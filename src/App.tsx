@@ -1481,8 +1481,8 @@ function App() {
               <div className="no-tournament-selected">
                 <h2>🏆 Bienvenido al Gestor de Torneos</h2>
                 <p>
-                  Selecciona un torneo del panel izquierdo para comenzar a
-                  gestionar partidos y resultados.
+                  Selecciona un torneo del panel para comenzar a gestionar
+                  partidos y resultados.
                 </p>
               </div>
             )}
