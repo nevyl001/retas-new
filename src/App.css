@@ -1795,6 +1795,36 @@ td {
     order: 1 !important;
   }
 
+  /* Mejorar distribución de espacios en gestión de parejas */
+  .pair-manager-display {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 15px !important;
+  }
+
+  .pair-manager-info {
+    text-align: center !important;
+  }
+
+  .pair-manager-players {
+    justify-content: center !important;
+    margin-bottom: 8px !important;
+  }
+
+  .pair-manager-actions {
+    justify-content: center !important;
+    gap: 12px !important;
+  }
+
+  .pair-manager-edit-btn,
+  .pair-manager-delete-btn {
+    flex: 1 !important;
+    max-width: 120px !important;
+    padding: 10px 16px !important;
+    font-size: 0.85rem !important;
+  }
+
   .tournament-header {
     padding: 20px !important;
   }
@@ -2061,6 +2091,27 @@ td {
   h1 {
     font-size: 1.5rem !important;
     padding: 12px !important;
+  }
+
+  /* Optimización adicional para gestión de parejas en pantallas pequeñas */
+  .pair-manager-display {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .pair-manager-players {
+    margin-bottom: 6px !important;
+  }
+
+  .pair-manager-actions {
+    gap: 8px !important;
+  }
+
+  .pair-manager-edit-btn,
+  .pair-manager-delete-btn {
+    max-width: 100px !important;
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
   }
 
   .tournament-header {
@@ -2342,6 +2393,27 @@ td {
   h1 {
     font-size: 1.3rem !important;
     padding: 10px !important;
+  }
+
+  /* Optimización para pantallas muy pequeñas */
+  .pair-manager-display {
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+
+  .pair-manager-players {
+    margin-bottom: 4px !important;
+  }
+
+  .pair-manager-actions {
+    gap: 6px !important;
+  }
+
+  .pair-manager-edit-btn,
+  .pair-manager-delete-btn {
+    max-width: 90px !important;
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
   }
 
   /* Winner Screen Ultra Mobile Optimizations */
