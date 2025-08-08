@@ -2418,46 +2418,46 @@ td {
 
   /* Winner Screen Ultra Mobile Optimizations */
   .winner-content {
-    padding: 5px !important;
-    margin: 2px !important;
+    padding: 3px !important;
+    margin: 1px !important;
     max-width: 100% !important;
   }
 
   .winner-title {
-    font-size: 1.1rem !important;
-    margin-bottom: 10px !important;
+    font-size: 0.9rem !important;
+    margin-bottom: 6px !important;
   }
 
   .winner-title::before,
   .winner-title::after {
-    font-size: 0.8rem !important;
-    left: -20px !important;
-    right: -20px !important;
+    font-size: 0.6rem !important;
+    left: -15px !important;
+    right: -15px !important;
   }
 
   .winner-names {
-    font-size: 0.9rem !important;
-    margin-bottom: 12px !important;
+    font-size: 0.75rem !important;
+    margin-bottom: 8px !important;
   }
 
   .stat-item {
-    min-width: 140px !important;
-    padding: 10px 6px !important;
-    margin-bottom: 5px !important;
+    min-width: 100px !important;
+    padding: 6px 4px !important;
+    margin-bottom: 3px !important;
   }
 
   .stat-number {
-    font-size: 1.5rem !important;
+    font-size: 1.2rem !important;
   }
 
   .stat-label {
-    font-size: 0.6rem !important;
+    font-size: 0.5rem !important;
   }
 
   .back-button {
-    margin-top: 15px !important;
-    padding: 6px 12px !important;
-    font-size: 0.7rem !important;
+    margin-top: 10px !important;
+    padding: 5px 10px !important;
+    font-size: 0.65rem !important;
   }
 
   .tournament-header {
