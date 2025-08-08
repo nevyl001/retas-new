@@ -118,12 +118,12 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
   return (
     <div className="player-manager">
       <div className="player-header">
-        <h3>👥 Gestión de Jugadores</h3>
+        <h3>👥 Jugadores ({players.length})</h3>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
           className="create-player-btn"
         >
-          {showCreateForm ? "❌ Cancelar" : "➕ Agregar Jugador"}
+          {showCreateForm ? "❌ Cancelar" : "➕ Agregar"}
         </button>
       </div>
 

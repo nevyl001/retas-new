@@ -843,17 +843,16 @@ function App() {
             {selectedTournament ? (
               <>
                 <div className="tournament-details">
-                  {/* Gestión de Jugadores - MOVIDA AQUÍ */}
+                  {/* Gestión de Jugadores */}
                   <div className="player-management-section">
                     <div className="player-management-header">
-                      <h3>👥 Gestión de Jugadores</h3>
                       <button
                         className="toggle-player-manager-btn"
                         onClick={() => setShowPlayerManager(!showPlayerManager)}
                       >
                         {showPlayerManager
-                          ? "👥 Ocultar Gestión de Jugadores"
-                          : "👥 Mostrar Gestión de Jugadores"}
+                          ? "Ocultar Jugadores"
+                          : "Gestionar Jugadores"}
                       </button>
                     </div>
 
