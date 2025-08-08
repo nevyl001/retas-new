@@ -2163,6 +2163,50 @@ td {
     font-size: 0.7rem !important;
   }
 
+  /* Winner Screen Mobile Optimizations */
+  .winner-content {
+    padding: 8px !important;
+    margin: 3px !important;
+    max-width: 99% !important;
+  }
+
+  .winner-title {
+    font-size: 1.3rem !important;
+    margin-bottom: 12px !important;
+  }
+
+  .winner-title::before,
+  .winner-title::after {
+    font-size: 1rem !important;
+    left: -25px !important;
+    right: -25px !important;
+  }
+
+  .winner-names {
+    font-size: 1rem !important;
+    margin-bottom: 15px !important;
+  }
+
+  .stat-item {
+    min-width: 160px !important;
+    padding: 12px 8px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .stat-number {
+    font-size: 1.8rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.7rem !important;
+  }
+
+  .back-button {
+    margin-top: 20px !important;
+    padding: 8px 16px !important;
+    font-size: 0.8rem !important;
+  }
+
   .debug-section {
     margin: 8px 0 !important;
   }
@@ -2285,6 +2329,50 @@ td {
   h1 {
     font-size: 1.3rem !important;
     padding: 10px !important;
+  }
+
+  /* Winner Screen Ultra Mobile Optimizations */
+  .winner-content {
+    padding: 5px !important;
+    margin: 2px !important;
+    max-width: 100% !important;
+  }
+
+  .winner-title {
+    font-size: 1.1rem !important;
+    margin-bottom: 10px !important;
+  }
+
+  .winner-title::before,
+  .winner-title::after {
+    font-size: 0.8rem !important;
+    left: -20px !important;
+    right: -20px !important;
+  }
+
+  .winner-names {
+    font-size: 0.9rem !important;
+    margin-bottom: 12px !important;
+  }
+
+  .stat-item {
+    min-width: 140px !important;
+    padding: 10px 6px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .stat-number {
+    font-size: 1.5rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.6rem !important;
+  }
+
+  .back-button {
+    margin-top: 15px !important;
+    padding: 6px 12px !important;
+    font-size: 0.7rem !important;
   }
 
   .tournament-header {
@@ -3259,29 +3347,52 @@ td {
 /* Responsive para pantalla de ganador */
 @media (max-width: 768px) {
   .winner-content {
-    padding: 20px;
-    margin: 20px;
+    padding: 15px !important;
+    margin: 10px !important;
+    max-width: 95% !important;
   }
 
   .winner-title {
-    font-size: 2.5rem;
+    font-size: 2rem !important;
+    margin-bottom: 20px !important;
+  }
+
+  .winner-title::before,
+  .winner-title::after {
+    font-size: 1.5rem !important;
+    left: -40px !important;
+    right: -40px !important;
   }
 
   .winner-names {
-    font-size: 2rem;
+    font-size: 1.5rem !important;
+    margin-bottom: 25px !important;
   }
 
   .winner-stats {
-    gap: 20px;
+    gap: 15px !important;
+    flex-direction: column !important;
+    align-items: center !important;
   }
 
   .stat-item {
-    min-width: 120px;
-    padding: 15px;
+    min-width: 200px !important;
+    padding: 20px 15px !important;
+    margin-bottom: 10px !important;
   }
 
   .stat-number {
-    font-size: 2rem;
+    font-size: 2.5rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.9rem !important;
+  }
+
+  .back-button {
+    margin-top: 30px !important;
+    padding: 12px 24px !important;
+    font-size: 1rem !important;
   }
 }
 
