@@ -1216,7 +1216,7 @@ function App() {
               </>
             ) : (
               <div className="no-tournament-selected">
-                <h2>🏆 Bienvenido al Gestor de Torneos</h2>
+                <h2>🏆 Bienvenido al Gestor de Torneos y Retas</h2>
                 <p>
                   Selecciona un torneo del panel para comenzar a gestionar
                   partidos y resultados.

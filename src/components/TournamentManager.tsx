@@ -129,7 +129,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           onClick={() => setShowCreateForm(!showCreateForm)}
           className="create-tournament-btn"
         >
-          {showCreateForm ? "❌ Cancelar" : "➕ Crear Nuevo Torneo"}
+          {showCreateForm ? "❌ Cancelar" : "➕ Crear Nueva Reta"}
         </button>
       </div>
 
