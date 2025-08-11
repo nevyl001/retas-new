@@ -1,0 +1,25 @@
+{
+  "short_name": "Gestor Pádel",
+  "name": "Gestor de Torneos y Retas de Pádel",
+  "description": "Aplicación completa para gestionar torneos, retas y partidos de pádel de manera profesional",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0ea5e9",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "categories": ["sports", "productivity", "utilities"],
+  "lang": "es"
+}
