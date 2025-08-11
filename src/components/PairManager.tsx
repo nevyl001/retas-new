@@ -227,7 +227,7 @@ export const PairManager: React.FC<PairManagerProps> = ({
                       <span className="pair-manager-player-name">
                         {pair.player1?.name || "Jugador 1"}
                       </span>
-                      <span className="pair-manager-vs">&</span>
+                      <span className="pair-manager-vs">/</span>
                       <span className="pair-manager-player-name">
                         {pair.player2?.name || "Jugador 2"}
                       </span>

@@ -179,7 +179,7 @@ function App() {
 
       if (existingPairLocal) {
         setError(
-          `La pareja ${player1.name} y ${player2.name} ya está registrada`
+          `La pareja ${player1.name} / ${player2.name} ya está registrada`
         );
         return;
       }
@@ -854,7 +854,7 @@ function App() {
                                   "🚨 ERROR: Pareja ya existe en la base de datos"
                                 );
                                 setError(
-                                  `La pareja ${player1.name} + ${player2.name} ya existe en el torneo`
+                                  `La pareja ${player1.name} / ${player2.name} ya existe en el torneo`
                                 );
                                 return;
                               }
@@ -1116,7 +1116,7 @@ function App() {
                           <div key={pair.id} className="pair-display-card">
                             <div className="pair-number">#{index + 1}</div>
                             <div className="pair-names">
-                              {pair.player1?.name} y {pair.player2?.name}
+                              {pair.player1?.name} / {pair.player2?.name}
                             </div>
                             <div className="pair-stats">
                               <span>Sets: {pair.sets_won}</span>
@@ -1127,7 +1127,7 @@ function App() {
                               onClick={() => {
                                 if (
                                   window.confirm(
-                                    `¿Estás seguro de que quieres eliminar la pareja "${pair.player1?.name} y ${pair.player2?.name}"?`
+                                    `¿Estás seguro de que quieres eliminar la pareja "${pair.player1?.name} / ${pair.player2?.name}"?`
                                   )
                                 ) {
                                   deletePair(pair.id);
@@ -1233,7 +1233,7 @@ function App() {
               <div className="winner-celebration">
                 <h1 className="winner-title">🏆 ¡FELICIDADES! 🏆</h1>
                 <div className="winner-names">
-                  {winner.player1?.name} y {winner.player2?.name}
+                  {winner.player1?.name} / {winner.player2?.name}
                 </div>
                 <div className="winner-subtitle">
                   ¡Son los campeones del torneo!

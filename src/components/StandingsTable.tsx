@@ -158,8 +158,8 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
       if (match.is_finished && !match.winner_id) {
         ties.push({
           matchId: match.id,
-          pair1: `${match.pair1?.player1?.name} y ${match.pair1?.player2?.name}`,
-          pair2: `${match.pair2?.player1?.name} y ${match.pair2?.player2?.name}`,
+          pair1: `${match.pair1?.player1?.name} / ${match.pair1?.player2?.name}`,
+          pair2: `${match.pair2?.player1?.name} / ${match.pair2?.player2?.name}`,
         });
       }
     });
@@ -234,7 +234,7 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
                   {index === 2 && "🥉"}
                 </td>
                 <td className="pair-name">
-                  {pair.player1?.name} y {pair.player2?.name}
+                  {pair.player1?.name} / {pair.player2?.name}
                 </td>
                 <td className="points">{pair.sets_won}</td>
                 <td className="points">{pair.matches_played}</td>

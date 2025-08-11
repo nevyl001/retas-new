@@ -222,8 +222,8 @@ export class MatchResultCalculator {
       } else if (winnerId) {
         const winnerName =
           winnerId === match.pair1_id
-            ? `${pair1?.player1?.name} y ${pair1?.player2?.name}`
-            : `${pair2?.player1?.name} y ${pair2?.player2?.name}`;
+            ? `${pair1?.player1?.name} / ${pair1?.player2?.name}`
+            : `${pair2?.player1?.name} / ${pair2?.player2?.name}`;
         message = `✅ Partido recalculado.\n\n🏆 Ganador: ${winnerName} (${stats.pair1TotalPoints}-${stats.pair2TotalPoints} puntos totales)`;
       } else {
         message = `✅ Partido recalculado.\n\n🤝 Empate (${stats.pair1TotalPoints}-${stats.pair2TotalPoints} puntos totales)`;
@@ -287,7 +287,7 @@ export class MatchResultCalculator {
       // ACUMULAR estadísticas en la base de datos
       if (pair1) {
         console.log(
-          `📊 Acumulando Pareja 1: ${pair1.player1?.name} y ${pair1.player2?.name}`
+          `📊 Acumulando Pareja 1: ${pair1.player1?.name} / ${pair1.player2?.name}`
         );
         console.log(
           `📊 Estadísticas actuales: ${pair1.games_won} juegos, ${pair1.sets_won} sets, ${pair1.points} puntos, ${pair1.matches_played} partidos`
@@ -314,7 +314,7 @@ export class MatchResultCalculator {
 
       if (pair2) {
         console.log(
-          `📊 Acumulando Pareja 2: ${pair2.player1?.name} y ${pair2.player2?.name}`
+          `📊 Acumulando Pareja 2: ${pair2.player1?.name} / ${pair2.player2?.name}`
         );
         console.log(
           `📊 Estadísticas actuales: ${pair2.games_won} juegos, ${pair2.sets_won} sets, ${pair2.points} puntos, ${pair2.matches_played} partidos`
@@ -371,8 +371,8 @@ export class MatchResultCalculator {
       } else if (winnerId) {
         const winnerName =
           winnerId === match.pair1_id
-            ? `${pair1?.player1?.name} y ${pair1?.player2?.name}`
-            : `${pair2?.player1?.name} y ${pair2?.player2?.name}`;
+            ? `${pair1?.player1?.name} / ${pair1?.player2?.name}`
+            : `${pair2?.player1?.name} / ${pair2?.player2?.name}`;
         message = `✅ Partido finalizado.\n\n🏆 Ganador: ${winnerName} (${stats.pair1TotalPoints}-${stats.pair2TotalPoints} puntos totales)`;
       } else {
         message = `✅ Partido finalizado.\n\n🤝 Empate (${stats.pair1TotalPoints}-${stats.pair2TotalPoints} puntos totales)`;

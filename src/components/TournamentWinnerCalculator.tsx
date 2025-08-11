@@ -114,7 +114,7 @@ export class TournamentWinnerCalculator {
           });
 
           console.log(
-            `🏆 Candidato: ${pair.player1?.name} y ${pair.player2?.name}`
+            `🏆 Candidato: ${pair.player1?.name} / ${pair.player2?.name}`
           );
           console.log(`   Puntos totales: ${stats.totalPoints}`);
           console.log(`   Sets totales: ${stats.totalSets}`);
@@ -156,7 +156,7 @@ export class TournamentWinnerCalculator {
 
       if (winner) {
         console.log(
-          `🏆 GANADOR DEL TORNEO: ${winner.pair.player1?.name} y ${winner.pair.player2?.name}`
+          `🏆 GANADOR DEL TORNEO: ${winner.pair.player1?.name} / ${winner.pair.player2?.name}`
         );
         console.log(`   Puntos totales: ${winner.totalPoints}`);
         console.log(`   Sets totales: ${winner.totalSets}`);

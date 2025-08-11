@@ -83,9 +83,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     if (!match.winner_id) return "Empate";
 
     if (match.winner_id === match.pair1_id && match.pair1) {
-      return `${match.pair1.player1?.name} y ${match.pair1.player2?.name}`;
+      return `${match.pair1.player1?.name} / ${match.pair1.player2?.name}`;
     } else if (match.winner_id === match.pair2_id && match.pair2) {
-      return `${match.pair2.player1?.name} y ${match.pair2.player2?.name}`;
+      return `${match.pair2.player1?.name} / ${match.pair2.player2?.name}`;
     }
 
     return "Ganador desconocido";
@@ -144,7 +144,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   // Función para obtener el nombre de la pareja
   const getPairName = (pair: Pair | undefined): string => {
     if (!pair) return "Pareja desconocida";
-    return `${pair.player1?.name} y ${pair.player2?.name}`;
+    return `${pair.player1?.name} / ${pair.player2?.name}`;
   };
 
   // Función para formatear el resultado de un juego
