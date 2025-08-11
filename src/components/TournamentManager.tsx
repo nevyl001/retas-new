@@ -11,13 +11,11 @@ import { ModernTournamentCard } from "./ModernTournamentCard";
 interface TournamentManagerProps {
   onTournamentSelect: (tournament: Tournament) => void;
   selectedTournament?: Tournament;
-  onViewResults?: (tournament: Tournament) => void;
 }
 
 export const TournamentManager: React.FC<TournamentManagerProps> = ({
   onTournamentSelect,
   selectedTournament,
-  onViewResults,
 }) => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);

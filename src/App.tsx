@@ -6,6 +6,7 @@ import { PairManager } from "./components/PairManager";
 import { MatchScoreEditor } from "./components/MatchScoreEditor";
 import StandingsTable from "./components/StandingsTable";
 import { SuccessModal } from "./components/SuccessModal";
+import MatchCardWithResults from "./components/MatchCardWithResults";
 
 import {
   Tournament,
@@ -28,7 +29,6 @@ import {
 } from "./lib/database";
 import { testConnection } from "./lib/supabaseClient";
 import { FlexibleMatchFinisher } from "./components/FlexibleMatchFinisher";
-import { MatchResultCalculator } from "./components/MatchResultCalculator";
 import {
   TournamentWinnerCalculator,
   TournamentWinner,
@@ -47,11 +47,6 @@ function App() {
   const [showPairManager, setShowPairManager] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
-  const [showMatchResults, setShowMatchResults] = useState(false);
-  const [selectedMatchResults, setSelectedMatchResults] =
-    useState<Match | null>(null);
-  const [calculatedMatchResults, setCalculatedMatchResults] =
-    useState<any>(null);
   const [showScoreCorrector, setShowScoreCorrector] = useState(false);
   const [selectedCorrectorMatch, setSelectedCorrectorMatch] =
     useState<Match | null>(null);
@@ -603,127 +598,6 @@ function App() {
     setShowWinnerScreen(false);
   };
 
-  const showMatchResultsHandler = async (match: Match) => {
-    try {
-      // Obtener los juegos del partido
-      const matchGames = await getGames(match.id);
-
-      // Calcular estadísticas en tiempo real
-      const stats = MatchResultCalculator.calculateMatchStatistics(
-        match,
-        matchGames
-      );
-
-      // Crear un objeto con los resultados calculados
-      const calculatedMatch = {
-        ...match,
-        pair1: {
-          ...match.pair1,
-          games_won: stats.pair1GamesWon,
-          sets_won: stats.pair1SetsWon,
-          points: stats.pair1TotalPoints,
-        },
-        pair2: {
-          ...match.pair2,
-          games_won: stats.pair2GamesWon,
-          sets_won: stats.pair2SetsWon,
-          points: stats.pair2TotalPoints,
-        },
-        winner_id: stats.isTie
-          ? undefined
-          : stats.pair1TotalPoints > stats.pair2TotalPoints
-          ? match.pair1_id
-          : match.pair2_id,
-      };
-
-      setSelectedMatchResults(match);
-      setCalculatedMatchResults(calculatedMatch);
-      setShowMatchResults(true);
-    } catch (error) {
-      console.error("Error al calcular resultados:", error);
-      // Fallback al comportamiento original
-      setSelectedMatchResults(match);
-      setShowMatchResults(true);
-    }
-  };
-
-  const hideMatchResultsHandler = () => {
-    setShowMatchResults(false);
-    setSelectedMatchResults(null);
-    setCalculatedMatchResults(null);
-  };
-
-  const handleViewTournamentResults = async (tournament: Tournament) => {
-    try {
-      setSelectedTournament(tournament);
-      await loadTournamentData();
-      alert(
-        `✅ Torneo "${tournament.name}" seleccionado\n\nAhora puedes ver todos los partidos y resultados en el panel derecho.`
-      );
-    } catch (err) {
-      console.error("❌ Error al cargar resultados del torneo:", err);
-      alert("Error al cargar los resultados del torneo. Inténtalo de nuevo.");
-    }
-  };
-
-  const recalculateMatchWinner = async (matchId: string) => {
-    try {
-      const match = matches.find((m) => m.id === matchId);
-      if (!match) {
-        console.error("Match not found:", matchId);
-        return;
-      }
-
-      const matchGames = await getGames(matchId);
-
-      if (matchGames.length === 0) {
-        console.log("No hay juegos para recalcular");
-        return;
-      }
-
-      let pair1Games = 0;
-      let pair2Games = 0;
-
-      matchGames.forEach((game) => {
-        if (game.is_tie_break) {
-          if (
-            game.tie_break_pair1_points >= 10 &&
-            game.tie_break_pair1_points - game.tie_break_pair2_points >= 2
-          ) {
-            pair1Games++;
-          } else if (
-            game.tie_break_pair2_points >= 10 &&
-            game.tie_break_pair2_points - game.tie_break_pair1_points >= 2
-          ) {
-            pair2Games++;
-          }
-        } else {
-          if (game.pair1_games > game.pair2_games) {
-            pair1Games++;
-          } else if (game.pair2_games > game.pair1_games) {
-            pair2Games++;
-          }
-        }
-      });
-
-      const isTie = pair1Games === pair2Games;
-      const winnerId = isTie
-        ? undefined
-        : pair1Games > pair2Games
-        ? match.pair1_id
-        : match.pair2_id;
-
-      await updateMatch(matchId, {
-        winner_id: winnerId,
-        is_finished: true,
-      });
-
-      console.log("✅ Ganador recalculado y actualizado en la base de datos");
-    } catch (error) {
-      console.error("Error recalculating match winner:", error);
-    }
-  };
-
   const handleBackToHome = () => {
     setSelectedTournament(null);
     setPairs([]);
@@ -732,8 +606,6 @@ function App() {
     setSelectedMatchId(null);
     setError("");
     setShowWinnerScreen(false);
-    setShowMatchResults(false);
-    setSelectedMatchResults(null);
     setShowScoreCorrector(false);
     setSelectedCorrectorMatch(null);
     setForceRefresh(0);
@@ -835,7 +707,6 @@ function App() {
             <TournamentManager
               selectedTournament={selectedTournament || undefined}
               onTournamentSelect={setSelectedTournament}
-              onViewResults={handleViewTournamentResults}
             />
           </div>
 
@@ -1296,148 +1167,14 @@ function App() {
                                 </h4>
                                 <div className="matches-container">
                                   {roundMatches.map((match) => (
-                                    <div
+                                    <MatchCardWithResults
                                       key={match.id}
-                                      className={`match-card ${
-                                        selectedMatchId === match.id
-                                          ? "selected"
-                                          : ""
-                                      }`}
-                                      onClick={() =>
-                                        handleMatchSelect(match.id)
-                                      }
-                                    >
-                                      <div className="match-header">
-                                        <h5>
-                                          {match.pair1?.player1?.name} y{" "}
-                                          {match.pair1?.player2?.name} vs{" "}
-                                          {match.pair2?.player1?.name} y{" "}
-                                          {match.pair2?.player2?.name}
-                                        </h5>
-                                        <div className="match-info">
-                                          <span className="court-badge">
-                                            🏟️ Cancha {match.court}
-                                          </span>
-                                          <span className="round-badge">
-                                            🔄 Ronda {match.round}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="match-details">
-                                        <p className="match-pairs">
-                                          <strong>Pareja 1:</strong>{" "}
-                                          {match.pair1?.player1?.name} y{" "}
-                                          {match.pair1?.player2?.name}
-                                        </p>
-                                        <p className="match-pairs">
-                                          <strong>Pareja 2:</strong>{" "}
-                                          {match.pair2?.player1?.name} y{" "}
-                                          {match.pair2?.player2?.name}
-                                        </p>
-                                      </div>
-                                      {(() => {
-                                        // Calcular el ganador en tiempo real
-                                        const matchGames = games.filter(
-                                          (g) => g.match_id === match.id
-                                        );
-                                        if (matchGames.length > 0) {
-                                          const stats =
-                                            MatchResultCalculator.calculateMatchStatistics(
-                                              match,
-                                              matchGames
-                                            );
-                                          const isTie = stats.isTie;
-
-                                          if (isTie) {
-                                            return (
-                                              <div className="winner">
-                                                <span className="winner-icon">
-                                                  🤝
-                                                </span>
-                                                Empate ({stats.pair1TotalPoints}
-                                                -{stats.pair2TotalPoints}{" "}
-                                                puntos)
-                                              </div>
-                                            );
-                                          } else {
-                                            const winnerId =
-                                              stats.pair1TotalPoints >
-                                              stats.pair2TotalPoints
-                                                ? match.pair1_id
-                                                : match.pair2_id;
-
-                                            return (
-                                              <div className="winner">
-                                                <span className="winner-icon">
-                                                  🏆
-                                                </span>
-                                                Ganador:{" "}
-                                                {winnerId === match.pair1_id
-                                                  ? `${match.pair1?.player1?.name} y ${match.pair1?.player2?.name}`
-                                                  : `${match.pair2?.player1?.name} y ${match.pair2?.player2?.name}`}
-                                              </div>
-                                            );
-                                          }
-                                        } else {
-                                          // Fallback a los datos de la base de datos
-                                          if (match.winner_id) {
-                                            return (
-                                              <div className="winner">
-                                                <span className="winner-icon">
-                                                  🏆
-                                                </span>
-                                                Ganador:{" "}
-                                                {match.winner_id ===
-                                                match.pair1_id
-                                                  ? `${match.pair1?.player1?.name} y ${match.pair1?.player2?.name}`
-                                                  : `${match.pair2?.player1?.name} y ${match.pair2?.player2?.name}`}
-                                              </div>
-                                            );
-                                          } else if (match.is_finished) {
-                                            return (
-                                              <div className="winner">
-                                                <span className="winner-icon">
-                                                  🤝
-                                                </span>
-                                                Empate
-                                              </div>
-                                            );
-                                          }
-                                        }
-                                        return null;
-                                      })()}
-                                      <div className="match-status">
-                                        {match.is_finished ? (
-                                          <span className="status-finished">
-                                            ✔ Finalizado
-                                          </span>
-                                        ) : (
-                                          <span className="status-pending">
-                                            ⏳ Pendiente
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div className="match-actions">
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            showMatchResultsHandler(match);
-                                          }}
-                                          className="view-results-btn"
-                                        >
-                                          📊 Ver Resultados
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            openScoreCorrector(match);
-                                          }}
-                                          className="correct-result-btn"
-                                        >
-                                          ✏️ Marcador
-                                        </button>
-                                      </div>
-                                    </div>
+                                      match={match}
+                                      isSelected={selectedMatchId === match.id}
+                                      onSelect={handleMatchSelect}
+                                      onCorrectScore={openScoreCorrector}
+                                      forceRefresh={forceRefresh}
+                                    />
                                   ))}
                                 </div>
                               </div>
@@ -1532,139 +1269,6 @@ function App() {
                   onClick={hideWinnerScreenHandler}
                 >
                   🏠 Volver al Torneo
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal de resultados de partido */}
-        {showMatchResults && selectedMatchResults && (
-          <div className="match-results-modal">
-            <div className="match-results-content">
-              <div className="match-results-header">
-                <h3>📊 Resultados del Partido</h3>
-                <button onClick={hideMatchResultsHandler} className="close-btn">
-                  ✕
-                </button>
-              </div>
-
-              <div className="match-results-info">
-                <h4>
-                  Partido {selectedMatchResults.court} - Ronda{" "}
-                  {selectedMatchResults.round}
-                </h4>
-                <div className="pairs-info">
-                  <div className="pair-info">
-                    <strong>Pareja 1:</strong>{" "}
-                    {selectedMatchResults.pair1?.player1?.name} y{" "}
-                    {selectedMatchResults.pair1?.player2?.name}
-                  </div>
-                  <div className="pair-info">
-                    <strong>Pareja 2:</strong>{" "}
-                    {selectedMatchResults.pair2?.player1?.name} y{" "}
-                    {selectedMatchResults.pair2?.player2?.name}
-                  </div>
-                </div>
-              </div>
-
-              <div className="match-results-details">
-                <div className="result-summary">
-                  <div className="result-item">
-                    <span className="result-label">Juegos Ganados:</span>
-                    <span className="result-value">
-                      {calculatedMatchResults?.pair1?.games_won ||
-                        selectedMatchResults.pair1?.games_won ||
-                        0}{" "}
-                      -{" "}
-                      {calculatedMatchResults?.pair2?.games_won ||
-                        selectedMatchResults.pair2?.games_won ||
-                        0}
-                    </span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">Sets Ganados:</span>
-                    <span className="result-value">
-                      {calculatedMatchResults?.pair1?.sets_won ||
-                        selectedMatchResults.pair1?.sets_won ||
-                        0}{" "}
-                      -{" "}
-                      {calculatedMatchResults?.pair2?.sets_won ||
-                        selectedMatchResults.pair2?.sets_won ||
-                        0}
-                    </span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">Puntos Totales:</span>
-                    <span className="result-value">
-                      {calculatedMatchResults?.pair1?.points ||
-                        selectedMatchResults.pair1?.points ||
-                        0}{" "}
-                      -{" "}
-                      {calculatedMatchResults?.pair2?.points ||
-                        selectedMatchResults.pair2?.points ||
-                        0}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="match-winner">
-                  {(() => {
-                    // Verificar si es empate basado en los puntos totales
-                    const pair1Points =
-                      calculatedMatchResults?.pair1?.points ||
-                      selectedMatchResults.pair1?.points ||
-                      0;
-                    const pair2Points =
-                      calculatedMatchResults?.pair2?.points ||
-                      selectedMatchResults.pair2?.points ||
-                      0;
-                    const isTie = pair1Points === pair2Points;
-
-                    if (isTie) {
-                      return (
-                        <div className="tie-display">
-                          <span className="tie-icon">🤝</span>
-                          <span className="tie-text">
-                            Empate ({pair1Points}-{pair2Points} puntos totales)
-                          </span>
-                        </div>
-                      );
-                    } else {
-                      const winnerId =
-                        calculatedMatchResults?.winner_id ||
-                        selectedMatchResults.winner_id;
-                      if (winnerId) {
-                        return (
-                          <div className="winner-display">
-                            <span className="winner-icon">🏆</span>
-                            <span className="winner-text">
-                              Ganador:{" "}
-                              {winnerId === selectedMatchResults.pair1?.id
-                                ? `${selectedMatchResults.pair1?.player1?.name} y ${selectedMatchResults.pair1?.player2?.name}`
-                                : `${selectedMatchResults.pair2?.player1?.name} y ${selectedMatchResults.pair2?.player2?.name}`}
-                            </span>
-                          </div>
-                        );
-                      } else {
-                        return (
-                          <div className="tie-display">
-                            <span className="tie-icon">🤝</span>
-                            <span className="tie-text">Empate</span>
-                          </div>
-                        );
-                      }
-                    }
-                  })()}
-                </div>
-              </div>
-
-              <div className="match-results-actions">
-                <button
-                  onClick={hideMatchResultsHandler}
-                  className="close-results-btn"
-                >
-                  Cerrar
                 </button>
               </div>
             </div>

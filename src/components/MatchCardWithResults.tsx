@@ -2,11 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Match, Pair, Game } from "../lib/database";
 import { getMatches, getPairs, getGames } from "../lib/database";
 
-interface MatchCardProps {
+interface MatchCardWithResultsProps {
   match: Match;
   isSelected: boolean;
   onSelect: (matchId: string) => void;
-  onViewResults: (match: Match) => void;
   onCorrectScore: (match: Match) => void;
   forceRefresh?: number;
 }
@@ -16,22 +15,25 @@ interface MatchWithPairs extends Match {
   pair2?: Pair;
 }
 
-const MatchCard: React.FC<MatchCardProps> = ({
+const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   match,
   isSelected,
   onSelect,
-  onViewResults,
   onCorrectScore,
   forceRefresh = 0,
 }) => {
   const [currentMatch, setCurrentMatch] = useState<MatchWithPairs | null>(null);
+  const [matchGames, setMatchGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Función para cargar datos frescos del partido
   const loadFreshMatchData = useCallback(
     async (matchId: string) => {
-      console.log("=== CARGANDO DATOS FRESCOS PARA TARJETA ===", matchId);
+      console.log(
+        "=== CARGANDO DATOS FRESCOS PARA TARJETA CON RESULTADOS ===",
+        matchId
+      );
       setLoading(true);
       setError(null);
 
@@ -49,6 +51,9 @@ const MatchCard: React.FC<MatchCardProps> = ({
         const pair1 = pairs.find((p) => p.id === updatedMatch.pair1_id);
         const pair2 = pairs.find((p) => p.id === updatedMatch.pair2_id);
 
+        // Cargar juegos del partido
+        const games = await getGames(matchId);
+
         // Crear match con parejas completas
         const matchWithPairs: MatchWithPairs = {
           ...updatedMatch,
@@ -56,10 +61,15 @@ const MatchCard: React.FC<MatchCardProps> = ({
           pair2,
         };
 
-        console.log("✅ Tarjeta actualizada:", matchWithPairs);
+        console.log("✅ Tarjeta con resultados actualizada:", matchWithPairs);
+        console.log("✅ Juegos cargados:", games);
         setCurrentMatch(matchWithPairs);
+        setMatchGames(games);
       } catch (err) {
-        console.error("❌ Error cargando datos para tarjeta:", err);
+        console.error(
+          "❌ Error cargando datos para tarjeta con resultados:",
+          err
+        );
         setError("Error cargando datos del partido");
       } finally {
         setLoading(false);
@@ -91,16 +101,65 @@ const MatchCard: React.FC<MatchCardProps> = ({
     return `Ganador: ${winnerName}`;
   };
 
+  // Función para calcular el ganador basado en los juegos
+  const calculateWinnerFromGames = () => {
+    if (matchGames.length === 0) return null;
+
+    let pair1Sets = 0;
+    let pair2Sets = 0;
+
+    matchGames.forEach((game) => {
+      if (game.is_tie_break) {
+        // Para tie-break, el ganador es quien llega a 10 puntos con diferencia de 2
+        if (
+          game.tie_break_pair1_points >= 10 &&
+          game.tie_break_pair1_points - game.tie_break_pair2_points >= 2
+        ) {
+          pair1Sets++;
+        } else if (
+          game.tie_break_pair2_points >= 10 &&
+          game.tie_break_pair2_points - game.tie_break_pair1_points >= 2
+        ) {
+          pair2Sets++;
+        }
+      } else {
+        // Para juegos normales, el ganador es quien tiene más games
+        if (game.pair1_games > game.pair2_games) {
+          pair1Sets++;
+        } else if (game.pair2_games > game.pair1_games) {
+          pair2Sets++;
+        }
+      }
+    });
+
+    if (pair1Sets === pair2Sets) {
+      return "Empate";
+    } else if (pair1Sets > pair2Sets) {
+      return `Ganador: ${getPairName(currentMatch?.pair1)}`;
+    } else {
+      return `Ganador: ${getPairName(currentMatch?.pair2)}`;
+    }
+  };
+
   // Función para obtener el nombre de la pareja
   const getPairName = (pair: Pair | undefined): string => {
     if (!pair) return "Pareja desconocida";
     return `${pair.player1?.name} y ${pair.player2?.name}`;
   };
 
+  // Función para formatear el resultado de un juego
+  const formatGameScore = (game: Game): string => {
+    if (game.is_tie_break) {
+      return `${game.tie_break_pair1_points}-${game.tie_break_pair2_points}`;
+    } else {
+      return `${game.pair1_games}-${game.pair2_games}`;
+    }
+  };
+
   // Cargar datos cuando se monta el componente o se fuerza actualización
   useEffect(() => {
     console.log(
-      "🔄 Cargando datos para tarjeta:",
+      "🔄 Cargando datos para tarjeta con resultados:",
       match.id,
       "forceRefresh:",
       forceRefresh
@@ -112,14 +171,6 @@ const MatchCard: React.FC<MatchCardProps> = ({
   const handleCardClick = () => {
     if (currentMatch) {
       onSelect(currentMatch.id);
-    }
-  };
-
-  // Función para manejar clic en botón de resultados
-  const handleViewResults = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (currentMatch) {
-      onViewResults(currentMatch);
     }
   };
 
@@ -162,6 +213,8 @@ const MatchCard: React.FC<MatchCardProps> = ({
     );
   }
 
+  const matchWinner = calculateWinnerFromGames();
+
   return (
     <div
       className={`match-card ${isSelected ? "selected" : ""}`}
@@ -193,11 +246,31 @@ const MatchCard: React.FC<MatchCardProps> = ({
         </p>
       </div>
 
+      {/* Mostrar resultados de juegos */}
+      {matchGames.length > 0 && (
+        <div className="match-games-results">
+          <h6>📊 Resultados por Juego:</h6>
+          <div className="games-grid">
+            {matchGames.map((game, index) => (
+              <div key={game.id} className="game-result">
+                <span className="game-number">Juego:</span>
+                <span className="game-score">
+                  {formatGameScore(game)}
+                  {game.is_tie_break && (
+                    <span className="tie-break-indicator">TB</span>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {currentMatch.is_finished && (
         <div className="winner">
           <span className="winner-icon">🏆</span>
           <span className="winner-text">
-            {getResultDisplayText(currentMatch)}
+            {matchWinner || getResultDisplayText(currentMatch)}
           </span>
         </div>
       )}
@@ -211,13 +284,6 @@ const MatchCard: React.FC<MatchCardProps> = ({
       </div>
 
       <div className="match-actions">
-        <button
-          onClick={handleViewResults}
-          className="view-results-btn"
-          title="Ver resultados detallados"
-        >
-          📊 Ver Resultados
-        </button>
         <button
           onClick={handleCorrectScore}
           className="correct-result-btn"
@@ -240,4 +306,4 @@ const MatchCard: React.FC<MatchCardProps> = ({
   );
 };
 
-export default MatchCard;
+export default MatchCardWithResults;
