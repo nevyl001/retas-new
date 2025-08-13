@@ -184,8 +184,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   if (loading) {
     return (
-      <div className="match-card loading">
-        <div className="loading-spinner"></div>
+      <div className="match-card-new loading">
+        <div className="loading-spinner-new"></div>
         <p>Cargando partido...</p>
       </div>
     );
@@ -193,11 +193,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   if (error) {
     return (
-      <div className="match-card error">
+      <div className="match-card-new error">
         <p>❌ {error}</p>
         <button
           onClick={() => loadFreshMatchData(match.id)}
-          className="retry-button"
+          className="retry-button-new"
         >
           🔄 Reintentar
         </button>
@@ -207,7 +207,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   if (!currentMatch) {
     return (
-      <div className="match-card error">
+      <div className="match-card-new error">
         <p>No se pudo cargar el partido</p>
       </div>
     );
@@ -217,47 +217,64 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   return (
     <div
-      className={`match-card ${isSelected ? "selected" : ""}`}
+      className={`match-card-new ${isSelected ? "selected" : ""}`}
       onClick={handleCardClick}
     >
-      <div className="match-header">
-        <h5>
-          {getPairName(currentMatch.pair1)} vs {getPairName(currentMatch.pair2)}
-        </h5>
+      {/* Header con información principal */}
+      <div className="match-header-new">
+        <div className="match-title-section">
+          <h5 className="match-title">
+            {getPairName(currentMatch.pair1)} vs{" "}
+            {getPairName(currentMatch.pair2)}
+          </h5>
+        </div>
+
+        {/* Badges de información */}
+        <div className="match-badges">
+          <span className="court-badge-new">
+            <span className="badge-icon">🏟️</span>
+            Cancha {currentMatch.court}
+          </span>
+          <span className="round-badge-new">
+            <span className="badge-icon">🔄</span>
+            Ronda {currentMatch.round}
+          </span>
+        </div>
       </div>
 
-      <div className="match-info">
-        <span className="court-badge">
-          <span>🏟️</span>
-          Cancha {currentMatch.court}
-        </span>
-        <span className="round-badge">
-          <span>🔄</span>
-          Ronda {currentMatch.round}
-        </span>
+      {/* Estado del partido */}
+      <div className="match-status-new">
+        {currentMatch.is_finished ? (
+          <span className="status-finished-new">✅ Finalizado</span>
+        ) : (
+          <span className="status-pending-new">⏳ En progreso</span>
+        )}
       </div>
 
-      <div className="match-pairs">
-        <p>
-          <strong>Pareja 1:</strong> {getPairName(currentMatch.pair1)}
-        </p>
-        <p>
-          <strong>Pareja 2:</strong> {getPairName(currentMatch.pair2)}
-        </p>
+      {/* Información de las parejas */}
+      <div className="match-pairs-new">
+        <div className="pair-info">
+          <span className="pair-label">Pareja 1:</span>
+          <span className="pair-names">{getPairName(currentMatch.pair1)}</span>
+        </div>
+        <div className="pair-info">
+          <span className="pair-label">Pareja 2:</span>
+          <span className="pair-names">{getPairName(currentMatch.pair2)}</span>
+        </div>
       </div>
 
-      {/* Mostrar resultados de juegos */}
+      {/* Resultados de juegos */}
       {matchGames.length > 0 && (
-        <div className="match-games-results">
-          <h6>📊 Resultados por Juego:</h6>
-          <div className="games-grid">
+        <div className="match-games-results-new">
+          <h6 className="games-title">📊 Resultados por Juego:</h6>
+          <div className="games-grid-new">
             {matchGames.map((game, index) => (
-              <div key={game.id} className="game-result">
-                <span className="game-number">Juego:</span>
-                <span className="game-score">
+              <div key={game.id} className="game-result-new">
+                <span className="game-number-new">Juego {index + 1}:</span>
+                <span className="game-score-new">
                   {formatGameScore(game)}
                   {game.is_tie_break && (
-                    <span className="tie-break-indicator">TB</span>
+                    <span className="tie-break-indicator-new">TB</span>
                   )}
                 </span>
               </div>
@@ -266,27 +283,21 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </div>
       )}
 
+      {/* Ganador */}
       {currentMatch.is_finished && (
-        <div className="winner">
-          <span className="winner-icon">🏆</span>
-          <span className="winner-text">
+        <div className="winner-new">
+          <span className="winner-icon-new">🏆</span>
+          <span className="winner-text-new">
             {matchWinner || getResultDisplayText(currentMatch)}
           </span>
         </div>
       )}
 
-      <div className="match-status">
-        {currentMatch.is_finished ? (
-          <span className="status-finished">✅ Finalizado</span>
-        ) : (
-          <span className="status-pending">⏳ En progreso</span>
-        )}
-      </div>
-
-      <div className="match-actions">
+      {/* Acciones */}
+      <div className="match-actions-new">
         <button
           onClick={handleCorrectScore}
-          className="correct-result-btn"
+          className="correct-result-btn-new"
           title="Corregir resultado del partido"
         >
           🔧 Marcador
@@ -296,7 +307,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             e.stopPropagation();
             loadFreshMatchData(match.id);
           }}
-          className="refresh-btn"
+          className="refresh-btn-new"
           title="Actualizar datos del partido"
         >
           🔄 Actualizar
