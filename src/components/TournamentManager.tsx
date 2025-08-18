@@ -6,7 +6,6 @@ import {
   updateTournament,
   Tournament,
 } from "../lib/database";
-import { ModernTournamentCard } from "./ModernTournamentCard";
 
 interface TournamentManagerProps {
   onTournamentSelect: (tournament: Tournament) => void;
@@ -37,7 +36,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       const data = await getTournaments();
       setTournaments(data);
     } catch (err) {
-      setError("Error al cargar los torneos");
+      setError("Error al cargar las retas");
       console.error(err);
     } finally {
       setLoading(false);
@@ -57,7 +56,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       setNewTournament({ name: "", description: "", courts: 1 });
       setShowCreateForm(false);
     } catch (err) {
-      setError("Error al crear el torneo");
+      setError("Error al crear la reta");
       console.error(err);
     }
   };
@@ -65,7 +64,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   const handleDeleteTournament = async (id: string) => {
     if (
       !window.confirm(
-        "¿Estás seguro de que quieres eliminar este torneo? Esta acción no se puede deshacer."
+        "¿Estás seguro de que quieres eliminar esta reta? Esta acción no se puede deshacer."
       )
     ) {
       return;
@@ -79,7 +78,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         onTournamentSelect(tournaments[0] || null);
       }
     } catch (err) {
-      setError("Error al eliminar el torneo");
+      setError("Error al eliminar la reta");
       console.error(err);
     }
   };
@@ -94,7 +93,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         )
       );
     } catch (err) {
-      setError("Error al iniciar el torneo");
+      setError("Error al iniciar la reta");
       console.error(err);
     }
   };
@@ -109,19 +108,19 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         )
       );
     } catch (err) {
-      setError("Error al finalizar el torneo");
+      setError("Error al finalizar la reta");
       console.error(err);
     }
   };
 
   if (loading) {
-    return <div className="loading">Cargando torneos...</div>;
+    return <div className="loading">Cargando retas...</div>;
   }
 
   return (
     <div className="tournament-manager">
       <div className="tournament-header">
-        <h2>🏆 Gestión de Torneos Express y Retas</h2>
+        <h2>🏆 Gestión de Retas Express</h2>
       </div>
 
       <div className="create-tournament-section">
@@ -137,10 +136,10 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
       {showCreateForm && (
         <div className="create-tournament-form">
-          <h3>Crear Nuevo Torneo</h3>
+          <h3>Crear Nueva Reta</h3>
           <form onSubmit={handleCreateTournament}>
             <div className="form-group">
-              <label htmlFor="tournament-name">Nombre del Torneo:</label>
+              <label htmlFor="tournament-name">Nombre de la Reta:</label>
               <input
                 id="tournament-name"
                 type="text"
@@ -148,7 +147,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                 onChange={(e) =>
                   setNewTournament({ ...newTournament, name: e.target.value })
                 }
-                placeholder="Ej: Torneo de Verano 2024"
+                placeholder="Ej: Reta de Verano 2024"
                 required
               />
             </div>
@@ -166,7 +165,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                     description: e.target.value,
                   })
                 }
-                placeholder="Descripción del torneo..."
+                placeholder="Descripción de la reta..."
                 rows={3}
               />
             </div>
@@ -191,7 +190,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
             <div className="form-actions">
               <button type="submit" className="submit-btn">
-                🏆 Crear Torneo
+                🏆 Crear Reta
               </button>
               <button
                 type="button"
@@ -206,24 +205,64 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       )}
 
       <div className="tournaments-list">
-        <h3>Torneos ({tournaments.length})</h3>
+        <h3>Retas ({tournaments.length})</h3>
         {tournaments.length === 0 ? (
           <div className="no-tournaments">
-            <p>📝 No hay torneos creados aún</p>
-            <p>Crea tu primer torneo para comenzar</p>
+            <p>📝 No hay retas creadas aún</p>
+            <p>Crea tu primera reta para comenzar</p>
           </div>
         ) : (
           <div className="tournaments-grid">
             {tournaments.map((tournament) => (
-              <ModernTournamentCard
+              <div
                 key={tournament.id}
-                tournament={tournament}
-                isSelected={selectedTournament?.id === tournament.id}
-                onSelect={onTournamentSelect}
-                onStart={handleStartTournament}
-                onFinish={handleFinishTournament}
-                onDelete={(tournament) => handleDeleteTournament(tournament.id)}
-              />
+                className={`reta-card ${
+                  selectedTournament?.id === tournament.id ? "selected" : ""
+                }`}
+                onClick={() => onTournamentSelect(tournament)}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="reta-card-header">
+                  <h4 className="reta-card-title">{tournament.name}</h4>
+                  <div className="reta-card-actions">
+                    {tournament.is_started && !tournament.is_finished && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFinishTournament(tournament);
+                        }}
+                        className="reta-btn reta-btn-finish"
+                      >
+                        🏁 Finalizar
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTournament(tournament.id);
+                      }}
+                      className="reta-btn reta-btn-delete"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+                {tournament.description && (
+                  <p className="reta-card-description">
+                    {tournament.description}
+                  </p>
+                )}
+                <div className="reta-card-info">
+                  <span>🏟️ {tournament.courts} canchas</span>
+                  <span>
+                    {tournament.is_finished
+                      ? "🏆 Finalizada"
+                      : tournament.is_started
+                      ? "🎾 En curso"
+                      : "⏳ Pendiente"}
+                  </span>
+                </div>
+              </div>
             ))}
           </div>
         )}

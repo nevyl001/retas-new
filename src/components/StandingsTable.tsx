@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { getPairs, getMatches, getGames, Pair } from "../lib/database";
+import { getPairs, getMatches, Match } from "../lib/database";
 import { MatchResultCalculator } from "./MatchResultCalculator";
 
 interface PairWithPlayers {
@@ -21,34 +21,6 @@ interface PairWithPlayers {
     id: string;
     name: string;
   };
-}
-
-interface Match {
-  id: string;
-  tournament_id: string;
-  pair1_id: string;
-  pair2_id: string;
-  court: number;
-  round: number;
-  winner_id?: string;
-  is_finished: boolean;
-  created_at: string;
-  updated_at: string;
-  pair1?: Pair;
-  pair2?: Pair;
-}
-
-interface Game {
-  id: string;
-  match_id: string;
-  game_number: number;
-  pair1_games: number;
-  pair2_games: number;
-  is_tie_break: boolean;
-  tie_break_pair1_points?: number;
-  tie_break_pair2_points?: number;
-  created_at: string;
-  updated_at: string;
 }
 
 interface StandingsTableProps {
@@ -96,7 +68,7 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
       );
     } catch (error) {
       console.error("❌ Error cargando datos:", error);
-      setError("Error al cargar los datos del torneo");
+      setError("Error al cargar los datos de la reta");
     } finally {
       setLoading(false);
     }
@@ -247,7 +219,7 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
 
       {sortedPairs.length === 0 && (
         <div className="no-pairs">
-          <p>📝 No hay parejas registradas en este torneo</p>
+          <p>📝 No hay parejas registradas en esta reta</p>
         </div>
       )}
     </div>

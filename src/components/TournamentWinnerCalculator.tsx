@@ -1,4 +1,3 @@
-import React from "react";
 import { Pair, Match, Game } from "../lib/database";
 import { getGames } from "../lib/database";
 
@@ -13,14 +12,14 @@ export interface TournamentWinner {
 
 export class TournamentWinnerCalculator {
   /**
-   * Calcula el ganador del torneo basado en criterios específicos
+   * Calcula el ganador de la reta basado en criterios específicos
    */
   static async calculateTournamentWinner(
     pairs: Pair[],
     matches: Match[]
   ): Promise<TournamentWinner | null> {
     try {
-      console.log("🏆 === CALCULANDO GANADOR DEL TORNEO ===");
+      console.log("🏆 === CALCULANDO GANADOR DE LA RETA ===");
 
       // Obtener todos los juegos de todos los partidos
       const allGames: Game[] = [];
@@ -156,7 +155,7 @@ export class TournamentWinnerCalculator {
 
       if (winner) {
         console.log(
-          `🏆 GANADOR DEL TORNEO: ${winner.pair.player1?.name} / ${winner.pair.player2?.name}`
+          `🏆 GANADOR DE LA RETA: ${winner.pair.player1?.name} / ${winner.pair.player2?.name}`
         );
         console.log(`   Puntos totales: ${winner.totalPoints}`);
         console.log(`   Sets totales: ${winner.totalSets}`);
@@ -172,7 +171,7 @@ export class TournamentWinnerCalculator {
       console.log("🏆 === FIN CALCULACIÓN GANADOR ===");
       return winner;
     } catch (error) {
-      console.error("❌ Error al calcular ganador del torneo:", error);
+      console.error("❌ Error al calcular ganador de la reta:", error);
       return null;
     }
   }

@@ -177,8 +177,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   // Función para manejar clic en botón de corrección
   const handleCorrectScore = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (currentMatch) {
+    e.preventDefault();
+    console.log("🔧 Botón Marcador clickeado para partido:", currentMatch?.id);
+    if (currentMatch && onCorrectScore) {
+      console.log("🔧 Llamando a onCorrectScore con:", currentMatch);
       onCorrectScore(currentMatch);
+    } else {
+      console.log("❌ Error: currentMatch o onCorrectScore no disponible");
     }
   };
 
@@ -294,11 +299,12 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       )}
 
       {/* Acciones */}
-      <div className="match-actions-new">
+      <div className="partido-acciones">
         <button
           onClick={handleCorrectScore}
-          className="correct-result-btn-new"
+          className="btn-marcador-partido"
           title="Corregir resultado del partido"
+          type="button"
         >
           🔧 Marcador
         </button>
@@ -307,8 +313,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             e.stopPropagation();
             loadFreshMatchData(match.id);
           }}
-          className="refresh-btn-new"
+          className="btn-actualizar-partido"
           title="Actualizar datos del partido"
+          type="button"
         >
           🔄 Actualizar
         </button>

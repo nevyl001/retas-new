@@ -5,7 +5,6 @@ import {
   deletePlayer,
   Player,
 } from "../lib/database";
-import { CompactPlayerGrid } from "./CompactPlayerGrid";
 
 interface PlayerManagerProps {
   onPlayerSelect?: (players: Player[]) => void;
@@ -103,14 +102,6 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
     }
   };
 
-  const isPlayerSelected = (player: Player) => {
-    return selectedPlayers.some((p) => p.id === player.id);
-  };
-
-  const isPlayerInPair = (player: Player) => {
-    return playersInPairs.includes(player.id);
-  };
-
   if (loading) {
     return <div className="loading">Cargando jugadores...</div>;
   }
@@ -171,13 +162,37 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
           <p>Agrega jugadores para poder crear parejas</p>
         </div>
       ) : (
-        <CompactPlayerGrid
-          players={players}
-          onPlayerSelect={handlePlayerSelect}
-          onDeletePlayer={handleDeletePlayer}
-          selectedPlayers={selectedPlayers}
-          playersInPairs={playersInPairs}
-        />
+        <div className="jugadores-grid">
+          {players.map((player) => {
+            const isSelected = selectedPlayers.some((p) => p.id === player.id);
+            const isInPair = playersInPairs.includes(player.id);
+
+            return (
+              <div
+                key={player.id}
+                className={`jugador-card ${isSelected ? "seleccionado" : ""} ${
+                  isInPair ? "en-pareja" : ""
+                }`}
+                onClick={() => handlePlayerSelect(player)}
+              >
+                <div className="jugador-info">
+                  <span className="jugador-nombre">{player.name}</span>
+                  {isInPair && <span className="indicador-pareja">👥</span>}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeletePlayer(player.id);
+                  }}
+                  className="eliminar-jugador-btn"
+                  title="Eliminar jugador"
+                >
+                  🗑️
+                </button>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

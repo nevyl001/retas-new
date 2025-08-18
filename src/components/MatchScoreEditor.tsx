@@ -35,7 +35,7 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
         console.log(`📊 Juegos cargados: ${matchGames.length}`);
         setGames(matchGames);
 
-        // Cargar parejas del torneo
+        // Cargar parejas de la reta
         const allPairs = await getPairs(match.tournament_id);
         console.log(`👥 Parejas cargadas: ${allPairs.length}`);
         setPairs(allPairs);
@@ -165,12 +165,12 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
     }
   };
 
-  // RECALCULAR todas las estadísticas del torneo desde cero (OPTIMIZADO)
+  // RECALCULAR todas las estadísticas de la reta desde cero (OPTIMIZADO)
   const recalculateAllTournamentStatistics = async () => {
     try {
-      console.log("🔄 RECALCULANDO todas las estadísticas del torneo...");
+      console.log("🔄 RECALCULANDO todas las estadísticas de la reta...");
 
-      // Obtener todos los partidos del torneo
+      // Obtener todos los partidos de la reta
       const { getMatches } = await import("../lib/database");
       const allMatches = await getMatches(match.tournament_id);
       const finishedMatches = allMatches.filter((m) => m.is_finished);
@@ -274,7 +274,7 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
       await Promise.all(updatePromises);
 
       console.log(
-        "✅ Todas las estadísticas del torneo recalculadas correctamente"
+        "✅ Todas las estadísticas de la reta recalculadas correctamente"
       );
     } catch (err) {
       console.error("❌ Error recalculando estadísticas:", err);
@@ -368,7 +368,7 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
 
       console.log("✅ Partido finalizado correctamente");
 
-      // RECALCULAR todas las estadísticas del torneo
+      // RECALCULAR todas las estadísticas de la reta
       await recalculateAllTournamentStatistics();
 
       // Llamar onMatchFinish() para actualizar tabla

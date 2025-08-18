@@ -409,7 +409,7 @@ export class MatchResultCalculator {
   }
 
   /**
-   * Recalcula todas las estadísticas del torneo
+   * Recalcula todas las estadísticas de la reta
    */
   static async recalculateAllStatistics(tournamentId: string): Promise<{
     success: boolean;
@@ -418,7 +418,7 @@ export class MatchResultCalculator {
     try {
       console.log("🔄 === INICIO RECÁLCULO COMPLETO ===");
 
-      // Obtener todos los datos del torneo
+      // Obtener todos los datos de la reta
       const pairs = await getPairs(tournamentId);
       const matches = await getMatches(tournamentId);
 
@@ -513,7 +513,7 @@ export class MatchResultCalculator {
       console.error("❌ Error en recalculateAllStatistics:", error);
       return {
         success: false,
-        message: "Error al recalcular estadísticas del torneo",
+        message: "Error al recalcular estadísticas de la reta",
       };
     }
   }
