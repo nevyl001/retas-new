@@ -518,7 +518,7 @@ function App() {
   return (
     <div className="App">
       <div className="container">
-        <h1>🏆 Gestión de Retas Express</h1>
+        <h1>🏆 ¡Organiza tu Reta de Pádel y ¡Que Gane el Mejor! 🏅</h1>
 
         {error && (
           <div className="error">
@@ -542,14 +542,16 @@ function App() {
         )}
 
         <div className="main-layout">
-          <div className="left-panel">
+          {/* Gestión de Retas - Arriba de todo */}
+          <div className="tournament-management-section">
             <TournamentManager
               selectedTournament={selectedTournament || undefined}
               onTournamentSelect={setSelectedTournament}
             />
           </div>
 
-          <div className="right-panel">
+          {/* Contenido de la Reta Seleccionada */}
+          <div className="tournament-content">
             {selectedTournament ? (
               <>
                 <div className="tournament-details">

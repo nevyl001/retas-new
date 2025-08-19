@@ -7,6 +7,14 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  height: auto !important;
+  min-height: 100vh;
+}
+
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -33,9 +41,9 @@ body {
 
 .container {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   background: #ffffff;
-  overflow: hidden;
+  overflow: visible;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -58,26 +66,37 @@ h1 {
 
 /* Layout principal */
 .main-layout {
-  display: grid;
-  grid-template-columns: 400px 1fr;
-  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+  min-height: calc(100vh - 100px);
+  overflow-y: visible;
+  padding: 0 20px;
 }
 
-.left-panel {
-  background: #f8fafc;
-  padding: 20px;
-  border-right: 1px solid #e2e8f0;
-  overflow-y: auto;
-  order: 1;
-  height: 100%;
-}
-
-.right-panel {
-  padding: 20px;
-  overflow-y: auto;
+.tournament-management-section {
   background: #ffffff;
-  order: 2;
-  height: 100%;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.tournament-content {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  min-height: 200px;
+  overflow-y: visible;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+.tournament-details {
+  min-height: 100px;
 }
 
 /* Mensajes de error */
@@ -309,23 +328,71 @@ h1 {
 }
 
 .tournaments-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
   margin-top: 10px;
+  max-width: 100%;
+}
+
+/* Responsive grid - máximo 4 por fila en pantallas grandes */
+@media (min-width: 1200px) {
+  .tournaments-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .tournaments-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  .tournaments-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  .tournaments-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .reta-card {
+    padding: 14px;
+    min-height: 160px;
+  }
+
+  .reta-card.selected {
+    padding-bottom: 40px;
+  }
+
+  .reta-card.selected::after {
+    bottom: 12px;
+    padding: 4px 12px;
+    font-size: 0.65rem;
+  }
 }
 
 /* Reta cards (lista de retas) */
 .reta-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
-  padding: 20px;
+  padding: 18px;
   color: #1e293b;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   border: 2px solid #e2e8f0;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
 }
 
 .reta-card::before {
@@ -340,8 +407,68 @@ h1 {
 
 .reta-card.selected {
   border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2), 0 8px 24px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  border-width: 3px;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.3),
+    0 12px 32px rgba(14, 165, 233, 0.25);
+  transform: translateY(-3px) scale(1.02);
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  position: relative;
+  z-index: 10;
+  padding-bottom: 50px;
+}
+
+.reta-card.selected::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, #0ea5e9, #0284c7, #10b981, #0ea5e9);
+  animation: selectedGlow 2s ease-in-out infinite alternate;
+}
+
+.reta-card.selected::after {
+  content: "✓ SELECCIONADA";
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.4);
+  z-index: 20;
+  animation: selectedPulse 1.5s ease-in-out infinite;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.3px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-align: center;
+  white-space: nowrap;
+}
+
+@keyframes selectedPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes selectedGlow {
+  0% {
+    opacity: 0.8;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+  }
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.8);
+  }
 }
 
 .reta-card:hover {
@@ -1770,30 +1897,31 @@ td {
 /* Responsive Design - Complete Overhaul */
 @media (max-width: 1400px) {
   .main-layout {
-    grid-template-columns: 350px 1fr !important;
-    gap: 0 !important;
+    gap: 15px !important;
+    padding: 0 15px !important;
   }
 
-  .left-panel {
-    min-width: 320px !important;
+  .tournament-management-section {
+    padding: 16px !important;
   }
 
-  .right-panel {
-    min-width: 0 !important;
+  .tournament-content {
+    padding: 16px !important;
   }
 }
 
 @media (max-width: 1200px) {
   .main-layout {
-    grid-template-columns: 1fr !important;
-    gap: 15px !important;
+    gap: 12px !important;
+    padding: 0 12px !important;
   }
 
-  .left-panel {
-    border-right: none !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    max-height: 400px !important;
-    overflow-y: auto !important;
+  .tournament-management-section {
+    padding: 14px !important;
+  }
+
+  .tournament-content {
+    padding: 14px !important;
   }
 
   .tournament-header-content {
@@ -1834,23 +1962,19 @@ td {
 
   /* Layout principal optimizado para móvil */
   .main-layout {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: auto auto !important;
-    gap: 0 !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+    padding: 0 10px !important;
   }
 
-  .left-panel {
-    order: 2 !important;
-    border-right: none !important;
-    border-bottom: 1px solid #e2e8f0 !important;
+  .tournament-management-section {
     padding: 12px !important;
-    max-height: 300px !important;
-    overflow-y: auto !important;
+    border-radius: 8px !important;
   }
 
-  .right-panel {
-    order: 1 !important;
+  .tournament-content {
     padding: 12px !important;
+    border-radius: 8px !important;
   }
 
   /* Secciones principales más compactas */
@@ -2356,18 +2480,25 @@ td {
     line-height: 1.2 !important;
   }
 
+  .main-layout {
+    gap: 6px !important;
+    margin-top: 8px !important;
+  }
+
+  .tournament-management-section {
+    padding: 10px !important;
+    border-radius: 6px !important;
+  }
+
+  .tournament-content {
+    padding: 10px !important;
+    border-radius: 6px !important;
+  }
+
   /* Layout ultra compacto */
   .main-layout {
-    gap: 0 !important;
-  }
-
-  .left-panel {
-    padding: 8px !important;
-    max-height: 250px !important;
-  }
-
-  .right-panel {
-    padding: 8px !important;
+    gap: 4px !important;
+    padding: 0 8px !important;
   }
 
   /* Secciones ultra compactas */
@@ -2905,18 +3036,25 @@ td {
     line-height: 1.1 !important;
   }
 
+  .main-layout {
+    gap: 4px !important;
+    margin-top: 6px !important;
+  }
+
+  .tournament-management-section {
+    padding: 8px !important;
+    border-radius: 4px !important;
+  }
+
+  .tournament-content {
+    padding: 8px !important;
+    border-radius: 4px !important;
+  }
+
   /* Layout ultra compacto para pantallas muy pequeñas */
   .main-layout {
-    gap: 0 !important;
-  }
-
-  .left-panel {
-    padding: 6px !important;
-    max-height: 200px !important;
-  }
-
-  .right-panel {
-    padding: 6px !important;
+    gap: 2px !important;
+    padding: 0 6px !important;
   }
 
   /* Secciones ultra compactas */

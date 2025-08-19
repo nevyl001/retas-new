@@ -120,7 +120,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   return (
     <div className="tournament-manager">
       <div className="tournament-header">
-        <h2>🏆 Gestión de Retas Express</h2>
+        <h2>🏆 ¡Selecciona o Crea tu Reta de Pádel y ¡Diviértete! 🎾</h2>
       </div>
 
       <div className="create-tournament-section">
