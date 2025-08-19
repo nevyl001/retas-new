@@ -9349,105 +9349,347 @@ td {
       left: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
-      background: #1e293b !important;
+      background: linear-gradient(
+        135deg,
+        #0f172a 0%,
+        #1e293b 50%,
+        #334155 100%
+      ) !important;
       display: flex !important;
       justify-content: center !important;
       align-items: center !important;
       z-index: 1000 !important;
       overflow: hidden !important;
+      animation: winnerFadeIn 0.8s ease-out !important;
     }
 
     .winner-mobile-container {
       width: 94% !important;
       max-width: 380px !important;
       max-height: 88vh !important;
-      background: white !important;
-      border-radius: 12px !important;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+      border-radius: 20px !important;
       padding: 18px 16px !important;
       text-align: center !important;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1) !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
       overflow: hidden !important;
+      animation: containerSlideIn 0.6s ease-out 0.2s both !important;
+      backdrop-filter: blur(20px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
     }
 
     .winner-mobile-header {
       margin-bottom: 10px !important;
       flex-shrink: 0 !important;
+      animation: headerSlideDown 0.8s ease-out 0.4s both !important;
     }
 
     .winner-mobile-title {
       font-size: 1rem !important;
-      font-weight: bold !important;
-      color: #1e40af !important;
+      font-weight: 900 !important;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
       margin-bottom: 5px !important;
-      letter-spacing: 0.3px !important;
+      letter-spacing: 0.5px !important;
+      text-shadow: 0 2px 4px rgba(30, 64, 175, 0.2) !important;
+      animation: titleGlow 2s ease-in-out infinite alternate !important;
     }
 
     .winner-mobile-subtitle {
       font-size: 0.7rem !important;
-      color: #6b7280 !important;
-      line-height: 1.2 !important;
+      color: #64748b !important;
+      line-height: 1.3 !important;
+      font-weight: 500 !important;
+      animation: subtitleFadeIn 1s ease-out 0.6s both !important;
     }
 
     .winner-mobile-names {
-      background: #1e40af !important;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
       color: white !important;
-      padding: 8px 10px !important;
-      border-radius: 7px !important;
+      padding: 12px 16px !important;
+      border-radius: 15px !important;
       font-size: 0.9rem !important;
-      font-weight: bold !important;
+      font-weight: 800 !important;
       margin-bottom: 10px !important;
-      box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3) !important;
+      box-shadow: 0 8px 25px rgba(30, 64, 175, 0.4),
+        0 4px 8px rgba(0, 0, 0, 0.1) !important;
       flex-shrink: 0 !important;
+      animation: namesSlideIn 0.8s ease-out 0.8s both !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      position: relative !important;
+      overflow: hidden !important;
+    }
+
+    .winner-mobile-names::before {
+      content: "" !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: -100% !important;
+      width: 100% !important;
+      height: 100% !important;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      ) !important;
+      animation: shimmer 2s infinite !important;
     }
 
     .winner-mobile-stats {
       display: flex !important;
       flex-direction: column !important;
-      gap: 6px !important;
+      gap: 8px !important;
       margin-bottom: 10px !important;
       flex: 1 !important;
       justify-content: center !important;
+      animation: statsSlideUp 1s ease-out 1s both !important;
     }
 
     .winner-mobile-stat {
-      background: #f3f4f6 !important;
-      border-radius: 6px !important;
-      padding: 8px 6px !important;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1) !important;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+      border-radius: 12px !important;
+      padding: 12px 10px !important;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+      border: 1px solid rgba(30, 64, 175, 0.1) !important;
+      position: relative !important;
+      overflow: hidden !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .winner-mobile-stat:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 8px 25px rgba(30, 64, 175, 0.2),
+        0 4px 8px rgba(0, 0, 0, 0.1) !important;
+      border-color: rgba(30, 64, 175, 0.3) !important;
+    }
+
+    .winner-mobile-stat::before {
+      content: "" !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      height: 2px !important;
+      background: linear-gradient(90deg, #1e40af, #3b82f6, #1e40af) !important;
+      transform: scaleX(0) !important;
+      transition: transform 0.3s ease !important;
+    }
+
+    .winner-mobile-stat:hover::before {
+      transform: scaleX(1) !important;
     }
 
     .winner-mobile-stat-number {
-      font-size: 1.1rem !important;
-      font-weight: bold !important;
-      color: #1e40af !important;
+      font-size: 1.3rem !important;
+      font-weight: 900 !important;
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
       display: block !important;
-      margin-bottom: 1px !important;
+      margin-bottom: 2px !important;
+      text-shadow: 0 1px 2px rgba(30, 64, 175, 0.1) !important;
     }
 
     .winner-mobile-stat-label {
-      font-size: 0.55rem !important;
-      color: #6b7280 !important;
-      font-weight: 600 !important;
+      font-size: 0.6rem !important;
+      color: #64748b !important;
+      font-weight: 700 !important;
       text-transform: uppercase !important;
-      letter-spacing: 0.2px !important;
+      letter-spacing: 0.5px !important;
     }
 
     .winner-mobile-back-btn {
-      background: #10b981 !important;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
       color: white !important;
       border: none !important;
-      padding: 8px 14px !important;
-      border-radius: 6px !important;
-      font-size: 0.75rem !important;
-      font-weight: 600 !important;
+      padding: 12px 18px !important;
+      border-radius: 12px !important;
+      font-size: 0.8rem !important;
+      font-weight: 700 !important;
       cursor: pointer !important;
       width: 100% !important;
-      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.1) !important;
       transition: all 0.3s ease !important;
       flex-shrink: 0 !important;
+      position: relative !important;
+      overflow: hidden !important;
+      animation: buttonSlideUp 1s ease-out 1.2s both !important;
+    }
+
+    .winner-mobile-back-btn::before {
+      content: "" !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: -100% !important;
+      width: 100% !important;
+      height: 100% !important;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+      ) !important;
+      transition: left 0.5s ease !important;
+    }
+
+    .winner-mobile-back-btn:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5),
+        0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .winner-mobile-back-btn:hover::before {
+      left: 100% !important;
+    }
+  }
+
+  /* ===== ANIMACIONES MODERNAS ===== */
+  @keyframes winnerFadeIn {
+    from {
+      opacity: 0;
+      background: #0f172a;
+    }
+    to {
+      opacity: 1;
+      background: linear-gradient(
+        135deg,
+        #0f172a 0%,
+        #1e293b 50%,
+        #334155 100%
+      );
+    }
+  }
+
+  @keyframes containerSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes headerSlideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes titleGlow {
+    from {
+      filter: drop-shadow(0 0 5px rgba(30, 64, 175, 0.3));
+    }
+    to {
+      filter: drop-shadow(0 0 15px rgba(30, 64, 175, 0.6));
+    }
+  }
+
+  @keyframes subtitleFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes namesSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      left: -100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  @keyframes statsSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes buttonSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Efectos de partículas flotantes */
+  .winner-screen-mobile::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(
+        circle at 20% 80%,
+        rgba(30, 64, 175, 0.1) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(59, 130, 246, 0.1) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 40% 40%,
+        rgba(16, 185, 129, 0.1) 0%,
+        transparent 50%
+      );
+    animation: particleFloat 20s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes particleFloat {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-10px) rotate(1deg);
+    }
+    66% {
+      transform: translateY(5px) rotate(-1deg);
     }
   }
 
