@@ -8083,3 +8083,722 @@ td {
   border-left: 4px solid #3b82f6;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+/* ===== OPTIMIZACIONES ESPECÍFICAS PARA IPHONE PRO MAX Y DISPOSITIVOS MÓVILES ===== */
+
+/* Optimizaciones globales para móviles */
+@media (max-width: 428px) {
+  /* iPhone Pro Max width */
+  /* Reducir tamaños de fuente globalmente */
+  body {
+    font-size: 14px !important;
+  }
+
+  /* Header más compacto */
+  h1 {
+    font-size: 1.1rem !important;
+    padding: 8px 12px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Layout principal ultra compacto */
+  .main-layout {
+    gap: 4px !important;
+    margin-top: 6px !important;
+    padding: 0 6px !important;
+  }
+
+  /* Secciones más compactas */
+  .tournament-management-section,
+  .tournament-content {
+    padding: 8px !important;
+    border-radius: 6px !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Cards de torneos más pequeñas */
+  .reta-card {
+    padding: 10px !important;
+    min-height: 120px !important;
+    border-radius: 8px !important;
+  }
+
+  .reta-card-title {
+    font-size: 1rem !important;
+    margin-bottom: 6px !important;
+  }
+
+  .reta-card-description {
+    font-size: 0.8rem !important;
+    padding: 8px 10px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .reta-card-info {
+    padding: 8px 10px !important;
+  }
+
+  .reta-card-info span {
+    font-size: 0.75rem !important;
+  }
+
+  /* Botones más pequeños */
+  .reta-btn {
+    padding: 6px 8px !important;
+    font-size: 0.7rem !important;
+    border-radius: 6px !important;
+  }
+
+  .create-tournament-btn {
+    padding: 8px 16px !important;
+    font-size: 0.8rem !important;
+    min-width: 160px !important;
+  }
+
+  /* Header de torneo más compacto */
+  .tournament-header {
+    padding: 12px !important;
+    border-radius: 8px !important;
+  }
+
+  .tournament-header h2 {
+    font-size: 1.2rem !important;
+  }
+
+  .tournament-description {
+    font-size: 0.85rem !important;
+  }
+
+  .tournament-icon {
+    font-size: 1.2rem !important;
+  }
+
+  /* Stats más compactos */
+  .stats-row {
+    gap: 6px !important;
+  }
+
+  .stat-badge,
+  .status-badge {
+    padding: 6px 10px !important;
+    font-size: 0.7rem !important;
+    min-width: 80px !important;
+  }
+
+  /* Grid de parejas más compacto */
+  .pairs-grid {
+    gap: 8px !important;
+    padding: 4px !important;
+  }
+
+  .pair-display-card {
+    padding: 10px !important;
+    padding-top: 20px !important;
+  }
+
+  .pair-number {
+    font-size: 1.2rem !important;
+    top: 6px !important;
+    right: 6px !important;
+  }
+
+  .pair-names {
+    font-size: 0.8rem !important;
+    padding: 6px 8px !important;
+  }
+
+  .pair-stats {
+    padding: 6px !important;
+    gap: 4px !important;
+  }
+
+  .pair-stats span {
+    font-size: 0.6rem !important;
+    padding: 3px 6px !important;
+  }
+
+  /* Partidos más compactos */
+  .matches-container {
+    gap: 8px !important;
+  }
+
+  .match-card {
+    padding: 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .match-header h5 {
+    font-size: 0.85rem !important;
+    margin-bottom: 4px !important;
+  }
+
+  .match-info {
+    gap: 4px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .court-badge,
+  .round-badge {
+    padding: 3px 6px !important;
+    font-size: 0.65rem !important;
+  }
+
+  .winner {
+    padding: 4px 8px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Player Manager más compacto */
+  .player-manager {
+    margin-top: 8px !important;
+    padding: 8px !important;
+  }
+
+  .player-header h3 {
+    font-size: 0.9rem !important;
+  }
+
+  .create-player-btn {
+    padding: 4px 8px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .players-grid {
+    gap: 4px !important;
+    max-height: 200px !important;
+  }
+
+  .player-card {
+    padding: 6px !important;
+    min-height: 40px !important;
+  }
+
+  .player-name {
+    font-size: 0.75rem !important;
+  }
+
+  .player-date {
+    font-size: 0.6rem !important;
+  }
+
+  /* Formularios más compactos */
+  .form-group {
+    margin-bottom: 8px !important;
+  }
+
+  .form-group label {
+    font-size: 0.8rem !important;
+    margin-bottom: 3px !important;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: 6px 8px !important;
+    font-size: 14px !important;
+    border-radius: 6px !important;
+  }
+
+  .form-actions {
+    gap: 6px !important;
+  }
+
+  .submit-btn,
+  .cancel-btn {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Tablas más compactas */
+  table {
+    font-size: 0.75rem !important;
+  }
+
+  th,
+  td {
+    padding: 6px 4px !important;
+  }
+
+  /* Modales más compactos */
+  .modal-content {
+    max-width: 98% !important;
+    margin: 5px !important;
+  }
+
+  .modal-body {
+    padding: 0.75rem !important;
+  }
+
+  /* Winner Screen más compacto */
+  .winner-content {
+    padding: 20px !important;
+    max-width: 95% !important;
+  }
+
+  .winner-title {
+    font-size: 2.5rem !important;
+    margin-bottom: 20px !important;
+  }
+
+  .winner-names {
+    font-size: 2rem !important;
+    margin-bottom: 15px !important;
+  }
+
+  .stat-item {
+    padding: 15px 12px !important;
+    min-width: 120px !important;
+  }
+
+  .stat-number {
+    font-size: 2rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.7rem !important;
+  }
+
+  .back-button {
+    padding: 12px 24px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+/* Optimizaciones para pantallas muy pequeñas */
+@media (max-width: 375px) {
+  /* iPhone SE, etc. */
+  body {
+    font-size: 13px !important;
+  }
+
+  h1 {
+    font-size: 1rem !important;
+    padding: 6px 10px !important;
+  }
+
+  .main-layout {
+    gap: 3px !important;
+    padding: 0 4px !important;
+  }
+
+  .tournament-management-section,
+  .tournament-content {
+    padding: 6px !important;
+  }
+
+  .reta-card {
+    padding: 8px !important;
+    min-height: 100px !important;
+  }
+
+  .reta-card-title {
+    font-size: 0.9rem !important;
+  }
+
+  .reta-card-description {
+    font-size: 0.75rem !important;
+    padding: 6px 8px !important;
+  }
+
+  .tournament-header {
+    padding: 10px !important;
+  }
+
+  .tournament-header h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .stat-badge,
+  .status-badge {
+    padding: 4px 8px !important;
+    font-size: 0.65rem !important;
+    min-width: 70px !important;
+  }
+
+  .pairs-grid {
+    gap: 6px !important;
+  }
+
+  .pair-display-card {
+    padding: 8px !important;
+    padding-top: 16px !important;
+  }
+
+  .pair-names {
+    font-size: 0.75rem !important;
+    padding: 4px 6px !important;
+  }
+
+  .pair-stats span {
+    font-size: 0.55rem !important;
+    padding: 2px 4px !important;
+  }
+
+  .match-card {
+    padding: 8px !important;
+  }
+
+  .match-header h5 {
+    font-size: 0.8rem !important;
+  }
+
+  .court-badge,
+  .round-badge {
+    padding: 2px 4px !important;
+    font-size: 0.6rem !important;
+  }
+
+  .winner {
+    padding: 3px 6px !important;
+    font-size: 0.7rem !important;
+  }
+
+  .player-card {
+    padding: 4px !important;
+    min-height: 35px !important;
+  }
+
+  .player-name {
+    font-size: 0.7rem !important;
+  }
+
+  .player-date {
+    font-size: 0.55rem !important;
+  }
+
+  .winner-content {
+    padding: 15px !important;
+  }
+
+  .winner-title {
+    font-size: 2rem !important;
+  }
+
+  .winner-names {
+    font-size: 1.5rem !important;
+  }
+
+  .stat-item {
+    padding: 12px 8px !important;
+    min-width: 100px !important;
+  }
+
+  .stat-number {
+    font-size: 1.5rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.6rem !important;
+  }
+}
+
+/* Optimizaciones para pantallas extra pequeñas */
+@media (max-width: 320px) {
+  /* iPhone 5, etc. */
+  body {
+    font-size: 12px !important;
+  }
+
+  h1 {
+    font-size: 0.9rem !important;
+    padding: 5px 8px !important;
+  }
+
+  .main-layout {
+    gap: 2px !important;
+    padding: 0 3px !important;
+  }
+
+  .tournament-management-section,
+  .tournament-content {
+    padding: 5px !important;
+  }
+
+  .reta-card {
+    padding: 6px !important;
+    min-height: 90px !important;
+  }
+
+  .reta-card-title {
+    font-size: 0.8rem !important;
+  }
+
+  .reta-card-description {
+    font-size: 0.7rem !important;
+    padding: 5px 6px !important;
+  }
+
+  .tournament-header {
+    padding: 8px !important;
+  }
+
+  .tournament-header h2 {
+    font-size: 1rem !important;
+  }
+
+  .stat-badge,
+  .status-badge {
+    padding: 3px 6px !important;
+    font-size: 0.6rem !important;
+    min-width: 60px !important;
+  }
+
+  .pairs-grid {
+    gap: 4px !important;
+  }
+
+  .pair-display-card {
+    padding: 6px !important;
+    padding-top: 14px !important;
+  }
+
+  .pair-names {
+    font-size: 0.7rem !important;
+    padding: 3px 5px !important;
+  }
+
+  .pair-stats span {
+    font-size: 0.5rem !important;
+    padding: 1px 3px !important;
+  }
+
+  .match-card {
+    padding: 6px !important;
+  }
+
+  .match-header h5 {
+    font-size: 0.75rem !important;
+  }
+
+  .court-badge,
+  .round-badge {
+    padding: 1px 3px !important;
+    font-size: 0.55rem !important;
+  }
+
+  .winner {
+    padding: 2px 4px !important;
+    font-size: 0.65rem !important;
+  }
+
+  .player-card {
+    padding: 3px !important;
+    min-height: 30px !important;
+  }
+
+  .player-name {
+    font-size: 0.65rem !important;
+  }
+
+  .player-date {
+    font-size: 0.5rem !important;
+  }
+
+  .winner-content {
+    padding: 10px !important;
+  }
+
+  .winner-title {
+    font-size: 1.5rem !important;
+  }
+
+  .winner-names {
+    font-size: 1.2rem !important;
+  }
+
+  .stat-item {
+    padding: 8px 6px !important;
+    min-width: 80px !important;
+  }
+
+  .stat-number {
+    font-size: 1.2rem !important;
+  }
+
+  .stat-label {
+    font-size: 0.5rem !important;
+  }
+}
+
+/* Optimizaciones específicas para iPhone Pro Max (428px) */
+@media (min-width: 375px) and (max-width: 428px) {
+  /* Ajustes específicos para iPhone Pro Max */
+  .main-layout {
+    padding: 0 8px !important;
+  }
+
+  .reta-card {
+    min-height: 140px !important;
+  }
+
+  .tournament-header {
+    padding: 14px !important;
+  }
+
+  .tournament-header h2 {
+    font-size: 1.3rem !important;
+  }
+
+  .stat-badge,
+  .status-badge {
+    min-width: 90px !important;
+  }
+
+  .pairs-grid {
+    gap: 10px !important;
+  }
+
+  .pair-display-card {
+    padding: 12px !important;
+  }
+
+  .match-card {
+    padding: 12px !important;
+  }
+
+  .winner-content {
+    padding: 25px !important;
+  }
+
+  .winner-title {
+    font-size: 3rem !important;
+  }
+
+  .winner-names {
+    font-size: 2.5rem !important;
+  }
+
+  .stat-item {
+    min-width: 140px !important;
+  }
+
+  .stat-number {
+    font-size: 2.5rem !important;
+  }
+}
+
+/* Optimizaciones para Galaxy y otros Android */
+@media (min-width: 360px) and (max-width: 400px) {
+  /* Ajustes específicos para Galaxy */
+  .main-layout {
+    padding: 0 6px !important;
+  }
+
+  .reta-card {
+    min-height: 130px !important;
+  }
+
+  .tournament-header {
+    padding: 12px !important;
+  }
+
+  .tournament-header h2 {
+    font-size: 1.2rem !important;
+  }
+
+  .stat-badge,
+  .status-badge {
+    min-width: 85px !important;
+  }
+
+  .pairs-grid {
+    gap: 8px !important;
+  }
+
+  .pair-display-card {
+    padding: 10px !important;
+  }
+
+  .match-card {
+    padding: 10px !important;
+  }
+
+  .winner-content {
+    padding: 20px !important;
+  }
+
+  .winner-title {
+    font-size: 2.8rem !important;
+  }
+
+  .winner-names {
+    font-size: 2.2rem !important;
+  }
+
+  .stat-item {
+    min-width: 130px !important;
+  }
+
+  .stat-number {
+    font-size: 2.2rem !important;
+  }
+}
+
+/* Mejoras de usabilidad para pantallas táctiles */
+@media (max-width: 428px) {
+  /* Botones más grandes para dedos */
+  button {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+
+  /* Mejor espaciado para toques */
+  .reta-btn,
+  .create-tournament-btn,
+  .submit-btn,
+  .cancel-btn {
+    padding: 10px 16px !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Mejor scroll en móvil */
+  .players-grid,
+  .pairs-grid,
+  .matches-container {
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+  }
+
+  /* Prevenir zoom en inputs */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+    -webkit-appearance: none !important;
+  }
+
+  /* Mejor feedback táctil */
+  .reta-card:hover,
+  .match-card:hover,
+  .player-card:hover {
+    transform: none !important;
+  }
+
+  .reta-card:active,
+  .match-card:active,
+  .player-card:active {
+    transform: scale(0.98) !important;
+  }
+}
+
+/* Optimizaciones de rendimiento para móvil */
+@media (max-width: 428px) {
+  /* Reducir animaciones en móvil */
+  * {
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+  }
+
+  /* Optimizar hover states */
+  .reta-card:hover,
+  .match-card:hover,
+  .player-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Reducir sombras para mejor rendimiento */
+  .reta-card,
+  .match-card,
+  .player-card {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+  }
+}
