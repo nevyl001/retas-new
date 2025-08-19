@@ -8339,6 +8339,13 @@ td {
     margin-bottom: 20px !important;
   }
 
+  .winner-title::before,
+  .winner-title::after {
+    font-size: 1.5rem !important;
+    left: -30px !important;
+    right: -30px !important;
+  }
+
   .winner-names {
     font-size: 2rem !important;
     margin-bottom: 15px !important;
@@ -8473,6 +8480,13 @@ td {
     font-size: 2rem !important;
   }
 
+  .winner-title::before,
+  .winner-title::after {
+    font-size: 1.2rem !important;
+    left: -25px !important;
+    right: -25px !important;
+  }
+
   .winner-names {
     font-size: 1.5rem !important;
   }
@@ -8601,6 +8615,13 @@ td {
     font-size: 1.5rem !important;
   }
 
+  .winner-title::before,
+  .winner-title::after {
+    font-size: 1rem !important;
+    left: -20px !important;
+    right: -20px !important;
+  }
+
   .winner-names {
     font-size: 1.2rem !important;
   }
@@ -8663,6 +8684,13 @@ td {
     font-size: 3rem !important;
   }
 
+  .winner-title::before,
+  .winner-title::after {
+    font-size: 1.8rem !important;
+    left: -35px !important;
+    right: -35px !important;
+  }
+
   .winner-names {
     font-size: 2.5rem !important;
   }
@@ -8718,6 +8746,13 @@ td {
 
   .winner-title {
     font-size: 2.8rem !important;
+  }
+
+  .winner-title::before,
+  .winner-title::after {
+    font-size: 1.6rem !important;
+    left: -32px !important;
+    right: -32px !important;
   }
 
   .winner-names {
@@ -8800,5 +8835,48 @@ td {
   .match-card,
   .player-card {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* Optimizaciones específicas para Winner Screen en móvil */
+  .winner-screen .winner-content {
+    padding: 20px !important;
+    max-width: 95% !important;
+    border-radius: 20px !important;
+  }
+
+  .winner-screen .winner-title {
+    font-size: 2.5rem !important;
+    margin-bottom: 20px !important;
+    letter-spacing: 1px !important;
+  }
+
+  .winner-screen .winner-title::before,
+  .winner-screen .winner-title::after {
+    font-size: 1.5rem !important;
+    left: -30px !important;
+    right: -30px !important;
+  }
+
+  .winner-screen .winner-names {
+    font-size: 2rem !important;
+    margin-bottom: 15px !important;
+  }
+
+  .winner-screen .stat-item {
+    padding: 15px 12px !important;
+    min-width: 120px !important;
+  }
+
+  .winner-screen .stat-number {
+    font-size: 2rem !important;
+  }
+
+  .winner-screen .stat-label {
+    font-size: 0.7rem !important;
+  }
+
+  .winner-screen .back-button {
+    padding: 12px 24px !important;
+    font-size: 0.9rem !important;
   }
 }
