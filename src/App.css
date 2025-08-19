@@ -8330,43 +8330,78 @@ td {
 
   /* Winner Screen más compacto */
   .winner-content {
-    padding: 20px !important;
-    max-width: 95% !important;
+    padding: 15px !important;
+    max-width: 98% !important;
+    max-height: 98vh !important;
+    border-radius: 15px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .winner-celebration {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1 !important;
   }
 
   .winner-title {
-    font-size: 2.5rem !important;
-    margin-bottom: 20px !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 15px !important;
+    letter-spacing: 0.5px !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
   }
 
   .winner-title::before,
   .winner-title::after {
-    font-size: 1.5rem !important;
-    left: -30px !important;
-    right: -30px !important;
+    font-size: 1.2rem !important;
+    left: -20px !important;
+    right: -20px !important;
   }
 
   .winner-names {
-    font-size: 2rem !important;
-    margin-bottom: 15px !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 20px !important;
+    text-align: center !important;
+    line-height: 1.3 !important;
+  }
+
+  .winner-stats {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 280px !important;
+    margin: 0 auto !important;
   }
 
   .stat-item {
-    padding: 15px 12px !important;
-    min-width: 120px !important;
+    padding: 12px 8px !important;
+    min-width: auto !important;
+    width: 100% !important;
+    border-radius: 12px !important;
   }
 
   .stat-number {
-    font-size: 2rem !important;
+    font-size: 1.8rem !important;
   }
 
   .stat-label {
-    font-size: 0.7rem !important;
+    font-size: 0.65rem !important;
   }
 
   .back-button {
-    padding: 12px 24px !important;
-    font-size: 0.9rem !important;
+    padding: 10px 20px !important;
+    font-size: 0.85rem !important;
+    margin-top: 15px !important;
+    width: auto !important;
+    min-width: 120px !important;
   }
 }
 
@@ -8473,27 +8508,37 @@ td {
   }
 
   .winner-content {
-    padding: 15px !important;
+    padding: 12px !important;
+    max-width: 99% !important;
+    max-height: 99vh !important;
+    border-radius: 12px !important;
   }
 
   .winner-title {
-    font-size: 2rem !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 12px !important;
   }
 
   .winner-title::before,
   .winner-title::after {
-    font-size: 1.2rem !important;
-    left: -25px !important;
-    right: -25px !important;
+    font-size: 1rem !important;
+    left: -18px !important;
+    right: -18px !important;
   }
 
   .winner-names {
-    font-size: 1.5rem !important;
+    font-size: 1.3rem !important;
+    margin-bottom: 15px !important;
+  }
+
+  .winner-stats {
+    gap: 8px !important;
+    max-width: 250px !important;
   }
 
   .stat-item {
-    padding: 12px 8px !important;
-    min-width: 100px !important;
+    padding: 10px 6px !important;
+    min-width: auto !important;
   }
 
   .stat-number {
@@ -8608,27 +8653,37 @@ td {
   }
 
   .winner-content {
-    padding: 10px !important;
+    padding: 8px !important;
+    max-width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 8px !important;
   }
 
   .winner-title {
-    font-size: 1.5rem !important;
+    font-size: 1.2rem !important;
+    margin-bottom: 10px !important;
   }
 
   .winner-title::before,
   .winner-title::after {
-    font-size: 1rem !important;
-    left: -20px !important;
-    right: -20px !important;
+    font-size: 0.8rem !important;
+    left: -15px !important;
+    right: -15px !important;
   }
 
   .winner-names {
-    font-size: 1.2rem !important;
+    font-size: 1rem !important;
+    margin-bottom: 12px !important;
+  }
+
+  .winner-stats {
+    gap: 6px !important;
+    max-width: 200px !important;
   }
 
   .stat-item {
-    padding: 8px 6px !important;
-    min-width: 80px !important;
+    padding: 8px 4px !important;
+    min-width: auto !important;
   }
 
   .stat-number {
@@ -8677,30 +8732,41 @@ td {
   }
 
   .winner-content {
-    padding: 25px !important;
+    padding: 20px !important;
+    max-width: 96% !important;
+    max-height: 96vh !important;
+    border-radius: 20px !important;
   }
 
   .winner-title {
-    font-size: 3rem !important;
+    font-size: 2.2rem !important;
+    margin-bottom: 18px !important;
   }
 
   .winner-title::before,
   .winner-title::after {
-    font-size: 1.8rem !important;
-    left: -35px !important;
-    right: -35px !important;
+    font-size: 1.4rem !important;
+    left: -25px !important;
+    right: -25px !important;
   }
 
   .winner-names {
-    font-size: 2.5rem !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 25px !important;
+  }
+
+  .winner-stats {
+    gap: 12px !important;
+    max-width: 320px !important;
   }
 
   .stat-item {
-    min-width: 140px !important;
+    min-width: auto !important;
+    padding: 15px 10px !important;
   }
 
   .stat-number {
-    font-size: 2.5rem !important;
+    font-size: 2.2rem !important;
   }
 }
 
@@ -8741,30 +8807,41 @@ td {
   }
 
   .winner-content {
-    padding: 20px !important;
+    padding: 18px !important;
+    max-width: 97% !important;
+    max-height: 97vh !important;
+    border-radius: 18px !important;
   }
 
   .winner-title {
-    font-size: 2.8rem !important;
+    font-size: 2rem !important;
+    margin-bottom: 16px !important;
   }
 
   .winner-title::before,
   .winner-title::after {
-    font-size: 1.6rem !important;
-    left: -32px !important;
-    right: -32px !important;
+    font-size: 1.3rem !important;
+    left: -22px !important;
+    right: -22px !important;
   }
 
   .winner-names {
-    font-size: 2.2rem !important;
+    font-size: 1.6rem !important;
+    margin-bottom: 22px !important;
+  }
+
+  .winner-stats {
+    gap: 11px !important;
+    max-width: 300px !important;
   }
 
   .stat-item {
-    min-width: 130px !important;
+    min-width: auto !important;
+    padding: 13px 9px !important;
   }
 
   .stat-number {
-    font-size: 2.2rem !important;
+    font-size: 2rem !important;
   }
 }
 
@@ -8838,45 +8915,95 @@ td {
   }
 
   /* Optimizaciones específicas para Winner Screen en móvil */
+  .winner-screen {
+    overflow: hidden !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+
   .winner-screen .winner-content {
-    padding: 20px !important;
-    max-width: 95% !important;
-    border-radius: 20px !important;
+    padding: 15px !important;
+    max-width: 98% !important;
+    max-height: 98vh !important;
+    border-radius: 15px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .winner-screen .winner-celebration {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
   }
 
   .winner-screen .winner-title {
-    font-size: 2.5rem !important;
-    margin-bottom: 20px !important;
-    letter-spacing: 1px !important;
+    font-size: 1.8rem !important;
+    margin-bottom: 15px !important;
+    letter-spacing: 0.5px !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
   }
 
   .winner-screen .winner-title::before,
   .winner-screen .winner-title::after {
-    font-size: 1.5rem !important;
-    left: -30px !important;
-    right: -30px !important;
+    font-size: 1.2rem !important;
+    left: -20px !important;
+    right: -20px !important;
   }
 
   .winner-screen .winner-names {
-    font-size: 2rem !important;
-    margin-bottom: 15px !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 20px !important;
+    text-align: center !important;
+    line-height: 1.3 !important;
+  }
+
+  .winner-screen .winner-stats {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 280px !important;
+    margin: 0 auto !important;
   }
 
   .winner-screen .stat-item {
-    padding: 15px 12px !important;
-    min-width: 120px !important;
+    padding: 12px 8px !important;
+    min-width: auto !important;
+    width: 100% !important;
+    border-radius: 12px !important;
   }
 
   .winner-screen .stat-number {
-    font-size: 2rem !important;
+    font-size: 1.8rem !important;
   }
 
   .winner-screen .stat-label {
-    font-size: 0.7rem !important;
+    font-size: 0.65rem !important;
   }
 
   .winner-screen .back-button {
-    padding: 12px 24px !important;
-    font-size: 0.9rem !important;
+    padding: 10px 20px !important;
+    font-size: 0.85rem !important;
+    margin-top: 15px !important;
+    width: auto !important;
+    min-width: 120px !important;
   }
 }
