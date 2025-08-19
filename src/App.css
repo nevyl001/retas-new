@@ -8893,7 +8893,7 @@ td {
 }
 
 /* Optimizaciones de rendimiento para móvil */
-@media (max-width: 558px) {
+@media (max-width: 788px) {
   /* Reducir animaciones en móvil */
   * {
     -webkit-transform: translateZ(0) !important;
