@@ -75,7 +75,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         setLoading(false);
       }
     },
-    [match.tournament_id]
+    [match.tournament_id, match.id, forceRefresh]
   );
 
   // Función para obtener el nombre del ganador
@@ -225,13 +225,25 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       className={`match-card-new ${isSelected ? "selected" : ""}`}
       onClick={handleCardClick}
     >
-      {/* Header con información principal */}
-      <div className="match-header-new">
-        <div className="match-title-section">
-          <h5 className="match-title">
-            {getPairName(currentMatch.pair1)} vs{" "}
-            {getPairName(currentMatch.pair2)}
-          </h5>
+      {/* Contenido principal */}
+      <div className="match-content">
+        {/* Header horizontal */}
+        <div className="match-header-new">
+          <div className="match-title-section">
+            <h5 className="match-title">
+              {getPairName(currentMatch.pair1)} vs{" "}
+              {getPairName(currentMatch.pair2)}
+            </h5>
+          </div>
+
+          {/* Estado del partido */}
+          <div className="match-status-new">
+            {currentMatch.is_finished ? (
+              <span className="status-finished-new">✅ Finalizado</span>
+            ) : (
+              <span className="status-pending-new">⏳ En progreso</span>
+            )}
+          </div>
         </div>
 
         {/* Badges de información */}
@@ -245,80 +257,75 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             Ronda {currentMatch.round}
           </span>
         </div>
-      </div>
 
-      {/* Estado del partido */}
-      <div className="match-status-new">
-        {currentMatch.is_finished ? (
-          <span className="status-finished-new">✅ Finalizado</span>
-        ) : (
-          <span className="status-pending-new">⏳ En progreso</span>
-        )}
-      </div>
-
-      {/* Información de las parejas */}
-      <div className="match-pairs-new">
-        <div className="pair-info">
-          <span className="pair-label">Pareja 1:</span>
-          <span className="pair-names">{getPairName(currentMatch.pair1)}</span>
-        </div>
-        <div className="pair-info">
-          <span className="pair-label">Pareja 2:</span>
-          <span className="pair-names">{getPairName(currentMatch.pair2)}</span>
-        </div>
-      </div>
-
-      {/* Resultados de juegos */}
-      {matchGames.length > 0 && (
-        <div className="match-games-results-new">
-          <h6 className="games-title">📊 Resultados por Juego:</h6>
-          <div className="games-grid-new">
-            {matchGames.map((game, index) => (
-              <div key={game.id} className="game-result-new">
-                <span className="game-number-new">Juego {index + 1}:</span>
-                <span className="game-score-new">
-                  {formatGameScore(game)}
-                  {game.is_tie_break && (
-                    <span className="tie-break-indicator-new">TB</span>
-                  )}
-                </span>
-              </div>
-            ))}
+        {/* Información de las parejas */}
+        <div className="match-pairs-new">
+          <div className="pair-info">
+            <span className="pair-label">Pareja 1:</span>
+            <span className="pair-names">
+              {getPairName(currentMatch.pair1)}
+            </span>
+          </div>
+          <div className="pair-info">
+            <span className="pair-label">Pareja 2:</span>
+            <span className="pair-names">
+              {getPairName(currentMatch.pair2)}
+            </span>
           </div>
         </div>
-      )}
 
-      {/* Ganador */}
-      {currentMatch.is_finished && (
-        <div className="winner-new">
-          <span className="winner-icon-new">🏆</span>
-          <span className="winner-text-new">
-            {matchWinner || getResultDisplayText(currentMatch)}
-          </span>
+        {/* Resultados de juegos */}
+        {matchGames.length > 0 && (
+          <div className="match-games-results-new">
+            <h6 className="games-title">📊 Resultados:</h6>
+            <div className="games-grid-new">
+              {matchGames.map((game, index) => (
+                <div key={game.id} className="game-result-new">
+                  <span className="game-number-new">J{index + 1}:</span>
+                  <span className="game-score-new">
+                    {formatGameScore(game)}
+                    {game.is_tie_break && (
+                      <span className="tie-break-indicator-new">TB</span>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Ganador */}
+        {currentMatch.is_finished && (
+          <div className="winner-new">
+            <span className="winner-icon-new">🏆</span>
+            <span className="winner-text-new">
+              {matchWinner || getResultDisplayText(currentMatch)}
+            </span>
+          </div>
+        )}
+
+        {/* Acciones */}
+        <div className="match-actions-new">
+          <button
+            onClick={handleCorrectScore}
+            className="correct-result-btn-new"
+            title="Corregir resultado del partido"
+            type="button"
+          >
+            🔧 Marcador
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              loadFreshMatchData(match.id);
+            }}
+            className="refresh-btn-new"
+            title="Actualizar datos del partido"
+            type="button"
+          >
+            🔄 Actualizar
+          </button>
         </div>
-      )}
-
-      {/* Acciones */}
-      <div className="partido-acciones">
-        <button
-          onClick={handleCorrectScore}
-          className="btn-marcador-partido"
-          title="Corregir resultado del partido"
-          type="button"
-        >
-          🔧 Marcador
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            loadFreshMatchData(match.id);
-          }}
-          className="btn-actualizar-partido"
-          title="Actualizar datos del partido"
-          type="button"
-        >
-          🔄 Actualizar
-        </button>
       </div>
     </div>
   );

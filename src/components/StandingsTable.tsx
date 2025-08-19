@@ -41,7 +41,7 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
   useEffect(() => {
     if (tournamentId) {
       console.log(
-        `🔄 StandingsTable: Recibió actualización (forceRefresh: ${forceRefresh})`
+        `🔄 StandingsTable: Cargando datos para torneo ${tournamentId}, forceRefresh: ${forceRefresh}`
       );
       loadTournamentData();
     }
@@ -171,19 +171,6 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
           🔄 Recalcular Estadísticas
         </button>
       </div>
-
-      {ties.length > 0 && (
-        <div className="ties-notice">
-          <h4>🤝 Partidos con Empate</h4>
-          <ul>
-            {ties.map((tie) => (
-              <li key={tie.matchId}>
-                {tie.pair1} vs {tie.pair2} - Empate
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       <div className="table-container">
         <table>

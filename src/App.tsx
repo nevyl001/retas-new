@@ -381,6 +381,43 @@ function App() {
     return finished;
   }, [matches]);
 
+  // Marcar automáticamente el torneo como finalizado cuando todos los partidos terminen
+  useEffect(() => {
+    const markTournamentAsFinished = async () => {
+      if (
+        isTournamentFinished &&
+        selectedTournament &&
+        !selectedTournament.is_finished
+      ) {
+        try {
+          console.log("🏆 Marcando torneo como finalizado automáticamente...");
+          await updateTournament(selectedTournament.id, {
+            is_finished: true,
+          });
+
+          // Actualizar el estado local del torneo
+          setSelectedTournament((prev) =>
+            prev ? { ...prev, is_finished: true } : null
+          );
+
+          console.log("✅ Torneo marcado como finalizado");
+        } catch (error) {
+          console.error("❌ Error marcando torneo como finalizado:", error);
+        }
+      }
+    };
+
+    markTournamentAsFinished();
+  }, [isTournamentFinished, selectedTournament]);
+
+  // Recargar datos automáticamente cuando cambie forceRefresh
+  useEffect(() => {
+    if (selectedTournament && forceRefresh > 0) {
+      console.log("🔄 Recargando datos debido a forceRefresh:", forceRefresh);
+      loadTournamentData();
+    }
+  }, [forceRefresh, selectedTournament]);
+
   const [tournamentWinner, setTournamentWinner] =
     useState<TournamentWinner | null>(null);
 
@@ -396,28 +433,13 @@ function App() {
     try {
       console.log("🏆 Calculando ganador de la reta...");
 
-      // Recargar datos frescos antes de calcular el ganador
-      if (selectedTournament) {
-        const [freshPairs, freshMatches] = await Promise.all([
-          getPairs(selectedTournament.id),
-          getMatches(selectedTournament.id),
-        ]);
+      // Usar los datos actuales en lugar de recargar
+      const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
+        pairs,
+        matches
+      );
 
-        const winner =
-          await TournamentWinnerCalculator.calculateTournamentWinner(
-            freshPairs,
-            freshMatches
-          );
-        setTournamentWinner(winner);
-      } else {
-        const winner =
-          await TournamentWinnerCalculator.calculateTournamentWinner(
-            pairs,
-            matches
-          );
-        setTournamentWinner(winner);
-      }
-
+      setTournamentWinner(winner);
       setShowWinnerScreen(true);
       console.log("✅ Ganador calculado y pantalla mostrada");
     } catch (error) {
@@ -463,12 +485,32 @@ function App() {
   const handleScoreCorrectorUpdate = async () => {
     if (selectedTournament) {
       console.log(
-        "🏆 Actualizando tabla de clasificación después de corregir partido..."
+        "🏆 Actualizando tabla de clasificación después de finalizar partido..."
       );
-      setForceRefresh((prev) => prev + 1);
-      console.log(
-        "✅ Tabla de clasificación actualizada después de corregir partido"
-      );
+
+      try {
+        // Incrementar forceRefresh inmediatamente para actualizar componentes
+        setForceRefresh((prev) => prev + 1);
+
+        // Recargar datos frescos del torneo
+        await loadTournamentData();
+
+        console.log(
+          "✅ Tabla de clasificación actualizada después de finalizar partido"
+        );
+
+        // Mostrar mensaje de éxito
+        setSuccessModalData({
+          title: "¡Partido Finalizado!",
+          message:
+            "El partido ha sido finalizado y la tabla se ha actualizado.",
+          icon: "🏆",
+        });
+        setShowSuccessModal(true);
+      } catch (error) {
+        console.error("❌ Error actualizando tabla:", error);
+        setError("Error al actualizar la tabla de clasificación");
+      }
     }
     closeScoreCorrector();
   };
@@ -733,11 +775,24 @@ function App() {
                     </div>
                   ) : (
                     <div className="tournament-status-section">
-                      <h3>🏆 Reta en Progreso</h3>
+                      <h3>
+                        {selectedTournament.is_finished
+                          ? "🏆 Reta Finalizada"
+                          : "🏆 Reta en Progreso"}
+                      </h3>
                       <div className="tournament-info">
-                        <p>La reta ya está iniciada y en progreso</p>
+                        <p>
+                          {selectedTournament.is_finished
+                            ? "La reta ha sido finalizada exitosamente"
+                            : "La reta ya está iniciada y en progreso"}
+                        </p>
                         <p>Tienes {pairs.length} parejas registradas</p>
-                        <p>Estado de la reta: Iniciada</p>
+                        <p>
+                          Estado de la reta:{" "}
+                          {selectedTournament.is_finished
+                            ? "Finalizada"
+                            : "Iniciada"}
+                        </p>
                       </div>
                       <button
                         className="reset-button"
