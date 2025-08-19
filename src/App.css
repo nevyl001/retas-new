@@ -6655,22 +6655,22 @@ td {
 .games-grid-new {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  justify-content: flex-start;
+  gap: 6px;
+  justify-content: center;
 }
 
 .game-result-new {
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 4px;
+  gap: 5px;
+  padding: 4px 8px;
   background: #ffffff;
-  border-radius: 4px;
+  border-radius: 8px;
   border: 1px solid #fbbf24;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 2px rgba(251, 191, 36, 0.1);
+  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.15);
   text-align: center;
-  font-size: 0.6rem;
+  font-size: 0.8rem;
 }
 
 .game-result-new:hover {
@@ -6683,32 +6683,32 @@ td {
 .game-number-new {
   color: #92400e;
   font-weight: 600;
-  font-size: 0.6rem;
+  font-size: 0.8rem;
   background: #fef3c7;
-  padding: 1px 3px;
-  border-radius: 3px;
+  padding: 3px 5px;
+  border-radius: 5px;
   border: 1px solid #fbbf24;
 }
 
 .game-score-new {
   color: #1e293b;
   font-weight: 600;
-  font-size: 0.6rem;
+  font-size: 0.8rem;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   background: #ffffff;
-  padding: 1px 3px;
-  border-radius: 3px;
+  padding: 3px 5px;
+  border-radius: 5px;
   border: 1px solid #e2e8f0;
 }
 
 .tie-break-indicator-new {
   background: #ef4444;
   color: #ffffff;
-  font-size: 0.5rem;
-  padding: 1px 2px;
-  border-radius: 2px;
+  font-size: 0.7rem;
+  padding: 2px 4px;
+  border-radius: 4px;
   font-weight: 600;
 }
 
@@ -6774,24 +6774,24 @@ td {
 /* Acciones */
 .match-actions-new {
   display: flex;
-  gap: 6px;
-  margin-top: 4px;
-  padding-top: 4px;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid #f3f4f6;
 }
 
 .correct-result-btn-new,
 .refresh-btn-new {
   flex: 1;
-  padding: 4px 8px;
+  padding: 6px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.65rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  min-width: 70px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  min-width: 80px;
   position: relative;
 }
 
