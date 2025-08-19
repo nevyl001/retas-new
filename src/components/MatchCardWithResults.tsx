@@ -169,7 +169,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   // Función para manejar clic en la tarjeta
   const handleCardClick = () => {
-    if (currentMatch) {
+    if (currentMatch && onSelect) {
       onSelect(currentMatch.id);
     }
   };

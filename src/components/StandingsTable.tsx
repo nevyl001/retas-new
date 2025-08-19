@@ -48,6 +48,8 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
   }, [tournamentId, forceRefresh]);
 
   const loadTournamentData = async () => {
+    if (!tournamentId) return;
+
     try {
       setLoading(true);
       setError("");
@@ -82,6 +84,7 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
       setError("");
 
       // Usar la nueva función de recálculo completo
+      if (!tournamentId) return;
       const result = await MatchResultCalculator.recalculateAllStatistics(
         tournamentId
       );
