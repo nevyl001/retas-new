@@ -8914,96 +8914,611 @@ td {
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08) !important;
   }
 
-  /* Optimizaciones específicas para Winner Screen en móvil */
-  .winner-screen {
-    overflow: hidden !important;
+  /* ===== WINNER PAGE - NUEVA VENTANA COMPLETA ===== */
+  .winner-page {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-  }
-
-  .winner-screen .winner-content {
-    padding: 15px !important;
-    max-width: 98% !important;
-    max-height: 98vh !important;
-    border-radius: 15px !important;
-    overflow: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: center !important;
-    position: relative !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-  }
-
-  .winner-screen .winner-celebration {
-    width: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex: 1 !important;
-    max-height: 100% !important;
+    background: #1e293b !important;
+    z-index: 1000 !important;
     overflow: hidden !important;
   }
 
-  .winner-screen .winner-title {
-    font-size: 1.8rem !important;
-    margin-bottom: 15px !important;
-    letter-spacing: 0.5px !important;
-    text-align: center !important;
-    line-height: 1.2 !important;
+  /* ===== CURSOR POINTER PARA ELEMENTOS INTERACTIVOS ===== */
+  button,
+  .clickable,
+  .interactive,
+  .tournament-card,
+  .reta-card,
+  .player-card,
+  .pair-card,
+  .match-card,
+  .team-card,
+  .standings-row,
+  .metric-item,
+  .stat-item,
+  .winner-stat,
+  .back-button,
+  .calculate-winner-btn,
+  .start-button,
+  .reset-button,
+  .toggle-player-manager-btn,
+  .toggle-pair-manager-btn,
+  .debug-toggle-btn,
+  .debug-btn,
+  .team-delete-btn,
+  .show-winner-button,
+  .back-home-button,
+  .winner-mobile-back-btn,
+  .modal-close-btn,
+  .score-editor-btn,
+  .correct-score-btn,
+  .delete-match-btn,
+  .finish-match-btn,
+  .retry-button,
+  .connection-btn,
+  .reload-btn,
+  .status-btn {
+    cursor: pointer !important;
   }
 
-  .winner-screen .winner-title::before,
-  .winner-screen .winner-title::after {
-    font-size: 1.2rem !important;
-    left: -20px !important;
-    right: -20px !important;
+  /* Elementos específicos que necesitan cursor pointer */
+  .tournament-header h2,
+  .player-name,
+  .pair-name,
+  .match-pair,
+  .standings-pair,
+  .winner-names,
+  .winner-title,
+  .winner-mobile-title,
+  .winner-mobile-names,
+  .stat-number,
+  .stat-label,
+  .winner-mobile-stat-number,
+  .winner-mobile-stat-label {
+    cursor: pointer !important;
   }
 
-  .winner-screen .winner-names {
-    font-size: 1.5rem !important;
-    margin-bottom: 20px !important;
-    text-align: center !important;
-    line-height: 1.3 !important;
+  /* Hover effects para elementos interactivos */
+  button:hover,
+  .clickable:hover,
+  .interactive:hover,
+  .tournament-card:hover,
+  .reta-card:hover,
+  .player-card:hover,
+  .pair-card:hover,
+  .match-card:hover,
+  .team-card:hover,
+  .standings-row:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.3s ease !important;
   }
 
-  .winner-screen .winner-stats {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    width: 100% !important;
-    max-width: 280px !important;
-    margin: 0 auto !important;
+  /* Efectos específicos para botones */
+  .reta-btn:hover,
+  .create-tournament-btn:hover,
+  .calculate-winner-btn:hover,
+  .start-button:hover,
+  .reset-button:hover,
+  .back-button:hover,
+  .winner-mobile-back-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
   }
 
-  .winner-screen .stat-item {
-    padding: 12px 8px !important;
-    min-width: auto !important;
-    width: 100% !important;
-    border-radius: 12px !important;
+  /* Efectos para elementos de estadísticas */
+  .stat-item:hover,
+  .winner-stat:hover,
+  .metric-item:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    transform: scale(1.02) !important;
   }
 
-  .winner-screen .stat-number {
-    font-size: 1.8rem !important;
+  /* Efectos para tarjetas de jugadores/parejas */
+  .player-card:hover,
+  .pair-card:hover,
+  .team-card:hover {
+    border-color: #0ea5e9 !important;
+    box-shadow: 0 6px 20px rgba(14, 165, 233, 0.2) !important;
   }
 
-  .winner-screen .stat-label {
-    font-size: 0.65rem !important;
+  /* Efectos para elementos de la tabla de clasificación */
+  .standings-row:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
   }
 
-  .winner-screen .back-button {
-    padding: 10px 20px !important;
-    font-size: 0.85rem !important;
-    margin-top: 15px !important;
-    width: auto !important;
-    min-width: 120px !important;
+  /* Efectos para elementos del ganador */
+  .winner-names:hover,
+  .winner-title:hover {
+    text-shadow: 0 2px 8px rgba(255, 255, 255, 0.3) !important;
+  }
+
+  /* Efectos para elementos móviles */
+  .winner-mobile-stat:hover {
+    background: #e2e8f0 !important;
+    transform: scale(1.05) !important;
+  }
+
+  .winner-mobile-names:hover {
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.5) !important;
+  }
+
+  /* Cursor pointer para elementos adicionales */
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    cursor: text !important;
+  }
+
+  /* Elementos de navegación */
+  .nav-item,
+  .menu-item,
+  .dropdown-item,
+  .tab-item {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de formulario interactivos */
+  .form-group,
+  .form-control,
+  .input-group {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de lista */
+  .list-item,
+  .table-row,
+  .grid-item {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de modal */
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    cursor: default !important;
+  }
+
+  .modal-close,
+  .modal-action {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de score editor */
+  .score-input,
+  .game-score,
+  .set-score {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de debug */
+  .debug-section,
+  .debug-info,
+  .debug-button {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de tournament manager */
+  .tournament-selector,
+  .tournament-option {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de player manager */
+  .player-selector,
+  .player-option {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de pair manager */
+  .pair-selector,
+  .pair-option {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de match card */
+  .match-header,
+  .match-body,
+  .match-footer {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de standings table */
+  .standings-header,
+  .standings-body,
+  .standings-footer {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de winner screen */
+  .winner-content,
+  .winner-celebration,
+  .winner-stats {
+    cursor: default !important;
+  }
+
+  .winner-stat-item,
+  .winner-action {
+    cursor: pointer !important;
+  }
+
+  /* Cursor pointer para elementos específicos de componentes */
+  .jugador-card,
+  .pareja-card,
+  .partido-card,
+  .torneo-card,
+  .reta-card,
+  .team-card,
+  .player-card,
+  .pair-card,
+  .match-card,
+  .tournament-card {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de texto interactivos */
+  .tournament-name,
+  .player-name,
+  .pair-name,
+  .match-pair,
+  .team-name,
+  .winner-name {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de estadísticas interactivos */
+  .stat-number,
+  .stat-label,
+  .metric-value,
+  .metric-label,
+  .score-value,
+  .score-label {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de botones específicos */
+  .btn,
+  .button,
+  .action-btn,
+  .primary-btn,
+  .secondary-btn,
+  .danger-btn,
+  .success-btn,
+  .warning-btn,
+  .info-btn {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de formularios */
+  .form-input,
+  .form-select,
+  .form-textarea,
+  .form-checkbox,
+  .form-radio {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de tablas */
+  .table-cell,
+  .table-header,
+  .table-row,
+  .standings-cell,
+  .standings-header {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de listas */
+  .list-group-item,
+  .list-item,
+  .dropdown-item,
+  .menu-item {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de navegación */
+  .nav-link,
+  .nav-item,
+  .breadcrumb-item,
+  .pagination-item {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de modales */
+  .modal-trigger,
+  .modal-close,
+  .modal-action,
+  .dialog-close {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de tooltips */
+  .tooltip,
+  .popover,
+  .dropdown {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de accordion */
+  .accordion-header,
+  .accordion-item,
+  .collapse-trigger {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de tabs */
+  .tab-header,
+  .tab-item,
+  .tab-trigger {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de carousel */
+  .carousel-item,
+  .carousel-control,
+  .slider-item {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de rating */
+  .rating-star,
+  .rating-item {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de progress */
+  .progress-bar,
+  .progress-item {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de badge */
+  .badge,
+  .tag,
+  .label {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de alert */
+  .alert,
+  .notification,
+  .toast {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de card */
+  .card,
+  .card-header,
+  .card-body,
+  .card-footer {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de panel */
+  .panel,
+  .panel-header,
+  .panel-body {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de sidebar */
+  .sidebar,
+  .sidebar-item,
+  .sidebar-link {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de header */
+  .header,
+  .header-item,
+  .header-link {
+    cursor: pointer !important;
+  }
+
+  /* Elementos de footer */
+  .footer,
+  .footer-item,
+  .footer-link {
+    cursor: pointer !important;
+  }
+
+  /* ===== WINNER SCREEN MÓVIL - VERSIÓN COMPLETAMENTE NUEVA Y SIMPLE ===== */
+
+  /* Ocultar versión móvil en escritorio */
+  @media (min-width: 429px) {
+    .winner-screen-mobile {
+      display: none !important;
+    }
+  }
+
+  /* Ocultar versión escritorio en móvil */
+  @media (max-width: 428px) {
+    .winner-screen {
+      display: none !important;
+    }
+  }
+
+  /* Versión móvil ultra simple */
+  @media (max-width: 428px) {
+    .winner-screen-mobile {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: #1e293b !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      z-index: 1000 !important;
+      overflow: hidden !important;
+    }
+
+    .winner-mobile-container {
+      width: 85% !important;
+      max-width: 280px !important;
+      background: white !important;
+      border-radius: 8px !important;
+      padding: 12px 10px !important;
+      text-align: center !important;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .winner-mobile-header {
+      margin-bottom: 8px !important;
+    }
+
+    .winner-mobile-title {
+      font-size: 0.9rem !important;
+      font-weight: bold !important;
+      color: #1e40af !important;
+      margin-bottom: 3px !important;
+    }
+
+    .winner-mobile-subtitle {
+      font-size: 0.6rem !important;
+      color: #6b7280 !important;
+    }
+
+    .winner-mobile-names {
+      background: #1e40af !important;
+      color: white !important;
+      padding: 6px 8px !important;
+      border-radius: 6px !important;
+      font-size: 0.8rem !important;
+      font-weight: bold !important;
+      margin-bottom: 8px !important;
+    }
+
+    .winner-mobile-stats {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+      margin-bottom: 8px !important;
+    }
+
+    .winner-mobile-stat {
+      background: #f3f4f6 !important;
+      border-radius: 4px !important;
+      padding: 4px 6px !important;
+    }
+
+    .winner-mobile-stat-number {
+      font-size: 1.1rem !important;
+      font-weight: bold !important;
+      color: #1e40af !important;
+      display: block !important;
+    }
+
+    .winner-mobile-stat-label {
+      font-size: 0.5rem !important;
+      color: #6b7280 !important;
+      font-weight: 500 !important;
+    }
+
+    .winner-mobile-back-btn {
+      background: #10b981 !important;
+      color: white !important;
+      border: none !important;
+      padding: 6px 12px !important;
+      border-radius: 4px !important;
+      font-size: 0.7rem !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      width: 100% !important;
+    }
+  }
+
+  /* Pantallas más pequeñas */
+  @media (max-width: 375px) {
+    .winner-mobile-container {
+      width: 90% !important;
+      padding: 8px 6px !important;
+    }
+
+    .winner-mobile-title {
+      font-size: 0.8rem !important;
+      margin-bottom: 2px !important;
+    }
+
+    .winner-mobile-subtitle {
+      font-size: 0.5rem !important;
+    }
+
+    .winner-mobile-names {
+      font-size: 0.7rem !important;
+      padding: 4px 6px !important;
+      margin-bottom: 6px !important;
+    }
+
+    .winner-mobile-stats {
+      gap: 3px !important;
+      margin-bottom: 6px !important;
+    }
+
+    .winner-mobile-stat {
+      padding: 3px 4px !important;
+    }
+
+    .winner-mobile-stat-number {
+      font-size: 1rem !important;
+    }
+
+    .winner-mobile-stat-label {
+      font-size: 0.45rem !important;
+    }
+
+    .winner-mobile-back-btn {
+      padding: 4px 8px !important;
+      font-size: 0.65rem !important;
+    }
+  }
+
+  /* Pantallas extra pequeñas */
+  @media (max-width: 320px) {
+    .winner-mobile-container {
+      width: 95% !important;
+      padding: 6px 4px !important;
+    }
+
+    .winner-mobile-title {
+      font-size: 0.7rem !important;
+      margin-bottom: 2px !important;
+    }
+
+    .winner-mobile-subtitle {
+      font-size: 0.45rem !important;
+    }
+
+    .winner-mobile-names {
+      font-size: 0.6rem !important;
+      padding: 3px 4px !important;
+      margin-bottom: 4px !important;
+    }
+
+    .winner-mobile-stats {
+      gap: 2px !important;
+      margin-bottom: 4px !important;
+    }
+
+    .winner-mobile-stat {
+      padding: 2px 3px !important;
+    }
+
+    .winner-mobile-stat-number {
+      font-size: 0.9rem !important;
+    }
+
+    .winner-mobile-stat-label {
+      font-size: 0.4rem !important;
+    }
+
+    .winner-mobile-back-btn {
+      padding: 3px 6px !important;
+      font-size: 0.6rem !important;
+    }
   }
 }
