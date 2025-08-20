@@ -382,7 +382,9 @@ function App() {
     return finished;
   }, [matches]);
 
-  // Marcar automáticamente el torneo como finalizado cuando todos los partidos terminen
+  // Comentado: Marcar automáticamente el torneo como finalizado cuando todos los partidos terminen
+  // Ahora la reta solo se finaliza manualmente con el botón en la tarjeta
+  /*
   useEffect(() => {
     const markTournamentAsFinished = async () => {
       if (
@@ -410,6 +412,7 @@ function App() {
 
     markTournamentAsFinished();
   }, [isTournamentFinished, selectedTournament]);
+  */
 
   // Recargar datos automáticamente cuando cambie forceRefresh
   useEffect(() => {
@@ -1082,19 +1085,21 @@ function App() {
                         />
 
                         {/* Botón para mostrar ganador */}
-                        {isTournamentFinished && winner && (
-                          <div className="winner-button-container">
-                            <button
-                              className="show-winner-button"
-                              onClick={showWinnerScreenHandler}
-                            >
-                              🏆 ¡Ver Ganador de la Reta!
-                            </button>
-                          </div>
-                        )}
+                        {(isTournamentFinished ||
+                          selectedTournament.is_finished) &&
+                          winner && (
+                            <div className="winner-button-container">
+                              <button
+                                className="show-winner-button"
+                                onClick={showWinnerScreenHandler}
+                              >
+                                🏆 ¡Ver Ganador de la Reta!
+                              </button>
+                            </div>
+                          )}
 
-                        {/* Debug info para verificar estado */}
-                        {process.env.NODE_ENV === "development" && (
+                        {/* Debug info para verificar estado - COMENTADO */}
+                        {/* {process.env.NODE_ENV === "development" && (
                           <div
                             style={{
                               fontSize: "12px",
@@ -1108,7 +1113,7 @@ function App() {
                             {isTournamentFinished ? "SÍ" : "NO"}, Ganador:{" "}
                             {winner ? "SÍ" : "NO"}
                           </div>
-                        )}
+                        )} */}
 
                         {/* Botón para volver al inicio */}
                         <div className="back-home-button-container">

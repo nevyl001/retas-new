@@ -99,17 +99,42 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   };
 
   const handleFinishTournament = async (tournament: Tournament) => {
+    if (
+      !window.confirm(
+        "¿Estás seguro de que quieres finalizar la reta? Esta acción no se puede deshacer."
+      )
+    ) {
+      return;
+    }
+
     try {
       setError("");
+      setLoading(true);
+
+      console.log("🏁 Finalizando reta:", tournament.name);
       await updateTournament(tournament.id, { is_finished: true });
+
+      // Actualizar el estado local
       setTournaments(
         tournaments.map((t) =>
           t.id === tournament.id ? { ...t, is_finished: true } : t
         )
       );
+
+      // Si esta reta está seleccionada, actualizar también el estado seleccionado
+      if (selectedTournament && selectedTournament.id === tournament.id) {
+        onTournamentSelect({ ...tournament, is_finished: true });
+      }
+
+      console.log("✅ Reta finalizada exitosamente");
+
+      // Mostrar mensaje de éxito
+      alert("¡Reta finalizada exitosamente! 🏆");
     } catch (err) {
-      setError("Error al finalizar la reta");
-      console.error(err);
+      console.error("❌ Error finalizando reta:", err);
+      setError("Error al finalizar la reta: " + (err as Error).message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -232,8 +257,9 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                           handleFinishTournament(tournament);
                         }}
                         className="reta-btn reta-btn-finish"
+                        disabled={loading}
                       >
-                        🏁 Finalizar
+                        {loading ? "⏳ Finalizando..." : "🏁 Finalizar"}
                       </button>
                     )}
                     <button

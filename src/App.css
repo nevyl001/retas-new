@@ -527,6 +527,13 @@ h1 {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: white;
 }
+
+.reta-btn-finish:disabled {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
 .reta-btn-delete {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
