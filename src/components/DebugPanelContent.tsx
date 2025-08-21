@@ -34,7 +34,6 @@ export const DebugPanelContent: React.FC<DebugPanelContentProps> = ({
       <div className="elegant-debug-header">
         <div className="elegant-header-content">
           <div className="elegant-header-title">
-            <h3>Panel de Debug</h3>
             <p>Información del Sistema</p>
           </div>
         </div>

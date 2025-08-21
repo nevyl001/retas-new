@@ -54,8 +54,7 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
       <div className="elegant-pair-header">
         <div className="elegant-header-content">
           <div className="elegant-header-title">
-            <h3>Gestión de Parejas</h3>
-            <div className="elegant-pair-count">{pairs.length}</div>
+            <div className="elegant-pair-count">{pairs.length} parejas</div>
           </div>
         </div>
       </div>

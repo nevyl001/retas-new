@@ -19,7 +19,6 @@ export const TournamentStatusContent: React.FC<
       <div className="elegant-status-header">
         <div className="elegant-header-content">
           <div className="elegant-header-title">
-            <h3>Reta en Progreso</h3>
             <p>Estado del Torneo</p>
           </div>
         </div>
