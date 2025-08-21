@@ -3834,89 +3834,132 @@ h1::before {
   }
 }
 
-/* iPhone 15 Pro Max specific */
+/* iPhone 15 Pro Max - Nuevo Editor de Marcador */
 @media (max-width: 430px) {
   .modern-score-editor-overlay {
-    backdrop-filter: blur(4px);
-  }
-
-  .modern-score-editor-modal {
-    width: 100%;
-    height: 100vh;
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modern-score-editor-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(
+      135deg,
+      rgba(20, 20, 35, 0.98) 0%,
+      rgba(40, 40, 80, 0.95) 100%
+    );
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .modern-score-editor-modal::before {
-    border-radius: 0;
+    display: none;
   }
 
   .modern-score-editor-header {
-    padding: 12px 16px 8px 16px;
-    border-radius: 0;
-    flex-shrink: 0;
     background: linear-gradient(
       135deg,
       rgba(20, 20, 35, 0.95) 0%,
       rgba(40, 40, 80, 0.9) 100%
     );
+    border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+    padding: 16px 20px 12px 20px;
+    border-radius: 0;
+    flex-shrink: 0;
   }
 
   .modern-score-editor-title h3 {
-    font-size: 1rem;
+    color: #ffd700;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
   }
 
   .modern-score-editor-close {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
   }
 
   .modern-score-editor-content {
-    padding: 12px;
     flex: 1;
+    padding: 16px 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    gap: 16px;
   }
 
   .modern-score-editor-match-info {
-    padding: 8px;
-    margin-bottom: 8px;
-    flex-shrink: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 215, 0, 0.1) 0%,
+      rgba(255, 237, 78, 0.05) 100%
+    );
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 0;
   }
 
   .modern-score-editor-match-title {
-    font-size: 0.9rem;
-    margin-bottom: 6px;
+    color: #ffd700;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
   }
 
   .modern-score-editor-pairs {
-    gap: 6px;
-    margin-bottom: 8px;
-    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 0;
   }
 
   .modern-score-editor-pair {
-    padding: 6px;
+    background: linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.1) 0%,
+      rgba(29, 78, 216, 0.05) 100%
+    );
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+    padding: 12px;
   }
 
   .modern-score-editor-pair-label {
-    font-size: 0.75rem;
-    margin-bottom: 2px;
+    color: #ffd700;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
   }
 
   .modern-score-editor-pair-names {
-    font-size: 0.85rem;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 500;
   }
 
   .modern-score-editor-games-section {
@@ -3927,86 +3970,160 @@ h1::before {
   }
 
   .modern-score-editor-games-header {
-    padding: 6px 8px;
-    margin-bottom: 6px;
-    flex-shrink: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.1) 0%,
+      rgba(5, 150, 105, 0.05) 100%
+    );
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .modern-score-editor-games-title {
-    font-size: 0.85rem;
+    color: #ffd700;
+    font-size: 0.95rem;
+    font-weight: 600;
   }
 
   .modern-score-editor-add-game {
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
   }
 
   .modern-score-editor-games-list {
     flex: 1;
     overflow-y: auto;
-    gap: 6px;
+    gap: 12px;
+    padding-right: 4px;
   }
 
   .modern-score-editor-game {
-    padding: 8px;
-    flex-shrink: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(20, 20, 35, 0.9) 0%,
+      rgba(40, 40, 80, 0.8) 100%
+    );
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
   }
 
   .modern-score-editor-game-header {
-    padding: 4px 0;
-    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
   }
 
   .modern-score-editor-game-title {
-    font-size: 0.8rem;
+    color: #ffd700;
+    font-size: 0.9rem;
+    font-weight: 600;
   }
 
   .modern-score-editor-remove-game {
-    width: 22px;
-    height: 22px;
-    font-size: 0.65rem;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #ffffff;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
   }
 
   .modern-score-editor-score-container {
-    gap: 6px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .modern-score-editor-score-input {
-    gap: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .modern-score-editor-pair-name {
-    font-size: 0.75rem;
-    min-width: 50px;
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 500;
+    min-width: 60px;
   }
 
   .modern-score-editor-input {
-    padding: 4px 6px;
-    font-size: 0.85rem;
-    width: 40px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 215, 0, 0.15) 0%,
+      rgba(255, 237, 78, 0.1) 100%
+    );
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    width: 60px;
+    text-align: center;
   }
 
   .modern-score-editor-separator {
-    font-size: 0.85rem;
-    margin: 0 3px;
+    color: #ffd700;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 8px;
   }
 
   .modern-score-editor-actions {
-    padding: 8px 12px;
-    gap: 6px;
-    flex-shrink: 0;
     background: linear-gradient(
       135deg,
       rgba(20, 20, 35, 0.95) 0%,
       rgba(40, 40, 80, 0.9) 100%
     );
+    border-top: 2px solid rgba(255, 215, 0, 0.3);
+    padding: 16px 20px;
+    gap: 12px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
   }
 
-  .modern-score-editor-finish,
+  .modern-score-editor-finish {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #000000;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+  }
+
   .modern-score-editor-cancel {
-    padding: 8px 12px;
-    font-size: 0.85rem;
-    border-radius: 8px;
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: #ffffff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
   }
 }
 
