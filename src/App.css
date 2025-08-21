@@ -2849,6 +2849,116 @@ h1::before {
   .modern-standings-table td:nth-child(5) {
     min-width: 60px;
   }
+
+  /* Responsive para tarjetas de partidos */
+  .modern-matches-section {
+    padding: 16px;
+  }
+
+  .modern-matches-header {
+    margin-bottom: 16px;
+  }
+
+  .modern-matches-title h3 {
+    font-size: 1.2rem;
+  }
+
+  .modern-matches-count {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+
+  .modern-round-header {
+    padding: 10px 12px;
+    margin-bottom: 12px;
+  }
+
+  .modern-round-title {
+    font-size: 1rem;
+  }
+
+  .modern-round-count {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+  }
+
+  .modern-matches-grid {
+    gap: 16px;
+  }
+
+  .modern-match-card {
+    padding: 16px;
+  }
+
+  .modern-match-title {
+    font-size: 1rem;
+  }
+
+  .modern-match-status {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
+
+  .modern-match-badges {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .modern-match-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  .modern-pair-info {
+    padding: 6px 10px;
+    margin-bottom: 6px;
+  }
+
+  .modern-pair-label {
+    font-size: 0.8rem;
+    min-width: 60px;
+  }
+
+  .modern-pair-names {
+    font-size: 0.85rem;
+  }
+
+  .modern-games-results {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+
+  .modern-games-title {
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+  }
+
+  .modern-games-grid {
+    gap: 6px;
+  }
+
+  .modern-game-result {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+
+  .modern-winner {
+    padding: 8px 10px;
+    margin-bottom: 12px;
+  }
+
+  .modern-winner-text {
+    font-size: 0.85rem;
+  }
+
+  .modern-match-actions {
+    gap: 8px;
+  }
+
+  .modern-match-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2870,6 +2980,112 @@ h1::before {
   .modern-standings-table td:nth-child(4),
   .modern-standings-table td:nth-child(5) {
     min-width: 50px;
+  }
+
+  /* Responsive para tarjetas de partidos - móviles pequeños */
+  .modern-matches-section {
+    padding: 12px;
+  }
+
+  .modern-matches-title h3 {
+    font-size: 1.1rem;
+  }
+
+  .modern-matches-count {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+
+  .modern-round-header {
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+
+  .modern-round-title {
+    font-size: 0.9rem;
+  }
+
+  .modern-round-count {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+  }
+
+  .modern-matches-grid {
+    gap: 12px;
+  }
+
+  .modern-match-card {
+    padding: 14px;
+  }
+
+  .modern-match-title {
+    font-size: 0.9rem;
+  }
+
+  .modern-match-status {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+
+  .modern-match-badges {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  .modern-match-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+  }
+
+  .modern-pair-info {
+    padding: 5px 8px;
+    margin-bottom: 5px;
+  }
+
+  .modern-pair-label {
+    font-size: 0.75rem;
+    min-width: 55px;
+  }
+
+  .modern-pair-names {
+    font-size: 0.8rem;
+  }
+
+  .modern-games-results {
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+
+  .modern-games-title {
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+  }
+
+  .modern-games-grid {
+    gap: 5px;
+  }
+
+  .modern-game-result {
+    font-size: 0.7rem;
+    padding: 2px 5px;
+  }
+
+  .modern-winner {
+    padding: 6px 8px;
+    margin-bottom: 10px;
+  }
+
+  .modern-winner-text {
+    font-size: 0.8rem;
+  }
+
+  .modern-match-actions {
+    gap: 6px;
+  }
+
+  .modern-match-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
   }
 }
 
@@ -3785,6 +4001,134 @@ h1::before {
   .modern-winner-subtitle,
   .modern-winner-stat {
     animation: none;
+  }
+
+  /* Responsive para tarjetas de partidos - iPhone 15 Pro Max */
+  .modern-matches-section {
+    padding: 8px;
+  }
+
+  .modern-matches-header {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .modern-matches-title h3 {
+    font-size: 1rem;
+  }
+
+  .modern-matches-count {
+    font-size: 0.7rem;
+    padding: 2px 5px;
+  }
+
+  .modern-round-header {
+    padding: 6px 8px;
+    margin-bottom: 8px;
+  }
+
+  .modern-round-title {
+    font-size: 0.85rem;
+  }
+
+  .modern-round-count {
+    font-size: 0.7rem;
+    padding: 2px 5px;
+  }
+
+  .modern-matches-grid {
+    gap: 8px;
+  }
+
+  .modern-match-card {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .modern-match-header {
+    margin-bottom: 12px;
+  }
+
+  .modern-match-title {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .modern-match-status {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+    border-radius: 8px;
+  }
+
+  .modern-match-badges {
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .modern-match-badge {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    border-radius: 6px;
+  }
+
+  .modern-match-pairs {
+    margin-bottom: 12px;
+  }
+
+  .modern-pair-info {
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    border-radius: 8px;
+  }
+
+  .modern-pair-label {
+    font-size: 0.7rem;
+    min-width: 50px;
+  }
+
+  .modern-pair-names {
+    font-size: 0.75rem;
+  }
+
+  .modern-games-results {
+    padding: 6px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+  }
+
+  .modern-games-title {
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+  }
+
+  .modern-games-grid {
+    gap: 4px;
+  }
+
+  .modern-game-result {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    border-radius: 6px;
+  }
+
+  .modern-winner {
+    padding: 5px 6px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+  }
+
+  .modern-winner-text {
+    font-size: 0.75rem;
+  }
+
+  .modern-match-actions {
+    gap: 4px;
+  }
+
+  .modern-match-btn {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+    border-radius: 8px;
   }
 }
 
