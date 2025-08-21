@@ -13641,24 +13641,146 @@ td {
 @media (max-width: 768px) {
   .elegant-players-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 
   .elegant-player-card {
-    padding: 20px;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .elegant-player-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
   }
 
   .elegant-player-name {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .elegant-delete-btn {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
   }
 
   .elegant-form-actions {
     flex-direction: column;
+  }
+}
+
+/* iPhone 15 Pro Max y dispositivos similares */
+@media (max-width: 430px) {
+  .elegant-player-manager {
+    padding: 16px;
+    margin: 0 4px;
+  }
+
+  .elegant-player-header {
+    padding: 16px;
+    margin: -16px -16px 16px -16px;
+  }
+
+  .elegant-header-title h3 {
+    font-size: 1.1rem;
+  }
+
+  .elegant-player-count {
+    padding: 6px 12px;
+    font-size: 1rem;
+  }
+
+  .elegant-add-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    min-width: 120px;
+  }
+
+  .elegant-players-grid {
+    gap: 10px;
+  }
+
+  .elegant-player-card {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .elegant-player-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .elegant-player-name {
+    font-size: 0.95rem;
+  }
+
+  .elegant-pair-indicator {
+    font-size: 0.8rem;
+  }
+
+  .elegant-delete-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Dispositivos muy pequeños */
+@media (max-width: 375px) {
+  .elegant-player-manager {
+    padding: 12px;
+    margin: 0 2px;
+  }
+
+  .elegant-player-header {
+    padding: 12px;
+    margin: -12px -12px 12px -12px;
+  }
+
+  .elegant-header-title h3 {
+    font-size: 1rem;
+  }
+
+  .elegant-player-count {
+    padding: 5px 10px;
+    font-size: 0.9rem;
+  }
+
+  .elegant-add-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+
+  .elegant-players-grid {
+    gap: 8px;
+  }
+
+  .elegant-player-card {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .elegant-player-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .elegant-player-name {
+    font-size: 0.9rem;
+  }
+
+  .elegant-pair-indicator {
+    font-size: 0.75rem;
+  }
+
+  .elegant-delete-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
   }
 }
 
@@ -14332,6 +14454,540 @@ td {
   .elegant-status-value,
   .elegant-debug-value {
     font-size: 1.1rem;
+  }
+}
+
+/* ===== COMPACT PAIRS MANAGER ===== */
+
+.compact-pairs-manager {
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.98) 0%,
+    rgba(40, 40, 80, 0.95) 50%,
+    rgba(20, 20, 35, 0.98) 100%
+  );
+  border-radius: 20px;
+  padding: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.6);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.2);
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+  min-height: 150px;
+}
+
+.compact-pairs-manager::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+/* Header Compacto */
+.compact-header {
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.95) 0%,
+    rgba(40, 40, 80, 0.9) 50%,
+    rgba(20, 20, 35, 0.95) 100%
+  );
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.4);
+  position: relative;
+  margin: -20px -20px 16px -20px;
+}
+
+.compact-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.compact-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.compact-icon {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.compact-title h3 {
+  color: #ffd700;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Grid de Parejas Compacto */
+.compact-pairs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 8px;
+}
+
+/* Tarjeta de Pareja Compacta */
+.compact-pair-card {
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.9) 0%,
+    rgba(40, 40, 80, 0.85) 50%,
+    rgba(20, 20, 35, 0.9) 100%
+  );
+  border-radius: 16px;
+  padding: 20px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 4px 15px rgba(255, 215, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slideInUp 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.compact-pair-card:nth-child(odd) {
+  animation-delay: 0.1s;
+}
+
+.compact-pair-card:nth-child(even) {
+  animation-delay: 0.2s;
+}
+
+.compact-pair-card:nth-child(3n) {
+  animation-delay: 0.3s;
+}
+
+.compact-pair-card:nth-child(4n) {
+  animation-delay: 0.4s;
+}
+
+.compact-pair-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
+  transform: scaleX(0);
+  transition: transform 0.4s ease;
+}
+
+.compact-pair-card:hover::before {
+  transform: scaleX(1);
+}
+
+.compact-pair-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.3);
+  border-color: #ffd700;
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.95) 0%,
+    rgba(40, 40, 80, 0.9) 50%,
+    rgba(20, 20, 35, 0.95) 100%
+  );
+}
+
+/* Número de Pareja */
+.compact-pair-number {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffb347 100%);
+  color: #000000;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  min-width: 40px;
+  text-align: center;
+  align-self: flex-start;
+  transition: all 0.3s ease;
+}
+
+.compact-pair-card:hover .compact-pair-number {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+/* Información de la Pareja */
+.compact-pair-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compact-pair-names {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Estadísticas Compactas */
+.compact-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.compact-stat {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #000000;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 50px;
+  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.compact-pair-card:hover .compact-stat {
+  transform: scale(1.1);
+  box-shadow: 0 6px 15px rgba(255, 215, 0, 0.4);
+}
+
+/* Efectos de partículas */
+.compact-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.compact-particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #ffd700;
+  border-radius: 50%;
+  opacity: 0;
+  animation: compactParticleFloat 4s ease-in-out infinite;
+}
+
+.compact-particle:nth-child(1) {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.compact-particle:nth-child(2) {
+  top: 60%;
+  right: 15%;
+  animation-delay: 1.5s;
+}
+
+.compact-particle:nth-child(3) {
+  bottom: 30%;
+  left: 20%;
+  animation-delay: 3s;
+}
+
+.compact-stat-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.compact-stat-value {
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Animaciones */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes compactParticleFloat {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(-10px) translateX(5px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-20px) translateX(-5px);
+  }
+  75% {
+    opacity: 0.5;
+    transform: translateY(-15px) translateX(10px);
+  }
+}
+
+/* Estados de Loading y Error */
+.compact-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #ffffff;
+}
+
+.compact-spinner {
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-top: 2px solid #ffd700;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+.compact-error {
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.2) 0%,
+    rgba(220, 38, 38, 0.15) 100%
+  );
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+}
+
+.compact-error-icon {
+  font-size: 1rem;
+}
+
+.compact-error-text {
+  font-size: 0.85rem;
+}
+
+/* Estado Vacío */
+.compact-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #ffffff;
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.9) 0%,
+    rgba(40, 40, 80, 0.85) 50%,
+    rgba(20, 20, 35, 0.9) 100%
+  );
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  backdrop-filter: blur(15px);
+}
+
+.compact-empty-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.compact-empty h4 {
+  color: #ffd700;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.compact-empty p {
+  color: #ffffff;
+  font-size: 0.85rem;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .compact-pairs-manager {
+    padding: 12px;
+    margin: 0 8px;
+  }
+
+  .compact-pairs-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 4px;
+  }
+
+  .compact-pair-card {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .compact-pair-number {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+    min-width: 32px;
+  }
+
+  .compact-pair-names {
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .compact-stats {
+    gap: 4px;
+  }
+
+  .compact-stat {
+    min-width: 35px;
+    padding: 2px 4px;
+  }
+
+  .compact-stat-label {
+    font-size: 0.6rem;
+  }
+
+  .compact-stat-value {
+    font-size: 0.75rem;
+  }
+}
+
+/* iPhone 15 Pro Max y dispositivos similares */
+@media (max-width: 430px) {
+  .compact-pairs-manager {
+    padding: 8px;
+    margin: 0 4px;
+  }
+
+  .compact-header {
+    padding: 12px;
+    margin: -8px -8px 12px -8px;
+  }
+
+  .compact-title h3 {
+    font-size: 1rem;
+  }
+
+  .compact-pairs-grid {
+    gap: 8px;
+    padding: 2px;
+  }
+
+  .compact-pair-card {
+    padding: 12px;
+    gap: 6px;
+    border-radius: 12px;
+  }
+
+  .compact-pair-number {
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    min-width: 28px;
+  }
+
+  .compact-pair-names {
+    font-size: 0.8rem;
+    line-height: 1.1;
+  }
+
+  .compact-stats {
+    gap: 3px;
+  }
+
+  .compact-stat {
+    min-width: 30px;
+    padding: 2px 3px;
+  }
+
+  .compact-stat-label {
+    font-size: 0.55rem;
+  }
+
+  .compact-stat-value {
+    font-size: 0.7rem;
+  }
+}
+
+/* Dispositivos muy pequeños */
+@media (max-width: 375px) {
+  .compact-pairs-manager {
+    padding: 6px;
+    margin: 0 2px;
+  }
+
+  .compact-header {
+    padding: 10px;
+    margin: -6px -6px 10px -6px;
+  }
+
+  .compact-title h3 {
+    font-size: 0.9rem;
+  }
+
+  .compact-pairs-grid {
+    gap: 6px;
+    padding: 1px;
+  }
+
+  .compact-pair-card {
+    padding: 10px;
+    gap: 5px;
+    border-radius: 10px;
+  }
+
+  .compact-pair-number {
+    padding: 3px 5px;
+    font-size: 0.7rem;
+    min-width: 25px;
+  }
+
+  .compact-pair-names {
+    font-size: 0.75rem;
+    line-height: 1.1;
+  }
+
+  .compact-stats {
+    gap: 2px;
+  }
+
+  .compact-stat {
+    min-width: 28px;
+    padding: 1px 2px;
+  }
+
+  .compact-stat-label {
+    font-size: 0.5rem;
+  }
+
+  .compact-stat-value {
+    font-size: 0.65rem;
   }
 }
 

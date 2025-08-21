@@ -955,64 +955,71 @@ function App() {
 
                     {/* Mostrar parejas creadas */}
                     {pairs.length > 0 && (
-                      <div className="pairs-display">
-                        <h3>👥 Parejas Registradas ({pairs.length})</h3>
-                        <div className="new-pairs-grid">
+                      <div className="compact-pairs-manager">
+                        {/* Header Compacto */}
+                        <div className="compact-header">
+                          <div className="compact-header-content">
+                            <div className="compact-title">
+                              <span className="compact-icon">👥</span>
+                              <h3>Parejas Registradas ({pairs.length})</h3>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Grid de Parejas Compacto */}
+                        <div className="compact-pairs-grid">
                           {pairs.map((pair, index) => (
-                            <div key={pair.id} className="new-pair-card">
-                              {/* Header de la tarjeta */}
-                              <div className="new-pair-header">
-                                {/* Número de pareja */}
-                                <div className="new-pair-number">
-                                  #{index + 1}
-                                </div>
-
-                                {/* Nombres de jugadores */}
-                                <div className="new-pair-names">
-                                  <h4>
-                                    {pair.player1?.name || "Jugador 1"} /{" "}
-                                    {pair.player2?.name || "Jugador 2"}
-                                  </h4>
-                                </div>
-
-                                {/* Botón de eliminar */}
-                                <button
-                                  onClick={() => {
-                                    if (
-                                      window.confirm(
-                                        `¿Estás seguro de que quieres eliminar la pareja "${pair.player1?.name} / ${pair.player2?.name}"?`
-                                      )
-                                    ) {
-                                      deletePair(pair.id);
-                                    }
-                                  }}
-                                  className="new-delete-btn"
-                                  title="Eliminar pareja"
-                                >
-                                  <span>🗑️</span>
-                                </button>
+                            <div
+                              key={pair.id}
+                              className="compact-pair-card"
+                              style={{ animationDelay: `${index * 0.1}s` }}
+                            >
+                              {/* Número de Pareja */}
+                              <div className="compact-pair-number">
+                                #{index + 1}
                               </div>
 
-                              {/* Sección de estadísticas */}
-                              <div className="new-pair-stats">
-                                <div className="new-stat-card">
-                                  <div className="new-stat-label">SETS</div>
-                                  <div className="new-stat-value">
-                                    {pair.sets_won || 0}
+                              {/* Información de la Pareja */}
+                              <div className="compact-pair-info">
+                                <div className="compact-pair-names">
+                                  {pair.player1?.name || "Jugador 1"} /{" "}
+                                  {pair.player2?.name || "Jugador 2"}
+                                </div>
+
+                                {/* Estadísticas Compactas */}
+                                <div className="compact-stats">
+                                  <div className="compact-stat">
+                                    <span className="compact-stat-label">
+                                      SETS
+                                    </span>
+                                    <span className="compact-stat-value">
+                                      {pair.sets_won || 0}
+                                    </span>
+                                  </div>
+                                  <div className="compact-stat">
+                                    <span className="compact-stat-label">
+                                      PARTIDOS
+                                    </span>
+                                    <span className="compact-stat-value">
+                                      {pair.matches_played || 0}
+                                    </span>
+                                  </div>
+                                  <div className="compact-stat">
+                                    <span className="compact-stat-label">
+                                      PUNTOS
+                                    </span>
+                                    <span className="compact-stat-value">
+                                      {pair.points || 0}
+                                    </span>
                                   </div>
                                 </div>
-                                <div className="new-stat-card">
-                                  <div className="new-stat-label">PARTIDOS</div>
-                                  <div className="new-stat-value">
-                                    {pair.matches_played || 0}
-                                  </div>
-                                </div>
-                                <div className="new-stat-card">
-                                  <div className="new-stat-label">PUNTOS</div>
-                                  <div className="new-stat-value">
-                                    {pair.points || 0}
-                                  </div>
-                                </div>
+                              </div>
+
+                              {/* Efectos de partículas */}
+                              <div className="compact-particles">
+                                <div className="compact-particle"></div>
+                                <div className="compact-particle"></div>
+                                <div className="compact-particle"></div>
                               </div>
                             </div>
                           ))}
