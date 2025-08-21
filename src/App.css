@@ -1,5 +1,59 @@
 /* Responsive Design - Complete Overhaul */
 
+/* Optimizaciones de rendimiento globales para móviles */
+@media (max-width: 768px) {
+  * {
+    animation-duration: 0.5s !important;
+    animation-delay: 0s !important;
+  }
+
+  /* Reducir animaciones infinitas */
+  [class*="shimmer"],
+  [class*="glow"],
+  [class*="pulse"],
+  [class*="float"],
+  [class*="bounce"],
+  [class*="spin"],
+  [class*="rotate"] {
+    animation-duration: 4s !important;
+  }
+
+  /* Deshabilitar animaciones complejas en móviles */
+  .banner::before,
+  .banner::after,
+  .floating-particle,
+  .elegant-particle {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  * {
+    animation-duration: 0.3s !important;
+  }
+
+  /* Deshabilitar más animaciones en móviles pequeños */
+  [class*="shimmer"],
+  [class*="glow"],
+  [class*="pulse"],
+  [class*="float"] {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 430px) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Solo mantener animaciones esenciales */
+  .modal-overlay,
+  .modal-content {
+    animation: fadeIn 0.2s ease-out !important;
+  }
+}
+
 /* Global Styles */
 * {
   margin: 0;
@@ -64,6 +118,24 @@ body::before {
   animation: backgroundPulse 8s ease-in-out infinite;
 }
 
+@media (max-width: 768px) {
+  body::before {
+    animation: backgroundPulse 16s ease-in-out infinite;
+  }
+}
+
+@media (max-width: 480px) {
+  body::before {
+    animation: backgroundPulse 24s ease-in-out infinite;
+  }
+}
+
+@media (max-width: 430px) {
+  body::before {
+    animation: none;
+  }
+}
+
 body::after {
   content: "";
   position: fixed;
@@ -85,6 +157,24 @@ body::after {
   animation: sparkle 20s linear infinite;
   pointer-events: none;
   z-index: -1;
+}
+
+@media (max-width: 768px) {
+  body::after {
+    animation: sparkle 40s linear infinite;
+  }
+}
+
+@media (max-width: 480px) {
+  body::after {
+    animation: sparkle 60s linear infinite;
+  }
+}
+
+@media (max-width: 430px) {
+  body::after {
+    animation: none;
+  }
 }
 
 @keyframes sparkle {
@@ -2969,6 +3059,30 @@ h1::before {
     padding: 8px 12px;
     font-size: 0.8rem;
   }
+
+  /* Optimizaciones de rendimiento para tablets */
+  .banner::before,
+  .banner::after,
+  .banner-icon,
+  .floating-particle {
+    animation-duration: 8s !important;
+  }
+
+  .modern-match-card::before,
+  .modern-standings-section::before,
+  .elegant-pair-card::before,
+  .elegant-player-card::before {
+    animation-duration: 6s !important;
+  }
+
+  /* Reducir backdrop-filter */
+  .modern-matches-section,
+  .modern-standings-section,
+  .modern-match-card,
+  .elegant-pair-manager,
+  .elegant-player-manager {
+    backdrop-filter: blur(8px) !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -3126,6 +3240,30 @@ h1::before {
   .modern-standings-table td:nth-child(4),
   .modern-standings-table td:nth-child(5) {
     min-width: 50px;
+  }
+
+  /* Optimizaciones de rendimiento para móviles pequeños */
+  .banner::before,
+  .banner::after,
+  .banner-icon,
+  .floating-particle {
+    animation-duration: 12s !important;
+  }
+
+  .modern-match-card::before,
+  .modern-standings-section::before,
+  .elegant-pair-card::before,
+  .elegant-player-card::before {
+    animation-duration: 8s !important;
+  }
+
+  /* Reducir backdrop-filter */
+  .modern-matches-section,
+  .modern-standings-section,
+  .modern-match-card,
+  .elegant-pair-manager,
+  .elegant-player-manager {
+    backdrop-filter: blur(6px) !important;
   }
 }
 
@@ -4253,6 +4391,71 @@ h1::before {
 
   .modern-standings-table tbody tr:last-child td:last-child {
     border-bottom-right-radius: 10px;
+  }
+
+  /* Optimizaciones de rendimiento - Deshabilitar animaciones en móviles */
+  * {
+    animation-duration: 0.3s !important;
+    animation-delay: 0s !important;
+  }
+
+  /* Deshabilitar animaciones infinitas en móviles */
+  .banner::before,
+  .banner::after,
+  .banner-icon,
+  .floating-particle,
+  .modern-match-card::before,
+  .modern-standings-section::before,
+  .modern-recalculate-btn::before,
+  .elegant-pair-card::before,
+  .elegant-player-card::before,
+  .elegant-status-card::before,
+  .elegant-debug-card::before,
+  .compact-pair-card::before,
+  .modern-winner-modal::before,
+  .modern-winner-stat::before {
+    animation: none !important;
+  }
+
+  /* Reducir animaciones de hover */
+  .modern-match-card:hover,
+  .modern-standings-table tbody tr:hover,
+  .elegant-pair-card:hover,
+  .elegant-player-card:hover,
+  .compact-pair-card:hover {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  /* Deshabilitar animaciones de partículas */
+  .elegant-particle,
+  .elegant-status-particle,
+  .elegant-debug-particle,
+  .compact-particle {
+    animation: none !important;
+  }
+
+  /* Reducir backdrop-filter en móviles */
+  .modern-matches-section,
+  .modern-standings-section,
+  .modern-match-card,
+  .elegant-pair-manager,
+  .elegant-player-manager,
+  .elegant-tournament-status,
+  .elegant-debug-panel,
+  .compact-pairs-manager {
+    backdrop-filter: blur(4px) !important;
+  }
+
+  /* Optimizar transiciones */
+  .modern-match-card,
+  .modern-standings-table tbody tr,
+  .elegant-pair-card,
+  .elegant-player-card,
+  .compact-pair-card,
+  .modern-match-btn,
+  .modern-recalculate-btn {
+    transition: none !important;
   }
 }
 
