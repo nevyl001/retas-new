@@ -2877,7 +2877,7 @@ h1::before {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -3404,12 +3404,12 @@ h1::before {
     rgba(20, 20, 35, 0.95) 50%,
     rgba(0, 0, 0, 0.9) 100%
   );
-  backdrop-filter: blur(15px);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .modern-winner-modal {
@@ -3422,13 +3422,13 @@ h1::before {
   border-radius: 28px;
   border: 3px solid rgba(255, 215, 0, 0.5);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 15px 40px rgba(255, 215, 0, 0.3);
-  backdrop-filter: blur(25px);
+  backdrop-filter: blur(12px);
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
   overflow: hidden;
   position: relative;
-  animation: winnerSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: winnerSlideIn 0.4s ease-out;
 }
 
 .modern-winner-modal::before {
@@ -3440,7 +3440,7 @@ h1::before {
   height: 4px;
   background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
   border-radius: 28px 28px 0 0;
-  animation: shimmer 2s ease-in-out infinite;
+  opacity: 0.8;
 }
 
 .modern-winner-modal::after {
@@ -3483,7 +3483,7 @@ h1::before {
     rgba(255, 215, 0, 0.1) 0%,
     transparent 70%
   );
-  animation: rotate 20s linear infinite;
+  opacity: 0.6;
 }
 
 .modern-winner-title {
@@ -3491,10 +3491,9 @@ h1::before {
   font-size: 1.8rem;
   font-weight: 800;
   margin: 0 0 16px 0;
-  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
   position: relative;
   z-index: 2;
-  animation: titleGlow 2s ease-in-out infinite alternate;
 }
 
 .modern-winner-names {
@@ -3505,7 +3504,7 @@ h1::before {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   position: relative;
   z-index: 2;
-  animation: fadeInUp 0.8s ease-out 0.3s both;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
 }
 
 .modern-winner-subtitle {
@@ -3516,7 +3515,7 @@ h1::before {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   position: relative;
   z-index: 2;
-  animation: fadeInUp 0.8s ease-out 0.5s both;
+  animation: fadeInUp 0.6s ease-out 0.4s both;
 }
 
 /* Stats Section */
@@ -3540,7 +3539,7 @@ h1::before {
   border: 1px solid rgba(255, 215, 0, 0.3);
   position: relative;
   overflow: hidden;
-  animation: fadeInUp 0.8s ease-out 0.7s both;
+  animation: fadeInUp 0.6s ease-out 0.6s both;
 }
 
 .modern-winner-stat::before {
@@ -3551,7 +3550,7 @@ h1::before {
   right: 0;
   height: 2px;
   background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
-  animation: shimmer 3s ease-in-out infinite;
+  opacity: 0.8;
 }
 
 .modern-winner-stat-number {
@@ -3561,7 +3560,6 @@ h1::before {
   font-weight: 800;
   margin-bottom: 8px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-  animation: numberPulse 2s ease-in-out infinite;
 }
 
 .modern-winner-stat-label {
@@ -3595,7 +3593,7 @@ h1::before {
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
   position: relative;
   overflow: hidden;
-  animation: fadeInUp 0.8s ease-out 0.9s both;
+  animation: fadeInUp 0.6s ease-out 0.8s both;
 }
 
 .modern-winner-back-btn::before {
@@ -3627,39 +3625,11 @@ h1::before {
 @keyframes winnerSlideIn {
   from {
     opacity: 0;
-    transform: translateY(40px) scale(0.9);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes titleGlow {
-  from {
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.5);
-  }
-  to {
-    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.8);
-  }
-}
-
-@keyframes numberPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+    transform: translateY(0);
   }
 }
 
@@ -3799,6 +3769,22 @@ h1::before {
   .modern-winner-back-btn {
     padding: 12px 20px;
     font-size: 0.85rem;
+  }
+
+  /* Optimizaciones de rendimiento para móviles */
+  .modern-winner-screen {
+    backdrop-filter: blur(4px);
+  }
+
+  .modern-winner-modal {
+    backdrop-filter: blur(6px);
+  }
+
+  .modern-winner-modal,
+  .modern-winner-names,
+  .modern-winner-subtitle,
+  .modern-winner-stat {
+    animation: none;
   }
 }
 
