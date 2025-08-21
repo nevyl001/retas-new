@@ -146,29 +146,44 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
 
   if (loading) {
     return (
-      <div className="standings">
-        <h3>📊 Clasificación</h3>
-        <div className="loading">⏳ Cargando clasificación...</div>
+      <div className="modern-standings-section">
+        <div className="modern-standings-header">
+          <div className="modern-standings-title">
+            <h3>📊 Clasificación</h3>
+          </div>
+        </div>
+        <div className="modern-match-loading">
+          <div className="modern-loading-spinner"></div>
+          <p>⏳ Cargando clasificación...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="standings">
-        <h3>📊 Clasificación</h3>
-        <div className="error">{error}</div>
+      <div className="modern-standings-section">
+        <div className="modern-standings-header">
+          <div className="modern-standings-title">
+            <h3>📊 Clasificación</h3>
+          </div>
+        </div>
+        <div className="modern-match-error">
+          <p>{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="standings">
-      <div className="standings-header">
-        <h3>📊 Clasificación</h3>
+    <div className="modern-standings-section">
+      <div className="modern-standings-header">
+        <div className="modern-standings-title">
+          <h3>📊 Clasificación</h3>
+        </div>
         <button
           onClick={recalculateAllStatistics}
-          className="recalculate-stats-btn"
+          className="modern-recalculate-btn"
           disabled={loading}
         >
           🔄 Recalcular Estadísticas
@@ -176,31 +191,31 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
       </div>
 
       <div className="table-container">
-        <table>
+        <table className="modern-standings-table">
           <thead>
             <tr>
-              <th>Pos</th>
-              <th>Pareja</th>
-              <th>Sets</th>
-              <th>Partidos</th>
-              <th>Puntos</th>
+              <th>POS</th>
+              <th>PAREJA</th>
+              <th>SETS</th>
+              <th>PARTIDOS</th>
+              <th>PUNTOS</th>
             </tr>
           </thead>
           <tbody>
             {sortedPairs.map((pair, index) => (
               <tr key={pair.id} className={`position-${index + 1}`}>
-                <td className="position">
+                <td>
                   {index + 1}
                   {index === 0 && "🥇"}
                   {index === 1 && "🥈"}
                   {index === 2 && "🥉"}
                 </td>
-                <td className="pair-name">
+                <td>
                   {pair.player1?.name} / {pair.player2?.name}
                 </td>
-                <td className="points">{pair.sets_won}</td>
-                <td className="points">{pair.matches_played}</td>
-                <td className="points">{pair.points}</td>
+                <td>{pair.sets_won}</td>
+                <td>{pair.matches_played}</td>
+                <td>{pair.points}</td>
               </tr>
             ))}
           </tbody>
@@ -208,7 +223,7 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
       </div>
 
       {sortedPairs.length === 0 && (
-        <div className="no-pairs">
+        <div className="modern-match-error">
           <p>📝 No hay parejas registradas en esta reta</p>
         </div>
       )}

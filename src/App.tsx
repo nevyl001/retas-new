@@ -1030,10 +1030,17 @@ function App() {
                     {selectedTournament.is_started && (
                       <div className="tournament-content">
                         {/* Lista de partidos */}
-                        <div className="matches-section">
-                          <h3>🎾 Partidos ({matches.length} total)</h3>
+                        <div className="modern-matches-section">
+                          <div className="modern-matches-header">
+                            <div className="modern-matches-title">
+                              <h3>🎾 Partidos</h3>
+                              <span className="modern-matches-count">
+                                {matches.length} total
+                              </span>
+                            </div>
+                          </div>
                           {matches.length === 0 ? (
-                            <div className="no-matches">
+                            <div className="modern-match-error">
                               <p>📝 No hay partidos programados aún</p>
                               <p>
                                 Inicia la reta para generar los partidos
@@ -1043,12 +1050,19 @@ function App() {
                           ) : (
                             Object.entries(matchesByRound).map(
                               ([round, roundMatches]) => (
-                                <div key={round} className="round-section">
-                                  <h4>
-                                    🔄 Ronda {round} ({roundMatches.length}{" "}
-                                    partidos)
-                                  </h4>
-                                  <div className="matches-container">
+                                <div
+                                  key={round}
+                                  className="modern-round-section"
+                                >
+                                  <div className="modern-round-header">
+                                    <h4 className="modern-round-title">
+                                      🔄 Ronda {round}
+                                    </h4>
+                                    <span className="modern-round-count">
+                                      {roundMatches.length} partidos
+                                    </span>
+                                  </div>
+                                  <div className="modern-matches-grid">
                                     {roundMatches.map((match) => (
                                       <MatchCardWithResults
                                         key={match.id}
@@ -1153,109 +1167,61 @@ function App() {
       ) : (
         /* Pantalla de ganador - Nueva ventana */
         <div className="winner-page">
-          {/* Pantalla de ganador - Versión Escritorio */}
+          {/* Pantalla de ganador - Versión Moderna */}
           {showWinnerScreen && winner && (
-            <div className="winner-screen">
-              <div className="winner-content">
-                <div className="winner-celebration">
-                  <h1 className="winner-title">🏆 ¡FELICIDADES! 🏆</h1>
-                  <div className="winner-names">
+            <div className="modern-winner-screen">
+              <div className="modern-winner-modal">
+                <div className="modern-winner-header">
+                  <h1 className="modern-winner-title">🏆 ¡FELICIDADES! 🏆</h1>
+                  <div className="modern-winner-names">
                     {winner.player1?.name} / {winner.player2?.name}
                   </div>
-                  <div className="winner-subtitle">
+                  <div className="modern-winner-subtitle">
                     ¡Son los campeones de la reta!
                   </div>
-                  <div className="winner-stats">
-                    <div className="stat-item">
-                      <span className="stat-number">
-                        {tournamentWinner
-                          ? tournamentWinner.totalSets
-                          : winner.sets_won}
-                      </span>
-                      <span className="stat-label">Sets Ganados</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-number">
-                        {tournamentWinner
-                          ? tournamentWinner.matchesPlayed
-                          : winner.games_won}
-                      </span>
-                      <span className="stat-label">Partidos Ganados</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-number">
-                        {tournamentWinner
-                          ? tournamentWinner.totalPoints
-                          : winner.points}
-                      </span>
-                      <span className="stat-label">Puntos Totales</span>
-                    </div>
-                  </div>
-                  <button
-                    className="back-button"
-                    onClick={hideWinnerScreenHandler}
-                  >
-                    🏠 Volver
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Pantalla de ganador - Versión Móvil */}
-          {showWinnerScreen && winner && (
-            <div className="winner-screen-mobile">
-              <div className="winner-mobile-container">
-                <div className="winner-mobile-header">
-                  <h1 className="winner-mobile-title">🏆 ¡FELICIDADES! 🏆</h1>
-                  <p className="winner-mobile-subtitle">
-                    ¡Son los campeones de la reta!
-                  </p>
                 </div>
 
-                <div className="winner-mobile-names">
-                  {winner.player1?.name} / {winner.player2?.name}
-                </div>
-
-                <div className="winner-mobile-stats">
-                  <div className="winner-mobile-stat">
-                    <span className="winner-mobile-stat-number">
+                <div className="modern-winner-stats">
+                  <div className="modern-winner-stat">
+                    <span className="modern-winner-stat-number">
                       {tournamentWinner
                         ? tournamentWinner.totalSets
                         : winner.sets_won}
                     </span>
-                    <span className="winner-mobile-stat-label">
+                    <span className="modern-winner-stat-label">
                       Sets Ganados
                     </span>
                   </div>
-                  <div className="winner-mobile-stat">
-                    <span className="winner-mobile-stat-number">
+                  <div className="modern-winner-stat">
+                    <span className="modern-winner-stat-number">
                       {tournamentWinner
                         ? tournamentWinner.matchesPlayed
                         : winner.games_won}
                     </span>
-                    <span className="winner-mobile-stat-label">
+                    <span className="modern-winner-stat-label">
                       Partidos Ganados
                     </span>
                   </div>
-                  <div className="winner-mobile-stat">
-                    <span className="winner-mobile-stat-number">
+                  <div className="modern-winner-stat">
+                    <span className="modern-winner-stat-number">
                       {tournamentWinner
                         ? tournamentWinner.totalPoints
                         : winner.points}
                     </span>
-                    <span className="winner-mobile-stat-label">
+                    <span className="modern-winner-stat-label">
                       Puntos Totales
                     </span>
                   </div>
                 </div>
 
-                <button
-                  className="winner-mobile-back-btn"
-                  onClick={hideWinnerScreenHandler}
-                >
-                  Volver
-                </button>
+                <div className="modern-winner-actions">
+                  <button
+                    className="modern-winner-back-btn"
+                    onClick={hideWinnerScreenHandler}
+                  >
+                    🏠 Volver
+                  </button>
+                </div>
               </div>
             </div>
           )}

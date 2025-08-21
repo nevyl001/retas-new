@@ -183,37 +183,37 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
   };
 
   return (
-    <div className="score-editor-overlay">
-      <div className="score-editor-modal">
+    <div className="modern-score-editor-overlay">
+      <div className="modern-score-editor-modal">
         {/* Header */}
-        <div className="score-editor-header">
-          <div className="score-editor-title">
-            <span className="score-editor-icon">🎾</span>
+        <div className="modern-score-editor-header">
+          <div className="modern-score-editor-title">
+            <span className="modern-score-editor-icon">🎾</span>
             <h3>Editor de Marcador</h3>
           </div>
-          <button className="score-editor-close" onClick={onClose}>
+          <button className="modern-score-editor-close" onClick={onClose}>
             ✕
           </button>
         </div>
 
         {/* Contenido */}
-        <div className="score-editor-content">
+        <div className="modern-score-editor-content">
           {/* Información del partido */}
-          <div className="score-editor-match-info">
-            <div className="score-editor-match-title">
+          <div className="modern-score-editor-match-info">
+            <div className="modern-score-editor-match-title">
               <span>🏆</span>
               Partido {match.court} - Ronda {match.round}
             </div>
-            <div className="score-editor-pairs">
-              <div className="score-editor-pair">
-                <div className="score-editor-pair-label">Pareja 1</div>
-                <div className="score-editor-pair-names">
+            <div className="modern-score-editor-pairs">
+              <div className="modern-score-editor-pair">
+                <div className="modern-score-editor-pair-label">Pareja 1</div>
+                <div className="modern-score-editor-pair-names">
                   {getPairName(match.pair1_id)}
                 </div>
               </div>
-              <div className="score-editor-pair">
-                <div className="score-editor-pair-label">Pareja 2</div>
-                <div className="score-editor-pair-names">
+              <div className="modern-score-editor-pair">
+                <div className="modern-score-editor-pair-label">Pareja 2</div>
+                <div className="modern-score-editor-pair-names">
                   {getPairName(match.pair2_id)}
                 </div>
               </div>
@@ -221,14 +221,14 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
           </div>
 
           {/* Juegos */}
-          <div className="score-editor-games-section">
-            <div className="score-editor-games-header">
-              <div className="score-editor-games-title">
+          <div className="modern-score-editor-games-section">
+            <div className="modern-score-editor-games-header">
+              <div className="modern-score-editor-games-title">
                 <span>🎾</span>
                 Juegos ({games.length})
               </div>
               <button
-                className="score-editor-add-game"
+                className="modern-score-editor-add-game"
                 onClick={addGame}
                 disabled={loading}
               >
@@ -238,19 +238,19 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
             </div>
 
             {games.length === 0 ? (
-              <div className="score-editor-error">
+              <div className="modern-score-editor-error">
                 <p>No hay juegos. Haz clic en "Agregar Juego" para comenzar.</p>
               </div>
             ) : (
-              <div className="score-editor-games-list">
+              <div className="modern-score-editor-games-list">
                 {games.map((game, index) => (
-                  <div key={game.id} className="score-editor-game">
-                    <div className="score-editor-game-header">
-                      <div className="score-editor-game-title">
+                  <div key={game.id} className="modern-score-editor-game">
+                    <div className="modern-score-editor-game-header">
+                      <div className="modern-score-editor-game-title">
                         Juego {index + 1}
                       </div>
                       <button
-                        className="score-editor-remove-game"
+                        className="modern-score-editor-remove-game"
                         onClick={() => removeGame(game.id)}
                       >
                         <span>🗑️</span>
@@ -258,13 +258,13 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
                       </button>
                     </div>
 
-                    <div className="score-editor-score-container">
-                      <div className="score-editor-score-input">
-                        <div className="score-editor-pair-name">
+                    <div className="modern-score-editor-score-container">
+                      <div className="modern-score-editor-score-input">
+                        <div className="modern-score-editor-pair-name">
                           {getPairName(match.pair1_id)}
                         </div>
                         <input
-                          className="score-editor-input"
+                          className="modern-score-editor-input"
                           type="number"
                           min="0"
                           value={game.pair1_games}
@@ -278,14 +278,14 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
                         />
                       </div>
 
-                      <div className="score-editor-separator">-</div>
+                      <div className="modern-score-editor-separator">-</div>
 
-                      <div className="score-editor-score-input">
-                        <div className="score-editor-pair-name">
+                      <div className="modern-score-editor-score-input">
+                        <div className="modern-score-editor-pair-name">
                           {getPairName(match.pair2_id)}
                         </div>
                         <input
-                          className="score-editor-input"
+                          className="modern-score-editor-input"
                           type="number"
                           min="0"
                           value={game.pair2_games}
@@ -307,22 +307,22 @@ export const MatchScoreEditor: React.FC<MatchScoreEditorProps> = ({
 
           {/* Error */}
           {error && (
-            <div className="score-editor-error">
+            <div className="modern-score-editor-error">
               <p>❌ {error}</p>
             </div>
           )}
 
           {/* Botones */}
-          <div className="score-editor-actions">
+          <div className="modern-score-editor-actions">
             <button
-              className="score-editor-finish"
+              className="modern-score-editor-finish"
               onClick={finishMatch}
               disabled={loading || games.length === 0}
             >
               <span>🏆</span>
               {loading ? "Finalizando..." : "Finalizar Partido"}
             </button>
-            <button className="score-editor-cancel" onClick={onClose}>
+            <button className="modern-score-editor-cancel" onClick={onClose}>
               <span>✕</span>
               Cancelar
             </button>
