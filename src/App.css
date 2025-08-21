@@ -2119,7 +2119,7 @@ h1::before {
 }
 
 .no-tournament-selected h2 {
-  color: #333333;
+  color: #ffd700;
   margin-bottom: 20px;
   font-size: 2rem;
 }
@@ -2138,7 +2138,7 @@ h1::before {
 
 /* Matches Section */
 .matches-section h3 {
-  color: #333333;
+  color: #ffd700;
   margin-bottom: 15px;
   font-size: 1.3rem;
 }
@@ -13673,114 +13673,128 @@ td {
 /* iPhone 15 Pro Max y dispositivos similares */
 @media (max-width: 430px) {
   .elegant-player-manager {
-    padding: 16px;
-    margin: 0 4px;
+    padding: 8px;
+    margin: 0;
+    border-radius: 16px;
   }
 
   .elegant-player-header {
-    padding: 16px;
-    margin: -16px -16px 16px -16px;
+    padding: 12px 8px;
+    margin: -8px -8px 12px -8px;
+    border-radius: 16px 16px 0 0;
   }
 
   .elegant-header-title h3 {
-    font-size: 1.1rem;
-  }
-
-  .elegant-player-count {
-    padding: 6px 12px;
-    font-size: 1rem;
-  }
-
-  .elegant-add-btn {
-    padding: 10px 16px;
-    font-size: 0.9rem;
-    min-width: 120px;
-  }
-
-  .elegant-players-grid {
-    gap: 10px;
-  }
-
-  .elegant-player-card {
-    padding: 14px;
-    gap: 10px;
-  }
-
-  .elegant-player-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 0.9rem;
-  }
-
-  .elegant-player-name {
     font-size: 0.95rem;
   }
 
-  .elegant-pair-indicator {
+  .elegant-header-title p {
     font-size: 0.8rem;
   }
 
-  .elegant-delete-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 0.9rem;
-  }
-}
-
-/* Dispositivos muy pequeños */
-@media (max-width: 375px) {
-  .elegant-player-manager {
-    padding: 12px;
-    margin: 0 2px;
-  }
-
-  .elegant-player-header {
-    padding: 12px;
-    margin: -12px -12px 12px -12px;
-  }
-
-  .elegant-header-title h3 {
-    font-size: 1rem;
-  }
-
   .elegant-player-count {
-    padding: 5px 10px;
-    font-size: 0.9rem;
+    padding: 4px 8px;
+    font-size: 0.85rem;
   }
 
   .elegant-add-btn {
     padding: 8px 12px;
-    font-size: 0.85rem;
-    min-width: 100px;
+    font-size: 0.8rem;
+    min-width: 90px;
   }
 
   .elegant-players-grid {
-    gap: 8px;
+    gap: 6px;
   }
 
   .elegant-player-card {
-    padding: 12px;
+    padding: 10px;
     gap: 8px;
+    border-radius: 12px;
   }
 
   .elegant-player-avatar {
     width: 32px;
     height: 32px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
   .elegant-player-name {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 
   .elegant-pair-indicator {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   .elegant-delete-btn {
     width: 28px;
     height: 28px;
     font-size: 0.8rem;
+  }
+}
+
+/* Dispositivos muy pequeños */
+@media (max-width: 375px) {
+  .elegant-player-manager {
+    padding: 6px;
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .elegant-player-header {
+    padding: 10px 6px;
+    margin: -6px -6px 10px -6px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .elegant-header-title h3 {
+    font-size: 0.9rem;
+  }
+
+  .elegant-header-title p {
+    font-size: 0.75rem;
+  }
+
+  .elegant-player-count {
+    padding: 3px 6px;
+    font-size: 0.8rem;
+  }
+
+  .elegant-add-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    min-width: 80px;
+  }
+
+  .elegant-players-grid {
+    gap: 4px;
+  }
+
+  .elegant-player-card {
+    padding: 8px;
+    gap: 6px;
+    border-radius: 10px;
+  }
+
+  .elegant-player-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .elegant-player-name {
+    font-size: 0.8rem;
+  }
+
+  .elegant-pair-indicator {
+    font-size: 0.65rem;
+  }
+
+  .elegant-delete-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
   }
 }
 
@@ -14882,69 +14896,15 @@ td {
 /* iPhone 15 Pro Max y dispositivos similares */
 @media (max-width: 430px) {
   .compact-pairs-manager {
-    padding: 8px;
-    margin: 0 4px;
-  }
-
-  .compact-header {
-    padding: 12px;
-    margin: -8px -8px 12px -8px;
-  }
-
-  .compact-title h3 {
-    font-size: 1rem;
-  }
-
-  .compact-pairs-grid {
-    gap: 8px;
-    padding: 2px;
-  }
-
-  .compact-pair-card {
-    padding: 12px;
-    gap: 6px;
-    border-radius: 12px;
-  }
-
-  .compact-pair-number {
-    padding: 4px 6px;
-    font-size: 0.75rem;
-    min-width: 28px;
-  }
-
-  .compact-pair-names {
-    font-size: 0.8rem;
-    line-height: 1.1;
-  }
-
-  .compact-stats {
-    gap: 3px;
-  }
-
-  .compact-stat {
-    min-width: 30px;
-    padding: 2px 3px;
-  }
-
-  .compact-stat-label {
-    font-size: 0.55rem;
-  }
-
-  .compact-stat-value {
-    font-size: 0.7rem;
-  }
-}
-
-/* Dispositivos muy pequeños */
-@media (max-width: 375px) {
-  .compact-pairs-manager {
     padding: 6px;
-    margin: 0 2px;
+    margin: 0;
+    border-radius: 16px;
   }
 
   .compact-header {
-    padding: 10px;
+    padding: 10px 6px;
     margin: -6px -6px 10px -6px;
+    border-radius: 16px 16px 0 0;
   }
 
   .compact-title h3 {
@@ -14959,7 +14919,7 @@ td {
   .compact-pair-card {
     padding: 10px;
     gap: 5px;
-    border-radius: 10px;
+    border-radius: 12px;
   }
 
   .compact-pair-number {
@@ -14988,6 +14948,64 @@ td {
 
   .compact-stat-value {
     font-size: 0.65rem;
+  }
+}
+
+/* Dispositivos muy pequeños */
+@media (max-width: 375px) {
+  .compact-pairs-manager {
+    padding: 4px;
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .compact-header {
+    padding: 8px 4px;
+    margin: -4px -4px 8px -4px;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .compact-title h3 {
+    font-size: 0.85rem;
+  }
+
+  .compact-pairs-grid {
+    gap: 4px;
+    padding: 0;
+  }
+
+  .compact-pair-card {
+    padding: 8px;
+    gap: 4px;
+    border-radius: 10px;
+  }
+
+  .compact-pair-number {
+    padding: 2px 4px;
+    font-size: 0.65rem;
+    min-width: 22px;
+  }
+
+  .compact-pair-names {
+    font-size: 0.7rem;
+    line-height: 1.1;
+  }
+
+  .compact-stats {
+    gap: 1px;
+  }
+
+  .compact-stat {
+    min-width: 25px;
+    padding: 1px;
+  }
+
+  .compact-stat-label {
+    font-size: 0.45rem;
+  }
+
+  .compact-stat-value {
+    font-size: 0.6rem;
   }
 }
 
