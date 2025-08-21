@@ -144,7 +144,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
   return (
     <div className="tournament-manager">
-      <div className="tournament-header">
+      <div className="tournament-manager-banner">
         <h2>🏆 ¡Selecciona o Crea tu Reta de Pádel y ¡Diviértete! 🎾</h2>
       </div>
 

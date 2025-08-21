@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import "./App.css";
 import { TournamentManager } from "./components/TournamentManager";
-import { PlayerManager } from "./components/PlayerManager";
-import { PairManager } from "./components/PairManager";
+import { ModernPlayerManager } from "./components/ModernPlayerManager";
+import { NewPairManager } from "./components/NewPairManager";
+import { DebugPanelContent } from "./components/DebugPanelContent";
+import { TournamentStatusContent } from "./components/TournamentStatusContent";
 import { MatchScoreEditor } from "./components/MatchScoreEditor";
 
 import StandingsTable from "./components/StandingsTable";
@@ -47,6 +49,7 @@ function App() {
 
   const [forceRefresh, setForceRefresh] = useState(0);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [showTournamentStatus, setShowTournamentStatus] = useState(false);
   const [showScoreCorrector, setShowScoreCorrector] = useState(false);
   const [selectedCorrectorMatch, setSelectedCorrectorMatch] =
     useState<Match | null>(null);
@@ -564,200 +567,360 @@ function App() {
               {selectedTournament ? (
                 <>
                   <div className="tournament-details">
-                    {/* Gestión de Jugadores */}
-                    <div className="player-management-section">
-                      <div className="player-management-header">
-                        <button
-                          className="toggle-player-manager-btn"
-                          onClick={() =>
-                            setShowPlayerManager(!showPlayerManager)
-                          }
-                        >
-                          {showPlayerManager
-                            ? "Ocultar Jugadores"
-                            : "Gestionar Jugadores"}
-                        </button>
-                      </div>
-
-                      {showPlayerManager && (
-                        <div className="player-manager-container">
-                          <PlayerManager
-                            playersInPairs={pairs.flatMap((pair) => [
-                              pair.player1_id,
-                              pair.player2_id,
-                            ])}
-                            onPlayerSelect={(players) => {
-                              console.log("=== SELECCIÓN DE JUGADORES ===");
-                              console.log("Players selected:", players.length);
-                              players.forEach((player, index) => {
+                    {/* Cuadrícula de 4 Componentes Uniformes */}
+                    <div className="four-components-grid">
+                      {/* Gestión de Jugadores */}
+                      <div className="component-card player-management-section">
+                        <div className="component-header">
+                          <div className="component-icon">👥</div>
+                          <div className="component-title">
+                            <h3>Gestión de Jugadores</h3>
+                            <span className="component-subtitle">
+                              Administrar Participantes
+                            </span>
+                          </div>
+                          <button
+                            className="component-toggle-btn"
+                            onClick={() =>
+                              setShowPlayerManager(!showPlayerManager)
+                            }
+                          >
+                            {showPlayerManager ? "❌" : "👁️"}
+                          </button>
+                        </div>
+                        {showPlayerManager && (
+                          <div className="component-content">
+                            <ModernPlayerManager
+                              playersInPairs={pairs.flatMap((pair) => [
+                                pair.player1_id,
+                                pair.player2_id,
+                              ])}
+                              onPlayerSelect={(players) => {
+                                console.log("=== SELECCIÓN DE JUGADORES ===");
                                 console.log(
-                                  `Player ${index + 1}:`,
-                                  player.name,
-                                  "(ID:",
-                                  player.id + ")"
+                                  "Players selected:",
+                                  players.length
                                 );
-                              });
-
-                              // Validación: Verificar si algún jugador ya está en una pareja
-                              const playersInPairs = players.filter(
-                                (player) => {
-                                  const isInPair = pairs.some(
-                                    (pair) =>
-                                      pair.player1_id === player.id ||
-                                      pair.player2_id === player.id
+                                players.forEach((player, index) => {
+                                  console.log(
+                                    `Player ${index + 1}:`,
+                                    player.name,
+                                    "(ID:",
+                                    player.id + ")"
                                   );
+                                });
 
-                                  if (isInPair) {
-                                    const existingPair = pairs.find(
+                                // Validación: Verificar si algún jugador ya está en una pareja
+                                const playersInPairs = players.filter(
+                                  (player) => {
+                                    const isInPair = pairs.some(
                                       (pair) =>
                                         pair.player1_id === player.id ||
                                         pair.player2_id === player.id
                                     );
-                                    console.log(
-                                      `🚨 JUGADOR YA EN PAREJA: ${
-                                        player.name
-                                      } está en pareja con ${
-                                        existingPair?.player1?.id === player.id
-                                          ? existingPair?.player2?.name
-                                          : existingPair?.player1?.name
-                                      }`
-                                    );
+
+                                    if (isInPair) {
+                                      const existingPair = pairs.find(
+                                        (pair) =>
+                                          pair.player1_id === player.id ||
+                                          pair.player2_id === player.id
+                                      );
+                                      console.log(
+                                        `🚨 JUGADOR YA EN PAREJA: ${
+                                          player.name
+                                        } está en pareja con ${
+                                          existingPair?.player1?.id ===
+                                          player.id
+                                            ? existingPair?.player2?.name
+                                            : existingPair?.player1?.name
+                                        }`
+                                      );
+                                    }
+
+                                    return isInPair;
                                   }
-
-                                  return isInPair;
-                                }
-                              );
-
-                              if (playersInPairs.length > 0) {
-                                const playerNames = playersInPairs
-                                  .map((p) => p.name)
-                                  .join(", ");
-                                console.log(
-                                  "🚨 ERROR: Jugadores ya están en parejas:",
-                                  playerNames
                                 );
-                                setError(
-                                  `Los jugadores ${playerNames} ya están en parejas existentes. Debes eliminar sus parejas actuales antes de poder seleccionarlos nuevamente.`
-                                );
-                                return;
-                              }
 
-                              // Validación: No permitir jugadores con nombres iguales
-                              if (players.length === 2) {
-                                const player1 = players[0];
-                                const player2 = players[1];
-
-                                if (
-                                  player1.name.toLowerCase() ===
-                                  player2.name.toLowerCase()
-                                ) {
+                                if (playersInPairs.length > 0) {
+                                  const playerNames = playersInPairs
+                                    .map((p) => p.name)
+                                    .join(", ");
                                   console.log(
-                                    "🚨 ERROR: Jugadores con nombres iguales detectados"
-                                  );
-                                  console.log(
-                                    "Player 1:",
-                                    player1.name,
-                                    "(ID:",
-                                    player1.id + ")"
-                                  );
-                                  console.log(
-                                    "Player 2:",
-                                    player2.name,
-                                    "(ID:",
-                                    player2.id + ")"
+                                    "🚨 ERROR: Jugadores ya están en parejas:",
+                                    playerNames
                                   );
                                   setError(
-                                    "No puedes seleccionar dos jugadores con el mismo nombre"
+                                    `Los jugadores ${playerNames} ya están en parejas existentes. Debes eliminar sus parejas actuales antes de poder seleccionarlos nuevamente.`
                                   );
                                   return;
                                 }
 
-                                // Validación: Verificar si ya existe una pareja con estos jugadores
-                                const existingPair = pairs.find((pair) => {
-                                  const sameIds =
-                                    (pair.player1_id === player1.id &&
-                                      pair.player2_id === player2.id) ||
-                                    (pair.player1_id === player2.id &&
-                                      pair.player2_id === player1.id);
+                                // Validación: No permitir jugadores con nombres iguales
+                                if (players.length === 2) {
+                                  const player1 = players[0];
+                                  const player2 = players[1];
 
-                                  const sameNames =
-                                    (pair.player1?.name.toLowerCase() ===
-                                      player1.name.toLowerCase() &&
-                                      pair.player2?.name.toLowerCase() ===
-                                        player2.name.toLowerCase()) ||
-                                    (pair.player1?.name.toLowerCase() ===
-                                      player2.name.toLowerCase() &&
-                                      pair.player2?.name.toLowerCase() ===
-                                        player1.name.toLowerCase());
-
-                                  if (sameIds || sameNames) {
+                                  if (
+                                    player1.name.toLowerCase() ===
+                                    player2.name.toLowerCase()
+                                  ) {
                                     console.log(
-                                      "🚨 PAREJA DUPLICADA DETECTADA:",
+                                      "🚨 ERROR: Jugadores con nombres iguales detectados"
+                                    );
+                                    console.log(
+                                      "Player 1:",
                                       player1.name,
-                                      "+",
-                                      player2.name
+                                      "(ID:",
+                                      player1.id + ")"
                                     );
-                                    console.log("Existing pair:", existingPair);
+                                    console.log(
+                                      "Player 2:",
+                                      player2.name,
+                                      "(ID:",
+                                      player2.id + ")"
+                                    );
+                                    setError(
+                                      "No puedes seleccionar dos jugadores con el mismo nombre"
+                                    );
+                                    return;
                                   }
 
-                                  return sameIds || sameNames;
-                                });
+                                  // Validación: Verificar si ya existe una pareja con estos jugadores
+                                  const existingPair = pairs.find((pair) => {
+                                    const sameIds =
+                                      (pair.player1_id === player1.id &&
+                                        pair.player2_id === player2.id) ||
+                                      (pair.player1_id === player2.id &&
+                                        pair.player2_id === player1.id);
 
-                                if (existingPair) {
+                                    const sameNames =
+                                      (pair.player1?.name.toLowerCase() ===
+                                        player1.name.toLowerCase() &&
+                                        pair.player2?.name.toLowerCase() ===
+                                          player2.name.toLowerCase()) ||
+                                      (pair.player1?.name.toLowerCase() ===
+                                        player2.name.toLowerCase() &&
+                                        pair.player2?.name.toLowerCase() ===
+                                          player1.name.toLowerCase());
+
+                                    if (sameIds || sameNames) {
+                                      console.log(
+                                        "🚨 PAREJA DUPLICADA DETECTADA:",
+                                        player1.name,
+                                        "+",
+                                        player2.name
+                                      );
+                                      console.log(
+                                        "Existing pair:",
+                                        existingPair
+                                      );
+                                    }
+
+                                    return sameIds || sameNames;
+                                  });
+
+                                  if (existingPair) {
+                                    console.log(
+                                      "🚨 ERROR: Pareja ya existe en la base de datos"
+                                    );
+                                    setError(
+                                      `La pareja ${player1.name} / ${player2.name} ya existe en la reta`
+                                    );
+                                    return;
+                                  }
+
+                                  // Si llegamos aquí, la pareja es válida
                                   console.log(
-                                    "🚨 ERROR: Pareja ya existe en la base de datos"
+                                    "✅ PAREJA VÁLIDA:",
+                                    player1.name,
+                                    "+",
+                                    player2.name
                                   );
-                                  setError(
-                                    `La pareja ${player1.name} / ${player2.name} ya existe en la reta`
-                                  );
-                                  return;
+                                  addPair(player1, player2);
+                                  setSelectedPlayers([]); // Limpiar selección después de crear la pareja
+                                } else {
+                                  setSelectedPlayers(players);
                                 }
-
-                                // Si llegamos aquí, la pareja es válida
-                                console.log(
-                                  "✅ PAREJA VÁLIDA:",
-                                  player1.name,
-                                  "+",
-                                  player2.name
-                                );
-                                addPair(player1, player2);
-                                setSelectedPlayers([]); // Limpiar selección después de crear la pareja
-                              } else {
-                                setSelectedPlayers(players);
-                              }
-                            }}
-                            selectedPlayers={selectedPlayers}
-                            allowMultipleSelection={true}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Gestión de Parejas - NUEVO COMPONENTE */}
-                    <div className="pair-management-section">
-                      <div className="pair-management-header">
-                        <button
-                          className="toggle-pair-manager-btn"
-                          onClick={() => setShowPairManager(!showPairManager)}
-                        >
-                          {showPairManager
-                            ? "✏️ Ocultar Gestión de Parejas"
-                            : "✏️ Mostrar Gestión de Parejas"}
-                        </button>
+                              }}
+                              selectedPlayers={selectedPlayers}
+                              allowMultipleSelection={true}
+                            />
+                          </div>
+                        )}
                       </div>
 
-                      {showPairManager && (
-                        <div className="pair-manager-container">
-                          <PairManager
-                            pairs={pairs}
-                            onPairUpdate={updatePairPlayers}
-                            onPairDelete={deletePair}
-                          />
+                      {/* Gestión de Parejas */}
+                      <div className="component-card pair-management-section">
+                        <div className="component-header">
+                          <div className="component-icon">✏️</div>
+                          <div className="component-title">
+                            <h3>Gestión de Parejas</h3>
+                            <span className="component-subtitle">
+                              Administrar Equipos
+                            </span>
+                          </div>
+                          <button
+                            className="component-toggle-btn"
+                            onClick={() => setShowPairManager(!showPairManager)}
+                          >
+                            {showPairManager ? "❌" : "👁️"}
+                          </button>
                         </div>
-                      )}
+                        {showPairManager && (
+                          <div className="component-content">
+                            <NewPairManager
+                              pairs={pairs}
+                              onPairUpdate={updatePairPlayers}
+                              onPairDelete={deletePair}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Panel de Estado del Torneo */}
+                      <div className="component-card tournament-status-card">
+                        <div className="component-header">
+                          <div className="component-icon">🏆</div>
+                          <div className="component-title">
+                            <h3>
+                              {selectedTournament.is_finished
+                                ? "Reta Finalizada"
+                                : "Reta en Progreso"}
+                            </h3>
+                            <span className="component-subtitle">
+                              Estado del Torneo
+                            </span>
+                          </div>
+                          <button
+                            className="component-toggle-btn"
+                            onClick={() =>
+                              setShowTournamentStatus(!showTournamentStatus)
+                            }
+                          >
+                            {showTournamentStatus ? "❌" : "👁️"}
+                          </button>
+                        </div>
+                        {showTournamentStatus && (
+                          <div className="component-content">
+                            <TournamentStatusContent
+                              tournament={selectedTournament}
+                              pairsCount={pairs.length}
+                              loading={loading}
+                              onReset={async () => {
+                                if (
+                                  window.confirm(
+                                    "¿Estás seguro de que quieres resetear la reta? Esto eliminará todos los partidos existentes."
+                                  )
+                                ) {
+                                  try {
+                                    setLoading(true);
+                                    await deleteMatchesByTournament(
+                                      selectedTournament.id
+                                    );
+                                    await updateTournament(
+                                      selectedTournament.id,
+                                      {
+                                        is_started: false,
+                                      }
+                                    );
+                                    setSelectedTournament((prev) =>
+                                      prev
+                                        ? { ...prev, is_started: false }
+                                        : null
+                                    );
+                                    setMatches([]);
+                                    await loadTournamentData();
+                                    setSuccessModalData({
+                                      title: "¡Reta Reseteada!",
+                                      message:
+                                        "La reta ha sido reseteada y está lista para iniciar nuevamente.",
+                                      icon: "🔄",
+                                    });
+                                    setShowSuccessModal(true);
+                                  } catch (error) {
+                                    setError(
+                                      "Error al resetear la reta: " +
+                                        (error as Error).message
+                                    );
+                                  } finally {
+                                    setLoading(false);
+                                  }
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Panel de Debug */}
+                      <div className="component-card debug-panel-card">
+                        <div className="component-header">
+                          <div className="component-icon">🔧</div>
+                          <div className="component-title">
+                            <h3>Panel de Debug</h3>
+                            <span className="component-subtitle">
+                              Información del Sistema
+                            </span>
+                          </div>
+                          <button
+                            className="component-toggle-btn"
+                            onClick={() => setShowDebugInfo(!showDebugInfo)}
+                          >
+                            {showDebugInfo ? "❌" : "👁️"}
+                          </button>
+                        </div>
+                        {showDebugInfo && (
+                          <div className="component-content">
+                            <DebugPanelContent
+                              status={
+                                selectedTournament.is_started
+                                  ? "✅ Iniciado"
+                                  : "⏳ Pendiente"
+                              }
+                              pairsCount={pairs.length}
+                              matchesCount={matches.length}
+                              onTestConnection={async () => {
+                                try {
+                                  const result = await testConnection();
+                                  alert(
+                                    result
+                                      ? "✅ Conexión exitosa a la base de datos"
+                                      : "❌ Error de conexión"
+                                  );
+                                } catch (error) {
+                                  alert(
+                                    "❌ Error al probar la conexión: " +
+                                      (error as Error).message
+                                  );
+                                }
+                              }}
+                              onReloadData={() => {
+                                loadTournamentData();
+                                setForceRefresh((prev) => prev + 1);
+                              }}
+                              onVerifyStatus={async () => {
+                                try {
+                                  alert(
+                                    `📊 Estado del Sistema:\n` +
+                                      `• Torneos: 1\n` +
+                                      `• Parejas: ${pairs.length}\n` +
+                                      `• Partidos: ${matches.length}\n` +
+                                      `• Estado: ✅ Todo funcionando correctamente`
+                                  );
+                                } catch (error) {
+                                  alert(
+                                    "❌ Error al verificar estado: " +
+                                      (error as Error).message
+                                  );
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {!selectedTournament.is_started ? (
+                    {!selectedTournament.is_started && (
                       <div className="start-tournament-section">
                         <h3>🚀 Iniciar Reta</h3>
                         <div className="tournament-info">
@@ -788,213 +951,31 @@ function App() {
                             : "🚀 ¡Iniciar Reta!"}
                         </button>
                       </div>
-                    ) : (
-                      <div className="tournament-status-section">
-                        <h3>
-                          {selectedTournament.is_finished
-                            ? "🏆 Reta Finalizada"
-                            : "🏆 Reta en Progreso"}
-                        </h3>
-                        <div className="tournament-info">
-                          <p>
-                            {selectedTournament.is_finished
-                              ? "La reta ha sido finalizada exitosamente"
-                              : "La reta ya está iniciada y en progreso"}
-                          </p>
-                          <p>Tienes {pairs.length} parejas registradas</p>
-                          <p>
-                            Estado de la reta:{" "}
-                            {selectedTournament.is_finished
-                              ? "Finalizada"
-                              : "Iniciada"}
-                          </p>
-                        </div>
-                        <button
-                          className="reset-button"
-                          onClick={async () => {
-                            if (
-                              window.confirm(
-                                "¿Estás seguro de que quieres resetear la reta? Esto eliminará todos los partidos existentes."
-                              )
-                            ) {
-                              try {
-                                setLoading(true);
-                                await deleteMatchesByTournament(
-                                  selectedTournament.id
-                                );
-                                await updateTournament(selectedTournament.id, {
-                                  is_started: false,
-                                });
-                                setSelectedTournament((prev) =>
-                                  prev ? { ...prev, is_started: false } : null
-                                );
-                                setMatches([]);
-                                await loadTournamentData();
-                                setSuccessModalData({
-                                  title: "¡Reta Reseteada!",
-                                  message:
-                                    "La reta ha sido reseteada y está lista para iniciar nuevamente.",
-                                  icon: "🔄",
-                                });
-                                setShowSuccessModal(true);
-                              } catch (error) {
-                                setError(
-                                  "Error al resetear la reta: " +
-                                    (error as Error).message
-                                );
-                              } finally {
-                                setLoading(false);
-                              }
-                            }
-                          }}
-                          disabled={loading}
-                        >
-                          {loading ? "⏳ Reseteando..." : "🔄 Resetear Reta"}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Debug info - COLAPSIBLE */}
-                    {selectedTournament && (
-                      <div className="debug-section">
-                        <button
-                          className="debug-toggle-btn"
-                          onClick={() => setShowDebugInfo(!showDebugInfo)}
-                        >
-                          {showDebugInfo ? "🔽" : "🔼"} Debug Info
-                        </button>
-
-                        {showDebugInfo && (
-                          <div className="debug-info">
-                            <div className="debug-header">
-                              <h4>🔧 Información de Debug</h4>
-                              <div className="debug-stats">
-                                <span>
-                                  Estado:{" "}
-                                  {selectedTournament.is_started
-                                    ? "✅ Iniciado"
-                                    : "⏳ Pendiente"}
-                                </span>
-                                <span>Parejas: {pairs.length}</span>
-                                <span>Partidos: {matches.length}</span>
-                              </div>
-                            </div>
-
-                            <div className="debug-buttons">
-                              <button
-                                onClick={async () => {
-                                  console.log("=== PROBAR CONEXIÓN ===");
-                                  const isConnected = await testConnection();
-                                  if (isConnected) {
-                                    setError("");
-                                  } else {
-                                    setError(
-                                      "❌ Error de conexión a Supabase. Verifica tu configuración."
-                                    );
-                                  }
-                                }}
-                                className="debug-btn connection-btn"
-                              >
-                                🔌 Probar Conexión
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  console.log(
-                                    "=== FORZANDO RECARGA DE DATOS ==="
-                                  );
-                                  loadTournamentData();
-                                }}
-                                className="debug-btn reload-btn"
-                              >
-                                🔄 Recargar Datos
-                              </button>
-
-                              <button
-                                onClick={async () => {
-                                  console.log(
-                                    "=== VERIFICANDO ESTADO DEL TORNEO ==="
-                                  );
-                                  try {
-                                    console.log(
-                                      "Estado actual del torneo:",
-                                      selectedTournament
-                                    );
-                                    console.log(
-                                      "Parejas en estado:",
-                                      pairs.length
-                                    );
-                                    console.log(
-                                      "Partidos en estado:",
-                                      matches.length
-                                    );
-
-                                    const dbPairs = await getPairs(
-                                      selectedTournament.id
-                                    );
-                                    const dbMatches = await getMatches(
-                                      selectedTournament.id
-                                    );
-
-                                    console.log(
-                                      "Parejas en BD:",
-                                      dbPairs.length
-                                    );
-                                    console.log(
-                                      "Partidos en BD:",
-                                      dbMatches.length
-                                    );
-
-                                    alert(
-                                      `Estado del torneo:\n\nParejas: ${
-                                        pairs.length
-                                      } (estado) / ${
-                                        dbPairs.length
-                                      } (BD)\nPartidos: ${
-                                        matches.length
-                                      } (estado) / ${
-                                        dbMatches.length
-                                      } (BD)\n\nTorneo iniciado: ${
-                                        selectedTournament.is_started
-                                          ? "Sí"
-                                          : "No"
-                                      }`
-                                    );
-                                  } catch (error) {
-                                    console.error(
-                                      "Error verificando estado:",
-                                      error
-                                    );
-                                  }
-                                }}
-                                className="debug-btn status-btn"
-                              >
-                                🔍 Verificar Estado
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
                     )}
 
                     {/* Mostrar parejas creadas */}
                     {pairs.length > 0 && (
                       <div className="pairs-display">
                         <h3>👥 Parejas Registradas ({pairs.length})</h3>
-                        <div className="pairs-grid">
+                        <div className="new-pairs-grid">
                           {pairs.map((pair, index) => (
-                            <div key={pair.id} className="team-card">
-                              <div className="team-header">
-                                <div className="team-rank">#{index + 1}</div>
-                                <div className="team-players">
-                                  <div className="player-name">
-                                    {pair.player1?.name}
-                                  </div>
-                                  <div className="player-separator">/</div>
-                                  <div className="player-name">
-                                    {pair.player2?.name}
-                                  </div>
+                            <div key={pair.id} className="new-pair-card">
+                              {/* Header de la tarjeta */}
+                              <div className="new-pair-header">
+                                {/* Número de pareja */}
+                                <div className="new-pair-number">
+                                  #{index + 1}
                                 </div>
+
+                                {/* Nombres de jugadores */}
+                                <div className="new-pair-names">
+                                  <h4>
+                                    {pair.player1?.name || "Jugador 1"} /{" "}
+                                    {pair.player2?.name || "Jugador 2"}
+                                  </h4>
+                                </div>
+
+                                {/* Botón de eliminar */}
                                 <button
                                   onClick={() => {
                                     if (
@@ -1005,30 +986,32 @@ function App() {
                                       deletePair(pair.id);
                                     }
                                   }}
-                                  className="team-delete-btn"
+                                  className="new-delete-btn"
                                   title="Eliminar pareja"
                                 >
-                                  🗑️
+                                  <span>🗑️</span>
                                 </button>
                               </div>
-                              <div className="team-metrics">
-                                <div className="metric-item">
-                                  <span className="metric-label">Sets</span>
-                                  <span className="metric-value">
-                                    {pair.sets_won}
-                                  </span>
+
+                              {/* Sección de estadísticas */}
+                              <div className="new-pair-stats">
+                                <div className="new-stat-card">
+                                  <div className="new-stat-label">SETS</div>
+                                  <div className="new-stat-value">
+                                    {pair.sets_won || 0}
+                                  </div>
                                 </div>
-                                <div className="metric-item">
-                                  <span className="metric-label">Partidos</span>
-                                  <span className="metric-value">
-                                    {pair.matches_played}
-                                  </span>
+                                <div className="new-stat-card">
+                                  <div className="new-stat-label">PARTIDOS</div>
+                                  <div className="new-stat-value">
+                                    {pair.matches_played || 0}
+                                  </div>
                                 </div>
-                                <div className="metric-item">
-                                  <span className="metric-label">Puntos</span>
-                                  <span className="metric-value">
-                                    {pair.points}
-                                  </span>
+                                <div className="new-stat-card">
+                                  <div className="new-stat-label">PUNTOS</div>
+                                  <div className="new-stat-value">
+                                    {pair.points || 0}
+                                  </div>
                                 </div>
                               </div>
                             </div>
