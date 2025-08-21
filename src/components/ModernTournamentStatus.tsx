@@ -17,85 +17,99 @@ export const ModernTournamentStatus: React.FC<ModernTournamentStatusProps> = ({
   onReset,
 }) => {
   return (
-    <div className="tournament-status-content">
-      {/* Indicadores de Estado */}
-      <div className="tournament-indicators">
-        <div className="tournament-card">
-          <div className="tournament-card-icon">
-            <span className="status-dot tournament-status"></span>
+    <div className="elegant-tournament-status">
+      {/* Header Elegante */}
+      <div className="elegant-status-header">
+        <div className="elegant-header-content">
+          <div className="elegant-header-title">
+            <h3>Reta en Progreso</h3>
+            <p>Estado del Torneo</p>
           </div>
-          <div className="tournament-card-info">
-            <span className="tournament-label">Estado</span>
-            <span className="tournament-value">
+        </div>
+      </div>
+
+      {/* Indicadores de Estado Elegantes */}
+      <div className="elegant-status-indicators">
+        <div className="elegant-status-card">
+          <div className="elegant-status-icon">
+            <span className="elegant-status-dot tournament-status"></span>
+          </div>
+          <div className="elegant-status-info">
+            <span className="elegant-status-label">ESTADO</span>
+            <span className="elegant-status-value">
               {tournament.is_finished ? "Finalizada" : "En Progreso"}
             </span>
           </div>
         </div>
 
-        <div className="tournament-card">
-          <div className="tournament-card-icon">
-            <span className="status-dot pairs-status"></span>
+        <div className="elegant-status-card">
+          <div className="elegant-status-icon">
+            <span className="elegant-status-dot pairs-status"></span>
           </div>
-          <div className="tournament-card-info">
-            <span className="tournament-label">Parejas</span>
-            <span className="tournament-value">{pairsCount}</span>
+          <div className="elegant-status-info">
+            <span className="elegant-status-label">PAREJAS</span>
+            <span className="elegant-status-value">{pairsCount}</span>
           </div>
         </div>
 
-        <div className="tournament-card">
-          <div className="tournament-card-icon">
-            <span className="status-dot info-status"></span>
+        <div className="elegant-status-card">
+          <div className="elegant-status-icon">
+            <span className="elegant-status-dot info-status"></span>
           </div>
-          <div className="tournament-card-info">
-            <span className="tournament-label">Info</span>
-            <span className="tournament-value">
+          <div className="elegant-status-info">
+            <span className="elegant-status-label">INFO</span>
+            <span className="elegant-status-value">
               {tournament.is_finished ? "Exitosa" : "Activa"}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Información Detallada */}
-      <div className="tournament-details">
-        <div className="detail-item">
-          <span className="detail-icon">✅</span>
-          <span className="detail-text">
+      {/* Información Detallada Elegante */}
+      <div className="elegant-status-details">
+        <div className="elegant-detail-item">
+          <span className="elegant-detail-icon">✅</span>
+          <span className="elegant-detail-text">
             {tournament.is_finished
               ? "La reta ha sido finalizada exitosamente"
               : "La reta ya está iniciada y en progreso"}
           </span>
         </div>
-        <div className="detail-item">
-          <span className="detail-icon">👥</span>
-          <span className="detail-text">
+        <div className="elegant-detail-item">
+          <span className="elegant-detail-icon">👥</span>
+          <span className="elegant-detail-text">
             Tienes {pairsCount} parejas registradas
           </span>
         </div>
-        <div className="detail-item">
-          <span className="detail-icon">📊</span>
-          <span className="detail-text">
+        <div className="elegant-detail-item">
+          <span className="elegant-detail-icon">📊</span>
+          <span className="elegant-detail-text">
             Estado de la reta:{" "}
             {tournament.is_finished ? "Finalizada" : "Iniciada"}
           </span>
         </div>
       </div>
 
-      {/* Botón de Reset */}
-      <button className="modern-reset-btn" onClick={onReset} disabled={loading}>
-        <div className="reset-btn-content">
-          <span className="reset-btn-icon">{loading ? "⏳" : "🔄"}</span>
-          <span className="reset-btn-text">
+      {/* Botón de Reset Elegante */}
+      <button
+        className="elegant-reset-btn"
+        onClick={onReset}
+        disabled={loading}
+      >
+        <div className="elegant-reset-content">
+          <span className="elegant-reset-icon">{loading ? "⏳" : "🔄"}</span>
+          <span className="elegant-reset-text">
             {loading ? "Reseteando..." : "Resetear Reta"}
           </span>
         </div>
-        <div className="reset-btn-background"></div>
+        <div className="elegant-reset-background"></div>
       </button>
 
-      {/* Efectos de Partículas */}
-      <div className="tournament-particles">
-        <div className="tournament-particle"></div>
-        <div className="tournament-particle"></div>
-        <div className="tournament-particle"></div>
+      {/* Efectos de Partículas Elegantes */}
+      <div className="elegant-status-particles">
+        <div className="elegant-status-particle"></div>
+        <div className="elegant-status-particle"></div>
+        <div className="elegant-status-particle"></div>
       </div>
     </div>
   );

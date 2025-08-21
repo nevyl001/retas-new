@@ -39,9 +39,9 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
 
   if (loading) {
     return (
-      <div className="new-pair-manager">
-        <div className="new-loading">
-          <div className="new-loading-spinner"></div>
+      <div className="elegant-pair-manager">
+        <div className="elegant-loading">
+          <div className="elegant-loading-spinner"></div>
           <p>Cargando parejas...</p>
         </div>
       </div>
@@ -49,82 +49,71 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
   }
 
   return (
-    <div className="new-pair-manager">
-      {/* Header Nuevo */}
-      <div className="new-pair-header">
-        <div className="new-header-content">
-          <div className="new-header-title">
-            <div className="new-title-icon">🏓</div>
+    <div className="elegant-pair-manager">
+      {/* Header Elegante */}
+      <div className="elegant-pair-header">
+        <div className="elegant-header-content">
+          <div className="elegant-header-title">
             <h3>Gestión de Parejas</h3>
-            <div className="new-pair-count">{pairs.length}</div>
+            <div className="elegant-pair-count">{pairs.length}</div>
           </div>
         </div>
       </div>
 
       {/* Mensaje de Error */}
       {error && (
-        <div className="new-error">
-          <span className="new-error-icon">⚠️</span>
-          <span className="new-error-text">{error}</span>
+        <div className="elegant-error">
+          <span className="elegant-error-icon">⚠️</span>
+          <span className="elegant-error-text">{error}</span>
         </div>
       )}
 
-      {/* Grid de Parejas */}
+      {/* Grid de Parejas Elegante */}
       {pairs.length === 0 ? (
-        <div className="new-empty-state">
-          <div className="new-empty-icon">🏓</div>
+        <div className="elegant-empty-state">
           <h4>No hay parejas registradas</h4>
           <p>Crea parejas para comenzar el torneo</p>
         </div>
       ) : (
-        <div className="new-pairs-grid">
+        <div className="elegant-pairs-grid">
           {pairs.map((pair, index) => {
             const isHovered = hoveredPair === pair.id;
 
             return (
               <div
                 key={pair.id}
-                className={`new-pair-card ${isHovered ? "hovered" : ""}`}
+                className={`elegant-pair-card ${isHovered ? "hovered" : ""}`}
                 onMouseEnter={() => setHoveredPair(pair.id)}
                 onMouseLeave={() => setHoveredPair(null)}
               >
-                {/* Header de la tarjeta */}
-                <div className="new-pair-header">
-                  {/* Número de pareja */}
-                  <div className="new-pair-number">#{index + 1}</div>
+                {/* Efecto de fondo animado */}
+                <div className="elegant-card-background"></div>
 
+                {/* Contenido de la pareja */}
+                <div className="elegant-pair-content">
                   {/* Nombres de jugadores */}
-                  <div className="new-pair-names">
+                  <div className="elegant-pair-names">
                     <h4>
                       {pair.player1?.name || "Jugador 1"} /{" "}
                       {pair.player2?.name || "Jugador 2"}
                     </h4>
                   </div>
 
-                  {/* Botón de eliminar */}
+                  {/* Botón de eliminar elegante */}
                   <button
-                    className="new-delete-btn"
+                    className="elegant-delete-btn"
                     onClick={() => onPairDelete(pair.id)}
                     title="Eliminar pareja"
                   >
-                    <span>🗑️</span>
+                    <span className="elegant-delete-icon">🗑️</span>
                   </button>
                 </div>
 
-                {/* Sección de estadísticas */}
-                <div className="new-pair-stats">
-                  <div className="new-stat-card">
-                    <div className="new-stat-label">SETS</div>
-                    <div className="new-stat-value">0</div>
-                  </div>
-                  <div className="new-stat-card">
-                    <div className="new-stat-label">PARTIDOS</div>
-                    <div className="new-stat-value">0</div>
-                  </div>
-                  <div className="new-stat-card">
-                    <div className="new-stat-label">PUNTOS</div>
-                    <div className="new-stat-value">0</div>
-                  </div>
+                {/* Efectos de partículas */}
+                <div className="elegant-particles">
+                  <div className="elegant-particle"></div>
+                  <div className="elegant-particle"></div>
+                  <div className="elegant-particle"></div>
                 </div>
               </div>
             );

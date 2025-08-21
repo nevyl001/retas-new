@@ -105,9 +105,9 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
 
   if (loading) {
     return (
-      <div className="modern-player-manager">
-        <div className="modern-loading">
-          <div className="loading-spinner"></div>
+      <div className="elegant-player-manager">
+        <div className="elegant-loading">
+          <div className="elegant-loading-spinner"></div>
           <p>Cargando jugadores...</p>
         </div>
       </div>
@@ -115,21 +115,22 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   }
 
   return (
-    <div className="modern-player-manager">
-      {/* Header Moderno */}
-      <div className="modern-player-header">
-        <div className="header-content">
-          <div className="header-title">
-            <div className="title-icon">👥</div>
+    <div className="elegant-player-manager">
+      {/* Header Elegante */}
+      <div className="elegant-player-header">
+        <div className="elegant-header-content">
+          <div className="elegant-header-title">
             <h3>Jugadores</h3>
-            <div className="player-count">{players.length}</div>
+            <div className="elegant-player-count">{players.length}</div>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="modern-add-btn"
+            className="elegant-add-btn"
           >
-            <span className="btn-icon">{showCreateForm ? "✕" : "+"}</span>
-            <span className="btn-text">
+            <span className="elegant-btn-icon">
+              {showCreateForm ? "✕" : "+"}
+            </span>
+            <span className="elegant-btn-text">
               {showCreateForm ? "Cancelar" : "Agregar"}
             </span>
           </button>
@@ -138,13 +139,13 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
 
       {/* Formulario Moderno */}
       {showCreateForm && (
-        <div className="modern-create-form">
-          <div className="form-header">
+        <div className="elegant-create-form">
+          <div className="elegant-form-header">
             <h4>✨ Nuevo Jugador</h4>
             <p>Agrega un nuevo jugador a tu reta</p>
           </div>
-          <form onSubmit={handleCreatePlayer} className="modern-form">
-            <div className="modern-input-group">
+          <form onSubmit={handleCreatePlayer} className="elegant-form">
+            <div className="elegant-input-group">
               <input
                 type="text"
                 value={newPlayerName}
@@ -152,13 +153,13 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                 placeholder="Nombre del jugador"
                 required
                 autoFocus
-                className="modern-input"
+                className="elegant-input"
               />
-              <div className="input-border"></div>
+              <div className="elegant-input-border"></div>
             </div>
-            <div className="form-actions">
-              <button type="submit" className="modern-submit-btn">
-                <span className="btn-icon">✓</span>
+            <div className="elegant-form-actions">
+              <button type="submit" className="elegant-submit-btn">
+                <span className="elegant-btn-icon">✓</span>
                 <span>Agregar</span>
               </button>
               <button
@@ -167,9 +168,9 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                   setShowCreateForm(false);
                   setNewPlayerName("");
                 }}
-                className="modern-cancel-btn"
+                className="elegant-cancel-btn"
               >
-                <span className="btn-icon">✕</span>
+                <span className="elegant-btn-icon">✕</span>
                 <span>Cancelar</span>
               </button>
             </div>
@@ -179,21 +180,20 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
 
       {/* Mensaje de Error */}
       {error && (
-        <div className="modern-error">
-          <span className="error-icon">⚠️</span>
-          <span>{error}</span>
+        <div className="elegant-error">
+          <span className="elegant-error-icon">⚠️</span>
+          <span className="elegant-error-text">{error}</span>
         </div>
       )}
 
-      {/* Grid de Jugadores */}
+      {/* Grid de Jugadores Elegante */}
       {players.length === 0 ? (
-        <div className="modern-empty-state">
-          <div className="empty-icon">👥</div>
+        <div className="elegant-empty-state">
           <h4>No hay jugadores</h4>
           <p>Agrega jugadores para poder crear parejas</p>
         </div>
       ) : (
-        <div className="modern-players-grid">
+        <div className="elegant-players-grid">
           {players.map((player) => {
             const isSelected = selectedPlayers.some((p) => p.id === player.id);
             const isInPair = playersInPairs.includes(player.id);
@@ -202,7 +202,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
             return (
               <div
                 key={player.id}
-                className={`modern-player-card ${
+                className={`elegant-player-card ${
                   isSelected ? "selected" : ""
                 } ${isInPair ? "in-pair" : ""} ${isHovered ? "hovered" : ""}`}
                 onClick={() => handlePlayerSelect(player)}
@@ -210,48 +210,48 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                 onMouseLeave={() => setHoveredPlayer(null)}
               >
                 {/* Efecto de fondo animado */}
-                <div className="card-background"></div>
+                <div className="elegant-card-background"></div>
 
                 {/* Contenido del jugador */}
-                <div className="player-content">
-                  <div className="player-avatar">
+                <div className="elegant-player-content">
+                  <div className="elegant-player-avatar">
                     {player.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="player-info">
-                    <span className="player-name">{player.name}</span>
+                  <div className="elegant-player-info">
+                    <span className="elegant-player-name">{player.name}</span>
                     {isInPair && (
-                      <span className="pair-indicator">
-                        <span className="indicator-dot"></span>
+                      <span className="elegant-pair-indicator">
+                        <span className="elegant-indicator-dot"></span>
                         En pareja
                       </span>
                     )}
                   </div>
 
-                  {/* Botón de eliminar */}
+                  {/* Botón de eliminar elegante */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeletePlayer(player.id);
                     }}
-                    className="modern-delete-btn"
+                    className="elegant-delete-btn"
                     title="Eliminar jugador"
                   >
-                    <span className="delete-icon">×</span>
+                    <span className="elegant-delete-icon">×</span>
                   </button>
                 </div>
 
                 {/* Indicador de selección */}
                 {isSelected && (
-                  <div className="selection-indicator">
-                    <span className="check-icon">✓</span>
+                  <div className="elegant-selection-indicator">
+                    <span className="elegant-check-icon">✓</span>
                   </div>
                 )}
 
                 {/* Efectos de partículas */}
-                <div className="particles">
-                  <div className="particle"></div>
-                  <div className="particle"></div>
-                  <div className="particle"></div>
+                <div className="elegant-particles">
+                  <div className="elegant-particle"></div>
+                  <div className="elegant-particle"></div>
+                  <div className="elegant-particle"></div>
                 </div>
               </div>
             );

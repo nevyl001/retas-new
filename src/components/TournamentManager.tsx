@@ -145,7 +145,17 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   return (
     <div className="tournament-manager">
       <div className="tournament-manager-banner">
-        <h2>🏆 ¡Selecciona o Crea tu Reta de Pádel y ¡Diviértete! 🎾</h2>
+        {/* Partículas flotantes */}
+        <div className="floating-particle"></div>
+        <div className="floating-particle"></div>
+        <div className="floating-particle"></div>
+        <div className="floating-particle"></div>
+
+        <h2>
+          <span className="banner-icon trophy">🏆</span>
+          ¡Selecciona o Crea tu Reta de Pádel y ¡Diviértete!
+          <span className="banner-icon ball">🎾</span>
+        </h2>
       </div>
 
       <div className="create-tournament-section">

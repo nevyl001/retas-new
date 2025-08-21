@@ -29,92 +29,102 @@ export const ModernDebugPanel: React.FC<ModernDebugPanelProps> = ({
   };
 
   return (
-    <div className="debug-panel-content">
-      {/* Indicadores de Estado */}
-      <div className="status-indicators">
-        <div className="status-card">
-          <div className="status-icon">
-            <span className="status-dot active"></span>
-          </div>
-          <div className="status-info">
-            <span className="status-label">Estado</span>
-            <span className="status-value">{status}</span>
-          </div>
-        </div>
-
-        <div className="status-card">
-          <div className="status-icon">
-            <span className="status-dot pairs"></span>
-          </div>
-          <div className="status-info">
-            <span className="status-label">Parejas</span>
-            <span className="status-value">{pairsCount}</span>
-          </div>
-        </div>
-
-        <div className="status-card">
-          <div className="status-icon">
-            <span className="status-dot matches"></span>
-          </div>
-          <div className="status-info">
-            <span className="status-label">Partidos</span>
-            <span className="status-value">{matchesCount}</span>
+    <div className="elegant-debug-panel">
+      {/* Header Elegante */}
+      <div className="elegant-debug-header">
+        <div className="elegant-header-content">
+          <div className="elegant-header-title">
+            <h3>Panel de Debug</h3>
+            <p>Información del Sistema</p>
           </div>
         </div>
       </div>
 
-      {/* Botones de Acción */}
-      <div className="action-buttons">
+      {/* Indicadores de Estado Elegantes */}
+      <div className="elegant-debug-indicators">
+        <div className="elegant-debug-card">
+          <div className="elegant-debug-icon">
+            <span className="elegant-debug-dot active"></span>
+          </div>
+          <div className="elegant-debug-info">
+            <span className="elegant-debug-label">ESTADO</span>
+            <span className="elegant-debug-value">{status}</span>
+          </div>
+        </div>
+
+        <div className="elegant-debug-card">
+          <div className="elegant-debug-icon">
+            <span className="elegant-debug-dot pairs"></span>
+          </div>
+          <div className="elegant-debug-info">
+            <span className="elegant-debug-label">PAREJAS</span>
+            <span className="elegant-debug-value">{pairsCount}</span>
+          </div>
+        </div>
+
+        <div className="elegant-debug-card">
+          <div className="elegant-debug-icon">
+            <span className="elegant-debug-dot matches"></span>
+          </div>
+          <div className="elegant-debug-info">
+            <span className="elegant-debug-label">PARTIDOS</span>
+            <span className="elegant-debug-value">{matchesCount}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Botones de Acción Elegantes */}
+      <div className="elegant-debug-actions">
         <button
-          className="action-btn connection-btn"
+          className="elegant-action-btn connection-btn"
           onClick={() => handleAction(onTestConnection)}
           disabled={isLoading}
         >
-          <div className="btn-content">
-            <span className="btn-icon">⚡</span>
-            <span className="btn-text">Probar Conexión</span>
+          <div className="elegant-btn-content">
+            <span className="elegant-btn-icon">⚡</span>
+            <span className="elegant-btn-text">Probar Conexión</span>
           </div>
-          <div className="btn-background"></div>
+          <div className="elegant-btn-background"></div>
         </button>
 
         <button
-          className="action-btn reload-btn"
+          className="elegant-action-btn reload-btn"
           onClick={() => handleAction(onReloadData)}
           disabled={isLoading}
         >
-          <div className="btn-content">
-            <span className="btn-icon">🔄</span>
-            <span className="btn-text">Recargar Datos</span>
+          <div className="elegant-btn-content">
+            <span className="elegant-btn-icon">🔄</span>
+            <span className="elegant-btn-text">Recargar Datos</span>
           </div>
-          <div className="btn-background"></div>
+          <div className="elegant-btn-background"></div>
         </button>
 
         <button
-          className="action-btn verify-btn"
+          className="elegant-action-btn verify-btn"
           onClick={() => handleAction(onVerifyStatus)}
           disabled={isLoading}
         >
-          <div className="btn-content">
-            <span className="btn-icon">🔍</span>
-            <span className="btn-text">Verificar Estado</span>
+          <div className="elegant-btn-content">
+            <span className="elegant-btn-icon">🔍</span>
+            <span className="elegant-btn-text">Verificar Estado</span>
           </div>
-          <div className="btn-background"></div>
+          <div className="elegant-btn-background"></div>
         </button>
       </div>
 
-      {/* Loading Overlay */}
+      {/* Loading Overlay Elegante */}
       {isLoading && (
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
+        <div className="elegant-loading-overlay">
+          <div className="elegant-loading-spinner"></div>
           <span>Procesando...</span>
         </div>
       )}
 
-      {/* Efectos de Partículas */}
-      <div className="debug-particles">
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
+      {/* Efectos de Partículas Elegantes */}
+      <div className="elegant-debug-particles">
+        <div className="elegant-debug-particle"></div>
+        <div className="elegant-debug-particle"></div>
+        <div className="elegant-debug-particle"></div>
       </div>
     </div>
   );
