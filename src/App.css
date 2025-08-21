@@ -2850,6 +2850,16 @@ h1::before {
     min-width: 60px;
   }
 
+  /* Responsive para tabla de clasificación */
+  .modern-standings-title h3 {
+    font-size: 1.2rem;
+  }
+
+  .modern-recalculate-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+  }
+
   /* Responsive para tarjetas de partidos */
   .modern-matches-section {
     padding: 16px;
@@ -3086,6 +3096,36 @@ h1::before {
   .modern-match-btn {
     padding: 6px 10px;
     font-size: 0.75rem;
+  }
+
+  /* Responsive para tabla de clasificación - móviles pequeños */
+  .modern-standings-section {
+    padding: 12px;
+  }
+
+  .modern-standings-title h3 {
+    font-size: 1.1rem;
+  }
+
+  .modern-recalculate-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  .modern-standings-table {
+    font-size: 0.75rem;
+  }
+
+  .modern-standings-table th,
+  .modern-standings-table td {
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+
+  .modern-standings-table td:nth-child(3),
+  .modern-standings-table td:nth-child(4),
+  .modern-standings-table td:nth-child(5) {
+    min-width: 50px;
   }
 }
 
@@ -4005,130 +4045,214 @@ h1::before {
 
   /* Responsive para tarjetas de partidos - iPhone 15 Pro Max */
   .modern-matches-section {
-    padding: 8px;
+    padding: 4px;
   }
 
   .modern-matches-header {
-    margin-bottom: 12px;
-    padding-bottom: 12px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
   }
 
   .modern-matches-title h3 {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .modern-matches-count {
-    font-size: 0.7rem;
-    padding: 2px 5px;
+    font-size: 0.65rem;
+    padding: 1px 4px;
   }
 
   .modern-round-header {
-    padding: 6px 8px;
-    margin-bottom: 8px;
+    padding: 4px 6px;
+    margin-bottom: 6px;
   }
 
   .modern-round-title {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
   .modern-round-count {
-    font-size: 0.7rem;
-    padding: 2px 5px;
+    font-size: 0.65rem;
+    padding: 1px 4px;
   }
 
   .modern-matches-grid {
-    gap: 8px;
+    gap: 6px;
   }
 
   .modern-match-card {
-    padding: 12px;
-    border-radius: 16px;
+    padding: 8px;
+    border-radius: 12px;
   }
 
   .modern-match-header {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .modern-match-title {
-    font-size: 0.85rem;
-    line-height: 1.2;
+    font-size: 0.8rem;
+    line-height: 1.1;
   }
 
   .modern-match-status {
-    font-size: 0.65rem;
-    padding: 3px 6px;
-    border-radius: 8px;
+    font-size: 0.6rem;
+    padding: 2px 4px;
+    border-radius: 6px;
   }
 
   .modern-match-badges {
-    gap: 4px;
-    margin-bottom: 8px;
+    gap: 3px;
+    margin-bottom: 6px;
   }
 
   .modern-match-badge {
-    font-size: 0.65rem;
-    padding: 2px 4px;
-    border-radius: 6px;
+    font-size: 0.6rem;
+    padding: 1px 3px;
+    border-radius: 4px;
   }
 
   .modern-match-pairs {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .modern-pair-info {
-    padding: 4px 6px;
-    margin-bottom: 4px;
-    border-radius: 8px;
-  }
-
-  .modern-pair-label {
-    font-size: 0.7rem;
-    min-width: 50px;
-  }
-
-  .modern-pair-names {
-    font-size: 0.75rem;
-  }
-
-  .modern-games-results {
-    padding: 6px;
-    margin-bottom: 8px;
-    border-radius: 10px;
-  }
-
-  .modern-games-title {
-    font-size: 0.75rem;
-    margin-bottom: 4px;
-  }
-
-  .modern-games-grid {
-    gap: 4px;
-  }
-
-  .modern-game-result {
-    font-size: 0.65rem;
-    padding: 2px 4px;
+    padding: 3px 4px;
+    margin-bottom: 3px;
     border-radius: 6px;
   }
 
-  .modern-winner {
-    padding: 5px 6px;
-    margin-bottom: 8px;
+  .modern-pair-label {
+    font-size: 0.65rem;
+    min-width: 45px;
+  }
+
+  .modern-pair-names {
+    font-size: 0.7rem;
+  }
+
+  .modern-games-results {
+    padding: 4px;
+    margin-bottom: 6px;
     border-radius: 8px;
+  }
+
+  .modern-games-title {
+    font-size: 0.7rem;
+    margin-bottom: 3px;
+  }
+
+  .modern-games-grid {
+    gap: 3px;
+  }
+
+  .modern-game-result {
+    font-size: 0.6rem;
+    padding: 1px 3px;
+    border-radius: 4px;
+  }
+
+  .modern-winner {
+    padding: 3px 4px;
+    margin-bottom: 6px;
+    border-radius: 6px;
   }
 
   .modern-winner-text {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   .modern-match-actions {
-    gap: 4px;
+    gap: 3px;
   }
 
   .modern-match-btn {
-    padding: 5px 8px;
+    padding: 3px 6px;
+    font-size: 0.65rem;
+    border-radius: 6px;
+  }
+
+  /* Responsive para tabla de clasificación - iPhone 15 Pro Max */
+  .modern-standings-section {
+    padding: 4px;
+  }
+
+  .modern-standings-header {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+  }
+
+  .modern-standings-title h3 {
+    font-size: 0.9rem;
+  }
+
+  .modern-recalculate-btn {
+    padding: 3px 8px;
+    font-size: 0.65rem;
+    border-radius: 6px;
+  }
+
+  .modern-standings-table {
+    font-size: 0.65rem;
+    border-radius: 10px;
+  }
+
+  .modern-standings-table thead {
+    border-radius: 10px 10px 0 0;
+  }
+
+  .modern-standings-table th {
+    padding: 6px 4px;
+    font-size: 0.65rem;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .modern-standings-table th:first-child {
+    border-top-left-radius: 10px;
+  }
+
+  .modern-standings-table th:last-child {
+    border-top-right-radius: 10px;
+  }
+
+  .modern-standings-table tbody tr {
+    animation: none;
+  }
+
+  .modern-standings-table tbody tr:hover {
+    transform: none;
+    box-shadow: none;
+    border-left: none;
+  }
+
+  .modern-standings-table td {
+    padding: 4px 3px;
+    font-size: 0.65rem;
+  }
+
+  .modern-standings-table td:first-child {
+    min-width: 35px;
     font-size: 0.7rem;
-    border-radius: 8px;
+  }
+
+  .modern-standings-table td:nth-child(2) {
+    font-size: 0.65rem;
+  }
+
+  .modern-standings-table td:nth-child(3),
+  .modern-standings-table td:nth-child(4),
+  .modern-standings-table td:nth-child(5) {
+    min-width: 35px;
+    font-size: 0.65rem;
+    border-radius: 4px;
+    margin: 1px;
+  }
+
+  .modern-standings-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 10px;
+  }
+
+  .modern-standings-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 10px;
   }
 }
 
