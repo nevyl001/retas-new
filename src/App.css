@@ -21768,16 +21768,18 @@ td {
 @media (max-width: 768px) {
   .elegant-winner-screen {
     padding: 8px;
-    align-items: flex-start;
-    padding-top: 20px;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
   }
 
   .elegant-winner-section {
     width: 100%;
     border-radius: 20px;
-    max-height: none;
+    max-height: 90vh;
     min-height: auto;
     margin: 0;
+    overflow-y: auto;
   }
 
   .elegant-winner-header {
@@ -21814,16 +21816,18 @@ td {
 @media (max-width: 480px) {
   .elegant-winner-screen {
     padding: 4px;
-    align-items: flex-start;
-    padding-top: 10px;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
   }
 
   .elegant-winner-section {
     width: 100%;
     border-radius: 16px;
-    max-height: none;
+    max-height: 85vh;
     min-height: auto;
     margin: 0;
+    overflow-y: auto;
   }
 
   .elegant-winner-header {
@@ -21875,16 +21879,18 @@ td {
 @media (max-width: 430px) {
   .elegant-winner-screen {
     padding: 2px;
-    align-items: flex-start;
-    padding-top: 8px;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
   }
 
   .elegant-winner-section {
     width: 100%;
     border-radius: 14px;
-    max-height: none;
+    max-height: 80vh;
     min-height: auto;
     margin: 0;
+    overflow-y: auto;
   }
 
   .elegant-winner-header {
@@ -21936,16 +21942,18 @@ td {
 @media (max-width: 375px) {
   .elegant-winner-screen {
     padding: 1px;
-    align-items: flex-start;
-    padding-top: 5px;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0;
   }
 
   .elegant-winner-section {
     width: 100%;
     border-radius: 12px;
-    max-height: none;
+    max-height: 75vh;
     min-height: auto;
     margin: 0;
+    overflow-y: auto;
   }
 
   .elegant-winner-header {
