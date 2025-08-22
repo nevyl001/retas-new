@@ -164,7 +164,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       };
     } else {
       return {
-        text: `Empate (${result.pair1Wins}-${result.pair2Wins})`,
+        text: "Empate",
         type: "tie",
         icon: "🤝",
       };
