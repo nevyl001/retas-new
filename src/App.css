@@ -485,14 +485,6 @@ h1::before {
   color: #495057;
 }
 
-/* Loading */
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: #666666;
-  font-size: 1.1rem;
-}
-
 /* Tournament Manager */
 .tournament-manager {
   margin-bottom: 30px;
@@ -9905,66 +9897,6 @@ td {
   font-size: 16px;
 }
 
-/* Estilos para el modal de éxito */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-}
-
-.modal-content {
-  background: linear-gradient(
-    135deg,
-    rgba(20, 20, 35, 0.98) 0%,
-    rgba(30, 30, 50, 0.95) 50%,
-    rgba(20, 20, 35, 0.98) 100%
-  );
-  border-radius: 24px;
-  padding: 0;
-  max-width: 400px;
-  width: 90%;
-  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8), 0 12px 40px rgba(255, 215, 0, 0.3);
-  animation: modalSlideIn 0.3s ease-out;
-  overflow: hidden;
-  border: 3px solid transparent;
-  background-clip: padding-box;
-  backdrop-filter: blur(25px);
-  color: #ffffff;
-}
-
-@keyframes modalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.modal-header {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffb347 100%);
-  color: #000000;
-  padding: 30px 30px 20px;
-  text-align: center;
-  position: relative;
-}
-
-.modal-icon {
-  font-size: 48px;
-  margin-bottom: 15px;
-  animation: iconBounce 0.6s ease-out;
-}
-
 @keyframes iconBounce {
   0%,
   20%,
@@ -9979,89 +9911,6 @@ td {
   60% {
     transform: translateY(-5px);
   }
-}
-
-.modal-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.modal-body {
-  padding: 30px;
-  text-align: center;
-}
-
-.modal-message {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.6;
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.modal-footer {
-  padding: 0 30px 30px;
-  text-align: center;
-}
-
-.modal-button {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffb347 100%);
-  color: #000000;
-  border: none;
-  padding: 14px 32px;
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
-  min-width: 120px;
-  backdrop-filter: blur(15px);
-}
-
-.modal-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
-  background: linear-gradient(135deg, #ffed4e 0%, #ffb347 50%, #ff8c00 100%);
-}
-
-.modal-button:active {
-  transform: translateY(0);
-}
-
-/* MatchResults Component Styles */
-.results-modal {
-  background: white;
-  border-radius: 16px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  position: relative;
-}
-
-.results-modal .modal-header {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  color: white;
-  padding: 1.5rem;
-  border-radius: 16px 16px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.results-modal .header-icon {
-  font-size: 1.5rem;
-  margin-right: 0.5rem;
-}
-
-.results-modal h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: bold;
 }
 
 .results-modal .close-button {

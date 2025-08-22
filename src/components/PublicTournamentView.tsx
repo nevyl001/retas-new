@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { getMatches, getPairs, getGames } from "../lib/database";
-import { Match, Pair, Game } from "../lib/database";
+import { getMatches, getPairs } from "../lib/database";
+import { Match, Pair } from "../lib/database";
 import StandingsTable from "./StandingsTable";
 import {
   TournamentWinnerCalculator,
@@ -67,12 +67,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return `${pair.player1?.name || "Jugador 1"} / ${
       pair.player2?.name || "Jugador 2"
     }`;
-  };
-
-  const getMatchGames = (matchId: string) => {
-    // Esta función simula obtener los juegos del partido
-    // En una implementación real, necesitarías obtener los juegos de la base de datos
-    return [];
   };
 
   if (loading) {
