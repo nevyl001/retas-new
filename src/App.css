@@ -507,11 +507,11 @@ h1::before {
   padding: 48px 36px;
   background: linear-gradient(
     135deg,
-    rgba(20, 20, 35, 0.98) 0%,
-    rgba(30, 30, 50, 0.95) 25%,
-    rgba(25, 25, 45, 0.9) 50%,
-    rgba(30, 30, 50, 0.95) 75%,
-    rgba(20, 20, 35, 0.98) 100%
+    rgba(30, 30, 50, 0.98) 0%,
+    rgba(25, 25, 45, 0.95) 25%,
+    rgba(20, 20, 35, 0.9) 50%,
+    rgba(25, 25, 45, 0.95) 75%,
+    rgba(30, 30, 50, 0.98) 100%
   );
   border-radius: 32px;
   color: #ffffff;
@@ -7844,8 +7844,8 @@ td {
   border: 2px solid rgba(255, 255, 255, 0.3) !important;
   min-width: 160px !important;
   backdrop-filter: blur(15px) !important;
-  box-shadow: 0 12px 25px rgba(30, 41, 59, 0.3),
-    0 0 30px rgba(30, 41, 59, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 12px 25px rgba(30, 41, 59, 0.3), 0 0 30px rgba(30, 41, 59, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
   position: relative !important;
   overflow: hidden !important;
@@ -7887,8 +7887,8 @@ td {
 
 .stat-item:hover {
   transform: translateY(-8px) scale(1.05) !important;
-  box-shadow: 0 20px 40px rgba(30, 41, 59, 0.3),
-    0 0 50px rgba(30, 41, 59, 0.3), 0 0 80px rgba(16, 185, 129, 0.2) !important;
+  box-shadow: 0 20px 40px rgba(30, 41, 59, 0.3), 0 0 50px rgba(30, 41, 59, 0.3),
+    0 0 80px rgba(16, 185, 129, 0.2) !important;
   border-color: rgba(255, 255, 255, 0.6) !important;
   background: linear-gradient(
     135deg,
@@ -13603,8 +13603,7 @@ td {
       font-size: 0.9rem !important;
       font-weight: 800 !important;
       margin-bottom: 10px !important;
-      box-shadow: 0 8px 25px rgba(30, 41, 59, 0.3),
-        0 4px 8px rgba(0, 0, 0, 0.1) !important;
+      box-shadow: 0 8px 25px rgba(30, 41, 59, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
       flex-shrink: 0 !important;
       animation: namesSlideIn 0.8s ease-out 0.8s both !important;
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -13651,8 +13650,7 @@ td {
 
     .winner-mobile-stat:hover {
       transform: translateY(-2px) !important;
-      box-shadow: 0 8px 25px rgba(30, 41, 59, 0.3),
-        0 4px 8px rgba(0, 0, 0, 0.1) !important;
+      box-shadow: 0 8px 25px rgba(30, 41, 59, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
       border-color: rgba(30, 41, 59, 0.3) !important;
     }
 
