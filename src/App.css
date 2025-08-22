@@ -3541,142 +3541,6 @@ h1::before {
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
 
-.modern-standings-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-}
-
-/* Tabla de clasificación moderna - Diseño 2024 */
-.modern-standings-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 24px;
-  background: #1a1a2e;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-}
-
-.modern-standings-table thead {
-  background: #16213e;
-}
-
-.modern-standings-table th {
-  color: #e8e8e8;
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 20px 16px;
-  text-align: center;
-  border: none;
-  position: relative;
-}
-
-.modern-standings-table th:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 25%;
-  height: 50%;
-  width: 1px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.modern-standings-table tbody tr {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  position: relative;
-}
-
-.modern-standings-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.modern-standings-table tbody tr:nth-child(1) {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-}
-
-.modern-standings-table tbody tr:nth-child(1) td {
-  color: #1a1a2e;
-  font-weight: 700;
-}
-
-.modern-standings-table tbody tr:nth-child(2) {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e5e5e5 100%);
-}
-
-.modern-standings-table tbody tr:nth-child(2) td {
-  color: #1a1a2e;
-  font-weight: 700;
-}
-
-.modern-standings-table tbody tr:nth-child(3) {
-  background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
-}
-
-.modern-standings-table tbody tr:nth-child(3) td {
-  color: #1a1a2e;
-  font-weight: 700;
-}
-
-.modern-standings-table tbody tr:nth-child(n + 4) {
-  background: #1a1a2e;
-}
-
-.modern-standings-table tbody tr:nth-child(n + 4):hover {
-  background: #16213e;
-}
-
-.modern-standings-table td {
-  padding: 20px 16px;
-  text-align: center;
-  font-weight: 500;
-  font-size: 1rem;
-  color: #e8e8e8;
-  border: none;
-  position: relative;
-}
-
-.modern-standings-table td:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 25%;
-  height: 50%;
-  width: 1px;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.modern-standings-table td:first-child {
-  font-weight: 800;
-  font-size: 1.3rem;
-  color: inherit;
-  background: none;
-  min-width: 80px;
-}
-
-.modern-standings-table td:nth-child(2) {
-  text-align: left;
-  font-weight: 600;
-  color: inherit;
-  font-size: 1.1rem;
-  background: none;
-}
-
-.modern-standings-table td:nth-child(3),
-.modern-standings-table td:nth-child(4),
-.modern-standings-table td:nth-child(5) {
-  font-weight: 700;
-  font-size: 1.2rem;
-  color: inherit;
-  background: none;
-  min-width: 100px;
-}
-
 /* Responsive para la nueva tabla elegante */
 @media (max-width: 768px) {
   .modern-standings-section {
@@ -3687,37 +3551,6 @@ h1::before {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
-  }
-
-  .modern-standings-table {
-    border-spacing: 0 6px;
-  }
-
-  .modern-standings-table th {
-    padding: 14px 12px;
-    font-size: 0.9rem;
-    letter-spacing: 0.5px;
-  }
-
-  .modern-standings-table td {
-    padding: 16px 12px;
-    font-size: 1rem;
-  }
-
-  .modern-standings-table td:first-child {
-    font-size: 1.2rem;
-    min-width: 50px;
-  }
-
-  .modern-standings-table td:nth-child(2) {
-    font-size: 1.1rem;
-  }
-
-  .modern-standings-table td:nth-child(3),
-  .modern-standings-table td:nth-child(4),
-  .modern-standings-table td:nth-child(5) {
-    font-size: 1.2rem;
-    min-width: 70px;
   }
 
   .modern-standings-title h3 {
@@ -7834,16 +7667,6 @@ td {
     max-width: 95% !important;
     max-height: 90vh !important;
     overflow-y: auto !important;
-  }
-
-  /* Optimizar tablas para móvil */
-  .standings-table {
-    font-size: 0.8rem !important;
-  }
-
-  .standings-table th,
-  .standings-table td {
-    padding: 6px 4px !important;
   }
 
   /* Mejorar navegación en móvil */
