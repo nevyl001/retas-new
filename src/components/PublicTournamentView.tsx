@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getMatches, getPairs } from "../lib/database";
 import { Match, Pair } from "../lib/database";
-import StandingsTable from "./StandingsTable";
+import ModernStandingsTable from "./ModernStandingsTable";
 import {
   TournamentWinnerCalculator,
   TournamentWinner,
@@ -177,7 +177,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         <div className="public-standings-header">
           <h2 className="public-standings-title">📊 Tabla de Clasificación</h2>
         </div>
-        <StandingsTable tournamentId={tournamentId} forceRefresh={0} />
+        <ModernStandingsTable tournamentId={tournamentId} forceRefresh={0} />
       </div>
 
       {/* Sección del Ganador */}

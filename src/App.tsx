@@ -5,7 +5,7 @@ import { ModernPlayerManager } from "./components/ModernPlayerManager";
 import { NewPairManager } from "./components/NewPairManager";
 import { DebugPanelContent } from "./components/DebugPanelContent";
 import { TournamentStatusContent } from "./components/TournamentStatusContent";
-import StandingsTable from "./components/StandingsTable";
+import ModernStandingsTable from "./components/ModernStandingsTable";
 import MatchCardWithResults from "./components/MatchCardWithResults";
 import PublicTournamentView from "./components/PublicTournamentView";
 
@@ -1202,7 +1202,7 @@ function App() {
                         </div>
 
                         {/* Tabla de clasificación */}
-                        <StandingsTable
+                        <ModernStandingsTable
                           tournamentId={selectedTournament.id}
                           forceRefresh={forceRefresh}
                         />
