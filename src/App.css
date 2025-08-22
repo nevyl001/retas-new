@@ -524,9 +524,9 @@ h1::before {
   border: 2px solid rgba(255, 215, 0, 0.3);
   backdrop-filter: blur(20px);
   width: 100%;
-  max-width: 72rem;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
   animation: headerFadeIn 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   opacity: 0;
   transform: translateY(-20px);
@@ -750,13 +750,22 @@ h1::before {
 }
 
 .tournaments-list h2 {
-  font-size: 2.5rem;
-  margin-bottom: 32px;
+  font-size: 3.2rem;
+  margin-bottom: 40px;
+  margin-top: 20px;
   color: #ffd700;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
   font-weight: 700;
   text-align: center;
   letter-spacing: -0.01em;
+  padding: 20px 0;
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.3) 0%,
+    rgba(30, 30, 50, 0.2) 100%
+  );
+  border-radius: 16px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
 }
 
 @media (min-width: 768px) {
@@ -765,15 +774,19 @@ h1::before {
   }
 
   .tournaments-list h2 {
-    font-size: 1.8rem;
-    margin-bottom: 24px;
+    font-size: 2.4rem;
+    margin-bottom: 32px;
+    margin-top: 16px;
+    padding: 16px 0;
   }
 }
 
 @media (min-width: 1200px) {
   .tournaments-list h2 {
-    font-size: 2.2rem;
-    margin-bottom: 32px;
+    font-size: 2.8rem;
+    margin-bottom: 36px;
+    margin-top: 18px;
+    padding: 18px 0;
   }
 }
 
@@ -17572,6 +17585,9 @@ td {
   /* Header moderno en móvil */
   .app-header {
     padding: 32px 16px !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   .app-header-container {
@@ -17615,6 +17631,14 @@ td {
     font-size: 0.75rem !important;
   }
 
+  /* Título "Mis Retas" en móvil */
+  .tournaments-list h2 {
+    font-size: 2rem !important;
+    margin-bottom: 24px !important;
+    margin-top: 12px !important;
+    padding: 12px 0 !important;
+  }
+
   .reta-card-actions .status-indicator {
     font-size: 0.7rem !important;
     padding: 4px 8px !important;
@@ -17642,6 +17666,9 @@ td {
 
     .app-header {
       padding: 24px 12px !important;
+      max-width: none !important;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
     }
 
     .reta-card {
@@ -17672,6 +17699,14 @@ td {
 
     .reta-card-info span {
       font-size: 0.7rem !important;
+    }
+
+    /* Título "Mis Retas" en iPhone */
+    .tournaments-list h2 {
+      font-size: 1.8rem !important;
+      margin-bottom: 20px !important;
+      margin-top: 10px !important;
+      padding: 10px 0 !important;
     }
   }
 
