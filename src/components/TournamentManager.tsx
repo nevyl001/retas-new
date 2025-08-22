@@ -265,6 +265,12 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                       </span>
                     </div>
                   )}
+                  {!tournament.description && (
+                    <div className="reta-card-description">
+                      <span className="description-icon">📝</span>
+                      <span className="description-text">Sin descripción</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="reta-card-actions">
