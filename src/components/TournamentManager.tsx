@@ -6,6 +6,7 @@ import {
   updateTournament,
   Tournament,
 } from "../lib/database";
+import AppHeader from "./AppHeader";
 
 interface TournamentManagerProps {
   onTournamentSelect: (tournament: Tournament) => void;
@@ -144,28 +145,10 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
   return (
     <div className="tournament-manager">
-      <div className="tournament-manager-banner">
-        {/* Partículas flotantes */}
-        <div className="floating-particle"></div>
-        <div className="floating-particle"></div>
-        <div className="floating-particle"></div>
-        <div className="floating-particle"></div>
-
-        <h2>
-          <span className="banner-icon trophy">🏆</span>
-          ¡Selecciona o Crea tu Reta de Pádel y ¡Diviértete!
-          <span className="banner-icon ball">🎾</span>
-        </h2>
-      </div>
-
-      <div className="create-tournament-section">
-        <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="create-tournament-btn"
-        >
-          {showCreateForm ? "❌ Cancelar" : "➕ Crear Nueva Reta"}
-        </button>
-      </div>
+      <AppHeader
+        onCreateClick={() => setShowCreateForm(!showCreateForm)}
+        isCreating={showCreateForm}
+      />
 
       {showCreateForm && (
         <div className="create-tournament-form">
@@ -238,7 +221,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       )}
 
       <div className="tournaments-list">
-        <h3>Retas ({tournaments.length})</h3>
+        <h2>Mis Retas</h2>
         {tournaments.length === 0 ? (
           <div className="no-tournaments">
             <p>📝 No hay retas creadas aún</p>
@@ -257,44 +240,71 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
               >
                 <div className="reta-card-header">
                   <h4 className="reta-card-title">{tournament.name}</h4>
-                  <div className="reta-card-actions">
-                    {tournament.is_started && !tournament.is_finished && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleFinishTournament(tournament);
-                        }}
-                        className="reta-btn reta-btn-finish"
-                        disabled={loading}
-                      >
-                        {loading ? "⏳ Finalizando..." : "🏁 Finalizar"}
-                      </button>
-                    )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTournament(tournament.id);
+                    }}
+                    className="reta-btn reta-btn-delete"
+                  >
+                    🗑️
+                  </button>
+                </div>
+
+                <div className="reta-card-info">
+                  <span>
+                    <span className="info-icon">🏟️</span>
+                    {tournament.courts}{" "}
+                    {tournament.courts === 1 ? "cancha" : "canchas"}
+                  </span>
+                  {tournament.description && (
+                    <div className="reta-card-description">
+                      <span className="description-icon">📝</span>
+                      <span className="description-text">
+                        {tournament.description}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="reta-card-actions">
+                  <div
+                    className={`status-indicator ${
+                      tournament.is_finished
+                        ? "finalizada"
+                        : tournament.is_started
+                        ? "en-curso"
+                        : "pendiente"
+                    }`}
+                  >
+                    <span>
+                      {tournament.is_finished
+                        ? "🏆"
+                        : tournament.is_started
+                        ? "⚡"
+                        : "⏳"}
+                    </span>
+                    <span>
+                      {tournament.is_finished
+                        ? "Finalizada"
+                        : tournament.is_started
+                        ? "En curso"
+                        : "Pendiente"}
+                    </span>
+                  </div>
+
+                  {tournament.is_started && !tournament.is_finished && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteTournament(tournament.id);
+                        handleFinishTournament(tournament);
                       }}
-                      className="reta-btn reta-btn-delete"
+                      className="reta-btn reta-btn-finish"
+                      disabled={loading}
                     >
-                      🗑️
+                      {loading ? "⏳ Finalizando..." : "Finalizar"}
                     </button>
-                  </div>
-                </div>
-                {tournament.description && (
-                  <p className="reta-card-description">
-                    {tournament.description}
-                  </p>
-                )}
-                <div className="reta-card-info">
-                  <span>🏟️ {tournament.courts} canchas</span>
-                  <span>
-                    {tournament.is_finished
-                      ? "🏆 Finalizada"
-                      : tournament.is_started
-                      ? "🎾 En curso"
-                      : "⏳ Pendiente"}
-                  </span>
+                  )}
                 </div>
               </div>
             ))}
