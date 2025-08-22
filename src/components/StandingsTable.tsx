@@ -160,21 +160,6 @@ const StandingsTable: React.FC<StandingsTableProps> = ({
     );
   }
 
-  if (error) {
-    return (
-      <div className="modern-standings-section">
-        <div className="modern-standings-header">
-          <div className="modern-standings-title">
-            <h3>📊 Clasificación</h3>
-          </div>
-        </div>
-        <div className="modern-match-error">
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="modern-standings-section">
       <div className="modern-standings-header">

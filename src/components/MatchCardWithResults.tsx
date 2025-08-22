@@ -1,6 +1,15 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Match, Pair, Game } from "../lib/database";
-import { getMatches, getPairs, getGames } from "../lib/database";
+import {
+  getMatches,
+  getPairs,
+  getGames,
+  createGame,
+  deleteGame,
+  updateMatch,
+  updateGame,
+} from "../lib/database";
+import { MatchResultCalculator } from "./MatchResultCalculator";
 
 interface MatchCardWithResultsProps {
   match: Match;
@@ -10,11 +19,6 @@ interface MatchCardWithResultsProps {
   forceRefresh?: number;
 }
 
-interface MatchWithPairs extends Match {
-  pair1?: Pair;
-  pair2?: Pair;
-}
-
 const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   match,
   isSelected,
@@ -22,224 +26,322 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   onCorrectScore,
   forceRefresh = 0,
 }) => {
-  const [currentMatch, setCurrentMatch] = useState<MatchWithPairs | null>(null);
-  const [matchGames, setMatchGames] = useState<Game[]>([]);
+  const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
+  const [pair1, setPair1] = useState<Pair | null>(null);
+  const [pair2, setPair2] = useState<Pair | null>(null);
+  const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [pair1Score, setPair1Score] = useState("");
+  const [pair2Score, setPair2Score] = useState("");
 
-  // Función para cargar datos frescos del partido
-  const loadFreshMatchData = useCallback(
-    async (matchId: string) => {
-      console.log(
-        "=== CARGANDO DATOS FRESCOS PARA TARJETA CON RESULTADOS ===",
-        matchId
-      );
+  // Función simple para cargar datos
+  const loadData = async () => {
+    try {
       setLoading(true);
       setError(null);
 
-      try {
-        // Cargar partido actualizado
-        const matches = await getMatches(match.tournament_id);
-        const updatedMatch = matches.find((m) => m.id === matchId);
+      // Cargar partido actualizado
+      const matches = await getMatches(match.tournament_id);
+      const updatedMatch = matches.find((m) => m.id === match.id);
+      if (!updatedMatch) throw new Error("Partido no encontrado");
+      setCurrentMatch(updatedMatch);
 
-        if (!updatedMatch) {
-          throw new Error("Partido no encontrado para tarjeta");
-        }
+      // Cargar parejas
+      const pairs = await getPairs(match.tournament_id);
+      const p1 = pairs.find((p) => p.id === updatedMatch.pair1_id);
+      const p2 = pairs.find((p) => p.id === updatedMatch.pair2_id);
+      setPair1(p1 || null);
+      setPair2(p2 || null);
 
-        // Cargar parejas actualizadas
-        const pairs = await getPairs(match.tournament_id);
-        const pair1 = pairs.find((p) => p.id === updatedMatch.pair1_id);
-        const pair2 = pairs.find((p) => p.id === updatedMatch.pair2_id);
+      // Cargar juegos
+      const matchGames = await getGames(match.id);
+      setGames(matchGames);
 
-        // Cargar juegos del partido
-        const games = await getGames(matchId);
+      console.log("✅ Datos cargados");
+    } catch (err) {
+      console.error("❌ Error cargando datos:", err);
+      setError("Error cargando datos");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        // Crear match con parejas completas
-        const matchWithPairs: MatchWithPairs = {
-          ...updatedMatch,
-          pair1,
-          pair2,
-        };
+  // Función para forzar actualización de tabla inmediata
+  const forceUpdateTable = async () => {
+    if (!onCorrectScore) {
+      console.error("❌ onCorrectScore no está disponible");
+      return;
+    }
 
-        console.log("✅ Tarjeta con resultados actualizada:", matchWithPairs);
-        console.log("✅ Juegos cargados:", games);
-        setCurrentMatch(matchWithPairs);
-        setMatchGames(games);
-      } catch (err) {
-        console.error(
-          "❌ Error cargando datos para tarjeta con resultados:",
-          err
+    try {
+      console.log("🔄 FORZANDO actualización de tabla para partido:", match.id);
+
+      // Obtener datos frescos del partido
+      const matches = await getMatches(match.tournament_id);
+      const updatedMatch = matches.find((m) => m.id === match.id);
+
+      if (updatedMatch) {
+        console.log(
+          "📊 Datos del partido obtenidos, llamando onCorrectScore..."
         );
-        setError("Error cargando datos del partido");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [match.tournament_id, match.id, forceRefresh]
-  );
 
-  // Función para obtener el nombre del ganador
-  const getWinnerName = (match: MatchWithPairs): string => {
-    if (!match.winner_id) return "Empate";
+        // Primera llamada inmediata
+        onCorrectScore(updatedMatch);
 
-    if (match.winner_id === match.pair1_id && match.pair1) {
-      return `${match.pair1.player1?.name} / ${match.pair1.player2?.name}`;
-    } else if (match.winner_id === match.pair2_id && match.pair2) {
-      return `${match.pair2.player1?.name} / ${match.pair2.player2?.name}`;
-    }
+        // Segunda llamada con delay corto
+        setTimeout(() => {
+          onCorrectScore(updatedMatch);
+          console.log("✅ TABLA ACTUALIZADA - Segunda llamada completada");
+        }, 100);
 
-    return "Ganador desconocido";
-  };
+        // Tercera llamada para asegurar sincronización
+        setTimeout(() => {
+          onCorrectScore(updatedMatch);
+          console.log(
+            "✅ ACTUALIZACIÓN FINAL - Tabla de clasificación sincronizada"
+          );
+        }, 300);
 
-  // Función para obtener el texto de resultado
-  const getResultDisplayText = (match: MatchWithPairs): string => {
-    if (!match.winner_id) {
-      return "Empate";
-    }
-
-    const winnerName = getWinnerName(match);
-    return `Ganador: ${winnerName}`;
-  };
-
-  // Función para calcular el ganador basado en los juegos
-  const calculateWinnerFromGames = () => {
-    if (matchGames.length === 0) return null;
-
-    let pair1Sets = 0;
-    let pair2Sets = 0;
-
-    matchGames.forEach((game) => {
-      if (game.is_tie_break) {
-        // Para tie-break, el ganador es quien llega a 10 puntos con diferencia de 2
-        if (
-          game.tie_break_pair1_points >= 10 &&
-          game.tie_break_pair1_points - game.tie_break_pair2_points >= 2
-        ) {
-          pair1Sets++;
-        } else if (
-          game.tie_break_pair2_points >= 10 &&
-          game.tie_break_pair2_points - game.tie_break_pair1_points >= 2
-        ) {
-          pair2Sets++;
-        }
+        console.log("🚀 Proceso de actualización iniciado correctamente");
       } else {
-        // Para juegos normales, el ganador es quien tiene más games
-        if (game.pair1_games > game.pair2_games) {
-          pair1Sets++;
-        } else if (game.pair2_games > game.pair1_games) {
-          pair2Sets++;
-        }
+        console.error("❌ No se encontró el partido actualizado");
+      }
+    } catch (err) {
+      console.error("❌ Error crítico en actualización:", err);
+    }
+  };
+
+  // Obtener nombre de pareja
+  const getPairName = (pair: Pair | null): string => {
+    if (!pair) return "Pareja desconocida";
+    return `${pair.player1?.name || "Jugador 1"} / ${
+      pair.player2?.name || "Jugador 2"
+    }`;
+  };
+
+  // Calcular ganador del partido
+  const getMatchWinner = () => {
+    if (games.length === 0) return null;
+
+    let pair1Wins = 0;
+    let pair2Wins = 0;
+
+    games.forEach((game) => {
+      if (game.pair1_games > game.pair2_games) {
+        pair1Wins++;
+      } else if (game.pair2_games > game.pair1_games) {
+        pair2Wins++;
       }
     });
 
-    if (pair1Sets === pair2Sets) {
-      return "Empate";
-    } else if (pair1Sets > pair2Sets) {
-      return `Ganador: ${getPairName(currentMatch?.pair1)}`;
+    if (pair1Wins > pair2Wins) {
+      return { winner: "pair1", pair1Wins, pair2Wins };
+    } else if (pair2Wins > pair1Wins) {
+      return { winner: "pair2", pair1Wins, pair2Wins };
     } else {
-      return `Ganador: ${getPairName(currentMatch?.pair2)}`;
+      return { winner: "tie", pair1Wins, pair2Wins };
     }
   };
 
-  // Función para obtener el nombre de la pareja
-  const getPairName = (pair: Pair | undefined): string => {
-    if (!pair) return "Pareja desconocida";
-    return `${pair.player1?.name} / ${pair.player2?.name}`;
-  };
+  // Obtener etiqueta del ganador
+  const getWinnerLabel = () => {
+    const result = getMatchWinner();
+    if (!result) return null;
 
-  // Función para formatear el resultado de un juego
-  const formatGameScore = (game: Game): string => {
-    if (game.is_tie_break) {
-      return `${game.tie_break_pair1_points}-${game.tie_break_pair2_points}`;
+    if (result.winner === "pair1") {
+      return {
+        text: `Ganador: ${getPairName(pair1)}`,
+        type: "winner",
+        icon: "🏆",
+      };
+    } else if (result.winner === "pair2") {
+      return {
+        text: `Ganador: ${getPairName(pair2)}`,
+        type: "winner",
+        icon: "🏆",
+      };
     } else {
-      return `${game.pair1_games}-${game.pair2_games}`;
+      return {
+        text: `Empate (${result.pair1Wins}-${result.pair2Wins})`,
+        type: "tie",
+        icon: "🤝",
+      };
     }
   };
 
-  // Cargar datos cuando se monta el componente o se fuerza actualización
+  // Agregar juego
+  const addGame = async () => {
+    if (!currentMatch) return;
+
+    const score1 = parseInt(pair1Score);
+    const score2 = parseInt(pair2Score);
+
+    if (isNaN(score1) || isNaN(score2)) {
+      setError("Ingresa puntuaciones válidas");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Crear juego
+      const gameNumber = games.length + 1;
+      const newGame = await createGame(currentMatch.id, gameNumber);
+
+      // Actualizar con puntuación
+      await updateGame(newGame.id, {
+        pair1_games: score1,
+        pair2_games: score2,
+        is_tie_break: false,
+        tie_break_pair1_points: 0,
+        tie_break_pair2_points: 0,
+      });
+
+      // Recargar datos
+      await loadData();
+
+      // FORZAR actualización automática de tabla
+      await forceUpdateTable();
+
+      // Limpiar inputs
+      setPair1Score("");
+      setPair2Score("");
+
+      console.log("✅ Juego agregado");
+    } catch (err) {
+      console.error("❌ Error agregando juego:", err);
+      setError("Error al agregar juego");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Eliminar juego
+  const removeGame = async (gameId: string) => {
+    if (!currentMatch) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      await deleteGame(gameId);
+      await loadData();
+      await forceUpdateTable();
+
+      console.log("✅ Juego eliminado");
+    } catch (err) {
+      console.error("❌ Error eliminando juego:", err);
+      setError("Error al eliminar juego");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Finalizar partido
+  const finishMatch = async () => {
+    if (!currentMatch) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Obtener parejas para estadísticas
+      const allPairs = await getPairs(currentMatch.tournament_id);
+
+      // Acumular estadísticas
+      const result = await MatchResultCalculator.accumulateMatchStatistics(
+        currentMatch,
+        games,
+        allPairs
+      );
+
+      if (result.success) {
+        // Marcar como finalizado
+        await updateMatch(currentMatch.id, { is_finished: true });
+
+        // Recargar datos y FORZAR actualización automática
+        await loadData();
+        await forceUpdateTable();
+
+        console.log("✅ Partido finalizado");
+      } else {
+        setError("Error: " + result.message);
+      }
+    } catch (err) {
+      console.error("❌ Error finalizando partido:", err);
+      setError("Error al finalizar partido");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Reabrir partido
+  const reopenMatch = async () => {
+    if (!currentMatch) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Marcar como no finalizado
+      await updateMatch(currentMatch.id, { is_finished: false });
+
+      // Recargar datos y FORZAR actualización automática
+      await loadData();
+      await forceUpdateTable();
+
+      console.log("✅ Partido reabierto");
+    } catch (err) {
+      console.error("❌ Error reabriendo partido:", err);
+      setError("Error al reabrir partido");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar datos al montar o cambiar forceRefresh
   useEffect(() => {
-    console.log(
-      "🔄 Cargando datos para tarjeta con resultados:",
-      match.id,
-      "forceRefresh:",
-      forceRefresh
-    );
-    loadFreshMatchData(match.id);
-  }, [match.id, forceRefresh, loadFreshMatchData]);
-
-  // Función para manejar clic en la tarjeta
-  const handleCardClick = () => {
-    if (currentMatch && onSelect) {
-      onSelect(currentMatch.id);
-    }
-  };
-
-  // Función para manejar clic en botón de corrección
-  const handleCorrectScore = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    console.log("🔧 Botón Marcador clickeado para partido:", currentMatch?.id);
-    if (currentMatch && onCorrectScore) {
-      console.log("🔧 Llamando a onCorrectScore con:", currentMatch);
-      onCorrectScore(currentMatch);
-    } else {
-      console.log("❌ Error: currentMatch o onCorrectScore no disponible");
-    }
-  };
+    loadData();
+  }, [match.id, forceRefresh]);
 
   if (loading) {
     return (
-      <div className="modern-match-loading">
-        <div className="modern-loading-spinner"></div>
-        <p>Cargando partido...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="modern-match-error">
-        <p>❌ {error}</p>
-        <button
-          onClick={() => loadFreshMatchData(match.id)}
-          className="modern-retry-btn"
-        >
-          🔄 Reintentar
-        </button>
+      <div className="modern-match-card">
+        <div className="modern-loading">
+          <div className="modern-loading-spinner"></div>
+          <p>Cargando...</p>
+        </div>
       </div>
     );
   }
 
   if (!currentMatch) {
-    return (
-      <div className="modern-match-error">
-        <p>No se pudo cargar el partido</p>
-      </div>
-    );
+    return null;
   }
-
-  const matchWinner = calculateWinnerFromGames();
 
   return (
     <div
       className={`modern-match-card ${isSelected ? "selected" : ""}`}
-      onClick={handleCardClick}
+      onClick={() => onSelect(currentMatch.id)}
     >
-      {/* Header del partido */}
+      {/* Header */}
       <div className="modern-match-header">
         <h5 className="modern-match-title">
-          {getPairName(currentMatch.pair1)} vs {getPairName(currentMatch.pair2)}
+          {getPairName(pair1)} vs {getPairName(pair2)}
         </h5>
         <div
           className={`modern-match-status ${
             currentMatch.is_finished ? "finished" : "progress"
           }`}
         >
-          {currentMatch.is_finished ? "Finalizado" : "En progreso"}
+          {currentMatch.is_finished ? "FINALIZADO" : "En progreso"}
         </div>
       </div>
 
-      {/* Badges de información */}
+      {/* Información */}
       <div className="modern-match-badges">
         <span className="modern-match-badge">
           <span className="modern-badge-icon">🏟️</span>
@@ -251,35 +353,42 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </span>
       </div>
 
-      {/* Información de las parejas */}
+      {/* Parejas */}
       <div className="modern-match-pairs">
         <div className="modern-pair-info">
           <span className="modern-pair-label">Pareja 1:</span>
-          <span className="modern-pair-names">
-            {getPairName(currentMatch.pair1)}
-          </span>
+          <span className="modern-pair-names">{getPairName(pair1)}</span>
         </div>
         <div className="modern-pair-info">
           <span className="modern-pair-label">Pareja 2:</span>
-          <span className="modern-pair-names">
-            {getPairName(currentMatch.pair2)}
-          </span>
+          <span className="modern-pair-names">{getPairName(pair2)}</span>
         </div>
       </div>
 
-      {/* Resultados de juegos */}
-      {matchGames.length > 0 && (
+      {/* Etiqueta del Ganador */}
+      {games.length > 0 && getWinnerLabel() && (
+        <div className="modern-winner-label">
+          <div
+            className={`modern-winner-badge modern-winner-${
+              getWinnerLabel()?.type
+            }`}
+          >
+            <span className="modern-winner-icon">{getWinnerLabel()?.icon}</span>
+            <span className="modern-winner-text">{getWinnerLabel()?.text}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Resultados */}
+      {games.length > 0 && (
         <div className="modern-games-results">
-          <h6 className="modern-games-title">📊 Resultados:</h6>
+          <h6 className="modern-games-title">📊 Juegos:</h6>
           <div className="modern-games-grid">
-            {matchGames.map((game, index) => (
+            {games.map((game, index) => (
               <div key={game.id} className="modern-game-result">
                 <span className="modern-game-number">J{index + 1}:</span>
                 <span className="modern-game-score">
-                  {formatGameScore(game)}
-                  {game.is_tie_break && (
-                    <span className="modern-tie-break-indicator">TB</span>
-                  )}
+                  {game.pair1_games}-{game.pair2_games}
                 </span>
               </div>
             ))}
@@ -287,36 +396,139 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </div>
       )}
 
-      {/* Ganador */}
-      {currentMatch.is_finished && (
-        <div className="modern-winner">
-          <span className="modern-winner-icon">🏆</span>
-          <span className="modern-winner-text">
-            {matchWinner || getResultDisplayText(currentMatch)}
-          </span>
+      {/* Editor */}
+      {isEditing && (
+        <div className="modern-match-editor">
+          <div className="modern-editor-content">
+            {/* Agregar juego */}
+            <div className="modern-add-game-section">
+              <h6 className="modern-add-game-title">➕ Agregar Juego</h6>
+              <div className="modern-score-inputs">
+                <div className="modern-score-input-group">
+                  <label className="modern-score-label">
+                    {getPairName(pair1)}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="7"
+                    value={pair1Score}
+                    onChange={(e) => setPair1Score(e.target.value)}
+                    className="modern-score-input"
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="0"
+                  />
+                </div>
+                <span className="modern-score-separator">vs</span>
+                <div className="modern-score-input-group">
+                  <label className="modern-score-label">
+                    {getPairName(pair2)}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="7"
+                    value={pair2Score}
+                    onChange={(e) => setPair2Score(e.target.value)}
+                    className="modern-score-input"
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addGame();
+                }}
+                className="modern-add-game-btn"
+                disabled={loading}
+              >
+                ➕ Agregar Juego
+              </button>
+            </div>
+
+            {/* Eliminar juegos */}
+            {games.length > 0 && (
+              <div className="modern-games-list">
+                <h6 className="modern-games-list-title">🗑️ Eliminar Juegos</h6>
+                {games.map((game, index) => (
+                  <div key={game.id} className="modern-game-item">
+                    <span className="modern-game-info">
+                      J{index + 1}: {game.pair1_games}-{game.pair2_games}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeGame(game.id);
+                      }}
+                      className="modern-delete-game-btn"
+                      disabled={loading}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Botones de acción */}
+            {!currentMatch.is_finished ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  finishMatch();
+                }}
+                className="modern-finish-match-btn"
+                disabled={loading}
+              >
+                🏆 Finalizar Partido
+              </button>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  reopenMatch();
+                }}
+                className="modern-reopen-match-btn"
+                disabled={loading}
+              >
+                🔄 Reabrir Partido
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="modern-error">
+          <span className="error-icon">⚠️</span>
+          {error}
         </div>
       )}
 
       {/* Acciones */}
       <div className="modern-match-actions">
         <button
-          onClick={handleCorrectScore}
-          className="modern-match-btn modern-correct-btn"
-          title="Corregir resultado del partido"
-          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            loadData();
+          }}
+          className="modern-match-btn modern-refresh-btn"
+          title="Actualizar datos"
         >
-          🔧 Marcador
+          🔄 Actualizar
         </button>
         <button
           onClick={(e) => {
             e.stopPropagation();
-            loadFreshMatchData(match.id);
+            setIsEditing(!isEditing);
           }}
-          className="modern-match-btn modern-refresh-btn"
-          title="Actualizar datos del partido"
-          type="button"
+          className="modern-match-btn modern-edit-btn"
+          title="Editar marcador"
         >
-          🔄 Actualizar
+          {isEditing ? "❌ Cerrar" : "✏️ Editar"}
         </button>
       </div>
     </div>

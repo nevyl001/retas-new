@@ -167,8 +167,6 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         </button>
       </div>
 
-      {error && <div className="error">{error}</div>}
-
       {showCreateForm && (
         <div className="create-tournament-form">
           <h3>Crear Nueva Reta</h3>

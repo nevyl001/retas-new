@@ -178,14 +178,6 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
         </div>
       )}
 
-      {/* Mensaje de Error */}
-      {error && (
-        <div className="elegant-error">
-          <span className="elegant-error-icon">⚠️</span>
-          <span className="elegant-error-text">{error}</span>
-        </div>
-      )}
-
       {/* Grid de Jugadores Elegante */}
       {players.length === 0 ? (
         <div className="elegant-empty-state">

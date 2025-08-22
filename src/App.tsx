@@ -5,10 +5,9 @@ import { ModernPlayerManager } from "./components/ModernPlayerManager";
 import { NewPairManager } from "./components/NewPairManager";
 import { DebugPanelContent } from "./components/DebugPanelContent";
 import { TournamentStatusContent } from "./components/TournamentStatusContent";
-import { MatchScoreEditor } from "./components/MatchScoreEditor";
 
 import StandingsTable from "./components/StandingsTable";
-import { SuccessModal } from "./components/SuccessModal";
+
 import MatchCardWithResults from "./components/MatchCardWithResults";
 
 import {
@@ -31,6 +30,7 @@ import {
   TournamentWinnerCalculator,
   TournamentWinner,
 } from "./components/TournamentWinnerCalculator";
+import { ModernToast } from "./components/ModernToast";
 
 function App() {
   const [selectedTournament, setSelectedTournament] =
@@ -50,15 +50,16 @@ function App() {
   const [forceRefresh, setForceRefresh] = useState(0);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [showTournamentStatus, setShowTournamentStatus] = useState(false);
-  const [showScoreCorrector, setShowScoreCorrector] = useState(false);
-  const [selectedCorrectorMatch, setSelectedCorrectorMatch] =
-    useState<Match | null>(null);
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successModalData, setSuccessModalData] = useState({
-    title: "",
+  // Toast notifications
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+    isVisible: boolean;
+  }>({
     message: "",
-    icon: "✅",
+    type: "info",
+    isVisible: false,
   });
 
   // Cargar datos cuando se selecciona una reta
@@ -67,6 +68,21 @@ function App() {
       loadTournamentData();
     }
   }, [selectedTournament?.id]);
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "info"
+  ) => {
+    setToast({
+      message,
+      type,
+      isVisible: true,
+    });
+  };
+
+  const hideToast = () => {
+    setToast((prev) => ({ ...prev, isVisible: false }));
+  };
 
   const loadTournamentData = useCallback(async () => {
     if (!selectedTournament) return;
@@ -109,9 +125,10 @@ function App() {
       setPairs(pairs.filter((p) => p.id !== pairId));
 
       console.log("Pareja eliminada exitosamente");
+      showToast("Pareja eliminada exitosamente", "success");
     } catch (err) {
       console.error("Error eliminando pareja:", err);
-      setError("Error al eliminar la pareja: " + (err as Error).message);
+      showToast("Error al eliminar la pareja", "error");
     }
   };
 
@@ -332,16 +349,13 @@ function App() {
       );
 
       await loadTournamentData();
-
-      setSuccessModalData({
-        title: "¡Reta Iniciada!",
-        message: `Se han creado ${createdMatches.length} partidos exitosamente usando ${selectedTournament.courts} canchas. La reta está lista para comenzar.`,
-        icon: "🏆",
-      });
-      setShowSuccessModal(true);
+      showToast(
+        `¡Reta iniciada exitosamente! Se crearon ${createdMatches.length} partidos.`,
+        "success"
+      );
     } catch (error) {
       console.error("Error starting tournament:", error);
-      setError("Error al iniciar la reta: " + (error as Error).message);
+      showToast("Error al iniciar la reta", "error");
     } finally {
       setLoading(false);
     }
@@ -471,59 +485,9 @@ function App() {
     setError("");
     setShowWinnerScreen(false);
     setCurrentView("main");
-    setShowScoreCorrector(false);
-    setSelectedCorrectorMatch(null);
+
     setForceRefresh(0);
     setShowDebugInfo(false);
-    setShowSuccessModal(false);
-    setSuccessModalData({
-      title: "",
-      message: "",
-      icon: "✅",
-    });
-  };
-
-  const openScoreCorrector = (match: Match) => {
-    setSelectedCorrectorMatch(match);
-    setShowScoreCorrector(true);
-  };
-
-  const closeScoreCorrector = () => {
-    setShowScoreCorrector(false);
-    setSelectedCorrectorMatch(null);
-  };
-
-  const handleScoreCorrectorUpdate = async () => {
-    if (selectedTournament) {
-      console.log(
-        "🏆 Actualizando tabla de clasificación después de finalizar partido..."
-      );
-
-      try {
-        // Incrementar forceRefresh inmediatamente para actualizar componentes
-        setForceRefresh((prev) => prev + 1);
-
-        // Recargar datos frescos del torneo
-        await loadTournamentData();
-
-        console.log(
-          "✅ Tabla de clasificación actualizada después de finalizar partido"
-        );
-
-        // Mostrar mensaje de éxito
-        setSuccessModalData({
-          title: "¡Partido Finalizado!",
-          message:
-            "El partido ha sido finalizado y la tabla se ha actualizado.",
-          icon: "🏆",
-        });
-        setShowSuccessModal(true);
-      } catch (error) {
-        console.error("❌ Error actualizando tabla:", error);
-        setError("Error al actualizar la tabla de clasificación");
-      }
-    }
-    closeScoreCorrector();
   };
 
   return (
@@ -531,21 +495,6 @@ function App() {
       {currentView === "main" ? (
         <div className="container">
           <h1>🏆 ¡Organiza tu Reta de Pádel y ¡Que Gane el Mejor! 🏅</h1>
-
-          {error && (
-            <div className="error">
-              <h4>❌ Error</h4>
-              <p>{error}</p>
-              <div className="error-help">
-                <h5>💡 Ayuda:</h5>
-                <ol>
-                  <li>Verifica tu conexión a internet</li>
-                  <li>Intenta recargar la página</li>
-                  <li>Si el problema persiste, contacta al administrador</li>
-                </ol>
-              </div>
-            </div>
-          )}
 
           {loading && (
             <div className="loading">
@@ -830,13 +779,6 @@ function App() {
                                     );
                                     setMatches([]);
                                     await loadTournamentData();
-                                    setSuccessModalData({
-                                      title: "¡Reta Reseteada!",
-                                      message:
-                                        "La reta ha sido reseteada y está lista para iniciar nuevamente.",
-                                      icon: "🔄",
-                                    });
-                                    setShowSuccessModal(true);
                                   } catch (error) {
                                     setError(
                                       "Error al resetear la reta: " +
@@ -1071,7 +1013,39 @@ function App() {
                                           selectedMatchId === match.id
                                         }
                                         onSelect={() => {}}
-                                        onCorrectScore={openScoreCorrector}
+                                        onCorrectScore={async (match) => {
+                                          console.log(
+                                            "🔄 Forzando actualización desde App.tsx para partido:",
+                                            match.id
+                                          );
+                                          try {
+                                            // Incrementar forceRefresh para forzar actualización
+                                            setForceRefresh((prev) => prev + 1);
+
+                                            // Recargar datos del torneo
+                                            await loadTournamentData();
+
+                                            // Forzar actualización adicional después de un delay
+                                            setTimeout(async () => {
+                                              console.log(
+                                                "🔄 Actualización adicional desde App.tsx"
+                                              );
+                                              setForceRefresh(
+                                                (prev) => prev + 1
+                                              );
+                                              await loadTournamentData();
+                                            }, 500);
+
+                                            console.log(
+                                              "✅ Actualización forzada completada"
+                                            );
+                                          } catch (error) {
+                                            console.error(
+                                              "❌ Error en actualización forzada:",
+                                              error
+                                            );
+                                          }
+                                        }}
                                         forceRefresh={forceRefresh}
                                       />
                                     ))}
@@ -1143,26 +1117,6 @@ function App() {
               )}
             </div>
           </div>
-
-          {/* Modal de corrección de marcador */}
-          {showScoreCorrector && selectedCorrectorMatch && (
-            <MatchScoreEditor
-              match={selectedCorrectorMatch}
-              onClose={closeScoreCorrector}
-              onMatchFinish={handleScoreCorrectorUpdate}
-            />
-          )}
-
-          {/* Modal de éxito */}
-          {showSuccessModal && (
-            <SuccessModal
-              title={successModalData.title}
-              message={successModalData.message}
-              icon={successModalData.icon}
-              isOpen={showSuccessModal}
-              onClose={() => setShowSuccessModal(false)}
-            />
-          )}
         </div>
       ) : (
         /* Pantalla de ganador - Nueva ventana */
@@ -1227,6 +1181,15 @@ function App() {
           )}
         </div>
       )}
+
+      {/* Toast Notifications */}
+      <ModernToast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+        duration={4000}
+      />
     </div>
   );
 }

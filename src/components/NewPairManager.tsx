@@ -59,14 +59,6 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
         </div>
       </div>
 
-      {/* Mensaje de Error */}
-      {error && (
-        <div className="elegant-error">
-          <span className="elegant-error-icon">⚠️</span>
-          <span className="elegant-error-text">{error}</span>
-        </div>
-      )}
-
       {/* Grid de Parejas Elegante */}
       {pairs.length === 0 ? (
         <div className="elegant-empty-state">
