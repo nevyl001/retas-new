@@ -1013,35 +1013,20 @@ function App() {
                                           selectedMatchId === match.id
                                         }
                                         onSelect={() => {}}
-                                        onCorrectScore={async (match) => {
+                                        onCorrectScore={async (match: any) => {
                                           console.log(
-                                            "🔄 Forzando actualización desde App.tsx para partido:",
+                                            "🔄 Actualizando tabla para partido:",
                                             match.id
                                           );
                                           try {
-                                            // Incrementar forceRefresh para forzar actualización
+                                            // Solo incrementar forceRefresh - StandingsTable se actualizará automáticamente
                                             setForceRefresh((prev) => prev + 1);
-
-                                            // Recargar datos del torneo
-                                            await loadTournamentData();
-
-                                            // Forzar actualización adicional después de un delay
-                                            setTimeout(async () => {
-                                              console.log(
-                                                "🔄 Actualización adicional desde App.tsx"
-                                              );
-                                              setForceRefresh(
-                                                (prev) => prev + 1
-                                              );
-                                              await loadTournamentData();
-                                            }, 500);
-
                                             console.log(
-                                              "✅ Actualización forzada completada"
+                                              "✅ ForceRefresh incrementado"
                                             );
                                           } catch (error) {
                                             console.error(
-                                              "❌ Error en actualización forzada:",
+                                              "❌ Error en actualización:",
                                               error
                                             );
                                           }

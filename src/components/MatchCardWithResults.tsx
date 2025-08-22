@@ -68,48 +68,29 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
-  // Función para forzar actualización de tabla inmediata
-  const forceUpdateTable = async () => {
+  // Función simple y eficiente para actualizar tabla
+  const updateTable = async () => {
     if (!onCorrectScore) {
       console.error("❌ onCorrectScore no está disponible");
       return;
     }
 
     try {
-      console.log("🔄 FORZANDO actualización de tabla para partido:", match.id);
+      console.log("🔄 Actualizando tabla para partido:", match.id);
 
       // Obtener datos frescos del partido
       const matches = await getMatches(match.tournament_id);
       const updatedMatch = matches.find((m) => m.id === match.id);
 
       if (updatedMatch) {
-        console.log(
-          "📊 Datos del partido obtenidos, llamando onCorrectScore..."
-        );
-
-        // Primera llamada inmediata
+        // Una sola llamada eficiente
         onCorrectScore(updatedMatch);
-
-        // Segunda llamada con delay corto
-        setTimeout(() => {
-          onCorrectScore(updatedMatch);
-          console.log("✅ TABLA ACTUALIZADA - Segunda llamada completada");
-        }, 100);
-
-        // Tercera llamada para asegurar sincronización
-        setTimeout(() => {
-          onCorrectScore(updatedMatch);
-          console.log(
-            "✅ ACTUALIZACIÓN FINAL - Tabla de clasificación sincronizada"
-          );
-        }, 300);
-
-        console.log("🚀 Proceso de actualización iniciado correctamente");
+        console.log("✅ Tabla actualizada correctamente");
       } else {
         console.error("❌ No se encontró el partido actualizado");
       }
     } catch (err) {
-      console.error("❌ Error crítico en actualización:", err);
+      console.error("❌ Error actualizando tabla:", err);
     }
   };
 
@@ -203,8 +184,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       // Recargar datos
       await loadData();
 
-      // FORZAR actualización automática de tabla
-      await forceUpdateTable();
+      // Actualizar tabla automáticamente
+      await updateTable();
 
       // Limpiar inputs
       setPair1Score("");
@@ -229,7 +210,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
       await deleteGame(gameId);
       await loadData();
-      await forceUpdateTable();
+      await updateTable();
 
       console.log("✅ Juego eliminado");
     } catch (err) {
@@ -262,9 +243,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         // Marcar como finalizado
         await updateMatch(currentMatch.id, { is_finished: true });
 
-        // Recargar datos y FORZAR actualización automática
+        // Recargar datos y actualizar tabla automáticamente
         await loadData();
-        await forceUpdateTable();
+        await updateTable();
 
         console.log("✅ Partido finalizado");
       } else {
@@ -289,9 +270,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       // Marcar como no finalizado
       await updateMatch(currentMatch.id, { is_finished: false });
 
-      // Recargar datos y FORZAR actualización automática
+      // Recargar datos y actualizar tabla automáticamente
       await loadData();
-      await forceUpdateTable();
+      await updateTable();
 
       console.log("✅ Partido reabierto");
     } catch (err) {
@@ -302,10 +283,10 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
-  // Cargar datos al montar o cambiar forceRefresh
+  // Cargar datos solo al montar o cambiar match.id
   useEffect(() => {
     loadData();
-  }, [match.id, forceRefresh]);
+  }, [match.id]);
 
   if (loading) {
     return (

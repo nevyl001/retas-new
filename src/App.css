@@ -8840,49 +8840,114 @@ td {
 
 /* Estilos para sección de iniciar torneo */
 .start-tournament-section {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  padding: 25px;
-  border-radius: 15px;
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.98) 0%,
+    rgba(40, 40, 80, 0.95) 50%,
+    rgba(20, 20, 35, 0.98) 100%
+  );
+  padding: 32px;
+  border-radius: 24px;
   text-align: center;
-  margin: 20px 0;
-  box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
+  margin: 24px 0;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.2);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  backdrop-filter: blur(30px);
+  position: relative;
+  overflow: hidden;
+}
+
+.start-tournament-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
+  animation: shimmer 3s ease-in-out infinite;
 }
 
 .start-tournament-section h3 {
-  color: white;
-  margin-bottom: 15px;
-  font-size: 1.5rem;
-  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  font-weight: 800;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.5);
 }
 
 .tournament-info {
-  color: rgb(255, 255, 255);
-  margin: 8px 0;
-  font-size: 1rem;
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.9) 0%,
+    rgba(40, 40, 80, 0.85) 50%,
+    rgba(20, 20, 35, 0.9) 100%
+  );
+  border-radius: 18px;
+  padding: 24px;
+  margin: 20px 0;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  backdrop-filter: blur(20px);
+}
+
+.tournament-info p {
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 12px 0;
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tournament-info p::before {
+  content: "✓";
+  color: #ffd700;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.2rem;
 }
 
 .start-button {
-  background: linear-gradient(45deg, #ffd700, #ffed4e);
-  color: #333333;
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffb347 100%);
+  color: #000000;
   border: none;
-  padding: 15px 30px;
-  border-radius: 10px;
-  font-size: 1.2rem;
-  font-weight: bold;
+  padding: 16px 32px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
-  margin-top: 15px;
-  box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
-  transition: all 0.3s ease;
+  margin-top: 20px;
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.2;
+  backdrop-filter: blur(15px);
+  position: relative;
+  overflow: hidden;
 }
 
 .start-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(255, 215, 0, 0.6);
+  background: linear-gradient(135deg, #ffed4e 0%, #ffb347 50%, #ff8c00 100%);
 }
 
 .start-button:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
+  background: linear-gradient(
+    135deg,
+    rgba(60, 60, 120, 0.8) 0%,
+    rgba(40, 40, 80, 0.9) 100%
+  );
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(60, 60, 120, 0.3);
 }
 
 /* Estilos para sección de crear parejas */
