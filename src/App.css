@@ -1,5 +1,11 @@
 /* Responsive Design - Complete Overhaul */
 
+/* Deshabilitar animaciones shimmer para evitar mareos */
+*::before,
+*::after {
+  animation: none !important;
+}
+
 /* Optimizaciones de rendimiento globales para móviles */
 @media (max-width: 768px) {
   * {
@@ -293,7 +299,6 @@ h1::before {
     rgba(255, 215, 0, 0.3),
     transparent
   );
-  animation: shimmer 4s infinite;
 }
 
 @keyframes shimmer {
@@ -440,7 +445,6 @@ h1::before {
     rgba(255, 215, 0, 0.1),
     transparent
   );
-  animation: shimmer 3s ease-in-out infinite;
 }
 
 .welcome-banner h2 {
@@ -822,8 +826,7 @@ h1::before {
   );
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.2);
-  border: 2px solid rgba(255, 215, 0, 0.6);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
   background-clip: padding-box;
   backdrop-filter: blur(20px);
   min-height: 150px;
@@ -2865,7 +2868,7 @@ h1::before {
 .tournament-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 32px;
 }
 
 /* ===== MODERN MATCHES SECTION ===== */
@@ -2878,23 +2881,16 @@ h1::before {
     rgba(20, 20, 35, 0.98) 100%
   );
   border-radius: 24px;
-  padding: 24px;
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.2);
+  padding: 32px;
+  border: none;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
 }
 
 .modern-matches-section::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
-  animation: shimmer 3s ease-in-out infinite;
+  display: none;
 }
 
 .modern-matches-header {
@@ -2903,7 +2899,7 @@ h1::before {
   justify-content: space-between;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  border-bottom: none;
 }
 
 .modern-matches-title {
@@ -2946,7 +2942,7 @@ h1::before {
     rgba(30, 30, 50, 0.85) 100%
   );
   border-radius: 16px;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  border: none;
 }
 
 .modern-round-title {
@@ -2987,7 +2983,7 @@ h1::before {
   margin-bottom: 16px;
   border: 2px solid rgba(255, 215, 0, 0.4);
   backdrop-filter: blur(15px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 4px 15px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -2995,15 +2991,7 @@ h1::before {
 }
 
 .modern-match-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
+  display: none;
 }
 
 .modern-match-card:hover::before {
@@ -3011,20 +2999,19 @@ h1::before {
 }
 
 .modern-match-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 8px 25px rgba(255, 215, 0, 0.3);
-  border-color: #ffd700;
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 215, 0, 0.6);
 }
 
 .modern-match-card.selected {
-  border-color: #ffd700;
   background: linear-gradient(
     135deg,
-    rgba(255, 215, 0, 0.15) 0%,
-    rgba(255, 237, 78, 0.1) 50%,
-    rgba(255, 179, 71, 0.15) 100%
+    rgba(255, 215, 0, 0.1) 0%,
+    rgba(255, 237, 78, 0.05) 50%,
+    rgba(255, 179, 71, 0.1) 100%
   );
-  box-shadow: 0 15px 45px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 15px 45px rgba(0, 0, 0, 0.6);
 }
 
 /* Match Header */
@@ -3387,8 +3374,8 @@ h1::before {
   );
   border-radius: 24px;
   padding: 24px;
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.2);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.1);
   backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
@@ -3411,7 +3398,7 @@ h1::before {
   justify-content: space-between;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.15);
 }
 
 .modern-standings-title {
@@ -3671,7 +3658,7 @@ h1::before {
 
   /* Responsive para tarjetas de partidos */
   .modern-matches-section {
-    padding: 16px;
+    padding: 24px;
   }
 
   .modern-matches-header {
@@ -3827,7 +3814,7 @@ h1::before {
 
   /* Responsive para tarjetas de partidos - móviles pequeños */
   .modern-matches-section {
-    padding: 12px;
+    padding: 18px;
   }
 
   .modern-matches-title h3 {
@@ -5160,7 +5147,7 @@ h1::before {
 @media (max-width: 430px) {
   /* Responsive para tarjetas de partidos - iPhone 15 Pro Max */
   .modern-matches-section {
-    padding: 4px;
+    padding: 12px;
   }
 
   .modern-matches-header {
@@ -6183,7 +6170,7 @@ td {
       #ffb347,
       #ffd700
     ) !important;
-    animation: shimmer 3s ease-in-out infinite !important;
+
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
   }
 
@@ -6726,7 +6713,7 @@ td {
       #ffb347,
       #ffd700
     ) !important;
-    animation: shimmer 3s ease-in-out infinite !important;
+
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
   }
 
@@ -18761,8 +18748,9 @@ td {
   );
   border-radius: 20px;
   padding: 20px;
-  border: 2px solid rgba(255, 215, 0, 0.6);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.2);
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 8px 25px rgba(255, 215, 0, 0.1);
   backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
@@ -18777,7 +18765,6 @@ td {
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
-  animation: shimmer 3s ease-in-out infinite;
 }
 
 /* Header Compacto */
@@ -18841,9 +18828,9 @@ td {
   );
   border-radius: 16px;
   padding: 20px;
-  border: 2px solid rgba(255, 215, 0, 0.3);
+  border: 1px solid rgba(255, 215, 0, 0.15);
   backdrop-filter: blur(15px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 4px 15px rgba(255, 215, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 4px 15px rgba(255, 215, 0, 0.05);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -18941,7 +18928,11 @@ td {
 }
 
 .compact-stat {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.8) 0%,
+    rgba(255, 237, 78, 0.6) 100%
+  );
   color: #000000;
   padding: 4px 8px;
   border-radius: 6px;
@@ -18949,13 +18940,13 @@ td {
   flex-direction: column;
   align-items: center;
   min-width: 50px;
-  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.15);
   transition: all 0.3s ease;
 }
 
 .compact-pair-card:hover .compact-stat {
-  transform: scale(1.1);
-  box-shadow: 0 6px 15px rgba(255, 215, 0, 0.4);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
 }
 
 /* Efectos de partículas */
@@ -19129,7 +19120,7 @@ td {
 @media (max-width: 768px) {
   .compact-pairs-manager {
     padding: 12px;
-    margin: 0 8px;
+    margin: 0 8px 20px 8px;
   }
 
   .compact-pairs-grid {
@@ -19176,7 +19167,7 @@ td {
 @media (max-width: 430px) {
   .compact-pairs-manager {
     padding: 6px;
-    margin: 0;
+    margin: 0 0 16px 0;
     border-radius: 16px;
   }
 
@@ -19234,7 +19225,7 @@ td {
 @media (max-width: 375px) {
   .compact-pairs-manager {
     padding: 4px;
-    margin: 0;
+    margin: 0 0 12px 0;
     border-radius: 12px;
   }
 
@@ -19408,9 +19399,9 @@ td {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  border: 2px solid rgba(255, 215, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.2);
   backdrop-filter: blur(20px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 4px 15px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 4px 15px rgba(255, 215, 0, 0.1);
 }
 
 .elegant-pair-card::before {
@@ -21572,32 +21563,22 @@ td {
 .modern-score-inputs {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: 24px;
+  gap: 16px;
   align-items: center;
   margin-bottom: 24px;
   padding: 24px;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.05) 0%,
-    rgba(255, 255, 255, 0.02) 100%
+    rgba(255, 215, 0, 0.15) 0%,
+    rgba(255, 237, 78, 0.1) 50%,
+    rgba(255, 179, 71, 0.15) 100%
   );
   border-radius: 16px;
-  border: 1px solid rgba(255, 215, 0, 0.2);
   position: relative;
 }
 
 .modern-score-inputs::before {
-  content: "";
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  background: linear-gradient(45deg, #ffd700, #ffed4e, #ffb347, #ffd700);
-  border-radius: 16px;
-  z-index: -1;
-  opacity: 0.3;
-  animation: borderGlow 4s ease-in-out infinite;
+  display: none;
 }
 
 /* Grupo de input de puntuación */
@@ -21605,23 +21586,29 @@ td {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  width: 100%;
+  flex: 1;
 }
 
 .modern-score-label {
-  color: #ffffff;
+  color: #ffd700;
   font-size: 0.9rem;
   font-weight: 600;
   text-align: center;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-  max-width: 120px;
+  width: 100%;
+  max-width: none;
   line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  padding: 0 8px;
 }
 
 /* Input de puntuación */
 .modern-score-input {
   background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  border: 2px solid rgba(255, 215, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.2);
   border-radius: 12px;
   padding: 12px 16px;
   color: #ffffff;
@@ -21677,23 +21664,24 @@ td {
 /* Separador VS */
 .modern-score-separator {
   color: #ffd700;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 800;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   text-align: center;
-  padding: 8px;
+  padding: 6px;
   background: linear-gradient(
     135deg,
     rgba(255, 215, 0, 0.1) 0%,
     rgba(255, 215, 0, 0.05) 100%
   );
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 45px;
+  height: 45px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(255, 215, 0, 0.3);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  flex-shrink: 0;
 }
 
 /* Botón agregar juego */
@@ -21705,14 +21693,14 @@ td {
     rgba(20, 20, 35, 0.95) 100%
   );
   color: #ffd700;
-  border: 2px solid rgba(255, 215, 0, 0.4);
+  border: none;
   padding: 16px 28px;
   border-radius: 16px;
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21726,19 +21714,7 @@ td {
 }
 
 .modern-add-game-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 215, 0, 0.2),
-    transparent
-  );
-  transition: left 0.6s ease;
+  display: none;
 }
 
 .modern-add-game-btn:hover::before {
@@ -21752,9 +21728,8 @@ td {
     rgba(25, 25, 45, 0.9) 50%,
     rgba(30, 30, 50, 0.95) 100%
   );
-  border-color: rgba(255, 215, 0, 0.6);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(255, 215, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
 }
 
 .modern-add-game-btn:disabled {
@@ -21866,14 +21841,14 @@ td {
     rgba(20, 20, 35, 0.95) 100%
   );
   color: #ffd700;
-  border: 2px solid rgba(255, 215, 0, 0.4);
+  border: none;
   padding: 16px 28px;
   border-radius: 16px;
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21887,19 +21862,7 @@ td {
 }
 
 .modern-finish-match-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 215, 0, 0.2),
-    transparent
-  );
-  transition: left 0.6s ease;
+  display: none;
 }
 
 .modern-finish-match-btn:hover::before {
@@ -21913,9 +21876,8 @@ td {
     rgba(25, 25, 45, 0.9) 50%,
     rgba(30, 30, 50, 0.95) 100%
   );
-  border-color: rgba(255, 215, 0, 0.6);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 6px 16px rgba(255, 215, 0, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
 }
 
 .modern-finish-match-btn:disabled {
@@ -22021,32 +21983,34 @@ td {
   .modern-score-inputs {
     grid-template-columns: 1fr auto 1fr;
     gap: 12px;
-    padding: 16px;
+    padding: 20px;
   }
 
   .modern-score-input {
-    width: 60px;
-    height: 45px;
-    font-size: 1.1rem;
-    padding: 8px 12px;
+    width: 50px;
+    height: 40px;
+    font-size: 1rem;
+    padding: 6px 10px;
   }
 
   .modern-score-label {
-    font-size: 0.8rem;
-    max-width: 80px;
+    font-size: 0.85rem;
+    width: 100%;
+    max-width: none;
+    padding: 0 4px;
   }
 
   .modern-score-separator {
-    font-size: 1.4rem;
-    width: 40px;
-    height: 40px;
+    font-size: 1.1rem;
+    width: 32px;
+    height: 32px;
   }
 
   .modern-add-game-btn,
   .modern-finish-match-btn,
   .modern-reopen-match-btn {
-    padding: 12px 20px;
-    font-size: 0.95rem;
+    padding: 10px 16px;
+    font-size: 0.9rem;
   }
 }
 
@@ -22054,6 +22018,7 @@ td {
   .modern-score-inputs {
     grid-template-columns: 1fr;
     gap: 16px;
+    padding: 16px;
   }
 
   .modern-score-separator {
@@ -22062,8 +22027,17 @@ td {
   }
 
   .modern-score-input {
-    width: 80px;
-    height: 50px;
+    width: 60px;
+    height: 45px;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+
+  .modern-score-label {
+    font-size: 0.8rem;
+    width: 100%;
+    max-width: none;
+    padding: 0 2px;
   }
 }
 
