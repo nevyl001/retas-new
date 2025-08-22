@@ -21228,6 +21228,144 @@ td {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
+/* Public Winner Section */
+.public-winner-section {
+  padding: 24px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.15) 0%,
+    rgba(255, 237, 78, 0.1) 100%
+  );
+  border-radius: 24px;
+  border: 3px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 10px 30px rgba(255, 215, 0, 0.3);
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.public-winner-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.public-winner-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.public-winner-title {
+  color: #ffd700;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
+  animation: winnerGlow 2s ease-in-out infinite;
+}
+
+.public-winner-content {
+  text-align: center;
+}
+
+.public-winner-names {
+  color: #ffffff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.public-winner-subtitle {
+  color: #ffd700;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 24px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.public-winner-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.public-winner-stat {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.2) 0%,
+    rgba(255, 237, 78, 0.15) 100%
+  );
+  border-radius: 16px;
+  padding: 20px 16px;
+  text-align: center;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease-out 0.6s both;
+}
+
+.public-winner-stat::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
+  opacity: 0.8;
+}
+
+.public-winner-stat-number {
+  display: block;
+  color: #ffd700;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.public-winner-stat-label {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes winnerGlow {
+  0%,
+  100% {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
+  }
+  50% {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.8);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Public Footer */
 .public-footer {
   background: linear-gradient(
@@ -21265,7 +21403,8 @@ td {
   }
 
   .public-matches-section,
-  .public-standings-section {
+  .public-standings-section,
+  .public-winner-section {
     padding: 16px;
   }
 
@@ -21290,6 +21429,23 @@ td {
     font-size: 0.8rem;
     padding: 3px 8px;
   }
+
+  .public-winner-title {
+    font-size: 1.8rem;
+  }
+
+  .public-winner-names {
+    font-size: 1.3rem;
+  }
+
+  .public-winner-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .public-winner-stat-number {
+    font-size: 1.8rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -21306,7 +21462,8 @@ td {
   }
 
   .public-matches-section,
-  .public-standings-section {
+  .public-standings-section,
+  .public-winner-section {
     padding: 12px;
   }
 
@@ -21336,6 +21493,27 @@ td {
   .public-score-pair2 {
     font-size: 1.2rem;
     padding: 6px 12px;
+  }
+
+  .public-winner-title {
+    font-size: 1.5rem;
+  }
+
+  .public-winner-names {
+    font-size: 1.1rem;
+  }
+
+  .public-winner-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .public-winner-stat-number {
+    font-size: 1.5rem;
+  }
+
+  .public-winner-stat-label {
+    font-size: 0.8rem;
   }
 
   .public-footer {
@@ -21373,5 +21551,299 @@ td {
   }
   50% {
     opacity: 1;
+  }
+}
+
+/* ===== ELEGANT WINNER SCREEN ===== */
+
+.elegant-winner-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(20, 20, 35, 0.95) 50%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease-out;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.elegant-winner-section {
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 35, 0.98) 0%,
+    rgba(30, 30, 50, 0.95) 50%,
+    rgba(20, 20, 35, 0.98) 100%
+  );
+  border-radius: 28px;
+  border: 3px solid rgba(255, 215, 0, 0.5);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 15px 40px rgba(255, 215, 0, 0.3);
+  backdrop-filter: blur(12px);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  animation: winnerSlideIn 0.4s ease-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.elegant-winner-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
+  border-radius: 28px 28px 0 0;
+  opacity: 0.8;
+}
+
+.elegant-winner-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 215, 0, 0.1) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.elegant-winner-header {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 32px 24px 0 24px;
+}
+
+.elegant-winner-title {
+  color: #ffd700;
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin: 0;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
+  animation: winnerGlow 2s ease-in-out infinite;
+}
+
+.elegant-winner-content {
+  text-align: center;
+  padding: 0 24px 32px 24px;
+}
+
+.elegant-winner-names {
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+.elegant-winner-subtitle {
+  color: #ffd700;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 32px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.elegant-winner-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.elegant-winner-stat {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.2) 0%,
+    rgba(255, 237, 78, 0.15) 100%
+  );
+  border-radius: 16px;
+  padding: 20px 16px;
+  text-align: center;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease-out 0.6s both;
+}
+
+.elegant-winner-stat::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
+  opacity: 0.8;
+}
+
+.elegant-winner-stat-number {
+  display: block;
+  color: #ffd700;
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.elegant-winner-stat-label {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.elegant-winner-actions {
+  text-align: center;
+}
+
+.elegant-winner-back-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease-out 0.8s both;
+}
+
+.elegant-winner-back-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.8s ease;
+}
+
+.elegant-winner-back-btn:hover::before {
+  left: 100%;
+}
+
+.elegant-winner-back-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(16, 185, 129, 0.4);
+}
+
+/* Responsive Elegant Winner Screen */
+@media (max-width: 768px) {
+  .elegant-winner-screen {
+    padding: 12px;
+  }
+
+  .elegant-winner-section {
+    width: 100%;
+    border-radius: 24px;
+    max-height: 85vh;
+  }
+
+  .elegant-winner-header {
+    padding: 24px 20px 0 20px;
+  }
+
+  .elegant-winner-title {
+    font-size: 2rem;
+  }
+
+  .elegant-winner-content {
+    padding: 0 20px 24px 20px;
+  }
+
+  .elegant-winner-names {
+    font-size: 1.5rem;
+  }
+
+  .elegant-winner-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .elegant-winner-stat-number {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .elegant-winner-screen {
+    padding: 8px;
+  }
+
+  .elegant-winner-section {
+    width: 100%;
+    border-radius: 20px;
+    max-height: 80vh;
+  }
+
+  .elegant-winner-header {
+    padding: 20px 16px 0 16px;
+  }
+
+  .elegant-winner-title {
+    font-size: 1.7rem;
+  }
+
+  .elegant-winner-content {
+    padding: 0 16px 20px 16px;
+  }
+
+  .elegant-winner-names {
+    font-size: 1.3rem;
+  }
+
+  .elegant-winner-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .elegant-winner-stat-number {
+    font-size: 1.8rem;
+  }
+
+  .elegant-winner-stat-label {
+    font-size: 0.8rem;
+  }
+
+  .elegant-winner-back-btn {
+    padding: 14px 24px;
+    font-size: 1rem;
   }
 }

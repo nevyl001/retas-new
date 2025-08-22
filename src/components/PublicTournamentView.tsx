@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { getMatches, getPairs, getGames } from "../lib/database";
 import { Match, Pair, Game } from "../lib/database";
 import StandingsTable from "./StandingsTable";
+import {
+  TournamentWinnerCalculator,
+  TournamentWinner,
+} from "./TournamentWinnerCalculator";
 
 interface PublicTournamentViewProps {
   tournamentId: string;
@@ -14,6 +18,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tournamentWinner, setTournamentWinner] =
+    useState<TournamentWinner | null>(null);
+  const [showWinner, setShowWinner] = useState(false);
 
   useEffect(() => {
     loadTournamentData();
@@ -28,6 +35,24 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       ]);
       setMatches(matchesData);
       setPairs(pairsData);
+
+      // Verificar si el torneo está terminado y calcular ganador
+      const finishedMatches = matchesData.filter((match) => match.is_finished);
+      const totalMatches = matchesData.length;
+
+      if (finishedMatches.length === totalMatches && totalMatches > 0) {
+        try {
+          const winner =
+            await TournamentWinnerCalculator.calculateTournamentWinner(
+              pairsData,
+              matchesData
+            );
+          setTournamentWinner(winner);
+          setShowWinner(true);
+        } catch (err) {
+          console.error("Error calculating winner:", err);
+        }
+      }
     } catch (err) {
       setError("Error al cargar los datos del torneo");
       console.error("Error loading tournament data:", err);
@@ -160,6 +185,55 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         </div>
         <StandingsTable tournamentId={tournamentId} forceRefresh={0} />
       </div>
+
+      {/* Sección del Ganador */}
+      {showWinner && tournamentWinner && (
+        <div className="public-winner-section">
+          <div className="public-winner-header">
+            <h2 className="public-winner-title">🏆 ¡GANADOR DE LA RETA! 🏆</h2>
+          </div>
+          <div className="public-winner-content">
+            <div className="public-winner-names">
+              {tournamentWinner.pair.player1?.name} /{" "}
+              {tournamentWinner.pair.player2?.name}
+            </div>
+            <div className="public-winner-subtitle">
+              ¡Son los campeones de la reta!
+            </div>
+
+            <div className="public-winner-stats">
+              <div className="public-winner-stat">
+                <span className="public-winner-stat-number">
+                  {tournamentWinner.totalSets}
+                </span>
+                <span className="public-winner-stat-label">Sets Ganados</span>
+              </div>
+              <div className="public-winner-stat">
+                <span className="public-winner-stat-number">
+                  {tournamentWinner.matchesPlayed}
+                </span>
+                <span className="public-winner-stat-label">
+                  Partidos Jugados
+                </span>
+              </div>
+              <div className="public-winner-stat">
+                <span className="public-winner-stat-number">
+                  {tournamentWinner.totalPoints}
+                </span>
+                <span className="public-winner-stat-label">Puntos Totales</span>
+              </div>
+              <div className="public-winner-stat">
+                <span className="public-winner-stat-number">
+                  {tournamentWinner.winPercentage.toFixed(1)}%
+                </span>
+                <span className="public-winner-stat-label">
+                  Porcentaje de Victoria
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer Público */}
       <div className="public-footer">

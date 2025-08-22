@@ -1177,60 +1177,74 @@ function App() {
       ) : (
         /* Pantalla de ganador - Nueva ventana */
         <div className="winner-page">
-          {/* Pantalla de ganador - Versión Moderna */}
+          {/* Pantalla de ganador - Versión Elegante */}
           {showWinnerScreen && winner && (
-            <div className="modern-winner-screen">
-              <div className="modern-winner-modal">
-                <div className="modern-winner-header">
-                  <h1 className="modern-winner-title">🏆 ¡FELICIDADES! 🏆</h1>
-                  <div className="modern-winner-names">
+            <div className="elegant-winner-screen">
+              <div className="elegant-winner-section">
+                <div className="elegant-winner-header">
+                  <h1 className="elegant-winner-title">
+                    🏆 ¡GANADOR DE LA RETA! 🏆
+                  </h1>
+                </div>
+                <div className="elegant-winner-content">
+                  <div className="elegant-winner-names">
                     {winner.player1?.name} / {winner.player2?.name}
                   </div>
-                  <div className="modern-winner-subtitle">
+                  <div className="elegant-winner-subtitle">
                     ¡Son los campeones de la reta!
                   </div>
-                </div>
 
-                <div className="modern-winner-stats">
-                  <div className="modern-winner-stat">
-                    <span className="modern-winner-stat-number">
-                      {tournamentWinner
-                        ? tournamentWinner.totalSets
-                        : winner.sets_won}
-                    </span>
-                    <span className="modern-winner-stat-label">
-                      Sets Ganados
-                    </span>
+                  <div className="elegant-winner-stats">
+                    <div className="elegant-winner-stat">
+                      <span className="elegant-winner-stat-number">
+                        {tournamentWinner
+                          ? tournamentWinner.totalSets
+                          : winner.sets_won}
+                      </span>
+                      <span className="elegant-winner-stat-label">
+                        Sets Ganados
+                      </span>
+                    </div>
+                    <div className="elegant-winner-stat">
+                      <span className="elegant-winner-stat-number">
+                        {tournamentWinner
+                          ? tournamentWinner.matchesPlayed
+                          : winner.games_won}
+                      </span>
+                      <span className="elegant-winner-stat-label">
+                        Partidos Jugados
+                      </span>
+                    </div>
+                    <div className="elegant-winner-stat">
+                      <span className="elegant-winner-stat-number">
+                        {tournamentWinner
+                          ? tournamentWinner.totalPoints
+                          : winner.points}
+                      </span>
+                      <span className="elegant-winner-stat-label">
+                        Puntos Totales
+                      </span>
+                    </div>
+                    {tournamentWinner && (
+                      <div className="elegant-winner-stat">
+                        <span className="elegant-winner-stat-number">
+                          {tournamentWinner.winPercentage.toFixed(1)}%
+                        </span>
+                        <span className="elegant-winner-stat-label">
+                          Porcentaje de Victoria
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className="modern-winner-stat">
-                    <span className="modern-winner-stat-number">
-                      {tournamentWinner
-                        ? tournamentWinner.matchesPlayed
-                        : winner.games_won}
-                    </span>
-                    <span className="modern-winner-stat-label">
-                      Partidos Ganados
-                    </span>
-                  </div>
-                  <div className="modern-winner-stat">
-                    <span className="modern-winner-stat-number">
-                      {tournamentWinner
-                        ? tournamentWinner.totalPoints
-                        : winner.points}
-                    </span>
-                    <span className="modern-winner-stat-label">
-                      Puntos Totales
-                    </span>
-                  </div>
-                </div>
 
-                <div className="modern-winner-actions">
-                  <button
-                    className="modern-winner-back-btn"
-                    onClick={hideWinnerScreenHandler}
-                  >
-                    🏠 Volver
-                  </button>
+                  <div className="elegant-winner-actions">
+                    <button
+                      className="elegant-winner-back-btn"
+                      onClick={hideWinnerScreenHandler}
+                    >
+                      🏠 Volver al Gestor
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
