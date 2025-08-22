@@ -5,10 +5,9 @@ import { ModernPlayerManager } from "./components/ModernPlayerManager";
 import { NewPairManager } from "./components/NewPairManager";
 import { DebugPanelContent } from "./components/DebugPanelContent";
 import { TournamentStatusContent } from "./components/TournamentStatusContent";
-
 import StandingsTable from "./components/StandingsTable";
-
 import MatchCardWithResults from "./components/MatchCardWithResults";
+import PublicTournamentView from "./components/PublicTournamentView";
 
 import {
   Tournament,
@@ -45,7 +44,12 @@ function App() {
   const [showPairManager, setShowPairManager] = useState(false);
   const [selectedPlayers, setSelectedPlayers] = useState<Player[]>([]);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
-  const [currentView, setCurrentView] = useState<"main" | "winner">("main");
+  const [currentView, setCurrentView] = useState<"main" | "winner" | "public">(
+    "main"
+  );
+  const [publicTournamentId, setPublicTournamentId] = useState<string | null>(
+    null
+  );
 
   const [forceRefresh, setForceRefresh] = useState(0);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
@@ -61,6 +65,18 @@ function App() {
     type: "info",
     isVisible: false,
   });
+
+  // Detectar si estamos en una vista pública
+  useEffect(() => {
+    const path = window.location.pathname;
+    const publicMatch = path.match(/^\/public\/([a-f0-9-]+)$/);
+
+    if (publicMatch) {
+      const tournamentId = publicMatch[1];
+      setPublicTournamentId(tournamentId);
+      setCurrentView("public");
+    }
+  }, []);
 
   // Cargar datos cuando se selecciona una reta
   useEffect(() => {
@@ -82,6 +98,23 @@ function App() {
 
   const hideToast = () => {
     setToast((prev) => ({ ...prev, isVisible: false }));
+  };
+
+  // Función para generar enlace público
+  const generatePublicLink = (tournamentId: string) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/public/${tournamentId}`;
+  };
+
+  // Función para copiar enlace al portapapeles
+  const copyPublicLink = async (tournamentId: string) => {
+    try {
+      const publicLink = generatePublicLink(tournamentId);
+      await navigator.clipboard.writeText(publicLink);
+      showToast("¡Enlace público copiado al portapapeles!", "success");
+    } catch (err) {
+      showToast("Error al copiar el enlace", "error");
+    }
   };
 
   const loadTournamentData = useCallback(async () => {
@@ -895,6 +928,41 @@ function App() {
                       </div>
                     )}
 
+                    {/* Sección de Enlace Público */}
+                    {selectedTournament.is_started && (
+                      <div className="public-link-section">
+                        <h3>🔗 Enlace Público</h3>
+                        <div className="public-link-info">
+                          <p>
+                            Comparte este enlace con los participantes para que
+                            vean los resultados en tiempo real
+                          </p>
+                          <p>
+                            Los participantes solo podrán ver los resultados, no
+                            podrán editar nada
+                          </p>
+                        </div>
+                        <div className="public-link-actions">
+                          <button
+                            className="public-link-button"
+                            onClick={() =>
+                              copyPublicLink(selectedTournament.id)
+                            }
+                          >
+                            📋 Copiar Enlace
+                          </button>
+                          <a
+                            href={generatePublicLink(selectedTournament.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="public-link-preview"
+                          >
+                            👁️ Ver Vista Pública
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Mostrar parejas creadas */}
                     {pairs.length > 0 && (
                       <div className="compact-pairs-manager">
@@ -1103,6 +1171,9 @@ function App() {
             </div>
           </div>
         </div>
+      ) : currentView === "public" ? (
+        /* Vista Pública del Torneo */
+        <PublicTournamentView tournamentId={publicTournamentId!} />
       ) : (
         /* Pantalla de ganador - Nueva ventana */
         <div className="winner-page">
