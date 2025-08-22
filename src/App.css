@@ -1537,28 +1537,30 @@ h1::before {
   }
 
   .reta-card.selected {
-    padding-bottom: 60px;
+    padding-bottom: 80px;
   }
 
   .reta-card.selected::after {
-    bottom: 16px;
+    bottom: 20px;
     right: 16px;
     padding: 6px 16px;
     font-size: 0.7rem;
     white-space: nowrap;
+    margin-left: 15px;
   }
 }
 
 @media (max-width: 375px) {
   .reta-card.selected {
-    padding-bottom: 70px;
+    padding-bottom: 90px;
   }
 
   .reta-card.selected::after {
-    bottom: 20px;
+    bottom: 25px;
     right: 12px;
     padding: 8px 20px;
     font-size: 0.75rem;
+    margin-left: 12px;
   }
 }
 
@@ -1587,6 +1589,28 @@ h1::before {
   backdrop-filter: blur(20px);
   transform: translateY(0);
   width: 100%;
+}
+
+.reta-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      1px 1px at 12px 18px,
+      rgba(255, 215, 0, 0.25),
+      transparent
+    ),
+    radial-gradient(1px 1px at 35px 45px, rgba(255, 215, 0, 0.15), transparent),
+    radial-gradient(1px 1px at 58px 12px, rgba(255, 215, 0, 0.3), transparent),
+    radial-gradient(1px 1px at 82px 52px, rgba(255, 215, 0, 0.2), transparent);
+  background-repeat: repeat;
+  background-size: 100px 70px;
+  animation: componentParticleFloat 16s linear infinite;
+  pointer-events: none;
+  opacity: 0.4;
 }
 
 @media (min-width: 768px) {
@@ -1630,7 +1654,7 @@ h1::before {
   );
   position: relative;
   z-index: 10;
-  padding-bottom: 50px;
+  padding-bottom: 70px;
 }
 
 .reta-card.selected::before {
@@ -1665,6 +1689,7 @@ h1::before {
   text-align: center;
   white-space: nowrap;
   backdrop-filter: blur(15px);
+  margin-left: 20px;
 }
 
 @keyframes selectedPulse {
@@ -2920,6 +2945,52 @@ h1::before {
   display: flex;
   align-items: center;
   gap: 12px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.15) 0%,
+    rgba(255, 237, 78, 0.1) 50%,
+    rgba(255, 179, 71, 0.15) 100%
+  );
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-matches-title::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      1px 1px at 10px 15px,
+      rgba(255, 215, 0, 0.4),
+      transparent
+    ),
+    radial-gradient(1px 1px at 30px 35px, rgba(255, 215, 0, 0.3), transparent),
+    radial-gradient(1px 1px at 50px 10px, rgba(255, 215, 0, 0.5), transparent),
+    radial-gradient(1px 1px at 70px 40px, rgba(255, 215, 0, 0.2), transparent);
+  background-repeat: repeat;
+  background-size: 80px 50px;
+  animation: componentParticleFloat 15s linear infinite;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.modern-matches-title::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
 }
 
 .modern-matches-title h3 {
@@ -2928,16 +2999,22 @@ h1::before {
   font-weight: 700;
   margin: 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  position: relative;
+  z-index: 2;
 }
 
 .modern-matches-count {
   background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffb347 100%);
   color: #000000;
-  padding: 6px 12px;
-  border-radius: 12px;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-weight: 700;
   font-size: 0.9rem;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.6);
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .modern-round-section {
@@ -3002,6 +3079,28 @@ h1::before {
   position: relative;
   overflow: hidden;
   cursor: pointer;
+}
+
+.modern-match-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      1px 1px at 15px 25px,
+      rgba(255, 215, 0, 0.3),
+      transparent
+    ),
+    radial-gradient(1px 1px at 45px 55px, rgba(255, 215, 0, 0.2), transparent),
+    radial-gradient(1px 1px at 75px 15px, rgba(255, 215, 0, 0.4), transparent),
+    radial-gradient(1px 1px at 105px 65px, rgba(255, 215, 0, 0.25), transparent);
+  background-repeat: repeat;
+  background-size: 120px 80px;
+  animation: componentParticleFloat 18s linear infinite;
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 .modern-match-card::before {
@@ -3636,13 +3735,18 @@ h1::before {
     margin-bottom: 16px;
   }
 
+  .modern-matches-title {
+    padding: 12px 16px;
+  }
+
   .modern-matches-title h3 {
     font-size: 1.2rem;
   }
 
   .modern-matches-count {
     font-size: 0.8rem;
-    padding: 4px 8px;
+    padding: 6px 12px;
+    border-radius: 16px;
   }
 
   .modern-round-header {
@@ -3803,13 +3907,18 @@ h1::before {
     padding: 18px;
   }
 
+  .modern-matches-title {
+    padding: 10px 14px;
+  }
+
   .modern-matches-title h3 {
     font-size: 1.1rem;
   }
 
   .modern-matches-count {
     font-size: 0.75rem;
-    padding: 3px 6px;
+    padding: 5px 10px;
+    border-radius: 14px;
   }
 
   .modern-round-header {
@@ -5141,13 +5250,18 @@ h1::before {
     padding-bottom: 8px;
   }
 
+  .modern-matches-title {
+    padding: 8px 12px;
+  }
+
   .modern-matches-title h3 {
     font-size: 0.9rem;
   }
 
   .modern-matches-count {
     font-size: 0.65rem;
-    padding: 1px 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
   }
 
   .modern-round-header {
@@ -12052,6 +12166,28 @@ td {
   min-height: 200px;
 }
 
+.player-management-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      1px 1px at 25px 35px,
+      rgba(255, 215, 0, 0.2),
+      transparent
+    ),
+    radial-gradient(1px 1px at 75px 85px, rgba(255, 215, 0, 0.15), transparent),
+    radial-gradient(1px 1px at 125px 25px, rgba(255, 215, 0, 0.25), transparent),
+    radial-gradient(1px 1px at 175px 95px, rgba(255, 215, 0, 0.1), transparent);
+  background-repeat: repeat;
+  background-size: 200px 120px;
+  animation: componentParticleFloat 19s linear infinite;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
 .player-management-section::before {
   content: "";
   position: absolute;
@@ -12567,6 +12703,28 @@ td {
   overflow: hidden;
   margin: 0;
   min-height: 200px;
+}
+
+.pair-management-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      1px 1px at 30px 40px,
+      rgba(255, 215, 0, 0.2),
+      transparent
+    ),
+    radial-gradient(1px 1px at 80px 90px, rgba(255, 215, 0, 0.15), transparent),
+    radial-gradient(1px 1px at 130px 30px, rgba(255, 215, 0, 0.25), transparent),
+    radial-gradient(1px 1px at 180px 100px, rgba(255, 215, 0, 0.1), transparent);
+  background-repeat: repeat;
+  background-size: 210px 130px;
+  animation: componentParticleFloat 20s linear infinite;
+  pointer-events: none;
+  opacity: 0.3;
 }
 
 .pair-management-section::before {
@@ -15586,7 +15744,37 @@ td {
   background: linear-gradient(135deg, #ffb347 0%, #ff8c00 100%);
 }
 
-/* Efectos de Partículas */
+/* ===== FONDO DE PARTÍCULAS GLOBAL ===== */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(
+      1px 1px at 20px 30px,
+      rgba(255, 215, 0, 0.3),
+      transparent
+    ),
+    radial-gradient(1px 1px at 40px 70px, rgba(255, 215, 0, 0.2), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255, 215, 0, 0.4), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255, 215, 0, 0.25), transparent),
+    radial-gradient(1px 1px at 160px 30px, rgba(255, 215, 0, 0.35), transparent),
+    radial-gradient(1px 1px at 200px 60px, rgba(255, 215, 0, 0.15), transparent),
+    radial-gradient(1px 1px at 240px 20px, rgba(255, 215, 0, 0.3), transparent),
+    radial-gradient(1px 1px at 280px 70px, rgba(255, 215, 0, 0.2), transparent),
+    radial-gradient(1px 1px at 320px 40px, rgba(255, 215, 0, 0.25), transparent),
+    radial-gradient(1px 1px at 360px 80px, rgba(255, 215, 0, 0.15), transparent);
+  background-repeat: repeat;
+  background-size: 400px 100px;
+  animation: globalParticleFloat 20s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.6;
+}
+
+/* Efectos de Partículas para Componentes */
 .particles {
   position: absolute;
   top: 0;
@@ -15740,6 +15928,24 @@ td {
   100% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes globalParticleFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100px);
+  }
+}
+
+@keyframes componentParticleFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50px);
   }
 }
 
