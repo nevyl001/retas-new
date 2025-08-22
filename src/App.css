@@ -17537,7 +17537,7 @@ td {
   .main-layout {
     gap: 10px !important;
     margin-top: 10px !important;
-    padding: 0 6px !important;
+    padding: 0 12px !important;
   }
 
   /* Formulario de crear torneo */
@@ -17571,7 +17571,7 @@ td {
 
   /* Header moderno en móvil */
   .app-header {
-    padding: 32px 20px !important;
+    padding: 32px 16px !important;
   }
 
   .app-header-container {
@@ -17602,7 +17602,7 @@ td {
 
   /* Tarjetas más compactas en móvil */
   .reta-card {
-    padding: 16px !important;
+    padding: 16px 12px !important;
     border-radius: 12px !important;
     min-height: 140px !important;
   }
@@ -17617,6 +17617,62 @@ td {
 
   .reta-card-actions .status-indicator {
     font-size: 0.7rem !important;
+    padding: 4px 8px !important;
+    margin-right: 8px !important;
+  }
+
+  .reta-card-actions {
+    gap: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .reta-btn {
+    padding: 6px 10px !important;
+    font-size: 0.7rem !important;
+    border-radius: 6px !important;
+    min-width: auto !important;
+    margin-right: 4px !important;
+  }
+
+  /* Optimizaciones específicas para iPhone */
+  @media (max-width: 480px) {
+    .main-layout {
+      padding: 0 16px !important;
+    }
+
+    .app-header {
+      padding: 24px 12px !important;
+    }
+
+    .reta-card {
+      padding: 14px 10px !important;
+    }
+
+    .reta-card-actions {
+      gap: 6px !important;
+      padding-right: 12px !important;
+    }
+
+    .reta-card-actions .status-indicator {
+      font-size: 0.65rem !important;
+      padding: 3px 6px !important;
+      margin-right: 6px !important;
+    }
+
+    .reta-btn {
+      padding: 5px 8px !important;
+      font-size: 0.65rem !important;
+      margin-right: 6px !important;
+    }
+
+    .reta-card-title {
+      font-size: 1rem !important;
+      line-height: 1.2 !important;
+    }
+
+    .reta-card-info span {
+      font-size: 0.7rem !important;
+    }
   }
 
   /* Secciones principales */
