@@ -20805,6 +20805,10 @@ td {
   backdrop-filter: blur(15px);
   position: relative;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .public-link-button::before {
@@ -20848,6 +20852,7 @@ td {
   overflow: hidden;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
 }
 
