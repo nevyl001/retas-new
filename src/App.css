@@ -1541,13 +1541,10 @@ h1::before {
   }
 
   .reta-card.selected::after {
-    bottom: 20px;
+    bottom: 16px;
+    right: 16px;
     padding: 6px 16px;
     font-size: 0.7rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: auto;
-    max-width: calc(100% - 20px);
     white-space: nowrap;
   }
 }
@@ -1558,10 +1555,10 @@ h1::before {
   }
 
   .reta-card.selected::after {
-    bottom: 25px;
+    bottom: 20px;
+    right: 12px;
     padding: 8px 20px;
     font-size: 0.75rem;
-    max-width: calc(100% - 16px);
   }
 }
 
@@ -1652,8 +1649,7 @@ h1::before {
   content: "✓ SELECCIONADA";
   position: absolute;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 20px;
   background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
   color: #000000;
   padding: 10px 24px;
