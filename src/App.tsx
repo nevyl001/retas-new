@@ -789,15 +789,47 @@ function App() {
                               pairsCount={pairs.length}
                               loading={loading}
                               onReset={async () => {
+                                console.log("🔄 Botón de reset clickeado");
                                 if (
                                   window.confirm(
-                                    "¿Estás seguro de que quieres resetear la reta? Esto eliminará todos los partidos existentes."
+                                    "¿Estás seguro de que quieres resetear la reta? Esto eliminará todos los partidos existentes y reseteará las estadísticas de todas las parejas."
                                   )
                                 ) {
                                   try {
+                                    console.log(
+                                      "🔄 Iniciando proceso de reset..."
+                                    );
                                     setLoading(true);
+
+                                    // 1. Eliminar todos los partidos del torneo
+                                    console.log("🗑️ Eliminando partidos...");
                                     await deleteMatchesByTournament(
                                       selectedTournament.id
+                                    );
+                                    console.log("✅ Partidos eliminados");
+
+                                    // 2. Resetear estadísticas de todas las parejas
+                                    console.log(
+                                      "🔄 Reseteando estadísticas de todas las parejas..."
+                                    );
+                                    for (const pair of pairs) {
+                                      console.log(
+                                        `🔄 Reseteando pareja: ${pair.player1?.name} + ${pair.player2?.name}`
+                                      );
+                                      await updatePair(pair.id, {
+                                        games_won: 0,
+                                        sets_won: 0,
+                                        points: 0,
+                                        matches_played: 0,
+                                      });
+                                    }
+                                    console.log(
+                                      "✅ Estadísticas de parejas reseteadas"
+                                    );
+
+                                    // 3. Marcar el torneo como no iniciado
+                                    console.log(
+                                      "🔄 Marcando torneo como no iniciado..."
                                     );
                                     await updateTournament(
                                       selectedTournament.id,
@@ -805,14 +837,37 @@ function App() {
                                         is_started: false,
                                       }
                                     );
+                                    console.log(
+                                      "✅ Torneo marcado como no iniciado"
+                                    );
+
+                                    // 4. Actualizar estado local
                                     setSelectedTournament((prev) =>
                                       prev
                                         ? { ...prev, is_started: false }
                                         : null
                                     );
                                     setMatches([]);
+
+                                    // 5. Recargar datos del torneo
+                                    console.log(
+                                      "🔄 Recargando datos del torneo..."
+                                    );
                                     await loadTournamentData();
+                                    console.log("✅ Datos recargados");
+
+                                    showToast(
+                                      "¡Reta reseteada exitosamente!",
+                                      "success"
+                                    );
+                                    console.log(
+                                      "🎉 Reset completado exitosamente"
+                                    );
                                   } catch (error) {
+                                    console.error(
+                                      "❌ Error al resetear la reta:",
+                                      error
+                                    );
                                     setError(
                                       "Error al resetear la reta: " +
                                         (error as Error).message
@@ -820,6 +875,10 @@ function App() {
                                   } finally {
                                     setLoading(false);
                                   }
+                                } else {
+                                  console.log(
+                                    "❌ Reset cancelado por el usuario"
+                                  );
                                 }
                               }}
                             />

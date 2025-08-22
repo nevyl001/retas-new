@@ -13,6 +13,10 @@ interface TournamentStatusContentProps {
 export const TournamentStatusContent: React.FC<
   TournamentStatusContentProps
 > = ({ tournament, pairsCount, loading, onReset }) => {
+  console.log("🔄 TournamentStatusContent renderizado:", {
+    loading,
+    pairsCount,
+  });
   return (
     <div className="elegant-tournament-status">
       {/* Header Elegante */}
@@ -89,8 +93,27 @@ export const TournamentStatusContent: React.FC<
       {/* Botón de Reset Elegante */}
       <button
         className="elegant-reset-btn"
-        onClick={onReset}
+        onClick={(e) => {
+          console.log(
+            "🔄 Click en botón de reset detectado, loading:",
+            loading
+          );
+          e.preventDefault();
+          e.stopPropagation();
+          if (!loading) {
+            console.log("✅ Ejecutando función onReset");
+            onReset();
+          } else {
+            console.log("❌ Botón deshabilitado por loading");
+          }
+        }}
         disabled={loading}
+        type="button"
+        style={{
+          pointerEvents: loading ? "none" : "auto",
+          position: "relative",
+          zIndex: 1000,
+        }}
       >
         <div className="elegant-reset-content">
           <span className="elegant-reset-icon">{loading ? "⏳" : "🔄"}</span>

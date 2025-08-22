@@ -35,8 +35,8 @@ export const ModernToast: React.FC<ToastProps> = ({
     switch (type) {
       case "success":
         return {
-          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-          icon: "✅",
+          background: "linear-gradient(135deg, #ffd700 0%, #ffb347 100%)",
+          icon: "🎉",
         };
       case "error":
         return {
