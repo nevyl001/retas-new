@@ -330,7 +330,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </span>
         <span className="modern-match-badge">
           <span className="modern-badge-icon">🔄</span>
-          Ronda 1
+          Ronda {currentMatch.round || 1}
         </span>
       </div>
 

@@ -40,6 +40,7 @@ export interface Match {
   pair1_name: string;
   pair2_name: string;
   court: number;
+  round?: number;
   status: string;
   pair1_score?: number;
   pair2_score?: number;
@@ -343,19 +344,22 @@ export const createMatch = async (
   console.log("Pair 1 name:", pair1Name);
   console.log("Pair 2 name:", pair2Name);
 
+  // Crear el objeto de inserción sin el campo round por ahora
+  const insertData: any = {
+    tournament_id: tournamentId,
+    pair1_id: pair1Id,
+    pair2_id: pair2Id,
+    pair1_name: pair1Name,
+    pair2_name: pair2Name,
+    court,
+  };
+
+  // Agregar round a los datos de inserción
+  insertData.round = round;
+
   const { data, error } = await supabase
     .from("matches")
-    .insert([
-      {
-        tournament_id: tournamentId,
-        pair1_id: pair1Id,
-        pair2_id: pair2Id,
-        pair1_name: pair1Name,
-        pair2_name: pair2Name,
-        court,
-        // Note: round field is not included as it doesn't exist in the database
-      },
-    ])
+    .insert([insertData])
     .select("*")
     .single();
 

@@ -30,6 +30,7 @@ import {
   TournamentWinner,
 } from "./components/TournamentWinnerCalculator";
 import { ModernToast } from "./components/ModernToast";
+import { CircleRoundRobinScheduler } from "./components/CircleRoundRobinScheduler";
 
 function App() {
   const [selectedTournament, setSelectedTournament] =
@@ -262,130 +263,28 @@ function App() {
       setError("");
 
       console.log("🚀 Iniciando reta:", selectedTournament.name);
+      console.log("📊 Parejas:", pairs.length);
+      console.log("🏟️ Canchas:", selectedTournament.courts);
 
-      // Limpiar partidos existentes
-      if (matches.length > 0) {
-        await deleteMatchesByTournament(selectedTournament.id);
-        setMatches([]);
-      }
-
-      const allPairs = [...pairs];
-      const allCombinations = [];
-
-      for (let i = 0; i < allPairs.length; i++) {
-        for (let j = i + 1; j < allPairs.length; j++) {
-          allCombinations.push({
-            pair1: allPairs[i],
-            pair2: allPairs[j],
-          });
-        }
-      }
-
-      const finalMatches = [];
-      const remainingCombinations = [...allCombinations];
-      let round = 1;
-
-      while (remainingCombinations.length > 0) {
-        const roundMatches = [];
-        const usedPairs = new Set();
-        const courtOrder = [];
-
-        for (let i = 0; i < selectedTournament.courts; i++) {
-          const rotatedCourt =
-            ((round - 1 + i) % selectedTournament.courts) + 1;
-          courtOrder.push(rotatedCourt);
-        }
-
-        for (let courtIndex = 0; courtIndex < courtOrder.length; courtIndex++) {
-          const court = courtOrder[courtIndex];
-          let bestIndex = -1;
-          let bestScore = -1;
-
-          for (let i = 0; i < remainingCombinations.length; i++) {
-            const combo = remainingCombinations[i];
-
-            if (
-              !usedPairs.has(combo.pair1.id) &&
-              !usedPairs.has(combo.pair2.id)
-            ) {
-              let score = 0;
-
-              for (let j = 0; j < remainingCombinations.length; j++) {
-                if (i !== j) {
-                  const futureCombo = remainingCombinations[j];
-                  if (
-                    !usedPairs.has(futureCombo.pair1.id) &&
-                    !usedPairs.has(futureCombo.pair2.id) &&
-                    futureCombo.pair1.id !== combo.pair1.id &&
-                    futureCombo.pair1.id !== combo.pair2.id &&
-                    futureCombo.pair2.id !== combo.pair1.id &&
-                    futureCombo.pair2.id !== combo.pair2.id
-                  ) {
-                    score++;
-                  }
-                }
-              }
-
-              if (score > bestScore) {
-                bestScore = score;
-                bestIndex = i;
-              }
-            }
-          }
-
-          if (bestIndex !== -1) {
-            const combo = remainingCombinations[bestIndex];
-
-            const match = {
-              pair1: combo.pair1,
-              pair2: combo.pair2,
-              round,
-              court,
-            };
-
-            roundMatches.push(match);
-            usedPairs.add(combo.pair1.id);
-            usedPairs.add(combo.pair2.id);
-            remainingCombinations.splice(bestIndex, 1);
-          } else {
-            break;
-          }
-        }
-
-        if (roundMatches.length > 0) {
-          finalMatches.push(...roundMatches);
-        }
-
-        round++;
-      }
-
-      const createdMatches = [];
-
-      for (const match of finalMatches) {
-        try {
-          const createdMatch = await createMatch(
-            selectedTournament.id,
-            match.pair1.id,
-            match.pair2.id,
-            match.court,
-            1
-          );
-          createdMatches.push(createdMatch);
-        } catch (error) {
-          console.error("Error creating match:", error);
-        }
-      }
-
-      await updateTournament(selectedTournament.id, { is_started: true });
-      setSelectedTournament((prev) =>
-        prev ? { ...prev, is_started: true } : null
+      // Usar el nuevo CircleRoundRobinScheduler
+      const result = await CircleRoundRobinScheduler.scheduleTournament(
+        selectedTournament.id,
+        pairs,
+        selectedTournament.courts
       );
 
-      await loadTournamentData();
-      showToast(
-        `¡Reta iniciada exitosamente! Se crearon ${createdMatches.length} partidos.`,
-        "success"
-      );
+      if (result.success) {
+        await updateTournament(selectedTournament.id, { is_started: true });
+        setSelectedTournament((prev) =>
+          prev ? { ...prev, is_started: true } : null
+        );
+
+        await loadTournamentData();
+        showToast(result.message, "success");
+      } else {
+        setError(result.message);
+        showToast(result.message, "error");
+      }
     } catch (error) {
       console.error("Error starting tournament:", error);
       showToast("Error al iniciar la reta", "error");
@@ -395,7 +294,7 @@ function App() {
   };
 
   const matchesByRound = matches.reduce((acc, match) => {
-    const round = 1; // Default to round 1 since round column doesn't exist
+    const round = match.round || 1; // Use match.round if available, default to 1
     if (!acc[round]) {
       acc[round] = [];
     }
