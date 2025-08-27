@@ -438,6 +438,39 @@ export const getGames = async (matchId: string) => {
   return data;
 };
 
+// Nueva función para obtener todos los games de un torneo
+export const getTournamentGames = async (tournamentId: string) => {
+  try {
+    // Primero obtenemos todos los matches del torneo
+    const { data: matches, error: matchesError } = await supabase
+      .from("matches")
+      .select("id")
+      .eq("tournament_id", tournamentId);
+
+    if (matchesError) throw matchesError;
+
+    if (!matches || matches.length === 0) {
+      return []; // No hay matches, no hay games
+    }
+
+    // Extraemos los IDs de los matches
+    const matchIds = matches.map((match) => match.id);
+
+    // Ahora obtenemos todos los games de esos matches
+    const { data: games, error: gamesError } = await supabase
+      .from("games")
+      .select("*")
+      .in("match_id", matchIds)
+      .order("game_number");
+
+    if (gamesError) throw gamesError;
+    return games || [];
+  } catch (error) {
+    console.error("Error getting tournament games:", error);
+    throw error;
+  }
+};
+
 export const updateGame = async (id: string, updates: Partial<Game>) => {
   const { data, error } = await supabase
     .from("games")

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { getMatches, getPairs } from "../lib/database";
-import { Match, Pair } from "../lib/database";
+import "./PublicTournamentView.css";
+import { getMatches, getPairs, getTournamentGames } from "../lib/database";
+import { Match, Pair, Game } from "../lib/database";
 import RealTimeStandingsTable from "./RealTimeStandingsTable";
 import {
   TournamentWinnerCalculator,
@@ -16,25 +17,38 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 }) => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [pairs, setPairs] = useState<Pair[]>([]);
+  const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tournamentWinner, setTournamentWinner] =
     useState<TournamentWinner | null>(null);
   const [showWinner, setShowWinner] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
     loadTournamentData();
+    // Auto-refresh cada 30 segundos
+    const interval = setInterval(loadTournamentData, 30000);
+    return () => clearInterval(interval);
   }, [tournamentId]);
 
   const loadTournamentData = async () => {
     try {
-      setLoading(true);
-      const [matchesData, pairsData] = await Promise.all([
+      // Solo mostrar loading en la primera carga, no en refreshes
+      if (matches.length === 0) setLoading(true);
+
+      setError(""); // Limpiar errores previos
+
+      const [matchesData, pairsData, gamesData] = await Promise.all([
         getMatches(tournamentId),
         getPairs(tournamentId),
+        getTournamentGames(tournamentId),
       ]);
+
       setMatches(matchesData);
       setPairs(pairsData);
+      setGames(gamesData || []); // Asegurar que games siempre sea un array
+      setLastUpdate(new Date());
 
       // Verificar si el torneo está terminado y calcular ganador
       const finishedMatches = matchesData.filter(
@@ -71,6 +85,23 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     }`;
   };
 
+  const getMatchResult = (matchId: string) => {
+    const matchGames = games.filter((game) => game.match_id === matchId);
+
+    if (matchGames.length === 0) {
+      return { pair1Score: 0, pair2Score: 0, hasResult: false };
+    }
+
+    // Obtener el último juego (el más reciente) para mostrar el marcador actual
+    const lastGame = matchGames[matchGames.length - 1];
+
+    return {
+      pair1Score: lastGame.pair1_games || 0,
+      pair2Score: lastGame.pair2_games || 0,
+      hasResult: true,
+    };
+  };
+
   if (loading) {
     return (
       <div className="public-loading">
@@ -91,7 +122,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   // Agrupar partidos por ronda
   const matchesByRound = matches.reduce((acc, match) => {
-    const round = 1; // Default to round 1 since round column doesn't exist
+    const round = match.round || 1; // Usar la ronda del match o default a 1
     if (!acc[round]) {
       acc[round] = [];
     }
@@ -129,49 +160,99 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               </div>
 
               <div className="public-matches-grid">
-                {matchesByRound[parseInt(round)].map((match) => (
-                  <div key={match.id} className="public-match-card">
-                    <div className="public-match-header">
-                      <div className="public-match-title">
-                        Cancha {match.court}
-                      </div>
-                      <div className="public-match-status">
-                        {match.status === "finished"
-                          ? "✅ Finalizado"
-                          : "🔄 En curso"}
-                      </div>
-                    </div>
+                {matchesByRound[parseInt(round)].map((match) => {
+                  const result = getMatchResult(match.id);
+                  const pair1Won =
+                    result.hasResult && result.pair1Score > result.pair2Score;
+                  const pair2Won =
+                    result.hasResult && result.pair2Score > result.pair1Score;
 
-                    <div className="public-match-pairs">
-                      <div className="public-pair-info">
-                        <span className="public-pair-label">Pareja 1:</span>
-                        <span className="public-pair-names">
-                          {getPairName(match.pair1_id)}
-                        </span>
-                      </div>
-                      <div className="public-pair-info">
-                        <span className="public-pair-label">Pareja 2:</span>
-                        <span className="public-pair-names">
-                          {getPairName(match.pair2_id)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {match.status === "finished" && (
-                      <div className="public-match-result">
-                        <div className="public-result-label">
-                          Resultado Final:
+                  return (
+                    <div key={match.id} className="public-match-card">
+                      <div className="public-match-header">
+                        <div className="public-match-title">
+                          Cancha {match.court}
                         </div>
-                        <div className="public-result-score">
-                          {/* Aquí mostrarías el resultado real */}
-                          <span className="public-score-pair1">6</span>
-                          <span className="public-score-separator">-</span>
-                          <span className="public-score-pair2">4</span>
+                        <div className="public-match-status">
+                          {match.status === "finished"
+                            ? "✅ Finalizado"
+                            : "🔄 En curso"}
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      <div className="public-match-content">
+                        {/* Pareja 1 */}
+                        <div
+                          className={`public-pair-info ${
+                            pair1Won ? "winner" : ""
+                          }`}
+                        >
+                          <span
+                            className={`public-pair-names ${
+                              pair1Won ? "winner" : ""
+                            }`}
+                          >
+                            {getPairName(match.pair1_id)}
+                          </span>
+                        </div>
+
+                        {/* Resultado en el centro */}
+                        {result.hasResult ? (
+                          <div className="public-match-result">
+                            <div className="public-result-score">
+                              <span
+                                className={`public-score-pair1 ${
+                                  pair1Won ? "winner" : ""
+                                }`}
+                              >
+                                {result.pair1Score}
+                              </span>
+                              <span className="public-score-separator">-</span>
+                              <span
+                                className={`public-score-pair2 ${
+                                  pair2Won ? "winner" : ""
+                                }`}
+                              >
+                                {result.pair2Score}
+                              </span>
+                            </div>
+                            <div className="public-result-label">
+                              {match.status === "finished"
+                                ? "Final"
+                                : "En curso"}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="public-match-result">
+                            <div className="public-result-score">
+                              <span className="public-score-pair1">0</span>
+                              <span className="public-score-separator">-</span>
+                              <span className="public-score-pair2">0</span>
+                            </div>
+                            <div className="public-result-label">
+                              Sin comenzar
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Pareja 2 */}
+                        <div
+                          className={`public-pair-info ${
+                            pair2Won ? "winner" : ""
+                          }`}
+                        >
+                          <span
+                            className={`public-pair-names ${
+                              pair2Won ? "winner" : ""
+                            }`}
+                          >
+                            {getPairName(match.pair2_id)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -237,7 +318,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {/* Footer Público */}
       <div className="public-footer">
         <p className="public-footer-text">
-          📱 Actualización automática cada 30 segundos
+          📱 Actualización automática cada 30 segundos - Última actualización:{" "}
+          {lastUpdate.toLocaleTimeString()}
         </p>
         <p className="public-footer-note">
           Esta es la vista pública de resultados. Solo lectura.
