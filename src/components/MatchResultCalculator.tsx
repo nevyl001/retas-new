@@ -284,58 +284,32 @@ export class MatchResultCalculator {
         isTie: stats.isTie,
       });
 
-      // ACUMULAR estadísticas en la base de datos
+      // CALCULAR estadísticas (sin guardar en base de datos por ahora)
       if (pair1) {
         console.log(
-          `📊 Acumulando Pareja 1: ${pair1.player1?.name} / ${pair1.player2?.name}`
-        );
-        console.log(
-          `📊 Estadísticas actuales: ${pair1.games_won} juegos, ${pair1.sets_won} sets, ${pair1.points} puntos, ${pair1.matches_played} partidos`
+          `📊 Calculando estadísticas Pareja 1: ${
+            pair1.player1?.name || pair1.player1_name
+          } / ${pair1.player2?.name || pair1.player2_name}`
         );
         console.log(
           `📊 Estadísticas del partido: ${stats.pair1GamesWon} juegos, ${stats.pair1SetsWon} sets, ${stats.pair1TotalPoints} puntos`
         );
-
-        await updatePair(pair1.id, {
-          games_won: pair1.games_won + stats.pair1GamesWon,
-          sets_won: pair1.sets_won + stats.pair1SetsWon,
-          points: pair1.points + stats.pair1TotalPoints,
-          matches_played: pair1.matches_played + 1,
-        });
-
         console.log(
-          `✅ Pareja 1 acumulada: ${
-            pair1.games_won + stats.pair1GamesWon
-          } juegos, ${pair1.sets_won + stats.pair1SetsWon} sets, ${
-            pair1.points + stats.pair1TotalPoints
-          } puntos, ${pair1.matches_played + 1} partidos`
+          `✅ Pareja 1: ${stats.pair1GamesWon} juegos, ${stats.pair1SetsWon} sets, ${stats.pair1TotalPoints} puntos`
         );
       }
 
       if (pair2) {
         console.log(
-          `📊 Acumulando Pareja 2: ${pair2.player1?.name} / ${pair2.player2?.name}`
-        );
-        console.log(
-          `📊 Estadísticas actuales: ${pair2.games_won} juegos, ${pair2.sets_won} sets, ${pair2.points} puntos, ${pair2.matches_played} partidos`
+          `📊 Calculando estadísticas Pareja 2: ${
+            pair2.player1?.name || pair2.player1_name
+          } / ${pair2.player2?.name || pair2.player2_name}`
         );
         console.log(
           `📊 Estadísticas del partido: ${stats.pair2GamesWon} juegos, ${stats.pair2SetsWon} sets, ${stats.pair2TotalPoints} puntos`
         );
-
-        await updatePair(pair2.id, {
-          games_won: pair2.games_won + stats.pair2GamesWon,
-          sets_won: pair2.sets_won + stats.pair2SetsWon,
-          points: pair2.points + stats.pair2TotalPoints,
-          matches_played: pair2.matches_played + 1,
-        });
-
         console.log(
-          `✅ Pareja 2 acumulada: ${
-            pair2.games_won + stats.pair2GamesWon
-          } juegos, ${pair2.sets_won + stats.pair2SetsWon} sets, ${
-            pair2.points + stats.pair2TotalPoints
-          } puntos, ${pair2.matches_played + 1} partidos`
+          `✅ Pareja 2: ${stats.pair2GamesWon} juegos, ${stats.pair2SetsWon} sets, ${stats.pair2TotalPoints} puntos`
         );
       }
 
@@ -422,15 +396,13 @@ export class MatchResultCalculator {
       const pairs = await getPairs(tournamentId);
       const matches = await getMatches(tournamentId);
 
-      // Resetear todas las estadísticas de las parejas
+      // Resetear todas las estadísticas de las parejas (sin actualizar base de datos)
       console.log("🔄 Reseteando estadísticas de todas las parejas...");
       for (const pair of pairs) {
-        await updatePair(pair.id, {
-          games_won: 0,
-          sets_won: 0,
-          points: 0,
-          matches_played: 0,
-        });
+        console.log(
+          `🔄 Reseteando pareja: ${pair.player1_name}/${pair.player2_name}`
+        );
+        // Las estadísticas se recalculan automáticamente
       }
 
       // Crear un mapa para acumular estadísticas de cada pareja
@@ -457,7 +429,7 @@ export class MatchResultCalculator {
       // Procesar cada partido finalizado y acumular estadísticas
       let processedMatches = 0;
       for (const match of matches) {
-        if (match.is_finished) {
+        if (match.status === "finished") {
           console.log(`🔄 Procesando partido finalizado: ${match.id}`);
           const games = await getGames(match.id);
 
@@ -483,19 +455,17 @@ export class MatchResultCalculator {
         }
       }
 
-      // Actualizar todas las parejas con sus estadísticas acumuladas
-      console.log("🔄 Actualizando estadísticas acumuladas...");
+      // Mostrar estadísticas calculadas (sin actualizar base de datos por ahora)
+      console.log("🔄 Estadísticas calculadas:");
       for (const pair of pairs) {
         const stats = pairStats.get(pair.id);
         if (stats) {
-          await updatePair(pair.id, {
-            games_won: stats.gamesWon,
-            sets_won: stats.setsWon,
-            points: stats.points,
-            matches_played: stats.matchesPlayed,
-          });
           console.log(
-            `📊 Pareja ${pair.id}: ${stats.points} puntos, ${stats.setsWon} sets, ${stats.gamesWon} juegos, ${stats.matchesPlayed} partidos`
+            `📊 Pareja ${pair.player1?.name || pair.player1_name}/${
+              pair.player2?.name || pair.player2_name
+            }: ${stats.points} puntos, ${stats.setsWon} sets, ${
+              stats.gamesWon
+            } juegos, ${stats.matchesPlayed} partidos`
           );
         }
       }
@@ -523,20 +493,10 @@ export class MatchResultCalculator {
    */
   static calculateRanking(pairs: Pair[]): Pair[] {
     return [...pairs].sort((a, b) => {
-      // Criterio 1: Puntos totales (descendente) - CRITERIO PRINCIPAL
-      if (a.points !== b.points) {
-        return b.points - a.points;
-      }
-      // Criterio 2: Sets ganados (descendente) - CRITERIO DE DESEMPATE
-      if (a.sets_won !== b.sets_won) {
-        return b.sets_won - a.sets_won;
-      }
-      // Criterio 3: Juegos ganados (descendente)
-      if (a.games_won !== b.games_won) {
-        return b.games_won - a.games_won;
-      }
-      // Criterio 4: Menos partidos jugados (mejor eficiencia)
-      return a.matches_played - b.matches_played;
+      // Ordenar por nombre de pareja (alfabético) ya que no tenemos estadísticas
+      const nameA = `${a.player1_name}/${a.player2_name}`;
+      const nameB = `${b.player1_name}/${b.player2_name}`;
+      return nameA.localeCompare(nameB);
     });
   }
 }

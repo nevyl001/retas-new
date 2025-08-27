@@ -5,7 +5,7 @@ import { ModernPlayerManager } from "./components/ModernPlayerManager";
 import { NewPairManager } from "./components/NewPairManager";
 import { DebugPanelContent } from "./components/DebugPanelContent";
 import { TournamentStatusContent } from "./components/TournamentStatusContent";
-import ModernStandingsTable from "./components/ModernStandingsTable";
+import RealTimeStandingsTable from "./components/RealTimeStandingsTable";
 import MatchCardWithResults from "./components/MatchCardWithResults";
 import PublicTournamentView from "./components/PublicTournamentView";
 
@@ -368,7 +368,7 @@ function App() {
             match.pair1.id,
             match.pair2.id,
             match.court,
-            match.round
+            1
           );
           createdMatches.push(createdMatch);
         } catch (error) {
@@ -395,38 +395,30 @@ function App() {
   };
 
   const matchesByRound = matches.reduce((acc, match) => {
-    if (!acc[match.round]) {
-      acc[match.round] = [];
+    const round = 1; // Default to round 1 since round column doesn't exist
+    if (!acc[round]) {
+      acc[round] = [];
     }
-    acc[match.round].push(match);
+    acc[round].push(match);
     return acc;
   }, {} as Record<number, Match[]>);
 
   const sortedPairs = useMemo(() => {
     return [...pairs].sort((a, b) => {
-      // Criterio 1: Puntos totales (descendente) - CRITERIO PRINCIPAL
-      if (a.points !== b.points) {
-        return b.points - a.points;
-      }
-      // Criterio 2: Sets ganados (descendente) - CRITERIO DE DESEMPATE
-      if (a.sets_won !== b.sets_won) {
-        return b.sets_won - a.sets_won;
-      }
-      // Criterio 3: Juegos ganados (descendente)
-      if (a.games_won !== b.games_won) {
-        return b.games_won - a.games_won;
-      }
-      // Criterio 4: Menos partidos jugados (mejor eficiencia)
-      return a.matches_played - b.matches_played;
+      // Ordenar por nombre de pareja (alfabético) ya que no tenemos estadísticas
+      const nameA = `${a.player1_name}/${a.player2_name}`;
+      const nameB = `${b.player1_name}/${b.player2_name}`;
+      return nameA.localeCompare(nameB);
     });
   }, [pairs, forceRefresh]);
 
   const isTournamentFinished = useMemo(() => {
     const finished =
-      matches.length > 0 && matches.every((match) => match.is_finished);
+      matches.length > 0 &&
+      matches.every((match) => match.status === "finished");
     console.log("🏆 Estado del torneo:", {
       totalMatches: matches.length,
-      finishedMatches: matches.filter((m) => m.is_finished).length,
+      finishedMatches: matches.filter((m) => m.status === "finished").length,
       isFinished: finished,
     });
     return finished;
@@ -841,23 +833,24 @@ function App() {
                                     );
                                     console.log("✅ Partidos eliminados");
 
-                                    // 2. Resetear estadísticas de todas las parejas
+                                    // 2. Resetear estadísticas de todas las parejas (sin actualizar base de datos)
                                     console.log(
                                       "🔄 Reseteando estadísticas de todas las parejas..."
                                     );
                                     for (const pair of pairs) {
                                       console.log(
-                                        `🔄 Reseteando pareja: ${pair.player1?.name} + ${pair.player2?.name}`
+                                        `🔄 Reseteando pareja: ${
+                                          pair.player1?.name ||
+                                          pair.player1_name
+                                        } + ${
+                                          pair.player2?.name ||
+                                          pair.player2_name
+                                        }`
                                       );
-                                      await updatePair(pair.id, {
-                                        games_won: 0,
-                                        sets_won: 0,
-                                        points: 0,
-                                        matches_played: 0,
-                                      });
+                                      // Las estadísticas se recalculan automáticamente al eliminar los partidos
                                     }
                                     console.log(
-                                      "✅ Estadísticas de parejas reseteadas"
+                                      "✅ Estadísticas de parejas reseteadas (se recalculan automáticamente)"
                                     );
 
                                     // 3. Marcar el torneo como no iniciado
@@ -1095,7 +1088,7 @@ function App() {
                                       SETS
                                     </span>
                                     <span className="compact-stat-value">
-                                      {pair.sets_won || 0}
+                                      0
                                     </span>
                                   </div>
                                   <div className="compact-stat">
@@ -1103,7 +1096,7 @@ function App() {
                                       PARTIDOS
                                     </span>
                                     <span className="compact-stat-value">
-                                      {pair.matches_played || 0}
+                                      0
                                     </span>
                                   </div>
                                   <div className="compact-stat">
@@ -1111,7 +1104,7 @@ function App() {
                                       PUNTOS
                                     </span>
                                     <span className="compact-stat-value">
-                                      {pair.points || 0}
+                                      0
                                     </span>
                                   </div>
                                 </div>
@@ -1202,7 +1195,7 @@ function App() {
                         </div>
 
                         {/* Tabla de clasificación */}
-                        <ModernStandingsTable
+                        <RealTimeStandingsTable
                           tournamentId={selectedTournament.id}
                           forceRefresh={forceRefresh}
                         />
@@ -1231,7 +1224,7 @@ function App() {
                             }}
                           >
                             Debug: Partidos {matches.length}, Terminados{" "}
-                            {matches.filter((m) => m.is_finished).length},
+                            {matches.filter((m) => m.status === 'finished').length},
                             Torneo terminado:{" "}
                             {isTournamentFinished ? "SÍ" : "NO"}, Ganador:{" "}
                             {winner ? "SÍ" : "NO"}
@@ -1289,9 +1282,7 @@ function App() {
                   <div className="elegant-winner-stats">
                     <div className="elegant-winner-stat">
                       <span className="elegant-winner-stat-number">
-                        {tournamentWinner
-                          ? tournamentWinner.totalSets
-                          : winner.sets_won}
+                        {tournamentWinner ? tournamentWinner.totalSets : 0}
                       </span>
                       <span className="elegant-winner-stat-label">
                         Sets Ganados
@@ -1299,9 +1290,7 @@ function App() {
                     </div>
                     <div className="elegant-winner-stat">
                       <span className="elegant-winner-stat-number">
-                        {tournamentWinner
-                          ? tournamentWinner.matchesPlayed
-                          : winner.games_won}
+                        {tournamentWinner ? tournamentWinner.matchesPlayed : 0}
                       </span>
                       <span className="elegant-winner-stat-label">
                         Partidos Jugados
@@ -1309,9 +1298,7 @@ function App() {
                     </div>
                     <div className="elegant-winner-stat">
                       <span className="elegant-winner-stat-number">
-                        {tournamentWinner
-                          ? tournamentWinner.totalPoints
-                          : winner.points}
+                        {tournamentWinner ? tournamentWinner.totalPoints : 0}
                       </span>
                       <span className="elegant-winner-stat-label">
                         Puntos Totales

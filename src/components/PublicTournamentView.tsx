@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { getMatches, getPairs } from "../lib/database";
 import { Match, Pair } from "../lib/database";
-import ModernStandingsTable from "./ModernStandingsTable";
+import RealTimeStandingsTable from "./RealTimeStandingsTable";
 import {
   TournamentWinnerCalculator,
   TournamentWinner,
@@ -37,7 +37,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       setPairs(pairsData);
 
       // Verificar si el torneo está terminado y calcular ganador
-      const finishedMatches = matchesData.filter((match) => match.is_finished);
+      const finishedMatches = matchesData.filter(
+        (match) => match.status === "finished"
+      );
       const totalMatches = matchesData.length;
 
       if (finishedMatches.length === totalMatches && totalMatches > 0) {
@@ -89,10 +91,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   // Agrupar partidos por ronda
   const matchesByRound = matches.reduce((acc, match) => {
-    if (!acc[match.round]) {
-      acc[match.round] = [];
+    const round = 1; // Default to round 1 since round column doesn't exist
+    if (!acc[round]) {
+      acc[round] = [];
     }
-    acc[match.round].push(match);
+    acc[round].push(match);
     return acc;
   }, {} as Record<number, Match[]>);
 
@@ -133,7 +136,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         Cancha {match.court}
                       </div>
                       <div className="public-match-status">
-                        {match.is_finished ? "✅ Finalizado" : "🔄 En curso"}
+                        {match.status === "finished"
+                          ? "✅ Finalizado"
+                          : "🔄 En curso"}
                       </div>
                     </div>
 
@@ -152,7 +157,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       </div>
                     </div>
 
-                    {match.is_finished && (
+                    {match.status === "finished" && (
                       <div className="public-match-result">
                         <div className="public-result-label">
                           Resultado Final:
@@ -177,7 +182,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         <div className="public-standings-header">
           <h2 className="public-standings-title">📊 Tabla de Clasificación</h2>
         </div>
-        <ModernStandingsTable tournamentId={tournamentId} forceRefresh={0} />
+        <RealTimeStandingsTable tournamentId={tournamentId} forceRefresh={0} />
       </div>
 
       {/* Sección del Ganador */}

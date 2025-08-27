@@ -24,7 +24,7 @@ export class TournamentWinnerCalculator {
       // Obtener todos los juegos de todos los partidos
       const allGames: Game[] = [];
       for (const match of matches) {
-        if (match.is_finished) {
+        if (match.status === "finished") {
           const matchGames = await getGames(match.id);
           allGames.push(...matchGames);
         }
@@ -57,7 +57,7 @@ export class TournamentWinnerCalculator {
 
       // Procesar cada partido finalizado
       for (const match of matches) {
-        if (match.is_finished) {
+        if (match.status === "finished") {
           const matchGames = allGames.filter((g) => g.match_id === match.id);
 
           if (matchGames.length > 0) {

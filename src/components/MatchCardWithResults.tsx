@@ -97,8 +97,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   // Obtener nombre de pareja
   const getPairName = (pair: Pair | null): string => {
     if (!pair) return "Pareja desconocida";
-    return `${pair.player1?.name || "Jugador 1"} / ${
-      pair.player2?.name || "Jugador 2"
+    return `${pair.player1?.name || pair.player1_name || "Jugador 1"} / ${
+      pair.player2?.name || pair.player2_name || "Jugador 2"
     }`;
   };
 
@@ -241,7 +241,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
       if (result.success) {
         // Marcar como finalizado
-        await updateMatch(currentMatch.id, { is_finished: true });
+        await updateMatch(currentMatch.id, { status: "finished" });
 
         // Recargar datos y actualizar tabla automáticamente
         await loadData();
@@ -268,7 +268,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setError(null);
 
       // Marcar como no finalizado
-      await updateMatch(currentMatch.id, { is_finished: false });
+      await updateMatch(currentMatch.id, { status: "pending" });
 
       // Recargar datos y actualizar tabla automáticamente
       await loadData();
@@ -315,10 +315,10 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </h5>
         <div
           className={`modern-match-status ${
-            currentMatch.is_finished ? "finished" : "progress"
+            currentMatch.status === "finished" ? "finished" : "progress"
           }`}
         >
-          {currentMatch.is_finished ? "FINALIZADO" : "En progreso"}
+          {currentMatch.status === "finished" ? "FINALIZADO" : "En progreso"}
         </div>
       </div>
 
@@ -330,7 +330,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </span>
         <span className="modern-match-badge">
           <span className="modern-badge-icon">🔄</span>
-          Ronda {currentMatch.round}
+          Ronda 1
         </span>
       </div>
 
@@ -381,9 +381,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       {isEditing && (
         <div className="modern-match-editor">
           <div className="modern-editor-content">
-            {/* Agregar juego */}
+            {/* Registrar Resultado */}
             <div className="modern-add-game-section">
-              <h6 className="modern-add-game-title">➕ Agregar Juego</h6>
+              <h6 className="modern-add-game-title">📝 Registrar Resultado</h6>
               <div className="modern-score-inputs">
                 <div className="modern-score-input-group">
                   <label className="modern-score-label">
@@ -454,7 +454,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             )}
 
             {/* Botones de acción */}
-            {!currentMatch.is_finished ? (
+            {currentMatch.status !== "finished" ? (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

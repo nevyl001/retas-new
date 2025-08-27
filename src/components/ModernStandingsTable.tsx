@@ -8,12 +8,9 @@ interface PairWithPlayers {
   tournament_id: string;
   player1_id: string;
   player2_id: string;
-  sets_won: number;
-  games_won: number;
-  points: number;
-  matches_played: number;
+  player1_name: string;
+  player2_name: string;
   created_at: string;
-  updated_at: string;
   player1?: {
     id: string;
     name: string;
@@ -91,16 +88,10 @@ const ModernStandingsTable: React.FC<ModernStandingsTableProps> = ({
 
   const sortedPairs = useMemo(() => {
     return [...pairs].sort((a, b) => {
-      if (b.points !== a.points) {
-        return b.points - a.points;
-      }
-      if (b.sets_won !== a.sets_won) {
-        return b.sets_won - a.sets_won;
-      }
-      if (b.games_won !== a.games_won) {
-        return b.games_won - a.games_won;
-      }
-      return a.matches_played - b.matches_played;
+      // Ordenar por nombre de pareja (alfabético) ya que no tenemos estadísticas
+      const nameA = `${a.player1_name}/${a.player2_name}`;
+      const nameB = `${b.player1_name}/${b.player2_name}`;
+      return nameA.localeCompare(nameB);
     });
   }, [pairs]);
 
@@ -178,9 +169,9 @@ const ModernStandingsTable: React.FC<ModernStandingsTableProps> = ({
                 <td className="new-team-cell">
                   {pair.player1?.name} / {pair.player2?.name}
                 </td>
-                <td className="new-stats-cell">{pair.sets_won}</td>
-                <td className="new-stats-cell">{pair.matches_played}</td>
-                <td className="new-points-cell">{pair.points}</td>
+                <td className="new-stats-cell">0</td>
+                <td className="new-stats-cell">0</td>
+                <td className="new-points-cell">0</td>
               </tr>
             ))}
           </tbody>
