@@ -1,5 +1,5 @@
 import { Game, Match, Pair } from "../lib/database";
-import { updatePair, getPairs, getMatches, getGames } from "../lib/database";
+import { getPairs, getMatches, getGames } from "../lib/database";
 
 export interface MatchResult {
   success: boolean;

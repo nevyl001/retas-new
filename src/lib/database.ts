@@ -109,17 +109,6 @@ export const getTournaments = async () => {
   return data;
 };
 
-export const getTournament = async (id: string) => {
-  const { data, error } = await supabase
-    .from("tournaments")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
 export const updateTournament = async (
   id: string,
   updates: Partial<Tournament>
@@ -393,12 +382,6 @@ export const updateMatch = async (id: string, updates: Partial<Match>) => {
 
   if (error) throw error;
   return data;
-};
-
-export const deleteMatch = async (id: string) => {
-  const { error } = await supabase.from("matches").delete().eq("id", id);
-
-  if (error) throw error;
 };
 
 export const deleteMatchesByTournament = async (tournamentId: string) => {
