@@ -496,6 +496,25 @@
 /* NUEVO DISEÑO ELEGANTE PARA VISTA PÚBLICA */
 /* ========================================= */
 
+/* Clases para mostrar/ocultar según dispositivo */
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+}
+
 /* Card principal del partido */
 .elegant-public-match-card {
   background: linear-gradient(
@@ -1311,5 +1330,242 @@
   .elegant-score-line {
     height: 12px;
     margin-top: 2px;
+  }
+}
+
+/* ============================================ */
+/* DISEÑO MÓVIL ESPECÍFICO - COMPLETAMENTE NUEVO */
+/* ============================================ */
+
+.mobile-match-card {
+  background: linear-gradient(
+    135deg,
+    rgba(30, 30, 50, 0.95) 0%,
+    rgba(35, 35, 60, 0.9) 100%
+  );
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-match-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.03) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+.mobile-match-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Header móvil */
+.mobile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.mobile-court {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.15);
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.mobile-status {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.mobile-status.finished {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.mobile-status.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+}
+
+/* Contenido principal móvil */
+.mobile-match-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-team {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
+  background: rgba(20, 20, 35, 0.6);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.mobile-team.winner {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.2) 0%,
+    rgba(255, 215, 0, 0.1) 100%
+  );
+  border-color: rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.mobile-team-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.mobile-team.winner .mobile-team-name {
+  color: #ffd700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-team-score {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.mobile-team.winner .mobile-team-score {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.1);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+.mobile-vs {
+  font-size: 1rem;
+  font-weight: 800;
+  color: rgba(255, 215, 0, 0.8);
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Ganador móvil */
+.mobile-winner {
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 215, 0, 0.2) 0%,
+    rgba(255, 215, 0, 0.1) 100%
+  );
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffd700;
+}
+
+/* Responsive para la versión móvil */
+@media (max-width: 480px) {
+  .mobile-match-card {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .mobile-header {
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+  }
+
+  .mobile-court {
+    font-size: 0.8rem;
+    padding: 3px 6px;
+  }
+
+  .mobile-status {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+  }
+
+  .mobile-match-content {
+    gap: 10px;
+  }
+
+  .mobile-team {
+    padding: 10px 6px;
+  }
+
+  .mobile-team-name {
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+  }
+
+  .mobile-team-score {
+    font-size: 1.1rem;
+    padding: 3px 6px;
+  }
+
+  .mobile-vs {
+    width: 30px;
+    height: 30px;
+    font-size: 0.9rem;
+  }
+
+  .mobile-winner {
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
+}
+
+@media (max-width: 375px) {
+  .mobile-match-card {
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+
+  .mobile-team-name {
+    font-size: 0.75rem;
+  }
+
+  .mobile-team-score {
+    font-size: 1rem;
+  }
+
+  .mobile-vs {
+    width: 25px;
+    height: 25px;
+    font-size: 0.8rem;
   }
 }

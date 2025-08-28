@@ -168,96 +168,161 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     result.hasResult && result.pair2Score > result.pair1Score;
 
                   return (
-                    <div key={match.id} className="elegant-public-match-card">
-                      {/* Header con información del partido */}
-                      <div className="elegant-public-header">
-                        <div className="elegant-match-info-top">
-                          <span className="elegant-court-badge">
-                            <span className="elegant-court-icon">🏟️</span>
-                            Cancha {match.court}
+                    <React.Fragment key={match.id}>
+                      {/* Versión Desktop */}
+                      <div className="elegant-public-match-card desktop-only">
+                        {/* Header con información del partido */}
+                        <div className="elegant-public-header">
+                          <div className="elegant-match-info-top">
+                            <span className="elegant-court-badge">
+                              <span className="elegant-court-icon">🏟️</span>
+                              Cancha {match.court}
+                            </span>
+                            <div
+                              className={`elegant-match-status ${
+                                match.status === "finished"
+                                  ? "finished"
+                                  : "active"
+                              }`}
+                            >
+                              {match.status === "finished"
+                                ? "✅ FINALIZADO"
+                                : "🔄 EN PROGRESO"}
+                            </div>
+                            <span className="elegant-round-badge">
+                              <span className="elegant-round-icon">🔄</span>
+                              Ronda {round}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Diseño del enfrentamiento */}
+                        <div className="elegant-vs-layout">
+                          {/* Pareja 1 */}
+                          <div
+                            className={`elegant-player-side left ${
+                              pair1Won ? "winner" : ""
+                            }`}
+                          >
+                            <div className="elegant-player-name">
+                              {getPairName(match.pair1_id)}
+                            </div>
+                            <div
+                              className={`elegant-player-score ${
+                                pair1Won ? "winner" : ""
+                              }`}
+                            >
+                              {result.hasResult ? result.pair1Score : 0}
+                            </div>
+                          </div>
+
+                          {/* Centro VS con animación */}
+                          <div className="elegant-vs-center">
+                            <div className="elegant-vs-circle">
+                              <span className="elegant-vs-label">VS</span>
+                            </div>
+                            <div className="elegant-score-line"></div>
+                          </div>
+
+                          {/* Pareja 2 */}
+                          <div
+                            className={`elegant-player-side right ${
+                              pair2Won ? "winner" : ""
+                            }`}
+                          >
+                            <div className="elegant-player-name">
+                              {getPairName(match.pair2_id)}
+                            </div>
+                            <div
+                              className={`elegant-player-score ${
+                                pair2Won ? "winner" : ""
+                              }`}
+                            >
+                              {result.hasResult ? result.pair2Score : 0}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Winner highlight for finished matches */}
+                        {match.status === "finished" && result.hasResult && (
+                          <div className="elegant-public-winner">
+                            <div className="elegant-winner-banner">
+                              <span className="elegant-winner-icon">🏆</span>
+                              <span className="elegant-winner-text">
+                                Ganador:{" "}
+                                {pair1Won
+                                  ? getPairName(match.pair1_id)
+                                  : pair2Won
+                                  ? getPairName(match.pair2_id)
+                                  : "Empate"}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Versión Mobile - Diseño completamente diferente */}
+                      <div className="mobile-match-card mobile-only">
+                        {/* Header compacto */}
+                        <div className="mobile-header">
+                          <span className="mobile-court">
+                            🏟️ Cancha {match.court}
                           </span>
                           <div
-                            className={`elegant-match-status ${
+                            className={`mobile-status ${
                               match.status === "finished"
                                 ? "finished"
                                 : "active"
                             }`}
                           >
-                            {match.status === "finished"
-                              ? "✅ FINALIZADO"
-                              : "🔄 EN PROGRESO"}
+                            {match.status === "finished" ? "✅" : "🔄"}
                           </div>
-                          <span className="elegant-round-badge">
-                            <span className="elegant-round-icon">🔄</span>
-                            Ronda {round}
-                          </span>
                         </div>
-                      </div>
 
-                      {/* Diseño del enfrentamiento */}
-                      <div className="elegant-vs-layout">
-                        {/* Pareja 1 */}
-                        <div
-                          className={`elegant-player-side left ${
-                            pair1Won ? "winner" : ""
-                          }`}
-                        >
-                          <div className="elegant-player-name">
-                            {getPairName(match.pair1_id)}
-                          </div>
+                        {/* Enfrentamiento horizontal compacto */}
+                        <div className="mobile-match-content">
                           <div
-                            className={`elegant-player-score ${
+                            className={`mobile-team ${
                               pair1Won ? "winner" : ""
                             }`}
                           >
-                            {result.hasResult ? result.pair1Score : 0}
+                            <div className="mobile-team-name">
+                              {getPairName(match.pair1_id)}
+                            </div>
+                            <div className="mobile-team-score">
+                              {result.hasResult ? result.pair1Score : 0}
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Centro VS con animación */}
-                        <div className="elegant-vs-center">
-                          <div className="elegant-vs-circle">
-                            <span className="elegant-vs-label">VS</span>
-                          </div>
-                          <div className="elegant-score-line"></div>
-                        </div>
+                          <div className="mobile-vs">VS</div>
 
-                        {/* Pareja 2 */}
-                        <div
-                          className={`elegant-player-side right ${
-                            pair2Won ? "winner" : ""
-                          }`}
-                        >
-                          <div className="elegant-player-name">
-                            {getPairName(match.pair2_id)}
-                          </div>
                           <div
-                            className={`elegant-player-score ${
+                            className={`mobile-team ${
                               pair2Won ? "winner" : ""
                             }`}
                           >
-                            {result.hasResult ? result.pair2Score : 0}
+                            <div className="mobile-team-name">
+                              {getPairName(match.pair2_id)}
+                            </div>
+                            <div className="mobile-team-score">
+                              {result.hasResult ? result.pair2Score : 0}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Winner highlight for finished matches */}
-                      {match.status === "finished" && result.hasResult && (
-                        <div className="elegant-public-winner">
-                          <div className="elegant-winner-banner">
-                            <span className="elegant-winner-icon">🏆</span>
-                            <span className="elegant-winner-text">
-                              Ganador:{" "}
-                              {pair1Won
-                                ? getPairName(match.pair1_id)
-                                : pair2Won
-                                ? getPairName(match.pair2_id)
-                                : "Empate"}
-                            </span>
+                        {/* Ganador móvil */}
+                        {match.status === "finished" && result.hasResult && (
+                          <div className="mobile-winner">
+                            🏆{" "}
+                            {pair1Won
+                              ? getPairName(match.pair1_id)
+                              : pair2Won
+                              ? getPairName(match.pair2_id)
+                              : "Empate"}
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    </React.Fragment>
                   );
                 })}
               </div>
