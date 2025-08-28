@@ -91,7 +91,7 @@
   text-align: center;
   margin-bottom: 30px;
   padding: 30px;
-  background: rgba(0, 0, 0, 0.3);
+  background: transparent;
   border-radius: 16px;
   border: 1px solid rgba(255, 215, 0, 0.4);
   backdrop-filter: blur(10px);
@@ -100,8 +100,20 @@
 .public-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #ffd700;
+  color: #ffd700 !important;
   margin-bottom: 10px;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-bottom: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  animation: publicTitleGlow 3s ease-in-out infinite;
+}
+
+.public-title::before {
+  display: none !important;
 }
 
 .public-subtitle {

@@ -22485,11 +22485,7 @@ body::before {
 
 /* Public Header */
 .public-header {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 215, 0, 0.15) 0%,
-    rgba(255, 237, 78, 0.1) 100%
-  );
+  background: transparent;
   padding: 40px 20px;
   text-align: center;
   border-bottom: 2px solid rgba(255, 215, 0, 0.3);
@@ -22497,23 +22493,24 @@ body::before {
   overflow: hidden;
 }
 
-.public-header::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
-  animation: shimmer 3s ease-in-out infinite;
-}
-
 .public-title {
-  color: #ffd700;
+  color: #ffd700 !important;
   font-size: 2.2rem;
   font-weight: 800;
-  margin: 0 0 12px 0;
+  margin: 0 0 12px 0 !important;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-bottom: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  animation: publicTitleGlow 3s ease-in-out infinite;
+}
+
+.public-title::before {
+  display: none !important;
 }
 
 .public-subtitle {
@@ -23626,5 +23623,19 @@ body::before {
     padding: 6px !important;
     margin: 0 !important;
     border-radius: 16px !important;
+  }
+}
+
+/* Animación sutil y elegante para el título público */
+@keyframes publicTitleGlow {
+  0%,
+  100% {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.8),
+      0 0 40px rgba(255, 215, 0, 0.3);
+    transform: scale(1.02);
   }
 }
