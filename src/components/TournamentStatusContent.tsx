@@ -18,12 +18,12 @@ export const TournamentStatusContent: React.FC<
     pairsCount,
   });
   return (
-    <div className="elegant-tournament-status">
+    <div className="elegant-reta-status">
       {/* Header Elegante */}
       <div className="elegant-status-header">
         <div className="elegant-header-content">
           <div className="elegant-header-title">
-            <p>Estado del Torneo</p>
+            <p>Estado de la Reta</p>
           </div>
         </div>
       </div>
@@ -32,7 +32,7 @@ export const TournamentStatusContent: React.FC<
       <div className="elegant-status-indicators">
         <div className="elegant-status-card">
           <div className="elegant-status-icon">
-            <span className="elegant-status-dot tournament-status"></span>
+            <span className="elegant-status-dot reta-status"></span>
           </div>
           <div className="elegant-status-info">
             <span className="elegant-status-label">ESTADO</span>

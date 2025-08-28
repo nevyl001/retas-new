@@ -683,7 +683,7 @@ h1::before {
   }
 }
 
-.create-tournament-btn::before {
+.create-reta-btn::before {
   content: "";
   position: absolute;
   top: 0;
@@ -699,7 +699,7 @@ h1::before {
   transition: left 0.5s;
 }
 
-.create-tournament-btn:hover::before {
+.create-reta-btn:hover::before {
   left: 100%;
 }
 
@@ -741,19 +741,19 @@ h1::before {
   }
 }
 
-.create-tournament-btn:hover {
+.create-reta-btn:hover {
   background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(31, 41, 55, 0.6);
 }
 
 /* Lista de retas moderna */
-.tournaments-list {
+.retas-list {
   margin-bottom: 40px;
   width: 100%;
 }
 
-.tournaments-list h2 {
+.retas-list h2 {
   font-size: 3.2rem;
   margin-bottom: 40px;
   margin-top: 20px;
@@ -773,11 +773,11 @@ h1::before {
 }
 
 @media (min-width: 768px) {
-  .tournaments-list {
+  .retas-list {
     margin-bottom: 32px;
   }
 
-  .tournaments-list h2 {
+  .retas-list h2 {
     font-size: 2.4rem;
     margin-bottom: 32px;
     margin-top: 16px;
@@ -786,7 +786,7 @@ h1::before {
 }
 
 @media (min-width: 1200px) {
-  .tournaments-list h2 {
+  .retas-list h2 {
     font-size: 2.8rem;
     margin-bottom: 36px;
     margin-top: 18px;
@@ -794,7 +794,7 @@ h1::before {
   }
 }
 
-.tournament-management-section {
+.reta-management-section {
   background: linear-gradient(
     135deg,
     rgba(20, 20, 35, 0.95) 0%,
@@ -812,12 +812,12 @@ h1::before {
   overflow: hidden;
 }
 
-.tournament-management-section:hover {
+.reta-management-section:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
-.tournament-content {
+.reta-content {
   background: linear-gradient(
     135deg,
     rgba(20, 20, 35, 0.95) 0%,
@@ -838,7 +838,7 @@ h1::before {
   overflow: hidden;
 }
 
-.tournament-content:hover {
+.reta-content:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
@@ -1211,7 +1211,7 @@ h1::before {
   animation-duration: 6s;
 }
 
-.tournament-header {
+.reta-header {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1235,7 +1235,7 @@ h1::before {
   overflow: hidden;
 }
 
-.create-tournament-section {
+.create-reta-section {
   display: flex;
   justify-content: center;
   margin-bottom: 24px;
@@ -1255,7 +1255,7 @@ h1::before {
   overflow: hidden;
 }
 
-.tournament-header h2 {
+.reta-header h2 {
   color: #ffd700;
   font-size: 2.2rem;
   margin: 0;
@@ -1268,7 +1268,7 @@ h1::before {
   background-clip: text;
 }
 
-.create-tournament-btn {
+.create-reta-btn {
   background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffb347 100%);
   color: #000000;
   border: none;
@@ -1288,14 +1288,14 @@ h1::before {
   overflow: hidden;
 }
 
-.create-tournament-btn:hover {
+.create-reta-btn:hover {
   transform: translateY(-4px);
   box-shadow: 0 15px 40px rgba(255, 215, 0, 0.6);
   background: linear-gradient(135deg, #ffed4e 0%, #ffb347 50%, #ff8c00 100%);
 }
 
-/* Formulario de crear torneo */
-.create-tournament-form {
+/* Formulario de crear reta */
+.create-reta-form {
   background: linear-gradient(
     135deg,
     rgba(20, 20, 35, 0.98) 0%,
@@ -1313,7 +1313,7 @@ h1::before {
   overflow: hidden;
 }
 
-.create-tournament-form h3 {
+.create-reta-form h3 {
   margin-bottom: 20px;
   color: #ffd700;
   font-size: 1.5rem;
@@ -1437,8 +1437,8 @@ h1::before {
   box-shadow: 0 15px 40px rgba(25, 25, 45, 0.7);
 }
 
-/* Lista de torneos */
-.tournaments-list h3 {
+/* Lista de retas */
+.retas-list h3 {
   margin-bottom: 20px;
   color: #ffd700;
   font-size: 1.8rem;
@@ -1999,7 +1999,7 @@ h1::before {
   font-weight: 400;
 }
 
-.tournament-header-info {
+.reta-header-info {
   margin-bottom: 10px;
 }
 
@@ -2687,7 +2687,7 @@ h1::before {
   height: 100%;
 }
 
-.tournament-header {
+.reta-header {
   background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
   color: white;
   padding: 25px;
@@ -2696,7 +2696,7 @@ h1::before {
   box-shadow: 0 6px 20px rgba(30, 41, 59, 0.3);
 }
 
-.tournament-header-content {
+.reta-header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2732,7 +2732,7 @@ h1::before {
   color: black;
 }
 
-.tournament-header h2 {
+.reta-header h2 {
   font-size: 1.8rem;
   margin-bottom: 6px;
   font-weight: 700;
@@ -2909,7 +2909,7 @@ h1::before {
 }
 
 /* Tournament Content */
-.tournament-content {
+.reta-content {
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -5376,7 +5376,7 @@ h1::before {
   .modern-match-card,
   .elegant-pair-manager,
   .elegant-player-manager,
-  .elegant-tournament-status,
+  .elegant-reta-status,
   .elegant-debug-panel,
   .compact-pairs-manager {
     backdrop-filter: blur(4px) !important;
@@ -5897,11 +5897,11 @@ td {
     padding: 0 15px !important;
   }
 
-  .tournament-management-section {
+  .reta-management-section {
     padding: 16px !important;
   }
 
-  .tournament-content {
+  .reta-content {
     padding: 16px !important;
   }
 }
@@ -5912,11 +5912,11 @@ td {
     padding: 0 12px !important;
   }
 
-  .tournament-management-section {
+  .reta-management-section {
     padding: 14px !important;
   }
 
-  .tournament-header-content {
+  .reta-header-content {
     flex-direction: column !important;
     gap: 20px !important;
   }
@@ -5959,7 +5959,7 @@ td {
     padding: 0 10px !important;
   }
 
-  .tournament-management-section {
+  .reta-management-section {
     padding: 12px !important;
     border-radius: 8px !important;
   }
@@ -6022,11 +6022,11 @@ td {
   }
 
   /* Header de reta optimizado */
-  .tournament-header {
+  .reta-header {
     padding: 16px !important;
   }
 
-  .tournament-header-content {
+  .reta-header-content {
     flex-direction: column !important;
     gap: 12px !important;
     text-align: center !important;
@@ -6042,7 +6042,7 @@ td {
     font-size: 1.5rem !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1.4rem !important;
     text-align: center !important;
   }
@@ -6054,13 +6054,13 @@ td {
   }
 
   /* Sección de estado de reta */
-  .tournament-status-section {
+  .reta-status-section {
     margin: 12px 0 !important;
     padding: 16px !important;
     border-radius: 12px !important;
   }
 
-  .tournament-status-section h3 {
+  .reta-status-section h3 {
     font-size: 1.2rem !important;
     margin-bottom: 12px !important;
   }
@@ -6507,12 +6507,12 @@ td {
     margin-top: 8px !important;
   }
 
-  .tournament-management-section {
+  .reta-management-section {
     padding: 10px !important;
     border-radius: 6px !important;
   }
 
-  .tournament-content {
+  .reta-content {
     padding: 6px !important;
     border-radius: 8px !important;
   }
@@ -6572,11 +6572,11 @@ td {
   }
 
   /* Header de reta ultra compacto */
-  .tournament-header {
+  .reta-header {
     padding: 12px !important;
   }
 
-  .tournament-header-content {
+  .reta-header-content {
     gap: 8px !important;
   }
 
@@ -6588,7 +6588,7 @@ td {
     font-size: 1.2rem !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1.2rem !important;
   }
 
@@ -6597,13 +6597,13 @@ td {
   }
 
   /* Sección de estado ultra compacta */
-  .tournament-status-section {
+  .reta-status-section {
     margin: 8px 0 !important;
     padding: 12px !important;
     border-radius: 8px !important;
   }
 
-  .tournament-status-section h3 {
+  .reta-status-section h3 {
     font-size: 1.1rem !important;
     margin-bottom: 8px !important;
   }
@@ -7098,12 +7098,12 @@ td {
     margin-top: 6px !important;
   }
 
-  .tournament-management-section {
+  .reta-management-section {
     padding: 8px !important;
     border-radius: 4px !important;
   }
 
-  .tournament-content {
+  .reta-content {
     padding: 6px !important;
     border-radius: 16px !important;
   }
@@ -7163,11 +7163,11 @@ td {
   }
 
   /* Header de reta ultra compacto */
-  .tournament-header {
+  .reta-header {
     padding: 8px !important;
   }
 
-  .tournament-header-content {
+  .reta-header-content {
     gap: 6px !important;
   }
 
@@ -7179,7 +7179,7 @@ td {
     font-size: 1rem !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1rem !important;
   }
 
@@ -7188,13 +7188,13 @@ td {
   }
 
   /* Sección de estado ultra compacta */
-  .tournament-status-section {
+  .reta-status-section {
     margin: 6px 0 !important;
     padding: 8px !important;
     border-radius: 6px !important;
   }
 
-  .tournament-status-section h3 {
+  .reta-status-section h3 {
     font-size: 1rem !important;
     margin-bottom: 6px !important;
   }
@@ -7515,7 +7515,7 @@ td {
     font-size: 1.5rem !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1.3rem !important;
   }
 
@@ -9492,7 +9492,7 @@ td {
   color: #4a90e2;
 }
 
-/* Estilos para sección de iniciar torneo */
+/* Estilos para sección de iniciar reta */
 .start-tournament-section {
   background: linear-gradient(
     135deg,
@@ -12637,7 +12637,7 @@ td {
 
 /* ===== ESTILOS PARA RESETEAR TORNEO ===== */
 
-.tournament-status-section {
+.reta-status-section {
   background: linear-gradient(
     135deg,
     rgba(20, 20, 35, 0.98) 0%,
@@ -12655,7 +12655,7 @@ td {
   min-height: 200px;
 }
 
-.tournament-status-section::before {
+.reta-status-section::before {
   content: "";
   position: absolute;
   top: 0;
@@ -12666,13 +12666,13 @@ td {
   animation: shimmer 3s ease-in-out infinite;
 }
 
-.tournament-status-section:hover {
+.reta-status-section:hover {
   transform: translateY(-5px) !important;
   box-shadow: 0 25px 70px rgba(0, 0, 0, 0.12),
     0 15px 35px rgba(255, 215, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
 }
 
-.tournament-status-section h3 {
+.reta-status-section h3 {
   color: #ffd700;
   font-size: 1.4rem;
   font-weight: 800;
@@ -12826,14 +12826,14 @@ td {
   }
 
   /* Secciones más compactas */
-  .tournament-management-section,
-  .tournament-content {
+  .reta-management-section,
+  .reta-content {
     padding: 8px !important;
     border-radius: 6px !important;
     margin-bottom: 8px !important;
   }
 
-  /* Cards de torneos más pequeñas */
+  /* Cards de retas más pequeñas */
   .reta-card {
     padding: 10px !important;
     min-height: 120px !important;
@@ -12866,19 +12866,19 @@ td {
     border-radius: 6px !important;
   }
 
-  .create-tournament-btn {
+  .create-reta-btn {
     padding: 8px 16px !important;
     font-size: 0.8rem !important;
     min-width: 160px !important;
   }
 
-  /* Header de torneo más compacto */
-  .tournament-header {
+  /* Header de reta más compacto */
+  .reta-header {
     padding: 12px !important;
     border-radius: 8px !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1.2rem !important;
   }
 
@@ -13139,8 +13139,8 @@ td {
     padding: 0 4px !important;
   }
 
-  .tournament-management-section,
-  .tournament-content {
+  .reta-management-section,
+  .reta-content {
     padding: 6px !important;
   }
 
@@ -13158,11 +13158,11 @@ td {
     padding: 6px 8px !important;
   }
 
-  .tournament-header {
+  .reta-header {
     padding: 10px !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1.1rem !important;
   }
 
@@ -13284,8 +13284,8 @@ td {
     padding: 0 3px !important;
   }
 
-  .tournament-management-section,
-  .tournament-content {
+  .reta-management-section,
+  .reta-content {
     padding: 5px !important;
   }
 
@@ -13303,11 +13303,11 @@ td {
     padding: 5px 6px !important;
   }
 
-  .tournament-header {
+  .reta-header {
     padding: 8px !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1rem !important;
   }
 
@@ -13423,11 +13423,11 @@ td {
     min-height: 140px !important;
   }
 
-  .tournament-header {
+  .reta-header {
     padding: 14px !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1.3rem !important;
   }
 
@@ -13498,11 +13498,11 @@ td {
     min-height: 130px !important;
   }
 
-  .tournament-header {
+  .reta-header {
     padding: 12px !important;
   }
 
-  .tournament-header h2 {
+  .reta-header h2 {
     font-size: 1.2rem !important;
   }
 
@@ -13572,7 +13572,7 @@ td {
 
   /* Mejor espaciado para toques */
   .reta-btn,
-  .create-tournament-btn,
+  .create-reta-btn,
   .submit-btn,
   .cancel-btn {
     padding: 10px 16px !important;
@@ -13682,7 +13682,7 @@ td {
   }
 
   /* Elementos específicos que necesitan cursor pointer */
-  .tournament-header h2,
+  .reta-header h2,
   .player-name,
   .pair-name,
   .match-pair,
@@ -13716,7 +13716,7 @@ td {
 
   /* Efectos específicos para botones */
   .reta-btn:hover,
-  .create-tournament-btn:hover,
+  .create-reta-btn:hover,
   .calculate-winner-btn:hover,
   .start-button:hover,
   .reset-button:hover,
@@ -13873,7 +13873,7 @@ td {
   .jugador-card,
   .pareja-card,
   .partido-card,
-  .torneo-card,
+  .reta-card,
   .reta-card,
   .team-card,
   .player-card,
@@ -17159,7 +17159,7 @@ body::before {
 
 /* ===== ELEGANT TOURNAMENT STATUS ===== */
 
-.elegant-tournament-status {
+.elegant-reta-status {
   background: linear-gradient(
     135deg,
     rgba(20, 20, 35, 0.98) 0%,
@@ -17177,7 +17177,7 @@ body::before {
   min-height: 200px;
 }
 
-.elegant-tournament-status::before {
+.elegant-reta-status::before {
   content: "";
   position: absolute;
   top: 0;
@@ -17284,7 +17284,7 @@ body::before {
   animation: pulse 2s ease-in-out infinite;
 }
 
-.elegant-status-dot.tournament-status {
+.elegant-status-dot.reta-status {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
 }
@@ -17666,13 +17666,13 @@ body::before {
     padding: 0 12px !important;
   }
 
-  /* Formulario de crear torneo */
-  .create-tournament-form {
+  /* Formulario de crear reta */
+  .create-reta-form {
     padding: 24px 20px !important;
     border-radius: 20px !important;
   }
 
-  .create-tournament-form h3 {
+  .create-reta-form h3 {
     font-size: 1.3rem !important;
     margin-bottom: 16px !important;
   }
@@ -17746,7 +17746,7 @@ body::before {
   }
 
   /* Título "Mis Retas" en móvil */
-  .tournaments-list h2 {
+  .retas-list h2 {
     font-size: 2rem !important;
     margin-bottom: 24px !important;
     margin-top: 12px !important;
@@ -17836,7 +17836,7 @@ body::before {
     }
 
     /* Título "Mis Retas" en iPhone */
-    .tournaments-list h2 {
+    .retas-list h2 {
       font-size: 1.8rem !important;
       margin-bottom: 20px !important;
       margin-top: 10px !important;
@@ -17872,13 +17872,13 @@ body::before {
   }
 
   /* Secciones principales */
-  .tournament-management-section {
+  .reta-management-section {
     padding: 14px !important;
     border-radius: 14px !important;
     margin-bottom: 10px !important;
   }
 
-  .tournament-content {
+  .reta-content {
     padding: 12px !important;
     border-radius: 16px !important;
   }
@@ -17979,7 +17979,7 @@ body::before {
     width: 100% !important;
   }
 
-  /* Grid de torneos */
+  /* Grid de retas */
   .tournaments-grid {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
@@ -18016,7 +18016,7 @@ body::before {
     font-size: 0.9rem !important;
   }
 
-  .tournaments-list h3 {
+  .retas-list h3 {
     font-size: 1.1rem !important;
     margin-bottom: 10px !important;
   }
@@ -18074,7 +18074,7 @@ body::before {
   }
 
   /* Optimizar espaciado */
-  .elegant-tournament-status {
+  .elegant-reta-status {
     padding: 10px !important;
   }
 
@@ -20810,7 +20810,7 @@ body::before {
   margin: 24px 0;
 }
 
-.tournament-status-section {
+.reta-status-section {
   background: linear-gradient(
     135deg,
     rgba(0, 0, 0, 0.95) 0%,
@@ -20824,7 +20824,7 @@ body::before {
   overflow: hidden;
 }
 
-.tournament-status-section::before {
+.reta-status-section::before {
   content: "";
   position: absolute;
   top: 0;
@@ -20836,7 +20836,7 @@ body::before {
 }
 
 /* Header del Panel de Estado */
-.tournament-status-header {
+.reta-status-header {
   background: linear-gradient(
     135deg,
     rgba(0, 0, 0, 0.9) 0%,
@@ -20850,7 +20850,7 @@ body::before {
   border-bottom: 2px solid #ffd700;
 }
 
-.tournament-status-header:hover {
+.reta-status-header:hover {
   background: linear-gradient(
     135deg,
     rgba(45, 45, 45, 0.9) 0%,
@@ -20931,7 +20931,7 @@ body::before {
 }
 
 /* Contenido Expandible del Panel de Estado */
-.tournament-status-content {
+.reta-status-content {
   max-height: 0;
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -20940,7 +20940,7 @@ body::before {
   border-top: 1px solid rgba(255, 215, 0, 0.3);
 }
 
-.tournament-status-content.expanded {
+.reta-status-content.expanded {
   max-height: 400px;
   padding: 24px;
 }
@@ -21039,11 +21039,11 @@ body::before {
     margin: 16px 0;
   }
 
-  .tournament-status-section {
+  .reta-status-section {
     padding: 20px;
   }
 
-  .tournament-status-section h3 {
+  .reta-status-section h3 {
     font-size: 1.4rem;
   }
 
@@ -21114,14 +21114,14 @@ body::before {
   box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);
 }
 
-.tournament-header-content {
+.reta-header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
 }
 
-.tournament-header-icon {
+.reta-header-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21140,12 +21140,12 @@ body::before {
   animation: iconFloat 3s ease-in-out infinite;
 }
 
-.tournament-header-title {
+.reta-header-title {
   flex: 1;
   text-align: left;
 }
 
-.tournament-header-title h3 {
+.reta-header-title h3 {
   color: #ffd700;
   font-size: 1.4rem;
   font-weight: 800;
@@ -21160,7 +21160,7 @@ body::before {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-.tournament-header-toggle {
+.reta-header-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21254,7 +21254,7 @@ body::before {
   box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
 }
 
-.status-dot.tournament-status {
+.status-dot.reta-status {
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -21461,11 +21461,11 @@ body::before {
     padding: 16px;
   }
 
-  .tournament-header-content {
+  .reta-header-content {
     gap: 12px;
   }
 
-  .tournament-header-icon {
+  .reta-header-icon {
     width: 40px;
     height: 40px;
   }
@@ -21474,7 +21474,7 @@ body::before {
     font-size: 1.2rem;
   }
 
-  .tournament-header-title h3 {
+  .reta-header-title h3 {
     font-size: 1.2rem;
   }
 
@@ -23508,7 +23508,7 @@ body::before {
 
 /* Reglas específicas para replicar compact-pairs-manager */
 @media (max-width: 768px) {
-  .tournament-content {
+  .reta-content {
     padding: 12px !important;
     margin: 0 8px !important;
     border-radius: 20px !important;
@@ -23516,7 +23516,7 @@ body::before {
 }
 
 @media (max-width: 430px) {
-  .tournament-content {
+  .reta-content {
     padding: 6px !important;
     margin: 0 !important;
     border-radius: 16px !important;

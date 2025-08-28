@@ -1,4 +1,4 @@
-# 🚀 Guía de Configuración - Sistema de Torneos de Pádel
+# 🚀 Guía de Configuración - RetaPadel
 
 ## 📋 Pasos para Configurar la Aplicación
 
@@ -14,7 +14,7 @@
 
 1. Haz clic en "New Project"
 2. Elige tu organización
-3. Dale un nombre al proyecto (ej: "padel-tournaments")
+3. Dale un nombre al proyecto (ej: "retapadel")
 4. Establece una contraseña para la base de datos
 5. Selecciona una región cercana
 6. Haz clic en "Create new project"
@@ -92,8 +92,8 @@ La aplicación debería abrirse en `http://localhost:3000`
 
 **Síntomas:**
 
-- Error al crear torneos
-- Error al cargar torneos
+- Error al crear retas
+- Error al cargar retas
 - Mensaje en consola sobre variables no configuradas
 
 **Solución:**
@@ -132,15 +132,15 @@ La aplicación debería abrirse en `http://localhost:3000`
 
 Una vez configurada, puedes probar:
 
-1. **Crear un torneo:**
+1. **Crear una reta:**
 
-   - Haz clic en "➕ Crear Nuevo Torneo"
+   - Haz clic en "➕ Crear Nueva Reta"
    - Completa el formulario
-   - Haz clic en "🏆 Crear Torneo"
+   - Haz clic en "🏆 Crear Reta"
 
 2. **Agregar jugadores:**
 
-   - Selecciona el torneo creado
+   - Selecciona la reta creada
    - Haz clic en "👥 Gestionar Jugadores"
    - Agrega algunos jugadores
 
@@ -149,9 +149,9 @@ Una vez configurada, puedes probar:
    - Selecciona dos jugadores
    - Haz clic en "✅ Crear Pareja"
 
-4. **Iniciar torneo:**
+4. **Iniciar reta:**
    - Una vez que tengas al menos 2 parejas
-   - Haz clic en "🚀 Iniciar Torneo"
+   - Haz clic en "🚀 Iniciar Reta"
 
 ## 📞 Soporte
 
@@ -166,9 +166,9 @@ Si tienes problemas:
 
 Una vez que la aplicación esté funcionando:
 
-1. Crea tu primer torneo
+1. Crea tu primera reta
 2. Agrega jugadores
 3. Forma parejas
-4. Inicia el torneo
+4. Inicia la reta
 5. Registra resultados de partidos
-6. ¡Disfruta gestionando tu torneo de pádel!
+6. ¡Disfruta gestionando tu reta de pádel!

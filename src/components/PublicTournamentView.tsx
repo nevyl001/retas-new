@@ -50,7 +50,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       setGames(gamesData || []); // Asegurar que games siempre sea un array
       setLastUpdate(new Date());
 
-      // Verificar si el torneo está terminado y calcular ganador
+      // Verificar si la reta está terminada y calcular ganador
       const finishedMatches = matchesData.filter(
         (match) => match.status === "finished"
       );
@@ -70,7 +70,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         }
       }
     } catch (err) {
-      setError("Error al cargar los datos del torneo");
+      setError("Error al cargar los datos de la reta");
       console.error("Error loading tournament data:", err);
     } finally {
       setLoading(false);
@@ -106,7 +106,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return (
       <div className="public-loading">
         <div className="public-loading-spinner">🏆</div>
-        <p>Cargando resultados del torneo...</p>
+        <p>Cargando resultados de la reta...</p>
       </div>
     );
   }
@@ -168,88 +168,95 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     result.hasResult && result.pair2Score > result.pair1Score;
 
                   return (
-                    <div key={match.id} className="public-match-card">
-                      <div className="public-match-header">
-                        <div className="public-match-title">
-                          Cancha {match.court}
-                        </div>
-                        <div className="public-match-status">
-                          {match.status === "finished"
-                            ? "✅ Finalizado"
-                            : "🔄 En curso"}
+                    <div key={match.id} className="elegant-public-match-card">
+                      {/* Header con información del partido */}
+                      <div className="elegant-public-header">
+                        <div className="elegant-match-info-top">
+                          <span className="elegant-court-badge">
+                            <span className="elegant-court-icon">🏟️</span>
+                            Cancha {match.court}
+                          </span>
+                          <div
+                            className={`elegant-match-status ${
+                              match.status === "finished"
+                                ? "finished"
+                                : "active"
+                            }`}
+                          >
+                            {match.status === "finished"
+                              ? "✅ FINALIZADO"
+                              : "🔄 EN PROGRESO"}
+                          </div>
+                          <span className="elegant-round-badge">
+                            <span className="elegant-round-icon">🔄</span>
+                            Ronda {round}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="public-match-content">
+                      {/* Diseño del enfrentamiento */}
+                      <div className="elegant-vs-layout">
                         {/* Pareja 1 */}
                         <div
-                          className={`public-pair-info ${
+                          className={`elegant-player-side left ${
                             pair1Won ? "winner" : ""
                           }`}
                         >
-                          <span
-                            className={`public-pair-names ${
+                          <div className="elegant-player-name">
+                            {getPairName(match.pair1_id)}
+                          </div>
+                          <div
+                            className={`elegant-player-score ${
                               pair1Won ? "winner" : ""
                             }`}
                           >
-                            {getPairName(match.pair1_id)}
-                          </span>
+                            {result.hasResult ? result.pair1Score : 0}
+                          </div>
                         </div>
 
-                        {/* Resultado en el centro */}
-                        {result.hasResult ? (
-                          <div className="public-match-result">
-                            <div className="public-result-score">
-                              <span
-                                className={`public-score-pair1 ${
-                                  pair1Won ? "winner" : ""
-                                }`}
-                              >
-                                {result.pair1Score}
-                              </span>
-                              <span className="public-score-separator">-</span>
-                              <span
-                                className={`public-score-pair2 ${
-                                  pair2Won ? "winner" : ""
-                                }`}
-                              >
-                                {result.pair2Score}
-                              </span>
-                            </div>
-                            <div className="public-result-label">
-                              {match.status === "finished"
-                                ? "Final"
-                                : "En curso"}
-                            </div>
+                        {/* Centro VS con animación */}
+                        <div className="elegant-vs-center">
+                          <div className="elegant-vs-circle">
+                            <span className="elegant-vs-label">VS</span>
                           </div>
-                        ) : (
-                          <div className="public-match-result">
-                            <div className="public-result-score">
-                              <span className="public-score-pair1">0</span>
-                              <span className="public-score-separator">-</span>
-                              <span className="public-score-pair2">0</span>
-                            </div>
-                            <div className="public-result-label">
-                              Sin comenzar
-                            </div>
-                          </div>
-                        )}
+                          <div className="elegant-score-line"></div>
+                        </div>
 
                         {/* Pareja 2 */}
                         <div
-                          className={`public-pair-info ${
+                          className={`elegant-player-side right ${
                             pair2Won ? "winner" : ""
                           }`}
                         >
-                          <span
-                            className={`public-pair-names ${
+                          <div className="elegant-player-name">
+                            {getPairName(match.pair2_id)}
+                          </div>
+                          <div
+                            className={`elegant-player-score ${
                               pair2Won ? "winner" : ""
                             }`}
                           >
-                            {getPairName(match.pair2_id)}
-                          </span>
+                            {result.hasResult ? result.pair2Score : 0}
+                          </div>
                         </div>
                       </div>
+
+                      {/* Winner highlight for finished matches */}
+                      {match.status === "finished" && result.hasResult && (
+                        <div className="elegant-public-winner">
+                          <div className="elegant-winner-banner">
+                            <span className="elegant-winner-icon">🏆</span>
+                            <span className="elegant-winner-text">
+                              Ganador:{" "}
+                              {pair1Won
+                                ? getPairName(match.pair1_id)
+                                : pair2Won
+                                ? getPairName(match.pair2_id)
+                                : "Empate"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

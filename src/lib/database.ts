@@ -62,7 +62,7 @@ export interface Game {
   updated_at: string;
 }
 
-// Funciones para Torneos
+// Funciones para Retas
 export const createTournament = async (
   name: string,
   description?: string,
@@ -166,7 +166,7 @@ export const createPlayer = async (name: string) => {
 };
 
 export const getPlayers = async () => {
-  // Obtener todos los jugadores de todos los torneos
+  // Obtener todos los jugadores de todas las retas
   const { data, error } = await supabase
     .from("players")
     .select("*")
@@ -438,10 +438,10 @@ export const getGames = async (matchId: string) => {
   return data;
 };
 
-// Nueva función para obtener todos los games de un torneo
+// Nueva función para obtener todos los games de una reta
 export const getTournamentGames = async (tournamentId: string) => {
   try {
-    // Primero obtenemos todos los matches del torneo
+    // Primero obtenemos todos los matches de la reta
     const { data: matches, error: matchesError } = await supabase
       .from("matches")
       .select("id")

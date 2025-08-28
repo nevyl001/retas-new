@@ -1,10 +1,10 @@
-# 🏆 Sistema de Torneos de Pádel
+# 🏆 RetaPadel - Sistema de Retas de Pádel
 
-Un sistema completo para gestionar torneos de pádel con persistencia de datos en base de datos Supabase.
+Un sistema completo para gestionar retas de pádel con persistencia de datos en base de datos Supabase.
 
 ## ✨ Características
 
-- **Gestión de Torneos**: Crear, editar y eliminar torneos con nombres personalizados
+- **Gestión de Retas**: Crear, editar y eliminar retas con nombres personalizados
 - **Gestión de Jugadores**: Registrar y gestionar jugadores de manera independiente
 - **Creación de Parejas**: Formar parejas seleccionando jugadores
 - **Sistema de Partidos**: Distribución automática de partidos por rondas y canchas
@@ -54,42 +54,42 @@ npm start
 
 ### Tablas Principales
 
-- **tournaments**: Información de torneos
+- **tournaments**: Información de retas
 - **players**: Jugadores registrados
 - **pairs**: Parejas formadas por jugadores
-- **matches**: Partidos del torneo
+- **matches**: Partidos de la reta
 - **games**: Juegos individuales de cada partido
 
 ### Relaciones
 
-- Un torneo tiene múltiples parejas
-- Una pareja pertenece a un torneo y tiene dos jugadores
-- Un torneo tiene múltiples partidos
+- Una reta tiene múltiples parejas
+- Una pareja pertenece a una reta y tiene dos jugadores
+- Una reta tiene múltiples partidos
 - Un partido tiene múltiples juegos
 
 ## 🎮 Cómo Usar
 
-### 1. Crear un Torneo
+### 1. Crear una Reta
 
-1. Haz clic en "➕ Crear Nuevo Torneo"
+1. Haz clic en "➕ Crear Nueva Reta"
 2. Completa el formulario:
-   - Nombre del torneo
+   - Nombre de la reta
    - Descripción (opcional)
    - Número de canchas disponibles
-3. Haz clic en "🏆 Crear Torneo"
+3. Haz clic en "🏆 Crear Reta"
 
 ### 2. Gestionar Jugadores
 
-1. Selecciona el torneo creado
+1. Selecciona la reta creada
 2. Haz clic en "👥 Gestionar Jugadores"
 3. Agrega jugadores uno por uno
 4. Selecciona dos jugadores para formar una pareja
 5. Haz clic en "✅ Crear Pareja"
 
-### 3. Iniciar el Torneo
+### 3. Iniciar la Reta
 
 1. Una vez que tengas al menos 2 parejas
-2. Haz clic en "🚀 Iniciar Torneo"
+2. Haz clic en "🚀 Iniciar Reta"
 3. El sistema creará automáticamente todos los partidos posibles
 
 ### 4. Gestionar Partidos
@@ -149,7 +149,7 @@ La clasificación se actualiza automáticamente y muestra:
 
 ### Gestión de Datos
 
-- **Eliminación Física**: Puedes eliminar torneos, jugadores y parejas
+- **Eliminación Física**: Puedes eliminar retas, jugadores y parejas
 - **Persistencia**: Todos los datos se guardan automáticamente
 - **Sincronización**: Cambios en tiempo real
 
@@ -163,7 +163,7 @@ La clasificación se actualiza automáticamente y muestra:
 
 - **Historial Completo**: Todos los resultados quedan registrados
 - **Clasificación Dinámica**: Se actualiza automáticamente
-- **Múltiples Torneos**: Puedes gestionar varios torneos simultáneamente
+- **Múltiples Retas**: Puedes gestionar varias retas simultáneamente
 
 ## 🚀 Próximas Funcionalidades
 
@@ -212,4 +212,4 @@ Si tienes problemas o preguntas:
 
 - [ ] Múltiples deportes
 - [ ] Sistema de rankings
-- [ ] Torneos internacionales
+- [ ] Retas internacionales

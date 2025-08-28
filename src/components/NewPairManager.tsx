@@ -63,7 +63,7 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
       {pairs.length === 0 ? (
         <div className="elegant-empty-state">
           <h4>No hay parejas registradas</h4>
-          <p>Crea parejas para comenzar el torneo</p>
+          <p>Crea parejas para comenzar la reta</p>
         </div>
       ) : (
         <div className="elegant-pairs-grid">

@@ -151,7 +151,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       />
 
       {showCreateForm && (
-        <div className="create-tournament-form">
+        <div className="create-reta-form">
           <h3>Crear Nueva Reta</h3>
           <form onSubmit={handleCreateTournament}>
             <div className="form-group">
@@ -220,7 +220,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         </div>
       )}
 
-      <div className="tournaments-list">
+      <div className="retas-list">
         <h2>Mis Retas</h2>
         {tournaments.length === 0 ? (
           <div className="no-tournaments">

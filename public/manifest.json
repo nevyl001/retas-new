@@ -1,7 +1,7 @@
 {
-  "short_name": "Gestor Pádel",
-  "name": "Gestor de Torneos y Retas de Pádel",
-  "description": "Aplicación completa para gestionar torneos, retas y partidos de pádel de manera profesional",
+  "short_name": "RetaPadel",
+  "name": "RetaPadel - Gestor de Retas de Pádel",
+  "description": "Aplicación completa para gestionar retas y partidos de pádel de manera profesional",
   "icons": [
     {
       "src": "favicon.svg",

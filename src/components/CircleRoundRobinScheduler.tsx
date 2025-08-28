@@ -306,7 +306,7 @@ export class CircleRoundRobinScheduler {
   }
 
   /**
-   * Programa un torneo completo usando el método del círculo
+   * Programa una reta completa usando el método del círculo
    */
   static async scheduleTournament(
     tournamentId: string,
@@ -315,14 +315,14 @@ export class CircleRoundRobinScheduler {
   ): Promise<CircleSchedulingResult> {
     try {
       console.log("🚀 === INICIANDO PROGRAMACIÓN MÉTODO DEL CÍRCULO ===");
-      console.log(`🏆 Torneo ID: ${tournamentId}`);
+      console.log(`🏆 Reta ID: ${tournamentId}`);
       console.log(`👥 Parejas: ${pairs.length}`);
       console.log(`🏟️ Canchas: ${courts}`);
 
       if (pairs.length < 2) {
         return {
           success: false,
-          message: "Se necesitan al menos 2 parejas para iniciar el torneo",
+          message: "Se necesitan al menos 2 parejas para iniciar la reta",
           matches: [],
           totalRounds: 0,
         };
@@ -375,15 +375,15 @@ export class CircleRoundRobinScheduler {
 
       return {
         success: true,
-        message: `Torneo programado exitosamente usando método del círculo. ${createdMatches.length} partidos distribuidos en ${totalRounds} rondas`,
+        message: `Reta programada exitosamente usando método del círculo. ${createdMatches.length} partidos distribuidos en ${totalRounds} rondas`,
         matches,
         totalRounds,
       };
     } catch (error) {
-      console.error("❌ Error programando torneo:", error);
+      console.error("❌ Error programando reta:", error);
       return {
         success: false,
-        message: `Error al programar el torneo: ${
+        message: `Error al programar la reta: ${
           error instanceof Error ? error.message : "Error desconocido"
         }`,
         matches: [],

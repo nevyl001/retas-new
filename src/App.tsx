@@ -315,7 +315,7 @@ function App() {
     const finished =
       matches.length > 0 &&
       matches.every((match) => match.status === "finished");
-    console.log("🏆 Estado del torneo:", {
+    console.log("🏆 Estado de la reta:", {
       totalMatches: matches.length,
       finishedMatches: matches.filter((m) => m.status === "finished").length,
       isFinished: finished,
@@ -323,7 +323,7 @@ function App() {
     return finished;
   }, [matches]);
 
-  // Comentado: Marcar automáticamente el torneo como finalizado cuando todos los partidos terminen
+  // Comentado: Marcar automáticamente la reta como finalizada cuando todos los partidos terminen
   // Ahora la reta solo se finaliza manualmente con el botón en la tarjeta
   /*
   useEffect(() => {
@@ -334,19 +334,19 @@ function App() {
         !selectedTournament.is_finished
       ) {
         try {
-          console.log("🏆 Marcando torneo como finalizado automáticamente...");
+          console.log("🏆 Marcando reta como finalizada automáticamente...");
           await updateTournament(selectedTournament.id, {
             is_finished: true,
           });
 
-          // Actualizar el estado local del torneo
+          // Actualizar el estado local de la reta
           setSelectedTournament((prev) =>
             prev ? { ...prev, is_finished: true } : null
           );
 
-          console.log("✅ Torneo marcado como finalizado");
+          console.log("✅ Reta marcada como finalizada");
         } catch (error) {
-          console.error("❌ Error marcando torneo como finalizado:", error);
+          console.error("❌ Error marcando reta como finalizada:", error);
         }
       }
     };
@@ -433,7 +433,7 @@ function App() {
               <div className="welcome-banner">
                 <h2>🏆 ¡Bienvenido a tu Gestor de Retas de Padel!</h2>
                 <p>
-                  Organiza y gestiona tus torneos de padel de manera elegante y
+                  Organiza y gestiona tus retas de padel de manera elegante y
                   profesional. ¡Que gane el mejor!
                 </p>
                 <div className="tutorial-steps">
@@ -461,7 +461,7 @@ function App() {
               </div>
             )}
 
-            <div className="tournament-management-section">
+            <div className="reta-management-section">
               <TournamentManager
                 selectedTournament={selectedTournament || undefined}
                 onTournamentSelect={setSelectedTournament}
@@ -469,7 +469,7 @@ function App() {
             </div>
 
             {/* Contenido de la Reta Seleccionada */}
-            <div className="tournament-content">
+            <div className="reta-content">
               {selectedTournament ? (
                 <>
                   <div className="tournament-details">
@@ -683,8 +683,8 @@ function App() {
                         )}
                       </div>
 
-                      {/* Panel de Estado del Torneo */}
-                      <div className="component-card tournament-status-card">
+                      {/* Panel de Estado de la Reta */}
+                      <div className="component-card reta-status-card">
                         <div className="component-header">
                           <div className="component-icon">🏆</div>
                           <div className="component-title">
@@ -694,7 +694,7 @@ function App() {
                                 : "Reta en Progreso"}
                             </h3>
                             <span className="component-subtitle">
-                              Estado del Torneo
+                              Estado de la Reta
                             </span>
                           </div>
                           <button
@@ -725,7 +725,7 @@ function App() {
                                     );
                                     setLoading(true);
 
-                                    // 1. Eliminar todos los partidos del torneo
+                                    // 1. Eliminar todos los partidos de la reta
                                     console.log("🗑️ Eliminando partidos...");
                                     await deleteMatchesByTournament(
                                       selectedTournament.id
@@ -752,9 +752,9 @@ function App() {
                                       "✅ Estadísticas de parejas reseteadas (se recalculan automáticamente)"
                                     );
 
-                                    // 3. Marcar el torneo como no iniciado
+                                    // 3. Marcar la reta como no iniciada
                                     console.log(
-                                      "🔄 Marcando torneo como no iniciado..."
+                                      "🔄 Marcando reta como no iniciada..."
                                     );
                                     await updateTournament(
                                       selectedTournament.id,
@@ -763,7 +763,7 @@ function App() {
                                       }
                                     );
                                     console.log(
-                                      "✅ Torneo marcado como no iniciado"
+                                      "✅ Reta marcada como no iniciada"
                                     );
 
                                     // 4. Actualizar estado local
@@ -774,9 +774,9 @@ function App() {
                                     );
                                     setMatches([]);
 
-                                    // 5. Recargar datos del torneo
+                                    // 5. Recargar datos de la reta
                                     console.log(
-                                      "🔄 Recargando datos del torneo..."
+                                      "🔄 Recargando datos de la reta..."
                                     );
                                     await loadTournamentData();
                                     console.log("✅ Datos recargados");
@@ -861,7 +861,7 @@ function App() {
                                 try {
                                   alert(
                                     `📊 Estado del Sistema:\n` +
-                                      `• Torneos: 1\n` +
+                                      `• Retas: 1\n` +
                                       `• Parejas: ${pairs.length}\n` +
                                       `• Partidos: ${matches.length}\n` +
                                       `• Estado: ✅ Todo funcionando correctamente`
@@ -1022,7 +1022,7 @@ function App() {
                     )}
 
                     {selectedTournament.is_started && (
-                      <div className="tournament-content">
+                      <div className="reta-content">
                         {/* Lista de partidos */}
                         <div className="modern-matches-section">
                           <div className="modern-matches-header">
@@ -1124,7 +1124,7 @@ function App() {
                           >
                             Debug: Partidos {matches.length}, Terminados{" "}
                             {matches.filter((m) => m.status === 'finished').length},
-                            Torneo terminado:{" "}
+                            Reta terminada:{" "}
                             {isTournamentFinished ? "SÍ" : "NO"}, Ganador:{" "}
                             {winner ? "SÍ" : "NO"}
                           </div>
@@ -1156,7 +1156,7 @@ function App() {
           </div>
         </div>
       ) : currentView === "public" ? (
-        /* Vista Pública del Torneo */
+        /* Vista Pública de la Reta */
         <PublicTournamentView tournamentId={publicTournamentId!} />
       ) : (
         /* Pantalla de ganador - Nueva ventana */
