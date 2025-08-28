@@ -240,8 +240,31 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       );
 
       if (result.success) {
-        // Marcar como finalizado
-        await updateMatch(currentMatch.id, { status: "finished" });
+        // Calcular marcador final del partido para guardarlo en el match
+        const matchGames = await getGames(currentMatch.id);
+        let pair1FinalScore = 0;
+        let pair2FinalScore = 0;
+
+        // Calcular sets ganados por cada pareja
+        matchGames.forEach((game) => {
+          if (game.pair1_games >= 6) {
+            pair1FinalScore++;
+          }
+          if (game.pair2_games >= 6) {
+            pair2FinalScore++;
+          }
+        });
+
+        // Marcar como finalizado y guardar marcador final
+        await updateMatch(currentMatch.id, {
+          status: "finished",
+          pair1_score: pair1FinalScore,
+          pair2_score: pair2FinalScore,
+        });
+
+        console.log(
+          `🏆 Partido finalizado: ${pair1FinalScore} - ${pair2FinalScore}`
+        );
 
         // Recargar datos y actualizar tabla automáticamente
         await loadData();

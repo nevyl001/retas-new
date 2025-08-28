@@ -3,6 +3,7 @@ import {
   getPairs,
   getMatches,
   getGames,
+  updateMatch,
   Match,
   Game,
   Pair,
@@ -65,6 +66,14 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         getMatches(tournamentId),
       ]);
 
+      console.log("🔍 Datos cargados:");
+      console.log("- Parejas:", pairsData.length);
+      console.log("- Partidos:", matchesData.length);
+      console.log(
+        "- Partidos finalizados:",
+        matchesData.filter((m) => m.status === "finished").length
+      );
+
       setPairs(pairsData);
       setMatches(matchesData);
 
@@ -73,6 +82,35 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       const gamesArrays = await Promise.all(gamesPromises);
       const allGamesData = gamesArrays.flat();
       setAllGames(allGamesData);
+
+      console.log("- Juegos cargados:", allGamesData.length);
+
+      // Log de algunos partidos para debug
+      matchesData.forEach((match, index) => {
+        if (index < 3) {
+          // Solo primeros 3 para no saturar log
+          console.log(`Partido ${index + 1}:`, {
+            id: match.id,
+            status: match.status,
+            pair1_score: match.pair1_score,
+            pair2_score: match.pair2_score,
+            games_count: allGamesData.filter((g) => g.match_id === match.id)
+              .length,
+          });
+        }
+      });
+
+      // Detectar partidos finalizados sin scores y mostrar aviso
+      const finishedWithoutScores = matchesData.filter(
+        (m) => m.status === "finished" && !m.pair1_score && !m.pair2_score
+      );
+
+      if (finishedWithoutScores.length > 0) {
+        console.log(
+          `⚠️ ENCONTRADOS ${finishedWithoutScores.length} partidos finalizados sin marcador final`
+        );
+        console.log("💡 Usa el botón 'Actualizar Scores' para corregir esto");
+      }
     } catch (error) {
       console.error("Error cargando datos:", error);
       setError("Error al cargar los datos de la reta");
@@ -132,7 +170,11 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
 
   // Calcular estadísticas en tiempo real
   const pairsWithStats = useMemo((): PairWithStats[] => {
-    if (!pairs.length || !matches.length) {
+    if (!pairs.length) {
+      return [];
+    }
+
+    if (!matches.length) {
       return pairs.map((pair) => ({
         ...pair,
         gamesWon: 0,
@@ -171,20 +213,18 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
           (game) => game.match_id === match.id
         );
 
-        if (matchGames.length > 0) {
-          // Calcular estadísticas del partido
-          const matchStats = calculateMatchStats(match, matchGames);
+        const pair1Stats = pairStats.get(match.pair1_id);
+        const pair2Stats = pairStats.get(match.pair2_id);
 
-          // Acumular estadísticas
-          const pair1Stats = pairStats.get(match.pair1_id);
-          const pair2Stats = pairStats.get(match.pair2_id);
+        if (pair1Stats && pair2Stats) {
+          // Incrementar partidos jugados
+          pair1Stats.matchesPlayed += 1;
+          pair2Stats.matchesPlayed += 1;
 
-          if (pair1Stats && pair2Stats) {
-            // Incrementar partidos jugados
-            pair1Stats.matchesPlayed += 1;
-            pair2Stats.matchesPlayed += 1;
+          if (matchGames.length > 0) {
+            // Usar datos detallados de juegos si están disponibles
+            const matchStats = calculateMatchStats(match, matchGames);
 
-            // Acumular estadísticas del partido
             pair1Stats.gamesWon += matchStats.pair1GamesWon;
             pair1Stats.setsWon += matchStats.pair1SetsWon;
             pair1Stats.points += matchStats.pair1TotalPoints;
@@ -192,6 +232,23 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
             pair2Stats.gamesWon += matchStats.pair2GamesWon;
             pair2Stats.setsWon += matchStats.pair2SetsWon;
             pair2Stats.points += matchStats.pair2TotalPoints;
+          } else {
+            // Usar datos básicos del match si no hay juegos detallados
+            const pair1Score = match.pair1_score || 0;
+            const pair2Score = match.pair2_score || 0;
+
+            // Acumular puntos básicos
+            pair1Stats.points += pair1Score;
+            pair2Stats.points += pair2Score;
+
+            // Determinar ganador de sets basado en marcador
+            if (pair1Score > pair2Score) {
+              pair1Stats.setsWon += 1;
+              pair1Stats.gamesWon += 1;
+            } else if (pair2Score > pair1Score) {
+              pair2Stats.setsWon += 1;
+              pair2Stats.gamesWon += 1;
+            }
           }
         }
       }
@@ -249,6 +306,47 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   };
 
   const recalculateStatistics = async () => {
+    await loadTournamentData();
+  };
+
+  // Función para actualizar marcadores de partidos finalizados que no tienen pair1_score/pair2_score
+  const updateFinishedMatchScores = async () => {
+    console.log("🔄 Actualizando marcadores de partidos finalizados...");
+
+    const finishedMatches = matches.filter(
+      (m) => m.status === "finished" && !m.pair1_score && !m.pair2_score
+    );
+
+    for (const match of finishedMatches) {
+      const matchGames = allGames.filter((g) => g.match_id === match.id);
+
+      if (matchGames.length > 0) {
+        let pair1FinalScore = 0;
+        let pair2FinalScore = 0;
+
+        // Calcular sets ganados por cada pareja
+        matchGames.forEach((game) => {
+          if (game.pair1_games >= 6) {
+            pair1FinalScore++;
+          }
+          if (game.pair2_games >= 6) {
+            pair2FinalScore++;
+          }
+        });
+
+        console.log(
+          `📊 Actualizando partido ${match.id}: ${pair1FinalScore} - ${pair2FinalScore}`
+        );
+
+        // Actualizar el match con los scores
+        await updateMatch(match.id, {
+          pair1_score: pair1FinalScore,
+          pair2_score: pair2FinalScore,
+        });
+      }
+    }
+
+    // Recargar datos después de actualizar
     await loadTournamentData();
   };
 

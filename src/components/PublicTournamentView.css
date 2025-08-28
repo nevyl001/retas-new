@@ -525,8 +525,8 @@
   );
   border: 2px solid rgba(255, 215, 0, 0.2);
   border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: 16px;
+  margin-bottom: 16px;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(10px);
@@ -566,7 +566,7 @@
 
 /* Header del partido - Nuevo diseño */
 .elegant-public-header {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .elegant-match-info-top {
@@ -581,17 +581,17 @@
 .elegant-court-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 4px;
+  padding: 6px 12px;
   background: linear-gradient(
     135deg,
     rgba(255, 215, 0, 0.25) 0%,
     rgba(255, 215, 0, 0.15) 100%
   );
   border: 1px solid rgba(255, 215, 0, 0.6);
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 700;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #ffd700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   box-shadow: 0 3px 12px rgba(255, 215, 0, 0.3);
@@ -603,9 +603,9 @@
 }
 
 .elegant-match-status {
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -626,12 +626,12 @@
 .elegant-round-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 4px;
+  padding: 6px 10px;
   background: rgba(255, 215, 0, 0.15);
   border: 1px solid rgba(255, 215, 0, 0.4);
-  border-radius: 12px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #ffd700;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -672,19 +672,19 @@
 .elegant-vs-layout {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-  padding: 20px 0;
+  gap: 15px;
+  margin-bottom: 12px;
+  padding: 12px 0;
 }
 
 /* Lados de jugadores */
 .elegant-player-side {
   flex: 1;
   text-align: center;
-  padding: 24px 16px;
+  padding: 16px 12px;
   background: rgba(20, 20, 35, 0.6);
   border: 1px solid rgba(255, 215, 0, 0.15);
-  border-radius: 16px;
+  border-radius: 12px;
   position: relative;
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -733,11 +733,11 @@
 }
 
 .elegant-player-name {
-  font-size: 1.7rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: #ffffff;
-  line-height: 1.3;
-  margin-bottom: 18px;
+  line-height: 1.2;
+  margin-bottom: 10px;
   position: relative;
   z-index: 2;
   animation: text-glow 3s ease-in-out infinite;
@@ -750,23 +750,23 @@
 }
 
 .elegant-player-score {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.9);
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
   position: relative;
   z-index: 2;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
+  border-radius: 6px;
   display: inline-block;
 }
 
 .elegant-player-score.winner {
   color: #ffd700;
   text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 700;
   background: rgba(255, 215, 0, 0.1);
 }

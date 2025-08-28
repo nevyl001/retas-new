@@ -4847,6 +4847,45 @@ h1::before {
   }
 }
 
+@keyframes statCardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(30px) rotateX(45deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+  }
+}
+
+@keyframes statCardFloat {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+@keyframes particlesFloat {
+  0% {
+    transform: translateY(0) translateX(0);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  50% {
+    transform: translateY(-10px) translateX(-5px);
+  }
+  75% {
+    transform: translateY(-30px) translateX(15px);
+  }
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .modern-winner-screen {
@@ -23094,8 +23133,8 @@ body::before {
   border: 3px solid rgba(255, 215, 0, 0.5);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 15px 40px rgba(255, 215, 0, 0.3);
   backdrop-filter: blur(12px);
-  max-width: 600px;
-  width: 100%;
+  max-width: 800px;
+  width: 98%;
   max-height: 90vh;
   overflow: hidden;
   position: relative;
@@ -23111,10 +23150,21 @@ body::before {
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #ffd700, #ffed4e, #ffb347, #ffd700);
-  border-radius: 28px 28px 0 0;
-  opacity: 0.8;
+  bottom: 0;
+  background-image: radial-gradient(
+      2px 2px at 20px 30px,
+      rgba(255, 215, 0, 0.4),
+      transparent
+    ),
+    radial-gradient(2px 2px at 40px 70px, rgba(255, 237, 78, 0.3), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255, 215, 0, 0.5), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255, 237, 78, 0.4), transparent),
+    radial-gradient(2px 2px at 160px 30px, rgba(255, 215, 0, 0.3), transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: particlesFloat 20s linear infinite;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .elegant-winner-section::after {
@@ -23124,57 +23174,90 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 215, 0, 0.1) 0%,
-    transparent 70%
-  );
+  background-image: radial-gradient(
+      1px 1px at 60px 50px,
+      rgba(255, 215, 0, 0.2),
+      transparent
+    ),
+    radial-gradient(1px 1px at 120px 20px, rgba(255, 237, 78, 0.3), transparent),
+    radial-gradient(2px 2px at 180px 60px, rgba(255, 215, 0, 0.2), transparent),
+    radial-gradient(1px 1px at 220px 90px, rgba(255, 237, 78, 0.4), transparent);
+  background-repeat: repeat;
+  background-size: 250px 120px;
+  animation: particlesFloat 25s linear infinite reverse;
   pointer-events: none;
+  z-index: 1;
 }
+
+/* ::before eliminado para mejor diseño */
+
+/* ::after eliminado para mejor diseño */
 
 .elegant-winner-header {
   text-align: center;
-  margin-bottom: 24px;
-  padding: 32px 24px 0 24px;
+  margin-bottom: 28px;
+  padding: 36px 24px 0 24px;
+  background: transparent !important;
+  position: relative;
+  z-index: 10;
 }
 
 .elegant-winner-title {
-  color: #ffd700;
-  font-size: 2.4rem;
+  color: #ffd700 !important;
+  font-size: 2.8rem;
   font-weight: 800;
   margin: 0;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
   animation: winnerGlow 2s ease-in-out infinite;
+  line-height: 1.2;
+  padding: 0 12px !important;
+  word-break: break-word;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-bottom: none !important;
+}
+
+.elegant-winner-title::before {
+  display: none !important;
 }
 
 .elegant-winner-content {
   text-align: center;
   padding: 0 24px 32px 24px;
+  position: relative;
+  z-index: 10;
 }
 
 .elegant-winner-names {
   color: #ffffff;
-  font-size: 1.8rem;
+  font-size: 2.2rem;
   font-weight: 700;
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   animation: fadeInUp 0.6s ease-out 0.2s both;
 }
 
 .elegant-winner-subtitle {
   color: #ffd700;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   font-weight: 600;
-  margin: 0 0 32px 0;
+  margin: 0 0 36px 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
   animation: fadeInUp 0.6s ease-out 0.4s both;
 }
 
 .elegant-winner-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .elegant-winner-stat {
@@ -23183,13 +23266,31 @@ body::before {
     rgba(255, 215, 0, 0.2) 0%,
     rgba(255, 237, 78, 0.15) 100%
   );
-  border-radius: 16px;
-  padding: 20px 16px;
+  border-radius: 20px;
+  padding: 28px 24px;
   text-align: center;
   border: 2px solid rgba(255, 215, 0, 0.3);
   position: relative;
   overflow: hidden;
-  animation: fadeInUp 0.6s ease-out 0.6s both;
+  animation: statCardEntrance 0.8s ease-out 0.6s both,
+    statCardFloat 3s ease-in-out 1.4s infinite;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.elegant-winner-stat:nth-child(1) {
+  animation-delay: 0.6s, 1.4s;
+}
+
+.elegant-winner-stat:nth-child(2) {
+  animation-delay: 0.8s, 1.6s;
+}
+
+.elegant-winner-stat:nth-child(3) {
+  animation-delay: 1s, 1.8s;
+}
+
+.elegant-winner-stat:nth-child(4) {
+  animation-delay: 1.2s, 2s;
 }
 
 .elegant-winner-stat::before {
@@ -23206,15 +23307,15 @@ body::before {
 .elegant-winner-stat-number {
   display: block;
   color: #ffd700;
-  font-size: 2.4rem;
+  font-size: 2.8rem;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .elegant-winner-stat-label {
   color: #ffffff;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -23292,7 +23393,9 @@ body::before {
   }
 
   .elegant-winner-title {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
+    padding: 0 12px;
+    background: transparent !important;
   }
 
   .elegant-winner-content {
@@ -23300,7 +23403,7 @@ body::before {
   }
 
   .elegant-winner-names {
-    font-size: 1.4rem;
+    font-size: 1.6rem;
   }
 
   .elegant-winner-stats {
@@ -23310,7 +23413,7 @@ body::before {
   }
 
   .elegant-winner-stat-number {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
 
   .elegant-winner-stat-label {
@@ -23340,7 +23443,8 @@ body::before {
   }
 
   .elegant-winner-title {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
+    padding: 0 10px;
   }
 
   .elegant-winner-content {
@@ -23403,7 +23507,8 @@ body::before {
   }
 
   .elegant-winner-title {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    padding: 0 8px;
   }
 
   .elegant-winner-content {
@@ -23467,6 +23572,7 @@ body::before {
 
   .elegant-winner-title {
     font-size: 1.3rem;
+    padding: 0 6px;
   }
 
   .elegant-winner-content {
