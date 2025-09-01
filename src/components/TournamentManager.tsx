@@ -19,7 +19,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 }) => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [, setError] = useState<string>("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTournament, setNewTournament] = useState({
     name: "",
@@ -80,21 +80,6 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       }
     } catch (err) {
       setError("Error al eliminar la reta");
-      console.error(err);
-    }
-  };
-
-  const handleStartTournament = async (tournament: Tournament) => {
-    try {
-      setError("");
-      await updateTournament(tournament.id, { is_started: true });
-      setTournaments(
-        tournaments.map((t) =>
-          t.id === tournament.id ? { ...t, is_started: true } : t
-        )
-      );
-    } catch (err) {
-      setError("Error al iniciar la reta");
       console.error(err);
     }
   };

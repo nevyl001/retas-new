@@ -310,6 +310,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   };
 
   // Función para actualizar marcadores de partidos finalizados que no tienen pair1_score/pair2_score
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updateFinishedMatchScores = async () => {
     console.log("🔄 Actualizando marcadores de partidos finalizados...");
 

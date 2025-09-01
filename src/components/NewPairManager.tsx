@@ -12,9 +12,9 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
   onPairUpdate,
   onPairDelete,
 }) => {
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [, setError] = useState<string>("");
   const [hoveredPair, setHoveredPair] = useState<string | null>(null);
 
   useEffect(() => {

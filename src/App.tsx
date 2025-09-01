@@ -18,7 +18,6 @@ import {
   getPairs,
   updatePair,
   deletePair as deletePairFromDB,
-  createMatch,
   getMatches,
   deleteMatchesByTournament,
   updateTournament,
@@ -42,8 +41,7 @@ function App() {
     Map<string, { sets: number; matches: number; points: number }>
   >(new Map());
 
-  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
-  const [error, setError] = useState<string>("");
+  const [, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [showPlayerManager, setShowPlayerManager] = useState(false);
   const [showPairManager, setShowPairManager] = useState(false);
@@ -392,7 +390,7 @@ function App() {
       const nameB = `${b.player1_name}/${b.player2_name}`;
       return nameA.localeCompare(nameB);
     });
-  }, [pairs, forceRefresh]);
+  }, [pairs]);
 
   const isTournamentFinished = useMemo(() => {
     const finished =
@@ -488,7 +486,6 @@ function App() {
     setPairs([]);
     setMatches([]);
 
-    setSelectedMatchId(null);
     setError("");
     setShowWinnerScreen(false);
     setCurrentView("main");
@@ -1144,9 +1141,7 @@ function App() {
                                       <MatchCardWithResults
                                         key={match.id}
                                         match={match}
-                                        isSelected={
-                                          selectedMatchId === match.id
-                                        }
+                                        isSelected={false}
                                         onSelect={() => {}}
                                         onCorrectScore={async (match: any) => {
                                           console.log(
