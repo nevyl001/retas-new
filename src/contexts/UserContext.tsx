@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
+import { getRedirectUrl } from "../config/auth";
 
 interface UserProfile {
   id: string;
@@ -119,6 +120,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           data: {
             name: name,
           },
+          emailRedirectTo: getRedirectUrl(),
         },
       });
 

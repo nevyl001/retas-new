@@ -11,6 +11,7 @@ import PublicTournamentView from "./components/PublicTournamentView";
 import { ModernToast } from "./components/ModernToast";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserHeader } from "./components/UserHeader";
+import { AuthCallback } from "./components/auth/AuthCallback";
 import { testConnection } from "./lib/supabaseClient";
 
 // Types
@@ -29,14 +30,22 @@ function AppContent() {
   // Estados básicos
   const [selectedTournament, setSelectedTournament] =
     useState<Tournament | null>(null);
-  const [currentView, setCurrentView] = useState<"main" | "winner" | "public">(
-    "main"
-  );
+  const [currentView, setCurrentView] = useState<
+    "main" | "winner" | "public" | "auth-callback"
+  >("main");
   const [publicTournamentId, setPublicTournamentId] = useState<string | null>(
     null
   );
   const [forceRefresh, setForceRefresh] = useState(0);
   const [, setError] = useState<string>("");
+
+  // Detectar si estamos en la ruta de callback de autenticación
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    if (currentPath === "/auth/callback") {
+      setCurrentView("auth-callback");
+    }
+  }, []);
 
   // Estados de UI
   const [showPlayerManager, setShowPlayerManager] = useState(false);
@@ -236,6 +245,10 @@ function AppContent() {
 
             {currentView === "public" && (
               <PublicTournamentView tournamentId={publicTournamentId!} />
+            )}
+
+            {currentView === "auth-callback" && (
+              <AuthCallback onSuccess={() => setCurrentView("main")} />
             )}
 
             {currentView === "winner" && (
