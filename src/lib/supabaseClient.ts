@@ -26,10 +26,10 @@ export const supabase = createClient(
 export const testConnection = async () => {
   try {
     console.log("🧪 Probando conexión a Supabase...");
-    const { error } = await supabase
-      .from("tournaments")
-      .select("count")
-      .limit(1);
+    console.log("🔗 URL:", supabaseUrl);
+    console.log("🔑 Key:", supabaseKey ? "Configurada" : "No configurada");
+
+    const { error } = await supabase.from("users").select("count").limit(1);
 
     if (error) {
       console.error("❌ Error de conexión:", error);

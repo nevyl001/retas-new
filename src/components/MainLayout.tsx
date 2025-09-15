@@ -9,6 +9,7 @@ interface MainLayoutProps {
   selectedTournament: Tournament | null;
   onTournamentSelect: (tournament: Tournament | null) => void;
   loading: boolean;
+  userId?: string;
 
   // Tournament data
   pairs: Pair[];
@@ -53,6 +54,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   selectedTournament,
   onTournamentSelect,
   loading,
+  userId,
   pairs,
   matches,
   pairStats,
@@ -132,6 +134,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               addPair={addPair}
               updatePairPlayers={updatePairPlayers}
               deletePair={deletePair}
+              userId={userId}
               onReset={onReset}
               loadTournamentData={loadTournamentData}
               setForceRefresh={setForceRefresh}

@@ -12,7 +12,8 @@ export const usePairManagement = (
   selectedTournament: any,
   setSelectedPlayers: (players: Player[]) => void,
   setError: (error: string) => void,
-  showToast: (message: string, type?: "success" | "error" | "info") => void
+  showToast: (message: string, type?: "success" | "error" | "info") => void,
+  userId?: string
 ) => {
   const deletePair = async (pairId: string) => {
     try {
@@ -100,7 +101,8 @@ export const usePairManagement = (
       const newPair = await createPair(
         selectedTournament.id,
         player1.id,
-        player2.id
+        player2.id,
+        userId || ""
       );
       setPairs([...pairs, newPair]);
       setSelectedPlayers([]);

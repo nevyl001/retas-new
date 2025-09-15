@@ -11,6 +11,7 @@ interface ModernPlayerManagerProps {
   selectedPlayers?: Player[];
   allowMultipleSelection?: boolean;
   playersInPairs?: string[]; // IDs de jugadores que ya están en parejas
+  userId?: string;
 }
 
 export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
@@ -18,6 +19,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   selectedPlayers = [],
   allowMultipleSelection = false,
   playersInPairs = [],
+  userId,
 }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,13 +29,17 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPlayers();
-  }, []);
+    if (userId) {
+      loadPlayers();
+    }
+  }, [userId]);
 
   const loadPlayers = async () => {
+    if (!userId) return;
+
     try {
       setLoading(true);
-      const data = await getPlayers();
+      const data = await getPlayers(userId);
       setPlayers(data);
     } catch (err) {
       setError("Error al cargar los jugadores");
@@ -45,11 +51,11 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
 
   const handleCreatePlayer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPlayerName.trim()) return;
+    if (!newPlayerName.trim() || !userId) return;
 
     try {
       setError("");
-      const player = await createPlayer(newPlayerName.trim());
+      const player = await createPlayer(newPlayerName.trim(), userId);
       setPlayers([...players, player]);
       setNewPlayerName("");
       setShowCreateForm(false);

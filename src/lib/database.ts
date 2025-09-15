@@ -65,10 +65,11 @@ export interface Game {
 // Funciones para Retas
 export const createTournament = async (
   name: string,
+  userId: string,
   description?: string,
   courts: number = 1
 ) => {
-  console.log("Creating tournament:", { name, description, courts });
+  console.log("Creating tournament:", { name, description, courts, userId });
 
   const { data, error } = await supabase
     .from("tournaments")
@@ -77,7 +78,7 @@ export const createTournament = async (
         name,
         description,
         courts,
-        user_id: "00000000-0000-0000-0000-000000000000", // Default user ID
+        user_id: userId,
       },
     ])
     .select()
@@ -92,21 +93,32 @@ export const createTournament = async (
   return data;
 };
 
-export const getTournaments = async () => {
-  console.log("Fetching tournaments...");
+export const getTournaments = async (userId?: string) => {
+  console.log("Fetching tournaments for user:", userId);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("tournaments")
     .select("*")
     .order("created_at", { ascending: false });
+
+  // Si se proporciona userId, filtrar por usuario
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching tournaments:", error);
     throw error;
   }
 
-  console.log("Tournaments fetched successfully:", data);
-  return data;
+  console.log(
+    "Tournaments fetched successfully:",
+    data?.length || 0,
+    "tournaments"
+  );
+  return data || [];
 };
 
 export const updateTournament = async (
@@ -131,12 +143,11 @@ export const deleteTournament = async (id: string) => {
 };
 
 // Funciones para Jugadores
-export const createPlayer = async (name: string) => {
+export const createPlayer = async (name: string, userId: string) => {
   // Generar email automático basado en el nombre
   const email = `${name.toLowerCase().replace(/\s+/g, "")}@padel.local`;
 
-  // Usar un tournament_id especial para jugadores globales
-  const GLOBAL_TOURNAMENT_ID = "00000000-0000-0000-0000-000000000001";
+  console.log("Creating player:", { name, email, userId });
 
   const { data, error } = await supabase
     .from("players")
@@ -144,25 +155,40 @@ export const createPlayer = async (name: string) => {
       {
         name,
         email,
-        tournament_id: GLOBAL_TOURNAMENT_ID,
+        user_id: userId,
       },
     ])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error creating player:", error);
+    throw error;
+  }
+
+  console.log("Player created successfully:", data);
   return data;
 };
 
-export const getPlayers = async () => {
-  // Obtener todos los jugadores de todas las retas
-  const { data, error } = await supabase
-    .from("players")
-    .select("*")
-    .order("name");
+export const getPlayers = async (userId?: string) => {
+  console.log("Fetching players for user:", userId);
 
-  if (error) throw error;
-  return data;
+  let query = supabase.from("players").select("*").order("name");
+
+  // Si se proporciona userId, filtrar por usuario
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching players:", error);
+    throw error;
+  }
+
+  console.log("Players fetched successfully:", data?.length || 0, "players");
+  return data || [];
 };
 
 export const deletePlayer = async (id: string) => {
@@ -175,7 +201,8 @@ export const deletePlayer = async (id: string) => {
 export const createPair = async (
   tournamentId: string,
   player1Id: string,
-  player2Id: string
+  player2Id: string,
+  userId: string
 ) => {
   console.log("=== CREATING PAIR IN DATABASE ===");
   console.log("Tournament ID:", tournamentId);
@@ -217,6 +244,7 @@ export const createPair = async (
         player2_id: player2Id,
         player1_name: player1.name,
         player2_name: player2.name,
+        user_id: userId,
       },
     ])
     .select(
@@ -295,7 +323,8 @@ export const createMatch = async (
   pair1Id: string,
   pair2Id: string,
   court: number,
-  round: number = 1
+  round: number = 1,
+  userId: string
 ) => {
   console.log("=== CREATING MATCH IN DATABASE ===");
   console.log("Tournament ID:", tournamentId);
@@ -341,6 +370,7 @@ export const createMatch = async (
     pair1_name: pair1Name,
     pair2_name: pair2Name,
     court,
+    user_id: userId,
   };
 
   // Agregar round a los datos de inserción
@@ -394,13 +424,18 @@ export const deleteMatchesByTournament = async (tournamentId: string) => {
 };
 
 // Funciones para Juegos
-export const createGame = async (matchId: string, gameNumber: number) => {
+export const createGame = async (
+  matchId: string,
+  gameNumber: number,
+  userId: string
+) => {
   const { data, error } = await supabase
     .from("games")
     .insert([
       {
         match_id: matchId,
         game_number: gameNumber,
+        user_id: userId,
       },
     ])
     .select()

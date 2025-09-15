@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   createTournament,
   getTournaments,
@@ -6,6 +6,7 @@ import {
   updateTournament,
   Tournament,
 } from "../lib/database";
+import { useUser } from "../contexts/UserContext";
 import AppHeader from "./AppHeader";
 
 interface TournamentManagerProps {
@@ -17,6 +18,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   onTournamentSelect,
   selectedTournament,
 }) => {
+  const { user } = useUser();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [, setError] = useState<string>("");
@@ -27,29 +29,45 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     courts: 1,
   });
 
+  // Cargar retas cuando el usuario cambie
   useEffect(() => {
-    loadTournaments();
-  }, []);
+    console.log("🔄 useEffect ejecutado, usuario:", user?.id);
 
-  const loadTournaments = async () => {
-    try {
-      setLoading(true);
-      const data = await getTournaments();
-      setTournaments(data);
-    } catch (err) {
-      setError("Error al cargar las retas");
-      console.error(err);
-    } finally {
+    if (!user) {
+      console.log("❌ No hay usuario, no se pueden cargar retas");
       setLoading(false);
+      setTournaments([]);
+      return;
     }
-  };
+
+    const loadTournaments = async () => {
+      console.log("🔄 Cargando retas para usuario:", user.id);
+      try {
+        setLoading(true);
+        const data = await getTournaments(user.id);
+        console.log("✅ Retas cargadas:", data?.length || 0);
+        setTournaments(data || []);
+      } catch (err) {
+        console.error("❌ Error al cargar retas:", err);
+        setError("Error al cargar las retas");
+        setTournaments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTournaments();
+  }, [user?.id]); // Solo depender del ID del usuario
 
   const handleCreateTournament = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+
     try {
       setError("");
       const tournament = await createTournament(
         newTournament.name,
+        user.id,
         newTournament.description || undefined,
         newTournament.courts
       );
@@ -207,10 +225,22 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
       <div className="retas-list">
         <h2>Mis Retas</h2>
-        {tournaments.length === 0 ? (
+        {loading ? (
+          <div className="loading-tournaments">
+            <p>⏳ Cargando retas...</p>
+          </div>
+        ) : tournaments.length === 0 ? (
           <div className="no-tournaments">
-            <p>📝 No hay retas creadas aún</p>
-            <p>Crea tu primera reta para comenzar</p>
+            <div className="no-tournaments-content">
+              <h3>🏆 ¡No tienes ninguna reta!</h3>
+              <p>¡Inicia una ya y comienza a organizar tus torneos de pádel!</p>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="create-first-tournament-btn"
+              >
+                🚀 Crear Mi Primera Reta
+              </button>
+            </div>
           </div>
         ) : (
           <div className="tournaments-grid">
@@ -305,3 +335,71 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     </div>
   );
 };
+
+// Estilos CSS para el componente
+const styles = `
+  .loading-tournaments {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+  }
+
+  .no-tournaments {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .no-tournaments-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 40px 20px;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .no-tournaments-content h3 {
+    color: var(--accent-color);
+    font-size: 24px;
+    margin: 0 0 16px 0;
+    font-weight: 700;
+  }
+
+  .no-tournaments-content p {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+  }
+
+  .create-first-tournament-btn {
+    background: var(--accent-color);
+    color: var(--bg-primary);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: none;
+  }
+
+  .create-first-tournament-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 214, 0, 0.2);
+  }
+
+  .create-first-tournament-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(255, 214, 0, 0.1);
+  }
+`;
+
+// Agregar estilos al documento
+if (typeof document !== "undefined") {
+  const styleSheet = document.createElement("style");
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+}

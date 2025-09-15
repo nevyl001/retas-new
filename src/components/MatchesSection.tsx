@@ -13,6 +13,7 @@ interface MatchesSectionProps {
   winner: Pair | null;
   onShowWinnerScreen: () => void;
   onBackToHome: () => void;
+  userId?: string;
 }
 
 export const MatchesSection: React.FC<MatchesSectionProps> = ({
@@ -25,6 +26,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   winner,
   onShowWinnerScreen,
   onBackToHome,
+  userId,
 }) => {
   if (!tournament.is_started) return null;
 
@@ -73,6 +75,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       }
                     }}
                     forceRefresh={forceRefresh}
+                    userId={userId}
                   />
                 ))}
               </div>

@@ -17,6 +17,7 @@ interface MatchCardWithResultsProps {
   onSelect: (matchId: string) => void;
   onCorrectScore: (match: Match) => void;
   forceRefresh?: number;
+  userId?: string;
 }
 
 const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
@@ -25,6 +26,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   onSelect,
   onCorrectScore,
   forceRefresh = 0,
+  userId,
 }) => {
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
   const [pair1, setPair1] = useState<Pair | null>(null);
@@ -170,7 +172,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
       // Crear juego
       const gameNumber = games.length + 1;
-      const newGame = await createGame(currentMatch.id, gameNumber);
+      const newGame = await createGame(
+        currentMatch.id,
+        gameNumber,
+        userId || ""
+      );
 
       // Actualizar con puntuación
       await updateGame(newGame.id, {

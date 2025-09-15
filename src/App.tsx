@@ -2,12 +2,16 @@ import React, { useState, useEffect, useMemo } from "react";
 import "./App.css";
 import "./styles/theme.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { UserProvider, useUser } from "./contexts/UserContext";
 
 // Components
 import MainLayout from "./components/MainLayout";
 import WinnerScreen from "./components/WinnerScreen";
 import PublicTournamentView from "./components/PublicTournamentView";
 import { ModernToast } from "./components/ModernToast";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { UserHeader } from "./components/UserHeader";
+import { testConnection } from "./lib/supabaseClient";
 
 // Types
 import { Tournament, Player } from "./lib/database";
@@ -19,7 +23,9 @@ import { useTournamentActions } from "./hooks/useTournamentActions";
 import { useToastNotifications } from "./hooks/useToastNotifications";
 import { useWinnerCalculation } from "./hooks/useWinnerCalculation";
 
-function App() {
+function AppContent() {
+  const { user } = useUser();
+
   // Estados básicos
   const [selectedTournament, setSelectedTournament] =
     useState<Tournament | null>(null);
@@ -64,7 +70,8 @@ function App() {
     selectedTournament,
     setSelectedPlayers,
     setError,
-    showToast
+    showToast,
+    user?.id
   );
 
   // Tournament actions
@@ -90,6 +97,14 @@ function App() {
       setPublicTournamentId(tournamentId);
       setCurrentView("public");
     }
+  }, []);
+
+  // Probar conexión a Supabase (solo una vez)
+  useEffect(() => {
+    const testOnce = async () => {
+      await testConnection();
+    };
+    testOnce();
   }, []);
 
   // Cargar datos cuando se selecciona torneo
@@ -125,7 +140,7 @@ function App() {
 
   // Handlers
   const handleStartTournament = () =>
-    startTournament(selectedTournament!, pairs);
+    startTournament(selectedTournament!, pairs, user?.id || "");
   const handleReset = () => resetTournament(selectedTournament!, pairs);
   const handleShowWinner = () =>
     calculateAndShowWinner(pairs, matches, setCurrentView);
@@ -172,68 +187,86 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="App">
-        {currentView === "main" && (
-          <MainLayout
-            selectedTournament={selectedTournament}
-            onTournamentSelect={setSelectedTournament}
-            loading={loading || actionLoading}
-            pairs={pairs}
-            matches={matches}
-            pairStats={pairStats}
-            matchesByRound={matchesByRound}
-            showPlayerManager={showPlayerManager}
-            setShowPlayerManager={setShowPlayerManager}
-            showPairManager={showPairManager}
-            setShowPairManager={setShowPairManager}
-            showTournamentStatus={showTournamentStatus}
-            setShowTournamentStatus={setShowTournamentStatus}
-            showDebugInfo={showDebugInfo}
-            setShowDebugInfo={setShowDebugInfo}
-            selectedPlayers={selectedPlayers}
-            setSelectedPlayers={setSelectedPlayers}
-            setError={setError}
-            addPair={addPair}
-            updatePairPlayers={updatePairPlayers}
-            deletePair={deletePair}
-            onReset={handleReset}
-            loadTournamentData={() =>
-              selectedTournament && loadTournamentData(selectedTournament)
-            }
-            setForceRefresh={setForceRefresh}
-            forceRefresh={forceRefresh}
-            onStartTournament={handleStartTournament}
-            onCopyPublicLink={copyPublicLink}
-            generatePublicLink={generatePublicLink}
-            isTournamentFinished={isTournamentFinished}
-            winner={winner}
-            tournamentWinner={tournamentWinner}
-            onShowWinnerScreen={handleShowWinner}
-            onBackToHome={handleBackToHome}
+      <UserProvider>
+        <div className="App">
+          <ProtectedRoute>
+            {/* Solo mostrar UserHeader cuando NO estemos en vista pública */}
+            {currentView !== "public" && <UserHeader />}
+
+            {currentView === "main" && (
+              <MainLayout
+                selectedTournament={selectedTournament}
+                onTournamentSelect={setSelectedTournament}
+                loading={loading || actionLoading}
+                userId={user?.id}
+                pairs={pairs}
+                matches={matches}
+                pairStats={pairStats}
+                matchesByRound={matchesByRound}
+                showPlayerManager={showPlayerManager}
+                setShowPlayerManager={setShowPlayerManager}
+                showPairManager={showPairManager}
+                setShowPairManager={setShowPairManager}
+                showTournamentStatus={showTournamentStatus}
+                setShowTournamentStatus={setShowTournamentStatus}
+                showDebugInfo={showDebugInfo}
+                setShowDebugInfo={setShowDebugInfo}
+                selectedPlayers={selectedPlayers}
+                setSelectedPlayers={setSelectedPlayers}
+                setError={setError}
+                addPair={addPair}
+                updatePairPlayers={updatePairPlayers}
+                deletePair={deletePair}
+                onReset={handleReset}
+                loadTournamentData={() =>
+                  selectedTournament && loadTournamentData(selectedTournament)
+                }
+                setForceRefresh={setForceRefresh}
+                forceRefresh={forceRefresh}
+                onStartTournament={handleStartTournament}
+                onCopyPublicLink={copyPublicLink}
+                generatePublicLink={generatePublicLink}
+                isTournamentFinished={isTournamentFinished}
+                winner={winner}
+                tournamentWinner={tournamentWinner}
+                onShowWinnerScreen={handleShowWinner}
+                onBackToHome={handleBackToHome}
+              />
+            )}
+
+            {currentView === "public" && (
+              <PublicTournamentView tournamentId={publicTournamentId!} />
+            )}
+
+            {currentView === "winner" && (
+              <WinnerScreen
+                isVisible={showWinnerScreen}
+                winner={winner}
+                tournamentWinner={tournamentWinner}
+                onBackToManager={handleHideWinner}
+              />
+            )}
+          </ProtectedRoute>
+
+          <ModernToast
+            message={toast.message}
+            type={toast.type}
+            isVisible={toast.isVisible}
+            onClose={hideToast}
+            duration={4000}
           />
-        )}
+        </div>
+      </UserProvider>
+    </ThemeProvider>
+  );
+}
 
-        {currentView === "public" && (
-          <PublicTournamentView tournamentId={publicTournamentId!} />
-        )}
-
-        {currentView === "winner" && (
-          <WinnerScreen
-            isVisible={showWinnerScreen}
-            winner={winner}
-            tournamentWinner={tournamentWinner}
-            onBackToManager={handleHideWinner}
-          />
-        )}
-
-        <ModernToast
-          message={toast.message}
-          type={toast.type}
-          isVisible={toast.isVisible}
-          onClose={hideToast}
-          duration={4000}
-        />
-      </div>
+function App() {
+  return (
+    <ThemeProvider>
+      <UserProvider>
+        <AppContent />
+      </UserProvider>
     </ThemeProvider>
   );
 }

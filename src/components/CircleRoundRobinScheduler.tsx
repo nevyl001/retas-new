@@ -311,7 +311,8 @@ export class CircleRoundRobinScheduler {
   static async scheduleTournament(
     tournamentId: string,
     pairs: Pair[],
-    courts: number
+    courts: number,
+    userId: string
   ): Promise<CircleSchedulingResult> {
     try {
       console.log("🚀 === INICIANDO PROGRAMACIÓN MÉTODO DEL CÍRCULO ===");
@@ -355,7 +356,8 @@ export class CircleRoundRobinScheduler {
             match.pair1.id,
             match.pair2.id,
             match.court,
-            match.round
+            match.round,
+            userId
           );
           createdMatches.push(createdMatch);
           console.log(

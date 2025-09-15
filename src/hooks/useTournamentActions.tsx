@@ -18,7 +18,8 @@ export const useTournamentActions = (
 
   const startTournament = async (
     selectedTournament: Tournament,
-    pairs: Pair[]
+    pairs: Pair[],
+    userId: string
   ) => {
     if (!selectedTournament || pairs.length < 2) {
       setError("Se necesitan al menos 2 parejas para iniciar la reta");
@@ -36,7 +37,8 @@ export const useTournamentActions = (
       const result = await CircleRoundRobinScheduler.scheduleTournament(
         selectedTournament.id,
         pairs,
-        selectedTournament.courts
+        selectedTournament.courts,
+        userId
       );
 
       if (result.success) {

@@ -28,6 +28,7 @@ interface TournamentDetailsProps {
   addPair: (player1: Player, player2: Player) => void;
   updatePairPlayers: (pairId: string, player1: Player, player2: Player) => void;
   deletePair: (pairId: string) => void;
+  userId?: string;
   onReset: () => Promise<void>;
   loadTournamentData: () => void;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
@@ -63,6 +64,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   addPair,
   updatePairPlayers,
   deletePair,
+  userId,
   onReset,
   loadTournamentData,
   setForceRefresh,
@@ -132,6 +134,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
         winner={winner}
         onShowWinnerScreen={onShowWinnerScreen}
         onBackToHome={onBackToHome}
+        userId={userId}
       />
     </div>
   );
