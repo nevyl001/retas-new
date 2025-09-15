@@ -58,7 +58,7 @@ export const UserHeader: React.FC = () => {
     <header className="user-header">
       <div className="user-header-content">
         <div className="user-header-logo">
-          <h1>🏆 Retas de Pádel</h1>
+          <h1>🏆 Bienvenido al mejor gestor de retas de pádel</h1>
         </div>
 
         <div className="user-header-actions">
