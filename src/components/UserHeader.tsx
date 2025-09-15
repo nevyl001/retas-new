@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../contexts/UserContext";
 import "./UserHeader.css";
 
@@ -6,6 +6,7 @@ export const UserHeader: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
     if (isSigningOut) return; // Evitar múltiples clics
@@ -33,6 +34,26 @@ export const UserHeader: React.FC = () => {
       .slice(0, 2);
   };
 
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
+
   return (
     <header className="user-header">
       <div className="user-header-content">
@@ -41,7 +62,7 @@ export const UserHeader: React.FC = () => {
         </div>
 
         <div className="user-header-actions">
-          <div className="user-profile">
+          <div className="user-profile" ref={dropdownRef}>
             <button
               className="user-profile-btn"
               onClick={() => setShowDropdown(!showDropdown)}
@@ -73,20 +94,18 @@ export const UserHeader: React.FC = () => {
             {showDropdown && (
               <div className="user-dropdown">
                 <div className="user-dropdown-content">
-                  <div className="user-dropdown-header">
-                    <h3>{userProfile?.name || "Usuario"}</h3>
-                    <p>{user?.email}</p>
-                  </div>
-
                   <div className="user-dropdown-actions">
                     <button className="dropdown-action-btn">
-                      👤 Mi Perfil
+                      <span className="dropdown-icon">👤</span>
+                      Mi Perfil
                     </button>
                     <button className="dropdown-action-btn">
-                      ⚙️ Configuración
+                      <span className="dropdown-icon">⚙️</span>
+                      Configuración
                     </button>
                     <button className="dropdown-action-btn">
-                      📊 Estadísticas
+                      <span className="dropdown-icon">📊</span>
+                      Estadísticas
                     </button>
                     <hr className="dropdown-divider" />
                     <button
@@ -94,7 +113,8 @@ export const UserHeader: React.FC = () => {
                       onClick={handleSignOut}
                       disabled={isSigningOut}
                     >
-                      {isSigningOut ? "⏳ Cerrando..." : "🚪 Cerrar Sesión"}
+                      <span className="dropdown-icon">🚪</span>
+                      {isSigningOut ? "Cerrando..." : "Cerrar Sesión"}
                     </button>
                   </div>
                 </div>
