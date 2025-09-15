@@ -25,5 +25,14 @@ export const AUTH_CONFIG = {
 export const getRedirectUrl = (
   path: string = AUTH_CONFIG.EMAIL_CONFIRM_REDIRECT
 ): string => {
-  return `${AUTH_CONFIG.BASE_URL}${path}`;
+  const baseUrl = AUTH_CONFIG.BASE_URL;
+  const fullUrl = `${baseUrl}${path}`;
+
+  console.log("🔧 Configuración de redirección:");
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+  console.log("BASE_URL:", baseUrl);
+  console.log("PATH:", path);
+  console.log("FULL_URL:", fullUrl);
+
+  return fullUrl;
 };

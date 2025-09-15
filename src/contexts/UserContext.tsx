@@ -113,6 +113,13 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
+      const redirectUrl = getRedirectUrl();
+
+      console.log("🚀 Iniciando registro de usuario:");
+      console.log("Email:", email);
+      console.log("Name:", name);
+      console.log("Redirect URL:", redirectUrl);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -120,16 +127,24 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           data: {
             name: name,
           },
-          emailRedirectTo: getRedirectUrl(),
+          // Temporalmente comentado para probar si el problema es la URL
+          // emailRedirectTo: redirectUrl,
         },
       });
 
+      console.log("📧 Respuesta de signUp:");
+      console.log("Data:", data);
+      console.log("Error:", error);
+
       if (error) {
+        console.error("❌ Error en signUp:", error);
         return { error };
       }
 
+      console.log("✅ Usuario registrado exitosamente");
       return { error: null };
     } catch (error) {
+      console.error("❌ Error catch en signUp:", error);
       return { error };
     }
   };
