@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "./App.css";
+import "./styles/theme.css";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 // Components
 import MainLayout from "./components/MainLayout";
@@ -169,68 +171,70 @@ function App() {
   }, [tournamentWinner, sortedPairs]);
 
   return (
-    <div className="App">
-      {currentView === "main" && (
-        <MainLayout
-          selectedTournament={selectedTournament}
-          onTournamentSelect={setSelectedTournament}
-          loading={loading || actionLoading}
-          pairs={pairs}
-          matches={matches}
-          pairStats={pairStats}
-          matchesByRound={matchesByRound}
-          showPlayerManager={showPlayerManager}
-          setShowPlayerManager={setShowPlayerManager}
-          showPairManager={showPairManager}
-          setShowPairManager={setShowPairManager}
-          showTournamentStatus={showTournamentStatus}
-          setShowTournamentStatus={setShowTournamentStatus}
-          showDebugInfo={showDebugInfo}
-          setShowDebugInfo={setShowDebugInfo}
-          selectedPlayers={selectedPlayers}
-          setSelectedPlayers={setSelectedPlayers}
-          setError={setError}
-          addPair={addPair}
-          updatePairPlayers={updatePairPlayers}
-          deletePair={deletePair}
-          onReset={handleReset}
-          loadTournamentData={() =>
-            selectedTournament && loadTournamentData(selectedTournament)
-          }
-          setForceRefresh={setForceRefresh}
-          forceRefresh={forceRefresh}
-          onStartTournament={handleStartTournament}
-          onCopyPublicLink={copyPublicLink}
-          generatePublicLink={generatePublicLink}
-          isTournamentFinished={isTournamentFinished}
-          winner={winner}
-          tournamentWinner={tournamentWinner}
-          onShowWinnerScreen={handleShowWinner}
-          onBackToHome={handleBackToHome}
+    <ThemeProvider>
+      <div className="App">
+        {currentView === "main" && (
+          <MainLayout
+            selectedTournament={selectedTournament}
+            onTournamentSelect={setSelectedTournament}
+            loading={loading || actionLoading}
+            pairs={pairs}
+            matches={matches}
+            pairStats={pairStats}
+            matchesByRound={matchesByRound}
+            showPlayerManager={showPlayerManager}
+            setShowPlayerManager={setShowPlayerManager}
+            showPairManager={showPairManager}
+            setShowPairManager={setShowPairManager}
+            showTournamentStatus={showTournamentStatus}
+            setShowTournamentStatus={setShowTournamentStatus}
+            showDebugInfo={showDebugInfo}
+            setShowDebugInfo={setShowDebugInfo}
+            selectedPlayers={selectedPlayers}
+            setSelectedPlayers={setSelectedPlayers}
+            setError={setError}
+            addPair={addPair}
+            updatePairPlayers={updatePairPlayers}
+            deletePair={deletePair}
+            onReset={handleReset}
+            loadTournamentData={() =>
+              selectedTournament && loadTournamentData(selectedTournament)
+            }
+            setForceRefresh={setForceRefresh}
+            forceRefresh={forceRefresh}
+            onStartTournament={handleStartTournament}
+            onCopyPublicLink={copyPublicLink}
+            generatePublicLink={generatePublicLink}
+            isTournamentFinished={isTournamentFinished}
+            winner={winner}
+            tournamentWinner={tournamentWinner}
+            onShowWinnerScreen={handleShowWinner}
+            onBackToHome={handleBackToHome}
+          />
+        )}
+
+        {currentView === "public" && (
+          <PublicTournamentView tournamentId={publicTournamentId!} />
+        )}
+
+        {currentView === "winner" && (
+          <WinnerScreen
+            isVisible={showWinnerScreen}
+            winner={winner}
+            tournamentWinner={tournamentWinner}
+            onBackToManager={handleHideWinner}
+          />
+        )}
+
+        <ModernToast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={hideToast}
+          duration={4000}
         />
-      )}
-
-      {currentView === "public" && (
-        <PublicTournamentView tournamentId={publicTournamentId!} />
-      )}
-
-      {currentView === "winner" && (
-        <WinnerScreen
-          isVisible={showWinnerScreen}
-          winner={winner}
-          tournamentWinner={tournamentWinner}
-          onBackToManager={handleHideWinner}
-        />
-      )}
-
-      <ModernToast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.isVisible}
-        onClose={hideToast}
-        duration={4000}
-      />
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }
 
