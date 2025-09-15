@@ -1,7 +1,7 @@
 {
-  "short_name": "RetaPadel",
-  "name": "RetaPadel - Gestor de Retas de Pádel",
-  "description": "Aplicación completa para gestionar retas y partidos de pádel de manera profesional",
+  "short_name": "🏆 Retas de Pádel",
+  "name": "🏆 Retas de Pádel - El Mejor Gestor Profesional",
+  "description": "Organiza y gestiona tus retas de pádel como un profesional. Crea torneos, gestiona jugadores, estadísticas en tiempo real y comparte enlaces públicos. ¡La plataforma más completa para amantes del pádel!",
   "icons": [
     {
       "src": "favicon.svg",
@@ -17,8 +17,8 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#0ea5e9",
-  "background_color": "#ffffff",
+  "theme_color": "#ffd700",
+  "background_color": "#0f0f23",
   "orientation": "portrait-primary",
   "categories": ["sports", "productivity", "utilities"],
   "lang": "es"
