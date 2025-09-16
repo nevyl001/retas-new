@@ -6,6 +6,9 @@ export const AUTH_CONFIG = {
       ? "https://retas-new.vercel.app"
       : "http://localhost:3000",
 
+  // URL base de la aplicación para producción (para uso en emails de Supabase)
+  BASE_URL_PRODUCTION: "https://retas-new.vercel.app",
+
   // URL de redirección después de confirmar email
   EMAIL_CONFIRM_REDIRECT: "/auth/callback",
 

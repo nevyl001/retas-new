@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
-import { getRedirectUrl } from "../config/auth";
+import { getRedirectUrl, AUTH_CONFIG } from "../config/auth";
 
 interface UserProfile {
   id: string;
@@ -114,7 +114,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
-      const redirectUrl = getRedirectUrl();
+      // Forzamos la URL de redirección a la de producción para los emails
+      const redirectUrl = `${AUTH_CONFIG.BASE_URL_PRODUCTION}${AUTH_CONFIG.EMAIL_CONFIRM_REDIRECT}`;
 
       console.log("🚀 Iniciando registro de usuario:");
       console.log("Email:", email);
