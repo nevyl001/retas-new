@@ -54,6 +54,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       if (session?.user) {
         console.log("👤 Usuario encontrado, obteniendo perfil...");
+        console.log("👤 Usuario data:", session.user);
         // Llamar fetchUserProfile directamente sin await para evitar bucles
         fetchUserProfile(session.user.id);
       } else {
@@ -87,8 +88,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             .from("users")
             .insert({
               id: userId,
-              email: userId, // Usar el ID como email temporal
-              name: "Usuario",
+              email: user?.email || userId, // Usar el email real del usuario
+              name: user?.user_metadata?.name || "Usuario",
             })
             .select()
             .single();
@@ -127,8 +128,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           data: {
             name: name,
           },
-          // Temporalmente comentado para probar si el problema es la URL
-          // emailRedirectTo: redirectUrl,
+          emailRedirectTo: redirectUrl,
         },
       });
 
