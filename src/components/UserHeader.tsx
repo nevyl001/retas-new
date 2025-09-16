@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../contexts/UserContext";
+import { MobileUserMenu } from "./MobileUserMenu";
 import "./UserHeader.css";
 
 export const UserHeader: React.FC = () => {
@@ -62,7 +63,8 @@ export const UserHeader: React.FC = () => {
         </div>
 
         <div className="user-header-actions">
-          <div className="user-profile" ref={dropdownRef}>
+          {/* Menú de escritorio */}
+          <div className="user-profile desktop-only" ref={dropdownRef}>
             <button
               className="user-profile-btn"
               onClick={() => setShowDropdown(!showDropdown)}
@@ -120,6 +122,11 @@ export const UserHeader: React.FC = () => {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Menú móvil */}
+          <div className="mobile-only">
+            <MobileUserMenu />
           </div>
         </div>
       </div>
