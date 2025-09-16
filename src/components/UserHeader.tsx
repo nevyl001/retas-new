@@ -97,19 +97,6 @@ export const UserHeader: React.FC = () => {
               <div className="user-dropdown">
                 <div className="user-dropdown-content">
                   <div className="user-dropdown-actions">
-                    <button className="dropdown-action-btn">
-                      <span className="dropdown-icon">👤</span>
-                      Mi Perfil
-                    </button>
-                    <button className="dropdown-action-btn">
-                      <span className="dropdown-icon">⚙️</span>
-                      Configuración
-                    </button>
-                    <button className="dropdown-action-btn">
-                      <span className="dropdown-icon">📊</span>
-                      Estadísticas
-                    </button>
-                    <hr className="dropdown-divider" />
                     <button
                       className="dropdown-action-btn logout-btn"
                       onClick={handleSignOut}

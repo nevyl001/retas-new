@@ -45,23 +45,6 @@ export const MobileUserMenu: React.FC = () => {
 
       {/* Opciones del menú */}
       <div className="mobile-menu-options">
-        <button className="mobile-menu-option">
-          <span className="mobile-menu-icon">👤</span>
-          <span className="mobile-menu-text">Mi Perfil</span>
-        </button>
-
-        <button className="mobile-menu-option">
-          <span className="mobile-menu-icon">⚙️</span>
-          <span className="mobile-menu-text">Configuración</span>
-        </button>
-
-        <button className="mobile-menu-option">
-          <span className="mobile-menu-icon">📊</span>
-          <span className="mobile-menu-text">Estadísticas</span>
-        </button>
-
-        <div className="mobile-menu-divider"></div>
-
         <button
           className="mobile-menu-option mobile-menu-logout"
           onClick={handleLogout}

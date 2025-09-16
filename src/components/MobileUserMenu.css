@@ -91,8 +91,8 @@
    ===================================================== */
 
 .mobile-menu-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
   width: 100%;
   max-width: 100%;
@@ -151,7 +151,6 @@
   border-color: rgba(255, 107, 107, 0.3);
   color: #ff6b6b;
   font-weight: 600;
-  grid-column: 1 / -1;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -204,6 +203,8 @@
     gap: 4px;
     width: 100%;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .mobile-menu-option {
