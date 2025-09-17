@@ -1,12 +1,14 @@
 // Service Worker para RetaPadel PWA
-const CACHE_NAME = 'retapadel-v1.0.0';
+const CACHE_NAME = 'retapadel-v1.1.0';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
   '/manifest.json',
   '/favicon.svg',
-  '/imgmeta-optimized.jpg'
+  '/apple-touch-icon.svg',
+  '/icon-192x192.png',
+  '/icon-512x512.png',
+  '/imgmeta-optimized.jpg',
+  '/ios-pwa.css'
 ];
 
 // Install event

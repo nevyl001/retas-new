@@ -11,22 +11,26 @@ Un sistema profesional para gestionar retas de pádel con persistencia de datos,
 ## ✨ **Características Principales**
 
 ### 🎾 **Gestión de Retas**
+
 - ✅ Crear, editar y eliminar retas con nombres personalizados
 - ✅ Sistema multi-usuario con autenticación Supabase
 - ✅ Retas públicas y privadas
 - ✅ Enlaces públicos para compartir torneos
 
 ### 👥 **Gestión de Jugadores**
+
 - ✅ Registrar y gestionar jugadores por usuario
 - ✅ Información completa: nombre, email, teléfono, nivel
 - ✅ Persistencia de jugadores entre retas
 
 ### 🤝 **Sistema de Parejas**
+
 - ✅ Formar parejas seleccionando jugadores
 - ✅ Estadísticas automáticas por pareja
 - ✅ Historial de parejas
 
 ### 🏆 **Sistema de Partidos**
+
 - ✅ Distribución automática Round-Robin
 - ✅ Distribución por canchas
 - ✅ Marcador en tiempo real
@@ -34,6 +38,7 @@ Un sistema profesional para gestionar retas de pádel con persistencia de datos,
 - ✅ Clasificación automática
 
 ### 📱 **Progressive Web App (PWA)**
+
 - ✅ **Android**: Instalable como APK
 - ✅ **iOS**: Instalable desde Safari
 - ✅ **Nombre**: "RetaPadel"
@@ -42,6 +47,7 @@ Un sistema profesional para gestionar retas de pádel con persistencia de datos,
 - ✅ **Notificaciones push**
 
 ### 🔐 **Panel de Administración**
+
 - ✅ **Login seguro** independiente
 - ✅ **Estadísticas generales** del sistema
 - ✅ **Gestión de usuarios**
@@ -94,6 +100,7 @@ npm start
 ## 📊 **Estructura de Base de Datos**
 
 ### **Tablas Principales**
+
 - `users` - Perfiles de usuario extendidos
 - `tournaments` - Retas por usuario
 - `players` - Jugadores por usuario
@@ -103,6 +110,7 @@ npm start
 - `admin_users` - Administradores del sistema
 
 ### **Características de Seguridad**
+
 - ✅ **Row Level Security (RLS)** habilitado
 - ✅ **Políticas por usuario** - Solo ven sus datos
 - ✅ **Triggers automáticos** para updated_at
@@ -113,23 +121,28 @@ npm start
 ### **Para Usuarios Normales**
 
 1. **Registrarse/Iniciar Sesión**
+
    - Crear cuenta con email
    - Perfil automático creado
 
 2. **Crear Reta**
+
    - Nombre y descripción
    - Número de canchas
    - Hacer pública/privada
 
 3. **Gestionar Jugadores**
+
    - Agregar jugadores
    - Información completa
 
 4. **Formar Parejas**
+
    - Seleccionar 2 jugadores
    - Crear pareja
 
 5. **Iniciar Reta**
+
    - Generación automática de partidos
    - Distribución por rondas
 
@@ -141,12 +154,14 @@ npm start
 ### **Para Administradores**
 
 1. **Acceder al Panel**
+
    - URL: `/admin-login`
    - Credenciales por defecto:
      - Email: `admin@test.com`
      - Password: `123456`
 
 2. **Dashboard de Estadísticas**
+
    - Total de usuarios
    - Retas creadas
    - Usuarios activos
@@ -161,6 +176,7 @@ npm start
 ### **Para Android**
 
 1. **Usar PWA Builder**:
+
    - Ir a [pwabuilder.com](https://pwabuilder.com)
    - Ingresar URL: `https://retas-new.vercel.app/`
    - Generar APK
@@ -173,6 +189,7 @@ npm start
 ### **Para iOS**
 
 1. **Instalación PWA**:
+
    - Abrir **Safari** (no Chrome)
    - Ir a: `https://retas-new.vercel.app/`
    - Tocar **Compartir** (📤)
@@ -184,6 +201,7 @@ npm start
    - Safari (navegador requerido)
 
 ### **Características PWA**
+
 - ✅ **Icono profesional** "RetaPadel"
 - ✅ **Modo standalone** (sin barras del navegador)
 - ✅ **Funciona offline** (datos básicos)
@@ -194,15 +212,18 @@ npm start
 ## 🎾 **Reglas del Juego**
 
 ### **Juegos Normales**
+
 - Puntuación de 0 a 7
 - Gana quien tenga más puntos
 
 ### **Tie Break**
+
 - Puntuación de 0 a 20
 - Gana quien llegue a 10 puntos con diferencia de 2
 - Se activa con botón "🎾 Cambiar a Tie Break"
 
 ### **Cálculo de Ganador**
+
 - Se cuenta cuántos juegos ganó cada pareja
 - La pareja con más juegos ganados gana el partido
 - En caso de empate, gana quien tenga más puntos totales
@@ -210,18 +231,21 @@ npm start
 ## 🛠️ **Tecnologías Utilizadas**
 
 ### **Frontend**
+
 - **React 18** + TypeScript
 - **React Hooks** para estado
 - **CSS3** responsive
 - **PWA** con Service Worker
 
 ### **Backend**
+
 - **Supabase** (PostgreSQL)
 - **Row Level Security**
 - **Autenticación Supabase Auth**
 - **Triggers y funciones SQL**
 
 ### **Deploy**
+
 - **Vercel** (deploy automático)
 - **GitHub** (control de versiones)
 - **HTTPS** automático
@@ -260,18 +284,21 @@ Archivos SQL:
 ## 🔧 **Solución de Problemas**
 
 ### **Error: Variables de entorno no configuradas**
+
 ```bash
 # Verificar archivo .env existe
 # Reiniciar aplicación después de cambios
 ```
 
 ### **Error: Tablas no existen**
+
 ```bash
 # Ejecutar database-schema-multi-user.sql en Supabase
 # Verificar en Table Editor
 ```
 
 ### **Error: Icono feo en iOS**
+
 ```bash
 # Eliminar app de pantalla de inicio
 # Limpiar cache de Safari
@@ -279,6 +306,7 @@ Archivos SQL:
 ```
 
 ### **Error: Admin no funciona**
+
 ```bash
 # Ejecutar admin-setup.sql en Supabase
 # Verificar credenciales por defecto
@@ -287,11 +315,13 @@ Archivos SQL:
 ## 🚀 **Deploy y Distribución**
 
 ### **Deploy Automático**
+
 - Push a `main` → Deploy automático en Vercel
 - URL pública: `https://retas-new.vercel.app/`
 - HTTPS automático
 
 ### **Distribución PWA**
+
 - **Android**: Generar APK con PWA Builder
 - **iOS**: Instalar PWA desde Safari
 - **Web**: Acceso directo desde navegador
@@ -299,29 +329,34 @@ Archivos SQL:
 ## 📞 **Soporte y Contacto**
 
 ### **Documentación Adicional**
+
 - `SOLUCION-ICONO-iOS.md` - Solución iconos iOS
 - `SETUP-PWA-iOS.md` - Instrucciones PWA iOS
 - `create-ios-icons.html` - Generador de iconos
 
 ### **Credenciales por Defecto**
+
 - **Admin**: admin@test.com / 123456
 - **Usuario**: Registro libre con email
 
 ## 🎯 **Roadmap Futuro**
 
 ### **Versión 1.1**
+
 - [ ] Modo eliminatoria
 - [ ] Grupos y fase de grupos
 - [ ] Horarios de partidos
 - [ ] Notificaciones push
 
 ### **Versión 1.2**
+
 - [ ] Exportación PDF de resultados
 - [ ] API REST para integraciones
 - [ ] Dashboard de estadísticas avanzadas
 - [ ] Modo offline completo
 
 ### **Versión 2.0**
+
 - [ ] Múltiples deportes
 - [ ] Sistema de rankings
 - [ ] Retas internacionales

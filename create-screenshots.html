@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Generador de Screenshots para RetaPadel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .screenshot {
+            margin: 20px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 12px 24px;
+            margin: 10px;
+            background: #3B82F6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #1E40AF;
+        }
+
+        .download-all {
+            background: #10B981;
+        }
+
+        .download-all:hover {
+            background: #059669;
+        }
+
+        h1 {
+            color: #1F2937;
+            text-align: center;
+        }
+
+        .instructions {
+            background: #F3F4F6;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+
+        .desktop {
+            width: 1280px;
+            height: 720px;
+        }
+
+        .mobile {
+            width: 375px;
+            height: 667px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📱 Generador de Screenshots para RetaPadel PWA</h1>
+
+        <div class="instructions">
+            <h3>📋 Instrucciones:</h3>
+            <p>1. Haz clic en "Generar Screenshots" para crear las imágenes</p>
+            <p>2. Haz clic en "Descargar Todos" para descargar los archivos PNG</p>
+            <p>3. Guarda los archivos en la carpeta <code>public/</code> de tu proyecto</p>
+            <p>4. Los screenshots se usarán en el manifest.json y PWA Builder</p>
+        </div>
+
+        <button onclick="generateAllScreenshots()">📱 Generar Screenshots</button>
+        <button onclick="downloadAll()" class="download-all">💾 Descargar Todos</button>
+
+        <div id="preview"></div>
+    </div>
+
+    <script>
+        function createDesktopScreenshot() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1280;
+            canvas.height = 720;
+            const ctx = canvas.getContext('2d');
+
+            // Fondo
+            ctx.fillStyle = '#0f0f23';
+            ctx.fillRect(0, 0, 1280, 720);
+
+            // Header
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, 1280, 80);
+
+            // Logo/Title
+            ctx.fillStyle = '#fef3c7';
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('🏆 RetaPadel', 40, 50);
+
+            // Subtitle
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '18px Arial';
+            ctx.fillText('Gestor de Retas de Pádel', 40, 75);
+
+            // Main content area
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(40, 120, 1200, 520);
+
+            // Cards
+            const cardWidth = 350;
+            const cardHeight = 200;
+            const cardsPerRow = 3;
+            const startY = 150;
+
+            for (let i = 0; i < 6; i++) {
+                const x = 60 + (i % cardsPerRow) * (cardWidth + 30);
+                const y = startY + Math.floor(i / cardsPerRow) * (cardHeight + 30);
+
+                // Card background
+                ctx.fillStyle = '#374151';
+                ctx.fillRect(x, y, cardWidth, cardHeight);
+
+                // Card border
+                ctx.strokeStyle = '#4b5563';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, cardWidth, cardHeight);
+
+                // Card content
+                ctx.fillStyle = '#fef3c7';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+
+                if (i === 0) {
+                    ctx.fillText('🎾 Crear Reta', x + cardWidth / 2, y + 40);
+                    ctx.fillText('Nueva reta de pádel', x + cardWidth / 2, y + 70);
+                } else if (i === 1) {
+                    ctx.fillText('👥 Jugadores', x + cardWidth / 2, y + 40);
+                    ctx.fillText('Gestionar jugadores', x + cardWidth / 2, y + 70);
+                } else if (i === 2) {
+                    ctx.fillText('🤝 Parejas', x + cardWidth / 2, y + 40);
+                    ctx.fillText('Formar equipos', x + cardWidth / 2, y + 70);
+                } else if (i === 3) {
+                    ctx.fillText('🏆 Partidos', x + cardWidth / 2, y + 40);
+                    ctx.fillText('Ver partidos', x + cardWidth / 2, y + 70);
+                } else if (i === 4) {
+                    ctx.fillText('📊 Clasificación', x + cardWidth / 2, y + 40);
+                    ctx.fillText('Ver posiciones', x + cardWidth / 2, y + 70);
+                } else {
+                    ctx.fillText('⚙️ Configuración', x + cardWidth / 2, y + 40);
+                    ctx.fillText('Ajustes del sistema', x + cardWidth / 2, y + 70);
+                }
+            }
+
+            // Footer
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 660, 1280, 60);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RetaPadel - El mejor gestor de retas de pádel', 640, 690);
+
+            return canvas;
+        }
+
+        function createMobileScreenshot() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 375;
+            canvas.height = 667;
+            const ctx = canvas.getContext('2d');
+
+            // Fondo
+            ctx.fillStyle = '#0f0f23';
+            ctx.fillRect(0, 0, 375, 667);
+
+            // Header
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, 375, 80);
+
+            // Logo/Title
+            ctx.fillStyle = '#fef3c7';
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏆 RetaPadel', 187, 35);
+
+            // Subtitle
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '14px Arial';
+            ctx.fillText('Gestor de Retas de Pádel', 187, 55);
+
+            // Main content
+            const cardWidth = 320;
+            const cardHeight = 80;
+            const startY = 120;
+
+            const features = [
+                { icon: '🎾', title: 'Crear Reta', desc: 'Nueva reta de pádel' },
+                { icon: '👥', title: 'Jugadores', desc: 'Gestionar jugadores' },
+                { icon: '🤝', title: 'Parejas', desc: 'Formar equipos' },
+                { icon: '🏆', title: 'Partidos', desc: 'Ver partidos' },
+                { icon: '📊', title: 'Clasificación', desc: 'Ver posiciones' },
+                { icon: '⚙️', title: 'Configuración', desc: 'Ajustes del sistema' }
+            ];
+
+            features.forEach((feature, i) => {
+                const y = startY + i * (cardHeight + 15);
+
+                // Card background
+                ctx.fillStyle = '#374151';
+                ctx.fillRect(27, y, cardWidth, cardHeight);
+
+                // Card border
+                ctx.strokeStyle = '#4b5563';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(27, y, cardWidth, cardHeight);
+
+                // Icon
+                ctx.fillStyle = '#fef3c7';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(feature.icon, 40, y + 35);
+
+                // Title
+                ctx.fillStyle = '#fef3c7';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText(feature.title, 80, y + 30);
+
+                // Description
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px Arial';
+                ctx.fillText(feature.desc, 80, y + 50);
+
+                // Arrow
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText('›', 330, y + 35);
+            });
+
+            // Footer
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 620, 375, 47);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RetaPadel - Gestor de retas', 187, 640);
+
+            return canvas;
+        }
+
+        function generateAllScreenshots() {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+
+            // Desktop screenshot
+            const desktopDiv = document.createElement('div');
+            desktopDiv.className = 'screenshot';
+
+            const desktopCanvas = createDesktopScreenshot();
+            desktopCanvas.id = 'screenshot-desktop';
+            desktopCanvas.className = 'desktop';
+
+            const desktopLabel = document.createElement('div');
+            desktopLabel.innerHTML = '<strong>Desktop Screenshot</strong><br>1280x720 - screenshot-desktop.png';
+
+            desktopDiv.appendChild(desktopCanvas);
+            desktopDiv.appendChild(desktopLabel);
+            preview.appendChild(desktopDiv);
+
+            // Mobile screenshot
+            const mobileDiv = document.createElement('div');
+            mobileDiv.className = 'screenshot';
+
+            const mobileCanvas = createMobileScreenshot();
+            mobileCanvas.id = 'screenshot-mobile';
+            mobileCanvas.className = 'mobile';
+
+            const mobileLabel = document.createElement('div');
+            mobileLabel.innerHTML = '<strong>Mobile Screenshot</strong><br>375x667 - screenshot-mobile.png';
+
+            mobileDiv.appendChild(mobileCanvas);
+            mobileDiv.appendChild(mobileLabel);
+            preview.appendChild(mobileDiv);
+        }
+
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function downloadAll() {
+            // Download desktop screenshot
+            const desktopCanvas = document.getElementById('screenshot-desktop');
+            if (desktopCanvas) {
+                downloadCanvas(desktopCanvas, 'screenshot-desktop.png');
+            }
+
+            // Download mobile screenshot
+            const mobileCanvas = document.getElementById('screenshot-mobile');
+            if (mobileCanvas) {
+                downloadCanvas(mobileCanvas, 'screenshot-mobile.png');
+            }
+        }
+
+        // Generar automáticamente al cargar
+        window.onload = generateAllScreenshots;
+    </script>
+</body>
+
+</html>
