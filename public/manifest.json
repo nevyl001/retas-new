@@ -4,6 +4,12 @@
   "description": "Organiza y gestiona tus retas de pádel como un profesional. Crea torneos, gestiona jugadores, estadísticas en tiempo real y comparte enlaces públicos. ¡La plataforma más completa para amantes del pádel!",
   "icons": [
     {
+      "src": "apple-touch-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
       "src": "favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
