@@ -62,7 +62,7 @@
       "label": "RetaPadel Dashboard en escritorio"
     },
     {
-      "src": "screenshot-mobile.png", 
+      "src": "screenshot-mobile.png",
       "sizes": "375x667",
       "type": "image/png",
       "form_factor": "narrow",
