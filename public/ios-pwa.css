@@ -1,0 +1,93 @@
+/* iOS PWA Styles */
+/* Optimizations for iOS Safari and PWA installation */
+
+/* Prevent zoom on input focus */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  font-size: 16px !important;
+}
+
+/* iOS Safari specific styles */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific styles */
+  .App {
+    -webkit-overflow-scrolling: touch;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Fix for iOS viewport height issues */
+  .App {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  /* Prevent bounce scrolling */
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix for iOS status bar */
+  @media screen and (max-width: 768px) {
+    .App {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+}
+
+/* PWA specific styles */
+@media (display-mode: standalone) {
+  /* Styles when app is running as PWA */
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Hide address bar space when in standalone mode */
+  .App {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+}
+
+/* iOS specific button styles */
+@supports (-webkit-touch-callout: none) {
+  button {
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Prevent text selection on UI elements */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* iOS safe area support */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
