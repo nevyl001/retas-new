@@ -1,0 +1,25 @@
+{
+  "short_name": "🏆 Retas de Pádel",
+  "name": "🏆 Retas de Pádel - El Mejor Gestor Profesional",
+  "description": "Organiza y gestiona tus retas de pádel como un profesional. Crea torneos, gestiona jugadores, estadísticas en tiempo real y comparte enlaces públicos. ¡La plataforma más completa para amantes del pádel!",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ffd700",
+  "background_color": "#0f0f23",
+  "orientation": "portrait-primary",
+  "categories": ["sports", "productivity", "utilities"],
+  "lang": "es"
+}

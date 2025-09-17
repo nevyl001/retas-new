@@ -50,15 +50,25 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       console.log("🔄 Cambio de autenticación:", event, session?.user?.id);
       setSession(session);
-      setUser(session?.user ?? null);
 
-      if (session?.user) {
-        console.log("👤 Usuario encontrado, obteniendo perfil...");
-        console.log("👤 Usuario data:", session.user);
-        // Llamar fetchUserProfile directamente sin await para evitar bucles
-        fetchUserProfile(session.user.id);
-      } else {
+      // Verificar si es admin antes de establecer como usuario normal
+      if (session?.user?.email === "admin@test.com") {
+        console.log(
+          "🔐 Usuario admin detectado, NO procesando como usuario normal"
+        );
+        setUser(null); // No establecer como usuario normal
         setUserProfile(null);
+      } else {
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          console.log("👤 Usuario normal encontrado, obteniendo perfil...");
+          console.log("👤 Usuario data:", session.user);
+          // Llamar fetchUserProfile directamente sin await para evitar bucles
+          fetchUserProfile(session.user.id);
+        } else {
+          setUserProfile(null);
+        }
       }
 
       setLoading(false);
@@ -152,6 +162,16 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Verificar si es admin - no permitir login como usuario normal
+      if (email === "admin@test.com") {
+        console.log(
+          "🔐 Intento de login de admin como usuario normal - DENEGADO"
+        );
+        return {
+          error: { message: "Admin debe usar el panel de administración" },
+        };
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,

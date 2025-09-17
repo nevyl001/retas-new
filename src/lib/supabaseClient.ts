@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY;
 
 console.log("🔧 Configuración de Supabase:");
 console.log("URL:", supabaseUrl ? "✅ Configurada" : "❌ No configurada");
@@ -20,6 +21,18 @@ if (!supabaseUrl || !supabaseKey) {
 export const supabase = createClient(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseKey || "placeholder_key"
+);
+
+// Cliente con permisos de administrador para operaciones que requieren service role
+export const supabaseAdmin = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseServiceKey || supabaseKey || "placeholder_key",
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
 );
 
 // Función para probar la conexión

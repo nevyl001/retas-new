@@ -12,6 +12,10 @@ import { ModernToast } from "./components/ModernToast";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserHeader } from "./components/UserHeader";
 import { AuthCallback } from "./components/auth/AuthCallback";
+import { AdminProvider, useAdmin } from "./contexts/AdminContext";
+import { AdminLogin } from "./components/admin/AdminLogin";
+import { AdminDashboard } from "./components/admin/AdminDashboard";
+import { AdminRoute } from "./components/admin/AdminRoute";
 import { testConnection } from "./lib/supabaseClient";
 
 // Types
@@ -26,25 +30,114 @@ import { useWinnerCalculation } from "./hooks/useWinnerCalculation";
 
 function AppContent() {
   const { user } = useUser();
+  const { isAdminLoggedIn } = useAdmin();
 
   // Estados básicos
   const [selectedTournament, setSelectedTournament] =
     useState<Tournament | null>(null);
+
+  // Inicializar currentView basado en la URL actual
+  const getInitialView = () => {
+    const currentPath = window.location.pathname;
+    console.log("🔍 Inicializando currentView basado en path:", currentPath);
+
+    if (currentPath === "/auth/callback") return "auth-callback";
+    if (currentPath === "/admin-login") return "admin-login";
+    if (currentPath === "/admin-dashboard") return "admin-dashboard";
+    if (currentPath.startsWith("/public/")) return "public";
+    return "main";
+  };
+
   const [currentView, setCurrentView] = useState<
-    "main" | "winner" | "public" | "auth-callback"
-  >("main");
+    | "main"
+    | "winner"
+    | "public"
+    | "auth-callback"
+    | "admin-login"
+    | "admin-dashboard"
+  >(getInitialView());
+
+  console.log("🔍 AppContent - isAdminLoggedIn:", isAdminLoggedIn);
+  console.log("🔍 AppContent - currentView:", currentView);
+
+  // Efecto para detectar cuando el admin se loguea
+  useEffect(() => {
+    console.log(
+      "🔍 useEffect admin login - isAdminLoggedIn:",
+      isAdminLoggedIn,
+      "currentView:",
+      currentView
+    );
+
+    if (isAdminLoggedIn && currentView !== "admin-dashboard") {
+      console.log("🔄 Admin logueado detectado, cambiando a admin-dashboard");
+      setCurrentView("admin-dashboard");
+    }
+  }, [isAdminLoggedIn, currentView]);
+
+  // Efecto para detectar cuando el admin se desloguea
+  useEffect(() => {
+    if (
+      !isAdminLoggedIn &&
+      (currentView === "admin-dashboard" || currentView === "admin-login")
+    ) {
+      console.log("🔄 Admin deslogueado detectado, cambiando a admin-login");
+      setCurrentView("admin-login");
+    }
+  }, [isAdminLoggedIn, currentView]);
+
   const [publicTournamentId, setPublicTournamentId] = useState<string | null>(
     null
   );
   const [forceRefresh, setForceRefresh] = useState(0);
   const [, setError] = useState<string>("");
 
-  // Detectar si estamos en la ruta de callback de autenticación
+  // Detectar cambios en la URL (solo para rutas específicas)
   useEffect(() => {
-    const currentPath = window.location.pathname;
-    if (currentPath === "/auth/callback") {
-      setCurrentView("auth-callback");
-    }
+    const checkCurrentPath = () => {
+      const currentPath = window.location.pathname;
+      console.log("🔍 Current path:", currentPath);
+
+      // Solo cambiar currentView para rutas específicas, NO sobrescribir
+      if (currentPath === "/auth/callback") {
+        setCurrentView("auth-callback");
+      } else if (currentPath === "/admin-login") {
+        setCurrentView("admin-login");
+      } else if (currentPath === "/admin-dashboard") {
+        setCurrentView("admin-dashboard");
+      } else if (currentPath.startsWith("/public/")) {
+        setCurrentView("public");
+        setPublicTournamentId(currentPath.split("/public/")[1]);
+      }
+      // NO cambiar a "main" automáticamente - dejar que se mantenga el valor inicial
+    };
+
+    // Escuchar cambios en la URL
+    const handlePopState = () => {
+      checkCurrentPath();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    // También escuchar cambios programáticos en la URL
+    const originalPushState = window.history.pushState;
+    const originalReplaceState = window.history.replaceState;
+
+    window.history.pushState = function (...args) {
+      originalPushState.apply(window.history, args);
+      setTimeout(checkCurrentPath, 0);
+    };
+
+    window.history.replaceState = function (...args) {
+      originalReplaceState.apply(window.history, args);
+      setTimeout(checkCurrentPath, 0);
+    };
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.history.pushState = originalPushState;
+      window.history.replaceState = originalReplaceState;
+    };
   }, []);
 
   // Estados de UI
@@ -121,7 +214,7 @@ function AppContent() {
     if (selectedTournament) {
       loadTournamentData(selectedTournament);
     }
-  }, [selectedTournament?.id, loadTournamentData]);
+  }, [selectedTournament, loadTournamentData]);
 
   // Recargar datos automáticamente
   useEffect(() => {
@@ -195,82 +288,105 @@ function AppContent() {
   }, [tournamentWinner, sortedPairs]);
 
   return (
-    <ThemeProvider>
-      <UserProvider>
-        <div className="App">
-          <ProtectedRoute>
-            {/* Solo mostrar UserHeader cuando NO estemos en vista pública */}
-            {currentView !== "public" && <UserHeader />}
+    <div className="App">
+      <ProtectedRoute>
+        {/* Solo mostrar UserHeader cuando NO estemos en vista pública NI en admin */}
+        {currentView !== "public" &&
+          currentView !== "admin-login" &&
+          currentView !== "admin-dashboard" && <UserHeader />}
 
-            {currentView === "main" && (
-              <MainLayout
-                selectedTournament={selectedTournament}
-                onTournamentSelect={setSelectedTournament}
-                loading={loading || actionLoading}
-                userId={user?.id}
-                pairs={pairs}
-                matches={matches}
-                pairStats={pairStats}
-                matchesByRound={matchesByRound}
-                showPlayerManager={showPlayerManager}
-                setShowPlayerManager={setShowPlayerManager}
-                showPairManager={showPairManager}
-                setShowPairManager={setShowPairManager}
-                showTournamentStatus={showTournamentStatus}
-                setShowTournamentStatus={setShowTournamentStatus}
-                showDebugInfo={showDebugInfo}
-                setShowDebugInfo={setShowDebugInfo}
-                selectedPlayers={selectedPlayers}
-                setSelectedPlayers={setSelectedPlayers}
-                setError={setError}
-                addPair={addPair}
-                updatePairPlayers={updatePairPlayers}
-                deletePair={deletePair}
-                onReset={handleReset}
-                loadTournamentData={() =>
-                  selectedTournament && loadTournamentData(selectedTournament)
-                }
-                setForceRefresh={setForceRefresh}
-                forceRefresh={forceRefresh}
-                onStartTournament={handleStartTournament}
-                onCopyPublicLink={copyPublicLink}
-                generatePublicLink={generatePublicLink}
-                isTournamentFinished={isTournamentFinished}
-                winner={winner}
-                tournamentWinner={tournamentWinner}
-                onShowWinnerScreen={handleShowWinner}
-                onBackToHome={handleBackToHome}
-              />
-            )}
-
-            {currentView === "public" && (
-              <PublicTournamentView tournamentId={publicTournamentId!} />
-            )}
-
-            {currentView === "auth-callback" && (
-              <AuthCallback onSuccess={() => setCurrentView("main")} />
-            )}
-
-            {currentView === "winner" && (
-              <WinnerScreen
-                isVisible={showWinnerScreen}
-                winner={winner}
-                tournamentWinner={tournamentWinner}
-                onBackToManager={handleHideWinner}
-              />
-            )}
-          </ProtectedRoute>
-
-          <ModernToast
-            message={toast.message}
-            type={toast.type}
-            isVisible={toast.isVisible}
-            onClose={hideToast}
-            duration={4000}
+        {currentView === "main" && (
+          <MainLayout
+            selectedTournament={selectedTournament}
+            onTournamentSelect={setSelectedTournament}
+            loading={loading || actionLoading}
+            userId={user?.id}
+            pairs={pairs}
+            matches={matches}
+            pairStats={pairStats}
+            matchesByRound={matchesByRound}
+            showPlayerManager={showPlayerManager}
+            setShowPlayerManager={setShowPlayerManager}
+            showPairManager={showPairManager}
+            setShowPairManager={setShowPairManager}
+            showTournamentStatus={showTournamentStatus}
+            setShowTournamentStatus={setShowTournamentStatus}
+            showDebugInfo={showDebugInfo}
+            setShowDebugInfo={setShowDebugInfo}
+            selectedPlayers={selectedPlayers}
+            setSelectedPlayers={setSelectedPlayers}
+            setError={setError}
+            addPair={addPair}
+            updatePairPlayers={updatePairPlayers}
+            deletePair={deletePair}
+            onReset={handleReset}
+            loadTournamentData={() =>
+              selectedTournament && loadTournamentData(selectedTournament)
+            }
+            setForceRefresh={setForceRefresh}
+            forceRefresh={forceRefresh}
+            onStartTournament={handleStartTournament}
+            onCopyPublicLink={copyPublicLink}
+            generatePublicLink={generatePublicLink}
+            isTournamentFinished={isTournamentFinished}
+            winner={winner}
+            tournamentWinner={tournamentWinner}
+            onShowWinnerScreen={handleShowWinner}
+            onBackToHome={handleBackToHome}
           />
-        </div>
-      </UserProvider>
-    </ThemeProvider>
+        )}
+
+        {currentView === "public" && (
+          <PublicTournamentView tournamentId={publicTournamentId!} />
+        )}
+
+        {currentView === "auth-callback" && (
+          <AuthCallback onSuccess={() => setCurrentView("main")} />
+        )}
+
+        {currentView === "winner" && (
+          <WinnerScreen
+            isVisible={showWinnerScreen}
+            winner={winner}
+            tournamentWinner={tournamentWinner}
+            onBackToManager={handleHideWinner}
+          />
+        )}
+
+        {/* Rutas de Admin */}
+        {currentView === "admin-login" && (
+          <>
+            {console.log("🔍 Renderizando AdminLogin")}
+            <AdminLogin
+              onLoginSuccess={() => {
+                console.log(
+                  "🔄 onLoginSuccess llamado - Redirigiendo a admin dashboard..."
+                );
+                setCurrentView("admin-dashboard");
+              }}
+            />
+          </>
+        )}
+        {currentView === "admin-dashboard" && (
+          <AdminRoute
+            onUnauthorized={() => {
+              console.log("🔄 Admin no autorizado, cambiando a admin-login");
+              setCurrentView("admin-login");
+            }}
+          >
+            <AdminDashboard />
+          </AdminRoute>
+        )}
+      </ProtectedRoute>
+
+      <ModernToast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+        duration={4000}
+      />
+    </div>
   );
 }
 
@@ -278,7 +394,9 @@ function App() {
   return (
     <ThemeProvider>
       <UserProvider>
-        <AppContent />
+        <AdminProvider>
+          <AppContent />
+        </AdminProvider>
       </UserProvider>
     </ThemeProvider>
   );

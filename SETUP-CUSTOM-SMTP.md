@@ -44,7 +44,8 @@ Supabase ha restringido el envío de emails debido a alta tasa de rebotes. Neces
 ```
 Enable custom SMTP: ✅ ON
 SMTP Host: [tu-proveedor-smtp]
-SMTP Port: 587 (o 465 para SSL)
+SMTP Port:
+587 (o 465 para SSL)
 SMTP User: [tu-usuario]
 SMTP Pass: [tu-contraseña]
 SMTP Admin Email: [tu-email-admin]

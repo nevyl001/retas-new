@@ -1,0 +1,23 @@
+/* =====================================================
+   ADMIN ROUTE - ESTILOS
+   ===================================================== */
+
+.admin-loading-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+}
+
+.admin-loading {
+  text-align: center;
+}
+
+.admin-loading h2 {
+  color: #ffd700;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}

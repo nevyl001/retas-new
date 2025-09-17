@@ -166,6 +166,16 @@
   margin: 8px 0;
 }
 
+.admin-btn {
+  color: #00d4ff;
+  font-weight: 500;
+}
+
+.admin-btn:hover {
+  background: rgba(0, 212, 255, 0.1);
+  color: #00b8e6;
+}
+
 .logout-btn {
   color: #ff6b6b;
   font-weight: 500;
