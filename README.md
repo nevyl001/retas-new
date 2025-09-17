@@ -1,215 +1,336 @@
-# 🏆 RetaPadel - Sistema de Retas de Pádel
+# 🏆 RetaPadel - Sistema Completo de Gestión de Retas de Pádel
 
-Un sistema completo para gestionar retas de pádel con persistencia de datos en base de datos Supabase.
+Un sistema profesional para gestionar retas de pádel con persistencia de datos, autenticación multi-usuario, panel de administración y Progressive Web App (PWA) para iOS y Android.
 
-## ✨ Características
+## 🌐 **URLs del Sistema**
 
-- **Gestión de Retas**: Crear, editar y eliminar retas con nombres personalizados
-- **Gestión de Jugadores**: Registrar y gestionar jugadores de manera independiente
-- **Creación de Parejas**: Formar parejas seleccionando jugadores
-- **Sistema de Partidos**: Distribución automática de partidos por rondas y canchas
-- **Marcador en Tiempo Real**: Registrar resultados de juegos normales y tie breaks
-- **Clasificación Automática**: Cálculo automático de posiciones basado en partidos ganados, juegos y puntos
-- **Persistencia de Datos**: Todos los datos se guardan en Supabase
-- **Interfaz Moderna**: Diseño responsive y intuitivo
+- **App Principal**: [https://retas-new.vercel.app/](https://retas-new.vercel.app/)
+- **Admin Login**: [https://retas-new.vercel.app/admin-login](https://retas-new.vercel.app/admin-login)
+- **PWA Builder**: [https://pwabuilder.com](https://pwabuilder.com)
 
-## 🚀 Configuración
+## ✨ **Características Principales**
 
-### 1. Configurar Supabase
+### 🎾 **Gestión de Retas**
+- ✅ Crear, editar y eliminar retas con nombres personalizados
+- ✅ Sistema multi-usuario con autenticación Supabase
+- ✅ Retas públicas y privadas
+- ✅ Enlaces públicos para compartir torneos
 
-1. Crea una cuenta en [Supabase](https://supabase.com)
-2. Crea un nuevo proyecto
-3. Ve a Settings > API y copia:
+### 👥 **Gestión de Jugadores**
+- ✅ Registrar y gestionar jugadores por usuario
+- ✅ Información completa: nombre, email, teléfono, nivel
+- ✅ Persistencia de jugadores entre retas
+
+### 🤝 **Sistema de Parejas**
+- ✅ Formar parejas seleccionando jugadores
+- ✅ Estadísticas automáticas por pareja
+- ✅ Historial de parejas
+
+### 🏆 **Sistema de Partidos**
+- ✅ Distribución automática Round-Robin
+- ✅ Distribución por canchas
+- ✅ Marcador en tiempo real
+- ✅ Juegos normales y tie breaks
+- ✅ Clasificación automática
+
+### 📱 **Progressive Web App (PWA)**
+- ✅ **Android**: Instalable como APK
+- ✅ **iOS**: Instalable desde Safari
+- ✅ **Nombre**: "RetaPadel"
+- ✅ **Icono profesional** optimizado
+- ✅ **Funciona offline**
+- ✅ **Notificaciones push**
+
+### 🔐 **Panel de Administración**
+- ✅ **Login seguro** independiente
+- ✅ **Estadísticas generales** del sistema
+- ✅ **Gestión de usuarios**
+- ✅ **Dashboard responsive**
+
+## 🚀 **Instalación y Configuración**
+
+### **1. Configurar Supabase**
+
+1. Crear cuenta en [supabase.com](https://supabase.com)
+2. Crear nuevo proyecto
+3. Obtener credenciales:
    - Project URL
    - anon/public key
 
-### 2. Configurar Variables de Entorno
+### **2. Configurar Variables de Entorno**
 
-Crea un archivo `.env` en la raíz del proyecto:
+Crear archivo `.env` en la raíz:
 
 ```env
 REACT_APP_SUPABASE_URL=tu_project_url_aqui
 REACT_APP_SUPABASE_ANON_KEY=tu_anon_key_aqui
 ```
 
-### 3. Configurar la Base de Datos
+### **3. Configurar Base de Datos**
 
-1. Ve a tu proyecto de Supabase
-2. Ve a SQL Editor
-3. Ejecuta el script SQL del archivo `database-schema.sql`
+Ejecutar en Supabase SQL Editor:
 
-### 4. Instalar Dependencias
+```sql
+-- Usar el archivo: database-schema-multi-user.sql
+-- Contiene todas las tablas, RLS policies y triggers
+```
+
+### **4. Configurar Panel de Admin**
+
+Ejecutar en Supabase SQL Editor:
+
+```sql
+-- Usar el archivo: admin-setup.sql
+-- Crea tabla admin_users y usuario por defecto
+```
+
+### **5. Instalar y Ejecutar**
 
 ```bash
 npm install
-```
-
-### 5. Ejecutar la Aplicación
-
-```bash
 npm start
 ```
 
-## 📊 Estructura de la Base de Datos
+## 📊 **Estructura de Base de Datos**
 
-### Tablas Principales
+### **Tablas Principales**
+- `users` - Perfiles de usuario extendidos
+- `tournaments` - Retas por usuario
+- `players` - Jugadores por usuario
+- `pairs` - Parejas por usuario
+- `matches` - Partidos por usuario
+- `games` - Juegos por usuario
+- `admin_users` - Administradores del sistema
 
-- **tournaments**: Información de retas
-- **players**: Jugadores registrados
-- **pairs**: Parejas formadas por jugadores
-- **matches**: Partidos de la reta
-- **games**: Juegos individuales de cada partido
+### **Características de Seguridad**
+- ✅ **Row Level Security (RLS)** habilitado
+- ✅ **Políticas por usuario** - Solo ven sus datos
+- ✅ **Triggers automáticos** para updated_at
+- ✅ **Función de perfil** automático al registrarse
 
-### Relaciones
+## 🎮 **Cómo Usar el Sistema**
 
-- Una reta tiene múltiples parejas
-- Una pareja pertenece a una reta y tiene dos jugadores
-- Una reta tiene múltiples partidos
-- Un partido tiene múltiples juegos
+### **Para Usuarios Normales**
 
-## 🎮 Cómo Usar
+1. **Registrarse/Iniciar Sesión**
+   - Crear cuenta con email
+   - Perfil automático creado
 
-### 1. Crear una Reta
+2. **Crear Reta**
+   - Nombre y descripción
+   - Número de canchas
+   - Hacer pública/privada
 
-1. Haz clic en "➕ Crear Nueva Reta"
-2. Completa el formulario:
-   - Nombre de la reta
-   - Descripción (opcional)
-   - Número de canchas disponibles
-3. Haz clic en "🏆 Crear Reta"
+3. **Gestionar Jugadores**
+   - Agregar jugadores
+   - Información completa
 
-### 2. Gestionar Jugadores
+4. **Formar Parejas**
+   - Seleccionar 2 jugadores
+   - Crear pareja
 
-1. Selecciona la reta creada
-2. Haz clic en "👥 Gestionar Jugadores"
-3. Agrega jugadores uno por uno
-4. Selecciona dos jugadores para formar una pareja
-5. Haz clic en "✅ Crear Pareja"
+5. **Iniciar Reta**
+   - Generación automática de partidos
+   - Distribución por rondas
 
-### 3. Iniciar la Reta
+6. **Registrar Resultados**
+   - Marcador en tiempo real
+   - Juegos normales y tie breaks
+   - Clasificación automática
 
-1. Una vez que tengas al menos 2 parejas
-2. Haz clic en "🚀 Iniciar Reta"
-3. El sistema creará automáticamente todos los partidos posibles
+### **Para Administradores**
 
-### 4. Gestionar Partidos
+1. **Acceder al Panel**
+   - URL: `/admin-login`
+   - Credenciales por defecto:
+     - Email: `admin@test.com`
+     - Password: `123456`
 
-1. Selecciona un partido de la lista
-2. Agrega juegos con "➕ Agregar Juego"
-3. Registra los resultados:
-   - Juegos normales (0-7)
-   - Tie breaks (0-20)
-4. Finaliza el partido con "✅ Finalizar Partido"
+2. **Dashboard de Estadísticas**
+   - Total de usuarios
+   - Retas creadas
+   - Usuarios activos
 
-### 5. Ver Clasificación
+3. **Gestión de Usuarios**
+   - Lista completa de usuarios
+   - Estadísticas por usuario
+   - Fechas de registro
 
-La clasificación se actualiza automáticamente y muestra:
+## 📱 **Instalación PWA**
 
-- Posición
-- Pareja
-- Partidos Jugados (PJ)
-- Sets Ganados (SG)
-- Juegos Ganados (JG)
-- Puntos Totales (Pts)
+### **Para Android**
 
-## 🎾 Reglas del Juego
+1. **Usar PWA Builder**:
+   - Ir a [pwabuilder.com](https://pwabuilder.com)
+   - Ingresar URL: `https://retas-new.vercel.app/`
+   - Generar APK
+   - Instalar archivo APK
 
-### Juegos Normales
+2. **Configuración previa**:
+   - Activar "Fuentes desconocidas"
+   - Permitir instalación de APKs
 
+### **Para iOS**
+
+1. **Instalación PWA**:
+   - Abrir **Safari** (no Chrome)
+   - Ir a: `https://retas-new.vercel.app/`
+   - Tocar **Compartir** (📤)
+   - Seleccionar **"Agregar a Pantalla de Inicio"**
+   - Tocar **"Agregar"**
+
+2. **Requisitos**:
+   - iOS 11.3+
+   - Safari (navegador requerido)
+
+### **Características PWA**
+- ✅ **Icono profesional** "RetaPadel"
+- ✅ **Modo standalone** (sin barras del navegador)
+- ✅ **Funciona offline** (datos básicos)
+- ✅ **Notificaciones push**
+- ✅ **Splash screen** personalizado
+- ✅ **Safe Area** compatible con iPhone X+
+
+## 🎾 **Reglas del Juego**
+
+### **Juegos Normales**
 - Puntuación de 0 a 7
 - Gana quien tenga más puntos
 
-### Tie Break
-
+### **Tie Break**
 - Puntuación de 0 a 20
 - Gana quien llegue a 10 puntos con diferencia de 2
-- Se activa con el botón "🎾 Cambiar a Tie Break"
+- Se activa con botón "🎾 Cambiar a Tie Break"
 
-### Cálculo de Ganador
-
+### **Cálculo de Ganador**
 - Se cuenta cuántos juegos ganó cada pareja
 - La pareja con más juegos ganados gana el partido
 - En caso de empate, gana quien tenga más puntos totales
 
-## 🛠️ Tecnologías Utilizadas
+## 🛠️ **Tecnologías Utilizadas**
 
-- **Frontend**: React + TypeScript
-- **Base de Datos**: Supabase (PostgreSQL)
-- **Estilos**: CSS3 con diseño responsive
-- **Estado**: React Hooks
-- **Autenticación**: Supabase Auth (preparado para futuras implementaciones)
+### **Frontend**
+- **React 18** + TypeScript
+- **React Hooks** para estado
+- **CSS3** responsive
+- **PWA** con Service Worker
 
-## 📱 Características Responsive
+### **Backend**
+- **Supabase** (PostgreSQL)
+- **Row Level Security**
+- **Autenticación Supabase Auth**
+- **Triggers y funciones SQL**
 
-- Diseño adaptativo para móviles y tablets
-- Interfaz optimizada para diferentes tamaños de pantalla
-- Navegación intuitiva en dispositivos táctiles
+### **Deploy**
+- **Vercel** (deploy automático)
+- **GitHub** (control de versiones)
+- **HTTPS** automático
 
-## 🔧 Funciones Avanzadas
+## 📁 **Estructura del Proyecto**
 
-### Gestión de Datos
+```
+src/
+├── components/
+│   ├── admin/              # Panel de administración
+│   ├── auth/               # Autenticación
+│   ├── MainLayout.tsx      # Layout principal
+│   └── ...                 # Componentes de la app
+├── contexts/
+│   ├── AdminContext.tsx    # Contexto de admin
+│   ├── UserContext.tsx     # Contexto de usuario
+│   └── ThemeContext.tsx    # Contexto de tema
+├── hooks/                  # Custom hooks
+├── lib/
+│   ├── database.ts         # Funciones de base de datos
+│   └── supabaseClient.ts   # Cliente Supabase
+└── styles/                 # Estilos globales
 
-- **Eliminación Física**: Puedes eliminar retas, jugadores y parejas
-- **Persistencia**: Todos los datos se guardan automáticamente
-- **Sincronización**: Cambios en tiempo real
+public/
+├── manifest.json           # Configuración PWA
+├── apple-touch-icon.svg    # Icono iOS
+├── favicon.svg             # Icono general
+└── ios-pwa.css            # Estilos iOS PWA
 
-### Distribución de Partidos
+Archivos SQL:
+├── database-schema-multi-user.sql  # Esquema principal
+├── admin-setup.sql                 # Configuración admin
+└── database-schema.sql             # Esquema original (referencia)
+```
 
-- **Algoritmo Round-Robin**: Todos contra todos
-- **Distribución por Canchas**: Optimización automática
-- **Evita Conflictos**: No hay partidos simultáneos de la misma pareja
+## 🔧 **Solución de Problemas**
 
-### Estadísticas Detalladas
+### **Error: Variables de entorno no configuradas**
+```bash
+# Verificar archivo .env existe
+# Reiniciar aplicación después de cambios
+```
 
-- **Historial Completo**: Todos los resultados quedan registrados
-- **Clasificación Dinámica**: Se actualiza automáticamente
-- **Múltiples Retas**: Puedes gestionar varias retas simultáneamente
+### **Error: Tablas no existen**
+```bash
+# Ejecutar database-schema-multi-user.sql en Supabase
+# Verificar en Table Editor
+```
 
-## 🚀 Próximas Funcionalidades
+### **Error: Icono feo en iOS**
+```bash
+# Eliminar app de pantalla de inicio
+# Limpiar cache de Safari
+# Reinstalar PWA
+```
 
-- [ ] Autenticación de usuarios
-- [ ] Exportación de resultados a PDF
-- [ ] Notificaciones en tiempo real
-- [ ] Modo offline
-- [ ] API REST para integraciones
-- [ ] Dashboard de estadísticas avanzadas
+### **Error: Admin no funciona**
+```bash
+# Ejecutar admin-setup.sql en Supabase
+# Verificar credenciales por defecto
+```
 
-## 🤝 Contribuir
+## 🚀 **Deploy y Distribución**
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+### **Deploy Automático**
+- Push a `main` → Deploy automático en Vercel
+- URL pública: `https://retas-new.vercel.app/`
+- HTTPS automático
 
-## 📄 Licencia
+### **Distribución PWA**
+- **Android**: Generar APK con PWA Builder
+- **iOS**: Instalar PWA desde Safari
+- **Web**: Acceso directo desde navegador
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
+## 📞 **Soporte y Contacto**
 
-## 🆘 Soporte
+### **Documentación Adicional**
+- `SOLUCION-ICONO-iOS.md` - Solución iconos iOS
+- `SETUP-PWA-iOS.md` - Instrucciones PWA iOS
+- `create-ios-icons.html` - Generador de iconos
 
-Si tienes problemas o preguntas:
+### **Credenciales por Defecto**
+- **Admin**: admin@test.com / 123456
+- **Usuario**: Registro libre con email
 
-1. Revisa la documentación de Supabase
-2. Verifica que las variables de entorno estén correctamente configuradas
-3. Asegúrate de que el esquema de la base de datos se haya ejecutado correctamente
+## 🎯 **Roadmap Futuro**
 
-## 🎯 Roadmap
-
-### Versión 1.1
-
+### **Versión 1.1**
 - [ ] Modo eliminatoria
 - [ ] Grupos y fase de grupos
 - [ ] Horarios de partidos
-
-### Versión 1.2
-
-- [ ] Aplicación móvil
 - [ ] Notificaciones push
-- [ ] Integración con redes sociales
 
-### Versión 2.0
+### **Versión 1.2**
+- [ ] Exportación PDF de resultados
+- [ ] API REST para integraciones
+- [ ] Dashboard de estadísticas avanzadas
+- [ ] Modo offline completo
 
+### **Versión 2.0**
 - [ ] Múltiples deportes
 - [ ] Sistema de rankings
 - [ ] Retas internacionales
+- [ ] App Store / Play Store
+
+## 📄 **Licencia**
+
+Este proyecto está bajo la Licencia MIT.
+
+---
+
+**¡Disfruta gestionando tus retas de pádel con RetaPadel!** 🎾🏆📱
