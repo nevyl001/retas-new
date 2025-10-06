@@ -1,0 +1,205 @@
+/* Theme Variables - Light and Dark Mode */
+
+/* Light Theme (Default) */
+:root {
+  /* Colors */
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #dbeafe;
+  --secondary-color: #64748b;
+  --accent-color: #f59e0b;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f5f9;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Text Colors */
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #ffffff;
+  --text-muted: #94a3b8;
+
+  /* Border Colors */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-focus: #2563eb;
+
+  /* Shadow Colors */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Gradient Colors */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --gradient-warning: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+
+  /* Tournament Specific Colors */
+  --tournament-bg: #f8fafc;
+  --tournament-card: #ffffff;
+  --tournament-border: #e2e8f0;
+  --tournament-winner: #fbbf24;
+  --tournament-active: #10b981;
+  --tournament-pending: #f59e0b;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  /* Colors */
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-light: #1e3a8a;
+  --secondary-color: #94a3b8;
+  --accent-color: #fbbf24;
+  --success-color: #34d399;
+  --warning-color: #fbbf24;
+  --error-color: #f87171;
+
+  /* Background Colors */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-card: #1e293b;
+  --bg-hover: #334155;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  /* Text Colors */
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #0f172a;
+  --text-muted: #64748b;
+
+  /* Border Colors */
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --border-focus: #3b82f6;
+
+  /* Shadow Colors */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4),
+    0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4),
+    0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4),
+    0 10px 10px -5px rgba(0, 0, 0, 0.2);
+
+  /* Gradient Colors */
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --gradient-warning: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+
+  /* Tournament Specific Colors */
+  --tournament-bg: #0f172a;
+  --tournament-card: #1e293b;
+  --tournament-border: #334155;
+  --tournament-winner: #fbbf24;
+  --tournament-active: #34d399;
+  --tournament-pending: #fbbf24;
+}
+
+/* Base Styles */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Common Component Styles */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+}
+
+.button-primary {
+  background-color: var(--primary-color);
+  color: var(--text-inverse);
+  border: 1px solid var(--primary-color);
+}
+
+.button-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.button-secondary {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.button-secondary:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-secondary);
+}
+
+.input {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Tournament Specific Styles */
+.tournament-card {
+  background-color: var(--tournament-card);
+  border: 1px solid var(--tournament-border);
+  color: var(--text-primary);
+}
+
+.tournament-winner {
+  background-color: var(--tournament-winner);
+  color: var(--text-inverse);
+}
+
+.tournament-active {
+  background-color: var(--tournament-active);
+  color: var(--text-inverse);
+}
+
+.tournament-pending {
+  background-color: var(--tournament-pending);
+  color: var(--text-inverse);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :root {
+    --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.1),
+      0 1px 2px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  [data-theme="dark"] {
+    --shadow-md: 0 2px 4px -1px rgba(0, 0, 0, 0.4),
+      0 1px 2px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.4),
+      0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  }
+}
