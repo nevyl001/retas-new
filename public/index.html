@@ -35,6 +35,7 @@
 
     <!-- iOS PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="RetaPadel" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.svg" />
@@ -62,12 +63,26 @@
     <div id="root"></div>
 
     <script>
-        // Registrar Service Worker
+        // Registrar Service Worker con actualización forzada
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
                     .then((registration) => {
                         console.log('SW registered: ', registration);
+                        
+                        // Forzar actualización del Service Worker
+                        registration.update();
+                        
+                        // Escuchar actualizaciones
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'activated') {
+                                    // Recargar página cuando el nuevo SW esté activo
+                                    window.location.reload();
+                                }
+                            });
+                        });
                     })
                     .catch((registrationError) => {
                         console.log('SW registration failed: ', registrationError);

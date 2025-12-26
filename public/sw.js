@@ -1,7 +1,6 @@
 // Service Worker para RetaPadel PWA
-const CACHE_NAME = "retapadel-v1.1.0";
+const CACHE_NAME = "retapadel-v1.2.0";
 const urlsToCache = [
-  "/",
   "/manifest.json",
   "/favicon.svg",
   "/apple-touch-icon.svg",
@@ -19,17 +18,49 @@ self.addEventListener("install", (event) => {
       return cache.addAll(urlsToCache);
     })
   );
+  // Forzar activación inmediata del nuevo Service Worker
+  self.skipWaiting();
 });
 
-// Fetch event
+// Fetch event - Network First para archivos JS/CSS con hash y HTML
 self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  
+  // No cachear HTML, JS ni CSS con hash (siempre buscar versión más reciente del servidor)
+  if (url.pathname === '/' || 
+      url.pathname === '/index.html' || 
+      url.pathname.includes('/static/js/') || 
+      url.pathname.includes('/static/css/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // No cachear estos archivos, siempre usar la versión más reciente
+          return response;
+        })
+        .catch(() => {
+          // Si falla la red, intentar desde cache solo como último recurso
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+  
+  // Para otros recursos estáticos (imágenes, iconos, etc.), usar cache primero
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // Cache hit - return response
       if (response) {
         return response;
       }
-      return fetch(event.request);
+      return fetch(event.request).then((response) => {
+        // Cachear solo si es exitoso
+        if (response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return response;
+      });
     })
   );
 });
@@ -48,4 +79,6 @@ self.addEventListener("activate", (event) => {
       );
     })
   );
+  // Tomar control inmediato de todas las páginas
+  return self.clients.claim();
 });
