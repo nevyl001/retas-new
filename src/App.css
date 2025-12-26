@@ -3836,8 +3836,8 @@ h1::before {
 
 .matches-grid-simplified {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
   width: 100%;
 }
 
@@ -3892,6 +3892,13 @@ h1::before {
 }
 
 /* Responsive para contenedor simplificado */
+@media (max-width: 1200px) {
+  .matches-grid-simplified {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+}
+
 @media (max-width: 768px) {
   .matches-container-simplified {
     padding: 10px;
@@ -3926,6 +3933,7 @@ h1::before {
   }
 
   .matches-grid-simplified {
+    grid-template-columns: 1fr;
     gap: 10px;
   }
 }
