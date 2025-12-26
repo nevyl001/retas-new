@@ -114,9 +114,17 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   }, [tournamentId]);
 
   useEffect(() => {
-    if (tournamentId) {
+    if (!tournamentId) return;
+
+    // Cargar al montar y cuando cambie forceRefresh
+    loadTournamentData();
+
+    // Auto-refresh cada 30s para vista en tiempo real
+    const interval = setInterval(() => {
       loadTournamentData();
-    }
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [tournamentId, forceRefresh, loadTournamentData]);
 
   // Función para calcular estadísticas de un partido
