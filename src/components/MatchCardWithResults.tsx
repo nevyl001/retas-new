@@ -162,9 +162,15 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
     const score1 = parseInt(pair1Score);
     const score2 = parseInt(pair2Score);
+    const ownerId = userId || currentMatch.created_by || "";
 
     if (isNaN(score1) || isNaN(score2)) {
       setError("Ingresa puntuaciones válidas");
+      return;
+    }
+
+    if (!ownerId) {
+      setError("No se pudo identificar al usuario para guardar el juego");
       return;
     }
 
@@ -174,11 +180,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
       // Crear juego
       const gameNumber = games.length + 1;
-      const newGame = await createGame(
-        currentMatch.id,
-        gameNumber,
-        userId || ""
-      );
+      const newGame = await createGame(currentMatch.id, gameNumber, ownerId);
 
       // Actualizar con puntuación
       await updateGame(newGame.id, {
