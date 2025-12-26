@@ -1,5 +1,5 @@
 // Service Worker para RetaPadel PWA
-const CACHE_NAME = "retapadel-v1.2.0";
+const CACHE_NAME = "retapadel-v1.3.0";
 const urlsToCache = [
   "/manifest.json",
   "/favicon.svg",
@@ -26,20 +26,26 @@ self.addEventListener("install", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   
-  // No cachear HTML, JS ni CSS con hash (siempre buscar versión más reciente del servidor)
+  // Para HTML, JS y CSS: siempre buscar en la red primero, nunca usar cache
   if (url.pathname === '/' || 
       url.pathname === '/index.html' || 
       url.pathname.includes('/static/js/') || 
       url.pathname.includes('/static/css/')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then((response) => {
-          // No cachear estos archivos, siempre usar la versión más reciente
-          return response;
+          // Si la respuesta es exitosa, devolverla sin cachear
+          if (response.status === 200) {
+            return response;
+          }
+          // Si hay error 404, no intentar cache, lanzar error
+          throw new Error('Resource not found');
         })
-        .catch(() => {
-          // Si falla la red, intentar desde cache solo como último recurso
-          return caches.match(event.request);
+        .catch((error) => {
+          // Si falla la red o hay 404, no usar cache para estos archivos
+          // Dejar que el navegador maneje el error
+          console.error('Failed to fetch:', event.request.url, error);
+          return fetch(event.request);
         })
     );
     return;
@@ -71,12 +77,32 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
+          // Eliminar TODOS los caches antiguos, incluyendo versiones anteriores
           if (cacheName !== CACHE_NAME) {
             console.log("Deleting old cache:", cacheName);
             return caches.delete(cacheName);
           }
         })
-      );
+      ).then(() => {
+        // Eliminar también cualquier cache de index.html o archivos JS/CSS
+        return caches.open(CACHE_NAME).then((cache) => {
+          return cache.keys().then((keys) => {
+            return Promise.all(
+              keys.map((key) => {
+                const url = new URL(key.url);
+                // Eliminar cualquier cache de HTML, JS o CSS
+                if (url.pathname === '/' || 
+                    url.pathname === '/index.html' || 
+                    url.pathname.includes('/static/js/') || 
+                    url.pathname.includes('/static/css/')) {
+                  console.log("Deleting cached resource:", url.pathname);
+                  return cache.delete(key);
+                }
+              })
+            );
+          });
+        });
+      });
     })
   );
   // Tomar control inmediato de todas las páginas

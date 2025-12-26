@@ -66,27 +66,47 @@
         // Registrar Service Worker con actualización forzada
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
-                    .then((registration) => {
-                        console.log('SW registered: ', registration);
-                        
-                        // Forzar actualización del Service Worker
-                        registration.update();
-                        
-                        // Escuchar actualizaciones
-                        registration.addEventListener('updatefound', () => {
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'activated') {
-                                    // Recargar página cuando el nuevo SW esté activo
-                                    window.location.reload();
-                                }
-                            });
-                        });
-                    })
-                    .catch((registrationError) => {
-                        console.log('SW registration failed: ', registrationError);
+                // Primero, desregistrar cualquier Service Worker existente
+                navigator.serviceWorker.getRegistrations().then((registrations) => {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                    }
+                }).then(() => {
+                    // Luego registrar el nuevo
+                    return navigator.serviceWorker.register('/sw.js', { 
+                        updateViaCache: 'none',
+                        scope: '/'
                     });
+                }).then((registration) => {
+                    console.log('SW registered: ', registration);
+                    
+                    // Forzar actualización del Service Worker
+                    registration.update();
+                    
+                    // Escuchar actualizaciones
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') {
+                                // Limpiar cache del navegador y recargar
+                                if ('caches' in window) {
+                                    caches.keys().then((cacheNames) => {
+                                        return Promise.all(
+                                            cacheNames.map((cacheName) => caches.delete(cacheName))
+                                        );
+                                    }).then(() => {
+                                        window.location.reload(true);
+                                    });
+                                } else {
+                                    window.location.reload(true);
+                                }
+                            }
+                        });
+                    });
+                })
+                .catch((registrationError) => {
+                    console.log('SW registration failed: ', registrationError);
+                });
             });
         }
     </script>
