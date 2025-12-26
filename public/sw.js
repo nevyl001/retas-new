@@ -1,5 +1,5 @@
 // Service Worker para RetaPadel PWA
-const CACHE_NAME = "retapadel-v1.3.0";
+const CACHE_NAME = "retapadel-v1.4.0";
 const urlsToCache = [
   "/manifest.json",
   "/favicon.svg",
