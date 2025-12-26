@@ -39,46 +39,46 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       </div>
       
       {/* Lista de partidos */}
-      {matches.length === 0 ? (
+        {matches.length === 0 ? (
         <div className="matches-error-simplified">
-          <p>📝 No hay partidos programados aún</p>
-          <p>Inicia la reta para generar los partidos automáticamente</p>
-        </div>
-      ) : (
-        Object.entries(matchesByRound).map(([round, roundMatches]) => (
+            <p>📝 No hay partidos programados aún</p>
+            <p>Inicia la reta para generar los partidos automáticamente</p>
+          </div>
+        ) : (
+          Object.entries(matchesByRound).map(([round, roundMatches]) => (
           <div key={round} className="round-section-simplified">
             <div className="round-header-simplified">
               <h4>🔄 Ronda {round}</h4>
               <span>{roundMatches.length} partidos</span>
-            </div>
+              </div>
             <div className="matches-grid-simplified">
-              {roundMatches.map((match) => (
-                <MatchCardWithResults
-                  key={match.id}
-                  match={match}
-                  isSelected={false}
-                  onSelect={() => {}}
-                  onCorrectScore={async (match: any) => {
-                    console.log(
-                      "🔄 Actualizando tabla para partido:",
-                      match.id
-                    );
-                    try {
-                      // Solo incrementar forceRefresh - StandingsTable se actualizará automáticamente
-                      setForceRefresh((prev) => prev + 1);
-                      console.log("✅ ForceRefresh incrementado");
-                    } catch (error) {
-                      console.error("❌ Error en actualización:", error);
-                    }
-                  }}
-                  forceRefresh={forceRefresh}
-                  userId={userId}
-                />
-              ))}
+                {roundMatches.map((match) => (
+                  <MatchCardWithResults
+                    key={match.id}
+                    match={match}
+                    isSelected={false}
+                    onSelect={() => {}}
+                    onCorrectScore={async (match: any) => {
+                      console.log(
+                        "🔄 Actualizando tabla para partido:",
+                        match.id
+                      );
+                      try {
+                        // Solo incrementar forceRefresh - StandingsTable se actualizará automáticamente
+                        setForceRefresh((prev) => prev + 1);
+                        console.log("✅ ForceRefresh incrementado");
+                      } catch (error) {
+                        console.error("❌ Error en actualización:", error);
+                      }
+                    }}
+                    forceRefresh={forceRefresh}
+                    userId={userId}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))
-      )}
+          ))
+        )}
 
       {/* Tabla de clasificación */}
       <RealTimeStandingsTable

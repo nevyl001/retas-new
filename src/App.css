@@ -3867,11 +3867,11 @@ h1::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+    margin-bottom: 12px;
   padding: 6px 10px;
   background: rgba(20, 20, 35, 0.6);
   border-radius: 10px;
-}
+  }
 
 .round-header-simplified h4 {
   color: #ffd700;
@@ -3939,7 +3939,7 @@ h1::before {
 .matches-container-simplified .modern-editor-content {
   position: relative !important;
   z-index: 50 !important;
-}
+  }
 
 .matches-container-simplified .modern-match-editor button,
 .matches-container-simplified .modern-editor-content button {
@@ -3952,7 +3952,7 @@ h1::before {
 }
 
 .matches-container-simplified .modern-match-status {
-  font-size: 0.75rem;
+    font-size: 0.75rem;
   padding: 4px 10px;
 }
 
@@ -3963,8 +3963,8 @@ h1::before {
 
 .matches-container-simplified .modern-match-badge {
   font-size: 0.7rem;
-  padding: 3px 6px;
-}
+    padding: 3px 6px;
+  }
 
 .matches-container-simplified .modern-pair-info {
   padding: 5px 8px;
