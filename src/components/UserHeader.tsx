@@ -7,7 +7,9 @@ export const UserHeader: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleSignOut = async () => {
     if (isSigningOut) return; // Evitar múltiples clics
@@ -35,12 +37,25 @@ export const UserHeader: React.FC = () => {
       .slice(0, 2);
   };
 
+  // Calcular posición del dropdown cuando se abre
+  useEffect(() => {
+    if (showDropdown && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        top: rect.bottom + 10,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [showDropdown]);
+
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
       ) {
         setShowDropdown(false);
       }
@@ -66,6 +81,7 @@ export const UserHeader: React.FC = () => {
           {/* Menú de escritorio */}
           <div className="user-profile desktop-only" ref={dropdownRef}>
             <button
+              ref={buttonRef}
               className="user-profile-btn"
               onClick={() => setShowDropdown(!showDropdown)}
             >
@@ -94,7 +110,14 @@ export const UserHeader: React.FC = () => {
             </button>
 
             {showDropdown && (
-              <div className="user-dropdown">
+              <div
+                ref={dropdownRef}
+                className="user-dropdown"
+                style={{
+                  top: `${dropdownPosition.top}px`,
+                  right: `${dropdownPosition.right}px`,
+                }}
+              >
                 <div className="user-dropdown-content">
                   <div className="user-dropdown-actions">
                     <button
