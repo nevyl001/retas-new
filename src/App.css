@@ -3145,8 +3145,20 @@ h1::before {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
+}
+
+/* En móvil, asegurar que los botones no se corten */
+@media (max-width: 768px) {
+  .modern-match-card {
+    overflow: visible !important;
+  }
+  
+  .modern-match-card::after {
+    pointer-events: none !important;
+    z-index: 0 !important;
+  }
 }
 
 .modern-match-card::after {
@@ -3893,6 +3905,7 @@ h1::before {
   border-radius: 12px;
   position: relative;
   z-index: 1;
+  overflow: visible !important;
 }
 
 /* Asegurar que los elementos interactivos dentro de las tarjetas funcionen */

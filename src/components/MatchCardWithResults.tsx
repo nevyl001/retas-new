@@ -449,6 +449,15 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
+                  addGame();
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
                   addGame();
                 }}
                 className="modern-add-game-btn"
@@ -487,6 +496,15 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
+                  finishMatch();
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
                   finishMatch();
                 }}
                 className="modern-finish-match-btn"
