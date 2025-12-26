@@ -192,8 +192,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         tie_break_pair2_points: 0,
       });
 
-      // Recargar datos
+      // Recargar datos inmediatamente
       await loadData();
+      
+      // Asegurar que los juegos se carguen correctamente
+      const matchGames = await getGames(currentMatch.id);
+      setGames(matchGames);
+      console.log("✅ Juegos actualizados:", matchGames.length);
 
       // Actualizar tabla automáticamente
       await updateTable();
@@ -211,12 +216,15 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setPair1Score("");
       setPair2Score("");
 
-      console.log("✅ Juego agregado");
+      console.log("✅ Juego agregado, total de juegos:", matchGames.length);
       
       // Forzar re-render después de un pequeño delay para asegurar que la UI se actualice
-      setTimeout(() => {
-        loadData();
-      }, 200);
+      setTimeout(async () => {
+        await loadData();
+        const updatedGames = await getGames(currentMatch.id);
+        setGames(updatedGames);
+        console.log("✅ Re-render completado, juegos:", updatedGames.length);
+      }, 300);
     } catch (err) {
       console.error("❌ Error agregando juego:", err);
       setError("Error al agregar juego");
@@ -235,9 +243,21 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
       await deleteGame(gameId);
       await loadData();
+      
+      // Asegurar que los juegos se actualicen correctamente
+      const matchGames = await getGames(currentMatch.id);
+      setGames(matchGames);
+      
       await updateTable();
 
-      console.log("✅ Juego eliminado");
+      console.log("✅ Juego eliminado, juegos restantes:", matchGames.length);
+      
+      // Forzar re-render
+      setTimeout(async () => {
+        await loadData();
+        const updatedGames = await getGames(currentMatch.id);
+        setGames(updatedGames);
+      }, 200);
     } catch (err) {
       console.error("❌ Error eliminando juego:", err);
       setError("Error al eliminar juego");
@@ -293,6 +313,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
         // Recargar datos y actualizar tabla automáticamente
         await loadData();
+        
+        // Asegurar que los juegos se carguen correctamente
+        const matchGames = await getGames(currentMatch.id);
+        setGames(matchGames);
+        
         await updateTable();
         
         // Cerrar el editor después de finalizar
@@ -308,12 +333,20 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           }
         }
 
-        console.log("✅ Partido finalizado");
+        console.log("✅ Partido finalizado, juegos:", matchGames.length);
         
         // Forzar re-render después de un pequeño delay para asegurar que la UI se actualice
-        setTimeout(() => {
-          loadData();
-        }, 200);
+        setTimeout(async () => {
+          await loadData();
+          const updatedGames = await getGames(currentMatch.id);
+          setGames(updatedGames);
+          const matches = await getMatches(currentMatch.tournament_id);
+          const updatedMatch = matches.find((m) => m.id === currentMatch.id);
+          if (updatedMatch) {
+            setCurrentMatch(updatedMatch);
+          }
+          console.log("✅ Re-render completado después de finalizar");
+        }, 300);
       } else {
         setError("Error: " + result.message);
       }
@@ -353,6 +386,20 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   useEffect(() => {
     loadData();
   }, [loadData, forceRefresh, match.status]);
+  
+  // Actualizar juegos cuando cambia forceRefresh o cuando se agrega/elimina un juego
+  useEffect(() => {
+    if (currentMatch) {
+      getGames(currentMatch.id).then((matchGames) => {
+        if (matchGames.length !== games.length) {
+          setGames(matchGames);
+          console.log("✅ Juegos actualizados:", matchGames.length);
+        }
+      }).catch((err) => {
+        console.error("❌ Error cargando juegos:", err);
+      });
+    }
+  }, [forceRefresh, currentMatch?.id]);
 
   // Actualizar currentMatch cuando el prop match cambia
   useEffect(() => {

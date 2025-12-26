@@ -22319,6 +22319,9 @@ body::before {
 .modern-games-list {
   margin-bottom: 28px;
   padding: 16px;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .modern-games-list-title {
