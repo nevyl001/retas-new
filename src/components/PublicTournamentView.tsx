@@ -347,7 +347,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {showWinner && tournamentWinner && (
         <div className="public-winner-section">
           <div className="public-winner-header">
-            <h2 className="public-winner-title">🏆 ¡GANADOR DE LA RETA! 🏆</h2>
+            <h2 className="public-winner-title">🏆 GANADORES DE LA RETA 🏆</h2>
           </div>
           <div className="public-winner-content">
             <div className="public-winner-names">

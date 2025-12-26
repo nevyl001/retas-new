@@ -22,7 +22,7 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
       <div className="elegant-winner-screen">
         <div className="elegant-winner-section">
           <div className="elegant-winner-header">
-            <h1 className="elegant-winner-title">🏆 ¡GANADOR DE LA RETA! 🏆</h1>
+            <h1 className="elegant-winner-title">🏆 GANADORES DE LA RETA 🏆</h1>
           </div>
           <div className="elegant-winner-content">
             <div className="elegant-winner-names">
