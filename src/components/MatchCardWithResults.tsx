@@ -61,10 +61,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       const matchGames = await getGames(match.id);
       setGames(matchGames);
       
-      // Si el match está finalizado, cerrar el editor
-      if (updatedMatch.status === 'finished' && isEditing) {
-        setIsEditing(false);
-      }
+      // Permitir edición incluso si está finalizado (para reabrir o ajustar juegos)
 
       console.log("✅ Datos cargados");
     } catch (err) {
@@ -410,10 +407,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         if (!isMounted) return;
         setGames(matchGames);
         
-        // Si el match está finalizado, cerrar el editor
-        if (updatedMatch.status === 'finished' && isEditing) {
-          setIsEditing(false);
-        }
+        // Mantener el editor abierto aunque esté finalizado (se puede reabrir)
 
         console.log("✅ Datos cargados");
       } catch (err) {
