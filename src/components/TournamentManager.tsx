@@ -30,6 +30,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   });
 
   // Cargar retas cuando el usuario cambie
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     console.log("🔄 useEffect ejecutado, usuario:", user?.id);
 

@@ -39,6 +39,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     let isMounted = true;
 
@@ -172,7 +173,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         };
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
