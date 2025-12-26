@@ -6485,11 +6485,13 @@ td {
   .table-container {
     overflow-x: auto !important;
     border-radius: 8px !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   table {
     font-size: 0.9rem !important;
-    min-width: 600px !important;
+    width: 100% !important;
+    min-width: 100% !important;
   }
 
   th,
@@ -7090,7 +7092,20 @@ td {
   /* Table improvements */
   table {
     font-size: 0.8rem !important;
-    min-width: 500px !important;
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+  
+  /* Hacer columnas más compactas en móviles pequeños */
+  .table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table th,
+  table td {
+    padding: 6px 4px !important;
+    font-size: 0.75rem !important;
   }
 
   th,

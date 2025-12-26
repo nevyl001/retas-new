@@ -312,8 +312,10 @@
 @media (max-width: 768px) {
   .new-standings-container {
     padding: 16px 12px;
-    margin: 0 -8px 20px -8px;
-    width: calc(100% + 16px);
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .new-standings-header {
@@ -333,10 +335,12 @@
 
   .new-standings-table-wrapper {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .new-standings-table {
-    min-width: 600px;
+    min-width: 100%;
+    width: 100%;
   }
 
   .new-standings-table th,
@@ -372,8 +376,10 @@
 @media (max-width: 480px) {
   .new-standings-container {
     padding: 12px 8px;
-    margin: 0 -4px 20px -4px;
-    width: calc(100% + 8px);
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .new-standings-header h2 {
@@ -381,7 +387,37 @@
   }
 
   .new-standings-table {
-    min-width: 500px;
+    min-width: 100%;
+    width: 100%;
+  }
+  
+  .new-standings-table th,
+  .new-standings-table td {
+    padding: 6px 4px;
+    font-size: 0.75rem;
+  }
+  
+  /* Hacer columnas más compactas en móvil */
+  .new-standings-table th:first-child,
+  .new-standings-table td:first-child {
+    width: 15%;
+    min-width: 50px;
+  }
+  
+  .new-standings-table th:nth-child(2),
+  .new-standings-table td:nth-child(2) {
+    width: 40%;
+    min-width: 120px;
+  }
+  
+  .new-standings-table th:nth-child(3),
+  .new-standings-table th:nth-child(4),
+  .new-standings-table th:nth-child(5),
+  .new-standings-table td:nth-child(3),
+  .new-standings-table td:nth-child(4),
+  .new-standings-table td:nth-child(5) {
+    width: 15%;
+    min-width: 45px;
   }
 
   .new-standings-table th,
@@ -417,12 +453,44 @@
 @media (max-width: 375px) {
   .new-standings-container {
     padding: 8px 4px;
-    margin: 0 -2px 20px -2px;
-    width: calc(100% + 4px);
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .new-standings-table {
-    min-width: 450px;
+    min-width: 100%;
+    width: 100%;
+  }
+  
+  /* Ajustes adicionales para pantallas muy pequeñas */
+  .new-standings-table th,
+  .new-standings-table td {
+    padding: 4px 2px;
+    font-size: 0.7rem;
+  }
+  
+  .new-standings-table th:first-child,
+  .new-standings-table td:first-child {
+    width: 12%;
+    min-width: 40px;
+  }
+  
+  .new-standings-table th:nth-child(2),
+  .new-standings-table td:nth-child(2) {
+    width: 35%;
+    min-width: 100px;
+  }
+  
+  .new-standings-table th:nth-child(3),
+  .new-standings-table th:nth-child(4),
+  .new-standings-table th:nth-child(5),
+  .new-standings-table td:nth-child(3),
+  .new-standings-table td:nth-child(4),
+  .new-standings-table td:nth-child(5) {
+    width: 17.6%;
+    min-width: 40px;
   }
 
   .new-standings-table th,
