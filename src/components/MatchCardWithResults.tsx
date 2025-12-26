@@ -162,7 +162,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
     const score1 = parseInt(pair1Score);
     const score2 = parseInt(pair2Score);
-    const ownerId = userId || currentMatch.created_by || "";
+    const ownerId = userId || "";
 
     if (isNaN(score1) || isNaN(score2)) {
       setError("Ingresa puntuaciones válidas");
