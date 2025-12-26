@@ -3760,6 +3760,17 @@ h1::before {
   max-width: 100%;
   padding: 12px;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+/* Asegurar que los botones dentro del contenedor simplificado funcionen */
+.matches-container-simplified button,
+.matches-container-simplified .modern-add-game-btn,
+.matches-container-simplified .modern-finish-match-btn {
+  pointer-events: auto !important;
+  z-index: 10 !important;
+  position: relative !important;
 }
 
 .matches-header-simplified {
@@ -3846,6 +3857,31 @@ h1::before {
   padding: 14px;
   margin-bottom: 0;
   border-radius: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Asegurar que los elementos interactivos dentro de las tarjetas funcionen */
+.matches-container-simplified .modern-match-card * {
+  pointer-events: auto;
+}
+
+.matches-container-simplified .modern-match-card::after,
+.matches-container-simplified .modern-match-card::before {
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+/* Asegurar que botones y elementos interactivos estén por encima */
+.matches-container-simplified button,
+.matches-container-simplified .modern-add-game-btn,
+.matches-container-simplified .modern-finish-match-btn,
+.matches-container-simplified .modern-match-btn,
+.matches-container-simplified input,
+.matches-container-simplified select {
+  position: relative !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
 }
 
 .matches-container-simplified .modern-match-title {
@@ -8062,10 +8098,25 @@ td {
     scroll-behavior: smooth !important;
   }
 
-  /* Optimizar animaciones para móvil */
-  * {
+  /* Optimizar animaciones para móvil - EXCEPTO botones */
+  *:not(button):not(input):not(select):not(textarea) {
     -webkit-transform: translateZ(0) !important;
     transform: translateZ(0) !important;
+  }
+  
+  /* Asegurar que los botones sean clickeables en móvil */
+  button,
+  .modern-add-game-btn,
+  .modern-finish-match-btn,
+  .modern-match-btn,
+  .add-game,
+  .finish-match,
+  .modern-score-editor-add-game {
+    pointer-events: auto !important;
+    z-index: 10 !important;
+    position: relative !important;
+    -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3) !important;
+    touch-action: manipulation !important;
   }
 
   /* Mejorar rendimiento de hover en móvil */
@@ -22156,6 +22207,10 @@ body::before {
   backdrop-filter: blur(15px);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.5px;
+  z-index: 10;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3);
+  touch-action: manipulation;
 }
 
 .modern-add-game-btn::before {
@@ -22304,6 +22359,10 @@ body::before {
   backdrop-filter: blur(15px);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.5px;
+  z-index: 10;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3);
+  touch-action: manipulation;
 }
 
 .modern-finish-match-btn::before {
