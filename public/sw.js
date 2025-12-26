@@ -1,5 +1,5 @@
-// Service Worker para RetaPadel PWA
-const CACHE_NAME = "retapadel-v1.5.0";
+// Service Worker para RetaPadel PWA - Versión minimalista
+const CACHE_NAME = "retapadel-v2.0.0";
 const urlsToCache = [
   "/manifest.json",
   "/favicon.svg",
@@ -7,90 +7,32 @@ const urlsToCache = [
   "/icon-192x192.png",
   "/icon-512x512.png",
   "/imgmeta-optimized.jpg",
-  "/ios-pwa.css",
 ];
 
-// Install event
+// Install event - solo cachear assets estáticos
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log("Opened cache");
       return cache.addAll(urlsToCache);
-    })
-  );
-  // Forzar activación inmediata del nuevo Service Worker
-  self.skipWaiting();
-});
-
-// Fetch event - Network First para archivos JS/CSS con hash y HTML
-self.addEventListener("fetch", (event) => {
-  const url = new URL(event.request.url);
-  
-  // Para HTML, JS y CSS: NUNCA usar cache, siempre red
-  if (url.pathname === '/' || 
-      url.pathname === '/index.html' || 
-      url.pathname.startsWith('/static/js/') || 
-      url.pathname.startsWith('/static/css/') ||
-      url.pathname.includes('.js') ||
-      url.pathname.includes('.css')) {
-    event.respondWith(
-      fetch(event.request, { 
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      })
-        .then((response) => {
-          if (response && response.status === 200) {
-            return response;
-          }
-          throw new Error('Resource not found');
-        })
-        .catch((error) => {
-          console.error('Failed to fetch:', event.request.url, error);
-          // No usar cache de respaldo para JS/CSS/HTML
-          return new Response('Resource not available', { status: 503 });
-        })
-    );
-    return;
-  }
-  
-  // Para otros recursos estáticos (imágenes, iconos, etc.), usar cache primero
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request).then((response) => {
-        // Cachear solo si es exitoso
-        if (response.status === 200) {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return response;
-      });
-    })
+    }).then(() => self.skipWaiting())
   );
 });
 
-// Activate event
+// Activate event - limpiar TODO
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // Eliminar TODOS los caches
-          console.log("Deleting cache:", cacheName);
           return caches.delete(cacheName);
         })
       );
-    }).then(() => {
-      // Tomar control de las páginas
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim())
   );
+});
+
+// Fetch event - NO CACHEAR NADA, solo pasar al network
+self.addEventListener("fetch", (event) => {
+  // Simplemente pasar todas las peticiones a la red sin cache
+  event.respondWith(fetch(event.request));
 });
