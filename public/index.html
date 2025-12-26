@@ -63,46 +63,19 @@
     <div id="root"></div>
 
     <script>
-        // Registrar Service Worker con actualización forzada
+        // Registrar Service Worker sin recargas automáticas
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Primero, desregistrar cualquier Service Worker existente
-                navigator.serviceWorker.getRegistrations().then((registrations) => {
-                    for (let registration of registrations) {
-                        registration.unregister();
-                    }
-                }).then(() => {
-                    // Luego registrar el nuevo
-                    return navigator.serviceWorker.register('/sw.js', { 
-                        updateViaCache: 'none',
-                        scope: '/'
-                    });
+                navigator.serviceWorker.register('/sw.js', { 
+                    updateViaCache: 'none',
+                    scope: '/'
                 }).then((registration) => {
                     console.log('SW registered: ', registration);
                     
-                    // Forzar actualización del Service Worker
-                    registration.update();
-                    
-                    // Escuchar actualizaciones
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'activated') {
-                                // Limpiar cache del navegador y recargar
-                                if ('caches' in window) {
-                                    caches.keys().then((cacheNames) => {
-                                        return Promise.all(
-                                            cacheNames.map((cacheName) => caches.delete(cacheName))
-                                        );
-                                    }).then(() => {
-                                        window.location.reload(true);
-                                    });
-                                } else {
-                                    window.location.reload(true);
-                                }
-                            }
-                        });
-                    });
+                    // Solo verificar actualizaciones periódicamente, sin recargar automáticamente
+                    setInterval(() => {
+                        registration.update();
+                    }, 60000); // Verificar cada minuto
                 })
                 .catch((registrationError) => {
                     console.log('SW registration failed: ', registrationError);
