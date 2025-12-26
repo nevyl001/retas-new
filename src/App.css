@@ -2957,11 +2957,24 @@ h1::before {
   gap: 32px;
 }
 
-/* Ajustes responsive para reta-content */
+/* Ajustes responsive para reta-content - SOLO gap */
 @media (max-width: 768px) {
   .reta-content {
     gap: 20px;
-    padding: 16px;
+  }
+}
+
+/* iPhone 17 Pro Max y pantallas móviles grandes (430px - 480px) */
+@media (max-width: 480px) and (min-width: 430px) {
+  .reta-content {
+    gap: 16px;
+  }
+}
+
+/* Pantallas móviles extra grandes (iPhone Pro Max) */
+@media (max-width: 430px) {
+  .reta-content {
+    gap: 12px;
   }
 }
 
