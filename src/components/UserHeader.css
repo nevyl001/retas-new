@@ -8,6 +8,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  overflow: visible;
 }
 
 .user-header-content {
@@ -19,7 +20,7 @@
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .user-header-logo {
@@ -49,6 +50,7 @@
 .user-profile {
   position: relative;
   z-index: 1001;
+  overflow: visible;
 }
 
 .user-profile-btn {
