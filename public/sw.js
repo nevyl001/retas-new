@@ -83,28 +83,10 @@ self.addEventListener("activate", (event) => {
             return caches.delete(cacheName);
           }
         })
-      ).then(() => {
-        // Eliminar también cualquier cache de index.html o archivos JS/CSS
-        return caches.open(CACHE_NAME).then((cache) => {
-          return cache.keys().then((keys) => {
-            return Promise.all(
-              keys.map((key) => {
-                const url = new URL(key.url);
-                // Eliminar cualquier cache de HTML, JS o CSS
-                if (url.pathname === '/' || 
-                    url.pathname === '/index.html' || 
-                    url.pathname.includes('/static/js/') || 
-                    url.pathname.includes('/static/css/')) {
-                  console.log("Deleting cached resource:", url.pathname);
-                  return cache.delete(key);
-                }
-              })
-            );
-          });
-        });
-      });
+      );
+    }).then(() => {
+      // Tomar control de las páginas sin forzar recarga
+      return self.clients.claim();
     })
   );
-  // Tomar control inmediato de todas las páginas
-  return self.clients.claim();
 });

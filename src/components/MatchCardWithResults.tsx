@@ -381,42 +381,73 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
-  // Cargar datos al montar, cambiar match.id, o cuando cambie forceRefresh
+  // Cargar datos al montar o cuando cambian las dependencias críticas
   useEffect(() => {
-    loadData();
-  }, [loadData, forceRefresh, match.status]);
-  
-  // Actualizar juegos cuando cambia forceRefresh o cuando se agrega/elimina un juego
-  useEffect(() => {
-    if (currentMatch) {
-      getGames(currentMatch.id).then((matchGames) => {
-        if (matchGames.length !== games.length) {
-          setGames(matchGames);
-          console.log("✅ Juegos actualizados:", matchGames.length);
-        }
-      }).catch((err) => {
-        console.error("❌ Error cargando juegos:", err);
-      });
-    }
-  }, [forceRefresh, currentMatch?.id]);
+    let isMounted = true;
+    
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  // Actualizar currentMatch cuando el prop match cambia
-  useEffect(() => {
-    if (match) {
-      // Si el match prop cambió (especialmente el status), actualizar el estado local
-      if (!currentMatch || 
-          match.id !== currentMatch.id || 
-          match.status !== currentMatch.status ||
-          match.pair1_score !== currentMatch.pair1_score ||
-          match.pair2_score !== currentMatch.pair2_score) {
-        setCurrentMatch(match);
-        // Si el status cambió a finished, cerrar el editor
-        if (match.status === 'finished' && isEditing) {
+        // Cargar partido actualizado
+        const matches = await getMatches(match.tournament_id);
+        const updatedMatch = matches.find((m) => m.id === match.id);
+        if (!updatedMatch) throw new Error("Partido no encontrado");
+        
+        if (!isMounted) return;
+        setCurrentMatch(updatedMatch);
+
+        // Cargar parejas
+        const pairs = await getPairs(match.tournament_id);
+        const p1 = pairs.find((p) => p.id === updatedMatch.pair1_id);
+        const p2 = pairs.find((p) => p.id === updatedMatch.pair2_id);
+        setPair1(p1 || null);
+        setPair2(p2 || null);
+
+        // Cargar juegos
+        const matchGames = await getGames(match.id);
+        if (!isMounted) return;
+        setGames(matchGames);
+        
+        // Si el match está finalizado, cerrar el editor
+        if (updatedMatch.status === 'finished' && isEditing) {
           setIsEditing(false);
         }
+
+        console.log("✅ Datos cargados");
+      } catch (err) {
+        if (!isMounted) return;
+        console.error("❌ Error cargando datos:", err);
+        setError("Error cargando datos");
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [match.id, match.tournament_id, match.status, forceRefresh]);
+
+  // Actualizar currentMatch cuando el prop match cambia (solo si realmente cambió)
+  useEffect(() => {
+    if (match && (!currentMatch || 
+        match.id !== currentMatch.id || 
+        match.status !== currentMatch.status ||
+        match.pair1_score !== currentMatch.pair1_score ||
+        match.pair2_score !== currentMatch.pair2_score)) {
+      setCurrentMatch(match);
+      // Si el status cambió a finished, cerrar el editor
+      if (match.status === 'finished' && isEditing) {
+        setIsEditing(false);
       }
     }
-  }, [match, currentMatch, isEditing]);
+  }, [match.id, match.status, match.pair1_score, match.pair2_score]);
 
   if (loading) {
     return (

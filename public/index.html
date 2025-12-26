@@ -63,7 +63,7 @@
     <div id="root"></div>
 
     <script>
-        // Registrar Service Worker sin recargas automáticas
+        // Registrar Service Worker de forma simple, sin verificaciones automáticas
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js', { 
@@ -71,11 +71,6 @@
                     scope: '/'
                 }).then((registration) => {
                     console.log('SW registered: ', registration);
-                    
-                    // Solo verificar actualizaciones periódicamente, sin recargar automáticamente
-                    setInterval(() => {
-                        registration.update();
-                    }, 60000); // Verificar cada minuto
                 })
                 .catch((registrationError) => {
                     console.log('SW registration failed: ', registrationError);
