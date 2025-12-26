@@ -73,7 +73,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [match.id, match.tournament_id]);
+  }, [match.id, match.tournament_id, isEditing]);
 
   // Función simple y eficiente para actualizar tabla
   const updateTable = async () => {
@@ -432,7 +432,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [match.id, match.tournament_id, match.status, forceRefresh]);
+  }, [match.id, match.tournament_id, match.status, forceRefresh, isEditing]);
 
   // Actualizar currentMatch cuando el prop match cambia (solo si realmente cambió)
   useEffect(() => {
@@ -447,7 +447,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         setIsEditing(false);
       }
     }
-  }, [match.id, match.status, match.pair1_score, match.pair2_score]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [match.id, match.status, match.pair1_score, match.pair2_score, isEditing]);
 
   if (loading) {
     return (
