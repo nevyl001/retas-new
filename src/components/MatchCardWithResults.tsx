@@ -70,7 +70,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [match.id, match.tournament_id, isEditing]);
+  }, [match.id, match.tournament_id]);
 
   // Función simple y eficiente para actualizar tabla
   const updateTable = async () => {
@@ -209,6 +209,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       // Recargar datos y UI inmediatamente
       await refreshFromServer();
 
+      // Log con la cantidad más reciente de juegos
+      if (currentMatch) {
+        const latestGames = await getGames(currentMatch.id);
+        setGames(latestGames);
+        console.log("✅ Juego agregado, total de juegos:", latestGames.length);
+      }
+
       // Limpiar inputs
       setPair1Score("");
       setPair2Score("");
@@ -235,7 +242,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       await deleteGame(gameId);
       await refreshFromServer();
 
-      console.log("✅ Juego eliminado, juegos restantes:", matchGames.length);
+      if (currentMatch) {
+        const latestGames = await getGames(currentMatch.id);
+        setGames(latestGames);
+        console.log("✅ Juego eliminado, juegos restantes:", latestGames.length);
+      }
     } catch (err) {
       console.error("❌ Error eliminando juego:", err);
       setError("Error al eliminar juego");
