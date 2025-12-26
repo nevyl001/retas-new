@@ -3767,10 +3767,44 @@ h1::before {
 /* Asegurar que los botones dentro del contenedor simplificado funcionen */
 .matches-container-simplified button,
 .matches-container-simplified .modern-add-game-btn,
-.matches-container-simplified .modern-finish-match-btn {
+.matches-container-simplified .modern-finish-match-btn,
+.matches-container-simplified .modern-match-btn,
+.matches-container-simplified .modern-delete-game-btn,
+.matches-container-simplified .new-recalculate-button {
   pointer-events: auto !important;
-  z-index: 10 !important;
+  z-index: 100 !important;
   position: relative !important;
+  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3) !important;
+  touch-action: manipulation !important;
+}
+
+/* Asegurar que la tabla de clasificación sea visible */
+.matches-container-simplified .new-standings-container {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 1 !important;
+  margin-top: 20px !important;
+  margin-bottom: 20px !important;
+}
+
+.matches-container-simplified .new-standings-container::after {
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+.matches-container-simplified .new-standings-container * {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.matches-container-simplified .new-standings-container button {
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3) !important;
+  touch-action: manipulation !important;
 }
 
 .matches-header-simplified {
@@ -3877,10 +3911,26 @@ h1::before {
 .matches-container-simplified .modern-add-game-btn,
 .matches-container-simplified .modern-finish-match-btn,
 .matches-container-simplified .modern-match-btn,
+.matches-container-simplified .modern-delete-game-btn,
 .matches-container-simplified input,
 .matches-container-simplified select {
   position: relative !important;
-  z-index: 10 !important;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3) !important;
+  touch-action: manipulation !important;
+}
+
+/* Asegurar que el editor de partidos y sus botones funcionen */
+.matches-container-simplified .modern-match-editor,
+.matches-container-simplified .modern-editor-content {
+  position: relative !important;
+  z-index: 50 !important;
+}
+
+.matches-container-simplified .modern-match-editor button,
+.matches-container-simplified .modern-editor-content button {
+  z-index: 101 !important;
   pointer-events: auto !important;
 }
 
@@ -22203,14 +22253,22 @@ body::before {
   gap: 10px;
   width: 100%;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   backdrop-filter: blur(15px);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.5px;
-  z-index: 10;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3);
-  touch-action: manipulation;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3) !important;
+  touch-action: manipulation !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+.modern-add-game-btn::before,
+.modern-add-game-btn::after {
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
 .modern-add-game-btn::before {
@@ -22355,14 +22413,22 @@ body::before {
   gap: 10px;
   width: 100%;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   backdrop-filter: blur(15px);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   letter-spacing: 0.5px;
-  z-index: 10;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3);
-  touch-action: manipulation;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3) !important;
+  touch-action: manipulation !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+.modern-finish-match-btn::before,
+.modern-finish-match-btn::after {
+  pointer-events: none !important;
+  z-index: -1 !important;
 }
 
 .modern-finish-match-btn::before {
