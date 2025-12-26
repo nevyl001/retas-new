@@ -25,6 +25,38 @@
   }
 }
 
+/* iPhone 17 Pro Max y pantallas móviles grandes (430px - 480px) */
+@media (max-width: 480px) and (min-width: 430px) {
+  .header-section {
+    padding: 0.75rem 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .header-section h1 {
+    font-size: 1.1rem;
+    line-height: 1.3;
+    padding: 0 4px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Pantallas móviles extra grandes (iPhone Pro Max) */
+@media (max-width: 430px) {
+  .header-section {
+    padding: 0.5rem 0.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .header-section h1 {
+    font-size: 1rem;
+    line-height: 1.2;
+    padding: 0 2px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
 /* Responsive Design - Complete Overhaul */
 
 /* Deshabilitar animaciones shimmer para evitar mareos */
@@ -3626,6 +3658,78 @@ h1::before {
   .modern-match-status {
     font-size: 0.75rem;
     padding: 5px 10px;
+  }
+}
+
+/* iPhone 17 Pro Max y pantallas móviles grandes (430px - 480px) */
+@media (max-width: 480px) and (min-width: 430px) {
+  .modern-matches-section {
+    padding: 14px;
+  }
+
+  .modern-matches-title {
+    padding: 8px 12px;
+  }
+
+  .modern-matches-title h3 {
+    font-size: 1rem;
+  }
+
+  .modern-match-card {
+    padding: 12px;
+  }
+
+  .modern-match-title {
+    font-size: 0.9rem;
+  }
+
+  .modern-round-header {
+    padding: 6px 8px;
+    margin-bottom: 8px;
+  }
+
+  .modern-round-title {
+    font-size: 0.85rem;
+  }
+
+  .modern-pair-names {
+    font-size: 0.8rem;
+  }
+}
+
+/* Pantallas móviles extra grandes (iPhone Pro Max) */
+@media (max-width: 430px) {
+  .modern-matches-section {
+    padding: 12px;
+  }
+
+  .modern-matches-title {
+    padding: 6px 10px;
+  }
+
+  .modern-matches-title h3 {
+    font-size: 0.95rem;
+  }
+
+  .modern-match-card {
+    padding: 10px;
+  }
+
+  .modern-match-title {
+    font-size: 0.85rem;
+  }
+
+  .modern-round-header {
+    padding: 5px 6px;
+    margin-bottom: 6px;
+  }
+
+  .modern-round-title {
+    font-size: 0.8rem;
+  }
+
+  .modern-pair-names {
+    font-size: 0.75rem;
   }
 
   .modern-match-badges {

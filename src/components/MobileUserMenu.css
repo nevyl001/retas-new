@@ -192,6 +192,46 @@
     padding: 0 12px;
     margin: 0 -30px;
   }
+}
+
+/* iPhone 17 Pro Max y pantallas móviles grandes (430px - 480px) */
+@media (max-width: 480px) and (min-width: 430px) {
+  .mobile-user-menu {
+    padding: 0 10px;
+    margin: 0 -20px;
+  }
+
+  .mobile-user-info {
+    padding: 6px 8px;
+  }
+
+  .mobile-user-name {
+    font-size: 13px;
+  }
+
+  .mobile-user-email {
+    font-size: 10px;
+  }
+}
+
+/* Pantallas móviles extra grandes (iPhone Pro Max) */
+@media (max-width: 430px) {
+  .mobile-user-menu {
+    padding: 0 8px;
+    margin: 0 -16px;
+  }
+
+  .mobile-user-info {
+    padding: 5px 6px;
+  }
+
+  .mobile-user-name {
+    font-size: 12px;
+  }
+
+  .mobile-user-email {
+    font-size: 9px;
+  }
 
   .mobile-user-info {
     padding: 6px 10px;
