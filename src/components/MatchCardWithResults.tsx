@@ -368,13 +368,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         if (match.status === 'finished' && isEditing) {
           setIsEditing(false);
         }
-        // Si el match cambió, recargar datos para asegurar sincronización
-        if (match.id === currentMatch?.id) {
-          loadData();
-        }
       }
     }
-  }, [match, currentMatch, isEditing, loadData]);
+  }, [match, currentMatch, isEditing]);
 
   if (loading) {
     return (
