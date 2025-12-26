@@ -311,12 +311,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           `🏆 Partido finalizado: ${pair1FinalScore} - ${pair2FinalScore}`
         );
 
+        // Actualizar el estado de juegos con los que ya tenemos
+        setGames(matchGames);
+
         // Recargar datos y actualizar tabla automáticamente
         await loadData();
-        
-        // Asegurar que los juegos se carguen correctamente
-        const matchGames = await getGames(currentMatch.id);
-        setGames(matchGames);
         
         await updateTable();
         
