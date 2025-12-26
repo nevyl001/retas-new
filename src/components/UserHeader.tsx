@@ -7,22 +7,18 @@ export const UserHeader: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleSignOut = async () => {
-    if (isSigningOut) return; // Evitar múltiples clics
-
-    console.log("🚪 Intentando cerrar sesión...");
+    if (isSigningOut) return;
     setIsSigningOut(true);
-    setShowDropdown(false); // Cerrar dropdown inmediatamente
+    setShowDropdown(false);
 
     try {
       await signOut();
-      console.log("✅ Sesión cerrada exitosamente");
     } catch (error) {
-      console.error("❌ Error al cerrar sesión:", error);
+      console.error("Error al cerrar sesión:", error);
     } finally {
       setIsSigningOut(false);
     }
@@ -36,17 +32,6 @@ export const UserHeader: React.FC = () => {
       .toUpperCase()
       .slice(0, 2);
   };
-
-  // Calcular posición del dropdown cuando se abre
-  useEffect(() => {
-    if (showDropdown && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + 10,
-        right: window.innerWidth - rect.right,
-      });
-    }
-  }, [showDropdown]);
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
@@ -79,7 +64,7 @@ export const UserHeader: React.FC = () => {
 
         <div className="user-header-actions">
           {/* Menú de escritorio */}
-          <div className="user-profile desktop-only" ref={dropdownRef}>
+          <div className="user-profile-wrapper desktop-only">
             <button
               ref={buttonRef}
               className="user-profile-btn"
@@ -110,26 +95,15 @@ export const UserHeader: React.FC = () => {
             </button>
 
             {showDropdown && (
-              <div
-                ref={dropdownRef}
-                className="user-dropdown"
-                style={{
-                  top: `${dropdownPosition.top}px`,
-                  right: `${dropdownPosition.right}px`,
-                }}
-              >
-                <div className="user-dropdown-content">
-                  <div className="user-dropdown-actions">
-                    <button
-                      className="dropdown-action-btn logout-btn"
-                      onClick={handleSignOut}
-                      disabled={isSigningOut}
-                    >
-                      <span className="dropdown-icon">🚪</span>
-                      {isSigningOut ? "Cerrando..." : "Cerrar Sesión"}
-                    </button>
-                  </div>
-                </div>
+              <div ref={dropdownRef} className="user-dropdown-menu">
+                <button
+                  className="logout-button"
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                >
+                  <span>🚪</span>
+                  <span>{isSigningOut ? "Cerrando..." : "Cerrar Sesión"}</span>
+                </button>
               </div>
             )}
           </div>
