@@ -581,6 +581,15 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
+                        removeGame(game.id);
+                      }}
+                      onTouchStart={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onTouchEnd={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
                         removeGame(game.id);
                       }}
                       className="modern-delete-game-btn"
