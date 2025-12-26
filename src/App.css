@@ -3968,89 +3968,112 @@ h1::before {
   }
 }
 
-  .modern-match-badges {
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  .modern-match-badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-  }
-
-  .modern-pair-info {
-    padding: 6px 10px;
-    margin-bottom: 6px;
-  }
-
-  .modern-pair-label {
-    font-size: 0.8rem;
-    min-width: 60px;
-  }
-
-  .modern-pair-names {
-    font-size: 0.85rem;
-  }
-
-  .modern-games-results {
+/* Samsung Galaxy S25 y pantallas similares (430px - 480px) */
+@media (max-width: 480px) and (min-width: 430px) {
+  .matches-container-simplified {
     padding: 10px;
+  }
+
+  .matches-header-simplified {
+    padding: 6px 10px;
     margin-bottom: 12px;
   }
 
-  .modern-games-title {
+  .matches-header-simplified h3 {
+    font-size: 0.95rem;
+  }
+
+  .matches-count-simplified {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+  }
+
+  .round-header-simplified {
+    padding: 5px 8px;
+    margin-bottom: 10px;
+  }
+
+  .round-header-simplified h4 {
     font-size: 0.85rem;
+  }
+
+  .round-header-simplified span {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .matches-container-simplified .modern-match-card {
+    padding: 12px;
+  }
+
+  .matches-container-simplified .modern-match-title {
+    font-size: 0.9rem;
+  }
+}
+
+/* iPhone 17 Pro Max y pantallas extra grandes (< 430px) */
+@media (max-width: 430px) {
+  .matches-container-simplified {
+    padding: 6px;
+  }
+
+  .matches-header-simplified {
+    padding: 4px 6px;
+    margin-bottom: 8px;
+  }
+
+  .matches-header-simplified h3 {
+    font-size: 0.85rem;
+  }
+
+  .matches-count-simplified {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+  }
+
+  .round-header-simplified {
+    padding: 3px 5px;
     margin-bottom: 6px;
   }
 
-  .modern-games-grid {
+  .round-header-simplified h4 {
+    font-size: 0.75rem;
+  }
+
+  .round-header-simplified span {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+
+  .matches-grid-simplified {
     gap: 6px;
   }
 
-  .modern-game-result {
-    font-size: 0.75rem;
-    padding: 3px 6px;
+  .matches-container-simplified .modern-match-card {
+    padding: 10px;
   }
 
-  .modern-winner {
-    padding: 8px 10px;
-    margin-bottom: 12px;
-  }
-
-  .modern-winner-text {
+  .matches-container-simplified .modern-match-title {
     font-size: 0.85rem;
   }
 
-  .modern-match-actions {
-    gap: 8px;
+  .matches-container-simplified .modern-match-status {
+    font-size: 0.7rem;
+    padding: 3px 8px;
   }
 
-  .modern-match-btn {
-    padding: 8px 12px;
-    font-size: 0.8rem;
+  .matches-container-simplified .modern-match-badge {
+    font-size: 0.65rem;
+    padding: 2px 5px;
   }
 
-  /* Optimizaciones de rendimiento para tablets */
-  .banner::before,
-  .banner::after,
-  .banner-icon,
-  .floating-particle {
-    animation-duration: 8s !important;
+  .matches-container-simplified .modern-pair-names {
+    font-size: 0.75rem;
   }
 
-  .modern-match-card::before,
-  .modern-standings-section::before,
-  .elegant-pair-card::before,
-  .elegant-player-card::before {
-    animation-duration: 6s !important;
-  }
-
-  /* Reducir backdrop-filter */
-  .modern-matches-section,
-  .modern-standings-section,
-  .modern-match-card,
-  .elegant-pair-manager,
-  .elegant-player-manager {
-    backdrop-filter: blur(8px) !important;
+  .matches-container-simplified .modern-match-btn {
+    padding: 5px 8px;
+    font-size: 0.7rem;
   }
 }
 
