@@ -220,8 +220,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setPair1Score("");
       setPair2Score("");
 
-      console.log("✅ Juego agregado, total de juegos:", matchGames.length);
-      
       console.log("✅ Juego agregado");
     } catch (err) {
       console.error("❌ Error agregando juego:", err);
