@@ -98,6 +98,21 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
+  const refreshFromServer = async () => {
+    // Recargar datos del propio card
+    await loadData();
+    // Actualizar tabla / padre
+    await updateTable();
+    // Forzar que el padre recargue el match actualizado
+    if (onCorrectScore && currentMatch) {
+      const matches = await getMatches(currentMatch.tournament_id);
+      const updatedMatch = matches.find((m) => m.id === currentMatch.id);
+      if (updatedMatch) {
+        onCorrectScore(updatedMatch);
+      }
+    }
+  };
+
   // Obtener nombre de pareja
   const getPairName = (pair: Pair | null): string => {
     if (!pair) return "Pareja desconocida";
@@ -191,25 +206,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         tie_break_pair2_points: 0,
       });
 
-      // Recargar datos inmediatamente
-      await loadData();
-      
-      // Asegurar que los juegos se carguen correctamente
-      const matchGames = await getGames(currentMatch.id);
-      setGames(matchGames);
-      console.log("✅ Juegos actualizados:", matchGames.length);
-
-      // Actualizar tabla automáticamente
-      await updateTable();
-      
-      // Forzar actualización del componente padre
-      if (onCorrectScore) {
-        const matches = await getMatches(currentMatch.tournament_id);
-        const updatedMatch = matches.find((m) => m.id === currentMatch.id);
-        if (updatedMatch) {
-          onCorrectScore(updatedMatch);
-        }
-      }
+      // Recargar datos y UI inmediatamente
+      await refreshFromServer();
 
       // Limpiar inputs
       setPair1Score("");
@@ -217,13 +215,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
       console.log("✅ Juego agregado, total de juegos:", matchGames.length);
       
-      // Forzar re-render después de un pequeño delay para asegurar que la UI se actualice
-      setTimeout(async () => {
-        await loadData();
-        const updatedGames = await getGames(currentMatch.id);
-        setGames(updatedGames);
-        console.log("✅ Re-render completado, juegos:", updatedGames.length);
-      }, 300);
+      console.log("✅ Juego agregado");
     } catch (err) {
       console.error("❌ Error agregando juego:", err);
       setError("Error al agregar juego");
@@ -241,22 +233,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setError(null);
 
       await deleteGame(gameId);
-      await loadData();
-      
-      // Asegurar que los juegos se actualicen correctamente
-      const matchGames = await getGames(currentMatch.id);
-      setGames(matchGames);
-      
-      await updateTable();
+      await refreshFromServer();
 
       console.log("✅ Juego eliminado, juegos restantes:", matchGames.length);
-      
-      // Forzar re-render
-      setTimeout(async () => {
-        await loadData();
-        const updatedGames = await getGames(currentMatch.id);
-        setGames(updatedGames);
-      }, 200);
     } catch (err) {
       console.error("❌ Error eliminando juego:", err);
       setError("Error al eliminar juego");
@@ -314,9 +293,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         setGames(matchGames);
 
         // Recargar datos y actualizar tabla automáticamente
-        await loadData();
-        
-        await updateTable();
+        await refreshFromServer();
         
         // Cerrar el editor después de finalizar
         setIsEditing(false);
@@ -332,19 +309,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         }
 
         console.log("✅ Partido finalizado, juegos:", matchGames.length);
-        
-        // Forzar re-render después de un pequeño delay para asegurar que la UI se actualice
-        setTimeout(async () => {
-          await loadData();
-          const updatedGames = await getGames(currentMatch.id);
-          setGames(updatedGames);
-          const matches = await getMatches(currentMatch.tournament_id);
-          const updatedMatch = matches.find((m) => m.id === currentMatch.id);
-          if (updatedMatch) {
-            setCurrentMatch(updatedMatch);
-          }
-          console.log("✅ Re-render completado después de finalizar");
-        }, 300);
       } else {
         setError("Error: " + result.message);
       }
