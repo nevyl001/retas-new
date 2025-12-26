@@ -1,5 +1,5 @@
 // Service Worker para RetaPadel PWA
-const CACHE_NAME = "retapadel-v1.4.0";
+const CACHE_NAME = "retapadel-v1.5.0";
 const urlsToCache = [
   "/manifest.json",
   "/favicon.svg",
@@ -26,26 +26,32 @@ self.addEventListener("install", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   
-  // Para HTML, JS y CSS: siempre buscar en la red primero, nunca usar cache
+  // Para HTML, JS y CSS: NUNCA usar cache, siempre red
   if (url.pathname === '/' || 
       url.pathname === '/index.html' || 
-      url.pathname.includes('/static/js/') || 
-      url.pathname.includes('/static/css/')) {
+      url.pathname.startsWith('/static/js/') || 
+      url.pathname.startsWith('/static/css/') ||
+      url.pathname.includes('.js') ||
+      url.pathname.includes('.css')) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
+      fetch(event.request, { 
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
         .then((response) => {
-          // Si la respuesta es exitosa, devolverla sin cachear
-          if (response.status === 200) {
+          if (response && response.status === 200) {
             return response;
           }
-          // Si hay error 404, no intentar cache, lanzar error
           throw new Error('Resource not found');
         })
         .catch((error) => {
-          // Si falla la red o hay 404, no usar cache para estos archivos
-          // Dejar que el navegador maneje el error
           console.error('Failed to fetch:', event.request.url, error);
-          return fetch(event.request);
+          // No usar cache de respaldo para JS/CSS/HTML
+          return new Response('Resource not available', { status: 503 });
         })
     );
     return;
@@ -77,15 +83,13 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // Eliminar TODOS los caches antiguos, incluyendo versiones anteriores
-          if (cacheName !== CACHE_NAME) {
-            console.log("Deleting old cache:", cacheName);
-            return caches.delete(cacheName);
-          }
+          // Eliminar TODOS los caches
+          console.log("Deleting cache:", cacheName);
+          return caches.delete(cacheName);
         })
       );
     }).then(() => {
-      // Tomar control de las páginas sin forzar recarga
+      // Tomar control de las páginas
       return self.clients.claim();
     })
   );
