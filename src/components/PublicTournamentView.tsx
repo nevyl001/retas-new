@@ -27,9 +27,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   const loadTournamentData = useCallback(async () => {
     try {
-      // Solo mostrar loading en la primera carga, no en refreshes
-      if (matches.length === 0) setLoading(true);
-
       setError(""); // Limpiar errores previos
 
       const [matchesData, pairsData, gamesData] = await Promise.all([
@@ -42,6 +39,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       setPairs(pairsData);
       setGames(gamesData || []); // Asegurar que games siempre sea un array
       setLastUpdate(new Date());
+
+      console.log("🔄 Vista pública actualizada:", new Date().toLocaleTimeString());
 
       // Verificar si la reta está terminada y calcular ganador
       const finishedMatches = matchesData.filter(
@@ -68,12 +67,18 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [tournamentId, matches.length]);
+  }, [tournamentId]);
 
   useEffect(() => {
+    setLoading(true);
     loadTournamentData();
+    
     // Auto-refresh cada 30 segundos
-    const interval = setInterval(loadTournamentData, 30000);
+    const interval = setInterval(() => {
+      console.log("⏰ Auto-refresh vista pública (30s)");
+      loadTournamentData();
+    }, 30000);
+    
     return () => clearInterval(interval);
   }, [tournamentId, loadTournamentData]);
 
