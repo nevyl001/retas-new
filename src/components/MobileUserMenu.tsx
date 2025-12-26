@@ -3,11 +3,7 @@ import { useUser } from "../contexts/UserContext";
 import "./MobileUserMenu.css";
 
 export const MobileUserMenu: React.FC = () => {
-  const { user, userProfile, signOut } = useUser();
-
-  const handleLogout = async () => {
-    await signOut();
-  };
+  const { user, userProfile } = useUser();
 
   if (!user || !userProfile) {
     return null;
@@ -41,17 +37,6 @@ export const MobileUserMenu: React.FC = () => {
           <div className="mobile-user-name">{userProfile.name}</div>
           <div className="mobile-user-email">{userProfile.email}</div>
         </div>
-      </div>
-
-      {/* Opciones del menú */}
-      <div className="mobile-menu-options">
-        <button
-          className="mobile-menu-option mobile-menu-logout"
-          onClick={handleLogout}
-        >
-          <span className="mobile-menu-icon">🚪</span>
-          <span className="mobile-menu-text">Cerrar Sesión</span>
-        </button>
       </div>
     </div>
   );
