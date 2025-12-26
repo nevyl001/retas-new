@@ -209,18 +209,26 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       // Recargar datos y UI inmediatamente
       await refreshFromServer();
 
-      // Log con la cantidad más reciente de juegos
-      if (currentMatch) {
-        const latestGames = await getGames(currentMatch.id);
-        setGames(latestGames);
-        console.log("✅ Juego agregado, total de juegos:", latestGames.length);
-      }
+      // Forzar recarga de juegos y actualizar estado
+      const latestGames = await getGames(currentMatch.id);
+      setGames(latestGames);
+      console.log("✅ Juego agregado, total de juegos:", latestGames.length);
 
       // Limpiar inputs
       setPair1Score("");
       setPair2Score("");
 
-      console.log("✅ Juego agregado");
+      // Forzar re-render del componente padre
+      if (onCorrectScore) {
+        const matches = await getMatches(currentMatch.tournament_id);
+        const freshMatch = matches.find((m) => m.id === currentMatch.id);
+        if (freshMatch) {
+          setCurrentMatch(freshMatch);
+          onCorrectScore(freshMatch);
+        }
+      }
+
+      console.log("✅ Juego agregado y UI actualizada");
     } catch (err) {
       console.error("❌ Error agregando juego:", err);
       setError("Error al agregar juego");
@@ -240,10 +248,19 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       await deleteGame(gameId);
       await refreshFromServer();
 
-      if (currentMatch) {
-        const latestGames = await getGames(currentMatch.id);
-        setGames(latestGames);
-        console.log("✅ Juego eliminado, juegos restantes:", latestGames.length);
+      // Forzar recarga de juegos y actualizar estado
+      const latestGames = await getGames(currentMatch.id);
+      setGames(latestGames);
+      console.log("✅ Juego eliminado, juegos restantes:", latestGames.length);
+
+      // Forzar re-render del componente padre
+      if (onCorrectScore) {
+        const matches = await getMatches(currentMatch.tournament_id);
+        const freshMatch = matches.find((m) => m.id === currentMatch.id);
+        if (freshMatch) {
+          setCurrentMatch(freshMatch);
+          onCorrectScore(freshMatch);
+        }
       }
     } catch (err) {
       console.error("❌ Error eliminando juego:", err);
@@ -652,10 +669,20 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            loadData();
+            e.preventDefault();
+            refreshFromServer();
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+          }}
+          onTouchEnd={async (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            await refreshFromServer();
           }}
           className="modern-match-btn modern-refresh-btn"
           title="Actualizar datos"
+          disabled={loading}
         >
           🔄 Actualizar
         </button>
