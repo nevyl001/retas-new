@@ -3752,6 +3752,221 @@ h1::before {
   .modern-pair-names {
     font-size: 0.75rem;
   }
+}
+
+/* ===== CONTENEDOR SIMPLIFICADO DE PARTIDOS ===== */
+.matches-container-simplified {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.matches-header-simplified {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 237, 78, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.matches-header-simplified h3 {
+  color: #ffd700;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.matches-count-simplified {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #000000;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.matches-error-simplified {
+  text-align: center;
+  padding: 20px;
+  color: #ffd700;
+}
+
+.matches-error-simplified p {
+  margin: 8px 0;
+  font-size: 0.9rem;
+}
+
+.round-section-simplified {
+  margin-bottom: 16px;
+}
+
+.round-header-simplified {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  background: rgba(20, 20, 35, 0.6);
+  border-radius: 10px;
+}
+
+.round-header-simplified h4 {
+  color: #ffd700;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.round-header-simplified span {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #000000;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 6px rgba(255, 215, 0, 0.3);
+}
+
+.matches-grid-simplified {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Ajustar tarjetas de partidos dentro del contenedor simplificado */
+.matches-container-simplified .modern-match-card {
+  padding: 14px;
+  margin-bottom: 0;
+  border-radius: 12px;
+}
+
+.matches-container-simplified .modern-match-title {
+  font-size: 0.95rem;
+}
+
+.matches-container-simplified .modern-match-status {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+}
+
+.matches-container-simplified .modern-match-badges {
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.matches-container-simplified .modern-match-badge {
+  font-size: 0.7rem;
+  padding: 3px 6px;
+}
+
+.matches-container-simplified .modern-pair-info {
+  padding: 5px 8px;
+  margin-bottom: 5px;
+}
+
+.matches-container-simplified .modern-pair-label {
+  font-size: 0.75rem;
+  min-width: 50px;
+}
+
+.matches-container-simplified .modern-pair-names {
+  font-size: 0.8rem;
+}
+
+.matches-container-simplified .modern-match-actions {
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.matches-container-simplified .modern-match-btn {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+}
+
+/* Responsive para contenedor simplificado */
+@media (max-width: 768px) {
+  .matches-container-simplified {
+    padding: 10px;
+  }
+
+  .matches-header-simplified {
+    padding: 6px 10px;
+    margin-bottom: 12px;
+  }
+
+  .matches-header-simplified h3 {
+    font-size: 1rem;
+  }
+
+  .matches-count-simplified {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+  }
+
+  .round-header-simplified {
+    padding: 5px 8px;
+    margin-bottom: 10px;
+  }
+
+  .round-header-simplified h4 {
+    font-size: 0.85rem;
+  }
+
+  .round-header-simplified span {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .matches-grid-simplified {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .matches-container-simplified {
+    padding: 8px;
+  }
+
+  .matches-header-simplified {
+    padding: 5px 8px;
+    margin-bottom: 10px;
+  }
+
+  .matches-header-simplified h3 {
+    font-size: 0.9rem;
+  }
+
+  .matches-count-simplified {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .round-header-simplified {
+    padding: 4px 6px;
+    margin-bottom: 8px;
+  }
+
+  .round-header-simplified h4 {
+    font-size: 0.8rem;
+  }
+
+  .round-header-simplified span {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+  }
+
+  .matches-grid-simplified {
+    gap: 8px;
+  }
+}
 
   .modern-match-badges {
     gap: 8px;
