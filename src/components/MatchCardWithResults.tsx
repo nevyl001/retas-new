@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Match, Pair, Game } from "../lib/database";
 import {
-  getMatches,
-  getPairs,
-  getGames,
+  getGames, // Solo necesitamos getGames (match y pairs vienen como props)
   createGame,
   deleteGame,
   updateMatch,
@@ -13,6 +11,7 @@ import { MatchResultCalculator } from "./MatchResultCalculator";
 
 interface MatchCardWithResultsProps {
   match: Match;
+  pairs: Pair[]; // Agregado: recibir pairs como prop para evitar cargas redundantes
   isSelected: boolean;
   onSelect: (matchId: string) => void;
   onCorrectScore: (match: Match) => void;
@@ -22,6 +21,7 @@ interface MatchCardWithResultsProps {
 
 const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   match,
+  pairs, // Agregado
   isSelected,
   onSelect,
   onCorrectScore,
@@ -37,31 +37,26 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [pair1Score, setPair1Score] = useState("");
   const [pair2Score, setPair2Score] = useState("");
+  const isUpdatingRef = useRef(false); // Prevenir múltiples actualizaciones simultáneas
 
-  // Función simple para cargar datos
+  // Función optimizada: solo cargar juegos (match y pairs vienen como props)
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Cargar partido actualizado
-      const matches = await getMatches(match.tournament_id);
-      const updatedMatch = matches.find((m) => m.id === match.id);
-      if (!updatedMatch) throw new Error("Partido no encontrado");
-      setCurrentMatch(updatedMatch);
+      // Usar match del prop directamente (no recargar)
+      setCurrentMatch(match);
 
-      // Cargar parejas
-      const pairs = await getPairs(match.tournament_id);
-      const p1 = pairs.find((p) => p.id === updatedMatch.pair1_id);
-      const p2 = pairs.find((p) => p.id === updatedMatch.pair2_id);
+      // Usar pairs recibidos como prop (ya vienen del padre, no recargar)
+      const p1 = pairs.find((p) => p.id === match.pair1_id);
+      const p2 = pairs.find((p) => p.id === match.pair2_id);
       setPair1(p1 || null);
       setPair2(p2 || null);
 
-      // Cargar juegos
+      // Solo cargar juegos de este partido específico (único dato que necesita cargar)
       const matchGames = await getGames(match.id);
       setGames(matchGames);
-      
-      // Permitir edición incluso si está finalizado (para reabrir o ajustar juegos)
 
       console.log("✅ Datos cargados");
     } catch (err) {
@@ -70,48 +65,56 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [match.id, match.tournament_id]);
+  }, [match, pairs]); // Usar match completo como dependencia
 
-  // Función simple y eficiente para actualizar tabla
-  const updateTable = async () => {
+  // Función optimizada: usar match del estado local o prop (ya está actualizado)
+  const updateTable = useCallback(async () => {
     if (!onCorrectScore) {
       console.error("❌ onCorrectScore no está disponible");
       return;
     }
 
     try {
-      console.log("🔄 Actualizando tabla para partido:", match.id);
-
-      // Obtener datos frescos del partido
-      const matches = await getMatches(match.tournament_id);
-      const updatedMatch = matches.find((m) => m.id === match.id);
-
-      if (updatedMatch) {
-        // Una sola llamada eficiente
-        onCorrectScore(updatedMatch);
-        console.log("✅ Tabla actualizada correctamente");
-      } else {
-        console.error("❌ No se encontró el partido actualizado");
-      }
+      // Usar currentMatch si está disponible, sino usar match del prop (ambos están actualizados)
+      const matchToUpdate = currentMatch || match;
+      onCorrectScore(matchToUpdate);
     } catch (err) {
       console.error("❌ Error actualizando tabla:", err);
     }
-  };
+  }, [match, currentMatch, onCorrectScore]);
 
-  const refreshFromServer = async () => {
-    // Recargar datos del propio card
-    await loadData();
-    // Actualizar tabla / padre
-    await updateTable();
-    // Forzar que el padre recargue el match actualizado
-    if (onCorrectScore && currentMatch) {
-      const matches = await getMatches(currentMatch.tournament_id);
-      const updatedMatch = matches.find((m) => m.id === currentMatch.id);
-      if (updatedMatch) {
-        onCorrectScore(updatedMatch);
-      }
+  // Función optimizada para recargar datos locales SIN múltiples actualizaciones
+  const refreshFromServer = useCallback(async () => {
+    // Prevenir múltiples actualizaciones simultáneas
+    if (isUpdatingRef.current) {
+      console.log("⏳ Actualización ya en progreso, ignorando...");
+      return;
     }
-  };
+
+    try {
+      isUpdatingRef.current = true;
+
+      // Actualizar desde props (vienen actualizados del padre)
+      setCurrentMatch(match);
+      const p1 = pairs.find((p) => p.id === match.pair1_id);
+      const p2 = pairs.find((p) => p.id === match.pair2_id);
+      setPair1(p1 || null);
+      setPair2(p2 || null);
+
+      // Solo recargar juegos (único dato que necesita actualizarse)
+      const matchGames = await getGames(match.id);
+      setGames(matchGames);
+
+      // Solo actualizar tabla UNA VEZ al final usando match del prop (ya viene actualizado del padre)
+      if (onCorrectScore) {
+        onCorrectScore(match);
+      }
+    } catch (err) {
+      console.error("❌ Error recargando datos:", err);
+    } finally {
+      isUpdatingRef.current = false;
+    }
+  }, [match.id, match.tournament_id, onCorrectScore]);
 
   // Obtener nombre de pareja
   const getPairName = (pair: Pair | null): string => {
@@ -171,7 +174,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
-  // Agregar juego
+  // Agregar juego - OPTIMIZADO: una sola actualización al final
   const addGame = async () => {
     if (!currentMatch) return;
 
@@ -206,27 +209,12 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         tie_break_pair2_points: 0,
       });
 
-      // Recargar datos y UI inmediatamente
-      await refreshFromServer();
-
-      // Forzar recarga de juegos y actualizar estado
-      const latestGames = await getGames(currentMatch.id);
-      setGames(latestGames);
-      console.log("✅ Juego agregado, total de juegos:", latestGames.length);
-
-      // Limpiar inputs
+      // Limpiar inputs inmediatamente
       setPair1Score("");
       setPair2Score("");
 
-      // Forzar re-render del componente padre
-      if (onCorrectScore) {
-        const matches = await getMatches(currentMatch.tournament_id);
-        const freshMatch = matches.find((m) => m.id === currentMatch.id);
-        if (freshMatch) {
-          setCurrentMatch(freshMatch);
-          onCorrectScore(freshMatch);
-        }
-      }
+      // UNA SOLA actualización al final (esto actualiza todo)
+      await refreshFromServer();
 
       console.log("✅ Juego agregado y UI actualizada");
     } catch (err) {
@@ -237,7 +225,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
-  // Eliminar juego
+  // Eliminar juego - OPTIMIZADO: una sola actualización al final
   const removeGame = async (gameId: string) => {
     if (!currentMatch) return;
 
@@ -246,22 +234,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setError(null);
 
       await deleteGame(gameId);
+
+      // UNA SOLA actualización al final (esto actualiza todo)
       await refreshFromServer();
 
-      // Forzar recarga de juegos y actualizar estado
-      const latestGames = await getGames(currentMatch.id);
-      setGames(latestGames);
-      console.log("✅ Juego eliminado, juegos restantes:", latestGames.length);
-
-      // Forzar re-render del componente padre
-      if (onCorrectScore) {
-        const matches = await getMatches(currentMatch.tournament_id);
-        const freshMatch = matches.find((m) => m.id === currentMatch.id);
-        if (freshMatch) {
-          setCurrentMatch(freshMatch);
-          onCorrectScore(freshMatch);
-        }
-      }
+      console.log("✅ Juego eliminado");
     } catch (err) {
       console.error("❌ Error eliminando juego:", err);
       setError("Error al eliminar juego");
@@ -278,14 +255,12 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setLoading(true);
       setError(null);
 
-      // Obtener parejas para estadísticas
-      const allPairs = await getPairs(currentMatch.tournament_id);
-
+      // Usar pairs recibidos como prop (ya están disponibles, no recargar)
       // Acumular estadísticas
       const result = await MatchResultCalculator.accumulateMatchStatistics(
         currentMatch,
         games,
-        allPairs
+        pairs // Usar prop en lugar de recargar
       );
 
       if (result.success) {
@@ -315,24 +290,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           `🏆 Partido finalizado: ${pair1FinalScore} - ${pair2FinalScore}`
         );
 
-        // Actualizar el estado de juegos con los que ya tenemos
-        setGames(matchGames);
-
-        // Recargar datos y actualizar tabla automáticamente
-        await refreshFromServer();
-        
         // Cerrar el editor después de finalizar
         setIsEditing(false);
-        
-        // Forzar actualización del componente padre para que recargue los matches
-        // Esto asegura que el prop match se actualice con el nuevo status
-        if (onCorrectScore) {
-          const matches = await getMatches(currentMatch.tournament_id);
-          const updatedMatch = matches.find((m) => m.id === currentMatch.id);
-          if (updatedMatch) {
-            onCorrectScore(updatedMatch);
-          }
-        }
+
+        // UNA SOLA actualización al final (esto actualiza todo, incluyendo status)
+        await refreshFromServer();
 
         console.log("✅ Partido finalizado, juegos:", matchGames.length);
       } else {
@@ -346,7 +308,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
-  // Reabrir partido
+  // Reabrir partido - OPTIMIZADO: una sola actualización
   const reopenMatch = async () => {
     if (!currentMatch) return;
 
@@ -357,9 +319,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       // Marcar como no finalizado
       await updateMatch(currentMatch.id, { status: "pending" });
 
-      // Recargar datos y actualizar tabla automáticamente
-      await loadData();
-      await updateTable();
+      // UNA SOLA actualización al final
+      await refreshFromServer();
 
       console.log("✅ Partido reabierto");
     } catch (err) {
@@ -370,42 +331,28 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
-  // Cargar datos al montar o cuando cambian las dependencias críticas
+  // Cargar datos al montar - OPTIMIZADO: solo cargar juegos, usar props para match y pairs
   useEffect(() => {
+    // Inicializar estado desde props inmediatamente (sin llamadas a BD)
+    setCurrentMatch(match);
+    const p1 = pairs.find((p) => p.id === match.pair1_id);
+    const p2 = pairs.find((p) => p.id === match.pair2_id);
+    setPair1(p1 || null);
+    setPair2(p2 || null);
+
+    // Solo cargar juegos (único dato específico del card que necesita BD)
     let isMounted = true;
-    
-    const fetchData = async () => {
+    const fetchGames = async () => {
       try {
         setLoading(true);
-        setError(null);
-
-        // Cargar partido actualizado
-        const matches = await getMatches(match.tournament_id);
-        const updatedMatch = matches.find((m) => m.id === match.id);
-        if (!updatedMatch) throw new Error("Partido no encontrado");
-        
-        if (!isMounted) return;
-        setCurrentMatch(updatedMatch);
-
-        // Cargar parejas
-        const pairs = await getPairs(match.tournament_id);
-        const p1 = pairs.find((p) => p.id === updatedMatch.pair1_id);
-        const p2 = pairs.find((p) => p.id === updatedMatch.pair2_id);
-        setPair1(p1 || null);
-        setPair2(p2 || null);
-
-        // Cargar juegos
         const matchGames = await getGames(match.id);
         if (!isMounted) return;
         setGames(matchGames);
-        
-        // Mantener el editor abierto aunque esté finalizado (se puede reabrir)
-
-        console.log("✅ Datos cargados");
+        console.log("✅ Juegos cargados para partido:", match.id);
       } catch (err) {
         if (!isMounted) return;
-        console.error("❌ Error cargando datos:", err);
-        setError("Error cargando datos");
+        console.error("❌ Error cargando juegos:", err);
+        setError("Error cargando juegos");
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -413,28 +360,50 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       }
     };
 
-    fetchData();
+    fetchGames();
 
     return () => {
       isMounted = false;
     };
-  }, [match.id, match.tournament_id, match.status, forceRefresh, isEditing]);
+  }, [match.id]); // Solo recargar cuando cambia el ID del match (nuevo partido)
 
-  // Actualizar currentMatch cuando el prop match cambia (solo si realmente cambió)
+  // Actualizar estado cuando el prop match cambia (sin recargar de BD)
   useEffect(() => {
+    // Actualizar match desde prop (viene actualizado del padre)
     if (match && (!currentMatch || 
         match.id !== currentMatch.id || 
         match.status !== currentMatch.status ||
         match.pair1_score !== currentMatch.pair1_score ||
         match.pair2_score !== currentMatch.pair2_score)) {
       setCurrentMatch(match);
+      
       // Si el status cambió a finished, cerrar el editor
       if (match.status === 'finished' && isEditing) {
         setIsEditing(false);
       }
+      
+      // Actualizar pairs desde prop (vienen actualizados del padre)
+      if (match.pair1_id && match.pair2_id) {
+        const p1 = pairs.find((p) => p.id === match.pair1_id);
+        const p2 = pairs.find((p) => p.id === match.pair2_id);
+        setPair1(p1 || null);
+        setPair2(p2 || null);
+      }
+      
+      // Solo recargar juegos si cambió el status o scores (puede haber nuevos juegos)
+      if (match.id === currentMatch?.id && 
+          (match.status !== currentMatch.status || 
+           match.pair1_score !== currentMatch.pair1_score ||
+           match.pair2_score !== currentMatch.pair2_score)) {
+        getGames(match.id).then((matchGames) => {
+          setGames(matchGames);
+        }).catch((err) => {
+          console.error("❌ Error recargando juegos:", err);
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.id, match.status, match.pair1_score, match.pair2_score, isEditing]);
+  }, [match]); // Usar match completo como dependencia (React compara por referencia)
 
   if (loading) {
     return (
@@ -701,4 +670,16 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   );
 };
 
-export default MatchCardWithResults;
+// Usar React.memo para evitar re-renders innecesarios cuando props no cambian
+export default React.memo(MatchCardWithResults, (prevProps, nextProps) => {
+  // Solo re-renderizar si cambian datos críticos
+  return (
+    prevProps.match.id === nextProps.match.id &&
+    prevProps.match.status === nextProps.match.status &&
+    prevProps.match.pair1_score === nextProps.match.pair1_score &&
+    prevProps.match.pair2_score === nextProps.match.pair2_score &&
+    prevProps.forceRefresh === nextProps.forceRefresh &&
+    prevProps.pairs.length === nextProps.pairs.length &&
+    prevProps.pairs.every((p, i) => p.id === nextProps.pairs[i]?.id)
+  );
+});

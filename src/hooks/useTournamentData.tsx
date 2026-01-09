@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   Tournament,
   Pair,
@@ -15,6 +15,7 @@ export const useTournamentData = () => {
     Map<string, { sets: number; matches: number; points: number }>
   >(new Map());
   const [loading, setLoading] = useState(false);
+  const isLoadingRef = useRef(false); // Prevenir múltiples recargas simultáneas
 
   const calculatePairStatistics = async (
     pairsData: Pair[],
@@ -90,7 +91,14 @@ export const useTournamentData = () => {
   const loadTournamentData = useCallback(async (tournament: Tournament) => {
     if (!tournament) return;
 
+    // Prevenir múltiples recargas simultáneas
+    if (isLoadingRef.current) {
+      console.log("⏳ Ya hay una recarga en progreso, ignorando...");
+      return;
+    }
+
     try {
+      isLoadingRef.current = true;
       setLoading(true);
       console.log("Loading tournament data for:", tournament.name);
 
@@ -115,6 +123,7 @@ export const useTournamentData = () => {
       throw err;
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   }, []);
 

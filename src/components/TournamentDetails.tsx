@@ -127,6 +127,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       <MatchesSection
         tournament={selectedTournament}
         matches={matches}
+        pairs={pairs}
         matchesByRound={matchesByRound}
         forceRefresh={forceRefresh}
         setForceRefresh={setForceRefresh}

@@ -36,8 +36,15 @@ function AppContent() {
   const [selectedTournament, setSelectedTournament] =
     useState<Tournament | null>(null);
 
-  // Inicializar currentView basado en la URL actual
-  const getInitialView = () => {
+  // Inicializar currentView basado en la URL actual (solo una vez)
+  const [currentView, setCurrentView] = useState<
+    | "main"
+    | "winner"
+    | "public"
+    | "auth-callback"
+    | "admin-login"
+    | "admin-dashboard"
+  >(() => {
     const currentPath = window.location.pathname;
     console.log("🔍 Inicializando currentView basado en path:", currentPath);
 
@@ -46,19 +53,13 @@ function AppContent() {
     if (currentPath === "/admin-dashboard") return "admin-dashboard";
     if (currentPath.startsWith("/public/")) return "public";
     return "main";
-  };
+  });
 
-  const [currentView, setCurrentView] = useState<
-    | "main"
-    | "winner"
-    | "public"
-    | "auth-callback"
-    | "admin-login"
-    | "admin-dashboard"
-  >(getInitialView());
-
-  console.log("🔍 AppContent - isAdminLoggedIn:", isAdminLoggedIn);
-  console.log("🔍 AppContent - currentView:", currentView);
+  // Log solo cuando cambien los valores (no en cada render)
+  useEffect(() => {
+    console.log("🔍 AppContent - isAdminLoggedIn:", isAdminLoggedIn);
+    console.log("🔍 AppContent - currentView:", currentView);
+  }, [isAdminLoggedIn, currentView]);
 
   // Efecto para detectar cuando el admin se loguea
   useEffect(() => {
@@ -214,15 +215,22 @@ function AppContent() {
     if (selectedTournament) {
       loadTournamentData(selectedTournament);
     }
-  }, [selectedTournament, loadTournamentData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTournament]); // loadTournamentData es estable, no necesita estar en deps
 
-  // Recargar datos automáticamente
+  // Recargar datos automáticamente con debounce para evitar múltiples recargas
   useEffect(() => {
     if (selectedTournament && forceRefresh > 0) {
-      console.log("🔄 Recargando datos debido a forceRefresh:", forceRefresh);
-      loadTournamentData(selectedTournament);
+      // Debounce: esperar 300ms antes de recargar para agrupar múltiples actualizaciones
+      const timeoutId = setTimeout(() => {
+        console.log("🔄 Recargando datos debido a forceRefresh:", forceRefresh);
+        loadTournamentData(selectedTournament);
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [forceRefresh, selectedTournament, loadTournamentData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceRefresh, selectedTournament]); // loadTournamentData es estable
 
   // Utilidades
   const generatePublicLink = (tournamentId: string) => {

@@ -2,10 +2,12 @@ import React from "react";
 import { Tournament, Match, Pair } from "../lib/database";
 import MatchCardWithResults from "./MatchCardWithResults";
 import RealTimeStandingsTable from "./RealTimeStandingsTable";
+import RestingPairsSection from "./RestingPairsSection";
 
 interface MatchesSectionProps {
   tournament: Tournament;
   matches: Match[];
+  pairs: Pair[]; // Agregado: pasar pairs para evitar cargas redundantes
   matchesByRound: Record<number, Match[]>;
   forceRefresh: number;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
@@ -19,6 +21,7 @@ interface MatchesSectionProps {
 export const MatchesSection: React.FC<MatchesSectionProps> = ({
   tournament,
   matches,
+  pairs, // Agregado
   matchesByRound,
   forceRefresh,
   setForceRefresh,
@@ -46,16 +49,17 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
           </div>
         ) : (
           Object.entries(matchesByRound).map(([round, roundMatches]) => (
-          <div key={round} className="round-section-simplified">
-            <div className="round-header-simplified">
-              <h4>🔄 Ronda {round}</h4>
-              <span>{roundMatches.length} partidos</span>
+            <div key={round} className="round-section-simplified">
+              <div className="round-header-simplified">
+                <h4>🔄 Ronda {round}</h4>
+                <span>{roundMatches.length} partidos</span>
               </div>
-            <div className="matches-grid-simplified">
+              <div className="matches-grid-simplified">
                 {roundMatches.map((match) => (
                   <MatchCardWithResults
                     key={match.id}
                     match={match}
+                    pairs={pairs}
                     isSelected={false}
                     onSelect={() => {}}
                     onCorrectScore={async (match: any) => {
@@ -64,7 +68,6 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         match.id
                       );
                       try {
-                        // Solo incrementar forceRefresh - StandingsTable se actualizará automáticamente
                         setForceRefresh((prev) => prev + 1);
                         console.log("✅ ForceRefresh incrementado");
                       } catch (error) {
@@ -76,6 +79,14 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                   />
                 ))}
               </div>
+              
+              {/* Sección de parejas que descansan en esta ronda */}
+              <RestingPairsSection
+                pairs={pairs}
+                matches={matches}
+                round={parseInt(round)}
+                courts={tournament.courts}
+              />
             </div>
           ))
         )}

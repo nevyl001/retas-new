@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   getPairs,
   getMatches,
@@ -8,6 +8,7 @@ import {
   Game,
   Pair,
 } from "../lib/database";
+import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import "./ModernStandingsTable.css";
 
 interface PairWithStats {
@@ -47,11 +48,19 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   const [allGames, setAllGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const isLoadingRef = useRef(false); // Prevenir múltiples recargas simultáneas
 
   const loadTournamentData = useCallback(async () => {
     if (!tournamentId) return;
 
+    // Prevenir múltiples recargas simultáneas
+    if (isLoadingRef.current) {
+      console.log("⏳ Ya hay una recarga en progreso en RealTimeStandingsTable, ignorando...");
+      return;
+    }
+
     try {
+      isLoadingRef.current = true;
       setLoading(true);
       setError("");
 
@@ -110,22 +119,47 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       setError("Error al cargar los datos de la reta");
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   }, [tournamentId]);
+
+  // Suscripción en tiempo real (con polling como fallback)
+  // IMPORTANTE: Debe ir DESPUÉS de la definición de loadTournamentData
+  useRealtimeSubscription({
+    tournamentId,
+    onUpdate: loadTournamentData,
+    enabled: true,
+  });
 
   useEffect(() => {
     if (!tournamentId) return;
 
-    // Cargar al montar y cuando cambie forceRefresh
+    // Cargar al montar
     loadTournamentData();
 
-    // Auto-refresh cada 30s para vista en tiempo real
+    // Auto-refresh cada 60s como fallback (si Realtime falla o no está disponible)
+    // Con Realtime activo, esto solo se usará como respaldo
     const interval = setInterval(() => {
+      console.log("⏰ Polling de respaldo (60s) - Realtime debería actualizar antes");
       loadTournamentData();
-    }, 30000);
+    }, 60000); // Aumentado a 60s ya que Realtime debería actualizar antes
 
     return () => clearInterval(interval);
-  }, [tournamentId, forceRefresh, loadTournamentData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tournamentId]); // Solo recargar cuando cambia el torneo
+
+  // Recargar cuando cambia forceRefresh con debounce para evitar múltiples recargas
+  useEffect(() => {
+    if (!tournamentId || forceRefresh === 0) return;
+
+    // Debounce: esperar 500ms después de que cambia forceRefresh para agrupar actualizaciones
+    const timeoutId = setTimeout(() => {
+      loadTournamentData();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceRefresh]); // loadTournamentData es estable
 
   // Función para calcular estadísticas de un partido
   const calculateMatchStats = (match: Match, games: Game[]) => {

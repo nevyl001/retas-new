@@ -3,6 +3,8 @@ import "./PublicTournamentView.css";
 import { getMatches, getPairs, getTournamentGames } from "../lib/database";
 import { Match, Pair, Game } from "../lib/database";
 import RealTimeStandingsTable from "./RealTimeStandingsTable";
+import RestingPairsSection from "./RestingPairsSection";
+import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import {
   TournamentWinnerCalculator,
   TournamentWinner,
@@ -69,15 +71,24 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     }
   }, [tournamentId]);
 
+  // Suscripción en tiempo real (con polling como fallback)
+  // IMPORTANTE: Debe ir DESPUÉS de la definición de loadTournamentData
+  useRealtimeSubscription({
+    tournamentId,
+    onUpdate: loadTournamentData,
+    enabled: true,
+  });
+
   useEffect(() => {
     setLoading(true);
     loadTournamentData();
     
-    // Auto-refresh cada 30 segundos
+    // Auto-refresh cada 60 segundos como fallback (si Realtime falla o no está disponible)
+    // Con Realtime activo, esto solo se usará como respaldo
     const interval = setInterval(() => {
-      console.log("⏰ Auto-refresh vista pública (30s)");
+      console.log("⏰ Polling de respaldo (60s) - Realtime debería actualizar antes");
       loadTournamentData();
-    }, 30000);
+    }, 60000); // Aumentado a 60s ya que Realtime debería actualizar antes
     
     return () => clearInterval(interval);
   }, [tournamentId, loadTournamentData]);
@@ -134,6 +145,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     acc[round].push(match);
     return acc;
   }, {} as Record<number, Match[]>);
+
+  // Calcular número de canchas desde los matches (el court más alto)
+  const courts = matches.length > 0 
+    ? Math.max(...matches.map(m => m.court || 1))
+    : 1;
 
   return (
     <div className="public-tournament-view">
@@ -331,6 +347,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   );
                 })}
               </div>
+              
+              {/* Sección de parejas que descansan en esta ronda */}
+              <RestingPairsSection
+                pairs={pairs}
+                matches={matches}
+                round={parseInt(round)}
+                courts={courts}
+              />
             </div>
           ))}
       </div>
@@ -395,7 +419,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {/* Footer Público */}
       <div className="public-footer">
         <p className="public-footer-text">
-          📱 Actualización automática cada 30 segundos - Última actualización:{" "}
+          📱 Actualización en tiempo real - Última actualización:{" "}
           {lastUpdate.toLocaleTimeString()}
         </p>
         <p className="public-footer-note">
