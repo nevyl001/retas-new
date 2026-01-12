@@ -21,18 +21,23 @@ export class CircleRoundRobinScheduler {
   /**
    * Implementa el algoritmo Round Robin clásico usando el método del círculo
    *
-   * Algoritmo:
-   * 1. Fijar una pareja como ancla (primera pareja)
-   * 2. Rotar las demás parejas en cada ronda
-   * 3. Emparejar la ancla con una diferente en cada ronda
-   * 4. El resto se emparejan entre sí
+   * Para números IMPARES (ej: 7 parejas):
+   * - N rondas (7 rondas para 7 parejas)
+   * - En cada ronda: (N-1)/2 partidos y 1 pareja descansa
+   * - Cada pareja descansa exactamente una vez
+   * - Todas las parejas se enfrentan exactamente una vez
+   *
+   * Para números PARES (ej: 6 parejas):
+   * - N-1 rondas (5 rondas para 6 parejas)
+   * - En cada ronda: N/2 partidos (todas juegan)
+   * - Todas las parejas se enfrentan exactamente una vez
    */
   private static generateCircleRoundRobin(
     pairs: Pair[],
     courts: number
   ): Array<{ pair1: Pair; pair2: Pair; round: number; court: number }> {
     console.log(
-      "🎯 === ALGORITMO ROUND ROBIN CLÁSICO (MÉTODO DEL CÍRCULO) ==="
+      "🎯 === ALGORITMO ROUND ROBIN (MÉTODO DEL CÍRCULO CORRECTO) ==="
     );
     console.log(`📊 Parejas: ${pairs.length}`);
     console.log(`🏟️ Canchas: ${courts}`);
@@ -48,26 +53,15 @@ export class CircleRoundRobinScheduler {
       court: number;
     }> = [];
 
-    // Paso 1: Fijar la primera pareja como ancla
-    const anchorPair = pairs[0];
-    const rotatingPairs = pairs.slice(1); // Todas las demás parejas
+    const isOdd = pairs.length % 2 === 1;
+    const totalRounds = isOdd ? pairs.length : pairs.length - 1;
 
-    console.log(
-      `🎯 Pareja ancla: ${anchorPair.player1_name}/${anchorPair.player2_name}`
-    );
-    console.log(`🔄 Parejas rotantes: ${rotatingPairs.length}`);
-    rotatingPairs.forEach((pair, index) => {
-      console.log(`   ${index + 1}. ${pair.player1_name}/${pair.player2_name}`);
-    });
+    console.log(`🔄 Total rondas: ${totalRounds} (${pairs.length} parejas, ${isOdd ? 'impar' : 'par'})`);
 
-    // Paso 2: Calcular número total de rondas
-    // Para round-robin completo:
-    // - Si N es par: N-1 rondas (todas las parejas juegan en cada ronda)
-    // - Si N es impar: N rondas (una pareja descansa en cada ronda)
-    const totalRounds = pairs.length % 2 === 0 ? pairs.length - 1 : pairs.length;
-    console.log(`🔄 Total rondas necesarias: ${totalRounds} (${pairs.length} parejas, ${pairs.length % 2 === 0 ? 'par' : 'impar'})`);
+    // Crear array circular de todas las parejas
+    let circularPairs = [...pairs];
 
-    // Paso 3: Generar cada ronda usando el método del círculo
+    // Para cada ronda
     for (let round = 1; round <= totalRounds; round++) {
       console.log(`\n🔄 === RONDA ${round} ===`);
 
@@ -78,21 +72,34 @@ export class CircleRoundRobinScheduler {
         court: number;
       }> = [];
 
-      // Paso 4: Crear array de parejas para esta ronda
-      const roundPairs = [anchorPair, ...rotatingPairs];
+      // Para números impares: la pareja del medio (índice N/2 redondeado hacia abajo) descansa
+      // Para números pares: todas las parejas juegan
+      let playingPairs: Pair[];
+      let restingPair: Pair | null = null;
 
-      // Paso 5: Generar partidos para esta ronda
-      // Rotar la cancha inicial para la pareja ancla
-      const anchorCourtStart = ((round - 1) % courts) + 1;
-      let court = anchorCourtStart;
+      if (isOdd) {
+        // La pareja en el medio del array circular descansa
+        const restingIndex = Math.floor(circularPairs.length / 2);
+        restingPair = circularPairs[restingIndex];
+        
+        // Todas las parejas excepto la que descansa
+        playingPairs = circularPairs.filter((_, index) => index !== restingIndex);
+        
+        console.log(`😴 Pareja que descansa: ${restingPair.player1_name}/${restingPair.player2_name}`);
+      } else {
+        // Para números pares, todas las parejas juegan
+        playingPairs = [...circularPairs];
+      }
 
-      // Emparejar desde el centro hacia afuera
-      for (let i = 0; i < Math.floor(roundPairs.length / 2); i++) {
-        const pair1 = roundPairs[i];
-        const pair2 = roundPairs[roundPairs.length - 1 - i];
+      // Emparejar las parejas que juegan: primera con última, segunda con penúltima, etc.
+      let court = ((round - 1) % courts) + 1;
+      
+      for (let i = 0; i < Math.floor(playingPairs.length / 2); i++) {
+        const pair1 = playingPairs[i];
+        const pair2 = playingPairs[playingPairs.length - 1 - i];
 
-        // Solo crear partido si no excedemos el número de canchas
-        if (i < courts) {
+        // Solo crear partido si tenemos cancha disponible
+        if (roundMatches.length < courts) {
           const match = {
             pair1,
             pair2,
@@ -106,27 +113,31 @@ export class CircleRoundRobinScheduler {
             `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
           );
 
-          // Rotar la cancha para el siguiente partido
+          // Rotar la cancha
           court = ((court - 1 + 1) % courts) + 1;
         }
       }
 
-      // Paso 6: Agregar partidos de esta ronda al resultado
       matches.push(...roundMatches);
 
-      console.log(
-        `✅ Ronda ${round} completada: ${roundMatches.length} partidos`
-      );
+      if (restingPair) {
+        console.log(
+          `✅ Ronda ${round}: ${roundMatches.length} partidos, ${restingPair.player1_name}/${restingPair.player2_name} descansa`
+        );
+      } else {
+        console.log(
+          `✅ Ronda ${round}: ${roundMatches.length} partidos`
+        );
+      }
 
-      // Paso 7: Rotar las parejas para la siguiente ronda (método del círculo)
+      // Rotar el círculo completo una posición hacia la izquierda para la siguiente ronda
+      // [A, B, C, D, E, F, G] -> [B, C, D, E, F, G, A]
       if (round < totalRounds) {
-        // Rotar las parejas rotantes (no la ancla)
-        const lastPair = rotatingPairs.pop();
-        if (lastPair) {
-          rotatingPairs.unshift(lastPair);
+        const firstPair = circularPairs.shift();
+        if (firstPair) {
+          circularPairs.push(firstPair);
         }
-
-        console.log(`🔄 Parejas rotadas para ronda ${round + 1}`);
+        console.log(`🔄 Círculo rotado para ronda ${round + 1}`);
       }
     }
 
@@ -244,58 +255,127 @@ export class CircleRoundRobinScheduler {
       }
     });
 
-    // Verificar que todas las parejas se enfrentan (round robin completo)
-    console.log(`\n🎯 === VERIFICACIÓN DE ENFRENTAMIENTOS ===`);
+    // Verificar que todas las parejas se enfrentan EXACTAMENTE UNA VEZ (round robin completo)
+    console.log(`\n🎯 === VERIFICACIÓN DE ENFRENTAMIENTOS ÚNICOS ===`);
     const pairMatchups = new Set<string>();
 
     matches.forEach((match) => {
-      const key1 = `${match.pair1.id}-${match.pair2.id}`;
-      const key2 = `${match.pair2.id}-${match.pair1.id}`;
-      pairMatchups.add(key1);
-      pairMatchups.add(key2);
+      // Crear clave única para el enfrentamiento (ordenar IDs para que A-B = B-A)
+      const ids = [match.pair1.id, match.pair2.id].sort();
+      const key = `${ids[0]}-${ids[1]}`;
+      pairMatchups.add(key);
     });
 
     const expectedCombinations = (pairs.length * (pairs.length - 1)) / 2;
-    const actualMatchups = pairMatchups.size / 2;
+    const actualMatchups = pairMatchups.size;
 
-    console.log(`📊 Enfrentamientos únicos: ${actualMatchups}`);
+    console.log(`📊 Enfrentamientos únicos encontrados: ${actualMatchups}`);
     console.log(`🎯 Combinaciones esperadas: ${expectedCombinations}`);
 
     if (actualMatchups === expectedCombinations) {
       console.log(
-        `✅ Todas las parejas se enfrentan correctamente (round robin completo)`
+        `✅ Todas las parejas se enfrentan exactamente una vez (round robin completo)`
       );
     } else {
-      console.log(
-        `❌ ERROR: Faltan ${
-          expectedCombinations - actualMatchups
-        } enfrentamientos`
+      console.error(
+        `❌ ERROR: Se encontraron ${actualMatchups} enfrentamientos únicos, pero se esperaban ${expectedCombinations}`
       );
+      console.error(`❌ Faltan ${expectedCombinations - actualMatchups} enfrentamientos o hay repeticiones`);
       allCorrect = false;
+
+      // Mostrar qué enfrentamientos faltan o están repetidos
+      const allPairs = pairs.map(p => p.id);
+      const expectedPairs: string[] = [];
+      for (let i = 0; i < allPairs.length; i++) {
+        for (let j = i + 1; j < allPairs.length; j++) {
+          const key = `${allPairs[i]}-${allPairs[j]}`;
+          expectedPairs.push(key);
+        }
+      }
+
+      const missing = expectedPairs.filter(key => !pairMatchups.has(key));
+      if (missing.length > 0) {
+        console.error(`❌ Enfrentamientos faltantes: ${missing.length}`);
+        missing.slice(0, 5).forEach(key => {
+          const [id1, id2] = key.split('-');
+          const p1 = pairs.find(p => p.id === id1);
+          const p2 = pairs.find(p => p.id === id2);
+          if (p1 && p2) {
+            console.error(`   - ${p1.player1_name}/${p1.player2_name} vs ${p2.player1_name}/${p2.player2_name}`);
+          }
+        });
+      }
+
+      // Verificar repeticiones
+      const matchupCounts: { [key: string]: number } = {};
+      matches.forEach((match) => {
+        const ids = [match.pair1.id, match.pair2.id].sort();
+        const key = `${ids[0]}-${ids[1]}`;
+        matchupCounts[key] = (matchupCounts[key] || 0) + 1;
+      });
+
+      const repeated = Object.keys(matchupCounts).filter(key => matchupCounts[key] > 1);
+      if (repeated.length > 0) {
+        console.error(`❌ Enfrentamientos repetidos: ${repeated.length}`);
+        repeated.slice(0, 5).forEach(key => {
+          const [id1, id2] = key.split('-');
+          const p1 = pairs.find(p => p.id === id1);
+          const p2 = pairs.find(p => p.id === id2);
+          if (p1 && p2) {
+            console.error(`   - ${p1.player1_name}/${p1.player2_name} vs ${p2.player1_name}/${p2.player2_name} (${matchupCounts[key]} veces)`);
+          }
+        });
+      }
     }
 
-    // Verificar que la pareja ancla no siempre está en la misma cancha
-    console.log(`\n🎯 === VERIFICACIÓN DE ROTACIÓN DE CANCHAS ===`);
-    const anchorPair = pairs[0];
-    const anchorCourtDistribution: { [key: number]: number } = {};
+    // Verificar que cada pareja descansa exactamente una vez (solo para números impares)
+    if (pairs.length % 2 === 1) {
+      console.log(`\n😴 === VERIFICACIÓN DE PAREJAS QUE DESCANSAN ===`);
+      const pairsRestingCount: { [pairId: string]: number } = {};
 
-    matches.forEach((match) => {
-      if (
-        match.pair1.id === anchorPair.id ||
-        match.pair2.id === anchorPair.id
-      ) {
-        anchorCourtDistribution[match.court] =
-          (anchorCourtDistribution[match.court] || 0) + 1;
+      // Inicializar contador para cada pareja
+      pairs.forEach((pair) => {
+        pairsRestingCount[pair.id] = 0;
+      });
+
+      // Para cada ronda, identificar qué pareja descansa
+      const totalRounds = pairs.length;
+      for (let round = 1; round <= totalRounds; round++) {
+        const roundMatches = matchesByRound[round] || [];
+        const playingPairIds = new Set<string>();
+        
+        roundMatches.forEach((match) => {
+          playingPairIds.add(match.pair1.id);
+          playingPairIds.add(match.pair2.id);
+        });
+
+        // Encontrar la pareja que descansa (la que no está jugando)
+        const restingPair = pairs.find((pair) => !playingPairIds.has(pair.id));
+        
+        if (restingPair) {
+          pairsRestingCount[restingPair.id] = (pairsRestingCount[restingPair.id] || 0) + 1;
+          console.log(`  Ronda ${round}: ${restingPair.player1_name}/${restingPair.player2_name} descansa`);
+        }
       }
-    });
 
-    const courtsUsedByAnchor = Object.keys(anchorCourtDistribution).length;
-    console.log(`🏟️ Canchas usadas por la pareja ancla: ${courtsUsedByAnchor}`);
+      // Verificar que cada pareja descansa exactamente una vez
+      let restingCorrect = true;
+      pairs.forEach((pair) => {
+        const restCount = pairsRestingCount[pair.id] || 0;
+        if (restCount !== 1) {
+          console.error(
+            `❌ ERROR: Pareja ${pair.player1_name}/${pair.player2_name} descansa ${restCount} veces (debería ser 1)`
+          );
+          restingCorrect = false;
+          allCorrect = false;
+        } else {
+          console.log(`  ✅ ${pair.player1_name}/${pair.player2_name} descansa exactamente 1 vez`);
+        }
+      });
 
-    if (courtsUsedByAnchor > 1) {
-      console.log(`✅ Pareja ancla rota entre diferentes canchas`);
-    } else {
-      console.log(`⚠️ Pareja ancla siempre en la misma cancha`);
+      if (restingCorrect) {
+        console.log(`✅ Todas las parejas descansan exactamente una vez`);
+      }
     }
 
     // Resultado final de la verificación
