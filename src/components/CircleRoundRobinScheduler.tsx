@@ -61,8 +61,11 @@ export class CircleRoundRobinScheduler {
     });
 
     // Paso 2: Calcular número total de rondas
-    const totalRounds = pairs.length - 1;
-    console.log(`🔄 Total rondas necesarias: ${totalRounds}`);
+    // Para round-robin completo:
+    // - Si N es par: N-1 rondas (todas las parejas juegan en cada ronda)
+    // - Si N es impar: N rondas (una pareja descansa en cada ronda)
+    const totalRounds = pairs.length % 2 === 0 ? pairs.length - 1 : pairs.length;
+    console.log(`🔄 Total rondas necesarias: ${totalRounds} (${pairs.length} parejas, ${pairs.length % 2 === 0 ? 'par' : 'impar'})`);
 
     // Paso 3: Generar cada ronda usando el método del círculo
     for (let round = 1; round <= totalRounds; round++) {
