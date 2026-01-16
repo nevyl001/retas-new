@@ -39,50 +39,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const [pair2Score, setPair2Score] = useState("");
   const isUpdatingRef = useRef(false); // Prevenir múltiples actualizaciones simultáneas
 
-  // Función optimizada: solo cargar juegos (match y pairs vienen como props)
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Usar match del prop directamente (no recargar)
-      setCurrentMatch(match);
-
-      // Usar pairs recibidos como prop (ya vienen del padre, no recargar)
-      const p1 = pairs.find((p) => p.id === match.pair1_id);
-      const p2 = pairs.find((p) => p.id === match.pair2_id);
-      setPair1(p1 || null);
-      setPair2(p2 || null);
-
-      // Solo cargar juegos de este partido específico (único dato que necesita cargar)
-      const matchGames = await getGames(match.id);
-      setGames(matchGames);
-
-      console.log("✅ Datos cargados");
-    } catch (err) {
-      console.error("❌ Error cargando datos:", err);
-      setError("Error cargando datos");
-    } finally {
-      setLoading(false);
-    }
-  }, [match, pairs]); // Usar match completo como dependencia
-
-  // Función optimizada: usar match del estado local o prop (ya está actualizado)
-  const updateTable = useCallback(async () => {
-    if (!onCorrectScore) {
-      console.error("❌ onCorrectScore no está disponible");
-      return;
-    }
-
-    try {
-      // Usar currentMatch si está disponible, sino usar match del prop (ambos están actualizados)
-      const matchToUpdate = currentMatch || match;
-      onCorrectScore(matchToUpdate);
-    } catch (err) {
-      console.error("❌ Error actualizando tabla:", err);
-    }
-  }, [match, currentMatch, onCorrectScore]);
-
   // Función optimizada para recargar datos locales SIN múltiples actualizaciones
   const refreshFromServer = useCallback(async () => {
     // Prevenir múltiples actualizaciones simultáneas
@@ -114,7 +70,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     } finally {
       isUpdatingRef.current = false;
     }
-  }, [match.id, match.tournament_id, onCorrectScore]);
+  }, [match, pairs, onCorrectScore]);
 
   // Obtener nombre de pareja
   const getPairName = (pair: Pair | null): string => {
@@ -365,7 +321,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [match.id]); // Solo recargar cuando cambia el ID del match (nuevo partido)
+  }, [match.id, match, pairs]); // Recargar cuando cambia el match o pairs
 
   // Actualizar estado cuando el prop match cambia (sin recargar de BD)
   useEffect(() => {
@@ -402,8 +358,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match]); // Usar match completo como dependencia (React compara por referencia)
+  }, [match, pairs, currentMatch, isEditing]); // Incluir todas las dependencias
 
   if (loading) {
     return (

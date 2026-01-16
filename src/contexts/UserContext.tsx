@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
 import { AUTH_CONFIG } from "../config/auth";
@@ -39,49 +39,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    let isMounted = true;
-
-    // Escuchar cambios de autenticación
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return;
-
-      console.log("🔄 Cambio de autenticación:", event, session?.user?.id);
-      setSession(session);
-
-      // Verificar si es admin antes de establecer como usuario normal
-      if (session?.user?.email === "admin@test.com") {
-        console.log(
-          "🔐 Usuario admin detectado, NO procesando como usuario normal"
-        );
-        setUser(null); // No establecer como usuario normal
-        setUserProfile(null);
-      } else {
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          console.log("👤 Usuario normal encontrado, obteniendo perfil...");
-          console.log("👤 Usuario data:", session.user);
-          // Llamar fetchUserProfile directamente sin await para evitar bucles
-          fetchUserProfile(session.user.id);
-        } else {
-          setUserProfile(null);
-        }
-      }
-
-      setLoading(false);
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, []); // Sin dependencias para evitar bucles
-
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = useCallback(async (userId: string) => {
     try {
       console.log("🔍 Obteniendo perfil para usuario:", userId);
       const { data, error } = await supabase
@@ -121,7 +79,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("❌ Error obteniendo perfil:", error);
     }
-  };
+  }, [user]);
 
   const signUp = async (email: string, password: string, name: string) => {
     try {

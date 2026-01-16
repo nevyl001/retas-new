@@ -58,7 +58,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     };
 
     loadTournaments();
-  }, [user?.id]); // Solo depender del ID del usuario
+  }, [user?.id, user]); // Incluir user para cumplir con ESLint
 
   const handleCreateTournament = async (e: React.FormEvent) => {
     e.preventDefault();
