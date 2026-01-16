@@ -30,35 +30,46 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   });
 
   // Cargar retas cuando el usuario cambie
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     console.log("🔄 useEffect ejecutado, usuario:", user?.id);
 
-    if (!user) {
+    if (!user?.id) {
       console.log("❌ No hay usuario, no se pueden cargar retas");
       setLoading(false);
       setTournaments([]);
       return;
     }
 
+    let isMounted = true;
+
     const loadTournaments = async () => {
       console.log("🔄 Cargando retas para usuario:", user.id);
       try {
         setLoading(true);
         const data = await getTournaments(user.id);
+        
+        if (!isMounted) return;
+        
         console.log("✅ Retas cargadas:", data?.length || 0);
         setTournaments(data || []);
       } catch (err) {
+        if (!isMounted) return;
         console.error("❌ Error al cargar retas:", err);
         setError("Error al cargar las retas");
         setTournaments([]);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadTournaments();
-  }, [user?.id, user]); // Incluir user para cumplir con ESLint
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id]); // Solo depender del ID del usuario
 
   const handleCreateTournament = async (e: React.FormEvent) => {
     e.preventDefault();
