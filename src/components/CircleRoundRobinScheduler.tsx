@@ -58,86 +58,123 @@ export class CircleRoundRobinScheduler {
 
     console.log(`🔄 Total rondas: ${totalRounds} (${pairs.length} parejas, ${isOdd ? 'impar' : 'par'})`);
 
-    // Crear array circular de todas las parejas
-    let circularPairs = [...pairs];
+    if (isOdd) {
+      // MÉTODO DEL CÍRCULO PARA NÚMEROS IMPARES
+      // Todas las parejas rotan en círculo, una descansa en cada ronda
+      let circularPairs = [...pairs];
 
-    // Para cada ronda
-    for (let round = 1; round <= totalRounds; round++) {
-      console.log(`\n🔄 === RONDA ${round} ===`);
+      for (let round = 1; round <= totalRounds; round++) {
+        console.log(`\n🔄 === RONDA ${round} ===`);
 
-      const roundMatches: Array<{
-        pair1: Pair;
-        pair2: Pair;
-        round: number;
-        court: number;
-      }> = [];
+        const roundMatches: Array<{
+          pair1: Pair;
+          pair2: Pair;
+          round: number;
+          court: number;
+        }> = [];
 
-      // Para números impares: la pareja del medio (índice N/2 redondeado hacia abajo) descansa
-      // Para números pares: todas las parejas juegan
-      let playingPairs: Pair[];
-      let restingPair: Pair | null = null;
-
-      if (isOdd) {
-        // La pareja en el medio del array circular descansa
+        // La pareja en el medio descansa
         const restingIndex = Math.floor(circularPairs.length / 2);
-        restingPair = circularPairs[restingIndex];
+        const restingPair = circularPairs[restingIndex];
         
         // Todas las parejas excepto la que descansa
-        playingPairs = circularPairs.filter((_, index) => index !== restingIndex);
+        const playingPairs = circularPairs.filter((_, index) => index !== restingIndex);
         
         console.log(`😴 Pareja que descansa: ${restingPair.player1_name}/${restingPair.player2_name}`);
-      } else {
-        // Para números pares, todas las parejas juegan
-        playingPairs = [...circularPairs];
-      }
 
-      // Emparejar las parejas que juegan: primera con última, segunda con penúltima, etc.
-      let court = ((round - 1) % courts) + 1;
-      
-      for (let i = 0; i < Math.floor(playingPairs.length / 2); i++) {
-        const pair1 = playingPairs[i];
-        const pair2 = playingPairs[playingPairs.length - 1 - i];
+        // Emparejar: primera con última, segunda con penúltima, etc.
+        let court = ((round - 1) % courts) + 1;
+        
+        for (let i = 0; i < Math.floor(playingPairs.length / 2); i++) {
+          const pair1 = playingPairs[i];
+          const pair2 = playingPairs[playingPairs.length - 1 - i];
 
-        // Solo crear partido si tenemos cancha disponible
-        if (roundMatches.length < courts) {
-          const match = {
-            pair1,
-            pair2,
-            round,
-            court,
-          };
+          if (roundMatches.length < courts) {
+            roundMatches.push({
+              pair1,
+              pair2,
+              round,
+              court,
+            });
 
-          roundMatches.push(match);
+            console.log(
+              `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
+            );
 
-          console.log(
-            `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
-          );
-
-          // Rotar la cancha
-          court = ((court - 1 + 1) % courts) + 1;
+            court = ((court - 1 + 1) % courts) + 1;
+          }
         }
-      }
 
-      matches.push(...roundMatches);
-
-      if (restingPair) {
+        matches.push(...roundMatches);
         console.log(
           `✅ Ronda ${round}: ${roundMatches.length} partidos, ${restingPair.player1_name}/${restingPair.player2_name} descansa`
         );
-      } else {
-        console.log(
-          `✅ Ronda ${round}: ${roundMatches.length} partidos`
-        );
-      }
 
-      // Rotar el círculo completo una posición hacia la izquierda para la siguiente ronda
-      // [A, B, C, D, E, F, G] -> [B, C, D, E, F, G, A]
-      if (round < totalRounds) {
-        const firstPair = circularPairs.shift();
-        if (firstPair) {
-          circularPairs.push(firstPair);
+        // Rotar el círculo completo una posición
+        if (round < totalRounds) {
+          const firstPair = circularPairs.shift();
+          if (firstPair) {
+            circularPairs.push(firstPair);
+          }
+          console.log(`🔄 Círculo rotado para ronda ${round + 1}`);
         }
-        console.log(`🔄 Círculo rotado para ronda ${round + 1}`);
+      }
+    } else {
+      // MÉTODO DEL CÍRCULO PARA NÚMEROS PARES
+      // Fijar la primera pareja, rotar las demás
+      const fixedPair = pairs[0];
+      let rotatingPairs = pairs.slice(1);
+
+      console.log(`🎯 Pareja fija: ${fixedPair.player1_name}/${fixedPair.player2_name}`);
+      console.log(`🔄 Parejas rotantes: ${rotatingPairs.length}`);
+
+      for (let round = 1; round <= totalRounds; round++) {
+        console.log(`\n🔄 === RONDA ${round} ===`);
+
+        const roundMatches: Array<{
+          pair1: Pair;
+          pair2: Pair;
+          round: number;
+          court: number;
+        }> = [];
+
+        // Crear array con pareja fija + parejas rotantes
+        const roundPairs = [fixedPair, ...rotatingPairs];
+
+        // Emparejar: primera con última, segunda con penúltima, etc.
+        let court = ((round - 1) % courts) + 1;
+        
+        for (let i = 0; i < Math.floor(roundPairs.length / 2); i++) {
+          const pair1 = roundPairs[i];
+          const pair2 = roundPairs[roundPairs.length - 1 - i];
+
+          if (roundMatches.length < courts) {
+            roundMatches.push({
+              pair1,
+              pair2,
+              round,
+              court,
+            });
+
+            console.log(
+              `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
+            );
+
+            court = ((court - 1 + 1) % courts) + 1;
+          }
+        }
+
+        matches.push(...roundMatches);
+        console.log(`✅ Ronda ${round}: ${roundMatches.length} partidos`);
+
+        // Rotar solo las parejas rotantes (no la fija)
+        if (round < totalRounds) {
+          const lastPair = rotatingPairs.pop();
+          if (lastPair) {
+            rotatingPairs.unshift(lastPair);
+          }
+          console.log(`🔄 Parejas rotantes rotadas para ronda ${round + 1}`);
+        }
       }
     }
 
