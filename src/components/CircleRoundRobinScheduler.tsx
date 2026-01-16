@@ -83,26 +83,27 @@ export class CircleRoundRobinScheduler {
         console.log(`😴 Pareja que descansa: ${restingPair.player1_name}/${restingPair.player2_name}`);
 
         // Emparejar: primera con última, segunda con penúltima, etc.
+        // Generar TODOS los partidos posibles hasta el límite de canchas disponibles
         let court = ((round - 1) % courts) + 1;
+        const maxMatches = Math.min(Math.floor(playingPairs.length / 2), courts);
         
-        for (let i = 0; i < Math.floor(playingPairs.length / 2); i++) {
+        for (let i = 0; i < maxMatches; i++) {
           const pair1 = playingPairs[i];
           const pair2 = playingPairs[playingPairs.length - 1 - i];
 
-          if (roundMatches.length < courts) {
-            roundMatches.push({
-              pair1,
-              pair2,
-              round,
-              court,
-            });
+          roundMatches.push({
+            pair1,
+            pair2,
+            round,
+            court,
+          });
 
-            console.log(
-              `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
-            );
+          console.log(
+            `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
+          );
 
-            court = ((court - 1 + 1) % courts) + 1;
-          }
+          // Rotar la cancha
+          court = ((court - 1 + 1) % courts) + 1;
         }
 
         matches.push(...roundMatches);
@@ -142,26 +143,27 @@ export class CircleRoundRobinScheduler {
         const roundPairs = [fixedPair, ...rotatingPairs];
 
         // Emparejar: primera con última, segunda con penúltima, etc.
+        // Generar TODOS los partidos posibles hasta el límite de canchas disponibles
         let court = ((round - 1) % courts) + 1;
+        const maxMatches = Math.min(Math.floor(roundPairs.length / 2), courts);
         
-        for (let i = 0; i < Math.floor(roundPairs.length / 2); i++) {
+        for (let i = 0; i < maxMatches; i++) {
           const pair1 = roundPairs[i];
           const pair2 = roundPairs[roundPairs.length - 1 - i];
 
-          if (roundMatches.length < courts) {
-            roundMatches.push({
-              pair1,
-              pair2,
-              round,
-              court,
-            });
+          roundMatches.push({
+            pair1,
+            pair2,
+            round,
+            court,
+          });
 
-            console.log(
-              `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
-            );
+          console.log(
+            `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
+          );
 
-            court = ((court - 1 + 1) % courts) + 1;
-          }
+          // Rotar la cancha
+          court = ((court - 1 + 1) % courts) + 1;
         }
 
         matches.push(...roundMatches);
