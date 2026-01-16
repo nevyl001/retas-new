@@ -39,7 +39,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = useCallback(async (userId: string) => {
+  const fetchUserProfile = useCallback(async (userId: string, userEmail?: string, userName?: string) => {
     try {
       console.log("🔍 Obteniendo perfil para usuario:", userId);
       const { data, error } = await supabase
@@ -57,8 +57,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             .from("users")
             .insert({
               id: userId,
-              email: user?.email || userId, // Usar el email real del usuario
-              name: user?.user_metadata?.name || "Usuario",
+              email: userEmail || userId,
+              name: userName || "Usuario",
             })
             .select()
             .single();
@@ -79,7 +79,52 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("❌ Error obteniendo perfil:", error);
     }
-  }, [user]);
+  }, []);
+
+  // Escuchar cambios de autenticación
+  useEffect(() => {
+    let isMounted = true;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
+      console.log("🔄 Cambio de autenticación:", event, session?.user?.id);
+      setSession(session);
+
+      // Verificar si es admin antes de establecer como usuario normal
+      if (session?.user?.email === "admin@test.com") {
+        console.log(
+          "🔐 Usuario admin detectado, NO procesando como usuario normal"
+        );
+        setUser(null);
+        setUserProfile(null);
+      } else {
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          console.log("👤 Usuario normal encontrado, obteniendo perfil...");
+          console.log("👤 Usuario data:", session.user);
+          fetchUserProfile(
+            session.user.id,
+            session.user.email,
+            session.user.user_metadata?.name
+          );
+        } else {
+          setUserProfile(null);
+        }
+      }
+
+      setLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
