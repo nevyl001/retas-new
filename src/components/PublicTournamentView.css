@@ -617,20 +617,20 @@
 
 .public-standings-section {
   background: var(--color-bg-surface);
-  border-radius: var(--radius-lg);
-  padding: var(--space-2xl);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
   border: 1px solid var(--color-border-subtle);
   backdrop-filter: none;
-  margin-bottom: var(--space-3xl);
-  box-shadow: var(--shadow-card);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-soft);
 }
 
 .public-standings-header {
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-md);
 }
 
 .public-standings-title {
-  font-size: 1.875rem;
+  font-size: 1.5rem;
   color: var(--color-text-primary);
   margin-bottom: 0;
   text-align: left;
@@ -956,62 +956,13 @@
   }
 
   .public-standings-section {
-    padding: var(--space-xl);
-  }
-
-  .public-winner-section {
-    padding: var(--space-xl);
+    padding: var(--space-md);
   }
   
-  .public-winner-title {
-    font-size: 1.75rem;
-  }
-  
-  .public-winner-names {
-    font-size: 1.5rem;
-    padding: var(--space-lg);
-  }
-  
-  .public-winner-subtitle {
-    font-size: 1.125rem;
-  }
-  
-  .public-winner-stat-number {
-    font-size: 1.875rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .public-tournament-view {
-    padding: var(--space-md) var(--space-sm);
-  }
-
-  .public-header {
-    padding: var(--space-sm) 0;
-  }
-
-  .public-title {
+  .public-standings-title {
     font-size: 1.25rem;
   }
 
-  .public-round-section {
-    padding: var(--space-sm);
-  }
-
-  .elegant-public-match-card {
-    padding: var(--space-sm);
-  }
-
-  .elegant-match-info-top {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-sm);
-  }
-
-  .public-winner-stats {
-    grid-template-columns: 1fr;
-  }
-  
   .public-winner-section {
     padding: var(--space-lg);
   }
@@ -1030,6 +981,108 @@
   }
   
   .public-winner-stat-number {
-    font-size: 1.875rem;
+    font-size: 1.5rem;
+  }
+  
+  .public-title {
+    font-size: 1.5rem;
+  }
+  
+  .public-matches-title {
+    font-size: 1.125rem;
+  }
+  
+  .public-round-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-tournament-view {
+    padding: var(--space-md) var(--space-sm);
+  }
+
+  .public-header {
+    padding: var(--space-sm) 0;
+  }
+
+  .public-title {
+    font-size: 1.125rem;
+  }
+  
+  .public-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .public-round-section {
+    padding: var(--space-sm);
+  }
+  
+  .public-round-title {
+    font-size: 0.9375rem;
+  }
+
+  .elegant-public-match-card {
+    padding: var(--space-sm);
+  }
+
+  .elegant-match-info-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+  
+  .elegant-court-badge {
+    font-size: 0.75rem;
+    padding: var(--space-xs) var(--space-sm);
+  }
+  
+  .elegant-player-name {
+    font-size: 0.75rem;
+  }
+  
+  .elegant-player-score {
+    font-size: 1.5rem;
+  }
+  
+  .elegant-player-score.winner {
+    font-size: 1.75rem;
+  }
+
+  .public-winner-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .public-winner-section {
+    padding: var(--space-md);
+  }
+  
+  .public-winner-title {
+    font-size: 1.25rem;
+  }
+  
+  .public-winner-names {
+    font-size: 1.125rem;
+    padding: var(--space-md);
+  }
+  
+  .public-winner-subtitle {
+    font-size: 0.9375rem;
+  }
+  
+  .public-winner-stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .public-standings-section {
+    padding: var(--space-sm);
+  }
+  
+  .public-standings-title {
+    font-size: 1.125rem;
+  }
+  
+  .public-matches-title {
+    font-size: 1rem;
   }
 }

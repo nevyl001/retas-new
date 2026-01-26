@@ -354,9 +354,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
       {/* Tabla de Clasificación */}
       <div className="public-standings-section">
-        <div className="public-standings-header">
-          <h2 className="public-standings-title">📊 Tabla de Clasificación</h2>
-        </div>
         <RealTimeStandingsTable tournamentId={tournamentId} forceRefresh={0} />
       </div>
 
