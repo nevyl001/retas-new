@@ -175,9 +175,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             <div key={round} className="public-round-section">
               <div className="public-round-header">
                 <h3 className="public-round-title">Ronda {round}</h3>
-                <span className="public-round-count">
-                  {matchesByRound[parseInt(round)].length} partidos
-                </span>
               </div>
 
               <div className="public-matches-grid">
@@ -210,10 +207,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                                 ? "✅ FINALIZADO"
                                 : "🔄 EN PROGRESO"}
                             </div>
-                            <span className="elegant-round-badge">
-                              <span className="elegant-round-icon">🔄</span>
-                              Ronda {round}
-                            </span>
                           </div>
                         </div>
 

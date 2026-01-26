@@ -89,7 +89,29 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="container">
       <div className="header-section">
-        <h1>🏆 ¡Organiza tu Reta de Pádel y ¡Que Gane el Mejor! 🏅</h1>
+        <h1>Gestor de Retas de Pádel</h1>
+        <div className="header-instructions">
+          <div className="instruction-step">
+            <span className="instruction-number">1</span>
+            <span className="instruction-icon">📝</span>
+            <span>Crea tu primera reta</span>
+          </div>
+          <div className="instruction-step">
+            <span className="instruction-number">2</span>
+            <span className="instruction-icon">👥</span>
+            <span>Añade jugadores participantes</span>
+          </div>
+          <div className="instruction-step">
+            <span className="instruction-number">3</span>
+            <span className="instruction-icon">🤝</span>
+            <span>Forma parejas</span>
+          </div>
+          <div className="instruction-step">
+            <span className="instruction-number">4</span>
+            <span className="instruction-icon">⚡</span>
+            <span>Inicia la reta y genera partidos</span>
+          </div>
+        </div>
       </div>
 
       {loading && (
@@ -150,10 +172,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             />
           ) : (
             <div className="no-tournament-selected">
-              <h2>🏆 Bienvenido al Gestor de Retas</h2>
+              <h2>Selecciona una Reta</h2>
               <p>
-                Selecciona una reta del panel para comenzar a gestionar partidos
-                y resultados.
+                Elige una reta del panel para comenzar a gestionar partidos y resultados.
               </p>
             </div>
           )}

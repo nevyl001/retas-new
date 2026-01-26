@@ -1,92 +1,73 @@
-/* Nueva Tabla de Clasificación - Simple y Sin Conflictos */
+/* =====================================================
+   MODERN STANDINGS TABLE - DISEÑO EDITORIAL PREMIUM
+   ===================================================== */
+
 .new-standings-container {
-  background: linear-gradient(
-    135deg,
-    rgba(20, 20, 35, 0.95) 0%,
-    rgba(30, 30, 50, 0.9) 50%,
-    rgba(20, 20, 35, 0.95) 100%
-  );
-  border-radius: 20px;
-  padding: 24px;
-  border: 2px solid rgba(255, 215, 0, 0.4);
-  backdrop-filter: blur(15px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  margin-bottom: 20px;
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border-subtle);
+  backdrop-filter: none;
+  box-shadow: var(--shadow-soft);
+  margin-bottom: var(--space-md);
   position: relative;
   overflow: hidden;
 }
 
 .new-standings-container::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: radial-gradient(
-      1px 1px at 20px 30px,
-      rgba(255, 215, 0, 0.2),
-      transparent
-    ),
-    radial-gradient(1px 1px at 60px 70px, rgba(255, 215, 0, 0.15), transparent),
-    radial-gradient(1px 1px at 100px 20px, rgba(255, 215, 0, 0.25), transparent),
-    radial-gradient(1px 1px at 140px 80px, rgba(255, 215, 0, 0.1), transparent);
-  background-repeat: repeat;
-  background-size: 160px 100px;
-  animation: componentParticleFloat 17s linear infinite;
-  pointer-events: none;
-  opacity: 0.3;
+  display: none;
 }
 
 .new-standings-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  margin-bottom: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .new-standings-header h2 {
-  color: #ffd700;
-  font-size: 1.1rem;
-  font-weight: 700;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
   margin: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: none;
   line-height: 1.3;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-family);
+  letter-spacing: 0.01em;
 }
 
 .new-recalculate-button {
-  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
-  color: #ffffff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-subtle);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  transition: all var(--transition-base);
+  font-family: var(--font-family);
 }
 
-.new-recalculate-button:hover {
-  background: linear-gradient(135deg, #374151 0%, #6b7280 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+.new-recalculate-button:hover:not(:disabled) {
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-soft);
+  transform: translateY(-1px);
 }
 
 .new-recalculate-button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
 .new-standings-table-wrapper {
-  background: transparent;
-  border-radius: 12px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .new-standings-table {
@@ -96,20 +77,20 @@
 }
 
 .new-standings-table thead {
-  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+  background: var(--color-bg-elevated);
 }
 
 .new-standings-table th {
-  color: #ffd700;
-  font-weight: 600;
-  font-size: 0.8rem;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 12px 8px;
+  letter-spacing: 0.08em;
+  padding: var(--space-sm) var(--space-xs);
   text-align: center;
   border: none;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  font-family: var(--font-family);
+  text-shadow: none;
 }
 
 .new-standings-table th:first-child {
@@ -127,8 +108,8 @@
 }
 
 .new-standings-table tbody tr {
-  border-bottom: 1px solid rgba(255, 215, 0, 0.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid var(--color-border-subtle);
+  transition: all var(--transition-base);
 }
 
 .new-standings-table tbody tr:last-child {
@@ -136,38 +117,38 @@
 }
 
 .new-standings-table tbody tr:hover {
-  background: rgba(255, 215, 0, 0.05);
+  background: var(--color-bg-hover);
 }
 
 /* Posiciones especiales */
 .new-first-place {
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-accent-border);
 }
 
 .new-first-place td {
-  color: #ffd700 !important;
-  font-weight: 600;
+  color: var(--color-accent) !important;
+  font-weight: var(--font-weight-semibold);
 }
 
 .new-second-place {
-  background: rgba(192, 192, 192, 0.03);
-  border: 1px solid rgba(192, 192, 192, 0.2);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-soft);
 }
 
 .new-second-place td {
-  color: #e5e5e5 !important;
-  font-weight: 600;
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-weight-semibold);
 }
 
 .new-third-place {
-  background: rgba(205, 127, 50, 0.03);
-  border: 1px solid rgba(205, 127, 50, 0.2);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-soft);
 }
 
 .new-third-place td {
-  color: #d4af37 !important;
-  font-weight: 600;
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-weight-semibold);
 }
 
 .new-normal-place {
@@ -175,66 +156,71 @@
 }
 
 .new-normal-place td {
-  color: #ffffff !important;
-  font-weight: 500;
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-weight-medium);
 }
 
 /* Celdas específicas */
 .new-standings-table td {
-  padding: 12px 8px;
+  padding: var(--space-sm) var(--space-xs);
   text-align: center;
-  font-weight: 500;
-  font-size: 0.9rem;
+  font-weight: var(--font-weight-medium);
+  font-size: 0.8125rem;
   border: none;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
 }
 
 .new-position-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
+  gap: var(--space-xs);
+  padding-left: var(--space-sm) !important;
+  padding-right: var(--space-sm) !important;
 }
 
 .new-position-number {
-  font-weight: 700;
-  font-size: 1.1rem;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  min-width: 24px;
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.9375rem;
+  font-family: var(--font-family);
+  min-width: 20px;
   text-align: center;
+  color: var(--color-text-primary);
 }
 
 .new-position-icon {
-  font-size: 1.1rem;
-  min-width: 24px;
+  font-size: 0.9375rem;
+  min-width: 20px;
   text-align: center;
+  opacity: 0.7;
 }
 
 .new-team-cell {
   text-align: left;
-  font-weight: 600;
-  font-size: 1.3rem;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.875rem;
+  font-family: var(--font-family);
+  padding-left: var(--space-sm) !important;
+  padding-right: var(--space-sm) !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--color-text-primary);
 }
 
 .new-stats-cell {
-  font-weight: 600;
-  font-size: 0.7rem;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.8125rem;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
 }
 
 .new-points-cell {
-  font-weight: 700;
-  font-size: 0.7rem;
-  color: #10b981 !important;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.8125rem;
+  color: var(--color-text-primary) !important;
+  font-family: var(--font-family);
 }
 
 /* Estados */
@@ -243,27 +229,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
-  color: #ffd700;
+  padding: var(--space-3xl) var(--space-xl);
+  color: var(--color-text-secondary);
 }
 
 .new-loading-spinner {
   width: 30px;
   height: 30px;
-  border: 2px solid rgba(255, 215, 0, 0.3);
-  border-top: 2px solid #ffd700;
+  border: 2px solid var(--color-border-subtle);
+  border-top: 2px solid var(--color-accent);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 12px;
-}
-
-@keyframes componentParticleFloat {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-50px);
-  }
+  margin-bottom: var(--space-md);
 }
 
 @keyframes spin {
@@ -277,58 +254,58 @@
 
 .new-empty-state {
   text-align: center;
-  padding: 30px 20px;
-  color: #ffd700;
-  background: rgba(255, 215, 0, 0.05);
-  border-radius: 12px;
-  margin-top: 16px;
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  padding: var(--space-2xl) var(--space-xl);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-md);
+  border: 1px solid var(--color-border-subtle);
 }
 
 .new-empty-state p {
-  font-size: 0.9rem;
+  font-size: 0.9375rem;
   margin: 0;
-  opacity: 0.9;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  opacity: 1;
+  font-family: var(--font-family);
 }
 
 .new-error-state {
   text-align: center;
-  padding: 16px;
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
-  border-radius: 12px;
-  margin-top: 16px;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: var(--space-md);
+  color: rgba(220, 38, 38, 0.9);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-md);
+  border: 1px solid rgba(220, 38, 38, 0.4);
 }
 
 .new-error-state p {
   margin: 0;
-  font-weight: 600;
-  font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .new-standings-container {
-    padding: 16px 12px;
-    margin: 0 -8px 20px -8px;
-    width: calc(100% + 16px);
+    padding: var(--space-md) var(--space-sm);
+    margin: 0;
+    width: 100%;
   }
 
   .new-standings-header {
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-sm);
     align-items: flex-start;
   }
 
   .new-standings-header h2 {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 
   .new-recalculate-button {
-    padding: 5px 10px;
-    font-size: 0.75rem;
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.8125rem;
   }
 
   .new-standings-table-wrapper {
@@ -341,14 +318,14 @@
 
   .new-standings-table th,
   .new-standings-table td {
-    padding: 8px 6px;
-    font-size: 0.8rem;
+    padding: var(--space-sm) var(--space-xs);
+    font-size: 0.875rem;
   }
 
   .new-position-cell {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-    gap: 6px;
+    padding-left: var(--space-sm) !important;
+    padding-right: var(--space-sm) !important;
+    gap: var(--space-xs);
   }
 
   .new-position-number,
@@ -358,26 +335,26 @@
   }
 
   .new-team-cell {
-    font-size: 1rem;
-    padding-left: 12px !important;
-    padding-right: 12px !important;
+    font-size: 0.9375rem;
+    padding-left: var(--space-sm) !important;
+    padding-right: var(--space-sm) !important;
   }
 
   .new-stats-cell,
   .new-points-cell {
-    font-size: 0.65rem;
+    font-size: 0.8125rem;
   }
 }
 
 @media (max-width: 480px) {
   .new-standings-container {
-    padding: 12px 8px;
-    margin: 0 -4px 20px -4px;
-    width: calc(100% + 8px);
+    padding: var(--space-sm) var(--space-xs);
+    margin: 0;
+    width: 100%;
   }
 
   .new-standings-header h2 {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
 
   .new-standings-table {
@@ -386,71 +363,30 @@
 
   .new-standings-table th,
   .new-standings-table td {
-    padding: 6px 4px;
-    font-size: 0.75rem;
+    padding: var(--space-xs) var(--space-xs);
+    font-size: 0.8125rem;
   }
 
   .new-position-cell {
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-    gap: 4px;
+    padding-left: var(--space-xs) !important;
+    padding-right: var(--space-xs) !important;
+    gap: var(--space-xs);
   }
 
   .new-position-number,
   .new-position-icon {
-    font-size: 0.9rem;
+    font-size: 0.9375rem;
     min-width: 18px;
   }
 
   .new-team-cell {
-    font-size: 0.85rem;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    font-size: 0.875rem;
+    padding-left: var(--space-xs) !important;
+    padding-right: var(--space-xs) !important;
   }
 
   .new-stats-cell,
   .new-points-cell {
-    font-size: 0.6rem;
-  }
-}
-
-@media (max-width: 375px) {
-  .new-standings-container {
-    padding: 8px 4px;
-    margin: 0 -2px 20px -2px;
-    width: calc(100% + 4px);
-  }
-
-  .new-standings-table {
-    min-width: 450px;
-  }
-
-  .new-standings-table th,
-  .new-standings-table td {
-    padding: 4px 2px;
-    font-size: 0.7rem;
-  }
-
-  .new-position-cell {
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-    gap: 3px;
-  }
-
-  .new-position-number,
-  .new-position-icon {
-    font-size: 0.8rem;
-    min-width: 16px;
-  }
-
-  .new-team-cell {
     font-size: 0.75rem;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-  }
-
-  .new-stats-cell,
-  .new-points-cell {
-    font-size: 0.55rem;
   }
 }

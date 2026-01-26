@@ -1,102 +1,108 @@
+/* =====================================================
+   RESTING PAIRS SECTION - DISEÑO EDITORIAL PREMIUM
+   ===================================================== */
+
 .resting-pairs-section {
-  margin-top: 20px;
-  padding: 16px;
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: none;
 }
 
 .resting-pairs-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .resting-pairs-icon {
-  font-size: 20px;
+  font-size: 1.25rem;
+  opacity: 0.6;
 }
 
 .resting-pairs-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffd700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  text-transform: none;
+  letter-spacing: 0.01em;
 }
 
 .resting-pairs-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .resting-pair-card {
-  padding: 10px 16px;
-  background: rgba(255, 215, 0, 0.1);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 8px;
-  backdrop-filter: blur(5px);
-  transition: all 0.3s ease;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  backdrop-filter: none;
+  transition: all var(--transition-base);
 }
 
 .resting-pair-card:hover {
-  background: rgba(255, 215, 0, 0.15);
-  border-color: rgba(255, 215, 0, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border-soft);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
 }
 
 .resting-pair-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #ffd700;
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
   white-space: nowrap;
 }
 
 .resting-pairs-info {
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 215, 0, 0.1);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .resting-pairs-info-text {
-  font-size: 11px;
-  color: rgba(255, 215, 0, 0.7);
-  font-style: italic;
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  font-style: normal;
+  line-height: 1.6;
 }
 
 /* Responsive para móvil */
 @media (max-width: 768px) {
   .resting-pairs-section {
-    padding: 12px;
-    margin-top: 16px;
+    padding: var(--space-md);
+    margin-top: var(--space-md);
   }
 
   .resting-pairs-header {
-    margin-bottom: 10px;
+    margin-bottom: var(--space-sm);
   }
 
   .resting-pairs-title {
-    font-size: 13px;
+    font-size: 0.8125rem;
   }
 
   .resting-pairs-list {
-    gap: 6px;
+    gap: var(--space-xs);
   }
 
   .resting-pair-card {
-    padding: 8px 12px;
+    padding: var(--space-xs) var(--space-sm);
   }
 
   .resting-pair-name {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 
   .resting-pairs-info-text {
-    font-size: 10px;
+    font-size: 0.6875rem;
   }
 }
