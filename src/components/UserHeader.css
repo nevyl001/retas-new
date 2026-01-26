@@ -1,21 +1,24 @@
 /* =====================================================
-   USER HEADER - DISEÑO NUEVO Y SIMPLE
+   USER HEADER - RESERVE PADEL INSPIRED - ELEGANT & MINIMALIST
    ===================================================== */
 
 .user-header {
-  background: #0f0f23;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
   padding: 0;
   position: sticky;
   top: 0;
   z-index: 1000;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
 }
 
 .user-header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
-  max-width: 1400px;
+  padding: 20px 40px;
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -27,15 +30,16 @@
 }
 
 .user-header-logo h1 {
-  color: #ffd700;
-  font-size: 22px;
-  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-semibold);
   margin: 0;
   line-height: 1.3;
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.02em;
 }
 
 .user-header-actions {
@@ -45,7 +49,7 @@
 }
 
 /* =====================================================
-   PERFIL DE USUARIO - ESCRITORIO
+   PERFIL DE USUARIO - ELEGANT DESIGN
    ===================================================== */
 
 .user-profile-wrapper {
@@ -55,31 +59,31 @@
 .user-profile-btn {
   display: flex;
   align-items: center;
-  gap: 14px;
-  background: rgba(255, 215, 0, 0.08);
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  gap: 12px;
+  background: transparent;
+  border: 1px solid var(--border-primary);
   cursor: pointer;
-  padding: 10px 18px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  transition: all 0.3s ease;
 }
 
 .user-profile-btn:hover {
-  background: rgba(255, 215, 0, 0.12);
-  border-color: rgba(255, 215, 0, 0.3);
+  background: var(--bg-hover);
+  border-color: var(--border-secondary);
   transform: translateY(-1px);
 }
 
 .user-avatar {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #ffd700, #ffa500);
-  border: 2px solid rgba(255, 215, 0, 0.3);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
   flex-shrink: 0;
 }
 
@@ -91,24 +95,24 @@
 }
 
 .user-avatar-initials {
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-size: 14px;
 }
 
 .user-info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 
 .user-name {
-  color: #ffffff;
-  font-weight: 500;
-  font-size: 15px;
-  line-height: 1;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  font-size: 14px;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -116,9 +120,9 @@
 }
 
 .user-email {
-  color: #a0a0a0;
-  font-size: 13px;
-  line-height: 1;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -126,27 +130,31 @@
 }
 
 .user-dropdown-arrow {
-  color: #a0a0a0;
-  font-size: 12px;
+  color: var(--text-secondary);
+  font-size: 10px;
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }
 
+.user-profile-btn:hover .user-dropdown-arrow {
+  transform: translateY(1px);
+}
+
 /* =====================================================
-   DROPDOWN MENU - DISEÑO SIMPLE Y VISIBLE
+   DROPDOWN MENU - ELEGANT DESIGN
    ===================================================== */
 
 .user-dropdown-menu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   right: 0;
-  background: #1a1a2e;
-  border: 2px solid rgba(255, 107, 107, 0.5);
-  border-radius: 12px;
-  min-width: 250px;
-  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  min-width: 220px;
+  padding: 8px;
   z-index: 10000;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
   animation: slideDown 0.2s ease-out;
 }
 
@@ -156,31 +164,30 @@
   justify-content: flex-start;
   gap: 12px;
   width: 100%;
-  padding: 14px 16px;
-  background: rgba(255, 107, 107, 0.15);
-  border: 1px solid rgba(255, 107, 107, 0.4);
-  border-radius: 8px;
-  color: #ff6b6b;
-  font-size: 15px;
-  font-weight: 500;
+  padding: 12px 16px;
+  background: transparent;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .logout-button:hover {
-  background: rgba(255, 107, 107, 0.25);
-  border-color: rgba(255, 107, 107, 0.6);
-  color: #ff5252;
-  transform: translateX(2px);
+  background: var(--bg-hover);
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
 }
 
 .logout-button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .logout-button span:first-child {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 /* =====================================================
@@ -190,7 +197,7 @@
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
@@ -226,46 +233,23 @@
 
 @media (max-width: 768px) {
   .user-header-content {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    padding: 20px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .user-header-logo {
-    order: 2;
-    text-align: center;
-    width: 100%;
-    max-width: 100%;
+    padding: 16px 20px;
+    gap: 16px;
   }
 
   .user-header-logo h1 {
-    font-size: 18px;
-    line-height: 1.4;
-    text-align: center;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    padding: 0 4px;
-  }
-
-  .user-header-actions {
-    order: 1;
-    justify-content: center;
-    width: 100%;
+    font-size: 1.25rem;
   }
 }
 
 @media (max-width: 480px) {
   .user-header-content {
-    padding: 16px 12px;
+    padding: 12px 16px;
     gap: 12px;
   }
 
   .user-header-logo h1 {
-    font-size: 16px;
+    font-size: 1.1rem;
   }
 
   .user-avatar {
@@ -274,43 +258,6 @@
   }
 
   .user-avatar-initials {
-    font-size: 13px;
-  }
-}
-
-/* iPhone 17 Pro Max y pantallas móviles grandes (430px - 480px) */
-@media (max-width: 480px) and (min-width: 430px) {
-  .user-header-content {
-    padding: 12px 10px;
-    gap: 10px;
-  }
-
-  .user-header-logo h1 {
-    font-size: 14px;
-    line-height: 1.3;
-    padding: 0 4px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .user-header-actions {
-    width: 100%;
-  }
-}
-
-/* Pantallas móviles extra grandes (iPhone Pro Max) */
-@media (max-width: 430px) {
-  .user-header-content {
-    padding: 12px 8px;
-    gap: 8px;
-  }
-
-  .user-header-logo h1 {
-    font-size: 13px;
-    line-height: 1.2;
-    padding: 0 2px;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
+    font-size: 12px;
   }
 }
