@@ -925,8 +925,45 @@
   }
 
   .public-round-section {
-    padding: var(--space-md);
+    padding: var(--space-sm);
     margin-bottom: var(--space-md);
+    margin-top: var(--space-xs);
+  }
+  
+  .public-round-header {
+    padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+  
+  .public-round-title {
+    font-size: 1.625rem;
+  }
+  
+  .public-matches-section {
+    margin-top: var(--space-xs);
+    margin-bottom: var(--space-md);
+  }
+  
+  .public-matches-header {
+    margin-bottom: var(--space-sm);
+  }
+  
+  .public-matches-grid {
+    gap: var(--space-sm);
+  }
+  
+  .elegant-public-match-card {
+    padding: var(--space-sm);
+  }
+  
+  .elegant-match-info-top {
+    gap: var(--space-xs);
+    padding: var(--space-xs) 0;
+  }
+  
+  .elegant-vs-layout {
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
   }
 
   .public-matches-grid {
@@ -1001,42 +1038,87 @@
 
 @media (max-width: 480px) {
   .public-tournament-view {
-    padding: var(--space-md) var(--space-sm);
+    padding: var(--space-sm) var(--space-xs);
   }
 
   .public-header {
-    padding: var(--space-sm) 0;
+    padding: var(--space-xs) 0;
+    margin-bottom: var(--space-sm);
   }
 
   .public-title {
     font-size: 1.125rem;
+    margin-bottom: var(--space-xs);
   }
   
   .public-subtitle {
     font-size: 0.875rem;
   }
 
+  .public-matches-section {
+    margin-top: var(--space-xs);
+    margin-bottom: var(--space-md);
+  }
+  
+  .public-matches-header {
+    margin-bottom: var(--space-sm);
+  }
+  
+  .public-matches-title {
+    font-size: 1rem;
+    padding: var(--space-sm) var(--space-md);
+  }
+
   .public-round-section {
-    padding: var(--space-sm);
+    padding: var(--space-xs) var(--space-xs) var(--space-sm) var(--space-xs);
+    margin-top: var(--space-xs);
+    margin-bottom: var(--space-md);
+  }
+  
+  .public-round-header {
+    padding: var(--space-xs) var(--space-sm) var(--space-sm) var(--space-sm);
+    margin-bottom: var(--space-sm);
   }
   
   .public-round-title {
-    font-size: 1.125rem;
+    font-size: 1.5rem;
+    margin: var(--space-xs) 0;
+  }
+
+  .public-matches-grid {
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
   }
 
   .elegant-public-match-card {
     padding: var(--space-sm);
   }
+  
+  .elegant-public-header {
+    margin-bottom: var(--space-xs);
+  }
 
   .elegant-match-info-top {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
+    padding: var(--space-xs) 0;
   }
   
   .elegant-court-badge {
     font-size: 0.75rem;
     padding: var(--space-xs) var(--space-sm);
+  }
+  
+  .elegant-vs-layout {
+    gap: var(--space-sm);
+    padding: var(--space-sm) 0;
+    margin-bottom: var(--space-xs);
+  }
+  
+  .elegant-player-side {
+    padding: var(--space-sm);
+    min-height: 100px;
   }
   
   .elegant-player-name {
@@ -1045,6 +1127,7 @@
   
   .elegant-player-score {
     font-size: 1.5rem;
+    padding: var(--space-sm) var(--space-md);
   }
   
   .elegant-player-score.winner {
@@ -1053,10 +1136,18 @@
 
   .public-winner-stats {
     grid-template-columns: 1fr;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
   }
   
   .public-winner-section {
     padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+  
+  .public-winner-header {
+    padding: var(--space-md) var(--space-sm);
+    margin-bottom: var(--space-md);
   }
   
   .public-winner-title {
@@ -1072,19 +1163,20 @@
     font-size: 0.9375rem;
   }
   
+  .public-winner-stat {
+    padding: var(--space-md);
+  }
+  
   .public-winner-stat-number {
     font-size: 1.5rem;
   }
   
   .public-standings-section {
     padding: var(--space-sm);
+    margin-bottom: var(--space-md);
   }
   
   .public-standings-title {
     font-size: 1.125rem;
-  }
-  
-  .public-matches-title {
-    font-size: 1rem;
   }
 }

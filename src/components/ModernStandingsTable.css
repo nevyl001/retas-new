@@ -293,19 +293,21 @@
 /* Responsive */
 @media (max-width: 768px) {
   .new-standings-container {
-    padding: var(--space-md) var(--space-sm);
+    padding: var(--space-sm) var(--space-xs);
     margin: 0;
     width: 100%;
   }
 
   .new-standings-header {
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     align-items: flex-start;
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-xs);
   }
 
   .new-standings-header h2 {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 
   .new-recalculate-button {
@@ -353,13 +355,18 @@
 
 @media (max-width: 480px) {
   .new-standings-container {
-    padding: var(--space-sm) var(--space-xs);
+    padding: var(--space-xs) var(--space-xs);
     margin: 0;
     width: 100%;
   }
 
+  .new-standings-header {
+    margin-bottom: var(--space-xs);
+    padding-bottom: var(--space-xs);
+  }
+
   .new-standings-header h2 {
-    font-size: 0.9375rem;
+    font-size: 1rem;
   }
 
   .new-standings-table {
