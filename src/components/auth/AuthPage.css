@@ -149,37 +149,21 @@
 }
 
 @media (max-width: 968px) {
+  .auth-page {
+    padding: var(--space-lg);
+  }
+
   .auth-layout {
     grid-template-columns: 1fr;
-    max-width: 600px;
+    max-width: 100%;
+    width: 100%;
   }
 
   .auth-hero {
-    padding: var(--space-2xl) var(--space-xl);
+    padding: var(--space-xl) var(--space-lg);
     border-right: none;
     border-bottom: 1px solid var(--color-border-subtle);
-  }
-
-  .auth-form-section {
-    padding: var(--space-2xl) var(--space-xl);
-  }
-
-  .auth-logo h1 {
-    font-size: 1.875rem;
-  }
-
-  .hero-title {
-    font-size: 1.5rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .auth-layout {
-    max-width: 500px;
-  }
-
-  .auth-hero {
-    padding: var(--space-xl) var(--space-lg);
+    gap: var(--space-lg);
   }
 
   .auth-form-section {
@@ -187,7 +171,11 @@
   }
 
   .auth-logo h1 {
-    font-size: 1.75rem;
+    font-size: 1.625rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
   }
 
   .hero-title {
@@ -195,17 +183,24 @@
   }
 
   .feature-item {
-    padding: var(--space-md);
+    max-width: 100%;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
+  .auth-page {
+    padding: var(--space-md);
+  }
+
   .auth-layout {
-    max-width: 400px;
+    max-width: 100%;
+    width: 100%;
+    border-radius: var(--radius-md);
   }
 
   .auth-hero {
     padding: var(--space-lg) var(--space-md);
+    gap: var(--space-lg);
   }
 
   .auth-form-section {
@@ -216,16 +211,143 @@
     font-size: 1.5rem;
   }
 
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
   .hero-title {
     font-size: 1.25rem;
   }
 
   .feature-item {
-    padding: var(--space-md);
+    padding: var(--space-md) var(--space-sm);
+    gap: var(--space-sm);
+  }
+
+  .feature-text h3 {
+    font-size: 0.9375rem;
+  }
+
+  .feature-text p {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: var(--space-sm);
+  }
+
+  .auth-layout {
+    max-width: 100%;
+    width: 100%;
+    border-radius: var(--radius-md);
+    margin: 0;
+  }
+
+  .auth-hero {
+    padding: var(--space-md) var(--space-sm);
     gap: var(--space-md);
   }
 
+  .auth-form-section {
+    padding: var(--space-md) var(--space-sm);
+  }
+
+  .auth-logo h1 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .hero-subtitle {
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .hero-content {
+    gap: var(--space-md);
+  }
+
+  .hero-title {
+    font-size: 1.0625rem;
+    line-height: 1.4;
+  }
+
+  .features-list {
+    gap: var(--space-sm);
+  }
+
+  .feature-item {
+    padding: var(--space-sm) var(--space-xs);
+    gap: var(--space-sm);
+    max-width: 100%;
+  }
+
   .feature-icon {
+    font-size: 1rem;
+  }
+
+  .feature-text h3 {
+    font-size: 0.875rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .feature-text p {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+  }
+
+  .cta-section {
+    margin-top: var(--space-sm);
+  }
+
+  .cta-text {
+    font-size: 0.875rem;
+  }
+
+  .cta-subtext {
+    font-size: 0.8125rem;
+  }
+}
+
+/* iPhone 17 Pro Max y pantallas grandes móviles (430px - 480px) */
+@media (max-width: 480px) and (min-width: 430px) {
+  .auth-page {
+    padding: var(--space-xs);
+  }
+
+  .auth-layout {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .auth-hero {
+    padding: var(--space-sm) var(--space-xs);
+    gap: var(--space-sm);
+  }
+
+  .auth-logo h1 {
     font-size: 1.125rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .hero-title {
+    font-size: 1rem;
+  }
+
+  .feature-item {
+    padding: var(--space-xs);
+    gap: var(--space-xs);
+  }
+
+  .feature-text h3 {
+    font-size: 0.8125rem;
+  }
+
+  .feature-text p {
+    font-size: 0.75rem;
   }
 }
