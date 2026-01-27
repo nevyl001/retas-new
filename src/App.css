@@ -1465,6 +1465,8 @@
   .main-layout {
     padding: var(--space-md);
     gap: var(--space-xl);
+    max-width: 1600px;
+    margin: 0 auto;
   }
 
   .welcome-banner {
@@ -1474,6 +1476,15 @@
   .tournaments-grid {
     grid-template-columns: 1fr;
     gap: var(--space-md);
+  }
+
+  /* En tablets, mantener el contenedor con estilos normales */
+  .tournament-manager {
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-card);
   }
 
   .four-components-grid {
@@ -1526,6 +1537,7 @@
     box-sizing: border-box;
   }
 
+  /* Solo en móvil: eliminar contenedor para que las cards ocupen todo el espacio */
   .tournament-manager {
     width: 100%;
     max-width: 100%;
@@ -2872,11 +2884,11 @@
 
 .round-section-simplified {
   margin-bottom: var(--space-lg);
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
-  border: none;
-  box-shadow: none;
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-card);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
