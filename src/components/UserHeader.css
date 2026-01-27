@@ -204,26 +204,33 @@
   .user-header-content {
     padding: var(--space-sm) var(--space-md);
     gap: var(--space-sm);
+    align-items: center;
   }
 
   .user-header-main {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: var(--space-sm);
+    width: 100%;
   }
 
   .user-header-logo {
     width: 100%;
+    text-align: center;
   }
 
   .user-header-logo h1 {
     font-size: 1.25rem;
     width: 100%;
+    text-align: center;
   }
 
   .mobile-header-top {
     width: 100%;
     margin-bottom: var(--space-xs);
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 
@@ -231,15 +238,23 @@
   .user-header-content {
     padding: var(--space-xs) var(--space-sm);
     gap: var(--space-xs);
+    align-items: center;
   }
 
   .user-header-main {
     gap: var(--space-xs);
+    align-items: center;
+    width: 100%;
+  }
+
+  .user-header-logo {
+    text-align: center;
   }
 
   .user-header-logo h1 {
     font-size: 1.1rem;
     margin: 0;
+    text-align: center;
   }
 
   .user-avatar {
@@ -253,5 +268,9 @@
 
   .mobile-header-top {
     margin-bottom: var(--space-xs);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
   }
 }
