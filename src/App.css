@@ -1538,6 +1538,18 @@
   }
 
   /* Solo en móvil: eliminar contenedor para que las cards ocupen todo el espacio */
+  .reta-management-section {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    box-sizing: border-box;
+  }
+
   .tournament-manager {
     width: 100%;
     max-width: 100%;
@@ -1560,6 +1572,58 @@
   .retas-list h2 {
     text-align: center;
     margin-bottom: var(--space-md);
+  }
+
+  /* Formulario de crear reta optimizado para móvil */
+  .create-reta-form {
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-lg) var(--space-md);
+    margin: 0 0 var(--space-lg) 0;
+    box-sizing: border-box;
+  }
+
+  .create-reta-form h3 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .form-group {
+    margin-bottom: var(--space-md);
+  }
+
+  .form-group label {
+    font-size: 0.9375rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: var(--space-md);
+    font-size: 1rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    width: 100%;
+  }
+
+  .submit-btn {
+    width: 100%;
+    min-width: unset;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 1rem;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .cancel-btn {
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 1rem;
+    text-align: center;
   }
 
   .header-section {
@@ -1820,6 +1884,79 @@
 
   .app-header-container {
     align-items: center;
+  }
+
+  /* Contenedor de gestión de retas optimizado para móvil */
+  .reta-management-section {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    box-sizing: border-box;
+  }
+
+  /* Formulario de crear reta optimizado para móvil */
+  .create-reta-form {
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-lg) var(--space-md);
+    margin: 0 0 var(--space-lg) 0;
+    box-sizing: border-box;
+    border-radius: var(--radius-md);
+  }
+
+  .create-reta-form h3 {
+    font-size: 1.25rem;
+    margin-bottom: var(--space-md);
+  }
+
+  .form-group {
+    margin-bottom: var(--space-md);
+  }
+
+  .form-group label {
+    font-size: 0.9375rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    padding: var(--space-md);
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    width: 100%;
+  }
+
+  .submit-btn {
+    width: 100%;
+    min-width: unset;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 1rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cancel-btn {
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 1rem;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .welcome-banner {
