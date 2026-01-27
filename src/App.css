@@ -1395,24 +1395,24 @@
   .matches-container-simplified {
     width: 100%;
     max-width: 100%;
-    padding: 0;
+    padding: var(--space-sm);
     margin: 0;
     box-sizing: border-box;
   }
 
   .matches-header-simplified {
-    padding: var(--space-md) 0;
+    padding: var(--space-md) var(--space-sm);
     width: 100%;
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
 
   .round-header-simplified {
-    margin-bottom: var(--space-md);
-    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
   }
 
   .round-header-simplified h4 {
-    font-size: 1.125rem;
+    font-size: 1.25rem;
   }
 
   .header-section {
@@ -1796,36 +1796,37 @@
   }
 
   .modern-match-card {
-    padding: var(--space-lg) var(--space-md);
+    padding: var(--space-xl) var(--space-lg);
     width: 100%;
     max-width: 100%;
     margin-left: 0;
     margin-right: 0;
+    margin-bottom: var(--space-lg);
     box-sizing: border-box;
   }
 
   .modern-match-header {
-    margin-bottom: var(--space-md);
-    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
   }
 
   .modern-match-title {
-    font-size: 0.9375rem;
-    line-height: 1.4;
+    font-size: 1.125rem;
+    line-height: 1.5;
   }
 
   .modern-match-badges {
-    margin-bottom: var(--space-md);
-    gap: var(--space-xs);
-  }
-
-  .modern-match-pairs {
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-lg);
     gap: var(--space-sm);
   }
 
+  .modern-match-pairs {
+    margin-bottom: var(--space-lg);
+    gap: var(--space-md);
+  }
+
   .modern-pair-info {
-    padding: var(--space-sm);
+    padding: var(--space-md);
   }
   
   .compact-pairs-grid {
@@ -2829,11 +2830,11 @@
 
 .round-section-simplified {
   margin-bottom: var(--space-lg);
-  background: var(--color-bg-surface);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
-  border: 1px solid var(--color-border-subtle);
-  box-shadow: var(--shadow-card);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -2841,8 +2842,19 @@
 
 @media (max-width: 768px) {
   .round-section-simplified {
-    padding: var(--space-md);
+    padding: 0;
+    margin-bottom: var(--space-lg);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .round-header-simplified {
+    padding: var(--space-md) var(--space-sm);
     margin-bottom: var(--space-md);
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border-subtle);
   }
 }
 
@@ -2880,9 +2892,11 @@
 @media (max-width: 768px) {
   .matches-grid-simplified {
     grid-template-columns: 1fr;
-    gap: var(--space-md);
+    gap: var(--space-lg);
     width: 100%;
     max-width: 100%;
+    padding: 0;
+    margin: 0;
   }
 }
 
