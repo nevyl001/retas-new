@@ -58,59 +58,61 @@ export const UserHeader: React.FC = () => {
   return (
     <header className="user-header">
       <div className="user-header-content">
-        <div className="user-header-logo">
-          <h1>Retas de Pádel</h1>
+        {/* Menú móvil - Arriba */}
+        <div className="mobile-only mobile-header-top">
+          <MobileUserMenu />
         </div>
 
-        <div className="user-header-actions">
-          {/* Menú de escritorio */}
-          <div className="user-profile-wrapper desktop-only">
-            <button
-              ref={buttonRef}
-              className="user-profile-btn"
-              onClick={() => setShowDropdown(!showDropdown)}
-            >
-              <div className="user-avatar">
-                {userProfile?.avatar_url ? (
-                  <img
-                    src={userProfile.avatar_url}
-                    alt={userProfile.name}
-                    className="user-avatar-img"
-                  />
-                ) : (
-                  <span className="user-avatar-initials">
-                    {getInitials(userProfile?.name || user?.email || "U")}
-                  </span>
-                )}
-              </div>
-              <div className="user-info">
-                <span className="user-name">
-                  {userProfile?.name || "Usuario"}
-                </span>
-                <span className="user-email">{user?.email}</span>
-              </div>
-              <span className="user-dropdown-arrow">
-                {showDropdown ? "▲" : "▼"}
-              </span>
-            </button>
-
-            {showDropdown && (
-              <div ref={dropdownRef} className="user-dropdown-menu">
-                <button
-                  className="logout-button"
-                  onClick={handleSignOut}
-                  disabled={isSigningOut}
-                >
-                  <span>🚪</span>
-                  <span>{isSigningOut ? "Cerrando..." : "Cerrar Sesión"}</span>
-                </button>
-              </div>
-            )}
+        <div className="user-header-main">
+          <div className="user-header-logo">
+            <h1>Retas de Pádel</h1>
           </div>
 
-          {/* Menú móvil */}
-          <div className="mobile-only">
-            <MobileUserMenu />
+          <div className="user-header-actions">
+            {/* Menú de escritorio */}
+            <div className="user-profile-wrapper desktop-only">
+              <button
+                ref={buttonRef}
+                className="user-profile-btn"
+                onClick={() => setShowDropdown(!showDropdown)}
+              >
+                <div className="user-avatar">
+                  {userProfile?.avatar_url ? (
+                    <img
+                      src={userProfile.avatar_url}
+                      alt={userProfile.name}
+                      className="user-avatar-img"
+                    />
+                  ) : (
+                    <span className="user-avatar-initials">
+                      {getInitials(userProfile?.name || user?.email || "U")}
+                    </span>
+                  )}
+                </div>
+                <div className="user-info">
+                  <span className="user-name">
+                    {userProfile?.name || "Usuario"}
+                  </span>
+                  <span className="user-email">{user?.email}</span>
+                </div>
+                <span className="user-dropdown-arrow">
+                  {showDropdown ? "▲" : "▼"}
+                </span>
+              </button>
+
+              {showDropdown && (
+                <div ref={dropdownRef} className="user-dropdown-menu">
+                  <button
+                    className="logout-button"
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                  >
+                    <span>🚪</span>
+                    <span>{isSigningOut ? "Cerrando..." : "Cerrar Sesión"}</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

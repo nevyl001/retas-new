@@ -966,6 +966,9 @@
   box-shadow: var(--shadow-soft);
   transition: all var(--transition-base);
   margin-bottom: var(--space-md);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .modern-match-card:hover {
@@ -1389,6 +1392,29 @@
 }
 
 @media (max-width: 768px) {
+  .matches-container-simplified {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+
+  .matches-header-simplified {
+    padding: var(--space-md) 0;
+    width: 100%;
+    margin-bottom: var(--space-md);
+  }
+
+  .round-header-simplified {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+  }
+
+  .round-header-simplified h4 {
+    font-size: 1.125rem;
+  }
+
   .header-section {
     padding: var(--space-lg) var(--space-md);
   }
@@ -1625,7 +1651,11 @@
   }
 
   .modern-match-card {
-    padding: var(--space-md) var(--space-sm);
+    padding: var(--space-lg) var(--space-md);
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
   }
   
   .compact-pairs-grid {
@@ -1735,7 +1765,36 @@
   }
 
   .modern-match-card {
-    padding: var(--space-lg);
+    padding: var(--space-lg) var(--space-md);
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+  }
+
+  .modern-match-header {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+  }
+
+  .modern-match-title {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+
+  .modern-match-badges {
+    margin-bottom: var(--space-md);
+    gap: var(--space-xs);
+  }
+
+  .modern-match-pairs {
+    margin-bottom: var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .modern-pair-info {
+    padding: var(--space-sm);
   }
   
   .compact-pairs-grid {
@@ -2744,6 +2803,16 @@
   padding: var(--space-xl);
   border: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-card);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .round-section-simplified {
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
 }
 
 .round-header-simplified {
@@ -2773,6 +2842,17 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: var(--space-lg);
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .matches-grid-simplified {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .winner-button-container,

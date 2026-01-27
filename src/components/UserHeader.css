@@ -14,12 +14,24 @@
 
 .user-header-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   padding: var(--space-lg) var(--space-2xl);
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
+  gap: var(--space-md);
+}
+
+.user-header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.mobile-header-top {
+  width: 100%;
+  order: -1;
 }
 
 .user-header-logo h1 {
@@ -190,23 +202,44 @@
   }
 
   .user-header-content {
-    padding: var(--space-md) var(--space-lg);
-    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .user-header-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .user-header-logo {
+    width: 100%;
   }
 
   .user-header-logo h1 {
     font-size: 1.25rem;
+    width: 100%;
+  }
+
+  .mobile-header-top {
+    width: 100%;
+    margin-bottom: var(--space-xs);
   }
 }
 
 @media (max-width: 480px) {
   .user-header-content {
-    padding: var(--space-sm) var(--space-md);
-    gap: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    gap: var(--space-xs);
+  }
+
+  .user-header-main {
+    gap: var(--space-xs);
   }
 
   .user-header-logo h1 {
     font-size: 1.1rem;
+    margin: 0;
   }
 
   .user-avatar {
@@ -216,5 +249,9 @@
 
   .user-avatar-initials {
     font-size: 12px;
+  }
+
+  .mobile-header-top {
+    margin-bottom: var(--space-xs);
   }
 }
