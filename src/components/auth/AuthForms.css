@@ -251,25 +251,54 @@
 }
 
 @media (max-width: 480px) {
+  .auth-header {
+    margin-bottom: var(--space-xl);
+  }
+
   .auth-header h2 {
-    font-size: 1.375rem;
+    font-size: 1.5rem;
+    margin-bottom: var(--space-sm);
   }
 
   .auth-header p {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+  }
+
+  .form-group {
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+
+  .form-group label {
+    font-size: 0.9375rem;
   }
 
   .form-group input {
     padding: var(--space-md) var(--space-lg);
-    font-size: 0.9375rem;
+    font-size: 1rem;
   }
 
   .auth-submit-btn {
     padding: var(--space-md) var(--space-lg);
-    font-size: 0.9375rem;
+    font-size: 1rem;
+    margin-top: var(--space-lg);
   }
 
   .auth-form-content {
-    gap: var(--space-md);
+    gap: var(--space-lg);
+  }
+
+  .auth-footer {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+  }
+
+  .auth-footer p {
+    font-size: 0.9375rem;
+  }
+
+  .auth-toggle-btn {
+    font-size: 0.9375rem;
   }
 }

@@ -235,7 +235,7 @@
 
 @media (max-width: 480px) {
   .auth-page {
-    padding: var(--space-sm);
+    padding: var(--space-md);
   }
 
   .auth-layout {
@@ -246,74 +246,79 @@
   }
 
   .auth-hero {
-    padding: var(--space-md) var(--space-sm);
-    gap: var(--space-md);
+    padding: var(--space-lg) var(--space-md);
+    gap: var(--space-lg);
   }
 
   .auth-form-section {
-    padding: var(--space-md) var(--space-sm);
+    padding: var(--space-lg) var(--space-md);
   }
 
   .auth-logo h1 {
-    font-size: 1.25rem;
-    margin-bottom: var(--space-sm);
+    font-size: 1.375rem;
+    margin-bottom: var(--space-md);
   }
 
   .hero-subtitle {
-    font-size: 0.875rem;
-    line-height: 1.6;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    margin-bottom: var(--space-md);
   }
 
   .hero-content {
-    gap: var(--space-md);
+    gap: var(--space-lg);
   }
 
   .hero-title {
-    font-size: 1.0625rem;
-    line-height: 1.4;
+    font-size: 1.125rem;
+    line-height: 1.5;
+    margin-bottom: var(--space-sm);
   }
 
   .features-list {
-    gap: var(--space-sm);
+    gap: var(--space-md);
   }
 
   .feature-item {
-    padding: var(--space-sm) var(--space-xs);
-    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-sm);
+    gap: var(--space-md);
     max-width: 100%;
   }
 
   .feature-icon {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 
   .feature-text h3 {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     margin-bottom: var(--space-xs);
+    line-height: 1.5;
   }
 
   .feature-text p {
-    font-size: 0.8125rem;
-    line-height: 1.6;
+    font-size: 0.875rem;
+    line-height: 1.7;
   }
 
   .cta-section {
-    margin-top: var(--space-sm);
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
   }
 
   .cta-text {
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
+    margin-bottom: var(--space-xs);
   }
 
   .cta-subtext {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
   }
 }
 
 /* iPhone 17 Pro Max y pantallas grandes móviles (430px - 480px) */
 @media (max-width: 480px) and (min-width: 430px) {
   .auth-page {
-    padding: var(--space-xs);
+    padding: var(--space-md);
   }
 
   .auth-layout {
@@ -322,32 +327,32 @@
   }
 
   .auth-hero {
-    padding: var(--space-sm) var(--space-xs);
-    gap: var(--space-sm);
+    padding: var(--space-lg) var(--space-md);
+    gap: var(--space-lg);
   }
 
   .auth-logo h1 {
-    font-size: 1.125rem;
+    font-size: 1.3125rem;
   }
 
   .hero-subtitle {
-    font-size: 0.8125rem;
+    font-size: 0.9375rem;
   }
 
   .hero-title {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 
   .feature-item {
-    padding: var(--space-xs);
-    gap: var(--space-xs);
+    padding: var(--space-md) var(--space-sm);
+    gap: var(--space-md);
   }
 
   .feature-text h3 {
-    font-size: 0.8125rem;
+    font-size: 0.9375rem;
   }
 
   .feature-text p {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
   }
 }
