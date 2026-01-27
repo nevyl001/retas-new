@@ -105,13 +105,13 @@
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-subtle);
   color: var(--color-text-primary);
-  font-size: 0.875rem;
-  font-weight: var(--font-weight-medium);
-  padding: var(--space-sm) var(--space-md);
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-md) var(--space-lg);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-base);
@@ -130,8 +130,8 @@
 }
 
 .mobile-menu-icon {
-  font-size: 14px;
-  width: 16px;
+  font-size: 1.25rem;
+  width: auto;
   text-align: center;
   flex-shrink: 0;
 }
@@ -165,19 +165,23 @@
 
 .mobile-menu-logout {
   background: var(--color-bg-surface);
-  border-color: rgba(220, 38, 38, 0.4);
-  color: rgba(220, 38, 38, 0.9);
+  border: 2px solid rgba(220, 38, 38, 0.5);
+  color: rgba(220, 38, 38, 1);
   font-weight: var(--font-weight-semibold);
+  font-size: 1.0625rem;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   margin: 0;
+  padding: var(--space-md) var(--space-xl);
 }
 
 .mobile-menu-logout:hover {
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.6);
+  background: rgba(220, 38, 38, 0.15);
+  border-color: rgba(220, 38, 38, 0.8);
   color: rgba(220, 38, 38, 1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
 /* =====================================================
@@ -188,18 +192,27 @@
   .mobile-user-menu {
     width: 100%;
     max-width: 100%;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
     padding: 0;
     margin: 0;
   }
 
   .mobile-user-info {
-    padding: var(--space-xs) var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
   }
 
   .mobile-menu-option {
-    padding: var(--space-xs) var(--space-sm);
-    font-size: 0.8125rem;
+    padding: var(--space-md) var(--space-lg);
+    font-size: 0.9375rem;
+  }
+
+  .mobile-menu-logout {
+    font-size: 1rem;
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .mobile-menu-icon {
+    font-size: 1.125rem;
   }
 }
 

@@ -1517,6 +1517,23 @@
   .main-layout {
     padding: var(--space-md) var(--space-sm);
     gap: var(--space-lg);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .tournament-manager {
+    width: 100%;
+    max-width: 100%;
+    padding: var(--space-md) var(--space-sm);
+    box-sizing: border-box;
+  }
+
+  .retas-list {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
   }
 
   .header-section {
@@ -1575,13 +1592,16 @@
   }
 
   .reta-card {
-    padding: var(--space-md) var(--space-sm);
-    gap: var(--space-sm);
+    padding: var(--space-lg) var(--space-md);
+    gap: var(--space-md);
     margin-bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .reta-card-title {
-    font-size: 1.0625rem;
+    font-size: 1.25rem;
     line-height: 1.4;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -1599,8 +1619,8 @@
   }
 
   .reta-card-info span {
-    font-size: 0.8125rem;
-    line-height: 1.5;
+    font-size: 0.9375rem;
+    line-height: 1.6;
   }
 
   .reta-card-description {
@@ -1609,8 +1629,8 @@
   }
 
   .description-text {
-    font-size: 0.8125rem;
-    line-height: 1.6;
+    font-size: 0.9375rem;
+    line-height: 1.7;
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
@@ -1753,11 +1773,22 @@
   }
 
   .reta-card {
-    padding: var(--space-md);
+    padding: var(--space-lg) var(--space-md);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .reta-card-title {
-    font-size: 1rem;
+    font-size: 1.125rem;
+  }
+
+  .reta-card-info span {
+    font-size: 0.875rem;
+  }
+
+  .description-text {
+    font-size: 0.875rem;
   }
   
   .retas-list h2 {

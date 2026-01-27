@@ -24,6 +24,17 @@ export const MobileUserMenu: React.FC = () => {
 
   return (
     <div className="mobile-user-menu">
+      {/* Botón de cerrar sesión - Primero y centrado */}
+      <div className="mobile-menu-options">
+        <button
+          className="mobile-menu-option mobile-menu-logout"
+          onClick={handleLogout}
+        >
+          <span className="mobile-menu-icon">🚪</span>
+          <span className="mobile-menu-text">Cerrar Sesión</span>
+        </button>
+      </div>
+
       {/* Información del usuario */}
       <div className="mobile-user-info">
         <div className="mobile-user-avatar">
@@ -41,17 +52,6 @@ export const MobileUserMenu: React.FC = () => {
           <div className="mobile-user-name">{userProfile.name}</div>
           <div className="mobile-user-email">{userProfile.email}</div>
         </div>
-      </div>
-
-      {/* Opciones del menú */}
-      <div className="mobile-menu-options">
-        <button
-          className="mobile-menu-option mobile-menu-logout"
-          onClick={handleLogout}
-        >
-          <span className="mobile-menu-icon">🚪</span>
-          <span className="mobile-menu-text">Cerrar Sesión</span>
-        </button>
       </div>
     </div>
   );
