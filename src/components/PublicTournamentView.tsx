@@ -184,6 +184,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     result.hasResult && result.pair1Score > result.pair2Score;
                   const pair2Won =
                     result.hasResult && result.pair2Score > result.pair1Score;
+                  
+                  // Obtener todos los juegos de este partido
+                  const matchGames = games.filter((game) => game.match_id === match.id);
 
                   return (
                     <React.Fragment key={match.id}>
@@ -273,6 +276,23 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                             </div>
                           </div>
                         )}
+
+                        {/* Sección de Juegos */}
+                        {matchGames.length > 0 && (
+                          <div className="modern-games-results">
+                            <h6 className="modern-games-title">📊 Juegos:</h6>
+                            <div className="modern-games-grid">
+                              {matchGames.map((game, index) => (
+                                <div key={game.id} className="modern-game-result">
+                                  <span className="modern-game-number">J{index + 1}:</span>
+                                  <span className="modern-game-score">
+                                    {game.pair1_games}-{game.pair2_games}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Versión Mobile - Diseño completamente diferente */}
@@ -333,6 +353,23 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                               : pair2Won
                               ? getPairName(match.pair2_id)
                               : "Empate"}
+                          </div>
+                        )}
+
+                        {/* Sección de Juegos - Móvil */}
+                        {matchGames.length > 0 && (
+                          <div className="modern-games-results">
+                            <h6 className="modern-games-title">📊 Juegos:</h6>
+                            <div className="modern-games-grid">
+                              {matchGames.map((game, index) => (
+                                <div key={game.id} className="modern-game-result">
+                                  <span className="modern-game-number">J{index + 1}:</span>
+                                  <span className="modern-game-score">
+                                    {game.pair1_games}-{game.pair2_games}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
