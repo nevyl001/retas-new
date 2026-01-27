@@ -1519,8 +1519,8 @@
 /* iPhone 17 Pro Max y pantallas grandes móviles (430px - 480px) */
 @media (max-width: 480px) and (min-width: 430px) {
   .main-layout {
-    padding: var(--space-sm);
-    gap: var(--space-lg);
+    padding: var(--space-xs);
+    gap: var(--space-md);
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -1529,7 +1529,12 @@
   .tournament-manager {
     width: 100%;
     max-width: 100%;
-    padding: var(--space-sm);
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
     box-sizing: border-box;
   }
 
@@ -1542,6 +1547,7 @@
 
   .retas-list h2 {
     text-align: center;
+    margin-bottom: var(--space-md);
   }
 
   .header-section {
@@ -1606,6 +1612,7 @@
     max-width: 100%;
     padding: 0;
     margin: 0;
+    box-sizing: border-box;
   }
 
   .retas-list {
@@ -1616,12 +1623,14 @@
   }
 
   .reta-card {
-    padding: var(--space-lg) var(--space-md);
+    padding: var(--space-lg);
     gap: var(--space-md);
     margin-bottom: var(--space-md);
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    margin-left: 0;
+    margin-right: 0;
   }
   
   .reta-card-title {
