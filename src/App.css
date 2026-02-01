@@ -3659,6 +3659,7 @@
   align-items: center;
   gap: var(--space-sm);
   position: relative;
+  z-index: 0;
 }
 
 .public-link-preview::after {
@@ -3679,6 +3680,7 @@
   ) border-box;
   opacity: 0;
   transition: opacity var(--transition-base);
+  z-index: -1;
 }
 
 .public-link-preview:hover::after {
@@ -3690,7 +3692,7 @@
   background: var(--color-bg-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px var(--color-accent-subtle);
-  color: var(--color-accent);
+  color: #e8d5a3;
 }
 
 /* ============================================
