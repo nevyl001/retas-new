@@ -4,7 +4,7 @@
 
 .public-tournament-view {
   min-height: 100vh;
-  padding: var(--space-md) var(--space-sm);
+  padding: var(--space-lg) var(--space-md);
   font-family: var(--font-family);
   background: var(--color-bg-base);
   color: var(--color-text-primary);
@@ -40,16 +40,16 @@
 
 .public-header {
   text-align: center;
-  margin-bottom: var(--space-sm);
-  padding: var(--space-sm) 0;
+  margin-bottom: var(--space-md);
+  padding: var(--space-md) 0;
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .public-title {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: var(--font-weight-bold);
   color: var(--color-accent);
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-sm);
   letter-spacing: 0.05em;
   background: none;
   background-color: transparent;
@@ -73,21 +73,21 @@
 
 .public-subtitle {
   color: var(--color-text-secondary);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   opacity: 1;
   font-weight: var(--font-weight-regular);
-  line-height: 1.4;
+  line-height: 1.6;
   margin: 0;
   text-align: center;
 }
 
 .public-matches-section {
-  margin-bottom: var(--space-md);
-  margin-top: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  margin-top: var(--space-md);
 }
 
 .public-matches-header {
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
 
 .public-matches-title {
@@ -97,7 +97,7 @@
   text-align: center;
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.02em;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-accent-border);
   border-radius: var(--radius-md);
@@ -111,15 +111,15 @@
 .public-matches-header {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-lg);
 }
 
 .public-round-section {
-  margin-bottom: var(--space-md);
-  margin-top: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  margin-top: var(--space-md);
   background: var(--color-bg-surface);
   border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-sm) var(--space-md) var(--space-sm);
+  padding: var(--space-md) var(--space-md) var(--space-lg) var(--space-md);
   border: 1px solid var(--color-border-subtle);
   backdrop-filter: none;
   box-shadow: var(--shadow-soft);
@@ -132,8 +132,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-sm);
-  padding: var(--space-xs) var(--space-sm) var(--space-sm) var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md) var(--space-md) var(--space-md);
   border-bottom: 2px solid var(--color-accent-border);
   text-align: center;
   position: relative;
@@ -156,12 +156,12 @@
 }
 
 .public-round-title {
-  font-size: 1.5rem;
+  font-size: 2rem;
   color: var(--color-accent);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  margin: var(--space-xs) 0;
+  margin: var(--space-sm) 0 var(--space-sm) 0;
   filter: drop-shadow(0 0 8px var(--color-accent-subtle));
   display: block;
 }
@@ -170,7 +170,7 @@
 .public-matches-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-sm);
+  gap: var(--space-md);
   width: 100%;
   overflow: visible;
 }
@@ -183,7 +183,7 @@
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
-  padding: var(--space-sm);
+  padding: var(--space-md);
   margin-bottom: 0;
   position: relative;
   overflow: visible;
@@ -206,15 +206,15 @@
 }
 
 .elegant-public-header {
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-sm);
 }
 
 .elegant-match-info-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs) 0;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
   border-bottom: 1px solid var(--color-border-subtle);
   flex-wrap: wrap;
 }
@@ -223,11 +223,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   background: var(--color-bg-elevated);
   border: 2px solid var(--color-accent-border);
   border-radius: var(--radius-md);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: var(--font-weight-semibold);
   color: var(--color-accent);
   text-shadow: none;
@@ -242,12 +242,12 @@
 }
 
 .elegant-match-status {
-  padding: var(--space-xs) var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   box-shadow: none;
   animation: none;
   background: var(--color-bg-elevated);
@@ -287,9 +287,9 @@
 .elegant-vs-layout {
   display: flex;
   align-items: stretch;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-xs);
-  padding: var(--space-sm) 0;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+  padding: var(--space-md) 0;
 }
 
 .elegant-player-side {
@@ -298,7 +298,7 @@
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-sm) var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
@@ -306,8 +306,8 @@
   overflow: visible;
   transition: all var(--transition-base);
   animation: none;
-  gap: var(--space-xs);
-  min-height: 88px;
+  gap: var(--space-sm);
+  min-height: 120px;
 }
 
 .elegant-player-side::before {
@@ -343,7 +343,7 @@
   font-size: 0.875rem;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  line-height: 1.3;
+  line-height: 1.4;
   margin: 0;
   position: relative;
   z-index: 2;
@@ -358,20 +358,20 @@
 
 
 .elegant-player-score {
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   text-shadow: none;
   transition: all var(--transition-base);
   position: relative;
   z-index: 2;
-  padding: var(--space-xs) var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   background: var(--color-bg-surface);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
+  min-width: 60px;
   border: 2px solid var(--color-border-subtle);
   letter-spacing: 0.05em;
 }
@@ -379,7 +379,7 @@
 .elegant-player-score.winner {
   color: var(--color-accent);
   text-shadow: none;
-  font-size: 1.75rem;
+  font-size: 2.25rem;
   font-weight: var(--font-weight-bold);
   background: var(--color-bg-elevated);
   border-color: var(--color-accent-border);
@@ -393,14 +393,14 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 44px;
+  width: 60px;
   position: relative;
-  padding: var(--space-xs) 0;
+  padding: var(--space-sm) 0;
 }
 
 .elegant-vs-circle {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   background: var(--color-bg-elevated);
   border: 2px solid var(--color-accent-border);
   border-radius: 50%;
@@ -434,8 +434,8 @@
 }
 
 .elegant-public-winner {
-  margin-top: var(--space-sm);
-  padding-top: var(--space-sm);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
   border-top: 1px solid var(--color-border-subtle);
 }
 
@@ -443,11 +443,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-md);
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-xl);
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-accent-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   text-align: center;
   animation: none;
 }
@@ -458,39 +458,11 @@
 }
 
 .elegant-winner-text {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: var(--font-weight-semibold);
   color: var(--color-accent);
   text-shadow: none;
   letter-spacing: 0.02em;
-}
-
-/* Sección Juegos - compacta en vista pública */
-.public-tournament-view .modern-games-results {
-  margin-top: var(--space-xs);
-  padding-top: var(--space-xs);
-  border-top: 1px solid var(--color-border-subtle);
-}
-
-.public-tournament-view .modern-games-title {
-  font-size: 0.75rem;
-  margin: 0 0 var(--space-xs) 0;
-}
-
-.public-tournament-view .modern-games-grid {
-  gap: var(--space-xs);
-}
-
-.public-tournament-view .modern-game-result {
-  padding: 2px var(--space-xs);
-}
-
-.public-tournament-view .modern-game-number {
-  font-size: 0.7rem;
-}
-
-.public-tournament-view .modern-game-score {
-  font-size: 0.8125rem;
 }
 
 /* =====================================================
@@ -500,9 +472,9 @@
 .mobile-match-card {
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  padding: var(--space-sm);
-  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-card);
@@ -516,8 +488,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-sm);
-  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
@@ -558,13 +530,13 @@
 .mobile-match-content {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
 
 .mobile-team {
   flex: 1;
   text-align: center;
-  padding: var(--space-sm) var(--space-xs);
+  padding: var(--space-md) var(--space-sm);
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
@@ -629,13 +601,13 @@
 }
 
 .mobile-winner {
-  margin-top: var(--space-sm);
-  padding: var(--space-xs) var(--space-sm);
+  margin-top: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-accent-border);
   border-radius: var(--radius-md);
   text-align: center;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: var(--font-weight-semibold);
   color: var(--color-accent);
   letter-spacing: 0.02em;
@@ -648,15 +620,15 @@
 .public-standings-section {
   background: var(--color-bg-surface);
   border-radius: var(--radius-md);
-  padding: var(--space-sm);
+  padding: var(--space-md);
   border: 1px solid var(--color-border-subtle);
   backdrop-filter: none;
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-lg);
   box-shadow: var(--shadow-soft);
 }
 
 .public-standings-header {
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .public-standings-title {
