@@ -4,14 +4,16 @@
 
 .public-tournament-view {
   min-height: 100vh;
-  padding: var(--space-lg) var(--space-md);
+  width: 100%;
+  max-width: 100%;
+  padding: var(--space-md) var(--space-md);
   font-family: var(--font-family);
   background: var(--color-bg-base);
   color: var(--color-text-primary);
   position: relative;
   overflow-x: hidden;
-  max-width: 1600px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .public-loading {
@@ -84,6 +86,9 @@
 .public-matches-section {
   margin-bottom: var(--space-lg);
   margin-top: var(--space-md);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .public-matches-header {
@@ -125,6 +130,8 @@
   box-shadow: var(--shadow-soft);
   overflow: visible;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .public-round-header {
@@ -169,10 +176,20 @@
 
 .public-matches-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--space-md);
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow: visible;
+  justify-items: stretch;
+}
+
+.public-matches-grid > * {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* =====================================================
