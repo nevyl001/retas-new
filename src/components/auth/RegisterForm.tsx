@@ -59,6 +59,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
               Revisa tu bandeja de entrada y haz clic en el enlace para activar
               tu cuenta.
             </p>
+            <p className="auth-success-note">
+              Por favor revisa también tu carpeta de <strong>correos no deseados</strong> (spam)
+              para confirmar tu email y poder acceder.
+            </p>
             <button
               type="button"
               onClick={onToggleMode}
