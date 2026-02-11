@@ -1,11 +1,10 @@
 // Service Worker para RetaPadel PWA - Versión minimalista
-const CACHE_NAME = "retapadel-v5.0.0";
+const CACHE_NAME = "retapadel-v6.0.0";
 const urlsToCache = [
   "/manifest.json",
-  "/favicon.svg",
-  "/apple-touch-icon.svg",
-  "/icon-192x192.png",
-  "/icon-512x512.png",
+  "/icon-192x192.png?v=2",
+  "/icon-512x512.png?v=2",
+  "/apple-touch-icon-180.png?v=2",
 ];
 
 // Install event - solo cachear assets estáticos
