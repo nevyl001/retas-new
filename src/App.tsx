@@ -19,7 +19,7 @@ import { AdminRoute } from "./components/admin/AdminRoute";
 import { testConnection } from "./lib/supabaseClient";
 
 // Types
-import { Tournament, Player } from "./lib/database";
+import { Tournament, Player, getTournamentById } from "./lib/database";
 
 // Custom Hooks
 import { useTournamentData } from "./hooks/useTournamentData";
@@ -211,13 +211,27 @@ function AppContent() {
     testOnce();
   }, []);
 
-  // Cargar datos cuando se selecciona torneo
+  // Cargar datos cuando se selecciona torneo (refrescar format/team_config desde BD para que la tabla muestre equipos en producción)
   useEffect(() => {
-    if (selectedTournament) {
-      loadTournamentData(selectedTournament);
-    }
+    if (!selectedTournament) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const fetched = await getTournamentById(selectedTournament.id);
+        if (cancelled) return;
+        const hasTeamConfigFromDb = fetched?.format === "teams" && fetched?.team_config?.teamNames?.length && fetched?.team_config?.pairToTeam && Object.keys(fetched.team_config.pairToTeam).length > 0;
+        const merged: Tournament = (fetched && (fetched.format != null || hasTeamConfigFromDb))
+          ? { ...selectedTournament, ...fetched }
+          : selectedTournament;
+        if (merged !== selectedTournament) setSelectedTournament(merged);
+        await loadTournamentData(merged);
+      } catch {
+        await loadTournamentData(selectedTournament);
+      }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTournament]); // loadTournamentData es estable, no necesita estar en deps
+  }, [selectedTournament?.id]); // Solo cuando cambia el torneo seleccionado
 
   // Recargar datos automáticamente con debounce para evitar múltiples recargas
   useEffect(() => {
