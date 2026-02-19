@@ -87,8 +87,14 @@ function AppContent() {
     }
   }, [isAdminLoggedIn, currentView]);
 
+  // Inicializar ID de vista pública desde la URL para no hacer peticiones con null
   const [publicTournamentId, setPublicTournamentId] = useState<string | null>(
-    null
+    () => {
+      if (typeof window === "undefined") return null;
+      const path = window.location.pathname;
+      const match = path.match(/\/public\/([a-f0-9-]+)/i);
+      return match ? match[1].split("/")[0].split("?")[0] : null;
+    }
   );
   const [forceRefresh, setForceRefresh] = useState(0);
   const [, setError] = useState<string>("");
@@ -367,8 +373,8 @@ function AppContent() {
           />
         )}
 
-        {currentView === "public" && (
-          <PublicTournamentView tournamentId={publicTournamentId!} />
+        {currentView === "public" && publicTournamentId && (
+          <PublicTournamentView tournamentId={publicTournamentId} />
         )}
 
         {currentView === "auth-callback" && (

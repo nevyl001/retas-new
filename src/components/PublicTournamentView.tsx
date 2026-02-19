@@ -32,6 +32,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
 
   const loadTournamentData = useCallback(async () => {
+    if (!tournamentId) return;
     try {
       setError(""); // Limpiar errores previos
 
@@ -101,16 +102,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   });
 
   useEffect(() => {
+    if (!tournamentId) return;
     setLoading(true);
     loadTournamentData();
-    
-    // Auto-refresh cada 60 segundos como fallback (si Realtime falla o no está disponible)
-    // Con Realtime activo, esto solo se usará como respaldo
+
     const interval = setInterval(() => {
-      console.log("⏰ Polling de respaldo (60s) - Realtime debería actualizar antes");
       loadTournamentData();
-    }, 60000); // Aumentado a 60s ya que Realtime debería actualizar antes
-    
+    }, 60000);
     return () => clearInterval(interval);
   }, [tournamentId, loadTournamentData]);
 
