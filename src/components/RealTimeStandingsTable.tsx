@@ -59,10 +59,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   const [error, setError] = useState("");
   const isLoadingRef = useRef(false); // Prevenir múltiples recargas simultáneas
 
-  // Resolver teamConfig: usar el del padre o cargar desde BD/localStorage (vista móvil a veces no recibe el prop a tiempo)
+  // Resolver teamConfig: usar el del padre o cargar desde BD/localStorage (vista pública/móvil a veces no recibe el prop a tiempo)
   const [resolvedTeamConfig, setResolvedTeamConfig] = useState<TeamConfig | null>(teamConfigProp ?? null);
   useEffect(() => {
-    setResolvedTeamConfig(teamConfigProp ?? null);
+    if (teamConfigProp != null) setResolvedTeamConfig(teamConfigProp);
   }, [teamConfigProp]);
   useEffect(() => {
     if (teamConfigProp != null || !tournamentId) return;
