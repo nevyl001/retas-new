@@ -34,14 +34,21 @@ interface PairWithStats {
   };
 }
 
+export interface TeamConfig {
+  teamNames: string[];
+  pairToTeam: Record<string, number>;
+}
+
 interface RealTimeStandingsTableProps {
   tournamentId: string;
   forceRefresh: number;
+  teamConfig?: TeamConfig | null;
 }
 
 const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   tournamentId,
   forceRefresh,
+  teamConfig,
 }) => {
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -334,6 +341,32 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     });
   }, [pairsWithStats]);
 
+  // Clasificación por equipos (suma de estadísticas de parejas del mismo equipo)
+  const teamStandings = useMemo((): Array<{ teamIndex: number; name: string; points: number; setsWon: number; matchesPlayed: number }> | null => {
+    if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam || Object.keys(teamConfig.pairToTeam).length === 0) return null;
+    const n = teamConfig.teamNames.length;
+    const totals: Array<{ points: number; setsWon: number; matchesPlayed: number }> = Array.from({ length: n }, () => ({ points: 0, setsWon: 0, matchesPlayed: 0 }));
+    pairsWithStats.forEach((pair) => {
+      const t = teamConfig.pairToTeam[pair.id];
+      if (t >= 0 && t < n) {
+        totals[t].points += pair.points;
+        totals[t].setsWon += pair.setsWon;
+        totals[t].matchesPlayed += pair.matchesPlayed;
+      }
+    });
+    return totals.map((tot, teamIndex) => ({
+      teamIndex,
+      name: teamConfig.teamNames[teamIndex] ?? `Equipo ${teamIndex + 1}`,
+      points: tot.points,
+      setsWon: tot.setsWon,
+      matchesPlayed: tot.matchesPlayed,
+    })).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
+      return b.matchesPlayed - a.matchesPlayed;
+    });
+  }, [teamConfig, pairsWithStats]);
+
   const getPositionIcon = (position: number) => {
     switch (position) {
       case 1:
@@ -420,7 +453,57 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         </button>
       </div>
 
-      <div className="new-standings-table-wrapper">
+      {/* Modo equipos: solo tabla por equipos (suma de puntos por equipo) */}
+      {teamStandings && teamStandings.length > 0 ? (
+        <div className="new-standings-table-wrapper">
+          <h3 style={{ marginBottom: 12, fontSize: "1.1rem", color: "var(--color-text-primary)" }}>
+            👥 Clasificación por equipos
+          </h3>
+          {teamStandings[0] && (
+            <p style={{ marginBottom: 12, fontSize: 14, color: "var(--color-text-secondary)" }}>
+              🏆 <strong>Equipo ganador:</strong> {teamStandings[0].name}
+            </p>
+          )}
+          <table className="new-standings-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Equipo</th>
+                <th>Sets</th>
+                <th>Partidos</th>
+                <th>Puntos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teamStandings.map((row, index) => (
+                <tr
+                  key={row.teamIndex}
+                  className={
+                    index === 0
+                      ? "new-first-place"
+                      : index === 1
+                      ? "new-second-place"
+                      : index === 2
+                      ? "new-third-place"
+                      : "new-normal-place"
+                  }
+                >
+                  <td className="new-position-cell">
+                    <span className="new-position-number">{index + 1}</span>
+                    <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
+                  </td>
+                  <td className="new-team-cell">{row.name}</td>
+                  <td className="new-stats-cell">{row.setsWon}</td>
+                  <td className="new-stats-cell">{row.matchesPlayed}</td>
+                  <td className="new-points-cell">{row.points}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        /* Modo round robin: tabla por parejas */
+        <div className="new-standings-table-wrapper">
         <table className="new-standings-table">
           <thead>
             <tr>
@@ -462,8 +545,9 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
           </tbody>
         </table>
       </div>
+      )}
 
-      {sortedPairs.length === 0 && (
+      {sortedPairs.length === 0 && !teamStandings?.length && (
         <div className="new-empty-state">
           <p>📝 No hay parejas registradas en esta reta</p>
         </div>

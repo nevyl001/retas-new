@@ -6,6 +6,8 @@ interface WinnerScreenProps {
   isVisible: boolean;
   winner: Pair | null;
   tournamentWinner: TournamentWinner | null;
+  /** Cuando la reta es por equipos: nombre del equipo ganador (más puntos). */
+  winningTeamName?: string | null;
   onBackToManager: () => void;
 }
 
@@ -13,9 +15,39 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
   isVisible,
   winner,
   tournamentWinner,
+  winningTeamName,
   onBackToManager,
 }) => {
-  if (!isVisible || !winner) return null;
+  if (!isVisible) return null;
+  if (!winningTeamName && !winner) return null;
+
+  if (winningTeamName) {
+    return (
+      <div className="winner-page">
+        <div className="elegant-winner-screen">
+          <div className="elegant-winner-section">
+            <div className="elegant-winner-header">
+              <h1 className="elegant-winner-title">🏆 EQUIPO GANADOR 🏆</h1>
+            </div>
+            <div className="elegant-winner-content">
+              <div className="elegant-winner-names">{winningTeamName}</div>
+              <div className="elegant-winner-subtitle">
+                Equipo que más puntos acumuló en la reta
+              </div>
+              <div className="elegant-winner-actions">
+                <button
+                  className="elegant-winner-back-btn"
+                  onClick={onBackToManager}
+                >
+                  🏠 Volver al Gestor
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="winner-page">
@@ -26,7 +58,7 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
           </div>
           <div className="elegant-winner-content">
             <div className="elegant-winner-names">
-              {winner.player1?.name} / {winner.player2?.name}
+              {winner!.player1?.name} / {winner!.player2?.name}
             </div>
             <div className="elegant-winner-subtitle">
               ¡Son los campeones de la reta!

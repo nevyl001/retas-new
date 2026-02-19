@@ -2118,8 +2118,8 @@
   flex-direction: column;
   gap: var(--space-md);
   width: 100%;
-  height: 100%;
-  min-height: 0;
+  min-height: 280px;
+  flex: 1 1 auto;
 }
 
 .elegant-player-header {
@@ -2318,10 +2318,13 @@
 .elegant-players-grid {
   display: grid;
   grid-template-columns: 1fr;
+  grid-auto-rows: minmax(52px, auto);
   gap: var(--space-sm);
-  max-height: 400px;
+  min-height: 200px;
+  max-height: min(55vh, 420px);
   overflow-y: auto;
-  padding-right: var(--space-xs);
+  padding-right: var(--space-sm);
+  flex: 1 1 auto;
 }
 
 .elegant-players-grid::-webkit-scrollbar {
@@ -2346,12 +2349,15 @@
   background: var(--color-bg-surface);
   border-radius: var(--radius-md);
   padding: var(--space-md);
+  min-height: 48px;
   border: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-soft);
   transition: all var(--transition-base);
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
 .elegant-player-card:hover {
@@ -2380,6 +2386,8 @@
   gap: var(--space-md);
   position: relative;
   z-index: 2;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .elegant-player-avatar {
@@ -2431,11 +2439,13 @@
 }
 
 .elegant-delete-btn {
+  flex-shrink: 0;
   background: transparent;
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-sm);
   width: 32px;
   height: 32px;
+  min-width: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2512,9 +2522,10 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--space-sm);
-  max-height: 400px;
+  max-height: min(60vh, 480px);
   overflow-y: auto;
-  padding-right: var(--space-xs);
+  padding-right: var(--space-sm);
+  padding-left: 2px;
 }
 
 .elegant-pairs-grid::-webkit-scrollbar {
@@ -2538,7 +2549,7 @@
 .elegant-pair-card {
   background: var(--color-bg-surface);
   border-radius: var(--radius-md);
-  padding: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
   border: 1px solid var(--color-border-subtle);
   box-shadow: var(--shadow-soft);
   transition: all var(--transition-base);
@@ -2560,11 +2571,13 @@
   gap: var(--space-md);
   position: relative;
   z-index: 2;
+  min-width: 0;
 }
 
 .elegant-pair-names {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  padding-right: var(--space-xs);
 }
 
 .elegant-pair-names h4 {
@@ -2574,9 +2587,9 @@
   margin: 0;
   letter-spacing: 0.01em;
   line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 /* ============================================
@@ -3634,7 +3647,7 @@
 
 .public-link-button {
   background: var(--color-bg-elevated);
-  border: 1px solid var(--color-accent-border);
+  border: 2px solid var(--color-accent-border);
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);
   color: var(--color-text-primary);
@@ -3670,11 +3683,11 @@
 }
 
 .public-link-button:hover {
-  border-color: var(--color-accent);
+  border: 2px solid var(--color-accent);
   color: var(--color-accent);
   background: var(--color-bg-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--color-accent-subtle);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--color-accent-subtle), 0 0 0 1px var(--color-accent-border);
 }
 
 .public-link-button:active {
@@ -3683,7 +3696,7 @@
 
 .public-link-preview {
   background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-soft);
+  border: 2px solid var(--color-border-soft);
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);
   color: var(--color-text-primary);
@@ -3695,6 +3708,7 @@
   align-items: center;
   gap: var(--space-sm);
   position: relative;
+  z-index: 0;
 }
 
 .public-link-preview::after {
@@ -3702,6 +3716,7 @@
   position: absolute;
   inset: 0;
   border-radius: var(--radius-md);
+  z-index: -1;
   border: 1px solid transparent;
   background: linear-gradient(
     var(--color-bg-elevated),
@@ -3722,11 +3737,11 @@
 }
 
 .public-link-preview:hover {
-  border-color: var(--color-accent-border);
+  border: 2px solid var(--color-accent);
   background: var(--color-bg-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--color-accent-subtle);
-  color: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--color-accent-subtle), 0 0 0 1px var(--color-accent-border);
+  color: #ffffff !important;
 }
 
 /* ============================================

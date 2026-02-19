@@ -1,8 +1,22 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Tournament, Match, Pair } from "../lib/database";
 import MatchCardWithResults from "./MatchCardWithResults";
 import RealTimeStandingsTable from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
+
+const TEAM_CONFIG_KEY = "retapadel_teams_";
+
+function getTeamConfig(tournamentId: string): { teamNames: string[]; pairToTeam: Record<string, number> } | null {
+  try {
+    const raw = localStorage.getItem(`${TEAM_CONFIG_KEY}${tournamentId}`);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data?.teamNames?.length && data?.pairToTeam && typeof data.pairToTeam === "object") return data;
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 interface MatchesSectionProps {
   tournament: Tournament;
@@ -31,6 +45,13 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   onBackToHome,
   userId,
 }) => {
+  const teamConfig = useMemo(() => {
+    if (tournament.format === "teams" && tournament.team_config?.teamNames?.length && tournament.team_config?.pairToTeam) {
+      return tournament.team_config;
+    }
+    return getTeamConfig(tournament.id);
+  }, [tournament.id, tournament.format, tournament.team_config]);
+
   if (!tournament.is_started) return null;
 
   return (
@@ -91,10 +112,11 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
           ))
         )}
 
-      {/* Tabla de clasificación */}
+      {/* Tabla de clasificación (y por equipos si aplica) */}
       <RealTimeStandingsTable
         tournamentId={tournament.id}
         forceRefresh={forceRefresh}
+        teamConfig={teamConfig}
       />
 
       {/* Botón para mostrar ganador */}

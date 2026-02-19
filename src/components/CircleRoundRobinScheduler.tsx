@@ -17,7 +17,149 @@ export interface CircleSchedulingResult {
   totalRounds: number;
 }
 
+/** Opciones al iniciar por formato Equipos. */
+export interface ScheduleTeamsOptions {
+  teamsCount: number;
+  teamNames?: string[];
+  pairToTeam?: Record<string, number>;
+}
+
 export class CircleRoundRobinScheduler {
+  /**
+   * Punto de entrada único: según el formato elegido usa el algoritmo correcto.
+   * - Round Robin: todos contra todos (cada pareja juega con todas las demás).
+   * - Equipos: equipo vs equipo (solo partidos entre parejas de equipos distintos).
+   */
+  static async scheduleByFormat(
+    tournamentId: string,
+    pairs: Pair[],
+    courts: number,
+    userId: string,
+    format: "roundRobin" | "teams",
+    options?: ScheduleTeamsOptions
+  ): Promise<CircleSchedulingResult> {
+    if (format === "teams" && options?.teamsCount) {
+      return this.scheduleTournamentTeams(
+        tournamentId,
+        pairs,
+        courts,
+        userId,
+        options.teamsCount,
+        options.pairToTeam
+      );
+    }
+    return this.scheduleTournament(tournamentId, pairs, courts, userId);
+  }
+
+  private static assignTeamsToPairs(
+    pairs: Pair[],
+    teamsCount: number
+  ): Map<string, number> {
+    const safeTeams = Math.min(Math.max(2, teamsCount), pairs.length);
+    const sortedPairs = [...pairs].sort((a, b) => a.id.localeCompare(b.id));
+    const teamByPairId = new Map<string, number>();
+    sortedPairs.forEach((pair, idx) => {
+      teamByPairId.set(pair.id, idx % safeTeams);
+    });
+    return teamByPairId;
+  }
+
+  /**
+   * Genera calendario por equipos: cada ronda con partidos simultáneos en todas las canchas,
+   * todas las parejas de un equipo contra las del otro, sin que nadie descanse (cuando equipos iguales).
+   * Round-robin entre dos grupos. Rotación de canchas para AMBOS equipos: en cada ronda la asignación
+   * slot → cancha rota para que todas las parejas (equipo0 y equipo1) jueguen en canchas distintas.
+   */
+  private static generateTeamsSchedule(
+    pairs: Pair[],
+    courts: number,
+    teamsCount: number,
+    pairToTeam?: Record<string, number>
+  ): Array<{ pair1: Pair; pair2: Pair; round: number; court: number }> {
+    console.log("🏁 === PROGRAMACIÓN POR EQUIPOS (SIMULTÁNEOS, SIN DESCANSOS) ===");
+    console.log(`📊 Parejas: ${pairs.length}`);
+    console.log(`🏟️ Canchas: ${courts}`);
+    console.log(`👥 Equipos: ${teamsCount}`);
+
+    if (pairs.length < 2) return [];
+    const teamByPairId =
+      pairToTeam && Object.keys(pairToTeam).length > 0
+        ? new Map<string, number>(Object.entries(pairToTeam).map(([k, v]) => [k, v]))
+        : this.assignTeamsToPairs(pairs, Math.min(Math.max(2, teamsCount), pairs.length));
+
+    // Solo 2 equipos: índice 0 y 1
+    const team0Pairs = pairs
+      .filter((p) => teamByPairId.get(p.id) === 0)
+      .sort((a, b) => a.id.localeCompare(b.id));
+    const team1Pairs = pairs
+      .filter((p) => teamByPairId.get(p.id) === 1)
+      .sort((a, b) => a.id.localeCompare(b.id));
+
+    const n0 = team0Pairs.length;
+    const n1 = team1Pairs.length;
+    if (n0 === 0 || n1 === 0) {
+      console.warn("Un equipo no tiene parejas; se requiere al menos una pareja por equipo.");
+      return [];
+    }
+
+    const n = Math.min(n0, n1);
+    const matchesPerRound = Math.min(n, courts);
+    const totalRounds = Math.ceil((n0 * n1) / matchesPerRound);
+    const team0First = n0 <= n1;
+
+    console.log(`👥 Equipo 0: ${n0} parejas, Equipo 1: ${n1} parejas`);
+    console.log(`🔄 Partidos por ronda: ${matchesPerRound} (simultáneos en todas las canchas)`);
+    console.log(`🔄 Total rondas: ${totalRounds}`);
+    console.log(`🔄 Rotación de canchas: ambos equipos cambian de cancha cada ronda`);
+
+    const scheduled: Array<{
+      pair1: Pair;
+      pair2: Pair;
+      round: number;
+      court: number;
+    }> = [];
+
+    // Round-robin: ambos equipos rotan de rival y de cancha.
+    // Ronda r: equipo0[i] vs equipo1[(i+r-1)%n1] (si n0<=n1), o equipo0[(i+r-1)%n0] vs equipo1[i].
+    // Cancha: rotamos la asignación (slot → cancha) por ronda para que las parejas de ambos equipos cambien de cancha.
+    for (let r = 1; r <= totalRounds; r++) {
+      const roundMatches: Array<{ pair1: Pair; pair2: Pair }> = [];
+      for (let i = 0; i < matchesPerRound; i++) {
+        const pair0 = team0First
+          ? team0Pairs[i]
+          : team0Pairs[(i + (r - 1)) % n0];
+        const pair1 = team0First
+          ? team1Pairs[(i + (r - 1)) % n1]
+          : team1Pairs[i];
+        roundMatches.push({ pair1: pair0, pair2: pair1 });
+      }
+      // Asignar cancha rotando por ronda: así ambas parejas del partido (equipo0 y equipo1) cambian de cancha cada ronda.
+      const roundOffset = (r - 1) % Math.max(1, matchesPerRound);
+      for (let slotIndex = 0; slotIndex < roundMatches.length; slotIndex++) {
+        const m = roundMatches[slotIndex];
+        const rotatedSlot = (slotIndex + roundOffset) % matchesPerRound;
+        const court = ((r - 1) + rotatedSlot) % courts + 1;
+        scheduled.push({
+          pair1: m.pair1,
+          pair2: m.pair2,
+          round: r,
+          court,
+        });
+      }
+      console.log(`✅ Ronda ${r}: ${roundMatches.length} partidos simultáneos en todas las canchas`);
+    }
+
+    const bad = scheduled.filter((m) => {
+      const t1 = teamByPairId.get(m.pair1.id);
+      const t2 = teamByPairId.get(m.pair2.id);
+      return t1 !== undefined && t2 !== undefined && t1 === t2;
+    });
+    if (bad.length > 0) {
+      console.error(`❌ ERROR: Se detectaron ${bad.length} partidos intra-equipo`);
+    }
+    return scheduled;
+  }
+
   /**
    * Implementa el algoritmo Round Robin usando el método del círculo
    * 
@@ -454,7 +596,8 @@ export class CircleRoundRobinScheduler {
   }
 
   /**
-   * Programa una reta completa usando el método del círculo
+   * Round Robin: todos contra todos. Cada pareja se enfrenta con todas las demás exactamente una vez.
+   * Usar cuando el formato de reta sea "Round Robin".
    */
   static async scheduleTournament(
     tournamentId: string,
@@ -540,6 +683,90 @@ export class CircleRoundRobinScheduler {
       return {
         success: false,
         message: `Error al programar la reta: ${
+          error instanceof Error ? error.message : "Error desconocido"
+        }`,
+        matches: [],
+        totalRounds: 0,
+      };
+    }
+  }
+
+  /**
+   * Por equipos: solo partidos entre equipos distintos (equipo A vs equipo B).
+   * Las parejas del mismo equipo nunca se enfrentan entre sí.
+   * Usar cuando el formato de reta sea "Equipos".
+   */
+  static async scheduleTournamentTeams(
+    tournamentId: string,
+    pairs: Pair[],
+    courts: number,
+    userId: string,
+    teamsCount: number,
+    pairToTeam?: Record<string, number>
+  ): Promise<CircleSchedulingResult> {
+    try {
+      console.log("🚀 === INICIANDO PROGRAMACIÓN POR EQUIPOS ===");
+      console.log(`🏆 Reta ID: ${tournamentId}`);
+      console.log(`👥 Parejas: ${pairs.length}`);
+      console.log(`🏟️ Canchas: ${courts}`);
+      console.log(`👥 Equipos: ${teamsCount}`);
+
+      if (pairs.length < 2) {
+        return {
+          success: false,
+          message: "Se necesitan al menos 2 parejas para iniciar la reta",
+          matches: [],
+          totalRounds: 0,
+        };
+      }
+      if (teamsCount < 2 || teamsCount > pairs.length) {
+        return {
+          success: false,
+          message: `Número de equipos inválido. Debe estar entre 2 y ${pairs.length}.`,
+          matches: [],
+          totalRounds: 0,
+        };
+      }
+
+      console.log("🗑️ Eliminando partidos existentes...");
+      await deleteMatchesByTournament(tournamentId);
+
+      const matches = this.generateTeamsSchedule(pairs, courts, teamsCount, pairToTeam);
+      if (matches.length === 0) {
+        return {
+          success: false,
+          message: "No se pudieron generar partidos por equipos",
+          matches: [],
+          totalRounds: 0,
+        };
+      }
+
+      console.log("💾 Creando partidos en la base de datos...");
+      const createdMatches: Match[] = [];
+      for (const match of matches) {
+        const createdMatch = await createMatch(
+          tournamentId,
+          match.pair1.id,
+          match.pair2.id,
+          match.court,
+          match.round,
+          userId
+        );
+        createdMatches.push(createdMatch);
+      }
+
+      const totalRounds = Math.max(...matches.map((m) => m.round));
+      return {
+        success: true,
+        message: `Reta programada por equipos. ${createdMatches.length} partidos distribuidos en ${totalRounds} rondas (sin enfrentamientos dentro del mismo equipo).`,
+        matches,
+        totalRounds,
+      };
+    } catch (error) {
+      console.error("❌ Error programando reta por equipos:", error);
+      return {
+        success: false,
+        message: `Error al programar la reta por equipos: ${
           error instanceof Error ? error.message : "Error desconocido"
         }`,
         matches: [],

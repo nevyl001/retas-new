@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import "./PublicTournamentView.css";
-import { getMatches, getPairs, getTournamentGames } from "../lib/database";
+import { getMatches, getPairs, getTournamentGames, getTournamentById } from "../lib/database";
 import { Match, Pair, Game } from "../lib/database";
+import { getTeamConfigFromStorage, computePairsWithStats, computeTeamStandings } from "../lib/standingsUtils";
+import type { TeamConfig } from "./RealTimeStandingsTable";
 import RealTimeStandingsTable from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
@@ -26,37 +28,56 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     useState<TournamentWinner | null>(null);
   const [showWinner, setShowWinner] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(null);
+  const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
 
   const loadTournamentData = useCallback(async () => {
     try {
       setError(""); // Limpiar errores previos
 
-      const [matchesData, pairsData, gamesData] = await Promise.all([
+      const [matchesData, pairsData, gamesData, tournament] = await Promise.all([
         getMatches(tournamentId),
         getPairs(tournamentId),
         getTournamentGames(tournamentId),
+        getTournamentById(tournamentId),
       ]);
+
+      const config =
+        tournament?.format === "teams" &&
+        tournament?.team_config?.teamNames?.length &&
+        tournament?.team_config?.pairToTeam
+          ? tournament.team_config
+          : getTeamConfigFromStorage(tournamentId);
+      setTeamConfig(config || null);
 
       setMatches(matchesData);
       setPairs(pairsData);
-      setGames(gamesData || []); // Asegurar que games siempre sea un array
+      setGames(gamesData || []);
       setLastUpdate(new Date());
 
       console.log("🔄 Vista pública actualizada:", new Date().toLocaleTimeString());
 
-      // Verificar si la reta está terminada y calcular ganador
-      const finishedMatches = matchesData.filter(
-        (match) => match.status === "finished"
-      );
+      const finishedMatches = matchesData.filter((m) => m.status === "finished");
       const totalMatches = matchesData.length;
+      const allFinished = finishedMatches.length === totalMatches && totalMatches > 0;
 
-      if (finishedMatches.length === totalMatches && totalMatches > 0) {
+      if (!allFinished) {
+        setShowWinner(false);
+        setWinningTeamName(null);
+        setTournamentWinner(null);
+      } else if (config) {
+        const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
+        const teamStandings = computeTeamStandings(pairsWithStats, config);
+        setWinningTeamName(teamStandings?.[0]?.name ?? null);
+        setTournamentWinner(null);
+        setShowWinner(true);
+      } else {
+        setWinningTeamName(null);
         try {
-          const winner =
-            await TournamentWinnerCalculator.calculateTournamentWinner(
-              pairsData,
-              matchesData
-            );
+          const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
+            pairsData,
+            matchesData
+          );
           setTournamentWinner(winner);
           setShowWinner(true);
         } catch (err) {
@@ -185,11 +206,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   const pair2Won =
                     result.hasResult && result.pair2Score > result.pair1Score;
                   
-                  // Obtener todos los juegos de este partido
                   const matchGames = games.filter((game) => game.match_id === match.id);
 
                   return (
-                    <React.Fragment key={match.id}>
+                    <div key={match.id} className="public-match-card-wrapper">
                       {/* Versión Desktop */}
                       <div className="elegant-public-match-card desktop-only">
                         {/* Header con información del partido */}
@@ -373,7 +393,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                           </div>
                         )}
                       </div>
-                    </React.Fragment>
+                    </div>
                   );
                 })}
               </div>
@@ -389,13 +409,26 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ))}
       </div>
 
-      {/* Tabla de Clasificación */}
+      {/* Tabla de Clasificación (por equipos si la reta es por equipos) */}
       <div className="public-standings-section">
-        <RealTimeStandingsTable tournamentId={tournamentId} forceRefresh={0} />
+        <RealTimeStandingsTable tournamentId={tournamentId} forceRefresh={0} teamConfig={teamConfig} />
       </div>
 
-      {/* Sección del Ganador */}
-      {showWinner && tournamentWinner && (
+      {/* Sección del Ganador: por equipos = equipo ganador; round robin = pareja ganadora */}
+      {showWinner && winningTeamName && (
+        <div className="public-winner-section">
+          <div className="public-winner-header">
+            <h2 className="public-winner-title">🏆 EQUIPO GANADOR 🏆</h2>
+          </div>
+          <div className="public-winner-content">
+            <div className="public-winner-names">{winningTeamName}</div>
+            <div className="public-winner-subtitle">
+              Equipo que más puntos acumuló en la reta
+            </div>
+          </div>
+        </div>
+      )}
+      {showWinner && !winningTeamName && tournamentWinner && (
         <div className="public-winner-section">
           <div className="public-winner-header">
             <h2 className="public-winner-title">🏆 GANADORES DE LA RETA 🏆</h2>

@@ -161,6 +161,7 @@ function AppContent() {
   } = useTournamentData();
   const {
     tournamentWinner,
+    winningTeamName,
     showWinnerScreen,
     calculateAndShowWinner,
     hideWinnerScreen,
@@ -249,11 +250,19 @@ function AppContent() {
   };
 
   // Handlers
-  const handleStartTournament = () =>
-    startTournament(selectedTournament!, pairs, user?.id || "");
+  const handleStartTournament = (opts: {
+    format: "roundRobin" | "teams";
+    teamsCount?: number;
+    teamNames?: string[];
+    pairToTeam?: Record<string, number>;
+  }) => {
+    return startTournament(selectedTournament!, pairs, user?.id || "", opts);
+  };
   const handleReset = () => resetTournament(selectedTournament!, pairs);
   const handleShowWinner = () =>
-    calculateAndShowWinner(pairs, matches, setCurrentView);
+    calculateAndShowWinner(pairs, matches, setCurrentView, {
+      tournament: selectedTournament ?? undefined,
+    });
   const handleHideWinner = () => hideWinnerScreen(setCurrentView);
 
   const handleBackToHome = () => {
@@ -357,6 +366,7 @@ function AppContent() {
             isVisible={showWinnerScreen}
             winner={winner}
             tournamentWinner={tournamentWinner}
+            winningTeamName={winningTeamName}
             onBackToManager={handleHideWinner}
           />
         )}

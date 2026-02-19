@@ -1,6 +1,11 @@
 import { supabase } from "./supabaseClient";
 
 // Tipos de datos para la base de datos
+export interface TournamentTeamConfig {
+  teamNames: string[];
+  pairToTeam: Record<string, number>;
+}
+
 export interface Tournament {
   id: string;
   name: string;
@@ -11,6 +16,10 @@ export interface Tournament {
   user_id: string;
   created_at: string;
   updated_at: string;
+  /** 'teams' = por equipos; ausente o 'round_robin' = round robin */
+  format?: "round_robin" | "teams";
+  /** Solo cuando format === 'teams': nombres y asignación pareja → equipo */
+  team_config?: TournamentTeamConfig;
 }
 
 export interface Player {
@@ -120,6 +129,17 @@ export const getTournaments = async (userId?: string) => {
     "tournaments"
   );
   return data || [];
+};
+
+/** Obtiene un torneo por id (para vista pública: necesitamos format y team_config). */
+export const getTournamentById = async (tournamentId: string) => {
+  const { data, error } = await supabase
+    .from("tournaments")
+    .select("*")
+    .eq("id", tournamentId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 };
 
 export const updateTournament = async (

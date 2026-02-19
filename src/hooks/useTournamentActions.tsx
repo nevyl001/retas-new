@@ -19,7 +19,13 @@ export const useTournamentActions = (
   const startTournament = async (
     selectedTournament: Tournament,
     pairs: Pair[],
-    userId: string
+    userId: string,
+    opts?: {
+      format: "roundRobin" | "teams";
+      teamsCount?: number;
+      teamNames?: string[];
+      pairToTeam?: Record<string, number>;
+    }
   ) => {
     if (!selectedTournament || pairs.length < 2) {
       setError("Se necesitan al menos 2 parejas para iniciar la reta");
@@ -33,17 +39,65 @@ export const useTournamentActions = (
       console.log("🚀 Iniciando reta:", selectedTournament.name);
       console.log("📊 Parejas:", pairs.length);
       console.log("🏟️ Canchas:", selectedTournament.courts);
+      console.log("🧩 Formato:", opts?.format || "roundRobin");
 
-      const result = await CircleRoundRobinScheduler.scheduleTournament(
+      const format = opts?.format || "roundRobin";
+      const result = await CircleRoundRobinScheduler.scheduleByFormat(
         selectedTournament.id,
         pairs,
         selectedTournament.courts,
-        userId
+        userId,
+        format,
+        format === "teams"
+          ? {
+              teamsCount: opts?.teamsCount ?? 2,
+              teamNames: opts?.teamNames,
+              pairToTeam: opts?.pairToTeam,
+            }
+          : undefined
       );
 
       if (result.success) {
-        await updateTournament(selectedTournament.id, { is_started: true });
-        setSelectedTournament({ ...selectedTournament, is_started: true });
+        const updatePayload: Parameters<typeof updateTournament>[1] = { is_started: true };
+        const teamConfigPayload =
+          format === "teams" && opts?.teamNames?.length && opts?.pairToTeam && Object.keys(opts.pairToTeam).length > 0
+            ? { format: "teams" as const, team_config: { teamNames: opts.teamNames, pairToTeam: opts.pairToTeam } }
+            : null;
+
+        if (teamConfigPayload) {
+          Object.assign(updatePayload, teamConfigPayload);
+        }
+
+        try {
+          await updateTournament(selectedTournament.id, updatePayload);
+        } catch (updateErr: unknown) {
+          const msg = updateErr && typeof (updateErr as Error).message === "string" ? (updateErr as Error).message : "";
+          if (msg.includes("format") || msg.includes("team_config") || msg.includes("PGRST204") || msg.includes("schema")) {
+            await updateTournament(selectedTournament.id, { is_started: true });
+            if (teamConfigPayload) {
+              console.warn("Columnas format/team_config no existen en la BD; la config de equipos se guarda solo en localStorage.");
+            }
+          } else {
+            throw updateErr;
+          }
+        }
+
+        setSelectedTournament({
+          ...selectedTournament,
+          is_started: true,
+          ...(teamConfigPayload || {}),
+        });
+
+        if (teamConfigPayload) {
+          try {
+            localStorage.setItem(
+              `retapadel_teams_${selectedTournament.id}`,
+              JSON.stringify({ teamNames: teamConfigPayload.team_config.teamNames, pairToTeam: teamConfigPayload.team_config.pairToTeam })
+            );
+          } catch (e) {
+            console.warn("No se pudo guardar configuración de equipos en localStorage", e);
+          }
+        }
 
         await loadTournamentData();
         showToast(result.message, "success");

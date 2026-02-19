@@ -33,7 +33,12 @@ interface TournamentDetailsProps {
   loadTournamentData: () => void;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
   forceRefresh: number;
-  onStartTournament: () => void;
+  onStartTournament: (opts: {
+    format: "roundRobin" | "teams";
+    teamsCount?: number;
+    teamNames?: string[];
+    pairToTeam?: Record<string, number>;
+  }) => void;
   onCopyPublicLink: (tournamentId: string) => void;
   generatePublicLink: (tournamentId: string) => string;
   isTournamentFinished: boolean;
