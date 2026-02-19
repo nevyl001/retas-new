@@ -4,10 +4,12 @@ import {
   getMatches,
   getGames,
   updateMatch,
+  getTournamentById,
   Match,
   Game,
   Pair,
 } from "../lib/database";
+import { getTeamConfigFromStorage } from "../lib/standingsUtils";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import "./ModernStandingsTable.css";
 
@@ -48,7 +50,7 @@ interface RealTimeStandingsTableProps {
 const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   tournamentId,
   forceRefresh,
-  teamConfig,
+  teamConfig: teamConfigProp,
 }) => {
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -56,6 +58,33 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const isLoadingRef = useRef(false); // Prevenir múltiples recargas simultáneas
+
+  // Resolver teamConfig: usar el del padre o cargar desde BD/localStorage (vista móvil a veces no recibe el prop a tiempo)
+  const [resolvedTeamConfig, setResolvedTeamConfig] = useState<TeamConfig | null>(teamConfigProp ?? null);
+  useEffect(() => {
+    setResolvedTeamConfig(teamConfigProp ?? null);
+  }, [teamConfigProp]);
+  useEffect(() => {
+    if (teamConfigProp != null || !tournamentId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const t = await getTournamentById(tournamentId);
+        if (cancelled) return;
+        const config =
+          t?.format === "teams" &&
+          t?.team_config?.teamNames?.length &&
+          t?.team_config?.pairToTeam
+            ? t.team_config
+            : getTeamConfigFromStorage(tournamentId);
+        setResolvedTeamConfig(config || null);
+      } catch {
+        if (!cancelled) setResolvedTeamConfig(getTeamConfigFromStorage(tournamentId) || null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [tournamentId, teamConfigProp]);
+  const teamConfig = resolvedTeamConfig;
 
   const loadTournamentData = useCallback(async () => {
     if (!tournamentId) return;
@@ -453,17 +482,9 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         </button>
       </div>
 
-      {/* Modo equipos: solo tabla por equipos (suma de puntos por equipo) */}
+      {/* Modo equipos: tabla por equipos (suma de puntos por equipo) */}
       {teamStandings && teamStandings.length > 0 ? (
         <div className="new-standings-table-wrapper">
-          <h3 style={{ marginBottom: 12, fontSize: "1.1rem", color: "var(--color-text-primary)" }}>
-            👥 Clasificación por equipos
-          </h3>
-          {teamStandings[0] && (
-            <p style={{ marginBottom: 12, fontSize: 14, color: "var(--color-text-secondary)" }}>
-              🏆 <strong>Equipo ganador:</strong> {teamStandings[0].name}
-            </p>
-          )}
           <table className="new-standings-table">
             <thead>
               <tr>
