@@ -8,20 +8,19 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useUser();
+  const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
 
-  // Verificar si estamos en una ruta de admin
-  const isAdminRoute = () => {
-    const currentPath = window.location.pathname;
-    return currentPath === "/admin-login" || currentPath === "/admin-dashboard";
-  };
+  // Rutas que no requieren login: cualquiera puede ver (incluye base path ej. /app/public/xxx)
+  const isPublicRoute = currentPath.includes("/public/");
+  const isAdminRoute =
+    currentPath === "/admin-login" || currentPath === "/admin-dashboard";
 
-  // Verificar si estamos en una ruta pública
-  const isPublicRoute = () => {
-    const currentPath = window.location.pathname;
-    return currentPath.startsWith("/public/");
-  };
+  // Primero: si es vista pública o admin, mostrar contenido sin pedir sesión
+  if (isPublicRoute || isAdminRoute) {
+    return <>{children}</>;
+  }
 
-  // Si está cargando, mostrar loading
+  // Si está cargando (solo para rutas que sí requieren login), mostrar loading
   if (loading) {
     return (
       <div className="loading-container">
@@ -33,27 +32,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // Si estamos en una ruta de admin, siempre mostrar children (no verificar usuario)
-  if (isAdminRoute()) {
-    console.log(
-      "🔍 Ruta de admin detectada, mostrando children sin verificar usuario"
-    );
-    return <>{children}</>;
-  }
-
-  // Si estamos en una ruta pública, siempre mostrar children (no verificar usuario)
-  if (isPublicRoute()) {
-    console.log(
-      "🔍 Ruta pública detectada, mostrando children sin verificar usuario"
-    );
-    return <>{children}</>;
-  }
-
   // Si no hay usuario, mostrar página de autenticación
   if (!user) {
     return <AuthPage />;
   }
 
-  // Si hay usuario, mostrar la aplicación
   return <>{children}</>;
 };
