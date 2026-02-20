@@ -3,7 +3,7 @@ import "./PublicTournamentView.css";
 import "./ModernStandingsTable.css";
 import { getMatches, getPairs, getTournamentGames, getTournamentById, getTournamentPublicConfig } from "../lib/database";
 import { Match, Pair, Game } from "../lib/database";
-import { getTeamConfigFromStorage, computePairsWithStats, computeTeamStandings } from "../lib/standingsUtils";
+import { getTeamConfigFromStorage, computePairsWithStats, computeTeamStandings, inferTeamConfigFromPairs } from "../lib/standingsUtils";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
@@ -149,15 +149,19 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     };
   };
 
-  // Clasificación: por equipos o por parejas según teamConfig (solo estado local, sin depender de otro componente)
+  // Clasificación: por equipos o por parejas. Si no hay teamConfig en BD, intentar inferir 2 equipos por nombres (ej. alva vs hack)
   const pairsWithStats = useMemo(
     () => computePairsWithStats(pairs, matches, games),
     [pairs, matches, games]
   );
+  const effectiveTeamConfig = useMemo(
+    () => teamConfig ?? (pairs.length >= 2 ? inferTeamConfigFromPairs(pairs) : null),
+    [teamConfig, pairs]
+  );
   const teamStandings = useMemo(() => {
-    if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam || Object.keys(teamConfig.pairToTeam).length === 0) return null;
-    return computeTeamStandings(pairsWithStats, teamConfig);
-  }, [teamConfig, pairsWithStats]);
+    if (!effectiveTeamConfig?.teamNames?.length || !effectiveTeamConfig.pairToTeam || Object.keys(effectiveTeamConfig.pairToTeam).length === 0) return null;
+    return computeTeamStandings(pairsWithStats, effectiveTeamConfig);
+  }, [effectiveTeamConfig, pairsWithStats]);
   const sortedPairs = useMemo(() => {
     return [...pairsWithStats].sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
@@ -519,14 +523,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         </div>
       </div>
 
-      {/* Sección del Ganador: por equipos = equipo ganador; round robin = pareja ganadora */}
-      {showWinner && winningTeamName && (
+      {/* Sección del Ganador: por equipos = equipo ganador (primero en la tabla); round robin = pareja ganadora */}
+      {showWinner && (winningTeamName || teamStandings?.[0]?.name) && (
         <div className="public-winner-section">
           <div className="public-winner-header">
             <h2 className="public-winner-title">🏆 EQUIPO GANADOR 🏆</h2>
           </div>
           <div className="public-winner-content">
-            <div className="public-winner-names">{winningTeamName}</div>
+            <div className="public-winner-names">{winningTeamName || teamStandings?.[0]?.name}</div>
             <div className="public-winner-subtitle">
               Equipo que más puntos acumuló en la reta
             </div>

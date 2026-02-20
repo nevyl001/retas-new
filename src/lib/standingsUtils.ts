@@ -132,6 +132,36 @@ export function computeTeamStandings(
 
 const TEAM_CONFIG_KEY = "retapadel_teams_";
 
+/**
+ * Infiere dos equipos por el prefijo del nombre del primer jugador (ej. alva1/hack1 → Equipo "alva" vs "hack").
+ * Útil en vista pública cuando no hay team_config en BD.
+ */
+export function inferTeamConfigFromPairs(pairs: Pair[]): TeamConfig | null {
+  if (!pairs?.length) return null;
+  const getPrefix = (name: string) => {
+    const s = (name || "").trim();
+    const match = s.match(/^[a-zA-Z\u00C0-\u024F]+/);
+    return (match ? match[0].toLowerCase() : s.slice(0, 4)) || "equipo";
+  };
+  const byPrefix = new Map<string, string[]>();
+  pairs.forEach((p) => {
+    const prefix = getPrefix(p.player1_name || p.player2_name || "");
+    if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
+    byPrefix.get(prefix)!.push(p.id);
+  });
+  const prefixes = Array.from(byPrefix.keys());
+  if (prefixes.length !== 2) return null;
+  const [name0, name1] = prefixes;
+  const teamNames = [
+    name0.charAt(0).toUpperCase() + name0.slice(1),
+    name1.charAt(0).toUpperCase() + name1.slice(1),
+  ];
+  const pairToTeam: Record<string, number> = {};
+  byPrefix.get(name0)!.forEach((id) => { pairToTeam[id] = 0; });
+  byPrefix.get(name1)!.forEach((id) => { pairToTeam[id] = 1; });
+  return { teamNames, pairToTeam };
+}
+
 /** Lee la config de equipos desde localStorage (fallback si la BD no la tiene). */
 export function getTeamConfigFromStorage(tournamentId: string): TeamConfig | null {
   try {
