@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import "./PublicTournamentView.css";
-import { getMatches, getPairs, getTournamentGames, getTournamentById } from "../lib/database";
+import "./ModernStandingsTable.css";
+import { getMatches, getPairs, getTournamentGames, getTournamentById, getTournamentPublicConfig } from "../lib/database";
 import { Match, Pair, Game } from "../lib/database";
 import { getTeamConfigFromStorage, computePairsWithStats, computeTeamStandings } from "../lib/standingsUtils";
 import type { TeamConfig } from "./RealTimeStandingsTable";
-import RealTimeStandingsTable from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import {
@@ -36,7 +36,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     try {
       setError(""); // Limpiar errores previos
 
-      const [matchesData, pairsData, gamesData, tournament] = await Promise.all([
+      // Intentar primero config pública (lectura anónima) para que la tabla por equipos funcione sin login
+      const [publicConfig, matchesData, pairsData, gamesData, tournament] = await Promise.all([
+        getTournamentPublicConfig(tournamentId),
         getMatches(tournamentId),
         getPairs(tournamentId),
         getTournamentGames(tournamentId),
@@ -44,11 +46,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       ]);
 
       const config =
-        tournament?.format === "teams" &&
+        publicConfig?.team_config ??
+        (tournament?.format === "teams" &&
         tournament?.team_config?.teamNames?.length &&
         tournament?.team_config?.pairToTeam
           ? tournament.team_config
-          : getTeamConfigFromStorage(tournamentId);
+          : getTeamConfigFromStorage(tournamentId));
       setTeamConfig(config || null);
 
       setMatches(matchesData);
@@ -101,21 +104,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     enabled: true,
   });
 
-  // Obtener teamConfig lo antes posible (sobre todo en móvil) para que la tabla muestre equipos desde el primer render
+  // Cargar teamConfig desde config pública (anon) lo antes posible
   useEffect(() => {
     if (!tournamentId) return;
     let cancelled = false;
-    getTournamentById(tournamentId)
-      .then((t) => {
-        if (cancelled) return;
-        const config =
-          t?.format === "teams" &&
-          t?.team_config?.teamNames?.length &&
-          t?.team_config?.pairToTeam
-            ? t.team_config
-            : getTeamConfigFromStorage(tournamentId);
-        if (config) setTeamConfig(config);
-      })
+    getTournamentPublicConfig(tournamentId)
+      .then((c) => { if (!cancelled && c?.team_config) setTeamConfig(c.team_config); })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [tournamentId]);
@@ -146,7 +140,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       return { pair1Score: 0, pair2Score: 0, hasResult: false };
     }
 
-    // Obtener el último juego (el más reciente) para mostrar el marcador actual
     const lastGame = matchGames[matchGames.length - 1];
 
     return {
@@ -155,6 +148,26 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       hasResult: true,
     };
   };
+
+  // Clasificación: por equipos o por parejas según teamConfig (solo estado local, sin depender de otro componente)
+  const pairsWithStats = useMemo(
+    () => computePairsWithStats(pairs, matches, games),
+    [pairs, matches, games]
+  );
+  const teamStandings = useMemo(() => {
+    if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam || Object.keys(teamConfig.pairToTeam).length === 0) return null;
+    return computeTeamStandings(pairsWithStats, teamConfig);
+  }, [teamConfig, pairsWithStats]);
+  const sortedPairs = useMemo(() => {
+    return [...pairsWithStats].sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
+      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+      return `${a.player1_name}/${a.player2_name}`.localeCompare(`${b.player1_name}/${b.player2_name}`);
+    });
+  }, [pairsWithStats]);
+
+  const getPositionIcon = (pos: number) => (pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : "");
 
   if (loading) {
     return (
@@ -426,9 +439,84 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ))}
       </div>
 
-      {/* Tabla de Clasificación (por equipos si la reta es por equipos) */}
+      {/* Tabla de Clasificación: por equipos o por parejas según formato (solo datos locales) */}
       <div className="public-standings-section">
-        <RealTimeStandingsTable tournamentId={tournamentId} forceRefresh={0} teamConfig={teamConfig} />
+        <div className="new-standings-container">
+          <div className="new-standings-header">
+            <h2>📊 Clasificación</h2>
+          </div>
+          {teamStandings && teamStandings.length > 0 ? (
+            <div className="new-standings-table-wrapper">
+              <table className="new-standings-table">
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>Equipo</th>
+                    <th>Sets</th>
+                    <th>Partidos</th>
+                    <th>Puntos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamStandings.map((row, index) => (
+                    <tr
+                      key={row.teamIndex}
+                      className={
+                        index === 0 ? "new-first-place" :
+                        index === 1 ? "new-second-place" :
+                        index === 2 ? "new-third-place" : "new-normal-place"
+                      }
+                    >
+                      <td className="new-position-cell">
+                        <span className="new-position-number">{index + 1}</span>
+                        <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
+                      </td>
+                      <td className="new-team-cell">{row.name}</td>
+                      <td className="new-stats-cell">{row.setsWon}</td>
+                      <td className="new-stats-cell">{row.matchesPlayed}</td>
+                      <td className="new-points-cell">{row.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="new-standings-table-wrapper">
+              <table className="new-standings-table">
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>Pareja</th>
+                    <th>Sets</th>
+                    <th>Partidos</th>
+                    <th>Puntos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedPairs.map((pair, index) => (
+                    <tr
+                      key={pair.id}
+                      className={
+                        index === 0 ? "new-first-place" :
+                        index === 1 ? "new-second-place" :
+                        index === 2 ? "new-third-place" : "new-normal-place"
+                      }
+                    >
+                      <td className="new-position-cell">
+                        <span className="new-position-number">{index + 1}</span>
+                        <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
+                      </td>
+                      <td className="new-team-cell">{pair.player1_name} / {pair.player2_name}</td>
+                      <td className="new-stats-cell">{pair.setsWon}</td>
+                      <td className="new-stats-cell">{pair.matchesPlayed}</td>
+                      <td className="new-points-cell">{pair.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sección del Ganador: por equipos = equipo ganador; round robin = pareja ganadora */}

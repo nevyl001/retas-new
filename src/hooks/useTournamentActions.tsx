@@ -4,6 +4,7 @@ import {
   Pair,
   deleteMatchesByTournament,
   updateTournament,
+  upsertTournamentPublicConfig,
 } from "../lib/database";
 import { CircleRoundRobinScheduler } from "../components/CircleRoundRobinScheduler";
 
@@ -97,6 +98,7 @@ export const useTournamentActions = (
           } catch (e) {
             console.warn("No se pudo guardar configuración de equipos en localStorage", e);
           }
+          await upsertTournamentPublicConfig(selectedTournament.id, "teams", teamConfigPayload.team_config);
         }
 
         await loadTournamentData();

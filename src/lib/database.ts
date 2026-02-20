@@ -142,6 +142,44 @@ export const getTournamentById = async (tournamentId: string) => {
   return data;
 };
 
+/**
+ * Config pública del torneo (lectura anónima). Tabla tournament_public_config con RLS: SELECT para anon.
+ * Si la tabla no existe, devuelve null.
+ */
+export const getTournamentPublicConfig = async (tournamentId: string): Promise<{ format: string; team_config: TournamentTeamConfig } | null> => {
+  try {
+    const { data, error } = await supabase
+      .from("tournament_public_config")
+      .select("format, team_config")
+      .eq("tournament_id", tournamentId)
+      .maybeSingle();
+    if (error || !data) return null;
+    if (data.format === "teams" && data.team_config?.teamNames?.length && data.team_config?.pairToTeam) return data as { format: string; team_config: TournamentTeamConfig };
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Guarda config pública para que la vista pública (anon) pueda mostrar tabla por equipos.
+ * Llamar al iniciar reta por equipos. Tabla tournament_public_config con RLS: INSERT/UPDATE para authenticated.
+ */
+export const upsertTournamentPublicConfig = async (
+  tournamentId: string,
+  format: "teams" | "round_robin",
+  team_config: TournamentTeamConfig | null
+) => {
+  try {
+    await supabase.from("tournament_public_config").upsert(
+      { tournament_id: tournamentId, format, team_config: team_config ?? null },
+      { onConflict: "tournament_id" }
+    );
+  } catch (e) {
+    console.warn("tournament_public_config no disponible:", e);
+  }
+};
+
 export const updateTournament = async (
   id: string,
   updates: Partial<Tournament>
