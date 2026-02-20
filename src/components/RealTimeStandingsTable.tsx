@@ -9,7 +9,7 @@ import {
   Game,
   Pair,
 } from "../lib/database";
-import { getTeamConfigFromStorage } from "../lib/standingsUtils";
+import { getTeamConfigFromStorage, inferTeamConfigFromPairs } from "../lib/standingsUtils";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import "./ModernStandingsTable.css";
 
@@ -87,7 +87,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     }, 150);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [tournamentId, teamConfigProp]);
+  // Si no hay config guardada, inferir equipos por nombres (ej. alva vs hack) para mostrar tabla por equipos
   const teamConfig = resolvedTeamConfig;
+  const effectiveTeamConfig = useMemo(
+    () => teamConfig ?? (pairs.length >= 2 ? inferTeamConfigFromPairs(pairs) : null),
+    [teamConfig, pairs]
+  );
 
   const loadTournamentData = useCallback(async () => {
     if (!tournamentId) return;
@@ -373,13 +378,13 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     });
   }, [pairsWithStats]);
 
-  // Clasificación por equipos (suma de estadísticas de parejas del mismo equipo)
+  // Clasificación por equipos (suma de estadísticas de parejas del mismo equipo); usa effectiveTeamConfig (incl. inferido)
   const teamStandings = useMemo((): Array<{ teamIndex: number; name: string; points: number; setsWon: number; matchesPlayed: number }> | null => {
-    if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam || Object.keys(teamConfig.pairToTeam).length === 0) return null;
-    const n = teamConfig.teamNames.length;
+    if (!effectiveTeamConfig?.teamNames?.length || !effectiveTeamConfig.pairToTeam || Object.keys(effectiveTeamConfig.pairToTeam).length === 0) return null;
+    const n = effectiveTeamConfig.teamNames.length;
     const totals: Array<{ points: number; setsWon: number; matchesPlayed: number }> = Array.from({ length: n }, () => ({ points: 0, setsWon: 0, matchesPlayed: 0 }));
     pairsWithStats.forEach((pair) => {
-      const t = teamConfig.pairToTeam[pair.id];
+      const t = effectiveTeamConfig.pairToTeam[pair.id];
       if (t >= 0 && t < n) {
         totals[t].points += pair.points;
         totals[t].setsWon += pair.setsWon;
@@ -388,7 +393,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     });
     return totals.map((tot, teamIndex) => ({
       teamIndex,
-      name: teamConfig.teamNames[teamIndex] ?? `Equipo ${teamIndex + 1}`,
+      name: effectiveTeamConfig.teamNames[teamIndex] ?? `Equipo ${teamIndex + 1}`,
       points: tot.points,
       setsWon: tot.setsWon,
       matchesPlayed: tot.matchesPlayed,
@@ -397,7 +402,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
       return b.matchesPlayed - a.matchesPlayed;
     });
-  }, [teamConfig, pairsWithStats]);
+  }, [effectiveTeamConfig, pairsWithStats]);
 
   const getPositionIcon = (position: number) => {
     switch (position) {
