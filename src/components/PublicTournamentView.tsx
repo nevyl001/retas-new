@@ -101,6 +101,25 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     enabled: true,
   });
 
+  // Obtener teamConfig lo antes posible (sobre todo en móvil) para que la tabla muestre equipos desde el primer render
+  useEffect(() => {
+    if (!tournamentId) return;
+    let cancelled = false;
+    getTournamentById(tournamentId)
+      .then((t) => {
+        if (cancelled) return;
+        const config =
+          t?.format === "teams" &&
+          t?.team_config?.teamNames?.length &&
+          t?.team_config?.pairToTeam
+            ? t.team_config
+            : getTeamConfigFromStorage(tournamentId);
+        if (config) setTeamConfig(config);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [tournamentId]);
+
   useEffect(() => {
     if (!tournamentId) return;
     setLoading(true);

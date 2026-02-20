@@ -64,25 +64,28 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   useEffect(() => {
     if (teamConfigProp != null) setResolvedTeamConfig(teamConfigProp);
   }, [teamConfigProp]);
+  // Fallback: cargar teamConfig desde BD/localStorage (vista pública/móvil). Pequeño delay para que el padre pueda pasar el config primero.
   useEffect(() => {
     if (teamConfigProp != null || !tournamentId) return;
     let cancelled = false;
-    (async () => {
-      try {
-        const t = await getTournamentById(tournamentId);
-        if (cancelled) return;
-        const config =
-          t?.format === "teams" &&
-          t?.team_config?.teamNames?.length &&
-          t?.team_config?.pairToTeam
-            ? t.team_config
-            : getTeamConfigFromStorage(tournamentId);
-        setResolvedTeamConfig(config || null);
-      } catch {
-        if (!cancelled) setResolvedTeamConfig(getTeamConfigFromStorage(tournamentId) || null);
-      }
-    })();
-    return () => { cancelled = true; };
+    const timer = setTimeout(() => {
+      (async () => {
+        try {
+          const t = await getTournamentById(tournamentId);
+          if (cancelled) return;
+          const config =
+            t?.format === "teams" &&
+            t?.team_config?.teamNames?.length &&
+            t?.team_config?.pairToTeam
+              ? t.team_config
+              : getTeamConfigFromStorage(tournamentId);
+          if (!cancelled) setResolvedTeamConfig(config || null);
+        } catch {
+          if (!cancelled) setResolvedTeamConfig(getTeamConfigFromStorage(tournamentId) || null);
+        }
+      })();
+    }, 150);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [tournamentId, teamConfigProp]);
   const teamConfig = resolvedTeamConfig;
 
