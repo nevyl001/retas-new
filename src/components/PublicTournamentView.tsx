@@ -69,23 +69,26 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         setShowWinner(false);
         setWinningTeamName(null);
         setTournamentWinner(null);
-      } else if (config) {
-        const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
-        const teamStandings = computeTeamStandings(pairsWithStats, config);
-        setWinningTeamName(teamStandings?.[0]?.name ?? null);
-        setTournamentWinner(null);
-        setShowWinner(true);
       } else {
-        setWinningTeamName(null);
-        try {
-          const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
-            pairsData,
-            matchesData
-          );
-          setTournamentWinner(winner);
+        const effectiveConfig = config ?? (pairsData.length >= 2 ? inferTeamConfigFromPairs(pairsData) : null);
+        if (effectiveConfig) {
+          const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
+          const teamStandings = computeTeamStandings(pairsWithStats, effectiveConfig);
+          setWinningTeamName(teamStandings?.[0]?.name ?? null);
+          setTournamentWinner(null);
           setShowWinner(true);
-        } catch (err) {
-          console.error("Error calculating winner:", err);
+        } else {
+          setWinningTeamName(null);
+          try {
+            const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
+              pairsData,
+              matchesData
+            );
+            setTournamentWinner(winner);
+            setShowWinner(true);
+          } catch (err) {
+            console.error("Error calculating winner:", err);
+          }
         }
       }
     } catch (err) {
@@ -537,7 +540,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           </div>
         </div>
       )}
-      {showWinner && !winningTeamName && tournamentWinner && (
+      {/* Solo mostrar ganadores por pareja cuando NO es por equipos (evitar duplicar con equipo ganador) */}
+      {showWinner && (!teamStandings || teamStandings.length === 0) && tournamentWinner && (
         <div className="public-winner-section">
           <div className="public-winner-header">
             <h2 className="public-winner-title">🏆 GANADORES DE LA RETA 🏆</h2>

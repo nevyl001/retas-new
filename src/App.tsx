@@ -168,6 +168,7 @@ function AppContent() {
   const {
     tournamentWinner,
     winningTeamName,
+    winningTeamStats,
     showWinnerScreen,
     calculateAndShowWinner,
     hideWinnerScreen,
@@ -387,6 +388,7 @@ function AppContent() {
             winner={winner}
             tournamentWinner={tournamentWinner}
             winningTeamName={winningTeamName}
+            winningTeamStats={winningTeamStats}
             onBackToManager={handleHideWinner}
           />
         )}

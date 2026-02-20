@@ -5,12 +5,13 @@ import {
   TournamentWinnerCalculator,
   TournamentWinner,
 } from "../components/TournamentWinnerCalculator";
-import { computePairsWithStats, computeTeamStandings, getTeamConfigFromStorage } from "../lib/standingsUtils";
+import { computePairsWithStats, computeTeamStandings, getTeamConfigFromStorage, inferTeamConfigFromPairs } from "../lib/standingsUtils";
 
 export const useWinnerCalculation = () => {
   const [tournamentWinner, setTournamentWinner] =
     useState<TournamentWinner | null>(null);
   const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
+  const [winningTeamStats, setWinningTeamStats] = useState<{ points: number; setsWon: number; matchesPlayed: number } | null>(null);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
 
   const calculateAndShowWinner = async (
@@ -21,30 +22,38 @@ export const useWinnerCalculation = () => {
   ) => {
     try {
       const tournament = options?.tournament;
-      const teamConfig =
+      const storedTeamConfig =
         tournament?.format === "teams" && tournament?.team_config?.teamNames?.length && tournament?.team_config?.pairToTeam
           ? tournament.team_config
           : tournament?.id
             ? getTeamConfigFromStorage(tournament.id)
             : null;
+      const teamConfig = storedTeamConfig ?? (pairs.length >= 2 ? inferTeamConfigFromPairs(pairs) : null);
       const isTeams = !!teamConfig;
 
       if (isTeams && teamConfig) {
-        console.log("🏆 Calculando equipo ganador...");
+        console.log("🏆 Calculando equipo ganador (más puntos)...");
         setTournamentWinner(null);
-        const games = await getTournamentGames(tournament!.id);
+        setWinningTeamStats(null);
+        const games = tournament?.id ? await getTournamentGames(tournament.id) : [];
         const pairsWithStats = computePairsWithStats(pairs, matches, games || []);
         const teamStandings = computeTeamStandings(pairsWithStats, teamConfig);
-        const teamName = teamStandings?.[0]?.name ?? null;
-        setWinningTeamName(teamName);
+        const first = teamStandings?.[0];
+        if (first) {
+          setWinningTeamName(first.name);
+          setWinningTeamStats({ points: first.points, setsWon: first.setsWon, matchesPlayed: first.matchesPlayed });
+        } else {
+          setWinningTeamName(null);
+        }
         setShowWinnerScreen(true);
         setCurrentView("winner");
-        console.log("✅ Equipo ganador:", teamName);
+        console.log("✅ Equipo ganador:", first?.name, "Puntos:", first?.points);
         return;
       }
 
       console.log("🏆 Calculando ganador de la reta (pareja)...");
       setWinningTeamName(null);
+      setWinningTeamStats(null);
       const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
         pairs,
         matches
@@ -65,12 +74,14 @@ export const useWinnerCalculation = () => {
   ) => {
     setShowWinnerScreen(false);
     setWinningTeamName(null);
+    setWinningTeamStats(null);
     setCurrentView("main");
   };
 
   return {
     tournamentWinner,
     winningTeamName,
+    winningTeamStats,
     showWinnerScreen,
     calculateAndShowWinner,
     hideWinnerScreen,
