@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import "./PublicTournamentView.css";
 import "./ModernStandingsTable.css";
 import { getMatches, getPairs, getTournamentGames, getTournamentById, getTournamentPublicConfig } from "../lib/database";
@@ -30,6 +30,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(null);
   const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
+  const configFetchOnDemandRef = useRef(false);
 
   const loadTournamentData = useCallback(async () => {
     if (!tournamentId) return;
@@ -124,11 +125,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return () => { cancelled = true; };
   }, [tournamentId]);
 
-  // Reintentos para config pública (móvil: red más lenta, la tabla por equipos debe verse igual que en escritorio)
+  // Reintentos para config pública (móvil: red más lenta; torneo ya configurado por equipos)
   useEffect(() => {
     if (!tournamentId || pairs.length === 0) return;
     let cancelled = false;
-    const delays = [0, 400, 1000, 2000];
+    const delays = [0, 400, 1000, 2000, 3500];
     const timeouts: ReturnType<typeof setTimeout>[] = [];
     delays.forEach((delay) => {
       const t = setTimeout(() => {
@@ -142,6 +143,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     });
     return () => { cancelled = true; timeouts.forEach(clearTimeout); };
   }, [tournamentId, pairs.length]);
+
+  // Una vez más al renderizar: si hay parejas y aún no hay config (móvil), intentar cargar config por si la primera petición falló
+  useEffect(() => {
+    if (!tournamentId || pairs.length === 0 || teamConfig || configFetchOnDemandRef.current) return;
+    configFetchOnDemandRef.current = true;
+    getTournamentPublicConfig(tournamentId).then((c) => {
+      if (c?.team_config?.teamNames?.length && c?.team_config?.pairToTeam)
+        setTeamConfig(c.team_config);
+    }).catch(() => {});
+  }, [tournamentId, pairs.length, teamConfig]);
 
   useEffect(() => {
     if (!tournamentId) return;
