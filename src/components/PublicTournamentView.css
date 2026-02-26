@@ -1045,8 +1045,15 @@
 
   .public-standings-section {
     padding: var(--space-md);
+    display: block !important;
+    visibility: visible !important;
   }
-  
+
+  .public-standings-section .new-standings-table-wrapper {
+    display: block !important;
+    visibility: visible !important;
+  }
+
   .public-standings-title {
     font-size: 1.25rem;
   }
@@ -1132,6 +1139,19 @@
   .public-round-title {
     font-size: 1.5rem;
     margin: var(--space-xs) 0;
+  }
+
+  .public-standings-section {
+    display: block !important;
+    visibility: visible !important;
+    width: 100%;
+  }
+
+  .public-standings-section .new-standings-container,
+  .public-standings-section .new-standings-table-wrapper {
+    display: block !important;
+    visibility: visible !important;
+    width: 100%;
   }
 
   .public-matches-grid {

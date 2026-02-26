@@ -36,9 +36,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     try {
       setError(""); // Limpiar errores previos
 
-      // Intentar primero config pública (lectura anónima) para que la tabla por equipos funcione sin login
-      const [publicConfig, matchesData, pairsData, gamesData, tournament] = await Promise.all([
-        getTournamentPublicConfig(tournamentId),
+      // 1) Cargar config pública PRIMERO (sobre todo en móvil) para que la tabla por equipos esté lista antes de pintar
+      const publicConfig = await getTournamentPublicConfig(tournamentId);
+      const configFromPublic = publicConfig?.team_config?.teamNames?.length && publicConfig?.team_config?.pairToTeam
+        ? publicConfig.team_config
+        : null;
+      if (configFromPublic) setTeamConfig(configFromPublic);
+
+      const [matchesData, pairsData, gamesData, tournament] = await Promise.all([
         getMatches(tournamentId),
         getPairs(tournamentId),
         getTournamentGames(tournamentId),
@@ -46,6 +51,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       ]);
 
       const config =
+        configFromPublic ??
         publicConfig?.team_config ??
         (tournament?.format === "teams" &&
         tournament?.team_config?.teamNames?.length &&
@@ -118,18 +124,23 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return () => { cancelled = true; };
   }, [tournamentId]);
 
-  // Reintento: si hay parejas pero no config (p. ej. carga inicial sin config), volver a pedir config pública para móvil/escritorio
+  // Reintentos para config pública (móvil: red más lenta, la tabla por equipos debe verse igual que en escritorio)
   useEffect(() => {
     if (!tournamentId || pairs.length === 0) return;
     let cancelled = false;
-    const t = setTimeout(() => {
-      getTournamentPublicConfig(tournamentId).then((c) => {
-        if (cancelled) return;
-        if (c?.team_config?.teamNames?.length && c?.team_config?.pairToTeam)
-          setTeamConfig(c.team_config);
-      }).catch(() => {});
-    }, 600);
-    return () => { cancelled = true; clearTimeout(t); };
+    const delays = [0, 400, 1000, 2000];
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    delays.forEach((delay) => {
+      const t = setTimeout(() => {
+        getTournamentPublicConfig(tournamentId).then((c) => {
+          if (cancelled) return;
+          if (c?.team_config?.teamNames?.length && c?.team_config?.pairToTeam)
+            setTeamConfig(c.team_config);
+        }).catch(() => {});
+      }, delay);
+      timeouts.push(t);
+    });
+    return () => { cancelled = true; timeouts.forEach(clearTimeout); };
   }, [tournamentId, pairs.length]);
 
   useEffect(() => {
@@ -461,8 +472,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ))}
       </div>
 
-      {/* Tabla de Clasificación: por equipos o por parejas según formato (solo datos locales) */}
-      <div className="public-standings-section">
+      {/* Tabla de Clasificación: misma lógica en móvil y escritorio (por equipos si hay config, si no por parejas) */}
+      <div
+        className="public-standings-section"
+        data-standings-mode={teamStandings?.length ? "teams" : "pairs"}
+      >
         <div className="new-standings-container">
           <div className="new-standings-header">
             <h2>📊 Clasificación</h2>
