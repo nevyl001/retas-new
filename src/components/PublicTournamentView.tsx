@@ -52,7 +52,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         tournament?.team_config?.pairToTeam
           ? tournament.team_config
           : getTeamConfigFromStorage(tournamentId));
-      setTeamConfig(config || null);
+      const hasValidConfig = config?.teamNames?.length && config?.pairToTeam && Object.keys(config.pairToTeam).length > 0;
+      setTeamConfig((prev) => (hasValidConfig ? config! : config === null ? (prev ?? null) : prev ?? null));
 
       setMatches(matchesData);
       setPairs(pairsData);
@@ -112,10 +113,24 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     if (!tournamentId) return;
     let cancelled = false;
     getTournamentPublicConfig(tournamentId)
-      .then((c) => { if (!cancelled && c?.team_config) setTeamConfig(c.team_config); })
+      .then((c) => { if (!cancelled && c?.team_config?.teamNames?.length && c?.team_config?.pairToTeam) setTeamConfig(c.team_config); })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [tournamentId]);
+
+  // Reintento: si hay parejas pero no config (p. ej. carga inicial sin config), volver a pedir config pública para móvil/escritorio
+  useEffect(() => {
+    if (!tournamentId || pairs.length === 0) return;
+    let cancelled = false;
+    const t = setTimeout(() => {
+      getTournamentPublicConfig(tournamentId).then((c) => {
+        if (cancelled) return;
+        if (c?.team_config?.teamNames?.length && c?.team_config?.pairToTeam)
+          setTeamConfig(c.team_config);
+      }).catch(() => {});
+    }, 600);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [tournamentId, pairs.length]);
 
   useEffect(() => {
     if (!tournamentId) return;

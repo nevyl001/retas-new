@@ -640,6 +640,7 @@
    STANDINGS & WINNER SECTIONS
    ===================================================== */
 
+/* Tabla de clasificación: siempre visible en móvil y escritorio (por equipos o por parejas) */
 .public-standings-section {
   background: var(--color-bg-surface);
   border-radius: var(--radius-md);
@@ -648,6 +649,15 @@
   backdrop-filter: none;
   margin-bottom: var(--space-lg);
   box-shadow: var(--shadow-soft);
+  display: block;
+  width: 100%;
+}
+
+.public-standings-section .new-standings-table-wrapper {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .public-standings-header {
