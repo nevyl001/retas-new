@@ -1,10 +1,26 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Tournament } from "../lib/database";
+
+const TEAM_CONFIG_KEY = "retapadel_teams_";
+
+function getTeamConfig(tournament: Tournament): { teamNames: string[]; pairToTeam: Record<string, number> } | null {
+  if (tournament.format === "teams" && tournament.team_config?.teamNames?.length && tournament.team_config?.pairToTeam)
+    return tournament.team_config;
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem(`${TEAM_CONFIG_KEY}${tournament.id}`) : null;
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data?.teamNames?.length && data?.pairToTeam && typeof data.pairToTeam === "object") return data;
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 interface PublicLinkSectionProps {
   tournament: Tournament;
-  onCopyPublicLink: (tournamentId: string) => void;
-  generatePublicLink: (tournamentId: string) => string;
+  onCopyPublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => void;
+  generatePublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => string;
 }
 
 export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
@@ -12,6 +28,8 @@ export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
   onCopyPublicLink,
   generatePublicLink,
 }) => {
+  const teamConfig = useMemo(() => getTeamConfig(tournament), [tournament.id, tournament.format, tournament.team_config]);
+
   if (!tournament.is_started) return null;
 
   return (
@@ -30,12 +48,12 @@ export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
       <div className="public-link-actions">
         <button
           className="public-link-button"
-          onClick={() => onCopyPublicLink(tournament.id)}
+          onClick={() => onCopyPublicLink(tournament.id, teamConfig)}
         >
           📋 Copiar Enlace
         </button>
         <a
-          href={generatePublicLink(tournament.id)}
+          href={generatePublicLink(tournament.id, teamConfig)}
           target="_blank"
           rel="noopener noreferrer"
           className="public-link-preview"

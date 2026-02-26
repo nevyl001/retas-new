@@ -16,6 +16,24 @@ interface PublicTournamentViewProps {
   tournamentId: string;
 }
 
+/** Parsea team config desde el hash de la URL (#teams=...) para que móvil muestre tabla por equipos aunque falle la API */
+function parseTeamConfigFromHash(): TeamConfig | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const hash = window.location.hash.slice(1);
+    const match = hash.match(/^teams=(.+)$/);
+    if (!match) return null;
+    const decoded = decodeURIComponent(match[1]);
+    const parsed = JSON.parse(decoded) as unknown;
+    if (!parsed || typeof parsed !== "object" || !Array.isArray((parsed as TeamConfig).teamNames) || !(parsed as TeamConfig).pairToTeam || typeof (parsed as TeamConfig).pairToTeam !== "object") return null;
+    const cfg = parsed as TeamConfig;
+    if (!cfg.teamNames.length || !Object.keys(cfg.pairToTeam).length) return null;
+    return cfg;
+  } catch {
+    return null;
+  }
+}
+
 const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   tournamentId,
 }) => {
@@ -28,7 +46,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     useState<TournamentWinner | null>(null);
   const [showWinner, setShowWinner] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(null);
+  const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(parseTeamConfigFromHash);
   const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
   const configFetchOnDemandRef = useRef(false);
 

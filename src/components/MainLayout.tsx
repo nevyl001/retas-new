@@ -44,8 +44,8 @@ interface MainLayoutProps {
     teamNames?: string[];
     pairToTeam?: Record<string, number>;
   }) => void;
-  onCopyPublicLink: (tournamentId: string) => void;
-  generatePublicLink: (tournamentId: string) => string;
+  onCopyPublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => void;
+  generatePublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => string;
 
   // Winner logic
   isTournamentFinished: boolean;

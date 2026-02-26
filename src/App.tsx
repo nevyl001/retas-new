@@ -254,15 +254,29 @@ function AppContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceRefresh, selectedTournament]); // loadTournamentData es estable
 
-  // Utilidades
-  const generatePublicLink = (tournamentId: string) => {
+  // Utilidades: incluir config de equipos en el enlace para que la vista pública (sobre todo móvil) muestre tabla por equipos aunque falle la API
+  const generatePublicLink = (
+    tournamentId: string,
+    teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null
+  ) => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/public/${tournamentId}`;
+    let link = `${baseUrl}/public/${tournamentId}`;
+    if (teamConfig?.teamNames?.length && teamConfig?.pairToTeam && Object.keys(teamConfig.pairToTeam).length > 0) {
+      try {
+        link += "#teams=" + encodeURIComponent(JSON.stringify(teamConfig));
+      } catch {
+        // ignore
+      }
+    }
+    return link;
   };
 
-  const copyPublicLink = async (tournamentId: string) => {
+  const copyPublicLink = async (
+    tournamentId: string,
+    teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null
+  ) => {
     try {
-      const publicLink = generatePublicLink(tournamentId);
+      const publicLink = generatePublicLink(tournamentId, teamConfig);
       await navigator.clipboard.writeText(publicLink);
       showToast("¡Enlace público copiado al portapapeles!", "success");
     } catch (err) {
