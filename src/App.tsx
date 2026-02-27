@@ -19,7 +19,7 @@ import { AdminRoute } from "./components/admin/AdminRoute";
 import { testConnection } from "./lib/supabaseClient";
 
 // Types
-import { Tournament, Player, getTournamentById } from "./lib/database";
+import { Tournament, Player, getTournamentById, upsertTournamentPublicConfig } from "./lib/database";
 
 // Custom Hooks
 import { useTournamentData } from "./hooks/useTournamentData";
@@ -276,6 +276,9 @@ function AppContent() {
     teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null
   ) => {
     try {
+      if (teamConfig?.teamNames?.length && teamConfig?.pairToTeam) {
+        await upsertTournamentPublicConfig(tournamentId, "teams", teamConfig);
+      }
       const publicLink = generatePublicLink(tournamentId, teamConfig);
       await navigator.clipboard.writeText(publicLink);
       showToast("¡Enlace público copiado al portapapeles!", "success");

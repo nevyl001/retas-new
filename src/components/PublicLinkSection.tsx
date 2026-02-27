@@ -1,5 +1,5 @@
-import React, { useMemo } from "react";
-import { Tournament } from "../lib/database";
+import React, { useMemo, useEffect } from "react";
+import { Tournament, upsertTournamentPublicConfig } from "../lib/database";
 
 const TEAM_CONFIG_KEY = "retapadel_teams_";
 
@@ -29,6 +29,12 @@ export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
   generatePublicLink,
 }) => {
   const teamConfig = useMemo(() => getTeamConfig(tournament), [tournament]);
+
+  // Sincronizar nombres de equipos al servidor para que la vista pública muestre los nombres reales (no "Equipo 1" / "Equipo 2")
+  useEffect(() => {
+    if (!tournament.id || !teamConfig?.teamNames?.length || !teamConfig?.pairToTeam) return;
+    upsertTournamentPublicConfig(tournament.id, "teams", teamConfig).catch(() => {});
+  }, [tournament.id, teamConfig]);
 
   if (!tournament.is_started) return null;
 
