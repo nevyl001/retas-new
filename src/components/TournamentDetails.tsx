@@ -39,8 +39,8 @@ interface TournamentDetailsProps {
     teamNames?: string[];
     pairToTeam?: Record<string, number>;
   }) => void;
-  onCopyPublicLink: (tournamentId: string) => void;
-  generatePublicLink: (tournamentId: string) => string;
+  onCopyPublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => void;
+  generatePublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => string;
   isTournamentFinished: boolean;
   winner: Pair | null;
   tournamentWinner: TournamentWinner | null;
