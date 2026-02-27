@@ -162,6 +162,18 @@ export function inferTeamConfigFromPairs(pairs: Pair[]): TeamConfig | null {
   return { teamNames, pairToTeam };
 }
 
+/**
+ * Último recurso: si no hay config ni inferencia por nombres, divide las parejas en dos mitades
+ * y muestra "Equipo 1" y "Equipo 2". Para que la vista pública muestre siempre tabla por equipos.
+ */
+export function fallbackTwoTeamsFromPairs(pairs: Pair[]): TeamConfig | null {
+  if (!pairs?.length || pairs.length < 2) return null;
+  const mid = Math.ceil(pairs.length / 2);
+  const pairToTeam: Record<string, number> = {};
+  pairs.forEach((p, i) => { pairToTeam[p.id] = i < mid ? 0 : 1; });
+  return { teamNames: ["Equipo 1", "Equipo 2"], pairToTeam };
+}
+
 /** Lee la config de equipos desde localStorage (fallback si la BD no la tiene). */
 export function getTeamConfigFromStorage(tournamentId: string): TeamConfig | null {
   try {
