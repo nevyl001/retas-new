@@ -660,6 +660,74 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* Móvil: cards; Escritorio: tabla */
+.standings-mobile-cards {
+  display: none;
+}
+
+.standings-desktop-table {
+  display: block;
+}
+
+/* Cards de clasificación (móvil) */
+.standings-card {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.standings-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.standings-card-pos {
+  min-width: 28px;
+  font-size: 1.125rem;
+  text-align: center;
+}
+
+.standings-card-name {
+  flex: 1;
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
+.standings-card-stats {
+  display: flex;
+  gap: var(--space-md);
+  padding-left: 36px;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.standings-card-stats strong {
+  color: var(--color-text-primary);
+  margin-right: 2px;
+}
+
+.standings-card-first {
+  border-color: var(--color-accent-border);
+  background: var(--color-accent-subtle);
+}
+
+.standings-card-first .standings-card-name {
+  color: var(--color-accent);
+}
+
+.standings-card-second,
+.standings-card-third {
+  border-color: var(--color-border-soft);
+}
+
 .public-standings-header {
   margin-bottom: var(--space-md);
 }
@@ -952,6 +1020,13 @@
   }
   .public-tournament-view .mobile-only {
     display: block;
+  }
+  /* Clasificación: en móvil mostrar cards, ocultar tabla */
+  .standings-mobile-cards {
+    display: block;
+  }
+  .standings-desktop-table {
+    display: none;
   }
 }
 

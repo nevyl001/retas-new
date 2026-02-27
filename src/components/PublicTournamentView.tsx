@@ -172,6 +172,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     }).catch(() => {});
   }, [tournamentId, pairs.length, teamConfig]);
 
+  // Local: si no hay config de API ni hash, usar localStorage (se guarda al iniciar reta por equipos en el mismo navegador)
+  useEffect(() => {
+    if (!tournamentId || teamConfig) return;
+    const fromStorage = getTeamConfigFromStorage(tournamentId);
+    if (fromStorage?.teamNames?.length && fromStorage?.pairToTeam && Object.keys(fromStorage.pairToTeam).length > 0)
+      setTeamConfig(fromStorage);
+  }, [tournamentId, teamConfig]);
+
   useEffect(() => {
     if (!tournamentId) return;
     setLoading(true);
@@ -501,7 +509,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ))}
       </div>
 
-      {/* Tabla de Clasificación: misma lógica en móvil y escritorio (por equipos si hay config, si no por parejas) */}
+      {/* Clasificación: tabla en escritorio, cards en móvil para que se vea bien */}
       <div
         className="public-standings-section"
         data-standings-mode={teamStandings?.length ? "teams" : "pairs"}
@@ -510,77 +518,118 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           <div className="new-standings-header">
             <h2>📊 Clasificación</h2>
           </div>
-          {teamStandings && teamStandings.length > 0 ? (
-            <div className="new-standings-table-wrapper">
-              <table className="new-standings-table">
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Equipo</th>
-                    <th>Sets</th>
-                    <th>Partidos</th>
-                    <th>Puntos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {teamStandings.map((row, index) => (
-                    <tr
-                      key={row.teamIndex}
-                      className={
-                        index === 0 ? "new-first-place" :
-                        index === 1 ? "new-second-place" :
-                        index === 2 ? "new-third-place" : "new-normal-place"
-                      }
-                    >
-                      <td className="new-position-cell">
-                        <span className="new-position-number">{index + 1}</span>
-                        <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
-                      </td>
-                      <td className="new-team-cell">{row.name}</td>
-                      <td className="new-stats-cell">{row.setsWon}</td>
-                      <td className="new-stats-cell">{row.matchesPlayed}</td>
-                      <td className="new-points-cell">{row.points}</td>
+
+          {/* Versión móvil: cards (se ve bien en pantalla pequeña) */}
+          <div className="standings-mobile-cards">
+            {teamStandings && teamStandings.length > 0
+              ? teamStandings.map((row, index) => (
+                  <div
+                    key={`team-${row.teamIndex}`}
+                    className={`standings-card ${index === 0 ? "standings-card-first" : index === 1 ? "standings-card-second" : index === 2 ? "standings-card-third" : ""}`}
+                  >
+                    <div className="standings-card-header">
+                      <span className="standings-card-pos">{getPositionIcon(index + 1) || index + 1}</span>
+                      <span className="standings-card-name">{row.name}</span>
+                    </div>
+                    <div className="standings-card-stats">
+                      <span><strong>{row.setsWon}</strong> Sets</span>
+                      <span><strong>{row.matchesPlayed}</strong> Part.</span>
+                      <span><strong>{row.points}</strong> Puntos</span>
+                    </div>
+                  </div>
+                ))
+              : sortedPairs.map((pair, index) => (
+                  <div
+                    key={pair.id}
+                    className={`standings-card ${index === 0 ? "standings-card-first" : index === 1 ? "standings-card-second" : index === 2 ? "standings-card-third" : ""}`}
+                  >
+                    <div className="standings-card-header">
+                      <span className="standings-card-pos">{getPositionIcon(index + 1) || index + 1}</span>
+                      <span className="standings-card-name">{pair.player1_name} / {pair.player2_name}</span>
+                    </div>
+                    <div className="standings-card-stats">
+                      <span><strong>{pair.setsWon}</strong> Sets</span>
+                      <span><strong>{pair.matchesPlayed}</strong> Part.</span>
+                      <span><strong>{pair.points}</strong> Puntos</span>
+                    </div>
+                  </div>
+                ))}
+          </div>
+
+          {/* Versión escritorio: tabla */}
+          <div className="standings-desktop-table">
+            {teamStandings && teamStandings.length > 0 ? (
+              <div className="new-standings-table-wrapper">
+                <table className="new-standings-table">
+                  <thead>
+                    <tr>
+                      <th>Pos</th>
+                      <th>Equipo</th>
+                      <th>Sets</th>
+                      <th>Partidos</th>
+                      <th>Puntos</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="new-standings-table-wrapper">
-              <table className="new-standings-table">
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Pareja</th>
-                    <th>Sets</th>
-                    <th>Partidos</th>
-                    <th>Puntos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedPairs.map((pair, index) => (
-                    <tr
-                      key={pair.id}
-                      className={
-                        index === 0 ? "new-first-place" :
-                        index === 1 ? "new-second-place" :
-                        index === 2 ? "new-third-place" : "new-normal-place"
-                      }
-                    >
-                      <td className="new-position-cell">
-                        <span className="new-position-number">{index + 1}</span>
-                        <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
-                      </td>
-                      <td className="new-team-cell">{pair.player1_name} / {pair.player2_name}</td>
-                      <td className="new-stats-cell">{pair.setsWon}</td>
-                      <td className="new-stats-cell">{pair.matchesPlayed}</td>
-                      <td className="new-points-cell">{pair.points}</td>
+                  </thead>
+                  <tbody>
+                    {teamStandings.map((row, index) => (
+                      <tr
+                        key={row.teamIndex}
+                        className={
+                          index === 0 ? "new-first-place" :
+                          index === 1 ? "new-second-place" :
+                          index === 2 ? "new-third-place" : "new-normal-place"
+                        }
+                      >
+                        <td className="new-position-cell">
+                          <span className="new-position-number">{index + 1}</span>
+                          <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
+                        </td>
+                        <td className="new-team-cell">{row.name}</td>
+                        <td className="new-stats-cell">{row.setsWon}</td>
+                        <td className="new-stats-cell">{row.matchesPlayed}</td>
+                        <td className="new-points-cell">{row.points}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="new-standings-table-wrapper">
+                <table className="new-standings-table">
+                  <thead>
+                    <tr>
+                      <th>Pos</th>
+                      <th>Pareja</th>
+                      <th>Sets</th>
+                      <th>Partidos</th>
+                      <th>Puntos</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {sortedPairs.map((pair, index) => (
+                      <tr
+                        key={pair.id}
+                        className={
+                          index === 0 ? "new-first-place" :
+                          index === 1 ? "new-second-place" :
+                          index === 2 ? "new-third-place" : "new-normal-place"
+                        }
+                      >
+                        <td className="new-position-cell">
+                          <span className="new-position-number">{index + 1}</span>
+                          <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
+                        </td>
+                        <td className="new-team-cell">{pair.player1_name} / {pair.player2_name}</td>
+                        <td className="new-stats-cell">{pair.setsWon}</td>
+                        <td className="new-stats-cell">{pair.matchesPlayed}</td>
+                        <td className="new-points-cell">{pair.points}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

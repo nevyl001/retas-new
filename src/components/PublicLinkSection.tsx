@@ -28,7 +28,7 @@ export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
   onCopyPublicLink,
   generatePublicLink,
 }) => {
-  const teamConfig = useMemo(() => getTeamConfig(tournament), [tournament.id, tournament.format, tournament.team_config]);
+  const teamConfig = useMemo(() => getTeamConfig(tournament), [tournament]);
 
   if (!tournament.is_started) return null;
 
