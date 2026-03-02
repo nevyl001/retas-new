@@ -256,6 +256,19 @@ export const deletePlayer = async (id: string) => {
   if (error) throw error;
 };
 
+export const updatePlayer = async (id: string, name: string) => {
+  const email = `${name.toLowerCase().replace(/\s+/g, "")}@padel.local`;
+  const { data, error } = await supabase
+    .from("players")
+    .update({ name: name.trim(), email })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
 // Funciones para Parejas
 export const createPair = async (
   tournamentId: string,

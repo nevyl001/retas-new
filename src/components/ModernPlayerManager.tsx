@@ -3,6 +3,7 @@ import {
   createPlayer,
   getPlayers,
   deletePlayer,
+  updatePlayer,
   Player,
 } from "../lib/database";
 
@@ -27,6 +28,8 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const loadPlayers = useCallback(async () => {
     if (!userId) return;
@@ -61,6 +64,25 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
       setShowCreateForm(false);
     } catch (err) {
       setError("Error al crear el jugador");
+      console.error(err);
+    }
+  };
+
+  const handleUpdatePlayer = async (id: string) => {
+    const name = editingName.trim();
+    if (!name || name === players.find((p) => p.id === id)?.name) {
+      setEditingPlayerId(null);
+      setEditingName("");
+      return;
+    }
+    try {
+      setError("");
+      const updated = await updatePlayer(id, name);
+      setPlayers(players.map((p) => (p.id === id ? updated : p)));
+      setEditingPlayerId(null);
+      setEditingName("");
+    } catch (err) {
+      setError("Error al actualizar el nombre");
       console.error(err);
     }
   };
@@ -213,29 +235,81 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                 {/* Contenido del jugador */}
                 <div className="elegant-player-content">
                   <div className="elegant-player-avatar">
-                    {player.name.charAt(0).toUpperCase()}
+                    {(editingPlayerId === player.id ? editingName : player.name).charAt(0).toUpperCase() || "?"}
                   </div>
                   <div className="elegant-player-info">
-                    <span className="elegant-player-name">{player.name}</span>
-                    {isInPair && (
-                      <span className="elegant-pair-indicator">
-                        <span className="elegant-indicator-dot"></span>
-                        En pareja
-                      </span>
+                    {editingPlayerId === player.id ? (
+                      <div className="elegant-player-edit-row" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleUpdatePlayer(player.id);
+                            if (e.key === "Escape") {
+                              setEditingPlayerId(null);
+                              setEditingName("");
+                            }
+                          }}
+                          className="elegant-player-edit-input"
+                          autoFocus
+                          placeholder="Nombre"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleUpdatePlayer(player.id)}
+                          className="elegant-edit-save-btn"
+                          title="Guardar"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingPlayerId(null);
+                            setEditingName("");
+                          }}
+                          className="elegant-edit-cancel-btn"
+                          title="Cancelar"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <span className="elegant-player-name">{player.name}</span>
+                        {isInPair && (
+                          <span className="elegant-pair-indicator">
+                            <span className="elegant-indicator-dot"></span>
+                            En pareja
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
 
-                  {/* Botón de eliminar elegante */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeletePlayer(player.id);
-                    }}
-                    className="elegant-delete-btn"
-                    title="Eliminar jugador"
-                  >
-                    <span className="elegant-delete-icon">×</span>
-                  </button>
+                  {/* Acciones (lapicero + eliminar) agrupadas y centradas verticalmente */}
+                  {editingPlayerId !== player.id && (
+                    <div className="elegant-player-actions" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => {
+                          setEditingPlayerId(player.id);
+                          setEditingName(player.name);
+                        }}
+                        className="elegant-edit-btn"
+                        title="Editar nombre"
+                      >
+                        <span className="elegant-edit-icon">✎</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeletePlayer(player.id)}
+                        className="elegant-delete-btn"
+                        title="Eliminar jugador"
+                      >
+                        <span className="elegant-delete-icon">×</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Indicador de selección */}
