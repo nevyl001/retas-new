@@ -343,7 +343,7 @@ function AppContent() {
   }, [tournamentWinner, sortedPairs]);
 
   return (
-    <div className="App">
+    <div className={`App${currentView === "public" ? " App--public-full-width" : ""}`}>
       <ProtectedRoute>
         {/* Solo mostrar UserHeader cuando NO estemos en vista pública NI en admin */}
         {currentView !== "public" &&

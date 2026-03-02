@@ -2,17 +2,24 @@
    PUBLIC TOURNAMENT VIEW - DISEÑO EDITORIAL PREMIUM
    ===================================================== */
 
+/* Cuando la vista pública está activa, el contenedor App usa todo el ancho */
+.App.App--public-full-width {
+  width: 100%;
+  max-width: none;
+}
+
+/* Ocupar todo el espacio disponible en la vista pública */
 .public-tournament-view {
   min-height: 100vh;
   width: 100%;
-  max-width: 100%;
-  padding: var(--space-md) var(--space-md);
+  max-width: none;
+  padding: var(--space-md) var(--space-lg);
   font-family: var(--font-family);
   background: var(--color-bg-base);
   color: var(--color-text-primary);
   position: relative;
   overflow-x: hidden;
-  margin: 0 auto;
+  margin: 0;
   box-sizing: border-box;
 }
 
