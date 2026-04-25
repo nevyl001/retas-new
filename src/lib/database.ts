@@ -80,19 +80,40 @@ export const createTournament = async (
 ) => {
   console.log("Creating tournament:", { name, description, courts, userId });
 
-  const { data, error } = await supabase
+  const payload = {
+    name,
+    description,
+    courts,
+    user_id: userId,
+    is_public: true, // Esquema nuevo
+  };
+
+  let { data, error } = await supabase
     .from("tournaments")
-    .insert([
-      {
-        name,
-        description,
-        courts,
-        user_id: userId,
-        is_public: true, // Marcar como público por defecto
-      },
-    ])
+    .insert([payload])
     .select()
     .single();
+
+  // Compatibilidad con esquema viejo (sin is_public)
+  if (
+    error &&
+    error.code === "PGRST204" &&
+    typeof error.message === "string" &&
+    error.message.includes("'is_public' column")
+  ) {
+    ({ data, error } = await supabase
+      .from("tournaments")
+      .insert([
+        {
+          name,
+          description,
+          courts,
+          user_id: userId,
+        },
+      ])
+      .select()
+      .single());
+  }
 
   if (error) {
     console.error("Error creating tournament:", error);
