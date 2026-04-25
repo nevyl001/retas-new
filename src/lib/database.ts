@@ -246,20 +246,33 @@ export const createPlayer = async (
   };
 
   const insertCandidates: Array<Record<string, unknown>> = [];
+  // Preferir pool global de jugadores para reutilizar en cualquier reta
   insertCandidates.push({
     ...basePayload,
     user_id: userId,
-    ...(tournamentId ? { tournament_id: tournamentId } : {}),
-  });
-  insertCandidates.push({
-    ...basePayload,
-    ...(tournamentId ? { tournament_id: tournamentId } : {}),
+    tournament_id: GLOBAL_TOURNAMENT_ID,
   });
   insertCandidates.push({
     ...basePayload,
     user_id: userId,
+  });
+  insertCandidates.push({
+    ...basePayload,
+    tournament_id: GLOBAL_TOURNAMENT_ID,
   });
   insertCandidates.push(basePayload);
+  // Compatibilidad adicional: algunos esquemas exigen tournament_id real
+  if (tournamentId) {
+    insertCandidates.push({
+      ...basePayload,
+      tournament_id: tournamentId,
+      user_id: userId,
+    });
+    insertCandidates.push({
+      ...basePayload,
+      tournament_id: tournamentId,
+    });
+  }
 
   let data: Player | null = null;
   let error: { code?: string; message?: string } | null = null;
@@ -303,40 +316,18 @@ export const createPlayer = async (
 };
 
 export const getPlayers = async (userId?: string, tournamentId?: string) => {
-  console.log("Fetching players for user:", userId, "tournament:", tournamentId);
+  console.log(
+    "Fetching global players for user:",
+    userId,
+    "tournament (ignored for pool):",
+    tournamentId
+  );
 
   const queryAttempts: Array<{
     label: string;
     run: () => any;
   }> = [];
 
-  if (userId && tournamentId) {
-    queryAttempts.push({
-      label: "user_id + tournament_id",
-      run: () =>
-        supabase
-          .from("players")
-          .select("*")
-          .eq("user_id", userId)
-          .or(
-            `tournament_id.eq.${tournamentId},tournament_id.eq.${GLOBAL_TOURNAMENT_ID},tournament_id.is.null`
-          )
-          .order("name"),
-    });
-  }
-  if (tournamentId) {
-    queryAttempts.push({
-      label: "tournament_id",
-      run: () =>
-        supabase
-          .from("players")
-          .select("*")
-          .or(
-            `tournament_id.eq.${tournamentId},tournament_id.eq.${GLOBAL_TOURNAMENT_ID},tournament_id.is.null`
-          )
-          .order("name"),
-    });
-  }
   if (userId) {
     queryAttempts.push({
       label: "user_id",
