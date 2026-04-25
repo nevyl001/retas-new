@@ -70,18 +70,17 @@
     <div id="root"></div>
 
     <script>
-        // Registrar Service Worker de forma simple, sin verificaciones automáticas
+        // Hotfix: desactivar Service Worker para evitar fallos de red
+        // (especialmente en refresh de token de Supabase).
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js', { 
-                    updateViaCache: 'none',
-                    scope: '/'
-                }).then((registration) => {
-                    console.log('SW registered: ', registration);
-                })
-                .catch((registrationError) => {
-                    console.log('SW registration failed: ', registrationError);
-                });
+                navigator.serviceWorker.getRegistrations()
+                    .then((registrations) => {
+                        return Promise.all(registrations.map((registration) => registration.unregister()));
+                    })
+                    .catch((error) => {
+                        console.log('SW unregister failed:', error);
+                    });
             });
         }
     </script>
