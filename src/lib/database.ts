@@ -81,6 +81,8 @@ const isMissingColumnError = (
   typeof error.message === "string" &&
   error.message.includes(`'${column}' column of '${table}'`);
 
+const GLOBAL_TOURNAMENT_ID = "00000000-0000-0000-0000-000000000000";
+
 // Funciones para Retas
 export const createTournament = async (
   name: string,
@@ -316,7 +318,9 @@ export const getPlayers = async (userId?: string, tournamentId?: string) => {
           .from("players")
           .select("*")
           .eq("user_id", userId)
-          .eq("tournament_id", tournamentId)
+          .or(
+            `tournament_id.eq.${tournamentId},tournament_id.eq.${GLOBAL_TOURNAMENT_ID},tournament_id.is.null`
+          )
           .order("name"),
     });
   }
@@ -324,7 +328,13 @@ export const getPlayers = async (userId?: string, tournamentId?: string) => {
     queryAttempts.push({
       label: "tournament_id",
       run: () =>
-        supabase.from("players").select("*").eq("tournament_id", tournamentId).order("name"),
+        supabase
+          .from("players")
+          .select("*")
+          .or(
+            `tournament_id.eq.${tournamentId},tournament_id.eq.${GLOBAL_TOURNAMENT_ID},tournament_id.is.null`
+          )
+          .order("name"),
     });
   }
   if (userId) {
