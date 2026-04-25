@@ -13,6 +13,7 @@ interface ModernPlayerManagerProps {
   allowMultipleSelection?: boolean;
   playersInPairs?: string[]; // IDs de jugadores que ya están en parejas
   userId?: string;
+  tournamentId?: string;
 }
 
 export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
@@ -21,6 +22,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   allowMultipleSelection = false,
   playersInPairs = [],
   userId,
+  tournamentId,
 }) => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
 
     try {
       setLoading(true);
-      const data = await getPlayers(userId);
+      const data = await getPlayers(userId, tournamentId);
       setPlayers(data);
     } catch (err) {
       setError("Error al cargar los jugadores");
@@ -44,7 +46,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, tournamentId]);
 
   useEffect(() => {
     if (userId) {
@@ -58,7 +60,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
 
     try {
       setError("");
-      const player = await createPlayer(newPlayerName.trim(), userId);
+      const player = await createPlayer(newPlayerName.trim(), userId, tournamentId);
       setPlayers([...players, player]);
       setNewPlayerName("");
       setShowCreateForm(false);

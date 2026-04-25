@@ -96,6 +96,7 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
               selectedPlayers={selectedPlayers}
               allowMultipleSelection={true}
               userId={selectedTournament.user_id}
+              tournamentId={selectedTournament.id}
             />
           </div>
         )}

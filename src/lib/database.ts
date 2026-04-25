@@ -71,6 +71,16 @@ export interface Game {
   updated_at: string;
 }
 
+const isMissingColumnError = (
+  error: { code?: string; message?: string } | null,
+  table: string,
+  column: string
+) =>
+  !!error &&
+  error.code === "PGRST204" &&
+  typeof error.message === "string" &&
+  error.message.includes(`'${column}' column of '${table}'`);
+
 // Funciones para Retas
 export const createTournament = async (
   name: string,
@@ -95,12 +105,7 @@ export const createTournament = async (
     .single();
 
   // Compatibilidad con esquema viejo (sin is_public)
-  if (
-    error &&
-    error.code === "PGRST204" &&
-    typeof error.message === "string" &&
-    error.message.includes("'is_public' column")
-  ) {
+  if (isMissingColumnError(error, "tournaments", "is_public")) {
     ({ data, error } = await supabase
       .from("tournaments")
       .insert([
@@ -223,35 +228,80 @@ export const deleteTournament = async (id: string) => {
 };
 
 // Funciones para Jugadores
-export const createPlayer = async (name: string, userId: string) => {
+export const createPlayer = async (
+  name: string,
+  userId: string,
+  tournamentId?: string
+) => {
   // Generar email automático basado en el nombre
   const email = `${name.toLowerCase().replace(/\s+/g, "")}@padel.local`;
 
   console.log("Creating player:", { name, email, userId });
 
-  const { data, error } = await supabase
-    .from("players")
-    .insert([
-      {
-        name,
-        email,
-        user_id: userId,
-      },
-    ])
-    .select()
-    .single();
+  const basePayload = {
+    name,
+    email,
+  };
+
+  const insertCandidates: Array<Record<string, unknown>> = [];
+  insertCandidates.push({
+    ...basePayload,
+    user_id: userId,
+    ...(tournamentId ? { tournament_id: tournamentId } : {}),
+  });
+  insertCandidates.push({
+    ...basePayload,
+    ...(tournamentId ? { tournament_id: tournamentId } : {}),
+  });
+  insertCandidates.push({
+    ...basePayload,
+    user_id: userId,
+  });
+  insertCandidates.push(basePayload);
+
+  let data: Player | null = null;
+  let error: { code?: string; message?: string } | null = null;
+
+  for (const payload of insertCandidates) {
+    const result = await supabase
+      .from("players")
+      .insert([payload])
+      .select()
+      .single();
+
+    if (!result.error) {
+      data = result.data;
+      error = null;
+      break;
+    }
+
+    error = result.error;
+    const isSchemaCompatibilityError =
+      isMissingColumnError(error, "players", "user_id") ||
+      isMissingColumnError(error, "players", "tournament_id") ||
+      (error.code === "23502" &&
+        typeof error.message === "string" &&
+        error.message.includes('"tournament_id"'));
+
+    if (!isSchemaCompatibilityError) {
+      break;
+    }
+  }
 
   if (error) {
     console.error("Error creating player:", error);
     throw error;
+  }
+  if (!data) {
+    throw new Error("No se pudo crear el jugador");
   }
 
   console.log("Player created successfully:", data);
   return data;
 };
 
-export const getPlayers = async (userId?: string) => {
-  console.log("Fetching players for user:", userId);
+export const getPlayers = async (userId?: string, tournamentId?: string) => {
+  console.log("Fetching players for user:", userId, "tournament:", tournamentId);
 
   let query = supabase.from("players").select("*").order("name");
 
@@ -260,7 +310,21 @@ export const getPlayers = async (userId?: string) => {
     query = query.eq("user_id", userId);
   }
 
-  const { data, error } = await query;
+  let { data, error } = await query;
+
+  // Compatibilidad con esquema viejo (sin user_id)
+  if (isMissingColumnError(error, "players", "user_id")) {
+    let fallbackQuery = supabase.from("players").select("*").order("name");
+    if (tournamentId) {
+      fallbackQuery = fallbackQuery.eq("tournament_id", tournamentId);
+    }
+    ({ data, error } = await fallbackQuery);
+
+    // Compatibilidad extra: esquema sin user_id y sin tournament_id
+    if (isMissingColumnError(error, "players", "tournament_id")) {
+      ({ data, error } = await supabase.from("players").select("*").order("name"));
+    }
+  }
 
   if (error) {
     console.error("Error fetching players:", error);
@@ -349,13 +413,38 @@ export const createPair = async (
     )
     .single();
 
-  if (error) {
-    console.error("Database error creating pair:", error);
-    throw error;
+  let pairData = data;
+  let pairError = error;
+
+  if (isMissingColumnError(pairError, "pairs", "user_id")) {
+    ({ data: pairData, error: pairError } = await supabase
+      .from("pairs")
+      .insert([
+        {
+          tournament_id: tournamentId,
+          player1_id: player1Id,
+          player2_id: player2Id,
+          player1_name: player1.name,
+          player2_name: player2.name,
+        },
+      ])
+      .select(
+        `
+      *,
+      player1:players!player1_id(*),
+      player2:players!player2_id(*)
+    `
+      )
+      .single());
   }
 
-  console.log("Pair created in database:", data);
-  return data;
+  if (pairError) {
+    console.error("Database error creating pair:", pairError);
+    throw pairError;
+  }
+
+  console.log("Pair created in database:", pairData);
+  return pairData;
 };
 
 export const getPairs = async (tournamentId: string) => {
@@ -469,11 +558,20 @@ export const createMatch = async (
   // Agregar round a los datos de inserción
   insertData.round = round;
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("matches")
     .insert([insertData])
     .select("*")
     .single();
+
+  if (isMissingColumnError(error, "matches", "user_id")) {
+    const { user_id: _omitUserId, ...insertWithoutUserId } = insertData;
+    ({ data, error } = await supabase
+      .from("matches")
+      .insert([insertWithoutUserId])
+      .select("*")
+      .single());
+  }
 
   if (error) {
     console.error("Database error creating match:", error);
@@ -522,7 +620,7 @@ export const createGame = async (
   gameNumber: number,
   userId: string
 ) => {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("games")
     .insert([
       {
@@ -533,6 +631,19 @@ export const createGame = async (
     ])
     .select()
     .single();
+
+  if (isMissingColumnError(error, "games", "user_id")) {
+    ({ data, error } = await supabase
+      .from("games")
+      .insert([
+        {
+          match_id: matchId,
+          game_number: gameNumber,
+        },
+      ])
+      .select()
+      .single());
+  }
 
   if (error) throw error;
   return data;
