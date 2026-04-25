@@ -303,27 +303,57 @@ export const createPlayer = async (
 export const getPlayers = async (userId?: string, tournamentId?: string) => {
   console.log("Fetching players for user:", userId, "tournament:", tournamentId);
 
-  let query = supabase.from("players").select("*").order("name");
+  const queryAttempts: Array<{
+    label: string;
+    run: () => any;
+  }> = [];
 
-  // Si se proporciona userId, filtrar por usuario
-  if (userId) {
-    query = query.eq("user_id", userId);
+  if (userId && tournamentId) {
+    queryAttempts.push({
+      label: "user_id + tournament_id",
+      run: () =>
+        supabase
+          .from("players")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("tournament_id", tournamentId)
+          .order("name"),
+    });
   }
+  if (tournamentId) {
+    queryAttempts.push({
+      label: "tournament_id",
+      run: () =>
+        supabase.from("players").select("*").eq("tournament_id", tournamentId).order("name"),
+    });
+  }
+  if (userId) {
+    queryAttempts.push({
+      label: "user_id",
+      run: () =>
+        supabase.from("players").select("*").eq("user_id", userId).order("name"),
+    });
+  }
+  queryAttempts.push({
+    label: "sin filtros",
+    run: () => supabase.from("players").select("*").order("name"),
+  });
 
-  let { data, error } = await query;
+  let data: Player[] | null = null;
+  let error: { code?: string; message?: string } | null = null;
 
-  // Compatibilidad con esquema viejo (sin user_id)
-  if (isMissingColumnError(error, "players", "user_id")) {
-    let fallbackQuery = supabase.from("players").select("*").order("name");
-    if (tournamentId) {
-      fallbackQuery = fallbackQuery.eq("tournament_id", tournamentId);
+  for (const attempt of queryAttempts) {
+    const result = await attempt.run();
+    if (!result.error) {
+      data = result.data;
+      error = null;
+      if (attempt.label !== "user_id + tournament_id") {
+        console.warn(`Players query fallback usado: ${attempt.label}`);
+      }
+      break;
     }
-    ({ data, error } = await fallbackQuery);
-
-    // Compatibilidad extra: esquema sin user_id y sin tournament_id
-    if (isMissingColumnError(error, "players", "tournament_id")) {
-      ({ data, error } = await supabase.from("players").select("*").order("name"));
-    }
+    error = result.error;
+    console.warn(`Players query failed (${attempt.label}):`, result.error);
   }
 
   if (error) {
