@@ -8,6 +8,15 @@ Un sistema profesional para gestionar retas de pádel con persistencia de datos,
 - **Admin Login**: [https://retas-new.vercel.app/admin-login](https://retas-new.vercel.app/admin-login)
 - **PWA Builder**: [https://pwabuilder.com](https://pwabuilder.com)
 
+### Producción y base de datos
+
+Guía paso a paso (Vercel, Supabase, SQL, caché): **[docs/DESPLIEGUE-Y-SUPABASE.md](docs/DESPLIEGUE-Y-SUPABASE.md)**  
+Orden de scripts SQL: **[docs/SQL-ORDEN.md](docs/SQL-ORDEN.md)**
+
+### Nota sobre capacidades (README vs implementación)
+
+Algunas frases históricas del README (por ejemplo notificaciones push u “offline total”) pueden no reflejar el estado actual del código. Prioriza lo que veas en el repositorio y en la guía de despliegue anterior.
+
 ## ✨ **Características Principales**
 
 ### 🎾 **Gestión de Retas**

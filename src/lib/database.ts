@@ -1,87 +1,22 @@
 import { supabase } from "./supabaseClient";
+import { GLOBAL_TOURNAMENT_ID, isMissingColumnError } from "./db/schemaHelpers";
+import type {
+  Game,
+  Match,
+  Pair,
+  Player,
+  Tournament,
+  TournamentTeamConfig,
+} from "./db/types";
 
-// Tipos de datos para la base de datos
-export interface TournamentTeamConfig {
-  teamNames: string[];
-  pairToTeam: Record<string, number>;
-}
-
-export interface Tournament {
-  id: string;
-  name: string;
-  description?: string;
-  courts: number;
-  is_started: boolean;
-  is_finished: boolean;
-  user_id: string;
-  created_at: string;
-  updated_at: string;
-  /** 'teams' = por equipos; ausente o 'round_robin' = round robin */
-  format?: "round_robin" | "teams";
-  /** Solo cuando format === 'teams': nombres y asignación pareja → equipo */
-  team_config?: TournamentTeamConfig;
-}
-
-export interface Player {
-  id: string;
-  name: string;
-  email: string;
-  created_at: string;
-}
-
-export interface Pair {
-  id: string;
-  tournament_id: string;
-  player1_id: string;
-  player2_id: string;
-  player1_name: string;
-  player2_name: string;
-  created_at: string;
-  player1?: Player;
-  player2?: Player;
-}
-
-export interface Match {
-  id: string;
-  tournament_id: string;
-  pair1_id: string;
-  pair2_id: string;
-  pair1_name: string;
-  pair2_name: string;
-  court: number;
-  round?: number;
-  status: string;
-  pair1_score?: number;
-  pair2_score?: number;
-  created_at: string;
-  pair1?: Pair;
-  pair2?: Pair;
-}
-
-export interface Game {
-  id: string;
-  match_id: string;
-  game_number: number;
-  pair1_games: number;
-  pair2_games: number;
-  is_tie_break: boolean;
-  tie_break_pair1_points: number;
-  tie_break_pair2_points: number;
-  created_at: string;
-  updated_at: string;
-}
-
-const isMissingColumnError = (
-  error: { code?: string; message?: string } | null,
-  table: string,
-  column: string
-) =>
-  !!error &&
-  error.code === "PGRST204" &&
-  typeof error.message === "string" &&
-  error.message.includes(`'${column}' column of '${table}'`);
-
-const GLOBAL_TOURNAMENT_ID = "00000000-0000-0000-0000-000000000000";
+export type {
+  Game,
+  Match,
+  Pair,
+  Player,
+  Tournament,
+  TournamentTeamConfig,
+} from "./db/types";
 
 // Funciones para Retas
 export const createTournament = async (
@@ -348,7 +283,7 @@ export const getPlayers = async (userId?: string, tournamentId?: string) => {
     if (!result.error) {
       data = result.data;
       error = null;
-      if (attempt.label !== "user_id + tournament_id") {
+      if (userId && attempt.label !== "user_id") {
         console.warn(`Players query fallback usado: ${attempt.label}`);
       }
       break;
