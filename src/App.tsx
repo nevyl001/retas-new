@@ -254,21 +254,13 @@ function AppContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceRefresh, selectedTournament]); // loadTournamentData es estable
 
-  // Utilidades: incluir config de equipos en el enlace para que la vista pública (sobre todo móvil) muestre tabla por equipos aunque falle la API
+  // Enlace corto: la config de equipos vive en tournament_public_config (Supabase). El hash #teams= era un respaldo; los enlaces viejos con hash siguen siendo leídos en PublicTournamentView.
   const generatePublicLink = (
     tournamentId: string,
-    teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null
+    _teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null
   ) => {
     const baseUrl = window.location.origin;
-    let link = `${baseUrl}/public/${tournamentId}`;
-    if (teamConfig?.teamNames?.length && teamConfig?.pairToTeam && Object.keys(teamConfig.pairToTeam).length > 0) {
-      try {
-        link += "#teams=" + encodeURIComponent(JSON.stringify(teamConfig));
-      } catch {
-        // ignore
-      }
-    }
-    return link;
+    return `${baseUrl}/public/${tournamentId}`;
   };
 
   const copyPublicLink = async (
@@ -276,6 +268,7 @@ function AppContent() {
     teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null
   ) => {
     try {
+      // Persistir en Supabase antes de copiar: el enlace ya no lleva #teams=; la vista pública lee tournament_public_config.
       if (teamConfig?.teamNames?.length && teamConfig?.pairToTeam) {
         await upsertTournamentPublicConfig(tournamentId, "teams", teamConfig);
       }
