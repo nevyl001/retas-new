@@ -5,6 +5,7 @@ import {
   getGames,
   updateMatch,
   getTournamentById,
+  getTournamentPublicConfig,
   Match,
   Game,
   Pair,
@@ -64,21 +65,33 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   useEffect(() => {
     if (teamConfigProp != null) setResolvedTeamConfig(teamConfigProp);
   }, [teamConfigProp]);
-  // Fallback: cargar teamConfig desde BD/localStorage (vista pública/móvil). Pequeño delay para que el padre pueda pasar el config primero.
+  // Fallback: misma fuente que la vista pública (tournament_public_config) + torneo + localStorage.
+  // Evita que en "main" se vea tabla por parejas si la reta es por equipos pero el estado del padre no trae team_config.
   useEffect(() => {
     if (teamConfigProp != null || !tournamentId) return;
     let cancelled = false;
     const timer = setTimeout(() => {
       (async () => {
         try {
-          const t = await getTournamentById(tournamentId);
+          const [publicCfg, t] = await Promise.all([
+            getTournamentPublicConfig(tournamentId),
+            getTournamentById(tournamentId),
+          ]);
           if (cancelled) return;
-          const config =
+          const fromPublic =
+            publicCfg?.format === "teams" &&
+            publicCfg?.team_config?.teamNames?.length &&
+            publicCfg?.team_config?.pairToTeam
+              ? publicCfg.team_config
+              : null;
+          const fromTournament =
             t?.format === "teams" &&
             t?.team_config?.teamNames?.length &&
             t?.team_config?.pairToTeam
               ? t.team_config
-              : getTeamConfigFromStorage(tournamentId);
+              : null;
+          const config =
+            fromPublic ?? fromTournament ?? getTeamConfigFromStorage(tournamentId);
           if (!cancelled) setResolvedTeamConfig(config || null);
         } catch {
           if (!cancelled) setResolvedTeamConfig(getTeamConfigFromStorage(tournamentId) || null);
@@ -147,10 +160,16 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         }
       });
 
-      // Detectar partidos finalizados sin scores y mostrar aviso
-      const finishedWithoutScores = matchesData.filter(
-        (m) => m.status === "finished" && !m.pair1_score && !m.pair2_score
-      );
+      // Partidos "sin marcador" solo si no hay sets en la fila del partido Y no hay juegos guardados.
+      // (!pair1_score && !pair2_score) es incorrecto: 0 es un marcador válido y los juegos pueden tener el resultado aunque la fila tenga 0-0.
+      const finishedWithoutScores = matchesData.filter((m) => {
+        if (m.status !== "finished") return false;
+        const gamesFor = allGamesData.filter((g) => g.match_id === m.id);
+        if (gamesFor.length > 0) return false;
+        const s1 = m.pair1_score;
+        const s2 = m.pair2_score;
+        return s1 == null && s2 == null;
+      });
 
       if (finishedWithoutScores.length > 0) {
         console.log(
@@ -426,9 +445,13 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   const updateFinishedMatchScores = async () => {
     console.log("🔄 Actualizando marcadores de partidos finalizados...");
 
-    const finishedMatches = matches.filter(
-      (m) => m.status === "finished" && !m.pair1_score && !m.pair2_score
-    );
+    const finishedMatches = matches.filter((m) => {
+      if (m.status !== "finished") return false;
+      const g = allGames.filter((x) => x.match_id === m.id);
+      if (g.length === 0) return false;
+      if (m.pair1_score != null && m.pair2_score != null) return false;
+      return true;
+    });
 
     for (const match of finishedMatches) {
       const matchGames = allGames.filter((g) => g.match_id === match.id);
