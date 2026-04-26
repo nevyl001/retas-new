@@ -22,6 +22,14 @@ En el proyecto de Vercel: **Settings → Environment Variables** (Production y P
 
 Después de guardar: **Deployments → Redeploy** el último build (las variables `REACT_APP_*` se inyectan en **build time**).
 
+### Error `ERR_NAME_NOT_RESOLVED` al iniciar sesión
+
+Casi siempre es **un typo en la URL** (un carácter de más o de menos). Copia la URL desde Supabase con **copiar/pegar**, no a mano.
+
+Ejemplo frecuente: escribir `...jepob...` en lugar de `...jepoob...` (falta una **o**). El dominio incorrecto **no existe** en DNS y el navegador muestra `net::ERR_NAME_NOT_RESOLVED`.
+
+Comprueba que `REACT_APP_SUPABASE_URL` coincida **letra por letra** con **Settings → API → Project URL** en el dashboard de Supabase.
+
 ## 3. Limpieza en el navegador (una vez por crisis)
 
 Si cambiaste de proyecto o URL:
