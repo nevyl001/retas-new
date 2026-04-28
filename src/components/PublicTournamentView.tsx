@@ -16,6 +16,46 @@ interface PublicTournamentViewProps {
   tournamentId: string;
 }
 
+/** Divide "A / B" en dos líneas para que no parta nombres al azar en el wrap. */
+function splitPairDisplayName(full: string): { a: string; b: string } | null {
+  const sep = " / ";
+  const i = full.indexOf(sep);
+  if (i === -1) return null;
+  const a = full.slice(0, i).trim();
+  const b = full.slice(i + sep.length).trim();
+  if (!a || !b) return null;
+  return { a, b };
+}
+
+/** Nombres de pareja en vista pública: dos líneas + barra, tipografía adaptable. */
+function PublicPairNameStack({
+  label,
+  variant = "card",
+}: {
+  label: string;
+  variant?: "card" | "winner" | "mobile";
+}) {
+  const split = splitPairDisplayName(label);
+  if (!split) {
+    return (
+      <span
+        className={`public-pair-name-stack public-pair-name-stack--${variant} public-pair-name-single`}
+      >
+        {label}
+      </span>
+    );
+  }
+  return (
+    <span className={`public-pair-name-stack public-pair-name-stack--${variant}`}>
+      <span className="public-pair-name-line">{split.a}</span>
+      <span className="public-pair-name-sep" aria-hidden="true">
+        /
+      </span>
+      <span className="public-pair-name-line">{split.b}</span>
+    </span>
+  );
+}
+
 /** Parsea team config desde el hash de la URL (#teams=...) para que móvil muestre tabla por equipos aunque falle la API */
 function parseTeamConfigFromHash(): TeamConfig | null {
   if (typeof window === "undefined") return null;
@@ -345,7 +385,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                             }`}
                           >
                             <div className="elegant-player-name">
-                              {getPairName(match.pair1_id)}
+                              <PublicPairNameStack
+                                label={getPairName(match.pair1_id)}
+                                variant="card"
+                              />
                             </div>
                             <div
                               className={`elegant-player-score ${
@@ -371,7 +414,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                             }`}
                           >
                             <div className="elegant-player-name">
-                              {getPairName(match.pair2_id)}
+                              <PublicPairNameStack
+                                label={getPairName(match.pair2_id)}
+                                variant="card"
+                              />
                             </div>
                             <div
                               className={`elegant-player-score ${
@@ -388,14 +434,25 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                           <div className="elegant-public-winner">
                             <div className="elegant-winner-banner">
                               <span className="elegant-winner-icon">🏆</span>
-                              <span className="elegant-winner-text">
-                                Ganador:{" "}
-                                {pair1Won
-                                  ? getPairName(match.pair1_id)
-                                  : pair2Won
-                                  ? getPairName(match.pair2_id)
-                                  : "Empate"}
-                              </span>
+                              <div className="elegant-winner-body">
+                                <span className="elegant-winner-prefix">
+                                  Ganador
+                                </span>
+                                {pair1Won || pair2Won ? (
+                                  <PublicPairNameStack
+                                    label={
+                                      pair1Won
+                                        ? getPairName(match.pair1_id)
+                                        : getPairName(match.pair2_id)
+                                    }
+                                    variant="winner"
+                                  />
+                                ) : (
+                                  <span className="elegant-winner-empate">
+                                    Empate
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}
@@ -444,7 +501,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                             }`}
                           >
                             <div className="mobile-team-name">
-                              {getPairName(match.pair1_id)}
+                              <PublicPairNameStack
+                                label={getPairName(match.pair1_id)}
+                                variant="mobile"
+                              />
                             </div>
                             <div className="mobile-team-score">
                               {result.hasResult ? result.pair1Score : 0}
@@ -459,7 +519,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                             }`}
                           >
                             <div className="mobile-team-name">
-                              {getPairName(match.pair2_id)}
+                              <PublicPairNameStack
+                                label={getPairName(match.pair2_id)}
+                                variant="mobile"
+                              />
                             </div>
                             <div className="mobile-team-score">
                               {result.hasResult ? result.pair2Score : 0}
@@ -470,12 +533,26 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         {/* Ganador móvil */}
                         {match.status === "finished" && result.hasResult && (
                           <div className="mobile-winner">
-                            🏆{" "}
-                            {pair1Won
-                              ? getPairName(match.pair1_id)
-                              : pair2Won
-                              ? getPairName(match.pair2_id)
-                              : "Empate"}
+                            <span className="mobile-winner-icon" aria-hidden>
+                              🏆
+                            </span>
+                            <div className="mobile-winner-inner">
+                              <span className="mobile-winner-label">Ganador</span>
+                              {pair1Won || pair2Won ? (
+                                <PublicPairNameStack
+                                  label={
+                                    pair1Won
+                                      ? getPairName(match.pair1_id)
+                                      : getPairName(match.pair2_id)
+                                  }
+                                  variant="winner"
+                                />
+                              ) : (
+                                <span className="mobile-winner-empate">
+                                  Empate
+                                </span>
+                              )}
+                            </div>
                           </div>
                         )}
 
