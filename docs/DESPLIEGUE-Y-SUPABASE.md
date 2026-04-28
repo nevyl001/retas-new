@@ -18,7 +18,8 @@ En el proyecto de Vercel: **Settings → Environment Variables** (Production y P
 |----------|-------------|
 | `REACT_APP_SUPABASE_URL` | `https://TU_REF.supabase.co` |
 | `REACT_APP_SUPABASE_ANON_KEY` | Clave anon (pública, con RLS) |
-| `REACT_APP_SUPABASE_SERVICE_KEY` | Opcional: service role **solo** si usas operaciones admin desde cliente (riesgo: no exponer en repos públicos) |
+
+No configures la **service role** como `REACT_APP_*`: Create React App la inyecta en el bundle y cualquiera puede usarla. Para borrar usuarios en Auth u otras tareas admin, usa el [panel de Supabase](https://supabase.com/dashboard) (Authentication → Users) o una **Edge Function** con la clave solo en secretos del servidor.
 
 Después de guardar: **Deployments → Redeploy** el último build (las variables `REACT_APP_*` se inyectan en **build time**).
 

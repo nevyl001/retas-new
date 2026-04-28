@@ -996,3 +996,46 @@
     align-items: flex-start;
   }
 }
+
+/* Aviso post-borrado: Auth debe limpiarse en el panel de Supabase */
+.user-management-notice {
+  margin: -8px 0 24px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: rgba(255, 248, 220, 0.95);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.user-management-notice p {
+  margin: 0 0 12px;
+}
+
+.user-management-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.user-management-notice .notice-link {
+  color: #ffd700;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.user-management-notice .notice-dismiss {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.user-management-notice .notice-dismiss:hover {
+  background: rgba(255, 255, 255, 0.12);
+}

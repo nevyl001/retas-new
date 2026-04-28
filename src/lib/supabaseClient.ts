@@ -7,7 +7,6 @@ const BROKEN_SUPABASE_URL = "https://cjdgebqralybtyhiuwmq.supabase.co";
 
 const rawSupabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const rawSupabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-const supabaseServiceKey = process.env.REACT_APP_SUPABASE_SERVICE_KEY;
 
 const useEmergencyFallback = rawSupabaseUrl === BROKEN_SUPABASE_URL;
 const supabaseUrl = useEmergencyFallback
@@ -41,17 +40,8 @@ export const supabase = createClient(
   supabaseKey || "placeholder_key"
 );
 
-// Cliente con permisos de administrador para operaciones que requieren service role
-export const supabaseAdmin = createClient(
-  supabaseUrl || "https://placeholder.supabase.co",
-  supabaseServiceKey || supabaseKey || "placeholder_key",
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  }
-);
+// Nota: no exportar cliente con service role aquí. Esa clave no puede ir en el bundle
+// del navegador (cualquiera la extrae). Borrado en Auth: panel Supabase o Edge Function.
 
 // Función para probar la conexión
 export const testConnection = async () => {

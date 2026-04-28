@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { supabase, supabaseAdmin } from "../../lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 import "./UserManagement.css";
 
 interface User {
@@ -32,6 +32,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   );
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
+  /** Tras borrar datos en la app: recordatorio de limpiar Auth en Supabase si aplica */
+  const [authCleanupNotice, setAuthCleanupNotice] = useState<string | null>(
+    null
+  );
 
   // Cargar usuarios
   useEffect(() => {
@@ -217,28 +221,19 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           userError
         );
         return;
-      } else {
-        console.log("✅ Usuario eliminado de public.users");
       }
+      console.log("✅ Usuario eliminado de public.users");
 
-      // 7. Eliminar usuario de auth.users (esto requiere admin privileges)
-      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(
-        user.id
+      // No usar service role en el navegador. Los datos de la app ya se eliminaron.
+      // Si hace falta quitar también la cuenta de acceso (Auth), hazlo en el panel:
+      // Supabase → Authentication → Users → eliminar por UUID (mismo id que arriba).
+      setAuthCleanupNotice(
+        `Se eliminaron los datos de "${user.name}" en la app. ` +
+          `Si esa persona aún puede iniciar sesión, borra también la cuenta en ` +
+          `Supabase → Authentication → Users (busca por email o por id ${user.id}).`
       );
 
-      if (authError) {
-        console.error("❌ Error eliminando usuario de auth.users:", authError);
-        console.log(
-          "⚠️ El usuario fue eliminado de public.users pero no de auth.users"
-        );
-        console.log(
-          "⚠️ Esto puede requerir permisos de administrador en Supabase"
-        );
-      } else {
-        console.log("✅ Usuario eliminado de auth.users");
-      }
-
-      console.log("✅ Usuario eliminado exitosamente de la base de datos");
+      console.log("✅ Usuario eliminado de la base de datos de la aplicación");
 
       // Recargar usuarios
       await loadUsers();
@@ -306,6 +301,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </button>
         </div>
       </div>
+
+      {authCleanupNotice && (
+        <div className="user-management-notice" role="status">
+          <p>{authCleanupNotice}</p>
+          <div className="user-management-notice-actions">
+            <a
+              href="https://supabase.com/dashboard"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="notice-link"
+            >
+              Abrir panel de Supabase
+            </a>
+            <button
+              type="button"
+              className="notice-dismiss"
+              onClick={() => setAuthCleanupNotice(null)}
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filtros y búsqueda */}
       <div className="user-management-filters">
