@@ -1,11 +1,24 @@
 import { useState } from "react";
-import { Pair, Match, Tournament } from "../lib/database";
-import { getTournamentGames } from "../lib/database";
+import {
+  Pair,
+  Match,
+  Tournament,
+  getTournamentGames,
+  getTournamentPublicConfig,
+  getTournamentById,
+} from "../lib/database";
 import {
   TournamentWinnerCalculator,
   TournamentWinner,
 } from "../components/TournamentWinnerCalculator";
-import { computePairsWithStats, computeTeamStandings, getTeamConfigFromStorage, inferTeamConfigFromPairs } from "../lib/standingsUtils";
+import {
+  computePairsWithStats,
+  computeTeamStandings,
+  getTeamConfigFromStorage,
+  inferTeamConfigFromPairs,
+  fallbackTwoTeamsFromPairs,
+  type TeamConfig,
+} from "../lib/standingsUtils";
 
 export const useWinnerCalculation = () => {
   const [tournamentWinner, setTournamentWinner] =
@@ -22,13 +35,52 @@ export const useWinnerCalculation = () => {
   ) => {
     try {
       const tournament = options?.tournament;
-      const storedTeamConfig =
-        tournament?.format === "teams" && tournament?.team_config?.teamNames?.length && tournament?.team_config?.pairToTeam
+      const tid = tournament?.id;
+
+      // Misma prioridad que RealTimeStandingsTable / vista pública (estado a veces sin team_config).
+      let teamConfig: TeamConfig | null =
+        tournament?.format === "teams" &&
+        tournament?.team_config?.teamNames?.length &&
+        tournament?.team_config?.pairToTeam
           ? tournament.team_config
-          : tournament?.id
-            ? getTeamConfigFromStorage(tournament.id)
-            : null;
-      const teamConfig = storedTeamConfig ?? (pairs.length >= 2 ? inferTeamConfigFromPairs(pairs) : null);
+          : null;
+
+      let formatIsTeams =
+        tournament?.format === "teams";
+
+      if (tid) {
+        const fromStorage = getTeamConfigFromStorage(tid);
+        try {
+          const [publicCfg, freshT] = await Promise.all([
+            getTournamentPublicConfig(tid),
+            getTournamentById(tid),
+          ]);
+          if (freshT?.format === "teams" || publicCfg?.format === "teams") {
+            formatIsTeams = true;
+          }
+          const fromPublic =
+            publicCfg?.format === "teams" &&
+            publicCfg?.team_config?.teamNames?.length &&
+            publicCfg?.team_config?.pairToTeam
+              ? publicCfg.team_config
+              : null;
+          const fromRow =
+            freshT?.format === "teams" &&
+            freshT?.team_config?.teamNames?.length &&
+            freshT?.team_config?.pairToTeam
+              ? freshT.team_config
+              : null;
+          teamConfig = teamConfig ?? fromPublic ?? fromRow ?? fromStorage;
+        } catch {
+          teamConfig = teamConfig ?? fromStorage;
+        }
+      }
+
+      if (formatIsTeams && !teamConfig && pairs.length >= 2) {
+        teamConfig =
+          inferTeamConfigFromPairs(pairs) ?? fallbackTwoTeamsFromPairs(pairs);
+      }
+
       const isTeams = !!teamConfig;
 
       if (isTeams && teamConfig) {
