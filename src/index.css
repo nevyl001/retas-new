@@ -1,5 +1,16 @@
 @import './styles/theme.css';
 
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+}
+
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   font-family: var(--font-family);

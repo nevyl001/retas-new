@@ -2,10 +2,15 @@
    PUBLIC TOURNAMENT VIEW - DISEÑO EDITORIAL PREMIUM
    ===================================================== */
 
-/* Cuando la vista pública está activa, el contenedor App usa todo el ancho */
+/* Cuando la vista pública está activa, el contenedor App usa todo el ancho del viewport */
 .App.App--public-full-width {
+  display: block;
+  box-sizing: border-box;
   width: 100%;
   max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 /* Ocupar todo el espacio disponible en la vista pública */
@@ -183,7 +188,8 @@
 
 .public-matches-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* auto-fit reparte el ancho entre las tarjetas; auto-fill dejaba columnas vacías a la derecha */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: var(--space-lg);
   width: 100%;
   max-width: 100%;

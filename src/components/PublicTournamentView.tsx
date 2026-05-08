@@ -3,7 +3,11 @@ import "./PublicTournamentView.css";
 import "./ModernStandingsTable.css";
 import { getMatches, getPairs, getTournamentGames, getTournamentById, getTournamentPublicConfig } from "../lib/database";
 import { Match, Pair, Game } from "../lib/database";
-import { getTeamConfigFromStorage, computePairsWithStats, computeTeamStandings, inferTeamConfigFromPairs, fallbackTwoTeamsFromPairs } from "../lib/standingsUtils";
+import {
+  computePairsWithStats,
+  computeTeamStandings,
+  resolvePublicStandingsTeamConfig,
+} from "../lib/standingsUtils";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
@@ -95,12 +99,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     try {
       setError(""); // Limpiar errores previos
 
-      // 1) Cargar config pública PRIMERO (sobre todo en móvil) para que la tabla por equipos esté lista antes de pintar
+      // 1) Config pública (solo existe fila con team_config cuando el torneo es por equipos)
       const publicConfig = await getTournamentPublicConfig(tournamentId);
-      const configFromPublic = publicConfig?.team_config?.teamNames?.length && publicConfig?.team_config?.pairToTeam
-        ? publicConfig.team_config
-        : null;
-      if (configFromPublic) setTeamConfig(configFromPublic);
+      const configFromPublic =
+        publicConfig?.team_config?.teamNames?.length &&
+        publicConfig?.team_config?.pairToTeam &&
+        Object.keys(publicConfig.team_config.pairToTeam).length > 0
+          ? publicConfig.team_config
+          : null;
 
       const [matchesData, pairsData, gamesData, tournament] = await Promise.all([
         getMatches(tournamentId),
@@ -109,16 +115,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         getTournamentById(tournamentId),
       ]);
 
-      const config =
-        configFromPublic ??
-        publicConfig?.team_config ??
-        (tournament?.format === "teams" &&
-        tournament?.team_config?.teamNames?.length &&
-        tournament?.team_config?.pairToTeam
-          ? tournament.team_config
-          : getTeamConfigFromStorage(tournamentId));
-      const hasValidConfig = config?.teamNames?.length && config?.pairToTeam && Object.keys(config.pairToTeam).length > 0;
-      setTeamConfig((prev) => (hasValidConfig ? config! : config === null ? (prev ?? null) : prev ?? null));
+      const hashTeamConfig = parseTeamConfigFromHash();
+      const resolvedTeamConfig = resolvePublicStandingsTeamConfig(
+        tournament,
+        configFromPublic,
+        tournamentId,
+        hashTeamConfig
+      );
+      setTeamConfig(resolvedTeamConfig);
 
       setMatches(matchesData);
       setPairs(pairsData);
@@ -136,11 +140,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         setWinningTeamName(null);
         setTournamentWinner(null);
       } else {
-        const effectiveConfig = config ?? (pairsData.length >= 2 ? inferTeamConfigFromPairs(pairsData) : null);
-        if (effectiveConfig) {
+        if (resolvedTeamConfig) {
           const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
-          const teamStandings = computeTeamStandings(pairsWithStats, effectiveConfig);
-          setWinningTeamName(teamStandings?.[0]?.name ?? null);
+          const standings = computeTeamStandings(pairsWithStats, resolvedTeamConfig);
+          setWinningTeamName(standings?.[0]?.name ?? null);
           setTournamentWinner(null);
           setShowWinner(true);
         } else {
@@ -212,14 +215,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     }).catch(() => {});
   }, [tournamentId, pairs.length, teamConfig]);
 
-  // Local: si no hay config de API ni hash, usar localStorage (se guarda al iniciar reta por equipos en el mismo navegador)
-  useEffect(() => {
-    if (!tournamentId || teamConfig) return;
-    const fromStorage = getTeamConfigFromStorage(tournamentId);
-    if (fromStorage?.teamNames?.length && fromStorage?.pairToTeam && Object.keys(fromStorage.pairToTeam).length > 0)
-      setTeamConfig(fromStorage);
-  }, [tournamentId, teamConfig]);
-
   useEffect(() => {
     if (!tournamentId) return;
     setLoading(true);
@@ -255,22 +250,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     };
   };
 
-  // Clasificación: SIEMPRE por equipos en vista pública. Si no hay config: inferir por nombres, o dividir parejas en "Equipo 1" y "Equipo 2"
+  // Clasificación por equipos solo si hay team_config real (reta por equipos); si no, tabla por parejas (round robin).
   const pairsWithStats = useMemo(
     () => computePairsWithStats(pairs, matches, games),
     [pairs, matches, games]
   );
-  const effectiveTeamConfig = useMemo(
-    () =>
-      teamConfig
-        ?? (pairs.length >= 2 ? inferTeamConfigFromPairs(pairs) : null)
-        ?? (pairs.length >= 2 ? fallbackTwoTeamsFromPairs(pairs) : null),
-    [teamConfig, pairs]
-  );
   const teamStandings = useMemo(() => {
-    if (!effectiveTeamConfig?.teamNames?.length || !effectiveTeamConfig.pairToTeam || Object.keys(effectiveTeamConfig.pairToTeam).length === 0) return null;
-    return computeTeamStandings(pairsWithStats, effectiveTeamConfig);
-  }, [effectiveTeamConfig, pairsWithStats]);
+    if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam || Object.keys(teamConfig.pairToTeam).length === 0)
+      return null;
+    return computeTeamStandings(pairsWithStats, teamConfig);
+  }, [teamConfig, pairsWithStats]);
   const sortedPairs = useMemo(() => {
     return [...pairsWithStats].sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
@@ -714,13 +703,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       </div>
 
       {/* Sección del Ganador: por equipos = equipo ganador (primero en la tabla); round robin = pareja ganadora */}
-      {showWinner && (winningTeamName || teamStandings?.[0]?.name) && (
+      {showWinner && teamStandings && teamStandings.length > 0 && (winningTeamName || teamStandings[0]?.name) && (
         <div className="public-winner-section">
           <div className="public-winner-header">
             <h2 className="public-winner-title">🏆 EQUIPO GANADOR 🏆</h2>
           </div>
           <div className="public-winner-content">
-            <div className="public-winner-names">{winningTeamName || teamStandings?.[0]?.name}</div>
+            <div className="public-winner-names">{winningTeamName || teamStandings[0]?.name}</div>
             <div className="public-winner-subtitle">
               Equipo que más puntos acumuló en la reta
             </div>

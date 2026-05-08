@@ -1,4 +1,5 @@
 import type { Match, Game, Pair } from "./database";
+import type { Tournament, TournamentTeamConfig } from "./db/types";
 
 export interface TeamConfig {
   teamNames: string[];
@@ -132,9 +133,22 @@ export function computeTeamStandings(
 
 const TEAM_CONFIG_KEY = "retapadel_teams_";
 
+function isCompleteTeamConfig(
+  tc: TeamConfig | TournamentTeamConfig | null | undefined
+): tc is TeamConfig {
+  return !!(
+    tc &&
+    Array.isArray(tc.teamNames) &&
+    tc.teamNames.length > 0 &&
+    tc.pairToTeam &&
+    typeof tc.pairToTeam === "object" &&
+    Object.keys(tc.pairToTeam).length > 0
+  );
+}
+
 /**
  * Infiere dos equipos por el prefijo del nombre del primer jugador (ej. alva1/hack1 → Equipo "alva" vs "hack").
- * Útil en vista pública cuando no hay team_config en BD.
+ * (No se usa en la vista pública estándar; puede servir para herramientas o migraciones.)
  */
 export function inferTeamConfigFromPairs(pairs: Pair[]): TeamConfig | null {
   if (!pairs?.length) return null;
@@ -163,8 +177,8 @@ export function inferTeamConfigFromPairs(pairs: Pair[]): TeamConfig | null {
 }
 
 /**
- * Último recurso: si no hay config ni inferencia por nombres, divide las parejas en dos mitades
- * y muestra "Equipo 1" y "Equipo 2". Para que la vista pública muestre siempre tabla por equipos.
+ * Divide las parejas en dos mitades con nombres genéricos (p. ej. demos o utilidades).
+ * La vista pública no debe usar esto para decidir la tabla de clasificación.
  */
 export function fallbackTwoTeamsFromPairs(pairs: Pair[]): TeamConfig | null {
   if (!pairs?.length || pairs.length < 2) return null;
@@ -185,4 +199,37 @@ export function getTeamConfigFromStorage(tournamentId: string): TeamConfig | nul
   } catch {
     return null;
   }
+}
+
+/**
+ * Vista pública: team_config solo si el torneo es por equipos o hay config explícita
+ * (Supabase `tournament_public_config`, fila del torneo, localStorage o hash #teams=).
+ * No usa inferencia ni "Equipo 1 / Equipo 2" para retas round robin.
+ */
+export function resolvePublicStandingsTeamConfig(
+  tournament: Tournament | null | undefined,
+  configFromPublic: TournamentTeamConfig | TeamConfig | null | undefined,
+  tournamentId: string,
+  hashTeamConfig: TeamConfig | null | undefined
+): TeamConfig | null {
+  if (tournament?.format === "round_robin") {
+    return null;
+  }
+  if (isCompleteTeamConfig(configFromPublic ?? undefined)) {
+    return configFromPublic as TeamConfig;
+  }
+  if (tournament?.format === "teams") {
+    if (isCompleteTeamConfig(tournament.team_config)) {
+      return tournament.team_config as TeamConfig;
+    }
+    const stored = getTeamConfigFromStorage(tournamentId);
+    if (isCompleteTeamConfig(stored)) return stored;
+    if (isCompleteTeamConfig(hashTeamConfig ?? undefined)) return hashTeamConfig!;
+    return null;
+  }
+  if (isCompleteTeamConfig(tournament?.team_config)) {
+    return tournament!.team_config as TeamConfig;
+  }
+  if (isCompleteTeamConfig(hashTeamConfig ?? undefined)) return hashTeamConfig!;
+  return null;
 }
