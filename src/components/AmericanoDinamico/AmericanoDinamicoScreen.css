@@ -1,0 +1,102 @@
+.americano-screen {
+  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--color-bg-surface, #181818);
+}
+
+.americano-screen__header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.americano-back-btn {
+  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  background: var(--color-bg-elevated, #121212);
+  color: var(--color-text-primary, #fff);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.americano-back-btn:hover {
+  border-color: var(--color-accent, #ffd600);
+}
+
+.americano-primary-btn {
+  border: 1px solid transparent;
+  background: var(--color-accent, #ffd600);
+  color: #111;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.americano-screen__actions {
+  margin-top: 12px;
+}
+
+.americano-screen__block {
+  margin-top: 12px;
+}
+
+.americano-screen__error {
+  margin-bottom: 10px;
+  color: rgba(220, 38, 38, 0.95);
+}
+
+.americano-screen__finished {
+  margin: 6px 0 0;
+  font-weight: 600;
+}
+
+.americano-podium {
+  margin-top: 12px;
+  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--color-bg-elevated, #121212);
+}
+
+.americano-podium h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.americano-podium__grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.americano-podium__card {
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.americano-podium__place {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.americano-podium__card--gold {
+  border-color: rgba(255, 214, 0, 0.5);
+  background: rgba(255, 214, 0, 0.14);
+}
+
+.americano-podium__card--silver {
+  border-color: rgba(203, 213, 225, 0.5);
+  background: rgba(203, 213, 225, 0.12);
+}
+
+.americano-podium__card--bronze {
+  border-color: rgba(180, 83, 9, 0.5);
+  background: rgba(180, 83, 9, 0.14);
+}

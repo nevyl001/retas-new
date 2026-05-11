@@ -1,14 +1,14 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Tournament, Pair } from "../lib/database";
 
-type TournamentFormat = "roundRobin" | "teams";
+type TournamentMode = "roundRobin" | "teams" | "americanoDinamico";
 
 interface StartTournamentSectionProps {
   tournament: Tournament;
   pairs: Pair[];
   loading: boolean;
   onStartTournament: (opts: {
-    format: TournamentFormat;
+    format: "roundRobin" | "teams";
     teamsCount?: number;
     teamNames?: string[];
     pairToTeam?: Record<string, number>;
@@ -21,7 +21,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
   loading,
   onStartTournament,
 }) => {
-  const [format, setFormat] = useState<TournamentFormat>("roundRobin");
+  const [format, setFormat] = useState<TournamentMode>("roundRobin");
   const [teamsCount, setTeamsCount] = useState<number>(2);
   const [teamNames, setTeamNames] = useState<string[]>(["Equipo 1", "Equipo 2"]);
   const [pairToTeam, setPairToTeam] = useState<Record<string, number>>({});
@@ -97,6 +97,10 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
             <>
               Se crearán {roundRobinMatchCount} partidos (round-robin completo, todas las parejas se enfrentan).
             </>
+          ) : format === "americanoDinamico" ? (
+            <>
+              Se abrirá el modo Americano Dinámico con generación de rondas y ranking en vivo.
+            </>
           ) : (
             <>
               Se crearán {teamsMatchCount ?? 0} partidos. Las parejas del mismo equipo nunca se enfrentan; solo contra otros equipos.
@@ -114,11 +118,12 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <select
               value={format}
-              onChange={(e) => setFormat(e.target.value as TournamentFormat)}
+              onChange={(e) => setFormat(e.target.value as TournamentMode)}
               disabled={loading}
             >
               <option value="roundRobin">Round Robin</option>
               <option value="teams">Equipos</option>
+              <option value="americanoDinamico">Americano Dinamico</option>
             </select>
 
             {format === "teams" && (
@@ -243,20 +248,39 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
 
       <button
         className="start-button"
-        onClick={() =>
+        onClick={() => {
+          if (format === "americanoDinamico") {
+            const params = new URLSearchParams({
+              tournamentId: tournament.id,
+              userId: tournament.user_id,
+            });
+            window.history.pushState(
+              {},
+              "",
+              `/americano-dinamico?${params.toString()}`
+            );
+            window.dispatchEvent(new PopStateEvent("popstate"));
+            return;
+          }
           onStartTournament({
             format,
             teamsCount: format === "teams" ? teamsCount : undefined,
             teamNames: format === "teams" ? teamNames : undefined,
             pairToTeam: format === "teams" ? pairToTeam : undefined,
-          })
+          });
+        }}
+        disabled={
+          loading ||
+          (format === "americanoDinamico" ? false : pairs.length < 2) ||
+          !isTeamsConfigValid
         }
-        disabled={loading || pairs.length < 2 || !isTeamsConfigValid}
       >
         {loading
           ? "⏳ Iniciando..."
           : tournament.is_started
           ? "🏆 Reta Ya Iniciada"
+          : format === "americanoDinamico"
+          ? "🎾 Ir a Americano Dinamico"
           : pairs.length < 2
           ? "❌ Necesitas al menos 2 parejas"
           : format === "teams" && !isTeamsConfigValid

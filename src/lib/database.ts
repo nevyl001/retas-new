@@ -250,6 +250,9 @@ export const createPlayer = async (
   return data;
 };
 
+/** Evita repetir GET con filtro user_id si el esquema no tiene esa columna (42703 / PGRST204). */
+let playersTableSupportsUserIdFilter: boolean | null = null;
+
 export const getPlayers = async (userId?: string, tournamentId?: string) => {
   console.log(
     "Fetching global players for user:",
@@ -263,7 +266,10 @@ export const getPlayers = async (userId?: string, tournamentId?: string) => {
     run: () => any;
   }> = [];
 
-  if (userId) {
+  if (
+    userId &&
+    playersTableSupportsUserIdFilter !== false
+  ) {
     queryAttempts.push({
       label: "user_id",
       run: () =>
@@ -283,12 +289,26 @@ export const getPlayers = async (userId?: string, tournamentId?: string) => {
     if (!result.error) {
       data = result.data;
       error = null;
-      if (userId && attempt.label !== "user_id") {
-        console.warn(`Players query fallback usado: ${attempt.label}`);
+      if (attempt.label === "user_id") {
+        playersTableSupportsUserIdFilter = true;
+      } else if (userId && attempt.label !== "user_id") {
+        if (playersTableSupportsUserIdFilter === false) {
+          // Esquema sin user_id en players: fallback esperado, sin ruido en consola.
+        } else {
+          console.warn(`Players query fallback usado: ${attempt.label}`);
+        }
       }
       break;
     }
     error = result.error;
+    if (
+      attempt.label === "user_id" &&
+      isMissingColumnError(result.error, "players", "user_id")
+    ) {
+      playersTableSupportsUserIdFilter = false;
+      error = null;
+      continue;
+    }
     console.warn(`Players query failed (${attempt.label}):`, result.error);
   }
 

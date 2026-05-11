@@ -1,13 +1,31 @@
-/** PostgREST: columna inexistente en el esquema expuesto */
+/**
+ * Columna inexistente en la tabla expuesta a PostgREST.
+ * - PGRST204: mensaje típico de PostgREST ("'col' column of 'table'").
+ * - 42703: error PostgreSQL ("column table.col does not exist") que a veces
+ *   llega tal cual en respuestas REST.
+ */
 export const isMissingColumnError = (
   error: { code?: string; message?: string } | null,
   table: string,
   column: string
-) =>
-  !!error &&
-  error.code === "PGRST204" &&
-  typeof error.message === "string" &&
-  error.message.includes(`'${column}' column of '${table}'`);
+): boolean => {
+  if (!error || typeof error.message !== "string") return false;
+  const msg = error.message;
+  if (
+    error.code === "PGRST204" &&
+    msg.includes(`'${column}' column of '${table}'`)
+  ) {
+    return true;
+  }
+  if (
+    error.code === "42703" &&
+    msg.includes(`${table}.${column}`) &&
+    msg.toLowerCase().includes("does not exist")
+  ) {
+    return true;
+  }
+  return false;
+};
 
 /** Pool global de jugadores reutilizable entre retas (UUID nulo estándar) */
 export const GLOBAL_TOURNAMENT_ID =

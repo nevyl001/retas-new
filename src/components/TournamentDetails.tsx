@@ -6,6 +6,11 @@ import StartTournamentSection from "./StartTournamentSection";
 import PublicLinkSection from "./PublicLinkSection";
 import PairsDisplay from "./PairsDisplay";
 import MatchesSection from "./MatchesSection";
+import {
+  loadAmericanoDinamicoSnapshot,
+  type AmericanoDinamicoSnapshotV1,
+} from "../lib/americanoDinamicoStorage";
+import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
 
 interface TournamentDetailsProps {
   selectedTournament: Tournament;
@@ -83,8 +88,47 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   onShowWinnerScreen,
   onBackToHome,
 }) => {
+  const [americanoSnapshot, setAmericanoSnapshot] =
+    React.useState<AmericanoDinamicoSnapshotV1 | null>(null);
+
+  const reloadAmericanoSnapshot = React.useCallback(() => {
+    if (!selectedTournament?.id) {
+      setAmericanoSnapshot(null);
+      return;
+    }
+    setAmericanoSnapshot(loadAmericanoDinamicoSnapshot(selectedTournament.id));
+  }, [selectedTournament?.id]);
+
+  React.useEffect(() => {
+    reloadAmericanoSnapshot();
+  }, [
+    reloadAmericanoSnapshot,
+    forceRefresh,
+    selectedTournament.is_finished,
+    selectedTournament.updated_at,
+  ]);
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<{ tournamentId?: string }>;
+      if (ce.detail?.tournamentId === selectedTournament.id) {
+        reloadAmericanoSnapshot();
+      }
+    };
+    window.addEventListener("americano-dinamico-snapshot", handler);
+    return () => window.removeEventListener("americano-dinamico-snapshot", handler);
+  }, [selectedTournament.id, reloadAmericanoSnapshot]);
+
   return (
     <div className="tournament-details">
+      {/* Sección para iniciar torneo */}
+      <StartTournamentSection
+        tournament={selectedTournament}
+        pairs={pairs}
+        loading={loading}
+        onStartTournament={onStartTournament}
+      />
+
       {/* Cuadrícula de 4 Componentes Uniformes */}
       <FourComponentsGrid
         selectedTournament={selectedTournament}
@@ -110,14 +154,6 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
         setForceRefresh={setForceRefresh}
       />
 
-      {/* Sección para iniciar torneo */}
-      <StartTournamentSection
-        tournament={selectedTournament}
-        pairs={pairs}
-        loading={loading}
-        onStartTournament={onStartTournament}
-      />
-
       {/* Sección de Enlace Público */}
       <PublicLinkSection
         tournament={selectedTournament}
@@ -127,6 +163,10 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
       {/* Mostrar parejas creadas */}
       <PairsDisplay pairs={pairs} pairStats={pairStats} />
+
+      {americanoSnapshot && (
+        <AmericanoTournamentSummary snapshot={americanoSnapshot} />
+      )}
 
       {/* Lista de partidos y clasificación */}
       <MatchesSection

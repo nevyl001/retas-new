@@ -1,0 +1,196 @@
+.americano-registration {
+  display: grid;
+  gap: 12px;
+}
+
+.americano-registration .card {
+  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--color-bg-surface, #181818);
+}
+
+.americano-registration__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.americano-registration h2 {
+  margin: 0;
+}
+
+.americano-registration__badge {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 214, 0, 0.5);
+  color: #ffd600;
+  background: rgba(255, 214, 0, 0.12);
+}
+
+.americano-registration__subtitle {
+  margin: 0;
+  color: var(--color-text-secondary, #b8b8b8);
+  font-size: 14px;
+}
+
+.americano-registration__controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.americano-registration__controls input {
+  flex: 1;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  background: var(--color-bg-elevated, #121212);
+  color: var(--color-text-primary, #fff);
+  padding: 8px 10px;
+}
+
+.americano-registration__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.americano-registration__meta p {
+  margin: 0;
+}
+
+.americano-registration__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.americano-registration__list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.americano-registration__empty {
+  color: var(--color-text-secondary, #b8b8b8);
+}
+
+.americano-registration__start {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.americano-registration__start-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.americano-registration__start label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.americano-registration__start input {
+  width: 90px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  background: var(--color-bg-elevated, #121212);
+  color: var(--color-text-primary, #fff);
+  padding: 8px 10px;
+}
+
+.americano-registration__db {
+  margin: 0;
+}
+
+.americano-registration__db h4 {
+  margin: 0 0 4px;
+}
+
+.americano-registration__hint {
+  margin: 0 0 10px;
+  color: var(--color-text-secondary, #b8b8b8);
+  font-size: 13px;
+}
+
+.americano-registration__db-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.americano-registration__db-item {
+  text-align: left;
+  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  background: var(--color-bg-elevated, #121212);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--color-text-primary, #fff);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.americano-registration__db-item:hover {
+  border-color: #ffd600;
+  transform: translateY(-1px);
+}
+
+.americano-registration__db-item.selected {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.18);
+  color: #d9ffe5;
+}
+
+.americano-btn {
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.americano-btn--ghost {
+  border-color: var(--color-border-subtle, #2f2f2f);
+  background: var(--color-bg-elevated, #121212);
+  color: var(--color-text-primary, #fff);
+}
+
+.americano-btn--danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fecaca;
+}
+
+.americano-btn--primary {
+  background: var(--color-accent, #ffd600);
+  color: #111;
+}
+
+.americano-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.americano-registration__courts-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary, #b8b8b8);
+}
+
+.americano-registration__start-btn {
+  align-self: flex-end;
+}

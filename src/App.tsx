@@ -17,6 +17,7 @@ import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { AdminRoute } from "./components/admin/AdminRoute";
 import { testConnection } from "./lib/supabaseClient";
+import { AmericanoDinamicoScreen } from "./components/AmericanoDinamico/AmericanoDinamicoScreen";
 
 // Types
 import { Tournament, Player, getTournamentById, upsertTournamentPublicConfig } from "./lib/database";
@@ -41,6 +42,7 @@ function AppContent() {
     | "main"
     | "winner"
     | "public"
+    | "americano-dinamico"
     | "auth-callback"
     | "admin-login"
     | "admin-dashboard"
@@ -51,6 +53,7 @@ function AppContent() {
     if (currentPath === "/auth/callback") return "auth-callback";
     if (currentPath === "/admin-login") return "admin-login";
     if (currentPath === "/admin-dashboard") return "admin-dashboard";
+    if (currentPath === "/americano-dinamico") return "americano-dinamico";
     if (currentPath.startsWith("/public/")) return "public";
     return "main";
   });
@@ -98,6 +101,15 @@ function AppContent() {
   );
   const [forceRefresh, setForceRefresh] = useState(0);
   const [, setError] = useState<string>("");
+  const isAmericanoRoute = window.location.pathname === "/americano-dinamico";
+  const americanoSearchParams = new URLSearchParams(window.location.search);
+  const americanoTournamentIdFromUrl = americanoSearchParams.get("tournamentId");
+  const americanoUserId = americanoSearchParams.get("userId");
+  /** Si la URL no trae tournamentId, usar la reta seleccionada solo en la vista Americano (para persistir resultados). */
+  const americanoTournamentId =
+    currentView === "americano-dinamico"
+      ? americanoTournamentIdFromUrl ?? selectedTournament?.id ?? null
+      : americanoTournamentIdFromUrl;
 
   // Detectar cambios en la URL (solo para rutas específicas)
   useEffect(() => {
@@ -112,6 +124,10 @@ function AppContent() {
         setCurrentView("admin-login");
       } else if (currentPath === "/admin-dashboard") {
         setCurrentView("admin-dashboard");
+      } else if (currentPath === "/americano-dinamico") {
+        setCurrentView("americano-dinamico");
+      } else if (currentPath === "/") {
+        setCurrentView("main");
       } else if (currentPath.startsWith("/public/")) {
         setCurrentView("public");
         setPublicTournamentId(currentPath.split("/public/")[1]);
@@ -343,44 +359,63 @@ function AppContent() {
           currentView !== "admin-login" &&
           currentView !== "admin-dashboard" && <UserHeader />}
 
-        {currentView === "main" && (
-          <MainLayout
-            selectedTournament={selectedTournament}
-            onTournamentSelect={setSelectedTournament}
-            loading={loading || actionLoading}
-            userId={user?.id}
-            pairs={pairs}
-            matches={matches}
-            pairStats={pairStats}
-            matchesByRound={matchesByRound}
-            showPlayerManager={showPlayerManager}
-            setShowPlayerManager={setShowPlayerManager}
-            showPairManager={showPairManager}
-            setShowPairManager={setShowPairManager}
-            showTournamentStatus={showTournamentStatus}
-            setShowTournamentStatus={setShowTournamentStatus}
-            showDebugInfo={showDebugInfo}
-            setShowDebugInfo={setShowDebugInfo}
-            selectedPlayers={selectedPlayers}
-            setSelectedPlayers={setSelectedPlayers}
-            setError={setError}
-            addPair={addPair}
-            updatePairPlayers={updatePairPlayers}
-            deletePair={deletePair}
-            onReset={handleReset}
-            loadTournamentData={() =>
-              selectedTournament && loadTournamentData(selectedTournament)
-            }
-            setForceRefresh={setForceRefresh}
-            forceRefresh={forceRefresh}
-            onStartTournament={handleStartTournament}
-            onCopyPublicLink={copyPublicLink}
-            generatePublicLink={generatePublicLink}
-            isTournamentFinished={isTournamentFinished}
-            winner={winner}
-            tournamentWinner={tournamentWinner}
-            onShowWinnerScreen={handleShowWinner}
-            onBackToHome={handleBackToHome}
+        {currentView === "main" && !isAmericanoRoute && (
+          <>
+            <MainLayout
+              selectedTournament={selectedTournament}
+              onTournamentSelect={setSelectedTournament}
+              loading={loading || actionLoading}
+              userId={user?.id}
+              pairs={pairs}
+              matches={matches}
+              pairStats={pairStats}
+              matchesByRound={matchesByRound}
+              showPlayerManager={showPlayerManager}
+              setShowPlayerManager={setShowPlayerManager}
+              showPairManager={showPairManager}
+              setShowPairManager={setShowPairManager}
+              showTournamentStatus={showTournamentStatus}
+              setShowTournamentStatus={setShowTournamentStatus}
+              showDebugInfo={showDebugInfo}
+              setShowDebugInfo={setShowDebugInfo}
+              selectedPlayers={selectedPlayers}
+              setSelectedPlayers={setSelectedPlayers}
+              setError={setError}
+              addPair={addPair}
+              updatePairPlayers={updatePairPlayers}
+              deletePair={deletePair}
+              onReset={handleReset}
+              loadTournamentData={() =>
+                selectedTournament && loadTournamentData(selectedTournament)
+              }
+              setForceRefresh={setForceRefresh}
+              forceRefresh={forceRefresh}
+              onStartTournament={handleStartTournament}
+              onCopyPublicLink={copyPublicLink}
+              generatePublicLink={generatePublicLink}
+              isTournamentFinished={isTournamentFinished}
+              winner={winner}
+              tournamentWinner={tournamentWinner}
+              onShowWinnerScreen={handleShowWinner}
+              onBackToHome={handleBackToHome}
+            />
+          </>
+        )}
+
+        {currentView === "americano-dinamico" && (
+          <AmericanoDinamicoScreen
+            tournamentId={americanoTournamentId}
+            userId={americanoUserId ?? user?.id ?? undefined}
+            onTournamentStatusChange={(updates) => {
+              if (!americanoTournamentId) return;
+              setSelectedTournament((prev) => {
+                if (!prev || prev.id !== americanoTournamentId) return prev;
+                return { ...prev, ...updates };
+              });
+              if (updates.is_finished) {
+                setForceRefresh((n) => n + 1);
+              }
+            }}
           />
         )}
 

@@ -71,6 +71,17 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     };
   }, [user?.id]); // Solo depender del ID del usuario
 
+  // Mantener la tarjeta sincronizada cuando selectedTournament cambia fuera del manager
+  // (ej. Americano Dinamico marca la reta como iniciada/finalizada).
+  useEffect(() => {
+    if (!selectedTournament) return;
+    setTournaments((prev) =>
+      prev.map((t) =>
+        t.id === selectedTournament.id ? { ...t, ...selectedTournament } : t
+      )
+    );
+  }, [selectedTournament]);
+
   const handleCreateTournament = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;

@@ -1,0 +1,167 @@
+.americano-summary {
+  margin: 1.25rem 0 1.75rem;
+  padding: 1.25rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: rgba(18, 18, 22, 0.95);
+  color: #e8e6e3;
+}
+
+.americano-summary__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.americano-summary__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #d4af37;
+  text-transform: uppercase;
+}
+
+.americano-summary__saved {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.americano-summary__podium {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.americano-summary__medal {
+  flex: 1 1 120px;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.americano-summary__medal span {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.americano-summary__medal--gold {
+  background: linear-gradient(145deg, rgba(212, 175, 55, 0.25), rgba(40, 35, 20, 0.9));
+  border-color: rgba(212, 175, 55, 0.45);
+}
+
+.americano-summary__medal--silver {
+  background: linear-gradient(145deg, rgba(180, 180, 190, 0.2), rgba(35, 35, 40, 0.95));
+}
+
+.americano-summary__medal--bronze {
+  background: linear-gradient(145deg, rgba(180, 120, 70, 0.22), rgba(40, 28, 22, 0.95));
+}
+
+.americano-summary__subtitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: #d4af37;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.americano-summary__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.americano-summary__table th,
+.americano-summary__table td {
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.americano-summary__table th {
+  color: rgba(232, 230, 227, 0.75);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.americano-summary__leader {
+  background: rgba(212, 175, 55, 0.12);
+}
+
+.americano-summary__history {
+  margin-top: 1.25rem;
+}
+
+.americano-summary__round {
+  margin-bottom: 0.5rem;
+}
+
+.americano-summary__toggle {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 30, 36, 0.9);
+  color: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.americano-summary__toggle:hover {
+  border-color: rgba(212, 175, 55, 0.35);
+}
+
+.americano-summary__bench {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  font-weight: 400;
+}
+
+.americano-summary__matches {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0 0 0 0.25rem;
+}
+
+.americano-summary__match {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.85rem;
+}
+
+.americano-summary__court {
+  font-weight: 700;
+  color: #d4af37;
+  min-width: 2rem;
+}
+
+.americano-summary__teams {
+  flex: 1 1 200px;
+}
+
+.americano-summary__score {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.americano-summary__empty {
+  margin: 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}

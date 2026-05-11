@@ -65,3 +65,35 @@ export interface Game {
   created_at: string;
   updated_at: string;
 }
+
+export interface AmericanoPlayer {
+  id: string;
+  name: string;
+  stats: AmericanoStats;
+}
+
+export interface AmericanoStats {
+  pointsFor: number;
+  pointsAgainst: number;
+  gamesPlayed: number;
+  roundsOnBench: number;
+}
+
+export interface AmericanoMatch {
+  id: string;
+  teamA: [AmericanoPlayer, AmericanoPlayer];
+  teamB: [AmericanoPlayer, AmericanoPlayer];
+  court: number;
+  scoreA?: number;
+  scoreB?: number;
+}
+
+export interface AmericanoRound {
+  roundNumber: number;
+  phase: 1 | 2 | 3;
+  matches: AmericanoMatch[];
+  benchPlayers: AmericanoPlayer[];
+}
+
+export type PartnerMatrix = Record<string, Record<string, number>>;
+export type RivalMatrix = Record<string, Record<string, number>>;
