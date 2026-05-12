@@ -12,7 +12,7 @@ import { MatchResultCalculator } from "./MatchResultCalculator";
 interface MatchCardWithResultsProps {
   match: Match;
   pairs: Pair[]; // Agregado: recibir pairs como prop para evitar cargas redundantes
-  /** Límite superior de número de cancha (canchas configuradas en la reta). */
+  /** Canchas configuradas en la reta (calendario / descansos); la edición manual del partido permite más pistas. */
   maxCourts?: number;
   isSelected: boolean;
   onSelect: (matchId: string) => void;
@@ -45,6 +45,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const [metaSaving, setMetaSaving] = useState(false);
   const [isEditingMeta, setIsEditingMeta] = useState(false);
   const isUpdatingRef = useRef(false); // Prevenir múltiples actualizaciones simultáneas
+
+  /** Tope al editar cancha en el partido: no limitar solo a `tournament.courts` (a menudo 1) o el guardado siempre queda en 1. */
+  const courtEditCap = Math.max(1, maxCourts, 32);
 
   // Función optimizada para recargar datos locales SIN múltiples actualizaciones
   const refreshFromServer = useCallback(async () => {
@@ -150,7 +153,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         setMetaSaving(false);
         return;
       }
-      const court = Math.min(maxCourts, Math.max(1, parsedCourt));
+      const court = Math.min(courtEditCap, Math.max(1, parsedCourt));
       const round = Math.min(999, Math.max(1, parsedRound));
       const updated = await updateMatch(currentMatch.id, { court, round });
       setCurrentMatch(updated);
@@ -170,21 +173,21 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   const openMetaEditor = useCallback(() => {
     setCourtInput(
-      String(Math.min(maxCourts, Math.max(1, match.court ?? 1)))
+      String(Math.min(courtEditCap, Math.max(1, match.court ?? 1)))
     );
     setRoundInput(String(Math.max(1, match.round ?? 1)));
     setError(null);
     setIsEditingMeta(true);
-  }, [match.court, match.round, maxCourts]);
+  }, [match.court, match.round, courtEditCap]);
 
   const cancelMetaEdit = useCallback(() => {
     setCourtInput(
-      String(Math.min(maxCourts, Math.max(1, match.court ?? 1)))
+      String(Math.min(courtEditCap, Math.max(1, match.court ?? 1)))
     );
     setRoundInput(String(Math.max(1, match.round ?? 1)));
     setIsEditingMeta(false);
     setError(null);
-  }, [match.court, match.round, maxCourts]);
+  }, [match.court, match.round, courtEditCap]);
 
   // Agregar juego - OPTIMIZADO: una sola actualización al final
   const addGame = async () => {
@@ -421,10 +424,10 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   useEffect(() => {
     if (isEditingMeta) return;
     setCourtInput(
-      String(Math.min(maxCourts, Math.max(1, match.court ?? 1)))
+      String(Math.min(courtEditCap, Math.max(1, match.court ?? 1)))
     );
     setRoundInput(String(Math.max(1, match.round ?? 1)));
-  }, [match.id, match.court, match.round, maxCourts, isEditingMeta]);
+  }, [match.id, match.court, match.round, courtEditCap, isEditingMeta]);
 
   if (loading) {
     return (
@@ -517,7 +520,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               <input
                 type="number"
                 min={1}
-                max={maxCourts}
+                max={courtEditCap}
                 value={courtInput}
                 onChange={(e) => setCourtInput(e.target.value)}
                 className="modern-meta-inline-input"
