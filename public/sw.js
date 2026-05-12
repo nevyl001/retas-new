@@ -1,11 +1,11 @@
 // Service Worker para RivieraApp PWA — versión minimalista
-const CACHE_NAME = "rivieraapp-v1.0.1";
+const CACHE_NAME = "rivieraapp-v1.0.2";
 const urlsToCache = [
   "/manifest.json",
-  "/icon-192x192.png?v=6",
-  "/icon-512x512.png?v=6",
-  "/apple-touch-icon-180.png?v=6",
-  "/logo-source.png?v=6",
+  "/icon-192x192.png?v=8",
+  "/icon-512x512.png?v=8",
+  "/apple-touch-icon-180.png?v=8",
+  "/logo-source.png?v=8",
 ];
 
 // Install event - solo cachear assets estáticos

@@ -158,32 +158,21 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     <div className="public-americano-view">
       <header className="public-americano-view__header">
         <div className="public-americano-view__brand">
-          <img
-            className="public-americano-view__logo"
-            src={`${process.env.PUBLIC_URL || ""}/logo-source.png?v=6`}
-            alt=""
-            width={48}
-            height={48}
-            decoding="async"
-          />
-          <div className="public-americano-view__brand-text">
-            <p className="public-americano-view__kicker">{RIVIERA_APP_DISPLAY}</p>
-            <h1 className="public-americano-view__title">
-              {tournamentName || "Americano en vivo"}
-            </h1>
-            <p className="public-americano-view__tagline">
-              {RIVIERA_PUBLIC_DESCRIPTION}
-            </p>
+          <h1 className="public-americano-view__title">
+            {tournamentName || "Americano en vivo"}
+          </h1>
+          <p className="public-americano-view__tagline">
+            {RIVIERA_PUBLIC_DESCRIPTION}
+          </p>
+          <p className="public-americano-view__meta">
+            Actualización automática cada pocos segundos
+          </p>
+          {snapshot?.savedAt && (
             <p className="public-americano-view__meta">
-              Actualización automática cada pocos segundos
+              Última publicación:{" "}
+              {new Date(snapshot.savedAt).toLocaleString()}
             </p>
-            {snapshot?.savedAt && (
-              <p className="public-americano-view__meta">
-                Última publicación:{" "}
-                {new Date(snapshot.savedAt).toLocaleString()}
-              </p>
-            )}
-          </div>
+          )}
         </div>
       </header>
 

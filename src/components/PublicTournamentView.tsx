@@ -330,23 +330,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {/* Header Público */}
       <div className="public-header">
         <div className="public-header-content public-header-brand">
-          <img
-            className="public-header-logo"
-            src={`${process.env.PUBLIC_URL || ""}/logo-source.png?v=6`}
-            alt=""
-            width={52}
-            height={52}
-            decoding="async"
-          />
-          <div className="public-header-text">
-            <p className="public-brand-kicker">{RIVIERA_APP_DISPLAY}</p>
-            <h1 className="public-title public-title--riviera-public">
-              {publicTournamentName || "Resultados en tiempo real"}
-            </h1>
-            <p className="public-subtitle public-subtitle--riviera">
-              {RIVIERA_PUBLIC_DESCRIPTION}
-            </p>
-          </div>
+          <h1 className="public-title public-title--riviera-public">
+            {publicTournamentName || "Resultados en tiempo real"}
+          </h1>
+          <p className="public-subtitle public-subtitle--riviera">
+            {RIVIERA_PUBLIC_DESCRIPTION}
+          </p>
         </div>
       </div>
 
