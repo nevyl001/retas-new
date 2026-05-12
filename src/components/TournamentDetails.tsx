@@ -1,5 +1,11 @@
 import React from "react";
-import { Tournament, Player, Pair, Match } from "../lib/database";
+import {
+  Tournament,
+  Player,
+  Pair,
+  Match,
+  fetchAmericanoLivePublic,
+} from "../lib/database";
 import { TournamentWinner } from "./TournamentWinnerCalculator";
 import FourComponentsGrid from "./FourComponentsGrid";
 import StartTournamentSection from "./StartTournamentSection";
@@ -91,18 +97,39 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   const [americanoSnapshot, setAmericanoSnapshot] =
     React.useState<AmericanoDinamicoSnapshotV1 | null>(null);
 
-  const reloadAmericanoSnapshot = React.useCallback(() => {
+  /** localStorage (mismo navegador) + Supabase `americano_live` para ver el resumen en cualquier dispositivo. */
+  const refreshAmericanoSnapshot = React.useCallback(async () => {
     if (!selectedTournament?.id) {
       setAmericanoSnapshot(null);
       return;
     }
-    setAmericanoSnapshot(loadAmericanoDinamicoSnapshot(selectedTournament.id));
+    const id = selectedTournament.id;
+    const local = loadAmericanoDinamicoSnapshot(id);
+    try {
+      const remote = await fetchAmericanoLivePublic(id);
+      if (remote.status === "ok") {
+        const r = remote.snapshot;
+        if (!local) {
+          setAmericanoSnapshot(r);
+          return;
+        }
+        const tLocal = new Date(local.savedAt).getTime();
+        const tRemote = new Date(r.savedAt).getTime();
+        setAmericanoSnapshot(
+          !Number.isNaN(tRemote) && tRemote >= tLocal ? r : local
+        );
+        return;
+      }
+    } catch {
+      /* red o Supabase: seguimos con local si existe */
+    }
+    setAmericanoSnapshot(local);
   }, [selectedTournament?.id]);
 
   React.useEffect(() => {
-    reloadAmericanoSnapshot();
+    void refreshAmericanoSnapshot();
   }, [
-    reloadAmericanoSnapshot,
+    refreshAmericanoSnapshot,
     forceRefresh,
     selectedTournament.is_finished,
     selectedTournament.updated_at,
@@ -112,12 +139,12 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
     const handler = (e: Event) => {
       const ce = e as CustomEvent<{ tournamentId?: string }>;
       if (ce.detail?.tournamentId === selectedTournament.id) {
-        reloadAmericanoSnapshot();
+        void refreshAmericanoSnapshot();
       }
     };
     window.addEventListener("americano-dinamico-snapshot", handler);
     return () => window.removeEventListener("americano-dinamico-snapshot", handler);
-  }, [selectedTournament.id, reloadAmericanoSnapshot]);
+  }, [selectedTournament.id, refreshAmericanoSnapshot]);
 
   return (
     <div className="tournament-details">
@@ -161,27 +188,30 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
         generatePublicLink={generatePublicLink}
       />
 
-      {/* Mostrar parejas creadas */}
-      <PairsDisplay pairs={pairs} pairStats={pairStats} />
+      {/* Americano dinámico no usa parejas/partidos clásicos en BD; evitar UI vacía engañosa */}
+      {!americanoSnapshot && (
+        <PairsDisplay pairs={pairs} pairStats={pairStats} />
+      )}
 
       {americanoSnapshot && (
         <AmericanoTournamentSummary snapshot={americanoSnapshot} />
       )}
 
-      {/* Lista de partidos y clasificación */}
-      <MatchesSection
-        tournament={selectedTournament}
-        matches={matches}
-        pairs={pairs}
-        matchesByRound={matchesByRound}
-        forceRefresh={forceRefresh}
-        setForceRefresh={setForceRefresh}
-        isTournamentFinished={isTournamentFinished}
-        winner={winner}
-        onShowWinnerScreen={onShowWinnerScreen}
-        onBackToHome={onBackToHome}
-        userId={userId}
-      />
+      {!americanoSnapshot && (
+        <MatchesSection
+          tournament={selectedTournament}
+          matches={matches}
+          pairs={pairs}
+          matchesByRound={matchesByRound}
+          forceRefresh={forceRefresh}
+          setForceRefresh={setForceRefresh}
+          isTournamentFinished={isTournamentFinished}
+          winner={winner}
+          onShowWinnerScreen={onShowWinnerScreen}
+          onBackToHome={onBackToHome}
+          userId={userId}
+        />
+      )}
     </div>
   );
 };
