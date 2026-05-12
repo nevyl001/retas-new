@@ -221,7 +221,10 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       )}
 
       {americanoSnapshot && (
-        <AmericanoTournamentSummary snapshot={americanoSnapshot} />
+        <AmericanoTournamentSummary
+          snapshot={americanoSnapshot}
+          tournamentId={selectedTournament.id}
+        />
       )}
 
       {isAmericanoShell &&

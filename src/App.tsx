@@ -9,6 +9,7 @@ import MainLayout from "./components/MainLayout";
 import WinnerScreen from "./components/WinnerScreen";
 import PublicTournamentView from "./components/PublicTournamentView";
 import PublicAmericanoView from "./components/PublicAmericanoView";
+import PublicAmericanoResultsBoard from "./components/PublicAmericanoResultsBoard";
 import { ModernToast } from "./components/ModernToast";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserHeader } from "./components/UserHeader";
@@ -45,6 +46,17 @@ function parsePublicAmericanoTournamentId(pathname: string): string | null {
   }
 }
 
+function parsePublicAmericanoBoardTournamentId(pathname: string): string | null {
+  const m = pathname.match(/^\/public\/americano-pantalla\/([^/?#]+)/i);
+  const raw = m?.[1];
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw).trim() || null;
+  } catch {
+    return raw.trim() || null;
+  }
+}
+
 function normalizeAppPathname(pathname: string): string {
   return pathname.replace(/\/+$/, "") || "/";
 }
@@ -63,6 +75,7 @@ function AppContent() {
     | "winner"
     | "public"
     | "public-americano"
+    | "public-americano-pantalla"
     | "americano-dinamico"
     | "auth-callback"
     | "admin-login"
@@ -75,6 +88,8 @@ function AppContent() {
     if (currentPath === "/admin-login") return "admin-login";
     if (currentPath === "/admin-dashboard") return "admin-dashboard";
     if (currentPath === "/americano-dinamico") return "americano-dinamico";
+    if (/^\/public\/americano-pantalla\//i.test(currentPath))
+      return "public-americano-pantalla";
     if (/^\/public\/americano\//i.test(currentPath)) return "public-americano";
     if (currentPath.startsWith("/public/")) return "public";
     return "main";
@@ -117,17 +132,28 @@ function AppContent() {
     () => {
       if (typeof window === "undefined") return null;
       const path = window.location.pathname;
-      if (/^\/public\/americano\//i.test(path)) return null;
+      const norm = normalizeAppPathname(path);
+      if (/^\/public\/americano-pantalla\//i.test(norm)) return null;
+      if (/^\/public\/americano\//i.test(norm)) return null;
       const m = path.match(/^\/public\/([^/?#]+)/);
       const seg = m?.[1];
-      if (!seg || seg === "americano") return null;
+      if (!seg || seg === "americano" || seg === "americano-pantalla") return null;
       return seg;
     }
   );
   const [publicAmericanoTournamentId, setPublicAmericanoTournamentId] =
     useState<string | null>(() => {
       if (typeof window === "undefined") return null;
-      return parsePublicAmericanoTournamentId(window.location.pathname);
+      return parsePublicAmericanoTournamentId(
+        normalizeAppPathname(window.location.pathname)
+      );
+    });
+  const [publicAmericanoBoardTournamentId, setPublicAmericanoBoardTournamentId] =
+    useState<string | null>(() => {
+      if (typeof window === "undefined") return null;
+      return parsePublicAmericanoBoardTournamentId(
+        normalizeAppPathname(window.location.pathname)
+      );
     });
   const [forceRefresh, setForceRefresh] = useState(0);
   const [, setError] = useState<string>("");
@@ -196,20 +222,29 @@ function AppContent() {
         setCurrentView("americano-dinamico");
       } else if (currentPath === "/") {
         setCurrentView("main");
+      } else if (/^\/public\/americano-pantalla\//i.test(currentPath)) {
+        setCurrentView("public-americano-pantalla");
+        setPublicAmericanoBoardTournamentId(
+          parsePublicAmericanoBoardTournamentId(currentPath)
+        );
+        setPublicTournamentId(null);
+        setPublicAmericanoTournamentId(null);
       } else if (/^\/public\/americano\//i.test(currentPath)) {
         setCurrentView("public-americano");
         setPublicAmericanoTournamentId(
           parsePublicAmericanoTournamentId(currentPath)
         );
+        setPublicAmericanoBoardTournamentId(null);
         setPublicTournamentId(null);
       } else if (currentPath.startsWith("/public/")) {
         setCurrentView("public");
         const m = currentPath.match(/^\/public\/([^/?#]+)/);
         const seg = m?.[1];
         setPublicTournamentId(
-          seg && seg !== "americano" ? seg : null
+          seg && seg !== "americano" && seg !== "americano-pantalla" ? seg : null
         );
         setPublicAmericanoTournamentId(null);
+        setPublicAmericanoBoardTournamentId(null);
       }
       // NO cambiar a "main" automáticamente - dejar que se mantenga el valor inicial
     };
@@ -433,7 +468,9 @@ function AppContent() {
   return (
     <div
       className={`App${
-        currentView === "public" || currentView === "public-americano"
+        currentView === "public" ||
+        currentView === "public-americano" ||
+        currentView === "public-americano-pantalla"
           ? " App--public-full-width"
           : ""
       }`}
@@ -442,6 +479,7 @@ function AppContent() {
         {/* Solo mostrar UserHeader cuando NO estemos en vista pública NI en admin */}
         {currentView !== "public" &&
           currentView !== "public-americano" &&
+          currentView !== "public-americano-pantalla" &&
           currentView !== "admin-login" &&
           currentView !== "admin-dashboard" && <UserHeader />}
 
@@ -512,6 +550,13 @@ function AppContent() {
         {currentView === "public-americano" && publicAmericanoTournamentId && (
           <PublicAmericanoView tournamentId={publicAmericanoTournamentId} />
         )}
+
+        {currentView === "public-americano-pantalla" &&
+          publicAmericanoBoardTournamentId && (
+            <PublicAmericanoResultsBoard
+              tournamentId={publicAmericanoBoardTournamentId}
+            />
+          )}
 
         {currentView === "auth-callback" && (
           <AuthCallback onSuccess={() => setCurrentView("main")} />
