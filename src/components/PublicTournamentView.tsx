@@ -146,6 +146,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       setPublicTournamentDescription(
         rawDesc && rawDesc !== nameNorm ? rawDesc : null
       );
+      setMatches(matchesData);
       setPairs(pairsData);
       setGames(gamesData || []);
       setLastUpdate(new Date());
