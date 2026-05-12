@@ -10,6 +10,10 @@ import type {
 } from "../lib/americanoDinamicoStorage";
 import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
 import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
+import {
+  RIVIERA_APP_DISPLAY,
+  RIVIERA_PUBLIC_DESCRIPTION,
+} from "../lib/rivieraBranding";
 import "./PublicAmericanoView.css";
 
 const POLL_MS = 4000;
@@ -59,6 +63,16 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     setTournamentStarted(false);
     setLoadError(null);
   }, [tournamentId]);
+
+  useEffect(() => {
+    const defaultTitle = `${RIVIERA_APP_DISPLAY} — Americano en vivo`;
+    document.title = tournamentName
+      ? `${tournamentName} · ${RIVIERA_APP_DISPLAY}`
+      : defaultTitle;
+    return () => {
+      document.title = defaultTitle;
+    };
+  }, [tournamentName]);
 
   const load = useCallback(async () => {
     try {
@@ -143,22 +157,34 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   return (
     <div className="public-americano-view">
       <header className="public-americano-view__header">
-        <h1 className="public-americano-view__title">Americano en vivo</h1>
-        <p className="public-americano-view__meta">
-          {tournamentName ? (
-            <>
-              <strong>{tournamentName}</strong>
-              <span> · </span>
-            </>
-          ) : null}
-          Actualización automática cada pocos segundos
-        </p>
-        {snapshot?.savedAt && (
-          <p className="public-americano-view__meta">
-            Última publicación:{" "}
-            {new Date(snapshot.savedAt).toLocaleString()}
-          </p>
-        )}
+        <div className="public-americano-view__brand">
+          <img
+            className="public-americano-view__logo"
+            src={`${process.env.PUBLIC_URL || ""}/logo-source.png?v=6`}
+            alt=""
+            width={48}
+            height={48}
+            decoding="async"
+          />
+          <div className="public-americano-view__brand-text">
+            <p className="public-americano-view__kicker">{RIVIERA_APP_DISPLAY}</p>
+            <h1 className="public-americano-view__title">
+              {tournamentName || "Americano en vivo"}
+            </h1>
+            <p className="public-americano-view__tagline">
+              {RIVIERA_PUBLIC_DESCRIPTION}
+            </p>
+            <p className="public-americano-view__meta">
+              Actualización automática cada pocos segundos
+            </p>
+            {snapshot?.savedAt && (
+              <p className="public-americano-view__meta">
+                Última publicación:{" "}
+                {new Date(snapshot.savedAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+        </div>
       </header>
 
       {loadError && (

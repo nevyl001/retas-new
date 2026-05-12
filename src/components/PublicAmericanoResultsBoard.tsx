@@ -7,6 +7,10 @@ import {
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
+import {
+  RIVIERA_APP_DISPLAY,
+  RIVIERA_PUBLIC_DESCRIPTION,
+} from "../lib/rivieraBranding";
 import "./PublicAmericanoResultsBoard.css";
 
 const POLL_MS = 8000;
@@ -89,19 +93,45 @@ export const PublicAmericanoResultsBoard: React.FC<
     return () => window.clearInterval(id);
   }, [load]);
 
+  useEffect(() => {
+    const defaultTitle = `${RIVIERA_APP_DISPLAY} — Pantalla de resultados`;
+    document.title = tournamentName
+      ? `${tournamentName} · ${RIVIERA_APP_DISPLAY}`
+      : defaultTitle;
+    return () => {
+      document.title = defaultTitle;
+    };
+  }, [tournamentName]);
+
   return (
     <div className="public-americano-board">
       <header className="public-americano-board__header">
-        <p className="public-americano-board__eyebrow">Americano dinámico</p>
-        <h1 className="public-americano-board__title">
-          {tournamentName || "Resultados"}
-        </h1>
-        {snapshot?.savedAt && (
-          <p className="public-americano-board__meta">
-            Última actualización:{" "}
-            {new Date(snapshot.savedAt).toLocaleString()}
-          </p>
-        )}
+        <div className="public-americano-board__brand">
+          <img
+            className="public-americano-board__logo"
+            src={`${process.env.PUBLIC_URL || ""}/logo-source.png?v=6`}
+            alt=""
+            width={44}
+            height={44}
+            decoding="async"
+          />
+          <div className="public-americano-board__brand-text">
+            <p className="public-americano-board__kicker">{RIVIERA_APP_DISPLAY}</p>
+            <p className="public-americano-board__eyebrow">Americano dinámico</p>
+            <h1 className="public-americano-board__title">
+              {tournamentName || "Resultados"}
+            </h1>
+            <p className="public-americano-board__tagline">
+              {RIVIERA_PUBLIC_DESCRIPTION}
+            </p>
+            {snapshot?.savedAt && (
+              <p className="public-americano-board__meta">
+                Última actualización:{" "}
+                {new Date(snapshot.savedAt).toLocaleString()}
+              </p>
+            )}
+          </div>
+        </div>
       </header>
 
       {loadError && (

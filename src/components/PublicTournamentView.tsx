@@ -15,6 +15,10 @@ import {
   TournamentWinnerCalculator,
   TournamentWinner,
 } from "./TournamentWinnerCalculator";
+import {
+  RIVIERA_APP_DISPLAY,
+  RIVIERA_PUBLIC_DESCRIPTION,
+} from "../lib/rivieraBranding";
 
 interface PublicTournamentViewProps {
   tournamentId: string;
@@ -92,6 +96,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(parseTeamConfigFromHash);
   const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
+  const [publicTournamentName, setPublicTournamentName] = useState<string | null>(null);
   const configFetchOnDemandRef = useRef(false);
 
   const loadTournamentData = useCallback(async () => {
@@ -123,6 +128,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         hashTeamConfig
       );
       setTeamConfig(resolvedTeamConfig);
+
+      setPublicTournamentName(
+        tournament && typeof (tournament as { name?: string }).name === "string"
+          ? (tournament as { name: string }).name
+          : null
+      );
 
       setMatches(matchesData);
       setPairs(pairsData);
@@ -271,6 +282,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   const getPositionIcon = (pos: number) => (pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : "");
 
+  useEffect(() => {
+    const defaultTitle = `${RIVIERA_APP_DISPLAY} — Retas y torneos de pádel`;
+    document.title = publicTournamentName
+      ? `${publicTournamentName} · ${RIVIERA_APP_DISPLAY}`
+      : defaultTitle;
+    return () => {
+      document.title = defaultTitle;
+    };
+  }, [publicTournamentName]);
+
   if (loading) {
     return (
       <div className="public-loading">
@@ -308,11 +329,24 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     <div className="public-tournament-view">
       {/* Header Público */}
       <div className="public-header">
-        <div className="public-header-content">
-          <h1 className="public-title">🏆 Resultados en Tiempo Real</h1>
-          <p className="public-subtitle">
-            Sigue los resultados de tu reta de pádel
-          </p>
+        <div className="public-header-content public-header-brand">
+          <img
+            className="public-header-logo"
+            src={`${process.env.PUBLIC_URL || ""}/logo-source.png?v=6`}
+            alt=""
+            width={52}
+            height={52}
+            decoding="async"
+          />
+          <div className="public-header-text">
+            <p className="public-brand-kicker">{RIVIERA_APP_DISPLAY}</p>
+            <h1 className="public-title public-title--riviera-public">
+              {publicTournamentName || "Resultados en tiempo real"}
+            </h1>
+            <p className="public-subtitle public-subtitle--riviera">
+              {RIVIERA_PUBLIC_DESCRIPTION}
+            </p>
+          </div>
         </div>
       </div>
 

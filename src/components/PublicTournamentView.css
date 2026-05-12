@@ -59,6 +59,59 @@
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
+.public-header-brand {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-md);
+  text-align: left;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.public-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.public-header-logo {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-subtle);
+  background: #0a0a0a;
+}
+
+.public-brand-kicker {
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-xs);
+}
+
+.public-title--riviera-public {
+  font-size: 1.35rem;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  filter: none;
+  justify-content: flex-start;
+  text-align: left;
+  line-height: 1.25;
+  margin-bottom: var(--space-sm);
+}
+
+.public-subtitle--riviera {
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  max-width: none;
+}
+
 .public-title {
   font-size: 2rem;
   font-weight: var(--font-weight-bold);
