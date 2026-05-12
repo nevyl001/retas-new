@@ -8,6 +8,7 @@ import type {
   Tournament,
   TournamentTeamConfig,
 } from "./db/types";
+import type { AmericanoDinamicoSnapshotV1 } from "./americanoDinamicoStorage";
 
 export type {
   Game,
@@ -121,6 +122,102 @@ export const getTournamentPublicConfig = async (tournamentId: string): Promise<{
     return null;
   } catch {
     return null;
+  }
+};
+
+/**
+ * Snapshot Americano para vista pública (columna americano_live en tournament_public_config).
+ * Requiere migración SQL tournament-americano-public-live.sql.
+ */
+export type FetchAmericanoLivePublicResult =
+  | { status: "ok"; snapshot: AmericanoDinamicoSnapshotV1 }
+  | { status: "empty" }
+  | { status: "missing_column" }
+  | { status: "fetch_error"; message: string };
+
+export const fetchAmericanoLivePublic = async (
+  tournamentId: string
+): Promise<FetchAmericanoLivePublicResult> => {
+  try {
+    // `select("*")` evita 400 de PostgREST si `americano_live` aún no existe en el esquema:
+    // con `select("americano_live")` PostgREST valida la columna y falla aunque la fila exista.
+    const { data, error } = await supabase
+      .from("tournament_public_config")
+      .select("*")
+      .eq("tournament_id", tournamentId)
+      .maybeSingle();
+    if (error) {
+      if (
+        isMissingColumnError(error, "tournament_public_config", "americano_live")
+      ) {
+        return { status: "missing_column" };
+      }
+      return { status: "fetch_error", message: error.message || "Error de lectura" };
+    }
+    const raw = data?.americano_live as unknown;
+    if (!raw || typeof raw !== "object") {
+      return { status: "empty" };
+    }
+    const s = raw as Record<string, unknown>;
+    if (
+      s.version !== 1 ||
+      !Array.isArray(s.rounds) ||
+      !Array.isArray(s.ranking)
+    ) {
+      return { status: "empty" };
+    }
+    return { status: "ok", snapshot: raw as AmericanoDinamicoSnapshotV1 };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { status: "fetch_error", message: msg };
+  }
+};
+
+/**
+ * Publica el estado del Americano para /public/americano/{id} (anon puede leer).
+ */
+export const upsertAmericanoLivePublic = async (
+  tournamentId: string,
+  snapshot: AmericanoDinamicoSnapshotV1
+): Promise<boolean> => {
+  try {
+    const { data: existing, error: selErr } = await supabase
+      .from("tournament_public_config")
+      .select("format, team_config")
+      .eq("tournament_id", tournamentId)
+      .maybeSingle();
+    if (selErr && !isMissingColumnError(selErr, "tournament_public_config", "americano_live")) {
+      console.warn("tournament_public_config select:", selErr);
+    }
+
+    const { error } = await supabase.from("tournament_public_config").upsert(
+      {
+        tournament_id: tournamentId,
+        format: (existing?.format as string) || "round_robin",
+        team_config:
+          existing && existing.team_config != null
+            ? existing.team_config
+            : null,
+        americano_live: snapshot as unknown as Record<string, unknown>,
+      },
+      { onConflict: "tournament_id" }
+    );
+    if (error) {
+      if (
+        isMissingColumnError(error, "tournament_public_config", "americano_live")
+      ) {
+        console.warn(
+          "Columna americano_live ausente: ejecuta tournament-americano-public-live.sql en Supabase."
+        );
+        return false;
+      }
+      console.warn("upsertAmericanoLivePublic:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.warn("upsertAmericanoLivePublic:", e);
+    return false;
   }
 };
 

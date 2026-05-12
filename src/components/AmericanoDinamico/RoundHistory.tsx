@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import type { AmericanoRound } from "../../lib/db/types";
+import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import "./RoundHistory.css";
 
 interface RoundHistoryProps {
   rounds: AmericanoRound[];
+  /** Total de rondas planificado (etiqueta "Final" en la última). */
+  totalRounds?: number;
   onEditScore: (
     roundIndex: number,
     matchId: string,
@@ -14,6 +17,7 @@ interface RoundHistoryProps {
 
 export const RoundHistory: React.FC<RoundHistoryProps> = ({
   rounds,
+  totalRounds = 0,
   onEditScore,
 }) => {
   const [openRound, setOpenRound] = useState<number | null>(null);
@@ -31,7 +35,8 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
               setOpenRound((prev) => (prev === round.roundNumber ? null : round.roundNumber))
             }
           >
-            Ronda {round.roundNumber} (Fase {round.phase})
+            Ronda {round.roundNumber} ·{" "}
+            {americanoRoundPhaseCaption(round, totalRounds)}
           </button>
 
           {openRound === round.roundNumber && (

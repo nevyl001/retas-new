@@ -1,6 +1,16 @@
-import { useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from "react";
 import type { AmericanoPlayer, AmericanoRound } from "../lib/db/types";
-import { generateAmericanoRounds } from "../lib/americanoGenerator";
+import {
+  buildMatricesFromScoredRounds,
+  generateAmericanoRound,
+} from "../lib/americanoGenerator";
 import {
   applyAmericanoResult,
   getAmericanoRanking,
@@ -15,6 +25,24 @@ function createEmptyStats() {
     gamesPlayed: 0,
     roundsOnBench: 0,
   };
+}
+
+function rosterTemplateFromRef(
+  baseRosterRef: MutableRefObject<AmericanoPlayer[]>,
+  players: AmericanoPlayer[]
+): AmericanoPlayer[] {
+  if (baseRosterRef.current.length > 0) {
+    return baseRosterRef.current.map((p) => ({
+      id: p.id,
+      name: p.name,
+      stats: createEmptyStats(),
+    }));
+  }
+  return players.map((p) => ({
+    id: p.id,
+    name: p.name,
+    stats: createEmptyStats(),
+  }));
 }
 
 function rebuildStateFromRounds(
@@ -76,6 +104,23 @@ export function useAmericanoDinamico() {
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
   const [phase, setPhase] = useState<AmericanoPhase>("registration");
 
+  const baseRosterRef = useRef<AmericanoPlayer[]>([]);
+  const totalRoundsRef = useRef(0);
+  const courtsRef = useRef(1);
+  const roundsRef = useRef(rounds);
+  const currentRoundIndexRef = useRef(currentRoundIndex);
+  const playersRef = useRef(players);
+
+  useEffect(() => {
+    roundsRef.current = rounds;
+  }, [rounds]);
+  useEffect(() => {
+    currentRoundIndexRef.current = currentRoundIndex;
+  }, [currentRoundIndex]);
+  useEffect(() => {
+    playersRef.current = players;
+  }, [players]);
+
   const addPlayer = (name: string) => {
     if (phase !== "registration") return;
     const clean = name.trim();
@@ -107,94 +152,166 @@ export function useAmericanoDinamico() {
   const startTournament = (totalRounds: number, courts: number = 1) => {
     if (players.length < 4 || totalRounds < 1) return;
     const safeCourts = Math.max(1, Math.floor(courts) || 1);
+    totalRoundsRef.current = totalRounds;
+    courtsRef.current = safeCourts;
+
     const seededPlayers = players.map((p) => ({
       ...p,
       stats: createEmptyStats(),
     }));
-    const generated = generateAmericanoRounds(
-      seededPlayers,
+
+    baseRosterRef.current = seededPlayers.map((p) => ({
+      id: p.id,
+      name: p.name,
+      stats: createEmptyStats(),
+    }));
+
+    const { partnerMatrix } = buildMatricesFromScoredRounds(seededPlayers, []);
+    const r1 = generateAmericanoRound({
+      allPlayers: seededPlayers,
+      roundNumber: 1,
       totalRounds,
-      safeCourts
-    );
-    const rebuilt = rebuildStateFromRounds(generated, seededPlayers);
-    setPlayers(rebuilt.players);
-    setRounds(rebuilt.rounds);
+      courts: safeCourts,
+      partnerMatrix,
+      lastBenchPlayerIds: new Set(),
+    });
+
+    setPlayers(seededPlayers);
+    setRounds([r1]);
     setCurrentRoundIndex(0);
     setPhase("playing");
   };
 
-  /** Confirma todos los marcadores de la ronda actual en una sola actualización. */
-  const commitRoundScores = (
-    scores: { matchId: string; scoreA: number; scoreB: number }[]
-  ) => {
+  const commitRoundScores = useCallback(
+    (scores: { matchId: string; scoreA: number; scoreB: number }[]) => {
+      if (phase !== "playing") return;
+      const map = new Map(scores.map((s) => [s.matchId, s]));
+      const idx = currentRoundIndexRef.current;
+      const prevRounds = roundsRef.current;
+      const nextRounds = prevRounds.map((round, roundIdx) => {
+        if (roundIdx !== idx) return round;
+        return {
+          ...round,
+          matches: round.matches.map((match) => {
+            const s = map.get(match.id);
+            return s
+              ? { ...match, scoreA: s.scoreA, scoreB: s.scoreB }
+              : match;
+          }),
+        };
+      });
+      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
+      const rebuilt = rebuildStateFromRounds(nextRounds, template);
+      setRounds(rebuilt.rounds);
+      setPlayers(rebuilt.players);
+    },
+    [phase]
+  );
+
+  const submitScore = useCallback(
+    (matchId: string, scoreA: number, scoreB: number) => {
+      if (phase !== "playing") return;
+      const idx = currentRoundIndexRef.current;
+      const prevRounds = roundsRef.current;
+      const nextRounds = prevRounds.map((round, roundIdx) => {
+        if (roundIdx !== idx) return round;
+        return {
+          ...round,
+          matches: round.matches.map((match) =>
+            match.id === matchId ? { ...match, scoreA, scoreB } : match
+          ),
+        };
+      });
+      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
+      const rebuilt = rebuildStateFromRounds(nextRounds, template);
+      setRounds(rebuilt.rounds);
+      setPlayers(rebuilt.players);
+    },
+    [phase]
+  );
+
+  const editScore = useCallback(
+    (roundIndex: number, matchId: string, scoreA: number, scoreB: number) => {
+      const prevRounds = roundsRef.current;
+      const nextRounds = prevRounds.map((round, idx) => {
+        if (idx !== roundIndex) return round;
+        return {
+          ...round,
+          matches: round.matches.map((match) =>
+            match.id === matchId ? { ...match, scoreA, scoreB } : match
+          ),
+        };
+      });
+      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
+      const rebuilt = rebuildStateFromRounds(nextRounds, template);
+      setRounds(rebuilt.rounds);
+      setPlayers(rebuilt.players);
+    },
+    []
+  );
+
+  const nextRound = useCallback(() => {
     if (phase !== "playing") return;
-    const map = new Map(scores.map((s) => [s.matchId, s]));
-    const nextRounds = rounds.map((round, idx) => {
-      if (idx !== currentRoundIndex) return round;
-      return {
-        ...round,
-        matches: round.matches.map((match) => {
-          const s = map.get(match.id);
-          return s
-            ? { ...match, scoreA: s.scoreA, scoreB: s.scoreB }
-            : match;
-        }),
-      };
+    const prevRounds = roundsRef.current;
+    const idx = currentRoundIndexRef.current;
+    const cur = prevRounds[idx];
+    if (!cur) return;
+
+    const allScores = cur.matches.every(
+      (m) =>
+        typeof m.scoreA === "number" &&
+        typeof m.scoreB === "number" &&
+        !Number.isNaN(m.scoreA) &&
+        !Number.isNaN(m.scoreB) &&
+        m.scoreA >= 0 &&
+        m.scoreB >= 0
+    );
+    if (!allScores) return;
+
+    const total = totalRoundsRef.current;
+    if (idx + 1 >= total) {
+      setPhase("finished");
+      return;
+    }
+
+    const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
+    const rebuilt = rebuildStateFromRounds(prevRounds, template);
+    const { partnerMatrix } = buildMatricesFromScoredRounds(
+      rebuilt.players,
+      rebuilt.rounds
+    );
+
+    const lastBenchIds = new Set(
+      prevRounds[idx].benchPlayers.map((p) => p.id)
+    );
+
+    const nextRoundNumber = idx + 2;
+    const newRound = generateAmericanoRound({
+      allPlayers: rebuilt.players,
+      roundNumber: nextRoundNumber,
+      totalRounds: total,
+      courts: courtsRef.current,
+      partnerMatrix,
+      lastBenchPlayerIds: lastBenchIds,
     });
-    const rebuilt = rebuildStateFromRounds(nextRounds, players);
-    setRounds(rebuilt.rounds);
+
     setPlayers(rebuilt.players);
-  };
+    setRounds([...rebuilt.rounds, newRound]);
+    setCurrentRoundIndex(idx + 1);
+  }, [phase]);
 
-  const submitScore = (matchId: string, scoreA: number, scoreB: number) => {
-    if (phase !== "playing") return;
-    const nextRounds = rounds.map((round, idx) => {
-      if (idx !== currentRoundIndex) return round;
-      return {
-        ...round,
-        matches: round.matches.map((match) =>
-          match.id === matchId ? { ...match, scoreA, scoreB } : match
-        ),
-      };
-    });
-    const rebuilt = rebuildStateFromRounds(nextRounds, players);
-    setRounds(rebuilt.rounds);
-    setPlayers(rebuilt.players);
-  };
+  const ranking = useMemo(() => {
+    if (phase === "registration") return [];
+    const template = rosterTemplateFromRef(baseRosterRef, players);
+    if (template.length === 0) return getAmericanoRanking(players);
+    const slice =
+      phase === "finished"
+        ? rounds
+        : rounds.slice(0, currentRoundIndex);
+    const { players: rp } = rebuildStateFromRounds(slice, template);
+    return getAmericanoRanking(rp);
+  }, [phase, rounds, currentRoundIndex, players]);
 
-  const editScore = (
-    roundIndex: number,
-    matchId: string,
-    scoreA: number,
-    scoreB: number
-  ) => {
-    const nextRounds = rounds.map((round, idx) => {
-      if (idx !== roundIndex) return round;
-      return {
-        ...round,
-        matches: round.matches.map((match) =>
-          match.id === matchId ? { ...match, scoreA, scoreB } : match
-        ),
-      };
-    });
-    const rebuilt = rebuildStateFromRounds(nextRounds, players);
-    setRounds(rebuilt.rounds);
-    setPlayers(rebuilt.players);
-  };
-
-  const nextRound = () => {
-    if (phase !== "playing") return;
-    setCurrentRoundIndex((prev) => {
-      const next = prev + 1;
-      if (next >= rounds.length) {
-        setPhase("finished");
-        return prev;
-      }
-      return next;
-    });
-  };
-
-  const ranking = useMemo(() => getAmericanoRanking(players), [players]);
   const currentRound = useMemo(
     () => (phase === "playing" ? rounds[currentRoundIndex] ?? null : null),
     [phase, rounds, currentRoundIndex]
@@ -205,6 +322,7 @@ export function useAmericanoDinamico() {
     rounds,
     currentRoundIndex,
     phase,
+    totalRounds: totalRoundsRef.current,
     addPlayer,
     removePlayer,
     toggleExistingPlayer,

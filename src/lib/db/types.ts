@@ -90,7 +90,8 @@ export interface AmericanoMatch {
 
 export interface AmericanoRound {
   roundNumber: number;
-  phase: 1 | 2 | 3;
+  /** 1 = primera mitad de rondas, 2 = segunda mitad (emparejamiento por games). */
+  phase: 1 | 2;
   matches: AmericanoMatch[];
   benchPlayers: AmericanoPlayer[];
 }

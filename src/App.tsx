@@ -8,6 +8,7 @@ import { UserProvider, useUser } from "./contexts/UserContext";
 import MainLayout from "./components/MainLayout";
 import WinnerScreen from "./components/WinnerScreen";
 import PublicTournamentView from "./components/PublicTournamentView";
+import PublicAmericanoView from "./components/PublicAmericanoView";
 import { ModernToast } from "./components/ModernToast";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserHeader } from "./components/UserHeader";
@@ -42,6 +43,7 @@ function AppContent() {
     | "main"
     | "winner"
     | "public"
+    | "public-americano"
     | "americano-dinamico"
     | "auth-callback"
     | "admin-login"
@@ -54,6 +56,7 @@ function AppContent() {
     if (currentPath === "/admin-login") return "admin-login";
     if (currentPath === "/admin-dashboard") return "admin-dashboard";
     if (currentPath === "/americano-dinamico") return "americano-dinamico";
+    if (/^\/public\/americano\//i.test(currentPath)) return "public-americano";
     if (currentPath.startsWith("/public/")) return "public";
     return "main";
   });
@@ -95,10 +98,21 @@ function AppContent() {
     () => {
       if (typeof window === "undefined") return null;
       const path = window.location.pathname;
-      const match = path.match(/\/public\/([a-f0-9-]+)/i);
-      return match ? match[1].split("/")[0].split("?")[0] : null;
+      if (/^\/public\/americano\//i.test(path)) return null;
+      const m = path.match(/^\/public\/([^/?#]+)/);
+      const seg = m?.[1];
+      if (!seg || seg === "americano") return null;
+      return seg;
     }
   );
+  const [publicAmericanoTournamentId, setPublicAmericanoTournamentId] =
+    useState<string | null>(() => {
+      if (typeof window === "undefined") return null;
+      const m = window.location.pathname.match(
+        /^\/public\/americano\/([^/?#]+)/i
+      );
+      return m?.[1] ?? null;
+    });
   const [forceRefresh, setForceRefresh] = useState(0);
   const [, setError] = useState<string>("");
   const isAmericanoRoute = window.location.pathname === "/americano-dinamico";
@@ -128,9 +142,19 @@ function AppContent() {
         setCurrentView("americano-dinamico");
       } else if (currentPath === "/") {
         setCurrentView("main");
+      } else if (/^\/public\/americano\//i.test(currentPath)) {
+        setCurrentView("public-americano");
+        const m = currentPath.match(/^\/public\/americano\/([^/?#]+)/i);
+        setPublicAmericanoTournamentId(m?.[1] ?? null);
+        setPublicTournamentId(null);
       } else if (currentPath.startsWith("/public/")) {
         setCurrentView("public");
-        setPublicTournamentId(currentPath.split("/public/")[1]);
+        const m = currentPath.match(/^\/public\/([^/?#]+)/);
+        const seg = m?.[1];
+        setPublicTournamentId(
+          seg && seg !== "americano" ? seg : null
+        );
+        setPublicAmericanoTournamentId(null);
       }
       // NO cambiar a "main" automáticamente - dejar que se mantenga el valor inicial
     };
@@ -352,10 +376,17 @@ function AppContent() {
   }, [tournamentWinner, sortedPairs]);
 
   return (
-    <div className={`App${currentView === "public" ? " App--public-full-width" : ""}`}>
+    <div
+      className={`App${
+        currentView === "public" || currentView === "public-americano"
+          ? " App--public-full-width"
+          : ""
+      }`}
+    >
       <ProtectedRoute>
         {/* Solo mostrar UserHeader cuando NO estemos en vista pública NI en admin */}
         {currentView !== "public" &&
+          currentView !== "public-americano" &&
           currentView !== "admin-login" &&
           currentView !== "admin-dashboard" && <UserHeader />}
 
@@ -421,6 +452,10 @@ function AppContent() {
 
         {currentView === "public" && publicTournamentId && (
           <PublicTournamentView tournamentId={publicTournamentId} />
+        )}
+
+        {currentView === "public-americano" && publicAmericanoTournamentId && (
+          <PublicAmericanoView tournamentId={publicAmericanoTournamentId} />
         )}
 
         {currentView === "auth-callback" && (

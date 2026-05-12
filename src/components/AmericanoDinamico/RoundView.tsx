@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
+import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import "./RoundView.css";
 
 export interface RoundScorePayload {
@@ -10,6 +11,8 @@ export interface RoundScorePayload {
 
 interface RoundViewProps {
   round: AmericanoRound;
+  /** Total de rondas del torneo (para mostrar "Final" en la última). */
+  totalRounds?: number;
   onCommitRound: (scores: RoundScorePayload[]) => void;
   onRoundFinalized: () => void;
 }
@@ -67,6 +70,7 @@ function draftsDifferFromCommitted(
 
 export const RoundView: React.FC<RoundViewProps> = ({
   round,
+  totalRounds = 0,
   onCommitRound,
   onRoundFinalized,
 }) => {
@@ -107,7 +111,12 @@ export const RoundView: React.FC<RoundViewProps> = ({
       <header className="americano-round__header">
         <div>
           <h3>Ronda {round.roundNumber}</h3>
-          <span className="americano-round__phase">Fase {round.phase}</span>
+          <span
+            className="americano-round__phase"
+            title="Primera mitad: emparejamientos aleatorios evitando repetir compañero. Segunda mitad: por games acumulados (1º+2º vs 3º+4º). La última ronda se muestra como Final."
+          >
+            {americanoRoundPhaseCaption(round, totalRounds)}
+          </span>
         </div>
         <p className="americano-round__hint">
           Completa los marcadores, confirma y luego usa{" "}
@@ -160,7 +169,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 }`}
               >
                 <label className="americano-match-card__score-field">
-                  <span>Puntos A</span>
+                  <span>Juegos equipo A</span>
                   <input
                     type="number"
                     min={0}
@@ -174,7 +183,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
                   />
                 </label>
                 <label className="americano-match-card__score-field">
-                  <span>Puntos B</span>
+                  <span>Juegos equipo B</span>
                   <input
                     type="number"
                     min={0}

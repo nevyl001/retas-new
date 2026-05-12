@@ -5,6 +5,17 @@
   background: var(--color-bg-surface, #181818);
 }
 
+.americano-ranking h3 {
+  margin: 0 0 8px;
+}
+
+.americano-ranking__caption {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--color-text-secondary, #b8b8b8);
+  line-height: 1.4;
+}
+
 .americano-ranking table {
   width: 100%;
   border-collapse: collapse;

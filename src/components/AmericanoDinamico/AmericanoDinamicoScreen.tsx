@@ -8,6 +8,7 @@ import {
   createPlayer,
   getPlayers,
   updateTournament,
+  upsertAmericanoLivePublic,
   type Player,
 } from "../../lib/database";
 import { useUser } from "../../contexts/UserContext";
@@ -38,6 +39,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     phase,
     ranking,
     currentRound,
+    totalRounds,
     addPlayer,
     removePlayer,
     toggleExistingPlayer,
@@ -51,7 +53,25 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     null
   );
   const finishedPersistedRef = React.useRef(false);
+  const lastLivePublishTournamentRef = React.useRef<string | null>(null);
   const effectiveUserId = userId || user?.id || null;
+
+  const publicAmericanoUrl = React.useMemo(
+    () =>
+      tournamentId && typeof window !== "undefined"
+        ? `${window.location.origin}/public/americano/${tournamentId}`
+        : "",
+    [tournamentId]
+  );
+
+  const copyPublicAmericanoLink = React.useCallback(async () => {
+    if (!publicAmericanoUrl) return;
+    try {
+      await navigator.clipboard.writeText(publicAmericanoUrl);
+    } catch {
+      window.prompt("Copia este enlace:", publicAmericanoUrl);
+    }
+  }, [publicAmericanoUrl]);
 
   React.useEffect(() => {
     if (!effectiveUserId) return;
@@ -146,25 +166,29 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     };
   }, [phase, tournamentId, onTournamentStatusChange]);
 
-  /** Guarda progreso en localStorage para poder ver la reta al volver al listado. */
+  /** localStorage + Supabase (vista pública en vivo). */
   React.useEffect(() => {
-    if (!tournamentId || phase !== "playing" || rounds.length === 0) return;
-    const t = window.setTimeout(() => {
-      saveAmericanoDinamicoSnapshot(
-        tournamentId,
-        buildAmericanoDinamicoSnapshot(ranking, rounds)
-      );
-    }, 450);
-    return () => window.clearTimeout(t);
-  }, [tournamentId, phase, rounds, ranking]);
-
-  React.useEffect(() => {
-    if (!tournamentId || phase !== "finished" || rounds.length === 0) return;
-    saveAmericanoDinamicoSnapshot(
-      tournamentId,
-      buildAmericanoDinamicoSnapshot(ranking, rounds)
+    if (!tournamentId || rounds.length === 0) return;
+    if (phase !== "playing" && phase !== "finished") return;
+    const snap = buildAmericanoDinamicoSnapshot(
+      ranking,
+      rounds,
+      phase,
+      totalRounds
     );
-  }, [tournamentId, phase, rounds, ranking]);
+    const publish = () => {
+      saveAmericanoDinamicoSnapshot(tournamentId, snap);
+      void upsertAmericanoLivePublic(tournamentId, snap);
+    };
+    const firstForThisTournament =
+      lastLivePublishTournamentRef.current !== tournamentId;
+    if (firstForThisTournament) {
+      lastLivePublishTournamentRef.current = tournamentId;
+      publish();
+    }
+    const t = window.setTimeout(publish, 250);
+    return () => window.clearTimeout(t);
+  }, [tournamentId, phase, rounds, ranking, totalRounds]);
 
   const podium = ranking.slice(0, 3);
 
@@ -201,19 +225,56 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ← Volver a Retas
           </button>
         </div>
+        {tournamentId && publicAmericanoUrl ? (
+          <section className="americano-public-link" aria-label="Enlace público">
+            <h3 className="americano-public-link__title">Vista pública en vivo</h3>
+            <p className="americano-public-link__text">
+              Comparte este enlace para que cualquiera vea en tiempo real quién juega
+              contra quién y el marcador (se actualiza solo).
+            </p>
+            <div className="americano-public-link__row">
+              <input
+                type="text"
+                readOnly
+                className="americano-public-link__input"
+                value={publicAmericanoUrl}
+                onFocus={(e) => e.target.select()}
+              />
+              <button
+                type="button"
+                className="americano-btn americano-btn--primary"
+                onClick={copyPublicAmericanoLink}
+              >
+                Copiar enlace
+              </button>
+            </div>
+            <p className="americano-public-link__hint">
+              Requiere columna <code>americano_live</code> en Supabase (archivo{" "}
+              <code>tournament-americano-public-live.sql</code> del proyecto).
+            </p>
+          </section>
+        ) : null}
         {currentRound && (
           <RoundView
             key={currentRound.roundNumber}
             round={currentRound}
+            totalRounds={totalRounds}
             onCommitRound={commitRoundScores}
             onRoundFinalized={nextRound}
           />
         )}
         <div className="americano-screen__block">
-          <LiveRanking players={ranking} />
+          <LiveRanking
+            players={ranking}
+            caption="Solo cuenta rondas ya cerradas; al cerrar la ronda actual se actualiza con esos resultados."
+          />
         </div>
         <div className="americano-screen__block">
-          <RoundHistory rounds={rounds} onEditScore={editScore} />
+          <RoundHistory
+            rounds={rounds}
+            totalRounds={totalRounds}
+            onEditScore={editScore}
+          />
         </div>
       </div>
     );
@@ -226,6 +287,27 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           ← Volver a Retas
         </button>
       </div>
+      {tournamentId && publicAmericanoUrl ? (
+        <section className="americano-public-link" aria-label="Enlace público">
+          <h3 className="americano-public-link__title">Vista pública (resultado final)</h3>
+          <div className="americano-public-link__row">
+            <input
+              type="text"
+              readOnly
+              className="americano-public-link__input"
+              value={publicAmericanoUrl}
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              type="button"
+              className="americano-btn americano-btn--primary"
+              onClick={copyPublicAmericanoLink}
+            >
+              Copiar enlace
+            </button>
+          </div>
+        </section>
+      ) : null}
       <p className="americano-screen__finished">Torneo finalizado</p>
       {podium.length > 0 && (
         <section className="americano-podium">
@@ -254,7 +336,11 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       )}
       <LiveRanking players={ranking} />
       <div className="americano-screen__block">
-        <RoundHistory rounds={rounds} onEditScore={editScore} />
+        <RoundHistory
+          rounds={rounds}
+          totalRounds={totalRounds}
+          onEditScore={editScore}
+        />
       </div>
     </div>
   );

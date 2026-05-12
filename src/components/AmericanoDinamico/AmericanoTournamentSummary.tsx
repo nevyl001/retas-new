@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { AmericanoDinamicoSnapshotV1 } from "../../lib/americanoDinamicoStorage";
+import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import "./AmericanoTournamentSummary.css";
 
 interface AmericanoTournamentSummaryProps {
@@ -11,6 +12,12 @@ export const AmericanoTournamentSummary: React.FC<
 > = ({ snapshot }) => {
   const [openRound, setOpenRound] = useState<number | null>(null);
   const podium = snapshot.ranking.slice(0, 3);
+  const totalForPhaseLabels =
+    snapshot.totalRounds != null && snapshot.totalRounds > 0
+      ? snapshot.totalRounds
+      : snapshot.tournamentPhase === "finished" && snapshot.rounds.length > 0
+        ? Math.max(...snapshot.rounds.map((r) => r.roundNumber))
+        : 0;
 
   return (
     <section className="americano-summary" aria-label="Resultados Americano Dinámico">
@@ -92,7 +99,8 @@ export const AmericanoTournamentSummary: React.FC<
                   )
                 }
               >
-                Ronda {round.roundNumber} · Fase {round.phase}
+                Ronda {round.roundNumber} ·{" "}
+                {americanoRoundPhaseCaption(round, totalForPhaseLabels)}
                 {round.benchPlayers.length > 0 && (
                   <span className="americano-summary__bench">
                     {" "}

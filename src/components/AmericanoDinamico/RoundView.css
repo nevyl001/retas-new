@@ -16,11 +16,13 @@
 .americano-round__phase {
   display: inline-block;
   font-size: 13px;
-  padding: 2px 8px;
+  padding: 4px 10px;
   border-radius: 6px;
   background: rgba(255, 214, 0, 0.12);
   color: #ffd600;
   border: 1px solid rgba(255, 214, 0, 0.35);
+  line-height: 1.25;
+  max-width: 100%;
 }
 
 .americano-round__hint {

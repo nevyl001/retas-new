@@ -28,14 +28,23 @@ export interface AmericanoSnapshotMatch {
 
 export interface AmericanoSnapshotRound {
   roundNumber: number;
-  phase: 1 | 2 | 3;
+  phase: 1 | 2;
   benchPlayers: AmericanoSnapshotPlayer[];
   matches: AmericanoSnapshotMatch[];
 }
 
+export type AmericanoSnapshotTournamentPhase =
+  | "registration"
+  | "playing"
+  | "finished";
+
 export interface AmericanoDinamicoSnapshotV1 {
   version: 1;
   savedAt: string;
+  /** Fase al guardar; la vista pública usa `finished` para podio y mensaje. */
+  tournamentPhase?: AmericanoSnapshotTournamentPhase;
+  /** Total de rondas planificado (para etiqueta "Final" en la última). */
+  totalRounds?: number;
   ranking: AmericanoSnapshotPlayer[];
   rounds: AmericanoSnapshotRound[];
 }
@@ -91,14 +100,18 @@ function miniPlayer(p: AmericanoPlayer): AmericanoSnapshotPlayer {
   };
 }
 
-/** Serializa ranking y rondas actuales del hook Americano Dinámico. */
+/** Serializa ranking y rondas del Americano Dinámico (incluye fase para vista pública). */
 export function buildAmericanoDinamicoSnapshot(
   ranking: AmericanoPlayer[],
-  rounds: AmericanoRound[]
+  rounds: AmericanoRound[],
+  tournamentPhase: AmericanoSnapshotTournamentPhase,
+  totalRounds: number
 ): AmericanoDinamicoSnapshotV1 {
   return {
     version: 1,
     savedAt: new Date().toISOString(),
+    tournamentPhase,
+    totalRounds: totalRounds > 0 ? totalRounds : undefined,
     ranking: ranking.map(miniPlayer),
     rounds: rounds.map((r) => ({
       roundNumber: r.roundNumber,
