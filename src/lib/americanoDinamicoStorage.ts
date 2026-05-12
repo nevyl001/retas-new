@@ -51,18 +51,21 @@ export interface AmericanoDinamicoSnapshotV1 {
 
 export function saveAmericanoDinamicoSnapshot(
   tournamentId: string,
-  snapshot: AmericanoDinamicoSnapshotV1
+  snapshot: AmericanoDinamicoSnapshotV1,
+  opts?: { skipDispatch?: boolean }
 ): void {
   try {
     localStorage.setItem(
       `${STORAGE_KEY_PREFIX}${tournamentId}`,
       JSON.stringify(snapshot)
     );
-    window.dispatchEvent(
-      new CustomEvent("americano-dinamico-snapshot", {
-        detail: { tournamentId },
-      })
-    );
+    if (!opts?.skipDispatch) {
+      window.dispatchEvent(
+        new CustomEvent("americano-dinamico-snapshot", {
+          detail: { tournamentId },
+        })
+      );
+    }
   } catch (e) {
     console.warn("No se pudo guardar snapshot Americano:", e);
   }

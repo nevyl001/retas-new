@@ -843,6 +843,26 @@
   flex: 1 1 0%;
 }
 
+.tournament-details__americano-wait,
+.tournament-details__americano-miss {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.tournament-details__americano-miss code {
+  font-size: 0.85em;
+}
+
+.tournament-details__americano-link {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
 .reta-management-section {
   background: var(--color-bg-surface);
   border-radius: var(--radius-lg);

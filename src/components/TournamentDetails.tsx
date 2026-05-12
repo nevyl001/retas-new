@@ -14,6 +14,7 @@ import PairsDisplay from "./PairsDisplay";
 import MatchesSection from "./MatchesSection";
 import {
   loadAmericanoDinamicoSnapshot,
+  saveAmericanoDinamicoSnapshot,
   type AmericanoDinamicoSnapshotV1,
 } from "../lib/americanoDinamicoStorage";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
@@ -96,8 +97,15 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 }) => {
   const [americanoSnapshot, setAmericanoSnapshot] =
     React.useState<AmericanoDinamicoSnapshotV1 | null>(null);
+  const [americanoRemoteLoading, setAmericanoRemoteLoading] =
+    React.useState(false);
 
-  /** localStorage (mismo navegador) + Supabase `americano_live` para ver el resumen en cualquier dispositivo. */
+  const isAmericanoShell =
+    selectedTournament.is_started &&
+    pairs.length === 0 &&
+    matches.length === 0;
+
+  /** localStorage + Supabase `americano_live` (cache local al traer remoto). */
   const refreshAmericanoSnapshot = React.useCallback(async () => {
     if (!selectedTournament?.id) {
       setAmericanoSnapshot(null);
@@ -105,34 +113,47 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
     }
     const id = selectedTournament.id;
     const local = loadAmericanoDinamicoSnapshot(id);
+    let chosen: AmericanoDinamicoSnapshotV1 | null = local;
     try {
       const remote = await fetchAmericanoLivePublic(id);
       if (remote.status === "ok") {
         const r = remote.snapshot;
         if (!local) {
-          setAmericanoSnapshot(r);
-          return;
+          chosen = r;
+        } else {
+          const tLocal = new Date(local.savedAt).getTime();
+          const tRemote = new Date(r.savedAt).getTime();
+          chosen =
+            !Number.isNaN(tRemote) && tRemote >= tLocal ? r : local;
         }
-        const tLocal = new Date(local.savedAt).getTime();
-        const tRemote = new Date(r.savedAt).getTime();
-        setAmericanoSnapshot(
-          !Number.isNaN(tRemote) && tRemote >= tLocal ? r : local
-        );
-        return;
+        if (chosen) {
+          saveAmericanoDinamicoSnapshot(id, chosen, { skipDispatch: true });
+        }
       }
     } catch {
-      /* red o Supabase: seguimos con local si existe */
+      /* red o Supabase */
     }
-    setAmericanoSnapshot(local);
+    setAmericanoSnapshot(chosen);
   }, [selectedTournament?.id]);
 
   React.useEffect(() => {
-    void refreshAmericanoSnapshot();
+    let cancelled = false;
+    const run = async () => {
+      setAmericanoRemoteLoading(isAmericanoShell);
+      await refreshAmericanoSnapshot();
+      if (!cancelled) setAmericanoRemoteLoading(false);
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
   }, [
     refreshAmericanoSnapshot,
+    isAmericanoShell,
     forceRefresh,
     selectedTournament.is_finished,
     selectedTournament.updated_at,
+    selectedTournament.id,
   ]);
 
   React.useEffect(() => {
@@ -189,15 +210,49 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       />
 
       {/* Americano dinámico no usa parejas/partidos clásicos en BD; evitar UI vacía engañosa */}
-      {!americanoSnapshot && (
+      {!americanoSnapshot && !(isAmericanoShell && americanoRemoteLoading) && (
         <PairsDisplay pairs={pairs} pairStats={pairStats} />
+      )}
+
+      {isAmericanoShell && americanoRemoteLoading && (
+        <div className="tournament-details__americano-wait">
+          Cargando resultados del Americano…
+        </div>
       )}
 
       {americanoSnapshot && (
         <AmericanoTournamentSummary snapshot={americanoSnapshot} />
       )}
 
-      {!americanoSnapshot && (
+      {isAmericanoShell &&
+        !americanoRemoteLoading &&
+        !americanoSnapshot && (
+          <div className="tournament-details__americano-miss">
+            <p>
+              <strong>No hay snapshot de Americano dinámico</strong> para esta
+              reta en este navegador ni en la nube.
+            </p>
+            <p>
+              Abre el torneo en <strong>Americano dinámico</strong> unos segundos
+              (con la sesión del organizador) para que se guarde en Supabase, o
+              ejecuta en Supabase el SQL{" "}
+              <code>tournament-americano-public-live.sql</code> si falta la
+              columna <code>americano_live</code>.
+            </p>
+            <p>
+              <a
+                className="tournament-details__americano-link"
+                href={`/americano-dinamico?tournamentId=${encodeURIComponent(
+                  selectedTournament.id
+                )}`}
+              >
+                Abrir Americano dinámico
+              </a>
+            </p>
+          </div>
+        )}
+
+      {!americanoSnapshot && !(isAmericanoShell && americanoRemoteLoading) && (
         <MatchesSection
           tournament={selectedTournament}
           matches={matches}
