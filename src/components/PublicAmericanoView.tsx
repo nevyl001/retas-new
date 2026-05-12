@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   fetchAmericanoLivePublic,
-  getTournamentById,
+  getTournamentByIdPublic,
   type FetchAmericanoLivePublicResult,
 } from "../lib/database";
 import type {
@@ -63,7 +63,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       setLoadError(null);
       const [remote, tournament] = await Promise.all([
         fetchAmericanoLivePublic(tournamentId),
-        getTournamentById(tournamentId).catch(() => null),
+        getTournamentByIdPublic(tournamentId).catch(() => null),
       ]);
 
       const merged = applyFetchResult(lastMergedFetchRef.current, remote);
@@ -75,7 +75,12 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       } else if (merged.status === "ok") {
         // Mantener último snapshot válido ante respuestas vacías o errores puntuales.
       } else {
-        const local = loadAmericanoDinamicoSnapshot(tournamentId);
+        let local: AmericanoDinamicoSnapshotV1 | null = null;
+        try {
+          local = loadAmericanoDinamicoSnapshot(tournamentId);
+        } catch {
+          local = null;
+        }
         if (local) {
           setSnapshot(local);
         } else {
@@ -88,7 +93,12 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(`No se pudo cargar: ${msg}`);
-      const local = loadAmericanoDinamicoSnapshot(tournamentId);
+      let local: AmericanoDinamicoSnapshotV1 | null = null;
+      try {
+        local = loadAmericanoDinamicoSnapshot(tournamentId);
+      } catch {
+        local = null;
+      }
       if (local) setSnapshot(local);
     }
   }, [tournamentId]);

@@ -30,6 +30,17 @@ import { useTournamentActions } from "./hooks/useTournamentActions";
 import { useToastNotifications } from "./hooks/useToastNotifications";
 import { useWinnerCalculation } from "./hooks/useWinnerCalculation";
 
+function parsePublicAmericanoTournamentId(pathname: string): string | null {
+  const m = pathname.match(/^\/public\/americano\/([^/?#]+)/i);
+  const raw = m?.[1];
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw).trim() || null;
+  } catch {
+    return raw.trim() || null;
+  }
+}
+
 function AppContent() {
   const { user } = useUser();
   const { isAdminLoggedIn } = useAdmin();
@@ -108,10 +119,7 @@ function AppContent() {
   const [publicAmericanoTournamentId, setPublicAmericanoTournamentId] =
     useState<string | null>(() => {
       if (typeof window === "undefined") return null;
-      const m = window.location.pathname.match(
-        /^\/public\/americano\/([^/?#]+)/i
-      );
-      return m?.[1] ?? null;
+      return parsePublicAmericanoTournamentId(window.location.pathname);
     });
   const [forceRefresh, setForceRefresh] = useState(0);
   const [, setError] = useState<string>("");
@@ -144,8 +152,9 @@ function AppContent() {
         setCurrentView("main");
       } else if (/^\/public\/americano\//i.test(currentPath)) {
         setCurrentView("public-americano");
-        const m = currentPath.match(/^\/public\/americano\/([^/?#]+)/i);
-        setPublicAmericanoTournamentId(m?.[1] ?? null);
+        setPublicAmericanoTournamentId(
+          parsePublicAmericanoTournamentId(currentPath)
+        );
         setPublicTournamentId(null);
       } else if (currentPath.startsWith("/public/")) {
         setCurrentView("public");

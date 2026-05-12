@@ -40,6 +40,23 @@ export const supabase = createClient(
   supabaseKey || "placeholder_key"
 );
 
+/**
+ * Cliente solo para lecturas públicas (vistas /public/*).
+ * No reutiliza la sesión del usuario: en Safari móvil una JWT vieja o corrupta
+ * pegada al cliente global podía hacer que `tournament_public_config` respondiera distinto que en escritorio.
+ */
+export const supabasePublicRead = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseKey || "placeholder_key",
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  }
+);
+
 // Nota: no exportar cliente con service role aquí. Esa clave no puede ir en el bundle
 // del navegador (cualquiera la extrae). Borrado en Auth: panel Supabase o Edge Function.
 

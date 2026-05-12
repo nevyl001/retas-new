@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient";
+import { supabase, supabasePublicRead } from "./supabaseClient";
 import { GLOBAL_TOURNAMENT_ID, isMissingColumnError } from "./db/schemaHelpers";
 import type {
   Game,
@@ -95,7 +95,20 @@ export const getTournaments = async (userId?: string) => {
   return data || [];
 };
 
-/** Obtiene un torneo por id (para vista pública: necesitamos format y team_config). */
+/** Lectura de torneo sin sesión (vista pública; mismo criterio que fetchAmericanoLivePublic). */
+export const getTournamentByIdPublic = async (tournamentId: string) => {
+  const tid = tournamentId.trim();
+  if (!tid) return null;
+  const { data, error } = await supabasePublicRead
+    .from("tournaments")
+    .select("*")
+    .eq("id", tid)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+};
+
+/** Obtiene un torneo por id (app con sesión: detalle de reta, edición). */
 export const getTournamentById = async (tournamentId: string) => {
   const { data, error } = await supabase
     .from("tournaments")
@@ -112,10 +125,10 @@ export const getTournamentById = async (tournamentId: string) => {
  */
 export const getTournamentPublicConfig = async (tournamentId: string): Promise<{ format: string; team_config: TournamentTeamConfig } | null> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabasePublicRead
       .from("tournament_public_config")
       .select("format, team_config")
-      .eq("tournament_id", tournamentId)
+      .eq("tournament_id", tournamentId.trim())
       .maybeSingle();
     if (error || !data) return null;
     if (data.format === "teams" && data.team_config?.teamNames?.length && data.team_config?.pairToTeam) return data as { format: string; team_config: TournamentTeamConfig };
@@ -138,13 +151,17 @@ export type FetchAmericanoLivePublicResult =
 export const fetchAmericanoLivePublic = async (
   tournamentId: string
 ): Promise<FetchAmericanoLivePublicResult> => {
+  const tid = tournamentId.trim();
+  if (!tid) {
+    return { status: "fetch_error", message: "tournamentId vacío" };
+  }
   try {
     // `select("*")` evita 400 de PostgREST si `americano_live` aún no existe en el esquema:
     // con `select("americano_live")` PostgREST valida la columna y falla aunque la fila exista.
-    const { data, error } = await supabase
+    const { data, error } = await supabasePublicRead
       .from("tournament_public_config")
       .select("*")
-      .eq("tournament_id", tournamentId)
+      .eq("tournament_id", tid)
       .maybeSingle();
     if (error) {
       if (
