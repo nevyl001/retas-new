@@ -222,13 +222,35 @@
 
 .public-round-title {
   font-size: 1.5rem;
-  color: var(--color-accent);
   font-weight: var(--font-weight-bold);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   margin: var(--space-xs) 0 var(--space-sm) 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35em 0.5em;
+  text-align: center;
+  max-width: 100%;
+}
+
+.public-round-title-round {
+  color: var(--color-accent);
   filter: drop-shadow(0 0 6px var(--color-accent-subtle));
-  display: block;
+}
+
+.public-round-title-sep {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium, 500);
+  opacity: 0.75;
+  user-select: none;
+}
+
+.public-round-title-reta {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold, 600);
+  letter-spacing: 0.04em;
 }
 
 

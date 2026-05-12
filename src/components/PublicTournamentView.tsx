@@ -364,7 +364,19 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           .map((round) => (
             <div key={round} className="public-round-section">
               <div className="public-round-header">
-                <h3 className="public-round-title">Ronda {round}</h3>
+                <h3 className="public-round-title">
+                  <span className="public-round-title-round">Ronda {round}</span>
+                  {publicTournamentDescription ? (
+                    <>
+                      <span className="public-round-title-sep" aria-hidden="true">
+                        ·
+                      </span>
+                      <span className="public-round-title-reta">
+                        {publicTournamentDescription}
+                      </span>
+                    </>
+                  ) : null}
+                </h3>
               </div>
 
               <div className="public-matches-grid">
