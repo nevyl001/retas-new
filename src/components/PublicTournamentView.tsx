@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import "./PublicTournamentView.css";
 import "./ModernStandingsTable.css";
-import { getMatches, getPairs, getTournamentGames, getTournamentById, getTournamentPublicConfig } from "../lib/database";
-import { Match, Pair, Game } from "../lib/database";
+import { getMatches, getPairs, getTournamentGames, getTournamentByIdPublic, getTournamentPublicConfig } from "../lib/database";
+import { Match, Pair, Game, Tournament } from "../lib/database";
 import {
   computePairsWithStats,
   computeTeamStandings,
@@ -97,6 +97,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(parseTeamConfigFromHash);
   const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
   const [publicTournamentName, setPublicTournamentName] = useState<string | null>(null);
+  const [publicTournamentDescription, setPublicTournamentDescription] = useState<
+    string | null
+  >(null);
   const configFetchOnDemandRef = useRef(false);
 
   const loadTournamentData = useCallback(async () => {
@@ -117,7 +120,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         getMatches(tournamentId),
         getPairs(tournamentId),
         getTournamentGames(tournamentId),
-        getTournamentById(tournamentId),
+        getTournamentByIdPublic(tournamentId),
       ]);
 
       const hashTeamConfig = parseTeamConfigFromHash();
@@ -134,8 +137,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ? (tournament as { name: string }).name
           : null
       );
-
-      setMatches(matchesData);
+      const t = tournament as Tournament | null | undefined;
+      const rawDesc =
+        t?.description && typeof t.description === "string"
+          ? t.description.trim()
+          : "";
+      const nameNorm = (t?.name || "").trim();
+      setPublicTournamentDescription(
+        rawDesc && rawDesc !== nameNorm ? rawDesc : null
+      );
       setPairs(pairsData);
       setGames(gamesData || []);
       setLastUpdate(new Date());
@@ -333,6 +343,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           <h1 className="public-title public-title--riviera-public">
             {publicTournamentName || "Resultados en tiempo real"}
           </h1>
+          {publicTournamentDescription && (
+            <p className="public-reta-detail">{publicTournamentDescription}</p>
+          )}
           <p className="public-subtitle public-subtitle--riviera">
             {RIVIERA_PUBLIC_DESCRIPTION}
           </p>
