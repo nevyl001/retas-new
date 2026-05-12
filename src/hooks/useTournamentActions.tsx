@@ -92,7 +92,7 @@ export const useTournamentActions = (
         if (teamConfigPayload) {
           try {
             localStorage.setItem(
-              `retapadel_teams_${selectedTournament.id}`,
+              `rivieraapp_teams_${selectedTournament.id}`,
               JSON.stringify({ teamNames: teamConfigPayload.team_config.teamNames, pairToTeam: teamConfigPayload.team_config.pairToTeam })
             );
           } catch (e) {

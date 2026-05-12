@@ -65,7 +65,7 @@ export const UserHeader: React.FC = () => {
 
         <div className="user-header-main">
           <div className="user-header-logo">
-            <h1>Retas de Pádel</h1>
+            <h1>RivieraApp</h1>
           </div>
 
           <div className="user-header-actions">

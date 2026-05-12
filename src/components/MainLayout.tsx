@@ -94,7 +94,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="container">
       <div className="header-section">
-        <h1>Gestor de Retas de Pádel</h1>
+        <h1>RivieraApp</h1>
+        <p className="header-tagline">Retas y torneos de pádel</p>
         <div className="header-instructions">
           <div className="instruction-step">
             <span className="instruction-number">1</span>

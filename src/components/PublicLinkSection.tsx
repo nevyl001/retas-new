@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect } from "react";
 import { Tournament, upsertTournamentPublicConfig } from "../lib/database";
 
-const TEAM_CONFIG_KEY = "retapadel_teams_";
+const TEAM_CONFIG_KEY = "rivieraapp_teams_";
 
 function getTeamConfig(tournament: Tournament): { teamNames: string[]; pairToTeam: Record<string, number> } | null {
   if (tournament.format === "teams" && tournament.team_config?.teamNames?.length && tournament.team_config?.pairToTeam)

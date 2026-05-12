@@ -265,7 +265,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       <div className="americano-screen">
         <div className="americano-screen__header">
           <button className="americano-back-btn" onClick={goBackToRetas}>
-            ← Volver a Retas
+            ← Volver al inicio
           </button>
         </div>
         {playersLoadError && (
@@ -290,7 +290,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       <div className="americano-screen">
         <div className="americano-screen__header">
           <button className="americano-back-btn" onClick={goBackToRetas}>
-            ← Volver a Retas
+            ← Volver al inicio
           </button>
         </div>
         {resolvedTournamentId && publicAmericanoUrl ? (
@@ -352,7 +352,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     <div className="americano-screen">
       <div className="americano-screen__header">
         <button className="americano-back-btn" onClick={goBackToRetas}>
-          ← Volver a Retas
+          ← Volver al inicio
         </button>
       </div>
       {resolvedTournamentId && publicAmericanoUrl ? (

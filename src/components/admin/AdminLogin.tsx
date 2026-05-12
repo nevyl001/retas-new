@@ -143,7 +143,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
           <div className="admin-info">
             <div className="info-item">
               <span className="info-icon">🏆</span>
-              <span>Retas de Pádel</span>
+              <span>RivieraApp</span>
             </div>
             <div className="info-item">
               <span className="info-icon">🛡️</span>

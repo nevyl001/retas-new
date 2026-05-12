@@ -1,10 +1,10 @@
 # 📱 Mensaje para enviar a tus amigos
 
-## 🎾 ¡Hola! Te comparto RetaPadel
+## 🎾 ¡Hola! Te comparto RivieraApp
 
 ¡Hola! 👋
 
-Te comparto **RetaPadel**, una app para gestionar retas de pádel que hice. Es súper fácil de instalar y usar.
+Te comparto **RivieraApp**, una app para gestionar retas de pádel que hice. Es súper fácil de instalar y usar.
 
 ### 📱 **Para Android:**
 
@@ -49,7 +49,7 @@ Si tienes problemas, avísame. ¡Es súper fácil de instalar!
 ```
 ¡Hola! 👋
 
-Te comparto RetaPadel, una app para gestionar retas de pádel que hice.
+Te comparto RivieraApp, una app para gestionar retas de pádel que hice.
 
 📱 ANDROID:
 - Descomprime el ZIP
@@ -68,11 +68,11 @@ Te comparto RetaPadel, una app para gestionar retas de pádel que hice.
 ## 📝 **Mensaje para email:**
 
 ```
-Asunto: 🎾 RetaPadel - App para gestionar retas de pádel
+Asunto: 🎾 RivieraApp - App para gestionar retas de pádel
 
 Hola [Nombre],
 
-Espero que estés bien. Te comparto RetaPadel, una aplicación que desarrollé para gestionar retas de pádel de manera profesional.
+Espero que estés bien. Te comparto RivieraApp, una aplicación que desarrollé para gestionar retas de pádel de manera profesional.
 
 ¿Qué incluye el archivo ZIP?
 - Instrucciones detalladas para Android e iOS
@@ -102,7 +102,7 @@ Saludos,
 ## 📝 **Mensaje para redes sociales:**
 
 ```
-🎾 ¡Nueva app: RetaPadel!
+🎾 ¡Nueva app: RivieraApp!
 
 Gestión profesional de retas de pádel:
 ✅ Crear torneos

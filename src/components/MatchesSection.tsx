@@ -4,7 +4,7 @@ import MatchCardWithResults from "./MatchCardWithResults";
 import RealTimeStandingsTable from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
 
-const TEAM_CONFIG_KEY = "retapadel_teams_";
+const TEAM_CONFIG_KEY = "rivieraapp_teams_";
 
 function getTeamConfig(tournamentId: string): { teamNames: string[]; pairToTeam: Record<string, number> } | null {
   try {
@@ -81,6 +81,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                     key={match.id}
                     match={match}
                     pairs={pairs}
+                    maxCourts={Math.max(1, tournament.courts || 1)}
                     isSelected={false}
                     onSelect={() => {}}
                     onCorrectScore={async (match: any) => {

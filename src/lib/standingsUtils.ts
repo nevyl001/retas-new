@@ -131,7 +131,7 @@ export function computeTeamStandings(
     });
 }
 
-const TEAM_CONFIG_KEY = "retapadel_teams_";
+const TEAM_CONFIG_KEY = "rivieraapp_teams_";
 
 function isCompleteTeamConfig(
   tc: TeamConfig | TournamentTeamConfig | null | undefined

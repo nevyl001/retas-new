@@ -1,4 +1,4 @@
-# 🚀 Recomendaciones de Mejoras para RetaPadel
+# 🚀 Recomendaciones de Mejoras para RivieraApp
 
 ## 📊 Priorización
 

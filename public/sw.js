@@ -1,10 +1,10 @@
-// Service Worker para RetaPadel PWA - Versión minimalista
-const CACHE_NAME = "retapadel-v7.0.0";
+// Service Worker para RivieraApp PWA — versión minimalista
+const CACHE_NAME = "rivieraapp-v1.0.0";
 const urlsToCache = [
   "/manifest.json",
-  "/icon-192x192.png?v=3",
-  "/icon-512x512.png?v=3",
-  "/apple-touch-icon-180.png?v=3",
+  "/icon-192x192.png?v=4",
+  "/icon-512x512.png?v=4",
+  "/apple-touch-icon-180.png?v=4",
 ];
 
 // Install event - solo cachear assets estáticos

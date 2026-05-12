@@ -1,4 +1,4 @@
-# 🏆 RetaPadel - Sistema Completo de Gestión de Retas de Pádel
+# 🏆 RivieraApp — Retas y torneos de pádel
 
 Un sistema profesional para gestionar retas de pádel con persistencia de datos, autenticación multi-usuario, panel de administración y Progressive Web App (PWA) para iOS y Android.
 
@@ -50,7 +50,7 @@ Algunas frases históricas del README (por ejemplo notificaciones push u “offl
 
 - ✅ **Android**: Instalable como APK
 - ✅ **iOS**: Instalable desde Safari
-- ✅ **Nombre**: "RetaPadel"
+- ✅ **Nombre**: "RivieraApp"
 - ✅ **Icono profesional** optimizado
 - ✅ **Funciona offline**
 - ✅ **Notificaciones push**
@@ -211,7 +211,7 @@ npm start
 
 ### **Características PWA**
 
-- ✅ **Icono profesional** "RetaPadel"
+- ✅ **Icono profesional** "RivieraApp"
 - ✅ **Modo standalone** (sin barras del navegador)
 - ✅ **Funciona offline** (datos básicos)
 - ✅ **Notificaciones push**
@@ -377,4 +377,4 @@ Este proyecto está bajo la Licencia MIT.
 
 ---
 
-**¡Disfruta gestionando tus retas de pádel con RetaPadel!** 🎾🏆📱
+**¡Disfruta gestionando tus retas de pádel con RivieraApp!** 🎾🏆📱

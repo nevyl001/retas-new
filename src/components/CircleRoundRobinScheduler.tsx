@@ -161,6 +161,42 @@ export class CircleRoundRobinScheduler {
   }
 
   /**
+   * Convierte rondas lógicas del círculo (N/2 partidos simultáneos si hubiera canchas)
+   * en rondas de tiempo consecutivas: en cada ronda de tiempo hay como máximo `courts`
+   * partidos en paralelo (canchas 1..courts). Así no se pierden enfrentamientos cuando
+   * hay menos canchas que partidos por ronda lógica (ej. 4 parejas, 2 partidos/ronda, 1 cancha).
+   */
+  private static packLogicalRoundsIntoTimeSlots(
+    logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>>,
+    courts: number
+  ): Array<{ pair1: Pair; pair2: Pair; round: number; court: number }> {
+    const safeCourts = Math.max(1, courts);
+    const out: Array<{
+      pair1: Pair;
+      pair2: Pair;
+      round: number;
+      court: number;
+    }> = [];
+    let timeRound = 1;
+    for (const logical of logicalRounds) {
+      for (let start = 0; start < logical.length; start += safeCourts) {
+        const chunk = logical.slice(start, start + safeCourts);
+        for (let k = 0; k < chunk.length; k++) {
+          const m = chunk[k];
+          out.push({
+            pair1: m.pair1,
+            pair2: m.pair2,
+            round: timeRound,
+            court: k + 1,
+          });
+        }
+        timeRound += 1;
+      }
+    }
+    return out;
+  }
+
+  /**
    * Implementa el algoritmo Round Robin usando el método del círculo
    * 
    * ALGORITMO CORRECTO Y ROBUSTO:
@@ -178,8 +214,8 @@ export class CircleRoundRobinScheduler {
    * - Método: Todas las parejas rotan en círculo
    * 
    * REGLAS CRÍTICAS:
-   * - Si hay suficientes canchas, TODAS las parejas juegan en cada ronda
-   * - Si no hay suficientes canchas, se generan los que caben
+   * - Si hay suficientes canchas, varios partidos de la misma ronda lógica comparten el mismo número de ronda (tiempo).
+   * - Si hay pocas canchas, la misma ronda lógica se parte en varias rondas de tiempo consecutivas.
    * - Cada pareja se enfrenta con todas las demás EXACTAMENTE UNA VEZ
    * - SIN REPETICIONES de enfrentamientos
    * - SIN rondas extra
@@ -209,73 +245,50 @@ export class CircleRoundRobinScheduler {
     const totalRounds = isOdd ? pairs.length : pairs.length - 1;
     const expectedMatches = (pairs.length * (pairs.length - 1)) / 2;
 
-    console.log(`🔄 Total rondas: ${totalRounds} (${pairs.length} parejas, ${isOdd ? 'impar' : 'par'})`);
+    console.log(
+      `🔄 Rondas lógicas del círculo: ${totalRounds} (${pairs.length} parejas, ${isOdd ? "impar" : "par"})`
+    );
     console.log(`🎯 Partidos esperados: ${expectedMatches}`);
 
     if (isOdd) {
       // ============================================
       // MÉTODO DEL CÍRCULO PARA NÚMEROS IMPARES
       // ============================================
-      // Todas las parejas rotan en círculo
-      // En cada ronda, la pareja del medio descansa
-      // Cada pareja descansa exactamente una vez
-      
       let circularPairs = [...pairs];
       console.log(`🔄 Usando método del círculo completo (números impares)`);
 
+      const logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>> = [];
+
       for (let round = 1; round <= totalRounds; round++) {
-        console.log(`\n🔄 === RONDA ${round} ===`);
+        console.log(`\n🔄 === RONDA LÓGICA ${round} ===`);
 
-        const roundMatches: Array<{
-          pair1: Pair;
-          pair2: Pair;
-          round: number;
-          court: number;
-        }> = [];
-
-        // La pareja en el medio del círculo descansa
         const restingIndex = Math.floor(circularPairs.length / 2);
         const restingPair = circularPairs[restingIndex];
-        
-        // Todas las parejas excepto la que descansa
         const playingPairs = circularPairs.filter((_, index) => index !== restingIndex);
-        
+
         console.log(`😴 Pareja que descansa: ${restingPair.player1_name}/${restingPair.player2_name}`);
         console.log(`👥 Parejas que juegan: ${playingPairs.length}`);
 
-        // Emparejar: primera con última, segunda con penúltima, etc.
-        // Para números impares: siempre hay (N-1)/2 partidos posibles
         const possibleMatches = Math.floor(playingPairs.length / 2);
-        // Si hay suficientes canchas, generar todos. Si no, solo los que caben.
-        const matchesToGenerate = Math.min(possibleMatches, courts);
-        
-        console.log(`📊 Partidos posibles: ${possibleMatches}, Canchas: ${courts}, Partidos a generar: ${matchesToGenerate}`);
-        
-        // Asignar canchas de forma secuencial
-        for (let i = 0; i < matchesToGenerate; i++) {
+        console.log(
+          `📊 Partidos en esta ronda lógica: ${possibleMatches} (canchas: ${courts}; si hay menos canchas, se reparten en varios pasos de tiempo)`
+        );
+
+        const roundPairings: Array<{ pair1: Pair; pair2: Pair }> = [];
+        for (let i = 0; i < possibleMatches; i++) {
           const pair1 = playingPairs[i];
           const pair2 = playingPairs[playingPairs.length - 1 - i];
-          const court = (i % courts) + 1;
-
-          roundMatches.push({
-            pair1,
-            pair2,
-            round,
-            court,
-          });
-
+          roundPairings.push({ pair1, pair2 });
           console.log(
-            `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
+            `  ✅ ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
           );
         }
 
-        matches.push(...roundMatches);
+        logicalRounds.push(roundPairings);
         console.log(
-          `✅ Ronda ${round}: ${roundMatches.length} partidos, ${restingPair.player1_name}/${restingPair.player2_name} descansa`
+          `✅ Ronda lógica ${round}: ${roundPairings.length} partidos, ${restingPair.player1_name}/${restingPair.player2_name} descansa`
         );
 
-        // Rotar el círculo completo una posición hacia la izquierda
-        // [A, B, C, D, E, F, G] -> [B, C, D, E, F, G, A]
         if (round < totalRounds) {
           const firstPair = circularPairs.shift();
           if (firstPair) {
@@ -284,67 +297,43 @@ export class CircleRoundRobinScheduler {
           console.log(`🔄 Círculo rotado para ronda ${round + 1}`);
         }
       }
+
+      matches.push(...this.packLogicalRoundsIntoTimeSlots(logicalRounds, courts));
     } else {
       // ============================================
       // MÉTODO DEL CÍRCULO PARA NÚMEROS PARES
       // ============================================
-      // Fijar la primera pareja, rotar las demás alrededor
-      // Todas las parejas juegan en cada ronda
-      // CRÍTICO: Solo N-1 rondas, no más
-      
       const fixedPair = pairs[0];
-      let rotatingPairs = [...pairs.slice(1)]; // Copia para no mutar el original
+      let rotatingPairs = [...pairs.slice(1)];
 
-      console.log(`🎯 Pareja fija: ${fixedPair.player1_name}/${fixedPair.player2_name}`);
+      console.log(`🎯 Pareja fija (método círculo): ${fixedPair.player1_name}/${fixedPair.player2_name}`);
       console.log(`🔄 Parejas rotantes: ${rotatingPairs.length}`);
-      console.log(`🔄 Usando método con pareja fija (números pares)`);
-      console.log(`⚠️ IMPORTANTE: Solo ${totalRounds} rondas, no más`);
+      console.log(`🔄 Número de rondas lógicas: ${totalRounds}`);
+
+      const logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>> = [];
 
       for (let round = 1; round <= totalRounds; round++) {
-        console.log(`\n🔄 === RONDA ${round} ===`);
+        console.log(`\n🔄 === RONDA LÓGICA ${round} ===`);
 
-        const roundMatches: Array<{
-          pair1: Pair;
-          pair2: Pair;
-          round: number;
-          court: number;
-        }> = [];
-
-        // Crear array con pareja fija + parejas rotantes en orden
         const roundPairs = [fixedPair, ...rotatingPairs];
-
-        // Emparejar: primera con última, segunda con penúltima, etc.
-        // Para números pares: siempre hay N/2 partidos posibles
         const possibleMatches = Math.floor(roundPairs.length / 2);
-        // Si hay suficientes canchas, generar todos. Si no, solo los que caben.
-        const matchesToGenerate = Math.min(possibleMatches, courts);
-        
-        console.log(`📊 Partidos posibles: ${possibleMatches}, Canchas: ${courts}, Partidos a generar: ${matchesToGenerate}`);
-        
-        // Asignar canchas de forma secuencial
-        for (let i = 0; i < matchesToGenerate; i++) {
+        console.log(
+          `📊 Partidos en esta ronda lógica: ${possibleMatches} (canchas: ${courts}; si hay menos canchas, se reparten en varios pasos de tiempo)`
+        );
+
+        const roundPairings: Array<{ pair1: Pair; pair2: Pair }> = [];
+        for (let i = 0; i < possibleMatches; i++) {
           const pair1 = roundPairs[i];
           const pair2 = roundPairs[roundPairs.length - 1 - i];
-          const court = (i % courts) + 1;
-
-          roundMatches.push({
-            pair1,
-            pair2,
-            round,
-            court,
-          });
-
+          roundPairings.push({ pair1, pair2 });
           console.log(
-            `  ✅ Cancha ${court}: ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
+            `  ✅ ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
           );
         }
 
-        matches.push(...roundMatches);
-        console.log(`✅ Ronda ${round}: ${roundMatches.length} partidos (todas las parejas juegan)`);
+        logicalRounds.push(roundPairings);
+        console.log(`✅ Ronda lógica ${round}: ${roundPairings.length} partidos (todas las parejas juegan en esta ronda lógica)`);
 
-        // Rotar solo las parejas rotantes (no la fija)
-        // Mover la última pareja al inicio: [B, C, D, E, F, G, H] -> [H, B, C, D, E, F, G]
-        // CRÍTICO: Solo rotar si no es la última ronda
         if (round < totalRounds) {
           const lastPair = rotatingPairs.pop();
           if (lastPair) {
@@ -352,14 +341,20 @@ export class CircleRoundRobinScheduler {
           }
           console.log(`🔄 Parejas rotantes rotadas para ronda ${round + 1}`);
         } else {
-          console.log(`🛑 Última ronda alcanzada, no rotar más`);
+          console.log(`🛑 Última ronda lógica alcanzada, no rotar más`);
         }
       }
+
+      matches.push(...this.packLogicalRoundsIntoTimeSlots(logicalRounds, courts));
     }
 
     console.log(`\n🎯 === DISTRIBUCIÓN COMPLETADA ===`);
     console.log(`📊 Total partidos generados: ${matches.length}`);
-    console.log(`🔄 Total rondas: ${totalRounds}`);
+    const maxTimeRound =
+      matches.length > 0 ? Math.max(...matches.map((m) => m.round)) : 0;
+    console.log(
+      `🔄 Rondas de tiempo (≤${courts} partido(s) simultáneo(s) por paso): ${maxTimeRound}`
+    );
     console.log(`🎯 Partidos esperados: ${expectedMatches}`);
     
     if (matches.length !== expectedMatches) {
@@ -532,58 +527,30 @@ export class CircleRoundRobinScheduler {
       }
     }
 
-    // Verificar que cada pareja descansa exactamente una vez (solo para números impares)
-    if (pairs.length % 2 === 1) {
-      console.log(`\n😴 === VERIFICACIÓN DE PAREJAS QUE DESCANSAN ===`);
-      const pairsRestingCount: { [pairId: string]: number } = {};
-
-      // Inicializar contador para cada pareja
-      pairs.forEach((pair) => {
-        pairsRestingCount[pair.id] = 0;
-      });
-
-      // Para cada ronda, identificar qué pareja descansa
-      const totalRounds = pairs.length;
-      for (let round = 1; round <= totalRounds; round++) {
-        const roundMatches = matchesByRound[round] || [];
-        const playingPairIds = new Set<string>();
-        
-        roundMatches.forEach((match) => {
-          playingPairIds.add(match.pair1.id);
-          playingPairIds.add(match.pair2.id);
-        });
-
-        // Encontrar la pareja que descansa (la que no está jugando)
-        const restingPair = pairs.find((pair) => !playingPairIds.has(pair.id));
-        
-        if (restingPair) {
-          pairsRestingCount[restingPair.id] = (pairsRestingCount[restingPair.id] || 0) + 1;
-          console.log(`  Ronda ${round}: ${restingPair.player1_name}/${restingPair.player2_name} descansa`);
-        } else {
-          console.error(`  ❌ Ronda ${round}: No se encontró pareja que descansa`);
-          allCorrect = false;
-        }
+    // Round robin: cada pareja disputa exactamente (n - 1) partidos
+    console.log(`\n📊 === PARTIDOS POR PAREJA (esperado: ${pairs.length - 1} c/u) ===`);
+    const playedCount: { [pairId: string]: number } = {};
+    pairs.forEach((p) => {
+      playedCount[p.id] = 0;
+    });
+    matches.forEach((m) => {
+      playedCount[m.pair1.id] = (playedCount[m.pair1.id] || 0) + 1;
+      playedCount[m.pair2.id] = (playedCount[m.pair2.id] || 0) + 1;
+    });
+    const expectedGamesPerPair = pairs.length - 1;
+    pairs.forEach((pair) => {
+      const c = playedCount[pair.id] || 0;
+      if (c !== expectedGamesPerPair) {
+        console.error(
+          `❌ ERROR: Pareja ${pair.player1_name}/${pair.player2_name} jugó ${c} partidos (esperado ${expectedGamesPerPair})`
+        );
+        allCorrect = false;
+      } else {
+        console.log(
+          `  ✅ ${pair.player1_name}/${pair.player2_name}: ${c} partidos`
+        );
       }
-
-      // Verificar que cada pareja descansa exactamente una vez
-      let restingCorrect = true;
-      pairs.forEach((pair) => {
-        const restCount = pairsRestingCount[pair.id] || 0;
-        if (restCount !== 1) {
-          console.error(
-            `❌ ERROR: Pareja ${pair.player1_name}/${pair.player2_name} descansa ${restCount} veces (debería ser 1)`
-          );
-          restingCorrect = false;
-          allCorrect = false;
-        } else {
-          console.log(`  ✅ ${pair.player1_name}/${pair.player2_name} descansa exactamente 1 vez`);
-        }
-      });
-
-      if (restingCorrect) {
-        console.log(`✅ Todas las parejas descansan exactamente una vez`);
-      }
-    }
+    });
 
     // Resultado final de la verificación
     if (allCorrect) {

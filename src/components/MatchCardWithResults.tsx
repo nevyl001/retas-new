@@ -12,6 +12,8 @@ import { MatchResultCalculator } from "./MatchResultCalculator";
 interface MatchCardWithResultsProps {
   match: Match;
   pairs: Pair[]; // Agregado: recibir pairs como prop para evitar cargas redundantes
+  /** Límite superior de número de cancha (canchas configuradas en la reta). */
+  maxCourts?: number;
   isSelected: boolean;
   onSelect: (matchId: string) => void;
   onCorrectScore: (match: Match) => void;
@@ -21,7 +23,8 @@ interface MatchCardWithResultsProps {
 
 const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   match,
-  pairs, // Agregado
+  pairs,
+  maxCourts = 12,
   isSelected,
   onSelect,
   onCorrectScore,
@@ -37,6 +40,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [pair1Score, setPair1Score] = useState("");
   const [pair2Score, setPair2Score] = useState("");
+  const [courtInput, setCourtInput] = useState("");
+  const [roundInput, setRoundInput] = useState("");
   const isUpdatingRef = useRef(false); // Prevenir múltiples actualizaciones simultáneas
 
   // Función optimizada para recargar datos locales SIN múltiples actualizaciones
@@ -127,6 +132,36 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         type: "tie",
         icon: "🤝",
       };
+    }
+  };
+
+  const saveCourtAndRound = async () => {
+    if (!currentMatch) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      const parsedCourt = parseInt(courtInput, 10);
+      const parsedRound = parseInt(roundInput, 10);
+      if (Number.isNaN(parsedCourt) || Number.isNaN(parsedRound)) {
+        setError("Cancha y ronda deben ser números válidos");
+        setLoading(false);
+        return;
+      }
+      const court = Math.min(maxCourts, Math.max(1, parsedCourt));
+      const round = Math.min(999, Math.max(1, parsedRound));
+      const updated = await updateMatch(currentMatch.id, { court, round });
+      setCurrentMatch(updated);
+      setCourtInput(String(court));
+      setRoundInput(String(round));
+      if (onCorrectScore) {
+        onCorrectScore(updated);
+      }
+    } catch (err) {
+      console.error("❌ Error guardando cancha/ronda:", err);
+      setError("No se pudo guardar cancha ni ronda");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -330,7 +365,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         match.id !== currentMatch.id || 
         match.status !== currentMatch.status ||
         match.pair1_score !== currentMatch.pair1_score ||
-        match.pair2_score !== currentMatch.pair2_score)) {
+        match.pair2_score !== currentMatch.pair2_score ||
+        match.court !== currentMatch.court ||
+        (match.round ?? 1) !== (currentMatch.round ?? 1))) {
       setCurrentMatch(match);
       
       // Si el status cambió a finished, cerrar el editor
@@ -359,6 +396,15 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       }
     }
   }, [match, pairs, currentMatch, isEditing]); // Incluir todas las dependencias
+
+  useEffect(() => {
+    if (isEditing && currentMatch) {
+      setCourtInput(
+        String(Math.min(maxCourts, Math.max(1, currentMatch.court ?? 1)))
+      );
+      setRoundInput(String(Math.max(1, currentMatch.round ?? 1)));
+    }
+  }, [isEditing, currentMatch, maxCourts]);
 
   if (loading) {
     return (
@@ -453,6 +499,60 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       {isEditing && (
         <div className="modern-match-editor">
           <div className="modern-editor-content">
+            <div className="modern-match-meta-editor">
+              <h6 className="modern-add-game-title">🏟️ Cancha y ronda</h6>
+              <p className="modern-meta-hint">
+                Cambia en qué cancha y en qué ronda aparece este partido (útil para
+                reorganizar torneos).
+              </p>
+              <div className="modern-meta-inputs">
+                <div className="modern-score-input-group">
+                  <label className="modern-score-label">
+                    Cancha (1–{maxCourts})
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={maxCourts}
+                    value={courtInput}
+                    onChange={(e) => setCourtInput(e.target.value)}
+                    className="modern-score-input"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+                <div className="modern-score-input-group">
+                  <label className="modern-score-label">Ronda</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={roundInput}
+                    onChange={(e) => setRoundInput(e.target.value)}
+                    className="modern-score-input"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  saveCourtAndRound();
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  saveCourtAndRound();
+                }}
+                className="modern-add-game-btn"
+                disabled={loading}
+              >
+                💾 Guardar cancha y ronda
+              </button>
+            </div>
+
             {/* Registrar Resultado */}
             <div className="modern-add-game-section">
               <h6 className="modern-add-game-title">📝 Registrar Resultado</h6>
@@ -633,6 +733,9 @@ export default React.memo(MatchCardWithResults, (prevProps, nextProps) => {
     prevProps.match.status === nextProps.match.status &&
     prevProps.match.pair1_score === nextProps.match.pair1_score &&
     prevProps.match.pair2_score === nextProps.match.pair2_score &&
+    prevProps.match.court === nextProps.match.court &&
+    (prevProps.match.round ?? 1) === (nextProps.match.round ?? 1) &&
+    prevProps.maxCourts === nextProps.maxCourts &&
     prevProps.forceRefresh === nextProps.forceRefresh &&
     prevProps.pairs.length === nextProps.pairs.length &&
     prevProps.pairs.every((p, i) => p.id === nextProps.pairs[i]?.id)

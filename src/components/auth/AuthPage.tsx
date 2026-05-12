@@ -17,15 +17,15 @@ export const AuthPage: React.FC = () => {
       <div className="auth-layout">
         <div className="auth-hero">
           <div className="auth-logo">
-            <h1>🏆 Retas de Pádel</h1>
+            <h1>🏆 RivieraApp</h1>
             <p className="hero-subtitle">
-              Gestiona tus retas de pádel de forma profesional
+              Retas y torneos de pádel, organizados en un solo lugar
             </p>
           </div>
 
           <div className="hero-content">
             <h2 className="hero-title">
-              ¡Únete a la mejor plataforma de retas de pádel!
+              ¡Únete a RivieraApp!
             </h2>
 
             <div className="features-list">
