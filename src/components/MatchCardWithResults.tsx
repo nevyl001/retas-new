@@ -43,6 +43,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const [courtInput, setCourtInput] = useState("");
   const [roundInput, setRoundInput] = useState("");
   const [metaSaving, setMetaSaving] = useState(false);
+  const [isEditingMeta, setIsEditingMeta] = useState(false);
   const isUpdatingRef = useRef(false); // Prevenir múltiples actualizaciones simultáneas
 
   // Función optimizada para recargar datos locales SIN múltiples actualizaciones
@@ -158,6 +159,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       if (onCorrectScore) {
         onCorrectScore(updated);
       }
+      setIsEditingMeta(false);
     } catch (err) {
       console.error("❌ Error guardando cancha/ronda:", err);
       setError("No se pudo guardar cancha ni ronda");
@@ -165,6 +167,24 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setMetaSaving(false);
     }
   };
+
+  const openMetaEditor = useCallback(() => {
+    setCourtInput(
+      String(Math.min(maxCourts, Math.max(1, match.court ?? 1)))
+    );
+    setRoundInput(String(Math.max(1, match.round ?? 1)));
+    setError(null);
+    setIsEditingMeta(true);
+  }, [match.court, match.round, maxCourts]);
+
+  const cancelMetaEdit = useCallback(() => {
+    setCourtInput(
+      String(Math.min(maxCourts, Math.max(1, match.court ?? 1)))
+    );
+    setRoundInput(String(Math.max(1, match.round ?? 1)));
+    setIsEditingMeta(false);
+    setError(null);
+  }, [match.court, match.round, maxCourts]);
 
   // Agregar juego - OPTIMIZADO: una sola actualización al final
   const addGame = async () => {
@@ -399,11 +419,12 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   }, [match, pairs, currentMatch, isEditing]); // Incluir todas las dependencias
 
   useEffect(() => {
+    if (isEditingMeta) return;
     setCourtInput(
       String(Math.min(maxCourts, Math.max(1, match.court ?? 1)))
     );
     setRoundInput(String(Math.max(1, match.round ?? 1)));
-  }, [match.id, match.court, match.round, maxCourts]);
+  }, [match.id, match.court, match.round, maxCourts, isEditingMeta]);
 
   if (loading) {
     return (
@@ -439,62 +460,110 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </div>
       </div>
 
-      {/* Información */}
-      <div className="modern-match-badges">
-        <span className="modern-match-badge">
-          <span className="modern-badge-icon">🏟️</span>
-          Cancha {currentMatch.court}
-        </span>
-        <span className="modern-match-badge">
-          <span className="modern-badge-icon">🔄</span>
-          Ronda {currentMatch.round || 1}
-        </span>
+      <div
+        className="modern-match-badges-row"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modern-match-badges">
+          <span className="modern-match-badge">
+            <span className="modern-badge-icon">🏟️</span>
+            Cancha {currentMatch.court}
+          </span>
+          <span className="modern-match-badge">
+            <span className="modern-badge-icon">🔄</span>
+            Ronda {currentMatch.round || 1}
+          </span>
+        </div>
+        {!isEditingMeta ? (
+          <button
+            type="button"
+            className="modern-meta-pencil-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              openMetaEditor();
+            }}
+            title="Editar cancha y ronda"
+            aria-label="Editar cancha y ronda"
+            disabled={loading || metaSaving}
+          >
+            ✏️
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="modern-meta-pencil-btn modern-meta-pencil-btn--close"
+            onClick={(e) => {
+              e.stopPropagation();
+              cancelMetaEdit();
+            }}
+            title="Cerrar sin guardar"
+            aria-label="Cerrar edición de cancha y ronda"
+            disabled={metaSaving}
+          >
+            ✕
+          </button>
+        )}
       </div>
 
-      <div
-        className="modern-match-meta-inline"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
-        <div className="modern-meta-inline-fields">
-          <label className="modern-meta-inline-label">
-            <span>Cancha</span>
-            <input
-              type="number"
-              min={1}
-              max={maxCourts}
-              value={courtInput}
-              onChange={(e) => setCourtInput(e.target.value)}
-              className="modern-meta-inline-input"
-              aria-label="Número de cancha"
-            />
-          </label>
-          <label className="modern-meta-inline-label">
-            <span>Ronda</span>
-            <input
-              type="number"
-              min={1}
-              max={999}
-              value={roundInput}
-              onChange={(e) => setRoundInput(e.target.value)}
-              className="modern-meta-inline-input"
-              aria-label="Número de ronda"
-            />
-          </label>
-        </div>
-        <button
-          type="button"
-          className="modern-meta-inline-save"
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            saveCourtAndRound();
-          }}
-          disabled={metaSaving || loading}
+      {isEditingMeta && (
+        <div
+          className="modern-match-meta-inline"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
         >
-          {metaSaving ? "⏳…" : "💾 Guardar"}
-        </button>
-      </div>
+          <div className="modern-meta-inline-fields">
+            <label className="modern-meta-inline-label">
+              <span>Cancha</span>
+              <input
+                type="number"
+                min={1}
+                max={maxCourts}
+                value={courtInput}
+                onChange={(e) => setCourtInput(e.target.value)}
+                className="modern-meta-inline-input"
+                aria-label="Número de cancha"
+              />
+            </label>
+            <label className="modern-meta-inline-label">
+              <span>Ronda</span>
+              <input
+                type="number"
+                min={1}
+                max={999}
+                value={roundInput}
+                onChange={(e) => setRoundInput(e.target.value)}
+                className="modern-meta-inline-input"
+                aria-label="Número de ronda"
+              />
+            </label>
+          </div>
+          <div className="modern-meta-inline-actions">
+            <button
+              type="button"
+              className="modern-meta-inline-save"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                saveCourtAndRound();
+              }}
+              disabled={metaSaving || loading}
+            >
+              {metaSaving ? "⏳…" : "💾 Guardar"}
+            </button>
+            <button
+              type="button"
+              className="modern-meta-inline-cancel"
+              onClick={(e) => {
+                e.stopPropagation();
+                cancelMetaEdit();
+              }}
+              disabled={metaSaving}
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Parejas */}
       <div className="modern-match-pairs">

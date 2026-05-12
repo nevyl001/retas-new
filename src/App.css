@@ -1104,11 +1104,56 @@
   opacity: 0.6;
 }
 
-.modern-match-meta-inline {
+.modern-match-badges-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.modern-match-badges-row .modern-match-badges {
+  margin-bottom: 0;
+}
+
+.modern-meta-pencil-btn {
+  flex-shrink: 0;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-base);
+}
+
+.modern-meta-pencil-btn:hover:not(:disabled) {
+  border-color: var(--color-accent-border);
+  color: var(--color-accent);
+  background: var(--color-bg-hover);
+}
+
+.modern-meta-pencil-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.modern-meta-pencil-btn--close {
+  font-size: 0.95rem;
+}
+
+.modern-match-meta-inline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
   margin-bottom: var(--space-md);
   padding: var(--space-sm) var(--space-md);
   background: var(--color-bg-elevated);
@@ -1169,6 +1214,37 @@
 }
 
 .modern-meta-inline-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.modern-meta-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.modern-meta-inline-cancel {
+  flex-shrink: 0;
+  padding: var(--space-xs) var(--space-md);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-subtle);
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-base);
+}
+
+.modern-meta-inline-cancel:hover:not(:disabled) {
+  border-color: var(--color-border-focus);
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.modern-meta-inline-cancel:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
