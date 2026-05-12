@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -15,6 +16,11 @@ import {
   applyAmericanoResult,
   getAmericanoRanking,
 } from "../lib/americanoStandings";
+import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
+import {
+  loadAmericanoDinamicoSnapshot,
+  resolveAmericanoTournamentId,
+} from "../lib/americanoDinamicoStorage";
 
 type AmericanoPhase = "registration" | "playing" | "finished";
 
@@ -98,7 +104,41 @@ function rebuildStateFromRounds(
   return { players: rebuiltPlayers, rounds: rebuiltRounds };
 }
 
-export function useAmericanoDinamico() {
+function collectSourcePlayersFromSnapshot(
+  snap: AmericanoDinamicoSnapshotV1
+): AmericanoPlayer[] {
+  const nameById = new Map<string, string>();
+  for (const p of snap.ranking) {
+    nameById.set(p.id, p.name);
+  }
+  for (const r of snap.rounds) {
+    for (const b of r.benchPlayers) {
+      nameById.set(b.id, b.name);
+    }
+    for (const m of r.matches) {
+      for (const pl of m.teamA) nameById.set(pl.id, pl.name);
+      for (const pl of m.teamB) nameById.set(pl.id, pl.name);
+    }
+  }
+  return Array.from(nameById.entries()).map(([id, name]) => ({
+    id,
+    name,
+    stats: createEmptyStats(),
+  }));
+}
+
+function inferCourtsFromRounds(rounds: AmericanoRound[]): number {
+  let maxCourt = 1;
+  for (const r of rounds) {
+    for (const m of r.matches) {
+      maxCourt = Math.max(maxCourt, m.court);
+    }
+  }
+  return maxCourt;
+}
+
+export function useAmericanoDinamico(tournamentId?: string | null) {
+  const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
   const [players, setPlayers] = useState<AmericanoPlayer[]>([]);
   const [rounds, setRounds] = useState<AmericanoRound[]>([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
@@ -110,6 +150,100 @@ export function useAmericanoDinamico() {
   const roundsRef = useRef(rounds);
   const currentRoundIndexRef = useRef(currentRoundIndex);
   const playersRef = useRef(players);
+
+  /** useLayoutEffect: restaurar antes de useEffect (p. ej. borrador registro) para no borrar el snapshot por carrera. */
+  useLayoutEffect(() => {
+    if (!resolvedTournamentId) return;
+    const snap = loadAmericanoDinamicoSnapshot(resolvedTournamentId);
+    if (!snap) return;
+
+    if (snap.rounds.length === 0) {
+      if (
+        snap.ranking.length > 0 &&
+        snap.tournamentPhase !== "playing" &&
+        snap.tournamentPhase !== "finished"
+      ) {
+        setPlayers(
+          snap.ranking.map((p) => ({
+            id: p.id,
+            name: p.name,
+            stats: { ...createEmptyStats(), ...p.stats },
+          }))
+        );
+        setRounds([]);
+        setCurrentRoundIndex(0);
+        setPhase("registration");
+        baseRosterRef.current = [];
+        totalRoundsRef.current = 0;
+        courtsRef.current = 1;
+      }
+      return;
+    }
+
+    try {
+      const sourcePlayers = collectSourcePlayersFromSnapshot(snap);
+      const playerMap = new Map(sourcePlayers.map((p) => [p.id, p]));
+      const convertedRounds: AmericanoRound[] = snap.rounds.map((sr) => ({
+        roundNumber: sr.roundNumber,
+        phase: sr.phase,
+        benchPlayers: sr.benchPlayers
+          .map((b) => playerMap.get(b.id))
+          .filter((p): p is AmericanoPlayer => !!p),
+        matches: sr.matches.map((sm) => {
+          const a0 = playerMap.get(sm.teamA[0].id);
+          const a1 = playerMap.get(sm.teamA[1].id);
+          const b0 = playerMap.get(sm.teamB[0].id);
+          const b1 = playerMap.get(sm.teamB[1].id);
+          if (!a0 || !a1 || !b0 || !b1) {
+            throw new Error("americano_snapshot_missing_player");
+          }
+          return {
+            id: sm.id,
+            court: sm.court,
+            scoreA: sm.scoreA,
+            scoreB: sm.scoreB,
+            teamA: [a0, a1] as [AmericanoPlayer, AmericanoPlayer],
+            teamB: [b0, b1] as [AmericanoPlayer, AmericanoPlayer],
+          };
+        }),
+      }));
+
+      const { players: pl, rounds: rl } = rebuildStateFromRounds(
+        convertedRounds,
+        sourcePlayers
+      );
+
+      baseRosterRef.current = sourcePlayers.map((p) => ({
+        id: p.id,
+        name: p.name,
+        stats: createEmptyStats(),
+      }));
+
+      const maxRoundNumber = Math.max(
+        ...snap.rounds.map((r) => r.roundNumber),
+        1
+      );
+      totalRoundsRef.current =
+        snap.totalRounds && snap.totalRounds > 0
+          ? snap.totalRounds
+          : maxRoundNumber;
+
+      courtsRef.current = inferCourtsFromRounds(rl);
+
+      const restoredPhase: AmericanoPhase =
+        snap.tournamentPhase === "finished" ? "finished" : "playing";
+
+      setPlayers(pl);
+      setRounds(rl);
+      setCurrentRoundIndex(Math.max(0, rl.length - 1));
+      setPhase(restoredPhase);
+    } catch (e) {
+      console.warn(
+        "Americano dinámico: no se pudo restaurar el estado guardado.",
+        e
+      );
+    }
+  }, [resolvedTournamentId]);
 
   useEffect(() => {
     roundsRef.current = rounds;

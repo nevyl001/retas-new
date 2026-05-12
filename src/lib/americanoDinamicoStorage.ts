@@ -6,6 +6,41 @@ import type { AmericanoPlayer, AmericanoRound } from "./db/types";
 
 const STORAGE_KEY_PREFIX = "americano_dinamico_snapshot_v1_";
 
+/** sessionStorage: última reta Americano en esta pestaña (F5 si la URL pierde el query). */
+export const AMERICANO_SESSION_TOURNAMENT_KEY =
+  "americano_dinamico_last_tournament_id";
+
+export function readAmericanoTournamentIdFromSession(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = sessionStorage.getItem(AMERICANO_SESSION_TOURNAMENT_KEY);
+    return v && v.trim() ? v.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Id para persistencia: prop de App > ?tournamentId= > sessionStorage.
+ * Así no dependemos solo del padre si la URL ya trae el id.
+ */
+export function resolveAmericanoTournamentId(
+  fromProps?: string | null
+): string | null {
+  const trimmed = typeof fromProps === "string" ? fromProps.trim() : "";
+  if (trimmed) return trimmed;
+  if (typeof window === "undefined") return null;
+  try {
+    const fromQuery = new URLSearchParams(window.location.search)
+      .get("tournamentId")
+      ?.trim();
+    if (fromQuery) return fromQuery;
+    return readAmericanoTournamentIdFromSession();
+  } catch {
+    return null;
+  }
+}
+
 export interface AmericanoSnapshotPlayer {
   id: string;
   name: string;

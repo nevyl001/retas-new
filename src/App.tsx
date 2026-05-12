@@ -19,6 +19,10 @@ import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { AdminRoute } from "./components/admin/AdminRoute";
 import { testConnection } from "./lib/supabaseClient";
 import { AmericanoDinamicoScreen } from "./components/AmericanoDinamico/AmericanoDinamicoScreen";
+import {
+  AMERICANO_SESSION_TOURNAMENT_KEY,
+  readAmericanoTournamentIdFromSession,
+} from "./lib/americanoDinamicoStorage";
 
 // Types
 import { Tournament, Player, getTournamentById, upsertTournamentPublicConfig } from "./lib/database";
@@ -41,6 +45,10 @@ function parsePublicAmericanoTournamentId(pathname: string): string | null {
   }
 }
 
+function normalizeAppPathname(pathname: string): string {
+  return pathname.replace(/\/+$/, "") || "/";
+}
+
 function AppContent() {
   const { user } = useUser();
   const { isAdminLoggedIn } = useAdmin();
@@ -60,7 +68,7 @@ function AppContent() {
     | "admin-login"
     | "admin-dashboard"
   >(() => {
-    const currentPath = window.location.pathname;
+    const currentPath = normalizeAppPathname(window.location.pathname);
     console.log("🔍 Inicializando currentView basado en path:", currentPath);
 
     if (currentPath === "/auth/callback") return "auth-callback";
@@ -123,20 +131,58 @@ function AppContent() {
     });
   const [forceRefresh, setForceRefresh] = useState(0);
   const [, setError] = useState<string>("");
-  const isAmericanoRoute = window.location.pathname === "/americano-dinamico";
+  const isAmericanoRoute =
+    normalizeAppPathname(window.location.pathname) === "/americano-dinamico";
   const americanoSearchParams = new URLSearchParams(window.location.search);
   const americanoTournamentIdFromUrl = americanoSearchParams.get("tournamentId");
   const americanoUserId = americanoSearchParams.get("userId");
-  /** Si la URL no trae tournamentId, usar la reta seleccionada solo en la vista Americano (para persistir resultados). */
+  const pathLooksAmericano =
+    normalizeAppPathname(window.location.pathname) === "/americano-dinamico";
+  const americanoTournamentIdFromSession =
+    currentView === "americano-dinamico" || pathLooksAmericano
+      ? readAmericanoTournamentIdFromSession()
+      : null;
+  /** URL > sessionStorage (misma pestaña) > reta seleccionada en memoria. */
   const americanoTournamentId =
     currentView === "americano-dinamico"
-      ? americanoTournamentIdFromUrl ?? selectedTournament?.id ?? null
+      ? americanoTournamentIdFromUrl ??
+        americanoTournamentIdFromSession ??
+        selectedTournament?.id ??
+        null
       : americanoTournamentIdFromUrl;
+
+  useEffect(() => {
+    if (!americanoTournamentId || currentView !== "americano-dinamico") return;
+    try {
+      sessionStorage.setItem(
+        AMERICANO_SESSION_TOURNAMENT_KEY,
+        americanoTournamentId
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [americanoTournamentId, currentView]);
+
+  /** Si la URL perdió ?tournamentId= (p. ej. navegación manual), reescribirla para que F5 siga funcionando. */
+  useEffect(() => {
+    if (currentView !== "americano-dinamico" || !americanoTournamentId) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("tournamentId") === americanoTournamentId) return;
+    params.set("tournamentId", americanoTournamentId);
+    const uid = americanoUserId || user?.id;
+    if (uid) params.set("userId", uid);
+    const q = params.toString();
+    window.history.replaceState(
+      {},
+      "",
+      `/americano-dinamico${q ? `?${q}` : ""}`
+    );
+  }, [currentView, americanoTournamentId, americanoUserId, user?.id]);
 
   // Detectar cambios en la URL (solo para rutas específicas)
   useEffect(() => {
     const checkCurrentPath = () => {
-      const currentPath = window.location.pathname;
+      const currentPath = normalizeAppPathname(window.location.pathname);
       console.log("🔍 Current path:", currentPath);
 
       // Solo cambiar currentView para rutas específicas, NO sobrescribir

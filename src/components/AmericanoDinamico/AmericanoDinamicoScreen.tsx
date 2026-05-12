@@ -13,7 +13,11 @@ import {
 } from "../../lib/database";
 import { useUser } from "../../contexts/UserContext";
 import {
+  AMERICANO_SESSION_TOURNAMENT_KEY,
   buildAmericanoDinamicoSnapshot,
+  clearAmericanoDinamicoSnapshot,
+  loadAmericanoDinamicoSnapshot,
+  resolveAmericanoTournamentId,
   saveAmericanoDinamicoSnapshot,
 } from "../../lib/americanoDinamicoStorage";
 import "./AmericanoDinamicoScreen.css";
@@ -33,6 +37,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   onTournamentStatusChange,
 }) => {
   const { user } = useUser();
+  const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
   const {
     players,
     rounds,
@@ -47,21 +52,20 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     commitRoundScores,
     editScore,
     nextRound,
-  } = useAmericanoDinamico();
+  } = useAmericanoDinamico(tournamentId ?? null);
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
   const [playersLoadError, setPlayersLoadError] = React.useState<string | null>(
     null
   );
   const finishedPersistedRef = React.useRef(false);
-  const lastLivePublishTournamentRef = React.useRef<string | null>(null);
   const effectiveUserId = userId || user?.id || null;
 
   const publicAmericanoUrl = React.useMemo(
     () =>
-      tournamentId && typeof window !== "undefined"
-        ? `${window.location.origin}/public/americano/${tournamentId}`
+      resolvedTournamentId && typeof window !== "undefined"
+        ? `${window.location.origin}/public/americano/${resolvedTournamentId}`
         : "",
-    [tournamentId]
+    [resolvedTournamentId]
   );
 
   const copyPublicAmericanoLink = React.useCallback(async () => {
@@ -79,7 +83,10 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     (async () => {
       try {
         setPlayersLoadError(null);
-        const data = await getPlayers(effectiveUserId, tournamentId || undefined);
+        const data = await getPlayers(
+          effectiveUserId,
+          resolvedTournamentId || undefined
+        );
         if (!cancelled) setAvailablePlayers(data || []);
       } catch {
         if (!cancelled) {
@@ -93,9 +100,68 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return () => {
       cancelled = true;
     };
-  }, [effectiveUserId, tournamentId]);
+  }, [effectiveUserId, resolvedTournamentId]);
+
+  /** Registro: guardar borrador en el mismo frame que la UI (F5 inmediato). */
+  React.useLayoutEffect(() => {
+    if (!resolvedTournamentId || phase !== "registration") return;
+    if (players.length === 0) return;
+    const draft = buildAmericanoDinamicoSnapshot(
+      players,
+      [],
+      "registration",
+      0
+    );
+    saveAmericanoDinamicoSnapshot(resolvedTournamentId, draft, {
+      skipDispatch: true,
+    });
+  }, [resolvedTournamentId, phase, players]);
+
+  /** Playing/finished: localStorage síncrono en cada commit (sin esperar 250 ms). */
+  React.useLayoutEffect(() => {
+    if (!resolvedTournamentId || rounds.length === 0) return;
+    if (phase !== "playing" && phase !== "finished") return;
+    const snap = buildAmericanoDinamicoSnapshot(
+      ranking,
+      rounds,
+      phase,
+      totalRounds
+    );
+    saveAmericanoDinamicoSnapshot(resolvedTournamentId, snap, {
+      skipDispatch: true,
+    });
+  }, [resolvedTournamentId, phase, rounds, ranking, totalRounds]);
+
+  React.useEffect(() => {
+    if (!resolvedTournamentId || phase !== "registration") return;
+    const t = window.setTimeout(() => {
+      if (players.length === 0) {
+        const existing = loadAmericanoDinamicoSnapshot(resolvedTournamentId);
+        if (existing?.rounds?.length) {
+          return;
+        }
+        clearAmericanoDinamicoSnapshot(resolvedTournamentId);
+        return;
+      }
+      const draft = buildAmericanoDinamicoSnapshot(
+        players,
+        [],
+        "registration",
+        0
+      );
+      saveAmericanoDinamicoSnapshot(resolvedTournamentId, draft, {
+        skipDispatch: true,
+      });
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [resolvedTournamentId, phase, players]);
 
   const goBackToRetas = React.useCallback(() => {
+    try {
+      sessionStorage.removeItem(AMERICANO_SESSION_TOURNAMENT_KEY);
+    } catch {
+      /* ignore */
+    }
     window.history.pushState({}, "", "/");
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, []);
@@ -111,7 +177,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         const created = await createPlayer(
           name.trim(),
           effectiveUserId,
-          tournamentId || undefined
+          resolvedTournamentId || undefined
         );
         setAvailablePlayers((prev) => {
           if (prev.some((p) => p.id === created.id)) return prev;
@@ -123,15 +189,15 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         addPlayer(name);
       }
     },
-    [effectiveUserId, tournamentId, addPlayer, toggleExistingPlayer]
+    [effectiveUserId, resolvedTournamentId, addPlayer, toggleExistingPlayer]
   );
   const handleStartTournament = React.useCallback(
     async (totalRounds: number, courts: number) => {
       startTournament(totalRounds, courts);
       finishedPersistedRef.current = false;
-      if (!tournamentId) return;
+      if (!resolvedTournamentId) return;
       try {
-        await updateTournament(tournamentId, {
+        await updateTournament(resolvedTournamentId, {
           is_started: true,
           is_finished: false,
         });
@@ -141,15 +207,16 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         console.warn("No se pudo marcar la reta como iniciada:", e);
       }
     },
-    [startTournament, tournamentId, onTournamentStatusChange]
+    [startTournament, resolvedTournamentId, onTournamentStatusChange]
   );
 
   React.useEffect(() => {
-    if (phase !== "finished" || !tournamentId || finishedPersistedRef.current) return;
+    if (phase !== "finished" || !resolvedTournamentId || finishedPersistedRef.current)
+      return;
     let cancelled = false;
     (async () => {
       try {
-        await updateTournament(tournamentId, {
+        await updateTournament(resolvedTournamentId, {
           is_started: true,
           is_finished: true,
         });
@@ -164,11 +231,11 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return () => {
       cancelled = true;
     };
-  }, [phase, tournamentId, onTournamentStatusChange]);
+  }, [phase, resolvedTournamentId, onTournamentStatusChange]);
 
-  /** localStorage + Supabase (vista pública en vivo). */
+  /** Supabase + evento otras vistas (localStorage ya va en useLayoutEffect). */
   React.useEffect(() => {
-    if (!tournamentId || rounds.length === 0) return;
+    if (!resolvedTournamentId || rounds.length === 0) return;
     if (phase !== "playing" && phase !== "finished") return;
     const snap = buildAmericanoDinamicoSnapshot(
       ranking,
@@ -176,19 +243,20 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       phase,
       totalRounds
     );
-    const publish = () => {
-      saveAmericanoDinamicoSnapshot(tournamentId, snap);
-      void upsertAmericanoLivePublic(tournamentId, snap);
-    };
-    const firstForThisTournament =
-      lastLivePublishTournamentRef.current !== tournamentId;
-    if (firstForThisTournament) {
-      lastLivePublishTournamentRef.current = tournamentId;
-      publish();
-    }
-    const t = window.setTimeout(publish, 250);
+    const t = window.setTimeout(() => {
+      void upsertAmericanoLivePublic(resolvedTournamentId, snap);
+      try {
+        window.dispatchEvent(
+          new CustomEvent("americano-dinamico-snapshot", {
+            detail: { tournamentId: resolvedTournamentId },
+          })
+        );
+      } catch {
+        /* ignore */
+      }
+    }, 450);
     return () => window.clearTimeout(t);
-  }, [tournamentId, phase, rounds, ranking, totalRounds]);
+  }, [resolvedTournamentId, phase, rounds, ranking, totalRounds]);
 
   const podium = ranking.slice(0, 3);
 
@@ -225,7 +293,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ← Volver a Retas
           </button>
         </div>
-        {tournamentId && publicAmericanoUrl ? (
+        {resolvedTournamentId && publicAmericanoUrl ? (
           <section className="americano-public-link" aria-label="Enlace público">
             <h3 className="americano-public-link__title">Vista pública en vivo</h3>
             <p className="americano-public-link__text">
@@ -287,7 +355,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           ← Volver a Retas
         </button>
       </div>
-      {tournamentId && publicAmericanoUrl ? (
+      {resolvedTournamentId && publicAmericanoUrl ? (
         <section className="americano-public-link" aria-label="Enlace público">
           <h3 className="americano-public-link__title">Vista pública (resultado final)</h3>
           <div className="americano-public-link__row">
