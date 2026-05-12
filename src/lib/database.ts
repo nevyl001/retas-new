@@ -171,7 +171,15 @@ export const fetchAmericanoLivePublic = async (
       }
       return { status: "fetch_error", message: error.message || "Error de lectura" };
     }
-    const raw = data?.americano_live as unknown;
+    if (!data) {
+      return { status: "empty" };
+    }
+    const row = data as Record<string, unknown>;
+    /** Sin clave en el JSON ⇒ PostgREST no expone la columna (no ejecutaste la migración). */
+    if (!("americano_live" in row)) {
+      return { status: "missing_column" };
+    }
+    const raw = row.americano_live as unknown;
     if (!raw || typeof raw !== "object") {
       return { status: "empty" };
     }

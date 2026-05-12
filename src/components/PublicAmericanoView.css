@@ -108,6 +108,18 @@
   line-height: 1.5;
 }
 
+.public-americano-view__hint code {
+  word-break: break-all;
+  font-size: 0.75em;
+}
+
+.public-americano-view__hint--warn {
+  color: var(--color-text-primary);
+  border-left: 3px solid var(--color-accent);
+  padding-left: var(--space-md);
+  text-align: left;
+}
+
 .public-americano-view__finished-line {
   margin: 0 0 var(--space-sm);
   font-weight: var(--font-weight-bold);

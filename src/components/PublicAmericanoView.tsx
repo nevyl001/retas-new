@@ -45,6 +45,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     useState<FetchAmericanoLivePublicResult | null>(null);
   const [tournamentName, setTournamentName] = useState<string | null>(null);
   const [tournamentFinished, setTournamentFinished] = useState(false);
+  const [tournamentStarted, setTournamentStarted] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedFetchRef =
     React.useRef<FetchAmericanoLivePublicResult | null>(null);
@@ -55,6 +56,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     setSnapshot(null);
     setTournamentName(null);
     setTournamentFinished(false);
+    setTournamentStarted(false);
     setLoadError(null);
   }, [tournamentId]);
 
@@ -90,6 +92,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
 
       if (tournament?.name) setTournamentName(tournament.name);
       setTournamentFinished(!!tournament?.is_finished);
+      setTournamentStarted(!!tournament?.is_started);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(`No se pudo cargar: ${msg}`);
@@ -169,11 +172,19 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
         !snapshot && (
           <div className="public-americano-view__section public-americano-view__empty">
             <p>
-              <strong>Falta la columna en la base de datos.</strong> En el panel
-              de Supabase → SQL Editor, ejecuta el archivo del proyecto{" "}
-              <code>tournament-americano-public-live.sql</code> (añade{" "}
-              <code>americano_live</code> a{" "}
-              <code>tournament_public_config</code>).
+              <strong>No se puede mostrar el Americano en vivo desde internet.</strong>
+            </p>
+            <p className="public-americano-view__hint">
+              En móvil (y en cualquier otro dispositivo) esta pantalla solo lee datos
+              guardados en <strong>Supabase</strong>, no el navegador del organizador.
+            </p>
+            <p className="public-americano-view__hint">
+              Falta la columna <code>americano_live</code> en la tabla{" "}
+              <code>tournament_public_config</code>. En Supabase → SQL Editor ejecuta
+              el archivo del repositorio{" "}
+              <code>tournament-americano-public-live.sql</code> y vuelve a abrir el
+              Americano en el móvil del organizador unos segundos para que se publique
+              el marcador.
             </p>
           </div>
         )}
@@ -203,13 +214,25 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
               internet.
             </p>
             <p className="public-americano-view__hint">
-              El organizador debe tener abierto el Americano de esta reta (con{" "}
-              <code>?tournamentId=…</code> en la URL o reta seleccionada),
-              haber pulsado <strong>Iniciar torneo</strong> y esperar unos
-              segundos para que se guarde en Supabase. Comprueba en el navegador
-              del organizador la consola (F12) por si el upsert falla (sesión
-              cerrada o columna faltante).
+              La vista pública <strong>no</strong> lee el mismo móvil u ordenador del
+              organizador: solo muestra lo que esté guardado en la nube (Supabase).
             </p>
+            {tournamentStarted ? (
+              <p className="public-americano-view__hint public-americano-view__hint--warn">
+                Esta reta consta como <strong>iniciada</strong>, pero no hay marcador
+                publicado. Si ya ejecutaste el torneo, revisa en Supabase la columna{" "}
+                <code>americano_live</code> (archivo{" "}
+                <code>tournament-americano-public-live.sql</code>) y en el dispositivo
+                del organizador la consola por errores de <code>upsert</code> (sesión
+                cerrada o permisos RLS).
+              </p>
+            ) : (
+              <p className="public-americano-view__hint">
+                El organizador debe tener abierto el Americano de esta reta (URL con{" "}
+                <code>?tournamentId=…</code>), pulsar <strong>Iniciar torneo</strong>{" "}
+                y esperar unos segundos a que se suba el estado.
+              </p>
+            )}
           </div>
         )}
 
