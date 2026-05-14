@@ -1030,12 +1030,12 @@
 }
 
 .modern-match-status {
-  padding: 4px 12px;
+  padding: 5px 14px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   background: transparent;
   border: 0.5px solid var(--color-muted);
   color: var(--color-muted);
@@ -1046,6 +1046,8 @@
   background: transparent;
   border: 1px solid #e8dcc8;
   font-weight: 500;
+  padding: 5px 14px;
+  letter-spacing: 0.1em;
 }
 
 .modern-match-status.active {
@@ -1053,6 +1055,18 @@
   color: var(--color-muted);
   background: transparent;
   opacity: 1;
+  padding: 5px 14px;
+  letter-spacing: 0.1em;
+}
+
+.modern-match-card--live .modern-pair-info {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  text-align: center;
 }
 
 .modern-match-badges {
@@ -1066,11 +1080,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
+  padding: 5px 14px;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-sm);
-  font-size: 0.75rem;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--color-text-secondary);
 }
 
@@ -1249,15 +1266,15 @@
 
 .modern-pair-info--winner .modern-pair-label {
   color: var(--color-muted);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: 0.1em;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .modern-pair-info--winner .modern-pair-names {
   color: var(--color-cream);
-  font-weight: 600;
+  font-weight: 500;
   filter: none;
 }
 
@@ -1283,16 +1300,16 @@
 
 .modern-pair-label {
   color: var(--color-muted);
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: 0.1em;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .modern-pair-names {
   color: var(--text-primary);
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   letter-spacing: 0.01em;
   transition: color var(--transition-base);
   filter: none;
@@ -1357,30 +1374,30 @@
 }
 
 .modern-winner-tag {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--color-muted);
 }
 
 .modern-winner-name {
   color: #e8dcc8;
-  font-size: 0.9375rem;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .modern-winner-text {
   color: var(--color-cream);
-  font-size: 0.9375rem;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.02em;
   filter: none;
 }
 
 .modern-winner-badge .modern-winner-text {
-  font-size: 0.875rem;
+  font-size: 18px;
 }
 
 /* ============================================
@@ -1745,6 +1762,46 @@
   
   .compact-stat-value {
     font-size: 1rem;
+  }
+
+  .modern-match-status {
+    font-size: 13px;
+    padding: 5px 14px;
+    letter-spacing: 0.1em;
+  }
+
+  .modern-match-badge {
+    font-size: 13px;
+    padding: 5px 14px;
+    letter-spacing: 0.1em;
+  }
+
+  .modern-match-title {
+    font-size: 15px;
+  }
+
+  .modern-pair-names {
+    font-size: 15px;
+  }
+
+  .modern-pair-label,
+  .modern-pair-info--winner .modern-pair-label,
+  .modern-winner-tag {
+    font-size: 13px;
+    letter-spacing: 0.1em;
+  }
+
+  .modern-winner-name,
+  .modern-winner-text,
+  .modern-winner-badge .modern-winner-text {
+    font-size: 17px;
+  }
+
+  .modern-games-title,
+  .modern-game-number,
+  .modern-game-score,
+  .modern-game-score.winner {
+    font-size: 15px;
   }
 }
 
@@ -3445,6 +3502,20 @@
   }
 }
 
+.matches-grid-simplified:has(> :only-child) {
+  display: flex;
+  justify-content: center;
+  align-content: start;
+  width: 100%;
+}
+
+.matches-grid-simplified:has(> :only-child) > * {
+  flex: 0 1 480px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
 .winner-button-container,
 .back-home-button-container {
   display: flex;
@@ -3538,7 +3609,7 @@
 
 .modern-games-title {
   color: var(--color-text-primary);
-  font-size: 0.875rem;
+  font-size: 14px;
   font-weight: var(--font-weight-semibold);
   margin: 0 0 var(--space-sm) 0;
   letter-spacing: 0.01em;
@@ -3568,13 +3639,13 @@
 
 .modern-game-number {
   color: var(--color-text-tertiary);
-  font-size: 0.75rem;
+  font-size: 14px;
   font-weight: var(--font-weight-medium);
 }
 
 .modern-game-score {
   color: var(--text-primary);
-  font-size: 0.9375rem;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.05em;
   transition: all var(--transition-base);
@@ -3584,7 +3655,8 @@
 .modern-game-score.winner {
   color: var(--color-cream);
   filter: none;
-  font-size: 1rem;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .modern-match-card:hover .modern-game-score {

@@ -404,7 +404,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   return (
                     <div key={match.id} className="public-match-card-wrapper">
                       {/* Versión Desktop */}
-                      <div className="elegant-public-match-card desktop-only">
+                      <div
+                        className={`elegant-public-match-card desktop-only${
+                          match.status !== "finished"
+                            ? " elegant-public-match-card--live"
+                            : ""
+                        }`}
+                      >
                         {/* Header con información del partido */}
                         <div className="elegant-public-header">
                           <div className="elegant-match-info-top">
@@ -522,7 +528,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       </div>
 
                       {/* Versión Mobile - Diseño completamente diferente */}
-                      <div className="mobile-match-card mobile-only">
+                      <div
+                        className={`mobile-match-card mobile-only${
+                          match.status !== "finished"
+                            ? " mobile-match-card--live"
+                            : ""
+                        }`}
+                      >
                         {/* Header compacto */}
                         <div className="mobile-header">
                           <span className="mobile-court">
@@ -764,13 +776,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             <span className="winner-hero__trophy" aria-hidden="true">
               🏆
             </span>
-            <p className="winner-hero__label">CAMPEONES</p>
+            <p className="winner-hero__label">GANADORES</p>
             <div className="winner-hero__name-card">
               <div className="winner-hero__names">
                 {winningTeamName || teamStandings[0]?.name}
               </div>
             </div>
-            <p className="winner-hero__sub">Equipo que más puntos acumuló</p>
+            <p className="winner-hero__sub">Equipo ganador por puntos</p>
           </div>
         </div>
       )}
@@ -788,7 +800,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                 {tournamentWinner.pair.player2?.name}
               </div>
             </div>
-            <p className="winner-hero__sub">Campeones</p>
           </div>
 
           <div className="public-winner-stats">

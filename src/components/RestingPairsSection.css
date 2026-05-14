@@ -26,9 +26,9 @@
 }
 
 .resting-pairs-title {
-  font-size: 0.875rem;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  color: #e8dcc8;
   text-transform: none;
   letter-spacing: 0.01em;
 }
@@ -41,25 +41,25 @@
 }
 
 .resting-pair-card {
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  background: #1e1e1e;
+  border: 0.5px solid #333;
+  border-radius: 6px;
   backdrop-filter: none;
   transition: all var(--transition-base);
 }
 
 .resting-pair-card:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-border-soft);
+  background: #252525;
+  border-color: #444;
   transform: translateY(-1px);
   box-shadow: var(--shadow-soft);
 }
 
 .resting-pair-name {
-  font-size: 0.8125rem;
+  font-size: 13px;
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
+  color: #aaa;
   white-space: nowrap;
 }
 
@@ -87,7 +87,7 @@
   }
 
   .resting-pairs-title {
-    font-size: 0.8125rem;
+    font-size: 15px;
   }
 
   .resting-pairs-list {
@@ -95,11 +95,11 @@
   }
 
   .resting-pair-card {
-    padding: var(--space-xs) var(--space-sm);
+    padding: 6px 14px;
   }
 
   .resting-pair-name {
-    font-size: 0.75rem;
+    font-size: 14px;
   }
 
   .resting-pairs-info-text {

@@ -5,58 +5,88 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 16px;
+  gap: 22px;
+  padding: 12px 0 16px;
   font-family: var(--font-family);
 }
 
 .winner-hero__trophy {
-  font-size: 48px;
+  font-size: 56px;
   line-height: 1;
   display: block;
+  filter: drop-shadow(0 4px 20px rgba(212, 175, 55, 0.35));
 }
 
 .winner-hero__label {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-muted);
+  color: #d4af37;
+  text-shadow: 0 0 28px rgba(212, 175, 55, 0.28);
 }
 
 .winner-hero__name-card {
   background: var(--bg-card);
-  border: 1.5px solid var(--color-gold);
-  border-radius: 12px;
-  padding: 24px 40px;
+  border: 2px solid var(--color-gold);
+  border-radius: 16px;
+  padding: 28px 44px;
   width: 100%;
-  max-width: min(100%, 560px);
+  max-width: min(100%, 640px);
   box-sizing: border-box;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(212, 175, 55, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .winner-hero__names {
   margin: 0;
-  font-size: 32px;
+  font-size: clamp(1.5rem, 4.5vw, 2.5rem);
   font-weight: 600;
   color: #e8dcc8;
-  line-height: 1.25;
+  line-height: 1.2;
   font-style: normal;
+  letter-spacing: 0.02em;
 }
 
 .winner-hero__sub {
   margin: 0;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--color-muted);
+  font-size: 16px;
+  font-weight: 500;
+  color: #c9bba8;
   font-style: normal;
+  letter-spacing: 0.02em;
+  max-width: 32rem;
+  line-height: 1.45;
 }
 
 @media (max-width: 480px) {
+  .winner-hero {
+    gap: 18px;
+    padding: 8px 0 12px;
+  }
+
+  .winner-hero__trophy {
+    font-size: 48px;
+  }
+
+  .winner-hero__label {
+    font-size: 14px;
+    letter-spacing: 0.16em;
+  }
+
   .winner-hero__name-card {
-    padding: 20px 24px;
+    padding: 22px 24px;
+    border-radius: 14px;
   }
 
   .winner-hero__names {
-    font-size: 1.375rem;
+    font-size: clamp(1.375rem, 6.5vw, 1.85rem);
+  }
+
+  .winner-hero__sub {
+    font-size: 15px;
   }
 }

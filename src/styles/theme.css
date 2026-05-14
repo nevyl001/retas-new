@@ -264,7 +264,7 @@ select:disabled {
   font-size: 11px;
 }
 
-/* Jugadores, marcadores, bloques ganador (peso medio) */
+/* Jugadores y nombres (peso medio); los marcadores grandes usan 600 en componentes */
 .modern-match-title,
 .modern-pair-names,
 .compact-pair-names,
@@ -272,10 +272,7 @@ select:disabled {
 .elegant-pair-names,
 .public-pair-name-stack,
 .public-winner-stat-number,
-.modern-game-score,
-.elegant-player-score,
 .mobile-team-name,
-.mobile-team-score,
 .resting-pair-name {
   font-family: var(--font-family);
   font-weight: 500;

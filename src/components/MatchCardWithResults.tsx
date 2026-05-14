@@ -477,7 +477,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   return (
     <div
-      className={`modern-match-card ${isSelected ? "selected" : ""}`}
+      className={`modern-match-card ${isSelected ? "selected" : ""}${
+        currentMatch.status !== "finished" ? " modern-match-card--live" : ""
+      }`}
       onClick={() => onSelect(currentMatch.id)}
     >
       {/* Header */}

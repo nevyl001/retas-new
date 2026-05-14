@@ -34,12 +34,12 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
               <span className="winner-hero__trophy" aria-hidden="true">
                 🏆
               </span>
-              <p className="winner-hero__label">CAMPEONES</p>
+              <p className="winner-hero__label">GANADORES</p>
               <div className="winner-hero__name-card">
                 <div className="winner-hero__names">{winningTeamName}</div>
               </div>
               <p className="winner-hero__sub">
-                Equipo que más puntos acumuló
+                Equipo ganador por puntos
               </p>
             </div>
             {winningTeamStats && (
@@ -86,7 +86,6 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
                 {winner!.player1?.name} / {winner!.player2?.name}
               </div>
             </div>
-            <p className="winner-hero__sub">Campeones</p>
           </div>
 
           <div className="elegant-winner-stats">
