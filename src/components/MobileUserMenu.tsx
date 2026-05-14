@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useUser } from "../contexts/UserContext";
 import "./MobileUserMenu.css";
 
 export const MobileUserMenu: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [userProfile?.avatar_url]);
 
   const handleLogout = async () => {
     await signOut();
@@ -38,11 +43,12 @@ export const MobileUserMenu: React.FC = () => {
       {/* Información del usuario */}
       <div className="mobile-user-info">
         <div className="mobile-user-avatar">
-          {userProfile.avatar_url ? (
+          {userProfile.avatar_url && !avatarLoadFailed ? (
             <img
               src={userProfile.avatar_url}
               alt={userProfile.name}
               className="mobile-user-avatar-img"
+              onError={() => setAvatarLoadFailed(true)}
             />
           ) : (
             <span className="mobile-user-avatar-initials">{userInitials}</span>

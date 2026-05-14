@@ -35,22 +35,26 @@ export const ModernToast: React.FC<ToastProps> = ({
     switch (type) {
       case "success":
         return {
-          background: "linear-gradient(135deg, #ffd700 0%, #ffb347 100%)",
+          background: "#E8DCC8",
+          color: "#111111",
           icon: "🎉",
         };
       case "error":
         return {
-          background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+          background: "#B91C1C",
+          color: "#F5F5F0",
           icon: "⚠️",
         };
       case "info":
         return {
-          background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+          background: "#1E3A5F",
+          color: "#F5F5F0",
           icon: "ℹ️",
         };
       default:
         return {
-          background: "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
+          background: "#3A3A3A",
+          color: "#F5F5F0",
           icon: "💬",
         };
     }
@@ -65,6 +69,7 @@ export const ModernToast: React.FC<ToastProps> = ({
       }`}
       style={{
         background: styles.background,
+        color: styles.color,
       }}
     >
       <div className="modern-toast-content">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import "./PublicTournamentView.css";
 import "./ModernStandingsTable.css";
+import "./WinnerHero.css";
 import { getMatches, getPairs, getTournamentGames, getTournamentByIdPublic, getTournamentPublicConfig } from "../lib/database";
 import { Match, Pair, Game, Tournament } from "../lib/database";
 import {
@@ -344,9 +345,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           <h1 className="public-title public-title--riviera-public">
             {publicTournamentName || "Resultados en tiempo real"}
           </h1>
-          {publicTournamentDescription && (
+          {publicTournamentDescription ? (
             <p className="public-reta-detail">{publicTournamentDescription}</p>
-          )}
+          ) : null}
           <p className="public-subtitle public-subtitle--riviera">
             {RIVIERA_PUBLIC_DESCRIPTION}
           </p>
@@ -356,7 +357,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {/* Partidos por Ronda */}
       <div className="public-matches-section">
         <div className="public-matches-header">
-          <h2 className="public-matches-title">📋 Partidos por Ronda</h2>
+          <h2 className="public-matches-tab">Partidos por Ronda</h2>
         </div>
 
         {Object.keys(matchesByRound)
@@ -386,6 +387,17 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     result.hasResult && result.pair1Score > result.pair2Score;
                   const pair2Won =
                     result.hasResult && result.pair2Score > result.pair1Score;
+                  const hasWinner = result.hasResult && (pair1Won || pair2Won);
+                  const pair1SideClass = pair1Won
+                    ? "winner"
+                    : hasWinner && pair2Won
+                      ? "loser"
+                      : "";
+                  const pair2SideClass = pair2Won
+                    ? "winner"
+                    : hasWinner && pair1Won
+                      ? "loser"
+                      : "";
                   
                   const matchGames = games.filter((game) => game.match_id === match.id);
 
@@ -408,8 +420,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                               }`}
                             >
                               {match.status === "finished"
-                                ? "✅ FINALIZADO"
-                                : "🔄 EN PROGRESO"}
+                                ? "FINALIZADO"
+                                : "EN CURSO"}
                             </div>
                           </div>
                         </div>
@@ -418,9 +430,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         <div className="elegant-vs-layout">
                           {/* Pareja 1 */}
                           <div
-                            className={`elegant-player-side left ${
-                              pair1Won ? "winner" : ""
-                            }`}
+                            className={`elegant-player-side left ${pair1SideClass}`}
                           >
                             <div className="elegant-player-name">
                               <PublicPairNameStack
@@ -447,9 +457,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
                           {/* Pareja 2 */}
                           <div
-                            className={`elegant-player-side right ${
-                              pair2Won ? "winner" : ""
-                            }`}
+                            className={`elegant-player-side right ${pair2SideClass}`}
                           >
                             <div className="elegant-player-name">
                               <PublicPairNameStack
@@ -474,7 +482,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                               <span className="elegant-winner-icon">🏆</span>
                               <div className="elegant-winner-body">
                                 <span className="elegant-winner-prefix">
-                                  Ganador
+                                  GANADOR
                                 </span>
                                 {pair1Won || pair2Won ? (
                                   <PublicPairNameStack
@@ -527,16 +535,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                                 : "active"
                             }`}
                           >
-                            {match.status === "finished" ? "✅" : "🔄"}
+                            {match.status === "finished"
+                              ? "FINALIZADO"
+                              : "EN CURSO"}
                           </div>
                         </div>
 
                         {/* Enfrentamiento horizontal compacto */}
                         <div className="mobile-match-content">
                           <div
-                            className={`mobile-team ${
-                              pair1Won ? "winner" : ""
-                            }`}
+                            className={`mobile-team ${pair1SideClass}`}
                           >
                             <div className="mobile-team-name">
                               <PublicPairNameStack
@@ -552,9 +560,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                           <div className="mobile-vs">VS</div>
 
                           <div
-                            className={`mobile-team ${
-                              pair2Won ? "winner" : ""
-                            }`}
+                            className={`mobile-team ${pair2SideClass}`}
                           >
                             <div className="mobile-team-name">
                               <PublicPairNameStack
@@ -575,7 +581,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                               🏆
                             </span>
                             <div className="mobile-winner-inner">
-                              <span className="mobile-winner-label">Ganador</span>
+                              <span className="mobile-winner-label">GANADOR</span>
                               {pair1Won || pair2Won ? (
                                 <PublicPairNameStack
                                   label={
@@ -754,33 +760,38 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {/* Sección del Ganador: por equipos = equipo ganador (primero en la tabla); round robin = pareja ganadora */}
       {showWinner && teamStandings && teamStandings.length > 0 && (winningTeamName || teamStandings[0]?.name) && (
         <div className="public-winner-section">
-          <div className="public-winner-header">
-            <h2 className="public-winner-title">🏆 EQUIPO GANADOR 🏆</h2>
-          </div>
-          <div className="public-winner-content">
-            <div className="public-winner-names">{winningTeamName || teamStandings[0]?.name}</div>
-            <div className="public-winner-subtitle">
-              Equipo que más puntos acumuló en la reta
+          <div className="winner-hero">
+            <span className="winner-hero__trophy" aria-hidden="true">
+              🏆
+            </span>
+            <p className="winner-hero__label">CAMPEONES</p>
+            <div className="winner-hero__name-card">
+              <div className="winner-hero__names">
+                {winningTeamName || teamStandings[0]?.name}
+              </div>
             </div>
+            <p className="winner-hero__sub">Equipo que más puntos acumuló</p>
           </div>
         </div>
       )}
       {/* Solo mostrar ganadores por pareja cuando NO es por equipos (evitar duplicar con equipo ganador) */}
       {showWinner && (!teamStandings || teamStandings.length === 0) && tournamentWinner && (
         <div className="public-winner-section">
-          <div className="public-winner-header">
-            <h2 className="public-winner-title">🏆 GANADORES DE LA RETA 🏆</h2>
+          <div className="winner-hero">
+            <span className="winner-hero__trophy" aria-hidden="true">
+              🏆
+            </span>
+            <p className="winner-hero__label">GANADORES</p>
+            <div className="winner-hero__name-card">
+              <div className="winner-hero__names">
+                {tournamentWinner.pair.player1?.name} /{" "}
+                {tournamentWinner.pair.player2?.name}
+              </div>
+            </div>
+            <p className="winner-hero__sub">Campeones</p>
           </div>
-          <div className="public-winner-content">
-            <div className="public-winner-names">
-              {tournamentWinner.pair.player1?.name} /{" "}
-              {tournamentWinner.pair.player2?.name}
-            </div>
-            <div className="public-winner-subtitle">
-              ¡Son los campeones de la reta!
-            </div>
 
-            <div className="public-winner-stats">
+          <div className="public-winner-stats">
               <div className="public-winner-stat">
                 <span className="public-winner-stat-number">
                   {tournamentWinner.totalSets}
@@ -810,7 +821,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                 </span>
               </div>
             </div>
-          </div>
         </div>
       )}
 

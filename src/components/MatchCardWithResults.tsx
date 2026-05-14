@@ -122,20 +122,23 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     if (result.winner === "pair1") {
       return {
         text: `Ganador: ${getPairName(pair1)}`,
-        type: "winner",
+        type: "winner" as const,
         icon: "🏆",
+        winnerPairName: getPairName(pair1),
       };
     } else if (result.winner === "pair2") {
       return {
         text: `Ganador: ${getPairName(pair2)}`,
-        type: "winner",
+        type: "winner" as const,
         icon: "🏆",
+        winnerPairName: getPairName(pair2),
       };
     } else {
       return {
         text: "Empate",
-        type: "tie",
+        type: "tie" as const,
         icon: "🤝",
+        winnerPairName: undefined as string | undefined,
       };
     }
   };
@@ -444,6 +447,34 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     return null;
   }
 
+  const winnerLabel = getWinnerLabel();
+  const hasDecisiveWinner =
+    games.length > 0 &&
+    winnerLabel?.type === "winner" &&
+    Boolean(winnerLabel.winnerPairName);
+  const pair1DisplayName = getPairName(pair1);
+  const pair2DisplayName = getPairName(pair2);
+  const pair1InfoClass = [
+    "modern-pair-info",
+    hasDecisiveWinner
+      ? winnerLabel!.winnerPairName === pair1DisplayName
+        ? "modern-pair-info--winner"
+        : "modern-pair-info--loser"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const pair2InfoClass = [
+    "modern-pair-info",
+    hasDecisiveWinner
+      ? winnerLabel!.winnerPairName === pair2DisplayName
+        ? "modern-pair-info--winner"
+        : "modern-pair-info--loser"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
       className={`modern-match-card ${isSelected ? "selected" : ""}`}
@@ -456,10 +487,10 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </h5>
         <div
           className={`modern-match-status ${
-            currentMatch.status === "finished" ? "finished" : "progress"
+            currentMatch.status === "finished" ? "finished" : "active"
           }`}
         >
-          {currentMatch.status === "finished" ? "FINALIZADO" : "En progreso"}
+          {currentMatch.status === "finished" ? "FINALIZADO" : "EN CURSO"}
         </div>
       </div>
 
@@ -570,26 +601,33 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
       {/* Parejas */}
       <div className="modern-match-pairs">
-        <div className="modern-pair-info">
+        <div className={pair1InfoClass}>
           <span className="modern-pair-label">Pareja 1:</span>
           <span className="modern-pair-names">{getPairName(pair1)}</span>
         </div>
-        <div className="modern-pair-info">
+        <div className={pair2InfoClass}>
           <span className="modern-pair-label">Pareja 2:</span>
           <span className="modern-pair-names">{getPairName(pair2)}</span>
         </div>
       </div>
 
       {/* Etiqueta del Ganador */}
-      {games.length > 0 && getWinnerLabel() && (
+      {games.length > 0 && winnerLabel && (
         <div className="modern-winner-label">
           <div
-            className={`modern-winner-badge modern-winner-${
-              getWinnerLabel()?.type
-            }`}
+            className={`modern-winner-badge modern-winner-${winnerLabel.type}`}
           >
-            <span className="modern-winner-icon">{getWinnerLabel()?.icon}</span>
-            <span className="modern-winner-text">{getWinnerLabel()?.text}</span>
+            <span className="modern-winner-icon">{winnerLabel.icon}</span>
+            {winnerLabel.type === "winner" && winnerLabel.winnerPairName ? (
+              <>
+                <span className="modern-winner-tag">GANADOR</span>
+                <span className="modern-winner-name">
+                  {winnerLabel.winnerPairName}
+                </span>
+              </>
+            ) : (
+              <span className="modern-winner-text">{winnerLabel.text}</span>
+            )}
           </div>
         </div>
       )}

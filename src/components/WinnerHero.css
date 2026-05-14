@@ -1,0 +1,62 @@
+/* Bloque compartido: pantalla ganadores (app) + vista pública */
+
+.winner-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  font-family: var(--font-family);
+}
+
+.winner-hero__trophy {
+  font-size: 48px;
+  line-height: 1;
+  display: block;
+}
+
+.winner-hero__label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.winner-hero__name-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--color-gold);
+  border-radius: 12px;
+  padding: 24px 40px;
+  width: 100%;
+  max-width: min(100%, 560px);
+  box-sizing: border-box;
+}
+
+.winner-hero__names {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 600;
+  color: #e8dcc8;
+  line-height: 1.25;
+  font-style: normal;
+}
+
+.winner-hero__sub {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-muted);
+  font-style: normal;
+}
+
+@media (max-width: 480px) {
+  .winner-hero__name-card {
+    padding: 20px 24px;
+  }
+
+  .winner-hero__names {
+    font-size: 1.375rem;
+  }
+}

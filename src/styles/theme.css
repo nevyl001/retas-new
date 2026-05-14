@@ -1,44 +1,66 @@
 /* =====================================================
-   SISTEMA DE DISEÑO EDITORIAL PREMIUM - COMPLETAMENTE NUEVO
+   RIVIERA OPEN — tema oscuro premium (superficies planas)
+   Variables globales: usar en toda la app (desktop y móvil).
    ===================================================== */
 
 :root {
-  /* ============================================
-     COLORES BASE - EDITORIAL SOBRIO
-     ============================================ */
-  
-  /* Fondos - Negro Carbón Profundo */
-  --color-bg-base: #0a0a0f;
-  --color-bg-surface: #111116;
-  --color-bg-elevated: #18181d;
-  --color-bg-hover: #1f1f24;
-  --color-bg-overlay: rgba(10, 10, 15, 0.95);
+  /* —— Paleta canónica (valores exactos) —— */
+  --bg-base: #0a0a0a;
+  --bg-section: #141414;
+  --bg-card: #242424;
+  --bg-elevated: #2e2e2e;
+  /** Pareja / bloque perdedor en partido */
+  --bg-loser: #1c1c1c;
 
-  /* Texto - Grises Editoriales */
-  --color-text-primary: #e8e8e8;
-  --color-text-secondary: #a8a8a8;
-  --color-text-tertiary: #787878;
-  --color-text-muted: #585858;
-  --color-text-inverse: #0a0a0f;
+  --border-default: #333333;
+  --border-subtle: #1f1f1f;
 
-  /* Acento Dorado - Solo Micro-Detalles */
-  --color-accent: #c9a961;
-  --color-accent-subtle: rgba(201, 169, 97, 0.15);
-  --color-accent-border: rgba(201, 169, 97, 0.2);
-  --color-accent-hover: rgba(201, 169, 97, 0.25);
+  --color-gold: #d4af37;
+  --color-cream: #e8dcc8;
+  --color-muted: #7b9ea6;
 
-  /* Bordes - Casi Invisibles */
-  --color-border-subtle: rgba(255, 255, 255, 0.04);
-  --color-border-soft: rgba(255, 255, 255, 0.08);
-  --color-border-focus: rgba(201, 169, 97, 0.3);
+  --text-primary: #f5f5f0;
+  --text-secondary: #888888;
+  --text-disabled: #444444;
 
-  /* Sombras - Profundas y Suaves */
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --shadow-deep: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.5);
+  /* —— Compat: tokens usados en componentes existentes —— */
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-section);
+  --color-bg-sunken: var(--bg-base);
+  --color-bg-card: var(--bg-card);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-hover: var(--bg-elevated);
+  --color-bg-overlay: rgba(10, 10, 10, 0.96);
+  --color-bg-secondary: var(--bg-loser);
 
-  /* Espaciado Editorial */
+  --color-border: var(--border-default);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-soft: var(--border-default);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--color-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-tertiary: var(--text-secondary);
+  --color-input-placeholder: var(--text-disabled);
+  --color-text-inverse: var(--bg-base);
+
+  --color-accent: var(--color-cream);
+  --color-accent-gold: var(--color-gold);
+  --color-accent-text: var(--bg-base);
+  --color-accent-border: var(--color-cream);
+  --color-accent-border-gold: var(--color-gold);
+  --color-accent-hover: #d4c9b0;
+  --color-border-focus: var(--color-cream);
+  --color-accent-subtle: rgba(0, 0, 0, 0.35);
+
+  /* Sombras neutras (mínimas, sin “glow” dorado) */
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-deep: 0 4px 16px rgba(0, 0, 0, 0.55);
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.5);
+
+  /* Espaciado */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -47,33 +69,31 @@
   --space-2xl: 64px;
   --space-3xl: 96px;
 
-  /* Tipografía Editorial */
-  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  /* Tipografía — Outfit única */
+  --font-family: "Outfit", sans-serif;
+
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* Radios - Suaves */
-  --radius-sm: 6px;
+  /* Radios (reglas de producto) */
+  --radius-button: 8px;
+  --radius-card: 12px;
+  --radius-sm: 8px;
   --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-lg: 12px;
+  --radius-xl: 12px;
 
-  /* Transiciones - Lentas y Elegantes */
   --transition-fast: 0.2s ease;
-  --transition-base: 0.4s ease;
-  --transition-slow: 0.6s ease;
+  --transition-base: 0.35s ease;
+  --transition-slow: 0.5s ease;
 }
 
 [data-theme="dark"] {
-  /* Mismo tema */
+  /* Mismo tema; reservado por si se añade tema claro */
 }
-
-/* ============================================
-   RESET Y BASE
-   ============================================ */
 
 * {
   box-sizing: border-box;
@@ -82,39 +102,52 @@
 }
 
 body {
-  font-family: var(--font-family);
+  font-family: "Outfit", sans-serif;
   font-weight: var(--font-weight-regular);
-  background-color: var(--color-bg-base);
-  color: var(--color-text-primary);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.7;
+  line-height: 1.65;
   letter-spacing: 0.01em;
   transition: background-color var(--transition-base), color var(--transition-base);
 }
 
-/* Tipografía Editorial */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  line-height: 1.3;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  line-height: 1.25;
   letter-spacing: 0.02em;
   margin: 0;
 }
 
+h1,
+h2 {
+  font-weight: 600;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 500;
+}
+
 h1 {
   font-size: 2.25rem;
-  letter-spacing: 0.03em;
 }
 
 h2 {
   font-size: 1.875rem;
-  letter-spacing: 0.02em;
 }
 
 h3 {
   font-size: 1.5rem;
-  letter-spacing: 0.015em;
 }
 
 h4 {
@@ -123,55 +156,131 @@ h4 {
 
 p {
   margin: 0;
-  color: var(--color-text-secondary);
-  line-height: 1.8;
+  color: var(--color-muted);
+  line-height: 1.7;
   font-size: 1rem;
+  font-weight: 400;
 }
 
-/* Links */
+label {
+  font-weight: 400;
+}
+
 a {
-  color: var(--color-text-primary);
+  color: var(--color-cream);
   text-decoration: none;
-  transition: color var(--transition-base);
+  transition: color var(--transition-fast);
 }
 
 a:hover {
-  color: var(--color-accent);
+  color: var(--color-accent-hover);
 }
 
-/* Botones Base */
 button {
   font-family: var(--font-family);
+  font-weight: 500;
   cursor: pointer;
   border: none;
   background: transparent;
-  color: var(--color-text-primary);
-  transition: all var(--transition-base);
+  color: var(--text-primary);
+  transition: color var(--transition-fast), background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
-/* Inputs Base */
-input, textarea, select {
+input,
+textarea,
+select {
   font-family: var(--font-family);
-  background: var(--color-bg-surface);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border-subtle);
+  font-weight: 400;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   padding: var(--space-md);
   font-size: 1rem;
-  transition: all var(--transition-base);
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
-input:focus, textarea:focus, select:focus {
+input:focus,
+textarea:focus,
+select:focus {
   outline: none;
   border-color: var(--color-border-focus);
-  background: var(--color-bg-elevated);
+  background: var(--bg-card);
 }
 
-input::placeholder, textarea::placeholder {
-  color: var(--color-text-tertiary);
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-input-placeholder);
 }
 
-/* Responsive */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: var(--text-disabled);
+  border-color: var(--border-subtle);
+}
+
+/* Primitivos reutilizables (clases opcionales) */
+.riviera-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-card);
+}
+
+.riviera-btn-primary {
+  background: var(--color-cream);
+  color: var(--bg-base);
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-cream);
+  font-weight: 600;
+}
+
+.riviera-btn-primary:hover {
+  background: #d9cdb8;
+  border-color: #d9cdb8;
+  color: var(--bg-base);
+}
+
+.riviera-btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-button);
+  font-weight: 500;
+}
+
+.riviera-btn-secondary:hover {
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
+}
+
+.riviera-badge {
+  background: var(--bg-loser);
+  border: 0.5px solid var(--color-cream);
+  color: var(--color-cream);
+  border-radius: var(--radius-sm);
+  font-weight: 400;
+  font-size: 11px;
+}
+
+/* Jugadores, marcadores, bloques ganador (peso medio) */
+.modern-match-title,
+.modern-pair-names,
+.compact-pair-names,
+.elegant-player-name,
+.elegant-pair-names,
+.public-pair-name-stack,
+.public-winner-stat-number,
+.modern-game-score,
+.elegant-player-score,
+.mobile-team-name,
+.mobile-team-score,
+.resting-pair-name {
+  font-family: var(--font-family);
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   h1 {
     font-size: 1.875rem;

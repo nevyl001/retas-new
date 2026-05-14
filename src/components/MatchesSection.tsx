@@ -124,7 +124,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       {(isTournamentFinished || tournament.is_finished) && winner && (
         <div className="winner-button-container">
           <button className="show-winner-button" onClick={onShowWinnerScreen}>
-            🏆 Ver Ganadores de la Reta
+            🏆 Ver ganadores
           </button>
         </div>
       )}

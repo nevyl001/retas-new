@@ -4,7 +4,7 @@
 
 .admin-dashboard-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+  background: var(--color-bg-base);
   padding: 20px;
 }
 
@@ -196,21 +196,21 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  background: var(--color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #0f0f23;
+  color: var(--color-accent-text);
   font-weight: 600;
   font-size: 0.8rem;
 }
 
 .admin-tournaments-count {
-  background: rgba(255, 215, 0, 0.1);
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  border-radius: 6px;
+  background: var(--color-accent-subtle);
+  border: 1px solid var(--color-accent-border);
+  border-radius: var(--radius-button);
   padding: 4px 8px;
-  color: #ffd700;
+  color: var(--color-accent);
   font-weight: 600;
   font-size: 0.8rem;
 }
@@ -360,12 +360,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 215, 0, 0.1),
-    transparent
-  );
+  background: var(--color-bg-base);
   transition: left 0.5s ease;
 }
 

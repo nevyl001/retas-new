@@ -7,7 +7,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  background: var(--color-bg-base);
   position: relative;
   overflow: hidden;
   padding: 20px;
@@ -28,21 +28,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(
-      circle at 25% 25%,
-      rgba(255, 215, 0, 0.1) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 75% 75%,
-      rgba(0, 212, 255, 0.1) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(255, 107, 107, 0.05) 0%,
-      transparent 50%
-    );
+  background-image: none;
   animation: adminPatternMove 20s ease-in-out infinite;
 }
 
@@ -104,7 +90,7 @@
 
 .admin-logo-icon {
   font-size: 2.5rem;
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  background: var(--color-bg-base);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -231,7 +217,7 @@
   justify-content: center;
   gap: 12px;
   padding: 16px 24px;
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  background: var(--color-bg-base);
   border: none;
   border-radius: 12px;
   color: #0f0f23;
@@ -251,12 +237,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
+  background: var(--color-bg-base);
   transition: left 0.5s ease;
 }
 

@@ -1,10 +1,10 @@
 .americano-summary {
   margin: 1.25rem 0 1.75rem;
   padding: 1.25rem 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  background: rgba(18, 18, 22, 0.95);
-  color: #e8e6e3;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-accent-border);
+  background: var(--color-bg-surface);
+  color: var(--color-text-primary);
 }
 
 .americano-summary__header {
@@ -27,17 +27,17 @@
 .americano-summary__screen-btn {
   flex-shrink: 0;
   padding: 0.5rem 0.9rem;
-  border-radius: 8px;
-  border: 1px solid rgba(212, 175, 55, 0.55);
-  background: rgba(212, 175, 55, 0.12);
-  color: #f5e6b8;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--color-accent-border);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .americano-summary__screen-btn:hover {
-  background: rgba(212, 175, 55, 0.22);
+  background: var(--color-bg-hover);
 }
 
 .americano-summary__title {
@@ -45,7 +45,7 @@
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #d4af37;
+  color: var(--color-accent);
   text-transform: uppercase;
 }
 
@@ -78,22 +78,24 @@
 }
 
 .americano-summary__medal--gold {
-  background: linear-gradient(145deg, rgba(212, 175, 55, 0.25), rgba(40, 35, 20, 0.9));
-  border-color: rgba(212, 175, 55, 0.45);
+  background: var(--color-accent-subtle);
+  border: 1px solid var(--color-accent-border-gold);
 }
 
 .americano-summary__medal--silver {
-  background: linear-gradient(145deg, rgba(180, 180, 190, 0.2), rgba(35, 35, 40, 0.95));
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
 }
 
 .americano-summary__medal--bronze {
-  background: linear-gradient(145deg, rgba(180, 120, 70, 0.22), rgba(40, 28, 22, 0.95));
+  background: var(--color-bg-sunken);
+  border: 1px solid var(--color-border-soft);
 }
 
 .americano-summary__subtitle {
   margin: 0 0 0.5rem;
   font-size: 0.95rem;
-  color: #d4af37;
+  color: var(--color-accent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -172,7 +174,7 @@
 
 .americano-summary__court {
   font-weight: 700;
-  color: #d4af37;
+  color: var(--color-accent);
   min-width: 2rem;
 }
 
@@ -234,7 +236,7 @@
   margin: 0 0 0.5rem;
   font-size: clamp(0.95rem, 1.8vw, 1.35rem);
   font-weight: 700;
-  color: #d4af37;
+  color: var(--color-accent);
   line-height: 1.35;
 }
 

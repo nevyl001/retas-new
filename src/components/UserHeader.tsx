@@ -7,6 +7,7 @@ export const UserHeader: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -55,6 +56,10 @@ export const UserHeader: React.FC = () => {
     };
   }, [showDropdown]);
 
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [userProfile?.avatar_url]);
+
   return (
     <header className="user-header">
       <div className="user-header-content">
@@ -77,11 +82,12 @@ export const UserHeader: React.FC = () => {
                 onClick={() => setShowDropdown(!showDropdown)}
               >
                 <div className="user-avatar">
-                  {userProfile?.avatar_url ? (
+                  {userProfile?.avatar_url && !avatarLoadFailed ? (
                     <img
                       src={userProfile.avatar_url}
                       alt={userProfile.name}
                       className="user-avatar-img"
+                      onError={() => setAvatarLoadFailed(true)}
                     />
                   ) : (
                     <span className="user-avatar-initials">

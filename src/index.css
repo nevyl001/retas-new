@@ -1,4 +1,5 @@
-@import './styles/theme.css';
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap');
+@import "./styles/theme.css";
 
 html,
 body {
@@ -16,7 +17,7 @@ body {
   font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--color-bg-base);
-  color: var(--color-text-primary);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   transition: background-color var(--transition-base), color var(--transition-base);
 }
