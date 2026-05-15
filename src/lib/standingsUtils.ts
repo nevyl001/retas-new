@@ -8,8 +8,15 @@ export interface TeamConfig {
 
 export interface PairWithStats extends Pair {
   gamesWon: number;
+  /** Total de juegos perdidos (cada juego ganado por el rival contra esta pareja). */
+  gamesLost: number;
   setsWon: number;
+  /** Sets perdidos (los que ganó el rival en los partidos de esta pareja). */
+  setsLost: number;
+  /** Puntos a favor (tu marcador acumulado en juegos/partidos). */
   points: number;
+  /** Puntos recibidos: marcador a favor del rival en tus partidos (para desempate; menos es mejor). */
+  pointsReceived: number;
   matchesPlayed: number;
 }
 
@@ -54,8 +61,29 @@ export function computePairsWithStats(
   allGames: Game[]
 ): PairWithStats[] {
   if (!pairs.length) return [];
-  const pairStats = new Map<string, { gamesWon: number; setsWon: number; points: number; matchesPlayed: number }>();
-  pairs.forEach((p) => pairStats.set(p.id, { gamesWon: 0, setsWon: 0, points: 0, matchesPlayed: 0 }));
+  const pairStats = new Map<
+    string,
+    {
+      gamesWon: number;
+      gamesLost: number;
+      setsWon: number;
+      setsLost: number;
+      points: number;
+      pointsReceived: number;
+      matchesPlayed: number;
+    }
+  >();
+  pairs.forEach((p) =>
+    pairStats.set(p.id, {
+      gamesWon: 0,
+      gamesLost: 0,
+      setsWon: 0,
+      setsLost: 0,
+      points: 0,
+      pointsReceived: 0,
+      matchesPlayed: 0,
+    })
+  );
 
   matches.forEach((match) => {
     if (match.status !== "finished") return;
@@ -68,23 +96,48 @@ export function computePairsWithStats(
     if (matchGames.length > 0) {
       const st = calculateMatchStats(match, matchGames);
       s1.gamesWon += st.pair1GamesWon;
+      s1.gamesLost += st.pair2GamesWon;
       s1.setsWon += st.pair1SetsWon;
+      s1.setsLost += st.pair2SetsWon;
       s1.points += st.pair1TotalPoints;
+      s1.pointsReceived += st.pair2TotalPoints;
       s2.gamesWon += st.pair2GamesWon;
+      s2.gamesLost += st.pair1GamesWon;
       s2.setsWon += st.pair2SetsWon;
+      s2.setsLost += st.pair1SetsWon;
       s2.points += st.pair2TotalPoints;
+      s2.pointsReceived += st.pair1TotalPoints;
     } else {
       const p1 = match.pair1_score ?? 0;
       const p2 = match.pair2_score ?? 0;
       s1.points += p1;
       s2.points += p2;
-      if (p1 > p2) s1.setsWon += 1;
-      else if (p2 > p1) s2.setsWon += 1;
+      s1.pointsReceived += p2;
+      s2.pointsReceived += p1;
+      if (p1 > p2) {
+        s1.setsWon += 1;
+        s1.gamesWon += 1;
+        s2.setsLost += 1;
+        s2.gamesLost += 1;
+      } else if (p2 > p1) {
+        s2.setsWon += 1;
+        s2.gamesWon += 1;
+        s1.setsLost += 1;
+        s1.gamesLost += 1;
+      }
     }
   });
 
   return pairs.map((pair) => {
-    const stats = pairStats.get(pair.id) ?? { gamesWon: 0, setsWon: 0, points: 0, matchesPlayed: 0 };
+    const stats = pairStats.get(pair.id) ?? {
+      gamesWon: 0,
+      gamesLost: 0,
+      setsWon: 0,
+      setsLost: 0,
+      points: 0,
+      pointsReceived: 0,
+      matchesPlayed: 0,
+    };
     return { ...pair, ...stats };
   });
 }
@@ -93,7 +146,11 @@ export interface TeamStandingRow {
   teamIndex: number;
   name: string;
   points: number;
+  pointsReceived: number;
+  gamesWon: number;
+  gamesLost: number;
   setsWon: number;
+  setsLost: number;
   matchesPlayed: number;
 }
 
@@ -104,15 +161,32 @@ export function computeTeamStandings(
 ): TeamStandingRow[] | null {
   if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam || Object.keys(teamConfig.pairToTeam).length === 0) return null;
   const n = teamConfig.teamNames.length;
-  const totals: Array<{ points: number; setsWon: number; matchesPlayed: number }> = Array.from(
-    { length: n },
-    () => ({ points: 0, setsWon: 0, matchesPlayed: 0 })
-  );
+  const totals: Array<{
+    points: number;
+    pointsReceived: number;
+    gamesWon: number;
+    gamesLost: number;
+    setsWon: number;
+    setsLost: number;
+    matchesPlayed: number;
+  }> = Array.from({ length: n }, () => ({
+    points: 0,
+    pointsReceived: 0,
+    gamesWon: 0,
+    gamesLost: 0,
+    setsWon: 0,
+    setsLost: 0,
+    matchesPlayed: 0,
+  }));
   pairsWithStats.forEach((pair) => {
     const t = teamConfig.pairToTeam[pair.id];
     if (t >= 0 && t < n) {
       totals[t].points += pair.points;
+      totals[t].pointsReceived += pair.pointsReceived;
+      totals[t].gamesWon += pair.gamesWon;
+      totals[t].gamesLost += pair.gamesLost;
       totals[t].setsWon += pair.setsWon;
+      totals[t].setsLost += pair.setsLost;
       totals[t].matchesPlayed += pair.matchesPlayed;
     }
   });
@@ -121,12 +195,19 @@ export function computeTeamStandings(
       teamIndex,
       name: teamConfig.teamNames[teamIndex] ?? `Equipo ${teamIndex + 1}`,
       points: tot.points,
+      pointsReceived: tot.pointsReceived,
+      gamesWon: tot.gamesWon,
+      gamesLost: tot.gamesLost,
       setsWon: tot.setsWon,
+      setsLost: tot.setsLost,
       matchesPlayed: tot.matchesPlayed,
     }))
     .sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
+      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+      if (a.gamesLost !== b.gamesLost) return a.gamesLost - b.gamesLost;
+      if (a.pointsReceived !== b.pointsReceived) return a.pointsReceived - b.pointsReceived;
       return b.matchesPlayed - a.matchesPlayed;
     });
 }

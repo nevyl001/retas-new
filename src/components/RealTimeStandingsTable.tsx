@@ -24,8 +24,11 @@ interface PairWithStats {
   created_at: string;
   // Estadísticas calculadas en tiempo real
   gamesWon: number;
+  gamesLost: number;
   setsWon: number;
+  setsLost: number;
   points: number;
+  pointsReceived: number;
   matchesPlayed: number;
   player1?: {
     id: string;
@@ -283,8 +286,11 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       return pairs.map((pair) => ({
         ...pair,
         gamesWon: 0,
+        gamesLost: 0,
         setsWon: 0,
+        setsLost: 0,
         points: 0,
+        pointsReceived: 0,
         matchesPlayed: 0,
       }));
     }
@@ -294,8 +300,11 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       string,
       {
         gamesWon: number;
+        gamesLost: number;
         setsWon: number;
+        setsLost: number;
         points: number;
+        pointsReceived: number;
         matchesPlayed: number;
       }
     >();
@@ -304,8 +313,11 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     pairs.forEach((pair) => {
       pairStats.set(pair.id, {
         gamesWon: 0,
+        gamesLost: 0,
         setsWon: 0,
+        setsLost: 0,
         points: 0,
+        pointsReceived: 0,
         matchesPlayed: 0,
       });
     });
@@ -331,12 +343,18 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
             const matchStats = calculateMatchStats(match, matchGames);
 
             pair1Stats.gamesWon += matchStats.pair1GamesWon;
+            pair1Stats.gamesLost += matchStats.pair2GamesWon;
             pair1Stats.setsWon += matchStats.pair1SetsWon;
+            pair1Stats.setsLost += matchStats.pair2SetsWon;
             pair1Stats.points += matchStats.pair1TotalPoints;
+            pair1Stats.pointsReceived += matchStats.pair2TotalPoints;
 
             pair2Stats.gamesWon += matchStats.pair2GamesWon;
+            pair2Stats.gamesLost += matchStats.pair1GamesWon;
             pair2Stats.setsWon += matchStats.pair2SetsWon;
+            pair2Stats.setsLost += matchStats.pair1SetsWon;
             pair2Stats.points += matchStats.pair2TotalPoints;
+            pair2Stats.pointsReceived += matchStats.pair1TotalPoints;
           } else {
             // Usar datos básicos del match si no hay juegos detallados
             const pair1Score = match.pair1_score || 0;
@@ -345,14 +363,20 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
             // Acumular puntos básicos
             pair1Stats.points += pair1Score;
             pair2Stats.points += pair2Score;
+            pair1Stats.pointsReceived += pair2Score;
+            pair2Stats.pointsReceived += pair1Score;
 
             // Determinar ganador de sets basado en marcador
             if (pair1Score > pair2Score) {
               pair1Stats.setsWon += 1;
               pair1Stats.gamesWon += 1;
+              pair2Stats.setsLost += 1;
+              pair2Stats.gamesLost += 1;
             } else if (pair2Score > pair1Score) {
               pair2Stats.setsWon += 1;
               pair2Stats.gamesWon += 1;
+              pair1Stats.setsLost += 1;
+              pair1Stats.gamesLost += 1;
             }
           }
         }
@@ -363,8 +387,11 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     return pairs.map((pair) => {
       const stats = pairStats.get(pair.id) || {
         gamesWon: 0,
+        gamesLost: 0,
         setsWon: 0,
+        setsLost: 0,
         points: 0,
+        pointsReceived: 0,
         matchesPlayed: 0,
       };
 
@@ -390,6 +417,13 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       if (b.gamesWon !== a.gamesWon) {
         return b.gamesWon - a.gamesWon;
       }
+      // Menos juegos perdidos = mejor
+      if (a.gamesLost !== b.gamesLost) {
+        return a.gamesLost - b.gamesLost;
+      }
+      if (a.pointsReceived !== b.pointsReceived) {
+        return a.pointsReceived - b.pointsReceived;
+      }
       // Si todo es igual, ordenar alfabéticamente
       const nameA = `${a.player1_name}/${a.player2_name}`;
       const nameB = `${b.player1_name}/${b.player2_name}`;
@@ -398,15 +432,47 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   }, [pairsWithStats]);
 
   // Clasificación por equipos (suma de estadísticas de parejas del mismo equipo); usa effectiveTeamConfig (incl. inferido)
-  const teamStandings = useMemo((): Array<{ teamIndex: number; name: string; points: number; setsWon: number; matchesPlayed: number }> | null => {
+  const teamStandings = useMemo(():
+    | Array<{
+        teamIndex: number;
+        name: string;
+        points: number;
+        pointsReceived: number;
+        gamesWon: number;
+        gamesLost: number;
+        setsWon: number;
+        setsLost: number;
+        matchesPlayed: number;
+      }>
+    | null => {
     if (!effectiveTeamConfig?.teamNames?.length || !effectiveTeamConfig.pairToTeam || Object.keys(effectiveTeamConfig.pairToTeam).length === 0) return null;
     const n = effectiveTeamConfig.teamNames.length;
-    const totals: Array<{ points: number; setsWon: number; matchesPlayed: number }> = Array.from({ length: n }, () => ({ points: 0, setsWon: 0, matchesPlayed: 0 }));
+    const totals: Array<{
+      points: number;
+      pointsReceived: number;
+      gamesWon: number;
+      gamesLost: number;
+      setsWon: number;
+      setsLost: number;
+      matchesPlayed: number;
+    }> = Array.from({ length: n }, () => ({
+      points: 0,
+      pointsReceived: 0,
+      gamesWon: 0,
+      gamesLost: 0,
+      setsWon: 0,
+      setsLost: 0,
+      matchesPlayed: 0,
+    }));
     pairsWithStats.forEach((pair) => {
       const t = effectiveTeamConfig.pairToTeam[pair.id];
       if (t >= 0 && t < n) {
         totals[t].points += pair.points;
+        totals[t].pointsReceived += pair.pointsReceived;
+        totals[t].gamesWon += pair.gamesWon;
+        totals[t].gamesLost += pair.gamesLost;
         totals[t].setsWon += pair.setsWon;
+        totals[t].setsLost += pair.setsLost;
         totals[t].matchesPlayed += pair.matchesPlayed;
       }
     });
@@ -414,11 +480,18 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       teamIndex,
       name: effectiveTeamConfig.teamNames[teamIndex] ?? `Equipo ${teamIndex + 1}`,
       points: tot.points,
+      pointsReceived: tot.pointsReceived,
+      gamesWon: tot.gamesWon,
+      gamesLost: tot.gamesLost,
       setsWon: tot.setsWon,
+      setsLost: tot.setsLost,
       matchesPlayed: tot.matchesPlayed,
     })).sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
+      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
+      if (a.gamesLost !== b.gamesLost) return a.gamesLost - b.gamesLost;
+      if (a.pointsReceived !== b.pointsReceived) return a.pointsReceived - b.pointsReceived;
       return b.matchesPlayed - a.matchesPlayed;
     });
   }, [effectiveTeamConfig, pairsWithStats]);
@@ -521,7 +594,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
               <tr>
                 <th>Pos</th>
                 <th>Equipo</th>
-                <th>Sets</th>
+                <th title="Sets ganados">S. gan.</th>
+                <th title="Sets perdidos">S. perd.</th>
+                <th title="Juegos perdidos">J. perd.</th>
+                <th title="Puntos recibidos (marcador a favor del rival)">P. rec.</th>
                 <th>Partidos</th>
                 <th>Puntos</th>
               </tr>
@@ -546,6 +622,9 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                   </td>
                   <td className="new-team-cell">{row.name}</td>
                   <td className="new-stats-cell">{row.setsWon}</td>
+                  <td className="new-stats-cell">{row.setsLost}</td>
+                  <td className="new-stats-cell">{row.gamesLost}</td>
+                  <td className="new-stats-cell">{row.pointsReceived}</td>
                   <td className="new-stats-cell">{row.matchesPlayed}</td>
                   <td className="new-points-cell">{row.points}</td>
                 </tr>
@@ -561,7 +640,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
             <tr>
               <th>Pos</th>
               <th>Pareja</th>
-              <th>Sets</th>
+              <th title="Sets ganados">S. gan.</th>
+              <th title="Sets perdidos">S. perd.</th>
+              <th title="Juegos perdidos">J. perd.</th>
+              <th title="Puntos recibidos (marcador a favor del rival)">P. rec.</th>
               <th>Partidos</th>
               <th>Puntos</th>
             </tr>
@@ -590,6 +672,9 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                   {pair.player1_name} / {pair.player2_name}
                 </td>
                 <td className="new-stats-cell">{pair.setsWon}</td>
+                <td className="new-stats-cell">{pair.setsLost}</td>
+                <td className="new-stats-cell">{pair.gamesLost}</td>
+                <td className="new-stats-cell">{pair.pointsReceived}</td>
                 <td className="new-stats-cell">{pair.matchesPlayed}</td>
                 <td className="new-points-cell">{pair.points}</td>
               </tr>

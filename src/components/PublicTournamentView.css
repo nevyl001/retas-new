@@ -1026,6 +1026,7 @@
 
 .standings-card-stats {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-md);
   padding-left: 36px;
   font-size: 0.8125rem;
