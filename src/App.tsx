@@ -22,6 +22,7 @@ import { testConnection } from "./lib/supabaseClient";
 import { AmericanoDinamicoScreen } from "./components/AmericanoDinamico/AmericanoDinamicoScreen";
 import {
   AMERICANO_SESSION_TOURNAMENT_KEY,
+  readAmericanoActiveTournamentId,
   readAmericanoTournamentIdFromSession,
 } from "./lib/americanoDinamicoStorage";
 import {
@@ -177,11 +178,16 @@ function AppContent() {
     currentView === "americano-dinamico" || pathLooksAmericano
       ? readAmericanoTournamentIdFromSession()
       : null;
-  /** URL > sessionStorage (misma pestaña) > reta seleccionada en memoria. */
+  const americanoTournamentIdFromStorage =
+    currentView === "americano-dinamico" || pathLooksAmericano
+      ? readAmericanoActiveTournamentId()
+      : null;
+  /** URL > localStorage/session > reta seleccionada en memoria. */
   const americanoTournamentId =
     currentView === "americano-dinamico"
       ? americanoTournamentIdFromUrl ??
         americanoTournamentIdFromSession ??
+        americanoTournamentIdFromStorage ??
         selectedTournament?.id ??
         null
       : americanoTournamentIdFromUrl;

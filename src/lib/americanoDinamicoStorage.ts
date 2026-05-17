@@ -10,6 +10,88 @@ const STORAGE_KEY_PREFIX = "americano_dinamico_snapshot_v1_";
 export const AMERICANO_SESSION_TOURNAMENT_KEY =
   "americano_dinamico_last_tournament_id";
 
+/** localStorage: reta Americano activa (persiste al volver al home). */
+export const AMERICANO_LOCAL_ACTIVE_KEY = "riviera_americano_active_id";
+
+const AMERICANO_MARK_PREFIX = "rivieraapp_americano_tournament_";
+
+export function persistAmericanoActiveTournamentId(tournamentId: string): void {
+  const id = tournamentId.trim();
+  if (!id) return;
+  try {
+    localStorage.setItem(AMERICANO_LOCAL_ACTIVE_KEY, id);
+    sessionStorage.setItem(AMERICANO_SESSION_TOURNAMENT_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readAmericanoActiveTournamentId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const fromLocal = localStorage.getItem(AMERICANO_LOCAL_ACTIVE_KEY)?.trim();
+    if (fromLocal) return fromLocal;
+    return readAmericanoTournamentIdFromSession();
+  } catch {
+    return null;
+  }
+}
+
+export function markTournamentAsAmericano(tournamentId: string): void {
+  const id = tournamentId.trim();
+  if (!id) return;
+  try {
+    sessionStorage.setItem(`${AMERICANO_MARK_PREFIX}${id}`, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isMarkedAmericanoTournament(tournamentId: string): boolean {
+  try {
+    return (
+      sessionStorage.getItem(`${AMERICANO_MARK_PREFIX}${tournamentId.trim()}`) ===
+      "1"
+    );
+  } catch {
+    return false;
+  }
+}
+
+export function isAmericanoTournamentRecord(
+  tournamentId: string,
+  tournament?: { is_started?: boolean; format?: string; is_finished?: boolean }
+): boolean {
+  if (isMarkedAmericanoTournament(tournamentId)) return true;
+  const snap = loadAmericanoDinamicoSnapshot(tournamentId);
+  if (snap) return true;
+  return Boolean(
+    tournament?.is_started && !tournament.format && !tournament.is_finished
+  );
+}
+
+export function isAmericanoResumable(tournamentId: string): boolean {
+  const snap = loadAmericanoDinamicoSnapshot(tournamentId);
+  if (snap?.tournamentPhase === "finished") return false;
+  if (snap) return true;
+  return isMarkedAmericanoTournament(tournamentId);
+}
+
+export function navigateToAmericanoDinamico(
+  tournamentId: string,
+  userId: string
+): void {
+  persistAmericanoActiveTournamentId(tournamentId);
+  markTournamentAsAmericano(tournamentId);
+  const params = new URLSearchParams({ tournamentId, userId });
+  window.history.pushState(
+    {},
+    "",
+    `/americano-dinamico?${params.toString()}`
+  );
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
 export function readAmericanoTournamentIdFromSession(): string | null {
   if (typeof window === "undefined") return null;
   try {

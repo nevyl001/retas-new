@@ -1,5 +1,9 @@
 import React from "react";
 import { Tournament, Player, Pair, Match } from "../lib/database";
+import {
+  isAmericanoTournamentRecord,
+  navigateToAmericanoDinamico,
+} from "../lib/americanoDinamicoStorage";
 import { TournamentWinner } from "./TournamentWinnerCalculator";
 import { TournamentManager } from "./TournamentManager";
 import TournamentDetails from "./TournamentDetails";
@@ -93,6 +97,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 }) => {
   const [showAllRetas, setShowAllRetas] = React.useState(false);
 
+  const handleTournamentSelect = React.useCallback(
+    (tournament: Tournament | null) => {
+      if (!tournament) {
+        onTournamentSelect(null);
+        return;
+      }
+      if (userId && isAmericanoTournamentRecord(tournament.id, tournament)) {
+        navigateToAmericanoDinamico(tournament.id, userId);
+        return;
+      }
+      onTournamentSelect(tournament);
+    },
+    [userId, onTournamentSelect]
+  );
+
   return (
     <div className="container">
       {loading && (
@@ -106,13 +125,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <>
             <HomeDashboard
               userId={userId}
-              onTournamentSelect={onTournamentSelect}
+              onTournamentSelect={handleTournamentSelect}
               onShowAllRetas={() => setShowAllRetas((v) => !v)}
             />
             {showAllRetas && (
               <div className="reta-management-section reta-management-section--v2">
                 <TournamentManager
-                  onTournamentSelect={onTournamentSelect}
+                  onTournamentSelect={handleTournamentSelect}
                   onBack={() => setShowAllRetas(false)}
                 />
               </div>

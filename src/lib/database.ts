@@ -8,7 +8,13 @@ import type {
   Tournament,
   TournamentTeamConfig,
 } from "./db/types";
-import type { AmericanoDinamicoSnapshotV1 } from "./americanoDinamicoStorage";
+import {
+  isAmericanoResumable,
+  isAmericanoTournamentRecord,
+  readAmericanoActiveTournamentId,
+  readAmericanoTournamentIdFromSession,
+  type AmericanoDinamicoSnapshotV1,
+} from "./americanoDinamicoStorage";
 
 export type {
   Game,
@@ -135,6 +141,48 @@ export const getTournamentById = async (tournamentId: string) => {
     .maybeSingle();
   if (error) throw error;
   return data;
+};
+
+/** Torneo Americano en curso del usuario (no crear uno nuevo al re-entrar). */
+export const findResumableAmericanoTournament = async (
+  userId: string
+): Promise<Tournament | null> => {
+  const tried = new Set<string>();
+
+  const tryId = async (id: string | null): Promise<Tournament | null> => {
+    const tid = id?.trim();
+    if (!tid || tried.has(tid)) return null;
+    tried.add(tid);
+    const t = await getTournamentById(tid);
+    if (!t || t.user_id !== userId || t.is_finished) return null;
+    if (!isAmericanoTournamentRecord(tid, t) || !isAmericanoResumable(tid)) {
+      return null;
+    }
+    return t;
+  };
+
+  const fromActive = await tryId(readAmericanoActiveTournamentId());
+  if (fromActive) {
+    console.log("Loading existing americano tournament:", fromActive.id, fromActive.name);
+    return fromActive;
+  }
+
+  const fromSession = await tryId(readAmericanoTournamentIdFromSession());
+  if (fromSession) {
+    console.log("Loading existing americano tournament:", fromSession.id, fromSession.name);
+    return fromSession;
+  }
+
+  const list = await getTournaments(userId);
+  for (const t of list) {
+    if (t.is_finished) continue;
+    if (!isAmericanoTournamentRecord(t.id, t)) continue;
+    if (!isAmericanoResumable(t.id)) continue;
+    console.log("Loading existing americano tournament:", t.id, t.name);
+    return t;
+  }
+
+  return null;
 };
 
 /**

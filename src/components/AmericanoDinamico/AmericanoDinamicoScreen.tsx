@@ -13,10 +13,11 @@ import {
 } from "../../lib/database";
 import { useUser } from "../../contexts/UserContext";
 import {
-  AMERICANO_SESSION_TOURNAMENT_KEY,
   buildAmericanoDinamicoSnapshot,
   clearAmericanoDinamicoSnapshot,
   loadAmericanoDinamicoSnapshot,
+  markTournamentAsAmericano,
+  persistAmericanoActiveTournamentId,
   resolveAmericanoTournamentId,
   saveAmericanoDinamicoSnapshot,
 } from "../../lib/americanoDinamicoStorage";
@@ -59,6 +60,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   );
   const finishedPersistedRef = React.useRef(false);
   const effectiveUserId = userId || user?.id || null;
+
+  React.useEffect(() => {
+    if (!resolvedTournamentId) return;
+    persistAmericanoActiveTournamentId(resolvedTournamentId);
+    markTournamentAsAmericano(resolvedTournamentId);
+  }, [resolvedTournamentId]);
 
   const publicAmericanoUrl = React.useMemo(
     () =>
@@ -137,7 +144,11 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     const t = window.setTimeout(() => {
       if (players.length === 0) {
         const existing = loadAmericanoDinamicoSnapshot(resolvedTournamentId);
-        if (existing?.rounds?.length) {
+        if (
+          existing?.rounds?.length ||
+          existing?.tournamentPhase === "playing" ||
+          existing?.tournamentPhase === "finished"
+        ) {
           return;
         }
         clearAmericanoDinamicoSnapshot(resolvedTournamentId);
@@ -157,11 +168,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   }, [resolvedTournamentId, phase, players]);
 
   const goBackToRetas = React.useCallback(() => {
-    try {
-      sessionStorage.removeItem(AMERICANO_SESSION_TOURNAMENT_KEY);
-    } catch {
-      /* ignore */
-    }
     window.history.pushState({}, "", "/");
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, []);

@@ -1,5 +1,14 @@
 import React, { useCallback, useState } from "react";
-import { createTournament, Tournament } from "../../lib/database";
+import {
+  createTournament,
+  findResumableAmericanoTournament,
+  Tournament,
+} from "../../lib/database";
+import {
+  markTournamentAsAmericano,
+  navigateToAmericanoDinamico,
+  persistAmericanoActiveTournamentId,
+} from "../../lib/americanoDinamicoStorage";
 import { useUser } from "../../contexts/UserContext";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import type { GameModeId } from "./gameModesConfig";
@@ -20,19 +29,6 @@ interface HomeDashboardProps {
   onShowAllRetas?: () => void;
 }
 
-function goAmericano(tournamentId: string, userId: string) {
-  const params = new URLSearchParams({
-    tournamentId,
-    userId,
-  });
-  window.history.pushState(
-    {},
-    "",
-    `/americano-dinamico?${params.toString()}`
-  );
-  window.dispatchEvent(new PopStateEvent("popstate"));
-}
-
 export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   userId,
   onTournamentSelect,
@@ -43,15 +39,29 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleModeSelect = useCallback((modeId: GameModeId) => {
-    setError(null);
-    persistLastGameMode(modeId);
-    if (modeId === "mini-torneo") {
-      navigateTorneoExpress("/torneo-express/nuevo");
-      return;
-    }
-    setSheetMode(modeId);
-  }, []);
+  const handleModeSelect = useCallback(
+    async (modeId: GameModeId) => {
+      setError(null);
+      persistLastGameMode(modeId);
+      if (modeId === "mini-torneo") {
+        navigateTorneoExpress("/torneo-express/nuevo");
+        return;
+      }
+      if (modeId === "americano" && userId) {
+        try {
+          const existing = await findResumableAmericanoTournament(userId);
+          if (existing) {
+            navigateToAmericanoDinamico(existing.id, userId);
+            return;
+          }
+        } catch {
+          /* abrir sheet de configuración */
+        }
+      }
+      setSheetMode(modeId);
+    },
+    [userId]
+  );
 
   const handleQuickStart = useCallback(
     async (payload: QuickStartPayload) => {
@@ -62,6 +72,15 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       setSubmitting(true);
       setError(null);
       try {
+        if (payload.modeId === "americano") {
+          const existing = await findResumableAmericanoTournament(userId);
+          if (existing) {
+            setSheetMode(null);
+            navigateToAmericanoDinamico(existing.id, userId);
+            return;
+          }
+        }
+
         const dbFormat = gameModeIdToTournamentFormat(payload.modeId);
         const tournament = await createTournament(
           payload.name,
@@ -77,7 +96,9 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         setSheetMode(null);
 
         if (payload.modeId === "americano") {
-          goAmericano(tournament.id, userId);
+          markTournamentAsAmericano(tournament.id);
+          persistAmericanoActiveTournamentId(tournament.id);
+          navigateToAmericanoDinamico(tournament.id, userId);
           return;
         }
 
