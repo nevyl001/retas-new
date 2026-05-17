@@ -58,18 +58,6 @@ export function isMarkedAmericanoTournament(tournamentId: string): boolean {
   }
 }
 
-export function isAmericanoTournamentRecord(
-  tournamentId: string,
-  tournament?: { is_started?: boolean; format?: string; is_finished?: boolean }
-): boolean {
-  if (isMarkedAmericanoTournament(tournamentId)) return true;
-  const snap = loadAmericanoDinamicoSnapshot(tournamentId);
-  if (snap) return true;
-  return Boolean(
-    tournament?.is_started && !tournament.format && !tournament.is_finished
-  );
-}
-
 export function isAmericanoResumable(tournamentId: string): boolean {
   const snap = loadAmericanoDinamicoSnapshot(tournamentId);
   if (snap?.tournamentPhase === "finished") return false;

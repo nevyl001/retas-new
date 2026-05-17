@@ -10,11 +10,11 @@ import type {
 } from "./db/types";
 import {
   isAmericanoResumable,
-  isAmericanoTournamentRecord,
   readAmericanoActiveTournamentId,
   readAmericanoTournamentIdFromSession,
   type AmericanoDinamicoSnapshotV1,
 } from "./americanoDinamicoStorage";
+import { isAmericanoTournament } from "./gameModeMapping";
 
 export type {
   Game,
@@ -155,7 +155,7 @@ export const findResumableAmericanoTournament = async (
     tried.add(tid);
     const t = await getTournamentById(tid);
     if (!t || t.user_id !== userId || t.is_finished) return null;
-    if (!isAmericanoTournamentRecord(tid, t) || !isAmericanoResumable(tid)) {
+    if (!isAmericanoTournament(t) || !isAmericanoResumable(tid)) {
       return null;
     }
     return t;
@@ -176,7 +176,7 @@ export const findResumableAmericanoTournament = async (
   const list = await getTournaments(userId);
   for (const t of list) {
     if (t.is_finished) continue;
-    if (!isAmericanoTournamentRecord(t.id, t)) continue;
+    if (!isAmericanoTournament(t)) continue;
     if (!isAmericanoResumable(t.id)) continue;
     console.log("Loading existing americano tournament:", t.id, t.name);
     return t;

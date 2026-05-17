@@ -15,6 +15,7 @@ import type { GameModeId } from "./gameModesConfig";
 import {
   gameModeIdToTournamentFormat,
   persistLastGameMode,
+  persistTournamentGameMode,
   persistTournamentMode,
 } from "../../lib/gameModeMapping";
 import { HomeHeader } from "./HomeHeader";
@@ -90,6 +91,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           dbFormat
         );
         persistLastGameMode(payload.modeId);
+        persistTournamentGameMode(tournament.id, payload.modeId);
         if (dbFormat) {
           persistTournamentMode(tournament.id, dbFormat);
         }

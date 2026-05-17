@@ -1,9 +1,6 @@
 import React from "react";
 import { Tournament, Player, Pair, Match } from "../lib/database";
-import {
-  isAmericanoTournamentRecord,
-  navigateToAmericanoDinamico,
-} from "../lib/americanoDinamicoStorage";
+import { continueTournament } from "../lib/tournamentRouting";
 import { TournamentWinner } from "./TournamentWinnerCalculator";
 import { TournamentManager } from "./TournamentManager";
 import TournamentDetails from "./TournamentDetails";
@@ -103,8 +100,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         onTournamentSelect(null);
         return;
       }
-      if (userId && isAmericanoTournamentRecord(tournament.id, tournament)) {
-        navigateToAmericanoDinamico(tournament.id, userId);
+      if (userId) {
+        continueTournament(tournament, {
+          userId,
+          onSelectMain: onTournamentSelect,
+        });
         return;
       }
       onTournamentSelect(tournament);

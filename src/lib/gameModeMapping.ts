@@ -1,9 +1,14 @@
 import type { GameModeId } from "../components/home/gameModesConfig";
+import {
+  isMarkedAmericanoTournament,
+  loadAmericanoDinamicoSnapshot,
+} from "./americanoDinamicoStorage";
 
 export type TournamentDbFormat = "round_robin" | "teams";
 export type StartTournamentFormat = "roundRobin" | "teams";
 
 const MODE_STORAGE_PREFIX = "rivieraapp_mode_";
+const GAME_MODE_STORAGE_PREFIX = "rivieraapp_game_mode_";
 const LAST_GAME_MODE_KEY = "rivieraapp_last_game_mode";
 
 export function persistLastGameMode(modeId: GameModeId): void {
@@ -77,6 +82,68 @@ export function readPersistedTournamentMode(
     /* ignore */
   }
   return null;
+}
+
+export function persistTournamentGameMode(
+  tournamentId: string,
+  modeId: GameModeId
+): void {
+  try {
+    sessionStorage.setItem(`${GAME_MODE_STORAGE_PREFIX}${tournamentId}`, modeId);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readPersistedTournamentGameMode(
+  tournamentId: string
+): GameModeId | null {
+  try {
+    const v = sessionStorage.getItem(
+      `${GAME_MODE_STORAGE_PREFIX}${tournamentId}`
+    );
+    if (
+      v === "reta-equipos" ||
+      v === "round-robin" ||
+      v === "americano" ||
+      v === "mini-torneo"
+    ) {
+      return v;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+/** Modo de juego de una reta (DB format > persistido > marca americano). */
+export function resolveTournamentGameMode(tournament: {
+  id: string;
+  format?: string;
+}): GameModeId {
+  const persistedMode = readPersistedTournamentGameMode(tournament.id);
+  if (persistedMode) return persistedMode;
+
+  if (tournament.format === "round_robin") return "round-robin";
+  if (tournament.format === "teams") return "reta-equipos";
+
+  const persistedFormat = readPersistedTournamentMode(tournament.id);
+  if (persistedFormat === "round_robin") return "round-robin";
+  if (persistedFormat === "teams") return "reta-equipos";
+
+  if (isMarkedAmericanoTournament(tournament.id)) return "americano";
+
+  const snap = loadAmericanoDinamicoSnapshot(tournament.id);
+  if (snap && !tournament.format && !persistedFormat) return "americano";
+
+  return "round-robin";
+}
+
+export function isAmericanoTournament(tournament: {
+  id: string;
+  format?: string;
+}): boolean {
+  return resolveTournamentGameMode(tournament) === "americano";
 }
 
 export function resolveTournamentStartFormat(tournament: {
