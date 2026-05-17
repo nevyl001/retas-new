@@ -2,6 +2,7 @@ import type { Tournament } from "./db/types";
 import { resolveTournamentGameMode } from "./gameModeMapping";
 import { navigateToAmericanoDinamico } from "./americanoDinamicoStorage";
 import { navigateTorneoExpress } from "../components/torneo-express/torneoExpressNav";
+import { navigateToReta } from "./appRouting";
 
 export type AppTournamentRoute = "main" | "americano-dinamico" | "torneo-express";
 
@@ -36,6 +37,7 @@ export function continueTournament(
       navigateTorneoExpress(`/torneo-express/${tournament.id}/gestionar`);
       break;
     default:
+      navigateToReta(tournament.id);
       handlers.onSelectMain(tournament);
   }
 }

@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
+import {
+  navigateAppTo,
+  normalizeAppPathname,
+  PATH_SYNC_EVENT,
+} from "../../lib/appRouting";
 
-const PATH_SYNC_EVENT = "riviera:pathname-sync";
+export { PATH_SYNC_EVENT };
 
 export function normalizeTorneoPath(path: string): string {
-  return path.replace(/\/+$/, "") || "/";
+  return normalizeAppPathname(path);
 }
 
 /** Mantiene el pathname en sync con pushState/popstate (sin recargar la página). */
@@ -56,11 +61,5 @@ export function getTorneoExpressGeneralBack(torneoId: string): string {
 
 /** Navegación solo por URL; no modifica Supabase ni estado global de retas. */
 export function navigateTorneoExpress(path: string): void {
-  const next = normalizeTorneoPath(path);
-  const current = normalizeTorneoPath(window.location.pathname);
-  if (next === current) return;
-
-  window.history.pushState({}, "", path);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-  window.dispatchEvent(new Event(PATH_SYNC_EVENT));
+  navigateAppTo(normalizeTorneoPath(path));
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./App.css";
 import "./styles/theme.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -30,6 +30,18 @@ import {
   TorneoExpressRouter,
 } from "./components/torneo-express/TorneoExpressRouter";
 import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
+import {
+  navigateToAppHome,
+  navigateToReta,
+  normalizeAppPathname,
+  parseRetaIdFromPath,
+  resolveAppViewFromPath,
+  type AppView,
+} from "./lib/appRouting";
+import {
+  continueTournament,
+  getRouteForTournament,
+} from "./lib/tournamentRouting";
 
 // Types
 import { Tournament, Player, getTournamentById, upsertTournamentPublicConfig } from "./lib/database";
@@ -64,12 +76,8 @@ function parsePublicAmericanoBoardTournamentId(pathname: string): string | null 
   }
 }
 
-function normalizeAppPathname(pathname: string): string {
-  return pathname.replace(/\/+$/, "") || "/";
-}
-
 function AppContent() {
-  const { user } = useUser();
+  const { user, loading: authLoading } = useUser();
   const { isAdminLoggedIn } = useAdmin();
   const appPathname = useSyncPathname();
 
@@ -78,32 +86,16 @@ function AppContent() {
     useState<Tournament | null>(null);
 
   // Inicializar currentView basado en la URL actual (solo una vez)
-  const [currentView, setCurrentView] = useState<
-    | "main"
-    | "winner"
-    | "public"
-    | "public-americano"
-    | "public-americano-pantalla"
-    | "americano-dinamico"
-    | "torneo-express"
-    | "auth-callback"
-    | "admin-login"
-    | "admin-dashboard"
-  >(() => {
+  const [currentView, setCurrentView] = useState<AppView>(() => {
     const currentPath = normalizeAppPathname(window.location.pathname);
-    console.log("🔍 Inicializando currentView basado en path:", currentPath);
-
-    if (currentPath === "/auth/callback") return "auth-callback";
-    if (currentPath === "/admin-login") return "admin-login";
-    if (currentPath === "/admin-dashboard") return "admin-dashboard";
-    if (currentPath === "/americano-dinamico") return "americano-dinamico";
-    if (currentPath.startsWith("/torneo-express")) return "torneo-express";
-    if (/^\/public\/americano-pantalla\//i.test(currentPath))
-      return "public-americano-pantalla";
-    if (/^\/public\/americano\//i.test(currentPath)) return "public-americano";
-    if (currentPath.startsWith("/public/")) return "public";
-    return "main";
+    const view = resolveAppViewFromPath(currentPath);
+    console.log("🔍 Inicializando currentView basado en path:", currentPath, "→", view);
+    return view;
   });
+
+  const [restoringRetaFromUrl, setRestoringRetaFromUrl] = useState(() =>
+    Boolean(parseRetaIdFromPath(window.location.pathname))
+  );
 
   // Log solo cuando cambien los valores (no en cada render)
   useEffect(() => {
@@ -220,40 +212,24 @@ function AppContent() {
     );
   }, [currentView, americanoTournamentId, americanoUserId, user?.id]);
 
+  const retaIdFromPath = useMemo(
+    () => parseRetaIdFromPath(appPathname),
+    [appPathname]
+  );
+
   // Detectar cambios en la URL (solo para rutas específicas)
   useEffect(() => {
-    type AppView =
-      | "main"
-      | "winner"
-      | "public"
-      | "public-americano"
-      | "public-americano-pantalla"
-      | "americano-dinamico"
-      | "torneo-express"
-      | "auth-callback"
-      | "admin-login"
-      | "admin-dashboard";
-
-    const resolveView = (currentPath: string): AppView | null => {
-      if (currentPath === "/auth/callback") return "auth-callback";
-      if (currentPath === "/admin-login") return "admin-login";
-      if (currentPath === "/admin-dashboard") return "admin-dashboard";
-      if (currentPath === "/americano-dinamico") return "americano-dinamico";
-      if (currentPath.startsWith("/torneo-express")) return "torneo-express";
-      if (currentPath === "/") return "main";
-      if (/^\/public\/americano-pantalla\//i.test(currentPath))
-        return "public-americano-pantalla";
-      if (/^\/public\/americano\//i.test(currentPath)) return "public-americano";
-      if (currentPath.startsWith("/public/")) return "public";
-      return null;
-    };
-
     const checkCurrentPath = () => {
       const currentPath = normalizeAppPathname(window.location.pathname);
-      const nextView = resolveView(currentPath);
+      const nextView = resolveAppViewFromPath(currentPath);
 
-      if (nextView) {
-        setCurrentView((prev) => (prev === nextView ? prev : nextView));
+      setCurrentView((prev) => (prev === nextView ? prev : nextView));
+
+      if (parseRetaIdFromPath(currentPath)) {
+        setRestoringRetaFromUrl(true);
+      } else if (currentPath === "/") {
+        setSelectedTournament(null);
+        setRestoringRetaFromUrl(false);
       }
 
       if (/^\/public\/americano-pantalla\//i.test(currentPath)) {
@@ -325,6 +301,92 @@ function AppContent() {
     loading,
     loadTournamentData,
   } = useTournamentData();
+
+  const handleTournamentSelect = useCallback(
+    (tournament: Tournament | null) => {
+      if (!tournament) {
+        setSelectedTournament(null);
+        setPairs([]);
+        setMatches([]);
+        navigateToAppHome();
+        return;
+      }
+
+      const route = getRouteForTournament(tournament);
+      if (route !== "main" && user?.id) {
+        continueTournament(tournament, {
+          userId: user.id,
+          onSelectMain: setSelectedTournament,
+        });
+        return;
+      }
+
+      setSelectedTournament(tournament);
+      navigateToReta(tournament.id);
+    },
+    [user?.id, setPairs, setMatches]
+  );
+
+  // Restaurar reta round-robin / equipos desde /reta/:id tras F5
+  useEffect(() => {
+    if (authLoading) return;
+    if (currentView !== "main" || !retaIdFromPath) {
+      setRestoringRetaFromUrl(false);
+      return;
+    }
+    if (!user?.id) {
+      setRestoringRetaFromUrl(false);
+      return;
+    }
+    if (selectedTournament?.id === retaIdFromPath) {
+      setRestoringRetaFromUrl(false);
+      return;
+    }
+
+    let cancelled = false;
+    setRestoringRetaFromUrl(true);
+
+    (async () => {
+      try {
+        const fetched = await getTournamentById(retaIdFromPath);
+        if (cancelled) return;
+        if (!fetched) {
+          navigateToAppHome();
+          setSelectedTournament(null);
+          return;
+        }
+
+        const route = getRouteForTournament(fetched);
+        if (route !== "main") {
+          continueTournament(fetched, {
+            userId: user.id,
+            onSelectMain: setSelectedTournament,
+          });
+          return;
+        }
+
+        setSelectedTournament(fetched);
+      } catch {
+        if (!cancelled) {
+          navigateToAppHome();
+          setSelectedTournament(null);
+        }
+      } finally {
+        if (!cancelled) setRestoringRetaFromUrl(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    authLoading,
+    currentView,
+    retaIdFromPath,
+    user?.id,
+    selectedTournament?.id,
+  ]);
+
   const {
     tournamentWinner,
     winningTeamName,
@@ -474,6 +536,7 @@ function AppContent() {
     setMatches([]);
     setError("");
     setCurrentView("main");
+    navigateToAppHome();
     setForceRefresh(0);
     setShowDebugInfo(false);
   };
@@ -536,9 +599,17 @@ function AppContent() {
 
         {currentView === "main" && !isAmericanoRoute && (
           <>
+            {restoringRetaFromUrl && retaIdFromPath && !selectedTournament ? (
+              <div className="loading-container">
+                <div className="loading-spinner">
+                  <div className="spinner" />
+                  <p>⏳ Cargando reta…</p>
+                </div>
+              </div>
+            ) : (
             <MainLayout
               selectedTournament={selectedTournament}
-              onTournamentSelect={setSelectedTournament}
+              onTournamentSelect={handleTournamentSelect}
               loading={loading || actionLoading}
               userId={user?.id}
               pairs={pairs}
@@ -574,6 +645,7 @@ function AppContent() {
               onShowWinnerScreen={handleShowWinner}
               onBackToHome={handleBackToHome}
             />
+            )}
           </>
         )}
 

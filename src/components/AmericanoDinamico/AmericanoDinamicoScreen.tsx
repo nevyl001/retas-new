@@ -12,6 +12,7 @@ import {
   type Player,
 } from "../../lib/database";
 import { useUser } from "../../contexts/UserContext";
+import { navigateToAppHome } from "../../lib/appRouting";
 import {
   buildAmericanoDinamicoSnapshot,
   clearAmericanoDinamicoSnapshot,
@@ -170,7 +171,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   }, [resolvedTournamentId, phase, players]);
 
   const goBackToRetas = React.useCallback(() => {
-    window.history.pushState({}, "", "/");
+    navigateToAppHome();
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, []);
 

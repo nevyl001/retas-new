@@ -81,31 +81,21 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   }, []);
 
-  // Escuchar cambios de autenticación
+  // Restaurar sesión antes de redirigir (getSession + listener)
   useEffect(() => {
     let isMounted = true;
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const applySession = (session: Session | null) => {
       if (!isMounted) return;
 
-      console.log("🔄 Cambio de autenticación:", event, session?.user?.id);
       setSession(session);
 
-      // Verificar si es admin antes de establecer como usuario normal
       if (session?.user?.email === "admin@test.com") {
-        console.log(
-          "🔐 Usuario admin detectado, NO procesando como usuario normal"
-        );
         setUser(null);
         setUserProfile(null);
       } else {
         setUser(session?.user ?? null);
-
         if (session?.user) {
-          console.log("👤 Usuario normal encontrado, obteniendo perfil...");
-          console.log("👤 Usuario data:", session.user);
           fetchUserProfile(
             session.user.id,
             session.user.email,
@@ -115,7 +105,20 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           setUserProfile(null);
         }
       }
+    };
 
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return;
+      applySession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!isMounted) return;
+      console.log("🔄 Cambio de autenticación:", event, session?.user?.id);
+      applySession(session);
       setLoading(false);
     });
 
@@ -124,7 +127,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       subscription.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Solo ejecutar una vez al montar
+  }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
     try {

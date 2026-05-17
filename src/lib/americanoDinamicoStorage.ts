@@ -3,6 +3,7 @@
  * No requiere columnas nuevas en Supabase; permite mostrar resultados al reabrir la reta.
  */
 import type { AmericanoPlayer, AmericanoRound } from "./db/types";
+import { navigateAppTo } from "./appRouting";
 
 const STORAGE_KEY_PREFIX = "americano_dinamico_snapshot_v1_";
 
@@ -72,12 +73,7 @@ export function navigateToAmericanoDinamico(
   persistAmericanoActiveTournamentId(tournamentId);
   markTournamentAsAmericano(tournamentId);
   const params = new URLSearchParams({ tournamentId, userId });
-  window.history.pushState(
-    {},
-    "",
-    `/americano-dinamico?${params.toString()}`
-  );
-  window.dispatchEvent(new PopStateEvent("popstate"));
+  navigateAppTo(`/americano-dinamico?${params.toString()}`);
 }
 
 export function readAmericanoTournamentIdFromSession(): string | null {
