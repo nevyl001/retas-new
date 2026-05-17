@@ -29,62 +29,78 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
 
   return (
     <div className="auth-form-container">
-      <div className="auth-form">
-        <div className="auth-header">
-          <h2>🏆 Iniciar Sesión</h2>
-          <p>Accede a tu cuenta para gestionar tus retas</p>
-        </div>
+      <div className="auth-form-card">
+        <header className="auth-form-header">
+          <div className="auth-form-header__brand">
+            <span className="auth-form-header__brand-icon" aria-hidden>
+              🏆
+            </span>
+            <span className="auth-form-header__brand-name">RivieraApp</span>
+          </div>
+          <h1>Bienvenido de vuelta</h1>
+          <p>Ingresa tus datos para continuar</p>
+        </header>
 
         <form onSubmit={handleSubmit} className="auth-form-content">
           {error && (
-            <div className="auth-error">
-              <span>❌ {error}</span>
+            <div className="auth-error" role="alert">
+              <span>{error}</span>
             </div>
           )}
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="email">
+              Email
+            </label>
             <input
               id="email"
+              className="auth-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
               required
               disabled={loading}
+              autoComplete="email"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="password">
+              Contraseña
+            </label>
             <input
               id="password"
+              className="auth-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Tu contraseña"
+              placeholder="••••••••"
               required
               disabled={loading}
+              autoComplete="current-password"
             />
           </div>
 
-          <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? "⏳ Iniciando sesión..." : "🚀 Iniciar Sesión"}
-          </button>
+          <div className="auth-cta">
+            <button
+              type="submit"
+              className="btn-auth-primary"
+              disabled={loading}
+            >
+              {loading ? "Entrando…" : "Entrar al juego →"}
+            </button>
+          </div>
         </form>
 
-        <div className="auth-footer">
+        <footer className="auth-footer">
           <p>
-            ¿No tienes cuenta?{" "}
-            <button
-              type="button"
-              onClick={onToggleMode}
-              className="auth-toggle-btn"
-            >
-              Regístrate aquí
+            ¿Primera vez aquí?{" "}
+            <button type="button" onClick={onToggleMode} className="auth-toggle-btn">
+              Crear cuenta gratis
             </button>
           </p>
-        </div>
+        </footer>
       </div>
     </div>
   );

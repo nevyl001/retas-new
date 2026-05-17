@@ -2,8 +2,8 @@ import React from "react";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { TournamentWinner } from "./TournamentWinnerCalculator";
 import { TournamentManager } from "./TournamentManager";
-import WelcomeBanner from "./WelcomeBanner";
 import TournamentDetails from "./TournamentDetails";
+import { HomeDashboard } from "./home/HomeDashboard";
 
 interface MainLayoutProps {
   selectedTournament: Tournament | null;
@@ -91,35 +91,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onShowWinnerScreen,
   onBackToHome,
 }) => {
+  const [showAllRetas, setShowAllRetas] = React.useState(false);
+
   return (
     <div className="container">
-      <div className="header-section">
-        <h1>RivieraApp</h1>
-        <p className="header-tagline">Retas y torneos de pádel</p>
-        <div className="header-instructions">
-          <div className="instruction-step">
-            <span className="instruction-number">1</span>
-            <span className="instruction-icon">📝</span>
-            <span>Crea tu primera reta</span>
-          </div>
-          <div className="instruction-step">
-            <span className="instruction-number">2</span>
-            <span className="instruction-icon">👥</span>
-            <span>Añade jugadores participantes</span>
-          </div>
-          <div className="instruction-step">
-            <span className="instruction-number">3</span>
-            <span className="instruction-icon">🤝</span>
-            <span>Forma parejas</span>
-          </div>
-          <div className="instruction-step">
-            <span className="instruction-number">4</span>
-            <span className="instruction-icon">⚡</span>
-            <span>Inicia la reta y genera partidos</span>
-          </div>
-        </div>
-      </div>
-
       {loading && (
         <div className="loading">
           <p>⏳ Cargando...</p>
@@ -127,20 +102,36 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       )}
 
       <div className="main-layout">
-        {/* Banner de Bienvenida */}
-        <WelcomeBanner isVisible={!selectedTournament} />
-
-        {/* Gestión de Retas */}
-        <div className="reta-management-section">
-          <TournamentManager
-            selectedTournament={selectedTournament || undefined}
-            onTournamentSelect={onTournamentSelect}
-          />
-        </div>
-
-        {/* Contenido de la Reta Seleccionada */}
-        <div className="reta-content">
-          {selectedTournament ? (
+        {!selectedTournament ? (
+          <>
+            <HomeDashboard
+              userId={userId}
+              onTournamentSelect={onTournamentSelect}
+              onShowAllRetas={() => setShowAllRetas((v) => !v)}
+            />
+            {showAllRetas && (
+              <div className="reta-management-section reta-management-section--v2">
+                <TournamentManager
+                  onTournamentSelect={onTournamentSelect}
+                  onBack={() => setShowAllRetas(false)}
+                />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="reta-content">
+            <div className="reta-content__toolbar">
+              <button
+                type="button"
+                className="home-link-btn"
+                onClick={() => {
+                  onTournamentSelect(null);
+                  onBackToHome();
+                }}
+              >
+                ← Volver al inicio
+              </button>
+            </div>
             <TournamentDetails
               selectedTournament={selectedTournament}
               pairs={pairs}
@@ -176,15 +167,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               onShowWinnerScreen={onShowWinnerScreen}
               onBackToHome={onBackToHome}
             />
-          ) : (
-            <div className="no-tournament-selected">
-              <h2>Selecciona una Reta</h2>
-              <p>
-                Elige una reta del panel para comenzar a gestionar partidos y resultados.
-              </p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,24 +4,28 @@
    ===================================================== */
 
 :root {
-  /* —— Paleta canónica (valores exactos) —— */
+  /* —— Paleta v2 (alineada con Home) —— */
   --bg-base: #0a0a0a;
+  --bg-primary: #0a0a0a;
   --bg-section: #141414;
-  --bg-card: #242424;
-  --bg-elevated: #2e2e2e;
+  --bg-card: #141414;
+  --bg-elevated: #1c1c1c;
+  --bg-overlay: #242424;
   /** Pareja / bloque perdedor en partido */
   --bg-loser: #1c1c1c;
 
-  --border-default: #333333;
-  --border-subtle: #1f1f1f;
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-strong: rgba(255, 255, 255, 0.18);
 
-  --color-gold: #d4af37;
-  --color-cream: #e8dcc8;
-  --color-muted: #7b9ea6;
+  --color-gold: #f59e0b;
+  --color-cream: #f59e0b;
+  --color-muted: #9ca3af;
 
-  --text-primary: #f5f5f0;
-  --text-secondary: #888888;
-  --text-disabled: #444444;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #4b5563;
+  --text-disabled: #374151;
 
   /* —— Compat: tokens usados en componentes existentes —— */
   --color-bg-base: var(--bg-base);
@@ -50,9 +54,9 @@
   --color-accent-text: var(--bg-base);
   --color-accent-border: var(--color-cream);
   --color-accent-border-gold: var(--color-gold);
-  --color-accent-hover: #d4c9b0;
-  --color-border-focus: var(--color-cream);
-  --color-accent-subtle: rgba(0, 0, 0, 0.35);
+  --color-accent-hover: #fbbf24;
+  --color-border-focus: rgba(245, 158, 11, 0.5);
+  --color-accent-subtle: rgba(245, 158, 11, 0.12);
 
   /* Sombras neutras (mínimas, sin “glow” dorado) */
   --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.45);
@@ -69,8 +73,9 @@
   --space-2xl: 64px;
   --space-3xl: 96px;
 
-  /* Tipografía — Outfit única */
-  --font-family: "Outfit", sans-serif;
+  /* Tipografía */
+  --font-family: "DM Sans", "Outfit", sans-serif;
+  --font-display: "Barlow Condensed", sans-serif;
 
   --font-weight-light: 300;
   --font-weight-regular: 400;

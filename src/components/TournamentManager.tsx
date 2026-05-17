@@ -1,40 +1,47 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-  createTournament,
   getTournaments,
   deleteTournament,
   updateTournament,
   Tournament,
 } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
-import AppHeader from "./AppHeader";
+import { Badge } from "./ui/Badge";
+import { formatRelativeDate } from "../lib/formatRelativeDate";
+import {
+  getTournamentGroupNames,
+  getTournamentModeBadge,
+  getTournamentStatusBadge,
+} from "../lib/tournamentDisplay";
+import "./mis-retas/mis-retas.css";
+
+type FilterId = "all" | "active" | "finished";
 
 interface TournamentManagerProps {
-  onTournamentSelect: (tournament: Tournament) => void;
+  onTournamentSelect: (tournament: Tournament | null) => void;
   selectedTournament?: Tournament;
+  onBack?: () => void;
+}
+
+function matchesFilter(tournament: Tournament, filter: FilterId): boolean {
+  if (filter === "all") return true;
+  if (filter === "finished") return tournament.is_finished;
+  return tournament.is_started && !tournament.is_finished;
 }
 
 export const TournamentManager: React.FC<TournamentManagerProps> = ({
   onTournamentSelect,
   selectedTournament,
+  onBack,
 }) => {
   const { user } = useUser();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
   const [, setError] = useState<string>("");
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newTournament, setNewTournament] = useState({
-    name: "",
-    description: "",
-    courts: 1,
-  });
+  const [filter, setFilter] = useState<FilterId>("all");
 
-  // Cargar retas cuando el usuario cambie
   useEffect(() => {
-    console.log("🔄 useEffect ejecutado, usuario:", user?.id);
-
     if (!user?.id) {
-      console.log("❌ No hay usuario, no se pueden cargar retas");
       setLoading(false);
       setTournaments([]);
       return;
@@ -43,36 +50,27 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     let isMounted = true;
 
     const loadTournaments = async () => {
-      console.log("🔄 Cargando retas para usuario:", user.id);
       try {
         setLoading(true);
         const data = await getTournaments(user.id);
-        
         if (!isMounted) return;
-        
-        console.log("✅ Retas cargadas:", data?.length || 0);
         setTournaments(data || []);
       } catch (err) {
         if (!isMounted) return;
-        console.error("❌ Error al cargar retas:", err);
+        console.error("Error al cargar retas:", err);
         setError("Error al cargar las retas");
         setTournaments([]);
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     };
 
     loadTournaments();
-
     return () => {
       isMounted = false;
     };
-  }, [user?.id]); // Solo depender del ID del usuario
+  }, [user?.id]);
 
-  // Mantener la tarjeta sincronizada cuando selectedTournament cambia fuera del manager
-  // (ej. Americano Dinamico marca la reta como iniciada/finalizada).
   useEffect(() => {
     if (!selectedTournament) return;
     setTournaments((prev) =>
@@ -82,26 +80,10 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     );
   }, [selectedTournament]);
 
-  const handleCreateTournament = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-
-    try {
-      setError("");
-      const tournament = await createTournament(
-        newTournament.name,
-        user.id,
-        newTournament.description || undefined,
-        newTournament.courts
-      );
-      setTournaments([tournament, ...tournaments]);
-      setNewTournament({ name: "", description: "", courts: 1 });
-      setShowCreateForm(false);
-    } catch (err) {
-      setError("Error al crear la reta");
-      console.error(err);
-    }
-  };
+  const filteredTournaments = useMemo(
+    () => tournaments.filter((t) => matchesFilter(t, filter)),
+    [tournaments, filter]
+  );
 
   const handleDeleteTournament = async (id: string) => {
     if (
@@ -117,7 +99,8 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       await deleteTournament(id);
       setTournaments(tournaments.filter((t) => t.id !== id));
       if (selectedTournament?.id === id) {
-        onTournamentSelect(tournaments[0] || null);
+        const remaining = tournaments.filter((t) => t.id !== id);
+        onTournamentSelect(remaining[0] ?? null);
       }
     } catch (err) {
       setError("Error al eliminar la reta");
@@ -137,292 +120,175 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     try {
       setError("");
       setLoading(true);
-
-      console.log("🏁 Finalizando reta:", tournament.name);
       await updateTournament(tournament.id, { is_finished: true });
-
-      // Actualizar el estado local
       setTournaments(
         tournaments.map((t) =>
           t.id === tournament.id ? { ...t, is_finished: true } : t
         )
       );
-
-      // Si esta reta está seleccionada, actualizar también el estado seleccionado
-      if (selectedTournament && selectedTournament.id === tournament.id) {
+      if (selectedTournament?.id === tournament.id) {
         onTournamentSelect({ ...tournament, is_finished: true });
       }
-
-      console.log("✅ Reta finalizada exitosamente");
-
-      // Mostrar mensaje de éxito
       alert("¡Reta finalizada exitosamente! 🏆");
     } catch (err) {
-      console.error("❌ Error finalizando reta:", err);
+      console.error("Error finalizando reta:", err);
       setError("Error al finalizar la reta: " + (err as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return <div className="loading">Cargando retas...</div>;
-  }
+  const filterChips: { id: FilterId; label: string }[] = [
+    { id: "all", label: "Todas" },
+    { id: "active", label: "En curso" },
+    { id: "finished", label: "Finalizadas" },
+  ];
 
   return (
-    <div className="tournament-manager">
-      <AppHeader
-        onCreateClick={() => setShowCreateForm(!showCreateForm)}
-        isCreating={showCreateForm}
-      />
+    <div className="tournament-manager mis-retas-page">
+      <header className="mis-retas-page__header">
+        {onBack && (
+          <button type="button" className="mis-retas-page__back" onClick={onBack}>
+            ← Volver
+          </button>
+        )}
+        <h1 className="mis-retas-page__title text-display">Mis Retas</h1>
+      </header>
 
-      {showCreateForm && (
-        <div className="create-reta-form">
-          <h3>Crear Nueva Reta</h3>
-          <form onSubmit={handleCreateTournament}>
-            <div className="form-group">
-              <label htmlFor="tournament-name">Nombre de la Reta:</label>
-              <input
-                id="tournament-name"
-                type="text"
-                value={newTournament.name}
-                onChange={(e) =>
-                  setNewTournament({ ...newTournament, name: e.target.value })
-                }
-                placeholder="Ej: Reta de Verano 2024"
-                required
-              />
-            </div>
+      <div className="mis-retas-page__filters riviera-filter-chips" role="tablist">
+        {filterChips.map((chip) => (
+          <button
+            key={chip.id}
+            type="button"
+            role="tab"
+            aria-selected={filter === chip.id}
+            className={`riviera-filter-chip${
+              filter === chip.id ? " riviera-filter-chip--active" : ""
+            }`}
+            onClick={() => setFilter(chip.id)}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
 
-            <div className="form-group">
-              <label htmlFor="tournament-description">
-                Descripción (opcional):
-              </label>
-              <textarea
-                id="tournament-description"
-                value={newTournament.description}
-                onChange={(e) =>
-                  setNewTournament({
-                    ...newTournament,
-                    description: e.target.value,
-                  })
-                }
-                placeholder="Descripción de la reta..."
-                rows={3}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="tournament-courts">Número de Canchas:</label>
-              <input
-                id="tournament-courts"
-                type="number"
-                min="1"
-                max="10"
-                value={newTournament.courts}
-                onChange={(e) =>
-                  setNewTournament({
-                    ...newTournament,
-                    courts: parseInt(e.target.value),
-                  })
-                }
-                required
-              />
-            </div>
-
-            <div className="form-actions">
-              <button type="submit" className="submit-btn">
-                🏆 Crear Reta
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                className="cancel-btn"
-              >
-                ❌ Cancelar
-              </button>
-            </div>
-          </form>
+      {loading ? (
+        <div className="mis-retas-loading" aria-busy="true">
+          <div className="riviera-skeleton mis-retas-loading__bar" />
+          <div className="riviera-skeleton mis-retas-loading__bar" />
+          <p className="mis-retas-loading__text">Cargando retas…</p>
         </div>
-      )}
+      ) : tournaments.length === 0 ? (
+        <div className="mis-retas-empty riviera-card">
+          <span className="mis-retas-empty__icon" aria-hidden>
+            🏓
+          </span>
+          <h2 className="mis-retas-empty__title">No tienes retas aún</h2>
+          <p className="mis-retas-empty__text">
+            Elige un modo de juego arriba para crear tu primera reta.
+          </p>
+        </div>
+      ) : filteredTournaments.length === 0 ? (
+        <div className="mis-retas-empty riviera-card">
+          <p className="mis-retas-empty__text">
+            No hay retas en este filtro. Prueba con &quot;Todas&quot;.
+          </p>
+        </div>
+      ) : (
+        <div className="mis-retas-page__grid">
+          {filteredTournaments.map((tournament) => {
+            const mode = getTournamentModeBadge(tournament);
+            const status = getTournamentStatusBadge(tournament);
+            const groups = getTournamentGroupNames(tournament);
+            const isSelected = selectedTournament?.id === tournament.id;
+            const courtsLabel =
+              tournament.courts === 1
+                ? "1 cancha"
+                : `${tournament.courts} canchas`;
 
-      <div className="retas-list">
-        <h2>Mis Retas</h2>
-        {loading ? (
-          <div className="loading-tournaments">
-            <p>⏳ Cargando retas...</p>
-          </div>
-        ) : tournaments.length === 0 ? (
-          <div className="no-tournaments">
-            <div className="no-tournaments-content">
-              <h3>🏆 ¡No tienes ninguna reta!</h3>
-              <p>¡Inicia una ya y comienza a organizar tus torneos de pádel!</p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="create-first-tournament-btn"
-              >
-                🚀 Crear Mi Primera Reta
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="tournaments-grid">
-            {tournaments.map((tournament) => (
-              <div
+            return (
+              <article
                 key={tournament.id}
-                className={`reta-card ${
-                  selectedTournament?.id === tournament.id ? "selected" : ""
+                className={`mis-reta-card riviera-card riviera-card--interactive${
+                  isSelected ? " mis-reta-card--selected" : ""
                 }`}
                 onClick={() => onTournamentSelect(tournament)}
-                style={{ cursor: "pointer" }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onTournamentSelect(tournament);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
-                <div className="reta-card-header">
-                  <h4 className="reta-card-title">{tournament.name}</h4>
+                <div className="mis-reta-card__badges">
+                  <Badge variant={mode.variant}>{mode.label}</Badge>
+                  <Badge variant={status.variant}>{status.label}</Badge>
+                </div>
+
+                <h3 className="mis-reta-card__name">{tournament.name}</h3>
+                <p className="mis-reta-card__meta">
+                  {formatRelativeDate(tournament.created_at)} · {courtsLabel}
+                </p>
+
+                {tournament.description ? (
+                  <p className="mis-reta-card__desc">{tournament.description}</p>
+                ) : null}
+
+                {groups.length > 0 && (
+                  <div className="mis-reta-card__groups">
+                    {groups.map((name) => (
+                      <span key={name} className="mis-reta-card__group-chip">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <footer className="mis-reta-card__footer">
                   <button
+                    type="button"
+                    className="mis-reta-card__continue"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteTournament(tournament.id);
+                      onTournamentSelect(tournament);
                     }}
-                    className="reta-btn reta-btn-delete"
                   >
-                    🗑️
+                    {tournament.is_finished ? "Ver resultados" : "Continuar"} →
                   </button>
-                </div>
-
-                <div className="reta-card-info">
-                  <span>
-                    <span className="info-icon">🏟️</span>
-                    {tournament.courts}{" "}
-                    {tournament.courts === 1 ? "cancha" : "canchas"}
-                  </span>
-                  {tournament.description && (
-                    <div className="reta-card-description">
-                      <span className="description-icon">📝</span>
-                      <span className="description-text">
-                        {tournament.description}
-                      </span>
-                    </div>
-                  )}
-                  {!tournament.description && (
-                    <div className="reta-card-description">
-                      <span className="description-icon">📝</span>
-                      <span className="description-text">Sin descripción</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="reta-card-actions">
-                  <div
-                    className={`status-indicator ${
-                      tournament.is_finished
-                        ? "finalizada"
-                        : tournament.is_started
-                        ? "en-curso"
-                        : "pendiente"
-                    }`}
-                  >
-                    <span>
-                      {tournament.is_finished
-                        ? "🏆"
-                        : tournament.is_started
-                        ? "⚡"
-                        : "⏳"}
-                    </span>
-                    <span>
-                      {tournament.is_finished
-                        ? "Finalizada"
-                        : tournament.is_started
-                        ? "En curso"
-                        : "Pendiente"}
-                    </span>
-                  </div>
-
-                  {tournament.is_started && !tournament.is_finished && (
+                  <div className="mis-reta-card__actions-right">
+                    {tournament.is_started && !tournament.is_finished && (
+                      <button
+                        type="button"
+                        className="riviera-btn-secondary mis-reta-card__finish"
+                        disabled={loading}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFinishTournament(tournament);
+                        }}
+                      >
+                        Finalizar
+                      </button>
+                    )}
                     <button
+                      type="button"
+                      className="riviera-btn-danger-icon"
+                      aria-label="Eliminar reta"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleFinishTournament(tournament);
+                        handleDeleteTournament(tournament.id);
                       }}
-                      className="reta-btn reta-btn-finish"
-                      disabled={loading}
                     >
-                      {loading ? "⏳ Finalizando..." : "Finalizar"}
+                      🗑
                     </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                  </div>
+                </footer>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
-
-// Estilos CSS para el componente
-const styles = `
-  .loading-tournaments {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--text-secondary);
-  }
-
-  .no-tournaments {
-    text-align: center;
-    padding: 40px 20px;
-  }
-
-  .no-tournaments-content {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 40px 20px;
-    max-width: 400px;
-    margin: 0 auto;
-  }
-
-  .no-tournaments-content h3 {
-    color: var(--accent-color);
-    font-size: 24px;
-    margin: 0 0 16px 0;
-    font-weight: 700;
-  }
-
-  .no-tournaments-content p {
-    color: var(--text-secondary);
-    font-size: 16px;
-    margin: 0 0 24px 0;
-    line-height: 1.5;
-  }
-
-  .create-first-tournament-btn {
-    background: var(--accent-color);
-    color: var(--bg-primary);
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: none;
-  }
-
-  .create-first-tournament-btn:hover {
-    background: var(--accent-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(255, 214, 0, 0.2);
-  }
-
-  .create-first-tournament-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(255, 214, 0, 0.1);
-  }
-`;
-
-// Agregar estilos al documento
-if (typeof document !== "undefined") {
-  const styleSheet = document.createElement("style");
-  styleSheet.textContent = styles;
-  document.head.appendChild(styleSheet);
-}

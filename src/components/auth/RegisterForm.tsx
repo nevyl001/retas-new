@@ -21,7 +21,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
     setLoading(true);
     setError(null);
 
-    // Validaciones
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden");
       setLoading(false);
@@ -48,27 +47,28 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
   if (success) {
     return (
       <div className="auth-form-container">
-        <div className="auth-form">
-          <div className="auth-success">
-            <h2>✅ ¡Registro Exitoso!</h2>
+        <div className="auth-form-card auth-success-card">
+          <header className="auth-form-header">
+            <h1>¡Cuenta creada!</h1>
             <p>
-              Te hemos enviado un email de confirmación a{" "}
-              <strong>{email}</strong>
+              Te enviamos un correo de confirmación a <strong>{email}</strong>
             </p>
-            <p>
-              Revisa tu bandeja de entrada y haz clic en el enlace para activar
-              tu cuenta.
-            </p>
-            <p className="auth-success-note">
-              Por favor revisa también tu carpeta de <strong>correos no deseados</strong> (spam)
-              para confirmar tu email y poder acceder.
-            </p>
+          </header>
+          <p>
+            Revisa tu bandeja de entrada y activa tu cuenta con el enlace del
+            mensaje.
+          </p>
+          <p className="auth-success-note">
+            Si no lo ves, revisa también la carpeta de{" "}
+            <strong>correo no deseado</strong>.
+          </p>
+          <div className="auth-cta">
             <button
               type="button"
               onClick={onToggleMode}
-              className="auth-submit-btn"
+              className="btn-auth-primary"
             >
-              Ir a Iniciar Sesión
+              Ir a iniciar sesión →
             </button>
           </div>
         </div>
@@ -78,88 +78,112 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
 
   return (
     <div className="auth-form-container">
-      <div className="auth-form">
-        <div className="auth-header">
-          <h2>🏆 Crear Cuenta</h2>
-          <p>Únete para gestionar tus retas de pádel</p>
-        </div>
+      <div className="auth-form-card">
+        <header className="auth-form-header">
+          <div className="auth-form-header__brand">
+            <span className="auth-form-header__brand-icon" aria-hidden>
+              🏆
+            </span>
+            <span className="auth-form-header__brand-name">RivieraApp</span>
+          </div>
+          <h1>Crea tu cuenta</h1>
+          <p>Empieza a organizar tus retas en minutos</p>
+        </header>
 
         <form onSubmit={handleSubmit} className="auth-form-content">
           {error && (
-            <div className="auth-error">
-              <span>❌ {error}</span>
+            <div className="auth-error" role="alert">
+              <span>{error}</span>
             </div>
           )}
 
-          <div className="form-group">
-            <label htmlFor="name">Nombre</label>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="name">
+              Nombre
+            </label>
             <input
               id="name"
+              className="auth-input"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Tu nombre completo"
+              placeholder="Tu nombre"
               required
               disabled={loading}
+              autoComplete="name"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="register-email">
+              Email
+            </label>
             <input
-              id="email"
+              id="register-email"
+              className="auth-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
               required
               disabled={loading}
+              autoComplete="email"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="register-password">
+              Contraseña
+            </label>
             <input
-              id="password"
+              id="register-password"
+              className="auth-input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Mínimo 6 caracteres"
               required
               disabled={loading}
+              autoComplete="new-password"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirmar Contraseña</label>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="confirmPassword">
+              Confirmar contraseña
+            </label>
             <input
               id="confirmPassword"
+              className="auth-input"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repite tu contraseña"
+              placeholder="••••••••"
               required
               disabled={loading}
+              autoComplete="new-password"
             />
           </div>
 
-          <button type="submit" className="auth-submit-btn" disabled={loading}>
-            {loading ? "⏳ Creando cuenta..." : "🚀 Crear Cuenta"}
-          </button>
+          <div className="auth-cta auth-cta--register">
+            <button
+              type="submit"
+              className="btn-auth-primary"
+              disabled={loading}
+            >
+              {loading ? "Creando cuenta…" : "Crear cuenta →"}
+            </button>
+          </div>
         </form>
 
-        <div className="auth-footer">
+        <footer className="auth-footer">
           <p>
             ¿Ya tienes cuenta?{" "}
-            <button
-              type="button"
-              onClick={onToggleMode}
-              className="auth-toggle-btn"
-            >
-              Inicia sesión aquí
+            <button type="button" onClick={onToggleMode} className="auth-toggle-btn">
+              Iniciar sesión
             </button>
           </p>
-        </div>
+        </footer>
       </div>
     </div>
   );

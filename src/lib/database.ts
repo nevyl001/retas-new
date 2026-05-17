@@ -24,26 +24,36 @@ export const createTournament = async (
   name: string,
   userId: string,
   description?: string,
-  courts: number = 1
+  courts: number = 1,
+  format?: "round_robin" | "teams"
 ) => {
-  console.log("Creating tournament:", { name, description, courts, userId });
+  console.log("Creating tournament:", { name, description, courts, userId, format });
 
-  const payload = {
+  const base = {
     name,
     description,
     courts,
     user_id: userId,
-    is_public: true, // Esquema nuevo
+    is_public: true,
+    ...(format ? { format } : {}),
   };
 
   let { data, error } = await supabase
     .from("tournaments")
-    .insert([payload])
+    .insert([base])
     .select()
     .single();
 
-  // Compatibilidad con esquema viejo (sin is_public)
   if (isMissingColumnError(error, "tournaments", "is_public")) {
+    const withoutPublic = { name, description, courts, user_id: userId, ...(format ? { format } : {}) };
+    ({ data, error } = await supabase
+      .from("tournaments")
+      .insert([withoutPublic])
+      .select()
+      .single());
+  }
+
+  if (isMissingColumnError(error, "tournaments", "format")) {
     ({ data, error } = await supabase
       .from("tournaments")
       .insert([
@@ -52,10 +62,18 @@ export const createTournament = async (
           description,
           courts,
           user_id: userId,
+          is_public: true,
         },
       ])
       .select()
       .single());
+    if (isMissingColumnError(error, "tournaments", "is_public")) {
+      ({ data, error } = await supabase
+        .from("tournaments")
+        .insert([{ name, description, courts, user_id: userId }])
+        .select()
+        .single());
+    }
   }
 
   if (error) {

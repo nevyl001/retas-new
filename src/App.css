@@ -4225,6 +4225,134 @@
   transform: none;
 }
 
+.start-tournament-section--v2 {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.start-tournament-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.start-tournament-section__title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.start-tournament-section__mode-badge {
+  flex-shrink: 0;
+}
+
+.start-tournament-section__hero {
+  margin-bottom: 1rem;
+  padding: 1.25rem 1.15rem;
+  text-align: center;
+}
+
+.start-tournament-section__headline {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.start-tournament-section__pairs-ready {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.start-tournament-section__instructions {
+  margin: 0 0 1rem;
+  padding: 0 0.25rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  text-align: center;
+}
+
+.start-tournament-section__teams {
+  margin-bottom: 1rem;
+  padding: 1rem 1.15rem;
+}
+
+.start-tournament-section__teams-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.start-tournament-section__teams-count input {
+  width: 4.5rem;
+  margin-top: 0.35rem;
+}
+
+.start-tournament-section__teams-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.start-tournament-section__error {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin: 0 0 0.75rem;
+}
+
+.start-tournament-section__team-block {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--bg-elevated);
+}
+
+.start-tournament-section__team-count {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.start-tournament-section__pair-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.875rem;
+}
+
+.start-tournament-section__pair-move {
+  width: auto;
+  min-width: 8rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.start-tournament-section__cta {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+}
+
+.start-tournament-section__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* ============================================
    WINNER SCREEN - ELEGANTE Y PREMIUM
    ============================================ */

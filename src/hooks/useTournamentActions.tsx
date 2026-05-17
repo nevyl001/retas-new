@@ -59,10 +59,13 @@ export const useTournamentActions = (
       );
 
       if (result.success) {
-        const updatePayload: Parameters<typeof updateTournament>[1] = { is_started: true };
+        const updatePayload: Parameters<typeof updateTournament>[1] = {
+          is_started: true,
+          format: format === "teams" ? "teams" : "round_robin",
+        };
         const teamConfigPayload =
           format === "teams" && opts?.teamNames?.length && opts?.pairToTeam && Object.keys(opts.pairToTeam).length > 0
-            ? { format: "teams" as const, team_config: { teamNames: opts.teamNames, pairToTeam: opts.pairToTeam } }
+            ? { team_config: { teamNames: opts.teamNames, pairToTeam: opts.pairToTeam } }
             : null;
 
         if (teamConfigPayload) {
@@ -86,6 +89,7 @@ export const useTournamentActions = (
         setSelectedTournament({
           ...selectedTournament,
           is_started: true,
+          format: format === "teams" ? "teams" : "round_robin",
           ...(teamConfigPayload || {}),
         });
 

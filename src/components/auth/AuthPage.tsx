@@ -12,80 +12,36 @@ export const AuthPage: React.FC = () => {
 
   return (
     <div className="auth-page">
-      <div className="auth-background"></div>
-
-      <div className="auth-layout">
-        <div className="auth-hero">
-          <div className="auth-logo">
-            <h1>🏆 RivieraApp</h1>
-            <p className="hero-subtitle">
-              Retas y torneos de pádel, organizados en un solo lugar
-            </p>
+      <div className="auth-visual-panel" aria-hidden="true">
+        <div className="auth-visual-panel__inner">
+          <div className="auth-visual-brand auth-logo">
+            <span className="auth-visual-brand__icon" aria-hidden>
+              🏆
+            </span>
+            <span className="auth-visual-brand__name">RivieraApp</span>
           </div>
+          <h2 className="auth-visual-title text-display">
+            Tu pádel,
+            <br />
+            organizado.
+          </h2>
+          <p className="auth-visual-subtitle">
+            Crea retas, gestiona torneos y sigue el ranking de tu grupo.
+          </p>
+          <p className="auth-visual-proof">Usado por +200 jugadores activos</p>
+        </div>
+      </div>
 
-          <div className="hero-content">
-            <h2 className="hero-title">
-              ¡Únete a RivieraApp!
-            </h2>
-
-            <div className="features-list">
-              <div className="feature-item">
-                <span className="feature-icon">⚡</span>
-                <div className="feature-text">
-                  <h3>Organización Instantánea</h3>
-                  <p>
-                    Crea y gestiona retas de pádel en segundos con nuestro
-                    sistema inteligente
-                  </p>
-                </div>
-              </div>
-
-              <div className="feature-item">
-                <span className="feature-icon">📊</span>
-                <div className="feature-text">
-                  <h3>Estadísticas en Tiempo Real</h3>
-                  <p>
-                    Mantén un seguimiento completo de resultados y
-                    clasificaciones
-                  </p>
-                </div>
-              </div>
-
-              <div className="feature-item">
-                <span className="feature-icon">🌐</span>
-                <div className="feature-text">
-                  <h3>Acceso Público</h3>
-                  <p>
-                    Comparte tus retas de pádel con enlaces públicos para máxima
-                    visibilidad
-                  </p>
-                </div>
-              </div>
-
-              <div className="feature-item">
-                <span className="feature-icon">🏆</span>
-                <div className="feature-text">
-                  <h3>Experiencia Premium</h3>
-                  <p>
-                    Interfaz moderna y fácil de usar para una gestión
-                    profesional
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="cta-section">
-              <p className="cta-text">
-                ¿Listo para revolucionar tus retas de pádel?
-              </p>
-              <p className="cta-subtext">
-                Inicia sesión o regístrate para comenzar
-              </p>
-            </div>
-          </div>
+      <div className="auth-form-panel">
+        <div className="auth-mobile-brand auth-logo">
+          <span className="auth-mobile-brand__icon" aria-hidden>
+            🏆
+          </span>
+          <span className="auth-mobile-brand__name">RivieraApp</span>
+          <p className="auth-mobile-tagline">Pádel competitivo</p>
         </div>
 
-        <div className="auth-form-section">
+        <div className="auth-form-panel__card-wrap">
           {isLoginMode ? (
             <LoginForm onToggleMode={toggleMode} />
           ) : (

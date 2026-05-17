@@ -24,9 +24,15 @@ import {
   AMERICANO_SESSION_TOURNAMENT_KEY,
   readAmericanoTournamentIdFromSession,
 } from "./lib/americanoDinamicoStorage";
+import {
+  isTorneoExpressPublicPath,
+  TorneoExpressRouter,
+} from "./components/torneo-express/TorneoExpressRouter";
+import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
 
 // Types
 import { Tournament, Player, getTournamentById, upsertTournamentPublicConfig } from "./lib/database";
+import { readPersistedTournamentMode } from "./lib/gameModeMapping";
 
 // Custom Hooks
 import { useTournamentData } from "./hooks/useTournamentData";
@@ -64,6 +70,7 @@ function normalizeAppPathname(pathname: string): string {
 function AppContent() {
   const { user } = useUser();
   const { isAdminLoggedIn } = useAdmin();
+  const appPathname = useSyncPathname();
 
   // Estados básicos
   const [selectedTournament, setSelectedTournament] =
@@ -77,6 +84,7 @@ function AppContent() {
     | "public-americano"
     | "public-americano-pantalla"
     | "americano-dinamico"
+    | "torneo-express"
     | "auth-callback"
     | "admin-login"
     | "admin-dashboard"
@@ -88,6 +96,7 @@ function AppContent() {
     if (currentPath === "/admin-login") return "admin-login";
     if (currentPath === "/admin-dashboard") return "admin-dashboard";
     if (currentPath === "/americano-dinamico") return "americano-dinamico";
+    if (currentPath.startsWith("/torneo-express")) return "torneo-express";
     if (/^\/public\/americano-pantalla\//i.test(currentPath))
       return "public-americano-pantalla";
     if (/^\/public\/americano\//i.test(currentPath)) return "public-americano";
@@ -207,37 +216,53 @@ function AppContent() {
 
   // Detectar cambios en la URL (solo para rutas específicas)
   useEffect(() => {
+    type AppView =
+      | "main"
+      | "winner"
+      | "public"
+      | "public-americano"
+      | "public-americano-pantalla"
+      | "americano-dinamico"
+      | "torneo-express"
+      | "auth-callback"
+      | "admin-login"
+      | "admin-dashboard";
+
+    const resolveView = (currentPath: string): AppView | null => {
+      if (currentPath === "/auth/callback") return "auth-callback";
+      if (currentPath === "/admin-login") return "admin-login";
+      if (currentPath === "/admin-dashboard") return "admin-dashboard";
+      if (currentPath === "/americano-dinamico") return "americano-dinamico";
+      if (currentPath.startsWith("/torneo-express")) return "torneo-express";
+      if (currentPath === "/") return "main";
+      if (/^\/public\/americano-pantalla\//i.test(currentPath))
+        return "public-americano-pantalla";
+      if (/^\/public\/americano\//i.test(currentPath)) return "public-americano";
+      if (currentPath.startsWith("/public/")) return "public";
+      return null;
+    };
+
     const checkCurrentPath = () => {
       const currentPath = normalizeAppPathname(window.location.pathname);
-      console.log("🔍 Current path:", currentPath);
+      const nextView = resolveView(currentPath);
 
-      // Solo cambiar currentView para rutas específicas, NO sobrescribir
-      if (currentPath === "/auth/callback") {
-        setCurrentView("auth-callback");
-      } else if (currentPath === "/admin-login") {
-        setCurrentView("admin-login");
-      } else if (currentPath === "/admin-dashboard") {
-        setCurrentView("admin-dashboard");
-      } else if (currentPath === "/americano-dinamico") {
-        setCurrentView("americano-dinamico");
-      } else if (currentPath === "/") {
-        setCurrentView("main");
-      } else if (/^\/public\/americano-pantalla\//i.test(currentPath)) {
-        setCurrentView("public-americano-pantalla");
+      if (nextView) {
+        setCurrentView((prev) => (prev === nextView ? prev : nextView));
+      }
+
+      if (/^\/public\/americano-pantalla\//i.test(currentPath)) {
         setPublicAmericanoBoardTournamentId(
           parsePublicAmericanoBoardTournamentId(currentPath)
         );
         setPublicTournamentId(null);
         setPublicAmericanoTournamentId(null);
       } else if (/^\/public\/americano\//i.test(currentPath)) {
-        setCurrentView("public-americano");
         setPublicAmericanoTournamentId(
           parsePublicAmericanoTournamentId(currentPath)
         );
         setPublicAmericanoBoardTournamentId(null);
         setPublicTournamentId(null);
       } else if (currentPath.startsWith("/public/")) {
-        setCurrentView("public");
         const m = currentPath.match(/^\/public\/([^/?#]+)/);
         const seg = m?.[1];
         setPublicTournamentId(
@@ -246,7 +271,6 @@ function AppContent() {
         setPublicAmericanoTournamentId(null);
         setPublicAmericanoBoardTournamentId(null);
       }
-      // NO cambiar a "main" automáticamente - dejar que se mantenga el valor inicial
     };
 
     // Escuchar cambios en la URL
@@ -357,9 +381,14 @@ function AppContent() {
         const fetched = await getTournamentById(selectedTournament.id);
         if (cancelled) return;
         const hasTeamConfigFromDb = fetched?.format === "teams" && fetched?.team_config?.teamNames?.length && fetched?.team_config?.pairToTeam && Object.keys(fetched.team_config.pairToTeam).length > 0;
-        const merged: Tournament = (fetched && (fetched.format != null || hasTeamConfigFromDb))
-          ? { ...selectedTournament, ...fetched }
-          : selectedTournament;
+        let merged: Tournament =
+          fetched && (fetched.format != null || hasTeamConfigFromDb)
+            ? { ...selectedTournament, ...fetched }
+            : selectedTournament;
+        const persistedFormat = readPersistedTournamentMode(selectedTournament.id);
+        if (!merged.format && persistedFormat) {
+          merged = { ...merged, format: persistedFormat };
+        }
         if (merged !== selectedTournament) setSelectedTournament(merged);
         await loadTournamentData(merged);
       } catch {
@@ -369,6 +398,13 @@ function AppContent() {
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTournament?.id]); // Solo cuando cambia el torneo seleccionado
+
+  // Reta nueva: abrir gestión de jugadores y parejas de inmediato
+  useEffect(() => {
+    if (!selectedTournament || selectedTournament.is_started) return;
+    setShowPlayerManager(true);
+    setShowPairManager(true);
+  }, [selectedTournament?.id, selectedTournament?.is_started]);
 
   // Recargar datos automáticamente con debounce para evitar múltiples recargas
   useEffect(() => {
@@ -465,12 +501,16 @@ function AppContent() {
     );
   }, [tournamentWinner, sortedPairs]);
 
+  const isTorneoExpressPublic =
+    currentView === "torneo-express" && isTorneoExpressPublicPath(appPathname);
+
   return (
     <div
       className={`App${
         currentView === "public" ||
         currentView === "public-americano" ||
-        currentView === "public-americano-pantalla"
+        currentView === "public-americano-pantalla" ||
+        isTorneoExpressPublic
           ? " App--public-full-width"
           : ""
       }`}
@@ -480,8 +520,13 @@ function AppContent() {
         {currentView !== "public" &&
           currentView !== "public-americano" &&
           currentView !== "public-americano-pantalla" &&
+          !isTorneoExpressPublic &&
           currentView !== "admin-login" &&
           currentView !== "admin-dashboard" && <UserHeader />}
+
+        {currentView === "torneo-express" && (
+          <TorneoExpressRouter key={appPathname} pathname={appPathname} />
+        )}
 
         {currentView === "main" && !isAmericanoRoute && (
           <>

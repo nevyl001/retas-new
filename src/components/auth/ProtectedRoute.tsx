@@ -11,7 +11,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
 
   // Rutas que no requieren login: cualquiera puede ver (incluye base path ej. /app/public/xxx)
-  const isPublicRoute = currentPath.includes("/public/");
+  const isPublicRoute =
+    currentPath.includes("/public/") ||
+    /\/torneo-express\/[^/]+\/(grupo\/[^/]+|general)\/?$/i.test(currentPath);
   const isAdminRoute =
     currentPath === "/admin-login" || currentPath === "/admin-dashboard";
 
