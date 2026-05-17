@@ -18,9 +18,8 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
         className={`standings-scoring-help standings-scoring-help--compact ${className}`.trim()}
         aria-label="Cómo se calcula la clasificación"
       >
-        Orden: <strong>DIF</strong> → <strong>PG</strong> → enfrentamiento directo ·{" "}
-        <strong>FAV</strong>/<strong>CON</strong> = juegos en cancha ·{" "}
-        <strong>PTS</strong> = victoria 2 (solo referencia)
+        Orden: más <strong>FAV</strong> → <strong>DIF</strong> → H2H →{" "}
+        <strong>PG</strong> · <strong>PTS</strong> = victoria 2 (solo referencia)
       </p>
     );
   }
@@ -32,15 +31,14 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
     >
       <p className="standings-scoring-help__title">¿Cómo se ordena la tabla?</p>
       <p className="standings-scoring-help__text">
-        La posición se define así: primero mayor <strong>DIF</strong> (FAV − CON);
-        si empatan, más <strong>PG</strong>; si siguen empatadas, gana quien ganó
-        el enfrentamiento directo entre ellas. <strong>FAV</strong> y{" "}
-        <strong>CON</strong> son los juegos anotados y recibidos en cancha.{" "}
-        <strong>PTS</strong> (victoria 2, derrota 0) es solo informativo y no
-        define el orden.
+        Primero va quien hizo más games (<strong>FAV</strong>), aunque la
+        diferencia sea negativa. Si empatan en FAV, gana mayor{" "}
+        <strong>DIF</strong> (FAV − CON); luego enfrentamiento directo y, al final, más{" "}
+        <strong>PG</strong>. <strong>PTS</strong> (victoria 2, derrota 0) es solo
+        informativo.
       </p>
       <p className="standings-scoring-help__legend">
-        Orden · DIF → PG → H2H · PTS · Victoria 2 · Derrota 0
+        Orden · FAV → DIF → H2H → PG · PTS · Victoria 2 · Derrota 0
       </p>
     </aside>
   );
