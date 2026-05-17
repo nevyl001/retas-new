@@ -15,9 +15,13 @@ export const AuthPage: React.FC = () => {
       <div className="auth-visual-panel" aria-hidden="true">
         <div className="auth-visual-panel__inner">
           <div className="auth-visual-brand auth-logo">
-            <span className="auth-visual-brand__icon" aria-hidden>
-              🏆
-            </span>
+            <img
+              src="/logo-source.png"
+              alt="RivieraApp logo"
+              className="auth-visual-brand__logo logo-img"
+              width={48}
+              height={48}
+            />
             <span className="auth-visual-brand__name">RivieraApp</span>
           </div>
           <h2 className="auth-visual-title text-display">
@@ -33,12 +37,24 @@ export const AuthPage: React.FC = () => {
       </div>
 
       <div className="auth-form-panel">
-        <div className="auth-mobile-brand auth-logo">
-          <span className="auth-mobile-brand__icon" aria-hidden>
-            🏆
-          </span>
-          <span className="auth-mobile-brand__name">RivieraApp</span>
-          <p className="auth-mobile-tagline">Pádel competitivo</p>
+        <div className="auth-mobile-hero auth-logo" aria-label="RivieraApp">
+          <img
+            src="/logo-source.png"
+            alt="RivieraApp logo"
+            className="auth-mobile-hero__logo logo-img"
+            width={56}
+            height={56}
+          />
+          <span className="auth-mobile-hero__name">RivieraApp</span>
+          <h2 className="auth-mobile-hero__title">
+            Tu pádel,
+            <br />
+            organizado.
+          </h2>
+          <p className="auth-mobile-hero__subtitle">
+            Crea retas, gestiona torneos y sigue el ranking.
+          </p>
+          <p className="auth-mobile-hero__proof">Usado por +200 jugadores activos</p>
         </div>
 
         <div className="auth-form-panel__card-wrap">
