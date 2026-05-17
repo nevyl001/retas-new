@@ -404,7 +404,7 @@ function AppContent() {
     if (!selectedTournament || selectedTournament.is_started) return;
     setShowPlayerManager(true);
     setShowPairManager(true);
-  }, [selectedTournament?.id, selectedTournament?.is_started]);
+  }, [selectedTournament]);
 
   // Recargar datos automáticamente con debounce para evitar múltiples recargas
   useEffect(() => {

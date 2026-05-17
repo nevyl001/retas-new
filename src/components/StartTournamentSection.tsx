@@ -3,7 +3,6 @@ import { Tournament, Pair } from "../lib/database";
 import {
   getStartFormatLabel,
   resolveTournamentStartFormat,
-  type StartTournamentFormat,
 } from "../lib/gameModeMapping";
 
 interface StartTournamentSectionProps {
