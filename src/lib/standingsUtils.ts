@@ -1,10 +1,10 @@
 import type { Match, Game, Pair } from "./database";
 import type { Tournament, TournamentTeamConfig } from "./db/types";
+import { computeStandingDif } from "../utils/standingsDisplay";
 import {
   applyMatchToStandingStats,
   createEmptyStandingStats,
   sortStandingsEntities,
-  standingDiff,
   type HeadToHeadMatch,
   type UnifiedStandingStats,
 } from "./unifiedStandings";
@@ -34,7 +34,7 @@ export interface PairWithStats extends Pair {
 export type { UnifiedStandingStats, HeadToHeadMatch };
 
 export function getPairStandingDiff(pair: PairWithStats): number {
-  return standingDiff(pairToUnifiedStats(pair));
+  return computeStandingDif(pair.points, pair.pointsReceived);
 }
 
 function pairToUnifiedStats(pair: PairWithStats): UnifiedStandingStats {

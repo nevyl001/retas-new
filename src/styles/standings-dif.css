@@ -1,0 +1,19 @@
+.standings-dif--pos {
+  color: #4ade80;
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.standings-dif--neg {
+  color: #f87171;
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.standings-dif--zero {
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.te-standings-table td.standings-dif--pos,
+.te-standings-table td.standings-dif--neg,
+.te-standings-table td.standings-dif--zero {
+  font-weight: 600;
+}

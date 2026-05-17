@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import type { AmericanoDinamicoSnapshotV1 } from "../../lib/americanoDinamicoStorage";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
+import {
+  formatStandingDif,
+  standingDifCellClass,
+} from "../../utils/standingsDisplay";
 import "./AmericanoTournamentSummary.css";
 
 interface AmericanoTournamentSummaryProps {
@@ -96,7 +100,9 @@ export const AmericanoTournamentSummary: React.FC<
           </thead>
           <tbody>
             {snapshot.ranking.map((player, index) => {
-              const diff = player.stats.pointsFor - player.stats.pointsAgainst;
+              const ptsFav = player.stats.pointsFor;
+              const ptsCon = player.stats.pointsAgainst;
+              const diff = ptsFav - ptsCon;
               return (
                 <tr
                   key={player.id}
@@ -104,9 +110,11 @@ export const AmericanoTournamentSummary: React.FC<
                 >
                   <td>{index + 1}</td>
                   <td>{player.name}</td>
-                  <td>{player.stats.pointsFor}</td>
-                  <td>{player.stats.pointsAgainst}</td>
-                  <td>{diff}</td>
+                  <td>{ptsFav}</td>
+                  <td>{ptsCon}</td>
+                  <td className={standingDifCellClass(diff)}>
+                    {formatStandingDif(diff)}
+                  </td>
                 </tr>
               );
             })}

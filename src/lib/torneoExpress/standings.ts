@@ -9,6 +9,7 @@ import {
   type MatchResult,
   type PairStanding,
 } from "../../utils/standings";
+import { computeStandingDif } from "../../utils/standingsDisplay";
 
 function standingToExpressRow(
   s: PairStanding,
@@ -26,7 +27,7 @@ function standingToExpressRow(
     pp: s.PP,
     ptsFav: s.juegosFavor,
     ptsCon: s.juegosContra,
-    dif: s.diferencia,
+    dif: computeStandingDif(s.juegosFavor, s.juegosContra),
     puntos: s.puntos,
   };
 }

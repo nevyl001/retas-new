@@ -4,7 +4,11 @@ import {
   buildAmericanoPlayerStandingStats,
   getAmericanoRanking,
 } from "../../lib/americanoStandings";
-import { standingDiff } from "../../lib/unifiedStandings";
+import {
+  computeStandingDif,
+  formatStandingDif,
+  standingDifCellClass,
+} from "../../utils/standingsDisplay";
 import "./LiveRanking.css";
 
 interface LiveRankingProps {
@@ -48,7 +52,7 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
             const st = statsMap?.get(player.id);
             const ptsFav = st?.ptsFav ?? player.stats.pointsFor;
             const ptsCon = st?.ptsCon ?? player.stats.pointsAgainst;
-            const dif = st ? standingDiff(st) : ptsFav - ptsCon;
+            const dif = computeStandingDif(ptsFav, ptsCon);
             return (
               <tr
                 key={player.id}
@@ -61,8 +65,8 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
                 <td>{st?.pp ?? 0}</td>
                 <td>{ptsFav}</td>
                 <td>{ptsCon}</td>
-                <td>{dif}</td>
-                <td>{st?.puntos ?? ptsFav}</td>
+                <td className={standingDifCellClass(dif)}>{formatStandingDif(dif)}</td>
+                <td>{st?.puntos ?? 0}</td>
               </tr>
             );
           })}

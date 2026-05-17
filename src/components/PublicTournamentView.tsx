@@ -11,6 +11,12 @@ import {
   resolvePublicStandingsTeamConfig,
   sortPairsForStandings,
 } from "../lib/standingsUtils";
+import {
+  computeStandingDif,
+  formatStandingDif,
+  standingDifCellClass,
+} from "../utils/standingsDisplay";
+import { StandingsDifCell } from "./standings/StandingsDifCell";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
@@ -669,7 +675,18 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       <span><strong>{row.pg}</strong> PG</span>
                       <span><strong>{row.pp}</strong> PP</span>
                       <span><strong>{row.points}</strong> Pts fav</span>
-                      <span><strong>{row.points - row.pointsReceived}</strong> Dif</span>
+                      <span
+                        className={standingDifCellClass(
+                          computeStandingDif(row.points, row.pointsReceived)
+                        )}
+                      >
+                        <strong>
+                          {formatStandingDif(
+                            computeStandingDif(row.points, row.pointsReceived)
+                          )}
+                        </strong>{" "}
+                        Dif
+                      </span>
                       <span><strong>{row.puntosTorneo}</strong> Puntos</span>
                     </div>
                   </div>
@@ -687,7 +704,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       <span><strong>{pair.pg}</strong> PG</span>
                       <span><strong>{pair.pp}</strong> PP</span>
                       <span><strong>{pair.points}</strong> Pts fav</span>
-                      <span><strong>{getPairStandingDiff(pair)}</strong> Dif</span>
+                      <span
+                        className={standingDifCellClass(getPairStandingDiff(pair))}
+                      >
+                        <strong>{formatStandingDif(getPairStandingDiff(pair))}</strong>{" "}
+                        Dif
+                      </span>
                       <span><strong>{pair.puntosTorneo}</strong> Puntos</span>
                     </div>
                   </div>
@@ -732,9 +754,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         <td className="new-stats-cell">{row.pp}</td>
                         <td className="new-stats-cell">{row.points}</td>
                         <td className="new-stats-cell">{row.pointsReceived}</td>
-                        <td className="new-stats-cell">
-                          {row.points - row.pointsReceived}
-                        </td>
+                        <StandingsDifCell
+                          ptsFav={row.points}
+                          ptsCon={row.pointsReceived}
+                        />
                         <td className="new-points-cell">{row.puntosTorneo}</td>
                       </tr>
                     ))}
@@ -777,7 +800,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         <td className="new-stats-cell">{pair.pp}</td>
                         <td className="new-stats-cell">{pair.points}</td>
                         <td className="new-stats-cell">{pair.pointsReceived}</td>
-                        <td className="new-stats-cell">{getPairStandingDiff(pair)}</td>
+                        <StandingsDifCell
+                          ptsFav={pair.points}
+                          ptsCon={pair.pointsReceived}
+                        />
                         <td className="new-points-cell">{pair.puntosTorneo}</td>
                       </tr>
                     ))}

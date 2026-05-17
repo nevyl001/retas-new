@@ -2,6 +2,10 @@
  * RivieraApp — Motor de clasificación v2.0
  * 7 criterios de desempate en cascada (mismas reglas en todos los modos).
  */
+import {
+  computeStandingDif,
+  formatStandingDif,
+} from "./standingsDisplay";
 
 export interface MatchResult {
   pairAId: string;
@@ -81,7 +85,7 @@ export const buildStandings = (
   return Object.values(statsMap);
 };
 
-const getHeadToHeadWinner = (
+export const getHeadToHeadWinner = (
   pairAId: string,
   pairBId: string,
   matches: MatchResult[]
@@ -168,7 +172,9 @@ export const formatStandingsForTable = (standings: PairStanding[]) => {
     PP: s.PP,
     ptsFav: s.juegosFavor,
     ptsCon: s.juegosContra,
-    dif: s.diferencia >= 0 ? `+${s.diferencia}` : `${s.diferencia}`,
+    dif: formatStandingDif(
+      computeStandingDif(s.juegosFavor, s.juegosContra)
+    ),
     puntos: s.puntos,
   }));
 };

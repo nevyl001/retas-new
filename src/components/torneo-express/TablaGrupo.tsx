@@ -1,4 +1,5 @@
 import React from "react";
+import { StandingsDifCell } from "../standings/StandingsDifCell";
 import { GrupoBadge } from "./GrupoBadge";
 import type { StandingRowExpress } from "../../lib/torneoExpress/types";
 
@@ -46,7 +47,11 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
               <td>{row.pp}</td>
               <td>{row.ptsFav}</td>
               <td>{row.ptsCon}</td>
-              <td>{row.dif}</td>
+              <StandingsDifCell
+                ptsFav={row.ptsFav}
+                ptsCon={row.ptsCon}
+                className=""
+              />
               <td>{row.puntos}</td>
             </tr>
           ))}

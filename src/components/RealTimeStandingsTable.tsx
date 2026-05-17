@@ -13,12 +13,12 @@ import {
 import {
   computePairsWithStats,
   computeTeamStandings,
-  getPairStandingDiff,
   getTeamConfigFromStorage,
   inferTeamConfigFromPairs,
   sortPairsForStandings,
 } from "../lib/standingsUtils";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
+import { StandingsDifCell } from "./standings/StandingsDifCell";
 import "./ModernStandingsTable.css";
 
 export interface TeamConfig {
@@ -360,9 +360,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                   <td className="new-stats-cell">{row.pp}</td>
                   <td className="new-stats-cell">{row.points}</td>
                   <td className="new-stats-cell">{row.pointsReceived}</td>
-                  <td className="new-stats-cell">
-                    {row.points - row.pointsReceived}
-                  </td>
+                  <StandingsDifCell
+                    ptsFav={row.points}
+                    ptsCon={row.pointsReceived}
+                  />
                   <td className="new-points-cell">{row.puntosTorneo}</td>
                 </tr>
               ))}
@@ -414,9 +415,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                 <td className="new-stats-cell">{pair.pp}</td>
                 <td className="new-stats-cell">{pair.points}</td>
                 <td className="new-stats-cell">{pair.pointsReceived}</td>
-                <td className="new-stats-cell">
-                  {getPairStandingDiff(pair)}
-                </td>
+                <StandingsDifCell
+                  ptsFav={pair.points}
+                  ptsCon={pair.pointsReceived}
+                />
                 <td className="new-points-cell">{pair.puntosTorneo}</td>
               </tr>
             ))}
