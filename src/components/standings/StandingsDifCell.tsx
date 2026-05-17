@@ -1,5 +1,6 @@
 import React from "react";
 import "../../styles/standings-dif.css";
+import { COL_DIF } from "./standingsTableColumns";
 import {
   computeStandingDif,
   formatStandingDif,
@@ -19,7 +20,9 @@ export const StandingsDifCell: React.FC<StandingsDifCellProps> = ({
 }) => {
   const dif = computeStandingDif(ptsFav, ptsCon);
   return (
-    <td className={`${className} ${standingDifCellClass(dif)}`.trim()}>
+    <td
+      className={`${COL_DIF} ${className} ${standingDifCellClass(dif)}`.trim()}
+    >
       {formatStandingDif(dif)}
     </td>
   );

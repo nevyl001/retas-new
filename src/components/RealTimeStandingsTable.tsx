@@ -22,6 +22,17 @@ import { StandingsDifCell } from "./standings/StandingsDifCell";
 import { StandingsPtsCell } from "./standings/StandingsPtsCell";
 import { StandingsScoringHelp } from "./standings/StandingsScoringHelp";
 import { StandingsTableHeader } from "./standings/StandingsTableHeader";
+import {
+  COL_CON,
+  COL_ENTITY,
+  COL_FAV,
+  COL_PG,
+  COL_PJ,
+  COL_POS,
+  COL_PP,
+  TABLA_RANKING_CLASS,
+  TABLA_WRAPPER_CLASS,
+} from "./standings/standingsTableColumns";
 import "./ModernStandingsTable.css";
 
 export interface TeamConfig {
@@ -326,8 +337,16 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
 
       {/* Modo equipos: tabla por equipos (suma de puntos por equipo) */}
       {teamStandings && teamStandings.length > 0 ? (
-        <div className="new-standings-table-wrapper">
-          <table className="new-standings-table">
+        <div
+          className={`new-standings-table-wrapper ${TABLA_WRAPPER_CLASS}`}
+          style={
+            {
+              "--standings-sticky-bg": "var(--color-bg-elevated, #1a1a1a)",
+              "--standings-sticky-bg-leader": "rgba(245, 158, 11, 0.12)",
+            } as React.CSSProperties
+          }
+        >
+          <table className={`new-standings-table ${TABLA_RANKING_CLASS}`}>
             <thead>
               <StandingsTableHeader entity="equipo" />
             </thead>
@@ -345,16 +364,16 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                       : "new-normal-place"
                   }
                 >
-                  <td className="new-position-cell">
+                  <td className={`new-position-cell ${COL_POS}`}>
                     <span className="new-position-number">{index + 1}</span>
                     <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
                   </td>
-                  <td className="new-team-cell">{row.name}</td>
-                  <td className="new-stats-cell">{row.matchesPlayed}</td>
-                  <td className="new-stats-cell">{row.pg}</td>
-                  <td className="new-stats-cell">{row.pp}</td>
-                  <td className="new-stats-cell">{row.points}</td>
-                  <td className="new-stats-cell">{row.pointsReceived}</td>
+                  <td className={`new-team-cell ${COL_ENTITY}`}>{row.name}</td>
+                  <td className={`new-stats-cell ${COL_PJ}`}>{row.matchesPlayed}</td>
+                  <td className={`new-stats-cell ${COL_PG}`}>{row.pg}</td>
+                  <td className={`new-stats-cell ${COL_PP}`}>{row.pp}</td>
+                  <td className={`new-stats-cell ${COL_FAV}`}>{row.points}</td>
+                  <td className={`new-stats-cell ${COL_CON}`}>{row.pointsReceived}</td>
                   <StandingsDifCell
                     ptsFav={row.points}
                     ptsCon={row.pointsReceived}
@@ -367,8 +386,16 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         </div>
       ) : (
         /* Modo round robin: tabla por parejas */
-        <div className="new-standings-table-wrapper">
-        <table className="new-standings-table">
+        <div
+          className={`new-standings-table-wrapper ${TABLA_WRAPPER_CLASS}`}
+          style={
+            {
+              "--standings-sticky-bg": "var(--color-bg-elevated, #1a1a1a)",
+              "--standings-sticky-bg-leader": "rgba(245, 158, 11, 0.12)",
+            } as React.CSSProperties
+          }
+        >
+        <table className={`new-standings-table ${TABLA_RANKING_CLASS}`}>
           <thead>
             <StandingsTableHeader entity="pareja" />
           </thead>
@@ -386,20 +413,20 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                     : "new-normal-place"
                 }
               >
-                <td className="new-position-cell">
+                <td className={`new-position-cell ${COL_POS}`}>
                   <span className="new-position-number">{index + 1}</span>
                   <span className="new-position-icon">
                     {getPositionIcon(index + 1)}
                   </span>
                 </td>
-                <td className="new-team-cell">
+                <td className={`new-team-cell ${COL_ENTITY}`}>
                   {pair.player1_name} / {pair.player2_name}
                 </td>
-                <td className="new-stats-cell">{pair.matchesPlayed}</td>
-                <td className="new-stats-cell">{pair.pg}</td>
-                <td className="new-stats-cell">{pair.pp}</td>
-                <td className="new-stats-cell">{pair.points}</td>
-                <td className="new-stats-cell">{pair.pointsReceived}</td>
+                <td className={`new-stats-cell ${COL_PJ}`}>{pair.matchesPlayed}</td>
+                <td className={`new-stats-cell ${COL_PG}`}>{pair.pg}</td>
+                <td className={`new-stats-cell ${COL_PP}`}>{pair.pp}</td>
+                <td className={`new-stats-cell ${COL_FAV}`}>{pair.points}</td>
+                <td className={`new-stats-cell ${COL_CON}`}>{pair.pointsReceived}</td>
                 <StandingsDifCell
                   ptsFav={pair.points}
                   ptsCon={pair.pointsReceived}

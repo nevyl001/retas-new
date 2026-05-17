@@ -4,7 +4,7 @@
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
-  background: #080808;
+  background: #000;
   position: relative;
   overflow: hidden;
 }
@@ -201,6 +201,7 @@
 @media (max-width: 967px) {
   .auth-page {
     flex-direction: column;
+    background: #000;
   }
 
   .auth-form-panel {
@@ -208,24 +209,21 @@
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
-    background:
-      linear-gradient(
-        135deg,
-        rgba(0, 0, 0, 0.88) 0%,
-        rgba(10, 10, 10, 0.75) 50%,
-        rgba(0, 0, 0, 0.92) 100%
-      ),
-      radial-gradient(ellipse at 20% 30%, rgba(245, 158, 11, 0.07) 0%, transparent 55%),
-      radial-gradient(ellipse at 80% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
-    background-color: #080808;
+    padding: 16px;
+    justify-content: center;
+    align-items: center;
+    background: #000;
   }
 
   .auth-form-panel::before {
-    background-image:
-      linear-gradient(rgba(245, 158, 11, 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(245, 158, 11, 0.025) 1px, transparent 1px);
-    background-size: 36px 36px;
-    mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
-    opacity: 1;
+    display: none;
+  }
+
+  .auth-mobile-brand {
+    display: none;
+  }
+
+  .auth-form-panel__card-wrap {
+    max-width: 420px;
   }
 }

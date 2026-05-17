@@ -1,4 +1,16 @@
 import React from "react";
+import "../../styles/standings-table-mobile.css";
+import {
+  COL_CON,
+  COL_DIF,
+  COL_ENTITY,
+  COL_FAV,
+  COL_PG,
+  COL_PJ,
+  COL_POS,
+  COL_PP,
+  COL_PTS,
+} from "./standingsTableColumns";
 import {
   STANDINGS_ENTITY_HEADERS,
   STANDINGS_PTS_TABLE_TITLE,
@@ -18,16 +30,34 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
   const entityHeader = STANDINGS_ENTITY_HEADERS[entity];
   return (
     <tr>
-      <th title="Posición">POS</th>
-      <th title={entityHeader.title}>{entityHeader.label}</th>
+      <th className={COL_POS} title="Posición">
+        POS
+      </th>
+      <th className={COL_ENTITY} title={entityHeader.title}>
+        {entityHeader.label}
+      </th>
       {middleColumns}
-      <th title="Partidos jugados">PJ</th>
-      <th title="Partidos ganados">PG</th>
-      <th title="Partidos perdidos">PP</th>
-      <th title="Juegos anotados a favor">FAV</th>
-      <th title="Juegos recibidos en contra">CON</th>
-      <th title="Diferencia (FAV − CON)">DIF</th>
-      <th title={STANDINGS_PTS_TABLE_TITLE}>PTS</th>
+      <th className={COL_PJ} title="Partidos jugados">
+        PJ
+      </th>
+      <th className={COL_PG} title="Partidos ganados">
+        PG
+      </th>
+      <th className={COL_PP} title="Partidos perdidos">
+        PP
+      </th>
+      <th className={COL_FAV} title="Juegos anotados a favor">
+        FAV
+      </th>
+      <th className={COL_CON} title="Juegos recibidos en contra">
+        CON
+      </th>
+      <th className={COL_DIF} title="Diferencia (FAV − CON)">
+        DIF
+      </th>
+      <th className={COL_PTS} title={STANDINGS_PTS_TABLE_TITLE}>
+        PTS
+      </th>
     </tr>
   );
 };

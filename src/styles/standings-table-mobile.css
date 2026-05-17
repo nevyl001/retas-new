@@ -1,0 +1,67 @@
+/* Tabla de ranking — scroll horizontal + columnas fijas en mobile */
+
+.tabla-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.tabla-ranking {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+
+@media (max-width: 640px) {
+  .tabla-ranking {
+    font-size: 12px;
+    min-width: 480px;
+  }
+
+  .tabla-ranking th,
+  .tabla-ranking td {
+    padding: 8px 6px;
+    white-space: nowrap;
+  }
+
+  .tabla-ranking .col-pj,
+  .tabla-ranking .col-pp {
+    display: none;
+  }
+
+  .tabla-ranking .col-pos {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    min-width: 36px;
+    background-color: var(--standings-sticky-bg, #1a1a1a);
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.35);
+  }
+
+  .tabla-ranking .col-entity {
+    position: sticky;
+    left: 36px;
+    z-index: 2;
+    min-width: 88px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: var(--standings-sticky-bg, #1a1a1a);
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.25);
+  }
+
+  .te-standings-table tr.te-row-top .col-pos,
+  .te-standings-table tr.te-row-top .col-entity {
+    background-color: var(--standings-sticky-bg-leader, #1f1a0a);
+  }
+
+  .new-standings-table tr.new-first-place .col-pos,
+  .new-standings-table tr.new-first-place .col-entity {
+    background-color: var(--standings-sticky-bg-leader, #1f1a0a);
+  }
+
+  .americano-ranking tr.americano-ranking__leader .col-pos,
+  .americano-ranking tr.americano-ranking__leader .col-entity {
+    background-color: var(--standings-sticky-bg-leader, #1f1a0a);
+  }
+}

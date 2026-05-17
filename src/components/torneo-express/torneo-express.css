@@ -170,6 +170,8 @@
 
 .te-standings-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   border-radius: 8px;
   border: 1px solid var(--te-border);
 }

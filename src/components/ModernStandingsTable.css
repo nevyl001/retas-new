@@ -71,8 +71,16 @@
 .new-standings-table-wrapper {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm);
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   border: 1px solid var(--color-border-subtle);
+}
+
+@media (min-width: 641px) {
+  .new-standings-table-wrapper:not(.tabla-wrapper) {
+    overflow: hidden;
+  }
 }
 
 .new-standings-table {
