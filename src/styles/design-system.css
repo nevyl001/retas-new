@@ -212,6 +212,37 @@
   border-color: var(--border-strong);
 }
 
+.riviera-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.85rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.riviera-btn-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.riviera-back-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
 .riviera-btn-ghost {
   background: none;
   border: none;

@@ -277,8 +277,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   if (phase === "registration") {
     return (
       <div className="americano-screen">
-        <div className="americano-screen__header">
-          <button className="americano-back-btn" onClick={goBackToRetas}>
+        <div className="americano-screen__header riviera-back-toolbar">
+          <button
+            type="button"
+            className="riviera-btn-back"
+            onClick={goBackToRetas}
+          >
             ← Volver al inicio
           </button>
         </div>
@@ -302,8 +306,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   if (phase === "playing") {
     return (
       <div className="americano-screen">
-        <div className="americano-screen__header">
-          <button className="americano-back-btn" onClick={goBackToRetas}>
+        <div className="americano-screen__header riviera-back-toolbar">
+          <button
+            type="button"
+            className="riviera-btn-back"
+            onClick={goBackToRetas}
+          >
             ← Volver al inicio
           </button>
         </div>
@@ -365,8 +373,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 
   return (
     <div className="americano-screen">
-      <div className="americano-screen__header">
-        <button className="americano-back-btn" onClick={goBackToRetas}>
+      <div className="americano-screen__header riviera-back-toolbar">
+        <button
+          type="button"
+          className="riviera-btn-back"
+          onClick={goBackToRetas}
+        >
           ← Volver al inicio
         </button>
       </div>

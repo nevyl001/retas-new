@@ -3519,8 +3519,12 @@
 .winner-button-container,
 .back-home-button-container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   margin-top: var(--space-md);
+}
+
+.back-home-button-container.riviera-back-toolbar {
+  justify-content: flex-start;
 }
 
 .winner-button-container {

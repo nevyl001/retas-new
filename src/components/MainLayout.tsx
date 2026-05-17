@@ -139,10 +139,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </>
         ) : (
           <div className="reta-content">
-            <div className="reta-content__toolbar">
+            <div className="reta-content__toolbar riviera-back-toolbar">
               <button
                 type="button"
-                className="home-link-btn"
+                className="riviera-btn-back"
                 onClick={() => {
                   onTournamentSelect(null);
                   onBackToHome();

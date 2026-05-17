@@ -11,19 +11,6 @@
   margin-bottom: 12px;
 }
 
-.americano-back-btn {
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
-  background: var(--color-bg-elevated, #121212);
-  color: var(--color-text-primary, #fff);
-  border-radius: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.americano-back-btn:hover {
-  border-color: var(--color-accent, #ffd600);
-}
-
 .americano-primary-btn {
   border: 1px solid transparent;
   background: var(--color-accent, #ffd600);

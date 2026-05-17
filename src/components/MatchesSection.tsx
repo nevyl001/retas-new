@@ -130,9 +130,9 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       )}
 
       {/* Botón para volver al inicio */}
-      <div className="back-home-button-container">
-        <button className="back-home-button" onClick={onBackToHome}>
-          🏠 Volver al Inicio
+      <div className="back-home-button-container riviera-back-toolbar">
+        <button type="button" className="riviera-btn-back" onClick={onBackToHome}>
+          ← Volver al inicio
         </button>
       </div>
     </div>

@@ -150,7 +150,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     <div className="tournament-manager mis-retas-page">
       <header className="mis-retas-page__header">
         {onBack && (
-          <button type="button" className="mis-retas-page__back" onClick={onBack}>
+          <button type="button" className="riviera-btn-back" onClick={onBack}>
             ← Volver
           </button>
         )}
