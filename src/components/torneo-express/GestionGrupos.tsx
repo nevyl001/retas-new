@@ -8,7 +8,10 @@ import {
 import { GrupoBadge } from "./GrupoBadge";
 import { PartidosGrupo } from "./PartidosGrupo";
 import { TablaGrupo } from "./TablaGrupo";
-import { navigateTorneoExpress } from "./torneoExpressNav";
+import {
+  navigateTorneoExpress,
+  setTorneoExpressGeneralBack,
+} from "./torneoExpressNav";
 import { torneoExpressEstadoLabel } from "../../lib/torneoExpress/labels";
 import "./torneo-express.css";
 
@@ -78,9 +81,13 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           <button
             type="button"
             className="torneo-express-btn"
-            onClick={() =>
-              navigateTorneoExpress(`/torneo-express/${torneoId}/general`)
-            }
+            onClick={() => {
+              setTorneoExpressGeneralBack(
+                torneoId,
+                `/torneo-express/${torneoId}/gestionar`
+              );
+              navigateTorneoExpress(`/torneo-express/${torneoId}/general`);
+            }}
           >
             Ver tabla general
           </button>

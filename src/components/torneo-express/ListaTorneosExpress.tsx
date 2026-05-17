@@ -7,7 +7,10 @@ import {
 } from "../../services/torneoExpressService";
 import { TorneoExpressDeleteModal } from "./TorneoExpressDeleteModal";
 import { torneoExpressEstadoLabel } from "../../lib/torneoExpress/labels";
-import { navigateTorneoExpress } from "./torneoExpressNav";
+import {
+  navigateTorneoExpress,
+  setTorneoExpressGeneralBack,
+} from "./torneoExpressNav";
 import "./torneo-express.css";
 
 function formatFecha(iso: string): string {
@@ -162,9 +165,10 @@ export const ListaTorneosExpress: React.FC = () => {
                   <button
                     type="button"
                     className="torneo-express-btn"
-                    onClick={() =>
-                      navigateTorneoExpress(`/torneo-express/${t.id}/general`)
-                    }
+                    onClick={() => {
+                      setTorneoExpressGeneralBack(t.id, "/torneo-express");
+                      navigateTorneoExpress(`/torneo-express/${t.id}/general`);
+                    }}
                   >
                     Ver tabla general
                   </button>
