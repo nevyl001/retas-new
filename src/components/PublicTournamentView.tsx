@@ -7,7 +7,9 @@ import { Match, Pair, Game, Tournament } from "../lib/database";
 import {
   computePairsWithStats,
   computeTeamStandings,
+  getPairStandingDiff,
   resolvePublicStandingsTeamConfig,
+  sortPairsForStandings,
 } from "../lib/standingsUtils";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
@@ -283,16 +285,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       return null;
     return computeTeamStandings(pairsWithStats, teamConfig);
   }, [teamConfig, pairsWithStats]);
-  const sortedPairs = useMemo(() => {
-    return [...pairsWithStats].sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
-      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
-      if (a.gamesLost !== b.gamesLost) return a.gamesLost - b.gamesLost;
-      if (a.pointsReceived !== b.pointsReceived) return a.pointsReceived - b.pointsReceived;
-      return `${a.player1_name}/${a.player2_name}`.localeCompare(`${b.player1_name}/${b.player2_name}`);
-    });
-  }, [pairsWithStats]);
+  const sortedPairs = useMemo(
+    () => sortPairsForStandings(pairsWithStats, matches, games),
+    [pairsWithStats, matches, games]
+  );
 
   const getPositionIcon = (pos: number) => (pos === 1 ? "🥇" : pos === 2 ? "🥈" : pos === 3 ? "🥉" : "");
 
@@ -670,12 +666,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       <span className="standings-card-name">{row.name}</span>
                     </div>
                     <div className="standings-card-stats">
-                      <span><strong>{row.setsWon}</strong> S. gan.</span>
-                      <span><strong>{row.setsLost}</strong> S. perd.</span>
-                      <span><strong>{row.gamesLost}</strong> J. perd.</span>
-                      <span><strong>{row.pointsReceived}</strong> P. rec.</span>
-                      <span><strong>{row.matchesPlayed}</strong> Part.</span>
-                      <span><strong>{row.points}</strong> Puntos</span>
+                      <span><strong>{row.pg}</strong> PG</span>
+                      <span><strong>{row.pp}</strong> PP</span>
+                      <span><strong>{row.points}</strong> Pts fav</span>
+                      <span><strong>{row.points - row.pointsReceived}</strong> Dif</span>
+                      <span><strong>{row.puntosTorneo}</strong> Puntos</span>
                     </div>
                   </div>
                 ))
@@ -689,12 +684,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       <span className="standings-card-name">{pair.player1_name} / {pair.player2_name}</span>
                     </div>
                     <div className="standings-card-stats">
-                      <span><strong>{pair.setsWon}</strong> S. gan.</span>
-                      <span><strong>{pair.setsLost}</strong> S. perd.</span>
-                      <span><strong>{pair.gamesLost}</strong> J. perd.</span>
-                      <span><strong>{pair.pointsReceived}</strong> P. rec.</span>
-                      <span><strong>{pair.matchesPlayed}</strong> Part.</span>
-                      <span><strong>{pair.points}</strong> Puntos</span>
+                      <span><strong>{pair.pg}</strong> PG</span>
+                      <span><strong>{pair.pp}</strong> PP</span>
+                      <span><strong>{pair.points}</strong> Pts fav</span>
+                      <span><strong>{getPairStandingDiff(pair)}</strong> Dif</span>
+                      <span><strong>{pair.puntosTorneo}</strong> Puntos</span>
                     </div>
                   </div>
                 ))}
@@ -709,11 +703,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     <tr>
                       <th>Pos</th>
                       <th>Equipo</th>
-                      <th title="Sets ganados">S. gan.</th>
-                      <th title="Sets perdidos">S. perd.</th>
-                      <th title="Juegos perdidos">J. perd.</th>
-                      <th title="Puntos recibidos (marcador a favor del rival)">P. rec.</th>
-                      <th>Partidos</th>
+                      <th>PJ</th>
+                      <th>PG</th>
+                      <th>PP</th>
+                      <th>Pts Fav</th>
+                      <th>Pts Con</th>
+                      <th>Dif</th>
                       <th>Puntos</th>
                     </tr>
                   </thead>
@@ -732,12 +727,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                           <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
                         </td>
                         <td className="new-team-cell">{row.name}</td>
-                        <td className="new-stats-cell">{row.setsWon}</td>
-                        <td className="new-stats-cell">{row.setsLost}</td>
-                        <td className="new-stats-cell">{row.gamesLost}</td>
-                        <td className="new-stats-cell">{row.pointsReceived}</td>
                         <td className="new-stats-cell">{row.matchesPlayed}</td>
-                        <td className="new-points-cell">{row.points}</td>
+                        <td className="new-stats-cell">{row.pg}</td>
+                        <td className="new-stats-cell">{row.pp}</td>
+                        <td className="new-stats-cell">{row.points}</td>
+                        <td className="new-stats-cell">{row.pointsReceived}</td>
+                        <td className="new-stats-cell">
+                          {row.points - row.pointsReceived}
+                        </td>
+                        <td className="new-points-cell">{row.puntosTorneo}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -750,11 +748,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     <tr>
                       <th>Pos</th>
                       <th>Pareja</th>
-                      <th title="Sets ganados">S. gan.</th>
-                      <th title="Sets perdidos">S. perd.</th>
-                      <th title="Juegos perdidos">J. perd.</th>
-                      <th title="Puntos recibidos (marcador a favor del rival)">P. rec.</th>
-                      <th>Partidos</th>
+                      <th>PJ</th>
+                      <th>PG</th>
+                      <th>PP</th>
+                      <th>Pts Fav</th>
+                      <th>Pts Con</th>
+                      <th>Dif</th>
                       <th>Puntos</th>
                     </tr>
                   </thead>
@@ -773,12 +772,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                           <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
                         </td>
                         <td className="new-team-cell">{pair.player1_name} / {pair.player2_name}</td>
-                        <td className="new-stats-cell">{pair.setsWon}</td>
-                        <td className="new-stats-cell">{pair.setsLost}</td>
-                        <td className="new-stats-cell">{pair.gamesLost}</td>
-                        <td className="new-stats-cell">{pair.pointsReceived}</td>
                         <td className="new-stats-cell">{pair.matchesPlayed}</td>
-                        <td className="new-points-cell">{pair.points}</td>
+                        <td className="new-stats-cell">{pair.pg}</td>
+                        <td className="new-stats-cell">{pair.pp}</td>
+                        <td className="new-stats-cell">{pair.points}</td>
+                        <td className="new-stats-cell">{pair.pointsReceived}</td>
+                        <td className="new-stats-cell">{getPairStandingDiff(pair)}</td>
+                        <td className="new-points-cell">{pair.puntosTorneo}</td>
                       </tr>
                     ))}
                   </tbody>

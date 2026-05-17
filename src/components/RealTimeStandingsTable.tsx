@@ -10,35 +10,16 @@ import {
   Game,
   Pair,
 } from "../lib/database";
-import { getTeamConfigFromStorage, inferTeamConfigFromPairs } from "../lib/standingsUtils";
+import {
+  computePairsWithStats,
+  computeTeamStandings,
+  getPairStandingDiff,
+  getTeamConfigFromStorage,
+  inferTeamConfigFromPairs,
+  sortPairsForStandings,
+} from "../lib/standingsUtils";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import "./ModernStandingsTable.css";
-
-interface PairWithStats {
-  id: string;
-  tournament_id: string;
-  player1_id: string;
-  player2_id: string;
-  player1_name: string;
-  player2_name: string;
-  created_at: string;
-  // Estadísticas calculadas en tiempo real
-  gamesWon: number;
-  gamesLost: number;
-  setsWon: number;
-  setsLost: number;
-  points: number;
-  pointsReceived: number;
-  matchesPlayed: number;
-  player1?: {
-    id: string;
-    name: string;
-  };
-  player2?: {
-    id: string;
-    name: string;
-  };
-}
 
 export interface TeamConfig {
   teamNames: string[];
@@ -227,274 +208,26 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceRefresh]); // loadTournamentData es estable
 
-  // Función para calcular estadísticas de un partido
-  const calculateMatchStats = (match: Match, games: Game[]) => {
-    let pair1GamesWon = 0;
-    let pair2GamesWon = 0;
-    let pair1SetsWon = 0;
-    let pair2SetsWon = 0;
-    let pair1TotalPoints = 0;
-    let pair2TotalPoints = 0;
+  const pairsWithStats = useMemo(
+    () => computePairsWithStats(pairs, matches, allGames),
+    [pairs, matches, allGames]
+  );
 
-    games.forEach((game) => {
-      if (game.is_tie_break) {
-        // Para tie-breaks
-        if (game.tie_break_pair1_points > game.tie_break_pair2_points) {
-          pair1GamesWon++;
-        } else if (game.tie_break_pair2_points > game.tie_break_pair1_points) {
-          pair2GamesWon++;
-        }
-        pair1TotalPoints += game.tie_break_pair1_points || 0;
-        pair2TotalPoints += game.tie_break_pair2_points || 0;
-      } else {
-        // Para juegos normales
-        if (game.pair1_games > game.pair2_games) {
-          pair1GamesWon++;
-        } else if (game.pair2_games > game.pair1_games) {
-          pair2GamesWon++;
-        }
-        pair1TotalPoints += game.pair1_games;
-        pair2TotalPoints += game.pair2_games;
+  const sortedPairs = useMemo(
+    () => sortPairsForStandings(pairsWithStats, matches, allGames),
+    [pairsWithStats, matches, allGames]
+  );
 
-        // Verificar si alguna pareja llegó a 6 puntos en este juego (gana 1 set)
-        if (game.pair1_games >= 6) {
-          pair1SetsWon++;
-        }
-        if (game.pair2_games >= 6) {
-          pair2SetsWon++;
-        }
-      }
-    });
-
-    return {
-      pair1GamesWon,
-      pair2GamesWon,
-      pair1SetsWon,
-      pair2SetsWon,
-      pair1TotalPoints,
-      pair2TotalPoints,
-    };
-  };
-
-  // Calcular estadísticas en tiempo real
-  const pairsWithStats = useMemo((): PairWithStats[] => {
-    if (!pairs.length) {
-      return [];
+  const teamStandings = useMemo(() => {
+    if (
+      !effectiveTeamConfig?.teamNames?.length ||
+      !effectiveTeamConfig.pairToTeam ||
+      Object.keys(effectiveTeamConfig.pairToTeam).length === 0
+    ) {
+      return null;
     }
-
-    if (!matches.length) {
-      return pairs.map((pair) => ({
-        ...pair,
-        gamesWon: 0,
-        gamesLost: 0,
-        setsWon: 0,
-        setsLost: 0,
-        points: 0,
-        pointsReceived: 0,
-        matchesPlayed: 0,
-      }));
-    }
-
-    // Crear mapa de estadísticas por pareja
-    const pairStats = new Map<
-      string,
-      {
-        gamesWon: number;
-        gamesLost: number;
-        setsWon: number;
-        setsLost: number;
-        points: number;
-        pointsReceived: number;
-        matchesPlayed: number;
-      }
-    >();
-
-    // Inicializar estadísticas para todas las parejas
-    pairs.forEach((pair) => {
-      pairStats.set(pair.id, {
-        gamesWon: 0,
-        gamesLost: 0,
-        setsWon: 0,
-        setsLost: 0,
-        points: 0,
-        pointsReceived: 0,
-        matchesPlayed: 0,
-      });
-    });
-
-    // Procesar partidos finalizados
-    matches.forEach((match) => {
-      if (match.status === "finished") {
-        // Obtener juegos de este partido específico
-        const matchGames = allGames.filter(
-          (game) => game.match_id === match.id
-        );
-
-        const pair1Stats = pairStats.get(match.pair1_id);
-        const pair2Stats = pairStats.get(match.pair2_id);
-
-        if (pair1Stats && pair2Stats) {
-          // Incrementar partidos jugados
-          pair1Stats.matchesPlayed += 1;
-          pair2Stats.matchesPlayed += 1;
-
-          if (matchGames.length > 0) {
-            // Usar datos detallados de juegos si están disponibles
-            const matchStats = calculateMatchStats(match, matchGames);
-
-            pair1Stats.gamesWon += matchStats.pair1GamesWon;
-            pair1Stats.gamesLost += matchStats.pair2GamesWon;
-            pair1Stats.setsWon += matchStats.pair1SetsWon;
-            pair1Stats.setsLost += matchStats.pair2SetsWon;
-            pair1Stats.points += matchStats.pair1TotalPoints;
-            pair1Stats.pointsReceived += matchStats.pair2TotalPoints;
-
-            pair2Stats.gamesWon += matchStats.pair2GamesWon;
-            pair2Stats.gamesLost += matchStats.pair1GamesWon;
-            pair2Stats.setsWon += matchStats.pair2SetsWon;
-            pair2Stats.setsLost += matchStats.pair1SetsWon;
-            pair2Stats.points += matchStats.pair2TotalPoints;
-            pair2Stats.pointsReceived += matchStats.pair1TotalPoints;
-          } else {
-            // Usar datos básicos del match si no hay juegos detallados
-            const pair1Score = match.pair1_score || 0;
-            const pair2Score = match.pair2_score || 0;
-
-            // Acumular puntos básicos
-            pair1Stats.points += pair1Score;
-            pair2Stats.points += pair2Score;
-            pair1Stats.pointsReceived += pair2Score;
-            pair2Stats.pointsReceived += pair1Score;
-
-            // Determinar ganador de sets basado en marcador
-            if (pair1Score > pair2Score) {
-              pair1Stats.setsWon += 1;
-              pair1Stats.gamesWon += 1;
-              pair2Stats.setsLost += 1;
-              pair2Stats.gamesLost += 1;
-            } else if (pair2Score > pair1Score) {
-              pair2Stats.setsWon += 1;
-              pair2Stats.gamesWon += 1;
-              pair1Stats.setsLost += 1;
-              pair1Stats.gamesLost += 1;
-            }
-          }
-        }
-      }
-    });
-
-    // Convertir a array con estadísticas
-    return pairs.map((pair) => {
-      const stats = pairStats.get(pair.id) || {
-        gamesWon: 0,
-        gamesLost: 0,
-        setsWon: 0,
-        setsLost: 0,
-        points: 0,
-        pointsReceived: 0,
-        matchesPlayed: 0,
-      };
-
-      return {
-        ...pair,
-        ...stats,
-      };
-    });
-  }, [pairs, matches, allGames]);
-
-  // Ordenar parejas por ranking
-  const sortedPairs = useMemo(() => {
-    return [...pairsWithStats].sort((a, b) => {
-      // Primero por puntos (descendente)
-      if (b.points !== a.points) {
-        return b.points - a.points;
-      }
-      // Luego por sets ganados (descendente)
-      if (b.setsWon !== a.setsWon) {
-        return b.setsWon - a.setsWon;
-      }
-      // Finalmente por juegos ganados (descendente)
-      if (b.gamesWon !== a.gamesWon) {
-        return b.gamesWon - a.gamesWon;
-      }
-      // Menos juegos perdidos = mejor
-      if (a.gamesLost !== b.gamesLost) {
-        return a.gamesLost - b.gamesLost;
-      }
-      if (a.pointsReceived !== b.pointsReceived) {
-        return a.pointsReceived - b.pointsReceived;
-      }
-      // Si todo es igual, ordenar alfabéticamente
-      const nameA = `${a.player1_name}/${a.player2_name}`;
-      const nameB = `${b.player1_name}/${b.player2_name}`;
-      return nameA.localeCompare(nameB);
-    });
-  }, [pairsWithStats]);
-
-  // Clasificación por equipos (suma de estadísticas de parejas del mismo equipo); usa effectiveTeamConfig (incl. inferido)
-  const teamStandings = useMemo(():
-    | Array<{
-        teamIndex: number;
-        name: string;
-        points: number;
-        pointsReceived: number;
-        gamesWon: number;
-        gamesLost: number;
-        setsWon: number;
-        setsLost: number;
-        matchesPlayed: number;
-      }>
-    | null => {
-    if (!effectiveTeamConfig?.teamNames?.length || !effectiveTeamConfig.pairToTeam || Object.keys(effectiveTeamConfig.pairToTeam).length === 0) return null;
-    const n = effectiveTeamConfig.teamNames.length;
-    const totals: Array<{
-      points: number;
-      pointsReceived: number;
-      gamesWon: number;
-      gamesLost: number;
-      setsWon: number;
-      setsLost: number;
-      matchesPlayed: number;
-    }> = Array.from({ length: n }, () => ({
-      points: 0,
-      pointsReceived: 0,
-      gamesWon: 0,
-      gamesLost: 0,
-      setsWon: 0,
-      setsLost: 0,
-      matchesPlayed: 0,
-    }));
-    pairsWithStats.forEach((pair) => {
-      const t = effectiveTeamConfig.pairToTeam[pair.id];
-      if (t >= 0 && t < n) {
-        totals[t].points += pair.points;
-        totals[t].pointsReceived += pair.pointsReceived;
-        totals[t].gamesWon += pair.gamesWon;
-        totals[t].gamesLost += pair.gamesLost;
-        totals[t].setsWon += pair.setsWon;
-        totals[t].setsLost += pair.setsLost;
-        totals[t].matchesPlayed += pair.matchesPlayed;
-      }
-    });
-    return totals.map((tot, teamIndex) => ({
-      teamIndex,
-      name: effectiveTeamConfig.teamNames[teamIndex] ?? `Equipo ${teamIndex + 1}`,
-      points: tot.points,
-      pointsReceived: tot.pointsReceived,
-      gamesWon: tot.gamesWon,
-      gamesLost: tot.gamesLost,
-      setsWon: tot.setsWon,
-      setsLost: tot.setsLost,
-      matchesPlayed: tot.matchesPlayed,
-    })).sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
-      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
-      if (a.gamesLost !== b.gamesLost) return a.gamesLost - b.gamesLost;
-      if (a.pointsReceived !== b.pointsReceived) return a.pointsReceived - b.pointsReceived;
-      return b.matchesPlayed - a.matchesPlayed;
-    });
-  }, [effectiveTeamConfig, pairsWithStats]);
+    return computeTeamStandings(pairsWithStats, effectiveTeamConfig);
+  }, [pairsWithStats, effectiveTeamConfig]);
 
   const getPositionIcon = (position: number) => {
     switch (position) {
@@ -594,11 +327,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
               <tr>
                 <th>Pos</th>
                 <th>Equipo</th>
-                <th title="Sets ganados">S. gan.</th>
-                <th title="Sets perdidos">S. perd.</th>
-                <th title="Juegos perdidos">J. perd.</th>
-                <th title="Puntos recibidos (marcador a favor del rival)">P. rec.</th>
-                <th>Partidos</th>
+                <th>PJ</th>
+                <th>PG</th>
+                <th>PP</th>
+                <th>Pts Fav</th>
+                <th>Pts Con</th>
+                <th>Dif</th>
                 <th>Puntos</th>
               </tr>
             </thead>
@@ -621,12 +355,15 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                     <span className="new-position-icon">{getPositionIcon(index + 1)}</span>
                   </td>
                   <td className="new-team-cell">{row.name}</td>
-                  <td className="new-stats-cell">{row.setsWon}</td>
-                  <td className="new-stats-cell">{row.setsLost}</td>
-                  <td className="new-stats-cell">{row.gamesLost}</td>
-                  <td className="new-stats-cell">{row.pointsReceived}</td>
                   <td className="new-stats-cell">{row.matchesPlayed}</td>
-                  <td className="new-points-cell">{row.points}</td>
+                  <td className="new-stats-cell">{row.pg}</td>
+                  <td className="new-stats-cell">{row.pp}</td>
+                  <td className="new-stats-cell">{row.points}</td>
+                  <td className="new-stats-cell">{row.pointsReceived}</td>
+                  <td className="new-stats-cell">
+                    {row.points - row.pointsReceived}
+                  </td>
+                  <td className="new-points-cell">{row.puntosTorneo}</td>
                 </tr>
               ))}
             </tbody>
@@ -640,11 +377,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
             <tr>
               <th>Pos</th>
               <th>Pareja</th>
-              <th title="Sets ganados">S. gan.</th>
-              <th title="Sets perdidos">S. perd.</th>
-              <th title="Juegos perdidos">J. perd.</th>
-              <th title="Puntos recibidos (marcador a favor del rival)">P. rec.</th>
-              <th>Partidos</th>
+              <th>PJ</th>
+              <th>PG</th>
+              <th>PP</th>
+              <th>Pts Fav</th>
+              <th>Pts Con</th>
+              <th>Dif</th>
               <th>Puntos</th>
             </tr>
           </thead>
@@ -671,12 +409,15 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                 <td className="new-team-cell">
                   {pair.player1_name} / {pair.player2_name}
                 </td>
-                <td className="new-stats-cell">{pair.setsWon}</td>
-                <td className="new-stats-cell">{pair.setsLost}</td>
-                <td className="new-stats-cell">{pair.gamesLost}</td>
-                <td className="new-stats-cell">{pair.pointsReceived}</td>
                 <td className="new-stats-cell">{pair.matchesPlayed}</td>
-                <td className="new-points-cell">{pair.points}</td>
+                <td className="new-stats-cell">{pair.pg}</td>
+                <td className="new-stats-cell">{pair.pp}</td>
+                <td className="new-stats-cell">{pair.points}</td>
+                <td className="new-stats-cell">{pair.pointsReceived}</td>
+                <td className="new-stats-cell">
+                  {getPairStandingDiff(pair)}
+                </td>
+                <td className="new-points-cell">{pair.puntosTorneo}</td>
               </tr>
             ))}
           </tbody>

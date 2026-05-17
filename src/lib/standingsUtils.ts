@@ -1,5 +1,13 @@
 import type { Match, Game, Pair } from "./database";
 import type { Tournament, TournamentTeamConfig } from "./db/types";
+import {
+  applyMatchToStandingStats,
+  createEmptyStandingStats,
+  sortStandingsEntities,
+  standingDiff,
+  type HeadToHeadMatch,
+  type UnifiedStandingStats,
+} from "./unifiedStandings";
 
 export interface TeamConfig {
   teamNames: string[];
@@ -8,16 +16,85 @@ export interface TeamConfig {
 
 export interface PairWithStats extends Pair {
   gamesWon: number;
-  /** Total de juegos perdidos (cada juego ganado por el rival contra esta pareja). */
   gamesLost: number;
   setsWon: number;
-  /** Sets perdidos (los que ganó el rival en los partidos de esta pareja). */
   setsLost: number;
-  /** Puntos a favor (tu marcador acumulado en juegos/partidos). */
+  /** Puntos a favor (marcador acumulado). */
   points: number;
-  /** Puntos recibidos: marcador a favor del rival en tus partidos (para desempate; menos es mejor). */
+  /** Puntos en contra (marcador del rival). */
   pointsReceived: number;
   matchesPlayed: number;
+  /** Partidos ganados / perdidos / puntos de torneo (reglas unificadas). */
+  pg: number;
+  pp: number;
+  puntosTorneo: number;
+}
+
+export type { UnifiedStandingStats, HeadToHeadMatch };
+
+export function getPairStandingDiff(pair: PairWithStats): number {
+  return standingDiff(pairToUnifiedStats(pair));
+}
+
+function pairToUnifiedStats(pair: PairWithStats): UnifiedStandingStats {
+  return {
+    pj: pair.matchesPlayed,
+    pg: pair.pg,
+    pp: pair.pp,
+    ptsFav: pair.points,
+    ptsCon: pair.pointsReceived,
+    puntos: pair.puntosTorneo,
+  };
+}
+
+function getMatchScoresForStandings(
+  match: Match,
+  matchGames: Game[]
+): { score1: number; score2: number } {
+  if (matchGames.length > 0) {
+    const st = calculateMatchStats(match, matchGames);
+    return { score1: st.pair1TotalPoints, score2: st.pair2TotalPoints };
+  }
+  return {
+    score1: match.pair1_score ?? 0,
+    score2: match.pair2_score ?? 0,
+  };
+}
+
+export function buildHeadToHeadFromMatches(
+  matches: Match[],
+  allGames: Game[] = []
+): HeadToHeadMatch[] {
+  return matches
+    .filter((m) => m.status === "finished")
+    .map((m) => {
+      const matchGames = allGames.filter((g) => g.match_id === m.id);
+      const { score1, score2 } = getMatchScoresForStandings(m, matchGames);
+      return {
+        idA: m.pair1_id,
+        idB: m.pair2_id,
+        scoreA: score1,
+        scoreB: score2,
+      };
+    });
+}
+
+export function sortPairsForStandings(
+  pairs: PairWithStats[],
+  matches: Match[],
+  allGames: Game[] = []
+): PairWithStats[] {
+  const entities = pairs.map((p) => ({
+    id: p.id,
+    label: `${p.player1_name}/${p.player2_name}`,
+    stats: pairToUnifiedStats(p),
+  }));
+  const sorted = sortStandingsEntities(
+    entities,
+    buildHeadToHeadFromMatches(matches, allGames)
+  );
+  const byId = new Map(pairs.map((p) => [p.id, p]));
+  return sorted.map((e) => byId.get(e.id)!);
 }
 
 function calculateMatchStats(match: Match, games: Game[]) {
@@ -71,6 +148,9 @@ export function computePairsWithStats(
       points: number;
       pointsReceived: number;
       matchesPlayed: number;
+      pg: number;
+      pp: number;
+      puntosTorneo: number;
     }
   >();
   pairs.forEach((p) =>
@@ -82,49 +162,60 @@ export function computePairsWithStats(
       points: 0,
       pointsReceived: 0,
       matchesPlayed: 0,
+      pg: 0,
+      pp: 0,
+      puntosTorneo: 0,
     })
   );
+
+  const unifiedByPair = new Map<string, UnifiedStandingStats>();
+  pairs.forEach((p) => unifiedByPair.set(p.id, createEmptyStandingStats()));
 
   matches.forEach((match) => {
     if (match.status !== "finished") return;
     const matchGames = allGames.filter((g) => g.match_id === match.id);
     const s1 = pairStats.get(match.pair1_id);
     const s2 = pairStats.get(match.pair2_id);
-    if (!s1 || !s2) return;
-    s1.matchesPlayed += 1;
-    s2.matchesPlayed += 1;
+    const u1 = unifiedByPair.get(match.pair1_id);
+    const u2 = unifiedByPair.get(match.pair2_id);
+    if (!s1 || !s2 || !u1 || !u2) return;
+
+    const { score1, score2 } = getMatchScoresForStandings(match, matchGames);
+    applyMatchToStandingStats(u1, u2, score1, score2);
+
+    s1.matchesPlayed = u1.pj;
+    s2.matchesPlayed = u2.pj;
+    s1.pg = u1.pg;
+    s2.pg = u2.pg;
+    s1.pp = u1.pp;
+    s2.pp = u2.pp;
+    s1.puntosTorneo = u1.puntos;
+    s2.puntosTorneo = u2.puntos;
+    s1.points = u1.ptsFav;
+    s2.points = u2.ptsFav;
+    s1.pointsReceived = u1.ptsCon;
+    s2.pointsReceived = u2.ptsCon;
+
     if (matchGames.length > 0) {
       const st = calculateMatchStats(match, matchGames);
       s1.gamesWon += st.pair1GamesWon;
       s1.gamesLost += st.pair2GamesWon;
       s1.setsWon += st.pair1SetsWon;
       s1.setsLost += st.pair2SetsWon;
-      s1.points += st.pair1TotalPoints;
-      s1.pointsReceived += st.pair2TotalPoints;
       s2.gamesWon += st.pair2GamesWon;
       s2.gamesLost += st.pair1GamesWon;
       s2.setsWon += st.pair2SetsWon;
       s2.setsLost += st.pair1SetsWon;
-      s2.points += st.pair2TotalPoints;
-      s2.pointsReceived += st.pair1TotalPoints;
-    } else {
-      const p1 = match.pair1_score ?? 0;
-      const p2 = match.pair2_score ?? 0;
-      s1.points += p1;
-      s2.points += p2;
-      s1.pointsReceived += p2;
-      s2.pointsReceived += p1;
-      if (p1 > p2) {
-        s1.setsWon += 1;
-        s1.gamesWon += 1;
-        s2.setsLost += 1;
-        s2.gamesLost += 1;
-      } else if (p2 > p1) {
-        s2.setsWon += 1;
-        s2.gamesWon += 1;
-        s1.setsLost += 1;
-        s1.gamesLost += 1;
-      }
+    } else if (score1 > score2) {
+      s1.setsWon += 1;
+      s1.gamesWon += 1;
+      s2.setsLost += 1;
+      s2.gamesLost += 1;
+    } else if (score2 > score1) {
+      s2.setsWon += 1;
+      s2.gamesWon += 1;
+      s1.setsLost += 1;
+      s1.gamesLost += 1;
     }
   });
 
@@ -137,6 +228,9 @@ export function computePairsWithStats(
       points: 0,
       pointsReceived: 0,
       matchesPlayed: 0,
+      pg: 0,
+      pp: 0,
+      puntosTorneo: 0,
     };
     return { ...pair, ...stats };
   });
@@ -152,6 +246,9 @@ export interface TeamStandingRow {
   setsWon: number;
   setsLost: number;
   matchesPlayed: number;
+  pg: number;
+  pp: number;
+  puntosTorneo: number;
 }
 
 /** Clasificación por equipos (ordenada por puntos, primero = ganador). */
@@ -169,6 +266,9 @@ export function computeTeamStandings(
     setsWon: number;
     setsLost: number;
     matchesPlayed: number;
+    pg: number;
+    pp: number;
+    puntosTorneo: number;
   }> = Array.from({ length: n }, () => ({
     points: 0,
     pointsReceived: 0,
@@ -177,6 +277,9 @@ export function computeTeamStandings(
     setsWon: 0,
     setsLost: 0,
     matchesPlayed: 0,
+    pg: 0,
+    pp: 0,
+    puntosTorneo: 0,
   }));
   pairsWithStats.forEach((pair) => {
     const t = teamConfig.pairToTeam[pair.id];
@@ -188,28 +291,41 @@ export function computeTeamStandings(
       totals[t].setsWon += pair.setsWon;
       totals[t].setsLost += pair.setsLost;
       totals[t].matchesPlayed += pair.matchesPlayed;
+      totals[t].pg += pair.pg;
+      totals[t].pp += pair.pp;
+      totals[t].puntosTorneo += pair.puntosTorneo;
     }
   });
-  return totals
-    .map((tot, teamIndex) => ({
-      teamIndex,
-      name: teamConfig.teamNames[teamIndex] ?? `Equipo ${teamIndex + 1}`,
-      points: tot.points,
-      pointsReceived: tot.pointsReceived,
-      gamesWon: tot.gamesWon,
-      gamesLost: tot.gamesLost,
-      setsWon: tot.setsWon,
-      setsLost: tot.setsLost,
-      matchesPlayed: tot.matchesPlayed,
-    }))
-    .sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.setsWon !== a.setsWon) return b.setsWon - a.setsWon;
-      if (b.gamesWon !== a.gamesWon) return b.gamesWon - a.gamesWon;
-      if (a.gamesLost !== b.gamesLost) return a.gamesLost - b.gamesLost;
-      if (a.pointsReceived !== b.pointsReceived) return a.pointsReceived - b.pointsReceived;
-      return b.matchesPlayed - a.matchesPlayed;
-    });
+  const rows: TeamStandingRow[] = totals.map((tot, teamIndex) => ({
+    teamIndex,
+    name: teamConfig.teamNames[teamIndex] ?? `Equipo ${teamIndex + 1}`,
+    points: tot.points,
+    pointsReceived: tot.pointsReceived,
+    gamesWon: tot.gamesWon,
+    gamesLost: tot.gamesLost,
+    setsWon: tot.setsWon,
+    setsLost: tot.setsLost,
+    matchesPlayed: tot.matchesPlayed,
+    pg: tot.pg,
+    pp: tot.pp,
+    puntosTorneo: tot.puntosTorneo,
+  }));
+
+  const entities = rows.map((r) => ({
+    id: String(r.teamIndex),
+    label: r.name,
+    stats: {
+      pj: r.matchesPlayed,
+      pg: r.pg,
+      pp: r.pp,
+      ptsFav: r.points,
+      ptsCon: r.pointsReceived,
+      puntos: r.puntosTorneo,
+    },
+  }));
+  const sorted = sortStandingsEntities(entities, []);
+  const byIdx = new Map(rows.map((r) => [String(r.teamIndex), r]));
+  return sorted.map((e) => byIdx.get(e.id)!);
 }
 
 const TEAM_CONFIG_KEY = "rivieraapp_teams_";

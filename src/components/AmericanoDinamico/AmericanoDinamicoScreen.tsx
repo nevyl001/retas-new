@@ -45,6 +45,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     rounds,
     phase,
     ranking,
+    currentRoundIndex,
     currentRound,
     totalRounds,
     addPlayer,
@@ -347,6 +348,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         <div className="americano-screen__block">
           <LiveRanking
             players={ranking}
+            rounds={rounds.slice(0, currentRoundIndex)}
             caption="Solo cuenta rondas ya cerradas; al cerrar la ronda actual se actualiza con esos resultados."
           />
         </div>
@@ -415,7 +417,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           </div>
         </section>
       )}
-      <LiveRanking players={ranking} />
+      <LiveRanking players={ranking} rounds={rounds} />
       <div className="americano-screen__block">
         <RoundHistory
           rounds={rounds}

@@ -1,14 +1,30 @@
 import React from "react";
-import type { AmericanoPlayer } from "../../lib/db/types";
+import type { AmericanoPlayer, AmericanoRound } from "../../lib/db/types";
+import {
+  buildAmericanoPlayerStandingStats,
+  getAmericanoRanking,
+} from "../../lib/americanoStandings";
+import { standingDiff } from "../../lib/unifiedStandings";
 import "./LiveRanking.css";
 
 interface LiveRankingProps {
   players: AmericanoPlayer[];
+  rounds?: AmericanoRound[];
   /** Texto bajo el título (p. ej. aclarar que no entra la ronda en curso). */
   caption?: string;
 }
 
-export const LiveRanking: React.FC<LiveRankingProps> = ({ players, caption }) => {
+export const LiveRanking: React.FC<LiveRankingProps> = ({
+  players,
+  rounds = [],
+  caption,
+}) => {
+  const ranked = getAmericanoRanking(players, rounds);
+  const statsMap =
+    rounds.length > 0
+      ? buildAmericanoPlayerStandingStats(players, rounds)
+      : null;
+
   return (
     <section className="americano-ranking">
       <h3>Ranking en vivo</h3>
@@ -18,21 +34,35 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({ players, caption }) =>
           <tr>
             <th>Pos</th>
             <th>Jugador</th>
-            <th>Juegos a favor</th>
-            <th>Juegos en contra</th>
+            <th>PJ</th>
+            <th>PG</th>
+            <th>PP</th>
+            <th>Pts Fav</th>
+            <th>Pts Con</th>
             <th>Dif</th>
+            <th>Puntos</th>
           </tr>
         </thead>
         <tbody>
-          {players.map((player, index) => {
-            const diff = player.stats.pointsFor - player.stats.pointsAgainst;
+          {ranked.map((player, index) => {
+            const st = statsMap?.get(player.id);
+            const ptsFav = st?.ptsFav ?? player.stats.pointsFor;
+            const ptsCon = st?.ptsCon ?? player.stats.pointsAgainst;
+            const dif = st ? standingDiff(st) : ptsFav - ptsCon;
             return (
-              <tr key={player.id} className={index === 0 ? "americano-ranking__leader" : ""}>
+              <tr
+                key={player.id}
+                className={index === 0 ? "americano-ranking__leader" : ""}
+              >
                 <td>{index + 1}</td>
                 <td>{player.name}</td>
-                <td>{player.stats.pointsFor}</td>
-                <td>{player.stats.pointsAgainst}</td>
-                <td>{diff}</td>
+                <td>{st?.pj ?? player.stats.gamesPlayed}</td>
+                <td>{st?.pg ?? 0}</td>
+                <td>{st?.pp ?? 0}</td>
+                <td>{ptsFav}</td>
+                <td>{ptsCon}</td>
+                <td>{dif}</td>
+                <td>{st?.puntos ?? ptsFav}</td>
               </tr>
             );
           })}

@@ -443,7 +443,7 @@ export function useAmericanoDinamico(tournamentId?: string | null) {
         ? rounds
         : rounds.slice(0, currentRoundIndex);
     const { players: rp } = rebuildStateFromRounds(slice, template);
-    return getAmericanoRanking(rp);
+    return getAmericanoRanking(rp, slice);
   }, [phase, rounds, currentRoundIndex, players]);
 
   const currentRound = useMemo(
