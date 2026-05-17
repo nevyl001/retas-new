@@ -1,5 +1,6 @@
 import type { GameModeId } from "../components/home/gameModesConfig";
 import { GAME_MODES } from "../components/home/gameModesConfig";
+import { inferAmericanoCourtsFromSnapshot } from "./americanoDinamicoStorage";
 import type { Tournament } from "./db/types";
 import { resolveTournamentGameMode } from "./gameModeMapping";
 
@@ -30,6 +31,20 @@ export function getTournamentModeBadge(tournament: Tournament): {
     label: config?.title ?? modeId,
     color: config?.accentColor ?? "#3B82F6",
   };
+}
+
+/** Canchas efectivas (Americano: snapshot o BD; otros modos: BD). */
+export function getTournamentCourtsCount(tournament: Tournament): number {
+  if (resolveTournamentGameMode(tournament) === "americano") {
+    const fromSnapshot = inferAmericanoCourtsFromSnapshot(tournament.id);
+    if (fromSnapshot) return fromSnapshot;
+  }
+  const n = tournament.courts;
+  return n && n > 0 ? n : 1;
+}
+
+export function formatTournamentCourtsLabel(count: number): string {
+  return count === 1 ? "1 cancha" : `${count} canchas`;
 }
 
 export function getTournamentStatusBadge(tournament: Tournament): {

@@ -9,6 +9,8 @@ import { useUser } from "../contexts/UserContext";
 import { Badge } from "./ui/Badge";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
 import {
+  formatTournamentCourtsLabel,
+  getTournamentCourtsCount,
   getTournamentGroupNames,
   getTournamentModeBadge,
   getTournamentStatusBadge,
@@ -201,10 +203,9 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
             const status = getTournamentStatusBadge(tournament);
             const groups = getTournamentGroupNames(tournament);
             const isSelected = selectedTournament?.id === tournament.id;
-            const courtsLabel =
-              tournament.courts === 1
-                ? "1 cancha"
-                : `${tournament.courts} canchas`;
+            const courtsLabel = formatTournamentCourtsLabel(
+              getTournamentCourtsCount(tournament)
+            );
 
             return (
               <article

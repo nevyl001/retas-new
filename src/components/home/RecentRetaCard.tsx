@@ -1,6 +1,10 @@
 import React from "react";
 import type { Tournament } from "../../lib/database";
-import { getTournamentModeBadge } from "../../lib/tournamentDisplay";
+import {
+  formatTournamentCourtsLabel,
+  getTournamentCourtsCount,
+  getTournamentModeBadge,
+} from "../../lib/tournamentDisplay";
 
 function isActive(t: Tournament): boolean {
   return Boolean(t.is_started && !t.is_finished);
@@ -17,6 +21,9 @@ export const RecentRetaCard: React.FC<RecentRetaCardProps> = ({
 }) => {
   const mode = getTournamentModeBadge(tournament);
   const active = isActive(tournament);
+  const courtsLabel = formatTournamentCourtsLabel(
+    getTournamentCourtsCount(tournament)
+  );
 
   return (
     <article
@@ -37,7 +44,7 @@ export const RecentRetaCard: React.FC<RecentRetaCardProps> = ({
           : active
             ? "En curso"
             : "Pendiente"}
-        {tournament.courts ? ` · ${tournament.courts} cancha(s)` : ""}
+        {` · ${courtsLabel}`}
       </p>
       <button type="button" className="recent-reta-card__btn" onClick={onContinue}>
         {tournament.is_finished ? "Ver resultados →" : "Continuar →"}

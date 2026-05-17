@@ -29,6 +29,7 @@ interface AmericanoDinamicoScreenProps {
   onTournamentStatusChange?: (updates: {
     is_started?: boolean;
     is_finished?: boolean;
+    courts?: number;
   }) => void;
 }
 
@@ -203,11 +204,17 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       finishedPersistedRef.current = false;
       if (!resolvedTournamentId) return;
       try {
+        const safeCourts = Math.max(1, Math.floor(courts) || 1);
         await updateTournament(resolvedTournamentId, {
           is_started: true,
           is_finished: false,
+          courts: safeCourts,
         });
-        onTournamentStatusChange?.({ is_started: true, is_finished: false });
+        onTournamentStatusChange?.({
+          is_started: true,
+          is_finished: false,
+          courts: safeCourts,
+        });
       } catch (e) {
         // Si falla persistencia, no bloqueamos el torneo local.
         console.warn("No se pudo marcar la reta como iniciada:", e);

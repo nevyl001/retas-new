@@ -176,6 +176,21 @@ export function saveAmericanoDinamicoSnapshot(
   }
 }
 
+/** Canchas usadas en el Americano (máx. número de cancha en partidos guardados). */
+export function inferAmericanoCourtsFromSnapshot(
+  tournamentId: string
+): number | null {
+  const snap = loadAmericanoDinamicoSnapshot(tournamentId);
+  if (!snap?.rounds?.length) return null;
+  let maxCourt = 0;
+  for (const round of snap.rounds) {
+    for (const match of round.matches) {
+      maxCourt = Math.max(maxCourt, match.court);
+    }
+  }
+  return maxCourt > 0 ? maxCourt : null;
+}
+
 export function loadAmericanoDinamicoSnapshot(
   tournamentId: string
 ): AmericanoDinamicoSnapshotV1 | null {
