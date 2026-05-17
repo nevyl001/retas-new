@@ -82,7 +82,44 @@ export const buildStandings = (
     stats.puntos = calcularPuntos(stats.PG, stats.PE);
   });
 
-  return Object.values(statsMap);
+  const result = Object.values(statsMap);
+  if (process.env.NODE_ENV === "development") {
+    validateStandings(result, matches);
+  }
+  return result;
+};
+
+/** Comprobaciones de integridad (solo desarrollo). */
+export function validateStandings(
+  standings: PairStanding[],
+  _matches: MatchResult[] = []
+): void {
+  standings.forEach((s) => {
+    console.assert(
+      s.PJ === s.PG + s.PE + s.PP,
+      `[standings] ${s.pairName}: PJ no cuadra`
+    );
+    console.assert(
+      s.puntos === s.PG * 2 + s.PE,
+      `[standings] ${s.pairName}: PTS de tabla incorrectos`
+    );
+    console.assert(
+      s.diferencia === s.juegosFavor - s.juegosContra,
+      `[standings] ${s.pairName}: DIF no cuadra`
+    );
+    if (s.PG === 0) {
+      console.assert(
+        s.puntos === 0,
+        `[standings] ${s.pairName}: 0 victorias pero tiene PTS`
+      );
+    }
+  });
+  const totalFav = standings.reduce((acc, s) => acc + s.juegosFavor, 0);
+  const totalCon = standings.reduce((acc, s) => acc + s.juegosContra, 0);
+  console.assert(
+    totalFav === totalCon,
+    `[standings] Integridad: total FAV (${totalFav}) ≠ total CON (${totalCon})`
+  );
 };
 
 export const getHeadToHeadWinner = (

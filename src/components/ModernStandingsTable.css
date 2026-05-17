@@ -217,6 +217,10 @@
   color: var(--color-text-primary);
 }
 
+.new-standings-container .standings-scoring-help {
+  margin-bottom: var(--space-md, 1rem);
+}
+
 .new-stats-cell {
   font-weight: var(--font-weight-semibold);
   font-size: 0.8125rem;

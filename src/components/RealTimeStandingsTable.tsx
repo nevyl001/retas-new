@@ -19,6 +19,9 @@ import {
 } from "../lib/standingsUtils";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import { StandingsDifCell } from "./standings/StandingsDifCell";
+import { StandingsPtsCell } from "./standings/StandingsPtsCell";
+import { StandingsScoringHelp } from "./standings/StandingsScoringHelp";
+import { StandingsTableHeader } from "./standings/StandingsTableHeader";
 import "./ModernStandingsTable.css";
 
 export interface TeamConfig {
@@ -319,22 +322,14 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         </button>
       </div>
 
+      <StandingsScoringHelp />
+
       {/* Modo equipos: tabla por equipos (suma de puntos por equipo) */}
       {teamStandings && teamStandings.length > 0 ? (
         <div className="new-standings-table-wrapper">
           <table className="new-standings-table">
             <thead>
-              <tr>
-                <th>Pos</th>
-                <th>Equipo</th>
-                <th>PJ</th>
-                <th>PG</th>
-                <th>PP</th>
-                <th>Pts Fav</th>
-                <th>Pts Con</th>
-                <th>Dif</th>
-                <th>Puntos</th>
-              </tr>
+              <StandingsTableHeader entity="equipo" />
             </thead>
             <tbody>
               {teamStandings.map((row, index) => (
@@ -364,7 +359,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                     ptsFav={row.points}
                     ptsCon={row.pointsReceived}
                   />
-                  <td className="new-points-cell">{row.puntosTorneo}</td>
+                  <StandingsPtsCell pts={row.puntosTorneo} />
                 </tr>
               ))}
             </tbody>
@@ -375,17 +370,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         <div className="new-standings-table-wrapper">
         <table className="new-standings-table">
           <thead>
-            <tr>
-              <th>Pos</th>
-              <th>Pareja</th>
-              <th>PJ</th>
-              <th>PG</th>
-              <th>PP</th>
-              <th>Pts Fav</th>
-              <th>Pts Con</th>
-              <th>Dif</th>
-              <th>Puntos</th>
-            </tr>
+            <StandingsTableHeader entity="pareja" />
           </thead>
           <tbody>
             {sortedPairs.map((pair, index) => (
@@ -419,7 +404,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                   ptsFav={pair.points}
                   ptsCon={pair.pointsReceived}
                 />
-                <td className="new-points-cell">{pair.puntosTorneo}</td>
+                <StandingsPtsCell pts={pair.puntosTorneo} />
               </tr>
             ))}
           </tbody>

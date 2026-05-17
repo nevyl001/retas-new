@@ -4,11 +4,10 @@ import {
   buildAmericanoPlayerStandingStats,
   getAmericanoRanking,
 } from "../../lib/americanoStandings";
-import {
-  computeStandingDif,
-  formatStandingDif,
-  standingDifCellClass,
-} from "../../utils/standingsDisplay";
+import { StandingsDifCell } from "../standings/StandingsDifCell";
+import { StandingsPtsCell } from "../standings/StandingsPtsCell";
+import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
+import { StandingsTableHeader } from "../standings/StandingsTableHeader";
 import "./LiveRanking.css";
 
 interface LiveRankingProps {
@@ -33,26 +32,16 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
     <section className="americano-ranking">
       <h3>Ranking en vivo</h3>
       {caption ? <p className="americano-ranking__caption">{caption}</p> : null}
+      <StandingsScoringHelp />
       <table>
         <thead>
-          <tr>
-            <th>Pos</th>
-            <th>Jugador</th>
-            <th>PJ</th>
-            <th>PG</th>
-            <th>PP</th>
-            <th>Pts Fav</th>
-            <th>Pts Con</th>
-            <th>Dif</th>
-            <th>Puntos</th>
-          </tr>
+          <StandingsTableHeader entity="jugador" />
         </thead>
         <tbody>
           {ranked.map((player, index) => {
             const st = statsMap?.get(player.id);
             const ptsFav = st?.ptsFav ?? player.stats.pointsFor;
             const ptsCon = st?.ptsCon ?? player.stats.pointsAgainst;
-            const dif = computeStandingDif(ptsFav, ptsCon);
             return (
               <tr
                 key={player.id}
@@ -65,8 +54,8 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
                 <td>{st?.pp ?? 0}</td>
                 <td>{ptsFav}</td>
                 <td>{ptsCon}</td>
-                <td className={standingDifCellClass(dif)}>{formatStandingDif(dif)}</td>
-                <td>{st?.puntos ?? 0}</td>
+                <StandingsDifCell ptsFav={ptsFav} ptsCon={ptsCon} className="" />
+                <StandingsPtsCell pts={st?.puntos ?? 0} className="" />
               </tr>
             );
           })}

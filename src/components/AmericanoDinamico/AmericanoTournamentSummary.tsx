@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import type { AmericanoDinamicoSnapshotV1 } from "../../lib/americanoDinamicoStorage";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
-import {
-  formatStandingDif,
-  standingDifCellClass,
-} from "../../utils/standingsDisplay";
+import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
+import { StandingsDifCell } from "../standings/StandingsDifCell";
 import "./AmericanoTournamentSummary.css";
 
 interface AmericanoTournamentSummaryProps {
@@ -88,21 +86,21 @@ export const AmericanoTournamentSummary: React.FC<
 
       <div className="americano-summary__ranking-wrap">
         <h3 className="americano-summary__subtitle">Clasificación final</h3>
+        <StandingsScoringHelp compact />
         <table className="americano-summary__table">
           <thead>
             <tr>
-              <th>Pos</th>
-              <th>Jugador</th>
-              <th>PF</th>
-              <th>PC</th>
-              <th>Dif</th>
+              <th title="Posición">POS</th>
+              <th title="Nombre del jugador">JUGADOR</th>
+              <th title="Juegos anotados a favor">FAV</th>
+              <th title="Juegos recibidos en contra">CON</th>
+              <th title="Diferencia (FAV − CON)">DIF</th>
             </tr>
           </thead>
           <tbody>
             {snapshot.ranking.map((player, index) => {
               const ptsFav = player.stats.pointsFor;
               const ptsCon = player.stats.pointsAgainst;
-              const diff = ptsFav - ptsCon;
               return (
                 <tr
                   key={player.id}
@@ -112,9 +110,11 @@ export const AmericanoTournamentSummary: React.FC<
                   <td>{player.name}</td>
                   <td>{ptsFav}</td>
                   <td>{ptsCon}</td>
-                  <td className={standingDifCellClass(diff)}>
-                    {formatStandingDif(diff)}
-                  </td>
+                  <StandingsDifCell
+                    ptsFav={ptsFav}
+                    ptsCon={ptsCon}
+                    className=""
+                  />
                 </tr>
               );
             })}

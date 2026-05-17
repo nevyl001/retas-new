@@ -164,6 +164,10 @@
 .te-grupo-badge--3 { color: #fca5a5; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.12); }
 .te-grupo-badge--4 { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.12); }
 
+.te-standings-block {
+  margin-bottom: 1rem;
+}
+
 .te-standings-wrap {
   overflow-x: auto;
   border-radius: 8px;
