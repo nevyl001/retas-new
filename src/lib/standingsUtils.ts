@@ -74,11 +74,15 @@ export function buildHeadToHeadFromMatches(
     .map((m) => {
       const matchGames = allGames.filter((g) => g.match_id === m.id);
       const { score1, score2 } = getMatchScoresForStandings(m, matchGames);
+      let winnerId: string | undefined;
+      if (score1 > score2) winnerId = m.pair1_id;
+      else if (score2 > score1) winnerId = m.pair2_id;
       return {
         pairAId: m.pair1_id,
         pairBId: m.pair2_id,
         gamesA: score1,
         gamesB: score2,
+        winnerId,
       };
     });
 }

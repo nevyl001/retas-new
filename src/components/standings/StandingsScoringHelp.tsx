@@ -7,7 +7,7 @@ interface StandingsScoringHelpProps {
   compact?: boolean;
 }
 
-/** Texto breve para que el usuario distinga juegos en cancha (FAV/CON) vs puntos de tabla (PTS). */
+/** Texto breve: estadísticas en cancha vs orden de la tabla. */
 export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
   className = "",
   compact = false,
@@ -18,9 +18,9 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
         className={`standings-scoring-help standings-scoring-help--compact ${className}`.trim()}
         aria-label="Cómo se calcula la clasificación"
       >
-        <strong>FAV</strong> / <strong>CON</strong> = juegos anotados y recibidos ·{" "}
-        <strong>DIF</strong> = FAV − CON · <strong>PTS</strong> de tabla: victoria 2,
-        empate 1, derrota 0
+        Orden: <strong>DIF</strong> → <strong>PG</strong> → enfrentamiento directo ·{" "}
+        <strong>FAV</strong>/<strong>CON</strong> = juegos en cancha ·{" "}
+        <strong>PTS</strong> = victoria 2 (solo referencia)
       </p>
     );
   }
@@ -30,16 +30,17 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
       className={`standings-scoring-help ${className}`.trim()}
       aria-label="Cómo se calcula la clasificación"
     >
-      <p className="standings-scoring-help__title">¿Cómo se calcula el puntaje?</p>
+      <p className="standings-scoring-help__title">¿Cómo se ordena la tabla?</p>
       <p className="standings-scoring-help__text">
-        <strong>FAV</strong> y <strong>CON</strong> son los juegos que anotaste y
-        los que recibiste en cada partido. <strong>DIF</strong> = FAV − CON.{" "}
-        <strong>PTS</strong> son puntos de tabla para el ranking (victoria 2,
-        empate 1, derrota 0): no son los juegos anotados; por ejemplo, 3 victorias
-        = 6 PTS.
+        La posición se define así: primero mayor <strong>DIF</strong> (FAV − CON);
+        si empatan, más <strong>PG</strong>; si siguen empatadas, gana quien ganó
+        el enfrentamiento directo entre ellas. <strong>FAV</strong> y{" "}
+        <strong>CON</strong> son los juegos anotados y recibidos en cancha.{" "}
+        <strong>PTS</strong> (victoria 2, derrota 0) es solo informativo y no
+        define el orden.
       </p>
       <p className="standings-scoring-help__legend">
-        PTS · Victoria 2 · Empate 1 · Derrota 0
+        Orden · DIF → PG → H2H · PTS · Victoria 2 · Derrota 0
       </p>
     </aside>
   );

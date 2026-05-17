@@ -11,10 +11,13 @@ import {
 
 export {
   buildStandings,
+  calcularEstadisticas,
   calcularPuntos,
   calculateFinalStandings,
   createStandingsComparator,
   formatStandingsForTable,
+  getHeadToHead,
+  ordenarTabla,
   sortStandings,
 } from "../utils/standings";
 
@@ -81,7 +84,7 @@ export function unifiedToPairStanding(
   };
 }
 
-/** Aplica un partido con victoria=2, empate=1, derrota=0. */
+/** Aplica un partido; PTS de tabla = PG×2 (solo visual). */
 export function applyMatchToStandingStats(
   local: UnifiedStandingStats,
   visit: UnifiedStandingStats,
@@ -106,8 +109,8 @@ export function applyMatchToStandingStats(
     visit.pe += 1;
   }
 
-  local.puntos = calcularPuntos(local.pg, local.pe);
-  visit.puntos = calcularPuntos(visit.pg, visit.pe);
+  local.puntos = calcularPuntos(local.pg);
+  visit.puntos = calcularPuntos(visit.pg);
 }
 
 export function sortStandingsEntities<T extends StandingsEntity>(

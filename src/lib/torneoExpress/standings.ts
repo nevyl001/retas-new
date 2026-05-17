@@ -40,6 +40,7 @@ function partidosToMatches(partidos: TorneoExpressPartido[]): MatchResult[] {
       pairBId: p.pareja_visitante_id,
       gamesA: p.puntos_local ?? 0,
       gamesB: p.puntos_visitante ?? 0,
+      winnerId: p.ganador_id,
     }));
 }
 

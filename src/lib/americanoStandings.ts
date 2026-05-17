@@ -43,7 +43,7 @@ function applyPlayerSideResult(
   } else {
     stats.pe += 1;
   }
-  stats.puntos = calcularPuntos(stats.pg, stats.pe);
+  stats.puntos = calcularPuntos(stats.pg);
 }
 
 /** Partidos 1v1 implícitos cuando dos jugadores se enfrentan en canchas opuestas. */

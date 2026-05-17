@@ -1,6 +1,7 @@
 /**
- * RivieraApp — Motor de clasificación v2.0
- * 7 criterios de desempate en cascada (mismas reglas en todos los modos).
+ * RivieraApp — Motor de clasificación (tabla general).
+ * Orden: 1) DIF  2) PG  3) Enfrentamiento directo.
+ * PTS = PG×2 (solo visual, no ordena).
  */
 import {
   computeStandingDif,
@@ -12,6 +13,8 @@ export interface MatchResult {
   pairBId: string;
   gamesA: number;
   gamesB: number;
+  /** Ganador explícito (p. ej. ganador_id en torneo express). */
+  winnerId?: string | null;
 }
 
 export interface PairStanding {
@@ -29,7 +32,49 @@ export interface PairStanding {
   posicion?: number;
 }
 
-export const calcularPuntos = (pg: number, pe: number): number => pg * 2 + pe * 1;
+/** PTS de tabla: 2 por victoria, 0 por derrota (no se usa para ordenar). */
+export const calcularPuntos = (pg: number, _pe = 0): number => pg * 2;
+
+export function resolveMatchWinner(match: MatchResult): string | null {
+  if (match.winnerId) return match.winnerId;
+  if (match.gamesA > match.gamesB) return match.pairAId;
+  if (match.gamesB > match.gamesA) return match.pairBId;
+  return null;
+}
+
+/**
+ * Enfrentamiento directo para sort: -1 si A va primero, 1 si B, 0 si empate.
+ * Usa el primer partido encontrado entre ambas parejas.
+ */
+export function getHeadToHead(
+  idA: string,
+  idB: string,
+  historialPartidos: MatchResult[]
+): number {
+  const partido = historialPartidos.find(
+    (p) =>
+      (p.pairAId === idA && p.pairBId === idB) ||
+      (p.pairAId === idB && p.pairBId === idA)
+  );
+  if (!partido) return 0;
+
+  const ganador = resolveMatchWinner(partido);
+  if (ganador === idA) return -1;
+  if (ganador === idB) return 1;
+  return 0;
+}
+
+/** @deprecated Usar getHeadToHead */
+export function getHeadToHeadWinner(
+  pairAId: string,
+  pairBId: string,
+  matches: MatchResult[]
+): string | null {
+  const cmp = getHeadToHead(pairAId, pairBId, matches);
+  if (cmp < 0) return pairAId;
+  if (cmp > 0) return pairBId;
+  return null;
+}
 
 export const buildStandings = (
   pairs: Array<{ id: string; name: string; seed?: number }>,
@@ -65,10 +110,11 @@ export const buildStandings = (
     b.juegosFavor += match.gamesB;
     b.juegosContra += match.gamesA;
 
-    if (match.gamesA > match.gamesB) {
+    const winner = resolveMatchWinner(match);
+    if (winner === match.pairAId) {
       a.PG++;
       b.PP++;
-    } else if (match.gamesB > match.gamesA) {
+    } else if (winner === match.pairBId) {
       b.PG++;
       a.PP++;
     } else {
@@ -79,7 +125,7 @@ export const buildStandings = (
 
   Object.values(statsMap).forEach((stats) => {
     stats.diferencia = stats.juegosFavor - stats.juegosContra;
-    stats.puntos = calcularPuntos(stats.PG, stats.PE);
+    stats.puntos = calcularPuntos(stats.PG);
   });
 
   const result = Object.values(statsMap);
@@ -89,7 +135,14 @@ export const buildStandings = (
   return result;
 };
 
-/** Comprobaciones de integridad (solo desarrollo). */
+/** Alias: recalcula FAV, CON, DIF, PG, PP, PTS desde el historial. */
+export function calcularEstadisticas(
+  pairs: Array<{ id: string; name: string; seed?: number }>,
+  historialPartidos: MatchResult[]
+): PairStanding[] {
+  return buildStandings(pairs, historialPartidos);
+}
+
 export function validateStandings(
   standings: PairStanding[],
   _matches: MatchResult[] = []
@@ -100,8 +153,8 @@ export function validateStandings(
       `[standings] ${s.pairName}: PJ no cuadra`
     );
     console.assert(
-      s.puntos === s.PG * 2 + s.PE,
-      `[standings] ${s.pairName}: PTS de tabla incorrectos`
+      s.puntos === s.PG * 2,
+      `[standings] ${s.pairName}: PTS incorrectos`
     );
     console.assert(
       s.diferencia === s.juegosFavor - s.juegosContra,
@@ -120,63 +173,23 @@ export function validateStandings(
     totalFav === totalCon,
     `[standings] Integridad: total FAV (${totalFav}) ≠ total CON (${totalCon})`
   );
-};
-
-export const getHeadToHeadWinner = (
-  pairAId: string,
-  pairBId: string,
-  matches: MatchResult[]
-): string | null => {
-  const h2hMatches = matches.filter(
-    (m) =>
-      (m.pairAId === pairAId && m.pairBId === pairBId) ||
-      (m.pairAId === pairBId && m.pairBId === pairAId)
-  );
-
-  if (h2hMatches.length === 0) return null;
-
-  let winsA = 0;
-  let winsB = 0;
-  let gamesA = 0;
-  let gamesB = 0;
-
-  h2hMatches.forEach((m) => {
-    if (m.pairAId === pairAId) {
-      gamesA += m.gamesA;
-      gamesB += m.gamesB;
-      if (m.gamesA > m.gamesB) winsA++;
-      else if (m.gamesB > m.gamesA) winsB++;
-    } else {
-      gamesA += m.gamesB;
-      gamesB += m.gamesA;
-      if (m.gamesB > m.gamesA) winsA++;
-      else if (m.gamesA > m.gamesB) winsB++;
-    }
-  });
-
-  if (winsA > winsB) return pairAId;
-  if (winsB > winsA) return pairBId;
-  if (gamesA > gamesB) return pairAId;
-  if (gamesB > gamesA) return pairBId;
-  return null;
-};
+}
 
 export const createStandingsComparator = (matches: MatchResult[]) => {
   return (a: PairStanding, b: PairStanding): number => {
-    if (b.puntos !== a.puntos) return b.puntos - a.puntos;
     if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
-    if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
     if (b.PG !== a.PG) return b.PG - a.PG;
-
-    const h2hWinner = getHeadToHeadWinner(a.pairId, b.pairId, matches);
-    if (h2hWinner === a.pairId) return -1;
-    if (h2hWinner === b.pairId) return 1;
-
-    if (a.juegosContra !== b.juegosContra) return a.juegosContra - b.juegosContra;
-
-    return a.seed - b.seed;
+    return getHeadToHead(a.pairId, b.pairId, matches);
   };
 };
+
+/** Alias: ordena por DIF → PG → enfrentamiento directo. */
+export function ordenarTabla(
+  parejas: PairStanding[],
+  historialPartidos: MatchResult[]
+): PairStanding[] {
+  return sortStandings(parejas, historialPartidos);
+}
 
 export const sortStandings = (
   standings: PairStanding[],
@@ -195,8 +208,8 @@ export const calculateFinalStandings = (
   pairs: Array<{ id: string; name: string; seed?: number }>,
   matches: MatchResult[]
 ): PairStanding[] => {
-  const standings = buildStandings(pairs, matches);
-  return sortStandings(standings, matches);
+  const standings = calcularEstadisticas(pairs, matches);
+  return ordenarTabla(standings, matches);
 };
 
 export const formatStandingsForTable = (standings: PairStanding[]) => {
