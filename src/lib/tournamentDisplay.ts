@@ -1,4 +1,7 @@
+import type { GameModeId } from "../components/home/gameModesConfig";
+import { GAME_MODES } from "../components/home/gameModesConfig";
 import type { Tournament } from "./db/types";
+import { resolveTournamentGameMode } from "./gameModeMapping";
 
 export type TournamentModeBadge =
   | "mode-equipos"
@@ -8,17 +11,25 @@ export type TournamentModeBadge =
 
 export type TournamentStatusBadge = "active" | "finished" | "pending";
 
+const MODE_BADGE_VARIANT: Record<GameModeId, TournamentModeBadge> = {
+  "reta-equipos": "mode-equipos",
+  "round-robin": "mode-robin",
+  americano: "mode-americano",
+  "mini-torneo": "mode-torneo",
+};
+
 export function getTournamentModeBadge(tournament: Tournament): {
   variant: TournamentModeBadge;
   label: string;
+  color: string;
 } {
-  if (tournament.format === "teams") {
-    return { variant: "mode-equipos", label: "Por equipos" };
-  }
-  if (tournament.format === "round_robin") {
-    return { variant: "mode-robin", label: "Round Robin" };
-  }
-  return { variant: "mode-robin", label: "Reta" };
+  const modeId = resolveTournamentGameMode(tournament);
+  const config = GAME_MODES.find((m) => m.id === modeId);
+  return {
+    variant: MODE_BADGE_VARIANT[modeId],
+    label: config?.title ?? modeId,
+    color: config?.accentColor ?? "#3B82F6",
+  };
 }
 
 export function getTournamentStatusBadge(tournament: Tournament): {

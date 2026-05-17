@@ -1,11 +1,6 @@
 import React from "react";
 import type { Tournament } from "../../lib/database";
-function modeLabel(t: Tournament): { label: string; color: string } {
-  if (t.format === "teams") {
-    return { label: "Equipos", color: "#F59E0B" };
-  }
-  return { label: "Round Robin", color: "#3B82F6" };
-}
+import { getTournamentModeBadge } from "../../lib/tournamentDisplay";
 
 function isActive(t: Tournament): boolean {
   return Boolean(t.is_started && !t.is_finished);
@@ -20,7 +15,7 @@ export const RecentRetaCard: React.FC<RecentRetaCardProps> = ({
   tournament,
   onContinue,
 }) => {
-  const mode = modeLabel(tournament);
+  const mode = getTournamentModeBadge(tournament);
   const active = isActive(tournament);
 
   return (
