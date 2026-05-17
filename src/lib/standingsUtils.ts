@@ -27,6 +27,7 @@ export interface PairWithStats extends Pair {
   /** Partidos ganados / perdidos / puntos de torneo (reglas unificadas). */
   pg: number;
   pp: number;
+  pe?: number;
   puntosTorneo: number;
 }
 
@@ -37,9 +38,12 @@ export function getPairStandingDiff(pair: PairWithStats): number {
 }
 
 function pairToUnifiedStats(pair: PairWithStats): UnifiedStandingStats {
+  const pe =
+    pair.pe ?? Math.max(0, pair.matchesPlayed - pair.pg - pair.pp);
   return {
     pj: pair.matchesPlayed,
     pg: pair.pg,
+    pe,
     pp: pair.pp,
     ptsFav: pair.points,
     ptsCon: pair.pointsReceived,
@@ -71,10 +75,10 @@ export function buildHeadToHeadFromMatches(
       const matchGames = allGames.filter((g) => g.match_id === m.id);
       const { score1, score2 } = getMatchScoresForStandings(m, matchGames);
       return {
-        idA: m.pair1_id,
-        idB: m.pair2_id,
-        scoreA: score1,
-        scoreB: score2,
+        pairAId: m.pair1_id,
+        pairBId: m.pair2_id,
+        gamesA: score1,
+        gamesB: score2,
       };
     });
 }
@@ -84,9 +88,10 @@ export function sortPairsForStandings(
   matches: Match[],
   allGames: Game[] = []
 ): PairWithStats[] {
-  const entities = pairs.map((p) => ({
+  const entities = pairs.map((p, i) => ({
     id: p.id,
     label: `${p.player1_name}/${p.player2_name}`,
+    seed: i,
     stats: pairToUnifiedStats(p),
   }));
   const sorted = sortStandingsEntities(
@@ -150,6 +155,7 @@ export function computePairsWithStats(
       matchesPlayed: number;
       pg: number;
       pp: number;
+      pe: number;
       puntosTorneo: number;
     }
   >();
@@ -164,6 +170,7 @@ export function computePairsWithStats(
       matchesPlayed: 0,
       pg: 0,
       pp: 0,
+      pe: 0,
       puntosTorneo: 0,
     })
   );
@@ -189,6 +196,8 @@ export function computePairsWithStats(
     s2.pg = u2.pg;
     s1.pp = u1.pp;
     s2.pp = u2.pp;
+    s1.pe = u1.pe;
+    s2.pe = u2.pe;
     s1.puntosTorneo = u1.puntos;
     s2.puntosTorneo = u2.puntos;
     s1.points = u1.ptsFav;
@@ -230,6 +239,7 @@ export function computePairsWithStats(
       matchesPlayed: 0,
       pg: 0,
       pp: 0,
+      pe: 0,
       puntosTorneo: 0,
     };
     return { ...pair, ...stats };
@@ -311,12 +321,14 @@ export function computeTeamStandings(
     puntosTorneo: tot.puntosTorneo,
   }));
 
-  const entities = rows.map((r) => ({
+  const entities = rows.map((r, i) => ({
     id: String(r.teamIndex),
     label: r.name,
+    seed: i,
     stats: {
       pj: r.matchesPlayed,
       pg: r.pg,
+      pe: Math.max(0, r.matchesPlayed - r.pg - r.pp),
       pp: r.pp,
       ptsFav: r.points,
       ptsCon: r.pointsReceived,

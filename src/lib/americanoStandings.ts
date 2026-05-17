@@ -1,5 +1,7 @@
 import type { AmericanoMatch, AmericanoPlayer, AmericanoRound } from "./db/types";
+import type { MatchResult } from "../utils/standings";
 import {
+  calcularPuntos,
   createEmptyStandingStats,
   sortStandingsEntities,
   type UnifiedStandingStats,
@@ -36,13 +38,42 @@ function applyPlayerSideResult(
   stats.ptsCon += scoreAgainst;
   if (scoreFor > scoreAgainst) {
     stats.pg += 1;
-    stats.puntos += 2;
   } else if (scoreAgainst > scoreFor) {
     stats.pp += 1;
-    stats.puntos += 1;
   } else {
-    stats.puntos += 1;
+    stats.pe += 1;
   }
+  stats.puntos = calcularPuntos(stats.pg, stats.pe);
+}
+
+/** Partidos 1v1 implícitos cuando dos jugadores se enfrentan en canchas opuestas. */
+export function buildAmericanoHeadToHeadMatches(
+  rounds: AmericanoRound[]
+): MatchResult[] {
+  const out: MatchResult[] = [];
+  for (const round of rounds) {
+    for (const match of round.matches) {
+      if (
+        typeof match.scoreA !== "number" ||
+        typeof match.scoreB !== "number" ||
+        match.scoreA < 0 ||
+        match.scoreB < 0
+      ) {
+        continue;
+      }
+      for (const a of match.teamA) {
+        for (const b of match.teamB) {
+          out.push({
+            pairAId: a.id,
+            pairBId: b.id,
+            gamesA: match.scoreA,
+            gamesB: match.scoreB,
+          });
+        }
+      }
+    }
+  }
+  return out;
 }
 
 /** Estadísticas unificadas por jugador a partir de rondas con marcador. */
@@ -83,10 +114,11 @@ function statsFromLegacyPlayer(p: AmericanoPlayer): UnifiedStandingStats {
   return {
     pj: p.stats.gamesPlayed,
     pg: 0,
+    pe: 0,
     pp: 0,
     ptsFav: p.stats.pointsFor,
     ptsCon: p.stats.pointsAgainst,
-    puntos: p.stats.pointsFor,
+    puntos: 0,
   };
 }
 
@@ -100,14 +132,17 @@ export function getAmericanoRanking(
       ? buildAmericanoPlayerStandingStats(players, rounds)
       : new Map(players.map((p) => [p.id, statsFromLegacyPlayer(p)]));
 
-  const entities = players.map((p) => ({
+  const h2h =
+    rounds.length > 0 ? buildAmericanoHeadToHeadMatches(rounds) : [];
+
+  const entities = players.map((p, i) => ({
     id: p.id,
     label: p.name,
+    seed: i,
     stats: statsMap.get(p.id) ?? createEmptyStandingStats(),
   }));
 
-  const sorted = sortStandingsEntities(entities, []);
+  const sorted = sortStandingsEntities(entities, h2h);
   const byId = new Map(players.map((p) => [p.id, p]));
   return sorted.map((e) => byId.get(e.id)!);
 }
-
