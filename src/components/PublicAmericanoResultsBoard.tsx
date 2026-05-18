@@ -12,6 +12,7 @@ import {
   RIVIERA_PUBLIC_DESCRIPTION,
 } from "../lib/rivieraBranding";
 import "./PublicAmericanoResultsBoard.css";
+import "../styles/riviera-public-reta.css";
 
 const POLL_MS = 8000;
 

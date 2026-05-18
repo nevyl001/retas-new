@@ -14,6 +14,7 @@ import {
 } from "./torneoExpressNav";
 import { torneoExpressEstadoLabel } from "../../lib/torneoExpress/labels";
 import "./torneo-express.css";
+import "./riviera-torneo-express.css";
 
 export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const {
@@ -109,14 +110,12 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
 
       {error && <p className="te-error">{error}</p>}
 
-      <div className="torneo-express-card">
-        <h2 style={{ marginTop: 0, fontSize: "1.1rem", color: "var(--te-gold)" }}>
-          Enlaces públicos
-        </h2>
+      <div className="torneo-express-card te-public-links-card">
+        <h2 className="te-public-links-card__title">Enlaces públicos</h2>
         <div className="te-links-row">
           <button
             type="button"
-            className="torneo-express-btn torneo-express-btn--primary"
+            className="torneo-express-btn torneo-express-btn--gold te-links-row__btn"
             onClick={() => copyLink(publicGeneralUrl(torneoId))}
           >
             Copiar enlace tabla general
@@ -124,7 +123,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           {grupo && (
             <button
               type="button"
-              className="torneo-express-btn"
+              className="torneo-express-btn te-links-row__btn te-links-row__btn--ghost"
               onClick={() => copyLink(publicGrupoUrl(torneoId, grupo.id))}
             >
               Copiar enlace grupo activo
@@ -147,10 +146,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               type="button"
               role="tab"
               aria-selected={g.id === grupoId}
-              className={`torneo-express-btn te-grupos-tab${
-                g.id === grupoId
-                  ? " torneo-express-btn--primary te-grupos-tab--active"
-                  : ""
+              className={`te-grupos-tab${
+                g.id === grupoId ? " te-grupos-tab--active" : ""
               }`}
               onClick={() => setActiveGrupoId(g.id)}
             >

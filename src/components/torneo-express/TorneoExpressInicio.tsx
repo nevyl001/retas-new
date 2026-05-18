@@ -3,6 +3,7 @@ import { navigateToAppHome } from "../../lib/appRouting";
 import { CrearTorneoExpress } from "./CrearTorneoExpress";
 import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
 import "./torneo-express.css";
+import "./riviera-torneo-express.css";
 
 export const TorneoExpressInicio: React.FC = () => {
   const [refreshToken, setRefreshToken] = useState(0);

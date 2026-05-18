@@ -301,7 +301,7 @@ function PartidoRow({
           </div>
           <button
             type="button"
-            className="torneo-express-btn torneo-express-btn--primary te-partido-save-btn"
+            className="torneo-express-btn torneo-express-btn--gold te-partido-save-btn"
             disabled={saving}
             onClick={() =>
               void onSave(partido.id, Number(pl) || 0, Number(pv) || 0).then(

@@ -22,6 +22,7 @@ import {
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
 import "./torneo-express.css";
+import "./riviera-torneo-express.css";
 
 interface CrearTorneoExpressProps {
   onTorneoCreated?: () => void;

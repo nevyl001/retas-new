@@ -1,0 +1,255 @@
+/* Riviera Gold — Superficies de app (organizador, enlaces, grid) */
+
+/* —— Organizador: grid de acciones —— */
+.four-components-grid {
+  gap: 1rem;
+}
+
+.component-card {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+  min-height: auto !important;
+}
+
+.component-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-accent) !important;
+  box-shadow: var(--glow-gold), var(--shadow-card) !important;
+}
+
+.component-header {
+  padding: 1.15rem 1.25rem !important;
+  border-bottom-color: var(--border-subtle) !important;
+}
+
+.component-icon {
+  background: var(--accent-gold-dim) !important;
+  border-color: var(--border-accent) !important;
+  color: var(--accent-gold) !important;
+  font-size: 1.1rem !important;
+}
+
+.component-title h3 {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  color: var(--text-primary) !important;
+}
+
+.component-subtitle {
+  font-family: var(--font-body) !important;
+  font-size: 0.8rem !important;
+  color: var(--text-muted) !important;
+}
+
+.component-toggle-btn {
+  border-color: var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+}
+
+.component-toggle-btn:hover {
+  border-color: var(--border-accent) !important;
+  color: var(--accent-gold) !important;
+}
+
+/* —— Enlace público (sin borde naranja) —— */
+.public-link-section {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+.public-link-section h3 {
+  font-family: var(--font-display) !important;
+  font-size: 1.5rem !important;
+  letter-spacing: 0.06em !important;
+  color: var(--text-primary) !important;
+}
+
+.public-link-section h3::first-letter,
+.public-link-info p::before {
+  color: var(--accent-gold) !important;
+}
+
+.public-link-info {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.public-link-info p {
+  color: var(--text-secondary) !important;
+  font-family: var(--font-body) !important;
+}
+
+.public-link-button {
+  background: var(--accent-gold) !important;
+  border: none !important;
+  color: var(--bg-base) !important;
+  font-weight: 700 !important;
+  border-radius: var(--radius-full) !important;
+}
+
+.public-link-button:hover {
+  background: var(--accent-gold-light) !important;
+  box-shadow: var(--glow-gold) !important;
+}
+
+.public-link-preview {
+  background: transparent !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+  border-radius: var(--radius-full) !important;
+}
+
+.public-link-preview:hover {
+  border-color: var(--border-accent) !important;
+  color: var(--accent-gold) !important;
+  background: var(--accent-gold-dim) !important;
+}
+
+/* —— Secciones reta —— */
+.reta-management-section,
+.reta-content {
+  animation: fadeInUp 0.45s ease-out both;
+}
+
+.welcome-banner {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.welcome-banner h2 {
+  font-family: var(--font-display) !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Parejas compactas */
+.compact-pair-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.compact-pair-card:hover {
+  border-color: var(--border-accent) !important;
+}
+
+.compact-pair-number {
+  font-family: var(--font-display) !important;
+  color: var(--accent-gold) !important;
+}
+
+.compact-stat-value {
+  font-family: var(--font-display) !important;
+}
+
+/* design-system cards heredan gold vía bridges */
+.riviera-card {
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.riviera-btn-primary {
+  border-radius: var(--radius-full);
+}
+
+.riviera-btn-back {
+  font-family: var(--font-body) !important;
+}
+
+.container {
+  background: var(--bg-base);
+}
+
+.main-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Tipografía display global */
+.text-display,
+.start-tournament-section__title {
+  font-family: var(--font-display) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.04em !important;
+}
+
+.start-tournament-section__headline {
+  font-family: var(--font-display) !important;
+}
+
+/* Rondas / partidos */
+.round-header-simplified {
+  border-bottom: none !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.round-header-simplified h4 {
+  font-family: var(--font-display) !important;
+  font-size: 1.35rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.06em !important;
+  color: var(--accent-gold) !important;
+  position: relative;
+  padding-bottom: 0.5rem;
+}
+
+.round-header-simplified h4::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 220px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-gold), transparent);
+}
+
+.round-header-simplified span {
+  font-family: var(--font-body) !important;
+  color: var(--text-muted) !important;
+}
+
+.modern-match-card {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+.modern-match-card.selected,
+.modern-match-card--live {
+  border-color: var(--border-accent) !important;
+  box-shadow: var(--glow-gold), var(--shadow-card) !important;
+}
+
+.modern-game-score.winner,
+.modern-match-card:hover .modern-game-score.winner {
+  font-family: var(--font-display) !important;
+  font-size: 1.1rem !important;
+  color: var(--accent-gold) !important;
+}
+
+.modern-pair-info--winner {
+  border-color: var(--border-accent) !important;
+  background: var(--accent-gold-dim) !important;
+}
+
+/* Parejas grid */
+.compact-pairs-grid {
+  gap: 1rem;
+}
+
+.compact-stat-label {
+  font-family: var(--font-body) !important;
+  font-size: 0.65rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--text-muted) !important;
+}

@@ -1,6 +1,7 @@
 import React from "react";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import "./torneo-express.css";
+import "./riviera-torneo-express.css";
 
 /** Acceso desde el dashboard principal sin tocar la lógica de retas. */
 export const TorneoExpressEntry: React.FC = () => {

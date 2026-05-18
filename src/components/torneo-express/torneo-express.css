@@ -1,16 +1,22 @@
-/* Torneo Express — mismo lenguaje visual RivieraApp */
+/* Torneo Express — base (Riviera Gold vía riviera-torneo-express.css) */
 .torneo-express-page {
-  --te-bg: #0a0a0a;
-  --te-card: #1a1a1a;
-  --te-border: #2a2a2a;
-  --te-gold: #c9a84c;
-  --te-text: #ffffff;
-  --te-muted: #9ca3af;
+  --te-bg: var(--bg-base, #0a0a0f);
+  --te-card: var(--bg-card, rgba(255, 255, 255, 0.04));
+  --te-border: var(--border-subtle, rgba(255, 255, 255, 0.07));
+  --te-gold: var(--accent-gold, #d4af37);
+  --te-gold-bright: var(--accent-gold, #d4af37);
+  --te-gold-light: var(--accent-gold-light, #f0d060);
+  --te-text: var(--text-primary, #f0f0f0);
+  --te-muted: var(--text-secondary, #a0a0b0);
+  --te-panel: var(--bg-surface, #111118);
+  --te-input-bg: rgba(255, 255, 255, 0.05);
   min-height: 100vh;
   background: var(--te-bg);
   color: var(--te-text);
+  font-family: var(--font-body, "Outfit", sans-serif);
   padding: var(--space-lg, 1.5rem);
   box-sizing: border-box;
+  animation: fadeInUp 0.45s ease-out both;
 }
 
 .torneo-express-page .te-header {

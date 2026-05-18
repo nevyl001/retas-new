@@ -1,5 +1,6 @@
 import React from "react";
 import "./torneo-express.css";
+import "./riviera-torneo-express.css";
 
 interface TorneoExpressDeleteModalProps {
   torneoNombre: string;

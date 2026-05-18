@@ -12,6 +12,7 @@ import {
   setTorneoExpressGeneralBack,
 } from "./torneoExpressNav";
 import "./torneo-express.css";
+import "./riviera-torneo-express.css";
 
 function formatFecha(iso: string): string {
   try {

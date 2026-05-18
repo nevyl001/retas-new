@@ -1,0 +1,355 @@
+/* Ajustes mínimos — vista pública Americano (clases base: torneo-express-public.css) */
+
+.te-public--americano .te-public__inner {
+  max-width: 1100px;
+}
+
+.te-pub-matches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .te-pub-matches-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.te-public-round-block {
+  margin-bottom: 2rem;
+}
+
+.te-public-round-block:last-child {
+  margin-bottom: 0;
+}
+
+.te-public-round-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.te-public-round-head__title {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.te-public-round-head__num {
+  color: var(--accent-primary);
+}
+
+.te-public-round-head__sep,
+.te-public-round-head__phase {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.te-public-round-head__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--live-color);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
+.te-pub-score--pending-label {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.te-public-bench {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.te-public-bench strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.te-public-podium {
+  text-align: center;
+}
+
+.te-public-podium__badge {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+
+.te-public-podium__title {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.te-public-podium__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.te-public-podium__card {
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+}
+
+.te-public-podium__card--gold {
+  border-color: rgba(212, 175, 55, 0.35);
+  box-shadow: inset 3px 0 0 var(--accent-primary);
+}
+
+.te-public-podium__place {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.te-public-podium__name {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  color: var(--accent-primary);
+}
+
+.te-public-error-block {
+  margin-bottom: 2rem;
+}
+
+.te-public-error-block p {
+  margin: 0 0 0.65rem;
+}
+
+.te-public-error-block .te-public-empty {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.te-public-error-block code {
+  font-size: 0.8em;
+  color: var(--accent-primary);
+}
+
+/* Round Robin / equipos / extensiones compartidas */
+.te-public--reta .te-public__inner {
+  max-width: 1100px;
+}
+
+.te-pub-match-winner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: var(--bg-card);
+}
+
+.te-pub-match-winner__icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--accent-primary);
+}
+
+.te-pub-match-winner__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.te-pub-match-winner__label {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.te-pub-match-winner__name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+  color: var(--accent-secondary);
+  line-height: 1.1;
+}
+
+.te-pub-games {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+}
+
+.te-pub-games__title {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.te-pub-games__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.te-pub-games__chip {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.te-pub-resting {
+  margin-top: 1rem;
+}
+
+.te-pub-resting__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.te-pub-resting__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.45rem;
+}
+
+.te-pub-resting__pill {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  opacity: 0.9;
+}
+
+.te-pub-resting__info {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.te-public-winner {
+  text-align: center;
+}
+
+.te-public-winner__hero {
+  padding: 0.5rem 0 1rem;
+}
+
+.te-public-winner__trophy {
+  display: block;
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 4px 20px rgba(212, 175, 55, 0.35));
+}
+
+.te-public-winner__label {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.te-public-winner__name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 5vw, 2.25rem);
+  letter-spacing: 0.04em;
+  color: var(--accent-secondary);
+  line-height: 1.05;
+}
+
+.te-public-winner__sub {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.te-public-winner__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.te-public-winner__stat {
+  padding: 0.85rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.te-public-winner__stat-num {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--accent-primary);
+  line-height: 1;
+}
+
+.te-public-winner__stat-label {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}

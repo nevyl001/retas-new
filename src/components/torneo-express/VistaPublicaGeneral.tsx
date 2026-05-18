@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
 import { copyToClipboard, publicGeneralUrl } from "../../services/torneoExpressService";
-import { TablaGeneral } from "./TablaGeneral";
+import { PublicStandingsSection } from "./public/PublicStandingsSection";
+import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
+import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import {
   getTorneoExpressGeneralBack,
   navigateTorneoExpress,
 } from "./torneoExpressNav";
-import "./torneo-express.css";
 
 export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const { user } = useUser();
@@ -23,56 +24,54 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
 
   const copyLink = async () => {
     const ok = await copyToClipboard(publicGeneralUrl(torneoId));
-    setCopyMsg(ok ? "Copiado" : "Error");
-    setTimeout(() => setCopyMsg(""), 2000);
+    setCopyMsg(ok ? "Enlace copiado" : "No se pudo copiar");
+    setTimeout(() => setCopyMsg(""), 2500);
   };
 
   if (loading && !bundle) {
     return (
-      <div className="torneo-express-page">
-        <p>Cargando…</p>
-      </div>
+      <PublicTorneoExpressShell>
+        <div className="te-public-loading">
+          <div className="te-public-loading__pulse" aria-hidden />
+          <p>Cargando tabla general…</p>
+        </div>
+      </PublicTorneoExpressShell>
     );
   }
 
   if (!bundle) {
     return (
-      <div className="torneo-express-page">
-        <p className="te-error">{error ?? "Torneo no encontrado"}</p>
-      </div>
+      <PublicTorneoExpressShell>
+        <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
+      </PublicTorneoExpressShell>
     );
   }
 
   return (
-    <div className="torneo-express-page App--public-full-width">
-      <header className="te-header">
-        <div>
-          <h1 className="te-title">{bundle.torneo.nombre}</h1>
-          <p className="te-subtitle">Tabla general · todos los grupos</p>
-        </div>
-        <div
-          className="te-header__actions"
-          style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
-        >
-          {user && (
+    <PublicTorneoExpressShell>
+      <PublicTorneoExpressHeader
+        torneoNombre={bundle.torneo.nombre}
+        subtitle="Tabla general · todos los grupos"
+        onCopyLink={copyLink}
+        copyMsg={copyMsg || undefined}
+        extraActions={
+          user ? (
             <button
               type="button"
-              className="torneo-express-btn"
+              className="te-public-btn te-public-btn--outline"
               onClick={goBack}
             >
               ← Regresar
             </button>
-          )}
-          <button type="button" className="torneo-express-btn" onClick={copyLink}>
-            Copiar enlace
-          </button>
-        </div>
-      </header>
-      {copyMsg && <span className="te-copy-ok">{copyMsg}</span>}
+          ) : undefined
+        }
+      />
 
-      <div className="torneo-express-card">
-        <TablaGeneral rows={standingsGeneral} />
-      </div>
-    </div>
+      <PublicStandingsSection
+        rows={standingsGeneral}
+        showGrupoColumn
+        title="Tabla general"
+      />
+    </PublicTorneoExpressShell>
   );
 };

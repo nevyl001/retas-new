@@ -4,6 +4,7 @@ import { TorneoExpressInicio } from "./TorneoExpressInicio";
 import { VistaPublicaGeneral } from "./VistaPublicaGeneral";
 import { VistaPublicaGrupo } from "./VistaPublicaGrupo";
 import "./torneo-express.css";
+import "./riviera-torneo-express.css";
 
 export type TorneoExpressRoute =
   | { kind: "home" }

@@ -14,7 +14,10 @@ import {
   RIVIERA_APP_DISPLAY,
   RIVIERA_PUBLIC_DESCRIPTION,
 } from "../lib/rivieraBranding";
-import "./PublicAmericanoView.css";
+import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
+import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
+import { PublicAmericanoStandingsSection } from "./public/PublicAmericanoStandingsSection";
+import "./public/riviera-public-americano.css";
 
 const POLL_MS = 4000;
 
@@ -155,29 +158,33 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     (snapshot.tournamentPhase === "finished" || tournamentFinished);
 
   return (
-    <div className="public-americano-view">
-      <header className="public-americano-view__header">
-        <div className="public-americano-view__brand">
-          <h1 className="public-americano-view__title">
+    <PublicTorneoExpressShell className="te-public--americano">
+      <header className="te-public-header te-pub-fade-in">
+        <div className="te-public-header__brand">
+          <p className="te-public-header__kicker">Americano</p>
+          <h1 className="te-public-header__title">
             {tournamentName || "Americano en vivo"}
           </h1>
-          <p className="public-americano-view__tagline">
-            {RIVIERA_PUBLIC_DESCRIPTION}
-          </p>
-          <p className="public-americano-view__meta">
-            Actualización automática cada pocos segundos
-          </p>
-          {snapshot?.savedAt && (
-            <p className="public-americano-view__meta">
-              Última publicación:{" "}
-              {new Date(snapshot.savedAt).toLocaleString()}
-            </p>
-          )}
+          <div className="te-public-header__line" aria-hidden />
+          <div className="te-public-header__meta">
+            <span className="te-public-header__subtitle">
+              {RIVIERA_PUBLIC_DESCRIPTION}
+            </span>
+            <span className="te-public-header__subtitle">
+              Actualización automática cada pocos segundos
+            </span>
+            {snapshot?.savedAt && (
+              <span className="te-public-header__subtitle">
+                Última publicación:{" "}
+                {new Date(snapshot.savedAt).toLocaleString()}
+              </span>
+            )}
+          </div>
         </div>
       </header>
 
       {loadError && (
-        <div className="public-americano-view__section public-americano-view__empty">
+        <div className="te-public-error te-public-error-block te-pub-fade-in">
           {loadError}
         </div>
       )}
@@ -185,21 +192,24 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       {!loadError &&
         fetchStatus?.status === "missing_column" &&
         !snapshot && (
-          <div className="public-americano-view__section public-americano-view__empty">
+          <div className="te-public-error te-public-error-block te-pub-fade-in">
             <p>
-              <strong>No se puede mostrar el Americano en vivo desde internet.</strong>
+              <strong>
+                No se puede mostrar el Americano en vivo desde internet.
+              </strong>
             </p>
-            <p className="public-americano-view__hint">
-              En móvil (y en cualquier otro dispositivo) esta pantalla solo lee datos
-              guardados en <strong>Supabase</strong>, no el navegador del organizador.
+            <p className="te-public-empty">
+              En móvil (y en cualquier otro dispositivo) esta pantalla solo lee
+              datos guardados en <strong>Supabase</strong>, no el navegador del
+              organizador.
             </p>
-            <p className="public-americano-view__hint">
+            <p className="te-public-empty">
               Falta la columna <code>americano_live</code> en la tabla{" "}
-              <code>tournament_public_config</code>. En Supabase → SQL Editor ejecuta
-              el archivo del repositorio{" "}
-              <code>tournament-americano-public-live.sql</code> y vuelve a abrir el
-              Americano en el móvil del organizador unos segundos para que se publique
-              el marcador.
+              <code>tournament_public_config</code>. En Supabase → SQL Editor
+              ejecuta el archivo del repositorio{" "}
+              <code>tournament-americano-public-live.sql</code> y vuelve a abrir
+              el Americano en el móvil del organizador unos segundos para que se
+              publique el marcador.
             </p>
           </div>
         )}
@@ -207,12 +217,12 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       {!loadError &&
         fetchStatus?.status === "fetch_error" &&
         !snapshot && (
-          <div className="public-americano-view__section public-americano-view__empty">
+          <div className="te-public-error te-public-error-block te-pub-fade-in">
             <p>
               <strong>No se pudo leer la publicación.</strong>{" "}
               {fetchStatus.message}
             </p>
-            <p className="public-americano-view__hint">
+            <p className="te-public-empty">
               Revisa la URL del proyecto Supabase, la tabla{" "}
               <code>tournament_public_config</code> y las políticas RLS (debe
               permitir <code>SELECT</code> a <code>anon</code>).
@@ -223,153 +233,147 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       {!loadError &&
         fetchStatus?.status === "empty" &&
         !snapshot && (
-          <div className="public-americano-view__section public-americano-view__empty">
-            <p>
+          <section className="te-public-section te-pub-fade-in">
+            <p className="te-public-empty">
               <strong>Aún no hay datos publicados</strong> para este torneo en
               internet.
             </p>
-            <p className="public-americano-view__hint">
-              La vista pública <strong>no</strong> lee el mismo móvil u ordenador del
-              organizador: solo muestra lo que esté guardado en la nube (Supabase).
+            <p className="te-public-empty">
+              La vista pública <strong>no</strong> lee el mismo móvil u ordenador
+              del organizador: solo muestra lo que esté guardado en la nube
+              (Supabase).
             </p>
             {tournamentStarted ? (
-              <p className="public-americano-view__hint public-americano-view__hint--warn">
-                Esta reta consta como <strong>iniciada</strong>, pero no hay marcador
-                publicado. Si ya ejecutaste el torneo, revisa en Supabase la columna{" "}
-                <code>americano_live</code> (archivo{" "}
-                <code>tournament-americano-public-live.sql</code>) y en el dispositivo
-                del organizador la consola por errores de <code>upsert</code> (sesión
-                cerrada o permisos RLS).
+              <p className="te-public-empty">
+                Esta reta consta como <strong>iniciada</strong>, pero no hay
+                marcador publicado. Si ya ejecutaste el torneo, revisa en
+                Supabase la columna <code>americano_live</code> (archivo{" "}
+                <code>tournament-americano-public-live.sql</code>) y en el
+                dispositivo del organizador la consola por errores de{" "}
+                <code>upsert</code> (sesión cerrada o permisos RLS).
               </p>
             ) : (
-              <p className="public-americano-view__hint">
-                El organizador debe tener abierto el Americano de esta reta (URL con{" "}
-                <code>?tournamentId=…</code>), pulsar <strong>Iniciar torneo</strong>{" "}
-                y esperar unos segundos a que se suba el estado.
+              <p className="te-public-empty">
+                El organizador debe tener abierto el Americano de esta reta (URL
+                con <code>?tournamentId=…</code>), pulsar{" "}
+                <strong>Iniciar torneo</strong> y esperar unos segundos a que se
+                suba el estado.
               </p>
             )}
-          </div>
+          </section>
         )}
 
       {snapshot && (
         <>
           {snapshot.rounds.length > 0 &&
             snapshot.rounds.map((round, roundIdx) => {
-            const isLastRound = roundIdx === snapshot.rounds.length - 1;
-            const inProgress = isLastRound && !roundFullyScored(round);
-            const matches = roundMatchesSorted(round);
-            return (
-              <section
-                key={`${round.roundNumber}-${round.phase}-${roundIdx}`}
-                className="public-americano-view__section"
-              >
-                <h2>
-                  Ronda {round.roundNumber} ·{" "}
-                  {americanoRoundPhaseCaption(round, totalForPhaseLabels)}
-                  {inProgress ? " · en curso" : ""}
-                </h2>
-                {round.benchPlayers.length > 0 && (
-                  <p className="public-americano-view__bench">
-                    <strong>Descansan:</strong>{" "}
-                    {round.benchPlayers.map((p) => p.name).join(", ")}
-                  </p>
-                )}
-                <div className="public-americano-view__grid">
-                  {matches.map((m) => (
-                    <article key={m.id} className="public-americano-match">
-                      <div className="public-americano-match__court">
-                        Cancha {m.court}
-                      </div>
-                      <div className="public-americano-match__teams">
-                        <strong>
-                          {m.teamA[0].name} / {m.teamA[1].name}
-                        </strong>
-                        {" vs "}
-                        <strong>
-                          {m.teamB[0].name} / {m.teamB[1].name}
-                        </strong>
-                      </div>
-                      <div className="public-americano-match__score">
-                        {typeof m.scoreA === "number" &&
-                        typeof m.scoreB === "number"
-                          ? `${m.scoreA} — ${m.scoreB}`
-                          : "Marcador pendiente"}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+              const isLastRound = roundIdx === snapshot.rounds.length - 1;
+              const inProgress = isLastRound && !roundFullyScored(round);
+              const matches = roundMatchesSorted(round);
+              const phaseCaption = americanoRoundPhaseCaption(
+                round,
+                totalForPhaseLabels
+              );
+
+              return (
+                <section
+                  key={`${round.roundNumber}-${round.phase}-${roundIdx}`}
+                  className="te-public-section te-pub-fade-in"
+                  style={{ animationDelay: `${0.05 + roundIdx * 0.06}s` }}
+                >
+                  <div className="te-public-round-head">
+                    <h2 className="te-public-round-head__title">
+                      <span className="te-public-round-head__num">
+                        Ronda {round.roundNumber}
+                      </span>
+                      <span className="te-public-round-head__sep">·</span>
+                      <span className="te-public-round-head__phase">
+                        {phaseCaption}
+                      </span>
+                      {inProgress && (
+                        <span className="te-public-round-head__live">
+                          <span className="te-pub-status__dot" aria-hidden />
+                          en curso
+                        </span>
+                      )}
+                    </h2>
+                  </div>
+                  <div className="te-public-section__divider" aria-hidden />
+
+                  {round.benchPlayers.length > 0 && (
+                    <p className="te-public-bench">
+                      <strong>Descansan:</strong>{" "}
+                      {round.benchPlayers.map((p) => p.name).join(", ")}
+                    </p>
+                  )}
+
+                  <div className="te-pub-matches-grid">
+                    {matches.map((m, matchIdx) => (
+                      <PublicAmericanoMatchCard
+                        key={m.id}
+                        match={m}
+                        live={inProgress}
+                        index={matchIdx}
+                      />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
 
           {showFinishedPodium && (
             <section
-              className="public-americano-view__section"
+              className="te-public-section te-public-podium te-pub-fade-in"
               aria-label="Podio final"
             >
-                <p className="public-americano-view__finished-line">
-                  Torneo finalizado
-                </p>
-                <h2 className="public-americano-view__podium-title">
-                  Felicidades a los 3 primeros lugares
-                </h2>
-                <div className="public-americano-view__podium-grid">
-                  {snapshot.ranking[0] && (
-                    <article className="public-americano-view__podium-card public-americano-view__podium-card--gold">
-                      <span className="public-americano-view__podium-place">
-                        1er lugar
-                      </span>
-                      <strong>{snapshot.ranking[0].name}</strong>
-                    </article>
-                  )}
-                  {snapshot.ranking[1] && (
-                    <article className="public-americano-view__podium-card public-americano-view__podium-card--silver">
-                      <span className="public-americano-view__podium-place">
-                        2do lugar
-                      </span>
-                      <strong>{snapshot.ranking[1].name}</strong>
-                    </article>
-                  )}
-                  {snapshot.ranking[2] && (
-                    <article className="public-americano-view__podium-card public-americano-view__podium-card--bronze">
-                      <span className="public-americano-view__podium-place">
-                        3er lugar
-                      </span>
-                      <strong>{snapshot.ranking[2].name}</strong>
-                    </article>
-                  )}
-                </div>
+              <p className="te-public-podium__badge">Torneo finalizado</p>
+              <h2 className="te-public-podium__title">
+                Felicidades a los 3 primeros lugares
+              </h2>
+              <div className="te-public-podium__grid">
+                {snapshot.ranking[0] && (
+                  <article className="te-public-podium__card te-public-podium__card--gold te-pub-fade-in-up">
+                    <span className="te-public-podium__place">1er lugar</span>
+                    <span className="te-public-podium__name">
+                      {snapshot.ranking[0].name}
+                    </span>
+                  </article>
+                )}
+                {snapshot.ranking[1] && (
+                  <article
+                    className="te-public-podium__card te-pub-fade-in-up"
+                    style={{ animationDelay: "0.08s" }}
+                  >
+                    <span className="te-public-podium__place">2do lugar</span>
+                    <span className="te-public-podium__name">
+                      {snapshot.ranking[1].name}
+                    </span>
+                  </article>
+                )}
+                {snapshot.ranking[2] && (
+                  <article
+                    className="te-public-podium__card te-pub-fade-in-up"
+                    style={{ animationDelay: "0.12s" }}
+                  >
+                    <span className="te-public-podium__place">3er lugar</span>
+                    <span className="te-public-podium__name">
+                      {snapshot.ranking[2].name}
+                    </span>
+                  </article>
+                )}
+              </div>
             </section>
           )}
 
           {snapshot.ranking.length > 0 && (
-            <section className="public-americano-view__section">
-              <h2>Clasificación (publicada)</h2>
-              <table className="public-americano-view__ranking">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Jugador</th>
-                    <th>Juegos a favor</th>
-                    <th>Juegos en contra</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {snapshot.ranking.map((p, i) => (
-                    <tr key={p.id}>
-                      <td>{i + 1}</td>
-                      <td>{p.name}</td>
-                      <td>{p.stats.pointsFor}</td>
-                      <td>{p.stats.pointsAgainst}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
+            <PublicAmericanoStandingsSection
+              rows={snapshot.ranking}
+              title="Clasificación"
+            />
           )}
         </>
       )}
-    </div>
+    </PublicTorneoExpressShell>
   );
 };
 

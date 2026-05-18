@@ -1,6 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600&family=Outfit:wght@400;500;600&display=swap');
 @import "./styles/theme.css";
 @import "./styles/design-system.css";
+@import "./styles/riviera-design-system.css";
+@import "./styles/riviera-app-surfaces.css";
 
 html,
 body {

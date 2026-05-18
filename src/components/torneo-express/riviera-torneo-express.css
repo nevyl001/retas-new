@@ -1,0 +1,735 @@
+/* ═══════════════════════════════════════════════════════════
+   Riviera Gold — Torneo Express (organizador + inicio + crear)
+   ═══════════════════════════════════════════════════════════ */
+
+/* —— Tipografía display —— */
+.torneo-express-page .te-title,
+.torneo-express-page .te-torneos-section__title,
+.torneo-express-page .te-torneo-card__nombre,
+.torneo-express-page .te-modal-title,
+.torneo-express-page .te-list-heading {
+  font-family: var(--font-display, "Bebas Neue", sans-serif);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  line-height: 1.05;
+}
+
+.torneo-express-page .te-title {
+  font-size: clamp(1.75rem, 4vw, 2rem);
+  color: var(--text-primary);
+}
+
+.torneo-express-page .te-subtitle,
+.torneo-express-page .te-subtitle__product {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+}
+
+.torneo-express-page .te-section-title,
+.torneo-express-page .te-grupos-card__title,
+.torneo-express-page .te-grupos-card__partidos-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+}
+
+.torneo-express-page .te-grupos-card__active-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--accent-gold);
+}
+
+/* —— Cards glass —— */
+.torneo-express-page .torneo-express-card,
+.torneo-express-page .te-torneo-list-card,
+.torneo-express-page .te-torneo-card,
+.torneo-express-page .te-torneos-empty,
+.torneo-express-page .te-players-panel,
+.torneo-express-page .te-modal-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+}
+
+.torneo-express-page .te-torneo-card--activo {
+  border-color: var(--border-accent);
+  box-shadow: var(--glow-gold), var(--shadow-card);
+}
+
+.torneo-express-page .te-torneo-card--finalizado {
+  border-color: var(--border-subtle);
+  opacity: 0.78;
+}
+
+.torneo-express-page .te-torneo-card:hover,
+.torneo-express-page .te-torneo-list-card:hover {
+  border-color: var(--border-accent);
+}
+
+.torneo-express-page .te-torneo-card__nombre {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+}
+
+.torneo-express-page .te-torneos-section__title {
+  font-size: 1.5rem;
+  color: var(--accent-gold);
+  margin-bottom: 1.25rem;
+}
+
+/* Enlaces públicos */
+.torneo-express-page .te-public-links-card__title {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.torneo-express-page .te-links-row__btn {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  border-radius: var(--radius-md);
+  padding: 0.55rem 1rem;
+  white-space: nowrap;
+}
+
+.torneo-express-page .te-links-row__btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.torneo-express-page .te-links-row__btn--ghost:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+}
+
+/* —— Estado EN CURSO —— */
+.torneo-express-page .te-subtitle--meta .te-estado--en_curso,
+.torneo-express-page .te-torneo-card__estado--live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.12);
+  color: var(--win);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.torneo-express-page .te-torneo-card__estado--live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--win);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.torneo-express-page .te-subtitle--meta .te-estado--finalizado {
+  color: var(--win);
+  border-color: rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+/* —— Botones —— */
+.torneo-express-page .torneo-express-btn {
+  font-family: var(--font-body);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  transition: border-color var(--transition-fast), color var(--transition-fast),
+    background var(--transition-fast), box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.torneo-express-page .torneo-express-btn:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+}
+
+.torneo-express-page .torneo-express-btn--primary {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: transparent;
+}
+
+.torneo-express-page .torneo-express-btn--primary:hover:not(:disabled) {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: var(--bg-base);
+  box-shadow: var(--glow-gold);
+}
+
+.torneo-express-page .torneo-express-btn--gold,
+.torneo-express-page .te-crear-submit {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: var(--bg-base);
+  font-weight: 700;
+  border-radius: var(--radius-full);
+}
+
+.torneo-express-page .torneo-express-btn--gold:hover:not(:disabled),
+.torneo-express-page .te-crear-submit:hover:not(:disabled) {
+  background: var(--accent-gold-light);
+  border-color: var(--accent-gold-light);
+  color: var(--bg-base);
+  box-shadow: var(--glow-gold);
+}
+
+.torneo-express-page .torneo-express-btn--outline,
+.torneo-express-page .te-torneo-btn--outline {
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+}
+
+.torneo-express-page .torneo-express-btn--outline:hover:not(:disabled),
+.torneo-express-page .te-torneo-btn--outline:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+}
+
+.torneo-express-page .te-torneo-btn--gold-outline {
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+.torneo-express-page .te-torneo-btn--gold-outline:hover:not(:disabled) {
+  background: var(--accent-gold);
+  color: var(--bg-base);
+  box-shadow: var(--glow-gold);
+}
+
+.torneo-express-page .te-torneo-btn--danger-outline {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: var(--loss);
+  border-radius: var(--radius-full);
+}
+
+.torneo-express-page .te-torneo-btn--danger-outline:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.torneo-express-page .te-ver-todos-btn {
+  color: var(--accent-gold);
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+.torneo-express-page .te-ver-todos-btn:hover {
+  color: var(--accent-gold-light);
+}
+
+/* —— Campos —— */
+.torneo-express-page .torneo-express-field label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.torneo-express-page .torneo-express-field input,
+.torneo-express-page .torneo-express-field select,
+.torneo-express-page .te-players-search input,
+.torneo-express-page .te-players-add-form input,
+.torneo-express-page .te-players-row__input,
+.torneo-express-page .te-score-inputs input,
+.torneo-express-page .te-partido-cancha__input,
+.torneo-express-page.te-crear-page .torneo-express-field input,
+.torneo-express-page.te-crear-page .torneo-express-field select,
+.torneo-express-page.te-inicio-page .torneo-express-field input,
+.torneo-express-page.te-inicio-page .torneo-express-field select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.torneo-express-page .torneo-express-field input:focus,
+.torneo-express-page .torneo-express-field select:focus,
+.torneo-express-page .te-players-search input:focus,
+.torneo-express-page .te-players-add-form input:focus,
+.torneo-express-page .te-players-row__input:focus,
+.torneo-express-page .te-score-inputs input:focus,
+.torneo-express-page.te-crear-page .torneo-express-field input:focus,
+.torneo-express-page.te-crear-page .torneo-express-field select:focus,
+.torneo-express-page.te-inicio-page .torneo-express-field input:focus,
+.torneo-express-page.te-inicio-page .torneo-express-field select:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--accent-gold-dim);
+}
+
+/* —— Panel jugadores —— */
+.torneo-express-page .te-players-panel__title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-players-panel__subtitle {
+  font-family: var(--font-body);
+  color: var(--text-muted);
+}
+
+.torneo-express-page .te-players-panel .torneo-express-btn--gold {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+.torneo-express-page .te-players-row {
+  border-bottom-color: var(--border-subtle);
+}
+
+.torneo-express-page .te-players-row__name {
+  font-family: var(--font-body);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.torneo-express-page .te-players-list-meta,
+.torneo-express-page .te-players-empty,
+.torneo-express-page .te-torneo-card__info,
+.torneo-express-page .te-torneo-card__fecha {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}
+
+.torneo-express-page .te-players-icon-btn--ok {
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-pareja-formada {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* —— Tabs grupos —— */
+.torneo-express-page .te-grupos-card__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom-color: var(--border-subtle);
+}
+
+.torneo-express-page .te-grupos-tab {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: unset;
+  margin: 0;
+  padding: 0.2rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.torneo-express-page .te-grupos-tab:hover:not(.te-grupos-tab--active) {
+  border-color: var(--border-accent);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.torneo-express-page .te-grupos-tab--active {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+  box-shadow: 0 0 0 1px var(--border-accent);
+}
+
+.torneo-express-page .te-grupos-tab .te-grupo-badge {
+  display: inline-block;
+  margin: 0;
+  pointer-events: none;
+}
+
+.torneo-express-page .te-grupos-tab--active .te-grupo-badge--0,
+.torneo-express-page .te-grupos-tab--active .te-grupo-badge--1,
+.torneo-express-page .te-grupos-tab--active .te-grupo-badge--2,
+.torneo-express-page .te-grupos-tab--active .te-grupo-badge--3,
+.torneo-express-page .te-grupos-tab--active .te-grupo-badge--4 {
+  color: var(--accent-gold);
+  border-color: var(--border-accent);
+  background: rgba(212, 175, 55, 0.18);
+}
+
+.torneo-express-page .te-grupos-card__active-name {
+  display: none;
+}
+
+/* —— Tabla / scoring help —— */
+.torneo-express-page .te-standings-wrap {
+  --standings-sticky-bg: var(--bg-surface);
+  --standings-sticky-bg-leader: rgba(212, 175, 55, 0.1);
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.torneo-express-page .te-torneo-list-card__title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--text-primary);
+}
+
+.torneo-express-page .te-standings-table th {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  border-bottom-color: var(--border-subtle);
+}
+
+.torneo-express-page .te-standings-table td {
+  font-family: var(--font-body);
+  border-bottom-color: var(--border-subtle);
+}
+
+.torneo-express-page .te-standings-table tr.te-row-top td {
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-standings-block .standings-scoring-help {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.torneo-express-page .standings-scoring-help__title {
+  font-family: var(--font-body);
+  color: var(--text-muted);
+}
+
+.torneo-express-page .standings-scoring-help__text,
+.torneo-express-page .standings-scoring-help__legend {
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+}
+
+/* —— Partidos / rondas —— */
+.torneo-express-page .te-partidos-ronda__label {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-partidos-ronda__line {
+  background: linear-gradient(90deg, var(--accent-gold), transparent);
+  height: 2px;
+}
+
+.torneo-express-page .te-partido-row {
+  border-bottom-color: var(--border-subtle);
+}
+
+.torneo-express-page .te-partido-score {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-partido-matchup {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.torneo-express-page .te-partido-vs {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.torneo-express-page .te-score-inputs input {
+  width: 2.75rem;
+  padding: 0.4rem 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--accent-gold);
+  text-align: center;
+}
+
+.torneo-express-page .te-score-inputs span {
+  color: var(--text-muted);
+}
+
+.torneo-express-page .te-partido-save-btn {
+  flex-shrink: 0;
+  border-radius: var(--radius-md) !important;
+  padding: 0.45rem 0.85rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 700;
+}
+
+.torneo-express-page .te-partido-status--jugado {
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+}
+
+.torneo-express-page .te-partido-order-btn {
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+}
+
+.torneo-express-page .te-partido-order-btn:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+}
+
+.torneo-express-page .te-partido-cancha__edit {
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.torneo-express-page .te-partido-cancha__edit:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-header .torneo-express-btn {
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
+
+.torneo-express-page .te-partido-row {
+  padding: 1rem 0;
+  gap: 0.75rem 1rem;
+}
+
+@media (min-width: 900px) {
+  .torneo-express-page .te-partido-row {
+    grid-template-columns: auto minmax(0, 1.4fr) auto minmax(7rem, 9rem) minmax(0, 1fr);
+  }
+}
+
+.torneo-express-page .te-partido-cancha--view,
+.torneo-express-page .te-partido-cancha--readonly {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+}
+
+.torneo-express-page .te-partido-cancha__display {
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-partido-cancha--edit {
+  background: var(--accent-gold-dim);
+  border-color: var(--border-accent);
+}
+
+.torneo-express-page .te-partidos-migration-hint {
+  border-color: var(--border-accent);
+  background: var(--accent-gold-dim);
+  color: var(--text-secondary);
+}
+
+.torneo-express-page .te-partidos-migration-hint code {
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-pareja-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle);
+  font-family: var(--font-body);
+}
+
+.torneo-express-page .te-pareja-chip--selected {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+}
+
+.torneo-express-page .te-grupo-assignment {
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* —— Modal —— */
+.torneo-express-page .te-modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.torneo-express-page .te-modal-card {
+  border-radius: var(--radius-lg);
+}
+
+.torneo-express-page .te-modal-title {
+  color: var(--text-primary);
+}
+
+/* —— Divider inicio —— */
+.torneo-express-page .te-section-divider {
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
+
+.torneo-express-page .te-section-divider::before,
+.torneo-express-page .te-section-divider::after {
+  background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+}
+
+/* —— Resultados panel —— */
+.torneo-express-page .te-resultados-panel {
+  border-top-color: var(--border-subtle);
+}
+
+.torneo-express-page .te-resultados-panel__label {
+  font-family: var(--font-body);
+  color: var(--accent-gold);
+}
+
+.torneo-express-page .te-resultados-grupo__title {
+  font-family: var(--font-display);
+  color: var(--accent-gold);
+  letter-spacing: 0.06em;
+}
+
+/* —— Grupo badges (gold para grupo A) —— */
+.torneo-express-page .te-grupo-badge--0 {
+  color: var(--accent-gold);
+  border-color: var(--border-accent);
+  background: var(--accent-gold-dim);
+}
+
+/* —— Stagger entrada —— */
+.torneo-express-page .te-torneos-cards > li {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.torneo-express-page .te-torneos-cards > li:nth-child(1) {
+  animation-delay: 0ms;
+}
+.torneo-express-page .te-torneos-cards > li:nth-child(2) {
+  animation-delay: 80ms;
+}
+.torneo-express-page .te-torneos-cards > li:nth-child(3) {
+  animation-delay: 160ms;
+}
+.torneo-express-page .te-torneos-cards > li:nth-child(4) {
+  animation-delay: 240ms;
+}
+.torneo-express-page .te-torneos-cards > li:nth-child(5) {
+  animation-delay: 320ms;
+}
+
+.torneo-express-page .te-crear-grid > .te-crear-col {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+.torneo-express-page .te-crear-col--form {
+  animation-delay: 80ms;
+}
+
+.torneo-express-page .te-crear-col--players {
+  animation-delay: 0ms;
+}
+
+/* —— Responsive tablas —— */
+@media (max-width: 767px) {
+  .torneo-express-page .te-standings-table {
+    min-width: 0;
+  }
+
+  .torneo-express-page .te-standings-wrap {
+    overflow-x: visible;
+  }
+
+  .torneo-express-page .te-standings-table thead {
+    display: none;
+  }
+
+  .torneo-express-page .te-standings-table tbody tr {
+    display: block;
+    margin-bottom: 0.75rem;
+    padding: 0.85rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .torneo-express-page .te-standings-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0;
+    border: none;
+    text-align: right;
+  }
+
+  .torneo-express-page .te-standings-table tbody td::before {
+    content: attr(data-label);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-right: 0.75rem;
+    text-align: left;
+  }
+
+  .torneo-express-page .te-standings-table td.te-cell-name {
+    font-weight: 600;
+    font-size: 1rem;
+    justify-content: flex-start;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .torneo-express-page .te-standings-table td.te-cell-name::before {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .torneo-express-page .te-crear-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

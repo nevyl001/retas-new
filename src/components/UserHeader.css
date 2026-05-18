@@ -1,47 +1,47 @@
-/* =====================================================
-   USER HEADER - DISEÑO EDITORIAL PREMIUM
-   ===================================================== */
+/* Riviera Gold — Navbar */
 
 .user-header {
-  background: var(--bg-base);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  padding: 0;
   position: sticky;
   top: 0;
   z-index: 1000;
-  backdrop-filter: none;
+  padding: 0;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .user-header-content {
   display: flex;
   flex-direction: column;
-  padding: var(--space-lg) var(--space-2xl);
+  gap: var(--space-md);
+  width: 100%;
   max-width: 1600px;
   margin: 0 auto;
-  width: 100%;
-  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-2xl);
 }
 
 .user-header-main {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
 }
 
 .mobile-header-top {
-  width: 100%;
   order: -1;
+  width: 100%;
 }
 
 .user-header-logo h1 {
-  font-family: var(--font-family);
-  color: var(--color-cream);
-  font-size: 1.5rem;
-  font-weight: 600;
   margin: 0;
-  line-height: 1.3;
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  color: var(--accent-gold);
+  text-transform: uppercase;
 }
 
 .user-header-actions {
@@ -58,46 +58,48 @@
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-subtle);
-  cursor: pointer;
   padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  transition: all var(--transition-base);
-  color: var(--color-text-primary);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-normal), background var(--transition-normal),
+    transform var(--transition-fast);
 }
 
 .user-profile-btn:hover {
-  background: var(--color-bg-elevated);
-  border-color: var(--color-accent-border);
+  border-color: var(--border-accent);
+  background: var(--bg-card-hover);
   transform: translateY(-1px);
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  overflow: hidden;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  background: var(--color-accent);
-  border: 1px solid var(--color-accent-border);
-  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  border: 1px solid var(--border-accent);
+  border-radius: 50%;
+  background: var(--accent-gold-dim);
 }
 
 .user-avatar-img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
   border-radius: 50%;
-  display: block;
+  object-fit: cover;
 }
 
 .user-avatar-initials {
-  color: var(--color-accent-text);
-  font-weight: var(--font-weight-medium);
+  font-family: var(--font-body);
   font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-gold);
 }
 
 .user-info {
@@ -109,32 +111,34 @@
 }
 
 .user-name {
-  color: var(--color-accent);
-  font-weight: var(--font-weight-medium);
-  font-size: 14px;
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 200px;
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-email {
-  color: var(--color-text-secondary);
+  max-width: 200px;
+  overflow: hidden;
+  font-family: var(--font-body);
   font-size: 12px;
   font-weight: 400;
   line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
+  color: var(--text-secondary);
   text-overflow: ellipsis;
-  max-width: 200px;
+  white-space: nowrap;
 }
 
 .user-dropdown-arrow {
-  color: var(--color-text-secondary);
-  font-size: 10px;
-  transition: transform var(--transition-base);
   flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  transition: transform var(--transition-fast);
 }
 
 .user-profile-btn:hover .user-dropdown-arrow {
@@ -145,13 +149,15 @@
   position: absolute;
   top: calc(100% + var(--space-sm));
   right: 0;
-  background: var(--color-bg-surface);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
+  z-index: 10000;
   min-width: 220px;
   padding: var(--space-sm);
-  z-index: 10000;
-  box-shadow: var(--shadow-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-elevated);
 }
 
 .logout-button {
@@ -161,21 +167,22 @@
   gap: var(--space-md);
   width: 100%;
   padding: var(--space-md);
-  background: transparent;
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  color: var(--color-text-primary);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
   font-size: 14px;
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-base);
-  font-family: var(--font-family);
+  transition: border-color var(--transition-fast), background var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .logout-button:hover {
-  background: var(--color-bg-elevated);
-  border-color: var(--color-border-soft);
-  color: var(--color-text-primary);
+  border-color: var(--border-accent);
+  background: var(--accent-gold-dim);
+  color: var(--accent-gold);
 }
 
 .logout-button:disabled {
@@ -205,9 +212,9 @@
   }
 
   .user-header-content {
-    padding: var(--space-sm) var(--space-md);
-    gap: var(--space-sm);
     align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
   }
 
   .user-header-main {
@@ -223,30 +230,30 @@
   }
 
   .user-header-logo h1 {
-    font-size: 1.25rem;
     width: 100%;
+    font-size: 1.35rem;
     text-align: center;
   }
 
   .mobile-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     margin-bottom: var(--space-xs);
-    display: flex;
-    justify-content: center;
-    align-items: center;
   }
 }
 
 @media (max-width: 480px) {
   .user-header-content {
-    padding: var(--space-xs) var(--space-sm);
-    gap: var(--space-xs);
     align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
   }
 
   .user-header-main {
-    gap: var(--space-xs);
     align-items: center;
+    gap: var(--space-xs);
     width: 100%;
   }
 
@@ -255,8 +262,8 @@
   }
 
   .user-header-logo h1 {
-    font-size: 1.1rem;
     margin: 0;
+    font-size: 1.2rem;
     text-align: center;
   }
 
@@ -270,10 +277,10 @@
   }
 
   .mobile-header-top {
-    margin-bottom: var(--space-xs);
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     width: 100%;
+    margin-bottom: var(--space-xs);
   }
 }
