@@ -333,7 +333,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               />
               <button
                 type="button"
-                className="americano-btn americano-btn--primary"
+                className="riviera-btn-primary americano-public-link__copy"
                 onClick={copyPublicAmericanoLink}
               >
                 Copiar enlace
@@ -396,7 +396,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             />
             <button
               type="button"
-              className="americano-btn americano-btn--primary"
+              className="riviera-btn-primary americano-public-link__copy"
               onClick={copyPublicAmericanoLink}
             >
               Copiar enlace
