@@ -22,7 +22,13 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     error,
     standingsByGrupo,
     saveResultado,
+    saveOrden,
     savingPartidoId,
+    savingOrden,
+    partidosOrdenDisponible,
+    partidosCanchaDisponible,
+    saveCancha,
+    savingCanchaId,
   } = useTorneoExpress(torneoId, { publicMode: false, realtime: true });
 
   const [activeGrupoId, setActiveGrupoId] = useState<string | null>(null);
@@ -128,14 +134,24 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         {copyMsg && <span className="te-copy-ok">{copyMsg}</span>}
       </div>
 
-      <div className="torneo-express-card">
-        <h2 style={{ marginTop: 0, fontSize: "1.1rem" }}>Grupos</h2>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
+      <div className="torneo-express-card te-grupos-card">
+        <h2 className="te-grupos-card__title">Grupos</h2>
+        <div
+          className="te-grupos-card__tabs"
+          role="tablist"
+          aria-label="Seleccionar grupo"
+        >
           {bundle.grupos.map((g) => (
             <button
               key={g.id}
               type="button"
-              className={`torneo-express-btn${g.id === grupoId ? " torneo-express-btn--primary" : ""}`}
+              role="tab"
+              aria-selected={g.id === grupoId}
+              className={`torneo-express-btn te-grupos-tab${
+                g.id === grupoId
+                  ? " torneo-express-btn--primary te-grupos-tab--active"
+                  : ""
+              }`}
               onClick={() => setActiveGrupoId(g.id)}
             >
               <GrupoBadge nombre={g.nombre} orden={g.orden} />
@@ -144,18 +160,43 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         </div>
 
         {grupo && (
-          <>
-            <h3 style={{ fontSize: "1rem", color: "var(--te-gold)" }}>{grupo.nombre}</h3>
+          <div className="te-grupos-card__body">
+            <h3 className="te-grupos-card__active-name">{grupo.nombre}</h3>
             <TablaGrupo rows={standingsByGrupo[grupo.id] ?? []} />
-            <h3 style={{ marginTop: "1.25rem", fontSize: "1rem" }}>Partidos</h3>
+            <h3 className="te-grupos-card__partidos-title">Partidos</h3>
+            {(!partidosOrdenDisponible || !partidosCanchaDisponible) && (
+              <div className="te-partidos-migration-hint" role="alert">
+                <p>
+                  Faltan columnas en Supabase para{" "}
+                  {!partidosOrdenDisponible && (
+                    <>
+                      <code>orden</code>
+                      {!partidosCanchaDisponible ? " y " : ""}
+                    </>
+                  )}
+                  {!partidosCanchaDisponible && <code>cancha</code>}.
+                </p>
+                <p className="te-partidos-migration-hint__sql">
+                  SQL Editor → ejecuta{" "}
+                  <strong>supabase/torneo-express-partidos-orden.sql</strong> y
+                  recarga.
+                </p>
+              </div>
+            )}
             <PartidosGrupo
               partidos={bundle.partidosPorGrupo[grupo.id] ?? []}
               parejas={bundle.parejasPorGrupo[grupo.id] ?? []}
               editable
+              allowReorder={partidosOrdenDisponible}
+              canchaEditable={partidosCanchaDisponible}
               savingPartidoId={savingPartidoId}
+              savingCanchaId={savingCanchaId}
+              savingOrden={savingOrden}
               onSaveResultado={saveResultado}
+              onSaveCancha={partidosCanchaDisponible ? saveCancha : undefined}
+              onSaveOrden={partidosOrdenDisponible ? saveOrden : undefined}
             />
-          </>
+          </div>
         )}
       </div>
     </div>

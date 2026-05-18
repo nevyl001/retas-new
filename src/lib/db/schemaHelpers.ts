@@ -24,6 +24,20 @@ export const isMissingColumnError = (
   ) {
     return true;
   }
+
+  const lower = msg.toLowerCase();
+  const col = column.toLowerCase();
+  const tbl = table.toLowerCase();
+  if (
+    lower.includes(col) &&
+    (lower.includes(tbl) || lower.includes(`'${table}'`)) &&
+    (lower.includes("schema cache") ||
+      lower.includes("does not exist") ||
+      lower.includes("could not find"))
+  ) {
+    return true;
+  }
+
   return false;
 };
 

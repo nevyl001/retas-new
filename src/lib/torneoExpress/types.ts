@@ -36,6 +36,12 @@ export interface TorneoExpressPartido {
   puntos_visitante: number | null;
   ganador_id: string | null;
   estado: PartidoExpressEstado;
+  /** Orden de juego en el grupo (1 = primero). */
+  orden?: number | null;
+  /** Ronda round-robin circular. */
+  ronda?: number | null;
+  /** Cancha asignada (ej. "1", "Cancha central"). */
+  cancha?: string | null;
   created_at: string;
 }
 

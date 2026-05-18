@@ -164,6 +164,68 @@
 .te-grupo-badge--3 { color: #fca5a5; border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.12); }
 .te-grupo-badge--4 { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.12); }
 
+/* Sección Grupos (gestión torneo) */
+.te-grupos-card {
+  padding: 1.5rem 1.5rem 1.75rem;
+}
+
+.te-grupos-card__title {
+  margin: 0 0 1.25rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--te-text);
+  letter-spacing: 0.02em;
+}
+
+.te-grupos-card__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--te-border);
+}
+
+.te-grupos-tab {
+  min-height: 2.5rem;
+  padding: 0.6rem 1.15rem;
+}
+
+.te-grupos-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.te-grupos-card__active-name {
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--te-gold);
+  letter-spacing: 0.03em;
+}
+
+.te-grupos-card__body .te-standings-block {
+  margin-bottom: 2rem;
+}
+
+.te-grupos-card__body .standings-scoring-help {
+  margin-bottom: 1.25rem;
+}
+
+.te-grupos-card__partidos-title {
+  margin: 0 0 1.25rem;
+  padding-top: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--te-text);
+  border-top: 1px solid var(--te-border);
+}
+
+.te-grupos-card__body .te-partidos-list {
+  margin-top: 0.25rem;
+}
+
 .te-standings-block {
   margin-bottom: 1rem;
 }
@@ -243,34 +305,372 @@
   margin-bottom: 1rem;
 }
 
+.te-partidos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.te-partidos-migration-hint {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 166, 35, 0.45);
+  background: rgba(245, 166, 35, 0.08);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.te-partidos-migration-hint p {
+  margin: 0 0 0.5rem;
+}
+
+.te-partidos-migration-hint p:last-child {
+  margin-bottom: 0;
+}
+
+.te-partidos-migration-hint__sql {
+  color: var(--te-muted);
+  font-size: 0.8rem;
+}
+
+.te-partidos-migration-hint code {
+  color: var(--te-gold);
+}
+
+.te-partidos-orden-bar {
+  margin-bottom: 0.75rem;
+}
+
+.te-partidos-ronda {
+  margin-bottom: 0.5rem;
+}
+
+.te-partidos-ronda__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.te-partidos-ronda__line {
+  flex: 1;
+  height: 1px;
+  background: var(--te-border);
+}
+
+.te-partidos-ronda__label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--te-muted);
+  white-space: nowrap;
+}
+
 .te-partido-row {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  gap: 0.75rem;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(8.5rem, 11rem) minmax(0, auto);
+  gap: 0.65rem 0.75rem;
   align-items: center;
-  padding: 0.75rem 0;
+  padding: 0.85rem 0;
   border-bottom: 1px solid var(--te-border);
+}
+
+.te-partido-cancha {
+  min-width: 0;
+}
+
+.te-partido-cancha--view,
+.te-partido-cancha--readonly {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--te-border);
+}
+
+.te-partido-cancha__pin {
+  font-size: 0.55rem;
+  color: var(--te-gold);
+  opacity: 0.85;
+  line-height: 1;
+}
+
+.te-partido-cancha__display {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--te-gold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.te-partido-cancha__edit {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--te-border);
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #aaa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.te-partido-cancha__edit:hover:not(:disabled) {
+  background: #333;
+  color: #fff;
+  border-color: var(--te-gold);
+}
+
+.te-partido-cancha__edit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.te-partido-cancha__edit-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.te-partido-cancha--edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(245, 166, 35, 0.06);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+}
+
+.te-partido-cancha--edit .te-partido-cancha__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--te-muted);
+}
+
+.te-partido-cancha__edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.te-partido-cancha__prefix {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--te-muted);
+  white-space: nowrap;
+}
+
+.te-partido-cancha__input {
+  flex: 1;
+  min-width: 2.5rem;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  color: var(--te-text);
+  background: #121212;
+  border: 1px solid var(--te-border);
+  border-radius: 6px;
+}
+
+.te-partido-cancha__input:focus {
+  outline: none;
+  border-color: var(--te-gold);
+}
+
+.te-partido-cancha__input:disabled {
+  opacity: 0.6;
+}
+
+.te-partido-cancha__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.te-partido-cancha__save {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+}
+
+.te-partido-cancha__cancel {
+  border: none;
+  background: transparent;
+  color: var(--te-muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 0.25rem 0.35rem;
+  text-decoration: underline;
+}
+
+.te-partido-cancha__cancel:hover:not(:disabled) {
+  color: var(--te-text);
+}
+
+.te-partido-cancha__error {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #f87171;
+}
+
+.te-partido-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.te-partido-order-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #888;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.te-partido-order-btn:hover:not(:disabled) {
+  background: #333;
+  color: #fff;
+}
+
+.te-partido-order-btn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+.te-partido-matchup {
+  min-width: 0;
+}
+
+.te-partido-vs {
+  margin: 0 0.35rem;
+  opacity: 0.6;
+}
+
+.te-partido-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.te-partido-actions--score {
+  gap: 0.65rem;
+}
+
+.te-partido-score {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--te-gold);
+}
+
+.te-partido-edit-btn {
+  border: none;
+  background: transparent;
+  color: var(--te-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.te-partido-edit-btn:hover {
+  color: var(--te-text);
+}
+
+.te-partido-save-btn {
+  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
   .te-partido-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "reorder matchup"
+      "cancha cancha"
+      "status actions";
+  }
+
+  .te-partido-reorder {
+    grid-area: reorder;
+  }
+
+  .te-partido-matchup {
+    grid-area: matchup;
+  }
+
+  .te-partido-cancha {
+    grid-area: cancha;
+  }
+
+  .te-partido-cancha--view,
+  .te-partido-cancha--readonly {
+    width: 100%;
+  }
+
+  .te-partido-cancha--edit {
+    width: 100%;
+  }
+
+  .te-partido-status {
+    grid-area: status;
+    justify-self: start;
+  }
+
+  .te-partido-actions {
+    grid-area: actions;
+    justify-self: stretch;
+    justify-content: flex-start;
   }
 }
 
 .te-partido-status {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
   border: 1px solid var(--te-border);
   color: var(--te-muted);
+  white-space: nowrap;
+}
+
+.te-partido-status--pendiente {
+  background: rgba(255, 255, 255, 0.04);
+  color: #888;
+}
+
+.te-partido-status--live {
+  border-color: #22c55e;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
 }
 
 .te-partido-status--jugado {
   border-color: var(--te-gold);
   color: var(--te-gold);
+  background: rgba(245, 166, 35, 0.08);
 }
 
 .te-score-inputs {

@@ -5,8 +5,14 @@ import {
 } from "../lib/torneoExpress/standings";
 import type { StandingRowExpress, TorneoExpressBundle } from "../lib/torneoExpress/types";
 import {
+  checkPartidosCanchaColumnAvailable,
+  checkPartidosOrdenColumnAvailable,
   fetchTorneoExpressBundle,
+  PartidosCanchaColumnMissingError,
+  PartidosOrdenColumnMissingError,
+  savePartidoCancha,
   savePartidoResultado,
+  savePartidosOrden,
   subscribeTorneoExpress,
 } from "../services/torneoExpressService";
 
@@ -21,6 +27,10 @@ export function useTorneoExpress(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingPartidoId, setSavingPartidoId] = useState<string | null>(null);
+  const [savingOrden, setSavingOrden] = useState(false);
+  const [partidosOrdenDisponible, setPartidosOrdenDisponible] = useState(true);
+  const [partidosCanchaDisponible, setPartidosCanchaDisponible] = useState(true);
+  const [savingCanchaId, setSavingCanchaId] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     if (!torneoId) {
@@ -30,8 +40,14 @@ export function useTorneoExpress(
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchTorneoExpressBundle(torneoId, publicMode);
+      const [data, ordenOk, canchaOk] = await Promise.all([
+        fetchTorneoExpressBundle(torneoId, publicMode),
+        checkPartidosOrdenColumnAvailable(),
+        checkPartidosCanchaColumnAvailable(),
+      ]);
       setBundle(data);
+      setPartidosOrdenDisponible(ordenOk);
+      setPartidosCanchaDisponible(canchaOk);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar torneo express");
     } finally {
@@ -100,6 +116,49 @@ export function useTorneoExpress(
     [reload]
   );
 
+  const saveCancha = useCallback(
+    async (partidoId: string, cancha: string | null) => {
+      setSavingCanchaId(partidoId);
+      setError(null);
+      try {
+        await savePartidoCancha(partidoId, cancha);
+        await reload();
+      } catch (e) {
+        if (e instanceof PartidosCanchaColumnMissingError) {
+          setPartidosCanchaDisponible(false);
+        }
+        setError(
+          e instanceof Error ? e.message : "No se pudo guardar la cancha"
+        );
+        throw e;
+      } finally {
+        setSavingCanchaId(null);
+      }
+    },
+    [reload]
+  );
+
+  const saveOrden = useCallback(
+    async (updates: Array<{ id: string; orden: number }>) => {
+      setSavingOrden(true);
+      setError(null);
+      try {
+        await savePartidosOrden(updates);
+        await reload();
+      } catch (e) {
+        if (e instanceof PartidosOrdenColumnMissingError) {
+          setPartidosOrdenDisponible(false);
+        }
+        setError(
+          e instanceof Error ? e.message : "No se pudo guardar el orden"
+        );
+      } finally {
+        setSavingOrden(false);
+      }
+    },
+    [reload]
+  );
+
   return {
     bundle,
     loading,
@@ -109,6 +168,12 @@ export function useTorneoExpress(
     standingsByGrupo,
     standingsGeneral,
     saveResultado,
+    saveCancha,
+    saveOrden,
     savingPartidoId,
+    savingCanchaId,
+    savingOrden,
+    partidosOrdenDisponible,
+    partidosCanchaDisponible,
   };
 }

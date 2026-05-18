@@ -1,5 +1,13 @@
 import { supabase, supabasePublicRead } from "../lib/supabaseClient";
 import { isMissingColumnError } from "../lib/db/schemaHelpers";
+import {
+  CANCHA_DEFAULT_VALUE,
+  normalizeCanchaForSave,
+} from "../lib/torneoExpress/canchaDisplay";
+import {
+  generateBalancedRoundRobin,
+  sortPartidosByOrden,
+} from "../lib/torneoExpress/roundRobin";
 import { formatPairDisplay } from "../lib/torneoExpress/standings";
 import type {
   GrupoAssignmentDraft,
@@ -68,33 +76,160 @@ function enrichParejasWithLabels(
   }));
 }
 
-/** Round robin: cada pareja juega una vez contra cada otra del grupo. */
-function buildRoundRobinPartidos(
-  grupoId: string,
-  parejaIds: string[]
-): Array<{
+type PartidoInsertRow = {
   grupo_id: string;
   pareja_local_id: string;
   pareja_visitante_id: string;
   estado: "pendiente";
-}> {
-  const partidos: Array<{
-    grupo_id: string;
-    pareja_local_id: string;
-    pareja_visitante_id: string;
-    estado: "pendiente";
-  }> = [];
-  for (let i = 0; i < parejaIds.length; i++) {
-    for (let j = i + 1; j < parejaIds.length; j++) {
-      partidos.push({
-        grupo_id: grupoId,
-        pareja_local_id: parejaIds[i],
-        pareja_visitante_id: parejaIds[j],
-        estado: "pendiente",
-      });
-    }
+  orden?: number;
+  ronda?: number;
+  cancha?: string;
+};
+
+/** Round robin circular balanceado por rondas. */
+function buildRoundRobinPartidos(
+  grupoId: string,
+  parejaIds: string[]
+): PartidoInsertRow[] {
+  return generateBalancedRoundRobin(parejaIds).map((m) => ({
+    grupo_id: grupoId,
+    pareja_local_id: m.localId,
+    pareja_visitante_id: m.visitanteId,
+    estado: "pendiente",
+    orden: m.orden,
+    ronda: m.ronda,
+    cancha: CANCHA_DEFAULT_VALUE,
+  }));
+}
+
+async function insertPartidosRows(
+  rows: PartidoInsertRow[],
+  grupoLabel: string
+): Promise<void> {
+  if (rows.length === 0) return;
+
+  const { error } = await supabase.from("torneo_express_partidos").insert(rows);
+  if (!error) return;
+
+  if (
+    isMissingColumnError(error, "torneo_express_partidos", "orden") ||
+    isMissingColumnError(error, "torneo_express_partidos", "ronda") ||
+    isMissingColumnError(error, "torneo_express_partidos", "cancha")
+  ) {
+    const legacy = rows.map(
+      ({ grupo_id, pareja_local_id, pareja_visitante_id, estado, orden, ronda }) => {
+        const row: Record<string, unknown> = {
+          grupo_id,
+          pareja_local_id,
+          pareja_visitante_id,
+          estado,
+        };
+        if (orden != null) row.orden = orden;
+        if (ronda != null) row.ronda = ronda;
+        return row;
+      }
+    );
+    const { error: legacyErr } = await supabase
+      .from("torneo_express_partidos")
+      .insert(legacy);
+    throwIfError(legacyErr, `insert torneo_express_partidos (${grupoLabel})`);
+    return;
   }
-  return partidos;
+
+  throwIfError(error, `insert torneo_express_partidos (${grupoLabel})`);
+}
+
+let partidosOrdenColumnKnown: boolean | null = null;
+
+export function partidosOrdenColumnIsAvailable(): boolean {
+  return partidosOrdenColumnKnown !== false;
+}
+
+export const PARTIDOS_EXTRAS_MIGRATION_HINT =
+  "En Supabase → SQL Editor, ejecuta supabase/torneo-express-partidos-orden.sql (columnas orden, ronda y cancha).";
+
+/** @deprecated Use PARTIDOS_EXTRAS_MIGRATION_HINT */
+export const PARTIDOS_ORDEN_MIGRATION_HINT = PARTIDOS_EXTRAS_MIGRATION_HINT;
+
+export async function checkPartidosOrdenColumnAvailable(
+  client: typeof supabase | typeof readClient = supabase
+): Promise<boolean> {
+  if (partidosOrdenColumnKnown !== null) return partidosOrdenColumnKnown;
+
+  const { error } = await client
+    .from("torneo_express_partidos")
+    .select("orden")
+    .limit(1);
+
+  if (!error) {
+    partidosOrdenColumnKnown = true;
+    return true;
+  }
+
+  if (isMissingColumnError(error, "torneo_express_partidos", "orden")) {
+    partidosOrdenColumnKnown = false;
+    return false;
+  }
+
+  partidosOrdenColumnKnown = true;
+  return true;
+}
+
+let partidosCanchaColumnKnown: boolean | null = null;
+
+export function partidosCanchaColumnIsAvailable(): boolean {
+  return partidosCanchaColumnKnown !== false;
+}
+
+export async function checkPartidosCanchaColumnAvailable(
+  client: typeof supabase | typeof readClient = supabase
+): Promise<boolean> {
+  if (partidosCanchaColumnKnown !== null) return partidosCanchaColumnKnown;
+
+  const { error } = await client
+    .from("torneo_express_partidos")
+    .select("cancha")
+    .limit(1);
+
+  if (!error) {
+    partidosCanchaColumnKnown = true;
+    return true;
+  }
+
+  if (isMissingColumnError(error, "torneo_express_partidos", "cancha")) {
+    partidosCanchaColumnKnown = false;
+    return false;
+  }
+
+  partidosCanchaColumnKnown = true;
+  return true;
+}
+
+async function fetchPartidosForGrupoIds(
+  client: typeof supabase | typeof readClient,
+  grupoIds: string[]
+): Promise<TorneoExpressPartido[]> {
+  if (grupoIds.length === 0) return [];
+
+  let { data, error } = await client
+    .from("torneo_express_partidos")
+    .select("*")
+    .in("grupo_id", grupoIds)
+    .order("orden", { ascending: true });
+
+  if (isMissingColumnError(error, "torneo_express_partidos", "orden")) {
+    partidosOrdenColumnKnown = false;
+    ({ data, error } = await client
+      .from("torneo_express_partidos")
+      .select("*")
+      .in("grupo_id", grupoIds)
+      .order("created_at", { ascending: true }));
+  } else if (!error) {
+    partidosOrdenColumnKnown = true;
+  }
+
+  throwIfError(error, "fetchTorneoExpressBundle.partidos");
+  return sortPartidosByOrden((data ?? []) as TorneoExpressPartido[]);
 }
 
 async function insertTorneoExpressRow(
@@ -363,12 +498,7 @@ export async function fetchTorneoExpressBundle(
     .in("grupo_id", grupoIds);
   throwIfError(pErr, "fetchTorneoExpressBundle.grupo_parejas");
 
-  const { data: partidosRows, error: mErr } = await client
-    .from("torneo_express_partidos")
-    .select("*")
-    .in("grupo_id", grupoIds)
-    .order("created_at", { ascending: true });
-  throwIfError(mErr, "fetchTorneoExpressBundle.partidos");
+  const partidosRows = await fetchPartidosForGrupoIds(client, grupoIds);
 
   const parejasPorGrupo: Record<string, TorneoExpressGrupoPareja[]> = {};
   const partidosPorGrupo: Record<string, TorneoExpressPartido[]> = {};
@@ -394,8 +524,7 @@ export async function fetchTorneoExpressBundle(
     );
   });
 
-  (partidosRows ?? []).forEach((row) => {
-    const m = row as TorneoExpressPartido;
+  partidosRows.forEach((m) => {
     if (!partidosPorGrupo[m.grupo_id]) partidosPorGrupo[m.grupo_id] = [];
     partidosPorGrupo[m.grupo_id].push(m);
   });
@@ -480,17 +609,9 @@ export async function createTorneoExpressWithGroups(input: {
       );
     }
 
-    // Paso 4: partidos round robin
+    // Paso 4: partidos round robin balanceado
     const partidoRows = buildRoundRobinPartidos(grupoId, draft.parejaIds);
-    if (partidoRows.length > 0) {
-      const { error: partidosErr } = await supabase
-        .from("torneo_express_partidos")
-        .insert(partidoRows);
-      throwIfError(
-        partidosErr,
-        `insert torneo_express_partidos (${draft.nombre})`
-      );
-    }
+    await insertPartidosRows(partidoRows, draft.nombre);
   }
 
   return torneoId;
@@ -540,6 +661,85 @@ export async function savePartidoResultado(
     throw new Error("Error en update torneo_express_partidos: sin datos");
   }
   return data as TorneoExpressPartido;
+}
+
+export class PartidosOrdenColumnMissingError extends Error {
+  constructor() {
+    super(PARTIDOS_EXTRAS_MIGRATION_HINT);
+    this.name = "PartidosOrdenColumnMissingError";
+  }
+}
+
+export class PartidosCanchaColumnMissingError extends Error {
+  constructor() {
+    super(PARTIDOS_EXTRAS_MIGRATION_HINT);
+    this.name = "PartidosCanchaColumnMissingError";
+  }
+}
+
+export async function savePartidoCancha(
+  partidoId: string,
+  cancha: string | null
+): Promise<TorneoExpressPartido> {
+  await requireAuthUser();
+
+  const disponible = await checkPartidosCanchaColumnAvailable();
+  if (!disponible) {
+    throw new PartidosCanchaColumnMissingError();
+  }
+
+  const value = normalizeCanchaForSave(cancha ?? "");
+
+  const { data, error } = await supabase
+    .from("torneo_express_partidos")
+    .update({ cancha: value })
+    .eq("id", partidoId)
+    .select()
+    .single();
+
+  if (error) {
+    if (isMissingColumnError(error, "torneo_express_partidos", "cancha")) {
+      partidosCanchaColumnKnown = false;
+      throw new PartidosCanchaColumnMissingError();
+    }
+    throwIfError(error, "update cancha torneo_express_partidos");
+  }
+  if (!data) {
+    throw new Error("Error en update cancha: sin datos");
+  }
+  return data as TorneoExpressPartido;
+}
+
+export async function savePartidosOrden(
+  updates: Array<{ id: string; orden: number }>
+): Promise<void> {
+  await requireAuthUser();
+  if (updates.length === 0) return;
+
+  const disponible = await checkPartidosOrdenColumnAvailable();
+  if (!disponible) {
+    throw new PartidosOrdenColumnMissingError();
+  }
+
+  const results = await Promise.all(
+    updates.map(({ id, orden }) =>
+      supabase
+        .from("torneo_express_partidos")
+        .update({ orden })
+        .eq("id", id)
+    )
+  );
+
+  for (let i = 0; i < results.length; i++) {
+    const { error } = results[i];
+    if (error) {
+      if (isMissingColumnError(error, "torneo_express_partidos", "orden")) {
+        partidosOrdenColumnKnown = false;
+        throw new PartidosOrdenColumnMissingError();
+      }
+      throwIfError(error, `update orden partido ${updates[i].id}`);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

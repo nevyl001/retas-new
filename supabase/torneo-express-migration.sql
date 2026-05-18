@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS torneo_express_partidos (
   puntos_visitante INTEGER DEFAULT NULL,
   ganador_id UUID DEFAULT NULL,
   estado TEXT DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'jugado')),
+  orden INTEGER DEFAULT 0,
+  ronda INTEGER DEFAULT 0,
+  cancha TEXT DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
