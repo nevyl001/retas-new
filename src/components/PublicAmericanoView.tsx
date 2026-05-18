@@ -367,14 +367,15 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
 
       <footer className="te-public-sync-footer te-pub-fade-in" aria-live="polite">
         <p className="te-public-sync-footer__line">
-          Actualización automática cada pocos segundos
+          {snapshot?.savedAt ? (
+            <>
+              Actualización en tiempo real · Última actualización:{" "}
+              {new Date(snapshot.savedAt).toLocaleString()}
+            </>
+          ) : (
+            "Actualización en tiempo real"
+          )}
         </p>
-        {snapshot?.savedAt ? (
-          <p className="te-public-sync-footer__line">
-            Última publicación:{" "}
-            {new Date(snapshot.savedAt).toLocaleString()}
-          </p>
-        ) : null}
       </footer>
     </PublicTorneoExpressShell>
   );

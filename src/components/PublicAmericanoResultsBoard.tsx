@@ -114,12 +114,6 @@ export const PublicAmericanoResultsBoard: React.FC<
           <p className="public-americano-board__tagline">
             {RIVIERA_PUBLIC_DESCRIPTION}
           </p>
-          {snapshot?.savedAt && (
-            <p className="public-americano-board__meta">
-              Última actualización:{" "}
-              {new Date(snapshot.savedAt).toLocaleString()}
-            </p>
-          )}
         </div>
       </header>
 
@@ -135,6 +129,15 @@ export const PublicAmericanoResultsBoard: React.FC<
 
       {snapshot && (
         <AmericanoTournamentSummary snapshot={snapshot} variant="display" />
+      )}
+
+      {snapshot?.savedAt && (
+        <footer className="public-americano-board__footer" aria-live="polite">
+          <p className="public-americano-board__meta">
+            Actualización en tiempo real · Última actualización:{" "}
+            {new Date(snapshot.savedAt).toLocaleString()}
+          </p>
+        </footer>
       )}
     </div>
   );

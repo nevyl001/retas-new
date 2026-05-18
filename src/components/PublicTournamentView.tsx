@@ -345,10 +345,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             <span className="te-public-header__subtitle">
               {RIVIERA_PUBLIC_DESCRIPTION}
             </span>
-            <span className="te-public-header__subtitle">
-              Actualización en tiempo real · Última actualización:{" "}
-              {lastUpdate.toLocaleTimeString()}
-            </span>
           </div>
         </div>
       </header>
@@ -485,9 +481,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           />
         )}
 
-      <p className="te-public-empty te-pub-fade-in" style={{ textAlign: "center" }}>
-        Vista pública de resultados · solo lectura
-      </p>
+      <footer className="te-public-sync-footer te-pub-fade-in" aria-live="polite">
+        <p className="te-public-sync-footer__line">
+          Actualización en tiempo real · Última actualización:{" "}
+          {lastUpdate.toLocaleTimeString()}
+        </p>
+        <p className="te-public-sync-footer__line">
+          Vista pública de resultados · solo lectura
+        </p>
+      </footer>
     </PublicTorneoExpressShell>
   );
 };

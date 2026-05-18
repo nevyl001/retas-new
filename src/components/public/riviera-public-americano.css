@@ -1,17 +1,26 @@
 /* Ajustes mínimos — vista pública Americano (clases base: torneo-express-public.css) */
 
+.te-public--americano .te-public__inner,
+.te-public--reta .te-public__inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .te-public--americano .te-public__inner {
   max-width: 1100px;
 }
 
-.te-public--americano .te-public-sync-footer {
-  margin-top: 2.5rem;
+.te-public--americano .te-public-sync-footer,
+.te-public--reta .te-public-sync-footer {
+  margin-top: auto;
   padding-top: 1.25rem;
   border-top: 1px solid var(--border-subtle);
   text-align: center;
 }
 
-.te-public--americano .te-public-sync-footer__line {
+.te-public--americano .te-public-sync-footer__line,
+.te-public--reta .te-public-sync-footer__line {
   margin: 0;
   font-family: var(--font-body);
   font-size: 0.75rem;
@@ -19,7 +28,8 @@
   color: var(--text-muted);
 }
 
-.te-public--americano .te-public-sync-footer__line + .te-public-sync-footer__line {
+.te-public--americano .te-public-sync-footer__line + .te-public-sync-footer__line,
+.te-public--reta .te-public-sync-footer__line + .te-public-sync-footer__line {
   margin-top: 0.35rem;
 }
 
