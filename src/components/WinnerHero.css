@@ -45,7 +45,7 @@
   margin: 0;
   font-size: clamp(1.5rem, 4.5vw, 2.5rem);
   font-weight: 600;
-  color: #e8dcc8;
+  color: var(--text-primary, #f0f0f0);
   line-height: 1.2;
   font-style: normal;
   letter-spacing: 0.02em;
@@ -55,7 +55,7 @@
   margin: 0;
   font-size: 16px;
   font-weight: 500;
-  color: #c9bba8;
+  color: var(--text-secondary, #9a9a9a);
   font-style: normal;
   letter-spacing: 0.02em;
   max-width: 32rem;

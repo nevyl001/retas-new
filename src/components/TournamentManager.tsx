@@ -155,7 +155,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
             ← Volver
           </button>
         )}
-        <h1 className="mis-retas-page__title text-display">Mis Retas</h1>
+        <h1 className="mis-retas-page__title">Mis Retas</h1>
       </header>
 
       <div className="mis-retas-page__filters riviera-filter-chips" role="tablist">
@@ -211,7 +211,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
             return (
               <article
                 key={tournament.id}
-                className={`mis-reta-card riviera-card riviera-card--interactive${
+                className={`mis-reta-card riviera-glass-card${
                   isSelected ? " mis-reta-card--selected" : ""
                 }`}
                 onClick={() => onTournamentSelect(tournament)}
@@ -263,7 +263,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                     {tournament.is_started && !tournament.is_finished && (
                       <button
                         type="button"
-                        className="riviera-btn-secondary mis-reta-card__finish"
+                        className="mis-reta-card__finish"
                         disabled={loading}
                         onClick={(e) => {
                           e.stopPropagation();

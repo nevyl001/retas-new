@@ -58,7 +58,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     <div className="matches-container-simplified">
       {/* Header simplificado */}
       <div className="matches-header-simplified">
-        <h3>🎾 Partidos</h3>
+        <h3>Partidos</h3>
         <span className="matches-count-simplified">{matches.length} total</span>
       </div>
       
@@ -72,7 +72,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
           Object.entries(matchesByRound).map(([round, roundMatches]) => (
             <div key={round} className="round-section-simplified">
               <div className="round-header-simplified">
-                <h4>🔄 Ronda {round}</h4>
+                <h4>Ronda {round}</h4>
                 <span>{roundMatches.length} partidos</span>
               </div>
               <div className="matches-grid-simplified">

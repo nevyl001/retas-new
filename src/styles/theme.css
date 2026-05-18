@@ -5,14 +5,14 @@
 
 :root {
   /* —— Paleta v2 (alineada con Home) —— */
-  --bg-base: #0a0a0a;
-  --bg-primary: #0a0a0a;
-  --bg-section: #141414;
-  --bg-card: #141414;
-  --bg-elevated: #1c1c1c;
-  --bg-overlay: #242424;
+  --bg-base: #000000;
+  --bg-primary: #000000;
+  --bg-section: #000000;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-elevated: #0a0a0a;
+  --bg-overlay: #0a0a0a;
   /** Pareja / bloque perdedor en partido */
-  --bg-loser: #1c1c1c;
+  --bg-loser: #0a0a0a;
 
   --border-default: rgba(255, 255, 255, 0.1);
   --border-subtle: rgba(255, 255, 255, 0.05);
@@ -34,7 +34,7 @@
   --color-bg-card: var(--bg-card);
   --color-bg-elevated: var(--bg-elevated);
   --color-bg-hover: var(--bg-elevated);
-  --color-bg-overlay: rgba(10, 10, 10, 0.96);
+  --color-bg-overlay: rgba(0, 0, 0, 0.96);
   --color-bg-secondary: var(--bg-loser);
 
   --color-border: var(--border-default);

@@ -138,7 +138,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             )}
           </>
         ) : (
-          <div className="reta-content">
+          <div className="reta-content riviera-organizer-reta">
             <div className="reta-content__toolbar riviera-back-toolbar">
               <button
                 type="button"

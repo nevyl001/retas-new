@@ -19,7 +19,7 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
         <div className="compact-header-content">
           <div className="compact-title">
             <span className="compact-icon">👥</span>
-            <h3>Parejas Registradas ({pairs.length})</h3>
+            <h3>Parejas registradas ({pairs.length})</h3>
           </div>
         </div>
       </div>
@@ -45,19 +45,19 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
               {/* Estadísticas Compactas */}
               <div className="compact-stats">
                 <div className="compact-stat">
-                  <span className="compact-stat-label">SETS</span>
+                  <span className="compact-stat-label">VIC</span>
                   <span className="compact-stat-value">
                     {pairStats.get(pair.id)?.sets || 0}
                   </span>
                 </div>
                 <div className="compact-stat">
-                  <span className="compact-stat-label">PARTIDOS</span>
+                  <span className="compact-stat-label">PJ</span>
                   <span className="compact-stat-value">
                     {pairStats.get(pair.id)?.matches || 0}
                   </span>
                 </div>
                 <div className="compact-stat">
-                  <span className="compact-stat-label">PUNTOS</span>
+                  <span className="compact-stat-label">PTS</span>
                   <span className="compact-stat-value">
                     {pairStats.get(pair.id)?.points || 0}
                   </span>

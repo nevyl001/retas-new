@@ -20,7 +20,7 @@
   margin-left: auto;
   margin-right: auto;
   padding: 1rem clamp(1rem, 3vw, 2.25rem) 2.5rem;
-  background: var(--bg-base, #0a0a0f);
+  background: var(--bg-base, #000000);
   color: var(--text-primary, #f0f0f0);
   font-family: var(--font-body, "Outfit", sans-serif);
   font-size: 0.9rem;
@@ -100,7 +100,7 @@
 .public-tournament-view .public-subtitle--riviera {
   font-family: var(--font-body);
   font-size: 0.85rem;
-  color: var(--text-secondary, #a0a0b0);
+  color: var(--text-secondary, #9a9a9a);
   line-height: 1.45;
 }
 
@@ -265,7 +265,7 @@
 }
 
 .public-americano-view__ranking thead {
-  background: var(--bg-surface, #111118);
+  background: var(--bg-base, #000000);
 }
 
 .public-americano-view__ranking th {

@@ -9,7 +9,7 @@ interface StandingsPtsCellProps {
 
 export const StandingsPtsCell: React.FC<StandingsPtsCellProps> = ({
   pts,
-  className = "new-points-cell",
+  className = "te-pub-standings-row__pts",
 }) => (
   <td className={`${COL_PTS} ${className}`.trim()} title={STANDINGS_PTS_TABLE_TITLE}>
     {pts}

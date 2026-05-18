@@ -1,14 +1,14 @@
 /* Torneo Express — base (Riviera Gold vía riviera-torneo-express.css) */
 .torneo-express-page {
-  --te-bg: var(--bg-base, #0a0a0f);
+  --te-bg: var(--bg-base, #000000);
   --te-card: var(--bg-card, rgba(255, 255, 255, 0.04));
   --te-border: var(--border-subtle, rgba(255, 255, 255, 0.07));
   --te-gold: var(--accent-gold, #d4af37);
   --te-gold-bright: var(--accent-gold, #d4af37);
   --te-gold-light: var(--accent-gold-light, #f0d060);
   --te-text: var(--text-primary, #f0f0f0);
-  --te-muted: var(--text-secondary, #a0a0b0);
-  --te-panel: var(--bg-surface, #111118);
+  --te-muted: var(--text-secondary, #9a9a9a);
+  --te-panel: var(--bg-base, #000000);
   --te-input-bg: rgba(255, 255, 255, 0.05);
   min-height: 100vh;
   background: var(--te-bg);
@@ -861,7 +861,7 @@
 /* ── Crear torneo: layout 2 columnas + jugadores ── */
 .te-crear-page {
   --te-gold-bright: #f5a623;
-  --te-panel: #1c1c1e;
+  --te-panel: #000000;
   --te-input-bg: #2a2a2a;
   max-width: 1200px;
   margin: 0 auto;
@@ -989,7 +989,7 @@
 .te-players-panel {
   max-width: none;
   margin: 0;
-  background: var(--te-panel, #1c1c1e);
+  background: var(--te-panel, #000000);
   border-radius: 16px;
   position: sticky;
   top: 1rem;
@@ -1338,7 +1338,7 @@
 }
 
 .te-torneos-empty {
-  background: #1c1c1e;
+  background: #0a0a0a;
   border: 1px solid #333;
   border-radius: 12px;
   padding: 1.5rem;
@@ -1364,7 +1364,7 @@
 .te-torneos-skeleton__card {
   height: 120px;
   border-radius: 12px;
-  background: linear-gradient(90deg, #1c1c1e 25%, #2a2a2a 50%, #1c1c1e 75%);
+  background: linear-gradient(90deg, #0a0a0a 25%, #141414 50%, #0a0a0a 75%);
   background-size: 200% 100%;
   animation: te-skeleton 1.2s ease-in-out infinite;
 }
@@ -1379,7 +1379,7 @@
 }
 
 .te-torneo-card {
-  background: #1c1c1e;
+  background: #0a0a0a;
   border-radius: 12px;
   padding: 20px;
   transition: border-color 0.2s ease, opacity 0.2s ease;

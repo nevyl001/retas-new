@@ -1,9 +1,9 @@
 /* RivieraApp — Design System v2 (UI only) */
 
 :root {
-  --bg-surface: #141414;
-  --bg-elevated: #1c1c1c;
-  --bg-overlay: #242424;
+  --bg-surface: #000000;
+  --bg-elevated: #0a0a0a;
+  --bg-overlay: #0a0a0a;
   --bg-hover: rgba(255, 255, 255, 0.04);
 
   --border-subtle: rgba(255, 255, 255, 0.05);

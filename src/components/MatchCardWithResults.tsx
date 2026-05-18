@@ -502,7 +502,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       >
         <div className="modern-match-badges">
           <span className="modern-match-badge">
-            <span className="modern-badge-icon">🏟️</span>
+            <span className="modern-badge-icon">🎾</span>
             Cancha {currentMatch.court}
           </span>
           <span className="modern-match-badge">
@@ -637,7 +637,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       {/* Resultados */}
       {games.length > 0 && (
         <div className="modern-games-results">
-          <h6 className="modern-games-title">📊 Juegos:</h6>
+          <h6 className="modern-games-title">Juegos:</h6>
           <div className="modern-games-grid">
             {games.map((game, index) => (
               <div key={game.id} className="modern-game-result">

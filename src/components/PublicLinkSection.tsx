@@ -40,7 +40,7 @@ export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
 
   return (
     <div className="public-link-section">
-      <h3>🔗 Enlace Público</h3>
+      <h3>Enlace público</h3>
       <div className="public-link-info">
         <p>
           Comparte este enlace con los participantes para que vean los
@@ -64,7 +64,7 @@ export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
           rel="noopener noreferrer"
           className="public-link-preview"
         >
-          👁️ Ver Vista Pública
+          Ver vista pública
         </a>
       </div>
     </div>

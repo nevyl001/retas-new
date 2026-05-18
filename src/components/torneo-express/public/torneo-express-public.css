@@ -1,7 +1,7 @@
 /* Sport Premium Dark — Vista pública Torneo Express */
 
 .te-public {
-  --bg-base: #0a0a0f;
+  --bg-base: #000000;
   --bg-card: rgba(255, 255, 255, 0.04);
   --border: rgba(255, 255, 255, 0.08);
   --accent-primary: #d4af37;
@@ -231,7 +231,7 @@
 
 .te-public-btn--outline:hover {
   background: var(--accent-primary);
-  color: #0a0a0f;
+  color: #000000;
 }
 
 /* Secciones */

@@ -5,32 +5,9 @@ import type {
   TorneoExpressGrupoPareja,
   TorneoExpressPartido,
 } from "../../../lib/torneoExpress/types";
+import { TePubMatchStatus } from "../../public/tePubShared";
 import { useCountUp } from "./useCountUp";
-
-function PublicMatchStatus({
-  estado,
-  enVivo,
-}: {
-  estado: TorneoExpressPartido["estado"];
-  enVivo: boolean;
-}) {
-  if (estado === "jugado") {
-    return (
-      <span className="te-pub-status te-pub-status--played">
-        <span aria-hidden>✓</span> Jugado
-      </span>
-    );
-  }
-  if (enVivo) {
-    return (
-      <span className="te-pub-status te-pub-status--live">
-        <span className="te-pub-status__dot" aria-hidden />
-        En vivo
-      </span>
-    );
-  }
-  return <span className="te-pub-status te-pub-status--pending">Pendiente</span>;
-}
+import "../../public/riviera-public-americano.css";
 
 function AnimatedScore({
   value,
@@ -51,7 +28,7 @@ function AnimatedScore({
   );
 }
 
-function PublicMatchCard({
+function TePublicMatchCard({
   partido,
   localLabel,
   visitLabel,
@@ -76,7 +53,9 @@ function PublicMatchCard({
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >
       <div className="te-pub-match__top">
-        <PublicMatchStatus estado={partido.estado} enVivo={enVivo} />
+        <TePubMatchStatus
+          variant={played ? "played" : enVivo ? "live" : "pending"}
+        />
         <span className="te-pub-cancha" title="Cancha">
           <span className="te-pub-cancha__icon" aria-hidden>
             🎾
@@ -99,13 +78,17 @@ function PublicMatchCard({
 
       <div className="te-pub-match__teams">
         <span
-          className={`te-pub-match__team${localWins ? " te-pub-match__team--win" : ""}`}
+          className={`te-pub-match__team${
+            localWins ? " te-pub-match__team--win" : ""
+          }`}
         >
           {localLabel}
         </span>
         <span className="te-pub-match__vs">vs</span>
         <span
-          className={`te-pub-match__team${visitWins ? " te-pub-match__team--win" : ""}`}
+          className={`te-pub-match__team${
+            visitWins ? " te-pub-match__team--win" : ""
+          }`}
         >
           {visitLabel}
         </span>
@@ -118,7 +101,7 @@ export const PublicPartidosSection: React.FC<{
   partidos: TorneoExpressPartido[];
   parejas: TorneoExpressGrupoPareja[];
   title?: string;
-}> = ({ partidos, parejas, title = "Partidos" }) => {
+}> = ({ partidos, parejas, title = "Juegos" }) => {
   const sorted = useMemo(() => sortPartidosByOrden(partidos), [partidos]);
 
   const labelById = useMemo(() => {
@@ -138,7 +121,7 @@ export const PublicPartidosSection: React.FC<{
     return (
       <section className="te-public-section te-pub-fade-in te-pub-fade-in--delay-2">
         <h2 className="te-public-section__title">{title}</h2>
-        <p className="te-public-empty">Sin partidos programados.</p>
+        <p className="te-public-empty">Sin juegos programados.</p>
       </section>
     );
   }
@@ -147,9 +130,10 @@ export const PublicPartidosSection: React.FC<{
     <section className="te-public-section te-pub-fade-in te-pub-fade-in--delay-2">
       <h2 className="te-public-section__title">{title}</h2>
       <div className="te-public-section__divider" aria-hidden />
-      <div className="te-pub-matches">
+
+      <div className="te-pub-matches-grid">
         {sorted.map((partido, index) => (
-          <PublicMatchCard
+          <TePublicMatchCard
             key={partido.id}
             partido={partido}
             localLabel={labelById.get(partido.pareja_local_id) ?? "Local"}

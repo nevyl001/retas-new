@@ -30,8 +30,8 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Round Robin",
     description: "Todos contra todos, tabla en vivo",
     icon: "🔄",
-    gradient: "linear-gradient(135deg, #0a1628 0%, #102040 100%)",
-    accentColor: "#3B82F6",
+    gradient: "linear-gradient(135deg, #0a0a0a 0%, #141414 100%)",
+    accentColor: "#d4af37",
   },
   {
     id: "americano",
@@ -48,7 +48,7 @@ export const GAME_MODES: GameModeConfig[] = [
     description: "Grupos + round robin, tabla pública",
     icon: "⚡",
     badge: "Nuevo",
-    gradient: "linear-gradient(135deg, #1a1030 0%, #281848 100%)",
-    accentColor: "#8B5CF6",
+    gradient: "linear-gradient(135deg, #0a0a0a 0%, #141414 100%)",
+    accentColor: "#d4af37",
   },
 ];
