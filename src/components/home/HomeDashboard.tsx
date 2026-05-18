@@ -45,7 +45,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       setError(null);
       persistLastGameMode(modeId);
       if (modeId === "mini-torneo") {
-        navigateTorneoExpress("/torneo-express/nuevo");
+        navigateTorneoExpress("/torneo-express");
         return;
       }
       if (modeId === "americano" && userId) {

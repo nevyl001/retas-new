@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getTournaments, Tournament } from "../../lib/database";
+import { filterRetasForHomeDisplay } from "../../lib/gameModeMapping";
 import { EmptyStateRetas } from "./EmptyStateRetas";
 import { RecentRetaCard } from "./RecentRetaCard";
 
@@ -24,7 +25,7 @@ export const RecentRetasSection: React.FC<RecentRetasSectionProps> = ({
     let active = true;
     getTournaments(userId)
       .then((data) => {
-        if (active) setTournaments(data ?? []);
+        if (active) setTournaments(filterRetasForHomeDisplay(data ?? []));
       })
       .catch(() => {
         if (active) setTournaments([]);

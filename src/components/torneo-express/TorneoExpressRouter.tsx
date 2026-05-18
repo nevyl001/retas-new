@@ -1,7 +1,6 @@
 import React from "react";
-import { CrearTorneoExpress } from "./CrearTorneoExpress";
 import { GestionGrupos } from "./GestionGrupos";
-import { ListaTorneosExpress } from "./ListaTorneosExpress";
+import { TorneoExpressInicio } from "./TorneoExpressInicio";
 import { VistaPublicaGeneral } from "./VistaPublicaGeneral";
 import { VistaPublicaGrupo } from "./VistaPublicaGrupo";
 import "./torneo-express.css";
@@ -39,9 +38,8 @@ export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
 
   switch (route.kind) {
     case "home":
-      return <ListaTorneosExpress />;
     case "nuevo":
-      return <CrearTorneoExpress />;
+      return <TorneoExpressInicio />;
     case "gestionar":
       return <GestionGrupos torneoId={route.torneoId} />;
     case "grupo":

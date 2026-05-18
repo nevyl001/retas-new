@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { filterRetasForHomeDisplay } from "../lib/gameModeMapping";
 import {
   getTournaments,
   deleteTournament,
@@ -56,7 +57,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         setLoading(true);
         const data = await getTournaments(user.id);
         if (!isMounted) return;
-        setTournaments(data || []);
+        setTournaments(filterRetasForHomeDisplay(data || []));
       } catch (err) {
         if (!isMounted) return;
         console.error("Error al cargar retas:", err);

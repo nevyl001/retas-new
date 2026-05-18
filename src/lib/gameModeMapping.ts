@@ -1,5 +1,9 @@
 import type { GameModeId } from "../components/home/gameModesConfig";
 import {
+  TE_DRAFT_TOURNAMENT_KEY,
+  TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
+} from "../components/torneo-express/crearTorneoExpressTypes";
+import {
   isMarkedAmericanoTournament,
   loadAmericanoDinamicoSnapshot,
 } from "./americanoDinamicoStorage";
@@ -144,6 +148,35 @@ export function isAmericanoTournament(tournament: {
   format?: string;
 }): boolean {
   return resolveTournamentGameMode(tournament) === "americano";
+}
+
+/** Borrador / staging en `tournaments` para armar parejas de Torneo Express (no es reta del home). */
+export function isTorneoExpressStagingTournament(tournament: {
+  id: string;
+  name?: string | null;
+  description?: string | null;
+}): boolean {
+  if (readPersistedTournamentGameMode(tournament.id) === "mini-torneo") {
+    return true;
+  }
+  const name = (tournament.name ?? "").trim();
+  if (name === TE_EXPRESS_DRAFT_TOURNAMENT_NAME || name.startsWith("(Borrador) Torneo Express")) {
+    return true;
+  }
+  try {
+    if (sessionStorage.getItem(TE_DRAFT_TOURNAMENT_KEY) === tournament.id) {
+      return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+export function filterRetasForHomeDisplay<
+  T extends { id: string; name?: string | null; description?: string | null },
+>(tournaments: T[]): T[] {
+  return tournaments.filter((t) => !isTorneoExpressStagingTournament(t));
 }
 
 export function resolveTournamentStartFormat(tournament: {

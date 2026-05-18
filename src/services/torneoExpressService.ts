@@ -180,7 +180,10 @@ export async function fetchPairLabelsByIds(
 // Lectura: torneo express
 // ---------------------------------------------------------------------------
 
-export type TorneoExpressListItem = TorneoExpress & { grupoCount: number };
+export type TorneoExpressListItem = TorneoExpress & {
+  grupoCount: number;
+  parejaCount: number;
+};
 
 export async function fetchTorneosExpressByOrganizador(): Promise<
   TorneoExpressListItem[]
@@ -194,7 +197,7 @@ export async function fetchTorneosExpressByOrganizador(): Promise<
     .order("created_at", { ascending: false });
 
   if (!error && data) {
-    return data.map((row) => {
+    const mapped = data.map((row) => {
       const grupos = (row as { torneo_express_grupos?: { id: string }[] })
         .torneo_express_grupos;
       const { torneo_express_grupos: _g, ...torneo } = row as TorneoExpress & {
@@ -204,8 +207,10 @@ export async function fetchTorneosExpressByOrganizador(): Promise<
       return {
         ...(torneo as TorneoExpress),
         grupoCount: Array.isArray(grupos) ? grupos.length : 0,
+        parejaCount: 0,
       };
     });
+    return enrichTorneoListWithParejaCounts(mapped);
   }
 
   const { data: torneos, error: tErr } = await supabase
@@ -230,10 +235,85 @@ export async function fetchTorneosExpressByOrganizador(): Promise<
     countByTorneo.set(g.torneo_id, (countByTorneo.get(g.torneo_id) ?? 0) + 1);
   });
 
-  return list.map((t) => ({
+  const withGrupos = list.map((t) => ({
     ...t,
     grupoCount: countByTorneo.get(t.id) ?? 0,
+    parejaCount: 0,
   }));
+  return enrichTorneoListWithParejaCounts(withGrupos);
+}
+
+async function enrichTorneoListWithParejaCounts(
+  list: TorneoExpressListItem[]
+): Promise<TorneoExpressListItem[]> {
+  if (list.length === 0) return list;
+  const ids = list.map((t) => t.id);
+  const { data: grupos, error: gErr } = await supabase
+    .from("torneo_express_grupos")
+    .select("id, torneo_id")
+    .in("torneo_id", ids);
+  throwIfError(gErr, "fetchTorneosExpress.parejaCounts.grupos");
+
+  const grupoRows = (grupos ?? []) as { id: string; torneo_id: string }[];
+  const grupoToTorneo = new Map(
+    grupoRows.map((g) => [g.id, g.torneo_id] as const)
+  );
+  const grupoIds = grupoRows.map((g) => g.id);
+  if (grupoIds.length === 0) return list;
+
+  const { data: parejas, error: pErr } = await supabase
+    .from("torneo_express_grupo_parejas")
+    .select("grupo_id")
+    .in("grupo_id", grupoIds);
+  throwIfError(pErr, "fetchTorneosExpress.parejaCounts.parejas");
+
+  const countByTorneo = new Map<string, number>();
+  (parejas ?? []).forEach((row: { grupo_id: string }) => {
+    const torneoId = grupoToTorneo.get(row.grupo_id);
+    if (!torneoId) return;
+    countByTorneo.set(torneoId, (countByTorneo.get(torneoId) ?? 0) + 1);
+  });
+
+  return list.map((t) => ({
+    ...t,
+    parejaCount: countByTorneo.get(t.id) ?? 0,
+  }));
+}
+
+export async function finalizeTorneoExpress(
+  torneoId: string
+): Promise<TorneoExpress> {
+  await requireAuthUser();
+
+  const payloads: Record<string, unknown>[] = [
+    { estado: "finalizado", fecha_fin: new Date().toISOString() },
+    { estado: "finalizado" },
+  ];
+
+  let lastError: { message: string } | null = null;
+  for (const payload of payloads) {
+    const { data, error } = await supabase
+      .from("torneo_express")
+      .update(payload)
+      .eq("id", torneoId)
+      .select()
+      .single();
+    if (!error && data) return data as TorneoExpress;
+    lastError = error;
+    if (
+      isMissingColumnError(error, "torneo_express", "fecha_fin") ||
+      (error?.code === "PGRST204" &&
+        typeof error.message === "string" &&
+        error.message.includes("fecha_fin"))
+    ) {
+      continue;
+    }
+    throwIfError(error, "finalizeTorneoExpress");
+  }
+
+  throw new Error(
+    `No se pudo finalizar el torneo: ${lastError?.message ?? "sin detalle"}`
+  );
 }
 
 export async function fetchTorneoExpress(

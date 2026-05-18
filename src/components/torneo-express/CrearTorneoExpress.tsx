@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   createPair,
   createTournament,
@@ -18,10 +18,18 @@ import { TorneoExpressPlayerPanel } from "./TorneoExpressPlayerPanel";
 import {
   ParejaDraft,
   TE_DRAFT_TOURNAMENT_KEY,
+  TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
 } from "./crearTorneoExpressTypes";
+import { persistTournamentGameMode } from "../../lib/gameModeMapping";
 import "./torneo-express.css";
 
-export const CrearTorneoExpress: React.FC = () => {
+interface CrearTorneoExpressProps {
+  onTorneoCreated?: () => void;
+}
+
+export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
+  onTorneoCreated,
+}) => {
   const { user } = useUser();
   const [nombre, setNombre] = useState("");
   const [numGrupos, setNumGrupos] = useState(2);
@@ -117,12 +125,13 @@ export const CrearTorneoExpress: React.FC = () => {
 
         if (!tournamentId) {
           const created = await createTournament(
-            "(Borrador) Torneo Express",
+            TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
             user.id,
             "Parejas en armado para torneo express",
             1
           );
           tournamentId = created.id;
+          persistTournamentGameMode(created.id, "mini-torneo");
           sessionStorage.setItem(TE_DRAFT_TOURNAMENT_KEY, created.id);
         }
 
@@ -142,9 +151,12 @@ export const CrearTorneoExpress: React.FC = () => {
     };
   }, [user?.id]);
 
+  const jugadoresForPairsRef = useRef(jugadores);
+  jugadoresForPairsRef.current = jugadores;
+
   useEffect(() => {
     if (!draftTournamentId || jugadores.length === 0) return;
-    loadPairsForDraft(draftTournamentId, jugadores).catch(() => {
+    loadPairsForDraft(draftTournamentId, jugadoresForPairsRef.current).catch(() => {
       /* ignore */
     });
   }, [draftTournamentId, jugadores.length, loadPairsForDraft]);
@@ -303,6 +315,7 @@ export const CrearTorneoExpress: React.FC = () => {
         grupos: assignments,
       });
       sessionStorage.removeItem(TE_DRAFT_TOURNAMENT_KEY);
+      onTorneoCreated?.();
       navigateTorneoExpress(`/torneo-express/${torneoId}/gestionar`);
     } catch (err) {
       setError(formatSupabaseError(err));
@@ -312,18 +325,7 @@ export const CrearTorneoExpress: React.FC = () => {
   };
 
   return (
-    <div className="torneo-express-page te-crear-page">
-      <div className="te-crear-toolbar riviera-back-toolbar">
-        <button
-          type="button"
-          className="riviera-btn-back"
-          onClick={() => navigateTorneoExpress("/torneo-express")}
-        >
-          ← Volver al inicio
-        </button>
-      </div>
-
-      <div className="te-crear-grid">
+    <div className="te-crear-grid">
         <div className="te-crear-col te-crear-col--players">
           {user?.id ? (
             <TorneoExpressPlayerPanel
@@ -502,7 +504,6 @@ export const CrearTorneoExpress: React.FC = () => {
             )}
           </form>
         </div>
-      </div>
     </div>
   );
 };
