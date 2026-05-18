@@ -170,15 +170,6 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
             <span className="te-public-header__subtitle">
               {RIVIERA_PUBLIC_DESCRIPTION}
             </span>
-            <span className="te-public-header__subtitle">
-              Actualización automática cada pocos segundos
-            </span>
-            {snapshot?.savedAt && (
-              <span className="te-public-header__subtitle">
-                Última publicación:{" "}
-                {new Date(snapshot.savedAt).toLocaleString()}
-              </span>
-            )}
           </div>
         </div>
       </header>
@@ -373,6 +364,18 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           )}
         </>
       )}
+
+      <footer className="te-public-sync-footer te-pub-fade-in" aria-live="polite">
+        <p className="te-public-sync-footer__line">
+          Actualización automática cada pocos segundos
+        </p>
+        {snapshot?.savedAt ? (
+          <p className="te-public-sync-footer__line">
+            Última publicación:{" "}
+            {new Date(snapshot.savedAt).toLocaleString()}
+          </p>
+        ) : null}
+      </footer>
     </PublicTorneoExpressShell>
   );
 };
