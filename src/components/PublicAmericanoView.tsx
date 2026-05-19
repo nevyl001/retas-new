@@ -317,7 +317,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
               className="te-public-section te-public-podium te-pub-fade-in"
               aria-label="Podio final"
             >
-              <p className="te-public-podium__badge">Torneo finalizado</p>
+              <p className="te-public-podium__badge">Americano finalizado</p>
               <h2 className="te-public-podium__title">
                 Felicidades a los 3 primeros lugares
               </h2>

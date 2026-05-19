@@ -404,7 +404,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           </div>
         </section>
       ) : null}
-      <p className="americano-screen__finished">Torneo finalizado</p>
+      <p className="americano-screen__finished">Americano finalizado</p>
       {podium.length > 0 && (
         <section className="americano-podium">
           <h3>Felicidades a los 3 primeros lugares</h3>
