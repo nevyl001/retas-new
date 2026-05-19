@@ -226,7 +226,7 @@
   font-size: 0.7rem;
   font-weight: 500;
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 0.2rem 0.5rem;

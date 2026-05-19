@@ -3,108 +3,59 @@
 @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700&display=swap");
 
 :root {
-  /* Fondos — negro puro, sin tinte azul */
+  /* ── Fondos ── */
   --bg-base: #000000;
-  --bg-surface: #000000;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --bg-card-hover: rgba(255, 255, 255, 0.07);
-  --bg-elevated: #0a0a0a;
-  --bg-overlay: #0a0a0a;
+  --bg-elevated: #111111;
+  --bg-card: rgba(255, 255, 255, 0.09);
+  --bg-card-hover: rgba(255, 255, 255, 0.13);
 
-  /* Bordes */
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-accent: rgba(212, 175, 55, 0.4);
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  /* ── Bordes ── */
+  --border-subtle: rgba(255, 255, 255, 0.16);
+  --border-accent: rgba(212, 175, 55, 0.35);
 
-  /* Dorado Riviera */
+  /* ── Dorado — acento escaso ── */
   --accent-gold: #d4af37;
   --accent-gold-light: #f0d060;
   --accent-gold-dim: rgba(212, 175, 55, 0.12);
 
-  /* Texto */
-  --text-primary: #f0f0f0;
-  --text-secondary: #9a9a9a;
-  --text-muted: #666666;
+  /* ── Texto — 3 niveles ── */
+  --text-primary: #ffffff;
+  --text-secondary: #c0c0c0;
+  --text-muted: #909090;
 
-  /* Estados */
+  /* ── Estados semánticos ── */
   --win: #22c55e;
   --loss: #ef4444;
   --live: #ff4444;
-  --pending: #666666;
+  --pending: #737373;
 
-  /* Tipografía */
-  --font-display: "Bebas Neue", sans-serif;
-  --font-body: "Outfit", sans-serif;
-  --font-family: var(--font-body);
-  --font-ui: var(--font-body);
+  /* ── Tipografía ── */
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Outfit', sans-serif;
 
-  /* Radios */
-  --radius-sm: 8px;
+  /* ── Radios — unificados ── */
+  --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-lg: 14px;
   --radius-full: 999px;
 
-  /* Sombras */
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --glow-gold: 0 0 20px rgba(212, 175, 55, 0.2);
+  /* ── Motion — sistema único ── */
+  --motion-enter: 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-micro: 150ms ease;
+  --motion-stagger: 60ms;
 
-  /* Transiciones */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* ── Misc ── */
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.4);
+}
 
-  /* Puentes legacy (theme.css / App.css / design-system.css) */
-  --bg-primary: var(--bg-base);
-  --bg-section: var(--bg-surface);
-  --color-bg-base: var(--bg-base);
-  --color-bg-surface: var(--bg-surface);
-  --color-bg-card: var(--bg-card);
-  --color-bg-elevated: var(--bg-elevated);
-  --color-bg-hover: var(--bg-card-hover);
-  --color-bg-overlay: rgba(0, 0, 0, 0.94);
-  --color-bg-sunken: var(--bg-base);
-  --color-bg-secondary: var(--bg-elevated);
-
-  --color-border: var(--border-default);
-  --color-border-subtle: var(--border-subtle);
-  --color-border-soft: var(--border-default);
-  --color-border-focus: rgba(212, 175, 55, 0.45);
-
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-text-tertiary: var(--text-secondary);
-  --color-text-disabled: #444444;
-  --color-input-placeholder: var(--text-muted);
-  --color-text-inverse: var(--bg-base);
-
-  --color-gold: var(--accent-gold);
-  --color-cream: var(--accent-gold);
-  --color-accent: var(--accent-gold);
-  --color-accent-gold: var(--accent-gold);
-  --color-accent-text: var(--bg-base);
-  --color-accent-border: var(--border-accent);
-  --color-accent-border-gold: var(--accent-gold);
-  --color-accent-hover: var(--accent-gold-light);
-  --color-accent-subtle: var(--accent-gold-dim);
-
-  --accent: var(--accent-gold);
-  --accent-hover: var(--accent-gold-light);
-  --accent-muted: var(--accent-gold-dim);
-  --accent-glow: var(--glow-gold);
-
-  --success: var(--win);
-  --success-muted: rgba(34, 197, 94, 0.12);
-  --error: var(--loss);
-  --error-muted: rgba(239, 68, 68, 0.12);
-
-  --te-gold: var(--accent-gold);
-  --te-muted: var(--text-muted);
-  --te-text: var(--text-primary);
-  --te-border: var(--border-subtle);
-  --te-card: var(--bg-card);
+/* Reduced motion — accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .riviera-organizer-reta *,
+  .te-public * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Superficies sólidas → negro; cards con glass */
@@ -358,7 +309,7 @@ body {
   padding: 0.65rem 0.85rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.09);
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.9rem;

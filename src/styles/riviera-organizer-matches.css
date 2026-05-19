@@ -1,0 +1,778 @@
+/* Vista organizador — Partidos / rondas */
+
+.riviera-organizer-reta .matches-container-simplified {
+  gap: 1.25rem;
+}
+
+.riviera-organizer-reta .matches-header-simplified {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* —— Sección Partidos —— */
+.riviera-organizer-reta .matches-header-simplified h3 {
+  font-family: var(--font-body) !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: var(--text-muted) !important;
+}
+
+.riviera-organizer-reta .matches-count-simplified {
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
+
+/* —— Rondas —— */
+.riviera-organizer-reta .round-section-simplified {
+  margin-bottom: 40px !important;
+}
+
+.riviera-organizer-reta .round-header-simplified {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  margin-bottom: 1rem !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.riviera-organizer-reta .round-header-simplified__left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.riviera-organizer-reta .round-header-simplified__title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: none !important;
+}
+
+.riviera-organizer-reta .round-header-simplified__title::after {
+  display: none !important;
+}
+
+.riviera-organizer-reta .round-header-simplified__label {
+  font-family: var(--font-body) !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: var(--text-muted) !important;
+}
+
+.riviera-organizer-reta .round-header-simplified__num {
+  font-family: var(--font-display) !important;
+  font-size: 1.6rem !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.04em !important;
+  /* GOLD-AUDIT: evaluar si es necesario */
+  color: var(--accent-gold) !important;
+}
+
+.riviera-organizer-reta .round-header-simplified__line {
+  width: 40px;
+  height: 2px;
+  /* GOLD-AUDIT: evaluar si es necesario */
+  background: linear-gradient(to right, var(--accent-gold), transparent);
+  border-radius: 1px;
+}
+
+.riviera-organizer-reta .round-header-simplified__count {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.65rem;
+  font-family: var(--font-body) !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: var(--text-muted) !important;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+/* —— Grid —— */
+.riviera-organizer-reta .matches-grid-simplified {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  justify-items: stretch;
+  align-items: stretch;
+}
+
+.riviera-organizer-reta .matches-grid-simplified > * {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .riviera-organizer-reta .matches-grid-simplified {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ══════════════════════════════════════════
+   OMC — Organizer Match Card
+   ══════════════════════════════════════════ */
+
+.riviera-organizer-reta .omc-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+  animation: fadeInUp var(--motion-enter) both;
+  animation-delay: calc(var(--motion-stagger) * var(--i, 0));
+}
+
+.riviera-organizer-reta .omc-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+  transition: background var(--motion-micro), border-color var(--motion-micro);
+}
+
+.riviera-organizer-reta .omc-card.selected {
+  border-color: var(--border-accent) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* —— Header —— */
+.riviera-organizer-reta .omc-header {
+  padding: 12px 12px 0;
+}
+
+.riviera-organizer-reta .omc-header__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.riviera-organizer-reta .omc-match-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #f0f0f0;
+}
+
+.riviera-organizer-reta .omc-match-title__line {
+  display: block;
+}
+
+.riviera-organizer-reta .omc-match-title__vs {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  color: #333;
+  margin: 2px 0;
+  letter-spacing: 0.04em;
+}
+
+.riviera-organizer-reta .omc-status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 999px;
+}
+
+.riviera-organizer-reta .omc-status--live {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.12);
+  border: 1px solid rgba(255, 68, 68, 0.25);
+}
+
+.riviera-organizer-reta .omc-status--live::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ff4444;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.riviera-organizer-reta .omc-status--done {
+  color: #888;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.riviera-organizer-reta .omc-header__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.riviera-organizer-reta .omc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.riviera-organizer-reta .omc-pill {
+  padding: 2px 8px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.riviera-organizer-reta .omc-pencil-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.riviera-organizer-reta .omc-pencil-btn:hover:not(:disabled) {
+  /* GOLD-AUDIT: evaluar si es necesario */
+  color: var(--accent-gold);
+}
+
+.riviera-organizer-reta .omc-pencil-icon {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.riviera-organizer-reta .omc-header__rule {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0;
+  border: none;
+}
+
+/* Meta editor (cancha/ronda) */
+.riviera-organizer-reta .omc-meta-editor {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.riviera-organizer-reta .omc-meta-editor__fields {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.riviera-organizer-reta .omc-meta-editor__field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.riviera-organizer-reta .omc-meta-editor__field span {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #707070;
+}
+
+.riviera-organizer-reta .omc-meta-editor__field input {
+  width: 100%;
+  padding: 6px 8px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+}
+
+.riviera-organizer-reta .omc-meta-editor__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.riviera-organizer-reta .omc-meta-save,
+.riviera-organizer-reta .omc-meta-cancel {
+  padding: 4px 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: #888888;
+}
+
+.riviera-organizer-reta .omc-meta-save:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+/* —— Body: equipos —— */
+.riviera-organizer-reta .omc-body {
+  padding: 0;
+}
+
+.riviera-organizer-reta .omc-team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+}
+
+.riviera-organizer-reta .omc-team-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.riviera-organizer-reta .omc-team-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #707070;
+  margin-bottom: 3px;
+}
+
+.riviera-organizer-reta .omc-team-name {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.riviera-organizer-reta .omc-team-score {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+/* Pendiente / en curso */
+.riviera-organizer-reta .omc-team-row--pending {
+  background: rgba(255, 255, 255, 0.02);
+  border-left-color: transparent;
+}
+
+.riviera-organizer-reta .omc-team-row--pending .omc-team-name {
+  color: #aaa;
+}
+
+.riviera-organizer-reta .omc-vs-divider {
+  display: block;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  color: #333;
+  padding: 2px 0;
+  line-height: 1;
+}
+
+/* Finalizado: ganador / perdedor */
+.riviera-organizer-reta .omc-team-row--winner {
+  background: rgba(212, 175, 55, 0.13);
+  border-left-color: #d4af37;
+}
+
+.riviera-organizer-reta .omc-team-row--winner .omc-team-name {
+  color: #f0d060;
+}
+
+.riviera-organizer-reta .omc-team-row--winner .omc-team-score {
+  color: #f0d060;
+  font-size: 32px;
+}
+
+.riviera-organizer-reta .omc-team-row--loser {
+  background: rgba(0, 0, 0, 0.2);
+  border-left-color: transparent;
+}
+
+.riviera-organizer-reta .omc-team-row--loser .omc-team-name {
+  color: #909090;
+}
+
+.riviera-organizer-reta .omc-team-row--loser .omc-team-score {
+  color: #888888;
+}
+
+/* Barra ganador */
+.riviera-organizer-reta .omc-winner-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 12px;
+  padding: 8px 12px;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+}
+
+.riviera-organizer-reta .omc-winner-bar__icon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: #888;
+}
+
+.riviera-organizer-reta .omc-winner-bar__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.riviera-organizer-reta .omc-winner-bar__tag {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.riviera-organizer-reta .omc-winner-bar__name {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  /* GOLD-AUDIT: evaluar si es necesario (nombre ganador; no es score grande) */
+  color: #d4af37;
+  line-height: 1.3;
+}
+
+/* Juegos (finalizado) */
+.riviera-organizer-reta .omc-games-line {
+  padding: 8px 12px 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  line-height: 1.5;
+  color: #909090;
+}
+
+.riviera-organizer-reta .omc-games-line__label {
+  color: #707070;
+  margin-right: 4px;
+}
+
+/* —— Registrar resultado —— */
+.riviera-organizer-reta .omc-register {
+  padding: 10px 12px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.riviera-organizer-reta .omc-register__label {
+  display: block;
+  margin: 0 0 10px;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #707070;
+}
+
+.riviera-organizer-reta .omc-register__scores {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.riviera-organizer-reta .omc-register__input {
+  width: 52px;
+  padding: 8px 4px;
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  -moz-appearance: textfield;
+}
+
+.riviera-organizer-reta .omc-register__input::-webkit-outer-spin-button,
+.riviera-organizer-reta .omc-register__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.riviera-organizer-reta .omc-register__input:focus {
+  outline: none;
+  /* GOLD-AUDIT: evaluar si es necesario */
+  border-color: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+}
+
+.riviera-organizer-reta .omc-register__vs {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 500;
+  color: #333;
+}
+
+.riviera-organizer-reta .omc-register__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.riviera-organizer-reta .omc-btn-add {
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: #909090;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.riviera-organizer-reta .omc-btn-add:hover:not(:disabled) {
+  color: #aaa;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.riviera-organizer-reta .omc-btn-finish {
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: #d4af37;
+  background: transparent;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.riviera-organizer-reta .omc-btn-finish:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: #d4af37;
+}
+
+.riviera-organizer-reta .omc-btn-reopen {
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: #909090;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.riviera-organizer-reta .omc-btn-reopen:hover:not(:disabled) {
+  color: #aaa;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Eliminar juegos (modo edición) */
+.riviera-organizer-reta .omc-delete-games {
+  padding: 0 12px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.riviera-organizer-reta .omc-delete-games__label {
+  display: block;
+  margin: 8px 0 6px;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #707070;
+}
+
+.riviera-organizer-reta .omc-delete-games__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: #909090;
+}
+
+.riviera-organizer-reta .omc-delete-games__item + .omc-delete-games__item {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.riviera-organizer-reta .omc-btn-delete-game {
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(239, 68, 68, 0.6);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.riviera-organizer-reta .omc-btn-delete-game:hover:not(:disabled) {
+  color: #ef4444;
+}
+
+/* Error */
+.riviera-organizer-reta .omc-error {
+  margin: 0 12px 8px;
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: #ff6b6b;
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  border-radius: 6px;
+}
+
+/* —— Footer —— */
+.riviera-organizer-reta .omc-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding: 8px 12px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.riviera-organizer-reta .omc-footer-btn {
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  color: #a0a0b0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.riviera-organizer-reta .omc-footer-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f0f0f0;
+}
+
+.riviera-organizer-reta .omc-footer-btn--ghost {
+  color: #707070;
+  background: transparent;
+  border-color: transparent;
+}
+
+.riviera-organizer-reta .omc-footer-btn--ghost:hover:not(:disabled) {
+  background: transparent;
+  color: #909090;
+  border-color: transparent;
+}
+
+.riviera-organizer-reta .omc-footer-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading — skeleton */
+.riviera-organizer-reta .omc-card--loading {
+  pointer-events: none;
+  padding: 16px 12px;
+  gap: 0;
+}
+
+.riviera-organizer-reta .omc-skeleton {
+  height: 16px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--bg-card) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    var(--bg-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  margin-bottom: 10px;
+}
+
+.riviera-organizer-reta .omc-skeleton--wide {
+  width: 70%;
+}
+
+.riviera-organizer-reta .omc-skeleton--short {
+  width: 40%;
+  margin-bottom: 0;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.riviera-organizer-reta .resting-pairs-section {
+  max-width: none !important;
+  margin: 1rem 0 0 !important;
+}

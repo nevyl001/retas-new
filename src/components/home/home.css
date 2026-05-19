@@ -480,7 +480,7 @@
   padding: 0.65rem 0.85rem;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.09);
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.95rem;

@@ -1,5 +1,9 @@
 import React from "react";
-import { TePubMatchStatus } from "./tePubShared";
+import {
+  TePubMatchOutcome,
+  TePubMatchStatus,
+  tePubScoreNumModifier,
+} from "./tePubShared";
 
 export const PublicRetaMatchCard: React.FC<{
   pair1Label: string;
@@ -23,12 +27,16 @@ export const PublicRetaMatchCard: React.FC<{
   status,
   live = false,
   index,
-  winnerLabel,
+  winnerLabel: winnerLabelProp,
   games,
 }) => {
   const played = status === "finished" && hasResult;
   const pair1Wins = played && score1 > score2;
   const pair2Wins = played && score2 > score1;
+  const isTie = played && score1 === score2;
+  const winnerLabel =
+    winnerLabelProp ??
+    (pair1Wins ? pair1Label : pair2Wins ? pair2Label : null);
 
   return (
     <article
@@ -57,17 +65,19 @@ export const PublicRetaMatchCard: React.FC<{
         {hasResult ? (
           <div className="te-pub-score">
             <span
-              className={`te-pub-score__num${
-                pair1Wins ? " te-pub-score__num--win" : ""
-              }`}
+              className={`te-pub-score__num${tePubScoreNumModifier({
+                isWin: pair1Wins,
+                isTie,
+              })}`}
             >
               {score1}
             </span>
             <span className="te-pub-score__sep">—</span>
             <span
-              className={`te-pub-score__num${
-                pair2Wins ? " te-pub-score__num--win" : ""
-              }`}
+              className={`te-pub-score__num${tePubScoreNumModifier({
+                isWin: pair2Wins,
+                isTie,
+              })}`}
             >
               {score2}
             </span>
@@ -97,17 +107,7 @@ export const PublicRetaMatchCard: React.FC<{
         </span>
       </div>
 
-      {winnerLabel && (
-        <div className="te-pub-match-winner">
-          <span className="te-pub-match-winner__icon" aria-hidden>
-            🏆
-          </span>
-          <div className="te-pub-match-winner__body">
-            <span className="te-pub-match-winner__label">Ganador</span>
-            <span className="te-pub-match-winner__name">{winnerLabel}</span>
-          </div>
-        </div>
-      )}
+      <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
 
       {games && games.length > 0 && (
         <div className="te-pub-games">

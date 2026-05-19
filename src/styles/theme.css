@@ -8,14 +8,14 @@
   --bg-base: #000000;
   --bg-primary: #000000;
   --bg-section: #000000;
-  --bg-card: rgba(255, 255, 255, 0.04);
+  --bg-card: rgba(255, 255, 255, 0.08);
   --bg-elevated: #0a0a0a;
   --bg-overlay: #0a0a0a;
   /** Pareja / bloque perdedor en partido */
   --bg-loser: #0a0a0a;
 
   --border-default: rgba(255, 255, 255, 0.1);
-  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-subtle: rgba(255, 255, 255, 0.09);
   --border-strong: rgba(255, 255, 255, 0.18);
 
   --color-gold: #f59e0b;

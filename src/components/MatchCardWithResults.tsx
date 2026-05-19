@@ -9,6 +9,38 @@ import {
 } from "../lib/database";
 import { MatchResultCalculator } from "./MatchResultCalculator";
 
+const PencilIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    aria-hidden
+    focusable="false"
+  >
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+);
+
+const TrophyIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    aria-hidden
+    focusable="false"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M8 21h8" />
+    <path d="M12 17v4" />
+    <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+    <path d="M5 4H3v2a3 3 0 0 0 3 3" />
+    <path d="M19 4h2v2a3 3 0 0 1-3 3" />
+  </svg>
+);
+
 interface MatchCardWithResultsProps {
   match: Match;
   pairs: Pair[]; // Agregado: recibir pairs como prop para evitar cargas redundantes
@@ -434,11 +466,16 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   if (loading) {
     return (
-      <div className="modern-match-card">
-        <div className="modern-loading">
-          <div className="modern-loading-spinner"></div>
-          <p>Cargando...</p>
-        </div>
+      <div
+        className="omc-card omc-card--loading"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="Cargando partido"
+      >
+        <div className="omc-skeleton omc-skeleton--wide" aria-hidden />
+        <div className="omc-skeleton" aria-hidden />
+        <div className="omc-skeleton omc-skeleton--short" aria-hidden />
       </div>
     );
   }
@@ -447,108 +484,110 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     return null;
   }
 
+  const isFinished = currentMatch.status === "finished";
   const winnerLabel = getWinnerLabel();
-  const hasDecisiveWinner =
-    games.length > 0 &&
-    winnerLabel?.type === "winner" &&
-    Boolean(winnerLabel.winnerPairName);
+  const matchWinner = getMatchWinner();
   const pair1DisplayName = getPairName(pair1);
   const pair2DisplayName = getPairName(pair2);
-  const pair1InfoClass = [
-    "modern-pair-info",
-    hasDecisiveWinner
-      ? winnerLabel!.winnerPairName === pair1DisplayName
-        ? "modern-pair-info--winner"
-        : "modern-pair-info--loser"
-      : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const pair2InfoClass = [
-    "modern-pair-info",
-    hasDecisiveWinner
-      ? winnerLabel!.winnerPairName === pair2DisplayName
-        ? "modern-pair-info--winner"
-        : "modern-pair-info--loser"
-      : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const pair1IsWinner = isFinished && matchWinner?.winner === "pair1";
+  const pair2IsWinner = isFinished && matchWinner?.winner === "pair2";
+  const pair1IsLoser = isFinished && matchWinner?.winner === "pair2";
+  const pair2IsLoser = isFinished && matchWinner?.winner === "pair1";
+
+  /** Marcador en fila: puntos del juego (6, 2…), no pair1_score del match (cuenta de sets). */
+  const teamDisplayScores = (() => {
+    if (!isFinished || games.length === 0) {
+      return { score1: null as number | null, score2: null as number | null };
+    }
+    const lastGame = games[games.length - 1];
+    const s1 = lastGame.pair1_games;
+    const s2 = lastGame.pair2_games;
+    if (typeof s1 !== "number" || typeof s2 !== "number") {
+      return { score1: null, score2: null };
+    }
+    return { score1: s1, score2: s2 };
+  })();
+
+  const gamesSummary = games
+    .map(
+      (game, index) =>
+        `J${index + 1}: ${game.pair1_games}–${game.pair2_games}`
+    )
+    .join(", ");
+
+  const stopCardClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+  };
 
   return (
     <div
-      className={`modern-match-card ${isSelected ? "selected" : ""}${
-        currentMatch.status !== "finished" ? " modern-match-card--live" : ""
+      className={`omc-card${isSelected ? " selected" : ""}${
+        isFinished ? " omc-card--done" : " omc-card--live"
       }`}
       onClick={() => onSelect(currentMatch.id)}
     >
-      {/* Header */}
-      <div className="modern-match-header">
-        <h5 className="modern-match-title">
-          {getPairName(pair1)} vs {getPairName(pair2)}
-        </h5>
-        <div
-          className={`modern-match-status ${
-            currentMatch.status === "finished" ? "finished" : "active"
-          }`}
-        >
-          {currentMatch.status === "finished" ? "FINALIZADO" : "EN CURSO"}
+      <header className="omc-header" onClick={stopCardClick}>
+        <div className="omc-header__top">
+          <h5 className="omc-match-title">
+            <span className="omc-match-title__line">{pair1DisplayName}</span>
+            <span className="omc-match-title__vs">vs</span>
+            <span className="omc-match-title__line">{pair2DisplayName}</span>
+          </h5>
+          <span
+            className={`omc-status ${
+              isFinished ? "omc-status--done" : "omc-status--live"
+            }`}
+          >
+            {isFinished ? "FINALIZADO" : "EN CURSO"}
+          </span>
         </div>
-      </div>
 
-      <div
-        className="modern-match-badges-row"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="modern-match-badges">
-          <span className="modern-match-badge">
-            <span className="modern-badge-icon">🎾</span>
-            Cancha {currentMatch.court}
-          </span>
-          <span className="modern-match-badge">
-            <span className="modern-badge-icon">🔄</span>
-            Ronda {currentMatch.round || 1}
-          </span>
+        <div className="omc-header__meta">
+          <div className="omc-pills">
+            <span className="omc-pill">Cancha {currentMatch.court}</span>
+            <span className="omc-pill">Ronda {currentMatch.round || 1}</span>
+          </div>
+          {!isEditingMeta ? (
+            <button
+              type="button"
+              className="omc-pencil-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                openMetaEditor();
+              }}
+              title="Editar cancha y ronda"
+              aria-label="Editar cancha y ronda"
+              disabled={metaSaving}
+            >
+              <PencilIcon className="omc-pencil-icon" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="omc-pencil-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                cancelMetaEdit();
+              }}
+              title="Cerrar sin guardar"
+              aria-label="Cerrar edición de cancha y ronda"
+              disabled={metaSaving}
+            >
+              ×
+            </button>
+          )}
         </div>
-        {!isEditingMeta ? (
-          <button
-            type="button"
-            className="modern-meta-pencil-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              openMetaEditor();
-            }}
-            title="Editar cancha y ronda"
-            aria-label="Editar cancha y ronda"
-            disabled={loading || metaSaving}
-          >
-            ✏️
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="modern-meta-pencil-btn modern-meta-pencil-btn--close"
-            onClick={(e) => {
-              e.stopPropagation();
-              cancelMetaEdit();
-            }}
-            title="Cerrar sin guardar"
-            aria-label="Cerrar edición de cancha y ronda"
-            disabled={metaSaving}
-          >
-            ✕
-          </button>
-        )}
-      </div>
+
+        <hr className="omc-header__rule" />
+      </header>
 
       {isEditingMeta && (
         <div
-          className="modern-match-meta-inline"
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
+          className="omc-meta-editor"
+          onClick={stopCardClick}
         >
-          <div className="modern-meta-inline-fields">
-            <label className="modern-meta-inline-label">
+          <div className="omc-meta-editor__fields">
+            <label className="omc-meta-editor__field">
               <span>Cancha</span>
               <input
                 type="number"
@@ -556,11 +595,10 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                 max={courtEditCap}
                 value={courtInput}
                 onChange={(e) => setCourtInput(e.target.value)}
-                className="modern-meta-inline-input"
                 aria-label="Número de cancha"
               />
             </label>
-            <label className="modern-meta-inline-label">
+            <label className="omc-meta-editor__field">
               <span>Ronda</span>
               <input
                 type="number"
@@ -568,27 +606,26 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                 max={999}
                 value={roundInput}
                 onChange={(e) => setRoundInput(e.target.value)}
-                className="modern-meta-inline-input"
                 aria-label="Número de ronda"
               />
             </label>
           </div>
-          <div className="modern-meta-inline-actions">
+          <div className="omc-meta-editor__actions">
             <button
               type="button"
-              className="modern-meta-inline-save"
+              className="omc-meta-save"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 saveCourtAndRound();
               }}
-              disabled={metaSaving || loading}
+              disabled={metaSaving}
             >
-              {metaSaving ? "⏳…" : "💾 Guardar"}
+              {metaSaving ? "Guardando…" : "Guardar"}
             </button>
             <button
               type="button"
-              className="modern-meta-inline-cancel"
+              className="omc-meta-cancel"
               onClick={(e) => {
                 e.stopPropagation();
                 cancelMetaEdit();
@@ -601,228 +638,248 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         </div>
       )}
 
-      {/* Parejas */}
-      <div className="modern-match-pairs">
-        <div className={pair1InfoClass}>
-          <span className="modern-pair-label">Pareja 1:</span>
-          <span className="modern-pair-names">{getPairName(pair1)}</span>
-        </div>
-        <div className={pair2InfoClass}>
-          <span className="modern-pair-label">Pareja 2:</span>
-          <span className="modern-pair-names">{getPairName(pair2)}</span>
-        </div>
-      </div>
-
-      {/* Etiqueta del Ganador */}
-      {games.length > 0 && winnerLabel && (
-        <div className="modern-winner-label">
-          <div
-            className={`modern-winner-badge modern-winner-${winnerLabel.type}`}
-          >
-            <span className="modern-winner-icon">{winnerLabel.icon}</span>
-            {winnerLabel.type === "winner" && winnerLabel.winnerPairName ? (
-              <>
-                <span className="modern-winner-tag">GANADOR</span>
-                <span className="modern-winner-name">
-                  {winnerLabel.winnerPairName}
-                </span>
-              </>
-            ) : (
-              <span className="modern-winner-text">{winnerLabel.text}</span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Resultados */}
-      {games.length > 0 && (
-        <div className="modern-games-results">
-          <h6 className="modern-games-title">Juegos:</h6>
-          <div className="modern-games-grid">
-            {games.map((game, index) => (
-              <div key={game.id} className="modern-game-result">
-                <span className="modern-game-number">J{index + 1}:</span>
-                <span className="modern-game-score">
-                  {game.pair1_games}-{game.pair2_games}
-                </span>
+      <div className="omc-body">
+        {isFinished ? (
+          <>
+            <div
+              className={`omc-team-row${
+                pair1IsWinner
+                  ? " omc-team-row--winner"
+                  : pair1IsLoser
+                    ? " omc-team-row--loser"
+                    : ""
+              }`}
+            >
+              <div className="omc-team-row__info">
+                <span className="omc-team-label">Pareja 1</span>
+                <span className="omc-team-name">{pair1DisplayName}</span>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Editor */}
-      {isEditing && (
-        <div className="modern-match-editor">
-          <div className="modern-editor-content">
-            {/* Registrar Resultado */}
-            <div className="modern-add-game-section">
-              <h6 className="modern-add-game-title">📝 Registrar Resultado</h6>
-              <div className="modern-score-inputs">
-                <div className="modern-score-input-group">
-                  <label className="modern-score-label">
-                    {getPairName(pair1)}
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="7"
-                    value={pair1Score}
-                    onChange={(e) => setPair1Score(e.target.value)}
-                    className="modern-score-input"
-                    onClick={(e) => e.stopPropagation()}
-                    placeholder="0"
-                  />
-                </div>
-                <span className="modern-score-separator">vs</span>
-                <div className="modern-score-input-group">
-                  <label className="modern-score-label">
-                    {getPairName(pair2)}
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="7"
-                    value={pair2Score}
-                    onChange={(e) => setPair2Score(e.target.value)}
-                    className="modern-score-input"
-                    onClick={(e) => e.stopPropagation()}
-                    placeholder="0"
-                  />
-                </div>
+              {teamDisplayScores.score1 != null ? (
+                <span className="omc-team-score">{teamDisplayScores.score1}</span>
+              ) : null}
+            </div>
+            <div
+              className={`omc-team-row${
+                pair2IsWinner
+                  ? " omc-team-row--winner"
+                  : pair2IsLoser
+                    ? " omc-team-row--loser"
+                    : ""
+              }`}
+            >
+              <div className="omc-team-row__info">
+                <span className="omc-team-label">Pareja 2</span>
+                <span className="omc-team-name">{pair2DisplayName}</span>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  addGame();
-                }}
-                onTouchStart={(e) => {
-                  e.stopPropagation();
-                }}
-                onTouchEnd={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  addGame();
-                }}
-                className="modern-add-game-btn"
-                disabled={loading}
-              >
-                ➕ Agregar Juego
-              </button>
+              {teamDisplayScores.score2 != null ? (
+                <span className="omc-team-score">{teamDisplayScores.score2}</span>
+              ) : null}
             </div>
 
-            {/* Eliminar juegos */}
-            {games.length > 0 && (
-              <div className="modern-games-list">
-                <h6 className="modern-games-list-title">🗑️ Eliminar Juegos</h6>
-                {games.map((game, index) => (
-                  <div key={game.id} className="modern-game-item">
-                    <span className="modern-game-info">
-                      J{index + 1}: {game.pair1_games}-{game.pair2_games}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        removeGame(game.id);
-                      }}
-                      onTouchStart={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onTouchEnd={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        removeGame(game.id);
-                      }}
-                      className="modern-delete-game-btn"
-                      disabled={loading}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                ))}
+            {winnerLabel?.type === "winner" && winnerLabel.winnerPairName && (
+              <div className="omc-winner-bar">
+                <TrophyIcon className="omc-winner-bar__icon" />
+                <div className="omc-winner-bar__text">
+                  <span className="omc-winner-bar__tag">Ganador</span>
+                  <span className="omc-winner-bar__name">
+                    {winnerLabel.winnerPairName}
+                  </span>
+                </div>
               </div>
             )}
 
-            {/* Botones de acción */}
-            {currentMatch.status !== "finished" ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  finishMatch();
-                }}
-                onTouchStart={(e) => {
-                  e.stopPropagation();
-                }}
-                onTouchEnd={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  finishMatch();
-                }}
-                className="modern-finish-match-btn"
-                disabled={loading}
-              >
-                🏆 Finalizar Partido
-              </button>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  reopenMatch();
-                }}
-                className="modern-reopen-match-btn"
-                disabled={loading}
-              >
-                🔄 Reabrir Partido
-              </button>
+            {games.length > 0 && (
+              <p className="omc-games-line">
+                <span className="omc-games-line__label">Juegos:</span>
+                {gamesSummary}
+              </p>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="modern-error">
-          <span className="error-icon">⚠️</span>
-          {error}
-        </div>
-      )}
-
-      {/* Acciones */}
-      <div className="modern-match-actions">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            refreshFromServer();
-          }}
-          onTouchStart={(e) => {
-            e.stopPropagation();
-          }}
-          onTouchEnd={async (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            await refreshFromServer();
-          }}
-          className="modern-match-btn modern-refresh-btn"
-          title="Actualizar datos"
-          disabled={loading}
-        >
-          🔄 Actualizar
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsEditing(!isEditing);
-          }}
-          className="modern-match-btn modern-edit-btn"
-          title="Editar marcador"
-        >
-          {isEditing ? "❌ Cerrar" : "✏️ Editar"}
-        </button>
+          </>
+        ) : (
+          <>
+            <div className="omc-team-row omc-team-row--pending">
+              <div className="omc-team-row__info">
+                <span className="omc-team-label">Pareja 1</span>
+                <span className="omc-team-name">{pair1DisplayName}</span>
+              </div>
+            </div>
+            <span className="omc-vs-divider">vs</span>
+            <div className="omc-team-row omc-team-row--pending">
+              <div className="omc-team-row__info">
+                <span className="omc-team-label">Pareja 2</span>
+                <span className="omc-team-name">{pair2DisplayName}</span>
+              </div>
+            </div>
+          </>
+        )}
       </div>
+
+      {isEditing && (
+        <>
+          <section className="omc-register" onClick={stopCardClick}>
+            <h6 className="omc-register__label">Registrar resultado</h6>
+            <div className="omc-register__scores">
+              <input
+                type="number"
+                min={0}
+                max={7}
+                value={pair1Score}
+                onChange={(e) => setPair1Score(e.target.value)}
+                className="omc-register__input"
+                onClick={stopCardClick}
+                placeholder="0"
+                aria-label={`Puntos ${pair1DisplayName}`}
+              />
+              <span className="omc-register__vs">vs</span>
+              <input
+                type="number"
+                min={0}
+                max={7}
+                value={pair2Score}
+                onChange={(e) => setPair2Score(e.target.value)}
+                className="omc-register__input"
+                onClick={stopCardClick}
+                placeholder="0"
+                aria-label={`Puntos ${pair2DisplayName}`}
+              />
+            </div>
+            <div className="omc-register__actions">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  addGame();
+                }}
+                onTouchStart={stopCardClick}
+                onTouchEnd={(e) => {
+                  stopCardClick(e);
+                  e.preventDefault();
+                  addGame();
+                }}
+                className="omc-btn-add"
+                disabled={loading}
+              >
+                Agregar juego
+              </button>
+              {!isFinished ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    finishMatch();
+                  }}
+                  onTouchStart={stopCardClick}
+                  onTouchEnd={(e) => {
+                    stopCardClick(e);
+                    e.preventDefault();
+                    finishMatch();
+                  }}
+                  className="omc-btn-finish"
+                  disabled={loading}
+                >
+                  Finalizar partido
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    reopenMatch();
+                  }}
+                  className="omc-btn-reopen"
+                  disabled={loading}
+                >
+                  Reabrir partido
+                </button>
+              )}
+            </div>
+          </section>
+
+          {games.length > 0 && (
+            <section className="omc-delete-games" onClick={stopCardClick}>
+              <span className="omc-delete-games__label">Eliminar juegos</span>
+              {games.map((game, index) => (
+                <div key={game.id} className="omc-delete-games__item">
+                  <span>
+                    J{index + 1}: {game.pair1_games}–{game.pair2_games}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      removeGame(game.id);
+                    }}
+                    onTouchStart={stopCardClick}
+                    onTouchEnd={(e) => {
+                      stopCardClick(e);
+                      e.preventDefault();
+                      removeGame(game.id);
+                    }}
+                    className="omc-btn-delete-game"
+                    disabled={loading}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              ))}
+            </section>
+          )}
+        </>
+      )}
+
+      {error && <div className="omc-error">{error}</div>}
+
+      <footer className="omc-footer" onClick={stopCardClick}>
+        {isEditing ? (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                refreshFromServer();
+              }}
+              onTouchStart={stopCardClick}
+              onTouchEnd={async (e) => {
+                stopCardClick(e);
+                e.preventDefault();
+                await refreshFromServer();
+              }}
+              className="omc-footer-btn"
+              title="Actualizar datos"
+              disabled={loading}
+            >
+              Actualizar
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(false);
+                setError(null);
+              }}
+              className="omc-footer-btn omc-footer-btn--ghost"
+            >
+              Cancelar
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+            }}
+            className="omc-footer-btn"
+            title="Editar marcador"
+          >
+            Editar
+          </button>
+        )}
+      </footer>
     </div>
   );
 };

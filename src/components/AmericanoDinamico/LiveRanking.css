@@ -1,34 +1,80 @@
 .americano-ranking {
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
-  border-radius: 12px;
-  padding: 16px;
-  background: var(--color-bg-surface, #181818);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  background: var(--bg-card);
+  margin-bottom: 16px;
+  animation: fadeInUp var(--motion-enter) both;
 }
 
 .americano-ranking h3 {
   margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+  line-height: 1.1;
 }
 
 .americano-ranking__caption {
   margin: 0 0 12px;
-  font-size: 13px;
-  color: var(--color-text-secondary, #b8b8b8);
-  line-height: 1.4;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+  line-height: 1.35;
 }
 
-.americano-ranking table {
+.americano-ranking .tabla-ranking {
   width: 100%;
   border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 14px;
 }
 
-.americano-ranking th,
-.americano-ranking td {
+.americano-ranking .tabla-ranking th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-weight: 500;
   text-align: left;
-  padding: 8px;
-  border-bottom: 1px solid var(--color-border-subtle, #2f2f2f);
+}
+
+.americano-ranking .tabla-ranking td {
+  padding: 12px 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+}
+
+.americano-ranking .tabla-ranking tbody tr:first-child td {
+  color: var(--text-primary);
+}
+
+.americano-ranking .tabla-ranking tbody tr:first-child td:first-child,
+.americano-ranking tr.americano-ranking__leader td:first-child,
+.americano-ranking tr.americano-ranking__leader .col-pos {
+  border-left: 3px solid var(--accent-gold);
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.americano-ranking tr.americano-ranking__leader td {
+  color: var(--text-primary);
 }
 
 .americano-ranking__leader {
-  background: rgba(255, 214, 0, 0.15);
-  font-weight: 700;
+  background: transparent;
+  font-weight: inherit;
+}
+
+.americano-ranking .col-pos {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  width: 40px;
 }

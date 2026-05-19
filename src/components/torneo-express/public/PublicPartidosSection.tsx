@@ -5,23 +5,29 @@ import type {
   TorneoExpressGrupoPareja,
   TorneoExpressPartido,
 } from "../../../lib/torneoExpress/types";
-import { TePubMatchStatus } from "../../public/tePubShared";
+import {
+  TePubMatchOutcome,
+  TePubMatchStatus,
+  tePubScoreNumModifier,
+} from "../../public/tePubShared";
 import { useCountUp } from "./useCountUp";
 import "../../public/riviera-public-americano.css";
 
 function AnimatedScore({
   value,
-  highlight,
+  isWin,
+  isTie,
   animate,
 }: {
   value: number;
-  highlight: boolean;
+  isWin: boolean;
+  isTie: boolean;
   animate: boolean;
 }) {
   const displayed = useCountUp(value, { enabled: animate });
   return (
     <span
-      className={`te-pub-score__num${highlight ? " te-pub-score__num--win" : ""}`}
+      className={`te-pub-score__num${tePubScoreNumModifier({ isWin, isTie })}`}
     >
       {displayed}
     </span>
@@ -46,6 +52,12 @@ function TePublicMatchCard({
   const pv = partido.puntos_visitante ?? 0;
   const localWins = played && pl > pv;
   const visitWins = played && pv > pl;
+  const isTie = played && pl === pv;
+  const winnerLabel = localWins
+    ? localLabel
+    : visitWins
+      ? visitLabel
+      : null;
 
   return (
     <article
@@ -67,9 +79,19 @@ function TePublicMatchCard({
       <div className="te-pub-match__score-block">
         {played ? (
           <div className="te-pub-score">
-            <AnimatedScore value={pl} highlight={localWins} animate={played} />
+            <AnimatedScore
+              value={pl}
+              isWin={localWins}
+              isTie={isTie}
+              animate={played}
+            />
             <span className="te-pub-score__sep">—</span>
-            <AnimatedScore value={pv} highlight={visitWins} animate={played} />
+            <AnimatedScore
+              value={pv}
+              isWin={visitWins}
+              isTie={isTie}
+              animate={played}
+            />
           </div>
         ) : (
           <span className="te-pub-score te-pub-score--pending">—</span>
@@ -93,6 +115,8 @@ function TePublicMatchCard({
           {visitLabel}
         </span>
       </div>
+
+      <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
     </article>
   );
 }

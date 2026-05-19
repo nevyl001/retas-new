@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
+import "./AdminRoute.css";
 
 interface AdminRouteProps {
   children: React.ReactNode;

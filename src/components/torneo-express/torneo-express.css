@@ -1,15 +1,15 @@
 /* Torneo Express — base (Riviera Gold vía riviera-torneo-express.css) */
 .torneo-express-page {
   --te-bg: var(--bg-base, #000000);
-  --te-card: var(--bg-card, rgba(255, 255, 255, 0.04));
+  --te-card: var(--bg-card, rgba(255, 255, 255, 0.08));
   --te-border: var(--border-subtle, rgba(255, 255, 255, 0.07));
   --te-gold: var(--accent-gold, #d4af37);
   --te-gold-bright: var(--accent-gold, #d4af37);
   --te-gold-light: var(--accent-gold-light, #f0d060);
   --te-text: var(--text-primary, #f0f0f0);
-  --te-muted: var(--text-secondary, #9a9a9a);
+  --te-muted: var(--text-secondary, #c0c0c0);
   --te-panel: var(--bg-base, #000000);
-  --te-input-bg: rgba(255, 255, 255, 0.05);
+  --te-input-bg: rgba(255, 255, 255, 0.09);
   min-height: 100vh;
   background: var(--te-bg);
   color: var(--te-text);
@@ -663,7 +663,7 @@
 }
 
 .te-partido-status--pendiente {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.08);
   color: #888;
 }
 
@@ -1408,7 +1408,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #555;
+  color: #888888;
 }
 
 .te-torneo-card__estado--live {
@@ -1468,13 +1468,13 @@
 }
 
 .te-torneo-btn--outline {
-  border: 1px solid #444;
+  border: 1px solid #707070;
   color: #fff;
 }
 
 .te-torneo-btn--outline:hover:not(:disabled) {
-  border-color: #666;
-  background: rgba(255, 255, 255, 0.04);
+  border-color: #909090;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .te-torneo-btn--danger-outline {
@@ -1551,7 +1551,7 @@
   display: flex;
   align-items: center;
   margin: 2rem 0 1.5rem;
-  color: #444;
+  color: #707070;
   font-size: 13px;
   text-align: center;
 }
@@ -1570,13 +1570,13 @@
 }
 
 .torneo-express-btn--outline {
-  border: 1px solid #444;
+  border: 1px solid #707070;
   color: #fff;
   background: transparent;
 }
 
 .torneo-express-btn--outline:hover:not(:disabled) {
-  border-color: #666;
+  border-color: #909090;
 }
 
 /* Panel resultados expandible */

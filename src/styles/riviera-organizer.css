@@ -1,0 +1,4 @@
+/* Organizer-only styles (reta / partidos). Loaded from MainLayout, not index.css. */
+@import "./riviera-app-surfaces.css";
+@import "./riviera-organizer-reta.css";
+@import "./riviera-organizer-matches.css";

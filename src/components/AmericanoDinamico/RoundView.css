@@ -1,8 +1,8 @@
 .americano-round {
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
-  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   padding: 16px;
-  background: var(--color-bg-surface, #181818);
+  background: var(--bg-card);
 }
 
 .americano-round__header {
@@ -10,25 +10,33 @@
 }
 
 .americano-round__header h3 {
-  margin: 0 0 4px;
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--accent-gold);
+  letter-spacing: 0.03em;
+  line-height: 1.1;
 }
 
 .americano-round__phase {
   display: inline-block;
+  font-family: var(--font-body);
   font-size: 13px;
   padding: 4px 10px;
-  border-radius: 6px;
-  background: rgba(255, 214, 0, 0.12);
-  color: #ffd600;
-  border: 1px solid rgba(255, 214, 0, 0.35);
+  border-radius: var(--radius-sm);
+  background: var(--accent-gold-dim);
+  color: var(--accent-gold);
+  border: 1px solid var(--border-accent);
   line-height: 1.25;
   max-width: 100%;
 }
 
 .americano-round__hint {
   margin: 10px 0 0;
+  font-family: var(--font-body);
   font-size: 13px;
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
@@ -52,11 +60,18 @@
 }
 
 .americano-match-card {
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
-  border-radius: 12px;
-  padding: 12px;
-  background: var(--color-bg-elevated, #121212);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  transition: border-color var(--motion-micro), background var(--motion-micro);
+  animation: fadeInUp var(--motion-enter) both;
+  animation-delay: calc(var(--motion-stagger) * var(--i, 0));
+}
+
+.americano-match-card:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-card-hover);
 }
 
 .americano-match-card__top {
@@ -71,24 +86,26 @@
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #ffd600;
-  border: 1px solid rgba(255, 214, 0, 0.45);
+  color: var(--accent-gold);
+  border: 1px solid var(--border-accent);
   padding: 5px 14px;
-  border-radius: 999px;
-  background: rgba(255, 214, 0, 0.08);
+  border-radius: var(--radius-full);
+  background: var(--accent-gold-dim);
 }
 
 .americano-match-card__edit-link {
   background: transparent;
   border: none;
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--text-muted);
   cursor: pointer;
+  font-family: var(--font-body);
   font-size: 13px;
   text-decoration: underline;
+  transition: color var(--motion-micro);
 }
 
 .americano-match-card__edit-link:hover {
-  color: #ffd600;
+  color: var(--accent-gold);
 }
 
 .americano-match-card__teams {
@@ -103,6 +120,25 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 3px solid transparent;
+}
+
+.americano-match-card__team--winner {
+  border-left-color: var(--accent-gold);
+  background: var(--accent-gold-dim);
+  color: var(--accent-gold-light);
+}
+
+.americano-match-card__team--winner .americano-match-card__team-label,
+.americano-match-card__team--winner strong {
+  color: var(--accent-gold-light);
 }
 
 .americano-match-card__team-label {
@@ -110,20 +146,31 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--text-muted);
 }
 
 .americano-match-card__team strong {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1.3;
-  color: var(--color-text-primary, #fff);
+  color: var(--text-primary);
 }
 
 .americano-match-card__vs {
   font-size: 12px;
-  opacity: 0.65;
+  color: var(--text-muted);
   text-align: center;
+}
+
+.americano-match-card__score {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--accent-gold-light);
+}
+
+.americano-match-card__score--loser {
+  color: var(--text-muted);
 }
 
 .americano-match-card__scores {
@@ -133,7 +180,7 @@
 }
 
 .americano-match-card__scores--editing {
-  outline: 1px solid rgba(255, 214, 0, 0.45);
+  outline: 1px solid var(--border-accent);
   border-radius: 8px;
   padding: 8px;
 }
@@ -142,32 +189,44 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  font-family: var(--font-body);
   font-size: 14px;
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--text-secondary);
 }
 
 .americano-match-card__score-field input {
   border-radius: 8px;
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
-  background: var(--color-bg-surface, #181818);
-  color: var(--color-text-primary, #fff);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--accent-gold-light);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
   padding: 8px 10px;
   width: 100%;
+  transition: border-color var(--motion-micro);
+}
+
+.americano-match-card__score-field input:focus {
+  outline: none;
+  border-color: var(--border-accent);
 }
 
 .americano-round__bench.card-like {
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
-  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   padding: 12px;
-  background: var(--color-bg-elevated, #121212);
+  background: var(--bg-elevated);
   margin-bottom: 14px;
 }
 
 .americano-round__bench h4 {
   margin: 0 0 8px;
+  font-family: var(--font-display);
   font-size: 15px;
-  font-weight: 600;
-  color: #e8dcc8;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
 }
 
 .americano-round__bench-list {
@@ -177,17 +236,17 @@
 }
 
 .americano-round__bench-empty {
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--text-muted);
   font-size: 14px;
 }
 
 .americano-round__bench-player {
   display: inline-block;
   padding: 6px 14px;
-  border-radius: 6px;
-  background: #1e1e1e;
-  border: 0.5px solid #333;
-  color: #aaa;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
 }
@@ -200,11 +259,16 @@
 }
 
 .americano-round-btn {
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  padding: 8px 18px;
   cursor: pointer;
-  border: 1px solid transparent;
+  transition: all var(--motion-micro);
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
 }
 
 .americano-round-btn:disabled {
@@ -213,20 +277,31 @@
 }
 
 .americano-round-btn--primary {
-  background: var(--color-accent, #ffd600);
-  color: #111;
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+  background: transparent;
+}
+
+.americano-round-btn--primary:hover:not(:disabled) {
+  background: var(--accent-gold-dim);
 }
 
 .americano-round-btn--secondary {
-  background: var(--color-bg-elevated, #121212);
-  color: var(--color-text-primary, #fff);
-  border-color: var(--color-border-subtle, #2f2f2f);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.americano-round-btn--secondary:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--border-accent);
 }
 
 .americano-round__footer-hint {
   margin: 10px 0 0;
+  font-family: var(--font-body);
   font-size: 13px;
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--text-muted);
 }
 
 @media (max-width: 768px) {
@@ -240,5 +315,9 @@
 
   .americano-match-card__score-field {
     font-size: 15px;
+  }
+
+  .americano-match-card__score-field input {
+    font-size: 1.75rem;
   }
 }

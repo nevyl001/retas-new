@@ -38,3 +38,48 @@ export function TePubMatchStatus({
   }
   return <span className="te-pub-status te-pub-status--pending">Pendiente</span>;
 }
+
+export function tePubScoreNumModifier(options: {
+  isWin?: boolean;
+  isTie?: boolean;
+}): string {
+  if (options.isWin) return " te-pub-score__num--win";
+  if (options.isTie) return " te-pub-score__num--tie";
+  return "";
+}
+
+export function TePubMatchOutcome({
+  winnerLabel,
+  isTie = false,
+}: {
+  winnerLabel?: string | null;
+  isTie?: boolean;
+}) {
+  if (winnerLabel) {
+    return (
+      <div className="te-pub-match-winner">
+        <span className="te-pub-match-winner__icon" aria-hidden>
+          🏆
+        </span>
+        <div className="te-pub-match-winner__body">
+          <span className="te-pub-match-winner__label">Ganador</span>
+          <span className="te-pub-match-winner__name">{winnerLabel}</span>
+        </div>
+      </div>
+    );
+  }
+  if (isTie) {
+    return (
+      <div className="te-pub-match-winner te-pub-match-winner--tie">
+        <span className="te-pub-match-winner__icon" aria-hidden>
+          ⇄
+        </span>
+        <div className="te-pub-match-winner__body">
+          <span className="te-pub-match-winner__label">Empate</span>
+          <span className="te-pub-match-winner__name">Marcador igualado</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+}

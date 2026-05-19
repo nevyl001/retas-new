@@ -72,13 +72,24 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
           Object.entries(matchesByRound).map(([round, roundMatches]) => (
             <div key={round} className="round-section-simplified">
               <div className="round-header-simplified">
-                <h4>Ronda {round}</h4>
-                <span>{roundMatches.length} partidos</span>
+                <div className="round-header-simplified__left">
+                  <h4 className="round-header-simplified__title">
+                    <span className="round-header-simplified__label">Ronda</span>
+                    <span className="round-header-simplified__num">{round}</span>
+                  </h4>
+                  <div className="round-header-simplified__line" aria-hidden />
+                </div>
+                <span className="round-header-simplified__count">
+                  {roundMatches.length} partidos
+                </span>
               </div>
               <div className="matches-grid-simplified">
-                {roundMatches.map((match) => (
-                  <MatchCardWithResults
+                {roundMatches.map((match, matchIdx) => (
+                  <div
                     key={match.id}
+                    style={{ "--i": matchIdx } as React.CSSProperties}
+                  >
+                  <MatchCardWithResults
                     match={match}
                     pairs={pairs}
                     maxCourts={Math.max(1, tournament.courts || 1)}
@@ -99,6 +110,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                     forceRefresh={forceRefresh}
                     userId={userId}
                   />
+                  </div>
                 ))}
               </div>
               

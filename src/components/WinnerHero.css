@@ -38,7 +38,7 @@
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(212, 175, 55, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .winner-hero__names {
@@ -55,7 +55,7 @@
   margin: 0;
   font-size: 16px;
   font-weight: 500;
-  color: var(--text-secondary, #9a9a9a);
+  color: var(--text-secondary, #c0c0c0);
   font-style: normal;
   letter-spacing: 0.02em;
   max-width: 32rem;

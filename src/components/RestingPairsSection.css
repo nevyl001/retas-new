@@ -51,7 +51,7 @@
 
 .resting-pair-card:hover {
   background: #252525;
-  border-color: #444;
+  border-color: #707070;
   transform: translateY(-1px);
   box-shadow: var(--shadow-soft);
 }

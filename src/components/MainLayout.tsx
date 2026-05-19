@@ -1,4 +1,5 @@
 import React from "react";
+import "../styles/riviera-organizer.css";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { continueTournament } from "../lib/tournamentRouting";
 import { TournamentWinner } from "./TournamentWinnerCalculator";

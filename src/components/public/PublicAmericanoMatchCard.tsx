@@ -1,5 +1,9 @@
 import React from "react";
 import type { AmericanoSnapshotMatch } from "../../lib/americanoDinamicoStorage";
+import {
+  TePubMatchOutcome,
+  tePubScoreNumModifier,
+} from "./tePubShared";
 
 function MatchStatus({ played, live }: { played: boolean; live: boolean }) {
   if (played) {
@@ -29,6 +33,12 @@ export const PublicAmericanoMatchCard: React.FC<{
     typeof m.scoreA === "number" && typeof m.scoreB === "number";
   const aWins = played && (m.scoreA as number) > (m.scoreB as number);
   const bWins = played && (m.scoreB as number) > (m.scoreA as number);
+  const isTie = played && (m.scoreA as number) === (m.scoreB as number);
+  const winnerLabel = aWins
+    ? `${m.teamA[0].name} / ${m.teamA[1].name}`
+    : bWins
+      ? `${m.teamB[0].name} / ${m.teamB[1].name}`
+      : null;
 
   return (
     <article
@@ -49,13 +59,13 @@ export const PublicAmericanoMatchCard: React.FC<{
         {played ? (
           <div className="te-pub-score">
             <span
-              className={`te-pub-score__num${aWins ? " te-pub-score__num--win" : ""}`}
+              className={`te-pub-score__num${tePubScoreNumModifier({ isWin: aWins, isTie })}`}
             >
               {m.scoreA}
             </span>
             <span className="te-pub-score__sep">—</span>
             <span
-              className={`te-pub-score__num${bWins ? " te-pub-score__num--win" : ""}`}
+              className={`te-pub-score__num${tePubScoreNumModifier({ isWin: bWins, isTie })}`}
             >
               {m.scoreB}
             </span>
@@ -76,6 +86,8 @@ export const PublicAmericanoMatchCard: React.FC<{
           {m.teamB[0].name} / {m.teamB[1].name}
         </span>
       </div>
+
+      <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
     </article>
   );
 };
