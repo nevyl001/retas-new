@@ -17,6 +17,10 @@ import {
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
 import { PublicAmericanoStandingsSection } from "./public/PublicAmericanoStandingsSection";
+import {
+  PublicRivieraCelebrateBrand,
+  PublicRivieraCelebrateClosing,
+} from "./public/PublicRivieraCelebrateBrand";
 import "./public/riviera-public-americano.css";
 
 const POLL_MS = 4000;
@@ -314,14 +318,22 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
 
           {showFinishedPodium && (
             <section
-              className="te-public-section te-public-podium te-pub-fade-in"
-              aria-label="Podio final"
+              className="te-public-section ro-pub-celebrate ro-pub-celebrate--podium te-pub-fade-in"
+              aria-label="Podio final Riviera Open"
             >
-              <p className="te-public-podium__badge">Americano finalizado</p>
-              <h2 className="te-public-podium__title">
-                Felicidades a los 3 primeros lugares
-              </h2>
-              <div className="te-public-podium__grid">
+              <div className="ro-pub-celebrate__inner">
+                <PublicRivieraCelebrateBrand />
+                <div className="ro-divider-gold" aria-hidden />
+                <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
+                <p className="ro-pub-celebrate__riviera-line">Riviera Open</p>
+                <p className="te-public-podium__badge">Americano finalizado</p>
+                <h3 className="te-public-podium__title">
+                  Los 3 primeros lugares
+                </h3>
+                <p className="ro-pub-celebrate__motivational">
+                  Así se juega en Riviera.
+                </p>
+                <div className="te-public-podium__grid">
                 {snapshot.ranking[0] && (
                   <article
                     data-rank="1"
@@ -336,7 +348,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                 {snapshot.ranking[1] && (
                   <article
                     data-rank="2"
-                    className="te-public-podium__card te-pub-fade-in-up"
+                    className="te-public-podium__card te-public-podium__card--silver te-pub-fade-in-up"
                     style={{ animationDelay: "0.08s" }}
                   >
                     <span className="te-public-podium__place">2do lugar</span>
@@ -348,7 +360,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                 {snapshot.ranking[2] && (
                   <article
                     data-rank="3"
-                    className="te-public-podium__card te-pub-fade-in-up"
+                    className="te-public-podium__card te-public-podium__card--bronze te-pub-fade-in-up"
                     style={{ animationDelay: "0.12s" }}
                   >
                     <span className="te-public-podium__place">3er lugar</span>
@@ -357,6 +369,10 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                     </span>
                   </article>
                 )}
+                </div>
+                <PublicRivieraCelebrateClosing
+                  torneoNombre={tournamentName ?? undefined}
+                />
               </div>
             </section>
           )}

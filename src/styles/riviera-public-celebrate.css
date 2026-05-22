@@ -1,0 +1,294 @@
+/* Celebración pública compartida — Round Robin, Americano, etc. */
+
+.ro-divider-gold {
+  width: 48px;
+  height: 1px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, transparent, #e8c547, transparent);
+  opacity: 0.6;
+}
+
+.ro-divider-gold--wide {
+  width: 60px;
+}
+
+.ro-pub-celebrate {
+  position: relative;
+  margin: 0 0 2rem;
+  border-radius: var(--radius-lg);
+  background: var(--riviera-bg-base, #1c1c1e);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.ro-pub-celebrate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  z-index: 0;
+}
+
+.ro-pub-celebrate::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(232, 197, 71, 0.55) 0%,
+    rgba(232, 197, 71, 0.12) 35%,
+    transparent 55%,
+    rgba(232, 197, 71, 0.2) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ro-pub-celebrate__inner {
+  position: relative;
+  z-index: 1;
+  padding: clamp(1.5rem, 4vw, 2.75rem) clamp(1.25rem, 4vw, 2rem)
+    clamp(1.25rem, 4vw, 2rem);
+  text-align: center;
+  background: radial-gradient(
+    ellipse 60% 40% at 50% 38%,
+    rgba(232, 197, 71, 0.08) 0%,
+    transparent 70%
+  );
+}
+
+.ro-pub-celebrate__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.ro-pub-celebrate__brand .ro-divider-gold--wide {
+  margin: 0;
+}
+
+.ro-pub-celebrate__wordmark {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem 0.5rem;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  opacity: 0.7;
+}
+
+.ro-pub-celebrate__wordmark-sep {
+  letter-spacing: 0;
+  opacity: 0.85;
+}
+
+.ro-pub-celebrate__brand-tagline {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ro-pub-celebrate__inner > .ro-divider-gold {
+  margin-bottom: 1rem;
+}
+
+.ro-pub-celebrate__headline {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 10vw, 3.25rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+.ro-pub-celebrate__riviera-line {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: clamp(0.75rem, 2.5vw, 0.875rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(232, 197, 71, 0.75);
+}
+
+.ro-pub-celebrate__names {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(1.25rem, 4.5vw, 1.75rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+.ro-pub-celebrate__motivational {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ro-pub-celebrate__rank {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+.ro-pub-celebrate__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 1rem 0 0;
+}
+
+.ro-pub-celebrate__footer .ro-divider-gold {
+  margin-bottom: 0.65rem;
+}
+
+.ro-pub-celebrate__torneo {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ro-pub-celebrate__closing {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  opacity: 0.8;
+}
+
+.ro-pub-celebrate__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  max-width: 22rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 520px) {
+  .ro-pub-celebrate__stats {
+    max-width: 36rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.ro-pub-celebrate__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 4.25rem;
+  padding: 0.55rem 0.5rem 0.5rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(232, 197, 71, 0.12);
+}
+
+.ro-pub-celebrate__stat-value {
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 4vw, 1.375rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.ro-pub-celebrate__stat-label {
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(232, 197, 71, 0.55);
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Podio Americano dentro de la tarjeta celebrate */
+.ro-pub-celebrate--podium .ro-pub-celebrate__inner {
+  padding-bottom: clamp(1rem, 3vw, 1.5rem);
+}
+
+.ro-pub-celebrate--podium .te-public-podium__badge {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(232, 197, 71, 0.65);
+}
+
+.ro-pub-celebrate--podium .te-public-podium__title {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.1rem, 4vw, 1.35rem);
+}
+
+.ro-pub-celebrate--podium .te-public-podium__grid {
+  margin: 1rem 0 0;
+}
+
+@media (max-width: 480px) {
+  .ro-pub-celebrate--podium .te-public-podium__grid {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .ro-pub-celebrate--podium .te-public-podium__card[data-rank="1"],
+  .ro-pub-celebrate--podium .te-public-podium__card[data-rank="2"],
+  .ro-pub-celebrate--podium .te-public-podium__card[data-rank="3"] {
+    order: unset;
+    padding-top: var(--space-3);
+  }
+
+  .ro-pub-celebrate--podium .te-public-podium__card[data-rank="1"] {
+    padding-top: var(--space-4);
+  }
+}

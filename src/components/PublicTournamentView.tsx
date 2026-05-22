@@ -461,6 +461,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           <PublicRetaWinnerSection
             title={winningTeamName || teamStandings[0]?.name}
             subtitle="Equipo ganador por puntos"
+            torneoNombre={publicTournamentName ?? undefined}
           />
         )}
 
@@ -469,6 +470,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         tournamentWinner && (
           <PublicRetaWinnerSection
             title={`${tournamentWinner.pair.player1?.name} / ${tournamentWinner.pair.player2?.name}`}
+            torneoNombre={publicTournamentName ?? undefined}
             stats={[
               { value: tournamentWinner.totalSets, label: "Sets ganados" },
               { value: tournamentWinner.matchesPlayed, label: "Partidos jugados" },

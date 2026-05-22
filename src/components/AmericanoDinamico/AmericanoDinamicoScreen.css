@@ -146,13 +146,21 @@
 }
 
 .americano-podium__card--silver {
-  border-color: rgba(180, 180, 180, 0.25);
-  background: rgba(180, 180, 180, 0.05);
+  border-color: rgba(180, 180, 180, 0.35);
+  background: rgba(180, 180, 180, 0.08);
+}
+
+.americano-podium__card--silver .americano-podium__place {
+  color: #b8bcc4;
 }
 
 .americano-podium__card--bronze {
-  border-color: rgba(180, 120, 60, 0.25);
-  background: rgba(180, 120, 60, 0.05);
+  border-color: rgba(205, 127, 50, 0.35);
+  background: rgba(180, 120, 60, 0.08);
+}
+
+.americano-podium__card--bronze .americano-podium__place {
+  color: #cd9a6a;
 }
 
 .americano-public-link {

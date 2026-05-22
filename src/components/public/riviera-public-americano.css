@@ -1,4 +1,5 @@
 /* Ajustes mínimos — vista pública Americano (clases base: torneo-express-public.css) */
+@import "../../styles/riviera-public-celebrate.css";
 
 .te-public--americano .te-public__inner,
 .te-public--reta .te-public__inner {
@@ -131,7 +132,8 @@
   font-weight: 600;
 }
 
-.te-public-podium {
+.te-public-podium,
+.ro-pub-celebrate--podium {
   text-align: center;
 }
 
@@ -182,10 +184,21 @@
   order: 3;
 }
 
+.te-public-podium__card--gold,
 .te-public-podium__card[data-rank="1"] {
   border-color: var(--border-accent);
   background: var(--accent-gold-dim);
   padding-top: var(--space-5);
+}
+
+.te-public-podium__card--silver {
+  border-color: rgba(180, 180, 180, 0.35);
+  background: rgba(180, 180, 180, 0.08);
+}
+
+.te-public-podium__card--bronze {
+  border-color: rgba(205, 127, 50, 0.35);
+  background: rgba(180, 120, 60, 0.08);
 }
 
 .te-public-podium__place {
@@ -198,8 +211,17 @@
   margin-bottom: var(--space-1);
 }
 
+.te-public-podium__card--gold .te-public-podium__place,
 .te-public-podium__card[data-rank="1"] .te-public-podium__place {
   color: var(--accent-gold);
+}
+
+.te-public-podium__card--silver .te-public-podium__place {
+  color: #b8bcc4;
+}
+
+.te-public-podium__card--bronze .te-public-podium__place {
+  color: #cd9a6a;
 }
 
 .te-public-podium__name {
@@ -210,6 +232,7 @@
   margin-top: var(--space-1);
 }
 
+.te-public-podium__card--gold .te-public-podium__name,
 .te-public-podium__card[data-rank="1"] .te-public-podium__name {
   color: var(--accent-gold);
 }
