@@ -88,6 +88,7 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
                 <PublicGrupoLeaderCelebrate
                   grupoNombre={grupo.nombre}
                   rows={rows}
+                  partidos={bundle.partidosPorGrupo[grupo.id] ?? []}
                   torneoNombre={bundle.torneo.nombre}
                 />
               </div>

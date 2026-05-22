@@ -1,10 +1,18 @@
 import React from "react";
-import type { StandingRowExpress } from "../../../lib/torneoExpress/types";
+import { isGrupoPartidosCompletos } from "../../../lib/torneoExpress/grupoCompletion";
+import type {
+  StandingRowExpress,
+  TorneoExpressPartido,
+} from "../../../lib/torneoExpress/types";
 
 const DEFAULT_MOTIVATIONAL =
   "Así se juega en Riviera." as const;
 
-function leaderFromRows(rows: StandingRowExpress[]): StandingRowExpress | null {
+function leaderFromRows(
+  rows: StandingRowExpress[],
+  partidos: TorneoExpressPartido[]
+): StandingRowExpress | null {
+  if (!isGrupoPartidosCompletos(partidos)) return null;
   if (!rows.length) return null;
   const leader = rows[0];
   const hasActivity = rows.some((r) => r.pj > 0);
@@ -20,16 +28,18 @@ function formatDif(dif: number): string {
 export const PublicGrupoLeaderCelebrate: React.FC<{
   grupoNombre: string;
   rows: StandingRowExpress[];
+  partidos: TorneoExpressPartido[];
   torneoNombre?: string;
   /** Frase corta entre el nombre y el lugar (p. ej. "Dominaron la cancha.") */
   fraseMotivacional?: string;
 }> = ({
   grupoNombre,
   rows,
+  partidos,
   torneoNombre,
   fraseMotivacional = DEFAULT_MOTIVATIONAL,
 }) => {
-  const leader = leaderFromRows(rows);
+  const leader = leaderFromRows(rows, partidos);
   if (!leader) return null;
 
   const grupoUpper = grupoNombre.trim().toUpperCase();
