@@ -225,6 +225,20 @@
   --riviera-space-6: var(--space-6);
   --riviera-font-display: var(--font-display);
   --riviera-font-body: var(--font-body);
+
+  /* ── Torneo (módulo TE) — dark premium / dorado terroso (Padelco) ── */
+  --te-black: #0c0c0c;
+  --te-surface: #141414;
+  --te-surface-hover: #1a1a1a;
+  --te-border: rgba(255, 255, 255, 0.06);
+  --te-gold: #c9a84c;
+  --te-gold-bright: #e8c547;
+  --te-gold-muted: rgba(201, 168, 76, 0.15);
+  --te-gold-glow: rgba(201, 168, 76, 0.08);
+  --te-text: #f0f0f0;
+  --te-text-muted: rgba(240, 240, 240, 0.45);
+  --te-red: #c0392b;
+  --te-live: #c9a84c;
 }
 
 @media (prefers-reduced-motion: reduce) {

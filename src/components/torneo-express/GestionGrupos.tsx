@@ -31,8 +31,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     savingOrden,
     partidosOrdenDisponible,
     partidosCanchaDisponible,
+    partidosProgramadoDisponible,
     saveCancha,
+    saveProgramado,
     savingCanchaId,
+    savingProgramadoId,
   } = useTorneoExpress(torneoId, { publicMode: false, realtime: true });
 
   const [activeGrupoId, setActiveGrupoId] = useState<string | null>(null);
@@ -157,7 +160,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       </div>
 
       <div className="torneo-express-card te-grupos-card">
-        <h2 className="te-grupos-card__title">Grupos</h2>
+        <h2 className="te-grupos-card__title te-label-section">Grupos</h2>
         <div
           className="te-grupos-card__tabs"
           role="tablist"
@@ -181,24 +184,32 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
 
         {grupo && (
           <div className="te-grupos-card__body">
-            <h3 className="te-grupos-card__active-name">{grupo.nombre}</h3>
+            <h3 className="te-grupos-card__active-name te-label-section">
+              {grupo.nombre}
+            </h3>
             <TablaGrupo rows={standingsByGrupo[grupo.id] ?? []} />
-            <h3 className="te-grupos-card__partidos-title">Partidos</h3>
-            {(!partidosOrdenDisponible || !partidosCanchaDisponible) && (
+            <h3 className="te-grupos-card__partidos-title te-label-section">
+              Partidos
+            </h3>
+            {(!partidosOrdenDisponible ||
+              !partidosCanchaDisponible ||
+              !partidosProgramadoDisponible) && (
               <div className="te-partidos-migration-hint" role="alert">
                 <p>
                   Faltan columnas en Supabase para{" "}
-                  {!partidosOrdenDisponible && (
-                    <>
-                      <code>orden</code>
-                      {!partidosCanchaDisponible ? " y " : ""}
-                    </>
-                  )}
-                  {!partidosCanchaDisponible && <code>cancha</code>}.
+                  {[
+                    !partidosOrdenDisponible && "orden",
+                    !partidosCanchaDisponible && "cancha",
+                    !partidosProgramadoDisponible && "programado_en",
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  .
                 </p>
                 <p className="te-partidos-migration-hint__sql">
                   SQL Editor → ejecuta{" "}
-                  <strong>supabase/torneo-express-partidos-orden.sql</strong> y
+                  <strong>supabase/torneo-express-partidos-orden.sql</strong> o{" "}
+                  <strong>torneo-express-partidos-programado.sql</strong> y
                   recarga.
                 </p>
               </div>
@@ -209,11 +220,16 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               editable
               allowReorder={partidosOrdenDisponible}
               canchaEditable={partidosCanchaDisponible}
+              horarioEditable={partidosProgramadoDisponible}
               savingPartidoId={savingPartidoId}
               savingCanchaId={savingCanchaId}
+              savingProgramadoId={savingProgramadoId}
               savingOrden={savingOrden}
               onSaveResultado={saveResultado}
               onSaveCancha={partidosCanchaDisponible ? saveCancha : undefined}
+              onSaveProgramado={
+                partidosProgramadoDisponible ? saveProgramado : undefined
+              }
               onSaveOrden={partidosOrdenDisponible ? saveOrden : undefined}
             />
           </div>

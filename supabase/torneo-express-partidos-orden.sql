@@ -21,6 +21,16 @@ UPDATE torneo_express_partidos
 SET cancha = '1'
 WHERE cancha IS NULL OR TRIM(cancha) = '';
 
+ALTER TABLE torneo_express_partidos
+  ADD COLUMN IF NOT EXISTS programado_en TIMESTAMPTZ;
+
+COMMENT ON COLUMN torneo_express_partidos.programado_en IS
+  'Día y hora programados del partido (editable).';
+
+UPDATE torneo_express_partidos
+SET programado_en = created_at
+WHERE programado_en IS NULL;
+
 -- Rellenar orden en partidos ya existentes (por fecha de creación dentro de cada grupo)
 WITH ranked AS (
   SELECT

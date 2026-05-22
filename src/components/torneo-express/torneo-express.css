@@ -1,22 +1,52 @@
-/* Torneo Express — base (Fase 1: --te-* → --riviera-* / tokens) */
+/* Torneo — scope: tokens en riviera-tokens.css (--te-*) + aliases Riviera */
 .torneo-express-page {
-  --te-bg: var(--riviera-bg-base);
-  --te-card: var(--riviera-bg-card);
-  --te-border: var(--riviera-border-subtle);
-  --te-gold: var(--riviera-accent-gold);
-  --te-gold-bright: var(--riviera-accent-gold);
-  --te-gold-light: var(--riviera-accent-gold-light);
-  --te-text: var(--riviera-text-primary);
-  --te-muted: var(--riviera-text-secondary);
-  --te-panel: var(--riviera-bg-base);
-  --te-input-bg: var(--riviera-bg-card);
+  --te-bg: var(--te-black);
+  --te-card: var(--te-surface);
+  --te-muted: var(--te-text-muted);
+  --te-panel: var(--te-black);
+  --te-input-bg: var(--te-surface-hover);
+  --te-gold-light: var(--te-gold-bright);
+  --riviera-live: var(--te-live);
+  --riviera-accent-gold: var(--te-gold-bright);
+  --riviera-accent-gold-dim: var(--te-gold-muted);
+  --riviera-border-accent: rgba(201, 168, 76, 0.2);
+  --riviera-bg-base: var(--te-black);
+  --riviera-bg-elevated: var(--te-surface-hover);
+  --riviera-bg-card: var(--te-surface);
+  --riviera-text-primary: var(--te-text);
+  --riviera-text-secondary: var(--te-text-muted);
+  --riviera-text-muted: var(--te-text-muted);
+  --bg-card: var(--te-surface);
+  --border-subtle: var(--te-border);
   min-height: 100vh;
+  width: 100%;
+  max-width: none;
   background: var(--te-bg);
   color: var(--te-text);
   font-family: var(--riviera-font-body);
   padding: var(--riviera-space-5) var(--riviera-space-6) var(--riviera-space-12);
   box-sizing: border-box;
   animation: fadeInUp 0.45s ease-out both;
+}
+
+/* Labels de sección (GRUPO A, PARTIDOS, RESULTADOS) */
+.torneo-express-page .te-label-section {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--te-gold);
+}
+
+/* Eyebrows (fecha, estado, categoría) */
+.torneo-express-page .te-label-eyebrow {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--te-text-muted);
 }
 
 .torneo-express-page--offset {
@@ -134,10 +164,10 @@
 }
 
 .torneo-express-card {
-  background: var(--te-card);
+  background: var(--te-surface);
   border: 1px solid var(--te-border);
   border-radius: 12px;
-  padding: var(--space-lg, 1.25rem);
+  padding: 24px;
   margin-bottom: var(--space-md, 1rem);
   max-width: 1100px;
   margin-left: auto;
@@ -231,15 +261,11 @@
 
 /* Sección Grupos (gestión torneo) */
 .te-grupos-card {
-  padding: 1.5rem 1.5rem 1.75rem;
+  padding: 24px;
 }
 
 .te-grupos-card__title {
   margin: 0 0 1.25rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: var(--te-text);
-  letter-spacing: 0.02em;
 }
 
 .te-grupos-card__tabs {
@@ -264,10 +290,6 @@
 
 .te-grupos-card__active-name {
   margin: 0 0 1.25rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--te-gold);
-  letter-spacing: 0.03em;
 }
 
 .te-grupos-card__body .te-standings-block {
@@ -280,10 +302,7 @@
 
 .te-grupos-card__partidos-title {
   margin: 0 0 1.25rem;
-  padding-top: 0.5rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--te-text);
+  padding-top: 1rem;
   border-top: 1px solid var(--te-border);
 }
 
@@ -299,32 +318,36 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   max-width: 100%;
-  border-radius: 8px;
-  border: 1px solid var(--te-border);
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .te-standings-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 640px;
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
+  background: transparent;
 }
 
 .te-standings-table th {
-  background: #121212;
-  color: var(--te-muted);
+  background: transparent;
+  color: var(--te-text-muted);
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.6rem 0.5rem;
+  letter-spacing: 0.12em;
+  padding: 0.5rem 0.45rem 0.65rem;
   text-align: center;
   border-bottom: 1px solid var(--te-border);
 }
 
 .te-standings-table td {
-  padding: 0.55rem 0.5rem;
+  padding: 0.6rem 0.45rem;
   text-align: center;
   border-bottom: 1px solid var(--te-border);
+  color: var(--te-text);
 }
 
 .te-standings-table td.te-cell-name {
@@ -332,8 +355,27 @@
   font-weight: 500;
 }
 
-.te-standings-table tr.te-row-top td {
+.te-standings-table .te-standings-pts {
   color: var(--te-gold);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.te-standings-pos__badge {
+  display: inline-block;
+  background: var(--te-gold-muted);
+  color: var(--te-gold);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.te-standings-pos__badge--lead {
+  color: var(--te-gold-bright);
+  background: var(--te-gold-muted);
 }
 
 .te-pareja-pool {
@@ -433,12 +475,83 @@
 }
 
 .te-partido-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto minmax(8.5rem, 11rem) minmax(0, auto);
-  gap: 0.65rem 0.75rem;
-  align-items: center;
-  padding: 0.85rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 0;
   border-bottom: 1px solid var(--te-border);
+}
+
+.te-partido-row__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.te-partido-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.te-partido-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--te-text);
+}
+
+button.te-partido-chip {
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button.te-partido-chip:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+button.te-partido-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.te-partido-chip__icon {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+.te-partido-chip--cancha {
+  background: var(--te-gold-muted);
+  border-color: rgba(201, 168, 76, 0.2);
+  color: var(--te-gold);
+}
+
+button.te-partido-chip--cancha {
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button.te-partido-chip--cancha:hover:not(:disabled) {
+  background: rgba(201, 168, 76, 0.22);
+  border-color: rgba(201, 168, 76, 0.35);
+}
+
+button.te-partido-chip--cancha:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .te-partido-cancha {
@@ -590,6 +703,67 @@
   color: #f87171;
 }
 
+.te-partido-horario--edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: var(--te-gold-muted);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+}
+
+.te-partido-horario__label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--te-text-muted);
+}
+
+.te-partido-horario__fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.te-partido-horario__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 8rem;
+  min-width: 0;
+  font-size: 0.72rem;
+  color: var(--te-text-muted);
+}
+
+.te-partido-horario__input {
+  padding: 0.4rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--te-text);
+  background: var(--te-input-bg);
+  border: 1px solid var(--te-border);
+  border-radius: 8px;
+}
+
+.te-partido-horario__input:focus {
+  outline: none;
+  border-color: var(--te-gold);
+}
+
+.te-partido-horario__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.te-partido-horario__error {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--te-red, #c0392b);
+}
+
 .te-partido-reorder {
   display: flex;
   flex-direction: column;
@@ -623,12 +797,47 @@
 }
 
 .te-partido-matchup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem 1rem;
   min-width: 0;
+  text-align: center;
+}
+
+.te-partido-team {
+  flex: 1 1 8rem;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.25;
+  color: var(--te-text);
+}
+
+.te-partido-score-center {
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--te-gold);
+  letter-spacing: 0.04em;
+}
+
+.te-partido-score-center.is-pending {
+  color: var(--te-text-muted);
+  font-weight: 600;
+}
+
+.te-partido-matchup .te-score-inputs {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .te-partido-vs {
-  margin: 0 0.35rem;
-  opacity: 0.6;
+  display: none;
 }
 
 .te-partido-actions {
@@ -644,7 +853,8 @@
 }
 
 .te-partido-score {
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--te-gold);
 }
@@ -668,43 +878,22 @@
 }
 
 @media (max-width: 768px) {
-  .te-partido-row {
-    grid-template-columns: auto 1fr;
-    grid-template-areas:
-      "reorder matchup"
-      "cancha cancha"
-      "status actions";
-  }
-
-  .te-partido-reorder {
-    grid-area: reorder;
-  }
-
   .te-partido-matchup {
-    grid-area: matchup;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
   }
 
-  .te-partido-cancha {
-    grid-area: cancha;
+  .te-partido-team {
+    flex: 1 1 auto;
   }
 
-  .te-partido-cancha--view,
-  .te-partido-cancha--readonly {
-    width: 100%;
-  }
-
-  .te-partido-cancha--edit {
-    width: 100%;
-  }
-
-  .te-partido-status {
-    grid-area: status;
-    justify-self: start;
+  .te-partido-score-center,
+  .te-partido-matchup .te-score-inputs {
+    align-self: center;
   }
 
   .te-partido-actions {
-    grid-area: actions;
-    justify-self: stretch;
     justify-content: flex-start;
   }
 }
@@ -966,11 +1155,17 @@
 }
 
 .te-crear-form__header {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  text-align: left;
 }
 
 .te-crear-form__header .te-title {
   margin: 0;
+  text-align: left;
+}
+
+.te-crear-form__header .te-subtitle {
+  text-align: left;
 }
 
 .te-section-title {
@@ -1355,7 +1550,15 @@
 }
 
 /* ── Inicio: torneos arriba + crear abajo ── */
+/* Fondo a ancho completo; el contenido va centrado en hijos directos */
 .te-inicio-page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.te-inicio-page > * {
   width: 100%;
   max-width: 1200px;
   margin-left: auto;
@@ -1383,9 +1586,13 @@
 .te-inicio-page .te-torneos-cards,
 .te-inicio-page .te-torneo-card,
 .te-inicio-page .te-torneos-empty,
-.te-inicio-page .te-section-divider {
+.te-inicio-page .te-inicio-crear {
   width: 100%;
   box-sizing: border-box;
+}
+
+.te-inicio-page .te-torneos-section__title {
+  text-align: left;
 }
 
 .te-inicio-toolbar {
@@ -1399,17 +1606,17 @@
 .te-torneos-section__title {
   margin: 0 0 1rem;
   font-size: 1.25rem;
-  color: var(--te-gold-bright, #f5a623);
+  color: var(--te-gold-bright);
   font-weight: 700;
 }
 
 .te-torneos-empty {
-  background: #0a0a0a;
-  border: 1px solid #333;
+  background: var(--te-surface);
+  border: 1px solid var(--te-border);
   border-radius: 12px;
   padding: 1.5rem;
   text-align: center;
-  color: #888;
+  color: var(--te-text-muted);
   font-size: 0.95rem;
   line-height: 1.5;
 }
@@ -1430,7 +1637,12 @@
 .te-torneos-skeleton__card {
   height: 120px;
   border-radius: 12px;
-  background: linear-gradient(90deg, #0a0a0a 25%, #141414 50%, #0a0a0a 75%);
+  background: linear-gradient(
+    90deg,
+    var(--te-black) 25%,
+    var(--te-surface) 50%,
+    var(--te-black) 75%
+  );
   background-size: 200% 100%;
   animation: te-skeleton 1.2s ease-in-out infinite;
 }
@@ -1445,19 +1657,20 @@
 }
 
 .te-torneo-card {
-  background: #0a0a0a;
+  background: var(--te-surface);
+  border: 1px solid var(--te-border);
   border-radius: 12px;
   padding: 20px;
-  transition: border-color 0.2s ease, opacity 0.2s ease;
+  transition: border-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
 }
 
 .te-torneo-card--activo {
-  border: 1px solid #f5a623;
+  border-color: rgba(201, 168, 76, 0.35);
 }
 
 .te-torneo-card--finalizado {
-  border: 1px solid #333;
-  opacity: 0.75;
+  border-color: var(--te-border);
+  opacity: 0.85;
 }
 
 .te-torneo-card__top {
@@ -1616,23 +1829,51 @@
 .te-section-divider {
   display: flex;
   align-items: center;
-  margin: 2rem 0 1.5rem;
-  color: #707070;
-  font-size: 13px;
-  text-align: center;
+  justify-content: center;
+  gap: 1.25rem;
+  width: 100%;
+  margin: 2.5rem 0 1.75rem;
 }
 
 .te-section-divider::before,
 .te-section-divider::after {
   content: "";
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 2rem;
   height: 1px;
-  background: #333;
+  background: var(--te-border);
 }
 
 .te-section-divider span {
-  padding: 0 1rem;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
   white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--te-gold);
+  opacity: 0.85;
+}
+
+.te-inicio-crear {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.te-inicio-crear .te-section-divider {
+  margin-top: 2rem;
+}
+
+.te-inicio-crear .te-crear-grid {
+  width: 100%;
+  margin: 0;
 }
 
 .torneo-express-btn--outline {
@@ -1710,12 +1951,13 @@
   justify-content: flex-end;
 }
 
-.te-inicio-page .te-crear-grid {
+.te-inicio-page .te-inicio-crear .te-crear-grid {
   margin-top: 0;
 }
 
-/* Torneo express dentro de App: contenido centrado */
+/* Torneo inicio: fondo full-bleed (sin bandas laterales del body) */
 .App .torneo-express-page.te-inicio-page {
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }

@@ -18,13 +18,18 @@ export const TorneoExpressInicio: React.FC = () => {
 
       <TorneoExpressTorneosSection refreshToken={refreshToken} />
 
-      <div className="te-section-divider" role="separator">
-        <span>── Crear nuevo torneo ──</span>
-      </div>
+      <section
+        className="te-inicio-crear"
+        aria-labelledby="te-crear-section-heading"
+      >
+        <div className="te-section-divider" role="separator">
+          <span id="te-crear-section-heading">Crear nuevo torneo</span>
+        </div>
 
-      <CrearTorneoExpress
-        onTorneoCreated={() => setRefreshToken((n) => n + 1)}
-      />
+        <CrearTorneoExpress
+          onTorneoCreated={() => setRefreshToken((n) => n + 1)}
+        />
+      </section>
     </TePageShell>
   );
 };

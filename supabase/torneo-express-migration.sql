@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS torneo_express_partidos (
   orden INTEGER DEFAULT 0,
   ronda INTEGER DEFAULT 0,
   cancha TEXT DEFAULT NULL,
+  programado_en TIMESTAMPTZ DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

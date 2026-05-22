@@ -1,0 +1,79 @@
+/* ============================================
+   RIVIERA OPEN — PUBLIC COURT BACKGROUND
+   Solo vistas de espectador (ro-public-view)
+   ============================================ */
+
+.ro-public-view {
+  position: relative;
+  min-height: 100vh;
+  background-color: #0c0c0c;
+  isolation: isolate;
+}
+
+.ro-public-view::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  /* Riviera Padel Club — foto propia (también en public/images para URL directa) */
+  background-image: url("../assets/cancha-riviera.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: 0.13;
+  z-index: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.ro-public-view::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(12, 12, 12, 0.8) 0%,
+    rgba(12, 12, 12, 0.35) 30%,
+    rgba(12, 12, 12, 0.5) 60%,
+    rgba(12, 12, 12, 0.9) 100%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ro-public-view > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Capas decorativas del shell TE (encima del gradiente, bajo el contenido) */
+.ro-public-view .te-public__grain,
+.ro-public-view .te-public__glow {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ro-public-view .te-public__inner {
+  z-index: 3;
+}
+
+@media (max-width: 768px) {
+  .ro-public-view::before {
+    position: absolute;
+    opacity: 0.09;
+    background-position: center center;
+    min-height: 100%;
+  }
+
+  .ro-public-view::after {
+    position: absolute;
+    min-height: 100%;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .ro-public-view::before,
+  .ro-public-view::after {
+    position: absolute;
+    min-height: 100vh;
+  }
+}

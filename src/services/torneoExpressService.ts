@@ -146,7 +146,7 @@ export function partidosOrdenColumnIsAvailable(): boolean {
 }
 
 export const PARTIDOS_EXTRAS_MIGRATION_HINT =
-  "En Supabase → SQL Editor, ejecuta supabase/torneo-express-partidos-orden.sql (columnas orden, ronda y cancha).";
+  "En Supabase → SQL Editor, ejecuta supabase/torneo-express-partidos-orden.sql (orden, ronda, cancha y programado_en).";
 
 /** @deprecated Use PARTIDOS_EXTRAS_MIGRATION_HINT */
 export const PARTIDOS_ORDEN_MIGRATION_HINT = PARTIDOS_EXTRAS_MIGRATION_HINT;
@@ -202,6 +202,38 @@ export async function checkPartidosCanchaColumnAvailable(
   }
 
   partidosCanchaColumnKnown = true;
+  return true;
+}
+
+let partidosProgramadoColumnKnown: boolean | null = null;
+
+export function partidosProgramadoColumnIsAvailable(): boolean {
+  return partidosProgramadoColumnKnown !== false;
+}
+
+export async function checkPartidosProgramadoColumnAvailable(
+  client: typeof supabase | typeof readClient = supabase
+): Promise<boolean> {
+  if (partidosProgramadoColumnKnown !== null) {
+    return partidosProgramadoColumnKnown;
+  }
+
+  const { error } = await client
+    .from("torneo_express_partidos")
+    .select("programado_en")
+    .limit(1);
+
+  if (!error) {
+    partidosProgramadoColumnKnown = true;
+    return true;
+  }
+
+  if (isMissingColumnError(error, "torneo_express_partidos", "programado_en")) {
+    partidosProgramadoColumnKnown = false;
+    return false;
+  }
+
+  partidosProgramadoColumnKnown = true;
   return true;
 }
 
@@ -694,6 +726,13 @@ export class PartidosCanchaColumnMissingError extends Error {
   }
 }
 
+export class PartidosProgramadoColumnMissingError extends Error {
+  constructor() {
+    super(PARTIDOS_EXTRAS_MIGRATION_HINT);
+    this.name = "PartidosProgramadoColumnMissingError";
+  }
+}
+
 export async function savePartidoCancha(
   partidoId: string,
   cancha: string | null
@@ -723,6 +762,37 @@ export async function savePartidoCancha(
   }
   if (!data) {
     throw new Error("Error en update cancha: sin datos");
+  }
+  return data as TorneoExpressPartido;
+}
+
+export async function savePartidoProgramado(
+  partidoId: string,
+  programadoEn: string | null
+): Promise<TorneoExpressPartido> {
+  await requireAuthUser();
+
+  const disponible = await checkPartidosProgramadoColumnAvailable();
+  if (!disponible) {
+    throw new PartidosProgramadoColumnMissingError();
+  }
+
+  const { data, error } = await supabase
+    .from("torneo_express_partidos")
+    .update({ programado_en: programadoEn })
+    .eq("id", partidoId)
+    .select()
+    .single();
+
+  if (error) {
+    if (isMissingColumnError(error, "torneo_express_partidos", "programado_en")) {
+      partidosProgramadoColumnKnown = false;
+      throw new PartidosProgramadoColumnMissingError();
+    }
+    throwIfError(error, "update programado_en torneo_express_partidos");
+  }
+  if (!data) {
+    throw new Error("Error en update programado: sin datos");
   }
   return data as TorneoExpressPartido;
 }

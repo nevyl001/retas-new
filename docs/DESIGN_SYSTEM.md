@@ -82,7 +82,7 @@ Desktop + móvil (375, 768, 1280):
 - [ ] Mis retas
 - [ ] Partidos reta activa
 - [ ] Público americano
-- [ ] Público torneo express
+- [x] Público — fondo cancha `.ro-public-view` (`riviera-public-court.css`)
 - [ ] Admin (si aplica)
 
 Verificar: sin amber `#f59e0b`, focus Tab visible, hover en cards, glow en botón primario.

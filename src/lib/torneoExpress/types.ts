@@ -44,6 +44,8 @@ export interface TorneoExpressPartido {
   ronda?: number | null;
   /** Cancha asignada (ej. "1", "Cancha central"). */
   cancha?: string | null;
+  /** Día y hora programados (editable); si falta en BD se usa created_at. */
+  programado_en?: string | null;
   created_at: string;
 }
 

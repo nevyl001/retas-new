@@ -7,10 +7,13 @@ import type { StandingRowExpress, TorneoExpressBundle } from "../lib/torneoExpre
 import {
   checkPartidosCanchaColumnAvailable,
   checkPartidosOrdenColumnAvailable,
+  checkPartidosProgramadoColumnAvailable,
   fetchTorneoExpressBundle,
   PartidosCanchaColumnMissingError,
   PartidosOrdenColumnMissingError,
+  PartidosProgramadoColumnMissingError,
   savePartidoCancha,
+  savePartidoProgramado,
   savePartidoResultado,
   savePartidosOrden,
   subscribeTorneoExpress,
@@ -37,7 +40,12 @@ export function useTorneoExpress(
   const [savingOrden, setSavingOrden] = useState(false);
   const [partidosOrdenDisponible, setPartidosOrdenDisponible] = useState(true);
   const [partidosCanchaDisponible, setPartidosCanchaDisponible] = useState(true);
+  const [partidosProgramadoDisponible, setPartidosProgramadoDisponible] =
+    useState(true);
   const [savingCanchaId, setSavingCanchaId] = useState<string | null>(null);
+  const [savingProgramadoId, setSavingProgramadoId] = useState<string | null>(
+    null
+  );
 
   const reload = useCallback(async (opts?: { silent?: boolean }) => {
     if (!torneoId) {
@@ -50,7 +58,7 @@ export function useTorneoExpress(
     }
     setError(null);
     try {
-      const [data, ordenOk, canchaOk] = await Promise.all([
+      const [data, ordenOk, canchaOk, programadoOk] = await Promise.all([
         fetchTorneoExpressBundle(torneoId, publicMode),
         publicMode
           ? Promise.resolve(true)
@@ -58,10 +66,14 @@ export function useTorneoExpress(
         publicMode
           ? Promise.resolve(true)
           : checkPartidosCanchaColumnAvailable(),
+        publicMode
+          ? Promise.resolve(true)
+          : checkPartidosProgramadoColumnAvailable(),
       ]);
       setBundle(data);
       setPartidosOrdenDisponible(ordenOk);
       setPartidosCanchaDisponible(canchaOk);
+      setPartidosProgramadoDisponible(programadoOk);
       setLastRefreshedAt(new Date());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar el torneo");
@@ -165,6 +177,28 @@ export function useTorneoExpress(
     [reload]
   );
 
+  const saveProgramado = useCallback(
+    async (partidoId: string, programadoEn: string | null) => {
+      setSavingProgramadoId(partidoId);
+      setError(null);
+      try {
+        await savePartidoProgramado(partidoId, programadoEn);
+        await reload();
+      } catch (e) {
+        if (e instanceof PartidosProgramadoColumnMissingError) {
+          setPartidosProgramadoDisponible(false);
+        }
+        setError(
+          e instanceof Error ? e.message : "No se pudo guardar fecha y hora"
+        );
+        throw e;
+      } finally {
+        setSavingProgramadoId(null);
+      }
+    },
+    [reload]
+  );
+
   const saveOrden = useCallback(
     async (updates: Array<{ id: string; orden: number }>) => {
       setSavingOrden(true);
@@ -197,11 +231,14 @@ export function useTorneoExpress(
     standingsGeneral,
     saveResultado,
     saveCancha,
+    saveProgramado,
     saveOrden,
     savingPartidoId,
     savingCanchaId,
+    savingProgramadoId,
     savingOrden,
     partidosOrdenDisponible,
     partidosCanchaDisponible,
+    partidosProgramadoDisponible,
   };
 }
