@@ -1,34 +1,35 @@
 /* ============================================
    RIVIERA OPEN — PUBLIC COURT BACKGROUND
-   Solo vistas de espectador (ro-public-view)
+   Aplicar en .ro-public-view (App o shell público)
+   Desktop: horizontal · Móvil: vertical (foto club)
    ============================================ */
 
 .ro-public-view {
   position: relative;
   min-height: 100vh;
+  width: 100%;
   background-color: #0c0c0c;
   isolation: isolate;
 }
 
-.ro-public-view::before {
+.ro-public-view::before,
+.ro-public-view::after {
   content: "";
   position: fixed;
   inset: 0;
-  /* Riviera Padel Club — foto propia (también en public/images para URL directa) */
+  pointer-events: none;
+}
+
+.ro-public-view::before {
   background-image: url("../assets/cancha-riviera.jpg");
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
   opacity: 0.13;
   z-index: 0;
-  pointer-events: none;
-  will-change: opacity;
 }
 
 .ro-public-view::after {
-  content: "";
-  position: fixed;
-  inset: 0;
   background: linear-gradient(
     180deg,
     rgba(12, 12, 12, 0.8) 0%,
@@ -37,7 +38,6 @@
     rgba(12, 12, 12, 0.9) 100%
   );
   z-index: 1;
-  pointer-events: none;
 }
 
 .ro-public-view > * {
@@ -56,27 +56,21 @@
   z-index: 3;
 }
 
-@media (max-width: 768px) {
+/* Móvil y portrait: foto vertical Riviera Open */
+@media (max-width: 768px), (orientation: portrait) and (max-width: 1024px) {
   .ro-public-view::before {
-    /* Foto vertical (móvil) — horizontal en desktop arriba */
     background-image: url("../assets/cancha-riviera-vertical.jpg");
-    position: absolute;
-    opacity: 0.11;
     background-position: center center;
-    background-size: cover;
-    min-height: 100%;
+    opacity: 0.14;
   }
 
   .ro-public-view::after {
-    position: absolute;
-    min-height: 100%;
-  }
-}
-
-@supports (-webkit-touch-callout: none) {
-  .ro-public-view::before,
-  .ro-public-view::after {
-    position: absolute;
-    min-height: 100vh;
+    background: linear-gradient(
+      180deg,
+      rgba(12, 12, 12, 0.72) 0%,
+      rgba(12, 12, 12, 0.28) 32%,
+      rgba(12, 12, 12, 0.42) 58%,
+      rgba(12, 12, 12, 0.88) 100%
+    );
   }
 }

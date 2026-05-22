@@ -45,8 +45,9 @@
   overflow-x: hidden;
 }
 
+.App.ro-public-view .te-public,
 .ro-public-view.te-public {
-  background-color: #0c0c0c;
+  background-color: transparent;
 }
 
 .te-public .te-label-section {

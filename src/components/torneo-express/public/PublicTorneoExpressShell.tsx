@@ -7,7 +7,7 @@ export const PublicTorneoExpressShell: React.FC<{
 }> = ({ children, className = "" }) => {
   return (
     <div
-      className={`te-public App--public-full-width ro-public-view ${className}`.trim()}
+      className={`te-public App--public-full-width ${className}`.trim()}
     >
       <div className="te-public__grain" aria-hidden />
       <div className="te-public__glow te-public__glow--a" aria-hidden />

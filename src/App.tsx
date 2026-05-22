@@ -572,15 +572,16 @@ function AppContent() {
   const isTorneoExpressPublic =
     currentView === "torneo-express" && isTorneoExpressPublicPath(appPathname);
 
+  const isPublicSpectatorView =
+    currentView === "public" ||
+    currentView === "public-americano" ||
+    currentView === "public-americano-pantalla" ||
+    isTorneoExpressPublic;
+
   return (
     <div
       className={`App${
-        currentView === "public" ||
-        currentView === "public-americano" ||
-        currentView === "public-americano-pantalla" ||
-        isTorneoExpressPublic
-          ? " App--public-full-width"
-          : ""
+        isPublicSpectatorView ? " App--public-full-width ro-public-view" : ""
       }`}
     >
       <ProtectedRoute>

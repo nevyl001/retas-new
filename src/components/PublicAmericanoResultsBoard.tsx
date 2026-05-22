@@ -105,7 +105,7 @@ export const PublicAmericanoResultsBoard: React.FC<
   }, [tournamentName]);
 
   return (
-    <div className="public-americano-board ro-public-view">
+    <div className="public-americano-board">
       <header className="public-americano-board__header">
         <div className="public-americano-board__brand">
           <h1 className="public-americano-board__title">
