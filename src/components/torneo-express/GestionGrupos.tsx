@@ -4,17 +4,20 @@ import {
   copyToClipboard,
   publicGeneralUrl,
   publicGrupoUrl,
+  publicGruposUrl,
 } from "../../services/torneoExpressService";
+import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
+import { torneoExpressEstadoLabel } from "../../lib/torneoExpress/labels";
 import { GrupoBadge } from "./GrupoBadge";
 import { PartidosGrupo } from "./PartidosGrupo";
 import { TablaGrupo } from "./TablaGrupo";
+import { TePageShell } from "./TePageShell";
+import { torneoEstadoBadgeVariant } from "./teEstadoBadge";
 import {
   navigateTorneoExpress,
   setTorneoExpressGeneralBack,
 } from "./torneoExpressNav";
-import { torneoExpressEstadoLabel } from "../../lib/torneoExpress/labels";
-import "./torneo-express.css";
-import "./riviera-torneo-express.css";
+import { Badge, Button } from "../ui";
 
 export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const {
@@ -35,8 +38,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const [activeGrupoId, setActiveGrupoId] = useState<string | null>(null);
   const [copyMsg, setCopyMsg] = useState("");
 
-  const grupoId =
-    activeGrupoId ?? bundle?.grupos[0]?.id ?? null;
+  const grupoId = activeGrupoId ?? bundle?.grupos[0]?.id ?? null;
   const grupo = bundle?.grupos.find((g) => g.id === grupoId);
 
   const copyLink = async (url: string) => {
@@ -47,47 +49,51 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
 
   if (loading && !bundle) {
     return (
-      <div className="torneo-express-page">
+      <TePageShell>
         <p>Cargando torneo…</p>
-      </div>
+      </TePageShell>
     );
   }
 
   if (!bundle) {
     return (
-      <div className="torneo-express-page">
+      <TePageShell>
         <p className="te-error">
           {error ?? "Torneo no encontrado. ¿Ejecutaste la migración SQL en Supabase?"}
         </p>
-        <button
+        <Button
           type="button"
-          className="torneo-express-btn"
+          variant="secondary"
           onClick={() => navigateTorneoExpress("/torneo-express")}
         >
           Volver al listado
-        </button>
-      </div>
+        </Button>
+      </TePageShell>
     );
   }
 
   return (
-    <div className="torneo-express-page">
+    <TePageShell>
       <header className="te-header">
         <div>
           <h1 className="te-title">{bundle.torneo.nombre}</h1>
           <p className="te-subtitle te-subtitle--meta">
             <span className="te-subtitle__product">Torneo Express</span>
-            <span
-              className={`te-estado te-estado--${bundle.torneo.estado}`}
-            >
+            {formatTorneoExpressCategoria(bundle.torneo.categoria) && (
+              <span className="te-categoria-pill">
+                {formatTorneoExpressCategoria(bundle.torneo.categoria)}
+              </span>
+            )}
+            <Badge variant={torneoEstadoBadgeVariant(bundle.torneo.estado)}>
               {torneoExpressEstadoLabel(bundle.torneo.estado)}
-            </span>
+            </Badge>
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <button
+        <div className="te-header__actions">
+          <Button
             type="button"
-            className="torneo-express-btn"
+            variant="secondary"
+            size="sm"
             onClick={() => {
               setTorneoExpressGeneralBack(
                 torneoId,
@@ -97,14 +103,15 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             }}
           >
             Ver tabla general
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="torneo-express-btn"
+            variant="ghost"
+            size="sm"
             onClick={() => navigateTorneoExpress("/torneo-express")}
           >
             Listado
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -112,22 +119,39 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
 
       <div className="torneo-express-card te-public-links-card">
         <h2 className="te-public-links-card__title">Enlaces públicos</h2>
+        <p className="te-public-links-card__hint">
+          Comparte la clasificación de cada grupo en una sola página, la tabla
+          general combinada, o el grupo que estés gestionando.
+        </p>
         <div className="te-links-row">
-          <button
+          <Button
             type="button"
-            className="torneo-express-btn torneo-express-btn--gold te-links-row__btn"
+            variant="primary"
+            size="sm"
+            className="te-links-row__btn"
+            onClick={() => copyLink(publicGruposUrl(torneoId))}
+          >
+            Copiar enlace tablas por grupo
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="te-links-row__btn"
             onClick={() => copyLink(publicGeneralUrl(torneoId))}
           >
             Copiar enlace tabla general
-          </button>
+          </Button>
           {grupo && (
-            <button
+            <Button
               type="button"
-              className="torneo-express-btn te-links-row__btn te-links-row__btn--ghost"
+              variant="secondary"
+              size="sm"
+              className="te-links-row__btn"
               onClick={() => copyLink(publicGrupoUrl(torneoId, grupo.id))}
             >
               Copiar enlace grupo activo
-            </button>
+            </Button>
           )}
         </div>
         {copyMsg && <span className="te-copy-ok">{copyMsg}</span>}
@@ -196,6 +220,6 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           </div>
         )}
       </div>
-    </div>
+    </TePageShell>
   );
 };

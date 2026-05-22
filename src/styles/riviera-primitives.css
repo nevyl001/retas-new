@@ -1,0 +1,469 @@
+/* ============================================================
+   RIVIERA PRIMITIVES v2 — única fuente de botones, cards, inputs, modales
+   Cargar después de archivos @legacy (ver index.css)
+   ============================================================ */
+
+/* ── Botones ── */
+.riviera-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--motion-fast);
+  white-space: nowrap;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.riviera-btn--sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-label);
+}
+
+.riviera-btn--md {
+  padding: var(--space-3) var(--space-6);
+}
+
+.riviera-btn--lg {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--text-body-lg);
+}
+
+.riviera-btn-primary {
+  background: var(--accent-gold);
+  color: var(--text-on-gold);
+  border-color: var(--accent-gold);
+}
+
+.riviera-btn-primary:hover:not(:disabled) {
+  background: var(--accent-gold-light);
+  border-color: var(--accent-gold-light);
+  box-shadow: var(--glow-gold);
+}
+
+.riviera-btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.riviera-btn-secondary:hover:not(:disabled) {
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+}
+
+.riviera-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+}
+
+.riviera-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.riviera-btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.riviera-btn-danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.riviera-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--motion-fast), border-color var(--motion-fast),
+    color var(--motion-fast);
+}
+
+.riviera-btn-back:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+}
+
+.riviera-btn-danger-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color var(--motion-fast), background var(--motion-fast);
+}
+
+.riviera-btn-danger-icon:hover:not(:disabled) {
+  color: var(--error);
+  background: var(--error-muted);
+}
+
+.riviera-btn:disabled,
+.riviera-btn[aria-disabled="true"],
+.riviera-btn-back:disabled,
+.riviera-btn-back[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.riviera-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.riviera-btn:focus-visible,
+.riviera-btn-back:focus-visible,
+.riviera-btn-danger-icon:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+.riviera-btn--loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.riviera-btn--loading::after {
+  content: "";
+  position: absolute;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: riviera-btn-spin 0.6s linear infinite;
+  color: var(--text-inverse);
+}
+
+.riviera-btn-secondary.riviera-btn--loading::after,
+.riviera-btn-ghost.riviera-btn--loading::after {
+  color: var(--text-primary);
+}
+
+@keyframes riviera-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Cards ── */
+.riviera-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast),
+    transform var(--motion-fast), background var(--motion-fast);
+}
+
+.riviera-glass-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+}
+
+.riviera-card--interactive {
+  cursor: pointer;
+}
+
+.riviera-card--interactive:hover,
+.riviera-glass-card.riviera-card--interactive:hover {
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-gold), var(--shadow-2);
+  transform: translateY(-2px);
+  background: var(--bg-card-hover);
+}
+
+.riviera-card--elevated {
+  background: var(--bg-elevated);
+  border-color: var(--border-default);
+}
+
+.riviera-card--flat {
+  background: transparent;
+  border-color: var(--border-subtle);
+}
+
+/* ── Campos ── */
+.riviera-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.riviera-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.riviera-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.riviera-input,
+.riviera-textarea,
+select.riviera-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+  transition: border-color var(--motion-fast), box-shadow var(--motion-fast);
+  outline: none;
+}
+
+.riviera-textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.riviera-input::placeholder,
+.riviera-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.riviera-input:hover:not(:disabled),
+.riviera-textarea:hover:not(:disabled),
+select.riviera-input:hover:not(:disabled) {
+  border-color: var(--border-accent);
+}
+
+.riviera-input:focus,
+.riviera-textarea:focus,
+select.riviera-input:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--accent-gold-dim);
+}
+
+.riviera-input:disabled,
+.riviera-textarea:disabled,
+select.riviera-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.riviera-input--error,
+.riviera-textarea.riviera-input--error {
+  border-color: var(--danger);
+}
+
+.riviera-field-hint {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  color: var(--text-muted);
+}
+
+.riviera-field-error {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  color: var(--danger);
+}
+
+/* ── Badges semánticos (extienden design-system.css) ── */
+.riviera-badge--live {
+  background: var(--accent-gold-dim);
+  color: var(--accent-gold);
+  border: 1px solid rgba(232, 197, 71, 0.25);
+}
+
+.riviera-badge--live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live);
+  animation: riviera-badge-pulse 1.2s ease-in-out infinite;
+}
+
+.riviera-badge--scheduled {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+.riviera-badge--win {
+  background: var(--success-muted);
+  color: #166534;
+  border: 1px solid rgba(74, 222, 128, 0.22);
+}
+
+.riviera-badge--loss {
+  background: var(--error-muted);
+  color: #991b1b;
+  border: 1px solid rgba(248, 113, 113, 0.22);
+}
+
+.riviera-badge--draw {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--draw);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+@keyframes riviera-badge-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.75);
+  }
+}
+
+/* ── Modal ── */
+.riviera-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--bg-overlay);
+  animation: riviera-modal-fade-in var(--motion-fast) ease both;
+}
+
+.riviera-modal-overlay--sheet {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.riviera-modal {
+  position: relative;
+  width: 100%;
+  max-height: min(90vh, 720px);
+  overflow: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
+  animation: riviera-modal-slide-up var(--motion-base) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.riviera-modal--sm {
+  max-width: 360px;
+}
+
+.riviera-modal--md {
+  max-width: 480px;
+}
+
+.riviera-modal--lg {
+  max-width: 640px;
+}
+
+.riviera-modal--full {
+  max-width: min(100%, var(--page-max-width));
+  max-height: 95vh;
+  border-radius: var(--radius-md);
+}
+
+.riviera-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.riviera-modal__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-display-m);
+  font-weight: var(--weight-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.riviera-modal__close {
+  flex-shrink: 0;
+}
+
+.riviera-modal__body {
+  padding: var(--space-5);
+}
+
+.riviera-modal__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.riviera-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  width: 100%;
+}
+
+@keyframes riviera-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes riviera-modal-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

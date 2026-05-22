@@ -5,6 +5,7 @@ import { copyToClipboard, publicGeneralUrl } from "../../services/torneoExpressS
 import { PublicStandingsSection } from "./public/PublicStandingsSection";
 import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
+import { Button } from "../ui";
 import {
   getTorneoExpressGeneralBack,
   navigateTorneoExpress,
@@ -51,18 +52,15 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
     <PublicTorneoExpressShell>
       <PublicTorneoExpressHeader
         torneoNombre={bundle.torneo.nombre}
+        categoria={bundle.torneo.categoria}
         subtitle="Tabla general · todos los grupos"
         onCopyLink={copyLink}
         copyMsg={copyMsg || undefined}
         extraActions={
           user ? (
-            <button
-              type="button"
-              className="te-public-btn te-public-btn--outline"
-              onClick={goBack}
-            >
+            <Button type="button" variant="back" size="sm" onClick={goBack}>
               ← Regresar
-            </button>
+            </Button>
           ) : undefined
         }
       />

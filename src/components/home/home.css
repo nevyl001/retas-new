@@ -90,7 +90,7 @@
   background: var(--bg-card) !important;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   opacity: 0;
@@ -198,7 +198,7 @@
   background: var(--bg-card);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   opacity: 0;
@@ -376,7 +376,29 @@
   border-top: 1px solid var(--border-subtle);
 }
 
-/* —— Modal creación de reta —— */
+/* —— Modal creación de reta (QuickStart + Modal UI) —— */
+.riviera-modal-overlay.home-sheet-overlay {
+  z-index: 1100;
+}
+
+.home-sheet.riviera-modal {
+  max-width: 560px;
+  max-height: 90vh;
+  padding: 0 1.35rem 1.35rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-card);
+}
+
+.home-sheet .riviera-modal__body {
+  padding: 0;
+}
+
+.home-sheet .riviera-modal__footer {
+  padding: 0;
+  border-top: none;
+}
+
 .home-sheet-overlay {
   position: fixed;
   inset: 0;
@@ -404,7 +426,7 @@
   padding: 0 1.35rem 1.35rem;
   box-sizing: border-box;
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: var(--shadow-card);
   animation: fadeInUp 0.35s ease-out both;
@@ -478,7 +500,7 @@
   margin-top: 0.4rem;
   box-sizing: border-box;
   padding: 0.65rem 0.85rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.09);
   color: var(--text-primary);

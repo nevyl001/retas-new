@@ -11,6 +11,7 @@ import {
 } from "../../lib/torneoExpress/resultadosCopy";
 import type { TorneoExpress } from "../../lib/torneoExpress/types";
 import { TablaGrupo } from "./TablaGrupo";
+import { Button } from "../ui";
 
 function formatFecha(iso: string): string {
   try {
@@ -82,14 +83,15 @@ export const TorneoExpressResultadosPanel: React.FC<
             {torneo.nombre} — {formatFecha(torneo.created_at)}
           </p>
         </div>
-        <button
+        <Button
           type="button"
-          className="te-players-btn-ghost"
+          variant="ghost"
+          size="sm"
           onClick={onClose}
           aria-label="Cerrar resultados"
         >
           Cerrar ✕
-        </button>
+        </Button>
       </div>
 
       {loading && <p className="te-subtitle">Cargando resultados…</p>}
@@ -109,13 +111,14 @@ export const TorneoExpressResultadosPanel: React.FC<
 
       {!loading && blocks.length > 0 && (
         <div className="te-resultados-panel__footer">
-          <button
+          <Button
             type="button"
-            className="torneo-express-btn torneo-express-btn--outline"
+            variant="secondary"
+            size="sm"
             onClick={() => void handleCopy()}
           >
-            {copied ? "¡Copiado! ✓" : "📋 Copiar resultados"}
-          </button>
+            {copied ? "¡Copiado! ✓" : "Copiar resultados"}
+          </Button>
         </div>
       )}
     </div>

@@ -7,6 +7,7 @@ import {
   type Player,
 } from "../../lib/database";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
+import { Button } from "../ui";
 
 interface TorneoExpressPlayerPanelProps {
   userId: string;
@@ -196,9 +197,10 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     <aside className="te-players-panel torneo-express-card">
       <div className="te-players-panel__head">
         <h2 className="te-players-panel__title">Gestión de Jugadores</h2>
-        <button
+        <Button
           type="button"
-          className="torneo-express-btn torneo-express-btn--gold"
+          variant="primary"
+          size="sm"
           onClick={() => {
             setAgregandoNuevo(true);
             setEliminandoId(null);
@@ -207,7 +209,7 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
           disabled={agregandoNuevo || guardando}
         >
           + Nuevo
-        </button>
+        </Button>
       </div>
 
       <p className="te-players-panel__subtitle">Jugadores registrados</p>
@@ -255,25 +257,28 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
             disabled={guardando}
           />
           <div className="te-players-add-form__actions">
-            <button
+            <Button
               type="button"
-              className="torneo-express-btn torneo-express-btn--gold"
+              variant="primary"
+              size="sm"
               onClick={() => void agregarJugador()}
               disabled={guardando || !nuevoJugadorNombre.trim()}
+              loading={guardando}
             >
-              ✓ Guardar
-            </button>
-            <button
+              Guardar
+            </Button>
+            <Button
               type="button"
-              className="te-players-btn-ghost"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setAgregandoNuevo(false);
                 setNuevoJugadorNombre("");
               }}
               disabled={guardando}
             >
-              ✕ Cancelar
-            </button>
+              Cancelar
+            </Button>
           </div>
         </div>
       )}
@@ -309,22 +314,25 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
                     ¿Eliminar <strong>{jugador.name}</strong>?
                   </span>
                   <div className="te-players-row__actions">
-                    <button
+                    <Button
                       type="button"
-                      className="te-players-btn-danger"
+                      variant="danger"
+                      size="sm"
                       onClick={() => void eliminarJugador(jugador)}
                       disabled={guardando}
+                      loading={guardando}
                     >
                       Sí, eliminar
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
-                      className="te-players-btn-ghost"
+                      variant="ghost"
+                      size="sm"
                       onClick={cancelarEliminar}
                       disabled={guardando}
                     >
                       Cancelar
-                    </button>
+                    </Button>
                   </div>
                 </li>
               );

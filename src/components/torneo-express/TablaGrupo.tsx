@@ -29,15 +29,7 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
   return (
     <div className="te-standings-block">
       <StandingsScoringHelp />
-      <div
-        className={`te-standings-wrap ${TABLA_WRAPPER_CLASS}`}
-        style={
-          {
-            "--standings-sticky-bg": "#121212",
-            "--standings-sticky-bg-leader": "#1f1a0a",
-          } as React.CSSProperties
-        }
-      >
+      <div className={`te-standings-wrap ${TABLA_WRAPPER_CLASS}`}>
         <table className={`te-standings-table ${TABLA_RANKING_CLASS}`}>
           <thead>
             <StandingsTableHeader

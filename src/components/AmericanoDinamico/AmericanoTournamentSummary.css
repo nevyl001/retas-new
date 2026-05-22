@@ -65,16 +65,29 @@
 }
 
 .americano-summary__podium {
-  display: grid;
-  grid-template-columns: 1fr 1.1fr 1fr;
-  gap: 10px;
-  align-items: end;
-  margin: 24px 0 1.25rem;
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+  margin: var(--space-6) 0 var(--space-5);
 }
 
-/* Orden visual podio: 2º | 1º | 3º */
+.americano-summary__medal {
+  flex: 1;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  padding: var(--space-3) var(--space-2);
+}
+
 .americano-summary__medal--gold {
   order: 2;
+  border-color: var(--border-accent);
+  background: var(--accent-gold-dim);
+  padding-top: var(--space-5);
 }
 
 .americano-summary__medal--silver {
@@ -85,76 +98,28 @@
   order: 3;
 }
 
-.americano-summary__medal {
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-/* 1er lugar — centro, un poco más alto */
-.americano-summary__medal--gold {
-  background: rgba(212, 175, 55, 0.12);
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  padding: 20px 14px 22px;
+.americano-summary__medal > span {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: var(--weight-display);
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: var(--space-1);
 }
 
 .americano-summary__medal--gold > span {
-  font-family: var(--font-display);
-  font-size: 1.75rem;
   color: var(--accent-gold);
-  display: block;
-  margin-bottom: 6px;
 }
 
-.americano-summary__medal--gold strong {
+.americano-summary__medal strong {
   font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--accent-gold-light);
-}
-
-/* 2do lugar — izquierda */
-.americano-summary__medal--silver {
-  background: rgba(180, 180, 190, 0.07);
-  border: 1px solid rgba(180, 180, 190, 0.25);
-  padding: 16px 14px 18px;
-}
-
-.americano-summary__medal--silver > span {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  color: #b4b4be;
-  display: block;
-  margin-bottom: 6px;
-}
-
-.americano-summary__medal--silver strong {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
 }
 
-/* 3er lugar — derecha */
-.americano-summary__medal--bronze {
-  background: rgba(160, 100, 50, 0.07);
-  border: 1px solid rgba(160, 100, 50, 0.2);
-  padding: 14px 14px 16px;
-}
-
-.americano-summary__medal--bronze > span {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  color: #a06432;
-  display: block;
-  margin-bottom: 6px;
-}
-
-.americano-summary__medal--bronze strong {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
+.americano-summary__medal--gold strong {
+  color: var(--accent-gold);
 }
 
 .americano-summary__subtitle {

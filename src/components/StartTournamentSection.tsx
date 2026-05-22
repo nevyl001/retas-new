@@ -4,6 +4,7 @@ import {
   getStartFormatLabel,
   resolveTournamentStartFormat,
 } from "../lib/gameModeMapping";
+import { Button, Card, Input } from "./ui";
 
 interface StartTournamentSectionProps {
   tournament: Tournament;
@@ -97,7 +98,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
         </span>
       </header>
 
-      <div className="start-tournament-section__hero riviera-card">
+      <Card variant="elevated" className="start-tournament-section__hero">
         <p className="start-tournament-section__headline">Selecciona las parejas</p>
         <p className="start-tournament-section__pairs-ready">
           {pairs.length === 0
@@ -106,31 +107,28 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
             ? "1 pareja lista · necesitas al menos 2"
             : `${pairs.length} parejas listas para jugar`}
         </p>
-      </div>
+      </Card>
 
       {format === "teams" && pairs.length >= 2 && (
-        <div className="start-tournament-section__teams riviera-card">
+        <Card variant="elevated" className="start-tournament-section__teams">
           <p className="riviera-label">Organiza tus equipos</p>
           <div className="start-tournament-section__teams-toolbar">
-            <label className="start-tournament-section__teams-count">
-              <span className="riviera-label">Número de equipos</span>
-              <input
-                type="number"
-                className="riviera-input"
-                min={2}
-                max={Math.max(2, pairs.length)}
-                value={teamsCount}
-                onChange={(e) => setTeamsCount(parseInt(e.target.value || "2", 10))}
-                disabled={loading}
-              />
-            </label>
+            <Input
+              type="number"
+              label="Número de equipos"
+              className="start-tournament-section__teams-count"
+              min={2}
+              max={Math.max(2, pairs.length)}
+              value={teamsCount}
+              onChange={(e) => setTeamsCount(parseInt(e.target.value || "2", 10))}
+              disabled={loading}
+            />
           </div>
 
           {teamsPreview?.map((t) => (
             <div key={t.teamIndex} className="start-tournament-section__team-block">
-              <input
+              <Input
                 type="text"
-                className="riviera-input"
                 value={teamNames[t.teamIndex] ?? `Equipo ${t.teamIndex + 1}`}
                 onChange={(e) => {
                   const next = [...teamNames];
@@ -169,16 +167,18 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
               </div>
             </div>
           ))}
-        </div>
+        </Card>
       )}
 
       <p className="start-tournament-section__instructions">
         Agrega jugadores, selecciona las parejas e inicia tu modo de juego. ¡Disfruta!
       </p>
 
-      <button
+      <Button
         type="button"
-        className="riviera-btn-primary start-tournament-section__cta"
+        variant="primary"
+        size="lg"
+        className="start-tournament-section__cta"
         onClick={() =>
           onStartTournament({
             format,
@@ -196,7 +196,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
           : format === "teams" && !isTeamsConfigValid
           ? "Revisa los equipos"
           : "Iniciar"}
-      </button>
+      </Button>
     </div>
   );
 };

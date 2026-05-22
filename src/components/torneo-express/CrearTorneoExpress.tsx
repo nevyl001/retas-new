@@ -21,8 +21,7 @@ import {
   TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
-import "./torneo-express.css";
-import "./riviera-torneo-express.css";
+import { Button } from "../ui";
 
 interface CrearTorneoExpressProps {
   onTorneoCreated?: () => void;
@@ -33,6 +32,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 }) => {
   const { user } = useUser();
   const [nombre, setNombre] = useState("");
+  const [categoria, setCategoria] = useState("");
   const [numGrupos, setNumGrupos] = useState(2);
   const [draftTournamentId, setDraftTournamentId] = useState<string | null>(null);
   const [jugadores, setJugadores] = useState<Player[]>([]);
@@ -312,6 +312,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     try {
       const torneoId = await createTorneoExpressWithGroups({
         nombre: nombre.trim(),
+        categoria: categoria.trim() || null,
         sourceTournamentId: draftTournamentId,
         grupos: assignments,
       });
@@ -361,6 +362,17 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                     placeholder="Ej. Express Riviera Mayo"
+                  />
+                </div>
+
+                <div className="torneo-express-field">
+                  <label htmlFor="te-categoria">Categoría</label>
+                  <input
+                    id="te-categoria"
+                    value={categoria}
+                    onChange={(e) => setCategoria(e.target.value)}
+                    placeholder="Ej. 4ta, 5ta, Open"
+                    autoComplete="off"
                   />
                 </div>
 
@@ -416,9 +428,10 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     </div>
                   </div>
 
-                  <button
+                  <Button
                     type="button"
-                    className="torneo-express-btn torneo-express-btn--gold"
+                    variant="primary"
+                    size="sm"
                     onClick={() => void agregarPareja()}
                     disabled={
                       addingPair ||
@@ -426,9 +439,10 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                       !jugador2Id ||
                       jugador1Id === jugador2Id
                     }
+                    loading={addingPair}
                   >
                     {addingPair ? "Agregando…" : "+ Agregar pareja"}
-                  </button>
+                  </Button>
 
                   {parejas.length > 0 && (
                     <ul className="te-parejas-formadas">
@@ -494,13 +508,15 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     </div>
                   ))}
 
-                <button
+                <Button
                   type="submit"
-                  className="torneo-express-btn torneo-express-btn--gold te-crear-submit"
+                  variant="primary"
+                  className="te-crear-submit"
                   disabled={submitting || parejas.length < 2}
+                  loading={submitting}
                 >
                   {submitting ? "Creando…" : "Crear torneo y generar partidos"}
-                </button>
+                </Button>
               </>
             )}
           </form>

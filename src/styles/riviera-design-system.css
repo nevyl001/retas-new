@@ -1,62 +1,4 @@
-/* Riviera Gold — Design System (fuente de verdad visual) */
-
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700&display=swap");
-
-:root {
-  /* ── Fondos ── */
-  --bg-base: #000000;
-  --bg-elevated: #111111;
-  --bg-card: rgba(255, 255, 255, 0.09);
-  --bg-card-hover: rgba(255, 255, 255, 0.13);
-
-  /* ── Bordes ── */
-  --border-subtle: rgba(255, 255, 255, 0.16);
-  --border-accent: rgba(212, 175, 55, 0.35);
-
-  /* ── Dorado — acento escaso ── */
-  --accent-gold: #d4af37;
-  --accent-gold-light: #f0d060;
-  --accent-gold-dim: rgba(212, 175, 55, 0.12);
-
-  /* ── Texto — 3 niveles ── */
-  --text-primary: #ffffff;
-  --text-secondary: #c0c0c0;
-  --text-muted: #909090;
-
-  /* ── Estados semánticos ── */
-  --win: #22c55e;
-  --loss: #ef4444;
-  --live: #ff4444;
-  --pending: #737373;
-
-  /* ── Tipografía ── */
-  --font-display: 'Bebas Neue', sans-serif;
-  --font-body: 'Outfit', sans-serif;
-
-  /* ── Radios — unificados ── */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 14px;
-  --radius-full: 999px;
-
-  /* ── Motion — sistema único ── */
-  --motion-enter: 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  --motion-micro: 150ms ease;
-  --motion-stagger: 60ms;
-
-  /* ── Misc ── */
-  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.4);
-}
-
-/* Reduced motion — accesibilidad */
-@media (prefers-reduced-motion: reduce) {
-  .riviera-organizer-reta *,
-  .te-public * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+/* Riviera Gold — utilidades y primitivos (tokens en riviera-tokens.css) */
 
 /* Superficies sólidas → negro; cards con glass */
 .user-header {
@@ -282,9 +224,9 @@ body {
   gap: 0.4rem;
   padding: 0.28rem 0.65rem;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(34, 197, 94, 0.35);
-  background: rgba(34, 197, 94, 0.12);
-  color: var(--win);
+  border: 1px solid rgba(232, 197, 71, 0.25);
+  background: var(--accent-gold-dim);
+  color: var(--accent-gold);
   font-family: var(--font-body);
   font-size: 0.68rem;
   font-weight: 700;
@@ -297,7 +239,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--win);
+  background: var(--accent-gold);
   animation: pulse-dot 1.2s ease-in-out infinite;
 }
 

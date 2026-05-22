@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
+import { Button, Input } from "../ui";
 import "./AdminLogin.css";
 
 interface AdminLoginProps {
@@ -86,7 +87,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
               Email de Administrador
             </label>
             <div className="input-container">
-              <input
+              <Input
                 type="email"
                 id="email"
                 value={email}
@@ -94,7 +95,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
                 placeholder="admin@test.com"
                 required
                 disabled={isLoading}
-                className="admin-input"
+                inputClassName="admin-input riviera-input"
+                className="admin-input-field"
               />
               <div className="input-icon">👤</div>
             </div>
@@ -106,7 +108,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
               Contraseña de Acceso
             </label>
             <div className="input-container">
-              <input
+              <Input
                 type="password"
                 id="password"
                 value={password}
@@ -114,7 +116,8 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
-                className="admin-input"
+                inputClassName="admin-input riviera-input"
+                className="admin-input-field"
               />
               <div className="input-icon">🔐</div>
             </div>
@@ -127,16 +130,19 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="lg"
             className="admin-login-btn"
+            loading={isLoading || loading}
             disabled={isLoading || loading}
           >
             <span className="btn-icon">{isLoading ? "⏳" : "🚀"}</span>
             <span className="btn-text">
               {isLoading ? "Verificando Acceso..." : "Acceder al Panel"}
             </span>
-          </button>
+          </Button>
         </form>
 
         <div className="admin-login-footer">

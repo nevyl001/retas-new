@@ -1,0 +1,113 @@
+/* Riviera Gold v3 — patrones de componente (preview HTML) */
+
+/* Display / kicker */
+.home-header__hero,
+.te-public-header__title,
+.te-public-podium__title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.home-header__hero {
+  font-weight: var(--weight-display);
+  letter-spacing: 0.04em;
+}
+
+.te-public-header__kicker,
+.te-public-podium__badge,
+.home-section-title,
+.riviera-section-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
+
+/* Cards interactivas */
+.game-mode-card,
+.riviera-glass-card,
+.riviera-card,
+.mis-reta-card {
+  border: 1px solid var(--border-default);
+}
+
+.game-mode-card:hover:not(:disabled),
+.riviera-glass-card.riviera-card--interactive:hover,
+.riviera-card--interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glow-gold);
+}
+
+/* Match cards — organizador */
+.modern-match-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+}
+
+.modern-match-card:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-card-hover);
+}
+
+.modern-match-title,
+.modern-pair-names {
+  font-size: 14px;
+  font-weight: var(--weight-semibold);
+}
+
+.modern-pair-info--winner .modern-pair-names,
+.te-pub-score--winner,
+.score-display--winner {
+  color: var(--accent-gold);
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+}
+
+/* Vista pública — partidos */
+.te-pub-match-card,
+.te-public-match-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--motion-fast), background var(--motion-fast);
+}
+
+.te-pub-match-card:hover,
+.te-public-match-card:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-card-hover);
+}
+
+/* Glow decorativo público */
+.te-public__glow--a {
+  background: var(--accent-gold-dim);
+}
+
+.te-public__glow--b {
+  background: rgba(232, 197, 71, 0.06);
+}
+
+/* Filtros / chips estilo nav preview */
+.mis-retas-page__filters .riviera-filter-chip--active,
+.riviera-filter-chip--active {
+  color: var(--accent-gold);
+  border-color: var(--border-accent);
+  background: var(--accent-gold-dim);
+}
+
+/* Welcome / containers */
+.container,
+.main-layout {
+  background: var(--bg-base);
+}
+
+.welcome-banner,
+.reta-management-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+}

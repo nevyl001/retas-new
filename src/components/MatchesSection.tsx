@@ -3,6 +3,7 @@ import { Tournament, Match, Pair } from "../lib/database";
 import MatchCardWithResults from "./MatchCardWithResults";
 import RealTimeStandingsTable from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
+import { Button } from "./ui";
 
 const TEAM_CONFIG_KEY = "rivieraapp_teams_";
 
@@ -143,9 +144,9 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
 
       {/* Botón para volver al inicio */}
       <div className="back-home-button-container riviera-back-toolbar">
-        <button type="button" className="riviera-btn-back" onClick={onBackToHome}>
+        <Button type="button" variant="back" onClick={onBackToHome}>
           ← Volver al inicio
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
 import React from "react";
 import { GestionGrupos } from "./GestionGrupos";
 import { TorneoExpressInicio } from "./TorneoExpressInicio";
+import { TePageShell } from "./TePageShell";
 import { VistaPublicaGeneral } from "./VistaPublicaGeneral";
 import { VistaPublicaGrupo } from "./VistaPublicaGrupo";
-import "./torneo-express.css";
-import "./riviera-torneo-express.css";
+import { VistaPublicaGrupos } from "./VistaPublicaGrupos";
 
 export type TorneoExpressRoute =
   | { kind: "home" }
@@ -12,6 +12,7 @@ export type TorneoExpressRoute =
   | { kind: "gestionar"; torneoId: string }
   | { kind: "grupo"; torneoId: string; grupoId: string }
   | { kind: "general"; torneoId: string }
+  | { kind: "grupos"; torneoId: string }
   | { kind: "unknown" };
 
 export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
@@ -24,12 +25,18 @@ export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
   if (grupo) return { kind: "grupo", torneoId: grupo[1], grupoId: grupo[2] };
   const general = path.match(/^\/torneo-express\/([^/]+)\/general$/);
   if (general) return { kind: "general", torneoId: general[1] };
+  const grupos = path.match(/^\/torneo-express\/([^/]+)\/grupos$/);
+  if (grupos) return { kind: "grupos", torneoId: grupos[1] };
   return { kind: "unknown" };
 }
 
 export function isTorneoExpressPublicPath(pathname: string): boolean {
   const route = parseTorneoExpressPath(pathname);
-  return route.kind === "grupo" || route.kind === "general";
+  return (
+    route.kind === "grupo" ||
+    route.kind === "general" ||
+    route.kind === "grupos"
+  );
 }
 
 export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
@@ -49,11 +56,13 @@ export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
       );
     case "general":
       return <VistaPublicaGeneral torneoId={route.torneoId} />;
+    case "grupos":
+      return <VistaPublicaGrupos torneoId={route.torneoId} />;
     default:
       return (
-        <div className="torneo-express-page">
+        <TePageShell>
           <p className="te-error">Ruta de torneo express no válida.</p>
-        </div>
+        </TePageShell>
       );
   }
 };

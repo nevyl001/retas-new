@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
+import { Button, Input } from "../ui";
 import "./AuthForms.css";
 
 interface RegisterFormProps {
@@ -97,82 +98,69 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
             </div>
           )}
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="name">
-              Nombre
-            </label>
-            <input
-              id="name"
-              className="auth-input"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Tu nombre"
-              required
-              disabled={loading}
-              autoComplete="name"
-            />
-          </div>
+          <Input
+            id="name"
+            className="auth-field"
+            label="Nombre"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Tu nombre"
+            required
+            disabled={loading}
+            autoComplete="name"
+          />
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="register-email">
-              Email
-            </label>
-            <input
-              id="register-email"
-              className="auth-input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              required
-              disabled={loading}
-              autoComplete="email"
-            />
-          </div>
+          <Input
+            id="register-email"
+            className="auth-field"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            required
+            disabled={loading}
+            autoComplete="email"
+          />
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="register-password">
-              Contraseña
-            </label>
-            <input
-              id="register-password"
-              className="auth-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
-              required
-              disabled={loading}
-              autoComplete="new-password"
-            />
-          </div>
+          <Input
+            id="register-password"
+            className="auth-field"
+            label="Contraseña"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Mínimo 6 caracteres"
+            required
+            disabled={loading}
+            autoComplete="new-password"
+          />
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="confirmPassword">
-              Confirmar contraseña
-            </label>
-            <input
-              id="confirmPassword"
-              className="auth-input"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              disabled={loading}
-              autoComplete="new-password"
-            />
-          </div>
+          <Input
+            id="confirmPassword"
+            className="auth-field"
+            label="Confirmar contraseña"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            disabled={loading}
+            autoComplete="new-password"
+          />
 
           <div className="auth-cta auth-cta--register">
-            <button
+            <Button
               type="submit"
+              variant="primary"
+              size="lg"
               className="btn-auth-primary"
+              loading={loading}
               disabled={loading}
             >
               {loading ? "Creando cuenta…" : "Crear cuenta →"}
-            </button>
+            </Button>
           </div>
         </form>
 

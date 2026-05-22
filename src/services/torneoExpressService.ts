@@ -234,9 +234,18 @@ async function fetchPartidosForGrupoIds(
 
 async function insertTorneoExpressRow(
   nombre: string,
-  organizador_id: string
+  organizador_id: string,
+  categoria?: string | null
 ): Promise<TorneoExpress> {
+  const cat =
+    categoria != null && String(categoria).trim() !== ""
+      ? String(categoria).trim()
+      : null;
+
   const attempts: Record<string, unknown>[] = [
+    { nombre, organizador_id, estado: "en_curso", categoria: cat },
+    { nombre, organizador_id, estado: "pendiente", categoria: cat },
+    { nombre, organizador_id, categoria: cat },
     { nombre, organizador_id, estado: "en_curso" },
     { nombre, organizador_id, estado: "pendiente" },
     { nombre, organizador_id },
@@ -256,10 +265,16 @@ async function insertTorneoExpressRow(
     }
 
     lastError = error;
+    if (!error) continue;
     if (
-      error &&
       "estado" in payload &&
       isMissingColumnError(error, "torneo_express", "estado")
+    ) {
+      continue;
+    }
+    if (
+      "categoria" in payload &&
+      isMissingColumnError(error, "torneo_express", "categoria")
     ) {
       continue;
     }
@@ -538,6 +553,7 @@ export async function fetchTorneoExpressBundle(
 
 export async function createTorneoExpressWithGroups(input: {
   nombre: string;
+  categoria?: string | null;
   sourceTournamentId: string;
   grupos: GrupoAssignmentDraft[];
 }): Promise<string> {
@@ -568,7 +584,8 @@ export async function createTorneoExpressWithGroups(input: {
   // Paso 1: torneo_express
   const torneoRow = await insertTorneoExpressRow(
     input.nombre.trim(),
-    organizador_id
+    organizador_id,
+    input.categoria
   );
   const torneoId = torneoRow.id;
   if (!torneoId) {
@@ -876,6 +893,11 @@ export function publicGrupoUrl(torneoId: string, grupoId: string): string {
 
 export function publicGeneralUrl(torneoId: string): string {
   return `${window.location.origin}/torneo-express/${torneoId}/general`;
+}
+
+/** Vista pública: tabla de clasificación de cada grupo del torneo. */
+export function publicGruposUrl(torneoId: string): string {
+  return `${window.location.origin}/torneo-express/${torneoId}/grupos`;
 }
 
 export async function copyToClipboard(text: string): Promise<boolean> {

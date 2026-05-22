@@ -4,6 +4,8 @@ export type PartidoExpressEstado = "pendiente" | "jugado";
 export interface TorneoExpress {
   id: string;
   nombre: string;
+  /** Ej. 4ta, 5ta, Open — requiere columna `categoria` en Supabase */
+  categoria?: string | null;
   organizador_id: string;
   estado: TorneoExpressEstado;
   source_tournament_id: string | null;

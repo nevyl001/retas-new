@@ -12,6 +12,7 @@ import type {
   TorneoExpressGrupoPareja,
   TorneoExpressPartido,
 } from "../../lib/torneoExpress/types";
+import { Badge, Button } from "../ui";
 
 interface PartidosGrupoProps {
   partidos: TorneoExpressPartido[];
@@ -41,24 +42,12 @@ function PartidoStatusBadge({
   enJuego: boolean;
 }) {
   if (partido.estado === "jugado") {
-    return (
-      <span className="te-partido-status te-partido-status--jugado">
-        ✓ JUGADO
-      </span>
-    );
+    return <Badge variant="finished">✓ JUGADO</Badge>;
   }
   if (enJuego) {
-    return (
-      <span className="te-partido-status te-partido-status--live">
-        ● EN JUEGO
-      </span>
-    );
+    return <Badge variant="live">EN JUEGO</Badge>;
   }
-  return (
-    <span className="te-partido-status te-partido-status--pendiente">
-      PENDIENTE
-    </span>
-  );
+  return <Badge variant="pending">PENDIENTE</Badge>;
 }
 
 function PartidoCanchaField({
@@ -170,22 +159,27 @@ function PartidoCanchaField({
         />
       </div>
       <div className="te-partido-cancha__actions">
-        <button
+        <Button
           type="button"
-          className="torneo-express-btn torneo-express-btn--primary te-partido-cancha__save"
+          variant="primary"
+          size="sm"
+          className="te-partido-cancha__save"
           disabled={savingCancha}
+          loading={savingCancha}
           onClick={guardarCancha}
         >
           {savingCancha ? "…" : "Guardar"}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           className="te-partido-cancha__cancel"
           disabled={savingCancha}
           onClick={cancelEdit}
         >
           Cancelar
-        </button>
+        </Button>
       </div>
       {canchaError && (
         <p className="te-partido-cancha__error">{canchaError}</p>
@@ -299,10 +293,13 @@ function PartidoRow({
               aria-label={`Puntos ${visitLabel}`}
             />
           </div>
-          <button
+          <Button
             type="button"
-            className="torneo-express-btn torneo-express-btn--gold te-partido-save-btn"
+            variant="primary"
+            size="sm"
+            className="te-partido-save-btn"
             disabled={saving}
+            loading={saving}
             onClick={() =>
               void onSave(partido.id, Number(pl) || 0, Number(pv) || 0).then(
                 () => setEditing(false)
@@ -310,7 +307,7 @@ function PartidoRow({
             }
           >
             {saving ? "Guardando…" : "Guardar"}
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="te-partido-actions te-partido-actions--score">
@@ -320,13 +317,15 @@ function PartidoRow({
               : "—"}
           </span>
           {editable && onSave && played && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               className="te-partido-edit-btn"
               onClick={() => setEditing(true)}
             >
               Editar
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -445,14 +444,16 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
 
       {showReorder && ordenModificado && (
         <div className="te-partidos-orden-bar">
-          <button
+          <Button
             type="button"
-            className="torneo-express-btn torneo-express-btn--primary"
+            variant="secondary"
+            size="sm"
             disabled={savingOrden}
+            loading={savingOrden}
             onClick={() => void guardarOrden()}
           >
             {savingOrden ? "Guardando orden…" : "Guardar nuevo orden"}
-          </button>
+          </Button>
         </div>
       )}
 

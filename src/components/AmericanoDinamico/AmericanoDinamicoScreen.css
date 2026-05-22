@@ -5,9 +5,10 @@
   font-family: var(--font-body);
   color: var(--text-primary);
   min-height: 100vh;
-  padding: 0 24px 48px;
+  padding: var(--space-5) var(--space-6) var(--space-12);
   max-width: 1100px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .americano-screen__header {
@@ -265,7 +266,7 @@
 
 @media (max-width: 720px) {
   .americano-screen {
-    padding: 0 16px 32px;
+    padding: var(--space-4) var(--space-4) var(--space-8);
   }
 
   .americano-podium__grid {

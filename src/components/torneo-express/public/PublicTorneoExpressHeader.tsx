@@ -1,7 +1,9 @@
 import React from "react";
+import { Button } from "../../ui";
 
 export const PublicTorneoExpressHeader: React.FC<{
   torneoNombre: string;
+  categoria?: string | null;
   subtitle?: React.ReactNode;
   grupoLabel?: string;
   onCopyLink?: () => void;
@@ -9,6 +11,7 @@ export const PublicTorneoExpressHeader: React.FC<{
   extraActions?: React.ReactNode;
 }> = ({
   torneoNombre,
+  categoria,
   subtitle,
   grupoLabel,
   onCopyLink,
@@ -21,6 +24,9 @@ export const PublicTorneoExpressHeader: React.FC<{
       <h1 className="te-public-header__title">{torneoNombre}</h1>
       <div className="te-public-header__line" aria-hidden />
       <div className="te-public-header__meta">
+        {categoria?.trim() ? (
+          <span className="te-public-header__categoria-pill">{categoria.trim()}</span>
+        ) : null}
         {grupoLabel && (
           <span className="te-public-header__grupo-pill">{grupoLabel}</span>
         )}
@@ -32,13 +38,9 @@ export const PublicTorneoExpressHeader: React.FC<{
     <div className="te-public-header__actions">
       {extraActions}
       {onCopyLink && (
-        <button
-          type="button"
-          className="te-public-btn te-public-btn--outline"
-          onClick={onCopyLink}
-        >
+        <Button type="button" variant="secondary" size="sm" onClick={onCopyLink}>
           Copiar enlace
-        </button>
+        </Button>
       )}
     </div>
     {copyMsg && <p className="te-public-header__copy-msg">{copyMsg}</p>}

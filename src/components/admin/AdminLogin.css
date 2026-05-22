@@ -162,6 +162,15 @@
   opacity: 0.8;
 }
 
+.admin-input-field.riviera-field {
+  margin: 0;
+  width: 100%;
+}
+
+.admin-input-field .riviera-input-wrap {
+  width: 100%;
+}
+
 .input-container {
   position: relative;
   display: flex;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
+import { Button } from "../ui";
 import "./AuthForms.css";
 
 interface AuthCallbackProps {
@@ -91,13 +92,14 @@ export const AuthCallback: React.FC<AuthCallbackProps> = ({ onSuccess }) => {
           <div className="auth-error">
             <h2>❌ Error de Confirmación</h2>
             <p>{error}</p>
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={() => (window.location.href = "/")}
               className="auth-submit-btn"
             >
               Volver al Login
-            </button>
+            </Button>
           </div>
         </div>
       </div>

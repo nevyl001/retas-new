@@ -10,6 +10,8 @@ import { TorneoExpressResultadosPanel } from "./TorneoExpressResultadosPanel";
 import { TorneoExpressTablaGeneralPanel } from "./TorneoExpressTablaGeneralPanel";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import type { TorneoExpress } from "../../lib/torneoExpress/types";
+import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
+import { Badge, Button } from "../ui";
 
 const MAX_VISIBLE = 5;
 
@@ -171,17 +173,22 @@ export const TorneoExpressTorneosSection: React.FC<
                 className={`te-torneo-card${activo ? " te-torneo-card--activo" : " te-torneo-card--finalizado"}`}
               >
                 <div className="te-torneo-card__top">
-                  <span
-                    className={`te-torneo-card__estado${activo ? " te-torneo-card__estado--live" : ""}`}
-                  >
-                    {activo ? "● EN CURSO" : "✓ FINALIZADO"}
-                  </span>
+                  {activo ? (
+                    <Badge variant="live">EN CURSO</Badge>
+                  ) : (
+                    <Badge variant="finished">FINALIZADO</Badge>
+                  )}
                   <span className="te-torneo-card__fecha">
                     Creado: {formatFecha(t.created_at)}
                   </span>
                 </div>
 
                 <h3 className="te-torneo-card__nombre">{t.nombre}</h3>
+                {formatTorneoExpressCategoria(t.categoria) && (
+                  <p className="te-torneo-card__categoria">
+                    Categoría: {formatTorneoExpressCategoria(t.categoria)}
+                  </p>
+                )}
                 <p className="te-torneo-card__info">
                   {t.grupoCount} {t.grupoCount === 1 ? "grupo" : "grupos"} ·{" "}
                   {t.parejaCount} {t.parejaCount === 1 ? "pareja" : "parejas"}
@@ -196,22 +203,25 @@ export const TorneoExpressTorneosSection: React.FC<
                       Esta acción no se puede deshacer.
                     </p>
                     <div className="te-torneo-card__confirm-actions">
-                      <button
+                      <Button
                         type="button"
-                        className="te-torneo-btn te-torneo-btn--danger"
+                        variant="danger"
+                        size="sm"
                         disabled={accionando}
+                        loading={accionando}
                         onClick={() => void handleFinalizar(t.id)}
                       >
                         Sí, finalizar fase
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
-                        className="te-players-btn-ghost"
+                        variant="ghost"
+                        size="sm"
                         disabled={accionando}
                         onClick={() => setFinalizarId(null)}
                       >
                         Cancelar
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -222,22 +232,25 @@ export const TorneoExpressTorneosSection: React.FC<
                       ¿Eliminar {t.nombre}?
                     </p>
                     <div className="te-torneo-card__confirm-actions">
-                      <button
+                      <Button
                         type="button"
-                        className="te-torneo-btn te-torneo-btn--danger"
+                        variant="danger"
+                        size="sm"
                         disabled={accionando}
+                        loading={accionando}
                         onClick={() => void handleEliminar(t.id)}
                       >
                         Sí, eliminar
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
-                        className="te-players-btn-ghost"
+                        variant="ghost"
+                        size="sm"
                         disabled={accionando}
                         onClick={() => setEliminarId(null)}
                       >
                         Cancelar
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -246,9 +259,10 @@ export const TorneoExpressTorneosSection: React.FC<
                   <div className="te-torneo-card__actions">
                     {activo && (
                       <>
-                        <button
+                        <Button
                           type="button"
-                          className="te-torneo-btn te-torneo-btn--gold-outline"
+                          variant="primary"
+                          size="sm"
                           onClick={() =>
                             navigateTorneoExpress(
                               `/torneo-express/${t.id}/gestionar`
@@ -256,63 +270,70 @@ export const TorneoExpressTorneosSection: React.FC<
                           }
                         >
                           Gestionar →
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          className="te-torneo-btn te-torneo-btn--outline"
+                          variant="secondary"
+                          size="sm"
                           onClick={() => openResultados(t.id)}
                         >
                           {showResultados ? "Ocultar resultados" : "Ver resultados"}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          className="te-torneo-btn te-torneo-btn--outline"
+                          variant="secondary"
+                          size="sm"
                           onClick={() => openTablaGeneral(t.id)}
                         >
                           {showTablaGeneral
                             ? "Ocultar tabla general"
                             : "Tabla general"}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          className="te-torneo-btn te-torneo-btn--danger-outline"
+                          variant="danger"
+                          size="sm"
                           onClick={() => {
                             setFinalizarId(t.id);
                             setEliminarId(null);
                           }}
                         >
                           Finalizar fase
-                        </button>
+                        </Button>
                       </>
                     )}
                     {!activo && (
                       <>
-                        <button
+                        <Button
                           type="button"
-                          className="te-torneo-btn te-torneo-btn--outline"
+                          variant="secondary"
+                          size="sm"
                           onClick={() => openResultados(t.id)}
                         >
                           {showResultados ? "Ocultar resultados" : "Ver resultados"}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          className="te-torneo-btn te-torneo-btn--outline"
+                          variant="secondary"
+                          size="sm"
                           onClick={() => openTablaGeneral(t.id)}
                         >
                           {showTablaGeneral
                             ? "Ocultar tabla general"
                             : "Tabla general"}
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
-                          className="te-torneo-btn te-torneo-btn--text-danger"
+                          variant="ghost"
+                          size="sm"
+                          className="te-btn-text-danger"
                           onClick={() => {
                             setEliminarId(t.id);
                             setFinalizarId(null);
                           }}
                         >
                           Eliminar
-                        </button>
+                        </Button>
                       </>
                     )}
                   </div>
@@ -338,13 +359,15 @@ export const TorneoExpressTorneosSection: React.FC<
       )}
 
       {!cargandoTorneos && hayMas && !showAll && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           className="te-ver-todos-btn"
           onClick={() => setShowAll(true)}
         >
           Ver todos mis torneos express →
-        </button>
+        </Button>
       )}
     </section>
   );

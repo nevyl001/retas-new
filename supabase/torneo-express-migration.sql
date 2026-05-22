@@ -4,6 +4,7 @@
 CREATE TABLE IF NOT EXISTS torneo_express (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   nombre TEXT NOT NULL,
+  categoria TEXT,
   organizador_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   estado TEXT DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'en_curso', 'finalizado')),
   source_tournament_id UUID,

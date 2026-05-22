@@ -323,7 +323,10 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
               </h2>
               <div className="te-public-podium__grid">
                 {snapshot.ranking[0] && (
-                  <article className="te-public-podium__card te-public-podium__card--gold te-pub-fade-in-up">
+                  <article
+                    data-rank="1"
+                    className="te-public-podium__card te-public-podium__card--gold te-pub-fade-in-up"
+                  >
                     <span className="te-public-podium__place">1er lugar</span>
                     <span className="te-public-podium__name">
                       {snapshot.ranking[0].name}
@@ -332,6 +335,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                 )}
                 {snapshot.ranking[1] && (
                   <article
+                    data-rank="2"
                     className="te-public-podium__card te-pub-fade-in-up"
                     style={{ animationDelay: "0.08s" }}
                   >
@@ -343,6 +347,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                 )}
                 {snapshot.ranking[2] && (
                   <article
+                    data-rank="3"
                     className="te-public-podium__card te-pub-fade-in-up"
                     style={{ animationDelay: "0.12s" }}
                   >

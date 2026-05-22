@@ -14,8 +14,15 @@ function DifPill({ ptsFav, ptsCon }: { ptsFav: number; ptsCon: number }) {
 export const PublicStandingsSection: React.FC<{
   rows: StandingRowExpress[];
   showGrupoColumn?: boolean;
+  /** Leyenda «¿Cómo se ordena la tabla?»; desactivar si ya se muestra arriba en la página */
+  showScoringHelp?: boolean;
   title?: string;
-}> = ({ rows, showGrupoColumn = false, title = "Clasificación" }) => {
+}> = ({
+  rows,
+  showGrupoColumn = false,
+  showScoringHelp = true,
+  title = "Clasificación",
+}) => {
   const staggerBase = useMemo(() => 0.04, []);
 
   if (rows.length === 0) {
@@ -32,7 +39,7 @@ export const PublicStandingsSection: React.FC<{
       <h2 className="te-public-section__title">{title}</h2>
       <div className="te-public-section__divider" aria-hidden />
 
-      <PublicStandingsScoringHelp />
+      {showScoringHelp ? <PublicStandingsScoringHelp /> : null}
 
       <div className="te-pub-standings-table-wrap te-pub-fade-in te-pub-fade-in--delay-1">
         <table className="te-pub-standings-table">

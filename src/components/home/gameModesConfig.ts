@@ -23,7 +23,7 @@ export const GAME_MODES: GameModeConfig[] = [
     icon: "🏆",
     badge: "Popular",
     gradient: "linear-gradient(135deg, #1a1508 0%, #2a2010 100%)",
-    accentColor: "#F59E0B",
+    accentColor: "#e8c547",
   },
   {
     id: "round-robin",
@@ -31,7 +31,7 @@ export const GAME_MODES: GameModeConfig[] = [
     description: "Todos contra todos, tabla en vivo",
     icon: "🔄",
     gradient: "linear-gradient(135deg, #0a0a0a 0%, #141414 100%)",
-    accentColor: "#d4af37",
+    accentColor: "#e8c547",
   },
   {
     id: "americano",
@@ -49,6 +49,6 @@ export const GAME_MODES: GameModeConfig[] = [
     icon: "⚡",
     badge: "Nuevo",
     gradient: "linear-gradient(135deg, #0a0a0a 0%, #141414 100%)",
-    accentColor: "#d4af37",
+    accentColor: "#e8c547",
   },
 ];

@@ -1,5 +1,6 @@
 import React from "react";
 import "../styles/riviera-organizer.css";
+import { Button } from "./ui";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { continueTournament } from "../lib/tournamentRouting";
 import { TournamentWinner } from "./TournamentWinnerCalculator";
@@ -141,16 +142,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         ) : (
           <div className="reta-content riviera-organizer-reta">
             <div className="reta-content__toolbar riviera-back-toolbar">
-              <button
+              <Button
                 type="button"
-                className="riviera-btn-back"
+                variant="back"
                 onClick={() => {
                   onTournamentSelect(null);
                   onBackToHome();
                 }}
               >
                 ← Volver al inicio
-              </button>
+              </Button>
             </div>
             <TournamentDetails
               selectedTournament={selectedTournament}

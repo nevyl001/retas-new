@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
+import { Button, Input } from "../ui";
 import "./AuthForms.css";
 
 interface LoginFormProps {
@@ -48,48 +49,43 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
             </div>
           )}
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              className="auth-input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              required
-              disabled={loading}
-              autoComplete="email"
-            />
-          </div>
+          <Input
+            id="email"
+            className="auth-field"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            required
+            disabled={loading}
+            autoComplete="email"
+          />
 
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="password">
-              Contraseña
-            </label>
-            <input
-              id="password"
-              className="auth-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              disabled={loading}
-              autoComplete="current-password"
-            />
-          </div>
+          <Input
+            id="password"
+            className="auth-field"
+            label="Contraseña"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            required
+            disabled={loading}
+            autoComplete="current-password"
+          />
 
           <div className="auth-cta">
-            <button
+            <Button
               type="submit"
+              variant="primary"
+              size="lg"
               className="btn-auth-primary"
+              loading={loading}
               disabled={loading}
             >
               {loading ? "Entrando…" : "Entrar al juego →"}
-            </button>
+            </Button>
           </div>
         </form>
 

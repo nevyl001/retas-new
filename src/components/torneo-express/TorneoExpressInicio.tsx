@@ -2,22 +2,18 @@ import React, { useState } from "react";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { CrearTorneoExpress } from "./CrearTorneoExpress";
 import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
-import "./torneo-express.css";
-import "./riviera-torneo-express.css";
+import { TePageShell } from "./TePageShell";
+import { Button } from "../ui";
 
 export const TorneoExpressInicio: React.FC = () => {
   const [refreshToken, setRefreshToken] = useState(0);
 
   return (
-    <div className="torneo-express-page te-inicio-page">
+    <TePageShell className="te-inicio-page">
       <div className="te-inicio-toolbar riviera-back-toolbar">
-        <button
-          type="button"
-          className="riviera-btn-back"
-          onClick={() => navigateToAppHome()}
-        >
+        <Button type="button" variant="back" onClick={() => navigateToAppHome()}>
           ← Volver al inicio
-        </button>
+        </Button>
       </div>
 
       <TorneoExpressTorneosSection refreshToken={refreshToken} />
@@ -29,6 +25,6 @@ export const TorneoExpressInicio: React.FC = () => {
       <CrearTorneoExpress
         onTorneoCreated={() => setRefreshToken((n) => n + 1)}
       />
-    </div>
+    </TePageShell>
   );
 };

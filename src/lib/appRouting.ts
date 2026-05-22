@@ -83,7 +83,10 @@ export function resolveAppViewFromPath(pathname: string): AppView {
 export function pathRequiresUserSession(pathname: string): boolean {
   const path = normalizeAppPathname(pathname);
   if (path.includes("/public/")) return false;
-  if (path.startsWith("/torneo-express/") && /\/(grupo\/[^/]+|general)\/?$/i.test(path)) {
+  if (
+    path.startsWith("/torneo-express/") &&
+    /\/(grupo\/[^/]+|general|grupos)\/?$/i.test(path)
+  ) {
     return false;
   }
   if (path === "/admin-login" || path === "/admin-dashboard") return false;

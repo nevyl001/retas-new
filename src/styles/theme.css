@@ -1,100 +1,6 @@
-/* =====================================================
-   RIVIERA OPEN — tema oscuro premium (superficies planas)
-   Variables globales: usar en toda la app (desktop y móvil).
+/* @legacy — tokens migrados a riviera-tokens.css — sunset: Fase 3
+   RIVIERA OPEN — reset tipográfico y primitivos opcionales
    ===================================================== */
-
-:root {
-  /* —— Paleta v2 (alineada con Home) —— */
-  --bg-base: #000000;
-  --bg-primary: #000000;
-  --bg-section: #000000;
-  --bg-card: rgba(255, 255, 255, 0.08);
-  --bg-elevated: #0a0a0a;
-  --bg-overlay: #0a0a0a;
-  /** Pareja / bloque perdedor en partido */
-  --bg-loser: #0a0a0a;
-
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-subtle: rgba(255, 255, 255, 0.09);
-  --border-strong: rgba(255, 255, 255, 0.18);
-
-  --color-gold: #f59e0b;
-  --color-cream: #f59e0b;
-  --color-muted: #9ca3af;
-
-  --text-primary: #ffffff;
-  --text-secondary: #9ca3af;
-  --text-muted: #4b5563;
-  --text-disabled: #374151;
-
-  /* —— Compat: tokens usados en componentes existentes —— */
-  --color-bg-base: var(--bg-base);
-  --color-bg-surface: var(--bg-section);
-  --color-bg-sunken: var(--bg-base);
-  --color-bg-card: var(--bg-card);
-  --color-bg-elevated: var(--bg-elevated);
-  --color-bg-hover: var(--bg-elevated);
-  --color-bg-overlay: rgba(0, 0, 0, 0.96);
-  --color-bg-secondary: var(--bg-loser);
-
-  --color-border: var(--border-default);
-  --color-border-subtle: var(--border-subtle);
-  --color-border-soft: var(--border-default);
-
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--color-muted);
-  --color-text-disabled: var(--text-disabled);
-  --color-text-tertiary: var(--text-secondary);
-  --color-input-placeholder: var(--text-disabled);
-  --color-text-inverse: var(--bg-base);
-
-  --color-accent: var(--color-cream);
-  --color-accent-gold: var(--color-gold);
-  --color-accent-text: var(--bg-base);
-  --color-accent-border: var(--color-cream);
-  --color-accent-border-gold: var(--color-gold);
-  --color-accent-hover: #fbbf24;
-  --color-border-focus: rgba(245, 158, 11, 0.5);
-  --color-accent-subtle: rgba(245, 158, 11, 0.12);
-
-  /* Sombras neutras (mínimas, sin “glow” dorado) */
-  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.45);
-  --shadow-medium: 0 2px 8px rgba(0, 0, 0, 0.5);
-  --shadow-deep: 0 4px 16px rgba(0, 0, 0, 0.55);
-  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.5);
-
-  /* Espaciado */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 32px;
-  --space-xl: 48px;
-  --space-2xl: 64px;
-  --space-3xl: 96px;
-
-  /* Tipografía */
-  --font-family: "DM Sans", "Outfit", sans-serif;
-  --font-display: "Barlow Condensed", sans-serif;
-
-  --font-weight-light: 300;
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-
-  /* Radios (reglas de producto) */
-  --radius-button: 8px;
-  --radius-card: 12px;
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 12px;
-
-  --transition-fast: 0.2s ease;
-  --transition-base: 0.35s ease;
-  --transition-slow: 0.5s ease;
-}
 
 [data-theme="dark"] {
   /* Mismo tema; reservado por si se añade tema claro */
@@ -107,7 +13,7 @@
 }
 
 body {
-  font-family: "Outfit", sans-serif;
+  font-family: var(--font-body);
   font-weight: var(--font-weight-regular);
   background-color: var(--bg-base);
   color: var(--text-primary);

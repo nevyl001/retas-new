@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./App.css";
-import "./styles/theme.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { UserProvider, useUser } from "./contexts/UserContext";
 

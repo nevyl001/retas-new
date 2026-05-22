@@ -425,8 +425,8 @@
 
 /* Finalizado: ganador / perdedor */
 .riviera-organizer-reta .omc-team-row--winner {
-  background: rgba(212, 175, 55, 0.13);
-  border-left-color: #d4af37;
+  background: rgba(232, 197, 71, 0.13);
+  border-left-color: var(--accent-gold);
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-name {
@@ -458,8 +458,8 @@
   gap: 8px;
   margin: 8px 12px;
   padding: 8px 12px;
-  background: rgba(212, 175, 55, 0.12);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(232, 197, 71, 0.12);
+  border: 1px solid rgba(232, 197, 71, 0.3);
   border-radius: 8px;
 }
 
@@ -491,7 +491,7 @@
   font-size: 12px;
   font-weight: 500;
   /* GOLD-AUDIT: evaluar si es necesario (nombre ganador; no es score grande) */
-  color: #d4af37;
+  color: var(--accent-gold);
   line-height: 1.3;
 }
 
@@ -557,8 +557,8 @@
 .riviera-organizer-reta .omc-register__input:focus {
   outline: none;
   /* GOLD-AUDIT: evaluar si es necesario */
-  border-color: #d4af37;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 2px rgba(232, 197, 71, 0.15);
 }
 
 .riviera-organizer-reta .omc-register__vs {
@@ -597,17 +597,17 @@
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 600;
-  color: #d4af37;
+  color: var(--accent-gold);
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.5);
+  border: 1px solid rgba(232, 197, 71, 0.5);
   border-radius: 6px;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .riviera-organizer-reta .omc-btn-finish:hover:not(:disabled) {
-  background: rgba(212, 175, 55, 0.1);
-  border-color: #d4af37;
+  background: rgba(232, 197, 71, 0.1);
+  border-color: var(--accent-gold);
 }
 
 .riviera-organizer-reta .omc-btn-reopen {

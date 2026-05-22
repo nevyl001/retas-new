@@ -7,7 +7,12 @@ export type BadgeVariant =
   | "mode-torneo"
   | "active"
   | "finished"
-  | "pending";
+  | "pending"
+  | "live"
+  | "scheduled"
+  | "win"
+  | "loss"
+  | "draw";
 
 interface BadgeProps {
   variant: BadgeVariant;

@@ -153,7 +153,7 @@
 .mobile-menu-admin {
   background: rgba(0, 212, 255, 0.1);
   border-color: rgba(0, 212, 255, 0.3);
-  color: var(--accent-gold, #d4af37);
+  color: var(--accent-gold);
   font-weight: 600;
   width: 100%;
   max-width: 100%;

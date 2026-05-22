@@ -7,7 +7,7 @@ import {
   Tournament,
 } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
-import { Badge } from "./ui/Badge";
+import { Badge, Button, Card } from "./ui";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
 import {
   formatTournamentCourtsLabel,
@@ -151,9 +151,9 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     <div className="tournament-manager mis-retas-page">
       <header className="mis-retas-page__header">
         {onBack && (
-          <button type="button" className="riviera-btn-back" onClick={onBack}>
+          <Button type="button" variant="back" onClick={onBack}>
             ← Volver
-          </button>
+          </Button>
         )}
         <h1 className="mis-retas-page__title">Mis Retas</h1>
       </header>
@@ -182,7 +182,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           <p className="mis-retas-loading__text">Cargando retas…</p>
         </div>
       ) : tournaments.length === 0 ? (
-        <div className="mis-retas-empty riviera-card">
+        <Card variant="elevated" className="mis-retas-empty">
           <span className="mis-retas-empty__icon" aria-hidden>
             🏓
           </span>
@@ -190,13 +190,13 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           <p className="mis-retas-empty__text">
             Elige un modo de juego arriba para crear tu primera reta.
           </p>
-        </div>
+        </Card>
       ) : filteredTournaments.length === 0 ? (
-        <div className="mis-retas-empty riviera-card">
+        <Card variant="elevated" className="mis-retas-empty">
           <p className="mis-retas-empty__text">
             No hay retas en este filtro. Prueba con &quot;Todas&quot;.
           </p>
-        </div>
+        </Card>
       ) : (
         <div className="mis-retas-page__grid">
           {filteredTournaments.map((tournament) => {
@@ -209,9 +209,12 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
             );
 
             return (
-              <article
+              <Card
                 key={tournament.id}
-                className={`mis-reta-card riviera-glass-card${
+                as="article"
+                variant="glass"
+                interactive
+                className={`mis-reta-card${
                   isSelected ? " mis-reta-card--selected" : ""
                 }`}
                 onClick={() => onTournamentSelect(tournament)}
@@ -286,7 +289,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                     </button>
                   </div>
                 </footer>
-              </article>
+              </Card>
             );
           })}
         </div>

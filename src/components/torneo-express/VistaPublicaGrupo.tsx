@@ -47,6 +47,7 @@ export const VistaPublicaGrupo: React.FC<{
     <PublicTorneoExpressShell>
       <PublicTorneoExpressHeader
         torneoNombre={bundle.torneo.nombre}
+        categoria={bundle.torneo.categoria}
         grupoLabel={grupo.nombre}
         onCopyLink={copyLink}
         copyMsg={copyMsg || undefined}

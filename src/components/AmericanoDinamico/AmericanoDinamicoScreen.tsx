@@ -22,6 +22,7 @@ import {
   resolveAmericanoTournamentId,
   saveAmericanoDinamicoSnapshot,
 } from "../../lib/americanoDinamicoStorage";
+import { Button } from "../ui";
 import "./AmericanoDinamicoScreen.css";
 
 interface AmericanoDinamicoScreenProps {
@@ -279,13 +280,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return (
       <div className="americano-screen">
         <div className="americano-screen__header riviera-back-toolbar">
-          <button
-            type="button"
-            className="riviera-btn-back"
-            onClick={goBackToRetas}
-          >
+          <Button type="button" variant="back" onClick={goBackToRetas}>
             ← Volver al inicio
-          </button>
+          </Button>
         </div>
         {playersLoadError && (
           <p className="americano-screen__error">
@@ -308,13 +305,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return (
       <div className="americano-screen">
         <div className="americano-screen__header riviera-back-toolbar">
-          <button
-            type="button"
-            className="riviera-btn-back"
-            onClick={goBackToRetas}
-          >
+          <Button type="button" variant="back" onClick={goBackToRetas}>
             ← Volver al inicio
-          </button>
+          </Button>
         </div>
         {resolvedTournamentId && publicAmericanoUrl ? (
           <section className="americano-public-link" aria-label="Enlace público">
@@ -331,13 +324,14 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
                 value={publicAmericanoUrl}
                 onFocus={(e) => e.target.select()}
               />
-              <button
+              <Button
                 type="button"
-                className="riviera-btn-primary americano-public-link__copy"
+                variant="primary"
+                className="americano-public-link__copy"
                 onClick={copyPublicAmericanoLink}
               >
                 Copiar enlace
-              </button>
+              </Button>
             </div>
             <p className="americano-public-link__hint">
               Requiere columna <code>americano_live</code> en Supabase (archivo{" "}
@@ -375,13 +369,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   return (
     <div className="americano-screen">
       <div className="americano-screen__header riviera-back-toolbar">
-        <button
-          type="button"
-          className="riviera-btn-back"
-          onClick={goBackToRetas}
-        >
-          ← Volver al inicio
-        </button>
+          <Button type="button" variant="back" onClick={goBackToRetas}>
+            ← Volver al inicio
+          </Button>
       </div>
       {resolvedTournamentId && publicAmericanoUrl ? (
         <section className="americano-public-link" aria-label="Enlace público">
@@ -394,13 +384,14 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               value={publicAmericanoUrl}
               onFocus={(e) => e.target.select()}
             />
-            <button
+            <Button
               type="button"
-              className="riviera-btn-primary americano-public-link__copy"
+              variant="primary"
+              className="americano-public-link__copy"
               onClick={copyPublicAmericanoLink}
             >
               Copiar enlace
-            </button>
+            </Button>
           </div>
         </section>
       ) : null}

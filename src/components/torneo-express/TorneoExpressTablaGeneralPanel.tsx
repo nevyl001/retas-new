@@ -6,6 +6,7 @@ import {
 import { buildStandingsGeneral } from "../../lib/torneoExpress/standings";
 import type { StandingRowExpress, TorneoExpress } from "../../lib/torneoExpress/types";
 import { TablaGeneral } from "./TablaGeneral";
+import { Button } from "../ui";
 
 function formatFecha(iso: string): string {
   try {
@@ -73,14 +74,15 @@ export const TorneoExpressTablaGeneralPanel: React.FC<
             {torneo.nombre} — {formatFecha(torneo.created_at)} · todos los grupos
           </p>
         </div>
-        <button
+        <Button
           type="button"
-          className="te-players-btn-ghost"
+          variant="ghost"
+          size="sm"
           onClick={onClose}
           aria-label="Cerrar tabla general"
         >
           Cerrar ✕
-        </button>
+        </Button>
       </div>
 
       {loading && <p className="te-subtitle">Cargando tabla general…</p>}

@@ -1,0 +1,152 @@
+/* @legacy App.css — winner screen */
+/* ============================================
+   WINNER SCREEN - ELEGANTE Y PREMIUM
+   ============================================ */
+
+.winner-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+.elegant-winner-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.elegant-winner-section {
+  background: transparent;
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  border: none;
+  box-shadow: none;
+  width: 100%;
+  max-width: 900px;
+  position: relative;
+  overflow: visible;
+}
+
+.winner-hero + .elegant-winner-stats {
+  margin-top: var(--space-xl);
+}
+
+.elegant-winner-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-md);
+  margin-top: 0;
+}
+
+.elegant-winner-stat {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  transition: border-color var(--transition-base), background-color var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.elegant-winner-stat:hover {
+  border-color: var(--color-border-soft);
+  background: var(--color-bg-hover);
+  transform: none;
+}
+
+.elegant-winner-stat-number {
+  display: block;
+  color: var(--text-primary);
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: var(--space-sm);
+  filter: none;
+  letter-spacing: 0.02em;
+  text-shadow: none;
+}
+
+.elegant-winner-stat-label {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+}
+
+.elegant-winner-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-xl);
+  padding-top: var(--space-xl);
+  border-top: 1px solid var(--color-border);
+  position: relative;
+}
+
+.elegant-winner-back-btn {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-xl);
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--transition-base), border-color var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  letter-spacing: 0.03em;
+  text-transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
+.elegant-winner-back-btn:hover {
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
+/* Responsive para Winner Screen */
+@media (max-width: 768px) {
+  .elegant-winner-section {
+    padding: var(--space-lg);
+  }
+
+  .elegant-winner-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .elegant-winner-stat-number {
+    font-size: 1.5rem;
+  }
+
+  .elegant-winner-stat-label {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .elegant-winner-section {
+    padding: var(--space-md);
+  }
+
+  .elegant-winner-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .elegant-winner-stat-number {
+    font-size: 1.375rem;
+  }
+}
