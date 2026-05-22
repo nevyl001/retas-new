@@ -58,9 +58,12 @@
 
 @media (max-width: 768px) {
   .ro-public-view::before {
+    /* Foto vertical (móvil) — horizontal en desktop arriba */
+    background-image: url("../assets/cancha-riviera-vertical.jpg");
     position: absolute;
-    opacity: 0.09;
+    opacity: 0.11;
     background-position: center center;
+    background-size: cover;
     min-height: 100%;
   }
 
