@@ -20,7 +20,7 @@ export const PublicTorneoExpressHeader: React.FC<{
 }) => (
   <header className="te-public-header te-pub-fade-in">
     <div className="te-public-header__brand">
-      <p className="te-public-header__kicker">Torneo Express</p>
+      <p className="te-public-header__kicker">Riviera Open</p>
       <h1 className="te-public-header__title">{torneoNombre}</h1>
       <div className="te-public-header__line" aria-hidden />
       <div className="te-public-header__meta">

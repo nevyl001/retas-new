@@ -128,7 +128,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
           const created = await createTournament(
             TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
             user.id,
-            "Parejas en armado para torneo express",
+            "Parejas en armado para torneo",
             1
           );
           tournamentId = created.id;
@@ -345,7 +345,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         <div className="te-crear-col te-crear-col--form">
           <form className="torneo-express-card te-crear-form" onSubmit={handleSubmit}>
             <header className="te-crear-form__header">
-              <h1 className="te-title">Crear Torneo Express</h1>
+              <h1 className="te-title">Crear torneo</h1>
               <p className="te-subtitle">Grupos + round robin por grupo</p>
             </header>
 
@@ -361,7 +361,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     id="te-nombre"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
-                    placeholder="Ej. Express Riviera Mayo"
+                    placeholder="Ej. Riviera Open Mayo"
                   />
                 </div>
 

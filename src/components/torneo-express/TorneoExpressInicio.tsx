@@ -19,7 +19,7 @@ export const TorneoExpressInicio: React.FC = () => {
       <TorneoExpressTorneosSection refreshToken={refreshToken} />
 
       <div className="te-section-divider" role="separator">
-        <span>── Crear nuevo torneo express ──</span>
+        <span>── Crear nuevo torneo ──</span>
       </div>
 
       <CrearTorneoExpress

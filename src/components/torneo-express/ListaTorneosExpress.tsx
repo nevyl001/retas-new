@@ -103,7 +103,7 @@ export const ListaTorneosExpress: React.FC = () => {
 
       <header className="te-header">
         <div>
-          <h1 className="te-title">Torneo Express</h1>
+          <h1 className="te-title">Torneos</h1>
           <p className="te-subtitle">Tus torneos por grupos</p>
         </div>
         <button
@@ -121,18 +121,18 @@ export const ListaTorneosExpress: React.FC = () => {
           className="torneo-express-btn torneo-express-btn--primary"
           onClick={() => navigateTorneoExpress("/torneo-express/nuevo")}
         >
-          Crear nuevo torneo express
+          Crear nuevo torneo
         </button>
       </section>
 
       <section className="torneo-express-card te-list-section">
-        <h2 className="te-list-heading">Tus torneos express</h2>
+        <h2 className="te-list-heading">Tus torneos</h2>
 
         {error && <p className="te-error">{error}</p>}
         {loading && <p className="te-subtitle">Cargando torneos…</p>}
 
         {!loading && !error && torneos.length === 0 && (
-          <p className="te-empty-list">No tienes torneos express. ¡Crea el primero!</p>
+          <p className="te-empty-list">No tienes torneos. ¡Crea el primero!</p>
         )}
 
         {!loading && torneos.length > 0 && (

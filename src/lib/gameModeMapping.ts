@@ -150,7 +150,7 @@ export function isAmericanoTournament(tournament: {
   return resolveTournamentGameMode(tournament) === "americano";
 }
 
-/** Borrador / staging en `tournaments` para armar parejas de Torneo Express (no es reta del home). */
+/** Borrador / staging en `tournaments` para armar parejas de torneos por grupos (no es reta del home). */
 export function isTorneoExpressStagingTournament(tournament: {
   id: string;
   name?: string | null;
@@ -160,7 +160,11 @@ export function isTorneoExpressStagingTournament(tournament: {
     return true;
   }
   const name = (tournament.name ?? "").trim();
-  if (name === TE_EXPRESS_DRAFT_TOURNAMENT_NAME || name.startsWith("(Borrador) Torneo Express")) {
+  if (
+    name === TE_EXPRESS_DRAFT_TOURNAMENT_NAME ||
+    name.startsWith("(Borrador) Torneo Express") ||
+    name.startsWith("(Borrador) Torneo")
+  ) {
     return true;
   }
   try {

@@ -61,7 +61,7 @@ export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
     default:
       return (
         <TePageShell>
-          <p className="te-error">Ruta de torneo express no válida.</p>
+          <p className="te-error">Ruta de torneo no válida.</p>
         </TePageShell>
       );
   }

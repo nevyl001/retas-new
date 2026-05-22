@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
 import { copyToClipboard, publicGrupoUrl } from "../../services/torneoExpressService";
 import { PublicPartidosSection } from "./public/PublicPartidosSection";
+import { PublicGrupoLeaderCelebrate } from "./public/PublicGrupoLeaderCelebrate";
 import { PublicStandingsSection } from "./public/PublicStandingsSection";
 import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
@@ -58,6 +59,12 @@ export const VistaPublicaGrupo: React.FC<{
       />
 
       <PublicStandingsSection rows={standingsByGrupo[grupoId] ?? []} />
+
+      <PublicGrupoLeaderCelebrate
+        grupoNombre={grupo.nombre}
+        rows={standingsByGrupo[grupoId] ?? []}
+        torneoNombre={bundle.torneo.nombre}
+      />
 
       <PublicPartidosSection
         partidos={bundle.partidosPorGrupo[grupo.id] ?? []}

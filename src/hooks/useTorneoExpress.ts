@@ -64,7 +64,7 @@ export function useTorneoExpress(
       setPartidosCanchaDisponible(canchaOk);
       setLastRefreshedAt(new Date());
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al cargar torneo express");
+      setError(e instanceof Error ? e.message : "Error al cargar el torneo");
     } finally {
       if (!silent) {
         setLoading(false);

@@ -4,6 +4,7 @@ import {
   copyToClipboard,
   publicGruposUrl,
 } from "../../services/torneoExpressService";
+import { PublicGrupoLeaderCelebrate } from "./public/PublicGrupoLeaderCelebrate";
 import { PublicStandingsSection } from "./public/PublicStandingsSection";
 import { PublicStandingsScoringHelp } from "./public/PublicStandingsScoringHelp";
 import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
@@ -75,14 +76,23 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
         {gruposOrdenados.length === 0 ? (
           <p className="te-public-empty">Sin grupos en este torneo.</p>
         ) : (
-          gruposOrdenados.map((grupo) => (
-            <PublicStandingsSection
-              key={grupo.id}
-              rows={standingsByGrupo[grupo.id] ?? []}
-              title={grupo.nombre}
-              showScoringHelp={false}
-            />
-          ))
+          gruposOrdenados.map((grupo) => {
+            const rows = standingsByGrupo[grupo.id] ?? [];
+            return (
+              <div key={grupo.id} className="te-public-grupo-block">
+                <PublicStandingsSection
+                  rows={rows}
+                  title={grupo.nombre}
+                  showScoringHelp={false}
+                />
+                <PublicGrupoLeaderCelebrate
+                  grupoNombre={grupo.nombre}
+                  rows={rows}
+                  torneoNombre={bundle.torneo.nombre}
+                />
+              </div>
+            );
+          })
         )}
       </div>
 

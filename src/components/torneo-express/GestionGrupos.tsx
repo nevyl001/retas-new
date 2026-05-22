@@ -78,7 +78,6 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         <div>
           <h1 className="te-title">{bundle.torneo.nombre}</h1>
           <p className="te-subtitle te-subtitle--meta">
-            <span className="te-subtitle__product">Torneo Express</span>
             {formatTorneoExpressCategoria(bundle.torneo.categoria) && (
               <span className="te-categoria-pill">
                 {formatTorneoExpressCategoria(bundle.torneo.categoria)}

@@ -136,7 +136,7 @@ export const TorneoExpressTorneosSection: React.FC<
   return (
     <section className="te-torneos-section" aria-labelledby="te-torneos-heading">
       <h2 id="te-torneos-heading" className="te-torneos-section__title">
-        Tus torneos express
+        Tus torneos
       </h2>
 
       {error && <p className="te-error">{error}</p>}
@@ -151,7 +151,7 @@ export const TorneoExpressTorneosSection: React.FC<
 
       {!cargandoTorneos && sorted.length === 0 && (
         <div className="te-torneos-empty">
-          <p>Aún no tienes torneos express.</p>
+          <p>Aún no tienes torneos.</p>
           <p>Crea uno abajo para comenzar.</p>
         </div>
       )}
@@ -366,7 +366,7 @@ export const TorneoExpressTorneosSection: React.FC<
           className="te-ver-todos-btn"
           onClick={() => setShowAll(true)}
         >
-          Ver todos mis torneos express →
+          Ver todos mis torneos →
         </Button>
       )}
     </section>
