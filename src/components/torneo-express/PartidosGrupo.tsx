@@ -203,7 +203,7 @@ function PartidoHorarioField({
       setDraftDate(d.date);
       setDraftTime(d.time);
     }
-  }, [partido.id, partido.programado_en, partido.created_at, editing]);
+  }, [partido, editing]);
 
   const closeEdit = () => {
     const d = programadoDraftFromPartido(partido);
