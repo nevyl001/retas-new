@@ -18,40 +18,57 @@ import {
 
 export function useTorneoExpress(
   torneoId: string | null,
-  options?: { publicMode?: boolean; realtime?: boolean }
+  options?: {
+    publicMode?: boolean;
+    realtime?: boolean;
+    /** Recarga en segundo plano (p. ej. 60000 en vistas públicas). */
+    pollIntervalMs?: number;
+  }
 ) {
   const publicMode = options?.publicMode ?? false;
   const realtime = options?.realtime ?? true;
+  const pollIntervalMs = options?.pollIntervalMs ?? 0;
 
   const [bundle, setBundle] = useState<TorneoExpressBundle | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [savingPartidoId, setSavingPartidoId] = useState<string | null>(null);
   const [savingOrden, setSavingOrden] = useState(false);
   const [partidosOrdenDisponible, setPartidosOrdenDisponible] = useState(true);
   const [partidosCanchaDisponible, setPartidosCanchaDisponible] = useState(true);
   const [savingCanchaId, setSavingCanchaId] = useState<string | null>(null);
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (opts?: { silent?: boolean }) => {
     if (!torneoId) {
       setBundle(null);
       return;
     }
-    setLoading(true);
+    const silent = opts?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const [data, ordenOk, canchaOk] = await Promise.all([
         fetchTorneoExpressBundle(torneoId, publicMode),
-        checkPartidosOrdenColumnAvailable(),
-        checkPartidosCanchaColumnAvailable(),
+        publicMode
+          ? Promise.resolve(true)
+          : checkPartidosOrdenColumnAvailable(),
+        publicMode
+          ? Promise.resolve(true)
+          : checkPartidosCanchaColumnAvailable(),
       ]);
       setBundle(data);
       setPartidosOrdenDisponible(ordenOk);
       setPartidosCanchaDisponible(canchaOk);
+      setLastRefreshedAt(new Date());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar torneo express");
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [torneoId, publicMode]);
 
@@ -73,9 +90,19 @@ export function useTorneoExpress(
 
     const grupoIds = grupoIdsKey.split(",").filter(Boolean);
     return subscribeTorneoExpress(torneoId, grupoIds, () => {
-      void reloadRef.current();
+      void reloadRef.current({ silent: true });
     });
   }, [torneoId, realtime, grupoIdsKey]);
+
+  useEffect(() => {
+    if (!torneoId || pollIntervalMs <= 0) return;
+
+    const id = window.setInterval(() => {
+      void reloadRef.current({ silent: true });
+    }, pollIntervalMs);
+
+    return () => window.clearInterval(id);
+  }, [torneoId, pollIntervalMs]);
 
   const standingsByGrupo = useMemo(() => {
     if (!bundle) return {} as Record<string, StandingRowExpress[]>;
@@ -165,6 +192,7 @@ export function useTorneoExpress(
     error,
     setError,
     reload,
+    lastRefreshedAt,
     standingsByGrupo,
     standingsGeneral,
     saveResultado,

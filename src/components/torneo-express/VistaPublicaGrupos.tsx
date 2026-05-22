@@ -8,14 +8,18 @@ import { PublicStandingsSection } from "./public/PublicStandingsSection";
 import { PublicStandingsScoringHelp } from "./public/PublicStandingsScoringHelp";
 import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
+import { PublicTorneoExpressSyncFooter } from "./public/PublicTorneoExpressSyncFooter";
+import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 
 export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
   torneoId,
 }) => {
-  const { bundle, loading, error, standingsByGrupo } = useTorneoExpress(torneoId, {
-    publicMode: true,
-    realtime: true,
-  });
+  const { bundle, loading, error, standingsByGrupo, lastRefreshedAt } =
+    useTorneoExpress(torneoId, {
+      publicMode: true,
+      realtime: true,
+      pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
+    });
   const [copyMsg, setCopyMsg] = useState("");
 
   const gruposOrdenados = useMemo(
@@ -81,6 +85,8 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
           ))
         )}
       </div>
+
+      <PublicTorneoExpressSyncFooter lastRefreshedAt={lastRefreshedAt} />
     </PublicTorneoExpressShell>
   );
 };

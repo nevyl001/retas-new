@@ -5,6 +5,8 @@ import { copyToClipboard, publicGeneralUrl } from "../../services/torneoExpressS
 import { PublicStandingsSection } from "./public/PublicStandingsSection";
 import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
+import { PublicTorneoExpressSyncFooter } from "./public/PublicTorneoExpressSyncFooter";
+import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 import { Button } from "../ui";
 import {
   getTorneoExpressGeneralBack,
@@ -13,10 +15,12 @@ import {
 
 export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const { user } = useUser();
-  const { bundle, loading, error, standingsGeneral } = useTorneoExpress(torneoId, {
-    publicMode: true,
-    realtime: true,
-  });
+  const { bundle, loading, error, standingsGeneral, lastRefreshedAt } =
+    useTorneoExpress(torneoId, {
+      publicMode: true,
+      realtime: true,
+      pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
+    });
   const [copyMsg, setCopyMsg] = useState("");
 
   const goBack = () => {
@@ -70,6 +74,8 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
         showGrupoColumn
         title="Tabla general"
       />
+
+      <PublicTorneoExpressSyncFooter lastRefreshedAt={lastRefreshedAt} />
     </PublicTorneoExpressShell>
   );
 };

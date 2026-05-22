@@ -5,15 +5,19 @@ import { PublicPartidosSection } from "./public/PublicPartidosSection";
 import { PublicStandingsSection } from "./public/PublicStandingsSection";
 import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
+import { PublicTorneoExpressSyncFooter } from "./public/PublicTorneoExpressSyncFooter";
+import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 
 export const VistaPublicaGrupo: React.FC<{
   torneoId: string;
   grupoId: string;
 }> = ({ torneoId, grupoId }) => {
-  const { bundle, loading, error, standingsByGrupo } = useTorneoExpress(torneoId, {
-    publicMode: true,
-    realtime: true,
-  });
+  const { bundle, loading, error, standingsByGrupo, lastRefreshedAt } =
+    useTorneoExpress(torneoId, {
+      publicMode: true,
+      realtime: true,
+      pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
+    });
   const [copyMsg, setCopyMsg] = useState("");
 
   const grupo = bundle?.grupos.find((g) => g.id === grupoId);
@@ -60,6 +64,8 @@ export const VistaPublicaGrupo: React.FC<{
         parejas={bundle.parejasPorGrupo[grupo.id] ?? []}
         title="Juegos"
       />
+
+      <PublicTorneoExpressSyncFooter lastRefreshedAt={lastRefreshedAt} />
     </PublicTorneoExpressShell>
   );
 };
