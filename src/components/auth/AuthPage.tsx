@@ -3,6 +3,9 @@ import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
 import "./AuthPage.css";
 
+/** PNG con transparencia (public/logo-riviera.png) */
+const AUTH_LOGO_SRC = "/logo-riviera.png?v=1";
+
 export const AuthPage: React.FC = () => {
   const [isLoginMode, setIsLoginMode] = useState(true);
 
@@ -16,11 +19,11 @@ export const AuthPage: React.FC = () => {
         <div className="auth-visual-panel__inner">
           <div className="auth-visual-brand auth-logo">
             <img
-              src="/logo-source.png"
+              src={AUTH_LOGO_SRC}
               alt="RivieraApp logo"
               className="auth-visual-brand__logo logo-img"
-              width={48}
-              height={48}
+              width={56}
+              height={56}
             />
             <span className="auth-visual-brand__name">RivieraApp</span>
           </div>
@@ -39,11 +42,11 @@ export const AuthPage: React.FC = () => {
       <div className="auth-form-panel">
         <div className="auth-mobile-hero auth-logo" aria-label="RivieraApp">
           <img
-            src="/logo-source.png"
+            src={AUTH_LOGO_SRC}
             alt="RivieraApp logo"
             className="auth-mobile-hero__logo logo-img"
-            width={56}
-            height={56}
+            width={64}
+            height={64}
           />
           <span className="auth-mobile-hero__name">RivieraApp</span>
           <h2 className="auth-mobile-hero__title">

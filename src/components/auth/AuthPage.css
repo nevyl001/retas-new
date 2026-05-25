@@ -61,12 +61,12 @@
 }
 
 .auth-visual-brand__logo {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   flex-shrink: 0;
   margin-bottom: 0;
-  filter: brightness(1.1);
+  background: transparent;
 }
 
 .auth-visual-brand__name {
@@ -154,13 +154,14 @@
 }
 
 .logo-img {
+  display: block;
   object-fit: contain;
-  filter: brightness(1.1);
+  background: transparent;
 }
 
 .auth-mobile-hero__logo {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   margin-bottom: 12px;
 }
 
