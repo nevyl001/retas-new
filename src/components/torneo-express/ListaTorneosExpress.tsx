@@ -11,6 +11,8 @@ import {
   navigateTorneoExpress,
   setTorneoExpressGeneralBack,
 } from "./torneoExpressNav";
+import { TePageShell } from "./TePageShell";
+import { Button } from "../ui";
 import "./torneo-express.css";
 import "./riviera-torneo-express.css";
 
@@ -91,7 +93,7 @@ export const ListaTorneosExpress: React.FC = () => {
   };
 
   return (
-    <div className="torneo-express-page">
+    <TePageShell>
       {deleteTarget && (
         <TorneoExpressDeleteModal
           torneoNombre={deleteTarget.nombre}
@@ -106,23 +108,25 @@ export const ListaTorneosExpress: React.FC = () => {
           <h1 className="te-title">Torneos</h1>
           <p className="te-subtitle">Tus torneos por grupos</p>
         </div>
-        <button
+        <Button
           type="button"
-          className="torneo-express-btn"
+          variant="ghost"
+          size="sm"
           onClick={() => navigateTorneoExpress("/")}
         >
           Ir a RivieraApp
-        </button>
+        </Button>
       </header>
 
       <section className="torneo-express-card te-list-section">
-        <button
+        <Button
           type="button"
-          className="torneo-express-btn torneo-express-btn--primary"
+          variant="primary"
+          size="sm"
           onClick={() => navigateTorneoExpress("/torneo-express/nuevo")}
         >
           Crear nuevo torneo
-        </button>
+        </Button>
       </section>
 
       <section className="torneo-express-card te-list-section">
@@ -154,38 +158,41 @@ export const ListaTorneosExpress: React.FC = () => {
                   </p>
                 </div>
                 <div className="te-torneo-list-card__actions">
-                  <button
+                  <Button
                     type="button"
-                    className="torneo-express-btn torneo-express-btn--primary"
+                    variant="primary"
+                    size="sm"
                     onClick={() =>
                       navigateTorneoExpress(`/torneo-express/${t.id}/gestionar`)
                     }
                   >
                     Gestionar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="torneo-express-btn"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                       setTorneoExpressGeneralBack(t.id, "/torneo-express");
                       navigateTorneoExpress(`/torneo-express/${t.id}/general`);
                     }}
                   >
                     Ver tabla general
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="torneo-express-btn te-btn-delete"
+                    variant="danger"
+                    size="sm"
                     onClick={() => setDeleteTarget(t)}
                   >
                     Eliminar
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </TePageShell>
   );
 };

@@ -192,13 +192,13 @@
 }
 
 .te-public-podium__card--silver {
-  border-color: rgba(180, 180, 180, 0.35);
-  background: rgba(180, 180, 180, 0.08);
+  border-color: var(--medal-silver-border);
+  background: var(--medal-silver-dim);
 }
 
 .te-public-podium__card--bronze {
-  border-color: rgba(205, 127, 50, 0.35);
-  background: rgba(180, 120, 60, 0.08);
+  border-color: var(--medal-bronze-border);
+  background: var(--medal-bronze-dim);
 }
 
 .te-public-podium__place {
@@ -217,11 +217,11 @@
 }
 
 .te-public-podium__card--silver .te-public-podium__place {
-  color: #b8bcc4;
+  color: var(--medal-silver);
 }
 
 .te-public-podium__card--bronze .te-public-podium__place {
-  color: #cd9a6a;
+  color: var(--medal-bronze);
 }
 
 .te-public-podium__name {

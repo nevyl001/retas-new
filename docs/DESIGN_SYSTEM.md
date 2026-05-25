@@ -143,6 +143,14 @@ Verificar: sin amber `#f59e0b`, focus Tab visible, hover en cards, glow en botó
 - Badge “En vivo” en dorado (no rojo).
 - Botón primario: texto `--text-on-gold` (`#1c1c1e`).
 
+### Unificación visual TE (2026-05-22)
+
+- Tokens `--te-*` como aliases de Riviera Gold v3 (`--accent-gold`, `--bg-deep`, etc.).
+- `--medal-silver` / `--medal-bronze` para podios públicos.
+- `.torneo-express-btn` alineado a `.riviera-btn` (pill + primary sólido).
+- Vista pública TE: sin bloque `:root` duplicado; badge live en dorado.
+- `ListaTorneosExpress` usa `<Button>` + `TePageShell`.
+
 ### Pendiente (post-sprint)
 
 - Migrar `UserManagement` modal a `<Modal>`.

@@ -146,21 +146,21 @@
 }
 
 .americano-podium__card--silver {
-  border-color: rgba(180, 180, 180, 0.35);
-  background: rgba(180, 180, 180, 0.08);
+  border-color: var(--medal-silver-border);
+  background: var(--medal-silver-dim);
 }
 
 .americano-podium__card--silver .americano-podium__place {
-  color: #b8bcc4;
+  color: var(--medal-silver);
 }
 
 .americano-podium__card--bronze {
-  border-color: rgba(205, 127, 50, 0.35);
-  background: rgba(180, 120, 60, 0.08);
+  border-color: var(--medal-bronze-border);
+  background: var(--medal-bronze-dim);
 }
 
 .americano-podium__card--bronze .americano-podium__place {
-  color: #cd9a6a;
+  color: var(--medal-bronze);
 }
 
 .americano-public-link {

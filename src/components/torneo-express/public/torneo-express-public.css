@@ -1,37 +1,10 @@
-/* Vista pública Torneo — dark premium / dorado terroso (Padelco) */
+/* Vista pública Torneo — tokens globales (:root) + shell */
 
 .te-public {
-  --te-black: #0c0c0c;
-  --te-surface: #141414;
-  --te-surface-hover: #1a1a1a;
-  --te-border: rgba(255, 255, 255, 0.06);
-  --te-gold: #c9a84c;
-  --te-gold-bright: #e8c547;
-  --te-gold-muted: rgba(201, 168, 76, 0.15);
-  --te-gold-glow: rgba(201, 168, 76, 0.08);
-  --te-text: #f0f0f0;
-  --te-text-muted: rgba(240, 240, 240, 0.45);
-  --te-red: #c0392b;
-  --te-live: #c9a84c;
-
-  --bg-base: var(--te-black);
-  --bg-card: var(--te-surface);
+  --bg-base: var(--bg-deep);
+  --bg-card: var(--bg-surface-solid);
   --bg-elevated: var(--te-surface-hover);
-  --border-subtle: var(--te-border);
-  --border-default: var(--te-border);
-  --accent-gold: var(--te-gold-bright);
-  --accent-gold-light: var(--te-gold-bright);
-  --accent-gold-dim: var(--te-gold-muted);
-  --text-primary: var(--te-text);
-  --text-secondary: var(--te-text-muted);
-  --text-muted: var(--te-text-muted);
-  --live: var(--te-live);
-  --live-color: var(--te-live);
-  --accent-primary: var(--te-gold-bright);
-  --accent-secondary: var(--te-gold);
-  --border: var(--te-border);
-  --font-display: var(--font-display);
-  --font-body: var(--font-body);
+  --live-color: var(--live);
 
   min-height: 100vh;
   width: 100%;
@@ -45,6 +18,7 @@
   overflow-x: hidden;
 }
 
+.App.ro-public-view .te-public,
 .App.ro-public-view .te-public,
 .ro-public-view.te-public {
   background-color: transparent;
@@ -1013,9 +987,9 @@
 }
 
 .te-pub-status--live {
-  background: rgba(255, 68, 68, 0.12);
-  color: var(--live-color);
-  border: 1px solid rgba(255, 68, 68, 0.35);
+  background: var(--accent-gold-dim);
+  color: var(--accent-gold);
+  border: 1px solid var(--border-accent);
 }
 
 .te-pub-status__dot {

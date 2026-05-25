@@ -24,7 +24,8 @@
   background: var(--te-bg);
   color: var(--te-text);
   font-family: var(--riviera-font-body);
-  padding: var(--riviera-space-5) var(--riviera-space-6) var(--riviera-space-12);
+  padding: var(--riviera-space-5) var(--riviera-space-6)
+    calc(var(--riviera-space-16) + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
   animation: fadeInUp 0.45s ease-out both;
 }
@@ -55,7 +56,8 @@
 
 @media (max-width: 720px) {
   .torneo-express-page {
-    padding: var(--riviera-space-4) var(--riviera-space-4) var(--riviera-space-8);
+    padding: var(--riviera-space-4) var(--riviera-space-4)
+      calc(var(--riviera-space-12) + env(safe-area-inset-bottom, 0px));
   }
 
   .torneo-express-page--offset {
@@ -166,40 +168,51 @@
 .torneo-express-card {
   background: var(--te-surface);
   border: 1px solid var(--te-border);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: var(--space-md, 1rem);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-md);
   max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
 }
 
+/* Puente legacy → mismos estilos que .riviera-btn (v3) */
 .torneo-express-btn {
-  font-family: inherit;
-  border-radius: 8px;
-  padding: 0.55rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
   cursor: pointer;
-  border: 1px solid var(--te-border);
-  background: var(--te-card);
-  color: var(--te-text);
-  transition: border-color 0.15s, background 0.15s;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: all var(--motion-fast);
+  white-space: nowrap;
 }
 
 .torneo-express-btn:hover:not(:disabled) {
-  border-color: var(--te-gold);
-  color: var(--te-gold);
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
 }
 
 .torneo-express-btn--primary {
-  background: transparent;
-  border-color: var(--te-gold);
-  color: var(--te-gold);
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: var(--text-on-gold);
 }
 
 .torneo-express-btn--primary:hover:not(:disabled) {
-  background: var(--riviera-accent-gold-dim);
+  background: var(--accent-gold-light);
+  border-color: var(--accent-gold-light);
+  color: var(--text-on-gold);
+  box-shadow: var(--glow-gold);
 }
 
 .torneo-express-btn:disabled {
@@ -260,8 +273,20 @@
 .te-grupo-badge--4 { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.12); }
 
 /* Sección Grupos (gestión torneo) */
+.te-entry-card__title {
+  margin: 0 0 var(--space-2);
+}
+
+.te-entry-card__text {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
 .te-grupos-card {
-  padding: 24px;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+  margin-bottom: var(--space-md);
 }
 
 .te-grupos-card__title {
@@ -286,6 +311,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding-bottom: 0.5rem;
 }
 
 .te-grupos-card__active-name {
@@ -297,7 +323,7 @@
 }
 
 .te-grupos-card__body .standings-scoring-help {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .te-grupos-card__partidos-title {
@@ -416,6 +442,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  padding-bottom: 0.75rem;
 }
 
 .te-partidos-migration-hint {
@@ -450,7 +477,11 @@
 }
 
 .te-partidos-ronda {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.te-partidos-ronda:last-child {
+  margin-bottom: 0;
 }
 
 .te-partidos-ronda__head {
@@ -478,8 +509,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 1rem 0;
+  padding: 1rem 0 1.15rem;
   border-bottom: 1px solid var(--te-border);
+}
+
+.te-partido-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0.35rem;
+}
+
+.te-partidos-ronda:last-child .te-partido-row:last-child {
+  padding-bottom: 0.75rem;
 }
 
 .te-partido-row__toolbar {
@@ -1047,17 +1087,17 @@ button.te-partido-chip--cancha:disabled {
 }
 
 .te-btn-delete {
-  color: #ef4444;
+  color: var(--danger);
   background: transparent;
-  border-color: rgba(239, 68, 68, 0.45);
-  font-size: 0.8rem;
-  padding: 0.45rem 0.75rem;
+  border-color: rgba(248, 113, 113, 0.45);
+  font-size: var(--text-body-sm);
+  padding: var(--space-2) var(--space-3);
 }
 
 .te-btn-delete:hover:not(:disabled) {
-  background: #ef4444;
-  border-color: #ef4444;
-  color: #ffffff;
+  background: var(--error-muted);
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .te-btn-delete--solid:hover:not(:disabled) {
@@ -1195,17 +1235,17 @@ button.te-partido-chip--cancha:disabled {
 }
 
 .torneo-express-btn--gold {
-  background: var(--riviera-accent-gold);
-  border-color: var(--riviera-accent-gold);
-  color: var(--riviera-text-on-gold);
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: var(--text-on-gold);
   font-weight: var(--weight-semibold);
 }
 
 .torneo-express-btn--gold:hover:not(:disabled) {
-  background: var(--riviera-accent-gold-light);
-  border-color: var(--riviera-accent-gold-light);
-  color: var(--riviera-text-on-gold);
-  box-shadow: var(--riviera-glow-gold);
+  background: var(--accent-gold-light);
+  border-color: var(--accent-gold-light);
+  color: var(--text-on-gold);
+  box-shadow: var(--glow-gold);
 }
 
 .te-crear-submit {
@@ -1877,13 +1917,15 @@ button.te-partido-chip--cancha:disabled {
 }
 
 .torneo-express-btn--outline {
-  border: 1px solid #707070;
-  color: #fff;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
   background: transparent;
 }
 
 .torneo-express-btn--outline:hover:not(:disabled) {
-  border-color: #909090;
+  border-color: var(--border-accent);
+  color: var(--accent-gold);
+  background: var(--accent-gold-dim);
 }
 
 /* Panel resultados expandible */

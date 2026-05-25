@@ -7,6 +7,8 @@
 :root {
   /* ── Superficies ── */
   --bg-base: #1c1c1e;
+  --bg-deep: #0c0c0c;
+  --bg-surface-solid: #141414;
   --bg-elevated: #242426;
   --bg-card: rgba(255, 255, 255, 0.07);
   --bg-card-hover: rgba(255, 255, 255, 0.11);
@@ -53,6 +55,15 @@
   --error: var(--loss);
   --error-muted: rgba(248, 113, 113, 0.13);
   --danger: var(--loss);
+
+  /* ── Podio / medallas (vistas públicas) ── */
+  --medal-gold: var(--accent-gold);
+  --medal-silver: #b8bcc4;
+  --medal-silver-dim: rgba(184, 188, 196, 0.12);
+  --medal-silver-border: rgba(184, 188, 196, 0.35);
+  --medal-bronze: #cd9a6a;
+  --medal-bronze-dim: rgba(180, 120, 60, 0.1);
+  --medal-bronze-border: rgba(205, 127, 50, 0.35);
 
   /* ── Modos de juego ── */
   --mode-equipos: var(--accent-gold);
@@ -223,22 +234,26 @@
   --riviera-space-4: var(--space-4);
   --riviera-space-5: var(--space-5);
   --riviera-space-6: var(--space-6);
+  --riviera-space-8: var(--space-8);
+  --riviera-space-10: var(--space-10);
+  --riviera-space-12: var(--space-12);
+  --riviera-space-16: var(--space-16);
   --riviera-font-display: var(--font-display);
   --riviera-font-body: var(--font-body);
 
-  /* ── Torneo (módulo TE) — dark premium / dorado terroso (Padelco) ── */
-  --te-black: #0c0c0c;
-  --te-surface: #141414;
+  /* ── Torneo Express — aliases de Riviera Gold v3 (no hex propios) ── */
+  --te-black: var(--bg-deep);
+  --te-surface: var(--bg-surface-solid);
   --te-surface-hover: #1a1a1a;
-  --te-border: rgba(255, 255, 255, 0.06);
-  --te-gold: #c9a84c;
-  --te-gold-bright: #e8c547;
-  --te-gold-muted: rgba(201, 168, 76, 0.15);
-  --te-gold-glow: rgba(201, 168, 76, 0.08);
-  --te-text: #f0f0f0;
-  --te-text-muted: rgba(240, 240, 240, 0.45);
-  --te-red: #c0392b;
-  --te-live: #c9a84c;
+  --te-border: var(--border-subtle);
+  --te-gold: var(--accent-gold);
+  --te-gold-bright: var(--accent-gold-light);
+  --te-gold-muted: var(--accent-gold-dim);
+  --te-gold-glow: var(--glow-gold);
+  --te-text: var(--text-primary);
+  --te-text-muted: var(--text-muted);
+  --te-red: var(--danger);
+  --te-live: var(--live);
 }
 
 @media (prefers-reduced-motion: reduce) {

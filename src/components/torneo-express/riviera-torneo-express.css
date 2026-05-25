@@ -111,8 +111,6 @@
   flex: 0 1 auto;
   width: auto;
   max-width: 100%;
-  border-radius: var(--radius-md);
-  padding: 0.55rem 1rem;
   white-space: nowrap;
 }
 
@@ -161,66 +159,11 @@
   background: var(--riviera-bg-card);
 }
 
-/* —— Botones —— */
-.torneo-express-page .torneo-express-btn {
-  font-family: var(--font-body);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-subtle);
-  background: transparent;
-  color: var(--text-secondary);
-  transition: border-color var(--transition-fast), color var(--transition-fast),
-    background var(--transition-fast), box-shadow var(--transition-fast),
-    transform var(--transition-fast);
-}
+/* Botones: torneo-express.css (.torneo-express-btn) + riviera-primitives (.riviera-btn) */
 
-.torneo-express-page .torneo-express-btn:hover:not(:disabled) {
-  border-color: var(--border-accent);
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
-}
-
-.torneo-express-page .torneo-express-btn--primary {
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
-  background: transparent;
-}
-
-.torneo-express-page .torneo-express-btn--primary:hover:not(:disabled) {
-  background: var(--accent-gold);
-  border-color: var(--accent-gold);
-  color: var(--bg-base);
-  box-shadow: var(--glow-gold);
-}
-
-.torneo-express-page .torneo-express-btn--gold,
 .torneo-express-page .te-crear-submit {
-  background: var(--accent-gold);
-  border-color: var(--accent-gold);
-  color: var(--bg-base);
-  font-weight: 700;
-  border-radius: var(--radius-full);
-}
-
-.torneo-express-page .torneo-express-btn--gold:hover:not(:disabled),
-.torneo-express-page .te-crear-submit:hover:not(:disabled) {
-  background: var(--accent-gold-light);
-  border-color: var(--accent-gold-light);
-  color: var(--bg-base);
-  box-shadow: var(--glow-gold);
-}
-
-.torneo-express-page .torneo-express-btn--outline,
-.torneo-express-page .te-torneo-btn--outline {
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-  border-radius: var(--radius-full);
-}
-
-.torneo-express-page .torneo-express-btn--outline:hover:not(:disabled),
-.torneo-express-page .te-torneo-btn--outline:hover:not(:disabled) {
-  border-color: var(--border-accent);
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
+  width: 100%;
+  margin-top: var(--space-4);
 }
 
 .torneo-express-page .te-torneo-btn--gold-outline {
@@ -534,9 +477,8 @@
   color: var(--accent-gold);
 }
 
+.torneo-express-page .te-header .riviera-btn,
 .torneo-express-page .te-header .torneo-express-btn {
-  border-radius: var(--radius-md);
-  padding: 0.5rem 1rem;
   white-space: nowrap;
 }
 
