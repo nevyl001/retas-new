@@ -19,6 +19,74 @@ function isDraftTournamentRow(row: {
   );
 }
 
+function americanIdsFromPublicConfig(
+  rows: Record<string, unknown>[] | null | undefined
+): Set<string> {
+  const ids = new Set<string>();
+  if (!rows) return ids;
+  for (const row of rows) {
+    if (!("americano_live" in row)) continue;
+    const live = row.americano_live as unknown;
+    if (
+      live &&
+      typeof live === "object" &&
+      !Array.isArray(live) &&
+      (live as { version?: number }).version === 1
+    ) {
+      const tid = row.tournament_id;
+      if (typeof tid === "string") ids.add(tid);
+    }
+  }
+  return ids;
+}
+
+function teamIdsFromPublicConfig(
+  rows: Record<string, unknown>[] | null | undefined
+): Set<string> {
+  const ids = new Set<string>();
+  if (!rows) return ids;
+  for (const row of rows) {
+    if (row.format !== "teams") continue;
+    const tc = row.team_config as
+      | { teamNames?: unknown[]; pairToTeam?: Record<string, unknown> }
+      | undefined;
+    const tid = row.tournament_id;
+    if (
+      typeof tid === "string" &&
+      Array.isArray(tc?.teamNames) &&
+      (tc?.teamNames?.length ?? 0) > 0 &&
+      tc?.pairToTeam &&
+      typeof tc.pairToTeam === "object"
+    ) {
+      ids.add(tid);
+    }
+  }
+  return ids;
+}
+
+type CountMaps = {
+  total: Record<string, number>;
+  active: Record<string, number>;
+  finished: Record<string, number>;
+};
+
+function emptyCountMaps(): CountMaps {
+  return { total: {}, active: {}, finished: {} };
+}
+
+function addCount(
+  maps: CountMaps,
+  userId: string,
+  isFinished: boolean | null | undefined
+): void {
+  maps.total[userId] = (maps.total[userId] || 0) + 1;
+  if (isFinished === true) {
+    maps.finished[userId] = (maps.finished[userId] || 0) + 1;
+  } else {
+    maps.active[userId] = (maps.active[userId] || 0) + 1;
+  }
+}
+
 interface User {
   id: string;
   email: string;
@@ -29,6 +97,19 @@ interface User {
   tournaments_total?: number;
   tournaments_active?: number;
   tournaments_finished?: number;
+  retas_americano_total?: number;
+  retas_americano_active?: number;
+  retas_americano_finished?: number;
+  retas_round_robin_total?: number;
+  retas_round_robin_active?: number;
+  retas_round_robin_finished?: number;
+  retas_teams_total?: number;
+  retas_teams_active?: number;
+  retas_teams_finished?: number;
+  express_total?: number;
+  express_active?: number;
+  express_finished?: number;
+  activity_total?: number;
   last_activity?: string;
 }
 
@@ -44,7 +125,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<
-    "name" | "email" | "created_at" | "updated_at" | "tournaments_total"
+    | "name"
+    | "email"
+    | "created_at"
+    | "updated_at"
+    | "tournaments_total"
+    | "activity_total"
   >("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterBy, setFilterBy] = useState<"all" | "active" | "inactive">(
@@ -70,39 +156,112 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         return;
       }
 
-      const { data: tournamentsData, error: tournamentsError } = await supabase
-        .from("tournaments")
-        .select("user_id, is_finished, name, description");
+      const [
+        { data: tournamentsData, error: tournamentsError },
+        { data: expressData, error: expressError },
+        { data: publicConfigData, error: publicConfigError },
+      ] = await Promise.all([
+        supabase
+          .from("tournaments")
+          .select("id, user_id, is_finished, name, description"),
+        supabase.from("torneo_express").select("organizador_id, estado"),
+        supabase.from("tournament_public_config").select("*"),
+      ]);
 
       if (tournamentsError) {
         console.error("Error cargando torneos:", tournamentsError);
       }
+      if (expressError) {
+        console.error("Error cargando Torneo Express:", expressError);
+      }
+      if (publicConfigError) {
+        console.warn("tournament_public_config (americano):", publicConfigError);
+      }
+
+      const americanTournamentIds = americanIdsFromPublicConfig(
+        publicConfigData as Record<string, unknown>[] | null | undefined
+      );
+      const teamTournamentIds = teamIdsFromPublicConfig(
+        publicConfigData as Record<string, unknown>[] | null | undefined
+      );
 
       const realTournaments =
         tournamentsData?.filter((t) => !isDraftTournamentRow(t)) ?? [];
 
-      const totals: Record<string, number> = {};
-      const active: Record<string, number> = {};
-      const finished: Record<string, number> = {};
+      const classicMaps = emptyCountMaps();
+      const americanoMaps = emptyCountMaps();
+      const roundRobinMaps = emptyCountMaps();
+      const teamsMaps = emptyCountMaps();
 
-      realTournaments.forEach((tournament) => {
-        const uid = tournament.user_id;
-        totals[uid] = (totals[uid] || 0) + 1;
-        if (tournament.is_finished === true) {
-          finished[uid] = (finished[uid] || 0) + 1;
+      const expressTotal: Record<string, number> = {};
+      const expressActive: Record<string, number> = {};
+      const expressFinished: Record<string, number> = {};
+
+      for (const t of realTournaments) {
+        const uid = t.user_id as string;
+        addCount(classicMaps, uid, t.is_finished);
+
+        const isAm = americanTournamentIds.has(String(t.id));
+        const isTeams = teamTournamentIds.has(String(t.id));
+        if (isAm) {
+          addCount(americanoMaps, uid, t.is_finished);
+        } else if (isTeams) {
+          addCount(teamsMaps, uid, t.is_finished);
         } else {
-          active[uid] = (active[uid] || 0) + 1;
+          addCount(roundRobinMaps, uid, t.is_finished);
         }
+      }
+
+      for (const row of expressData ?? []) {
+        const oid = (row as { organizador_id?: string }).organizador_id;
+        if (!oid) continue;
+        expressTotal[oid] = (expressTotal[oid] || 0) + 1;
+        const estado = (row as { estado?: string }).estado ?? "pendiente";
+        if (estado === "finalizado") {
+          expressFinished[oid] = (expressFinished[oid] || 0) + 1;
+        } else {
+          expressActive[oid] = (expressActive[oid] || 0) + 1;
+        }
+      }
+
+      const merge = (maps: CountMaps, uid: string) => ({
+        total: maps.total[uid] || 0,
+        active: maps.active[uid] || 0,
+        finished: maps.finished[uid] || 0,
       });
 
       const usersWithCounts = (usersData ?? [])
-        .map((user) => ({
-          ...user,
-          tournaments_total: totals[user.id] || 0,
-          tournaments_active: active[user.id] || 0,
-          tournaments_finished: finished[user.id] || 0,
-          last_activity: user.updated_at,
-        }))
+        .map((user) => {
+          const uid = user.id;
+          const c = merge(classicMaps, uid);
+          const am = merge(americanoMaps, uid);
+          const rr = merge(roundRobinMaps, uid);
+          const tm = merge(teamsMaps, uid);
+          const exT = expressTotal[uid] || 0;
+          const exA = expressActive[uid] || 0;
+          const exF = expressFinished[uid] || 0;
+
+          return {
+            ...user,
+            tournaments_total: c.total,
+            tournaments_active: c.active,
+            tournaments_finished: c.finished,
+            retas_americano_total: am.total,
+            retas_americano_active: am.active,
+            retas_americano_finished: am.finished,
+            retas_round_robin_total: rr.total,
+            retas_round_robin_active: rr.active,
+            retas_round_robin_finished: rr.finished,
+            retas_teams_total: tm.total,
+            retas_teams_active: tm.active,
+            retas_teams_finished: tm.finished,
+            express_total: exT,
+            express_active: exA,
+            express_finished: exF,
+            activity_total: c.total + exT,
+            last_activity: user.updated_at,
+          };
+        })
         .filter((u) => u.id !== adminUser?.user_id);
 
       setUsers(usersWithCounts);
@@ -123,27 +282,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
+      const hasClassicActive = (user.tournaments_active || 0) > 0;
+      const hasExpressActive = (user.express_active || 0) > 0;
+
       const matchesFilter =
         filterBy === "all" ||
-        (filterBy === "active" && (user.tournaments_active || 0) > 0) ||
-        (filterBy === "inactive" && (user.tournaments_active || 0) === 0);
+        (filterBy === "active" && (hasClassicActive || hasExpressActive)) ||
+        (filterBy === "inactive" && !hasClassicActive && !hasExpressActive);
 
       return matchesSearch && matchesFilter;
     });
 
     filtered.sort((a, b) => {
-      let aValue: any = a[sortBy];
-      let bValue: any = b[sortBy];
-
+      let cmp = 0;
       if (sortBy === "created_at" || sortBy === "updated_at") {
-        aValue = new Date(aValue).getTime();
-        bValue = new Date(bValue).getTime();
+        cmp =
+          new Date(a[sortBy]).getTime() - new Date(b[sortBy]).getTime();
+      } else if (sortBy === "name" || sortBy === "email") {
+        cmp = String(a[sortBy]).localeCompare(String(b[sortBy]), "es");
+      } else {
+        cmp =
+          Number(a[sortBy] ?? 0) - Number(b[sortBy] ?? 0);
       }
-
-      if (sortOrder === "asc") {
-        return aValue > bValue ? 1 : -1;
-      }
-      return aValue < bValue ? 1 : -1;
+      return sortOrder === "asc" ? cmp : -cmp;
     });
 
     return filtered;
@@ -230,7 +391,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       setAuthCleanupNotice(
         `Se eliminaron los datos de "${user.name || user.email}" en la app. ` +
           `Si esa persona aún puede iniciar sesión, borra también la cuenta en ` +
-          `Supabase → Authentication → Users (busca por email o por id ${user.id}).`
+          `Supabase → Authentication → Users (busca por email o por id ${user.id}). ` +
+          `Los Torneo Express del usuario no se eliminan desde este panel; hazlo en Supabase si aplica.`
       );
 
       await loadUsers();
@@ -340,8 +502,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             className="filter-select"
           >
             <option value="all">Todos los usuarios</option>
-            <option value="active">Con retas activas</option>
-            <option value="inactive">Sin retas activas</option>
+            <option value="active">Con actividad en curso</option>
+            <option value="inactive">Sin actividad en curso</option>
           </select>
 
           <select
@@ -354,6 +516,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   | "created_at"
                   | "updated_at"
                   | "tournaments_total"
+                  | "activity_total"
               )
             }
             className="filter-select"
@@ -362,7 +525,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <option value="updated_at">Ordenar por última actualización</option>
             <option value="name">Ordenar por nombre</option>
             <option value="email">Ordenar por email</option>
-            <option value="tournaments_total">Ordenar por total de retas</option>
+            <option value="tournaments_total">Ordenar por retas (app)</option>
+            <option value="activity_total">Ordenar por actividad total</option>
           </select>
 
           <button
@@ -406,9 +570,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   <h3 className="user-name">{user.name || user.email}</h3>
                   <p className="user-email">{user.email}</p>
                   <div className="user-stats">
-                    <span className="stat-item">
-                      {user.tournaments_total || 0}{" "}
-                      {user.tournaments_total === 1 ? "reta" : "retas"}
+                    <span className="stat-item stat-item--strong">
+                      {user.activity_total || 0}{" "}
+                      {(user.activity_total || 0) === 1
+                        ? "actividad"
+                        : "actividades"}
+                    </span>
+                    <span className="stat-item stat-item--muted">
+                      {user.tournaments_total || 0} retas · RR{" "}
+                      {user.retas_round_robin_total || 0} · Am.{" "}
+                      {user.retas_americano_total || 0} · Eq.{" "}
+                      {user.retas_teams_total || 0} · TE{" "}
+                      {user.express_total || 0}
                     </span>
                     <span className="stat-item">
                       {formatDate(user.created_at)}
@@ -483,8 +656,20 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   <span>{detailUser.email}</span>
                 </div>
 
+                <h4 className="detail-section-title">Resumen de actividad</h4>
                 <div className="detail-row detail-row--stats">
-                  <label>Total de retas:</label>
+                  <label>Actividad total (retas + Torneo Express):</label>
+                  <span className="tournaments-count">
+                    {detailUser.activity_total || 0}
+                  </span>
+                </div>
+
+                <h4 className="detail-section-title">Retas en la app</h4>
+                <p className="detail-section-hint">
+                  Round robin, por equipos y pádel americano (sin borradores).
+                </p>
+                <div className="detail-row detail-row--stats">
+                  <label>Total retas:</label>
                   <span className="tournaments-count">
                     {detailUser.tournaments_total || 0}
                   </span>
@@ -498,6 +683,49 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   <span>{detailUser.tournaments_finished || 0}</span>
                 </div>
 
+                <h4 className="detail-section-title">Por modo (retas)</h4>
+                <div className="detail-row detail-row--stats">
+                  <label>Pádel americano:</label>
+                  <span>
+                    {(detailUser.retas_americano_total || 0) > 0
+                      ? `${detailUser.retas_americano_total} tot. · ${detailUser.retas_americano_active} activas · ${detailUser.retas_americano_finished} fin.`
+                      : "0"}
+                  </span>
+                </div>
+                <div className="detail-row detail-row--stats">
+                  <label>Round robin:</label>
+                  <span>
+                    {(detailUser.retas_round_robin_total || 0) > 0
+                      ? `${detailUser.retas_round_robin_total} tot. · ${detailUser.retas_round_robin_active} activas · ${detailUser.retas_round_robin_finished} fin.`
+                      : "0"}
+                  </span>
+                </div>
+                <div className="detail-row detail-row--stats">
+                  <label>Por equipos:</label>
+                  <span>
+                    {(detailUser.retas_teams_total || 0) > 0
+                      ? `${detailUser.retas_teams_total} tot. · ${detailUser.retas_teams_active} activas · ${detailUser.retas_teams_finished} fin.`
+                      : "0"}
+                  </span>
+                </div>
+
+                <h4 className="detail-section-title">Torneo Express</h4>
+                <div className="detail-row detail-row--stats">
+                  <label>Total torneos:</label>
+                  <span className="tournaments-count">
+                    {detailUser.express_total || 0}
+                  </span>
+                </div>
+                <div className="detail-row detail-row--stats">
+                  <label>Pendiente / en curso:</label>
+                  <span>{detailUser.express_active || 0}</span>
+                </div>
+                <div className="detail-row detail-row--stats">
+                  <label>Finalizados:</label>
+                  <span>{detailUser.express_finished || 0}</span>
+                </div>
+
+                <h4 className="detail-section-title">Cuenta</h4>
                 <div className="detail-row">
                   <label>Fecha de registro:</label>
                   <span>{formatDate(detailUser.created_at)}</span>
