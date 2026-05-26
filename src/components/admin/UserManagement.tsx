@@ -614,140 +614,129 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       </div>
 
       {detailUser && (
-        <div className="user-details-modal">
+        <div
+          className="user-details-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="um-detail-modal-title"
+        >
           <div
             className="modal-backdrop"
             onClick={() => setShowUserDetails(false)}
-          ></div>
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Detalles del Usuario</h3>
+            aria-hidden="true"
+          />
+          <div className="modal-content um-detail-modal">
+            <header className="um-detail-modal__header">
               <button
                 type="button"
-                className="modal-close"
+                className="um-detail-modal__close"
                 onClick={() => setShowUserDetails(false)}
+                aria-label="Cerrar"
               >
                 ×
               </button>
-            </div>
 
-            <div className="modal-body">
-              <div className="user-detail-avatar">
-                {detailUser.avatar_url ? (
-                  <img
-                    src={detailUser.avatar_url}
-                    alt={detailUser.name || detailUser.email}
-                    className="detail-avatar-img"
-                  />
-                ) : (
-                  <span className="detail-avatar-initials">
-                    {getInitials(detailUser.name, detailUser.email)}
-                  </span>
-                )}
+              <div className="um-detail-modal__identity">
+                <div className="um-detail-modal__avatar">
+                  {detailUser.avatar_url ? (
+                    <img
+                      src={detailUser.avatar_url}
+                      alt=""
+                      className="um-detail-modal__avatar-img"
+                    />
+                  ) : (
+                    <span className="um-detail-modal__avatar-initials">
+                      {getInitials(detailUser.name, detailUser.email)}
+                    </span>
+                  )}
+                </div>
+                <h3 id="um-detail-modal-title" className="um-detail-modal__name">
+                  {detailUser.name || detailUser.email}
+                </h3>
+                <p className="um-detail-modal__email">{detailUser.email}</p>
               </div>
+            </header>
 
-              <div className="user-detail-info">
-                <div className="detail-row">
-                  <label>Nombre:</label>
-                  <span>{detailUser.name || "—"}</span>
-                </div>
-                <div className="detail-row">
-                  <label>Email:</label>
-                  <span>{detailUser.email}</span>
-                </div>
-
-                <h4 className="detail-section-title">Resumen de actividad</h4>
-                <div className="detail-row detail-row--stats">
-                  <label>Actividad total (retas + Torneo Express):</label>
-                  <span className="tournaments-count">
-                    {detailUser.activity_total || 0}
-                  </span>
-                </div>
-
-                <h4 className="detail-section-title">Retas en la app</h4>
-                <p className="detail-section-hint">
-                  Round robin, por equipos y pádel americano (sin borradores).
-                </p>
-                <div className="detail-row detail-row--stats">
-                  <label>Total retas:</label>
-                  <span className="tournaments-count">
+            <div className="um-detail-modal__body">
+              <div
+                className="um-detail-modal__metrics"
+                aria-label="Resumen de retas"
+              >
+                <div className="um-detail-modal__metric">
+                  <span className="um-detail-modal__metric-value">
                     {detailUser.tournaments_total || 0}
                   </span>
+                  <span className="um-detail-modal__metric-label">
+                    Total retas
+                  </span>
                 </div>
-                <div className="detail-row detail-row--stats">
-                  <label>Retas activas:</label>
-                  <span>{detailUser.tournaments_active || 0}</span>
+                <div className="um-detail-modal__metric">
+                  <span className="um-detail-modal__metric-value">
+                    {detailUser.tournaments_active || 0}
+                  </span>
+                  <span className="um-detail-modal__metric-label">
+                    Retas activas
+                  </span>
                 </div>
-                <div className="detail-row detail-row--stats">
-                  <label>Retas finalizadas:</label>
-                  <span>{detailUser.tournaments_finished || 0}</span>
+                <div className="um-detail-modal__metric">
+                  <span className="um-detail-modal__metric-value">
+                    {detailUser.tournaments_finished || 0}
+                  </span>
+                  <span className="um-detail-modal__metric-label">
+                    Finalizadas
+                  </span>
                 </div>
+                <div className="um-detail-modal__metric">
+                  <span className="um-detail-modal__metric-value um-detail-modal__metric-value--date">
+                    {new Date(detailUser.created_at).toLocaleDateString(
+                      "es-ES",
+                      {
+                        month: "short",
+                        year: "numeric",
+                      }
+                    )}
+                  </span>
+                  <span className="um-detail-modal__metric-label">Desde</span>
+                </div>
+              </div>
 
-                <h4 className="detail-section-title">Por modo (retas)</h4>
-                <div className="detail-row detail-row--stats">
-                  <label>Pádel americano:</label>
-                  <span>
-                    {(detailUser.retas_americano_total || 0) > 0
-                      ? `${detailUser.retas_americano_total} tot. · ${detailUser.retas_americano_active} activas · ${detailUser.retas_americano_finished} fin.`
-                      : "0"}
+              <div className="um-detail-modal__data">
+                <div className="um-detail-modal__data-row">
+                  <span className="um-detail-modal__data-label">Email</span>
+                  <span className="um-detail-modal__data-value">
+                    {detailUser.email}
                   </span>
                 </div>
-                <div className="detail-row detail-row--stats">
-                  <label>Round robin:</label>
-                  <span>
-                    {(detailUser.retas_round_robin_total || 0) > 0
-                      ? `${detailUser.retas_round_robin_total} tot. · ${detailUser.retas_round_robin_active} activas · ${detailUser.retas_round_robin_finished} fin.`
-                      : "0"}
+                <div className="um-detail-modal__data-row">
+                  <span className="um-detail-modal__data-label">
+                    Fecha de registro
+                  </span>
+                  <span className="um-detail-modal__data-value">
+                    {formatDate(detailUser.created_at)}
                   </span>
                 </div>
-                <div className="detail-row detail-row--stats">
-                  <label>Por equipos:</label>
-                  <span>
-                    {(detailUser.retas_teams_total || 0) > 0
-                      ? `${detailUser.retas_teams_total} tot. · ${detailUser.retas_teams_active} activas · ${detailUser.retas_teams_finished} fin.`
-                      : "0"}
+                <div className="um-detail-modal__data-row">
+                  <span className="um-detail-modal__data-label">
+                    Última actualización
                   </span>
-                </div>
-
-                <h4 className="detail-section-title">Torneo Express</h4>
-                <div className="detail-row detail-row--stats">
-                  <label>Total torneos:</label>
-                  <span className="tournaments-count">
-                    {detailUser.express_total || 0}
+                  <span className="um-detail-modal__data-value">
+                    {formatDate(detailUser.updated_at)}
                   </span>
-                </div>
-                <div className="detail-row detail-row--stats">
-                  <label>Pendiente / en curso:</label>
-                  <span>{detailUser.express_active || 0}</span>
-                </div>
-                <div className="detail-row detail-row--stats">
-                  <label>Finalizados:</label>
-                  <span>{detailUser.express_finished || 0}</span>
-                </div>
-
-                <h4 className="detail-section-title">Cuenta</h4>
-                <div className="detail-row">
-                  <label>Fecha de registro:</label>
-                  <span>{formatDate(detailUser.created_at)}</span>
-                </div>
-                <div className="detail-row">
-                  <label>Última actualización:</label>
-                  <span>{formatDate(detailUser.updated_at)}</span>
                 </div>
               </div>
             </div>
 
-            <div className="modal-footer">
+            <footer className="um-detail-modal__footer">
               <button
                 type="button"
-                className="modal-btn secondary"
+                className="um-detail-modal__btn um-detail-modal__btn--ghost"
                 onClick={() => setShowUserDetails(false)}
               >
                 Cerrar
               </button>
               <button
                 type="button"
-                className="modal-btn danger"
+                className="um-detail-modal__btn um-detail-modal__btn--danger"
                 onClick={() => {
                   setShowUserDetails(false);
                   handleDeleteUser(detailUser);
@@ -755,7 +744,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               >
                 Eliminar usuario
               </button>
-            </div>
+            </footer>
           </div>
         </div>
       )}
