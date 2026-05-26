@@ -11,20 +11,36 @@ interface UserRow {
   created_at: string;
 }
 
+const DRAFT_DESCRIPTION = "Parejas en armado para torneo";
+
+function isDraftTournamentRow(row: {
+  name?: string | null;
+  description?: string | null;
+}): boolean {
+  const n = (row.name ?? "").trim();
+  const d = (row.description ?? "").trim();
+  return (
+    n.startsWith("(Borrador)") ||
+    n === "Torneo Express Draft" ||
+    n === DRAFT_DESCRIPTION ||
+    d === DRAFT_DESCRIPTION
+  );
+}
+
 interface DashboardStats {
   totalUsers: number;
+  totalTournaments: number;
   activeTournaments: number;
-  activeUsers: number;
-  recentRegistrations: number;
+  finishedTournaments: number;
 }
 
 export const AdminDashboard: React.FC = () => {
   const { adminUser, logoutAdmin } = useAdmin();
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalUsers: 0,
+    totalTournaments: 0,
     activeTournaments: 0,
-    activeUsers: 0,
-    recentRegistrations: 0,
+    finishedTournaments: 0,
   });
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<"dashboard" | "users">(
@@ -53,27 +69,23 @@ export const AdminDashboard: React.FC = () => {
 
       const { data: tournaments, error: tournamentsError } = await supabase
         .from("tournaments")
-        .select("id, created_at, user_id, is_finished");
+        .select("id, created_at, user_id, is_finished, name, description");
 
       if (tournamentsError) {
         throw tournamentsError;
       }
 
-      const activeTournaments =
-        tournaments?.filter((t) => t.is_finished !== true) ?? [];
-
-      const now = new Date();
-      const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const realTournaments =
+        tournaments?.filter((t) => !isDraftTournamentRow(t)) ?? [];
 
       const stats: DashboardStats = {
         totalUsers: filteredUsers.length,
-        activeTournaments: activeTournaments.length,
-        activeUsers: filteredUsers.filter(
-          (user) => new Date(user.created_at) > lastWeek
+        totalTournaments: realTournaments.length,
+        activeTournaments: realTournaments.filter(
+          (t) => t.is_finished !== true
         ).length,
-        recentRegistrations: filteredUsers.filter(
-          (user) => new Date(user.created_at) > lastMonth
+        finishedTournaments: realTournaments.filter(
+          (t) => t.is_finished === true
         ).length,
       };
 
@@ -163,33 +175,25 @@ export const AdminDashboard: React.FC = () => {
               <span className="admin-dash__stat-value">
                 {dashboardStats.totalUsers}
               </span>
-              <span className="admin-dash__stat-label">
-                Usuarios registrados
+              <span className="admin-dash__stat-label">Usuarios</span>
+            </article>
+            <article className="admin-dash__stat-card">
+              <span className="admin-dash__stat-value">
+                {dashboardStats.totalTournaments}
               </span>
+              <span className="admin-dash__stat-label">Retas totales</span>
             </article>
             <article className="admin-dash__stat-card">
               <span className="admin-dash__stat-value">
                 {dashboardStats.activeTournaments}
               </span>
-              <span className="admin-dash__stat-label">
-                Retas activas
-              </span>
+              <span className="admin-dash__stat-label">Retas activas</span>
             </article>
             <article className="admin-dash__stat-card">
               <span className="admin-dash__stat-value">
-                {dashboardStats.activeUsers}
+                {dashboardStats.finishedTournaments}
               </span>
-              <span className="admin-dash__stat-label">
-                Activos (7 días)
-              </span>
-            </article>
-            <article className="admin-dash__stat-card">
-              <span className="admin-dash__stat-value">
-                {dashboardStats.recentRegistrations}
-              </span>
-              <span className="admin-dash__stat-label">
-                Altas (30 días)
-              </span>
+              <span className="admin-dash__stat-label">Retas finalizadas</span>
             </article>
           </div>
           <p className="admin-dash__hint-muted">

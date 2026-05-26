@@ -3,6 +3,22 @@ import { supabase } from "../../lib/supabaseClient";
 import { useAdmin } from "../../contexts/AdminContext";
 import "./UserManagement.css";
 
+const DRAFT_DESCRIPTION = "Parejas en armado para torneo";
+
+function isDraftTournamentRow(row: {
+  name?: string | null;
+  description?: string | null;
+}): boolean {
+  const n = (row.name ?? "").trim();
+  const d = (row.description ?? "").trim();
+  return (
+    n.startsWith("(Borrador)") ||
+    n === "Torneo Express Draft" ||
+    n === DRAFT_DESCRIPTION ||
+    d === DRAFT_DESCRIPTION
+  );
+}
+
 interface User {
   id: string;
   email: string;
@@ -10,7 +26,9 @@ interface User {
   avatar_url?: string;
   created_at: string;
   updated_at: string;
-  tournaments_count?: number;
+  tournaments_total?: number;
+  tournaments_active?: number;
+  tournaments_finished?: number;
   last_activity?: string;
 }
 
@@ -26,7 +44,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<
-    "name" | "email" | "created_at" | "updated_at" | "tournaments_count"
+    "name" | "email" | "created_at" | "updated_at" | "tournaments_total"
   >("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterBy, setFilterBy] = useState<"all" | "active" | "inactive">(
@@ -54,25 +72,35 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
       const { data: tournamentsData, error: tournamentsError } = await supabase
         .from("tournaments")
-        .select("user_id, is_finished");
+        .select("user_id, is_finished, name, description");
 
       if (tournamentsError) {
         console.error("Error cargando torneos:", tournamentsError);
       }
 
-      const tournamentCounts: { [key: string]: number } = {};
-      if (tournamentsData) {
-        tournamentsData.forEach((tournament) => {
-          if (tournament.is_finished === true) return;
-          tournamentCounts[tournament.user_id] =
-            (tournamentCounts[tournament.user_id] || 0) + 1;
-        });
-      }
+      const realTournaments =
+        tournamentsData?.filter((t) => !isDraftTournamentRow(t)) ?? [];
+
+      const totals: Record<string, number> = {};
+      const active: Record<string, number> = {};
+      const finished: Record<string, number> = {};
+
+      realTournaments.forEach((tournament) => {
+        const uid = tournament.user_id;
+        totals[uid] = (totals[uid] || 0) + 1;
+        if (tournament.is_finished === true) {
+          finished[uid] = (finished[uid] || 0) + 1;
+        } else {
+          active[uid] = (active[uid] || 0) + 1;
+        }
+      });
 
       const usersWithCounts = (usersData ?? [])
         .map((user) => ({
           ...user,
-          tournaments_count: tournamentCounts[user.id] || 0,
+          tournaments_total: totals[user.id] || 0,
+          tournaments_active: active[user.id] || 0,
+          tournaments_finished: finished[user.id] || 0,
           last_activity: user.updated_at,
         }))
         .filter((u) => u.id !== adminUser?.user_id);
@@ -97,8 +125,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
       const matchesFilter =
         filterBy === "all" ||
-        (filterBy === "active" && (user.tournaments_count || 0) > 0) ||
-        (filterBy === "inactive" && (user.tournaments_count || 0) === 0);
+        (filterBy === "active" && (user.tournaments_active || 0) > 0) ||
+        (filterBy === "inactive" && (user.tournaments_active || 0) === 0);
 
       return matchesSearch && matchesFilter;
     });
@@ -120,6 +148,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
     return filtered;
   }, [users, searchTerm, sortBy, sortOrder, filterBy]);
+
+  const detailUser =
+    showUserDetails && selectedUser
+      ? users.find((u) => u.id === selectedUser.id) ?? selectedUser
+      : null;
 
   const handleUserSelect = (user: User) => {
     setSelectedUser(user);
@@ -307,8 +340,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             className="filter-select"
           >
             <option value="all">Todos los usuarios</option>
-            <option value="active">Usuarios activos</option>
-            <option value="inactive">Usuarios inactivos</option>
+            <option value="active">Con retas activas</option>
+            <option value="inactive">Sin retas activas</option>
           </select>
 
           <select
@@ -320,7 +353,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   | "email"
                   | "created_at"
                   | "updated_at"
-                  | "tournaments_count"
+                  | "tournaments_total"
               )
             }
             className="filter-select"
@@ -329,7 +362,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <option value="updated_at">Ordenar por última actualización</option>
             <option value="name">Ordenar por nombre</option>
             <option value="email">Ordenar por email</option>
-            <option value="tournaments_count">Ordenar por retas activas</option>
+            <option value="tournaments_total">Ordenar por total de retas</option>
           </select>
 
           <button
@@ -374,7 +407,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   <p className="user-email">{user.email}</p>
                   <div className="user-stats">
                     <span className="stat-item">
-                      {user.tournaments_count || 0} activas
+                      {user.tournaments_total || 0}{" "}
+                      {user.tournaments_total === 1 ? "reta" : "retas"}
                     </span>
                     <span className="stat-item">
                       {formatDate(user.created_at)}
@@ -406,7 +440,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         )}
       </div>
 
-      {showUserDetails && selectedUser && (
+      {detailUser && (
         <div className="user-details-modal">
           <div
             className="modal-backdrop"
@@ -426,15 +460,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
             <div className="modal-body">
               <div className="user-detail-avatar">
-                {selectedUser.avatar_url ? (
+                {detailUser.avatar_url ? (
                   <img
-                    src={selectedUser.avatar_url}
-                    alt={selectedUser.name || selectedUser.email}
+                    src={detailUser.avatar_url}
+                    alt={detailUser.name || detailUser.email}
                     className="detail-avatar-img"
                   />
                 ) : (
                   <span className="detail-avatar-initials">
-                    {getInitials(selectedUser.name, selectedUser.email)}
+                    {getInitials(detailUser.name, detailUser.email)}
                   </span>
                 )}
               </div>
@@ -442,29 +476,35 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               <div className="user-detail-info">
                 <div className="detail-row">
                   <label>Nombre:</label>
-                  <span>{selectedUser.name || "—"}</span>
+                  <span>{detailUser.name || "—"}</span>
                 </div>
                 <div className="detail-row">
                   <label>Email:</label>
-                  <span>{selectedUser.email}</span>
+                  <span>{detailUser.email}</span>
                 </div>
-                <div className="detail-row">
-                  <label>ID:</label>
-                  <span className="user-id">{selectedUser.id}</span>
+
+                <div className="detail-row detail-row--stats">
+                  <label>Total de retas:</label>
+                  <span className="tournaments-count">
+                    {detailUser.tournaments_total || 0}
+                  </span>
                 </div>
+                <div className="detail-row detail-row--stats">
+                  <label>Retas activas:</label>
+                  <span>{detailUser.tournaments_active || 0}</span>
+                </div>
+                <div className="detail-row detail-row--stats">
+                  <label>Retas finalizadas:</label>
+                  <span>{detailUser.tournaments_finished || 0}</span>
+                </div>
+
                 <div className="detail-row">
                   <label>Fecha de registro:</label>
-                  <span>{formatDate(selectedUser.created_at)}</span>
+                  <span>{formatDate(detailUser.created_at)}</span>
                 </div>
                 <div className="detail-row">
                   <label>Última actualización:</label>
-                  <span>{formatDate(selectedUser.updated_at)}</span>
-                </div>
-                <div className="detail-row">
-                  <label>Retas activas:</label>
-                  <span className="tournaments-count">
-                    {selectedUser.tournaments_count || 0}
-                  </span>
+                  <span>{formatDate(detailUser.updated_at)}</span>
                 </div>
               </div>
             </div>
@@ -482,7 +522,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 className="modal-btn danger"
                 onClick={() => {
                   setShowUserDetails(false);
-                  handleDeleteUser(selectedUser);
+                  handleDeleteUser(detailUser);
                 }}
               >
                 Eliminar usuario
