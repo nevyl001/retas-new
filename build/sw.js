@@ -5,7 +5,8 @@ const urlsToCache = [
   "/icon-192x192.png?v=8",
   "/icon-512x512.png?v=8",
   "/apple-touch-icon-180.png?v=8",
-  "/logo-source.png?v=8",
+  "/logo-riviera.png?v=1",
+  "/logo-source.png?v=1",
 ];
 
 // Install event - solo cachear assets estáticos

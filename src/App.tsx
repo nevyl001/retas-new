@@ -111,8 +111,9 @@ function AppContent() {
       currentView
     );
 
-    if (isAdminLoggedIn && currentView !== "admin-dashboard") {
+    if (isAdminLoggedIn && currentView === "admin-login") {
       console.log("🔄 Admin logueado detectado, cambiando a admin-dashboard");
+      window.history.replaceState({}, "", "/admin-dashboard");
       setCurrentView("admin-dashboard");
     }
   }, [isAdminLoggedIn, currentView]);
@@ -124,6 +125,9 @@ function AppContent() {
       (currentView === "admin-dashboard" || currentView === "admin-login")
     ) {
       console.log("🔄 Admin deslogueado detectado, cambiando a admin-login");
+      if (currentView === "admin-dashboard") {
+        window.history.replaceState({}, "", "/admin-login");
+      }
       setCurrentView("admin-login");
     }
   }, [isAdminLoggedIn, currentView]);
@@ -705,6 +709,7 @@ function AppContent() {
                 console.log(
                   "🔄 onLoginSuccess llamado - Redirigiendo a admin dashboard..."
                 );
+                window.history.replaceState({}, "", "/admin-dashboard");
                 setCurrentView("admin-dashboard");
               }}
             />
@@ -714,6 +719,7 @@ function AppContent() {
           <AdminRoute
             onUnauthorized={() => {
               console.log("🔄 Admin no autorizado, cambiando a admin-login");
+              window.history.replaceState({}, "", "/admin-login");
               setCurrentView("admin-login");
             }}
           >

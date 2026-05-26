@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
-import { Button, Input } from "../ui";
 import "./AdminLogin.css";
 
 interface AdminLoginProps {
@@ -8,25 +7,13 @@ interface AdminLoginProps {
 }
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
-  const { loginAdmin, loading, isAdminLoggedIn } = useAdmin();
+  const { loginAdmin, loading } = useAdmin();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log("🔍 AdminLogin renderizado");
-
-  // Redirigir si ya está logueado como admin
-  useEffect(() => {
-    if (isAdminLoggedIn) {
-      console.log("🔄 Admin ya logueado, redirigiendo...");
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      } else {
-        window.location.href = "/admin-dashboard";
-      }
-    }
-  }, [isAdminLoggedIn, onLoginSuccess]);
+  const busy = isLoading || loading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,27 +21,20 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
 
     try {
-      console.log("🔐 Llamando a loginAdmin con:", { email, password });
       const result = await loginAdmin(email, password);
-      console.log("📊 Resultado de loginAdmin:", result);
 
       if (result.success) {
-        console.log("✅ Login exitoso, redirigiendo...");
-        // Redirigir al dashboard
         if (onLoginSuccess) {
-          console.log("🔄 Llamando onLoginSuccess...");
           onLoginSuccess();
         } else {
-          console.log("🔄 Usando window.location.href...");
           window.location.href = "/admin-dashboard";
         }
-        return; // Salir inmediatamente
+        return;
       } else {
-        console.log("❌ Login falló:", result.error);
         setError(result.error || "Error al iniciar sesión");
       }
     } catch (err) {
-      console.error("❌ Error inesperado en login:", err);
+      console.error("Error inesperado en login:", err);
       setError("Error inesperado");
     } finally {
       setIsLoading(false);
@@ -62,105 +42,91 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="admin-login-container">
-      <div className="admin-login-background">
-        <div className="admin-login-pattern"></div>
-      </div>
+    <div className="admin-login-page">
+      <div className="admin-login-page__glow" aria-hidden="true" />
 
-      <div className="admin-login-card">
-        <div className="admin-login-header">
-          <div className="admin-logo">
-            <div className="admin-logo-icon">🛡️</div>
-            <h1>Panel de Administración</h1>
+      <main className="admin-login-card">
+        <header className="admin-login-card__header">
+          <div className="admin-login-brand" aria-hidden="true">
+            <img
+              src="/logo-riviera.png"
+              alt=""
+              className="admin-login-brand__logo"
+              width={40}
+              height={40}
+            />
           </div>
-          <p className="admin-subtitle">Acceso Seguro de Administrador</p>
-          <div className="admin-security-badge">
-            <span className="security-icon">🔒</span>
-            <span>Conexión Segura</span>
-          </div>
-        </div>
+          <p className="admin-login-card__eyebrow">RivieraApp</p>
+          <h1 className="admin-login-card__title">Administración</h1>
+          <p className="admin-login-card__subtitle">
+            Inicia sesión con tu cuenta de administrador
+          </p>
+        </header>
 
-        <form onSubmit={handleSubmit} className="admin-login-form">
-          <div className="admin-form-group">
-            <label htmlFor="email">
-              <span className="label-icon">📧</span>
-              Email de Administrador
+        <form onSubmit={handleSubmit} className="admin-login-form" noValidate>
+          <div className="admin-login-field">
+            <label htmlFor="admin-email" className="admin-login-label">
+              Correo electrónico
             </label>
-            <div className="input-container">
-              <Input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@test.com"
-                required
-                disabled={isLoading}
-                inputClassName="admin-input riviera-input"
-                className="admin-input-field"
-              />
-              <div className="input-icon">👤</div>
-            </div>
+            <input
+              id="admin-email"
+              type="email"
+              className="admin-login-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              autoComplete="email"
+              required
+              disabled={busy}
+            />
           </div>
 
-          <div className="admin-form-group">
-            <label htmlFor="password">
-              <span className="label-icon">🔑</span>
-              Contraseña de Acceso
+          <div className="admin-login-field">
+            <label htmlFor="admin-password" className="admin-login-label">
+              Contraseña
             </label>
-            <div className="input-container">
-              <Input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                disabled={isLoading}
-                inputClassName="admin-input riviera-input"
-                className="admin-input-field"
-              />
-              <div className="input-icon">🔐</div>
-            </div>
+            <input
+              id="admin-password"
+              type="password"
+              className="admin-login-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Introduce tu contraseña"
+              autoComplete="current-password"
+              required
+              disabled={busy}
+            />
           </div>
 
-          {error && (
-            <div className="admin-error">
-              <span className="error-icon">⚠️</span>
-              <span>{error}</span>
+          {error ? (
+            <div className="admin-login-error" role="alert">
+              {error}
             </div>
-          )}
+          ) : null}
 
-          <Button
+          <button
             type="submit"
-            variant="primary"
-            size="lg"
-            className="admin-login-btn"
-            loading={isLoading || loading}
-            disabled={isLoading || loading}
+            className="admin-login-submit"
+            disabled={busy}
+            aria-busy={busy}
           >
-            <span className="btn-icon">{isLoading ? "⏳" : "🚀"}</span>
-            <span className="btn-text">
-              {isLoading ? "Verificando Acceso..." : "Acceder al Panel"}
-            </span>
-          </Button>
+            {busy ? (
+              <>
+                <span className="admin-login-submit__spinner" aria-hidden="true" />
+                <span>Verificando acceso</span>
+              </>
+            ) : (
+              <span>Continuar</span>
+            )}
+          </button>
         </form>
 
-        <div className="admin-login-footer">
-          <div className="admin-info">
-            <div className="info-item">
-              <span className="info-icon">🏆</span>
-              <span>RivieraApp</span>
-            </div>
-            <div className="info-item">
-              <span className="info-icon">🛡️</span>
-              <span>Panel de Administración</span>
-            </div>
-          </div>
-          <div className="admin-version">
-            <span>v1.0.0</span>
-          </div>
-        </div>
-      </div>
+        <footer className="admin-login-card__footer">
+          <span>Panel restringido</span>
+          <span className="admin-login-card__dot" aria-hidden="true" />
+          <span>RivieraApp</span>
+        </footer>
+      </main>
     </div>
   );
 };

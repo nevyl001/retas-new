@@ -90,20 +90,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       setSession(session);
 
-      if (session?.user?.email === "admin@test.com") {
-        setUser(null);
-        setUserProfile(null);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchUserProfile(
+          session.user.id,
+          session.user.email,
+          session.user.user_metadata?.name
+        );
       } else {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchUserProfile(
-            session.user.id,
-            session.user.email,
-            session.user.user_metadata?.name
-          );
-        } else {
-          setUserProfile(null);
-        }
+        setUserProfile(null);
       }
     };
 
@@ -169,16 +164,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Verificar si es admin - no permitir login como usuario normal
-      if (email === "admin@test.com") {
-        console.log(
-          "🔐 Intento de login de admin como usuario normal - DENEGADO"
-        );
-        return {
-          error: { message: "Admin debe usar el panel de administración" },
-        };
-      }
-
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
