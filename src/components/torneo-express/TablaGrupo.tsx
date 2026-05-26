@@ -57,7 +57,7 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
                   {row.parejaLabel}
                 </td>
                 {showGrupoColumn && (
-                  <td>
+                  <td className="col-grupo">
                     <GrupoBadge nombre={row.grupoNombre} orden={row.grupoOrden} />
                   </td>
                 )}

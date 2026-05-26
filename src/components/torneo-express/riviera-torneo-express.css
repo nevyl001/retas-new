@@ -617,14 +617,15 @@
   animation-delay: 0ms;
 }
 
-/* —— Responsive tablas —— */
+/* —— Responsive tablas (gestión / TablaGrupo) —— */
 @media (max-width: 767px) {
-  .torneo-express-page .te-standings-table {
-    min-width: 0;
+  .torneo-express-page .te-standings-wrap.tabla-wrapper {
+    overflow-x: visible;
   }
 
-  .torneo-express-page .te-standings-wrap {
-    overflow-x: visible;
+  .torneo-express-page .te-standings-table.tabla-ranking {
+    min-width: 0;
+    width: 100%;
   }
 
   .torneo-express-page .te-standings-table thead {
@@ -632,45 +633,152 @@
   }
 
   .torneo-express-page .te-standings-table tbody tr {
-    display: block;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
     margin-bottom: 0.75rem;
-    padding: 0.85rem;
+    padding: 0.85rem 1rem;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.03);
   }
 
-  .torneo-express-page .te-standings-table tbody td {
-    display: flex;
+  .torneo-express-page .te-standings-table tbody tr.te-row-top,
+  .torneo-express-page .te-standings-table tbody tr:first-child {
+    border-color: rgba(232, 197, 71, 0.35);
+    box-shadow: inset 3px 0 0 var(--riviera-accent-gold, #e8c547);
+  }
+
+  /* Cabecera de card: pareja + posición */
+  .torneo-express-page .te-standings-table tbody td.col-pos {
+    position: absolute;
+    top: 0.85rem;
+    right: 1rem;
+    padding: 0;
+    border: none;
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-pos::before {
+    display: none;
+  }
+
+  .torneo-express-page .te-standings-table tbody td.te-cell-name,
+  .torneo-express-page .te-standings-table tbody td.col-entity {
+    display: block;
+    width: 100%;
+    padding: 0 3rem 0.65rem 0;
+    margin-bottom: 0.65rem;
+    border-bottom: 1px solid var(--border-subtle);
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    text-align: left;
+    white-space: normal;
+    position: static;
+    left: auto;
+    max-width: none;
+    overflow: visible;
+    text-overflow: unset;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .torneo-express-page .te-standings-table tbody td.te-cell-name::before,
+  .torneo-express-page .te-standings-table tbody td.col-entity::before {
+    display: none;
+  }
+
+  /* Stats: fila label | valor */
+  .torneo-express-page .te-standings-table tbody td.col-pj,
+  .torneo-express-page .te-standings-table tbody td.col-pg,
+  .torneo-express-page .te-standings-table tbody td.col-pp,
+  .torneo-express-page .te-standings-table tbody td.col-fav,
+  .torneo-express-page .te-standings-table tbody td.col-con,
+  .torneo-express-page .te-standings-table tbody td.col-dif,
+  .torneo-express-page .te-standings-table tbody td.col-pts {
+    display: flex !important;
     justify-content: space-between;
     align-items: center;
-    padding: 0.35rem 0;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
     border: none;
     text-align: right;
+    white-space: nowrap;
+    position: static;
+    min-width: 0;
+    max-width: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-pj::before {
+    content: "PJ";
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-pg::before {
+    content: "PG";
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-pp::before {
+    content: "PP";
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-fav::before {
+    content: "FAV";
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-con::before {
+    content: "CON";
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-dif::before {
+    content: "DIF";
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-pts::before {
+    content: "PTS";
   }
 
   .torneo-express-page .te-standings-table tbody td::before {
-    content: attr(data-label);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--text-muted);
-    margin-right: 0.75rem;
+    flex-shrink: 0;
     text-align: left;
   }
 
-  .torneo-express-page .te-standings-table td.te-cell-name {
+  .torneo-express-page .te-standings-table tbody td.col-pts {
+    margin-top: 0.25rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--border-subtle);
+    font-weight: 700;
+    color: var(--riviera-accent-gold, #e8c547);
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-pts::before {
+    color: var(--text-muted);
     font-weight: 600;
-    font-size: 1rem;
-    justify-content: flex-start;
-    padding-bottom: 0.5rem;
+  }
+
+  .torneo-express-page .te-standings-table tbody td.col-grupo {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0 0.65rem;
     margin-bottom: 0.35rem;
+    border: none;
     border-bottom: 1px solid var(--border-subtle);
   }
 
-  .torneo-express-page .te-standings-table td.te-cell-name::before {
-    display: none;
+  .torneo-express-page .te-standings-table tbody td.col-grupo::before {
+    content: "GRUPO";
+  }
+
+  .torneo-express-page .te-standings-table .te-standings-pos__badge {
+    font-size: 0.75rem;
   }
 }
 
