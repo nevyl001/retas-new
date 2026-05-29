@@ -33,12 +33,14 @@ export const PublicGrupoLeaderCelebrate: React.FC<{
   torneoNombre?: string;
   /** Frase corta entre el nombre y el lugar (p. ej. "Dominaron la cancha.") */
   fraseMotivacional?: string;
+  className?: string;
 }> = ({
   grupoNombre,
   rows,
   partidos,
   torneoNombre,
   fraseMotivacional = DEFAULT_MOTIVATIONAL,
+  className = "",
 }) => {
   const leader = leaderFromRows(rows, partidos);
   if (!leader) return null;
@@ -47,7 +49,7 @@ export const PublicGrupoLeaderCelebrate: React.FC<{
 
   return (
     <aside
-      className="te-pub-grupo-celebrate te-pub-fade-in"
+      className={`te-pub-grupo-celebrate te-pub-fade-in ${className}`.trim()}
       aria-label={`Felicitación al líder de ${grupoNombre}`}
     >
       <div className="te-pub-grupo-celebrate__inner">

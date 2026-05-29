@@ -12,6 +12,7 @@ import type {
   TorneoExpressPartido,
 } from "../../../lib/torneoExpress/types";
 import { Button } from "../../ui";
+import { PublicGrupoLeaderCelebrate } from "./PublicGrupoLeaderCelebrate";
 import { PublicStandingsSection } from "./PublicStandingsSection";
 import { PublicStandingsScoringHelp } from "./PublicStandingsScoringHelp";
 import "./te-public-grupos.css";
@@ -32,6 +33,7 @@ export interface TEPublicGruposPartido {
 export interface TEPublicGruposGrupo {
   nombre: string;
   partidos: TEPublicGruposPartido[];
+  partidosExpress: TorneoExpressPartido[];
   standingRows: StandingRowExpress[];
   clasifican: number;
 }
@@ -118,6 +120,7 @@ export function buildTEPublicGruposProps(
         bundle.partidosPorGrupo[grupo.id] ?? [],
         labelById
       ),
+      partidosExpress: bundle.partidosPorGrupo[grupo.id] ?? [],
       standingRows: standingsByGrupo[grupo.id] ?? [],
       clasifican,
     };
@@ -299,22 +302,31 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
               </span>
             </div>
 
-            <div className="te-grupo-partidos">
-              {grupo.partidos.length === 0 ? (
-                <p className="te-grupos-empty">Sin partidos programados.</p>
-              ) : (
-                grupo.partidos.map((partido) => (
-                  <PartidoRow key={partido.id} partido={partido} />
-                ))
-              )}
-            </div>
+            <div className="te-grupo-inner">
+              <div className="te-grupo-partidos">
+                {grupo.partidos.length === 0 ? (
+                  <p className="te-grupos-empty">Sin partidos programados.</p>
+                ) : (
+                  grupo.partidos.map((partido) => (
+                    <PartidoRow key={partido.id} partido={partido} />
+                  ))
+                )}
+              </div>
 
-            <div className="te-grupo-standing-full">
-              <PublicStandingsSection
-                rows={grupo.standingRows}
-                title="Clasificación"
-                showScoringHelp={false}
-              />
+              <div className="te-grupo-standing-full">
+                <PublicStandingsSection
+                  rows={grupo.standingRows}
+                  title="Clasificación"
+                  showScoringHelp={false}
+                />
+                <PublicGrupoLeaderCelebrate
+                  className="te-pub-grupo-celebrate--aside"
+                  grupoNombre={grupo.nombre}
+                  rows={grupo.standingRows}
+                  partidos={grupo.partidosExpress}
+                  torneoNombre={torneoNombre}
+                />
+              </div>
             </div>
           </section>
         ))}

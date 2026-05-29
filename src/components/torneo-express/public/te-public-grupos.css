@@ -94,41 +94,62 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--border-subtle);
 }
 
 .te-grupo-label {
   margin: 0;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  padding-left: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-primary);
+  border-left: 3px solid var(--accent-gold);
+  line-height: 1.2;
 }
 
 .te-grupo-clasifican-badge {
-  padding: 2px 6px;
-  font-size: 9px;
-  font-weight: 500;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 600;
   color: var(--accent-gold);
   background: var(--accent-gold-dim);
   border: 0.5px solid rgba(201, 162, 39, 0.2);
-  border-radius: 3px;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+}
+
+.te-grupo-inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+@media (min-width: 769px) {
+  .te-grupo-inner {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 12px;
+  }
 }
 
 .te-grupo-partidos {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 16px;
+  min-width: 0;
 }
 
 .te-partido-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1px minmax(0, 1fr) auto;
+  gap: 8px 10px;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  padding: 9px 12px;
   background: var(--bg-card);
   border: 0.5px solid var(--border-default);
   border-radius: var(--radius-md);
@@ -138,52 +159,71 @@
 .te-partido-meta {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-width: 72px;
+  gap: 4px;
+  flex-shrink: 0;
+  width: 84px;
+  padding: 5px 7px;
+  grid-column: 1;
+  border-radius: var(--radius-md);
+  background: var(--accent-gold-dim);
+  border: 0.5px solid rgba(201, 162, 39, 0.22);
 }
 
 .te-partido-hora {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--text-primary);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .te-partido-cancha {
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
-  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-gold);
+  line-height: 1.2;
 }
 
 .te-partido-cancha__icon {
   flex-shrink: 0;
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1;
 }
 
 .te-partido-divider {
+  grid-column: 2;
   align-self: stretch;
+  flex-shrink: 0;
   width: 0.5px;
   background: var(--border-subtle);
 }
 
 .te-partido-teams {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  grid-column: 3;
+  min-width: 0;
+}
+
+.te-partido-badge {
+  flex-shrink: 0;
+  grid-column: 4;
+  justify-self: end;
 }
 
 .te-team-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
+  gap: 6px;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  width: 100%;
 }
 
 .te-team-name {
-  flex: 1;
   min-width: 0;
   overflow: hidden;
   font-size: 12px;
@@ -198,12 +238,10 @@
 }
 
 .te-team-score {
-  flex-shrink: 0;
-  min-width: 16px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-disabled);
-  text-align: right;
+  text-align: center;
 }
 
 .te-team-score--winner {
@@ -211,16 +249,13 @@
 }
 
 .te-score-pending {
+  justify-self: center;
   display: inline-block;
   padding: 1px 5px;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-disabled);
   background: var(--border-subtle);
   border-radius: 3px;
-}
-
-.te-partido-badge {
-  flex-shrink: 0;
 }
 
 .te-badge-final,
@@ -262,7 +297,8 @@
 }
 
 .te-grupo-standing-full {
-  margin-top: 4px;
+  min-width: 0;
+  align-self: start;
 }
 
 .te-grupo-standing-full .te-public-section {
@@ -270,8 +306,12 @@
 }
 
 .te-grupo-standing-full .te-public-section__title {
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.08em;
+}
+
+.te-grupo-standing-full .te-public-section__divider {
+  margin-bottom: 0.65rem;
 }
 
 .te-grupo-standing-full .te-pub-standings-table-wrap {
@@ -282,6 +322,154 @@
 .te-grupo-standing-full .te-pub-standings-table {
   width: 100%;
   min-width: 0;
+  font-size: 0.72rem;
+}
+
+.te-grupo-standing-full .te-pub-standings-table thead th {
+  padding: 0.55rem 0.35rem;
+  font-size: 0.58rem;
+}
+
+.te-grupo-standing-full .te-pub-standings-row td {
+  padding: 0.5rem 0.35rem;
+  font-size: 0.72rem;
+}
+
+.te-grupo-standing-full .te-pub-standings-row__pos {
+  width: 2rem;
+}
+
+.te-grupo-standing-full .te-pub-standings-row__pos-num {
+  font-size: 1rem;
+}
+
+.te-grupo-standing-full .te-pub-standings-row__name {
+  min-width: 0;
+  font-size: 0.72rem;
+}
+
+.te-grupo-standing-full .te-pub-dif {
+  min-width: 1.75rem;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.65rem;
+}
+
+/* Felicitación compacta — columna derecha del grupo */
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside {
+  margin: 14px 0 0;
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: none;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside::before {
+  opacity: 0.02;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside::after {
+  background: linear-gradient(
+    160deg,
+    rgba(201, 162, 39, 0.35) 0%,
+    rgba(201, 162, 39, 0.08) 40%,
+    transparent 70%
+  );
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__inner {
+  padding: 16px 14px 14px;
+  text-align: center;
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    rgba(201, 162, 39, 0.06) 0%,
+    transparent 65%
+  );
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__brand {
+  gap: 0.4rem;
+  margin-bottom: 12px;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-divider-gold--wide {
+  width: 40px;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__wordmark {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__brand-tagline {
+  font-size: 11px;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__inner > .te-divider-gold {
+  width: 32px;
+  margin-bottom: 0.75rem;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__headline {
+  font-size: 1.15rem;
+  line-height: 1.1;
+  margin-bottom: 0.35rem;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__names {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__motivational {
+  margin: 6px 0;
+  font-size: 12px;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__rank {
+  margin: 0 0 0.85rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--accent-gold);
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__footer {
+  margin-bottom: 0.85rem;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__footer .te-divider-gold {
+  width: 28px;
+  margin-bottom: 0.5rem;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__torneo {
+  font-size: 0.62rem;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__closing {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--accent-gold);
+  opacity: 1;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__stats {
+  gap: 0.35rem;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__stat {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.4rem 0.4rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 0.5px solid var(--border-subtle);
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__stat-label {
+  font-size: 0.55rem;
+}
+
+.te-grupo-standing-full .te-pub-grupo-celebrate--aside .te-pub-grupo-celebrate__stat-value {
+  font-size: 0.9rem;
 }
 
 .te-grupos-empty {
@@ -314,20 +502,20 @@
     align-items: stretch;
   }
 
-  .te-partido-item {
-    flex-wrap: wrap;
-    gap: 10px;
+  .te-grupo-inner {
+    grid-template-columns: 1fr;
   }
 
   .te-partido-meta {
-    min-width: 60px;
+    width: 78px;
+    padding: 4px 6px;
   }
 
   .te-partido-hora {
-    font-size: 12px;
+    font-size: 14px;
   }
 
-  .te-partido-badge {
-    margin-left: auto;
+  .te-partido-cancha {
+    font-size: 10px;
   }
 }

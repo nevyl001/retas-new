@@ -10,8 +10,6 @@ export const PublicTorneoExpressShell: React.FC<{
       className={`te-public App--public-full-width ${className}`.trim()}
     >
       <div className="te-public__grain" aria-hidden />
-      <div className="te-public__glow te-public__glow--a" aria-hidden />
-      <div className="te-public__glow te-public__glow--b" aria-hidden />
       <div className="te-public__inner">{children}</div>
     </div>
   );
