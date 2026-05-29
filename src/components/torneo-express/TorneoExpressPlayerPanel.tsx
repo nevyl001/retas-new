@@ -195,8 +195,13 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
   return (
     <aside className="te-players-panel torneo-express-card">
-      <div className="te-players-panel__head">
-        <h2 className="te-players-panel__title">Gestión de Jugadores</h2>
+      <div className="te-players-panel__title-row">
+        <h2 className="te-players-panel__title">
+          <span className="te-players-panel__title-icon" aria-hidden>
+            👥
+          </span>
+          Jugadores registrados
+        </h2>
         <Button
           type="button"
           variant="primary"
@@ -211,8 +216,6 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
           + Nuevo
         </Button>
       </div>
-
-      <p className="te-players-panel__subtitle">Jugadores registrados</p>
 
       {error && (
         <div className="te-players-alert" role="alert">
@@ -357,7 +360,6 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
                       onClick={() => void editarJugador(jugador)}
                       disabled={guardando}
                       aria-label="Guardar"
-                      title="Guardar"
                     >
                       ✓
                     </button>
@@ -367,7 +369,6 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
                       onClick={cancelarEdicion}
                       disabled={guardando}
                       aria-label="Cancelar"
-                      title="Cancelar"
                     >
                       ✕
                     </button>
@@ -386,7 +387,6 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
                     onClick={() => iniciarEdicion(jugador)}
                     disabled={guardando}
                     aria-label={`Editar ${jugador.name}`}
-                    title="Editar"
                   >
                     ✏️
                   </button>
@@ -396,7 +396,6 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
                     onClick={() => confirmarEliminar(jugador)}
                     disabled={guardando}
                     aria-label={`Eliminar ${jugador.name}`}
-                    title="Eliminar"
                   >
                     🗑️
                   </button>

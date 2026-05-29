@@ -44,13 +44,20 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
             />
           </thead>
           <tbody>
-            {rows.map((row, index) => (
+            {rows.map((row, index) => {
+              const posMedalClass =
+                index === 0
+                  ? " te-standings-pos__badge--gold"
+                  : index === 1
+                    ? " te-standings-pos__badge--silver"
+                    : index === 2
+                      ? " te-standings-pos__badge--bronze"
+                      : "";
+              return (
               <tr key={`${row.grupoId}-${row.parejaId}`}>
                 <td className={COL_POS}>
                   <span
-                    className={`te-standings-pos__badge${
-                      index === 0 ? " te-standings-pos__badge--lead" : ""
-                    }`}
+                    className={`te-standings-pos__badge${posMedalClass}`}
                   >
                     {index + 1}°
                   </span>
@@ -75,7 +82,8 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
                 />
                 <StandingsPtsCell pts={row.puntos} className="te-standings-pts" />
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>

@@ -4,6 +4,7 @@ import { CrearTorneoExpress } from "./CrearTorneoExpress";
 import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
 import { TePageShell } from "./TePageShell";
 import { Button } from "../ui";
+import "./te-inicio-page.css";
 
 export const TorneoExpressInicio: React.FC = () => {
   const [refreshToken, setRefreshToken] = useState(0);
@@ -22,9 +23,12 @@ export const TorneoExpressInicio: React.FC = () => {
         className="te-inicio-crear"
         aria-labelledby="te-crear-section-heading"
       >
-        <div className="te-section-divider" role="separator">
-          <span id="te-crear-section-heading">Crear nuevo torneo</span>
-        </div>
+        <h2 id="te-crear-section-heading" className="te-inicio-crear__title">
+          <span className="te-inicio-crear__icon" aria-hidden>
+            🏆
+          </span>
+          Crear nuevo torneo
+        </h2>
 
         <CrearTorneoExpress
           onTorneoCreated={() => setRefreshToken((n) => n + 1)}

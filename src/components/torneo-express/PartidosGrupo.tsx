@@ -121,16 +121,16 @@ function PartidoCanchaField({
   }
 
   return (
-    <div className="te-partido-cancha te-partido-cancha--edit">
-      <span className="te-partido-cancha__label">Cancha</span>
-      <div className="te-partido-cancha__edit-row">
-        <span className="te-partido-cancha__prefix">Cancha</span>
+    <div className="te-partido-meta-edit__section">
+      <p className="te-partido-meta-edit__heading">Cancha</p>
+      <label className="te-partido-meta-edit__field te-partido-meta-edit__field--full">
+        <span className="sr-only">Número o nombre de cancha</span>
         <input
           id={`cancha-${partido.id}`}
           type="text"
-          className="te-partido-cancha__input"
+          className="te-partido-meta-edit__input"
           value={draft}
-          placeholder="1"
+          placeholder="Ej. 1 o Cancha central"
           maxLength={24}
           disabled={savingCancha}
           autoFocus
@@ -139,15 +139,13 @@ function PartidoCanchaField({
             if (e.key === "Enter") guardarCancha();
             if (e.key === "Escape") closeEdit();
           }}
-          aria-label="Número o nombre de cancha"
         />
-      </div>
-      <div className="te-partido-cancha__actions">
+      </label>
+      <div className="te-partido-meta-edit__actions">
         <Button
           type="button"
           variant="primary"
           size="sm"
-          className="te-partido-cancha__save"
           disabled={savingCancha}
           loading={savingCancha}
           onClick={guardarCancha}
@@ -158,16 +156,15 @@ function PartidoCanchaField({
           type="button"
           variant="ghost"
           size="sm"
-          className="te-partido-cancha__cancel"
           disabled={savingCancha}
           onClick={closeEdit}
         >
           Cancelar
         </Button>
       </div>
-      {canchaError && (
-        <p className="te-partido-cancha__error">{canchaError}</p>
-      )}
+      {canchaError ? (
+        <p className="te-partido-meta-edit__error">{canchaError}</p>
+      ) : null}
     </div>
   );
 }
@@ -243,31 +240,31 @@ function PartidoHorarioField({
   }
 
   return (
-    <div className="te-partido-horario te-partido-horario--edit">
-      <span className="te-partido-horario__label">Fecha y hora</span>
-      <div className="te-partido-horario__fields">
-        <label className="te-partido-horario__field">
-          <span>Día</span>
+    <div className="te-partido-meta-edit__section">
+      <p className="te-partido-meta-edit__heading">Fecha y hora</p>
+      <div className="te-partido-meta-edit__row">
+        <label className="te-partido-meta-edit__field">
+          <span className="te-partido-meta-edit__field-label">Día</span>
           <input
             type="date"
-            className="te-partido-horario__input"
+            className="te-partido-meta-edit__input"
             value={draftDate}
             disabled={savingProgramado}
             onChange={(e) => setDraftDate(e.target.value)}
           />
         </label>
-        <label className="te-partido-horario__field">
-          <span>Hora</span>
+        <label className="te-partido-meta-edit__field">
+          <span className="te-partido-meta-edit__field-label">Hora</span>
           <input
             type="time"
-            className="te-partido-horario__input"
+            className="te-partido-meta-edit__input"
             value={draftTime}
             disabled={savingProgramado}
             onChange={(e) => setDraftTime(e.target.value)}
           />
         </label>
       </div>
-      <div className="te-partido-horario__actions">
+      <div className="te-partido-meta-edit__actions">
         <Button
           type="button"
           variant="primary"
@@ -288,9 +285,9 @@ function PartidoHorarioField({
           Cancelar
         </Button>
       </div>
-      {horarioError && (
-        <p className="te-partido-horario__error">{horarioError}</p>
-      )}
+      {horarioError ? (
+        <p className="te-partido-meta-edit__error">{horarioError}</p>
+      ) : null}
     </div>
   );
 }
@@ -331,6 +328,10 @@ function PartidoRow({
   onSaveProgramado?: PartidosGrupoProps["onSaveProgramado"];
 }) {
   const played = partido.estado === "jugado";
+  const puntosLocal = partido.puntos_local ?? 0;
+  const puntosVisitante = partido.puntos_visitante ?? 0;
+  const pair1Won = played && puntosLocal > puntosVisitante;
+  const pair2Won = played && puntosVisitante > puntosLocal;
   const [editing, setEditing] = useState(false);
   const [canchaEditOpen, setCanchaEditOpen] = useState(false);
   const [horarioEditOpen, setHorarioEditOpen] = useState(false);
@@ -348,12 +349,8 @@ function PartidoRow({
   const horaLabel = formatPartidoHora(scheduleIso);
   const canchaLabel = formatCanchaDisplay(partido.cancha);
   const metaBusy = savingCancha || savingProgramado;
-  const scoreCenter = played
-    ? `${partido.puntos_local ?? 0} ${partido.puntos_visitante ?? 0}`
-    : "—";
-
   return (
-    <div className="te-partido-row">
+    <div className="te-partido-row te-partido-card">
       <div className="te-partido-row__toolbar">
         {onMove ? (
           <div className="te-partido-reorder">
@@ -451,7 +448,17 @@ function PartidoRow({
       </div>
 
       <div className="te-partido-matchup">
-        <span className="te-partido-team">{localLabel}</span>
+        <span
+          className={`te-partido-team te-partido-team--local${
+            pair1Won
+              ? " te-partido-team--winner"
+              : pair2Won
+                ? " te-partido-team--loser"
+                : ""
+          }`}
+        >
+          {localLabel}
+        </span>
         {showInputs ? (
           <div className="te-score-inputs">
             <input
@@ -472,33 +479,74 @@ function PartidoRow({
         ) : (
           <span
             className={`te-partido-score-center${played ? "" : " is-pending"}`}
+            aria-label={
+              played
+                ? `Marcador ${puntosLocal} a ${puntosVisitante}`
+                : "Sin resultado"
+            }
           >
-            {scoreCenter}
+            {played ? (
+              <>
+                <span
+                  className={`te-partido-score-num${
+                    pair1Won ? " te-partido-score-num--win" : ""
+                  }`}
+                >
+                  {puntosLocal}
+                </span>
+                <span className="te-partido-score-sep" aria-hidden>
+                  –
+                </span>
+                <span
+                  className={`te-partido-score-num${
+                    pair2Won ? " te-partido-score-num--win" : ""
+                  }`}
+                >
+                  {puntosVisitante}
+                </span>
+              </>
+            ) : (
+              "—"
+            )}
           </span>
         )}
-        <span className="te-partido-team">{visitLabel}</span>
+        <span
+          className={`te-partido-team te-partido-team--visit${
+            pair2Won
+              ? " te-partido-team--winner"
+              : pair1Won
+                ? " te-partido-team--loser"
+                : ""
+          }`}
+        >
+          {visitLabel}
+        </span>
       </div>
 
-      {horarioEditOpen && horarioEditable && onSaveProgramado && (
-        <PartidoHorarioField
-          partido={partido}
-          horarioEditable={horarioEditable}
-          savingProgramado={savingProgramado}
-          onSaveProgramado={onSaveProgramado}
-          forceEdit
-          onClose={() => setHorarioEditOpen(false)}
-        />
-      )}
-
-      {canchaEditOpen && canchaEditable && onSaveCancha && (
-        <PartidoCanchaField
-          partido={partido}
-          canchaEditable={canchaEditable}
-          savingCancha={savingCancha}
-          onSaveCancha={onSaveCancha}
-          forceEdit
-          onClose={() => setCanchaEditOpen(false)}
-        />
+      {((horarioEditOpen && horarioEditable && onSaveProgramado) ||
+        (canchaEditOpen && canchaEditable && onSaveCancha)) && (
+        <div className="te-partido-meta-edit">
+          {horarioEditOpen && horarioEditable && onSaveProgramado ? (
+            <PartidoHorarioField
+              partido={partido}
+              horarioEditable={horarioEditable}
+              savingProgramado={savingProgramado}
+              onSaveProgramado={onSaveProgramado}
+              forceEdit
+              onClose={() => setHorarioEditOpen(false)}
+            />
+          ) : null}
+          {canchaEditOpen && canchaEditable && onSaveCancha ? (
+            <PartidoCanchaField
+              partido={partido}
+              canchaEditable={canchaEditable}
+              savingCancha={savingCancha}
+              onSaveCancha={onSaveCancha}
+              forceEdit
+              onClose={() => setCanchaEditOpen(false)}
+            />
+          ) : null}
+        </div>
       )}
 
       {showInputs ? (
@@ -534,7 +582,7 @@ function PartidoRow({
         editable &&
         onSave &&
         played && (
-          <div className="te-partido-actions te-partido-actions--score">
+          <div className="te-partido-actions te-partido-actions--score te-partido-actions--corner">
             <Button
               type="button"
               variant="ghost"

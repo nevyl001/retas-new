@@ -345,7 +345,10 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         <div className="te-crear-col te-crear-col--form">
           <form className="torneo-express-card te-crear-form" onSubmit={handleSubmit}>
             <header className="te-crear-form__header">
-              <h1 className="te-title">Crear torneo</h1>
+              <h1 className="te-title">
+                <span aria-hidden>🏆</span>
+                Nuevo torneo
+              </h1>
               <p className="te-subtitle">Grupos + round robin por grupo</p>
             </header>
 
@@ -395,7 +398,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     actualizan al editarlos allí.
                   </p>
 
-                  <div className="te-pareja-form-row">
+                  <div className="te-pareja-form-row te-pareja-form-row--inline">
                     <div className="torneo-express-field">
                       <label htmlFor="te-j1">Jugador 1</label>
                       <select
@@ -411,6 +414,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                         ))}
                       </select>
                     </div>
+                    <span className="te-pareja-form-row__sep" aria-hidden>
+                      /
+                    </span>
                     <div className="torneo-express-field">
                       <label htmlFor="te-j2">Jugador 2</label>
                       <select
@@ -430,8 +436,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
                   <Button
                     type="button"
-                    variant="primary"
+                    variant="secondary"
                     size="sm"
+                    className="te-btn-agregar-pareja"
                     onClick={() => void agregarPareja()}
                     disabled={
                       addingPair ||
@@ -515,6 +522,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                   disabled={submitting || parejas.length < 2}
                   loading={submitting}
                 >
+                  <span className="te-crear-submit__icon" aria-hidden>
+                    ⚡
+                  </span>
                   {submitting ? "Creando…" : "Crear torneo y generar partidos"}
                 </Button>
               </>

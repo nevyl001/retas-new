@@ -1,0 +1,646 @@
+/* Vista principal — gestionar torneo express (layout ancho + 2 columnas) */
+
+.te-gestion-page {
+  --te-gestion-max: 1200px;
+  --te-gestion-pad-x: clamp(0.65rem, 2.5vw, 1.25rem);
+  --te-gestion-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --te-gestion-surface: var(--bg-card, var(--te-surface));
+  width: 100%;
+  max-width: none;
+  padding-left: var(--te-gestion-pad-x);
+  padding-right: var(--te-gestion-pad-x);
+  box-sizing: border-box;
+}
+
+.te-gestion-page > * {
+  width: 100%;
+  max-width: min(100%, var(--te-gestion-max));
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.te-gestion-page .torneo-express-card,
+.te-gestion-page .te-header,
+.te-gestion-page .te-public-links-compact {
+  max-width: min(100%, var(--te-gestion-max));
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* —— Header —— */
+.te-gestion-page .te-gestion-header {
+  margin-bottom: 1rem;
+  align-items: flex-start;
+}
+
+.te-gestion-page .te-gestion-title {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-body);
+  font-size: clamp(1.75rem, 3.2vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--text-primary);
+  text-transform: none;
+}
+
+.te-gestion-page .te-gestion-header__pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.te-gestion-page .te-categoria-pill--neutral {
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--color-text-secondary, var(--text-secondary));
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.te-gestion-page .te-gestion-estado-pill.riviera-badge {
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.te-gestion-page .te-gestion-estado-pill.riviera-badge--live {
+  background: var(--success-muted);
+  color: var(--success);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+.te-gestion-page .te-gestion-estado-pill.riviera-badge--live::before {
+  background: var(--success);
+}
+
+.te-gestion-page .te-gestion-estado-pill.riviera-badge--finished {
+  background: var(--bg-elevated);
+  color: var(--color-text-secondary, var(--text-secondary));
+  border: 1px solid var(--border-subtle);
+}
+
+.te-gestion-page .te-gestion-estado-pill.riviera-badge--pending {
+  background: var(--bg-elevated);
+  color: var(--color-text-secondary, var(--text-secondary));
+  border: 1px solid var(--border-subtle);
+}
+
+.te-gestion-page .te-gestion-header__actions {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.te-gestion-page .te-gestion-header__actions .riviera-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.te-gestion-page .te-btn-icon {
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+/* —— Enlaces públicos compactos —— */
+.te-gestion-page .te-public-links-compact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.te-gestion-page .te-public-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.te-gestion-page .te-public-links-compact .te-copy-ok {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary, var(--text-secondary));
+}
+
+/* —— Card grupos + layout 2 columnas —— */
+.te-gestion-page .te-gestion-card {
+  max-width: min(100%, var(--te-gestion-max));
+  padding: var(--space-5, 1.25rem) var(--space-6, 1.5rem) var(--space-8, 2rem);
+  margin-bottom: var(--space-lg, 1.5rem);
+}
+
+.te-gestion-page .te-gestion-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.75rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .te-gestion-page .te-gestion-layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    gap: 1.5rem 2rem;
+  }
+}
+
+.te-gestion-page .te-gestion-layout__partidos,
+.te-gestion-page .te-gestion-layout__aside {
+  min-width: 0;
+}
+
+.te-gestion-page .te-gestion-layout__aside {
+  position: sticky;
+  top: 1rem;
+}
+
+.te-gestion-page .te-grupos-card__standings-title {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* —— Tabs grupos —— */
+.te-gestion-page .te-grupos-card__tabs {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.te-gestion-page .te-grupos-tab {
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+}
+
+.te-gestion-page .te-grupos-tab:hover:not(.te-grupos-tab--active) {
+  border-color: var(--border-default);
+  background: var(--bg-elevated);
+}
+
+.te-gestion-page .te-grupos-tab--active {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold);
+  box-shadow: none;
+}
+
+.te-gestion-page .te-grupos-tab--active .te-grupo-badge,
+.te-gestion-page .te-grupos-tab--active .te-grupo-badge--0,
+.te-gestion-page .te-grupos-tab--active .te-grupo-badge--1,
+.te-gestion-page .te-grupos-tab--active .te-grupo-badge--2,
+.te-gestion-page .te-grupos-tab--active .te-grupo-badge--3,
+.te-gestion-page .te-grupos-tab--active .te-grupo-badge--4 {
+  color: var(--text-on-gold);
+  border-color: transparent;
+  background: transparent;
+}
+
+.te-gestion-page .te-grupos-tab:not(.te-grupos-tab--active) .te-grupo-badge {
+  color: var(--color-text-secondary, var(--text-secondary));
+  border-color: var(--border-subtle);
+  background: transparent;
+}
+
+/* —— Separadores de ronda —— */
+.te-gestion-page .te-partidos-ronda__head {
+  margin: 1.25rem 0 0.85rem;
+}
+
+.te-gestion-page .te-partidos-ronda__label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, var(--text-muted));
+}
+
+.te-gestion-page .te-partidos-ronda__line {
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* —— Tarjetas de partido —— */
+.te-gestion-page .te-partidos-list .te-partido-row {
+  border-bottom: none;
+}
+
+.te-gestion-page .te-partido-card.te-partido-row {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: unset;
+}
+
+.te-gestion-page .te-partido-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.1rem 1.15rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--te-gestion-surface);
+  box-shadow: var(--te-gestion-card-shadow);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.te-gestion-page .te-partido-card:last-child {
+  margin-bottom: 0;
+}
+
+.te-gestion-page .te-partidos-ronda .te-partido-card:last-child {
+  margin-bottom: 0.5rem;
+}
+
+.te-gestion-page .te-partido-row__toolbar {
+  margin-bottom: 0;
+}
+
+.te-gestion-page .te-partido-meta-chips {
+  gap: 0.65rem 1rem;
+}
+
+.te-gestion-page .te-partido-chip {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, var(--text-muted));
+}
+
+.te-gestion-page button.te-partido-chip {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.te-gestion-page button.te-partido-chip:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.te-gestion-page .te-partido-chip--cancha {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary, var(--text-muted));
+}
+
+.te-gestion-page .te-partido-matchup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.25rem 0;
+}
+
+.te-gestion-page .te-partido-team {
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--color-text-secondary, var(--text-secondary));
+  text-align: left;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.te-gestion-page .te-partido-team--visit {
+  text-align: right;
+}
+
+.te-gestion-page .te-partido-team--winner {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.te-gestion-page .te-partido-team--loser {
+  color: var(--color-text-secondary, var(--text-muted));
+  font-weight: 500;
+}
+
+.te-gestion-page .te-partido-score-center {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary, var(--text-muted));
+  letter-spacing: 0.02em;
+}
+
+.te-gestion-page .te-partido-score-num--win {
+  color: var(--accent-gold);
+}
+
+.te-gestion-page .te-partido-score-center.is-pending {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.te-gestion-page .te-partido-score-sep {
+  font-weight: 500;
+  opacity: 0.65;
+}
+
+.te-gestion-page .te-partido-row .riviera-badge--finished {
+  background: var(--success-muted);
+  color: var(--success);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: var(--radius-full, 9999px);
+  padding: 0.25rem 0.55rem;
+}
+
+.te-gestion-page .te-partido-row .riviera-badge--live {
+  border-radius: var(--radius-full, 9999px);
+}
+
+.te-gestion-page .te-partido-actions--corner {
+  margin: 0.15rem 0 0;
+  padding: 0.35rem 0 0;
+  justify-content: flex-end;
+  border-top: none;
+}
+
+.te-gestion-page .te-partido-actions--corner .te-partido-edit-btn,
+.te-gestion-page .te-partido-actions--corner .riviera-btn-ghost {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, var(--text-muted));
+  text-decoration: none;
+  padding: 0;
+  min-height: unset;
+  border: none;
+  background: transparent;
+}
+
+.te-gestion-page .te-partido-actions--corner .te-partido-edit-btn:hover,
+.te-gestion-page .te-partido-actions--corner .riviera-btn-ghost:hover:not(:disabled) {
+  color: var(--accent-gold);
+  background: transparent;
+  text-decoration: underline;
+}
+
+.te-gestion-page .te-partido-actions:not(.te-partido-actions--corner) {
+  position: static;
+  justify-content: flex-start;
+  padding-top: 0.25rem;
+}
+
+/* —— Editor fecha / hora / cancha (inline en tarjeta) —— */
+.te-gestion-page .te-partido-meta-edit {
+  margin-top: 0.15rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+}
+
+.te-gestion-page .te-partido-meta-edit__section + .te-partido-meta-edit__section {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.te-gestion-page .te-partido-meta-edit__heading {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary, var(--text-muted));
+}
+
+.te-gestion-page .te-partido-meta-edit__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.te-gestion-page .te-partido-meta-edit__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.te-gestion-page .te-partido-meta-edit__field--full {
+  margin-bottom: 0.65rem;
+}
+
+.te-gestion-page .te-partido-meta-edit__field-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, var(--text-secondary));
+}
+
+.te-gestion-page .te-partido-meta-edit__input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 42px;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-base, var(--te-black));
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.2;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.te-gestion-page .te-partido-meta-edit__input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.te-gestion-page .te-partido-meta-edit__input:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.te-gestion-page .te-partido-meta-edit__input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--accent-gold-dim);
+}
+
+.te-gestion-page .te-partido-meta-edit__input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.te-gestion-page .te-partido-meta-edit__input[type="date"],
+.te-gestion-page .te-partido-meta-edit__input[type="time"] {
+  color-scheme: dark;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.te-gestion-page .te-partido-meta-edit__input[type="date"]::-webkit-calendar-picker-indicator,
+.te-gestion-page .te-partido-meta-edit__input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.65;
+  filter: invert(0.85);
+}
+
+.te-gestion-page .te-partido-meta-edit__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.te-gestion-page .te-partido-meta-edit__actions .riviera-btn-primary {
+  min-height: 36px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+}
+
+.te-gestion-page .te-partido-meta-edit__actions .riviera-btn-ghost {
+  min-height: 36px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, var(--text-muted));
+}
+
+.te-gestion-page .te-partido-meta-edit__actions .riviera-btn-ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.te-gestion-page .te-partido-meta-edit__error {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--error, var(--loss));
+}
+
+/* Anular estilos legacy (cajas doradas duplicadas) dentro de gestión */
+.te-gestion-page .te-partido-card .te-partido-horario--edit,
+.te-gestion-page .te-partido-card .te-partido-cancha--edit {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+@media (max-width: 480px) {
+  .te-gestion-page .te-partido-meta-edit__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.te-gestion-page .te-grupos-card__partidos-hint,
+.te-gestion-page .te-grupos-card__standings-hint {
+  color: var(--color-text-secondary, var(--text-secondary));
+}
+
+/* —— Clasificación —— */
+.te-gestion-page .te-standings-table th,
+.te-gestion-page .te-standings-table td {
+  border-bottom-width: 0.5px;
+  border-bottom-color: var(--border-subtle);
+}
+
+.te-gestion-page .te-standings-table th {
+  color: var(--color-text-secondary, var(--text-muted));
+  padding: 0.55rem 0.5rem 0.7rem;
+}
+
+.te-gestion-page .te-standings-table td {
+  padding: 0.65rem 0.5rem;
+  color: var(--text-primary);
+}
+
+.te-gestion-page .te-standings-table td.te-cell-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.te-gestion-page .te-standings-pos__badge--gold {
+  color: var(--medal-gold);
+  background: var(--accent-gold-dim);
+  border: 1px solid var(--border-accent);
+}
+
+.te-gestion-page .te-standings-pos__badge--silver {
+  color: var(--medal-silver);
+  background: var(--medal-silver-dim);
+  border: 1px solid var(--medal-silver-border);
+}
+
+.te-gestion-page .te-standings-pos__badge--bronze {
+  color: var(--medal-bronze);
+  background: var(--medal-bronze-dim);
+  border: 1px solid var(--medal-bronze-border);
+}
+
+.te-gestion-page .te-standings-table .te-standings-pts {
+  color: var(--accent-gold);
+}
+
+.te-gestion-page .te-standings-block .standings-scoring-help {
+  margin-bottom: 1rem;
+  color: var(--color-text-secondary, var(--text-secondary));
+}
+
+@media (max-width: 899px) {
+  .te-gestion-page .te-gestion-layout__aside {
+    position: static;
+  }
+
+  .te-gestion-page .te-gestion-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .te-gestion-page .te-gestion-header__actions {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .te-gestion-page .te-public-links-compact {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .te-gestion-page .te-public-link-btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .te-gestion-page .te-partido-matchup {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .te-gestion-page .te-partido-team,
+  .te-gestion-page .te-partido-team--visit {
+    text-align: center;
+    width: 100%;
+  }
+}

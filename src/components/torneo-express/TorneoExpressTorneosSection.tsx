@@ -78,6 +78,23 @@ export const TorneoExpressTorneosSection: React.FC<
   const sorted = useMemo(() => sortTorneos(torneos), [torneos]);
   const visible = showAll ? sorted : sorted.slice(0, MAX_VISIBLE);
   const hayMas = sorted.length > MAX_VISIBLE;
+  const activosCount = useMemo(
+    () => sorted.filter((t) => isActivo(t.estado)).length,
+    [sorted]
+  );
+  const visibleActivos = useMemo(
+    () => visible.filter((t) => isActivo(t.estado)),
+    [visible]
+  );
+  const visibleFinalizados = useMemo(
+    () => visible.filter((t) => t.estado === "finalizado"),
+    [visible]
+  );
+  const visibleOtros = useMemo(
+    () =>
+      visible.filter((t) => !isActivo(t.estado) && t.estado !== "finalizado"),
+    [visible]
+  );
 
   const torneoResultados = useMemo(
     () => sorted.find((t) => t.id === resultadosTorneoId) ?? null,
@@ -133,11 +150,224 @@ export const TorneoExpressTorneosSection: React.FC<
     }
   };
 
+  const renderTorneoCard = (t: TorneoExpressListItem) => {
+    const activo = isActivo(t.estado);
+    const showResultados =
+      resultadosTorneoId === t.id && torneoResultados;
+    const showTablaGeneral =
+      tablaGeneralTorneoId === t.id && torneoTablaGeneral;
+    const confirmFinalizar = finalizarId === t.id;
+    const confirmEliminar = eliminarId === t.id;
+
+    return (
+      <li
+        key={t.id}
+        className={`te-torneo-card${activo ? " te-torneo-card--activo" : " te-torneo-card--finalizado"}`}
+      >
+        <div className="te-torneo-card__inner">
+          <div className="te-torneo-card__info-col">
+            <div className="te-torneo-card__meta-top">
+              {activo ? (
+                <Badge variant="live" className="te-torneo-card__badge-live">
+                  EN CURSO
+                </Badge>
+              ) : (
+                <Badge variant="finished" className="te-torneo-card__badge-done">
+                  FINALIZADO
+                </Badge>
+              )}
+              <span className="te-torneo-card__fecha">
+                Creado: {formatFecha(t.created_at)}
+              </span>
+            </div>
+
+            <h3 className="te-torneo-card__nombre">{t.nombre}</h3>
+            {formatTorneoExpressCategoria(t.categoria) ? (
+              <p className="te-torneo-card__categoria">
+                {formatTorneoExpressCategoria(t.categoria)}
+              </p>
+            ) : null}
+            <p className="te-torneo-card__info">
+              {t.grupoCount} {t.grupoCount === 1 ? "grupo" : "grupos"} ·{" "}
+              {t.parejaCount} {t.parejaCount === 1 ? "pareja" : "parejas"}
+            </p>
+          </div>
+
+          {!confirmFinalizar && !confirmEliminar ? (
+            <div className="te-torneo-card__actions-col">
+              {activo ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={() =>
+                      navigateTorneoExpress(
+                        `/torneo-express/${t.id}/gestionar`
+                      )
+                    }
+                  >
+                    Gestionar →
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => openResultados(t.id)}
+                  >
+                    {showResultados ? "Ocultar resultados" : "Ver resultados"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => openTablaGeneral(t.id)}
+                  >
+                    {showTablaGeneral
+                      ? "Ocultar tabla general"
+                      : "Tabla general"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="te-btn-finalizar-fase"
+                    onClick={() => {
+                      setFinalizarId(t.id);
+                      setEliminarId(null);
+                    }}
+                  >
+                    Finalizar fase
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => openResultados(t.id)}
+                  >
+                    {showResultados ? "Ocultar resultados" : "Ver resultados"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => openTablaGeneral(t.id)}
+                  >
+                    {showTablaGeneral
+                      ? "Ocultar tabla general"
+                      : "Tabla general"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="te-btn-finalizar-fase"
+                    onClick={() => {
+                      setEliminarId(t.id);
+                      setFinalizarId(null);
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                </>
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        {confirmFinalizar ? (
+          <div className="te-torneo-card__confirm">
+            <p className="te-torneo-card__confirm-title">
+              ⚠️ ¿Finalizar la fase de grupos?
+            </p>
+            <p className="te-torneo-card__confirm-text">
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="te-torneo-card__confirm-actions">
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                disabled={accionando}
+                loading={accionando}
+                onClick={() => void handleFinalizar(t.id)}
+              >
+                Sí, finalizar fase
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={accionando}
+                onClick={() => setFinalizarId(null)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {confirmEliminar ? (
+          <div className="te-torneo-card__confirm">
+            <p className="te-torneo-card__confirm-title">
+              ¿Eliminar {t.nombre}?
+            </p>
+            <div className="te-torneo-card__confirm-actions">
+              <Button
+                type="button"
+                variant="danger"
+                size="sm"
+                disabled={accionando}
+                loading={accionando}
+                onClick={() => void handleEliminar(t.id)}
+              >
+                Sí, eliminar
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={accionando}
+                onClick={() => setEliminarId(null)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {showResultados && torneoResultados ? (
+          <TorneoExpressResultadosPanel
+            torneo={torneoResultados as TorneoExpress}
+            onClose={() => setResultadosTorneoId(null)}
+          />
+        ) : null}
+
+        {showTablaGeneral && torneoTablaGeneral ? (
+          <TorneoExpressTablaGeneralPanel
+            torneo={torneoTablaGeneral as TorneoExpress}
+            onClose={() => setTablaGeneralTorneoId(null)}
+          />
+        ) : null}
+      </li>
+    );
+  };
+
   return (
     <section className="te-torneos-section" aria-labelledby="te-torneos-heading">
-      <h2 id="te-torneos-heading" className="te-torneos-section__title">
-        Tus torneos
-      </h2>
+      <div className="te-torneos-section__head">
+        <h2 id="te-torneos-heading" className="te-torneos-section__title">
+          Tus torneos
+        </h2>
+        {!cargandoTorneos && activosCount > 0 ? (
+          <span className="te-torneos-section__count">
+            {activosCount} {activosCount === 1 ? "activo" : "activos"}
+          </span>
+        ) : null}
+      </div>
 
       {error && <p className="te-error">{error}</p>}
 
@@ -157,205 +387,34 @@ export const TorneoExpressTorneosSection: React.FC<
       )}
 
       {!cargandoTorneos && visible.length > 0 && (
-        <ul className="te-torneos-cards">
-          {visible.map((t) => {
-            const activo = isActivo(t.estado);
-            const showResultados =
-              resultadosTorneoId === t.id && torneoResultados;
-            const showTablaGeneral =
-              tablaGeneralTorneoId === t.id && torneoTablaGeneral;
-            const confirmFinalizar = finalizarId === t.id;
-            const confirmEliminar = eliminarId === t.id;
+        <>
+          {visibleActivos.length > 0 ? (
+            <div className="te-torneos-group">
+              <h3 className="te-torneos-group__label">En curso</h3>
+              <ul className="te-torneos-cards">
+                {visibleActivos.map(renderTorneoCard)}
+              </ul>
+            </div>
+          ) : null}
 
-            return (
-              <li
-                key={t.id}
-                className={`te-torneo-card${activo ? " te-torneo-card--activo" : " te-torneo-card--finalizado"}`}
-              >
-                <div className="te-torneo-card__top">
-                  {activo ? (
-                    <Badge variant="live">EN CURSO</Badge>
-                  ) : (
-                    <Badge variant="finished">FINALIZADO</Badge>
-                  )}
-                  <span className="te-torneo-card__fecha">
-                    Creado: {formatFecha(t.created_at)}
-                  </span>
-                </div>
+          {visibleOtros.length > 0 ? (
+            <div className="te-torneos-group">
+              <h3 className="te-torneos-group__label">Otros</h3>
+              <ul className="te-torneos-cards">
+                {visibleOtros.map(renderTorneoCard)}
+              </ul>
+            </div>
+          ) : null}
 
-                <h3 className="te-torneo-card__nombre">{t.nombre}</h3>
-                {formatTorneoExpressCategoria(t.categoria) && (
-                  <p className="te-torneo-card__categoria">
-                    Categoría: {formatTorneoExpressCategoria(t.categoria)}
-                  </p>
-                )}
-                <p className="te-torneo-card__info">
-                  {t.grupoCount} {t.grupoCount === 1 ? "grupo" : "grupos"} ·{" "}
-                  {t.parejaCount} {t.parejaCount === 1 ? "pareja" : "parejas"}
-                </p>
-
-                {confirmFinalizar && (
-                  <div className="te-torneo-card__confirm">
-                    <p className="te-torneo-card__confirm-title">
-                      ⚠️ ¿Finalizar la fase de grupos?
-                    </p>
-                    <p className="te-torneo-card__confirm-text">
-                      Esta acción no se puede deshacer.
-                    </p>
-                    <div className="te-torneo-card__confirm-actions">
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        disabled={accionando}
-                        loading={accionando}
-                        onClick={() => void handleFinalizar(t.id)}
-                      >
-                        Sí, finalizar fase
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={accionando}
-                        onClick={() => setFinalizarId(null)}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {confirmEliminar && (
-                  <div className="te-torneo-card__confirm">
-                    <p className="te-torneo-card__confirm-title">
-                      ¿Eliminar {t.nombre}?
-                    </p>
-                    <div className="te-torneo-card__confirm-actions">
-                      <Button
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        disabled={accionando}
-                        loading={accionando}
-                        onClick={() => void handleEliminar(t.id)}
-                      >
-                        Sí, eliminar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={accionando}
-                        onClick={() => setEliminarId(null)}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {!confirmFinalizar && !confirmEliminar && (
-                  <div className="te-torneo-card__actions">
-                    {activo && (
-                      <>
-                        <Button
-                          type="button"
-                          variant="primary"
-                          size="sm"
-                          onClick={() =>
-                            navigateTorneoExpress(
-                              `/torneo-express/${t.id}/gestionar`
-                            )
-                          }
-                        >
-                          Gestionar →
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openResultados(t.id)}
-                        >
-                          {showResultados ? "Ocultar resultados" : "Ver resultados"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openTablaGeneral(t.id)}
-                        >
-                          {showTablaGeneral
-                            ? "Ocultar tabla general"
-                            : "Tabla general"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="danger"
-                          size="sm"
-                          onClick={() => {
-                            setFinalizarId(t.id);
-                            setEliminarId(null);
-                          }}
-                        >
-                          Finalizar fase
-                        </Button>
-                      </>
-                    )}
-                    {!activo && (
-                      <>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openResultados(t.id)}
-                        >
-                          {showResultados ? "Ocultar resultados" : "Ver resultados"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openTablaGeneral(t.id)}
-                        >
-                          {showTablaGeneral
-                            ? "Ocultar tabla general"
-                            : "Tabla general"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="te-btn-text-danger"
-                          onClick={() => {
-                            setEliminarId(t.id);
-                            setFinalizarId(null);
-                          }}
-                        >
-                          Eliminar
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {showResultados && torneoResultados && (
-                  <TorneoExpressResultadosPanel
-                    torneo={torneoResultados as TorneoExpress}
-                    onClose={() => setResultadosTorneoId(null)}
-                  />
-                )}
-
-                {showTablaGeneral && torneoTablaGeneral && (
-                  <TorneoExpressTablaGeneralPanel
-                    torneo={torneoTablaGeneral as TorneoExpress}
-                    onClose={() => setTablaGeneralTorneoId(null)}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ul>
+          {visibleFinalizados.length > 0 ? (
+            <div className="te-torneos-group">
+              <h3 className="te-torneos-group__label">Finalizados</h3>
+              <ul className="te-torneos-cards">
+                {visibleFinalizados.map(renderTorneoCard)}
+              </ul>
+            </div>
+          ) : null}
+        </>
       )}
 
       {!cargandoTorneos && hayMas && !showAll && (
