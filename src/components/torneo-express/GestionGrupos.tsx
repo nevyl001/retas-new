@@ -187,10 +187,13 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             <h3 className="te-grupos-card__active-name te-label-section">
               {grupo.nombre}
             </h3>
-            <TablaGrupo rows={standingsByGrupo[grupo.id] ?? []} />
+
             <h3 className="te-grupos-card__partidos-title te-label-section">
               Partidos
             </h3>
+            <p className="te-grupos-card__partidos-hint">
+              Captura resultados, horarios y canchas de cada juego.
+            </p>
             {(!partidosOrdenDisponible ||
               !partidosCanchaDisponible ||
               !partidosProgramadoDisponible) && (
@@ -231,6 +234,17 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 partidosProgramadoDisponible ? saveProgramado : undefined
               }
               onSaveOrden={partidosOrdenDisponible ? saveOrden : undefined}
+            />
+
+            <h3 className="te-grupos-card__standings-title te-label-section">
+              Clasificación
+            </h3>
+            <p className="te-grupos-card__standings-hint">
+              Se actualiza sola al guardar resultados en los partidos.
+            </p>
+            <TablaGrupo
+              rows={standingsByGrupo[grupo.id] ?? []}
+              scoringHelpVariant="express"
             />
           </div>
         )}

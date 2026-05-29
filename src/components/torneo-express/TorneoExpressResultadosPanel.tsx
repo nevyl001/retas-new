@@ -105,7 +105,7 @@ export const TorneoExpressResultadosPanel: React.FC<
         blocks.map((block) => (
           <div key={block.grupo.id} className="te-resultados-grupo">
             <h4 className="te-resultados-grupo__title">{block.grupo.nombre}</h4>
-            <TablaGrupo rows={block.rows} />
+            <TablaGrupo rows={block.rows} scoringHelpVariant="express" />
           </div>
         ))}
 

@@ -318,22 +318,41 @@
   margin: 0 0 1.25rem;
 }
 
-.te-grupos-card__body .te-standings-block {
-  margin-bottom: 2rem;
-}
-
 .te-grupos-card__body .standings-scoring-help {
   margin-bottom: 1.5rem;
 }
 
 .te-grupos-card__partidos-title {
+  margin: 0 0 0.5rem;
+}
+
+.te-grupos-card__partidos-hint {
   margin: 0 0 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--te-border);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 
 .te-grupos-card__body .te-partidos-list {
   margin-top: 0.25rem;
+  margin-bottom: 2rem;
+}
+
+.te-grupos-card__standings-title {
+  margin: 0 0 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--te-border);
+}
+
+.te-grupos-card__standings-hint {
+  margin: 0 0 1.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.te-grupos-card__body .te-standings-block {
+  margin-bottom: 0.5rem;
 }
 
 .te-standings-block {

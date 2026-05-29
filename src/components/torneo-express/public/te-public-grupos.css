@@ -76,9 +76,24 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .te-grupos-grid .te-grupo-wrap:only-child {
+  .te-grupos-grid:not(.te-grupos-grid--single) .te-grupo-wrap:only-child {
     grid-column: 1 / -1;
     max-width: 720px;
+  }
+}
+
+.te-grupos-grid--single {
+  grid-template-columns: 1fr;
+}
+
+.te-grupos-grid--single .te-grupo-wrap {
+  max-width: none;
+}
+
+@media (min-width: 900px) {
+  .te-grupos-grid--single .te-grupo-inner {
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 1fr);
+    gap: 16px;
   }
 }
 

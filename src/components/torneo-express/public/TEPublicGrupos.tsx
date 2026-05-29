@@ -31,6 +31,7 @@ export interface TEPublicGruposPartido {
 }
 
 export interface TEPublicGruposGrupo {
+  id: string;
   nombre: string;
   partidos: TEPublicGruposPartido[];
   partidosExpress: TorneoExpressPartido[];
@@ -44,6 +45,8 @@ export interface TEPublicGruposProps {
   categoria: string;
   fecha: string;
   lugar: string;
+  /** Vista de un solo grupo (enlace /grupo/:id) */
+  singleGrupo?: boolean;
   onCopyLink?: () => void;
   copyMsg?: string;
 }
@@ -115,6 +118,7 @@ export function buildTEPublicGruposProps(
     });
 
     return {
+      id: grupo.id,
       nombre: grupo.nombre,
       partidos: mapPartidosForGrupo(
         bundle.partidosPorGrupo[grupo.id] ?? [],
@@ -132,6 +136,21 @@ export function buildTEPublicGruposProps(
     categoria: bundle.torneo.categoria?.trim() ?? "",
     fecha,
     lugar: options?.lugar?.trim() ?? "",
+  };
+}
+
+export function buildTEPublicGrupoProps(
+  bundle: TorneoExpressBundle,
+  standingsByGrupo: Record<string, StandingRowExpress[]>,
+  grupoId: string,
+  options?: { clasifican?: number; lugar?: string }
+): Omit<TEPublicGruposProps, "onCopyLink" | "copyMsg"> {
+  const all = buildTEPublicGruposProps(bundle, standingsByGrupo, options);
+  const grupo = all.grupos.find((g) => g.id === grupoId);
+  return {
+    ...all,
+    singleGrupo: true,
+    grupos: grupo ? [grupo] : [],
   };
 }
 
@@ -241,6 +260,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   categoria,
   fecha,
   lugar,
+  singleGrupo = false,
   onCopyLink,
   copyMsg,
 }) => {
@@ -249,19 +269,33 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
       (sum, g) => sum + g.standingRows.length,
       0
     );
-    const parts = [
-      `${grupos.length} grupo${grupos.length === 1 ? "" : "s"}`,
-      `${totalParejas} pareja${totalParejas === 1 ? "" : "s"}`,
-    ];
+    const parts: string[] = [];
+    if (!singleGrupo) {
+      parts.push(
+        `${grupos.length} grupo${grupos.length === 1 ? "" : "s"}`,
+        `${totalParejas} pareja${totalParejas === 1 ? "" : "s"}`
+      );
+    } else {
+      parts.push(`${totalParejas} pareja${totalParejas === 1 ? "" : "s"}`);
+    }
     if (lugar.trim()) parts.push(lugar.trim());
     if (fecha.trim()) parts.push(fecha.trim());
     return parts.join(" · ");
-  }, [grupos, lugar, fecha]);
+  }, [grupos, lugar, fecha, singleGrupo]);
 
-  const heroTitle = categoria.trim()
-    ? `${categoria.trim()} — Fase de grupos`
-    : `${torneoNombre} — Fase de grupos`;
+  const grupoNombre = singleGrupo ? grupos[0]?.nombre?.trim() : "";
+  const heroTitle = singleGrupo && grupoNombre
+    ? categoria.trim()
+      ? `${categoria.trim()} — ${grupoNombre}`
+      : `${grupoNombre} — Fase de grupos`
+    : categoria.trim()
+      ? `${categoria.trim()} — Fase de grupos`
+      : `${torneoNombre} — Fase de grupos`;
   const eyebrow = `TORNEO · ${torneoNombre.trim().toUpperCase()}`;
+
+  const gridClass = singleGrupo
+    ? "te-grupos-grid te-grupos-grid--single"
+    : "te-grupos-grid";
 
   return (
     <div className="te-grupos-page">
@@ -292,9 +326,9 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
       {grupos.length === 0 ? (
         <p className="te-grupos-empty">Sin grupos en este torneo.</p>
       ) : (
-        <div className="te-grupos-grid">
+        <div className={gridClass}>
         {grupos.map((grupo) => (
-          <section key={grupo.nombre} className="te-grupo-wrap">
+          <section key={grupo.id} className="te-grupo-wrap">
             <div className="te-grupo-head">
               <h2 className="te-grupo-label">{grupo.nombre}</h2>
               <span className="te-grupo-clasifican-badge">

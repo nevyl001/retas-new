@@ -20,15 +20,17 @@ import type { StandingRowExpress } from "../../lib/torneoExpress/types";
 interface TablaGrupoProps {
   rows: StandingRowExpress[];
   showGrupoColumn?: boolean;
+  scoringHelpVariant?: "default" | "express";
 }
 
 export const TablaGrupo: React.FC<TablaGrupoProps> = ({
   rows,
   showGrupoColumn = false,
+  scoringHelpVariant = "default",
 }) => {
   return (
     <div className="te-standings-block">
-      <StandingsScoringHelp />
+      <StandingsScoringHelp variant={scoringHelpVariant} />
       <div className={`te-standings-wrap ${TABLA_WRAPPER_CLASS}`}>
         <table className={`te-standings-table ${TABLA_RANKING_CLASS}`}>
           <thead>
