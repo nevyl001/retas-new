@@ -345,7 +345,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
           style={
             {
               "--standings-sticky-bg": "var(--bg-card)",
-              "--standings-sticky-bg-leader": "rgba(232, 197, 71, 0.04)",
+              "--standings-sticky-bg-leader": "rgba(201, 162, 39, 0.04)",
             } as React.CSSProperties
           }
         >
@@ -386,7 +386,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
           style={
             {
               "--standings-sticky-bg": "var(--bg-card)",
-              "--standings-sticky-bg-leader": "rgba(232, 197, 71, 0.04)",
+              "--standings-sticky-bg-leader": "rgba(201, 162, 39, 0.04)",
             } as React.CSSProperties
           }
         >

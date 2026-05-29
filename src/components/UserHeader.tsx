@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../contexts/UserContext";
+import { RIVIERA_APP_TAGLINE } from "../lib/rivieraBranding";
 import { MobileUserMenu } from "./MobileUserMenu";
 import "./UserHeader.css";
 
@@ -71,6 +72,7 @@ export const UserHeader: React.FC = () => {
         <div className="user-header-main">
           <div className="user-header-logo">
             <h1>RivieraApp</h1>
+            <span className="user-header-tagline">{RIVIERA_APP_TAGLINE}</span>
           </div>
 
           <div className="user-header-actions">

@@ -1,7 +1,7 @@
 /* ============================================================
    RIVIERA GOLD v3 — Fuente única de verdad
    Preview: riviera_gold_v3_preview.html
-   Grafito #1c1c1e + Dorado #e8c547 · Barlow Condensed + DM Sans
+   Grafito #1c1c1e + Dorado #c9a227 · DM Sans display + body
    ============================================================ */
 
 :root {
@@ -15,24 +15,39 @@
   --bg-overlay: rgba(28, 28, 30, 0.88);
 
   /* ── Bordes ── */
-  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.06);
   --border-default: rgba(255, 255, 255, 0.1);
   --border-strong: rgba(255, 255, 255, 0.16);
-  --border-accent: rgba(232, 197, 71, 0.4);
-  --border-focus: rgba(232, 197, 71, 0.55);
+  --border-accent: rgba(201, 162, 39, 0.4);
+  --border-focus: rgba(201, 162, 39, 0.55);
+  --bg-inset: rgba(255, 255, 255, 0.03);
 
+  /* GOLD USAGE POLICY
+     KEEP:   active nav, EN VIVO badge, mode badges, primary CTA,
+             victory accent, oro medal, focus ring
+     REDUCE: card borders → var(--border-default)
+             section dividers → var(--border-subtle)
+             info backgrounds → var(--bg-elevated)
+     REMOVE: body text, disabled state, bullets, decorative gradients
+  */
   /* ── Dorado ── */
-  --accent-gold: #e8c547;
-  --accent-gold-light: #f5d96a;
-  --accent-gold-dim: rgba(232, 197, 71, 0.13);
-  --glow-gold: 0 0 20px rgba(232, 197, 71, 0.2);
+  --accent-gold: #c9a227;
+  --accent-gold-light: #dbb842;
+  --accent-gold-dim: rgba(201, 162, 39, 0.12);
+  --glow-gold: 0 0 20px rgba(201, 162, 39, 0.15);
+
+  /* alias — do not use directly */
+  --riviera-accent-gold: var(--accent-gold);
+  /* alias — do not use directly */
+  --te-gold: var(--accent-gold);
+  /* alias — do not use directly */
+  --color-gold: var(--accent-gold);
 
   /* ── Aliases legacy ── */
   --accent: var(--accent-gold);
   --accent-hover: var(--accent-gold-light);
   --accent-muted: var(--accent-gold-dim);
   --accent-glow: var(--accent-gold-dim);
-  --color-gold: var(--accent-gold);
   --color-cream: var(--accent-gold);
 
   /* ── Texto ── */
@@ -53,7 +68,7 @@
   --success-muted: rgba(74, 222, 128, 0.13);
   --warning: var(--accent-gold-light);
   --error: var(--loss);
-  --error-muted: rgba(248, 113, 113, 0.13);
+  --error-muted: rgba(239, 68, 68, 0.08);
   --danger: var(--loss);
 
   /* ── Podio / medallas (vistas públicas) ── */
@@ -72,8 +87,9 @@
   --mode-torneo: #8b5cf6;
 
   /* ── Tipografía v3 ── */
-  --font-display: "Barlow Condensed", sans-serif;
   --font-body: "DM Sans", system-ui, sans-serif;
+  --font-display: var(--font-body);
+  /* use for hero titles — no Barlow Condensed */
   --font-ui: var(--font-body);
   --font-family: var(--font-body);
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
@@ -212,7 +228,6 @@
   --riviera-border-default: var(--border-default);
   --riviera-border-strong: var(--border-strong);
   --riviera-border-accent: var(--border-accent);
-  --riviera-accent-gold: var(--accent-gold);
   --riviera-accent-gold-light: var(--accent-gold-light);
   --riviera-accent-gold-dim: var(--accent-gold-dim);
   --riviera-glow-gold: var(--glow-gold);
@@ -246,7 +261,6 @@
   --te-surface: var(--bg-surface-solid);
   --te-surface-hover: #1a1a1a;
   --te-border: var(--border-subtle);
-  --te-gold: var(--accent-gold);
   --te-gold-bright: var(--accent-gold-light);
   --te-gold-muted: var(--accent-gold-dim);
   --te-gold-glow: var(--glow-gold);

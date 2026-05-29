@@ -6,9 +6,9 @@
   --admin-border: #1f1f23;
   --admin-text: #fafafa;
   --admin-text-muted: #71717a;
-  --admin-accent: var(--accent-gold, #e8c547);
-  --admin-accent-soft: rgba(232, 197, 71, 0.1);
-  --admin-accent-border: rgba(232, 197, 71, 0.22);
+  --admin-accent: var(--accent-gold);
+  --admin-accent-soft: rgba(201, 162, 39, 0.1);
+  --admin-accent-border: rgba(201, 162, 39, 0.22);
 
   min-height: 100vh;
   min-height: 100dvh;

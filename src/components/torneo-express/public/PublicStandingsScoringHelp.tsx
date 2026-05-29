@@ -15,9 +15,8 @@ export const PublicStandingsScoringHelp: React.FC = () => (
   <aside className="te-pub-scoring-help" aria-label="Cómo se calcula la clasificación">
     <p className="te-pub-scoring-help__title">¿Cómo se ordena la tabla?</p>
     <p className="te-pub-scoring-help__text">
-      Primero quien hizo más games (<strong>FAV</strong>), aunque la diferencia sea
-      negativa. Si empatan en FAV, gana mayor <strong>DIF</strong> (FAV − CON); luego
-      enfrentamiento directo y, al final, más <strong>PG</strong>.{" "}
+      Primero más <strong>PG</strong> (partidos ganados). Si empatan, gana mayor{" "}
+      <strong>DIF</strong> (FAV − CON); luego enfrentamiento directo.{" "}
       <strong>PTS</strong> (2 por victoria, 0 por derrota) es solo informativo.
     </p>
     <ul className="te-pub-scoring-help__legend">

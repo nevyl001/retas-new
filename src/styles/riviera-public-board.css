@@ -28,7 +28,7 @@
   font-weight: 400;
   letter-spacing: 0.05em;
   line-height: 1.05;
-  color: var(--accent-gold);
+  color: var(--text-primary);
   text-transform: uppercase;
 }
 
@@ -38,7 +38,7 @@
   width: 48px;
   height: 2px;
   margin: 0.5rem auto 0;
-  background: var(--accent-gold);
+  background: var(--text-secondary);
 }
 
 .public-americano-board__tagline {

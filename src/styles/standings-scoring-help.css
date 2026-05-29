@@ -23,7 +23,7 @@
 }
 
 .standings-scoring-help__text strong {
-  color: var(--accent-gold);
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -52,5 +52,5 @@
 }
 
 .standings-scoring-help--compact strong {
-  color: var(--accent-gold);
+  color: var(--text-muted);
 }

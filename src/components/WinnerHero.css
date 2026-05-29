@@ -14,7 +14,7 @@
   font-size: 56px;
   line-height: 1;
   display: block;
-  filter: drop-shadow(0 4px 20px rgba(232, 197, 71, 0.35));
+  filter: drop-shadow(0 4px 20px rgba(201, 162, 39, 0.35));
 }
 
 .winner-hero__label {
@@ -24,12 +24,12 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--accent-gold);
-  text-shadow: 0 0 28px rgba(232, 197, 71, 0.28);
+  text-shadow: 0 0 28px rgba(201, 162, 39, 0.28);
 }
 
 .winner-hero__name-card {
   background: var(--bg-card);
-  border: 2px solid var(--color-gold);
+  border: var(--border-default);
   border-radius: 16px;
   padding: 28px 44px;
   width: 100%;
@@ -37,7 +37,7 @@
   box-sizing: border-box;
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.45),
-    0 0 0 1px rgba(232, 197, 71, 0.2),
+    0 0 0 1px rgba(201, 162, 39, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
+import { RIVIERA_APP_TAGLINE } from "../../lib/rivieraBranding";
 import "./AdminLogin.css";
 
 interface AdminLoginProps {
@@ -57,6 +58,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             />
           </div>
           <p className="admin-login-card__eyebrow">RivieraApp</p>
+          <p className="admin-login-card__tagline">{RIVIERA_APP_TAGLINE}</p>
           <h1 className="admin-login-card__title">Administración</h1>
           <p className="admin-login-card__subtitle">
             Inicia sesión con tu cuenta de administrador

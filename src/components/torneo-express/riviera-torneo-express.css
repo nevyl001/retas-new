@@ -7,10 +7,13 @@
 .torneo-express-page .te-torneos-section__title,
 .torneo-express-page .te-torneo-card__nombre,
 .torneo-express-page .te-modal-title,
-.torneo-express-page .te-list-heading {
+.torneo-express-page .te-list-heading,
+.torneo-express-page .te-torneo-list-card__title,
+.torneo-express-page .te-players-panel__title {
   font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
   line-height: 1.05;
 }
 
@@ -32,7 +35,7 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--te-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-grupos-card__active-name.te-label-section,
@@ -58,7 +61,7 @@
 
 .torneo-express-page .te-torneo-card--activo {
   border-color: rgba(201, 168, 76, 0.35);
-  box-shadow: 0 0 24px var(--te-gold-glow);
+  box-shadow: var(--shadow-card);
 }
 
 .torneo-express-page .te-torneo-card--finalizado {
@@ -78,7 +81,7 @@
 
 .torneo-express-page .te-torneos-section__title {
   font-size: 1.5rem;
-  color: var(--accent-gold);
+  color: var(--text-primary);
   margin-bottom: 1.25rem;
 }
 
@@ -87,9 +90,9 @@
   margin: 0 0 0.5rem;
   font-family: var(--font-display);
   font-size: 1.2rem;
-  font-weight: 400;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
   color: var(--text-muted);
 }
 
@@ -122,8 +125,8 @@
 
 .torneo-express-page .te-links-row__btn--ghost:hover:not(:disabled) {
   border-color: var(--border-accent);
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
 }
 
 /* —— Estado EN CURSO —— */
@@ -135,7 +138,7 @@
   padding: 0.2rem 0.55rem;
   border-radius: var(--riviera-radius-full);
   border: 1px solid var(--riviera-border-accent);
-  background: var(--riviera-accent-gold-dim);
+  background: var(--bg-elevated);
   color: var(--riviera-live);
   font-family: var(--riviera-font-body);
   font-size: 0.68rem;
@@ -168,7 +171,7 @@
 
 .torneo-express-page .te-torneo-btn--gold-outline {
   border: 1px solid var(--accent-gold);
-  color: var(--accent-gold);
+  color: var(--text-primary);
   border-radius: var(--radius-full);
   font-family: var(--font-body);
   font-weight: 600;
@@ -191,7 +194,7 @@
 }
 
 .torneo-express-page .te-ver-todos-btn {
-  color: var(--accent-gold);
+  color: var(--text-primary);
   font-family: var(--font-body);
   font-weight: 600;
 }
@@ -238,16 +241,14 @@
 .torneo-express-page.te-inicio-page .torneo-express-field input:focus,
 .torneo-express-page.te-inicio-page .torneo-express-field select:focus {
   outline: none;
-  border-color: var(--accent-gold);
+  border-color: var(--text-primary);
   box-shadow: 0 0 0 3px var(--accent-gold-dim);
 }
 
 /* —— Panel jugadores —— */
 .torneo-express-page .te-players-panel__title {
-  font-family: var(--font-display);
   font-size: 1.4rem;
-  font-weight: 400;
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-players-panel__subtitle {
@@ -279,7 +280,7 @@
 }
 
 .torneo-express-page .te-players-icon-btn--ok {
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-pareja-formada {
@@ -317,8 +318,8 @@
 }
 
 .torneo-express-page .te-grupos-tab--active {
-  border-color: var(--accent-gold);
-  background: var(--accent-gold-dim);
+  border-color: var(--text-primary);
+  background: var(--bg-elevated);
   box-shadow: 0 0 0 1px var(--border-accent);
 }
 
@@ -333,9 +334,9 @@
 .torneo-express-page .te-grupos-tab--active .te-grupo-badge--2,
 .torneo-express-page .te-grupos-tab--active .te-grupo-badge--3,
 .torneo-express-page .te-grupos-tab--active .te-grupo-badge--4 {
-  color: var(--accent-gold);
+  color: var(--text-primary);
   border-color: var(--border-accent);
-  background: rgba(232, 197, 71, 0.18);
+  background: rgba(201, 162, 39, 0.18);
 }
 
 .torneo-express-page .te-grupos-card__active-name {
@@ -345,7 +346,7 @@
 /* —— Tabla / scoring help —— */
 .torneo-express-page .te-standings-wrap {
   --standings-sticky-bg: var(--bg-surface);
-  --standings-sticky-bg-leader: rgba(232, 197, 71, 0.1);
+  --standings-sticky-bg-leader: rgba(201, 162, 39, 0.1);
   border-color: var(--border-subtle);
   border-radius: var(--radius-md);
 }
@@ -369,7 +370,7 @@
 }
 
 .torneo-express-page .te-standings-table tr.te-row-top td {
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-standings-block .standings-scoring-help {
@@ -395,11 +396,11 @@
   font-size: 0.95rem;
   font-weight: 400;
   letter-spacing: 0.1em;
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-partidos-ronda__line {
-  background: linear-gradient(90deg, var(--accent-gold), transparent);
+  background: var(--bg-elevated);
   height: 2px;
 }
 
@@ -410,7 +411,7 @@
 .torneo-express-page .te-partido-score {
   font-family: var(--font-display);
   font-size: 1.15rem;
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-partido-matchup {
@@ -432,7 +433,7 @@
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 400;
-  color: var(--accent-gold);
+  color: var(--text-primary);
   text-align: center;
 }
 
@@ -450,8 +451,8 @@
 
 .torneo-express-page .te-partido-status--jugado {
   border-color: var(--border-accent);
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
 }
 
 .torneo-express-page .te-partido-order-btn {
@@ -462,8 +463,8 @@
 
 .torneo-express-page .te-partido-order-btn:hover:not(:disabled) {
   border-color: var(--border-accent);
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
 }
 
 .torneo-express-page .te-partido-cancha__edit {
@@ -474,7 +475,7 @@
 
 .torneo-express-page .te-partido-cancha__edit:hover:not(:disabled) {
   border-color: var(--border-accent);
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-header .riviera-btn,
@@ -500,22 +501,22 @@
 }
 
 .torneo-express-page .te-partido-cancha__display {
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-partido-cancha--edit {
-  background: var(--accent-gold-dim);
+  background: var(--bg-elevated);
   border-color: var(--border-accent);
 }
 
 .torneo-express-page .te-partidos-migration-hint {
   border-color: var(--border-accent);
-  background: var(--accent-gold-dim);
+  background: var(--bg-elevated);
   color: var(--text-secondary);
 }
 
 .torneo-express-page .te-partidos-migration-hint code {
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-pareja-chip {
@@ -525,9 +526,9 @@
 }
 
 .torneo-express-page .te-pareja-chip--selected {
-  border-color: var(--accent-gold);
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
 }
 
 .torneo-express-page .te-grupo-assignment {
@@ -556,7 +557,7 @@
 }
 
 .torneo-express-page .te-section-divider span {
-  color: var(--te-gold, var(--accent-gold));
+  color: var(--text-secondary);
 }
 
 /* —— Resultados panel —— */
@@ -566,20 +567,20 @@
 
 .torneo-express-page .te-resultados-panel__label {
   font-family: var(--font-body);
-  color: var(--accent-gold);
+  color: var(--text-primary);
 }
 
 .torneo-express-page .te-resultados-grupo__title {
   font-family: var(--font-display);
-  color: var(--accent-gold);
+  color: var(--text-primary);
   letter-spacing: 0.06em;
 }
 
 /* —— Grupo badges (gold para grupo A) —— */
 .torneo-express-page .te-grupo-badge--0 {
-  color: var(--accent-gold);
+  color: var(--text-primary);
   border-color: var(--border-accent);
-  background: var(--accent-gold-dim);
+  background: var(--bg-elevated);
 }
 
 /* —— Stagger entrada —— */
@@ -646,8 +647,8 @@
 
   .torneo-express-page .te-standings-table tbody tr.te-row-top,
   .torneo-express-page .te-standings-table tbody tr:first-child {
-    border-color: rgba(232, 197, 71, 0.35);
-    box-shadow: inset 3px 0 0 var(--riviera-accent-gold, #e8c547);
+    border-color: rgba(201, 162, 39, 0.35);
+    box-shadow: inset 3px 0 0 var(--accent-gold);
   }
 
   /* Cabecera de card: pareja + posición */
@@ -755,7 +756,7 @@
     padding-top: 0.55rem;
     border-top: 1px solid var(--border-subtle);
     font-weight: 700;
-    color: var(--riviera-accent-gold, #e8c547);
+    color: var(--text-primary);
   }
 
   .torneo-express-page .te-standings-table tbody td.col-pts::before {
@@ -795,8 +796,8 @@
   padding: 0.2rem 0.6rem;
   border-radius: var(--riviera-radius-full, 9999px);
   border: 1px solid var(--riviera-border-accent);
-  background: var(--riviera-accent-gold-dim);
-  color: var(--riviera-accent-gold);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
   font-family: var(--riviera-font-body);
   font-size: 0.72rem;
   font-weight: 600;
@@ -808,6 +809,6 @@
   margin: 0 0 0.35rem;
   font-size: var(--text-body-sm);
   font-weight: 600;
-  color: var(--riviera-accent-gold);
+  color: var(--text-primary);
   letter-spacing: 0.04em;
 }

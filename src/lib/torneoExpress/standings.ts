@@ -5,7 +5,8 @@ import type {
   TorneoExpressPartido,
 } from "./types";
 import {
-  calculateFinalStandings,
+  calcularEstadisticas,
+  getHeadToHead,
   type MatchResult,
   type PairStanding,
 } from "../../utils/standings";
@@ -44,6 +45,28 @@ function partidosToMatches(partidos: TorneoExpressPartido[]): MatchResult[] {
     }));
 }
 
+/** Torneo Express: PG → DIF → enfrentamiento directo. */
+function createExpressStandingsComparator(matches: MatchResult[]) {
+  return (a: PairStanding, b: PairStanding): number => {
+    if (b.PG !== a.PG) return b.PG - a.PG;
+    if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
+    const h2h = getHeadToHead(a.pairId, b.pairId, matches);
+    if (h2h !== 0) return h2h;
+    return a.seed - b.seed;
+  };
+}
+
+function calculateExpressStandings(
+  pairs: Array<{ id: string; name: string; seed?: number }>,
+  matches: MatchResult[]
+): PairStanding[] {
+  const stats = calcularEstadisticas(pairs, matches);
+  const cmp = createExpressStandingsComparator(matches);
+  return [...stats]
+    .sort(cmp)
+    .map((pair, index) => ({ ...pair, posicion: index + 1 }));
+}
+
 export function buildStandingsForGrupo(
   grupo: TorneoExpressGrupo,
   parejas: TorneoExpressGrupoPareja[],
@@ -60,10 +83,8 @@ export function buildStandingsForGrupo(
     seed: i,
   }));
 
-  const standings = calculateFinalStandings(
-    pairInputs,
-    partidosToMatches(partidos)
-  );
+  const matches = partidosToMatches(partidos);
+  const standings = calculateExpressStandings(pairInputs, matches);
 
   return standings.map((s) =>
     standingToExpressRow(s, grupo, labels.get(s.pairId) ?? s.pairName)
@@ -96,7 +117,7 @@ export function buildStandingsGeneral(
     });
   });
 
-  const standings = calculateFinalStandings(pairInputs, allMatches);
+  const standings = calculateExpressStandings(pairInputs, allMatches);
 
   return standings.map((s) => {
     const meta = metaByPair.get(s.pairId);

@@ -308,7 +308,7 @@ select.riviera-input:disabled {
 .riviera-badge--live {
   background: var(--accent-gold-dim);
   color: var(--accent-gold);
-  border: 1px solid rgba(232, 197, 71, 0.25);
+  border: 1px solid rgba(201, 162, 39, 0.25);
 }
 
 .riviera-badge--live::before {

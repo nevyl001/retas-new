@@ -4,10 +4,10 @@ import {
   copyToClipboard,
   publicGruposUrl,
 } from "../../services/torneoExpressService";
-import { PublicGrupoLeaderCelebrate } from "./public/PublicGrupoLeaderCelebrate";
-import { PublicStandingsSection } from "./public/PublicStandingsSection";
-import { PublicStandingsScoringHelp } from "./public/PublicStandingsScoringHelp";
-import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
+import {
+  buildTEPublicGruposProps,
+  TEPublicGrupos,
+} from "./public/TEPublicGrupos";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { PublicTorneoExpressSyncFooter } from "./public/PublicTorneoExpressSyncFooter";
 import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
@@ -23,12 +23,12 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
     });
   const [copyMsg, setCopyMsg] = useState("");
 
-  const gruposOrdenados = useMemo(
+  const gruposProps = useMemo(
     () =>
-      bundle?.grupos
-        ? [...bundle.grupos].sort((a, b) => a.orden - b.orden)
-        : [],
-    [bundle]
+      bundle
+        ? buildTEPublicGruposProps(bundle, standingsByGrupo)
+        : null,
+    [bundle, standingsByGrupo]
   );
 
   const copyLink = async () => {
@@ -42,13 +42,13 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
       <PublicTorneoExpressShell>
         <div className="te-public-loading">
           <div className="te-public-loading__pulse" aria-hidden />
-          <p>Cargando tablas por grupo…</p>
+          <p>Cargando fase de grupos…</p>
         </div>
       </PublicTorneoExpressShell>
     );
   }
 
-  if (!bundle) {
+  if (!bundle || !gruposProps) {
     return (
       <PublicTorneoExpressShell>
         <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
@@ -57,46 +57,12 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
   }
 
   return (
-    <PublicTorneoExpressShell>
-      <PublicTorneoExpressHeader
-        torneoNombre={bundle.torneo.nombre}
-        categoria={bundle.torneo.categoria}
-        subtitle="Clasificación por grupo"
+    <PublicTorneoExpressShell className="te-public--grupos-wide">
+      <TEPublicGrupos
+        {...gruposProps}
         onCopyLink={copyLink}
         copyMsg={copyMsg || undefined}
       />
-
-      {gruposOrdenados.length > 0 && (
-        <div className="te-public-grupos-help te-pub-fade-in">
-          <PublicStandingsScoringHelp />
-        </div>
-      )}
-
-      <div className="te-public-grupos-stack">
-        {gruposOrdenados.length === 0 ? (
-          <p className="te-public-empty">Sin grupos en este torneo.</p>
-        ) : (
-          gruposOrdenados.map((grupo) => {
-            const rows = standingsByGrupo[grupo.id] ?? [];
-            return (
-              <div key={grupo.id} className="te-public-grupo-block">
-                <PublicStandingsSection
-                  rows={rows}
-                  title={grupo.nombre}
-                  showScoringHelp={false}
-                />
-                <PublicGrupoLeaderCelebrate
-                  grupoNombre={grupo.nombre}
-                  rows={rows}
-                  partidos={bundle.partidosPorGrupo[grupo.id] ?? []}
-                  torneoNombre={bundle.torneo.nombre}
-                />
-              </div>
-            );
-          })
-        )}
-      </div>
-
       <PublicTorneoExpressSyncFooter lastRefreshedAt={lastRefreshedAt} />
     </PublicTorneoExpressShell>
   );

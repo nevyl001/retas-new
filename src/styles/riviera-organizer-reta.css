@@ -78,16 +78,16 @@
   font-weight: 600 !important;
   text-decoration: none !important;
   background: transparent !important;
-  color: var(--accent-gold) !important;
-  border: 1px solid var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
+  border: var(--text-secondary) !important;
   border-radius: var(--radius-full) !important;
   transition: background var(--transition-fast), color var(--transition-fast),
     border-color var(--transition-fast);
 }
 
 .riviera-organizer-reta .public-link-preview:hover {
-  background: var(--accent-gold-dim) !important;
-  color: var(--accent-gold-light) !important;
+  background: var(--bg-elevated) !important;
+  color: var(--text-secondary) !important;
 }
 
 /* —— Parejas registradas —— */
@@ -168,8 +168,8 @@
   font-size: 0.95rem !important;
   font-weight: 400 !important;
   letter-spacing: 0.04em;
-  color: var(--accent-gold) !important;
-  background: var(--accent-gold-dim) !important;
+  color: var(--text-secondary) !important;
+  background: var(--bg-elevated) !important;
   border: 1px solid var(--border-accent) !important;
   border-radius: var(--radius-full) !important;
   filter: none !important;
@@ -217,7 +217,7 @@
   font-size: 1.35rem !important;
   font-weight: 400 !important;
   line-height: 1;
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
   filter: none !important;
 }
 
@@ -345,10 +345,10 @@
   width: 2.5rem !important;
   height: 2.5rem !important;
   font-size: 1rem !important;
-  background: var(--accent-gold-dim) !important;
+  background: var(--bg-elevated) !important;
   border: 1px solid var(--border-accent) !important;
   border-radius: var(--radius-md) !important;
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .component-title h3 {
@@ -406,8 +406,8 @@
   font-family: var(--font-body) !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
-  color: var(--accent-gold) !important;
-  background: var(--accent-gold-dim) !important;
+  color: var(--text-secondary) !important;
+  background: var(--bg-elevated) !important;
   border: 1px solid var(--border-accent) !important;
   border-radius: var(--radius-full) !important;
 }
@@ -469,13 +469,13 @@
 
 .riviera-organizer-reta .elegant-player-card.selected {
   border-color: var(--border-accent) !important;
-  box-shadow: inset 3px 0 0 var(--accent-gold) !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
 .riviera-organizer-reta .elegant-player-avatar {
-  background: var(--accent-gold-dim) !important;
+  background: var(--bg-elevated) !important;
   border: 1px solid var(--border-accent) !important;
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
   font-family: var(--font-body) !important;
   font-weight: 700 !important;
 }
@@ -507,8 +507,8 @@
 
 .riviera-organizer-reta .elegant-edit-btn:hover {
   border-color: var(--border-accent) !important;
-  color: var(--accent-gold) !important;
-  background: var(--accent-gold-dim) !important;
+  color: var(--text-secondary) !important;
+  background: var(--bg-elevated) !important;
 }
 
 .riviera-organizer-reta .elegant-delete-btn:hover {
@@ -518,7 +518,7 @@
 }
 
 .riviera-organizer-reta .elegant-selection-indicator {
-  background: var(--accent-gold) !important;
+  background: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .elegant-check-icon {
@@ -614,7 +614,7 @@
 .riviera-organizer-reta .elegant-action-btn:hover,
 .riviera-organizer-reta .elegant-reset-btn:hover:not(:disabled) {
   border-color: var(--border-accent) !important;
-  background: var(--accent-gold-dim) !important;
+  background: var(--bg-elevated) !important;
 }
 
 .riviera-organizer-reta .elegant-btn-content,
@@ -627,7 +627,7 @@
 
 .riviera-organizer-reta .elegant-action-btn:hover .elegant-btn-content,
 .riviera-organizer-reta .elegant-reset-btn:hover:not(:disabled) .elegant-reset-content {
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
 }
 
 /* Formulario nuevo jugador */
@@ -650,7 +650,7 @@
 }
 
 .riviera-organizer-reta .elegant-submit-btn {
-  background: var(--accent-gold) !important;
+  background: var(--text-secondary) !important;
   border: none !important;
   color: var(--bg-base) !important;
   font-weight: 700 !important;
@@ -718,9 +718,9 @@
 }
 
 .riviera-organizer-reta .riviera-standings__recalc.new-recalculate-button:hover:not(:disabled) {
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
   border-color: var(--border-accent) !important;
-  background: var(--accent-gold-dim) !important;
+  background: var(--bg-elevated) !important;
   transform: none !important;
 }
 
@@ -753,7 +753,7 @@
 }
 
 .riviera-organizer-reta .riviera-standings .standings-scoring-help__text strong {
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
   font-weight: 600 !important;
 }
 
@@ -799,22 +799,22 @@
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader td {
-  background: rgba(232, 197, 71, 0.04) !important;
+  background: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader {
-  box-shadow: inset 3px 0 0 var(--accent-gold) !important;
+  box-shadow: var(--shadow-card) !important;
   border: none !important;
   background: transparent !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader td,
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__name {
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__pos-num {
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row__name {
@@ -841,7 +841,7 @@
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row__pts {
   font-weight: 700 !important;
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row:nth-child(1) {
@@ -875,7 +875,7 @@
 }
 
 .riviera-organizer-reta .riviera-standings .new-loading-spinner {
-  border-top-color: var(--accent-gold) !important;
+  border-top-color: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .show-winner-button {
@@ -883,9 +883,9 @@
   font-family: var(--font-body) !important;
   font-size: 0.875rem !important;
   font-weight: 600 !important;
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
   background: transparent !important;
-  border: 1px solid var(--accent-gold) !important;
+  border: var(--text-secondary) !important;
   border-radius: var(--radius-full) !important;
   box-shadow: none !important;
 }
@@ -895,8 +895,8 @@
 }
 
 .riviera-organizer-reta .show-winner-button:hover {
-  background: var(--accent-gold-dim) !important;
-  border-color: var(--accent-gold) !important;
+  background: var(--bg-elevated) !important;
+  border-color: var(--text-secondary) !important;
   transform: translateY(-1px) !important;
   box-shadow: var(--glow-gold) !important;
 }

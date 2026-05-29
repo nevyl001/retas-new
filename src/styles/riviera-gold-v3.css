@@ -24,7 +24,7 @@
   font-weight: var(--weight-semibold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent-gold);
+  color: var(--text-secondary);
 }
 
 /* Cards interactivas */
@@ -63,7 +63,7 @@
 .modern-pair-info--winner .modern-pair-names,
 .te-pub-score--winner,
 .score-display--winner {
-  color: var(--accent-gold);
+  color: var(--text-secondary);
   font-family: var(--font-display);
   font-weight: var(--weight-display);
 }
@@ -85,19 +85,19 @@
 
 /* Glow decorativo público */
 .te-public__glow--a {
-  background: var(--accent-gold-dim);
+  background: transparent;
 }
 
 .te-public__glow--b {
-  background: rgba(232, 197, 71, 0.06);
+  background: transparent;
 }
 
 /* Filtros / chips estilo nav preview */
 .mis-retas-page__filters .riviera-filter-chip--active,
 .riviera-filter-chip--active {
-  color: var(--accent-gold);
+  color: var(--text-secondary);
   border-color: var(--border-accent);
-  background: var(--accent-gold-dim);
+  background: var(--text-secondary);
 }
 
 /* Welcome / containers */

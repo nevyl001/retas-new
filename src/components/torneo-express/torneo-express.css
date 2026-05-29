@@ -7,8 +7,8 @@
   --te-input-bg: var(--te-surface-hover);
   --te-gold-light: var(--te-gold-bright);
   --riviera-live: var(--te-live);
-  --riviera-accent-gold: var(--te-gold-bright);
-  --riviera-accent-gold-dim: var(--te-gold-muted);
+  --riviera-accent-gold: var(--accent-gold);
+  --riviera-accent-gold-dim: var(--accent-gold-dim);
   --riviera-border-accent: rgba(201, 168, 76, 0.2);
   --riviera-bg-base: var(--te-black);
   --riviera-bg-elevated: var(--te-surface-hover);
@@ -38,7 +38,7 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--te-gold);
+  color: var(--text-secondary);
 }
 
 /* Eyebrows (fecha, estado, categoría) */
@@ -114,8 +114,8 @@
 .torneo-express-page .te-title {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--te-gold);
-  letter-spacing: 0.04em;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .torneo-express-page .te-subtitle {
@@ -152,7 +152,7 @@
 .te-subtitle--meta .te-estado--en_curso {
   color: var(--riviera-live);
   border-color: var(--riviera-border-accent);
-  background: var(--riviera-accent-gold-dim);
+  background: var(--accent-gold-dim);
 }
 
 .te-subtitle--meta .te-estado--finalizado {
@@ -198,13 +198,13 @@
 
 .torneo-express-btn:hover:not(:disabled) {
   border-color: var(--border-accent);
-  color: var(--accent-gold);
+  color: var(--text-secondary);
   background: var(--accent-gold-dim);
 }
 
 .torneo-express-btn--primary {
   background: var(--accent-gold);
-  border-color: var(--accent-gold);
+  border-color: var(--text-secondary);
   color: var(--text-on-gold);
 }
 
@@ -247,13 +247,13 @@
 .torneo-express-field select:focus {
   outline: none;
   border-color: var(--riviera-border-accent);
-  box-shadow: 0 0 0 3px var(--riviera-accent-gold-dim);
+  box-shadow: 0 0 0 3px var(--accent-gold-dim);
 }
 
 .torneo-express-field input:focus,
 .torneo-express-field select:focus {
   outline: none;
-  border-color: var(--te-gold);
+  border-color: var(--text-secondary);
 }
 
 .te-grupo-badge {
@@ -382,7 +382,7 @@
 }
 
 .te-standings-table .te-standings-pts {
-  color: var(--te-gold);
+  color: var(--accent-gold);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -427,8 +427,8 @@
 }
 
 .te-pareja-chip--selected {
-  border-color: var(--te-gold);
-  color: var(--te-gold);
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
 }
 
 .te-grupo-assignment {
@@ -469,7 +469,7 @@
 }
 
 .te-partidos-migration-hint code {
-  color: var(--te-gold);
+  color: var(--text-secondary);
 }
 
 .te-partidos-orden-bar {
@@ -575,7 +575,7 @@ button.te-partido-chip:disabled {
 .te-partido-chip--cancha {
   background: var(--te-gold-muted);
   border-color: rgba(201, 168, 76, 0.2);
-  color: var(--te-gold);
+  color: var(--text-secondary);
 }
 
 button.te-partido-chip--cancha {
@@ -611,7 +611,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-partido-cancha__pin {
   font-size: 0.55rem;
-  color: var(--te-gold);
+  color: var(--text-secondary);
   opacity: 0.85;
   line-height: 1;
 }
@@ -621,7 +621,7 @@ button.te-partido-chip--cancha:disabled {
   min-width: 0;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--te-gold);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -646,7 +646,7 @@ button.te-partido-chip--cancha:disabled {
 .te-partido-cancha__edit:hover:not(:disabled) {
   background: #333;
   color: #fff;
-  border-color: var(--te-gold);
+  border-color: var(--text-secondary);
 }
 
 .te-partido-cancha__edit:disabled {
@@ -704,7 +704,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-partido-cancha__input:focus {
   outline: none;
-  border-color: var(--te-gold);
+  border-color: var(--text-secondary);
 }
 
 .te-partido-cancha__input:disabled {
@@ -789,7 +789,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-partido-horario__input:focus {
   outline: none;
-  border-color: var(--te-gold);
+  border-color: var(--text-secondary);
 }
 
 .te-partido-horario__actions {
@@ -860,7 +860,7 @@ button.te-partido-chip--cancha:disabled {
   font-size: 15px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--te-gold);
+  color: var(--accent-gold);
   letter-spacing: 0.04em;
 }
 
@@ -896,7 +896,7 @@ button.te-partido-chip--cancha:disabled {
   font-size: 15px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--te-gold);
+  color: var(--accent-gold);
 }
 
 .te-partido-edit-btn {
@@ -958,18 +958,18 @@ button.te-partido-chip--cancha:disabled {
 .te-partido-status--live {
   border-color: var(--riviera-border-accent);
   color: var(--riviera-live);
-  background: var(--riviera-accent-gold-dim);
+  background: var(--accent-gold-dim);
 }
 
 .te-partido-status--jugado {
   border-color: var(--riviera-border-accent);
-  color: var(--riviera-accent-gold);
-  background: var(--riviera-accent-gold-dim);
+  color: var(--text-secondary);
+  background: var(--accent-gold-dim);
 }
 
 .te-standings-wrap {
   --standings-sticky-bg: var(--riviera-bg-elevated);
-  --standings-sticky-bg-leader: var(--riviera-accent-gold-dim);
+  --standings-sticky-bg-leader: var(--text-secondary);
 }
 
 .te-score-inputs {
@@ -1004,7 +1004,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-copy-ok {
   font-size: 0.75rem;
-  color: var(--te-gold);
+  color: var(--text-secondary);
 }
 
 .te-list-section {
@@ -1051,7 +1051,7 @@ button.te-partido-chip--cancha:disabled {
 .te-torneo-list-card__title {
   margin: 0 0 0.35rem;
   font-size: 1.1rem;
-  color: var(--te-gold);
+  color: var(--text-secondary);
 }
 
 .te-torneo-list-card__meta {
@@ -1075,7 +1075,7 @@ button.te-partido-chip--cancha:disabled {
 }
 
 .te-estado--en_curso {
-  color: var(--te-gold);
+  color: var(--text-secondary);
 }
 
 .te-estado--finalizado {
@@ -1131,7 +1131,7 @@ button.te-partido-chip--cancha:disabled {
 .te-modal-title {
   margin: 0 0 0.75rem;
   font-size: 1.15rem;
-  color: var(--te-gold);
+  color: var(--text-secondary);
 }
 
 .te-modal-text {
@@ -1154,7 +1154,7 @@ button.te-partido-chip--cancha:disabled {
 
 /* ── Crear torneo: layout 2 columnas + jugadores ── */
 .te-crear-page {
-  --te-gold-bright: var(--riviera-accent-gold);
+  --te-gold-bright: var(--accent-gold-light);
   --te-panel: var(--riviera-bg-base);
   --te-input-bg: var(--riviera-bg-elevated);
   max-width: 1200px;
@@ -1236,7 +1236,7 @@ button.te-partido-chip--cancha:disabled {
 
 .torneo-express-btn--gold {
   background: var(--accent-gold);
-  border-color: var(--accent-gold);
+  border-color: var(--text-secondary);
   color: var(--text-on-gold);
   font-weight: var(--weight-semibold);
 }
@@ -1307,7 +1307,7 @@ button.te-partido-chip--cancha:disabled {
 .te-players-panel__title {
   margin: 0;
   font-size: 1.1rem;
-  color: var(--te-gold-bright, #f5a623);
+  color: var(--text-primary);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -1366,7 +1366,7 @@ button.te-partido-chip--cancha:disabled {
 }
 
 .te-players-search input:focus {
-  border-color: var(--te-gold-bright, #f5a623);
+  border-color: var(--text-primary);
 }
 
 .te-players-add-form {
@@ -1391,7 +1391,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-players-add-form input:focus {
   outline: none;
-  border-color: var(--te-gold-bright, #f5a623);
+  border-color: var(--text-primary);
 }
 
 .te-players-add-form__actions {
@@ -1508,7 +1508,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-players-row__input:focus {
   outline: none;
-  border-color: var(--te-gold-bright, #f5a623);
+  border-color: var(--text-primary);
 }
 
 .te-players-row--edit,
@@ -1554,7 +1554,7 @@ button.te-partido-chip--cancha:disabled {
 }
 
 .te-players-icon-btn--ok {
-  color: var(--te-gold-bright, #f5a623);
+  color: var(--text-primary);
   font-weight: 700;
 }
 
@@ -1586,7 +1586,7 @@ button.te-partido-chip--cancha:disabled {
 .torneo-express-page.te-crear-page .torneo-express-field select:focus,
 .torneo-express-page.te-inicio-page .torneo-express-field input:focus,
 .torneo-express-page.te-inicio-page .torneo-express-field select:focus {
-  border-color: var(--te-gold-bright, #f5a623);
+  border-color: var(--text-primary);
 }
 
 /* ── Inicio: torneos arriba + crear abajo ── */
@@ -1646,7 +1646,7 @@ button.te-partido-chip--cancha:disabled {
 .te-torneos-section__title {
   margin: 0 0 1rem;
   font-size: 1.25rem;
-  color: var(--te-gold-bright);
+  color: var(--text-primary);
   font-weight: 700;
 }
 
@@ -1778,8 +1778,8 @@ button.te-partido-chip--cancha:disabled {
 }
 
 .te-torneo-btn--gold-outline {
-  border: 1px solid #f5a623;
-  color: #f5a623;
+  border: 1px solid var(--accent-gold-light);
+  color: var(--text-secondary);
 }
 
 .te-torneo-btn--gold-outline:hover:not(:disabled) {
@@ -1855,7 +1855,7 @@ button.te-partido-chip--cancha:disabled {
   padding: 0.65rem;
   background: none;
   border: none;
-  color: #f5a623;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -1895,7 +1895,7 @@ button.te-partido-chip--cancha:disabled {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   line-height: 1.2;
-  color: var(--te-gold);
+  color: var(--text-secondary);
   opacity: 0.85;
 }
 
@@ -1924,7 +1924,7 @@ button.te-partido-chip--cancha:disabled {
 
 .torneo-express-btn--outline:hover:not(:disabled) {
   border-color: var(--border-accent);
-  color: var(--accent-gold);
+  color: var(--text-secondary);
   background: var(--accent-gold-dim);
 }
 
@@ -1961,11 +1961,11 @@ button.te-partido-chip--cancha:disabled {
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #f5a623;
+  color: var(--text-secondary);
 }
 
 .te-tabla-general-panel .te-resultados-panel__label {
-  color: #f5a623;
+  color: var(--text-secondary);
 }
 
 .te-resultados-panel__sub {

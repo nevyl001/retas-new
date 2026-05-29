@@ -1,7 +1,7 @@
 /* UserManagement — Linear / Vercel style */
 
 .user-management {
-  --admin-accent: #e8c547;
+  --admin-accent: var(--accent-gold);
   --admin-bg: #09090b;
   --admin-card: #111113;
   --admin-border: #1f1f23;
@@ -60,8 +60,8 @@
   margin-bottom: 1rem;
   padding: 12px 14px;
   border-radius: 8px;
-  background: rgba(232, 197, 71, 0.08);
-  border: 1px solid rgba(232, 197, 71, 0.22);
+  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.22);
   color: var(--admin-text);
   font-size: 0.8125rem;
   line-height: 1.45;
@@ -135,7 +135,7 @@
 
 .search-input:focus {
   outline: none;
-  border-color: rgba(232, 197, 71, 0.4);
+  border-color: rgba(201, 162, 39, 0.4);
 }
 
 .filter-controls {
@@ -157,7 +157,7 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: rgba(232, 197, 71, 0.4);
+  border-color: rgba(201, 162, 39, 0.4);
 }
 
 .sort-btn,
@@ -211,7 +211,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(232, 197, 71, 0.15);
+  background: rgba(201, 162, 39, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -287,10 +287,10 @@
 .stat-item:first-child {
   color: var(--admin-accent);
   font-weight: 500;
-  background: rgba(232, 197, 71, 0.08);
+  background: rgba(201, 162, 39, 0.08);
   padding: 2px 8px;
   border-radius: 20px;
-  border: 1px solid rgba(232, 197, 71, 0.2);
+  border: 1px solid rgba(201, 162, 39, 0.2);
 }
 
 .stat-item--strong {
@@ -499,8 +499,8 @@
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--admin-accent);
-  background: rgba(232, 197, 71, 0.14);
-  border: 1px solid rgba(232, 197, 71, 0.28);
+  background: rgba(201, 162, 39, 0.14);
+  border: 1px solid rgba(201, 162, 39, 0.28);
 }
 
 .um-detail-modal__name {

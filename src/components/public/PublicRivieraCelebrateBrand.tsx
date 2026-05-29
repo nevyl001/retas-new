@@ -1,4 +1,5 @@
 import React from "react";
+import { RIVIERA_APP_TAGLINE } from "../../lib/rivieraBranding";
 
 export const PublicRivieraCelebrateBrand: React.FC<{
   showTagline?: boolean;
@@ -13,9 +14,7 @@ export const PublicRivieraCelebrateBrand: React.FC<{
       <span>O P E N</span>
     </p>
     {showTagline ? (
-      <p className="ro-pub-celebrate__brand-tagline">
-        Donde el pádel se vive en grande
-      </p>
+      <p className="ro-pub-celebrate__brand-tagline">{RIVIERA_APP_TAGLINE}</p>
     ) : null}
     <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
   </header>

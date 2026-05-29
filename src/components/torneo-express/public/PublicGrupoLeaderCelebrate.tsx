@@ -1,5 +1,6 @@
 import React from "react";
 import { isGrupoPartidosCompletos } from "../../../lib/torneoExpress/grupoCompletion";
+import { RIVIERA_APP_TAGLINE } from "../../../lib/rivieraBranding";
 import type {
   StandingRowExpress,
   TorneoExpressPartido,
@@ -60,7 +61,7 @@ export const PublicGrupoLeaderCelebrate: React.FC<{
             <span>O P E N</span>
           </p>
           <p className="te-pub-grupo-celebrate__brand-tagline">
-            Donde el pádel se vive en grande
+            {RIVIERA_APP_TAGLINE}
           </p>
           <div className="te-divider-gold te-divider-gold--wide" aria-hidden />
         </header>

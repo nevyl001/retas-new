@@ -8,8 +8,8 @@
   --admin-text-muted: #71717a;
   --admin-input-bg: #18181b;
   --admin-input-border: #27272a;
-  --admin-accent: var(--accent-gold, #e8c547);
-  --admin-accent-hover: var(--accent-gold-light, #f5d96a);
+  --admin-accent: var(--accent-gold);
+  --admin-accent-hover: var(--accent-gold-light);
   --admin-error: #ef4444;
   --admin-error-bg: rgba(239, 68, 68, 0.08);
   --admin-error-border: rgba(239, 68, 68, 0.25);
@@ -37,7 +37,7 @@
   height: 420px;
   background: radial-gradient(
     ellipse at center,
-    rgba(232, 197, 71, 0.07) 0%,
+    rgba(201, 162, 39, 0.07) 0%,
     transparent 68%
   );
   pointer-events: none;
@@ -88,8 +88,8 @@
   height: 3rem;
   margin: 0 auto 1rem;
   border-radius: 10px;
-  background: rgba(232, 197, 71, 0.06);
-  border: 1px solid rgba(232, 197, 71, 0.14);
+  background: rgba(201, 162, 39, 0.06);
+  border: 1px solid rgba(201, 162, 39, 0.14);
 }
 
 .admin-login-brand__logo {
@@ -106,6 +106,14 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--admin-accent);
+}
+
+.admin-login-card__tagline {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--admin-text-muted);
 }
 
 .admin-login-card__title {
@@ -168,8 +176,8 @@
 
 .admin-login-input:focus {
   outline: none;
-  border-color: rgba(232, 197, 71, 0.55);
-  box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.12);
+  border-color: rgba(201, 162, 39, 0.55);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.12);
 }
 
 .admin-login-input:disabled {
@@ -214,7 +222,7 @@
 
 .admin-login-submit:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(232, 197, 71, 0.28);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.28);
 }
 
 .admin-login-submit:disabled {

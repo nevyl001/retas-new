@@ -450,7 +450,7 @@
 
 .modern-pair-info--winner {
   background: var(--bg-card);
-  border: 1.5px solid var(--color-gold);
+  border: 1.5px solid var(--accent-gold);
 }
 
 .modern-pair-info--winner .modern-pair-label {
@@ -462,7 +462,7 @@
 }
 
 .modern-pair-info--winner .modern-pair-names {
-  color: var(--color-cream);
+  color: var(--accent-gold);
   font-weight: 500;
   filter: none;
 }
@@ -484,7 +484,7 @@
 }
 
 .modern-match-card:hover .modern-pair-info--winner {
-  border-color: var(--color-gold);
+  border-color: var(--accent-gold);
 }
 
 .modern-pair-label {
@@ -510,7 +510,7 @@
 }
 
 .modern-match-card:hover .modern-pair-info--winner .modern-pair-names {
-  color: var(--color-cream);
+  color: var(--accent-gold);
 }
 
 .modern-match-card:hover .modern-pair-info--loser .modern-pair-names {
@@ -525,7 +525,7 @@
   padding: var(--space-sm);
   background: var(--bg-loser);
   border-radius: var(--radius-sm);
-  border: 0.5px solid var(--color-gold);
+  border: 0.5px solid var(--border-default);
   margin-top: var(--space-sm);
 }
 
@@ -556,7 +556,7 @@
 }
 
 .modern-winner-icon {
-  color: var(--color-gold);
+  color: var(--accent-gold);
   font-size: 0.875rem;
   opacity: 1;
   filter: none;
@@ -627,7 +627,7 @@
   margin: var(--space-md) 0;
   font-weight: 600;
   font-size: 0.9375rem;
-  border: 0.5px solid var(--color-gold);
+  border: var(--text-secondary);
   box-shadow: none;
   backdrop-filter: none;
   text-shadow: none;
@@ -949,7 +949,7 @@
 }
 
 .modern-game-score {
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -958,19 +958,19 @@
 }
 
 .modern-game-score.winner {
-  color: var(--color-cream);
+  color: var(--accent-gold);
   filter: none;
   font-size: 14px;
   font-weight: 600;
 }
 
 .modern-match-card:hover .modern-game-score {
-  color: var(--text-primary);
+  color: var(--text-secondary);
   filter: none;
 }
 
 .modern-match-card:hover .modern-game-score.winner {
-  color: var(--color-cream);
+  color: var(--accent-gold);
   filter: none;
 }
 

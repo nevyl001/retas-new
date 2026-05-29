@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
+import { RIVIERA_APP_TAGLINE } from "../../lib/rivieraBranding";
 import "./AuthPage.css";
 
 /** PNG con transparencia (public/logo-riviera.png) */
@@ -27,11 +28,7 @@ export const AuthPage: React.FC = () => {
             />
             <span className="auth-visual-brand__name">RivieraApp</span>
           </div>
-          <h2 className="auth-visual-title text-display">
-            Tu pádel,
-            <br />
-            organizado.
-          </h2>
+          <p className="auth-brand-tagline">{RIVIERA_APP_TAGLINE}</p>
           <p className="auth-visual-subtitle">
             Crea retas, gestiona torneos y sigue el ranking de tu grupo.
           </p>
@@ -49,11 +46,9 @@ export const AuthPage: React.FC = () => {
             height={64}
           />
           <span className="auth-mobile-hero__name">RivieraApp</span>
-          <h2 className="auth-mobile-hero__title">
-            Tu pádel,
-            <br />
-            organizado.
-          </h2>
+          <p className="auth-brand-tagline auth-brand-tagline--hero">
+            {RIVIERA_APP_TAGLINE}
+          </p>
           <p className="auth-mobile-hero__subtitle">
             Crea retas, gestiona torneos y sigue el ranking.
           </p>

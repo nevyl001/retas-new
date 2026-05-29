@@ -4,7 +4,7 @@
   width: 48px;
   height: 1px;
   margin: 0 auto;
-  background: linear-gradient(90deg, transparent, #e8c547, transparent);
+  background: var(--border-subtle);
   opacity: 0.6;
 }
 
@@ -41,10 +41,10 @@
   padding: 1px;
   background: linear-gradient(
     145deg,
-    rgba(232, 197, 71, 0.55) 0%,
-    rgba(232, 197, 71, 0.12) 35%,
+    rgba(201, 162, 39, 0.55) 0%,
+    rgba(201, 162, 39, 0.12) 35%,
     transparent 55%,
-    rgba(232, 197, 71, 0.2) 100%
+    rgba(201, 162, 39, 0.2) 100%
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -66,7 +66,7 @@
   text-align: center;
   background: radial-gradient(
     ellipse 60% 40% at 50% 38%,
-    rgba(232, 197, 71, 0.08) 0%,
+    rgba(201, 162, 39, 0.08) 0%,
     transparent 70%
   );
 }
@@ -136,7 +136,7 @@
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(232, 197, 71, 0.75);
+  color: rgba(201, 162, 39, 0.75);
 }
 
 .ro-pub-celebrate__names {
@@ -155,7 +155,7 @@
   font-style: italic;
   font-weight: 400;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
 }
 
 .ro-pub-celebrate__rank {
@@ -227,7 +227,7 @@
   padding: 0.55rem 0.5rem 0.5rem;
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(232, 197, 71, 0.12);
+  border: var(--text-secondary);
 }
 
 .ro-pub-celebrate__stat-value {
@@ -245,7 +245,7 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(232, 197, 71, 0.55);
+  color: rgba(201, 162, 39, 0.55);
   text-align: center;
   line-height: 1.2;
 }
@@ -262,7 +262,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(232, 197, 71, 0.65);
+  color: rgba(201, 162, 39, 0.65);
 }
 
 .ro-pub-celebrate--podium .te-public-podium__title {

@@ -23,7 +23,6 @@
       rgba(10, 10, 10, 0.7) 50%,
       rgba(0, 0, 0, 0.9) 100%
     ),
-    radial-gradient(ellipse at 20% 50%, var(--accent-gold-dim) 0%, transparent 60%),
     radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
     radial-gradient(ellipse at 60% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
   background-color: var(--bg-elevated);
@@ -34,8 +33,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(232, 197, 71, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(232, 197, 71, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
   pointer-events: none;
@@ -77,6 +76,33 @@
   letter-spacing: 0.04em;
 }
 
+.auth-brand-tagline {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.auth-visual-panel__inner > .auth-brand-tagline {
+  margin: 0 0 1.25rem;
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.auth-brand-tagline--hero {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
 .auth-visual-title {
   margin: 0 0 1.25rem;
   font-size: clamp(2.5rem, 5vw, 3.5rem);
@@ -100,7 +126,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--accent-gold);
+  color: var(--text-secondary);
   opacity: 0.85;
 }
 
@@ -128,8 +154,7 @@
       rgba(0, 0, 0, 0.75) 0%,
       rgba(10, 10, 10, 0.5) 40%,
       rgba(0, 0, 0, 0.85) 100%
-    ),
-    radial-gradient(ellipse at 50% 0%, var(--accent-gold-dim) 0%, transparent 55%);
+    );
   pointer-events: none;
 }
 
@@ -198,7 +223,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--accent-gold);
+  color: var(--text-secondary);
 }
 
 @keyframes authLogoIn {

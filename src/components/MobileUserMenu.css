@@ -153,7 +153,7 @@
 .mobile-menu-admin {
   background: rgba(0, 212, 255, 0.1);
   border-color: rgba(0, 212, 255, 0.3);
-  color: var(--accent-gold);
+  color: var(--text-secondary);
   font-weight: 600;
   width: 100%;
   max-width: 100%;
@@ -164,7 +164,7 @@
 .mobile-menu-admin:hover {
   background: rgba(0, 212, 255, 0.2);
   border-color: rgba(0, 212, 255, 0.5);
-  color: var(--accent-gold-light, #f0d060);
+  color: var(--text-secondary);
 }
 
 .mobile-menu-logout {

@@ -80,14 +80,14 @@
   line-height: 1 !important;
   letter-spacing: 0.04em !important;
   /* GOLD-AUDIT: evaluar si es necesario */
-  color: var(--accent-gold) !important;
+  color: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .round-header-simplified__line {
   width: 40px;
   height: 2px;
   /* GOLD-AUDIT: evaluar si es necesario */
-  background: linear-gradient(to right, var(--accent-gold), transparent);
+  background: var(--bg-elevated);
   border-radius: 1px;
 }
 
@@ -272,7 +272,7 @@
 
 .riviera-organizer-reta .omc-pencil-btn:hover:not(:disabled) {
   /* GOLD-AUDIT: evaluar si es necesario */
-  color: var(--accent-gold);
+  color: var(--text-secondary);
 }
 
 .riviera-organizer-reta .omc-pencil-icon {
@@ -425,16 +425,16 @@
 
 /* Finalizado: ganador / perdedor */
 .riviera-organizer-reta .omc-team-row--winner {
-  background: rgba(232, 197, 71, 0.13);
+  background: var(--accent-gold-dim);
   border-left-color: var(--accent-gold);
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-name {
-  color: #f0d060;
+  color: var(--accent-gold);
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-score {
-  color: #f0d060;
+  color: var(--accent-gold);
   font-size: 32px;
 }
 
@@ -458,8 +458,8 @@
   gap: 8px;
   margin: 8px 12px;
   padding: 8px 12px;
-  background: rgba(232, 197, 71, 0.12);
-  border: 1px solid rgba(232, 197, 71, 0.3);
+  background: var(--accent-gold-dim);
+  border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 8px;
 }
 
@@ -557,8 +557,8 @@
 .riviera-organizer-reta .omc-register__input:focus {
   outline: none;
   /* GOLD-AUDIT: evaluar si es necesario */
-  border-color: var(--accent-gold);
-  box-shadow: 0 0 0 2px rgba(232, 197, 71, 0.15);
+  border-color: var(--text-secondary);
+  box-shadow: var(--text-secondary);
 }
 
 .riviera-organizer-reta .omc-register__vs {
@@ -597,17 +597,17 @@
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent-gold);
+  color: var(--text-secondary);
   background: transparent;
-  border: 1px solid rgba(232, 197, 71, 0.5);
+  border: 1px solid rgba(201, 162, 39, 0.5);
   border-radius: 6px;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .riviera-organizer-reta .omc-btn-finish:hover:not(:disabled) {
-  background: rgba(232, 197, 71, 0.1);
-  border-color: var(--accent-gold);
+  background: rgba(201, 162, 39, 0.1);
+  border-color: var(--text-secondary);
 }
 
 .riviera-organizer-reta .omc-btn-reopen {
