@@ -12,6 +12,61 @@
   max-width: 1100px;
 }
 
+/* Header: nombre del evento protagonista (Americano, Round Robin, equipos) */
+.te-public--americano .te-public-header--americano,
+.te-public--reta .te-public-header--reta {
+  margin-bottom: 1.75rem;
+}
+
+.te-public--americano .te-public-header__kicker,
+.te-public--reta .te-public-header__kicker {
+  margin: 0 0 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--accent-gold);
+}
+
+.te-public--americano .te-public-header__title--event,
+.te-public--reta .te-public-header__title--event {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 5.5vw, 2.85rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+  color: var(--text-primary);
+  text-transform: none;
+  max-width: 18ch;
+}
+
+.te-public--americano .te-public-header__line,
+.te-public--reta .te-public-header__line {
+  max-width: min(100%, 320px);
+  height: 2px;
+  margin: 0 0 14px;
+  background: linear-gradient(
+    90deg,
+    var(--accent-gold) 0%,
+    rgba(201, 162, 39, 0.35) 55%,
+    transparent 100%
+  );
+}
+
+.te-public--americano .te-public-header__categoria-pill--desc,
+.te-public--reta .te-public-header__categoria-pill--desc {
+  padding: 0.4rem 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--accent-gold);
+  border-color: rgba(201, 162, 39, 0.35);
+  background: var(--accent-gold-dim);
+}
+
 /* Footer sync: base en torneo-express-public.css (.te-public-sync-footer) */
 .te-public--americano .te-public-sync-footer,
 .te-public--reta .te-public-sync-footer {

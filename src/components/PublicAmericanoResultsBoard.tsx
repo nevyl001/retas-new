@@ -36,6 +36,9 @@ export const PublicAmericanoResultsBoard: React.FC<
     null
   );
   const [tournamentName, setTournamentName] = useState<string | null>(null);
+  const [tournamentDescription, setTournamentDescription] = useState<
+    string | null
+  >(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedRef = React.useRef<FetchAmericanoLivePublicResult | null>(
     null
@@ -69,6 +72,11 @@ export const PublicAmericanoResultsBoard: React.FC<
       }
 
       if (tournament?.name) setTournamentName(tournament.name);
+      const desc =
+        typeof tournament?.description === "string"
+          ? tournament.description.trim()
+          : "";
+      setTournamentDescription(desc || null);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(msg);
@@ -85,6 +93,7 @@ export const PublicAmericanoResultsBoard: React.FC<
     lastMergedRef.current = null;
     setSnapshot(null);
     setTournamentName(null);
+    setTournamentDescription(null);
     setLoadError(null);
   }, [tournamentId]);
 
@@ -111,6 +120,9 @@ export const PublicAmericanoResultsBoard: React.FC<
           <h1 className="public-americano-board__title">
             {tournamentName || "Resultados"}
           </h1>
+          {tournamentDescription ? (
+            <p className="public-americano-board__desc">{tournamentDescription}</p>
+          ) : null}
           <p className="public-americano-board__tagline">
             {RIVIERA_PUBLIC_DESCRIPTION}
           </p>

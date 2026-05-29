@@ -12,7 +12,6 @@ import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
 import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
 import {
   RIVIERA_APP_DISPLAY,
-  RIVIERA_PUBLIC_DESCRIPTION,
 } from "../lib/rivieraBranding";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
@@ -55,6 +54,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   const [fetchStatus, setFetchStatus] =
     useState<FetchAmericanoLivePublicResult | null>(null);
   const [tournamentName, setTournamentName] = useState<string | null>(null);
+  const [tournamentDescription, setTournamentDescription] = useState<
+    string | null
+  >(null);
   const [tournamentFinished, setTournamentFinished] = useState(false);
   const [tournamentStarted, setTournamentStarted] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     setFetchStatus(null);
     setSnapshot(null);
     setTournamentName(null);
+    setTournamentDescription(null);
     setTournamentFinished(false);
     setTournamentStarted(false);
     setLoadError(null);
@@ -112,6 +115,11 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       }
 
       if (tournament?.name) setTournamentName(tournament.name);
+      const desc =
+        typeof tournament?.description === "string"
+          ? tournament.description.trim()
+          : "";
+      setTournamentDescription(desc || null);
       setTournamentFinished(!!tournament?.is_finished);
       setTournamentStarted(!!tournament?.is_started);
     } catch (e) {
@@ -163,17 +171,19 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
 
   return (
     <PublicTorneoExpressShell className="te-public--americano">
-      <header className="te-public-header te-pub-fade-in">
+      <header className="te-public-header te-public-header--americano te-pub-fade-in">
         <div className="te-public-header__brand">
-          <p className="te-public-header__kicker">Americano</p>
-          <h1 className="te-public-header__title">
-            {tournamentName || "Americano en vivo"}
+          <p className="te-public-header__kicker">Americano · En vivo</p>
+          <h1 className="te-public-header__title te-public-header__title--event">
+            {tournamentName || "Torneo Americano"}
           </h1>
           <div className="te-public-header__line" aria-hidden />
           <div className="te-public-header__meta">
-            <span className="te-public-header__subtitle">
-              {RIVIERA_PUBLIC_DESCRIPTION}
-            </span>
+            {tournamentDescription ? (
+              <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
+                {tournamentDescription}
+              </span>
+            ) : null}
           </div>
         </div>
       </header>

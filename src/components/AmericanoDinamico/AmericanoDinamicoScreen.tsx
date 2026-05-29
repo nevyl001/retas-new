@@ -7,6 +7,7 @@ import { RoundHistory } from "./RoundHistory";
 import {
   createPlayer,
   getPlayers,
+  getTournamentById,
   updateTournament,
   upsertAmericanoLivePublic,
   type Player,
@@ -62,6 +63,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   const [playersLoadError, setPlayersLoadError] = React.useState<string | null>(
     null
   );
+  const [tournamentName, setTournamentName] = React.useState<string>("");
+  const [tournamentDescription, setTournamentDescription] =
+    React.useState<string>("");
   const finishedPersistedRef = React.useRef(false);
   const effectiveUserId = userId || user?.id || null;
 
@@ -87,6 +91,29 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       window.prompt("Copia este enlace:", publicAmericanoUrl);
     }
   }, [publicAmericanoUrl]);
+
+  React.useEffect(() => {
+    if (!resolvedTournamentId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const t = await getTournamentById(resolvedTournamentId);
+        if (cancelled || !t) return;
+        setTournamentName(typeof t.name === "string" ? t.name.trim() : "");
+        setTournamentDescription(
+          typeof t.description === "string" ? t.description.trim() : ""
+        );
+      } catch {
+        if (!cancelled) {
+          setTournamentName("");
+          setTournamentDescription("");
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedTournamentId]);
 
   React.useEffect(() => {
     if (!effectiveUserId) return;
@@ -276,6 +303,21 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 
   const podium = ranking.slice(0, 3);
 
+  const tournamentBanner =
+    tournamentName || tournamentDescription ? (
+      <header className="americano-tournament-banner">
+        <p className="americano-tournament-banner__kicker">Americano</p>
+        {tournamentName ? (
+          <h2 className="americano-tournament-banner__name">{tournamentName}</h2>
+        ) : null}
+        {tournamentDescription ? (
+          <p className="americano-tournament-banner__desc">
+            {tournamentDescription}
+          </p>
+        ) : null}
+      </header>
+    ) : null;
+
   if (phase === "registration") {
     return (
       <div className="americano-screen">
@@ -284,6 +326,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ← Volver al inicio
           </Button>
         </div>
+        {tournamentBanner}
         {playersLoadError && (
           <p className="americano-screen__error">
             {playersLoadError}
@@ -309,6 +352,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ← Volver al inicio
           </Button>
         </div>
+        {tournamentBanner}
         {resolvedTournamentId && publicAmericanoUrl ? (
           <section className="americano-public-link" aria-label="Enlace público">
             <h3 className="americano-public-link__title">Vista pública en vivo</h3>
@@ -373,6 +417,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ← Volver al inicio
           </Button>
       </div>
+      {tournamentBanner}
       {resolvedTournamentId && publicAmericanoUrl ? (
         <section className="americano-public-link" aria-label="Enlace público">
           <h3 className="americano-public-link__title">Vista pública (resultado final)</h3>

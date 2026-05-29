@@ -15,7 +15,6 @@ import {
 } from "./TournamentWinnerCalculator";
 import {
   RIVIERA_APP_DISPLAY,
-  RIVIERA_PUBLIC_DESCRIPTION,
 } from "../lib/rivieraBranding";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { PublicRetaMatchCard } from "./public/PublicRetaMatchCard";
@@ -329,22 +328,19 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   return (
     <PublicTorneoExpressShell className="te-public--reta">
-      <header className="te-public-header te-pub-fade-in">
+      <header className="te-public-header te-public-header--reta te-pub-fade-in">
         <div className="te-public-header__brand">
-          <p className="te-public-header__kicker">{formatKicker}</p>
-          <h1 className="te-public-header__title">
+          <p className="te-public-header__kicker">{formatKicker} · En vivo</p>
+          <h1 className="te-public-header__title te-public-header__title--event">
             {publicTournamentName || "Resultados en tiempo real"}
           </h1>
           <div className="te-public-header__line" aria-hidden />
           <div className="te-public-header__meta">
             {publicTournamentDescription ? (
-              <span className="te-public-header__grupo-pill">
+              <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
                 {publicTournamentDescription}
               </span>
             ) : null}
-            <span className="te-public-header__subtitle">
-              {RIVIERA_PUBLIC_DESCRIPTION}
-            </span>
           </div>
         </div>
       </header>
