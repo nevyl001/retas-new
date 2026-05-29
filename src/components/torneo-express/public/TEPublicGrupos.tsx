@@ -258,7 +258,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   const heroTitle = categoria.trim()
     ? `${categoria.trim()} — Fase de grupos`
     : `${torneoNombre} — Fase de grupos`;
-  const eyebrow = `${torneoNombre.toUpperCase()} · TORNEO EXPRESS`;
+  const eyebrow = `TORNEO · ${torneoNombre.trim().toUpperCase()}`;
 
   return (
     <div className="te-grupos-page">
