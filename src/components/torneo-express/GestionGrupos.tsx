@@ -19,6 +19,7 @@ import { PartidosGrupo } from "./PartidosGrupo";
 import { TablaGrupo } from "./TablaGrupo";
 import { TePageShell } from "./TePageShell";
 import { TorneoExpressBracketModal } from "./TorneoExpressBracketModal";
+import { TorneoExpressResetEliminatoriaModal } from "./TorneoExpressResetEliminatoriaModal";
 import { torneoEstadoBadgeVariant } from "./teEstadoBadge";
 import {
   navigateTorneoExpress,
@@ -54,15 +55,22 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     savingEliminatoriaProgramadoId,
     finalizarTorneoEliminatoria,
     reabrirTorneoEliminatoria,
+    resetEliminatoriaTorneo,
     finalizandoTorneo,
     reabriendoTorneo,
+    reiniciandoEliminatoria,
   } = useTorneoExpress(torneoId, { publicMode: false, realtime: true });
 
   const [activeGrupoId, setActiveGrupoId] = useState<string | null>(null);
   const [copyMsg, setCopyMsg] = useState("");
   const [bracketOpen, setBracketOpen] = useState(false);
+  const [resetElimOpen, setResetElimOpen] = useState(false);
   const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
   const [confirmFinalizar, setConfirmFinalizar] = useState(false);
+  const [actionToast, setActionToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
   const faseTorneo = bundle?.torneo.fase_torneo ?? "grupos";
   const enEliminatoria =
@@ -108,6 +116,17 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots)
     );
   }, [bundle, faseTorneo]);
+
+  const puedeReiniciarEliminatoria =
+    faseTorneo === "eliminatoria" && bundle?.torneo.estado !== "finalizado";
+
+  const showActionToast = (
+    message: string,
+    type: "success" | "error"
+  ) => {
+    setActionToast({ message, type });
+    window.setTimeout(() => setActionToast(null), 4500);
+  };
 
   const copyLink = async (url: string) => {
     const ok = await copyToClipboard(url);
@@ -191,6 +210,21 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               }}
             >
               Reanudar eliminatoria
+            </Button>
+          ) : null}
+          {puedeReiniciarEliminatoria ? (
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              className="te-btn-finalizar-fase"
+              disabled={reiniciandoEliminatoria}
+              onClick={() => setResetElimOpen(true)}
+            >
+              <span className="te-btn-icon" aria-hidden>
+                ↻
+              </span>
+              Reiniciar eliminatoria
             </Button>
           ) : null}
           {puedeFinalizarTorneo ? (
@@ -330,6 +364,16 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       </div>
 
       {error && <p className="te-error">{error}</p>}
+
+      {actionToast ? (
+        <div
+          className={`te-gestion-toast te-gestion-toast--${actionToast.type}`}
+          role="status"
+          aria-live="polite"
+        >
+          {actionToast.message}
+        </div>
+      ) : null}
 
       {enEliminatoria ? (
         <div
@@ -482,6 +526,31 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           )}
         </div>
       )}
+
+      <TorneoExpressResetEliminatoriaModal
+        open={resetElimOpen}
+        resetting={reiniciandoEliminatoria}
+        onCancel={() => setResetElimOpen(false)}
+        onConfirm={() => {
+          void resetEliminatoriaTorneo()
+            .then(() => {
+              setResetElimOpen(false);
+              setVista("grupos");
+              setConfirmFinalizar(false);
+              setBracketOpen(true);
+              showActionToast(
+                "Eliminatoria reiniciada. Puedes configurarla de nuevo.",
+                "success"
+              );
+            })
+            .catch(() => {
+              showActionToast(
+                "Error al reiniciar. Intenta de nuevo.",
+                "error"
+              );
+            });
+        }}
+      />
 
       <TorneoExpressBracketModal
         torneoId={torneoId}

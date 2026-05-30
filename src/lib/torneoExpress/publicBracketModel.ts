@@ -7,7 +7,7 @@ import {
   totalRondasEliminatoria,
 } from "./bracketRounds";
 import { parejaLabelFromMap } from "./eliminatoriaLabels";
-import { getPartidoSets } from "./partidoSets";
+import { getPartidoSets, matchWinnerSideFromPartido } from "./partidoSets";
 import type { BracketQualifier } from "./bracketTypes";
 import type {
   PartidoSetScore,
@@ -146,7 +146,7 @@ function buildTeamFromId(
   parejaId: string | null,
   labelMap: Record<string, string>,
   qualifierMap: Map<string, BracketQualifier>,
-  ganadorId: string | null,
+  isWinner: boolean,
   score: number | null,
   isBye: boolean
 ): PublicBracketTeam {
@@ -156,9 +156,20 @@ function buildTeamFromId(
   const q = qualifierMap.get(parejaId);
   return teamRow(parejaId, parejaLabelFromMap(labelMap, parejaId), {
     qualifier: q,
-    isWinner: ganadorId === parejaId,
+    isWinner,
     score,
   });
+}
+
+function teamIsWinner(
+  parejaId: string | null,
+  side: "local" | "visitante",
+  partido: TorneoExpressEliminatoriaPartido | null
+): boolean {
+  if (!parejaId || !partido || partido.estado !== "jugado") return false;
+  const winnerSide = matchWinnerSideFromPartido(partido);
+  if (!winnerSide) return partido.ganador_id === parejaId;
+  return winnerSide === side;
 }
 
 function roundLabelUpper(
@@ -468,7 +479,11 @@ function buildRoundOneCards(
           partido?.pareja_local_id ?? c.local?.parejaId ?? null,
           labelMap,
           qualifierMap,
-          partido?.ganador_id ?? null,
+          teamIsWinner(
+            partido?.pareja_local_id ?? c.local?.parejaId ?? null,
+            "local",
+            partido
+          ),
           partido?.puntos_local ?? null,
           localBye
         ),
@@ -476,7 +491,11 @@ function buildRoundOneCards(
           partido?.pareja_visitante_id ?? c.visitante?.parejaId ?? null,
           labelMap,
           qualifierMap,
-          partido?.ganador_id ?? null,
+          teamIsWinner(
+            partido?.pareja_visitante_id ?? c.visitante?.parejaId ?? null,
+            "visitante",
+            partido
+          ),
           partido?.puntos_visitante ?? null,
           visitBye
         ),
@@ -527,7 +546,7 @@ function buildDbRoundCards(
           p.pareja_local_id,
           labelMap,
           qualifierMap,
-          p.ganador_id,
+          teamIsWinner(p.pareja_local_id, "local", p),
           p.puntos_local,
           p.es_bye && !p.pareja_local_id
         ),
@@ -535,7 +554,7 @@ function buildDbRoundCards(
           p.pareja_visitante_id,
           labelMap,
           qualifierMap,
-          p.ganador_id,
+          teamIsWinner(p.pareja_visitante_id, "visitante", p),
           p.puntos_visitante,
           p.es_bye && !p.pareja_visitante_id
         ),

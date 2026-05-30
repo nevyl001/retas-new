@@ -3,8 +3,10 @@ import {
   canAddAnotherSet,
   countSetWins,
   detectMatchWinner,
+  formatSetWinsForWinner,
   getPartidoSets,
   looksLikeSetWinTally,
+  matchWinnerSideFromPartido,
   parseSetsResultado,
 } from "./partidoSets";
 
@@ -97,5 +99,23 @@ describe("partidoSets", () => {
   it("parseSetsResultado rejects invalid", () => {
     expect(parseSetsResultado(null)).toBeNull();
     expect(parseSetsResultado([{ local: 1 }])).toBeNull();
+  });
+
+  it("matchWinnerSideFromPartido prefers sets over wrong ganador_id", () => {
+    expect(
+      matchWinnerSideFromPartido({
+        estado: "jugado",
+        sets_resultado: [{ local: 4, visitante: 6 }],
+        ganador_id: "local-team",
+        pareja_local_id: "local-team",
+        pareja_visitante_id: "visit-team",
+      })
+    ).toBe("visitante");
+  });
+
+  it("formatSetWinsForWinner orders winner sets first", () => {
+    expect(
+      formatSetWinsForWinner("visitante", { local: 0, visitante: 1 })
+    ).toEqual({ winnerSets: 1, loserSets: 0 });
   });
 });

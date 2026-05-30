@@ -10,13 +10,7 @@ import type {
   PublicMatchupCard,
 } from "../../../lib/torneoExpress/publicBracketModel";
 import type { PartidoSetScore } from "../../../lib/torneoExpress/types";
-import type { PartidoSetsSide } from "../../../lib/torneoExpress/partidoSets";
-
-function matchWinnerSide(card: PublicMatchupCard): PartidoSetsSide | null {
-  if (card.local.isWinner) return "local";
-  if (card.visit.isWinner) return "visitante";
-  return null;
-}
+import { detectMatchWinner } from "../../../lib/torneoExpress/partidoSets";
 
 function statusLabel(status: PublicMatchStatus): string {
   switch (status) {
@@ -137,12 +131,49 @@ function BracketFinalSchedule({ card }: { card: PublicMatchupCard }) {
 
 function BracketSetsList({
   sets,
-  winnerSide,
+  layout = "inline",
 }: {
   sets: PartidoSetScore[];
-  winnerSide: PartidoSetsSide | null;
+  layout?: "inline" | "aligned";
 }) {
   if (sets.length === 0) return null;
+
+  if (layout === "aligned") {
+    return (
+      <div
+        className="te-bracket-sets te-bracket-sets--aligned"
+        aria-label="Marcador por sets"
+      >
+        <ul className="te-bracket-sets__list te-bracket-sets__list--aligned">
+          {sets.map((set, i) => {
+            const localWonSet = set.local > set.visitante;
+            const visitWonSet = set.visitante > set.local;
+            return (
+              <li key={i} className="te-bracket-sets__aligned-row">
+                <span className="te-bracket-sets__aligned-label">
+                  Set {i + 1}
+                </span>
+                <span
+                  className={`te-bracket-sets__aligned-num te-bracket-sets__aligned-num--top${
+                    localWonSet ? " te-bracket-sets__num--accent" : ""
+                  }`}
+                >
+                  {set.local}
+                </span>
+                <span
+                  className={`te-bracket-sets__aligned-num te-bracket-sets__aligned-num--bottom${
+                    visitWonSet ? " te-bracket-sets__num--accent" : ""
+                  }`}
+                >
+                  {set.visitante}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
 
   return (
     <div className="te-bracket-sets" aria-label="Marcador por sets">
@@ -153,21 +184,9 @@ function BracketSetsList({
         {sets.map((set, i) => {
           const localWonSet = set.local > set.visitante;
           const visitWonSet = set.visitante > set.local;
-          const matchWinnerWonSet =
-            winnerSide === "local"
-              ? localWonSet
-              : winnerSide === "visitante"
-                ? visitWonSet
-                : localWonSet;
 
-          const localClass =
-            matchWinnerWonSet && winnerSide === "local"
-              ? " te-bracket-sets__num--accent"
-              : "";
-          const visitClass =
-            matchWinnerWonSet && winnerSide === "visitante"
-              ? " te-bracket-sets__num--accent"
-              : "";
+          const localClass = localWonSet ? " te-bracket-sets__num--accent" : "";
+          const visitClass = visitWonSet ? " te-bracket-sets__num--accent" : "";
 
           return (
             <li key={i} className="te-bracket-sets__row">
@@ -189,6 +208,23 @@ function BracketSetsList({
       </ul>
     </div>
   );
+}
+
+function bracketWinnerFlags(card: PublicMatchupCard, played: boolean) {
+  if (!played) {
+    return { localWins: false, visitWins: false };
+  }
+  const fromSets = detectMatchWinner(card.sets);
+  if (fromSets === "local") {
+    return { localWins: true, visitWins: false };
+  }
+  if (fromSets === "visitante") {
+    return { localWins: false, visitWins: true };
+  }
+  return {
+    localWins: card.local.isWinner,
+    visitWins: card.visit.isWinner,
+  };
 }
 
 function BracketTeamRow({
@@ -232,14 +268,23 @@ function BracketMatchCard({
   isCenter?: boolean;
 }) {
   const played = card.status === "finished";
-  const localWins = played && card.local.isWinner;
-  const visitWins = played && card.visit.isWinner;
-  const winnerSide = matchWinnerSide(card);
-
-  const hasWinner = played && (localWins || visitWins);
-  const winner = localWins ? card.local : visitWins ? card.visit : null;
-  const loser = localWins ? card.visit : visitWins ? card.local : null;
+  const { localWins, visitWins } = bracketWinnerFlags(card, played);
   const hasSets = played && card.sets.length > 0;
+
+  const localRole: "winner" | "loser" | "neutral" = played
+    ? localWins
+      ? "winner"
+      : visitWins
+        ? "loser"
+        : "neutral"
+    : "neutral";
+  const visitRole: "winner" | "loser" | "neutral" = played
+    ? visitWins
+      ? "winner"
+      : localWins
+        ? "loser"
+        : "neutral"
+    : "neutral";
 
   const phaseLabel = isCenter ? "FINAL" : card.matchTitle.toUpperCase();
   const visualPhase = cardVisualPhase(card, isCenter);
@@ -309,15 +354,23 @@ function BracketMatchCard({
           isCenter ? " te-elim-bracket-card__body--final" : ""
         }`}
       >
-        {isCenter && !hasWinner ? (
+        {isCenter && !played ? (
           renderFinalPending()
-        ) : hasWinner && winner && loser ? (
+        ) : played && (localWins || visitWins) ? (
           <>
-            <BracketTeamRow team={winner} role="winner" centered={isCenter} />
+            <BracketTeamRow
+              team={card.local}
+              role={localRole}
+              centered={isCenter}
+            />
             {hasSets ? (
-              <BracketSetsList sets={card.sets} winnerSide={winnerSide} />
+              <BracketSetsList sets={card.sets} layout="aligned" />
             ) : null}
-            <BracketTeamRow team={loser} role="loser" centered={isCenter} />
+            <BracketTeamRow
+              team={card.visit}
+              role={visitRole}
+              centered={isCenter}
+            />
           </>
         ) : (
           <>
@@ -586,28 +639,27 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
     [allCards, totalRondas, activeRonda]
   );
 
+  const sideHasWinner = useCallback((card: PublicMatchupCard) => {
+    if (card.status !== "finished") return false;
+    const w = detectMatchWinner(card.sets);
+    if (w === "local" || w === "visitante") return true;
+    return card.local.isWinner || card.visit.isWinner;
+  }, []);
+
   const leftHasWinner = useMemo(
     () =>
       layout.columns
         .find((c) => c.side === "left")
-        ?.slots.some(
-          (s) =>
-            s.card?.status === "finished" &&
-            (s.card.local.isWinner || s.card.visit.isWinner)
-        ) ?? false,
-    [layout.columns]
+        ?.slots.some((s) => s.card && sideHasWinner(s.card)) ?? false,
+    [layout.columns, sideHasWinner]
   );
 
   const rightHasWinner = useMemo(
     () =>
       layout.columns
         .find((c) => c.side === "right")
-        ?.slots.some(
-          (s) =>
-            s.card?.status === "finished" &&
-            (s.card.local.isWinner || s.card.visit.isWinner)
-        ) ?? false,
-    [layout.columns]
+        ?.slots.some((s) => s.card && sideHasWinner(s.card)) ?? false,
+    [layout.columns, sideHasWinner]
   );
 
   const showConnectors = layout.columnCount > 1;

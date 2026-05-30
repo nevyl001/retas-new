@@ -6,6 +6,7 @@ import {
   countSetWins,
   detectMatchWinner,
   emptySetDraft,
+  formatSetWinsForWinner,
   getPartidoSets,
 } from "../../lib/torneoExpress/partidoSets";
 import type { PartidoSetScore } from "../../lib/torneoExpress/types";
@@ -114,6 +115,11 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
         ? visitLabel
         : null;
 
+  const winsForDisplay =
+    winner && winnerLabel
+      ? formatSetWinsForWinner(winner, wins)
+      : null;
+
   return (
     <Modal
       open={open}
@@ -212,7 +218,8 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
           <p className="te-sets-modal__winner">
             Ganador detectado automáticamente:{" "}
             <strong>
-              ✓ {winnerLabel} ({wins.local} sets a {wins.visitante})
+              ✓ {winnerLabel} ({winsForDisplay?.winnerSets ?? 0} sets a{" "}
+              {winsForDisplay?.loserSets ?? 0})
             </strong>
           </p>
         ) : (

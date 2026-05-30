@@ -81,14 +81,27 @@ export function matchWinnerSideFromPartido(
     pareja_visitante_id?: string | null;
   }
 ): PartidoSetsSide | null {
+  if (partido.estado === "jugado") {
+    const sets = getPartidoSets(partido);
+    const fromSets = detectMatchWinner(sets);
+    if (fromSets) return fromSets;
+  }
   if (partido.ganador_id && partido.pareja_local_id) {
     if (partido.ganador_id === partido.pareja_local_id) return "local";
     if (partido.ganador_id === partido.pareja_visitante_id) return "visitante";
   }
-  if (partido.estado === "jugado") {
-    return detectMatchWinner(getPartidoSets(partido));
-  }
   return null;
+}
+
+/** Sets ganados por cada lado (para mensajes: primero el ganador). */
+export function formatSetWinsForWinner(
+  winner: PartidoSetsSide,
+  wins: { local: number; visitante: number }
+): { winnerSets: number; loserSets: number } {
+  if (winner === "local") {
+    return { winnerSets: wins.local, loserSets: wins.visitante };
+  }
+  return { winnerSets: wins.visitante, loserSets: wins.local };
 }
 
 export function setWinnerSide(set: PartidoSetScore): PartidoSetsSide | null {

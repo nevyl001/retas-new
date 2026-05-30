@@ -400,6 +400,44 @@
   justify-content: flex-end;
 }
 
+.te-gestion-toast {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 1200;
+  max-width: min(calc(100vw - 2rem), 22rem);
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  animation: te-gestion-toast-in 0.25s ease-out;
+}
+
+.te-gestion-toast--success {
+  background: rgba(22, 101, 52, 0.95);
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  color: #ecfdf5;
+}
+
+.te-gestion-toast--error {
+  background: rgba(127, 29, 29, 0.95);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #fef2f2;
+}
+
+@keyframes te-gestion-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .te-gestion-page .te-partido-row .riviera-badge--finished {
   background: var(--success-muted);
   color: var(--success);

@@ -330,3 +330,80 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Modal reiniciar eliminatoria */
+.te-reset-elim-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.te-reset-elim-modal__lead {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.te-reset-elim-modal__warn {
+  font-size: 1.1rem;
+}
+
+.te-reset-elim-modal__list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.te-reset-elim-modal__safe {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.te-reset-elim-modal__note {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.te-reset-elim-modal__confirm-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.te-reset-elim-modal__field {
+  display: block;
+}
+
+.te-reset-elim-modal__input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-sizing: border-box;
+}
+
+.te-reset-elim-modal__input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.te-reset-elim-modal__actions {
+  margin-top: 0.5rem;
+}

@@ -884,6 +884,67 @@
   opacity: 0.5;
 }
 
+/* Sets alineados con local arriba / visitante abajo */
+.te-bracket-sets--aligned {
+  padding: 0.35rem 0 0.15rem;
+  margin-top: 0.1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.te-bracket-sets__list--aligned {
+  gap: 0.35rem;
+}
+
+.te-bracket-sets__aligned-row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr 1fr;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.te-bracket-sets__aligned-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.65;
+}
+
+.te-bracket-sets__aligned-num {
+  font-size: clamp(0.9375rem, 1.35vw, 1.125rem);
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.te-bracket-sets__aligned-num--top {
+  justify-self: stretch;
+}
+
+.te-bracket-sets__aligned-num--bottom {
+  justify-self: stretch;
+}
+
+[data-bracket-phase="semifinal"] .te-bracket-sets__aligned-num {
+  font-size: clamp(1rem, 1.45vw, 1.1875rem);
+}
+
+.te-elim-bracket-card--center .te-bracket-sets--aligned {
+  width: min(100%, 16rem);
+  margin-inline: auto;
+}
+
+.te-elim-bracket-card--center .te-bracket-sets__aligned-row {
+  grid-template-columns: 3.75rem 1fr 1fr;
+  gap: 0.5rem 0.75rem;
+}
+
+.te-elim-bracket-card--center .te-bracket-sets__aligned-num {
+  font-size: clamp(1.0625rem, 1.6vw, 1.3125rem);
+}
+
 /* vs */
 .te-bracket-vs {
   display: flex;

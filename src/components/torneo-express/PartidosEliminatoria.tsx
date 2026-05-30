@@ -18,6 +18,7 @@ import {
   programadoDraftFromPartido,
   programadoIsoFromDraft,
 } from "../../lib/torneoExpress/partidoSchedule";
+import { matchWinnerSideFromPartido } from "../../lib/torneoExpress/partidoSets";
 import type {
   PartidoSetScore,
   TorneoExpressEliminatoriaPartido,
@@ -102,15 +103,9 @@ function EliminatoriaPartidoCard({
   const [draftDate, setDraftDate] = useState(initialSchedule.date);
   const [draftTime, setDraftTime] = useState(initialSchedule.time);
 
-  const localWins =
-    played && partido.ganador_id === partido.pareja_local_id;
-  const visitWins =
-    played && partido.ganador_id === partido.pareja_visitante_id;
-
-  const leftLabel = played && visitWins ? visitLabel : localLabel;
-  const rightLabel = played && visitWins ? localLabel : visitLabel;
-  const leftWins = played && visitWins ? visitWins : localWins;
-  const rightWins = played && visitWins ? localWins : visitWins;
+  const winnerSide = played ? matchWinnerSideFromPartido(partido) : null;
+  const localWins = winnerSide === "local";
+  const visitWins = winnerSide === "visitante";
 
   const metaBusy = savingCancha || savingProgramado;
   const canchaLabel = formatCanchaDisplay(partido.cancha);
@@ -257,19 +252,19 @@ function EliminatoriaPartidoCard({
         <div className="te-partido-matchup">
           <span
             className={`te-partido-team te-partido-team--local${
-              leftWins
+              localWins
                 ? " te-partido-team--winner"
-                : rightWins
+                : visitWins
                   ? " te-partido-team--loser"
                   : ""
             }`}
           >
-            {leftWins ? (
+            {localWins ? (
               <span className="te-partido-winner-mark" aria-hidden>
                 ✓{" "}
               </span>
             ) : null}
-            {leftLabel}
+            {localLabel}
           </span>
 
           {played ? (
@@ -284,19 +279,19 @@ function EliminatoriaPartidoCard({
 
           <span
             className={`te-partido-team te-partido-team--visit${
-              rightWins
+              visitWins
                 ? " te-partido-team--winner"
-                : leftWins
+                : localWins
                   ? " te-partido-team--loser"
                   : ""
             }`}
           >
-            {rightWins ? (
+            {visitWins ? (
               <span className="te-partido-winner-mark" aria-hidden>
                 ✓{" "}
               </span>
             ) : null}
-            {rightLabel}
+            {visitLabel}
           </span>
         </div>
 

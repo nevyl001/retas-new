@@ -15,6 +15,7 @@ import {
   PartidosProgramadoColumnMissingError,
   finalizarTorneoExpressEliminatoria as persistFinalizarTorneoEliminatoria,
   reabrirTorneoExpressEliminatoria as persistReabrirTorneoEliminatoria,
+  resetEliminatoriaTorneoExpress as persistResetEliminatoria,
   saveEliminatoriaCancha as persistEliminatoriaCancha,
   saveEliminatoriaProgramado as persistEliminatoriaProgramado,
   saveEliminatoriaResultado as persistEliminatoriaResultado,
@@ -62,6 +63,7 @@ export function useTorneoExpress(
     useState<string | null>(null);
   const [finalizandoTorneo, setFinalizandoTorneo] = useState(false);
   const [reabriendoTorneo, setReabriendoTorneo] = useState(false);
+  const [reiniciandoEliminatoria, setReiniciandoEliminatoria] = useState(false);
 
   const reload = useCallback(async (opts?: { silent?: boolean }) => {
     if (!torneoId) {
@@ -332,6 +334,23 @@ export function useTorneoExpress(
     }
   }, [reload, torneoId]);
 
+  const resetEliminatoriaTorneo = useCallback(async () => {
+    if (!torneoId) return;
+    setReiniciandoEliminatoria(true);
+    setError(null);
+    try {
+      await persistResetEliminatoria(torneoId);
+      await reload();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Error al reiniciar. Intenta de nuevo."
+      );
+      throw e;
+    } finally {
+      setReiniciandoEliminatoria(false);
+    }
+  }, [reload, torneoId]);
+
   return {
     bundle,
     loading,
@@ -350,6 +369,7 @@ export function useTorneoExpress(
     saveEliminatoriaProgramado,
     finalizarTorneoEliminatoria,
     reabrirTorneoEliminatoria,
+    resetEliminatoriaTorneo,
     eliminatoriaLabelMap,
     savingPartidoId,
     savingCanchaId,
@@ -359,6 +379,7 @@ export function useTorneoExpress(
     savingEliminatoriaProgramadoId,
     finalizandoTorneo,
     reabriendoTorneo,
+    reiniciandoEliminatoria,
     savingOrden,
     partidosOrdenDisponible,
     partidosCanchaDisponible,

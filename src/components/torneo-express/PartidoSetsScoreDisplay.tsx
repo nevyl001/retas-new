@@ -38,10 +38,11 @@ function SetGameNums({
   winnerSide: PartidoSetsSide | null;
   variant: PartidoSetsScoreVariant;
 }) {
+  const setSide = set.local > set.visitante ? "local" : set.visitante > set.local ? "visitante" : null;
   const localWin =
-    winnerSide === "local" ? " te-set-game--win" : " te-set-game--lose";
+    setSide === "local" ? " te-set-game--win" : setSide === "visitante" ? " te-set-game--lose" : "";
   const visitWin =
-    winnerSide === "visitante" ? " te-set-game--win" : " te-set-game--lose";
+    setSide === "visitante" ? " te-set-game--win" : setSide === "local" ? " te-set-game--lose" : "";
 
   if (variant === "single-large") {
     return (
