@@ -1,12 +1,10 @@
 import {
-  armarBracket,
   calcularClasificadosFase,
   calcularBracketInicial,
   mejoresTercerosNecesarios,
   swapBracketSlots,
   validarChoques,
 } from "./bracket";
-import type { BracketFase, BracketQualifier } from "./bracketTypes";
 import type {
   TorneoExpress,
   TorneoExpressBundle,

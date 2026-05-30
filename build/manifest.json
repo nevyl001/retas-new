@@ -1,7 +1,7 @@
 {
   "short_name": "RivieraApp",
-  "name": "RivieraApp — Retas y torneos de pádel",
-  "description": "Organiza retas y torneos de pádel. Crea retas, gestiona jugadores, estadísticas en tiempo real y enlaces públicos.",
+  "name": "RivieraApp — Organiza. Juega. Compite.",
+  "description": "Organiza. Juega. Compite. Crea retas y torneos de pádel, gestiona jugadores, estadísticas en tiempo real y enlaces públicos.",
   "id": "com.rivieraapp.padel",
   "icons": [
     {

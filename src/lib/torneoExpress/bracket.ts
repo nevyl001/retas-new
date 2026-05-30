@@ -175,14 +175,6 @@ function seedPlacementOrder(count: number): number[] {
   return map;
 }
 
-function qualifiersBySeed(
-  clasificados: BracketQualifier[]
-): Map<number, BracketQualifier> {
-  const m = new Map<number, BracketQualifier>();
-  clasificados.forEach((q) => m.set(q.seed, q));
-  return m;
-}
-
 /** Coloca clasificados en slots; huecos = BYE (seeds altos primero) */
 function colocarEnSlots(
   clasificados: BracketQualifier[],
@@ -192,7 +184,6 @@ function colocarEnSlots(
     type: "bye" as const,
   }));
   const placement = seedPlacementOrder(totalSlots);
-  const bySeed = qualifiersBySeed(clasificados);
 
   clasificados.forEach((q) => {
     const slotIndex = placement[q.seed - 1];
