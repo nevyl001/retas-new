@@ -1017,6 +1017,283 @@ button.te-partido-chip--cancha:disabled {
   padding: var(--riviera-space-2);
 }
 
+/* Sets al mejor de 3 — gestión */
+.te-partido-card--clickable {
+  cursor: pointer;
+}
+
+.te-partido-winner-mark {
+  color: var(--accent-gold);
+}
+
+/* Marcador por sets — compartido gestión / cuadro / público */
+.te-partido-sets-score {
+  font-variant-numeric: tabular-nums;
+}
+
+.te-partido-sets-score--large {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.te-partido-sets-score--inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.te-partido-sets-score--inline.te-partido-sets-score--single {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.te-partido-sets-score__slash {
+  color: var(--text-muted);
+  opacity: 0.55;
+  font-weight: 400;
+  padding: 0 0.1rem;
+}
+
+.te-set-chip {
+  white-space: nowrap;
+}
+
+.te-set-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 14px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid var(--border-subtle);
+}
+
+.te-set-pill--match-won {
+  background: var(--accent-gold-dim);
+  border-color: rgba(201, 162, 39, 0.25);
+}
+
+.te-set-pill--match-lost {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-subtle);
+}
+
+.te-partido-sets-score--pills-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.te-partido-sets-score--cuadro {
+  display: block;
+  margin-top: 6px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.te-set-game {
+  color: var(--text-muted);
+  opacity: 0.65;
+}
+
+.te-set-game--win {
+  color: var(--accent-gold);
+  opacity: 1;
+  font-weight: 700;
+}
+
+.te-set-game--lose {
+  color: var(--text-muted);
+  opacity: 0.45;
+}
+
+.te-set-game--cuadro {
+  color: var(--text-muted);
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.te-set-game-sep {
+  opacity: 0.5;
+  font-weight: 400;
+  padding: 0 0.05rem;
+}
+
+.te-partido-sets-inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.te-partido-sets-inline__sep {
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+.te-partido-set-chip {
+  white-space: nowrap;
+}
+
+.te-partido-set-chip--win {
+  color: var(--accent-gold);
+}
+
+.te-partido-set-chip--lose {
+  opacity: 0.55;
+}
+
+.te-sets-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.te-sets-modal__teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.te-sets-modal__team--visit {
+  text-align: right;
+}
+
+.te-sets-modal__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.te-sets-modal__row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.te-sets-modal__row-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.te-sets-modal__row-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.riviera-modal .te-sets-modal__input,
+.te-sets-modal__input {
+  box-sizing: border-box;
+  width: 3.75rem;
+  min-height: 44px;
+  padding: 0.5rem 0.35rem;
+  text-align: center;
+  background: var(--bg-base, #1c1c1e);
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.1));
+  border-radius: var(--riviera-radius-sm, 8px);
+  color: var(--text-primary, #f5f5f7);
+  font-family: var(--font-body, inherit);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  -webkit-text-fill-color: var(--text-primary, #f5f5f7);
+  caret-color: var(--accent-gold, #c9a227);
+}
+
+.riviera-modal .te-sets-modal__input::placeholder,
+.te-sets-modal__input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.riviera-modal .te-sets-modal__input:focus,
+.te-sets-modal__input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--accent-gold-dim);
+}
+
+.riviera-modal .te-sets-modal__input:disabled,
+.te-sets-modal__input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.te-sets-modal__vs {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: lowercase;
+}
+
+.te-sets-modal__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.te-sets-modal__winner {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--riviera-radius-sm);
+  background: var(--accent-gold-dim);
+  border: 0.5px solid rgba(201, 162, 39, 0.25);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.te-sets-modal__winner strong {
+  color: var(--text-primary);
+}
+
+.te-sets-modal__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.te-sets-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.te-partido-chip--muted {
+  opacity: 0.65;
+  font-style: italic;
+}
+
 .te-error {
   color: var(--riviera-danger);
   font-size: 0.875rem;

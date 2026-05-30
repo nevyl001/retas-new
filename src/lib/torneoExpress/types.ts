@@ -1,5 +1,13 @@
 export type TorneoExpressEstado = "pendiente" | "en_curso" | "finalizado";
 export type PartidoExpressEstado = "pendiente" | "jugado";
+export type TorneoExpressFaseTorneo = "grupos" | "eliminatoria" | "cerrado";
+export type TorneoExpressFaseEliminacion = "semifinal" | "cuartos" | "octavos";
+
+/** Marcador por set en partidos al mejor de 3. */
+export interface PartidoSetScore {
+  local: number;
+  visitante: number;
+}
 
 export interface TorneoExpress {
   id: string;
@@ -9,6 +17,30 @@ export interface TorneoExpress {
   organizador_id: string;
   estado: TorneoExpressEstado;
   source_tournament_id: string | null;
+  created_at: string;
+  fase_torneo?: TorneoExpressFaseTorneo | null;
+  fase_eliminacion?: TorneoExpressFaseEliminacion | null;
+  bracket_slots?: unknown;
+  fase_grupos_finalizada_at?: string | null;
+}
+
+export interface TorneoExpressEliminatoriaPartido {
+  id: string;
+  torneo_id: string;
+  ronda: number;
+  orden: number;
+  cruce_index: number;
+  pareja_local_id: string | null;
+  pareja_visitante_id: string | null;
+  puntos_local: number | null;
+  puntos_visitante: number | null;
+  /** JSON [{local, visitante}, ...]; null si un solo set (usa puntos_*). */
+  sets_resultado?: PartidoSetScore[] | null;
+  ganador_id: string | null;
+  estado: PartidoExpressEstado;
+  es_bye: boolean;
+  cancha?: string | null;
+  programado_en?: string | null;
   created_at: string;
 }
 
@@ -36,6 +68,8 @@ export interface TorneoExpressPartido {
   pareja_visitante_id: string;
   puntos_local: number | null;
   puntos_visitante: number | null;
+  /** JSON [{local, visitante}, ...] en eliminatoria multi-set. */
+  sets_resultado?: PartidoSetScore[] | null;
   ganador_id: string | null;
   estado: PartidoExpressEstado;
   /** Orden de juego en el grupo (1 = primero). */
@@ -54,6 +88,7 @@ export interface TorneoExpressBundle {
   grupos: TorneoExpressGrupo[];
   parejasPorGrupo: Record<string, TorneoExpressGrupoPareja[]>;
   partidosPorGrupo: Record<string, TorneoExpressPartido[]>;
+  eliminatoriaPartidos: TorneoExpressEliminatoriaPartido[];
 }
 
 export interface StandingRowExpress {

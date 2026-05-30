@@ -2,6 +2,7 @@ import React from "react";
 import { GestionGrupos } from "./GestionGrupos";
 import { TorneoExpressInicio } from "./TorneoExpressInicio";
 import { TePageShell } from "./TePageShell";
+import { VistaPublicaEliminatoria } from "./VistaPublicaEliminatoria";
 import { VistaPublicaGeneral } from "./VistaPublicaGeneral";
 import { VistaPublicaGrupo } from "./VistaPublicaGrupo";
 import { VistaPublicaGrupos } from "./VistaPublicaGrupos";
@@ -13,6 +14,7 @@ export type TorneoExpressRoute =
   | { kind: "grupo"; torneoId: string; grupoId: string }
   | { kind: "general"; torneoId: string }
   | { kind: "grupos"; torneoId: string }
+  | { kind: "eliminatoria"; torneoId: string }
   | { kind: "unknown" };
 
 export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
@@ -27,6 +29,8 @@ export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
   if (general) return { kind: "general", torneoId: general[1] };
   const grupos = path.match(/^\/torneo-express\/([^/]+)\/grupos$/);
   if (grupos) return { kind: "grupos", torneoId: grupos[1] };
+  const eliminatoria = path.match(/^\/torneo-express\/([^/]+)\/eliminatoria$/);
+  if (eliminatoria) return { kind: "eliminatoria", torneoId: eliminatoria[1] };
   return { kind: "unknown" };
 }
 
@@ -35,7 +39,8 @@ export function isTorneoExpressPublicPath(pathname: string): boolean {
   return (
     route.kind === "grupo" ||
     route.kind === "general" ||
-    route.kind === "grupos"
+    route.kind === "grupos" ||
+    route.kind === "eliminatoria"
   );
 }
 
@@ -58,6 +63,8 @@ export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
       return <VistaPublicaGeneral torneoId={route.torneoId} />;
     case "grupos":
       return <VistaPublicaGrupos torneoId={route.torneoId} />;
+    case "eliminatoria":
+      return <VistaPublicaEliminatoria torneoId={route.torneoId} />;
     default:
       return (
         <TePageShell>

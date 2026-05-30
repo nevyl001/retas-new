@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   deleteTorneoExpress,
   fetchTorneosExpressByOrganizador,
-  finalizeTorneoExpress,
   formatSupabaseError,
   type TorneoExpressListItem,
 } from "../../services/torneoExpressService";
+import { TorneoExpressBracketModal } from "./TorneoExpressBracketModal";
 import { TorneoExpressResultadosPanel } from "./TorneoExpressResultadosPanel";
 import { TorneoExpressTablaGeneralPanel } from "./TorneoExpressTablaGeneralPanel";
 import { navigateTorneoExpress } from "./torneoExpressNav";
@@ -53,7 +53,8 @@ export const TorneoExpressTorneosSection: React.FC<
   const [tablaGeneralTorneoId, setTablaGeneralTorneoId] = useState<string | null>(
     null
   );
-  const [finalizarId, setFinalizarId] = useState<string | null>(null);
+  const [bracketTorneo, setBracketTorneo] =
+    useState<TorneoExpressListItem | null>(null);
   const [eliminarId, setEliminarId] = useState<string | null>(null);
   const [accionando, setAccionando] = useState(false);
 
@@ -116,25 +117,6 @@ export const TorneoExpressTorneosSection: React.FC<
     setTablaGeneralTorneoId((prev) => (prev === id ? null : id));
   };
 
-  const handleFinalizar = async (torneoId: string) => {
-    setAccionando(true);
-    setError(null);
-    try {
-      await finalizeTorneoExpress(torneoId);
-      setTorneos((prev) =>
-        prev.map((t) =>
-          t.id === torneoId ? { ...t, estado: "finalizado" } : t
-        )
-      );
-      setFinalizarId(null);
-      setResultadosTorneoId(torneoId);
-    } catch (e) {
-      setError(formatSupabaseError(e));
-    } finally {
-      setAccionando(false);
-    }
-  };
-
   const handleEliminar = async (torneoId: string) => {
     setAccionando(true);
     setError(null);
@@ -152,11 +134,17 @@ export const TorneoExpressTorneosSection: React.FC<
 
   const renderTorneoCard = (t: TorneoExpressListItem) => {
     const activo = isActivo(t.estado);
+    const faseTorneo = t.fase_torneo ?? "grupos";
+    const puedeGestionar =
+      activo || faseTorneo === "eliminatoria" || faseTorneo === "cerrado";
+    const enEliminatoria =
+      activo &&
+      (faseTorneo === "eliminatoria" || faseTorneo === "cerrado");
+    const enGrupos = activo && faseTorneo === "grupos";
     const showResultados =
       resultadosTorneoId === t.id && torneoResultados;
     const showTablaGeneral =
       tablaGeneralTorneoId === t.id && torneoTablaGeneral;
-    const confirmFinalizar = finalizarId === t.id;
     const confirmEliminar = eliminarId === t.id;
 
     return (
@@ -167,7 +155,15 @@ export const TorneoExpressTorneosSection: React.FC<
         <div className="te-torneo-card__inner">
           <div className="te-torneo-card__info-col">
             <div className="te-torneo-card__meta-top">
-              {activo ? (
+              {enEliminatoria ? (
+                <Badge variant="live" className="te-torneo-card__badge-live">
+                  ELIMINATORIA
+                </Badge>
+              ) : enGrupos ? (
+                <Badge variant="live" className="te-torneo-card__badge-live">
+                  EN CURSO
+                </Badge>
+              ) : activo ? (
                 <Badge variant="live" className="te-torneo-card__badge-live">
                   EN CURSO
                 </Badge>
@@ -193,9 +189,9 @@ export const TorneoExpressTorneosSection: React.FC<
             </p>
           </div>
 
-          {!confirmFinalizar && !confirmEliminar ? (
+          {!confirmEliminar ? (
             <div className="te-torneo-card__actions-col">
-              {activo ? (
+              {puedeGestionar ? (
                 <>
                   <Button
                     type="button"
@@ -227,18 +223,20 @@ export const TorneoExpressTorneosSection: React.FC<
                       ? "Ocultar tabla general"
                       : "Tabla general"}
                   </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="te-btn-finalizar-fase"
-                    onClick={() => {
-                      setFinalizarId(t.id);
-                      setEliminarId(null);
-                    }}
-                  >
-                    Finalizar fase
-                  </Button>
+                  {enGrupos ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="te-btn-finalizar-fase"
+                      onClick={() => {
+                        setBracketTorneo(t);
+                        setEliminarId(null);
+                      }}
+                    >
+                      Finalizar fase
+                    </Button>
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -267,7 +265,6 @@ export const TorneoExpressTorneosSection: React.FC<
                     className="te-btn-finalizar-fase"
                     onClick={() => {
                       setEliminarId(t.id);
-                      setFinalizarId(null);
                     }}
                   >
                     Eliminar
@@ -277,38 +274,6 @@ export const TorneoExpressTorneosSection: React.FC<
             </div>
           ) : null}
         </div>
-
-        {confirmFinalizar ? (
-          <div className="te-torneo-card__confirm">
-            <p className="te-torneo-card__confirm-title">
-              ⚠️ ¿Finalizar la fase de grupos?
-            </p>
-            <p className="te-torneo-card__confirm-text">
-              Esta acción no se puede deshacer.
-            </p>
-            <div className="te-torneo-card__confirm-actions">
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                disabled={accionando}
-                loading={accionando}
-                onClick={() => void handleFinalizar(t.id)}
-              >
-                Sí, finalizar fase
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={accionando}
-                onClick={() => setFinalizarId(null)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        ) : null}
 
         {confirmEliminar ? (
           <div className="te-torneo-card__confirm">
@@ -428,6 +393,17 @@ export const TorneoExpressTorneosSection: React.FC<
           Ver todos mis torneos →
         </Button>
       )}
+
+      <TorneoExpressBracketModal
+        torneoId={bracketTorneo?.id ?? ""}
+        torneoNombre={bracketTorneo?.nombre ?? ""}
+        open={Boolean(bracketTorneo)}
+        onClose={() => setBracketTorneo(null)}
+        onConfirmed={() => {
+          setBracketTorneo(null);
+          void cargar();
+        }}
+      />
     </section>
   );
 };

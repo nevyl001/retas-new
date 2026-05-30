@@ -1,17 +1,24 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
+import { eliminatoriaUltimaRondaCompleta } from "../../lib/torneoExpress/bracketRounds";
 import {
   copyToClipboard,
+  publicEliminatoriaUrl,
   publicGeneralUrl,
   publicGrupoUrl,
   publicGruposUrl,
 } from "../../services/torneoExpressService";
 import { formatTorneoExpressCategoria } from "../../lib/torneoExpress/formatCategoria";
-import { torneoExpressEstadoLabel } from "../../lib/torneoExpress/labels";
+import {
+  torneoExpressEstadoLabel,
+  torneoExpressFaseLabel,
+} from "../../lib/torneoExpress/labels";
 import { GrupoBadge } from "./GrupoBadge";
+import { GestionEliminatoria } from "./GestionEliminatoria";
 import { PartidosGrupo } from "./PartidosGrupo";
 import { TablaGrupo } from "./TablaGrupo";
 import { TePageShell } from "./TePageShell";
+import { TorneoExpressBracketModal } from "./TorneoExpressBracketModal";
 import { torneoEstadoBadgeVariant } from "./teEstadoBadge";
 import {
   navigateTorneoExpress,
@@ -25,6 +32,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     bundle,
     loading,
     error,
+    reload,
     standingsByGrupo,
     saveResultado,
     saveOrden,
@@ -37,13 +45,64 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     saveProgramado,
     savingCanchaId,
     savingProgramadoId,
+    eliminatoriaLabelMap,
+    saveEliminatoriaResultado,
+    saveEliminatoriaCancha,
+    saveEliminatoriaProgramado,
+    savingEliminatoriaId,
+    savingEliminatoriaCanchaId,
+    savingEliminatoriaProgramadoId,
+    finalizarTorneoEliminatoria,
+    reabrirTorneoEliminatoria,
+    finalizandoTorneo,
+    reabriendoTorneo,
   } = useTorneoExpress(torneoId, { publicMode: false, realtime: true });
 
   const [activeGrupoId, setActiveGrupoId] = useState<string | null>(null);
   const [copyMsg, setCopyMsg] = useState("");
+  const [bracketOpen, setBracketOpen] = useState(false);
+  const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
+  const [confirmFinalizar, setConfirmFinalizar] = useState(false);
+
+  const faseTorneo = bundle?.torneo.fase_torneo ?? "grupos";
+  const enEliminatoria =
+    faseTorneo === "eliminatoria" || faseTorneo === "cerrado";
 
   const grupoId = activeGrupoId ?? bundle?.grupos[0]?.id ?? null;
   const grupo = bundle?.grupos.find((g) => g.id === grupoId);
+
+  useEffect(() => {
+    if (
+      bundle?.torneo.fase_torneo === "eliminatoria" ||
+      bundle?.torneo.fase_torneo === "cerrado"
+    ) {
+      setVista("eliminatoria");
+    }
+  }, [bundle?.torneo.fase_torneo, bundle?.torneo.id]);
+
+  const fasePill = useMemo(
+    () => torneoExpressFaseLabel(faseTorneo),
+    [faseTorneo]
+  );
+
+  const puedeFinalizarTorneo = useMemo(() => {
+    if (!bundle || faseTorneo !== "eliminatoria") return false;
+    const fase = bundle.torneo.fase_eliminacion;
+    if (!fase) return false;
+    return eliminatoriaUltimaRondaCompleta(bundle.eliminatoriaPartidos, fase);
+  }, [bundle, faseTorneo]);
+
+  const puedeReanudarEliminatoria = useMemo(() => {
+    if (!bundle?.torneo.fase_eliminacion) return false;
+    const fase = bundle.torneo.fase_eliminacion;
+    const cerradoOFinalizado =
+      faseTorneo === "cerrado" || bundle.torneo.estado === "finalizado";
+    if (!cerradoOFinalizado) return false;
+    return !eliminatoriaUltimaRondaCompleta(
+      bundle.eliminatoriaPartidos,
+      fase
+    );
+  }, [bundle, faseTorneo]);
 
   const copyLink = async (url: string) => {
     const ok = await copyToClipboard(url);
@@ -76,6 +135,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     );
   }
 
+  const mostrarEliminatoria = enEliminatoria && vista === "eliminatoria";
+
   return (
     <TePageShell className="te-gestion-page">
       <header className="te-header te-gestion-header">
@@ -87,6 +148,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 {formatTorneoExpressCategoria(bundle.torneo.categoria)}
               </span>
             ) : null}
+            {fasePill ? (
+              <Badge variant="scheduled" className="te-gestion-fase-pill">
+                {fasePill}
+              </Badge>
+            ) : null}
             <Badge
               variant={torneoEstadoBadgeVariant(bundle.torneo.estado)}
               className="te-gestion-estado-pill"
@@ -96,6 +162,77 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           </div>
         </div>
         <div className="te-header__actions te-gestion-header__actions">
+          {faseTorneo === "grupos" && bundle.torneo.estado !== "finalizado" ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="te-btn-finalizar-fase"
+              onClick={() => setBracketOpen(true)}
+            >
+              Finalizar fase
+            </Button>
+          ) : null}
+          {puedeReanudarEliminatoria ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="te-btn-finalizar-fase"
+              loading={reabriendoTorneo}
+              disabled={reabriendoTorneo}
+              onClick={() => {
+                void reabrirTorneoEliminatoria();
+              }}
+            >
+              Reanudar eliminatoria
+            </Button>
+          ) : null}
+          {puedeFinalizarTorneo ? (
+            confirmFinalizar ? (
+              <div className="te-gestion-finalizar-confirm">
+                <p className="te-gestion-finalizar-confirm__text">
+                  ¿Confirmas que el torneo ha terminado? Esta acción no se puede
+                  deshacer.
+                </p>
+                <div className="te-gestion-finalizar-confirm__actions">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    loading={finalizandoTorneo}
+                    disabled={finalizandoTorneo}
+                    onClick={() => {
+                      void finalizarTorneoEliminatoria().finally(() =>
+                        setConfirmFinalizar(false)
+                      );
+                    }}
+                  >
+                    Sí, finalizar torneo
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={finalizandoTorneo}
+                    onClick={() => setConfirmFinalizar(false)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="te-btn-finalizar-fase"
+                onClick={() => setConfirmFinalizar(true)}
+              >
+                Finalizar torneo
+              </Button>
+            )
+          ) : null}
           <Button
             type="button"
             variant="secondary"
@@ -132,6 +269,20 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         role="group"
         aria-label="Enlaces públicos"
       >
+        {enEliminatoria ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="te-public-link-btn"
+            onClick={() => copyLink(publicEliminatoriaUrl(torneoId))}
+          >
+            <span className="te-btn-icon" aria-hidden>
+              ⎘
+            </span>
+            Cuadro eliminatorio
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="secondary"
@@ -156,7 +307,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           </span>
           Tabla general
         </Button>
-        {grupo ? (
+        {grupo && !mostrarEliminatoria ? (
           <Button
             type="button"
             variant="secondary"
@@ -175,100 +326,169 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
 
       {error && <p className="te-error">{error}</p>}
 
-      <div className="torneo-express-card te-grupos-card te-gestion-card">
-        <h2 className="te-grupos-card__title te-label-section">Grupos</h2>
+      {enEliminatoria ? (
         <div
-          className="te-grupos-card__tabs"
+          className="te-grupos-card__tabs te-gestion-vista-tabs"
           role="tablist"
-          aria-label="Seleccionar grupo"
+          aria-label="Vista del torneo"
         >
-          {bundle.grupos.map((g) => (
-            <button
-              key={g.id}
-              type="button"
-              role="tab"
-              aria-selected={g.id === grupoId}
-              className={`te-grupos-tab${
-                g.id === grupoId ? " te-grupos-tab--active" : ""
-              }`}
-              onClick={() => setActiveGrupoId(g.id)}
-            >
-              <GrupoBadge nombre={g.nombre} orden={g.orden} />
-            </button>
-          ))}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={vista === "grupos"}
+            className={`te-grupos-tab${
+              vista === "grupos" ? " te-grupos-tab--active" : ""
+            }`}
+            onClick={() => setVista("grupos")}
+          >
+            Fase de grupos
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={vista === "eliminatoria"}
+            className={`te-grupos-tab${
+              vista === "eliminatoria" ? " te-grupos-tab--active" : ""
+            }`}
+            onClick={() => setVista("eliminatoria")}
+          >
+            Eliminatoria
+          </button>
         </div>
+      ) : null}
 
-        {grupo && (
-          <div className="te-grupos-card__body te-gestion-layout">
-            <section className="te-gestion-layout__partidos">
-              <h3 className="te-grupos-card__active-name te-label-section">
-                {grupo.nombre}
-              </h3>
-
-              <h3 className="te-grupos-card__partidos-title te-label-section">
-                Partidos
-              </h3>
-              <p className="te-grupos-card__partidos-hint">
-                Captura resultados, horarios y canchas de cada juego.
-              </p>
-              {(!partidosOrdenDisponible ||
-                !partidosCanchaDisponible ||
-                !partidosProgramadoDisponible) && (
-                <div className="te-partidos-migration-hint" role="alert">
-                  <p>
-                    Faltan columnas en Supabase para{" "}
-                    {[
-                      !partidosOrdenDisponible && "orden",
-                      !partidosCanchaDisponible && "cancha",
-                      !partidosProgramadoDisponible && "programado_en",
-                    ]
-                      .filter(Boolean)
-                      .join(", ")}
-                    .
-                  </p>
-                  <p className="te-partidos-migration-hint__sql">
-                    SQL Editor → ejecuta{" "}
-                    <strong>supabase/torneo-express-partidos-orden.sql</strong>{" "}
-                    o <strong>torneo-express-partidos-programado.sql</strong> y
-                    recarga.
-                  </p>
-                </div>
-              )}
-              <PartidosGrupo
-                partidos={bundle.partidosPorGrupo[grupo.id] ?? []}
-                parejas={bundle.parejasPorGrupo[grupo.id] ?? []}
-                editable
-                allowReorder={partidosOrdenDisponible}
-                canchaEditable={partidosCanchaDisponible}
-                horarioEditable={partidosProgramadoDisponible}
-                savingPartidoId={savingPartidoId}
-                savingCanchaId={savingCanchaId}
-                savingProgramadoId={savingProgramadoId}
-                savingOrden={savingOrden}
-                onSaveResultado={saveResultado}
-                onSaveCancha={partidosCanchaDisponible ? saveCancha : undefined}
-                onSaveProgramado={
-                  partidosProgramadoDisponible ? saveProgramado : undefined
-                }
-                onSaveOrden={partidosOrdenDisponible ? saveOrden : undefined}
-              />
-            </section>
-
-            <aside className="te-gestion-layout__aside">
-              <h3 className="te-grupos-card__standings-title te-label-section">
-                Clasificación
-              </h3>
-              <p className="te-grupos-card__standings-hint">
-                Se actualiza sola al guardar resultados en los partidos.
-              </p>
-              <TablaGrupo
-                rows={standingsByGrupo[grupo.id] ?? []}
-                scoringHelpVariant="express"
-              />
-            </aside>
+      {mostrarEliminatoria ? (
+        <GestionEliminatoria
+          bundle={bundle}
+          labelMap={eliminatoriaLabelMap}
+          editable={faseTorneo === "eliminatoria" || faseTorneo === "cerrado"}
+          savingEliminatoriaId={savingEliminatoriaId}
+          savingEliminatoriaCanchaId={savingEliminatoriaCanchaId}
+          savingEliminatoriaProgramadoId={savingEliminatoriaProgramadoId}
+          onSaveResultado={saveEliminatoriaResultado}
+          onSaveCancha={saveEliminatoriaCancha}
+          onSaveProgramado={saveEliminatoriaProgramado}
+        />
+      ) : (
+        <div className="torneo-express-card te-grupos-card te-gestion-card">
+          <h2 className="te-grupos-card__title te-label-section">Grupos</h2>
+          <div
+            className="te-grupos-card__tabs"
+            role="tablist"
+            aria-label="Seleccionar grupo"
+          >
+            {bundle.grupos.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                role="tab"
+                aria-selected={g.id === grupoId}
+                className={`te-grupos-tab${
+                  g.id === grupoId ? " te-grupos-tab--active" : ""
+                }`}
+                onClick={() => setActiveGrupoId(g.id)}
+              >
+                <GrupoBadge nombre={g.nombre} orden={g.orden} />
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+
+          {grupo && (
+            <div className="te-grupos-card__body te-gestion-layout">
+              <section className="te-gestion-layout__partidos">
+                <h3 className="te-grupos-card__active-name te-label-section">
+                  {grupo.nombre}
+                </h3>
+
+                <h3 className="te-grupos-card__partidos-title te-label-section">
+                  Partidos
+                </h3>
+                <p className="te-grupos-card__partidos-hint">
+                  Captura resultados, horarios y canchas de cada juego.
+                </p>
+                {(!partidosOrdenDisponible ||
+                  !partidosCanchaDisponible ||
+                  !partidosProgramadoDisponible) && (
+                  <div className="te-partidos-migration-hint" role="alert">
+                    <p>
+                      Faltan columnas en Supabase para{" "}
+                      {[
+                        !partidosOrdenDisponible && "orden",
+                        !partidosCanchaDisponible && "cancha",
+                        !partidosProgramadoDisponible && "programado_en",
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                      .
+                    </p>
+                    <p className="te-partidos-migration-hint__sql">
+                      SQL Editor → ejecuta{" "}
+                      <strong>supabase/torneo-express-partidos-orden.sql</strong>{" "}
+                      o <strong>torneo-express-partidos-programado.sql</strong> y
+                      recarga.
+                    </p>
+                  </div>
+                )}
+                <PartidosGrupo
+                  partidos={bundle.partidosPorGrupo[grupo.id] ?? []}
+                  parejas={bundle.parejasPorGrupo[grupo.id] ?? []}
+                  editable={faseTorneo === "grupos"}
+                  allowReorder={partidosOrdenDisponible}
+                  canchaEditable={partidosCanchaDisponible}
+                  horarioEditable={partidosProgramadoDisponible}
+                  savingPartidoId={savingPartidoId}
+                  savingCanchaId={savingCanchaId}
+                  savingProgramadoId={savingProgramadoId}
+                  savingOrden={savingOrden}
+                  onSaveResultado={
+                    faseTorneo === "grupos" ? saveResultado : undefined
+                  }
+                  onSaveCancha={
+                    faseTorneo === "grupos" && partidosCanchaDisponible
+                      ? saveCancha
+                      : undefined
+                  }
+                  onSaveProgramado={
+                    faseTorneo === "grupos" && partidosProgramadoDisponible
+                      ? saveProgramado
+                      : undefined
+                  }
+                  onSaveOrden={
+                    faseTorneo === "grupos" && partidosOrdenDisponible
+                      ? saveOrden
+                      : undefined
+                  }
+                />
+              </section>
+
+              <aside className="te-gestion-layout__aside">
+                <h3 className="te-grupos-card__standings-title te-label-section">
+                  Clasificación
+                </h3>
+                <p className="te-grupos-card__standings-hint">
+                  Se actualiza sola al guardar resultados en los partidos.
+                </p>
+                <TablaGrupo
+                  rows={standingsByGrupo[grupo.id] ?? []}
+                  scoringHelpVariant="express"
+                />
+              </aside>
+            </div>
+          )}
+        </div>
+      )}
+
+      <TorneoExpressBracketModal
+        torneoId={torneoId}
+        torneoNombre={bundle.torneo.nombre}
+        open={bracketOpen}
+        onClose={() => setBracketOpen(false)}
+        onConfirmed={() => {
+          setBracketOpen(false);
+          setVista("eliminatoria");
+          void reload();
+        }}
+      />
     </TePageShell>
   );
 };

@@ -1,0 +1,515 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  buildPublicBracketVisualLayout,
+  type BracketVisualColumn,
+  type BracketVisualSlot,
+} from "../../../lib/torneoExpress/publicBracketLayout";
+import type {
+  PublicBracketTeam,
+  PublicMatchStatus,
+  PublicMatchupCard,
+} from "../../../lib/torneoExpress/publicBracketModel";
+import type { PartidoSetScore } from "../../../lib/torneoExpress/types";
+import type { PartidoSetsSide } from "../../../lib/torneoExpress/partidoSets";
+
+function matchWinnerSide(card: PublicMatchupCard): PartidoSetsSide | null {
+  if (card.local.isWinner) return "local";
+  if (card.visit.isWinner) return "visitante";
+  return null;
+}
+
+function statusLabel(status: PublicMatchStatus): string {
+  switch (status) {
+    case "live":
+      return "EN JUEGO";
+    case "finished":
+      return "JUGADO";
+    case "bye":
+      return "BYE";
+    default:
+      return "PENDIENTE";
+  }
+}
+
+function formatMeta(hora: string, cancha: string | null): string {
+  const time = hora.replace(/\s*p\.?\s*m\.?/gi, "").trim();
+  if (cancha) {
+    const court = cancha.replace(/^cancha\s*/i, "Cancha ");
+    return `${time} · ${court}`;
+  }
+  return time;
+}
+
+function BracketSetsList({
+  sets,
+  winnerSide,
+}: {
+  sets: PartidoSetScore[];
+  winnerSide: PartidoSetsSide | null;
+}) {
+  if (sets.length === 0) return null;
+
+  return (
+    <div className="te-bracket-sets" aria-label="Marcador por sets">
+      <p className="te-bracket-sets__label" aria-hidden>
+        Sets
+      </p>
+      <ul className="te-bracket-sets__list">
+        {sets.map((set, i) => {
+          const localWonSet = set.local > set.visitante;
+          const visitWonSet = set.visitante > set.local;
+          const matchWinnerWonSet =
+            winnerSide === "local"
+              ? localWonSet
+              : winnerSide === "visitante"
+                ? visitWonSet
+                : localWonSet;
+
+          const localClass =
+            matchWinnerWonSet && winnerSide === "local"
+              ? " te-bracket-sets__num--accent"
+              : "";
+          const visitClass =
+            matchWinnerWonSet && winnerSide === "visitante"
+              ? " te-bracket-sets__num--accent"
+              : "";
+
+          return (
+            <li key={i} className="te-bracket-sets__row">
+              <span className="te-bracket-sets__set-name">Set {i + 1}:</span>
+              <span className="te-bracket-sets__score">
+                <span className={`te-bracket-sets__num${localClass}`}>
+                  {set.local}
+                </span>
+                <span className="te-bracket-sets__sep" aria-hidden>
+                  –
+                </span>
+                <span className={`te-bracket-sets__num${visitClass}`}>
+                  {set.visitante}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function BracketTeamRow({
+  team,
+  role,
+  centered = false,
+}: {
+  team: PublicBracketTeam;
+  role: "winner" | "loser" | "neutral";
+  centered?: boolean;
+}) {
+  const isWinner = role === "winner";
+
+  return (
+    <div
+      className={`te-bracket-team te-bracket-team--${role}${
+        isWinner ? " te-bracket-team--winner" : ""
+      }${centered ? " te-bracket-team--centered" : ""}`}
+    >
+      <div className="te-bracket-team__main">
+        {team.seed != null ? (
+          <span className="te-bracket-team__seed">#{team.seed}</span>
+        ) : null}
+        <span className="te-bracket-team__name">{team.label}</span>
+        {team.originBadge ? (
+          <span className="te-bracket-origin">{team.originBadge}</span>
+        ) : null}
+      </div>
+      {isWinner ? (
+        <span className="te-bracket-team__dot" aria-hidden title="Ganador" />
+      ) : null}
+    </div>
+  );
+}
+
+function BracketMatchCard({
+  card,
+  isCenter = false,
+}: {
+  card: PublicMatchupCard;
+  isCenter?: boolean;
+}) {
+  const played = card.status === "finished";
+  const localWins = played && card.local.isWinner;
+  const visitWins = played && card.visit.isWinner;
+  const winnerSide = matchWinnerSide(card);
+
+  const hasWinner = played && (localWins || visitWins);
+  const winner = localWins ? card.local : visitWins ? card.visit : null;
+  const loser = localWins ? card.visit : visitWins ? card.local : null;
+  const hasSets = played && card.sets.length > 0;
+
+  const phaseLabel = isCenter ? "FINAL" : card.matchTitle.toUpperCase();
+  const meta = formatMeta(card.horaDisplay, card.canchaLabel);
+  const localPending = !card.local.label?.trim();
+  const visitPending = !card.visit.label?.trim();
+
+  const renderFinalPending = () => (
+    <>
+      <span
+        className={`te-elim-bracket-finalist${
+          localPending ? " te-elim-bracket-finalist--pending" : ""
+        }`}
+      >
+        {card.local.label?.trim() || "Por definir"}
+      </span>
+      <span className="te-bracket-vs te-bracket-vs--final">
+        <span className="te-bracket-vs__line" aria-hidden />
+        <span className="te-bracket-vs__text">vs</span>
+        <span className="te-bracket-vs__line" aria-hidden />
+      </span>
+      <span
+        className={`te-elim-bracket-finalist${
+          visitPending ? " te-elim-bracket-finalist--pending" : ""
+        }`}
+      >
+        {card.visit.label?.trim() || "Por definir"}
+      </span>
+    </>
+  );
+
+  return (
+    <article
+      className={`te-elim-bracket-card te-elim-bracket-card--${card.status}${
+        isCenter ? " te-elim-bracket-card--center" : ""
+      }`}
+      data-bracket-card={isCenter ? "final" : "semi"}
+      aria-label={`${card.matchTitle}: ${card.local.label} vs ${card.visit.label}`}
+    >
+      <header
+        className={`te-elim-bracket-card__head${
+          isCenter ? " te-elim-bracket-card__head--center" : ""
+        }`}
+      >
+        <span
+          className={`te-elim-bracket-card__phase${
+            isCenter ? " te-elim-bracket-card__phase--final" : ""
+          }`}
+        >
+          {phaseLabel}
+        </span>
+        <span
+          className={`te-elim-bracket-card__status te-elim-bracket-card__status--${card.status}`}
+        >
+          {statusLabel(card.status)}
+        </span>
+      </header>
+
+      {!isCenter || card.status !== "pending" ? (
+        <p className="te-elim-bracket-card__meta">{meta}</p>
+      ) : null}
+
+      <div
+        className={`te-elim-bracket-card__body${
+          isCenter ? " te-elim-bracket-card__body--final" : ""
+        }`}
+      >
+        {isCenter && !hasWinner ? (
+          renderFinalPending()
+        ) : hasWinner && winner && loser ? (
+          <>
+            <BracketTeamRow team={winner} role="winner" centered={isCenter} />
+            {hasSets ? (
+              <BracketSetsList sets={card.sets} winnerSide={winnerSide} />
+            ) : null}
+            <BracketTeamRow team={loser} role="loser" centered={isCenter} />
+          </>
+        ) : (
+          <>
+            <BracketTeamRow team={card.local} role="neutral" centered={isCenter} />
+            <span className="te-bracket-vs">
+              <span className="te-bracket-vs__line" aria-hidden />
+              <span className="te-bracket-vs__text">vs</span>
+              <span className="te-bracket-vs__line" aria-hidden />
+            </span>
+            <BracketTeamRow
+              team={card.visit}
+              role="neutral"
+              centered={isCenter}
+            />
+          </>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function BracketFinalPlaceholderCard({
+  slot,
+}: {
+  slot: BracketVisualSlot;
+}) {
+  const top = slot.finalistTop ?? "Por definir";
+  const bottom = slot.finalistBottom ?? "Por definir";
+  const topPending = top === "Por definir";
+  const bottomPending = bottom === "Por definir";
+
+  return (
+    <article
+      className="te-elim-bracket-card te-elim-bracket-card--center te-elim-bracket-card--placeholder te-elim-bracket-card--pending"
+      data-bracket-card="final"
+      aria-label="Final"
+    >
+      <header className="te-elim-bracket-card__head te-elim-bracket-card__head--center">
+        <span className="te-elim-bracket-card__phase te-elim-bracket-card__phase--final">
+          FINAL
+        </span>
+        <span className="te-elim-bracket-card__status te-elim-bracket-card__status--pending">
+          PENDIENTE
+        </span>
+      </header>
+
+      <div className="te-elim-bracket-card__body te-elim-bracket-card__body--final">
+        <span
+          className={`te-elim-bracket-finalist${
+            topPending ? " te-elim-bracket-finalist--pending" : ""
+          }`}
+        >
+          {top}
+        </span>
+        <span className="te-bracket-vs te-bracket-vs--final">
+          <span className="te-bracket-vs__line" aria-hidden />
+          <span className="te-bracket-vs__text">vs</span>
+          <span className="te-bracket-vs__line" aria-hidden />
+        </span>
+        <span
+          className={`te-elim-bracket-finalist${
+            bottomPending ? " te-elim-bracket-finalist--pending" : ""
+          }`}
+        >
+          {bottom}
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function BracketSlotView({
+  slot,
+}: {
+  slot: BracketVisualSlot;
+}) {
+  const isCenter = Boolean(slot.isCenter);
+  const content =
+    slot.kind === "final-placeholder" || !slot.card ? (
+      <BracketFinalPlaceholderCard slot={slot} />
+    ) : (
+      <BracketMatchCard card={slot.card} isCenter={isCenter} />
+    );
+
+  if (isCenter) {
+    return <div className="te-bracket-final-wrap">{content}</div>;
+  }
+
+  return content;
+}
+
+function BracketColumn({ column }: { column: BracketVisualColumn }) {
+  return (
+    <div
+      className={`te-bracket-col te-bracket-col--${column.side}`}
+      data-col={column.side}
+    >
+      <div className="te-bracket-col__stack">
+        {column.slots.map((slot, i) => (
+          <BracketSlotView
+            key={`${column.index}-${i}-${slot.card?.id ?? "ph"}`}
+            slot={slot}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+interface ConnectorPaths {
+  left: string;
+  right: string;
+}
+
+function BracketConnectorOverlay({
+  stageRef,
+  leftHasWinner,
+  rightHasWinner,
+  enabled,
+}: {
+  stageRef: React.RefObject<HTMLDivElement | null>;
+  leftHasWinner: boolean;
+  rightHasWinner: boolean;
+  enabled: boolean;
+}) {
+  const [paths, setPaths] = useState<ConnectorPaths>({ left: "", right: "" });
+
+  const measure = useCallback(() => {
+    const stage = stageRef.current;
+    if (!stage || !enabled) {
+      setPaths({ left: "", right: "" });
+      return;
+    }
+
+    const leftCard = stage.querySelector<HTMLElement>(
+      '[data-col="left"] [data-bracket-card="semi"]'
+    );
+    const finalCard = stage.querySelector<HTMLElement>(
+      '[data-col="center"] [data-bracket-card="final"]'
+    );
+    const rightCard = stage.querySelector<HTMLElement>(
+      '[data-col="right"] [data-bracket-card="semi"]'
+    );
+
+    if (!leftCard || !finalCard || !rightCard) {
+      setPaths({ left: "", right: "" });
+      return;
+    }
+
+    const sr = stage.getBoundingClientRect();
+    const lr = leftCard.getBoundingClientRect();
+    const fr = finalCard.getBoundingClientRect();
+    const rr = rightCard.getBoundingClientRect();
+
+    const leftY = lr.top + lr.height / 2 - sr.top;
+    const leftX = lr.right - sr.left;
+    const finalLeftX = fr.left - sr.left;
+    const finalRightX = fr.right - sr.left;
+    const finalY = fr.top + fr.height / 2 - sr.top;
+    const rightY = rr.top + rr.height / 2 - sr.top;
+    const rightX = rr.left - sr.left;
+
+    setPaths({
+      left: `M ${leftX} ${leftY} L ${finalLeftX} ${finalY}`,
+      right: `M ${rightX} ${rightY} L ${finalRightX} ${finalY}`,
+    });
+  }, [enabled, stageRef]);
+
+  useEffect(() => {
+    measure();
+    const stage = stageRef.current;
+    if (!stage || !enabled) return;
+
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(stage);
+    const cards = stage.querySelectorAll("[data-bracket-card]");
+    cards.forEach((el) => ro.observe(el));
+
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [enabled, measure, stageRef]);
+
+  if (!enabled || (!paths.left && !paths.right)) return null;
+
+  return (
+    <svg className="te-bracket-connectors" aria-hidden>
+      {paths.left ? (
+        <path
+          d={paths.left}
+          className={`te-bracket-connectors__path${
+            leftHasWinner ? " te-bracket-connectors__path--active" : ""
+          }`}
+        />
+      ) : null}
+      {paths.right ? (
+        <path
+          d={paths.right}
+          className={`te-bracket-connectors__path${
+            rightHasWinner ? " te-bracket-connectors__path--active" : ""
+          }`}
+        />
+      ) : null}
+    </svg>
+  );
+}
+
+export interface TEPublicBracketVisualProps {
+  allCards: PublicMatchupCard[];
+  totalRondas: number;
+}
+
+export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
+  allCards,
+  totalRondas,
+}) => {
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  const layout = useMemo(
+    () => buildPublicBracketVisualLayout(allCards, totalRondas),
+    [allCards, totalRondas]
+  );
+
+  const leftHasWinner = useMemo(
+    () =>
+      layout.columns
+        .find((c) => c.side === "left")
+        ?.slots.some(
+          (s) =>
+            s.card?.status === "finished" &&
+            (s.card.local.isWinner || s.card.visit.isWinner)
+        ) ?? false,
+    [layout.columns]
+  );
+
+  const rightHasWinner = useMemo(
+    () =>
+      layout.columns
+        .find((c) => c.side === "right")
+        ?.slots.some(
+          (s) =>
+            s.card?.status === "finished" &&
+            (s.card.local.isWinner || s.card.visit.isWinner)
+        ) ?? false,
+    [layout.columns]
+  );
+
+  const showConnectors = layout.columnCount > 1;
+
+  if (allCards.length === 0) {
+    return (
+      <p className="te-elim-public-empty">
+        Aún no hay enfrentamientos publicados.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <div
+        ref={stageRef}
+        className="te-bracket-stage te-bracket-visual te-bracket-visual--desktop te-pub-fade-in"
+      >
+        <div className="te-bracket-visual__grid">
+          {layout.columns.map((col) => (
+            <BracketColumn key={`col-${col.index}`} column={col} />
+          ))}
+        </div>
+        <BracketConnectorOverlay
+          stageRef={stageRef}
+          leftHasWinner={leftHasWinner}
+          rightHasWinner={rightHasWinner}
+          enabled={showConnectors}
+        />
+      </div>
+
+      <div className="te-bracket-visual te-bracket-visual--mobile te-pub-fade-in">
+        {layout.mobileSlots.map((slot, i) => (
+          <React.Fragment key={`m-${i}-${slot.card?.id ?? "ph"}`}>
+            {i > 0 ? (
+              <div className="te-bracket-mobile-arrow" aria-hidden>
+                ↓
+              </div>
+            ) : null}
+            <BracketSlotView slot={slot} />
+          </React.Fragment>
+        ))}
+      </div>
+    </>
+  );
+};

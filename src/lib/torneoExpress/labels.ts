@@ -1,4 +1,4 @@
-import type { TorneoExpressEstado } from "./types";
+import type { TorneoExpressEstado, TorneoExpressFaseTorneo } from "./types";
 
 export function torneoExpressEstadoLabel(
   estado: TorneoExpressEstado | string
@@ -12,5 +12,20 @@ export function torneoExpressEstadoLabel(
       return "Pendiente";
     default:
       return "Pendiente";
+  }
+}
+
+export function torneoExpressFaseLabel(
+  fase: TorneoExpressFaseTorneo | string | null | undefined
+): string | null {
+  switch (fase) {
+    case "eliminatoria":
+      return "Eliminatoria";
+    case "cerrado":
+      return "Cerrado";
+    case "grupos":
+      return "Fase de grupos";
+    default:
+      return null;
   }
 }

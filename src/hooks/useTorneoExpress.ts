@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { buildEliminatoriaLabelMap } from "../lib/torneoExpress/eliminatoriaLabels";
 import {
   buildStandingsForGrupo,
   buildStandingsGeneral,
 } from "../lib/torneoExpress/standings";
-import type { StandingRowExpress, TorneoExpressBundle } from "../lib/torneoExpress/types";
+import type { PartidoSetScore, StandingRowExpress, TorneoExpressBundle } from "../lib/torneoExpress/types";
 import {
   checkPartidosCanchaColumnAvailable,
   checkPartidosOrdenColumnAvailable,
@@ -12,6 +13,11 @@ import {
   PartidosCanchaColumnMissingError,
   PartidosOrdenColumnMissingError,
   PartidosProgramadoColumnMissingError,
+  finalizarTorneoExpressEliminatoria as persistFinalizarTorneoEliminatoria,
+  reabrirTorneoExpressEliminatoria as persistReabrirTorneoEliminatoria,
+  saveEliminatoriaCancha as persistEliminatoriaCancha,
+  saveEliminatoriaProgramado as persistEliminatoriaProgramado,
+  saveEliminatoriaResultado as persistEliminatoriaResultado,
   savePartidoCancha,
   savePartidoProgramado,
   savePartidoResultado,
@@ -46,6 +52,16 @@ export function useTorneoExpress(
   const [savingProgramadoId, setSavingProgramadoId] = useState<string | null>(
     null
   );
+  const [savingEliminatoriaId, setSavingEliminatoriaId] = useState<string | null>(
+    null
+  );
+  const [savingEliminatoriaCanchaId, setSavingEliminatoriaCanchaId] = useState<
+    string | null
+  >(null);
+  const [savingEliminatoriaProgramadoId, setSavingEliminatoriaProgramadoId] =
+    useState<string | null>(null);
+  const [finalizandoTorneo, setFinalizandoTorneo] = useState(false);
+  const [reabriendoTorneo, setReabriendoTorneo] = useState(false);
 
   const reload = useCallback(async (opts?: { silent?: boolean }) => {
     if (!torneoId) {
@@ -98,9 +114,9 @@ export function useTorneoExpress(
   reloadRef.current = reload;
 
   useEffect(() => {
-    if (!torneoId || !realtime || !grupoIdsKey) return;
+    if (!torneoId || !realtime) return;
 
-    const grupoIds = grupoIdsKey.split(",").filter(Boolean);
+    const grupoIds = grupoIdsKey ? grupoIdsKey.split(",").filter(Boolean) : [];
     return subscribeTorneoExpress(torneoId, grupoIds, () => {
       void reloadRef.current({ silent: true });
     });
@@ -136,6 +152,11 @@ export function useTorneoExpress(
       bundle.parejasPorGrupo,
       bundle.partidosPorGrupo
     );
+  }, [bundle]);
+
+  const eliminatoriaLabelMap = useMemo(() => {
+    if (!bundle) return {} as Record<string, string>;
+    return buildEliminatoriaLabelMap(bundle);
   }, [bundle]);
 
   const saveResultado = useCallback(
@@ -220,6 +241,97 @@ export function useTorneoExpress(
     [reload]
   );
 
+  const saveEliminatoriaResultado = useCallback(
+    async (partidoId: string, sets: PartidoSetScore[]) => {
+      setSavingEliminatoriaId(partidoId);
+      setError(null);
+      try {
+        await persistEliminatoriaResultado(partidoId, sets);
+        await reload();
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "No se pudo guardar el resultado"
+        );
+        throw e;
+      } finally {
+        setSavingEliminatoriaId(null);
+      }
+    },
+    [reload]
+  );
+
+  const saveEliminatoriaCancha = useCallback(
+    async (partidoId: string, cancha: string | null) => {
+      setSavingEliminatoriaCanchaId(partidoId);
+      setError(null);
+      try {
+        await persistEliminatoriaCancha(partidoId, cancha);
+        await reload();
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "No se pudo guardar la cancha"
+        );
+        throw e;
+      } finally {
+        setSavingEliminatoriaCanchaId(null);
+      }
+    },
+    [reload]
+  );
+
+  const saveEliminatoriaProgramado = useCallback(
+    async (partidoId: string, programadoEn: string | null) => {
+      setSavingEliminatoriaProgramadoId(partidoId);
+      setError(null);
+      try {
+        await persistEliminatoriaProgramado(partidoId, programadoEn);
+        await reload();
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "No se pudo guardar fecha y hora"
+        );
+        throw e;
+      } finally {
+        setSavingEliminatoriaProgramadoId(null);
+      }
+    },
+    [reload]
+  );
+
+  const finalizarTorneoEliminatoria = useCallback(async () => {
+    if (!torneoId) return;
+    setFinalizandoTorneo(true);
+    setError(null);
+    try {
+      await persistFinalizarTorneoEliminatoria(torneoId);
+      await reload();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "No se pudo finalizar el torneo"
+      );
+      throw e;
+    } finally {
+      setFinalizandoTorneo(false);
+    }
+  }, [reload, torneoId]);
+
+  const reabrirTorneoEliminatoria = useCallback(async () => {
+    if (!torneoId) return;
+    setReabriendoTorneo(true);
+    setError(null);
+    try {
+      await persistReabrirTorneoEliminatoria(torneoId);
+      await reload();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "No se pudo reabrir el torneo"
+      );
+      throw e;
+    } finally {
+      setReabriendoTorneo(false);
+    }
+  }, [reload, torneoId]);
+
   return {
     bundle,
     loading,
@@ -233,9 +345,20 @@ export function useTorneoExpress(
     saveCancha,
     saveProgramado,
     saveOrden,
+    saveEliminatoriaResultado,
+    saveEliminatoriaCancha,
+    saveEliminatoriaProgramado,
+    finalizarTorneoEliminatoria,
+    reabrirTorneoEliminatoria,
+    eliminatoriaLabelMap,
     savingPartidoId,
     savingCanchaId,
     savingProgramadoId,
+    savingEliminatoriaId,
+    savingEliminatoriaCanchaId,
+    savingEliminatoriaProgramadoId,
+    finalizandoTorneo,
+    reabriendoTorneo,
     savingOrden,
     partidosOrdenDisponible,
     partidosCanchaDisponible,

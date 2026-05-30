@@ -362,6 +362,44 @@
   opacity: 0.65;
 }
 
+.te-gestion-page .te-partido-matchup .te-partido-sets-score--inline {
+  font-size: 22px;
+  font-weight: 700;
+  gap: 0.15rem 0.25rem;
+}
+
+.te-gestion-page .te-partido-matchup .te-partido-sets-score__slash {
+  font-size: 0.85em;
+  opacity: 0.55;
+}
+
+.te-gestion-finalizar-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  max-width: 18rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--border-accent);
+  background: var(--bg-elevated);
+}
+
+.te-gestion-finalizar-confirm__text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.te-gestion-finalizar-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
 .te-gestion-page .te-partido-row .riviera-badge--finished {
   background: var(--success-muted);
   color: var(--success);
@@ -643,4 +681,65 @@
     text-align: center;
     width: 100%;
   }
+}
+
+/* —— Fase eliminatoria (gestión) —— */
+.te-gestion-page .te-gestion-vista-tabs {
+  margin-bottom: 16px;
+}
+
+.te-gestion-page .te-gestion-fase-pill {
+  font-size: 0.68rem;
+}
+
+.te-gestion-page .te-elim-gestion__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.te-gestion-page .te-gestion-layout--elim {
+  margin-top: 8px;
+}
+
+.te-gestion-page .te-elim-rondas-tabs {
+  margin-bottom: 16px;
+}
+
+.te-gestion-page .te-grupos-tab--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.te-gestion-page .te-elim-bye-label {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.te-gestion-page .te-elim-cuadro__columns {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.te-gestion-page .te-elim-cuadro__col-title {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.te-gestion-page .te-elim-campeon {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--accent-gold-dim);
+  border: 0.5px solid var(--accent-gold);
+  font-size: 0.875rem;
+  color: var(--text-primary);
 }
