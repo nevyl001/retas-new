@@ -136,7 +136,7 @@ function PublicEliminatoriaCelebrate({
           {championLabel}
         </p>
         <p className="te-pub-grupo-celebrate__motivational">
-          Una final épica. Gracias por competir con garra.
+          Una final inolvidable. Gracias por dejarlo todo en la cancha y elevar el torneo.
         </p>
 
         <footer className="te-pub-grupo-celebrate__footer">

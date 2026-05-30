@@ -219,7 +219,7 @@ function resolveFinalistsCelebrate(
 
 function motivationalMessageLegacy(currentPhaseUpper: string): string {
   if (currentPhaseUpper.includes("CAMPEONES")) {
-    return "¡Tenemos campeones! Gracias por competir con garra.";
+    return "¡Tenemos campeones! Gracias por competir con pasión, esfuerzo y entrega.";
   }
   if (currentPhaseUpper === "FINAL") {
     return "¡La gran final ha llegado. Solo uno puede ganar!";
