@@ -5,11 +5,29 @@
 }
 
 .te-public.te-public--eliminatoria .te-public__inner {
-  max-width: min(1400px, 96vw);
+  max-width: min(1600px, 98vw);
   width: 100%;
-  padding: 1.25rem clamp(1rem, 3vw, 2.5rem) 2.5rem;
+  padding: 1rem clamp(0.75rem, 2.5vw, 2rem) 2rem;
 }
 
+.te-elim-public-bracket-wrap {
+  margin-top: 0.75rem;
+  padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 2.75rem);
+  min-height: min(72vh, 780px);
+  display: flex;
+  align-items: center;
+  background: rgba(12, 12, 14, 0.42);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.32);
+}
+
+.te-elim-public-bracket-wrap .te-bracket-stage,
+.te-elim-public-bracket-wrap .te-bracket-visual--mobile {
+  width: 100%;
+}
 
 .te-elim-public {
   font-family: var(--font-body);
@@ -36,19 +54,6 @@
 .te-elim-champion strong {
   font-weight: 700;
   color: var(--text-primary);
-}
-
-.te-elim-public-bracket-wrap {
-  margin-top: 1rem;
-  padding: clamp(1.75rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3.5rem);
-  background: rgba(14, 14, 16, 0.34);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 20px;
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .te-elim-public-empty {
@@ -89,19 +94,128 @@
 
 .te-bracket-visual__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: clamp(1.5rem, 3.5vw, 3.25rem);
+  grid-template-columns: minmax(0, 0.72fr) minmax(300px, 1.55fr) minmax(0, 0.72fr);
+  gap: clamp(1rem, 2.5vw, 2.5rem);
   align-items: center;
   width: 100%;
-  min-height: 0;
+  min-height: min(60vh, 640px);
   position: relative;
   z-index: 1;
 }
 
 @media (min-width: 1200px) {
   .te-bracket-visual__grid {
-    gap: clamp(2rem, 4vw, 4rem);
+    grid-template-columns: minmax(0, 0.68fr) minmax(360px, 1.65fr) minmax(0, 0.68fr);
+    gap: clamp(1.25rem, 3vw, 3rem);
+    min-height: min(65vh, 700px);
   }
+}
+
+.te-bracket-col--left,
+.te-bracket-col--right {
+  max-width: 100%;
+}
+
+.te-bracket-col--left .te-elim-bracket-card,
+.te-bracket-col--right .te-elim-bracket-card {
+  max-width: min(100%, 19rem);
+  margin-inline: auto;
+}
+
+.te-bracket-col--left .te-elim-bracket-card {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.te-bracket-col--right .te-elim-bracket-card {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.te-bracket-final-wrap {
+  width: 100%;
+  max-width: min(100%, 34rem);
+  height: fit-content;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(0.85rem, 1.5vw, 1.25rem);
+}
+
+@media (min-width: 1200px) {
+  .te-bracket-final-wrap {
+    max-width: min(100%, 38rem);
+  }
+}
+
+/* Encabezado final — fuera del cuadro dorado */
+.te-bracket-final-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.45rem;
+  padding: 0 0.5rem;
+}
+
+.te-bracket-final-caption__ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: min(100%, 18rem);
+  margin-bottom: 0.15rem;
+}
+
+.te-bracket-final-caption__line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 162, 39, 0.55),
+    transparent
+  );
+}
+
+.te-bracket-final-caption__diamond {
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--accent-gold);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.45);
+}
+
+.te-bracket-final-caption__brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(0.6875rem, 1vw, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.te-bracket-final-caption__brand-sep {
+  color: var(--accent-gold);
+  letter-spacing: 0.12em;
+  opacity: 0.9;
+}
+
+.te-bracket-final-caption__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 2.2vw, 1.625rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  color: var(--accent-gold);
+  text-wrap: balance;
+  text-shadow: 0 0 24px rgba(201, 162, 39, 0.18);
 }
 
 .te-bracket-col {
@@ -136,16 +250,7 @@
   max-width: 100%;
 }
 
-/* Contenedor: solo el ancho/alto del contenido de la final */
-.te-bracket-final-wrap {
-  display: block;
-  width: max-content;
-  max-width: min(100%, 20rem);
-  height: fit-content;
-  margin-inline: auto;
-}
-
-/* Conectores SVG semi → final */
+/* Contenedor final — sin segundo panel de vidrio */
 .te-bracket-connectors {
   position: absolute;
   inset: 0;
@@ -167,31 +272,29 @@
   stroke: rgba(212, 160, 23, 0.5);
 }
 
-/* ── Tarjeta de partido ── */
+/* ── Tarjetas: transparentes dentro del contenedor único ── */
 .te-public.te-public--eliminatoria .te-elim-bracket-card {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.65rem;
   width: 100%;
-  padding: clamp(1.25rem, 2vw, 1.75rem) clamp(1.35rem, 2.2vw, 2rem);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  background: rgba(18, 18, 20, 0.62);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  padding: 1rem 1.125rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: transparent;
   box-sizing: border-box;
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transition:
-    border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.25s ease;
+  box-shadow: none;
+  transition: border-color 0.25s ease;
 }
 
-.te-public.te-public--eliminatoria .te-elim-bracket-card:not(.te-elim-bracket-card--center):hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  transform: translateY(-1px);
+.te-public.te-public--eliminatoria [data-bracket-card="semi"] {
+  padding: 0.875rem 1rem;
+  gap: 0.5rem;
+  font-size: 0.92em;
+}
+
+.te-public.te-public--eliminatoria [data-bracket-card="semi"]:hover {
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .te-bracket-final-wrap .te-elim-bracket-card--center {
@@ -202,14 +305,12 @@
   height: fit-content;
   min-height: 0;
   margin: 0;
-  padding: 0.75rem 1.125rem 0.875rem;
-  gap: 0.35rem;
-  border: 1px solid rgba(212, 160, 23, 0.35);
-  background: rgba(22, 20, 16, 0.68);
-  box-shadow:
-    0 14px 36px rgba(0, 0, 0, 0.26),
-    0 0 0 1px rgba(212, 160, 23, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: clamp(1.35rem, 2.5vw, 2rem) clamp(1.5rem, 3vw, 2.25rem);
+  gap: clamp(0.75rem, 1.5vw, 1.125rem);
+  border: 1px solid rgba(212, 160, 23, 0.55);
+  border-radius: 20px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .te-bracket-final-wrap .te-elim-bracket-card--center > * {
@@ -253,9 +354,10 @@
 }
 
 .te-elim-bracket-card__phase--final {
-  font-size: 13px;
+  font-size: clamp(0.8125rem, 1.2vw, 0.9375rem);
   color: var(--accent-gold);
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
+  font-weight: 700;
 }
 
 .te-elim-bracket-card__status {
@@ -287,11 +389,105 @@
 
 .te-elim-bracket-card__meta {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 400;
   color: var(--text-muted);
   line-height: 1.35;
-  opacity: 0.45;
+  opacity: 0.55;
+}
+
+/* Programación final — fecha, horario, cancha */
+.te-bracket-final-schedule {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  width: 100%;
+  padding: 1rem 0.5rem 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0.15rem 0 0.25rem;
+}
+
+.te-bracket-final-schedule__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0 0.65rem;
+  text-align: center;
+}
+
+.te-bracket-final-schedule__item:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.te-bracket-final-schedule__item--time {
+  padding-inline: 0.85rem;
+}
+
+.te-bracket-final-schedule__label {
+  display: block;
+  width: 100%;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  opacity: 0.85;
+  text-align: center;
+}
+
+.te-bracket-final-schedule__value {
+  display: block;
+  width: 100%;
+  font-size: clamp(0.875rem, 1.2vw, 1rem);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-primary);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.te-bracket-final-schedule__value--date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.te-bracket-final-schedule__date-line {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.te-bracket-final-schedule__value--time {
+  font-size: clamp(1.125rem, 1.9vw, 1.4375rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--accent-gold);
+  white-space: nowrap;
+}
+
+@media (max-width: 519px) {
+  .te-bracket-final-schedule {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.85rem 0.25rem 0.65rem;
+  }
+
+  .te-bracket-final-schedule__item:not(:last-child) {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    padding-bottom: 0.75rem;
+  }
+
+  .te-bracket-final-schedule__item--time {
+    padding-inline: 0.65rem;
+  }
 }
 
 .te-elim-bracket-card__body {
@@ -305,23 +501,20 @@
 .te-elim-bracket-card__body--final {
   align-items: center;
   text-align: center;
-  gap: 0.35rem;
-  padding: 0;
+  gap: clamp(0.65rem, 1.2vw, 1rem);
+  padding: 0.25rem 0 0;
   flex: 0 0 auto;
   min-height: 0;
 }
 
-.te-bracket-final-wrap .te-elim-bracket-card--center .te-elim-bracket-card__meta {
-  margin: 0;
-  line-height: 1.2;
-}
-
 .te-bracket-final-wrap .te-elim-bracket-finalist {
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
   line-height: 1.25;
 }
 
 .te-bracket-final-wrap .te-bracket-vs--final {
-  margin: 0.1rem auto;
+  margin: 0.25rem auto;
+  max-width: 14rem;
 }
 
 /* Equipos */
@@ -357,7 +550,7 @@
 }
 
 .te-bracket-team--winner .te-bracket-team__name {
-  font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  font-size: clamp(1rem, 1.4vw, 1.1875rem);
   font-weight: 600;
   line-height: 1.35;
   color: var(--text-primary);
@@ -365,7 +558,7 @@
 }
 
 .te-bracket-team--loser .te-bracket-team__name {
-  font-size: clamp(0.9375rem, 1.25vw, 1.0625rem);
+  font-size: clamp(0.8125rem, 1.1vw, 0.9375rem);
   font-weight: 400;
   line-height: 1.35;
   color: var(--text-muted);
@@ -373,27 +566,41 @@
 }
 
 .te-bracket-team--neutral .te-bracket-team__name {
-  font-size: clamp(1rem, 1.35vw, 1.125rem);
+  font-size: clamp(0.875rem, 1.2vw, 1rem);
   font-weight: 500;
   line-height: 1.35;
   color: var(--text-secondary);
 }
 
+.te-bracket-final-wrap .te-bracket-team--neutral .te-bracket-team__name,
+.te-bracket-final-wrap .te-bracket-team--winner .te-bracket-team__name {
+  font-size: clamp(1.125rem, 2vw, 1.4375rem);
+  font-weight: 700;
+}
+
+.te-bracket-final-wrap .te-bracket-team--loser .te-bracket-team__name {
+  font-size: clamp(1rem, 1.6vw, 1.1875rem);
+}
+
+[data-bracket-card="semi"] .te-bracket-sets__row {
+  font-size: 12px;
+}
+
+[data-bracket-card="semi"] .te-bracket-sets__set-name {
+  min-width: 2.75rem;
+}
+
 @media (min-width: 1200px) {
-  .te-bracket-team--winner .te-bracket-team__name {
-    font-size: clamp(1.25rem, 1.75vw, 1.5rem);
+  [data-bracket-card="semi"] .te-bracket-team--winner .te-bracket-team__name {
+    font-size: 1.0625rem;
   }
 
-  .te-bracket-team--loser .te-bracket-team__name {
-    font-size: clamp(1rem, 1.35vw, 1.125rem);
+  .te-bracket-final-wrap .te-elim-bracket-finalist {
+    font-size: clamp(1.25rem, 2.2vw, 1.625rem);
   }
 
-  .te-bracket-sets__row {
-    font-size: clamp(0.9375rem, 1.1vw, 1.0625rem);
-  }
-
-  .te-elim-bracket-finalist {
-    font-size: clamp(1.125rem, 1.6vw, 1.375rem);
+  .te-bracket-final-schedule__value--time {
+    font-size: 1.5rem;
   }
 }
 
@@ -523,7 +730,7 @@
 
 /* Finalistas en tarjeta central */
 .te-elim-bracket-finalist {
-  font-size: clamp(1rem, 1.35vw, 1.125rem);
+  font-size: clamp(1rem, 1.5vw, 1.1875rem);
   font-weight: 700;
   line-height: 1.25;
   color: var(--text-primary);

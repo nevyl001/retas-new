@@ -232,6 +232,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         <TEPublicBracketVisual
           allCards={model.allBracketCards}
           totalRondas={model.totalRondas}
+          categoria={categoria}
         />
       </section>
 

@@ -40,6 +40,78 @@ function formatMeta(hora: string, cancha: string | null): string {
   return time;
 }
 
+function formatFinalDateParts(
+  scheduleMs: number | null
+): { weekday: string; date: string } {
+  if (scheduleMs == null) {
+    return { weekday: "Por confirmar", date: "" };
+  }
+  try {
+    const d = new Date(scheduleMs);
+    const weekday = d
+      .toLocaleDateString("es-MX", { weekday: "long" })
+      .replace(/^\w/, (c) => c.toUpperCase());
+    const date = d.toLocaleDateString("es-MX", {
+      day: "numeric",
+      month: "long",
+    });
+    return { weekday, date };
+  } catch {
+    return { weekday: "Por confirmar", date: "" };
+  }
+}
+
+function formatFinalTime(horaDisplay: string, scheduleMs: number | null): string {
+  if (scheduleMs != null) {
+    try {
+      return new Date(scheduleMs).toLocaleTimeString("es-MX", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch {
+      /* fall through */
+    }
+  }
+  const time = horaDisplay.replace(/\s*p\.?\s*m\.?/gi, "").trim();
+  return time || "Por confirmar";
+}
+
+function formatFinalCourt(cancha: string | null): string {
+  if (!cancha?.trim()) return "Por confirmar";
+  return cancha.replace(/^cancha\s*/i, "Cancha ");
+}
+
+function BracketFinalSchedule({ card }: { card: PublicMatchupCard }) {
+  const { weekday, date } = formatFinalDateParts(card.scheduleMs);
+  const hora = formatFinalTime(card.horaDisplay, card.scheduleMs);
+  const cancha = formatFinalCourt(card.canchaLabel);
+
+  return (
+    <div className="te-bracket-final-schedule" aria-label="Programación de la final">
+      <div className="te-bracket-final-schedule__item">
+        <span className="te-bracket-final-schedule__label">Fecha</span>
+        <span className="te-bracket-final-schedule__value te-bracket-final-schedule__value--date">
+          <span className="te-bracket-final-schedule__date-line">{weekday}</span>
+          {date ? (
+            <span className="te-bracket-final-schedule__date-line">{date}</span>
+          ) : null}
+        </span>
+      </div>
+      <div className="te-bracket-final-schedule__item te-bracket-final-schedule__item--time">
+        <span className="te-bracket-final-schedule__label">Horario</span>
+        <span className="te-bracket-final-schedule__value te-bracket-final-schedule__value--time">
+          {hora}
+        </span>
+      </div>
+      <div className="te-bracket-final-schedule__item">
+        <span className="te-bracket-final-schedule__label">Cancha</span>
+        <span className="te-bracket-final-schedule__value">{cancha}</span>
+      </div>
+    </div>
+  );
+}
+
 function BracketSetsList({
   sets,
   winnerSide,
@@ -202,9 +274,11 @@ function BracketMatchCard({
         </span>
       </header>
 
-      {!isCenter || card.status !== "pending" ? (
+      {!isCenter ? (
         <p className="te-elim-bracket-card__meta">{meta}</p>
-      ) : null}
+      ) : (
+        <BracketFinalSchedule card={card} />
+      )}
 
       <div
         className={`te-elim-bracket-card__body${
@@ -291,10 +365,37 @@ function BracketFinalPlaceholderCard({
   );
 }
 
+function BracketFinalCaption({ categoria }: { categoria: string | null }) {
+  const categoryLine = categoria
+    ? `Final · ${categoria.toUpperCase()}`
+    : "Gran final";
+
+  return (
+    <header className="te-bracket-final-caption" aria-label={categoryLine}>
+      <div className="te-bracket-final-caption__ornament" aria-hidden>
+        <span className="te-bracket-final-caption__line" />
+        <span className="te-bracket-final-caption__diamond" />
+        <span className="te-bracket-final-caption__line" />
+      </div>
+      <p className="te-bracket-final-caption__brand">
+        RIVIERA
+        <span className="te-bracket-final-caption__brand-sep" aria-hidden>
+          {" "}
+          ·{" "}
+        </span>
+        OPEN
+      </p>
+      <p className="te-bracket-final-caption__title">{categoryLine}</p>
+    </header>
+  );
+}
+
 function BracketSlotView({
   slot,
+  categoria,
 }: {
   slot: BracketVisualSlot;
+  categoria: string | null;
 }) {
   const isCenter = Boolean(slot.isCenter);
   const content =
@@ -305,13 +406,24 @@ function BracketSlotView({
     );
 
   if (isCenter) {
-    return <div className="te-bracket-final-wrap">{content}</div>;
+    return (
+      <div className="te-bracket-final-wrap">
+        <BracketFinalCaption categoria={categoria} />
+        {content}
+      </div>
+    );
   }
 
   return content;
 }
 
-function BracketColumn({ column }: { column: BracketVisualColumn }) {
+function BracketColumn({
+  column,
+  categoria,
+}: {
+  column: BracketVisualColumn;
+  categoria: string | null;
+}) {
   return (
     <div
       className={`te-bracket-col te-bracket-col--${column.side}`}
@@ -322,6 +434,7 @@ function BracketColumn({ column }: { column: BracketVisualColumn }) {
           <BracketSlotView
             key={`${column.index}-${i}-${slot.card?.id ?? "ph"}`}
             slot={slot}
+            categoria={categoria}
           />
         ))}
       </div>
@@ -432,11 +545,13 @@ function BracketConnectorOverlay({
 export interface TEPublicBracketVisualProps {
   allCards: PublicMatchupCard[];
   totalRondas: number;
+  categoria?: string | null;
 }
 
 export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   allCards,
   totalRondas,
+  categoria = null,
 }) => {
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -487,7 +602,11 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
       >
         <div className="te-bracket-visual__grid">
           {layout.columns.map((col) => (
-            <BracketColumn key={`col-${col.index}`} column={col} />
+            <BracketColumn
+              key={`col-${col.index}`}
+              column={col}
+              categoria={categoria}
+            />
           ))}
         </div>
         <BracketConnectorOverlay
@@ -506,7 +625,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
                 ↓
               </div>
             ) : null}
-            <BracketSlotView slot={slot} />
+            <BracketSlotView slot={slot} categoria={categoria} />
           </React.Fragment>
         ))}
       </div>
