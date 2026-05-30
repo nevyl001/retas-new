@@ -1,5 +1,6 @@
 import React from "react";
 import { useUser } from "../../contexts/UserContext";
+import { isTorneoExpressPublicPath } from "../torneo-express/TorneoExpressRouter";
 import { AuthPage } from "./AuthPage";
 
 interface ProtectedRouteProps {
@@ -12,8 +13,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Rutas que no requieren login: cualquiera puede ver (incluye base path ej. /app/public/xxx)
   const isPublicRoute =
-    currentPath.includes("/public/") ||
-    /\/torneo-express\/[^/]+\/(grupo\/[^/]+|general|grupos)\/?$/i.test(currentPath);
+    currentPath.includes("/public/") || isTorneoExpressPublicPath(currentPath);
   const isAdminRoute =
     currentPath === "/admin-login" || currentPath === "/admin-dashboard";
 

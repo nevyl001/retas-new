@@ -85,7 +85,7 @@ export function pathRequiresUserSession(pathname: string): boolean {
   if (path.includes("/public/")) return false;
   if (
     path.startsWith("/torneo-express/") &&
-    /\/(grupo\/[^/]+|general|grupos)\/?$/i.test(path)
+    /\/(grupo\/[^/]+|general|grupos|eliminatoria)\/?$/i.test(path)
   ) {
     return false;
   }
