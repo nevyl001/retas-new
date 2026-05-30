@@ -108,7 +108,7 @@ function PublicEliminatoriaCelebrate({
   return (
     <section
       className="te-pub-grupo-celebrate te-pub-fade-in te-elim-public-celebrate"
-      aria-label="Campeón del torneo"
+      aria-label="Campeones del torneo"
     >
       <div className="te-pub-grupo-celebrate__inner">
         <header className="te-pub-grupo-celebrate__brand">
@@ -223,7 +223,11 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
 
         {model.championLabel ? (
           <p className="te-elim-champion">
-            🏆 Campeón: <strong>{model.championLabel}</strong>
+            <span className="te-elim-champion__icon" aria-hidden>
+              🏆
+            </span>
+            <span className="te-elim-champion__label">Campeones:</span>
+            <strong className="te-elim-champion__names">{model.championLabel}</strong>
           </p>
         ) : null}
       </header>

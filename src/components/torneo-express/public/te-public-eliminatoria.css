@@ -46,14 +46,35 @@
 }
 
 .te-elim-champion {
-  margin: 0.85rem 0 0;
-  font-size: 0.9375rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.65rem;
+  margin: 1.15rem 0 0.5rem;
+  font-size: 1rem;
+  line-height: 1.45;
   color: var(--accent-gold);
 }
 
-.te-elim-champion strong {
+.te-elim-champion__icon {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+.te-elim-champion__label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.te-elim-champion strong,
+.te-elim-champion__names {
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.te-elim-public .te-public-header__meta {
+  margin-bottom: 0.15rem;
 }
 
 .te-elim-public-empty {

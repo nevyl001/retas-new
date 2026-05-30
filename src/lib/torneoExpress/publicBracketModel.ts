@@ -218,8 +218,8 @@ function resolveFinalistsCelebrate(
 }
 
 function motivationalMessageLegacy(currentPhaseUpper: string): string {
-  if (currentPhaseUpper.includes("CAMPEÓN")) {
-    return "¡Tenemos campeón! Gracias por competir con garra.";
+  if (currentPhaseUpper.includes("CAMPEONES")) {
+    return "¡Tenemos campeones! Gracias por competir con garra.";
   }
   if (currentPhaseUpper === "FINAL") {
     return "¡La gran final ha llegado. Solo uno puede ganar!";
@@ -253,7 +253,7 @@ function motivationalMessageForRound(
     championLabel: string | null;
   }
 ): string {
-  if (currentPhaseUpper.includes("CAMPEÓN")) {
+  if (currentPhaseUpper.includes("CAMPEONES")) {
     return motivationalMessageLegacy(currentPhaseUpper);
   }
 
@@ -535,7 +535,7 @@ function currentPhaseUpper(
   championLabel: string | null,
   activeRonda: number
 ): string {
-  if (championLabel) return "CAMPEÓN DEFINIDO";
+  if (championLabel) return "CAMPEONES DEFINIDOS";
   return roundLabelUpper(fase, activeRonda, totalRondas);
 }
 
