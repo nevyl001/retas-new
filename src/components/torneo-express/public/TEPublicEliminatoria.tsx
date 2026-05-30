@@ -64,6 +64,20 @@ function PublicEliminatoriaFinalistsCelebrate({
       aria-label="Felicitación a finalistas"
     >
       <div className="te-pub-grupo-celebrate__inner te-elim-public-celebrate__inner">
+        <header className="te-pub-grupo-celebrate__brand te-elim-finalists-brand">
+          <div className="te-divider-gold te-divider-gold--wide" aria-hidden />
+          <p className="te-pub-grupo-celebrate__wordmark">
+            RIVIERA
+            <span className="te-pub-grupo-celebrate__wordmark-sep" aria-hidden>
+              {" "}
+              ·{" "}
+            </span>
+            OPEN
+          </p>
+        </header>
+
+        <div className="te-divider-gold te-elim-finalists-brand__divider" aria-hidden />
+
         <h2 className="te-elim-finalists-headline">¡Felicidades finalistas!</h2>
 
         {categoria ? (
@@ -236,6 +250,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         <TEPublicBracketVisual
           allCards={model.allBracketCards}
           totalRondas={model.totalRondas}
+          activeRonda={model.activeRonda}
           categoria={categoria}
         />
       </section>

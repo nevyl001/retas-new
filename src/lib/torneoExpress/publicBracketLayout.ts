@@ -72,22 +72,33 @@ function winnerLabel(card: PublicMatchupCard): string | null {
   return null;
 }
 
-function columnSide(
-  colIndex: number,
-  centerIndex: number
-): "left" | "center" | "right" {
-  if (colIndex === centerIndex) return "center";
-  return colIndex < centerIndex ? "left" : "right";
+/** Ronda que se muestra en columnas laterales (siempre antes de la final). */
+function resolveSideRound(
+  allCards: PublicMatchupCard[],
+  totalRondas: number,
+  activeRonda?: number
+): number {
+  if (totalRondas <= 1) return 1;
+
+  if (activeRonda != null) {
+    if (activeRonda < totalRondas) return activeRonda;
+    return Math.max(1, totalRondas - 1);
+  }
+
+  for (let r = 1; r < totalRondas; r++) {
+    if (allCards.some((c) => c.ronda === r)) return r;
+  }
+  return 1;
 }
 
 function buildFinalPlaceholder(
   allCards: PublicMatchupCard[],
-  totalRondas: number
+  totalRondas: number,
+  sideRound: number
 ): BracketVisualSlot {
-  const semiRound = totalRondas - 1;
   const semiCards =
     allCards
-      .filter((c) => c.ronda === semiRound)
+      .filter((c) => c.ronda === sideRound)
       .sort((a, b) => a.cruceIndex - b.cruceIndex) ?? [];
   const { left, right } = splitRound(semiCards);
 
@@ -111,86 +122,79 @@ function buildFinalPlaceholder(
 
 export function buildPublicBracketVisualLayout(
   allCards: PublicMatchupCard[],
-  totalRondas: number
+  totalRondas: number,
+  activeRonda?: number
 ): PublicBracketVisualLayout {
-  const columnCount = Math.max(1, totalRondas * 2 - 1);
-  const centerColumnIndex = totalRondas - 1;
+  const columnCount = 3;
+  const centerColumnIndex = 1;
+  const sideRound = resolveSideRound(allCards, totalRondas, activeRonda);
   const byRound = cardsByRound(allCards);
 
-  const columns: BracketVisualColumn[] = Array.from(
-    { length: columnCount },
-    (_, index) => ({
-      index,
-      side: columnSide(index, centerColumnIndex),
-      slots: [],
-    })
-  );
+  const columns: BracketVisualColumn[] = [
+    { index: 0, side: "left", slots: [] },
+    { index: 1, side: "center", slots: [] },
+    { index: 2, side: "right", slots: [] },
+  ];
 
   const connectors: BracketConnector[] = [];
 
-  for (let ronda = 1; ronda <= totalRondas; ronda++) {
-    const roundCards = byRound.get(ronda) ?? [];
-    const leftCol = ronda - 1;
-    const rightCol = columnCount - ronda;
+  const sideRoundCards = byRound.get(sideRound) ?? [];
+  const { left, right } = splitRound(sideRoundCards);
 
-    if (ronda === totalRondas) {
-      if (roundCards.length > 0) {
-        roundCards.forEach((card) => {
-          columns[centerColumnIndex].slots.push({
-            kind: "match",
-            card,
-            isCenter: true,
-          });
-        });
-      } else {
-        columns[centerColumnIndex].slots.push(
-          buildFinalPlaceholder(allCards, totalRondas)
-        );
-      }
-      continue;
-    }
+  left.forEach((card, slotIndex) => {
+    columns[0].slots.push({ kind: "match", card });
+    connectors.push({
+      id: `L-${sideRound}-${slotIndex}`,
+      fromSide: "left",
+      slotIndex: columns[0].slots.length - 1,
+      hasWinner: card.status === "finished" && Boolean(winnerLabel(card)),
+    });
+  });
 
-    const { left, right } = splitRound(roundCards);
-    left.forEach((card, slotIndex) => {
-      columns[leftCol].slots.push({ kind: "match", card });
-      connectors.push({
-        id: `L-${ronda}-${slotIndex}`,
-        fromSide: "left",
-        slotIndex: columns[leftCol].slots.length - 1,
-        hasWinner: card.status === "finished" && Boolean(winnerLabel(card)),
+  right.forEach((card, slotIndex) => {
+    columns[2].slots.push({ kind: "match", card });
+    connectors.push({
+      id: `R-${sideRound}-${slotIndex}`,
+      fromSide: "right",
+      slotIndex: columns[2].slots.length - 1,
+      hasWinner: card.status === "finished" && Boolean(winnerLabel(card)),
+    });
+  });
+
+  const finalCards = byRound.get(totalRondas) ?? [];
+  if (finalCards.length > 0) {
+    finalCards.forEach((card) => {
+      columns[1].slots.push({
+        kind: "match",
+        card,
+        isCenter: true,
       });
     });
-    right.forEach((card, slotIndex) => {
-      columns[rightCol].slots.push({ kind: "match", card });
-      connectors.push({
-        id: `R-${ronda}-${slotIndex}`,
-        fromSide: "right",
-        slotIndex: columns[rightCol].slots.length - 1,
-        hasWinner: card.status === "finished" && Boolean(winnerLabel(card)),
-      });
-    });
-  }
-
-  if (columns.every((c) => c.slots.length === 0) && allCards.length > 0) {
-    const { left, right } = splitRound(allCards);
-    left.forEach((card) => {
-      columns[0].slots.push({ kind: "match", card });
-    });
-    right.forEach((card) => {
-      columns[columnCount - 1].slots.push({ kind: "match", card });
-    });
-    columns[centerColumnIndex].slots.push(
-      buildFinalPlaceholder(allCards, totalRondas)
+  } else {
+    columns[1].slots.push(
+      buildFinalPlaceholder(allCards, totalRondas, sideRound)
     );
   }
 
-  const centerSlots = columns[centerColumnIndex]?.slots ?? [];
-  const sideSlots: BracketVisualSlot[] = [];
+  if (
+    columns[0].slots.length === 0 &&
+    columns[2].slots.length === 0 &&
+    allCards.length > 0
+  ) {
+    const { left: fallbackLeft, right: fallbackRight } = splitRound(allCards);
+    fallbackLeft.forEach((card) => {
+      columns[0].slots.push({ kind: "match", card });
+    });
+    fallbackRight.forEach((card) => {
+      columns[2].slots.push({ kind: "match", card });
+    });
+  }
 
-  columns.forEach((col, i) => {
-    if (i === centerColumnIndex) return;
-    sideSlots.push(...col.slots);
-  });
+  const centerSlots = columns[centerColumnIndex].slots;
+  const sideSlots: BracketVisualSlot[] = [
+    ...columns[0].slots,
+    ...columns[2].slots,
+  ];
 
   sideSlots.sort((a, b) => {
     const ra = a.card?.ronda ?? 0;

@@ -1,13 +1,24 @@
 import { BRACKET_FASE_SLOTS } from "./bracketTypes";
+import { deserializeBracketSlots } from "./bracketPersistence";
 import type {
   TorneoExpressFaseEliminacion,
   TorneoExpressEliminatoriaPartido,
 } from "./types";
 
-export function totalRondasEliminatoria(
-  fase: TorneoExpressFaseEliminacion
+export function eliminatoriaBracketSize(
+  fase: TorneoExpressFaseEliminacion,
+  bracketSlots?: unknown
 ): number {
-  const slots = BRACKET_FASE_SLOTS[fase];
+  const slots = deserializeBracketSlots(bracketSlots);
+  if (slots.length > 0) return slots.length;
+  return BRACKET_FASE_SLOTS[fase];
+}
+
+export function totalRondasEliminatoria(
+  fase: TorneoExpressFaseEliminacion,
+  bracketSlotCount?: number
+): number {
+  const slots = bracketSlotCount ?? BRACKET_FASE_SLOTS[fase];
   let rounds = 0;
   let matches = slots / 2;
   while (matches >= 1) {
@@ -20,14 +31,17 @@ export function totalRondasEliminatoria(
 export function labelRondaEliminatoria(
   fase: TorneoExpressFaseEliminacion,
   ronda: number,
-  totalRondas?: number
+  totalRondas?: number,
+  bracketSlotCount?: number
 ): string {
-  const total = totalRondas ?? totalRondasEliminatoria(fase);
+  const slots = bracketSlotCount ?? BRACKET_FASE_SLOTS[fase];
+  const total = totalRondas ?? totalRondasEliminatoria(fase, slots);
   if (ronda === total) return "Final";
-  if (ronda === total - 1 && total > 1) return "Semifinal";
-  if (fase === "octavos" && ronda === 1) return "Octavos de final";
-  if (fase === "cuartos" && ronda === 1) return "Cuartos de final";
-  if (fase === "semifinal" && ronda === 1) return "Semifinal";
+
+  const matchesInRound = Math.max(1, slots / 2 ** ronda);
+  if (matchesInRound >= 8) return "Octavos de final";
+  if (matchesInRound >= 4) return "Cuartos de final";
+  if (matchesInRound >= 2) return "Semifinal";
   return `Ronda ${ronda}`;
 }
 
@@ -113,8 +127,9 @@ export function maxRondaActual(
 /** True cuando todos los partidos de la última ronda están jugados. */
 export function eliminatoriaUltimaRondaCompleta(
   partidos: TorneoExpressEliminatoriaPartido[],
-  fase: TorneoExpressFaseEliminacion
+  fase: TorneoExpressFaseEliminacion,
+  bracketSlotCount?: number
 ): boolean {
-  const total = totalRondasEliminatoria(fase);
+  const total = totalRondasEliminatoria(fase, bracketSlotCount);
   return rondaCompleta(partidos, total);
 }

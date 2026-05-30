@@ -115,7 +115,7 @@
 
 .te-bracket-visual__grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.72fr) minmax(300px, 1.55fr) minmax(0, 0.72fr);
+  grid-template-columns: minmax(0, 0.78fr) minmax(320px, 1.75fr) minmax(0, 0.78fr);
   gap: clamp(1rem, 2.5vw, 2.5rem);
   align-items: center;
   width: 100%;
@@ -126,9 +126,9 @@
 
 @media (min-width: 1200px) {
   .te-bracket-visual__grid {
-    grid-template-columns: minmax(0, 0.68fr) minmax(360px, 1.65fr) minmax(0, 0.68fr);
+    grid-template-columns: minmax(0, 0.75fr) minmax(380px, 1.85fr) minmax(0, 0.75fr);
     gap: clamp(1.25rem, 3vw, 3rem);
-    min-height: min(65vh, 700px);
+    min-height: min(65vh, 720px);
   }
 }
 
@@ -139,8 +139,40 @@
 
 .te-bracket-col--left .te-elim-bracket-card,
 .te-bracket-col--right .te-elim-bracket-card {
-  max-width: min(100%, 19rem);
+  width: 100%;
   margin-inline: auto;
+}
+
+.te-bracket-col--left [data-bracket-phase="octavos"],
+.te-bracket-col--right [data-bracket-phase="octavos"] {
+  max-width: min(100%, 17rem);
+}
+
+.te-bracket-col--left [data-bracket-phase="cuartos"],
+.te-bracket-col--right [data-bracket-phase="cuartos"] {
+  max-width: min(100%, 21rem);
+}
+
+.te-bracket-col--left [data-bracket-phase="semifinal"],
+.te-bracket-col--right [data-bracket-phase="semifinal"] {
+  max-width: min(100%, 26rem);
+}
+
+@media (min-width: 1200px) {
+  .te-bracket-col--left [data-bracket-phase="octavos"],
+  .te-bracket-col--right [data-bracket-phase="octavos"] {
+    max-width: min(100%, 18rem);
+  }
+
+  .te-bracket-col--left [data-bracket-phase="cuartos"],
+  .te-bracket-col--right [data-bracket-phase="cuartos"] {
+    max-width: min(100%, 23rem);
+  }
+
+  .te-bracket-col--left [data-bracket-phase="semifinal"],
+  .te-bracket-col--right [data-bracket-phase="semifinal"] {
+    max-width: min(100%, 28rem);
+  }
 }
 
 .te-bracket-col--left .te-elim-bracket-card {
@@ -155,7 +187,7 @@
 
 .te-bracket-final-wrap {
   width: 100%;
-  max-width: min(100%, 34rem);
+  max-width: min(100%, 36rem);
   height: fit-content;
   margin-inline: auto;
   display: flex;
@@ -166,7 +198,7 @@
 
 @media (min-width: 1200px) {
   .te-bracket-final-wrap {
-    max-width: min(100%, 38rem);
+    max-width: min(100%, 42rem);
   }
 }
 
@@ -297,7 +329,7 @@
 .te-public.te-public--eliminatoria .te-elim-bracket-card {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.75rem;
   width: 100%;
   padding: 1rem 1.125rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -308,13 +340,28 @@
   transition: border-color 0.25s ease;
 }
 
-.te-public.te-public--eliminatoria [data-bracket-card="semi"] {
+/* Escala por fase: octavos → cuartos → semifinal → final */
+.te-public.te-public--eliminatoria [data-bracket-phase="octavos"] {
   padding: 0.875rem 1rem;
-  gap: 0.5rem;
-  font-size: 0.92em;
+  gap: 0.65rem;
+  border-radius: 14px;
 }
 
-.te-public.te-public--eliminatoria [data-bracket-card="semi"]:hover {
+.te-public.te-public--eliminatoria [data-bracket-phase="cuartos"] {
+  padding: 1rem 1.2rem;
+  gap: 0.75rem;
+  border-radius: 15px;
+}
+
+.te-public.te-public--eliminatoria [data-bracket-phase="semifinal"] {
+  padding: 1.15rem 1.35rem;
+  gap: 0.85rem;
+  border-radius: 16px;
+}
+
+.te-public.te-public--eliminatoria [data-bracket-phase="octavos"]:hover,
+.te-public.te-public--eliminatoria [data-bracket-phase="cuartos"]:hover,
+.te-public.te-public--eliminatoria [data-bracket-phase="semifinal"]:hover {
   border-color: rgba(255, 255, 255, 0.18);
 }
 
@@ -326,10 +373,10 @@
   height: fit-content;
   min-height: 0;
   margin: 0;
-  padding: clamp(1.35rem, 2.5vw, 2rem) clamp(1.5rem, 3vw, 2.25rem);
-  gap: clamp(0.75rem, 1.5vw, 1.125rem);
+  padding: clamp(1.5rem, 3vw, 2.35rem) clamp(1.75rem, 3.5vw, 2.75rem);
+  gap: clamp(0.85rem, 1.75vw, 1.35rem);
   border: 1px solid rgba(212, 160, 23, 0.55);
-  border-radius: 20px;
+  border-radius: 22px;
   background: transparent;
   box-shadow: none;
 }
@@ -415,6 +462,86 @@
   color: var(--text-muted);
   line-height: 1.35;
   opacity: 0.55;
+}
+
+/* Horario + cancha en cuartos / semifinales */
+.te-bracket-side-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  width: 100%;
+  padding: 0.65rem 0.25rem 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0.1rem 0 0.15rem;
+}
+
+.te-bracket-side-meta__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 0 0.5rem;
+  text-align: center;
+}
+
+.te-bracket-side-meta__item:first-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.te-bracket-side-meta__label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  opacity: 0.9;
+}
+
+.te-bracket-side-meta__value {
+  font-size: clamp(0.8125rem, 1.1vw, 0.9375rem);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+.te-bracket-side-meta__value--time {
+  font-size: clamp(0.9375rem, 1.35vw, 1.125rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-gold);
+  white-space: nowrap;
+}
+
+[data-bracket-phase="octavos"] .te-bracket-side-meta__value {
+  font-size: 0.8125rem;
+}
+
+[data-bracket-phase="octavos"] .te-bracket-side-meta__value--time {
+  font-size: 0.9375rem;
+}
+
+[data-bracket-phase="cuartos"] .te-bracket-side-meta__value {
+  font-size: clamp(0.875rem, 1.15vw, 1rem);
+}
+
+[data-bracket-phase="cuartos"] .te-bracket-side-meta__value--time {
+  font-size: clamp(1rem, 1.4vw, 1.125rem);
+}
+
+[data-bracket-phase="semifinal"] .te-bracket-side-meta__value {
+  font-size: clamp(0.9375rem, 1.25vw, 1.0625rem);
+}
+
+[data-bracket-phase="semifinal"] .te-bracket-side-meta__value--time {
+  font-size: clamp(1.0625rem, 1.55vw, 1.25rem);
+}
+
+[data-bracket-phase="semifinal"] .te-bracket-side-meta {
+  padding: 0.75rem 0.35rem 0.6rem;
 }
 
 /* Programación final — fecha, horario, cancha */
@@ -593,6 +720,39 @@
   color: var(--text-secondary);
 }
 
+[data-bracket-phase="octavos"] .te-bracket-team--neutral .te-bracket-team__name,
+[data-bracket-phase="octavos"] .te-bracket-team--winner .te-bracket-team__name {
+  font-size: clamp(0.8125rem, 1.05vw, 0.9375rem);
+}
+
+[data-bracket-phase="cuartos"] .te-bracket-team--neutral .te-bracket-team__name,
+[data-bracket-phase="cuartos"] .te-bracket-team--winner .te-bracket-team__name {
+  font-size: clamp(0.9375rem, 1.25vw, 1.0625rem);
+}
+
+[data-bracket-phase="semifinal"] .te-bracket-team--neutral .te-bracket-team__name {
+  font-size: clamp(1rem, 1.45vw, 1.1875rem);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+[data-bracket-phase="semifinal"] .te-bracket-team--winner .te-bracket-team__name {
+  font-size: clamp(1.0625rem, 1.55vw, 1.25rem);
+  font-weight: 700;
+}
+
+[data-bracket-phase="semifinal"] .te-bracket-team--loser .te-bracket-team__name {
+  font-size: clamp(0.9375rem, 1.25vw, 1.0625rem);
+}
+
+[data-bracket-phase="semifinal"] .te-elim-bracket-card__phase {
+  font-size: 12px;
+}
+
+[data-bracket-phase="cuartos"] .te-elim-bracket-card__phase {
+  font-size: 11px;
+}
+
 .te-bracket-final-wrap .te-bracket-team--neutral .te-bracket-team__name,
 .te-bracket-final-wrap .te-bracket-team--winner .te-bracket-team__name {
   font-size: clamp(1.125rem, 2vw, 1.4375rem);
@@ -603,21 +763,29 @@
   font-size: clamp(1rem, 1.6vw, 1.1875rem);
 }
 
-[data-bracket-card="semi"] .te-bracket-sets__row {
+[data-bracket-card="side"] .te-bracket-sets__row {
   font-size: 12px;
 }
 
-[data-bracket-card="semi"] .te-bracket-sets__set-name {
+[data-bracket-phase="semifinal"] [data-bracket-card="side"] .te-bracket-sets__row {
+  font-size: 13px;
+}
+
+[data-bracket-card="side"] .te-bracket-sets__set-name {
   min-width: 2.75rem;
 }
 
 @media (min-width: 1200px) {
-  [data-bracket-card="semi"] .te-bracket-team--winner .te-bracket-team__name {
+  [data-bracket-phase="semifinal"] .te-bracket-team--winner .te-bracket-team__name {
+    font-size: 1.25rem;
+  }
+
+  [data-bracket-phase="cuartos"] .te-bracket-team--winner .te-bracket-team__name {
     font-size: 1.0625rem;
   }
 
   .te-bracket-final-wrap .te-elim-bracket-finalist {
-    font-size: clamp(1.25rem, 2.2vw, 1.625rem);
+    font-size: clamp(1.35rem, 2.4vw, 1.75rem);
   }
 
   .te-bracket-final-schedule__value--time {
@@ -824,6 +992,33 @@
     rgba(201, 162, 39, 0.06) 0%,
     transparent 68%
   );
+}
+
+.te-elim-finalists-brand {
+  margin-bottom: 0.25rem;
+}
+
+.te-elim-finalists-brand .te-divider-gold--wide {
+  margin-bottom: 0.85rem;
+  opacity: 0.9;
+}
+
+.te-elim-finalists-brand .te-pub-grupo-celebrate__wordmark {
+  font-size: clamp(0.6875rem, 1.1vw, 0.8125rem);
+  letter-spacing: 0.28em;
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.te-elim-finalists-brand .te-pub-grupo-celebrate__wordmark-sep {
+  color: var(--accent-gold);
+  opacity: 1;
+}
+
+.te-elim-finalists-brand__divider {
+  margin: 0.75rem auto 1.35rem;
+  max-width: 5rem;
+  opacity: 0.85;
 }
 
 .te-elim-finalists-headline {

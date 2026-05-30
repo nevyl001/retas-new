@@ -164,9 +164,15 @@ function buildTeamFromId(
 function roundLabelUpper(
   fase: TorneoExpressFaseEliminacion,
   ronda: number,
-  totalRondas: number
+  totalRondas: number,
+  bracketSlotCount?: number
 ): string {
-  const label = labelRondaEliminatoria(fase, ronda, totalRondas);
+  const label = labelRondaEliminatoria(
+    fase,
+    ronda,
+    totalRondas,
+    bracketSlotCount
+  );
   if (label === "Final") return "FINAL";
   if (label === "Semifinal") return "SEMIFINALES";
   if (label === "Cuartos de final") return "CUARTOS DE FINAL";
@@ -422,10 +428,16 @@ function buildRoundOneCards(
   partidos: TorneoExpressEliminatoriaPartido[],
   slots: ReturnType<typeof deserializeBracketSlots>,
   labelMap: Record<string, string>,
-  qualifierMap: Map<string, BracketQualifier>
+  qualifierMap: Map<string, BracketQualifier>,
+  bracketSlotCount?: number
 ): PublicMatchupCard[] {
   const cruces = crucesPrimeraRonda(slots);
-  const roundLabel = labelRondaEliminatoria(fase, ronda, totalRondas);
+  const roundLabel = labelRondaEliminatoria(
+    fase,
+    ronda,
+    totalRondas,
+    bracketSlotCount
+  );
 
   return cruces
     .map((c) => {
@@ -447,7 +459,11 @@ function buildRoundOneCards(
         ronda,
         cruceIndex: c.cruceIndex,
         roundLabel,
-        matchTitle: matchTitle(roundLabelUpper(fase, ronda, totalRondas), c.cruceIndex, cruces.length),
+        matchTitle: matchTitle(
+          roundLabelUpper(fase, ronda, totalRondas, bracketSlotCount),
+          c.cruceIndex,
+          cruces.length
+        ),
         local: buildTeamFromId(
           partido?.pareja_local_id ?? c.local?.parejaId ?? null,
           labelMap,
@@ -482,10 +498,16 @@ function buildDbRoundCards(
   totalRondas: number,
   partidos: TorneoExpressEliminatoriaPartido[],
   labelMap: Record<string, string>,
-  qualifierMap: Map<string, BracketQualifier>
+  qualifierMap: Map<string, BracketQualifier>,
+  bracketSlotCount?: number
 ): PublicMatchupCard[] {
   const inRound = partidosDeRonda(partidos, ronda);
-  const roundLabel = labelRondaEliminatoria(fase, ronda, totalRondas);
+  const roundLabel = labelRondaEliminatoria(
+    fase,
+    ronda,
+    totalRondas,
+    bracketSlotCount
+  );
 
   return inRound
     .filter((p) => !p.es_bye || (p.pareja_local_id && p.pareja_visitante_id))
@@ -497,7 +519,7 @@ function buildDbRoundCards(
         cruceIndex: p.cruce_index,
         roundLabel,
         matchTitle: matchTitle(
-          roundLabelUpper(fase, ronda, totalRondas),
+          roundLabelUpper(fase, ronda, totalRondas, bracketSlotCount),
           p.cruce_index,
           inRound.length
         ),
@@ -533,10 +555,11 @@ function currentPhaseUpper(
   partidos: TorneoExpressEliminatoriaPartido[],
   totalRondas: number,
   championLabel: string | null,
-  activeRonda: number
+  activeRonda: number,
+  bracketSlotCount?: number
 ): string {
   if (championLabel) return "CAMPEONES DEFINIDOS";
-  return roundLabelUpper(fase, activeRonda, totalRondas);
+  return roundLabelUpper(fase, activeRonda, totalRondas, bracketSlotCount);
 }
 
 export function buildPublicBracketViewModel(
@@ -547,7 +570,8 @@ export function buildPublicBracketViewModel(
   const partidos = bundle.eliminatoriaPartidos;
   const slots = deserializeBracketSlots(bundle.torneo.bracket_slots);
   const qualifierMap = buildQualifierMap(slots);
-  const totalRondas = totalRondasEliminatoria(fase);
+  const bracketSlotCount = slots.length > 0 ? slots.length : undefined;
+  const totalRondas = totalRondasEliminatoria(fase, bracketSlotCount);
   const activeRonda = activeRondaFromPartidos(partidos, totalRondas);
 
   const allCards: PublicMatchupCard[] = [];
@@ -563,7 +587,8 @@ export function buildPublicBracketViewModel(
             partidos,
             slots,
             labelMap,
-            qualifierMap
+            qualifierMap,
+            bracketSlotCount
           )
         : dbRound.length > 0
           ? buildDbRoundCards(
@@ -572,7 +597,8 @@ export function buildPublicBracketViewModel(
               totalRondas,
               partidos,
               labelMap,
-              qualifierMap
+              qualifierMap,
+              bracketSlotCount
             )
           : [];
 
@@ -604,7 +630,8 @@ export function buildPublicBracketViewModel(
     partidos,
     totalRondas,
     championLabel,
-    activeRonda
+    activeRonda,
+    bracketSlotCount
   );
 
   const displayCards = allCards.map((c) => {

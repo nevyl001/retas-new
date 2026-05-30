@@ -31,13 +31,36 @@ function statusLabel(status: PublicMatchStatus): string {
   }
 }
 
-function formatMeta(hora: string, cancha: string | null): string {
-  const time = hora.replace(/\s*p\.?\s*m\.?/gi, "").trim();
-  if (cancha) {
-    const court = cancha.replace(/^cancha\s*/i, "Cancha ");
-    return `${time} · ${court}`;
-  }
-  return time;
+function cardVisualPhase(
+  card: PublicMatchupCard,
+  isCenter: boolean
+): "octavos" | "cuartos" | "semifinal" | "final" {
+  if (isCenter) return "final";
+  const label = card.roundLabel.toLowerCase();
+  if (label.includes("octavo")) return "octavos";
+  if (label.includes("cuarto")) return "cuartos";
+  if (label.includes("semi")) return "semifinal";
+  return "cuartos";
+}
+
+function BracketSideMeta({ card }: { card: PublicMatchupCard }) {
+  const hora = formatFinalTime(card.horaDisplay, card.scheduleMs);
+  const cancha = formatFinalCourt(card.canchaLabel);
+
+  return (
+    <div className="te-bracket-side-meta" aria-label="Horario y cancha">
+      <div className="te-bracket-side-meta__item">
+        <span className="te-bracket-side-meta__label">Horario</span>
+        <span className="te-bracket-side-meta__value te-bracket-side-meta__value--time">
+          {hora}
+        </span>
+      </div>
+      <div className="te-bracket-side-meta__item">
+        <span className="te-bracket-side-meta__label">Cancha</span>
+        <span className="te-bracket-side-meta__value">{cancha}</span>
+      </div>
+    </div>
+  );
 }
 
 function formatFinalDateParts(
@@ -219,7 +242,7 @@ function BracketMatchCard({
   const hasSets = played && card.sets.length > 0;
 
   const phaseLabel = isCenter ? "FINAL" : card.matchTitle.toUpperCase();
-  const meta = formatMeta(card.horaDisplay, card.canchaLabel);
+  const visualPhase = cardVisualPhase(card, isCenter);
   const localPending = !card.local.label?.trim();
   const visitPending = !card.visit.label?.trim();
 
@@ -252,7 +275,8 @@ function BracketMatchCard({
       className={`te-elim-bracket-card te-elim-bracket-card--${card.status}${
         isCenter ? " te-elim-bracket-card--center" : ""
       }`}
-      data-bracket-card={isCenter ? "final" : "semi"}
+      data-bracket-card={isCenter ? "final" : "side"}
+      data-bracket-phase={visualPhase}
       aria-label={`${card.matchTitle}: ${card.local.label} vs ${card.visit.label}`}
     >
       <header
@@ -275,7 +299,7 @@ function BracketMatchCard({
       </header>
 
       {!isCenter ? (
-        <p className="te-elim-bracket-card__meta">{meta}</p>
+        <BracketSideMeta card={card} />
       ) : (
         <BracketFinalSchedule card={card} />
       )}
@@ -468,13 +492,13 @@ function BracketConnectorOverlay({
     }
 
     const leftCard = stage.querySelector<HTMLElement>(
-      '[data-col="left"] [data-bracket-card="semi"]'
+      '[data-col="left"] [data-bracket-card="side"]'
     );
     const finalCard = stage.querySelector<HTMLElement>(
       '[data-col="center"] [data-bracket-card="final"]'
     );
     const rightCard = stage.querySelector<HTMLElement>(
-      '[data-col="right"] [data-bracket-card="semi"]'
+      '[data-col="right"] [data-bracket-card="side"]'
     );
 
     if (!leftCard || !finalCard || !rightCard) {
@@ -545,19 +569,21 @@ function BracketConnectorOverlay({
 export interface TEPublicBracketVisualProps {
   allCards: PublicMatchupCard[];
   totalRondas: number;
+  activeRonda?: number;
   categoria?: string | null;
 }
 
 export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   allCards,
   totalRondas,
+  activeRonda,
   categoria = null,
 }) => {
   const stageRef = useRef<HTMLDivElement>(null);
 
   const layout = useMemo(
-    () => buildPublicBracketVisualLayout(allCards, totalRondas),
-    [allCards, totalRondas]
+    () => buildPublicBracketVisualLayout(allCards, totalRondas, activeRonda),
+    [allCards, totalRondas, activeRonda]
   );
 
   const leftHasWinner = useMemo(

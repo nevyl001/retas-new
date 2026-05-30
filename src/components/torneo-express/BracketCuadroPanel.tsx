@@ -41,7 +41,10 @@ export const BracketCuadroPanel: React.FC<BracketCuadroPanelProps> = ({
     [bracketSlots]
   );
   const crucesR1 = useMemo(() => crucesPrimeraRonda(slots), [slots]);
-  const totalRondas = totalRondasEliminatoria(fase);
+  const totalRondas = totalRondasEliminatoria(
+    fase,
+    slots.length > 0 ? slots.length : undefined
+  );
   const rondaMax = maxRondaActual(partidos);
 
   const ganadorFinal = useMemo(() => {
@@ -96,7 +99,7 @@ export const BracketCuadroPanel: React.FC<BracketCuadroPanelProps> = ({
 
     out.push({
       ronda: 1,
-      label: labelRondaEliminatoria(fase, 1, totalRondas),
+      label: labelRondaEliminatoria(fase, 1, totalRondas, slots.length),
       items: r1Items,
     });
 
@@ -107,7 +110,7 @@ export const BracketCuadroPanel: React.FC<BracketCuadroPanelProps> = ({
       if (inRound.length === 0) continue;
       out.push({
         ronda: r,
-        label: labelRondaEliminatoria(fase, r, totalRondas),
+        label: labelRondaEliminatoria(fase, r, totalRondas, slots.length),
         items: inRound.map((p) => ({
           key: p.id,
           local: slotLabel(p.pareja_local_id, labelMap),
@@ -119,7 +122,7 @@ export const BracketCuadroPanel: React.FC<BracketCuadroPanelProps> = ({
     }
 
     return out;
-  }, [crucesR1, fase, labelMap, partidos, totalRondas]);
+  }, [crucesR1, fase, labelMap, partidos, totalRondas, slots.length]);
 
   if (slots.length === 0) {
     return (

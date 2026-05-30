@@ -13,6 +13,7 @@ import { crucesPrimeraRonda } from "../lib/torneoExpress/bracket";
 import type { BracketFase, BracketSlotEntry } from "../lib/torneoExpress/bracketTypes";
 import {
   buildSiguienteRondaPartidos,
+  eliminatoriaBracketSize,
   eliminatoriaUltimaRondaCompleta,
   maxRondaActual,
   rondaCompleta,
@@ -1185,7 +1186,10 @@ export async function avanzarEliminatoriaSiCompleta(
   const ronda = maxRondaActual(partidos);
   if (ronda === 0 || !rondaCompleta(partidos, ronda)) return;
 
-  const totalRondas = totalRondasEliminatoria(torneo.fase_eliminacion);
+  const totalRondas = totalRondasEliminatoria(
+    torneo.fase_eliminacion,
+    eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots)
+  );
 
   // Última ronda jugada: esperar confirmación explícita del organizador.
   if (ronda >= totalRondas) {
@@ -1220,7 +1224,13 @@ export async function reabrirTorneoExpressEliminatoria(
   }
 
   const partidos = await fetchEliminatoriaPartidos(torneoId);
-  if (eliminatoriaUltimaRondaCompleta(partidos, torneo.fase_eliminacion)) {
+  if (
+    eliminatoriaUltimaRondaCompleta(
+      partidos,
+      torneo.fase_eliminacion,
+      eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots)
+    )
+  ) {
     throw new Error(
       "La final ya está jugada. Usa «Finalizar torneo» si aún no lo cerraste."
     );
@@ -1278,7 +1288,13 @@ export async function finalizarTorneoExpressEliminatoria(
   }
 
   const partidos = await fetchEliminatoriaPartidos(torneoId);
-  if (!eliminatoriaUltimaRondaCompleta(partidos, torneo.fase_eliminacion)) {
+  if (
+    !eliminatoriaUltimaRondaCompleta(
+      partidos,
+      torneo.fase_eliminacion,
+      eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots)
+    )
+  ) {
     throw new Error(
       "Completa todos los partidos de la final antes de finalizar el torneo"
     );

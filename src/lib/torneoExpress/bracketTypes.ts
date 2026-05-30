@@ -43,6 +43,8 @@ export interface BracketBuildResult {
   byeCount: number;
   fase: BracketFase;
   advertencias: BracketClashWarning[];
+  /** Resultado de resolverBracket cuando aplica. */
+  resolver?: BracketResolverResult;
 }
 
 export interface ClasificadosSummary {
@@ -50,6 +52,41 @@ export interface ClasificadosSummary {
   tercerosCandidatos: BracketQualifier[];
   mejoresTercerosNecesarios: number;
   totalClasificados: number;
+}
+
+export type BracketResolverTipo = "limpio" | "con_byes" | "hibrido";
+
+export interface BracketResolverByeExtra {
+  qualifier: BracketQualifier;
+  motivo: "impar_en_fase_previa";
+}
+
+export interface BracketResolverPartidoPrevia {
+  cruceIndex: number;
+  local: BracketQualifier;
+  visitante: BracketQualifier;
+  choqueDeGrupo: boolean;
+}
+
+export interface BracketResolverArbol {
+  faseElegida: BracketFase;
+  fasePrevia: BracketFase | null;
+  plazasObjetivo: number;
+  plazasCuadro: number;
+  rondaInicial: BracketFase;
+}
+
+export interface BracketResolverResult {
+  valido: boolean;
+  tipo: BracketResolverTipo;
+  byeDirecto: BracketQualifier[];
+  enFasePrevia: BracketQualifier[];
+  byeExtra: BracketResolverByeExtra | null;
+  partidosPrevios: BracketResolverPartidoPrevia[];
+  arbol: BracketResolverArbol;
+  descripcion: string;
+  slots: BracketSlotEntry[];
+  advertencias: BracketClashWarning[];
 }
 
 export function standingToQualifier(

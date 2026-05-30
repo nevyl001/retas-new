@@ -32,6 +32,8 @@ describe("bracketRounds", () => {
     expect(totalRondasEliminatoria("semifinal")).toBe(2);
     expect(totalRondasEliminatoria("cuartos")).toBe(3);
     expect(totalRondasEliminatoria("octavos")).toBe(4);
+    expect(totalRondasEliminatoria("semifinal", 8)).toBe(3);
+    expect(totalRondasEliminatoria("cuartos", 16)).toBe(4);
   });
 
   it("labelRondaEliminatoria", () => {

@@ -122,6 +122,14 @@
   color: var(--text-muted);
 }
 
+.te-bracket-fase-option__desc {
+  flex-basis: 100%;
+  margin-left: 28px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
 .te-bracket-resumen {
   margin-bottom: 20px;
   padding: 12px 14px;

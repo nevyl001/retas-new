@@ -4,6 +4,7 @@ import {
   calcularResumenClasificados,
   grupoBadgeLabel,
   mejoresTercerosNecesarios,
+  previsualizarResolverBracket,
   resumenConfirmacion,
   sugerirFaseAutomatica,
   swapBracketSlots,
@@ -11,7 +12,11 @@ import {
   validarChoques,
   validarFaseElegible,
 } from "../../lib/torneoExpress/bracket";
-import type { BracketFase, BracketSlotEntry } from "../../lib/torneoExpress/bracketTypes";
+import type {
+  BracketFase,
+  BracketResolverResult,
+  BracketSlotEntry,
+} from "../../lib/torneoExpress/bracketTypes";
 import { BRACKET_FASE_SLOTS } from "../../lib/torneoExpress/bracketTypes";
 import type { TorneoExpressBundle } from "../../lib/torneoExpress/types";
 import {
@@ -48,6 +53,9 @@ export const TorneoExpressBracketModal: React.FC<
   const [cantidadTerceros, setCantidadTerceros] = useState(0);
   const [slots, setSlots] = useState<BracketSlotEntry[]>([]);
   const [autoSlots, setAutoSlots] = useState<BracketSlotEntry[]>([]);
+  const [resolverResult, setResolverResult] = useState<BracketResolverResult | null>(
+    null
+  );
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [confirming, setConfirming] = useState(false);
 
@@ -77,6 +85,7 @@ export const TorneoExpressBracketModal: React.FC<
     setStep("fase");
     setSlots([]);
     setAutoSlots([]);
+    setResolverResult(null);
     void loadBundle();
   }, [open, loadBundle]);
 
@@ -99,6 +108,21 @@ export const TorneoExpressBracketModal: React.FC<
     }
   }, [bundle, fase, faseValidacion]);
 
+  const fasePreviews = useMemo(() => {
+    if (!bundle) return {} as Partial<Record<BracketFase, string>>;
+    const numGrupos = bundle.grupos.length;
+    const fijos = numGrupos * 2;
+    const out: Partial<Record<BracketFase, string>> = {};
+    for (const opt of FASE_OPCIONES) {
+      const maxTer = mejoresTercerosNecesarios(numGrupos, opt.id);
+      const terceros = Math.min(cantidadTerceros, maxTer);
+      const total = fijos + terceros;
+      const preview = previsualizarResolverBracket(numGrupos, opt.id, total);
+      out[opt.id] = preview.descripcion;
+    }
+    return out;
+  }, [bundle, cantidadTerceros]);
+
   const advertencias = useMemo(() => validarChoques(slots), [slots]);
 
   const rebuildBracket = useCallback(() => {
@@ -107,6 +131,7 @@ export const TorneoExpressBracketModal: React.FC<
       const built = calcularBracketInicial(bundle, fase, { cantidadTerceros });
       setSlots(built.slots);
       setAutoSlots(built.slots);
+      setResolverResult(built.resolver ?? null);
       setStep("bracket");
       setError(null);
     } catch (e) {
@@ -162,7 +187,7 @@ export const TorneoExpressBracketModal: React.FC<
 
   if (!open) return null;
 
-  const totalSlots = BRACKET_FASE_SLOTS[fase];
+  const totalSlots = slots.length > 0 ? slots.length : BRACKET_FASE_SLOTS[fase];
 
   return (
     <div
@@ -220,6 +245,11 @@ export const TorneoExpressBracketModal: React.FC<
                   <span className="te-bracket-fase-option__slots">
                     {BRACKET_FASE_SLOTS[opt.id]} plazas
                   </span>
+                  {fasePreviews[opt.id] && (
+                    <span className="te-bracket-fase-option__desc">
+                      {fasePreviews[opt.id]}
+                    </span>
+                  )}
                 </label>
               ))}
             </div>
@@ -281,7 +311,7 @@ export const TorneoExpressBracketModal: React.FC<
         {!loading && bundle && step === "bracket" && (
           <div className="te-bracket-step te-bracket-step--bracket">
             <p className="te-bracket-resumen-line">
-              {resumenConfirmacion(slots, fase)}
+              {resumenConfirmacion(slots, fase, resolverResult ?? undefined)}
             </p>
 
             {advertencias.length > 0 && (
@@ -311,6 +341,7 @@ export const TorneoExpressBracketModal: React.FC<
                   >
                     <span className="te-bracket-cruce__label">
                       Cruce {cruceIdx + 1}
+                      {clash ? " · ⚠ Mismo grupo" : ""}
                     </span>
                     <div className="te-bracket-cruce__pair">
                       <BracketSlotCard

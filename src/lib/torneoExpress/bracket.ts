@@ -1,7 +1,6 @@
 import { buildStandingsForGrupo } from "./standings";
 import type {
   BracketBuildResult,
-  BracketClashWarning,
   BracketFase,
   BracketQualifier,
   BracketSlotEntry,
@@ -11,17 +10,16 @@ import {
   BRACKET_FASE_SLOTS,
   standingToQualifier,
 } from "./bracketTypes";
+import {
+  previsualizarResolverBracket,
+  resolverBracket,
+} from "./resolverBracket";
 import type {
   TorneoExpressBundle,
   TorneoExpressGrupo,
 } from "./types";
 
-/** Posición de cada seed (1-based) en el cuadro estándar de pádel/tenis */
-const SEED_SLOT_INDEX: Record<number, number[]> = {
-  4: [0, 3, 2, 1],
-  8: [0, 7, 3, 4, 2, 5, 6, 1],
-  16: [0, 15, 7, 8, 3, 12, 4, 11, 2, 13, 6, 9, 5, 10, 14, 1],
-};
+export { validarChoques } from "./resolverBracket";
 
 function compareQualifiers(a: BracketQualifier, b: BracketQualifier): number {
   if (b.puntos !== a.puntos) return b.puntos - a.puntos;
@@ -59,22 +57,26 @@ export function validarFaseElegible(
   numGrupos: number,
   fase: BracketFase
 ): { ok: true } | { ok: false; error: string } {
-  const slots = BRACKET_FASE_SLOTS[fase];
   const fijos = numGrupos * 2;
-  const tercerosNec = mejoresTercerosNecesarios(numGrupos, fase);
+  const maxPlazas = BRACKET_FASE_SLOTS.octavos;
 
-  if (fijos > slots) {
+  if (fijos > maxPlazas) {
     return {
       ok: false,
-      error: `Hay ${fijos} clasificados fijos (1° y 2°) pero ${labelFase(fase)} solo tiene ${slots} plazas. Elige una fase con más cupos.`,
+      error: `Hay ${fijos} clasificados fijos (1° y 2°) pero el bracket máximo admite ${maxPlazas} plazas.`,
     };
   }
-  if (tercerosNec > numGrupos) {
+
+  const maxClasificados = Math.min(maxPlazas, fijos + numGrupos);
+  try {
+    previsualizarResolverBracket(numGrupos, fase, maxClasificados);
+  } catch (e) {
     return {
       ok: false,
-      error: `Se necesitan ${tercerosNec} mejores terceros pero solo hay ${numGrupos} grupos. Elige otra fase.`,
+      error: e instanceof Error ? e.message : "Formato no válido para esta fase.",
     };
   }
+
   return { ok: true };
 }
 
@@ -141,11 +143,13 @@ export function getTablaOrdenada(
 export function calcularClasificadosFase(
   bundle: TorneoExpressBundle,
   fase: BracketFase,
-  opts?: { cantidadTerceros?: number }
+  opts?: { cantidadTerceros?: number; skipValidation?: boolean }
 ): BracketQualifier[] {
-  const valid = validarFaseElegible(bundle.grupos.length, fase);
-  if (!valid.ok) {
-    throw new Error(valid.error);
+  if (!opts?.skipValidation) {
+    const valid = validarFaseElegible(bundle.grupos.length, fase);
+    if (!valid.ok) {
+      throw new Error(valid.error);
+    }
   }
 
   const resumen = calcularResumenClasificados(bundle, fase);
@@ -165,109 +169,6 @@ export function calcularClasificadosFase(
 
   const ordenados = [...primeros, ...segundos, ...terceros];
   return ordenados.map((q, i) => ({ ...q, seed: i + 1 }));
-}
-
-function seedPlacementOrder(count: number): number[] {
-  const map = SEED_SLOT_INDEX[count];
-  if (!map) {
-    throw new Error(`Bracket no soportado para ${count} plazas`);
-  }
-  return map;
-}
-
-/** Coloca clasificados en slots; huecos = BYE (seeds altos primero) */
-function colocarEnSlots(
-  clasificados: BracketQualifier[],
-  totalSlots: number
-): BracketSlotEntry[] {
-  const slots: BracketSlotEntry[] = Array.from({ length: totalSlots }, () => ({
-    type: "bye" as const,
-  }));
-  const placement = seedPlacementOrder(totalSlots);
-
-  clasificados.forEach((q) => {
-    const slotIndex = placement[q.seed - 1];
-    if (slotIndex === undefined) return;
-    slots[slotIndex] = { type: "team", qualifier: q };
-  });
-
-  return slots;
-}
-
-export function validarChoques(slots: BracketSlotEntry[]): BracketClashWarning[] {
-  const choques: BracketClashWarning[] = [];
-  for (let i = 0; i < slots.length; i += 2) {
-    const a = slots[i];
-    const b = slots[i + 1];
-    if (a?.type !== "team" || b?.type !== "team") continue;
-    if (a.qualifier.grupoId === b.qualifier.grupoId) {
-      choques.push({
-        cruceIndex: i / 2,
-        slotA: i,
-        slotB: i + 1,
-        mensaje: `${a.qualifier.parejaLabel} y ${b.qualifier.parejaLabel} son del mismo grupo (${a.qualifier.grupoNombre})`,
-      });
-    }
-  }
-  return choques;
-}
-
-function sameGrupoPair(
-  a: BracketSlotEntry | undefined,
-  b: BracketSlotEntry | undefined
-): boolean {
-  if (a?.type !== "team" || b?.type !== "team") return false;
-  return a.qualifier.grupoId === b.qualifier.grupoId;
-}
-
-function findSwapCandidate(
-  slots: BracketSlotEntry[],
-  teamSlot: number,
-  partnerSlot: number
-): number | null {
-  const team = slots[teamSlot];
-  if (team?.type !== "team") return null;
-
-  for (let d = 1; d < slots.length; d++) {
-    for (const delta of [d, -d]) {
-      const other = teamSlot + delta;
-      if (other < 0 || other >= slots.length || other === partnerSlot) continue;
-      const otherEntry = slots[other];
-      if (otherEntry?.type !== "team") continue;
-      if (otherEntry.qualifier.grupoId === team.qualifier.grupoId) continue;
-
-      const otherPartner = other % 2 === 0 ? other + 1 : other - 1;
-      const partnerEntry = slots[otherPartner];
-      if (partnerEntry?.type === "team") {
-        if (partnerEntry.qualifier.grupoId === otherEntry.qualifier.grupoId) {
-          continue;
-        }
-      }
-      return other;
-    }
-  }
-  return null;
-}
-
-function resolverChoquesAutomaticos(
-  slots: BracketSlotEntry[]
-): BracketSlotEntry[] {
-  const next = slots.map((s) =>
-    s.type === "team"
-      ? { type: "team" as const, qualifier: { ...s.qualifier } }
-      : { type: "bye" as const }
-  );
-
-  for (let i = 0; i < next.length; i += 2) {
-    if (!sameGrupoPair(next[i], next[i + 1])) continue;
-    const swapIdx = findSwapCandidate(next, i, i + 1);
-    if (swapIdx == null) continue;
-    const tmp = next[i + 1];
-    next[i + 1] = next[swapIdx];
-    next[swapIdx] = tmp;
-  }
-
-  return next;
 }
 
 export function swapBracketSlots(
@@ -291,31 +192,23 @@ export function swapBracketSlots(
 
 export function armarBracket(
   clasificados: BracketQualifier[],
-  fase: BracketFase
+  fase: BracketFase,
+  numGrupos: number
 ): BracketBuildResult {
-  const totalSlots = BRACKET_FASE_SLOTS[fase];
-  if (clasificados.length > totalSlots) {
-    throw new Error(
-      `Demasiados clasificados (${clasificados.length}) para ${labelFase(fase)} (${totalSlots} plazas).`
-    );
-  }
-  if (clasificados.length % 2 !== 0 && clasificados.length > 0) {
-    throw new Error(
-      `El número de clasificados (${clasificados.length}) no encaja en un bracket de ${labelFase(fase)}.`
-    );
+  const resolved = resolverBracket(numGrupos, fase, clasificados);
+  if (!resolved.valido) {
+    throw new Error(resolved.descripcion || "No se pudo armar el bracket.");
   }
 
-  let slots = colocarEnSlots(clasificados, totalSlots);
-  slots = resolverChoquesAutomaticos(slots);
-  const advertencias = validarChoques(slots);
-  const byeCount = slots.filter((s) => s.type === "bye").length;
+  const byeCount = resolved.slots.filter((s) => s.type === "bye").length;
 
   return {
-    slots,
+    slots: resolved.slots,
     qualifiers: clasificados,
     byeCount,
     fase,
-    advertencias,
+    advertencias: resolved.advertencias,
+    resolver: resolved,
   };
 }
 
@@ -325,18 +218,24 @@ export function calcularBracketInicial(
   opts?: { cantidadTerceros?: number }
 ): BracketBuildResult {
   const clasificados = calcularClasificadosFase(bundle, fase, opts);
-  return armarBracket(clasificados, fase);
+  return armarBracket(clasificados, fase, bundle.grupos.length);
 }
 
 export function resumenConfirmacion(
   slots: BracketSlotEntry[],
-  fase: BracketFase
+  fase: BracketFase,
+  resolver?: BracketBuildResult["resolver"]
 ): string {
+  if (resolver?.descripcion) {
+    return `${resolver.descripcion} (${labelFase(fase)}).`;
+  }
   const teams = slots.filter((s) => s.type === "team").length;
   const byes = slots.filter((s) => s.type === "bye").length;
-  const total = BRACKET_FASE_SLOTS[fase];
+  const total = slots.length;
   return `${teams} clasificados + ${byes} BYE = ${total} plazas (${labelFase(fase)}).`;
 }
+
+export { previsualizarResolverBracket } from "./resolverBracket";
 
 export function validarAntesDeConfirmar(
   slots: BracketSlotEntry[]

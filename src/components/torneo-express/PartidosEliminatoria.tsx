@@ -7,6 +7,7 @@ import {
 import {
   labelRondaEliminatoria,
   partidosDeRonda,
+  eliminatoriaBracketSize,
   totalRondasEliminatoria,
 } from "../../lib/torneoExpress/bracketRounds";
 import { parejaLabelFromMap } from "../../lib/torneoExpress/eliminatoriaLabels";
@@ -30,6 +31,7 @@ import { PartidoSetsScoreDisplay } from "./PartidoSetsScoreDisplay";
 interface PartidosEliminatoriaProps {
   partidos: TorneoExpressEliminatoriaPartido[];
   fase: TorneoExpressFaseEliminacion;
+  bracketSlots?: unknown;
   labelMap: Record<string, string>;
   editable?: boolean;
   savingPartidoId?: string | null;
@@ -454,6 +456,7 @@ function EliminatoriaPartidoCard({
 export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   partidos,
   fase,
+  bracketSlots,
   labelMap,
   editable = false,
   savingPartidoId,
@@ -463,7 +466,8 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   onSaveCancha,
   onSaveProgramado,
 }) => {
-  const totalRondas = totalRondasEliminatoria(fase);
+  const bracketSize = eliminatoriaBracketSize(fase, bracketSlots);
+  const totalRondas = totalRondasEliminatoria(fase, bracketSize);
   const rondas = useMemo(() => {
     const set = new Set(partidos.map((p) => p.ronda));
     return Array.from(set).sort((a, b) => a - b);
@@ -504,7 +508,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
               }${!exists ? " te-grupos-tab--disabled" : ""}`}
               onClick={() => setActiveRonda(r)}
             >
-              {labelRondaEliminatoria(fase, r, totalRondas)}
+              {labelRondaEliminatoria(fase, r, totalRondas, bracketSize)}
             </button>
           );
         })}

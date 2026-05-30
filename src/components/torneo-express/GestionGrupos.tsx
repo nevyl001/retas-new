@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
-import { eliminatoriaUltimaRondaCompleta } from "../../lib/torneoExpress/bracketRounds";
+import { eliminatoriaUltimaRondaCompleta, eliminatoriaBracketSize } from "../../lib/torneoExpress/bracketRounds";
 import {
   copyToClipboard,
   publicEliminatoriaUrl,
@@ -89,7 +89,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     if (!bundle || faseTorneo !== "eliminatoria") return false;
     const fase = bundle.torneo.fase_eliminacion;
     if (!fase) return false;
-    return eliminatoriaUltimaRondaCompleta(bundle.eliminatoriaPartidos, fase);
+    return eliminatoriaUltimaRondaCompleta(
+      bundle.eliminatoriaPartidos,
+      fase,
+      eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots)
+    );
   }, [bundle, faseTorneo]);
 
   const puedeReanudarEliminatoria = useMemo(() => {
@@ -100,7 +104,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     if (!cerradoOFinalizado) return false;
     return !eliminatoriaUltimaRondaCompleta(
       bundle.eliminatoriaPartidos,
-      fase
+      fase,
+      eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots)
     );
   }, [bundle, faseTorneo]);
 

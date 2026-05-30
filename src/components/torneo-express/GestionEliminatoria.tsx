@@ -62,6 +62,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
           <PartidosEliminatoria
             partidos={bundle.eliminatoriaPartidos}
             fase={fase}
+            bracketSlots={bundle.torneo.bracket_slots}
             labelMap={labelMap}
             editable
             savingPartidoId={savingEliminatoriaId}
