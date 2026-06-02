@@ -21,7 +21,15 @@ import {
   TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
+import {
+  playerHasNotifiableEmail,
+  playerNeedsEmailContact,
+} from "../../services/torneoExpressNotificacionesService";
 import { Button } from "../ui";
+
+type PlayerWithContact = Player & {
+  email_verified?: boolean | null;
+};
 
 interface CrearTorneoExpressProps {
   onTorneoCreated?: () => void;
@@ -44,6 +52,18 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const [addingPair, setAddingPair] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const jugadoresEnParejasSinEmail = useMemo(() => {
+    const ids = new Set<string>();
+    parejas.forEach((p) => {
+      ids.add(p.jugador1.id);
+      ids.add(p.jugador2.id);
+    });
+    return jugadores.filter(
+      (j) =>
+        ids.has(j.id) && playerNeedsEmailContact(j as PlayerWithContact)
+    );
+  }, [parejas, jugadores]);
 
   const playerIdsInPairs = useMemo(() => {
     const ids = new Set<string>();
@@ -391,11 +411,30 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                   />
                 </div>
 
+                <div className="te-crear-notif-hint" role="note">
+                  <strong>Notificaciones automáticas</strong>
+                  <p>
+                    Al pulsar «Crear torneo», cada jugador con{" "}
+                    <strong>email real</strong> (panel derecho → 📧 o + Nuevo)
+                    recibe aviso de inscripción y grupo por email.
+                    Los que marquen «⚠️ sin email» no recibirán nada.
+                  </p>
+                </div>
+
+                {jugadoresEnParejasSinEmail.length > 0 ? (
+                  <p className="te-crear-notif-warn" role="alert">
+                    {jugadoresEnParejasSinEmail.length} jugador(es) en tus parejas
+                    aún sin email:{" "}
+                    {jugadoresEnParejasSinEmail.map((j) => j.name).join(", ")}.
+                    Completa su contacto con 📧 antes de crear el torneo.
+                  </p>
+                ) : null}
+
                 <section className="te-armar-parejas">
                   <h2 className="te-section-title">Armar parejas</h2>
                   <p className="te-subtitle">
-                    Elige jugadores del panel de jugadores. Los nombres se
-                    actualizan al editarlos allí.
+                    Elige jugadores del panel. Usa 📧 para el email de quienes ya
+                    existían.
                   </p>
 
                   <div className="te-pareja-form-row te-pareja-form-row--inline">
@@ -407,11 +446,17 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                         onChange={(e) => setJugador1Id(e.target.value)}
                       >
                         <option value="">Seleccionar…</option>
-                        {optionsJ1.map((j) => (
-                          <option key={j.id} value={j.id}>
-                            {j.name}
-                          </option>
-                        ))}
+                        {optionsJ1.map((j) => {
+                          const ok = playerHasNotifiableEmail(
+                            j as PlayerWithContact
+                          );
+                          return (
+                            <option key={j.id} value={j.id}>
+                              {j.name}
+                              {ok ? "" : " ⚠️ sin email"}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                     <span className="te-pareja-form-row__sep" aria-hidden>
@@ -425,11 +470,17 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                         onChange={(e) => setJugador2Id(e.target.value)}
                       >
                         <option value="">Seleccionar…</option>
-                        {optionsJ2.map((j) => (
-                          <option key={j.id} value={j.id}>
-                            {j.name}
-                          </option>
-                        ))}
+                        {optionsJ2.map((j) => {
+                          const ok = playerHasNotifiableEmail(
+                            j as PlayerWithContact
+                          );
+                          return (
+                            <option key={j.id} value={j.id}>
+                              {j.name}
+                              {ok ? "" : " ⚠️ sin email"}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                   </div>
@@ -453,10 +504,19 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
                   {parejas.length > 0 && (
                     <ul className="te-parejas-formadas">
-                      {parejas.map((p) => (
+                      {parejas.map((p) => {
+                        const j1Ok = playerHasNotifiableEmail(
+                          p.jugador1 as PlayerWithContact
+                        );
+                        const j2Ok = playerHasNotifiableEmail(
+                          p.jugador2 as PlayerWithContact
+                        );
+                        return (
                         <li key={p.id} className="te-pareja-formada">
                           <span>
-                            {p.jugador1.name} / {p.jugador2.name}
+                            {p.jugador1.name}
+                            {!j1Ok ? " ⚠️" : ""} / {p.jugador2.name}
+                            {!j2Ok ? " ⚠️" : ""}
                           </span>
                           <button
                             type="button"
@@ -468,7 +528,8 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                             🗑️
                           </button>
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   )}
                 </section>

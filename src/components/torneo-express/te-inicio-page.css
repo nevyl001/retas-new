@@ -203,6 +203,18 @@
   color: var(--loss) !important;
 }
 
+.te-inicio-page .te-btn-eliminar-torneo {
+  border-color: rgba(248, 113, 113, 0.35) !important;
+  color: var(--loss) !important;
+  background: transparent !important;
+}
+
+.te-inicio-page .te-btn-eliminar-torneo:hover:not(:disabled) {
+  background: var(--error-muted) !important;
+  border-color: var(--loss) !important;
+  color: var(--loss) !important;
+}
+
 .te-inicio-page .te-torneo-card__confirm,
 .te-inicio-page .te-torneo-card .te-resultados-panel,
 .te-inicio-page .te-torneo-card .te-tabla-general-panel {
@@ -463,8 +475,103 @@
 .te-inicio-page .te-players-list {
   border: 0.5px solid var(--border-subtle);
   border-radius: 8px;
-  overflow: hidden;
-  max-height: min(52vh, 480px);
+  max-height: min(60vh, 560px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+.te-inicio-page .te-players-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.te-inicio-page .te-players-list::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 4px;
+}
+
+.te-inicio-page .te-players-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.te-inicio-page .te-players-add-form__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #a8b4c4);
+  margin: 0.5rem 0 0.25rem;
+}
+
+.te-inicio-page .te-players-add-form__label:first-of-type {
+  margin-top: 0;
+}
+
+.te-inicio-page .te-players-panel__hint--notif {
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-muted, #b8c5d6);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  border-radius: 8px;
+}
+
+.te-inicio-page .te-players-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.te-inicio-page .te-players-row--sin-contacto {
+  background: rgba(255, 180, 80, 0.06);
+}
+
+.te-inicio-page .te-players-row__contact-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.te-inicio-page .te-players-row__contact-badge--ok {
+  color: #7dcea0;
+}
+
+.te-inicio-page .te-players-row__contact-badge--warn {
+  color: #f0b27a;
+}
+
+.te-inicio-page .te-players-icon-btn--contact:hover:not(:disabled) {
+  background: rgba(212, 175, 55, 0.15);
+}
+
+.te-inicio-page .te-crear-notif-hint {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.te-inicio-page .te-crear-notif-hint p {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted, #b8c5d6);
+}
+
+.te-inicio-page .te-crear-notif-warn {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(230, 126, 34, 0.12);
+  border: 1px solid rgba(230, 126, 34, 0.35);
+  color: #f5cba7;
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .te-inicio-page .te-players-row {

@@ -6,8 +6,19 @@ import {
   updatePlayer,
   type Player,
 } from "../../lib/database";
+import {
+  isValidRealEmail,
+  playerHasNotifiableEmail,
+  playerNeedsEmailContact,
+  updatePlayerNotificationContact,
+} from "../../services/torneoExpressNotificacionesService";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
+import { InscripcionParejaModal } from "./InscripcionParejaModal";
 import { Button } from "../ui";
+
+type PlayerRow = Player & {
+  email_verified?: boolean | null;
+};
 
 interface TorneoExpressPlayerPanelProps {
   userId: string;
@@ -26,10 +37,16 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
   const [jugadorEditando, setJugadorEditando] = useState<string | null>(null);
   const [nombreEditado, setNombreEditado] = useState("");
   const [nuevoJugadorNombre, setNuevoJugadorNombre] = useState("");
+  const [nuevoJugadorEmail, setNuevoJugadorEmail] = useState("");
   const [agregandoNuevo, setAgregandoNuevo] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+  const [contactModal, setContactModal] = useState<{
+    playerId: string;
+    playerName: string;
+    email: string;
+  } | null>(null);
 
   const syncJugadores = useCallback(
     (list: Player[]) => {
@@ -77,9 +94,24 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     [parejas]
   );
 
+  const resetAddForm = () => {
+    setNuevoJugadorNombre("");
+    setNuevoJugadorEmail("");
+    setAgregandoNuevo(false);
+  };
+
   const agregarJugador = async () => {
     const nombre = nuevoJugadorNombre.trim();
+    const email = nuevoJugadorEmail.trim();
+
     if (!nombre || !userId) return;
+
+    if (!email || !isValidRealEmail(email)) {
+      setError(
+        "Ingresa un email real válido (no se permiten direcciones @padel.local)."
+      );
+      return;
+    }
 
     const existe = jugadores.some(
       (j) => j.name.toLowerCase() === nombre.toLowerCase()
@@ -93,9 +125,23 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     setError("");
     try {
       const data = await createPlayer(nombre, userId);
-      syncJugadores([...jugadores, data]);
-      setNuevoJugadorNombre("");
-      setAgregandoNuevo(false);
+      const updated = await updatePlayerNotificationContact(
+        data.id,
+        {
+          email,
+          notif_opt_in_email: true,
+        },
+        { autoNotifyEnrollment: false }
+      );
+      syncJugadores([
+        ...jugadores,
+        {
+          ...data,
+          email: updated.email ?? email,
+          email_verified: updated.email_verified,
+        } as PlayerRow,
+      ]);
+      resetAddForm();
     } catch {
       setError("Error al guardar el jugador");
     } finally {
@@ -180,8 +226,7 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
       void agregarJugador();
     }
     if (e.key === "Escape") {
-      setAgregandoNuevo(false);
-      setNuevoJugadorNombre("");
+      resetAddForm();
     }
   };
 
@@ -192,6 +237,22 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     }
     if (e.key === "Escape") cancelarEdicion();
   };
+
+  const abrirContacto = (jugador: PlayerRow) => {
+    setContactModal({
+      playerId: jugador.id,
+      playerName: jugador.name,
+      email: jugador.email ?? "",
+    });
+    setJugadorEditando(null);
+    setEliminandoId(null);
+    setError("");
+  };
+
+  const jugadoresSinEmail = useMemo(
+    () => jugadores.filter((j) => playerNeedsEmailContact(j as PlayerRow)).length,
+    [jugadores]
+  );
 
   return (
     <aside className="te-players-panel torneo-express-card">
@@ -250,14 +311,31 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
       {agregandoNuevo && (
         <div className="te-players-add-form">
+          <label className="te-players-add-form__label" htmlFor="te-nuevo-nombre">
+            Nombre
+          </label>
           <input
+            id="te-nuevo-nombre"
             type="text"
-            placeholder="Nombre del jugador nuevo"
+            placeholder="Nombre del jugador"
             value={nuevoJugadorNombre}
             onChange={(e) => setNuevoJugadorNombre(e.target.value)}
             onKeyDown={onAddKeyDown}
             autoFocus
             disabled={guardando}
+          />
+          <label className="te-players-add-form__label" htmlFor="te-nuevo-email">
+            Email real
+          </label>
+          <input
+            id="te-nuevo-email"
+            type="email"
+            placeholder="email@ejemplo.com"
+            value={nuevoJugadorEmail}
+            onChange={(e) => setNuevoJugadorEmail(e.target.value)}
+            onKeyDown={onAddKeyDown}
+            disabled={guardando}
+            autoComplete="email"
           />
           <div className="te-players-add-form__actions">
             <Button
@@ -265,7 +343,11 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
               variant="primary"
               size="sm"
               onClick={() => void agregarJugador()}
-              disabled={guardando || !nuevoJugadorNombre.trim()}
+              disabled={
+                guardando ||
+                !nuevoJugadorNombre.trim() ||
+                !nuevoJugadorEmail.trim()
+              }
               loading={guardando}
             >
               Guardar
@@ -274,10 +356,7 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => {
-                setAgregandoNuevo(false);
-                setNuevoJugadorNombre("");
-              }}
+              onClick={resetAddForm}
               disabled={guardando}
             >
               Cancelar
@@ -286,10 +365,24 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
         </div>
       )}
 
+      <p className="te-players-panel__hint te-players-panel__hint--notif">
+        Para notificar al crear el torneo, cada jugador necesita{" "}
+        <strong>email real</strong>. Pulsa <strong>+ Nuevo</strong> o{" "}
+        <strong>📧</strong> en quien ya esté en la lista.
+      </p>
+
       <p className="te-players-list-meta">
         {cargandoJugadores
           ? "Cargando jugadores…"
-          : `Lista (${jugadores.length} jugador${jugadores.length === 1 ? "" : "es"})`}
+          : `Lista (${jugadores.length} jugador${jugadores.length === 1 ? "" : "es"}${
+              jugadoresSinEmail > 0
+                ? ` · ${jugadoresSinEmail} sin email listo`
+                : ""
+            }${
+              jugadoresFiltrados.length > 6
+                ? " · desplázate en la lista ↓"
+                : ""
+            })`}
       </p>
 
       {cargandoJugadores ? (
@@ -377,16 +470,50 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
               );
             }
 
+            const row = jugador as PlayerRow;
+            const emailOk = playerHasNotifiableEmail(row);
+
             return (
-              <li key={jugador.id} className="te-players-row">
-                <span className="te-players-row__name">{jugador.name}</span>
+              <li
+                key={jugador.id}
+                className={`te-players-row${
+                  !emailOk ? " te-players-row--sin-contacto" : ""
+                }`}
+              >
+                <div className="te-players-row__main">
+                  <span className="te-players-row__name">{jugador.name}</span>
+                  <span
+                    className={`te-players-row__contact-badge${
+                      emailOk
+                        ? " te-players-row__contact-badge--ok"
+                        : " te-players-row__contact-badge--warn"
+                    }`}
+                    title={
+                      emailOk
+                        ? "Email listo para notificaciones"
+                        : "Falta email real"
+                    }
+                  >
+                    {emailOk ? "✉️ OK" : "⚠️ sin email"}
+                  </span>
+                </div>
                 <div className="te-players-row__actions">
+                  <button
+                    type="button"
+                    className="te-players-icon-btn te-players-icon-btn--contact"
+                    onClick={() => abrirContacto(row)}
+                    disabled={guardando}
+                    aria-label={`Contacto de ${jugador.name}`}
+                    title="Email de contacto"
+                  >
+                    📧
+                  </button>
                   <button
                     type="button"
                     className="te-players-icon-btn"
                     onClick={() => iniciarEdicion(jugador)}
                     disabled={guardando}
-                    aria-label={`Editar ${jugador.name}`}
+                    aria-label={`Editar nombre de ${jugador.name}`}
                   >
                     ✏️
                   </button>
@@ -405,6 +532,31 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
           })}
         </ul>
       )}
+
+      <InscripcionParejaModal
+        open={Boolean(contactModal)}
+        playerId={contactModal?.playerId ?? ""}
+        playerName={contactModal?.playerName ?? ""}
+        initialEmail={contactModal?.email}
+        onClose={() => setContactModal(null)}
+        onSaved={(updated) => {
+          if (updated) {
+            syncJugadores(
+              jugadores.map((j) =>
+                j.id === updated.id
+                  ? ({
+                      ...j,
+                      email: updated.email ?? j.email,
+                      email_verified: updated.email_verified,
+                    } as PlayerRow)
+                  : j
+              )
+            );
+          } else {
+            void cargarJugadores();
+          }
+        }}
+      />
     </aside>
   );
 };

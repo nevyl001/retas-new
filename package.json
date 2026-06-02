@@ -17,7 +17,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "update-icons": "node scripts/update-icons.js"
+    "update-icons": "node scripts/update-icons.js",
+    "email-hero-assets": "node scripts/generate-email-hero-assets.mjs"
   },
   "eslintConfig": {
     "extends": [
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "supabase": "^2.102.0"
   }
 }

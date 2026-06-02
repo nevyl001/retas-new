@@ -19,6 +19,7 @@ import { PartidosGrupo } from "./PartidosGrupo";
 import { TablaGrupo } from "./TablaGrupo";
 import { TePageShell } from "./TePageShell";
 import { TorneoExpressBracketModal } from "./TorneoExpressBracketModal";
+import { TorneoExpressNotificacionesPanel } from "./TorneoExpressNotificacionesPanel";
 import { TorneoExpressResetEliminatoriaModal } from "./TorneoExpressResetEliminatoriaModal";
 import { torneoEstadoBadgeVariant } from "./teEstadoBadge";
 import {
@@ -527,6 +528,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         </div>
       )}
 
+      <TorneoExpressNotificacionesPanel torneoExpressId={torneoId} />
+
       <TorneoExpressResetEliminatoriaModal
         open={resetElimOpen}
         resetting={reiniciandoEliminatoria}
@@ -561,8 +564,13 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           setBracketOpen(false);
           setVista("eliminatoria");
           void reload();
+          showActionToast(
+            "Eliminatoria confirmada. Los avisos por email se envían automáticamente.",
+            "success"
+          );
         }}
       />
+
     </TePageShell>
   );
 };

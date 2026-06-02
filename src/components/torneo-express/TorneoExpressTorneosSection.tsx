@@ -6,6 +6,7 @@ import {
   type TorneoExpressListItem,
 } from "../../services/torneoExpressService";
 import { TorneoExpressBracketModal } from "./TorneoExpressBracketModal";
+import { TorneoExpressDeleteModal } from "./TorneoExpressDeleteModal";
 import { TorneoExpressResultadosPanel } from "./TorneoExpressResultadosPanel";
 import { TorneoExpressTablaGeneralPanel } from "./TorneoExpressTablaGeneralPanel";
 import { navigateTorneoExpress } from "./torneoExpressNav";
@@ -55,8 +56,9 @@ export const TorneoExpressTorneosSection: React.FC<
   );
   const [bracketTorneo, setBracketTorneo] =
     useState<TorneoExpressListItem | null>(null);
-  const [eliminarId, setEliminarId] = useState<string | null>(null);
-  const [accionando, setAccionando] = useState(false);
+  const [deleteTarget, setDeleteTarget] =
+    useState<TorneoExpressListItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargandoTorneos(true);
@@ -117,20 +119,39 @@ export const TorneoExpressTorneosSection: React.FC<
     setTablaGeneralTorneoId((prev) => (prev === id ? null : id));
   };
 
-  const handleEliminar = async (torneoId: string) => {
-    setAccionando(true);
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    const torneoId = deleteTarget.id;
+    setDeleting(true);
     setError(null);
     try {
       await deleteTorneoExpress(torneoId);
       setTorneos((prev) => prev.filter((t) => t.id !== torneoId));
-      setEliminarId(null);
+      setDeleteTarget(null);
       if (resultadosTorneoId === torneoId) setResultadosTorneoId(null);
+      if (tablaGeneralTorneoId === torneoId) setTablaGeneralTorneoId(null);
     } catch (e) {
       setError(formatSupabaseError(e));
     } finally {
-      setAccionando(false);
+      setDeleting(false);
     }
   };
+
+  const renderEliminarBtn = (t: TorneoExpressListItem) => (
+    <Button
+      type="button"
+      variant="secondary"
+      size="sm"
+      className="te-btn-eliminar-torneo"
+      disabled={deleting}
+      onClick={() => {
+        setDeleteTarget(t);
+        setBracketTorneo(null);
+      }}
+    >
+      Eliminar
+    </Button>
+  );
 
   const renderTorneoCard = (t: TorneoExpressListItem) => {
     const activo = isActivo(t.estado);
@@ -145,8 +166,6 @@ export const TorneoExpressTorneosSection: React.FC<
       resultadosTorneoId === t.id && torneoResultados;
     const showTablaGeneral =
       tablaGeneralTorneoId === t.id && torneoTablaGeneral;
-    const confirmEliminar = eliminarId === t.id;
-
     return (
       <li
         key={t.id}
@@ -189,120 +208,75 @@ export const TorneoExpressTorneosSection: React.FC<
             </p>
           </div>
 
-          {!confirmEliminar ? (
-            <div className="te-torneo-card__actions-col">
-              {puedeGestionar ? (
-                <>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    onClick={() =>
-                      navigateTorneoExpress(
-                        `/torneo-express/${t.id}/gestionar`
-                      )
-                    }
-                  >
-                    Gestionar →
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => openResultados(t.id)}
-                  >
-                    {showResultados ? "Ocultar resultados" : "Ver resultados"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => openTablaGeneral(t.id)}
-                  >
-                    {showTablaGeneral
-                      ? "Ocultar tabla general"
-                      : "Tabla general"}
-                  </Button>
-                  {enGrupos ? (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="te-btn-finalizar-fase"
-                      onClick={() => {
-                        setBracketTorneo(t);
-                        setEliminarId(null);
-                      }}
-                    >
-                      Finalizar fase
-                    </Button>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => openResultados(t.id)}
-                  >
-                    {showResultados ? "Ocultar resultados" : "Ver resultados"}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => openTablaGeneral(t.id)}
-                  >
-                    {showTablaGeneral
-                      ? "Ocultar tabla general"
-                      : "Tabla general"}
-                  </Button>
+          <div className="te-torneo-card__actions-col">
+            {puedeGestionar ? (
+              <>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={() =>
+                    navigateTorneoExpress(`/torneo-express/${t.id}/gestionar`)
+                  }
+                >
+                  Gestionar →
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openResultados(t.id)}
+                >
+                  {showResultados ? "Ocultar resultados" : "Ver resultados"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openTablaGeneral(t.id)}
+                >
+                  {showTablaGeneral
+                    ? "Ocultar tabla general"
+                    : "Tabla general"}
+                </Button>
+                {enGrupos ? (
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
                     className="te-btn-finalizar-fase"
-                    onClick={() => {
-                      setEliminarId(t.id);
-                    }}
+                    onClick={() => setBracketTorneo(t)}
                   >
-                    Eliminar
+                    Finalizar fase
                   </Button>
-                </>
-              )}
-            </div>
-          ) : null}
-        </div>
-
-        {confirmEliminar ? (
-          <div className="te-torneo-card__confirm">
-            <p className="te-torneo-card__confirm-title">
-              ¿Eliminar {t.nombre}?
-            </p>
-            <div className="te-torneo-card__confirm-actions">
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                disabled={accionando}
-                loading={accionando}
-                onClick={() => void handleEliminar(t.id)}
-              >
-                Sí, eliminar
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={accionando}
-                onClick={() => setEliminarId(null)}
-              >
-                Cancelar
-              </Button>
-            </div>
+                ) : null}
+                {renderEliminarBtn(t)}
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openResultados(t.id)}
+                >
+                  {showResultados ? "Ocultar resultados" : "Ver resultados"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => openTablaGeneral(t.id)}
+                >
+                  {showTablaGeneral
+                    ? "Ocultar tabla general"
+                    : "Tabla general"}
+                </Button>
+                {renderEliminarBtn(t)}
+              </>
+            )}
           </div>
-        ) : null}
+        </div>
 
         {showResultados && torneoResultados ? (
           <TorneoExpressResultadosPanel
@@ -393,6 +367,15 @@ export const TorneoExpressTorneosSection: React.FC<
           Ver todos mis torneos →
         </Button>
       )}
+
+      {deleteTarget ? (
+        <TorneoExpressDeleteModal
+          torneoNombre={deleteTarget.nombre}
+          deleting={deleting}
+          onCancel={() => !deleting && setDeleteTarget(null)}
+          onConfirm={() => void handleConfirmDelete()}
+        />
+      ) : null}
 
       <TorneoExpressBracketModal
         torneoId={bracketTorneo?.id ?? ""}

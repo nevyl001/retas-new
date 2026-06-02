@@ -1210,6 +1210,22 @@ export async function avanzarEliminatoriaSiCompleta(
     throw new BracketSchemaMissingError();
   }
   throwIfError(error, "avanzarEliminatoriaSiCompleta.insert");
+
+  const nextRonda = ronda + 1;
+  if (nextRonda === totalRondas) {
+    const finalistPairIds = nextRows.flatMap((row) => [
+      row.pareja_local_id,
+      row.pareja_visitante_id,
+    ]);
+    const { notifyFinalPhase } = await import(
+      "./torneoExpressNotificacionesService"
+    );
+    void notifyFinalPhase(torneoId, finalistPairIds as string[]).catch(
+      () => {
+        /* no bloquear avance de ronda */
+      }
+    );
+  }
 }
 
 /** Reabre un torneo cerrado antes de tiempo (p. ej. auto-finalizado por error). */

@@ -1,0 +1,2 @@
+-- Obsoleto: usar supabase/notificaciones-solo-momentos-clave.sql
+-- (sin emails por resultado de partido; solo grupo, eliminatoria y final)
