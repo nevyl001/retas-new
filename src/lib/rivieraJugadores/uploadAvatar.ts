@@ -5,6 +5,40 @@ import { AVATAR_BUCKET } from "./constants";
 const OUTPUT_SIZE = 1200;
 const JPEG_QUALITY = 0.92;
 
+type DrawableSource = HTMLImageElement | ImageBitmap;
+
+async function loadDrawableSource(file: File): Promise<{
+  source: DrawableSource;
+  width: number;
+  height: number;
+  release: () => void;
+}> {
+  if (typeof createImageBitmap === "function") {
+    try {
+      const bitmap = await createImageBitmap(file, {
+        imageOrientation: "from-image",
+        resizeQuality: "high",
+      } as unknown as ImageBitmapOptions);
+      return {
+        source: bitmap,
+        width: bitmap.width,
+        height: bitmap.height,
+        release: () => bitmap.close(),
+      };
+    } catch {
+      /* fallback abajo */
+    }
+  }
+
+  const img = await loadImage(file);
+  return {
+    source: img,
+    width: img.naturalWidth || img.width,
+    height: img.naturalHeight || img.height,
+    release: () => {},
+  };
+}
+
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -22,25 +56,24 @@ function loadImage(file: File): Promise<HTMLImageElement> {
 }
 
 /**
- * Recorte cuadrado para avatar: en fotos verticales prioriza la parte superior (cabeza).
+ * Recorte cuadrado centrado en horizontal.
+ * En vertical prioriza la zona superior (cara/torso), con un leve margen si hay espacio.
  */
-function computeSquareCrop(
+export function computeSquareCrop(
   width: number,
   height: number
 ): { sx: number; sy: number; side: number } {
   const side = Math.min(width, height);
-  let sx = Math.round((width - side) / 2);
-  let sy = Math.round((height - side) / 2);
+  const sx = Math.max(0, Math.round((width - side) / 2));
 
-  if (height > width * 1.08) {
-    sx = 0;
-    sy = 0;
-  } else if (width > height * 1.08) {
-    sx = Math.round((width - side) / 2);
+  let sy: number;
+  if (height > width) {
+    const slack = height - side;
+    sy = slack > 0 ? Math.round(slack * 0.1) : 0;
+  } else {
     sy = 0;
   }
 
-  sx = Math.max(0, Math.min(sx, width - side));
   sy = Math.max(0, Math.min(sy, height - side));
 
   return { sx, sy, side };
@@ -48,29 +81,33 @@ function computeSquareCrop(
 
 /** Recorta cuadrado, redimensiona y devuelve JPEG nítido para avatar y hero. */
 export async function resizeAvatarFile(file: File): Promise<Blob> {
-  const img = await loadImage(file);
-  const { sx, sy, side } = computeSquareCrop(img.width, img.height);
+  const { source, width, height, release } = await loadDrawableSource(file);
+  try {
+    const { sx, sy, side } = computeSquareCrop(width, height);
 
-  const canvas = document.createElement("canvas");
-  canvas.width = OUTPUT_SIZE;
-  canvas.height = OUTPUT_SIZE;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas no disponible");
+    const canvas = document.createElement("canvas");
+    canvas.width = OUTPUT_SIZE;
+    canvas.height = OUTPUT_SIZE;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas no disponible");
 
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(img, sx, sy, side, side, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(source, sx, sy, side, side, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
 
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) resolve(blob);
-        else reject(new Error("Error al procesar imagen"));
-      },
-      "image/jpeg",
-      JPEG_QUALITY
-    );
-  });
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error("Error al procesar imagen"));
+        },
+        "image/jpeg",
+        JPEG_QUALITY
+      );
+    });
+  } finally {
+    release();
+  }
 }
 
 export async function uploadJugadorAvatar(
