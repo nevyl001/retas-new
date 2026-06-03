@@ -40,7 +40,7 @@ const FORMATOS_RESUMEN = [
   },
 ] as const;
 
-const EXPRESS_HITOS = [
+const EXPRESS_ETAPAS = [
   { label: "Participar", pts: PUNTOS_EXPRESS.PARTICIPACION },
   { label: "Pasar grupos", pts: PUNTOS_EXPRESS.PASAR_FASE_GRUPOS },
   { label: "Semifinal", pts: PUNTOS_EXPRESS.PASAR_SEMIFINAL },
@@ -69,10 +69,10 @@ export const RankingPuntosTeaser: React.FC = () => {
         </a>
       </div>
 
-      <div className="rjp-ranking-puntos__express" aria-label="Hitos Torneo Express">
-        <p className="rjp-ranking-puntos__express-label">Torneo Express — hitos</p>
+      <div className="rjp-ranking-puntos__express" aria-label="Puntos Torneo Express">
+        <p className="rjp-ranking-puntos__express-label">Torneo Express — por fase</p>
         <ul className="rjp-ranking-puntos__milestones">
-          {EXPRESS_HITOS.map((h) => (
+          {EXPRESS_ETAPAS.map((h) => (
             <li key={h.label} className="rjp-ranking-puntos__milestone">
               <span>{h.label}</span>
               <span className="rjp-ranking-puntos__pts">+{h.pts}</span>
@@ -80,7 +80,7 @@ export const RankingPuntosTeaser: React.FC = () => {
           ))}
         </ul>
         <p className="rjp-ranking-puntos__express-foot">
-          Ej. campeón (con todos los hitos):{" "}
+          Ej. campeón (suma todas las fases):{" "}
           <strong>{expressCampeon.toLocaleString("es-MX")} pts</strong>
         </p>
       </div>
