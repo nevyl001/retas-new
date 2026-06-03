@@ -1,4 +1,4 @@
-import type { LigaJornada, LigaJornadaPareja, LigaPartido } from "./types";
+import type { LigaJornada, LigaJornadaPareja } from "./types";
 
 export interface ParejaJornadaStat {
   parejaId: string;
