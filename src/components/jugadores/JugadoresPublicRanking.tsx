@@ -5,7 +5,10 @@ import {
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
 import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
-import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
+import {
+  getPublicOrganizadorIdWithoutUser,
+  resolvePublicOrganizadorId,
+} from "../../lib/rivieraJugadores/publicOrganizador";
 import type {
   RivieraJugadorCategoria,
   RivieraJugadorWithStats,
@@ -15,7 +18,7 @@ import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import { navigatePublicJugadorFicha } from "./jugadoresPublicNav";
 
 export const JugadoresPublicRanking: React.FC = () => {
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const orgId = resolvePublicOrganizadorId(user?.id);
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
@@ -24,8 +27,12 @@ export const JugadoresPublicRanking: React.FC = () => {
 
   const load = useCallback(async () => {
     if (!orgId) {
+      if (userLoading && !getPublicOrganizadorIdWithoutUser()) {
+        setLoading(true);
+        return;
+      }
       setError(
-        "Configura REACT_APP_RIVIERA_PUBLIC_ORGANIZADOR_ID o abre con ?org=TU_UUID"
+        "No se pudo cargar el ranking del club. Abre el enlace con ?org= o inicia sesión como organizador."
       );
       setLoading(false);
       return;
@@ -40,7 +47,7 @@ export const JugadoresPublicRanking: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [orgId, categoria]);
+  }, [orgId, categoria, userLoading]);
 
   useEffect(() => {
     void load();

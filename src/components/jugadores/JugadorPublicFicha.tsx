@@ -13,7 +13,7 @@ import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
-import { navigatePublicJugadores } from "./jugadoresPublicNav";
+import { buildPublicRankingUrl, navigatePublicJugadores } from "./jugadoresPublicNav";
 
 interface JugadorPublicFichaProps {
   slug: string;
@@ -57,7 +57,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   if (!jugador) {
     return (
       <JugadoresPublicShell>
-        <button type="button" className="rjp-back" onClick={() => navigatePublicJugadores()}>
+        <button
+          type="button"
+          className="rjp-back"
+          onClick={() => navigatePublicJugadores(buildPublicRankingUrl(orgId))}
+        >
           ← Ranking
         </button>
         <p className="rjp-empty">Jugador no encontrado o no está visible al público.</p>
@@ -70,7 +74,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
 
   return (
     <JugadoresPublicShell>
-      <button type="button" className="rjp-back" onClick={() => navigatePublicJugadores()}>
+      <button
+        type="button"
+        className="rjp-back"
+        onClick={() => navigatePublicJugadores(buildPublicRankingUrl(orgId))}
+      >
         ← Ranking
       </button>
 

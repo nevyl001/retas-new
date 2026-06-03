@@ -1,7 +1,8 @@
 import { navigateAppTo } from "../../lib/appRouting";
+import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
 
-export function navigatePublicJugadores(path = "/public/jugadores"): void {
-  navigateAppTo(path);
+export function navigatePublicJugadores(path?: string): void {
+  navigateAppTo(path ?? buildPublicRankingUrl(resolvePublicOrganizadorId()));
 }
 
 export function buildPublicJugadorPath(slug: string, orgId?: string | null): string {

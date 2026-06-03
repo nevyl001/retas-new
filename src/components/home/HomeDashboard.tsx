@@ -12,7 +12,10 @@ import {
 import { useUser } from "../../contexts/UserContext";
 import { navigateLiga } from "../liga/ligaNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
-import { navigatePublicJugadores } from "../jugadores/jugadoresPublicNav";
+import {
+  buildPublicRankingUrl,
+  navigatePublicJugadores,
+} from "../jugadores/jugadoresPublicNav";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import type { GameModeId } from "./gameModesConfig";
 import {
@@ -142,7 +145,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         <button
           type="button"
           className="home-link-btn"
-          onClick={() => navigatePublicJugadores()}
+          onClick={() =>
+            navigatePublicJugadores(
+              userId ? buildPublicRankingUrl(userId) : undefined
+            )
+          }
         >
           Ranking público por categoría →
         </button>
