@@ -5,11 +5,15 @@ import "./riviera-jugadores-public.css";
 export const JugadoresPublicShell: React.FC<{
   children: React.ReactNode;
   variant?: "ranking" | "ficha";
-}> = ({ children, variant = "ranking" }) => {
+  /** Página de reglas de puntos: más ancha en escritorio */
+  layout?: "ranking" | "rules";
+}> = ({ children, variant = "ranking", layout }) => {
+  const shellLayout = layout ?? (variant === "ranking" ? "ranking" : "default");
   const rootClass = [
     "rjp-public",
     variant === "ficha" ? "rjp-public--ficha" : "",
     variant === "ranking" ? "rjp-public--ranking" : "",
+    shellLayout === "rules" ? "rjp-public--rules" : "",
   ]
     .filter(Boolean)
     .join(" ");

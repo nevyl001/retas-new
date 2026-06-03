@@ -108,9 +108,11 @@ function FormatoCard({
         <tbody>
           {rows.map((row) => (
             <tr key={`${row.concepto}-${row.cuando}`}>
-              <td>{row.concepto}</td>
-              <td>{row.cuando}</td>
-              <td>
+              <td className="rkcf-table__concepto">{row.concepto}</td>
+              <td className="rkcf-table__meta" data-label="Cuándo">
+                {row.cuando}
+              </td>
+              <td className="rkcf-table__meta rkcf-table__meta--pts" data-label="Puntos">
                 <PuntosValue text={row.puntos} tone={row.tone} />
               </td>
             </tr>
@@ -133,8 +135,8 @@ export const RankingComoFuncionaPage: React.FC = () => {
   const rankingHref = buildPublicRankingUrl(getPublicOrganizadorIdWithoutUser());
 
   return (
-    <JugadoresPublicShell variant="ranking">
-      <div className="rkcf">
+    <JugadoresPublicShell variant="ranking" layout="rules">
+      <div className="rkcf rkcf--page">
         <section className="rkcf-hero">
           <div className="rkcf-hero__grid" aria-hidden />
           <div className="rkcf-hero__inner">

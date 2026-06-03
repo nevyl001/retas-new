@@ -13,9 +13,10 @@
 }
 
 @media (max-width: 899px) {
-  .rjp-public--ranking .rjp-public__inner {
-    max-width: 390px;
-    padding: 16px 16px 2rem;
+  .rjp-public--ranking .rjp-public__inner,
+  .rjp-public--rules .rjp-public__inner {
+    max-width: 100%;
+    padding: 16px 14px 2rem;
   }
 }
 
@@ -415,6 +416,27 @@
   font-size: 11px;
   line-height: 1.4;
   color: var(--rjp-rk-muted, #7a7a85);
+}
+
+@media (max-width: 639px) {
+  .rjp-ranking-puntos__head {
+    gap: 10px;
+  }
+
+  .rjp-ranking-puntos__cta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rjp-ranking-puntos__formato {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .rjp-ranking-puntos__formato-line {
+    font-size: 12px;
+    line-height: 1.45;
+  }
 }
 
 .rjp-ranking-footer {
