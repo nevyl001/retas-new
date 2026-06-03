@@ -162,7 +162,9 @@ export const JugadoresPublicRanking: React.FC = () => {
           </div>
         </section>
 
-        <footer className="rjp-ranking-footer">Riviera Open · Padel Club</footer>
+        <footer className="rjp-ranking-footer">
+          Riviera Open · Vive el pádel diferente
+        </footer>
       </div>
     </JugadoresPublicShell>
   );

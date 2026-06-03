@@ -161,50 +161,62 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
                   />
                 )}
 
-                <div className="rjp-ficha-hero__main">
-                  <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
+                <div
+                  className={
+                    hasPhoto
+                      ? "rjp-ficha-hero__panel rjp-ficha-hero__panel--photo"
+                      : "rjp-ficha-hero__panel"
+                  }
+                >
+                  <div className="rjp-ficha-hero__main">
+                    <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
 
-                  <div className="rjp-ficha-hero__pills">
-                    <span className="rjp-ficha-pill rjp-ficha-pill--open">
-                      <TablerIcon name="trophy" size={14} />
-                      {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
-                    </span>
-                    {perfilMeta.map((item) => (
-                      <span
-                        key={item.label}
-                        className="rjp-ficha-pill rjp-ficha-pill--muted rjp-ficha-pill--labeled"
-                      >
-                        <TablerIcon name={metaIcon(item.label)} size={14} />
-                        <span className="rjp-ficha-pill__text">
-                          <span className="rjp-ficha-pill__lbl">{item.label}</span>
-                          <span className="rjp-ficha-pill__val">{item.value}</span>
+                    <div className="rjp-ficha-hero__pills">
+                      <span className="rjp-ficha-pill rjp-ficha-pill--open">
+                        <TablerIcon name="trophy" size={14} />
+                        {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
+                      </span>
+                      {perfilMeta.map((item) => (
+                        <span
+                          key={item.label}
+                          className="rjp-ficha-pill rjp-ficha-pill--muted rjp-ficha-pill--labeled"
+                        >
+                          <TablerIcon name={metaIcon(item.label)} size={14} />
+                          <span className="rjp-ficha-pill__text">
+                            <span className="rjp-ficha-pill__lbl">
+                              {item.label}
+                            </span>
+                            <span className="rjp-ficha-pill__val">
+                              {item.value}
+                            </span>
+                          </span>
                         </span>
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="rjp-ficha-hero__stats">
-                    <div className="rjp-ficha-stat">
-                      <TablerIcon
-                        name="hash"
-                        size={14}
-                        className="rjp-ficha-stat__icon"
-                      />
-                      <span className="rjp-ficha-stat__lbl">Ranking</span>
-                      <span className="rjp-ficha-stat__val rjp-ficha-stat__val--empty">
-                        {rankingVal}
-                      </span>
+                      ))}
                     </div>
-                    <div className="rjp-ficha-stat">
-                      <TablerIcon
-                        name="star"
-                        size={14}
-                        className="rjp-ficha-stat__icon"
-                      />
-                      <span className="rjp-ficha-stat__lbl">Puntos totales</span>
-                      <span className="rjp-ficha-stat__val">
-                        {puntos.toLocaleString("es-MX")}
-                      </span>
+
+                    <div className="rjp-ficha-hero__stats">
+                      <div className="rjp-ficha-stat">
+                        <TablerIcon
+                          name="hash"
+                          size={14}
+                          className="rjp-ficha-stat__icon"
+                        />
+                        <span className="rjp-ficha-stat__lbl">Ranking</span>
+                        <span className="rjp-ficha-stat__val rjp-ficha-stat__val--empty">
+                          {rankingVal}
+                        </span>
+                      </div>
+                      <div className="rjp-ficha-stat">
+                        <TablerIcon
+                          name="star"
+                          size={14}
+                          className="rjp-ficha-stat__icon"
+                        />
+                        <span className="rjp-ficha-stat__lbl">Puntos totales</span>
+                        <span className="rjp-ficha-stat__val">
+                          {puntos.toLocaleString("es-MX")}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -245,7 +257,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
           />
         </div>
 
-        <footer className="rjp-ficha-footer">Riviera Open · Padel Club</footer>
+        <footer className="rjp-ficha-footer">
+          Riviera Open · Vive el pádel diferente
+        </footer>
       </div>
     </JugadoresPublicShell>
   );
