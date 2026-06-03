@@ -1384,7 +1384,7 @@ export async function resetEliminatoriaTorneoExpress(
 export async function finalizarTorneoExpressEliminatoria(
   torneoId: string
 ): Promise<TorneoExpress> {
-  await requireAuthUser();
+  const user = await requireAuthUser();
 
   const torneo = await fetchTorneoExpress(torneoId);
   if (!torneo?.fase_eliminacion) {
@@ -1412,6 +1412,19 @@ export async function finalizarTorneoExpressEliminatoria(
   if (!updated) {
     throw new Error("No se pudo cargar el torneo tras finalizar");
   }
+
+  // Registro Riviera Open: historial por jugador (no bloquea la finalización).
+  void import("../lib/rivieraJugadores/syncParticipaciones")
+    .then(({ syncTorneoExpressParticipaciones }) =>
+      syncTorneoExpressParticipaciones(torneoId, user.id)
+    )
+    .catch((err) =>
+      console.error(
+        "[riviera-jugadores] sync tras finalizar torneo express:",
+        err
+      )
+    );
+
   return updated;
 }
 

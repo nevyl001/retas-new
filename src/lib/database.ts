@@ -435,8 +435,25 @@ export const createPlayer = async (
   }
 
   console.log("Player created successfully:", data);
+
+  try {
+    const { ensureRivieraJugadorForLegacyPlayer } = await import(
+      "./rivieraJugadores/rivieraJugadoresService"
+    );
+    await ensureRivieraJugadorForLegacyPlayer(userId, {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+    });
+  } catch (linkErr) {
+    console.warn("Riviera jugador link skipped:", linkErr);
+  }
+
   return data;
 };
+
+export type { RegistrarParticipacionParams } from "./rivieraJugadores/types";
+export { registrarParticipacion } from "./rivieraJugadores/rivieraJugadoresService";
 
 /** Evita repetir GET con filtro user_id si el esquema no tiene esa columna (42703 / PGRST204). */
 let playersTableSupportsUserIdFilter: boolean | null = null;

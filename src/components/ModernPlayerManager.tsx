@@ -6,6 +6,8 @@ import {
   updatePlayer,
   Player,
 } from "../lib/database";
+import { JugadorAutocomplete } from "./jugadores/JugadorAutocomplete";
+import "./jugadores/riviera-jugadores.css";
 
 interface ModernPlayerManagerProps {
   onPlayerSelect?: (players: Player[]) => void;
@@ -175,6 +177,26 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
             <p>Agrega un nuevo jugador a tu reta</p>
           </div>
           <form onSubmit={handleCreatePlayer} className="elegant-form">
+            {userId && (
+              <JugadorAutocomplete
+                organizadorId={userId}
+                value={newPlayerName}
+                onChange={setNewPlayerName}
+                onSelect={(rj) => {
+                  if (rj.legacy_player_id) {
+                    const pl = players.find((p) => p.id === rj.legacy_player_id);
+                    if (pl) {
+                      handlePlayerSelect(pl);
+                      setShowCreateForm(false);
+                      setNewPlayerName("");
+                      return;
+                    }
+                  }
+                  setNewPlayerName(rj.nombre);
+                }}
+                placeholder="Buscar en registro Riviera…"
+              />
+            )}
             <div className="elegant-input-group">
               <input
                 type="text"
@@ -182,7 +204,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                 onChange={(e) => setNewPlayerName(e.target.value)}
                 placeholder="Nombre del jugador"
                 required
-                autoFocus
+                autoFocus={!userId}
                 className="elegant-input"
               />
               <div className="elegant-input-border"></div>

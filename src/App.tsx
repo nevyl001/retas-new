@@ -29,6 +29,10 @@ import {
   TorneoExpressRouter,
 } from "./components/torneo-express/TorneoExpressRouter";
 import { isLigaPublicPath, LigaRouter } from "./components/liga/LigaRouter";
+import {
+  isJugadoresPublicPath,
+  JugadoresRouter,
+} from "./components/jugadores/JugadoresRouter";
 import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
 import {
   navigateToAppHome,
@@ -590,19 +594,27 @@ function AppContent() {
   const isLigaPublic =
     currentView === "liga" && isLigaPublicPath(appPathname);
 
+  const isJugadoresPublic =
+    currentView === "jugadores" && isJugadoresPublicPath(appPathname);
+
   const isPublicSpectatorView =
     currentView === "public" ||
     currentView === "public-americano" ||
     currentView === "public-americano-pantalla" ||
     isTorneoExpressPublic ||
-    isLigaPublic;
+    isLigaPublic ||
+    isJugadoresPublic;
+
+  const appShellClass = [
+    "App",
+    isPublicSpectatorView ? "App--public-full-width ro-public-view" : "",
+    isJugadoresPublic ? "App--jugadores-public" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div
-      className={`App${
-        isPublicSpectatorView ? " App--public-full-width ro-public-view" : ""
-      }`}
-    >
+    <div className={appShellClass}>
       <ProtectedRoute>
         {/* Solo mostrar UserHeader cuando NO estemos en vista pública NI en admin */}
         {currentView !== "public" &&
@@ -610,6 +622,7 @@ function AppContent() {
           currentView !== "public-americano-pantalla" &&
           !isTorneoExpressPublic &&
           !isLigaPublic &&
+          !isJugadoresPublic &&
           currentView !== "admin-login" &&
           currentView !== "admin-dashboard" && <UserHeader />}
 
@@ -619,6 +632,10 @@ function AppContent() {
 
         {currentView === "liga" && (
           <LigaRouter key={appPathname} pathname={appPathname} />
+        )}
+
+        {currentView === "jugadores" && (
+          <JugadoresRouter key={appPathname} pathname={appPathname} />
         )}
 
         {currentView === "main" && !isAmericanoRoute && (

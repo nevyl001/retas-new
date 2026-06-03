@@ -1067,6 +1067,31 @@ export async function aplicarPuntosJornada(jornadaId: string): Promise<void> {
 
 export async function finishJornada(jornadaId: string): Promise<void> {
   await aplicarPuntosJornada(jornadaId);
+
+  const userId = await requireUserId();
+  const { data: jornada, error: jErr } = await supabase
+    .from("liga_jornadas")
+    .select("liga_id, numero")
+    .eq("id", jornadaId)
+    .maybeSingle();
+
+  if (!jErr && jornada?.liga_id != null && jornada.numero != null) {
+    // Registro Riviera Open: una participación por jugador y jornada.
+    void import("../lib/rivieraJugadores/syncParticipaciones")
+      .then(({ syncLigaJornada }) =>
+        syncLigaJornada(
+          String(jornada.liga_id),
+          Number(jornada.numero),
+          userId
+        )
+      )
+      .catch((err) =>
+        console.error(
+          "[riviera-jugadores] sync tras finalizar jornada de liga:",
+          err
+        )
+      );
+  }
 }
 
 export async function actualizarPuntosInscripcion(

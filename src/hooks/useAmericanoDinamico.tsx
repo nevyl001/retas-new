@@ -137,7 +137,16 @@ function inferCourtsFromRounds(rounds: AmericanoRound[]): number {
   return maxCourt;
 }
 
-export function useAmericanoDinamico(tournamentId?: string | null) {
+export interface UseAmericanoDinamicoOptions {
+  organizadorId?: string | null;
+  /** Nombre visible en el historial Riviera (p. ej. nombre de la reta). */
+  sessionLabel?: string;
+}
+
+export function useAmericanoDinamico(
+  tournamentId?: string | null,
+  options?: UseAmericanoDinamicoOptions
+) {
   const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
   const [players, setPlayers] = useState<AmericanoPlayer[]>([]);
   const [rounds, setRounds] = useState<AmericanoRound[]>([]);
@@ -150,6 +159,13 @@ export function useAmericanoDinamico(tournamentId?: string | null) {
   const roundsRef = useRef(rounds);
   const currentRoundIndexRef = useRef(currentRoundIndex);
   const playersRef = useRef(players);
+  const sesionIdRef = useRef<string>(
+    resolvedTournamentId ??
+      (typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `americano-${Date.now()}`)
+  );
+  const participacionSyncedRef = useRef(false);
 
   /** useLayoutEffect: restaurar antes de useEffect (p. ej. borrador registro) para no borrar el snapshot por carrera. */
   useLayoutEffect(() => {
@@ -299,6 +315,13 @@ export function useAmericanoDinamico(tournamentId?: string | null) {
       name: p.name,
       stats: createEmptyStats(),
     }));
+
+    participacionSyncedRef.current = false;
+    sesionIdRef.current =
+      resolvedTournamentId ??
+      (typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `americano-${Date.now()}`);
 
     const { partnerMatrix } = buildMatricesFromScoredRounds(seededPlayers, []);
     const r1 = generateAmericanoRound({
@@ -450,6 +473,34 @@ export function useAmericanoDinamico(tournamentId?: string | null) {
     () => (phase === "playing" ? rounds[currentRoundIndex] ?? null : null),
     [phase, rounds, currentRoundIndex]
   );
+
+  useEffect(() => {
+    if (phase !== "finished") return;
+    if (!options?.organizadorId || participacionSyncedRef.current) return;
+    if (players.length === 0) return;
+
+    participacionSyncedRef.current = true;
+    const label = options.sessionLabel?.trim() || "Sesión";
+    const roster = playersRef.current;
+    const allRounds = roundsRef.current;
+
+    void import("../lib/rivieraJugadores/syncParticipaciones")
+      .then(({ syncAmericanoParticipaciones }) =>
+        syncAmericanoParticipaciones(
+          sesionIdRef.current,
+          label,
+          roster,
+          allRounds,
+          options.organizadorId!
+        )
+      )
+      .catch((err) =>
+        console.error(
+          "[riviera-jugadores] sync tras finalizar americano:",
+          err
+        )
+      );
+  }, [phase, options?.organizadorId, options?.sessionLabel, players.length]);
 
   return {
     players,

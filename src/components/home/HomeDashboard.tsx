@@ -11,6 +11,8 @@ import {
 } from "../../lib/americanoDinamicoStorage";
 import { useUser } from "../../contexts/UserContext";
 import { navigateLiga } from "../liga/ligaNav";
+import { navigateJugadores } from "../jugadores/jugadoresNav";
+import { navigatePublicJugadores } from "../jugadores/jugadoresPublicNav";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import type { GameModeId } from "./gameModesConfig";
 import {
@@ -129,13 +131,27 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       <GameModesGrid onModeSelect={handleModeSelect} />
       {error && <p className="home-error">{error}</p>}
       <RecentRetasSection userId={userId} onSelectTournament={onTournamentSelect} />
-      {onShowAllRetas && (
-        <div className="home-secondary-actions">
+      <div className="home-secondary-actions">
+        <button
+          type="button"
+          className="home-link-btn"
+          onClick={() => navigateJugadores()}
+        >
+          Registro de jugadores Riviera Open →
+        </button>
+        <button
+          type="button"
+          className="home-link-btn"
+          onClick={() => navigatePublicJugadores()}
+        >
+          Ranking público por categoría →
+        </button>
+        {onShowAllRetas && (
           <button type="button" className="home-link-btn" onClick={onShowAllRetas}>
             Gestionar todas mis retas →
           </button>
-        </div>
-      )}
+        )}
+      </div>
       <QuickStartSheet
         modeId={sheetMode}
         onClose={() => !submitting && setSheetMode(null)}

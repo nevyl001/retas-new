@@ -43,6 +43,16 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 }) => {
   const { user } = useUser();
   const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
+  const effectiveUserId = userId || user?.id || null;
+  const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
+  const [playersLoadError, setPlayersLoadError] = React.useState<string | null>(
+    null
+  );
+  const [tournamentName, setTournamentName] = React.useState<string>("");
+  const [tournamentDescription, setTournamentDescription] =
+    React.useState<string>("");
+  const finishedPersistedRef = React.useRef(false);
+
   const {
     players,
     rounds,
@@ -58,16 +68,10 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     commitRoundScores,
     editScore,
     nextRound,
-  } = useAmericanoDinamico(tournamentId ?? null);
-  const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
-  const [playersLoadError, setPlayersLoadError] = React.useState<string | null>(
-    null
-  );
-  const [tournamentName, setTournamentName] = React.useState<string>("");
-  const [tournamentDescription, setTournamentDescription] =
-    React.useState<string>("");
-  const finishedPersistedRef = React.useRef(false);
-  const effectiveUserId = userId || user?.id || null;
+  } = useAmericanoDinamico(tournamentId ?? null, {
+    organizadorId: effectiveUserId,
+    sessionLabel: tournamentName || "Sesión",
+  });
 
   React.useEffect(() => {
     if (!resolvedTournamentId) return;

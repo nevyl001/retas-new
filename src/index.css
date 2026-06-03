@@ -9,6 +9,7 @@
 @import "./styles/riviera-gold-v3.css";
 @import "./styles/riviera-app-shell.css";
 @import "./styles/riviera-public-court.css";
+@import "./components/jugadores/riviera-jugadores-public.css";
 
 html,
 body {

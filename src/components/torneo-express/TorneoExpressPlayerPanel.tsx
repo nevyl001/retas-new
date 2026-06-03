@@ -15,6 +15,8 @@ import {
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
 import { InscripcionParejaModal } from "./InscripcionParejaModal";
 import { Button } from "../ui";
+import { JugadorAutocomplete } from "../jugadores/JugadorAutocomplete";
+import "../jugadores/riviera-jugadores.css";
 
 type PlayerRow = Player & {
   email_verified?: boolean | null;
@@ -311,6 +313,17 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
       {agregandoNuevo && (
         <div className="te-players-add-form">
+          <JugadorAutocomplete
+            organizadorId={userId}
+            value={nuevoJugadorNombre}
+            onChange={setNuevoJugadorNombre}
+            onSelect={(rj) => {
+              setNuevoJugadorNombre(rj.nombre);
+              if (rj.email && !rj.email.endsWith("@padel.local")) {
+                setNuevoJugadorEmail(rj.email);
+              }
+            }}
+          />
           <label className="te-players-add-form__label" htmlFor="te-nuevo-nombre">
             Nombre
           </label>

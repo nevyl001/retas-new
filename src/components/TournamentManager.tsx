@@ -4,8 +4,11 @@ import {
   getTournaments,
   deleteTournament,
   updateTournament,
+  getPairs,
+  getMatches,
   Tournament,
 } from "../lib/database";
+import { syncRetaParticipaciones } from "../lib/rivieraJugadores/syncParticipaciones";
 import { useUser } from "../contexts/UserContext";
 import { Badge, Button, Card } from "./ui";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
@@ -124,6 +127,22 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       setError("");
       setLoading(true);
       await updateTournament(tournament.id, { is_finished: true });
+      if (user?.id) {
+        try {
+          const [pairs, matches] = await Promise.all([
+            getPairs(tournament.id),
+            getMatches(tournament.id),
+          ]);
+          await syncRetaParticipaciones({
+            organizadorId: user.id,
+            tournament,
+            pairs,
+            matches,
+          });
+        } catch (syncErr) {
+          console.warn("syncRetaParticipaciones:", syncErr);
+        }
+      }
       setTournaments(
         tournaments.map((t) =>
           t.id === tournament.id ? { ...t, is_finished: true } : t
