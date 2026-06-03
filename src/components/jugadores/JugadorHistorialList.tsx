@@ -38,7 +38,7 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
 
   if (items.length === 0) {
     return (
-      <p className={variant === "public" ? "rjp-muted" : "rj-empty"}>
+      <p className={variant === "public" ? "rjp-ficha-historial__empty" : "rj-empty"}>
         Sin participaciones registradas aún. El historial se guarda al finalizar
         retas, torneos, ligas o americanos.
       </p>

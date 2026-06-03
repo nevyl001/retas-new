@@ -36,6 +36,17 @@ export const JUGADOR_CATEGORIA_CLASS: Record<RivieraJugadorCategoria, string> = 
   "6ta_fuerza": "rj-cat--6",
 };
 
+/** Abreviatura en el dot badge del avatar (ficha pública). */
+export const JUGADOR_CATEGORIA_AVATAR_BADGE: Record<RivieraJugadorCategoria, string> = {
+  open: "OP",
+  "1ra_fuerza": "1",
+  "2da_fuerza": "2",
+  "3ra_fuerza": "3",
+  "4ta_fuerza": "4",
+  "5ta_fuerza": "5",
+  "6ta_fuerza": "6",
+};
+
 export const MANO_DOMINANTE_LABELS: Record<ManoDominante, string> = {
   derecha: "Derecha",
   izquierda: "Izquierda",

@@ -1,45 +1,43 @@
 import React from "react";
+import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
+import { JUGADOR_CATEGORIA_AVATAR_BADGE } from "../../lib/rivieraJugadores/constants";
 
 interface JugadorAvatarHeroProps {
   fotoUrl?: string | null;
   nombre: string;
+  categoria: RivieraJugadorCategoria;
   className?: string;
 }
 
 export const JugadorAvatarHero: React.FC<JugadorAvatarHeroProps> = ({
   fotoUrl,
   nombre,
+  categoria,
   className = "",
 }) => {
   const initial = (nombre.trim()[0] ?? "?").toUpperCase();
+  const badge = JUGADOR_CATEGORIA_AVATAR_BADGE[categoria];
 
   return (
     <div
-      className={["rjp-avatar-hero", className].filter(Boolean).join(" ")}
+      className={["rjp-ficha-avatar", className].filter(Boolean).join(" ")}
       aria-hidden={!fotoUrl}
     >
-      <div className="rjp-avatar-hero__ring" />
-      <div className="rjp-avatar-hero__glow" />
-      <div className="rjp-avatar-hero__inner">
+      <div className="rjp-ficha-avatar__circle">
         {fotoUrl ? (
           <img
-            className="rjp-avatar-hero__img"
+            className="rjp-ficha-avatar__img"
             src={fotoUrl}
             alt=""
-            width={88}
-            height={88}
+            width={72}
+            height={72}
             loading="lazy"
           />
         ) : (
-          <>
-            <span className="rjp-avatar-hero__watermark" aria-hidden>
-              🎾
-            </span>
-            <span className="rjp-avatar-hero__initial">{initial}</span>
-          </>
+          <span className="rjp-ficha-avatar__initial">{initial}</span>
         )}
       </div>
-      <span className="rjp-avatar-hero__shine" aria-hidden />
+      <span className="rjp-ficha-avatar__badge">{badge}</span>
     </div>
   );
 };

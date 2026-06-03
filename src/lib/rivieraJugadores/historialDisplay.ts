@@ -204,6 +204,29 @@ export function participacionToHistorialItem(
   };
 }
 
+export function computePublicProfileStats(
+  participaciones: JugadorParticipacion[]
+): {
+  torneos: number;
+  victorias: number;
+  winRate: number | null;
+} {
+  let victorias = 0;
+  let derrotas = 0;
+  for (const p of participaciones) {
+    if (p.resultado === "victoria") victorias += 1;
+    else if (p.resultado === "derrota") derrotas += 1;
+  }
+  const decided = victorias + derrotas;
+  const winRate =
+    decided > 0 ? Math.round((victorias / decided) * 100) : null;
+  return {
+    torneos: participaciones.length,
+    victorias,
+    winRate,
+  };
+}
+
 export function groupHistorialResumen(items: HistorialItemView[]): {
   campeonatos: number;
   subcampeonatos: number;
