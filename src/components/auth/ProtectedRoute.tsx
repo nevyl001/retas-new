@@ -1,7 +1,6 @@
 import React from "react";
 import { useUser } from "../../contexts/UserContext";
-import { isLigaPublicPath } from "../liga/LigaRouter";
-import { isTorneoExpressPublicPath } from "../torneo-express/TorneoExpressRouter";
+import { pathRequiresUserSession } from "../../lib/appRouting";
 import { AuthPage } from "./AuthPage";
 
 interface ProtectedRouteProps {
@@ -12,20 +11,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useUser();
   const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
 
-  // Rutas que no requieren login: cualquiera puede ver (incluye base path ej. /app/public/xxx)
-  const isPublicRoute =
-    currentPath.includes("/public/") ||
-    isTorneoExpressPublicPath(currentPath) ||
-    isLigaPublicPath(currentPath);
   const isAdminRoute =
     currentPath === "/admin-login" || currentPath === "/admin-dashboard";
 
-  // Primero: si es vista pública o admin, mostrar contenido sin pedir sesión
-  if (isPublicRoute || isAdminRoute) {
+  // Ranking, cómo funciona, fichas /public/, torneo express público, etc.
+  if (!pathRequiresUserSession(currentPath) || isAdminRoute) {
     return <>{children}</>;
   }
 
-  // Si está cargando (solo para rutas que sí requieren login), mostrar loading
   if (loading) {
     return (
       <div className="loading-container">
@@ -37,7 +30,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // Si no hay usuario, mostrar página de autenticación
   if (!user) {
     return <AuthPage />;
   }
