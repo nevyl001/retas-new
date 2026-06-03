@@ -7,11 +7,11 @@ interface GameModeCardProps extends GameModeConfig {
 }
 
 export const GameModeCard: React.FC<GameModeCardProps> = ({
+  id,
   title,
   description,
   icon,
   badge,
-  gradient,
   accentColor,
   disabled,
   index,
@@ -20,10 +20,11 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
   return (
     <button
       type="button"
-      className={`game-mode-card${disabled ? " game-mode-card--disabled" : ""}`}
+      className={`game-mode-card game-mode-card--${id}${
+        disabled ? " game-mode-card--disabled" : ""
+      }`}
       style={
         {
-          background: gradient,
           "--mode-accent": accentColor,
           animationDelay: `${index * 80}ms`,
         } as React.CSSProperties

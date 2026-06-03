@@ -23,7 +23,7 @@ export const GAME_MODES: GameModeConfig[] = [
     description: "Parejas agrupadas compiten por equipos",
     icon: "🏆",
     badge: "Popular",
-    gradient: "linear-gradient(135deg, #1a1508 0%, #2a2010 100%)",
+    gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#c9a227",
   },
   {
@@ -31,7 +31,7 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Round Robin",
     description: "Todos contra todos, tabla en vivo",
     icon: "🔄",
-    gradient: "linear-gradient(135deg, #0a0a0a 0%, #141414 100%)",
+    gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#c9a227",
   },
   {
@@ -40,8 +40,8 @@ export const GAME_MODES: GameModeConfig[] = [
     description: "Rotación dinámica por rondas y canchas",
     icon: "🎾",
     badge: "Rápido",
-    gradient: "linear-gradient(135deg, #0a1f18 0%, #103028 100%)",
-    accentColor: "#10B981",
+    gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+    accentColor: "#c9a227",
   },
   {
     id: "mini-torneo",
@@ -49,7 +49,7 @@ export const GAME_MODES: GameModeConfig[] = [
     description: "Grupos + round robin, tabla pública",
     icon: "⚡",
     badge: "Nuevo",
-    gradient: "linear-gradient(135deg, #0a0a0a 0%, #141414 100%)",
+    gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#c9a227",
   },
   {
@@ -58,7 +58,7 @@ export const GAME_MODES: GameModeConfig[] = [
     description: "Temporada con jornadas y ranking acumulado",
     icon: "🏅",
     badge: "Nuevo",
-    gradient: "linear-gradient(135deg, #1a1530 0%, #2a2048 100%)",
-    accentColor: "#5B4FCF",
+    gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+    accentColor: "#c9a227",
   },
 ];

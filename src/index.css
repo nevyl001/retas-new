@@ -7,6 +7,7 @@
 @import "./styles/riviera-primitives.css";
 @import "./styles/riviera-utilities.css";
 @import "./styles/riviera-gold-v3.css";
+@import "./styles/riviera-app-shell.css";
 @import "./styles/riviera-public-court.css";
 
 html,

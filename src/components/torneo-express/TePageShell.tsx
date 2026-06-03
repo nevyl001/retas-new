@@ -1,6 +1,7 @@
 import React from "react";
 import "./torneo-express.css";
 import "./riviera-torneo-express.css";
+import "./te-fondos.css";
 
 export interface TePageShellProps {
   children: React.ReactNode;

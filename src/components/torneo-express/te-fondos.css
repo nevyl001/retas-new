@@ -1,0 +1,52 @@
+/* Torneo Express — un solo fondo grafito; las cards se leen por borde, no por otro gris */
+
+.torneo-express-page {
+  --te-bg: var(--bg-base);
+  --te-panel: var(--bg-base);
+  --te-card: var(--bg-base);
+  --riviera-bg-base: var(--bg-base);
+  --riviera-bg-card: var(--bg-base);
+  background: var(--bg-base);
+}
+
+.torneo-express-page.te-inicio-page,
+.te-inicio-page {
+  --te-inicio-page-bg: var(--bg-base);
+  --te-inicio-surface: var(--bg-base);
+  --te-inicio-surface-raised: var(--bg-base);
+  background: var(--bg-base);
+}
+
+.te-gestion-page {
+  --te-gestion-surface: var(--bg-base);
+}
+
+.torneo-express-page .torneo-express-card,
+.torneo-express-page .te-torneo-card,
+.torneo-express-page .te-torneos-empty,
+.torneo-express-page .te-players-panel,
+.torneo-express-page .te-torneo-list-card,
+.torneo-express-page .te-modal-card,
+.te-inicio-page .te-torneo-card,
+.te-inicio-page .te-torneos-empty,
+.te-inicio-page .te-crear-col .torneo-express-card,
+.te-inicio-page .te-crear-col .te-players-panel {
+  background: var(--bg-base);
+}
+
+.te-gestion-page .torneo-express-card,
+.te-gestion-page .te-gestion-card,
+.te-gestion-page .te-grupos-card,
+.te-gestion-page .te-notif-panel,
+.te-gestion-page .te-partido-card {
+  background: var(--bg-base);
+}
+
+/* Bloques internos: inset suave, no otro gris plano */
+.te-gestion-page .te-notif-table-wrap,
+.te-gestion-page .te-notif-table thead,
+.te-gestion-page .te-notif-card,
+.te-gestion-page .te-elim-cuadro .te-bracket-match,
+.torneo-express-page .te-elim-slot {
+  background: var(--bg-inset);
+}

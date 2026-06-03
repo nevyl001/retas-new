@@ -5,6 +5,7 @@ import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
 import { TePageShell } from "./TePageShell";
 import { Button } from "../ui";
 import "./te-inicio-page.css";
+import "./te-fondos.css";
 
 export const TorneoExpressInicio: React.FC = () => {
   const [refreshToken, setRefreshToken] = useState(0);

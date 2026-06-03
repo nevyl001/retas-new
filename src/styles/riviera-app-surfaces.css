@@ -1,4 +1,4 @@
-/* Riviera Gold — Superficies globales del organizador (layout reta) */
+/* Riviera Gold — Superficies del organizador (reta) */
 
 .reta-management-section,
 .reta-content {
@@ -27,15 +27,6 @@
 
 .riviera-btn-back {
   font-family: var(--font-body) !important;
-}
-
-.container {
-  background: var(--bg-base);
-}
-
-.main-layout {
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .text-display,

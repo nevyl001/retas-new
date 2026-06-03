@@ -23,6 +23,7 @@ import {
   ligaJornadaPath,
   navigateLiga,
 } from "./ligaNav";
+import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
 
 interface LigaGestionarProps {
@@ -312,25 +313,25 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
   if (loading && !detalle) {
     return (
-      <div className="liga-page">
+      <LigaPageShell>
         <p>Cargando…</p>
-      </div>
+      </LigaPageShell>
     );
   }
 
   if (!detalle) {
     return (
-      <div className="liga-page">
+      <LigaPageShell>
         <p className="liga-error">{error ?? "Liga no encontrada"}</p>
         <Button type="button" variant="secondary" onClick={() => navigateLiga("/liga")}>
           Volver
         </Button>
-      </div>
+      </LigaPageShell>
     );
   }
 
   return (
-    <div className="liga-page">
+    <LigaPageShell>
       <div className="liga-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateLiga("/liga")}>
           ← Ligas
@@ -687,6 +688,6 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
           )}
         </div>
       )}
-    </div>
+    </LigaPageShell>
   );
 };

@@ -7,6 +7,7 @@ import {
 } from "../../services/ligaService";
 import type { RankingItem } from "../../lib/liga/types";
 import { LigaRanking } from "./LigaRanking";
+import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
 
 interface LigaDetalleProps {
@@ -48,22 +49,22 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
 
   if (loading && !detalle) {
     return (
-      <div className={`liga-page${publica ? " liga-page--public" : ""}`}>
+      <LigaPageShell className={publica ? "liga-page--public" : ""}>
         <p>Cargando…</p>
-      </div>
+      </LigaPageShell>
     );
   }
 
   if (!detalle) {
     return (
-      <div className={`liga-page${publica ? " liga-page--public" : ""}`}>
+      <LigaPageShell className={publica ? "liga-page--public" : ""}>
         <p className="liga-error">{error ?? "No disponible"}</p>
-      </div>
+      </LigaPageShell>
     );
   }
 
   return (
-    <div className={`liga-page${publica ? " liga-page--public" : ""}`}>
+    <LigaPageShell className={publica ? "liga-page--public" : ""}>
       <header className="liga-header">
         <h1 className="liga-title">Liga: {detalle.nombre}</h1>
         <p className="liga-subtitle">
@@ -110,6 +111,6 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
           </ul>
         )}
       </div>
-    </div>
+    </LigaPageShell>
   );
 };

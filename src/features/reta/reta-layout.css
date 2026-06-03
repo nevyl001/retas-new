@@ -11,7 +11,7 @@
 .container {
   width: 100%;
   min-height: 100vh;
-  background: var(--color-bg-base);
+  background: transparent;
   padding: 0;
   margin: 0;
 }
@@ -136,14 +136,15 @@
   color: var(--color-accent);
 }
 
-.main-layout {
+/* Solo vista reta activa — no anular padding del shell en Home */
+.main-layout:has(> .reta-content) {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
-  padding: var(--space-xl);
+  gap: 0;
+  padding: 0;
   width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
   box-sizing: border-box;
 }
 

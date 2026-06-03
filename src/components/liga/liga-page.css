@@ -1,47 +1,22 @@
 @import "./liga-tokens.css";
 
-/* Fondo coherente en el shell cuando hay vistas admin de liga */
-.App:has(.liga-page) {
-  background: var(--liga-bg-base);
-  min-height: 100vh;
-}
-
-/* ─── Page shell ─── */
+/* Shell visual: riviera-app-shell.css (.liga-page) */
 
 .liga-page {
-  position: relative;
-  isolation: isolate;
-  box-sizing: border-box;
-  min-height: 100vh;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  background: var(--liga-bg-gradient);
-  color: var(--liga-text);
   font-family: var(--liga-font-body);
-  padding:
-    var(--liga-space-xl)
-    clamp(20px, 4vw, 56px)
-    var(--liga-space-3xl);
 }
 
-.liga-page::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-.liga-page > * {
+.liga-page__inner {
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
-.liga-page--public {
-  max-width: none;
+.liga-page--public .liga-page__inner {
+  max-width: 1200px;
 }
 
 .liga-toolbar {

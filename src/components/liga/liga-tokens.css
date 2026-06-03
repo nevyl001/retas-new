@@ -12,33 +12,17 @@
   --liga-green-light: #6ee7b7;
   --liga-green-dim: rgba(16, 185, 129, 0.15);
   --liga-red: #f87171;
-  --liga-bg-base: #0f0f12;
-  --liga-bg: #0f0f12;
-  --liga-bg-gradient:
-    radial-gradient(
-      ellipse 120% 80% at 50% -25%,
-      rgba(201, 162, 39, 0.09) 0%,
-      transparent 55%
-    ),
-    radial-gradient(
-      ellipse 55% 45% at 100% 40%,
-      rgba(91, 79, 207, 0.06) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse 45% 35% at 0% 85%,
-      rgba(16, 185, 129, 0.04) 0%,
-      transparent 45%
-    ),
-    linear-gradient(180deg, #16161c 0%, #0e0e12 45%, #09090c 100%);
-  --liga-surface: rgba(255, 255, 255, 0.045);
-  --liga-surface-hover: rgba(255, 255, 255, 0.07);
+  --liga-bg-base: var(--bg-base);
+  --liga-bg: var(--bg-base);
+  --liga-bg-gradient: var(--bg-base);
+  --liga-surface: var(--bg-card);
+  --liga-surface-hover: var(--bg-card-hover);
   --liga-surface-deep: rgba(0, 0, 0, 0.35);
-  --liga-border: rgba(255, 255, 255, 0.08);
-  --liga-border-subtle: rgba(255, 255, 255, 0.04);
-  --liga-text: #f5f5f5;
-  --liga-text-muted: rgba(245, 245, 245, 0.55);
-  --liga-text-soft: rgba(255, 255, 255, 0.72);
+  --liga-border: var(--border-default);
+  --liga-border-subtle: var(--border-subtle);
+  --liga-text: var(--text-primary);
+  --liga-text-muted: var(--text-muted);
+  --liga-text-soft: var(--text-secondary);
   --liga-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.25);
   --liga-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.3);
   --liga-shadow-gold: 0 2px 8px rgba(201, 162, 39, 0.35);

@@ -5,6 +5,7 @@ import { LigaGestionar } from "./LigaGestionar";
 import { LigaHome } from "./LigaHome";
 import { LigaJornadaView } from "./LigaJornada";
 import { LigaNueva } from "./LigaNueva";
+import { LigaPageShell } from "./LigaPageShell";
 
 export type LigaRoute =
   | { kind: "home" }
@@ -75,9 +76,9 @@ export const LigaRouter: React.FC<{ pathname: string }> = ({ pathname }) => {
       );
     default:
       return (
-        <div className="liga-page">
+        <LigaPageShell>
           <p className="liga-error">Ruta de liga no válida.</p>
-        </div>
+        </LigaPageShell>
       );
   }
 };

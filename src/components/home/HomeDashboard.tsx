@@ -124,7 +124,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   );
 
   return (
-    <div className="home-container">
+    <div className="home-inner">
       <HomeHeader userName={userProfile?.name} />
       <GameModesGrid onModeSelect={handleModeSelect} />
       {error && <p className="home-error">{error}</p>}

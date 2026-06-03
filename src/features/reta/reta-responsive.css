@@ -4,10 +4,6 @@
    ============================================ */
 
 @media (max-width: 1200px) {
-  .main-layout {
-    padding: var(--space-xl);
-  }
-
   .four-components-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-lg);
@@ -87,14 +83,6 @@
   
   .app-header-title {
     font-size: 1.5rem;
-  }
-
-  .main-layout {
-    padding: var(--space-md);
-    gap: var(--space-xl);
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto;
   }
 
   .welcome-banner {
@@ -197,14 +185,6 @@
 
 /* iPhone 17 Pro Max y pantallas grandes móviles (430px - 480px) */
 @media (max-width: 480px) and (min-width: 430px) {
-  .main-layout {
-    padding: var(--space-xs);
-    gap: var(--space-md);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-
   /* Solo en móvil: eliminar contenedor para que las cards ocupen todo el espacio */
   .reta-management-section {
     width: 100%;

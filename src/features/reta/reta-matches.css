@@ -48,7 +48,7 @@
 .reta-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: clamp(20px, 3vw, 28px);
   width: 100%;
   min-width: 0;
   max-width: 100%;

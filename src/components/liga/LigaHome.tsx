@@ -4,6 +4,7 @@ import type { Liga } from "../../lib/liga/types";
 import { getLigas } from "../../services/ligaService";
 import { Button } from "../ui";
 import { navigateLiga } from "./ligaNav";
+import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
 
 function estadoLabel(estado: Liga["estado"]): string {
@@ -48,7 +49,7 @@ export const LigaHome: React.FC = () => {
   }, [load]);
 
   return (
-    <div className="liga-page">
+    <LigaPageShell>
       <div className="liga-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateToAppHome()}>
           ← Volver al inicio
@@ -105,6 +106,6 @@ export const LigaHome: React.FC = () => {
           ))}
         </ul>
       )}
-    </div>
+    </LigaPageShell>
   );
 };

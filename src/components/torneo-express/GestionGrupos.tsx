@@ -28,6 +28,7 @@ import {
 } from "./torneoExpressNav";
 import { Badge, Button } from "../ui";
 import "./te-gestion-page.css";
+import "./te-fondos.css";
 
 export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const {

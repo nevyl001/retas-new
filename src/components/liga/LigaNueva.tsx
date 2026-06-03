@@ -3,6 +3,7 @@ import { navigateToAppHome } from "../../lib/appRouting";
 import { createLiga } from "../../services/ligaService";
 import { Button } from "../ui";
 import { ligaGestionarPath, navigateLiga } from "./ligaNav";
+import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
 
 export const LigaNueva: React.FC = () => {
@@ -35,7 +36,7 @@ export const LigaNueva: React.FC = () => {
   };
 
   return (
-    <div className="liga-page">
+    <LigaPageShell>
       <div className="liga-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateLiga("/liga")}>
           ← Ligas
@@ -92,6 +93,6 @@ export const LigaNueva: React.FC = () => {
           </Button>
         </div>
       </form>
-    </div>
+    </LigaPageShell>
   );
 };

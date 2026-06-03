@@ -207,6 +207,11 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
             const courtsLabel = formatTournamentCourtsLabel(
               getTournamentCourtsCount(tournament)
             );
+            const statusCardClass = tournament.is_finished
+              ? "mis-reta-card--status-finished"
+              : tournament.is_started
+                ? "mis-reta-card--status-active"
+                : "mis-reta-card--status-pending";
 
             return (
               <Card
@@ -214,7 +219,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                 as="article"
                 variant="glass"
                 interactive
-                className={`mis-reta-card${
+                className={`mis-reta-card ${statusCardClass}${
                   isSelected ? " mis-reta-card--selected" : ""
                 }`}
                 onClick={() => onTournamentSelect(tournament)}

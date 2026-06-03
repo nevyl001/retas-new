@@ -1,0 +1,73 @@
+/* Shell unificado — Home y Liga (Torneo Express usa su propio .torneo-express-page) */
+
+.main-layout,
+.liga-page {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  padding: clamp(28px, 5vw, 52px) clamp(20px, 4vw, 56px)
+    clamp(48px, 6vw, 80px);
+  box-sizing: border-box;
+  animation: fadeInUp 0.45s ease-out both;
+  background:
+    radial-gradient(
+      ellipse 100% 55% at 50% -15%,
+      rgba(201, 162, 39, 0.035) 0%,
+      transparent 58%
+    ),
+    var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.main-layout::before,
+.liga-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.018'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Home / reta activa — un solo contenedor de contenido */
+.main-layout > .home-inner,
+.main-layout > .reta-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* Reta activa: .main-layout sin padding (reta-layout) — el aire va aquí */
+.main-layout > .reta-content {
+  padding: clamp(20px, 3.5vw, 36px) clamp(16px, 3vw, 28px)
+    clamp(40px, 5vw, 56px);
+}
+
+.main-layout > .reta-content .reta-content__toolbar {
+  margin-bottom: clamp(12px, 2vw, 20px);
+}
+
+.home-inner {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .main-layout,
+  .liga-page {
+    padding: clamp(20px, 4vw, 28px) clamp(16px, 4vw, 24px)
+      clamp(40px, 5vw, 56px);
+  }
+}

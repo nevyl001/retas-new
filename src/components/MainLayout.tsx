@@ -115,7 +115,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   );
 
   return (
-    <div className="container">
+    <>
       {loading && (
         <div className="loading">
           <p>⏳ Cargando...</p>
@@ -124,21 +124,20 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       <div className="main-layout">
         {!selectedTournament ? (
-          <>
+          showAllRetas ? (
+            <div className="home-inner">
+              <TournamentManager
+                onTournamentSelect={handleTournamentSelect}
+                onBack={() => setShowAllRetas(false)}
+              />
+            </div>
+          ) : (
             <HomeDashboard
               userId={userId}
               onTournamentSelect={handleTournamentSelect}
-              onShowAllRetas={() => setShowAllRetas((v) => !v)}
+              onShowAllRetas={() => setShowAllRetas(true)}
             />
-            {showAllRetas && (
-              <div className="reta-management-section reta-management-section--v2">
-                <TournamentManager
-                  onTournamentSelect={handleTournamentSelect}
-                  onBack={() => setShowAllRetas(false)}
-                />
-              </div>
-            )}
-          </>
+          )
         ) : (
           <div className="reta-content riviera-organizer-reta">
             <div className="reta-content__toolbar riviera-back-toolbar">
@@ -191,7 +190,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 };
 

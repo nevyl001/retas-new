@@ -18,6 +18,7 @@ import {
 } from "../../services/ligaService";
 import { Button } from "../ui";
 import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
+import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
 
 interface LigaJornadaProps {
@@ -262,15 +263,15 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
   if (loading && !detalle) {
     return (
-      <div className="liga-page">
+      <LigaPageShell>
         <p>Cargando jornada…</p>
-      </div>
+      </LigaPageShell>
     );
   }
 
   if (!detalle || !jornada) {
     return (
-      <div className="liga-page">
+      <LigaPageShell>
         <p className="liga-error">{error ?? "Jornada no encontrada"}</p>
         <Button
           type="button"
@@ -279,7 +280,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         >
           Volver
         </Button>
-      </div>
+      </LigaPageShell>
     );
   }
 
@@ -300,7 +301,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const partidosEsperados = (nParejas * (nParejas - 1)) / 2;
 
   return (
-    <div className="liga-page">
+    <LigaPageShell>
       <div className="liga-toolbar riviera-back-toolbar">
         <Button
           type="button"
@@ -692,6 +693,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           </div>
         </aside>
       </div>
-    </div>
+    </LigaPageShell>
   );
 };

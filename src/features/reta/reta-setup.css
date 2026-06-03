@@ -1236,16 +1236,16 @@
   background: transparent;
   border: none;
   box-shadow: none;
-  padding: 0;
+  padding: 0.25rem 0 0.5rem;
 }
 
 .start-tournament-section__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1rem 1.25rem;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .start-tournament-section__title {
@@ -1258,8 +1258,8 @@
 }
 
 .start-tournament-section__hero {
-  margin-bottom: 1rem;
-  padding: 1.25rem 1.15rem;
+  margin-bottom: 1.15rem;
+  padding: 1.4rem 1.35rem;
   text-align: center;
 }
 

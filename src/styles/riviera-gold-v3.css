@@ -100,10 +100,9 @@
   background: var(--text-secondary);
 }
 
-/* Welcome / containers */
-.container,
-.main-layout {
-  background: var(--bg-base);
+/* Welcome / containers — fondo unificado en .main-layout (riviera-app-surfaces.css) */
+.container {
+  background: transparent;
 }
 
 .welcome-banner,
