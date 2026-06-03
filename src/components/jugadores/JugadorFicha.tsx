@@ -25,7 +25,7 @@ import { buildPublicJugadorPath, buildPublicRankingUrl } from "./jugadoresPublic
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
 import { JugadorHistorialList } from "./JugadorHistorialList";
-import { navigateJugadores } from "./jugadoresNav";
+import { navigateJugadorFicha, navigateJugadores } from "./jugadoresNav";
 import "./riviera-jugadores.css";
 
 interface JugadorFichaProps {
@@ -43,6 +43,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [nombre, setNombre] = useState("");
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [edad, setEdad] = useState("");
   const [mano, setMano] = useState<ManoDominante | "">("");
@@ -62,6 +63,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       const j = await getRivieraJugadorBySlug(user.id, slug);
       setJugador(j);
       if (j) {
+        setNombre(j.nombre);
         setCategoria(j.categoria);
         setEdad(j.edad != null ? String(j.edad) : "");
         setMano(j.mano_dominante ?? "");
@@ -86,10 +88,16 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
 
   const handleSaveProfile = async () => {
     if (!jugador) return;
+    const nombreTrim = nombre.trim();
+    if (!nombreTrim) {
+      alert("Escribe el nombre del jugador.");
+      return;
+    }
     setSaving(true);
     try {
       const edadNum = edad.trim() ? Number(edad) : null;
       const updated = await updateRivieraJugador(jugador.id, {
+        nombre: nombreTrim,
         categoria,
         edad:
           edadNum != null && !Number.isNaN(edadNum) && edadNum >= 5 && edadNum <= 99
@@ -105,7 +113,11 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         visible_publico: visiblePublico,
       });
       setJugador({ ...jugador, ...updated, stats: jugador.stats });
+      setNombre(updated.nombre);
       setEditOpen(false);
+      if (updated.slug !== jugador.slug) {
+        navigateJugadorFicha(updated.slug);
+      }
     } catch (e) {
       alert(e instanceof Error ? e.message : "No se pudo guardar");
     } finally {
@@ -249,6 +261,17 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         {editOpen && (
           <section className="rj-edit-panel">
             <h2 className="rj-edit-panel__title">Datos del jugador</h2>
+            <div className="rj-field">
+              <label htmlFor="rj-nombre">Nombre</label>
+              <input
+                id="rj-nombre"
+                type="text"
+                autoComplete="name"
+                placeholder="Nombre del jugador"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+              />
+            </div>
             <div className="rj-field">
               <label htmlFor="rj-cat">Categoría</label>
               <select

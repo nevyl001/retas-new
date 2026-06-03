@@ -529,6 +529,15 @@ export async function inscribirJugador(
   });
 
   if (error) throw new Error(error.message);
+
+  const uid = await requireUserId();
+  void import("../lib/rivieraJugadores/syncParticipaciones")
+    .then(({ syncLigaInscripcionRanking }) =>
+      syncLigaInscripcionRanking(ligaId, jugadorId, uid)
+    )
+    .catch((err) =>
+      console.error("[riviera-jugadores] sync inscripción liga:", err)
+    );
 }
 
 export async function desinscribirJugador(
@@ -1140,6 +1149,13 @@ export async function finishLiga(ligaId: string): Promise<void> {
     .eq("id", ligaId);
 
   if (error) throw new Error(error.message);
+
+  const uid = await requireUserId();
+  void import("../lib/rivieraJugadores/syncParticipaciones")
+    .then(({ syncLigaFinalPodio }) => syncLigaFinalPodio(ligaId, uid))
+    .catch((err) =>
+      console.error("[riviera-jugadores] sync podio final liga:", err)
+    );
 }
 
 export async function getRanking(ligaId: string): Promise<RankingItem[]> {

@@ -2,11 +2,7 @@ import type { Match, Pair, Player, Tournament } from "../db/types";
 import type { AmericanoPlayer, AmericanoRound } from "../db/types";
 import { getGames, getMatches, getPairs, getTournaments } from "../database";
 import { computeJornadaPublicStats } from "../liga/jornadaStats";
-import {
-  computePairsWithStats,
-  sortPairsForStandings,
-} from "../standingsUtils";
-import { formatLugarOrdinal, placementTorneoLabel } from "./historialDisplay";
+import { formatLugarOrdinal } from "./historialDisplay";
 import { supabase } from "../supabaseClient";
 import {
   buildAmericanoPlayerStandingStats,
@@ -21,9 +17,18 @@ import {
 import type { TorneoExpressBundle } from "../torneoExpress/types";
 import type { TorneoExpressEliminatoriaPartido } from "../torneoExpress/types";
 import {
-  puntosRankingPorPlacement,
-  type RivieraTePlacement,
-} from "../torneoExpress/rankingPoints";
+  calcularPuntosEventoDesglose,
+  RANKING_PUNTOS_ESQUEMA,
+  type CalcularPuntosEventoParams,
+  type PuntosDesglose,
+  type RivieraRankingFormato,
+} from "./rivieraRankingPoints";
+import {
+  computePairsWithStats,
+  sortPairsForStandings,
+  computeTeamStandings,
+  getTeamConfigFromStorage,
+} from "../standingsUtils";
 import {
   createRivieraJugador,
   getRivieraJugadorByLegacyLigaId,
@@ -202,6 +207,86 @@ export async function getOrCreateJugadorId(params: {
   }
 }
 
+async function tieneParticipacionSubtipo(
+  jugadorId: string,
+  tipoEvento: JugadorTipoEvento,
+  eventoId: string,
+  subtipo: string
+): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from("jugador_participaciones")
+      .select("id")
+      .eq("jugador_id", jugadorId)
+      .eq("tipo_evento", tipoEvento)
+      .eq("evento_id", eventoId)
+      .filter("metadata->>subtipo", "eq", subtipo)
+      .limit(1)
+      .maybeSingle();
+    if (error) return false;
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
+function rankingMetadata(
+  desglose: PuntosDesglose,
+  extra: Record<string, unknown> = {}
+): Record<string, unknown> {
+  const total = Object.values(desglose).reduce((a, b) => a + b, 0);
+  return {
+    ...extra,
+    puntos_aplicados: true,
+    puntos_desglose: desglose,
+    puntos_evento: total,
+    ranking_puntos_esquema: RANKING_PUNTOS_ESQUEMA,
+  };
+}
+
+async function registrarPuntosRanking(params: {
+  jugadorId: string;
+  tipoEvento: JugadorTipoEvento;
+  eventoId: string;
+  eventoNombre: string;
+  resultado: JugadorResultado;
+  formato: RivieraRankingFormato;
+  calcParams: Omit<CalcularPuntosEventoParams, "formato">;
+  setsFavor?: number;
+  setsContra?: number;
+  parejaCon?: string;
+  metadata?: Record<string, unknown>;
+  skipIfSubtipoExists?: string;
+}): Promise<void> {
+  if (params.skipIfSubtipoExists) {
+    const exists = await tieneParticipacionSubtipo(
+      params.jugadorId,
+      params.tipoEvento,
+      params.eventoId,
+      params.skipIfSubtipoExists
+    );
+    if (exists) return;
+  }
+
+  const { total, desglose } = calcularPuntosEventoDesglose({
+    formato: params.formato,
+    ...params.calcParams,
+  });
+
+  await safeRegistrar({
+    jugadorId: params.jugadorId,
+    tipoEvento: params.tipoEvento,
+    eventoId: params.eventoId,
+    eventoNombre: params.eventoNombre,
+    resultado: params.resultado,
+    setsFavor: params.setsFavor,
+    setsContra: params.setsContra,
+    puntosObtenidos: total,
+    parejaCon: params.parejaCon,
+    metadata: rankingMetadata(desglose, params.metadata),
+  });
+}
+
 async function safeRegistrar(params: {
   jugadorId: string;
   tipoEvento: JugadorTipoEvento;
@@ -215,7 +300,10 @@ async function safeRegistrar(params: {
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   try {
-    await registrarParticipacion(params);
+    await registrarParticipacion({
+      ...params,
+      puntosObtenidos: Math.max(0, params.puntosObtenidos ?? 0),
+    });
   } catch (e) {
     console.error("[riviera-jugadores] safeRegistrar:", e);
   }
@@ -452,6 +540,17 @@ async function syncRetaParticipacionesInner(params: {
   const modalidad = esEquipos ? "reta_equipos" : "round_robin";
   const modalidadLabel = esEquipos ? "Reta por equipos" : "Round Robin";
 
+  let winningTeamIndex: number | null = null;
+  const teamConfig = esEquipos ? getTeamConfigFromStorage(tournament.id) : null;
+  if (esEquipos && teamConfig) {
+    const teamRows = computeTeamStandings(sortedPairs, teamConfig);
+    winningTeamIndex = teamRows?.[0]?.teamIndex ?? null;
+  }
+
+  const formatoRanking: RivieraRankingFormato = esEquipos
+    ? "reta_equipos"
+    : "reta";
+
   for (const st of Array.from(agg.values())) {
     const jugadorId = await getOrCreateJugadorId({
       nombre: st.nombre,
@@ -467,16 +566,26 @@ async function syncRetaParticipacionesInner(params: {
     );
     const rank = pair ? pairRank.get(pair.id) : undefined;
 
-    await safeRegistrar({
+    let equipoGanador = false;
+    if (esEquipos && winningTeamIndex != null && pair && teamConfig) {
+      const teamIdx = teamConfig.pairToTeam[pair.id];
+      equipoGanador = teamIdx === winningTeamIndex;
+    }
+
+    await registrarPuntosRanking({
       jugadorId,
       tipoEvento: "reta",
       eventoId: tournament.id,
       eventoNombre: tournament.name,
       resultado: resultadoFromRecord(st.wins, st.losses, st.draws),
+      formato: formatoRanking,
+      calcParams: esEquipos
+        ? { equipo_ganador: equipoGanador }
+        : { posicion_final: rank?.pos ?? null },
       setsFavor: st.setsFavor,
       setsContra: st.setsContra,
-      puntosObtenidos: st.puntosObtenidos,
       metadata: {
+        subtipo: "reta_cierre",
         partidos_ganados: st.wins,
         partidos_perdidos: st.losses,
         partidos_empatados: st.draws,
@@ -490,6 +599,7 @@ async function syncRetaParticipacionesInner(params: {
         lugar: rank
           ? formatLugarOrdinal(rank.pos, rank.total)
           : "Participación",
+        equipo_ganador: esEquipos ? equipoGanador : undefined,
       },
     });
   }
@@ -574,17 +684,6 @@ function resolveSubcampeonParejaId(
   return null;
 }
 
-function placementForPlayer(
-  legacyPlayerId: string | undefined,
-  campeonPlayerIds: Set<string>,
-  subcampeonPlayerIds: Set<string>
-): RivieraTePlacement {
-  if (!legacyPlayerId) return "otro";
-  if (campeonPlayerIds.has(legacyPlayerId)) return "campeon";
-  if (subcampeonPlayerIds.has(legacyPlayerId)) return "subcampeon";
-  return "otro";
-}
-
 function legacyPlayerIdsFromPair(pair: Pair | undefined): Set<string> {
   const ids = new Set<string>();
   if (!pair) return ids;
@@ -593,20 +692,135 @@ function legacyPlayerIdsFromPair(pair: Pair | undefined): Set<string> {
   return ids;
 }
 
+function resolveExpressPlayerPosicion(
+  legacyPlayerId: string | undefined,
+  ctx: {
+    campeonPlayerIds: Set<string>;
+    subcampeonPlayerIds: Set<string>;
+    tercerPlayerIds: Set<string>;
+    cuartoPlayerIds: Set<string>;
+    semiPlayerIds: Set<string>;
+  }
+): { posicion_final: number | null; llego_semi: boolean } {
+  if (!legacyPlayerId) return { posicion_final: null, llego_semi: false };
+  if (ctx.campeonPlayerIds.has(legacyPlayerId)) {
+    return { posicion_final: 1, llego_semi: true };
+  }
+  if (ctx.subcampeonPlayerIds.has(legacyPlayerId)) {
+    return { posicion_final: 2, llego_semi: true };
+  }
+  if (ctx.tercerPlayerIds.has(legacyPlayerId)) {
+    return { posicion_final: 3, llego_semi: true };
+  }
+  if (ctx.cuartoPlayerIds.has(legacyPlayerId)) {
+    return { posicion_final: 4, llego_semi: true };
+  }
+  if (ctx.semiPlayerIds.has(legacyPlayerId)) {
+    return { posicion_final: null, llego_semi: true };
+  }
+  return { posicion_final: null, llego_semi: false };
+}
+
+function buildExpressPlacementContext(
+  bundle: TorneoExpressBundle,
+  campeonParejaId: string | null,
+  subcampeonParejaId: string | null,
+  pairMap: Map<string, Pair>
+): {
+  campeonPlayerIds: Set<string>;
+  subcampeonPlayerIds: Set<string>;
+  tercerPlayerIds: Set<string>;
+  cuartoPlayerIds: Set<string>;
+  semiPlayerIds: Set<string>;
+} {
+  const campeonPlayerIds = campeonParejaId
+    ? legacyPlayerIdsFromPair(pairMap.get(campeonParejaId))
+    : new Set<string>();
+  const subcampeonPlayerIds = subcampeonParejaId
+    ? legacyPlayerIdsFromPair(pairMap.get(subcampeonParejaId))
+    : new Set<string>();
+
+  const tercerPlayerIds = new Set<string>();
+  const cuartoPlayerIds = new Set<string>();
+  const semiPlayerIds = new Set<string>();
+
+  const torneo = bundle.torneo;
+  if (!torneo.fase_eliminacion || bundle.eliminatoriaPartidos.length === 0) {
+    return {
+      campeonPlayerIds,
+      subcampeonPlayerIds,
+      tercerPlayerIds,
+      cuartoPlayerIds,
+      semiPlayerIds,
+    };
+  }
+
+  const bracketSize = eliminatoriaBracketSize(
+    torneo.fase_eliminacion,
+    torneo.bracket_slots
+  );
+  const total = totalRondasEliminatoria(torneo.fase_eliminacion, bracketSize);
+  const semiRonda = total >= 2 ? total - 1 : null;
+
+  if (semiRonda != null) {
+    const semiMatches = partidosDeRonda(
+      bundle.eliminatoriaPartidos,
+      semiRonda
+    ).filter((p) => p.estado === "jugado" && !p.es_bye);
+
+    const semiLoserParejaIds: string[] = [];
+    for (const m of semiMatches) {
+      if (m.pareja_local_id) {
+        Array.from(legacyPlayerIdsFromPair(pairMap.get(m.pareja_local_id))).forEach(
+          (id) => semiPlayerIds.add(id)
+        );
+      }
+      if (m.pareja_visitante_id) {
+        Array.from(
+          legacyPlayerIdsFromPair(pairMap.get(m.pareja_visitante_id))
+        ).forEach((id) => semiPlayerIds.add(id));
+      }
+      const winner = resolveGanadorParejaIdFromPartido(m);
+      const local = m.pareja_local_id;
+      const visit = m.pareja_visitante_id;
+      if (!winner || !local || !visit) continue;
+      const loser = winner === local ? visit : local;
+      if (loser !== campeonParejaId && loser !== subcampeonParejaId) {
+        semiLoserParejaIds.push(loser);
+      }
+    }
+
+    if (semiLoserParejaIds[0]) {
+      Array.from(
+        legacyPlayerIdsFromPair(pairMap.get(semiLoserParejaIds[0]))
+      ).forEach((id) => tercerPlayerIds.add(id));
+    }
+    if (semiLoserParejaIds[1]) {
+      Array.from(
+        legacyPlayerIdsFromPair(pairMap.get(semiLoserParejaIds[1]))
+      ).forEach((id) => cuartoPlayerIds.add(id));
+    }
+  }
+
+  return {
+    campeonPlayerIds,
+    subcampeonPlayerIds,
+    tercerPlayerIds,
+    cuartoPlayerIds,
+    semiPlayerIds,
+  };
+}
+
 async function flushTorneoExpressPlayerAgg(
   agg: Map<string, PlayerAgg>,
   organizadorId: string,
   torneoId: string,
   eventoNombre: string,
-  campeonParejaId: string,
+  campeonParejaId: string | null,
   subcampeonParejaId: string | null,
-  pairMap: Map<string, Pair>
+  pairMap: Map<string, Pair>,
+  placementCtx: ReturnType<typeof buildExpressPlacementContext>
 ): Promise<void> {
-  const campeonPlayerIds = legacyPlayerIdsFromPair(pairMap.get(campeonParejaId));
-  const subcampeonPlayerIds = subcampeonParejaId
-    ? legacyPlayerIdsFromPair(pairMap.get(subcampeonParejaId))
-    : new Set<string>();
-
   for (const st of Array.from(agg.values())) {
     const jugadorId = await getOrCreateJugadorId({
       nombre: st.nombre,
@@ -617,40 +831,45 @@ async function flushTorneoExpressPlayerAgg(
     });
     if (!jugadorId) continue;
 
-    const placement = placementForPlayer(
+    const { posicion_final, llego_semi } = resolveExpressPlayerPosicion(
       st.legacyPlayerId,
-      campeonPlayerIds,
-      subcampeonPlayerIds
+      placementCtx
     );
-    const puntosRanking = puntosRankingPorPlacement(placement);
 
     let resultado = resultadoFromRecord(st.wins, st.losses, st.draws);
-    if (placement === "campeon") resultado = "victoria";
-    else if (placement === "subcampeon") resultado = "derrota";
+    if (posicion_final === 1) resultado = "victoria";
+    else if (posicion_final === 2) resultado = "derrota";
 
-    await safeRegistrar({
+    await registrarPuntosRanking({
       jugadorId,
       tipoEvento: "torneo_express",
       eventoId: torneoId,
       eventoNombre,
       resultado,
+      formato: "express",
+      calcParams: { posicion_final, llego_semi },
       setsFavor: st.setsFavor,
       setsContra: st.setsContra,
-      puntosObtenidos: puntosRanking,
       metadata: {
+        subtipo: "express_cierre",
         partidos_ganados: st.wins,
         partidos_perdidos: st.losses,
         partidos_empatados: st.draws,
         puntos_juego_acumulados: st.puntosObtenidos,
-        placement,
-        lugar: placementTorneoLabel(placement),
+        posicion_final,
+        llego_semi,
+        lugar:
+          posicion_final != null
+            ? formatLugarOrdinal(posicion_final)
+            : llego_semi
+              ? "Semifinal"
+              : "Participación",
         modalidad: "torneo_express",
         modalidad_label: "Torneo Express",
-        campeon_torneo: placement === "campeon",
-        subcampeon_torneo: placement === "subcampeon",
+        campeon_torneo: posicion_final === 1,
+        subcampeon_torneo: posicion_final === 2,
         pareja_campeon_id: campeonParejaId,
         pareja_subcampeon_id: subcampeonParejaId,
-        ranking_puntos_esquema: "riviera_100_50_0",
         torneo_express_id: torneoId,
       },
     });
@@ -679,18 +898,25 @@ export async function syncTorneoExpressParticipaciones(
     }
 
     const campeonParejaId = resolveCampeonParejaId(bundle);
+    const subcampeonParejaId = campeonParejaId
+      ? resolveSubcampeonParejaId(bundle, campeonParejaId)
+      : null;
+
     if (!campeonParejaId) {
       console.warn(
-        "[riviera-jugadores] syncTorneoExpressParticipaciones: final de eliminatoria sin ganador definido",
+        "[riviera-jugadores] syncTorneoExpressParticipaciones: sin final; solo puntos de participación",
         torneoId
       );
-      return;
     }
 
-    const subcampeonParejaId = resolveSubcampeonParejaId(bundle, campeonParejaId);
-
-    const partidoParejaIds: string[] = [campeonParejaId];
+    const partidoParejaIds: string[] = [];
+    if (campeonParejaId) partidoParejaIds.push(campeonParejaId);
     if (subcampeonParejaId) partidoParejaIds.push(subcampeonParejaId);
+    for (const list of Object.values(bundle.parejasPorGrupo)) {
+      for (const gp of list) {
+        if (gp.pareja_id) partidoParejaIds.push(gp.pareja_id);
+      }
+    }
     for (const list of Object.values(bundle.partidosPorGrupo)) {
       for (const p of list) {
         if (p.estado === "jugado") {
@@ -738,6 +964,34 @@ export async function syncTorneoExpressParticipaciones(
       );
     }
 
+    for (const pair of pairs) {
+      for (const pl of [pair.player1_id, pair.player2_id]) {
+        if (!pl) continue;
+        if (!agg.has(pl)) {
+          agg.set(pl, {
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            setsFavor: 0,
+            setsContra: 0,
+            puntosObtenidos: 0,
+            nombre:
+              pl === pair.player1_id
+                ? pair.player1_name || "Jugador"
+                : pair.player2_name || "Jugador",
+            legacyPlayerId: pl,
+          });
+        }
+      }
+    }
+
+    const placementCtx = buildExpressPlacementContext(
+      bundle,
+      campeonParejaId,
+      subcampeonParejaId,
+      pairMap
+    );
+
     await flushTorneoExpressPlayerAgg(
       agg,
       userId,
@@ -745,7 +999,8 @@ export async function syncTorneoExpressParticipaciones(
       bundle.torneo.nombre,
       campeonParejaId,
       subcampeonParejaId,
-      pairMap
+      pairMap,
+      placementCtx
     );
   } catch (e) {
     console.error("[riviera-jugadores] syncTorneoExpressParticipaciones:", e);
@@ -864,6 +1119,14 @@ export async function syncLigaJornada(
     );
     const totalJugadores = jornadaStats.rankingJugadores.length;
 
+    const ganadorPareja = jornadaStats.ganadorPareja;
+    const jornadaWinnerIds = new Set<string>();
+    if (ganadorPareja) {
+      const gp = parejaMap.get(ganadorPareja.parejaId);
+      if (gp?.jugador1_id) jornadaWinnerIds.add(gp.jugador1_id);
+      if (gp?.jugador2_id) jornadaWinnerIds.add(gp.jugador2_id);
+    }
+
     for (const st of Array.from(agg.values())) {
       const jugadorId = await getOrCreateJugadorId({
         nombre: st.nombre,
@@ -876,33 +1139,136 @@ export async function syncLigaJornada(
         ? posByJugador.get(st.legacyLigaJugadorId)
         : undefined;
 
-      await safeRegistrar({
+      const ganoJornada =
+        !!st.legacyLigaJugadorId &&
+        jornadaWinnerIds.has(st.legacyLigaJugadorId);
+
+      await registrarPuntosRanking({
         jugadorId,
         tipoEvento: "liga",
         eventoId: jornada.id,
         eventoNombre,
-        resultado: resultadoFromRecord(st.wins, st.losses, st.draws),
+        resultado: ganoJornada
+          ? "victoria"
+          : resultadoFromRecord(st.wins, st.losses, st.draws),
+        formato: "liga",
+        calcParams: { jornadas_ganadas: ganoJornada ? 1 : 0 },
         setsFavor: st.setsFavor,
         setsContra: st.setsContra,
-        puntosObtenidos: st.puntosObtenidos,
         parejaCon: (st as PlayerAgg & { lastPareja?: string }).lastPareja,
         metadata: {
+          subtipo: "liga_jornada",
           liga_id: ligaId,
           liga_nombre: detalle.nombre,
           jornada_numero: jornada.numero,
+          jornada_ganada: ganoJornada,
           modalidad: "liga",
           modalidad_label: "Liga",
           posicion_jornada: posicion,
           total_participantes: totalJugadores,
           lugar:
-            posicion != null && posicion > 0
-              ? formatLugarOrdinal(posicion, totalJugadores)
-              : "Participación en jornada",
+            ganoJornada
+              ? `Ganador jornada ${jornada.numero}`
+              : posicion != null && posicion > 0
+                ? formatLugarOrdinal(posicion, totalJugadores)
+                : "Participación en jornada",
         },
       });
     }
   } catch (e) {
     console.error("[riviera-jugadores] syncLigaJornada:", e);
+  }
+}
+
+/** +100 al inscribirse (una vez por temporada de liga). */
+export async function syncLigaInscripcionRanking(
+  ligaId: string,
+  legacyLigaJugadorId: string,
+  organizadorId: string
+): Promise<void> {
+  try {
+    const detalle = await getLigaById(ligaId);
+    const jugadorLiga = detalle.jugadores.find((j) => j.id === legacyLigaJugadorId);
+    const nombre = jugadorLiga?.nombre ?? "Jugador";
+
+    const jugadorId = await getOrCreateJugadorId({
+      nombre,
+      organizadorId,
+      legacyLigaJugadorId,
+    });
+    if (!jugadorId) return;
+
+    await registrarPuntosRanking({
+      jugadorId,
+      tipoEvento: "liga",
+      eventoId: ligaId,
+      eventoNombre: `Liga ${detalle.nombre} — Inscripción`,
+      resultado: "participación",
+      formato: "liga",
+      calcParams: { esNuevoEnLiga: true },
+      metadata: {
+        subtipo: "liga_inscripcion",
+        liga_id: ligaId,
+        liga_nombre: detalle.nombre,
+        modalidad: "liga",
+        modalidad_label: "Liga",
+        lugar: "Inscripción a la liga",
+      },
+      skipIfSubtipoExists: "liga_inscripcion",
+    });
+  } catch (e) {
+    console.error("[riviera-jugadores] syncLigaInscripcionRanking:", e);
+  }
+}
+
+/** Podio final al cerrar la liga (+500 / +250 / +100). */
+export async function syncLigaFinalPodio(
+  ligaId: string,
+  organizadorId: string
+): Promise<void> {
+  try {
+    const detalle = await getLigaById(ligaId);
+    const ranking = [...detalle.inscripciones].sort(
+      (a, b) => b.puntos - a.puntos
+    );
+
+    for (let i = 0; i < ranking.length; i += 1) {
+      const posicion = i + 1;
+      if (posicion > 3) break;
+
+      const ins = ranking[i];
+      const nombre = ins.jugador?.nombre ?? "Jugador";
+      const jugadorId = await getOrCreateJugadorId({
+        nombre,
+        organizadorId,
+        legacyLigaJugadorId: ins.jugador_id,
+      });
+      if (!jugadorId) continue;
+
+      const resultado: JugadorResultado =
+        posicion === 1 ? "victoria" : posicion === 2 ? "derrota" : "empate";
+
+      await registrarPuntosRanking({
+        jugadorId,
+        tipoEvento: "liga",
+        eventoId: ligaId,
+        eventoNombre: `Liga ${detalle.nombre} — Podio final`,
+        resultado,
+        formato: "liga",
+        calcParams: { posicion_final: posicion },
+        metadata: {
+          subtipo: "liga_podio_final",
+          liga_id: ligaId,
+          liga_nombre: detalle.nombre,
+          posicion_final: posicion,
+          modalidad: "liga",
+          modalidad_label: "Liga",
+          lugar: formatLugarOrdinal(posicion, ranking.length),
+        },
+      });
+    }
+  } catch (e) {
+    console.error("[riviera-jugadores] syncLigaFinalPodio:", e);
   }
 }
 
@@ -968,16 +1334,31 @@ export async function syncAmericanoParticipaciones(
       });
       if (!jugadorId) continue;
 
-      await safeRegistrar({
+      const podioPos = posicion <= 3 ? posicion : null;
+
+      await registrarPuntosRanking({
         jugadorId,
         tipoEvento: "americano",
         eventoId: sesionId,
         eventoNombre,
-        resultado: "participación",
-        puntosObtenidos: st?.puntos ?? jugador.stats.pointsFor,
+        resultado:
+          podioPos === 1
+            ? "victoria"
+            : podioPos === 2
+              ? "derrota"
+              : podioPos === 3
+                ? "empate"
+                : "participación",
+        formato: "americano",
+        calcParams: {
+          victorias_americano: st?.pg ?? 0,
+          posicion_final: podioPos,
+        },
         metadata: {
+          subtipo: "americano_cierre",
           partidos: jugador.stats.gamesPlayed,
           banquillo: jugador.stats.roundsOnBench,
+          victorias_ranking: st?.pg ?? 0,
           posicion_final: posicion,
           posicion,
           total_participantes: ranked.length,

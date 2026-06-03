@@ -219,6 +219,7 @@ export async function updateRivieraJugador(
     Pick<
       RivieraJugador,
       | "nombre"
+      | "slug"
       | "email"
       | "telefono"
       | "whatsapp"
@@ -238,9 +239,43 @@ export async function updateRivieraJugador(
     >
   >
 ): Promise<RivieraJugador> {
+  const payload: Record<string, unknown> = { ...updates };
+
+  if (updates.nombre !== undefined) {
+    const trimmed = updates.nombre.trim();
+    if (!trimmed) {
+      throw new Error("El nombre del jugador es obligatorio.");
+    }
+    payload.nombre = trimmed;
+
+    const { data: current, error: curErr } = await supabase
+      .from("riviera_jugadores")
+      .select("organizador_id, slug")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (curErr) throw curErr;
+    if (current?.organizador_id) {
+      const baseSlug = slugifyJugadorNombre(trimmed);
+      if (baseSlug !== current.slug) {
+        const orgId = String(current.organizador_id);
+        payload.slug = await ensureUniqueSlug(baseSlug, async (candidate) => {
+          const { data: taken } = await supabase
+            .from("riviera_jugadores")
+            .select("id")
+            .eq("organizador_id", orgId)
+            .eq("slug", candidate)
+            .neq("id", id)
+            .maybeSingle();
+          return !!taken;
+        });
+      }
+    }
+  }
+
   const { data, error } = await supabase
     .from("riviera_jugadores")
-    .update(updates)
+    .update(payload)
     .eq("id", id)
     .select(JUGADOR_SELECT)
     .single();
