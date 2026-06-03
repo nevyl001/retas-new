@@ -26,6 +26,17 @@ export const JUGADOR_CATEGORIA_LABELS: Record<RivieraJugadorCategoria, string> =
   "6ta_fuerza": "6ta fuerza",
 };
 
+/** Etiquetas cortas para selector móvil (sin scroll horizontal). */
+export const JUGADOR_CATEGORIA_SHORT_LABELS: Record<RivieraJugadorCategoria, string> = {
+  open: "Open",
+  "1ra_fuerza": "1ra",
+  "2da_fuerza": "2da",
+  "3ra_fuerza": "3ra",
+  "4ta_fuerza": "4ta",
+  "5ta_fuerza": "5ta",
+  "6ta_fuerza": "6ta",
+};
+
 export const JUGADOR_CATEGORIA_CLASS: Record<RivieraJugadorCategoria, string> = {
   open: "rj-cat--open",
   "1ra_fuerza": "rj-cat--1",

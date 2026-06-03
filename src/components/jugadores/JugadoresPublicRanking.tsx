@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
   JUGADOR_CATEGORIA_LABELS,
+  JUGADOR_CATEGORIA_SHORT_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
 import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
@@ -13,9 +14,11 @@ import type {
   RivieraJugadorCategoria,
   RivieraJugadorWithStats,
 } from "../../lib/rivieraJugadores/types";
+import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import { navigatePublicJugadorFicha } from "./jugadoresPublicNav";
+import "./riviera-jugadores-public-ranking.css";
 
 export const JugadoresPublicRanking: React.FC = () => {
   const { user, loading: userLoading } = useUser();
@@ -53,73 +56,114 @@ export const JugadoresPublicRanking: React.FC = () => {
     void load();
   }, [load]);
 
+  const metaLine = loading
+    ? "Cargando ranking…"
+    : `${jugadores.length} jugador${jugadores.length === 1 ? "" : "es"} · ${JUGADOR_CATEGORIA_LABELS[categoria]}`;
+
   return (
-    <JugadoresPublicShell>
-      <header className="rjp-header">
-        <p className="rjp-brand">Riviera Open</p>
-        <h1 className="rjp-title">Ranking de jugadores</h1>
-      </header>
+    <JugadoresPublicShell variant="ranking">
+      <div className="rjp-ranking">
+        <header className="rjp-ranking-header">
+          <p className="rjp-ranking-header__brand">Riviera Open</p>
+          <h1 className="rjp-ranking-header__title">Ranking de jugadores</h1>
+        </header>
 
-      <nav className="rjp-tabs" aria-label="Categorías">
-        {JUGADOR_CATEGORIAS_ORDER.map((cat) => (
-          <button
-            key={cat}
-            type="button"
-            className={`rjp-tab${categoria === cat ? " rjp-tab--active" : ""}`}
-            onClick={() => setCategoria(cat)}
-          >
-            {JUGADOR_CATEGORIA_LABELS[cat]}
-          </button>
-        ))}
-      </nav>
+        <section className="rjp-ranking-panel" aria-label="Ranking por categoría">
+          <div className="rjp-ranking-panel__picker">
+            <p className="rjp-ranking-panel__label">
+              <TablerIcon name="layout-grid" size={14} />
+              Categoría
+            </p>
+            <div className="rjp-cat-grid" role="tablist" aria-label="Categorías">
+              {JUGADOR_CATEGORIAS_ORDER.map((cat) => {
+                const active = categoria === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    className={`rjp-cat-chip${active ? " rjp-cat-chip--active" : ""}${
+                      cat === "open" ? " rjp-cat-chip--open" : ""
+                    }`}
+                    onClick={() => setCategoria(cat)}
+                  >
+                    {cat === "open" && (
+                      <TablerIcon name="trophy" size={12} className="rjp-cat-chip__icon" />
+                    )}
+                    <span className="rjp-cat-chip__short">
+                      {JUGADOR_CATEGORIA_SHORT_LABELS[cat]}
+                    </span>
+                    <span className="rjp-cat-chip__full">
+                      {JUGADOR_CATEGORIA_LABELS[cat]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-      <div className="rjp-section-head">
-        <h2>{JUGADOR_CATEGORIA_LABELS[categoria]}</h2>
-        <p>
-          {loading
-            ? "Cargando…"
-            : `Mostrando ${jugadores.length} jugador${jugadores.length === 1 ? "" : "es"} en esta categoría`}
-        </p>
+          <div className="rjp-ranking-panel__body">
+            <p className="rjp-ranking-panel__meta">{metaLine}</p>
+
+            {error && <p className="rjp-ranking-empty">{error}</p>}
+            {!error && !loading && jugadores.length === 0 && (
+              <p className="rjp-ranking-empty">
+                Aún no hay jugadores publicados en esta categoría.
+              </p>
+            )}
+
+            {!error && jugadores.length > 0 && (
+              <ul className="rjp-ranking-list">
+                {jugadores.map((j, idx) => (
+                  <li key={j.id}>
+                    <button
+                      type="button"
+                      className={`rjp-ranking-card${
+                        idx === 0 ? " rjp-ranking-card--first" : ""
+                      }`}
+                      onClick={() =>
+                        navigatePublicJugadorFicha(j.slug, orgId ?? undefined)
+                      }
+                    >
+                      <span
+                        className={`rjp-ranking-card__rank${
+                          idx === 0 ? " rjp-ranking-card__rank--gold" : ""
+                        }`}
+                      >
+                        {idx === 0 ? (
+                          <TablerIcon name="trophy" size={14} />
+                        ) : (
+                          `#${idx + 1}`
+                        )}
+                      </span>
+                      <JugadorAvatar
+                        fotoUrl={j.foto_url}
+                        nombre={j.nombre}
+                        size="md"
+                      />
+                      <div className="rjp-ranking-card__body">
+                        <span className="rjp-ranking-card__name">{j.nombre}</span>
+                        <span className="rjp-ranking-card__pts">
+                          {(j.stats?.puntos_totales ?? 0).toLocaleString("es-MX")}{" "}
+                          pts
+                        </span>
+                      </div>
+                      <TablerIcon
+                        name="chevron-right"
+                        size={18}
+                        className="rjp-ranking-card__chev"
+                      />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        <footer className="rjp-ranking-footer">Riviera Open · Padel Club</footer>
       </div>
-
-      {error && <p className="rjp-empty">{error}</p>}
-      {!error && !loading && jugadores.length === 0 && (
-        <p className="rjp-empty">Aún no hay jugadores publicados en esta categoría.</p>
-      )}
-
-      <ul className="rjp-list">
-        {jugadores.map((j, idx) => (
-          <li key={j.id}>
-            <button
-              type="button"
-              className="rjp-card"
-              onClick={() => navigatePublicJugadorFicha(j.slug, orgId ?? undefined)}
-            >
-              <span className="rjp-rank">#{idx + 1}</span>
-              <JugadorAvatar fotoUrl={j.foto_url} nombre={j.nombre} size="md" />
-              <div className="rjp-card__body">
-                <span className="rjp-card__name">{j.nombre}</span>
-                <span className="rjp-card__meta">
-                  <span className="rjp-card__pts">
-                    {(j.stats?.puntos_totales ?? 0).toLocaleString("es-MX")} pts
-                  </span>
-                  <span className="rjp-card__cat">
-                    {JUGADOR_CATEGORIA_LABELS[j.categoria]}
-                  </span>
-                </span>
-              </div>
-              {(j.instagram_url || j.facebook_url) && (
-                <span className="rjp-card__social" aria-hidden>
-                  {j.instagram_url ? "◎" : ""}
-                  {j.facebook_url ? "f" : ""}
-                </span>
-              )}
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <footer className="rjp-public__footer">Riviera Open · Padel Club</footer>
     </JugadoresPublicShell>
   );
 };

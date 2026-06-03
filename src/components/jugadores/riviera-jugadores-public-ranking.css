@@ -1,0 +1,299 @@
+/* Ranking público — móvil sin scroll horizontal de categorías */
+
+.rjp-public--ranking {
+  --rjp-rk-gold: #c9a84c;
+  --rjp-rk-gold-bg: #1e1a0e;
+  --rjp-rk-gold-border: #c9a84c44;
+  --rjp-rk-card: #161618;
+  --rjp-rk-surface: #1a1a1f;
+  --rjp-rk-border: #2a2a2e;
+  --rjp-rk-text: #e8e8ec;
+  --rjp-rk-muted: #7a7a85;
+  --rjp-rk-muted-2: #4a4a55;
+}
+
+@media (max-width: 899px) {
+  .rjp-public--ranking .rjp-public__inner {
+    max-width: 390px;
+    padding: 16px 16px 2rem;
+  }
+}
+
+.rjp-ranking {
+  width: 100%;
+}
+
+.rjp-ranking-header {
+  margin-bottom: 16px;
+  animation: rjp-fade-in 0.45s ease-out both;
+}
+
+.rjp-ranking-header__brand {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #9a8650;
+}
+
+.rjp-ranking-header__title {
+  margin: 6px 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--rjp-rk-text, #e8e8ec);
+  line-height: 1.15;
+}
+
+/* Panel único: categorías + lista */
+.rjp-ranking-panel {
+  border-radius: 20px;
+  border: 0.5px solid var(--rjp-rk-border, #2a2a2e);
+  background: var(--rjp-rk-card, #161618);
+  overflow: hidden;
+  animation: rjp-fade-in 0.5s ease-out 0.05s both;
+}
+
+.rjp-ranking-panel__picker {
+  padding: 16px 16px 14px;
+  border-bottom: 0.5px solid #1e1e24;
+}
+
+.rjp-ranking-panel__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--rjp-rk-muted-2, #4a4a55);
+}
+
+.rjp-ranking-panel__label .ti {
+  color: var(--rjp-rk-muted, #7a7a85);
+}
+
+/* Grid de categorías — todo visible, sin scroll horizontal */
+.rjp-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rjp-cat-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 8px 4px;
+  border: 0.5px solid var(--rjp-rk-border, #2a2a2e);
+  border-radius: 10px;
+  background: var(--rjp-rk-surface, #1a1a1f);
+  color: var(--rjp-rk-muted, #7a7a85);
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+
+.rjp-cat-chip__icon {
+  color: var(--rjp-rk-gold, #c9a84c);
+}
+
+.rjp-cat-chip__short {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.rjp-cat-chip__full {
+  display: none;
+  font-size: 9px;
+  font-weight: 500;
+  opacity: 0.85;
+  line-height: 1.1;
+}
+
+.rjp-cat-chip--active {
+  background: var(--rjp-rk-gold-bg, #1e1a0e);
+  border-color: var(--rjp-rk-gold-border, #c9a84c44);
+  color: var(--rjp-rk-gold, #c9a84c);
+}
+
+.rjp-cat-chip--active.rjp-cat-chip--open .rjp-cat-chip__icon {
+  color: var(--rjp-rk-gold, #c9a84c);
+}
+
+.rjp-ranking-panel__body {
+  padding: 14px 16px 16px;
+}
+
+.rjp-ranking-panel__meta {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--rjp-rk-muted, #7a7a85);
+}
+
+.rjp-ranking-empty {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #35353f;
+  line-height: 1.55;
+  text-align: center;
+  padding: 12px 8px;
+}
+
+.rjp-ranking-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rjp-ranking-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 10px;
+  border: 0.5px solid var(--rjp-rk-border, #2a2a2e);
+  border-radius: 14px;
+  background: var(--rjp-rk-surface, #1a1a1f);
+  color: var(--rjp-rk-text, #e8e8ec);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.rjp-ranking-card:active {
+  border-color: #3a3a42;
+}
+
+.rjp-ranking-card--first {
+  border-color: var(--rjp-rk-gold-border, #c9a84c44);
+  background: linear-gradient(
+    135deg,
+    rgba(30, 26, 14, 0.95) 0%,
+    rgba(26, 26, 31, 0.98) 100%
+  );
+}
+
+.rjp-ranking-card__rank {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rjp-rk-muted, #7a7a85);
+  background: #141416;
+  border: 0.5px solid var(--rjp-rk-border, #2a2a2e);
+}
+
+.rjp-ranking-card__rank--gold {
+  background: var(--rjp-rk-gold, #c9a84c);
+  border-color: transparent;
+  color: #1a1505;
+}
+
+.rjp-ranking-card__rank--gold .ti {
+  color: #1a1505;
+}
+
+.rjp-public--ranking .rj-avatar {
+  border-color: var(--rjp-rk-gold-border, #c9a84c44);
+  color: var(--rjp-rk-gold, #c9a84c);
+}
+
+.rjp-ranking-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.rjp-ranking-card__name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--rjp-rk-text, #e8e8ec);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rjp-ranking-card__pts {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rjp-rk-gold, #c9a84c);
+}
+
+.rjp-ranking-card__chev {
+  flex-shrink: 0;
+  color: #4a4a55;
+}
+
+.rjp-ranking-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+/* Pantallas muy estrechas: 3 columnas */
+@media (max-width: 340px) {
+  .rjp-cat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Escritorio: chips en una fila flexible + nombre completo */
+@media (min-width: 900px) {
+  .rjp-public--ranking .rjp-public__inner {
+    max-width: 720px;
+    padding: clamp(1.25rem, 4vw, 2rem) clamp(1rem, 4vw, 1.5rem) 3rem;
+  }
+
+  .rjp-ranking-header__title {
+    font-size: 1.85rem;
+  }
+
+  .rjp-cat-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .rjp-cat-chip {
+    min-height: 52px;
+    padding: 10px 8px;
+  }
+
+  .rjp-cat-chip__short {
+    display: none;
+  }
+
+  .rjp-cat-chip__full {
+    display: block;
+    font-size: 11px;
+  }
+
+  .rjp-ranking-card:hover {
+    border-color: var(--rjp-rk-gold-border, #c9a84c44);
+  }
+}

@@ -9,6 +9,7 @@ export const JugadoresPublicShell: React.FC<{
   const rootClass = [
     "rjp-public",
     variant === "ficha" ? "rjp-public--ficha" : "",
+    variant === "ranking" ? "rjp-public--ranking" : "",
   ]
     .filter(Boolean)
     .join(" ");
