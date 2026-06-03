@@ -14,6 +14,7 @@ import {
   partidosDeRonda,
   totalRondasEliminatoria,
 } from "../torneoExpress/bracketRounds";
+import { clasificadosPairIdsFromBundle } from "../torneoExpress/clasificadosPairs";
 import type { TorneoExpressBundle } from "../torneoExpress/types";
 import type { TorneoExpressEliminatoriaPartido } from "../torneoExpress/types";
 import {
@@ -692,6 +693,19 @@ function legacyPlayerIdsFromPair(pair: Pair | undefined): Set<string> {
   return ids;
 }
 
+function clasificadosPlayerIdsFromBundle(
+  bundle: TorneoExpressBundle,
+  pairMap: Map<string, Pair>
+): Set<string> {
+  const playerIds = new Set<string>();
+  clasificadosPairIdsFromBundle(bundle).forEach((parejaId) => {
+    legacyPlayerIdsFromPair(pairMap.get(parejaId)).forEach((pl) => {
+      playerIds.add(pl);
+    });
+  });
+  return playerIds;
+}
+
 function resolveExpressPlayerPosicion(
   legacyPlayerId: string | undefined,
   ctx: {
@@ -701,24 +715,21 @@ function resolveExpressPlayerPosicion(
     cuartoPlayerIds: Set<string>;
     semiPlayerIds: Set<string>;
   }
-): { posicion_final: number | null; llego_semi: boolean } {
-  if (!legacyPlayerId) return { posicion_final: null, llego_semi: false };
+): { posicion_final: number | null } {
+  if (!legacyPlayerId) return { posicion_final: null };
   if (ctx.campeonPlayerIds.has(legacyPlayerId)) {
-    return { posicion_final: 1, llego_semi: true };
+    return { posicion_final: 1 };
   }
   if (ctx.subcampeonPlayerIds.has(legacyPlayerId)) {
-    return { posicion_final: 2, llego_semi: true };
+    return { posicion_final: 2 };
   }
   if (ctx.tercerPlayerIds.has(legacyPlayerId)) {
-    return { posicion_final: 3, llego_semi: true };
+    return { posicion_final: 3 };
   }
   if (ctx.cuartoPlayerIds.has(legacyPlayerId)) {
-    return { posicion_final: 4, llego_semi: true };
+    return { posicion_final: 4 };
   }
-  if (ctx.semiPlayerIds.has(legacyPlayerId)) {
-    return { posicion_final: null, llego_semi: true };
-  }
-  return { posicion_final: null, llego_semi: false };
+  return { posicion_final: null };
 }
 
 function buildExpressPlacementContext(
@@ -732,6 +743,7 @@ function buildExpressPlacementContext(
   tercerPlayerIds: Set<string>;
   cuartoPlayerIds: Set<string>;
   semiPlayerIds: Set<string>;
+  finalPlayerIds: Set<string>;
 } {
   const campeonPlayerIds = campeonParejaId
     ? legacyPlayerIdsFromPair(pairMap.get(campeonParejaId))
@@ -743,6 +755,10 @@ function buildExpressPlacementContext(
   const tercerPlayerIds = new Set<string>();
   const cuartoPlayerIds = new Set<string>();
   const semiPlayerIds = new Set<string>();
+  const finalPlayerIds = new Set<string>([
+    ...Array.from(campeonPlayerIds),
+    ...Array.from(subcampeonPlayerIds),
+  ]);
 
   const torneo = bundle.torneo;
   if (!torneo.fase_eliminacion || bundle.eliminatoriaPartidos.length === 0) {
@@ -752,6 +768,7 @@ function buildExpressPlacementContext(
       tercerPlayerIds,
       cuartoPlayerIds,
       semiPlayerIds,
+      finalPlayerIds,
     };
   }
 
@@ -802,12 +819,29 @@ function buildExpressPlacementContext(
     }
   }
 
+  const finalMatches = partidosDeRonda(bundle.eliminatoriaPartidos, total).filter(
+    (p) => p.estado === "jugado" && !p.es_bye
+  );
+  finalMatches.forEach((m) => {
+    if (m.pareja_local_id) {
+      legacyPlayerIdsFromPair(pairMap.get(m.pareja_local_id)).forEach((id) =>
+        finalPlayerIds.add(id)
+      );
+    }
+    if (m.pareja_visitante_id) {
+      legacyPlayerIdsFromPair(pairMap.get(m.pareja_visitante_id)).forEach((id) =>
+        finalPlayerIds.add(id)
+      );
+    }
+  });
+
   return {
     campeonPlayerIds,
     subcampeonPlayerIds,
     tercerPlayerIds,
     cuartoPlayerIds,
     semiPlayerIds,
+    finalPlayerIds,
   };
 }
 
@@ -819,7 +853,8 @@ async function flushTorneoExpressPlayerAgg(
   campeonParejaId: string | null,
   subcampeonParejaId: string | null,
   pairMap: Map<string, Pair>,
-  placementCtx: ReturnType<typeof buildExpressPlacementContext>
+  placementCtx: ReturnType<typeof buildExpressPlacementContext>,
+  clasificadosPlayerIds: Set<string>
 ): Promise<void> {
   for (const st of Array.from(agg.values())) {
     const jugadorId = await getOrCreateJugadorId({
@@ -831,10 +866,19 @@ async function flushTorneoExpressPlayerAgg(
     });
     if (!jugadorId) continue;
 
-    const { posicion_final, llego_semi } = resolveExpressPlayerPosicion(
+    const { posicion_final } = resolveExpressPlayerPosicion(
       st.legacyPlayerId,
       placementCtx
     );
+    const paso_fase_grupos = st.legacyPlayerId
+      ? clasificadosPlayerIds.has(st.legacyPlayerId)
+      : false;
+    const paso_semifinal = st.legacyPlayerId
+      ? placementCtx.semiPlayerIds.has(st.legacyPlayerId)
+      : false;
+    const llego_final = st.legacyPlayerId
+      ? placementCtx.finalPlayerIds.has(st.legacyPlayerId)
+      : false;
 
     let resultado = resultadoFromRecord(st.wins, st.losses, st.draws);
     if (posicion_final === 1) resultado = "victoria";
@@ -847,7 +891,12 @@ async function flushTorneoExpressPlayerAgg(
       eventoNombre,
       resultado,
       formato: "express",
-      calcParams: { posicion_final, llego_semi },
+      calcParams: {
+        posicion_final,
+        paso_fase_grupos,
+        paso_semifinal,
+        llego_final,
+      },
       setsFavor: st.setsFavor,
       setsContra: st.setsContra,
       metadata: {
@@ -857,13 +906,19 @@ async function flushTorneoExpressPlayerAgg(
         partidos_empatados: st.draws,
         puntos_juego_acumulados: st.puntosObtenidos,
         posicion_final,
-        llego_semi,
+        paso_fase_grupos,
+        paso_semifinal,
+        llego_final,
         lugar:
           posicion_final != null
             ? formatLugarOrdinal(posicion_final)
-            : llego_semi
-              ? "Semifinal"
-              : "Participación",
+            : llego_final
+              ? "Final"
+              : paso_semifinal
+                ? "Semifinal"
+                : paso_fase_grupos
+                  ? "Eliminatoria"
+                  : "Participación",
         modalidad: "torneo_express",
         modalidad_label: "Torneo Express",
         campeon_torneo: posicion_final === 1,
@@ -991,6 +1046,7 @@ export async function syncTorneoExpressParticipaciones(
       subcampeonParejaId,
       pairMap
     );
+    const clasificadosPlayerIds = clasificadosPlayerIdsFromBundle(bundle, pairMap);
 
     await flushTorneoExpressPlayerAgg(
       agg,
@@ -1000,7 +1056,8 @@ export async function syncTorneoExpressParticipaciones(
       campeonParejaId,
       subcampeonParejaId,
       pairMap,
-      placementCtx
+      placementCtx,
+      clasificadosPlayerIds
     );
   } catch (e) {
     console.error("[riviera-jugadores] syncTorneoExpressParticipaciones:", e);
@@ -1143,14 +1200,14 @@ export async function syncLigaJornada(
         !!st.legacyLigaJugadorId &&
         jornadaWinnerIds.has(st.legacyLigaJugadorId);
 
+      // Siempre «participación» por jornada: un registro por jugador/jornada (evita
+      // duplicar puntos si se vuelve a finalizar la misma jornada).
       await registrarPuntosRanking({
         jugadorId,
         tipoEvento: "liga",
         eventoId: jornada.id,
         eventoNombre,
-        resultado: ganoJornada
-          ? "victoria"
-          : resultadoFromRecord(st.wins, st.losses, st.draws),
+        resultado: "participación",
         formato: "liga",
         calcParams: { jornadas_ganadas: ganoJornada ? 1 : 0 },
         setsFavor: st.setsFavor,

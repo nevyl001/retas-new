@@ -236,6 +236,17 @@
   }
 }
 
+.rkcf-card__note {
+  margin: 0 0 0.85rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(201, 162, 39, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--rkcf-text-2);
+}
+
 .rkcf-table {
   width: 100%;
   border-collapse: collapse;
@@ -251,6 +262,13 @@
   color: var(--rkcf-muted);
   padding: 0 0 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.rkcf-table--3col th:nth-child(2),
+.rkcf-table--3col td:nth-child(2) {
+  width: 34%;
+  font-size: 12px;
+  color: var(--rkcf-muted);
 }
 
 .rkcf-table th:last-child {
@@ -341,20 +359,29 @@
   padding: 0 2rem;
   border-radius: 14px;
   background: var(--rkcf-gold);
-  color: var(--rkcf-deep);
+  color: #1c1c1e;
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
+  border: 1px solid rgba(201, 162, 39, 0.55);
   transition:
     background 0.2s ease,
     box-shadow 0.2s ease,
-    transform 0.15s ease;
+    border-color 0.2s ease;
 }
 
-.rkcf-cta__btn:hover {
+/* theme.css pone enlaces dorados en hover; forzar contraste en el CTA */
+.rkcf-cta__btn:hover,
+.rkcf-cta__btn:focus-visible {
   background: var(--rkcf-gold-hover);
+  color: #1c1c1e;
+  border-color: var(--rkcf-gold-hover);
   box-shadow: 0 0 24px rgba(201, 162, 39, 0.35);
-  transform: translateY(-1px);
+}
+
+.rkcf-cta__btn:focus-visible {
+  outline: 2px solid #f5f5f7;
+  outline-offset: 3px;
 }
 
 .rkcf-cta__note {

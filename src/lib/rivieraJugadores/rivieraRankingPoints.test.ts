@@ -18,6 +18,23 @@ describe("calcularPuntosEvento", () => {
     ).toBe(PUNTOS_LIGA.BASE_INSCRIPCION + PUNTOS_LIGA.GANAR_JORNADA + PUNTOS_LIGA.PRIMER_LUGAR);
   });
 
+  it("liga: cada jornada ganada suma +50 (acumulable entre jornadas)", () => {
+    const unaJornada = calcularPuntosEvento({
+      formato: "liga",
+      jornadas_ganadas: 1,
+    });
+    expect(unaJornada).toBe(PUNTOS_LIGA.GANAR_JORNADA);
+    expect(unaJornada + unaJornada + unaJornada).toBe(3 * PUNTOS_LIGA.GANAR_JORNADA);
+  });
+
+  it("liga: ejemplo 5 jornadas ganadas + campeón", () => {
+    expect(
+      PUNTOS_LIGA.BASE_INSCRIPCION +
+        5 * PUNTOS_LIGA.GANAR_JORNADA +
+        PUNTOS_LIGA.PRIMER_LUGAR
+    ).toBe(850);
+  });
+
   it("reta: participación + victoria", () => {
     expect(
       calcularPuntosEvento({ formato: "reta", posicion_final: 1 })
@@ -44,16 +61,62 @@ describe("calcularPuntosEvento", () => {
     );
   });
 
-  it("express: campeón", () => {
+  it("express: campeón con hitos eliminatorios", () => {
     expect(
-      calcularPuntosEvento({ formato: "express", posicion_final: 1 })
-    ).toBe(PUNTOS_EXPRESS.PARTICIPACION + PUNTOS_EXPRESS.PRIMER_LUGAR);
+      calcularPuntosEvento({
+        formato: "express",
+        posicion_final: 1,
+        paso_fase_grupos: true,
+        paso_semifinal: true,
+        llego_final: true,
+      })
+    ).toBe(
+      PUNTOS_EXPRESS.PARTICIPACION +
+        PUNTOS_EXPRESS.PASAR_FASE_GRUPOS +
+        PUNTOS_EXPRESS.PASAR_SEMIFINAL +
+        PUNTOS_EXPRESS.LLEGAR_FINAL +
+        PUNTOS_EXPRESS.PRIMER_LUGAR
+    );
   });
 
-  it("express: semifinalista 3er puesto", () => {
+  it("express: clasificado pierde en cuartos", () => {
     expect(
-      calcularPuntosEvento({ formato: "express", posicion_final: 3 })
-    ).toBe(PUNTOS_EXPRESS.PARTICIPACION + PUNTOS_EXPRESS.TERCER_LUGAR);
+      calcularPuntosEvento({ formato: "express", paso_fase_grupos: true })
+    ).toBe(PUNTOS_EXPRESS.PARTICIPACION + PUNTOS_EXPRESS.PASAR_FASE_GRUPOS);
+  });
+
+  it("express: 3.º con grupos y semifinal", () => {
+    expect(
+      calcularPuntosEvento({
+        formato: "express",
+        posicion_final: 3,
+        paso_fase_grupos: true,
+        paso_semifinal: true,
+      })
+    ).toBe(
+      PUNTOS_EXPRESS.PARTICIPACION +
+        PUNTOS_EXPRESS.PASAR_FASE_GRUPOS +
+        PUNTOS_EXPRESS.PASAR_SEMIFINAL +
+        PUNTOS_EXPRESS.TERCER_LUGAR
+    );
+  });
+
+  it("express: finalista", () => {
+    expect(
+      calcularPuntosEvento({
+        formato: "express",
+        posicion_final: 2,
+        paso_fase_grupos: true,
+        paso_semifinal: true,
+        llego_final: true,
+      })
+    ).toBe(
+      PUNTOS_EXPRESS.PARTICIPACION +
+        PUNTOS_EXPRESS.PASAR_FASE_GRUPOS +
+        PUNTOS_EXPRESS.PASAR_SEMIFINAL +
+        PUNTOS_EXPRESS.LLEGAR_FINAL +
+        PUNTOS_EXPRESS.SEGUNDO_LUGAR
+    );
   });
 
   it("nunca devuelve negativos", () => {

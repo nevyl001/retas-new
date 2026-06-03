@@ -130,6 +130,43 @@
   opacity: 0.85;
 }
 
+.auth-public-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 1.5rem;
+}
+
+.auth-public-links--mobile {
+  justify-content: center;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.auth-public-links__item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 162, 39, 0.35);
+  background: rgba(201, 162, 39, 0.1);
+  color: var(--color-cream, #f5f5f7);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.auth-public-links__item:hover,
+.auth-public-links__item:focus-visible {
+  background: rgba(201, 162, 39, 0.18);
+  border-color: rgba(201, 162, 39, 0.55);
+  color: #f5f5f7;
+}
+
 /* Panel formulario */
 .auth-form-panel {
   flex: 1 1 40%;

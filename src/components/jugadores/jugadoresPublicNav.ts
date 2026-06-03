@@ -24,9 +24,9 @@ export function buildRankingComoFuncionaPath(): string {
 
 export function buildPublicRankingUrl(orgId?: string | null): string {
   if (typeof window === "undefined") {
-    return orgId ? `/public/jugadores?org=${orgId}` : "/public/jugadores";
+    return orgId ? `/ranking?org=${encodeURIComponent(orgId)}` : "/ranking";
   }
-  const url = new URL("/public/jugadores", window.location.origin);
+  const url = new URL("/ranking", window.location.origin);
   if (orgId) url.searchParams.set("org", orgId);
   return url.pathname + url.search;
 }

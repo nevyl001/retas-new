@@ -15,6 +15,7 @@ type PuntosTone = "base" | "win" | "gold" | "silver" | "bronze" | "zero" | "defa
 
 interface PuntosRow {
   concepto: string;
+  cuando: string;
   puntos: string;
   tone?: PuntosTone;
 }
@@ -24,6 +25,7 @@ interface FormatoCardProps {
   title: string;
   subtitle?: string;
   star?: boolean;
+  note?: string;
   rows: PuntosRow[];
   footer: { label: string; value: string }[];
   delayMs: number;
@@ -35,15 +37,31 @@ const RE = PUNTOS_RETA_EQUIPOS;
 const A = PUNTOS_AMERICANO;
 const E = PUNTOS_EXPRESS;
 
-const FOOTER_LIGA = {
-  solo: L.BASE_INSCRIPCION,
-  campeonSinJornadas: L.BASE_INSCRIPCION + L.PRIMER_LUGAR,
-  max10: L.BASE_INSCRIPCION + 10 * L.GANAR_JORNADA + L.PRIMER_LUGAR,
+const expressEliminatoria = {
+  paso_fase_grupos: true as const,
+  paso_semifinal: true as const,
 };
 
 const expressCampeon = calcularPuntosEvento({
   formato: "express",
   posicion_final: 1,
+  ...expressEliminatoria,
+  llego_final: true,
+});
+const expressFinalista = calcularPuntosEvento({
+  formato: "express",
+  posicion_final: 2,
+  ...expressEliminatoria,
+  llego_final: true,
+});
+const expressSemiPodio = calcularPuntosEvento({
+  formato: "express",
+  posicion_final: 3,
+  ...expressEliminatoria,
+});
+const expressCuartos = calcularPuntosEvento({
+  formato: "express",
+  paso_fase_grupos: true,
 });
 
 function PuntosValue({ text, tone = "default" }: { text: string; tone?: PuntosTone }) {
@@ -55,6 +73,7 @@ function FormatoCard({
   title,
   subtitle,
   star,
+  note,
   rows,
   footer,
   delayMs,
@@ -76,17 +95,20 @@ function FormatoCard({
           <span className="rkcf-card__badge">Formato estrella</span>
         )}
       </header>
-      <table className="rkcf-table">
+      {note && <p className="rkcf-card__note">{note}</p>}
+      <table className="rkcf-table rkcf-table--3col">
         <thead>
           <tr>
             <th scope="col">Concepto</th>
+            <th scope="col">Cuándo</th>
             <th scope="col">Puntos</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.concepto}>
+            <tr key={`${row.concepto}-${row.cuando}`}>
               <td>{row.concepto}</td>
+              <td>{row.cuando}</td>
               <td>
                 <PuntosValue text={row.puntos} tone={row.tone} />
               </td>
@@ -145,8 +167,7 @@ export const RankingComoFuncionaPage: React.FC = () => {
             Puntos por formato
           </h2>
           <p className="rkcf-section-sub rkcf-reveal">
-            Cada modalidad suma a tu perfil público cuando el organizador cierra el
-            evento.
+            Mismas reglas que usa la app al cerrar retas, ligas, americanos y torneos.
           </p>
 
           <div className="rkcf-formats__grid">
@@ -155,61 +176,86 @@ export const RankingComoFuncionaPage: React.FC = () => {
               title="Liga Riviera Open"
               subtitle="Formato estrella"
               star
+              note="Sin tope de jornadas: el calendario se genera según inscritos (p. ej. 8 jugadores → 7 jornadas). Cada vez que tu pareja gana la jornada sumas +50 al cerrarla."
               delayMs={0}
               rows={[
                 {
-                  concepto: "Inscribirse (base, una vez por temporada)",
-                  puntos: `+${L.BASE_INSCRIPCION}`,
+                  concepto: "Liga inscripción",
+                  cuando: "Al inscribir jugador",
+                  puntos: `+${L.BASE_INSCRIPCION} (una vez, no duplica)`,
                   tone: "base",
                 },
                 {
-                  concepto: "Ganar una jornada",
-                  puntos: `+${L.GANAR_JORNADA} c/u`,
+                  concepto: "Liga jornada",
+                  cuando: "Al finalizar jornada",
+                  puntos: `+${L.GANAR_JORNADA} si ganó la jornada (pareja ganadora)`,
                   tone: "win",
                 },
                 {
-                  concepto: "1er lugar final",
+                  concepto: "Jornada sin ganar",
+                  cuando: "Al finalizar jornada",
+                  puntos: "+0",
+                  tone: "zero",
+                },
+                {
+                  concepto: "Liga podio — 1.º",
+                  cuando: "Al cerrar la liga",
                   puntos: `+${L.PRIMER_LUGAR}`,
                   tone: "gold",
                 },
                 {
-                  concepto: "2do lugar final",
+                  concepto: "Liga podio — 2.º",
+                  cuando: "Al cerrar la liga",
                   puntos: `+${L.SEGUNDO_LUGAR}`,
                   tone: "silver",
                 },
                 {
-                  concepto: "3er lugar final",
+                  concepto: "Liga podio — 3.º",
+                  cuando: "Al cerrar la liga",
                   puntos: `+${L.TERCER_LUGAR}`,
                   tone: "bronze",
                 },
                 {
-                  concepto: "4to en adelante",
+                  concepto: "4.º en adelante",
+                  cuando: "Al cerrar la liga",
                   puntos: "+0",
                   tone: "zero",
                 },
               ]}
               footer={[
-                { label: "Solo participar", value: `${FOOTER_LIGA.solo}` },
+                { label: "Solo inscripción", value: `${L.BASE_INSCRIPCION}` },
                 {
                   label: "Campeón sin jornadas",
-                  value: `${FOOTER_LIGA.campeonSinJornadas}`,
+                  value: `${L.BASE_INSCRIPCION + L.PRIMER_LUGAR}`,
                 },
-                { label: "Máx. 10 jornadas", value: `${FOOTER_LIGA.max10}+` },
+                {
+                  label: "Ej. 5 jornadas ganadas + 1.º",
+                  value: `${L.BASE_INSCRIPCION + 5 * L.GANAR_JORNADA + L.PRIMER_LUGAR}`,
+                },
               ]}
             />
 
             <FormatoCard
               icon="⚔️"
-              title="Reta individual"
+              title="Reta / Round Robin"
               delayMs={80}
               rows={[
-                { concepto: "Participar (base)", puntos: `+${R.PARTICIPACION}`, tone: "base" },
-                { concepto: "Ganar", puntos: `+${R.VICTORIA}`, tone: "win" },
-                { concepto: "Perder", puntos: "+0", tone: "zero" },
+                {
+                  concepto: "Participar",
+                  cuando: "Al finalizar reta",
+                  puntos: `+${R.PARTICIPACION}`,
+                  tone: "base",
+                },
+                {
+                  concepto: "1.º en parejas",
+                  cuando: "Al finalizar reta",
+                  puntos: `+${R.VICTORIA}`,
+                  tone: "win",
+                },
               ]}
               footer={[
                 { label: "Solo jugar", value: `${R.PARTICIPACION}` },
-                { label: "Si ganas", value: `${R.PARTICIPACION + R.VICTORIA}` },
+                { label: "Si ganas (1.º)", value: `${R.PARTICIPACION + R.VICTORIA}` },
               ]}
             />
 
@@ -219,16 +265,23 @@ export const RankingComoFuncionaPage: React.FC = () => {
               delayMs={160}
               rows={[
                 {
-                  concepto: "Participar — cada jugador",
+                  concepto: "Participar (cada jugador)",
+                  cuando: "Al finalizar reta",
                   puntos: `+${RE.PARTICIPACION}`,
                   tone: "base",
                 },
                 {
-                  concepto: "Equipo ganador — cada jugador",
-                  puntos: `+${RE.VICTORIA}`,
+                  concepto: "Equipo con más marcador",
+                  cuando: "Al finalizar reta",
+                  puntos: `+${RE.VICTORIA} c/u en equipo ganador`,
                   tone: "win",
                 },
-                { concepto: "Equipo perdedor", puntos: "+0", tone: "zero" },
+                {
+                  concepto: "Equipo perdedor",
+                  cuando: "Al finalizar reta",
+                  puntos: "+0",
+                  tone: "zero",
+                },
               ]}
               footer={[
                 { label: "Solo jugar", value: `${RE.PARTICIPACION}` },
@@ -245,23 +298,40 @@ export const RankingComoFuncionaPage: React.FC = () => {
               delayMs={240}
               rows={[
                 {
-                  concepto: "Participar (base)",
+                  concepto: "Participar",
+                  cuando: "Al finalizar sesión",
                   puntos: `+${A.PARTICIPACION}`,
                   tone: "base",
                 },
                 {
-                  concepto: "Por cada victoria",
+                  concepto: "Por victoria (PG)",
+                  cuando: "Al finalizar sesión",
                   puntos: `+${A.POR_VICTORIA} c/u`,
                   tone: "win",
                 },
-                { concepto: "1er lugar", puntos: `+${A.PRIMER_LUGAR}`, tone: "gold" },
-                { concepto: "2do lugar", puntos: `+${A.SEGUNDO_LUGAR}`, tone: "silver" },
-                { concepto: "3er lugar", puntos: `+${A.TERCER_LUGAR}`, tone: "bronze" },
+                {
+                  concepto: "Podio 1.º",
+                  cuando: "Al finalizar sesión",
+                  puntos: `+${A.PRIMER_LUGAR}`,
+                  tone: "gold",
+                },
+                {
+                  concepto: "Podio 2.º",
+                  cuando: "Al finalizar sesión",
+                  puntos: `+${A.SEGUNDO_LUGAR}`,
+                  tone: "silver",
+                },
+                {
+                  concepto: "Podio 3.º",
+                  cuando: "Al finalizar sesión",
+                  puntos: `+${A.TERCER_LUGAR}`,
+                  tone: "bronze",
+                },
               ]}
               footer={[
                 { label: "Solo jugar", value: `${A.PARTICIPACION}` },
                 {
-                  label: "Campeón (6 vict.)",
+                  label: "Ej. campeón 6 vict.",
                   value: `${A.PARTICIPACION + 6 * A.POR_VICTORIA + A.PRIMER_LUGAR}`,
                 },
               ]}
@@ -274,34 +344,62 @@ export const RankingComoFuncionaPage: React.FC = () => {
               rows={[
                 {
                   concepto: "Participar (base)",
+                  cuando: "Al cerrar torneo",
                   puntos: `+${E.PARTICIPACION}`,
                   tone: "base",
                 },
                 {
-                  concepto: "Llegar a semifinal",
-                  puntos: `+${E.LLEGAR_SEMI}`,
+                  concepto: "Pasar fase de grupos",
+                  cuando: "Clasificar (cuartos o semis directas)",
+                  puntos: `+${E.PASAR_FASE_GRUPOS}`,
                   tone: "win",
                 },
-                { concepto: "Campeón", puntos: `+${E.PRIMER_LUGAR}`, tone: "gold" },
                 {
-                  concepto: "Finalista",
+                  concepto: "No pasa fase de grupos",
+                  cuando: "Al cerrar torneo",
+                  puntos: "+0",
+                  tone: "zero",
+                },
+                {
+                  concepto: "Pasar a semifinales",
+                  cuando: "Al jugar semifinal",
+                  puntos: `+${E.PASAR_SEMIFINAL}`,
+                  tone: "win",
+                },
+                {
+                  concepto: "Llegar a la final",
+                  cuando: "Campeón o finalista",
+                  puntos: `+${E.LLEGAR_FINAL}`,
+                  tone: "win",
+                },
+                {
+                  concepto: "Podio campeón",
+                  cuando: "Al cerrar torneo",
+                  puntos: `+${E.PRIMER_LUGAR}`,
+                  tone: "gold",
+                },
+                {
+                  concepto: "Podio finalista",
+                  cuando: "Al cerrar torneo",
                   puntos: `+${E.SEGUNDO_LUGAR}`,
                   tone: "silver",
                 },
                 {
-                  concepto: "3er–4to lugar",
+                  concepto: "Podio 3.º–4.º",
+                  cuando: "Al cerrar torneo",
                   puntos: `+${E.TERCER_LUGAR}`,
                   tone: "bronze",
-                },
-                {
-                  concepto: "Eliminado antes de semi",
-                  puntos: "+0",
-                  tone: "zero",
                 },
               ]}
               footer={[
                 { label: "Solo jugar", value: `${E.PARTICIPACION}` },
+                {
+                  label: "Clasifica, pierde en cuartos",
+                  value: `${expressCuartos}`,
+                },
                 { label: "Campeón (total)", value: `${expressCampeon}` },
+                { label: "Finalista (total)", value: `${expressFinalista}` },
+                { label: "3.º–4.º (total)", value: `${expressSemiPodio}` },
               ]}
             />
           </div>

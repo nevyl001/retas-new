@@ -33,7 +33,12 @@ export const PUNTOS_AMERICANO = {
 
 export const PUNTOS_EXPRESS = {
   PARTICIPACION: 50,
-  LLEGAR_SEMI: 50,
+  /** Clasificar de fase de grupos (cuartos, semis directas, etc.) */
+  PASAR_FASE_GRUPOS: 100,
+  /** Jugar la ronda de semifinales (o equivalente en cuadro directo a semis) */
+  PASAR_SEMIFINAL: 50,
+  /** Llegar a la final (campeón o finalista) */
+  LLEGAR_FINAL: 100,
   PRIMER_LUGAR: 300,
   SEGUNDO_LUGAR: 150,
   TERCER_LUGAR: 50,
@@ -50,14 +55,21 @@ export interface CalcularPuntosEventoParams {
   formato: RivieraRankingFormato;
   /** Liga: primera inscripción en la temporada */
   esNuevoEnLiga?: boolean;
-  /** Liga: cuántas jornadas ganó en este registro (normalmente 0 o 1) */
+  /**
+   * Liga: jornadas ganadas en este registro (0 o 1 por participación de jornada).
+   * Varias jornadas = varios registros al finalizar cada una (+50 c/u).
+   */
   jornadas_ganadas?: number;
   /** Liga (cierre), americano, express, reta individual: 1, 2, 3, 4… */
   posicion_final?: number | null;
   /** Americano: victorias en duelos 1v1 (PG de standings) */
   victorias_americano?: number;
-  /** Express: llegó a semifinal sin medalla 1–4 */
-  llego_semi?: boolean;
+  /** Express: clasificó de fase de grupos al cuadro eliminatorio */
+  paso_fase_grupos?: boolean;
+  /** Express: llegó a la ronda de semifinales */
+  paso_semifinal?: boolean;
+  /** Express: jugó la final (1.º o 2.º) */
+  llego_final?: boolean;
   /** Reta por equipos: jugador en el equipo con más marcador */
   equipo_ganador?: boolean;
 }
@@ -125,6 +137,15 @@ export function calcularPuntosEventoDesglose(
     }
     case "express": {
       add(desglose, "express_participacion", PUNTOS_EXPRESS.PARTICIPACION);
+      if (params.paso_fase_grupos) {
+        add(desglose, "express_pasar_grupos", PUNTOS_EXPRESS.PASAR_FASE_GRUPOS);
+      }
+      if (params.paso_semifinal) {
+        add(desglose, "express_pasar_semifinal", PUNTOS_EXPRESS.PASAR_SEMIFINAL);
+      }
+      if (params.llego_final) {
+        add(desglose, "express_llegar_final", PUNTOS_EXPRESS.LLEGAR_FINAL);
+      }
       const pos = params.posicion_final;
       if (pos === 1) {
         add(desglose, "express_campeon", PUNTOS_EXPRESS.PRIMER_LUGAR);
@@ -132,8 +153,6 @@ export function calcularPuntosEventoDesglose(
         add(desglose, "express_finalista", PUNTOS_EXPRESS.SEGUNDO_LUGAR);
       } else if (pos === 3 || pos === 4) {
         add(desglose, "express_semifinal", PUNTOS_EXPRESS.TERCER_LUGAR);
-      } else if (params.llego_semi) {
-        add(desglose, "express_llegar_semi", PUNTOS_EXPRESS.LLEGAR_SEMI);
       }
       break;
     }

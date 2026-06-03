@@ -23,12 +23,21 @@ async function pairIdsFromEliminatoriaPartidos(
   return ids;
 }
 
-function pairIdsFromBracketSlots(bracketSlots: unknown): Set<string> {
+export function pairIdsFromBracketSlots(bracketSlots: unknown): Set<string> {
   const ids = new Set<string>();
   for (const slot of deserializeBracketSlots(bracketSlots)) {
     if (slot.type === "team" && slot.qualifier.parejaId) {
       ids.add(slot.qualifier.parejaId);
     }
+  }
+  return ids;
+}
+
+function pairIdsClasificadosFromEliminatoria(bundle: TorneoExpressBundle): Set<string> {
+  const ids = new Set<string>();
+  for (const row of bundle.eliminatoriaPartidos) {
+    if (row.pareja_local_id) ids.add(row.pareja_local_id);
+    if (row.pareja_visitante_id) ids.add(row.pareja_visitante_id);
   }
   return ids;
 }
@@ -47,6 +56,17 @@ function pairIdsFromBundleStandings(bundle: TorneoExpressBundle): Set<string> {
   return qualified;
 }
 
+/** Parejas que clasificaron de grupos (cuadro, bracket o top 2 por grupo). */
+export function clasificadosPairIdsFromBundle(bundle: TorneoExpressBundle): Set<string> {
+  const fromPartidos = pairIdsClasificadosFromEliminatoria(bundle);
+  if (fromPartidos.size > 0) return fromPartidos;
+
+  const fromSlots = pairIdsFromBracketSlots(bundle.torneo.bracket_slots);
+  if (fromSlots.size > 0) return fromSlots;
+
+  return pairIdsFromBundleStandings(bundle);
+}
+
 /** Parejas que clasificaron (cuadro → bracket confirmado → top 2 por grupo). */
 export async function fetchClasificadosPairIds(
   torneoExpressId: string
@@ -54,17 +74,7 @@ export async function fetchClasificadosPairIds(
   const fromPartidos = await pairIdsFromEliminatoriaPartidos(torneoExpressId);
   if (fromPartidos.size > 0) return fromPartidos;
 
-  const { data: torneo, error: tErr } = await supabase
-    .from("torneo_express")
-    .select("bracket_slots")
-    .eq("id", torneoExpressId)
-    .maybeSingle();
-  if (tErr) throw tErr;
-
-  const fromSlots = pairIdsFromBracketSlots(torneo?.bracket_slots);
-  if (fromSlots.size > 0) return fromSlots;
-
   const bundle = await fetchTorneoExpressBundle(torneoExpressId);
   if (!bundle) return new Set();
-  return pairIdsFromBundleStandings(bundle);
+  return clasificadosPairIdsFromBundle(bundle);
 }
