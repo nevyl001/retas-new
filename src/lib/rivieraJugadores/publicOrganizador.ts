@@ -1,3 +1,5 @@
+import { supabase } from "../supabaseClient";
+
 const SESSION_KEY = "riviera_public_organizador_id";
 
 /** UUID del club/organizador para rankings públicos (build-time). */
@@ -52,4 +54,39 @@ export function resolvePublicOrganizadorId(fallbackUserId?: string | null): stri
     null;
   if (id) persistPublicOrganizadorId(id);
   return id;
+}
+
+/** Si no hay ?org= ni env, usa el organizador del primer jugador público visible. */
+export async function fetchFallbackPublicOrganizadorId(): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from("riviera_jugadores")
+      .select("organizador_id")
+      .eq("estado", "activo")
+      .eq("visible_publico", true)
+      .not("organizador_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("[riviera-jugadores] fetchFallbackPublicOrganizadorId:", error);
+      return null;
+    }
+
+    const id = (data?.organizador_id as string | undefined)?.trim();
+    if (id) persistPublicOrganizadorId(id);
+    return id || null;
+  } catch (e) {
+    console.warn("[riviera-jugadores] fetchFallbackPublicOrganizadorId:", e);
+    return null;
+  }
+}
+
+/** Resuelve org para páginas públicas sin depender de la sesión. */
+export async function resolvePublicOrganizadorIdAsync(
+  loggedInUserId?: string | null
+): Promise<string | null> {
+  const direct = resolvePublicOrganizadorId(loggedInUserId);
+  if (direct) return direct;
+  return fetchFallbackPublicOrganizadorId();
 }

@@ -7,6 +7,7 @@ import {
   PUNTOS_RETA,
   PUNTOS_RETA_EQUIPOS,
 } from "../../lib/rivieraJugadores/rivieraRankingPoints";
+import { getPublicOrganizadorIdWithoutUser } from "../../lib/rivieraJugadores/publicOrganizador";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import "./ranking-como-funciona.css";
@@ -129,7 +130,7 @@ function FormatoCard({
 }
 
 export const RankingComoFuncionaPage: React.FC = () => {
-  const rankingHref = buildPublicRankingUrl();
+  const rankingHref = buildPublicRankingUrl(getPublicOrganizadorIdWithoutUser());
 
   return (
     <JugadoresPublicShell variant="ranking">

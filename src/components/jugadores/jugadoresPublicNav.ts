@@ -22,11 +22,13 @@ export function buildRankingComoFuncionaPath(): string {
   return "/ranking/como-funciona";
 }
 
+/** Ranking público: /ranking (alias histórico: /public/jugadores). */
 export function buildPublicRankingUrl(orgId?: string | null): string {
+  const base = "/ranking";
   if (typeof window === "undefined") {
-    return orgId ? `/ranking?org=${encodeURIComponent(orgId)}` : "/ranking";
+    return orgId ? `${base}?org=${encodeURIComponent(orgId)}` : base;
   }
-  const url = new URL("/ranking", window.location.origin);
+  const url = new URL(base, window.location.origin);
   if (orgId) url.searchParams.set("org", orgId);
   return url.pathname + url.search;
 }

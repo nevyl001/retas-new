@@ -1,21 +1,33 @@
 import React from "react";
 import { useUser } from "../../contexts/UserContext";
-import { pathRequiresUserSession } from "../../lib/appRouting";
+import { normalizeAppPathname, pathRequiresUserSession } from "../../lib/appRouting";
+import { isJugadoresPublicPath } from "../jugadores/JugadoresRouter";
+import { isLigaPublicPath } from "../liga/LigaRouter";
+import { isTorneoExpressPublicPath } from "../torneo-express/TorneoExpressRouter";
 import { AuthPage } from "./AuthPage";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+function isPublicAppPath(pathname: string): boolean {
+  const path = normalizeAppPathname(pathname);
+  if (!pathRequiresUserSession(path)) return true;
+  if (path.includes("/public/")) return true;
+  if (isJugadoresPublicPath(path)) return true;
+  if (isTorneoExpressPublicPath(path)) return true;
+  if (isLigaPublicPath(path)) return true;
+  if (path === "/admin-login" || path === "/admin-dashboard") return true;
+  if (path === "/auth/callback") return true;
+  return false;
+}
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useUser();
-  const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+  const currentPath =
+    typeof window !== "undefined" ? window.location.pathname : "";
 
-  const isAdminRoute =
-    currentPath === "/admin-login" || currentPath === "/admin-dashboard";
-
-  // Ranking, cómo funciona, fichas /public/, torneo express público, etc.
-  if (!pathRequiresUserSession(currentPath) || isAdminRoute) {
+  if (isPublicAppPath(currentPath)) {
     return <>{children}</>;
   }
 

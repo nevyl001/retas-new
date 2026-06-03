@@ -8,7 +8,7 @@ import {
 import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import {
   getPublicOrganizadorIdWithoutUser,
-  resolvePublicOrganizadorId,
+  resolvePublicOrganizadorIdAsync,
 } from "../../lib/rivieraJugadores/publicOrganizador";
 import type {
   RivieraJugadorCategoria,
@@ -22,25 +22,49 @@ import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
 import "./riviera-jugadores-public-ranking.css";
 
 export const JugadoresPublicRanking: React.FC = () => {
-  const { user, loading: userLoading } = useUser();
-  const orgId = resolvePublicOrganizadorId(user?.id);
+  const { user } = useUser();
+  const [orgId, setOrgId] = useState<string | null>(() =>
+    getPublicOrganizadorIdWithoutUser()
+  );
+  const [orgReady, setOrgReady] = useState(() => !!getPublicOrganizadorIdWithoutUser());
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    const preset = getPublicOrganizadorIdWithoutUser();
+    if (preset) {
+      setOrgId(preset);
+      setOrgReady(true);
+      return;
+    }
+
+    setOrgReady(false);
+    void resolvePublicOrganizadorIdAsync(user?.id).then((id) => {
+      if (cancelled) return;
+      setOrgId(id);
+      setOrgReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   const load = useCallback(async () => {
+    if (!orgReady) return;
+
     if (!orgId) {
-      if (userLoading && !getPublicOrganizadorIdWithoutUser()) {
-        setLoading(true);
-        return;
-      }
+      setJugadores([]);
       setError(
-        "No se pudo cargar el ranking del club. Abre el enlace con ?org= o inicia sesión como organizador."
+        "No hay jugadores públicos configurados todavía. El organizador puede compartir el enlace con ?org=UUID."
       );
       setLoading(false);
       return;
     }
+
     setLoading(true);
     setError(null);
     try {
@@ -51,7 +75,7 @@ export const JugadoresPublicRanking: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [orgId, categoria, userLoading]);
+  }, [orgId, categoria, orgReady]);
 
   useEffect(() => {
     void load();
