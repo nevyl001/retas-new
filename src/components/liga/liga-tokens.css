@@ -1,0 +1,66 @@
+:root {
+  /* Colores Liga */
+  --liga-gold: #c9a227;
+  --liga-gold-light: #e8d48a;
+  --liga-gold-bright: #fde68a;
+  --liga-gold-dim: rgba(201, 162, 39, 0.15);
+  --liga-gold-border: rgba(201, 162, 39, 0.25);
+  --liga-purple: rgba(91, 79, 207, 0.85);
+  --liga-purple-dim: rgba(91, 79, 207, 0.18);
+  --liga-purple-text: #ddd6fe;
+  --liga-green: #10b981;
+  --liga-green-light: #6ee7b7;
+  --liga-green-dim: rgba(16, 185, 129, 0.15);
+  --liga-red: #f87171;
+  --liga-bg-base: #0f0f12;
+  --liga-bg: #0f0f12;
+  --liga-bg-gradient:
+    radial-gradient(
+      ellipse 120% 80% at 50% -25%,
+      rgba(201, 162, 39, 0.09) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 55% 45% at 100% 40%,
+      rgba(91, 79, 207, 0.06) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 45% 35% at 0% 85%,
+      rgba(16, 185, 129, 0.04) 0%,
+      transparent 45%
+    ),
+    linear-gradient(180deg, #16161c 0%, #0e0e12 45%, #09090c 100%);
+  --liga-surface: rgba(255, 255, 255, 0.045);
+  --liga-surface-hover: rgba(255, 255, 255, 0.07);
+  --liga-surface-deep: rgba(0, 0, 0, 0.35);
+  --liga-border: rgba(255, 255, 255, 0.08);
+  --liga-border-subtle: rgba(255, 255, 255, 0.04);
+  --liga-text: #f5f5f5;
+  --liga-text-muted: rgba(245, 245, 245, 0.55);
+  --liga-text-soft: rgba(255, 255, 255, 0.72);
+  --liga-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.25);
+  --liga-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --liga-shadow-gold: 0 2px 8px rgba(201, 162, 39, 0.35);
+  --liga-shadow-gold-glow: 0 0 40px rgba(201, 162, 39, 0.2);
+  --liga-shadow-green-glow: 0 0 8px rgba(16, 185, 129, 0.25);
+
+  /* Tipografía */
+  --liga-font-display: var(--font-display, "Inter", sans-serif);
+  --liga-font-body: var(--font-body, "Inter", sans-serif);
+
+  /* Spacing */
+  --liga-space-xs: 4px;
+  --liga-space-sm: 8px;
+  --liga-space-md: 16px;
+  --liga-space-lg: 24px;
+  --liga-space-xl: 32px;
+  --liga-space-2xl: 48px;
+  --liga-space-3xl: 64px;
+
+  /* Radios */
+  --liga-radius-sm: 8px;
+  --liga-radius-md: 12px;
+  --liga-radius-lg: 16px;
+  --liga-radius-pill: 999px;
+}

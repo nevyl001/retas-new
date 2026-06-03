@@ -22,7 +22,6 @@ import { Button } from "../ui";
 import {
   ligaJornadaPath,
   navigateLiga,
-  publicLigaJornadaUrl,
 } from "./ligaNav";
 import "./liga-page.css";
 
@@ -681,16 +680,6 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                     >
                       Ir a jornada
                     </Button>
-                    {(j.partidos?.length ?? 0) > 0 && (
-                      <a
-                        href={publicLigaJornadaUrl(ligaId, j.numero)}
-                        className="liga-public-link"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Pantalla
-                      </a>
-                    )}
                   </div>
                 </li>
               ))}

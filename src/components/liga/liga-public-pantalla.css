@@ -1,22 +1,24 @@
+@import "./liga-tokens.css";
+
 /* Vista pública jornada — optimizada para TV / pantalla en cancha */
 
 .liga-pantalla {
-  --liga-pantalla-gold: #c9a227;
-  --liga-pantalla-live: #10b981;
+  --liga-pantalla-gold: var(--liga-gold);
+  --liga-pantalla-live: var(--liga-green);
   min-height: 100vh;
   width: 100%;
   margin: 0;
   padding: 0;
-  background: #0a0a0a !important;
-  color: #f5f5f5;
-  font-family: var(--font-body, system-ui, sans-serif);
+  background: var(--liga-bg-gradient) !important;
+  color: var(--liga-text);
+  font-family: var(--liga-font-body);
   position: relative;
   overflow-x: hidden;
 }
 
 .App.ro-public-view .liga-pantalla,
 .App--public-full-width .liga-pantalla {
-  background: #0a0a0a !important;
+  background: var(--liga-bg-gradient) !important;
   max-width: none;
 }
 
@@ -34,14 +36,14 @@
   z-index: 2;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 1.5rem 2rem 2.5rem;
+  padding: var(--liga-space-lg) var(--liga-space-lg) 2.5rem;
 }
 
 .liga-pantalla__header {
   text-align: center;
   margin-bottom: 1.75rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(201, 162, 39, 0.25);
+  border-bottom: 0.5px solid var(--liga-gold-border);
 }
 
 .liga-pantalla__eyebrow {
@@ -49,27 +51,29 @@
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--liga-pantalla-gold);
+  color: var(--liga-gold);
   margin: 0 0 0.35rem;
 }
 
 .liga-pantalla__title {
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 800;
+  font-family: var(--liga-font-display);
   margin: 0 0 0.25rem;
   letter-spacing: 0.02em;
+  color: var(--liga-text);
 }
 
 .liga-pantalla__subtitle {
   font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--liga-text-soft);
   margin: 0;
 }
 
 .liga-pantalla__layout {
   display: grid;
   grid-template-columns: 1fr 320px;
-  gap: 1.5rem;
+  gap: var(--liga-space-lg);
   align-items: start;
 }
 
@@ -86,10 +90,10 @@
 }
 
 .liga-pantalla-ronda {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
+  background: var(--liga-surface);
+  border: 0.5px solid var(--liga-border);
+  border-radius: var(--liga-radius-md);
+  padding: var(--liga-space-md) 1.25rem;
 }
 
 .liga-pantalla-ronda--live {
@@ -109,30 +113,35 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--liga-pantalla-gold);
+  color: var(--liga-gold);
   margin: 0;
 }
 
+/* Badges públicos — mismos estilos que admin (.liga-badge--*) */
+
 .liga-pantalla-ronda__badge {
-  font-size: 0.65rem;
+  display: inline-block;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
+  padding: 3px 10px;
+  border-radius: var(--liga-radius-pill);
   background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--liga-text-muted);
 }
 
 .liga-pantalla-ronda__badge--live {
-  background: rgba(16, 185, 129, 0.2);
-  color: #6ee7b7;
+  background: var(--liga-green-dim);
+  color: var(--liga-green);
+  box-shadow: var(--liga-shadow-green-glow);
   animation: liga-pantalla-pulse 2s ease-in-out infinite;
 }
 
 .liga-pantalla-ronda__badge--done {
-  background: rgba(91, 79, 207, 0.25);
-  color: #c4b5fd;
+  background: var(--liga-gold-dim);
+  color: var(--liga-gold);
+  border: 0.5px solid var(--liga-gold-border);
 }
 
 @keyframes liga-pantalla-pulse {
@@ -154,9 +163,9 @@
 }
 
 .liga-pantalla-match {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  background: var(--liga-surface-deep);
+  border: 0.5px solid var(--liga-border);
+  border-radius: var(--liga-radius-md);
   overflow: hidden;
 }
 
@@ -168,9 +177,9 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-align: center;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--liga-text-muted);
   background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 0.5px solid var(--liga-border);
 }
 
 .liga-pantalla-match__board {
@@ -183,11 +192,11 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.5rem 0.35rem;
-  border-radius: 8px;
+  border-radius: var(--liga-radius-sm);
 }
 
 .liga-pantalla-match__row--win {
-  background: rgba(201, 162, 39, 0.12);
+  background: var(--liga-gold-dim);
 }
 
 .liga-pantalla-match__name {
@@ -195,29 +204,30 @@
   font-size: clamp(0.9rem, 1.8vw, 1.05rem);
   font-weight: 600;
   line-height: 1.3;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--liga-text);
 }
 
 .liga-pantalla-match__row--win .liga-pantalla-match__name {
-  color: #e8d48a;
+  color: var(--liga-gold-light);
 }
 
 .liga-pantalla-match__pts {
   flex-shrink: 0;
   min-width: 2.25rem;
-  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  font-size: clamp(28px, 5vw, 48px);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   text-align: right;
-  color: var(--liga-pantalla-gold);
+  color: var(--liga-gold);
+  line-height: 1;
 }
 
 .liga-pantalla-match__row--win .liga-pantalla-match__pts {
-  color: #fde68a;
+  color: var(--liga-gold-bright);
 }
 
 .liga-pantalla-match__pts--pending {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--liga-text-muted);
   font-size: 1.1rem;
 }
 
@@ -228,30 +238,31 @@
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--liga-text-muted);
 }
 
 .liga-pantalla-ranking {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(201, 162, 39, 0.2);
-  border-radius: 14px;
-  padding: 1rem 1.15rem;
+  background: var(--liga-surface);
+  border: 0.5px solid var(--liga-gold-border);
+  border-radius: var(--liga-radius-md);
+  padding: var(--liga-space-md) 1.15rem;
   position: sticky;
-  top: 1rem;
+  top: var(--liga-space-md);
+  box-shadow: var(--liga-shadow-card);
 }
 
 .liga-pantalla-winner {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--liga-space-lg);
   padding: 1.25rem 1.5rem;
-  border-radius: 14px;
+  border-radius: var(--liga-radius-md);
   background: linear-gradient(
     135deg,
     rgba(201, 162, 39, 0.22) 0%,
-    rgba(91, 79, 207, 0.15) 100%
+    var(--liga-purple-dim) 100%
   );
-  border: 1px solid rgba(201, 162, 39, 0.45);
-  box-shadow: 0 0 32px rgba(201, 162, 39, 0.15);
+  border: 0.5px solid var(--liga-gold-border);
+  box-shadow: var(--liga-shadow-gold-glow);
 }
 
 .liga-pantalla-winner__eyebrow {
@@ -260,20 +271,20 @@
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #fde68a;
+  color: var(--liga-gold-bright);
 }
 
 .liga-pantalla-winner__title {
   margin: 0 0 0.35rem;
   font-size: clamp(1.35rem, 3vw, 2rem);
   font-weight: 800;
-  color: #fff;
+  color: var(--liga-text);
 }
 
 .liga-pantalla-winner__meta {
   margin: 0;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--liga-text-muted);
 }
 
 .liga-pantalla-ranking__title {
@@ -281,14 +292,14 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--liga-pantalla-gold);
+  color: var(--liga-gold);
   margin: 0 0 0.35rem;
 }
 
 .liga-pantalla-ranking__hint {
   margin: 0 0 0.75rem;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--liga-text-muted);
   line-height: 1.35;
 }
 
@@ -297,12 +308,12 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--liga-text-muted);
   margin: 1.1rem 0 0.5rem;
 }
 
 .liga-pantalla-ranking-winner td {
-  color: #fde68a !important;
+  color: var(--liga-gold-bright) !important;
   font-weight: 700;
 }
 
@@ -316,19 +327,19 @@
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--liga-text-muted);
   text-align: left;
   padding: 0.35rem 0.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 0.5px solid var(--liga-border);
 }
 
 .liga-pantalla-ranking td {
   padding: 0.5rem 0.25rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 0.5px solid var(--liga-border-subtle);
 }
 
 .liga-pantalla-ranking tr.liga-pantalla-ranking-top td {
-  color: #e8d48a;
+  color: var(--liga-gold-light);
   font-weight: 600;
 }
 
@@ -336,34 +347,34 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--liga-space-md);
 }
 
 .liga-pantalla-pareja {
   font-size: 0.8rem;
   padding: 0.3rem 0.55rem;
-  border-radius: 6px;
-  background: rgba(91, 79, 207, 0.22);
-  color: #ddd6fe;
+  border-radius: var(--liga-radius-sm);
+  background: var(--liga-purple-dim);
+  color: var(--liga-purple-text);
 }
 
 .liga-pantalla__footer {
-  margin-top: 1.5rem;
+  margin-top: var(--liga-space-lg);
   text-align: center;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--liga-text-muted);
 }
 
 .liga-pantalla__loading {
   text-align: center;
-  padding: 4rem 1rem;
-  color: rgba(255, 255, 255, 0.5);
+  padding: 4rem var(--liga-space-md);
+  color: var(--liga-text-muted);
 }
 
 .liga-pantalla__error {
   text-align: center;
   padding: 3rem;
-  color: #f87171;
+  color: var(--liga-red);
 }
 
 /* Vista pública liga completa */
@@ -380,13 +391,13 @@
 
 .liga-pantalla-ranking--wide {
   position: sticky;
-  top: 1rem;
+  top: var(--liga-space-md);
 }
 
 .liga-pantalla-ranking__pts {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--liga-pantalla-gold);
+  color: var(--liga-gold);
   font-size: 1.05rem;
 }
 
@@ -395,25 +406,34 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--liga-pantalla-gold);
-  margin: 0 0 1rem;
+  color: var(--liga-gold);
+  margin: 0 0 var(--liga-space-md);
 }
 
 .liga-pantalla-jornadas__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1rem;
+  gap: var(--liga-space-md);
 }
 
 .liga-pantalla-jornada-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 1rem 1.1rem;
+  background: var(--liga-surface);
+  border: 0.5px solid var(--liga-border);
+  border-radius: var(--liga-radius-md);
+  padding: var(--liga-space-md) 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  transition: border-color 0.2s ease;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
+}
+
+.liga-pantalla-jornada-card:hover {
+  border-color: var(--liga-gold-border);
+  box-shadow: var(--liga-shadow-hover);
+  transform: translateY(-1px);
 }
 
 .liga-pantalla-jornada-card--live {
@@ -425,14 +445,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--liga-space-sm);
 }
 
 .liga-pantalla-jornada-card__num {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--liga-text);
 }
 
 .liga-pantalla-parejas--card {
@@ -445,42 +465,42 @@
   justify-content: center;
   margin-top: auto;
   padding: 0.55rem 0.85rem;
-  border-radius: 8px;
-  background: rgba(201, 162, 39, 0.15);
-  border: 1px solid rgba(201, 162, 39, 0.4);
-  color: #e8d48a;
+  border-radius: var(--liga-radius-sm);
+  background: var(--liga-gold-dim);
+  border: 0.5px solid var(--liga-gold-border);
+  color: var(--liga-gold-light);
   font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.15s ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .liga-pantalla-jornada-card__link:hover {
   background: rgba(201, 162, 39, 0.28);
-  color: #fff;
+  color: var(--liga-text);
 }
 
 .liga-pantalla-jornada-card__hint {
   margin: 0;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--liga-text-muted);
 }
 
 /* Cierre de liga — felicitación y podio */
 
 .liga-pantalla-cierre {
   margin-top: 2.5rem;
-  padding: 2rem 1.5rem 2.25rem;
+  padding: var(--liga-space-lg) var(--liga-space-lg) 2.25rem;
   text-align: center;
-  border-radius: 16px;
+  border-radius: var(--liga-radius-lg);
   background: linear-gradient(
     180deg,
     rgba(201, 162, 39, 0.12) 0%,
-    rgba(91, 79, 207, 0.08) 50%,
-    rgba(255, 255, 255, 0.03) 100%
+    var(--liga-purple-dim) 50%,
+    var(--liga-surface) 100%
   );
-  border: 1px solid rgba(201, 162, 39, 0.35);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35);
+  border: 0.5px solid var(--liga-gold-border);
+  box-shadow: var(--liga-shadow-hover);
 }
 
 .liga-pantalla-cierre__eyebrow {
@@ -489,23 +509,24 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #fde68a;
+  color: var(--liga-gold-bright);
 }
 
 .liga-pantalla-cierre__title {
   margin: 0 0 0.85rem;
   font-size: clamp(1.5rem, 4vw, 2.25rem);
   font-weight: 800;
-  color: #fff;
+  font-family: var(--liga-font-display);
+  color: var(--liga-text);
   line-height: 1.2;
 }
 
 .liga-pantalla-cierre__mensaje {
   max-width: 42rem;
-  margin: 0 auto 2rem;
+  margin: 0 auto var(--liga-space-lg);
   font-size: clamp(0.95rem, 2vw, 1.1rem);
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--liga-text-soft);
 }
 
 .liga-pantalla-cierre__podio-titulo {
@@ -514,7 +535,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--liga-pantalla-gold);
+  color: var(--liga-gold);
 }
 
 .liga-pantalla-podium {
@@ -530,10 +551,10 @@
 .liga-pantalla-podium__place {
   flex: 1 1 140px;
   max-width: 200px;
-  padding: 1rem 0.85rem 1.15rem;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--liga-space-md) 0.85rem 1.15rem;
+  border-radius: var(--liga-radius-md);
+  background: var(--liga-surface-deep);
+  border: 0.5px solid var(--liga-border);
   list-style: none;
 }
 
@@ -541,13 +562,13 @@
   order: 2;
   padding-top: 1.35rem;
   padding-bottom: 1.5rem;
-  border-color: rgba(201, 162, 39, 0.55);
+  border-color: var(--liga-gold-border);
   background: linear-gradient(
     180deg,
     rgba(201, 162, 39, 0.28) 0%,
-    rgba(0, 0, 0, 0.4) 100%
+    var(--liga-surface-deep) 100%
   );
-  box-shadow: 0 0 28px rgba(201, 162, 39, 0.2);
+  box-shadow: var(--liga-shadow-gold-glow);
   transform: translateY(-0.5rem);
 }
 
@@ -576,7 +597,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--liga-text-muted);
   margin-bottom: 0.35rem;
 }
 
@@ -584,13 +605,13 @@
   margin: 0 0 0.35rem;
   font-size: clamp(1rem, 2.5vw, 1.25rem);
   font-weight: 800;
-  color: #e8d48a;
+  color: var(--liga-gold-light);
   line-height: 1.25;
 }
 
 .liga-pantalla-podium__place--1 .liga-pantalla-podium__name {
   font-size: clamp(1.15rem, 3vw, 1.45rem);
-  color: #fde68a;
+  color: var(--liga-gold-bright);
 }
 
 .liga-pantalla-podium__pts {
@@ -598,7 +619,7 @@
   font-size: 1.35rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--liga-text);
 }
 
 .liga-pantalla-podium__place--1 .liga-pantalla-podium__pts {
@@ -608,13 +629,13 @@
 .liga-pantalla-podium__pts-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--liga-text-muted);
 }
 
 .liga-pantalla-podium__meta {
   margin: 0.35rem 0 0;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--liga-text-muted);
 }
 
 @media (max-width: 520px) {
