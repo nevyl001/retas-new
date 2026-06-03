@@ -355,43 +355,6 @@ function processExpressPartido(
   bumpPairPlayers(visit, true, false, pv, pl, pv, agg);
 }
 
-async function flushPlayerAgg(
-  agg: Map<string, PlayerAgg>,
-  organizadorId: string,
-  eventoId: string,
-  eventoNombre: string,
-  tipoEvento: JugadorTipoEvento,
-  extraMetadata?: Record<string, unknown>
-): Promise<void> {
-  for (const st of Array.from(agg.values())) {
-    const jugadorId = await getOrCreateJugadorId({
-      nombre: st.nombre,
-      organizadorId,
-      legacyPlayerId: st.legacyPlayerId,
-      legacyLigaJugadorId: st.legacyLigaJugadorId,
-      email: st.email,
-    });
-    if (!jugadorId) continue;
-
-    await safeRegistrar({
-      jugadorId,
-      tipoEvento,
-      eventoId,
-      eventoNombre,
-      resultado: resultadoFromRecord(st.wins, st.losses, st.draws),
-      setsFavor: st.setsFavor,
-      setsContra: st.setsContra,
-      puntosObtenidos: st.puntosObtenidos,
-      metadata: {
-        partidos_ganados: st.wins,
-        partidos_perdidos: st.losses,
-        partidos_empatados: st.draws,
-        ...extraMetadata,
-      },
-    });
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Reta
 // ---------------------------------------------------------------------------
