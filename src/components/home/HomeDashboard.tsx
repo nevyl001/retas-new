@@ -10,6 +10,7 @@ import {
   persistAmericanoActiveTournamentId,
 } from "../../lib/americanoDinamicoStorage";
 import { useUser } from "../../contexts/UserContext";
+import { navigateLiga } from "../liga/ligaNav";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import type { GameModeId } from "./gameModesConfig";
 import {
@@ -46,6 +47,10 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       persistLastGameMode(modeId);
       if (modeId === "mini-torneo") {
         navigateTorneoExpress("/torneo-express");
+        return;
+      }
+      if (modeId === "liga") {
+        navigateLiga("/liga");
         return;
       }
       if (modeId === "americano" && userId) {

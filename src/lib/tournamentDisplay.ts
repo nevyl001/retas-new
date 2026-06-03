@@ -17,6 +17,7 @@ const MODE_BADGE_VARIANT: Record<GameModeId, TournamentModeBadge> = {
   "round-robin": "mode-robin",
   americano: "mode-americano",
   "mini-torneo": "mode-torneo",
+  liga: "mode-torneo",
 };
 
 export function getTournamentModeBadge(tournament: Tournament): {

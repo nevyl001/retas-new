@@ -12,6 +12,7 @@ export type AppView =
   | "public-americano-pantalla"
   | "americano-dinamico"
   | "torneo-express"
+  | "liga"
   | "auth-callback"
   | "admin-login"
   | "admin-dashboard";
@@ -70,6 +71,8 @@ export function resolveAppViewFromPath(pathname: string): AppView {
   if (currentPath === "/admin-login") return "admin-login";
   if (currentPath === "/admin-dashboard") return "admin-dashboard";
   if (currentPath === "/americano-dinamico") return "americano-dinamico";
+  if (currentPath.startsWith("/liga") || /^\/public\/liga\//i.test(currentPath))
+    return "liga";
   if (currentPath.startsWith("/torneo-express")) return "torneo-express";
   if (/^\/public\/americano-pantalla\//i.test(currentPath))
     return "public-americano-pantalla";
@@ -83,6 +86,7 @@ export function resolveAppViewFromPath(pathname: string): AppView {
 export function pathRequiresUserSession(pathname: string): boolean {
   const path = normalizeAppPathname(pathname);
   if (path.includes("/public/")) return false;
+  if (path.startsWith("/liga")) return true;
   if (
     path.startsWith("/torneo-express/") &&
     /\/(grupo\/[^/]+|general|grupos|eliminatoria)\/?$/i.test(path)

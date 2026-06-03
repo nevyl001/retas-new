@@ -28,6 +28,7 @@ import {
   isTorneoExpressPublicPath,
   TorneoExpressRouter,
 } from "./components/torneo-express/TorneoExpressRouter";
+import { isLigaPublicPath, LigaRouter } from "./components/liga/LigaRouter";
 import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
 import {
   navigateToAppHome,
@@ -140,6 +141,7 @@ function AppContent() {
       const norm = normalizeAppPathname(path);
       if (/^\/public\/americano-pantalla\//i.test(norm)) return null;
       if (/^\/public\/americano\//i.test(norm)) return null;
+      if (/^\/public\/liga\//i.test(norm)) return null;
       const m = path.match(/^\/public\/([^/?#]+)/);
       const seg = m?.[1];
       if (!seg || seg === "americano" || seg === "americano-pantalla") return null;
@@ -247,11 +249,20 @@ function AppContent() {
         );
         setPublicAmericanoBoardTournamentId(null);
         setPublicTournamentId(null);
+      } else if (/^\/public\/liga\//i.test(currentPath)) {
+        setPublicTournamentId(null);
+        setPublicAmericanoTournamentId(null);
+        setPublicAmericanoBoardTournamentId(null);
       } else if (currentPath.startsWith("/public/")) {
         const m = currentPath.match(/^\/public\/([^/?#]+)/);
         const seg = m?.[1];
         setPublicTournamentId(
-          seg && seg !== "americano" && seg !== "americano-pantalla" ? seg : null
+          seg &&
+            seg !== "americano" &&
+            seg !== "americano-pantalla" &&
+            seg !== "liga"
+            ? seg
+            : null
         );
         setPublicAmericanoTournamentId(null);
         setPublicAmericanoBoardTournamentId(null);
@@ -576,11 +587,15 @@ function AppContent() {
   const isTorneoExpressPublic =
     currentView === "torneo-express" && isTorneoExpressPublicPath(appPathname);
 
+  const isLigaPublic =
+    currentView === "liga" && isLigaPublicPath(appPathname);
+
   const isPublicSpectatorView =
     currentView === "public" ||
     currentView === "public-americano" ||
     currentView === "public-americano-pantalla" ||
-    isTorneoExpressPublic;
+    isTorneoExpressPublic ||
+    isLigaPublic;
 
   return (
     <div
@@ -594,11 +609,16 @@ function AppContent() {
           currentView !== "public-americano" &&
           currentView !== "public-americano-pantalla" &&
           !isTorneoExpressPublic &&
+          !isLigaPublic &&
           currentView !== "admin-login" &&
           currentView !== "admin-dashboard" && <UserHeader />}
 
         {currentView === "torneo-express" && (
           <TorneoExpressRouter key={appPathname} pathname={appPathname} />
+        )}
+
+        {currentView === "liga" && (
+          <LigaRouter key={appPathname} pathname={appPathname} />
         )}
 
         {currentView === "main" && !isAmericanoRoute && (

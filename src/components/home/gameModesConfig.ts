@@ -2,7 +2,8 @@ export type GameModeId =
   | "reta-equipos"
   | "round-robin"
   | "americano"
-  | "mini-torneo";
+  | "mini-torneo"
+  | "liga";
 
 export interface GameModeConfig {
   id: GameModeId;
@@ -50,5 +51,14 @@ export const GAME_MODES: GameModeConfig[] = [
     badge: "Nuevo",
     gradient: "linear-gradient(135deg, #0a0a0a 0%, #141414 100%)",
     accentColor: "#c9a227",
+  },
+  {
+    id: "liga",
+    title: "Liga",
+    description: "Temporada con jornadas y ranking acumulado",
+    icon: "🏅",
+    badge: "Nuevo",
+    gradient: "linear-gradient(135deg, #1a1530 0%, #2a2048 100%)",
+    accentColor: "#5B4FCF",
   },
 ];
