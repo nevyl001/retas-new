@@ -11,6 +11,8 @@ import {
 } from "../../lib/americanoDinamicoStorage";
 import { useUser } from "../../contexts/UserContext";
 import { navigateLiga } from "../liga/ligaNav";
+import { navigateAppTo } from "../../lib/appRouting";
+import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import { TablerIcon } from "../ui/TablerIcon";
@@ -146,6 +148,26 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               <span className="home-quick-card__title">Registro de jugadores</span>
               <span className="home-quick-card__sub">
                 Riviera Open · fichas, categorías e historial
+              </span>
+            </span>
+            <TablerIcon
+              name="chevron-right"
+              size={20}
+              className="home-quick-card__chev"
+            />
+          </button>
+          <button
+            type="button"
+            className="home-quick-card home-quick-card--ranking"
+            onClick={() => navigateAppTo(buildRankingComoFuncionaPath())}
+          >
+            <span className="home-quick-card__icon" aria-hidden>
+              <TablerIcon name="trophy" size={22} />
+            </span>
+            <span className="home-quick-card__body">
+              <span className="home-quick-card__title">Cómo funciona el ranking</span>
+              <span className="home-quick-card__sub">
+                Sistema de puntos Riviera Open · comparte con jugadores
               </span>
             </span>
             <TablerIcon

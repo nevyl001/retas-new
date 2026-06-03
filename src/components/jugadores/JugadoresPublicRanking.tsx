@@ -17,7 +17,7 @@ import type {
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
-import { navigatePublicJugadorFicha } from "./jugadoresPublicNav";
+import { buildRankingComoFuncionaPath, navigatePublicJugadorFicha } from "./jugadoresPublicNav";
 import "./riviera-jugadores-public-ranking.css";
 
 export const JugadoresPublicRanking: React.FC = () => {
@@ -66,6 +66,9 @@ export const JugadoresPublicRanking: React.FC = () => {
         <header className="rjp-ranking-header">
           <p className="rjp-ranking-header__brand">Riviera Open</p>
           <h1 className="rjp-ranking-header__title">Ranking de jugadores</h1>
+          <a className="rjp-ranking-header__link" href={buildRankingComoFuncionaPath()}>
+            ¿Cómo funcionan los puntos?
+          </a>
         </header>
 
         <section className="rjp-ranking-panel" aria-label="Ranking por categoría">

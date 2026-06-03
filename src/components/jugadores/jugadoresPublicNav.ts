@@ -18,6 +18,10 @@ export function navigatePublicJugadorFicha(
   navigateAppTo(buildPublicJugadorPath(slug, orgId));
 }
 
+export function buildRankingComoFuncionaPath(): string {
+  return "/ranking/como-funciona";
+}
+
 export function buildPublicRankingUrl(orgId?: string | null): string {
   if (typeof window === "undefined") {
     return orgId ? `/public/jugadores?org=${orgId}` : "/public/jugadores";

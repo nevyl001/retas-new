@@ -76,7 +76,10 @@ export function resolveAppViewFromPath(pathname: string): AppView {
     return "liga";
   if (
     currentPath.startsWith("/jugadores") ||
-    currentPath.startsWith("/public/jugadores")
+    currentPath.startsWith("/public/jugadores") ||
+    currentPath === "/ranking" ||
+    currentPath.startsWith("/ranking/") ||
+    currentPath === "/public/ranking-puntos"
   ) {
     return "jugadores";
   }
@@ -95,6 +98,8 @@ export function pathRequiresUserSession(pathname: string): boolean {
   if (path.includes("/public/")) return false;
   if (path.startsWith("/liga")) return true;
   if (path.startsWith("/public/jugadores")) return false;
+  if (path === "/ranking" || path.startsWith("/ranking/")) return false;
+  if (path === "/public/ranking-puntos") return false;
   if (path.startsWith("/jugadores")) return true;
   if (
     path.startsWith("/torneo-express/") &&

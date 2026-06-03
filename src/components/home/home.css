@@ -471,6 +471,12 @@
   }
 }
 
+@media (min-width: 960px) {
+  .home-quick-links__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .home-quick-card {
   display: flex;
   align-items: center;
@@ -520,6 +526,32 @@
 
 .home-quick-card--jugadores .home-quick-card__icon .ti {
   color: #c9a84c;
+}
+
+.home-quick-card--ranking {
+  border-color: rgba(201, 162, 39, 0.22);
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 24, 0.95) 0%,
+    rgba(22, 22, 24, 0.9) 100%
+  );
+}
+
+.home-quick-card--ranking:hover {
+  border-color: rgba(201, 162, 39, 0.42);
+}
+
+.home-quick-card--ranking .home-quick-card__icon {
+  background: rgba(201, 162, 39, 0.1);
+  border-color: rgba(201, 162, 39, 0.22);
+}
+
+.home-quick-card--ranking .home-quick-card__icon .ti {
+  color: #c9a227;
+}
+
+.home-quick-card--ranking:hover .home-quick-card__chev {
+  color: #c9a227;
 }
 
 .home-quick-card--retas .home-quick-card__icon {

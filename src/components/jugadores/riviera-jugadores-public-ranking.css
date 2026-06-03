@@ -46,6 +46,20 @@
   line-height: 1.15;
 }
 
+.rjp-ranking-header__link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c9a227;
+  text-decoration: none;
+}
+
+.rjp-ranking-header__link:hover {
+  color: #dbb842;
+  text-decoration: underline;
+}
+
 /* Panel único: categorías + lista */
 .rjp-ranking-panel {
   border-radius: 20px;

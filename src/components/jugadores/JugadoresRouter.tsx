@@ -3,17 +3,24 @@ import { JugadorFicha } from "./JugadorFicha";
 import { JugadorPublicFicha } from "./JugadorPublicFicha";
 import { JugadoresLista } from "./JugadoresLista";
 import { JugadoresPublicRanking } from "./JugadoresPublicRanking";
+import { RankingComoFuncionaPage } from "./RankingComoFuncionaPage";
 
 export type JugadoresRoute =
   | { kind: "lista" }
   | { kind: "ficha"; slug: string }
   | { kind: "publicRanking" }
   | { kind: "publicFicha"; slug: string }
+  | { kind: "rankingComoFunciona" }
   | { kind: "unknown" };
 
 export function parseJugadoresPath(pathname: string): JugadoresRoute {
   const path = pathname.replace(/\/+$/, "") || "/";
 
+  if (path === "/ranking" || path === "/ranking/") {
+    return { kind: "publicRanking" };
+  }
+  if (path === "/ranking/como-funciona") return { kind: "rankingComoFunciona" };
+  if (path === "/public/ranking-puntos") return { kind: "rankingComoFunciona" };
   if (path === "/public/jugadores") return { kind: "publicRanking" };
   const pub = path.match(/^\/public\/jugadores\/([^/]+)$/i);
   if (pub) {
@@ -38,13 +45,19 @@ export function parseJugadoresPath(pathname: string): JugadoresRoute {
 
 export function isJugadoresPublicPath(pathname: string): boolean {
   const kind = parseJugadoresPath(pathname).kind;
-  return kind === "publicRanking" || kind === "publicFicha";
+  return (
+    kind === "publicRanking" ||
+    kind === "publicFicha" ||
+    kind === "rankingComoFunciona"
+  );
 }
 
 export const JugadoresRouter: React.FC<{ pathname: string }> = ({ pathname }) => {
   const route = parseJugadoresPath(pathname);
 
   switch (route.kind) {
+    case "rankingComoFunciona":
+      return <RankingComoFuncionaPage />;
     case "publicRanking":
       return <JugadoresPublicRanking />;
     case "publicFicha":
