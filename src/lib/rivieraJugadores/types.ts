@@ -17,6 +17,9 @@ export type RivieraJugadorCategoria =
 
 export type ManoDominante = "derecha" | "izquierda" | "ambidiestro";
 
+/** Lado en cancha (pádel): revés o drive. */
+export type EnCancha = "reves" | "drive";
+
 export type RivieraJugadorEstado = "activo" | "invitado" | "archivado";
 
 export type JugadorTipoEvento =
@@ -43,6 +46,7 @@ export interface RivieraJugador {
   categoria: RivieraJugadorCategoria;
   edad: number | null;
   mano_dominante: ManoDominante | null;
+  en_cancha: EnCancha | null;
   instagram_url: string | null;
   facebook_url: string | null;
   tiktok_url: string | null;
@@ -121,6 +125,7 @@ export interface CreateRivieraJugadorInput {
   categoria?: RivieraJugadorCategoria;
   edad?: number | null;
   mano_dominante?: ManoDominante | null;
+  en_cancha?: EnCancha | null;
   genero?: string | null;
   club?: string | null;
   foto_url?: string | null;

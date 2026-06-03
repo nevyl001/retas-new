@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
+  JUGADOR_CATEGORIA_AVATAR_BADGE,
   JUGADOR_CATEGORIA_LABELS,
-  MANO_DOMINANTE_LABELS,
 } from "../../lib/rivieraJugadores/constants";
+import { getJugadorPerfilMeta } from "../../lib/rivieraJugadores/jugadorPerfilDisplay";
 import {
   computePublicProfileStats,
   participacionToHistorialItem,
@@ -109,6 +110,15 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   const puntos = jugador.stats?.puntos_totales ?? 0;
   const redes = getRedesPublicas(jugador);
   const rankingVal = "—";
+  const perfilMeta = getJugadorPerfilMeta(jugador);
+  const hasPhoto = Boolean(jugador.foto_url?.trim());
+  const catBadge = JUGADOR_CATEGORIA_AVATAR_BADGE[jugador.categoria];
+
+  const metaIcon = (label: string) => {
+    if (label === "Edad") return "user";
+    if (label === "Mano dominante") return "hand-finger";
+    return "arrows-left-right";
+  };
 
   return (
     <JugadoresPublicShell variant="ficha">
@@ -117,17 +127,39 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
 
         <div className="rjp-ficha__layout">
           <div className="rjp-ficha__col rjp-ficha__col--profile">
-            <section className="rjp-ficha-card rjp-ficha-hero">
-              <div className="rjp-ficha-hero__banner" aria-hidden>
-                <p className="rjp-ficha-hero__brand">Riviera Open · Jugador</p>
-              </div>
-
-              <div className="rjp-ficha-hero__body">
-                <JugadorAvatarHero
-                  fotoUrl={jugador.foto_url}
-                  nombre={jugador.nombre}
-                  categoria={jugador.categoria}
+            <section
+              className={`rjp-ficha-card rjp-ficha-hero${
+                hasPhoto ? " rjp-ficha-hero--photo" : ""
+              }`}
+            >
+              {hasPhoto && jugador.foto_url && (
+                <img
+                  className="rjp-ficha-hero__photo"
+                  src={jugador.foto_url}
+                  alt=""
+                  decoding="async"
+                  fetchPriority="high"
                 />
+              )}
+              <div className="rjp-ficha-hero__dim" aria-hidden />
+              <div className="rjp-ficha-hero__veil" aria-hidden />
+              <div className="rjp-ficha-hero__gold-line" aria-hidden />
+
+              <div className="rjp-ficha-hero__content">
+                <div className="rjp-ficha-hero__top">
+                  <p className="rjp-ficha-hero__brand">Riviera Open · Jugador</p>
+                  {hasPhoto ? (
+                    <span className="rjp-ficha-hero__cat-badge">{catBadge}</span>
+                  ) : null}
+                </div>
+
+                {!hasPhoto && (
+                  <JugadorAvatarHero
+                    fotoUrl={null}
+                    nombre={jugador.nombre}
+                    categoria={jugador.categoria}
+                  />
+                )}
 
                 <div className="rjp-ficha-hero__main">
                   <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
@@ -137,18 +169,18 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
                       <TablerIcon name="trophy" size={14} />
                       {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
                     </span>
-                    {jugador.edad != null && (
-                      <span className="rjp-ficha-pill rjp-ficha-pill--muted">
-                        <TablerIcon name="user" size={14} />
-                        {jugador.edad} años
+                    {perfilMeta.map((item) => (
+                      <span
+                        key={item.label}
+                        className="rjp-ficha-pill rjp-ficha-pill--muted rjp-ficha-pill--labeled"
+                      >
+                        <TablerIcon name={metaIcon(item.label)} size={14} />
+                        <span className="rjp-ficha-pill__text">
+                          <span className="rjp-ficha-pill__lbl">{item.label}</span>
+                          <span className="rjp-ficha-pill__val">{item.value}</span>
+                        </span>
                       </span>
-                    )}
-                    {jugador.mano_dominante && (
-                      <span className="rjp-ficha-pill rjp-ficha-pill--muted">
-                        <TablerIcon name="hand-finger" size={14} />
-                        {MANO_DOMINANTE_LABELS[jugador.mano_dominante]}
-                      </span>
-                    )}
+                    ))}
                   </div>
 
                   <div className="rjp-ficha-hero__stats">

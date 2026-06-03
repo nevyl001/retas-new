@@ -42,3 +42,5 @@ Tras cambios en RLS, prueba la app con un usuario normal (no rol `postgres` del 
 4. Opcional: Storage → bucket `jugadores-avatars` → eliminar archivos viejos.
 
 Luego crea jugadores de nuevo en **Registro de jugadores Riviera Open**.
+
+4. **`supabase/riviera-jugadores-en-cancha.sql`** — Campo `en_cancha` (Revés / Drive) en perfiles.

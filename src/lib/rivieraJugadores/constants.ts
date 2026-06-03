@@ -1,4 +1,5 @@
 import type {
+  EnCancha,
   JugadorResultado,
   JugadorTipoEvento,
   ManoDominante,
@@ -62,6 +63,13 @@ export const MANO_DOMINANTE_LABELS: Record<ManoDominante, string> = {
   derecha: "Derecha",
   izquierda: "Izquierda",
   ambidiestro: "Ambidiestro",
+};
+
+export const EN_CANCHA_ORDER: EnCancha[] = ["reves", "drive"];
+
+export const EN_CANCHA_LABELS: Record<EnCancha, string> = {
+  reves: "Revés",
+  drive: "Drive",
 };
 
 export const JUGADOR_NIVEL_LABELS: Record<RivieraJugadorNivel, string> = {

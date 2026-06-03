@@ -14,6 +14,7 @@ import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
+import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { navigateJugadorFicha } from "./jugadoresNav";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
 import "./riviera-jugadores.css";
@@ -182,6 +183,7 @@ export const JugadoresLista: React.FC = () => {
               <JugadorAvatar fotoUrl={j.foto_url} nombre={j.nombre} size="md" />
               <p className="rj-card__name">{j.nombre}</p>
               <JugadorCategoriaBadge categoria={j.categoria} />
+              <JugadorPerfilMeta jugador={j} variant="card" />
               <p className="rj-card__stats">
                 {j.stats?.total_partidos ?? 0} partidos · {pct(j)} victorias
               </p>

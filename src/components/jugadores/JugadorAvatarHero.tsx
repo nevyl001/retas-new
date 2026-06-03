@@ -29,9 +29,8 @@ export const JugadorAvatarHero: React.FC<JugadorAvatarHeroProps> = ({
             className="rjp-ficha-avatar__img"
             src={fotoUrl}
             alt=""
-            width={72}
-            height={72}
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <span className="rjp-ficha-avatar__initial">{initial}</span>

@@ -1,8 +1,9 @@
 import { supabase } from "../supabaseClient";
 import { AVATAR_BUCKET } from "./constants";
 
-const MAX_EDGE = 200;
-const JPEG_QUALITY = 0.88;
+/** Tamaño alto para que el fondo de la ficha no se pixelee en móvil/retina. */
+const OUTPUT_SIZE = 1200;
+const JPEG_QUALITY = 0.92;
 
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -20,18 +21,46 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   });
 }
 
-/** Redimensiona en cliente a máx 200×200 y devuelve JPEG */
+/**
+ * Recorte cuadrado para avatar: en fotos verticales prioriza la parte superior (cabeza).
+ */
+function computeSquareCrop(
+  width: number,
+  height: number
+): { sx: number; sy: number; side: number } {
+  const side = Math.min(width, height);
+  let sx = Math.round((width - side) / 2);
+  let sy = Math.round((height - side) / 2);
+
+  if (height > width * 1.08) {
+    sx = 0;
+    sy = 0;
+  } else if (width > height * 1.08) {
+    sx = Math.round((width - side) / 2);
+    sy = 0;
+  }
+
+  sx = Math.max(0, Math.min(sx, width - side));
+  sy = Math.max(0, Math.min(sy, height - side));
+
+  return { sx, sy, side };
+}
+
+/** Recorta cuadrado, redimensiona y devuelve JPEG nítido para avatar y hero. */
 export async function resizeAvatarFile(file: File): Promise<Blob> {
   const img = await loadImage(file);
-  const scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height, 1));
-  const w = Math.max(1, Math.round(img.width * scale));
-  const h = Math.max(1, Math.round(img.height * scale));
+  const { sx, sy, side } = computeSquareCrop(img.width, img.height);
+
   const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = OUTPUT_SIZE;
+  canvas.height = OUTPUT_SIZE;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas no disponible");
-  ctx.drawImage(img, 0, 0, w, h);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, sx, sy, side, side, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -60,5 +89,5 @@ export async function uploadJugadorAvatar(
     });
   if (error) throw error;
   const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  return `${data.publicUrl}?v=${Date.now()}`;
 }

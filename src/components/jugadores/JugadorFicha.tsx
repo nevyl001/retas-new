@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
+  EN_CANCHA_LABELS,
+  EN_CANCHA_ORDER,
   JUGADOR_CATEGORIA_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
   MANO_DOMINANTE_LABELS,
 } from "../../lib/rivieraJugadores/constants";
+import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import {
   getRivieraJugadorBySlug,
   listParticipaciones,
@@ -12,6 +15,7 @@ import {
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { uploadJugadorAvatar } from "../../lib/rivieraJugadores/uploadAvatar";
 import type {
+  EnCancha,
   ManoDominante,
   RivieraJugadorCategoria,
   RivieraJugadorWithStats,
@@ -42,6 +46,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [edad, setEdad] = useState("");
   const [mano, setMano] = useState<ManoDominante | "">("");
+  const [enCancha, setEnCancha] = useState<EnCancha | "">("");
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -60,6 +65,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setCategoria(j.categoria);
         setEdad(j.edad != null ? String(j.edad) : "");
         setMano(j.mano_dominante ?? "");
+        setEnCancha(j.en_cancha ?? "");
         setTelefono(j.telefono ?? j.whatsapp ?? "");
         setEmail(j.email ?? "");
         setInstagram(j.instagram_url ?? "");
@@ -90,6 +96,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             ? edadNum
             : null,
         mano_dominante: mano || null,
+        en_cancha: enCancha || null,
         telefono: telefono.trim() || null,
         email: email.trim() || null,
         instagram_url: instagram.trim() || null,
@@ -195,14 +202,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           <div>
             <h1 className="rj-ficha-header__name">{jugador.nombre}</h1>
             <JugadorCategoriaBadge categoria={jugador.categoria} />
-            {(jugador.edad != null || jugador.mano_dominante) && (
-              <p className="rj-page__sub" style={{ marginTop: 6 }}>
-                {jugador.edad != null && `${jugador.edad} años`}
-                {jugador.edad != null && jugador.mano_dominante && " · "}
-                {jugador.mano_dominante &&
-                  MANO_DOMINANTE_LABELS[jugador.mano_dominante]}
-              </p>
-            )}
+            <JugadorPerfilMeta jugador={jugador} variant="inline" />
             {jugador.club && (
               <p className="rj-page__sub" style={{ marginTop: 6 }}>
                 {jugador.club}
@@ -295,6 +295,22 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
                       </option>
                     )
                   )}
+                </select>
+              </div>
+              <div className="rj-field">
+                <label htmlFor="rj-cancha">En la cancha</label>
+                <select
+                  id="rj-cancha"
+                  className="rj-select"
+                  value={enCancha}
+                  onChange={(e) => setEnCancha(e.target.value as EnCancha | "")}
+                >
+                  <option value="">—</option>
+                  {EN_CANCHA_ORDER.map((c) => (
+                    <option key={c} value={c}>
+                      {EN_CANCHA_LABELS[c]}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

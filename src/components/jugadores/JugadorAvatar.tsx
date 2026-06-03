@@ -21,14 +21,17 @@ export const JugadorAvatar: React.FC<JugadorAvatarProps> = ({
 
   if (fotoUrl) {
     return (
-      <img
-        className={cls}
-        src={fotoUrl}
-        alt=""
-        width={px}
-        height={px}
-        loading="lazy"
-      />
+      <span className={cls} style={{ width: px, height: px }} aria-hidden>
+        <img
+          className="rj-avatar__img"
+          src={fotoUrl}
+          alt=""
+          width={px}
+          height={px}
+          loading="lazy"
+          decoding="async"
+        />
+      </span>
     );
   }
 

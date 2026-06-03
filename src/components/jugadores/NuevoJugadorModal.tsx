@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import type {
+  EnCancha,
   ManoDominante,
   RivieraJugadorCategoria,
 } from "../../lib/rivieraJugadores/types";
 import {
+  EN_CANCHA_LABELS,
+  EN_CANCHA_ORDER,
   JUGADOR_CATEGORIA_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
   MANO_DOMINANTE_LABELS,
@@ -19,6 +22,7 @@ interface NuevoJugadorModalProps {
     categoria: RivieraJugadorCategoria;
     edad?: number | null;
     mano_dominante?: ManoDominante | null;
+    en_cancha?: EnCancha | null;
   }) => Promise<void>;
 }
 
@@ -33,6 +37,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("3ra_fuerza");
   const [edad, setEdad] = useState("");
   const [mano, setMano] = useState<ManoDominante | "">("");
+  const [enCancha, setEnCancha] = useState<EnCancha | "">("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +56,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
         categoria,
         edad: edad.trim() ? Number(edad) : null,
         mano_dominante: mano || null,
+        en_cancha: enCancha || null,
       });
       setNombre("");
       setEmail("");
@@ -58,6 +64,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
       setCategoria("3ra_fuerza");
       setEdad("");
       setMano("");
+      setEnCancha("");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo crear el jugador");
@@ -148,6 +155,22 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
                     </option>
                   )
                 )}
+              </select>
+            </div>
+            <div className="rj-field">
+              <label htmlFor="rj-cancha-new">En la cancha</label>
+              <select
+                id="rj-cancha-new"
+                className="rj-select"
+                value={enCancha}
+                onChange={(e) => setEnCancha(e.target.value as EnCancha | "")}
+              >
+                <option value="">—</option>
+                {EN_CANCHA_ORDER.map((c) => (
+                  <option key={c} value={c}>
+                    {EN_CANCHA_LABELS[c]}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
