@@ -11,6 +11,7 @@ import {
 import { syncRetaParticipaciones } from "../lib/rivieraJugadores/syncParticipaciones";
 import { useUser } from "../contexts/UserContext";
 import { Badge, Button, Card } from "./ui";
+import { TablerIcon } from "./ui/TablerIcon";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
 import {
   formatTournamentCourtsLabel,
@@ -203,7 +204,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       ) : tournaments.length === 0 ? (
         <Card variant="elevated" className="mis-retas-empty">
           <span className="mis-retas-empty__icon" aria-hidden>
-            🏓
+            <TablerIcon name="ball-tennis" size={40} />
           </span>
           <h2 className="mis-retas-empty__title">No tienes retas aún</h2>
           <p className="mis-retas-empty__text">

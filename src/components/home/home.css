@@ -415,9 +415,14 @@
 }
 
 .home-empty-retas__icon {
-  font-size: 2.5rem;
-  display: block;
+  display: flex;
+  justify-content: center;
   margin-bottom: 0.75rem;
+}
+
+.home-empty-retas__icon .ti {
+  color: #c9a84c;
+  opacity: 0.85;
 }
 
 .home-empty-retas__title {
@@ -447,28 +452,132 @@
   margin: 0 0 1rem;
 }
 
-.home-secondary-actions {
-  text-align: center;
+/* —— Accesos: jugadores y retas —— */
+.home-quick-links {
   margin-top: clamp(32px, 5vw, 48px);
-  padding-top: clamp(24px, 4vw, 32px);
-  border-top: 0.5px solid var(--border-subtle);
+  padding-top: clamp(8px, 2vw, 12px);
 }
 
-.home-link-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
+.home-quick-links__grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .home-quick-links__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+.home-quick-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(22, 22, 24, 0.85);
+  color: var(--text-primary, #f5f5f7);
   font-family: var(--font-body);
-  font-size: 0.875rem;
-  font-weight: 500;
+  text-align: left;
   cursor: pointer;
-  text-decoration: none;
-  letter-spacing: 0.01em;
-  transition: color var(--transition-fast);
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.15s;
 }
 
-.home-link-btn:hover {
-  color: var(--text-secondary);
+.home-quick-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(28, 28, 32, 0.92);
+}
+
+.home-quick-card:active {
+  transform: translateY(0);
+}
+
+.home-quick-card--jugadores {
+  border-color: rgba(201, 168, 76, 0.35);
+  background: linear-gradient(
+    135deg,
+    rgba(30, 26, 14, 0.92) 0%,
+    rgba(22, 22, 24, 0.9) 100%
+  );
+}
+
+.home-quick-card--jugadores:hover {
+  border-color: rgba(201, 168, 76, 0.55);
+}
+
+.home-quick-card--jugadores .home-quick-card__icon {
+  background: rgba(201, 168, 76, 0.14);
+  border-color: rgba(201, 168, 76, 0.28);
+}
+
+.home-quick-card--jugadores .home-quick-card__icon .ti {
+  color: #c9a84c;
+}
+
+.home-quick-card--retas .home-quick-card__icon {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.home-quick-card--retas .home-quick-card__icon .ti {
+  color: #9a9aa8;
+}
+
+.home-quick-card__icon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 0.5px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-quick-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home-quick-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #e8e8ec);
+  line-height: 1.2;
+}
+
+.home-quick-card__sub {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #6e6e73);
+  line-height: 1.35;
+}
+
+.home-quick-card__chev {
+  flex-shrink: 0;
+  color: #4a4a55;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.home-quick-card:hover .home-quick-card__chev {
+  color: #7a7a85;
+  transform: translateX(2px);
+}
+
+.home-quick-card--jugadores:hover .home-quick-card__chev {
+  color: #c9a84c;
 }
 
 .reta-management-section--secondary {

@@ -627,13 +627,13 @@ export function buildRivieraEmail(params: RivieraEmailParams): RivieraEmailResul
           },
           {
             layout: "banner",
-            text: "🏓 ¡Prepárate para competir! Pronto te asignamos tu grupo.",
+            text: "🎾 ¡Prepárate para competir! Pronto te asignamos tu grupo.",
           },
         ],
         textBody:
           `Hola ${name},\n\n` +
           `Inscripción confirmada en ${torneo}${cat}.\n\n` +
-          `🏓 ¡Prepárate para competir! Pronto te asignamos tu grupo.`,
+          `🎾 ¡Prepárate para competir! Pronto te asignamos tu grupo.`,
         withCta: false,
         withSocialLinks: true,
       });
@@ -655,7 +655,7 @@ export function buildRivieraEmail(params: RivieraEmailParams): RivieraEmailResul
           { layout: "half", label: "Grupo", value: grupo, highlight: true },
           {
             layout: "banner",
-            text: "🏓 ¡Listo para competir! Vive la experiencia Riviera Open.",
+            text: "🎾 ¡Listo para competir! Vive la experiencia Riviera Open.",
           },
           {
             layout: "full",
@@ -671,7 +671,7 @@ export function buildRivieraEmail(params: RivieraEmailParams): RivieraEmailResul
         textBody:
           `Hola ${name},\n\nInscripción confirmada en ${torneo}${cat}.\nGrupo: ${grupo}\nParejas en tu grupo:\n${parejasTexto}` +
           (compañero ? `\nTu pareja: ${compañero}` : "") +
-          "\n\n🏓 ¡Listo para competir! Vive la experiencia Riviera Open.",
+          "\n\n🎾 ¡Listo para competir! Vive la experiencia Riviera Open.",
       });
     }
 

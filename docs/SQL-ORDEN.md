@@ -31,3 +31,14 @@ Ejecuta en el **SQL Editor** del proyecto que uses en producción. Si un script 
 | `admin-setup.sql` | Panel admin |
 
 Tras cambios en RLS, prueba la app con un usuario normal (no rol `postgres` del Table Editor).
+
+## Volver a empezar (borrar datos, no el esquema)
+
+**`supabase/reset-datos-operativos.sql`** — Vacía retas, jugadores, torneos express, ligas, registro Riviera y notificaciones. **No** borra cuentas (`auth.users` / `public.users`).
+
+1. Ejecutar el script en Supabase SQL Editor (staging primero si aplica).
+2. Revisar los mensajes `NOTICE` (conteos antes/después en 0).
+3. En el navegador: limpiar `localStorage` del sitio (Americano / reta activa).
+4. Opcional: Storage → bucket `jugadores-avatars` → eliminar archivos viejos.
+
+Luego crea jugadores de nuevo en **Registro de jugadores Riviera Open**.

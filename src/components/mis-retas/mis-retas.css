@@ -347,9 +347,14 @@
 }
 
 .mis-retas-page .mis-retas-empty__icon {
-  font-size: 2.5rem;
-  display: block;
+  display: flex;
+  justify-content: center;
   margin-bottom: 0.75rem;
+}
+
+.mis-retas-page .mis-retas-empty__icon .ti {
+  color: #c9a84c;
+  opacity: 0.85;
 }
 
 .mis-retas-page .mis-retas-empty__title {

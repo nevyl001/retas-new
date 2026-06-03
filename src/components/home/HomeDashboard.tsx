@@ -12,11 +12,8 @@ import {
 import { useUser } from "../../contexts/UserContext";
 import { navigateLiga } from "../liga/ligaNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
-import {
-  buildPublicRankingUrl,
-  navigatePublicJugadores,
-} from "../jugadores/jugadoresPublicNav";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
+import { TablerIcon } from "../ui/TablerIcon";
 import type { GameModeId } from "./gameModesConfig";
 import {
   gameModeIdToTournamentFormat,
@@ -134,31 +131,53 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       <GameModesGrid onModeSelect={handleModeSelect} />
       {error && <p className="home-error">{error}</p>}
       <RecentRetasSection userId={userId} onSelectTournament={onTournamentSelect} />
-      <div className="home-secondary-actions">
-        <button
-          type="button"
-          className="home-link-btn"
-          onClick={() => navigateJugadores()}
-        >
-          Registro de jugadores Riviera Open →
-        </button>
-        <button
-          type="button"
-          className="home-link-btn"
-          onClick={() =>
-            navigatePublicJugadores(
-              userId ? buildPublicRankingUrl(userId) : undefined
-            )
-          }
-        >
-          Ranking público por categoría →
-        </button>
-        {onShowAllRetas && (
-          <button type="button" className="home-link-btn" onClick={onShowAllRetas}>
-            Gestionar todas mis retas →
+      <section className="home-quick-links" aria-label="Accesos de organización">
+        <h2 className="home-section-title">Organización</h2>
+        <div className="home-quick-links__grid">
+          <button
+            type="button"
+            className="home-quick-card home-quick-card--jugadores"
+            onClick={() => navigateJugadores()}
+          >
+            <span className="home-quick-card__icon" aria-hidden>
+              <TablerIcon name="users" size={22} />
+            </span>
+            <span className="home-quick-card__body">
+              <span className="home-quick-card__title">Registro de jugadores</span>
+              <span className="home-quick-card__sub">
+                Riviera Open · fichas, categorías e historial
+              </span>
+            </span>
+            <TablerIcon
+              name="chevron-right"
+              size={20}
+              className="home-quick-card__chev"
+            />
           </button>
-        )}
-      </div>
+          {onShowAllRetas && (
+            <button
+              type="button"
+              className="home-quick-card home-quick-card--retas"
+              onClick={onShowAllRetas}
+            >
+              <span className="home-quick-card__icon" aria-hidden>
+                <TablerIcon name="layout-list" size={22} />
+              </span>
+              <span className="home-quick-card__body">
+                <span className="home-quick-card__title">Gestionar mis retas</span>
+                <span className="home-quick-card__sub">
+                  Ver, abrir y administrar todas tus retas
+                </span>
+              </span>
+              <TablerIcon
+                name="chevron-right"
+                size={20}
+                className="home-quick-card__chev"
+              />
+            </button>
+          )}
+        </div>
+      </section>
       <QuickStartSheet
         modeId={sheetMode}
         onClose={() => !submitting && setSheetMode(null)}
