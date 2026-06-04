@@ -353,6 +353,55 @@ export const deleteTournament = async (id: string) => {
 };
 
 // Funciones para Jugadores
+
+function normalizeLegacyPlayerKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/** Busca jugador existente en el pool global (evita duplicados en players). */
+export async function findLegacyPlayerExisting(
+  name: string,
+  email?: string | null,
+  organizadorId?: string
+): Promise<Player | null> {
+  const nameKey = normalizeLegacyPlayerKey(name);
+  const emailKey = email?.trim().toLowerCase();
+
+  if (emailKey) {
+    const { data: byEmail } = await supabase
+      .from("players")
+      .select("*")
+      .ilike("email", emailKey);
+    if (byEmail?.length) {
+      const match = (byEmail as Player[]).find(
+        (p) => normalizeLegacyPlayerKey(p.name) === nameKey
+      );
+      if (match) return match;
+      return byEmail[0] as Player;
+    }
+  }
+
+  const { data: byName } = await supabase
+    .from("players")
+    .select("*")
+    .ilike("name", name.trim());
+  if (byName?.length) {
+    const matches = (byName as Player[]).filter(
+      (p) => normalizeLegacyPlayerKey(p.name) === nameKey
+    );
+    if (!matches.length) return null;
+    if (organizadorId) {
+      const withUser = matches.find(
+        (p) => (p as Player & { user_id?: string }).user_id === organizadorId
+      );
+      if (withUser) return withUser;
+    }
+    return matches[0];
+  }
+
+  return null;
+}
+
 /** Inserta en `players` sin tocar riviera_jugadores (usar playerPoolSync para enlazar). */
 export const insertLegacyPlayer = async (
   name: string,
@@ -363,6 +412,26 @@ export const insertLegacyPlayer = async (
   const email =
     options?.email?.trim() ||
     `${trimmed.toLowerCase().replace(/\s+/g, "")}@padel.local`;
+
+  const existing = await findLegacyPlayerExisting(trimmed, email, userId);
+  if (existing) {
+    if (userId && playersTableSupportsUserIdFilter !== false) {
+      const row = existing as Player & { user_id?: string | null };
+      if (!row.user_id) {
+        const { error: uidErr } = await supabase
+          .from("players")
+          .update({ user_id: userId })
+          .eq("id", existing.id);
+        if (
+          uidErr &&
+          isMissingColumnError(uidErr, "players", "user_id")
+        ) {
+          playersTableSupportsUserIdFilter = false;
+        }
+      }
+    }
+    return existing;
+  }
 
   const basePayload = {
     name: trimmed,
