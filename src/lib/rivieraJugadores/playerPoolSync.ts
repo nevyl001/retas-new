@@ -1,5 +1,5 @@
 import type { Player } from "../db/types";
-import { fetchLegacyPlayersPool, insertLegacyPlayer } from "../database";
+import { insertLegacyPlayer } from "../database";
 import { supabase } from "../supabaseClient";
 import type { LigaJugador } from "../liga/types";
 import {
@@ -9,13 +9,27 @@ import {
   listRivieraJugadores,
 } from "./rivieraJugadoresService";
 import type { RivieraJugador } from "./types";
+import { normalizePlayerNameKey } from "./playerNameKey";
 
 const SYNC_TTL_MS = 45_000;
 const lastLegacySyncAt: Record<string, number> = {};
 const lastLigaSyncAt: Record<string, number> = {};
 
 function normalizeName(n: string): string {
-  return n.trim().toLowerCase();
+  return normalizePlayerNameKey(n);
+}
+
+function pickCanonicalRivieraRow(rows: RivieraJugador[]): RivieraJugador {
+  return [...rows].sort((a, b) => {
+    let scoreA = 0;
+    let scoreB = 0;
+    if (a.legacy_player_id) scoreA += 20;
+    if (b.legacy_player_id) scoreB += 20;
+    if (isRealEmail(a.email)) scoreA += 10;
+    if (isRealEmail(b.email)) scoreB += 10;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return (a.created_at ?? "").localeCompare(b.created_at ?? "");
+  })[0];
 }
 
 function isRealEmail(email: string | null | undefined): boolean {
@@ -94,15 +108,66 @@ async function findLegacyPlayerForRiviera(
     if (linked) return linked;
   }
 
-  const fromPool = await fetchLegacyPlayersPool(organizadorId);
-  const fromPoolMatch = pickBestLegacyMatch(fromPool, organizadorId, rj);
-  if (fromPoolMatch) return fromPoolMatch;
-
   const globalByName = await searchLegacyPlayersByName(rj.nombre);
   const globalMatch = pickBestLegacyMatch(globalByName, organizadorId, rj);
   if (globalMatch) return globalMatch;
 
   return null;
+}
+
+/** Datos de contacto del registro Riviera sobre la fila legacy (para torneos/retas). */
+export function mergeRivieraContactIntoLegacyPlayer(
+  rj: RivieraJugador,
+  legacy: Player
+): Player {
+  const email = isRealEmail(rj.email)
+    ? rj.email!.trim()
+    : isRealEmail(legacy.email)
+      ? legacy.email.trim()
+      : legacy.email;
+  return {
+    ...legacy,
+    name: rj.nombre.trim() || legacy.name,
+    email,
+  };
+}
+
+/**
+ * Pool único para retas y torneos: un `players` por nombre en riviera_jugadores.
+ * Si hay filas duplicadas en el registro (mismo nombre), enlaza todas al mismo legacy.
+ */
+export async function buildLegacyPlayersFromRivieraRegistry(
+  organizadorId: string
+): Promise<Player[]> {
+  const registry = await listRivieraJugadores(organizadorId);
+  const byName = new Map<string, RivieraJugador[]>();
+
+  for (const rj of registry) {
+    const nameKey = normalizeName(rj.nombre);
+    if (!nameKey) continue;
+    const group = byName.get(nameKey) ?? [];
+    group.push(rj);
+    byName.set(nameKey, group);
+  }
+
+  const out: Player[] = [];
+
+  for (const rows of Array.from(byName.values())) {
+    const canonical = pickCanonicalRivieraRow(rows);
+    const legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
+    if (!legacy) continue;
+
+    for (const other of rows) {
+      if (other.id !== canonical.id && other.legacy_player_id !== legacy.id) {
+        await linkLegacyPlayerId(other.id, legacy.id);
+      }
+    }
+
+    out.push(mergeRivieraContactIntoLegacyPlayer(canonical, legacy));
+  }
+
+  const { dedupeLegacyPlayersByName } = await import("../database");
+  return dedupeLegacyPlayersByName(out);
 }
 
 /** Crea o enlaza un registro en `players` para un jugador del ecosistema Riviera. */

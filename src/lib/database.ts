@@ -15,6 +15,7 @@ import {
   type AmericanoDinamicoSnapshotV1,
 } from "./americanoDinamicoStorage";
 import { isAmericanoTournament } from "./gameModeMapping";
+import { normalizePlayerNameKey } from "./rivieraJugadores/playerNameKey";
 
 export type {
   Game,
@@ -355,7 +356,7 @@ export const deleteTournament = async (id: string) => {
 // Funciones para Jugadores
 
 function normalizeLegacyPlayerKey(name: string): string {
-  return name.trim().toLowerCase();
+  return normalizePlayerNameKey(name);
 }
 
 /** Busca jugador existente en el pool global (evita duplicados en players). */
@@ -539,15 +540,18 @@ export { registrarParticipacion } from "./rivieraJugadores/rivieraJugadoresServi
 /** Evita repetir GET con filtro user_id si el esquema no tiene esa columna (42703 / PGRST204). */
 let playersTableSupportsUserIdFilter: boolean | null = null;
 
-type PlayersSelectResult = {
-  data: Player[] | null;
-  error: { code?: string; message?: string } | null;
-};
-
 type PlayerRow = Player & { user_id?: string | null };
 
 function normalizePlayerName(name: string): string {
-  return name.trim().toLowerCase();
+  return normalizePlayerNameKey(name);
+}
+
+function legacyPlayerKeepScore(p: PlayerRow): number {
+  let score = 0;
+  if (p.user_id) score += 20;
+  const email = p.email?.trim().toLowerCase() ?? "";
+  if (email && !email.endsWith("@padel.local")) score += 10;
+  return score;
 }
 
 /** Un solo jugador por nombre (evita duplicados tras sync o migración). */
@@ -563,13 +567,13 @@ export function dedupeLegacyPlayersByName(players: Player[]): Player[] {
       byName.set(key, p);
       continue;
     }
-    const prevUid = prev.user_id ?? null;
-    const nextUid = p.user_id ?? null;
-    if (prevUid && !nextUid) continue;
-    if (!prevUid && nextUid) {
+    const prevScore = legacyPlayerKeepScore(prev);
+    const nextScore = legacyPlayerKeepScore(p);
+    if (nextScore > prevScore) {
       byName.set(key, p);
       continue;
     }
+    if (nextScore < prevScore) continue;
     if (p.created_at < prev.created_at) {
       byName.set(key, p);
     }
@@ -580,35 +584,11 @@ export function dedupeLegacyPlayersByName(players: Player[]): Player[] {
   );
 }
 
-async function fetchPlayersByUserId(
-  userId: string
-): Promise<PlayersSelectResult> {
-  const withOrder = await supabase
-    .from("players")
-    .select("*")
-    .eq("user_id", userId)
-    .order("name", { ascending: true });
-  if (!withOrder.error) return withOrder as PlayersSelectResult;
-  return supabase
-    .from("players")
-    .select("*")
-    .eq("user_id", userId) as PromiseLike<PlayersSelectResult>;
-}
-
-async function fetchPlayersByIds(ids: string[]): Promise<Player[]> {
-  if (!ids.length) return [];
-  const { data, error } = await supabase
-    .from("players")
-    .select("*")
-    .in("id", ids);
-  if (error) {
-    console.warn("fetchPlayersByIds:", error);
-    return [];
-  }
-  return (data ?? []) as Player[];
-}
-
-/** Lectura directa de `players` (sin sincronizar con riviera_jugadores). */
+/**
+ * Pool de jugadores para retas/torneos.
+ * Con organizador: solo riviera_jugadores (fuente del ranking), enlazados a `players`.
+ * Sin organizador: lectura legacy deduplicada (admin).
+ */
 export const fetchLegacyPlayersPool = async (
   userId?: string
 ): Promise<Player[]> => {
@@ -625,42 +605,10 @@ export const fetchLegacyPlayersPool = async (
     return dedupeLegacyPlayersByName((data ?? []) as Player[]);
   }
 
-  const { listRivieraJugadores } = await import(
-    "./rivieraJugadores/rivieraJugadoresService"
+  const { buildLegacyPlayersFromRivieraRegistry } = await import(
+    "./rivieraJugadores/playerPoolSync"
   );
-  const registry = await listRivieraJugadores(userId);
-  const linkedIds = Array.from(
-    new Set(
-      registry
-        .map((r) => r.legacy_player_id)
-        .filter((id): id is string => typeof id === "string" && id.length > 0)
-    )
-  );
-
-  const merged: Player[] = [];
-
-  if (playersTableSupportsUserIdFilter !== false) {
-    const byUser = await fetchPlayersByUserId(userId);
-    if (!byUser.error) {
-      playersTableSupportsUserIdFilter = true;
-      merged.push(...((byUser.data ?? []) as Player[]));
-    } else if (isMissingColumnError(byUser.error, "players", "user_id")) {
-      playersTableSupportsUserIdFilter = false;
-    } else {
-      console.warn("Players by user_id failed:", byUser.error);
-    }
-  }
-
-  if (linkedIds.length) {
-    merged.push(...(await fetchPlayersByIds(linkedIds)));
-  }
-
-  if (!merged.length && playersTableSupportsUserIdFilter === false) {
-    const linkedOnly = await fetchPlayersByIds(linkedIds);
-    return dedupeLegacyPlayersByName(linkedOnly);
-  }
-
-  return dedupeLegacyPlayersByName(merged);
+  return buildLegacyPlayersFromRivieraRegistry(userId);
 };
 
 export const getPlayers = async (userId?: string, tournamentId?: string) => {
@@ -670,17 +618,6 @@ export const getPlayers = async (userId?: string, tournamentId?: string) => {
     "tournament (ignored for pool):",
     tournamentId
   );
-
-  if (userId) {
-    try {
-      const { syncLegacyPlayersFromRivieraRegistry } = await import(
-        "./rivieraJugadores/playerPoolSync"
-      );
-      await syncLegacyPlayersFromRivieraRegistry(userId);
-    } catch (syncErr) {
-      console.warn("Riviera → players sync skipped:", syncErr);
-    }
-  }
 
   const data = await fetchLegacyPlayersPool(userId);
   console.log("Players fetched successfully:", data.length, "players");

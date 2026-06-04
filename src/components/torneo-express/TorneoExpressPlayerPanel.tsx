@@ -1,11 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createPlayer,
+  dedupeLegacyPlayersByName,
   deletePlayer,
   getPlayers,
   updatePlayer,
   type Player,
 } from "../../lib/database";
+import { dedupePlayersForSelect } from "../../lib/rivieraJugadores/playerNameKey";
+import { ensureLegacyPlayerForRivieraJugador } from "../../lib/rivieraJugadores/playerPoolSync";
+import type { RivieraJugador } from "../../lib/rivieraJugadores/types";
 import {
   isValidRealEmail,
   playerHasNotifiableEmail,
@@ -49,10 +53,12 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     playerName: string;
     email: string;
   } | null>(null);
+  const [rivieraSeleccionado, setRivieraSeleccionado] =
+    useState<RivieraJugador | null>(null);
 
   const syncJugadores = useCallback(
     (list: Player[]) => {
-      const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
+      const sorted = dedupePlayersForSelect(dedupeLegacyPlayersByName(list));
       setJugadores(sorted);
       onJugadoresChange(sorted);
     },
@@ -99,6 +105,7 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
   const resetAddForm = () => {
     setNuevoJugadorNombre("");
     setNuevoJugadorEmail("");
+    setRivieraSeleccionado(null);
     setAgregandoNuevo(false);
   };
 
@@ -126,23 +133,33 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     setGuardando(true);
     setError("");
     try {
-      const data = await createPlayer(nombre, userId);
+      let base: Player;
+      if (
+        rivieraSeleccionado &&
+        rivieraSeleccionado.nombre.trim().toLowerCase() === nombre.toLowerCase()
+      ) {
+        const linked = await ensureLegacyPlayerForRivieraJugador(
+          userId,
+          rivieraSeleccionado
+        );
+        if (!linked) {
+          setError("No se pudo enlazar el jugador del registro");
+          return;
+        }
+        base = linked;
+      } else {
+        base = await createPlayer(nombre, userId);
+      }
+
       const updated = await updatePlayerNotificationContact(
-        data.id,
+        base.id,
         {
           email,
           notif_opt_in_email: true,
         },
         { autoNotifyEnrollment: false }
       );
-      syncJugadores([
-        ...jugadores,
-        {
-          ...data,
-          email: updated.email ?? email,
-          email_verified: updated.email_verified,
-        } as PlayerRow,
-      ]);
+      await cargarJugadores();
       resetAddForm();
     } catch {
       setError("Error al guardar el jugador");
@@ -316,8 +333,12 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
           <JugadorAutocomplete
             organizadorId={userId}
             value={nuevoJugadorNombre}
-            onChange={setNuevoJugadorNombre}
+            onChange={(v) => {
+              setNuevoJugadorNombre(v);
+              setRivieraSeleccionado(null);
+            }}
             onSelect={(rj) => {
+              setRivieraSeleccionado(rj);
               setNuevoJugadorNombre(rj.nombre);
               if (rj.email && !rj.email.endsWith("@padel.local")) {
                 setNuevoJugadorEmail(rj.email);

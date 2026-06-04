@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   createPair,
   createTournament,
+  dedupeLegacyPlayersByName,
   deletePair,
   getTournamentById,
+  updatePair,
   type Player,
 } from "../../lib/database";
 import { useUser } from "../../contexts/UserContext";
@@ -21,6 +23,12 @@ import {
   TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
+import {
+  dedupePlayersForSelect,
+  normalizePlayerNameKey,
+  playerNameKeysInPairs,
+  resolvePlayerInPool,
+} from "../../lib/rivieraJugadores/playerNameKey";
 import {
   playerHasNotifiableEmail,
   playerNeedsEmailContact,
@@ -65,32 +73,41 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     );
   }, [parejas, jugadores]);
 
-  const playerIdsInPairs = useMemo(() => {
-    const ids = new Set<string>();
-    parejas.forEach((p) => {
-      ids.add(p.jugador1.id);
-      ids.add(p.jugador2.id);
-    });
-    return ids;
-  }, [parejas]);
-
-  const syncParejasFromPlayers = useCallback(
-    (list: Player[]) => {
-      setParejas((prev) =>
-        prev.map((p) => ({
-          ...p,
-          jugador1: list.find((j) => j.id === p.jugador1.id) ?? p.jugador1,
-          jugador2: list.find((j) => j.id === p.jugador2.id) ?? p.jugador2,
-        }))
-      );
-    },
-    []
+  const jugadoresPool = useMemo(
+    () => dedupeLegacyPlayersByName(jugadores),
+    [jugadores]
   );
+
+  const nameKeysInPairs = useMemo(
+    () => playerNameKeysInPairs(parejas),
+    [parejas]
+  );
+
+  const jugador1NameKey = useMemo(() => {
+    const j = jugadoresPool.find((x) => x.id === jugador1Id);
+    return j ? normalizePlayerNameKey(j.name) : "";
+  }, [jugadoresPool, jugador1Id]);
+
+  const jugador2NameKey = useMemo(() => {
+    const j = jugadoresPool.find((x) => x.id === jugador2Id);
+    return j ? normalizePlayerNameKey(j.name) : "";
+  }, [jugadoresPool, jugador2Id]);
+
+  const syncParejasFromPlayers = useCallback((list: Player[]) => {
+    setParejas((prev) =>
+      prev.map((p) => ({
+        ...p,
+        jugador1: resolvePlayerInPool(p.jugador1, list),
+        jugador2: resolvePlayerInPool(p.jugador2, list),
+      }))
+    );
+  }, []);
 
   const handleJugadoresChange = useCallback(
     (list: Player[]) => {
-      setJugadores(list);
-      syncParejasFromPlayers(list);
+      const deduped = dedupeLegacyPlayersByName(list);
+      setJugadores(deduped);
+      syncParejasFromPlayers(deduped);
     },
     [syncParejasFromPlayers]
   );
@@ -101,7 +118,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       const byId = new Map(players.map((p) => [p.id, p]));
       const drafts: ParejaDraft[] = [];
       for (const row of rows ?? []) {
-        const j1 =
+        const raw1 =
           byId.get(row.player1_id) ??
           ({
             id: row.player1_id,
@@ -109,7 +126,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
             email: "",
             created_at: row.created_at,
           } as Player);
-        const j2 =
+        const raw2 =
           byId.get(row.player2_id) ??
           ({
             id: row.player2_id,
@@ -117,7 +134,31 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
             email: "",
             created_at: row.created_at,
           } as Player);
-        drafts.push({ id: row.id, jugador1: j1, jugador2: j2 });
+        const j1 = resolvePlayerInPool(raw1, players);
+        const j2 = resolvePlayerInPool(raw2, players);
+        drafts.push({
+          id: row.id,
+          jugador1: j1,
+          jugador2: j2,
+        });
+
+        if (
+          j1.id !== row.player1_id ||
+          j2.id !== row.player2_id ||
+          j1.name !== row.player1_name ||
+          j2.name !== row.player2_name
+        ) {
+          try {
+            await updatePair(row.id, {
+              player1_id: j1.id,
+              player2_id: j2.id,
+              player1_name: j1.name,
+              player2_name: j2.name,
+            });
+          } catch {
+            /* la UI sigue con ids canónicos en memoria */
+          }
+        }
       }
       setParejas(drafts);
     },
@@ -204,23 +245,48 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     return s;
   }, [assignments]);
 
-  const optionsJ1 = useMemo(
-    () =>
-      jugadores.filter(
-        (j) => !playerIdsInPairs.has(j.id) || j.id === jugador1Id
-      ),
-    [jugadores, playerIdsInPairs, jugador1Id]
+  const isPlayerAvailableForPair = useCallback(
+    (j: Player, currentSelectId: string, blockNameKey: string) => {
+      const key = normalizePlayerNameKey(j.name);
+      if (blockNameKey && key === blockNameKey) return false;
+      if (currentSelectId && j.id === currentSelectId) return true;
+      return key ? !nameKeysInPairs.has(key) : true;
+    },
+    [nameKeysInPairs]
   );
 
-  const optionsJ2 = useMemo(
-    () =>
-      jugadores.filter(
-        (j) =>
-          j.id !== jugador1Id &&
-          (!playerIdsInPairs.has(j.id) || j.id === jugador2Id)
-      ),
-    [jugadores, playerIdsInPairs, jugador1Id, jugador2Id]
-  );
+  const optionsJ1 = useMemo(() => {
+    const filtered = jugadoresPool.filter((j) =>
+      isPlayerAvailableForPair(j, jugador1Id, jugador2NameKey)
+    );
+    return dedupePlayersForSelect(filtered, [jugador1Id]);
+  }, [
+    jugadoresPool,
+    jugador1Id,
+    jugador2NameKey,
+    isPlayerAvailableForPair,
+  ]);
+
+  const optionsJ2 = useMemo(() => {
+    const filtered = jugadoresPool.filter((j) =>
+      isPlayerAvailableForPair(j, jugador2Id, jugador1NameKey)
+    );
+    return dedupePlayersForSelect(filtered, [jugador2Id]);
+  }, [
+    jugadoresPool,
+    jugador2Id,
+    jugador1NameKey,
+    isPlayerAvailableForPair,
+  ]);
+
+  useEffect(() => {
+    if (jugador1Id && !optionsJ1.some((j) => j.id === jugador1Id)) {
+      setJugador1Id("");
+    }
+    if (jugador2Id && !optionsJ2.some((j) => j.id === jugador2Id)) {
+      setJugador2Id("");
+    }
+  }, [jugador1Id, jugador2Id, optionsJ1, optionsJ2]);
 
   const agregarPareja = async () => {
     if (!user?.id || !draftTournamentId) return;
@@ -232,14 +298,23 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
       setError("Los jugadores de una pareja deben ser distintos");
       return;
     }
-    if (playerIdsInPairs.has(jugador1Id) || playerIdsInPairs.has(jugador2Id)) {
+    const j1 = jugadoresPool.find((j) => j.id === jugador1Id);
+    const j2 = jugadoresPool.find((j) => j.id === jugador2Id);
+    if (!j1 || !j2) return;
+
+    const k1 = normalizePlayerNameKey(j1.name);
+    const k2 = normalizePlayerNameKey(j2.name);
+    const yaEnPareja = parejas.some((p) => {
+      const p1 = normalizePlayerNameKey(p.jugador1.name);
+      const p2 = normalizePlayerNameKey(p.jugador2.name);
+      return (
+        (k1 && (p1 === k1 || p2 === k1)) || (k2 && (p1 === k2 || p2 === k2))
+      );
+    });
+    if (yaEnPareja) {
       setError("Uno de los jugadores ya está en otra pareja");
       return;
     }
-
-    const j1 = jugadores.find((j) => j.id === jugador1Id);
-    const j2 = jugadores.find((j) => j.id === jugador2Id);
-    if (!j1 || !j2) return;
 
     setAddingPair(true);
     setError(null);
