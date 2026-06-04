@@ -1,9 +1,13 @@
 import { crucesPrimeraRonda, grupoBadgeLabel } from "./bracket";
 import { deserializeBracketSlots } from "./bracketPersistence";
 import {
+  isFinaleEliminatoriaStage,
+  isRondaTercerLugar,
   labelRondaEliminatoria,
   maxRondaActual,
   partidosDeRonda,
+  rondaCompleta,
+  RONDA_TERCER_LUGAR,
   totalRondasEliminatoria,
 } from "./bracketRounds";
 import { parejaLabelFromMap } from "./eliminatoriaLabels";
@@ -50,6 +54,10 @@ export interface PublicBracketViewModel {
   championLabel: string | null;
   /** Semis completas y final pendiente — tarjeta de felicitación a finalistas. */
   finalistsCelebrate: { labels: string[] } | null;
+  /** Ganador del partido por el 3.er lugar (pareja). */
+  thirdPlaceCelebrate: { label: string } | null;
+  /** Tarjeta del juego por el bronce (si ya está creado). */
+  thirdPlaceCard: PublicMatchupCard | null;
   currentPhaseUpper: string;
   motivationalMessage: string;
   hasLiveMatch: boolean;
@@ -184,6 +192,7 @@ function roundLabelUpper(
     totalRondas,
     bracketSlotCount
   );
+  if (label === "Tercer lugar") return "TERCER LUGAR";
   if (label === "Final") return "FINAL";
   if (label === "Semifinal") return "SEMIFINALES";
   if (label === "Cuartos de final") return "CUARTOS DE FINAL";
@@ -197,6 +206,7 @@ function matchTitle(
   totalInRound: number
 ): string {
   if (roundLabel === "FINAL") return "FINAL";
+  if (roundLabel === "TERCER LUGAR") return "TERCER LUGAR";
   if (totalInRound <= 1) return roundLabel;
   const singular = roundLabel
     .replace(/SEMIFINALES\b/, "SEMIFINAL")
@@ -254,6 +264,7 @@ function motivationalMessageLegacy(currentPhaseUpper: string): string {
 }
 
 function phaseFriendlyLabel(currentPhaseUpper: string): string {
+  if (currentPhaseUpper.includes("TERCER")) return "al partido por el tercer lugar";
   if (currentPhaseUpper.includes("SEMIFINAL")) return "semifinalistas";
   if (currentPhaseUpper.includes("CUARTOS")) return "a cuartos de final";
   if (currentPhaseUpper === "FINAL") return "finalistas";
@@ -318,6 +329,9 @@ function motivationalMessageForRound(
       if (currentPhaseUpper === "FINAL") {
         return "¡Felicidades finalistas! Den lo mejor en la gran final";
       }
+      if (currentPhaseUpper.includes("FINAL Y TERCER")) {
+        return "¡Gran final y partido por el bronce! Den lo mejor en la cancha 🏆🥉";
+      }
     }
 
     return "¡Increíbles partidos! Nos vemos en la siguiente ronda 🏆";
@@ -346,11 +360,18 @@ function activeRondaFromPartidos(
   partidos: TorneoExpressEliminatoriaPartido[],
   totalRondas: number
 ): number {
+  if (isFinaleEliminatoriaStage(partidos, totalRondas)) {
+    return totalRondas;
+  }
+
   for (let r = 1; r <= totalRondas; r++) {
     const round = partidosDeRonda(partidos, r);
     if (round.some((p) => !p.es_bye && p.estado === "pendiente")) return r;
   }
-  return Math.max(maxRondaActual(partidos), 1);
+  return Math.max(
+    maxRondaActual(partidos.filter((p) => !isRondaTercerLugar(p.ronda))),
+    1
+  );
 }
 
 function clusterByScheduleTime(
@@ -578,6 +599,12 @@ function currentPhaseUpper(
   bracketSlotCount?: number
 ): string {
   if (championLabel) return "CAMPEONES DEFINIDOS";
+  if (
+    isFinaleEliminatoriaStage(partidos, totalRondas) &&
+    partidos.some((p) => isRondaTercerLugar(p.ronda))
+  ) {
+    return "FINAL Y TERCER LUGAR";
+  }
   return roundLabelUpper(fase, activeRonda, totalRondas, bracketSlotCount);
 }
 
@@ -624,11 +651,37 @@ export function buildPublicBracketViewModel(
     if (cards.length > 0) allCards.push(...cards);
   }
 
-  const currentRoundCards = allCards.filter((c) => c.ronda === activeRonda);
+  const tercerPartidos = partidos.filter((p) => isRondaTercerLugar(p.ronda));
+  if (tercerPartidos.length > 0) {
+    allCards.push(
+      ...buildDbRoundCards(
+        fase,
+        RONDA_TERCER_LUGAR,
+        totalRondas,
+        partidos,
+        labelMap,
+        qualifierMap,
+        bracketSlotCount
+      )
+    );
+  }
+
+  const finaleStage = isFinaleEliminatoriaStage(partidos, totalRondas);
+  const currentRoundCards = finaleStage
+    ? allCards.filter(
+        (c) => c.ronda === totalRondas || isRondaTercerLugar(c.ronda)
+      )
+    : allCards.filter((c) => c.ronda === activeRonda);
   markLiveBatch(currentRoundCards);
   harmonizeSimultaneousStatuses(currentRoundCards);
 
-  const futureRoundCards = allCards.filter((c) => c.ronda > activeRonda);
+  const futureRoundCards = finaleStage
+    ? []
+    : allCards.filter(
+        (c) =>
+          c.ronda > activeRonda &&
+          !isRondaTercerLugar(c.ronda)
+      );
   futureRoundCards.forEach((c) => {
     if (c.status !== "finished") c.status = "pending";
   });
@@ -664,9 +717,19 @@ export function buildPublicBracketViewModel(
     championLabel
   );
 
+  const thirdPlaceCard =
+    displayCards.find((c) => isRondaTercerLugar(c.ronda)) ?? null;
+  let thirdPlaceCelebrate: { label: string } | null = null;
+  if (thirdPlaceCard?.status === "finished") {
+    const label = winnerLabelFromCard(thirdPlaceCard);
+    if (label) thirdPlaceCelebrate = { label };
+  }
+
   return {
     championLabel,
     finalistsCelebrate,
+    thirdPlaceCelebrate,
+    thirdPlaceCard,
     currentPhaseUpper: phaseUpper,
     motivationalMessage: motivationalMessageForRound(
       phaseUpper,

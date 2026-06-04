@@ -196,6 +196,22 @@
   gap: clamp(0.85rem, 1.5vw, 1.25rem);
 }
 
+.te-bracket-final-wrap--duo {
+  max-width: min(100%, 44rem);
+}
+
+.te-bracket-col__stack--finale {
+  width: 100%;
+  align-items: stretch;
+  gap: clamp(1.15rem, 2.2vh, 1.65rem);
+}
+
+.te-bracket-final-wrap--duo .te-elim-bracket-card[data-bracket-card="tercer"] {
+  width: 100%;
+  max-width: 100%;
+  margin-inline: 0;
+}
+
 @media (min-width: 1200px) {
   .te-bracket-final-wrap {
     max-width: min(100%, 42rem);
@@ -1040,6 +1056,25 @@
 
 .te-elim-public-celebrate.te-pub-grupo-celebrate::after {
   opacity: 0.35;
+}
+
+.te-elim-public-celebrate--tercer {
+  --te-celebrate-accent: #cd7f32;
+}
+
+.te-elim-finalists-headline--tercer {
+  color: #e8b88a;
+}
+
+.te-elim-finalist-name--tercer {
+  color: #f0d4b8;
+  font-size: clamp(1.15rem, 4vw, 1.45rem);
+}
+
+.te-elim-campeon--tercer {
+  margin-top: 0.35rem;
+  color: #e8b88a;
+  font-size: 0.9rem;
 }
 
 .te-elim-public-celebrate--finalists {

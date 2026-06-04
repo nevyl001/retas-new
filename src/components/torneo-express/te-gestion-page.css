@@ -772,6 +772,11 @@
   color: var(--text-muted);
 }
 
+.te-gestion-page .te-elim-campeon--tercer {
+  color: #e8b88a;
+  font-size: 0.95rem;
+}
+
 .te-gestion-page .te-elim-campeon {
   margin: 0 0 16px;
   padding: 10px 12px;

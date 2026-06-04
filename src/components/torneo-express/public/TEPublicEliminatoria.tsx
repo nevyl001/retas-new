@@ -110,6 +110,64 @@ function PublicEliminatoriaFinalistsCelebrate({
   );
 }
 
+function PublicEliminatoriaThirdPlaceCelebrate({
+  pairLabel,
+  categoria,
+  torneoNombre,
+}: {
+  pairLabel: string;
+  categoria: string | null;
+  torneoNombre: string;
+}) {
+  return (
+    <section
+      className="te-pub-grupo-celebrate te-pub-fade-in te-elim-public-celebrate te-elim-public-celebrate--tercer"
+      aria-label="Felicitación tercer lugar"
+    >
+      <div className="te-pub-grupo-celebrate__inner te-elim-public-celebrate__inner">
+        <header className="te-pub-grupo-celebrate__brand te-elim-finalists-brand">
+          <div className="te-divider-gold te-divider-gold--wide" aria-hidden />
+          <p className="te-pub-grupo-celebrate__wordmark">
+            RIVIERA
+            <span className="te-pub-grupo-celebrate__wordmark-sep" aria-hidden>
+              {" "}
+              ·{" "}
+            </span>
+            OPEN
+          </p>
+        </header>
+
+        <div className="te-divider-gold te-elim-finalists-brand__divider" aria-hidden />
+
+        <h2 className="te-elim-finalists-headline te-elim-finalists-headline--tercer">
+          ¡Felicidades por el tercer lugar!
+        </h2>
+
+        {categoria ? (
+          <p className="te-elim-celebrate__categoria">
+            Categoría · {categoria.toUpperCase()}
+          </p>
+        ) : null}
+
+        <p className="te-elim-finalist-name te-elim-finalist-name--tercer">
+          {pairLabel}
+        </p>
+
+        <p className="te-elim-finalists-message">
+          Gran torneo en Riviera Open: broncé merecido tras un gran paso por
+          semifinales. ¡Gracias por competir con pasión!
+        </p>
+
+        <footer className="te-pub-grupo-celebrate__footer">
+          <div className="te-divider-gold" aria-hidden />
+          <p className="te-pub-grupo-celebrate__torneo">{torneoNombre}</p>
+          <p className="te-pub-grupo-celebrate__closing">Vive Riviera Open</p>
+        </footer>
+      </div>
+    </section>
+  );
+}
+
 function PublicEliminatoriaCelebrate({
   championLabel,
   torneoNombre,
@@ -264,6 +322,17 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           <PublicEliminatoriaFinalistsCelebrate
             finalistLabels={model.finalistsCelebrate.labels}
             categoria={categoria}
+          />
+        </>
+      ) : null}
+
+      {model.thirdPlaceCelebrate ? (
+        <>
+          <div className="te-elim-public-bracket-divider" aria-hidden />
+          <PublicEliminatoriaThirdPlaceCelebrate
+            pairLabel={model.thirdPlaceCelebrate.label}
+            categoria={categoria}
+            torneoNombre={bundle.torneo.nombre}
           />
         </>
       ) : null}

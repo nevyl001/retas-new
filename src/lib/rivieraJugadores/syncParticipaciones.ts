@@ -11,6 +11,7 @@ import { fetchTorneoExpressBundle } from "../../services/torneoExpressService";
 import { getLigaById } from "../../services/ligaService";
 import {
   eliminatoriaBracketSize,
+  isRondaTercerLugar,
   partidosDeRonda,
   totalRondasEliminatoria,
 } from "../torneoExpress/bracketRounds";
@@ -798,7 +799,30 @@ function buildExpressPlacementContext(
   const total = totalRondasEliminatoria(torneo.fase_eliminacion, bracketSize);
   const semiRonda = total >= 2 ? total - 1 : null;
 
-  if (semiRonda != null) {
+  const tercerMatch = bundle.eliminatoriaPartidos.find(
+    (p) => isRondaTercerLugar(p.ronda) && p.estado === "jugado" && !p.es_bye
+  );
+
+  if (tercerMatch?.ganador_id) {
+    const tercerParejaId = tercerMatch.ganador_id;
+    const local = tercerMatch.pareja_local_id;
+    const visit = tercerMatch.pareja_visitante_id;
+    const cuartoParejaId =
+      local && visit
+        ? tercerParejaId === local
+          ? visit
+          : local
+        : null;
+
+    Array.from(legacyPlayerIdsFromPair(pairMap.get(tercerParejaId))).forEach(
+      (id) => tercerPlayerIds.add(id)
+    );
+    if (cuartoParejaId) {
+      Array.from(legacyPlayerIdsFromPair(pairMap.get(cuartoParejaId))).forEach(
+        (id) => cuartoPlayerIds.add(id)
+      );
+    }
+  } else if (semiRonda != null) {
     const semiMatches = partidosDeRonda(
       bundle.eliminatoriaPartidos,
       semiRonda

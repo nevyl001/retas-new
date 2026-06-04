@@ -1,3 +1,4 @@
+import { isRondaTercerLugar } from "./bracketRounds";
 import type { PublicMatchupCard } from "./publicBracketModel";
 
 export type BracketSlotKind = "match" | "final-placeholder";
@@ -162,6 +163,8 @@ export function buildPublicBracketVisualLayout(
   });
 
   const finalCards = byRound.get(totalRondas) ?? [];
+  const tercerCards = allCards.filter((c) => isRondaTercerLugar(c.ronda));
+
   if (finalCards.length > 0) {
     finalCards.forEach((card) => {
       columns[1].slots.push({
@@ -174,6 +177,16 @@ export function buildPublicBracketVisualLayout(
     columns[1].slots.push(
       buildFinalPlaceholder(allCards, totalRondas, sideRound)
     );
+  }
+
+  if (tercerCards.length > 0) {
+    tercerCards.forEach((card) => {
+      columns[1].slots.push({
+        kind: "match",
+        card,
+        isCenter: false,
+      });
+    });
   }
 
   if (

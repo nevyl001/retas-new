@@ -4,6 +4,7 @@ import {
   type BracketVisualColumn,
   type BracketVisualSlot,
 } from "../../../lib/torneoExpress/publicBracketLayout";
+import { isRondaTercerLugar } from "../../../lib/torneoExpress/bracketRounds";
 import type {
   PublicBracketTeam,
   PublicMatchStatus,
@@ -29,8 +30,9 @@ function cardVisualPhase(
   card: PublicMatchupCard,
   isCenter: boolean
 ): "octavos" | "cuartos" | "semifinal" | "final" {
-  if (isCenter) return "final";
   const label = card.roundLabel.toLowerCase();
+  if (label.includes("tercer")) return "final";
+  if (isCenter) return "final";
   if (label.includes("octavo")) return "octavos";
   if (label.includes("cuarto")) return "cuartos";
   if (label.includes("semi")) return "semifinal";
@@ -286,7 +288,11 @@ function BracketMatchCard({
         : "neutral"
     : "neutral";
 
-  const phaseLabel = isCenter ? "FINAL" : card.matchTitle.toUpperCase();
+  const phaseLabel = isCenter
+    ? "FINAL"
+    : isRondaTercerLugar(card.ronda)
+      ? "TERCER LUGAR"
+      : card.matchTitle.toUpperCase();
   const visualPhase = cardVisualPhase(card, isCenter);
   const localPending = !card.local.label?.trim();
   const visitPending = !card.visit.label?.trim();
@@ -320,7 +326,9 @@ function BracketMatchCard({
       className={`te-elim-bracket-card te-elim-bracket-card--${card.status}${
         isCenter ? " te-elim-bracket-card--center" : ""
       }`}
-      data-bracket-card={isCenter ? "final" : "side"}
+      data-bracket-card={
+        isCenter ? "final" : isRondaTercerLugar(card.ronda) ? "tercer" : "side"
+      }
       data-bracket-phase={visualPhase}
       aria-label={`${card.matchTitle}: ${card.local.label} vs ${card.visit.label}`}
     >
@@ -442,10 +450,20 @@ function BracketFinalPlaceholderCard({
   );
 }
 
-function BracketFinalCaption({ categoria }: { categoria: string | null }) {
-  const categoryLine = categoria
-    ? `Final · ${categoria.toUpperCase()}`
-    : "Gran final";
+function BracketFinalCaption({
+  categoria,
+  showThirdPlace = false,
+}: {
+  categoria: string | null;
+  showThirdPlace?: boolean;
+}) {
+  const categoryLine = showThirdPlace
+    ? categoria
+      ? `Final y tercer lugar · ${categoria.toUpperCase()}`
+      : "Final y tercer lugar"
+    : categoria
+      ? `Final · ${categoria.toUpperCase()}`
+      : "Gran final";
 
   return (
     <header className="te-bracket-final-caption" aria-label={categoryLine}>
@@ -470,9 +488,11 @@ function BracketFinalCaption({ categoria }: { categoria: string | null }) {
 function BracketSlotView({
   slot,
   categoria,
+  inFinaleStack = false,
 }: {
   slot: BracketVisualSlot;
   categoria: string | null;
+  inFinaleStack?: boolean;
 }) {
   const isCenter = Boolean(slot.isCenter);
   const content =
@@ -482,7 +502,7 @@ function BracketSlotView({
       <BracketMatchCard card={slot.card} isCenter={isCenter} />
     );
 
-  if (isCenter) {
+  if (isCenter && !inFinaleStack) {
     return (
       <div className="te-bracket-final-wrap">
         <BracketFinalCaption categoria={categoria} />
@@ -501,6 +521,35 @@ function BracketColumn({
   column: BracketVisualColumn;
   categoria: string | null;
 }) {
+  const hasFinaleStack =
+    column.side === "center" &&
+    column.slots.some(
+      (s) => s.card != null && isRondaTercerLugar(s.card.ronda)
+    );
+
+  if (hasFinaleStack) {
+    return (
+      <div
+        className="te-bracket-col te-bracket-col--center"
+        data-col="center"
+      >
+        <div className="te-bracket-final-wrap te-bracket-final-wrap--duo">
+          <BracketFinalCaption categoria={categoria} showThirdPlace />
+          <div className="te-bracket-col__stack te-bracket-col__stack--finale">
+            {column.slots.map((slot, i) => (
+              <BracketSlotView
+                key={`${column.index}-${i}-${slot.card?.id ?? "ph"}`}
+                slot={slot}
+                categoria={categoria}
+                inFinaleStack
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`te-bracket-col te-bracket-col--${column.side}`}

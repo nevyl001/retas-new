@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { crucesPrimeraRonda } from "../../lib/torneoExpress/bracket";
 import { deserializeBracketSlots } from "../../lib/torneoExpress/bracketPersistence";
 import {
+  isRondaTercerLugar,
   labelRondaEliminatoria,
   maxRondaActual,
   totalRondasEliminatoria,
@@ -121,8 +122,32 @@ export const BracketCuadroPanel: React.FC<BracketCuadroPanelProps> = ({
       });
     }
 
+    const tercer = partidos
+      .filter((p) => isRondaTercerLugar(p.ronda))
+      .sort((a, b) => a.orden - b.orden);
+    if (tercer.length > 0) {
+      out.push({
+        ronda: tercer[0].ronda,
+        label: "Tercer lugar",
+        items: tercer.map((p) => ({
+          key: p.id,
+          local: slotLabel(p.pareja_local_id, labelMap),
+          visit: slotLabel(p.pareja_visitante_id, labelMap),
+          partido: p.estado === "jugado" ? p : undefined,
+          done: p.estado === "jugado",
+        })),
+      });
+    }
+
     return out;
   }, [crucesR1, fase, labelMap, partidos, totalRondas, slots.length]);
+
+  const ganadorTercer = useMemo(() => {
+    const tercer = partidos.find(
+      (p) => isRondaTercerLugar(p.ronda) && p.estado === "jugado"
+    );
+    return tercer?.ganador_id ?? null;
+  }, [partidos]);
 
   if (slots.length === 0) {
     return (
@@ -138,6 +163,12 @@ export const BracketCuadroPanel: React.FC<BracketCuadroPanelProps> = ({
         <p className="te-elim-campeon">
           Campeón:{" "}
           <strong>{parejaLabelFromMap(labelMap, ganadorFinal)}</strong>
+        </p>
+      ) : null}
+      {ganadorTercer ? (
+        <p className="te-elim-campeon te-elim-campeon--tercer">
+          3.er lugar:{" "}
+          <strong>{parejaLabelFromMap(labelMap, ganadorTercer)}</strong>
         </p>
       ) : null}
 

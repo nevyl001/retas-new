@@ -5,6 +5,7 @@ import {
   normalizeCanchaForSave,
 } from "../../lib/torneoExpress/canchaDisplay";
 import {
+  isRondaTercerLugar,
   labelRondaEliminatoria,
   partidosDeRonda,
   eliminatoriaBracketSize,
@@ -465,11 +466,20 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
   const totalRondas = totalRondasEliminatoria(fase, bracketSize);
   const rondas = useMemo(() => {
     const set = new Set(partidos.map((p) => p.ronda));
-    return Array.from(set).sort((a, b) => a - b);
+    return Array.from(set).sort((a, b) => {
+      if (isRondaTercerLugar(a)) return 1;
+      if (isRondaTercerLugar(b)) return -1;
+      return a - b;
+    });
   }, [partidos]);
 
   const [activeRonda, setActiveRonda] = useState<number | null>(null);
   const rondaVisible = activeRonda ?? rondas[rondas.length - 1] ?? 1;
+
+  const labelForRonda = (r: number) =>
+    isRondaTercerLugar(r)
+      ? "Tercer lugar"
+      : labelRondaEliminatoria(fase, r, totalRondas, bracketSize);
 
   if (partidos.length === 0) {
     return (
@@ -489,24 +499,20 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
         role="tablist"
         aria-label="Rondas eliminatorias"
       >
-        {Array.from({ length: totalRondas }, (_, i) => i + 1).map((r) => {
-          const exists = rondas.includes(r);
-          return (
+        {rondas.map((r) => (
             <button
               key={r}
               type="button"
               role="tab"
               aria-selected={r === rondaVisible}
-              disabled={!exists}
               className={`te-grupos-tab${
                 r === rondaVisible ? " te-grupos-tab--active" : ""
-              }${!exists ? " te-grupos-tab--disabled" : ""}`}
+              }`}
               onClick={() => setActiveRonda(r)}
             >
-              {labelRondaEliminatoria(fase, r, totalRondas, bracketSize)}
+              {labelForRonda(r)}
             </button>
-          );
-        })}
+          ))}
       </div>
 
       <div className="te-partidos-list">

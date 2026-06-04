@@ -1,7 +1,9 @@
 import {
   buildSiguienteRondaPartidos,
+  buildTercerLugarPartido,
   eliminatoriaUltimaRondaCompleta,
   labelRondaEliminatoria,
+  RONDA_TERCER_LUGAR,
   rondaCompleta,
   totalRondasEliminatoria,
 } from "./bracketRounds";
@@ -99,17 +101,64 @@ describe("bracketRounds", () => {
     });
   });
 
-  it("eliminatoriaUltimaRondaCompleta", () => {
+  it("eliminatoriaUltimaRondaCompleta exige tercer lugar", () => {
     const r1 = [
       mkPartido({ ronda: 1, cruce_index: 0, estado: "jugado" }),
       mkPartido({ ronda: 1, cruce_index: 1, estado: "jugado" }),
     ];
     expect(eliminatoriaUltimaRondaCompleta(r1, "semifinal")).toBe(false);
 
-    const final = [
+    const soloFinal = [
       ...r1,
       mkPartido({ ronda: 2, cruce_index: 0, estado: "jugado" }),
     ];
-    expect(eliminatoriaUltimaRondaCompleta(final, "semifinal")).toBe(true);
+    expect(eliminatoriaUltimaRondaCompleta(soloFinal, "semifinal")).toBe(
+      false
+    );
+
+    const completo = [
+      ...soloFinal,
+      mkPartido({
+        ronda: RONDA_TERCER_LUGAR,
+        cruce_index: 0,
+        pareja_local_id: "l1",
+        pareja_visitante_id: "l2",
+        ganador_id: "l1",
+        estado: "jugado",
+      }),
+    ];
+    expect(eliminatoriaUltimaRondaCompleta(completo, "semifinal")).toBe(true);
+  });
+
+  it("buildTercerLugarPartido con perdedores de semifinal", () => {
+    const semis = [
+      mkPartido({
+        ronda: 2,
+        cruce_index: 0,
+        pareja_local_id: "a",
+        pareja_visitante_id: "b",
+        ganador_id: "a",
+      }),
+      mkPartido({
+        ronda: 2,
+        cruce_index: 1,
+        pareja_local_id: "c",
+        pareja_visitante_id: "d",
+        ganador_id: "d",
+      }),
+    ];
+    const tercer = buildTercerLugarPartido("t1", semis, 2);
+    expect(tercer).toMatchObject({
+      ronda: RONDA_TERCER_LUGAR,
+      pareja_local_id: "b",
+      pareja_visitante_id: "c",
+      estado: "pendiente",
+    });
+  });
+
+  it("labelRondaEliminatoria tercer lugar", () => {
+    expect(labelRondaEliminatoria("cuartos", RONDA_TERCER_LUGAR)).toBe(
+      "Tercer lugar"
+    );
   });
 });

@@ -13,8 +13,11 @@ import { crucesPrimeraRonda } from "../lib/torneoExpress/bracket";
 import type { BracketFase, BracketSlotEntry } from "../lib/torneoExpress/bracketTypes";
 import {
   buildSiguienteRondaPartidos,
+  buildTercerLugarPartido,
   eliminatoriaBracketSize,
+  eliminatoriaIncluyeTercerLugar,
   eliminatoriaUltimaRondaCompleta,
+  isRondaTercerLugar,
   maxRondaActual,
   rondaCompleta,
   totalRondasEliminatoria,
@@ -654,10 +657,23 @@ export async function fetchTorneoExpressBundle(
   const grupoList = (grupos ?? []) as TorneoExpressGrupo[];
   const grupoIds = grupoList.map((g) => g.id);
 
-  const eliminatoriaPartidos = await fetchEliminatoriaPartidos(
+  let eliminatoriaPartidos = await fetchEliminatoriaPartidos(
     torneoId,
     usePublicClient
   );
+
+  if (
+    !usePublicClient &&
+    torneo.fase_torneo === "eliminatoria" &&
+    torneo.fase_eliminacion
+  ) {
+    await ensureTercerLugarPartidoSiAplica(
+      torneoId,
+      torneo,
+      eliminatoriaPartidos
+    );
+    eliminatoriaPartidos = await fetchEliminatoriaPartidos(torneoId);
+  }
 
   if (grupoIds.length === 0) {
     return {
@@ -1291,6 +1307,41 @@ async function cerrarTorneoEliminatoria(torneoId: string): Promise<void> {
   }
 }
 
+/** Crea el partido por el 3.er lugar cuando las semifinales ya tienen resultado. */
+export async function ensureTercerLugarPartidoSiAplica(
+  torneoId: string,
+  torneo: TorneoExpress,
+  partidos: TorneoExpressEliminatoriaPartido[]
+): Promise<void> {
+  if (!torneo.fase_eliminacion) return;
+  const bracketSize = eliminatoriaBracketSize(
+    torneo.fase_eliminacion,
+    torneo.bracket_slots
+  );
+  if (!eliminatoriaIncluyeTercerLugar(torneo.fase_eliminacion, bracketSize)) {
+    return;
+  }
+  if (partidos.some((p) => isRondaTercerLugar(p.ronda))) return;
+
+  const totalRondas = totalRondasEliminatoria(
+    torneo.fase_eliminacion,
+    bracketSize
+  );
+  const semiRonda = totalRondas - 1;
+  if (!rondaCompleta(partidos, semiRonda)) return;
+
+  const tercerRow = buildTercerLugarPartido(torneoId, partidos, semiRonda);
+  if (!tercerRow) return;
+
+  const { error } = await supabase
+    .from("torneo_express_eliminatoria_partidos")
+    .insert(tercerRow);
+  if (isBracketSchemaError(error)) {
+    throw new BracketSchemaMissingError();
+  }
+  throwIfError(error, "ensureTercerLugarPartidoSiAplica");
+}
+
 /** Tras completar una ronda, genera la siguiente. Nunca cierra el torneo solo. */
 export async function avanzarEliminatoriaSiCompleta(
   torneoId: string
@@ -1301,50 +1352,68 @@ export async function avanzarEliminatoriaSiCompleta(
     return;
   }
 
-  const partidos = await fetchEliminatoriaPartidos(torneoId);
-  const ronda = maxRondaActual(partidos);
-  if (ronda === 0 || !rondaCompleta(partidos, ronda)) return;
-
+  let partidos = await fetchEliminatoriaPartidos(torneoId);
+  const bracketSize = eliminatoriaBracketSize(
+    torneo.fase_eliminacion,
+    torneo.bracket_slots
+  );
   const totalRondas = totalRondasEliminatoria(
     torneo.fase_eliminacion,
-    eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots)
+    bracketSize
   );
 
-  // Última ronda jugada: esperar confirmación explícita del organizador.
-  if (ronda >= totalRondas) {
+  let ronda = maxRondaActual(
+    partidos.filter((p) => !isRondaTercerLugar(p.ronda))
+  );
+  if (ronda === 0 || !rondaCompleta(partidos, ronda)) {
+    await ensureTercerLugarPartidoSiAplica(torneoId, torneo, partidos);
     return;
   }
 
-  if (partidos.some((p) => p.ronda === ronda + 1)) return;
+  if (ronda < totalRondas) {
+    if (!partidos.some((p) => p.ronda === ronda + 1)) {
+      const nextRows = buildSiguienteRondaPartidos(torneoId, ronda, partidos);
+      if (nextRows.length > 0) {
+        const inserts = [...nextRows];
+        const nextRonda = ronda + 1;
+        if (nextRonda === totalRondas) {
+          const tercerRow = buildTercerLugarPartido(
+            torneoId,
+            partidos,
+            ronda
+          );
+          if (tercerRow) inserts.push(tercerRow);
+        }
 
-  const nextRows = buildSiguienteRondaPartidos(torneoId, ronda, partidos);
-  if (nextRows.length === 0) {
-    return;
-  }
+        const { error } = await supabase
+          .from("torneo_express_eliminatoria_partidos")
+          .insert(inserts);
+        if (isBracketSchemaError(error)) {
+          throw new BracketSchemaMissingError();
+        }
+        throwIfError(error, "avanzarEliminatoriaSiCompleta.insert");
 
-  const { error } = await supabase
-    .from("torneo_express_eliminatoria_partidos")
-    .insert(nextRows);
-  if (isBracketSchemaError(error)) {
-    throw new BracketSchemaMissingError();
-  }
-  throwIfError(error, "avanzarEliminatoriaSiCompleta.insert");
+        if (nextRonda === totalRondas) {
+          const finalistPairIds = nextRows.flatMap((row) => [
+            row.pareja_local_id,
+            row.pareja_visitante_id,
+          ]);
+          const { notifyFinalPhase } = await import(
+            "./torneoExpressNotificacionesService"
+          );
+          void notifyFinalPhase(torneoId, finalistPairIds as string[]).catch(
+            () => {
+              /* no bloquear avance de ronda */
+            }
+          );
+        }
 
-  const nextRonda = ronda + 1;
-  if (nextRonda === totalRondas) {
-    const finalistPairIds = nextRows.flatMap((row) => [
-      row.pareja_local_id,
-      row.pareja_visitante_id,
-    ]);
-    const { notifyFinalPhase } = await import(
-      "./torneoExpressNotificacionesService"
-    );
-    void notifyFinalPhase(torneoId, finalistPairIds as string[]).catch(
-      () => {
-        /* no bloquear avance de ronda */
+        partidos = await fetchEliminatoriaPartidos(torneoId);
       }
-    );
+    }
   }
+
+  await ensureTercerLugarPartidoSiAplica(torneoId, torneo, partidos);
 }
 
 /** Reabre un torneo cerrado antes de tiempo (p. ej. auto-finalizado por error). */
@@ -1522,7 +1591,7 @@ export async function finalizarTorneoExpressEliminatoria(
     )
   ) {
     throw new Error(
-      "Completa todos los partidos de la final antes de finalizar el torneo"
+      "Completa la final y el partido por el tercer lugar antes de finalizar el torneo"
     );
   }
 

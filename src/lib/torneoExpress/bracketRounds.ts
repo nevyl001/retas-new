@@ -5,6 +5,35 @@ import type {
   TorneoExpressEliminatoriaPartido,
 } from "./types";
 
+/** Ronda especial (no cuenta en totalRondasEliminatoria): juego por el 3.er lugar. */
+export const RONDA_TERCER_LUGAR = 90;
+
+export function isRondaTercerLugar(ronda: number): boolean {
+  return ronda === RONDA_TERCER_LUGAR;
+}
+
+/** Semifinales listas y hay final (y normalmente también partido por el 3.er lugar). */
+export function isFinaleEliminatoriaStage(
+  partidos: TorneoExpressEliminatoriaPartido[],
+  totalRondas: number
+): boolean {
+  if (totalRondas < 2) return false;
+  const semiRonda = totalRondas - 1;
+  if (!rondaCompleta(partidos, semiRonda)) return false;
+  const hasFinal = partidos.some(
+    (p) => p.ronda === totalRondas && !p.es_bye
+  );
+  const hasTercer = partidos.some((p) => isRondaTercerLugar(p.ronda));
+  return hasFinal || hasTercer;
+}
+
+export function eliminatoriaIncluyeTercerLugar(
+  fase: TorneoExpressFaseEliminacion,
+  bracketSlotCount?: number
+): boolean {
+  return totalRondasEliminatoria(fase, bracketSlotCount) >= 2;
+}
+
 export function eliminatoriaBracketSize(
   fase: TorneoExpressFaseEliminacion,
   bracketSlots?: unknown
@@ -34,6 +63,8 @@ export function labelRondaEliminatoria(
   totalRondas?: number,
   bracketSlotCount?: number
 ): string {
+  if (isRondaTercerLugar(ronda)) return "Tercer lugar";
+
   const slots = bracketSlotCount ?? BRACKET_FASE_SLOTS[fase];
   const total = totalRondas ?? totalRondasEliminatoria(fase, slots);
   if (ronda === total) return "Final";
@@ -117,6 +148,48 @@ export function buildSiguienteRondaPartidos(
   return inserts;
 }
 
+/** Perdedores de semifinal (o penúltima ronda) juegan por el 3.er lugar. */
+export function buildTercerLugarPartido(
+  torneoId: string,
+  partidos: TorneoExpressEliminatoriaPartido[],
+  semiRonda: number
+): EliminatoriaPartidoInsert | null {
+  const semiMatches = partidosDeRonda(partidos, semiRonda).filter(
+    (p) =>
+      !p.es_bye &&
+      p.pareja_local_id &&
+      p.pareja_visitante_id &&
+      p.estado === "jugado" &&
+      p.ganador_id
+  );
+
+  if (semiMatches.length < 2) return null;
+
+  const losers: string[] = [];
+  for (const p of semiMatches) {
+    const local = p.pareja_local_id!;
+    const visit = p.pareja_visitante_id!;
+    const loser = p.ganador_id === local ? visit : local;
+    if (!losers.includes(loser)) losers.push(loser);
+  }
+
+  if (losers.length !== 2) return null;
+
+  return {
+    torneo_id: torneoId,
+    ronda: RONDA_TERCER_LUGAR,
+    orden: 1,
+    cruce_index: 0,
+    pareja_local_id: losers[0],
+    pareja_visitante_id: losers[1],
+    puntos_local: null,
+    puntos_visitante: null,
+    ganador_id: null,
+    estado: "pendiente",
+    es_bye: false,
+  };
+}
+
 export function maxRondaActual(
   partidos: TorneoExpressEliminatoriaPartido[]
 ): number {
@@ -124,12 +197,21 @@ export function maxRondaActual(
   return Math.max(...partidos.map((p) => p.ronda));
 }
 
-/** True cuando todos los partidos de la última ronda están jugados. */
+/** True cuando la final y (si aplica) el partido por el 3.er lugar están jugados. */
 export function eliminatoriaUltimaRondaCompleta(
   partidos: TorneoExpressEliminatoriaPartido[],
   fase: TorneoExpressFaseEliminacion,
   bracketSlotCount?: number
 ): boolean {
   const total = totalRondasEliminatoria(fase, bracketSlotCount);
-  return rondaCompleta(partidos, total);
+  if (!rondaCompleta(partidos, total)) return false;
+
+  if (!eliminatoriaIncluyeTercerLugar(fase, bracketSlotCount)) {
+    return true;
+  }
+
+  const tercerRows = partidos.filter((p) => isRondaTercerLugar(p.ronda));
+  if (tercerRows.length === 0) return false;
+
+  return rondaCompleta(partidos, RONDA_TERCER_LUGAR);
 }
