@@ -168,6 +168,14 @@ export async function buildLegacyPlayersFromRivieraRegistry(
     let legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
     if (!legacy) continue;
 
+    if (!legacyMatchesRivieraName(legacy, canonical)) {
+      const created = await insertLegacyPlayer(canonical.nombre, organizadorId, {
+        email: isRealEmail(canonical.email) ? canonical.email : null,
+      });
+      await linkLegacyPlayerId(canonical.id, created.id);
+      legacy = created;
+    }
+
     const nameKey = normalizeName(canonical.nombre);
     const clashKey = legacyIdToNameKey.get(legacy.id);
     if (clashKey && clashKey !== nameKey) {

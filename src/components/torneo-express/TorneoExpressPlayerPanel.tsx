@@ -10,6 +10,7 @@ import {
 import {
   dedupePlayersById,
   dedupePlayersForSelect,
+  normalizePlayerNameKey,
 } from "../../lib/rivieraJugadores/playerNameKey";
 import { ensureLegacyPlayerForRivieraJugador } from "../../lib/rivieraJugadores/playerPoolSync";
 import type { RivieraJugador } from "../../lib/rivieraJugadores/types";
@@ -444,7 +445,10 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
             if (confirmDelete) {
               return (
-                <li key={jugador.id} className="te-players-row te-players-row--confirm">
+                <li
+                  key={`${normalizePlayerNameKey(jugador.name)}-${jugador.id}`}
+                  className="te-players-row te-players-row--confirm"
+                >
                   <span>
                     ¿Eliminar <strong>{jugador.name}</strong>?
                   </span>
@@ -475,7 +479,10 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
             if (editando) {
               return (
-                <li key={jugador.id} className="te-players-row te-players-row--edit">
+                <li
+                  key={`${normalizePlayerNameKey(jugador.name)}-${jugador.id}`}
+                  className="te-players-row te-players-row--edit"
+                >
                   <input
                     type="text"
                     value={nombreEditado}
@@ -514,7 +521,7 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
             return (
               <li
-                key={jugador.id}
+                key={`${normalizePlayerNameKey(jugador.name)}-${jugador.id}`}
                 className={`te-players-row${
                   !emailOk ? " te-players-row--sin-contacto" : ""
                 }`}

@@ -65,9 +65,21 @@ export function resolvePlayerInPool(player: Player, pool: Player[]): Player {
   return player;
 }
 
-/** Un solo registro por `players.id` (evita keys duplicadas en React). */
+/**
+ * Si varios jugadores comparten el mismo `players.id` (enlace legacy incorrecto),
+ * conserva uno por nombre para no ocultar a nadie (p. ej. GusVa).
+ */
 export function dedupePlayersById(players: Player[]): Player[] {
-  const byId = new Map<string, Player>();
+  const byId = new Map<string, Player[]>();
+
+  for (const p of players) {
+    const group = byId.get(p.id) ?? [];
+    group.push(p);
+    byId.set(p.id, group);
+  }
+
+  const out: Player[] = [];
+  const seenNameKeys = new Set<string>();
 
   const score = (p: Player): number => {
     let s = 0;
@@ -76,16 +88,26 @@ export function dedupePlayersById(players: Player[]): Player[] {
     return s;
   };
 
-  for (const p of players) {
-    const prev = byId.get(p.id);
-    if (!prev) {
-      byId.set(p.id, p);
+  for (const group of Array.from(byId.values())) {
+    if (group.length === 1) {
+      const p = group[0];
+      const nk = normalizePlayerNameKey(p.name);
+      if (nk && seenNameKeys.has(nk)) continue;
+      if (nk) seenNameKeys.add(nk);
+      out.push(p);
       continue;
     }
-    if (score(p) > score(prev)) byId.set(p.id, p);
+
+    const sorted = [...group].sort((a, b) => score(b) - score(a));
+    for (const p of sorted) {
+      const nk = normalizePlayerNameKey(p.name);
+      if (!nk || seenNameKeys.has(nk)) continue;
+      seenNameKeys.add(nk);
+      out.push(p);
+    }
   }
 
-  return Array.from(byId.values());
+  return out.sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
 /** Evita dos parejas compartiendo el mismo jugador (p. ej. Carlos Co vs Carlos R). */

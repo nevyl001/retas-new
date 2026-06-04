@@ -378,7 +378,6 @@ export async function findLegacyPlayerExisting(
         (p) => normalizeLegacyPlayerKey(p.name) === nameKey
       );
       if (match) return match;
-      return byEmail[0] as Player;
     }
   }
 

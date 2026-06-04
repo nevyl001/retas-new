@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/static/css/main.43edf8bf.css",
-    "main.js": "/static/js/main.fc560c28.js",
+    "main.js": "/static/js/main.2224f28a.js",
     "static/media/cancha-riviera.jpg": "/static/media/cancha-riviera.f1a27607e150b0e15b52.jpg",
     "static/media/cancha-riviera-vertical.jpg": "/static/media/cancha-riviera-vertical.47b5bfa12c48b2b5b6de.jpg",
     "index.html": "/index.html",
     "main.43edf8bf.css.map": "/static/css/main.43edf8bf.css.map",
-    "main.fc560c28.js.map": "/static/js/main.fc560c28.js.map"
+    "main.2224f28a.js.map": "/static/js/main.2224f28a.js.map"
   },
   "entrypoints": [
     "static/css/main.43edf8bf.css",
-    "static/js/main.fc560c28.js"
+    "static/js/main.2224f28a.js"
   ]
 }
