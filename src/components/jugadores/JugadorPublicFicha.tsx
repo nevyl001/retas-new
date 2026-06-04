@@ -10,6 +10,7 @@ import {
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
 import {
+  getRankingPosicionEnCategoria,
   getRivieraJugadorPublicBySlug,
   listParticipaciones,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
@@ -51,6 +52,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   const [historial, setHistorial] = useState<
     Awaited<ReturnType<typeof listParticipaciones>>
   >([]);
+  const [rankingPos, setRankingPos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -59,8 +61,16 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
       const j = await getRivieraJugadorPublicBySlug(slug, orgId ?? undefined);
       setJugador(j);
       if (j) {
-        const h = await listParticipaciones(j.id, 100);
+        const [h, pos] = await Promise.all([
+          listParticipaciones(j.id, 100),
+          orgId
+            ? getRankingPosicionEnCategoria(orgId, j.id, j.categoria)
+            : Promise.resolve(null),
+        ]);
         setHistorial(h);
+        setRankingPos(pos);
+      } else {
+        setRankingPos(null);
       }
     } finally {
       setLoading(false);
@@ -76,9 +86,13 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   const historialItems = useMemo(
     () =>
       [...historial]
-        .map(participacionToHistorialItem)
+        .map((row) =>
+          participacionToHistorialItem(row, {
+            categoriaFallback: jugador?.categoria,
+          })
+        )
         .sort((a, b) => b.fecha.localeCompare(a.fecha)),
-    [historial]
+    [historial, jugador?.categoria]
   );
 
   const profileStats = useMemo(
@@ -109,7 +123,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
 
   const puntos = jugador.stats?.puntos_totales ?? 0;
   const redes = getRedesPublicas(jugador);
-  const rankingVal = "—";
+  const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);
   const hasPhoto = Boolean(jugador.foto_url?.trim());
   const catBadge = JUGADOR_CATEGORIA_AVATAR_BADGE[jugador.categoria];
@@ -202,7 +216,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
                           className="rjp-ficha-stat__icon"
                         />
                         <span className="rjp-ficha-stat__lbl">Ranking</span>
-                        <span className="rjp-ficha-stat__val rjp-ficha-stat__val--empty">
+                        <span
+                          className={`rjp-ficha-stat__val${
+                            rankingPos == null ? " rjp-ficha-stat__val--empty" : ""
+                          }`}
+                        >
                           {rankingVal}
                         </span>
                       </div>
@@ -242,6 +260,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
               <div className="rjp-ficha-historial__body">
                 <JugadorHistorialList
                   participaciones={historial}
+                  categoriaFallback={jugador.categoria}
                   variant="public"
                   showResumen={false}
                 />

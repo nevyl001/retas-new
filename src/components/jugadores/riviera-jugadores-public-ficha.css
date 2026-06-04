@@ -662,6 +662,13 @@
   transform: none;
 }
 
+.rjp-ficha-historial .rj-historial-timeline--public .rj-historial-timeline__desc {
+  margin: 0 0 4px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--rjp-ficha-text-2);
+}
+
 .rjp-ficha-historial .rj-historial-timeline--public .rj-historial-timeline__evento {
   color: var(--rjp-ficha-text);
 }

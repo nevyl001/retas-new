@@ -294,6 +294,17 @@ export async function linkLegacyPlayerId(
   if (error) throw error;
 }
 
+export async function linkLegacyLigaJugadorId(
+  rivieraJugadorId: string,
+  legacyLigaJugadorId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("riviera_jugadores")
+    .update({ legacy_liga_jugador_id: legacyLigaJugadorId })
+    .eq("id", rivieraJugadorId);
+  if (error) throw error;
+}
+
 /** Crea o enlaza perfil Riviera al crear un player legacy */
 export async function ensureRivieraJugadorForLegacyPlayer(
   organizadorId: string,
@@ -430,6 +441,17 @@ export async function listPublicJugadoresRanking(
     if (pb !== pa) return pb - pa;
     return a.nombre.localeCompare(b.nombre, "es");
   });
+}
+
+/** Posición # en el ranking público de su categoría (1 = primero). */
+export async function getRankingPosicionEnCategoria(
+  organizadorId: string,
+  jugadorId: string,
+  categoria: string
+): Promise<number | null> {
+  const list = await listPublicJugadoresRanking(organizadorId, categoria);
+  const idx = list.findIndex((j) => j.id === jugadorId);
+  return idx >= 0 ? idx + 1 : null;
 }
 
 export async function searchRivieraJugadoresQuick(

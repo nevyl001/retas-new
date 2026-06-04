@@ -782,6 +782,13 @@
   color: #c0c0c8;
 }
 
+.rj-historial-timeline__desc {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+  color: var(--rj-text-muted, #7a7a85);
+  line-height: 1.4;
+}
+
 .rj-historial-timeline__evento {
   margin: 0;
   font-weight: 700;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   createPlayer,
   getPlayers,
@@ -6,6 +6,8 @@ import {
   updatePlayer,
   Player,
 } from "../lib/database";
+import { useUser } from "../contexts/UserContext";
+import { ensureLegacyPlayerForRivieraJugador } from "../lib/rivieraJugadores/playerPoolSync";
 import { JugadorAutocomplete } from "./jugadores/JugadorAutocomplete";
 import "./jugadores/riviera-jugadores.css";
 
@@ -26,6 +28,8 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   userId,
   tournamentId,
 }) => {
+  const { user } = useUser();
+  const organizadorId = userId ?? user?.id;
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [, setError] = useState<string>("");
@@ -36,11 +40,14 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   const [editingName, setEditingName] = useState("");
 
   const loadPlayers = useCallback(async () => {
-    if (!userId) return;
+    if (!organizadorId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
-      const data = await getPlayers(userId, tournamentId);
+      const data = await getPlayers(organizadorId, tournamentId);
       setPlayers(data);
     } catch (err) {
       setError("Error al cargar los jugadores");
@@ -48,21 +55,31 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [userId, tournamentId]);
+  }, [organizadorId, tournamentId]);
 
   useEffect(() => {
-    if (userId) {
-      loadPlayers();
-    }
-  }, [userId, loadPlayers]);
+    loadPlayers();
+  }, [loadPlayers]);
+
+  const emptyHint = useMemo(
+    () =>
+      organizadorId
+        ? "Agrega jugadores o búscalos en el registro Riviera Open"
+        : "Inicia sesión para cargar el registro de jugadores",
+    [organizadorId]
+  );
 
   const handleCreatePlayer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPlayerName.trim() || !userId) return;
+    if (!newPlayerName.trim() || !organizadorId) return;
 
     try {
       setError("");
-      const player = await createPlayer(newPlayerName.trim(), userId, tournamentId);
+      const player = await createPlayer(
+        newPlayerName.trim(),
+        organizadorId,
+        tournamentId
+      );
       setPlayers([...players, player]);
       setNewPlayerName("");
       setShowCreateForm(false);
@@ -177,20 +194,30 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
             <p>Agrega un nuevo jugador a tu reta</p>
           </div>
           <form onSubmit={handleCreatePlayer} className="elegant-form">
-            {userId && (
+            {organizadorId && (
               <JugadorAutocomplete
-                organizadorId={userId}
+                organizadorId={organizadorId}
                 value={newPlayerName}
                 onChange={setNewPlayerName}
-                onSelect={(rj) => {
-                  if (rj.legacy_player_id) {
-                    const pl = players.find((p) => p.id === rj.legacy_player_id);
+                onSelect={async (rj) => {
+                  try {
+                    const pl =
+                      players.find((p) => p.id === rj.legacy_player_id) ??
+                      (await ensureLegacyPlayerForRivieraJugador(
+                        organizadorId,
+                        rj
+                      ));
                     if (pl) {
+                      setPlayers((prev) =>
+                        prev.some((p) => p.id === pl.id) ? prev : [...prev, pl]
+                      );
                       handlePlayerSelect(pl);
                       setShowCreateForm(false);
                       setNewPlayerName("");
                       return;
                     }
+                  } catch (err) {
+                    console.error(err);
                   }
                   setNewPlayerName(rj.nombre);
                 }}
@@ -204,7 +231,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                 onChange={(e) => setNewPlayerName(e.target.value)}
                 placeholder="Nombre del jugador"
                 required
-                autoFocus={!userId}
+                autoFocus={!organizadorId}
                 className="elegant-input"
               />
               <div className="elegant-input-border"></div>
@@ -234,7 +261,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
       {players.length === 0 ? (
         <div className="elegant-empty-state">
           <h4>No hay jugadores</h4>
-          <p>Agrega jugadores para poder crear parejas</p>
+          <p>{emptyHint}</p>
         </div>
       ) : (
         <div className="elegant-players-grid">

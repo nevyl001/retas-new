@@ -495,6 +495,14 @@ export async function regenerarCalendarioLiga(
 
 export async function getJugadoresOrganizador(): Promise<LigaJugador[]> {
   const uid = await requireUserId();
+  try {
+    const { syncLigaJugadoresFromRivieraRegistry } = await import(
+      "../lib/rivieraJugadores/playerPoolSync"
+    );
+    await syncLigaJugadoresFromRivieraRegistry(uid);
+  } catch (syncErr) {
+    console.warn("Riviera → liga_jugadores sync skipped:", syncErr);
+  }
   const { data, error } = await supabase
     .from("liga_jugadores")
     .select("*")

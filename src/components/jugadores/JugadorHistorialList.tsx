@@ -3,10 +3,14 @@ import {
   groupHistorialResumen,
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
-import type { JugadorParticipacion } from "../../lib/rivieraJugadores/types";
+import type {
+  JugadorParticipacion,
+  RivieraJugadorCategoria,
+} from "../../lib/rivieraJugadores/types";
 
 interface JugadorHistorialListProps {
   participaciones: JugadorParticipacion[];
+  categoriaFallback?: RivieraJugadorCategoria;
   variant?: "admin" | "public";
   showResumen?: boolean;
 }
@@ -25,12 +29,16 @@ function formatFecha(iso: string): string {
 
 export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
   participaciones,
+  categoriaFallback,
   variant = "admin",
   showResumen = true,
 }) => {
   const items = useMemo(
-    () => participaciones.map(participacionToHistorialItem),
-    [participaciones]
+    () =>
+      participaciones.map((row) =>
+        participacionToHistorialItem(row, { categoriaFallback })
+      ),
+    [participaciones, categoriaFallback]
   );
   const resumen = useMemo(() => groupHistorialResumen(items), [items]);
   const rootClass =
@@ -88,6 +96,9 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
                 </span>
               </div>
               <p className="rj-historial-timeline__evento">{it.eventoNombre}</p>
+              {it.eventoDescripcion && (
+                <p className="rj-historial-timeline__desc">{it.eventoDescripcion}</p>
+              )}
               {it.detalle && (
                 <p className="rj-historial-timeline__detalle">{it.detalle}</p>
               )}

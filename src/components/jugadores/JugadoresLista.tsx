@@ -7,6 +7,10 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import { backfillRetasHistorial } from "../../lib/rivieraJugadores/syncParticipaciones";
 import {
+  ensureLegacyPlayerForRivieraJugador,
+  ensureLigaJugadorForRivieraJugador,
+} from "../../lib/rivieraJugadores/playerPoolSync";
+import {
   createRivieraJugador,
   listRivieraJugadores,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
@@ -197,7 +201,11 @@ export const JugadoresLista: React.FC = () => {
         onClose={() => setModalOpen(false)}
         onSubmit={async (data) => {
           if (!user?.id) return;
-          await createRivieraJugador(user.id, data);
+          const created = await createRivieraJugador(user.id, data);
+          await Promise.all([
+            ensureLegacyPlayerForRivieraJugador(user.id, created),
+            ensureLigaJugadorForRivieraJugador(user.id, created),
+          ]);
           await load();
         }}
       />

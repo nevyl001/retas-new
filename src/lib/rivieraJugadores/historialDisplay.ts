@@ -1,10 +1,18 @@
-import { TIPO_EVENTO_LABELS } from "./constants";
-import type { JugadorParticipacion, JugadorTipoEvento } from "./types";
+import {
+  JUGADOR_CATEGORIA_LABELS,
+  TIPO_EVENTO_LABELS,
+} from "./constants";
+import type {
+  JugadorParticipacion,
+  JugadorTipoEvento,
+  RivieraJugadorCategoria,
+} from "./types";
 
 export type HistorialModalidadId =
   | "torneo_express"
   | "liga"
   | "reta"
+  | "torneo"
   | "round_robin"
   | "reta_equipos"
   | "americano"
@@ -19,6 +27,9 @@ export interface HistorialItemView {
   fecha: string;
   lugarLabel: string;
   detalle?: string;
+  categoriaLabel?: string;
+  eventoDescripcion?: string;
+  balanceLabel?: string;
   puntos?: number;
   esCampeon: boolean;
   esSubcampeon: boolean;
@@ -29,7 +40,8 @@ const MODALIDAD_ICONS: Record<HistorialModalidadId, string> = {
   torneo_express: "⚡",
   liga: "🏅",
   reta: "🏆",
-  round_robin: "🔄",
+  torneo: "🏆",
+  round_robin: "🏆",
   reta_equipos: "👥",
   americano: "🎾",
   dual_meet: "🤝",
@@ -64,13 +76,22 @@ export function formatLugarOrdinal(pos: number, total?: number): string {
   return `${pos}º lugar`;
 }
 
+function isTorneoRoundRobin(meta: Record<string, unknown>): boolean {
+  const explicit = metaStr(meta, "modalidad");
+  if (explicit === "torneo" || explicit === "round_robin") return true;
+  const label = (metaStr(meta, "modalidad_label") ?? "").toLowerCase();
+  if (label === "torneo" || label.includes("round robin")) return true;
+  const fmt = metaStr(meta, "formato");
+  return fmt === "round_robin";
+}
+
 export function resolveModalidadFromParticipacion(
   row: JugadorParticipacion
 ): { id: HistorialModalidadId; label: string } {
   const meta = row.metadata ?? {};
   const explicit = metaStr(meta, "modalidad");
-  if (explicit === "round_robin") {
-    return { id: "round_robin", label: "Round Robin" };
+  if (explicit === "torneo" || explicit === "round_robin") {
+    return { id: "torneo", label: "Torneo" };
   }
   if (explicit === "reta_equipos" || explicit === "teams") {
     return { id: "reta_equipos", label: "Reta por equipos" };
@@ -80,6 +101,10 @@ export function resolveModalidadFromParticipacion(
   }
   const label = metaStr(meta, "modalidad_label");
   if (label) {
+    const normalized = label.toLowerCase();
+    if (normalized === "torneo" || normalized.includes("round robin")) {
+      return { id: "torneo", label: "Torneo" };
+    }
     const id = (explicit as HistorialModalidadId) || inferIdFromLabel(label);
     return { id, label };
   }
@@ -98,8 +123,8 @@ export function resolveModalidadFromParticipacion(
     if (fmt === "teams" || fmt === "reta_equipos") {
       return { id: "reta_equipos", label: "Reta por equipos" };
     }
-    if (fmt === "round_robin") {
-      return { id: "round_robin", label: "Round Robin" };
+    if (isTorneoRoundRobin(meta)) {
+      return { id: "torneo", label: "Torneo" };
     }
     return { id: "reta", label: TIPO_EVENTO_LABELS.reta };
   }
@@ -111,11 +136,47 @@ function inferIdFromLabel(label: string): HistorialModalidadId {
   const l = label.toLowerCase();
   if (l.includes("americano")) return "americano";
   if (l.includes("liga")) return "liga";
-  if (l.includes("torneo")) return "torneo_express";
-  if (l.includes("round")) return "round_robin";
+  if (l.includes("express")) return "torneo_express";
+  if (l.includes("round")) return "torneo";
+  if (l === "torneo") return "torneo";
   if (l.includes("dual")) return "dual_meet";
   if (l.includes("equipo")) return "reta_equipos";
   return "reta";
+}
+
+function resolveCategoriaLabel(
+  meta: Record<string, unknown>,
+  fallback?: RivieraJugadorCategoria
+): string | undefined {
+  const raw = metaStr(meta, "jugador_categoria") ?? metaStr(meta, "categoria");
+  if (raw && raw in JUGADOR_CATEGORIA_LABELS) {
+    return JUGADOR_CATEGORIA_LABELS[raw as RivieraJugadorCategoria];
+  }
+  if (fallback) return JUGADOR_CATEGORIA_LABELS[fallback];
+  return undefined;
+}
+
+/** Victorias y derrotas en partidos del evento (no confundir con V/D del marcador de sets). */
+function formatBalanceParticipacion(
+  meta: Record<string, unknown>,
+  row: JugadorParticipacion
+): string | undefined {
+  const wins = metaNum(meta, "partidos_ganados");
+  const losses = metaNum(meta, "partidos_perdidos");
+  if (wins != null && (wins > 0 || (losses ?? 0) > 0)) {
+    const wTxt = `${wins} victoria${wins === 1 ? "" : "s"}`;
+    const lTxt =
+      losses != null && losses > 0
+        ? ` · ${losses} derrota${losses === 1 ? "" : "s"}`
+        : "";
+    return wTxt + lTxt;
+  }
+  const sf = row.sets_favor ?? 0;
+  const sc = row.sets_contra ?? 0;
+  if (sf > 0 || sc > 0) {
+    return `Marcador acumulado ${sf}–${sc}`;
+  }
+  return undefined;
 }
 
 export function resolveLugarLabel(row: JugadorParticipacion): string {
@@ -149,7 +210,8 @@ export function resolveLugarLabel(row: JugadorParticipacion): string {
 }
 
 export function participacionToHistorialItem(
-  row: JugadorParticipacion
+  row: JugadorParticipacion,
+  opts?: { categoriaFallback?: RivieraJugadorCategoria }
 ): HistorialItemView {
   const { id: modalidadId, label: modalidadLabel } =
     resolveModalidadFromParticipacion(row);
@@ -157,28 +219,24 @@ export function participacionToHistorialItem(
   const lugarLabel = resolveLugarLabel(row);
   const ligaNombre = metaStr(meta, "liga_nombre");
   const jornadaNum = metaNum(meta, "jornada_numero");
+  const categoriaLabel = resolveCategoriaLabel(meta, opts?.categoriaFallback);
+  const eventoDescripcion =
+    metaStr(meta, "evento_descripcion") ??
+    metaStr(meta, "reta_descripcion") ??
+    metaStr(meta, "descripcion");
+  const balanceLabel = formatBalanceParticipacion(meta, row);
 
-  let detalle: string | undefined;
-  if (row.pareja_con) {
-    detalle = `Pareja: ${row.pareja_con}`;
-  }
+  const detalleParts: string[] = [];
+  if (categoriaLabel) detalleParts.push(categoriaLabel);
+  if (row.pareja_con) detalleParts.push(`Pareja: ${row.pareja_con}`);
   if (row.tipo_evento === "liga" && ligaNombre) {
-    detalle = jornadaNum
-      ? `${ligaNombre} · Jornada ${jornadaNum}`
-      : ligaNombre;
+    detalleParts.push(
+      jornadaNum ? `${ligaNombre} · Jornada ${jornadaNum}` : ligaNombre
+    );
   }
-
-  const partidos = metaNum(meta, "partidos_ganados");
-  const partidosPerdidos = metaNum(meta, "partidos_perdidos");
-  if (
-    partidos != null &&
-    (row.tipo_evento === "reta" ||
-      row.tipo_evento === "torneo_express" ||
-      modalidadId === "round_robin")
-  ) {
-    const extra = `${partidos}V${partidosPerdidos != null ? ` · ${partidosPerdidos}D` : ""}`;
-    detalle = detalle ? `${detalle} · ${extra}` : extra;
-  }
+  if (balanceLabel) detalleParts.push(balanceLabel);
+  const detalle =
+    detalleParts.length > 0 ? detalleParts.join(" · ") : undefined;
 
   return {
     id: row.id,
@@ -189,6 +247,9 @@ export function participacionToHistorialItem(
     fecha: row.fecha,
     lugarLabel,
     detalle,
+    categoriaLabel,
+    eventoDescripcion,
+    balanceLabel,
     puntos: row.puntos_obtenidos > 0 ? row.puntos_obtenidos : undefined,
     esCampeon:
       lugarLabel === "Campeón" ||

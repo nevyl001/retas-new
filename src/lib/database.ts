@@ -353,23 +353,24 @@ export const deleteTournament = async (id: string) => {
 };
 
 // Funciones para Jugadores
-export const createPlayer = async (
+/** Inserta en `players` sin tocar riviera_jugadores (usar playerPoolSync para enlazar). */
+export const insertLegacyPlayer = async (
   name: string,
   userId: string,
-  tournamentId?: string
-) => {
-  // Generar email automático basado en el nombre
-  const email = `${name.toLowerCase().replace(/\s+/g, "")}@padel.local`;
-
-  console.log("Creating player:", { name, email, userId });
+  options?: { email?: string | null; tournamentId?: string }
+): Promise<Player> => {
+  const trimmed = name.trim();
+  const email =
+    options?.email?.trim() ||
+    `${trimmed.toLowerCase().replace(/\s+/g, "")}@padel.local`;
 
   const basePayload = {
-    name,
+    name: trimmed,
     email,
   };
 
+  const tournamentId = options?.tournamentId;
   const insertCandidates: Array<Record<string, unknown>> = [];
-  // Preferir pool global de jugadores para reutilizar en cualquier reta
   insertCandidates.push({
     ...basePayload,
     user_id: userId,
@@ -384,7 +385,6 @@ export const createPlayer = async (
     tournament_id: GLOBAL_TOURNAMENT_ID,
   });
   insertCandidates.push(basePayload);
-  // Compatibilidad adicional: algunos esquemas exigen tournament_id real
   if (tournamentId) {
     insertCandidates.push({
       ...basePayload,
@@ -434,6 +434,18 @@ export const createPlayer = async (
     throw new Error("No se pudo crear el jugador");
   }
 
+  return data;
+};
+
+export const createPlayer = async (
+  name: string,
+  userId: string,
+  tournamentId?: string
+) => {
+  console.log("Creating player:", { name, userId, tournamentId });
+
+  const data = await insertLegacyPlayer(name, userId, { tournamentId });
+
   console.log("Player created successfully:", data);
 
   try {
@@ -458,6 +470,130 @@ export { registrarParticipacion } from "./rivieraJugadores/rivieraJugadoresServi
 /** Evita repetir GET con filtro user_id si el esquema no tiene esa columna (42703 / PGRST204). */
 let playersTableSupportsUserIdFilter: boolean | null = null;
 
+type PlayersSelectResult = {
+  data: Player[] | null;
+  error: { code?: string; message?: string } | null;
+};
+
+type PlayerRow = Player & { user_id?: string | null };
+
+function normalizePlayerName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/** Un solo jugador por nombre (evita duplicados tras sync o migración). */
+export function dedupeLegacyPlayersByName(players: Player[]): Player[] {
+  const byName = new Map<string, PlayerRow>();
+
+  for (const raw of players) {
+    const p = raw as PlayerRow;
+    const key = normalizePlayerName(p.name);
+    if (!key) continue;
+    const prev = byName.get(key);
+    if (!prev) {
+      byName.set(key, p);
+      continue;
+    }
+    const prevUid = prev.user_id ?? null;
+    const nextUid = p.user_id ?? null;
+    if (prevUid && !nextUid) continue;
+    if (!prevUid && nextUid) {
+      byName.set(key, p);
+      continue;
+    }
+    if (p.created_at < prev.created_at) {
+      byName.set(key, p);
+    }
+  }
+
+  return Array.from(byName.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, "es")
+  );
+}
+
+async function fetchPlayersByUserId(
+  userId: string
+): Promise<PlayersSelectResult> {
+  const withOrder = await supabase
+    .from("players")
+    .select("*")
+    .eq("user_id", userId)
+    .order("name", { ascending: true });
+  if (!withOrder.error) return withOrder as PlayersSelectResult;
+  return supabase
+    .from("players")
+    .select("*")
+    .eq("user_id", userId) as PromiseLike<PlayersSelectResult>;
+}
+
+async function fetchPlayersByIds(ids: string[]): Promise<Player[]> {
+  if (!ids.length) return [];
+  const { data, error } = await supabase
+    .from("players")
+    .select("*")
+    .in("id", ids);
+  if (error) {
+    console.warn("fetchPlayersByIds:", error);
+    return [];
+  }
+  return (data ?? []) as Player[];
+}
+
+/** Lectura directa de `players` (sin sincronizar con riviera_jugadores). */
+export const fetchLegacyPlayersPool = async (
+  userId?: string
+): Promise<Player[]> => {
+  if (!userId) {
+    const { data, error } = await supabase
+      .from("players")
+      .select("*")
+      .order("name", { ascending: true });
+    if (error) {
+      const retry = await supabase.from("players").select("*");
+      if (retry.error) throw retry.error;
+      return dedupeLegacyPlayersByName((retry.data ?? []) as Player[]);
+    }
+    return dedupeLegacyPlayersByName((data ?? []) as Player[]);
+  }
+
+  const { listRivieraJugadores } = await import(
+    "./rivieraJugadores/rivieraJugadoresService"
+  );
+  const registry = await listRivieraJugadores(userId);
+  const linkedIds = Array.from(
+    new Set(
+      registry
+        .map((r) => r.legacy_player_id)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    )
+  );
+
+  const merged: Player[] = [];
+
+  if (playersTableSupportsUserIdFilter !== false) {
+    const byUser = await fetchPlayersByUserId(userId);
+    if (!byUser.error) {
+      playersTableSupportsUserIdFilter = true;
+      merged.push(...((byUser.data ?? []) as Player[]));
+    } else if (isMissingColumnError(byUser.error, "players", "user_id")) {
+      playersTableSupportsUserIdFilter = false;
+    } else {
+      console.warn("Players by user_id failed:", byUser.error);
+    }
+  }
+
+  if (linkedIds.length) {
+    merged.push(...(await fetchPlayersByIds(linkedIds)));
+  }
+
+  if (!merged.length && playersTableSupportsUserIdFilter === false) {
+    const linkedOnly = await fetchPlayersByIds(linkedIds);
+    return dedupeLegacyPlayersByName(linkedOnly);
+  }
+
+  return dedupeLegacyPlayersByName(merged);
+};
+
 export const getPlayers = async (userId?: string, tournamentId?: string) => {
   console.log(
     "Fetching global players for user:",
@@ -466,64 +602,20 @@ export const getPlayers = async (userId?: string, tournamentId?: string) => {
     tournamentId
   );
 
-  const queryAttempts: Array<{
-    label: string;
-    run: () => any;
-  }> = [];
-
-  if (
-    userId &&
-    playersTableSupportsUserIdFilter !== false
-  ) {
-    queryAttempts.push({
-      label: "user_id",
-      run: () =>
-        supabase.from("players").select("*").eq("user_id", userId).order("name"),
-    });
-  }
-  queryAttempts.push({
-    label: "sin filtros",
-    run: () => supabase.from("players").select("*").order("name"),
-  });
-
-  let data: Player[] | null = null;
-  let error: { code?: string; message?: string } | null = null;
-
-  for (const attempt of queryAttempts) {
-    const result = await attempt.run();
-    if (!result.error) {
-      data = result.data;
-      error = null;
-      if (attempt.label === "user_id") {
-        playersTableSupportsUserIdFilter = true;
-      } else if (userId && attempt.label !== "user_id") {
-        if (playersTableSupportsUserIdFilter === false) {
-          // Esquema sin user_id en players: fallback esperado, sin ruido en consola.
-        } else {
-          console.warn(`Players query fallback usado: ${attempt.label}`);
-        }
-      }
-      break;
+  if (userId) {
+    try {
+      const { syncLegacyPlayersFromRivieraRegistry } = await import(
+        "./rivieraJugadores/playerPoolSync"
+      );
+      await syncLegacyPlayersFromRivieraRegistry(userId);
+    } catch (syncErr) {
+      console.warn("Riviera → players sync skipped:", syncErr);
     }
-    error = result.error;
-    if (
-      attempt.label === "user_id" &&
-      isMissingColumnError(result.error, "players", "user_id")
-    ) {
-      playersTableSupportsUserIdFilter = false;
-      error = null;
-      continue;
-    }
-    console.warn(`Players query failed (${attempt.label}):`, result.error);
   }
 
-  if (error) {
-    console.error("Error fetching players:", error);
-    throw error;
-  }
-
-  console.log("Players fetched successfully:", data?.length || 0, "players");
-  return data || [];
+  const data = await fetchLegacyPlayersPool(userId);
+  console.log("Players fetched successfully:", data.length, "players");
+  return data;
 };
 
 export const deletePlayer = async (id: string) => {

@@ -538,8 +538,8 @@ async function syncRetaParticipacionesInner(params: {
   );
 
   const esEquipos = tournament.format === "teams";
-  const modalidad = esEquipos ? "reta_equipos" : "round_robin";
-  const modalidadLabel = esEquipos ? "Reta por equipos" : "Round Robin";
+  const modalidad = esEquipos ? "reta_equipos" : "torneo";
+  const modalidadLabel = esEquipos ? "Reta por equipos" : "Torneo";
 
   let winningTeamIndex: number | null = null;
   const teamConfig = esEquipos ? getTeamConfigFromStorage(tournament.id) : null;
@@ -573,6 +573,12 @@ async function syncRetaParticipacionesInner(params: {
       equipoGanador = teamIdx === winningTeamIndex;
     }
 
+    const { data: perfilRiviera } = await supabase
+      .from("riviera_jugadores")
+      .select("categoria")
+      .eq("id", jugadorId)
+      .maybeSingle();
+
     await registrarPuntosRanking({
       jugadorId,
       tipoEvento: "reta",
@@ -595,6 +601,12 @@ async function syncRetaParticipacionesInner(params: {
         modalidad_label: modalidadLabel,
         reta_id: tournament.id,
         reta_nombre: tournament.name,
+        ...(tournament.description?.trim()
+          ? { evento_descripcion: tournament.description.trim() }
+          : {}),
+        ...(perfilRiviera?.categoria
+          ? { jugador_categoria: perfilRiviera.categoria }
+          : {}),
         posicion: rank?.pos,
         total_participantes: rank?.total,
         lugar: rank

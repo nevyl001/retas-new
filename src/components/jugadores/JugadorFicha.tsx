@@ -479,7 +479,11 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         </div>
 
         {tab === "historial" && (
-          <JugadorHistorialList participaciones={historial} variant="admin" />
+          <JugadorHistorialList
+            participaciones={historial}
+            categoriaFallback={jugador?.categoria}
+            variant="admin"
+          />
         )}
 
         {tab === "stats" && (
