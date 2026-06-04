@@ -18,7 +18,10 @@ import type {
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
-import { navigatePublicJugadorFicha } from "./jugadoresPublicNav";
+import {
+  buildRankingComoFuncionaPath,
+  navigatePublicJugadorFicha,
+} from "./jugadoresPublicNav";
 import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
 import "./riviera-jugadores-public-ranking.css";
 
@@ -97,6 +100,14 @@ export const JugadoresPublicRanking: React.FC = () => {
         <header className="rjp-ranking-header">
           <p className="rjp-ranking-header__brand">Riviera Open</p>
           <h1 className="rjp-ranking-header__title">Ranking de jugadores</h1>
+          <p className="rjp-ranking-header__sub">
+            Retas, ligas, americanos y torneos suman al mismo ranking. Sin puntos
+            negativos.
+          </p>
+          <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
+            Ver reglas completas
+            <TablerIcon name="chevron-right" size={18} />
+          </a>
         </header>
 
         <RankingPuntosTeaser />

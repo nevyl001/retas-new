@@ -7,7 +7,6 @@ import {
   calcularPuntosEvento,
 } from "../../lib/rivieraJugadores/rivieraRankingPoints";
 import { TablerIcon } from "../ui/TablerIcon";
-import { buildRankingComoFuncionaPath } from "./jugadoresPublicNav";
 
 const expressCampeon = calcularPuntosEvento({
   formato: "express",
@@ -17,87 +16,105 @@ const expressCampeon = calcularPuntosEvento({
   llego_final: true,
 });
 
-const FORMATOS_RESUMEN = [
+const americanoMax = calcularPuntosEvento({
+  formato: "americano",
+  posicion_final: 1,
+  victorias_americano: 6,
+});
+
+const LIGA_MAX = PUNTOS_LIGA.BASE_INSCRIPCION + PUNTOS_LIGA.PRIMER_LUGAR;
+const RETA_MAX = PUNTOS_RETA.PARTICIPACION + PUNTOS_RETA.VICTORIA;
+
+const MODALIDADES = [
   {
-    icon: "🏆",
+    id: "liga",
+    icon: "trophy",
     nombre: "Liga",
-    linea: `+${PUNTOS_LIGA.BASE_INSCRIPCION} inscripción · +${PUNTOS_LIGA.GANAR_JORNADA} por jornada ganada (pareja) · podio ${PUNTOS_LIGA.PRIMER_LUGAR}/${PUNTOS_LIGA.SEGUNDO_LUGAR}/${PUNTOS_LIGA.TERCER_LUGAR}`,
+    linea: `+${PUNTOS_LIGA.BASE_INSCRIPCION} inscripción · +${PUNTOS_LIGA.GANAR_JORNADA} jornada · podio ${PUNTOS_LIGA.PRIMER_LUGAR}/${PUNTOS_LIGA.SEGUNDO_LUGAR}/${PUNTOS_LIGA.TERCER_LUGAR}`,
+    maxPts: LIGA_MAX,
   },
   {
-    icon: "⚔️",
-    nombre: "Reta",
-    linea: `+${PUNTOS_RETA.PARTICIPACION} jugar · +${PUNTOS_RETA.VICTORIA} si ganas`,
+    id: "torneo",
+    icon: "bolt",
+    nombre: "Torneo",
+    linea: `+${PUNTOS_EXPRESS.PARTICIPACION} participar · fases y podio hasta campeón`,
+    maxPts: expressCampeon,
   },
   {
-    icon: "🔄",
+    id: "americano",
+    icon: "refresh",
     nombre: "Americano",
     linea: `+${PUNTOS_AMERICANO.PARTICIPACION} · +${PUNTOS_AMERICANO.POR_VICTORIA}/victoria · podio ${PUNTOS_AMERICANO.PRIMER_LUGAR}/${PUNTOS_AMERICANO.SEGUNDO_LUGAR}/${PUNTOS_AMERICANO.TERCER_LUGAR}`,
+    maxPts: americanoMax,
   },
   {
-    icon: "⚡",
-    nombre: "Torneo Express",
-    linea: `Ruta: +${PUNTOS_EXPRESS.PARTICIPACION} → +${PUNTOS_EXPRESS.PASAR_FASE_GRUPOS} grupos → +${PUNTOS_EXPRESS.PASAR_SEMIFINAL} semi → +${PUNTOS_EXPRESS.LLEGAR_FINAL} final + podio`,
+    id: "reta",
+    icon: "ball-tennis",
+    nombre: "Reta",
+    linea: `+${PUNTOS_RETA.PARTICIPACION} jugar · +${PUNTOS_RETA.VICTORIA} si ganas`,
+    maxPts: RETA_MAX,
   },
 ] as const;
 
-const EXPRESS_ETAPAS = [
+const EXPRESS_FASES = [
   { label: "Participar", pts: PUNTOS_EXPRESS.PARTICIPACION },
   { label: "Pasar grupos", pts: PUNTOS_EXPRESS.PASAR_FASE_GRUPOS },
   { label: "Semifinal", pts: PUNTOS_EXPRESS.PASAR_SEMIFINAL },
   { label: "Final", pts: PUNTOS_EXPRESS.LLEGAR_FINAL },
-  { label: "Campeón (+podio)", pts: PUNTOS_EXPRESS.PRIMER_LUGAR },
 ] as const;
 
 export const RankingPuntosTeaser: React.FC = () => {
-  const reglasHref = buildRankingComoFuncionaPath();
-
   return (
-    <section className="rjp-ranking-puntos" aria-labelledby="rjp-ranking-puntos-title">
-      <div className="rjp-ranking-puntos__head">
-        <div>
-          <h2 id="rjp-ranking-puntos-title" className="rjp-ranking-puntos__title">
-            Sistema de puntos
-          </h2>
-          <p className="rjp-ranking-puntos__sub">
-            Retas, ligas, americanos y torneos suman al mismo ranking. Sin puntos
-            negativos.
-          </p>
-        </div>
-        <a className="rjp-ranking-puntos__cta" href={reglasHref}>
-          Ver reglas completas
-          <TablerIcon name="chevron-right" size={18} />
-        </a>
-      </div>
-
-      <div className="rjp-ranking-puntos__express" aria-label="Puntos Torneo Express">
-        <p className="rjp-ranking-puntos__express-label">Torneo Express — por fase</p>
-        <ul className="rjp-ranking-puntos__milestones">
-          {EXPRESS_ETAPAS.map((h) => (
-            <li key={h.label} className="rjp-ranking-puntos__milestone">
-              <span>{h.label}</span>
-              <span className="rjp-ranking-puntos__pts">+{h.pts}</span>
+    <div className="rjp-ranking-intro" aria-label="Sistema de puntos">
+      <section className="rjp-ranking-modalidades" aria-labelledby="rjp-modalidades-title">
+        <h2 id="rjp-modalidades-title" className="rjp-ranking-section-label">
+          Modalidades
+        </h2>
+        <ul className="rjp-ranking-modalidades__list">
+          {MODALIDADES.map((m) => (
+            <li key={m.id}>
+              <article className="rjp-ranking-modalidad">
+                <span className="rjp-ranking-modalidad__icon-wrap" aria-hidden>
+                  <TablerIcon name={m.icon} size={18} />
+                </span>
+                <div className="rjp-ranking-modalidad__body">
+                  <span className="rjp-ranking-modalidad__name">{m.nombre}</span>
+                  <span className="rjp-ranking-modalidad__line">{m.linea}</span>
+                </div>
+                <span className="rjp-ranking-modalidad__max">
+                  {m.maxPts.toLocaleString("es-MX")}{" "}
+                  <span className="rjp-ranking-modalidad__max-unit">pts máx</span>
+                </span>
+              </article>
             </li>
           ))}
         </ul>
-        <p className="rjp-ranking-puntos__express-foot">
-          Ej. campeón (suma todas las fases):{" "}
-          <strong>{expressCampeon.toLocaleString("es-MX")} pts</strong>
-        </p>
-      </div>
+      </section>
 
-      <ul className="rjp-ranking-puntos__formatos">
-        {FORMATOS_RESUMEN.map((f) => (
-          <li key={f.nombre} className="rjp-ranking-puntos__formato">
-            <span className="rjp-ranking-puntos__formato-icon" aria-hidden>
-              {f.icon}
-            </span>
-            <div>
-              <span className="rjp-ranking-puntos__formato-name">{f.nombre}</span>
-              <span className="rjp-ranking-puntos__formato-line">{f.linea}</span>
+      <section
+        className="rjp-ranking-express"
+        aria-labelledby="rjp-express-title"
+      >
+        <h2 id="rjp-express-title" className="rjp-ranking-section-label">
+          Torneo — por fase
+        </h2>
+        <div className="rjp-ranking-express__grid">
+          {EXPRESS_FASES.map((f) => (
+            <div key={f.label} className="rjp-ranking-express__cell">
+              <span className="rjp-ranking-express__label">{f.label}</span>
+              <span className="rjp-ranking-express__pts">
+                {f.pts.toLocaleString("es-MX")} pts
+              </span>
             </div>
-          </li>
-        ))}
-      </ul>
-    </section>
+          ))}
+          <div className="rjp-ranking-express__cell rjp-ranking-express__cell--total">
+            <span className="rjp-ranking-express__label">Campeón + podio</span>
+            <span className="rjp-ranking-express__pts rjp-ranking-express__pts--hero">
+              {expressCampeon.toLocaleString("es-MX")} pts
+            </span>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 };
