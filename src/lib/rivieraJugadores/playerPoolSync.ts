@@ -160,11 +160,24 @@ export async function buildLegacyPlayersFromRivieraRegistry(
   }
 
   const out: Player[] = [];
+  /** Un `players.id` no puede representar dos nombres distintos (p. ej. Carlos R y Carlos Co). */
+  const legacyIdToNameKey = new Map<string, string>();
 
   for (const rows of Array.from(byName.values())) {
     const canonical = pickCanonicalRivieraRow(rows);
-    const legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
+    let legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
     if (!legacy) continue;
+
+    const nameKey = normalizeName(canonical.nombre);
+    const clashKey = legacyIdToNameKey.get(legacy.id);
+    if (clashKey && clashKey !== nameKey) {
+      const created = await insertLegacyPlayer(canonical.nombre, organizadorId, {
+        email: isRealEmail(canonical.email) ? canonical.email : null,
+      });
+      await linkLegacyPlayerId(canonical.id, created.id);
+      legacy = created;
+    }
+    legacyIdToNameKey.set(legacy.id, nameKey);
 
     for (const other of rows) {
       if (other.id !== canonical.id && other.legacy_player_id !== legacy.id) {

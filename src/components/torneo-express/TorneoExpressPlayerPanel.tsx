@@ -7,7 +7,10 @@ import {
   updatePlayer,
   type Player,
 } from "../../lib/database";
-import { dedupePlayersForSelect } from "../../lib/rivieraJugadores/playerNameKey";
+import {
+  dedupePlayersById,
+  dedupePlayersForSelect,
+} from "../../lib/rivieraJugadores/playerNameKey";
 import { ensureLegacyPlayerForRivieraJugador } from "../../lib/rivieraJugadores/playerPoolSync";
 import type { RivieraJugador } from "../../lib/rivieraJugadores/types";
 import {
@@ -58,7 +61,9 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
   const syncJugadores = useCallback(
     (list: Player[]) => {
-      const sorted = dedupePlayersForSelect(dedupeLegacyPlayersByName(list));
+      const sorted = dedupePlayersForSelect(
+        dedupePlayersById(dedupeLegacyPlayersByName(list))
+      );
       setJugadores(sorted);
       onJugadoresChange(sorted);
     },

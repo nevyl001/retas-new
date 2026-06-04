@@ -48,36 +48,87 @@ export function dedupePlayersForSelect(
   );
 }
 
-/** Tras deduplicar el pool, alinea un jugador (p. ej. de una pareja guardada) al id canónico actual. */
+/**
+ * Alinea un jugador al pool canónico.
+ * Prioriza el nombre (evita Carlos R con el UUID de Carlos Co).
+ */
 export function resolvePlayerInPool(player: Player, pool: Player[]): Player {
+  const key = normalizePlayerNameKey(player.name);
+  if (key) {
+    const byName = pool.find((p) => normalizePlayerNameKey(p.name) === key);
+    if (byName) return byName;
+  }
+
   const byId = pool.find((p) => p.id === player.id);
   if (byId) return byId;
 
-  const key = normalizePlayerNameKey(player.name);
-  if (!key) return player;
+  return player;
+}
 
-  return pool.find((p) => normalizePlayerNameKey(p.name) === key) ?? player;
+/** Un solo registro por `players.id` (evita keys duplicadas en React). */
+export function dedupePlayersById(players: Player[]): Player[] {
+  const byId = new Map<string, Player>();
+
+  const score = (p: Player): number => {
+    let s = 0;
+    const email = p.email?.trim().toLowerCase() ?? "";
+    if (email && !email.endsWith("@padel.local")) s += 10;
+    return s;
+  };
+
+  for (const p of players) {
+    const prev = byId.get(p.id);
+    if (!prev) {
+      byId.set(p.id, p);
+      continue;
+    }
+    if (score(p) > score(prev)) byId.set(p.id, p);
+  }
+
+  return Array.from(byId.values());
 }
 
 /** Evita dos parejas compartiendo el mismo jugador (p. ej. Carlos Co vs Carlos R). */
 export function dedupeParejaDraftsByPlayerName(
-  pairs: { id: string; jugador1: Player; jugador2: Player }[]
+  pairs: { id: string; jugador1: Player; jugador2: Player }[],
+  preferPairIds: string[] = []
 ): typeof pairs {
+  return splitParejaDraftsByPlayerName(pairs, preferPairIds).kept;
+}
+
+export function splitParejaDraftsByPlayerName(
+  pairs: { id: string; jugador1: Player; jugador2: Player }[],
+  preferPairIds: string[] = []
+): { kept: typeof pairs; droppedIds: string[] } {
+  const prefer = new Set(preferPairIds.filter(Boolean));
   const used = new Set<string>();
   const kept: typeof pairs = [];
+  const droppedIds: string[] = [];
 
-  for (let i = pairs.length - 1; i >= 0; i--) {
-    const p = pairs[i];
+  const sorted = [...pairs].sort((a, b) => {
+    const ap = prefer.has(a.id) ? 1 : 0;
+    const bp = prefer.has(b.id) ? 1 : 0;
+    return bp - ap;
+  });
+
+  for (let i = sorted.length - 1; i >= 0; i--) {
+    const p = sorted[i];
     const k1 = normalizePlayerNameKey(p.jugador1.name);
     const k2 = normalizePlayerNameKey(p.jugador2.name);
-    if (!k1 || !k2 || k1 === k2) continue;
-    if (used.has(k1) || used.has(k2)) continue;
+    if (!k1 || !k2 || k1 === k2) {
+      droppedIds.push(p.id);
+      continue;
+    }
+    if (used.has(k1) || used.has(k2)) {
+      droppedIds.push(p.id);
+      continue;
+    }
     used.add(k1);
     used.add(k2);
     kept.unshift(p);
   }
 
-  return kept;
+  return { kept, droppedIds };
 }
 
 export function playerNameKeysInPairs(

@@ -14,6 +14,7 @@ import {
   createTorneoExpressWithGroups,
   fetchPairsForTournament,
   formatSupabaseError,
+  pruneDraftPairsForTournament,
 } from "../../services/torneoExpressService";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import { ArmarParejasPicker } from "./ArmarParejasPicker";
@@ -27,8 +28,10 @@ import {
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
 import {
   dedupeParejaDraftsByPlayerName,
+  dedupePlayersById,
   normalizePlayerNameKey,
   resolvePlayerInPool,
+  splitParejaDraftsByPlayerName,
 } from "../../lib/rivieraJugadores/playerNameKey";
 import { playerNeedsEmailContact } from "../../services/torneoExpressNotificacionesService";
 import { Button } from "../ui";
@@ -70,7 +73,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   }, [parejas, jugadores]);
 
   const jugadoresPool = useMemo(
-    () => dedupeLegacyPlayersByName(jugadores),
+    () => dedupeLegacyPlayersByName(dedupePlayersById(jugadores)),
     [jugadores]
   );
 
@@ -86,7 +89,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
   const handleJugadoresChange = useCallback(
     (list: Player[]) => {
-      const deduped = dedupeLegacyPlayersByName(list);
+      const deduped = dedupeLegacyPlayersByName(dedupePlayersById(list));
       setJugadores(deduped);
       syncParejasFromPlayers(deduped);
     },
@@ -141,7 +144,19 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
           }
         }
       }
-      setParejas(dedupeParejaDraftsByPlayerName(drafts));
+      const preferIds = drafts.map((d) => d.id);
+      const { kept, droppedIds } = splitParejaDraftsByPlayerName(
+        drafts,
+        preferIds
+      );
+      for (const id of droppedIds) {
+        try {
+          await deletePair(id);
+        } catch {
+          /* fila ya eliminada */
+        }
+      }
+      setParejas(kept);
     },
     []
   );
@@ -341,11 +356,15 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     setSubmitting(true);
     setError(null);
     try {
+      const keepIds = parejas.map((p) => p.id);
+      await pruneDraftPairsForTournament(draftTournamentId, keepIds);
+
       const torneoId = await createTorneoExpressWithGroups({
         nombre: nombre.trim(),
         categoria: categoria.trim() || null,
         sourceTournamentId: draftTournamentId,
         grupos: assignments,
+        keepPairIds: keepIds,
       });
       sessionStorage.removeItem(TE_DRAFT_TOURNAMENT_KEY);
       onTorneoCreated?.();

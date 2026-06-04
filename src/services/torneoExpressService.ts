@@ -33,8 +33,9 @@ import type {
   TorneoExpressPartido,
 } from "../lib/torneoExpress/types";
 import type { Pair } from "../lib/database";
-import { updatePair } from "../lib/database";
-import { normalizePlayerNameKey } from "../lib/rivieraJugadores/playerNameKey";
+import { deletePair, updatePair } from "../lib/database";
+import { splitParejaDraftsByPlayerName } from "../lib/rivieraJugadores/playerNameKey";
+import type { Player } from "../lib/db/types";
 
 const readClient = supabasePublicRead;
 
@@ -403,6 +404,56 @@ export async function fetchPairsForTournament(
   return (data ?? []) as Pair[];
 }
 
+/**
+ * Borra parejas huérfanas del borrador y duplicados por jugador (nombre).
+ * La UI (`keepPairIds`) es la fuente de verdad al crear el torneo.
+ */
+export async function pruneDraftPairsForTournament(
+  tournamentId: string,
+  keepPairIds: string[] = []
+): Promise<Pair[]> {
+  const keep = new Set(keepPairIds.filter(Boolean));
+  let rows = await fetchPairsForTournament(tournamentId);
+  await syncPairsNamesFromPlayers(rows);
+
+  for (const row of rows) {
+    if (keep.size > 0 && !keep.has(row.id)) {
+      await deletePair(row.id);
+    }
+  }
+
+  rows = await fetchPairsForTournament(tournamentId);
+  await syncPairsNamesFromPlayers(rows);
+
+  const drafts = rows.map((row) => ({
+    id: row.id,
+    jugador1: {
+      id: row.player1_id,
+      name: row.player1_name,
+      email: "",
+      created_at: row.created_at,
+    } as Player,
+    jugador2: {
+      id: row.player2_id,
+      name: row.player2_name,
+      email: "",
+      created_at: row.created_at,
+    } as Player,
+  }));
+
+  const { droppedIds } = splitParejaDraftsByPlayerName(
+    drafts,
+    Array.from(keep)
+  );
+  for (const id of droppedIds) {
+    await deletePair(id);
+  }
+
+  const final = await fetchPairsForTournament(tournamentId);
+  await syncPairsNamesFromPlayers(final);
+  return final;
+}
+
 export async function fetchPairLabelsByIds(
   pairIds: string[],
   client = supabase
@@ -692,26 +743,20 @@ export async function createTorneoExpressWithGroups(input: {
   categoria?: string | null;
   sourceTournamentId: string;
   grupos: GrupoAssignmentDraft[];
+  /** Parejas visibles en la UI; borra huérfanas del borrador en `pairs`. */
+  keepPairIds?: string[];
 }): Promise<string> {
   const user = await requireAuthUser();
   const organizador_id = user.id;
 
-  const pairsFromDb = await fetchPairsForTournament(input.sourceTournamentId);
-  await syncPairsNamesFromPlayers(pairsFromDb);
-
-  const usedPlayerKeys = new Set<string>();
-  for (const p of pairsFromDb) {
-    const k1 = normalizePlayerNameKey(p.player1_name);
-    const k2 = normalizePlayerNameKey(p.player2_name);
-    if (!k1 || !k2) continue;
-    if (usedPlayerKeys.has(k1) || usedPlayerKeys.has(k2)) {
-      throw new Error(
-        `Hay parejas duplicadas o jugadores repetidos en el borrador (revisa «${p.player1_name} / ${p.player2_name}»). Elimina parejas viejas y vuelve a armarlas.`
-      );
-    }
-    usedPlayerKeys.add(k1);
-    usedPlayerKeys.add(k2);
-  }
+  const keepPairIds =
+    input.keepPairIds?.length
+      ? input.keepPairIds
+      : input.grupos.flatMap((g) => g.parejaIds);
+  const pairsFromDb = await pruneDraftPairsForTournament(
+    input.sourceTournamentId,
+    keepPairIds
+  );
 
   if (pairsFromDb.length === 0) {
     throw new Error(
