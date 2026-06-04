@@ -52,6 +52,20 @@ function metaStr(meta: Record<string, unknown>, key: string): string | undefined
   return typeof v === "string" && v.trim() ? v.trim() : undefined;
 }
 
+/** Ajustes de puntos hechos por el organizador (no se muestran en fichas/historial). */
+export function isParticipacionAjusteManual(row: JugadorParticipacion): boolean {
+  const meta = (row.metadata ?? {}) as Record<string, unknown>;
+  if (meta.subtipo === "ajuste_manual") return true;
+  const nombre = row.evento_nombre?.trim() ?? "";
+  return nombre.startsWith("Ajuste manual");
+}
+
+export function filterParticipacionesHistorialVisible(
+  rows: JugadorParticipacion[]
+): JugadorParticipacion[] {
+  return rows.filter((p) => !isParticipacionAjusteManual(p));
+}
+
 function metaNum(meta: Record<string, unknown>, key: string): number | undefined {
   const v = meta[key];
   if (typeof v === "number" && !Number.isNaN(v)) return v;
@@ -317,7 +331,7 @@ export function computePublicProfileStats(
   let victorias = 0;
   let derrotas = 0;
 
-  for (const p of participaciones) {
+  for (const p of filterParticipacionesHistorialVisible(participaciones)) {
     if (p.tipo_evento === "reta") retas += 1;
     else if (p.tipo_evento === "torneo_express") torneosExpress += 1;
     else if (p.tipo_evento === "liga") ligas += 1;

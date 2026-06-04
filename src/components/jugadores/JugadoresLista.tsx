@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { useUser } from "../../contexts/UserContext";
 import {
@@ -15,8 +15,14 @@ import {
   listRivieraJugadores,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
+import {
+  rankingPosicionesFromSorted,
+  rankingPuntosJugador,
+} from "../../lib/rivieraJugadores/rankingPosition";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
+import { JugadorAjustePuntosModal } from "./JugadorAjustePuntosModal";
 import { JugadorAvatar } from "./JugadorAvatar";
+import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { navigateJugadorFicha } from "./jugadoresNav";
@@ -31,6 +37,8 @@ export const JugadoresLista: React.FC = () => {
   const [nivelFilter, setNivelFilter] = useState("");
   const [recientes, setRecientes] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [ajusteJugador, setAjusteJugador] =
+    useState<RivieraJugadorWithStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
 
@@ -66,6 +74,19 @@ export const JugadoresLista: React.FC = () => {
     if (!s?.total_partidos) return "—";
     return `${Number(s.pct_victorias).toFixed(0)}%`;
   };
+
+  const { jugadoresOrdenados, rankById } = useMemo(() => {
+    const sorted = [...jugadores].sort((a, b) => {
+      const pa = rankingPuntosJugador(a);
+      const pb = rankingPuntosJugador(b);
+      if (pb !== pa) return pb - pa;
+      return a.nombre.localeCompare(b.nombre, "es");
+    });
+    const ranks = rankingPosicionesFromSorted(sorted);
+    const map = new Map<string, number>();
+    sorted.forEach((j, i) => map.set(j.id, ranks[i] ?? i + 1));
+    return { jugadoresOrdenados: sorted, rankById: map };
+  }, [jugadores]);
 
   return (
     <div className="rj-page">
@@ -177,22 +198,57 @@ export const JugadoresLista: React.FC = () => {
         )}
 
         <div className="rj-grid">
-          {jugadores.map((j) => (
-            <button
-              key={j.id}
-              type="button"
-              className="rj-card"
-              onClick={() => navigateJugadorFicha(j.slug)}
-            >
-              <JugadorAvatar fotoUrl={j.foto_url} nombre={j.nombre} size="md" />
-              <p className="rj-card__name">{j.nombre}</p>
-              <JugadorCategoriaBadge categoria={j.categoria} />
-              <JugadorPerfilMeta jugador={j} variant="card" />
-              <p className="rj-card__stats">
-                {j.stats?.total_partidos ?? 0} partidos · {pct(j)} victorias
-              </p>
-            </button>
-          ))}
+          {jugadoresOrdenados.map((j) => {
+            const pos = rankById.get(j.id) ?? 0;
+            const puntos = rankingPuntosJugador(j);
+            const esPrimero = pos === 1;
+            return (
+              <div key={j.id} className="rj-card-wrap">
+                <button
+                  type="button"
+                  className="rj-card"
+                  onClick={() => navigateJugadorFicha(j.slug)}
+                >
+                  <div className="rj-card__top">
+                    <span
+                      className={`rj-card__rank${
+                        esPrimero ? " rj-card__rank--gold" : ""
+                      }`}
+                    >
+                      {esPrimero ? (
+                        <TablerIcon name="trophy" size={12} />
+                      ) : (
+                        `#${pos}`
+                      )}
+                    </span>
+                    <span className="rj-card__pts">
+                      {puntos.toLocaleString("es-MX")} pts
+                    </span>
+                  </div>
+                  <JugadorAvatar
+                    fotoUrl={j.foto_url}
+                    nombre={j.nombre}
+                    size="md"
+                  />
+                  <p className="rj-card__name">{j.nombre}</p>
+                  <JugadorCategoriaBadge categoria={j.categoria} />
+                  <JugadorPerfilMeta jugador={j} variant="card" />
+                  <p className="rj-card__stats">
+                    {j.stats?.total_partidos ?? 0} partidos · {pct(j)} victorias
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  className="rj-card__edit"
+                  title="Sumar o restar puntos"
+                  aria-label={`Ajustar puntos de ${j.nombre}`}
+                  onClick={() => setAjusteJugador(j)}
+                >
+                  <TablerIcon name="pencil" size={14} aria-hidden={false} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -209,6 +265,16 @@ export const JugadoresLista: React.FC = () => {
           await load();
         }}
       />
+
+      {user?.id && (
+        <JugadorAjustePuntosModal
+          open={ajusteJugador !== null}
+          jugador={ajusteJugador}
+          organizadorId={user.id}
+          onClose={() => setAjusteJugador(null)}
+          onSaved={load}
+        />
+      )}
     </div>
   );
 };

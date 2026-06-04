@@ -7,6 +7,7 @@ import {
 import { getJugadorPerfilMeta } from "../../lib/rivieraJugadores/jugadorPerfilDisplay";
 import {
   computePublicProfileStats,
+  filterParticipacionesHistorialVisible,
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
 import {
@@ -85,7 +86,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
 
   const historialItems = useMemo(
     () =>
-      [...historial]
+      filterParticipacionesHistorialVisible(historial)
         .map((row) =>
           participacionToHistorialItem(row, {
             categoriaFallback: jugador?.categoria,

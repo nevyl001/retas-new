@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import {
+  filterParticipacionesHistorialVisible,
   groupHistorialResumen,
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
@@ -33,12 +34,17 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
   variant = "admin",
   showResumen = true,
 }) => {
+  const visible = useMemo(
+    () => filterParticipacionesHistorialVisible(participaciones),
+    [participaciones]
+  );
+
   const items = useMemo(
     () =>
-      participaciones.map((row) =>
+      visible.map((row) =>
         participacionToHistorialItem(row, { categoriaFallback })
       ),
-    [participaciones, categoriaFallback]
+    [visible, categoriaFallback]
   );
   const resumen = useMemo(() => groupHistorialResumen(items), [items]);
   const rootClass =

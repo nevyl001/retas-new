@@ -390,6 +390,37 @@ export async function registrarParticipacion(
   return data as string;
 }
 
+/** Ajuste manual de puntos de ranking (suma o resta vía participación). */
+export async function adjustRankingPuntosManual(
+  organizadorId: string,
+  jugadorId: string,
+  delta: number,
+  motivo?: string
+): Promise<void> {
+  const n = Math.trunc(delta);
+  if (!n) {
+    throw new Error("Indica cuántos puntos sumar o restar (distinto de cero).");
+  }
+  const sign = n > 0 ? "+" : "";
+  const nota = motivo?.trim();
+  await registrarParticipacion({
+    jugadorId,
+    tipoEvento: "liga",
+    eventoId: crypto.randomUUID(),
+    eventoNombre: nota
+      ? `Ajuste manual (${sign}${n} pts): ${nota}`
+      : `Ajuste manual (${sign}${n} pts)`,
+    resultado: "participación",
+    puntosObtenidos: n,
+    metadata: {
+      subtipo: "ajuste_manual",
+      delta: n,
+      motivo: nota || null,
+      organizador_id: organizadorId,
+    },
+  });
+}
+
 export async function getRivieraJugadorPublicBySlug(
   slug: string,
   organizadorId?: string | null
