@@ -443,15 +443,15 @@ export async function listPublicJugadoresRanking(
   });
 }
 
-/** Posición # en el ranking público de su categoría (1 = primero). */
+/** Posición # en el ranking público (empates comparten número). */
 export async function getRankingPosicionEnCategoria(
   organizadorId: string,
   jugadorId: string,
   categoria: string
 ): Promise<number | null> {
+  const { rankingPosicionEnLista } = await import("./rankingPosition");
   const list = await listPublicJugadoresRanking(organizadorId, categoria);
-  const idx = list.findIndex((j) => j.id === jugadorId);
-  return idx >= 0 ? idx + 1 : null;
+  return rankingPosicionEnLista(list, jugadorId);
 }
 
 export async function searchRivieraJugadoresQuick(

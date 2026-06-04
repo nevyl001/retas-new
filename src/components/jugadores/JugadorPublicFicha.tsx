@@ -95,10 +95,15 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
     [historial, jugador?.categoria]
   );
 
-  const profileStats = useMemo(
-    () => computePublicProfileStats(historial),
-    [historial]
-  );
+  const profileStats = useMemo(() => {
+    const fromHist = computePublicProfileStats(historial);
+    const teStats = jugador?.stats?.total_torneos_express ?? 0;
+    return {
+      ...fromHist,
+      torneosExpress: Math.max(fromHist.torneosExpress, teStats),
+      retas: Math.max(fromHist.retas, jugador?.stats?.total_retas ?? 0),
+    };
+  }, [historial, jugador?.stats?.total_torneos_express, jugador?.stats?.total_retas]);
 
   const recentActivity = useMemo(() => historialItems.slice(0, 3), [historialItems]);
 
@@ -269,7 +274,8 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
           </div>
 
           <JugadorPublicFichaAside
-            torneos={profileStats.torneos}
+            retas={profileStats.retas}
+            torneosExpress={profileStats.torneosExpress}
             victorias={profileStats.victorias}
             winRate={profileStats.winRate}
             recent={recentActivity}

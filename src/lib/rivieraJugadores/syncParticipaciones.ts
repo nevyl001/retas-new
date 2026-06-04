@@ -538,8 +538,8 @@ async function syncRetaParticipacionesInner(params: {
   );
 
   const esEquipos = tournament.format === "teams";
-  const modalidad = esEquipos ? "reta_equipos" : "torneo";
-  const modalidadLabel = esEquipos ? "Reta por equipos" : "Torneo";
+  const modalidad = esEquipos ? "reta_equipos" : "round_robin";
+  const modalidadLabel = esEquipos ? "Reta por equipos" : "Reta";
 
   let winningTeamIndex: number | null = null;
   const teamConfig = esEquipos ? getTeamConfigFromStorage(tournament.id) : null;
@@ -579,12 +579,19 @@ async function syncRetaParticipacionesInner(params: {
       .eq("id", jugadorId)
       .maybeSingle();
 
+    let resultadoReta = resultadoFromRecord(st.wins, st.losses, st.draws);
+    if (!esEquipos && rank?.pos === 1) {
+      resultadoReta = "victoria";
+    } else if (esEquipos && equipoGanador) {
+      resultadoReta = "victoria";
+    }
+
     await registrarPuntosRanking({
       jugadorId,
       tipoEvento: "reta",
       eventoId: tournament.id,
       eventoNombre: tournament.name,
-      resultado: resultadoFromRecord(st.wins, st.losses, st.draws),
+      resultado: resultadoReta,
       formato: formatoRanking,
       calcParams: esEquipos
         ? { equipo_ganador: equipoGanador }

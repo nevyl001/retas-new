@@ -76,13 +76,9 @@ export function formatLugarOrdinal(pos: number, total?: number): string {
   return `${pos}º lugar`;
 }
 
-function isTorneoRoundRobin(meta: Record<string, unknown>): boolean {
-  const explicit = metaStr(meta, "modalidad");
-  if (explicit === "torneo" || explicit === "round_robin") return true;
-  const label = (metaStr(meta, "modalidad_label") ?? "").toLowerCase();
-  if (label === "torneo" || label.includes("round robin")) return true;
-  const fmt = metaStr(meta, "formato");
-  return fmt === "round_robin";
+/** Reta cerrada en app (tournaments), distinto de Torneo Express. */
+function isRetaParticipacion(row: JugadorParticipacion): boolean {
+  return row.tipo_evento === "reta";
 }
 
 export function resolveModalidadFromParticipacion(
@@ -90,43 +86,38 @@ export function resolveModalidadFromParticipacion(
 ): { id: HistorialModalidadId; label: string } {
   const meta = row.metadata ?? {};
   const explicit = metaStr(meta, "modalidad");
-  if (explicit === "torneo" || explicit === "round_robin") {
-    return { id: "torneo", label: "Torneo" };
-  }
-  if (explicit === "reta_equipos" || explicit === "teams") {
-    return { id: "reta_equipos", label: "Reta por equipos" };
-  }
-  if (explicit === "dual_meet") {
-    return { id: "dual_meet", label: "Dual Meet" };
-  }
-  const label = metaStr(meta, "modalidad_label");
-  if (label) {
-    const normalized = label.toLowerCase();
-    if (normalized === "torneo" || normalized.includes("round robin")) {
-      return { id: "torneo", label: "Torneo" };
-    }
-    const id = (explicit as HistorialModalidadId) || inferIdFromLabel(label);
-    return { id, label };
-  }
 
+  if (row.tipo_evento === "torneo_express") {
+    return { id: "torneo_express", label: "Torneos" };
+  }
   if (row.tipo_evento === "americano") {
     return { id: "americano", label: "Pádel Americano" };
   }
   if (row.tipo_evento === "liga") {
     return { id: "liga", label: "Liga" };
   }
-  if (row.tipo_evento === "torneo_express") {
-    return { id: "torneo_express", label: "Torneo Express" };
-  }
-  if (row.tipo_evento === "reta") {
-    const fmt = metaStr(meta, "formato");
-    if (fmt === "teams" || fmt === "reta_equipos") {
+  if (isRetaParticipacion(row)) {
+    if (
+      explicit === "reta_equipos" ||
+      explicit === "teams" ||
+      metaStr(meta, "formato") === "teams"
+    ) {
       return { id: "reta_equipos", label: "Reta por equipos" };
     }
-    if (isTorneoRoundRobin(meta)) {
-      return { id: "torneo", label: "Torneo" };
+    const fmt = metaStr(meta, "formato");
+    if (fmt === "round_robin" || explicit === "round_robin") {
+      return { id: "round_robin", label: TIPO_EVENTO_LABELS.reta };
     }
     return { id: "reta", label: TIPO_EVENTO_LABELS.reta };
+  }
+
+  if (explicit === "reta_equipos" || explicit === "teams") {
+    return { id: "reta_equipos", label: "Reta por equipos" };
+  }
+  const label = metaStr(meta, "modalidad_label");
+  if (label) {
+    const id = (explicit as HistorialModalidadId) || inferIdFromLabel(label);
+    return { id, label };
   }
 
   return { id: "reta", label: TIPO_EVENTO_LABELS.reta };
@@ -136,12 +127,48 @@ function inferIdFromLabel(label: string): HistorialModalidadId {
   const l = label.toLowerCase();
   if (l.includes("americano")) return "americano";
   if (l.includes("liga")) return "liga";
-  if (l.includes("express")) return "torneo_express";
-  if (l.includes("round")) return "torneo";
-  if (l === "torneo") return "torneo";
+  if (l.includes("express") || l === "torneos") return "torneo_express";
+  if (l.includes("round")) return "round_robin";
   if (l.includes("dual")) return "dual_meet";
   if (l.includes("equipo")) return "reta_equipos";
+  if (l.includes("reta")) return "reta";
   return "reta";
+}
+
+/** Victoria en el evento (incluye 1.er lugar aunque resultado sea participación). */
+export function participacionCuentaComoVictoria(
+  row: JugadorParticipacion
+): boolean {
+  if (row.resultado === "victoria") return true;
+  if (row.resultado === "derrota") return false;
+
+  const meta = row.metadata ?? {};
+  if (meta.placement === "campeon" || meta.campeon_torneo === true) return true;
+
+  const pos =
+    metaNum(meta, "posicion") ??
+    metaNum(meta, "posicion_final") ??
+    metaNum(meta, "posicion_jornada");
+  if (pos === 1) return true;
+
+  const lugar = (metaStr(meta, "lugar") ?? resolveLugarLabel(row)).toLowerCase();
+  if (lugar === "campeón" || lugar.startsWith("1er")) return true;
+
+  return false;
+}
+
+export function participacionCuentaComoDerrota(
+  row: JugadorParticipacion
+): boolean {
+  if (row.resultado === "derrota") return true;
+  if (participacionCuentaComoVictoria(row)) return false;
+
+  const meta = row.metadata ?? {};
+  const pos =
+    metaNum(meta, "posicion") ?? metaNum(meta, "posicion_final");
+  if (pos != null && pos > 1) return true;
+
+  return false;
 }
 
 function resolveCategoriaLabel(
@@ -228,6 +255,12 @@ export function participacionToHistorialItem(
 
   const detalleParts: string[] = [];
   if (categoriaLabel) detalleParts.push(categoriaLabel);
+  if (
+    row.tipo_evento === "reta" &&
+    metaStr(meta, "formato") === "round_robin"
+  ) {
+    detalleParts.push("Round Robin");
+  }
   if (row.pareja_con) detalleParts.push(`Pareja: ${row.pareja_con}`);
   if (row.tipo_evento === "liga" && ligaNombre) {
     detalleParts.push(
@@ -252,10 +285,12 @@ export function participacionToHistorialItem(
     balanceLabel,
     puntos: row.puntos_obtenidos > 0 ? row.puntos_obtenidos : undefined,
     esCampeon:
-      lugarLabel === "Campeón" ||
-      meta.placement === "campeon" ||
-      meta.campeon_torneo === true ||
-      metaStr(meta, "placement") === "campeon",
+      participacionCuentaComoVictoria(row) &&
+      (lugarLabel === "Campeón" ||
+        lugarLabel.startsWith("1er") ||
+        meta.placement === "campeon" ||
+        meta.campeon_torneo === true ||
+        metaStr(meta, "placement") === "campeon"),
     esSubcampeon:
       lugarLabel === "Subcampeón" ||
       meta.placement === "subcampeon" ||
@@ -268,21 +303,42 @@ export function participacionToHistorialItem(
 export function computePublicProfileStats(
   participaciones: JugadorParticipacion[]
 ): {
-  torneos: number;
+  retas: number;
+  torneosExpress: number;
+  ligas: number;
+  americanos: number;
   victorias: number;
   winRate: number | null;
 } {
+  let retas = 0;
+  let torneosExpress = 0;
+  let ligas = 0;
+  let americanos = 0;
   let victorias = 0;
   let derrotas = 0;
+
   for (const p of participaciones) {
-    if (p.resultado === "victoria") victorias += 1;
-    else if (p.resultado === "derrota") derrotas += 1;
+    if (p.tipo_evento === "reta") retas += 1;
+    else if (p.tipo_evento === "torneo_express") torneosExpress += 1;
+    else if (p.tipo_evento === "liga") ligas += 1;
+    else if (p.tipo_evento === "americano") americanos += 1;
+
+    if (participacionCuentaComoVictoria(p)) victorias += 1;
+    else if (participacionCuentaComoDerrota(p)) derrotas += 1;
   }
-  const decided = victorias + derrotas;
-  const winRate =
-    decided > 0 ? Math.round((victorias / decided) * 100) : null;
+
+  let winRate: number | null = null;
+  if (victorias > 0 && derrotas === 0) {
+    winRate = 100;
+  } else if (victorias + derrotas > 0) {
+    winRate = Math.round((victorias / (victorias + derrotas)) * 100);
+  }
+
   return {
-    torneos: participaciones.length,
+    retas,
+    torneosExpress,
+    ligas,
+    americanos,
     victorias,
     winRate,
   };

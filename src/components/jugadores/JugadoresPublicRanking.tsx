@@ -5,6 +5,7 @@ import {
   JUGADOR_CATEGORIA_SHORT_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
+import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
 import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import {
   getPublicOrganizadorIdWithoutUser,
@@ -81,6 +82,11 @@ export const JugadoresPublicRanking: React.FC = () => {
     void load();
   }, [load]);
 
+  const rankingPositions = React.useMemo(
+    () => rankingPosicionesFromSorted(jugadores),
+    [jugadores]
+  );
+
   const metaLine = loading
     ? "Cargando ranking…"
     : `${jugadores.length} jugador${jugadores.length === 1 ? "" : "es"} · ${JUGADOR_CATEGORIA_LABELS[categoria]}`;
@@ -142,12 +148,15 @@ export const JugadoresPublicRanking: React.FC = () => {
 
             {!error && jugadores.length > 0 && (
               <ul className="rjp-ranking-list">
-                {jugadores.map((j, idx) => (
+                {jugadores.map((j, idx) => {
+                  const pos = rankingPositions[idx] ?? idx + 1;
+                  const esPrimero = pos === 1;
+                  return (
                   <li key={j.id}>
                     <button
                       type="button"
                       className={`rjp-ranking-card${
-                        idx === 0 ? " rjp-ranking-card--first" : ""
+                        esPrimero ? " rjp-ranking-card--first" : ""
                       }`}
                       onClick={() =>
                         navigatePublicJugadorFicha(j.slug, orgId ?? undefined)
@@ -155,13 +164,13 @@ export const JugadoresPublicRanking: React.FC = () => {
                     >
                       <span
                         className={`rjp-ranking-card__rank${
-                          idx === 0 ? " rjp-ranking-card__rank--gold" : ""
+                          esPrimero ? " rjp-ranking-card__rank--gold" : ""
                         }`}
                       >
-                        {idx === 0 ? (
+                        {esPrimero ? (
                           <TablerIcon name="trophy" size={14} />
                         ) : (
-                          `#${idx + 1}`
+                          `#${pos}`
                         )}
                       </span>
                       <JugadorAvatar
@@ -183,7 +192,8 @@ export const JugadoresPublicRanking: React.FC = () => {
                       />
                     </button>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             )}
           </div>

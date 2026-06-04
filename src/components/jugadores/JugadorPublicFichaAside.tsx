@@ -14,28 +14,51 @@ function formatFechaCorta(iso: string): string {
 }
 
 interface JugadorPublicFichaAsideProps {
-  torneos: number;
+  retas: number;
+  torneosExpress: number;
   victorias: number;
   winRate: number | null;
   recent: HistorialItemView[];
 }
 
 export const JugadorPublicFichaAside: React.FC<JugadorPublicFichaAsideProps> = ({
-  torneos,
+  retas,
+  torneosExpress,
   victorias,
   winRate,
   recent,
 }) => {
-  const sinDatos = torneos === 0;
+  const sinDatos = retas === 0 && torneosExpress === 0;
 
   return (
     <aside className="rjp-ficha-aside" aria-label="Resumen y actividad">
       <div className="rjp-ficha-aside__kpis">
         <div className="rjp-ficha-kpi">
-          <span className="rjp-ficha-kpi__lbl">Torneos</span>
-          <span className="rjp-ficha-kpi__val">{torneos}</span>
+          <span className="rjp-ficha-kpi__lbl">Retas</span>
+          <span
+            className={`rjp-ficha-kpi__val${
+              retas === 0 ? " rjp-ficha-kpi__val--empty" : ""
+            }`}
+          >
+            {retas}
+          </span>
           <span className="rjp-ficha-kpi__hint">
-            {sinDatos ? "Sin registros" : "Participaciones"}
+            {retas === 0 ? "Sin retas aún" : "Participaciones"}
+          </span>
+        </div>
+        <div className="rjp-ficha-kpi rjp-ficha-kpi--torneo">
+          <span className="rjp-ficha-kpi__lbl">Torneos</span>
+          <span
+            className={`rjp-ficha-kpi__val${
+              torneosExpress === 0 ? " rjp-ficha-kpi__val--empty" : ""
+            }`}
+          >
+            {torneosExpress}
+          </span>
+          <span className="rjp-ficha-kpi__hint">
+            {torneosExpress === 0
+              ? "Se registra al finalizar"
+              : "Participaciones"}
           </span>
         </div>
         <div className="rjp-ficha-kpi">

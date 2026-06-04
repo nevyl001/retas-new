@@ -41,6 +41,8 @@ export const JugadorRedesPublicas: React.FC<JugadorRedesPublicasProps> = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rjp-ficha-social__btn"
+                aria-label={r.label}
+                title={r.label}
               >
                 <span
                   className={[
@@ -48,9 +50,8 @@ export const JugadorRedesPublicas: React.FC<JugadorRedesPublicasProps> = ({
                     cfg.chipClass,
                   ].join(" ")}
                 >
-                  <TablerIcon name={cfg.icon} size={15} />
+                  <TablerIcon name={cfg.icon} size={18} />
                 </span>
-                <span className="rjp-ficha-social__label">{r.label}</span>
               </a>
             </li>
           );
