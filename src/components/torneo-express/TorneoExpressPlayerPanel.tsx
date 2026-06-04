@@ -151,7 +151,7 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
         base = await createPlayer(nombre, userId);
       }
 
-      const updated = await updatePlayerNotificationContact(
+      await updatePlayerNotificationContact(
         base.id,
         {
           email,
