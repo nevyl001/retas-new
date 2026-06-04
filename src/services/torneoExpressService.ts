@@ -33,6 +33,8 @@ import type {
   TorneoExpressPartido,
 } from "../lib/torneoExpress/types";
 import type { Pair } from "../lib/database";
+import { updatePair } from "../lib/database";
+import { normalizePlayerNameKey } from "../lib/rivieraJugadores/playerNameKey";
 
 const readClient = supabasePublicRead;
 
@@ -75,10 +77,61 @@ async function requireAuthUser() {
   return user;
 }
 
-function pairLabelFromRow(p: Pair): string {
-  const n1 = p.player1_name || "Jugador 1";
-  const n2 = p.player2_name || "Jugador 2";
+async function fetchPlayerNamesByIds(
+  playerIds: string[],
+  client = supabase
+): Promise<Map<string, string>> {
+  const unique = Array.from(new Set(playerIds.filter(Boolean)));
+  const map = new Map<string, string>();
+  if (!unique.length) return map;
+
+  const { data, error } = await client
+    .from("players")
+    .select("id, name")
+    .in("id", unique);
+  if (error) {
+    console.warn("[torneoExpress] fetchPlayerNamesByIds:", error.message);
+    return map;
+  }
+  for (const row of data ?? []) {
+    const r = row as { id: string; name: string };
+    if (r.id && r.name) map.set(r.id, r.name.trim());
+  }
+  return map;
+}
+
+function pairLabelFromRow(p: Pair, playerNames: Map<string, string>): string {
+  const n1 =
+    playerNames.get(p.player1_id) ?? p.player1_name?.trim() ?? "Jugador 1";
+  const n2 =
+    playerNames.get(p.player2_id) ?? p.player2_name?.trim() ?? "Jugador 2";
   return formatPairDisplay(n1, n2);
+}
+
+/** Sincroniza player1_name / player2_name desde la tabla players (evita Carlos Co vs Carlos R). */
+async function syncPairsNamesFromPlayers(
+  pairs: Pair[],
+  client = supabase
+): Promise<void> {
+  const playerIds = pairs.flatMap((p) => [p.player1_id, p.player2_id]);
+  const names = await fetchPlayerNamesByIds(playerIds, client);
+
+  for (const p of pairs) {
+    const n1 = names.get(p.player1_id);
+    const n2 = names.get(p.player2_id);
+    if (!n1 || !n2) continue;
+    if (p.player1_name === n1 && p.player2_name === n2) continue;
+    try {
+      await updatePair(p.id, {
+        player1_name: n1,
+        player2_name: n2,
+      });
+      p.player1_name = n1;
+      p.player2_name = n2;
+    } catch (e) {
+      console.warn("[torneoExpress] syncPairsNamesFromPlayers:", p.id, e);
+    }
+  }
 }
 
 function enrichParejasWithLabels(
@@ -369,7 +422,12 @@ export async function fetchPairLabelsByIds(
     );
     return map;
   }
-  (data as Pair[]).forEach((p) => map.set(p.id, pairLabelFromRow(p)));
+  const pairs = (data ?? []) as Pair[];
+  const names = await fetchPlayerNamesByIds(
+    pairs.flatMap((p) => [p.player1_id, p.player2_id]),
+    client
+  );
+  pairs.forEach((p) => map.set(p.id, pairLabelFromRow(p, names)));
   return map;
 }
 
@@ -639,6 +697,22 @@ export async function createTorneoExpressWithGroups(input: {
   const organizador_id = user.id;
 
   const pairsFromDb = await fetchPairsForTournament(input.sourceTournamentId);
+  await syncPairsNamesFromPlayers(pairsFromDb);
+
+  const usedPlayerKeys = new Set<string>();
+  for (const p of pairsFromDb) {
+    const k1 = normalizePlayerNameKey(p.player1_name);
+    const k2 = normalizePlayerNameKey(p.player2_name);
+    if (!k1 || !k2) continue;
+    if (usedPlayerKeys.has(k1) || usedPlayerKeys.has(k2)) {
+      throw new Error(
+        `Hay parejas duplicadas o jugadores repetidos en el borrador (revisa «${p.player1_name} / ${p.player2_name}»). Elimina parejas viejas y vuelve a armarlas.`
+      );
+    }
+    usedPlayerKeys.add(k1);
+    usedPlayerKeys.add(k2);
+  }
+
   if (pairsFromDb.length === 0) {
     throw new Error(
       "La reta no tiene parejas en la tabla pairs. Crea parejas antes de continuar."

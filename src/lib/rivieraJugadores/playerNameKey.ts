@@ -59,6 +59,27 @@ export function resolvePlayerInPool(player: Player, pool: Player[]): Player {
   return pool.find((p) => normalizePlayerNameKey(p.name) === key) ?? player;
 }
 
+/** Evita dos parejas compartiendo el mismo jugador (p. ej. Carlos Co vs Carlos R). */
+export function dedupeParejaDraftsByPlayerName(
+  pairs: { id: string; jugador1: Player; jugador2: Player }[]
+): typeof pairs {
+  const used = new Set<string>();
+  const kept: typeof pairs = [];
+
+  for (let i = pairs.length - 1; i >= 0; i--) {
+    const p = pairs[i];
+    const k1 = normalizePlayerNameKey(p.jugador1.name);
+    const k2 = normalizePlayerNameKey(p.jugador2.name);
+    if (!k1 || !k2 || k1 === k2) continue;
+    if (used.has(k1) || used.has(k2)) continue;
+    used.add(k1);
+    used.add(k2);
+    kept.unshift(p);
+  }
+
+  return kept;
+}
+
 export function playerNameKeysInPairs(
   pairs: { jugador1: Player; jugador2: Player }[]
 ): Set<string> {

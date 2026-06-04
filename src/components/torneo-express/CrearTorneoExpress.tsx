@@ -26,6 +26,7 @@ import {
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
 import {
+  dedupeParejaDraftsByPlayerName,
   normalizePlayerNameKey,
   resolvePlayerInPool,
 } from "../../lib/rivieraJugadores/playerNameKey";
@@ -140,7 +141,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
           }
         }
       }
-      setParejas(drafts);
+      setParejas(dedupeParejaDraftsByPlayerName(drafts));
     },
     []
   );
@@ -256,10 +257,20 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         j2.id,
         user.id
       );
-      setParejas((prev) => [
-        ...prev,
-        { id: pair.id, jugador1: j1, jugador2: j2 },
-      ]);
+      await updatePair(pair.id, {
+        player1_name: j1.name.trim(),
+        player2_name: j2.name.trim(),
+      });
+      setParejas((prev) =>
+        dedupeParejaDraftsByPlayerName([
+          ...prev,
+          {
+            id: pair.id,
+            jugador1: { ...j1, name: j1.name.trim() },
+            jugador2: { ...j2, name: j2.name.trim() },
+          },
+        ])
+      );
     } catch (err) {
       setError(formatSupabaseError(err));
     } finally {

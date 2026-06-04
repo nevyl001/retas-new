@@ -79,6 +79,7 @@ function pickBestLegacyMatch(
 
   const nameKey = normalizeName(rj.nombre);
   let pool = candidates.filter((p) => normalizeName(p.name) === nameKey);
+  if (!pool.length) return null;
 
   if (isRealEmail(rj.email)) {
     const emailKey = rj.email!.trim().toLowerCase();
@@ -99,18 +100,26 @@ function pickBestLegacyMatch(
   return scored[0]?.p ?? null;
 }
 
+function legacyMatchesRivieraName(legacy: Player, rj: RivieraJugador): boolean {
+  return normalizeName(legacy.name) === normalizeName(rj.nombre);
+}
+
 async function findLegacyPlayerForRiviera(
   organizadorId: string,
   rj: RivieraJugador
 ): Promise<Player | null> {
   if (rj.legacy_player_id) {
     const linked = await fetchPlayerById(rj.legacy_player_id);
-    if (linked) return linked;
+    if (linked && legacyMatchesRivieraName(linked, rj)) {
+      return linked;
+    }
   }
 
   const globalByName = await searchLegacyPlayersByName(rj.nombre);
   const globalMatch = pickBestLegacyMatch(globalByName, organizadorId, rj);
-  if (globalMatch) return globalMatch;
+  if (globalMatch && legacyMatchesRivieraName(globalMatch, rj)) {
+    return globalMatch;
+  }
 
   return null;
 }
