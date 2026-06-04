@@ -6,7 +6,6 @@ import {
   labelRondaEliminatoria,
   maxRondaActual,
   partidosDeRonda,
-  rondaCompleta,
   RONDA_TERCER_LUGAR,
   totalRondasEliminatoria,
 } from "./bracketRounds";
