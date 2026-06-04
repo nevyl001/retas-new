@@ -16,6 +16,8 @@ import {
   formatSupabaseError,
 } from "../../services/torneoExpressService";
 import { navigateTorneoExpress } from "./torneoExpressNav";
+import { ArmarParejasPicker } from "./ArmarParejasPicker";
+import { AsignarParejasGrupos } from "./AsignarParejasGrupos";
 import { TorneoExpressPlayerPanel } from "./TorneoExpressPlayerPanel";
 import {
   ParejaDraft,
@@ -24,15 +26,10 @@ import {
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
 import {
-  dedupePlayersForSelect,
   normalizePlayerNameKey,
-  playerNameKeysInPairs,
   resolvePlayerInPool,
 } from "../../lib/rivieraJugadores/playerNameKey";
-import {
-  playerHasNotifiableEmail,
-  playerNeedsEmailContact,
-} from "../../services/torneoExpressNotificacionesService";
+import { playerNeedsEmailContact } from "../../services/torneoExpressNotificacionesService";
 import { Button } from "../ui";
 
 type PlayerWithContact = Player & {
@@ -53,8 +50,6 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const [draftTournamentId, setDraftTournamentId] = useState<string | null>(null);
   const [jugadores, setJugadores] = useState<Player[]>([]);
   const [parejas, setParejas] = useState<ParejaDraft[]>([]);
-  const [jugador1Id, setJugador1Id] = useState("");
-  const [jugador2Id, setJugador2Id] = useState("");
   const [assignments, setAssignments] = useState<GrupoAssignmentDraft[]>([]);
   const [initializing, setInitializing] = useState(true);
   const [addingPair, setAddingPair] = useState(false);
@@ -77,21 +72,6 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     () => dedupeLegacyPlayersByName(jugadores),
     [jugadores]
   );
-
-  const nameKeysInPairs = useMemo(
-    () => playerNameKeysInPairs(parejas),
-    [parejas]
-  );
-
-  const jugador1NameKey = useMemo(() => {
-    const j = jugadoresPool.find((x) => x.id === jugador1Id);
-    return j ? normalizePlayerNameKey(j.name) : "";
-  }, [jugadoresPool, jugador1Id]);
-
-  const jugador2NameKey = useMemo(() => {
-    const j = jugadoresPool.find((x) => x.id === jugador2Id);
-    return j ? normalizePlayerNameKey(j.name) : "";
-  }, [jugadoresPool, jugador2Id]);
 
   const syncParejasFromPlayers = useCallback((list: Player[]) => {
     setParejas((prev) =>
@@ -245,65 +225,16 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     return s;
   }, [assignments]);
 
-  const isPlayerAvailableForPair = useCallback(
-    (j: Player, currentSelectId: string, blockNameKey: string) => {
-      const key = normalizePlayerNameKey(j.name);
-      if (blockNameKey && key === blockNameKey) return false;
-      if (currentSelectId && j.id === currentSelectId) return true;
-      return key ? !nameKeysInPairs.has(key) : true;
-    },
-    [nameKeysInPairs]
-  );
-
-  const optionsJ1 = useMemo(() => {
-    const filtered = jugadoresPool.filter((j) =>
-      isPlayerAvailableForPair(j, jugador1Id, jugador2NameKey)
-    );
-    return dedupePlayersForSelect(filtered, [jugador1Id]);
-  }, [
-    jugadoresPool,
-    jugador1Id,
-    jugador2NameKey,
-    isPlayerAvailableForPair,
-  ]);
-
-  const optionsJ2 = useMemo(() => {
-    const filtered = jugadoresPool.filter((j) =>
-      isPlayerAvailableForPair(j, jugador2Id, jugador1NameKey)
-    );
-    return dedupePlayersForSelect(filtered, [jugador2Id]);
-  }, [
-    jugadoresPool,
-    jugador2Id,
-    jugador1NameKey,
-    isPlayerAvailableForPair,
-  ]);
-
-  useEffect(() => {
-    if (jugador1Id && !optionsJ1.some((j) => j.id === jugador1Id)) {
-      setJugador1Id("");
-    }
-    if (jugador2Id && !optionsJ2.some((j) => j.id === jugador2Id)) {
-      setJugador2Id("");
-    }
-  }, [jugador1Id, jugador2Id, optionsJ1, optionsJ2]);
-
-  const agregarPareja = async () => {
+  const formarPareja = async (j1: Player, j2: Player) => {
     if (!user?.id || !draftTournamentId) return;
-    if (!jugador1Id || !jugador2Id) {
-      setError("Selecciona dos jugadores");
-      return;
-    }
-    if (jugador1Id === jugador2Id) {
-      setError("Los jugadores de una pareja deben ser distintos");
-      return;
-    }
-    const j1 = jugadoresPool.find((j) => j.id === jugador1Id);
-    const j2 = jugadoresPool.find((j) => j.id === jugador2Id);
-    if (!j1 || !j2) return;
 
     const k1 = normalizePlayerNameKey(j1.name);
     const k2 = normalizePlayerNameKey(j2.name);
+    if (!k1 || !k2 || k1 === k2) {
+      setError("Elige dos jugadores distintos");
+      return;
+    }
+
     const yaEnPareja = parejas.some((p) => {
       const p1 = normalizePlayerNameKey(p.jugador1.name);
       const p2 = normalizePlayerNameKey(p.jugador2.name);
@@ -321,20 +252,14 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     try {
       const pair = await createPair(
         draftTournamentId,
-        jugador1Id,
-        jugador2Id,
+        j1.id,
+        j2.id,
         user.id
       );
       setParejas((prev) => [
         ...prev,
-        {
-          id: pair.id,
-          jugador1: j1,
-          jugador2: j2,
-        },
+        { id: pair.id, jugador1: j1, jugador2: j2 },
       ]);
-      setJugador1Id("");
-      setJugador2Id("");
     } catch (err) {
       setError(formatSupabaseError(err));
     } finally {
@@ -505,151 +430,21 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                   </p>
                 ) : null}
 
-                <section className="te-armar-parejas">
-                  <h2 className="te-section-title">Armar parejas</h2>
-                  <p className="te-subtitle">
-                    Elige jugadores del panel. Usa 📧 para el email de quienes ya
-                    existían.
-                  </p>
+                <ArmarParejasPicker
+                  jugadoresPool={jugadoresPool}
+                  parejas={parejas}
+                  addingPair={addingPair}
+                  onFormarPareja={(j1, j2) => void formarPareja(j1, j2)}
+                  onEliminarPareja={(p) => void eliminarPareja(p)}
+                />
 
-                  <div className="te-pareja-form-row te-pareja-form-row--inline">
-                    <div className="torneo-express-field">
-                      <label htmlFor="te-j1">Jugador 1</label>
-                      <select
-                        id="te-j1"
-                        value={jugador1Id}
-                        onChange={(e) => setJugador1Id(e.target.value)}
-                      >
-                        <option value="">Seleccionar…</option>
-                        {optionsJ1.map((j) => {
-                          const ok = playerHasNotifiableEmail(
-                            j as PlayerWithContact
-                          );
-                          return (
-                            <option key={j.id} value={j.id}>
-                              {j.name}
-                              {ok ? "" : " ⚠️ sin email"}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-                    <span className="te-pareja-form-row__sep" aria-hidden>
-                      /
-                    </span>
-                    <div className="torneo-express-field">
-                      <label htmlFor="te-j2">Jugador 2</label>
-                      <select
-                        id="te-j2"
-                        value={jugador2Id}
-                        onChange={(e) => setJugador2Id(e.target.value)}
-                      >
-                        <option value="">Seleccionar…</option>
-                        {optionsJ2.map((j) => {
-                          const ok = playerHasNotifiableEmail(
-                            j as PlayerWithContact
-                          );
-                          return (
-                            <option key={j.id} value={j.id}>
-                              {j.name}
-                              {ok ? "" : " ⚠️ sin email"}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    </div>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="te-btn-agregar-pareja"
-                    onClick={() => void agregarPareja()}
-                    disabled={
-                      addingPair ||
-                      !jugador1Id ||
-                      !jugador2Id ||
-                      jugador1Id === jugador2Id
-                    }
-                    loading={addingPair}
-                  >
-                    {addingPair ? "Agregando…" : "+ Agregar pareja"}
-                  </Button>
-
-                  {parejas.length > 0 && (
-                    <ul className="te-parejas-formadas">
-                      {parejas.map((p) => {
-                        const j1Ok = playerHasNotifiableEmail(
-                          p.jugador1 as PlayerWithContact
-                        );
-                        const j2Ok = playerHasNotifiableEmail(
-                          p.jugador2 as PlayerWithContact
-                        );
-                        return (
-                        <li key={p.id} className="te-pareja-formada">
-                          <span>
-                            {p.jugador1.name}
-                            {!j1Ok ? " ⚠️" : ""} / {p.jugador2.name}
-                            {!j2Ok ? " ⚠️" : ""}
-                          </span>
-                          <button
-                            type="button"
-                            className="te-players-icon-btn te-players-icon-btn--danger"
-                            onClick={() => void eliminarPareja(p)}
-                            aria-label="Eliminar pareja"
-                            title="Eliminar pareja"
-                          >
-                            🗑️
-                          </button>
-                        </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </section>
-
-                {parejas.length > 0 &&
-                  assignments.map((grupo, gi) => (
-                    <div key={grupo.orden} className="te-grupo-assignment">
-                      <div className="torneo-express-field te-grupo-assignment__name">
-                        <label>Nombre del grupo</label>
-                        <input
-                          value={grupo.nombre}
-                          onChange={(e) =>
-                            setAssignments((prev) =>
-                              prev.map((g, i) =>
-                                i === gi ? { ...g, nombre: e.target.value } : g
-                              )
-                            )
-                          }
-                        />
-                      </div>
-                      <p className="te-subtitle">
-                        Parejas asignadas: {grupo.parejaIds.length} (mín. 2)
-                      </p>
-                      <div className="te-pareja-pool">
-                        {parejas.map((p) => {
-                          const label = `${p.jugador1.name} / ${p.jugador2.name}`;
-                          const inThis = grupo.parejaIds.includes(p.id);
-                          const inOther = !inThis && assignedIds.has(p.id);
-                          return (
-                            <button
-                              key={p.id}
-                              type="button"
-                              className={`te-pareja-chip${inThis ? " te-pareja-chip--selected" : ""}${
-                                inOther ? " te-pareja-chip--assigned" : ""
-                              }`}
-                              disabled={inOther}
-                              onClick={() => togglePair(gi, p.id)}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                <AsignarParejasGrupos
+                  parejas={parejas}
+                  assignments={assignments}
+                  assignedIds={assignedIds}
+                  onAssignmentsChange={setAssignments}
+                  onTogglePair={togglePair}
+                />
 
                 <Button
                   type="submit"
