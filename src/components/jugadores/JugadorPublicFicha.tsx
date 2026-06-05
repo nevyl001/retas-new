@@ -20,6 +20,7 @@ import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrg
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatarHero } from "./JugadorAvatarHero";
+import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
@@ -189,7 +190,14 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
                   }
                 >
                   <div className="rjp-ficha-hero__main">
-                    <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
+                    <div className="rjp-ficha-hero__name-row">
+                      <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
+                      <JugadorPaisBadge
+                        codigo={jugador.pais_codigo}
+                        size="md"
+                        className="rjp-ficha-hero__pais"
+                      />
+                    </div>
 
                     <div className="rjp-ficha-hero__pills">
                       <span className="rjp-ficha-pill rjp-ficha-pill--open">

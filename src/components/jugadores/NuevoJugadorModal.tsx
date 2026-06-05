@@ -11,6 +11,7 @@ import {
   JUGADOR_CATEGORIAS_ORDER,
   MANO_DOMINANTE_LABELS,
 } from "../../lib/rivieraJugadores/constants";
+import { PAISES_RIVIERA, paisSelectLabel } from "../../lib/rivieraJugadores/paises";
 
 interface NuevoJugadorModalProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface NuevoJugadorModalProps {
     edad?: number | null;
     mano_dominante?: ManoDominante | null;
     en_cancha?: EnCancha | null;
+    pais_codigo?: string | null;
   }) => Promise<void>;
 }
 
@@ -38,6 +40,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
   const [edad, setEdad] = useState("");
   const [mano, setMano] = useState<ManoDominante | "">("");
   const [enCancha, setEnCancha] = useState<EnCancha | "">("");
+  const [paisCodigo, setPaisCodigo] = useState("MX");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +60,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
         edad: edad.trim() ? Number(edad) : null,
         mano_dominante: mano || null,
         en_cancha: enCancha || null,
+        pais_codigo: paisCodigo || null,
       });
       setNombre("");
       setEmail("");
@@ -65,6 +69,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
       setEdad("");
       setMano("");
       setEnCancha("");
+      setPaisCodigo("MX");
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo crear el jugador");
@@ -109,6 +114,22 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
             />
+          </div>
+          <div className="rj-field">
+            <label htmlFor="rj-pais-new">País / bandera</label>
+            <select
+              id="rj-pais-new"
+              className="rj-select"
+              value={paisCodigo}
+              onChange={(e) => setPaisCodigo(e.target.value)}
+            >
+              <option value="">— Sin especificar —</option>
+              {PAISES_RIVIERA.map((p) => (
+                <option key={p.codigo} value={p.codigo}>
+                  {paisSelectLabel(p)}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="rj-field">
             <label htmlFor="rj-cat-new">Categoría</label>

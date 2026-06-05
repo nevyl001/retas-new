@@ -20,9 +20,11 @@ import type {
   RivieraJugadorCategoria,
   RivieraJugadorWithStats,
 } from "../../lib/rivieraJugadores/types";
+import { PAISES_RIVIERA, paisSelectLabel } from "../../lib/rivieraJugadores/paises";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { buildPublicJugadorPath, buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadorAvatar } from "./JugadorAvatar";
+import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 import { navigateJugadorFicha, navigateJugadores } from "./jugadoresNav";
@@ -48,6 +50,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [edad, setEdad] = useState("");
   const [mano, setMano] = useState<ManoDominante | "">("");
   const [enCancha, setEnCancha] = useState<EnCancha | "">("");
+  const [paisCodigo, setPaisCodigo] = useState("");
   const [telefono, setTelefono] = useState("");
   const [email, setEmail] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -68,6 +71,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setEdad(j.edad != null ? String(j.edad) : "");
         setMano(j.mano_dominante ?? "");
         setEnCancha(j.en_cancha ?? "");
+        setPaisCodigo(j.pais_codigo ?? "");
         setTelefono(j.telefono ?? j.whatsapp ?? "");
         setEmail(j.email ?? "");
         setInstagram(j.instagram_url ?? "");
@@ -105,6 +109,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             : null,
         mano_dominante: mano || null,
         en_cancha: enCancha || null,
+        pais_codigo: paisCodigo || null,
         telefono: telefono.trim() || null,
         email: email.trim() || null,
         instagram_url: instagram.trim() || null,
@@ -212,7 +217,10 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             />
           </div>
           <div>
-            <h1 className="rj-ficha-header__name">{jugador.nombre}</h1>
+            <div className="rj-ficha-header__name-row">
+              <h1 className="rj-ficha-header__name">{jugador.nombre}</h1>
+              <JugadorPaisBadge codigo={jugador.pais_codigo} size="md" />
+            </div>
             <JugadorCategoriaBadge categoria={jugador.categoria} />
             <JugadorPerfilMeta jugador={jugador} variant="inline" />
             {jugador.club && (
@@ -285,6 +293,22 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
                 {JUGADOR_CATEGORIAS_ORDER.map((c) => (
                   <option key={c} value={c}>
                     {JUGADOR_CATEGORIA_LABELS[c]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="rj-field">
+              <label htmlFor="rj-pais">País / bandera</label>
+              <select
+                id="rj-pais"
+                className="rj-select"
+                value={paisCodigo}
+                onChange={(e) => setPaisCodigo(e.target.value)}
+              >
+                <option value="">— Sin especificar —</option>
+                {PAISES_RIVIERA.map((p) => (
+                  <option key={p.codigo} value={p.codigo}>
+                    {paisSelectLabel(p)}
                   </option>
                 ))}
               </select>

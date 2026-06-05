@@ -47,6 +47,8 @@ export interface RivieraJugador {
   edad: number | null;
   mano_dominante: ManoDominante | null;
   en_cancha: EnCancha | null;
+  /** ISO 3166-1 alpha-2 (MX, ES, US…) para bandera en ficha y ranking. */
+  pais_codigo: string | null;
   instagram_url: string | null;
   facebook_url: string | null;
   tiktok_url: string | null;
@@ -126,6 +128,7 @@ export interface CreateRivieraJugadorInput {
   edad?: number | null;
   mano_dominante?: ManoDominante | null;
   en_cancha?: EnCancha | null;
+  pais_codigo?: string | null;
   genero?: string | null;
   club?: string | null;
   foto_url?: string | null;

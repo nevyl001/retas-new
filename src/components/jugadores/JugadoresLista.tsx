@@ -22,6 +22,7 @@ import {
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadorAjustePuntosModal } from "./JugadorAjustePuntosModal";
 import { JugadorAvatar } from "./JugadorAvatar";
+import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
@@ -230,7 +231,10 @@ export const JugadoresLista: React.FC = () => {
                     nombre={j.nombre}
                     size="md"
                   />
-                  <p className="rj-card__name">{j.nombre}</p>
+                  <div className="rj-card__name-row">
+                    <p className="rj-card__name">{j.nombre}</p>
+                    <JugadorPaisBadge codigo={j.pais_codigo} size="sm" />
+                  </div>
                   <JugadorCategoriaBadge categoria={j.categoria} />
                   <JugadorPerfilMeta jugador={j} variant="card" />
                   <p className="rj-card__stats">

@@ -15,6 +15,7 @@ function j(puntos: number, id: string): RivieraJugadorWithStats {
     edad: null,
     mano_dominante: null,
     en_cancha: null,
+    pais_codigo: null,
     instagram_url: null,
     facebook_url: null,
     tiktok_url: null,

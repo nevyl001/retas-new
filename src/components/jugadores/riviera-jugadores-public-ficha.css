@@ -319,13 +319,36 @@
   line-height: 1;
 }
 
+.rjp-ficha-hero__name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.rjp-ficha-hero--photo .rjp-ficha-hero__name-row {
+  margin-top: 0;
+}
+
 .rjp-ficha-hero__name {
-  margin: 10px 0 0;
+  margin: 0;
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--rjp-ficha-text);
   line-height: 1.1;
+}
+
+.rjp-ficha-hero__pais {
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.rjp-ficha-hero--photo .rjp-ficha-hero__pais {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
 }
 
 .rjp-ficha-hero--photo .rjp-ficha-hero__name {

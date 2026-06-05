@@ -265,8 +265,17 @@
   min-width: 0;
 }
 
+.rjp-ranking-card__name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .rjp-ranking-card__name {
   display: block;
+  flex: 1;
+  min-width: 0;
   font-size: 15px;
   font-weight: 600;
   color: var(--rjp-rk-text, #e8e8ec);

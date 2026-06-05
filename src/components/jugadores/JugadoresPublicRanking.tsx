@@ -17,6 +17,7 @@ import type {
 } from "../../lib/rivieraJugadores/types";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatar } from "./JugadorAvatar";
+import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import {
   buildRankingComoFuncionaPath,
@@ -190,7 +191,13 @@ export const JugadoresPublicRanking: React.FC = () => {
                         size="md"
                       />
                       <div className="rjp-ranking-card__body">
-                        <span className="rjp-ranking-card__name">{j.nombre}</span>
+                        <div className="rjp-ranking-card__name-row">
+                          <JugadorPaisBadge
+                            codigo={j.pais_codigo}
+                            size="sm"
+                          />
+                          <span className="rjp-ranking-card__name">{j.nombre}</span>
+                        </div>
                         <span className="rjp-ranking-card__pts">
                           {(j.stats?.puntos_totales ?? 0).toLocaleString("es-MX")}{" "}
                           pts

@@ -9,10 +9,11 @@ import type {
   RivieraJugadorNivel,
   RivieraJugadorWithStats,
 } from "./types";
+import { normalizePaisCodigo } from "./paises";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 
 const JUGADOR_SELECT =
-  "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,instagram_url,facebook_url,tiktok_url,visible_publico,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
+  "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
 
 const STATS_SELECT =
   "jugador_id,total_partidos,victorias,derrotas,empates,participaciones_solo,pct_victorias,total_retas,total_torneos_express,total_ligas,total_americanos,sets_favor_total,sets_contra_total,racha_actual,ultima_actividad,puntos_totales,updated_at";
@@ -48,6 +49,9 @@ function normalizeJugadorFields(
   }
   if (j.en_cancha === undefined) {
     j.en_cancha = null;
+  }
+  if (j.pais_codigo === undefined) {
+    j.pais_codigo = null;
   }
   return j;
 }
@@ -200,6 +204,7 @@ export async function createRivieraJugador(
       edad: input.edad ?? null,
       mano_dominante: input.mano_dominante ?? null,
       en_cancha: input.en_cancha ?? null,
+      pais_codigo: normalizePaisCodigo(input.pais_codigo),
       genero: input.genero ?? null,
       club: input.club ?? null,
       foto_url: input.foto_url ?? null,
@@ -228,6 +233,7 @@ export async function updateRivieraJugador(
       | "edad"
       | "mano_dominante"
       | "en_cancha"
+      | "pais_codigo"
       | "instagram_url"
       | "facebook_url"
       | "tiktok_url"
@@ -240,6 +246,10 @@ export async function updateRivieraJugador(
   >
 ): Promise<RivieraJugador> {
   const payload: Record<string, unknown> = { ...updates };
+
+  if (updates.pais_codigo !== undefined) {
+    payload.pais_codigo = normalizePaisCodigo(updates.pais_codigo);
+  }
 
   if (updates.nombre !== undefined) {
     const trimmed = updates.nombre.trim();
