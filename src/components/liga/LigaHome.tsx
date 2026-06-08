@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Liga } from "../../lib/liga/types";
-import { getLigas } from "../../services/ligaService";
+import { deleteLiga, getLigas } from "../../services/ligaService";
 import { Button } from "../ui";
 import { navigateLiga } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
@@ -30,6 +30,7 @@ export const LigaHome: React.FC = () => {
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,6 +48,26 @@ export const LigaHome: React.FC = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  const handleDeleteLiga = async (liga: Liga) => {
+    if (
+      !window.confirm(
+        `¿Eliminar «${liga.nombre}»? Se borrarán inscripciones, jornadas y resultados. Esta acción no se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+    setDeletingId(liga.id);
+    setError(null);
+    try {
+      await deleteLiga(liga.id);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo eliminar la liga");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <LigaPageShell>
@@ -94,14 +115,27 @@ export const LigaHome: React.FC = () => {
                   </span>
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={() => navigateLiga(`/liga/${liga.id}/gestionar`)}
-              >
-                Gestionar
-              </Button>
+              <div className="liga-list-item__actions">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={deletingId !== null}
+                  onClick={() => navigateLiga(`/liga/${liga.id}/gestionar`)}
+                >
+                  Gestionar
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  loading={deletingId === liga.id}
+                  disabled={deletingId !== null && deletingId !== liga.id}
+                  onClick={() => void handleDeleteLiga(liga)}
+                >
+                  Eliminar
+                </Button>
+              </div>
             </li>
           ))}
         </ul>

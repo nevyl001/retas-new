@@ -1,3 +1,5 @@
+import type { RivieraJugadorCategoria } from "../rivieraJugadores/types";
+
 export type LigaEstado = "upcoming" | "in_progress" | "completed";
 export type LigaJornadaEstado = "upcoming" | "in_progress" | "completed";
 export type LigaPartidoEstado = "upcoming" | "in_progress" | "completed";
@@ -26,6 +28,11 @@ export interface LigaJugador {
   estado: LigaJugadorEstado;
   organizador_id: string | null;
   created_at: string;
+}
+
+/** Jugador del pool de liga con categoría del registro Riviera Open. */
+export interface LigaJugadorPoolItem extends LigaJugador {
+  categoria: RivieraJugadorCategoria | null;
 }
 
 export interface LigaInscripcion {

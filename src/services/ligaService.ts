@@ -7,11 +7,15 @@ import type {
   LigaJornada,
   LigaJornadaPareja,
   LigaJugador,
+  LigaJugadorPoolItem,
   LigaPartido,
   RankingItem,
   UpdateJugadorLigaInput,
 } from "../lib/liga/types";
 import { validateInscripcionesParaCalendario } from "../lib/liga/calendario";
+import { dedupeLigaJugadoresByName } from "../lib/liga/dedupeJugadores";
+import { normalizePlayerNameKey } from "../lib/rivieraJugadores/playerNameKey";
+import type { RivieraJugadorCategoria } from "../lib/rivieraJugadores/types";
 
 async function requireUserId(): Promise<string> {
   const {
@@ -313,10 +317,27 @@ export async function addJugadorLiga(
   data: AddJugadorLigaInput
 ): Promise<LigaJugador> {
   const uid = await requireUserId();
+  const nombreTrim = data.nombre.trim();
+  const nameKey = normalizePlayerNameKey(nombreTrim);
+
+  if (nameKey) {
+    const { data: existingRows } = await supabase
+      .from("liga_jugadores")
+      .select("*")
+      .eq("organizador_id", uid)
+      .eq("estado", "activo");
+    const match = (existingRows ?? []).find(
+      (r) => normalizePlayerNameKey(String(r.nombre ?? "")) === nameKey
+    );
+    if (match) {
+      return mapJugador(match as Record<string, unknown>);
+    }
+  }
+
   const { data: row, error } = await supabase
     .from("liga_jugadores")
     .insert({
-      nombre: data.nombre.trim(),
+      nombre: nombreTrim,
       email: data.email?.trim() || null,
       telefono: data.telefono?.trim() || null,
       genero: data.genero ?? null,
@@ -444,6 +465,60 @@ async function insertJornadasForLiga(
   }
 }
 
+/** Elimina la liga y todos sus datos (inscripciones, jornadas, partidos). */
+export async function deleteLiga(ligaId: string): Promise<void> {
+  const uid = await requireUserId();
+
+  const { data: liga, error: lErr } = await supabase
+    .from("ligas")
+    .select("id, organizador_id")
+    .eq("id", ligaId)
+    .maybeSingle();
+
+  if (lErr) throw new Error(lErr.message);
+  if (!liga) throw new Error("Liga no encontrada.");
+  if (liga.organizador_id !== uid) {
+    throw new Error("No tienes permiso para eliminar esta liga.");
+  }
+
+  const { data: jornadas, error: jErr } = await supabase
+    .from("liga_jornadas")
+    .select("id")
+    .eq("liga_id", ligaId);
+
+  if (jErr) throw new Error(jErr.message);
+
+  const jornadaIds = (jornadas ?? []).map((j) => String(j.id));
+
+  if (jornadaIds.length > 0) {
+    const { error: partErr } = await supabase
+      .from("liga_partidos")
+      .delete()
+      .in("jornada_id", jornadaIds);
+    if (partErr) throw new Error(partErr.message);
+
+    const { error: parejaErr } = await supabase
+      .from("liga_jornada_parejas")
+      .delete()
+      .in("jornada_id", jornadaIds);
+    if (parejaErr) throw new Error(parejaErr.message);
+  }
+
+  await deleteAllJornadasLiga(ligaId);
+
+  const { error: inscErr } = await supabase
+    .from("liga_inscripciones")
+    .delete()
+    .eq("liga_id", ligaId);
+  if (inscErr) throw new Error(inscErr.message);
+
+  const { error: delErr } = await supabase
+    .from("ligas")
+    .delete()
+    .eq("id", ligaId);
+  if (delErr) throw new Error(delErr.message);
+}
+
 /** Borra jornadas, puntos y vuelve la liga a «upcoming». */
 export async function resetLiga(ligaId: string): Promise<void> {
   await requireUserId();
@@ -493,7 +568,44 @@ export async function regenerarCalendarioLiga(
   if (error) throw new Error(error.message);
 }
 
-export async function getJugadoresOrganizador(): Promise<LigaJugador[]> {
+async function enrichLigaJugadoresWithCategoria(
+  organizadorId: string,
+  jugadores: LigaJugador[]
+): Promise<LigaJugadorPoolItem[]> {
+  const { data, error } = await supabase
+    .from("riviera_jugadores")
+    .select("categoria, legacy_liga_jugador_id, nombre")
+    .eq("organizador_id", organizadorId)
+    .neq("estado", "archivado");
+
+  if (error) {
+    console.warn("enrichLigaJugadoresWithCategoria:", error.message);
+    return jugadores.map((j) => ({ ...j, categoria: null }));
+  }
+
+  const byLigaId = new Map<string, RivieraJugadorCategoria>();
+  const byName = new Map<string, RivieraJugadorCategoria>();
+
+  for (const row of data ?? []) {
+    const cat = row.categoria as RivieraJugadorCategoria | null;
+    if (!cat) continue;
+    if (row.legacy_liga_jugador_id) {
+      byLigaId.set(String(row.legacy_liga_jugador_id), cat);
+    }
+    const key = normalizePlayerNameKey(String(row.nombre ?? ""));
+    if (key) byName.set(key, cat);
+  }
+
+  return jugadores.map((j) => ({
+    ...j,
+    categoria:
+      byLigaId.get(j.id) ??
+      byName.get(normalizePlayerNameKey(j.nombre)) ??
+      null,
+  }));
+}
+
+export async function getJugadoresOrganizador(): Promise<LigaJugadorPoolItem[]> {
   const uid = await requireUserId();
   try {
     const { syncLigaJugadoresFromRivieraRegistry } = await import(
@@ -511,7 +623,9 @@ export async function getJugadoresOrganizador(): Promise<LigaJugador[]> {
     .order("nombre", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => mapJugador(r as Record<string, unknown>));
+  const rows = (data ?? []).map((r) => mapJugador(r as Record<string, unknown>));
+  const deduped = dedupeLigaJugadoresByName(rows);
+  return enrichLigaJugadoresWithCategoria(uid, deduped);
 }
 
 export async function inscribirJugador(

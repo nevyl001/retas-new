@@ -129,11 +129,35 @@
   min-width: 0;
 }
 
+.liga-list-item__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
 .liga-list-item__title {
   font-size: 15px;
   font-weight: 600;
   color: var(--liga-text);
-  margin: 0 0 2px;
+  margin: 0;
+}
+
+.liga-list-item__cat {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.liga-list-item__cat-missing {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--liga-text-muted);
+  padding: 2px 8px;
+  border: 0.5px solid var(--liga-border);
+  border-radius: 999px;
 }
 
 .liga-list-item__meta {

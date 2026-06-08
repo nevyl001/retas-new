@@ -3,10 +3,11 @@ import {
   calendarioDesactualizado,
   tieneJornadasEnCurso,
 } from "../../lib/liga/calendario";
-import type { LigaDetalle, LigaJugador, LigaJugadorGenero } from "../../lib/liga/types";
+import type { LigaDetalle, LigaJugadorPoolItem } from "../../lib/liga/types";
+import { JugadorCategoriaBadge } from "../jugadores/JugadorCategoriaBadge";
+import "../jugadores/riviera-jugadores.css";
 import {
-  addJugadorLiga,
-  deactivateJugadorLiga,
+  deleteLiga,
   desinscribirJugador,
   finishLiga,
   getJugadoresOrganizador,
@@ -16,7 +17,6 @@ import {
   regenerarCalendarioLiga,
   resetLiga,
   startLiga,
-  updateJugadorLiga,
 } from "../../services/ligaService";
 import { Button } from "../ui";
 import {
@@ -45,25 +45,12 @@ function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
 
 export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const [detalle, setDetalle] = useState<LigaDetalle | null>(null);
-  const [jugadoresPool, setJugadoresPool] = useState<LigaJugador[]>([]);
+  const [jugadoresPool, setJugadoresPool] = useState<LigaJugadorPoolItem[]>([]);
   const [tab, setTab] = useState<"jugadores" | "jornadas">("jugadores");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  const [nuevoNombre, setNuevoNombre] = useState("");
-  const [nuevoEmail, setNuevoEmail] = useState("");
-  const [nuevoTel, setNuevoTel] = useState("");
-  const [nuevoGenero, setNuevoGenero] = useState<LigaJugadorGenero | "">("");
-  const [nuevoNivel, setNuevoNivel] = useState<number | "">("");
-
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editNombre, setEditNombre] = useState("");
-  const [editEmail, setEditEmail] = useState("");
-  const [editTel, setEditTel] = useState("");
-  const [editGenero, setEditGenero] = useState<LigaJugadorGenero | "">("");
-  const [editNivel, setEditNivel] = useState<number | "">("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -124,90 +111,6 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
   const ligaEditable = detalle?.estado !== "completed";
 
-  const startEdit = (j: LigaJugador) => {
-    setEditId(j.id);
-    setEditNombre(j.nombre);
-    setEditEmail(j.email ?? "");
-    setEditTel(j.telefono ?? "");
-    setEditGenero(j.genero ?? "");
-    setEditNivel(j.nivel ?? "");
-  };
-
-  const cancelEdit = () => {
-    setEditId(null);
-  };
-
-  const handleAddJugador = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nuevoNombre.trim()) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await addJugadorLiga({
-        nombre: nuevoNombre.trim(),
-        email: nuevoEmail || null,
-        telefono: nuevoTel || null,
-        genero: nuevoGenero || null,
-        nivel: nuevoNivel === "" ? null : Number(nuevoNivel),
-      });
-      setNuevoNombre("");
-      setNuevoEmail("");
-      setNuevoTel("");
-      setNuevoGenero("");
-      setNuevoNivel("");
-      setMessage("Jugador agregado.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleSaveEdit = async (jugadorId: string) => {
-    if (!editNombre.trim()) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await updateJugadorLiga(jugadorId, {
-        nombre: editNombre.trim(),
-        email: editEmail || null,
-        telefono: editTel || null,
-        genero: editGenero || null,
-        nivel: editNivel === "" ? null : Number(editNivel),
-      });
-      setEditId(null);
-      setMessage("Jugador actualizado.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleRemoveFromModule = async (jugador: LigaJugador) => {
-    if (
-      !window.confirm(
-        `¿Quitar a ${jugador.nombre} del módulo? Se desinscribirá de todas tus ligas.`
-      )
-    ) {
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await deactivateJugadorLiga(jugador.id);
-      if (editId === jugador.id) setEditId(null);
-      setMessage("Jugador quitado del módulo.");
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const toggleInscripcion = async (jugadorId: string, inscrito: boolean) => {
     setBusy(true);
     setError(null);
@@ -262,6 +165,26 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
     } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleDeleteLiga = async () => {
+    if (!detalle) return;
+    if (
+      !window.confirm(
+        `¿Eliminar «${detalle.nombre}»? Se borrarán inscripciones, jornadas y resultados. Esta acción no se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteLiga(ligaId);
+      navigateLiga("/liga");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
       setBusy(false);
     }
   };
@@ -385,6 +308,15 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             Reiniciar liga
           </Button>
         )}
+        <Button
+          type="button"
+          variant="danger"
+          size="sm"
+          disabled={busy}
+          onClick={() => void handleDeleteLiga()}
+        >
+          Eliminar liga
+        </Button>
         {puedeFinalizarLiga && (
           <Button
             type="button"
@@ -437,189 +369,33 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
       {tab === "jugadores" && (
         <>
-          {ligaEditable && (
-            <div className="liga-card">
-              <h2 className="liga-card__title">Agregar jugador</h2>
-              <form onSubmit={handleAddJugador}>
-                <div className="liga-field">
-                  <label htmlFor="nj-nombre">Nombre *</label>
-                  <input
-                    id="nj-nombre"
-                    value={nuevoNombre}
-                    onChange={(e) => setNuevoNombre(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="liga-form-row">
-                  <div className="liga-field">
-                    <label htmlFor="nj-email">Email</label>
-                    <input
-                      id="nj-email"
-                      type="email"
-                      value={nuevoEmail}
-                      onChange={(e) => setNuevoEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="liga-field">
-                    <label htmlFor="nj-tel">Teléfono</label>
-                    <input
-                      id="nj-tel"
-                      value={nuevoTel}
-                      onChange={(e) => setNuevoTel(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="liga-form-row">
-                  <div className="liga-field">
-                    <label htmlFor="nj-genero">Género</label>
-                    <select
-                      id="nj-genero"
-                      value={nuevoGenero}
-                      onChange={(e) =>
-                        setNuevoGenero(e.target.value as LigaJugadorGenero | "")
-                      }
-                    >
-                      <option value="">—</option>
-                      <option value="M">M</option>
-                      <option value="F">F</option>
-                    </select>
-                  </div>
-                  <div className="liga-field">
-                    <label htmlFor="nj-nivel">Nivel (1-6)</label>
-                    <input
-                      id="nj-nivel"
-                      type="number"
-                      min={1}
-                      max={6}
-                      value={nuevoNivel}
-                      onChange={(e) =>
-                        setNuevoNivel(
-                          e.target.value === "" ? "" : Number(e.target.value)
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-                <Button type="submit" variant="primary" loading={busy}>
-                  Guardar jugador
-                </Button>
-              </form>
-            </div>
-          )}
-
           <div className="liga-card">
             <h2 className="liga-card__title">Inscripciones en esta liga</h2>
             <ul className="liga-list">
               {jugadoresPool.map((j) => {
                 const inscrito = inscritosIds.has(j.id);
-                const editing = editId === j.id;
-
-                if (editing) {
-                  return (
-                    <li key={j.id} className="liga-list-item liga-list-item--edit">
-                      <div className="liga-edit-form">
-                        <div className="liga-field">
-                          <label>Nombre</label>
-                          <input
-                            value={editNombre}
-                            onChange={(e) => setEditNombre(e.target.value)}
-                          />
-                        </div>
-                        <div className="liga-form-row">
-                          <div className="liga-field">
-                            <label>Email</label>
-                            <input
-                              value={editEmail}
-                              onChange={(e) => setEditEmail(e.target.value)}
-                            />
-                          </div>
-                          <div className="liga-field">
-                            <label>Teléfono</label>
-                            <input
-                              value={editTel}
-                              onChange={(e) => setEditTel(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                        <div className="liga-form-row">
-                          <div className="liga-field">
-                            <label>Género</label>
-                            <select
-                              value={editGenero}
-                              onChange={(e) =>
-                                setEditGenero(
-                                  e.target.value as LigaJugadorGenero | ""
-                                )
-                              }
-                            >
-                              <option value="">—</option>
-                              <option value="M">M</option>
-                              <option value="F">F</option>
-                            </select>
-                          </div>
-                          <div className="liga-field">
-                            <label>Nivel</label>
-                            <input
-                              type="number"
-                              min={1}
-                              max={6}
-                              value={editNivel}
-                              onChange={(e) =>
-                                setEditNivel(
-                                  e.target.value === ""
-                                    ? ""
-                                    : Number(e.target.value)
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="liga-actions">
-                          <Button
-                            type="button"
-                            variant="primary"
-                            size="sm"
-                            disabled={busy}
-                            onClick={() => handleSaveEdit(j.id)}
-                          >
-                            Guardar
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={cancelEdit}
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                }
-
                 return (
                   <li key={j.id} className="liga-list-item">
                     <div className="liga-list-item__main">
-                      <p className="liga-list-item__title">{j.nombre}</p>
+                      <div className="liga-list-item__head">
+                        <p className="liga-list-item__title">{j.nombre}</p>
+                        {j.categoria ? (
+                          <JugadorCategoriaBadge
+                            categoria={j.categoria}
+                            className="liga-list-item__cat"
+                          />
+                        ) : (
+                          <span className="liga-list-item__cat-missing">
+                            Sin categoría
+                          </span>
+                        )}
+                      </div>
                       <p className="liga-list-item__meta">
-                        {j.nivel ? `Nivel ${j.nivel}` : "Sin nivel"}
-                        {inscrito ? " · Inscrito" : ""}
+                        {inscrito ? "Inscrito en esta liga" : "Sin inscribir"}
                       </p>
                     </div>
-                    <div className="liga-list-item__actions">
-                      {ligaEditable && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={busy}
-                          onClick={() => startEdit(j)}
-                        >
-                          Editar
-                        </Button>
-                      )}
-                      {ligaEditable && (
+                    {ligaEditable && (
+                      <div className="liga-list-item__actions">
                         <Button
                           type="button"
                           variant={inscrito ? "danger" : "secondary"}
@@ -629,25 +405,14 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                         >
                           {inscrito ? "Desinscribir" : "Inscribir"}
                         </Button>
-                      )}
-                      {ligaEditable && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          disabled={busy}
-                          onClick={() => handleRemoveFromModule(j)}
-                        >
-                          Quitar
-                        </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </li>
                 );
               })}
             </ul>
             {jugadoresPool.length === 0 && (
-              <p className="liga-empty">Agrega jugadores arriba.</p>
+              <p className="liga-empty">Aún no hay jugadores disponibles.</p>
             )}
           </div>
         </>
