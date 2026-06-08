@@ -8,6 +8,7 @@ import {
   getTournamentGames,
 } from "../lib/database";
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
+import { syncChampionshipConfigFromPublic } from "../lib/roundRobinChampionship";
 
 export const useTournamentData = () => {
   const [pairs, setPairs] = useState<Pair[]>([]);
@@ -16,6 +17,7 @@ export const useTournamentData = () => {
     Map<string, { sets: number; matches: number; points: number }>
   >(new Map());
   const [loading, setLoading] = useState(false);
+  const [championshipRevision, setChampionshipRevision] = useState(0);
   const isLoadingRef = useRef(false); // Prevenir múltiples recargas simultáneas
 
   const calculatePairStatistics = async (
@@ -129,6 +131,9 @@ export const useTournamentData = () => {
 
       setMatches(resolvedMatches);
 
+      await syncChampionshipConfigFromPublic(tournament.id);
+      setChampionshipRevision((n) => n + 1);
+
       await calculatePairStatistics(pairsData, resolvedMatches, tournament.id);
     } catch (err) {
       console.error("Error loading tournament data:", err);
@@ -147,5 +152,6 @@ export const useTournamentData = () => {
     pairStats,
     loading,
     loadTournamentData,
+    championshipRevision,
   };
 };

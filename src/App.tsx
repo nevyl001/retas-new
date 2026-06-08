@@ -319,6 +319,7 @@ function AppContent() {
     pairStats,
     loading,
     loadTournamentData,
+    championshipRevision,
   } = useTournamentData();
 
   const handleTournamentSelect = useCallback(
@@ -580,8 +581,9 @@ function AppContent() {
   }, [pairs]);
 
   const isTournamentFinished = useMemo(() => {
+    void championshipRevision;
     return isRoundRobinTournamentComplete(matches, selectedTournament);
-  }, [matches, selectedTournament]);
+  }, [matches, selectedTournament, championshipRevision]);
 
   const winner = useMemo(() => {
     return (

@@ -11,6 +11,7 @@ import {
   maybeGenerateChampionshipRound,
   partitionMatches,
   resolveChampionPair,
+  syncChampionshipConfigFromPublic,
   syncChampionshipConfigPublic,
 } from "../lib/roundRobinChampionship";
 
@@ -53,7 +54,8 @@ function renderRoundBlock(
     setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
     userId?: string;
     roundTitle?: React.ReactNode;
-    onReloadMatches?: () => void;
+    onReloadMatches?: () => void | Promise<void>;
+    onAfterScoreSaved?: () => void | Promise<void>;
   }
 ) {
   const {
@@ -64,6 +66,7 @@ function renderRoundBlock(
     userId,
     roundTitle,
     onReloadMatches,
+    onAfterScoreSaved,
   } = opts;
 
   return (
@@ -97,7 +100,8 @@ function renderRoundBlock(
               isSelected={false}
               onSelect={() => {}}
               onCorrectScore={async () => {
-                onReloadMatches?.();
+                await onReloadMatches?.();
+                await onAfterScoreSaved?.();
                 setForceRefresh((prev) => prev + 1);
               }}
               forceRefresh={forceRefresh}
@@ -136,15 +140,25 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     return getTeamConfig(tournament.id);
   }, [tournament.id, tournament.format, tournament.team_config]);
 
+  const [configTick, setConfigTick] = useState(0);
   const championshipActive = isRoundRobinChampionshipActive(tournament);
-  const champConfig = loadChampionshipConfig(tournament.id);
+  const champConfig = useMemo(() => {
+    void configTick;
+    return loadChampionshipConfig(tournament.id);
+  }, [tournament.id, configTick]);
+
+  useEffect(() => {
+    void syncChampionshipConfigFromPublic(tournament.id).then(() => {
+      setConfigTick((n) => n + 1);
+    });
+  }, [tournament.id]);
 
   useEffect(() => {
     const cfg = loadChampionshipConfig(tournament.id);
     if (cfg?.championshipEnabled) {
       void syncChampionshipConfigPublic(tournament.id, cfg);
     }
-  }, [tournament.id, forceRefresh]);
+  }, [tournament.id, forceRefresh, configTick]);
 
   const { regular, championship } = useMemo(
     () => partitionMatches(matches, tournament.id, champConfig),
@@ -180,7 +194,8 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         userId,
       });
       if (created.length > 0) {
-        onReloadMatches?.();
+        setConfigTick((n) => n + 1);
+        await onReloadMatches?.();
         setForceRefresh((n) => n + 1);
       }
     } catch (e) {
@@ -221,7 +236,13 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     setForceRefresh,
     userId,
     onReloadMatches,
+    onAfterScoreSaved: tryGenerateChampionship,
   };
+
+  const canShowWinnersButton =
+    championshipActive
+      ? isTournamentFinished
+      : isTournamentFinished || tournament.is_finished;
 
   return (
     <div className="matches-container-simplified">
@@ -261,6 +282,17 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                 !regular.every((m) => m.status === "finished") && (
                   <p className="rr-championship__pending">
                     Se activará cuando terminen todas las rondas del Round Robin.
+                  </p>
+                )}
+
+              {regular.length > 0 &&
+                regular.every((m) => m.status === "finished") &&
+                championship.length === 0 &&
+                champConfig &&
+                champConfig.championshipRoundsGenerated <
+                  champConfig.championshipRounds && (
+                  <p className="rr-championship__pending">
+                    Preparando partidos de remontada…
                   </p>
                 )}
 
@@ -323,7 +355,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         </div>
       )}
 
-      {(isTournamentFinished || tournament.is_finished) && winner && (
+      {canShowWinnersButton && winner && (
         <div className="winner-button-container">
           <button className="show-winner-button" onClick={onShowWinnerScreen}>
             🏆 Ver ganadores

@@ -1,5 +1,11 @@
 import type { Game, Match, Pair, Tournament } from "./db/types";
-import { createMatch, getGames, getMatches } from "./database";
+import {
+  createMatch,
+  getGames,
+  getMatches,
+  getTournamentPublicConfigExtended,
+} from "./database";
+import { assignCourtsInChunk } from "./circleRoundRobinSchedule";
 import {
   computePairsWithStats,
   sortPairsForStandings,
@@ -60,6 +66,83 @@ export function loadChampionshipConfig(
   } catch {
     return null;
   }
+}
+
+/** Trae config de remontada desde Supabase si falta o está desactualizada en localStorage. */
+export async function syncChampionshipConfigFromPublic(
+  tournamentId: string
+): Promise<RoundRobinChampionshipConfig | null> {
+  const local = loadChampionshipConfig(tournamentId);
+  try {
+    const pub = await getTournamentPublicConfigExtended(tournamentId);
+    const remote = parseChampionshipConfig(pub?.championship_config);
+    if (!remote) return local;
+
+    if (!local) {
+      saveChampionshipConfig(tournamentId, remote);
+      return remote;
+    }
+
+    if (
+      !local.championshipEnabled &&
+      remote.championshipEnabled
+    ) {
+      const merged: RoundRobinChampionshipConfig = {
+        ...local,
+        championshipEnabled: true,
+        championshipRounds: remote.championshipRounds,
+        regularRoundsMax: local.regularRoundsMax ?? remote.regularRoundsMax,
+      };
+      saveChampionshipConfig(tournamentId, merged);
+      return merged;
+    }
+
+    return local;
+  } catch {
+    return local;
+  }
+}
+
+function countChampionshipRoundsGenerated(
+  championship: Match[],
+  regular: Match[],
+  cfg: RoundRobinChampionshipConfig
+): number {
+  if (!championship.length) return 0;
+  const regularMax = resolveRegularRoundsMax(regular, cfg);
+  const indices = new Set<number>();
+  for (const m of championship) {
+    const idx = championshipRoundIndex(m.round ?? 0, regularMax);
+    if (idx > 0) indices.add(idx);
+  }
+  return indices.size > 0 ? Math.max(...Array.from(indices)) : 0;
+}
+
+function reconcileChampionshipConfig(
+  tournamentId: string,
+  cfg: RoundRobinChampionshipConfig,
+  regular: Match[],
+  championship: Match[]
+): RoundRobinChampionshipConfig {
+  const actualGenerated = countChampionshipRoundsGenerated(
+    championship,
+    regular,
+    cfg
+  );
+  if (actualGenerated === cfg.championshipRoundsGenerated) {
+    return cfg;
+  }
+  const fixed: RoundRobinChampionshipConfig = {
+    ...cfg,
+    championshipRoundsGenerated: actualGenerated,
+    regularRoundsMax:
+      cfg.regularRoundsMax ?? resolveRegularRoundsMax(regular, cfg),
+  };
+  saveChampionshipConfig(tournamentId, fixed);
+  console.info(
+    `[remontada-final] Contador de rondas corregido: ${cfg.championshipRoundsGenerated} → ${actualGenerated}`
+  );
+  return fixed;
 }
 
 let warnedMissingChampionshipColumn = false;
@@ -401,18 +484,40 @@ export async function maybeGenerateChampionshipRound(params: {
   userId: string;
 }): Promise<Match[]> {
   const { tournament, pairs, userId } = params;
-  const cfg = loadChampionshipConfig(tournament.id);
+  if (!userId) {
+    console.warn("[remontada-final] Sin userId; no se puede generar ronda.");
+    return [];
+  }
+
+  await syncChampionshipConfigFromPublic(tournament.id);
+  let cfg = loadChampionshipConfig(tournament.id);
   if (!cfg?.championshipEnabled) return [];
   if (pairs.length < 2) return [];
-  if (cfg.championshipRoundsGenerated >= cfg.championshipRounds) return [];
 
   const matches = await getMatches(tournament.id);
-  const { regular, championship } = partitionMatches(
+  let { regular, championship } = partitionMatches(
     matches,
     tournament.id,
     cfg
   );
-  if (!areAllMatchesFinished(regular)) return [];
+  cfg = reconcileChampionshipConfig(
+    tournament.id,
+    cfg,
+    regular,
+    championship
+  );
+
+  if (cfg.championshipRoundsGenerated >= cfg.championshipRounds) {
+    return [];
+  }
+
+  if (!areAllMatchesFinished(regular)) {
+    const pending = regular.filter((m) => m.status !== "finished").length;
+    console.log(
+      `[remontada-final] RR aún en curso (${pending} partido(s) pendiente(s)).`
+    );
+    return [];
+  }
 
   const regularMax = resolveRegularRoundsMax(regular, cfg);
 
@@ -439,9 +544,23 @@ export async function maybeGenerateChampionshipRound(params: {
   const courts = Math.max(1, tournament.courts || 1);
   const created: Match[] = [];
 
+  const pairById = new Map(pairs.map((p) => [p.id, p]));
+  const chunk = matchups
+    .map(([p1, p2]) => ({
+      pair1: pairById.get(p1)!,
+      pair2: pairById.get(p2)!,
+    }))
+    .filter((m) => m.pair1 && m.pair2);
+  const courtsForChunk = assignCourtsInChunk(
+    chunk,
+    nextIndex,
+    courts,
+    ranked[0]?.id
+  );
+
   for (let i = 0; i < matchups.length; i += 1) {
     const [p1, p2] = matchups[i];
-    const court = (i % courts) + 1;
+    const court = courtsForChunk[i] ?? (i % courts) + 1;
     const row = await createMatch(
       tournament.id,
       p1,
@@ -460,6 +579,10 @@ export async function maybeGenerateChampionshipRound(params: {
     championshipRoundsGenerated: nextIndex,
     regularRoundsMax: cfg.regularRoundsMax ?? regularMax,
   });
+
+  console.log(
+    `[remontada-final] Ronda ${nextIndex} generada: ${created.length} partido(s) (round DB ${roundNum}).`
+  );
 
   return created;
 }
