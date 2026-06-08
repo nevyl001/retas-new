@@ -56,15 +56,20 @@ export function TePubMatchOutcome({
   isTie?: boolean;
 }) {
   if (winnerLabel) {
+    const displayName = winnerLabel.replace(/\s*\/\s*/g, " · ");
     return (
-      <div className="te-pub-match-winner">
+      <div
+        className="te-pub-match-winner te-pub-match-winner--compact"
+        aria-label={`Ganador: ${displayName}`}
+      >
         <span className="te-pub-match-winner__icon" aria-hidden>
           🏆
         </span>
-        <div className="te-pub-match-winner__body">
-          <span className="te-pub-match-winner__label">Ganador</span>
-          <span className="te-pub-match-winner__name">{winnerLabel}</span>
-        </div>
+        <span className="te-pub-match-winner__label">Ganador</span>
+        <span className="te-pub-match-winner__sep" aria-hidden>
+          ·
+        </span>
+        <span className="te-pub-match-winner__name">{displayName}</span>
       </div>
     );
   }

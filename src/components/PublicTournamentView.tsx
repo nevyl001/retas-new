@@ -26,6 +26,7 @@ import {
 } from "../lib/rivieraBranding";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { PublicRetaMatchCard } from "./public/PublicRetaMatchCard";
+import type { PublicRetaPairPlayer } from "./public/PublicRetaPairSide";
 import {
   PublicRetaStandingsSection,
   type PublicRetaStandingRow,
@@ -96,6 +97,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
     []
   );
+  const [playerAvatars, setPlayerAvatars] = useState<
+    Record<string, string | null>
+  >({});
   const configFetchOnDemandRef = useRef(false);
 
   const loadTournamentData = useCallback(async () => {
@@ -265,12 +269,118 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return () => clearInterval(interval);
   }, [tournamentId, loadTournamentData]);
 
+  const playerAvatarEntries = useMemo((): PlayerAvatarLookupEntry[] => {
+    const seen = new Set<string>();
+    const entries: PlayerAvatarLookupEntry[] = [];
+    for (const pair of pairs) {
+      for (const row of [
+        { id: pair.player1_id, name: pair.player1_name || pair.player1?.name },
+        { id: pair.player2_id, name: pair.player2_name || pair.player2?.name },
+      ]) {
+        if (!row.id || seen.has(row.id)) continue;
+        seen.add(row.id);
+        entries.push({
+          id: row.id,
+          name: row.name?.trim() || "Jugador",
+        });
+      }
+    }
+    return entries;
+  }, [pairs]);
+
+  useEffect(() => {
+    if (!organizadorId || playerAvatarEntries.length === 0) {
+      setPlayerAvatars({});
+      return;
+    }
+    let cancelled = false;
+    void resolvePlayerAvatars(organizadorId, playerAvatarEntries, {
+      publicOnly: true,
+    }).then((map) => {
+      if (!cancelled) setPlayerAvatars(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizadorId, playerAvatarEntries]);
+
   const getPairName = (pairId: string) => {
     const pair = pairs.find((p) => p.id === pairId);
     if (!pair) return "Pareja no encontrada";
-    return `${pair.player1?.name || "Jugador 1"} / ${
-      pair.player2?.name || "Jugador 2"
-    }`;
+    const n1 = pair.player1_name || pair.player1?.name || "Jugador 1";
+    const n2 = pair.player2_name || pair.player2?.name || "Jugador 2";
+    return `${n1} / ${n2}`;
+  };
+
+  const getPairPlayers = useCallback(
+    (pairId: string): PublicRetaPairPlayer[] => {
+      const pair = pairs.find((p) => p.id === pairId);
+      if (!pair) return [];
+      return [
+        {
+          id: pair.player1_id,
+          name: pair.player1_name || pair.player1?.name || "Jugador 1",
+          fotoUrl: playerAvatars[pair.player1_id] ?? null,
+        },
+        {
+          id: pair.player2_id,
+          name: pair.player2_name || pair.player2?.name || "Jugador 2",
+          fotoUrl: playerAvatars[pair.player2_id] ?? null,
+        },
+      ];
+    },
+    [pairs, playerAvatars]
+  );
+
+  const renderPublicMatchCard = (
+    match: Match,
+    matchIdx: number,
+    opts?: { remontadaRound?: number; encounterLabel?: string }
+  ) => {
+    const result = getMatchResult(match.id);
+    const pair1Won =
+      result.hasResult && result.pair1Score > result.pair2Score;
+    const pair2Won =
+      result.hasResult && result.pair2Score > result.pair1Score;
+    const matchGames = games
+      .filter((game) => game.match_id === match.id)
+      .map((game) => ({
+        id: game.id,
+        pair1: game.pair1_games || 0,
+        pair2: game.pair2_games || 0,
+      }));
+
+    let winnerLabel: string | null = null;
+    if (
+      match.status === "finished" &&
+      result.hasResult &&
+      (pair1Won || pair2Won)
+    ) {
+      winnerLabel = pair1Won
+        ? getPairName(match.pair1_id)
+        : getPairName(match.pair2_id);
+    }
+
+    return (
+      <PublicRetaMatchCard
+        key={match.id}
+        pair1Label={getPairName(match.pair1_id)}
+        pair2Label={getPairName(match.pair2_id)}
+        pair1Players={getPairPlayers(match.pair1_id)}
+        pair2Players={getPairPlayers(match.pair2_id)}
+        score1={result.hasResult ? result.pair1Score : 0}
+        score2={result.hasResult ? result.pair2Score : 0}
+        hasResult={result.hasResult}
+        court={match.court || 1}
+        status={match.status === "finished" ? "finished" : "active"}
+        live={match.status !== "finished"}
+        index={matchIdx}
+        winnerLabel={winnerLabel}
+        games={matchGames.length > 0 ? matchGames : undefined}
+        remontadaRound={opts?.remontadaRound}
+        encounterLabel={opts?.encounterLabel}
+      />
+    );
   };
 
   const getMatchResult = (matchId: string) => {
@@ -406,7 +516,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   if (loading) {
     return (
-      <PublicTorneoExpressShell className="te-public--reta">
+      <PublicTorneoExpressShell className="te-public--reta te-public--reta-wide">
         <div className="te-public-loading">
           <div className="te-public-loading__pulse" aria-hidden />
           <p>Cargando resultados de la reta…</p>
@@ -417,7 +527,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   if (error) {
     return (
-      <PublicTorneoExpressShell className="te-public--reta">
+      <PublicTorneoExpressShell className="te-public--reta te-public--reta-wide">
         <p className="te-public-error">{error}</p>
       </PublicTorneoExpressShell>
     );
@@ -455,7 +565,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     : 1;
 
   return (
-    <PublicTorneoExpressShell className="te-public--reta">
+    <PublicTorneoExpressShell className="te-public--reta te-public--reta-wide">
       <header className="te-public-header te-public-header--reta te-pub-fade-in">
         <div className="te-public-header__brand">
           <p className="te-public-header__kicker">{formatKicker} · En vivo</p>
@@ -514,51 +624,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   </h3>
                 </div>
 
-                <div className="te-pub-matches-grid">
-                  {roundMatches.map((match, matchIdx) => {
-                    const result = getMatchResult(match.id);
-                    const pair1Won =
-                      result.hasResult && result.pair1Score > result.pair2Score;
-                    const pair2Won =
-                      result.hasResult && result.pair2Score > result.pair1Score;
-                    const matchGames = games
-                      .filter((game) => game.match_id === match.id)
-                      .map((game) => ({
-                        id: game.id,
-                        pair1: game.pair1_games || 0,
-                        pair2: game.pair2_games || 0,
-                      }));
-
-                    let winnerLabel: string | null = null;
-                    if (
-                      match.status === "finished" &&
-                      result.hasResult &&
-                      (pair1Won || pair2Won)
-                    ) {
-                      winnerLabel = pair1Won
-                        ? getPairName(match.pair1_id)
-                        : getPairName(match.pair2_id);
-                    }
-
-                    return (
-                      <PublicRetaMatchCard
-                        key={match.id}
-                        pair1Label={getPairName(match.pair1_id)}
-                        pair2Label={getPairName(match.pair2_id)}
-                        score1={result.hasResult ? result.pair1Score : 0}
-                        score2={result.hasResult ? result.pair2Score : 0}
-                        hasResult={result.hasResult}
-                        court={match.court || 1}
-                        status={
-                          match.status === "finished" ? "finished" : "active"
-                        }
-                        live={match.status !== "finished"}
-                        index={matchIdx}
-                        winnerLabel={winnerLabel}
-                        games={matchGames.length > 0 ? matchGames : undefined}
-                      />
-                    );
-                  })}
+                <div className="te-pub-matches-grid te-pub-matches-grid--wide">
+                  {[...roundMatches]
+                    .sort((a, b) => (a.court ?? 1) - (b.court ?? 1))
+                    .map((match, matchIdx) =>
+                      renderPublicMatchCard(match, matchIdx, {
+                        encounterLabel: `Encuentro ${matchIdx + 1}`,
+                      })
+                    )}
                 </div>
 
                 <PublicRetaRestingPairsSection
@@ -623,56 +696,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         ) : null}
                       </h3>
                     </div>
-                    <div className="te-pub-matches-grid">
-                      {roundMatches.map((match, matchIdx) => {
-                        const result = getMatchResult(match.id);
-                        const pair1Won =
-                          result.hasResult &&
-                          result.pair1Score > result.pair2Score;
-                        const pair2Won =
-                          result.hasResult &&
-                          result.pair2Score > result.pair1Score;
-                        const matchGames = games
-                          .filter((game) => game.match_id === match.id)
-                          .map((game) => ({
-                            id: game.id,
-                            pair1: game.pair1_games || 0,
-                            pair2: game.pair2_games || 0,
-                          }));
-
-                        let winnerLabel: string | null = null;
-                        if (
-                          match.status === "finished" &&
-                          result.hasResult &&
-                          (pair1Won || pair2Won)
-                        ) {
-                          winnerLabel = pair1Won
-                            ? getPairName(match.pair1_id)
-                            : getPairName(match.pair2_id);
-                        }
-
-                        return (
-                          <PublicRetaMatchCard
-                            key={match.id}
-                            pair1Label={getPairName(match.pair1_id)}
-                            pair2Label={getPairName(match.pair2_id)}
-                            score1={result.hasResult ? result.pair1Score : 0}
-                            score2={result.hasResult ? result.pair2Score : 0}
-                            hasResult={result.hasResult}
-                            court={match.court || 1}
-                            status={
-                              match.status === "finished" ? "finished" : "active"
-                            }
-                            live={match.status !== "finished"}
-                            index={matchIdx}
-                            winnerLabel={winnerLabel}
-                            games={
-                              matchGames.length > 0 ? matchGames : undefined
-                            }
-                            remontadaRound={idx}
-                          />
-                        );
-                      })}
+                    <div className="te-pub-matches-grid te-pub-matches-grid--wide">
+                      {[...roundMatches]
+                        .sort((a, b) => (a.court ?? 1) - (b.court ?? 1))
+                        .map((match, matchIdx) =>
+                          renderPublicMatchCard(match, matchIdx, {
+                            remontadaRound: idx,
+                            encounterLabel: `Remontada · encuentro ${matchIdx + 1}`,
+                          })
+                        )}
                     </div>
                   </div>
                 );

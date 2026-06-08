@@ -338,9 +338,243 @@
   color: var(--text-secondary);
 }
 
-/* Round Robin / equipos / extensiones compartidas */
+/* Round Robin — vista pública ancho completo */
+.te-public--reta.te-public--reta-wide .te-public__inner {
+  width: 100%;
+  max-width: none;
+  padding-left: clamp(12px, 3vw, 48px);
+  padding-right: clamp(12px, 3vw, 48px);
+}
+
+.te-public--reta.te-public--reta-wide .te-public-header__title--event {
+  max-width: none;
+}
+
 .te-public--reta .te-public__inner {
   max-width: 1100px;
+}
+
+.te-pub-matches-grid--wide {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 1rem;
+  width: 100%;
+  align-items: stretch;
+}
+
+.te-pub-match--wide {
+  min-width: 0;
+  height: 100%;
+  padding: 1rem 1.1rem 0.95rem;
+}
+
+.te-pub-match__top-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  min-width: 0;
+}
+
+.te-pub-match__encounter {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.te-pub-match__faceoff {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(0.75rem, 3vw, 2rem);
+  margin-top: 0.35rem;
+}
+
+.te-pub-match__score-block--center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+}
+
+.te-pub-score--faceoff {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.te-pub-score--faceoff .te-pub-score__num {
+  font-size: clamp(1.45rem, 3.5vw, 2.15rem);
+}
+
+.te-pub-matches-grid--wide .te-pub-match__faceoff {
+  gap: 0.5rem 0.65rem;
+}
+
+.te-pub-matches-grid--wide .te-pub-pair__label {
+  font-size: clamp(0.82rem, 2vw, 0.98rem);
+}
+
+.te-pub-match-winner--compact {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.te-pub-match-winner--compact .te-pub-match-winner__icon {
+  font-size: 1rem;
+}
+
+.te-pub-match-winner--compact .te-pub-match-winner__label {
+  font-size: 0.72rem;
+  margin: 0;
+}
+
+.te-pub-match-winner--compact .te-pub-match-winner__sep {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.te-pub-match-winner--compact .te-pub-match-winner__name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent-gold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(100%, 14rem);
+}
+
+.te-pub-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.te-pub-pair--left {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.te-pub-pair--right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.te-pub-pair--win .te-pub-pair__label {
+  color: var(--accent-gold);
+}
+
+.te-pub-pair__avatars {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 52px;
+}
+
+.te-pub-pair--right .te-pub-pair__avatars {
+  flex-direction: row-reverse;
+}
+
+.te-pub-pair__avatar {
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.te-pub-pair__avatar--back {
+  z-index: 1;
+}
+
+.te-pub-pair__avatar--front {
+  margin-left: -14px;
+  z-index: 2;
+}
+
+.te-pub-pair--right .te-pub-pair__avatar--front {
+  margin-left: 0;
+  margin-right: -14px;
+}
+
+.te-pub-pair--win .te-pub-pair__avatar {
+  border-color: rgba(201, 162, 39, 0.65);
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.25), 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.te-pub-pair__label {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.te-pub-pair__names {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.te-pub-pair--right .te-pub-pair__names {
+  justify-content: flex-end;
+}
+
+.te-pub-pair__sep {
+  opacity: 0.55;
+}
+
+@media (max-width: 720px) {
+  .te-pub-match__faceoff {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0.85rem;
+    text-align: center;
+  }
+
+  .te-pub-pair--left,
+  .te-pub-pair--right {
+    align-items: center;
+    text-align: center;
+  }
+
+  .te-pub-pair--left .te-pub-pair__avatars,
+  .te-pub-pair--right .te-pub-pair__avatars {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  .te-pub-pair--right .te-pub-pair__avatar--front {
+    margin-right: -14px;
+    margin-left: 0;
+  }
+
+  .te-pub-pair--right .te-pub-pair__names {
+    justify-content: center;
+  }
+
+  .te-pub-match__score-block--center {
+    order: -1;
+    min-width: 0;
+  }
 }
 
 .te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name {
@@ -552,7 +786,21 @@
 
 .te-pub-match--remontada {
   border-color: rgba(245, 158, 11, 0.45);
-  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(245, 158, 11, 0.12),
+    inset 4px 0 0 rgba(245, 158, 11, 0.85);
+  background: linear-gradient(
+    90deg,
+    rgba(245, 158, 11, 0.12) 0%,
+    rgba(255, 255, 255, 0.06) 28%,
+    rgba(255, 255, 255, 0.08) 100%
+  );
+}
+
+.te-pub-match--remontada .te-pub-match__encounter {
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.14);
 }
 
 .te-pub-match__remontada-badge {
@@ -574,20 +822,22 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 0.4rem 0.5rem;
 }
 
 /* Remontada Final — vista pública reta */
 .rr-championship--public {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  border-radius: 14px;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  margin-top: 2rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border-radius: 16px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
   background: linear-gradient(
     180deg,
-    rgba(245, 158, 11, 0.1) 0%,
-    rgba(245, 158, 11, 0.03) 100%
+    rgba(245, 158, 11, 0.14) 0%,
+    rgba(245, 158, 11, 0.04) 100%
   );
+  width: 100%;
 }
 
 .rr-championship__header {
