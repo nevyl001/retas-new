@@ -934,6 +934,39 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+.rj-historial-timeline__head-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rj-historial-timeline__delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid rgba(255, 90, 90, 0.35);
+  border-radius: 6px;
+  background: rgba(255, 70, 70, 0.08);
+  color: #ff8a8a;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.rj-historial-timeline__delete:hover:not(:disabled) {
+  background: rgba(255, 70, 70, 0.18);
+  border-color: rgba(255, 90, 90, 0.55);
+  color: #ffb0b0;
+}
+
+.rj-historial-timeline__delete:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
 .rj-historial-timeline__lugar {
   font-size: 0.75rem;
   font-weight: 700;
@@ -976,4 +1009,14 @@
 
 .rj-historial-timeline__pts {
   color: #c9a227;
+}
+
+@keyframes rj-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.rj-spin {
+  animation: rj-spin 0.8s linear infinite;
 }

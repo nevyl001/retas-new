@@ -8,12 +8,15 @@ import type {
   JugadorParticipacion,
   RivieraJugadorCategoria,
 } from "../../lib/rivieraJugadores/types";
+import { TablerIcon } from "../ui/TablerIcon";
 
 interface JugadorHistorialListProps {
   participaciones: JugadorParticipacion[];
   categoriaFallback?: RivieraJugadorCategoria;
   variant?: "admin" | "public";
   showResumen?: boolean;
+  onDelete?: (participacionId: string, eventoNombre: string) => void;
+  deletingId?: string | null;
 }
 
 function formatFecha(iso: string): string {
@@ -33,6 +36,8 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
   categoriaFallback,
   variant = "admin",
   showResumen = true,
+  onDelete,
+  deletingId = null,
 }) => {
   const visible = useMemo(
     () => filterParticipacionesHistorialVisible(participaciones),
@@ -89,17 +94,35 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
                 <span className="rj-historial-timeline__modalidad">
                   {it.modalidadLabel}
                 </span>
-                <span
-                  className={`rj-historial-timeline__lugar${
-                    it.esCampeon
-                      ? " rj-historial-timeline__lugar--gold"
-                      : it.esSubcampeon
-                        ? " rj-historial-timeline__lugar--silver"
-                        : ""
-                  }`}
-                >
-                  {it.lugarLabel}
-                </span>
+                <div className="rj-historial-timeline__head-end">
+                  <span
+                    className={`rj-historial-timeline__lugar${
+                      it.esCampeon
+                        ? " rj-historial-timeline__lugar--gold"
+                        : it.esSubcampeon
+                          ? " rj-historial-timeline__lugar--silver"
+                          : ""
+                    }`}
+                  >
+                    {it.lugarLabel}
+                  </span>
+                  {onDelete && (
+                    <button
+                      type="button"
+                      className="rj-historial-timeline__delete"
+                      title="Eliminar del historial"
+                      aria-label={`Eliminar ${it.eventoNombre} del historial`}
+                      disabled={deletingId === it.id}
+                      onClick={() => onDelete(it.id, it.eventoNombre)}
+                    >
+                      <TablerIcon
+                        name={deletingId === it.id ? "loader-2" : "trash"}
+                        size={15}
+                        className={deletingId === it.id ? "rj-spin" : undefined}
+                      />
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="rj-historial-timeline__evento">{it.eventoNombre}</p>
               {it.eventoDescripcion && (

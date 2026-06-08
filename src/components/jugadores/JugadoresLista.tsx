@@ -18,6 +18,7 @@ import {
   deleteRivieraJugador,
   listRivieraJugadores,
   promoteImportedRivieraJugadores,
+  rebuildJugadorStats,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 import {
@@ -169,6 +170,10 @@ export const JugadoresLista: React.FC = () => {
                           backfillAmericanoHistorial(user.id),
                           promoteImportedRivieraJugadores(user.id),
                         ]);
+                      const todos = await listRivieraJugadores(user.id);
+                      await Promise.allSettled(
+                        todos.map((j) => rebuildJugadorStats(j.id))
+                      );
                       await load();
                       const total = nRetas + nAmericanos;
                       const promoNote =

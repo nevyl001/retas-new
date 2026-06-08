@@ -80,6 +80,47 @@ function isMissingTableError(error: { code?: string; message?: string } | null):
   );
 }
 
+function isMissingRpcError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const msg = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "42883" ||
+    error.code === "PGRST202" ||
+    msg.includes("refresh_jugador_stats") ||
+    msg.includes("could not find the function")
+  );
+}
+
+async function fetchJugadorStatsRow(
+  jugadorId: string
+): Promise<JugadorStats | null> {
+  const { data, error } = await supabase
+    .from("jugador_stats")
+    .select(STATS_SELECT)
+    .eq("jugador_id", jugadorId)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingTableError(error)) return null;
+    throw error;
+  }
+  return data ? (data as JugadorStats) : null;
+}
+
+async function computeStatsFallback(
+  jugadorId: string
+): Promise<JugadorStats> {
+  const { computeJugadorStatsFromParticipaciones } = await import(
+    "./rebuildJugadorStats"
+  );
+  const rows = await listParticipaciones(jugadorId, 500);
+  const stats = computeJugadorStatsFromParticipaciones(jugadorId, rows);
+  return {
+    ...stats,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 export async function listRivieraJugadores(
   organizadorId: string,
   opts?: { search?: string; nivel?: string; activosRecientes?: boolean }
@@ -428,6 +469,94 @@ export async function ensureRivieraJugadorForLegacyPlayer(
   } catch (e) {
     console.warn("ensureRivieraJugadorForLegacyPlayer:", e);
     return null;
+  }
+}
+
+/** Recalcula stats vía RPC en Supabase (SECURITY DEFINER). No escribe directo en jugador_stats. */
+export async function rebuildJugadorStats(
+  jugadorId: string
+): Promise<JugadorStats | null> {
+  const { error: rpcErr } = await supabase.rpc("refresh_jugador_stats", {
+    p_jugador_id: jugadorId,
+  });
+
+  if (rpcErr) {
+    if (isMissingTableError(rpcErr) || isMissingRpcError(rpcErr)) {
+      return computeStatsFallback(jugadorId);
+    }
+    console.warn("[riviera-jugadores] refresh_jugador_stats:", rpcErr);
+  }
+
+  try {
+    const row = await fetchJugadorStatsRow(jugadorId);
+    if (row) return row;
+  } catch (e) {
+    console.warn("[riviera-jugadores] fetch jugador_stats:", e);
+  }
+
+  return computeStatsFallback(jugadorId);
+}
+
+/**
+ * Elimina una participación del historial, recalcula estadísticas y puntos
+ * de ranking. Solo el organizador dueño del jugador puede ejecutarlo.
+ */
+export async function deleteParticipacionJugador(
+  organizadorId: string,
+  jugadorId: string,
+  participacionId: string
+): Promise<void> {
+  const { data: jugador, error: jugErr } = await supabase
+    .from("riviera_jugadores")
+    .select("id")
+    .eq("id", jugadorId)
+    .eq("organizador_id", organizadorId)
+    .maybeSingle();
+
+  if (jugErr) {
+    if (isMissingTableError(jugErr)) {
+      throw new Error("El registro de jugadores no está disponible.");
+    }
+    throw jugErr;
+  }
+  if (!jugador) {
+    throw new Error("Jugador no encontrado o sin permiso.");
+  }
+
+  const { data: part, error: partFetchErr } = await supabase
+    .from("jugador_participaciones")
+    .select("id, jugador_id, evento_nombre, puntos_obtenidos")
+    .eq("id", participacionId)
+    .eq("jugador_id", jugadorId)
+    .maybeSingle();
+
+  if (partFetchErr) {
+    if (isMissingTableError(partFetchErr)) {
+      throw new Error("El historial no está disponible.");
+    }
+    throw partFetchErr;
+  }
+  if (!part) {
+    throw new Error("Registro de historial no encontrado.");
+  }
+
+  const { error: delErr } = await supabase
+    .from("jugador_participaciones")
+    .delete()
+    .eq("id", participacionId)
+    .eq("jugador_id", jugadorId);
+
+  if (delErr) {
+    if (isMissingTableError(delErr)) {
+      throw new Error("No se pudo eliminar el registro.");
+    }
+    throw delErr;
+  }
+
+  try {
+    await rebuildJugadorStats(jugadorId);
+  } catch (e) {
+    console.warn("[riviera-jugadores] rebuild tras eliminar participación:", e);
   }
 }
 

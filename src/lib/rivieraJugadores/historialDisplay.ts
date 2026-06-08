@@ -321,28 +321,46 @@ export function participacionToHistorialItem(
   };
 }
 
+function isLigaInscripcionParticipacion(row: JugadorParticipacion): boolean {
+  const meta = row.metadata ?? {};
+  return meta.subtipo === "liga_inscripcion";
+}
+
 /** Partidos ganados/perdidos dentro de cada evento (no el puesto final del torneo). */
 export function extractPartidosFromParticipacion(
   row: JugadorParticipacion
 ): { ganados: number; perdidos: number; empates: number } {
   const meta = row.metadata ?? {};
 
+  if (isLigaInscripcionParticipacion(row)) {
+    return { ganados: 0, perdidos: 0, empates: 0 };
+  }
+
+  const hasWinsKey = metaNum(meta, "partidos_ganados") != null;
+  const hasLossesKey = metaNum(meta, "partidos_perdidos") != null;
+  const victoriasRanking = metaNum(meta, "victorias_ranking");
+  const jugados =
+    metaNum(meta, "partidos_jugados") ?? metaNum(meta, "partidos");
+
   let ganados =
-    metaNum(meta, "partidos_ganados") ?? metaNum(meta, "victorias_ranking");
+    metaNum(meta, "partidos_ganados") ?? victoriasRanking;
   let perdidos = metaNum(meta, "partidos_perdidos");
   let empates = metaNum(meta, "partidos_empatados") ?? 0;
 
-  if (ganados != null || perdidos != null) {
-    const jugados =
-      metaNum(meta, "partidos_jugados") ?? metaNum(meta, "partidos");
+  if (hasWinsKey || hasLossesKey || victoriasRanking != null) {
     if (perdidos == null && jugados != null && ganados != null) {
       perdidos = Math.max(0, jugados - ganados - empates);
     }
-    return {
-      ganados: ganados ?? 0,
-      perdidos: perdidos ?? 0,
-      empates,
-    };
+    const g = ganados ?? 0;
+    const p = perdidos ?? 0;
+    if (g + p + empates > 0) {
+      return { ganados: g, perdidos: p, empates };
+    }
+    if (jugados != null && jugados > 0) {
+      /* Metadatos incompletos: hay partidos pero sin desglose W/L. */
+    } else {
+      return { ganados: g, perdidos: p, empates };
+    }
   }
 
   const sf = row.sets_favor ?? 0;

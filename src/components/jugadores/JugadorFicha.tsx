@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
   EN_CANCHA_LABELS,
@@ -8,10 +8,13 @@ import {
   MANO_DOMINANTE_LABELS,
 } from "../../lib/rivieraJugadores/constants";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
+import { computePublicProfileStats } from "../../lib/rivieraJugadores/historialDisplay";
 import {
+  deleteParticipacionJugador,
   deleteRivieraJugador,
   getRivieraJugadorBySlug,
   listParticipaciones,
+  rebuildJugadorStats,
   updateRivieraJugador,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { uploadJugadorAvatar } from "../../lib/rivieraJugadores/uploadAvatar";
@@ -59,6 +62,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [tiktok, setTiktok] = useState("");
   const [visiblePublico, setVisiblePublico] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [deletingHistId, setDeletingHistId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -82,6 +86,14 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setVisiblePublico(j.visible_publico !== false);
         const h = await listParticipaciones(j.id, 100);
         setHistorial(h);
+        try {
+          const rebuilt = await rebuildJugadorStats(j.id);
+          if (rebuilt) {
+            setJugador({ ...j, stats: rebuilt });
+          }
+        } catch (e) {
+          console.warn("[riviera-jugadores] sync stats en ficha:", e);
+        }
       }
     } finally {
       setLoading(false);
@@ -135,6 +147,28 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     }
   };
 
+  const handleDeleteParticipacion = async (
+    participacionId: string,
+    eventoNombre: string
+  ) => {
+    if (!user?.id || !jugador) return;
+    const ok = window.confirm(
+      `¿Eliminar «${eventoNombre}» del historial?\n\nSe borrará de la base de datos, se restarán sus puntos de ranking y se recalcularán victorias y efectividad.`
+    );
+    if (!ok) return;
+    setDeletingHistId(participacionId);
+    try {
+      await deleteParticipacionJugador(user.id, jugador.id, participacionId);
+      await load();
+    } catch (e) {
+      alert(
+        e instanceof Error ? e.message : "No se pudo eliminar el registro"
+      );
+    } finally {
+      setDeletingHistId(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!user?.id || !jugador) return;
     const ok = window.confirm(
@@ -165,6 +199,13 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       setUploading(false);
     }
   };
+
+  const histStats = useMemo(
+    () => computePublicProfileStats(historial),
+    [historial]
+  );
+  const partidosDecididos =
+    histStats.partidosGanados + histStats.partidosPerdidos;
 
   if (loading) {
     return (
@@ -476,20 +517,18 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
 
         <div className="rj-stats-row">
           <div className="rj-stat-card">
-            <span className="rj-stat-card__val">{s?.total_partidos ?? 0}</span>
+            <span className="rj-stat-card__val">{partidosDecididos}</span>
             <span className="rj-stat-card__lbl">Partidos</span>
           </div>
           <div className="rj-stat-card">
-            <span className="rj-stat-card__val">{s?.victorias ?? 0}</span>
+            <span className="rj-stat-card__val">{histStats.partidosGanados}</span>
             <span className="rj-stat-card__lbl">Victorias</span>
           </div>
           <div className="rj-stat-card">
             <span className="rj-stat-card__val">
-              {s?.total_partidos
-                ? `${Number(s.pct_victorias).toFixed(0)}%`
-                : "—"}
+              {histStats.winRate != null ? `${histStats.winRate}%` : "—"}
             </span>
-            <span className="rj-stat-card__lbl">% Victorias</span>
+            <span className="rj-stat-card__lbl">Efectividad</span>
           </div>
           <div className="rj-stat-card">
             <span className="rj-stat-card__val">{s?.total_retas ?? 0}</span>
@@ -537,6 +576,8 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             participaciones={historial}
             categoriaFallback={jugador?.categoria}
             variant="admin"
+            onDelete={handleDeleteParticipacion}
+            deletingId={deletingHistId}
           />
         )}
 
