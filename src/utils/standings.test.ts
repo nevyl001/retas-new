@@ -25,7 +25,7 @@ const row = (
   puntos: pg * 2,
 });
 
-describe("standings — orden FAV → DIF → H2H → PG", () => {
+describe("standings — orden FAV → DIF → PG → H2H", () => {
   it("PTS = PG×2 (solo visual)", () => {
     expect(calcularPuntos(0)).toBe(0);
     expect(calcularPuntos(3)).toBe(6);
@@ -53,7 +53,15 @@ describe("standings — orden FAV → DIF → H2H → PG", () => {
     expect(sorted[1].diferencia).toBe(-2);
   });
 
-  it("con mismo FAV y DIF, desempata enfrentamiento directo", () => {
+  it("con mismo FAV y DIF, gana más PG antes que H2H", () => {
+    const sorted = ordenarTabla(
+      [row("a", 20, 20, 1), row("b", 20, 20, 2)],
+      []
+    );
+    expect(sorted[0].pairId).toBe("b");
+  });
+
+  it("con mismo FAV, DIF y PG, desempata enfrentamiento directo", () => {
     const matches = [
       { pairAId: "a", pairBId: "b", gamesA: 6, gamesB: 4, winnerId: "a" },
     ];
@@ -63,14 +71,6 @@ describe("standings — orden FAV → DIF → H2H → PG", () => {
     );
     expect(sorted[0].pairId).toBe("a");
     expect(getHeadToHead("a", "b", matches)).toBe(-1);
-  });
-
-  it("con mismo FAV, DIF y sin H2H, gana más PG", () => {
-    const sorted = ordenarTabla(
-      [row("a", 20, 20, 1), row("b", 20, 20, 2)],
-      []
-    );
-    expect(sorted[0].pairId).toBe("b");
   });
 
   it("sin enfrentamiento directo mantiene empate (0)", () => {

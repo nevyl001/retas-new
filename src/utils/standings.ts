@@ -1,6 +1,6 @@
 /**
  * RivieraApp — Motor de clasificación (tabla general).
- * Orden: 1) FAV  2) DIF  3) H2H  4) PG.
+ * Orden: 1) FAV  2) DIF  3) PG  4) H2H.
  * PTS = PG×2 (solo visual, no ordena).
  */
 import {
@@ -179,14 +179,14 @@ export const createStandingsComparator = (matches: MatchResult[]) => {
   return (a: PairStanding, b: PairStanding): number => {
     if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
     if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
+    if (b.PG !== a.PG) return b.PG - a.PG;
     const h2h = getHeadToHead(a.pairId, b.pairId, matches);
     if (h2h !== 0) return h2h;
-    if (b.PG !== a.PG) return b.PG - a.PG;
     return 0;
   };
 };
 
-/** Alias: ordena por FAV → DIF → H2H → PG. */
+/** Alias: ordena por FAV → DIF → PG → H2H. */
 export function ordenarTabla(
   parejas: PairStanding[],
   historialPartidos: MatchResult[]

@@ -8,6 +8,8 @@ export interface QuickStartPayload {
   name: string;
   description?: string;
   courts: number;
+  championshipEnabled?: boolean;
+  championshipRounds?: number;
 }
 
 interface QuickStartSheetProps {
@@ -33,6 +35,8 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [courts, setCourts] = useState(1);
+  const [championshipEnabled, setChampionshipEnabled] = useState(false);
+  const [championshipRounds, setChampionshipRounds] = useState(2);
 
   if (!modeId) return null;
 
@@ -40,6 +44,10 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
   if (!mode) return null;
 
   const isAmericano = modeId === "americano";
+  const isRoundRobin = modeId === "round-robin";
+
+  const clampChampRounds = (n: number) =>
+    Math.min(10, Math.max(1, Math.floor(n) || 2));
 
   return (
     <Modal
@@ -66,6 +74,12 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
                 name: name.trim() || `Reta ${mode.title}`,
                 description: description.trim() || undefined,
                 courts: isAmericano ? 1 : courts,
+                ...(isRoundRobin
+                  ? {
+                      championshipEnabled,
+                      championshipRounds: clampChampRounds(championshipRounds),
+                    }
+                  : {}),
               })
             }
           >
@@ -141,10 +155,68 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
           </div>
         </>
       )}
+
+      {isRoundRobin && (
+        <div
+          className={`home-sheet__optional${championshipEnabled ? " home-sheet__optional--on" : ""}`}
+        >
+          <div className="home-sheet__optional-head">
+            <div>
+              <p className="home-sheet__optional-kicker">Opcional</p>
+              <p className="home-sheet__optional-title">⚡ Remontada Final</p>
+              <p className="home-sheet__optional-sub">
+                Solo si te sobra tiempo: #1 vs #2 y #3 vs #4 después del Round
+                Robin.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={championshipEnabled}
+              aria-label="Activar Remontada Final"
+              className={`home-sheet__switch${championshipEnabled ? " home-sheet__switch--on" : ""}`}
+              onClick={() => setChampionshipEnabled((v) => !v)}
+            >
+              <span className="home-sheet__switch-thumb" aria-hidden />
+            </button>
+          </div>
+          {championshipEnabled && (
+            <div className="home-sheet__optional-extra">
+              <span className="home-sheet__optional-extra-lbl">Rondas extra</span>
+              <div className="home-sheet__mini-stepper">
+                <button
+                  type="button"
+                  className="home-sheet__mini-step"
+                  onClick={() =>
+                    setChampionshipRounds((r) => clampChampRounds(r - 1))
+                  }
+                  aria-label="Menos rondas"
+                >
+                  −
+                </button>
+                <span className="home-sheet__mini-val">{championshipRounds}</span>
+                <button
+                  type="button"
+                  className="home-sheet__mini-step"
+                  onClick={() =>
+                    setChampionshipRounds((r) => clampChampRounds(r + 1))
+                  }
+                  aria-label="Más rondas"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <p className="home-sheet__hint">
         {isAmericano
           ? "Las canchas, jugadores y rondas se configuran en el siguiente paso del Americano."
-          : "Después podrás añadir jugadores y parejas en la reta. El flujo del modo no cambia."}
+          : isRoundRobin
+            ? "Con las parejas y canchas adecuadas el Round Robin suele llenar el tiempo. Activa Remontada Final solo si quieres rondas de desempate al final."
+            : "Después podrás añadir jugadores y parejas en la reta."}
       </p>
     </Modal>
   );

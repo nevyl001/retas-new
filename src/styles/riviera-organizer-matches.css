@@ -776,3 +776,91 @@
   max-width: none !important;
   margin: 1rem 0 0 !important;
 }
+
+/* ── Remontada Final (Round Robin) ── */
+.rr-championship {
+  margin-top: 1.75rem;
+  padding: 1.1rem 1rem 0.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: linear-gradient(
+    180deg,
+    rgba(245, 158, 11, 0.1) 0%,
+    rgba(245, 158, 11, 0.03) 100%
+  );
+}
+
+.rr-championship__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.rr-championship__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.rr-championship__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #f59e0b;
+}
+
+.rr-championship__subtitle {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.rr-championship__pending {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.rr-championship__round-title {
+  margin: 0;
+}
+
+.rr-championship__round-label {
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #fbbf24;
+}
+
+.rr-championship__winner {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 1.25rem 0;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.rr-championship__winner-badge {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.rr-championship__winner-title {
+  margin: 0;
+  font-weight: 800;
+  color: #f59e0b;
+}
+
+.rr-championship__winner-name {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.rr-championship--public {
+  margin-top: 1.5rem;
+}

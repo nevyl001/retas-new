@@ -205,6 +205,31 @@ export const getTournamentPublicConfig = async (tournamentId: string): Promise<{
   }
 };
 
+/** Config pública extendida (equipos + remontada final si existe la columna). */
+export const getTournamentPublicConfigExtended = async (
+  tournamentId: string
+): Promise<{
+  format?: string;
+  team_config?: TournamentTeamConfig | null;
+  championship_config?: unknown;
+} | null> => {
+  try {
+    const { data, error } = await supabasePublicRead
+      .from("tournament_public_config")
+      .select("*")
+      .eq("tournament_id", tournamentId.trim())
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as {
+      format?: string;
+      team_config?: TournamentTeamConfig | null;
+      championship_config?: unknown;
+    };
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Snapshot Americano para vista pública (columna americano_live en tournament_public_config).
  * Requiere columna americano_live en tournament_public_config.
@@ -794,7 +819,8 @@ export const createMatch = async (
   pair2Id: string,
   court: number,
   round: number = 1,
-  userId: string
+  userId: string,
+  matchType?: "roundrobin" | "championship"
 ) => {
   console.log("=== CREATING MATCH IN DATABASE ===");
   console.log("Tournament ID:", tournamentId);
@@ -843,26 +869,29 @@ export const createMatch = async (
     user_id: userId,
   };
 
-  // Agregar round a los datos de inserción
   insertData.round = round;
+  if (matchType) {
+    insertData.match_type = matchType;
+  }
 
-  let { data, error } = await supabase
-    .from("matches")
-    .insert([insertData])
-    .select("*")
-    .single();
+  const insertOnce = async (payload: Record<string, unknown>) =>
+    supabase.from("matches").insert([payload]).select("*").single();
 
-  if (isMissingColumnError(error, "matches", "user_id")) {
-    const { user_id: _omitUserId, ...insertWithoutUserId } = insertData;
-    ({ data, error } = await supabase
-      .from("matches")
-      .insert([insertWithoutUserId])
-      .select("*")
-      .single());
+  let { data, error } = await insertOnce(insertData);
+
+  if (error && matchType) {
+    const { match_type: _omit, ...withoutType } = insertData;
+    ({ data, error } = await insertOnce(withoutType));
+  }
+
+  if (error && isMissingColumnError(error, "matches", "user_id")) {
+    const { user_id: _omitUserId, match_type: _omitType, ...withoutUser } =
+      insertData;
+    ({ data, error } = await insertOnce(withoutUser));
   }
 
   if (error) {
-    console.error("Database error creating match:", error);
+    console.error("Database error creating match:", error.message, error);
     throw error;
   }
 

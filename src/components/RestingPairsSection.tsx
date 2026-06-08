@@ -9,17 +9,24 @@ interface RestingPairsSectionProps {
   courts: number;
 }
 
+/** Partidos de la ronda: si ya vienen filtrados (p. ej. remontada), no re-filtrar por número. */
+function resolveRoundMatches(matches: Match[], round: number): Match[] {
+  if (!matches.length) return [];
+  const roundNums = new Set(matches.map((m) => m.round ?? round));
+  if (roundNums.size === 1) return matches;
+  return matches.filter((m) => (m.round ?? round) === round);
+}
+
 /**
- * Calcula qué parejas descansan en una ronda específica
- * Una pareja descansa si no está en ningún partido de esa ronda
+ * Calcula qué parejas descansan en una ronda específica.
+ * Una pareja descansa si no está en ningún partido de esa ronda.
  */
 const getRestingPairs = (
   pairs: Pair[],
   matches: Match[],
   round: number
 ): Pair[] => {
-  // Obtener todas las parejas que juegan en esta ronda
-  const roundMatches = matches.filter((m) => m.round === round);
+  const roundMatches = resolveRoundMatches(matches, round);
   const playingPairIds = new Set<string>();
   
   roundMatches.forEach((match) => {

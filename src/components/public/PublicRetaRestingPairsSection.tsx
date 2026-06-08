@@ -1,8 +1,15 @@
 import React from "react";
 import type { Pair, Match } from "../../lib/database";
 
+function resolveRoundMatches(matches: Match[], round: number): Match[] {
+  if (!matches.length) return [];
+  const roundNums = new Set(matches.map((m) => m.round ?? round));
+  if (roundNums.size === 1) return matches;
+  return matches.filter((m) => (m.round ?? round) === round);
+}
+
 function getRestingPairs(pairs: Pair[], matches: Match[], round: number): Pair[] {
-  const roundMatches = matches.filter((m) => m.round === round);
+  const roundMatches = resolveRoundMatches(matches, round);
   const playingPairIds = new Set<string>();
   roundMatches.forEach((match) => {
     playingPairIds.add(match.pair1_id);

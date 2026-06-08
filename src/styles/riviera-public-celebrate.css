@@ -139,6 +139,20 @@
   color: rgba(201, 162, 39, 0.75);
 }
 
+.ro-pub-celebrate__avatars {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 0.9rem;
+}
+
+.ro-pub-celebrate__avatar.rj-avatar {
+  box-shadow:
+    0 0 0 2px rgba(201, 162, 39, 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
 .ro-pub-celebrate__names {
   margin: 0;
   font-family: var(--font-body);

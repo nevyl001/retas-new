@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "./Button";
 
 export type ModalSize = "sm" | "md" | "lg" | "full";
@@ -64,7 +65,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const labelledBy = ariaLabelledBy ?? (title ? titleId : undefined);
 
-  return (
+  return createPortal(
     <div
       className={[
         "riviera-modal-overlay",
@@ -117,6 +118,7 @@ export const Modal: React.FC<ModalProps> = ({
 
         {footer ? <footer className="riviera-modal__footer">{footer}</footer> : null}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

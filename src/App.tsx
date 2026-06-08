@@ -49,6 +49,7 @@ import {
 
 // Types
 import { Tournament, Player, getTournamentById, upsertTournamentPublicConfig } from "./lib/database";
+import { isRoundRobinTournamentComplete } from "./lib/roundRobinChampionship";
 import { readPersistedTournamentMode } from "./lib/gameModeMapping";
 
 // Custom Hooks
@@ -576,11 +577,8 @@ function AppContent() {
   }, [pairs]);
 
   const isTournamentFinished = useMemo(() => {
-    return (
-      matches.length > 0 &&
-      matches.every((match) => match.status === "finished")
-    );
-  }, [matches]);
+    return isRoundRobinTournamentComplete(matches, selectedTournament);
+  }, [matches, selectedTournament]);
 
   const winner = useMemo(() => {
     return (

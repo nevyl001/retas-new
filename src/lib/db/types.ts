@@ -36,6 +36,8 @@ export interface Pair {
   player2?: Player;
 }
 
+export type RoundRobinMatchType = "roundrobin" | "championship";
+
 export interface Match {
   id: string;
   tournament_id: string;
@@ -45,6 +47,8 @@ export interface Match {
   pair2_name: string;
   court: number;
   round?: number;
+  /** Ronda regular vs remontada final (si la columna existe en Supabase). */
+  match_type?: RoundRobinMatchType | string | null;
   status: string;
   pair1_score?: number;
   pair2_score?: number;

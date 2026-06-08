@@ -23,6 +23,7 @@ import {
   persistTournamentGameMode,
   persistTournamentMode,
 } from "../../lib/gameModeMapping";
+import { initChampionshipConfig } from "../../lib/roundRobinChampionship";
 import { HomeHeader } from "./HomeHeader";
 import { GameModesGrid } from "./GameModesGrid";
 import { QuickStartSheet, QuickStartPayload } from "./QuickStartSheet";
@@ -103,6 +104,12 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         persistTournamentGameMode(tournament.id, payload.modeId);
         if (dbFormat) {
           persistTournamentMode(tournament.id, dbFormat);
+        }
+        if (payload.modeId === "round-robin" && payload.championshipEnabled) {
+          initChampionshipConfig(tournament.id, {
+            enabled: true,
+            rounds: payload.championshipRounds ?? 2,
+          });
         }
         setSheetMode(null);
 

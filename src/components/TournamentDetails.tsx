@@ -266,6 +266,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           winner={winner}
           onShowWinnerScreen={onShowWinnerScreen}
           onBackToHome={onBackToHome}
+          onReloadMatches={loadTournamentData}
           userId={userId}
         />
       )}
