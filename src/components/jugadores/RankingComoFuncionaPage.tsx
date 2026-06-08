@@ -244,21 +244,34 @@ export const RankingComoFuncionaPage: React.FC = () => {
               delayMs={80}
               rows={[
                 {
-                  concepto: "Participar",
+                  concepto: "Podio — 1.º",
                   cuando: "Al finalizar reta",
-                  puntos: `+${R.PARTICIPACION}`,
-                  tone: "base",
+                  puntos: `+${R.PRIMER_LUGAR}`,
+                  tone: "gold",
                 },
                 {
-                  concepto: "1.º en parejas",
+                  concepto: "Podio — 2.º",
                   cuando: "Al finalizar reta",
-                  puntos: `+${R.VICTORIA}`,
-                  tone: "win",
+                  puntos: `+${R.SEGUNDO_LUGAR}`,
+                  tone: "silver",
+                },
+                {
+                  concepto: "Podio — 3.º",
+                  cuando: "Al finalizar reta",
+                  puntos: `+${R.TERCER_LUGAR}`,
+                  tone: "bronze",
+                },
+                {
+                  concepto: "4.º en adelante",
+                  cuando: "Al finalizar reta",
+                  puntos: `+${R.PARTICIPACION} (participar)`,
+                  tone: "base",
                 },
               ]}
               footer={[
-                { label: "Solo jugar", value: `${R.PARTICIPACION}` },
-                { label: "Si ganas (1.º)", value: `${R.PARTICIPACION + R.VICTORIA}` },
+                { label: "Solo participar", value: `${R.PARTICIPACION}` },
+                { label: "Campeón (1.º)", value: `${R.PRIMER_LUGAR}` },
+                { label: "Subcampeón (2.º)", value: `${R.SEGUNDO_LUGAR}` },
               ]}
             />
 
@@ -268,30 +281,33 @@ export const RankingComoFuncionaPage: React.FC = () => {
               delayMs={160}
               rows={[
                 {
-                  concepto: "Participar (cada jugador)",
+                  concepto: "Podio — 1.º equipo",
                   cuando: "Al finalizar reta",
-                  puntos: `+${RE.PARTICIPACION}`,
+                  puntos: `+${RE.PRIMER_LUGAR} c/u`,
+                  tone: "gold",
+                },
+                {
+                  concepto: "Podio — 2.º equipo",
+                  cuando: "Al finalizar reta",
+                  puntos: `+${RE.SEGUNDO_LUGAR} c/u`,
+                  tone: "silver",
+                },
+                {
+                  concepto: "Podio — 3.º equipo",
+                  cuando: "Al finalizar reta",
+                  puntos: `+${RE.TERCER_LUGAR} c/u`,
+                  tone: "bronze",
+                },
+                {
+                  concepto: "4.º equipo en adelante",
+                  cuando: "Al finalizar reta",
+                  puntos: `+${RE.PARTICIPACION} c/u (participar)`,
                   tone: "base",
-                },
-                {
-                  concepto: "Equipo con más marcador",
-                  cuando: "Al finalizar reta",
-                  puntos: `+${RE.VICTORIA} c/u en equipo ganador`,
-                  tone: "win",
-                },
-                {
-                  concepto: "Equipo perdedor",
-                  cuando: "Al finalizar reta",
-                  puntos: "+0",
-                  tone: "zero",
                 },
               ]}
               footer={[
-                { label: "Solo jugar", value: `${RE.PARTICIPACION}` },
-                {
-                  label: "Equipo ganador",
-                  value: `${RE.PARTICIPACION + RE.VICTORIA}`,
-                },
+                { label: "Solo participar", value: `${RE.PARTICIPACION}` },
+                { label: "Equipo campeón", value: `${RE.PRIMER_LUGAR}` },
               ]}
             />
 

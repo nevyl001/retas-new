@@ -23,7 +23,7 @@ const americanoMax = calcularPuntosEvento({
 });
 
 const LIGA_MAX = PUNTOS_LIGA.BASE_INSCRIPCION + PUNTOS_LIGA.PRIMER_LUGAR;
-const RETA_MAX = PUNTOS_RETA.PARTICIPACION + PUNTOS_RETA.VICTORIA;
+const RETA_MAX = PUNTOS_RETA.PRIMER_LUGAR;
 
 const MODALIDADES = [
   {
@@ -51,7 +51,7 @@ const MODALIDADES = [
     id: "reta",
     icon: "ball-tennis",
     nombre: "Reta",
-    linea: `+${PUNTOS_RETA.PARTICIPACION} jugar · +${PUNTOS_RETA.VICTORIA} si ganas`,
+    linea: `Podio ${PUNTOS_RETA.PRIMER_LUGAR}/${PUNTOS_RETA.SEGUNDO_LUGAR}/${PUNTOS_RETA.TERCER_LUGAR} · +${PUNTOS_RETA.PARTICIPACION} participar`,
     maxPts: RETA_MAX,
   },
 ] as const;

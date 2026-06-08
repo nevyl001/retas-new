@@ -561,10 +561,14 @@ async function syncRetaParticipacionesInner(params: {
   const modalidadLabel = esEquipos ? "Reta por equipos" : "Reta";
 
   let winningTeamIndex: number | null = null;
+  const teamPosByIndex = new Map<number, number>();
   const teamConfig = esEquipos ? getTeamConfigFromStorage(tournament.id) : null;
   if (esEquipos && teamConfig) {
     const teamRows = computeTeamStandings(sortedPairs, teamConfig);
     winningTeamIndex = teamRows?.[0]?.teamIndex ?? null;
+    teamRows?.forEach((row, i) => {
+      teamPosByIndex.set(row.teamIndex, i + 1);
+    });
   }
 
   const formatoRanking: RivieraRankingFormato = esEquipos
@@ -587,9 +591,14 @@ async function syncRetaParticipacionesInner(params: {
     const rank = pair ? pairRank.get(pair.id) : undefined;
 
     let equipoGanador = false;
-    if (esEquipos && winningTeamIndex != null && pair && teamConfig) {
+    let posicionEquipo: number | null = null;
+    if (esEquipos && pair && teamConfig) {
       const teamIdx = teamConfig.pairToTeam[pair.id];
-      equipoGanador = teamIdx === winningTeamIndex;
+      if (teamIdx != null) {
+        posicionEquipo = teamPosByIndex.get(teamIdx) ?? null;
+        equipoGanador =
+          winningTeamIndex != null && teamIdx === winningTeamIndex;
+      }
     }
 
     const { data: perfilRiviera } = await supabase
@@ -613,7 +622,10 @@ async function syncRetaParticipacionesInner(params: {
       resultado: resultadoReta,
       formato: formatoRanking,
       calcParams: esEquipos
-        ? { equipo_ganador: equipoGanador }
+        ? {
+            posicion_final: posicionEquipo,
+            equipo_ganador: equipoGanador,
+          }
         : { posicion_final: rank?.pos ?? null },
       setsFavor: st.setsFavor,
       setsContra: st.setsContra,

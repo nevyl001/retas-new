@@ -14,13 +14,18 @@ export const PUNTOS_LIGA = {
 } as const;
 
 export const PUNTOS_RETA = {
-  PARTICIPACION: 20,
-  VICTORIA: 50,
+  /** 4.º lugar en adelante (solo participar). */
+  PARTICIPACION: 25,
+  PRIMER_LUGAR: 100,
+  SEGUNDO_LUGAR: 75,
+  TERCER_LUGAR: 50,
 } as const;
 
 export const PUNTOS_RETA_EQUIPOS = {
-  PARTICIPACION: 20,
-  VICTORIA: 50,
+  PARTICIPACION: 25,
+  PRIMER_LUGAR: 100,
+  SEGUNDO_LUGAR: 75,
+  TERCER_LUGAR: 50,
 } as const;
 
 export const PUNTOS_AMERICANO = {
@@ -107,16 +112,35 @@ export function calcularPuntosEventoDesglose(
       break;
     }
     case "reta": {
-      add(desglose, "reta_participacion", PUNTOS_RETA.PARTICIPACION);
-      if (params.posicion_final === 1) {
-        add(desglose, "reta_victoria", PUNTOS_RETA.VICTORIA);
+      const posReta = params.posicion_final;
+      if (posReta === 1) {
+        add(desglose, "reta_podio_1", PUNTOS_RETA.PRIMER_LUGAR);
+      } else if (posReta === 2) {
+        add(desglose, "reta_podio_2", PUNTOS_RETA.SEGUNDO_LUGAR);
+      } else if (posReta === 3) {
+        add(desglose, "reta_podio_3", PUNTOS_RETA.TERCER_LUGAR);
+      } else {
+        add(desglose, "reta_participacion", PUNTOS_RETA.PARTICIPACION);
       }
       break;
     }
     case "reta_equipos": {
-      add(desglose, "reta_equipos_participacion", PUNTOS_RETA_EQUIPOS.PARTICIPACION);
-      if (params.equipo_ganador) {
-        add(desglose, "reta_equipos_victoria", PUNTOS_RETA_EQUIPOS.VICTORIA);
+      let posEquipos = params.posicion_final;
+      if (posEquipos == null && params.equipo_ganador) {
+        posEquipos = 1;
+      }
+      if (posEquipos === 1) {
+        add(desglose, "reta_equipos_podio_1", PUNTOS_RETA_EQUIPOS.PRIMER_LUGAR);
+      } else if (posEquipos === 2) {
+        add(desglose, "reta_equipos_podio_2", PUNTOS_RETA_EQUIPOS.SEGUNDO_LUGAR);
+      } else if (posEquipos === 3) {
+        add(desglose, "reta_equipos_podio_3", PUNTOS_RETA_EQUIPOS.TERCER_LUGAR);
+      } else {
+        add(
+          desglose,
+          "reta_equipos_participacion",
+          PUNTOS_RETA_EQUIPOS.PARTICIPACION
+        );
       }
       break;
     }

@@ -4,6 +4,7 @@ import {
   PUNTOS_EXPRESS,
   PUNTOS_LIGA,
   PUNTOS_RETA,
+  PUNTOS_RETA_EQUIPOS,
 } from "./rivieraRankingPoints";
 
 describe("calcularPuntosEvento", () => {
@@ -35,16 +36,22 @@ describe("calcularPuntosEvento", () => {
     ).toBe(850);
   });
 
-  it("reta: participación + victoria", () => {
+  it("reta: podio 1.º / 2.º / 3.º y participación", () => {
     expect(
       calcularPuntosEvento({ formato: "reta", posicion_final: 1 })
-    ).toBe(PUNTOS_RETA.PARTICIPACION + PUNTOS_RETA.VICTORIA);
+    ).toBe(PUNTOS_RETA.PRIMER_LUGAR);
+    expect(
+      calcularPuntosEvento({ formato: "reta", posicion_final: 2 })
+    ).toBe(PUNTOS_RETA.SEGUNDO_LUGAR);
+    expect(
+      calcularPuntosEvento({ formato: "reta", posicion_final: 3 })
+    ).toBe(PUNTOS_RETA.TERCER_LUGAR);
   });
 
-  it("reta equipos: solo participación si pierde", () => {
+  it("reta equipos: participación si no está en podio", () => {
     expect(
-      calcularPuntosEvento({ formato: "reta_equipos", equipo_ganador: false })
-    ).toBe(20);
+      calcularPuntosEvento({ formato: "reta_equipos", posicion_final: 4 })
+    ).toBe(PUNTOS_RETA_EQUIPOS.PARTICIPACION);
   });
 
   it("americano: base + victorias + podio", () => {
