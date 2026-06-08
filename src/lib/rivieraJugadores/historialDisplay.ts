@@ -202,8 +202,15 @@ function formatBalanceParticipacion(
   meta: Record<string, unknown>,
   row: JugadorParticipacion
 ): string | undefined {
-  const wins = metaNum(meta, "partidos_ganados");
-  const losses = metaNum(meta, "partidos_perdidos");
+  let wins = metaNum(meta, "partidos_ganados");
+  let losses = metaNum(meta, "partidos_perdidos");
+  if (wins == null) wins = metaNum(meta, "victorias_ranking");
+  if (losses == null && wins != null) {
+    const jugados =
+      metaNum(meta, "partidos_jugados") ?? metaNum(meta, "partidos");
+    const empates = metaNum(meta, "partidos_empatados") ?? 0;
+    if (jugados != null) losses = Math.max(0, jugados - wins - empates);
+  }
   if (wins != null && (wins > 0 || (losses ?? 0) > 0)) {
     const wTxt = `${wins} victoria${wins === 1 ? "" : "s"}`;
     const lTxt =
@@ -314,46 +321,111 @@ export function participacionToHistorialItem(
   };
 }
 
+/** Partidos ganados/perdidos dentro de cada evento (no el puesto final del torneo). */
+export function extractPartidosFromParticipacion(
+  row: JugadorParticipacion
+): { ganados: number; perdidos: number; empates: number } {
+  const meta = row.metadata ?? {};
+
+  let ganados =
+    metaNum(meta, "partidos_ganados") ?? metaNum(meta, "victorias_ranking");
+  let perdidos = metaNum(meta, "partidos_perdidos");
+  let empates = metaNum(meta, "partidos_empatados") ?? 0;
+
+  if (ganados != null || perdidos != null) {
+    const jugados =
+      metaNum(meta, "partidos_jugados") ?? metaNum(meta, "partidos");
+    if (perdidos == null && jugados != null && ganados != null) {
+      perdidos = Math.max(0, jugados - ganados - empates);
+    }
+    return {
+      ganados: ganados ?? 0,
+      perdidos: perdidos ?? 0,
+      empates,
+    };
+  }
+
+  const sf = row.sets_favor ?? 0;
+  const sc = row.sets_contra ?? 0;
+  if (sf > 0 || sc > 0) {
+    if (sf > sc) return { ganados: 1, perdidos: 0, empates: 0 };
+    if (sc > sf) return { ganados: 0, perdidos: 1, empates: 0 };
+    return { ganados: 0, perdidos: 0, empates: 1 };
+  }
+
+  if (participacionCuentaComoVictoria(row)) {
+    return { ganados: 1, perdidos: 0, empates: 0 };
+  }
+  if (participacionCuentaComoDerrota(row)) {
+    return { ganados: 0, perdidos: 1, empates: 0 };
+  }
+  if (row.resultado === "empate") {
+    return { ganados: 0, perdidos: 0, empates: 1 };
+  }
+
+  return { ganados: 0, perdidos: 0, empates: 0 };
+}
+
+export function computeWinRatePct(
+  ganados: number,
+  perdidos: number
+): number | null {
+  const decididos = ganados + perdidos;
+  if (decididos <= 0) return ganados > 0 ? 100 : null;
+  return Math.round((ganados / decididos) * 100);
+}
+
 export function computePublicProfileStats(
   participaciones: JugadorParticipacion[]
 ): {
-  retas: number;
+  /** Solo eventos tipo reta (admin / desglose). */
+  retasClasicas: number;
+  /** Retas + americanos + ligas + torneos (tarjeta pública «Retas»). */
+  eventosJugados: number;
   torneosExpress: number;
   ligas: number;
   americanos: number;
+  /** Partidos ganados en duelos (suma de todos los eventos). */
+  partidosGanados: number;
+  partidosPerdidos: number;
+  partidosEmpatados: number;
   victorias: number;
   winRate: number | null;
 } {
-  let retas = 0;
+  let retasClasicas = 0;
   let torneosExpress = 0;
   let ligas = 0;
   let americanos = 0;
-  let victorias = 0;
-  let derrotas = 0;
+  let partidosGanados = 0;
+  let partidosPerdidos = 0;
+  let partidosEmpatados = 0;
 
-  for (const p of filterParticipacionesHistorialVisible(participaciones)) {
-    if (p.tipo_evento === "reta") retas += 1;
+  const visible = filterParticipacionesHistorialVisible(participaciones);
+
+  for (const p of visible) {
+    if (p.tipo_evento === "reta") retasClasicas += 1;
     else if (p.tipo_evento === "torneo_express") torneosExpress += 1;
     else if (p.tipo_evento === "liga") ligas += 1;
     else if (p.tipo_evento === "americano") americanos += 1;
 
-    if (participacionCuentaComoVictoria(p)) victorias += 1;
-    else if (participacionCuentaComoDerrota(p)) derrotas += 1;
+    const m = extractPartidosFromParticipacion(p);
+    partidosGanados += m.ganados;
+    partidosPerdidos += m.perdidos;
+    partidosEmpatados += m.empates;
   }
 
-  let winRate: number | null = null;
-  if (victorias > 0 && derrotas === 0) {
-    winRate = 100;
-  } else if (victorias + derrotas > 0) {
-    winRate = Math.round((victorias / (victorias + derrotas)) * 100);
-  }
+  const winRate = computeWinRatePct(partidosGanados, partidosPerdidos);
 
   return {
-    retas,
+    retasClasicas,
+    eventosJugados: visible.length,
     torneosExpress,
     ligas,
     americanos,
-    victorias,
+    partidosGanados,
+    partidosPerdidos,
+    partidosEmpatados,
+    victorias: partidosGanados,
     winRate,
   };
 }

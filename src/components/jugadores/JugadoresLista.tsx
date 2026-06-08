@@ -5,14 +5,19 @@ import {
   JUGADOR_CATEGORIA_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
-import { backfillRetasHistorial } from "../../lib/rivieraJugadores/syncParticipaciones";
+import {
+  backfillAmericanoHistorial,
+  backfillRetasHistorial,
+} from "../../lib/rivieraJugadores/syncParticipaciones";
 import {
   ensureLegacyPlayerForRivieraJugador,
   ensureLigaJugadorForRivieraJugador,
 } from "../../lib/rivieraJugadores/playerPoolSync";
 import {
   createRivieraJugador,
+  deleteRivieraJugador,
   listRivieraJugadores,
+  promoteImportedRivieraJugadores,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 import {
@@ -42,6 +47,7 @@ export const JugadoresLista: React.FC = () => {
     useState<RivieraJugadorWithStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -70,10 +76,41 @@ export const JugadoresLista: React.FC = () => {
     return () => clearTimeout(t);
   }, [load, search]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    void promoteImportedRivieraJugadores(user.id).then((n) => {
+      if (!cancelled && n > 0) void load();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, load]);
+
   const pct = (j: RivieraJugadorWithStats) => {
     const s = j.stats;
     if (!s?.total_partidos) return "—";
     return `${Number(s.pct_victorias).toFixed(0)}%`;
+  };
+
+  const handleDeleteJugador = async (j: RivieraJugadorWithStats) => {
+    if (!user?.id) return;
+    const ok = window.confirm(
+      `¿Eliminar a «${j.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas. Esta acción no se puede deshacer.`
+    );
+    if (!ok) return;
+    setDeletingId(j.id);
+    setError(null);
+    try {
+      await deleteRivieraJugador(user.id, j.id);
+      await load();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "No se pudo eliminar el jugador."
+      );
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const { jugadoresOrdenados, rankById } = useMemo(() => {
@@ -121,17 +158,29 @@ export const JugadoresLista: React.FC = () => {
                   type="button"
                   className="rj-btn rj-btn--ghost"
                   disabled={backfilling}
-                  title="Importa historial de retas ya finalizadas"
+                  title="Importa historial de retas y americanos finalizados"
                   onClick={async () => {
                     if (!user?.id) return;
                     setBackfilling(true);
                     try {
-                      const n = await backfillRetasHistorial(user.id);
+                      const [nRetas, nAmericanos, nPromoted] =
+                        await Promise.all([
+                          backfillRetasHistorial(user.id),
+                          backfillAmericanoHistorial(user.id),
+                          promoteImportedRivieraJugadores(user.id),
+                        ]);
                       await load();
+                      const total = nRetas + nAmericanos;
+                      const promoNote =
+                        nPromoted > 0
+                          ? ` ${nPromoted} jugador(es) activados en ranking público.`
+                          : "";
                       alert(
-                        n > 0
-                          ? `Historial actualizado desde ${n} reta(s) finalizada(s).`
-                          : "No hay retas finalizadas para importar."
+                        total > 0
+                          ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s).${promoNote}`
+                          : nPromoted > 0
+                            ? `${nPromoted} jugador(es) activados en ranking público.`
+                            : "No hay retas ni americanos finalizados para importar."
                       );
                     } catch (e) {
                       alert(
@@ -144,7 +193,7 @@ export const JugadoresLista: React.FC = () => {
                     }
                   }}
                 >
-                  {backfilling ? "Importando…" : "Importar retas"}
+                  {backfilling ? "Importando…" : "Importar historial"}
                 </button>
               </>
             )}
@@ -241,15 +290,27 @@ export const JugadoresLista: React.FC = () => {
                     {j.stats?.total_partidos ?? 0} partidos · {pct(j)} victorias
                   </p>
                 </button>
-                <button
-                  type="button"
-                  className="rj-card__edit"
-                  title="Sumar o restar puntos"
-                  aria-label={`Ajustar puntos de ${j.nombre}`}
-                  onClick={() => setAjusteJugador(j)}
-                >
-                  <TablerIcon name="pencil" size={14} aria-hidden={false} />
-                </button>
+                <div className="rj-card__actions">
+                  <button
+                    type="button"
+                    className="rj-card__edit"
+                    title="Sumar o restar puntos"
+                    aria-label={`Ajustar puntos de ${j.nombre}`}
+                    onClick={() => setAjusteJugador(j)}
+                  >
+                    <TablerIcon name="pencil" size={14} aria-hidden={false} />
+                  </button>
+                  <button
+                    type="button"
+                    className="rj-card__delete"
+                    title="Eliminar jugador"
+                    aria-label={`Eliminar a ${j.nombre}`}
+                    disabled={deletingId === j.id}
+                    onClick={() => void handleDeleteJugador(j)}
+                  >
+                    <TablerIcon name="trash" size={14} aria-hidden={false} />
+                  </button>
+                </div>
               </div>
             );
           })}

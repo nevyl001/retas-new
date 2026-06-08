@@ -7,9 +7,11 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
 import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { navigateAppTo } from "../../lib/appRouting";
 import {
+  getPublicOrganizadorIdFromPath,
+  getPublicOrganizadorIdFromSearch,
   getPublicOrganizadorIdWithoutUser,
-  resolvePublicOrganizadorIdAsync,
 } from "../../lib/rivieraJugadores/publicOrganizador";
 import type {
   RivieraJugadorCategoria,
@@ -20,43 +22,51 @@ import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import {
+  buildPublicRankingUrl,
   buildRankingComoFuncionaPath,
   navigatePublicJugadorFicha,
 } from "./jugadoresPublicNav";
 import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
 import "./riviera-jugadores-public-ranking.css";
 
-export const JugadoresPublicRanking: React.FC = () => {
+interface JugadoresPublicRankingProps {
+  /** Org de la ruta `/ranking/o/{id}` (evita mezclar rankings entre perfiles). */
+  organizadorId?: string;
+}
+
+export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
+  organizadorId: routeOrganizadorId,
+}) => {
   const { user } = useUser();
-  const [orgId, setOrgId] = useState<string | null>(() =>
-    getPublicOrganizadorIdWithoutUser()
-  );
-  const [orgReady, setOrgReady] = useState(() => !!getPublicOrganizadorIdWithoutUser());
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const [orgReady, setOrgReady] = useState(false);
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    const preset = getPublicOrganizadorIdWithoutUser();
-    if (preset) {
-      setOrgId(preset);
-      setOrgReady(true);
+    try {
+      sessionStorage.removeItem("riviera_public_organizador_id");
+    } catch {
+      /* ignore */
+    }
+
+    const queryOrg = getPublicOrganizadorIdFromSearch();
+    const pathOrg = getPublicOrganizadorIdFromPath();
+    if (queryOrg && !pathOrg && !routeOrganizadorId) {
+      navigateAppTo(buildPublicRankingUrl(queryOrg));
       return;
     }
 
-    setOrgReady(false);
-    void resolvePublicOrganizadorIdAsync(user?.id).then((id) => {
-      if (cancelled) return;
-      setOrgId(id);
-      setOrgReady(true);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
+    const fromUrl =
+      routeOrganizadorId?.trim() ||
+      getPublicOrganizadorIdWithoutUser() ||
+      null;
+    const resolved = fromUrl ?? user?.id?.trim() ?? null;
+    setOrgId(resolved);
+    setOrgReady(true);
+  }, [routeOrganizadorId, user?.id]);
 
   const load = useCallback(async () => {
     if (!orgReady) return;
@@ -64,7 +74,7 @@ export const JugadoresPublicRanking: React.FC = () => {
     if (!orgId) {
       setJugadores([]);
       setError(
-        "No hay jugadores públicos configurados todavía. El organizador puede compartir el enlace con ?org=UUID."
+        "No hay ranking público en esta ruta. El organizador puede compartir su enlace desde Registro Riviera Open."
       );
       setLoading(false);
       return;
@@ -154,7 +164,8 @@ export const JugadoresPublicRanking: React.FC = () => {
             {error && <p className="rjp-ranking-empty">{error}</p>}
             {!error && !loading && jugadores.length === 0 && (
               <p className="rjp-ranking-empty">
-                Aún no hay jugadores publicados en esta categoría.
+                Aún no hay jugadores en esta categoría. Si cambiaste la categoría
+                de alguien, búscalo en la pestaña de su nueva categoría.
               </p>
             )}
 

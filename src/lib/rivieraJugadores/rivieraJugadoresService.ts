@@ -152,13 +152,17 @@ export async function getRivieraJugadorByLegacyLigaId(
 }
 
 export async function getRivieraJugadorByLegacyPlayerId(
-  legacyPlayerId: string
+  legacyPlayerId: string,
+  organizadorId?: string
 ): Promise<RivieraJugador | null> {
-  const { data, error } = await supabase
+  let q = supabase
     .from("riviera_jugadores")
     .select(JUGADOR_SELECT)
-    .eq("legacy_player_id", legacyPlayerId)
-    .maybeSingle();
+    .eq("legacy_player_id", legacyPlayerId);
+  if (organizadorId?.trim()) {
+    q = q.eq("organizador_id", organizadorId.trim());
+  }
+  const { data, error } = await q.maybeSingle();
 
   if (error) {
     if (isMissingTableError(error)) return null;
@@ -210,6 +214,7 @@ export async function createRivieraJugador(
       foto_url: input.foto_url ?? null,
       organizador_id: organizadorId,
       estado: "activo",
+      visible_publico: true,
     })
     .select(JUGADOR_SELECT)
     .single();
@@ -245,6 +250,18 @@ export async function updateRivieraJugador(
     >
   >
 ): Promise<RivieraJugador> {
+  const { data: rowMeta, error: metaErr } = await supabase
+    .from("riviera_jugadores")
+    .select("organizador_id, slug")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (metaErr) throw metaErr;
+  if (!rowMeta?.organizador_id) {
+    throw new Error("Jugador no encontrado.");
+  }
+
+  const organizadorId = String(rowMeta.organizador_id);
   const payload: Record<string, unknown> = { ...updates };
 
   if (updates.pais_codigo !== undefined) {
@@ -258,28 +275,18 @@ export async function updateRivieraJugador(
     }
     payload.nombre = trimmed;
 
-    const { data: current, error: curErr } = await supabase
-      .from("riviera_jugadores")
-      .select("organizador_id, slug")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (curErr) throw curErr;
-    if (current?.organizador_id) {
-      const baseSlug = slugifyJugadorNombre(trimmed);
-      if (baseSlug !== current.slug) {
-        const orgId = String(current.organizador_id);
-        payload.slug = await ensureUniqueSlug(baseSlug, async (candidate) => {
-          const { data: taken } = await supabase
-            .from("riviera_jugadores")
-            .select("id")
-            .eq("organizador_id", orgId)
-            .eq("slug", candidate)
-            .neq("id", id)
-            .maybeSingle();
-          return !!taken;
-        });
-      }
+    const baseSlug = slugifyJugadorNombre(trimmed);
+    if (baseSlug !== rowMeta.slug) {
+      payload.slug = await ensureUniqueSlug(baseSlug, async (candidate) => {
+        const { data: taken } = await supabase
+          .from("riviera_jugadores")
+          .select("id")
+          .eq("organizador_id", organizadorId)
+          .eq("slug", candidate)
+          .neq("id", id)
+          .maybeSingle();
+        return !!taken;
+      });
     }
   }
 
@@ -287,10 +294,80 @@ export async function updateRivieraJugador(
     .from("riviera_jugadores")
     .update(payload)
     .eq("id", id)
+    .eq("organizador_id", organizadorId)
     .select(JUGADOR_SELECT)
     .single();
   if (error) throw error;
-  return data as RivieraJugador;
+
+  const updated = data as RivieraJugador;
+  if (updated.organizador_id) {
+    const { syncRivieraJugadorToLinkedPools } = await import("./playerPoolSync");
+    await syncRivieraJugadorToLinkedPools(updated.organizador_id, updated);
+  }
+  if (updated.visible_publico !== false && updated.estado !== "archivado") {
+    await ensureRivieraJugadorVisibleEnRanking(updated.id);
+  }
+  return updated;
+}
+
+/** Jugadores importados de retas/americanos quedan visibles en ranking y ficha pública. */
+export async function ensureRivieraJugadorVisibleEnRanking(
+  jugadorId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from("riviera_jugadores")
+    .update({ estado: "activo", visible_publico: true })
+    .eq("id", jugadorId)
+    .neq("estado", "archivado");
+  if (error && !isMissingTableError(error)) {
+    console.warn("ensureRivieraJugadorVisibleEnRanking:", error);
+  }
+}
+
+/** Activa jugadores importados (estado invitado) que ya tienen historial o puntos. */
+export async function promoteImportedRivieraJugadores(
+  organizadorId: string
+): Promise<number> {
+  try {
+    const { data: rows, error } = await supabase
+      .from("riviera_jugadores")
+      .select(`id, stats:jugador_stats(puntos_totales, total_partidos)`)
+      .eq("organizador_id", organizadorId)
+      .eq("estado", "invitado");
+
+    if (error) {
+      if (isMissingTableError(error)) return 0;
+      throw error;
+    }
+
+    let count = 0;
+    for (const raw of rows ?? []) {
+      const row = raw as Record<string, unknown>;
+      const st = normalizeStatsJoin(
+        row.stats as JugadorStats | JugadorStats[] | null | undefined
+      );
+      const jugadorId = String(row.id ?? "");
+      if (!jugadorId) continue;
+      const hasStats =
+        (st?.puntos_totales ?? 0) > 0 || (st?.total_partidos ?? 0) > 0;
+      let hasHistorial = false;
+      if (!hasStats) {
+        const { count: n, error: pErr } = await supabase
+          .from("jugador_participaciones")
+          .select("id", { count: "exact", head: true })
+          .eq("jugador_id", jugadorId);
+        if (!pErr) hasHistorial = (n ?? 0) > 0;
+      }
+      if (hasStats || hasHistorial) {
+        await ensureRivieraJugadorVisibleEnRanking(jugadorId);
+        count += 1;
+      }
+    }
+    return count;
+  } catch (e) {
+    console.warn("promoteImportedRivieraJugadores:", e);
+    return 0;
+  }
 }
 
 export async function linkLegacyPlayerId(
@@ -440,7 +517,7 @@ export async function getRivieraJugadorPublicBySlug(
     .select(`${JUGADOR_SELECT}, stats:jugador_stats(${STATS_SELECT})`)
     .eq("slug", slug)
     .eq("estado", "activo")
-    .eq("visible_publico", true);
+    .or("visible_publico.eq.true,visible_publico.is.null");
 
   if (organizadorId) {
     q = q.eq("organizador_id", organizadorId);
@@ -465,7 +542,7 @@ export async function listPublicJugadoresRanking(
     .eq("organizador_id", organizadorId)
     .eq("categoria", categoria)
     .eq("estado", "activo")
-    .eq("visible_publico", true)
+    .or("visible_publico.eq.true,visible_publico.is.null")
     .order("nombre");
 
   if (error) {
@@ -493,6 +570,66 @@ export async function getRankingPosicionEnCategoria(
   const { rankingPosicionEnLista } = await import("./rankingPosition");
   const list = await listPublicJugadoresRanking(organizadorId, categoria);
   return rankingPosicionEnLista(list, jugadorId);
+}
+
+/**
+ * Elimina un jugador del registro Riviera y todo su historial de ranking
+ * (participaciones y estadísticas). No borra retas/torneos ya jugados en `players`.
+ */
+export async function deleteRivieraJugador(
+  organizadorId: string,
+  jugadorId: string
+): Promise<void> {
+  const { data: row, error: fetchErr } = await supabase
+    .from("riviera_jugadores")
+    .select("id, legacy_liga_jugador_id")
+    .eq("id", jugadorId)
+    .eq("organizador_id", organizadorId)
+    .maybeSingle();
+
+  if (fetchErr) {
+    if (isMissingTableError(fetchErr)) {
+      throw new Error("El registro de jugadores no está disponible.");
+    }
+    throw fetchErr;
+  }
+  if (!row) {
+    throw new Error("Jugador no encontrado o sin permiso para eliminarlo.");
+  }
+
+  const { error: partErr } = await supabase
+    .from("jugador_participaciones")
+    .delete()
+    .eq("jugador_id", jugadorId);
+  if (partErr && !isMissingTableError(partErr)) throw partErr;
+
+  const { error: statsErr } = await supabase
+    .from("jugador_stats")
+    .delete()
+    .eq("jugador_id", jugadorId);
+  if (statsErr && !isMissingTableError(statsErr)) throw statsErr;
+
+  const ligaJugadorId = (row.legacy_liga_jugador_id as string | null)?.trim();
+  if (ligaJugadorId) {
+    const { error: ligaErr } = await supabase
+      .from("liga_inscripciones")
+      .delete()
+      .eq("jugador_id", ligaJugadorId);
+    if (ligaErr && !isMissingTableError(ligaErr)) throw ligaErr;
+  }
+
+  const { error: delErr } = await supabase
+    .from("riviera_jugadores")
+    .delete()
+    .eq("id", jugadorId)
+    .eq("organizador_id", organizadorId);
+
+  if (delErr) {
+    if (isMissingTableError(delErr)) {
+      throw new Error("No se pudo eliminar el jugador del registro.");
+    }
+    throw delErr;
+  }
 }
 
 export async function searchRivieraJugadoresQuick(

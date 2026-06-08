@@ -256,6 +256,33 @@
   background: var(--medal-bronze-dim);
 }
 
+.te-public-podium__avatar {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto var(--space-2);
+}
+
+.te-public-podium__avatar .rj-avatar {
+  border-width: 2px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+.te-public-podium__card[data-rank="1"] .te-public-podium__avatar .rj-avatar {
+  width: 72px;
+  height: 72px;
+  border-color: rgba(201, 162, 39, 0.65);
+}
+
+.te-public-podium__card[data-rank="1"] .te-public-podium__avatar .rj-avatar__img {
+  width: 72px;
+  height: 72px;
+}
+
+.te-public-podium__card[data-rank="2"] .te-public-podium__avatar .rj-avatar,
+.te-public-podium__card[data-rank="3"] .te-public-podium__avatar .rj-avatar {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .te-public-podium__place {
   display: block;
   font-family: var(--font-display);

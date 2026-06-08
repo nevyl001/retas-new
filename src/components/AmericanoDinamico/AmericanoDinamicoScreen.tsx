@@ -5,14 +5,15 @@ import { RoundView } from "./RoundView";
 import { LiveRanking } from "./LiveRanking";
 import { RoundHistory } from "./RoundHistory";
 import {
-  createPlayer,
   getPlayers,
   getTournamentById,
   updateTournament,
   upsertAmericanoLivePublic,
   type Player,
 } from "../../lib/database";
+import { resolvePlayerAvatars } from "../../lib/rivieraJugadores/publicPlayerAvatars";
 import { useUser } from "../../contexts/UserContext";
+import { PublicAmericanoPodiumCard } from "../public/PublicAmericanoPodiumCard";
 import { navigateToAppHome } from "../../lib/appRouting";
 import {
   buildAmericanoDinamicoSnapshot,
@@ -24,6 +25,7 @@ import {
   saveAmericanoDinamicoSnapshot,
 } from "../../lib/americanoDinamicoStorage";
 import { Button } from "../ui";
+import "../public/riviera-public-americano.css";
 import "./AmericanoDinamicoScreen.css";
 
 interface AmericanoDinamicoScreenProps {
@@ -61,7 +63,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     currentRoundIndex,
     currentRound,
     totalRounds,
-    addPlayer,
     removePlayer,
     toggleExistingPlayer,
     startTournament,
@@ -207,31 +208,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     window.dispatchEvent(new PopStateEvent("popstate"));
   }, []);
 
-  const handleAddPlayer = React.useCallback(
-    async (name: string) => {
-      if (!name.trim()) return;
-      if (!effectiveUserId) {
-        addPlayer(name);
-        return;
-      }
-      try {
-        const created = await createPlayer(
-          name.trim(),
-          effectiveUserId,
-          resolvedTournamentId || undefined
-        );
-        setAvailablePlayers((prev) => {
-          if (prev.some((p) => p.id === created.id)) return prev;
-          return [...prev, created].sort((a, b) => a.name.localeCompare(b.name));
-        });
-        toggleExistingPlayer(created);
-      } catch {
-        // Fallback local para no bloquear el flujo si falla el insert en BD.
-        addPlayer(name);
-      }
-    },
-    [effectiveUserId, resolvedTournamentId, addPlayer, toggleExistingPlayer]
-  );
   const handleStartTournament = React.useCallback(
     async (totalRounds: number, courts: number) => {
       startTournament(totalRounds, courts);
@@ -305,7 +281,30 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return () => window.clearTimeout(t);
   }, [resolvedTournamentId, phase, rounds, ranking, totalRounds]);
 
-  const podium = ranking.slice(0, 3);
+  const podiumPlayers = React.useMemo(
+    () => ranking.slice(0, 3),
+    [ranking]
+  );
+  const [podiumAvatars, setPodiumAvatars] = React.useState<
+    Record<string, string | null>
+  >({});
+
+  React.useEffect(() => {
+    if (!effectiveUserId || podiumPlayers.length === 0 || phase !== "finished") {
+      setPodiumAvatars({});
+      return;
+    }
+    let cancelled = false;
+    void resolvePlayerAvatars(
+      effectiveUserId,
+      podiumPlayers.map((p) => ({ id: p.id, name: p.name }))
+    ).then((map) => {
+      if (!cancelled) setPodiumAvatars(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveUserId, phase, podiumPlayers]);
 
   const tournamentBanner =
     tournamentName || tournamentDescription ? (
@@ -339,7 +338,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         <PlayerRegistration
           players={players}
           availablePlayers={availablePlayers}
-          onAddPlayer={handleAddPlayer}
           onRemovePlayer={removePlayer}
           onToggleExistingPlayer={toggleExistingPlayer}
           onStartTournament={handleStartTournament}
@@ -445,27 +443,32 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         </section>
       ) : null}
       <p className="americano-screen__finished">Americano finalizado</p>
-      {podium.length > 0 && (
-        <section className="americano-podium">
+      {podiumPlayers.length > 0 && (
+        <section className="americano-podium te-public-podium">
           <h3>Felicidades a los 3 primeros lugares</h3>
-          <div className="americano-podium__grid">
-            {podium[0] && (
-              <article className="americano-podium__card americano-podium__card--gold">
-                <span className="americano-podium__place">1er lugar</span>
-                <strong>{podium[0].name}</strong>
-              </article>
+          <div className="te-public-podium__grid">
+            {podiumPlayers[0] && (
+              <PublicAmericanoPodiumCard
+                rank={1}
+                name={podiumPlayers[0].name}
+                fotoUrl={podiumAvatars[podiumPlayers[0].id]}
+              />
             )}
-            {podium[1] && (
-              <article className="americano-podium__card americano-podium__card--silver">
-                <span className="americano-podium__place">2do lugar</span>
-                <strong>{podium[1].name}</strong>
-              </article>
+            {podiumPlayers[1] && (
+              <PublicAmericanoPodiumCard
+                rank={2}
+                name={podiumPlayers[1].name}
+                fotoUrl={podiumAvatars[podiumPlayers[1].id]}
+                animationDelay="0.08s"
+              />
             )}
-            {podium[2] && (
-              <article className="americano-podium__card americano-podium__card--bronze">
-                <span className="americano-podium__place">3er lugar</span>
-                <strong>{podium[2].name}</strong>
-              </article>
+            {podiumPlayers[2] && (
+              <PublicAmericanoPodiumCard
+                rank={3}
+                name={podiumPlayers[2].name}
+                fotoUrl={podiumAvatars[podiumPlayers[2].id]}
+                animationDelay="0.12s"
+              />
             )}
           </div>
         </section>

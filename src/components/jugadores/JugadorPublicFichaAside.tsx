@@ -17,6 +17,7 @@ interface JugadorPublicFichaAsideProps {
   retas: number;
   torneosExpress: number;
   victorias: number;
+  partidosPerdidos: number;
   winRate: number | null;
   recent: HistorialItemView[];
 }
@@ -25,10 +26,11 @@ export const JugadorPublicFichaAside: React.FC<JugadorPublicFichaAsideProps> = (
   retas,
   torneosExpress,
   victorias,
+  partidosPerdidos,
   winRate,
   recent,
 }) => {
-  const sinDatos = retas === 0 && torneosExpress === 0;
+  const tieneDuelos = victorias > 0 || partidosPerdidos > 0;
 
   return (
     <aside className="rjp-ficha-aside" aria-label="Resumen y actividad">
@@ -43,7 +45,9 @@ export const JugadorPublicFichaAside: React.FC<JugadorPublicFichaAsideProps> = (
             {retas}
           </span>
           <span className="rjp-ficha-kpi__hint">
-            {retas === 0 ? "Sin retas aún" : "Participaciones"}
+            {retas === 0
+              ? "Sin actividad aún"
+              : "Retas, americanos, ligas y más"}
           </span>
         </div>
         <div className="rjp-ficha-kpi rjp-ficha-kpi--torneo">
@@ -63,13 +67,23 @@ export const JugadorPublicFichaAside: React.FC<JugadorPublicFichaAsideProps> = (
         </div>
         <div className="rjp-ficha-kpi">
           <span className="rjp-ficha-kpi__lbl">Victorias</span>
-          <span className="rjp-ficha-kpi__val">{victorias}</span>
+          <span
+            className={`rjp-ficha-kpi__val${
+              victorias === 0 ? " rjp-ficha-kpi__val--empty" : ""
+            }`}
+          >
+            {victorias}
+          </span>
           <span className="rjp-ficha-kpi__hint">
-            {sinDatos ? "Sin registros" : "Resultado victoria"}
+            {!tieneDuelos
+              ? "Sin partidos registrados"
+              : partidosPerdidos > 0
+                ? `${victorias} ganados · ${partidosPerdidos} perdidos`
+                : "Partidos ganados"}
           </span>
         </div>
         <div className="rjp-ficha-kpi">
-          <span className="rjp-ficha-kpi__lbl">Win rate</span>
+          <span className="rjp-ficha-kpi__lbl">Efectividad</span>
           <span
             className={`rjp-ficha-kpi__val${
               winRate == null ? " rjp-ficha-kpi__val--empty" : ""
@@ -78,7 +92,9 @@ export const JugadorPublicFichaAside: React.FC<JugadorPublicFichaAsideProps> = (
             {winRate != null ? `${winRate}%` : "—"}
           </span>
           <span className="rjp-ficha-kpi__hint">
-            {winRate == null ? "Sin datos" : "Victorias / decididos"}
+            {winRate == null
+              ? "Sin duelos decididos"
+              : "% victorias en partidos"}
           </span>
         </div>
       </div>

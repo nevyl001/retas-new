@@ -6,7 +6,6 @@ import "./PlayerRegistration.css";
 interface PlayerRegistrationProps {
   players: AmericanoPlayer[];
   availablePlayers: Player[];
-  onAddPlayer: (name: string) => void | Promise<void>;
   onRemovePlayer: (id: string) => void;
   onToggleExistingPlayer: (player: Player) => void;
   onStartTournament: (totalRounds: number, courts: number) => void;
@@ -15,22 +14,14 @@ interface PlayerRegistrationProps {
 export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   players,
   availablePlayers,
-  onAddPlayer,
   onRemovePlayer,
   onToggleExistingPlayer,
   onStartTournament,
 }) => {
-  const [name, setName] = useState("");
   const [totalRounds, setTotalRounds] = useState(3);
   const [courts, setCourts] = useState(1);
 
   const benchPerRound = players.length % 4 !== 0 ? players.length % 4 : 0;
-
-  const handleAdd = () => {
-    if (!name.trim()) return;
-    onAddPlayer(name.trim());
-    setName("");
-  };
 
   return (
     <section className="americano-registration">
@@ -39,21 +30,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         <span className="americano-registration__badge">Modo por jugadores</span>
       </div>
       <p className="americano-registration__subtitle">
-        Selecciona jugadores de la base y define cuantas rondas quieres jugar.
-        Si agregas uno nuevo aqui, tambien se guarda en tu base de jugadores.
+        Selecciona jugadores del registro Riviera Open y define cuantas rondas
+        quieres jugar.
       </p>
-
-      <div className="americano-registration__controls card">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre del jugador"
-        />
-        <button className="americano-btn americano-btn--ghost" onClick={handleAdd}>
-          Anadir
-        </button>
-      </div>
 
       <div className="americano-registration__meta card">
         <p>
@@ -86,10 +65,15 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       </div>
 
       <div className="americano-registration__db card">
-        <h4>Jugadores de la base de datos</h4>
+        <h4>Registro Riviera Open</h4>
         <p className="americano-registration__hint">
           Toca un jugador para seleccionarlo o deseleccionarlo.
         </p>
+        {availablePlayers.length === 0 ? (
+          <p className="americano-registration__empty">
+            No hay jugadores en el registro. Créalos en Registro Riviera Open.
+          </p>
+        ) : null}
         <div className="americano-registration__db-grid">
           {availablePlayers.map((player) => {
             const selected = players.some((p) => p.id === player.id);

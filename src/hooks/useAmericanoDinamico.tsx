@@ -167,6 +167,10 @@ export function useAmericanoDinamico(
   );
   const participacionSyncedRef = useRef(false);
 
+  useEffect(() => {
+    participacionSyncedRef.current = false;
+  }, [resolvedTournamentId]);
+
   /** useLayoutEffect: restaurar antes de useEffect (p. ej. borrador registro) para no borrar el snapshot por carrera. */
   useLayoutEffect(() => {
     if (!resolvedTournamentId) return;
@@ -270,17 +274,6 @@ export function useAmericanoDinamico(
   useEffect(() => {
     playersRef.current = players;
   }, [players]);
-
-  const addPlayer = (name: string) => {
-    if (phase !== "registration") return;
-    const clean = name.trim();
-    if (!clean) return;
-    const id =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `americano-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setPlayers((prev) => [...prev, { id, name: clean, stats: createEmptyStats() }]);
-  };
 
   const removePlayer = (id: string) => {
     if (phase !== "registration") return;
@@ -508,7 +501,6 @@ export function useAmericanoDinamico(
     currentRoundIndex,
     phase,
     totalRounds: totalRoundsRef.current,
-    addPlayer,
     removePlayer,
     toggleExistingPlayer,
     startTournament,

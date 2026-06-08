@@ -60,6 +60,18 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.rj-btn--danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+}
+
+.rj-btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.65);
+  color: #fecaca;
+}
+
 .rj-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -106,11 +118,17 @@
   position: relative;
 }
 
-.rj-card__edit {
+.rj-card__actions {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
   z-index: 2;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.rj-card__edit,
+.rj-card__delete {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -131,13 +149,24 @@
   background: rgba(201, 162, 39, 0.12);
 }
 
+.rj-card__delete:hover:not(:disabled) {
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.rj-card__delete:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .rj-card__top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   margin-bottom: 0.35rem;
-  padding-right: 1.75rem;
+  padding-right: 3.5rem;
 }
 
 .rj-card__rank {

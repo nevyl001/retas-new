@@ -1,8 +1,6 @@
 import { supabase } from "../supabaseClient";
 
-const SESSION_KEY = "riviera_public_organizador_id";
-
-/** UUID del club/organizador para rankings públicos (build-time). */
+/** UUID del club/organizador para rankings públicos (build-time, un solo club). */
 export function getPublicOrganizadorIdFromEnv(): string | null {
   const id = process.env.REACT_APP_RIVIERA_PUBLIC_ORGANIZADOR_ID?.trim();
   return id || null;
@@ -14,49 +12,54 @@ export function getPublicOrganizadorIdFromSearch(): string | null {
   return org || null;
 }
 
-export function getPublicOrganizadorIdFromSession(): string | null {
-  if (typeof window === "undefined") return null;
+/** Org en la ruta canónica `/ranking/o/{organizadorId}`. */
+export function getPublicOrganizadorIdFromPath(pathname?: string): string | null {
+  const path =
+    pathname ??
+    (typeof window !== "undefined" ? window.location.pathname : "");
+  const m = path.replace(/\/+$/, "").match(/^\/ranking\/o\/([^/]+)$/i);
+  const raw = m?.[1];
+  if (!raw) return null;
   try {
-    const id = sessionStorage.getItem(SESSION_KEY)?.trim();
-    return id || null;
+    return decodeURIComponent(raw).trim() || null;
   } catch {
-    return null;
+    return raw.trim() || null;
   }
 }
 
-export function persistPublicOrganizadorId(id: string | null | undefined): void {
-  if (typeof window === "undefined") return;
-  const trimmed = id?.trim();
-  if (!trimmed) return;
-  try {
-    sessionStorage.setItem(SESSION_KEY, trimmed);
-  } catch {
-    /* modo privado / cuota */
-  }
-}
-
-/** Org resuelto sin depender de la sesión del usuario (URL, storage, env). */
-export function getPublicOrganizadorIdWithoutUser(): string | null {
+/** Org resuelto solo desde la URL (ruta o query), sin sesión ni env. */
+export function getPublicOrganizadorIdWithoutUser(pathname?: string): string | null {
   return (
+    getPublicOrganizadorIdFromPath(pathname) ||
     getPublicOrganizadorIdFromSearch() ||
-    getPublicOrganizadorIdFromSession() ||
-    getPublicOrganizadorIdFromEnv() ||
     null
   );
 }
 
-export function resolvePublicOrganizadorId(fallbackUserId?: string | null): string | null {
-  const id =
-    getPublicOrganizadorIdFromSearch() ||
-    getPublicOrganizadorIdFromSession() ||
-    getPublicOrganizadorIdFromEnv() ||
-    fallbackUserId?.trim() ||
-    null;
-  if (id) persistPublicOrganizadorId(id);
-  return id;
+/**
+ * Org para páginas públicas de jugadores.
+ * Prioridad: URL explícita → usuario autenticado (solo si no hay org en URL).
+ */
+export function resolvePublicOrganizadorId(
+  fallbackUserId?: string | null,
+  pathname?: string
+): string | null {
+  const fromUrl = getPublicOrganizadorIdWithoutUser(pathname);
+  if (fromUrl) return fromUrl;
+  return fallbackUserId?.trim() || null;
 }
 
-/** Si no hay ?org= ni env, usa el organizador del primer jugador público visible. */
+/** @deprecated Ya no se usa sessionStorage para evitar mezclar rankings entre perfiles. */
+export function getPublicOrganizadorIdFromSession(): string | null {
+  return null;
+}
+
+/** @deprecated */
+export function persistPublicOrganizadorId(_id: string | null | undefined): void {
+  /* noop — cada perfil usa su enlace /ranking/o/{id} */
+}
+
+/** @deprecated */
 export async function fetchFallbackPublicOrganizadorId(): Promise<string | null> {
   try {
     const { data, error } = await supabase
@@ -74,7 +77,6 @@ export async function fetchFallbackPublicOrganizadorId(): Promise<string | null>
     }
 
     const id = (data?.organizador_id as string | undefined)?.trim();
-    if (id) persistPublicOrganizadorId(id);
     return id || null;
   } catch (e) {
     console.warn("[riviera-jugadores] fetchFallbackPublicOrganizadorId:", e);
@@ -82,11 +84,9 @@ export async function fetchFallbackPublicOrganizadorId(): Promise<string | null>
   }
 }
 
-/** Resuelve org para páginas públicas sin depender de la sesión. */
 export async function resolvePublicOrganizadorIdAsync(
-  loggedInUserId?: string | null
+  loggedInUserId?: string | null,
+  pathname?: string
 ): Promise<string | null> {
-  const direct = resolvePublicOrganizadorId(loggedInUserId);
-  if (direct) return direct;
-  return fetchFallbackPublicOrganizadorId();
+  return resolvePublicOrganizadorId(loggedInUserId, pathname);
 }

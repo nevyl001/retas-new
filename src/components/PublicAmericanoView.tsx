@@ -14,7 +14,9 @@ import {
   RIVIERA_APP_DISPLAY,
 } from "../lib/rivieraBranding";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
+import { resolvePlayerAvatars } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
+import { PublicAmericanoPodiumCard } from "./public/PublicAmericanoPodiumCard";
 import { PublicAmericanoStandingsSection } from "./public/PublicAmericanoStandingsSection";
 import {
   PublicRivieraCelebrateBrand,
@@ -59,6 +61,10 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   >(null);
   const [tournamentFinished, setTournamentFinished] = useState(false);
   const [tournamentStarted, setTournamentStarted] = useState(false);
+  const [organizadorId, setOrganizadorId] = useState<string | null>(null);
+  const [podiumAvatars, setPodiumAvatars] = useState<
+    Record<string, string | null>
+  >({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedFetchRef =
     React.useRef<FetchAmericanoLivePublicResult | null>(null);
@@ -122,6 +128,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       setTournamentDescription(desc || null);
       setTournamentFinished(!!tournament?.is_finished);
       setTournamentStarted(!!tournament?.is_started);
+      const orgId =
+        typeof tournament?.user_id === "string" ? tournament.user_id : null;
+      setOrganizadorId(orgId);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(`No se pudo cargar: ${msg}`);
@@ -168,6 +177,29 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     !!snapshot &&
     snapshot.ranking.length > 0 &&
     (snapshot.tournamentPhase === "finished" || tournamentFinished);
+
+  const podiumPlayers = React.useMemo(
+    () => snapshot?.ranking.slice(0, 3) ?? [],
+    [snapshot?.ranking]
+  );
+
+  useEffect(() => {
+    if (!organizadorId || podiumPlayers.length === 0) {
+      setPodiumAvatars({});
+      return;
+    }
+    let cancelled = false;
+    void resolvePlayerAvatars(
+      organizadorId,
+      podiumPlayers.map((p) => ({ id: p.id, name: p.name })),
+      { publicOnly: true }
+    ).then((map) => {
+      if (!cancelled) setPodiumAvatars(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizadorId, podiumPlayers]);
 
   return (
     <PublicTorneoExpressShell className="te-public--americano">
@@ -341,41 +373,29 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                   Así se juega en Riviera.
                 </p>
                 <div className="te-public-podium__grid">
-                {snapshot.ranking[0] && (
-                  <article
-                    data-rank="1"
-                    className="te-public-podium__card te-public-podium__card--gold te-pub-fade-in-up"
-                  >
-                    <span className="te-public-podium__place">1er lugar</span>
-                    <span className="te-public-podium__name">
-                      {snapshot.ranking[0].name}
-                    </span>
-                  </article>
-                )}
-                {snapshot.ranking[1] && (
-                  <article
-                    data-rank="2"
-                    className="te-public-podium__card te-public-podium__card--silver te-pub-fade-in-up"
-                    style={{ animationDelay: "0.08s" }}
-                  >
-                    <span className="te-public-podium__place">2do lugar</span>
-                    <span className="te-public-podium__name">
-                      {snapshot.ranking[1].name}
-                    </span>
-                  </article>
-                )}
-                {snapshot.ranking[2] && (
-                  <article
-                    data-rank="3"
-                    className="te-public-podium__card te-public-podium__card--bronze te-pub-fade-in-up"
-                    style={{ animationDelay: "0.12s" }}
-                  >
-                    <span className="te-public-podium__place">3er lugar</span>
-                    <span className="te-public-podium__name">
-                      {snapshot.ranking[2].name}
-                    </span>
-                  </article>
-                )}
+                  {snapshot.ranking[0] && (
+                    <PublicAmericanoPodiumCard
+                      rank={1}
+                      name={snapshot.ranking[0].name}
+                      fotoUrl={podiumAvatars[snapshot.ranking[0].id]}
+                    />
+                  )}
+                  {snapshot.ranking[1] && (
+                    <PublicAmericanoPodiumCard
+                      rank={2}
+                      name={snapshot.ranking[1].name}
+                      fotoUrl={podiumAvatars[snapshot.ranking[1].id]}
+                      animationDelay="0.08s"
+                    />
+                  )}
+                  {snapshot.ranking[2] && (
+                    <PublicAmericanoPodiumCard
+                      rank={3}
+                      name={snapshot.ranking[2].name}
+                      fotoUrl={podiumAvatars[snapshot.ranking[2].id]}
+                      animationDelay="0.12s"
+                    />
+                  )}
                 </div>
                 <PublicRivieraCelebrateClosing
                   torneoNombre={tournamentName ?? undefined}

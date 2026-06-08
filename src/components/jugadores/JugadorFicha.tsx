@@ -9,6 +9,7 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import {
+  deleteRivieraJugador,
   getRivieraJugadorBySlug,
   listParticipaciones,
   updateRivieraJugador,
@@ -57,6 +58,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [facebook, setFacebook] = useState("");
   const [tiktok, setTiktok] = useState("");
   const [visiblePublico, setVisiblePublico] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -119,14 +121,34 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       });
       setJugador({ ...jugador, ...updated, stats: jugador.stats });
       setNombre(updated.nombre);
+      setCategoria(updated.categoria);
       setEditOpen(false);
       if (updated.slug !== jugador.slug) {
         navigateJugadorFicha(updated.slug);
+      } else {
+        await load();
       }
     } catch (e) {
       alert(e instanceof Error ? e.message : "No se pudo guardar");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!user?.id || !jugador) return;
+    const ok = window.confirm(
+      `¿Eliminar a «${jugador.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas. Esta acción no se puede deshacer.`
+    );
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await deleteRivieraJugador(user.id, jugador.id);
+      navigateJugadores();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "No se pudo eliminar el jugador");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -264,6 +286,14 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
               Ver perfil público
             </a>
           )}
+          <button
+            type="button"
+            className="rj-btn rj-btn--danger"
+            disabled={deleting}
+            onClick={() => void handleDelete()}
+          >
+            {deleting ? "Eliminando…" : "Eliminar jugador"}
+          </button>
         </div>
 
         {editOpen && (

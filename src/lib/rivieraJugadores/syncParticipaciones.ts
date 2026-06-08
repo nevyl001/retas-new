@@ -4,9 +4,17 @@ import { getGames, getMatches, getPairs, getTournaments } from "../database";
 import { computeJornadaPublicStats } from "../liga/jornadaStats";
 import { formatLugarOrdinal } from "./historialDisplay";
 import { supabase } from "../supabaseClient";
+import { rebuildAmericanoFromSnapshot } from "../americanoSnapshotRoster";
 import {
   buildAmericanoPlayerStandingStats,
+  getAmericanoRanking,
 } from "../americanoStandings";
+import {
+  fetchAmericanoLivePublic,
+  type FetchAmericanoLivePublicResult,
+} from "../database";
+import { isAmericanoTournament } from "../gameModeMapping";
+import { loadAmericanoDinamicoSnapshot } from "../americanoDinamicoStorage";
 import { fetchTorneoExpressBundle } from "../../services/torneoExpressService";
 import { getLigaById } from "../../services/ligaService";
 import {
@@ -32,7 +40,9 @@ import {
   getTeamConfigFromStorage,
 } from "../standingsUtils";
 import {
+  adjustRankingPuntosManual,
   createRivieraJugador,
+  ensureRivieraJugadorVisibleEnRanking,
   getRivieraJugadorByLegacyLigaId,
   getRivieraJugadorByLegacyPlayerId,
   registrarParticipacion,
@@ -107,6 +117,14 @@ async function slugExistsForOrg(
   return !!data;
 }
 
+async function finalizeJugadorIdForRanking(
+  jugadorId: string | null | undefined
+): Promise<string | null> {
+  if (!jugadorId) return null;
+  await ensureRivieraJugadorVisibleEnRanking(jugadorId);
+  return jugadorId;
+}
+
 export async function getOrCreateJugadorId(params: {
   nombre: string;
   organizadorId: string;
@@ -120,16 +138,17 @@ export async function getOrCreateJugadorId(params: {
   try {
     if (params.legacyPlayerId) {
       const byPlayer = await getRivieraJugadorByLegacyPlayerId(
-        params.legacyPlayerId
+        params.legacyPlayerId,
+        params.organizadorId
       );
-      if (byPlayer) return byPlayer.id;
+      if (byPlayer) return finalizeJugadorIdForRanking(byPlayer.id);
     }
 
     if (params.legacyLigaJugadorId) {
       const byLiga = await getRivieraJugadorByLegacyLigaId(
         params.legacyLigaJugadorId
       );
-      if (byLiga) return byLiga.id;
+      if (byLiga) return finalizeJugadorIdForRanking(byLiga.id);
     }
 
     const { data: byName } = await supabase
@@ -152,7 +171,7 @@ export async function getOrCreateJugadorId(params: {
           .update(updates)
           .eq("id", byName.id);
       }
-      return byName.id;
+      return finalizeJugadorIdForRanking(byName.id);
     }
 
     const baseSlug = slugifyJugadorNombre(nombre);
@@ -164,7 +183,8 @@ export async function getOrCreateJugadorId(params: {
       nombre,
       slug,
       organizador_id: params.organizadorId,
-      estado: "invitado",
+      estado: "activo",
+      visible_publico: true,
       email: params.email ?? null,
     };
     if (params.legacyPlayerId) insert.legacy_player_id = params.legacyPlayerId;
@@ -187,10 +207,7 @@ export async function getOrCreateJugadorId(params: {
       if (params.legacyPlayerId) {
         await supabase
           .from("riviera_jugadores")
-          .update({
-            legacy_player_id: params.legacyPlayerId,
-            estado: "invitado",
-          })
+          .update({ legacy_player_id: params.legacyPlayerId })
           .eq("id", createdViaService.id);
       }
       if (params.legacyLigaJugadorId) {
@@ -199,10 +216,10 @@ export async function getOrCreateJugadorId(params: {
           .update({ legacy_liga_jugador_id: params.legacyLigaJugadorId })
           .eq("id", createdViaService.id);
       }
-      return createdViaService.id;
+      return finalizeJugadorIdForRanking(createdViaService.id);
     }
 
-    return created?.id ?? null;
+    return finalizeJugadorIdForRanking(created?.id ?? null);
   } catch (e) {
     console.error("[riviera-jugadores] getOrCreateJugadorId:", e);
     return null;
@@ -306,6 +323,7 @@ async function safeRegistrar(params: {
       ...params,
       puntosObtenidos: Math.max(0, params.puntosObtenidos ?? 0),
     });
+    await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
   } catch (e) {
     console.error("[riviera-jugadores] safeRegistrar:", e);
   }
@@ -1403,6 +1421,34 @@ export async function backfillRetasHistorial(organizadorId: string): Promise<num
   return count;
 }
 
+async function getParticipacionAmericanoCierre(
+  jugadorId: string,
+  eventoId: string
+): Promise<{
+  id: string;
+  puntos_obtenidos: number | null;
+  metadata: Record<string, unknown> | null;
+} | null> {
+  try {
+    const { data, error } = await supabase
+      .from("jugador_participaciones")
+      .select("id, puntos_obtenidos, metadata")
+      .eq("jugador_id", jugadorId)
+      .eq("tipo_evento", "americano")
+      .eq("evento_id", eventoId)
+      .filter("metadata->>subtipo", "eq", "americano_cierre")
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as {
+      id: string;
+      puntos_obtenidos: number | null;
+      metadata: Record<string, unknown> | null;
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function syncAmericanoParticipaciones(
   sesionId: string,
   nombre: string,
@@ -1413,15 +1459,7 @@ export async function syncAmericanoParticipaciones(
   try {
     const statsMap = buildAmericanoPlayerStandingStats(jugadores, rounds);
     const eventoNombre = `Americano Dinámico - ${nombre.trim() || "Sesión"}`;
-
-    const ranked = [...jugadores].sort((a, b) => {
-      const sa = statsMap.get(a.id);
-      const sb = statsMap.get(b.id);
-      const pa = sa?.puntos ?? 0;
-      const pb = sb?.puntos ?? 0;
-      if (pb !== pa) return pb - pa;
-      return a.name.localeCompare(b.name);
-    });
+    const ranked = getAmericanoRanking(jugadores, rounds);
 
     let posicion = 0;
     for (const jugador of ranked) {
@@ -1432,45 +1470,142 @@ export async function syncAmericanoParticipaciones(
         organizadorId: userId,
         legacyPlayerId: jugador.id.includes("-") ? jugador.id : undefined,
       });
-      if (!jugadorId) continue;
+      if (!jugadorId) {
+        console.warn(
+          "[riviera-jugadores] americano sin perfil Riviera:",
+          jugador.name
+        );
+        continue;
+      }
 
       const podioPos = posicion <= 3 ? posicion : null;
+      const calcParams: Omit<CalcularPuntosEventoParams, "formato"> = {
+        victorias_americano: st?.pg ?? 0,
+        posicion_final: podioPos,
+      };
+      const { total, desglose } = calcularPuntosEventoDesglose({
+        formato: "americano",
+        ...calcParams,
+      });
+      const metadata = rankingMetadata(desglose, {
+        subtipo: "americano_cierre",
+        partidos: st?.pj ?? jugador.stats.gamesPlayed,
+        partidos_jugados: st?.pj ?? jugador.stats.gamesPlayed,
+        partidos_ganados: st?.pg ?? 0,
+        partidos_perdidos: st?.pp ?? 0,
+        partidos_empatados: st?.pe ?? 0,
+        banquillo: jugador.stats.roundsOnBench,
+        victorias_ranking: st?.pg ?? 0,
+        posicion_final: posicion,
+        posicion,
+        total_participantes: ranked.length,
+        lugar: formatLugarOrdinal(posicion, ranked.length),
+        modalidad: "americano",
+        modalidad_label: "Pádel Americano",
+        puntos_a_favor: jugador.stats.pointsFor,
+        puntos_en_contra: jugador.stats.pointsAgainst,
+      });
+      const resultado: JugadorResultado =
+        podioPos === 1
+          ? "victoria"
+          : podioPos === 2
+            ? "derrota"
+            : podioPos === 3
+              ? "empate"
+              : "participación";
+
+      const existing = await getParticipacionAmericanoCierre(
+        jugadorId,
+        sesionId
+      );
+      if (existing) {
+        const aplicados = existing.puntos_obtenidos ?? 0;
+        const delta = total - aplicados;
+        if (delta !== 0) {
+          await adjustRankingPuntosManual(
+            userId,
+            jugadorId,
+            delta,
+            `Corrección ${eventoNombre}`
+          );
+        }
+        const prevMeta =
+          existing.metadata && typeof existing.metadata === "object"
+            ? existing.metadata
+            : {};
+        await supabase
+          .from("jugador_participaciones")
+          .update({
+            puntos_obtenidos: total,
+            resultado,
+            metadata: { ...prevMeta, ...metadata },
+          })
+          .eq("id", existing.id);
+        continue;
+      }
 
       await registrarPuntosRanking({
         jugadorId,
         tipoEvento: "americano",
         eventoId: sesionId,
         eventoNombre,
-        resultado:
-          podioPos === 1
-            ? "victoria"
-            : podioPos === 2
-              ? "derrota"
-              : podioPos === 3
-                ? "empate"
-                : "participación",
+        resultado,
         formato: "americano",
-        calcParams: {
-          victorias_americano: st?.pg ?? 0,
-          posicion_final: podioPos,
-        },
-        metadata: {
-          subtipo: "americano_cierre",
-          partidos: jugador.stats.gamesPlayed,
-          banquillo: jugador.stats.roundsOnBench,
-          victorias_ranking: st?.pg ?? 0,
-          posicion_final: posicion,
-          posicion,
-          total_participantes: ranked.length,
-          lugar: formatLugarOrdinal(posicion, ranked.length),
-          modalidad: "americano",
-          modalidad_label: "Pádel Americano",
-          puntos_a_favor: jugador.stats.pointsFor,
-          puntos_en_contra: jugador.stats.pointsAgainst,
-        },
+        calcParams,
+        metadata: metadata as Record<string, unknown>,
+        skipIfSubtipoExists: "americano_cierre",
       });
     }
   } catch (e) {
     console.error("[riviera-jugadores] syncAmericanoParticipaciones:", e);
   }
+}
+
+/** Importa puntos e historial de americanos finalizados (local o público en Supabase). */
+export async function backfillAmericanoHistorial(
+  organizadorId: string
+): Promise<number> {
+  let count = 0;
+  try {
+    const tournaments = await getTournaments(organizadorId);
+    for (const t of tournaments) {
+      if (!t.is_finished || !isAmericanoTournament(t)) continue;
+
+      let snap = loadAmericanoDinamicoSnapshot(t.id);
+      if (!snap || snap.tournamentPhase !== "finished" || !snap.rounds.length) {
+        let remote: FetchAmericanoLivePublicResult | null = null;
+        try {
+          remote = await fetchAmericanoLivePublic(t.id);
+        } catch {
+          remote = null;
+        }
+        if (
+          remote?.status === "ok" &&
+          remote.snapshot.tournamentPhase === "finished" &&
+          remote.snapshot.rounds.length > 0
+        ) {
+          snap = remote.snapshot;
+        }
+      }
+
+      if (!snap || snap.tournamentPhase !== "finished" || !snap.rounds.length) {
+        continue;
+      }
+
+      const rebuilt = rebuildAmericanoFromSnapshot(snap);
+      if (!rebuilt) continue;
+
+      await syncAmericanoParticipaciones(
+        t.id,
+        typeof t.name === "string" ? t.name : "Sesión",
+        rebuilt.players,
+        rebuilt.rounds,
+        organizadorId
+      );
+      count += 1;
+    }
+  } catch (e) {
+    console.error("[riviera-jugadores] backfillAmericanoHistorial:", e);
+  }
+  return count;
 }

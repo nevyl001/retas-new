@@ -8,7 +8,7 @@ import { RankingComoFuncionaPage } from "./RankingComoFuncionaPage";
 export type JugadoresRoute =
   | { kind: "lista" }
   | { kind: "ficha"; slug: string }
-  | { kind: "publicRanking" }
+  | { kind: "publicRanking"; organizadorId?: string }
   | { kind: "publicFicha"; slug: string }
   | { kind: "rankingComoFunciona" }
   | { kind: "unknown" };
@@ -16,6 +16,17 @@ export type JugadoresRoute =
 export function parseJugadoresPath(pathname: string): JugadoresRoute {
   const path = pathname.replace(/\/+$/, "") || "/";
 
+  const rankingOrg = path.match(/^\/ranking\/o\/([^/]+)$/i);
+  if (rankingOrg) {
+    try {
+      return {
+        kind: "publicRanking",
+        organizadorId: decodeURIComponent(rankingOrg[1]),
+      };
+    } catch {
+      return { kind: "publicRanking", organizadorId: rankingOrg[1] };
+    }
+  }
   if (path === "/ranking" || path === "/ranking/") {
     return { kind: "publicRanking" };
   }
@@ -59,7 +70,9 @@ export const JugadoresRouter: React.FC<{ pathname: string }> = ({ pathname }) =>
     case "rankingComoFunciona":
       return <RankingComoFuncionaPage />;
     case "publicRanking":
-      return <JugadoresPublicRanking />;
+      return (
+        <JugadoresPublicRanking organizadorId={route.organizadorId} />
+      );
     case "publicFicha":
       return <JugadorPublicFicha slug={route.slug} />;
     case "lista":

@@ -2,7 +2,15 @@ import { navigateAppTo } from "../../lib/appRouting";
 import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
 
 export function navigatePublicJugadores(path?: string): void {
-  navigateAppTo(path ?? buildPublicRankingUrl(resolvePublicOrganizadorId()));
+  navigateAppTo(
+    path ??
+      buildPublicRankingUrl(
+        resolvePublicOrganizadorId(
+          undefined,
+          typeof window !== "undefined" ? window.location.pathname : undefined
+        )
+      )
+  );
 }
 
 export function buildPublicJugadorPath(slug: string, orgId?: string | null): string {
@@ -22,13 +30,11 @@ export function buildRankingComoFuncionaPath(): string {
   return "/ranking/como-funciona";
 }
 
-/** Ranking público: /ranking (alias histórico: /public/jugadores). */
+/** Ranking público por organizador: /ranking/o/{organizadorId}. */
 export function buildPublicRankingUrl(orgId?: string | null): string {
-  const base = "/ranking";
-  if (typeof window === "undefined") {
-    return orgId ? `${base}?org=${encodeURIComponent(orgId)}` : base;
+  const trimmed = orgId?.trim();
+  if (trimmed) {
+    return `/ranking/o/${encodeURIComponent(trimmed)}`;
   }
-  const url = new URL(base, window.location.origin);
-  if (orgId) url.searchParams.set("org", orgId);
-  return url.pathname + url.search;
+  return "/ranking";
 }

@@ -1,5 +1,5 @@
 import type { Player } from "../db/types";
-import { insertLegacyPlayer } from "../database";
+import { insertLegacyPlayer, updatePlayer } from "../database";
 import { supabase } from "../supabaseClient";
 import {
   groupLigaJugadoresByName,
@@ -114,9 +114,7 @@ async function findLegacyPlayerForRiviera(
 ): Promise<Player | null> {
   if (rj.legacy_player_id) {
     const linked = await fetchPlayerById(rj.legacy_player_id);
-    if (linked && legacyMatchesRivieraName(linked, rj)) {
-      return linked;
-    }
+    if (linked) return linked;
   }
 
   const globalByName = await searchLegacyPlayersByName(rj.nombre);
@@ -215,7 +213,11 @@ export async function ensureLegacyPlayerForRivieraJugador(
       if (rj.legacy_player_id !== existing.id) {
         await linkLegacyPlayerId(rj.id, existing.id);
       }
-      return existing;
+      if (!legacyMatchesRivieraName(existing, rj)) {
+        const synced = await updatePlayer(existing.id, rj.nombre);
+        return mergeRivieraContactIntoLegacyPlayer(rj, synced);
+      }
+      return mergeRivieraContactIntoLegacyPlayer(rj, existing);
     }
 
     const created = await insertLegacyPlayer(rj.nombre, organizadorId, {
@@ -304,6 +306,21 @@ export async function ensureLigaJugadorForRivieraJugador(
     if (existing) {
       if (rj.legacy_liga_jugador_id !== existing.id) {
         await linkLegacyLigaJugadorId(rj.id, existing.id);
+      }
+      const nombre = rj.nombre.trim();
+      if (nombre && normalizeName(existing.nombre) !== normalizeName(nombre)) {
+        const { data: synced, error: upErr } = await supabase
+          .from("liga_jugadores")
+          .update({
+            nombre,
+            telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
+            ...(isRealEmail(rj.email) ? { email: rj.email!.trim() } : {}),
+          })
+          .eq("id", existing.id)
+          .eq("organizador_id", organizadorId)
+          .select()
+          .single();
+        if (!upErr && synced) return synced as LigaJugador;
       }
       return existing;
     }
@@ -503,6 +520,46 @@ export async function syncLigaJugadoresFromRivieraRegistry(
   }
   await consolidateDuplicateLigaJugadores(organizadorId);
   lastLigaSyncAt[organizadorId] = now;
+}
+
+/** Propaga nombre y contacto del registro Riviera a `players` y `liga_jugadores` enlazados. */
+export async function syncRivieraJugadorToLinkedPools(
+  organizadorId: string,
+  rj: RivieraJugador
+): Promise<void> {
+  const nombre = rj.nombre.trim();
+  if (!nombre) return;
+
+  if (rj.legacy_player_id) {
+    try {
+      const legacy = await fetchPlayerById(rj.legacy_player_id);
+      if (legacy && !legacyMatchesRivieraName(legacy, rj)) {
+        await updatePlayer(legacy.id, nombre);
+      }
+    } catch (e) {
+      console.warn("syncRivieraJugadorToLinkedPools legacy:", e);
+    }
+  } else {
+    await ensureLegacyPlayerForRivieraJugador(organizadorId, rj);
+  }
+
+  if (rj.legacy_liga_jugador_id) {
+    try {
+      await supabase
+        .from("liga_jugadores")
+        .update({
+          nombre,
+          telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
+          ...(isRealEmail(rj.email) ? { email: rj.email!.trim() } : {}),
+        })
+        .eq("id", rj.legacy_liga_jugador_id)
+        .eq("organizador_id", organizadorId);
+    } catch (e) {
+      console.warn("syncRivieraJugadorToLinkedPools liga:", e);
+    }
+  } else {
+    await ensureLigaJugadorForRivieraJugador(organizadorId, rj);
+  }
 }
 
 /** Resuelve jugador Riviera a partir de un player legacy (para ranking). */

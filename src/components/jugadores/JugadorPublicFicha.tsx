@@ -49,7 +49,10 @@ function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
 
 export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) => {
   const { user } = useUser();
-  const orgId = resolvePublicOrganizadorId(user?.id);
+  const orgId = resolvePublicOrganizadorId(
+    user?.id,
+    typeof window !== "undefined" ? window.location.pathname : undefined
+  );
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [historial, setHistorial] = useState<
     Awaited<ReturnType<typeof listParticipaciones>>
@@ -100,12 +103,42 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   const profileStats = useMemo(() => {
     const fromHist = computePublicProfileStats(historial);
     const teStats = jugador?.stats?.total_torneos_express ?? 0;
+    const partidosStats = jugador?.stats?.total_partidos ?? 0;
+    const victorias = Math.max(
+      fromHist.partidosGanados,
+      jugador?.stats?.victorias ?? 0
+    );
+    const perdidas = Math.max(
+      fromHist.partidosPerdidos,
+      jugador?.stats?.derrotas ?? 0
+    );
+    const winRateFromHist = fromHist.winRate;
+    const winRateFromStats =
+      jugador?.stats && jugador.stats.total_partidos > 0
+        ? Math.round(Number(jugador.stats.pct_victorias))
+        : null;
+    const winRate =
+      victorias + perdidas > 0
+        ? Math.round((victorias / (victorias + perdidas)) * 100)
+        : winRateFromHist ?? winRateFromStats;
+
     return {
       ...fromHist,
       torneosExpress: Math.max(fromHist.torneosExpress, teStats),
-      retas: Math.max(fromHist.retas, jugador?.stats?.total_retas ?? 0),
+      eventosJugados: Math.max(
+        fromHist.eventosJugados,
+        partidosStats,
+        jugador?.stats?.total_retas ?? 0,
+        fromHist.retasClasicas +
+          fromHist.americanos +
+          fromHist.ligas +
+          fromHist.torneosExpress
+      ),
+      victorias,
+      partidosPerdidos: perdidas,
+      winRate,
     };
-  }, [historial, jugador?.stats?.total_torneos_express, jugador?.stats?.total_retas]);
+  }, [historial, jugador?.stats]);
 
   const recentActivity = useMemo(() => historialItems.slice(0, 3), [historialItems]);
 
@@ -283,9 +316,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
           </div>
 
           <JugadorPublicFichaAside
-            retas={profileStats.retas}
+            retas={profileStats.eventosJugados}
             torneosExpress={profileStats.torneosExpress}
             victorias={profileStats.victorias}
+            partidosPerdidos={profileStats.partidosPerdidos}
             winRate={profileStats.winRate}
             recent={recentActivity}
           />
