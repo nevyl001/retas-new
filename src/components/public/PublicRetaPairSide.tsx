@@ -30,7 +30,7 @@ export const PublicRetaPairSide: React.FC<{
           <JugadorAvatar
             fotoUrl={p1.fotoUrl}
             nombre={p1.name}
-            size="md"
+            size="lg"
             className="te-pub-pair__avatar te-pub-pair__avatar--back"
           />
         ) : null}
@@ -38,7 +38,7 @@ export const PublicRetaPairSide: React.FC<{
           <JugadorAvatar
             fotoUrl={p2.fotoUrl}
             nombre={p2.name}
-            size="md"
+            size="lg"
             className="te-pub-pair__avatar te-pub-pair__avatar--front"
           />
         ) : null}

@@ -62,11 +62,6 @@ export const PublicRetaMatchCard: React.FC<{
           {encounterLabel ? (
             <span className="te-pub-match__encounter">{encounterLabel}</span>
           ) : null}
-          {remontadaRound != null ? (
-            <span className="te-pub-match__remontada-badge">
-              ⚡ Remontada ronda {remontadaRound}
-            </span>
-          ) : null}
           <TePubMatchStatus
             variant={
               status === "finished"
@@ -132,7 +127,11 @@ export const PublicRetaMatchCard: React.FC<{
       <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
 
       {games && games.length > 0 && (
-        <div className="te-pub-games">
+        <div
+          className={`te-pub-games${
+            games.length === 1 ? " te-pub-games--solo" : ""
+          }`}
+        >
           <p className="te-pub-games__title">Juegos</p>
           <div className="te-pub-games__list">
             {games.map((g, i) => (

@@ -686,7 +686,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     <div className="te-public-round-head">
                       <h3 className="te-public-round-head__title rr-championship__round-title">
                         <span className="rr-championship__round-label">
-                          REMONTADA RONDA {idx}
+                          Ronda {idx}
                         </span>
                         {roundInProgress ? (
                           <span className="te-public-round-head__live">
@@ -702,7 +702,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         .map((match, matchIdx) =>
                           renderPublicMatchCard(match, matchIdx, {
                             remontadaRound: idx,
-                            encounterLabel: `Remontada · encuentro ${matchIdx + 1}`,
+                            encounterLabel: `Encuentro ${matchIdx + 1}`,
                           })
                         )}
                     </div>
