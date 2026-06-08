@@ -11,7 +11,7 @@ import { CircleRoundRobinScheduler } from "../components/CircleRoundRobinSchedul
 export const useTournamentActions = (
   setSelectedTournament: (tournament: Tournament | null) => void,
   setMatches: (matches: any[]) => void,
-  loadTournamentData: () => void,
+  loadTournamentData: (tournament?: Tournament) => void | Promise<void>,
   showToast: (message: string, type?: "success" | "error" | "info") => void,
   setError: (error: string) => void
 ) => {
@@ -86,12 +86,13 @@ export const useTournamentActions = (
           }
         }
 
-        setSelectedTournament({
+        const updatedTournament: Tournament = {
           ...selectedTournament,
           is_started: true,
           format: format === "teams" ? "teams" : "round_robin",
           ...(teamConfigPayload || {}),
-        });
+        };
+        setSelectedTournament(updatedTournament);
 
         if (teamConfigPayload) {
           try {
@@ -105,7 +106,7 @@ export const useTournamentActions = (
           await upsertTournamentPublicConfig(selectedTournament.id, "teams", teamConfigPayload.team_config);
         }
 
-        await loadTournamentData();
+        await loadTournamentData(updatedTournament);
         showToast(result.message, "success");
       } else {
         setError(result.message);

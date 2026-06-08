@@ -8,6 +8,7 @@ import {
   getTournamentPublicConfigExtended,
 } from "../lib/database";
 import { Match, Pair, Game, Tournament } from "../lib/database";
+import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
 import {
   computePairsWithStats,
   computeTeamStandings,
@@ -146,7 +147,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ? t.user_id.trim()
           : null
       );
-      setMatches(matchesData);
+      let resolvedMatches = matchesData;
+      if (matchesData.length > 0 && t && t.format !== "teams") {
+        resolvedMatches = await repairMatchCourtRotation(
+          pairsData,
+          t.courts,
+          matchesData,
+          t.format
+        );
+      }
+      setMatches(resolvedMatches);
       setPairs(pairsData);
       setGames(gamesData || []);
       setLastUpdate(new Date());

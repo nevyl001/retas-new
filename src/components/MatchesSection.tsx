@@ -83,7 +83,9 @@ function renderRoundBlock(
         </span>
       </div>
       <div className="matches-grid-simplified">
-        {roundMatches.map((match, matchIdx) => (
+        {[...roundMatches]
+          .sort((a, b) => (a.court ?? 1) - (b.court ?? 1))
+          .map((match, matchIdx) => (
           <div
             key={match.id}
             style={{ "--i": matchIdx } as React.CSSProperties}

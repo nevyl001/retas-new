@@ -7,6 +7,7 @@ import {
   getMatches,
   getTournamentGames,
 } from "../lib/database";
+import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
 
 export const useTournamentData = () => {
   const [pairs, setPairs] = useState<Pair[]>([]);
@@ -115,9 +116,20 @@ export const useTournamentData = () => {
         matchesData.length,
         "matches"
       );
-      setMatches(matchesData);
 
-      await calculatePairStatistics(pairsData, matchesData, tournament.id);
+      let resolvedMatches = matchesData;
+      if (matchesData.length > 0 && tournament.format !== "teams") {
+        resolvedMatches = await repairMatchCourtRotation(
+          pairsData,
+          tournament.courts,
+          matchesData,
+          tournament.format
+        );
+      }
+
+      setMatches(resolvedMatches);
+
+      await calculatePairStatistics(pairsData, resolvedMatches, tournament.id);
     } catch (err) {
       console.error("Error loading tournament data:", err);
       throw err;

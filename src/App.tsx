@@ -434,7 +434,10 @@ function AppContent() {
   } = useTournamentActions(
     setSelectedTournament,
     setMatches,
-    () => selectedTournament && loadTournamentData(selectedTournament),
+    (tournament?: Tournament) => {
+      const target = tournament ?? selectedTournament;
+      return target ? loadTournamentData(target) : undefined;
+    },
     showToast,
     setError
   );

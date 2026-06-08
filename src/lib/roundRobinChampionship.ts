@@ -62,38 +62,68 @@ export function loadChampionshipConfig(
   }
 }
 
+let warnedMissingChampionshipColumn = false;
+
 /** Publica config de remontada para la vista pública (anon). */
 export async function syncChampionshipConfigPublic(
   tournamentId: string,
   config: RoundRobinChampionshipConfig
 ): Promise<void> {
   if (!config.championshipEnabled) return;
+
   try {
     const { supabase } = await import("./supabaseClient");
-    const { isMissingColumnError } = await import("./db/schemaHelpers");
     const { data: existing } = await supabase
       .from("tournament_public_config")
-      .select("format, team_config")
+      .select("*")
       .eq("tournament_id", tournamentId)
       .maybeSingle();
 
-    const { error } = await supabase.from("tournament_public_config").upsert(
-      {
-        tournament_id: tournamentId,
-        format: (existing?.format as string) || "round_robin",
-        team_config: existing?.team_config ?? null,
+    const basePayload = {
+      tournament_id: tournamentId,
+      format: (existing?.format as string) || "round_robin",
+      team_config: existing?.team_config ?? null,
+    };
+
+    const { error: baseError } = await supabase
+      .from("tournament_public_config")
+      .upsert(basePayload, { onConflict: "tournament_id" });
+
+    if (baseError) {
+      console.warn("[remontada-final] sync public config (base):", baseError.message);
+      return;
+    }
+
+    const { data: row, error: readError } = await supabase
+      .from("tournament_public_config")
+      .select("*")
+      .eq("tournament_id", tournamentId)
+      .maybeSingle();
+
+    if (readError || !row || !("championship_config" in row)) {
+      if (!warnedMissingChampionshipColumn) {
+        warnedMissingChampionshipColumn = true;
+        console.info(
+          "[remontada-final] La columna championship_config no está en Supabase; la remontada sigue en localStorage. Ejecuta supabase/tournament-public-config-championship.sql si quieres publicarla."
+        );
+      }
+      return;
+    }
+
+    const { error: champError } = await supabase
+      .from("tournament_public_config")
+      .update({
         championship_config: {
           championshipEnabled: config.championshipEnabled,
           championshipRounds: config.championshipRounds,
           championshipRoundsGenerated: config.championshipRoundsGenerated,
           regularRoundsMax: config.regularRoundsMax,
         },
-      },
-      { onConflict: "tournament_id" }
-    );
+      })
+      .eq("tournament_id", tournamentId);
 
-    if (error && !isMissingColumnError(error, "tournament_public_config", "championship_config")) {
-      console.warn("[remontada-final] sync public config:", error);
+    if (champError) {
+      console.warn("[remontada-final] sync championship_config:", champError.message);
     }
   } catch (e) {
     console.warn("[remontada-final] sync public config:", e);

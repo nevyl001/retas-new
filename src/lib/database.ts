@@ -338,6 +338,43 @@ export const upsertAmericanoLivePublic = async (
   }
 };
 
+const publicConfigColumnCache = new Map<string, boolean>();
+
+/**
+ * Comprueba si una columna opcional existe en tournament_public_config (PostgREST).
+ * Evita POST 400 al hacer upsert con campos que aún no están en el esquema.
+ */
+export const isTournamentPublicConfigColumnAvailable = async (
+  column: string
+): Promise<boolean> => {
+  if (publicConfigColumnCache.has(column)) {
+    return publicConfigColumnCache.get(column)!;
+  }
+
+  const { error } = await supabase
+    .from("tournament_public_config")
+    .select(column)
+    .limit(1);
+
+  const available =
+    !error ||
+    !isMissingColumnError(error, "tournament_public_config", column);
+
+  if (error && !available) {
+    publicConfigColumnCache.set(column, false);
+    return false;
+  }
+
+  if (error) {
+    console.warn(`tournament_public_config probe (${column}):`, error.message);
+    publicConfigColumnCache.set(column, false);
+    return false;
+  }
+
+  publicConfigColumnCache.set(column, available);
+  return available;
+};
+
 /**
  * Guarda config pública para que la vista pública (anon) pueda mostrar tabla por equipos.
  * Llamar al iniciar reta por equipos. Tabla tournament_public_config con RLS: INSERT/UPDATE para authenticated.
@@ -348,10 +385,13 @@ export const upsertTournamentPublicConfig = async (
   team_config: TournamentTeamConfig | null
 ) => {
   try {
-    await supabase.from("tournament_public_config").upsert(
+    const { error } = await supabase.from("tournament_public_config").upsert(
       { tournament_id: tournamentId, format, team_config: team_config ?? null },
       { onConflict: "tournament_id" }
     );
+    if (error) {
+      console.warn("tournament_public_config no disponible:", error.message);
+    }
   } catch (e) {
     console.warn("tournament_public_config no disponible:", e);
   }

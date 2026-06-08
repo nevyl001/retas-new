@@ -4,6 +4,7 @@ import {
   createMatch,
   deleteMatchesByTournament,
 } from "../lib/database";
+import { generateCircleRoundRobinSchedule } from "../lib/circleRoundRobinSchedule";
 
 export interface CircleSchedulingResult {
   success: boolean;
@@ -160,66 +161,6 @@ export class CircleRoundRobinScheduler {
     return scheduled;
   }
 
-  /**
-   * Convierte rondas lógicas del círculo (N/2 partidos simultáneos si hubiera canchas)
-   * en rondas de tiempo consecutivas: en cada ronda de tiempo hay como máximo `courts`
-   * partidos en paralelo (canchas 1..courts). Así no se pierden enfrentamientos cuando
-   * hay menos canchas que partidos por ronda lógica (ej. 4 parejas, 2 partidos/ronda, 1 cancha).
-   */
-  private static packLogicalRoundsIntoTimeSlots(
-    logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>>,
-    courts: number
-  ): Array<{ pair1: Pair; pair2: Pair; round: number; court: number }> {
-    const safeCourts = Math.max(1, courts);
-    const out: Array<{
-      pair1: Pair;
-      pair2: Pair;
-      round: number;
-      court: number;
-    }> = [];
-    let timeRound = 1;
-    for (const logical of logicalRounds) {
-      for (let start = 0; start < logical.length; start += safeCourts) {
-        const chunk = logical.slice(start, start + safeCourts);
-        for (let k = 0; k < chunk.length; k++) {
-          const m = chunk[k];
-          out.push({
-            pair1: m.pair1,
-            pair2: m.pair2,
-            round: timeRound,
-            court: k + 1,
-          });
-        }
-        timeRound += 1;
-      }
-    }
-    return out;
-  }
-
-  /**
-   * Implementa el algoritmo Round Robin usando el método del círculo
-   * 
-   * ALGORITMO CORRECTO Y ROBUSTO:
-   * 
-   * Para números PARES (ej: 8 parejas):
-   * - N-1 rondas (7 rondas para 8 parejas)
-   * - En cada ronda: N/2 partidos (todas las parejas juegan)
-   * - Total: (N-1) * (N/2) = N*(N-1)/2 partidos únicos
-   * - Método: Fijar primera pareja, rotar las demás
-   * 
-   * Para números IMPARES (ej: 7 parejas):
-   * - N rondas (7 rondas para 7 parejas)
-   * - En cada ronda: (N-1)/2 partidos, 1 pareja descansa
-   * - Total: N * (N-1)/2 = N*(N-1)/2 partidos únicos
-   * - Método: Todas las parejas rotan en círculo
-   * 
-   * REGLAS CRÍTICAS:
-   * - Si hay suficientes canchas, varios partidos de la misma ronda lógica comparten el mismo número de ronda (tiempo).
-   * - Si hay pocas canchas, la misma ronda lógica se parte en varias rondas de tiempo consecutivas.
-   * - Cada pareja se enfrenta con todas las demás EXACTAMENTE UNA VEZ
-   * - SIN REPETICIONES de enfrentamientos
-   * - SIN rondas extra
-   */
   private static generateCircleRoundRobin(
     pairs: Pair[],
     courts: number
@@ -230,123 +171,14 @@ export class CircleRoundRobinScheduler {
     console.log(`📊 Parejas: ${pairs.length}`);
     console.log(`🏟️ Canchas: ${courts}`);
 
-    if (pairs.length < 2) {
-      return [];
-    }
-
-    const matches: Array<{
-      pair1: Pair;
-      pair2: Pair;
-      round: number;
-      court: number;
-    }> = [];
-
-    const isOdd = pairs.length % 2 === 1;
-    const totalRounds = isOdd ? pairs.length : pairs.length - 1;
+    const matches = generateCircleRoundRobinSchedule(pairs, courts);
     const expectedMatches = (pairs.length * (pairs.length - 1)) / 2;
 
-    console.log(
-      `🔄 Rondas lógicas del círculo: ${totalRounds} (${pairs.length} parejas, ${isOdd ? "impar" : "par"})`
-    );
-    console.log(`🎯 Partidos esperados: ${expectedMatches}`);
-
-    if (isOdd) {
-      // ============================================
-      // MÉTODO DEL CÍRCULO PARA NÚMEROS IMPARES
-      // ============================================
-      let circularPairs = [...pairs];
-      console.log(`🔄 Usando método del círculo completo (números impares)`);
-
-      const logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>> = [];
-
-      for (let round = 1; round <= totalRounds; round++) {
-        console.log(`\n🔄 === RONDA LÓGICA ${round} ===`);
-
-        const restingIndex = Math.floor(circularPairs.length / 2);
-        const restingPair = circularPairs[restingIndex];
-        const playingPairs = circularPairs.filter((_, index) => index !== restingIndex);
-
-        console.log(`😴 Pareja que descansa: ${restingPair.player1_name}/${restingPair.player2_name}`);
-        console.log(`👥 Parejas que juegan: ${playingPairs.length}`);
-
-        const possibleMatches = Math.floor(playingPairs.length / 2);
-        console.log(
-          `📊 Partidos en esta ronda lógica: ${possibleMatches} (canchas: ${courts}; si hay menos canchas, se reparten en varios pasos de tiempo)`
-        );
-
-        const roundPairings: Array<{ pair1: Pair; pair2: Pair }> = [];
-        for (let i = 0; i < possibleMatches; i++) {
-          const pair1 = playingPairs[i];
-          const pair2 = playingPairs[playingPairs.length - 1 - i];
-          roundPairings.push({ pair1, pair2 });
-          console.log(
-            `  ✅ ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
-          );
-        }
-
-        logicalRounds.push(roundPairings);
-        console.log(
-          `✅ Ronda lógica ${round}: ${roundPairings.length} partidos, ${restingPair.player1_name}/${restingPair.player2_name} descansa`
-        );
-
-        if (round < totalRounds) {
-          const firstPair = circularPairs.shift();
-          if (firstPair) {
-            circularPairs.push(firstPair);
-          }
-          console.log(`🔄 Círculo rotado para ronda ${round + 1}`);
-        }
-      }
-
-      matches.push(...this.packLogicalRoundsIntoTimeSlots(logicalRounds, courts));
-    } else {
-      // ============================================
-      // MÉTODO DEL CÍRCULO PARA NÚMEROS PARES
-      // ============================================
-      const fixedPair = pairs[0];
-      let rotatingPairs = [...pairs.slice(1)];
-
-      console.log(`🎯 Pareja fija (método círculo): ${fixedPair.player1_name}/${fixedPair.player2_name}`);
-      console.log(`🔄 Parejas rotantes: ${rotatingPairs.length}`);
-      console.log(`🔄 Número de rondas lógicas: ${totalRounds}`);
-
-      const logicalRounds: Array<Array<{ pair1: Pair; pair2: Pair }>> = [];
-
-      for (let round = 1; round <= totalRounds; round++) {
-        console.log(`\n🔄 === RONDA LÓGICA ${round} ===`);
-
-        const roundPairs = [fixedPair, ...rotatingPairs];
-        const possibleMatches = Math.floor(roundPairs.length / 2);
-        console.log(
-          `📊 Partidos en esta ronda lógica: ${possibleMatches} (canchas: ${courts}; si hay menos canchas, se reparten en varios pasos de tiempo)`
-        );
-
-        const roundPairings: Array<{ pair1: Pair; pair2: Pair }> = [];
-        for (let i = 0; i < possibleMatches; i++) {
-          const pair1 = roundPairs[i];
-          const pair2 = roundPairs[roundPairs.length - 1 - i];
-          roundPairings.push({ pair1, pair2 });
-          console.log(
-            `  ✅ ${pair1.player1_name}/${pair1.player2_name} vs ${pair2.player1_name}/${pair2.player2_name}`
-          );
-        }
-
-        logicalRounds.push(roundPairings);
-        console.log(`✅ Ronda lógica ${round}: ${roundPairings.length} partidos (todas las parejas juegan en esta ronda lógica)`);
-
-        if (round < totalRounds) {
-          const lastPair = rotatingPairs.pop();
-          if (lastPair) {
-            rotatingPairs.unshift(lastPair);
-          }
-          console.log(`🔄 Parejas rotantes rotadas para ronda ${round + 1}`);
-        } else {
-          console.log(`🛑 Última ronda lógica alcanzada, no rotar más`);
-        }
-      }
-
-      matches.push(...this.packLogicalRoundsIntoTimeSlots(logicalRounds, courts));
-    }
+    matches.forEach((m) => {
+      console.log(
+        `  ✅ R${m.round} Cancha ${m.court}: ${m.pair1.player1_name}/${m.pair1.player2_name} vs ${m.pair2.player1_name}/${m.pair2.player2_name}`
+      );
+    });
 
     console.log(`\n🎯 === DISTRIBUCIÓN COMPLETADA ===`);
     console.log(`📊 Total partidos generados: ${matches.length}`);
@@ -356,14 +188,15 @@ export class CircleRoundRobinScheduler {
       `🔄 Rondas de tiempo (≤${courts} partido(s) simultáneo(s) por paso): ${maxTimeRound}`
     );
     console.log(`🎯 Partidos esperados: ${expectedMatches}`);
-    
+
     if (matches.length !== expectedMatches) {
-      console.error(`❌ ERROR: Se generaron ${matches.length} partidos pero se esperaban ${expectedMatches}`);
+      console.error(
+        `❌ ERROR: Se generaron ${matches.length} partidos pero se esperaban ${expectedMatches}`
+      );
     } else {
       console.log(`✅ Número correcto de partidos generados`);
     }
 
-    // Verificar distribución
     this.verifyCircleDistribution(matches, pairs, courts);
 
     return matches;
@@ -525,6 +358,29 @@ export class CircleRoundRobinScheduler {
           }
         });
       }
+    }
+
+    if (courts > 1) {
+      const courtsByPair = new Map<string, Set<number>>();
+      matches.forEach((match) => {
+        for (const pair of [match.pair1, match.pair2]) {
+          if (!courtsByPair.has(pair.id)) {
+            courtsByPair.set(pair.id, new Set());
+          }
+          courtsByPair.get(pair.id)!.add(match.court);
+        }
+      });
+      pairs.forEach((pair) => {
+        const played = matches.filter(
+          (m) => m.pair1.id === pair.id || m.pair2.id === pair.id
+        ).length;
+        const usedCourts = courtsByPair.get(pair.id);
+        if (played >= 2 && usedCourts && usedCourts.size === 1) {
+          console.warn(
+            `⚠️ ${pair.player1_name}/${pair.player2_name} siempre juega en cancha ${Array.from(usedCourts)[0]}`
+          );
+        }
+      });
     }
 
     // Round robin: cada pareja disputa exactamente (n - 1) partidos
