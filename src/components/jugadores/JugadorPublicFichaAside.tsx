@@ -36,7 +36,7 @@ export const JugadorPublicFichaAside: React.FC<JugadorPublicFichaAsideProps> = (
     <aside className="rjp-ficha-aside" aria-label="Resumen y actividad">
       <div className="rjp-ficha-aside__kpis">
         <div className="rjp-ficha-kpi">
-          <span className="rjp-ficha-kpi__lbl">Retas</span>
+          <span className="rjp-ficha-kpi__lbl">Participaciones</span>
           <span
             className={`rjp-ficha-kpi__val${
               retas === 0 ? " rjp-ficha-kpi__val--empty" : ""
