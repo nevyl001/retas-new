@@ -1,4 +1,4 @@
-import type { Match, Pair, Player, Tournament } from "../db/types";
+import type { Match, Pair, Tournament } from "../db/types";
 import type { AmericanoPlayer, AmericanoRound } from "../db/types";
 import { getGames, getMatches, getPairs, getTournaments } from "../database";
 import { computeJornadaPublicStats } from "../liga/jornadaStats";
