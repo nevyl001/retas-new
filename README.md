@@ -81,25 +81,11 @@ REACT_APP_SUPABASE_URL=tu_project_url_aqui
 REACT_APP_SUPABASE_ANON_KEY=tu_anon_key_aqui
 ```
 
-### **3. Configurar Base de Datos**
+### **3. Base de datos**
 
-Ejecutar en Supabase SQL Editor:
+El esquema (tablas, RLS, triggers) vive en el proyecto **Supabase** ya configurado. Conecta la app con las variables de entorno del paso 2. Para vaciar datos operativos sin borrar cuentas, ver `supabase/reset-datos-operativos.sql`.
 
-```sql
--- Usar el archivo: database-schema-multi-user.sql
--- Contiene todas las tablas, RLS policies y triggers
-```
-
-### **4. Configurar Panel de Admin**
-
-Ejecutar en Supabase SQL Editor:
-
-```sql
--- Usar el archivo: admin-setup.sql
--- Crea tabla admin_users y usuario por defecto
-```
-
-### **5. Instalar y Ejecutar**
+### **4. Instalar y Ejecutar**
 
 ```bash
 npm install
@@ -284,10 +270,8 @@ public/
 ├── favicon.svg             # Icono general
 └── ios-pwa.css            # Estilos iOS PWA
 
-Archivos SQL:
-├── database-schema-multi-user.sql  # Esquema principal
-├── admin-setup.sql                 # Configuración admin
-└── database-schema.sql             # Esquema original (referencia)
+supabase/
+└── reset-datos-operativos.sql      # Vaciar datos (no borra usuarios)
 ```
 
 ## 🔧 **Solución de Problemas**
@@ -302,8 +286,8 @@ Archivos SQL:
 ### **Error: Tablas no existen**
 
 ```bash
-# Ejecutar database-schema-multi-user.sql en Supabase
-# Verificar en Table Editor
+# Verificar REACT_APP_SUPABASE_URL y proyecto correcto en Supabase
+# Revisar Table Editor del proyecto
 ```
 
 ### **Error: Icono feo en iOS**
@@ -317,8 +301,7 @@ Archivos SQL:
 ### **Error: Admin no funciona**
 
 ```bash
-# Ejecutar admin-setup.sql en Supabase
-# Verificar credenciales por defecto
+# Verificar tabla admin_users y credenciales en Supabase
 ```
 
 ## 🚀 **Deploy y Distribución**

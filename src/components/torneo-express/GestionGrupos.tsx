@@ -148,7 +148,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     return (
       <TePageShell className="te-gestion-page">
         <p className="te-error">
-          {error ?? "Torneo no encontrado. ¿Ejecutaste la migración SQL en Supabase?"}
+          {error ?? "Torneo no encontrado."}
         </p>
         <Button
           type="button"
@@ -473,10 +473,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                       .
                     </p>
                     <p className="te-partidos-migration-hint__sql">
-                      SQL Editor → ejecuta{" "}
-                      <strong>supabase/torneo-express-partidos-orden.sql</strong>{" "}
-                      o <strong>torneo-express-partidos-programado.sql</strong> y
-                      recarga.
+                      Revisa el esquema de <strong>torneo_express_partidos</strong> en
+                      Supabase y recarga.
                     </p>
                   </div>
                 )}

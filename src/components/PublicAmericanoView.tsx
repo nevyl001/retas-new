@@ -210,11 +210,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
             </p>
             <p className="te-public-empty">
               Falta la columna <code>americano_live</code> en la tabla{" "}
-              <code>tournament_public_config</code>. En Supabase → SQL Editor
-              ejecuta el archivo del repositorio{" "}
-              <code>tournament-americano-public-live.sql</code> y vuelve a abrir
-              el Americano en el móvil del organizador unos segundos para que se
-              publique el marcador.
+              <code>tournament_public_config</code> (Supabase). Añádela en el
+              esquema y vuelve a abrir el Americano en el móvil del organizador
+              unos segundos para que se publique el marcador.
             </p>
           </div>
         )}
@@ -252,8 +250,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
               <p className="te-public-empty">
                 Esta reta consta como <strong>iniciada</strong>, pero no hay
                 marcador publicado. Si ya ejecutaste el torneo, revisa en
-                Supabase la columna <code>americano_live</code> (archivo{" "}
-                <code>tournament-americano-public-live.sql</code>) y en el
+                Supabase la columna <code>americano_live</code> y en el
                 dispositivo del organizador la consola por errores de{" "}
                 <code>upsert</code> (sesión cerrada o permisos RLS).
               </p>

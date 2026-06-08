@@ -238,9 +238,8 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
             <p>
               Abre el torneo en <strong>Americano dinámico</strong> unos segundos
               (con la sesión del organizador) para que se guarde en Supabase, o
-              ejecuta en Supabase el SQL{" "}
-              <code>tournament-americano-public-live.sql</code> si falta la
-              columna <code>americano_live</code>.
+              revisa en Supabase la columna <code>americano_live</code> en{" "}
+              <code>tournament_public_config</code>.
             </p>
             <p>
               <a

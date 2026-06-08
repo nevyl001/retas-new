@@ -961,7 +961,7 @@ export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
   if (resetErr) {
     throw new Error(
       resetErr.message +
-        " (¿Ejecutaste supabase/liga-migration-dynamic.sql para permitir actualizar puntos?)"
+        " (¿El esquema de liga en Supabase permite actualizar puntos?)"
     );
   }
 
@@ -1132,7 +1132,7 @@ export async function actualizarPuntosInscripcion(
   if (error) {
     throw new Error(
       error.message +
-        " (¿Ejecutaste supabase/liga-migration-dynamic.sql para permitir actualizar puntos?)"
+        " (¿El esquema de liga en Supabase permite actualizar puntos?)"
     );
   }
 }

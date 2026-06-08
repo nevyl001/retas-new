@@ -41,11 +41,11 @@ Si cambiaste de proyecto o URL:
 
 Así evitas bundles viejos que aún apuntaban a otro host.
 
-## 4. Orden recomendado de SQL en Supabase
+## 4. Esquema en Supabase
 
-Ver [SQL-ORDEN.md](./SQL-ORDEN.md) y ejecuta los scripts en el **SQL Editor** del proyecto oficial, en el orden indicado.
+Las migraciones ya están en el proyecto Supabase de producción. Para vaciar datos operativos, ver [SQL-ORDEN.md](./SQL-ORDEN.md) (`reset-datos-operativos.sql`).
 
-Puntos críticos que ya te afectaron:
+Puntos críticos del esquema:
 
 - Tabla `tournament_public_config` + RLS (enlace público corto y vista por equipos).
 - Políticas de `players` por **dueño del torneo** (`tournaments.user_id`) si usas `tournament_id` en jugadores.

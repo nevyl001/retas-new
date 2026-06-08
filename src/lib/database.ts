@@ -207,7 +207,7 @@ export const getTournamentPublicConfig = async (tournamentId: string): Promise<{
 
 /**
  * Snapshot Americano para vista pública (columna americano_live en tournament_public_config).
- * Requiere migración SQL tournament-americano-public-live.sql.
+ * Requiere columna americano_live en tournament_public_config.
  */
 export type FetchAmericanoLivePublicResult =
   | { status: "ok"; snapshot: AmericanoDinamicoSnapshotV1 }
@@ -299,7 +299,7 @@ export const upsertAmericanoLivePublic = async (
         isMissingColumnError(error, "tournament_public_config", "americano_live")
       ) {
         console.warn(
-          "Columna americano_live ausente: ejecuta tournament-americano-public-live.sql en Supabase."
+          "Columna americano_live ausente en tournament_public_config (Supabase)."
         );
         return false;
       }

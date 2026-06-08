@@ -58,7 +58,7 @@ export const JugadoresLista: React.FC = () => {
       setError(
         e instanceof Error
           ? e.message
-          : "No se pudo cargar el registro. ¿Ejecutaste la migración SQL?"
+          : "No se pudo cargar el registro de jugadores."
       );
     } finally {
       setLoading(false);

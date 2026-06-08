@@ -218,7 +218,7 @@ export function partidosOrdenColumnIsAvailable(): boolean {
 }
 
 export const PARTIDOS_EXTRAS_MIGRATION_HINT =
-  "En Supabase → SQL Editor, ejecuta supabase/torneo-express-partidos-orden.sql (orden, ronda, cancha y programado_en).";
+  "Faltan columnas de partidos en Supabase (orden, ronda, cancha o programado_en). Revisa el esquema del proyecto.";
 
 /** @deprecated Use PARTIDOS_EXTRAS_MIGRATION_HINT */
 export const PARTIDOS_ORDEN_MIGRATION_HINT = PARTIDOS_EXTRAS_MIGRATION_HINT;
@@ -1188,7 +1188,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
 export class BracketSchemaMissingError extends Error {
   constructor() {
     super(
-      "Faltan columnas de fase eliminatoria en Supabase. Ejecuta supabase/torneo-express-bracket.sql en el SQL Editor."
+      "Faltan columnas de fase eliminatoria en Supabase. Revisa el esquema del proyecto."
     );
     this.name = "BracketSchemaMissingError";
   }

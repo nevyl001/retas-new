@@ -29,7 +29,7 @@ type LogTipo =
   | "clasifico_eliminatoria"
   | "no_clasifico";
 
-/** Eventos de cola obsoletos (triggers desactivados en notificaciones-solo-momentos-clave.sql). */
+/** Eventos de cola obsoletos (triggers desactivados en Supabase). */
 const LEGACY_QUEUE_EVENTS = new Set([
   "inscripcion_torneo",
   "resultado_partido",

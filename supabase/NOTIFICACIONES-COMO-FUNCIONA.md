@@ -25,10 +25,10 @@ Acción en BD (trigger)
 
 ### Archivos clave
 
-| Pieza | Archivo |
-|-------|---------|
-| Triggers + cola | `supabase/notificaciones-eventos-automaticos.sql` |
-| Desactivar resultados | `supabase/notificaciones-solo-momentos-clave.sql` (**ejecutar en SQL Editor**) |
+| Pieza | Ubicación |
+|-------|-----------|
+| Triggers + cola | Ya en Supabase (tabla `notificaciones_eventos_queue`) |
+| Desactivar resultados | Política en BD (sin eventos por resultado/partido programado) |
 | Procesar cola | `supabase/functions/procesar-notificaciones-evento/index.ts` |
 | Plantillas HTML | `supabase/functions/_shared/emailTemplates.ts` |
 | Resend | `supabase/functions/_shared/resendEmail.ts` |
@@ -38,7 +38,7 @@ Acción en BD (trigger)
 
 Solo se procesan: `asignacion_grupo`, `clasifico_eliminatoria_batch`.
 
-Filas legacy (`resultado_partido`, `partido_programado`, `inscripcion_torneo`) se ignoran sin enviar (triggers desactivados en `notificaciones-solo-momentos-clave.sql`).
+Filas legacy (`resultado_partido`, `partido_programado`, `inscripcion_torneo`) se ignoran sin enviar (triggers desactivados en Supabase).
 
 ### Webhook requerido (Supabase Dashboard)
 
@@ -81,7 +81,7 @@ save eliminatoria ronda completa
 
 ## Si siguen llegando emails de “Resultado registrado”
 
-1. **Triggers viejos aún activos en Supabase.** Ejecutar `notificaciones-solo-momentos-clave.sql`.
+1. **Triggers viejos aún activos en Supabase.** Desactivar triggers de resultado/partido programado en el SQL Editor.
 2. Verificar triggers en BD:
 
 ```sql

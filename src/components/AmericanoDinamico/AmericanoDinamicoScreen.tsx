@@ -382,8 +382,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               </Button>
             </div>
             <p className="americano-public-link__hint">
-              Requiere columna <code>americano_live</code> en Supabase (archivo{" "}
-              <code>tournament-americano-public-live.sql</code> del proyecto).
+              Requiere columna <code>americano_live</code> en{" "}
+              <code>tournament_public_config</code> (Supabase).
             </p>
           </section>
         ) : null}
