@@ -104,14 +104,13 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
     const fromHist = computePublicProfileStats(historial);
     const teStats = jugador?.stats?.total_torneos_express ?? 0;
     const partidosStats = jugador?.stats?.total_partidos ?? 0;
-    const victorias = Math.max(
-      fromHist.partidosGanados,
-      jugador?.stats?.victorias ?? 0
-    );
-    const perdidas = Math.max(
-      fromHist.partidosPerdidos,
-      jugador?.stats?.derrotas ?? 0
-    );
+    const tieneHistorial = historial.length > 0;
+    const victorias = tieneHistorial
+      ? fromHist.partidosGanados
+      : jugador?.stats?.victorias ?? 0;
+    const perdidas = tieneHistorial
+      ? fromHist.partidosPerdidos
+      : jugador?.stats?.derrotas ?? 0;
     const winRateFromHist = fromHist.winRate;
     const winRateFromStats =
       jugador?.stats && jugador.stats.total_partidos > 0

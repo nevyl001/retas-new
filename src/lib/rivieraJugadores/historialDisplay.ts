@@ -365,7 +365,12 @@ export function extractPartidosFromParticipacion(
 
   const sf = row.sets_favor ?? 0;
   const sc = row.sets_contra ?? 0;
-  if (sf > 0 || sc > 0) {
+  // sets_favor en reta/americano/liga = games acumulados, no contar como 1 partido.
+  const skipSetsAsSingleMatch =
+    row.tipo_evento === "reta" ||
+    row.tipo_evento === "americano" ||
+    row.tipo_evento === "liga";
+  if (!skipSetsAsSingleMatch && (sf > 0 || sc > 0)) {
     if (sf > sc) return { ganados: 1, perdidos: 0, empates: 0 };
     if (sc > sf) return { ganados: 0, perdidos: 1, empates: 0 };
     return { ganados: 0, perdidos: 0, empates: 1 };

@@ -39,6 +39,7 @@ import {
   type PlayerAvatarLookupEntry,
 } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import {
+  enrichChampionshipConfigForPartition,
   groupChampionshipByRound,
   isRoundRobinTournamentComplete,
   loadChampionshipConfig,
@@ -422,9 +423,20 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return acc;
   }, {} as Record<number, Match[]>);
 
+  const effectiveChampionshipConfig =
+    championshipMatches.length > 0 || championshipConfig?.championshipEnabled
+      ? enrichChampionshipConfigForPartition(matches, championshipConfig)
+      : championshipConfig;
+
   const championshipByRound = groupChampionshipByRound(
     championshipMatches,
-    championshipConfig?.regularRoundsMax
+    effectiveChampionshipConfig?.regularRoundsMax
+  );
+
+  const remontadaActiva = Boolean(
+    effectiveChampionshipConfig?.championshipEnabled ||
+      championshipConfig?.championshipEnabled ||
+      championshipMatches.length > 0
   );
 
   // Calcular número de canchas desde los matches (el court más alto)
@@ -549,7 +561,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             );
           })}
 
-        {championshipMatches.length > 0 && (
+        {remontadaActiva && (
           <div className="rr-championship rr-championship--public te-pub-fade-in-up">
             <header className="rr-championship__header">
               <span className="rr-championship__icon" aria-hidden>
@@ -559,10 +571,22 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                 <h3 className="rr-championship__title">REMONTADA FINAL</h3>
                 <p className="rr-championship__subtitle">
                   Los mejores se vuelven a ver las caras
+                  {championshipMatches.length > 0
+                    ? ` · ${championshipMatches.length} partido${
+                        championshipMatches.length === 1 ? "" : "s"
+                      }`
+                    : ""}
                 </p>
               </div>
             </header>
-            {Object.keys(championshipByRound)
+            {championshipMatches.length === 0 ? (
+              <p className="rr-championship__pending-public">
+                Se publicarán aquí los partidos de remontada al terminar el
+                Round Robin.
+              </p>
+            ) : null}
+            {championshipMatches.length > 0 &&
+              Object.keys(championshipByRound)
               .sort((a, b) => Number(a) - Number(b))
               .map((roundKey, roundIdx) => {
                 const idx = Number(roundKey);
@@ -635,6 +659,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                             games={
                               matchGames.length > 0 ? matchGames : undefined
                             }
+                            remontadaRound={idx}
                           />
                         );
                       })}

@@ -37,6 +37,7 @@ import {
   computePairsWithStats,
   sortPairsForStandings,
   computeTeamStandings,
+  getMatchScoresForStandings,
   getTeamConfigFromStorage,
 } from "../standingsUtils";
 import {
@@ -477,25 +478,36 @@ async function syncRetaParticipacionesInner(params: {
   const pairById = new Map(pairs.map((p) => [p.id, p]));
   const agg = new Map<string, PlayerAgg>();
 
-  const ensureAgg = (player: Player) => {
-    if (!agg.has(player.id)) {
-      agg.set(player.id, {
-        wins: 0,
-        losses: 0,
-        draws: 0,
-        setsFavor: 0,
-        setsContra: 0,
-        puntosObtenidos: 0,
-        nombre: player.name,
-        legacyPlayerId: player.id,
-        email: player.email,
-      });
-    }
+  const ensureAggFromPair = (
+    playerId: string,
+    name: string,
+    email?: string | null
+  ) => {
+    if (!playerId || agg.has(playerId)) return;
+    agg.set(playerId, {
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      setsFavor: 0,
+      setsContra: 0,
+      puntosObtenidos: 0,
+      nombre: name || "Jugador",
+      legacyPlayerId: playerId,
+      email: email ?? undefined,
+    });
   };
 
   for (const pair of pairs) {
-    if (pair.player1) ensureAgg(pair.player1);
-    if (pair.player2) ensureAgg(pair.player2);
+    ensureAggFromPair(
+      pair.player1_id,
+      pair.player1_name,
+      pair.player1?.email
+    );
+    ensureAggFromPair(
+      pair.player2_id,
+      pair.player2_name,
+      pair.player2?.email
+    );
   }
 
   for (const match of matches.filter((m) => m.status === "finished")) {
@@ -503,31 +515,26 @@ async function syncRetaParticipacionesInner(params: {
     const pair2 = pairById.get(match.pair2_id);
     if (!pair1 || !pair2) continue;
 
-    let games;
+    let games: Awaited<ReturnType<typeof getGames>> = [];
     try {
       games = await getGames(match.id);
     } catch {
-      continue;
-    }
-    if (!games.length) continue;
-
-    let p1Pts = 0;
-    let p2Pts = 0;
-    for (const g of games) {
-      p1Pts += g.pair1_score ?? 0;
-      p2Pts += g.pair2_score ?? 0;
+      games = [];
     }
 
-    const pair1Wins = p1Pts > p2Pts;
-    const pair2Wins = p2Pts > p1Pts;
-    if (!pair1Wins && !pair2Wins) continue;
+    const { score1, score2 } = getMatchScoresForStandings(match, games);
+    if (score1 === 0 && score2 === 0) continue;
 
     processExpressPartido(
       match.pair1_id,
       match.pair2_id,
-      p1Pts,
-      p2Pts,
-      pair1Wins ? match.pair1_id : pair2Wins ? match.pair2_id : null,
+      score1,
+      score2,
+      score1 > score2
+        ? match.pair1_id
+        : score2 > score1
+          ? match.pair2_id
+          : null,
       pairById,
       agg
     );
@@ -588,7 +595,15 @@ async function syncRetaParticipacionesInner(params: {
       (p) =>
         p.player1_id === st.legacyPlayerId || p.player2_id === st.legacyPlayerId
     );
+    const pairStats = pair
+      ? sortedPairs.find((p) => p.id === pair.id)
+      : undefined;
     const rank = pair ? pairRank.get(pair.id) : undefined;
+    const partidosGanados = pairStats?.pg ?? st.wins;
+    const partidosPerdidos = pairStats?.pp ?? st.losses;
+    const partidosJugados =
+      pairStats?.matchesPlayed ??
+      partidosGanados + partidosPerdidos + st.draws;
 
     let equipoGanador = false;
     let posicionEquipo: number | null = null;
@@ -627,12 +642,13 @@ async function syncRetaParticipacionesInner(params: {
             equipo_ganador: equipoGanador,
           }
         : { posicion_final: rank?.pos ?? null },
-      setsFavor: st.setsFavor,
-      setsContra: st.setsContra,
+      setsFavor: pairStats?.points ?? st.setsFavor,
+      setsContra: pairStats?.pointsReceived ?? st.setsContra,
       metadata: {
         subtipo: "reta_cierre",
-        partidos_ganados: st.wins,
-        partidos_perdidos: st.losses,
+        partidos_ganados: partidosGanados,
+        partidos_perdidos: partidosPerdidos,
+        partidos_jugados: partidosJugados,
         partidos_empatados: st.draws,
         formato: tournament.format ?? "round_robin",
         modalidad,

@@ -17,6 +17,8 @@ export const PublicRetaMatchCard: React.FC<{
   index: number;
   winnerLabel?: string | null;
   games?: { id: string; pair1: number; pair2: number }[];
+  /** Si está definido, muestra etiqueta de Remontada Final. */
+  remontadaRound?: number;
 }> = ({
   pair1Label,
   pair2Label,
@@ -29,6 +31,7 @@ export const PublicRetaMatchCard: React.FC<{
   index,
   winnerLabel: winnerLabelProp,
   games,
+  remontadaRound,
 }) => {
   const played = status === "finished" && hasResult;
   const pair1Wins = played && score1 > score2;
@@ -40,10 +43,17 @@ export const PublicRetaMatchCard: React.FC<{
 
   return (
     <article
-      className="te-pub-match te-pub-fade-in-up"
+      className={`te-pub-match te-pub-fade-in-up${
+        remontadaRound != null ? " te-pub-match--remontada" : ""
+      }`}
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >
       <div className="te-pub-match__top">
+        {remontadaRound != null ? (
+          <span className="te-pub-match__remontada-badge">
+            ⚡ Remontada ronda {remontadaRound}
+          </span>
+        ) : null}
         <TePubMatchStatus
           variant={
             status === "finished"

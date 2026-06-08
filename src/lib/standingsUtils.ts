@@ -51,7 +51,7 @@ function pairToUnifiedStats(pair: PairWithStats): UnifiedStandingStats {
   };
 }
 
-function getMatchScoresForStandings(
+export function getMatchScoresForStandings(
   match: Match,
   matchGames: Game[]
 ): { score1: number; score2: number } {

@@ -550,6 +550,33 @@
   color: var(--text-muted);
 }
 
+.te-pub-match--remontada {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.12);
+}
+
+.te-pub-match__remontada-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fcd34d;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.te-pub-match__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.5rem;
+}
+
 /* Remontada Final — vista pública reta */
 .rr-championship--public {
   margin-top: 1.5rem;
@@ -589,4 +616,11 @@
   font-weight: 800;
   letter-spacing: 0.05em;
   color: #fbbf24;
+}
+
+.rr-championship__pending-public {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
 }

@@ -204,6 +204,77 @@ export function persistMatchType(
   }
 }
 
+/** Infiere regularRoundsMax para vista pública (sin localStorage). */
+export function enrichChampionshipConfigForPartition(
+  matches: Match[],
+  cfg: RoundRobinChampionshipConfig | null | undefined
+): RoundRobinChampionshipConfig | null | undefined {
+  if (!matches.length) return cfg;
+
+  if (cfg?.regularRoundsMax != null && cfg.regularRoundsMax > 0) {
+    return cfg;
+  }
+
+  const withExplicitType = matches.filter(
+    (m) =>
+      m.match_type === "championship" || isChampionshipRoundNumber(m.round)
+  );
+  if (withExplicitType.length > 0) {
+    const minChampRound = Math.min(
+      ...withExplicitType.map((m) => m.round ?? CHAMPIONSHIP_ROUND_OFFSET)
+    );
+    let regularRoundsMax = minChampRound - 1;
+    if (isChampionshipRoundNumber(minChampRound)) {
+      const regularOnly = matches.filter(
+        (m) => !isChampionshipRoundNumber(m.round)
+      );
+      regularRoundsMax = regularOnly.length
+        ? Math.max(...regularOnly.map((m) => m.round ?? 1))
+        : 0;
+    }
+    if (regularRoundsMax > 0) {
+      return {
+        championshipEnabled: true,
+        championshipRounds:
+          cfg?.championshipRounds ?? DEFAULT_CONFIG.championshipRounds,
+        championshipRoundsGenerated:
+          cfg?.championshipRoundsGenerated ??
+          new Set(withExplicitType.map((m) => m.round)).size,
+        regularRoundsMax,
+      };
+    }
+  }
+
+  if (cfg?.championshipEnabled && (cfg.championshipRoundsGenerated ?? 0) > 0) {
+    const maxRound = Math.max(...matches.map((m) => m.round ?? 1));
+    const inferred = maxRound - cfg.championshipRoundsGenerated;
+    if (inferred > 0) {
+      return { ...cfg, regularRoundsMax: inferred };
+    }
+  }
+
+  const pairIds = new Set<string>();
+  for (const m of matches) {
+    pairIds.add(m.pair1_id);
+    pairIds.add(m.pair2_id);
+  }
+  const pairCount = pairIds.size;
+  if (pairCount >= 2) {
+    const expectedRegularRounds = pairCount - 1;
+    const maxRound = Math.max(...matches.map((m) => m.round ?? 1));
+    if (maxRound > expectedRegularRounds) {
+      return {
+        championshipEnabled: true,
+        championshipRounds: maxRound - expectedRegularRounds,
+        championshipRoundsGenerated: maxRound - expectedRegularRounds,
+        regularRoundsMax: expectedRegularRounds,
+      };
+    }
+  }
+
+  return cfg;
+}
+
 export function partitionMatches(
   matches: Match[],
   tournamentId?: string | null,
@@ -212,12 +283,13 @@ export function partitionMatches(
   regular: Match[];
   championship: Match[];
 } {
-  const cfg =
+  const rawCfg =
     configOverride !== undefined
       ? configOverride
       : tournamentId
         ? loadChampionshipConfig(tournamentId)
         : null;
+  const cfg = enrichChampionshipConfigForPartition(matches, rawCfg);
   const regular: Match[] = [];
   const championship: Match[] = [];
   for (const m of matches) {
