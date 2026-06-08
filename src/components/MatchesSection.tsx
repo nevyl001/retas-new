@@ -138,10 +138,11 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   const champConfig = loadChampionshipConfig(tournament.id);
 
   useEffect(() => {
-    if (champConfig?.championshipEnabled) {
-      void syncChampionshipConfigPublic(tournament.id, champConfig);
+    const cfg = loadChampionshipConfig(tournament.id);
+    if (cfg?.championshipEnabled) {
+      void syncChampionshipConfigPublic(tournament.id, cfg);
     }
-  }, [tournament.id, champConfig?.championshipEnabled, champConfig?.championshipRounds, champConfig?.championshipRoundsGenerated]);
+  }, [tournament.id, forceRefresh]);
 
   const { regular, championship } = useMemo(
     () => partitionMatches(matches, tournament.id, champConfig),
