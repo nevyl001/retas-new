@@ -488,7 +488,8 @@
 }
 
 .te-pub-pair--right .te-pub-pair__avatars {
-  flex-direction: row-reverse;
+  flex-direction: row;
+  justify-content: flex-end;
 }
 
 .te-pub-pair__avatar {
@@ -504,11 +505,6 @@
 .te-pub-pair__avatar--front {
   margin-left: -16px;
   z-index: 2;
-}
-
-.te-pub-pair--right .te-pub-pair__avatar--front {
-  margin-left: 0;
-  margin-right: -16px;
 }
 
 .te-pub-pair--win .te-pub-pair__avatar {
