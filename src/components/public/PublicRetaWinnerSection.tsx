@@ -27,43 +27,56 @@ export const PublicRetaWinnerSection: React.FC<{
   fraseMotivacional = DEFAULT_MOTIVATIONAL,
   stats,
   winners,
-}) => (
-  <section
-    className="te-public-section ro-pub-celebrate te-pub-fade-in"
-    aria-label="Ganadores Riviera Open"
-  >
-    <div className="ro-pub-celebrate__inner">
-      <PublicRivieraCelebrateBrand />
-      <div className="ro-divider-gold" aria-hidden />
-      <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
-      <p className="ro-pub-celebrate__riviera-line">Riviera Open</p>
-      {winners && winners.length > 0 ? (
-        <div className="ro-pub-celebrate__avatars" aria-hidden>
-          {winners.map((w) => (
-            <JugadorAvatar
-              key={w.name}
-              fotoUrl={w.fotoUrl}
-              nombre={w.name}
-              size="lg"
-              className="ro-pub-celebrate__avatar"
-            />
-          ))}
-        </div>
-      ) : null}
-      <p className="ro-pub-celebrate__names">{title}</p>
-      <p className="ro-pub-celebrate__motivational">{fraseMotivacional}</p>
-      {subtitle ? <p className="ro-pub-celebrate__rank">{subtitle}</p> : null}
-      <PublicRivieraCelebrateClosing torneoNombre={torneoNombre} />
-      {stats && stats.length > 0 ? (
-        <div className="ro-pub-celebrate__stats" role="list">
-          {stats.map((s) => (
-            <div key={s.label} className="ro-pub-celebrate__stat" role="listitem">
-              <span className="ro-pub-celebrate__stat-value">{s.value}</span>
-              <span className="ro-pub-celebrate__stat-label">{s.label}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  </section>
-);
+}) => {
+  const hasWinners = Boolean(winners && winners.length > 0);
+
+  return (
+    <section
+      className="te-public-section ro-pub-celebrate ro-pub-celebrate--winners te-pub-fade-in"
+      aria-label="Ganadores Riviera Open"
+    >
+      <div className="ro-pub-celebrate__glow" aria-hidden />
+      <div className="ro-pub-celebrate__inner">
+        <PublicRivieraCelebrateBrand showTagline={false} />
+
+        <p className="ro-pub-celebrate__badge">Ganadores</p>
+        <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
+
+        {hasWinners ? (
+          <div className="ro-pub-celebrate__heroes" aria-hidden>
+            {winners!.map((w) => (
+              <div key={w.name} className="ro-pub-celebrate__hero">
+                <div className="ro-pub-celebrate__hero-ring">
+                  <JugadorAvatar
+                    fotoUrl={w.fotoUrl}
+                    nombre={w.name}
+                    size="xl"
+                    className="ro-pub-celebrate__hero-avatar"
+                  />
+                </div>
+                <span className="ro-pub-celebrate__hero-name">{w.name}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <p className="ro-pub-celebrate__names">
+          {hasWinners ? title.replace(/\s*\/\s*/g, " · ") : title}
+        </p>
+        <p className="ro-pub-celebrate__motivational">{fraseMotivacional}</p>
+        {subtitle ? <p className="ro-pub-celebrate__rank">{subtitle}</p> : null}
+        <PublicRivieraCelebrateClosing torneoNombre={torneoNombre} />
+        {stats && stats.length > 0 ? (
+          <div className="ro-pub-celebrate__stats" role="list">
+            {stats.map((s) => (
+              <div key={s.label} className="ro-pub-celebrate__stat" role="listitem">
+                <span className="ro-pub-celebrate__stat-value">{s.value}</span>
+                <span className="ro-pub-celebrate__stat-label">{s.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+};
