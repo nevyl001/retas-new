@@ -3,11 +3,11 @@ import React from "react";
 interface JugadorAvatarProps {
   fotoUrl?: string | null;
   nombre: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
 
-const SIZE_PX = { sm: 40, md: 48, lg: 64 } as const;
+const SIZE_PX = { sm: 40, md: 48, lg: 64, xl: 96 } as const;
 
 export const JugadorAvatar: React.FC<JugadorAvatarProps> = ({
   fotoUrl,

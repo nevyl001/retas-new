@@ -325,6 +325,12 @@
   font-size: 1.25rem;
 }
 
+.rj-avatar--xl {
+  width: 96px;
+  height: 96px;
+  font-size: 1.75rem;
+}
+
 .rj-nivel-badge {
   display: inline-block;
   padding: 0.2rem 0.5rem;
