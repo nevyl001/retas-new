@@ -5,7 +5,6 @@ import {
   JUGADOR_CATEGORIA_SHORT_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
-import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
 import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { navigateAppTo } from "../../lib/appRouting";
 import {
@@ -26,6 +25,7 @@ import {
   buildRankingComoFuncionaPath,
   navigatePublicJugadorFicha,
 } from "./jugadoresPublicNav";
+import { RankingPodio } from "./RankingPodio";
 import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
 import "./riviera-jugadores-public-ranking.css";
 
@@ -44,6 +44,9 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [teaserOpen, setTeaserOpen] = React.useState(false);
+
+  const jugadoresFiltrados = jugadores;
 
   useEffect(() => {
     try {
@@ -96,14 +99,11 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     void load();
   }, [load]);
 
-  const rankingPositions = React.useMemo(
-    () => rankingPosicionesFromSorted(jugadores),
-    [jugadores]
-  );
-
   const metaLine = loading
     ? "Cargando ranking…"
-    : `${jugadores.length} jugador${jugadores.length === 1 ? "" : "es"} · ${JUGADOR_CATEGORIA_LABELS[categoria]}`;
+    : `${jugadoresFiltrados.length} jugador${jugadoresFiltrados.length === 1 ? "" : "es"} · ${JUGADOR_CATEGORIA_LABELS[categoria]}`;
+
+  const listWide = jugadoresFiltrados.length > 8;
 
   return (
     <JugadoresPublicShell variant="ranking">
@@ -121,7 +121,31 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
           </a>
         </header>
 
-        <RankingPuntosTeaser />
+        <button
+          type="button"
+          className="rjp-ranking-teaser-toggle"
+          onClick={() => setTeaserOpen((v) => !v)}
+          aria-expanded={teaserOpen}
+        >
+          <span className="rjp-ranking-teaser-toggle__pills">
+            Liga <strong>600</strong> · Torneo <strong>600</strong> · Americano{" "}
+            <strong>140</strong> · Reta <strong>100</strong>
+          </span>
+          <span
+            className="rjp-ranking-teaser-toggle__chevron"
+            data-open={teaserOpen}
+            aria-hidden
+          >
+            ›
+          </span>
+        </button>
+        <div
+          className={`rjp-ranking-teaser-body${
+            teaserOpen ? " rjp-ranking-teaser-body--open" : ""
+          }`}
+        >
+          <RankingPuntosTeaser />
+        </div>
 
         <section className="rjp-ranking-panel" aria-label="Ranking por categoría">
           <div className="rjp-ranking-panel__picker">
@@ -162,68 +186,70 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
             <p className="rjp-ranking-panel__meta">{metaLine}</p>
 
             {error && <p className="rjp-ranking-empty">{error}</p>}
-            {!error && !loading && jugadores.length === 0 && (
+            {!error && !loading && jugadoresFiltrados.length === 0 && (
               <p className="rjp-ranking-empty">
                 Aún no hay jugadores en esta categoría. Si cambiaste la categoría
                 de alguien, búscalo en la pestaña de su nueva categoría.
               </p>
             )}
 
-            {!error && jugadores.length > 0 && (
-              <ul className="rjp-ranking-list">
-                {jugadores.map((j, idx) => {
-                  const pos = rankingPositions[idx] ?? idx + 1;
-                  const esPrimero = pos === 1;
-                  return (
-                  <li key={j.id}>
-                    <button
-                      type="button"
-                      className={`rjp-ranking-card${
-                        esPrimero ? " rjp-ranking-card--first" : ""
-                      }`}
-                      onClick={() =>
-                        navigatePublicJugadorFicha(j.slug, orgId ?? undefined)
-                      }
-                    >
-                      <span
-                        className={`rjp-ranking-card__rank${
-                          esPrimero ? " rjp-ranking-card__rank--gold" : ""
-                        }`}
-                      >
-                        {esPrimero ? (
-                          <TablerIcon name="trophy" size={14} />
-                        ) : (
-                          `#${pos}`
-                        )}
-                      </span>
-                      <JugadorAvatar
-                        fotoUrl={j.foto_url}
-                        nombre={j.nombre}
-                        size="md"
-                      />
-                      <div className="rjp-ranking-card__body">
-                        <div className="rjp-ranking-card__name-row">
-                          <JugadorPaisBadge
-                            codigo={j.pais_codigo}
-                            size="sm"
+            {!error && jugadoresFiltrados.length > 0 && (
+              <>
+                <RankingPodio
+                  jugadores={jugadoresFiltrados.slice(0, 3)}
+                  onSelect={(slug) =>
+                    navigatePublicJugadorFicha(slug, orgId ?? undefined)
+                  }
+                />
+
+                <ul
+                  className={`rjp-ranking-list${
+                    listWide ? " rjp-ranking-list--wide" : ""
+                  }${loading ? " is-loading" : ""}`}
+                >
+                  {jugadoresFiltrados.slice(3).map((j, idx) => {
+                    const pos = idx + 4;
+                    return (
+                      <li key={j.id}>
+                        <button
+                          type="button"
+                          className="rjp-ranking-card"
+                          onClick={() =>
+                            navigatePublicJugadorFicha(j.slug, orgId ?? undefined)
+                          }
+                        >
+                          <span className="rjp-ranking-card__rank">#{pos}</span>
+                          <JugadorAvatar
+                            fotoUrl={j.foto_url}
+                            nombre={j.nombre}
+                            size="md"
+                            className="rjp-ranking-card__avatar"
                           />
-                          <span className="rjp-ranking-card__name">{j.nombre}</span>
-                        </div>
-                        <span className="rjp-ranking-card__pts">
-                          {(j.stats?.puntos_totales ?? 0).toLocaleString("es-MX")}{" "}
-                          pts
-                        </span>
-                      </div>
-                      <TablerIcon
-                        name="chevron-right"
-                        size={18}
-                        className="rjp-ranking-card__chev"
-                      />
-                    </button>
-                  </li>
-                  );
-                })}
-              </ul>
+                          <div className="rjp-ranking-card__body">
+                            <span className="rjp-ranking-card__name">
+                              {j.nombre}
+                            </span>
+                            <span className="rjp-ranking-card__meta">
+                              <JugadorPaisBadge codigo={j.pais_codigo} size="sm" />
+                              <span className="rjp-ranking-card__pts">
+                                {(j.stats?.puntos_totales ?? 0).toLocaleString(
+                                  "es-MX"
+                                )}{" "}
+                                pts
+                              </span>
+                            </span>
+                          </div>
+                          <TablerIcon
+                            name="chevron-right"
+                            size={18}
+                            className="rjp-ranking-card__chev"
+                          />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
             )}
           </div>
         </section>
