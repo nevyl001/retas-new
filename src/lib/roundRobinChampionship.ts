@@ -719,16 +719,14 @@ async function createChampionshipMatches(params: {
 
 async function backfillThirdPlaceMatchIfMissing(params: {
   tournament: Tournament;
-  pairs: Pair[];
   userId: string;
   cfg: RoundRobinChampionshipConfig;
   regular: Match[];
   championship: Match[];
 }): Promise<Match[]> {
-  const { tournament, pairs, userId, cfg, regular, championship } = params;
+  const { tournament, userId, cfg, regular, championship } = params;
   if (cfg.championshipRounds < 2) return [];
 
-  const regularMax = resolveRegularRoundsMax(regular, cfg);
   const finalRoundNum = championshipRoundDbNumber(
     cfg.championshipRounds,
     regular,
@@ -812,7 +810,6 @@ export async function maybeGenerateChampionshipRound(params: {
 
   const backfilled = await backfillThirdPlaceMatchIfMissing({
     tournament,
-    pairs,
     userId,
     cfg,
     regular,
