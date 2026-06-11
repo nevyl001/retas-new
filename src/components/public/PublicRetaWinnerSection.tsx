@@ -13,6 +13,12 @@ export type PublicRetaWinnerAvatar = {
   fotoUrl?: string | null;
 };
 
+export type PublicRetaRunnerUp = {
+  place: 2 | 3;
+  title: string;
+  avatars: PublicRetaWinnerAvatar[];
+};
+
 export const PublicRetaWinnerSection: React.FC<{
   title: string;
   subtitle?: string;
@@ -20,6 +26,7 @@ export const PublicRetaWinnerSection: React.FC<{
   fraseMotivacional?: string;
   stats?: { value: string | number; label: string }[];
   winners?: PublicRetaWinnerAvatar[];
+  runnersUp?: PublicRetaRunnerUp[];
 }> = ({
   title,
   subtitle,
@@ -27,8 +34,10 @@ export const PublicRetaWinnerSection: React.FC<{
   fraseMotivacional = DEFAULT_MOTIVATIONAL,
   stats,
   winners,
+  runnersUp,
 }) => {
   const hasWinners = Boolean(winners && winners.length > 0);
+  const hasRunnersUp = Boolean(runnersUp && runnersUp.length > 0);
 
   return (
     <section
@@ -72,6 +81,43 @@ export const PublicRetaWinnerSection: React.FC<{
               <div key={s.label} className="ro-pub-celebrate__stat" role="listitem">
                 <span className="ro-pub-celebrate__stat-value">{s.value}</span>
                 <span className="ro-pub-celebrate__stat-label">{s.label}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {hasRunnersUp ? (
+          <div className="ro-pub-celebrate__podium-sub" aria-label="Subcampeones">
+            {runnersUp!.map((entry) => (
+              <div
+                key={entry.place}
+                className={`ro-pub-celebrate__podium-sub-item ro-pub-celebrate__podium-sub-item--${entry.place}`}
+              >
+                <p className="ro-pub-celebrate__podium-sub-rank">
+                  {entry.place === 2 ? "2.º lugar" : "3.er lugar"}
+                </p>
+                {entry.avatars.length > 0 ? (
+                  <div className="ro-pub-celebrate__heroes ro-pub-celebrate__heroes--sub">
+                    {entry.avatars.map((w) => (
+                      <div key={w.name} className="ro-pub-celebrate__hero ro-pub-celebrate__hero--sub">
+                        <div className="ro-pub-celebrate__hero-ring ro-pub-celebrate__hero-ring--sub">
+                          <JugadorAvatar
+                            fotoUrl={w.fotoUrl}
+                            nombre={w.name}
+                            size="lg"
+                            className="ro-pub-celebrate__hero-avatar ro-pub-celebrate__hero-avatar--sub"
+                          />
+                        </div>
+                        <span className="ro-pub-celebrate__hero-name ro-pub-celebrate__hero-name--sub">
+                          {w.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                <p className="ro-pub-celebrate__names ro-pub-celebrate__names--sub">
+                  {entry.title.replace(/\s*\/\s*/g, " · ")}
+                </p>
               </div>
             ))}
           </div>

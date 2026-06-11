@@ -8,6 +8,7 @@ import {
 import { assignCourtsInChunk } from "./circleRoundRobinSchedule";
 import {
   computePairsWithStats,
+  getMatchScoresForStandings,
   sortPairsForStandings,
 } from "./standingsUtils";
 
@@ -425,6 +426,133 @@ export function isRoundRobinChampionshipActive(
   return Boolean(cfg?.championshipEnabled);
 }
 
+export function championshipRoundLabel(
+  roundIndex: number,
+  totalRounds: number
+): string {
+  if (totalRounds >= 2 && roundIndex === 1) return "SEMIFINAL";
+  if (totalRounds >= 2 && roundIndex === totalRounds) return "FINAL";
+  return `REMONTADA RONDA ${roundIndex}`;
+}
+
+export function championshipMatchEncounterLabel(
+  match: Match,
+  roundIndex: number,
+  totalRounds: number,
+  semiMatches: Match[] = [],
+  allGames: Game[] = []
+): string {
+  if (totalRounds >= 2 && roundIndex === totalRounds && semiMatches.length >= 2) {
+    if (isChampionshipFinalMatch(match, semiMatches, allGames)) return "Final";
+    if (isChampionshipThirdPlaceMatch(match, semiMatches, allGames)) {
+      return "3er lugar";
+    }
+  }
+  const orderedSemi = [...semiMatches].sort(
+    (a, b) => (a.court ?? 1) - (b.court ?? 1)
+  );
+  const semiIdx = orderedSemi.findIndex((m) => m.id === match.id);
+  if (semiIdx >= 0) return `Encuentro ${semiIdx + 1}`;
+  return "Encuentro";
+}
+
+function getSemifinalWinnerAndLoserIds(
+  semiMatches: Match[],
+  allGames: Game[] = []
+): { winners: Set<string>; losers: Set<string> } {
+  const winners = new Set<string>();
+  const losers = new Set<string>();
+  for (const m of semiMatches) {
+    const winnerId = getFinishedMatchWinnerPairId(m, allGames);
+    const loserId = getFinishedMatchLoserPairId(m, allGames);
+    if (winnerId) winners.add(winnerId);
+    if (loserId) losers.add(loserId);
+  }
+  return { winners, losers };
+}
+
+export function isChampionshipFinalMatch(
+  match: Match,
+  semiMatches: Match[],
+  allGames: Game[] = []
+): boolean {
+  if (semiMatches.length < 2) return false;
+  const { winners } = getSemifinalWinnerAndLoserIds(semiMatches, allGames);
+  return (
+    winners.size >= 2 &&
+    winners.has(match.pair1_id) &&
+    winners.has(match.pair2_id)
+  );
+}
+
+export function isChampionshipThirdPlaceMatch(
+  match: Match,
+  semiMatches: Match[],
+  allGames: Game[] = []
+): boolean {
+  if (semiMatches.length < 2) return false;
+  const { losers } = getSemifinalWinnerAndLoserIds(semiMatches, allGames);
+  return (
+    losers.size >= 2 &&
+    losers.has(match.pair1_id) &&
+    losers.has(match.pair2_id)
+  );
+}
+
+export function sortChampionshipRoundMatches(
+  roundMatches: Match[],
+  roundIndex: number,
+  totalRounds: number,
+  semiMatches: Match[] = [],
+  allGames: Game[] = []
+): Match[] {
+  const byCourt = [...roundMatches].sort(
+    (a, b) => (a.court ?? 1) - (b.court ?? 1)
+  );
+  if (
+    totalRounds >= 2 &&
+    roundIndex === totalRounds &&
+    roundMatches.length >= 2 &&
+    semiMatches.length >= 2
+  ) {
+    return [...roundMatches].sort((a, b) => {
+      const aFinal = isChampionshipFinalMatch(a, semiMatches, allGames);
+      const bFinal = isChampionshipFinalMatch(b, semiMatches, allGames);
+      if (aFinal && !bFinal) return -1;
+      if (!aFinal && bFinal) return 1;
+      return (a.court ?? 1) - (b.court ?? 1);
+    });
+  }
+  return byCourt;
+}
+
+function findChampionshipFinalMatch(
+  lastRoundMatches: Match[],
+  byRound: Record<number, Match[]>,
+  lastIdx: number,
+  allGames: Game[]
+): Match | null {
+  if (lastRoundMatches.length === 0) return null;
+  if (lastRoundMatches.length === 1) return lastRoundMatches[0];
+
+  const semiMatches = byRound[lastIdx - 1] ?? [];
+  if (semiMatches.length >= 2) {
+    const semiWinners = new Set(
+      semiMatches
+        .map((m) => getFinishedMatchWinnerPairId(m, allGames))
+        .filter((id): id is string => Boolean(id))
+    );
+    const finalMatch = lastRoundMatches.find(
+      (m) => semiWinners.has(m.pair1_id) && semiWinners.has(m.pair2_id)
+    );
+    if (finalMatch) return finalMatch;
+  }
+
+  return [...lastRoundMatches].sort(
+    (a, b) => (a.court ?? 1) - (b.court ?? 1)
+  )[0];
+}
+
 export function isRoundRobinTournamentComplete(
   matches: Match[],
   tournament: Tournament | null | undefined,
@@ -451,17 +579,79 @@ export function isRoundRobinTournamentComplete(
   return areAllMatchesFinished(championship);
 }
 
+export function buildChampionshipSemifinalMatchups(
+  rankedPairIds: string[]
+): Array<[string, string]> {
+  if (rankedPairIds.length >= 4) {
+    return [
+      [rankedPairIds[0], rankedPairIds[3]],
+      [rankedPairIds[1], rankedPairIds[2]],
+    ];
+  }
+  if (rankedPairIds.length >= 2) {
+    return [[rankedPairIds[0], rankedPairIds[1]]];
+  }
+  return [];
+}
+
+function getFinishedMatchWinnerPairId(
+  match: Match,
+  allGames: Game[]
+): string | null {
+  if (match.status !== "finished") return null;
+  const matchGames = allGames.filter((g) => g.match_id === match.id);
+  const { score1, score2 } = getMatchScoresForStandings(match, matchGames);
+  if (score1 > score2) return match.pair1_id;
+  if (score2 > score1) return match.pair2_id;
+  return null;
+}
+
+function getFinishedMatchLoserPairId(
+  match: Match,
+  allGames: Game[]
+): string | null {
+  const winnerId = getFinishedMatchWinnerPairId(match, allGames);
+  if (!winnerId) return null;
+  return winnerId === match.pair1_id ? match.pair2_id : match.pair1_id;
+}
+
+export function buildChampionshipFinalMatchups(
+  lastRoundMatches: Match[],
+  allGames: Game[]
+): Array<[string, string]> {
+  const winners: string[] = [];
+  const losers: string[] = [];
+  for (const m of lastRoundMatches) {
+    const winnerId = getFinishedMatchWinnerPairId(m, allGames);
+    const loserId = getFinishedMatchLoserPairId(m, allGames);
+    if (winnerId) winners.push(winnerId);
+    if (loserId) losers.push(loserId);
+  }
+  if (winners.length < 2) return [];
+  const matchups: Array<[string, string]> = [[winners[0], winners[1]]];
+  if (losers.length >= 2) {
+    matchups.push([losers[0], losers[1]]);
+  }
+  return matchups;
+}
+
+export function buildChampionshipMatchupsForRound(
+  roundIndex: number,
+  rankedPairIds: string[],
+  lastRoundMatches: Match[],
+  allGames: Game[]
+): Array<[string, string]> {
+  if (roundIndex <= 1) {
+    return buildChampionshipSemifinalMatchups(rankedPairIds);
+  }
+  return buildChampionshipFinalMatchups(lastRoundMatches, allGames);
+}
+
+/** @deprecated Use buildChampionshipSemifinalMatchups / buildChampionshipMatchupsForRound. */
 export function buildChampionshipMatchups(
   rankedPairIds: string[]
 ): Array<[string, string]> {
-  const matchups: Array<[string, string]> = [];
-  if (rankedPairIds.length >= 2) {
-    matchups.push([rankedPairIds[0], rankedPairIds[1]]);
-  }
-  if (rankedPairIds.length >= 4) {
-    matchups.push([rankedPairIds[2], rankedPairIds[3]]);
-  }
-  return matchups;
+  return buildChampionshipSemifinalMatchups(rankedPairIds);
 }
 
 async function loadAllGames(matches: Match[]): Promise<Game[]> {
@@ -475,6 +665,119 @@ async function loadAllGames(matches: Match[]): Promise<Game[]> {
     }
   }
   return all;
+}
+
+async function createChampionshipMatches(params: {
+  tournament: Tournament;
+  matchups: Array<[string, string]>;
+  roundNum: number;
+  roundIndex: number;
+  pairs: Pair[];
+  userId: string;
+  rankedTopPairId?: string;
+}): Promise<Match[]> {
+  const { tournament, matchups, roundNum, roundIndex, pairs, userId, rankedTopPairId } =
+    params;
+  const courts = Math.max(1, tournament.courts || 1);
+  const pairById = new Map(pairs.map((p) => [p.id, p]));
+  const chunk = matchups
+    .map(([p1, p2]) => ({
+      pair1: pairById.get(p1)!,
+      pair2: pairById.get(p2)!,
+    }))
+    .filter((m) => m.pair1 && m.pair2);
+  const courtsForChunk = assignCourtsInChunk(
+    chunk,
+    roundIndex,
+    courts,
+    rankedTopPairId
+  );
+
+  const created: Match[] = [];
+  const isFinalRoundWithThirdPlace =
+    matchups.length === 2 && roundIndex >= 2;
+  for (let i = 0; i < matchups.length; i += 1) {
+    const [p1, p2] = matchups[i];
+    let court = courtsForChunk[i] ?? (i % courts) + 1;
+    if (isFinalRoundWithThirdPlace) {
+      court = i === 0 ? 1 : Math.min(2, courts);
+    }
+    const row = await createMatch(
+      tournament.id,
+      p1,
+      p2,
+      court,
+      roundNum,
+      userId,
+      "championship"
+    );
+    persistMatchType(row.id, "championship");
+    created.push(row as Match);
+  }
+  return created;
+}
+
+async function backfillThirdPlaceMatchIfMissing(params: {
+  tournament: Tournament;
+  pairs: Pair[];
+  userId: string;
+  cfg: RoundRobinChampionshipConfig;
+  regular: Match[];
+  championship: Match[];
+}): Promise<Match[]> {
+  const { tournament, pairs, userId, cfg, regular, championship } = params;
+  if (cfg.championshipRounds < 2) return [];
+
+  const regularMax = resolveRegularRoundsMax(regular, cfg);
+  const finalRoundNum = championshipRoundDbNumber(
+    cfg.championshipRounds,
+    regular,
+    cfg
+  );
+  const semiRoundNum = championshipRoundDbNumber(1, regular, cfg);
+  const finalRoundMatches = championship.filter(
+    (m) => (m.round ?? 0) === finalRoundNum
+  );
+  const semiMatches = championship.filter(
+    (m) => (m.round ?? 0) === semiRoundNum
+  );
+
+  if (finalRoundMatches.length !== 1 || semiMatches.length < 2) return [];
+  if (!areAllMatchesFinished(semiMatches)) return [];
+
+  const allGames = await loadAllGames([...regular, ...championship]);
+  const losers = semiMatches
+    .map((m) => getFinishedMatchLoserPairId(m, allGames))
+    .filter((id): id is string => Boolean(id));
+  if (losers.length < 2) return [];
+
+  const finalMatch = finalRoundMatches[0];
+  const existingPairIds = new Set([finalMatch.pair1_id, finalMatch.pair2_id]);
+  if (existingPairIds.has(losers[0]) || existingPairIds.has(losers[1])) {
+    return [];
+  }
+
+  const courts = Math.max(1, tournament.courts || 1);
+  const finalCourt = finalMatch.court ?? 1;
+  const court =
+    finalCourt === 1 ? Math.min(2, courts) : Math.min(1, courts);
+
+  const row = await createMatch(
+    tournament.id,
+    losers[0],
+    losers[1],
+    court,
+    finalRoundNum,
+    userId,
+    "championship"
+  );
+  persistMatchType(row.id, "championship");
+
+  console.log(
+    `[remontada-final] Partido de 3er lugar generado (round DB ${finalRoundNum}).`
+  );
+
+  return [row as Match];
 }
 
 export async function maybeGenerateChampionshipRound(params: {
@@ -507,6 +810,16 @@ export async function maybeGenerateChampionshipRound(params: {
     championship
   );
 
+  const backfilled = await backfillThirdPlaceMatchIfMissing({
+    tournament,
+    pairs,
+    userId,
+    cfg,
+    regular,
+    championship,
+  });
+  if (backfilled.length > 0) return backfilled;
+
   if (cfg.championshipRoundsGenerated >= cfg.championshipRounds) {
     return [];
   }
@@ -536,43 +849,33 @@ export async function maybeGenerateChampionshipRound(params: {
   const allGames = await loadAllGames(matches);
   const withStats = computePairsWithStats(pairs, matches, allGames);
   const ranked = sortPairsForStandings(withStats, matches, allGames);
-  const matchups = buildChampionshipMatchups(ranked.map((p) => p.id));
+  const nextIndex = cfg.championshipRoundsGenerated + 1;
+  const lastRoundNum =
+    cfg.championshipRoundsGenerated > 0
+      ? championshipRoundDbNumber(cfg.championshipRoundsGenerated, regular, cfg)
+      : null;
+  const lastRoundMatches =
+    lastRoundNum != null
+      ? championship.filter((m) => (m.round ?? 0) === lastRoundNum)
+      : [];
+  const matchups = buildChampionshipMatchupsForRound(
+    nextIndex,
+    ranked.map((p) => p.id),
+    lastRoundMatches,
+    allGames
+  );
   if (!matchups.length) return [];
 
-  const nextIndex = cfg.championshipRoundsGenerated + 1;
   const roundNum = championshipRoundDbNumber(nextIndex, regular, cfg);
-  const courts = Math.max(1, tournament.courts || 1);
-  const created: Match[] = [];
-
-  const pairById = new Map(pairs.map((p) => [p.id, p]));
-  const chunk = matchups
-    .map(([p1, p2]) => ({
-      pair1: pairById.get(p1)!,
-      pair2: pairById.get(p2)!,
-    }))
-    .filter((m) => m.pair1 && m.pair2);
-  const courtsForChunk = assignCourtsInChunk(
-    chunk,
-    nextIndex,
-    courts,
-    ranked[0]?.id
-  );
-
-  for (let i = 0; i < matchups.length; i += 1) {
-    const [p1, p2] = matchups[i];
-    const court = courtsForChunk[i] ?? (i % courts) + 1;
-    const row = await createMatch(
-      tournament.id,
-      p1,
-      p2,
-      court,
-      roundNum,
-      userId,
-      "championship"
-    );
-    persistMatchType(row.id, "championship");
-    created.push(row as Match);
-  }
+  const created = await createChampionshipMatches({
+    tournament,
+    matchups,
+    roundNum,
+    roundIndex: nextIndex,
+    pairs,
+    userId,
+    rankedTopPairId: ranked[0]?.id,
+  });
 
   saveChampionshipConfig(tournament.id, {
     ...cfg,
@@ -603,12 +906,115 @@ export function groupChampionshipByRound(
   return acc;
 }
 
+export interface ChampionshipPodium {
+  first: Pair | null;
+  second: Pair | null;
+  third: Pair | null;
+}
+
+export async function resolveChampionshipPodium(
+  pairs: Pair[],
+  matches: Match[],
+  configOverride?: RoundRobinChampionshipConfig | null,
+  gamesOverride?: Game[]
+): Promise<ChampionshipPodium | null> {
+  if (!pairs.length || !matches.length) return null;
+
+  const tournamentId = matches[0]?.tournament_id;
+  const cfg =
+    configOverride !== undefined
+      ? configOverride
+      : tournamentId
+        ? loadChampionshipConfig(tournamentId)
+        : null;
+  if (!cfg?.championshipEnabled) return null;
+
+  const allGames = gamesOverride ?? (await loadAllGames(matches));
+  const { regular, championship } = partitionMatches(
+    matches,
+    tournamentId,
+    cfg
+  );
+  if (!championship.length) return null;
+
+  const regularMax = resolveRegularRoundsMax(regular, cfg);
+  const byRound = groupChampionshipByRound(championship, regularMax);
+  const lastIdx = Math.max(
+    ...Object.keys(byRound)
+      .map((k) => Number(k))
+      .filter((n) => !Number.isNaN(n)),
+    0
+  );
+  const lastRoundMatches = byRound[lastIdx] ?? [];
+  const semiMatches = byRound[lastIdx - 1] ?? [];
+  if (!lastRoundMatches.length) return null;
+
+  const finalMatch = findChampionshipFinalMatch(
+    lastRoundMatches,
+    byRound,
+    lastIdx,
+    allGames
+  );
+  const thirdMatch =
+    lastRoundMatches.find((m) =>
+      isChampionshipThirdPlaceMatch(m, semiMatches, allGames)
+    ) ??
+    (finalMatch
+      ? lastRoundMatches.find((m) => m.id !== finalMatch.id) ?? null
+      : null);
+
+  const pairById = (id: string | null | undefined): Pair | null =>
+    id ? pairs.find((p) => p.id === id) ?? null : null;
+
+  let first: Pair | null = null;
+  let second: Pair | null = null;
+  let third: Pair | null = null;
+
+  if (finalMatch?.status === "finished") {
+    first = pairById(getFinishedMatchWinnerPairId(finalMatch, allGames));
+    second = pairById(getFinishedMatchLoserPairId(finalMatch, allGames));
+  }
+
+  if (thirdMatch?.status === "finished") {
+    third = pairById(getFinishedMatchWinnerPairId(thirdMatch, allGames));
+  }
+
+  if (!first && !second && !third) return null;
+  return { first, second, third };
+}
+
 export async function resolveChampionPair(
   pairs: Pair[],
   matches: Match[]
 ): Promise<Pair | null> {
   if (!pairs.length || !matches.length) return null;
   const allGames = await loadAllGames(matches);
+  const tournamentId = matches[0]?.tournament_id;
+  const cfg = tournamentId ? loadChampionshipConfig(tournamentId) : null;
+  const { regular, championship } = partitionMatches(matches, tournamentId, cfg);
+
+  if (cfg?.championshipEnabled && championship.length > 0) {
+    const regularMax = resolveRegularRoundsMax(regular, cfg);
+    const byRound = groupChampionshipByRound(championship, regularMax);
+    const lastIdx = Math.max(
+      ...Object.keys(byRound).map((k) => Number(k)).filter((n) => !Number.isNaN(n)),
+      0
+    );
+    const lastRoundMatches = byRound[lastIdx] ?? [];
+    const finalMatch = findChampionshipFinalMatch(
+      lastRoundMatches,
+      byRound,
+      lastIdx,
+      allGames
+    );
+    if (finalMatch) {
+      const winnerId = getFinishedMatchWinnerPairId(finalMatch, allGames);
+      if (winnerId) {
+        return pairs.find((p) => p.id === winnerId) ?? null;
+      }
+    }
+  }
+
   const withStats = computePairsWithStats(pairs, matches, allGames);
   const ranked = sortPairsForStandings(withStats, matches, allGames);
   return ranked[0] ?? null;

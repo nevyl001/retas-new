@@ -13,6 +13,9 @@ import {
   resolveChampionPair,
   syncChampionshipConfigFromPublic,
   syncChampionshipConfigPublic,
+  championshipRoundLabel,
+  championshipMatchEncounterLabel,
+  sortChampionshipRoundMatches,
 } from "../lib/roundRobinChampionship";
 
 const TEAM_CONFIG_KEY = "rivieraapp_teams_";
@@ -54,6 +57,7 @@ function renderRoundBlock(
     setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
     userId?: string;
     roundTitle?: React.ReactNode;
+    matchEncounterLabel?: (match: Match) => string | undefined;
     onReloadMatches?: () => void | Promise<void>;
     onAfterScoreSaved?: () => void | Promise<void>;
   }
@@ -65,6 +69,7 @@ function renderRoundBlock(
     setForceRefresh,
     userId,
     roundTitle,
+    matchEncounterLabel,
     onReloadMatches,
     onAfterScoreSaved,
   } = opts;
@@ -88,11 +93,16 @@ function renderRoundBlock(
       <div className="matches-grid-simplified">
         {[...roundMatches]
           .sort((a, b) => (a.court ?? 1) - (b.court ?? 1))
-          .map((match, matchIdx) => (
+          .map((match, matchIdx) => {
+          const encounterLabel = matchEncounterLabel?.(match);
+          return (
           <div
             key={match.id}
             style={{ "--i": matchIdx } as React.CSSProperties}
           >
+            {encounterLabel ? (
+              <p className="rr-championship__match-label">{encounterLabel}</p>
+            ) : null}
             <MatchCardWithResults
               match={match}
               pairs={pairs}
@@ -108,7 +118,8 @@ function renderRoundBlock(
               userId={userId}
             />
           </div>
-        ))}
+          );
+        })}
       </div>
       <RestingPairsSection
         pairs={pairs}
@@ -301,18 +312,33 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                 .map((roundKey) => {
                   const idx = Number(roundKey);
                   const roundMatches = championshipByRound[idx];
+                  const totalRounds = champConfig?.championshipRounds ?? idx;
+                  const semiMatches = championshipByRound[idx - 1] ?? [];
+                  const sortedRoundMatches = sortChampionshipRoundMatches(
+                    roundMatches,
+                    idx,
+                    totalRounds,
+                    semiMatches
+                  );
                   return renderRoundBlock(
                     String(idx),
-                    roundMatches,
+                    sortedRoundMatches,
                     {
                       ...roundBlockOpts,
                       roundTitle: (
                         <h4 className="round-header-simplified__title rr-championship__round-title">
                           <span className="rr-championship__round-label">
-                            REMONTADA RONDA {idx}
+                            {championshipRoundLabel(idx, totalRounds)}
                           </span>
                         </h4>
                       ),
+                      matchEncounterLabel: (match) =>
+                        championshipMatchEncounterLabel(
+                          match,
+                          idx,
+                          totalRounds,
+                          semiMatches
+                        ),
                     }
                   );
                 })}

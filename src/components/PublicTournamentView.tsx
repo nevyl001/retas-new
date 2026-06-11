@@ -34,6 +34,7 @@ import {
 import { PublicRetaRestingPairsSection } from "./public/PublicRetaRestingPairsSection";
 import {
   PublicRetaWinnerSection,
+  type PublicRetaRunnerUp,
   type PublicRetaWinnerAvatar,
 } from "./public/PublicRetaWinnerSection";
 import {
@@ -41,12 +42,17 @@ import {
   type PlayerAvatarLookupEntry,
 } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import {
+  championshipMatchEncounterLabel,
+  championshipRoundLabel,
   enrichChampionshipConfigForPartition,
   groupChampionshipByRound,
   isRoundRobinTournamentComplete,
   loadChampionshipConfig,
   parseChampionshipConfig,
   partitionMatches,
+  resolveChampionshipPodium,
+  sortChampionshipRoundMatches,
+  type ChampionshipPodium,
   type RoundRobinChampionshipConfig,
 } from "../lib/roundRobinChampionship";
 import "./public/riviera-public-americano.css";
@@ -97,6 +103,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
     []
   );
+  const [championshipPodium, setChampionshipPodium] =
+    useState<ChampionshipPodium | null>(null);
+  const [podiumAvatars, setPodiumAvatars] = useState<{
+    second: PublicRetaWinnerAvatar[];
+    third: PublicRetaWinnerAvatar[];
+  }>({ second: [], third: [] });
   const [playerAvatars, setPlayerAvatars] = useState<
     Record<string, string | null>
   >({});
@@ -182,21 +194,32 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         setShowWinner(false);
         setWinningTeamName(null);
         setTournamentWinner(null);
+        setChampionshipPodium(null);
       } else {
         if (resolvedTeamConfig) {
           const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
           const standings = computeTeamStandings(pairsWithStats, resolvedTeamConfig);
           setWinningTeamName(standings?.[0]?.name ?? null);
           setTournamentWinner(null);
+          setChampionshipPodium(null);
           setShowWinner(true);
         } else {
           setWinningTeamName(null);
           try {
-            const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
-              pairsData,
-              matchesData
-            );
+            const [winner, podium] = await Promise.all([
+              TournamentWinnerCalculator.calculateTournamentWinner(
+                pairsData,
+                matchesData
+              ),
+              resolveChampionshipPodium(
+                pairsData,
+                matchesData,
+                champCfg,
+                gamesData || []
+              ),
+            ]);
             setTournamentWinner(winner);
+            setChampionshipPodium(podium);
             setShowWinner(true);
           } catch (err) {
             console.error("Error calculating winner:", err);
@@ -500,6 +523,69 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     };
   }, [showWinner, organizadorId, winnerAvatarEntries]);
 
+  const podiumAvatarEntries = useMemo(() => {
+    const toEntries = (pair: Pair | null | undefined): PlayerAvatarLookupEntry[] =>
+      pair
+        ? [
+            { id: pair.player1_id, name: pair.player1_name },
+            { id: pair.player2_id, name: pair.player2_name },
+          ]
+        : [];
+    return {
+      second: toEntries(championshipPodium?.second),
+      third: toEntries(championshipPodium?.third),
+    };
+  }, [championshipPodium]);
+
+  useEffect(() => {
+    const allEntries = [
+      ...podiumAvatarEntries.second,
+      ...podiumAvatarEntries.third,
+    ];
+    if (!showWinner || !organizadorId || allEntries.length === 0) {
+      setPodiumAvatars({ second: [], third: [] });
+      return;
+    }
+    let cancelled = false;
+    void resolvePlayerAvatars(organizadorId, allEntries, {
+      publicOnly: true,
+    }).then((map) => {
+      if (cancelled) return;
+      const toAvatars = (entries: PlayerAvatarLookupEntry[]) =>
+        entries.map((e) => ({
+          name: e.name,
+          fotoUrl: map[e.id] ?? null,
+        }));
+      setPodiumAvatars({
+        second: toAvatars(podiumAvatarEntries.second),
+        third: toAvatars(podiumAvatarEntries.third),
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [showWinner, organizadorId, podiumAvatarEntries]);
+
+  const runnersUp = useMemo((): PublicRetaRunnerUp[] => {
+    if (!championshipPodium) return [];
+    const items: PublicRetaRunnerUp[] = [];
+    if (championshipPodium.second) {
+      items.push({
+        place: 2,
+        title: `${championshipPodium.second.player1_name} / ${championshipPodium.second.player2_name}`,
+        avatars: podiumAvatars.second,
+      });
+    }
+    if (championshipPodium.third) {
+      items.push({
+        place: 3,
+        title: `${championshipPodium.third.player1_name} / ${championshipPodium.third.player2_name}`,
+        avatars: podiumAvatars.third,
+      });
+    }
+    return items;
+  }, [championshipPodium, podiumAvatars]);
+
   const formatKicker = teamStandings?.length
     ? "Reta por equipos"
     : "Round Robin";
@@ -674,6 +760,17 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               .map((roundKey, roundIdx) => {
                 const idx = Number(roundKey);
                 const roundMatches = championshipByRound[idx];
+                const totalRounds =
+                  effectiveChampionshipConfig?.championshipRounds ??
+                  championshipConfig?.championshipRounds ??
+                  idx;
+                const semiMatches = championshipByRound[idx - 1] ?? [];
+                const sortedRoundMatches = sortChampionshipRoundMatches(
+                  roundMatches,
+                  idx,
+                  totalRounds,
+                  semiMatches
+                );
                 const roundInProgress = roundMatches.some(
                   (m) => m.status !== "finished"
                 );
@@ -686,7 +783,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                     <div className="te-public-round-head">
                       <h3 className="te-public-round-head__title rr-championship__round-title">
                         <span className="rr-championship__round-label">
-                          Ronda {idx}
+                          {championshipRoundLabel(idx, totalRounds)}
                         </span>
                         {roundInProgress ? (
                           <span className="te-public-round-head__live">
@@ -697,14 +794,17 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                       </h3>
                     </div>
                     <div className="te-pub-matches-grid te-pub-matches-grid--wide">
-                      {[...roundMatches]
-                        .sort((a, b) => (a.court ?? 1) - (b.court ?? 1))
-                        .map((match, matchIdx) =>
-                          renderPublicMatchCard(match, matchIdx, {
-                            remontadaRound: idx,
-                            encounterLabel: `Encuentro ${matchIdx + 1}`,
-                          })
-                        )}
+                      {sortedRoundMatches.map((match, matchIdx) =>
+                        renderPublicMatchCard(match, matchIdx, {
+                          remontadaRound: idx,
+                          encounterLabel: championshipMatchEncounterLabel(
+                            match,
+                            idx,
+                            totalRounds,
+                            semiMatches
+                          ),
+                        })
+                      )}
                     </div>
                   </div>
                 );
@@ -738,6 +838,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             title={`${tournamentWinner.pair.player1_name} / ${tournamentWinner.pair.player2_name}`}
             torneoNombre={publicTournamentName ?? undefined}
             winners={winnerAvatars}
+            runnersUp={runnersUp.length > 0 ? runnersUp : undefined}
             stats={[
               { value: tournamentWinner.totalSets, label: "Sets ganados" },
               { value: tournamentWinner.matchesPlayed, label: "Partidos jugados" },

@@ -165,8 +165,8 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
               <p className="home-sheet__optional-kicker">Opcional</p>
               <p className="home-sheet__optional-title">⚡ Remontada Final</p>
               <p className="home-sheet__optional-sub">
-                Solo si te sobra tiempo: #1 vs #2 y #3 vs #4 después del Round
-                Robin.
+                Tras el Round Robin: semifinal #1 vs #4 y #2 vs #3; final entre
+                ganadores y partido por 3er lugar entre perdedores.
               </p>
             </div>
             <button
