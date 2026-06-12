@@ -4,6 +4,7 @@ import { buildPublicBracketViewModel } from "../../../lib/torneoExpress/publicBr
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
+import { usePublicBracketPairPlayers } from "../../../hooks/usePublicBracketPairPlayers";
 import "./te-public-grupos.css";
 import "./torneo-express-public.css";
 import "./te-public-eliminatoria.css";
@@ -244,6 +245,11 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
     [bundle, labelMap]
   );
 
+  const pairPlayersById = usePublicBracketPairPlayers(
+    bundle.torneo.organizador_id,
+    model.allBracketCards
+  );
+
   const categoria = formatTorneoExpressCategoria(bundle.torneo.categoria);
 
   useEffect(() => {
@@ -310,6 +316,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           totalRondas={model.totalRondas}
           activeRonda={model.activeRonda}
           categoria={categoria}
+          pairPlayersById={pairPlayersById}
         />
       </section>
 

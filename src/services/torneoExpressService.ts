@@ -485,6 +485,35 @@ export async function fetchPairLabelsByIds(
   return map;
 }
 
+/** Parejas completas (con nombres) para vista pública del bracket. */
+export async function fetchPairsByIdsPublic(
+  pairIds: string[]
+): Promise<Pair[]> {
+  const unique = Array.from(new Set(pairIds.filter(Boolean)));
+  if (unique.length === 0) return [];
+
+  const { data, error } = await readClient
+    .from("pairs")
+    .select(PAIRS_SELECT)
+    .in("id", unique);
+  if (error) {
+    console.warn("[torneoExpress] fetchPairsByIdsPublic:", error.message);
+    return [];
+  }
+
+  const pairs = (data ?? []) as Pair[];
+  const names = await fetchPlayerNamesByIds(
+    pairs.flatMap((p) => [p.player1_id, p.player2_id]),
+    readClient
+  );
+
+  return pairs.map((p) => ({
+    ...p,
+    player1_name: names.get(p.player1_id) ?? p.player1_name,
+    player2_name: names.get(p.player2_id) ?? p.player2_name,
+  }));
+}
+
 // ---------------------------------------------------------------------------
 // Lectura: torneo express
 // ---------------------------------------------------------------------------

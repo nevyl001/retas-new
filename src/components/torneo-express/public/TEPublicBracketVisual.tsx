@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildPublicBracketVisualLayout,
   type BracketVisualColumn,
@@ -12,6 +12,33 @@ import type {
 } from "../../../lib/torneoExpress/publicBracketModel";
 import type { PartidoSetScore } from "../../../lib/torneoExpress/types";
 import { detectMatchWinner } from "../../../lib/torneoExpress/partidoSets";
+import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
+import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
+import "../../jugadores/riviera-jugadores.css";
+
+const BracketPairPlayersContext = React.createContext<
+  Record<string, PublicRetaPairPlayer[]>
+>({});
+
+function useBracketPairPlayers(parejaId: string | null | undefined) {
+  const map = useContext(BracketPairPlayersContext);
+  return parejaId ? map[parejaId] : undefined;
+}
+
+function parseLabelPlayers(label: string): [string, string] {
+  const parts = label.split(/\s*\/\s*/).map((s) => s.trim()).filter(Boolean);
+  return [parts[0] ?? "?", parts[1] ?? "?"];
+}
+
+function avatarSizeForPhase(
+  phase: "octavos" | "cuartos" | "semifinal" | "final",
+  centered: boolean
+): "sm" | "md" | "lg" {
+  if (centered || phase === "final") return "lg";
+  if (phase === "semifinal") return "md";
+  if (phase === "octavos") return "sm";
+  return "md";
+}
 
 function statusLabel(status: PublicMatchStatus): string {
   switch (status) {
@@ -233,12 +260,41 @@ function BracketTeamRow({
   team,
   role,
   centered = false,
+  visualPhase = "cuartos",
 }: {
   team: PublicBracketTeam;
   role: "winner" | "loser" | "neutral";
   centered?: boolean;
+  visualPhase?: "octavos" | "cuartos" | "semifinal" | "final";
 }) {
   const isWinner = role === "winner";
+  const playersFromMap = useBracketPairPlayers(team.parejaId);
+  const pending = !team.label?.trim() && !team.parejaId;
+  const avatarSize = avatarSizeForPhase(visualPhase, centered);
+
+  if (pending || team.isBye) {
+    return (
+      <div
+        className={`te-bracket-team te-bracket-team--pending${
+          centered ? " te-bracket-team--centered" : ""
+        }`}
+      >
+        <span className="te-bracket-team__pending-label">
+          {team.isBye ? "BYE" : "Por definir"}
+        </span>
+      </div>
+    );
+  }
+
+  const [name1, name2] = parseLabelPlayers(team.label);
+  const p1: PublicRetaPairPlayer = playersFromMap?.[0] ?? {
+    id: `${team.parejaId ?? team.label}-1`,
+    name: name1,
+  };
+  const p2: PublicRetaPairPlayer = playersFromMap?.[1] ?? {
+    id: `${team.parejaId ?? team.label}-2`,
+    name: name2,
+  };
 
   return (
     <div
@@ -246,11 +302,31 @@ function BracketTeamRow({
         isWinner ? " te-bracket-team--winner" : ""
       }${centered ? " te-bracket-team--centered" : ""}`}
     >
+      <div className="te-bracket-team__avatars" aria-hidden>
+        <JugadorAvatar
+          fotoUrl={p1.fotoUrl}
+          nombre={p1.name}
+          size={avatarSize}
+          className="te-bracket-team__avatar"
+        />
+        <JugadorAvatar
+          fotoUrl={p2.fotoUrl}
+          nombre={p2.name}
+          size={avatarSize}
+          className="te-bracket-team__avatar te-bracket-team__avatar--front"
+        />
+      </div>
       <div className="te-bracket-team__main">
         {team.seed != null ? (
           <span className="te-bracket-team__seed">#{team.seed}</span>
         ) : null}
-        <span className="te-bracket-team__name">{team.label}</span>
+        <div className="te-bracket-team__names">
+          <span className="te-bracket-team__player">{p1.name}</span>
+          <span className="te-bracket-team__sep" aria-hidden>
+            /
+          </span>
+          <span className="te-bracket-team__player">{p2.name}</span>
+        </div>
         {team.originBadge ? (
           <span className="te-bracket-origin">{team.originBadge}</span>
         ) : null}
@@ -259,6 +335,37 @@ function BracketTeamRow({
         <span className="te-bracket-team__dot" aria-hidden title="Ganador" />
       ) : null}
     </div>
+  );
+}
+
+function BracketFinalistBlock({
+  team,
+  pending,
+  visualPhase = "final",
+}: {
+  team?: PublicBracketTeam;
+  pending: boolean;
+  visualPhase?: "octavos" | "cuartos" | "semifinal" | "final";
+}) {
+  if (team && !pending) {
+    return (
+      <BracketTeamRow
+        team={team}
+        role="neutral"
+        centered
+        visualPhase={visualPhase}
+      />
+    );
+  }
+
+  return (
+    <span
+      className={`te-elim-bracket-finalist${
+        pending ? " te-elim-bracket-finalist--pending" : ""
+      }`}
+    >
+      {team?.label?.trim() || "Por definir"}
+    </span>
   );
 }
 
@@ -299,25 +406,21 @@ function BracketMatchCard({
 
   const renderFinalPending = () => (
     <>
-      <span
-        className={`te-elim-bracket-finalist${
-          localPending ? " te-elim-bracket-finalist--pending" : ""
-        }`}
-      >
-        {card.local.label?.trim() || "Por definir"}
-      </span>
+      <BracketFinalistBlock
+        team={card.local}
+        pending={localPending}
+        visualPhase={visualPhase}
+      />
       <span className="te-bracket-vs te-bracket-vs--final">
         <span className="te-bracket-vs__line" aria-hidden />
         <span className="te-bracket-vs__text">vs</span>
         <span className="te-bracket-vs__line" aria-hidden />
       </span>
-      <span
-        className={`te-elim-bracket-finalist${
-          visitPending ? " te-elim-bracket-finalist--pending" : ""
-        }`}
-      >
-        {card.visit.label?.trim() || "Por definir"}
-      </span>
+      <BracketFinalistBlock
+        team={card.visit}
+        pending={visitPending}
+        visualPhase={visualPhase}
+      />
     </>
   );
 
@@ -370,6 +473,7 @@ function BracketMatchCard({
               team={card.local}
               role={localRole}
               centered={isCenter}
+              visualPhase={visualPhase}
             />
             {hasSets ? (
               <BracketSetsList sets={card.sets} layout="aligned" />
@@ -378,11 +482,17 @@ function BracketMatchCard({
               team={card.visit}
               role={visitRole}
               centered={isCenter}
+              visualPhase={visualPhase}
             />
           </>
         ) : (
           <>
-            <BracketTeamRow team={card.local} role="neutral" centered={isCenter} />
+            <BracketTeamRow
+              team={card.local}
+              role="neutral"
+              centered={isCenter}
+              visualPhase={visualPhase}
+            />
             <span className="te-bracket-vs">
               <span className="te-bracket-vs__line" aria-hidden />
               <span className="te-bracket-vs__text">vs</span>
@@ -392,6 +502,7 @@ function BracketMatchCard({
               team={card.visit}
               role="neutral"
               centered={isCenter}
+              visualPhase={visualPhase}
             />
           </>
         )}
@@ -673,6 +784,7 @@ export interface TEPublicBracketVisualProps {
   totalRondas: number;
   activeRonda?: number;
   categoria?: string | null;
+  pairPlayersById?: Record<string, PublicRetaPairPlayer[]>;
 }
 
 export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
@@ -680,6 +792,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   totalRondas,
   activeRonda,
   categoria = null,
+  pairPlayersById = {},
 }) => {
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -722,7 +835,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   }
 
   return (
-    <>
+    <BracketPairPlayersContext.Provider value={pairPlayersById}>
       <div
         ref={stageRef}
         className="te-bracket-stage te-bracket-visual te-bracket-visual--desktop te-pub-fade-in"
@@ -756,6 +869,6 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
           </React.Fragment>
         ))}
       </div>
-    </>
+    </BracketPairPlayersContext.Provider>
   );
 };
