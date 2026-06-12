@@ -1,5 +1,5 @@
 import type { Player } from "../db/types";
-import { insertLegacyPlayer, updatePlayer } from "../database";
+import { insertLegacyPlayer } from "../database";
 import { supabase } from "../supabaseClient";
 import {
   groupLigaJugadoresByName,
@@ -126,21 +126,74 @@ async function findLegacyPlayerForRiviera(
   return null;
 }
 
+type LegacyPlayerContact = Player & {
+  email_verified?: boolean | null;
+  notif_opt_in_email?: boolean | null;
+};
+
 /** Datos de contacto del registro Riviera sobre la fila legacy (para torneos/retas). */
 export function mergeRivieraContactIntoLegacyPlayer(
   rj: RivieraJugador,
   legacy: Player
-): Player {
-  const email = isRealEmail(rj.email)
-    ? rj.email!.trim()
-    : isRealEmail(legacy.email)
-      ? legacy.email.trim()
-      : legacy.email;
+): LegacyPlayerContact {
+  const legacyRow = legacy as LegacyPlayerContact;
+  const rivieraEmail = isRealEmail(rj.email) ? rj.email!.trim() : null;
+  const legacyRealEmail = isRealEmail(legacy.email)
+    ? legacy.email.trim()
+    : null;
+  const email = rivieraEmail ?? legacyRealEmail ?? legacy.email;
+  const email_verified = rivieraEmail
+    ? true
+    : legacyRow.email_verified;
+
   return {
     ...legacy,
     name: rj.nombre.trim() || legacy.name,
     email,
+    email_verified,
   };
+}
+
+/** Persiste email del registro Riviera en `players` si la fila legacy aún no está lista. */
+async function applyRivieraContactToLegacyPlayer(
+  rj: RivieraJugador,
+  legacy: Player
+): Promise<LegacyPlayerContact> {
+  const merged = mergeRivieraContactIntoLegacyPlayer(rj, legacy);
+  if (!isRealEmail(rj.email)) return merged;
+
+  const legacyRow = legacy as LegacyPlayerContact;
+  const targetEmail = rj.email!.trim().toLowerCase();
+  const currentEmail = legacy.email?.trim().toLowerCase() ?? "";
+  const needsDbSync =
+    !isRealEmail(legacy.email) ||
+    currentEmail !== targetEmail ||
+    legacyRow.email_verified === false;
+
+  if (!needsDbSync) return merged;
+
+  try {
+    const { updatePlayerNotificationContact } = await import(
+      "../../services/torneoExpressNotificacionesService"
+    );
+    const updated = await updatePlayerNotificationContact(
+      legacy.id,
+      {
+        email: rj.email!.trim(),
+        notif_opt_in_email: legacyRow.notif_opt_in_email !== false,
+      },
+      { autoNotifyEnrollment: false }
+    );
+    return {
+      ...merged,
+      email: updated.email ?? merged.email,
+      email_verified: updated.email_verified ?? true,
+      notif_opt_in_email: updated.notif_opt_in_email,
+    };
+  } catch (e) {
+    console.warn("applyRivieraContactToLegacyPlayer:", rj.nombre, e);
+    return merged;
+  }
 }
 
 /**
@@ -195,7 +248,7 @@ export async function buildLegacyPlayersFromRivieraRegistry(
       }
     }
 
-    out.push(mergeRivieraContactIntoLegacyPlayer(canonical, legacy));
+    out.push(await applyRivieraContactToLegacyPlayer(canonical, legacy));
   }
 
   const { dedupeLegacyPlayersByName } = await import("../database");
@@ -214,17 +267,28 @@ export async function ensureLegacyPlayerForRivieraJugador(
         await linkLegacyPlayerId(rj.id, existing.id);
       }
       if (!legacyMatchesRivieraName(existing, rj)) {
-        const synced = await updatePlayer(existing.id, rj.nombre);
-        return mergeRivieraContactIntoLegacyPlayer(rj, synced);
+        const nombre = rj.nombre.trim();
+        const { error: nameErr } = await supabase
+          .from("players")
+          .update({ name: nombre })
+          .eq("id", existing.id);
+        if (nameErr) {
+          console.warn("ensureLegacyPlayerForRivieraJugador rename:", nameErr);
+        }
+        const refreshed = (await fetchPlayerById(existing.id)) ?? {
+          ...existing,
+          name: nombre,
+        };
+        return applyRivieraContactToLegacyPlayer(rj, refreshed);
       }
-      return mergeRivieraContactIntoLegacyPlayer(rj, existing);
+      return applyRivieraContactToLegacyPlayer(rj, existing);
     }
 
     const created = await insertLegacyPlayer(rj.nombre, organizadorId, {
       email: isRealEmail(rj.email) ? rj.email : null,
     });
     await linkLegacyPlayerId(rj.id, created.id);
-    return created;
+    return applyRivieraContactToLegacyPlayer(rj, created);
   } catch (e) {
     console.warn("ensureLegacyPlayerForRivieraJugador:", rj.nombre, e);
     return null;
@@ -533,8 +597,17 @@ export async function syncRivieraJugadorToLinkedPools(
   if (rj.legacy_player_id) {
     try {
       const legacy = await fetchPlayerById(rj.legacy_player_id);
-      if (legacy && !legacyMatchesRivieraName(legacy, rj)) {
-        await updatePlayer(legacy.id, nombre);
+      if (legacy) {
+        if (!legacyMatchesRivieraName(legacy, rj)) {
+          const { error: nameErr } = await supabase
+            .from("players")
+            .update({ name: nombre })
+            .eq("id", legacy.id);
+          if (nameErr) {
+            console.warn("syncRivieraJugadorToLinkedPools rename:", nameErr);
+          }
+        }
+        await applyRivieraContactToLegacyPlayer(rj, legacy);
       }
     } catch (e) {
       console.warn("syncRivieraJugadorToLinkedPools legacy:", e);
