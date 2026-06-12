@@ -1457,6 +1457,288 @@
   }
 }
 
+/* Podio compartible — campeones, subcampeones, 3.er lugar */
+.te-elim-podium-share {
+  margin-top: 0;
+}
+
+.te-elim-podium-share .te-elim-finalists-share__inner {
+  padding-bottom: clamp(1.75rem, 3vw, 2.5rem);
+}
+
+.te-elim-podium-share__rank {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(0.72rem, 1.1vw, 0.875rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.te-elim-podium-share__body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(1.15rem, 2.5vw, 1.75rem);
+  width: 100%;
+  margin: clamp(1.35rem, 3vw, 2rem) 0 clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.te-elim-podium-share__heroes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.85rem, 2vw, 1.25rem);
+  min-width: 0;
+}
+
+.te-elim-podium-share__message {
+  max-width: min(100%, 34rem);
+  margin: 0;
+}
+
+.te-elim-podium-pair--hero .te-elim-finalists-pair__avatars {
+  transform: none;
+}
+
+.te-elim-podium-pair--hero .te-elim-podium-pair__label {
+  font-size: clamp(1.15rem, 3vw, 1.75rem);
+}
+
+.te-elim-podium-pair__avatar--hero.rj-avatar--lg {
+  width: clamp(92px, 26vw, 124px);
+  height: clamp(92px, 26vw, 124px);
+}
+
+.te-elim-podium-pair--hero .te-elim-finalists-pair__avatar-ring--front {
+  margin-left: -0.95rem;
+}
+
+.te-elim-podium-share__stats-panel {
+  width: 100%;
+}
+
+.te-elim-podium-share__stats-title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.te-elim-podium-share__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  gap: 0.55rem;
+}
+
+.te-elim-podium-share__stats .te-pub-grupo-celebrate__stat {
+  min-height: 4.35rem;
+  padding: 0.65rem 0.55rem 0.6rem;
+}
+
+.te-elim-podium-share__stats .te-pub-grupo-celebrate__stat-value {
+  font-size: clamp(1.25rem, 2.2vw, 1.65rem);
+}
+
+.te-elim-podium-share--champion .te-elim-finalists-share__badge,
+.te-elim-podium-share--champion .te-elim-podium-share__rank,
+.te-elim-podium-share--champion .te-elim-finalists-share__tagline {
+  color: rgba(219, 184, 66, 0.95);
+}
+
+.te-elim-podium-share--champion .te-elim-finalists-share__badge {
+  background: rgba(201, 162, 39, 0.16);
+  border-color: rgba(201, 162, 39, 0.38);
+}
+
+.te-elim-podium-share--champion .te-elim-finalists-share__glow {
+  background: radial-gradient(
+    ellipse 85% 60% at 50% 16%,
+    rgba(201, 162, 39, 0.2) 0%,
+    transparent 70%
+  );
+}
+
+.te-elim-podium-share--champion .te-pub-grupo-celebrate__stat {
+  border-color: rgba(201, 162, 39, 0.24);
+  background: rgba(201, 162, 39, 0.06);
+}
+
+.te-elim-podium-share--champion .te-elim-podium-share__stats-panel {
+  border-color: rgba(201, 162, 39, 0.18);
+  background: rgba(201, 162, 39, 0.05);
+}
+
+.te-elim-podium-share--runner-up .te-elim-finalists-share__badge,
+.te-elim-podium-share--runner-up .te-elim-podium-share__rank {
+  color: rgba(192, 200, 212, 0.95);
+}
+
+.te-elim-podium-share--runner-up .te-elim-finalists-share__badge {
+  background: rgba(192, 200, 212, 0.1);
+  border-color: rgba(192, 200, 212, 0.28);
+}
+
+.te-elim-podium-share--runner-up .te-elim-finalists-pair__avatar-ring {
+  background: linear-gradient(
+    145deg,
+    rgba(192, 200, 212, 0.85) 0%,
+    rgba(160, 170, 185, 0.45) 50%,
+    rgba(192, 200, 212, 0.28) 100%
+  );
+  box-shadow: 0 10px 28px rgba(160, 170, 185, 0.14);
+}
+
+.te-elim-podium-share--runner-up .te-elim-finalists-share__glow {
+  background: radial-gradient(
+    ellipse 85% 60% at 50% 16%,
+    rgba(192, 200, 212, 0.12) 0%,
+    transparent 70%
+  );
+}
+
+.te-elim-podium-share--runner-up .te-elim-podium-share__stats-panel {
+  border-color: rgba(192, 200, 212, 0.16);
+  background: rgba(192, 200, 212, 0.04);
+}
+
+.te-elim-podium-share--runner-up .te-pub-grupo-celebrate__stat {
+  border-color: rgba(192, 200, 212, 0.18);
+}
+
+.te-elim-podium-share--tercer .te-elim-finalists-headline {
+  color: #e8b88a;
+}
+
+.te-elim-podium-share--tercer .te-elim-finalists-share__badge,
+.te-elim-podium-share--tercer .te-elim-podium-share__rank {
+  color: #e8b88a;
+}
+
+.te-elim-podium-share--tercer .te-elim-finalists-share__badge {
+  background: rgba(205, 127, 50, 0.12);
+  border-color: rgba(205, 127, 50, 0.32);
+}
+
+.te-elim-podium-share--tercer .te-elim-finalists-pair__avatar-ring {
+  background: linear-gradient(
+    145deg,
+    rgba(205, 127, 50, 0.9) 0%,
+    rgba(232, 184, 138, 0.5) 50%,
+    rgba(205, 127, 50, 0.32) 100%
+  );
+  box-shadow: 0 10px 28px rgba(205, 127, 50, 0.16);
+}
+
+.te-elim-podium-share--tercer .te-elim-finalists-share__glow {
+  background: radial-gradient(
+    ellipse 85% 60% at 50% 16%,
+    rgba(205, 127, 50, 0.14) 0%,
+    transparent 70%
+  );
+}
+
+.te-elim-podium-share--tercer .te-elim-podium-share__stats-panel {
+  border-color: rgba(205, 127, 50, 0.18);
+  background: rgba(205, 127, 50, 0.05);
+}
+
+.te-elim-podium-share--tercer .te-pub-grupo-celebrate__stat {
+  border-color: rgba(205, 127, 50, 0.2);
+}
+
+@media (min-width: 768px) {
+  .te-elim-podium-share__body {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.75rem, 4.5vw, 3.5rem);
+    padding-inline: clamp(0.5rem, 2vw, 2rem);
+  }
+
+  .te-elim-podium-share__heroes {
+    flex: 1 1 58%;
+    max-width: 62%;
+  }
+
+  .te-elim-podium-share__stats-panel {
+    flex: 0 1 min(38%, 20rem);
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1.1rem, 2vw, 1.45rem);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .te-elim-podium-share__stats-title {
+    text-align: left;
+  }
+
+  .te-elim-podium-pair__avatar--hero.rj-avatar--lg {
+    width: clamp(132px, 15vw, 196px);
+    height: clamp(132px, 15vw, 196px);
+  }
+
+  .te-elim-podium-pair--hero .te-elim-finalists-pair__avatar-ring {
+    padding: 5px;
+  }
+
+  .te-elim-podium-pair--hero .te-elim-finalists-pair__avatar-ring--front {
+    margin-left: -1.45rem;
+  }
+
+  .te-elim-podium-pair--hero .te-elim-podium-pair__label {
+    font-size: clamp(1.35rem, 2.8vw, 2.25rem);
+  }
+
+  .te-elim-podium-share__message {
+    max-width: 100%;
+    font-size: clamp(0.95rem, 1.25vw, 1.125rem);
+  }
+}
+
+@media (min-width: 1100px) {
+  .te-elim-podium-share__body {
+    gap: clamp(2.5rem, 5vw, 4.5rem);
+    padding-inline: clamp(1rem, 3vw, 3rem);
+  }
+
+  .te-elim-podium-pair__avatar--hero.rj-avatar--lg {
+    width: clamp(156px, 17vw, 228px);
+    height: clamp(156px, 17vw, 228px);
+  }
+
+  .te-elim-podium-pair--hero .te-elim-finalists-pair__avatar-ring--front {
+    margin-left: -1.65rem;
+  }
+
+  .te-elim-podium-pair--hero .te-elim-podium-pair__label {
+    font-size: clamp(1.5rem, 2.5vw, 2.5rem);
+  }
+
+  .te-elim-podium-share__stats-panel {
+    flex-basis: min(34%, 22rem);
+    padding: 1.5rem 1.35rem;
+  }
+
+  .te-elim-podium-share__stats .te-pub-grupo-celebrate__stat {
+    min-height: 5rem;
+  }
+}
+
 @media (max-width: 640px) {
   .te-elim-finalists-faceoff {
     grid-template-columns: 1fr;

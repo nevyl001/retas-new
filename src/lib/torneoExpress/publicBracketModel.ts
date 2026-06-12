@@ -56,10 +56,14 @@ export interface PublicFinalistEntry {
 
 export interface PublicBracketViewModel {
   championLabel: string | null;
+  /** Ganadores de la final — tarjeta compartible. */
+  championCelebrate: PublicFinalistEntry | null;
+  /** Perdedores de la final — subcampeones. */
+  runnerUpCelebrate: PublicFinalistEntry | null;
   /** Semis completas y final pendiente — tarjeta de felicitación a finalistas. */
   finalistsCelebrate: { finalists: PublicFinalistEntry[] } | null;
   /** Ganador del partido por el 3.er lugar (pareja). */
-  thirdPlaceCelebrate: { label: string } | null;
+  thirdPlaceCelebrate: PublicFinalistEntry | null;
   /** Tarjeta del juego por el bronce (si ya está creado). */
   thirdPlaceCard: PublicMatchupCard | null;
   currentPhaseUpper: string;
@@ -219,12 +223,6 @@ function matchTitle(
   return `${singular} ${cruceIndex + 1}`;
 }
 
-function winnerLabelFromCard(card: PublicMatchupCard): string | null {
-  if (card.local.isWinner) return card.local.label;
-  if (card.visit.isWinner) return card.visit.label;
-  return null;
-}
-
 function winnerPairFromCard(
   card: PublicMatchupCard
 ): PublicFinalistEntry | null {
@@ -233,6 +231,18 @@ function winnerPairFromCard(
   }
   if (card.visit.isWinner) {
     return { label: card.visit.label, parejaId: card.visit.parejaId };
+  }
+  return null;
+}
+
+function loserPairFromCard(
+  card: PublicMatchupCard
+): PublicFinalistEntry | null {
+  if (card.local.isWinner) {
+    return { label: card.visit.label, parejaId: card.visit.parejaId };
+  }
+  if (card.visit.isWinner) {
+    return { label: card.local.label, parejaId: card.local.parejaId };
   }
   return null;
 }
@@ -703,14 +713,14 @@ export function buildPublicBracketViewModel(
   });
 
   let championLabel: string | null = null;
+  let championCelebrate: PublicFinalistEntry | null = null;
+  let runnerUpCelebrate: PublicFinalistEntry | null = null;
   const finalCards = allCards.filter((c) => c.ronda === totalRondas);
   const finalDone = finalCards.find((c) => c.status === "finished");
   if (finalDone) {
-    championLabel = finalDone.local.isWinner
-      ? finalDone.local.label
-      : finalDone.visit.isWinner
-        ? finalDone.visit.label
-        : null;
+    championCelebrate = winnerPairFromCard(finalDone);
+    runnerUpCelebrate = loserPairFromCard(finalDone);
+    championLabel = championCelebrate?.label ?? null;
   }
 
   const phaseUpper = currentPhaseUpper(
@@ -735,14 +745,15 @@ export function buildPublicBracketViewModel(
 
   const thirdPlaceCard =
     displayCards.find((c) => isRondaTercerLugar(c.ronda)) ?? null;
-  let thirdPlaceCelebrate: { label: string } | null = null;
+  let thirdPlaceCelebrate: PublicFinalistEntry | null = null;
   if (thirdPlaceCard?.status === "finished") {
-    const label = winnerLabelFromCard(thirdPlaceCard);
-    if (label) thirdPlaceCelebrate = { label };
+    thirdPlaceCelebrate = winnerPairFromCard(thirdPlaceCard);
   }
 
   return {
     championLabel,
+    championCelebrate,
+    runnerUpCelebrate,
     finalistsCelebrate,
     thirdPlaceCelebrate,
     thirdPlaceCard,

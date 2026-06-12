@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { buildPublicPodiumStatsForPair } from "../../../lib/torneoExpress/publicEliminatoriaPodiumStats";
 import { formatTorneoExpressCategoria } from "../../../lib/torneoExpress/formatCategoria";
 import { buildPublicBracketViewModel } from "../../../lib/torneoExpress/publicBracketModel";
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
+import { PodiumCard } from "./PodiumCard";
 import { PublicEliminatoriaFinalistsCelebrate } from "./PublicEliminatoriaFinalistsCelebrate";
 import { usePublicBracketPairPlayers } from "../../../hooks/usePublicBracketPairPlayers";
 import "./te-public-grupos.css";
@@ -51,117 +53,6 @@ function RefreshFooter({
   );
 }
 
-function PublicEliminatoriaThirdPlaceCelebrate({
-  pairLabel,
-  categoria,
-  torneoNombre,
-}: {
-  pairLabel: string;
-  categoria: string | null;
-  torneoNombre: string;
-}) {
-  return (
-    <section
-      className="te-pub-grupo-celebrate te-pub-fade-in te-elim-public-celebrate te-elim-public-celebrate--tercer"
-      aria-label="Felicitación tercer lugar"
-    >
-      <div className="te-pub-grupo-celebrate__inner te-elim-public-celebrate__inner">
-        <header className="te-pub-grupo-celebrate__brand te-elim-finalists-brand">
-          <div className="te-divider-gold te-divider-gold--wide" aria-hidden />
-          <p className="te-pub-grupo-celebrate__wordmark">
-            RIVIERA
-            <span className="te-pub-grupo-celebrate__wordmark-sep" aria-hidden>
-              {" "}
-              ·{" "}
-            </span>
-            OPEN
-          </p>
-        </header>
-
-        <div className="te-divider-gold te-elim-finalists-brand__divider" aria-hidden />
-
-        <h2 className="te-elim-finalists-headline te-elim-finalists-headline--tercer">
-          ¡Felicidades por el tercer lugar!
-        </h2>
-
-        {categoria ? (
-          <p className="te-elim-celebrate__categoria">
-            Categoría · {categoria.toUpperCase()}
-          </p>
-        ) : null}
-
-        <p className="te-elim-finalist-name te-elim-finalist-name--tercer">
-          {pairLabel}
-        </p>
-
-        <p className="te-elim-finalists-message">
-          Gran torneo en Riviera Open: broncé merecido tras un gran paso por
-          semifinales. ¡Gracias por competir con pasión!
-        </p>
-
-        <footer className="te-pub-grupo-celebrate__footer">
-          <div className="te-divider-gold" aria-hidden />
-          <p className="te-pub-grupo-celebrate__torneo">{torneoNombre}</p>
-          <p className="te-pub-grupo-celebrate__closing">Vive Riviera Open</p>
-        </footer>
-      </div>
-    </section>
-  );
-}
-
-function PublicEliminatoriaCelebrate({
-  championLabel,
-  torneoNombre,
-  categoria,
-}: {
-  championLabel: string;
-  torneoNombre: string;
-  categoria: string | null;
-}) {
-  return (
-    <section
-      className="te-pub-grupo-celebrate te-pub-fade-in te-elim-public-celebrate"
-      aria-label="Campeones del torneo"
-    >
-      <div className="te-pub-grupo-celebrate__inner">
-        <header className="te-pub-grupo-celebrate__brand">
-          <div className="te-divider-gold te-divider-gold--wide" aria-hidden />
-          <p className="te-pub-grupo-celebrate__wordmark">
-            RIVIERA
-            <span className="te-pub-grupo-celebrate__wordmark-sep" aria-hidden>
-              {" "}
-              ·{" "}
-            </span>
-            OPEN
-          </p>
-        </header>
-
-        <div className="te-divider-gold" aria-hidden />
-
-        <h2 className="te-pub-grupo-celebrate__headline">¡Campeones!</h2>
-        <p className="te-pub-grupo-celebrate__riviera-line">Riviera Open</p>
-        {categoria ? (
-          <p className="te-elim-celebrate__categoria">
-            Categoría · {categoria.toUpperCase()}
-          </p>
-        ) : null}
-        <p className="te-elim-finalist-name te-elim-finalist-name--champion">
-          {championLabel}
-        </p>
-        <p className="te-pub-grupo-celebrate__motivational">
-          Una final inolvidable. Gracias por dejarlo todo en la cancha y elevar el torneo.
-        </p>
-
-        <footer className="te-pub-grupo-celebrate__footer">
-          <div className="te-divider-gold" aria-hidden />
-          <p className="te-pub-grupo-celebrate__torneo">{torneoNombre}</p>
-          <p className="te-pub-grupo-celebrate__closing">Vive Riviera Open</p>
-        </footer>
-      </div>
-    </section>
-  );
-}
-
 export interface TEPublicEliminatoriaProps {
   bundle: TorneoExpressBundle;
   labelMap: Record<string, string>;
@@ -191,6 +82,30 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   );
 
   const categoria = formatTorneoExpressCategoria(bundle.torneo.categoria);
+
+  const championStats = useMemo(
+    () =>
+      buildPublicPodiumStatsForPair(
+        bundle,
+        model.championCelebrate?.parejaId
+      ),
+    [bundle, model.championCelebrate?.parejaId]
+  );
+
+  const runnerUpStats = useMemo(
+    () =>
+      buildPublicPodiumStatsForPair(bundle, model.runnerUpCelebrate?.parejaId),
+    [bundle, model.runnerUpCelebrate?.parejaId]
+  );
+
+  const thirdPlaceStats = useMemo(
+    () =>
+      buildPublicPodiumStatsForPair(
+        bundle,
+        model.thirdPlaceCelebrate?.parejaId
+      ),
+    [bundle, model.thirdPlaceCelebrate?.parejaId]
+  );
 
   useEffect(() => {
     if (!lastRefreshedAt) return;
@@ -276,23 +191,46 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         </>
       ) : null}
 
-      {model.thirdPlaceCelebrate ? (
+      {model.championCelebrate ? (
         <>
           <div className="te-elim-public-bracket-divider" aria-hidden />
-          <PublicEliminatoriaThirdPlaceCelebrate
-            pairLabel={model.thirdPlaceCelebrate.label}
+          <PodiumCard
+            position={1}
+            entry={model.championCelebrate}
             categoria={categoria}
             torneoNombre={bundle.torneo.nombre}
+            pairPlayersById={pairPlayersById}
+            stats={championStats}
           />
         </>
       ) : null}
 
-      {model.championLabel ? (
-        <PublicEliminatoriaCelebrate
-          championLabel={model.championLabel}
-          torneoNombre={bundle.torneo.nombre}
-          categoria={categoria}
-        />
+      {model.runnerUpCelebrate ? (
+        <>
+          <div className="te-elim-public-bracket-divider" aria-hidden />
+          <PodiumCard
+            position={2}
+            entry={model.runnerUpCelebrate}
+            categoria={categoria}
+            torneoNombre={bundle.torneo.nombre}
+            pairPlayersById={pairPlayersById}
+            stats={runnerUpStats}
+          />
+        </>
+      ) : null}
+
+      {model.thirdPlaceCelebrate ? (
+        <>
+          <div className="te-elim-public-bracket-divider" aria-hidden />
+          <PodiumCard
+            position={3}
+            entry={model.thirdPlaceCelebrate}
+            categoria={categoria}
+            torneoNombre={bundle.torneo.nombre}
+            pairPlayersById={pairPlayersById}
+            stats={thirdPlaceStats}
+          />
+        </>
       ) : null}
 
       <RefreshFooter lastRefreshedAt={lastRefreshedAt} spinning={spinning} />
