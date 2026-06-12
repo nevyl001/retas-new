@@ -4,13 +4,17 @@ import {
   type BracketVisualColumn,
   type BracketVisualSlot,
 } from "../../../lib/torneoExpress/publicBracketLayout";
-import { isRondaTercerLugar } from "../../../lib/torneoExpress/bracketRounds";
+import type { TorneoExpressFaseEliminacion } from "../../../lib/torneoExpress/types";
 import type {
   PublicBracketTeam,
   PublicMatchStatus,
   PublicMatchupCard,
 } from "../../../lib/torneoExpress/publicBracketModel";
 import type { PartidoSetScore } from "../../../lib/torneoExpress/types";
+import {
+  isRondaTercerLugar,
+  labelRondaEliminatoria,
+} from "../../../lib/torneoExpress/bracketRounds";
 import { detectMatchWinner } from "../../../lib/torneoExpress/partidoSets";
 import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
 import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
@@ -511,25 +515,72 @@ function BracketMatchCard({
   );
 }
 
-function BracketFinalPlaceholderCard({
+function placeholderPhaseLabel(
+  placeholderRound: number,
+  totalRondas: number,
+  placeholderIndex = 0,
+  fase?: TorneoExpressFaseEliminacion | null
+): string {
+  if (placeholderRound === totalRondas) return "FINAL";
+  const base = fase
+    ? labelRondaEliminatoria(fase, placeholderRound, totalRondas).toUpperCase()
+    : placeholderRound === totalRondas - 1
+      ? "SEMIFINAL"
+      : "SIGUIENTE RONDA";
+  const matchCount =
+    placeholderRound < totalRondas
+      ? Math.max(1, 2 ** (totalRondas - placeholderRound - 1))
+      : 1;
+  if (matchCount >= 2) {
+    return `${base} ${placeholderIndex + 1}`;
+  }
+  return base;
+}
+
+function BracketRoundPlaceholderCard({
   slot,
+  totalRondas,
+  fase,
 }: {
   slot: BracketVisualSlot;
+  totalRondas: number;
+  fase?: TorneoExpressFaseEliminacion | null;
 }) {
   const top = slot.finalistTop ?? "Por definir";
   const bottom = slot.finalistBottom ?? "Por definir";
   const topPending = top === "Por definir";
   const bottomPending = bottom === "Por definir";
+  const placeholderRound = slot.placeholderRound ?? totalRondas;
+  const phaseLabel = placeholderPhaseLabel(
+    placeholderRound,
+    totalRondas,
+    slot.placeholderIndex ?? 0,
+    fase
+  );
+  const isFinal = placeholderRound === totalRondas;
 
   return (
     <article
-      className="te-elim-bracket-card te-elim-bracket-card--center te-elim-bracket-card--placeholder te-elim-bracket-card--pending"
-      data-bracket-card="final"
-      aria-label="Final"
+      className={`te-elim-bracket-card te-elim-bracket-card--center te-elim-bracket-card--placeholder te-elim-bracket-card--pending${
+        isFinal ? "" : " te-elim-bracket-card--next-round"
+      }`}
+      data-bracket-card={isFinal ? "final" : "center-next"}
+      data-bracket-phase={
+        placeholderRound === totalRondas
+          ? "final"
+          : placeholderRound === totalRondas - 1
+            ? "semifinal"
+            : "cuartos"
+      }
+      aria-label={phaseLabel}
     >
       <header className="te-elim-bracket-card__head te-elim-bracket-card__head--center">
-        <span className="te-elim-bracket-card__phase te-elim-bracket-card__phase--final">
-          FINAL
+        <span
+          className={`te-elim-bracket-card__phase${
+            isFinal ? " te-elim-bracket-card__phase--final" : ""
+          }`}
+        >
+          {phaseLabel}
         </span>
         <span className="te-elim-bracket-card__status te-elim-bracket-card__status--pending">
           PENDIENTE
@@ -564,17 +615,31 @@ function BracketFinalPlaceholderCard({
 function BracketFinalCaption({
   categoria,
   showThirdPlace = false,
+  centerRound,
+  totalRondas,
+  fase,
 }: {
   categoria: string | null;
   showThirdPlace?: boolean;
+  centerRound: number;
+  totalRondas: number;
+  fase?: TorneoExpressFaseEliminacion | null;
 }) {
+  const roundTitle = fase
+    ? labelRondaEliminatoria(fase, centerRound, totalRondas)
+    : centerRound === totalRondas
+      ? "Final"
+      : centerRound === totalRondas - 1
+        ? "Semifinal"
+        : "Siguiente ronda";
+
   const categoryLine = showThirdPlace
     ? categoria
       ? `Final y tercer lugar · ${categoria.toUpperCase()}`
       : "Final y tercer lugar"
     : categoria
-      ? `Final · ${categoria.toUpperCase()}`
-      : "Gran final";
+      ? `${roundTitle} · ${categoria.toUpperCase()}`
+      : roundTitle;
 
   return (
     <header className="te-bracket-final-caption" aria-label={categoryLine}>
@@ -600,23 +665,40 @@ function BracketSlotView({
   slot,
   categoria,
   inFinaleStack = false,
+  totalRondas,
+  centerRound,
+  fase,
+  showCenterCaption = false,
 }: {
   slot: BracketVisualSlot;
   categoria: string | null;
   inFinaleStack?: boolean;
+  totalRondas: number;
+  centerRound: number;
+  fase?: TorneoExpressFaseEliminacion | null;
+  showCenterCaption?: boolean;
 }) {
   const isCenter = Boolean(slot.isCenter);
   const content =
-    slot.kind === "final-placeholder" || !slot.card ? (
-      <BracketFinalPlaceholderCard slot={slot} />
+    slot.kind === "round-placeholder" || !slot.card ? (
+      <BracketRoundPlaceholderCard
+        slot={slot}
+        totalRondas={totalRondas}
+        fase={fase}
+      />
     ) : (
       <BracketMatchCard card={slot.card} isCenter={isCenter} />
     );
 
-  if (isCenter && !inFinaleStack) {
+  if (isCenter && showCenterCaption && !inFinaleStack) {
     return (
       <div className="te-bracket-final-wrap">
-        <BracketFinalCaption categoria={categoria} />
+        <BracketFinalCaption
+          categoria={categoria}
+          centerRound={centerRound}
+          totalRondas={totalRondas}
+          fase={fase}
+        />
         {content}
       </div>
     );
@@ -628,15 +710,27 @@ function BracketSlotView({
 function BracketColumn({
   column,
   categoria,
+  totalRondas,
+  centerRound,
+  fase,
 }: {
   column: BracketVisualColumn;
   categoria: string | null;
+  totalRondas: number;
+  centerRound: number;
+  fase?: TorneoExpressFaseEliminacion | null;
 }) {
   const hasFinaleStack =
     column.side === "center" &&
     column.slots.some(
       (s) => s.card != null && isRondaTercerLugar(s.card.ronda)
     );
+
+  const centerMatchSlots = column.slots.filter(
+    (s) => s.isCenter || s.kind === "round-placeholder"
+  );
+  const useCenterStack =
+    column.side === "center" && centerMatchSlots.length > 1;
 
   if (hasFinaleStack) {
     return (
@@ -645,7 +739,13 @@ function BracketColumn({
         data-col="center"
       >
         <div className="te-bracket-final-wrap te-bracket-final-wrap--duo">
-          <BracketFinalCaption categoria={categoria} showThirdPlace />
+          <BracketFinalCaption
+            categoria={categoria}
+            showThirdPlace
+            centerRound={centerRound}
+            totalRondas={totalRondas}
+            fase={fase}
+          />
           <div className="te-bracket-col__stack te-bracket-col__stack--finale">
             {column.slots.map((slot, i) => (
               <BracketSlotView
@@ -653,6 +753,40 @@ function BracketColumn({
                 slot={slot}
                 categoria={categoria}
                 inFinaleStack
+                totalRondas={totalRondas}
+                centerRound={centerRound}
+                fase={fase}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (useCenterStack) {
+    return (
+      <div
+        className="te-bracket-col te-bracket-col--center"
+        data-col="center"
+      >
+        <div className="te-bracket-final-wrap te-bracket-final-wrap--duo">
+          <BracketFinalCaption
+            categoria={categoria}
+            centerRound={centerRound}
+            totalRondas={totalRondas}
+            fase={fase}
+          />
+          <div className="te-bracket-col__stack te-bracket-col__stack--finale">
+            {centerMatchSlots.map((slot, i) => (
+              <BracketSlotView
+                key={`${column.index}-c-${i}-${slot.card?.id ?? "ph"}`}
+                slot={slot}
+                categoria={categoria}
+                inFinaleStack
+                totalRondas={totalRondas}
+                centerRound={centerRound}
+                fase={fase}
               />
             ))}
           </div>
@@ -672,6 +806,10 @@ function BracketColumn({
             key={`${column.index}-${i}-${slot.card?.id ?? "ph"}`}
             slot={slot}
             categoria={categoria}
+            totalRondas={totalRondas}
+            centerRound={centerRound}
+            fase={fase}
+            showCenterCaption={column.side === "center" && i === 0}
           />
         ))}
       </div>
@@ -708,7 +846,7 @@ function BracketConnectorOverlay({
       '[data-col="left"] [data-bracket-card="side"]'
     );
     const finalCard = stage.querySelector<HTMLElement>(
-      '[data-col="center"] [data-bracket-card="final"]'
+      '[data-col="center"] [data-bracket-card="final"], [data-col="center"] [data-bracket-card="center-next"]'
     );
     const rightCard = stage.querySelector<HTMLElement>(
       '[data-col="right"] [data-bracket-card="side"]'
@@ -784,6 +922,7 @@ export interface TEPublicBracketVisualProps {
   totalRondas: number;
   activeRonda?: number;
   categoria?: string | null;
+  fase?: TorneoExpressFaseEliminacion | null;
   pairPlayersById?: Record<string, PublicRetaPairPlayer[]>;
 }
 
@@ -792,6 +931,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   totalRondas,
   activeRonda,
   categoria = null,
+  fase = null,
   pairPlayersById = {},
 }) => {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -846,6 +986,9 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
               key={`col-${col.index}`}
               column={col}
               categoria={categoria}
+              totalRondas={totalRondas}
+              centerRound={layout.centerRound}
+              fase={fase}
             />
           ))}
         </div>
@@ -865,7 +1008,14 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
                 ↓
               </div>
             ) : null}
-            <BracketSlotView slot={slot} categoria={categoria} />
+            <BracketSlotView
+              slot={slot}
+              categoria={categoria}
+              totalRondas={totalRondas}
+              centerRound={layout.centerRound}
+              fase={fase}
+              showCenterCaption={Boolean(slot.isCenter)}
+            />
           </React.Fragment>
         ))}
       </div>

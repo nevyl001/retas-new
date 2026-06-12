@@ -49,10 +49,15 @@ export interface PublicMatchupCard {
   canchaLabel: string | null;
 }
 
+export interface PublicFinalistEntry {
+  label: string;
+  parejaId: string | null;
+}
+
 export interface PublicBracketViewModel {
   championLabel: string | null;
   /** Semis completas y final pendiente — tarjeta de felicitación a finalistas. */
-  finalistsCelebrate: { labels: string[] } | null;
+  finalistsCelebrate: { finalists: PublicFinalistEntry[] } | null;
   /** Ganador del partido por el 3.er lugar (pareja). */
   thirdPlaceCelebrate: { label: string } | null;
   /** Tarjeta del juego por el bronce (si ya está creado). */
@@ -220,11 +225,23 @@ function winnerLabelFromCard(card: PublicMatchupCard): string | null {
   return null;
 }
 
+function winnerPairFromCard(
+  card: PublicMatchupCard
+): PublicFinalistEntry | null {
+  if (card.local.isWinner) {
+    return { label: card.local.label, parejaId: card.local.parejaId };
+  }
+  if (card.visit.isWinner) {
+    return { label: card.visit.label, parejaId: card.visit.parejaId };
+  }
+  return null;
+}
+
 function resolveFinalistsCelebrate(
   allCards: PublicMatchupCard[],
   totalRondas: number,
   championLabel: string | null
-): { labels: string[] } | null {
+): { finalists: PublicFinalistEntry[] } | null {
   if (championLabel || totalRondas < 2) return null;
 
   const semiRound = totalRondas - 1;
@@ -235,12 +252,12 @@ function resolveFinalistsCelebrate(
   if (semiCards.length === 0) return null;
   if (!semiCards.every((c) => c.status === "finished")) return null;
 
-  const labels = semiCards
-    .map((c) => winnerLabelFromCard(c))
-    .filter((name): name is string => Boolean(name));
+  const finalists = semiCards
+    .map((c) => winnerPairFromCard(c))
+    .filter((entry): entry is PublicFinalistEntry => Boolean(entry));
 
-  if (labels.length < 2) return null;
-  return { labels };
+  if (finalists.length < 2) return null;
+  return { finalists };
 }
 
 function motivationalMessageLegacy(currentPhaseUpper: string): string {

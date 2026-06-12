@@ -1,12 +1,14 @@
 import { isRondaTercerLugar } from "./bracketRounds";
 import type { PublicMatchupCard } from "./publicBracketModel";
 
-export type BracketSlotKind = "match" | "final-placeholder";
+export type BracketSlotKind = "match" | "round-placeholder";
 
 export interface BracketVisualSlot {
   kind: BracketSlotKind;
   card: PublicMatchupCard | null;
-  /** Solo para final sin partido creado aún. */
+  /** Ronda que representa el placeholder (semis, final, etc.). */
+  placeholderRound?: number;
+  placeholderIndex?: number;
   finalistTop?: string;
   finalistBottom?: string;
   isCenter?: boolean;
@@ -20,21 +22,19 @@ export interface BracketVisualColumn {
 
 export interface BracketConnector {
   id: string;
-  /** Columna origen (lado del partido). */
   fromSide: "left" | "right";
-  /** Índice del slot en su columna. */
   slotIndex: number;
-  /** Hay ganador confirmado en ese partido. */
   hasWinner: boolean;
 }
 
 export interface PublicBracketVisualLayout {
   totalRondas: number;
+  sideRound: number;
+  centerRound: number;
   columnCount: number;
   centerColumnIndex: number;
   columns: BracketVisualColumn[];
   connectors: BracketConnector[];
-  /** Orden mobile: semis primero, final al final. */
   mobileSlots: BracketVisualSlot[];
 }
 
@@ -43,6 +43,7 @@ function cardsByRound(
 ): Map<number, PublicMatchupCard[]> {
   const map = new Map<number, PublicMatchupCard[]>();
   cards.forEach((c) => {
+    if (isRondaTercerLugar(c.ronda)) return;
     const list = map.get(c.ronda) ?? [];
     list.push(c);
     map.set(c.ronda, list);
@@ -73,7 +74,7 @@ function winnerLabel(card: PublicMatchupCard): string | null {
   return null;
 }
 
-/** Ronda que se muestra en columnas laterales (siempre antes de la final). */
+/** Ronda que se muestra en columnas laterales (siempre antes del centro). */
 function resolveSideRound(
   allCards: PublicMatchupCard[],
   totalRondas: number,
@@ -87,38 +88,107 @@ function resolveSideRound(
   }
 
   for (let r = 1; r < totalRondas; r++) {
-    if (allCards.some((c) => c.ronda === r)) return r;
+    if (allCards.some((c) => c.ronda === r && !isRondaTercerLugar(c.ronda))) {
+      return r;
+    }
   }
   return 1;
 }
 
-function buildFinalPlaceholder(
-  allCards: PublicMatchupCard[],
-  totalRondas: number,
-  sideRound: number
+function teamLabelFromFinished(card: PublicMatchupCard): string {
+  if (card.status !== "finished") return "Por definir";
+  return winnerLabel(card) ?? "Por definir";
+}
+
+function buildPairPlaceholder(
+  cardA: PublicMatchupCard,
+  cardB: PublicMatchupCard,
+  placeholderRound: number,
+  placeholderIndex: number
 ): BracketVisualSlot {
-  const semiCards =
-    allCards
-      .filter((c) => c.ronda === sideRound)
-      .sort((a, b) => a.cruceIndex - b.cruceIndex) ?? [];
-  const { left, right } = splitRound(semiCards);
-
-  const top =
-    left[0] && left[0].status === "finished"
-      ? winnerLabel(left[0]) ?? "Por definir"
-      : "Por definir";
-  const bottom =
-    right[0] && right[0].status === "finished"
-      ? winnerLabel(right[0]) ?? "Por definir"
-      : "Por definir";
-
   return {
-    kind: "final-placeholder",
+    kind: "round-placeholder",
     card: null,
-    finalistTop: top,
-    finalistBottom: bottom,
+    placeholderRound,
+    placeholderIndex,
+    finalistTop: teamLabelFromFinished(cardA),
+    finalistBottom: teamLabelFromFinished(cardB),
     isCenter: true,
   };
+}
+
+function buildFinalPlaceholder(
+  sideRoundCards: PublicMatchupCard[],
+  placeholderRound: number
+): BracketVisualSlot {
+  const { left, right } = splitRound(sideRoundCards);
+  return {
+    kind: "round-placeholder",
+    card: null,
+    placeholderRound,
+    placeholderIndex: 0,
+    finalistTop:
+      left[0] != null ? teamLabelFromFinished(left[0]) : "Por definir",
+    finalistBottom:
+      right[0] != null ? teamLabelFromFinished(right[0]) : "Por definir",
+    isCenter: true,
+  };
+}
+
+/** Placeholders de la ronda central cuando aún no hay partidos creados. */
+function buildCenterPlaceholders(
+  prevRoundCards: PublicMatchupCard[],
+  centerRound: number,
+  totalRondas: number
+): BracketVisualSlot[] {
+  if (centerRound >= totalRondas) {
+    return [buildFinalPlaceholder(prevRoundCards, centerRound)];
+  }
+
+  const { left, right } = splitRound(prevRoundCards);
+  const slots: BracketVisualSlot[] = [];
+
+  if (left.length >= 2) {
+    slots.push(
+      buildPairPlaceholder(left[0], left[1], centerRound, slots.length)
+    );
+  } else if (left.length === 1 && right.length >= 1) {
+    slots.push(
+      buildPairPlaceholder(left[0], right[0], centerRound, slots.length)
+    );
+  }
+
+  if (right.length >= 2) {
+    slots.push(
+      buildPairPlaceholder(right[0], right[1], centerRound, slots.length)
+    );
+  }
+
+  if (slots.length === 0 && prevRoundCards.length > 0) {
+    return [buildFinalPlaceholder(prevRoundCards, centerRound)];
+  }
+
+  return slots;
+}
+
+function buildCenterSlots(
+  byRound: Map<number, PublicMatchupCard[]>,
+  sideRound: number,
+  totalRondas: number
+): BracketVisualSlot[] {
+  const centerRound = Math.min(sideRound + 1, totalRondas);
+  const centerCards = byRound.get(centerRound) ?? [];
+
+  if (centerCards.length > 0) {
+    return centerCards.map((card) => ({
+      kind: "match" as const,
+      card,
+      isCenter: true,
+    }));
+  }
+
+  const prevRoundCards = byRound.get(sideRound) ?? [];
+  return buildCenterPlaceholders(prevRoundCards, centerRound, totalRondas);
 }
 
 export function buildPublicBracketVisualLayout(
@@ -129,6 +199,7 @@ export function buildPublicBracketVisualLayout(
   const columnCount = 3;
   const centerColumnIndex = 1;
   const sideRound = resolveSideRound(allCards, totalRondas, activeRonda);
+  const centerRound = Math.min(sideRound + 1, totalRondas);
   const byRound = cardsByRound(allCards);
 
   const columns: BracketVisualColumn[] = [
@@ -162,23 +233,9 @@ export function buildPublicBracketVisualLayout(
     });
   });
 
-  const finalCards = byRound.get(totalRondas) ?? [];
+  columns[1].slots.push(...buildCenterSlots(byRound, sideRound, totalRondas));
+
   const tercerCards = allCards.filter((c) => isRondaTercerLugar(c.ronda));
-
-  if (finalCards.length > 0) {
-    finalCards.forEach((card) => {
-      columns[1].slots.push({
-        kind: "match",
-        card,
-        isCenter: true,
-      });
-    });
-  } else {
-    columns[1].slots.push(
-      buildFinalPlaceholder(allCards, totalRondas, sideRound)
-    );
-  }
-
   if (tercerCards.length > 0) {
     tercerCards.forEach((card) => {
       columns[1].slots.push({
@@ -194,7 +251,8 @@ export function buildPublicBracketVisualLayout(
     columns[2].slots.length === 0 &&
     allCards.length > 0
   ) {
-    const { left: fallbackLeft, right: fallbackRight } = splitRound(allCards);
+    const playable = allCards.filter((c) => !isRondaTercerLugar(c.ronda));
+    const { left: fallbackLeft, right: fallbackRight } = splitRound(playable);
     fallbackLeft.forEach((card) => {
       columns[0].slots.push({ kind: "match", card });
     });
@@ -210,16 +268,20 @@ export function buildPublicBracketVisualLayout(
   ];
 
   sideSlots.sort((a, b) => {
-    const ra = a.card?.ronda ?? 0;
-    const rb = b.card?.ronda ?? 0;
+    const ra = a.card?.ronda ?? a.placeholderRound ?? 0;
+    const rb = b.card?.ronda ?? b.placeholderRound ?? 0;
     if (ra !== rb) return ra - rb;
-    return (a.card?.cruceIndex ?? 0) - (b.card?.cruceIndex ?? 0);
+    const ia = a.card?.cruceIndex ?? a.placeholderIndex ?? 0;
+    const ib = b.card?.cruceIndex ?? b.placeholderIndex ?? 0;
+    return ia - ib;
   });
 
   const mobileSlots = [...sideSlots, ...centerSlots];
 
   return {
     totalRondas,
+    sideRound,
+    centerRound,
     columnCount,
     centerColumnIndex,
     columns,

@@ -4,6 +4,7 @@ import { buildPublicBracketViewModel } from "../../../lib/torneoExpress/publicBr
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
+import { PublicEliminatoriaFinalistsCelebrate } from "./PublicEliminatoriaFinalistsCelebrate";
 import { usePublicBracketPairPlayers } from "../../../hooks/usePublicBracketPairPlayers";
 import "./te-public-grupos.css";
 import "./torneo-express-public.css";
@@ -47,67 +48,6 @@ function RefreshFooter({
         RIVIERA OPEN · Vista pública · Actualizado hace {secondsAgo}s
       </span>
     </footer>
-  );
-}
-
-function PublicEliminatoriaFinalistsCelebrate({
-  finalistLabels,
-  categoria,
-}: {
-  finalistLabels: string[];
-  categoria: string | null;
-}) {
-  const [top, bottom] = finalistLabels;
-
-  return (
-    <section
-      className="te-pub-grupo-celebrate te-pub-fade-in te-elim-public-celebrate te-elim-public-celebrate--finalists"
-      aria-label="Felicitación a finalistas"
-    >
-      <div className="te-pub-grupo-celebrate__inner te-elim-public-celebrate__inner">
-        <header className="te-pub-grupo-celebrate__brand te-elim-finalists-brand">
-          <div className="te-divider-gold te-divider-gold--wide" aria-hidden />
-          <p className="te-pub-grupo-celebrate__wordmark">
-            RIVIERA
-            <span className="te-pub-grupo-celebrate__wordmark-sep" aria-hidden>
-              {" "}
-              ·{" "}
-            </span>
-            OPEN
-          </p>
-        </header>
-
-        <div className="te-divider-gold te-elim-finalists-brand__divider" aria-hidden />
-
-        <h2 className="te-elim-finalists-headline">¡Felicidades finalistas!</h2>
-
-        {categoria ? (
-          <p className="te-elim-celebrate__categoria">
-            Categoría · {categoria.toUpperCase()}
-          </p>
-        ) : null}
-
-        <div className="te-elim-finalists-duel" aria-label="Finalistas">
-          {top ? (
-            <p className="te-elim-finalist-name">{top}</p>
-          ) : null}
-          <p className="te-elim-finalists-vs" aria-hidden>
-            <span className="te-elim-finalists-vs__line" />
-            <span className="te-elim-finalists-vs__text">vs</span>
-            <span className="te-elim-finalists-vs__line" />
-          </p>
-          {bottom ? (
-            <p className="te-elim-finalist-name">{bottom}</p>
-          ) : null}
-        </div>
-
-        <p className="te-elim-finalists-message">
-          En Riviera Open vivimos el pádel como ustedes: con pasión, esfuerzo y
-          ganas de mejorar cada semana. Los esperamos en la cancha. Que gane el
-          mejor.
-        </p>
-      </div>
-    </section>
   );
 }
 
@@ -316,6 +256,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           totalRondas={model.totalRondas}
           activeRonda={model.activeRonda}
           categoria={categoria}
+          fase={bundle.torneo.fase_eliminacion}
           pairPlayersById={pairPlayersById}
         />
       </section>
@@ -327,8 +268,10 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
             aria-hidden
           />
           <PublicEliminatoriaFinalistsCelebrate
-            finalistLabels={model.finalistsCelebrate.labels}
+            finalists={model.finalistsCelebrate.finalists}
             categoria={categoria}
+            torneoNombre={bundle.torneo.nombre}
+            pairPlayersById={pairPlayersById}
           />
         </>
       ) : null}

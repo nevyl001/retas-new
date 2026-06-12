@@ -9,3 +9,23 @@ export const RIVIERA_APP_TAGLINE = "Organiza. Juega. Compite.";
  * Debe coincidir con `public/index.html` y `public/manifest.json`.
  */
 export const RIVIERA_PUBLIC_DESCRIPTION = `${RIVIERA_APP_TAGLINE} Crea retas y torneos de pádel, gestiona jugadores, estadísticas en tiempo real y enlaces públicos.`;
+
+export const RIVIERA_SOCIAL_HANDLE = "@rivieraopen";
+
+export const RIVIERA_SOCIAL_LINKS = [
+  {
+    id: "instagram" as const,
+    label: "Instagram",
+    href: "https://www.instagram.com/rivieraopen",
+  },
+  {
+    id: "tiktok" as const,
+    label: "TikTok",
+    href: "https://www.tiktok.com/@rivieraopen",
+  },
+  {
+    id: "facebook" as const,
+    label: "Facebook",
+    href: "https://www.facebook.com/rivieraopen/",
+  },
+];

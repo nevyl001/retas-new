@@ -55,10 +55,13 @@ describe("publicBracketLayout", () => {
 
     expect(layout.columnCount).toBe(3);
     expect(layout.centerColumnIndex).toBe(1);
+    expect(layout.sideRound).toBe(1);
+    expect(layout.centerRound).toBe(2);
     expect(layout.columns[0].slots).toHaveLength(1);
     expect(layout.columns[0].slots[0].card?.id).toBe("s1");
     expect(layout.columns[2].slots[0].card?.id).toBe("s2");
-    expect(layout.columns[1].slots[0].kind).toBe("final-placeholder");
+    expect(layout.columns[1].slots[0].kind).toBe("round-placeholder");
+    expect(layout.columns[1].slots[0].placeholderRound).toBe(2);
     expect(layout.mobileSlots).toHaveLength(3);
   });
 
@@ -75,7 +78,7 @@ describe("publicBracketLayout", () => {
     expect(layout.columns[1].slots[0].kind).toBe("match");
   });
 
-  it("keeps 3 columns when totalRondas is 3 (bracket híbrido)", () => {
+  it("shows semifinal placeholders in center during cuartos", () => {
     const q1 = card("q1", 1, 0, "CUARTOS 1");
     const q2 = card("q2", 1, 1, "CUARTOS 2");
     const q3 = card("q3", 1, 2, "CUARTOS 3");
@@ -87,12 +90,19 @@ describe("publicBracketLayout", () => {
     );
 
     expect(layout.columnCount).toBe(3);
+    expect(layout.sideRound).toBe(1);
+    expect(layout.centerRound).toBe(2);
     expect(layout.columns[0].slots).toHaveLength(2);
     expect(layout.columns[2].slots).toHaveLength(2);
-    expect(layout.columns[1].slots[0].kind).toBe("final-placeholder");
+    expect(layout.columns[1].slots).toHaveLength(2);
+    expect(layout.columns[1].slots.every((s) => s.kind === "round-placeholder")).toBe(
+      true
+    );
+    expect(layout.columns[1].slots[0].placeholderRound).toBe(2);
+    expect(layout.columns[1].slots[1].placeholderRound).toBe(2);
   });
 
-  it("shows active semifinals on sides when ronda 2 is active", () => {
+  it("shows active semifinals on sides and final placeholder when ronda 2 is active", () => {
     const q1 = card("q1", 1, 0, "CUARTOS 1");
     const q2 = card("q2", 1, 1, "CUARTOS 2");
     const s1 = card("s1", 2, 0, "SEMIFINAL 1");
@@ -103,9 +113,13 @@ describe("publicBracketLayout", () => {
       2
     );
 
+    expect(layout.sideRound).toBe(2);
+    expect(layout.centerRound).toBe(3);
     expect(layout.columns[0].slots[0].card?.id).toBe("s1");
     expect(layout.columns[2].slots[0].card?.id).toBe("s2");
     expect(layout.columns[0].slots).toHaveLength(1);
     expect(layout.columns[2].slots).toHaveLength(1);
+    expect(layout.columns[1].slots[0].kind).toBe("round-placeholder");
+    expect(layout.columns[1].slots[0].placeholderRound).toBe(3);
   });
 });
