@@ -4,6 +4,10 @@ import type {
   ManoDominante,
   RivieraJugadorCategoria,
 } from "../../lib/rivieraJugadores/types";
+import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
+import {
+  RIVIERA_GENERO_NEW_LABEL,
+} from "../../lib/rivieraJugadores/genero";
 import {
   EN_CANCHA_LABELS,
   EN_CANCHA_ORDER,
@@ -15,6 +19,7 @@ import { PAISES_RIVIERA, paisSelectLabel } from "../../lib/rivieraJugadores/pais
 
 interface NuevoJugadorModalProps {
   open: boolean;
+  genero: RivieraJugadorGenero;
   onClose: () => void;
   onSubmit: (data: {
     nombre: string;
@@ -25,11 +30,13 @@ interface NuevoJugadorModalProps {
     mano_dominante?: ManoDominante | null;
     en_cancha?: EnCancha | null;
     pais_codigo?: string | null;
+    genero: RivieraJugadorGenero;
   }) => Promise<void>;
 }
 
 export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
   open,
+  genero,
   onClose,
   onSubmit,
 }) => {
@@ -61,6 +68,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
         mano_dominante: mano || null,
         en_cancha: enCancha || null,
         pais_codigo: paisCodigo || null,
+        genero,
       });
       setNombre("");
       setEmail("");
@@ -86,7 +94,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
         aria-labelledby="rj-modal-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="rj-modal-title">Nuevo jugador</h2>
+        <h2 id="rj-modal-title">{RIVIERA_GENERO_NEW_LABEL[genero]}</h2>
         <form onSubmit={handleSubmit}>
           <div className="rj-field">
             <label htmlFor="rj-nombre">Nombre *</label>

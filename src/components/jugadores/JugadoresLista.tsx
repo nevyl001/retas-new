@@ -21,11 +21,18 @@ import {
   rebuildJugadorStats,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
+import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
+import {
+  RIVIERA_GENERO_NEW_LABEL,
+  RIVIERA_GENERO_REGISTRY_TITLE,
+} from "../../lib/rivieraJugadores/genero";
 import {
   rankingPosicionesFromSorted,
   rankingPuntosJugador,
 } from "../../lib/rivieraJugadores/rankingPosition";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
+import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
+import { navigateJugadoresLista } from "./jugadoresGeneroNav";
 import { JugadorAjustePuntosModal } from "./JugadorAjustePuntosModal";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
@@ -36,7 +43,10 @@ import { navigateJugadorFicha } from "./jugadoresNav";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
 import "./riviera-jugadores.css";
 
-export const JugadoresLista: React.FC = () => {
+export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
+  genero: generoProp = "M",
+}) => {
+  const genero = generoProp;
   const { user } = useUser();
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,6 +69,7 @@ export const JugadoresLista: React.FC = () => {
         search,
         nivel: nivelFilter || undefined,
         activosRecientes: recientes,
+        genero,
       });
       setJugadores(data);
     } catch (e) {
@@ -70,7 +81,7 @@ export const JugadoresLista: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, search, nivelFilter, recientes]);
+  }, [user?.id, search, nivelFilter, recientes, genero]);
 
   useEffect(() => {
     const t = setTimeout(load, search ? 280 : 0);
@@ -141,7 +152,8 @@ export const JugadoresLista: React.FC = () => {
           <div>
             <h1 className="rj-page__title">Registro Riviera Open</h1>
             <p className="rj-page__sub">
-              Perfiles, categoría y estadísticas de tus jugadores
+              Perfiles, categoría y estadísticas de tus{" "}
+              {RIVIERA_GENERO_REGISTRY_TITLE[genero]}
             </p>
           </div>
           <div className="rj-page__top-actions">
@@ -149,11 +161,11 @@ export const JugadoresLista: React.FC = () => {
               <>
                 <a
                   className="rj-btn rj-btn--ghost"
-                  href={buildPublicRankingUrl(user.id)}
+                  href={buildPublicRankingUrl(user.id, genero)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Ranking público
+                  Ranking {genero === "F" ? "femenil" : "varonil"}
                 </a>
                 <button
                   type="button"
@@ -207,10 +219,15 @@ export const JugadoresLista: React.FC = () => {
               className="rj-btn rj-btn--primary"
               onClick={() => setModalOpen(true)}
             >
-              + Nuevo jugador
+              + {RIVIERA_GENERO_NEW_LABEL[genero]}
             </button>
           </div>
         </div>
+
+        <JugadoresGeneroTabs
+          genero={genero}
+          onChange={(g) => navigateJugadoresLista(g)}
+        />
 
         <div className="rj-filters">
           <input
@@ -247,8 +264,8 @@ export const JugadoresLista: React.FC = () => {
         {loading && !error && <p className="rj-empty">Cargando jugadores…</p>}
         {!loading && !error && jugadores.length === 0 && (
           <p className="rj-empty">
-            Aún no hay jugadores en el registro. Crea el primero o ejecuta la
-            migración desde players/liga.
+            Aún no hay {RIVIERA_GENERO_REGISTRY_TITLE[genero]} en el registro.
+            Crea el primero o ejecuta la migración desde players/liga.
           </p>
         )}
 
@@ -324,6 +341,7 @@ export const JugadoresLista: React.FC = () => {
 
       <NuevoJugadorModal
         open={modalOpen}
+        genero={genero}
         onClose={() => setModalOpen(false)}
         onSubmit={async (data) => {
           if (!user?.id) return;

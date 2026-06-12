@@ -1,3 +1,5 @@
+import type { RivieraJugadorGenero } from "./genero";
+
 export type RivieraJugadorNivel =
   | "iniciación"
   | "intermedio"
@@ -53,7 +55,7 @@ export interface RivieraJugador {
   facebook_url: string | null;
   tiktok_url: string | null;
   visible_publico: boolean;
-  genero: string | null;
+  genero: RivieraJugadorGenero | null;
   fecha_nacimiento: string | null;
   club: string | null;
   organizador_id: string;
@@ -129,7 +131,7 @@ export interface CreateRivieraJugadorInput {
   mano_dominante?: ManoDominante | null;
   en_cancha?: EnCancha | null;
   pais_codigo?: string | null;
-  genero?: string | null;
+  genero?: RivieraJugadorGenero | null;
   club?: string | null;
   foto_url?: string | null;
 }

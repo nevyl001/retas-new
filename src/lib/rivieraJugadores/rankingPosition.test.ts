@@ -69,4 +69,20 @@ describe("rankingPosicionesFromSorted", () => {
       1, 1, 3, 3, 3, 3, 7, 7, 7, 7,
     ]);
   });
+
+  it("empates en puesto 6: ambos #6 y el siguiente #8", () => {
+    const list = [
+      j(550, "diego"),
+      j(400, "carlos"),
+      j(400, "enrique"),
+      j(250, "paco"),
+      j(220, "axel"),
+      j(200, "luis"),
+      j(200, "memo"),
+      j(150, "carlos-co"),
+    ];
+    expect(rankingPosicionesFromSorted(list)).toEqual([
+      1, 2, 2, 4, 5, 6, 6, 8,
+    ]);
+  });
 });

@@ -11,6 +11,10 @@ import type {
 } from "./types";
 import { normalizePaisCodigo } from "./paises";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
+import {
+  isJugadorInGeneroBracket,
+  type RivieraJugadorGenero,
+} from "./genero";
 
 const JUGADOR_SELECT =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -123,7 +127,12 @@ async function computeStatsFallback(
 
 export async function listRivieraJugadores(
   organizadorId: string,
-  opts?: { search?: string; nivel?: string; activosRecientes?: boolean }
+  opts?: {
+    search?: string;
+    nivel?: string;
+    activosRecientes?: boolean;
+    genero?: RivieraJugadorGenero;
+  }
 ): Promise<RivieraJugadorWithStats[]> {
   let q = supabase
     .from("riviera_jugadores")
@@ -131,6 +140,12 @@ export async function listRivieraJugadores(
     .eq("organizador_id", organizadorId)
     .neq("estado", "archivado")
     .order("nombre");
+
+  if (opts?.genero === "F") {
+    q = q.eq("genero", "F");
+  } else if (opts?.genero === "M") {
+    q = q.or("genero.eq.M,genero.is.null");
+  }
 
   if (opts?.search?.trim()) {
     q = q.ilike("nombre", `%${opts.search.trim()}%`);
@@ -148,6 +163,11 @@ export async function listRivieraJugadores(
   let rows = (data ?? []).map((row) =>
     mapJugadorRow(row as Record<string, unknown>)
   );
+  if (opts?.genero) {
+    rows = rows.filter((row) =>
+      isJugadorInGeneroBracket(row.genero, opts.genero!)
+    );
+  }
   if (opts?.activosRecientes) {
     rows = [...rows].sort((a, b) => {
       const da = a.stats?.ultima_actividad ?? "";
@@ -214,14 +234,22 @@ export async function getRivieraJugadorByLegacyPlayerId(
 
 export async function slugExistsForOrg(
   organizadorId: string,
-  slug: string
+  slug: string,
+  genero?: RivieraJugadorGenero | null
 ): Promise<boolean> {
-  const { data, error } = await supabase
+  let q = supabase
     .from("riviera_jugadores")
     .select("id")
     .eq("organizador_id", organizadorId)
-    .eq("slug", slug)
-    .maybeSingle();
+    .eq("slug", slug);
+
+  if (genero === "F") {
+    q = q.eq("genero", "F");
+  } else if (genero === "M") {
+    q = q.or("genero.eq.M,genero.is.null");
+  }
+
+  const { data, error } = await q.maybeSingle();
   if (error && isMissingTableError(error)) return false;
   if (error) throw error;
   return !!data;
@@ -232,8 +260,9 @@ export async function createRivieraJugador(
   input: CreateRivieraJugadorInput
 ): Promise<RivieraJugador> {
   const baseSlug = slugifyJugadorNombre(input.nombre);
+  const genero = input.genero ?? "M";
   const slug = await ensureUniqueSlug(baseSlug, (s) =>
-    slugExistsForOrg(organizadorId, s)
+    slugExistsForOrg(organizadorId, s, genero)
   );
 
   const { data, error } = await supabase
@@ -250,7 +279,7 @@ export async function createRivieraJugador(
       mano_dominante: input.mano_dominante ?? null,
       en_cancha: input.en_cancha ?? null,
       pais_codigo: normalizePaisCodigo(input.pais_codigo),
-      genero: input.genero ?? null,
+      genero,
       club: input.club ?? null,
       foto_url: input.foto_url ?? null,
       organizador_id: organizadorId,
@@ -660,12 +689,13 @@ export async function getRivieraJugadorPublicBySlug(
   return data ? mapJugadorRow(data as Record<string, unknown>) : null;
 }
 
-/** Ranking público por categoría (orden: más puntos, luego nombre). */
+/** Ranking público por categoría y género (orden: más puntos, luego nombre). */
 export async function listPublicJugadoresRanking(
   organizadorId: string,
-  categoria: string
+  categoria: string,
+  genero: RivieraJugadorGenero = "M"
 ): Promise<RivieraJugadorWithStats[]> {
-  const { data, error } = await supabase
+  let q = supabase
     .from("riviera_jugadores")
     .select(`${JUGADOR_SELECT}, stats:jugador_stats(${STATS_SELECT})`)
     .eq("organizador_id", organizadorId)
@@ -673,6 +703,14 @@ export async function listPublicJugadoresRanking(
     .eq("estado", "activo")
     .or("visible_publico.eq.true,visible_publico.is.null")
     .order("nombre");
+
+  if (genero === "F") {
+    q = q.eq("genero", "F");
+  } else {
+    q = q.or("genero.eq.M,genero.is.null");
+  }
+
+  const { data, error } = await q;
 
   if (error) {
     if (isMissingTableError(error)) return [];
@@ -682,7 +720,10 @@ export async function listPublicJugadoresRanking(
   const rows = (data ?? []).map((row) =>
     mapJugadorRow(row as Record<string, unknown>)
   );
-  return [...rows].sort((a, b) => {
+  const filtered = rows.filter((row) =>
+    isJugadorInGeneroBracket(row.genero, genero)
+  );
+  return [...filtered].sort((a, b) => {
     const pa = a.stats?.puntos_totales ?? 0;
     const pb = b.stats?.puntos_totales ?? 0;
     if (pb !== pa) return pb - pa;
@@ -694,10 +735,11 @@ export async function listPublicJugadoresRanking(
 export async function getRankingPosicionEnCategoria(
   organizadorId: string,
   jugadorId: string,
-  categoria: string
+  categoria: string,
+  genero: RivieraJugadorGenero = "M"
 ): Promise<number | null> {
   const { rankingPosicionEnLista } = await import("./rankingPosition");
-  const list = await listPublicJugadoresRanking(organizadorId, categoria);
+  const list = await listPublicJugadoresRanking(organizadorId, categoria, genero);
   return rankingPosicionEnLista(list, jugadorId);
 }
 

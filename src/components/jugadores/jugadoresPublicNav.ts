@@ -1,5 +1,19 @@
 import { navigateAppTo } from "../../lib/appRouting";
 import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
+import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
+import { parseRivieraGeneroFromPath } from "../../lib/rivieraJugadores/genero";
+
+const RANKING_SEGMENT: Record<RivieraJugadorGenero, string> = {
+  M: "varonil",
+  F: "femenil",
+};
+
+export function parsePublicRankingGenero(pathname: string): RivieraJugadorGenero {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  const m = path.match(/^\/ranking\/o\/[^/]+\/(varonil|femenil|m|f)$/i);
+  if (!m) return "M";
+  return parseRivieraGeneroFromPath(m[1]) ?? "M";
+}
 
 export function navigatePublicJugadores(path?: string): void {
   navigateAppTo(
@@ -30,11 +44,19 @@ export function buildRankingComoFuncionaPath(): string {
   return "/ranking/como-funciona";
 }
 
-/** Ranking público por organizador: /ranking/o/{organizadorId}. */
-export function buildPublicRankingUrl(orgId?: string | null): string {
+/** Ranking público por organizador y género: /ranking/o/{organizadorId}/varonil|femenil. */
+export function buildPublicRankingUrl(
+  orgId?: string | null,
+  genero: RivieraJugadorGenero = "M"
+): string {
   const trimmed = orgId?.trim();
+  const segment = RANKING_SEGMENT[genero];
   if (trimmed) {
-    return `/ranking/o/${encodeURIComponent(trimmed)}`;
+    return `/ranking/o/${encodeURIComponent(trimmed)}/${segment}`;
   }
-  return "/ranking";
+  return genero === "F" ? `/ranking/femenil` : "/ranking";
+}
+
+export function buildPublicRankingGeneroPath(genero: RivieraJugadorGenero): string {
+  return genero === "F" ? "/ranking/femenil" : "/ranking";
 }

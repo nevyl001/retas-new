@@ -26,8 +26,10 @@ const SLOTS: {
 
 export const RankingPodio: React.FC<{
   jugadores: RankingPodioJugador[];
+  /** Posiciones reales (empates comparten número). Índice alineado con `jugadores`. */
+  ranks?: number[];
   onSelect: (slug: string) => void;
-}> = ({ jugadores, onSelect }) => {
+}> = ({ jugadores, ranks, onSelect }) => {
   if (jugadores.length === 0) return null;
 
   return (
@@ -35,6 +37,7 @@ export const RankingPodio: React.FC<{
       {SLOTS.map(({ medal, playerIdx, order, avatarSize, rankLabel }) => {
         const jugador = jugadores[playerIdx];
         if (!jugador) return null;
+        const displayRank = ranks?.[playerIdx] ?? rankLabel;
 
         return (
           <button
@@ -47,14 +50,14 @@ export const RankingPodio: React.FC<{
               if (jugador.slug) onSelect(jugador.slug);
             }}
           >
-            {medal === "gold" ? (
+            {displayRank === 1 ? (
               <span className="rjp-podio__trophy" aria-hidden>
                 🏆
               </span>
             ) : null}
             <div className="rjp-podio__avatar-wrap">
               <span className="rjp-podio__medal" aria-hidden>
-                {rankLabel}
+                {displayRank}
               </span>
               <JugadorAvatar
                 fotoUrl={jugador.foto_url}

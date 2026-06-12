@@ -1,20 +1,48 @@
 import React from "react";
+import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
+import { parseRivieraGeneroFromPath } from "../../lib/rivieraJugadores/genero";
 import { JugadorFicha } from "./JugadorFicha";
 import { JugadorPublicFicha } from "./JugadorPublicFicha";
 import { JugadoresLista } from "./JugadoresLista";
 import { JugadoresPublicRanking } from "./JugadoresPublicRanking";
 import { RankingComoFuncionaPage } from "./RankingComoFuncionaPage";
+import { parseJugadoresListaGenero } from "./jugadoresGeneroNav";
+import { parsePublicRankingGenero } from "./jugadoresPublicNav";
+
+const RESERVED_JUGADOR_SLUGS = new Set([
+  "varonil",
+  "femenil",
+  "m",
+  "f",
+]);
 
 export type JugadoresRoute =
-  | { kind: "lista" }
+  | { kind: "lista"; genero: RivieraJugadorGenero }
   | { kind: "ficha"; slug: string }
-  | { kind: "publicRanking"; organizadorId?: string }
+  | { kind: "publicRanking"; organizadorId?: string; genero: RivieraJugadorGenero }
   | { kind: "publicFicha"; slug: string }
   | { kind: "rankingComoFunciona" }
   | { kind: "unknown" };
 
-export function parseJugadoresPath(pathname: string): JugadoresRoute {
-  const path = pathname.replace(/\/+$/, "") || "/";
+function parseRankingRoute(path: string): JugadoresRoute | null {
+  const rankingOrgGenero = path.match(
+    /^\/ranking\/o\/([^/]+)\/(varonil|femenil|m|f)$/i
+  );
+  if (rankingOrgGenero) {
+    try {
+      return {
+        kind: "publicRanking",
+        organizadorId: decodeURIComponent(rankingOrgGenero[1]),
+        genero: parseRivieraGeneroFromPath(rankingOrgGenero[2]) ?? "M",
+      };
+    } catch {
+      return {
+        kind: "publicRanking",
+        organizadorId: rankingOrgGenero[1],
+        genero: parseRivieraGeneroFromPath(rankingOrgGenero[2]) ?? "M",
+      };
+    }
+  }
 
   const rankingOrg = path.match(/^\/ranking\/o\/([^/]+)$/i);
   if (rankingOrg) {
@@ -22,17 +50,39 @@ export function parseJugadoresPath(pathname: string): JugadoresRoute {
       return {
         kind: "publicRanking",
         organizadorId: decodeURIComponent(rankingOrg[1]),
+        genero: "M",
       };
     } catch {
-      return { kind: "publicRanking", organizadorId: rankingOrg[1] };
+      return {
+        kind: "publicRanking",
+        organizadorId: rankingOrg[1],
+        genero: "M",
+      };
     }
   }
-  if (path === "/ranking" || path === "/ranking/") {
-    return { kind: "publicRanking" };
+
+  if (path === "/ranking/femenil") {
+    return { kind: "publicRanking", genero: "F" };
   }
+  if (path === "/ranking" || path === "/ranking/") {
+    return { kind: "publicRanking", genero: "M" };
+  }
+
+  return null;
+}
+
+export function parseJugadoresPath(pathname: string): JugadoresRoute {
+  const path = pathname.replace(/\/+$/, "") || "/";
+
+  const rankingRoute = parseRankingRoute(path);
+  if (rankingRoute) return rankingRoute;
+
   if (path === "/ranking/como-funciona") return { kind: "rankingComoFunciona" };
   if (path === "/public/ranking-puntos") return { kind: "rankingComoFunciona" };
-  if (path === "/public/jugadores") return { kind: "publicRanking" };
+  if (path === "/public/jugadores") {
+    return { kind: "publicRanking", genero: "M" };
+  }
+
   const pub = path.match(/^\/public\/jugadores\/([^/]+)$/i);
   if (pub) {
     try {
@@ -42,15 +92,25 @@ export function parseJugadoresPath(pathname: string): JugadoresRoute {
     }
   }
 
-  if (path === "/jugadores") return { kind: "lista" };
+  const listaGenero = parseJugadoresListaGenero(path);
+  if (listaGenero) {
+    return { kind: "lista", genero: listaGenero };
+  }
+
   const m = path.match(/^\/jugadores\/([^/]+)$/i);
   if (m) {
+    const slugRaw = m[1];
+    let slug = slugRaw;
     try {
-      return { kind: "ficha", slug: decodeURIComponent(m[1]) };
+      slug = decodeURIComponent(slugRaw);
     } catch {
-      return { kind: "ficha", slug: m[1] };
+      slug = slugRaw;
+    }
+    if (!RESERVED_JUGADOR_SLUGS.has(slug.toLowerCase())) {
+      return { kind: "ficha", slug };
     }
   }
+
   return { kind: "unknown" };
 }
 
@@ -71,12 +131,15 @@ export const JugadoresRouter: React.FC<{ pathname: string }> = ({ pathname }) =>
       return <RankingComoFuncionaPage />;
     case "publicRanking":
       return (
-        <JugadoresPublicRanking organizadorId={route.organizadorId} />
+        <JugadoresPublicRanking
+          organizadorId={route.organizadorId}
+          genero={route.genero ?? parsePublicRankingGenero(pathname)}
+        />
       );
     case "publicFicha":
       return <JugadorPublicFicha slug={route.slug} />;
     case "lista":
-      return <JugadoresLista />;
+      return <JugadoresLista genero={route.genero} />;
     case "ficha":
       return <JugadorFicha slug={route.slug} />;
     default:

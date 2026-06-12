@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
   JUGADOR_CATEGORIA_LABELS,
@@ -6,6 +6,7 @@ import {
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
 import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
 import { navigateAppTo } from "../../lib/appRouting";
 import {
   getPublicOrganizadorIdFromPath,
@@ -16,6 +17,11 @@ import type {
   RivieraJugadorCategoria,
   RivieraJugadorWithStats,
 } from "../../lib/rivieraJugadores/types";
+import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
+import {
+  RIVIERA_GENERO_RANKING_TITLE,
+  RIVIERA_GENERO_REGISTRY_TITLE,
+} from "../../lib/rivieraJugadores/genero";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
@@ -25,6 +31,7 @@ import {
   buildRankingComoFuncionaPath,
   navigatePublicJugadorFicha,
 } from "./jugadoresPublicNav";
+import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
 import { RankingPodio } from "./RankingPodio";
 import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
 import "./riviera-jugadores-public-ranking.css";
@@ -32,10 +39,12 @@ import "./riviera-jugadores-public-ranking.css";
 interface JugadoresPublicRankingProps {
   /** Org de la ruta `/ranking/o/{id}` (evita mezclar rankings entre perfiles). */
   organizadorId?: string;
+  genero?: RivieraJugadorGenero;
 }
 
 export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   organizadorId: routeOrganizadorId,
+  genero = "M",
 }) => {
   const { user } = useUser();
   const [orgId, setOrgId] = useState<string | null>(null);
@@ -48,6 +57,11 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
 
   const jugadoresFiltrados = jugadores;
 
+  const rankingRanks = useMemo(
+    () => rankingPosicionesFromSorted(jugadoresFiltrados),
+    [jugadoresFiltrados]
+  );
+
   useEffect(() => {
     try {
       sessionStorage.removeItem("riviera_public_organizador_id");
@@ -58,7 +72,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     const queryOrg = getPublicOrganizadorIdFromSearch();
     const pathOrg = getPublicOrganizadorIdFromPath();
     if (queryOrg && !pathOrg && !routeOrganizadorId) {
-      navigateAppTo(buildPublicRankingUrl(queryOrg));
+      navigateAppTo(buildPublicRankingUrl(queryOrg, genero));
       return;
     }
 
@@ -69,7 +83,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     const resolved = fromUrl ?? user?.id?.trim() ?? null;
     setOrgId(resolved);
     setOrgReady(true);
-  }, [routeOrganizadorId, user?.id]);
+  }, [routeOrganizadorId, user?.id, genero]);
 
   const load = useCallback(async () => {
     if (!orgReady) return;
@@ -86,22 +100,31 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const rows = await listPublicJugadoresRanking(orgId, categoria);
+      const rows = await listPublicJugadoresRanking(orgId, categoria, genero);
       setJugadores(rows);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el ranking");
     } finally {
       setLoading(false);
     }
-  }, [orgId, categoria, orgReady]);
+  }, [orgId, categoria, genero, orgReady]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  const personaLabel =
+    genero === "F"
+      ? jugadoresFiltrados.length === 1
+        ? "jugadora"
+        : "jugadoras"
+      : jugadoresFiltrados.length === 1
+        ? "jugador"
+        : "jugadores";
+
   const metaLine = loading
     ? "Cargando ranking…"
-    : `${jugadoresFiltrados.length} jugador${jugadoresFiltrados.length === 1 ? "" : "es"} · ${JUGADOR_CATEGORIA_LABELS[categoria]}`;
+    : `${jugadoresFiltrados.length} ${personaLabel} · ${JUGADOR_CATEGORIA_LABELS[categoria]}`;
 
   const listWide = jugadoresFiltrados.length > 8;
 
@@ -110,16 +133,24 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
       <div className="rjp-ranking">
         <header className="rjp-ranking-header">
           <p className="rjp-ranking-header__brand">Riviera Open</p>
-          <h1 className="rjp-ranking-header__title">Ranking de jugadores</h1>
+          <h1 className="rjp-ranking-header__title">
+            {RIVIERA_GENERO_RANKING_TITLE[genero]}
+          </h1>
           <p className="rjp-ranking-header__sub">
-            Retas, ligas, americanos y torneos suman al mismo ranking. Sin puntos
-            negativos.
+            Retas, ligas, americanos y torneos suman al ranking{" "}
+            {genero === "F" ? "femenil" : "varonil"}. Sin puntos negativos.
           </p>
           <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
             Ver reglas completas
             <TablerIcon name="chevron-right" size={18} />
           </a>
         </header>
+
+        <JugadoresGeneroTabs
+          className="rjp-ranking-genero-tabs"
+          genero={genero}
+          onChange={(g) => navigateAppTo(buildPublicRankingUrl(orgId, g))}
+        />
 
         <button
           type="button"
@@ -188,8 +219,9 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
             {error && <p className="rjp-ranking-empty">{error}</p>}
             {!error && !loading && jugadoresFiltrados.length === 0 && (
               <p className="rjp-ranking-empty">
-                Aún no hay jugadores en esta categoría. Si cambiaste la categoría
-                de alguien, búscalo en la pestaña de su nueva categoría.
+                Aún no hay {RIVIERA_GENERO_REGISTRY_TITLE[genero]} en esta
+                categoría. Si cambiaste la categoría de alguien, búscalo en la
+                pestaña de su nueva categoría.
               </p>
             )}
 
@@ -197,6 +229,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
               <>
                 <RankingPodio
                   jugadores={jugadoresFiltrados.slice(0, 3)}
+                  ranks={rankingRanks.slice(0, 3)}
                   onSelect={(slug) =>
                     navigatePublicJugadorFicha(slug, orgId ?? undefined)
                   }
@@ -208,7 +241,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                   }${loading ? " is-loading" : ""}`}
                 >
                   {jugadoresFiltrados.slice(3).map((j, idx) => {
-                    const pos = idx + 4;
+                    const pos = rankingRanks[idx + 3] ?? idx + 4;
                     return (
                       <li key={j.id}>
                         <button

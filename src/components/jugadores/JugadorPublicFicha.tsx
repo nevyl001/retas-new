@@ -16,6 +16,7 @@ import {
   listParticipaciones,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
+import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
 import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 import { TablerIcon } from "../ui/TablerIcon";
@@ -69,7 +70,12 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
         const [h, pos] = await Promise.all([
           listParticipaciones(j.id, 100),
           orgId
-            ? getRankingPosicionEnCategoria(orgId, j.id, j.categoria)
+            ? getRankingPosicionEnCategoria(
+                orgId,
+                j.id,
+                j.categoria,
+                normalizeRivieraGenero(j.genero) ?? "M"
+              )
             : Promise.resolve(null),
         ]);
         setHistorial(h);
@@ -86,7 +92,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
     void load();
   }, [load]);
 
-  const rankingUrl = buildPublicRankingUrl(orgId);
+  const rankingUrl = buildPublicRankingUrl(
+    orgId,
+    normalizeRivieraGenero(jugador?.genero) ?? "M"
+  );
 
   const historialItems = useMemo(
     () =>

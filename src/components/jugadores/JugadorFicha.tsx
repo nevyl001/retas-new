@@ -506,8 +506,15 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
               {user?.id && (
                 <p className="rj-page__sub">
                   Ranking:{" "}
-                  <a href={buildPublicRankingUrl(user.id)} target="_blank" rel="noreferrer">
-                    {buildPublicRankingUrl(user.id)}
+                  <a
+                    href={buildPublicRankingUrl(
+                      user.id,
+                      jugador.genero ?? "M"
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {buildPublicRankingUrl(user.id, jugador.genero ?? "M")}
                   </a>
                 </p>
               )}

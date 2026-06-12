@@ -12,13 +12,16 @@ export function getPublicOrganizadorIdFromSearch(): string | null {
   return org || null;
 }
 
-/** Org en la ruta canónica `/ranking/o/{organizadorId}`. */
+/** Org en la ruta canónica `/ranking/o/{organizadorId}` o con segmento de género. */
 export function getPublicOrganizadorIdFromPath(pathname?: string): string | null {
   const path =
     pathname ??
     (typeof window !== "undefined" ? window.location.pathname : "");
-  const m = path.replace(/\/+$/, "").match(/^\/ranking\/o\/([^/]+)$/i);
-  const raw = m?.[1];
+  const withGenero = path
+    .replace(/\/+$/, "")
+    .match(/^\/ranking\/o\/([^/]+)\/(?:varonil|femenil|m|f)$/i);
+  const plain = path.replace(/\/+$/, "").match(/^\/ranking\/o\/([^/]+)$/i);
+  const raw = withGenero?.[1] ?? plain?.[1];
   if (!raw) return null;
   try {
     return decodeURIComponent(raw).trim() || null;
