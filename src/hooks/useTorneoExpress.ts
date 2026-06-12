@@ -19,6 +19,7 @@ import {
   saveEliminatoriaCancha as persistEliminatoriaCancha,
   saveEliminatoriaProgramado as persistEliminatoriaProgramado,
   saveEliminatoriaResultado as persistEliminatoriaResultado,
+  saveGrupoNombre as persistGrupoNombre,
   savePartidoCancha,
   savePartidoProgramado,
   savePartidoResultado,
@@ -64,6 +65,9 @@ export function useTorneoExpress(
   const [finalizandoTorneo, setFinalizandoTorneo] = useState(false);
   const [reabriendoTorneo, setReabriendoTorneo] = useState(false);
   const [reiniciandoEliminatoria, setReiniciandoEliminatoria] = useState(false);
+  const [savingGrupoNombreId, setSavingGrupoNombreId] = useState<string | null>(
+    null
+  );
 
   const reload = useCallback(async (opts?: { silent?: boolean }) => {
     if (!torneoId) {
@@ -351,6 +355,33 @@ export function useTorneoExpress(
     }
   }, [reload, torneoId]);
 
+  const saveGrupoNombre = useCallback(
+    async (grupoId: string, nombre: string) => {
+      setSavingGrupoNombreId(grupoId);
+      setError(null);
+      try {
+        const updated = await persistGrupoNombre(grupoId, nombre);
+        setBundle((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            grupos: prev.grupos.map((g) => (g.id === grupoId ? updated : g)),
+          };
+        });
+        void reload({ silent: true });
+        return updated;
+      } catch (e) {
+        setError(
+          e instanceof Error ? e.message : "No se pudo guardar el nombre del grupo"
+        );
+        throw e;
+      } finally {
+        setSavingGrupoNombreId(null);
+      }
+    },
+    [reload]
+  );
+
   return {
     bundle,
     loading,
@@ -364,6 +395,7 @@ export function useTorneoExpress(
     saveCancha,
     saveProgramado,
     saveOrden,
+    saveGrupoNombre,
     saveEliminatoriaResultado,
     saveEliminatoriaCancha,
     saveEliminatoriaProgramado,
@@ -381,6 +413,7 @@ export function useTorneoExpress(
     reabriendoTorneo,
     reiniciandoEliminatoria,
     savingOrden,
+    savingGrupoNombreId,
     partidosOrdenDisponible,
     partidosCanchaDisponible,
     partidosProgramadoDisponible,

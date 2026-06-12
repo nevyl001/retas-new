@@ -26,7 +26,9 @@ import {
   navigateTorneoExpress,
   setTorneoExpressGeneralBack,
 } from "./torneoExpressNav";
+import type { TorneoExpressGrupo } from "../../lib/torneoExpress/types";
 import { Badge, Button } from "../ui";
+import { TablerIcon } from "../ui/TablerIcon";
 import "./te-gestion-page.css";
 import "./te-fondos.css";
 
@@ -61,9 +63,13 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     finalizandoTorneo,
     reabriendoTorneo,
     reiniciandoEliminatoria,
+    saveGrupoNombre,
+    savingGrupoNombreId,
   } = useTorneoExpress(torneoId, { publicMode: false, realtime: true });
 
   const [activeGrupoId, setActiveGrupoId] = useState<string | null>(null);
+  const [editingGrupoId, setEditingGrupoId] = useState<string | null>(null);
+  const [draftGrupoNombre, setDraftGrupoNombre] = useState("");
   const [copyMsg, setCopyMsg] = useState("");
   const [bracketOpen, setBracketOpen] = useState(false);
   const [resetElimOpen, setResetElimOpen] = useState(false);
@@ -105,6 +111,47 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots)
     );
   }, [bundle, faseTorneo]);
+
+  const cancelEditGrupo = () => {
+    setEditingGrupoId(null);
+    setDraftGrupoNombre("");
+  };
+
+  const startEditGrupo = (g: TorneoExpressGrupo) => {
+    setEditingGrupoId(g.id);
+    setDraftGrupoNombre(g.nombre);
+    setActiveGrupoId(g.id);
+  };
+
+  const commitEditGrupo = async (grupoId: string) => {
+    const nombre = draftGrupoNombre.trim();
+    if (!nombre) {
+      setActionToast({
+        message: "El nombre del grupo no puede estar vacío",
+        type: "error",
+      });
+      return;
+    }
+    const current = bundle?.grupos.find((g) => g.id === grupoId);
+    if (current?.nombre === nombre) {
+      cancelEditGrupo();
+      return;
+    }
+    try {
+      await saveGrupoNombre(grupoId, nombre);
+      cancelEditGrupo();
+      setActionToast({
+        message: "Nombre del grupo actualizado",
+        type: "success",
+      });
+    } catch (e) {
+      setActionToast({
+        message:
+          e instanceof Error ? e.message : "No se pudo guardar el nombre",
+        type: "error",
+      });
+    }
+  };
 
   const puedeReanudarEliminatoria = useMemo(() => {
     if (!bundle?.torneo.fase_eliminacion) return false;
@@ -429,18 +476,81 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             aria-label="Seleccionar grupo"
           >
             {bundle.grupos.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                role="tab"
-                aria-selected={g.id === grupoId}
-                className={`te-grupos-tab${
-                  g.id === grupoId ? " te-grupos-tab--active" : ""
-                }`}
-                onClick={() => setActiveGrupoId(g.id)}
-              >
-                <GrupoBadge nombre={g.nombre} orden={g.orden} />
-              </button>
+              <div key={g.id} className="te-grupos-tab-item">
+                {editingGrupoId === g.id ? (
+                  <div
+                    className="te-grupos-tab-edit"
+                    role="group"
+                    aria-label={`Renombrar ${g.nombre}`}
+                  >
+                    <input
+                      type="text"
+                      className="te-grupos-tab-edit__input"
+                      value={draftGrupoNombre}
+                      onChange={(e) => setDraftGrupoNombre(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void commitEditGrupo(g.id);
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          cancelEditGrupo();
+                        }
+                      }}
+                      disabled={savingGrupoNombreId === g.id}
+                      maxLength={80}
+                      autoFocus
+                      aria-label="Nuevo nombre del grupo"
+                    />
+                    <button
+                      type="button"
+                      className="te-grupos-tab-edit__btn te-grupos-tab-edit__btn--ok"
+                      onClick={() => void commitEditGrupo(g.id)}
+                      disabled={savingGrupoNombreId === g.id}
+                      aria-label="Guardar nombre"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      type="button"
+                      className="te-grupos-tab-edit__btn"
+                      onClick={cancelEditGrupo}
+                      disabled={savingGrupoNombreId === g.id}
+                      aria-label="Cancelar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className={`te-grupos-tab-item__row${
+                      g.id === grupoId ? " te-grupos-tab-item__row--active" : ""
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={g.id === grupoId}
+                      className={`te-grupos-tab${
+                        g.id === grupoId ? " te-grupos-tab--active" : ""
+                      }`}
+                      onClick={() => setActiveGrupoId(g.id)}
+                    >
+                      <GrupoBadge nombre={g.nombre} orden={g.orden} />
+                    </button>
+                    <button
+                      type="button"
+                      className="te-grupos-tab__edit"
+                      onClick={() => startEditGrupo(g)}
+                      aria-label={`Renombrar ${g.nombre}`}
+                      title="Renombrar grupo"
+                    >
+                      <TablerIcon name="pencil" size={14} aria-hidden={false} />
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
 

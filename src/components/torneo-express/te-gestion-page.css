@@ -220,6 +220,98 @@
   background: transparent;
 }
 
+.te-gestion-page .te-grupos-tab-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.te-gestion-page .te-grupos-tab-item__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.te-gestion-page .te-grupos-tab__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.te-gestion-page .te-grupos-tab__edit:hover:not(:disabled) {
+  color: var(--accent-gold);
+  border-color: var(--border-accent);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.te-gestion-page .te-grupos-tab__edit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.te-gestion-page .te-grupos-tab-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid var(--accent-gold);
+  border-radius: var(--radius-full, 9999px);
+  background: var(--bg-elevated);
+}
+
+.te-gestion-page .te-grupos-tab-edit__input {
+  width: min(10rem, 42vw);
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full, 9999px);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.te-gestion-page .te-grupos-tab-edit__input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.te-gestion-page .te-grupos-tab-edit__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full, 9999px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.te-gestion-page .te-grupos-tab-edit__btn--ok {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.te-gestion-page .te-grupos-tab-edit__btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.te-gestion-page .te-grupos-tab-edit__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* —— Separadores de ronda —— */
 .te-gestion-page .te-partidos-ronda__head {
   margin: 1.25rem 0 0.85rem;

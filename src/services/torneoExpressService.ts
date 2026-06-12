@@ -1007,6 +1007,67 @@ export async function savePartidoProgramado(
   return data as TorneoExpressPartido;
 }
 
+export async function saveGrupoNombre(
+  grupoId: string,
+  nombre: string
+): Promise<TorneoExpressGrupo> {
+  const user = await requireAuthUser();
+  const trimmed = nombre.trim();
+  if (!trimmed) {
+    throw new Error("El nombre del grupo no puede estar vacío");
+  }
+  if (trimmed.length > 80) {
+    throw new Error("El nombre del grupo es demasiado largo (máx. 80 caracteres)");
+  }
+
+  const { data: grupo, error: gErr } = await supabase
+    .from("torneo_express_grupos")
+    .select("id, torneo_id, nombre")
+    .eq("id", grupoId)
+    .maybeSingle();
+  throwIfError(gErr, "saveGrupoNombre.fetch");
+  if (!grupo) {
+    throw new Error("Grupo no encontrado");
+  }
+
+  const { data: torneo, error: tErr } = await supabase
+    .from("torneo_express")
+    .select("organizador_id")
+    .eq("id", grupo.torneo_id)
+    .maybeSingle();
+  throwIfError(tErr, "saveGrupoNombre.torneo");
+  if (!torneo || torneo.organizador_id !== user.id) {
+    throw new Error("No tienes permiso para editar este grupo");
+  }
+
+  const { data: siblings, error: sErr } = await supabase
+    .from("torneo_express_grupos")
+    .select("id, nombre")
+    .eq("torneo_id", grupo.torneo_id)
+    .neq("id", grupoId);
+  throwIfError(sErr, "saveGrupoNombre.siblings");
+
+  const duplicate = (siblings ?? []).some(
+    (row: { nombre: string }) =>
+      row.nombre.trim().toLowerCase() === trimmed.toLowerCase()
+  );
+  if (duplicate) {
+    throw new Error(`Ya existe un grupo llamado «${trimmed}» en este torneo`);
+  }
+
+  const { data, error } = await supabase
+    .from("torneo_express_grupos")
+    .update({ nombre: trimmed })
+    .eq("id", grupoId)
+    .select()
+    .single();
+  throwIfError(error, "saveGrupoNombre.update");
+  if (!data) {
+    throw new Error("No se pudo actualizar el nombre del grupo");
+  }
+  return data as TorneoExpressGrupo;
+}
+
 export async function savePartidosOrden(
   updates: Array<{ id: string; orden: number }>
 ): Promise<void> {
