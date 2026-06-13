@@ -6,7 +6,7 @@ import {
 } from "../lib/torneoExpress/canchaDisplay";
 import {
   generateBalancedRoundRobin,
-  sortPartidosByOrden,
+  dedupePartidosExpress,
 } from "../lib/torneoExpress/roundRobin";
 import { formatPairDisplay } from "../lib/torneoExpress/standings";
 import { crucesPrimeraRonda } from "../lib/torneoExpress/bracket";
@@ -333,7 +333,7 @@ async function fetchPartidosForGrupoIds(
   }
 
   throwIfError(error, "fetchTorneoExpressBundle.partidos");
-  return sortPartidosByOrden((data ?? []) as TorneoExpressPartido[]);
+  return dedupePartidosExpress((data ?? []) as TorneoExpressPartido[]);
 }
 
 async function insertTorneoExpressRow(

@@ -240,6 +240,7 @@ export function useTorneoExpress(
         setError(
           e instanceof Error ? e.message : "No se pudo guardar el orden"
         );
+        throw e;
       } finally {
         setSavingOrden(false);
       }

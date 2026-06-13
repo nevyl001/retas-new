@@ -838,6 +838,60 @@ button.te-partido-chip--cancha:disabled {
   gap: 0.25rem;
 }
 
+.te-partido-row-wrap {
+  position: relative;
+}
+
+.te-partido-row-wrap--over {
+  outline: 2px dashed var(--accent-gold, #c9a84c);
+  outline-offset: 4px;
+  border-radius: var(--radius-md, 12px);
+}
+
+.te-partido-row-wrap--dragging {
+  opacity: 0.55;
+}
+
+.te-partido-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border-subtle, #333);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary, #888);
+  cursor: grab;
+  touch-action: none;
+}
+
+.te-partido-drag-handle:active {
+  cursor: grabbing;
+}
+
+.te-partido-drag-handle:hover:not(:disabled) {
+  border-color: var(--accent-gold, #c9a84c);
+  color: var(--accent-gold, #c9a84c);
+}
+
+.te-partido-drag-handle:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.te-partidos-order-hint,
+.te-partidos-dedupe-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #888);
+}
+
+.te-partidos-dedupe-hint {
+  color: var(--accent-gold, #c9a84c);
+}
+
 .te-partido-order-btn {
   width: 24px;
   height: 24px;

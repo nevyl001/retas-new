@@ -134,3 +134,39 @@ export function groupPartidosByRonda(
 
   return groups;
 }
+
+function matchupKey(p: TorneoExpressPartido): string {
+  const pairIds = [p.pareja_local_id, p.pareja_visitante_id].sort().join("|");
+  return `${p.grupo_id}:${pairIds}`;
+}
+
+function pickPreferredPartido(
+  a: TorneoExpressPartido,
+  b: TorneoExpressPartido
+): TorneoExpressPartido {
+  if (a.estado === "jugado" && b.estado !== "jugado") return a;
+  if (b.estado === "jugado" && a.estado !== "jugado") return b;
+  const oa = a.orden ?? 9999;
+  const ob = b.orden ?? 9999;
+  if (oa !== ob) return oa < ob ? a : b;
+  return a.created_at.localeCompare(b.created_at) <= 0 ? a : b;
+}
+
+/** Quita filas repetidas (mismo id o mismo enfrentamiento en el grupo). */
+export function dedupePartidosExpress(
+  partidos: TorneoExpressPartido[]
+): TorneoExpressPartido[] {
+  const byId = new Map<string, TorneoExpressPartido>();
+  for (const p of partidos) {
+    if (!byId.has(p.id)) byId.set(p.id, p);
+  }
+
+  const byMatchup = new Map<string, TorneoExpressPartido>();
+  Array.from(byId.values()).forEach((p) => {
+    const key = matchupKey(p);
+    const prev = byMatchup.get(key);
+    byMatchup.set(key, prev ? pickPreferredPartido(prev, p) : p);
+  });
+
+  return sortPartidosByOrden(Array.from(byMatchup.values()));
+}

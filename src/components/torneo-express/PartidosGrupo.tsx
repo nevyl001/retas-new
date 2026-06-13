@@ -1,8 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  groupPartidosByRonda,
-  sortPartidosByOrden,
-} from "../../lib/torneoExpress/roundRobin";
+import { dedupePartidosExpress } from "../../lib/torneoExpress/roundRobin";
 import {
   canchaDraftFromStored,
   formatCanchaDisplay,
@@ -20,6 +17,7 @@ import type {
   TorneoExpressPartido,
 } from "../../lib/torneoExpress/types";
 import { Badge, Button } from "../ui";
+import { TablerIcon } from "../ui/TablerIcon";
 
 interface PartidosGrupoProps {
   partidos: TorneoExpressPartido[];
@@ -299,9 +297,6 @@ function PartidoRow({
   editable,
   saving,
   enJuego,
-  canMoveUp,
-  canMoveDown,
-  onMove,
   onSave,
   onSaveCancha,
   onSaveProgramado,
@@ -309,6 +304,7 @@ function PartidoRow({
   horarioEditable,
   savingCancha,
   savingProgramado,
+  dragHandle,
 }: {
   partido: TorneoExpressPartido;
   localLabel: string;
@@ -318,11 +314,9 @@ function PartidoRow({
   savingCancha: boolean;
   savingProgramado: boolean;
   enJuego: boolean;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
   canchaEditable: boolean;
   horarioEditable: boolean;
-  onMove?: (direccion: -1 | 1) => void;
+  dragHandle?: React.ReactNode;
   onSave?: PartidosGrupoProps["onSaveResultado"];
   onSaveCancha?: PartidosGrupoProps["onSaveCancha"];
   onSaveProgramado?: PartidosGrupoProps["onSaveProgramado"];
@@ -352,32 +346,7 @@ function PartidoRow({
   return (
     <div className="te-partido-row te-partido-card">
       <div className="te-partido-row__toolbar">
-        {onMove ? (
-          <div className="te-partido-reorder">
-            <button
-              type="button"
-              className="te-partido-order-btn"
-              disabled={!canMoveUp}
-              onClick={() => onMove(-1)}
-              aria-label="Subir partido"
-              title="Subir"
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              className="te-partido-order-btn"
-              disabled={!canMoveDown}
-              onClick={() => onMove(1)}
-              aria-label="Bajar partido"
-              title="Bajar"
-            >
-              ↓
-            </button>
-          </div>
-        ) : (
-          <span />
-        )}
+        {dragHandle ?? <span />}
         <PartidoStatusBadge partido={partido} enJuego={enJuego} />
       </div>
 
@@ -615,18 +584,23 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
   onSaveProgramado,
   onSaveOrden,
 }) => {
-  const sortedFromProps = useMemo(
-    () => sortPartidosByOrden(partidos),
+  const partidosLimpios = useMemo(
+    () => dedupePartidosExpress(partidos),
     [partidos]
   );
+  const duplicadosOcultos = partidos.length - partidosLimpios.length;
 
-  const [localPartidos, setLocalPartidos] = useState(sortedFromProps);
-  const [ordenModificado, setOrdenModificado] = useState(false);
+  const [localPartidos, setLocalPartidos] = useState(partidosLimpios);
   const [ordenError, setOrdenError] = useState<string | null>(null);
+  const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [pendingOrderSave, setPendingOrderSave] = useState(false);
 
   useEffect(() => {
-    if (!ordenModificado) setLocalPartidos(sortedFromProps);
-  }, [sortedFromProps, ordenModificado]);
+    if (!pendingOrderSave && !savingOrden) {
+      setLocalPartidos(partidosLimpios);
+    }
+  }, [partidosLimpios, pendingOrderSave, savingOrden]);
 
   const labelById = useMemo(() => {
     const m = new Map<string, string>();
@@ -641,114 +615,150 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
     return firstPending?.id ?? null;
   }, [localPartidos]);
 
-  const rondaGroups = useMemo(
-    () =>
-      groupPartidosByRonda(localPartidos, {
-        preserveListOrder: ordenModificado,
-      }),
-    [localPartidos, ordenModificado]
+  const showReorder = allowReorder && editable && Boolean(onSaveOrden);
+
+  const persistOrder = useCallback(
+    async (ordered: TorneoExpressPartido[]) => {
+      if (!onSaveOrden) return;
+      setOrdenError(null);
+      setPendingOrderSave(true);
+      const updates = ordered.map((p, index) => ({
+        id: p.id,
+        orden: index + 1,
+      }));
+      try {
+        await onSaveOrden(updates);
+      } catch (e) {
+        setLocalPartidos(partidosLimpios);
+        setOrdenError(
+          e instanceof Error ? e.message : "No se pudo guardar el orden"
+        );
+      } finally {
+        setPendingOrderSave(false);
+      }
+    },
+    [onSaveOrden, partidosLimpios]
   );
 
-  const showRondaHeaders = useMemo(
-    () =>
-      !ordenModificado &&
-      localPartidos.some((p) => p.ronda != null && p.ronda > 0),
-    [localPartidos, ordenModificado]
+  const reorderPartidos = useCallback(
+    async (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return;
+      const next = [...localPartidos];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      setLocalPartidos(next);
+      await persistOrder(next);
+    },
+    [localPartidos, persistOrder]
   );
 
-  const moverPartido = useCallback((index: number, direccion: -1 | 1) => {
-    const destino = index + direccion;
-    if (destino < 0 || destino >= localPartidos.length) return;
-    const nuevos = [...localPartidos];
-    [nuevos[index], nuevos[destino]] = [nuevos[destino], nuevos[index]];
-    setLocalPartidos(nuevos);
-    setOrdenModificado(true);
-  }, [localPartidos]);
+  const clearDragState = useCallback(() => {
+    setDragFromIndex(null);
+    setDragOverIndex(null);
+  }, []);
 
-  const guardarOrden = useCallback(async () => {
-    if (!onSaveOrden) return;
-    setOrdenError(null);
-    const updates = localPartidos.map((p, index) => ({
-      id: p.id,
-      orden: index + 1,
-    }));
-    try {
-      await onSaveOrden(updates);
-      setOrdenModificado(false);
-    } catch (e) {
-      setOrdenError(
-        e instanceof Error ? e.message : "No se pudo guardar el orden"
-      );
-    }
-  }, [localPartidos, onSaveOrden]);
+  const onDragStart = useCallback(
+    (index: number) => (e: React.DragEvent) => {
+      if (!showReorder || savingOrden) {
+        e.preventDefault();
+        return;
+      }
+      setDragFromIndex(index);
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(index));
+    },
+    [showReorder, savingOrden]
+  );
 
-  if (partidos.length === 0) {
+  const onDrop = useCallback(
+    (targetIndex: number) => async (e: React.DragEvent) => {
+      e.preventDefault();
+      const raw = e.dataTransfer.getData("text/plain");
+      const fromIndex =
+        dragFromIndex ?? (raw !== "" ? Number.parseInt(raw, 10) : NaN);
+      clearDragState();
+      if (Number.isNaN(fromIndex) || fromIndex === targetIndex) return;
+      await reorderPartidos(fromIndex, targetIndex);
+    },
+    [clearDragState, dragFromIndex, reorderPartidos]
+  );
+
+  if (partidosLimpios.length === 0) {
     return <p className="te-subtitle">Sin partidos en este grupo.</p>;
   }
 
-  const showReorder = allowReorder && editable && onSaveOrden;
-
-  const renderPartidoRow = (partido: TorneoExpressPartido, index: number) => (
-    <PartidoRow
-      key={partido.id}
-      partido={partido}
-      localLabel={labelById.get(partido.pareja_local_id) ?? "Local"}
-      visitLabel={labelById.get(partido.pareja_visitante_id) ?? "Visitante"}
-      editable={editable}
-      saving={savingPartidoId === partido.id}
-      savingCancha={savingCanchaId === partido.id}
-      savingProgramado={savingProgramadoId === partido.id}
-      canchaEditable={canchaEditable}
-      horarioEditable={horarioEditable}
-      enJuego={partido.id === enJuegoId}
-      canMoveUp={Boolean(showReorder && index > 0)}
-      canMoveDown={Boolean(showReorder && index < localPartidos.length - 1)}
-      onMove={showReorder ? (d) => moverPartido(index, d) : undefined}
-      onSave={onSaveResultado}
-      onSaveCancha={onSaveCancha}
-      onSaveProgramado={onSaveProgramado}
-    />
-  );
-
   return (
     <div className="te-partidos-list">
-      {ordenError && <p className="te-error">{ordenError}</p>}
+      {showReorder ? (
+        <p className="te-partidos-order-hint">
+          Arrastra el icono{" "}
+          <TablerIcon name="grip-vertical" size={14} aria-hidden={false} /> para
+          cambiar el orden de los juegos.
+        </p>
+      ) : null}
 
-      {showReorder && ordenModificado && (
-        <div className="te-partidos-orden-bar">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={savingOrden}
-            loading={savingOrden}
-            onClick={() => void guardarOrden()}
-          >
-            {savingOrden ? "Guardando orden…" : "Guardar nuevo orden"}
-          </Button>
+      {duplicadosOcultos > 0 ? (
+        <p className="te-partidos-dedupe-hint" role="status">
+          Se ocultaron {duplicadosOcultos} partido
+          {duplicadosOcultos === 1 ? "" : "s"} duplicado
+          {duplicadosOcultos === 1 ? "" : "s"} en este grupo.
+        </p>
+      ) : null}
+
+      {ordenError ? <p className="te-error">{ordenError}</p> : null}
+
+      {localPartidos.map((partido, index) => (
+        <div
+          key={partido.id}
+          className={`te-partido-row-wrap${
+            dragOverIndex === index ? " te-partido-row-wrap--over" : ""
+          }${dragFromIndex === index ? " te-partido-row-wrap--dragging" : ""}`}
+          onDragOver={(e) => {
+            if (!showReorder || savingOrden) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+            setDragOverIndex(index);
+          }}
+          onDragLeave={() => {
+            if (dragOverIndex === index) setDragOverIndex(null);
+          }}
+          onDrop={(e) => void onDrop(index)(e)}
+        >
+          <PartidoRow
+            partido={partido}
+            localLabel={labelById.get(partido.pareja_local_id) ?? "Local"}
+            visitLabel={
+              labelById.get(partido.pareja_visitante_id) ?? "Visitante"
+            }
+            editable={editable}
+            saving={savingPartidoId === partido.id}
+            savingCancha={savingCanchaId === partido.id}
+            savingProgramado={savingProgramadoId === partido.id}
+            canchaEditable={canchaEditable}
+            horarioEditable={horarioEditable}
+            enJuego={partido.id === enJuegoId}
+            onSave={onSaveResultado}
+            onSaveCancha={onSaveCancha}
+            onSaveProgramado={onSaveProgramado}
+            dragHandle={
+              showReorder ? (
+                <button
+                  type="button"
+                  className="te-partido-drag-handle"
+                  draggable={!savingOrden}
+                  disabled={savingOrden}
+                  onDragStart={onDragStart(index)}
+                  onDragEnd={clearDragState}
+                  aria-label={`Arrastrar partido ${index + 1}`}
+                  title="Arrastrar para reordenar"
+                >
+                  <TablerIcon name="grip-vertical" size={18} />
+                </button>
+              ) : undefined
+            }
+          />
         </div>
-      )}
-
-      {ordenModificado ? (
-        localPartidos.map((partido, index) => renderPartidoRow(partido, index))
-      ) : (
-        rondaGroups.map((group) => (
-        <div key={`ronda-${group.ronda}`} className="te-partidos-ronda">
-          {showRondaHeaders ? (
-            <div className="te-partidos-ronda__head" role="separator">
-              <span className="te-partidos-ronda__line" aria-hidden />
-              <span className="te-partidos-ronda__label">RONDA {group.ronda}</span>
-              <span className="te-partidos-ronda__line" aria-hidden />
-            </div>
-          ) : null}
-
-          {group.items.map((partido) => {
-            const index = localPartidos.findIndex((p) => p.id === partido.id);
-            return renderPartidoRow(partido, index);
-          })}
-        </div>
-        ))
-      )}
+      ))}
     </div>
   );
 };

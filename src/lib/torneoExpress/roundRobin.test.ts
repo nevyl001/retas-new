@@ -1,4 +1,5 @@
 import {
+  dedupePartidosExpress,
   expectedMatchCount,
   generateBalancedRoundRobin,
 } from "./roundRobin";
@@ -53,5 +54,38 @@ describe("generateBalancedRoundRobin", () => {
       seen.add(key);
     });
     expect(seen.size).toBe(6);
+  });
+});
+
+describe("dedupePartidosExpress", () => {
+  const base = {
+    grupo_id: "g1",
+    ganador_id: null,
+    estado: "pendiente" as const,
+    puntos_local: null,
+    puntos_visitante: null,
+    created_at: "2026-01-01T00:00:00Z",
+  };
+
+  it("deja un solo partido por enfrentamiento", () => {
+    const list = [
+      {
+        ...base,
+        id: "p1",
+        pareja_local_id: "a",
+        pareja_visitante_id: "b",
+        orden: 1,
+        ronda: 1,
+      },
+      {
+        ...base,
+        id: "p2",
+        pareja_local_id: "b",
+        pareja_visitante_id: "a",
+        orden: 2,
+        ronda: 2,
+      },
+    ];
+    expect(dedupePartidosExpress(list)).toHaveLength(1);
   });
 });
