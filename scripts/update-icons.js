@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 
 const PUBLIC = path.join(__dirname, '..', 'public');
-const LOGO_SOURCE = path.join(PUBLIC, 'logo-source.png');
+const LOGO_SOURCE = path.join(PUBLIC, 'logo-riviera.png');
 
 const SIZES = [
   { size: 512, out: 'icon-512x512.png' },
@@ -18,7 +18,7 @@ const SIZES = [
 
 async function run() {
   if (!fs.existsSync(LOGO_SOURCE)) {
-    console.error('No se encuentra logo-source.png en public/');
+    console.error('No se encuentra logo-riviera.png en public/');
     process.exit(1);
   }
 

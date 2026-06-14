@@ -1,3 +1,6 @@
 node_modules
 dist
 .cache
+build
+.DS_Store
+**/.DS_Store
