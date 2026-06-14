@@ -1,10 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  createPlayer,
   dedupeLegacyPlayersByName,
-  deletePlayer,
   getPlayers,
-  updatePlayer,
   type Player,
 } from "../../lib/database";
 import {
@@ -12,18 +9,14 @@ import {
   dedupePlayersForSelect,
   normalizePlayerNameKey,
 } from "../../lib/rivieraJugadores/playerNameKey";
-import { ensureLegacyPlayerForRivieraJugador } from "../../lib/rivieraJugadores/playerPoolSync";
-import type { RivieraJugador } from "../../lib/rivieraJugadores/types";
 import {
-  isValidRealEmail,
   playerHasNotifiableEmail,
   playerNeedsEmailContact,
-  updatePlayerNotificationContact,
 } from "../../services/torneoExpressNotificacionesService";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
 import { InscripcionParejaModal } from "./InscripcionParejaModal";
+import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
 import { Button } from "../ui";
-import { JugadorAutocomplete } from "../jugadores/JugadorAutocomplete";
 import "../jugadores/riviera-jugadores.css";
 
 type PlayerRow = Player & {
@@ -38,27 +31,18 @@ interface TorneoExpressPlayerPanelProps {
 
 export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> = ({
   userId,
-  parejas,
+  parejas: _parejas,
   onJugadoresChange,
 }) => {
   const [jugadores, setJugadores] = useState<Player[]>([]);
   const [cargandoJugadores, setCargandoJugadores] = useState(true);
   const [busqueda, setBusqueda] = useState("");
-  const [jugadorEditando, setJugadorEditando] = useState<string | null>(null);
-  const [nombreEditado, setNombreEditado] = useState("");
-  const [nuevoJugadorNombre, setNuevoJugadorNombre] = useState("");
-  const [nuevoJugadorEmail, setNuevoJugadorEmail] = useState("");
-  const [agregandoNuevo, setAgregandoNuevo] = useState(false);
-  const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
-  const [eliminandoId, setEliminandoId] = useState<string | null>(null);
   const [contactModal, setContactModal] = useState<{
     playerId: string;
     playerName: string;
     email: string;
   } | null>(null);
-  const [rivieraSeleccionado, setRivieraSeleccionado] =
-    useState<RivieraJugador | null>(null);
 
   const syncJugadores = useCallback(
     (list: Player[]) => {
@@ -100,177 +84,12 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     return jugadores.filter((j) => j.name.toLowerCase().includes(q));
   }, [jugadores, busqueda]);
 
-  const estaEnPareja = useCallback(
-    (jugadorId: string) =>
-      parejas.some(
-        (p) => p.jugador1.id === jugadorId || p.jugador2.id === jugadorId
-      ),
-    [parejas]
-  );
-
-  const resetAddForm = () => {
-    setNuevoJugadorNombre("");
-    setNuevoJugadorEmail("");
-    setRivieraSeleccionado(null);
-    setAgregandoNuevo(false);
-  };
-
-  const agregarJugador = async () => {
-    const nombre = nuevoJugadorNombre.trim();
-    const email = nuevoJugadorEmail.trim();
-
-    if (!nombre || !userId) return;
-
-    if (!email || !isValidRealEmail(email)) {
-      setError(
-        "Ingresa un email real válido (no se permiten direcciones @padel.local)."
-      );
-      return;
-    }
-
-    const existe = jugadores.some(
-      (j) => j.name.toLowerCase() === nombre.toLowerCase()
-    );
-    if (existe) {
-      setError("Ya existe un jugador con ese nombre");
-      return;
-    }
-
-    setGuardando(true);
-    setError("");
-    try {
-      let base: Player;
-      if (
-        rivieraSeleccionado &&
-        rivieraSeleccionado.nombre.trim().toLowerCase() === nombre.toLowerCase()
-      ) {
-        const linked = await ensureLegacyPlayerForRivieraJugador(
-          userId,
-          rivieraSeleccionado
-        );
-        if (!linked) {
-          setError("No se pudo enlazar el jugador del registro");
-          return;
-        }
-        base = linked;
-      } else {
-        base = await createPlayer(nombre, userId);
-      }
-
-      await updatePlayerNotificationContact(
-        base.id,
-        {
-          email,
-          notif_opt_in_email: true,
-        },
-        { autoNotifyEnrollment: false }
-      );
-      await cargarJugadores();
-      resetAddForm();
-    } catch {
-      setError("Error al guardar el jugador");
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  const iniciarEdicion = (jugador: Player) => {
-    setJugadorEditando(jugador.id);
-    setNombreEditado(jugador.name);
-    setEliminandoId(null);
-    setError("");
-  };
-
-  const cancelarEdicion = () => {
-    setJugadorEditando(null);
-    setNombreEditado("");
-  };
-
-  const editarJugador = async (jugador: Player) => {
-    const nombre = nombreEditado.trim();
-    if (!nombre || nombre === jugador.name) {
-      cancelarEdicion();
-      return;
-    }
-
-    const existe = jugadores.some(
-      (j) =>
-        j.id !== jugador.id && j.name.toLowerCase() === nombre.toLowerCase()
-    );
-    if (existe) {
-      setError("Ya existe un jugador con ese nombre");
-      return;
-    }
-
-    setGuardando(true);
-    setError("");
-    try {
-      const data = await updatePlayer(jugador.id, nombre);
-      syncJugadores(jugadores.map((j) => (j.id === jugador.id ? data : j)));
-      cancelarEdicion();
-    } catch {
-      setError("Error al editar el jugador");
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  const confirmarEliminar = (jugador: Player) => {
-    setEliminandoId(jugador.id);
-    setJugadorEditando(null);
-    setError("");
-  };
-
-  const cancelarEliminar = () => setEliminandoId(null);
-
-  const eliminarJugador = async (jugador: Player) => {
-    if (estaEnPareja(jugador.id)) {
-      setError(
-        `No puedes eliminar a ${jugador.name} porque ya está asignado a una pareja en este torneo. Elimina primero la pareja.`
-      );
-      setEliminandoId(null);
-      return;
-    }
-
-    setGuardando(true);
-    setError("");
-    try {
-      await deletePlayer(jugador.id);
-      syncJugadores(jugadores.filter((j) => j.id !== jugador.id));
-      setEliminandoId(null);
-    } catch {
-      setError("Error al eliminar el jugador");
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  const onAddKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      void agregarJugador();
-    }
-    if (e.key === "Escape") {
-      resetAddForm();
-    }
-  };
-
-  const onEditKeyDown = (e: React.KeyboardEvent, jugador: Player) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      void editarJugador(jugador);
-    }
-    if (e.key === "Escape") cancelarEdicion();
-  };
-
   const abrirContacto = (jugador: PlayerRow) => {
     setContactModal({
       playerId: jugador.id,
       playerName: jugador.name,
       email: jugador.email ?? "",
     });
-    setJugadorEditando(null);
-    setEliminandoId(null);
     setError("");
   };
 
@@ -286,20 +105,15 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
           <span className="te-players-panel__title-icon" aria-hidden>
             👥
           </span>
-          Jugadores registrados
+          Jugadores del registro
         </h2>
         <Button
           type="button"
-          variant="primary"
+          variant="ghost"
           size="sm"
-          onClick={() => {
-            setAgregandoNuevo(true);
-            setEliminandoId(null);
-            setError("");
-          }}
-          disabled={agregandoNuevo || guardando}
+          onClick={() => navigateJugadoresLista("M")}
         >
-          + Nuevo
+          Ir al registro
         </Button>
       </div>
 
@@ -334,81 +148,12 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
         />
       </div>
 
-      {agregandoNuevo && (
-        <div className="te-players-add-form">
-          <JugadorAutocomplete
-            organizadorId={userId}
-            value={nuevoJugadorNombre}
-            onChange={(v) => {
-              setNuevoJugadorNombre(v);
-              setRivieraSeleccionado(null);
-            }}
-            onSelect={(rj) => {
-              setRivieraSeleccionado(rj);
-              setNuevoJugadorNombre(rj.nombre);
-              if (rj.email && !rj.email.endsWith("@padel.local")) {
-                setNuevoJugadorEmail(rj.email);
-              }
-            }}
-          />
-          <label className="te-players-add-form__label" htmlFor="te-nuevo-nombre">
-            Nombre
-          </label>
-          <input
-            id="te-nuevo-nombre"
-            type="text"
-            placeholder="Nombre del jugador"
-            value={nuevoJugadorNombre}
-            onChange={(e) => setNuevoJugadorNombre(e.target.value)}
-            onKeyDown={onAddKeyDown}
-            autoFocus
-            disabled={guardando}
-          />
-          <label className="te-players-add-form__label" htmlFor="te-nuevo-email">
-            Email real
-          </label>
-          <input
-            id="te-nuevo-email"
-            type="email"
-            placeholder="email@ejemplo.com"
-            value={nuevoJugadorEmail}
-            onChange={(e) => setNuevoJugadorEmail(e.target.value)}
-            onKeyDown={onAddKeyDown}
-            disabled={guardando}
-            autoComplete="email"
-          />
-          <div className="te-players-add-form__actions">
-            <Button
-              type="button"
-              variant="primary"
-              size="sm"
-              onClick={() => void agregarJugador()}
-              disabled={
-                guardando ||
-                !nuevoJugadorNombre.trim() ||
-                !nuevoJugadorEmail.trim()
-              }
-              loading={guardando}
-            >
-              Guardar
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={resetAddForm}
-              disabled={guardando}
-            >
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      )}
-
       <p className="te-players-panel__hint te-players-panel__hint--notif">
-        Para notificar al crear el torneo, cada jugador necesita{" "}
-        <strong>email real</strong>. Pulsa <strong>+ Nuevo</strong> o{" "}
-        <strong>📧</strong> en quien ya esté en la lista.
+        Los jugadores se registran solo en{" "}
+        <strong>Registro de jugadores</strong>. Aquí se listan los del registro
+        para armar parejas. Para notificaciones necesitan{" "}
+        <strong>email real</strong> (agrégalo en el registro o con 📧 si aún
+        falta).
       </p>
 
       <p className="te-players-list-meta">
@@ -432,7 +177,17 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
           ))}
         </ul>
       ) : jugadores.length === 0 ? (
-        <p className="te-players-empty">No hay jugadores registrados aún</p>
+        <div className="te-players-empty">
+          <p>No hay jugadores en el registro.</p>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={() => navigateJugadoresLista("M")}
+          >
+            Registrar jugadores
+          </Button>
+        </div>
       ) : jugadoresFiltrados.length === 0 ? (
         <p className="te-players-empty">
           No se encontró ningún jugador con ese nombre
@@ -440,82 +195,6 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
       ) : (
         <ul className="te-players-list">
           {jugadoresFiltrados.map((jugador) => {
-            const editando = jugadorEditando === jugador.id;
-            const confirmDelete = eliminandoId === jugador.id;
-
-            if (confirmDelete) {
-              return (
-                <li
-                  key={`${normalizePlayerNameKey(jugador.name)}-${jugador.id}`}
-                  className="te-players-row te-players-row--confirm"
-                >
-                  <span>
-                    ¿Eliminar <strong>{jugador.name}</strong>?
-                  </span>
-                  <div className="te-players-row__actions">
-                    <Button
-                      type="button"
-                      variant="danger"
-                      size="sm"
-                      onClick={() => void eliminarJugador(jugador)}
-                      disabled={guardando}
-                      loading={guardando}
-                    >
-                      Sí, eliminar
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={cancelarEliminar}
-                      disabled={guardando}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </li>
-              );
-            }
-
-            if (editando) {
-              return (
-                <li
-                  key={`${normalizePlayerNameKey(jugador.name)}-${jugador.id}`}
-                  className="te-players-row te-players-row--edit"
-                >
-                  <input
-                    type="text"
-                    value={nombreEditado}
-                    onChange={(e) => setNombreEditado(e.target.value)}
-                    onKeyDown={(e) => onEditKeyDown(e, jugador)}
-                    autoFocus
-                    disabled={guardando}
-                    className="te-players-row__input"
-                  />
-                  <div className="te-players-row__actions">
-                    <button
-                      type="button"
-                      className="te-players-icon-btn te-players-icon-btn--ok"
-                      onClick={() => void editarJugador(jugador)}
-                      disabled={guardando}
-                      aria-label="Guardar"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      type="button"
-                      className="te-players-icon-btn"
-                      onClick={cancelarEdicion}
-                      disabled={guardando}
-                      aria-label="Cancelar"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </li>
-              );
-            }
-
             const row = jugador as PlayerRow;
             const emailOk = playerHasNotifiableEmail(row);
 
@@ -537,41 +216,24 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
                     title={
                       emailOk
                         ? "Email listo para notificaciones"
-                        : "Falta email real"
+                        : "Falta email real en el registro"
                     }
                   >
                     {emailOk ? "✉️ OK" : "⚠️ sin email"}
                   </span>
                 </div>
                 <div className="te-players-row__actions">
-                  <button
-                    type="button"
-                    className="te-players-icon-btn te-players-icon-btn--contact"
-                    onClick={() => abrirContacto(row)}
-                    disabled={guardando}
-                    aria-label={`Contacto de ${jugador.name}`}
-                    title="Email de contacto"
-                  >
-                    📧
-                  </button>
-                  <button
-                    type="button"
-                    className="te-players-icon-btn"
-                    onClick={() => iniciarEdicion(jugador)}
-                    disabled={guardando}
-                    aria-label={`Editar nombre de ${jugador.name}`}
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    type="button"
-                    className="te-players-icon-btn te-players-icon-btn--danger"
-                    onClick={() => confirmarEliminar(jugador)}
-                    disabled={guardando}
-                    aria-label={`Eliminar ${jugador.name}`}
-                  >
-                    🗑️
-                  </button>
+                  {!emailOk ? (
+                    <button
+                      type="button"
+                      className="te-players-icon-btn te-players-icon-btn--contact"
+                      onClick={() => abrirContacto(row)}
+                      aria-label={`Contacto de ${jugador.name}`}
+                      title="Completar email de contacto"
+                    >
+                      📧
+                    </button>
+                  ) : null}
                 </div>
               </li>
             );

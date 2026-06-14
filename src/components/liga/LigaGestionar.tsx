@@ -5,6 +5,7 @@ import {
 } from "../../lib/liga/calendario";
 import type { LigaDetalle, LigaJugadorPoolItem } from "../../lib/liga/types";
 import { JugadorCategoriaBadge } from "../jugadores/JugadorCategoriaBadge";
+import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
 import "../jugadores/riviera-jugadores.css";
 import {
   deleteLiga,
@@ -412,7 +413,17 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               })}
             </ul>
             {jugadoresPool.length === 0 && (
-              <p className="liga-empty">Aún no hay jugadores disponibles.</p>
+              <div className="liga-empty">
+                <p>Aún no hay jugadores en el registro.</p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => navigateJugadoresLista("M")}
+                >
+                  Ir al registro de jugadores
+                </Button>
+              </div>
             )}
           </div>
         </>

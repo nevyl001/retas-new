@@ -445,8 +445,8 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                   <strong>Notificaciones automáticas</strong>
                   <p>
                     Al pulsar «Crear torneo», cada jugador con{" "}
-                    <strong>email real</strong> (panel derecho → 📧 o + Nuevo)
-                    recibe aviso de inscripción y grupo por email.
+                    <strong>email real</strong> en el registro recibe aviso de
+                    inscripción y grupo por email.
                     Los que marquen «⚠️ sin email» no recibirán nada.
                   </p>
                 </div>
