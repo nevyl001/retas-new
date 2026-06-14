@@ -7,6 +7,7 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import {
   backfillAmericanoHistorial,
+  backfillLigaJornadaHistorial,
   backfillRetasHistorial,
 } from "../../lib/rivieraJugadores/syncParticipaciones";
 import {
@@ -171,15 +172,16 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                   type="button"
                   className="rj-btn rj-btn--ghost"
                   disabled={backfilling}
-                  title="Importa historial de retas y americanos finalizados"
+                  title="Importa historial de retas, americanos y jornadas de liga finalizadas"
                   onClick={async () => {
                     if (!user?.id) return;
                     setBackfilling(true);
                     try {
-                      const [nRetas, nAmericanos, nPromoted] =
+                      const [nRetas, nAmericanos, nLigas, nPromoted] =
                         await Promise.all([
                           backfillRetasHistorial(user.id),
                           backfillAmericanoHistorial(user.id),
+                          backfillLigaJornadaHistorial(user.id),
                           promoteImportedRivieraJugadores(user.id),
                         ]);
                       const todos = await listRivieraJugadores(user.id);
@@ -187,17 +189,17 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                         todos.map((j) => rebuildJugadorStats(j.id))
                       );
                       await load();
-                      const total = nRetas + nAmericanos;
+                      const total = nRetas + nAmericanos + nLigas;
                       const promoNote =
                         nPromoted > 0
                           ? ` ${nPromoted} jugador(es) activados en ranking público.`
                           : "";
                       alert(
                         total > 0
-                          ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s).${promoNote}`
+                          ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s), ${nLigas} jornada(s) de liga.${promoNote}`
                           : nPromoted > 0
                             ? `${nPromoted} jugador(es) activados en ranking público.`
-                            : "No hay retas ni americanos finalizados para importar."
+                            : "No hay retas, americanos ni jornadas de liga para importar."
                       );
                     } catch (e) {
                       alert(

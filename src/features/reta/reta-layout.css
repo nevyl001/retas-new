@@ -428,9 +428,9 @@
 }
 
 .submit-btn:hover {
-  border-color: #c5a028;
-  color: var(--color-accent-text);
-  background: #c5a028;
+  border-color: var(--ro-accent);
+  color: var(--ro-text-on-accent);
+  background: var(--ro-accent);
   transform: translateY(-1px);
   box-shadow: var(--shadow-medium);
 }

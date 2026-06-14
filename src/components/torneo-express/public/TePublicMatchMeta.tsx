@@ -17,13 +17,13 @@ export const TePublicMatchMeta: React.FC<{ partido: TorneoExpressPartido }> = ({
 
   return (
     <div className="te-pub-match__meta" aria-label="Programación del partido">
-      <span className="te-pub-match-chip">
+      <span className="te-pub-match-chip te-pub-match-chip--fecha">
         <span className="te-pub-match-chip__icon" aria-hidden>
           📅
         </span>
         {fechaLabel}
       </span>
-      <span className="te-pub-match-chip">
+      <span className="te-pub-match-chip te-pub-match-chip--hora">
         <span className="te-pub-match-chip__icon" aria-hidden>
           🕐
         </span>

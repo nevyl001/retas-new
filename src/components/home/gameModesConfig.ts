@@ -24,7 +24,7 @@ export const GAME_MODES: GameModeConfig[] = [
     icon: "🏆",
     badge: "Popular",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-    accentColor: "#c9a227",
+    accentColor: "#ffffff",
   },
   {
     id: "round-robin",
@@ -32,7 +32,7 @@ export const GAME_MODES: GameModeConfig[] = [
     description: "Todos contra todos, tabla en vivo",
     icon: "🔄",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-    accentColor: "#c9a227",
+    accentColor: "#ffffff",
   },
   {
     id: "americano",
@@ -41,7 +41,7 @@ export const GAME_MODES: GameModeConfig[] = [
     icon: "🎾",
     badge: "Rápido",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-    accentColor: "#c9a227",
+    accentColor: "#10b981",
   },
   {
     id: "mini-torneo",
@@ -50,7 +50,7 @@ export const GAME_MODES: GameModeConfig[] = [
     icon: "⚡",
     badge: "Nuevo",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-    accentColor: "#c9a227",
+    accentColor: "#8b5cf6",
   },
   {
     id: "liga",
@@ -59,6 +59,6 @@ export const GAME_MODES: GameModeConfig[] = [
     icon: "🏅",
     badge: "Nuevo",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-    accentColor: "#c9a227",
+    accentColor: "#3b82f6",
   },
 ];

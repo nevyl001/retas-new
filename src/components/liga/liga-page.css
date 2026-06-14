@@ -282,7 +282,7 @@
 .liga-field select:focus {
   outline: none;
   border-color: var(--liga-gold);
-  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
 
 .liga-form-row {
@@ -366,8 +366,8 @@
 .liga-banner--completed {
   background: linear-gradient(
     135deg,
-    rgba(201, 162, 39, 0.12),
-    rgba(201, 162, 39, 0.04)
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.04)
   );
   border: 0.5px solid var(--liga-gold-border);
   border-radius: var(--liga-radius-md);
@@ -497,7 +497,7 @@
 .liga-score-input:focus {
   border-color: var(--liga-gold);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
 
 /* ─── Chips & links ─── */
@@ -620,5 +620,5 @@
 .liga-jornada-manual__input:focus {
   border-color: var(--liga-gold);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
 }

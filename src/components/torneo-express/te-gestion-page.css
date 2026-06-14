@@ -200,6 +200,7 @@
 .te-gestion-page .te-grupos-tab--active {
   border-color: var(--accent-gold);
   background: var(--accent-gold);
+  color: var(--text-on-gold);
   box-shadow: none;
 }
 
@@ -1108,11 +1109,11 @@
 }
 
 .te-gestion-page .te-notif-toolbar__sep {
-  color: var(--te-muted, #6e6e73);
+  color: var(--te-muted, var(--ro-text-muted));
 }
 
 .te-gestion-page .te-notif-toolbar__count {
-  color: var(--accent-gold, #c9a227);
+  color: var(--accent-gold, var(--ro-accent));
   font-weight: 600;
   margin-left: 0.25rem;
 }
@@ -1122,14 +1123,14 @@
   border: none;
   padding: 0;
   font-size: 0.75rem;
-  color: var(--accent-gold, #c9a227);
+  color: var(--accent-gold, var(--ro-accent));
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .te-gestion-page .te-notif-link:hover {
-  color: var(--accent-gold-light, #dbb842);
+  color: var(--accent-gold-light, var(--ro-accent-hover));
 }
 
 .te-gestion-page .te-notif-send-bar {
@@ -1176,7 +1177,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--bg-elevated, #242426);
+  background: var(--bg-elevated, var(--ro-bg-elevated));
 }
 
 .te-gestion-page .te-notif-table th {
@@ -1197,7 +1198,7 @@
 }
 
 .te-gestion-page .te-notif-table__row--on {
-  background: rgba(201, 162, 39, 0.06);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .te-gestion-page .te-notif-table__check {
@@ -1238,17 +1239,17 @@
 
 .te-gestion-page .te-notif-pill--ok {
   background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
+  color: var(--ro-success);
 }
 
 .te-gestion-page .te-notif-pill--partial {
-  background: rgba(201, 162, 39, 0.15);
-  color: var(--accent-gold, #c9a227);
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--accent-gold, var(--ro-accent));
 }
 
 .te-gestion-page .te-notif-pill--off {
   background: rgba(255, 255, 255, 0.06);
-  color: var(--te-muted, #6e6e73);
+  color: var(--te-muted, var(--ro-text-muted));
 }
 
 .te-gestion-page .te-notif-table__expand td {
@@ -1272,7 +1273,7 @@
 
 .te-gestion-page .te-notif-expand__name {
   font-size: 0.72rem;
-  color: var(--te-muted, #aeaeb2);
+  color: var(--te-muted, var(--ro-text-secondary));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1332,7 +1333,7 @@
 
 .te-gestion-page .te-notif-contacts-grid__label {
   font-size: 0.7rem;
-  color: var(--te-muted, #aeaeb2);
+  color: var(--te-muted, var(--ro-text-secondary));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

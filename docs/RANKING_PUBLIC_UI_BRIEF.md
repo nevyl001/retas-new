@@ -1,6 +1,6 @@
 # Brief UI — Ranking público Riviera Open
 
-Documento para revisión de diseño (Claude u otro). Describe el estado actual de la **vista pública del ranking de jugadores** para proponer mejoras visuales alineadas con Riviera Gold v3 y tendencias 2026 (shareable, premium deportivo).
+Documento para revisión de diseño (Claude u otro). Describe el estado actual de la **vista pública del ranking de jugadores** para proponer mejoras visuales alineadas con **Riviera Open Maestro v1.0** (negro + blanco + grises, sin dorado) y tendencias 2026 (shareable, premium deportivo).
 
 ---
 
@@ -14,7 +14,7 @@ Documento para revisión de diseño (Claude u otro). Describe el estado actual d
 | **App wrapper** | `App--jugadores-public ro-public-view` (fondo cancha) |
 | **Audiencia** | Jugadores que consultan su posición; el organizador comparte el enlace |
 | **Objetivo UX** | Ver ranking por categoría, entender sistema de puntos, abrir ficha del jugador |
-| **Objetivo visual** | Premium, oscuro, dorado quirúrgico; digno de compartir en Instagram/stories |
+| **Objetivo visual** | Premium, oscuro, acento blanco quirúrgico; digno de compartir en Instagram/stories |
 
 ---
 

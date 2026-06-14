@@ -224,7 +224,7 @@ body {
   gap: 0.4rem;
   padding: 0.28rem 0.65rem;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(232, 197, 71, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   background: var(--accent-gold-dim);
   color: var(--accent-gold);
   font-family: var(--font-body);

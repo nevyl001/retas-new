@@ -1,17 +1,17 @@
 :root {
   /* Colores Liga */
-  --liga-gold: #c9a227;
-  --liga-gold-light: #e8d48a;
-  --liga-gold-bright: #fde68a;
-  --liga-gold-dim: rgba(201, 162, 39, 0.15);
-  --liga-gold-border: rgba(201, 162, 39, 0.25);
+  --liga-gold: var(--ro-accent);
+  --liga-gold-light: var(--ro-accent-hover);
+  --liga-gold-bright: var(--ro-accent);
+  --liga-gold-dim: var(--ro-accent-dim);
+  --liga-gold-border: var(--ro-border-accent);
   --liga-purple: rgba(91, 79, 207, 0.85);
   --liga-purple-dim: rgba(91, 79, 207, 0.18);
   --liga-purple-text: #ddd6fe;
   --liga-green: #10b981;
   --liga-green-light: #6ee7b7;
   --liga-green-dim: rgba(16, 185, 129, 0.15);
-  --liga-red: #f87171;
+  --liga-red: var(--ro-error);
   --liga-bg-base: var(--bg-base);
   --liga-bg: var(--bg-base);
   --liga-bg-gradient: var(--bg-base);
@@ -25,13 +25,13 @@
   --liga-text-soft: var(--text-secondary);
   --liga-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.25);
   --liga-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.3);
-  --liga-shadow-gold: 0 2px 8px rgba(201, 162, 39, 0.35);
-  --liga-shadow-gold-glow: 0 0 40px rgba(201, 162, 39, 0.2);
+  --liga-shadow-gold: 0 2px 8px rgba(255, 255, 255, 0.35);
+  --liga-shadow-gold-glow: 0 0 40px rgba(255, 255, 255, 0.2);
   --liga-shadow-green-glow: 0 0 8px rgba(16, 185, 129, 0.25);
 
   /* Tipografía */
-  --liga-font-display: var(--font-display, "Inter", sans-serif);
-  --liga-font-body: var(--font-body, "Inter", sans-serif);
+  --liga-font-display: var(--ro-font-heading);
+  --liga-font-body: var(--ro-font-body);
 
   /* Spacing */
   --liga-space-xs: 4px;

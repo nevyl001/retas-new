@@ -73,7 +73,7 @@
 
 .mis-retas-page .riviera-filter-chip--active {
   background: var(--accent-gold-dim);
-  border-color: rgba(201, 162, 39, 0.35);
+  border-color: rgba(255, 255, 255, 0.35);
   color: var(--text-primary);
 }
 
@@ -144,7 +144,7 @@
 }
 
 .mis-retas-page .mis-reta-card--status-pending {
-  border-color: rgba(201, 162, 39, 0.28) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
 }
 
 .mis-retas-page .mis-reta-card--status-finished {
@@ -153,8 +153,8 @@
 }
 
 .mis-retas-page .mis-reta-card--selected {
-  border-color: rgba(201, 162, 39, 0.4) !important;
-  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
 }
 
 .mis-retas-page .mis-reta-card__badges {
@@ -174,8 +174,8 @@
 .mis-retas-page .riviera-badge--mode-equipos,
 .mis-retas-page .riviera-badge--mode-torneo {
   background: var(--accent-gold-dim) !important;
-  color: rgba(201, 162, 39, 0.95) !important;
-  border: 0.5px solid rgba(201, 162, 39, 0.38) !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.38) !important;
 }
 
 .mis-retas-page .riviera-badge--mode-robin {
@@ -207,7 +207,7 @@
 }
 
 .mis-retas-page .riviera-badge--pending {
-  color: #fcd34d !important;
+  color: var(--ro-accent-hover) !important;
   border-color: rgba(251, 191, 36, 0.35) !important;
   background: rgba(251, 191, 36, 0.12) !important;
 }
@@ -288,7 +288,7 @@
 }
 
 .mis-retas-page .mis-reta-card__continue:hover {
-  color: rgba(201, 162, 39, 0.85);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .mis-retas-page .mis-reta-card__actions-right {
@@ -353,7 +353,7 @@
 }
 
 .mis-retas-page .mis-retas-empty__icon .ti {
-  color: #c9a84c;
+  color: var(--ro-accent);
   opacity: 0.85;
 }
 

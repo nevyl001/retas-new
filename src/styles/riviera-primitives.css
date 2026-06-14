@@ -37,14 +37,14 @@
 }
 
 .riviera-btn-primary {
-  background: var(--accent-gold);
-  color: var(--text-on-gold);
-  border-color: var(--accent-gold);
+  background: var(--ro-accent);
+  color: var(--ro-text-on-accent);
+  border-color: var(--ro-accent);
 }
 
 .riviera-btn-primary:hover:not(:disabled) {
-  background: var(--accent-gold-light);
-  border-color: var(--accent-gold-light);
+  background: var(--ro-accent-hover);
+  border-color: var(--ro-accent-hover);
   box-shadow: var(--glow-gold);
 }
 
@@ -56,7 +56,7 @@
 
 .riviera-btn-secondary:hover:not(:disabled) {
   border-color: var(--border-accent);
-  color: var(--accent-gold);
+  color: var(--ro-accent);
 }
 
 .riviera-btn-ghost {
@@ -308,7 +308,7 @@ select.riviera-input:disabled {
 .riviera-badge--live {
   background: var(--accent-gold-dim);
   color: var(--accent-gold);
-  border: 1px solid rgba(201, 162, 39, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .riviera-badge--live::before {

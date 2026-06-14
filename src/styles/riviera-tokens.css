@@ -1,97 +1,86 @@
 /* ============================================================
-   RIVIERA GOLD v3 — Fuente única de verdad
-   Preview: riviera_gold_v3_preview.html
-   Grafito #1c1c1e + Dorado #c9a227 · DM Sans display + body
+   RIVIERA OPEN — tokens de compatibilidad (app + módulos legacy)
+   Fuente de verdad: riviera-open-tokens.css (--ro-*)
+   Design System Maestro v1.0 — negro + blanco + grises
    ============================================================ */
 
-:root {
-  /* ── Superficies ── */
-  --bg-base: #1c1c1e;
-  --bg-deep: #0c0c0c;
-  --bg-surface-solid: #141414;
-  --bg-elevated: #242426;
-  --bg-card: rgba(255, 255, 255, 0.07);
-  --bg-card-hover: rgba(255, 255, 255, 0.11);
-  --bg-overlay: rgba(28, 28, 30, 0.88);
+@import "./riviera-open-tokens.css";
 
-  /* ── Bordes ── */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.16);
-  --border-accent: rgba(201, 162, 39, 0.4);
-  --border-focus: rgba(201, 162, 39, 0.55);
+:root {
+  /* ── Superficies → --ro-* ── */
+  --bg-base: var(--ro-bg-base);
+  --bg-deep: var(--ro-bg-deep);
+  --bg-surface-solid: var(--ro-bg-surface);
+  --bg-elevated: var(--ro-bg-elevated);
+  --bg-card: var(--ro-bg-card);
+  --bg-card-hover: var(--ro-bg-elevated);
+  --bg-overlay: rgba(0, 0, 0, 0.88);
   --bg-inset: rgba(255, 255, 255, 0.03);
 
-  /* GOLD USAGE POLICY
-     KEEP:   active nav, EN VIVO badge, mode badges, primary CTA,
-             victory accent, oro medal, focus ring
-     REDUCE: card borders → var(--border-default)
-             section dividers → var(--border-subtle)
-             info backgrounds → var(--bg-elevated)
-     REMOVE: body text, disabled state, bullets, decorative gradients
-  */
-  /* ── Dorado ── */
-  --accent-gold: #c9a227;
-  --accent-gold-light: #dbb842;
-  --accent-gold-dim: rgba(201, 162, 39, 0.12);
-  --glow-gold: 0 0 20px rgba(201, 162, 39, 0.15);
+  /* ── Bordes ── */
+  --border-subtle: var(--ro-border-subtle);
+  --border-default: var(--ro-border);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-accent: var(--ro-border-accent);
+  --border-focus: rgba(255, 255, 255, 0.35);
 
-  /* alias — do not use directly */
-  --riviera-accent-gold: var(--accent-gold);
-  /* alias — do not use directly */
-  --te-gold: var(--accent-gold);
-  /* alias — do not use directly */
-  --color-gold: var(--accent-gold);
+  /* ── Acento (sin dorado — aliases legacy → blanco) ── */
+  --accent-gold: var(--ro-accent);
+  --accent-gold-light: var(--ro-accent-hover);
+  --accent-gold-dim: var(--ro-accent-dim);
+  --glow-gold: 0 0 20px rgba(255, 255, 255, 0.08);
 
-  /* ── Aliases legacy ── */
-  --accent: var(--accent-gold);
-  --accent-hover: var(--accent-gold-light);
-  --accent-muted: var(--accent-gold-dim);
-  --accent-glow: var(--accent-gold-dim);
-  --color-cream: var(--accent-gold);
+  --riviera-accent-gold: var(--ro-accent);
+  --te-gold: var(--ro-accent);
+  --color-gold: var(--ro-accent);
+
+  --accent: var(--ro-accent);
+  --accent-hover: var(--ro-accent-hover);
+  --accent-muted: var(--ro-accent-dim);
+  --accent-glow: var(--ro-accent-dim);
+  --color-cream: var(--ro-accent);
 
   /* ── Texto ── */
-  --text-primary: #f5f5f7;
-  --text-secondary: #aeaeb2;
-  --text-muted: #6e6e73;
-  --text-disabled: #48484a;
-  --text-inverse: #1c1c1e;
-  --text-on-gold: #1c1c1e;
+  --text-primary: var(--ro-text-primary);
+  --text-secondary: var(--ro-text-secondary);
+  --text-muted: var(--ro-text-muted);
+  --text-disabled: #333333;
+  --text-inverse: var(--ro-text-on-accent);
+  --text-on-gold: var(--ro-text-on-accent);
 
   /* ── Estados ── */
-  --win: #4ade80;
-  --loss: #f87171;
+  --win: var(--ro-success);
+  --loss: var(--ro-error);
   --draw: #94a3b8;
-  --live: var(--accent-gold);
-  --pending: #6e6e73;
-  --success: var(--win);
+  --live: var(--ro-accent);
+  --pending: var(--ro-pending);
+  --success: var(--ro-success);
   --success-muted: rgba(74, 222, 128, 0.13);
-  --warning: var(--accent-gold-light);
-  --error: var(--loss);
-  --error-muted: rgba(239, 68, 68, 0.08);
-  --danger: var(--loss);
+  --warning: var(--ro-accent-hover);
+  --error: var(--ro-error);
+  --error-muted: rgba(248, 113, 113, 0.08);
+  --danger: var(--ro-error);
 
-  /* ── Podio / medallas (vistas públicas) ── */
-  --medal-gold: var(--accent-gold);
-  --medal-silver: #b8bcc4;
-  --medal-silver-dim: rgba(184, 188, 196, 0.12);
-  --medal-silver-border: rgba(184, 188, 196, 0.35);
-  --medal-bronze: #cd9a6a;
-  --medal-bronze-dim: rgba(180, 120, 60, 0.1);
-  --medal-bronze-border: rgba(205, 127, 50, 0.35);
+  /* ── Podio / medallas ── */
+  --medal-gold: var(--ro-medal-gold);
+  --medal-silver: var(--ro-medal-silver);
+  --medal-silver-dim: rgba(160, 160, 160, 0.12);
+  --medal-silver-border: rgba(160, 160, 160, 0.35);
+  --medal-bronze: var(--ro-medal-bronze);
+  --medal-bronze-dim: rgba(107, 107, 107, 0.12);
+  --medal-bronze-border: rgba(107, 107, 107, 0.35);
 
   /* ── Modos de juego ── */
-  --mode-equipos: var(--accent-gold);
-  --mode-robin: #3b82f6;
-  --mode-americano: #10b981;
-  --mode-torneo: #8b5cf6;
+  --mode-equipos: var(--ro-mode-reta);
+  --mode-robin: var(--ro-mode-liga);
+  --mode-americano: var(--ro-mode-americano);
+  --mode-torneo: var(--ro-mode-torneo);
 
-  /* ── Tipografía v3 ── */
-  --font-body: "DM Sans", system-ui, sans-serif;
-  --font-display: var(--font-body);
-  /* use for hero titles — no Barlow Condensed */
-  --font-ui: var(--font-body);
-  --font-family: var(--font-body);
+  /* ── Tipografía ── */
+  --font-body: var(--ro-font-body);
+  --font-display: var(--ro-font-heading);
+  --font-ui: var(--ro-font-body);
+  --font-family: var(--ro-font-body);
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
   --font-weight-light: 300;
@@ -100,67 +89,67 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* ── Escala tipográfica ── */
-  --text-display-xl: clamp(2rem, 6vw, 2.375rem);
-  --text-display-l: clamp(1.25rem, 4vw, 1.5rem);
-  --text-display-m: 1.25rem;
-  --text-body-lg: 1rem;
-  --text-body: 0.875rem;
-  --text-body-sm: 0.8125rem;
-  --text-label: 0.6875rem;
-  --text-score: 2rem;
-  --text-xs: 11px;
-  --text-sm: 13px;
-  --text-base: 14px;
+  /* ── Escala tipográfica → --ro-* ── */
+  --text-display-xl: var(--ro-text-hero);
+  --text-display-l: var(--ro-text-display);
+  --text-display-m: var(--ro-text-title);
+  --text-body-lg: var(--ro-text-body-lg);
+  --text-body: var(--ro-text-body);
+  --text-body-sm: var(--ro-text-small);
+  --text-label: var(--ro-text-label);
+  --text-score: var(--ro-text-score);
+  --text-xs: var(--ro-text-label);
+  --text-sm: var(--ro-text-small);
+  --text-base: var(--ro-text-body);
 
   --weight-display: 700;
   --weight-semibold: 600;
   --weight-medium: 500;
   --weight-regular: 400;
 
-  /* ── Espaciado (4px) ── */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-10: 40px;
-  --space-12: 48px;
-  --space-16: 64px;
+  /* ── Espaciado ── */
+  --space-1: var(--ro-space-1);
+  --space-2: var(--ro-space-2);
+  --space-3: var(--ro-space-3);
+  --space-4: var(--ro-space-4);
+  --space-5: var(--ro-space-5);
+  --space-6: var(--ro-space-6);
+  --space-8: var(--ro-space-8);
+  --space-10: var(--ro-space-10);
+  --space-12: var(--ro-space-12);
+  --space-16: var(--ro-space-16);
   --space-20: 80px;
   --space-24: 96px;
 
-  --space-xs: var(--space-1);
-  --space-sm: var(--space-2);
-  --space-md: var(--space-4);
-  --space-lg: var(--space-8);
-  --space-xl: var(--space-12);
-  --space-2xl: var(--space-16);
+  --space-xs: var(--ro-space-1);
+  --space-sm: var(--ro-space-2);
+  --space-md: var(--ro-space-4);
+  --space-lg: var(--ro-space-8);
+  --space-xl: var(--ro-space-12);
+  --space-2xl: var(--ro-space-16);
   --space-3xl: var(--space-24);
 
-  /* ── Radius v3 ── */
+  /* ── Radius ── */
   --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 14px;
-  --radius-full: 999px;
-  --radius-button: var(--radius-md);
-  --radius-card: var(--radius-lg);
+  --radius-sm: var(--ro-radius-sm);
+  --radius-md: var(--ro-radius-md);
+  --radius-lg: var(--ro-radius-lg);
+  --radius-xl: var(--ro-radius-xl);
+  --radius-full: var(--ro-radius-full);
+  --radius-button: var(--ro-radius-md);
+  --radius-card: var(--ro-radius-lg);
 
   /* ── Sombras ── */
   --shadow-0: none;
-  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.45);
-  --shadow-3: 0 8px 32px rgba(0, 0, 0, 0.55);
-  --shadow-card: var(--shadow-1);
+  --shadow-1: var(--ro-shadow-sm);
+  --shadow-2: var(--ro-shadow-md);
+  --shadow-3: 0 8px 32px rgba(0, 0, 0, 0.85);
+  --shadow-card: var(--ro-shadow-sm);
   --shadow-gold: var(--glow-gold);
-  --shadow-soft: var(--shadow-1);
-  --shadow-medium: var(--shadow-2);
+  --shadow-soft: var(--ro-shadow-sm);
+  --shadow-medium: var(--ro-shadow-md);
   --shadow-deep: var(--shadow-3);
-  --shadow-elevated: var(--shadow-2);
+  --shadow-elevated: var(--ro-shadow-md);
   --shadow-glow-gold: var(--glow-gold);
 
   /* ── Motion ── */
@@ -181,7 +170,7 @@
   /* ── Layout ── */
   --page-max-width: 1200px;
   --page-max-width-public: 720px;
-  --page-padding: var(--space-4);
+  --page-padding: var(--ro-space-4);
 
   /* ── Legacy App.css ── */
   --bg-primary: var(--bg-base);
@@ -218,7 +207,7 @@
   --color-border-focus: var(--border-focus);
   --color-accent-subtle: var(--accent-gold-dim);
 
-  /* ── Aliases --riviera-* (módulos TE, reglas de implementación) ── */
+  /* ── Aliases --riviera-* ── */
   --riviera-bg-base: var(--bg-base);
   --riviera-bg-elevated: var(--bg-elevated);
   --riviera-bg-card: var(--bg-card);
@@ -256,10 +245,10 @@
   --riviera-font-display: var(--font-display);
   --riviera-font-body: var(--font-body);
 
-  /* ── Torneo Express — aliases de Riviera Gold v3 (no hex propios) ── */
+  /* ── Torneo Express ── */
   --te-black: var(--bg-deep);
   --te-surface: var(--bg-surface-solid);
-  --te-surface-hover: #1a1a1a;
+  --te-surface-hover: var(--ro-bg-elevated);
   --te-border: var(--border-subtle);
   --te-gold-bright: var(--accent-gold-light);
   --te-gold-muted: var(--accent-gold-dim);

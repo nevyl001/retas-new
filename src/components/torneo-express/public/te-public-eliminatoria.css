@@ -69,7 +69,7 @@
 .te-elim-champion strong,
 .te-elim-champion__names {
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ro-medal-gold, var(--accent-gold));
   letter-spacing: -0.01em;
 }
 
@@ -251,7 +251,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(201, 162, 39, 0.55),
+    rgba(255, 255, 255, 0.55),
     transparent
   );
 }
@@ -263,7 +263,7 @@
   background: var(--accent-gold);
   transform: rotate(45deg);
   flex-shrink: 0;
-  box-shadow: 0 0 10px rgba(201, 162, 39, 0.45);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
 }
 
 .te-bracket-final-caption__brand {
@@ -292,7 +292,7 @@
   line-height: 1.15;
   color: var(--accent-gold);
   text-wrap: balance;
-  text-shadow: 0 0 24px rgba(201, 162, 39, 0.18);
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
 }
 
 .te-bracket-col {
@@ -461,7 +461,7 @@
 }
 
 .te-elim-bracket-card__status--live {
-  color: var(--color-live, #4ade80);
+  color: var(--color-live, var(--ro-success));
   animation: te-bracket-live-pulse 1.6s ease-in-out infinite;
 }
 
@@ -515,12 +515,19 @@
   border-right: 1px solid rgba(255, 255, 255, 0.07);
 }
 
+.te-bracket-side-meta__item:first-child .te-bracket-side-meta__label {
+  color: var(--ro-pub-schedule, var(--accent-gold));
+}
+
+.te-bracket-side-meta__item:last-child .te-bracket-side-meta__label {
+  color: var(--ro-pub-court, #f87171);
+}
+
 .te-bracket-side-meta__label {
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--accent-gold);
   opacity: 0.9;
 }
 
@@ -536,8 +543,13 @@
   font-size: clamp(0.9375rem, 1.35vw, 1.125rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--accent-gold);
+  color: var(--ro-pub-schedule, var(--accent-gold));
   white-space: nowrap;
+}
+
+.te-bracket-side-meta__item:last-child .te-bracket-side-meta__value {
+  color: var(--ro-pub-court, #f87171);
+  font-weight: 700;
 }
 
 [data-bracket-phase="octavos"] .te-bracket-side-meta__value {
@@ -606,9 +618,20 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent-gold);
   opacity: 0.85;
   text-align: center;
+}
+
+.te-bracket-final-schedule__item:first-child .te-bracket-final-schedule__label {
+  color: var(--text-secondary);
+}
+
+.te-bracket-final-schedule__item--time .te-bracket-final-schedule__label {
+  color: var(--ro-pub-schedule, var(--accent-gold));
+}
+
+.te-bracket-final-schedule__item:last-child .te-bracket-final-schedule__label {
+  color: var(--ro-pub-court, #f87171);
 }
 
 .te-bracket-final-schedule__value {
@@ -640,8 +663,13 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  color: var(--accent-gold);
+  color: var(--ro-pub-schedule, var(--accent-gold));
   white-space: nowrap;
+}
+
+.te-bracket-final-schedule__item:last-child .te-bracket-final-schedule__value {
+  color: var(--ro-pub-court, #f87171);
+  font-weight: 700;
 }
 
 @media (max-width: 519px) {
@@ -723,8 +751,8 @@
 }
 
 .te-bracket-team--winner {
-  background: rgba(201, 162, 39, 0.1);
-  border-color: rgba(201, 162, 39, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.28);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
@@ -787,7 +815,7 @@
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: rgba(201, 162, 39, 0.75);
+  color: rgba(255, 255, 255, 0.75);
   flex-shrink: 0;
 }
 
@@ -819,7 +847,7 @@
 
 .te-bracket-team--winner .te-bracket-team__player {
   font-size: clamp(0.875rem, 1.25vw, 1rem);
-  color: #fff;
+  color: var(--ro-accent);
 }
 
 .te-bracket-team--loser .te-bracket-team__player {
@@ -918,7 +946,7 @@
   letter-spacing: 0.04em;
   color: var(--accent-gold);
   background: var(--accent-gold-dim);
-  border: 0.5px solid rgba(201, 162, 39, 0.2);
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
   vertical-align: middle;
 }
 
@@ -1078,11 +1106,11 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(201, 162, 39, 0.7);
+  color: rgba(255, 255, 255, 0.7);
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
-  border: 1px solid rgba(201, 162, 39, 0.22);
-  background: rgba(201, 162, 39, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
   opacity: 1;
 }
 
@@ -1157,21 +1185,21 @@
 }
 
 .te-elim-public-celebrate--tercer {
-  --te-celebrate-accent: #cd7f32;
+  --te-celebrate-accent: var(--ro-medal-bronze);
 }
 
 .te-elim-finalists-headline--tercer {
-  color: #e8b88a;
+  color: var(--ro-medal-bronze);
 }
 
 .te-elim-finalist-name--tercer {
-  color: #f0d4b8;
+  color: var(--ro-text-secondary);
   font-size: clamp(1.15rem, 4vw, 1.45rem);
 }
 
 .te-elim-campeon--tercer {
   margin-top: 0.35rem;
-  color: #e8b88a;
+  color: var(--ro-medal-bronze);
   font-size: 0.9rem;
 }
 
@@ -1187,7 +1215,7 @@
   margin-inline: 0;
   border-radius: 22px;
   overflow: hidden;
-  border: 1px solid rgba(201, 162, 39, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
@@ -1199,7 +1227,7 @@
   pointer-events: none;
   background: radial-gradient(
     ellipse 80% 55% at 50% 18%,
-    rgba(201, 162, 39, 0.14) 0%,
+    rgba(255, 255, 255, 0.14) 0%,
     transparent 68%
   );
 }
@@ -1225,8 +1253,8 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent-gold);
-  background: rgba(201, 162, 39, 0.12);
-  border: 1px solid rgba(201, 162, 39, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .te-elim-finalists-faceoff {
@@ -1253,7 +1281,7 @@
   background: linear-gradient(
     180deg,
     transparent,
-    rgba(201, 162, 39, 0.45),
+    rgba(255, 255, 255, 0.45),
     transparent
   );
 }
@@ -1263,7 +1291,7 @@
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.18em;
-  color: rgba(201, 162, 39, 0.85);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .te-elim-finalists-pair {
@@ -1285,11 +1313,11 @@
   border-radius: 50%;
   background: linear-gradient(
     145deg,
-    rgba(201, 162, 39, 0.95) 0%,
+    rgba(255, 255, 255, 0.95) 0%,
     rgba(219, 184, 66, 0.55) 50%,
-    rgba(201, 162, 39, 0.35) 100%
+    rgba(255, 255, 255, 0.35) 100%
   );
-  box-shadow: 0 10px 28px rgba(201, 162, 39, 0.18);
+  box-shadow: 0 10px 28px rgba(255, 255, 255, 0.18);
 }
 
 .te-elim-finalists-pair__avatar-ring--front {
@@ -1318,7 +1346,7 @@
   line-height: 1.25;
   letter-spacing: -0.01em;
   text-align: center;
-  color: #fff;
+  color: var(--ro-accent);
 }
 
 .te-elim-finalists-pair__sep {
@@ -1351,7 +1379,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(201, 162, 39, 0.72);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 @media (min-width: 768px) {
@@ -1421,7 +1449,7 @@
     width: 100%;
     margin-top: 0.5rem;
     padding-top: 1.25rem;
-    border-top: 1px solid rgba(201, 162, 39, 0.14);
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
   }
 
   .te-elim-finalists-share__footer .ro-pub-social {
@@ -1552,35 +1580,35 @@
 .te-elim-podium-share--champion .te-elim-finalists-share__badge,
 .te-elim-podium-share--champion .te-elim-podium-share__rank,
 .te-elim-podium-share--champion .te-elim-finalists-share__tagline {
-  color: rgba(219, 184, 66, 0.95);
+  color: var(--ro-medal-gold);
 }
 
 .te-elim-podium-share--champion .te-elim-finalists-share__badge {
-  background: rgba(201, 162, 39, 0.16);
-  border-color: rgba(201, 162, 39, 0.38);
+  background: var(--ro-pub-gold-dim, rgba(201, 162, 39, 0.14));
+  border-color: var(--ro-pub-gold-border, rgba(201, 162, 39, 0.38));
 }
 
 .te-elim-podium-share--champion .te-elim-finalists-share__glow {
   background: radial-gradient(
     ellipse 85% 60% at 50% 16%,
-    rgba(201, 162, 39, 0.2) 0%,
+    var(--ro-pub-gold-glow, rgba(201, 162, 39, 0.2)) 0%,
     transparent 70%
   );
 }
 
 .te-elim-podium-share--champion .te-pub-grupo-celebrate__stat {
-  border-color: rgba(201, 162, 39, 0.24);
+  border-color: rgba(201, 162, 39, 0.28);
   background: rgba(201, 162, 39, 0.06);
 }
 
 .te-elim-podium-share--champion .te-elim-podium-share__stats-panel {
-  border-color: rgba(201, 162, 39, 0.18);
-  background: rgba(201, 162, 39, 0.05);
+  border-color: rgba(201, 162, 39, 0.22);
+  background: rgba(201, 162, 39, 0.04);
 }
 
 .te-elim-podium-share--runner-up .te-elim-finalists-share__badge,
 .te-elim-podium-share--runner-up .te-elim-podium-share__rank {
-  color: rgba(192, 200, 212, 0.95);
+  color: var(--ro-medal-silver);
 }
 
 .te-elim-podium-share--runner-up .te-elim-finalists-share__badge {
@@ -1616,12 +1644,12 @@
 }
 
 .te-elim-podium-share--tercer .te-elim-finalists-headline {
-  color: #e8b88a;
+  color: var(--ro-medal-bronze);
 }
 
 .te-elim-podium-share--tercer .te-elim-finalists-share__badge,
 .te-elim-podium-share--tercer .te-elim-podium-share__rank {
-  color: #e8b88a;
+  color: var(--ro-medal-bronze);
 }
 
 .te-elim-podium-share--tercer .te-elim-finalists-share__badge {
@@ -1759,7 +1787,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(201, 162, 39, 0.45),
+      rgba(255, 255, 255, 0.45),
       transparent
     );
   }
@@ -1769,7 +1797,7 @@
   padding: clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 5vw, 3.5rem);
   background: radial-gradient(
     ellipse 70% 50% at 50% 30%,
-    rgba(201, 162, 39, 0.06) 0%,
+    rgba(255, 255, 255, 0.06) 0%,
     transparent 68%
   );
 }

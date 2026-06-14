@@ -66,7 +66,7 @@ export const AuthCallback: React.FC<AuthCallbackProps> = ({ onSuccess }) => {
               style={{
                 width: "40px",
                 height: "40px",
-                border: "4px solid #ffd700",
+                border: "4px solid var(--ro-accent, #ffffff)",
                 borderTop: "4px solid transparent",
                 borderRadius: "50%",
                 animation: "spin 1s linear infinite",
@@ -117,7 +117,7 @@ export const AuthCallback: React.FC<AuthCallbackProps> = ({ onSuccess }) => {
             style={{
               width: "40px",
               height: "40px",
-              border: "4px solid #ffd700",
+              border: "4px solid var(--ro-accent, #ffffff)",
               borderTop: "4px solid transparent",
               borderRadius: "50%",
               animation: "spin 1s linear infinite",

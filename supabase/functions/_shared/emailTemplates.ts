@@ -1,5 +1,5 @@
 /**
- * Plantillas HTML Riviera Open — diseño premium sutil (tema oscuro, oro solo como acento).
+ * Plantillas HTML Riviera Open — diseño premium sutil (tema oscuro, acento blanco).
  */
 
 export type RivieraEmailKind =
@@ -28,7 +28,7 @@ export interface RivieraEmailParams {
   rivales?: string | null;
 }
 
-/** Premium subtle — dark theme, gold accent only */
+/** Premium subtle — dark theme, white accent */
 const C = {
   bgDeep: "#0a0a0b",
   surface: "#111113",
@@ -40,14 +40,14 @@ const C = {
   textMuted: "rgba(255,255,255,0.25)",
   textLabel: "rgba(255,255,255,0.3)",
   textTagline: "rgba(255,255,255,0.35)",
-  gold: "#c9a84c",
-  goldSubtleBg: "rgba(201,168,76,0.08)",
-  goldSubtleBorder: "rgba(201,168,76,0.18)",
-  goldBadgeBorder: "rgba(201,168,76,0.3)",
-  goldAvatarBg: "rgba(201,168,76,0.15)",
-  goldAvatarBorder: "rgba(201,168,76,0.25)",
-  goldLink: "rgba(201,168,76,0.6)",
-  onGold: "#111113",
+  gold: "#ffffff",
+  goldSubtleBg: "rgba(255,255,255,0.08)",
+  goldSubtleBorder: "rgba(255,255,255,0.15)",
+  goldBadgeBorder: "rgba(255,255,255,0.3)",
+  goldAvatarBg: "rgba(255,255,255,0.12)",
+  goldAvatarBorder: "rgba(255,255,255,0.25)",
+  goldLink: "rgba(255,255,255,0.6)",
+  onGold: "#000000",
   divider: "rgba(255,255,255,0.06)",
   headerBorder: "rgba(255,255,255,0.07)",
   pairBg: "rgba(255,255,255,0.03)",
@@ -354,7 +354,7 @@ function renderEmailCourtBanner(badge: string): string {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
                 <tr>
                   <td align="right" valign="top" style="padding:12px 16px 0;line-height:normal;font-size:14px;">
-                    <span style="display:inline-block;padding:5px 12px;border-radius:100px;border:1px solid rgba(201,168,76,0.4);background:rgba(0,0,0,0.45);font-family:${FONT};font-size:10px;font-weight:700;letter-spacing:0.1em;color:${C.gold};">&#9679; ${badgeHtml}</span>
+                    <span style="display:inline-block;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,0.4);background:rgba(0,0,0,0.45);font-family:${FONT};font-size:10px;font-weight:700;letter-spacing:0.1em;color:${C.gold};">&#9679; ${badgeHtml}</span>
                   </td>
                 </tr>
               </table>

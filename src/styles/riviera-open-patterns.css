@@ -1,4 +1,4 @@
-/* Riviera Gold v3 — patrones de componente (preview HTML) */
+/* Riviera Open Maestro v1.0 — patrones de componente compartidos */
 
 /* Display / kicker */
 .home-header__hero,
@@ -95,9 +95,9 @@
 /* Filtros / chips estilo nav preview */
 .mis-retas-page__filters .riviera-filter-chip--active,
 .riviera-filter-chip--active {
-  color: var(--text-secondary);
-  border-color: var(--border-accent);
-  background: var(--text-secondary);
+  color: var(--ro-text-on-accent);
+  border-color: var(--ro-border-accent);
+  background: var(--ro-accent);
 }
 
 /* Welcome / containers — fondo unificado en .main-layout (riviera-app-surfaces.css) */

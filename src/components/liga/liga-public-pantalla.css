@@ -258,7 +258,7 @@
   border-radius: var(--liga-radius-md);
   background: linear-gradient(
     135deg,
-    rgba(201, 162, 39, 0.22) 0%,
+    rgba(255, 255, 255, 0.22) 0%,
     var(--liga-purple-dim) 100%
   );
   border: 0.5px solid var(--liga-gold-border);
@@ -476,7 +476,7 @@
 }
 
 .liga-pantalla-jornada-card__link:hover {
-  background: rgba(201, 162, 39, 0.28);
+  background: rgba(255, 255, 255, 0.28);
   color: var(--liga-text);
 }
 
@@ -495,7 +495,7 @@
   border-radius: var(--liga-radius-lg);
   background: linear-gradient(
     180deg,
-    rgba(201, 162, 39, 0.12) 0%,
+    rgba(255, 255, 255, 0.12) 0%,
     var(--liga-purple-dim) 50%,
     var(--liga-surface) 100%
   );
@@ -565,7 +565,7 @@
   border-color: var(--liga-gold-border);
   background: linear-gradient(
     180deg,
-    rgba(201, 162, 39, 0.28) 0%,
+    rgba(255, 255, 255, 0.28) 0%,
     var(--liga-surface-deep) 100%
   );
   box-shadow: var(--liga-shadow-gold-glow);

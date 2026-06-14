@@ -4,18 +4,18 @@
   --te-inicio-max: 1100px;
   --te-inicio-pad-x: 24px;
   --te-inicio-section-gap: 48px;
-  --te-inicio-page-bg: #0f0f0f;
-  --te-inicio-surface: #1a1a1a;
-  --te-inicio-surface-raised: #1e1e1e;
-  --te-inicio-text-muted: #666666;
-  --te-inicio-text-secondary: #a0a0a0;
+  --te-inicio-page-bg: var(--ro-bg-surface);
+  --te-inicio-surface: var(--ro-bg-elevated);
+  --te-inicio-surface-raised: var(--ro-bg-elevated);
+  --te-inicio-text-muted: var(--ro-text-muted);
+  --te-inicio-text-secondary: var(--ro-text-secondary);
   width: 100%;
   max-width: none;
   margin: 0;
   padding: 24px var(--te-inicio-pad-x)
     calc(48px + env(safe-area-inset-bottom, 0px));
   background: var(--te-inicio-page-bg);
-  color: #ffffff;
+  color: var(--ro-text-primary);
   box-sizing: border-box;
 }
 
@@ -50,7 +50,7 @@
   font-size: 24px;
   font-weight: 600;
   line-height: 1.2;
-  color: #ffffff;
+  color: var(--ro-text-primary);
   letter-spacing: -0.02em;
 }
 
@@ -161,7 +161,7 @@
   font-size: 20px;
   font-weight: 600;
   line-height: 1.25;
-  color: #ffffff;
+  color: var(--ro-text-primary);
 }
 
 .te-inicio-page .te-torneo-card__categoria,
@@ -250,7 +250,7 @@
   font-family: var(--font-body);
   font-size: 24px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--ro-text-primary);
   letter-spacing: -0.02em;
 }
 
@@ -289,7 +289,7 @@
   font-family: var(--font-body);
   font-size: 20px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--ro-text-primary);
 }
 
 .te-inicio-page .te-crear-form__header .te-subtitle {
@@ -320,7 +320,7 @@
   border-radius: 8px;
   border: 0.5px solid var(--border-default);
   background: var(--te-inicio-page-bg);
-  color: #ffffff;
+  color: var(--ro-text-primary);
   font-size: 15px;
 }
 
@@ -343,7 +343,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
-  color: #ffffff;
+  color: var(--ro-text-primary);
 }
 
 .te-inicio-page .te-armar-parejas > .te-subtitle {
@@ -369,8 +369,8 @@
   justify-content: center;
   font-size: 13px;
   font-weight: 700;
-  color: #1a1508;
-  background: var(--accent-gold, #c9a227);
+  color: var(--ro-text-on-accent);
+  background: var(--accent-gold, var(--ro-accent));
 }
 
 .te-inicio-page .te-armar-parejas__meta {
@@ -400,7 +400,7 @@
   border-radius: 999px;
   border: 0.5px solid var(--border-default);
   background: var(--bg-elevated, #1a1a1f);
-  color: #f0f0f2;
+  color: var(--ro-text-primary);
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
@@ -413,13 +413,13 @@
 
 .te-inicio-page .te-jugador-pick:hover {
   border-color: var(--border-strong);
-  background: #222228;
+  background: var(--ro-bg-elevated);
 }
 
 .te-inicio-page .te-jugador-pick--selected {
   border-color: var(--accent-gold);
-  background: rgba(201, 162, 39, 0.18);
-  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.35);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
   color: #fff;
 }
 
@@ -508,9 +508,9 @@
   border-radius: 10px;
   font-size: 12px;
   line-height: 1.45;
-  color: #f5d78e;
-  background: rgba(201, 162, 39, 0.1);
-  border: 0.5px solid rgba(201, 162, 39, 0.35);
+  color: var(--ro-accent);
+  background: rgba(255, 255, 255, 0.1);
+  border: 0.5px solid rgba(255, 255, 255, 0.35);
 }
 
 .te-inicio-page .te-asignar-grupos__ok {
@@ -554,7 +554,7 @@
 }
 
 .te-inicio-page .te-btn-agregar-pareja.riviera-btn-secondary:hover:not(:disabled) {
-  color: #ffffff;
+  color: var(--ro-text-primary);
   border-color: var(--border-strong);
   background: var(--bg-elevated);
 }
@@ -595,7 +595,7 @@
   font-family: var(--font-body);
   font-size: 20px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--ro-text-primary);
 }
 
 .te-inicio-page .te-players-panel__title-icon {
@@ -624,7 +624,7 @@
   border-radius: 8px;
   border: 0.5px solid var(--border-default);
   background: var(--te-inicio-page-bg);
-  color: #ffffff;
+  color: var(--ro-text-primary);
   box-sizing: border-box;
 }
 
@@ -761,7 +761,7 @@
 
 .te-inicio-page .te-players-row__name {
   font-size: 14px;
-  color: #ffffff;
+  color: var(--ro-text-primary);
 }
 
 .te-inicio-page .te-players-icon-btn {

@@ -149,9 +149,9 @@
   min-height: 36px;
   padding: 0 14px;
   border-radius: 10px;
-  border: 1px solid rgba(201, 162, 39, 0.35);
-  background: rgba(201, 162, 39, 0.1);
-  color: var(--color-cream, #f5f5f7);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-cream, var(--ro-text-primary));
   font-size: 0.8125rem;
   font-weight: 600;
   text-decoration: none;
@@ -162,9 +162,9 @@
 
 .auth-public-links__item:hover,
 .auth-public-links__item:focus-visible {
-  background: rgba(201, 162, 39, 0.18);
-  border-color: rgba(201, 162, 39, 0.55);
-  color: #f5f5f7;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-primary);
 }
 
 /* Panel formulario */

@@ -5,7 +5,7 @@
   gap: 0.65rem;
   margin-top: 1.35rem;
   padding-top: 1.15rem;
-  border-top: 1px solid rgba(201, 162, 39, 0.18);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .ro-pub-social__handle {
@@ -15,7 +15,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: lowercase;
-  color: rgba(201, 162, 39, 0.88);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .ro-pub-social__list {
@@ -52,7 +52,7 @@
 
 .ro-pub-social__link:hover {
   transform: translateY(-1px);
-  color: #fff;
+  color: var(--ro-text-primary);
 }
 
 .ro-pub-social__link--instagram:hover {

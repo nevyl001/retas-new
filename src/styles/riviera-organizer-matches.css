@@ -317,7 +317,7 @@
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #707070;
+  color: var(--ro-text-muted);
 }
 
 .riviera-organizer-reta .omc-meta-editor__field input {
@@ -346,7 +346,7 @@
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: transparent;
-  color: #888888;
+  color: var(--ro-text-muted);
 }
 
 .riviera-organizer-reta .omc-meta-save:hover:not(:disabled) {
@@ -380,7 +380,7 @@
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #707070;
+  color: var(--ro-text-muted);
   margin-bottom: 3px;
 }
 
@@ -444,11 +444,11 @@
 }
 
 .riviera-organizer-reta .omc-team-row--loser .omc-team-name {
-  color: #909090;
+  color: var(--ro-text-secondary);
 }
 
 .riviera-organizer-reta .omc-team-row--loser .omc-team-score {
-  color: #888888;
+  color: var(--ro-text-muted);
 }
 
 /* Barra ganador */
@@ -459,7 +459,7 @@
   margin: 8px 12px;
   padding: 8px 12px;
   background: var(--accent-gold-dim);
-  border: 1px solid rgba(201, 162, 39, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
 }
 
@@ -501,11 +501,11 @@
   font-family: var(--font-body);
   font-size: 11px;
   line-height: 1.5;
-  color: #909090;
+  color: var(--ro-text-secondary);
 }
 
 .riviera-organizer-reta .omc-games-line__label {
-  color: #707070;
+  color: var(--ro-text-muted);
   margin-right: 4px;
 }
 
@@ -523,7 +523,7 @@
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #707070;
+  color: var(--ro-text-muted);
 }
 
 .riviera-organizer-reta .omc-register__scores {
@@ -579,7 +579,7 @@
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 500;
-  color: #909090;
+  color: var(--ro-text-secondary);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
@@ -599,14 +599,14 @@
   font-weight: 600;
   color: var(--text-secondary);
   background: transparent;
-  border: 1px solid rgba(201, 162, 39, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 6px;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .riviera-organizer-reta .omc-btn-finish:hover:not(:disabled) {
-  background: rgba(201, 162, 39, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-color: var(--text-secondary);
 }
 
@@ -615,7 +615,7 @@
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 500;
-  color: #909090;
+  color: var(--ro-text-secondary);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
@@ -642,7 +642,7 @@
   font-weight: 500;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #707070;
+  color: var(--ro-text-muted);
 }
 
 .riviera-organizer-reta .omc-delete-games__item {
@@ -653,7 +653,7 @@
   padding: 6px 0;
   font-family: var(--font-body);
   font-size: 11px;
-  color: #909090;
+  color: var(--ro-text-secondary);
 }
 
 .riviera-organizer-reta .omc-delete-games__item + .omc-delete-games__item {
@@ -717,14 +717,14 @@
 }
 
 .riviera-organizer-reta .omc-footer-btn--ghost {
-  color: #707070;
+  color: var(--ro-text-muted);
   background: transparent;
   border-color: transparent;
 }
 
 .riviera-organizer-reta .omc-footer-btn--ghost:hover:not(:disabled) {
   background: transparent;
-  color: #909090;
+  color: var(--ro-text-secondary);
   border-color: transparent;
 }
 
@@ -807,7 +807,7 @@
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: #f59e0b;
+  color: var(--ro-accent);
 }
 
 .rr-championship__subtitle {
@@ -830,7 +830,7 @@
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.05em;
-  color: #fbbf24;
+  color: var(--ro-accent-hover);
 }
 
 .rr-championship__match-label {
@@ -861,7 +861,7 @@
 .rr-championship__winner-title {
   margin: 0;
   font-weight: 800;
-  color: #f59e0b;
+  color: var(--ro-accent);
 }
 
 .rr-championship__winner-name {

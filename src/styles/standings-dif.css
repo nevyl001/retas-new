@@ -1,10 +1,10 @@
 .standings-dif--pos {
-  color: #4ade80;
+  color: var(--ro-success);
   font-weight: var(--font-weight-semibold, 600);
 }
 
 .standings-dif--neg {
-  color: #f87171;
+  color: var(--ro-error);
   font-weight: var(--font-weight-semibold, 600);
 }
 

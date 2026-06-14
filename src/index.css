@@ -6,9 +6,10 @@
 @import "./styles/riviera-design-system.css";
 @import "./styles/riviera-primitives.css";
 @import "./styles/riviera-utilities.css";
-@import "./styles/riviera-gold-v3.css";
+@import "./styles/riviera-open-patterns.css"; /* Maestro v1.0 — patrones compartidos */
 @import "./styles/riviera-app-shell.css";
 @import "./styles/riviera-public-court.css";
+@import "./styles/riviera-public-tokens.css";
 @import "./components/jugadores/riviera-jugadores-public.css";
 
 html,

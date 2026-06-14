@@ -111,7 +111,7 @@ async function fetchJugadorStatsRow(
   return data ? (data as JugadorStats) : null;
 }
 
-async function computeStatsFallback(
+async function computeStatsFromParticipaciones(
   jugadorId: string
 ): Promise<JugadorStats> {
   const { computeJugadorStatsFromParticipaciones } = await import(
@@ -123,6 +123,39 @@ async function computeStatsFallback(
     ...stats,
     updated_at: new Date().toISOString(),
   };
+}
+
+/** Escribe jugador_stats calculado desde participaciones (fuente de verdad). */
+async function persistJugadorStats(stats: JugadorStats): Promise<JugadorStats> {
+  const { error } = await supabase.from("jugador_stats").upsert(
+    {
+      jugador_id: stats.jugador_id,
+      total_partidos: stats.total_partidos,
+      victorias: stats.victorias,
+      derrotas: stats.derrotas,
+      empates: stats.empates,
+      participaciones_solo: stats.participaciones_solo,
+      pct_victorias: stats.pct_victorias,
+      total_retas: stats.total_retas,
+      total_torneos_express: stats.total_torneos_express,
+      total_ligas: stats.total_ligas,
+      total_americanos: stats.total_americanos,
+      sets_favor_total: stats.sets_favor_total,
+      sets_contra_total: stats.sets_contra_total,
+      racha_actual: stats.racha_actual,
+      ultima_actividad: stats.ultima_actividad,
+      puntos_totales: stats.puntos_totales,
+      updated_at: stats.updated_at,
+    },
+    { onConflict: "jugador_id" }
+  );
+
+  if (error) {
+    if (isMissingTableError(error)) return stats;
+    console.warn("[riviera-jugadores] persist jugador_stats:", error);
+  }
+
+  return stats;
 }
 
 export async function listRivieraJugadores(
@@ -501,7 +534,10 @@ export async function ensureRivieraJugadorForLegacyPlayer(
   }
 }
 
-/** Recalcula stats vía RPC en Supabase (SECURITY DEFINER). No escribe directo en jugador_stats. */
+/**
+ * Recalcula jugador_stats desde jugador_participaciones y lo persiste.
+ * Las participaciones son la fuente de verdad (p. ej. tras borrar del historial).
+ */
 export async function rebuildJugadorStats(
   jugadorId: string
 ): Promise<JugadorStats | null> {
@@ -509,21 +545,21 @@ export async function rebuildJugadorStats(
     p_jugador_id: jugadorId,
   });
 
-  if (rpcErr) {
-    if (isMissingTableError(rpcErr) || isMissingRpcError(rpcErr)) {
-      return computeStatsFallback(jugadorId);
-    }
+  if (rpcErr && !isMissingTableError(rpcErr) && !isMissingRpcError(rpcErr)) {
     console.warn("[riviera-jugadores] refresh_jugador_stats:", rpcErr);
   }
 
   try {
-    const row = await fetchJugadorStatsRow(jugadorId);
-    if (row) return row;
+    const computed = await computeStatsFromParticipaciones(jugadorId);
+    return await persistJugadorStats(computed);
   } catch (e) {
-    console.warn("[riviera-jugadores] fetch jugador_stats:", e);
+    console.warn("[riviera-jugadores] rebuildJugadorStats:", e);
+    try {
+      return await fetchJugadorStatsRow(jugadorId);
+    } catch {
+      return null;
+    }
   }
-
-  return computeStatsFallback(jugadorId);
 }
 
 /**
@@ -534,7 +570,7 @@ export async function deleteParticipacionJugador(
   organizadorId: string,
   jugadorId: string,
   participacionId: string
-): Promise<void> {
+): Promise<JugadorStats | null> {
   const { data: jugador, error: jugErr } = await supabase
     .from("riviera_jugadores")
     .select("id")
@@ -583,9 +619,10 @@ export async function deleteParticipacionJugador(
   }
 
   try {
-    await rebuildJugadorStats(jugadorId);
+    return await rebuildJugadorStats(jugadorId);
   } catch (e) {
     console.warn("[riviera-jugadores] rebuild tras eliminar participación:", e);
+    return null;
   }
 }
 

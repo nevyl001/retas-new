@@ -1,0 +1,83 @@
+/* =============================================
+   RIVIERA OPEN — DESIGN SYSTEM MAESTRO v1.0
+   Negro + Blanco + Grises. Sin dorado.
+============================================= */
+
+:root {
+  /* FONDOS */
+  --ro-bg-base: #000000;
+  --ro-bg-deep: #0a0a0a;
+  --ro-bg-surface: #0f0f0f;
+  --ro-bg-elevated: #1a1a1a;
+  --ro-bg-card: #111111;
+  --ro-bg-input: #1a1a1a;
+
+  /* ACENTO — blanco como único acento */
+  --ro-accent: #ffffff;
+  --ro-accent-hover: #e0e0e0;
+  --ro-accent-dim: rgba(255, 255, 255, 0.08);
+
+  /* TEXTO */
+  --ro-text-primary: #ffffff;
+  --ro-text-secondary: #a0a0a0;
+  --ro-text-muted: #555555;
+  --ro-text-on-accent: #000000;
+
+  /* BORDES */
+  --ro-border: #2a2a2a;
+  --ro-border-subtle: #1a1a1a;
+  --ro-border-accent: rgba(255, 255, 255, 0.15);
+
+  /* ESTADOS */
+  --ro-success: #4ade80;
+  --ro-error: #f87171;
+  --ro-pending: #555555;
+
+  /* MEDALLAS — grises sin dorado */
+  --ro-medal-gold: #ffffff;
+  --ro-medal-silver: #a0a0a0;
+  --ro-medal-bronze: #6b6b6b;
+
+  /* MODOS DE JUEGO */
+  --ro-mode-reta: #ffffff;
+  --ro-mode-americano: #10b981;
+  --ro-mode-liga: #3b82f6;
+  --ro-mode-torneo: #8b5cf6;
+
+  /* TIPOGRAFÍA */
+  --ro-font-heading: "Stack Sans Headline", sans-serif;
+  --ro-font-body: "Inter", system-ui, sans-serif;
+
+  /* ESCALA TIPOGRÁFICA */
+  --ro-text-hero: clamp(2.25rem, 6vw, 4.5rem);
+  --ro-text-display: clamp(1.5rem, 4vw, 2.25rem);
+  --ro-text-title: 1.25rem;
+  --ro-text-body-lg: 1rem;
+  --ro-text-body: 0.875rem;
+  --ro-text-small: 0.8125rem;
+  --ro-text-label: 0.6875rem;
+  --ro-text-score: 2rem;
+
+  /* ESPACIADO */
+  --ro-space-1: 4px;
+  --ro-space-2: 8px;
+  --ro-space-3: 12px;
+  --ro-space-4: 16px;
+  --ro-space-5: 20px;
+  --ro-space-6: 24px;
+  --ro-space-8: 32px;
+  --ro-space-10: 40px;
+  --ro-space-12: 48px;
+  --ro-space-16: 64px;
+
+  /* RADIOS */
+  --ro-radius-sm: 6px;
+  --ro-radius-md: 10px;
+  --ro-radius-lg: 14px;
+  --ro-radius-xl: 20px;
+  --ro-radius-full: 999px;
+
+  /* SOMBRAS */
+  --ro-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --ro-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.7);
+}

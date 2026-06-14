@@ -1,4 +1,4 @@
-/* Ranking público — Riviera Gold v3 */
+/* Ranking público — Riviera Open Maestro v1.0 */
 
 .rjp-ranking {
   width: 100%;
@@ -66,9 +66,9 @@
 
 .rjp-ranking-header__cta:hover,
 .rjp-ranking-header__cta:focus-visible {
-  border-color: rgba(201, 162, 39, 0.28);
-  background: rgba(24, 24, 28, 0.65);
-  color: var(--text-primary);
+  border-color: var(--ro-border-accent);
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-primary);
 }
 
 /* —— Panel categorías + lista —— */
@@ -149,9 +149,9 @@
 }
 
 .rjp-cat-chip--active {
-  background: var(--bg-deep);
-  border-color: rgba(201, 162, 39, 0.28);
-  color: var(--accent-gold);
+  background: var(--ro-bg-deep);
+  border-color: var(--ro-border-accent);
+  color: var(--ro-accent);
 }
 
 .rjp-ranking-panel__body {
@@ -227,8 +227,8 @@
 }
 
 .rjp-public--ranking .rj-avatar {
-  border-color: rgba(201, 162, 39, 0.28);
-  color: var(--accent-gold);
+  border-color: var(--ro-border-accent);
+  color: var(--ro-accent);
 }
 
 .rjp-ranking-card__body {
@@ -354,7 +354,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: lowercase;
-  color: rgba(201, 162, 39, 0.75);
+  color: var(--ro-text-secondary);
 }
 
 .rjp-ranking-express__grid {
@@ -517,11 +517,11 @@
   }
 
   .rjp-ranking-card:hover {
-    border-color: rgba(201, 162, 39, 0.28);
+    border-color: var(--ro-border-accent);
   }
 
   .rjp-ranking-modalidad:hover {
-    border-color: rgba(201, 162, 39, 0.28);
+    border-color: var(--ro-border-accent);
   }
 }
 
@@ -544,9 +544,9 @@
     width: 100%;
     padding: 10px 14px;
     margin-bottom: 12px;
-    border: 0.5px solid rgba(201, 162, 39, 0.28);
+    border: 0.5px solid var(--ro-border-accent);
     border-radius: 12px;
-    background: var(--accent-gold-dim);
+    background: var(--ro-accent-dim);
     color: var(--text-primary);
     font-family: inherit;
     cursor: pointer;
@@ -640,18 +640,18 @@
 }
 
 .rjp-podio__slot--gold .rjp-podio__medal {
-  background: var(--accent-gold);
-  color: #1a1200;
+  background: var(--ro-accent);
+  color: var(--ro-text-on-accent);
 }
 
 .rjp-podio__slot--silver .rjp-podio__medal {
-  background: #8a8a94;
-  color: #fff;
+  background: var(--ro-medal-silver);
+  color: var(--ro-text-on-accent);
 }
 
 .rjp-podio__slot--bronze .rjp-podio__medal {
-  background: #8a5c3a;
-  color: #fff;
+  background: var(--ro-medal-bronze);
+  color: var(--ro-text-primary);
 }
 
 .rjp-podio__avatar.rj-avatar--lg {
@@ -696,22 +696,22 @@
 
 .rjp-podio__slot--gold .rjp-podio__platform {
   height: 40px;
-  background: var(--accent-gold-dim);
-  border: 0.5px solid rgba(201, 162, 39, 0.28);
+  background: var(--ro-accent-dim);
+  border: 0.5px solid var(--ro-border-accent);
   border-bottom: none;
 }
 
 .rjp-podio__slot--silver .rjp-podio__platform {
   height: 28px;
-  background: rgba(138, 138, 148, 0.08);
-  border: 0.5px solid rgba(138, 138, 148, 0.18);
+  background: rgba(160, 160, 160, 0.08);
+  border: 0.5px solid rgba(160, 160, 160, 0.18);
   border-bottom: none;
 }
 
 .rjp-podio__slot--bronze .rjp-podio__platform {
   height: 20px;
-  background: rgba(138, 92, 58, 0.07);
-  border: 0.5px solid rgba(138, 92, 58, 0.18);
+  background: rgba(107, 107, 107, 0.07);
+  border: 0.5px solid rgba(107, 107, 107, 0.18);
   border-bottom: none;
 }
 

@@ -1,19 +1,19 @@
 /* Ficha pública jugador — mobile-first 390px, paleta Riviera Open */
 
 .rjp-public--ficha {
-  --rjp-ficha-bg: #0d0d0f;
-  --rjp-ficha-card: #161618;
-  --rjp-ficha-surface: #1a1a1f;
-  --rjp-ficha-border: #2a2a2e;
-  --rjp-ficha-text: #e8e8ec;
-  --rjp-ficha-text-2: #7a7a85;
-  --rjp-ficha-text-3: #4a4a55;
-  --rjp-ficha-text-empty: #35353f;
-  --rjp-ficha-gold: #c9a84c;
-  --rjp-ficha-gold-bg: #1e1a0e;
-  --rjp-ficha-gold-border: #c9a84c44;
-  --rjp-ficha-banner: #1a1810;
-  --rjp-ficha-brand: #9a8650;
+  --rjp-ficha-bg: var(--ro-bg-deep);
+  --rjp-ficha-card: var(--ro-bg-card);
+  --rjp-ficha-surface: var(--ro-bg-elevated);
+  --rjp-ficha-border: var(--ro-border);
+  --rjp-ficha-text: var(--ro-text-primary);
+  --rjp-ficha-text-2: var(--ro-text-secondary);
+  --rjp-ficha-text-3: var(--ro-text-muted);
+  --rjp-ficha-text-empty: var(--ro-text-muted);
+  --rjp-ficha-gold: var(--ro-pub-gold, var(--accent-gold, var(--ro-medal-gold)));
+  --rjp-ficha-gold-bg: var(--ro-pub-gold-dim, var(--accent-gold-dim));
+  --rjp-ficha-gold-border: var(--ro-pub-gold-border, rgba(201, 162, 39, 0.38));
+  --rjp-ficha-banner: var(--ro-bg-elevated);
+  --rjp-ficha-brand: var(--ro-pub-gold-light, var(--accent-gold-light));
 
   background: transparent;
   color: var(--rjp-ficha-text);
@@ -42,7 +42,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: #9a9a9a;
+  color: var(--ro-text-secondary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -50,7 +50,7 @@
 }
 
 .rjp-ficha-topbar__back .ti {
-  color: #9a9a9a;
+  color: var(--ro-text-secondary);
 }
 
 .rjp-ficha-empty {
@@ -80,7 +80,7 @@
 
 .rjp-ficha-hero--photo {
   min-height: clamp(480px, 58vh, 560px);
-  border-color: #c9a84c33;
+  border-color: var(--rjp-ficha-gold-border);
 }
 
 .rjp-ficha-hero__photo {
@@ -167,11 +167,12 @@
   background: linear-gradient(
     90deg,
     transparent,
-    #c9a84c44,
-    #c9a84c88,
-    #c9a84c44,
+    var(--rjp-ficha-gold),
+    var(--ro-pub-gold-light, var(--accent-gold-light)),
+    var(--rjp-ficha-gold),
     transparent
   );
+  opacity: 0.9;
 }
 
 .rjp-ficha-hero__content {
@@ -240,7 +241,7 @@
 }
 
 .rjp-ficha-hero--photo .rjp-ficha-hero__brand {
-  color: #d4bc7a;
+  color: var(--rjp-ficha-gold);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
 }
 
@@ -254,12 +255,12 @@
   border: 2px solid rgba(14, 14, 16, 0.85);
   font-size: 10px;
   font-weight: 800;
-  color: #1a1505;
+  color: var(--ro-text-on-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   letter-spacing: 0.02em;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 16px var(--ro-pub-gold-glow, rgba(201, 162, 39, 0.25));
 }
 
 .rjp-ficha-hero__main {
@@ -278,10 +279,10 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  border: 2px solid #c9a84c55;
-  box-shadow: 0 0 0 3px #161618;
+  border: 2px solid var(--ro-border-accent);
+  box-shadow: 0 0 0 3px var(--ro-bg-card);
   overflow: hidden;
-  background: #1e1e22;
+  background: var(--ro-bg-elevated);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -309,10 +310,10 @@
   height: 20px;
   border-radius: 50%;
   background: var(--rjp-ficha-gold);
-  border: 2px solid #161618;
+  border: 2px solid var(--ro-bg-card);
   font-size: 6px;
   font-weight: 700;
-  color: #1a1505;
+  color: var(--ro-text-on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -353,7 +354,7 @@
 
 .rjp-ficha-hero--photo .rjp-ficha-hero__name {
   margin-top: 0;
-  color: #fff;
+  color: var(--ro-text-primary);
   text-shadow:
     0 2px 12px rgba(0, 0, 0, 0.85),
     0 4px 28px rgba(0, 0, 0, 0.55);
@@ -400,7 +401,7 @@
 }
 
 .rjp-ficha-pill--muted {
-  background: #1e1e1e;
+  background: var(--ro-bg-elevated);
   color: var(--rjp-ficha-text-2);
   border: 0.5px solid var(--rjp-ficha-border);
 }
@@ -409,7 +410,7 @@
   background: rgba(22, 18, 10, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-color: #c9a84c55;
+  border-color: var(--rjp-ficha-gold-border);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
@@ -426,7 +427,7 @@
 }
 
 .rjp-ficha-hero--photo .rjp-ficha-pill__val {
-  color: #f0f0f4;
+  color: var(--ro-text-primary);
 }
 
 .rjp-ficha-pill--muted .ti {
@@ -454,14 +455,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--rjp-ficha-text-3, #4a4a55);
+  color: var(--rjp-ficha-text-3, var(--ro-text-muted));
   line-height: 1.1;
 }
 
 .rjp-ficha-pill__val {
   font-size: 12px;
   font-weight: 600;
-  color: var(--rjp-ficha-text-2, #7a7a85);
+  color: var(--rjp-ficha-text-2, var(--ro-text-secondary));
   line-height: 1.2;
 }
 
@@ -494,11 +495,11 @@
 }
 
 .rjp-ficha-hero--photo .rjp-ficha-stat__lbl {
-  color: #8a8a95;
+  color: var(--ro-text-secondary);
 }
 
 .rjp-ficha-hero--photo .rjp-ficha-stat__val {
-  color: #f5f5f7;
+  color: var(--ro-text-primary);
 }
 
 .rjp-ficha-stat__icon {
@@ -524,8 +525,13 @@
   line-height: 1.2;
 }
 
+.rjp-ficha-stat:first-child .rjp-ficha-stat__val:not(.rjp-ficha-stat__val--empty),
+.rjp-ficha-stat:nth-child(2) .rjp-ficha-stat__val {
+  color: var(--rjp-ficha-gold);
+}
+
 .rjp-ficha-stat__val--empty {
-  color: #3a3a45;
+  color: var(--ro-text-muted);
 }
 
 /* Redes sociales */
@@ -586,27 +592,21 @@
 }
 
 .rjp-ficha-social__chip--ig {
-  background: #2a1f22;
+  background: var(--ro-bg-elevated);
 }
 
-.rjp-ficha-social__chip--ig .ti {
-  color: #d4748a;
+.rjp-ficha-social__chip--ig .ti,
+.rjp-ficha-social__chip--fb .ti,
+.rjp-ficha-social__chip--tt .ti {
+  color: var(--ro-text-secondary);
 }
 
 .rjp-ficha-social__chip--fb {
-  background: #1a2030;
-}
-
-.rjp-ficha-social__chip--fb .ti {
-  color: #6a8ec8;
+  background: var(--ro-bg-elevated);
 }
 
 .rjp-ficha-social__chip--tt {
-  background: #1a1f28;
-}
-
-.rjp-ficha-social__chip--tt .ti {
-  color: #7aabe0;
+  background: var(--ro-bg-elevated);
 }
 
 /* Historial */
@@ -637,7 +637,7 @@
   margin: 0;
   font-size: 15px;
   font-weight: 500;
-  color: #c8c8d0;
+  color: var(--ro-text-primary);
   line-height: 1.3;
 }
 
@@ -651,7 +651,7 @@
 .rjp-ficha-historial__body {
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 0.5px solid #1e1e24;
+  border-top: 0.5px solid var(--ro-border-subtle);
 }
 
 .rjp-ficha-historial__empty {
@@ -696,6 +696,14 @@
 }
 
 .rjp-ficha-historial .rj-historial-timeline--public .rj-historial-timeline__lugar--gold {
+  color: var(--ro-medal-gold, var(--rjp-ficha-gold));
+}
+
+.rjp-ficha-historial .rj-historial-timeline--public .rj-historial-timeline__lugar--silver {
+  color: var(--ro-medal-silver);
+}
+
+.rjp-ficha-historial .rj-historial-timeline--public .rj-historial-timeline__pts {
   color: var(--rjp-ficha-gold);
 }
 
@@ -712,7 +720,7 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #3a3a42;
+  color: var(--ro-text-muted);
 }
 
 /* ——— Escritorio (≥900px) ——— */
@@ -837,7 +845,7 @@
   }
 
   .rjp-ficha-social__btn:hover {
-    border-color: #3a3a42;
+    border-color: var(--ro-text-muted);
   }
 
   /* Historial ocupa altura */
@@ -853,7 +861,7 @@
     max-height: min(58vh, 520px);
     padding-right: 4px;
     scrollbar-width: thin;
-    scrollbar-color: #2a2a2e transparent;
+    scrollbar-color: var(--ro-border) transparent;
   }
 
   .rjp-ficha-historial__body::-webkit-scrollbar {
@@ -861,7 +869,7 @@
   }
 
   .rjp-ficha-historial__body::-webkit-scrollbar-thumb {
-    background: #2a2a2e;
+    background: var(--ro-border);
     border-radius: 4px;
   }
 
@@ -881,6 +889,15 @@
 
   .rjp-ficha-kpi--torneo {
     border-color: var(--rjp-ficha-gold-border);
+    background: linear-gradient(
+      180deg,
+      var(--rjp-ficha-gold-bg) 0%,
+      var(--rjp-ficha-card) 100%
+    );
+  }
+
+  .rjp-ficha-kpi--torneo .rjp-ficha-kpi__val {
+    color: var(--rjp-ficha-gold);
   }
 
   .rjp-ficha-kpi__lbl {
@@ -903,7 +920,7 @@
   }
 
   .rjp-ficha-kpi__val--empty {
-    color: #3a3a45;
+    color: var(--ro-text-muted);
     font-size: 24px;
   }
 
@@ -953,7 +970,7 @@
     justify-content: space-between;
     gap: 10px;
     padding: 11px 0;
-    border-bottom: 0.5px solid #1e1e24;
+    border-bottom: 0.5px solid var(--ro-border-subtle);
     font-size: 12px;
     color: var(--rjp-ficha-text-2);
   }
@@ -996,11 +1013,11 @@
   }
 
   .rjp-ficha-activity__badge--gold {
-    color: var(--rjp-ficha-gold);
+    color: var(--ro-medal-gold, var(--rjp-ficha-gold));
   }
 
   .rjp-ficha-activity__badge--silver {
-    color: #9a9aa8;
+    color: var(--ro-medal-silver);
   }
 }
 

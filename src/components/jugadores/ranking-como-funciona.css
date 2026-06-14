@@ -1,19 +1,19 @@
 /* Ranking — cómo funcionan los puntos (página pública estática) */
 
 .rkcf {
-  --rkcf-bg: #1c1c1e;
-  --rkcf-deep: #0c0c0c;
-  --rkcf-surface: #141414;
-  --rkcf-elevated: #242426;
-  --rkcf-gold: #c9a227;
-  --rkcf-gold-hover: #dbb842;
-  --rkcf-gold-dim: rgba(201, 162, 39, 0.12);
-  --rkcf-text: #f5f5f7;
-  --rkcf-text-2: #aeaeb2;
-  --rkcf-muted: #6e6e73;
-  --rkcf-win: #4ade80;
-  --rkcf-silver: #b8bcc4;
-  --rkcf-bronze: #cd9a6a;
+  --rkcf-bg: var(--ro-bg-base);
+  --rkcf-deep: var(--ro-bg-deep);
+  --rkcf-surface: var(--ro-bg-surface);
+  --rkcf-elevated: var(--ro-bg-elevated);
+  --rkcf-gold: var(--ro-accent);
+  --rkcf-gold-hover: var(--ro-accent-hover);
+  --rkcf-gold-dim: var(--ro-accent-dim);
+  --rkcf-text: var(--ro-text-primary);
+  --rkcf-text-2: var(--ro-text-secondary);
+  --rkcf-muted: var(--ro-text-muted);
+  --rkcf-win: var(--ro-success);
+  --rkcf-silver: var(--ro-medal-silver);
+  --rkcf-bronze: var(--ro-medal-bronze);
 
   max-width: 720px;
   margin: 0 auto;
@@ -37,8 +37,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(201, 162, 39, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(201, 162, 39, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 28px 28px;
   pointer-events: none;
 }
@@ -56,7 +56,7 @@
   padding: 6px 14px;
   border-radius: 999px;
   background: var(--rkcf-gold-dim);
-  border: 1px solid rgba(201, 162, 39, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -77,11 +77,11 @@
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.5);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
   }
   50% {
     opacity: 0.85;
-    box-shadow: 0 0 0 6px rgba(201, 162, 39, 0);
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
   }
 }
 
@@ -176,15 +176,15 @@
 }
 
 .rkcf-card:hover {
-  border-color: rgba(201, 162, 39, 0.35);
+  border-color: rgba(255, 255, 255, 0.35);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
 }
 
 .rkcf-card--star {
-  border-color: rgba(201, 162, 39, 0.28);
+  border-color: rgba(255, 255, 255, 0.28);
   background: linear-gradient(
     165deg,
-    rgba(201, 162, 39, 0.1) 0%,
+    rgba(255, 255, 255, 0.1) 0%,
     var(--rkcf-surface) 42%
   );
 }
@@ -232,10 +232,10 @@
 @keyframes rkcf-badge-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.35);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.35);
   }
   50% {
-    box-shadow: 0 0 14px 2px rgba(201, 162, 39, 0.45);
+    box-shadow: 0 0 14px 2px rgba(255, 255, 255, 0.45);
   }
 }
 
@@ -243,8 +243,8 @@
   margin: 0 0 0.85rem;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(201, 162, 39, 0.08);
-  border: 1px solid rgba(201, 162, 39, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   font-size: 12px;
   line-height: 1.45;
   color: var(--rkcf-text-2);
@@ -487,11 +487,11 @@
   padding: 0 2rem;
   border-radius: 14px;
   background: var(--rkcf-gold);
-  color: #1c1c1e;
+  color: var(--ro-bg-base);
   font-size: 15px;
   font-weight: 700;
   text-decoration: none;
-  border: 1px solid rgba(201, 162, 39, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.55);
   transition:
     background 0.2s ease,
     box-shadow 0.2s ease,
@@ -502,13 +502,13 @@
 .rkcf-cta__btn:hover,
 .rkcf-cta__btn:focus-visible {
   background: var(--rkcf-gold-hover);
-  color: #1c1c1e;
+  color: var(--ro-bg-base);
   border-color: var(--rkcf-gold-hover);
-  box-shadow: 0 0 24px rgba(201, 162, 39, 0.35);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.35);
 }
 
 .rkcf-cta__btn:focus-visible {
-  outline: 2px solid #f5f5f7;
+  outline: 2px solid var(--ro-text-primary);
   outline-offset: 3px;
 }
 

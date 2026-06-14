@@ -231,9 +231,9 @@
 }
 
 .modern-match-status.finished {
-  color: #e8dcc8;
+  color: var(--ro-accent);
   background: transparent;
-  border: 1px solid #e8dcc8;
+  border: 1px solid var(--ro-accent);
   font-weight: 500;
   padding: 5px 14px;
   letter-spacing: 0.1em;
@@ -571,7 +571,7 @@
 }
 
 .modern-winner-name {
-  color: #e8dcc8;
+  color: var(--ro-accent);
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.02em;

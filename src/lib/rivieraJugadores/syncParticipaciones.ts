@@ -46,6 +46,7 @@ import {
   ensureRivieraJugadorVisibleEnRanking,
   getRivieraJugadorByLegacyLigaId,
   getRivieraJugadorByLegacyPlayerId,
+  rebuildJugadorStats,
   registrarParticipacion,
 } from "./rivieraJugadoresService";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
@@ -277,6 +278,7 @@ async function registrarPuntosRanking(params: {
   parejaCon?: string;
   metadata?: Record<string, unknown>;
   skipIfSubtipoExists?: string;
+  upsertSubtipo?: string;
 }): Promise<void> {
   if (params.skipIfSubtipoExists) {
     const exists = await tieneParticipacionSubtipo(
@@ -293,6 +295,30 @@ async function registrarPuntosRanking(params: {
     ...params.calcParams,
   });
 
+  const metadata = rankingMetadata(desglose, params.metadata);
+  const subtipo =
+    params.upsertSubtipo ??
+    (typeof params.metadata?.subtipo === "string"
+      ? params.metadata.subtipo
+      : undefined);
+
+  if (subtipo) {
+    await upsertParticipacionRanking({
+      jugadorId: params.jugadorId,
+      tipoEvento: params.tipoEvento,
+      eventoId: params.eventoId,
+      eventoNombre: params.eventoNombre,
+      resultado: params.resultado,
+      subtipo,
+      setsFavor: params.setsFavor,
+      setsContra: params.setsContra,
+      puntosObtenidos: total,
+      parejaCon: params.parejaCon,
+      metadata,
+    });
+    return;
+  }
+
   await safeRegistrar({
     jugadorId: params.jugadorId,
     tipoEvento: params.tipoEvento,
@@ -303,7 +329,7 @@ async function registrarPuntosRanking(params: {
     setsContra: params.setsContra,
     puntosObtenidos: total,
     parejaCon: params.parejaCon,
-    metadata: rankingMetadata(desglose, params.metadata),
+    metadata,
   });
 }
 
@@ -328,6 +354,108 @@ async function safeRegistrar(params: {
   } catch (e) {
     console.error("[riviera-jugadores] safeRegistrar:", e);
   }
+}
+
+async function getParticipacionBySubtipo(
+  jugadorId: string,
+  tipoEvento: JugadorTipoEvento,
+  eventoId: string,
+  subtipo: string
+): Promise<{
+  id: string;
+  puntos_obtenidos: number | null;
+  metadata: Record<string, unknown> | null;
+  sets_favor: number | null;
+  sets_contra: number | null;
+  resultado: JugadorResultado | null;
+  pareja_con: string | null;
+} | null> {
+  try {
+    const { data, error } = await supabase
+      .from("jugador_participaciones")
+      .select(
+        "id, puntos_obtenidos, metadata, sets_favor, sets_contra, resultado, pareja_con"
+      )
+      .eq("jugador_id", jugadorId)
+      .eq("tipo_evento", tipoEvento)
+      .eq("evento_id", eventoId)
+      .filter("metadata->>subtipo", "eq", subtipo)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data as {
+      id: string;
+      puntos_obtenidos: number | null;
+      metadata: Record<string, unknown> | null;
+      sets_favor: number | null;
+      sets_contra: number | null;
+      resultado: JugadorResultado | null;
+      pareja_con: string | null;
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function upsertParticipacionRanking(params: {
+  jugadorId: string;
+  tipoEvento: JugadorTipoEvento;
+  eventoId: string;
+  eventoNombre: string;
+  resultado: JugadorResultado;
+  subtipo: string;
+  setsFavor?: number;
+  setsContra?: number;
+  puntosObtenidos: number;
+  parejaCon?: string;
+  metadata: Record<string, unknown>;
+}): Promise<void> {
+  const existing = await getParticipacionBySubtipo(
+    params.jugadorId,
+    params.tipoEvento,
+    params.eventoId,
+    params.subtipo
+  );
+
+  if (existing) {
+    const prevMeta =
+      existing.metadata && typeof existing.metadata === "object"
+        ? existing.metadata
+        : {};
+    const { error } = await supabase
+      .from("jugador_participaciones")
+      .update({
+        evento_nombre: params.eventoNombre,
+        resultado: params.resultado,
+        sets_favor: params.setsFavor ?? existing.sets_favor ?? 0,
+        sets_contra: params.setsContra ?? existing.sets_contra ?? 0,
+        puntos_obtenidos: params.puntosObtenidos,
+        pareja_con: params.parejaCon ?? existing.pareja_con,
+        metadata: { ...prevMeta, ...params.metadata },
+      })
+      .eq("id", existing.id);
+    if (error) {
+      console.error("[riviera-jugadores] upsertParticipacionRanking:", error);
+    }
+    return;
+  }
+
+  await safeRegistrar({
+    jugadorId: params.jugadorId,
+    tipoEvento: params.tipoEvento,
+    eventoId: params.eventoId,
+    eventoNombre: params.eventoNombre,
+    resultado: params.resultado,
+    setsFavor: params.setsFavor,
+    setsContra: params.setsContra,
+    puntosObtenidos: params.puntosObtenidos,
+    parejaCon: params.parejaCon,
+    metadata: params.metadata,
+  });
+}
+
+async function refreshJugadorStatsBatch(jugadorIds: Iterable<string>): Promise<void> {
+  const unique = Array.from(new Set(Array.from(jugadorIds).filter(Boolean)));
+  await Promise.allSettled(unique.map((id) => rebuildJugadorStats(id)));
 }
 
 function resultadoFromRecord(
@@ -582,6 +710,8 @@ async function syncRetaParticipacionesInner(params: {
     ? "reta_equipos"
     : "reta";
 
+  const touchedJugadorIds = new Set<string>();
+
   for (const st of Array.from(agg.values())) {
     const jugadorId = await getOrCreateJugadorId({
       nombre: st.nombre,
@@ -590,6 +720,7 @@ async function syncRetaParticipacionesInner(params: {
       email: st.email,
     });
     if (!jugadorId) continue;
+    touchedJugadorIds.add(jugadorId);
 
     const pair = pairs.find(
       (p) =>
@@ -670,6 +801,8 @@ async function syncRetaParticipacionesInner(params: {
       },
     });
   }
+
+  await refreshJugadorStatsBatch(touchedJugadorIds);
 }
 
 /** Una participación por jugador al cerrar la reta. */
@@ -1273,6 +1406,8 @@ export async function syncLigaJornada(
       if (gp?.jugador2_id) jornadaWinnerIds.add(gp.jugador2_id);
     }
 
+    const touchedJugadorIds = new Set<string>();
+
     for (const st of Array.from(agg.values())) {
       const jugadorId = await getOrCreateJugadorId({
         nombre: st.nombre,
@@ -1280,6 +1415,7 @@ export async function syncLigaJornada(
         legacyLigaJugadorId: st.legacyLigaJugadorId,
       });
       if (!jugadorId) continue;
+      touchedJugadorIds.add(jugadorId);
 
       const posicion = st.legacyLigaJugadorId
         ? posByJugador.get(st.legacyLigaJugadorId)
@@ -1288,6 +1424,8 @@ export async function syncLigaJornada(
       const ganoJornada =
         !!st.legacyLigaJugadorId &&
         jornadaWinnerIds.has(st.legacyLigaJugadorId);
+
+      const partidosJugados = st.wins + st.losses + st.draws;
 
       // Siempre «participación» por jornada: un registro por jugador/jornada (evita
       // duplicar puntos si se vuelve a finalizar la misma jornada).
@@ -1308,6 +1446,10 @@ export async function syncLigaJornada(
           liga_nombre: detalle.nombre,
           jornada_numero: jornada.numero,
           jornada_ganada: ganoJornada,
+          partidos_ganados: st.wins,
+          partidos_perdidos: st.losses,
+          partidos_jugados: partidosJugados,
+          partidos_empatados: st.draws,
           modalidad: "liga",
           modalidad_label: "Liga",
           posicion_jornada: posicion,
@@ -1321,6 +1463,8 @@ export async function syncLigaJornada(
         },
       });
     }
+
+    await refreshJugadorStatsBatch(touchedJugadorIds);
   } catch (e) {
     console.error("[riviera-jugadores] syncLigaJornada:", e);
   }
@@ -1421,6 +1565,33 @@ export async function syncLigaFinalPodio(
 // ---------------------------------------------------------------------------
 // Americano Dinámico
 // ---------------------------------------------------------------------------
+
+/** Re-sincroniza jornadas de liga completadas (metadata de partidos W/L + stats). */
+export async function backfillLigaJornadaHistorial(
+  organizadorId: string
+): Promise<number> {
+  let count = 0;
+  try {
+    const { data: ligas, error } = await supabase
+      .from("ligas")
+      .select("id")
+      .eq("organizador_id", organizadorId);
+
+    if (error || !ligas?.length) return 0;
+
+    for (const liga of ligas) {
+      const detalle = await getLigaById(String(liga.id));
+      for (const jornada of detalle.jornadas) {
+        if (jornada.estado !== "completed") continue;
+        await syncLigaJornada(String(liga.id), jornada.numero, organizadorId);
+        count += 1;
+      }
+    }
+  } catch (e) {
+    console.error("[riviera-jugadores] backfillLigaJornadaHistorial:", e);
+  }
+  return count;
+}
 
 /**
  * Reconstruye participaciones desde retas ya finalizadas (actualiza lugar y modalidad).

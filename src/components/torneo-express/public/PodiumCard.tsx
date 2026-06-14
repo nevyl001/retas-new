@@ -30,8 +30,8 @@ const PODIUM_VARIANT: Record<
     message:
       "Una final inolvidable. Gracias por dejarlo todo en la cancha y elevar el torneo.",
     modifier: "first",
-    bg: "#0f0d08",
-    accent: "#C9A84C",
+    bg: "var(--ro-bg-surface)",
+    accent: "var(--ro-medal-gold)",
   },
   2: {
     badge: "SUBCAMPEONES",
@@ -40,8 +40,8 @@ const PODIUM_VARIANT: Record<
     message:
       "Gran final en Riviera Open. Compitieron al más alto nivel hasta el último punto.",
     modifier: "second",
-    bg: "#0d0c0b",
-    accent: "#A8A9AD",
+    bg: "var(--ro-bg-deep)",
+    accent: "var(--ro-medal-silver)",
   },
   3: {
     badge: "TERCER LUGAR",
@@ -50,8 +50,8 @@ const PODIUM_VARIANT: Record<
     message:
       "Gran recorrido en Riviera Open. Semifinalistas de alto nivel que compitieron con pasión y entrega en cada partido.",
     modifier: "third",
-    bg: "#0c0b09",
-    accent: "#C9A84C",
+    bg: "var(--ro-bg-deep)",
+    accent: "var(--ro-medal-bronze)",
   },
 };
 

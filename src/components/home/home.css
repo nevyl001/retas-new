@@ -20,16 +20,16 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(201, 162, 39, 0.75);
+  color: rgba(255, 255, 255, 0.75);
   margin: 0 0 10px;
   font-family: var(--font-body);
 }
 
 .home-header__hero {
-  font-family: var(--font-display, "DM Sans", sans-serif);
+  font-family: var(--font-display, var(--ro-font-body), sans-serif);
   font-size: clamp(2rem, 5vw, 3.25rem);
   font-weight: 700;
-  color: var(--text-primary, #f5f5f7);
+  color: var(--text-primary, var(--ro-text-primary));
   line-height: 1.12;
   margin: 0 0 12px;
   letter-spacing: -0.02em;
@@ -38,7 +38,7 @@
 
 .home-header__sub {
   font-size: clamp(14px, 2vw, 16px);
-  color: var(--text-muted, #6e6e73);
+  color: var(--text-muted, var(--ro-text-muted));
   margin: 0;
   font-family: var(--font-body);
 }
@@ -48,7 +48,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-muted, #6e6e73);
+  color: var(--text-muted, var(--ro-text-muted));
   margin: 0 0 20px;
   display: flex;
   align-items: center;
@@ -169,8 +169,8 @@
 
 .game-mode-card:focus-visible {
   outline: none;
-  border-color: rgba(201, 162, 39, 0.35);
-  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
 .game-mode-card--disabled {
@@ -214,7 +214,7 @@
   font-family: var(--font-display);
   font-size: clamp(1.05rem, 2.2vw, 1.25rem);
   font-weight: 600;
-  color: var(--text-primary, #f5f5f7);
+  color: var(--text-primary, var(--ro-text-primary));
   margin: 14px 0 6px;
   position: relative;
   z-index: 1;
@@ -310,7 +310,7 @@
 }
 
 .recent-reta-card--status-pending {
-  border-color: rgba(201, 162, 39, 0.28);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 .recent-reta-card--status-finished {
@@ -336,8 +336,8 @@
 .recent-reta-card .riviera-badge--mode-americano,
 .recent-reta-card .riviera-badge--mode-torneo {
   background: var(--accent-gold-dim);
-  color: rgba(201, 162, 39, 0.95);
-  border: 0.5px solid rgba(201, 162, 39, 0.38);
+  color: rgba(255, 255, 255, 0.95);
+  border: 0.5px solid rgba(255, 255, 255, 0.38);
 }
 
 .recent-reta-card .riviera-badge--mode-robin {
@@ -366,14 +366,14 @@
 
 .recent-reta-card .riviera-badge--pending {
   background: rgba(251, 191, 36, 0.12);
-  color: #fcd34d;
+  color: var(--ro-accent-hover);
   border-color: rgba(251, 191, 36, 0.35);
 }
 
 .recent-reta-card__name {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary, #f5f5f7);
+  color: var(--text-primary, var(--ro-text-primary));
   margin: 0;
   font-family: var(--font-body);
   line-height: 1.3;
@@ -381,7 +381,7 @@
 
 .recent-reta-card__meta {
   font-size: 0.75rem;
-  color: var(--text-muted, #6e6e73);
+  color: var(--text-muted, var(--ro-text-muted));
   margin: 0;
   font-family: var(--font-body);
   letter-spacing: 0.02em;
@@ -402,7 +402,7 @@
 }
 
 .recent-reta-card__btn:hover {
-  color: rgba(201, 162, 39, 0.85);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* —— Vacío / utilidades —— */
@@ -421,7 +421,7 @@
 }
 
 .home-empty-retas__icon .ti {
-  color: #c9a84c;
+  color: var(--ro-accent);
   opacity: 0.85;
 }
 
@@ -486,7 +486,7 @@
   border-radius: 16px;
   border: 0.5px solid rgba(255, 255, 255, 0.1);
   background: rgba(22, 22, 24, 0.85);
-  color: var(--text-primary, #f5f5f7);
+  color: var(--text-primary, var(--ro-text-primary));
   font-family: var(--font-body);
   text-align: left;
   cursor: pointer;
@@ -525,11 +525,11 @@
 }
 
 .home-quick-card--jugadores .home-quick-card__icon .ti {
-  color: #c9a84c;
+  color: var(--ro-accent);
 }
 
 .home-quick-card--ranking {
-  border-color: rgba(201, 162, 39, 0.22);
+  border-color: rgba(255, 255, 255, 0.22);
   background: linear-gradient(
     135deg,
     rgba(20, 20, 24, 0.95) 0%,
@@ -538,20 +538,20 @@
 }
 
 .home-quick-card--ranking:hover {
-  border-color: rgba(201, 162, 39, 0.42);
+  border-color: rgba(255, 255, 255, 0.42);
 }
 
 .home-quick-card--ranking .home-quick-card__icon {
-  background: rgba(201, 162, 39, 0.1);
-  border-color: rgba(201, 162, 39, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .home-quick-card--ranking .home-quick-card__icon .ti {
-  color: #c9a227;
+  color: var(--ro-accent);
 }
 
 .home-quick-card--ranking:hover .home-quick-card__chev {
-  color: #c9a227;
+  color: var(--ro-accent);
 }
 
 .home-quick-card--retas .home-quick-card__icon {
@@ -593,7 +593,7 @@
 .home-quick-card__sub {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-muted, #6e6e73);
+  color: var(--text-muted, var(--ro-text-muted));
   line-height: 1.35;
 }
 
@@ -609,7 +609,7 @@
 }
 
 .home-quick-card--jugadores:hover .home-quick-card__chev {
-  color: #c9a84c;
+  color: var(--ro-accent);
 }
 
 .reta-management-section--secondary {
@@ -635,12 +635,12 @@
     #1c1c22 0%,
     #141418 100%
   );
-  border: 1px solid rgba(201, 162, 39, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow:
     0 28px 90px rgba(0, 0, 0, 0.72),
     0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 0 40px rgba(201, 162, 39, 0.08);
+    0 0 40px rgba(255, 255, 255, 0.08);
 }
 
 .home-sheet .riviera-modal__body {
@@ -683,12 +683,12 @@
     #1c1c22 0%,
     #141418 100%
   );
-  border: 1px solid rgba(201, 162, 39, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow:
     0 28px 90px rgba(0, 0, 0, 0.72),
     0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 0 40px rgba(201, 162, 39, 0.08);
+    0 0 40px rgba(255, 255, 255, 0.08);
   animation: home-sheet-rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 

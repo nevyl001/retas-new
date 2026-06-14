@@ -129,7 +129,7 @@
 .mobile-menu-option:hover {
   background: rgba(255, 215, 0, 0.2);
   border-color: rgba(255, 215, 0, 0.4);
-  color: #ffd700;
+  color: var(--ro-accent);
   transform: translateX(3px);
 }
 

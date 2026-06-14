@@ -133,7 +133,7 @@
   font-weight: 600;
   color: var(--accent-gold);
   background: var(--accent-gold-dim);
-  border: 0.5px solid rgba(201, 162, 39, 0.2);
+  border: 0.5px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
   white-space: nowrap;
 }
@@ -177,29 +177,44 @@
   gap: 4px;
   flex-shrink: 0;
   width: 84px;
-  padding: 5px 7px;
+  padding: 0;
   grid-column: 1;
-  border-radius: var(--radius-md);
-  background: var(--accent-gold-dim);
-  border: 0.5px solid rgba(201, 162, 39, 0.22);
+  border-radius: 0;
+  background: transparent;
+  border: none;
 }
 
 .te-partido-hora {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 7px;
+  border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--ro-pub-schedule, var(--accent-gold-light));
   line-height: 1.15;
   letter-spacing: -0.02em;
+  background: var(--ro-pub-schedule-dim, var(--accent-gold-dim));
+  border: 0.5px solid var(--ro-pub-schedule-border, rgba(232, 197, 71, 0.35));
 }
 
 .te-partido-cancha {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border-radius: var(--radius-full, 999px);
   font-size: 11px;
-  font-weight: 600;
-  color: var(--accent-gold);
-  line-height: 1.2;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ro-pub-court, #f87171);
+  background: var(--ro-pub-court-dim, rgba(248, 113, 113, 0.14));
+  border: 0.5px solid var(--ro-pub-court-border, rgba(248, 113, 113, 0.42));
 }
 
 .te-partido-cancha__icon {
@@ -308,7 +323,7 @@
 .te-badge-proximo {
   color: var(--accent-gold);
   background: var(--accent-gold-dim);
-  border: 0.5px solid rgba(201, 162, 39, 0.15);
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
 }
 
 .te-grupo-standing-full {
@@ -384,8 +399,8 @@
 .te-grupo-standing-full .te-pub-grupo-celebrate--aside::after {
   background: linear-gradient(
     160deg,
-    rgba(201, 162, 39, 0.35) 0%,
-    rgba(201, 162, 39, 0.08) 40%,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.08) 40%,
     transparent 70%
   );
 }
@@ -395,7 +410,7 @@
   text-align: center;
   background: radial-gradient(
     ellipse 80% 50% at 50% 0%,
-    rgba(201, 162, 39, 0.06) 0%,
+    rgba(255, 255, 255, 0.06) 0%,
     transparent 65%
   );
 }

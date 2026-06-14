@@ -1,34 +1,35 @@
-# RivieraApp — Design System (Riviera Gold v2)
+# RivieraApp — Design System (Riviera Open Maestro v1.0)
 
-**Estado:** Riviera Gold **v3** — grafito `#1c1c1e` + dorado `#e8c547` + Barlow Condensed / DM Sans.
+**Estado:** **Riviera Open Maestro v1.0** — negro `#000000` + blanco `#ffffff` + grises. **Sin dorado.**
+
+Fuente de verdad: [`src/styles/riviera-open-tokens.css`](../src/styles/riviera-open-tokens.css) (`--ro-*`).
+
+Compatibilidad app/módulos legacy: [`src/styles/riviera-tokens.css`](../src/styles/riviera-tokens.css) (aliases `--accent-gold` → `--ro-accent`, etc.).
 
 ## Principios
 
-- **Precision Dark:** negro absoluto, tipografía como estructura, oro como acento quirúrgico.
-- Un solo `:root` activo. Sin hex en CSS de features (objetivo Fase 2+).
-- Referencias de calidad: densidad tipo Linear, dark honesto tipo Vercel, componentes predecibles tipo Stripe.
+- **Precision Dark:** negro absoluto, tipografía como estructura, **blanco** como acento único.
+- Un solo `:root` maestro (`--ro-*`). Sin hex en CSS de features (objetivo).
+- Tipografía: **Stack Sans Headline** (títulos) + **Inter** (cuerpo).
 
-## Regla del oro (producto)
+## Regla de acento (producto)
 
-1. Máximo **3 acentos dorados** visibles por pantalla pública: kicker, score ganador, un acento estructural.
-2. El oro (`#d4af37`) es de alto valor — CTAs primarios, scores ganadores, estados live, énfasis único.
-3. Todo lo demás: blanco, gris o negro.
+1. Máximo **3 acentos blancos** visibles por pantalla pública: kicker, score ganador, CTA primario.
+2. El blanco es de alto valor — CTAs primarios, estados live, énfasis único.
+3. Todo lo demás: grises o negro. Modos de juego conservan color semántico (verde americano, azul liga, etc.).
 
-## Tokens
-
-Fuente única: [`src/styles/riviera-tokens.css`](../src/styles/riviera-tokens.css)
+## Tokens maestro (`--ro-*`)
 
 | Categoría | Tokens clave |
 |-----------|----------------|
-| Fondo | `--bg-base`, `--bg-card`, `--bg-elevated` |
-| Acento | `--accent-gold`, `--accent-gold-light`, `--glow-gold` |
-| Texto | `--text-primary`, `--text-secondary`, `--text-muted` |
-| Estados | `--win`, `--loss`, `--live`, `--pending` |
-| Tipo | `--font-display`, `--font-body` |
-| Espacio | `--space-1` … `--space-20` (múltiplos de 4px) |
-| Radio | `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-full` |
-| Sombra | `--shadow-1`, `--shadow-2`, `--shadow-3`, `--shadow-gold` |
-| Motion | `--motion-fast`, `--motion-base`, `--motion-stagger` |
+| Fondo | `--ro-bg-base`, `--ro-bg-deep`, `--ro-bg-surface`, `--ro-bg-elevated`, `--ro-bg-card` |
+| Acento | `--ro-accent`, `--ro-accent-hover`, `--ro-accent-dim` |
+| Texto | `--ro-text-primary`, `--ro-text-secondary`, `--ro-text-muted` |
+| Estados | `--ro-success`, `--ro-error`, `--ro-pending` |
+| Tipo | `--ro-font-heading`, `--ro-font-body` |
+| Escala | `--ro-text-hero` … `--ro-text-label`, `--ro-text-score` |
+| Espacio | `--ro-space-1` … `--ro-space-16` |
+| Radio | `--ro-radius-sm` … `--ro-radius-full` |
 
 ### Breakpoints (usar valores fijos en `@media`)
 
@@ -134,14 +135,14 @@ Verificar: sin amber `#f59e0b`, focus Tab visible, hover en cards, glow en botó
 - Botones/badges Riviera en flujos organizador principales; live en dorado.
 - `torneo-express-public.css`: colores migrados a tokens (parcial).
 
-### Riviera Gold v3 (2026-05-18)
+### Riviera Open Maestro v1.0 (2026-06)
 
-- Tokens v3 en `riviera-tokens.css` (preview `riviera_gold_v3_preview.html`).
-- Fuentes: Barlow Condensed + DM Sans (`public/index.html`).
-- `riviera-gold-v3.css`: patrones match card, kicker, cards, filtros.
-- Podio público y summary alineados al preview (`data-rank`, flex, oro solo en 1º).
-- Badge “En vivo” en dorado (no rojo).
-- Botón primario: texto `--text-on-gold` (`#1c1c1e`).
+- Tokens maestro en `riviera-open-tokens.css` (`--ro-*`).
+- Compatibilidad legacy en `riviera-tokens.css`.
+- Fuentes: Stack Sans Headline + Inter.
+- Fase 2: vistas públicas migradas a `--ro-*`.
+- Fase 3: app privada/organizador migrada; `riviera-gold-v3.css` → `riviera-open-patterns.css`.
+- Emails TE: acento blanco (`emailTemplates.ts`), sin dorado.
 
 ### Unificación visual TE (2026-05-22)
 

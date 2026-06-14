@@ -14,6 +14,7 @@ import {
   getRankingPosicionEnCategoria,
   getRivieraJugadorPublicBySlug,
   listParticipaciones,
+  rebuildJugadorStats,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
@@ -80,6 +81,14 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
         ]);
         setHistorial(h);
         setRankingPos(pos);
+        try {
+          const rebuilt = await rebuildJugadorStats(j.id);
+          if (rebuilt) {
+            setJugador({ ...j, stats: rebuilt });
+          }
+        } catch (e) {
+          console.warn("[riviera-jugadores] sync stats en ficha pública:", e);
+        }
       } else {
         setRankingPos(null);
       }

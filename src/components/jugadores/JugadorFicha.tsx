@@ -158,8 +158,18 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     if (!ok) return;
     setDeletingHistId(participacionId);
     try {
-      await deleteParticipacionJugador(user.id, jugador.id, participacionId);
-      await load();
+      const rebuilt = await deleteParticipacionJugador(
+        user.id,
+        jugador.id,
+        participacionId
+      );
+      const h = await listParticipaciones(jugador.id, 100);
+      setHistorial(h);
+      if (rebuilt) {
+        setJugador({ ...jugador, stats: rebuilt });
+      } else {
+        await load();
+      }
     } catch (e) {
       alert(
         e instanceof Error ? e.message : "No se pudo eliminar el registro"
@@ -231,12 +241,16 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   }
 
   const s = jugador.stats;
+  const retasCount = histStats.retasClasicas;
+  const torneosCount = histStats.torneosExpress;
+  const ligasCount = histStats.ligas;
+  const americanosCount = histStats.americanos;
   const maxModalidad = Math.max(
     1,
-    s?.total_retas ?? 0,
-    s?.total_torneos_express ?? 0,
-    s?.total_ligas ?? 0,
-    s?.total_americanos ?? 0
+    retasCount,
+    torneosCount,
+    ligasCount,
+    americanosCount
   );
 
   return (
@@ -538,26 +552,26 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             <span className="rj-stat-card__lbl">Efectividad</span>
           </div>
           <div className="rj-stat-card">
-            <span className="rj-stat-card__val">{s?.total_retas ?? 0}</span>
+            <span className="rj-stat-card__val">{retasCount}</span>
             <span className="rj-stat-card__lbl">Retas</span>
           </div>
           <div className="rj-stat-card">
-            <span className="rj-stat-card__val">{s?.total_torneos_express ?? 0}</span>
+            <span className="rj-stat-card__val">{torneosCount}</span>
             <span className="rj-stat-card__lbl">Torneos</span>
           </div>
           <div className="rj-stat-card">
-            <span className="rj-stat-card__val">{s?.total_ligas ?? 0}</span>
+            <span className="rj-stat-card__val">{ligasCount}</span>
             <span className="rj-stat-card__lbl">Ligas</span>
           </div>
           <div className="rj-stat-card">
-            <span className="rj-stat-card__val">{s?.total_americanos ?? 0}</span>
+            <span className="rj-stat-card__val">{americanosCount}</span>
             <span className="rj-stat-card__lbl">Americanos</span>
           </div>
         </div>
 
         {s?.racha_actual && (
           <p className="rj-page__sub" style={{ marginBottom: "1rem" }}>
-            Racha: <strong style={{ color: "#c9a227" }}>{s.racha_actual}</strong>
+            Racha: <strong style={{ color: "var(--ro-accent)" }}>{s.racha_actual}</strong>
           </p>
         )}
 
@@ -592,10 +606,10 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           <div className="rj-progress-list">
             {(
               [
-                ["Retas", s?.total_retas ?? 0],
-                ["Torneos Express", s?.total_torneos_express ?? 0],
-                ["Ligas", s?.total_ligas ?? 0],
-                ["Pádel Americano", s?.total_americanos ?? 0],
+                ["Retas", retasCount],
+                ["Torneos Express", torneosCount],
+                ["Ligas", ligasCount],
+                ["Pádel Americano", americanosCount],
               ] as const
             ).map(([label, count]) => (
               <div key={label} className="rj-progress-item">
