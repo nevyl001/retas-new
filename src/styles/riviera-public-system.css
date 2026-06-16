@@ -1,0 +1,117 @@
+/* =============================================
+   RIVIERA OPEN — SISTEMA VISUAL VISTAS PÚBLICAS
+   Fuentes, escala tipográfica y componentes compartidos.
+   Cargar después de riviera-public-tokens.css
+============================================= */
+
+.ro-public-view,
+.App.ro-public-view,
+.App--jugadores-public,
+.rjp-public,
+.te-public,
+.liga-pantalla,
+.public-americano-board,
+.rkcf {
+  --font-body: var(--ro-font-body);
+  --font-display: var(--ro-font-heading);
+  --font-family: var(--ro-font-body);
+
+  /* Escala tipográfica pública (rem) */
+  --ro-pub-text-kicker: 0.6875rem; /* 11px — eyebrow / modo */
+  --ro-pub-text-eyebrow: 0.625rem; /* 10px */
+  --ro-pub-text-section: 0.75rem; /* 12px — labels de sección */
+  --ro-pub-text-body: 0.875rem; /* 14px */
+  --ro-pub-text-meta: 0.8125rem; /* 13px */
+  --ro-pub-text-badge: 0.72rem;
+  --ro-pub-text-score: clamp(1.75rem, 5vw, 2.25rem);
+}
+
+/* Liga pública — oro alineado al resto de público */
+.ro-public-view .liga-pantalla,
+.App.ro-public-view .liga-pantalla {
+  --liga-gold: var(--ro-pub-gold);
+  --liga-gold-light: var(--ro-pub-gold-light);
+  --liga-gold-bright: var(--ro-pub-gold-light);
+  --liga-gold-dim: var(--ro-pub-gold-dim);
+  --liga-gold-border: var(--ro-pub-gold-border);
+  --liga-shadow-gold: 0 2px 8px var(--ro-pub-gold-glow);
+  --liga-shadow-gold-glow: 0 0 40px var(--ro-pub-gold-glow);
+  background: transparent !important;
+}
+
+/* Ranking cómo funciona — oro público */
+.rkcf {
+  --rkcf-gold: var(--ro-pub-gold);
+  --rkcf-gold-hover: var(--ro-pub-gold-light);
+  --rkcf-gold-dim: var(--ro-pub-gold-dim);
+}
+
+/* —— Header kicker (modo / marca) —— */
+.ro-public-view .te-public-header__kicker,
+.te-public .te-public-header__kicker {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: var(--ro-pub-text-kicker);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--accent-gold);
+}
+
+/* —— Títulos de sección —— */
+.ro-public-view .te-public-section__title,
+.te-public .te-public-section__title,
+.ro-public-view .te-label-section,
+.te-public .te-label-section {
+  font-family: var(--font-display);
+  font-size: var(--ro-pub-text-section);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* —— Badge cancha unificado (rojo) —— */
+.ro-public-view .te-pub-cancha,
+.ro-public-view .te-pub-match-chip--cancha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.34rem 0.7rem;
+  border-radius: var(--radius-full, 999px);
+  font-family: var(--font-body);
+  font-size: var(--ro-pub-text-badge);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  color: var(--ro-pub-court);
+  background: var(--ro-pub-court-dim);
+  border: 1px solid var(--ro-pub-court-border);
+}
+
+/* —— Horario / fecha chips —— */
+.ro-public-view .te-pub-match-chip--hora {
+  color: var(--ro-pub-schedule);
+  background: var(--ro-pub-schedule-dim);
+  border: 1px solid var(--ro-pub-schedule-border);
+}
+
+.ro-public-view .te-pub-match-chip--fecha {
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* —— Remontada / championship — oro público (no amber Tailwind) —— */
+.ro-public-view .te-pub-match--remontada,
+.ro-public-view .rr-championship--public {
+  --ro-pub-remontada-border: var(--ro-pub-gold-border);
+  --ro-pub-remontada-dim: var(--ro-pub-gold-dim);
+  --ro-pub-remontada-glow: var(--ro-pub-gold-glow);
+}

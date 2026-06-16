@@ -155,14 +155,14 @@
 }
 
 .te-public-header__kicker {
-  margin: 0 0 var(--riviera-space-5, 20px);
+  margin: 0 0 10px;
   font-family: var(--font-display);
-  font-size: clamp(2.5rem, 10vw, 3.75rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  color: var(--accent-primary);
-  text-transform: none;
+  font-size: var(--ro-pub-text-kicker, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--accent-gold);
 }
 
 .te-public-header__title {

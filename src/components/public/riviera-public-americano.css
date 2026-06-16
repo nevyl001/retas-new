@@ -846,7 +846,7 @@
   .te-pub-match--remontada > .te-pub-match__top {
     margin-bottom: 0.55rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(245, 158, 11, 0.22);
+    border-bottom: 1px solid var(--ro-pub-gold-border);
     gap: 0.35rem;
   }
 
@@ -867,8 +867,8 @@
   }
 
   .te-pub-match--remontada .te-pub-match__faceoff > :nth-child(2) {
-    border-color: rgba(245, 158, 11, 0.28);
-    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--ro-pub-gold-border);
+    background: var(--ro-pub-gold-dim);
   }
 
   .rr-championship--public {
@@ -1165,22 +1165,22 @@
 }
 
 .te-pub-match--remontada {
-  border-color: rgba(245, 158, 11, 0.45);
+  border-color: var(--ro-pub-gold-border);
   box-shadow:
-    0 0 0 1px rgba(245, 158, 11, 0.12),
-    inset 4px 0 0 rgba(245, 158, 11, 0.85);
+    0 0 0 1px var(--ro-pub-gold-dim),
+    inset 4px 0 0 var(--ro-pub-gold);
   background: linear-gradient(
     90deg,
-    rgba(245, 158, 11, 0.12) 0%,
+    var(--ro-pub-gold-dim) 0%,
     rgba(255, 255, 255, 0.06) 28%,
     rgba(255, 255, 255, 0.08) 100%
   );
 }
 
 .te-pub-match--remontada .te-pub-match__encounter {
-  color: var(--ro-accent-hover);
-  border-color: rgba(245, 158, 11, 0.35);
-  background: rgba(245, 158, 11, 0.14);
+  color: var(--accent-gold-light);
+  border-color: var(--ro-pub-gold-border);
+  background: var(--ro-pub-gold-dim);
 }
 
 .te-pub-match__remontada-badge {
@@ -1193,9 +1193,9 @@
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ro-accent-hover);
-  background: rgba(245, 158, 11, 0.18);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--accent-gold-light);
+  background: var(--ro-pub-gold-dim);
+  border: 1px solid var(--ro-pub-gold-border);
 }
 
 .te-pub-match__top {
@@ -1211,11 +1211,11 @@
   margin-top: 2rem;
   padding: clamp(1rem, 2.5vw, 1.5rem);
   border-radius: 16px;
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  border: 1px solid var(--ro-pub-gold-border);
   background: linear-gradient(
     180deg,
-    rgba(245, 158, 11, 0.14) 0%,
-    rgba(245, 158, 11, 0.04) 100%
+    var(--ro-pub-gold-dim) 0%,
+    var(--ro-pub-gold-dim) 100%
   );
   width: 100%;
 }
@@ -1232,7 +1232,7 @@
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: var(--ro-accent);
+  color: var(--accent-gold);
 }
 
 .rr-championship__subtitle {
@@ -1245,7 +1245,7 @@
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.05em;
-  color: var(--ro-accent-hover);
+  color: var(--accent-gold-light);
 }
 
 .rr-championship__pending-public {

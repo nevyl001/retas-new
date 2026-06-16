@@ -8,7 +8,7 @@
   background: rgba(10, 9, 7, 0.34);
   border: 1px solid var(--ro-pub-gold-border, rgba(201, 168, 76, 0.2));
   border-radius: 8px;
-  font-family: var(--font-body, var(--ro-font-body), system-ui, sans-serif);
+  font-family: var(--font-body);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -45,7 +45,7 @@
   position: absolute;
   width: 28px;
   height: 28px;
-  border-color: rgba(201, 168, 76, 0.22);
+  border-color: var(--ro-pub-gold-border);
   border-style: solid;
   border-width: 0;
   pointer-events: none;
@@ -93,7 +93,7 @@
   width: 40px;
   height: 1px;
   margin: 0 0 14px;
-  background: var(--ro-accent);
+  background: var(--accent-gold);
 }
 
 .podium-card__badge {
@@ -167,7 +167,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: var(--ro-accent-dim);
+  background: var(--ro-pub-gold-dim);
   outline: 3px solid var(--podium-accent);
   outline-offset: 3px;
   flex-shrink: 0;
@@ -201,7 +201,7 @@
   font-size: 16px;
   font-weight: 600;
   line-height: 1.25;
-  color: var(--ro-accent);
+  color: var(--accent-gold);
   text-wrap: balance;
 }
 
@@ -245,7 +245,7 @@
   gap: 4px;
   padding: 12px;
   border-radius: 6px;
-  border: 1px solid rgba(201, 168, 76, 0.14);
+  border: 1px solid var(--ro-pub-gold-border);
   background: rgba(18, 16, 12, 0.48);
   text-align: center;
 }
@@ -275,7 +275,7 @@
   width: 100%;
   height: 1px;
   margin: 16px 0 12px;
-  background: rgba(201, 168, 76, 0.16);
+  background: var(--ro-pub-gold-dim);
 }
 
 .podium-card__footer {

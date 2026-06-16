@@ -847,7 +847,7 @@
 
 .te-bracket-team--winner .te-bracket-team__player {
   font-size: clamp(0.875rem, 1.25vw, 1rem);
-  color: var(--ro-accent);
+  color: var(--accent-gold);
 }
 
 .te-bracket-team--loser .te-bracket-team__player {
@@ -1346,7 +1346,7 @@
   line-height: 1.25;
   letter-spacing: -0.01em;
   text-align: center;
-  color: var(--ro-accent);
+  color: var(--accent-gold);
 }
 
 .te-elim-finalists-pair__sep {

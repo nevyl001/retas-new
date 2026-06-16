@@ -151,7 +151,7 @@
 .rjp-cat-chip--active {
   background: var(--ro-bg-deep);
   border-color: var(--ro-border-accent);
-  color: var(--ro-accent);
+  color: var(--accent-gold);
 }
 
 .rjp-ranking-panel__body {
@@ -228,7 +228,7 @@
 
 .rjp-public--ranking .rj-avatar {
   border-color: var(--ro-border-accent);
-  color: var(--ro-accent);
+  color: var(--accent-gold);
 }
 
 .rjp-ranking-card__body {
@@ -546,7 +546,7 @@
     margin-bottom: 12px;
     border: 0.5px solid var(--ro-border-accent);
     border-radius: 12px;
-    background: var(--ro-accent-dim);
+    background: var(--ro-pub-gold-dim);
     color: var(--text-primary);
     font-family: inherit;
     cursor: pointer;
@@ -640,7 +640,7 @@
 }
 
 .rjp-podio__slot--gold .rjp-podio__medal {
-  background: var(--ro-accent);
+  background: var(--accent-gold);
   color: var(--ro-text-on-accent);
 }
 
@@ -696,7 +696,7 @@
 
 .rjp-podio__slot--gold .rjp-podio__platform {
   height: 40px;
-  background: var(--ro-accent-dim);
+  background: var(--ro-pub-gold-dim);
   border: 0.5px solid var(--ro-border-accent);
   border-bottom: none;
 }

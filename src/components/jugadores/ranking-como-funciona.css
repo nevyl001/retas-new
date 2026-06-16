@@ -5,9 +5,9 @@
   --rkcf-deep: var(--ro-bg-deep);
   --rkcf-surface: var(--ro-bg-surface);
   --rkcf-elevated: var(--ro-bg-elevated);
-  --rkcf-gold: var(--ro-accent);
-  --rkcf-gold-hover: var(--ro-accent-hover);
-  --rkcf-gold-dim: var(--ro-accent-dim);
+  --rkcf-gold: var(--accent-gold, var(--ro-pub-gold));
+  --rkcf-gold-hover: var(--accent-gold-light, var(--ro-pub-gold-light));
+  --rkcf-gold-dim: var(--accent-gold-dim, var(--ro-pub-gold-dim));
   --rkcf-text: var(--ro-text-primary);
   --rkcf-text-2: var(--ro-text-secondary);
   --rkcf-muted: var(--ro-text-muted);

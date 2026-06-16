@@ -174,47 +174,72 @@
 .te-partido-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
   width: 84px;
+  max-width: 84px;
   padding: 0;
   grid-column: 1;
   border-radius: 0;
   background: transparent;
   border: none;
+  overflow: hidden;
+}
+
+.te-partido-meta .te-partido-hora {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3px 4px;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.ro-public-view .te-partido-meta .te-partido-cancha,
+.te-public .te-partido-meta .te-partido-cancha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  gap: 2px;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: var(--radius-full, 999px);
+  color: var(--ro-pub-court);
+  background: var(--ro-pub-court-dim);
+  border: 1px solid var(--ro-pub-court-border);
+}
+
+.te-partido-meta .te-partido-cancha__icon {
+  flex-shrink: 0;
+  font-size: 7px;
+  line-height: 1;
 }
 
 .te-partido-hora {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 5px 7px;
+  padding: 0.34rem 0.55rem;
   border-radius: var(--radius-md);
-  font-size: 15px;
+  font-family: var(--font-body);
+  font-size: var(--ro-pub-text-body, 0.875rem);
   font-weight: 700;
-  color: var(--ro-pub-schedule, var(--accent-gold-light));
+  color: var(--ro-pub-schedule);
   line-height: 1.15;
   letter-spacing: -0.02em;
-  background: var(--ro-pub-schedule-dim, var(--accent-gold-dim));
-  border: 0.5px solid var(--ro-pub-schedule-border, rgba(232, 197, 71, 0.35));
-}
-
-.te-partido-cancha {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding: 5px 9px;
-  border-radius: var(--radius-full, 999px);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  color: var(--ro-pub-court, #f87171);
-  background: var(--ro-pub-court-dim, rgba(248, 113, 113, 0.14));
-  border: 0.5px solid var(--ro-pub-court-border, rgba(248, 113, 113, 0.42));
+  background: var(--ro-pub-schedule-dim);
+  border: 1px solid var(--ro-pub-schedule-border);
 }
 
 .te-partido-cancha__icon {
@@ -538,14 +563,16 @@
 
   .te-partido-meta {
     width: 78px;
+    max-width: 78px;
     padding: 4px 6px;
   }
 
-  .te-partido-hora {
-    font-size: 14px;
+  .te-partido-meta .te-partido-hora {
+    font-size: 10px;
   }
 
-  .te-partido-cancha {
-    font-size: 10px;
+  .te-partido-meta .te-partido-cancha {
+    font-size: 8px;
+    padding: 2px 3px;
   }
 }

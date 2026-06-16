@@ -10,6 +10,7 @@
 @import "./styles/riviera-app-shell.css";
 @import "./styles/riviera-public-court.css";
 @import "./styles/riviera-public-tokens.css";
+@import "./styles/riviera-public-system.css";
 @import "./components/jugadores/riviera-jugadores-public.css";
 
 html,

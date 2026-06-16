@@ -42,3 +42,37 @@
   --medal-bronze-dim: rgba(205, 154, 106, 0.12);
   --medal-bronze-border: rgba(205, 154, 106, 0.38);
 }
+
+/* Alcance ampliado — todas las vistas espectador */
+.ro-public-view .liga-pantalla,
+.ro-public-view .public-americano-board,
+.ro-public-view .rkcf,
+.liga-pantalla.ro-public-view,
+.public-americano-board {
+  --ro-pub-gold: #c9a227;
+  --ro-pub-gold-light: #e8c547;
+  --ro-pub-gold-dim: rgba(201, 162, 39, 0.14);
+  --ro-pub-gold-border: rgba(201, 162, 39, 0.38);
+  --ro-pub-gold-glow: rgba(201, 162, 39, 0.22);
+  --ro-pub-schedule: #e8c547;
+  --ro-pub-schedule-dim: rgba(232, 197, 71, 0.14);
+  --ro-pub-schedule-border: rgba(232, 197, 71, 0.38);
+  --ro-pub-court: #f87171;
+  --ro-pub-court-dim: rgba(248, 113, 113, 0.14);
+  --ro-pub-court-border: rgba(248, 113, 113, 0.42);
+  --ro-medal-gold: #d4af37;
+  --ro-medal-silver: #b8bcc4;
+  --ro-medal-bronze: #cd9a6a;
+  --accent-gold: var(--ro-pub-gold);
+  --accent-gold-light: var(--ro-pub-gold-light);
+  --accent-gold-dim: var(--ro-pub-gold-dim);
+  --medal-gold: var(--ro-medal-gold);
+  --medal-silver: var(--ro-medal-silver);
+  --medal-silver-dim: rgba(184, 188, 196, 0.12);
+  --medal-silver-border: rgba(184, 188, 196, 0.38);
+  --medal-bronze: var(--ro-medal-bronze);
+  --medal-bronze-dim: rgba(205, 154, 106, 0.12);
+  --medal-bronze-border: rgba(205, 154, 106, 0.38);
+  --font-body: var(--ro-font-body);
+  --font-display: var(--ro-font-heading);
+}

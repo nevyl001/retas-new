@@ -1,6 +1,4 @@
-/* Tablero público americano (/americano-pantalla/...) — solo public-americano-board* */
-
-/* Fondo de cancha: .ro-public-view (riviera-public-court.css) */
+/* Tablero público americano (/americano-pantalla/...) */
 
 .public-americano-board {
   width: 100%;
@@ -22,14 +20,14 @@
 }
 
 .public-americano-board__title {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(2rem, 6vw, 3rem);
-  font-weight: 400;
-  letter-spacing: 0.05em;
-  line-height: 1.05;
+  font-size: clamp(1.85rem, 5.5vw, 2.85rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
   color: var(--text-primary);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .public-americano-board__title::after {
@@ -37,17 +35,14 @@
   display: block;
   width: 48px;
   height: 2px;
-  margin: 0.5rem auto 0;
-  background: var(--text-secondary);
-}
-
-.public-americano-board__tagline {
-  display: none;
+  margin: 0.65rem auto 0;
+  background: var(--ro-pub-gold, var(--accent-gold));
+  opacity: 0.85;
 }
 
 .public-americano-board__meta {
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: var(--ro-pub-text-meta, 0.8125rem);
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -55,4 +50,9 @@
 .public-americano-board__waiting,
 .public-americano-board__error {
   font-family: var(--font-body);
+  font-size: var(--ro-pub-text-body, 0.875rem);
+}
+
+.public-americano-board__error {
+  color: var(--ro-error);
 }
