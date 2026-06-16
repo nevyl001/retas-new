@@ -27,3 +27,11 @@ Si recibes **"Table publicly accessible"** / `rls_disabled_in_public`:
 4. Vuelve a correr Security Advisor y prueba: login, reta, TE público, ranking, liga pública.
 
 Sin RLS, cualquiera con la URL del proyecto y la clave **anon** (visible en el bundle de la app) puede leer y modificar datos.
+
+## Vistas SECURITY DEFINER (Advisor)
+
+Si aparecen alertas en `pairs_with_contact` o `notificaciones_eventos_queue_resumen`:
+
+1. Ejecuta **`supabase/fix-security-definer-views.sql`** en SQL Editor.
+2. Prueba el panel de **notificaciones** de un torneo express y un envío de email de prueba.
+3. No afecta las vistas públicas `/public/...` del torneo.
