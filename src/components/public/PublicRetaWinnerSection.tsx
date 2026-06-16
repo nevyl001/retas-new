@@ -52,7 +52,10 @@ export const PublicRetaWinnerSection: React.FC<{
         <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
 
         {hasWinners ? (
-          <div className="ro-pub-celebrate__heroes" aria-hidden>
+          <div
+            className="ro-pub-celebrate__heroes"
+            aria-label={title.replace(/\s*\/\s*/g, ", ")}
+          >
             {winners!.map((w) => (
               <div key={w.name} className="ro-pub-celebrate__hero">
                 <div className="ro-pub-celebrate__hero-ring">
@@ -67,11 +70,9 @@ export const PublicRetaWinnerSection: React.FC<{
               </div>
             ))}
           </div>
-        ) : null}
-
-        <p className="ro-pub-celebrate__names">
-          {hasWinners ? title.replace(/\s*\/\s*/g, " · ") : title}
-        </p>
+        ) : (
+          <p className="ro-pub-celebrate__names">{title.replace(/\s*\/\s*/g, " · ")}</p>
+        )}
         <p className="ro-pub-celebrate__motivational">{fraseMotivacional}</p>
         {subtitle ? <p className="ro-pub-celebrate__rank">{subtitle}</p> : null}
         <PublicRivieraCelebrateClosing torneoNombre={torneoNombre} />
@@ -114,10 +115,11 @@ export const PublicRetaWinnerSection: React.FC<{
                       </div>
                     ))}
                   </div>
-                ) : null}
-                <p className="ro-pub-celebrate__names ro-pub-celebrate__names--sub">
-                  {entry.title.replace(/\s*\/\s*/g, " · ")}
-                </p>
+                ) : (
+                  <p className="ro-pub-celebrate__names ro-pub-celebrate__names--sub">
+                    {entry.title.replace(/\s*\/\s*/g, " · ")}
+                  </p>
+                )}
               </div>
             ))}
           </div>
