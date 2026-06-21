@@ -50,9 +50,7 @@ import {
   loadChampionshipConfig,
   parseChampionshipConfig,
   partitionMatches,
-  resolveChampionshipPodium,
   sortChampionshipRoundMatches,
-  type ChampionshipPodium,
   type RoundRobinChampionshipConfig,
 } from "../lib/roundRobinChampionship";
 import "./public/riviera-public-americano.css";
@@ -103,8 +101,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
     []
   );
-  const [championshipPodium, setChampionshipPodium] =
-    useState<ChampionshipPodium | null>(null);
   const [podiumAvatars, setPodiumAvatars] = useState<{
     second: PublicRetaWinnerAvatar[];
     third: PublicRetaWinnerAvatar[];
@@ -194,32 +190,21 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         setShowWinner(false);
         setWinningTeamName(null);
         setTournamentWinner(null);
-        setChampionshipPodium(null);
       } else {
         if (resolvedTeamConfig) {
           const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
           const standings = computeTeamStandings(pairsWithStats, resolvedTeamConfig);
           setWinningTeamName(standings?.[0]?.name ?? null);
           setTournamentWinner(null);
-          setChampionshipPodium(null);
           setShowWinner(true);
         } else {
           setWinningTeamName(null);
           try {
-            const [winner, podium] = await Promise.all([
-              TournamentWinnerCalculator.calculateTournamentWinner(
-                pairsData,
-                matchesData
-              ),
-              resolveChampionshipPodium(
-                pairsData,
-                matchesData,
-                champCfg,
-                gamesData || []
-              ),
-            ]);
+            const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
+              pairsData,
+              matchesData
+            );
             setTournamentWinner(winner);
-            setChampionshipPodium(podium);
             setShowWinner(true);
           } catch (err) {
             console.error("Error calculating winner:", err);
@@ -524,7 +509,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   }, [showWinner, organizadorId, winnerAvatarEntries]);
 
   const podiumAvatarEntries = useMemo(() => {
-    const toEntries = (pair: Pair | null | undefined): PlayerAvatarLookupEntry[] =>
+    const toEntries = (pair: Pair | undefined): PlayerAvatarLookupEntry[] =>
       pair
         ? [
             { id: pair.player1_id, name: pair.player1_name },
@@ -532,10 +517,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ]
         : [];
     return {
-      second: toEntries(championshipPodium?.second),
-      third: toEntries(championshipPodium?.third),
+      second: toEntries(sortedPairs[1]),
+      third: toEntries(sortedPairs[2]),
     };
-  }, [championshipPodium]);
+  }, [sortedPairs]);
 
   useEffect(() => {
     const allEntries = [
@@ -567,24 +552,25 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   }, [showWinner, organizadorId, podiumAvatarEntries]);
 
   const runnersUp = useMemo((): PublicRetaRunnerUp[] => {
-    if (!championshipPodium) return [];
     const items: PublicRetaRunnerUp[] = [];
-    if (championshipPodium.second) {
+    const second = sortedPairs[1];
+    const third = sortedPairs[2];
+    if (second) {
       items.push({
         place: 2,
-        title: `${championshipPodium.second.player1_name} / ${championshipPodium.second.player2_name}`,
+        title: `${second.player1_name} / ${second.player2_name}`,
         avatars: podiumAvatars.second,
       });
     }
-    if (championshipPodium.third) {
+    if (third) {
       items.push({
         place: 3,
-        title: `${championshipPodium.third.player1_name} / ${championshipPodium.third.player2_name}`,
+        title: `${third.player1_name} / ${third.player2_name}`,
         avatars: podiumAvatars.third,
       });
     }
     return items;
-  }, [championshipPodium, podiumAvatars]);
+  }, [sortedPairs, podiumAvatars]);
 
   const formatKicker = teamStandings?.length
     ? "Reta por equipos"
