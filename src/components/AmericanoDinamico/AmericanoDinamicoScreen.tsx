@@ -61,7 +61,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     phase,
     ranking,
     rosterForUi,
-    currentRoundIndex,
     currentRound,
     totalRounds,
     removePlayer,

@@ -20,10 +20,6 @@ interface DueloPairBuilderProps {
   onPairBChange: (pair: DueloPair | null) => void;
 }
 
-function pairKey(p: DueloPair): string {
-  return [p.j1.id, p.j2.id].sort().join("-");
-}
-
 export function bothPairsReady(
   pairA: DueloPair | null,
   pairB: DueloPair | null
@@ -98,20 +94,6 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   useEffect(() => {
     void load();
   }, [load]);
-
-  const usedIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (pairA) {
-      ids.add(pairA.j1.id);
-      ids.add(pairA.j2.id);
-    }
-    if (pairB) {
-      ids.add(pairB.j1.id);
-      ids.add(pairB.j2.id);
-    }
-    for (const s of selected) ids.add(s.id);
-    return ids;
-  }, [pairA, pairB, selected]);
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();

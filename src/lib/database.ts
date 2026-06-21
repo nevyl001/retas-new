@@ -15,7 +15,6 @@ import {
   type AmericanoDinamicoSnapshotV1,
 } from "./americanoDinamicoStorage";
 import { isAmericanoResumableAsync } from "./americanoDinamicoSync";
-import { isAmericanoTournament } from "./gameModeMapping";
 import { normalizePlayerNameKey } from "./rivieraJugadores/playerNameKey";
 
 export type {
