@@ -11,6 +11,12 @@
   box-sizing: border-box;
 }
 
+.americano-screen__loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
 .americano-screen__header {
   display: flex;
   flex-direction: column;

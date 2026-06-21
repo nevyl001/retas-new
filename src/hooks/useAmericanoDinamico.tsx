@@ -11,16 +11,23 @@ import type { AmericanoPlayer, AmericanoRound } from "../lib/db/types";
 import {
   buildMatricesFromScoredRounds,
   generateAmericanoRound,
+  regenerateUnscoredSecondHalfRound,
 } from "../lib/americanoGenerator";
 import {
+  computeAmericanoLiveRanking,
+  filterScoredAmericanoRounds,
+  rosterSeedMap,
+} from "../lib/americanoLiveStandings";
+import {
   applyAmericanoResult,
-  getAmericanoRanking,
 } from "../lib/americanoStandings";
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import {
   loadAmericanoDinamicoSnapshot,
   resolveAmericanoTournamentId,
 } from "../lib/americanoDinamicoStorage";
+import { applyAmericanoSnapshotToState } from "../lib/americanoDinamicoRestore";
+import { loadAmericanoDinamicoSnapshotMerged } from "../lib/americanoDinamicoSync";
 
 type AmericanoPhase = "registration" | "playing" | "finished";
 
@@ -104,37 +111,27 @@ function rebuildStateFromRounds(
   return { players: rebuiltPlayers, rounds: rebuiltRounds };
 }
 
-function collectSourcePlayersFromSnapshot(
-  snap: AmericanoDinamicoSnapshotV1
-): AmericanoPlayer[] {
-  const nameById = new Map<string, string>();
-  for (const p of snap.ranking) {
-    nameById.set(p.id, p.name);
+function refreshUnscoredSecondHalfRoundsFrom(
+  players: AmericanoPlayer[],
+  allRounds: AmericanoRound[],
+  fromIndex: number,
+  totalRounds: number,
+  courts: number,
+  seedById: Map<string, number>
+): AmericanoRound[] {
+  let out = allRounds;
+  for (let i = Math.max(0, fromIndex); i < out.length; i++) {
+    const refreshed = regenerateUnscoredSecondHalfRound(
+      players,
+      out,
+      i,
+      totalRounds,
+      courts,
+      seedById
+    );
+    if (refreshed) out = refreshed;
   }
-  for (const r of snap.rounds) {
-    for (const b of r.benchPlayers) {
-      nameById.set(b.id, b.name);
-    }
-    for (const m of r.matches) {
-      for (const pl of m.teamA) nameById.set(pl.id, pl.name);
-      for (const pl of m.teamB) nameById.set(pl.id, pl.name);
-    }
-  }
-  return Array.from(nameById.entries()).map(([id, name]) => ({
-    id,
-    name,
-    stats: createEmptyStats(),
-  }));
-}
-
-function inferCourtsFromRounds(rounds: AmericanoRound[]): number {
-  let maxCourt = 1;
-  for (const r of rounds) {
-    for (const m of r.matches) {
-      maxCourt = Math.max(maxCourt, m.court);
-    }
-  }
-  return maxCourt;
+  return out;
 }
 
 export interface UseAmericanoDinamicoOptions {
@@ -152,6 +149,8 @@ export function useAmericanoDinamico(
   const [rounds, setRounds] = useState<AmericanoRound[]>([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
   const [phase, setPhase] = useState<AmericanoPhase>("registration");
+  const [hydrating, setHydrating] = useState(() => Boolean(resolvedTournamentId));
+  const [remoteSyncReady, setRemoteSyncReady] = useState(true);
 
   const baseRosterRef = useRef<AmericanoPlayer[]>([]);
   const totalRoundsRef = useRef(0);
@@ -169,101 +168,59 @@ export function useAmericanoDinamico(
 
   useEffect(() => {
     participacionSyncedRef.current = false;
+    setHydrating(Boolean(resolvedTournamentId));
+    setRemoteSyncReady(true);
   }, [resolvedTournamentId]);
 
-  /** useLayoutEffect: restaurar antes de useEffect (p. ej. borrador registro) para no borrar el snapshot por carrera. */
+  const applySnapshot = useCallback(
+    (snap: AmericanoDinamicoSnapshotV1) => {
+      applyAmericanoSnapshotToState(
+        snap,
+        { setPlayers, setRounds, setCurrentRoundIndex, setPhase },
+        { baseRosterRef, totalRoundsRef, courtsRef }
+      );
+    },
+    []
+  );
+
+  /** Caché local inmediata (mismo dispositivo). */
   useLayoutEffect(() => {
     if (!resolvedTournamentId) return;
     const snap = loadAmericanoDinamicoSnapshot(resolvedTournamentId);
     if (!snap) return;
+    applySnapshot(snap);
+  }, [resolvedTournamentId, applySnapshot]);
 
-    if (snap.rounds.length === 0) {
-      if (
-        snap.ranking.length > 0 &&
-        snap.tournamentPhase !== "playing" &&
-        snap.tournamentPhase !== "finished"
-      ) {
-        setPlayers(
-          snap.ranking.map((p) => ({
-            id: p.id,
-            name: p.name,
-            stats: { ...createEmptyStats(), ...p.stats },
-          }))
-        );
-        setRounds([]);
-        setCurrentRoundIndex(0);
-        setPhase("registration");
-        baseRosterRef.current = [];
-        totalRoundsRef.current = 0;
-        courtsRef.current = 1;
-      }
+  /** Supabase: fuente de verdad entre dispositivos. */
+  useEffect(() => {
+    if (!resolvedTournamentId) {
+      setHydrating(false);
       return;
     }
 
-    try {
-      const sourcePlayers = collectSourcePlayersFromSnapshot(snap);
-      const playerMap = new Map(sourcePlayers.map((p) => [p.id, p]));
-      const convertedRounds: AmericanoRound[] = snap.rounds.map((sr) => ({
-        roundNumber: sr.roundNumber,
-        phase: sr.phase,
-        benchPlayers: sr.benchPlayers
-          .map((b) => playerMap.get(b.id))
-          .filter((p): p is AmericanoPlayer => !!p),
-        matches: sr.matches.map((sm) => {
-          const a0 = playerMap.get(sm.teamA[0].id);
-          const a1 = playerMap.get(sm.teamA[1].id);
-          const b0 = playerMap.get(sm.teamB[0].id);
-          const b1 = playerMap.get(sm.teamB[1].id);
-          if (!a0 || !a1 || !b0 || !b1) {
-            throw new Error("americano_snapshot_missing_player");
-          }
-          return {
-            id: sm.id,
-            court: sm.court,
-            scoreA: sm.scoreA,
-            scoreB: sm.scoreB,
-            teamA: [a0, a1] as [AmericanoPlayer, AmericanoPlayer],
-            teamB: [b0, b1] as [AmericanoPlayer, AmericanoPlayer],
-          };
-        }),
-      }));
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { snapshot, remoteAvailable } =
+          await loadAmericanoDinamicoSnapshotMerged(resolvedTournamentId);
+        if (cancelled) return;
+        if (snapshot) {
+          applySnapshot(snapshot);
+        }
+        if (!remoteAvailable) {
+          setRemoteSyncReady(false);
+        }
+      } catch (e) {
+        console.warn("Americano: no se pudo sincronizar desde Supabase.", e);
+      } finally {
+        if (!cancelled) setHydrating(false);
+      }
+    })();
 
-      const { players: pl, rounds: rl } = rebuildStateFromRounds(
-        convertedRounds,
-        sourcePlayers
-      );
-
-      baseRosterRef.current = sourcePlayers.map((p) => ({
-        id: p.id,
-        name: p.name,
-        stats: createEmptyStats(),
-      }));
-
-      const maxRoundNumber = Math.max(
-        ...snap.rounds.map((r) => r.roundNumber),
-        1
-      );
-      totalRoundsRef.current =
-        snap.totalRounds && snap.totalRounds > 0
-          ? snap.totalRounds
-          : maxRoundNumber;
-
-      courtsRef.current = inferCourtsFromRounds(rl);
-
-      const restoredPhase: AmericanoPhase =
-        snap.tournamentPhase === "finished" ? "finished" : "playing";
-
-      setPlayers(pl);
-      setRounds(rl);
-      setCurrentRoundIndex(Math.max(0, rl.length - 1));
-      setPhase(restoredPhase);
-    } catch (e) {
-      console.warn(
-        "Americano dinámico: no se pudo restaurar el estado guardado.",
-        e
-      );
-    }
-  }, [resolvedTournamentId]);
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedTournamentId, applySnapshot]);
 
   useEffect(() => {
     roundsRef.current = rounds;
@@ -332,6 +289,25 @@ export function useAmericanoDinamico(
     setPhase("playing");
   };
 
+  const persistRebuiltState = useCallback(
+    (nextRounds: AmericanoRound[], refreshFromRoundIndex = 0) => {
+      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
+      const rebuilt = rebuildStateFromRounds(nextRounds, template);
+      const seeds = rosterSeedMap(template);
+      const synced = refreshUnscoredSecondHalfRoundsFrom(
+        rebuilt.players,
+        rebuilt.rounds,
+        refreshFromRoundIndex,
+        totalRoundsRef.current,
+        courtsRef.current,
+        seeds
+      );
+      setRounds(synced);
+      setPlayers(rebuilt.players);
+    },
+    []
+  );
+
   const commitRoundScores = useCallback(
     (scores: { matchId: string; scoreA: number; scoreB: number }[]) => {
       if (phase !== "playing") return;
@@ -350,12 +326,9 @@ export function useAmericanoDinamico(
           }),
         };
       });
-      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
-      const rebuilt = rebuildStateFromRounds(nextRounds, template);
-      setRounds(rebuilt.rounds);
-      setPlayers(rebuilt.players);
+      persistRebuiltState(nextRounds, idx + 1);
     },
-    [phase]
+    [phase, persistRebuiltState]
   );
 
   const submitScore = useCallback(
@@ -372,12 +345,9 @@ export function useAmericanoDinamico(
           ),
         };
       });
-      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
-      const rebuilt = rebuildStateFromRounds(nextRounds, template);
-      setRounds(rebuilt.rounds);
-      setPlayers(rebuilt.players);
+      persistRebuiltState(nextRounds, idx);
     },
-    [phase]
+    [phase, persistRebuiltState]
   );
 
   const editScore = useCallback(
@@ -392,12 +362,9 @@ export function useAmericanoDinamico(
           ),
         };
       });
-      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
-      const rebuilt = rebuildStateFromRounds(nextRounds, template);
-      setRounds(rebuilt.rounds);
-      setPlayers(rebuilt.players);
+      persistRebuiltState(nextRounds, roundIndex + 1);
     },
-    []
+    [persistRebuiltState]
   );
 
   const nextRound = useCallback(() => {
@@ -426,9 +393,10 @@ export function useAmericanoDinamico(
 
     const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
     const rebuilt = rebuildStateFromRounds(prevRounds, template);
+    const scoredRounds = filterScoredAmericanoRounds(rebuilt.rounds);
     const { partnerMatrix } = buildMatricesFromScoredRounds(
       rebuilt.players,
-      rebuilt.rounds
+      scoredRounds
     );
 
     const lastBenchIds = new Set(
@@ -443,6 +411,8 @@ export function useAmericanoDinamico(
       courts: courtsRef.current,
       partnerMatrix,
       lastBenchPlayerIds: lastBenchIds,
+      scoredRounds,
+      seedById: rosterSeedMap(template),
     });
 
     setPlayers(rebuilt.players);
@@ -452,15 +422,15 @@ export function useAmericanoDinamico(
 
   const ranking = useMemo(() => {
     if (phase === "registration") return [];
-    const template = rosterTemplateFromRef(baseRosterRef, players);
-    if (template.length === 0) return getAmericanoRanking(players);
-    const slice =
-      phase === "finished"
-        ? rounds
-        : rounds.slice(0, currentRoundIndex);
-    const { players: rp } = rebuildStateFromRounds(slice, template);
-    return getAmericanoRanking(rp, slice);
-  }, [phase, rounds, currentRoundIndex, players]);
+    const roster = rosterTemplateFromRef(baseRosterRef, players);
+    if (roster.length === 0) return [];
+    return computeAmericanoLiveRanking(roster, rounds);
+  }, [phase, rounds, players]);
+
+  const rosterForUi = useMemo(
+    () => rosterTemplateFromRef(baseRosterRef, players),
+    [players]
+  );
 
   const currentRound = useMemo(
     () => (phase === "playing" ? rounds[currentRoundIndex] ?? null : null),
@@ -501,6 +471,8 @@ export function useAmericanoDinamico(
     currentRoundIndex,
     phase,
     totalRounds: totalRoundsRef.current,
+    hydrating,
+    remoteSyncReady,
     removePlayer,
     toggleExistingPlayer,
     startTournament,
@@ -509,6 +481,7 @@ export function useAmericanoDinamico(
     editScore,
     nextRound,
     ranking,
+    rosterForUi,
     currentRound,
   };
 }

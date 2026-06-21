@@ -1,0 +1,97 @@
+.rjp-evolution {
+  margin-top: var(--ro-space-4, 1rem);
+  padding: var(--ro-space-4, 1rem);
+  border-radius: var(--ro-radius-md, 12px);
+  background: var(--rjp-ficha-surface, var(--ro-bg-elevated));
+  border: 1px solid var(--rjp-ficha-border, var(--ro-border));
+}
+
+.rjp-evolution__head {
+  margin-bottom: var(--ro-space-3, 0.75rem);
+}
+
+.rjp-evolution__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--rjp-ficha-text, var(--ro-text-primary));
+}
+
+.rjp-evolution__sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--rjp-ficha-text-2, var(--ro-text-secondary));
+}
+
+.rjp-evolution__chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 120px;
+  padding: 8px 0 4px;
+  border-bottom: 1px solid var(--rjp-ficha-border, var(--ro-border));
+}
+
+.rjp-evolution__col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.rjp-evolution__bar {
+  width: 100%;
+  max-width: 28px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(
+    180deg,
+    var(--rjp-ficha-gold, var(--ro-accent)) 0%,
+    color-mix(in srgb, var(--rjp-ficha-gold, var(--ro-accent)) 55%, transparent) 100%
+  );
+  min-height: 4px;
+  transition: height 0.35s ease;
+}
+
+.rjp-evolution__label {
+  font-size: 9px;
+  color: var(--rjp-ficha-text-3, var(--ro-text-muted));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: center;
+}
+
+.rjp-evolution__recent {
+  list-style: none;
+  margin: var(--ro-space-3, 0.75rem) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rjp-evolution__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.rjp-evolution__item-name {
+  color: var(--rjp-ficha-text-2, var(--ro-text-secondary));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rjp-evolution__item-delta {
+  font-weight: 600;
+  color: var(--rjp-ficha-gold, var(--ro-accent));
+  flex-shrink: 0;
+}

@@ -18,7 +18,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "update-icons": "node scripts/update-icons.js",
-    "email-hero-assets": "node scripts/generate-email-hero-assets.mjs"
+    "email-hero-assets": "node scripts/generate-email-hero-assets.mjs",
+    "gen:types": "supabase gen types typescript --project-id giswxhmgjepoobdoljb --schema public > src/lib/database.types.ts"
   },
   "eslintConfig": {
     "extends": [

@@ -2,6 +2,7 @@ import React from "react";
 import {
   calcularPuntosEvento,
   PUNTOS_AMERICANO,
+  PUNTOS_DUELO_2V2,
   PUNTOS_EXPRESS,
   PUNTOS_LIGA,
   PUNTOS_RETA,
@@ -37,6 +38,9 @@ const R = PUNTOS_RETA;
 const RE = PUNTOS_RETA_EQUIPOS;
 const A = PUNTOS_AMERICANO;
 const E = PUNTOS_EXPRESS;
+const D = PUNTOS_DUELO_2V2;
+
+const dueloGanador = D.PARTICIPACION + D.GANADOR;
 
 const expressEliminatoria = {
   paso_fase_grupos: true as const,
@@ -419,6 +423,31 @@ export const RankingComoFuncionaPage: React.FC = () => {
                 { label: "Campeón (total)", value: `${expressCampeon}` },
                 { label: "Finalista (total)", value: `${expressFinalista}` },
                 { label: "3.º–4.º (total)", value: `${expressSemiPodio}` },
+              ]}
+            />
+
+            <FormatoCard
+              icon="⚔️"
+              title="Duelo 2 vs 2"
+              subtitle="Encuentro entre dos parejas del registro"
+              delayMs={400}
+              rows={[
+                {
+                  concepto: "Participación",
+                  cuando: "Al finalizar el duelo",
+                  puntos: `+${D.PARTICIPACION}`,
+                  tone: "base",
+                },
+                {
+                  concepto: "Victoria",
+                  cuando: "Pareja ganadora",
+                  puntos: `+${D.GANADOR} (además de participar)`,
+                  tone: "gold",
+                },
+              ]}
+              footer={[
+                { label: "Perdedor", value: `${D.PARTICIPACION}` },
+                { label: "Ganador (total)", value: `${dueloGanador}` },
               ]}
             />
           </div>

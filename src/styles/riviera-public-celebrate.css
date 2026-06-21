@@ -317,6 +317,22 @@
   color: var(--accent-gold);
 }
 
+.ro-pub-celebrate__participantes-note {
+  margin: 1.25rem 0 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--riviera-radius-sm, 10px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.65));
+  max-width: 36rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .ro-pub-celebrate__footer {
   display: flex;
   flex-direction: column;

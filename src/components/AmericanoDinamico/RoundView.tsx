@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
-import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
+import {
+  AMERICANO_SECOND_HALF_PAIRING_HELP,
+  AMERICANO_SECOND_HALF_PAIRING_TITLE,
+  americanoRoundPhaseCaption,
+} from "../../lib/americanoPhaseLabels";
 import "./RoundView.css";
 
 export interface RoundScorePayload {
@@ -113,11 +117,28 @@ export const RoundView: React.FC<RoundViewProps> = ({
           <h3>Ronda {round.roundNumber}</h3>
           <span
             className="americano-round__phase"
-            title="Primera mitad: emparejamientos aleatorios evitando repetir compañero. Segunda mitad: por games acumulados (1º+2º vs 3º+4º). La última ronda se muestra como Final."
+            title={
+              round.phase === 2
+                ? AMERICANO_SECOND_HALF_PAIRING_HELP
+                : "Primera mitad: emparejamientos aleatorios evitando repetir compañero."
+            }
           >
             {americanoRoundPhaseCaption(round, totalRounds)}
           </span>
         </div>
+        {round.phase === 2 ? (
+          <aside
+            className="americano-round__pairing-note"
+            aria-label={AMERICANO_SECOND_HALF_PAIRING_TITLE}
+          >
+            <p className="americano-round__pairing-note-title">
+              {AMERICANO_SECOND_HALF_PAIRING_TITLE}
+            </p>
+            <p className="americano-round__pairing-note-text">
+              {AMERICANO_SECOND_HALF_PAIRING_HELP}
+            </p>
+          </aside>
+        ) : null}
         <p className="americano-round__hint">
           Completa los marcadores, confirma y luego usa{" "}
           <strong>Ronda finalizada</strong> para avanzar.

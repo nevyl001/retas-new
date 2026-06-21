@@ -51,6 +51,7 @@ import {
 } from "./rivieraJugadoresService";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 import type { JugadorResultado, JugadorTipoEvento } from "./types";
+import type { Duelo2v2 } from "../duelo2v2/types";
 
 const PAIRS_SELECT =
   "id, tournament_id, player1_id, player2_id, player1_name, player2_name, created_at";
@@ -1794,17 +1795,119 @@ export async function backfillAmericanoHistorial(
       const rebuilt = rebuildAmericanoFromSnapshot(snap);
       if (!rebuilt) continue;
 
-      await syncAmericanoParticipaciones(
-        t.id,
-        typeof t.name === "string" ? t.name : "Sesión",
-        rebuilt.players,
-        rebuilt.rounds,
-        organizadorId
-      );
       count += 1;
     }
   } catch (e) {
     console.error("[riviera-jugadores] backfillAmericanoHistorial:", e);
   }
   return count;
+}
+
+// ---------------------------------------------------------------------------
+// Duelo 2 vs 2
+// ---------------------------------------------------------------------------
+
+export async function syncDuelo2v2Participaciones(params: {
+  organizadorId: string;
+  duelo: Duelo2v2;
+}): Promise<void> {
+  const { organizadorId, duelo } = params;
+  if (duelo.estado !== "finalizado" || !duelo.ganador) return;
+
+  const eventoNombre = duelo.nombre.trim() || "Duelo 2 vs 2";
+  const fecha =
+    duelo.finalizado_at?.slice(0, 10) ??
+    duelo.updated_at.slice(0, 10) ??
+    new Date().toISOString().slice(0, 10);
+
+  const slots: Array<{
+    jugadorId: string | null;
+    nombre: string;
+    parejaCon: string;
+    esGanador: boolean;
+    setsFavor: number;
+    setsContra: number;
+  }> = [
+    {
+      jugadorId: duelo.pareja_a_j1_id,
+      nombre: duelo.pareja_a_j1_nombre,
+      parejaCon: duelo.pareja_a_j2_nombre,
+      esGanador: duelo.ganador === "a",
+      setsFavor: duelo.sets_pareja_a,
+      setsContra: duelo.sets_pareja_b,
+    },
+    {
+      jugadorId: duelo.pareja_a_j2_id,
+      nombre: duelo.pareja_a_j2_nombre,
+      parejaCon: duelo.pareja_a_j1_nombre,
+      esGanador: duelo.ganador === "a",
+      setsFavor: duelo.sets_pareja_a,
+      setsContra: duelo.sets_pareja_b,
+    },
+    {
+      jugadorId: duelo.pareja_b_j1_id,
+      nombre: duelo.pareja_b_j1_nombre,
+      parejaCon: duelo.pareja_b_j2_nombre,
+      esGanador: duelo.ganador === "b",
+      setsFavor: duelo.sets_pareja_b,
+      setsContra: duelo.sets_pareja_a,
+    },
+    {
+      jugadorId: duelo.pareja_b_j2_id,
+      nombre: duelo.pareja_b_j2_nombre,
+      parejaCon: duelo.pareja_b_j1_nombre,
+      esGanador: duelo.ganador === "b",
+      setsFavor: duelo.sets_pareja_b,
+      setsContra: duelo.sets_pareja_a,
+    },
+  ];
+
+  try {
+    for (const slot of slots) {
+      const jugadorId =
+        slot.jugadorId ??
+        (await getOrCreateJugadorId({
+          nombre: slot.nombre,
+          organizadorId,
+        }));
+      if (!jugadorId) continue;
+
+      const posicion = slot.esGanador ? 1 : 2;
+      const resultado: JugadorResultado = slot.esGanador ? "victoria" : "derrota";
+
+      await registrarPuntosRanking({
+        jugadorId,
+        tipoEvento: "duelo_2v2",
+        eventoId: duelo.id,
+        eventoNombre,
+        resultado,
+        formato: "duelo_2v2",
+        calcParams: { ganador_duelo: slot.esGanador },
+        setsFavor: slot.setsFavor,
+        setsContra: slot.setsContra,
+        parejaCon: slot.parejaCon,
+        skipIfSubtipoExists: "duelo_2v2_cierre",
+        upsertSubtipo: "duelo_2v2_cierre",
+        metadata: {
+          subtipo: "duelo_2v2_cierre",
+          modalidad: "duelo_2v2",
+          modalidad_label: "Duelo 2 vs 2",
+          posicion: posicion,
+          posicion_final: posicion,
+          total_participantes: 4,
+          lugar: slot.esGanador ? "Campeón" : "2do lugar",
+          placement: slot.esGanador ? "campeon" : "subcampeon",
+          campeon_torneo: slot.esGanador,
+          partidos_ganados: slot.esGanador ? 1 : 0,
+          partidos_perdidos: slot.esGanador ? 0 : 1,
+          partidos_jugados: 1,
+          fecha,
+        },
+      });
+
+      await rebuildJugadorStats(jugadorId);
+    }
+  } catch (e) {
+    console.error("[riviera-jugadores] syncDuelo2v2Participaciones:", e);
+  }
 }

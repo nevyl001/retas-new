@@ -110,6 +110,9 @@ export function resolveModalidadFromParticipacion(
   if (row.tipo_evento === "liga") {
     return { id: "liga", label: "Liga" };
   }
+  if (row.tipo_evento === "duelo_2v2") {
+    return { id: "dual_meet", label: "Duelo 2 vs 2" };
+  }
   if (isRetaParticipacion(row)) {
     if (
       explicit === "reta_equipos" ||
@@ -369,7 +372,8 @@ export function extractPartidosFromParticipacion(
   const skipSetsAsSingleMatch =
     row.tipo_evento === "reta" ||
     row.tipo_evento === "americano" ||
-    row.tipo_evento === "liga";
+    row.tipo_evento === "liga" ||
+    row.tipo_evento === "duelo_2v2";
   if (!skipSetsAsSingleMatch && (sf > 0 || sc > 0)) {
     if (sf > sc) return { ganados: 1, perdidos: 0, empates: 0 };
     if (sc > sf) return { ganados: 0, perdidos: 1, empates: 0 };
@@ -430,6 +434,7 @@ export function computePublicProfileStats(
     else if (p.tipo_evento === "torneo_express") torneosExpress += 1;
     else if (p.tipo_evento === "liga") ligas += 1;
     else if (p.tipo_evento === "americano") americanos += 1;
+    else if (p.tipo_evento === "duelo_2v2") retasClasicas += 1;
 
     const m = extractPartidosFromParticipacion(p);
     partidosGanados += m.ganados;
@@ -469,4 +474,32 @@ export function groupHistorialResumen(items: HistorialItemView[]): {
   }
 
   return { campeonatos, subcampeonatos, porModalidad };
+}
+
+export interface RankingEvolutionPoint {
+  fecha: string;
+  eventoNombre: string;
+  delta: number;
+  puntosAcumulados: number;
+}
+
+/** Serie temporal de puntos Riviera a partir del historial de participaciones. */
+export function computeRankingEvolution(
+  participaciones: JugadorParticipacion[]
+): RankingEvolutionPoint[] {
+  const visible = filterParticipacionesHistorialVisible(participaciones)
+    .filter((p) => (p.puntos_obtenidos ?? 0) > 0)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+  let acumulado = 0;
+  return visible.map((p) => {
+    const delta = p.puntos_obtenidos ?? 0;
+    acumulado += delta;
+    return {
+      fecha: p.fecha,
+      eventoNombre: p.evento_nombre,
+      delta,
+      puntosAcumulados: acumulado,
+    };
+  });
 }

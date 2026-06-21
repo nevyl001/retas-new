@@ -7,6 +7,7 @@ import {
 import { getJugadorPerfilMeta } from "../../lib/rivieraJugadores/jugadorPerfilDisplay";
 import {
   computePublicProfileStats,
+  computeRankingEvolution,
   filterParticipacionesHistorialVisible,
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
@@ -24,6 +25,7 @@ import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatarHero } from "./JugadorAvatarHero";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadorHistorialList } from "./JugadorHistorialList";
+import { RankingEvolutionChart } from "./RankingEvolutionChart";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
@@ -158,6 +160,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   }, [historial, jugador?.stats]);
 
   const recentActivity = useMemo(() => historialItems.slice(0, 3), [historialItems]);
+
+  const evolutionPoints = useMemo(
+    () => computeRankingEvolution(historial),
+    [historial]
+  );
 
   if (loading) {
     return (
@@ -306,6 +313,8 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
             </section>
 
             <JugadorRedesPublicas redes={redes} />
+
+            <RankingEvolutionChart points={evolutionPoints} />
           </div>
 
           <div className="rjp-ficha__col rjp-ficha__col--historial">

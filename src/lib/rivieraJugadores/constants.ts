@@ -93,6 +93,7 @@ export const TIPO_EVENTO_LABELS: Record<JugadorTipoEvento, string> = {
   torneo_express: "Torneo Express",
   liga: "Liga",
   americano: "Americano",
+  duelo_2v2: "Duelo 2 vs 2",
 };
 
 export const RESULTADO_LABELS: Record<JugadorResultado, string> = {

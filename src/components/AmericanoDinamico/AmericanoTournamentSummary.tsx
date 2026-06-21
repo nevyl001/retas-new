@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import type { AmericanoDinamicoSnapshotV1 } from "../../lib/americanoDinamicoStorage";
+import { buildPublicPantallaUrl } from "../../lib/publicPantalla";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
+import { resolveAmericanoRankingFromSnapshot } from "../../lib/americanoSnapshotRoster";
 import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
 import { StandingsDifCell } from "../standings/StandingsDifCell";
 import "./AmericanoTournamentSummary.css";
@@ -18,7 +20,8 @@ export const AmericanoTournamentSummary: React.FC<
 > = ({ snapshot, tournamentId, variant = "default" }) => {
   const [openRound, setOpenRound] = useState<number | null>(null);
   const isDisplay = variant === "display";
-  const podium = snapshot.ranking.slice(0, 3);
+  const rankedRows = resolveAmericanoRankingFromSnapshot(snapshot);
+  const podium = rankedRows.slice(0, 3);
   const totalForPhaseLabels =
     snapshot.totalRounds != null && snapshot.totalRounds > 0
       ? snapshot.totalRounds
@@ -28,9 +31,7 @@ export const AmericanoTournamentSummary: React.FC<
 
   const openResultsBoard = () => {
     if (!tournamentId || typeof window === "undefined") return;
-    const url = `${window.location.origin}/public/americano-pantalla/${encodeURIComponent(
-      tournamentId
-    )}`;
+    const url = buildPublicPantallaUrl("americano", tournamentId);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -98,7 +99,7 @@ export const AmericanoTournamentSummary: React.FC<
             </tr>
           </thead>
           <tbody>
-            {snapshot.ranking.map((player, index) => {
+            {rankedRows.map((player, index) => {
               const ptsFav = player.stats.pointsFor;
               const ptsCon = player.stats.pointsAgainst;
               return (

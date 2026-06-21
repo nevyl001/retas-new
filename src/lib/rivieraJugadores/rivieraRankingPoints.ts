@@ -36,6 +36,11 @@ export const PUNTOS_AMERICANO = {
   TERCER_LUGAR: 20,
 } as const;
 
+export const PUNTOS_DUELO_2V2 = {
+  PARTICIPACION: 25,
+  GANADOR: 100,
+} as const;
+
 export const PUNTOS_EXPRESS = {
   PARTICIPACION: 50,
   /** Clasificar de fase de grupos (cuartos, semis directas, etc.) */
@@ -54,7 +59,8 @@ export type RivieraRankingFormato =
   | "reta"
   | "reta_equipos"
   | "americano"
-  | "express";
+  | "express"
+  | "duelo_2v2";
 
 export interface CalcularPuntosEventoParams {
   formato: RivieraRankingFormato;
@@ -77,6 +83,8 @@ export interface CalcularPuntosEventoParams {
   llego_final?: boolean;
   /** Reta por equipos: jugador en el equipo con más marcador */
   equipo_ganador?: boolean;
+  /** Duelo 2 vs 2: jugador en la pareja ganadora */
+  ganador_duelo?: boolean;
 }
 
 export type PuntosDesglose = Record<string, number>;
@@ -156,6 +164,13 @@ export function calcularPuntosEventoDesglose(
         add(desglose, "americano_podio_2", PUNTOS_AMERICANO.SEGUNDO_LUGAR);
       } else if (pos === 3) {
         add(desglose, "americano_podio_3", PUNTOS_AMERICANO.TERCER_LUGAR);
+      }
+      break;
+    }
+    case "duelo_2v2": {
+      add(desglose, "duelo_2v2_participacion", PUNTOS_DUELO_2V2.PARTICIPACION);
+      if (params.ganador_duelo) {
+        add(desglose, "duelo_2v2_victoria", PUNTOS_DUELO_2V2.GANADOR);
       }
       break;
     }

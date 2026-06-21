@@ -19,6 +19,7 @@ function isPublicAppPath(pathname: string): boolean {
   if (isLigaPublicPath(path)) return true;
   if (path === "/admin-login" || path === "/admin-dashboard") return true;
   if (path === "/auth/callback") return true;
+  if (path === "/auth/reset-password") return true;
   return false;
 }
 

@@ -25,7 +25,7 @@ const row = (
   puntos: pg * 2,
 });
 
-describe("standings — orden FAV → DIF → PG → H2H", () => {
+describe("standings — orden FAV → DIF → H2H → PG", () => {
   it("PTS = PG×2 (solo visual)", () => {
     expect(calcularPuntos(0)).toBe(0);
     expect(calcularPuntos(3)).toBe(6);
@@ -53,7 +53,19 @@ describe("standings — orden FAV → DIF → PG → H2H", () => {
     expect(sorted[1].diferencia).toBe(-2);
   });
 
-  it("con mismo FAV y DIF, gana más PG antes que H2H", () => {
+  it("con mismo FAV y DIF, desempata enfrentamiento directo antes que PG", () => {
+    const matches = [
+      { pairAId: "a", pairBId: "b", gamesA: 6, gamesB: 4, winnerId: "a" },
+    ];
+    const sorted = ordenarTabla(
+      [row("a", 20, 20, 1), row("b", 20, 20, 2)],
+      matches
+    );
+    expect(sorted[0].pairId).toBe("a");
+    expect(getHeadToHead("a", "b", matches)).toBe(-1);
+  });
+
+  it("sin H2H, con mismo FAV y DIF, gana más PG", () => {
     const sorted = ordenarTabla(
       [row("a", 20, 20, 1), row("b", 20, 20, 2)],
       []
@@ -61,20 +73,33 @@ describe("standings — orden FAV → DIF → PG → H2H", () => {
     expect(sorted[0].pairId).toBe("b");
   });
 
-  it("con mismo FAV, DIF y PG, desempata enfrentamiento directo", () => {
-    const matches = [
-      { pairAId: "a", pairBId: "b", gamesA: 6, gamesB: 4, winnerId: "a" },
-    ];
-    const sorted = ordenarTabla(
-      [row("a", 20, 20, 1), row("b", 20, 20, 1)],
-      matches
-    );
-    expect(sorted[0].pairId).toBe("a");
-    expect(getHeadToHead("a", "b", matches)).toBe(-1);
-  });
-
   it("sin enfrentamiento directo mantiene empate (0)", () => {
     expect(getHeadToHead("a", "b", [])).toBe(0);
+  });
+
+  it("agrega varios cruces directos (americano)", () => {
+    const matches = [
+      { pairAId: "a", pairBId: "b", gamesA: 4, gamesB: 6 },
+      { pairAId: "b", pairBId: "a", gamesA: 7, gamesB: 5 },
+    ];
+    expect(getHeadToHead("a", "b", matches)).toBe(2);
+  });
+
+  it("empate 1-1 en H2H desempata por el último cruce directo", () => {
+    const matches = [
+      { pairAId: "chap", pairBId: "isra", gamesA: 4, gamesB: 6, roundNumber: 1 },
+      { pairAId: "isra", pairBId: "chap", gamesA: 4, gamesB: 6, roundNumber: 3 },
+    ];
+    expect(getHeadToHead("isra", "chap", matches)).toBe(1);
+    expect(getHeadToHead("chap", "isra", matches)).toBe(-1);
+  });
+
+  it("empate en victorias H2H desempata por games acumulados", () => {
+    const matches = [
+      { pairAId: "a", pairBId: "b", gamesA: 6, gamesB: 4 },
+      { pairAId: "b", pairBId: "a", gamesA: 6, gamesB: 5 },
+    ];
+    expect(getHeadToHead("a", "b", matches)).toBe(-1);
   });
 
   it("0 victorias → 0 PTS", () => {

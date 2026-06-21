@@ -13,6 +13,7 @@ import { ModernToast } from "./components/ModernToast";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserHeader } from "./components/UserHeader";
 import { AuthCallback } from "./components/auth/AuthCallback";
+import { ResetPasswordPage } from "./components/auth/ResetPasswordPage";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
 import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
@@ -29,6 +30,13 @@ import {
   TorneoExpressRouter,
 } from "./components/torneo-express/TorneoExpressRouter";
 import { isLigaPublicPath, LigaRouter } from "./components/liga/LigaRouter";
+import {
+  Duelo2v2Router,
+  isDuelo2v2PublicPath,
+} from "./components/duelo-2v2/Duelo2v2Router";
+import {
+  PublicPantallaRouter,
+} from "./components/public/PublicPantallaRouter";
 import {
   isJugadoresPublicPath,
   JugadoresRouter,
@@ -258,6 +266,14 @@ function AppContent() {
         setPublicTournamentId(null);
         setPublicAmericanoTournamentId(null);
         setPublicAmericanoBoardTournamentId(null);
+      } else if (/^\/public\/duelo-2v2\//i.test(currentPath)) {
+        setPublicTournamentId(null);
+        setPublicAmericanoTournamentId(null);
+        setPublicAmericanoBoardTournamentId(null);
+      } else if (/^\/public\/pantalla\//i.test(currentPath)) {
+        setPublicTournamentId(null);
+        setPublicAmericanoTournamentId(null);
+        setPublicAmericanoBoardTournamentId(null);
       } else if (currentPath.startsWith("/public/")) {
         const m = currentPath.match(/^\/public\/([^/?#]+)/);
         const seg = m?.[1];
@@ -265,7 +281,9 @@ function AppContent() {
           seg &&
             seg !== "americano" &&
             seg !== "americano-pantalla" &&
-            seg !== "liga"
+            seg !== "liga" &&
+            seg !== "duelo-2v2" &&
+            seg !== "pantalla"
             ? seg
             : null
         );
@@ -597,15 +615,22 @@ function AppContent() {
   const isLigaPublic =
     currentView === "liga" && isLigaPublicPath(appPathname);
 
+  const isDuelo2v2Public =
+    currentView === "duelo-2v2" && isDuelo2v2PublicPath(appPathname);
+
   const isJugadoresPublic =
     currentView === "jugadores" && isJugadoresPublicPath(appPathname);
+
+  const isPublicPantalla = currentView === "public-pantalla";
 
   const isPublicSpectatorView =
     currentView === "public" ||
     currentView === "public-americano" ||
     currentView === "public-americano-pantalla" ||
+    isPublicPantalla ||
     isTorneoExpressPublic ||
     isLigaPublic ||
+    isDuelo2v2Public ||
     isJugadoresPublic;
 
   const appShellClass = [
@@ -623,8 +648,10 @@ function AppContent() {
         {currentView !== "public" &&
           currentView !== "public-americano" &&
           currentView !== "public-americano-pantalla" &&
+          currentView !== "public-pantalla" &&
           !isTorneoExpressPublic &&
           !isLigaPublic &&
+          !isDuelo2v2Public &&
           !isJugadoresPublic &&
           currentView !== "admin-login" &&
           currentView !== "admin-dashboard" && <UserHeader />}
@@ -635,6 +662,14 @@ function AppContent() {
 
         {currentView === "liga" && (
           <LigaRouter key={appPathname} pathname={appPathname} />
+        )}
+
+        {currentView === "duelo-2v2" && (
+          <Duelo2v2Router key={appPathname} pathname={appPathname} />
+        )}
+
+        {currentView === "public-pantalla" && (
+          <PublicPantallaRouter key={appPathname} pathname={appPathname} />
         )}
 
         {currentView === "jugadores" && (
@@ -728,6 +763,8 @@ function AppContent() {
         {currentView === "auth-callback" && (
           <AuthCallback onSuccess={() => setCurrentView("main")} />
         )}
+
+        {currentView === "auth-reset-password" && <ResetPasswordPage />}
 
         {currentView === "winner" && (
           <WinnerScreen

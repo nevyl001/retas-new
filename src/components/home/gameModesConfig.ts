@@ -3,7 +3,8 @@ export type GameModeId =
   | "round-robin"
   | "americano"
   | "mini-torneo"
-  | "liga";
+  | "liga"
+  | "duelo-2v2";
 
 export interface GameModeConfig {
   id: GameModeId;
@@ -60,5 +61,14 @@ export const GAME_MODES: GameModeConfig[] = [
     badge: "Nuevo",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#3b82f6",
+  },
+  {
+    id: "duelo-2v2",
+    title: "Duelo 2 vs 2",
+    description: "Dos parejas del registro · suma al ranking Riviera Open",
+    icon: "⚔️",
+    badge: "Nuevo",
+    gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+    accentColor: "#f59e0b",
   },
 ];

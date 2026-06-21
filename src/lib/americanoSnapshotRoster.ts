@@ -1,5 +1,7 @@
 import type { AmericanoDinamicoSnapshotV1 } from "./americanoDinamicoStorage";
+import type { AmericanoSnapshotPlayer } from "./americanoDinamicoStorage";
 import type { AmericanoPlayer, AmericanoRound } from "./db/types";
+import { computeAmericanoLiveRanking } from "./americanoLiveStandings";
 import { applyAmericanoResult } from "./americanoStandings";
 
 function createEmptyStats() {
@@ -124,4 +126,40 @@ export function rebuildAmericanoFromSnapshot(
     console.warn("[americano] rebuildAmericanoFromSnapshot:", e);
     return null;
   }
+}
+
+export function rosterFromAmericanoSnapshot(
+  snap: AmericanoDinamicoSnapshotV1
+): AmericanoPlayer[] {
+  if (snap.roster?.length) {
+    return snap.roster.map((p) => ({
+      id: p.id,
+      name: p.name,
+      stats: createEmptyStats(),
+    }));
+  }
+  return collectAmericanoPlayersFromSnapshot(snap);
+}
+
+/** Clasificación recalculada desde rondas (FAV → DIF → H2H → PG), no el array guardado. */
+export function resolveAmericanoRankingFromSnapshot(
+  snap: AmericanoDinamicoSnapshotV1
+): AmericanoSnapshotPlayer[] {
+  const roster = rosterFromAmericanoSnapshot(snap);
+  const rebuilt = rebuildAmericanoFromSnapshot(snap);
+  if (!rebuilt) {
+    return snap.ranking.length > 0
+      ? [...snap.ranking]
+      : computeAmericanoLiveRanking(roster, []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          stats: { ...p.stats },
+        }));
+  }
+  const ranked = computeAmericanoLiveRanking(roster, rebuilt.rounds);
+  return ranked.map((p) => ({
+    id: p.id,
+    name: p.name,
+    stats: { ...p.stats },
+  }));
 }

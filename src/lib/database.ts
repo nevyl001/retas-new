@@ -14,6 +14,7 @@ import {
   readAmericanoTournamentIdFromSession,
   type AmericanoDinamicoSnapshotV1,
 } from "./americanoDinamicoStorage";
+import { isAmericanoResumableAsync } from "./americanoDinamicoSync";
 import { isAmericanoTournament } from "./gameModeMapping";
 import { normalizePlayerNameKey } from "./rivieraJugadores/playerNameKey";
 
@@ -156,7 +157,10 @@ export const findResumableAmericanoTournament = async (
     tried.add(tid);
     const t = await getTournamentById(tid);
     if (!t || t.user_id !== userId || t.is_finished) return null;
-    if (!isAmericanoTournament(t) || !isAmericanoResumable(tid)) {
+    if (
+      !isAmericanoResumable(tid) &&
+      !(await isAmericanoResumableAsync(tid))
+    ) {
       return null;
     }
     return t;
@@ -177,8 +181,12 @@ export const findResumableAmericanoTournament = async (
   const list = await getTournaments(userId);
   for (const t of list) {
     if (t.is_finished) continue;
-    if (!isAmericanoTournament(t)) continue;
-    if (!isAmericanoResumable(t.id)) continue;
+    if (
+      !isAmericanoResumable(t.id) &&
+      !(await isAmericanoResumableAsync(t.id))
+    ) {
+      continue;
+    }
     console.log("Loading existing americano tournament:", t.id, t.name);
     return t;
   }
@@ -310,7 +318,7 @@ export const upsertAmericanoLivePublic = async (
     const { error } = await supabase.from("tournament_public_config").upsert(
       {
         tournament_id: tournamentId,
-        format: (existing?.format as string) || "round_robin",
+        format: (existing?.format as string) || "americano_dinamico",
         team_config:
           existing && existing.team_config != null
             ? existing.team_config

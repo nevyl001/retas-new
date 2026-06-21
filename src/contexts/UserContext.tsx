@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
-import { AUTH_CONFIG } from "../config/auth";
+import { AUTH_CONFIG, getAuthEmailRedirectUrl } from "../config/auth";
 
 interface UserProfile {
   id: string;
@@ -24,6 +24,8 @@ interface UserContextType {
   ) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<{ error: any }>;
+  updatePassword: (password: string) => Promise<{ error: any }>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: any }>;
 }
 
@@ -41,7 +43,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const fetchUserProfile = useCallback(async (userId: string, userEmail?: string, userName?: string) => {
     try {
-      console.log("🔍 Obteniendo perfil para usuario:", userId);
       const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -49,10 +50,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         .single();
 
       if (error) {
-        console.error("❌ Error obteniendo perfil:", error);
+        console.error("Error obteniendo perfil:", error);
         // Si no existe el perfil, crear uno básico
         if (error.code === "PGRST116") {
-          console.log("👤 Perfil no existe, creando uno básico...");
           const { data: newProfile, error: createError } = await supabase
             .from("users")
             .insert({
@@ -64,20 +64,18 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             .single();
 
           if (createError) {
-            console.error("❌ Error creando perfil:", createError);
+            console.error("Error creando perfil:", createError);
             return;
           }
 
-          console.log("✅ Perfil creado:", newProfile);
           setUserProfile(newProfile);
         }
         return;
       }
 
-      console.log("✅ Perfil obtenido:", data);
       setUserProfile(data);
     } catch (error) {
-      console.error("❌ Error obteniendo perfil:", error);
+      console.error("Error obteniendo perfil:", error);
     }
   }, []);
 
@@ -110,9 +108,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!isMounted) return;
-      console.log("🔄 Cambio de autenticación:", event, session?.user?.id);
       applySession(session);
       setLoading(false);
     });
@@ -126,15 +123,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
-      // Forzamos la URL de redirección a la de producción para los emails
-      const redirectUrl = `${AUTH_CONFIG.BASE_URL_PRODUCTION}${AUTH_CONFIG.EMAIL_CONFIRM_REDIRECT}`;
+      const redirectUrl = getAuthEmailRedirectUrl(
+        AUTH_CONFIG.EMAIL_CONFIRM_REDIRECT
+      );
 
-      console.log("🚀 Iniciando registro de usuario:");
-      console.log("Email:", email);
-      console.log("Name:", name);
-      console.log("Redirect URL:", redirectUrl);
-
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -145,19 +138,12 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         },
       });
 
-      console.log("📧 Respuesta de signUp:");
-      console.log("Data:", data);
-      console.log("Error:", error);
-
       if (error) {
-        console.error("❌ Error en signUp:", error);
         return { error };
       }
 
-      console.log("✅ Usuario registrado exitosamente");
       return { error: null };
     } catch (error) {
-      console.error("❌ Error catch en signUp:", error);
       return { error };
     }
   };
@@ -181,24 +167,42 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
-      console.log("🚪 Cerrando sesión...");
-
-      // Limpiar estado local primero
       setUser(null);
       setUserProfile(null);
       setSession(null);
 
-      // Luego cerrar sesión en Supabase
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error("❌ Error al cerrar sesión:", error);
+        console.error("Error al cerrar sesión:", error);
         throw error;
       }
-
-      console.log("✅ Sesión cerrada exitosamente");
     } catch (error) {
-      console.error("❌ Error al cerrar sesión:", error);
+      console.error("Error al cerrar sesión:", error);
       throw error;
+    }
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    try {
+      const redirectTo = getAuthEmailRedirectUrl(
+        AUTH_CONFIG.PASSWORD_RESET_REDIRECT
+      );
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        { redirectTo }
+      );
+      return { error: error ?? null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      return { error: error ?? null };
+    } catch (error) {
+      return { error };
     }
   };
 
@@ -234,6 +238,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     signUp,
     signIn,
     signOut,
+    requestPasswordReset,
+    updatePassword,
     updateProfile,
   };
 

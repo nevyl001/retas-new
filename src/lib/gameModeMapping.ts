@@ -31,7 +31,8 @@ export function readLastGameMode(): GameModeId | null {
       v === "round-robin" ||
       v === "americano" ||
       v === "mini-torneo" ||
-      v === "liga"
+      v === "liga" ||
+      v === "duelo-2v2"
     ) {
       return v;
     }
@@ -112,7 +113,8 @@ export function readPersistedTournamentGameMode(
       v === "round-robin" ||
       v === "americano" ||
       v === "mini-torneo" ||
-      v === "liga"
+      v === "liga" ||
+      v === "duelo-2v2"
     ) {
       return v;
     }

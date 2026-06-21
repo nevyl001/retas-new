@@ -1,0 +1,121 @@
+import React from "react";
+import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import { PublicRivieraCelebrateBrand } from "../public/PublicRivieraCelebrateBrand";
+import type { Duelo2v2 } from "../../lib/duelo2v2/types";
+import { Duelo2v2TeamSetResults } from "./Duelo2v2TeamSetResults";
+
+export interface DueloPlayerView {
+  id: string | null;
+  nombre: string;
+  fotoUrl?: string | null;
+}
+
+interface Duelo2v2LiveBoardProps {
+  duelo: Duelo2v2;
+  teamA: [DueloPlayerView, DueloPlayerView];
+  teamB: [DueloPlayerView, DueloPlayerView];
+  showBrand?: boolean;
+  live?: boolean;
+}
+
+export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
+  duelo,
+  teamA,
+  teamB,
+  showBrand = true,
+  live = false,
+}) => {
+  const ganadorA = duelo.ganador === "a";
+  const ganadorB = duelo.ganador === "b";
+  const tieneGanador = Boolean(duelo.ganador);
+
+  return (
+    <section className="duelo2v2-live-board" aria-label="Encuentro 2 vs 2">
+      {showBrand && (
+        <div className="duelo2v2-live-board__brand">
+          <PublicRivieraCelebrateBrand showTagline />
+        </div>
+      )}
+
+      <header className="duelo2v2-live-board__header">
+        <h1 className="duelo2v2-live-board__title">{duelo.nombre}</h1>
+        <p className="duelo2v2-live-board__sub">
+          Duelo 2 vs 2 · Riviera Open
+          {live && !tieneGanador ? (
+            <span className="duelo2v2-live-dot"> · En vivo</span>
+          ) : tieneGanador ? (
+            <span className="duelo2v2-live-board__done"> · Duelo decidido</span>
+          ) : null}
+        </p>
+      </header>
+
+      <div className="duelo2v2-live-board__arena">
+        <div
+          className={`duelo2v2-live-team${ganadorA ? " duelo2v2-live-team--winner" : ""}`}
+        >
+          <p className="duelo2v2-live-team__label">Pareja 1</p>
+          <div className="duelo2v2-live-team__avatars">
+            {teamA.map((p) => (
+              <div key={p.nombre} className="duelo2v2-live-player">
+                <div className="duelo2v2-live-player__ring">
+                  <JugadorAvatar
+                    fotoUrl={p.fotoUrl}
+                    nombre={p.nombre}
+                    size="xl"
+                    className="duelo2v2-live-player__avatar"
+                  />
+                </div>
+                <span className="duelo2v2-live-player__name">{p.nombre}</span>
+              </div>
+            ))}
+          </div>
+
+          <Duelo2v2TeamSetResults detalle={duelo.detalle_sets} side="a" />
+
+          <div className="duelo2v2-live-team__score">
+            {duelo.sets_pareja_a}
+            <span className="duelo2v2-live-team__score-label">sets</span>
+          </div>
+        </div>
+
+        <div className="duelo2v2-live-board__center">
+          <span className="duelo2v2-live-board__vs">VS</span>
+          {live && !tieneGanador && (
+            <span className="duelo2v2-live-board__pulse">Encuentro en curso</span>
+          )}
+          {tieneGanador && (
+            <span className="duelo2v2-live-board__winner-badge">¡Ganadores!</span>
+          )}
+        </div>
+
+        <div
+          className={`duelo2v2-live-team${ganadorB ? " duelo2v2-live-team--winner" : ""}`}
+        >
+          <p className="duelo2v2-live-team__label">Pareja 2</p>
+          <div className="duelo2v2-live-team__avatars">
+            {teamB.map((p) => (
+              <div key={p.nombre} className="duelo2v2-live-player">
+                <div className="duelo2v2-live-player__ring">
+                  <JugadorAvatar
+                    fotoUrl={p.fotoUrl}
+                    nombre={p.nombre}
+                    size="xl"
+                    className="duelo2v2-live-player__avatar"
+                  />
+                </div>
+                <span className="duelo2v2-live-player__name">{p.nombre}</span>
+              </div>
+            ))}
+          </div>
+
+          <Duelo2v2TeamSetResults detalle={duelo.detalle_sets} side="b" />
+
+          <div className="duelo2v2-live-team__score">
+            {duelo.sets_pareja_b}
+            <span className="duelo2v2-live-team__score-label">sets</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};

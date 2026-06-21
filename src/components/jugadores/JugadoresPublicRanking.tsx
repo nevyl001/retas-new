@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import {
   JUGADOR_CATEGORIA_LABELS,
   JUGADOR_CATEGORIA_SHORT_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
+import { RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS } from "../../lib/rivieraJugadores/publicPoll";
 import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { subscribeRivieraRanking } from "../../lib/rivieraJugadores/subscribeRivieraRanking";
 import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
 import { navigateAppTo } from "../../lib/appRouting";
 import {
@@ -85,19 +87,23 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     setOrgReady(true);
   }, [routeOrganizadorId, user?.id, genero]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!orgReady) return;
+
+    const silent = opts?.silent ?? false;
 
     if (!orgId) {
       setJugadores([]);
       setError(
         "No hay ranking público en esta ruta. El organizador puede compartir su enlace desde Registro Riviera Open."
       );
-      setLoading(false);
+      if (!silent) setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (!silent) {
+      setLoading(true);
+    }
     setError(null);
     try {
       const rows = await listPublicJugadoresRanking(orgId, categoria, genero);
@@ -105,13 +111,36 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el ranking");
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [orgId, categoria, genero, orgReady]);
 
+  const loadRef = useRef(load);
+  loadRef.current = load;
+
   useEffect(() => {
-    void load();
+    void loadRef.current();
   }, [load]);
+
+  useEffect(() => {
+    if (!orgId) return;
+
+    return subscribeRivieraRanking(orgId, () => {
+      void loadRef.current({ silent: true });
+    });
+  }, [orgId]);
+
+  useEffect(() => {
+    if (!orgId) return;
+
+    const id = window.setInterval(() => {
+      void loadRef.current({ silent: true });
+    }, RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS);
+
+    return () => window.clearInterval(id);
+  }, [orgId]);
 
   const personaLabel =
     genero === "F"

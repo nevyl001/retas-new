@@ -11,7 +11,8 @@
 .te-public,
 .liga-pantalla,
 .public-americano-board,
-.rkcf {
+.rkcf,
+.duelo2v2-page--public {
   --font-body: var(--ro-font-body);
   --font-display: var(--ro-font-heading);
   --font-family: var(--ro-font-body);
@@ -36,6 +37,11 @@
   --liga-gold-border: var(--ro-pub-gold-border);
   --liga-shadow-gold: 0 2px 8px var(--ro-pub-gold-glow);
   --liga-shadow-gold-glow: 0 0 40px var(--ro-pub-gold-glow);
+  background: transparent !important;
+}
+
+.App.ro-public-view .duelo2v2-page--public,
+.App--public-full-width .duelo2v2-page--public {
   background: transparent !important;
 }
 

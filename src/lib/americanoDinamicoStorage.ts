@@ -1,6 +1,6 @@
 /**
- * Persistencia local del modo Americano Dinámico por reta (tournament id).
- * No requiere columnas nuevas en Supabase; permite mostrar resultados al reabrir la reta.
+ * Persistencia del Americano Dinámico por reta (tournament id).
+ * Caché local + fuente de verdad en Supabase (`americanoDinamicoSync.ts`).
  */
 import type { AmericanoPlayer, AmericanoRound } from "./db/types";
 import { navigateAppTo } from "./appRouting";
@@ -139,6 +139,11 @@ export type AmericanoSnapshotTournamentPhase =
   | "playing"
   | "finished";
 
+export interface AmericanoSnapshotRosterEntry {
+  id: string;
+  name: string;
+}
+
 export interface AmericanoDinamicoSnapshotV1 {
   version: 1;
   savedAt: string;
@@ -146,6 +151,8 @@ export interface AmericanoDinamicoSnapshotV1 {
   tournamentPhase?: AmericanoSnapshotTournamentPhase;
   /** Total de rondas planificado (para etiqueta "Final" en la última). */
   totalRounds?: number;
+  /** Orden de registro al iniciar (no la tabla ordenada). */
+  roster?: AmericanoSnapshotRosterEntry[];
   ranking: AmericanoSnapshotPlayer[];
   rounds: AmericanoSnapshotRound[];
 }
@@ -224,13 +231,16 @@ export function buildAmericanoDinamicoSnapshot(
   ranking: AmericanoPlayer[],
   rounds: AmericanoRound[],
   tournamentPhase: AmericanoSnapshotTournamentPhase,
-  totalRounds: number
+  totalRounds: number,
+  roster?: AmericanoPlayer[]
 ): AmericanoDinamicoSnapshotV1 {
+  const rosterSource = roster ?? ranking;
   return {
     version: 1,
     savedAt: new Date().toISOString(),
     tournamentPhase,
     totalRounds: totalRounds > 0 ? totalRounds : undefined,
+    roster: rosterSource.map((p) => ({ id: p.id, name: p.name })),
     ranking: ranking.map(miniPlayer),
     rounds: rounds.map((r) => ({
       roundNumber: r.roundNumber,

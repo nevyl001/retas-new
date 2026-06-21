@@ -5,6 +5,11 @@ import type {
   PartnerMatrix,
   RivalMatrix,
 } from "./db/types";
+import { getAmericanoRanking } from "./americanoStandings";
+import {
+  filterScoredAmericanoRounds,
+  isAmericanoRoundFullyScored,
+} from "./americanoLiveStandings";
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -145,9 +150,21 @@ function randomMatchAvoidPartnerRepeats(
 }
 
 /**
- * Segunda mitad: el grupo ya viene ordenado por games (pointsFor) de mayor a menor.
- * 1º+2º vs 3º+4º.
+ * Segunda mitad: mismo orden que la tabla (FAV → DIF → H2H → PG), sin desempate alfabético.
  */
+export function sortAmericanoPlayersForPairing(
+  players: AmericanoPlayer[],
+  scoredRounds: AmericanoRound[],
+  seedById?: Map<string, number>
+): AmericanoPlayer[] {
+  if (players.length === 0) return [];
+  const ranked = getAmericanoRanking(players, scoredRounds, { seedById });
+  const order = new Map(ranked.map((p, i) => [p.id, i]));
+  return [...players].sort(
+    (a, b) => (order.get(a.id) ?? 999) - (order.get(b.id) ?? 999)
+  );
+}
+/** 1º+2º vs 3º+4º (grupo ya ordenado como la tabla de ranking). */
 function skillSplitMatchFromOrderedGroup(group: AmericanoPlayer[]): AmericanoMatch {
   return {
     id: "",
@@ -196,6 +213,10 @@ export interface GenerateAmericanoRoundParams {
   partnerMatrix: PartnerMatrix;
   /** IDs de quienes descansaron la ronda anterior (vacío en la ronda 1). */
   lastBenchPlayerIds: Set<string>;
+  /** Rondas con marcador confirmado (para ordenar 2.ª mitad igual que la tabla). */
+  scoredRounds?: AmericanoRound[];
+  /** Orden de registro (desempate estable, nunca alfabético). */
+  seedById?: Map<string, number>;
 }
 
 /**
@@ -212,6 +233,8 @@ export function generateAmericanoRound(
     courts,
     partnerMatrix,
     lastBenchPlayerIds,
+    scoredRounds = [],
+    seedById,
   } = params;
 
   if (allPlayers.length < 4) {
@@ -234,12 +257,11 @@ export function generateAmericanoRound(
   if (firstHalf) {
     activePlayers = shuffle(activePlayers);
   } else {
-    activePlayers = [...activePlayers].sort((a, b) => {
-      if (b.stats.pointsFor !== a.stats.pointsFor) {
-        return b.stats.pointsFor - a.stats.pointsFor;
-      }
-      return a.name.localeCompare(b.name);
-    });
+    activePlayers = sortAmericanoPlayersForPairing(
+      activePlayers,
+      scoredRounds,
+      seedById
+    );
   }
 
   const matches: AmericanoMatch[] = [];
@@ -267,4 +289,46 @@ export function generateAmericanoRound(
     matches,
     benchPlayers,
   };
+}
+
+/** Si la ronda actual es 2.ª mitad sin marcadores, regenera emparejamientos con la tabla al día. */
+export function regenerateUnscoredSecondHalfRound(
+  allPlayers: AmericanoPlayer[],
+  allRounds: AmericanoRound[],
+  roundIndex: number,
+  totalRounds: number,
+  courts: number,
+  seedById: Map<string, number>
+): AmericanoRound[] | null {
+  const cur = allRounds[roundIndex];
+  if (!cur || cur.phase !== 2 || isAmericanoRoundFullyScored(cur)) {
+    return null;
+  }
+
+  const scoredRounds = filterScoredAmericanoRounds(
+    allRounds.slice(0, roundIndex)
+  );
+  const { partnerMatrix } = buildMatricesFromScoredRounds(
+    allPlayers,
+    scoredRounds
+  );
+  const lastBenchIds =
+    roundIndex > 0
+      ? new Set(allRounds[roundIndex - 1].benchPlayers.map((p) => p.id))
+      : new Set<string>();
+
+  const fresh = generateAmericanoRound({
+    allPlayers,
+    roundNumber: cur.roundNumber,
+    totalRounds,
+    courts,
+    partnerMatrix,
+    lastBenchPlayerIds: lastBenchIds,
+    scoredRounds,
+    seedById,
+  });
+
+  const next = [...allRounds];
+  next[roundIndex] = fresh;
+  return next;
 }

@@ -4,19 +4,15 @@ import {
   Player,
   Pair,
   Match,
-  fetchAmericanoLivePublic,
 } from "../lib/database";
+import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
+import { loadAmericanoDinamicoSnapshotMerged } from "../lib/americanoDinamicoSync";
 import { TournamentWinner } from "./TournamentWinnerCalculator";
 import FourComponentsGrid from "./FourComponentsGrid";
 import StartTournamentSection from "./StartTournamentSection";
 import PublicLinkSection from "./PublicLinkSection";
 import PairsDisplay from "./PairsDisplay";
 import MatchesSection from "./MatchesSection";
-import {
-  loadAmericanoDinamicoSnapshot,
-  saveAmericanoDinamicoSnapshot,
-  type AmericanoDinamicoSnapshotV1,
-} from "../lib/americanoDinamicoStorage";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
 
 interface TournamentDetailsProps {
@@ -105,35 +101,16 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
     pairs.length === 0 &&
     matches.length === 0;
 
-  /** localStorage + Supabase `americano_live` (cache local al traer remoto). */
+  /** localStorage + Supabase `americano_live` (fuente de verdad en nube). */
   const refreshAmericanoSnapshot = React.useCallback(async () => {
     if (!selectedTournament?.id) {
       setAmericanoSnapshot(null);
       return;
     }
-    const id = selectedTournament.id;
-    const local = loadAmericanoDinamicoSnapshot(id);
-    let chosen: AmericanoDinamicoSnapshotV1 | null = local;
-    try {
-      const remote = await fetchAmericanoLivePublic(id);
-      if (remote.status === "ok") {
-        const r = remote.snapshot;
-        if (!local) {
-          chosen = r;
-        } else {
-          const tLocal = new Date(local.savedAt).getTime();
-          const tRemote = new Date(r.savedAt).getTime();
-          chosen =
-            !Number.isNaN(tRemote) && tRemote >= tLocal ? r : local;
-        }
-        if (chosen) {
-          saveAmericanoDinamicoSnapshot(id, chosen, { skipDispatch: true });
-        }
-      }
-    } catch {
-      /* red o Supabase */
-    }
-    setAmericanoSnapshot(chosen);
+    const { snapshot } = await loadAmericanoDinamicoSnapshotMerged(
+      selectedTournament.id
+    );
+    setAmericanoSnapshot(snapshot);
   }, [selectedTournament?.id]);
 
   React.useEffect(() => {

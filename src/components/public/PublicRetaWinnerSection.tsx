@@ -24,6 +24,7 @@ export const PublicRetaWinnerSection: React.FC<{
   subtitle?: string;
   torneoNombre?: string;
   fraseMotivacional?: string;
+  participantesNote?: string;
   stats?: { value: string | number; label: string }[];
   winners?: PublicRetaWinnerAvatar[];
   runnersUp?: PublicRetaRunnerUp[];
@@ -32,6 +33,7 @@ export const PublicRetaWinnerSection: React.FC<{
   subtitle,
   torneoNombre,
   fraseMotivacional = DEFAULT_MOTIVATIONAL,
+  participantesNote,
   stats,
   winners,
   runnersUp,
@@ -85,6 +87,10 @@ export const PublicRetaWinnerSection: React.FC<{
               </div>
             ))}
           </div>
+        ) : null}
+
+        {participantesNote ? (
+          <p className="ro-pub-celebrate__participantes-note">{participantesNote}</p>
         ) : null}
 
         {hasRunnersUp ? (

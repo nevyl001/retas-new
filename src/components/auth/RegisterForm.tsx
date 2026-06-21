@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { Button, Input } from "../ui";
+import { PasswordField } from "./PasswordField";
 import "./AuthForms.css";
 
 interface RegisterFormProps {
@@ -124,27 +125,24 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
             autoComplete="email"
           />
 
-          <Input
+          <PasswordField
             id="register-password"
-            className="auth-field"
             label="Contraseña"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Mínimo 6 caracteres"
             required
             disabled={loading}
             autoComplete="new-password"
+            hint="Usa «Mostrar» para verificar lo que escribes"
           />
 
-          <Input
+          <PasswordField
             id="confirmPassword"
-            className="auth-field"
             label="Confirmar contraseña"
-            type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="Repite la contraseña"
             required
             disabled={loading}
             autoComplete="new-password"

@@ -364,3 +364,53 @@
     color: #888;
   }
 }
+
+.auth-forgot-row {
+  margin: -0.35rem 0 0.85rem;
+  text-align: right;
+}
+
+.auth-standalone {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  box-sizing: border-box;
+}
+
+.auth-password-field__wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.auth-password-field__input {
+  padding-right: 5.5rem;
+}
+
+.auth-password-field__toggle {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: rgba(245, 158, 11, 0.9);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+}
+
+.auth-password-field__toggle:hover:not(:disabled) {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.auth-password-field__toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

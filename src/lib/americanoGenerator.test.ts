@@ -7,7 +7,9 @@ import {
   initializeMatrix,
   isFirstHalfRound,
   selectBenchPlayers,
+  sortAmericanoPlayersForPairing,
 } from "./americanoGenerator";
+import { getAmericanoRanking } from "./americanoStandings";
 
 function makePlayers(total: number): AmericanoPlayer[] {
   return Array.from({ length: total }, (_, i) => ({
@@ -85,6 +87,7 @@ describe("generateAmericanoRound", () => {
       courts: 2,
       partnerMatrix: pm,
       lastBenchPlayerIds: new Set(),
+      scoredRounds: [],
     });
     expect(round.phase).toBe(2);
     const m0 = round.matches[0];
@@ -94,6 +97,97 @@ describe("generateAmericanoRound", () => {
     const idsB = new Set([m0.teamB[0].id, m0.teamB[1].id]);
     expect(idsB.has("p-3")).toBe(true);
     expect(idsB.has("p-4")).toBe(true);
+  });
+
+  test("second half pairing order matches ranking table (FAV → DIF → H2H → PG)", () => {
+    const ps = makePlayers(8);
+    ps[2].name = "Chaparro";
+    ps[4].name = "IsraBe";
+
+    const prior: AmericanoRound[] = [
+      {
+        roundNumber: 1,
+        phase: 1,
+        benchPlayers: [],
+        matches: [
+          {
+            id: "m1",
+            court: 1,
+            teamA: [ps[0], ps[1]],
+            teamB: [ps[2], ps[3]],
+            scoreA: 10,
+            scoreB: 3,
+          },
+          {
+            id: "m2",
+            court: 2,
+            teamA: [ps[4], ps[7]],
+            teamB: [ps[5], ps[6]],
+            scoreA: 8,
+            scoreB: 6,
+          },
+        ],
+      },
+      {
+        roundNumber: 2,
+        phase: 1,
+        benchPlayers: [],
+        matches: [
+          {
+            id: "m3",
+            court: 1,
+            teamA: [ps[4], ps[3]],
+            teamB: [ps[2], ps[5]],
+            scoreA: 7,
+            scoreB: 4,
+          },
+          {
+            id: "m4",
+            court: 2,
+            teamA: [ps[0], ps[6]],
+            teamB: [ps[1], ps[7]],
+            scoreA: 6,
+            scoreB: 5,
+          },
+        ],
+      },
+      {
+        roundNumber: 3,
+        phase: 1,
+        benchPlayers: [],
+        matches: [
+          {
+            id: "m5",
+            court: 1,
+            teamA: [ps[4], ps[2]],
+            teamB: [ps[3], ps[1]],
+            scoreA: 6,
+            scoreB: 4,
+          },
+          {
+            id: "m6",
+            court: 2,
+            teamA: [ps[0], ps[5]],
+            teamB: [ps[6], ps[7]],
+            scoreA: 5,
+            scoreB: 5,
+          },
+        ],
+      },
+    ];
+
+    const ranked = getAmericanoRanking(ps, prior);
+    const sorted = sortAmericanoPlayersForPairing(ps, prior);
+    expect(sorted.map((p) => p.id)).toEqual(ranked.map((p) => p.id));
+
+    const chapIdx = ranked.findIndex((p) => p.id === "p-3");
+    const israIdx = ranked.findIndex((p) => p.id === "p-5");
+    if (chapIdx >= 0 && israIdx >= 0) {
+      const alphaWouldPreferChaparro = "Chaparro".localeCompare("IsraBe") < 0;
+      if (alphaWouldPreferChaparro && chapIdx !== israIdx) {
+        expect(israIdx).toBeLessThan(chapIdx);
+      }
+    }
   });
 
   test("court numbers stay within configured courts", () => {

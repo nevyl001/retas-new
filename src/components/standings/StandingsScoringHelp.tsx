@@ -49,9 +49,12 @@ export const StandingsScoringHelp: React.FC<StandingsScoringHelpProps> = ({
       <>
         Primero va quien hizo más games (<strong>FAV</strong>), aunque la
         diferencia sea negativa. Si empatan en FAV, gana mayor{" "}
-        <strong>DIF</strong> (FAV − CON); luego enfrentamiento directo y, al final, más{" "}
-        <strong>PG</strong>. <strong>PTS</strong> (victoria 2, derrota 0) es solo
-        informativo.
+        <strong>DIF</strong> (FAV − CON); luego <strong>enfrentamiento directo</strong>{" "}
+        (H2H): quien ganó cuando se enfrentaron; si empatan 1-1 en cruces, cuenta el{" "}
+        <strong>último</strong>. Al final, más <strong>PG</strong>.{" "}
+        <strong>PTS</strong> (victoria 2, derrota 0) es solo informativo. En la{" "}
+        <strong>2.ª mitad</strong> del americano, los emparejamientos (1º+2º vs 3º+4º)
+        usan exactamente este orden — nunca el alfabeto.
       </>
     );
 

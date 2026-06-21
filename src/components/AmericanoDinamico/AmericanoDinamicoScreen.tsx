@@ -8,9 +8,9 @@ import {
   getPlayers,
   getTournamentById,
   updateTournament,
-  upsertAmericanoLivePublic,
   type Player,
 } from "../../lib/database";
+import { persistAmericanoDinamicoSnapshot } from "../../lib/americanoDinamicoSync";
 import { resolvePlayerAvatars } from "../../lib/rivieraJugadores/publicPlayerAvatars";
 import { useUser } from "../../contexts/UserContext";
 import { PublicAmericanoPodiumCard } from "../public/PublicAmericanoPodiumCard";
@@ -60,6 +60,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     rounds,
     phase,
     ranking,
+    rosterForUi,
     currentRoundIndex,
     currentRound,
     totalRounds,
@@ -69,6 +70,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     commitRoundScores,
     editScore,
     nextRound,
+    hydrating,
+    remoteSyncReady,
   } = useAmericanoDinamico(tournamentId ?? null, {
     organizadorId: effectiveUserId,
     sessionLabel: tournamentName || "Sesión",
@@ -168,13 +171,15 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       ranking,
       rounds,
       phase,
-      totalRounds
+      totalRounds,
+      rosterForUi
     );
     saveAmericanoDinamicoSnapshot(resolvedTournamentId, snap, {
       skipDispatch: true,
     });
-  }, [resolvedTournamentId, phase, rounds, ranking, totalRounds]);
+  }, [resolvedTournamentId, phase, rounds, ranking, totalRounds, rosterForUi]);
 
+  /** Registro: borrador → local + Supabase. */
   React.useEffect(() => {
     if (!resolvedTournamentId || phase !== "registration") return;
     const t = window.setTimeout(() => {
@@ -196,12 +201,29 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         "registration",
         0
       );
-      saveAmericanoDinamicoSnapshot(resolvedTournamentId, draft, {
+      void persistAmericanoDinamicoSnapshot(resolvedTournamentId, draft, {
         skipDispatch: true,
       });
     }, 400);
     return () => window.clearTimeout(t);
   }, [resolvedTournamentId, phase, players]);
+
+  /** Playing/finished: local inmediato + Supabase (debounced). */
+  React.useEffect(() => {
+    if (!resolvedTournamentId || rounds.length === 0) return;
+    if (phase !== "playing" && phase !== "finished") return;
+    const snap = buildAmericanoDinamicoSnapshot(
+      ranking,
+      rounds,
+      phase,
+      totalRounds,
+      rosterForUi
+    );
+    const t = window.setTimeout(() => {
+      void persistAmericanoDinamicoSnapshot(resolvedTournamentId, snap);
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [resolvedTournamentId, phase, rounds, ranking, totalRounds, rosterForUi]);
 
   const goBackToRetas = React.useCallback(() => {
     navigateToAppHome();
@@ -256,31 +278,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     };
   }, [phase, resolvedTournamentId, onTournamentStatusChange]);
 
-  /** Supabase + evento otras vistas (localStorage ya va en useLayoutEffect). */
-  React.useEffect(() => {
-    if (!resolvedTournamentId || rounds.length === 0) return;
-    if (phase !== "playing" && phase !== "finished") return;
-    const snap = buildAmericanoDinamicoSnapshot(
-      ranking,
-      rounds,
-      phase,
-      totalRounds
-    );
-    const t = window.setTimeout(() => {
-      void upsertAmericanoLivePublic(resolvedTournamentId, snap);
-      try {
-        window.dispatchEvent(
-          new CustomEvent("americano-dinamico-snapshot", {
-            detail: { tournamentId: resolvedTournamentId },
-          })
-        );
-      } catch {
-        /* ignore */
-      }
-    }, 450);
-    return () => window.clearTimeout(t);
-  }, [resolvedTournamentId, phase, rounds, ranking, totalRounds]);
-
   const podiumPlayers = React.useMemo(
     () => ranking.slice(0, 3),
     [ranking]
@@ -321,6 +318,23 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       </header>
     ) : null;
 
+  const syncWarning = !remoteSyncReady ? (
+    <p className="americano-screen__error">
+      Falta la columna <code>americano_live</code> en Supabase (
+      <code>tournament_public_config</code>). Ejecuta{" "}
+      <code>supabase/tournament-public-config-americano.sql</code>. Mientras tanto
+      solo se guarda en este navegador.
+    </p>
+  ) : null;
+
+  if (hydrating && phase === "registration" && players.length === 0) {
+    return (
+      <div className="americano-screen">
+        <p className="americano-screen__loading">Cargando americano…</p>
+      </div>
+    );
+  }
+
   if (phase === "registration") {
     return (
       <div className="americano-screen">
@@ -329,6 +343,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ← Volver al inicio
           </Button>
         </div>
+        {syncWarning}
         {tournamentBanner}
         {playersLoadError && (
           <p className="americano-screen__error">
@@ -354,6 +369,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             ← Volver al inicio
           </Button>
         </div>
+        {syncWarning}
         {tournamentBanner}
         {resolvedTournamentId && publicAmericanoUrl ? (
           <section className="americano-public-link" aria-label="Enlace público">
@@ -380,8 +396,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               </Button>
             </div>
             <p className="americano-public-link__hint">
-              Requiere columna <code>americano_live</code> en{" "}
-              <code>tournament_public_config</code> (Supabase).
+              El marcador se sincroniza en la nube; comparte el enlace para verlo
+              en vivo desde cualquier dispositivo.
             </p>
           </section>
         ) : null}
@@ -396,9 +412,10 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         )}
         <div className="americano-screen__block">
           <LiveRanking
-            players={ranking}
-            rounds={rounds.slice(0, currentRoundIndex)}
-            caption="Solo cuenta rondas ya cerradas; al cerrar la ronda actual se actualiza con esos resultados."
+            ranked={ranking}
+            roster={rosterForUi}
+            rounds={rounds}
+            caption="Acumulado de todo el americano: suma cada ronda en cuanto confirmes los marcadores."
           />
         </div>
         <div className="americano-screen__block">
@@ -473,7 +490,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           </div>
         </section>
       )}
-      <LiveRanking players={ranking} rounds={rounds} />
+      <LiveRanking ranked={ranking} roster={rosterForUi} rounds={rounds} />
       <div className="americano-screen__block">
         <RoundHistory
           rounds={rounds}

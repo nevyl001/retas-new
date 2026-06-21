@@ -9,6 +9,7 @@ import type {
   AmericanoSnapshotRound,
 } from "../lib/americanoDinamicoStorage";
 import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
+import { resolveAmericanoRankingFromSnapshot } from "../lib/americanoSnapshotRoster";
 import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
 import {
   RIVIERA_APP_DISPLAY,
@@ -173,14 +174,19 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     return 0;
   })();
 
+  const rankedRows = React.useMemo(
+    () => (snapshot ? resolveAmericanoRankingFromSnapshot(snapshot) : []),
+    [snapshot]
+  );
+
   const showFinishedPodium =
+    rankedRows.length > 0 &&
     !!snapshot &&
-    snapshot.ranking.length > 0 &&
     (snapshot.tournamentPhase === "finished" || tournamentFinished);
 
   const podiumPlayers = React.useMemo(
-    () => snapshot?.ranking.slice(0, 3) ?? [],
-    [snapshot?.ranking]
+    () => rankedRows.slice(0, 3),
+    [rankedRows]
   );
 
   useEffect(() => {
@@ -373,26 +379,26 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                   Así se juega en Riviera.
                 </p>
                 <div className="te-public-podium__grid">
-                  {snapshot.ranking[0] && (
+                  {rankedRows[0] && (
                     <PublicAmericanoPodiumCard
                       rank={1}
-                      name={snapshot.ranking[0].name}
-                      fotoUrl={podiumAvatars[snapshot.ranking[0].id]}
+                      name={rankedRows[0].name}
+                      fotoUrl={podiumAvatars[rankedRows[0].id]}
                     />
                   )}
-                  {snapshot.ranking[1] && (
+                  {rankedRows[1] && (
                     <PublicAmericanoPodiumCard
                       rank={2}
-                      name={snapshot.ranking[1].name}
-                      fotoUrl={podiumAvatars[snapshot.ranking[1].id]}
+                      name={rankedRows[1].name}
+                      fotoUrl={podiumAvatars[rankedRows[1].id]}
                       animationDelay="0.08s"
                     />
                   )}
-                  {snapshot.ranking[2] && (
+                  {rankedRows[2] && (
                     <PublicAmericanoPodiumCard
                       rank={3}
-                      name={snapshot.ranking[2].name}
-                      fotoUrl={podiumAvatars[snapshot.ranking[2].id]}
+                      name={rankedRows[2].name}
+                      fotoUrl={podiumAvatars[rankedRows[2].id]}
                       animationDelay="0.12s"
                     />
                   )}
@@ -404,9 +410,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
             </section>
           )}
 
-          {snapshot.ranking.length > 0 && (
+          {rankedRows.length > 0 && (
             <PublicAmericanoStandingsSection
-              rows={snapshot.ranking}
+              rows={rankedRows}
               title="Clasificación"
             />
           )}

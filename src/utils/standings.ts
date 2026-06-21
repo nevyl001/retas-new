@@ -1,6 +1,6 @@
 /**
  * RivieraApp — Motor de clasificación (tabla general).
- * Orden: 1) FAV  2) DIF  3) PG  4) H2H.
+ * Orden: 1) FAV  2) DIF  3) H2H  4) PG.
  * PTS = PG×2 (solo visual, no ordena).
  */
 import {
@@ -15,6 +15,8 @@ export interface MatchResult {
   gamesB: number;
   /** Ganador explícito (p. ej. ganador_id en torneo express). */
   winnerId?: string | null;
+  /** Orden de ronda (americano); si falta, se usa el orden del array. */
+  roundNumber?: number;
 }
 
 export interface PairStanding {
@@ -44,23 +46,65 @@ export function resolveMatchWinner(match: MatchResult): string | null {
 
 /**
  * Enfrentamiento directo para sort: -1 si A va primero, 1 si B, 0 si empate.
- * Usa el primer partido encontrado entre ambas parejas.
+ * Suma cruces; si empatan victorias y games, gana quien ganó el último cruce.
  */
 export function getHeadToHead(
   idA: string,
   idB: string,
   historialPartidos: MatchResult[]
 ): number {
-  const partido = historialPartidos.find(
-    (p) =>
-      (p.pairAId === idA && p.pairBId === idB) ||
-      (p.pairAId === idB && p.pairBId === idA)
-  );
-  if (!partido) return 0;
+  const confrontaciones = historialPartidos
+    .map((p, index) => ({ p, index }))
+    .filter(
+      ({ p }) =>
+        (p.pairAId === idA && p.pairBId === idB) ||
+        (p.pairAId === idB && p.pairBId === idA)
+    )
+    .sort((x, y) => {
+      const rA = x.p.roundNumber ?? x.index;
+      const rB = y.p.roundNumber ?? y.index;
+      return rA - rB;
+    })
+    .map(({ p }) => p);
 
-  const ganador = resolveMatchWinner(partido);
-  if (ganador === idA) return -1;
-  if (ganador === idB) return 1;
+  if (confrontaciones.length === 0) return 0;
+
+  let winsA = 0;
+  let winsB = 0;
+  let gamesA = 0;
+  let gamesB = 0;
+
+  const winnerOf = (partido: MatchResult): string | null => {
+    const aOnSideA = partido.pairAId === idA;
+    const gA = aOnSideA ? partido.gamesA : partido.gamesB;
+    const gB = aOnSideA ? partido.gamesB : partido.gamesA;
+    if (partido.winnerId === idA || partido.winnerId === idB) {
+      return partido.winnerId;
+    }
+    if (gA > gB) return idA;
+    if (gB > gA) return idB;
+    return null;
+  };
+
+  for (const partido of confrontaciones) {
+    const aOnSideA = partido.pairAId === idA;
+    const gA = aOnSideA ? partido.gamesA : partido.gamesB;
+    const gB = aOnSideA ? partido.gamesB : partido.gamesA;
+    gamesA += gA;
+    gamesB += gB;
+
+    const ganador = winnerOf(partido);
+    if (ganador === idA) winsA += 1;
+    else if (ganador === idB) winsB += 1;
+  }
+
+  if (winsA !== winsB) return winsB - winsA;
+  if (gamesA !== gamesB) return gamesB - gamesA;
+
+  const ultimo = confrontaciones[confrontaciones.length - 1];
+  const ganadorUltimo = winnerOf(ultimo);
+  if (ganadorUltimo === idA) return -1;
+  if (ganadorUltimo === idB) return 1;
   return 0;
 }
 
@@ -179,14 +223,14 @@ export const createStandingsComparator = (matches: MatchResult[]) => {
   return (a: PairStanding, b: PairStanding): number => {
     if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
     if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
-    if (b.PG !== a.PG) return b.PG - a.PG;
     const h2h = getHeadToHead(a.pairId, b.pairId, matches);
     if (h2h !== 0) return h2h;
-    return 0;
+    if (b.PG !== a.PG) return b.PG - a.PG;
+    return a.seed - b.seed;
   };
 };
 
-/** Alias: ordena por FAV → DIF → PG → H2H. */
+/** Alias: ordena por FAV → DIF → H2H → PG. */
 export function ordenarTabla(
   parejas: PairStanding[],
   historialPartidos: MatchResult[]

@@ -40,6 +40,30 @@
   line-height: 1.5;
 }
 
+.americano-round__pairing-note {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-accent);
+  background: var(--bg-elevated);
+}
+
+.americano-round__pairing-note-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+}
+
+.americano-round__pairing-note-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 .americano-round__matches {
   display: grid;
   gap: 14px;

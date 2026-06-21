@@ -18,6 +18,7 @@ const MODE_BADGE_VARIANT: Record<GameModeId, TournamentModeBadge> = {
   americano: "mode-americano",
   "mini-torneo": "mode-torneo",
   liga: "mode-torneo",
+  "duelo-2v2": "mode-torneo",
 };
 
 export function getTournamentModeBadge(tournament: Tournament): {

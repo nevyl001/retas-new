@@ -68,6 +68,7 @@ export function buildAmericanoHeadToHeadMatches(
             pairBId: b.id,
             gamesA: match.scoreA,
             gamesB: match.scoreB,
+            roundNumber: round.roundNumber,
           });
         }
       }
@@ -125,7 +126,8 @@ function statsFromLegacyPlayer(p: AmericanoPlayer): UnifiedStandingStats {
 /** Clasificación con las mismas reglas que Round Robin / Torneo Express. */
 export function getAmericanoRanking(
   players: AmericanoPlayer[],
-  rounds: AmericanoRound[] = []
+  rounds: AmericanoRound[] = [],
+  options?: { seedById?: Map<string, number> }
 ): AmericanoPlayer[] {
   const statsMap =
     rounds.length > 0
@@ -135,10 +137,11 @@ export function getAmericanoRanking(
   const h2h =
     rounds.length > 0 ? buildAmericanoHeadToHeadMatches(rounds) : [];
 
+  const seedById = options?.seedById;
   const entities = players.map((p, i) => ({
     id: p.id,
     label: p.name,
-    seed: i,
+    seed: seedById?.get(p.id) ?? i,
     stats: statsMap.get(p.id) ?? createEmptyStandingStats(),
   }));
 

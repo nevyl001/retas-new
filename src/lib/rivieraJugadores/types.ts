@@ -28,7 +28,8 @@ export type JugadorTipoEvento =
   | "reta"
   | "torneo_express"
   | "liga"
-  | "americano";
+  | "americano"
+  | "duelo_2v2";
 
 export type JugadorResultado =
   | "victoria"

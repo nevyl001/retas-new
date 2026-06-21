@@ -10,11 +10,14 @@ export type AppView =
   | "public"
   | "public-americano"
   | "public-americano-pantalla"
+  | "public-pantalla"
   | "americano-dinamico"
   | "torneo-express"
   | "liga"
+  | "duelo-2v2"
   | "jugadores"
   | "auth-callback"
+  | "auth-reset-password"
   | "admin-login"
   | "admin-dashboard";
 
@@ -69,11 +72,17 @@ export function resolveAppViewFromPath(pathname: string): AppView {
   const currentPath = normalizeAppPathname(pathname);
 
   if (currentPath === "/auth/callback") return "auth-callback";
+  if (currentPath === "/auth/reset-password") return "auth-reset-password";
   if (currentPath === "/admin-login") return "admin-login";
   if (currentPath === "/admin-dashboard") return "admin-dashboard";
   if (currentPath === "/americano-dinamico") return "americano-dinamico";
   if (currentPath.startsWith("/liga") || /^\/public\/liga\//i.test(currentPath))
     return "liga";
+  if (
+    currentPath.startsWith("/duelo-2v2") ||
+    /^\/public\/duelo-2v2\//i.test(currentPath)
+  )
+    return "duelo-2v2";
   if (
     currentPath.startsWith("/jugadores") ||
     currentPath.startsWith("/public/jugadores") ||
@@ -84,6 +93,7 @@ export function resolveAppViewFromPath(pathname: string): AppView {
     return "jugadores";
   }
   if (currentPath.startsWith("/torneo-express")) return "torneo-express";
+  if (/^\/public\/pantalla\//i.test(currentPath)) return "public-pantalla";
   if (/^\/public\/americano-pantalla\//i.test(currentPath))
     return "public-americano-pantalla";
   if (/^\/public\/americano\//i.test(currentPath)) return "public-americano";
@@ -97,6 +107,7 @@ export function pathRequiresUserSession(pathname: string): boolean {
   const path = normalizeAppPathname(pathname);
   if (path.includes("/public/")) return false;
   if (path.startsWith("/liga")) return true;
+  if (path.startsWith("/duelo-2v2")) return true;
   if (path.startsWith("/public/jugadores")) return false;
   if (path === "/ranking" || path.startsWith("/ranking/")) return false;
   if (path === "/public/ranking-puntos") return false;
@@ -109,5 +120,6 @@ export function pathRequiresUserSession(pathname: string): boolean {
   }
   if (path === "/admin-login" || path === "/admin-dashboard") return false;
   if (path === "/auth/callback") return false;
+  if (path === "/auth/reset-password") return false;
   return true;
 }

@@ -11,6 +11,7 @@ import {
 } from "../../lib/americanoDinamicoStorage";
 import { useUser } from "../../contexts/UserContext";
 import { navigateLiga } from "../liga/ligaNav";
+import { navigateDuelo2v2 } from "../duelo-2v2/duelo2v2Nav";
 import { navigateAppTo } from "../../lib/appRouting";
 import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
@@ -56,6 +57,10 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       }
       if (modeId === "liga") {
         navigateLiga("/liga");
+        return;
+      }
+      if (modeId === "duelo-2v2") {
+        navigateDuelo2v2("/duelo-2v2/nuevo");
         return;
       }
       if (modeId === "americano" && userId) {

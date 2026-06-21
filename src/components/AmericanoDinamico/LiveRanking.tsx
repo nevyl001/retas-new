@@ -1,9 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import type { AmericanoPlayer, AmericanoRound } from "../../lib/db/types";
-import {
-  buildAmericanoPlayerStandingStats,
-  getAmericanoRanking,
-} from "../../lib/americanoStandings";
+import { computeAmericanoLiveStatsMap } from "../../lib/americanoLiveStandings";
 import { StandingsDifCell } from "../standings/StandingsDifCell";
 import { StandingsPtsCell } from "../standings/StandingsPtsCell";
 import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
@@ -22,22 +19,25 @@ import {
 import "./LiveRanking.css";
 
 interface LiveRankingProps {
-  players: AmericanoPlayer[];
+  /** Clasificación ya calculada (FAV → DIF → H2H → PG). */
+  ranked: AmericanoPlayer[];
+  /** Plantilla en orden de registro (desempate estable). */
+  roster: AmericanoPlayer[];
   rounds?: AmericanoRound[];
   /** Texto bajo el título (p. ej. aclarar que no entra la ronda en curso). */
   caption?: string;
 }
 
 export const LiveRanking: React.FC<LiveRankingProps> = ({
-  players,
+  ranked,
+  roster,
   rounds = [],
   caption,
 }) => {
-  const ranked = getAmericanoRanking(players, rounds);
-  const statsMap =
-    rounds.length > 0
-      ? buildAmericanoPlayerStandingStats(players, rounds)
-      : null;
+  const statsMap = useMemo(
+    () => computeAmericanoLiveStatsMap(roster, rounds),
+    [roster, rounds]
+  );
 
   return (
     <section className="americano-ranking">
@@ -59,7 +59,7 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
           </thead>
           <tbody>
             {ranked.map((player, index) => {
-              const st = statsMap?.get(player.id);
+              const st = statsMap.get(player.id);
               const ptsFav = st?.ptsFav ?? player.stats.pointsFor;
               const ptsCon = st?.ptsCon ?? player.stats.pointsAgainst;
               return (
