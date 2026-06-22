@@ -471,6 +471,7 @@ CREATE POLICY rj_mutate_auth ON public.riviera_jugadores
   WITH CHECK (organizador_id = auth.uid());
 
 DROP POLICY IF EXISTS jp_select_auth ON public.jugador_participaciones;
+DROP POLICY IF EXISTS jp_select_anon ON public.jugador_participaciones;
 DROP POLICY IF EXISTS jp_mutate_auth ON public.jugador_participaciones;
 
 CREATE POLICY jp_select_auth ON public.jugador_participaciones
@@ -481,6 +482,18 @@ CREATE POLICY jp_select_auth ON public.jugador_participaciones
       FROM public.riviera_jugadores rj
       WHERE rj.id = jugador_participaciones.jugador_id
         AND rj.organizador_id = auth.uid()
+    )
+  );
+
+CREATE POLICY jp_select_anon ON public.jugador_participaciones
+  FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.riviera_jugadores rj
+      WHERE rj.id = jugador_participaciones.jugador_id
+        AND rj.estado = 'activo'
+        AND COALESCE(rj.visible_publico, true) = true
     )
   );
 

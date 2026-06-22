@@ -6,9 +6,7 @@ import {
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
 import {
-  backfillAmericanoHistorial,
-  backfillLigaJornadaHistorial,
-  backfillRetasHistorial,
+  backfillHistorialJugadores,
 } from "../../lib/rivieraJugadores/syncParticipaciones";
 import {
   ensureLegacyPlayerForRivieraJugador,
@@ -172,34 +170,33 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                   type="button"
                   className="rj-btn rj-btn--ghost"
                   disabled={backfilling}
-                  title="Importa historial de retas, americanos y jornadas de liga finalizadas"
+                  title="Importa historial de retas, americanos, jornadas de liga y duelos finalizados"
                   onClick={async () => {
                     if (!user?.id) return;
                     setBackfilling(true);
                     try {
-                      const [nRetas, nAmericanos, nLigas, nPromoted] =
-                        await Promise.all([
-                          backfillRetasHistorial(user.id),
-                          backfillAmericanoHistorial(user.id),
-                          backfillLigaJornadaHistorial(user.id),
-                          promoteImportedRivieraJugadores(user.id),
-                        ]);
+                      const [resumen, nPromoted] = await Promise.all([
+                        backfillHistorialJugadores(user.id),
+                        promoteImportedRivieraJugadores(user.id),
+                      ]);
+                      const { retas: nRetas, americanos: nAmericanos, ligas: nLigas, duelos: nDuelos } =
+                        resumen;
                       const todos = await listRivieraJugadores(user.id);
                       await Promise.allSettled(
                         todos.map((j) => rebuildJugadorStats(j.id))
                       );
                       await load();
-                      const total = nRetas + nAmericanos + nLigas;
+                      const total = nRetas + nAmericanos + nLigas + nDuelos;
                       const promoNote =
                         nPromoted > 0
                           ? ` ${nPromoted} jugador(es) activados en ranking público.`
                           : "";
                       alert(
                         total > 0
-                          ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s), ${nLigas} jornada(s) de liga.${promoNote}`
+                          ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s), ${nLigas} jornada(s) de liga, ${nDuelos} duelo(s).${promoNote}`
                           : nPromoted > 0
                             ? `${nPromoted} jugador(es) activados en ranking público.`
-                            : "No hay retas, americanos ni jornadas de liga para importar."
+                            : "No hay eventos cerrados para importar."
                       );
                     } catch (e) {
                       alert(

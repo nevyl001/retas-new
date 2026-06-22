@@ -14,7 +14,7 @@ import {
 import {
   getRankingPosicionEnCategoria,
   getRivieraJugadorPublicBySlug,
-  listParticipaciones,
+  listParticipacionesPublic,
   rebuildJugadorStats,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
@@ -59,7 +59,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   );
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [historial, setHistorial] = useState<
-    Awaited<ReturnType<typeof listParticipaciones>>
+    Awaited<ReturnType<typeof listParticipacionesPublic>>
   >([]);
   const [rankingPos, setRankingPos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +71,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
       setJugador(j);
       if (j) {
         const [h, pos] = await Promise.all([
-          listParticipaciones(j.id, 100),
+          listParticipacionesPublic(j.id, 100),
           orgId
             ? getRankingPosicionEnCategoria(
                 orgId,

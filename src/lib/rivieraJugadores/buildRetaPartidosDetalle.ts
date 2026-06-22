@@ -1,24 +1,27 @@
 import type { Game, Match, Pair } from "../db/types";
-import { isChampionshipRoundNumber } from "../roundRobinChampionship";
+import {
+  isChampionshipFinalMatch,
+  isChampionshipRoundNumber,
+  isChampionshipThirdPlaceMatch,
+} from "../roundRobinChampionship";
 import { getMatchScoresForStandings } from "../standingsUtils";
+import {
+  formatRivalPair,
+  labelRetaRonda,
+  resultadoFromScores,
+  type PartidoDetalle,
+  type PartidoDetalleResultado,
+} from "../shared/buildPartidosDetalle";
 
-export type RetaPartidoDetalleResultado = "win" | "loss" | "draw";
+export type { PartidoDetalle, PartidoDetalleResultado };
+/** @deprecated Use PartidoDetalle */
+export type RetaPartidoDetalle = PartidoDetalle;
 
-/** Snapshot inmutable por partido (historial público tras borrar la reta). */
-export interface RetaPartidoDetalle {
-  id?: string;
-  ronda: number;
-  rival: string;
-  games_favor: number;
-  games_contra: number;
-  resultado: RetaPartidoDetalleResultado;
-  fecha: string;
-}
+export { labelRetaRonda } from "../shared/buildPartidosDetalle";
+export { loadGamesByMatchId } from "./buildRetaPartidosDetalleHelpers";
 
 function pairDisplayLabel(pair: Pair): string {
-  const n1 = pair.player1_name?.trim() || "?";
-  const n2 = pair.player2_name?.trim() || "?";
-  return `${n1} / ${n2}`;
+  return formatRivalPair(pair.player1_name, pair.player2_name);
 }
 
 function rivalLabel(
@@ -35,13 +38,35 @@ function rivalLabel(
   return raw?.trim() || "Rival";
 }
 
-function resultadoFromScores(
-  favor: number,
-  contra: number
-): RetaPartidoDetalleResultado {
-  if (favor > contra) return "win";
-  if (contra > favor) return "loss";
-  return "draw";
+function resolveRetaMatchFase(
+  match: Match,
+  allMatches: Match[],
+  allGames: Game[],
+  regularRoundsMax?: number | null
+): string {
+  const ronda = match.round ?? 1;
+  if (
+    regularRoundsMax != null &&
+    regularRoundsMax > 0 &&
+    ronda > regularRoundsMax
+  ) {
+    const semiRound = regularRoundsMax + 1;
+    const semiMatches = allMatches.filter(
+      (m) => m.status === "finished" && (m.round ?? 0) === semiRound
+    );
+    if (semiMatches.length >= 2) {
+      if (isChampionshipThirdPlaceMatch(match, semiMatches, allGames)) {
+        return "3er lugar";
+      }
+      if (isChampionshipFinalMatch(match, semiMatches, allGames)) {
+        return "Final";
+      }
+    }
+    const playoffIdx = ronda - regularRoundsMax;
+    if (playoffIdx === 1) return "Semifinal";
+    return "Final";
+  }
+  return labelRetaRonda(ronda, regularRoundsMax);
 }
 
 /** Partidos de una pareja, ordenados por ronda y fecha. */
@@ -49,9 +74,12 @@ export function buildPartidosDetalleForPair(
   pairId: string,
   matches: Match[],
   gamesByMatchId: Map<string, Game[]>,
-  pairById: Map<string, Pair>
-): RetaPartidoDetalle[] {
-  const entries: RetaPartidoDetalle[] = [];
+  pairById: Map<string, Pair>,
+  regularRoundsMax?: number | null,
+  allGamesFlat?: Game[]
+): PartidoDetalle[] {
+  const entries: PartidoDetalle[] = [];
+  const allGames = allGamesFlat ?? Array.from(gamesByMatchId.values()).flat();
 
   const pairMatches = matches
     .filter(
@@ -75,10 +103,12 @@ export function buildPartidosDetalleForPair(
 
     const favor = isPair1 ? score1 : score2;
     const contra = isPair1 ? score2 : score1;
+    const ronda = match.round ?? 1;
 
     entries.push({
       id: match.id,
-      ronda: match.round ?? 1,
+      ronda,
+      fase: resolveRetaMatchFase(match, matches, allGames, regularRoundsMax),
       rival: rivalLabel(match, opponentId, pairById),
       games_favor: favor,
       games_contra: contra,
@@ -94,56 +124,27 @@ export function buildPartidosDetalleForPair(
 export function buildPartidosDetalleByLegacyPlayerId(
   pairs: Pair[],
   matches: Match[],
-  gamesByMatchId: Map<string, Game[]>
-): Map<string, RetaPartidoDetalle[]> {
+  gamesByMatchId: Map<string, Game[]>,
+  regularRoundsMax?: number | null
+): Map<string, PartidoDetalle[]> {
   const pairById = new Map(pairs.map((p) => [p.id, p]));
-  const byPlayer = new Map<string, RetaPartidoDetalle[]>();
+  const allGames = Array.from(gamesByMatchId.values()).flat();
+  const byPlayer = new Map<string, PartidoDetalle[]>();
 
   for (const pair of pairs) {
     const detalle = buildPartidosDetalleForPair(
       pair.id,
       matches,
       gamesByMatchId,
-      pairById
+      pairById,
+      regularRoundsMax,
+      allGames
     );
     if (pair.player1_id) byPlayer.set(pair.player1_id, detalle);
     if (pair.player2_id) byPlayer.set(pair.player2_id, detalle);
   }
 
   return byPlayer;
-}
-
-export async function loadGamesByMatchId(
-  finishedMatches: Match[],
-  getGames: (matchId: string) => Promise<Game[]>
-): Promise<{ gamesByMatchId: Map<string, Game[]>; allGames: Game[] }> {
-  const gamesByMatchId = new Map<string, Game[]>();
-  const allGames: Game[] = [];
-
-  for (const m of finishedMatches) {
-    try {
-      const g = await getGames(m.id);
-      gamesByMatchId.set(m.id, g);
-      allGames.push(...g);
-    } catch {
-      gamesByMatchId.set(m.id, []);
-    }
-  }
-
-  return { gamesByMatchId, allGames };
-}
-
-/** Etiqueta de ronda para historial público (riviera-open-web). */
-export function labelRetaRonda(
-  ronda: number,
-  regularRoundsMax?: number | null
-): string {
-  if (regularRoundsMax != null && regularRoundsMax > 0 && ronda > regularRoundsMax) {
-    const playoffIdx = ronda - regularRoundsMax;
-    if (playoffIdx === 1) return "Semifinal";
-    return "Final";
-  }
-  return `Ronda ${ronda}`;
 }
 
 /** Indica si el partido pertenece a remontada (solo uso interno / futuro). */

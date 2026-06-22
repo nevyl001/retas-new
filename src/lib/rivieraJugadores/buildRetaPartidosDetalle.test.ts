@@ -71,6 +71,7 @@ describe("buildRetaPartidosDetalle", () => {
     expect(detalle[0]).toMatchObject({
       id: "m1",
       ronda: 1,
+      fase: "Ronda 1",
       rival: "Nevyl / Marlon",
       games_favor: 6,
       games_contra: 2,

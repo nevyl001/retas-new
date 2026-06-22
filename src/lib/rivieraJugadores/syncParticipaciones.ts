@@ -63,6 +63,16 @@ import {
   buildPartidosDetalleByLegacyPlayerId,
   loadGamesByMatchId,
 } from "./buildRetaPartidosDetalle";
+import { buildAmericanoPartidosDetalleForPlayer } from "./buildAmericanoPartidosDetalle";
+import { buildDuelo2vs2PartidosDetalle } from "./buildDuelo2vs2PartidosDetalle";
+import { buildLigaJornadaPartidosDetalleByJugadorId } from "./buildLigaJornadaPartidosDetalle";
+import {
+  enrichMetadataWithPartidosDetalle,
+  mergeMetadataWithPartidosDetalle,
+  parsePartidosDetalle,
+  summarizePartidosDetalle,
+  type PartidoDetalle,
+} from "../shared/buildPartidosDetalle";
 
 const PAIRS_SELECT =
   "id, tournament_id, player1_id, player2_id, player1_name, player2_name, created_at";
@@ -420,7 +430,9 @@ async function upsertParticipacionRanking(params: {
   puntosObtenidos: number;
   parejaCon?: string;
   metadata: Record<string, unknown>;
+  force?: boolean;
 }): Promise<void> {
+  const incomingDetalle = parsePartidosDetalle(params.metadata.partidos_detalle);
   const existing = await getParticipacionBySubtipo(
     params.jugadorId,
     params.tipoEvento,
@@ -428,21 +440,35 @@ async function upsertParticipacionRanking(params: {
     params.subtipo
   );
 
+  const mergedMeta = mergeMetadataWithPartidosDetalle(
+    existing?.metadata,
+    params.metadata,
+    incomingDetalle,
+    { force: params.force }
+  );
+  const detSummary = summarizePartidosDetalle(
+    parsePartidosDetalle(mergedMeta.partidos_detalle)
+  );
+  const setsFavor =
+    detSummary.jugados > 0
+      ? detSummary.setsFavor
+      : (params.setsFavor ?? existing?.sets_favor ?? 0);
+  const setsContra =
+    detSummary.jugados > 0
+      ? detSummary.setsContra
+      : (params.setsContra ?? existing?.sets_contra ?? 0);
+
   if (existing) {
-    const prevMeta =
-      existing.metadata && typeof existing.metadata === "object"
-        ? existing.metadata
-        : {};
     const { error } = await supabase
       .from("jugador_participaciones")
       .update({
         evento_nombre: params.eventoNombre,
         resultado: params.resultado,
-        sets_favor: params.setsFavor ?? existing.sets_favor ?? 0,
-        sets_contra: params.setsContra ?? existing.sets_contra ?? 0,
+        sets_favor: setsFavor,
+        sets_contra: setsContra,
         puntos_obtenidos: params.puntosObtenidos,
         pareja_con: params.parejaCon ?? existing.pareja_con,
-        metadata: { ...prevMeta, ...params.metadata },
+        metadata: mergedMeta,
       })
       .eq("id", existing.id);
     if (error) {
@@ -457,11 +483,47 @@ async function upsertParticipacionRanking(params: {
     eventoId: params.eventoId,
     eventoNombre: params.eventoNombre,
     resultado: params.resultado,
+    setsFavor,
+    setsContra,
+    puntosObtenidos: params.puntosObtenidos,
+    parejaCon: params.parejaCon,
+    metadata: mergedMeta,
+  });
+}
+
+/** Persiste snapshot inmutable con merge de partidos_detalle (no sobrescribe si ya hay filas). */
+export async function persistParticipacionSnapshot(params: {
+  jugadorId: string;
+  tipoEvento: JugadorTipoEvento;
+  eventoId: string;
+  eventoNombre: string;
+  resultado: JugadorResultado;
+  subtipo: string;
+  metadata: Record<string, unknown>;
+  partidosDetalle?: PartidoDetalle[];
+  setsFavor?: number;
+  setsContra?: number;
+  puntosObtenidos: number;
+  parejaCon?: string;
+  force?: boolean;
+}): Promise<void> {
+  const metadata = params.partidosDetalle?.length
+    ? enrichMetadataWithPartidosDetalle(params.metadata, params.partidosDetalle)
+    : params.metadata;
+
+  await upsertParticipacionRanking({
+    jugadorId: params.jugadorId,
+    tipoEvento: params.tipoEvento,
+    eventoId: params.eventoId,
+    eventoNombre: params.eventoNombre,
+    resultado: params.resultado,
+    subtipo: params.subtipo,
     setsFavor: params.setsFavor,
     setsContra: params.setsContra,
     puntosObtenidos: params.puntosObtenidos,
     parejaCon: params.parejaCon,
-    metadata: params.metadata,
+    metadata,
+    force: params.force,
   });
 }
 
@@ -655,11 +717,6 @@ async function syncRetaParticipacionesInner(params: {
     finishedMatches,
     getGames
   );
-  const partidosDetalleByPlayer = buildPartidosDetalleByLegacyPlayerId(
-    pairs,
-    matches,
-    gamesByMatchId
-  );
 
   for (const match of finishedMatches) {
     const pair1 = pairById.get(match.pair1_id);
@@ -731,6 +788,13 @@ async function syncRetaParticipacionesInner(params: {
     if (podium?.third) podioPosByPairId.set(podium.third.id, 3);
   }
 
+  const partidosDetalleByPlayer = buildPartidosDetalleByLegacyPlayerId(
+    pairs,
+    matches,
+    gamesByMatchId,
+    regularRoundsMax
+  );
+
   const esEquipos = tournament.format === "teams";
   const modalidad = esEquipos ? "reta_equipos" : "round_robin";
   const modalidadLabel = esEquipos ? "Reta por equipos" : "Reta";
@@ -777,11 +841,31 @@ async function syncRetaParticipacionesInner(params: {
         : rankRegular?.pos ?? rank?.pos;
     const totalParticipantes =
       rankRegular?.total ?? rank?.total ?? sortedPairs.length;
-    const partidosGanados = pairStats?.pg ?? st.wins;
-    const partidosPerdidos = pairStats?.pp ?? st.losses;
+
+    const partidosDetalle =
+      partidosDetalleByPlayer.get(st.legacyPlayerId ?? "") ?? [];
+    const detSummary = summarizePartidosDetalle(partidosDetalle);
+
+    const partidosGanados =
+      detSummary.jugados > 0 ? detSummary.ganados : (pairStats?.pg ?? st.wins);
+    const partidosPerdidos =
+      detSummary.jugados > 0 ? detSummary.perdidos : (pairStats?.pp ?? st.losses);
+    const partidosEmpatados =
+      detSummary.jugados > 0 ? detSummary.empatados : st.draws;
     const partidosJugados =
-      pairStats?.matchesPlayed ??
-      partidosGanados + partidosPerdidos + st.draws;
+      detSummary.jugados > 0
+        ? detSummary.jugados
+        : (pairStats?.matchesPlayed ??
+          partidosGanados + partidosPerdidos + partidosEmpatados);
+
+    const setsFavorReta =
+      detSummary.jugados > 0
+        ? detSummary.setsFavor
+        : (pairStats?.points ?? st.setsFavor);
+    const setsContraReta =
+      detSummary.jugados > 0
+        ? detSummary.setsContra
+        : (pairStats?.pointsReceived ?? st.setsContra);
 
     let equipoGanador = false;
     let posicionEquipo: number | null = null;
@@ -800,39 +884,27 @@ async function syncRetaParticipacionesInner(params: {
       .eq("id", jugadorId)
       .maybeSingle();
 
-    let resultadoReta = resultadoFromRecord(st.wins, st.losses, st.draws);
+    let resultadoReta = resultadoFromRecord(
+      partidosGanados,
+      partidosPerdidos,
+      partidosEmpatados
+    );
     if (!esEquipos && posicionFinal === 1) {
       resultadoReta = "victoria";
     } else if (esEquipos && equipoGanador) {
       resultadoReta = "victoria";
     }
 
-    const partidosDetalle =
-      partidosDetalleByPlayer.get(st.legacyPlayerId ?? "") ?? [];
-
-    await registrarPuntosRanking({
-      jugadorId,
-      tipoEvento: "reta",
-      eventoId: tournament.id,
-      eventoNombre: tournament.name,
-      resultado: resultadoReta,
-      formato: formatoRanking,
-      calcParams: esEquipos
-        ? {
-            posicion_final: posicionEquipo,
-            equipo_ganador: equipoGanador,
-          }
-        : { posicion_final: posicionFinal ?? null },
-      setsFavor: pairStats?.points ?? st.setsFavor,
-      setsContra: pairStats?.pointsReceived ?? st.setsContra,
-      metadata: {
+    const metadata = enrichMetadataWithPartidosDetalle(
+      {
         subtipo: "reta_cierre",
-        partidos_ganados: partidosGanados,
-        partidos_perdidos: partidosPerdidos,
-        partidos_jugados: partidosJugados,
-        partidos_empatados: st.draws,
-        ...(partidosDetalle.length > 0
-          ? { partidos_detalle: partidosDetalle }
+        ...(partidosDetalle.length === 0
+          ? {
+              partidos_ganados: partidosGanados,
+              partidos_perdidos: partidosPerdidos,
+              partidos_jugados: partidosJugados,
+              partidos_empatados: partidosEmpatados,
+            }
           : {}),
         ...(champCfg?.championshipEnabled && regularRoundsMax != null
           ? {
@@ -859,6 +931,25 @@ async function syncRetaParticipacionesInner(params: {
           : "Participación",
         equipo_ganador: esEquipos ? equipoGanador : undefined,
       },
+      partidosDetalle
+    );
+
+    await registrarPuntosRanking({
+      jugadorId,
+      tipoEvento: "reta",
+      eventoId: tournament.id,
+      eventoNombre: tournament.name,
+      resultado: resultadoReta,
+      formato: formatoRanking,
+      calcParams: esEquipos
+        ? {
+            posicion_final: posicionEquipo,
+            equipo_ganador: equipoGanador,
+          }
+        : { posicion_final: posicionFinal ?? null },
+      setsFavor: setsFavorReta,
+      setsContra: setsContraReta,
+      metadata,
     });
   }
 
@@ -1453,6 +1544,8 @@ export async function syncLigaJornada(
 
     const eventoNombre = `Liga ${detalle.nombre} - Jornada ${jornada.numero}`;
     const jornadaStats = computeJornadaPublicStats(jornada);
+    const partidosDetalleByJugador =
+      buildLigaJornadaPartidosDetalleByJugadorId(jornada);
     const posByJugador = new Map(
       jornadaStats.rankingJugadores.map((j) => [j.jugadorId, j.posicion])
     );
@@ -1485,31 +1578,34 @@ export async function syncLigaJornada(
         !!st.legacyLigaJugadorId &&
         jornadaWinnerIds.has(st.legacyLigaJugadorId);
 
-      const partidosJugados = st.wins + st.losses + st.draws;
+      const partidosDetalle = st.legacyLigaJugadorId
+        ? (partidosDetalleByJugador.get(st.legacyLigaJugadorId) ?? [])
+        : [];
+      const detSummary = summarizePartidosDetalle(partidosDetalle);
+      const partidosJugados =
+        detSummary.jugados > 0
+          ? detSummary.jugados
+          : st.wins + st.losses + st.draws;
+      const setsFavorLiga =
+        detSummary.jugados > 0 ? detSummary.setsFavor : st.setsFavor;
+      const setsContraLiga =
+        detSummary.jugados > 0 ? detSummary.setsContra : st.setsContra;
 
-      // Siempre «participación» por jornada: un registro por jugador/jornada (evita
-      // duplicar puntos si se vuelve a finalizar la misma jornada).
-      await registrarPuntosRanking({
-        jugadorId,
-        tipoEvento: "liga",
-        eventoId: jornada.id,
-        eventoNombre,
-        resultado: "participación",
-        formato: "liga",
-        calcParams: { jornadas_ganadas: ganoJornada ? 1 : 0 },
-        setsFavor: st.setsFavor,
-        setsContra: st.setsContra,
-        parejaCon: (st as PlayerAgg & { lastPareja?: string }).lastPareja,
-        metadata: {
+      const metadata = enrichMetadataWithPartidosDetalle(
+        {
           subtipo: "liga_jornada",
           liga_id: ligaId,
           liga_nombre: detalle.nombre,
           jornada_numero: jornada.numero,
           jornada_ganada: ganoJornada,
-          partidos_ganados: st.wins,
-          partidos_perdidos: st.losses,
-          partidos_jugados: partidosJugados,
-          partidos_empatados: st.draws,
+          ...(partidosDetalle.length === 0
+            ? {
+                partidos_ganados: st.wins,
+                partidos_perdidos: st.losses,
+                partidos_jugados: partidosJugados,
+                partidos_empatados: st.draws,
+              }
+            : {}),
           modalidad: "liga",
           modalidad_label: "Liga",
           posicion_jornada: posicion,
@@ -1521,6 +1617,24 @@ export async function syncLigaJornada(
                 ? formatLugarOrdinal(posicion, totalJugadores)
                 : "Participación en jornada",
         },
+        partidosDetalle
+      );
+
+      // Siempre «participación» por jornada: un registro por jugador/jornada (evita
+      // duplicar puntos si se vuelve a finalizar la misma jornada).
+      await registrarPuntosRanking({
+        jugadorId,
+        tipoEvento: "liga",
+        eventoId: jornada.id,
+        eventoNombre,
+        resultado: "participación",
+        formato: "liga",
+        calcParams: { jornadas_ganadas: ganoJornada ? 1 : 0 },
+        setsFavor: setsFavorLiga,
+        setsContra: setsContraLiga,
+        parejaCon: (st as PlayerAgg & { lastPareja?: string }).lastPareja,
+        upsertSubtipo: "liga_jornada",
+        metadata,
       });
     }
 
@@ -1719,6 +1833,8 @@ export async function syncAmericanoParticipaciones(
     const statsMap = buildAmericanoPlayerStandingStats(jugadores, rounds);
     const eventoNombre = `Americano Dinámico - ${nombre.trim() || "Sesión"}`;
     const ranked = getAmericanoRanking(jugadores, rounds);
+    const fechaFallback = new Date().toISOString();
+    const touchedJugadorIds = new Set<string>();
 
     let posicion = 0;
     for (const jugador of ranked) {
@@ -1736,6 +1852,14 @@ export async function syncAmericanoParticipaciones(
         );
         continue;
       }
+      touchedJugadorIds.add(jugadorId);
+
+      const partidosDetalle = buildAmericanoPartidosDetalleForPlayer(
+        jugador.id,
+        rounds,
+        fechaFallback
+      );
+      const detSummary = summarizePartidosDetalle(partidosDetalle);
 
       const podioPos = posicion <= 3 ? posicion : null;
       const calcParams: Omit<CalcularPuntosEventoParams, "formato"> = {
@@ -1746,24 +1870,34 @@ export async function syncAmericanoParticipaciones(
         formato: "americano",
         ...calcParams,
       });
-      const metadata = rankingMetadata(desglose, {
-        subtipo: "americano_cierre",
-        partidos: st?.pj ?? jugador.stats.gamesPlayed,
-        partidos_jugados: st?.pj ?? jugador.stats.gamesPlayed,
-        partidos_ganados: st?.pg ?? 0,
-        partidos_perdidos: st?.pp ?? 0,
-        partidos_empatados: st?.pe ?? 0,
-        banquillo: jugador.stats.roundsOnBench,
-        victorias_ranking: st?.pg ?? 0,
-        posicion_final: posicion,
-        posicion,
-        total_participantes: ranked.length,
-        lugar: formatLugarOrdinal(posicion, ranked.length),
-        modalidad: "americano",
-        modalidad_label: "Pádel Americano",
-        puntos_a_favor: jugador.stats.pointsFor,
-        puntos_en_contra: jugador.stats.pointsAgainst,
-      });
+      const metadata = enrichMetadataWithPartidosDetalle(
+        rankingMetadata(desglose, {
+          subtipo: "americano_cierre",
+          partidos:
+            detSummary.jugados > 0
+              ? detSummary.jugados
+              : (st?.pj ?? jugador.stats.gamesPlayed),
+          ...(partidosDetalle.length === 0
+            ? {
+                partidos_jugados: st?.pj ?? jugador.stats.gamesPlayed,
+                partidos_ganados: st?.pg ?? 0,
+                partidos_perdidos: st?.pp ?? 0,
+                partidos_empatados: st?.pe ?? 0,
+              }
+            : {}),
+          banquillo: jugador.stats.roundsOnBench,
+          victorias_ranking: st?.pg ?? 0,
+          posicion_final: posicion,
+          posicion,
+          total_participantes: ranked.length,
+          lugar: formatLugarOrdinal(posicion, ranked.length),
+          modalidad: "americano",
+          modalidad_label: "Pádel Americano",
+          puntos_a_favor: jugador.stats.pointsFor,
+          puntos_en_contra: jugador.stats.pointsAgainst,
+        }),
+        partidosDetalle
+      );
       const resultado: JugadorResultado =
         podioPos === 1
           ? "victoria"
@@ -1772,6 +1906,13 @@ export async function syncAmericanoParticipaciones(
             : podioPos === 3
               ? "empate"
               : "participación";
+
+      const setsFavor =
+        detSummary.jugados > 0 ? detSummary.setsFavor : jugador.stats.pointsFor;
+      const setsContra =
+        detSummary.jugados > 0
+          ? detSummary.setsContra
+          : jugador.stats.pointsAgainst;
 
       const existing = await getParticipacionAmericanoCierre(
         jugadorId,
@@ -1788,19 +1929,6 @@ export async function syncAmericanoParticipaciones(
             `Corrección ${eventoNombre}`
           );
         }
-        const prevMeta =
-          existing.metadata && typeof existing.metadata === "object"
-            ? existing.metadata
-            : {};
-        await supabase
-          .from("jugador_participaciones")
-          .update({
-            puntos_obtenidos: total,
-            resultado,
-            metadata: { ...prevMeta, ...metadata },
-          })
-          .eq("id", existing.id);
-        continue;
       }
 
       await registrarPuntosRanking({
@@ -1811,10 +1939,14 @@ export async function syncAmericanoParticipaciones(
         resultado,
         formato: "americano",
         calcParams,
+        setsFavor,
+        setsContra,
         metadata: metadata as Record<string, unknown>,
-        skipIfSubtipoExists: "americano_cierre",
+        upsertSubtipo: "americano_cierre",
       });
     }
+
+    await refreshJugadorStatsBatch(touchedJugadorIds);
   } catch (e) {
     console.error("[riviera-jugadores] syncAmericanoParticipaciones:", e);
   }
@@ -1854,6 +1986,13 @@ export async function backfillAmericanoHistorial(
       const rebuilt = rebuildAmericanoFromSnapshot(snap);
       if (!rebuilt) continue;
 
+      await syncAmericanoParticipaciones(
+        t.id,
+        t.name,
+        rebuilt.players,
+        rebuilt.rounds,
+        organizadorId
+      );
       count += 1;
     }
   } catch (e) {
@@ -1884,6 +2023,7 @@ export async function syncDuelo2v2Participaciones(params: {
     nombre: string;
     parejaCon: string;
     esGanador: boolean;
+    esParejaA: boolean;
     setsFavor: number;
     setsContra: number;
   }> = [
@@ -1892,6 +2032,7 @@ export async function syncDuelo2v2Participaciones(params: {
       nombre: duelo.pareja_a_j1_nombre,
       parejaCon: duelo.pareja_a_j2_nombre,
       esGanador: duelo.ganador === "a",
+      esParejaA: true,
       setsFavor: duelo.sets_pareja_a,
       setsContra: duelo.sets_pareja_b,
     },
@@ -1900,6 +2041,7 @@ export async function syncDuelo2v2Participaciones(params: {
       nombre: duelo.pareja_a_j2_nombre,
       parejaCon: duelo.pareja_a_j1_nombre,
       esGanador: duelo.ganador === "a",
+      esParejaA: true,
       setsFavor: duelo.sets_pareja_a,
       setsContra: duelo.sets_pareja_b,
     },
@@ -1908,6 +2050,7 @@ export async function syncDuelo2v2Participaciones(params: {
       nombre: duelo.pareja_b_j1_nombre,
       parejaCon: duelo.pareja_b_j2_nombre,
       esGanador: duelo.ganador === "b",
+      esParejaA: false,
       setsFavor: duelo.sets_pareja_b,
       setsContra: duelo.sets_pareja_a,
     },
@@ -1916,6 +2059,7 @@ export async function syncDuelo2v2Participaciones(params: {
       nombre: duelo.pareja_b_j2_nombre,
       parejaCon: duelo.pareja_b_j1_nombre,
       esGanador: duelo.ganador === "b",
+      esParejaA: false,
       setsFavor: duelo.sets_pareja_b,
       setsContra: duelo.sets_pareja_a,
     },
@@ -1934,20 +2078,18 @@ export async function syncDuelo2v2Participaciones(params: {
       const posicion = slot.esGanador ? 1 : 2;
       const resultado: JugadorResultado = slot.esGanador ? "victoria" : "derrota";
 
-      await registrarPuntosRanking({
-        jugadorId,
-        tipoEvento: "duelo_2v2",
-        eventoId: duelo.id,
-        eventoNombre,
-        resultado,
-        formato: "duelo_2v2",
-        calcParams: { ganador_duelo: slot.esGanador },
-        setsFavor: slot.setsFavor,
-        setsContra: slot.setsContra,
-        parejaCon: slot.parejaCon,
-        skipIfSubtipoExists: "duelo_2v2_cierre",
-        upsertSubtipo: "duelo_2v2_cierre",
-        metadata: {
+      const partidosDetalle = buildDuelo2vs2PartidosDetalle({
+        duelo,
+        esParejaA: slot.esParejaA,
+      });
+      const detSummary = summarizePartidosDetalle(partidosDetalle);
+      const setsFavor =
+        detSummary.jugados > 0 ? detSummary.setsFavor : slot.setsFavor;
+      const setsContra =
+        detSummary.jugados > 0 ? detSummary.setsContra : slot.setsContra;
+
+      const metadata = enrichMetadataWithPartidosDetalle(
+        {
           subtipo: "duelo_2v2_cierre",
           modalidad: "duelo_2v2",
           modalidad_label: "Duelo 2 vs 2",
@@ -1957,11 +2099,31 @@ export async function syncDuelo2v2Participaciones(params: {
           lugar: slot.esGanador ? "Campeón" : "2do lugar",
           placement: slot.esGanador ? "campeon" : "subcampeon",
           campeon_torneo: slot.esGanador,
-          partidos_ganados: slot.esGanador ? 1 : 0,
-          partidos_perdidos: slot.esGanador ? 0 : 1,
-          partidos_jugados: 1,
+          ...(partidosDetalle.length === 0
+            ? {
+                partidos_ganados: slot.esGanador ? 1 : 0,
+                partidos_perdidos: slot.esGanador ? 0 : 1,
+                partidos_jugados: 1,
+              }
+            : {}),
           fecha,
         },
+        partidosDetalle
+      );
+
+      await registrarPuntosRanking({
+        jugadorId,
+        tipoEvento: "duelo_2v2",
+        eventoId: duelo.id,
+        eventoNombre,
+        resultado,
+        formato: "duelo_2v2",
+        calcParams: { ganador_duelo: slot.esGanador },
+        setsFavor,
+        setsContra,
+        parejaCon: slot.parejaCon,
+        upsertSubtipo: "duelo_2v2_cierre",
+        metadata,
       });
 
       await rebuildJugadorStats(jugadorId);
@@ -1969,4 +2131,89 @@ export async function syncDuelo2v2Participaciones(params: {
   } catch (e) {
     console.error("[riviera-jugadores] syncDuelo2v2Participaciones:", e);
   }
+}
+
+function mapDueloRowForBackfill(row: Record<string, unknown>): Duelo2v2 {
+  const parseDetalleSets = (raw: unknown): Duelo2v2["detalle_sets"] => {
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const o = item as Record<string, unknown>;
+        const a = Number(o.a);
+        const b = Number(o.b);
+        if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+        return { a, b };
+      })
+      .filter((x): x is { a: number; b: number } => x !== null);
+  };
+
+  return {
+    id: String(row.id),
+    organizador_id: String(row.organizador_id),
+    nombre: String(row.nombre),
+    descripcion: row.descripcion ? String(row.descripcion) : null,
+    estado: row.estado as Duelo2v2["estado"],
+    pareja_a_j1_id: row.pareja_a_j1_id ? String(row.pareja_a_j1_id) : null,
+    pareja_a_j2_id: row.pareja_a_j2_id ? String(row.pareja_a_j2_id) : null,
+    pareja_a_j1_nombre: String(row.pareja_a_j1_nombre),
+    pareja_a_j2_nombre: String(row.pareja_a_j2_nombre),
+    pareja_b_j1_id: row.pareja_b_j1_id ? String(row.pareja_b_j1_id) : null,
+    pareja_b_j2_id: row.pareja_b_j2_id ? String(row.pareja_b_j2_id) : null,
+    pareja_b_j1_nombre: String(row.pareja_b_j1_nombre),
+    pareja_b_j2_nombre: String(row.pareja_b_j2_nombre),
+    sets_pareja_a: Number(row.sets_pareja_a ?? 0),
+    sets_pareja_b: Number(row.sets_pareja_b ?? 0),
+    detalle_sets: parseDetalleSets(row.detalle_sets),
+    ganador: (row.ganador as Duelo2v2["ganador"]) ?? null,
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
+    finalizado_at: row.finalizado_at ? String(row.finalizado_at) : null,
+  };
+}
+
+/** Re-sincroniza duelos 2v2 finalizados con partidos_detalle. */
+export async function backfillDuelosHistorial(
+  organizadorId: string
+): Promise<number> {
+  let count = 0;
+  try {
+    const { data, error } = await supabase
+      .from("duelos_2v2")
+      .select("*")
+      .eq("organizador_id", organizadorId)
+      .eq("estado", "finalizado");
+
+    if (error || !data?.length) return 0;
+
+    for (const row of data) {
+      const duelo = mapDueloRowForBackfill(row as Record<string, unknown>);
+      if (!duelo.ganador) continue;
+      await syncDuelo2v2Participaciones({ organizadorId, duelo });
+      count += 1;
+    }
+  } catch (e) {
+    console.error("[riviera-jugadores] backfillDuelosHistorial:", e);
+  }
+  return count;
+}
+
+export type BackfillHistorialResumen = {
+  retas: number;
+  americanos: number;
+  ligas: number;
+  duelos: number;
+};
+
+/** Re-sincroniza historial partido a partido de eventos cerrados del organizador. */
+export async function backfillHistorialJugadores(
+  organizadorId: string
+): Promise<BackfillHistorialResumen> {
+  const [retas, americanos, ligas, duelos] = await Promise.all([
+    backfillRetasHistorial(organizadorId),
+    backfillAmericanoHistorial(organizadorId),
+    backfillLigaJornadaHistorial(organizadorId),
+    backfillDuelosHistorial(organizadorId),
+  ]);
+  return { retas, americanos, ligas, duelos };
 }

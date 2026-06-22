@@ -1,4 +1,4 @@
-import { supabase } from "../supabaseClient";
+import { supabase, supabasePublicRead } from "../supabaseClient";
 import type {
   CreateRivieraJugadorInput,
   JugadorParticipacion,
@@ -631,6 +631,29 @@ export async function listParticipaciones(
   limit = 100
 ): Promise<JugadorParticipacion[]> {
   const { data, error } = await supabase
+    .from("jugador_participaciones")
+    .select("*")
+    .eq("jugador_id", jugadorId)
+    .order("fecha", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    if (isMissingTableError(error)) return [];
+    throw error;
+  }
+  return (data ?? []) as JugadorParticipacion[];
+}
+
+/**
+ * Historial público del jugador (anon). Incluye metadata.partidos_detalle
+ * — fuente única para el sitio web; no depende de matches/games borrados.
+ */
+export async function listParticipacionesPublic(
+  jugadorId: string,
+  limit = 100
+): Promise<JugadorParticipacion[]> {
+  const { data, error } = await supabasePublicRead
     .from("jugador_participaciones")
     .select("*")
     .eq("jugador_id", jugadorId)
