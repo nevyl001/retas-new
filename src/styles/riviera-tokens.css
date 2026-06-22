@@ -24,7 +24,7 @@
   --border-accent: var(--ro-border-accent);
   --border-focus: rgba(255, 255, 255, 0.35);
 
-  /* ── Acento (sin dorado — aliases legacy → blanco) ── */
+  /* ── Acento UI (blanco). Dorado vía --ro-gold en público y podio. ── */
   --accent-gold: var(--ro-accent);
   --accent-gold-light: var(--ro-accent-hover);
   --accent-gold-dim: var(--ro-accent-dim);

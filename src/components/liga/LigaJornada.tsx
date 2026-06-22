@@ -47,6 +47,19 @@ function rondaEnCurso(partidos: LigaPartido[]): boolean {
   return partidos.some((p) => p.estado === "in_progress");
 }
 
+function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
+  switch (estado) {
+    case "upcoming":
+      return "Próxima";
+    case "in_progress":
+      return "En curso";
+    case "completed":
+      return "Finalizada";
+    default:
+      return estado;
+  }
+}
+
 async function activarSiguienteRonda(
   jornadaId: string,
   rondaActual: number
@@ -312,37 +325,41 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         </Button>
       </div>
 
-      <div className="liga-actions">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(
-                publicLigaJornadaUrl(ligaId, numero)
-              );
-              setMessage("Enlace de pantalla copiado.");
-            } catch {
-              setError("No se pudo copiar el enlace.");
-            }
-          }}
-        >
-          Copiar enlace pantalla
-        </Button>
-      </div>
-
       <header className="liga-header">
         <h1 className="liga-title">
           Liga: {detalle.nombre} — Jornada {numero}
         </h1>
         <p className="liga-subtitle">
-          Estado: {jornada.estado}
+          Estado: {jornadaEstadoLabel(jornada.estado)}
           {totalPartidos > 0
             ? ` · ${totalPartidos} partidos (${nParejas} parejas, todos vs todos)`
             : null}
         </p>
       </header>
+
+      <div className="liga-jornada-toolbar">
+        <Button
+          type="button"
+          variant="secondary"
+          className="liga-jornada-toolbar__tv-link"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(
+                publicLigaJornadaUrl(ligaId, numero)
+              );
+              setMessage("Enlace copiado. Ábrelo en la TV o pantalla de la cancha.");
+            } catch {
+              setError("No se pudo copiar el enlace.");
+            }
+          }}
+        >
+          Enlace para TV / pantalla
+        </Button>
+        <p className="liga-jornada-toolbar__hint">
+          Para proyectar los partidos en vivo: copia el enlace y ábrelo en un navegador
+          de la tele o tablet en cancha.
+        </p>
+      </div>
 
       {message ? <p className="liga-success">{message}</p> : null}
       {error ? <p className="liga-error">{error}</p> : null}

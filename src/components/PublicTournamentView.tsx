@@ -89,6 +89,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [tournamentWinner, setTournamentWinner] =
     useState<TournamentWinner | null>(null);
+  const [podiumSecond, setPodiumSecond] = useState<Pair | null>(null);
+  const [podiumThird, setPodiumThird] = useState<Pair | null>(null);
   const [showWinner, setShowWinner] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(parseTeamConfigFromHash);
@@ -192,6 +194,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         setShowWinner(false);
         setWinningTeamName(null);
         setTournamentWinner(null);
+        setPodiumSecond(null);
+        setPodiumThird(null);
       } else {
         if (resolvedTeamConfig) {
           const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
@@ -210,6 +214,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               champCfg
             );
             setTournamentWinner(outcome.winner);
+            setPodiumSecond(outcome.secondPair);
+            setPodiumThird(outcome.thirdPair);
             setShowWinner(true);
           } catch (err) {
             console.error("Error calculating winner:", err);
@@ -540,10 +546,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ]
         : [];
     return {
-      second: toEntries(sortedPairs[1]),
-      third: toEntries(sortedPairs[2]),
+      second: toEntries(podiumSecond ?? undefined),
+      third: toEntries(podiumThird ?? undefined),
     };
-  }, [sortedPairs]);
+  }, [podiumSecond, podiumThird]);
 
   useEffect(() => {
     const allEntries = [
@@ -576,8 +582,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   const runnersUp = useMemo((): PublicRetaRunnerUp[] => {
     const items: PublicRetaRunnerUp[] = [];
-    const second = sortedPairs[1];
-    const third = sortedPairs[2];
+    const second = podiumSecond;
+    const third = podiumThird;
     if (second) {
       items.push({
         place: 2,
@@ -593,7 +599,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       });
     }
     return items;
-  }, [sortedPairs, podiumAvatars]);
+  }, [podiumSecond, podiumThird, podiumAvatars]);
 
   const formatKicker = teamStandings?.length
     ? "Reta por equipos"

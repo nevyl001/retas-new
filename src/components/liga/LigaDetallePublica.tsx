@@ -147,15 +147,17 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                     <tr
                       key={row.jugador_id}
                       className={
-                        row.posicion <= 3
+                        row.posicion === 1
                           ? "liga-pantalla-ranking-top"
                           : undefined
                       }
                     >
-                      <td>{row.posicion}</td>
-                      <td>{row.nombre}</td>
+                      <td className="liga-pantalla-ranking__rank">{row.posicion}</td>
+                      <td className="liga-pantalla-ranking__name">{row.nombre}</td>
                       <td className="liga-pantalla-ranking__pts">{row.puntos}</td>
-                      <td>{row.jornadas_jugadas}</td>
+                      <td className="liga-pantalla-ranking__meta">
+                        {row.jornadas_jugadas}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -192,7 +194,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                       <div className="liga-pantalla-parejas liga-pantalla-parejas--card">
                         {(j.parejas ?? []).map((p) => (
                           <span key={p.id} className="liga-pantalla-pareja">
-                            {p.jugador1?.nombre ?? "?"} /{" "}
+                            {p.jugador1?.nombre ?? "?"} —{" "}
                             {p.jugador2?.nombre ?? "?"}
                           </span>
                         ))}

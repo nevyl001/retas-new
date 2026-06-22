@@ -114,7 +114,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* —— Remontada / championship — oro público (no amber Tailwind) —— */
+/* —— Remontada / championship — oro público —— */
 .ro-public-view .te-pub-match--remontada,
 .ro-public-view .rr-championship--public {
   --ro-pub-remontada-border: var(--ro-pub-gold-border);

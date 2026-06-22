@@ -1,6 +1,6 @@
 /* =============================================
    RIVIERA OPEN — DESIGN SYSTEM MAESTRO v1.0
-   Negro + Blanco + Grises. Sin dorado.
+   Negro + blanco + grises. Verde solo matices.
 ============================================= */
 
 :root {
@@ -12,10 +12,24 @@
   --ro-bg-card: #111111;
   --ro-bg-input: #1a1a1a;
 
-  /* ACENTO — blanco como único acento */
+  /* ACENTO UI — blanco (botones, foco, navegación) */
   --ro-accent: #ffffff;
   --ro-accent-hover: #e0e0e0;
   --ro-accent-dim: rgba(255, 255, 255, 0.08);
+
+  /* VERDE RIVIERA — solo matices puntuales (badges, hover, marca) */
+  --ro-green: #2d6a4f;
+  --ro-green-hover: #3d8564;
+  --ro-green-dim: rgba(45, 106, 79, 0.08);
+  --ro-green-border: rgba(45, 106, 79, 0.22);
+  --ro-green-glow: rgba(45, 106, 79, 0.12);
+
+  /* DORADO — ganadores, marcadores, podio */
+  --ro-gold: #c9a227;
+  --ro-gold-light: #e8c547;
+  --ro-gold-dim: rgba(201, 162, 39, 0.14);
+  --ro-gold-border: rgba(201, 162, 39, 0.38);
+  --ro-gold-glow: rgba(201, 162, 39, 0.22);
 
   /* TEXTO */
   --ro-text-primary: #ffffff;
@@ -33,8 +47,8 @@
   --ro-error: #f87171;
   --ro-pending: #555555;
 
-  /* MEDALLAS — grises sin dorado */
-  --ro-medal-gold: #ffffff;
+  /* MEDALLAS */
+  --ro-medal-gold: #d4af37;
   --ro-medal-silver: #a0a0a0;
   --ro-medal-bronze: #6b6b6b;
 

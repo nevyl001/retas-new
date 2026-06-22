@@ -17,7 +17,7 @@ function parejaNombre(
 ): string {
   const p = jornada?.parejas?.find((x) => x.id === parejaId);
   if (!p) return "—";
-  return `${p.jugador1?.nombre ?? "?"} / ${p.jugador2?.nombre ?? "?"}`;
+  return `${p.jugador1?.nombre ?? "?"} — ${p.jugador2?.nombre ?? "?"}`;
 }
 
 function rondaLabel(estado: string): string {
@@ -148,7 +148,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         <div className="liga-pantalla-parejas">
           {(jornada.parejas ?? []).map((p) => (
             <span key={p.id} className="liga-pantalla-pareja">
-              {p.jugador1?.nombre ?? "?"} / {p.jugador2?.nombre ?? "?"}
+              {p.jugador1?.nombre ?? "?"} — {p.jugador2?.nombre ?? "?"}
             </span>
           ))}
         </div>

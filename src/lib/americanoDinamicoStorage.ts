@@ -59,6 +59,24 @@ export function isMarkedAmericanoTournament(tournamentId: string): boolean {
   }
 }
 
+/** IDs marcados en sessionStorage como Americano (sin consultar todos los torneos). */
+export function listMarkedAmericanoTournamentIds(): string[] {
+  if (typeof window === "undefined") return [];
+  const ids: string[] = [];
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(AMERICANO_MARK_PREFIX)) {
+        const id = key.slice(AMERICANO_MARK_PREFIX.length).trim();
+        if (id) ids.push(id);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return ids;
+}
+
 export function isAmericanoResumable(tournamentId: string): boolean {
   const snap = loadAmericanoDinamicoSnapshot(tournamentId);
   if (snap?.tournamentPhase === "finished") return false;

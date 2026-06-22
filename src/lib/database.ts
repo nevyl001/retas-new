@@ -10,6 +10,8 @@ import type {
 } from "./db/types";
 import {
   isAmericanoResumable,
+  isMarkedAmericanoTournament,
+  listMarkedAmericanoTournamentIds,
   readAmericanoActiveTournamentId,
   readAmericanoTournamentIdFromSession,
   type AmericanoDinamicoSnapshotV1,
@@ -93,8 +95,6 @@ export const createTournament = async (
 };
 
 export const getTournaments = async (userId?: string) => {
-  console.log("Fetching tournaments for user:", userId);
-
   let query = supabase
     .from("tournaments")
     .select("*")
@@ -112,11 +112,6 @@ export const getTournaments = async (userId?: string) => {
     throw error;
   }
 
-  console.log(
-    "Tournaments fetched successfully:",
-    data?.length || 0,
-    "tournaments"
-  );
   return data || [];
 };
 
@@ -156,38 +151,45 @@ export const findResumableAmericanoTournament = async (
     tried.add(tid);
     const t = await getTournamentById(tid);
     if (!t || t.user_id !== userId || t.is_finished) return null;
+    if (isAmericanoResumable(tid)) return t;
     if (
-      !isAmericanoResumable(tid) &&
-      !(await isAmericanoResumableAsync(tid))
+      isMarkedAmericanoTournament(tid) &&
+      (await isAmericanoResumableAsync(tid))
     ) {
-      return null;
+      return t;
     }
-    return t;
+    return null;
   };
 
-  const fromActive = await tryId(readAmericanoActiveTournamentId());
-  if (fromActive) {
-    console.log("Loading existing americano tournament:", fromActive.id, fromActive.name);
-    return fromActive;
+  const candidateIds = [
+    readAmericanoActiveTournamentId(),
+    readAmericanoTournamentIdFromSession(),
+    ...listMarkedAmericanoTournamentIds(),
+  ];
+
+  for (const id of candidateIds) {
+    const hit = await tryId(id);
+    if (hit) return hit;
   }
 
-  const fromSession = await tryId(readAmericanoTournamentIdFromSession());
-  if (fromSession) {
-    console.log("Loading existing americano tournament:", fromSession.id, fromSession.name);
-    return fromSession;
-  }
+  const { data: recent, error } = await supabase
+    .from("tournaments")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_finished", false)
+    .order("created_at", { ascending: false })
+    .limit(8);
 
-  const list = await getTournaments(userId);
-  for (const t of list) {
-    if (t.is_finished) continue;
-    if (
-      !isAmericanoResumable(t.id) &&
-      !(await isAmericanoResumableAsync(t.id))
-    ) {
-      continue;
+  if (!error && recent?.length) {
+    for (const t of recent) {
+      if (tried.has(t.id)) continue;
+      if (!isAmericanoResumable(t.id) && !isMarkedAmericanoTournament(t.id)) {
+        continue;
+      }
+      if (isAmericanoResumable(t.id) || (await isAmericanoResumableAsync(t.id))) {
+        return t;
+      }
     }
-    console.log("Loading existing americano tournament:", t.id, t.name);
-    return t;
   }
 
   return null;

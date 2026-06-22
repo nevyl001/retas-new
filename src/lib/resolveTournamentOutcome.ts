@@ -45,8 +45,10 @@ export function matchesForStandingsTable(
 }
 
 /**
- * Campeón: ganador de remontada si aplica; si no, #1 de la tabla.
- * 2.º y 3.º: siempre posiciones 2 y 3 de la clasificación regular (Round Robin).
+ * Podio del torneo:
+ * - Con remontada: 1.º, 2.º y 3.º desde la final y el partido de 3er lugar.
+ * - Sin remontada: top 3 de la tabla Round Robin.
+ * Las estadísticas del campeón usan solo partidos de remontada si aplica.
  */
 export async function resolveTournamentPodiumOutcome(
   pairs: Pair[],
@@ -69,6 +71,11 @@ export async function resolveTournamentPodiumOutcome(
   const statsById = new Map(pairsWithStats.map((p) => [p.id, p]));
 
   let winnerPair: Pair | null = sorted[0] ?? null;
+  let secondPair: Pair | null = sorted[1] ?? null;
+  let thirdPair: Pair | null = sorted[2] ?? null;
+  let winnerStats: PairWithStats | undefined = winnerPair
+    ? statsById.get(winnerPair.id)
+    : undefined;
 
   if (champCfg?.championshipEnabled) {
     const podium = await resolveChampionshipPodium(
@@ -79,14 +86,23 @@ export async function resolveTournamentPodiumOutcome(
     );
     if (podium?.first) {
       winnerPair = podium.first;
+      secondPair = podium.second ?? null;
+      thirdPair = podium.third ?? null;
+
+      const { championship } = partitionMatches(matches, tournamentId, champCfg);
+      if (championship.length > 0) {
+        const champStats = computePairsWithStats(pairs, championship, games);
+        winnerStats =
+          champStats.find((p) => p.id === winnerPair!.id) ?? winnerStats;
+      }
     }
   }
 
   return {
     winner: winnerPair
-      ? pairToTournamentWinner(winnerPair, statsById.get(winnerPair.id))
+      ? pairToTournamentWinner(winnerPair, winnerStats)
       : null,
-    secondPair: sorted[1] ?? null,
-    thirdPair: sorted[2] ?? null,
+    secondPair,
+    thirdPair,
   };
 }

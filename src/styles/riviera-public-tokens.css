@@ -1,6 +1,6 @@
 /* =============================================
    RIVIERA OPEN — TOKENS SOLO VISTAS PÚBLICAS
-   Dorado + medallas oro/plata/bronce.
+   Dorado en ganadores/marcadores. Verde solo matices.
    Scoped a .ro-public-view — no afecta app privada.
 ============================================= */
 
@@ -14,6 +14,11 @@
   --ro-pub-gold-dim: rgba(201, 162, 39, 0.14);
   --ro-pub-gold-border: rgba(201, 162, 39, 0.38);
   --ro-pub-gold-glow: rgba(201, 162, 39, 0.22);
+
+  /* Verde — solo detalles (eyebrow, hover chip, en vivo) */
+  --ro-pub-green: var(--ro-green, #2d6a4f);
+  --ro-pub-green-dim: var(--ro-green-dim, rgba(45, 106, 79, 0.08));
+  --ro-pub-green-border: var(--ro-green-border, rgba(45, 106, 79, 0.22));
 
   /* Horario — ámbar/dorado */
   --ro-pub-schedule: #e8c547;
@@ -54,6 +59,9 @@
   --ro-pub-gold-dim: rgba(201, 162, 39, 0.14);
   --ro-pub-gold-border: rgba(201, 162, 39, 0.38);
   --ro-pub-gold-glow: rgba(201, 162, 39, 0.22);
+  --ro-pub-green: var(--ro-green, #2d6a4f);
+  --ro-pub-green-dim: var(--ro-green-dim, rgba(45, 106, 79, 0.08));
+  --ro-pub-green-border: var(--ro-green-border, rgba(45, 106, 79, 0.22));
   --ro-pub-schedule: #e8c547;
   --ro-pub-schedule-dim: rgba(232, 197, 71, 0.14);
   --ro-pub-schedule-border: rgba(232, 197, 71, 0.38);

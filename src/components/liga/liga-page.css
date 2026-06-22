@@ -623,3 +623,31 @@
   outline: none;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
+
+.liga-jornada-toolbar {
+  margin-bottom: var(--liga-space-lg);
+  padding: 1rem 1.1rem;
+  border-radius: var(--liga-radius-md);
+  border: 1px solid var(--liga-border);
+  background: var(--liga-surface);
+}
+
+.liga-jornada-toolbar__tv-link {
+  width: 100%;
+  min-height: 44px;
+  font-weight: 700;
+}
+
+.liga-jornada-toolbar__hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--liga-text-muted);
+}
+
+@media (min-width: 640px) {
+  .liga-jornada-toolbar__tv-link {
+    width: auto;
+    min-width: 280px;
+  }
+}

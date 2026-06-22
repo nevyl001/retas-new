@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   createTournament,
   findResumableAmericanoTournament,
@@ -46,6 +46,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   const [sheetMode, setSheetMode] = useState<GameModeId | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const americanoResumeRef = useRef(false);
 
   const handleModeSelect = useCallback(
     async (modeId: GameModeId) => {
@@ -63,16 +64,24 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         navigateDuelo2v2("/duelo-2v2/nuevo");
         return;
       }
-      if (modeId === "americano" && userId) {
-        try {
-          const existing = await findResumableAmericanoTournament(userId);
-          if (existing) {
-            navigateToAmericanoDinamico(existing.id, userId);
-            return;
-          }
-        } catch {
-          /* abrir sheet de configuración */
-        }
+      if (modeId === "americano") {
+        setSheetMode("americano");
+        if (!userId || americanoResumeRef.current) return;
+        americanoResumeRef.current = true;
+        void findResumableAmericanoTournament(userId)
+          .then((existing) => {
+            if (existing) {
+              setSheetMode(null);
+              navigateToAmericanoDinamico(existing.id, userId);
+            }
+          })
+          .catch(() => {
+            /* sheet ya abierto: crear nueva reta */
+          })
+          .finally(() => {
+            americanoResumeRef.current = false;
+          });
+        return;
       }
       setSheetMode(modeId);
     },
