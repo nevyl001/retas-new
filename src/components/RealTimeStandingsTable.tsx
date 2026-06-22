@@ -17,6 +17,10 @@ import {
   inferTeamConfigFromPairs,
   sortPairsForStandings,
 } from "../lib/standingsUtils";
+import { matchesForStandingsTable } from "../lib/resolveTournamentOutcome";
+import {
+  loadChampionshipConfig,
+} from "../lib/roundRobinChampionship";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import { StandingsDifCell } from "./standings/StandingsDifCell";
 import { StandingsPtsCell } from "./standings/StandingsPtsCell";
@@ -223,14 +227,24 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceRefresh]); // loadTournamentData es estable
 
+  const champConfig = useMemo(
+    () => (tournamentId ? loadChampionshipConfig(tournamentId) : null),
+    [tournamentId, forceRefresh, matches.length]
+  );
+
+  const standingsMatches = useMemo(
+    () => matchesForStandingsTable(matches, tournamentId, champConfig),
+    [matches, tournamentId, champConfig]
+  );
+
   const pairsWithStats = useMemo(
-    () => computePairsWithStats(pairs, matches, allGames),
-    [pairs, matches, allGames]
+    () => computePairsWithStats(pairs, standingsMatches, allGames),
+    [pairs, standingsMatches, allGames]
   );
 
   const sortedPairs = useMemo(
-    () => sortPairsForStandings(pairsWithStats, matches, allGames),
-    [pairsWithStats, matches, allGames]
+    () => sortPairsForStandings(pairsWithStats, standingsMatches, allGames),
+    [pairsWithStats, standingsMatches, allGames]
   );
 
   const teamStandings = useMemo(() => {

@@ -803,13 +803,13 @@
 
   .te-gestion-page .te-partido-matchup {
     grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
+    justify-items: stretch;
+    text-align: left;
   }
 
   .te-gestion-page .te-partido-team,
   .te-gestion-page .te-partido-team--visit {
-    text-align: center;
+    text-align: left;
     width: 100%;
   }
 }

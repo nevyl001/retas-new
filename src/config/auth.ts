@@ -1,26 +1,27 @@
 // Configuración de autenticación
+const PRODUCTION_APP_URL =
+  process.env.REACT_APP_PUBLIC_URL?.replace(/\/$/, "") ||
+  "https://appriviera.rivieraopen.com";
+
 export const AUTH_CONFIG = {
-  // URL base de la aplicación
   BASE_URL:
     process.env.NODE_ENV === "production"
-      ? "https://retas-new.vercel.app"
+      ? PRODUCTION_APP_URL
       : "http://localhost:3000",
 
-  // URL base de la aplicación para producción (para uso en emails de Supabase)
-  BASE_URL_PRODUCTION: "https://retas-new.vercel.app",
+  BASE_URL_PRODUCTION: PRODUCTION_APP_URL,
 
-  // URL de redirección después de confirmar email
   EMAIL_CONFIRM_REDIRECT: "/auth/callback",
-
-  // URL de redirección después de reset de contraseña
   PASSWORD_RESET_REDIRECT: "/auth/reset-password",
 
-  // URLs permitidas en Supabase (deben configurarse en el dashboard)
   ALLOWED_REDIRECT_URLS: [
-    "https://retas-new.vercel.app/auth/callback",
+    `${PRODUCTION_APP_URL}/auth/callback`,
     "http://localhost:3000/auth/callback",
-    "https://retas-new.vercel.app/auth/reset-password",
+    `${PRODUCTION_APP_URL}/auth/reset-password`,
     "http://localhost:3000/auth/reset-password",
+    // Legacy Vercel URL (enlaces viejos en emails)
+    "https://retas-new.vercel.app/auth/callback",
+    "https://retas-new.vercel.app/auth/reset-password",
   ],
 };
 

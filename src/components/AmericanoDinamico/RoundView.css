@@ -345,3 +345,18 @@
     font-size: 1.75rem;
   }
 }
+
+@media (max-width: 480px) {
+  .americano-match-card__teams {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .americano-match-card__vs {
+    text-align: center;
+  }
+
+  .americano-round__header h3 {
+    font-size: 1.35rem;
+  }
+}

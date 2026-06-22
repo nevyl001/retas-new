@@ -46,6 +46,8 @@ interface MatchCardWithResultsProps {
   pairs: Pair[]; // Agregado: recibir pairs como prop para evitar cargas redundantes
   /** Canchas configuradas en la reta (calendario / descansos); la edición manual del partido permite más pistas. */
   maxCourts?: number;
+  /** En remontada: etiqueta legible (FINAL, ENCUENTRO 1…) en lugar de "Ronda N". */
+  roundLabelOverride?: string;
   isSelected: boolean;
   onSelect: (matchId: string) => void;
   onCorrectScore: (match: Match) => void;
@@ -57,6 +59,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   match,
   pairs,
   maxCourts = 12,
+  roundLabelOverride,
   isSelected,
   onSelect,
   onCorrectScore,
@@ -545,7 +548,9 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         <div className="omc-header__meta">
           <div className="omc-pills">
             <span className="omc-pill">Cancha {currentMatch.court}</span>
-            <span className="omc-pill">Ronda {currentMatch.round || 1}</span>
+            <span className="omc-pill">
+              {roundLabelOverride ?? `Ronda ${currentMatch.round || 1}`}
+            </span>
           </div>
           {!isEditingMeta ? (
             <button
@@ -876,7 +881,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             className="omc-footer-btn"
             title="Editar marcador"
           >
-            Editar
+            Marcador
           </button>
         )}
       </footer>

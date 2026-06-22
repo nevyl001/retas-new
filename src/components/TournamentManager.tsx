@@ -44,7 +44,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   const { user } = useUser();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
-  const [, setError] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const [filter, setFilter] = useState<FilterId>("all");
 
   useEffect(() => {
@@ -177,6 +177,12 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         )}
         <h1 className="mis-retas-page__title">Mis Retas</h1>
       </header>
+
+      {error ? (
+        <p className="mis-retas-page__error" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       <div className="mis-retas-page__filters riviera-filter-chips" role="tablist">
         {filterChips.map((chip) => (

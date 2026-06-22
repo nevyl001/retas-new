@@ -100,13 +100,11 @@ function renderRoundBlock(
             key={match.id}
             style={{ "--i": matchIdx } as React.CSSProperties}
           >
-            {encounterLabel ? (
-              <p className="rr-championship__match-label">{encounterLabel}</p>
-            ) : null}
             <MatchCardWithResults
               match={match}
               pairs={pairs}
               maxCourts={Math.max(1, tournament.courts || 1)}
+              roundLabelOverride={encounterLabel ?? undefined}
               isSelected={false}
               onSelect={() => {}}
               onCorrectScore={async () => {

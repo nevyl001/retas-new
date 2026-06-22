@@ -964,3 +964,14 @@
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+.riviera-organizer-reta .riviera-inline-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fecaca;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}

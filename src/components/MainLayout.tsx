@@ -3,7 +3,7 @@ import "../styles/riviera-organizer.css";
 import { Button } from "./ui";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { continueTournament } from "../lib/tournamentRouting";
-import { TournamentWinner } from "./TournamentWinnerCalculator";
+import { TournamentWinner } from "../lib/tournamentWinner";
 import { TournamentManager } from "./TournamentManager";
 import TournamentDetails from "./TournamentDetails";
 import { HomeDashboard } from "./home/HomeDashboard";
@@ -31,6 +31,7 @@ interface MainLayoutProps {
   setShowDebugInfo: (show: boolean) => void;
   selectedPlayers: Player[];
   setSelectedPlayers: (players: Player[]) => void;
+  error: string;
   setError: (error: string) => void;
 
   // Actions
@@ -77,6 +78,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   setShowDebugInfo,
   selectedPlayers,
   setSelectedPlayers,
+  error,
   setError,
   addPair,
   updatePairPlayers,
@@ -140,6 +142,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           )
         ) : (
           <div className="reta-content riviera-organizer-reta">
+            {error ? (
+              <div className="riviera-inline-error" role="alert">
+                {error}
+              </div>
+            ) : null}
             <div className="reta-content__toolbar riviera-back-toolbar">
               <Button
                 type="button"

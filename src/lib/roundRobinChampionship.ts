@@ -443,16 +443,16 @@ export function championshipMatchEncounterLabel(
   allGames: Game[] = []
 ): string {
   if (totalRounds >= 2 && roundIndex === totalRounds && semiMatches.length >= 2) {
-    if (isChampionshipFinalMatch(match, semiMatches, allGames)) return "Final";
+    if (isChampionshipFinalMatch(match, semiMatches, allGames)) return "FINAL";
     if (isChampionshipThirdPlaceMatch(match, semiMatches, allGames)) {
-      return "3er lugar";
+      return "3ER LUGAR";
     }
   }
   const orderedSemi = [...semiMatches].sort(
     (a, b) => (a.court ?? 1) - (b.court ?? 1)
   );
   const semiIdx = orderedSemi.findIndex((m) => m.id === match.id);
-  if (semiIdx >= 0) return `Encuentro ${semiIdx + 1}`;
+  if (semiIdx >= 0) return `ENCUENTRO ${semiIdx + 1}`;
   return "Encuentro";
 }
 

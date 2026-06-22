@@ -29,7 +29,9 @@ export const useTournamentActions = (
     }
   ) => {
     if (!selectedTournament || pairs.length < 2) {
-      setError("Se necesitan al menos 2 parejas para iniciar la reta");
+      const msg = "Se necesitan al menos 2 parejas para iniciar la reta";
+      setError(msg);
+      showToast(msg, "error");
       return;
     }
 
@@ -154,6 +156,7 @@ export const useTournamentActions = (
       } catch (error) {
         console.error("❌ Error al resetear la reta:", error);
         setError("Error al resetear la reta: " + (error as Error).message);
+        showToast("Error al resetear la reta", "error");
       } finally {
         setLoading(false);
       }

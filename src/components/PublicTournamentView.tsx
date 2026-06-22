@@ -12,15 +12,17 @@ import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
 import {
   computePairsWithStats,
   computeTeamStandings,
+  getMatchScoresForStandings,
   resolvePublicStandingsTeamConfig,
   sortPairsForStandings,
 } from "../lib/standingsUtils";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
+import type { TournamentWinner } from "../lib/tournamentWinner";
 import {
-  TournamentWinnerCalculator,
-  TournamentWinner,
-} from "./TournamentWinnerCalculator";
+  matchesForStandingsTable,
+  resolveTournamentPodiumOutcome,
+} from "../lib/resolveTournamentOutcome";
 import {
   RIVIERA_APP_DISPLAY,
 } from "../lib/rivieraBranding";
@@ -176,8 +178,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       console.log("🔄 Vista pública actualizada:", new Date().toLocaleTimeString());
 
       const champCfg: RoundRobinChampionshipConfig | null =
-        loadChampionshipConfig(tournamentId) ??
-        parseChampionshipConfig(publicConfig?.championship_config);
+        parseChampionshipConfig(publicConfig?.championship_config) ??
+        loadChampionshipConfig(tournamentId);
       setChampionshipConfig(champCfg);
 
       const tournamentComplete = isRoundRobinTournamentComplete(
@@ -200,11 +202,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         } else {
           setWinningTeamName(null);
           try {
-            const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
+            const outcome = await resolveTournamentPodiumOutcome(
               pairsData,
-              matchesData
+              matchesData,
+              gamesData || [],
+              tournamentId,
+              champCfg
             );
-            setTournamentWinner(winner);
+            setTournamentWinner(outcome.winner);
             setShowWinner(true);
           } catch (err) {
             console.error("Error calculating winner:", err);
@@ -392,25 +397,43 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   };
 
   const getMatchResult = (matchId: string) => {
+    const match = matches.find((m) => m.id === matchId);
     const matchGames = games.filter((game) => game.match_id === matchId);
 
-    if (matchGames.length === 0) {
+    if (!match || matchGames.length === 0) {
+      if (match?.status === "finished") {
+        return {
+          pair1Score: match.pair1_score ?? 0,
+          pair2Score: match.pair2_score ?? 0,
+          hasResult: true,
+        };
+      }
       return { pair1Score: 0, pair2Score: 0, hasResult: false };
     }
 
-    const lastGame = matchGames[matchGames.length - 1];
+    const { score1, score2 } = getMatchScoresForStandings(match, matchGames);
 
     return {
-      pair1Score: lastGame.pair1_games || 0,
-      pair2Score: lastGame.pair2_games || 0,
+      pair1Score: score1,
+      pair2Score: score2,
       hasResult: true,
     };
   };
 
+  const standingsMatches = useMemo(
+    () =>
+      matchesForStandingsTable(
+        matches,
+        tournamentId,
+        championshipConfig
+      ),
+    [matches, tournamentId, championshipConfig]
+  );
+
   // Clasificación por equipos solo si hay team_config real (reta por equipos); si no, tabla por parejas (round robin).
   const pairsWithStats = useMemo(
-    () => computePairsWithStats(pairs, matches, games),
-    [pairs, matches, games]
+    () => computePairsWithStats(pairs, standingsMatches, games),
+    [pairs, standingsMatches, games]
   );
   const teamStandings = useMemo(() => {
     if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam || Object.keys(teamConfig.pairToTeam).length === 0)
@@ -418,8 +441,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return computeTeamStandings(pairsWithStats, teamConfig);
   }, [teamConfig, pairsWithStats]);
   const sortedPairs = useMemo(
-    () => sortPairsForStandings(pairsWithStats, matches, games),
-    [pairsWithStats, matches, games]
+    () => sortPairsForStandings(pairsWithStats, standingsMatches, games),
+    [pairsWithStats, standingsMatches, games]
   );
 
   const standingRows = useMemo((): PublicRetaStandingRow[] => {
@@ -801,8 +824,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
       <PublicRetaStandingsSection
         rows={standingRows}
-        title="Clasificación"
+        title={
+          championshipConfig?.championshipEnabled
+            ? "Clasificación (Round Robin)"
+            : "Clasificación"
+        }
         entityHeader={teamStandings?.length ? "EQUIPO" : "PAREJA"}
+        scrollHint
       />
 
       {showWinner &&

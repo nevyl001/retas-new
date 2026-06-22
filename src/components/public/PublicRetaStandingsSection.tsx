@@ -16,7 +16,13 @@ export const PublicRetaStandingsSection: React.FC<{
   rows: PublicRetaStandingRow[];
   title?: string;
   entityHeader?: string;
-}> = ({ rows, title = "Clasificación", entityHeader = "PAREJA" }) => {
+  scrollHint?: boolean;
+}> = ({
+  rows,
+  title = "Clasificación",
+  entityHeader = "PAREJA",
+  scrollHint = false,
+}) => {
   const staggerBase = useMemo(() => 0.04, []);
 
   if (rows.length === 0) return null;
@@ -25,6 +31,12 @@ export const PublicRetaStandingsSection: React.FC<{
     <section className="te-public-section te-pub-fade-in te-pub-fade-in--delay-2">
       <h2 className="te-public-section__title">{title}</h2>
       <div className="te-public-section__divider" aria-hidden />
+
+      {scrollHint ? (
+        <p className="te-pub-standings-scroll-hint" aria-hidden>
+          Desliza → para ver todas las columnas
+        </p>
+      ) : null}
 
       <div className="te-pub-standings-table-wrap te-pub-fade-in te-pub-fade-in--delay-1">
         <table className="te-pub-standings-table">

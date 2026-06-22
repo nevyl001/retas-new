@@ -5,12 +5,9 @@ import {
   Tournament,
   getTournamentGames,
   getTournamentPublicConfig,
+  getTournamentPublicConfigExtended,
   getTournamentById,
 } from "../lib/database";
-import {
-  TournamentWinnerCalculator,
-  TournamentWinner,
-} from "../components/TournamentWinnerCalculator";
 import {
   computePairsWithStats,
   computeTeamStandings,
@@ -19,6 +16,12 @@ import {
   fallbackTwoTeamsFromPairs,
   type TeamConfig,
 } from "../lib/standingsUtils";
+import { resolveTournamentPodiumOutcome } from "../lib/resolveTournamentOutcome";
+import {
+  loadChampionshipConfig,
+  parseChampionshipConfig,
+} from "../lib/roundRobinChampionship";
+import type { TournamentWinner } from "../lib/tournamentWinner";
 
 export const useWinnerCalculation = () => {
   const [tournamentWinner, setTournamentWinner] =
@@ -37,7 +40,6 @@ export const useWinnerCalculation = () => {
       const tournament = options?.tournament;
       const tid = tournament?.id;
 
-      // Misma prioridad que RealTimeStandingsTable / vista pública (estado a veces sin team_config).
       let teamConfig: TeamConfig | null =
         tournament?.format === "teams" &&
         tournament?.team_config?.teamNames?.length &&
@@ -84,7 +86,6 @@ export const useWinnerCalculation = () => {
       const isTeams = !!teamConfig;
 
       if (isTeams && teamConfig) {
-        console.log("🏆 Calculando equipo ganador (más puntos)...");
         setTournamentWinner(null);
         setWinningTeamStats(null);
         const games = tournament?.id ? await getTournamentGames(tournament.id) : [];
@@ -99,21 +100,33 @@ export const useWinnerCalculation = () => {
         }
         setShowWinnerScreen(true);
         setCurrentView("winner");
-        console.log("✅ Equipo ganador:", first?.name, "Puntos:", first?.points);
         return;
       }
 
-      console.log("🏆 Calculando ganador de la reta (pareja)...");
       setWinningTeamName(null);
       setWinningTeamStats(null);
-      const winner = await TournamentWinnerCalculator.calculateTournamentWinner(
+
+      const games = tid ? await getTournamentGames(tid) : [];
+      let champCfg = tid ? loadChampionshipConfig(tid) : null;
+      if (tid && !champCfg) {
+        try {
+          const publicCfg = await getTournamentPublicConfigExtended(tid);
+          champCfg = parseChampionshipConfig(publicCfg?.championship_config);
+        } catch {
+          /* ignore */
+        }
+      }
+
+      const outcome = await resolveTournamentPodiumOutcome(
         pairs,
-        matches
+        matches,
+        games || [],
+        tid ?? "",
+        champCfg
       );
-      setTournamentWinner(winner);
+      setTournamentWinner(outcome.winner);
       setShowWinnerScreen(true);
       setCurrentView("winner");
-      console.log("✅ Ganador calculado y pantalla mostrada");
     } catch (error) {
       console.error("❌ Error al calcular ganador:", error);
       setShowWinnerScreen(true);

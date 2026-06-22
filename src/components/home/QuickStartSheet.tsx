@@ -37,6 +37,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
   const [courts, setCourts] = useState(1);
   const [championshipEnabled, setChampionshipEnabled] = useState(false);
   const [championshipRounds, setChampionshipRounds] = useState(2);
+  const [showRemontadaHelp, setShowRemontadaHelp] = useState(false);
 
   if (!modeId) return null;
 
@@ -164,10 +165,20 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
             <div>
               <p className="home-sheet__optional-kicker">Opcional</p>
               <p className="home-sheet__optional-title">⚡ Remontada Final</p>
-              <p className="home-sheet__optional-sub">
-                Tras el Round Robin: semifinal #1 vs #4 y #2 vs #3; final entre
-                ganadores y partido por 3er lugar entre perdedores.
-              </p>
+              {!showRemontadaHelp ? (
+                <button
+                  type="button"
+                  className="home-sheet__optional-link"
+                  onClick={() => setShowRemontadaHelp(true)}
+                >
+                  ¿Cómo funciona?
+                </button>
+              ) : (
+                <p className="home-sheet__optional-sub">
+                  Tras el Round Robin: semifinal #1 vs #4 y #2 vs #3; final entre
+                  ganadores y partido por 3er lugar entre perdedores.
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -213,10 +224,12 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
 
       <p className="home-sheet__hint">
         {isAmericano
-          ? "Las canchas, jugadores y rondas se configuran en el siguiente paso del Americano."
+          ? "Configura jugadores y rondas en el siguiente paso."
           : isRoundRobin
-            ? "Con las parejas y canchas adecuadas el Round Robin suele llenar el tiempo. Activa Remontada Final solo si quieres rondas de desempate al final."
-            : "Después podrás añadir jugadores y parejas en la reta."}
+            ? championshipEnabled
+              ? "Añade parejas y canchas; la remontada se juega al terminar el Round Robin."
+              : "Añade parejas y canchas para generar el calendario."
+            : "Después podrás añadir jugadores y parejas."}
       </p>
     </Modal>
   );

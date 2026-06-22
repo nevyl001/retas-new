@@ -17,6 +17,7 @@ export const useTournamentData = () => {
     Map<string, { sets: number; matches: number; points: number }>
   >(new Map());
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [championshipRevision, setChampionshipRevision] = useState(0);
   const isLoadingRef = useRef(false); // Prevenir múltiples recargas simultáneas
 
@@ -103,6 +104,7 @@ export const useTournamentData = () => {
     try {
       isLoadingRef.current = true;
       setLoading(true);
+      setLoadError(null);
       console.log("Loading tournament data for:", tournament.name);
 
       const [pairsData, matchesData] = await Promise.all([
@@ -137,6 +139,7 @@ export const useTournamentData = () => {
       await calculatePairStatistics(pairsData, resolvedMatches, tournament.id);
     } catch (err) {
       console.error("Error loading tournament data:", err);
+      setLoadError("No se pudieron cargar los datos de la reta. Revisa tu conexión e inténtalo de nuevo.");
       throw err;
     } finally {
       setLoading(false);
@@ -153,5 +156,6 @@ export const useTournamentData = () => {
     loading,
     loadTournamentData,
     championshipRevision,
+    loadError,
   };
 };

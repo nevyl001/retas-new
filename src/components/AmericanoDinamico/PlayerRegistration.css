@@ -194,3 +194,63 @@
 .americano-registration__start-btn {
   align-self: flex-end;
 }
+
+@media (max-width: 639px) {
+  .americano-registration__title-row {
+    flex-wrap: wrap;
+  }
+
+  .americano-registration__controls {
+    flex-direction: column;
+  }
+
+  .americano-registration__controls input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .americano-registration__start-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .americano-registration__start input {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .americano-registration__db-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .americano-registration__db-item {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
+
+  .americano-registration__list {
+    max-height: min(40vh, 280px);
+  }
+
+  .americano-registration__list li {
+    min-height: 44px;
+    gap: 8px;
+  }
+
+  .americano-btn {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .americano-registration__start-btn {
+    align-self: stretch;
+    width: 100%;
+  }
+
+  .americano-registration__hint,
+  .americano-registration__courts-hint {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+}

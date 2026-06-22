@@ -7,7 +7,7 @@ import {
 } from "../lib/database";
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import { loadAmericanoDinamicoSnapshotMerged } from "../lib/americanoDinamicoSync";
-import { TournamentWinner } from "./TournamentWinnerCalculator";
+import { TournamentWinner } from "../lib/tournamentWinner";
 import FourComponentsGrid from "./FourComponentsGrid";
 import StartTournamentSection from "./StartTournamentSection";
 import PublicLinkSection from "./PublicLinkSection";

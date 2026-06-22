@@ -1,6 +1,6 @@
 import React from "react";
 import { Pair } from "../lib/database";
-import { TournamentWinner } from "./TournamentWinnerCalculator";
+import { TournamentWinner } from "../lib/tournamentWinner";
 import "./WinnerHero.css";
 
 interface WinnerScreenProps {

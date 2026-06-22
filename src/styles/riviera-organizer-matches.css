@@ -873,3 +873,57 @@
 .rr-championship--public {
   margin-top: 1.5rem;
 }
+
+/* —— Mobile: tarjetas de partido más claras y táctiles —— */
+@media (max-width: 639px) {
+  .riviera-organizer-reta .omc-pencil-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .riviera-organizer-reta .omc-pencil-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .riviera-organizer-reta .omc-footer-btn {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .riviera-organizer-reta .omc-meta-save,
+  .riviera-organizer-reta .omc-meta-cancel {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  /* Nombres solo en el cuerpo del marcador (evita repetición) */
+  .riviera-organizer-reta .omc-match-title {
+    display: none;
+  }
+
+  .riviera-organizer-reta .omc-header__top {
+    justify-content: flex-end;
+  }
+
+  .riviera-organizer-reta .omc-status {
+    font-size: 10px;
+  }
+
+  .rr-championship {
+    padding: 0.85rem 0.75rem 0.35rem;
+    margin-top: 1.25rem;
+  }
+
+  .rr-championship__subtitle,
+  .rr-championship__pending {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .rr-championship__round-label {
+    font-size: 0.95rem;
+  }
+}

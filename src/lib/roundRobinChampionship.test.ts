@@ -202,10 +202,10 @@ describe("Remontada Final matchups", () => {
     expect(isChampionshipThirdPlaceMatch(thirdMatch, semiMatches)).toBe(true);
     expect(
       championshipMatchEncounterLabel(finalMatch, 2, 2, semiMatches)
-    ).toBe("Final");
+    ).toBe("FINAL");
     expect(
       championshipMatchEncounterLabel(thirdMatch, 2, 2, semiMatches)
-    ).toBe("3er lugar");
+    ).toBe("3ER LUGAR");
     expect(
       sortChampionshipRoundMatches([thirdMatch, finalMatch], 2, 2, semiMatches)
     ).toEqual([finalMatch, thirdMatch]);

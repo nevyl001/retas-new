@@ -176,7 +176,7 @@ function AppContent() {
       );
     });
   const [forceRefresh, setForceRefresh] = useState(0);
-  const [, setError] = useState<string>("");
+  const [error, setError] = useState<string>("");
   const isAmericanoRoute =
     normalizeAppPathname(window.location.pathname) === "/americano-dinamico";
   const americanoSearchParams = new URLSearchParams(window.location.search);
@@ -338,6 +338,7 @@ function AppContent() {
     loading,
     loadTournamentData,
     championshipRevision,
+    loadError,
   } = useTournamentData();
 
   const handleTournamentSelect = useCallback(
@@ -529,6 +530,12 @@ function AppContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceRefresh, selectedTournament]); // loadTournamentData es estable
 
+  useEffect(() => {
+    if (loadError) {
+      showToast(loadError, "error");
+    }
+  }, [loadError, showToast]);
+
   // Enlace corto: la config de equipos vive en tournament_public_config (Supabase). El hash #teams= era un respaldo; los enlaces viejos con hash siguen siendo leídos en PublicTournamentView.
   const generatePublicLink = (
     tournamentId: string,
@@ -705,6 +712,7 @@ function AppContent() {
               setShowDebugInfo={setShowDebugInfo}
               selectedPlayers={selectedPlayers}
               setSelectedPlayers={setSelectedPlayers}
+              error={error}
               setError={setError}
               addPair={addPair}
               updatePairPlayers={updatePairPlayers}

@@ -4,6 +4,7 @@
 
 .liga-page {
   font-family: var(--liga-font-body);
+  padding-bottom: max(var(--liga-space-lg, 24px), env(safe-area-inset-bottom));
 }
 
 .liga-page__inner {

@@ -46,6 +46,17 @@
   color: var(--text-primary);
 }
 
+.mis-retas-page__error {
+  margin: 0 0 1rem;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fecaca;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 .mis-retas-page__filters {
   margin-bottom: clamp(20px, 3vw, 28px);
 }

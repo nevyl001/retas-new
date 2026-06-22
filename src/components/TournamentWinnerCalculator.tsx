@@ -1,14 +1,8 @@
 import { Pair, Match, Game } from "../lib/database";
 import { getGames } from "../lib/database";
+import type { TournamentWinner } from "../lib/tournamentWinner";
 
-export interface TournamentWinner {
-  pair: Pair;
-  totalPoints: number;
-  totalSets: number;
-  totalGames: number;
-  matchesPlayed: number;
-  winPercentage: number;
-}
+export type { TournamentWinner };
 
 export class TournamentWinnerCalculator {
   /**
