@@ -727,8 +727,8 @@ async function syncRetaParticipacionesInner(params: {
       allGames
     );
     if (podium?.first) podioPosByPairId.set(podium.first.id, 1);
-    if (podium.second) podioPosByPairId.set(podium.second.id, 2);
-    if (podium.third) podioPosByPairId.set(podium.third.id, 3);
+    if (podium?.second) podioPosByPairId.set(podium.second.id, 2);
+    if (podium?.third) podioPosByPairId.set(podium.third.id, 3);
   }
 
   const esEquipos = tournament.format === "teams";
