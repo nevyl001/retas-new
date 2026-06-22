@@ -40,6 +40,13 @@ import {
   getMatchScoresForStandings,
   getTeamConfigFromStorage,
 } from "../standingsUtils";
+import { matchesForStandingsTable } from "../resolveTournamentOutcome";
+import {
+  loadChampionshipConfig,
+  partitionMatches,
+  resolveChampionshipPodium,
+  resolveRegularRoundsMax,
+} from "../roundRobinChampionship";
 import {
   adjustRankingPuntosManual,
   createRivieraJugador,
@@ -52,6 +59,10 @@ import {
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 import type { JugadorResultado, JugadorTipoEvento } from "./types";
 import type { Duelo2v2 } from "../duelo2v2/types";
+import {
+  buildPartidosDetalleByLegacyPlayerId,
+  loadGamesByMatchId,
+} from "./buildRetaPartidosDetalle";
 
 const PAIRS_SELECT =
   "id, tournament_id, player1_id, player2_id, player1_name, player2_name, created_at";
@@ -639,18 +650,23 @@ async function syncRetaParticipacionesInner(params: {
     );
   }
 
-  for (const match of matches.filter((m) => m.status === "finished")) {
+  const finishedMatches = matches.filter((m) => m.status === "finished");
+  const { gamesByMatchId, allGames } = await loadGamesByMatchId(
+    finishedMatches,
+    getGames
+  );
+  const partidosDetalleByPlayer = buildPartidosDetalleByLegacyPlayerId(
+    pairs,
+    matches,
+    gamesByMatchId
+  );
+
+  for (const match of finishedMatches) {
     const pair1 = pairById.get(match.pair1_id);
     const pair2 = pairById.get(match.pair2_id);
     if (!pair1 || !pair2) continue;
 
-    let games: Awaited<ReturnType<typeof getGames>> = [];
-    try {
-      games = await getGames(match.id);
-    } catch {
-      games = [];
-    }
-
+    const games = gamesByMatchId.get(match.id) ?? [];
     const { score1, score2 } = getMatchScoresForStandings(match, games);
     if (score1 === 0 && score2 === 0) continue;
 
@@ -669,17 +685,6 @@ async function syncRetaParticipacionesInner(params: {
     );
   }
 
-  const finishedMatches = matches.filter((m) => m.status === "finished");
-  const allGames: Awaited<ReturnType<typeof getGames>> = [];
-  for (const m of finishedMatches) {
-    try {
-      const g = await getGames(m.id);
-      allGames.push(...g);
-    } catch {
-      /* partido sin juegos */
-    }
-  }
-
   const sortedPairs = sortPairsForStandings(
     computePairsWithStats(pairs, matches, allGames),
     matches,
@@ -691,6 +696,40 @@ async function syncRetaParticipacionesInner(params: {
       { pos: i + 1, total: sortedPairs.length },
     ])
   );
+
+  const champCfg = loadChampionshipConfig(tournament.id);
+  const standingsMatches = matchesForStandingsTable(
+    matches,
+    tournament.id,
+    champCfg
+  );
+  const sortedRegular = sortPairsForStandings(
+    computePairsWithStats(pairs, standingsMatches, allGames),
+    standingsMatches,
+    allGames
+  );
+  const regularPairRank = new Map(
+    sortedRegular.map((p, i) => [
+      p.id,
+      { pos: i + 1, total: sortedRegular.length },
+    ])
+  );
+
+  const podioPosByPairId = new Map<string, number>();
+  let regularRoundsMax: number | undefined;
+  if (champCfg?.championshipEnabled) {
+    const { regular } = partitionMatches(matches, tournament.id, champCfg);
+    regularRoundsMax = resolveRegularRoundsMax(regular, champCfg);
+    const podium = await resolveChampionshipPodium(
+      pairs,
+      matches,
+      champCfg,
+      allGames
+    );
+    if (podium?.first) podioPosByPairId.set(podium.first.id, 1);
+    if (podium.second) podioPosByPairId.set(podium.second.id, 2);
+    if (podium.third) podioPosByPairId.set(podium.third.id, 3);
+  }
 
   const esEquipos = tournament.format === "teams";
   const modalidad = esEquipos ? "reta_equipos" : "round_robin";
@@ -730,7 +769,14 @@ async function syncRetaParticipacionesInner(params: {
     const pairStats = pair
       ? sortedPairs.find((p) => p.id === pair.id)
       : undefined;
+    const rankRegular = pair ? regularPairRank.get(pair.id) : undefined;
     const rank = pair ? pairRank.get(pair.id) : undefined;
+    const posicionFinal =
+      pair && podioPosByPairId.has(pair.id)
+        ? podioPosByPairId.get(pair.id)!
+        : rankRegular?.pos ?? rank?.pos;
+    const totalParticipantes =
+      rankRegular?.total ?? rank?.total ?? sortedPairs.length;
     const partidosGanados = pairStats?.pg ?? st.wins;
     const partidosPerdidos = pairStats?.pp ?? st.losses;
     const partidosJugados =
@@ -755,11 +801,14 @@ async function syncRetaParticipacionesInner(params: {
       .maybeSingle();
 
     let resultadoReta = resultadoFromRecord(st.wins, st.losses, st.draws);
-    if (!esEquipos && rank?.pos === 1) {
+    if (!esEquipos && posicionFinal === 1) {
       resultadoReta = "victoria";
     } else if (esEquipos && equipoGanador) {
       resultadoReta = "victoria";
     }
+
+    const partidosDetalle =
+      partidosDetalleByPlayer.get(st.legacyPlayerId ?? "") ?? [];
 
     await registrarPuntosRanking({
       jugadorId,
@@ -773,7 +822,7 @@ async function syncRetaParticipacionesInner(params: {
             posicion_final: posicionEquipo,
             equipo_ganador: equipoGanador,
           }
-        : { posicion_final: rank?.pos ?? null },
+        : { posicion_final: posicionFinal ?? null },
       setsFavor: pairStats?.points ?? st.setsFavor,
       setsContra: pairStats?.pointsReceived ?? st.setsContra,
       metadata: {
@@ -782,6 +831,16 @@ async function syncRetaParticipacionesInner(params: {
         partidos_perdidos: partidosPerdidos,
         partidos_jugados: partidosJugados,
         partidos_empatados: st.draws,
+        ...(partidosDetalle.length > 0
+          ? { partidos_detalle: partidosDetalle }
+          : {}),
+        ...(champCfg?.championshipEnabled && regularRoundsMax != null
+          ? {
+              remontada_activa: true,
+              regular_rondas_max: regularRoundsMax,
+            }
+          : {}),
+        ...(rankRegular?.pos != null ? { posicion_rr: rankRegular.pos } : {}),
         formato: tournament.format ?? "round_robin",
         modalidad,
         modalidad_label: modalidadLabel,
@@ -793,10 +852,10 @@ async function syncRetaParticipacionesInner(params: {
         ...(perfilRiviera?.categoria
           ? { jugador_categoria: perfilRiviera.categoria }
           : {}),
-        posicion: rank?.pos,
-        total_participantes: rank?.total,
-        lugar: rank
-          ? formatLugarOrdinal(rank.pos, rank.total)
+        posicion: posicionFinal,
+        total_participantes: totalParticipantes,
+        lugar: posicionFinal
+          ? formatLugarOrdinal(posicionFinal, totalParticipantes)
           : "Participación",
         equipo_ganador: esEquipos ? equipoGanador : undefined,
       },

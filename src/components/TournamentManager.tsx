@@ -103,6 +103,26 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
     try {
       setError("");
+      const tournament = tournaments.find((t) => t.id === id);
+      if (user?.id && tournament) {
+        try {
+          const [pairs, matches] = await Promise.all([
+            getPairs(id),
+            getMatches(id),
+          ]);
+          const hasFinished = matches.some((m) => m.status === "finished");
+          if (tournament.is_finished || hasFinished) {
+            await syncRetaParticipaciones({
+              organizadorId: user.id,
+              tournament,
+              pairs,
+              matches,
+            });
+          }
+        } catch (syncErr) {
+          console.warn("syncRetaParticipaciones antes de eliminar:", syncErr);
+        }
+      }
       await deleteTournament(id);
       setTournaments(tournaments.filter((t) => t.id !== id));
       if (selectedTournament?.id === id) {

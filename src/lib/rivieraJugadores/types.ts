@@ -103,6 +103,9 @@ export interface JugadorParticipacion {
   created_at: string;
 }
 
+/** Detalle partido a partido en metadata.partidos_detalle (reta_cierre). */
+export type { RetaPartidoDetalle } from "./buildRetaPartidosDetalle";
+
 export interface RivieraJugadorWithStats extends RivieraJugador {
   stats?: JugadorStats | null;
 }
