@@ -227,10 +227,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceRefresh]); // loadTournamentData es estable
 
-  const champConfig = useMemo(
-    () => (tournamentId ? loadChampionshipConfig(tournamentId) : null),
-    [tournamentId, forceRefresh, matches.length]
-  );
+  const champConfig = useMemo(() => {
+    if (!tournamentId) return null;
+    // forceRefresh: re-leer localStorage tras sync de remontada en loadTournamentData
+    void forceRefresh;
+    return loadChampionshipConfig(tournamentId);
+  }, [tournamentId, forceRefresh]);
 
   const standingsMatches = useMemo(
     () => matchesForStandingsTable(matches, tournamentId, champConfig),
