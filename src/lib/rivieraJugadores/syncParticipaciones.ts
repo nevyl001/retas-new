@@ -50,8 +50,6 @@ import {
 import {
   adjustRankingPuntosManual,
   ensureRivieraJugadorVisibleEnRanking,
-  getRivieraJugadorByLegacyLigaId,
-  getRivieraJugadorByLegacyPlayerId,
   rebuildJugadorStats,
   registrarParticipacion,
 } from "./rivieraJugadoresService";
