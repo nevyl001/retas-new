@@ -1,39 +1,39 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { filterRetasForHomeDisplay } from "../lib/gameModeMapping";
 import {
-  getTournaments,
-  deleteTournament,
-  updateTournament,
   getPairs,
   getMatches,
+  deleteTournament,
+  updateTournament,
   Tournament,
 } from "../lib/database";
 import { syncRetaParticipaciones } from "../lib/rivieraJugadores/syncParticipaciones";
+import {
+  getRetaCreatedAt,
+  getRetaDescription,
+  getRetaGroupNames,
+  getRetaId,
+  getRetaMetaLine,
+  getRetaModeBadge,
+  getRetaName,
+  getRetaStatusBadge,
+  isRetaFinished,
+  loadUserRetasForHome,
+  matchesRetaFilter,
+  type HomeRetaItem,
+  type RetaFilterId,
+} from "../lib/retasList";
+import { deleteDuelo2v2 } from "../services/duelo2v2Service";
+import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo-2v2/duelo2v2Nav";
 import { useUser } from "../contexts/UserContext";
 import { Badge, Button, Card } from "./ui";
 import { TablerIcon } from "./ui/TablerIcon";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
-import {
-  formatTournamentCourtsLabel,
-  getTournamentCourtsCount,
-  getTournamentGroupNames,
-  getTournamentModeBadge,
-  getTournamentStatusBadge,
-} from "../lib/tournamentDisplay";
 import "./mis-retas/mis-retas.css";
-
-type FilterId = "all" | "active" | "finished";
 
 interface TournamentManagerProps {
   onTournamentSelect: (tournament: Tournament | null) => void;
   selectedTournament?: Tournament;
   onBack?: () => void;
-}
-
-function matchesFilter(tournament: Tournament, filter: FilterId): boolean {
-  if (filter === "all") return true;
-  if (filter === "finished") return tournament.is_finished;
-  return tournament.is_started && !tournament.is_finished;
 }
 
 export const TournamentManager: React.FC<TournamentManagerProps> = ({
@@ -42,37 +42,37 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   onBack,
 }) => {
   const { user } = useUser();
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [retas, setRetas] = useState<HomeRetaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  const [filter, setFilter] = useState<FilterId>("all");
+  const [filter, setFilter] = useState<RetaFilterId>("all");
 
   useEffect(() => {
     if (!user?.id) {
       setLoading(false);
-      setTournaments([]);
+      setRetas([]);
       return;
     }
 
     let isMounted = true;
 
-    const loadTournaments = async () => {
+    const loadRetas = async () => {
       try {
         setLoading(true);
-        const data = await getTournaments(user.id);
+        const data = await loadUserRetasForHome(user.id);
         if (!isMounted) return;
-        setTournaments(filterRetasForHomeDisplay(data || []));
+        setRetas(data);
       } catch (err) {
         if (!isMounted) return;
         console.error("Error al cargar retas:", err);
         setError("Error al cargar las retas");
-        setTournaments([]);
+        setRetas([]);
       } finally {
         if (isMounted) setLoading(false);
       }
     };
 
-    loadTournaments();
+    loadRetas();
     return () => {
       isMounted = false;
     };
@@ -80,31 +80,50 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
   useEffect(() => {
     if (!selectedTournament) return;
-    setTournaments((prev) =>
-      prev.map((t) =>
-        t.id === selectedTournament.id ? { ...t, ...selectedTournament } : t
+    setRetas((prev) =>
+      prev.map((item) =>
+        item.kind === "tournament" && item.tournament.id === selectedTournament.id
+          ? { ...item, tournament: { ...item.tournament, ...selectedTournament } }
+          : item
       )
     );
   }, [selectedTournament]);
 
-  const filteredTournaments = useMemo(
-    () => tournaments.filter((t) => matchesFilter(t, filter)),
-    [tournaments, filter]
+  const filteredRetas = useMemo(
+    () => retas.filter((item) => matchesRetaFilter(item, filter)),
+    [retas, filter]
   );
 
-  const handleDeleteTournament = async (id: string) => {
+  const handleOpenReta = (item: HomeRetaItem) => {
+    if (item.kind === "duelo-2v2") {
+      navigateDuelo2v2(duelo2v2GestionarPath(item.duelo.id));
+      return;
+    }
+    onTournamentSelect(item.tournament);
+  };
+
+  const handleDeleteReta = async (item: HomeRetaItem) => {
+    const name = getRetaName(item);
     if (
       !window.confirm(
-        "¿Estás seguro de que quieres eliminar esta reta? Esta acción no se puede deshacer."
+        `¿Estás seguro de que quieres eliminar «${name}»? Esta acción no se puede deshacer.`
       )
     ) {
       return;
     }
 
+    const id = getRetaId(item);
+
     try {
       setError("");
-      const tournament = tournaments.find((t) => t.id === id);
-      if (user?.id && tournament) {
+      if (item.kind === "duelo-2v2") {
+        await deleteDuelo2v2(id);
+        setRetas(retas.filter((r) => getRetaId(r) !== id));
+        return;
+      }
+
+      const tournament = item.tournament;
+      if (user?.id) {
         try {
           const [pairs, matches] = await Promise.all([
             getPairs(id),
@@ -124,10 +143,12 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         }
       }
       await deleteTournament(id);
-      setTournaments(tournaments.filter((t) => t.id !== id));
+      setRetas(retas.filter((r) => getRetaId(r) !== id));
       if (selectedTournament?.id === id) {
-        const remaining = tournaments.filter((t) => t.id !== id);
-        onTournamentSelect(remaining[0] ?? null);
+        const remaining = retas
+          .filter((r) => getRetaId(r) !== id)
+          .find((r) => r.kind === "tournament");
+        onTournamentSelect(remaining?.kind === "tournament" ? remaining.tournament : null);
       }
     } catch (err) {
       setError("Error al eliminar la reta");
@@ -164,9 +185,11 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           console.warn("syncRetaParticipaciones:", syncErr);
         }
       }
-      setTournaments(
-        tournaments.map((t) =>
-          t.id === tournament.id ? { ...t, is_finished: true } : t
+      setRetas(
+        retas.map((item) =>
+          item.kind === "tournament" && item.tournament.id === tournament.id
+            ? { ...item, tournament: { ...item.tournament, is_finished: true } }
+            : item
         )
       );
       if (selectedTournament?.id === tournament.id) {
@@ -181,7 +204,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     }
   };
 
-  const filterChips: { id: FilterId; label: string }[] = [
+  const filterChips: { id: RetaFilterId; label: string }[] = [
     { id: "all", label: "Todas" },
     { id: "active", label: "En curso" },
     { id: "finished", label: "Finalizadas" },
@@ -227,7 +250,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           <div className="riviera-skeleton mis-retas-loading__bar" />
           <p className="mis-retas-loading__text">Cargando retas…</p>
         </div>
-      ) : tournaments.length === 0 ? (
+      ) : retas.length === 0 ? (
         <Card variant="elevated" className="mis-retas-empty">
           <span className="mis-retas-empty__icon" aria-hidden>
             <TablerIcon name="ball-tennis" size={40} />
@@ -237,7 +260,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
             Elige un modo de juego arriba para crear tu primera reta.
           </p>
         </Card>
-      ) : filteredTournaments.length === 0 ? (
+      ) : filteredRetas.length === 0 ? (
         <Card variant="elevated" className="mis-retas-empty">
           <p className="mis-retas-empty__text">
             No hay retas en este filtro. Prueba con &quot;Todas&quot;.
@@ -245,34 +268,39 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         </Card>
       ) : (
         <div className="mis-retas-page__grid">
-          {filteredTournaments.map((tournament) => {
-            const mode = getTournamentModeBadge(tournament);
-            const status = getTournamentStatusBadge(tournament);
-            const groups = getTournamentGroupNames(tournament);
-            const isSelected = selectedTournament?.id === tournament.id;
-            const courtsLabel = formatTournamentCourtsLabel(
-              getTournamentCourtsCount(tournament)
-            );
-            const statusCardClass = tournament.is_finished
+          {filteredRetas.map((item) => {
+            const mode = getRetaModeBadge(item);
+            const status = getRetaStatusBadge(item);
+            const groups = getRetaGroupNames(item);
+            const isSelected =
+              item.kind === "tournament" &&
+              selectedTournament?.id === item.tournament.id;
+            const finished = isRetaFinished(item);
+            const active =
+              item.kind === "tournament"
+                ? item.tournament.is_started && !item.tournament.is_finished
+                : item.duelo.estado === "en_juego";
+            const statusCardClass = finished
               ? "mis-reta-card--status-finished"
-              : tournament.is_started
+              : active
                 ? "mis-reta-card--status-active"
                 : "mis-reta-card--status-pending";
+            const description = getRetaDescription(item);
 
             return (
               <Card
-                key={tournament.id}
+                key={`${item.kind}-${getRetaId(item)}`}
                 as="article"
                 variant="glass"
                 interactive
                 className={`mis-reta-card ${statusCardClass}${
                   isSelected ? " mis-reta-card--selected" : ""
                 }`}
-                onClick={() => onTournamentSelect(tournament)}
+                onClick={() => handleOpenReta(item)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    onTournamentSelect(tournament);
+                    handleOpenReta(item);
                   }
                 }}
                 role="button"
@@ -283,13 +311,13 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                   <Badge variant={status.variant}>{status.label}</Badge>
                 </div>
 
-                <h3 className="mis-reta-card__name">{tournament.name}</h3>
+                <h3 className="mis-reta-card__name">{getRetaName(item)}</h3>
                 <p className="mis-reta-card__meta">
-                  {formatRelativeDate(tournament.created_at)} · {courtsLabel}
+                  {formatRelativeDate(getRetaCreatedAt(item))} · {getRetaMetaLine(item)}
                 </p>
 
-                {tournament.description ? (
-                  <p className="mis-reta-card__desc">{tournament.description}</p>
+                {description ? (
+                  <p className="mis-reta-card__desc">{description}</p>
                 ) : null}
 
                 {groups.length > 0 && (
@@ -308,32 +336,34 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                     className="mis-reta-card__continue"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onTournamentSelect(tournament);
+                      handleOpenReta(item);
                     }}
                   >
-                    {tournament.is_finished ? "Ver resultados" : "Continuar"} →
+                    {finished ? "Ver resultados" : "Continuar"} →
                   </button>
                   <div className="mis-reta-card__actions-right">
-                    {tournament.is_started && !tournament.is_finished && (
-                      <button
-                        type="button"
-                        className="mis-reta-card__finish"
-                        disabled={loading}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleFinishTournament(tournament);
-                        }}
-                      >
-                        Finalizar
-                      </button>
-                    )}
+                    {item.kind === "tournament" &&
+                      item.tournament.is_started &&
+                      !item.tournament.is_finished && (
+                        <button
+                          type="button"
+                          className="mis-reta-card__finish"
+                          disabled={loading}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFinishTournament(item.tournament);
+                          }}
+                        >
+                          Finalizar
+                        </button>
+                      )}
                     <button
                       type="button"
                       className="riviera-btn-danger-icon"
                       aria-label="Eliminar reta"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteTournament(tournament.id);
+                        void handleDeleteReta(item);
                       }}
                     >
                       🗑

@@ -1,34 +1,30 @@
 import React from "react";
-import type { Tournament } from "../../lib/database";
 import {
-  formatTournamentCourtsLabel,
-  getTournamentCourtsCount,
-  getTournamentModeBadge,
-  getTournamentStatusBadge,
-} from "../../lib/tournamentDisplay";
+  getRetaMetaLine,
+  getRetaModeBadge,
+  getRetaName,
+  getRetaStatusBadge,
+  isRetaActive,
+  isRetaFinished,
+  type HomeRetaItem,
+} from "../../lib/retasList";
 import { Badge } from "../ui";
 
-function isActive(t: Tournament): boolean {
-  return Boolean(t.is_started && !t.is_finished);
-}
-
 interface RecentRetaCardProps {
-  tournament: Tournament;
+  item: HomeRetaItem;
   onContinue: () => void;
 }
 
 export const RecentRetaCard: React.FC<RecentRetaCardProps> = ({
-  tournament,
+  item,
   onContinue,
 }) => {
-  const mode = getTournamentModeBadge(tournament);
-  const status = getTournamentStatusBadge(tournament);
-  const active = isActive(tournament);
-  const courtsLabel = formatTournamentCourtsLabel(
-    getTournamentCourtsCount(tournament)
-  );
+  const mode = getRetaModeBadge(item);
+  const status = getRetaStatusBadge(item);
+  const active = isRetaActive(item);
+  const finished = isRetaFinished(item);
 
-  const statusClass = tournament.is_finished
+  const statusClass = finished
     ? "recent-reta-card--status-finished"
     : active
       ? "recent-reta-card--status-active"
@@ -44,10 +40,10 @@ export const RecentRetaCard: React.FC<RecentRetaCardProps> = ({
         </Badge>
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>
-      <h3 className="recent-reta-card__name">{tournament.name}</h3>
-      <p className="recent-reta-card__meta">{courtsLabel}</p>
+      <h3 className="recent-reta-card__name">{getRetaName(item)}</h3>
+      <p className="recent-reta-card__meta">{getRetaMetaLine(item)}</p>
       <button type="button" className="recent-reta-card__btn" onClick={onContinue}>
-        {tournament.is_finished ? "Ver resultados →" : "Continuar →"}
+        {finished ? "Ver resultados →" : "Continuar →"}
       </button>
     </article>
   );
