@@ -927,7 +927,7 @@ export async function updateScore(
   score2: number,
   force = false
 ): Promise<void> {
-  await requireUserId();
+  const organizadorId = await requireUserId();
 
   const { data: partido, error: pErr } = await supabase
     .from("liga_partidos")
@@ -954,6 +954,13 @@ export async function updateScore(
     .eq("id", partidoId);
 
   if (uErr) throw new Error(uErr.message);
+
+  void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
+    ({ aplicarRatingLigaPartido }) =>
+      aplicarRatingLigaPartido(partidoId, organizadorId).catch((e) =>
+        console.warn("[rating] liga:", e)
+      )
+  );
 
   const jornadaId = String(partido.jornada_id);
   const ronda = Number(partido.ronda);

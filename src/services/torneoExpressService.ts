@@ -919,6 +919,14 @@ export async function savePartidoResultado(
   if (!data) {
     throw new Error("Error en update torneo_express_partidos: sin datos");
   }
+
+  void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
+    ({ aplicarRatingTorneoExpressGrupoPartido }) =>
+      aplicarRatingTorneoExpressGrupoPartido(partidoId, pl, pv).catch((e) =>
+        console.warn("[rating] torneo express grupo:", e)
+      )
+  );
+
   return data as TorneoExpressPartido;
 }
 
@@ -1785,6 +1793,14 @@ export async function saveEliminatoriaResultado(
       throw new Error("No se pudo guardar el resultado eliminatorio");
     }
     await avanzarEliminatoriaSiCompleta(existing.torneo_id as string);
+    void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
+      ({ aplicarRatingTorneoExpressEliminatoriaPartido }) =>
+        aplicarRatingTorneoExpressEliminatoriaPartido(
+          partidoId,
+          payload.ganadorSide,
+          existing.torneo_id as string
+        ).catch((e) => console.warn("[rating] torneo express elim:", e))
+    );
     return legacyData as TorneoExpressEliminatoriaPartido;
   }
 
@@ -1797,6 +1813,16 @@ export async function saveEliminatoriaResultado(
   }
 
   await avanzarEliminatoriaSiCompleta(existing.torneo_id as string);
+
+  void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
+    ({ aplicarRatingTorneoExpressEliminatoriaPartido }) =>
+      aplicarRatingTorneoExpressEliminatoriaPartido(
+        partidoId,
+        payload.ganadorSide,
+        existing.torneo_id as string
+      ).catch((e) => console.warn("[rating] torneo express elim:", e))
+  );
+
   return data as TorneoExpressEliminatoriaPartido;
 }
 

@@ -28,6 +28,7 @@ import {
 } from "../lib/americanoDinamicoStorage";
 import { applyAmericanoSnapshotToState } from "../lib/americanoDinamicoRestore";
 import { loadAmericanoDinamicoSnapshotMerged } from "../lib/americanoDinamicoSync";
+import { aplicarRatingAmericanoPartido } from "../lib/rivieraJugadores/aplicarRatingPartido";
 
 type AmericanoPhase = "registration" | "playing" | "finished";
 
@@ -327,8 +328,17 @@ export function useAmericanoDinamico(
         };
       });
       persistRebuiltState(nextRounds, idx + 1);
+
+      if (options?.organizadorId) {
+        const round = nextRounds[idx];
+        for (const m of round?.matches ?? []) {
+          void aplicarRatingAmericanoPartido(options.organizadorId, m).catch(
+            (e) => console.warn("[rating] americano:", e)
+          );
+        }
+      }
     },
-    [phase, persistRebuiltState]
+    [phase, persistRebuiltState, options?.organizadorId]
   );
 
   const submitScore = useCallback(
@@ -346,8 +356,18 @@ export function useAmericanoDinamico(
         };
       });
       persistRebuiltState(nextRounds, idx);
+
+      if (options?.organizadorId) {
+        const round = nextRounds[idx];
+        const m = round?.matches.find((match) => match.id === matchId);
+        if (m) {
+          void aplicarRatingAmericanoPartido(options.organizadorId, m).catch(
+            (e) => console.warn("[rating] americano:", e)
+          );
+        }
+      }
     },
-    [phase, persistRebuiltState]
+    [phase, persistRebuiltState, options?.organizadorId]
   );
 
   const editScore = useCallback(

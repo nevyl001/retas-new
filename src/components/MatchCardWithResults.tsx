@@ -8,6 +8,7 @@ import {
   updateGame,
 } from "../lib/database";
 import { MatchResultCalculator } from "./MatchResultCalculator";
+import { aplicarRatingDesdePairs } from "../lib/rivieraJugadores/aplicarRatingPartido";
 
 const PencilIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -342,6 +343,29 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         console.log(
           `🏆 Partido finalizado: ${pair1FinalScore} - ${pair2FinalScore}`
         );
+
+        if (
+          userId &&
+          pair1FinalScore !== pair2FinalScore &&
+          pair1 &&
+          pair2
+        ) {
+          const pair1Row = pairs.find((p) => p.id === currentMatch.pair1_id);
+          const pair2Row = pairs.find((p) => p.id === currentMatch.pair2_id);
+          if (pair1Row && pair2Row) {
+            void aplicarRatingDesdePairs(
+              userId,
+              pair1Row,
+              pair2Row,
+              pair1FinalScore > pair2FinalScore ? "a" : "b",
+              {
+                modoJuego: "reta_rr",
+                partidoRef: `reta:${currentMatch.id}`,
+                descripcion: "Reta Round Robin",
+              }
+            ).catch((e) => console.warn("[rating] reta:", e));
+          }
+        }
 
         // Cerrar el editor después de finalizar
         setIsEditing(false);
