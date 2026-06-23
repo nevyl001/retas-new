@@ -1,6 +1,6 @@
 import { supabase } from "../lib/supabaseClient";
-import { syncDuelo2v2Participaciones } from "../lib/rivieraJugadores/syncParticipaciones";
 import { aplicarRatingDuelo2v2 } from "../lib/rivieraJugadores/aplicarRatingPartido";
+import { syncDuelo2v2Participaciones } from "../lib/rivieraJugadores/syncParticipaciones";
 import type {
   CreateDuelo2v2Input,
   Duelo2v2,
@@ -246,14 +246,16 @@ export async function finalizarDuelo2v2(id: string): Promise<Duelo2v2> {
   if (error) throw new Error(formatDueloDbError(error));
   const finalizado = mapDuelo(data as Record<string, unknown>);
 
+  try {
+    await aplicarRatingDuelo2v2(finalizado);
+  } catch (e) {
+    console.warn("[rating] finalizar duelo 2v2:", e);
+  }
+
   await syncDuelo2v2Participaciones({
     organizadorId: uid,
     duelo: finalizado,
   });
-
-  void aplicarRatingDuelo2v2(finalizado).catch((e) =>
-    console.warn("[rating] duelo 2v2:", e)
-  );
 
   return finalizado;
 }

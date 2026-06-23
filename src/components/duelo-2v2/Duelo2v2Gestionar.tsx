@@ -79,7 +79,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     try {
       const updated = await finalizarDuelo2v2(dueloId);
       setDuelo(updated);
-      setMessage("Duelo finalizado. Puntos aplicados al ranking.");
+      setMessage("Duelo finalizado. Rating y puntos aplicados al ranking.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo finalizar");
     } finally {

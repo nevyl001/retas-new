@@ -1,6 +1,8 @@
-import type { Pair } from "../database";
+import type { Match, Pair } from "../database";
+import type { Game } from "../database";
 import { supabase } from "../supabaseClient";
-import { getOrCreateJugadorId } from "./syncParticipaciones";
+import { getMatchScoresForStandings } from "../standingsUtils";
+import { getOrCreateJugadorId } from "./jugadorIdResolver";
 
 export type RatingModoJuego =
   | "reta_rr"
@@ -36,9 +38,9 @@ function isMissingRatingRpc(error: { code?: string; message?: string } | null): 
 /** Llama al RPC de Supabase que actualiza rating de los 4 jugadores. */
 export async function aplicarRatingPartido(
   params: AplicarRatingPartidoParams
-): Promise<void> {
+): Promise<boolean> {
   const { j1, j2, j3, j4, ganador, modoJuego, partidoRef, descripcion } = params;
-  if (!j1 || !j2 || !j3 || !j4) return;
+  if (!j1 || !j2 || !j3 || !j4) return false;
 
   const { error } = await supabase.rpc("aplicar_rating_partido", {
     p_j1: j1,
@@ -56,10 +58,14 @@ export async function aplicarRatingPartido(
       console.warn(
         "[rating] RPC aplicar_rating_partido no disponible. Ejecuta supabase/rating-sistema.sql"
       );
-      return;
+      return false;
     }
+    console.error("[rating] RPC error:", error.message, error.code, error);
     throw error;
   }
+
+  console.info(`[rating] aplicado: ${partidoRef} (${modoJuego})`);
+  return true;
 }
 
 /** No bloquea el guardado del partido si falla el rating. */
@@ -104,7 +110,7 @@ export async function aplicarRatingDesdePairs(
   const [b1, b2] = (await resolverRivieraIdsDesdePair(organizadorId, pairB)) ?? [];
   if (!a1 || !a2 || !b1 || !b2) return;
 
-  aplicarRatingPartidoSafe({
+  await aplicarRatingPartido({
     j1: a1,
     j2: a2,
     j3: b1,
@@ -243,15 +249,15 @@ export async function aplicarRatingDuelo2v2(duelo: {
   pareja_a_j2_id: string | null;
   pareja_b_j1_id: string | null;
   pareja_b_j2_id: string | null;
-}): Promise<void> {
-  if (!duelo.ganador) return;
+}): Promise<boolean> {
+  if (!duelo.ganador) return false;
   const j1 = duelo.pareja_a_j1_id;
   const j2 = duelo.pareja_a_j2_id;
   const j3 = duelo.pareja_b_j1_id;
   const j4 = duelo.pareja_b_j2_id;
-  if (!j1 || !j2 || !j3 || !j4) return;
+  if (!j1 || !j2 || !j3 || !j4) return false;
 
-  aplicarRatingPartidoSafe({
+  return aplicarRatingPartido({
     j1,
     j2,
     j3,
@@ -387,4 +393,47 @@ export async function aplicarRatingAmericanoPartido(
     partidoRef: `americano:${match.id}`,
     descripcion: "Americano",
   });
+}
+
+/** Aplica rating a todos los partidos finalizados de una reta (idempotente). */
+export async function aplicarRatingRetaFinishedMatches(params: {
+  organizadorId: string;
+  pairs: Pair[];
+  matches: Match[];
+  gamesByMatchId: Map<string, Game[]>;
+  descripcion?: string;
+}): Promise<number> {
+  const { organizadorId, pairs, matches, gamesByMatchId, descripcion } =
+    params;
+  const pairById = new Map(pairs.map((p) => [p.id, p]));
+  let applied = 0;
+
+  for (const match of matches.filter((m) => m.status === "finished")) {
+    const pair1 = pairById.get(match.pair1_id);
+    const pair2 = pairById.get(match.pair2_id);
+    if (!pair1 || !pair2) continue;
+
+    const games = gamesByMatchId.get(match.id) ?? [];
+    const { score1, score2 } = getMatchScoresForStandings(match, games);
+    if (score1 === score2) continue;
+
+    try {
+      await aplicarRatingDesdePairs(
+        organizadorId,
+        pair1,
+        pair2,
+        score1 > score2 ? "a" : "b",
+        {
+          modoJuego: "reta_rr",
+          partidoRef: `reta:${match.id}`,
+          descripcion: descripcion ?? "Reta Round Robin",
+        }
+      );
+      applied += 1;
+    } catch (e) {
+      console.warn("[rating] reta partido", match.id, e);
+    }
+  }
+
+  return applied;
 }

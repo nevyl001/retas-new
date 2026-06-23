@@ -49,14 +49,12 @@ import {
 } from "../roundRobinChampionship";
 import {
   adjustRankingPuntosManual,
-  createRivieraJugador,
   ensureRivieraJugadorVisibleEnRanking,
   getRivieraJugadorByLegacyLigaId,
   getRivieraJugadorByLegacyPlayerId,
   rebuildJugadorStats,
   registrarParticipacion,
 } from "./rivieraJugadoresService";
-import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 import type { JugadorResultado, JugadorTipoEvento } from "./types";
 import type { Duelo2v2 } from "../duelo2v2/types";
 import {
@@ -66,6 +64,11 @@ import {
 import { buildAmericanoPartidosDetalleForPlayer } from "./buildAmericanoPartidosDetalle";
 import { buildDuelo2vs2PartidosDetalle } from "./buildDuelo2vs2PartidosDetalle";
 import { buildLigaJornadaPartidosDetalleByJugadorId } from "./buildLigaJornadaPartidosDetalle";
+import { getOrCreateJugadorId } from "./jugadorIdResolver";
+import {
+  aplicarRatingDuelo2v2,
+  aplicarRatingRetaFinishedMatches,
+} from "./aplicarRatingPartido";
 import {
   enrichMetadataWithPartidosDetalle,
   mergeMetadataWithPartidosDetalle,
@@ -128,127 +131,7 @@ export async function yaRegistrada(
   }
 }
 
-async function slugExistsForOrg(
-  organizadorId: string,
-  slug: string
-): Promise<boolean> {
-  const { data } = await supabase
-    .from("riviera_jugadores")
-    .select("id")
-    .eq("organizador_id", organizadorId)
-    .eq("slug", slug)
-    .maybeSingle();
-  return !!data;
-}
-
-async function finalizeJugadorIdForRanking(
-  jugadorId: string | null | undefined
-): Promise<string | null> {
-  if (!jugadorId) return null;
-  await ensureRivieraJugadorVisibleEnRanking(jugadorId);
-  return jugadorId;
-}
-
-export async function getOrCreateJugadorId(params: {
-  nombre: string;
-  organizadorId: string;
-  legacyPlayerId?: string;
-  legacyLigaJugadorId?: string;
-  email?: string | null;
-}): Promise<string | null> {
-  const nombre = params.nombre.trim();
-  if (!nombre) return null;
-
-  try {
-    if (params.legacyPlayerId) {
-      const byPlayer = await getRivieraJugadorByLegacyPlayerId(
-        params.legacyPlayerId,
-        params.organizadorId
-      );
-      if (byPlayer) return finalizeJugadorIdForRanking(byPlayer.id);
-    }
-
-    if (params.legacyLigaJugadorId) {
-      const byLiga = await getRivieraJugadorByLegacyLigaId(
-        params.legacyLigaJugadorId
-      );
-      if (byLiga) return finalizeJugadorIdForRanking(byLiga.id);
-    }
-
-    const { data: byName } = await supabase
-      .from("riviera_jugadores")
-      .select("id")
-      .eq("organizador_id", params.organizadorId)
-      .ilike("nombre", nombre)
-      .limit(1)
-      .maybeSingle();
-
-    if (byName?.id) {
-      const updates: Record<string, string> = {};
-      if (params.legacyPlayerId) updates.legacy_player_id = params.legacyPlayerId;
-      if (params.legacyLigaJugadorId) {
-        updates.legacy_liga_jugador_id = params.legacyLigaJugadorId;
-      }
-      if (Object.keys(updates).length > 0) {
-        await supabase
-          .from("riviera_jugadores")
-          .update(updates)
-          .eq("id", byName.id);
-      }
-      return finalizeJugadorIdForRanking(byName.id);
-    }
-
-    const baseSlug = slugifyJugadorNombre(nombre);
-    const slug = await ensureUniqueSlug(baseSlug, (s) =>
-      slugExistsForOrg(params.organizadorId, s)
-    );
-
-    const insert: Record<string, unknown> = {
-      nombre,
-      slug,
-      organizador_id: params.organizadorId,
-      estado: "activo",
-      visible_publico: true,
-      email: params.email ?? null,
-    };
-    if (params.legacyPlayerId) insert.legacy_player_id = params.legacyPlayerId;
-    if (params.legacyLigaJugadorId) {
-      insert.legacy_liga_jugador_id = params.legacyLigaJugadorId;
-    }
-
-    const { data: created, error } = await supabase
-      .from("riviera_jugadores")
-      .insert(insert)
-      .select("id")
-      .single();
-
-    if (error) {
-      console.error("[riviera-jugadores] getOrCreateJugadorId insert:", error);
-      const createdViaService = await createRivieraJugador(params.organizadorId, {
-        nombre,
-        email: params.email ?? null,
-      });
-      if (params.legacyPlayerId) {
-        await supabase
-          .from("riviera_jugadores")
-          .update({ legacy_player_id: params.legacyPlayerId })
-          .eq("id", createdViaService.id);
-      }
-      if (params.legacyLigaJugadorId) {
-        await supabase
-          .from("riviera_jugadores")
-          .update({ legacy_liga_jugador_id: params.legacyLigaJugadorId })
-          .eq("id", createdViaService.id);
-      }
-      return finalizeJugadorIdForRanking(createdViaService.id);
-    }
-
-    return finalizeJugadorIdForRanking(created?.id ?? null);
-  } catch (e) {
-    console.error("[riviera-jugadores] getOrCreateJugadorId:", e);
-    return null;
-  }
-}
+export { getOrCreateJugadorId } from "./jugadorIdResolver";
 
 async function tieneParticipacionSubtipo(
   jugadorId: string,
@@ -951,6 +834,23 @@ async function syncRetaParticipacionesInner(params: {
       setsContra: setsContraReta,
       metadata,
     });
+  }
+
+  try {
+    const ratingApplied = await aplicarRatingRetaFinishedMatches({
+      organizadorId,
+      pairs,
+      matches,
+      gamesByMatchId,
+      descripcion: tournament.name?.trim()
+        ? `Reta: ${tournament.name.trim()}`
+        : "Reta Round Robin",
+    });
+    if (ratingApplied > 0) {
+      console.info(`[rating] reta ${tournament.id}: ${ratingApplied} partido(s)`);
+    }
+  } catch (e) {
+    console.warn("[rating] sync reta:", e);
   }
 
   await refreshJugadorStatsBatch(touchedJugadorIds);
@@ -2064,6 +1964,15 @@ export async function syncDuelo2v2Participaciones(params: {
       setsContra: duelo.sets_pareja_a,
     },
   ];
+
+  try {
+    const ratingApplied = await aplicarRatingDuelo2v2(duelo);
+    if (ratingApplied) {
+      console.info(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
+    }
+  } catch (e) {
+    console.warn("[rating] duelo 2v2 sync:", e);
+  }
 
   try {
     for (const slot of slots) {

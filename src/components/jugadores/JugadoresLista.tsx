@@ -170,7 +170,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                   type="button"
                   className="rj-btn rj-btn--ghost"
                   disabled={backfilling}
-                  title="Importa historial de retas, americanos, jornadas de liga y duelos finalizados"
+                  title="Importa historial y recalcula rating de retas, americanos, ligas y duelos finalizados"
                   onClick={async () => {
                     if (!user?.id) return;
                     setBackfilling(true);
@@ -193,7 +193,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                           : "";
                       alert(
                         total > 0
-                          ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s), ${nLigas} jornada(s) de liga, ${nDuelos} duelo(s).${promoNote}`
+                          ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s), ${nLigas} jornada(s) de liga, ${nDuelos} duelo(s). Se recalculó el rating de partidos ya cerrados.${promoNote}`
                           : nPromoted > 0
                             ? `${nPromoted} jugador(es) activados en ranking público.`
                             : "No hay eventos cerrados para importar."

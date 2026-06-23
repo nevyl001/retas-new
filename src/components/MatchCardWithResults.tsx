@@ -344,12 +344,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           `🏆 Partido finalizado: ${pair1FinalScore} - ${pair2FinalScore}`
         );
 
-        if (
-          userId &&
-          pair1FinalScore !== pair2FinalScore &&
-          pair1 &&
-          pair2
-        ) {
+        if (userId && pair1FinalScore !== pair2FinalScore) {
           const pair1Row = pairs.find((p) => p.id === currentMatch.pair1_id);
           const pair2Row = pairs.find((p) => p.id === currentMatch.pair2_id);
           if (pair1Row && pair2Row) {

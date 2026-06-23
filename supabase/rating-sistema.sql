@@ -144,8 +144,16 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.aplicar_rating_partido(
   uuid, uuid, uuid, uuid, text, text, text, text
-) TO authenticated;
+) TO anon, authenticated;
 
 GRANT SELECT ON public.rating_historial TO anon, authenticated;
+
+ALTER TABLE public.rating_historial ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS rating_historial_select_public ON public.rating_historial;
+
+CREATE POLICY rating_historial_select_public ON public.rating_historial
+  FOR SELECT TO anon, authenticated
+  USING (true);
 
 NOTIFY pgrst, 'reload schema';
