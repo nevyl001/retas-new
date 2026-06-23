@@ -172,7 +172,7 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
             points={evolutionSvg.polyline}
           />
         </svg>
-      ) : (
+      ) : partidosJugados === 0 ? (
         <p
           style={{
             margin: "0 0 0.85rem",
@@ -184,7 +184,7 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
         >
           Juega tu primer partido competitivo para empezar a mover tu nivel
         </p>
-      )}
+      ) : null}
 
       {historial.length > 0 ? (
         <div>
