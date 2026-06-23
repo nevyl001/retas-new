@@ -85,3 +85,72 @@ export function dueloCanchaDraftFromDuelo(
 ): string {
   return canchaDraftFromStored(duelo.cancha);
 }
+
+export type DueloSchedulePhase = "upcoming" | "in_window" | "after" | "unknown";
+
+export function resolveDueloSchedulePhase(
+  duelo: Pick<Duelo2v2, "programado_en" | "programado_hasta">,
+  now: Date = new Date()
+): DueloSchedulePhase {
+  const startMs = duelo.programado_en
+    ? new Date(duelo.programado_en).getTime()
+    : NaN;
+  const endMs = duelo.programado_hasta
+    ? new Date(duelo.programado_hasta).getTime()
+    : NaN;
+  const t = now.getTime();
+
+  if (!Number.isFinite(startMs)) return "unknown";
+  if (t < startMs) return "upcoming";
+  if (Number.isFinite(endMs) && t > endMs) return "after";
+  return "in_window";
+}
+
+export type DueloPublicStatusTone = "live" | "upcoming" | "muted" | "done";
+
+export function getDueloPublicStatus(
+  duelo: Pick<Duelo2v2, "programado_en" | "programado_hasta" | "ganador" | "estado">,
+  now: Date = new Date()
+): { label: string; tone: DueloPublicStatusTone } | null {
+  if (duelo.ganador) {
+    return { label: "Duelo decidido", tone: "done" };
+  }
+  if (duelo.estado === "finalizado") {
+    return { label: "Finalizado", tone: "done" };
+  }
+
+  const phase = resolveDueloSchedulePhase(duelo, now);
+  if (phase === "upcoming" && duelo.programado_en) {
+    return {
+      label: `Inicia a las ${formatPartidoHora(duelo.programado_en)}`,
+      tone: "upcoming",
+    };
+  }
+  if (phase === "in_window") {
+    return { label: "En vivo", tone: "live" };
+  }
+  if (phase === "after") {
+    const horario = formatDueloHorarioRange(
+      duelo.programado_en,
+      duelo.programado_hasta
+    );
+    return {
+      label: horario ? `Horario: ${horario}` : "Fuera de horario programado",
+      tone: "muted",
+    };
+  }
+
+  if (duelo.estado === "en_juego") {
+    return { label: "En curso", tone: "live" };
+  }
+
+  return null;
+}
+
+export function isDueloWithinScheduledWindow(
+  duelo: Pick<Duelo2v2, "programado_en" | "programado_hasta" | "ganador" | "estado">,
+  now: Date = new Date()
+): boolean {
+  if (duelo.ganador || duelo.estado === "finalizado") return false;
+  return resolveDueloSchedulePhase(duelo, now) === "in_window";
+}

@@ -40,6 +40,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
+  const [clockNow, setClockNow] = useState(() => new Date());
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -53,6 +54,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
       setDuelo(d);
       setError(null);
       setLastRefreshedAt(new Date());
+      setClockNow(new Date());
       const fotoMap = await fetchJugadorFotos([
         d.pareja_a_j1_id,
         d.pareja_a_j2_id,
@@ -88,6 +90,13 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
     }, DUELO_2V2_PUBLIC_POLL_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, [dueloId]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setClockNow(new Date());
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   if (loading) {
     return (
@@ -140,7 +149,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
           teamA={[...teamA]}
           teamB={[...teamB]}
           showBrand={!tieneGanador}
-          live={!tieneGanador}
+          clockNow={clockNow}
         />
 
         {tieneGanador && duelo.ganador && (

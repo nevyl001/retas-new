@@ -2,6 +2,7 @@ import React from "react";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { PublicRivieraCelebrateBrand } from "../public/PublicRivieraCelebrateBrand";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
+import { getDueloPublicStatus } from "../../lib/duelo2v2/schedule";
 import { Duelo2v2TeamSetResults } from "./Duelo2v2TeamSetResults";
 import { Duelo2v2MatchMeta } from "./Duelo2v2MatchMeta";
 
@@ -16,19 +17,30 @@ interface Duelo2v2LiveBoardProps {
   teamA: [DueloPlayerView, DueloPlayerView];
   teamB: [DueloPlayerView, DueloPlayerView];
   showBrand?: boolean;
-  live?: boolean;
+  clockNow?: Date;
 }
+
+const STATUS_CLASS: Record<
+  NonNullable<ReturnType<typeof getDueloPublicStatus>>["tone"],
+  string
+> = {
+  live: "duelo2v2-live-dot",
+  upcoming: "duelo2v2-live-board__upcoming",
+  muted: "duelo2v2-live-board__muted",
+  done: "duelo2v2-live-board__done",
+};
 
 export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
   duelo,
   teamA,
   teamB,
   showBrand = true,
-  live = false,
+  clockNow,
 }) => {
   const ganadorA = duelo.ganador === "a";
   const ganadorB = duelo.ganador === "b";
   const tieneGanador = Boolean(duelo.ganador);
+  const status = getDueloPublicStatus(duelo, clockNow);
 
   return (
     <section className="duelo2v2-live-board" aria-label="Encuentro 2 vs 2">
@@ -42,10 +54,8 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
         <h1 className="duelo2v2-live-board__title">{duelo.nombre}</h1>
         <p className="duelo2v2-live-board__sub">
           Duelo 2 vs 2 · Riviera Open
-          {live && !tieneGanador ? (
-            <span className="duelo2v2-live-dot"> · En vivo</span>
-          ) : tieneGanador ? (
-            <span className="duelo2v2-live-board__done"> · Duelo decidido</span>
+          {status ? (
+            <span className={STATUS_CLASS[status.tone]}> · {status.label}</span>
           ) : null}
         </p>
         <Duelo2v2MatchMeta duelo={duelo} className="duelo2v2-live-board__meta" />
@@ -80,14 +90,13 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
           </div>
         </div>
 
-        <div className="duelo2v2-live-board__center">
+        <div className="duelo2v2-live-board__center" aria-hidden="true">
           <span className="duelo2v2-live-board__vs">VS</span>
-          {live && !tieneGanador && (
-            <span className="duelo2v2-live-board__pulse">Encuentro en curso</span>
-          )}
-          {tieneGanador && (
-            <span className="duelo2v2-live-board__winner-badge">¡Ganadores!</span>
-          )}
+          {tieneGanador ? (
+            <span className="duelo2v2-live-board__winner-badge duelo2v2-live-board__winner-badge--desktop">
+              ¡Ganadores!
+            </span>
+          ) : null}
         </div>
 
         <div

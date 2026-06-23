@@ -203,7 +203,8 @@
 }
 
 .duelo2v2-match-meta__value--court {
-  color: #f8b4b4;
+  color: #ef4444;
+  font-weight: 700;
   letter-spacing: 0.02em;
 }
 
@@ -597,6 +598,16 @@
 .duelo2v2-live-board__done {
   color: #fbbf24;
   font-weight: 600;
+}
+
+.duelo2v2-live-board__upcoming {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.duelo2v2-live-board__muted {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
 }
 
 .duelo2v2-live-board__winner-badge {
@@ -1253,12 +1264,17 @@
 }
 
 .duelo2v2-live-board__pulse {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #34d399;
-  animation: duelo2v2-pulse 2s ease-in-out infinite;
+  display: none;
+}
+
+.duelo2v2-live-board__winner-badge--desktop {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .duelo2v2-live-board__winner-badge--desktop {
+    display: inline;
+  }
 }
 
 @keyframes duelo2v2-pulse {
@@ -1471,7 +1487,15 @@
 
   .duelo2v2-live-board__center {
     flex-direction: row;
-    padding: 0.5rem 0;
+    justify-content: center;
+    padding: 0.15rem 0;
+    min-height: auto;
+  }
+
+  .duelo2v2-live-board__vs {
+    font-size: 1.15rem;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.35);
   }
 
   .duelo2v2-match-board {
