@@ -82,6 +82,111 @@
   box-sizing: border-box;
 }
 
+.duelo2v2-form__schedule-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  max-width: 720px;
+}
+
+@media (max-width: 900px) {
+  .duelo2v2-form__schedule-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .duelo2v2-form__schedule-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.duelo2v2-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.duelo2v2-form__field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.duelo2v2-form__field input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.duelo2v2-match-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.duelo2v2-match-meta__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.duelo2v2-match-meta__icon {
+  line-height: 1;
+}
+
+.duelo2v2-live-board__meta {
+  justify-content: center;
+}
+
+.duelo2v2-card__schedule {
+  margin-top: 0.65rem;
+}
+
+.duelo2v2-details-editor {
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+  padding: clamp(1rem, 2vw, 1.25rem);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.duelo2v2-details-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.duelo2v2-details-editor__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.duelo2v2-details-editor__form {
+  margin-top: 1rem;
+}
+
+.duelo2v2-details-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .duelo2v2-form__submit {
   padding-top: 0.5rem;
 }

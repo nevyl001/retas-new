@@ -5,6 +5,7 @@ import type {
   Duelo2v2,
   Duelo2v2Ganador,
   Duelo2v2SetDetalle,
+  UpdateDuelo2v2DetailsInput,
   UpdateDuelo2v2ScoreInput,
 } from "../lib/duelo2v2/types";
 import { computeDueloScore } from "../lib/duelo2v2/scoring";
@@ -65,6 +66,9 @@ function mapDuelo(row: Record<string, unknown>): Duelo2v2 {
     organizador_id: String(row.organizador_id),
     nombre: String(row.nombre),
     descripcion: row.descripcion ? String(row.descripcion) : null,
+    cancha: row.cancha != null ? String(row.cancha) : null,
+    programado_en: row.programado_en ? String(row.programado_en) : null,
+    programado_hasta: row.programado_hasta ? String(row.programado_hasta) : null,
     estado: row.estado as Duelo2v2["estado"],
     pareja_a_j1_id: row.pareja_a_j1_id ? String(row.pareja_a_j1_id) : null,
     pareja_a_j2_id: row.pareja_a_j2_id ? String(row.pareja_a_j2_id) : null,
@@ -143,6 +147,9 @@ export async function createDuelo2v2(
       organizador_id: uid,
       nombre: input.nombre.trim(),
       descripcion: input.descripcion?.trim() || null,
+      cancha: input.cancha?.trim() || null,
+      programado_en: input.programado_en ?? null,
+      programado_hasta: input.programado_hasta ?? null,
       estado: "en_juego",
       pareja_a_j1_id: input.pareja_a_j1_id,
       pareja_a_j2_id: input.pareja_a_j2_id,
@@ -153,6 +160,33 @@ export async function createDuelo2v2(
       pareja_b_j1_nombre: input.pareja_b_j1_nombre.trim(),
       pareja_b_j2_nombre: input.pareja_b_j2_nombre.trim(),
     })
+    .select()
+    .single();
+
+  if (error) throw new Error(formatDueloDbError(error));
+  return mapDuelo(data as Record<string, unknown>);
+}
+
+export async function updateDuelo2v2Details(
+  id: string,
+  input: UpdateDuelo2v2DetailsInput
+): Promise<Duelo2v2> {
+  await requireUserId();
+  const nombre = input.nombre.trim();
+  if (!nombre) {
+    throw new Error("El nombre del encuentro es obligatorio.");
+  }
+
+  const { data, error } = await supabase
+    .from("duelos_2v2")
+    .update({
+      nombre,
+      cancha: input.cancha?.trim() || null,
+      programado_en: input.programado_en ?? null,
+      programado_hasta: input.programado_hasta ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
     .select()
     .single();
 

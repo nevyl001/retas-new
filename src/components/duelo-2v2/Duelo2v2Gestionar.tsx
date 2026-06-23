@@ -8,8 +8,10 @@ import {
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
+import { Duelo2v2DetailsEditor } from "./Duelo2v2DetailsEditor";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { Duelo2v2ScoreEditor } from "./Duelo2v2ScoreEditor";
+import { Duelo2v2MatchMeta } from "./Duelo2v2MatchMeta";
 import { navigateDuelo2v2, publicDuelo2v2Url } from "./duelo2v2Nav";
 import "../../styles/riviera-public-celebrate.css";
 import "./duelo2v2-page.css";
@@ -136,7 +138,19 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       <header className="duelo2v2-header">
         <h1>{duelo.nombre}</h1>
         {duelo.descripcion && <p>{duelo.descripcion}</p>}
+        <Duelo2v2MatchMeta duelo={duelo} />
       </header>
+
+      <Duelo2v2DetailsEditor
+        duelo={duelo}
+        disabled={busy}
+        onSaved={(updated) => {
+          setDuelo(updated);
+          setMessage("Datos del encuentro actualizados.");
+          setError(null);
+        }}
+        onError={setError}
+      />
 
       {finalizado && duelo.ganador && (
         <Duelo2v2CelebrateSection

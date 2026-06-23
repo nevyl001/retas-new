@@ -12,6 +12,11 @@ import {
   type TournamentModeBadge,
   type TournamentStatusBadge,
 } from "./tournamentDisplay";
+import { formatCanchaDisplay } from "./torneoExpress/canchaDisplay";
+import { formatDueloHorarioRange } from "./duelo2v2/schedule";
+import {
+  formatPartidoFecha,
+} from "./torneoExpress/partidoSchedule";
 
 export type HomeRetaItem =
   | { kind: "tournament"; tournament: Tournament }
@@ -102,10 +107,17 @@ export function getRetaMetaLine(item: HomeRetaItem): string {
     const d = item.duelo;
     const parejaA = `${d.pareja_a_j1_nombre} / ${d.pareja_a_j2_nombre}`;
     const parejaB = `${d.pareja_b_j1_nombre} / ${d.pareja_b_j2_nombre}`;
-    if (d.estado === "finalizado") {
-      return `${parejaA} vs ${parejaB} · ${d.sets_pareja_a}–${d.sets_pareja_b} sets`;
+    const parts = [`${parejaA} vs ${parejaB}`];
+    if (d.programado_en) {
+      parts.push(formatPartidoFecha(d.programado_en));
+      const horario = formatDueloHorarioRange(d.programado_en, d.programado_hasta);
+      if (horario) parts.push(horario);
     }
-    return `${parejaA} vs ${parejaB}`;
+    parts.push(formatCanchaDisplay(d.cancha));
+    if (d.estado === "finalizado") {
+      parts.push(`${d.sets_pareja_a}–${d.sets_pareja_b} sets`);
+    }
+    return parts.join(" · ");
   }
   return formatTournamentCourtsLabel(getTournamentCourtsCount(item.tournament));
 }

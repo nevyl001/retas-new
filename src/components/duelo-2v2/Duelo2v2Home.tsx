@@ -8,6 +8,7 @@ import {
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
+import { Duelo2v2MatchMeta } from "./Duelo2v2MatchMeta";
 import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo2v2Nav";
 import "./duelo2v2-page.css";
 
@@ -110,6 +111,7 @@ export const Duelo2v2Home: React.FC = () => {
               <> · {d.sets_pareja_a}–{d.sets_pareja_b} sets</>
             )}
           </div>
+          <Duelo2v2MatchMeta duelo={d} className="duelo2v2-card__schedule" />
           <div className="duelo2v2-card__actions">
             <Button
               type="button"

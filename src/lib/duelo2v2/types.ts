@@ -12,6 +12,9 @@ export interface Duelo2v2 {
   organizador_id: string;
   nombre: string;
   descripcion: string | null;
+  cancha: string | null;
+  programado_en: string | null;
+  programado_hasta: string | null;
   estado: Duelo2v2Estado;
   pareja_a_j1_id: string | null;
   pareja_a_j2_id: string | null;
@@ -33,6 +36,9 @@ export interface Duelo2v2 {
 export interface CreateDuelo2v2Input {
   nombre: string;
   descripcion?: string;
+  cancha?: string;
+  programado_en?: string | null;
+  programado_hasta?: string | null;
   pareja_a_j1_id: string;
   pareja_a_j2_id: string;
   pareja_a_j1_nombre: string;
@@ -45,6 +51,13 @@ export interface CreateDuelo2v2Input {
 
 export interface UpdateDuelo2v2ScoreInput {
   detalle_sets: Duelo2v2SetDetalle[];
+}
+
+export interface UpdateDuelo2v2DetailsInput {
+  nombre: string;
+  cancha?: string;
+  programado_en?: string | null;
+  programado_hasta?: string | null;
 }
 
 export interface Duelo2v2JugadorSlot {

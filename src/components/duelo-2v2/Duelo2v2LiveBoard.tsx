@@ -3,6 +3,7 @@ import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { PublicRivieraCelebrateBrand } from "../public/PublicRivieraCelebrateBrand";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
 import { Duelo2v2TeamSetResults } from "./Duelo2v2TeamSetResults";
+import { Duelo2v2MatchMeta } from "./Duelo2v2MatchMeta";
 
 export interface DueloPlayerView {
   id: string | null;
@@ -47,6 +48,7 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
             <span className="duelo2v2-live-board__done"> · Duelo decidido</span>
           ) : null}
         </p>
+        <Duelo2v2MatchMeta duelo={duelo} className="duelo2v2-live-board__meta" />
       </header>
 
       <div className="duelo2v2-live-board__arena">

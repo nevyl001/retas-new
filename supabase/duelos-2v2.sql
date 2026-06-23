@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS public.duelos_2v2 (
   organizador_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   nombre text NOT NULL,
   descripcion text,
+  cancha text,
+  programado_en timestamptz,
+  programado_hasta timestamptz,
   estado text NOT NULL DEFAULT 'configuracion'
     CHECK (estado IN ('configuracion', 'en_juego', 'finalizado')),
   pareja_a_j1_id uuid REFERENCES public.riviera_jugadores(id),
@@ -73,5 +76,10 @@ BEGIN
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
+
+-- Migración si la tabla ya existía sin cancha/horario
+ALTER TABLE public.duelos_2v2 ADD COLUMN IF NOT EXISTS cancha text;
+ALTER TABLE public.duelos_2v2 ADD COLUMN IF NOT EXISTS programado_en timestamptz;
+ALTER TABLE public.duelos_2v2 ADD COLUMN IF NOT EXISTS programado_hasta timestamptz;
 
 NOTIFY pgrst, 'reload schema';
