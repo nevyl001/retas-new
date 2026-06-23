@@ -15,7 +15,7 @@ import {
   RIVIERA_APP_DISPLAY,
 } from "../lib/rivieraBranding";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
-import { resolvePlayerAvatars } from "../lib/rivieraJugadores/publicPlayerAvatars";
+import { resolvePlayerAvatars, resolvePlayerPublicProfiles } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
 import { PublicAmericanoPodiumCard } from "./public/PublicAmericanoPodiumCard";
 import { PublicAmericanoStandingsSection } from "./public/PublicAmericanoStandingsSection";
@@ -66,6 +66,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   const [podiumAvatars, setPodiumAvatars] = useState<
     Record<string, string | null>
   >({});
+  const [playerRatings, setPlayerRatings] = useState<Record<string, number>>(
+    {}
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedFetchRef =
     React.useRef<FetchAmericanoLivePublicResult | null>(null);
@@ -188,6 +191,50 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     () => rankedRows.slice(0, 3),
     [rankedRows]
   );
+
+  const snapshotPlayerEntries = React.useMemo(() => {
+    if (!snapshot) return [];
+    const seen = new Set<string>();
+    const entries: { id: string; name: string }[] = [];
+    const add = (id: string, name: string) => {
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      entries.push({ id, name });
+    };
+    for (const round of snapshot.rounds) {
+      for (const m of round.matches) {
+        add(m.teamA[0].id, m.teamA[0].name);
+        add(m.teamA[1].id, m.teamA[1].name);
+        add(m.teamB[0].id, m.teamB[0].name);
+        add(m.teamB[1].id, m.teamB[1].name);
+      }
+      for (const p of round.benchPlayers) {
+        add(p.id, p.name);
+      }
+    }
+    return entries;
+  }, [snapshot]);
+
+  useEffect(() => {
+    if (!organizadorId || snapshotPlayerEntries.length === 0) {
+      setPlayerRatings({});
+      return;
+    }
+    let cancelled = false;
+    void resolvePlayerPublicProfiles(organizadorId, snapshotPlayerEntries, {
+      publicOnly: true,
+    }).then((profiles) => {
+      if (cancelled) return;
+      const ratings: Record<string, number> = {};
+      for (const e of snapshotPlayerEntries) {
+        ratings[e.id] = profiles[e.id]?.rating ?? 3;
+      }
+      setPlayerRatings(ratings);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizadorId, snapshotPlayerEntries]);
 
   useEffect(() => {
     if (!organizadorId || podiumPlayers.length === 0) {
@@ -354,6 +401,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                         match={m}
                         live={inProgress}
                         index={matchIdx}
+                        playerRatings={playerRatings}
                       />
                     ))}
                   </div>

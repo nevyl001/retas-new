@@ -1,5 +1,6 @@
 import React from "react";
 import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
+import { JugadorRatingChip } from "../../jugadores/JugadorRatingChip";
 import "../../jugadores/riviera-jugadores.css";
 import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
 
@@ -67,11 +68,23 @@ export const PublicEliminatoriaPairShowcase: React.FC<{
         </div>
       </div>
       <p className="te-elim-finalists-pair__label te-elim-podium-pair__label">
-        <span>{p1.name}</span>
+        <span>
+          {p1.name}
+          <JugadorRatingChip
+            rating={p1.rating}
+            className="te-elim-finalists-pair__rating"
+          />
+        </span>
         <span className="te-elim-finalists-pair__sep" aria-hidden>
           /
         </span>
-        <span>{p2.name}</span>
+        <span>
+          {p2.name}
+          <JugadorRatingChip
+            rating={p2.rating}
+            className="te-elim-finalists-pair__rating"
+          />
+        </span>
       </p>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { fetchRivieraJugadorProfilesByIds } from "../../lib/rivieraJugadores/publicPlayerAvatars";
 import { DUELO_2V2_PUBLIC_POLL_INTERVAL_MS } from "../../lib/duelo2v2/publicPoll";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
 import {
@@ -16,27 +16,17 @@ interface Duelo2v2PublicaProps {
   dueloId: string;
 }
 
-async function fetchJugadorFotos(
+async function fetchJugadorProfiles(
   ids: (string | null)[]
-): Promise<Map<string, string | null>> {
-  const valid = ids.filter((id): id is string => Boolean(id));
-  if (valid.length === 0) return new Map();
-
-  const { data } = await supabase
-    .from("riviera_jugadores")
-    .select("id, foto_url")
-    .in("id", valid);
-
-  const map = new Map<string, string | null>();
-  for (const row of data ?? []) {
-    map.set(String(row.id), row.foto_url ? String(row.foto_url) : null);
-  }
-  return map;
+): Promise<Map<string, { fotoUrl: string | null; rating: number }>> {
+  return fetchRivieraJugadorProfilesByIds(ids, { publicOnly: true });
 }
 
 export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => {
   const [duelo, setDuelo] = useState<Duelo2v2 | null>(null);
-  const [fotos, setFotos] = useState<Map<string, string | null>>(new Map());
+  const [profiles, setProfiles] = useState<
+    Map<string, { fotoUrl: string | null; rating: number }>
+  >(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
@@ -55,13 +45,13 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
       setError(null);
       setLastRefreshedAt(new Date());
       setClockNow(new Date());
-      const fotoMap = await fetchJugadorFotos([
+      const profileMap = await fetchJugadorProfiles([
         d.pareja_a_j1_id,
         d.pareja_a_j2_id,
         d.pareja_b_j1_id,
         d.pareja_b_j2_id,
       ]);
-      setFotos(fotoMap);
+      setProfiles(profileMap);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No disponible");
     } finally {
@@ -129,16 +119,37 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
   const tieneGanador = Boolean(duelo.ganador);
   const finalizado = duelo.estado === "finalizado";
 
-  const foto = (id: string | null) => (id ? fotos.get(id) ?? null : null);
+  const profile = (id: string | null) =>
+    id ? profiles.get(id) ?? { fotoUrl: null, rating: 3.0 } : { fotoUrl: null, rating: 3.0 };
 
   const teamA = [
-    { id: duelo.pareja_a_j1_id, nombre: duelo.pareja_a_j1_nombre, fotoUrl: foto(duelo.pareja_a_j1_id) },
-    { id: duelo.pareja_a_j2_id, nombre: duelo.pareja_a_j2_nombre, fotoUrl: foto(duelo.pareja_a_j2_id) },
+    {
+      id: duelo.pareja_a_j1_id,
+      nombre: duelo.pareja_a_j1_nombre,
+      fotoUrl: profile(duelo.pareja_a_j1_id).fotoUrl,
+      rating: profile(duelo.pareja_a_j1_id).rating,
+    },
+    {
+      id: duelo.pareja_a_j2_id,
+      nombre: duelo.pareja_a_j2_nombre,
+      fotoUrl: profile(duelo.pareja_a_j2_id).fotoUrl,
+      rating: profile(duelo.pareja_a_j2_id).rating,
+    },
   ] as const;
 
   const teamB = [
-    { id: duelo.pareja_b_j1_id, nombre: duelo.pareja_b_j1_nombre, fotoUrl: foto(duelo.pareja_b_j1_id) },
-    { id: duelo.pareja_b_j2_id, nombre: duelo.pareja_b_j2_nombre, fotoUrl: foto(duelo.pareja_b_j2_id) },
+    {
+      id: duelo.pareja_b_j1_id,
+      nombre: duelo.pareja_b_j1_nombre,
+      fotoUrl: profile(duelo.pareja_b_j1_id).fotoUrl,
+      rating: profile(duelo.pareja_b_j1_id).rating,
+    },
+    {
+      id: duelo.pareja_b_j2_id,
+      nombre: duelo.pareja_b_j2_nombre,
+      fotoUrl: profile(duelo.pareja_b_j2_id).fotoUrl,
+      rating: profile(duelo.pareja_b_j2_id).rating,
+    },
   ] as const;
 
   return (

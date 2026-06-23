@@ -41,6 +41,9 @@ function riviera(email: string | null): RivieraJugador {
     estado: "activo",
     legacy_player_id: "p1",
     legacy_liga_jugador_id: null,
+    rating: 3,
+    rating_partidos: 0,
+    rating_fiabilidad: 0.2,
     created_at: "",
     updated_at: "",
   };

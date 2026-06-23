@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PublicMatchupCard } from "../lib/torneoExpress/publicBracketModel";
 import {
-  resolvePlayerAvatars,
+  resolvePlayerPublicProfiles,
   type PlayerAvatarLookupEntry,
 } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { fetchPairsByIdsPublic } from "../services/torneoExpressService";
@@ -40,7 +40,7 @@ export function usePublicBracketPairPlayers(
           { id: p.player1_id, name: p.player1_name },
           { id: p.player2_id, name: p.player2_name },
         ]);
-        const avatars = await resolvePlayerAvatars(organizadorId, entries, {
+        const profiles = await resolvePlayerPublicProfiles(organizadorId, entries, {
           publicOnly: true,
         });
         if (cancelled) return;
@@ -51,12 +51,14 @@ export function usePublicBracketPairPlayers(
             {
               id: pair.player1_id,
               name: pair.player1_name,
-              fotoUrl: avatars[pair.player1_id] ?? null,
+              fotoUrl: profiles[pair.player1_id]?.fotoUrl ?? null,
+              rating: profiles[pair.player1_id]?.rating ?? 3,
             },
             {
               id: pair.player2_id,
               name: pair.player2_name,
-              fotoUrl: avatars[pair.player2_id] ?? null,
+              fotoUrl: profiles[pair.player2_id]?.fotoUrl ?? null,
+              rating: profiles[pair.player2_id]?.rating ?? 3,
             },
           ];
         }

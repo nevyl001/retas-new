@@ -15,17 +15,22 @@ import {
   getRankingPosicionEnCategoria,
   getRivieraJugadorPublicBySlug,
   listParticipacionesPublic,
+  obtenerHistorialRatingPublic,
   rebuildJugadorStats,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
 import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
-import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
+import type {
+  RatingHistorialEntry,
+  RivieraJugadorWithStats,
+} from "../../lib/rivieraJugadores/types";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatarHero } from "./JugadorAvatarHero";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 import { RankingEvolutionChart } from "./RankingEvolutionChart";
+import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
@@ -62,6 +67,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
     Awaited<ReturnType<typeof listParticipacionesPublic>>
   >([]);
   const [rankingPos, setRankingPos] = useState<number | null>(null);
+  const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -102,6 +108,24 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!jugador?.id) {
+      setHistorialRating([]);
+      return;
+    }
+    let active = true;
+    obtenerHistorialRatingPublic(jugador.id, 10)
+      .then((rows) => {
+        if (active) setHistorialRating(rows);
+      })
+      .catch(() => {
+        if (active) setHistorialRating([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [jugador?.id]);
 
   const rankingUrl = buildPublicRankingUrl(
     orgId,
@@ -307,6 +331,13 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
                         </span>
                       </div>
                     </div>
+
+                    <RatingNivel
+                      rating={jugador.rating ?? 3}
+                      fiabilidad={jugador.rating_fiabilidad ?? 0.2}
+                      partidosJugados={jugador.rating_partidos ?? 0}
+                      historial={historialRating}
+                    />
                   </div>
                 </div>
               </div>

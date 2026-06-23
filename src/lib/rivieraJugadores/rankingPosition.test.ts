@@ -27,6 +27,9 @@ function j(puntos: number, id: string): RivieraJugadorWithStats {
     estado: "activo",
     legacy_player_id: null,
     legacy_liga_jugador_id: null,
+    rating: 3,
+    rating_partidos: 0,
+    rating_fiabilidad: 0.2,
     created_at: "",
     updated_at: "",
     stats: {

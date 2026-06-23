@@ -1,9 +1,33 @@
 import React from "react";
 import type { AmericanoSnapshotMatch } from "../../lib/americanoDinamicoStorage";
+import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import {
   TePubMatchOutcome,
   tePubScoreNumModifier,
 } from "./tePubShared";
+
+function formatTeamLabel(
+  players: [{ id: string; name: string }, { id: string; name: string }],
+  ratings?: Record<string, number>
+) {
+  const renderPlayer = (p: { id: string; name: string }) => (
+    <span key={p.name} className="te-pub-match__team-player">
+      {p.name}
+      <JugadorRatingChip
+        rating={ratings?.[p.id]}
+        className="te-pub-match__team-rating"
+      />
+    </span>
+  );
+
+  return (
+    <>
+      {renderPlayer(players[0])}
+      <span className="te-pub-match__team-sep"> / </span>
+      {renderPlayer(players[1])}
+    </>
+  );
+}
 
 function MatchStatus({ played, live }: { played: boolean; live: boolean }) {
   if (played) {
@@ -28,7 +52,8 @@ export const PublicAmericanoMatchCard: React.FC<{
   match: AmericanoSnapshotMatch;
   live: boolean;
   index: number;
-}> = ({ match: m, live, index }) => {
+  playerRatings?: Record<string, number>;
+}> = ({ match: m, live, index, playerRatings }) => {
   const played =
     typeof m.scoreA === "number" && typeof m.scoreB === "number";
   const aWins = played && (m.scoreA as number) > (m.scoreB as number);
@@ -79,11 +104,11 @@ export const PublicAmericanoMatchCard: React.FC<{
 
       <div className="te-pub-match__teams">
         <span className={`te-pub-match__team${aWins ? " te-pub-match__team--win" : ""}`}>
-          {m.teamA[0].name} / {m.teamA[1].name}
+          {formatTeamLabel(m.teamA, playerRatings)}
         </span>
         <span className="te-pub-match__vs">vs</span>
         <span className={`te-pub-match__team${bWins ? " te-pub-match__team--win" : ""}`}>
-          {m.teamB[0].name} / {m.teamB[1].name}
+          {formatTeamLabel(m.teamB, playerRatings)}
         </span>
       </div>
 

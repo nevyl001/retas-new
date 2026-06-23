@@ -41,7 +41,9 @@ import {
 } from "./public/PublicRetaWinnerSection";
 import {
   resolvePlayerAvatars,
+  resolvePlayerPublicProfiles,
   type PlayerAvatarLookupEntry,
+  type PlayerPublicProfile,
 } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import {
   championshipMatchEncounterLabel,
@@ -109,8 +111,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     second: PublicRetaWinnerAvatar[];
     third: PublicRetaWinnerAvatar[];
   }>({ second: [], third: [] });
-  const [playerAvatars, setPlayerAvatars] = useState<
-    Record<string, string | null>
+  const [playerProfiles, setPlayerProfiles] = useState<
+    Record<string, PlayerPublicProfile>
   >({});
   const configFetchOnDemandRef = useRef(false);
 
@@ -309,14 +311,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   useEffect(() => {
     if (!organizadorId || playerAvatarEntries.length === 0) {
-      setPlayerAvatars({});
+      setPlayerProfiles({});
       return;
     }
     let cancelled = false;
-    void resolvePlayerAvatars(organizadorId, playerAvatarEntries, {
+    void resolvePlayerPublicProfiles(organizadorId, playerAvatarEntries, {
       publicOnly: true,
     }).then((map) => {
-      if (!cancelled) setPlayerAvatars(map);
+      if (!cancelled) setPlayerProfiles(map);
     });
     return () => {
       cancelled = true;
@@ -339,16 +341,18 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         {
           id: pair.player1_id,
           name: pair.player1_name || pair.player1?.name || "Jugador 1",
-          fotoUrl: playerAvatars[pair.player1_id] ?? null,
+          fotoUrl: playerProfiles[pair.player1_id]?.fotoUrl ?? null,
+          rating: playerProfiles[pair.player1_id]?.rating ?? 3,
         },
         {
           id: pair.player2_id,
           name: pair.player2_name || pair.player2?.name || "Jugador 2",
-          fotoUrl: playerAvatars[pair.player2_id] ?? null,
+          fotoUrl: playerProfiles[pair.player2_id]?.fotoUrl ?? null,
+          rating: playerProfiles[pair.player2_id]?.rating ?? 3,
         },
       ];
     },
-    [pairs, playerAvatars]
+    [pairs, playerProfiles]
   );
 
   const renderPublicMatchCard = (

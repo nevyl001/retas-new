@@ -1,5 +1,6 @@
 import React from "react";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import { PublicRivieraCelebrateBrand } from "../public/PublicRivieraCelebrateBrand";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
 import { getDueloPublicStatus } from "../../lib/duelo2v2/schedule";
@@ -10,6 +11,7 @@ export interface DueloPlayerView {
   id: string | null;
   nombre: string;
   fotoUrl?: string | null;
+  rating?: number | null;
 }
 
 interface Duelo2v2LiveBoardProps {
@@ -78,6 +80,10 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
                   />
                 </div>
                 <span className="duelo2v2-live-player__name">{p.nombre}</span>
+                <JugadorRatingChip
+                  rating={p.rating}
+                  className="duelo2v2-live-player__rating"
+                />
               </div>
             ))}
           </div>
@@ -115,6 +121,10 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
                   />
                 </div>
                 <span className="duelo2v2-live-player__name">{p.nombre}</span>
+                <JugadorRatingChip
+                  rating={p.rating}
+                  className="duelo2v2-live-player__rating"
+                />
               </div>
             ))}
           </div>

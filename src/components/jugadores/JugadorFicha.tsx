@@ -14,6 +14,7 @@ import {
   deleteRivieraJugador,
   getRivieraJugadorBySlug,
   listParticipaciones,
+  obtenerHistorialRating,
   rebuildJugadorStats,
   updateRivieraJugador,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
@@ -21,6 +22,7 @@ import { uploadJugadorAvatar } from "../../lib/rivieraJugadores/uploadAvatar";
 import type {
   EnCancha,
   ManoDominante,
+  RatingHistorialEntry,
   RivieraJugadorCategoria,
   RivieraJugadorWithStats,
 } from "../../lib/rivieraJugadores/types";
@@ -31,6 +33,7 @@ import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
 import { JugadorHistorialList } from "./JugadorHistorialList";
+import { RatingNivel } from "./RatingNivel";
 import { navigateJugadorFicha, navigateJugadores } from "./jugadoresNav";
 import "./riviera-jugadores.css";
 
@@ -45,6 +48,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [historial, setHistorial] = useState<
     Awaited<ReturnType<typeof listParticipaciones>>
   >([]);
+  const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -103,6 +107,24 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!jugador?.id) {
+      setHistorialRating([]);
+      return;
+    }
+    let active = true;
+    obtenerHistorialRating(jugador.id, 10)
+      .then((rows) => {
+        if (active) setHistorialRating(rows);
+      })
+      .catch(() => {
+        if (active) setHistorialRating([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [jugador?.id]);
 
   const handleSaveProfile = async () => {
     if (!jugador) return;
@@ -568,6 +590,13 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             <span className="rj-stat-card__lbl">Americanos</span>
           </div>
         </div>
+
+        <RatingNivel
+          rating={jugador.rating ?? 3}
+          fiabilidad={jugador.rating_fiabilidad ?? 0.2}
+          partidosJugados={jugador.rating_partidos ?? 0}
+          historial={historialRating}
+        />
 
         {s?.racha_actual && (
           <p className="rj-page__sub" style={{ marginBottom: "1rem" }}>

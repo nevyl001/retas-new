@@ -1,11 +1,13 @@
 import React from "react";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import "../jugadores/riviera-jugadores.css";
 
 export type PublicRetaPairPlayer = {
   id: string;
   name: string;
   fotoUrl?: string | null;
+  rating?: number | null;
 };
 
 export const PublicRetaPairSide: React.FC<{
@@ -34,6 +36,10 @@ export const PublicRetaPairSide: React.FC<{
               className="te-pub-pair__avatar"
             />
             <span className="te-pub-pair__player-name">{p1!.name}</span>
+            <JugadorRatingChip
+              rating={p1!.rating}
+              className="te-pub-pair__player-rating"
+            />
           </div>
           <div className="te-pub-pair__player">
             <JugadorAvatar
@@ -43,6 +49,10 @@ export const PublicRetaPairSide: React.FC<{
               className="te-pub-pair__avatar"
             />
             <span className="te-pub-pair__player-name">{p2!.name}</span>
+            <JugadorRatingChip
+              rating={p2!.rating}
+              className="te-pub-pair__player-rating"
+            />
           </div>
         </div>
       ) : (

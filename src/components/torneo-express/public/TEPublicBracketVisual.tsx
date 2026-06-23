@@ -17,6 +17,7 @@ import {
 } from "../../../lib/torneoExpress/bracketRounds";
 import { detectMatchWinner } from "../../../lib/torneoExpress/partidoSets";
 import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
+import { JugadorRatingChip } from "../../jugadores/JugadorRatingChip";
 import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
 import "../../jugadores/riviera-jugadores.css";
 
@@ -325,11 +326,23 @@ function BracketTeamRow({
           <span className="te-bracket-team__seed">#{team.seed}</span>
         ) : null}
         <div className="te-bracket-team__names">
-          <span className="te-bracket-team__player">{p1.name}</span>
+          <span className="te-bracket-team__player">
+            {p1.name}
+            <JugadorRatingChip
+              rating={p1.rating}
+              className="te-bracket-team__rating"
+            />
+          </span>
           <span className="te-bracket-team__sep" aria-hidden>
             /
           </span>
-          <span className="te-bracket-team__player">{p2.name}</span>
+          <span className="te-bracket-team__player">
+            {p2.name}
+            <JugadorRatingChip
+              rating={p2.rating}
+              className="te-bracket-team__rating"
+            />
+          </span>
         </div>
         {team.originBadge ? (
           <span className="te-bracket-origin">{team.originBadge}</span>

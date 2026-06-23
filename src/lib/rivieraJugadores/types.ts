@@ -65,6 +65,10 @@ export interface RivieraJugador {
   legacy_liga_jugador_id: string | null;
   created_at: string;
   updated_at: string;
+  /** Nivel Playtomic-style (1.00–7.00), default 3.00 */
+  rating: number;
+  rating_partidos: number;
+  rating_fiabilidad: number;
 }
 
 export interface JugadorStats {
@@ -108,6 +112,16 @@ export type { RetaPartidoDetalle } from "./buildRetaPartidosDetalle";
 
 export interface RivieraJugadorWithStats extends RivieraJugador {
   stats?: JugadorStats | null;
+}
+
+export interface RatingHistorialEntry {
+  id: string;
+  fecha: string;
+  rating_antes: number;
+  rating_despues: number;
+  delta: number;
+  modo_juego: string;
+  descripcion: string;
 }
 
 export interface RegistrarParticipacionParams {

@@ -1068,3 +1068,55 @@
   justify-content: center;
   margin: 0 auto 1rem;
 }
+
+.jugador-rating-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #a3e635;
+  padding: 0.14rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(163, 230, 53, 0.35);
+  background: rgba(163, 230, 53, 0.12);
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+
+.te-pub-pair__player-rating,
+.duelo2v2-live-player__rating {
+  margin-top: 0.28rem;
+}
+
+.te-bracket-team__rating {
+  margin-left: 0.25rem;
+  vertical-align: middle;
+  font-size: 0.62rem;
+  padding: 0.1rem 0.35rem;
+}
+
+.te-elim-finalists-pair__rating {
+  margin-left: 0.2rem;
+  font-size: 0.62rem;
+  padding: 0.1rem 0.32rem;
+}
+
+.te-pub-match__team-rating {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.62rem;
+  opacity: 0.9;
+}
+
+.te-pub-match__team-player {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: top;
+}
+
+.te-pub-match__team-sep {
+  display: inline-block;
+  margin: 0 0.35rem;
+  vertical-align: middle;
+}

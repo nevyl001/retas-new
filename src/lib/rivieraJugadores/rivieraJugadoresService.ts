@@ -1,3 +1,4 @@
+import { isMissingColumnError } from "../db/schemaHelpers";
 import { supabase, supabasePublicRead } from "../supabaseClient";
 import type {
   CreateRivieraJugadorInput,
@@ -8,6 +9,7 @@ import type {
   RivieraJugadorCategoria,
   RivieraJugadorNivel,
   RivieraJugadorWithStats,
+  RatingHistorialEntry,
 } from "./types";
 import { normalizePaisCodigo } from "./paises";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
@@ -16,11 +18,55 @@ import {
   type RivieraJugadorGenero,
 } from "./genero";
 
-const JUGADOR_SELECT =
+const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
+
+const JUGADOR_RATING_COLS = "rating,rating_partidos,rating_fiabilidad";
+
+/** null = aún no probado; false = columnas rating no existen en riviera_jugadores */
+let jugadorRatingColsInDb: boolean | null = null;
+
+function getJugadorSelectColumns(): string {
+  if (jugadorRatingColsInDb === false) return JUGADOR_SELECT_BASE;
+  return `${JUGADOR_SELECT_BASE},${JUGADOR_RATING_COLS}`;
+}
+
+function isMissingRatingColumnError(
+  error: { code?: string; message?: string } | null
+): boolean {
+  return (
+    isMissingColumnError(error, "riviera_jugadores", "rating") ||
+    isMissingColumnError(error, "riviera_jugadores", "rating_partidos") ||
+    isMissingColumnError(error, "riviera_jugadores", "rating_fiabilidad")
+  );
+}
+
+type SupabaseResult<T> = {
+  data: T;
+  error: { code?: string; message?: string } | null;
+};
+
+async function withJugadorSelectFallback<T>(
+  run: (selectCols: string) => PromiseLike<SupabaseResult<T>>
+): Promise<SupabaseResult<T>> {
+  if (jugadorRatingColsInDb === false) {
+    return run(JUGADOR_SELECT_BASE);
+  }
+  const result = await run(getJugadorSelectColumns());
+  if (result.error && isMissingRatingColumnError(result.error)) {
+    jugadorRatingColsInDb = false;
+    return run(JUGADOR_SELECT_BASE);
+  }
+  if (!result.error) jugadorRatingColsInDb = true;
+  return result;
+}
 
 const STATS_SELECT =
   "jugador_id,total_partidos,victorias,derrotas,empates,participaciones_solo,pct_victorias,total_retas,total_torneos_express,total_ligas,total_americanos,sets_favor_total,sets_contra_total,racha_actual,ultima_actividad,puntos_totales,updated_at";
+
+function jugadorSelectWithStats(cols = getJugadorSelectColumns()): string {
+  return `${cols}, stats:jugador_stats(${STATS_SELECT})`;
+}
 
 function normalizeStatsJoin(
   stats: JugadorStats | JugadorStats[] | null | undefined
@@ -57,6 +103,21 @@ function normalizeJugadorFields(
   if (j.pais_codigo === undefined) {
     j.pais_codigo = null;
   }
+  const ratingRaw = raw.rating;
+  const partidosRaw = raw.rating_partidos;
+  const fiabRaw = raw.rating_fiabilidad;
+  j.rating =
+    ratingRaw != null && Number.isFinite(Number(ratingRaw))
+      ? Number(ratingRaw)
+      : 3.0;
+  j.rating_partidos =
+    partidosRaw != null && Number.isFinite(Number(partidosRaw))
+      ? Number(partidosRaw)
+      : 0;
+  j.rating_fiabilidad =
+    fiabRaw != null && Number.isFinite(Number(fiabRaw))
+      ? Number(fiabRaw)
+      : 0.2;
   return j;
 }
 
@@ -167,34 +228,40 @@ export async function listRivieraJugadores(
     genero?: RivieraJugadorGenero;
   }
 ): Promise<RivieraJugadorWithStats[]> {
-  let q = supabase
-    .from("riviera_jugadores")
-    .select(`${JUGADOR_SELECT}, stats:jugador_stats(${STATS_SELECT})`)
-    .eq("organizador_id", organizadorId)
-    .neq("estado", "archivado")
-    .order("nombre");
+  const buildQuery = (selectCols: string) => {
+    let q = supabase
+      .from("riviera_jugadores")
+      .select(jugadorSelectWithStats(selectCols))
+      .eq("organizador_id", organizadorId)
+      .neq("estado", "archivado")
+      .order("nombre");
 
-  if (opts?.genero === "F") {
-    q = q.eq("genero", "F");
-  } else if (opts?.genero === "M") {
-    q = q.or("genero.eq.M,genero.is.null");
-  }
+    if (opts?.genero === "F") {
+      q = q.eq("genero", "F");
+    } else if (opts?.genero === "M") {
+      q = q.or("genero.eq.M,genero.is.null");
+    }
 
-  if (opts?.search?.trim()) {
-    q = q.ilike("nombre", `%${opts.search.trim()}%`);
-  }
-  if (opts?.nivel) {
-    q = q.eq("categoria", opts.nivel);
-  }
+    if (opts?.search?.trim()) {
+      q = q.ilike("nombre", `%${opts.search.trim()}%`);
+    }
+    if (opts?.nivel) {
+      q = q.eq("categoria", opts.nivel);
+    }
 
-  const { data, error } = await q;
+    return q;
+  };
+
+  const { data, error } = await withJugadorSelectFallback((cols) =>
+    buildQuery(cols)
+  );
   if (error) {
     if (isMissingTableError(error)) return [];
     throw error;
   }
 
-  let rows = (data ?? []).map((row) =>
-    mapJugadorRow(row as Record<string, unknown>)
+  let rows = ((data ?? []) as unknown as Record<string, unknown>[]).map(
+    (row) => mapJugadorRow(row)
   );
   if (opts?.genero) {
     rows = rows.filter((row) =>
@@ -215,54 +282,62 @@ export async function getRivieraJugadorBySlug(
   organizadorId: string,
   slug: string
 ): Promise<RivieraJugadorWithStats | null> {
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .select(`${JUGADOR_SELECT}, stats:jugador_stats(${STATS_SELECT})`)
-    .eq("organizador_id", organizadorId)
-    .eq("slug", slug)
-    .maybeSingle();
+  const { data, error } = await withJugadorSelectFallback<
+    Record<string, unknown> | null
+  >((cols) =>
+    supabase
+      .from("riviera_jugadores")
+      .select(jugadorSelectWithStats(cols))
+      .eq("organizador_id", organizadorId)
+      .eq("slug", slug)
+      .maybeSingle()
+  );
 
   if (error) {
     if (isMissingTableError(error)) return null;
     throw error;
   }
-  return data ? mapJugadorRow(data as Record<string, unknown>) : null;
+  return data ? mapJugadorRow(data as unknown as Record<string, unknown>) : null;
 }
 
 export async function getRivieraJugadorByLegacyLigaId(
   legacyLigaJugadorId: string
 ): Promise<RivieraJugador | null> {
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .select(JUGADOR_SELECT)
-    .eq("legacy_liga_jugador_id", legacyLigaJugadorId)
-    .maybeSingle();
+  const { data, error } = await withJugadorSelectFallback((cols) =>
+    supabase
+      .from("riviera_jugadores")
+      .select(cols)
+      .eq("legacy_liga_jugador_id", legacyLigaJugadorId)
+      .maybeSingle()
+  );
 
   if (error) {
     if (isMissingTableError(error)) return null;
     throw error;
   }
-  return (data as RivieraJugador | null) ?? null;
+  return (data as unknown as RivieraJugador | null) ?? null;
 }
 
 export async function getRivieraJugadorByLegacyPlayerId(
   legacyPlayerId: string,
   organizadorId?: string
 ): Promise<RivieraJugador | null> {
-  let q = supabase
-    .from("riviera_jugadores")
-    .select(JUGADOR_SELECT)
-    .eq("legacy_player_id", legacyPlayerId);
-  if (organizadorId?.trim()) {
-    q = q.eq("organizador_id", organizadorId.trim());
-  }
-  const { data, error } = await q.maybeSingle();
+  const { data, error } = await withJugadorSelectFallback((cols) => {
+    let q = supabase
+      .from("riviera_jugadores")
+      .select(cols)
+      .eq("legacy_player_id", legacyPlayerId);
+    if (organizadorId?.trim()) {
+      q = q.eq("organizador_id", organizadorId.trim());
+    }
+    return q.maybeSingle();
+  });
 
   if (error) {
     if (isMissingTableError(error)) return null;
     throw error;
   }
-  return (data as RivieraJugador | null) ?? null;
+  return (data as unknown as RivieraJugador | null) ?? null;
 }
 
 export async function slugExistsForOrg(
@@ -298,32 +373,34 @@ export async function createRivieraJugador(
     slugExistsForOrg(organizadorId, s, genero)
   );
 
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .insert({
-      nombre: input.nombre.trim(),
-      slug,
-      email: input.email ?? null,
-      telefono: input.telefono ?? null,
-      whatsapp: input.whatsapp ?? null,
-      nivel: input.nivel ?? "intermedio",
-      categoria: input.categoria ?? "open",
-      edad: input.edad ?? null,
-      mano_dominante: input.mano_dominante ?? null,
-      en_cancha: input.en_cancha ?? null,
-      pais_codigo: normalizePaisCodigo(input.pais_codigo),
-      genero,
-      club: input.club ?? null,
-      foto_url: input.foto_url ?? null,
-      organizador_id: organizadorId,
-      estado: "activo",
-      visible_publico: true,
-    })
-    .select(JUGADOR_SELECT)
-    .single();
+  const { data, error } = await withJugadorSelectFallback((cols) =>
+    supabase
+      .from("riviera_jugadores")
+      .insert({
+        nombre: input.nombre.trim(),
+        slug,
+        email: input.email ?? null,
+        telefono: input.telefono ?? null,
+        whatsapp: input.whatsapp ?? null,
+        nivel: input.nivel ?? "intermedio",
+        categoria: input.categoria ?? "open",
+        edad: input.edad ?? null,
+        mano_dominante: input.mano_dominante ?? null,
+        en_cancha: input.en_cancha ?? null,
+        pais_codigo: normalizePaisCodigo(input.pais_codigo),
+        genero,
+        club: input.club ?? null,
+        foto_url: input.foto_url ?? null,
+        organizador_id: organizadorId,
+        estado: "activo",
+        visible_publico: true,
+      })
+      .select(cols)
+      .single()
+  );
 
   if (error) throw error;
-  return data as RivieraJugador;
+  return data as unknown as RivieraJugador;
 }
 
 export async function updateRivieraJugador(
@@ -393,16 +470,18 @@ export async function updateRivieraJugador(
     }
   }
 
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .update(payload)
-    .eq("id", id)
-    .eq("organizador_id", organizadorId)
-    .select(JUGADOR_SELECT)
-    .single();
+  const { data, error } = await withJugadorSelectFallback((cols) =>
+    supabase
+      .from("riviera_jugadores")
+      .update(payload)
+      .eq("id", id)
+      .eq("organizador_id", organizadorId)
+      .select(cols)
+      .single()
+  );
   if (error) throw error;
 
-  const updated = data as RivieraJugador;
+  const updated = data as unknown as RivieraJugador;
   if (updated.organizador_id) {
     const { syncRivieraJugadorToLinkedPools } = await import("./playerPoolSync");
     await syncRivieraJugadorToLinkedPools(updated.organizador_id, updated);
@@ -510,15 +589,18 @@ export async function ensureRivieraJugadorForLegacyPlayer(
         : null;
 
     if (email) {
-      const { data: byEmail } = await supabase
-        .from("riviera_jugadores")
-        .select(JUGADOR_SELECT)
-        .eq("organizador_id", organizadorId)
-        .ilike("email", email)
-        .maybeSingle();
+      const { data: byEmail } = await withJugadorSelectFallback((cols) =>
+        supabase
+          .from("riviera_jugadores")
+          .select(cols)
+          .eq("organizador_id", organizadorId)
+          .ilike("email", email)
+          .maybeSingle()
+      );
       if (byEmail) {
-        await linkLegacyPlayerId(byEmail.id, legacyPlayer.id);
-        return byEmail as RivieraJugador;
+        const jugador = byEmail as unknown as RivieraJugador;
+        await linkLegacyPlayerId(jugador.id, legacyPlayer.id);
+        return jugador;
       }
     }
 
@@ -730,23 +812,25 @@ export async function getRivieraJugadorPublicBySlug(
   slug: string,
   organizadorId?: string | null
 ): Promise<RivieraJugadorWithStats | null> {
-  let q = supabase
-    .from("riviera_jugadores")
-    .select(`${JUGADOR_SELECT}, stats:jugador_stats(${STATS_SELECT})`)
-    .eq("slug", slug)
-    .eq("estado", "activo")
-    .or("visible_publico.eq.true,visible_publico.is.null");
+  const { data, error } = await withJugadorSelectFallback((cols) => {
+    let q = supabase
+      .from("riviera_jugadores")
+      .select(jugadorSelectWithStats(cols))
+      .eq("slug", slug)
+      .eq("estado", "activo")
+      .or("visible_publico.eq.true,visible_publico.is.null");
 
-  if (organizadorId) {
-    q = q.eq("organizador_id", organizadorId);
-  }
+    if (organizadorId) {
+      q = q.eq("organizador_id", organizadorId);
+    }
 
-  const { data, error } = await q.maybeSingle();
+    return q.maybeSingle();
+  });
   if (error) {
     if (isMissingTableError(error)) return null;
     throw error;
   }
-  return data ? mapJugadorRow(data as Record<string, unknown>) : null;
+  return data ? mapJugadorRow(data as unknown as Record<string, unknown>) : null;
 }
 
 /** Ranking público por categoría y género (orden: más puntos, luego nombre). */
@@ -755,30 +839,32 @@ export async function listPublicJugadoresRanking(
   categoria: string,
   genero: RivieraJugadorGenero = "M"
 ): Promise<RivieraJugadorWithStats[]> {
-  let q = supabase
-    .from("riviera_jugadores")
-    .select(`${JUGADOR_SELECT}, stats:jugador_stats(${STATS_SELECT})`)
-    .eq("organizador_id", organizadorId)
-    .eq("categoria", categoria)
-    .eq("estado", "activo")
-    .or("visible_publico.eq.true,visible_publico.is.null")
-    .order("nombre");
+  const { data, error } = await withJugadorSelectFallback((cols) => {
+    let q = supabase
+      .from("riviera_jugadores")
+      .select(jugadorSelectWithStats(cols))
+      .eq("organizador_id", organizadorId)
+      .eq("categoria", categoria)
+      .eq("estado", "activo")
+      .or("visible_publico.eq.true,visible_publico.is.null")
+      .order("nombre");
 
-  if (genero === "F") {
-    q = q.eq("genero", "F");
-  } else {
-    q = q.or("genero.eq.M,genero.is.null");
-  }
+    if (genero === "F") {
+      q = q.eq("genero", "F");
+    } else {
+      q = q.or("genero.eq.M,genero.is.null");
+    }
 
-  const { data, error } = await q;
+    return q;
+  });
 
   if (error) {
     if (isMissingTableError(error)) return [];
     throw error;
   }
 
-  const rows = (data ?? []).map((row) =>
-    mapJugadorRow(row as Record<string, unknown>)
+  const rows = ((data ?? []) as unknown as Record<string, unknown>[]).map(
+    (row) => mapJugadorRow(row)
   );
   const filtered = rows.filter((row) =>
     isJugadorInGeneroBracket(row.genero, genero)
@@ -870,20 +956,85 @@ export async function searchRivieraJugadoresQuick(
 ): Promise<RivieraJugador[]> {
   const q = query.trim();
   if (!q) return [];
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .select(JUGADOR_SELECT)
-    .eq("organizador_id", organizadorId)
-    .neq("estado", "archivado")
-    .ilike("nombre", `%${q}%`)
-    .order("nombre")
-    .limit(limit);
+  const { data, error } = await withJugadorSelectFallback((cols) =>
+    supabase
+      .from("riviera_jugadores")
+      .select(cols)
+      .eq("organizador_id", organizadorId)
+      .neq("estado", "archivado")
+      .ilike("nombre", `%${q}%`)
+      .order("nombre")
+      .limit(limit)
+  );
 
   if (error) {
     if (isMissingTableError(error)) return [];
     throw error;
   }
-  return (data ?? []) as RivieraJugador[];
+  return (data ?? []) as unknown as RivieraJugador[];
+}
+
+export async function obtenerHistorialRating(
+  jugadorId: string,
+  limite = 10
+): Promise<RatingHistorialEntry[]> {
+  const { data, error } = await supabase
+    .from("rating_historial")
+    .select(
+      "id, fecha, rating_antes, rating_despues, delta, modo_juego, descripcion"
+    )
+    .eq("jugador_id", jugadorId)
+    .order("fecha", { ascending: false })
+    .limit(limite);
+
+  if (error) {
+    if (isMissingTableError(error)) return [];
+    throw new Error(error.message);
+  }
+  return (data ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      id: String(r.id),
+      fecha: String(r.fecha),
+      rating_antes: Number(r.rating_antes ?? 0),
+      rating_despues: Number(r.rating_despues ?? 0),
+      delta: Number(r.delta ?? 0),
+      modo_juego: String(r.modo_juego ?? ""),
+      descripcion: String(r.descripcion ?? ""),
+    };
+  });
+}
+
+/** Historial de rating para vista pública (sin sesión de organizador). */
+export async function obtenerHistorialRatingPublic(
+  jugadorId: string,
+  limite = 10
+): Promise<RatingHistorialEntry[]> {
+  const { data, error } = await supabasePublicRead
+    .from("rating_historial")
+    .select(
+      "id, fecha, rating_antes, rating_despues, delta, modo_juego, descripcion"
+    )
+    .eq("jugador_id", jugadorId)
+    .order("fecha", { ascending: false })
+    .limit(limite);
+
+  if (error) {
+    if (isMissingTableError(error)) return [];
+    throw new Error(error.message);
+  }
+  return (data ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      id: String(r.id),
+      fecha: String(r.fecha),
+      rating_antes: Number(r.rating_antes ?? 0),
+      rating_despues: Number(r.rating_despues ?? 0),
+      delta: Number(r.delta ?? 0),
+      modo_juego: String(r.modo_juego ?? ""),
+      descripcion: String(r.descripcion ?? ""),
+    };
+  });
 }
 
 export type { JugadorStats };
