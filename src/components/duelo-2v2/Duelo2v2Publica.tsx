@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useUser } from "../../contexts/UserContext";
 import { supabase } from "../../lib/supabaseClient";
 import { DUELO_2V2_PUBLIC_POLL_INTERVAL_MS } from "../../lib/duelo2v2/publicPoll";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
@@ -10,8 +9,6 @@ import {
 } from "../../services/duelo2v2Service";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
 import { Duelo2v2LiveBoard } from "./Duelo2v2LiveBoard";
-import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo2v2Nav";
-import { Button } from "../ui";
 import "../../styles/riviera-public-celebrate.css";
 import "./duelo2v2-page.css";
 
@@ -38,11 +35,11 @@ async function fetchJugadorFotos(
 }
 
 export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => {
-  const { user } = useUser();
   const [duelo, setDuelo] = useState<Duelo2v2 | null>(null);
   const [fotos, setFotos] = useState<Map<string, string | null>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -55,6 +52,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
       }
       setDuelo(d);
       setError(null);
+      setLastRefreshedAt(new Date());
       const fotoMap = await fetchJugadorFotos([
         d.pareja_a_j1_id,
         d.pareja_a_j2_id,
@@ -134,8 +132,6 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
     { id: duelo.pareja_b_j2_id, nombre: duelo.pareja_b_j2_nombre, fotoUrl: foto(duelo.pareja_b_j2_id) },
   ] as const;
 
-  const isOrganizador = Boolean(user && duelo.organizador_id === user.id);
-
   return (
     <div className="duelo2v2-page duelo2v2-page--public duelo2v2-publica">
       <div className="duelo2v2-page__inner duelo2v2-page__inner--public">
@@ -162,18 +158,19 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
           />
         )}
 
-        {isOrganizador && !finalizado && (
-          <div className="duelo2v2-public-admin">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => navigateDuelo2v2(duelo2v2GestionarPath(duelo.id))}
-            >
-              {tieneGanador ? "Gestionar duelo" : "Actualizar marcador"}
-            </Button>
-          </div>
-        )}
+        <footer className="duelo2v2-public-sync" aria-live="polite">
+          <p className="duelo2v2-public-sync__line">
+            Esta página se actualiza automáticamente cada 60 segundos
+            {lastRefreshedAt
+              ? ` · Última actualización: ${lastRefreshedAt.toLocaleTimeString("es-MX", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}`
+              : ""}
+          </p>
+          <p className="duelo2v2-public-sync__line">Vista pública · solo lectura</p>
+        </footer>
       </div>
     </div>
   );

@@ -111,7 +111,7 @@ export const Duelo2v2Home: React.FC = () => {
               <> · {d.sets_pareja_a}–{d.sets_pareja_b} sets</>
             )}
           </div>
-          <Duelo2v2MatchMeta duelo={d} className="duelo2v2-card__schedule" />
+          <Duelo2v2MatchMeta duelo={d} className="duelo2v2-card__schedule" align="start" />
           <div className="duelo2v2-card__actions">
             <Button
               type="button"

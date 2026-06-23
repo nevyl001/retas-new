@@ -126,30 +126,165 @@
 }
 
 .duelo2v2-match-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  width: 100%;
+  margin-top: 0.85rem;
 }
 
-.duelo2v2-match-meta__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+.duelo2v2-match-meta--align-center .duelo2v2-match-meta__card {
+  margin-inline: auto;
+}
+
+.duelo2v2-match-meta--align-start .duelo2v2-match-meta__card {
+  margin-inline: 0;
+}
+
+.duelo2v2-match-meta__card {
+  display: grid;
+  width: 100%;
+  max-width: min(100%, 520px);
+  border-radius: 14px;
+  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "fecha horario"
+    "cancha cancha";
 }
 
-.duelo2v2-match-meta__icon {
-  line-height: 1;
+.duelo2v2-match-meta__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.72rem 0.55rem;
+  text-align: center;
+  min-width: 0;
+}
+
+.duelo2v2-match-meta__item--fecha {
+  grid-area: fecha;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.duelo2v2-match-meta__item--horario {
+  grid-area: horario;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.duelo2v2-match-meta__item--cancha {
+  grid-area: cancha;
+  border-right: none;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.duelo2v2-match-meta__kicker {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+  line-height: 1.2;
+}
+
+.duelo2v2-match-meta__value {
+  font-size: clamp(0.78rem, 2.6vw, 0.9rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.92);
+  word-break: break-word;
+}
+
+.duelo2v2-match-meta__value--accent {
+  color: var(--accent-gold-light, #e8c547);
+}
+
+.duelo2v2-match-meta__value--court {
+  color: #f8b4b4;
+  letter-spacing: 0.02em;
+}
+
+/* Solo cancha (sin fecha/horario) */
+.duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--cancha):not(
+    :has(.duelo2v2-match-meta__item--fecha)
+  ):not(:has(.duelo2v2-match-meta__item--horario)) {
+  grid-template-columns: 1fr;
+  grid-template-areas: "cancha";
+}
+
+/* Solo fecha + cancha */
+.duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--fecha):not(
+    :has(.duelo2v2-match-meta__item--horario)
+  ) {
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "fecha fecha"
+    "cancha cancha";
+}
+
+.duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--fecha):not(
+    :has(.duelo2v2-match-meta__item--horario)
+  )
+  .duelo2v2-match-meta__item--fecha {
+  border-right: none;
+}
+
+/* Solo horario + cancha */
+.duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--horario):not(
+    :has(.duelo2v2-match-meta__item--fecha)
+  ) {
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "horario horario"
+    "cancha cancha";
+}
+
+@media (min-width: 560px) {
+  .duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--fecha):has(
+      .duelo2v2-match-meta__item--horario
+    ) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-areas: "fecha horario cancha";
+  }
+
+  .duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--fecha):has(
+      .duelo2v2-match-meta__item--horario
+    )
+    .duelo2v2-match-meta__item--fecha,
+  .duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--fecha):has(
+      .duelo2v2-match-meta__item--horario
+    )
+    .duelo2v2-match-meta__item--horario {
+    border-bottom: none;
+  }
+
+  .duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--fecha):has(
+      .duelo2v2-match-meta__item--horario
+    )
+    .duelo2v2-match-meta__item--fecha {
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--fecha):has(
+      .duelo2v2-match-meta__item--horario
+    )
+    .duelo2v2-match-meta__item--horario {
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .duelo2v2-match-meta__card:has(.duelo2v2-match-meta__item--fecha):has(
+      .duelo2v2-match-meta__item--horario
+    )
+    .duelo2v2-match-meta__item--cancha {
+    background: transparent;
+  }
 }
 
 .duelo2v2-live-board__meta {
-  justify-content: center;
+  margin-top: 1rem;
 }
 
 .duelo2v2-card__schedule {
@@ -1296,12 +1431,22 @@
   margin-right: auto;
 }
 
-.duelo2v2-public-admin {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+.duelo2v2-public-sync {
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.duelo2v2-public-sync__line {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.duelo2v2-public-sync__line + .duelo2v2-public-sync__line {
+  margin-top: 0.25rem;
 }
 
 .duelo2v2-public-score {

@@ -7,16 +7,44 @@ import {
 import { canchaDraftFromStored } from "../torneoExpress/canchaDisplay";
 import type { Duelo2v2 } from "./types";
 
-/** Rango horario legible: "3:00 p.m. a 5:00 p.m." */
+/** Rango horario legible: "3:00 – 5:00 p.m." o "3:00 p.m. – 5:00 a.m." */
 export function formatDueloHorarioRange(
   inicioIso: string | null | undefined,
   finIso: string | null | undefined
 ): string | null {
   if (!inicioIso?.trim()) return null;
-  const inicio = formatPartidoHora(inicioIso);
-  if (!finIso?.trim()) return inicio;
-  const fin = formatPartidoHora(finIso);
-  return `${inicio} a ${fin}`;
+  if (!finIso?.trim()) return formatPartidoHora(inicioIso);
+
+  const inicioDate = new Date(inicioIso);
+  const finDate = new Date(finIso);
+  if (Number.isNaN(inicioDate.getTime()) || Number.isNaN(finDate.getTime())) {
+    return formatPartidoHora(inicioIso);
+  }
+
+  const timeOpts: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  const inicioFull = inicioDate.toLocaleTimeString("es-MX", timeOpts);
+  const finFull = finDate.toLocaleTimeString("es-MX", timeOpts);
+  const meridiemRe = /\s*(a\.?\s*m\.?|p\.?\s*m\.?)\s*$/i;
+
+  const inicioMer = inicioFull.match(meridiemRe)?.[1] ?? "";
+  const finMer = finFull.match(meridiemRe)?.[1] ?? "";
+  const inicioTime = inicioFull.replace(meridiemRe, "").trim();
+  const finTime = finFull.replace(meridiemRe, "").trim();
+
+  if (
+    inicioMer &&
+    finMer &&
+    inicioMer.replace(/\./g, "").toLowerCase() ===
+      finMer.replace(/\./g, "").toLowerCase()
+  ) {
+    return `${inicioTime} – ${finTime} ${finMer}`;
+  }
+
+  return `${inicioFull} – ${finFull}`;
 }
 
 export function dueloScheduleDraftFromDuelo(
