@@ -50,6 +50,13 @@
   border-radius: 20px;
 }
 
+.user-management-hint {
+  margin: -0.75rem 0 1.25rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--admin-text-muted);
+}
+
 .header-controls {
   display: flex;
   gap: 8px;
@@ -69,6 +76,12 @@
 
 .user-management-notice p {
   margin: 0 0 10px;
+}
+
+.user-management-notice--error {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fecaca;
 }
 
 .user-management-notice-actions {

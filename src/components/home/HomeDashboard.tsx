@@ -10,6 +10,8 @@ import {
   persistAmericanoActiveTournamentId,
 } from "../../lib/americanoDinamicoStorage";
 import { useUser } from "../../contexts/UserContext";
+import { useAccountFeatures } from "../../contexts/AccountFeaturesContext";
+import { GAME_MODE_LABELS } from "../../lib/admin/organizadorGameModes";
 import { navigateLiga } from "../liga/ligaNav";
 import { navigateDuelo2v2 } from "../duelo-2v2/duelo2v2Nav";
 import { navigateAppTo } from "../../lib/appRouting";
@@ -43,6 +45,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   onShowAllRetas,
 }) => {
   const { userProfile } = useUser();
+  const { isModeEnabled } = useAccountFeatures();
   const [sheetMode, setSheetMode] = useState<GameModeId | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +54,12 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   const handleModeSelect = useCallback(
     async (modeId: GameModeId) => {
       setError(null);
+      if (!isModeEnabled(modeId)) {
+        setError(
+          `${GAME_MODE_LABELS[modeId]} no está habilitado para tu cuenta. Contacta a Riviera Open.`
+        );
+        return;
+      }
       persistLastGameMode(modeId);
       if (modeId === "mini-torneo") {
         navigateTorneoExpress("/torneo-express");
@@ -85,7 +94,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       }
       setSheetMode(modeId);
     },
-    [userId]
+    [userId, isModeEnabled]
   );
 
   const handleQuickStart = useCallback(
@@ -151,7 +160,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   return (
     <div className="home-inner">
       <HomeHeader userName={userProfile?.name} />
-      <GameModesGrid onModeSelect={handleModeSelect} />
+      <GameModesGrid onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
       {error && <p className="home-error">{error}</p>}
       <RecentRetasSection userId={userId} onSelectTournament={onTournamentSelect} />
       <section className="home-quick-links" aria-label="Accesos de organización">

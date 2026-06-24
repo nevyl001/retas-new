@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useAdmin } from "../../contexts/AdminContext";
+import { navigateAdminUser } from "../../lib/admin/adminNav";
+import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
 import "./UserManagement.css";
 
 const DRAFT_DESCRIPTION = "Parejas en armado para torneo";
@@ -136,11 +138,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   const [filterBy, setFilterBy] = useState<"all" | "active" | "inactive">(
     "all"
   );
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showUserDetails, setShowUserDetails] = useState(false);
   const [authCleanupNotice, setAuthCleanupNotice] = useState<string | null>(
     null
   );
+  const [authCleanupNoticeError, setAuthCleanupNoticeError] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -310,99 +312,43 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     return filtered;
   }, [users, searchTerm, sortBy, sortOrder, filterBy]);
 
-  const detailUser =
-    showUserDetails && selectedUser
-      ? users.find((u) => u.id === selectedUser.id) ?? selectedUser
-      : null;
-
   const handleUserSelect = (user: User) => {
-    setSelectedUser(user);
-    setShowUserDetails(true);
     if (onUserSelect) {
       onUserSelect(user);
     }
+    navigateAdminUser(user.id);
   };
 
   const handleDeleteUser = async (user: User) => {
     if (
       !window.confirm(
-        `¿Estás seguro de que quieres eliminar al usuario "${user.name || user.email}"? Esta acción no se puede deshacer.`
+        `¿Eliminar por completo a "${user.name || user.email}"?\n\nSe borrarán retas, jugadores, torneos, ligas, duelos, ranking y su cuenta de acceso. Esta acción no se puede deshacer.`
       )
     ) {
       return;
     }
 
+    setDeletingUserId(user.id);
+    setAuthCleanupNotice(null);
+    setAuthCleanupNoticeError(false);
+
     try {
-      const { error: tournamentsError } = await supabase
-        .from("tournaments")
-        .delete()
-        .eq("user_id", user.id);
-
-      if (tournamentsError) {
-        console.error("Error eliminando torneos:", tournamentsError);
-      }
-
-      const { error: playersError } = await supabase
-        .from("players")
-        .delete()
-        .eq("user_id", user.id);
-
-      if (playersError) {
-        console.error("Error eliminando jugadores:", playersError);
-      }
-
-      const { error: pairsError } = await supabase
-        .from("pairs")
-        .delete()
-        .eq("user_id", user.id);
-
-      if (pairsError) {
-        console.error("Error eliminando pares:", pairsError);
-      }
-
-      const { error: matchesError } = await supabase
-        .from("matches")
-        .delete()
-        .eq("user_id", user.id);
-
-      if (matchesError) {
-        console.error("Error eliminando partidos:", matchesError);
-      }
-
-      const { error: gamesError } = await supabase
-        .from("games")
-        .delete()
-        .eq("user_id", user.id);
-
-      if (gamesError) {
-        console.error("Error eliminando juegos:", gamesError);
-      }
-
-      const { error: userError } = await supabase
-        .from("users")
-        .delete()
-        .eq("id", user.id);
-
-      if (userError) {
-        console.error("Error eliminando usuario de public.users:", userError);
-        return;
-      }
+      await deleteUserComplete(user.id);
 
       setAuthCleanupNotice(
-        `Se eliminaron los datos de "${user.name || user.email}" en la app. ` +
-          `Si esa persona aún puede iniciar sesión, borra también la cuenta en ` +
-          `Supabase → Authentication → Users (busca por email o por id ${user.id}). ` +
-          `Los Torneo Express del usuario no se eliminan desde este panel; hazlo en Supabase si aplica.`
+        `Se eliminó por completo la cuenta de "${user.name || user.email}" y todos sus datos.`
       );
+      setAuthCleanupNoticeError(false);
 
       await loadUsers();
-
-      if (selectedUser?.id === user.id) {
-        setShowUserDetails(false);
-        setSelectedUser(null);
-      }
-    } catch (error) {
-      console.error("Error inesperado:", error);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "No se pudo eliminar el usuario";
+      setAuthCleanupNotice(message);
+      setAuthCleanupNoticeError(true);
+      console.error("Error eliminando usuario:", err);
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -458,23 +404,29 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </button>
         </div>
       </div>
+      <p className="user-management-hint">
+        Pulsa <strong>Gestionar</strong> en una cuenta para bloquear modos de
+        juego y controlar qué jugadores suman al ranking del sitio web.
+      </p>
 
       {authCleanupNotice && (
-        <div className="user-management-notice" role="status">
+        <div
+          className={
+            authCleanupNoticeError
+              ? "user-management-notice user-management-notice--error"
+              : "user-management-notice"
+          }
+          role="status"
+        >
           <p>{authCleanupNotice}</p>
           <div className="user-management-notice-actions">
-            <a
-              href="https://supabase.com/dashboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="notice-link"
-            >
-              Abrir panel de Supabase
-            </a>
             <button
               type="button"
               className="notice-dismiss"
-              onClick={() => setAuthCleanupNotice(null)}
+              onClick={() => {
+                setAuthCleanupNotice(null);
+                setAuthCleanupNoticeError(false);
+              }}
             >
               Entendido
             </button>
@@ -594,17 +546,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                     type="button"
                     className="action-btn view-btn"
                     onClick={() => handleUserSelect(user)}
-                    title="Ver detalles"
+                    title="Modos de juego, jugadores y ranking"
                   >
-                    Ver
+                    Gestionar
                   </button>
                   <button
                     type="button"
                     className="action-btn delete-btn"
                     onClick={() => handleDeleteUser(user)}
                     title="Eliminar usuario"
+                    disabled={deletingUserId === user.id}
                   >
-                    Eliminar
+                    {deletingUserId === user.id ? "Eliminando…" : "Eliminar"}
                   </button>
                 </div>
               </div>
@@ -612,142 +565,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </div>
         )}
       </div>
-
-      {detailUser && (
-        <div
-          className="user-details-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="um-detail-modal-title"
-        >
-          <div
-            className="modal-backdrop"
-            onClick={() => setShowUserDetails(false)}
-            aria-hidden="true"
-          />
-          <div className="modal-content um-detail-modal">
-            <header className="um-detail-modal__header">
-              <button
-                type="button"
-                className="um-detail-modal__close"
-                onClick={() => setShowUserDetails(false)}
-                aria-label="Cerrar"
-              >
-                ×
-              </button>
-
-              <div className="um-detail-modal__identity">
-                <div className="um-detail-modal__avatar">
-                  {detailUser.avatar_url ? (
-                    <img
-                      src={detailUser.avatar_url}
-                      alt=""
-                      className="um-detail-modal__avatar-img"
-                    />
-                  ) : (
-                    <span className="um-detail-modal__avatar-initials">
-                      {getInitials(detailUser.name, detailUser.email)}
-                    </span>
-                  )}
-                </div>
-                <h3 id="um-detail-modal-title" className="um-detail-modal__name">
-                  {detailUser.name || detailUser.email}
-                </h3>
-                <p className="um-detail-modal__email">{detailUser.email}</p>
-              </div>
-            </header>
-
-            <div className="um-detail-modal__body">
-              <div
-                className="um-detail-modal__metrics"
-                aria-label="Resumen de retas"
-              >
-                <div className="um-detail-modal__metric">
-                  <span className="um-detail-modal__metric-value">
-                    {detailUser.tournaments_total || 0}
-                  </span>
-                  <span className="um-detail-modal__metric-label">
-                    Total retas
-                  </span>
-                </div>
-                <div className="um-detail-modal__metric">
-                  <span className="um-detail-modal__metric-value">
-                    {detailUser.tournaments_active || 0}
-                  </span>
-                  <span className="um-detail-modal__metric-label">
-                    Retas activas
-                  </span>
-                </div>
-                <div className="um-detail-modal__metric">
-                  <span className="um-detail-modal__metric-value">
-                    {detailUser.tournaments_finished || 0}
-                  </span>
-                  <span className="um-detail-modal__metric-label">
-                    Finalizadas
-                  </span>
-                </div>
-                <div className="um-detail-modal__metric">
-                  <span className="um-detail-modal__metric-value um-detail-modal__metric-value--date">
-                    {new Date(detailUser.created_at).toLocaleDateString(
-                      "es-ES",
-                      {
-                        month: "short",
-                        year: "numeric",
-                      }
-                    )}
-                  </span>
-                  <span className="um-detail-modal__metric-label">Desde</span>
-                </div>
-              </div>
-
-              <div className="um-detail-modal__data">
-                <div className="um-detail-modal__data-row">
-                  <span className="um-detail-modal__data-label">Email</span>
-                  <span className="um-detail-modal__data-value">
-                    {detailUser.email}
-                  </span>
-                </div>
-                <div className="um-detail-modal__data-row">
-                  <span className="um-detail-modal__data-label">
-                    Fecha de registro
-                  </span>
-                  <span className="um-detail-modal__data-value">
-                    {formatDate(detailUser.created_at)}
-                  </span>
-                </div>
-                <div className="um-detail-modal__data-row">
-                  <span className="um-detail-modal__data-label">
-                    Última actualización
-                  </span>
-                  <span className="um-detail-modal__data-value">
-                    {formatDate(detailUser.updated_at)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <footer className="um-detail-modal__footer">
-              <button
-                type="button"
-                className="um-detail-modal__btn um-detail-modal__btn--ghost"
-                onClick={() => setShowUserDetails(false)}
-              >
-                Cerrar
-              </button>
-              <button
-                type="button"
-                className="um-detail-modal__btn um-detail-modal__btn--danger"
-                onClick={() => {
-                  setShowUserDetails(false);
-                  handleDeleteUser(detailUser);
-                }}
-              >
-                Eliminar usuario
-              </button>
-            </footer>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

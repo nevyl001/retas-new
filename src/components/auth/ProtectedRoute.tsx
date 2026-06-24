@@ -18,6 +18,7 @@ function isPublicAppPath(pathname: string): boolean {
   if (isTorneoExpressPublicPath(path)) return true;
   if (isLigaPublicPath(path)) return true;
   if (path === "/admin-login" || path === "/admin-dashboard") return true;
+  if (/^\/admin-dashboard\/usuario\//i.test(path)) return true;
   if (path === "/auth/callback") return true;
   if (path === "/auth/reset-password") return true;
   return false;

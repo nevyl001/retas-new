@@ -19,7 +19,8 @@ export type AppView =
   | "auth-callback"
   | "auth-reset-password"
   | "admin-login"
-  | "admin-dashboard";
+  | "admin-dashboard"
+  | "admin-user";
 
 export function normalizeAppPathname(pathname: string): string {
   return pathname.replace(/\/+$/, "") || "/";
@@ -74,6 +75,7 @@ export function resolveAppViewFromPath(pathname: string): AppView {
   if (currentPath === "/auth/callback") return "auth-callback";
   if (currentPath === "/auth/reset-password") return "auth-reset-password";
   if (currentPath === "/admin-login") return "admin-login";
+  if (/^\/admin-dashboard\/usuario\/[^/]+$/i.test(currentPath)) return "admin-user";
   if (currentPath === "/admin-dashboard") return "admin-dashboard";
   if (currentPath === "/americano-dinamico") return "americano-dinamico";
   if (currentPath.startsWith("/liga") || /^\/public\/liga\//i.test(currentPath))

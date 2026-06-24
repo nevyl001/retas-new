@@ -75,6 +75,35 @@ import {
   type PartidoDetalle,
 } from "../shared/buildPartidosDetalle";
 
+const jugadorSumaRankingCache = new Map<string, boolean>();
+
+async function jugadorSumaAlRanking(jugadorId: string): Promise<boolean> {
+  const cached = jugadorSumaRankingCache.get(jugadorId);
+  if (cached !== undefined) return cached;
+
+  try {
+    const { data, error } = await supabase
+      .from("riviera_jugadores")
+      .select("suma_ranking, estado")
+      .eq("id", jugadorId)
+      .maybeSingle();
+
+    if (error || !data) {
+      jugadorSumaRankingCache.set(jugadorId, true);
+      return true;
+    }
+
+    const ok =
+      data.estado !== "archivado" &&
+      (data as { suma_ranking?: boolean }).suma_ranking !== false;
+    jugadorSumaRankingCache.set(jugadorId, ok);
+    return ok;
+  } catch {
+    jugadorSumaRankingCache.set(jugadorId, true);
+    return true;
+  }
+}
+
 const PAIRS_SELECT =
   "id, tournament_id, player1_id, player2_id, player1_name, player2_name, created_at";
 
@@ -249,11 +278,17 @@ async function safeRegistrar(params: {
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   try {
+    const sumaRanking = await jugadorSumaAlRanking(params.jugadorId);
+    const puntos = sumaRanking
+      ? Math.max(0, params.puntosObtenidos ?? 0)
+      : 0;
     await registrarParticipacion({
       ...params,
-      puntosObtenidos: Math.max(0, params.puntosObtenidos ?? 0),
+      puntosObtenidos: puntos,
     });
-    await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
+    if (sumaRanking) {
+      await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
+    }
   } catch (e) {
     console.error("[riviera-jugadores] safeRegistrar:", e);
   }
@@ -338,6 +373,8 @@ async function upsertParticipacionRanking(params: {
     detSummary.jugados > 0
       ? detSummary.setsContra
       : (params.setsContra ?? existing?.sets_contra ?? 0);
+  const sumaRanking = await jugadorSumaAlRanking(params.jugadorId);
+  const puntosObtenidos = sumaRanking ? params.puntosObtenidos : 0;
 
   if (existing) {
     const { error } = await supabase
@@ -347,7 +384,7 @@ async function upsertParticipacionRanking(params: {
         resultado: params.resultado,
         sets_favor: setsFavor,
         sets_contra: setsContra,
-        puntos_obtenidos: params.puntosObtenidos,
+        puntos_obtenidos: puntosObtenidos,
         pareja_con: params.parejaCon ?? existing.pareja_con,
         metadata: mergedMeta,
       })
@@ -368,7 +405,7 @@ async function upsertParticipacionRanking(params: {
     resultado: params.resultado,
     setsFavor,
     setsContra,
-    puntosObtenidos: params.puntosObtenidos,
+    puntosObtenidos,
     parejaCon: params.parejaCon,
     metadata: mergedMeta,
   });

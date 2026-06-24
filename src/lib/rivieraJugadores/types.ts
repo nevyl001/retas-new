@@ -56,6 +56,8 @@ export interface RivieraJugador {
   facebook_url: string | null;
   tiktok_url: string | null;
   visible_publico: boolean;
+  /** Si false, no suma puntos ni aparece en ranking público. */
+  suma_ranking: boolean;
   genero: RivieraJugadorGenero | null;
   fecha_nacimiento: string | null;
   club: string | null;

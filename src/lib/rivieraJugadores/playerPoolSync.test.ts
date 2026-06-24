@@ -34,6 +34,7 @@ function riviera(email: string | null): RivieraJugador {
     facebook_url: null,
     tiktok_url: null,
     visible_publico: true,
+    suma_ranking: true,
     genero: null,
     fecha_nacimiento: null,
     club: null,

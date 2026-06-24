@@ -20,7 +20,7 @@ import {
 } from "./genero";
 
 const JUGADOR_SELECT_BASE =
-  "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
+  "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
 
 const JUGADOR_RATING_COLS = "rating,rating_partidos,rating_fiabilidad";
 
@@ -94,6 +94,9 @@ function normalizeJugadorFields(
   }
   if (j.visible_publico === undefined) {
     j.visible_publico = true;
+  }
+  if (j.suma_ranking === undefined) {
+    j.suma_ranking = true;
   }
   if (j.tiktok_url === undefined) {
     j.tiktok_url = null;
@@ -493,10 +496,24 @@ export async function updateRivieraJugador(
   return updated;
 }
 
-/** Jugadores importados de retas/americanos quedan visibles en ranking y ficha pública. */
+/** Jugadores importados de retas/americanos quedan visibles en ranking si suma_ranking lo permite. */
 export async function ensureRivieraJugadorVisibleEnRanking(
   jugadorId: string
 ): Promise<void> {
+  const { data: row, error: readErr } = await supabase
+    .from("riviera_jugadores")
+    .select("suma_ranking, estado")
+    .eq("id", jugadorId)
+    .maybeSingle();
+
+  if (readErr && !isMissingTableError(readErr)) {
+    console.warn("ensureRivieraJugadorVisibleEnRanking:", readErr);
+    return;
+  }
+  if (row?.estado === "archivado" || row?.suma_ranking === false) {
+    return;
+  }
+
   const { error } = await supabase
     .from("riviera_jugadores")
     .update({ estado: "activo", visible_publico: true })
@@ -848,6 +865,7 @@ export async function listPublicJugadoresRanking(
       .eq("categoria", categoria)
       .eq("estado", "activo")
       .or("visible_publico.eq.true,visible_publico.is.null")
+      .or("suma_ranking.eq.true,suma_ranking.is.null")
       .order("nombre");
 
     if (genero === "F") {

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import "./App.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { UserProvider, useUser } from "./contexts/UserContext";
+import { AccountFeaturesProvider } from "./contexts/AccountFeaturesContext";
 
 // Components
 import MainLayout from "./components/MainLayout";
@@ -17,7 +18,9 @@ import { ResetPasswordPage } from "./components/auth/ResetPasswordPage";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
 import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
+import { AdminUserManagePage } from "./components/admin/AdminUserManagePage";
 import { AdminRoute } from "./components/admin/AdminRoute";
+import { parseAdminUserIdFromPath } from "./lib/admin/adminNav";
 import { testConnection } from "./lib/supabaseClient";
 import { AmericanoDinamicoScreen } from "./components/AmericanoDinamico/AmericanoDinamicoScreen";
 import {
@@ -136,10 +139,12 @@ function AppContent() {
   useEffect(() => {
     if (
       !isAdminLoggedIn &&
-      (currentView === "admin-dashboard" || currentView === "admin-login")
+      (currentView === "admin-dashboard" ||
+        currentView === "admin-user" ||
+        currentView === "admin-login")
     ) {
       console.log("🔄 Admin deslogueado detectado, cambiando a admin-login");
-      if (currentView === "admin-dashboard") {
+      if (currentView === "admin-dashboard" || currentView === "admin-user") {
         window.history.replaceState({}, "", "/admin-login");
       }
       setCurrentView("admin-login");
@@ -661,7 +666,8 @@ function AppContent() {
           !isDuelo2v2Public &&
           !isJugadoresPublic &&
           currentView !== "admin-login" &&
-          currentView !== "admin-dashboard" && <UserHeader />}
+          currentView !== "admin-dashboard" &&
+          currentView !== "admin-user" && <UserHeader />}
 
         {currentView === "torneo-express" && (
           <TorneoExpressRouter key={appPathname} pathname={appPathname} />
@@ -811,6 +817,18 @@ function AppContent() {
             <AdminDashboard />
           </AdminRoute>
         )}
+        {currentView === "admin-user" && (
+          <AdminRoute
+            onUnauthorized={() => {
+              window.history.replaceState({}, "", "/admin-login");
+              setCurrentView("admin-login");
+            }}
+          >
+            <AdminUserManagePage
+              userId={parseAdminUserIdFromPath(appPathname) ?? ""}
+            />
+          </AdminRoute>
+        )}
       </ProtectedRoute>
 
       <ModernToast
@@ -828,9 +846,11 @@ function App() {
   return (
     <ThemeProvider>
       <UserProvider>
-        <AdminProvider>
-          <AppContent />
-        </AdminProvider>
+        <AccountFeaturesProvider>
+          <AdminProvider>
+            <AppContent />
+          </AdminProvider>
+        </AccountFeaturesProvider>
       </UserProvider>
     </ThemeProvider>
   );
