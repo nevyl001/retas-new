@@ -128,7 +128,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
 
         <div className="duelo2v2-celebrate__outcome-cards">
           <article className="duelo2v2-celebrate__team-card duelo2v2-celebrate__team-card--winner">
-            <p className="duelo2v2-celebrate__team-card-badge">Campeones</p>
+            <p className="duelo2v2-celebrate__team-card-badge">Ganadores</p>
             <h2 className="duelo2v2-celebrate__team-card-headline">¡Felicidades!</h2>
             <p className="duelo2v2-celebrate__team-card-names">{winnersName}</p>
 
