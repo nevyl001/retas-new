@@ -36,6 +36,8 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
   const [ratingByJugadorId, setRatingByJugadorId] = useState<
     Record<string, RatingMovimientoPartido>
   >({});
+  const [celebrateCompact, setCelebrateCompact] = useState(false);
+  const celebrateRef = useRef<HTMLElement>(null);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -100,6 +102,26 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
     }, 60_000);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    const updateCompact = () => {
+      const el = celebrateRef.current;
+      if (!el) {
+        setCelebrateCompact(false);
+        return;
+      }
+      const rect = el.getBoundingClientRect();
+      setCelebrateCompact(rect.top < 8);
+    };
+
+    updateCompact();
+    window.addEventListener("scroll", updateCompact, { passive: true });
+    window.addEventListener("resize", updateCompact);
+    return () => {
+      window.removeEventListener("scroll", updateCompact);
+      window.removeEventListener("resize", updateCompact);
+    };
+  }, [duelo?.id, duelo?.ganador]);
 
   if (loading) {
     return (
@@ -178,6 +200,8 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
 
         {tieneGanador && duelo.ganador && (
           <Duelo2v2CelebrateSection
+            sectionRef={celebrateRef}
+            compact={celebrateCompact}
             teamAName={teamAName}
             teamBName={teamBName}
             teamA={teamA.map((p) => ({

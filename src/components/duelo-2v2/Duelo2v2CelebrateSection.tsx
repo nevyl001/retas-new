@@ -21,6 +21,8 @@ interface Duelo2v2CelebrateSectionProps {
   torneoNombre: string;
   finalizado: boolean;
   ratingByJugadorId?: Record<string, RatingMovimientoPartido>;
+  compact?: boolean;
+  sectionRef?: React.Ref<HTMLElement>;
 }
 
 function RatingMoveBadge({ move }: { move: RatingMovimientoPartido }) {
@@ -92,6 +94,8 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
   torneoNombre,
   finalizado,
   ratingByJugadorId,
+  compact = false,
+  sectionRef,
 }) => {
   const summary = computeDueloScore(detalle);
   const ganadorA = ganador === "a";
@@ -99,18 +103,12 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     ratingByJugadorId && Object.keys(ratingByJugadorId).length > 0
   );
 
-  const winnerMove = teamA
-    .concat(teamB)
-    .map((p) => (p.jugadorId ? ratingByJugadorId?.[p.jugadorId] : undefined))
-    .find((m) => m && m.delta > 0);
-  const loserMove = teamA
-    .concat(teamB)
-    .map((p) => (p.jugadorId ? ratingByJugadorId?.[p.jugadorId] : undefined))
-    .find((m) => m && m.delta < 0);
-
   return (
     <section
-      className="duelo2v2-celebrate ro-pub-celebrate ro-pub-celebrate--winners te-pub-fade-in"
+      ref={sectionRef}
+      className={`duelo2v2-celebrate ro-pub-celebrate ro-pub-celebrate--winners te-pub-fade-in${
+        compact ? " duelo2v2-celebrate--compact" : ""
+      }`}
       aria-label="Ganadores del duelo 2 vs 2"
     >
       <div className="ro-pub-celebrate__glow" aria-hidden />
@@ -170,20 +168,6 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
             {summary.gamesTotalA}–{summary.gamesTotalB} juegos totales
           </p>
         </div>
-
-        {hasRating && winnerMove && loserMove ? (
-          <div className="duelo2v2-celebrate__rating-summary" aria-label="Cambio de nivel">
-            <p className="duelo2v2-celebrate__rating-summary-title">Nivel actualizado</p>
-            <div className="duelo2v2-celebrate__rating-summary-row">
-              <span className="duelo2v2-celebrate__rating-summary-item duelo2v2-celebrate__rating-summary-item--up">
-                Ganadores ▲ +{winnerMove.delta.toFixed(2)}
-              </span>
-              <span className="duelo2v2-celebrate__rating-summary-item duelo2v2-celebrate__rating-summary-item--down">
-                Perdedores ▼ {loserMove.delta.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        ) : null}
 
         <p className="ro-pub-celebrate__motivational">
           {finalizado

@@ -20,6 +20,7 @@ interface Duelo2v2LiveBoardProps {
   teamB: [DueloPlayerView, DueloPlayerView];
   showBrand?: boolean;
   clockNow?: Date;
+  className?: string;
 }
 
 const STATUS_CLASS: Record<
@@ -38,6 +39,7 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
   teamB,
   showBrand = true,
   clockNow,
+  className,
 }) => {
   const ganadorA = duelo.ganador === "a";
   const ganadorB = duelo.ganador === "b";
@@ -45,7 +47,10 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
   const status = getDueloPublicStatus(duelo, clockNow);
 
   return (
-    <section className="duelo2v2-live-board" aria-label="Encuentro 2 vs 2">
+    <section
+      className={`duelo2v2-live-board${className ? ` ${className}` : ""}`}
+      aria-label="Encuentro 2 vs 2"
+    >
       {showBrand && (
         <div className="duelo2v2-live-board__brand">
           <PublicRivieraCelebrateBrand showTagline />
