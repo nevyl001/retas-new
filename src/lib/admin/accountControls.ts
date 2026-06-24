@@ -5,7 +5,6 @@ import {
   DEFAULT_ORGANIZADOR_GAME_MODES,
   inputFromEnabledModes,
   rowToEnabledModes,
-  type OrganizadorGameModesInput,
   type OrganizadorGameModesRow,
 } from "./organizadorGameModes";
 
