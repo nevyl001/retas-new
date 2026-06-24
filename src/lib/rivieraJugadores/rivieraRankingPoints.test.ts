@@ -1,6 +1,7 @@
 import {
   calcularPuntosEvento,
   PUNTOS_AMERICANO,
+  PUNTOS_DUELO_2V2,
   PUNTOS_EXPRESS,
   PUNTOS_LIGA,
   PUNTOS_RETA,
@@ -124,6 +125,15 @@ describe("calcularPuntosEvento", () => {
         PUNTOS_EXPRESS.LLEGAR_FINAL +
         PUNTOS_EXPRESS.SEGUNDO_LUGAR
     );
+  });
+
+  it("duelo 2v2: ganador 50 pts, perdedor 20 pts", () => {
+    expect(
+      calcularPuntosEvento({ formato: "duelo_2v2", ganador_duelo: true })
+    ).toBe(PUNTOS_DUELO_2V2.GANADOR);
+    expect(
+      calcularPuntosEvento({ formato: "duelo_2v2", ganador_duelo: false })
+    ).toBe(PUNTOS_DUELO_2V2.PERDEDOR);
   });
 
   it("nunca devuelve negativos", () => {

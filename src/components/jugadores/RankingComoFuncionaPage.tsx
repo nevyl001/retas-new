@@ -40,7 +40,8 @@ const A = PUNTOS_AMERICANO;
 const E = PUNTOS_EXPRESS;
 const D = PUNTOS_DUELO_2V2;
 
-const dueloGanador = D.PARTICIPACION + D.GANADOR;
+const dueloGanador = D.GANADOR;
+const dueloPerdedor = D.PERDEDOR;
 
 const expressEliminatoria = {
   paso_fase_grupos: true as const,
@@ -433,21 +434,21 @@ export const RankingComoFuncionaPage: React.FC = () => {
               delayMs={400}
               rows={[
                 {
-                  concepto: "Participación",
-                  cuando: "Al finalizar el duelo",
-                  puntos: `+${D.PARTICIPACION}`,
-                  tone: "base",
+                  concepto: "Victoria",
+                  cuando: "Pareja ganadora al finalizar",
+                  puntos: `+${D.GANADOR}`,
+                  tone: "gold",
                 },
                 {
-                  concepto: "Victoria",
-                  cuando: "Pareja ganadora",
-                  puntos: `+${D.GANADOR} (además de participar)`,
-                  tone: "gold",
+                  concepto: "Derrota",
+                  cuando: "Pareja perdedora al finalizar",
+                  puntos: `+${D.PERDEDOR}`,
+                  tone: "base",
                 },
               ]}
               footer={[
-                { label: "Perdedor", value: `${D.PARTICIPACION}` },
-                { label: "Ganador (total)", value: `${dueloGanador}` },
+                { label: "Perdedor", value: `${dueloPerdedor}` },
+                { label: "Ganador", value: `${dueloGanador}` },
               ]}
             />
           </div>

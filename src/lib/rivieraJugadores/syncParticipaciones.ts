@@ -354,7 +354,9 @@ async function upsertParticipacionRanking(params: {
       .eq("id", existing.id);
     if (error) {
       console.error("[riviera-jugadores] upsertParticipacionRanking:", error);
+      return;
     }
+    await rebuildJugadorStats(params.jugadorId);
     return;
   }
 

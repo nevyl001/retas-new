@@ -37,8 +37,8 @@ export const PUNTOS_AMERICANO = {
 } as const;
 
 export const PUNTOS_DUELO_2V2 = {
-  PARTICIPACION: 25,
-  GANADOR: 100,
+  GANADOR: 50,
+  PERDEDOR: 20,
 } as const;
 
 export const PUNTOS_EXPRESS = {
@@ -168,9 +168,10 @@ export function calcularPuntosEventoDesglose(
       break;
     }
     case "duelo_2v2": {
-      add(desglose, "duelo_2v2_participacion", PUNTOS_DUELO_2V2.PARTICIPACION);
       if (params.ganador_duelo) {
-        add(desglose, "duelo_2v2_victoria", PUNTOS_DUELO_2V2.GANADOR);
+        add(desglose, "duelo_2v2_ganador", PUNTOS_DUELO_2V2.GANADOR);
+      } else {
+        add(desglose, "duelo_2v2_perdedor", PUNTOS_DUELO_2V2.PERDEDOR);
       }
       break;
     }
