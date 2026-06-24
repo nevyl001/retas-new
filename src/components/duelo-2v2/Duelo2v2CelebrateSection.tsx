@@ -21,8 +21,6 @@ interface Duelo2v2CelebrateSectionProps {
   torneoNombre: string;
   finalizado: boolean;
   ratingByJugadorId?: Record<string, RatingMovimientoPartido>;
-  compact?: boolean;
-  sectionRef?: React.Ref<HTMLElement>;
 }
 
 function RatingMoveBadge({ move }: { move: RatingMovimientoPartido }) {
@@ -94,8 +92,6 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
   torneoNombre,
   finalizado,
   ratingByJugadorId,
-  compact = false,
-  sectionRef,
 }) => {
   const summary = computeDueloScore(detalle);
   const ganadorA = ganador === "a";
@@ -105,10 +101,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
 
   return (
     <section
-      ref={sectionRef}
-      className={`duelo2v2-celebrate ro-pub-celebrate ro-pub-celebrate--winners te-pub-fade-in${
-        compact ? " duelo2v2-celebrate--compact" : ""
-      }`}
+      className="duelo2v2-celebrate ro-pub-celebrate ro-pub-celebrate--winners te-pub-fade-in"
       aria-label="Ganadores del duelo 2 vs 2"
     >
       <div className="ro-pub-celebrate__glow" aria-hidden />
