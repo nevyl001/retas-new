@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { fetchRivieraJugadorProfilesByIds } from "../../lib/rivieraJugadores/publicPlayerAvatars";
+import { fetchRatingMovimientosByPartidoRef } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { DUELO_2V2_PUBLIC_POLL_INTERVAL_MS } from "../../lib/duelo2v2/publicPoll";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
 import {
@@ -31,6 +33,9 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [clockNow, setClockNow] = useState(() => new Date());
+  const [ratingByJugadorId, setRatingByJugadorId] = useState<
+    Record<string, RatingMovimientoPartido>
+  >({});
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent ?? false;
@@ -52,6 +57,14 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
         d.pareja_b_j2_id,
       ]);
       setProfiles(profileMap);
+      if (d.estado === "finalizado" && d.ganador) {
+        const moves = await fetchRatingMovimientosByPartidoRef(`duelo2v2:${d.id}`);
+        setRatingByJugadorId(
+          Object.fromEntries(moves.map((m) => [m.jugadorId, m]))
+        );
+      } else {
+        setRatingByJugadorId({});
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "No disponible");
     } finally {
@@ -167,14 +180,23 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
           <Duelo2v2CelebrateSection
             teamAName={teamAName}
             teamBName={teamBName}
-            teamA={teamA.map((p) => ({ name: p.nombre, fotoUrl: p.fotoUrl }))}
-            teamB={teamB.map((p) => ({ name: p.nombre, fotoUrl: p.fotoUrl }))}
+            teamA={teamA.map((p) => ({
+              name: p.nombre,
+              fotoUrl: p.fotoUrl,
+              jugadorId: p.id,
+            }))}
+            teamB={teamB.map((p) => ({
+              name: p.nombre,
+              fotoUrl: p.fotoUrl,
+              jugadorId: p.id,
+            }))}
             ganador={duelo.ganador}
             setsA={duelo.sets_pareja_a}
             setsB={duelo.sets_pareja_b}
             detalle={duelo.detalle_sets}
             torneoNombre={duelo.nombre}
             finalizado={finalizado}
+            ratingByJugadorId={ratingByJugadorId}
           />
         )}
 

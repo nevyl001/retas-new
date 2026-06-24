@@ -124,6 +124,14 @@ export interface RatingHistorialEntry {
   descripcion: string;
 }
 
+/** Movimiento de nivel de un jugador en un partido concreto. */
+export interface RatingMovimientoPartido {
+  jugadorId: string;
+  ratingAntes: number;
+  ratingDespues: number;
+  delta: number;
+}
+
 export interface RegistrarParticipacionParams {
   jugadorId: string;
   tipoEvento: JugadorTipoEvento;

@@ -10,6 +10,7 @@ import type {
   RivieraJugadorNivel,
   RivieraJugadorWithStats,
   RatingHistorialEntry,
+  RatingMovimientoPartido,
 } from "./types";
 import { normalizePaisCodigo } from "./paises";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
@@ -1033,6 +1034,31 @@ export async function obtenerHistorialRatingPublic(
       delta: Number(r.delta ?? 0),
       modo_juego: String(r.modo_juego ?? ""),
       descripcion: String(r.descripcion ?? ""),
+    };
+  });
+}
+
+/** Movimientos de nivel por partido (vista pública, p. ej. duelo 2v2). */
+export async function fetchRatingMovimientosByPartidoRef(
+  partidoRef: string
+): Promise<RatingMovimientoPartido[]> {
+  const { data, error } = await supabasePublicRead
+    .from("rating_historial")
+    .select("jugador_id, rating_antes, rating_despues, delta")
+    .eq("partido_ref", partidoRef);
+
+  if (error) {
+    if (isMissingTableError(error)) return [];
+    return [];
+  }
+
+  return (data ?? []).map((row) => {
+    const r = row as Record<string, unknown>;
+    return {
+      jugadorId: String(r.jugador_id),
+      ratingAntes: Number(r.rating_antes ?? 0),
+      ratingDespues: Number(r.rating_despues ?? 0),
+      delta: Number(r.delta ?? 0),
     };
   });
 }

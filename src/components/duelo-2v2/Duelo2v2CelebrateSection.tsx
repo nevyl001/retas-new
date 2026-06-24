@@ -1,6 +1,7 @@
 import React from "react";
 import { computeDueloScore } from "../../lib/duelo2v2/scoring";
 import type { Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
+import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import {
   PublicRivieraCelebrateBrand,
@@ -19,12 +20,29 @@ interface Duelo2v2CelebrateSectionProps {
   detalle: Duelo2v2SetDetalle[];
   torneoNombre: string;
   finalizado: boolean;
+  ratingByJugadorId?: Record<string, RatingMovimientoPartido>;
+}
+
+function RatingMoveBadge({ move }: { move: RatingMovimientoPartido }) {
+  const up = move.delta >= 0;
+  return (
+    <span
+      className={`duelo2v2-celebrate__rating-move duelo2v2-celebrate__rating-move--${
+        up ? "up" : "down"
+      }`}
+      aria-label={`Nivel ${up ? "subió" : "bajó"} ${Math.abs(move.delta).toFixed(2)}`}
+    >
+      {up ? "▲" : "▼"} {up ? "+" : ""}
+      {move.delta.toFixed(2)} · {move.ratingDespues.toFixed(2)}
+    </span>
+  );
 }
 
 function renderPair(
   label: string,
   players: PublicRetaWinnerAvatar[],
-  isWinner: boolean
+  isWinner: boolean,
+  ratingByJugadorId?: Record<string, RatingMovimientoPartido>
 ) {
   return (
     <div
@@ -37,19 +55,26 @@ function renderPair(
         {isWinner ? " · Ganadores" : ""}
       </p>
       <div className="duelo2v2-celebrate__pair-players">
-        {players.map((p) => (
-          <div key={p.name} className="duelo2v2-celebrate__player">
-            <div className="duelo2v2-celebrate__player-ring">
-              <JugadorAvatar
-                fotoUrl={p.fotoUrl}
-                nombre={p.name}
-                size="xl"
-                className="duelo2v2-celebrate__player-avatar"
-              />
+        {players.map((p) => {
+          const move =
+            p.jugadorId && ratingByJugadorId
+              ? ratingByJugadorId[p.jugadorId]
+              : undefined;
+          return (
+            <div key={p.jugadorId ?? p.name} className="duelo2v2-celebrate__player">
+              <div className="duelo2v2-celebrate__player-ring">
+                <JugadorAvatar
+                  fotoUrl={p.fotoUrl}
+                  nombre={p.name}
+                  size="xl"
+                  className="duelo2v2-celebrate__player-avatar"
+                />
+              </div>
+              <span className="duelo2v2-celebrate__player-name">{p.name}</span>
+              {move ? <RatingMoveBadge move={move} /> : null}
             </div>
-            <span className="duelo2v2-celebrate__player-name">{p.name}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -66,9 +91,22 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
   detalle,
   torneoNombre,
   finalizado,
+  ratingByJugadorId,
 }) => {
   const summary = computeDueloScore(detalle);
   const ganadorA = ganador === "a";
+  const hasRating = Boolean(
+    ratingByJugadorId && Object.keys(ratingByJugadorId).length > 0
+  );
+
+  const winnerMove = teamA
+    .concat(teamB)
+    .map((p) => (p.jugadorId ? ratingByJugadorId?.[p.jugadorId] : undefined))
+    .find((m) => m && m.delta > 0);
+  const loserMove = teamA
+    .concat(teamB)
+    .map((p) => (p.jugadorId ? ratingByJugadorId?.[p.jugadorId] : undefined))
+    .find((m) => m && m.delta < 0);
 
   return (
     <section
@@ -83,11 +121,11 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
         <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
 
         <div className="duelo2v2-celebrate__pairs">
-          {renderPair(teamAName, teamA, ganadorA)}
+          {renderPair(teamAName, teamA, ganadorA, ratingByJugadorId)}
           <div className="duelo2v2-celebrate__pairs-vs" aria-hidden>
             VS
           </div>
-          {renderPair(teamBName, teamB, !ganadorA)}
+          {renderPair(teamBName, teamB, !ganadorA, ratingByJugadorId)}
         </div>
 
         <div className="duelo2v2-celebrate__scoreboard">
@@ -133,9 +171,25 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
           </p>
         </div>
 
+        {hasRating && winnerMove && loserMove ? (
+          <div className="duelo2v2-celebrate__rating-summary" aria-label="Cambio de nivel">
+            <p className="duelo2v2-celebrate__rating-summary-title">Nivel actualizado</p>
+            <div className="duelo2v2-celebrate__rating-summary-row">
+              <span className="duelo2v2-celebrate__rating-summary-item duelo2v2-celebrate__rating-summary-item--up">
+                Ganadores ▲ +{winnerMove.delta.toFixed(2)}
+              </span>
+              <span className="duelo2v2-celebrate__rating-summary-item duelo2v2-celebrate__rating-summary-item--down">
+                Perdedores ▼ {loserMove.delta.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        ) : null}
+
         <p className="ro-pub-celebrate__motivational">
           {finalizado
-            ? "¡Victoria confirmada! Sumaron puntos al ranking Riviera Open."
+            ? hasRating
+              ? "¡Victoria confirmada! Actualizaron su nivel y sumaron puntos al ranking Riviera Open."
+              : "¡Victoria confirmada! Sumaron puntos al ranking Riviera Open."
             : "¡Gran duelo! Se llevan la victoria en este encuentro."}
         </p>
         <p className="ro-pub-celebrate__rank">Ganadores del duelo 2 vs 2</p>

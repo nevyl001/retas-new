@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import type { Duelo2v2, Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
+import { fetchRatingMovimientosByPartidoRef } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import {
   finalizarDuelo2v2,
   getDuelo2v2ById,
@@ -30,6 +32,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const [message, setMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
+  const [ratingByJugadorId, setRatingByJugadorId] = useState<
+    Record<string, RatingMovimientoPartido>
+  >({});
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -39,6 +44,14 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       if (!d) throw new Error("Duelo no encontrado");
       setDuelo(d);
       setEditorKey((k) => k + 1);
+      if (d.estado === "finalizado" && d.ganador) {
+        const moves = await fetchRatingMovimientosByPartidoRef(`duelo2v2:${d.id}`);
+        setRatingByJugadorId(
+          Object.fromEntries(moves.map((m) => [m.jugadorId, m]))
+        );
+      } else {
+        setRatingByJugadorId({});
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar");
     } finally {
@@ -79,6 +92,10 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     try {
       const updated = await finalizarDuelo2v2(dueloId);
       setDuelo(updated);
+      const moves = await fetchRatingMovimientosByPartidoRef(`duelo2v2:${updated.id}`);
+      setRatingByJugadorId(
+        Object.fromEntries(moves.map((m) => [m.jugadorId, m]))
+      );
       setMessage("Duelo finalizado. Rating y puntos aplicados al ranking.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo finalizar");
@@ -157,12 +174,12 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           teamAName={teamAName}
           teamBName={teamBName}
           teamA={[
-            { name: duelo.pareja_a_j1_nombre },
-            { name: duelo.pareja_a_j2_nombre },
+            { name: duelo.pareja_a_j1_nombre, jugadorId: duelo.pareja_a_j1_id },
+            { name: duelo.pareja_a_j2_nombre, jugadorId: duelo.pareja_a_j2_id },
           ]}
           teamB={[
-            { name: duelo.pareja_b_j1_nombre },
-            { name: duelo.pareja_b_j2_nombre },
+            { name: duelo.pareja_b_j1_nombre, jugadorId: duelo.pareja_b_j1_id },
+            { name: duelo.pareja_b_j2_nombre, jugadorId: duelo.pareja_b_j2_id },
           ]}
           ganador={duelo.ganador}
           setsA={duelo.sets_pareja_a}
@@ -170,6 +187,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           detalle={duelo.detalle_sets}
           torneoNombre={duelo.nombre}
           finalizado
+          ratingByJugadorId={ratingByJugadorId}
         />
       )}
 

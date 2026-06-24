@@ -719,6 +719,71 @@
   word-break: break-word;
 }
 
+.duelo2v2-celebrate__rating-move {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.duelo2v2-celebrate__rating-move--up {
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+}
+
+.duelo2v2-celebrate__rating-move--down {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.duelo2v2-celebrate__rating-summary {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(163, 230, 53, 0.2);
+  background: rgba(163, 230, 53, 0.06);
+  text-align: center;
+}
+
+.duelo2v2-celebrate__rating-summary-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.duelo2v2-celebrate__rating-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.duelo2v2-celebrate__rating-summary-item {
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.duelo2v2-celebrate__rating-summary-item--up {
+  color: #34d399;
+}
+
+.duelo2v2-celebrate__rating-summary-item--down {
+  color: #f87171;
+}
+
 .duelo2v2-celebrate__scoreboard {
   width: 100%;
   max-width: 28rem;

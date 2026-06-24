@@ -11,6 +11,7 @@ const DEFAULT_MOTIVATIONAL = "Dominaron la cancha." as const;
 export type PublicRetaWinnerAvatar = {
   name: string;
   fotoUrl?: string | null;
+  jugadorId?: string | null;
 };
 
 export type PublicRetaRunnerUp = {
