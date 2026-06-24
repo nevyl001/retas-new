@@ -1,5 +1,6 @@
 import { navigateAppTo } from "../../lib/appRouting";
 import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
+import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
 import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
 import { parseRivieraGeneroFromPath } from "../../lib/rivieraJugadores/genero";
 
@@ -15,16 +16,47 @@ export function parsePublicRankingGenero(pathname: string): RivieraJugadorGenero
   return parseRivieraGeneroFromPath(m[1]) ?? "M";
 }
 
+/** Ranking interno del club en appriviera (todos los jugadores con «Ranking»). */
+export function buildInternalClubRankingUrl(
+  orgId: string,
+  genero: RivieraJugadorGenero = "M"
+): string {
+  const segment = RANKING_SEGMENT[genero];
+  return `/ranking/o/${encodeURIComponent(orgId.trim())}/${segment}`;
+}
+
+/** Ranking interno; sin org redirige a /ranking (sitio oficial). */
+export function buildPublicRankingUrl(
+  orgId?: string | null,
+  genero: RivieraJugadorGenero = "M"
+): string {
+  const trimmed = orgId?.trim();
+  if (trimmed) return buildInternalClubRankingUrl(trimmed, genero);
+  return genero === "F" ? "/ranking/femenil" : "/ranking";
+}
+
+/** Sitio oficial rivieraopen.com (solo jugadores «Público»). */
+export function buildOfficialSiteRankingUrl(
+  orgId?: string | null,
+  genero: RivieraJugadorGenero = "M"
+): string {
+  return buildMarketingOfficialRankingsUrl(orgId, genero);
+}
+
 export function navigatePublicJugadores(path?: string): void {
-  navigateAppTo(
+  const url =
     path ??
-      buildPublicRankingUrl(
-        resolvePublicOrganizadorId(
-          undefined,
-          typeof window !== "undefined" ? window.location.pathname : undefined
-        )
+    buildPublicRankingUrl(
+      resolvePublicOrganizadorId(
+        undefined,
+        typeof window !== "undefined" ? window.location.pathname : undefined
       )
-  );
+    );
+  if (url.startsWith("http")) {
+    window.location.href = url;
+    return;
+  }
+  navigateAppTo(url);
 }
 
 export function buildPublicJugadorPath(slug: string, orgId?: string | null): string {
@@ -42,19 +74,6 @@ export function navigatePublicJugadorFicha(
 
 export function buildRankingComoFuncionaPath(): string {
   return "/ranking/como-funciona";
-}
-
-/** Ranking público por organizador y género: /ranking/o/{organizadorId}/varonil|femenil. */
-export function buildPublicRankingUrl(
-  orgId?: string | null,
-  genero: RivieraJugadorGenero = "M"
-): string {
-  const trimmed = orgId?.trim();
-  const segment = RANKING_SEGMENT[genero];
-  if (trimmed) {
-    return `/ranking/o/${encodeURIComponent(trimmed)}/${segment}`;
-  }
-  return genero === "F" ? `/ranking/femenil` : "/ranking";
 }
 
 export function buildPublicRankingGeneroPath(genero: RivieraJugadorGenero): string {

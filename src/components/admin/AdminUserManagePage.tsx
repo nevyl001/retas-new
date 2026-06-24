@@ -4,10 +4,8 @@ import {
   fetchAdminUserDetail,
   type AdminUserDetail,
 } from "../../lib/admin/fetchAdminUserDetail";
-import {
-  buildAppClubRankingUrl,
-  buildOfficialRankingsUrl,
-} from "../../lib/rivieraOfficialSite";
+import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
+import { buildInternalClubRankingUrl } from "../jugadores/jugadoresPublicNav";
 import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
 import { navigateAdminDashboard } from "../../lib/admin/adminNav";
 import { AccountControlsPanel } from "./AccountControlsPanel";
@@ -72,8 +70,8 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
     void loadUser();
   }, [loadUser]);
 
-  const appRankingUrl = buildAppClubRankingUrl(userId);
-  const officialRankingsUrl = buildOfficialRankingsUrl();
+  const internalRankingUrl = buildInternalClubRankingUrl(userId, "M");
+  const officialSiteRankingUrl = buildMarketingOfficialRankingsUrl(userId);
 
   const handleDelete = async () => {
     if (!user) return;
@@ -208,31 +206,33 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
 
       <section className="admin-user-page__ranking-link">
         <span className="admin-user-page__ranking-label">
-          Ranking oficial · appriviera
+          Rankings del club
         </span>
         <p className="admin-user-page__ranking-hint">
-          El ranking y los perfiles públicos viven en{" "}
-          <strong>appriviera.rivieraopen.com</strong>. www.rivieraopen.com enlaza
-          ahí. Los toggles de abajo controlan quién aparece.
+          «Ranking» = ranking interno en appriviera. «Público» + club publicado =
+          también en rivieraopen.com. Cada club es independiente.
         </p>
+        <span className="admin-user-page__ranking-label admin-user-page__ranking-label--sub">
+          Sitio oficial (rivieraopen.com)
+        </span>
         <a
-          href={officialRankingsUrl}
+          href={officialSiteRankingUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="admin-user-page__ranking-url"
         >
-          {officialRankingsUrl}
+          {officialSiteRankingUrl}
         </a>
         <span className="admin-user-page__ranking-label admin-user-page__ranking-label--sub">
-          Vista previa solo de este club
+          Ranking interno del club (appriviera)
         </span>
         <a
-          href={appRankingUrl}
+          href={internalRankingUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="admin-user-page__ranking-url admin-user-page__ranking-url--muted"
         >
-          {appRankingUrl}
+          {internalRankingUrl}
         </a>
       </section>
 

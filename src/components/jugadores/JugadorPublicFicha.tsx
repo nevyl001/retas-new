@@ -34,7 +34,7 @@ import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
-import { buildOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
+import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
 import { buildPublicRankingUrl, navigatePublicJugadores } from "./jugadoresPublicNav";
 import "./riviera-jugadores-public-ficha.css";
 
@@ -90,6 +90,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           playerId
             ? getRankingPosicionOficialEnCategoria(
                 j.id,
+                j.organizador_id,
                 j.categoria,
                 normalizeRivieraGenero(j.genero) ?? "M"
               )
@@ -143,7 +144,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   }, [jugador?.id]);
 
   const rankingUrl = playerId
-    ? buildOfficialRankingsUrl(normalizeRivieraGenero(jugador?.genero) ?? "M")
+    ? buildMarketingOfficialRankingsUrl(
+        jugador?.organizador_id,
+        normalizeRivieraGenero(jugador?.genero) ?? "M"
+      )
     : buildPublicRankingUrl(
         orgId,
         normalizeRivieraGenero(jugador?.genero) ?? "M"

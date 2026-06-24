@@ -5,6 +5,7 @@ import { JugadorFicha } from "./JugadorFicha";
 import { JugadorPublicFicha } from "./JugadorPublicFicha";
 import { JugadoresLista } from "./JugadoresLista";
 import { JugadoresPublicRanking } from "./JugadoresPublicRanking";
+import { RankingOfficialOutbound } from "./RankingOfficialOutbound";
 import { RankingComoFuncionaPage } from "./RankingComoFuncionaPage";
 import { parseJugadoresListaGenero } from "./jugadoresGeneroNav";
 import { parsePublicRankingGenero } from "./jugadoresPublicNav";
@@ -149,9 +150,16 @@ export const JugadoresRouter: React.FC<{ pathname: string }> = ({ pathname }) =>
     case "rankingComoFunciona":
       return <RankingComoFuncionaPage />;
     case "publicRanking":
+      if (route.organizadorId) {
+        return (
+          <JugadoresPublicRanking
+            organizadorId={route.organizadorId}
+            genero={route.genero ?? parsePublicRankingGenero(pathname)}
+          />
+        );
+      }
       return (
-        <JugadoresPublicRanking
-          organizadorId={route.organizadorId}
+        <RankingOfficialOutbound
           genero={route.genero ?? parsePublicRankingGenero(pathname)}
         />
       );

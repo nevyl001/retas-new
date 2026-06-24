@@ -743,3 +743,13 @@
     color: var(--accent-gold-light);
   }
 }
+
+/* —— Índice de clubs —— */
+.rjp-ranking-clubs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

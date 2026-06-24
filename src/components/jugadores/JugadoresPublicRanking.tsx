@@ -5,8 +5,7 @@ import {
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
 import { RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS } from "../../lib/rivieraJugadores/publicPoll";
-import { listOfficialSiteJugadoresRanking, listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
-import { isOrganizadorRankingPublico } from "../../lib/admin/accountControls";
+import { listInternalClubJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { subscribeRivieraRanking } from "../../lib/rivieraJugadores/subscribeRivieraRanking";
 import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
 import { navigateAppTo } from "../../lib/appRouting";
@@ -29,9 +28,8 @@ import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import {
-  buildPublicRankingUrl,
+  buildInternalClubRankingUrl,
   buildRankingComoFuncionaPath,
-  navigateOfficialPlayerFicha,
   navigatePublicJugadorFicha,
 } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
@@ -50,7 +48,6 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   genero = "M",
 }) => {
   const [orgId, setOrgId] = useState<string | null>(null);
-  const [officialGlobal, setOfficialGlobal] = useState(false);
   const [orgReady, setOrgReady] = useState(false);
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
@@ -75,7 +72,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     const queryOrg = getPublicOrganizadorIdFromSearch();
     const pathOrg = getPublicOrganizadorIdFromPath();
     if (queryOrg && !pathOrg && !routeOrganizadorId) {
-      navigateAppTo(buildPublicRankingUrl(queryOrg, genero));
+      navigateAppTo(buildInternalClubRankingUrl(queryOrg, genero));
       return;
     }
 
@@ -83,20 +80,15 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
       routeOrganizadorId?.trim() ||
       getPublicOrganizadorIdWithoutUser() ||
       null;
-    setOfficialGlobal(!fromUrl);
     setOrgId(fromUrl);
     setOrgReady(true);
   }, [routeOrganizadorId, genero]);
 
   const openPlayer = useCallback(
     (j: RivieraJugadorWithStats) => {
-      if (officialGlobal) {
-        navigateOfficialPlayerFicha(j.id);
-        return;
-      }
       navigatePublicJugadorFicha(j.slug, orgId ?? undefined);
     },
-    [officialGlobal, orgId]
+    [orgId]
   );
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
@@ -104,10 +96,10 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
 
     const silent = opts?.silent ?? false;
 
-    if (!officialGlobal && !orgId) {
+    if (!orgId) {
       setJugadores([]);
       setError(
-        "No hay ranking público en esta ruta. El organizador puede compartir su enlace desde Registro Riviera Open."
+        "No hay ranking en esta ruta. Abre el ranking desde Registro Riviera Open."
       );
       if (!silent) setLoading(false);
       return;
@@ -118,21 +110,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     }
     setError(null);
     try {
-      if (officialGlobal) {
-        const rows = await listOfficialSiteJugadoresRanking(categoria, genero);
-        setJugadores(rows);
-        return;
-      }
-
-      const publicado = await isOrganizadorRankingPublico(orgId!);
-      if (!publicado) {
-        setJugadores([]);
-        setError(
-          "Este club aún no está publicado en el ranking oficial de Riviera Open."
-        );
-        return;
-      }
-      const rows = await listPublicJugadoresRanking(orgId!, categoria, genero);
+      const rows = await listInternalClubJugadoresRanking(orgId, categoria, genero);
       setJugadores(rows);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el ranking");
@@ -141,7 +119,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
         setLoading(false);
       }
     }
-  }, [orgId, categoria, genero, orgReady, officialGlobal]);
+  }, [orgId, categoria, genero, orgReady]);
 
   const loadRef = useRef(load);
   loadRef.current = load;
@@ -151,12 +129,12 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   }, [load]);
 
   useEffect(() => {
-    if (!orgId || officialGlobal) return;
+    if (!orgId) return;
 
     return subscribeRivieraRanking(orgId, () => {
       void loadRef.current({ silent: true });
     });
-  }, [orgId, officialGlobal]);
+  }, [orgId]);
 
   useEffect(() => {
     if (!orgReady) return;
@@ -166,7 +144,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     }, RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS);
 
     return () => window.clearInterval(id);
-  }, [orgReady, officialGlobal, orgId]);
+  }, [orgReady, orgId]);
 
   const personaLabel =
     genero === "F"
@@ -192,8 +170,9 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
             {RIVIERA_GENERO_RANKING_TITLE[genero]}
           </h1>
           <p className="rjp-ranking-header__sub">
-            Retas, ligas, americanos y torneos suman al ranking{" "}
-            {genero === "F" ? "femenil" : "varonil"}. Sin puntos negativos.
+            Ranking interno de tu club. Retas, ligas, americanos y torneos suman
+            puntos. Solo los jugadores con «Público» activo aparecen también en{" "}
+            rivieraopen.com.
           </p>
           <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
             Ver reglas completas
@@ -205,13 +184,9 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
           className="rjp-ranking-genero-tabs"
           genero={genero}
           onChange={(g) =>
-            navigateAppTo(
-              officialGlobal
-                ? g === "F"
-                  ? "/ranking/femenil"
-                  : "/ranking"
-                : buildPublicRankingUrl(orgId, g)
-            )
+            orgId
+              ? navigateAppTo(buildInternalClubRankingUrl(orgId, g))
+              : undefined
           }
         />
 

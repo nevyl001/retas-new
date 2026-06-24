@@ -265,13 +265,15 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
             onChange={() => setVisibleRanking((v) => !v)}
           />
           <span className="account-controls__toggle-label">
-            Publicar club en ranking oficial (appriviera)
+            Publicar club en ranking oficial (rivieraopen.com)
           </span>
         </label>
         <p className="account-controls__hint account-controls__hint--tight">
-          Si lo activas, los jugadores de esta cuenta pueden aparecer en el ranking
-          global de appriviera (www.rivieraopen.com enlaza ahí). Cada jugador
-          también necesita «Ranking» y «Público» activos.
+          Habilita a los jugadores de este club para aparecer en{" "}
+          <strong>www.rivieraopen.com/rankings</strong>. Cada jugador también
+          necesita «Ranking» y «Público» activos para salir en el sitio oficial.
+          El ranking interno del club sigue en appriviera (
+          <code>/ranking/o/…</code>).
         </p>
       </div>
       <button
@@ -291,9 +293,9 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         Jugadores del registro ({jugadores.length})
       </h4>
       <p className="account-controls__hint">
-        «Ranking» y «Público» controlan si el jugador aparece en el ranking
-        oficial de <strong>appriviera</strong> y si acumula puntos en partidos
-        nuevos.
+        «Ranking» suma puntos y muestra al jugador en el ranking interno del club.
+        «Público» además lo publica en <strong>rivieraopen.com</strong> (si el
+        club está publicado).
       </p>
 
       <form className="account-controls__add-form" onSubmit={(e) => void handleAddJugador(e)}>

@@ -240,6 +240,36 @@ export async function isOrganizadorRankingPublico(
   return data === true;
 }
 
+export interface OrganizadorRankingOficial {
+  organizador_id: string;
+  nombre: string;
+  email: string;
+}
+
+/** Clubs con ranking publicado en el sitio oficial (índice /ranking). */
+export async function listOrganizadoresRankingOficial(): Promise<
+  OrganizadorRankingOficial[]
+> {
+  const { data, error } = await supabase.rpc("riviera_organizadores_ranking_oficial");
+
+  if (error) {
+    if (
+      isMissingTableError(error) ||
+      error.message?.includes("riviera_organizadores_ranking_oficial")
+    ) {
+      return [];
+    }
+    console.warn("[admin] listOrganizadoresRankingOficial:", error);
+    return [];
+  }
+
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    organizador_id: String(row.organizador_id ?? ""),
+    nombre: String(row.nombre ?? "").trim() || "Club",
+    email: String(row.email ?? "").trim(),
+  }));
+}
+
 /** ¿Este jugador puede verse en el ranking/perfil oficial (appriviera)? */
 export async function isJugadorVisibleSitioOficial(
   jugadorId: string

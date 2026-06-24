@@ -48,7 +48,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
 }) => {
   const genero = generoProp;
   const { user } = useUser();
-  const { permiteAjustePuntosManuales, visibleRankingOficial } = useAccountFeatures();
+  const { permiteAjustePuntosManuales } = useAccountFeatures();
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -158,12 +158,10 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             </p>
           </div>
           <div className="rj-page__top-actions">
-            {user?.id && visibleRankingOficial ? (
+            {user?.id ? (
               <a
                 className="rj-btn rj-btn--ghost"
                 href={buildPublicRankingUrl(user.id, genero)}
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 Ranking {genero === "F" ? "femenil" : "varonil"}
               </a>

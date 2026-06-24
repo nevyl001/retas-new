@@ -896,12 +896,41 @@ export async function getRivieraJugadorPublicById(
 
 /** Ranking oficial global (clubs publicados vía admin maestro). */
 export async function listOfficialSiteJugadoresRanking(
+  organizadorId: string,
   categoria: string,
   genero: RivieraJugadorGenero = "M"
 ): Promise<RivieraJugadorWithStats[]> {
+  const { isOrganizadorRankingPublico } = await import("../admin/accountControls");
+  const publicado = await isOrganizadorRankingPublico(organizadorId);
+  if (!publicado) return [];
+
+  const generoParam = genero === "F" ? "F" : "M";
+  const { data, error } = await supabase.rpc(
+    "riviera_ranking_sitio_oficial_por_organizador",
+    {
+      p_organizador_id: organizadorId,
+      p_categoria: categoria,
+      p_genero: generoParam,
+    }
+  );
+
+  if (!error && data) {
+    const rows = (data as Record<string, unknown>[]).map(mapSitioOficialRow);
+    return rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
+  }
+
+  if (
+    error &&
+    !isMissingTableError(error) &&
+    !error.message?.includes("riviera_ranking_sitio_oficial_por_organizador")
+  ) {
+    throw error;
+  }
+
   let q = supabase
     .from("riviera_jugadores_sitio_oficial")
     .select("*")
+    .eq("organizador_id", organizadorId)
     .eq("categoria", categoria);
 
   if (genero === "F") {
@@ -910,19 +939,19 @@ export async function listOfficialSiteJugadoresRanking(
     q = q.or("genero.eq.M,genero.is.null");
   }
 
-  const { data, error } = await q.order("nombre");
+  const { data: viewData, error: viewError } = await q.order("nombre");
 
-  if (error) {
+  if (viewError) {
     if (
-      isMissingTableError(error) ||
-      error.message?.includes("riviera_jugadores_sitio_oficial")
+      isMissingTableError(viewError) ||
+      viewError.message?.includes("riviera_jugadores_sitio_oficial")
     ) {
       return [];
     }
-    throw error;
+    throw viewError;
   }
 
-  const rows = ((data ?? []) as Record<string, unknown>[]).map(mapSitioOficialRow);
+  const rows = ((viewData ?? []) as Record<string, unknown>[]).map(mapSitioOficialRow);
   const filtered = rows.filter((row) =>
     isJugadorInGeneroBracket(row.genero, genero)
   );
@@ -936,12 +965,87 @@ export async function listOfficialSiteJugadoresRanking(
 
 export async function getRankingPosicionOficialEnCategoria(
   jugadorId: string,
+  organizadorId: string,
   categoria: string,
   genero: RivieraJugadorGenero = "M"
 ): Promise<number | null> {
   const { rankingPosicionEnLista } = await import("./rankingPosition");
-  const list = await listOfficialSiteJugadoresRanking(categoria, genero);
+  const list = await listOfficialSiteJugadoresRanking(
+    organizadorId,
+    categoria,
+    genero
+  );
   return rankingPosicionEnLista(list, jugadorId);
+}
+
+/**
+ * Ranking interno del club (appriviera): todos los jugadores con suma_ranking,
+ * sin filtrar visible_publico ni publicación en rivieraopen.com.
+ */
+export async function listInternalClubJugadoresRanking(
+  organizadorId: string,
+  categoria: string,
+  genero: RivieraJugadorGenero = "M"
+): Promise<RivieraJugadorWithStats[]> {
+  const generoParam = genero === "F" ? "F" : "M";
+  const { data, error } = await supabase.rpc(
+    "riviera_ranking_interno_por_organizador",
+    {
+      p_organizador_id: organizadorId,
+      p_categoria: categoria,
+      p_genero: generoParam,
+    }
+  );
+
+  if (!error && data) {
+    const rows = (data as Record<string, unknown>[]).map(mapSitioOficialRow);
+    return rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
+  }
+
+  if (
+    error &&
+    !isMissingTableError(error) &&
+    !error.message?.includes("riviera_ranking_interno_por_organizador")
+  ) {
+    throw error;
+  }
+
+  const { data: viewData, error: viewError } = await withJugadorSelectFallback((cols) => {
+    let q = supabase
+      .from("riviera_jugadores")
+      .select(jugadorSelectWithStats(cols))
+      .eq("organizador_id", organizadorId)
+      .eq("categoria", categoria)
+      .eq("estado", "activo")
+      .or("suma_ranking.eq.true,suma_ranking.is.null")
+      .order("nombre");
+
+    if (genero === "F") {
+      q = q.eq("genero", "F");
+    } else {
+      q = q.or("genero.eq.M,genero.is.null");
+    }
+
+    return q;
+  });
+
+  if (viewError) {
+    if (isMissingTableError(viewError)) return [];
+    throw viewError;
+  }
+
+  const rows = ((viewData ?? []) as unknown as Record<string, unknown>[]).map((row) =>
+    mapJugadorRow(row)
+  );
+  const filtered = rows.filter((row) =>
+    isJugadorInGeneroBracket(row.genero, genero)
+  );
+  return [...filtered].sort((a, b) => {
+    const pa = a.stats?.puntos_totales ?? 0;
+    const pb = b.stats?.puntos_totales ?? 0;
+    if (pb !== pa) return pb - pa;
+    return a.nombre.localeCompare(b.nombre, "es");
+  });
 }
 
 export async function getRivieraJugadorPublicBySlug(
@@ -1026,7 +1130,7 @@ export async function listPublicJugadoresRanking(
   });
 }
 
-/** Posición # en el ranking público (empates comparten número). */
+/** Posición # en el ranking interno del club (empates comparten número). */
 export async function getRankingPosicionEnCategoria(
   organizadorId: string,
   jugadorId: string,
@@ -1034,7 +1138,11 @@ export async function getRankingPosicionEnCategoria(
   genero: RivieraJugadorGenero = "M"
 ): Promise<number | null> {
   const { rankingPosicionEnLista } = await import("./rankingPosition");
-  const list = await listPublicJugadoresRanking(organizadorId, categoria, genero);
+  const list = await listInternalClubJugadoresRanking(
+    organizadorId,
+    categoria,
+    genero
+  );
   return rankingPosicionEnLista(list, jugadorId);
 }
 

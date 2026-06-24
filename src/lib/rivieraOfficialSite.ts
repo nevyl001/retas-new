@@ -1,6 +1,8 @@
 /**
- * URLs del ranking y perfiles oficiales — viven en appriviera, no en rivieraopen.com.
- * www.rivieraopen.com (marketing) enlaza o embebe estas rutas.
+ * URLs de ranking y perfiles.
+ *
+ * - Ranking interno por club (app): /ranking/o/{organizador_id}
+ * - Sitio oficial (solo jugadores «Público»): www.rivieraopen.com/rankings
  */
 const APP_BASE =
   process.env.REACT_APP_PUBLIC_URL?.replace(/\/+$/, "") ||
@@ -23,21 +25,47 @@ export function buildOfficialPlayerUrl(jugadorId: string): string {
   return `${APP_BASE}/players/${encodeURIComponent(jugadorId.trim())}`;
 }
 
-/** Ranking oficial global multi-club: appriviera /ranking */
-export function buildOfficialRankingsUrl(
+/**
+ * Sitio oficial (rivieraopen.com) — solo jugadores con «Público» + club publicado.
+ * https://www.rivieraopen.com/rankings?org={organizador_id}
+ */
+export function buildMarketingOfficialRankingsUrl(
+  organizadorId?: string | null,
   genero: "M" | "F" = "M"
 ): string {
-  return genero === "F" ? `${APP_BASE}/ranking/femenil` : `${APP_BASE}/ranking`;
+  const params = new URLSearchParams();
+  const org = organizadorId?.trim();
+  if (org) params.set("org", org);
+  if (genero === "F") params.set("genero", "femenil");
+  const qs = params.toString();
+  return qs ? `${MARKETING_BASE}/rankings?${qs}` : `${MARKETING_BASE}/rankings`;
 }
 
-/** Vista previa del ranking de un solo club (interno / compartir club). */
-export function buildAppClubRankingUrl(organizadorId: string): string {
+/** Ranking interno del club en appriviera: /ranking/o/{organizador_id}/varonil */
+export function buildAppClubRankingUrl(
+  organizadorId: string,
+  genero: "M" | "F" = "M"
+): string {
   const base =
     APP_BASE || (typeof window !== "undefined" ? window.location.origin : "");
-  return `${base}/ranking/o/${encodeURIComponent(organizadorId.trim())}`;
+  const segment = genero === "F" ? "femenil" : "varonil";
+  return `${base}/ranking/o/${encodeURIComponent(organizadorId.trim())}/${segment}`;
 }
 
-/** @deprecated Usar buildOfficialPlayerUrl — el perfil oficial está en appriviera */
+/** @deprecated Usar buildMarketingOfficialRankingsUrl */
+export function buildOfficialRankingsUrl(genero: "M" | "F" = "M"): string {
+  return buildMarketingOfficialRankingsUrl(null, genero);
+}
+
+/** @deprecated Usar buildMarketingOfficialRankingsUrl(organizadorId) */
+export function buildOfficialClubRankingUrl(
+  organizadorId: string,
+  genero: "M" | "F" = "M"
+): string {
+  return buildMarketingOfficialRankingsUrl(organizadorId, genero);
+}
+
+/** @deprecated Usar getRivieraMarketingSiteBase */
 export function getRivieraOfficialSiteBase(): string {
   return MARKETING_BASE;
 }

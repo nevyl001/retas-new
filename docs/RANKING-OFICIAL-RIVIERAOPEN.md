@@ -11,16 +11,15 @@
 
 ---
 
-## URLs canónicas (appriviera)
+## URLs canónicas
 
-| Recurso | URL |
-|---------|-----|
-| Ranking oficial global (multi-club) | `https://appriviera.rivieraopen.com/ranking` |
-| Ranking femenil | `https://appriviera.rivieraopen.com/ranking/femenil` |
-| Perfil jugador | `https://appriviera.rivieraopen.com/players/{riviera_jugadores.id}` |
-| Ranking de un club (vista previa) | `https://appriviera.rivieraopen.com/ranking/o/{organizador_id}` |
+| Pieza | URL |
+|-------|-----|
+| **Ranking interno del club (app)** | `https://appriviera.rivieraopen.com/ranking/o/{organizador_id}` |
+| **Sitio oficial (solo jugadores «Público»)** | `https://www.rivieraopen.com/rankings?org={organizador_id}` |
+| **Perfil jugador** | `https://appriviera.rivieraopen.com/players/{riviera_jugadores.id}` |
 
-www.rivieraopen.com debe **enlazar o embeber** esas URLs, no reimplementar consultas propias.
+**No existe ranking global mezclado.** Cada organizador tiene su listado; rivieraopen.com filtra por `organizador_id`.
 
 ---
 
@@ -35,27 +34,52 @@ Un jugador aparece en el ranking/perfil oficial solo si:
 
 Implementación en appriviera:
 
-- `/ranking` sin `/o/{id}` → `listOfficialSiteJugadoresRanking()` (vista `riviera_jugadores_sitio_oficial`)
-- `/players/{uuid}` → `getRivieraJugadorPublicById()` + RPC `is_jugador_visible_sitio_oficial`
+- `/ranking` sin `/o/{id}` → índice de clubs (`riviera_organizadores_ranking_oficial`)
+- `/ranking/o/{organizador_id}` → `listOfficialSiteJugadoresRanking(organizadorId, …)` (RPC `riviera_ranking_sitio_oficial_por_organizador`)
+- `/players/{uuid}` → `getRivieraJugadorPublicById()` + RPC `is_jugador_visible_sitio_oficial`; posición en ranking del **club del jugador**, no global
 
 ---
 
 ## SQL en Supabase
 
+Ejecutar en este orden:
+
 1. `admin-master-controls.sql`
 2. `ranking-oficial-sitio-web.sql`
+
+### Endpoints para consumo externo (rivieraopen.com u otros)
+
+| Recurso | Tipo | Uso |
+|---------|------|-----|
+| `riviera_organizadores_ranking_oficial()` | RPC | Lista clubs con `visible_ranking_oficial = true` |
+| `riviera_ranking_sitio_oficial_por_organizador(p_organizador_id, p_categoria, p_genero)` | RPC | Ranking de un solo club |
+| `riviera_jugadores_sitio_oficial` | Vista | Base filtrada; **siempre** filtrar por `organizador_id` |
+| `is_organizador_ranking_publico(p_org_id)` | RPC | ¿Club publicado? |
+| `is_jugador_visible_sitio_oficial(p_jugador_id)` | RPC | ¿Jugador visible en sitio oficial? |
+
+Ejemplo PostgREST (anon key):
+
+```
+POST /rest/v1/rpc/riviera_organizadores_ranking_oficial
+
+POST /rest/v1/rpc/riviera_ranking_sitio_oficial_por_organizador
+Body: { "p_organizador_id": "uuid-del-club", "p_categoria": "open", "p_genero": "M" }
+```
+
+`p_organizador_id` es el UUID del organizador (`public.users.id`), no un slug de jugador.
 
 ---
 
 ## Qué pedirle a Cursor en rivieraopen.com (marketing)
 
-> rivieraopen.com **no** consulta Supabase para rankings. Depende de appriviera.
+> rivieraopen.com **no** consulta Supabase para rankings mezclados. Depende de appriviera.
 >
-> 1. En `/rankings` y enlaces de jugadores, usar URLs de appriviera:
->    - Ranking: `https://appriviera.rivieraopen.com/ranking`
+> 1. En `/rankings`, mostrar clubs publicados o enlazar al índice:
+>    - Índice: `https://appriviera.rivieraopen.com/ranking`
+>    - Club Nevyl (ejemplo): `https://appriviera.rivieraopen.com/ranking/o/{organizador_id}`
 >    - Perfil: `https://appriviera.rivieraopen.com/players/{id}`
-> 2. Opciones: redirect 302, `window.location`, iframe, o botón «Ver ranking en Riviera App».
-> 3. **Eliminar** (si existen) `rankingService.ts` / `playerService.ts` con queries directas a Supabase y `NEXT_PUBLIC_RANKING_ORGANIZADOR_ID`.
+> 2. Si rivieraopen.com consulta Supabase directamente, usar solo los RPC por `organizador_id`; **no** leer `riviera_jugadores_sitio_oficial` sin filtro de club.
+> 3. Opciones de integración: redirect 302, iframe, o botón «Ver ranking en Riviera App».
 > 4. El control de quién aparece lo hace el admin en appriviera; no hace falta admin de jugadores en rivieraopen.com.
 
 ---
