@@ -38,44 +38,41 @@ function RatingMoveBadge({ move }: { move: RatingMovimientoPartido }) {
   );
 }
 
-function renderPair(
-  label: string,
-  players: PublicRetaWinnerAvatar[],
-  isWinner: boolean,
-  ratingByJugadorId?: Record<string, RatingMovimientoPartido>
-) {
+function TeamPlayers({
+  players,
+  ratingByJugadorId,
+  winnerRing,
+}: {
+  players: PublicRetaWinnerAvatar[];
+  ratingByJugadorId?: Record<string, RatingMovimientoPartido>;
+  winnerRing?: boolean;
+}) {
   return (
-    <div
-      className={`duelo2v2-celebrate__pair${
-        isWinner ? " duelo2v2-celebrate__pair--winner" : ""
-      }`}
-    >
-      <p className="duelo2v2-celebrate__pair-label">
-        {label}
-        {isWinner ? " · Ganadores" : ""}
-      </p>
-      <div className="duelo2v2-celebrate__pair-players">
-        {players.map((p) => {
-          const move =
-            p.jugadorId && ratingByJugadorId
-              ? ratingByJugadorId[p.jugadorId]
-              : undefined;
-          return (
-            <div key={p.jugadorId ?? p.name} className="duelo2v2-celebrate__player">
-              <div className="duelo2v2-celebrate__player-ring">
-                <JugadorAvatar
-                  fotoUrl={p.fotoUrl}
-                  nombre={p.name}
-                  size="xl"
-                  className="duelo2v2-celebrate__player-avatar"
-                />
-              </div>
-              <span className="duelo2v2-celebrate__player-name">{p.name}</span>
-              {move ? <RatingMoveBadge move={move} /> : null}
+    <div className="duelo2v2-celebrate__pair-players">
+      {players.map((p) => {
+        const move =
+          p.jugadorId && ratingByJugadorId
+            ? ratingByJugadorId[p.jugadorId]
+            : undefined;
+        return (
+          <div key={p.jugadorId ?? p.name} className="duelo2v2-celebrate__player">
+            <div
+              className={`duelo2v2-celebrate__player-ring${
+                winnerRing ? " duelo2v2-celebrate__player-ring--winner" : ""
+              }`}
+            >
+              <JugadorAvatar
+                fotoUrl={p.fotoUrl}
+                nombre={p.name}
+                size="xl"
+                className="duelo2v2-celebrate__player-avatar"
+              />
             </div>
-          );
-        })}
-      </div>
+            <span className="duelo2v2-celebrate__player-name">{p.name}</span>
+            {move ? <RatingMoveBadge move={move} /> : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -99,81 +96,111 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     ratingByJugadorId && Object.keys(ratingByJugadorId).length > 0
   );
 
+  const winners = ganadorA ? teamA : teamB;
+  const losers = ganadorA ? teamB : teamA;
+  const winnersName = ganadorA ? teamAName : teamBName;
+  const losersName = ganadorA ? teamBName : teamAName;
+  const setsWin = ganadorA ? setsA : setsB;
+  const setsLoss = ganadorA ? setsB : setsA;
+  const gamesWin = ganadorA ? summary.gamesTotalA : summary.gamesTotalB;
+  const gamesLoss = ganadorA ? summary.gamesTotalB : summary.gamesTotalA;
+
+  const winnerMessage = finalizado
+    ? hasRating
+      ? "¡Victoria confirmada! Subieron su nivel y sumaron puntos al ranking Riviera Open. Sigan así en la cancha."
+      : "¡Victoria confirmada! Sumaron puntos al ranking Riviera Open. Sigan dominando la cancha."
+    : "¡Se llevan la victoria! Gran duelo en Riviera Open.";
+
+  const loserMessage = finalizado
+    ? hasRating
+      ? "Este duelo también cuenta. Sigan entrenando, sigan mejorando y verán su nivel subir partido a partido. ¡La revancha está más cerca de lo que creen!"
+      : "Gran esfuerzo en la cancha. Sigan entrenando, jugando y mejorando — cada duelo los acerca más arriba en Riviera Open."
+    : "Gran duelo. Sigan entrenando y mejorando — la revancha y el siguiente nivel los esperan en Riviera Open.";
+
   return (
     <section
       className="duelo2v2-celebrate ro-pub-celebrate ro-pub-celebrate--winners te-pub-fade-in"
-      aria-label="Ganadores del duelo 2 vs 2"
+      aria-label="Resultado del duelo 2 vs 2"
     >
       <div className="ro-pub-celebrate__glow" aria-hidden />
       <div className="ro-pub-celebrate__inner">
         <PublicRivieraCelebrateBrand showTagline={false} />
 
-        <p className="ro-pub-celebrate__badge">Ganadores</p>
-        <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
+        <div className="duelo2v2-celebrate__outcome-cards">
+          <article className="duelo2v2-celebrate__team-card duelo2v2-celebrate__team-card--winner">
+            <p className="duelo2v2-celebrate__team-card-badge">Campeones</p>
+            <h2 className="duelo2v2-celebrate__team-card-headline">¡Felicidades!</h2>
+            <p className="duelo2v2-celebrate__team-card-names">{winnersName}</p>
 
-        <div className="duelo2v2-celebrate__pairs">
-          {renderPair(teamAName, teamA, ganadorA, ratingByJugadorId)}
-          <div className="duelo2v2-celebrate__pairs-vs" aria-hidden>
-            VS
-          </div>
-          {renderPair(teamBName, teamB, !ganadorA, ratingByJugadorId)}
-        </div>
+            <TeamPlayers
+              players={winners}
+              ratingByJugadorId={ratingByJugadorId}
+              winnerRing
+            />
 
-        <div className="duelo2v2-celebrate__scoreboard">
-          <div className="duelo2v2-celebrate__score-main">
-            <span
-              className={`duelo2v2-celebrate__score-team${
-                ganadorA ? " duelo2v2-celebrate__score-team--winner" : ""
-              }`}
-            >
-              {teamAName}
-            </span>
-            <div className="duelo2v2-celebrate__score-numbers">
-              <strong>{setsA}</strong>
-              <span className="duelo2v2-celebrate__score-dash">–</span>
-              <strong>{setsB}</strong>
+            <div className="duelo2v2-celebrate__team-card-score">
+              <div className="duelo2v2-celebrate__team-card-score-main">
+                <span className="duelo2v2-celebrate__team-card-score-winner">
+                  {winnersName}
+                </span>
+                <div className="duelo2v2-celebrate__score-numbers">
+                  <strong>{setsWin}</strong>
+                  <span className="duelo2v2-celebrate__score-dash">–</span>
+                  <strong>{setsLoss}</strong>
+                </div>
+                <span className="duelo2v2-celebrate__team-card-score-rival">
+                  {losersName}
+                </span>
+              </div>
+              <p className="duelo2v2-celebrate__score-caption">Sets ganados</p>
+
+              {detalle.length > 0 && (
+                <ul className="duelo2v2-celebrate__sets-list">
+                  {detalle.map((row, index) => {
+                    const outcome = summary.setOutcomes[index] ?? "incompleto";
+                    if (outcome === "incompleto") return null;
+                    return (
+                      <li key={index}>
+                        Set {index + 1}: {row.a}–{row.b}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              <p className="duelo2v2-celebrate__games-total">
+                {gamesWin}–{gamesLoss} juegos totales
+              </p>
             </div>
-            <span
-              className={`duelo2v2-celebrate__score-team${
-                !ganadorA ? " duelo2v2-celebrate__score-team--winner" : ""
-              }`}
-            >
-              {teamBName}
-            </span>
-          </div>
-          <p className="duelo2v2-celebrate__score-caption">Sets ganados</p>
 
-          {detalle.length > 0 && (
-            <ul className="duelo2v2-celebrate__sets-list">
-              {detalle.map((row, index) => {
-                const outcome = summary.setOutcomes[index] ?? "incompleto";
-                if (outcome === "incompleto") return null;
-                return (
-                  <li key={index}>
-                    Set {index + 1}: {row.a}–{row.b}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+            <p className="duelo2v2-celebrate__team-card-message duelo2v2-celebrate__team-card-message--winner">
+              {winnerMessage}
+            </p>
+          </article>
 
-          <p className="duelo2v2-celebrate__games-total">
-            {summary.gamesTotalA}–{summary.gamesTotalB} juegos totales
-          </p>
+          <article className="duelo2v2-celebrate__team-card duelo2v2-celebrate__team-card--loser">
+            <p className="duelo2v2-celebrate__team-card-badge duelo2v2-celebrate__team-card-badge--loser">
+              Sigue adelante
+            </p>
+            <h3 className="duelo2v2-celebrate__team-card-subheadline">
+              Sigue entrenando, sigue mejorando
+            </h3>
+            <p className="duelo2v2-celebrate__team-card-names duelo2v2-celebrate__team-card-names--loser">
+              {losersName}
+            </p>
+
+            <TeamPlayers players={losers} ratingByJugadorId={ratingByJugadorId} />
+
+            <p className="duelo2v2-celebrate__team-card-message duelo2v2-celebrate__team-card-message--loser">
+              {loserMessage}
+            </p>
+          </article>
         </div>
 
-        <p className="ro-pub-celebrate__motivational">
-          {finalizado
-            ? hasRating
-              ? "¡Victoria confirmada! Actualizaron su nivel y sumaron puntos al ranking Riviera Open."
-              : "¡Victoria confirmada! Sumaron puntos al ranking Riviera Open."
-            : "¡Gran duelo! Se llevan la victoria en este encuentro."}
-        </p>
-        <p className="ro-pub-celebrate__rank">Ganadores del duelo 2 vs 2</p>
         <PublicRivieraCelebrateClosing torneoNombre={torneoNombre} />
 
         <p className="ro-pub-celebrate__participantes-note">
-          Gracias a todas las parejas por participar y seguir escribiendo su
+          Gracias a los cuatro jugadores por competir y seguir escribiendo su
           historia en Riviera Open.
         </p>
       </div>
