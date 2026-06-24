@@ -170,8 +170,8 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
             {RIVIERA_GENERO_RANKING_TITLE[genero]}
           </h1>
           <p className="rjp-ranking-header__sub">
-            Ranking interno de tu club. Retas, ligas, americanos y torneos suman
-            puntos. Solo los jugadores con «Público» activo aparecen también en{" "}
+            Ranking interno de tu club. Todos los jugadores activos aparecen aquí.
+            Solo los marcados «Sitio oficial» en el admin salen también en
             rivieraopen.com.
           </p>
           <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>

@@ -93,7 +93,7 @@ function normalizeJugadorFields(
     j.categoria = NIVEL_TO_CATEGORIA[j.nivel] ?? "3ra_fuerza";
   }
   if (j.visible_publico === undefined) {
-    j.visible_publico = true;
+    j.visible_publico = false;
   }
   if (j.suma_ranking === undefined) {
     j.suma_ranking = true;
@@ -397,7 +397,7 @@ export async function createRivieraJugador(
         foto_url: input.foto_url ?? null,
         organizador_id: organizadorId,
         estado: "activo",
-        visible_publico: true,
+        visible_publico: false,
       })
       .select(cols)
       .single()
@@ -516,7 +516,7 @@ export async function ensureRivieraJugadorVisibleEnRanking(
 
   const { error } = await supabase
     .from("riviera_jugadores")
-    .update({ estado: "activo", visible_publico: true })
+    .update({ estado: "activo" })
     .eq("id", jugadorId)
     .neq("estado", "archivado");
   if (error && !isMissingTableError(error)) {
@@ -979,8 +979,8 @@ export async function getRankingPosicionOficialEnCategoria(
 }
 
 /**
- * Ranking interno del club (appriviera): todos los jugadores con suma_ranking,
- * sin filtrar visible_publico ni publicación en rivieraopen.com.
+ * Ranking interno del club (appriviera): jugadores activos del organizador.
+ * No filtra visible_publico (eso solo aplica en rivieraopen.com).
  */
 export async function listInternalClubJugadoresRanking(
   organizadorId: string,
@@ -1017,7 +1017,6 @@ export async function listInternalClubJugadoresRanking(
       .eq("organizador_id", organizadorId)
       .eq("categoria", categoria)
       .eq("estado", "activo")
-      .or("suma_ranking.eq.true,suma_ranking.is.null")
       .order("nombre");
 
     if (genero === "F") {

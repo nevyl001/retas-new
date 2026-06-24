@@ -62,13 +62,6 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     [jugadoresFiltrados]
   );
 
-  const rankingBulk = useMemo(() => {
-    const n = jugadoresEditables.length;
-    if (n === 0) return { all: false, some: false, count: 0 };
-    const on = jugadoresEditables.filter((j) => j.suma_ranking).length;
-    return { all: on === n, some: on > 0 && on < n, count: on };
-  }, [jugadoresEditables]);
-
   const publicoBulk = useMemo(() => {
     const n = jugadoresEditables.length;
     if (n === 0) return { all: false, some: false, count: 0 };
@@ -269,11 +262,9 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
           </span>
         </label>
         <p className="account-controls__hint account-controls__hint--tight">
-          Habilita a los jugadores de este club para aparecer en{" "}
-          <strong>www.rivieraopen.com/rankings</strong>. Cada jugador también
-          necesita «Ranking» y «Público» activos para salir en el sitio oficial.
-          El ranking interno del club sigue en appriviera (
-          <code>/ranking/o/…</code>).
+          Habilita este club en <strong>www.rivieraopen.com/rankings</strong>.
+          Cada jugador entra al ranking interno del club por defecto; solo aparece
+          en el sitio oficial si activas «Sitio oficial» en ese jugador.
         </p>
       </div>
       <button
@@ -293,9 +284,9 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         Jugadores del registro ({jugadores.length})
       </h4>
       <p className="account-controls__hint">
-        «Ranking» suma puntos y muestra al jugador en el ranking interno del club.
-        «Público» además lo publica en <strong>rivieraopen.com</strong> (si el
-        club está publicado).
+        El ranking interno del club incluye a todos los jugadores activos. En{" "}
+        <strong>rivieraopen.com</strong> solo aparece quien tú actives con
+        «Sitio oficial» (por defecto nadie se publica).
       </p>
 
       <form className="account-controls__add-form" onSubmit={(e) => void handleAddJugador(e)}>
@@ -351,7 +342,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
               {jugadoresEditables.length > 0 ? (
                 <>
                   {" · "}
-                  {rankingBulk.count}/{jugadoresEditables.length} en ranking
+                  {publicoBulk.count}/{jugadoresEditables.length} en sitio oficial
                 </>
               ) : null}
             </p>
@@ -360,34 +351,8 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                 className="account-controls__bulk-toggle"
                 title={
                   playerSearch.trim()
-                    ? "Ranking para todos los jugadores visibles"
-                    : "Ranking para todos los jugadores activos"
-                }
-              >
-                <input
-                  type="checkbox"
-                  checked={rankingBulk.all}
-                  ref={(el) => {
-                    if (el) el.indeterminate = rankingBulk.some;
-                  }}
-                  disabled={bulkBusy || jugadoresEditables.length === 0}
-                  onChange={() =>
-                    void bulkPatchJugadores(
-                      { suma_ranking: !rankingBulk.all },
-                      rankingBulk.all
-                        ? "Ranking desactivado para todos"
-                        : "Ranking activado para todos"
-                    )
-                  }
-                />
-                <span>Todos en ranking</span>
-              </label>
-              <label
-                className="account-controls__bulk-toggle"
-                title={
-                  playerSearch.trim()
-                    ? "Público para todos los jugadores visibles"
-                    : "Público para todos los jugadores activos"
+                    ? "Sitio oficial para todos los jugadores visibles"
+                    : "Sitio oficial para todos los jugadores activos"
                 }
               >
                 <input
@@ -401,12 +366,12 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                     void bulkPatchJugadores(
                       { visible_publico: !publicoBulk.all },
                       publicoBulk.all
-                        ? "Ficha pública desactivada para todos"
-                        : "Ficha pública activada para todos"
+                        ? "Quitados del sitio oficial"
+                        : "Publicados en el sitio oficial"
                     )
                   }
                 />
-                <span>Todos públicos</span>
+                <span>Todos en sitio oficial</span>
               </label>
             </div>
             <div className="account-controls__bulk-buttons">
@@ -416,12 +381,12 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                 disabled={bulkBusy || jugadoresEditables.length === 0}
                 onClick={() =>
                   void bulkPatchJugadores(
-                    { suma_ranking: true, visible_publico: true },
-                    "Todos activados en ranking y público"
+                    { visible_publico: true },
+                    "Todos publicados en el sitio oficial"
                   )
                 }
               >
-                Activar todos
+                Publicar todos
               </button>
               <button
                 type="button"
@@ -429,12 +394,12 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                 disabled={bulkBusy || jugadoresEditables.length === 0}
                 onClick={() =>
                   void bulkPatchJugadores(
-                    { suma_ranking: false, visible_publico: false },
-                    "Todos quitados del ranking y ficha pública"
+                    { visible_publico: false },
+                    "Todos quitados del sitio oficial"
                   )
                 }
               >
-                Quitar todos
+                Quitar del sitio
               </button>
             </div>
           </div>
@@ -458,18 +423,10 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                   </span>
                 </div>
                 <div className="account-controls__player-actions">
-                  <label className="account-controls__mini-toggle" title="Visible en ranking oficial rivieraopen.com">
-                    <input
-                      type="checkbox"
-                      checked={j.suma_ranking}
-                      disabled={busy || archivado || bulkBusy}
-                      onChange={() =>
-                        void patchJugador(j, { suma_ranking: !j.suma_ranking })
-                      }
-                    />
-                    <span>Ranking</span>
-                  </label>
-                  <label className="account-controls__mini-toggle" title="Perfil público en rivieraopen.com">
+                  <label
+                    className="account-controls__mini-toggle"
+                    title="Publicar en rivieraopen.com (ranking interno siempre activo)"
+                  >
                     <input
                       type="checkbox"
                       checked={j.visible_publico}
@@ -480,7 +437,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                         })
                       }
                     />
-                    <span>Público</span>
+                    <span>Sitio oficial</span>
                   </label>
                   {!archivado ? (
                     <button

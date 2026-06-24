@@ -141,7 +141,7 @@ export async function listJugadoresForAdmin(
       slug: String(row.slug ?? ""),
       categoria: String(row.categoria ?? ""),
       estado: String(row.estado ?? "activo"),
-      visible_publico: row.visible_publico !== false,
+      visible_publico: row.visible_publico === true,
       suma_ranking: row.suma_ranking !== false,
       puntos_totales: Number(st?.puntos_totales ?? 0),
       created_at: String(row.created_at ?? ""),
@@ -157,9 +157,10 @@ export async function updateJugadorAdminControls(
     estado: "activo" | "invitado" | "archivado";
   }>
 ): Promise<void> {
+  const { suma_ranking: _ignored, ...rest } = patch;
   const { error } = await supabase
     .from("riviera_jugadores")
-    .update(patch)
+    .update({ ...rest, suma_ranking: true })
     .eq("id", jugadorId);
 
   if (error) throw new Error(error.message || "No se pudo actualizar el jugador");
@@ -178,9 +179,10 @@ export async function bulkUpdateJugadoresAdminControls(
   );
   if (ids.length === 0) return 0;
 
+  const { suma_ranking: _ignored, ...rest } = patch;
   const { error, count } = await supabase
     .from("riviera_jugadores")
-    .update(patch, { count: "exact" })
+    .update({ ...rest, suma_ranking: true }, { count: "exact" })
     .eq("organizador_id", organizadorId)
     .in("id", ids);
 

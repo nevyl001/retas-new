@@ -87,7 +87,7 @@ export async function getOrCreateJugadorId(params: {
       slug,
       organizador_id: params.organizadorId,
       estado: "activo",
-      visible_publico: true,
+      visible_publico: false,
       email: params.email ?? null,
     };
     if (params.legacyPlayerId) insert.legacy_player_id = params.legacyPlayerId;

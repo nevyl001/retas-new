@@ -20,7 +20,6 @@ BEGIN
   UPDATE public.riviera_jugadores
   SET
     estado = CASE WHEN estado = 'archivado' THEN estado ELSE 'activo' END,
-    visible_publico = true,
     suma_ranking = true,
     updated_at = now()
   WHERE organizador_id = v_org_id
@@ -35,7 +34,7 @@ SELECT categoria, count(*) AS jugadores
 FROM public.riviera_jugadores
 WHERE organizador_id = '2770b522-9064-4c7b-a729-4a0ea7e3f6e8'
   AND estado = 'activo'
-  AND COALESCE(visible_publico, true) = true
+  AND visible_publico IS TRUE
   AND COALESCE(suma_ranking, true) = true
 GROUP BY categoria
 ORDER BY categoria;

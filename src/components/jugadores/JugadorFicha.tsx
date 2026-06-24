@@ -64,7 +64,6 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [instagram, setInstagram] = useState("");
   const [facebook, setFacebook] = useState("");
   const [tiktok, setTiktok] = useState("");
-  const [visiblePublico, setVisiblePublico] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [deletingHistId, setDeletingHistId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -87,7 +86,6 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setInstagram(j.instagram_url ?? "");
         setFacebook(j.facebook_url ?? "");
         setTiktok(j.tiktok_url ?? "");
-        setVisiblePublico(j.visible_publico !== false);
         const h = await listParticipaciones(j.id, 100);
         setHistorial(h);
         try {
@@ -151,7 +149,6 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         instagram_url: instagram.trim() || null,
         facebook_url: facebook.trim() || null,
         tiktok_url: tiktok.trim() || null,
-        visible_publico: visiblePublico,
       });
       setJugador({ ...jugador, ...updated, stats: jugador.stats });
       setNombre(updated.nombre);
@@ -522,14 +519,6 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
                 onChange={(e) => setTiktok(e.target.value)}
               />
             </div>
-            <label className="rj-check">
-              <input
-                type="checkbox"
-                checked={visiblePublico}
-                onChange={(e) => setVisiblePublico(e.target.checked)}
-              />
-              Visible en ranking público
-            </label>
             <div className="rj-edit-panel__actions">
               <button
                 type="button"

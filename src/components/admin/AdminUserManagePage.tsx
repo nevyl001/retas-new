@@ -209,8 +209,9 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
           Rankings del club
         </span>
         <p className="admin-user-page__ranking-hint">
-          «Ranking» = ranking interno en appriviera. «Público» + club publicado =
-          también en rivieraopen.com. Cada club es independiente.
+          Con «Publicar club» + «Sitio oficial» en cada jugador, entran a
+          rivieraopen.com. El ranking interno del club incluye a todos los
+          jugadores activos.
         </p>
         <span className="admin-user-page__ranking-label admin-user-page__ranking-label--sub">
           Sitio oficial (rivieraopen.com)

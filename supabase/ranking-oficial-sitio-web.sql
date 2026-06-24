@@ -15,7 +15,7 @@ AS $$
     FROM public.riviera_jugadores rj
     WHERE rj.id = p_jugador_id
       AND rj.estado = 'activo'
-      AND COALESCE(rj.visible_publico, true) = true
+      AND rj.visible_publico IS TRUE
       AND COALESCE(rj.suma_ranking, true) = true
       AND public.is_organizador_ranking_publico(rj.organizador_id)
   );
@@ -50,7 +50,7 @@ SELECT
 FROM public.riviera_jugadores rj
 LEFT JOIN public.jugador_stats js ON js.jugador_id = rj.id
 WHERE rj.estado = 'activo'
-  AND COALESCE(rj.visible_publico, true) = true
+  AND rj.visible_publico IS TRUE
   AND COALESCE(rj.suma_ranking, true) = true
   AND public.is_organizador_ranking_publico(rj.organizador_id);
 
@@ -220,7 +220,6 @@ AS $$
   LEFT JOIN public.jugador_stats js ON js.jugador_id = rj.id
   WHERE rj.organizador_id = p_organizador_id
     AND rj.estado = 'activo'
-    AND COALESCE(rj.suma_ranking, true) = true
     AND (p_categoria IS NULL OR rj.categoria = p_categoria)
     AND (
       p_genero IS NULL
@@ -234,7 +233,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.riviera_ranking_interno_por_organizador(uuid, text, text) IS
-  'Ranking interno del club en appriviera. Incluye jugadores con suma_ranking; no filtra visible_publico.';
+  'Ranking interno del club en appriviera. Jugadores activos del organizador; no filtra visible_publico.';
 
 GRANT EXECUTE ON FUNCTION public.riviera_ranking_interno_por_organizador(uuid, text, text) TO anon, authenticated;
 
