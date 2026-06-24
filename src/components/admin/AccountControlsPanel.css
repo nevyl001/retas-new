@@ -211,6 +211,72 @@
   margin-top: 0;
 }
 
+.account-controls__bulk-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-input-border, #27272a);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.account-controls__input--search {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.account-controls__bulk-meta {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--admin-text-muted, #71717a);
+}
+
+.account-controls__bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.account-controls__bulk-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--admin-text, #fafafa);
+  cursor: pointer;
+}
+
+.account-controls__bulk-toggle input {
+  accent-color: var(--admin-accent, #c9a227);
+}
+
+.account-controls__bulk-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
 .account-controls--page .account-controls__player-list {
   max-height: none;
+}
+
+.account-controls__hint--tight {
+  margin-bottom: 0;
+}
+
+.account-controls__permiso-block {
+  margin: 1rem 0 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--admin-input-border, #27272a);
+}
+
+.account-controls__toggle--block {
+  align-items: flex-start;
+}
+
+.account-controls__toggle--block .account-controls__toggle-label {
+  line-height: 1.4;
 }

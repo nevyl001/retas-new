@@ -1863,7 +1863,8 @@ export async function syncAmericanoParticipaciones(
             userId,
             jugadorId,
             delta,
-            `Corrección ${eventoNombre}`
+            `Corrección ${eventoNombre}`,
+            { bypassPermisoCheck: true }
           );
         }
       }

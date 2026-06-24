@@ -90,6 +90,7 @@ export function resolveAppViewFromPath(pathname: string): AppView {
     currentPath.startsWith("/public/jugadores") ||
     currentPath === "/ranking" ||
     currentPath.startsWith("/ranking/") ||
+    currentPath.startsWith("/players/") ||
     currentPath === "/public/ranking-puntos"
   ) {
     return "jugadores";
@@ -112,6 +113,7 @@ export function pathRequiresUserSession(pathname: string): boolean {
   if (path.startsWith("/duelo-2v2")) return true;
   if (path.startsWith("/public/jugadores")) return false;
   if (path === "/ranking" || path.startsWith("/ranking/")) return false;
+  if (path.startsWith("/players/")) return false;
   if (path === "/public/ranking-puntos") return false;
   if (path.startsWith("/jugadores")) return true;
   if (

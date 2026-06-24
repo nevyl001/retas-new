@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useUser } from "../../contexts/UserContext";
 import {
   JUGADOR_CATEGORIA_LABELS,
   JUGADOR_CATEGORIA_SHORT_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
 import { RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS } from "../../lib/rivieraJugadores/publicPoll";
-import { listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { listOfficialSiteJugadoresRanking, listPublicJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { isOrganizadorRankingPublico } from "../../lib/admin/accountControls";
 import { subscribeRivieraRanking } from "../../lib/rivieraJugadores/subscribeRivieraRanking";
 import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
 import { navigateAppTo } from "../../lib/appRouting";
@@ -31,6 +31,7 @@ import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import {
   buildPublicRankingUrl,
   buildRankingComoFuncionaPath,
+  navigateOfficialPlayerFicha,
   navigatePublicJugadorFicha,
 } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
@@ -48,8 +49,8 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   organizadorId: routeOrganizadorId,
   genero = "M",
 }) => {
-  const { user } = useUser();
   const [orgId, setOrgId] = useState<string | null>(null);
+  const [officialGlobal, setOfficialGlobal] = useState(false);
   const [orgReady, setOrgReady] = useState(false);
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
@@ -82,17 +83,28 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
       routeOrganizadorId?.trim() ||
       getPublicOrganizadorIdWithoutUser() ||
       null;
-    const resolved = fromUrl ?? user?.id?.trim() ?? null;
-    setOrgId(resolved);
+    setOfficialGlobal(!fromUrl);
+    setOrgId(fromUrl);
     setOrgReady(true);
-  }, [routeOrganizadorId, user?.id, genero]);
+  }, [routeOrganizadorId, genero]);
+
+  const openPlayer = useCallback(
+    (j: RivieraJugadorWithStats) => {
+      if (officialGlobal) {
+        navigateOfficialPlayerFicha(j.id);
+        return;
+      }
+      navigatePublicJugadorFicha(j.slug, orgId ?? undefined);
+    },
+    [officialGlobal, orgId]
+  );
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!orgReady) return;
 
     const silent = opts?.silent ?? false;
 
-    if (!orgId) {
+    if (!officialGlobal && !orgId) {
       setJugadores([]);
       setError(
         "No hay ranking público en esta ruta. El organizador puede compartir su enlace desde Registro Riviera Open."
@@ -106,7 +118,21 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     }
     setError(null);
     try {
-      const rows = await listPublicJugadoresRanking(orgId, categoria, genero);
+      if (officialGlobal) {
+        const rows = await listOfficialSiteJugadoresRanking(categoria, genero);
+        setJugadores(rows);
+        return;
+      }
+
+      const publicado = await isOrganizadorRankingPublico(orgId!);
+      if (!publicado) {
+        setJugadores([]);
+        setError(
+          "Este club aún no está publicado en el ranking oficial de Riviera Open."
+        );
+        return;
+      }
+      const rows = await listPublicJugadoresRanking(orgId!, categoria, genero);
       setJugadores(rows);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el ranking");
@@ -115,7 +141,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
         setLoading(false);
       }
     }
-  }, [orgId, categoria, genero, orgReady]);
+  }, [orgId, categoria, genero, orgReady, officialGlobal]);
 
   const loadRef = useRef(load);
   loadRef.current = load;
@@ -125,22 +151,22 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   }, [load]);
 
   useEffect(() => {
-    if (!orgId) return;
+    if (!orgId || officialGlobal) return;
 
     return subscribeRivieraRanking(orgId, () => {
       void loadRef.current({ silent: true });
     });
-  }, [orgId]);
+  }, [orgId, officialGlobal]);
 
   useEffect(() => {
-    if (!orgId) return;
+    if (!orgReady) return;
 
     const id = window.setInterval(() => {
       void loadRef.current({ silent: true });
     }, RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS);
 
     return () => window.clearInterval(id);
-  }, [orgId]);
+  }, [orgReady, officialGlobal, orgId]);
 
   const personaLabel =
     genero === "F"
@@ -178,7 +204,15 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
         <JugadoresGeneroTabs
           className="rjp-ranking-genero-tabs"
           genero={genero}
-          onChange={(g) => navigateAppTo(buildPublicRankingUrl(orgId, g))}
+          onChange={(g) =>
+            navigateAppTo(
+              officialGlobal
+                ? g === "F"
+                  ? "/ranking/femenil"
+                  : "/ranking"
+                : buildPublicRankingUrl(orgId, g)
+            )
+          }
         />
 
         <button
@@ -259,9 +293,10 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                 <RankingPodio
                   jugadores={jugadoresFiltrados.slice(0, 3)}
                   ranks={rankingRanks.slice(0, 3)}
-                  onSelect={(slug) =>
-                    navigatePublicJugadorFicha(slug, orgId ?? undefined)
-                  }
+                  onSelect={(slug) => {
+                    const j = jugadoresFiltrados.find((row) => row.slug === slug);
+                    if (j) openPlayer(j);
+                  }}
                 />
 
                 <ul
@@ -276,9 +311,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                         <button
                           type="button"
                           className="rjp-ranking-card"
-                          onClick={() =>
-                            navigatePublicJugadorFicha(j.slug, orgId ?? undefined)
-                          }
+                          onClick={() => openPlayer(j)}
                         >
                           <span className="rjp-ranking-card__rank">#{pos}</span>
                           <JugadorAvatar

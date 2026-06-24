@@ -60,3 +60,12 @@ export function buildPublicRankingUrl(
 export function buildPublicRankingGeneroPath(genero: RivieraJugadorGenero): string {
   return genero === "F" ? "/ranking/femenil" : "/ranking";
 }
+
+/** Perfil oficial en appriviera (UUID). */
+export function buildOfficialPlayerPath(jugadorId: string): string {
+  return `/players/${encodeURIComponent(jugadorId.trim())}`;
+}
+
+export function navigateOfficialPlayerFicha(jugadorId: string): void {
+  navigateAppTo(buildOfficialPlayerPath(jugadorId));
+}

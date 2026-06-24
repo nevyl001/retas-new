@@ -12,6 +12,8 @@ import {
 } from "../../lib/rivieraJugadores/historialDisplay";
 import {
   getRankingPosicionEnCategoria,
+  getRankingPosicionOficialEnCategoria,
+  getRivieraJugadorPublicById,
   getRivieraJugadorPublicBySlug,
   listParticipacionesPublic,
   obtenerHistorialRatingPublic,
@@ -32,11 +34,13 @@ import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
+import { buildOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
 import { buildPublicRankingUrl, navigatePublicJugadores } from "./jugadoresPublicNav";
 import "./riviera-jugadores-public-ficha.css";
 
 interface JugadorPublicFichaProps {
-  slug: string;
+  slug?: string;
+  playerId?: string;
 }
 
 function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
@@ -54,12 +58,17 @@ function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
   );
 }
 
-export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) => {
+export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
+  slug,
+  playerId,
+}) => {
   const { user } = useUser();
-  const orgId = resolvePublicOrganizadorId(
-    user?.id,
-    typeof window !== "undefined" ? window.location.pathname : undefined
-  );
+  const orgId = playerId
+    ? null
+    : resolvePublicOrganizadorId(
+        user?.id,
+        typeof window !== "undefined" ? window.location.pathname : undefined
+      );
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [historial, setHistorial] = useState<
     Awaited<ReturnType<typeof listParticipacionesPublic>>
@@ -71,12 +80,20 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const j = await getRivieraJugadorPublicBySlug(slug, orgId ?? undefined);
+      const j = playerId
+        ? await getRivieraJugadorPublicById(playerId)
+        : await getRivieraJugadorPublicBySlug(slug ?? "", orgId ?? undefined);
       setJugador(j);
       if (j) {
         const [h, pos] = await Promise.all([
           listParticipacionesPublic(j.id, 100),
-          orgId
+          playerId
+            ? getRankingPosicionOficialEnCategoria(
+                j.id,
+                j.categoria,
+                normalizeRivieraGenero(j.genero) ?? "M"
+              )
+            : orgId
             ? getRankingPosicionEnCategoria(
                 orgId,
                 j.id,
@@ -101,7 +118,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
     } finally {
       setLoading(false);
     }
-  }, [slug, orgId]);
+  }, [slug, orgId, playerId]);
 
   useEffect(() => {
     void load();
@@ -125,10 +142,12 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({ slug }) 
     };
   }, [jugador?.id]);
 
-  const rankingUrl = buildPublicRankingUrl(
-    orgId,
-    normalizeRivieraGenero(jugador?.genero) ?? "M"
-  );
+  const rankingUrl = playerId
+    ? buildOfficialRankingsUrl(normalizeRivieraGenero(jugador?.genero) ?? "M")
+    : buildPublicRankingUrl(
+        orgId,
+        normalizeRivieraGenero(jugador?.genero) ?? "M"
+      );
 
   const historialItems = useMemo(
     () =>

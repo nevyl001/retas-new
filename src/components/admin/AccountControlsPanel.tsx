@@ -1,12 +1,13 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { GAME_MODES, type GameModeId } from "../home/gameModesConfig";
 import {
+  bulkUpdateJugadoresAdminControls,
   createJugadorForAdmin,
-  fetchOrganizadorGameModes,
+  fetchOrganizadorAccountSettings,
   listJugadoresForAdmin,
   removeJugadorForAdmin,
   updateJugadorAdminControls,
-  upsertOrganizadorGameModes,
+  upsertOrganizadorAccountSettings,
   type AdminJugadorRow,
 } from "../../lib/admin/accountControls";
 import { GAME_MODE_LABELS } from "../../lib/admin/organizadorGameModes";
@@ -35,6 +36,8 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   layout = "modal",
 }) => {
   const [modes, setModes] = useState<Record<GameModeId, boolean> | null>(null);
+  const [permiteAjustePuntos, setPermiteAjustePuntos] = useState(true);
+  const [visibleRanking, setVisibleRanking] = useState(false);
   const [jugadores, setJugadores] = useState<AdminJugadorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingModes, setSavingModes] = useState(false);
@@ -45,16 +48,45 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     useState<RivieraJugadorCategoria>("3ra_fuerza");
   const [addingJugador, setAddingJugador] = useState(false);
   const [busyJugadorId, setBusyJugadorId] = useState<string | null>(null);
+  const [playerSearch, setPlayerSearch] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  const jugadoresFiltrados = useMemo(() => {
+    const q = playerSearch.trim().toLowerCase();
+    if (!q) return jugadores;
+    return jugadores.filter((j) => j.nombre.toLowerCase().includes(q));
+  }, [jugadores, playerSearch]);
+
+  const jugadoresEditables = useMemo(
+    () => jugadoresFiltrados.filter((j) => j.estado !== "archivado"),
+    [jugadoresFiltrados]
+  );
+
+  const rankingBulk = useMemo(() => {
+    const n = jugadoresEditables.length;
+    if (n === 0) return { all: false, some: false, count: 0 };
+    const on = jugadoresEditables.filter((j) => j.suma_ranking).length;
+    return { all: on === n, some: on > 0 && on < n, count: on };
+  }, [jugadoresEditables]);
+
+  const publicoBulk = useMemo(() => {
+    const n = jugadoresEditables.length;
+    if (n === 0) return { all: false, some: false, count: 0 };
+    const on = jugadoresEditables.filter((j) => j.visible_publico).length;
+    return { all: on === n, some: on > 0 && on < n, count: on };
+  }, [jugadoresEditables]);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [m, j] = await Promise.all([
-        fetchOrganizadorGameModes(organizadorId),
+      const [settings, j] = await Promise.all([
+        fetchOrganizadorAccountSettings(organizadorId),
         listJugadoresForAdmin(organizadorId),
       ]);
-      setModes(m);
+      setModes(settings.modes);
+      setPermiteAjustePuntos(settings.permiteAjustePuntosManuales);
+      setVisibleRanking(settings.visibleRankingOficial);
       setJugadores(j);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar controles");
@@ -72,16 +104,20 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     setModes({ ...modes, [modeId]: !modes[modeId] });
   };
 
-  const saveModes = async () => {
+  const saveSettings = async () => {
     if (!modes) return;
     setSavingModes(true);
     setError("");
     setNotice("");
     try {
-      await upsertOrganizadorGameModes(organizadorId, modes);
-      setNotice("Modos de juego guardados.");
+      await upsertOrganizadorAccountSettings(organizadorId, {
+        modes,
+        permiteAjustePuntosManuales: permiteAjustePuntos,
+        visibleRankingOficial: visibleRanking,
+      });
+      setNotice("Configuración guardada.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudieron guardar los modos");
+      setError(e instanceof Error ? e.message : "No se pudo guardar la configuración");
     } finally {
       setSavingModes(false);
     }
@@ -120,6 +156,31 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
       setError(e instanceof Error ? e.message : "No se pudo actualizar el jugador");
     } finally {
       setBusyJugadorId(null);
+    }
+  };
+
+  const bulkPatchJugadores = async (
+    patch: Parameters<typeof bulkUpdateJugadoresAdminControls>[2],
+    label: string
+  ) => {
+    const ids = jugadoresEditables.map((j) => j.id);
+    if (ids.length === 0) return;
+
+    setBulkBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const n = await bulkUpdateJugadoresAdminControls(organizadorId, ids, patch);
+      const scope =
+        playerSearch.trim() && jugadoresFiltrados.length < jugadores.length
+          ? ` (${n} visibles)`
+          : "";
+      setNotice(`${label}${scope}.`);
+      await loadAll();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo actualizar los jugadores");
+    } finally {
+      setBulkBusy(false);
     }
   };
 
@@ -180,13 +241,46 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
           </li>
         ))}
       </ul>
+      <div className="account-controls__permiso-block">
+        <label className="account-controls__toggle account-controls__toggle--block">
+          <input
+            type="checkbox"
+            checked={permiteAjustePuntos}
+            onChange={() => setPermiteAjustePuntos((v) => !v)}
+          />
+          <span className="account-controls__toggle-label">
+            Permitir ajuste manual de puntos
+          </span>
+        </label>
+        <p className="account-controls__hint account-controls__hint--tight">
+          Si lo desactivas, el club solo acumula puntos por partidos registrados
+          en la app. No podrá sumar ni restar puntos con el lápiz del registro.
+        </p>
+      </div>
+      <div className="account-controls__permiso-block">
+        <label className="account-controls__toggle account-controls__toggle--block">
+          <input
+            type="checkbox"
+            checked={visibleRanking}
+            onChange={() => setVisibleRanking((v) => !v)}
+          />
+          <span className="account-controls__toggle-label">
+            Publicar club en ranking oficial (appriviera)
+          </span>
+        </label>
+        <p className="account-controls__hint account-controls__hint--tight">
+          Si lo activas, los jugadores de esta cuenta pueden aparecer en el ranking
+          global de appriviera (www.rivieraopen.com enlaza ahí). Cada jugador
+          también necesita «Ranking» y «Público» activos.
+        </p>
+      </div>
       <button
         type="button"
         className="account-controls__btn account-controls__btn--primary"
-        onClick={() => void saveModes()}
+        onClick={() => void saveSettings()}
         disabled={savingModes || !modes}
       >
-        {savingModes ? "Guardando…" : "Guardar modos"}
+        {savingModes ? "Guardando…" : "Guardar configuración"}
       </button>
     </section>
   );
@@ -197,8 +291,9 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         Jugadores del registro ({jugadores.length})
       </h4>
       <p className="account-controls__hint">
-        &quot;Ranking&quot; controla si aparecen en el ranking público y si
-        acumulan puntos en partidos nuevos.
+        «Ranking» y «Público» controlan si el jugador aparece en el ranking
+        oficial de <strong>appriviera</strong> y si acumula puntos en partidos
+        nuevos.
       </p>
 
       <form className="account-controls__add-form" onSubmit={(e) => void handleAddJugador(e)}>
@@ -236,8 +331,114 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
       {jugadores.length === 0 ? (
         <p className="account-controls__empty">Sin jugadores en esta cuenta.</p>
       ) : (
-        <ul className="account-controls__player-list">
-          {jugadores.map((j) => {
+        <>
+          <div className="account-controls__bulk-bar">
+            <input
+              type="search"
+              className="account-controls__input account-controls__input--search"
+              placeholder="Buscar jugador…"
+              value={playerSearch}
+              onChange={(e) => setPlayerSearch(e.target.value)}
+              disabled={bulkBusy}
+              aria-label="Buscar jugador"
+            />
+            <p className="account-controls__bulk-meta">
+              {jugadoresFiltrados.length === jugadores.length
+                ? `${jugadores.length} jugadores`
+                : `${jugadoresFiltrados.length} de ${jugadores.length} visibles`}
+              {jugadoresEditables.length > 0 ? (
+                <>
+                  {" · "}
+                  {rankingBulk.count}/{jugadoresEditables.length} en ranking
+                </>
+              ) : null}
+            </p>
+            <div className="account-controls__bulk-actions">
+              <label
+                className="account-controls__bulk-toggle"
+                title={
+                  playerSearch.trim()
+                    ? "Ranking para todos los jugadores visibles"
+                    : "Ranking para todos los jugadores activos"
+                }
+              >
+                <input
+                  type="checkbox"
+                  checked={rankingBulk.all}
+                  ref={(el) => {
+                    if (el) el.indeterminate = rankingBulk.some;
+                  }}
+                  disabled={bulkBusy || jugadoresEditables.length === 0}
+                  onChange={() =>
+                    void bulkPatchJugadores(
+                      { suma_ranking: !rankingBulk.all },
+                      rankingBulk.all
+                        ? "Ranking desactivado para todos"
+                        : "Ranking activado para todos"
+                    )
+                  }
+                />
+                <span>Todos en ranking</span>
+              </label>
+              <label
+                className="account-controls__bulk-toggle"
+                title={
+                  playerSearch.trim()
+                    ? "Público para todos los jugadores visibles"
+                    : "Público para todos los jugadores activos"
+                }
+              >
+                <input
+                  type="checkbox"
+                  checked={publicoBulk.all}
+                  ref={(el) => {
+                    if (el) el.indeterminate = publicoBulk.some;
+                  }}
+                  disabled={bulkBusy || jugadoresEditables.length === 0}
+                  onChange={() =>
+                    void bulkPatchJugadores(
+                      { visible_publico: !publicoBulk.all },
+                      publicoBulk.all
+                        ? "Ficha pública desactivada para todos"
+                        : "Ficha pública activada para todos"
+                    )
+                  }
+                />
+                <span>Todos públicos</span>
+              </label>
+            </div>
+            <div className="account-controls__bulk-buttons">
+              <button
+                type="button"
+                className="account-controls__btn account-controls__btn--ghost"
+                disabled={bulkBusy || jugadoresEditables.length === 0}
+                onClick={() =>
+                  void bulkPatchJugadores(
+                    { suma_ranking: true, visible_publico: true },
+                    "Todos activados en ranking y público"
+                  )
+                }
+              >
+                Activar todos
+              </button>
+              <button
+                type="button"
+                className="account-controls__btn account-controls__btn--ghost"
+                disabled={bulkBusy || jugadoresEditables.length === 0}
+                onClick={() =>
+                  void bulkPatchJugadores(
+                    { suma_ranking: false, visible_publico: false },
+                    "Todos quitados del ranking y ficha pública"
+                  )
+                }
+              >
+                Quitar todos
+              </button>
+            </div>
+          </div>
+
+          <ul className="account-controls__player-list">
+          {jugadoresFiltrados.map((j) => {
             const busy = busyJugadorId === j.id;
             const archivado = j.estado === "archivado";
             return (
@@ -255,22 +456,22 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                   </span>
                 </div>
                 <div className="account-controls__player-actions">
-                  <label className="account-controls__mini-toggle" title="Suma al ranking">
+                  <label className="account-controls__mini-toggle" title="Visible en ranking oficial rivieraopen.com">
                     <input
                       type="checkbox"
                       checked={j.suma_ranking}
-                      disabled={busy || archivado}
+                      disabled={busy || archivado || bulkBusy}
                       onChange={() =>
                         void patchJugador(j, { suma_ranking: !j.suma_ranking })
                       }
                     />
                     <span>Ranking</span>
                   </label>
-                  <label className="account-controls__mini-toggle" title="Ficha pública">
+                  <label className="account-controls__mini-toggle" title="Perfil público en rivieraopen.com">
                     <input
                       type="checkbox"
                       checked={j.visible_publico}
-                      disabled={busy || archivado}
+                      disabled={busy || archivado || bulkBusy}
                       onChange={() =>
                         void patchJugador(j, {
                           visible_publico: !j.visible_publico,
@@ -311,6 +512,10 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
             );
           })}
         </ul>
+        {jugadoresFiltrados.length === 0 ? (
+          <p className="account-controls__empty">Ningún jugador coincide con la búsqueda.</p>
+        ) : null}
+        </>
       )}
     </section>
   );

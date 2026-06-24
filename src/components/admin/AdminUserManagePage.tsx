@@ -4,6 +4,10 @@ import {
   fetchAdminUserDetail,
   type AdminUserDetail,
 } from "../../lib/admin/fetchAdminUserDetail";
+import {
+  buildAppClubRankingUrl,
+  buildOfficialRankingsUrl,
+} from "../../lib/rivieraOfficialSite";
 import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
 import { navigateAdminDashboard } from "../../lib/admin/adminNav";
 import { AccountControlsPanel } from "./AccountControlsPanel";
@@ -68,10 +72,8 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
     void loadUser();
   }, [loadUser]);
 
-  const rankingUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/ranking/o/${encodeURIComponent(userId)}`
-      : `/ranking/o/${userId}`;
+  const appRankingUrl = buildAppClubRankingUrl(userId);
+  const officialRankingsUrl = buildOfficialRankingsUrl();
 
   const handleDelete = async () => {
     if (!user) return;
@@ -205,14 +207,32 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
       </section>
 
       <section className="admin-user-page__ranking-link">
-        <span className="admin-user-page__ranking-label">Ranking público</span>
+        <span className="admin-user-page__ranking-label">
+          Ranking oficial · appriviera
+        </span>
+        <p className="admin-user-page__ranking-hint">
+          El ranking y los perfiles públicos viven en{" "}
+          <strong>appriviera.rivieraopen.com</strong>. www.rivieraopen.com enlaza
+          ahí. Los toggles de abajo controlan quién aparece.
+        </p>
         <a
-          href={rankingUrl}
+          href={officialRankingsUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="admin-user-page__ranking-url"
         >
-          {rankingUrl}
+          {officialRankingsUrl}
+        </a>
+        <span className="admin-user-page__ranking-label admin-user-page__ranking-label--sub">
+          Vista previa solo de este club
+        </span>
+        <a
+          href={appRankingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="admin-user-page__ranking-url admin-user-page__ranking-url--muted"
+        >
+          {appRankingUrl}
         </a>
       </section>
 

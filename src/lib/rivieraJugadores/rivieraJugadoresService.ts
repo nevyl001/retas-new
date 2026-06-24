@@ -800,8 +800,21 @@ export async function adjustRankingPuntosManual(
   organizadorId: string,
   jugadorId: string,
   delta: number,
-  motivo?: string
+  motivo?: string,
+  options?: { bypassPermisoCheck?: boolean }
 ): Promise<void> {
+  if (!options?.bypassPermisoCheck) {
+    const { fetchOrganizadorAccountSettings } = await import(
+      "../admin/accountControls"
+    );
+    const settings = await fetchOrganizadorAccountSettings(organizadorId);
+    if (!settings.permiteAjustePuntosManuales) {
+      throw new Error(
+        "Tu cuenta no puede ajustar puntos manualmente. Solo se registran por partidos jugados en la app."
+      );
+    }
+  }
+
   const n = Math.trunc(delta);
   if (!n) {
     throw new Error("Indica cuántos puntos sumar o restar (distinto de cero).");
@@ -826,6 +839,111 @@ export async function adjustRankingPuntosManual(
   });
 }
 
+function mapSitioOficialRow(
+  row: Record<string, unknown>
+): RivieraJugadorWithStats {
+  const j = mapJugadorRow(row);
+  const puntos = Number(row.puntos_totales ?? j.stats?.puntos_totales ?? 0);
+  const partidos = Number(row.total_partidos ?? j.stats?.total_partidos ?? 0);
+  const victorias = Number(row.victorias ?? j.stats?.victorias ?? 0);
+  j.stats = {
+    ...(j.stats ?? {
+      jugador_id: j.id,
+      total_partidos: 0,
+      victorias: 0,
+      derrotas: 0,
+      empates: 0,
+      participaciones_solo: 0,
+      pct_victorias: 0,
+      total_retas: 0,
+      total_torneos_express: 0,
+      total_ligas: 0,
+      total_americanos: 0,
+      sets_favor_total: 0,
+      sets_contra_total: 0,
+      racha_actual: "",
+      ultima_actividad: null,
+      puntos_totales: 0,
+      updated_at: "",
+    }),
+    puntos_totales: puntos,
+    total_partidos: partidos,
+    victorias,
+  };
+  return j;
+}
+
+export async function getRivieraJugadorPublicById(
+  jugadorId: string
+): Promise<RivieraJugadorWithStats | null> {
+  const { isJugadorVisibleSitioOficial } = await import("../admin/accountControls");
+  if (!(await isJugadorVisibleSitioOficial(jugadorId))) return null;
+
+  const { data, error } = await withJugadorSelectFallback((cols) =>
+    supabase
+      .from("riviera_jugadores")
+      .select(jugadorSelectWithStats(cols))
+      .eq("id", jugadorId)
+      .maybeSingle()
+  );
+
+  if (error) {
+    if (isMissingTableError(error)) return null;
+    throw error;
+  }
+  return data ? mapJugadorRow(data as unknown as Record<string, unknown>) : null;
+}
+
+/** Ranking oficial global (clubs publicados vía admin maestro). */
+export async function listOfficialSiteJugadoresRanking(
+  categoria: string,
+  genero: RivieraJugadorGenero = "M"
+): Promise<RivieraJugadorWithStats[]> {
+  let q = supabase
+    .from("riviera_jugadores_sitio_oficial")
+    .select("*")
+    .eq("categoria", categoria);
+
+  if (genero === "F") {
+    q = q.eq("genero", "F");
+  } else {
+    q = q.or("genero.eq.M,genero.is.null");
+  }
+
+  const { data, error } = await q.order("nombre");
+
+  if (error) {
+    if (
+      isMissingTableError(error) ||
+      error.message?.includes("riviera_jugadores_sitio_oficial")
+    ) {
+      return [];
+    }
+    throw error;
+  }
+
+  const rows = ((data ?? []) as Record<string, unknown>[]).map(mapSitioOficialRow);
+  const filtered = rows.filter((row) =>
+    isJugadorInGeneroBracket(row.genero, genero)
+  );
+  return [...filtered].sort((a, b) => {
+    const pa = a.stats?.puntos_totales ?? 0;
+    const pb = b.stats?.puntos_totales ?? 0;
+    if (pb !== pa) return pb - pa;
+    return a.nombre.localeCompare(b.nombre, "es");
+  });
+}
+
+export async function getRankingPosicionOficialEnCategoria(
+  jugadorId: string,
+  categoria: string,
+  genero: RivieraJugadorGenero = "M"
+): Promise<number | null> {
+  const { rankingPosicionEnLista } = await import("./rankingPosition");
+  const list = await listOfficialSiteJugadoresRanking(categoria, genero);
+  return rankingPosicionEnLista(list, jugadorId);
+}
+
 export async function getRivieraJugadorPublicBySlug(
   slug: string,
   organizadorId?: string | null
@@ -848,7 +966,15 @@ export async function getRivieraJugadorPublicBySlug(
     if (isMissingTableError(error)) return null;
     throw error;
   }
-  return data ? mapJugadorRow(data as unknown as Record<string, unknown>) : null;
+  const j = data ? mapJugadorRow(data as unknown as Record<string, unknown>) : null;
+  if (!j) return null;
+
+  if (!organizadorId) {
+    const { isJugadorVisibleSitioOficial } = await import("../admin/accountControls");
+    if (!(await isJugadorVisibleSitioOficial(j.id))) return null;
+  }
+
+  return j;
 }
 
 /** Ranking público por categoría y género (orden: más puntos, luego nombre). */
@@ -857,6 +983,10 @@ export async function listPublicJugadoresRanking(
   categoria: string,
   genero: RivieraJugadorGenero = "M"
 ): Promise<RivieraJugadorWithStats[]> {
+  const { isOrganizadorRankingPublico } = await import("../admin/accountControls");
+  const publicado = await isOrganizadorRankingPublico(organizadorId);
+  if (!publicado) return [];
+
   const { data, error } = await withJugadorSelectFallback((cols) => {
     let q = supabase
       .from("riviera_jugadores")

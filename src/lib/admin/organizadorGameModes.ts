@@ -18,6 +18,8 @@ export interface OrganizadorGameModesRow {
   mini_torneo: boolean;
   liga: boolean;
   duelo_2v2: boolean;
+  permite_ajuste_puntos_manuales: boolean;
+  visible_ranking_oficial: boolean;
   updated_at?: string;
 }
 
@@ -26,13 +28,22 @@ export type OrganizadorGameModesInput = Omit<
   "organizador_id" | "updated_at"
 >;
 
+export interface OrganizadorAccountSettings {
+  modes: Record<GameModeId, boolean>;
+  permiteAjustePuntosManuales: boolean;
+  visibleRankingOficial: boolean;
+}
+
+/** Defaults para cuentas nuevas sin fila en BD (coincide con column DEFAULT de SQL). */
 export const DEFAULT_ORGANIZADOR_GAME_MODES: OrganizadorGameModesInput = {
-  reta_equipos: true,
+  reta_equipos: false,
   round_robin: true,
-  americano: true,
-  mini_torneo: true,
-  liga: true,
+  americano: false,
+  mini_torneo: false,
+  liga: false,
   duelo_2v2: true,
+  permite_ajuste_puntos_manuales: true,
+  visible_ranking_oficial: false,
 };
 
 export const GAME_MODE_LABELS: Record<GameModeId, string> = {
@@ -62,12 +73,14 @@ export function isGameModeEnabled(
   modes: Record<GameModeId, boolean> | null | undefined,
   modeId: GameModeId
 ): boolean {
-  if (!modes) return true;
+  if (!modes) return false;
   return modes[modeId] !== false;
 }
 
 export function inputFromEnabledModes(
-  modes: Record<GameModeId, boolean>
+  modes: Record<GameModeId, boolean>,
+  permiteAjustePuntosManuales: boolean,
+  visibleRankingOficial: boolean
 ): OrganizadorGameModesInput {
   return {
     reta_equipos: modes["reta-equipos"],
@@ -76,5 +89,18 @@ export function inputFromEnabledModes(
     mini_torneo: modes["mini-torneo"],
     liga: modes.liga,
     duelo_2v2: modes["duelo-2v2"],
+    permite_ajuste_puntos_manuales: permiteAjustePuntosManuales,
+    visible_ranking_oficial: visibleRankingOficial,
+  };
+}
+
+export function rowToAccountSettings(
+  row: OrganizadorGameModesRow | OrganizadorGameModesInput | null | undefined
+): OrganizadorAccountSettings {
+  const base = row ?? DEFAULT_ORGANIZADOR_GAME_MODES;
+  return {
+    modes: rowToEnabledModes(base),
+    permiteAjustePuntosManuales: base.permite_ajuste_puntos_manuales !== false,
+    visibleRankingOficial: base.visible_ranking_oficial === true,
   };
 }

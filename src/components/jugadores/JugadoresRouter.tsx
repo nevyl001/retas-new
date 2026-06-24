@@ -21,8 +21,12 @@ export type JugadoresRoute =
   | { kind: "ficha"; slug: string }
   | { kind: "publicRanking"; organizadorId?: string; genero: RivieraJugadorGenero }
   | { kind: "publicFicha"; slug: string }
+  | { kind: "officialPlayer"; playerId: string }
   | { kind: "rankingComoFunciona" }
   | { kind: "unknown" };
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function parseRankingRoute(path: string): JugadoresRoute | null {
   const rankingOrgGenero = path.match(
@@ -77,6 +81,20 @@ export function parseJugadoresPath(pathname: string): JugadoresRoute {
   const rankingRoute = parseRankingRoute(path);
   if (rankingRoute) return rankingRoute;
 
+  const playerById = path.match(/^\/players\/([^/]+)$/i);
+  if (playerById) {
+    const raw = playerById[1];
+    let id = raw;
+    try {
+      id = decodeURIComponent(raw);
+    } catch {
+      id = raw;
+    }
+    if (UUID_RE.test(id)) {
+      return { kind: "officialPlayer", playerId: id };
+    }
+  }
+
   if (path === "/ranking/como-funciona") return { kind: "rankingComoFunciona" };
   if (path === "/public/ranking-puntos") return { kind: "rankingComoFunciona" };
   if (path === "/public/jugadores") {
@@ -119,6 +137,7 @@ export function isJugadoresPublicPath(pathname: string): boolean {
   return (
     kind === "publicRanking" ||
     kind === "publicFicha" ||
+    kind === "officialPlayer" ||
     kind === "rankingComoFunciona"
   );
 }
@@ -138,6 +157,8 @@ export const JugadoresRouter: React.FC<{ pathname: string }> = ({ pathname }) =>
       );
     case "publicFicha":
       return <JugadorPublicFicha slug={route.slug} />;
+    case "officialPlayer":
+      return <JugadorPublicFicha playerId={route.playerId} />;
     case "lista":
       return <JugadoresLista genero={route.genero} />;
     case "ficha":

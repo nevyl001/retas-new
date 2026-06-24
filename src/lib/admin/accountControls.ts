@@ -1,10 +1,10 @@
 import { supabase } from "../supabaseClient";
-import type { GameModeId } from "../../components/home/gameModesConfig";
 import type { RivieraJugadorCategoria } from "../rivieraJugadores/types";
 import {
   DEFAULT_ORGANIZADOR_GAME_MODES,
   inputFromEnabledModes,
-  rowToEnabledModes,
+  rowToAccountSettings,
+  type OrganizadorAccountSettings,
   type OrganizadorGameModesRow,
 } from "./organizadorGameModes";
 
@@ -19,9 +19,22 @@ function isMissingTableError(error: { code?: string; message?: string } | null):
   );
 }
 
-export async function fetchOrganizadorGameModes(
+function isMissingColumnError(
+  error: { code?: string; message?: string } | null,
+  column: string
+): boolean {
+  if (!error) return false;
+  const msg = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "42703" ||
+    msg.includes(column.toLowerCase()) ||
+    msg.includes("does not exist")
+  );
+}
+
+export async function fetchOrganizadorAccountSettings(
   organizadorId: string
-): Promise<Record<GameModeId, boolean>> {
+): Promise<OrganizadorAccountSettings> {
   const { data, error } = await supabase
     .from("organizador_game_modes")
     .select("*")
@@ -29,23 +42,39 @@ export async function fetchOrganizadorGameModes(
     .maybeSingle();
 
   if (error) {
-    if (isMissingTableError(error)) {
-      return rowToEnabledModes(DEFAULT_ORGANIZADOR_GAME_MODES);
+    if (
+      isMissingTableError(error) ||
+      isMissingColumnError(error, "permite_ajuste_puntos_manuales") ||
+      isMissingColumnError(error, "visible_ranking_oficial")
+    ) {
+      return rowToAccountSettings(DEFAULT_ORGANIZADOR_GAME_MODES);
     }
-    console.warn("[admin] fetchOrganizadorGameModes:", error);
-    return rowToEnabledModes(DEFAULT_ORGANIZADOR_GAME_MODES);
+    console.warn("[admin] fetchOrganizadorAccountSettings:", error);
+    return rowToAccountSettings(DEFAULT_ORGANIZADOR_GAME_MODES);
   }
 
-  return rowToEnabledModes((data as OrganizadorGameModesRow | null) ?? null);
+  return rowToAccountSettings((data as OrganizadorGameModesRow | null) ?? null);
 }
 
-export async function upsertOrganizadorGameModes(
+/** @deprecated Usar fetchOrganizadorAccountSettings */
+export async function fetchOrganizadorGameModes(
+  organizadorId: string
+): Promise<OrganizadorAccountSettings["modes"]> {
+  const settings = await fetchOrganizadorAccountSettings(organizadorId);
+  return settings.modes;
+}
+
+export async function upsertOrganizadorAccountSettings(
   organizadorId: string,
-  modes: Record<GameModeId, boolean>
+  settings: OrganizadorAccountSettings
 ): Promise<void> {
   const payload: OrganizadorGameModesRow = {
     organizador_id: organizadorId,
-    ...inputFromEnabledModes(modes),
+    ...inputFromEnabledModes(
+      settings.modes,
+      settings.permiteAjustePuntosManuales,
+      settings.visibleRankingOficial
+    ),
     updated_at: new Date().toISOString(),
   };
 
@@ -54,8 +83,21 @@ export async function upsertOrganizadorGameModes(
     .upsert(payload, { onConflict: "organizador_id" });
 
   if (error) {
-    throw new Error(error.message || "No se pudieron guardar los modos de juego");
+    throw new Error(error.message || "No se pudo guardar la configuración");
   }
+}
+
+/** @deprecated Usar upsertOrganizadorAccountSettings */
+export async function upsertOrganizadorGameModes(
+  organizadorId: string,
+  modes: OrganizadorAccountSettings["modes"]
+): Promise<void> {
+  const current = await fetchOrganizadorAccountSettings(organizadorId);
+  await upsertOrganizadorAccountSettings(organizadorId, {
+    modes,
+    permiteAjustePuntosManuales: current.permiteAjustePuntosManuales,
+    visibleRankingOficial: current.visibleRankingOficial,
+  });
 }
 
 export interface AdminJugadorRow {
@@ -123,6 +165,32 @@ export async function updateJugadorAdminControls(
   if (error) throw new Error(error.message || "No se pudo actualizar el jugador");
 }
 
+export async function bulkUpdateJugadoresAdminControls(
+  organizadorId: string,
+  jugadorIds: string[],
+  patch: Partial<{
+    suma_ranking: boolean;
+    visible_publico: boolean;
+  }>
+): Promise<number> {
+  const ids = Array.from(
+    new Set(jugadorIds.map((id) => id.trim()).filter(Boolean))
+  );
+  if (ids.length === 0) return 0;
+
+  const { error, count } = await supabase
+    .from("riviera_jugadores")
+    .update(patch, { count: "exact" })
+    .eq("organizador_id", organizadorId)
+    .in("id", ids);
+
+  if (error) {
+    throw new Error(error.message || "No se pudo actualizar los jugadores");
+  }
+
+  return count ?? ids.length;
+}
+
 export async function createJugadorForAdmin(
   organizadorId: string,
   input: { nombre: string; categoria?: RivieraJugadorCategoria }
@@ -147,4 +215,49 @@ export async function removeJugadorForAdmin(
     "../rivieraJugadores/rivieraJugadoresService"
   );
   await deleteRivieraJugador(organizadorId, jugadorId);
+}
+
+/** ¿El ranking público de esta cuenta está publicado en el sitio? */
+export async function isOrganizadorRankingPublico(
+  organizadorId: string
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("is_organizador_ranking_publico", {
+    p_org_id: organizadorId,
+  });
+
+  if (error) {
+    if (
+      isMissingTableError(error) ||
+      error.message?.includes("is_organizador_ranking_publico")
+    ) {
+      const settings = await fetchOrganizadorAccountSettings(organizadorId);
+      return settings.visibleRankingOficial;
+    }
+    console.warn("[admin] isOrganizadorRankingPublico:", error);
+    return false;
+  }
+
+  return data === true;
+}
+
+/** ¿Este jugador puede verse en el ranking/perfil oficial (appriviera)? */
+export async function isJugadorVisibleSitioOficial(
+  jugadorId: string
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("is_jugador_visible_sitio_oficial", {
+    p_jugador_id: jugadorId,
+  });
+
+  if (error) {
+    if (
+      isMissingTableError(error) ||
+      error.message?.includes("is_jugador_visible_sitio_oficial")
+    ) {
+      return false;
+    }
+    console.warn("[admin] isJugadorVisibleSitioOficial:", error);
+    return false;
+  }
+
+  return data === true;
 }
