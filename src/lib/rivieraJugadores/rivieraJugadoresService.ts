@@ -1101,11 +1101,7 @@ export async function listInternalClubJugadoresRanking(
     return rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
   }
 
-  if (
-    error &&
-    !isMissingTableError(error) &&
-    !error.message?.includes("riviera_ranking_interno_por_organizador")
-  ) {
+  if (error && !isMissingTableError(error) && !isMissingRpcError(error)) {
     throw error;
   }
 
