@@ -751,8 +751,32 @@ export async function listParticipaciones(
  */
 export async function listParticipacionesPublic(
   jugadorId: string,
-  limit = 100
+  limit = 100,
+  organizadorId?: string | null
 ): Promise<JugadorParticipacion[]> {
+  const org = organizadorId?.trim();
+  if (org) {
+    const { data, error } = await supabasePublicRead.rpc(
+      "riviera_participaciones_interno",
+      {
+        p_organizador_id: org,
+        p_jugador_id: jugadorId,
+        p_limit: limit,
+      }
+    );
+    if (!error && data) {
+      return (data ?? []) as JugadorParticipacion[];
+    }
+    if (
+      error &&
+      !isMissingRpcError(error) &&
+      !isMissingTableError(error) &&
+      !error.message?.includes("riviera_participaciones_interno")
+    ) {
+      throw error;
+    }
+  }
+
   const { data, error } = await supabasePublicRead
     .from("jugador_participaciones")
     .select("*")
@@ -837,6 +861,31 @@ export async function adjustRankingPuntosManual(
       organizador_id: organizadorId,
     },
   });
+}
+
+function mapInternalClubJugadorRow(
+  row: Record<string, unknown>
+): RivieraJugadorWithStats {
+  const stats: JugadorStats = {
+    jugador_id: String(row.id),
+    total_partidos: Number(row.total_partidos ?? 0),
+    victorias: Number(row.victorias ?? 0),
+    derrotas: Number(row.derrotas ?? 0),
+    empates: Number(row.empates ?? 0),
+    participaciones_solo: Number(row.participaciones_solo ?? 0),
+    pct_victorias: Number(row.pct_victorias ?? 0),
+    total_retas: Number(row.total_retas ?? 0),
+    total_torneos_express: Number(row.total_torneos_express ?? 0),
+    total_ligas: Number(row.total_ligas ?? 0),
+    total_americanos: Number(row.total_americanos ?? 0),
+    sets_favor_total: Number(row.sets_favor_total ?? 0),
+    sets_contra_total: Number(row.sets_contra_total ?? 0),
+    racha_actual: String(row.racha_actual ?? ""),
+    ultima_actividad: (row.ultima_actividad as string | null) ?? null,
+    puntos_totales: Number(row.puntos_totales ?? 0),
+    updated_at: String(row.stats_updated_at ?? row.updated_at ?? ""),
+  };
+  return mapJugadorRow({ ...row, stats });
 }
 
 function mapSitioOficialRow(
@@ -1051,17 +1100,58 @@ export async function getRivieraJugadorPublicBySlug(
   slug: string,
   organizadorId?: string | null
 ): Promise<RivieraJugadorWithStats | null> {
+  const trimmedSlug = slug.trim();
+  const trimmedOrg = organizadorId?.trim();
+
+  if (trimmedOrg) {
+    const { data, error } = await supabase.rpc("riviera_jugador_interno_por_slug", {
+      p_organizador_id: trimmedOrg,
+      p_slug: trimmedSlug,
+    });
+
+    if (!error && data) {
+      const row = Array.isArray(data) ? data[0] : data;
+      return row
+        ? mapInternalClubJugadorRow(row as Record<string, unknown>)
+        : null;
+    }
+
+    if (
+      error &&
+      !isMissingRpcError(error) &&
+      !isMissingTableError(error) &&
+      !error.message?.includes("riviera_jugador_interno_por_slug")
+    ) {
+      throw error;
+    }
+
+    const { data: fallbackData, error: fallbackError } =
+      await withJugadorSelectFallback((cols) =>
+        supabase
+          .from("riviera_jugadores")
+          .select(jugadorSelectWithStats(cols))
+          .eq("slug", trimmedSlug)
+          .eq("organizador_id", trimmedOrg)
+          .eq("estado", "activo")
+          .maybeSingle()
+      );
+
+    if (fallbackError) {
+      if (isMissingTableError(fallbackError)) return null;
+      throw fallbackError;
+    }
+    return fallbackData
+      ? mapJugadorRow(fallbackData as unknown as Record<string, unknown>)
+      : null;
+  }
+
   const { data, error } = await withJugadorSelectFallback((cols) => {
     let q = supabase
       .from("riviera_jugadores")
       .select(jugadorSelectWithStats(cols))
-      .eq("slug", slug)
+      .eq("slug", trimmedSlug)
       .eq("estado", "activo")
       .or("visible_publico.eq.true,visible_publico.is.null");
-
-    if (organizadorId) {
-      q = q.eq("organizador_id", organizadorId);
-    }
 
     return q.maybeSingle();
   });
@@ -1072,10 +1162,8 @@ export async function getRivieraJugadorPublicBySlug(
   const j = data ? mapJugadorRow(data as unknown as Record<string, unknown>) : null;
   if (!j) return null;
 
-  if (!organizadorId) {
-    const { isJugadorVisibleSitioOficial } = await import("../admin/accountControls");
-    if (!(await isJugadorVisibleSitioOficial(j.id))) return null;
-  }
+  const { isJugadorVisibleSitioOficial } = await import("../admin/accountControls");
+  if (!(await isJugadorVisibleSitioOficial(j.id))) return null;
 
   return j;
 }

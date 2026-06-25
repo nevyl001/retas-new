@@ -86,7 +86,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       setJugador(j);
       if (j) {
         const [h, pos] = await Promise.all([
-          listParticipacionesPublic(j.id, 100),
+          listParticipacionesPublic(j.id, 100, orgId ?? undefined),
           playerId
             ? getRankingPosicionOficialEnCategoria(
                 j.id,
@@ -219,7 +219,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       <JugadoresPublicShell variant="ficha">
         <FichaTopbar rankingUrl={rankingUrl} />
         <p className="rjp-ficha-empty">
-          Jugador no encontrado o no está visible al público.
+          {orgId
+            ? "Jugador no encontrado en este club."
+            : "Jugador no encontrado o no está visible al público."}
         </p>
       </JugadoresPublicShell>
     );
