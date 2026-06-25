@@ -11,7 +11,6 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
   title,
   description,
   icon,
-  badge,
   accentColor,
   disabled,
   index,
@@ -40,7 +39,6 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
           {disabled ? (
             <span className="game-mode-card__upgrade-badge">Upgrade</span>
           ) : null}
-          {badge ? <span className="game-mode-card__badge">{badge}</span> : null}
         </div>
       </div>
       <h3 className="game-mode-card__title">{title}</h3>

@@ -11,7 +11,6 @@ export interface GameModeConfig {
   title: string;
   description: string;
   icon: string;
-  badge?: string;
   gradient: string;
   accentColor: string;
   disabled?: boolean;
@@ -23,7 +22,6 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Reta por Equipos",
     description: "Parejas agrupadas compiten por equipos",
     icon: "🏆",
-    badge: "Popular",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#ffffff",
   },
@@ -40,7 +38,6 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Pádel Americano",
     description: "Rotación dinámica por rondas y canchas",
     icon: "🎾",
-    badge: "Rápido",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#10b981",
   },
@@ -49,7 +46,6 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Torneos",
     description: "Grupos + round robin, tabla pública",
     icon: "⚡",
-    badge: "Nuevo",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#8b5cf6",
   },
@@ -58,7 +54,6 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Liga",
     description: "Temporada con jornadas y ranking acumulado",
     icon: "🏅",
-    badge: "Nuevo",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#3b82f6",
   },
@@ -67,7 +62,6 @@ export const GAME_MODES: GameModeConfig[] = [
     title: "Duelo 2 vs 2",
     description: "Dos parejas del registro · suma al ranking Riviera Open",
     icon: "⚔️",
-    badge: "Nuevo",
     gradient: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#f59e0b",
   },

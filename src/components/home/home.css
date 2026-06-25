@@ -172,8 +172,7 @@
 
 .game-mode-card--disabled .game-mode-card__title,
 .game-mode-card--disabled .game-mode-card__desc,
-.game-mode-card--disabled .game-mode-card__icon,
-.game-mode-card--disabled .game-mode-card__badge {
+.game-mode-card--disabled .game-mode-card__icon {
   opacity: 0.55;
 }
 
