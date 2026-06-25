@@ -176,21 +176,13 @@ async function fetchInternalClubJugadorRow(
     ? { p_organizador_id: trimmedOrg, p_jugador_id: opts.jugadorId.trim() }
     : { p_organizador_id: trimmedOrg, p_slug: (opts.slug ?? "").trim() };
 
-  for (const client of [supabasePublicRead, supabase]) {
-    const { data, error } = await client.rpc(rpcName, rpcParams);
-    if (!error && data) {
-      const row = Array.isArray(data) ? data[0] : data;
-      return row
-        ? mapInternalClubJugadorRow(row as Record<string, unknown>)
-        : null;
-    }
-    if (
-      error &&
-      !isMissingRpcError(error) &&
-      !isMissingTableError(error)
-    ) {
-      throw error;
-    }
+  const { data, error } = await supabase.rpc(rpcName, rpcParams);
+  if (!error && data) {
+    const row = Array.isArray(data) ? data[0] : data;
+    return row ? mapInternalClubJugadorRow(row as Record<string, unknown>) : null;
+  }
+  if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
+    throw error;
   }
 
   const { data: fallbackData, error: fallbackError } =
@@ -822,25 +814,16 @@ export async function listParticipacionesPublic(
 ): Promise<JugadorParticipacion[]> {
   const org = organizadorId?.trim();
   if (org) {
-    for (const client of [supabasePublicRead, supabase]) {
-      const { data, error } = await client.rpc(
-        "riviera_participaciones_interno",
-        {
-          p_organizador_id: org,
-          p_jugador_id: jugadorId,
-          p_limit: limit,
-        }
-      );
-      if (!error && data) {
-        return (data ?? []) as JugadorParticipacion[];
-      }
-      if (
-        error &&
-        !isMissingRpcError(error) &&
-        !isMissingTableError(error)
-      ) {
-        throw error;
-      }
+    const { data, error } = await supabase.rpc("riviera_participaciones_interno", {
+      p_organizador_id: org,
+      p_jugador_id: jugadorId,
+      p_limit: limit,
+    });
+    if (!error && data) {
+      return (data ?? []) as JugadorParticipacion[];
+    }
+    if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
+      throw error;
     }
   }
 

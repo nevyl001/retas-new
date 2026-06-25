@@ -18,6 +18,7 @@ export const supabasePublicRead = createClient(supabaseUrl, supabaseKey, {
     persistSession: false,
     autoRefreshToken: false,
     detectSessionInUrl: false,
+    storageKey: "riviera-public-read",
   },
 });
 
