@@ -36,10 +36,20 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
         <span className="game-mode-card__icon" aria-hidden>
           {icon}
         </span>
-        {badge && <span className="game-mode-card__badge">{badge}</span>}
+        <div className="game-mode-card__badges">
+          {disabled ? (
+            <span className="game-mode-card__upgrade-badge">Upgrade</span>
+          ) : null}
+          {badge ? <span className="game-mode-card__badge">{badge}</span> : null}
+        </div>
       </div>
       <h3 className="game-mode-card__title">{title}</h3>
       <p className="game-mode-card__desc">{description}</p>
+      {disabled ? (
+        <p className="game-mode-card__upgrade">
+          ¿Deseas el upgrade del sistema? Contacta al administrador.
+        </p>
+      ) : null}
     </button>
   );
 };

@@ -161,10 +161,58 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
-.game-mode-card--disabled {
-  opacity: 0.45;
+.game-mode-card--disabled,
+.game-mode-card--disabled:disabled {
   cursor: not-allowed;
-  animation: none;
+  opacity: 1;
+  animation: fadeInUp 0.5s ease-out forwards;
+  border-color: var(--border-subtle);
+  min-height: 168px;
+}
+
+.game-mode-card--disabled .game-mode-card__title,
+.game-mode-card--disabled .game-mode-card__desc,
+.game-mode-card--disabled .game-mode-card__icon,
+.game-mode-card--disabled .game-mode-card__badge {
+  opacity: 0.55;
+}
+
+.game-mode-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 62%;
+}
+
+.game-mode-card__upgrade-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.18);
+  color: var(--accent-gold-light, #e8c547);
+  border: 0.5px solid rgba(212, 175, 55, 0.55);
+  white-space: nowrap;
+  font-family: var(--font-body);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+}
+
+.game-mode-card__upgrade {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 0.5px solid rgba(212, 175, 55, 0.35);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--accent-gold-light, #e8c547);
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
 }
 
 .game-mode-card__top {
