@@ -237,4 +237,6 @@ COMMENT ON FUNCTION public.riviera_ranking_interno_por_organizador(uuid, text, t
 
 GRANT EXECUTE ON FUNCTION public.riviera_ranking_interno_por_organizador(uuid, text, text) TO anon, authenticated;
 
+-- Fichas de jugador en ranking interno: ejecutar también supabase/jugador-interno-por-slug.sql
+
 NOTIFY pgrst, 'reload schema';

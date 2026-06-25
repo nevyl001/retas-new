@@ -149,15 +149,81 @@ function isMissingTableError(error: { code?: string; message?: string } | null):
   );
 }
 
-function isMissingRpcError(error: { code?: string; message?: string } | null): boolean {
+function isMissingRpcError(error: { code?: string; message?: string; status?: number } | null): boolean {
   if (!error) return false;
   const msg = (error.message ?? "").toLowerCase();
   return (
+    error.status === 404 ||
     error.code === "42883" ||
     error.code === "PGRST202" ||
-    msg.includes("refresh_jugador_stats") ||
-    msg.includes("could not find the function")
+    msg.includes("could not find the function") ||
+    msg.includes("riviera_jugador_interno") ||
+    msg.includes("riviera_participaciones_interno") ||
+    msg.includes("riviera_ranking_interno") ||
+    msg.includes("refresh_jugador_stats")
   );
+}
+
+async function fetchInternalClubJugadorRow(
+  organizadorId: string,
+  opts: { slug?: string; jugadorId?: string }
+): Promise<RivieraJugadorWithStats | null> {
+  const trimmedOrg = organizadorId.trim();
+  const rpcName = opts.jugadorId
+    ? "riviera_jugador_interno_por_id"
+    : "riviera_jugador_interno_por_slug";
+  const rpcParams = opts.jugadorId
+    ? { p_organizador_id: trimmedOrg, p_jugador_id: opts.jugadorId.trim() }
+    : { p_organizador_id: trimmedOrg, p_slug: (opts.slug ?? "").trim() };
+
+  for (const client of [supabasePublicRead, supabase]) {
+    const { data, error } = await client.rpc(rpcName, rpcParams);
+    if (!error && data) {
+      const row = Array.isArray(data) ? data[0] : data;
+      return row
+        ? mapInternalClubJugadorRow(row as Record<string, unknown>)
+        : null;
+    }
+    if (
+      error &&
+      !isMissingRpcError(error) &&
+      !isMissingTableError(error)
+    ) {
+      throw error;
+    }
+  }
+
+  const { data: fallbackData, error: fallbackError } =
+    await withJugadorSelectFallback((cols) => {
+      let q = supabase
+        .from("riviera_jugadores")
+        .select(jugadorSelectWithStats(cols))
+        .eq("organizador_id", trimmedOrg)
+        .eq("estado", "activo");
+
+      if (opts.jugadorId) {
+        q = q.eq("id", opts.jugadorId.trim());
+      } else {
+        q = q.eq("slug", (opts.slug ?? "").trim());
+      }
+
+      return q.maybeSingle();
+    });
+
+  if (fallbackError) {
+    if (isMissingTableError(fallbackError)) return null;
+    throw fallbackError;
+  }
+  return fallbackData
+    ? mapJugadorRow(fallbackData as unknown as Record<string, unknown>)
+    : null;
+}
+
+export async function getRivieraJugadorInternalClubById(
+  jugadorId: string,
+  organizadorId: string
+): Promise<RivieraJugadorWithStats | null> {
+  return fetchInternalClubJugadorRow(organizadorId, { jugadorId });
 }
 
 async function fetchJugadorStatsRow(
@@ -756,24 +822,25 @@ export async function listParticipacionesPublic(
 ): Promise<JugadorParticipacion[]> {
   const org = organizadorId?.trim();
   if (org) {
-    const { data, error } = await supabasePublicRead.rpc(
-      "riviera_participaciones_interno",
-      {
-        p_organizador_id: org,
-        p_jugador_id: jugadorId,
-        p_limit: limit,
+    for (const client of [supabasePublicRead, supabase]) {
+      const { data, error } = await client.rpc(
+        "riviera_participaciones_interno",
+        {
+          p_organizador_id: org,
+          p_jugador_id: jugadorId,
+          p_limit: limit,
+        }
+      );
+      if (!error && data) {
+        return (data ?? []) as JugadorParticipacion[];
       }
-    );
-    if (!error && data) {
-      return (data ?? []) as JugadorParticipacion[];
-    }
-    if (
-      error &&
-      !isMissingRpcError(error) &&
-      !isMissingTableError(error) &&
-      !error.message?.includes("riviera_participaciones_interno")
-    ) {
-      throw error;
+      if (
+        error &&
+        !isMissingRpcError(error) &&
+        !isMissingTableError(error)
+      ) {
+        throw error;
+      }
     }
   }
 
@@ -1104,45 +1171,7 @@ export async function getRivieraJugadorPublicBySlug(
   const trimmedOrg = organizadorId?.trim();
 
   if (trimmedOrg) {
-    const { data, error } = await supabase.rpc("riviera_jugador_interno_por_slug", {
-      p_organizador_id: trimmedOrg,
-      p_slug: trimmedSlug,
-    });
-
-    if (!error && data) {
-      const row = Array.isArray(data) ? data[0] : data;
-      return row
-        ? mapInternalClubJugadorRow(row as Record<string, unknown>)
-        : null;
-    }
-
-    if (
-      error &&
-      !isMissingRpcError(error) &&
-      !isMissingTableError(error) &&
-      !error.message?.includes("riviera_jugador_interno_por_slug")
-    ) {
-      throw error;
-    }
-
-    const { data: fallbackData, error: fallbackError } =
-      await withJugadorSelectFallback((cols) =>
-        supabase
-          .from("riviera_jugadores")
-          .select(jugadorSelectWithStats(cols))
-          .eq("slug", trimmedSlug)
-          .eq("organizador_id", trimmedOrg)
-          .eq("estado", "activo")
-          .maybeSingle()
-      );
-
-    if (fallbackError) {
-      if (isMissingTableError(fallbackError)) return null;
-      throw fallbackError;
-    }
-    return fallbackData
-      ? mapJugadorRow(fallbackData as unknown as Record<string, unknown>)
-      : null;
+    return fetchInternalClubJugadorRow(trimmedOrg, { slug: trimmedSlug });
   }
 
   const { data, error } = await withJugadorSelectFallback((cols) => {

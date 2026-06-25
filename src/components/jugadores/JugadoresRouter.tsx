@@ -21,7 +21,7 @@ export type JugadoresRoute =
   | { kind: "lista"; genero: RivieraJugadorGenero }
   | { kind: "ficha"; slug: string }
   | { kind: "publicRanking"; organizadorId?: string; genero: RivieraJugadorGenero }
-  | { kind: "publicFicha"; slug: string }
+  | { kind: "publicFicha"; slug?: string; playerId?: string; internalClub?: boolean }
   | { kind: "officialPlayer"; playerId: string }
   | { kind: "rankingComoFunciona" }
   | { kind: "unknown" };
@@ -104,11 +104,16 @@ export function parseJugadoresPath(pathname: string): JugadoresRoute {
 
   const pub = path.match(/^\/public\/jugadores\/([^/]+)$/i);
   if (pub) {
+    let segment = pub[1];
     try {
-      return { kind: "publicFicha", slug: decodeURIComponent(pub[1]) };
+      segment = decodeURIComponent(segment);
     } catch {
-      return { kind: "publicFicha", slug: pub[1] };
+      segment = pub[1];
     }
+    if (UUID_RE.test(segment)) {
+      return { kind: "publicFicha", playerId: segment, internalClub: true };
+    }
+    return { kind: "publicFicha", slug: segment };
   }
 
   const listaGenero = parseJugadoresListaGenero(path);
@@ -164,7 +169,13 @@ export const JugadoresRouter: React.FC<{ pathname: string }> = ({ pathname }) =>
         />
       );
     case "publicFicha":
-      return <JugadorPublicFicha slug={route.slug} />;
+      return (
+        <JugadorPublicFicha
+          slug={route.slug}
+          playerId={route.playerId}
+          internalClub={route.internalClub}
+        />
+      );
     case "officialPlayer":
       return <JugadorPublicFicha playerId={route.playerId} />;
     case "lista":

@@ -65,11 +65,26 @@ export function buildPublicJugadorPath(slug: string, orgId?: string | null): str
   return `${base}?org=${encodeURIComponent(orgId)}`;
 }
 
+/** Ficha interna del club por UUID (ranking /ranking/o/{org}). */
+export function buildInternalClubJugadorPath(
+  jugadorId: string,
+  orgId: string
+): string {
+  return buildPublicJugadorPath(jugadorId.trim(), orgId.trim());
+}
+
 export function navigatePublicJugadorFicha(
   slug: string,
   orgId?: string | null
 ): void {
   navigateAppTo(buildPublicJugadorPath(slug, orgId));
+}
+
+export function navigateInternalClubJugadorFicha(
+  jugadorId: string,
+  orgId: string
+): void {
+  navigateAppTo(buildInternalClubJugadorPath(jugadorId, orgId));
 }
 
 export function buildRankingComoFuncionaPath(): string {

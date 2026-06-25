@@ -13,6 +13,7 @@ import {
 import {
   getRankingPosicionEnCategoria,
   getRankingPosicionOficialEnCategoria,
+  getRivieraJugadorInternalClubById,
   getRivieraJugadorPublicById,
   getRivieraJugadorPublicBySlug,
   listParticipacionesPublic,
@@ -41,6 +42,8 @@ import "./riviera-jugadores-public-ficha.css";
 interface JugadorPublicFichaProps {
   slug?: string;
   playerId?: string;
+  /** Perfil desde ranking interno del club (/public/jugadores/{uuid}?org=). */
+  internalClub?: boolean;
 }
 
 function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
@@ -61,14 +64,16 @@ function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
 export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   slug,
   playerId,
+  internalClub = false,
 }) => {
   const { user } = useUser();
-  const orgId = playerId
-    ? null
-    : resolvePublicOrganizadorId(
-        user?.id,
-        typeof window !== "undefined" ? window.location.pathname : undefined
-      );
+  const orgId =
+    playerId && !internalClub
+      ? null
+      : resolvePublicOrganizadorId(
+          user?.id,
+          typeof window !== "undefined" ? window.location.pathname : undefined
+        );
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [historial, setHistorial] = useState<
     Awaited<ReturnType<typeof listParticipacionesPublic>>
@@ -80,14 +85,28 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const j = playerId
-        ? await getRivieraJugadorPublicById(playerId)
-        : await getRivieraJugadorPublicBySlug(slug ?? "", orgId ?? undefined);
+      const j =
+        internalClub && playerId && orgId
+          ? await getRivieraJugadorInternalClubById(playerId, orgId)
+          : playerId
+          ? await getRivieraJugadorPublicById(playerId)
+          : await getRivieraJugadorPublicBySlug(slug ?? "", orgId ?? undefined);
       setJugador(j);
       if (j) {
         const [h, pos] = await Promise.all([
-          listParticipacionesPublic(j.id, 100, orgId ?? undefined),
-          playerId
+          listParticipacionesPublic(
+            j.id,
+            100,
+            internalClub || orgId ? orgId ?? undefined : undefined
+          ),
+          internalClub && orgId
+            ? getRankingPosicionEnCategoria(
+                orgId,
+                j.id,
+                j.categoria,
+                normalizeRivieraGenero(j.genero) ?? "M"
+              )
+            : playerId
             ? getRankingPosicionOficialEnCategoria(
                 j.id,
                 j.organizador_id,
@@ -119,7 +138,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [slug, orgId, playerId]);
+  }, [slug, orgId, playerId, internalClub]);
 
   useEffect(() => {
     void load();
@@ -143,7 +162,12 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     };
   }, [jugador?.id]);
 
-  const rankingUrl = playerId
+  const rankingUrl = internalClub
+    ? buildPublicRankingUrl(
+        orgId,
+        normalizeRivieraGenero(jugador?.genero) ?? "M"
+      )
+    : playerId
     ? buildMarketingOfficialRankingsUrl(
         jugador?.organizador_id,
         normalizeRivieraGenero(jugador?.genero) ?? "M"

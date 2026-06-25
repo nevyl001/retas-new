@@ -30,6 +30,7 @@ import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import {
   buildInternalClubRankingUrl,
   buildRankingComoFuncionaPath,
+  navigateInternalClubJugadorFicha,
   navigatePublicJugadorFicha,
 } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
@@ -87,7 +88,11 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
 
   const openPlayer = useCallback(
     (j: RivieraJugadorWithStats) => {
-      navigatePublicJugadorFicha(j.slug, orgId ?? undefined);
+      if (orgId) {
+        navigateInternalClubJugadorFicha(j.id, orgId);
+        return;
+      }
+      navigatePublicJugadorFicha(j.slug);
     },
     [orgId]
   );
