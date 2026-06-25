@@ -42,6 +42,8 @@ interface RatingNivelProps {
   fiabilidad: number;
   partidosJugados: number;
   historial?: RatingHistorialEntry[];
+  /** standalone = fuera de la card del jugador */
+  layout?: "embedded" | "standalone";
 }
 
 export const RatingNivel: React.FC<RatingNivelProps> = ({
@@ -49,6 +51,7 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
   fiabilidad,
   partidosJugados,
   historial = [],
+  layout = "embedded",
 }) => {
   const badge = fiabilidadBadge(fiabilidad, partidosJugados);
   const ratingLabel = rating.toFixed(2);
@@ -75,18 +78,25 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
     return { w, h, polyline: coords.join(" ") };
   }, [evolutionPoints]);
 
-  const cardStyle: React.CSSProperties = {
-    marginTop: "0.85rem",
-    padding: "1rem 1.1rem",
-    borderRadius: "14px",
-    border: "1px solid rgba(255, 255, 255, 0.1)",
-    background: "rgba(255, 255, 255, 0.04)",
-    width: "100%",
-    boxSizing: "border-box",
-  };
+  const cardStyle: React.CSSProperties | undefined =
+    layout === "embedded"
+      ? {
+          marginTop: "0.85rem",
+          padding: "1rem 1.1rem",
+          borderRadius: "14px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          background: "rgba(255, 255, 255, 0.04)",
+          width: "100%",
+          boxSizing: "border-box",
+        }
+      : undefined;
 
   return (
-    <section style={cardStyle} aria-label="Nivel de juego">
+    <section
+      className={layout === "standalone" ? "rjp-ficha-rating__inner" : undefined}
+      style={cardStyle}
+      aria-label="Nivel de juego"
+    >
       <div
         style={{
           display: "flex",

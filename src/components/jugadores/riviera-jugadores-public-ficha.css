@@ -648,6 +648,110 @@
   line-height: 1.5;
 }
 
+/* Rating — card independiente debajo del hero */
+.rjp-ficha-rating {
+  padding: 16px 18px;
+}
+
+.rjp-ficha-rating__inner {
+  width: 100%;
+}
+
+.rjp-ficha-rating .rjp-ficha-rating__inner > div:first-child {
+  margin-bottom: 0.35rem;
+}
+
+/* Pestañas del historial */
+.rjp-ficha-historial__tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.rjp-ficha-historial__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.rjp-ficha-historial__tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 0.5px solid var(--rjp-ficha-border);
+  background: var(--rjp-ficha-surface);
+  color: var(--rjp-ficha-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+
+.rjp-ficha-historial__tab:hover {
+  color: var(--rjp-ficha-text);
+  border-color: var(--rjp-ficha-gold-border);
+}
+
+.rjp-ficha-historial__tab--active {
+  color: var(--rjp-ficha-gold);
+  border-color: var(--rjp-ficha-gold-border);
+  background: var(--rjp-ficha-gold-bg);
+}
+
+.rjp-ficha-historial__tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.rjp-ficha-historial__tab--active .rjp-ficha-historial__tab-count {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.rjp-ficha-historial__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 0.5px solid var(--rjp-ficha-border);
+  background: var(--rjp-ficha-surface);
+  color: var(--rjp-ficha-text-2);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.rjp-ficha-historial__more:hover {
+  color: var(--rjp-ficha-gold);
+  border-color: var(--rjp-ficha-gold-border);
+}
+
+.rjp-ficha-historial__more .ti {
+  color: inherit;
+}
+
 .rjp-ficha-historial__body {
   margin-top: 14px;
   padding-top: 14px;

@@ -30,7 +30,7 @@ import type {
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatarHero } from "./JugadorAvatarHero";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
-import { JugadorHistorialList } from "./JugadorHistorialList";
+import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
 import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
@@ -373,43 +373,29 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                         </span>
                       </div>
                     </div>
-
-                    <RatingNivel
-                      rating={jugador.rating ?? 3}
-                      fiabilidad={jugador.rating_fiabilidad ?? 0.2}
-                      partidosJugados={jugador.rating_partidos ?? 0}
-                      historial={historialRating}
-                    />
                   </div>
                 </div>
               </div>
+            </section>
+
+            <section className="rjp-ficha-card rjp-ficha-rating">
+              <RatingNivel
+                layout="standalone"
+                rating={jugador.rating ?? 3}
+                fiabilidad={jugador.rating_fiabilidad ?? 0.2}
+                partidosJugados={jugador.rating_partidos ?? 0}
+                historial={historialRating}
+              />
             </section>
 
             <JugadorRedesPublicas redes={redes} />
           </div>
 
           <div className="rjp-ficha__col rjp-ficha__col--historial">
-            <section className="rjp-ficha-card rjp-ficha-historial">
-              <header className="rjp-ficha-historial__head">
-                <span className="rjp-ficha-historial__chip" aria-hidden>
-                  <TablerIcon name="trophy" size={16} />
-                </span>
-                <div>
-                  <h2 className="rjp-ficha-historial__title">Historial completo</h2>
-                  <p className="rjp-ficha-historial__sub">
-                    Retas, Round Robin, Torneos, Liga, Pádel Americano y más.
-                  </p>
-                </div>
-              </header>
-              <div className="rjp-ficha-historial__body">
-                <JugadorHistorialList
-                  participaciones={historial}
-                  categoriaFallback={jugador.categoria}
-                  variant="public"
-                  showResumen={false}
-                />
-              </div>
-            </section>
+            <JugadorPublicHistorial
+              participaciones={historial}
+              categoriaFallback={jugador.categoria}
+            />
           </div>
 
           <JugadorPublicFichaAside
