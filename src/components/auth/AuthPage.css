@@ -181,6 +181,25 @@
   background: var(--bg-elevated);
 }
 
+.auth-page-foot {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  margin-top: clamp(1.25rem, 3vw, 1.75rem);
+  padding-top: 0;
+  border-top: none;
+}
+
+.auth-page-foot .app-site-foot__link {
+  font-size: 0.6875rem;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+  max-width: 18rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .auth-form-panel::before {
   content: "";
   position: absolute;
@@ -330,6 +349,11 @@
     justify-content: flex-start;
     padding-top: max(24px, env(safe-area-inset-top, 0px));
     overflow-y: auto;
+  }
+
+  .auth-page-foot {
+    margin-top: auto;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
   }
 
   .auth-mobile-hero {

@@ -36,6 +36,18 @@
   color: var(--text-secondary);
 }
 
+.rjp-ranking-header__official-link {
+  color: var(--accent-gold-light, #e8c547);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rjp-ranking-header__official-link:hover,
+.rjp-ranking-header__official-link:focus-visible {
+  color: var(--accent-gold, #d4af37);
+}
+
 .rjp-ranking-header__cta {
   display: flex;
   align-items: center;

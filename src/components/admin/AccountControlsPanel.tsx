@@ -11,6 +11,7 @@ import {
   type AdminJugadorRow,
 } from "../../lib/admin/accountControls";
 import { GAME_MODE_LABELS } from "../../lib/admin/organizadorGameModes";
+import { getOfficialRankingsPageUrl } from "../../lib/rivieraOfficialSite";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import "./AccountControlsPanel.css";
 
@@ -258,7 +259,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
             onChange={() => setVisibleRanking((v) => !v)}
           />
           <span className="account-controls__toggle-label">
-            Publicar club en ranking oficial (rivieraopen.com)
+            Publicar club en ranking oficial ({getOfficialRankingsPageUrl()})
           </span>
         </label>
         <p className="account-controls__hint account-controls__hint--tight">
@@ -285,8 +286,8 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
       </h4>
       <p className="account-controls__hint">
         El ranking interno del club incluye a todos los jugadores activos. En{" "}
-        <strong>rivieraopen.com</strong> solo aparece quien tú actives con
-        «Sitio oficial» (por defecto nadie se publica).
+        <strong>{getOfficialRankingsPageUrl()}</strong> solo aparece quien tú
+        actives con «Sitio oficial» (por defecto nadie se publica).
       </p>
 
       <form className="account-controls__add-form" onSubmit={(e) => void handleAddJugador(e)}>
@@ -425,7 +426,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                 <div className="account-controls__player-actions">
                   <label
                     className="account-controls__mini-toggle"
-                    title="Publicar en rivieraopen.com (ranking interno siempre activo)"
+                    title={`Publicar en ${getOfficialRankingsPageUrl()} (ranking interno siempre activo)`}
                   >
                     <input
                       type="checkbox"

@@ -33,6 +33,7 @@ import {
   navigatePublicJugadorFicha,
 } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
+import { RankingInternoDisclaimer } from "./RankingInternoDisclaimer";
 import { RankingPodio } from "./RankingPodio";
 import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
 import "./riviera-jugadores-public-ranking.css";
@@ -169,11 +170,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
           <h1 className="rjp-ranking-header__title">
             {RIVIERA_GENERO_RANKING_TITLE[genero]}
           </h1>
-          <p className="rjp-ranking-header__sub">
-            Ranking interno de tu club. Todos los jugadores activos aparecen aquí.
-            Solo los marcados «Sitio oficial» en el admin salen también en
-            rivieraopen.com.
-          </p>
+          <RankingInternoDisclaimer organizadorId={orgId} />
           <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
             Ver reglas completas
             <TablerIcon name="chevron-right" size={18} />

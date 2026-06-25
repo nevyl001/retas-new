@@ -20,6 +20,11 @@ export function getRivieraMarketingSiteBase(): string {
   return MARKETING_BASE;
 }
 
+/** URL canónica del ranking en el sitio oficial (sin query). */
+export function getOfficialRankingsPageUrl(): string {
+  return `${MARKETING_BASE}/rankings`;
+}
+
 /** Perfil público canónico: appriviera /players/{riviera_jugadores.id} */
 export function buildOfficialPlayerUrl(jugadorId: string): string {
   return `${APP_BASE}/players/${encodeURIComponent(jugadorId.trim())}`;

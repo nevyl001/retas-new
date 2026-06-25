@@ -4,7 +4,7 @@ import {
   fetchAdminUserDetail,
   type AdminUserDetail,
 } from "../../lib/admin/fetchAdminUserDetail";
-import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
+import { buildMarketingOfficialRankingsUrl, getOfficialRankingsPageUrl } from "../../lib/rivieraOfficialSite";
 import { buildInternalClubRankingUrl } from "../jugadores/jugadoresPublicNav";
 import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
 import { navigateAdminDashboard } from "../../lib/admin/adminNav";
@@ -209,12 +209,19 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
           Rankings del club
         </span>
         <p className="admin-user-page__ranking-hint">
-          Con «Publicar club» + «Sitio oficial» en cada jugador, entran a
-          rivieraopen.com. El ranking interno del club incluye a todos los
-          jugadores activos.
+          Ranking interno del club: todos los jugadores activos aparecen en
+          appriviera. Solo los seleccionados aparecen en el sitio oficial:{" "}
+          <a
+            href={officialSiteRankingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {getOfficialRankingsPageUrl()}
+          </a>
+          .
         </p>
         <span className="admin-user-page__ranking-label admin-user-page__ranking-label--sub">
-          Sitio oficial (rivieraopen.com)
+          Sitio oficial ({getOfficialRankingsPageUrl()})
         </span>
         <a
           href={officialSiteRankingUrl}

@@ -44,6 +44,7 @@ import {
   isJugadoresPublicPath,
   JugadoresRouter,
 } from "./components/jugadores/JugadoresRouter";
+import { PrivacidadTerminosPage } from "./components/legal/PrivacidadTerminosPage";
 import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
 import {
   navigateToAppHome,
@@ -649,6 +650,7 @@ function AppContent() {
     "App",
     isPublicSpectatorView ? "App--public-full-width ro-public-view" : "",
     isJugadoresPublic ? "App--jugadores-public" : "",
+    currentView === "legal" ? "App--legal" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -688,6 +690,8 @@ function AppContent() {
         {currentView === "jugadores" && (
           <JugadoresRouter key={appPathname} pathname={appPathname} />
         )}
+
+        {currentView === "legal" && <PrivacidadTerminosPage />}
 
         {currentView === "main" && !isAmericanoRoute && (
           <>

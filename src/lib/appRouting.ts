@@ -20,7 +20,8 @@ export type AppView =
   | "auth-reset-password"
   | "admin-login"
   | "admin-dashboard"
-  | "admin-user";
+  | "admin-user"
+  | "legal";
 
 export function normalizeAppPathname(pathname: string): string {
   return pathname.replace(/\/+$/, "") || "/";
@@ -74,6 +75,7 @@ export function resolveAppViewFromPath(pathname: string): AppView {
 
   if (currentPath === "/auth/callback") return "auth-callback";
   if (currentPath === "/auth/reset-password") return "auth-reset-password";
+  if (currentPath === "/privacidad-terminos") return "legal";
   if (currentPath === "/admin-login") return "admin-login";
   if (/^\/admin-dashboard\/usuario\/[^/]+$/i.test(currentPath)) return "admin-user";
   if (currentPath === "/admin-dashboard") return "admin-dashboard";
@@ -125,5 +127,6 @@ export function pathRequiresUserSession(pathname: string): boolean {
   if (path === "/admin-login" || path === "/admin-dashboard") return false;
   if (path === "/auth/callback") return false;
   if (path === "/auth/reset-password") return false;
+  if (path === "/privacidad-terminos") return false;
   return true;
 }

@@ -31,6 +31,7 @@ import { HomeHeader } from "./HomeHeader";
 import { GameModesGrid } from "./GameModesGrid";
 import { QuickStartSheet, QuickStartPayload } from "./QuickStartSheet";
 import { RecentRetasSection } from "./RecentRetasSection";
+import { AppSiteFooter } from "../legal/AppSiteFooter";
 import "./home.css";
 
 interface HomeDashboardProps {
@@ -236,6 +237,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         onSubmit={handleQuickStart}
         submitting={submitting}
       />
+      <AppSiteFooter />
     </div>
   );
 };

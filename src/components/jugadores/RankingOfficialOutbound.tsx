@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
+import { buildMarketingOfficialRankingsUrl, getOfficialRankingsPageUrl } from "../../lib/rivieraOfficialSite";
 import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import "./riviera-jugadores-public-ranking.css";
@@ -31,7 +31,7 @@ export const RankingOfficialOutbound: React.FC<RankingOfficialOutboundProps> = (
             redirigimos automáticamente…
           </p>
           <a className="rjp-ranking-header__cta" href={targetUrl}>
-            Ver ranking en rivieraopen.com
+            Ver ranking en {getOfficialRankingsPageUrl()}
           </a>
         </header>
       </div>

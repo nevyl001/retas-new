@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
 import { RIVIERA_APP_TAGLINE } from "../../lib/rivieraBranding";
+import { AppSiteFooter } from "../legal/AppSiteFooter";
 import "./AuthPage.css";
 
 /** PNG con transparencia (public/logo-riviera.png) */
@@ -62,6 +63,8 @@ export const AuthPage: React.FC = () => {
             <RegisterForm onToggleMode={toggleMode} />
           )}
         </div>
+
+        <AppSiteFooter className="auth-page-foot" />
       </div>
     </div>
   );
