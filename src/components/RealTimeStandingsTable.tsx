@@ -357,7 +357,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       {/* Modo equipos: tabla por equipos (suma de puntos por equipo) */}
       {teamStandings && teamStandings.length > 0 ? (
         <div
-          className={`new-standings-table-wrapper te-pub-standings-table-wrap ${TABLA_WRAPPER_CLASS}`}
+          className={`new-standings-table-wrapper te-pub-standings-table-wrap rv-table-wrap ${TABLA_WRAPPER_CLASS}`}
           style={
             {
               "--standings-sticky-bg": "var(--bg-card)",
@@ -365,7 +365,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
             } as React.CSSProperties
           }
         >
-          <table className={`new-standings-table te-pub-standings-table ${TABLA_RANKING_CLASS}`}>
+            <table className={`new-standings-table te-pub-standings-table rv-table ${TABLA_RANKING_CLASS}`}>
             <thead>
               <StandingsTableHeader entity="equipo" />
             </thead>
@@ -398,7 +398,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       ) : (
         /* Modo round robin: tabla por parejas */
         <div
-          className={`new-standings-table-wrapper te-pub-standings-table-wrap ${TABLA_WRAPPER_CLASS}`}
+          className={`new-standings-table-wrapper te-pub-standings-table-wrap rv-table-wrap ${TABLA_WRAPPER_CLASS}`}
           style={
             {
               "--standings-sticky-bg": "var(--bg-card)",
@@ -406,7 +406,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
             } as React.CSSProperties
           }
         >
-        <table className={`new-standings-table te-pub-standings-table ${TABLA_RANKING_CLASS}`}>
+          <table className={`new-standings-table te-pub-standings-table rv-table ${TABLA_RANKING_CLASS}`}>
           <thead>
             <StandingsTableHeader entity="pareja" />
           </thead>

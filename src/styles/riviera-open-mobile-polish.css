@@ -1,0 +1,314 @@
+/* =============================================
+   RIVIERA OPEN — Mobile-first polish (revisión final)
+   Solo layout / visual. Tokens --ro-* y clases .rv-*
+============================================= */
+
+/* —— 1. Sin scroll horizontal —— */
+html {
+  overflow-x: clip;
+}
+
+body,
+#root {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+.main-layout,
+.liga-page,
+.torneo-express-page,
+.duelo2v2-page,
+.te-public,
+.liga-pantalla,
+.americano-screen.rv-page,
+.reta-content.rv-page,
+.home-inner.rv-page,
+.duelo2v2-page__inner.rv-shell,
+.liga-page__inner.rv-shell,
+.te-public__inner.rv-public-board {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.te-pub-matches-grid,
+.te-pub-matches-grid--wide,
+.tournament-details,
+.four-components-grid {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* —— 2. Colores dentro del design system —— */
+.te-pub-cancha,
+.te-pub-match-chip--cancha {
+  color: var(--ro-text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--ro-border);
+}
+
+/* —— 3. Menos gradientes en cards públicas —— */
+.te-pub-match--wide {
+  background: var(--ro-bg-card);
+  border: 0.5px solid var(--ro-border-subtle);
+  box-shadow: var(--ro-shadow-sm);
+}
+
+.te-pub-match__faceoff {
+  background: rgba(255, 255, 255, 0.03);
+  border: 0.5px solid var(--ro-border-subtle);
+}
+
+.te-pub-match-winner--compact {
+  background: var(--ro-gold-dim);
+  border: 0.5px solid var(--ro-gold-border);
+}
+
+.te-pub-match-winner--compact .te-pub-match-winner__name {
+  color: var(--ro-gold-light);
+}
+
+/* —— 4. Tablas: scroll contenido, no romper layout —— */
+.tabla-wrapper,
+.new-standings-table-wrapper,
+.te-standings-wrap,
+.americano-ranking .tabla-wrapper,
+.liga-pantalla-ranking {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+/* —— 5. Ranking legible (organizador) —— */
+.americano-ranking.rv-card {
+  padding: clamp(14px, 3.5vw, 20px);
+}
+
+.americano-ranking__caption {
+  font-family: var(--ro-font-body);
+  font-size: var(--ro-text-body);
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ro-text-secondary);
+  line-height: 1.45;
+}
+
+.rv-ranking-card__title {
+  font-size: clamp(1rem, 3.5vw, 1.15rem);
+}
+
+/* —— Mobile (≤768px) —— */
+@media (max-width: 768px) {
+  /* Touch targets */
+  .riviera-btn--md,
+  .riviera-btn--lg {
+    min-height: 44px;
+  }
+
+  .riviera-btn-back,
+  .rv-button-primary,
+  .rv-button-secondary,
+  .rv-button-ghost,
+  .americano-primary-btn,
+  .americano-round-btn,
+  .americano-round-btn--secondary {
+    min-height: 44px;
+  }
+
+  .rv-action-bar .riviera-btn,
+  .rv-action-bar .riviera-btn-back,
+  .duelo2v2-actions .riviera-btn,
+  .liga-actions .riviera-btn,
+  .liga-jornada-toolbar .riviera-btn,
+  .te-gestion-header__actions .riviera-btn,
+  .te-inicio-crear .riviera-btn-primary,
+  .start-tournament-section__cta .riviera-btn,
+  .home-inner .rv-mode-card__cta {
+    min-height: 44px;
+  }
+
+  /* CTAs apilados en móvil */
+  .te-gestion-header__actions.rv-action-bar,
+  .liga-jornada-toolbar.rv-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .te-gestion-header__actions.rv-action-bar .riviera-btn,
+  .liga-jornada-toolbar.rv-action-bar .riviera-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Headers más compactos */
+  .rv-mode-header {
+    margin-bottom: clamp(14px, 4vw, 22px);
+  }
+
+  .rv-mode-header__title,
+  .duelo2v2-header.rv-mode-header .rv-mode-header__title,
+  .liga-header.rv-mode-header .liga-title,
+  .te-header.rv-mode-header .te-gestion-title {
+    font-size: clamp(1.28rem, 5.2vw, 1.6rem);
+  }
+
+  .rv-mode-header__sub,
+  .liga-subtitle,
+  .duelo2v2-header.rv-mode-header .rv-mode-header__sub {
+    font-size: 0.875rem;
+  }
+
+  .home-inner .rv-mode-header__title {
+    font-size: clamp(1.5rem, 6.5vw, 2rem);
+  }
+
+  .te-public-header__title--event {
+    font-size: clamp(1.4rem, 6vw, 1.85rem);
+    margin-bottom: 10px;
+  }
+
+  .te-public-round-head__title {
+    font-size: clamp(1.05rem, 4.2vw, 1.25rem);
+    padding-bottom: 0.4rem;
+  }
+
+  .liga-pantalla__title {
+    font-size: clamp(1.3rem, 5.5vw, 1.65rem);
+  }
+
+  .liga-pantalla__header {
+    margin-bottom: 1rem;
+  }
+
+  /* Padding shells */
+  .torneo-express-page.rv-page {
+    padding: clamp(14px, 3.5vw, 20px) clamp(14px, 3.8vw, 18px)
+      calc(48px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .americano-screen.rv-page {
+    padding: 12px clamp(14px, 3.8vw, 18px) calc(40px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .duelo2v2-page__inner.rv-shell {
+    padding-inline: clamp(14px, 3.8vw, 18px);
+  }
+
+  .liga-page__inner.rv-shell {
+    padding-inline: clamp(14px, 3.8vw, 18px);
+  }
+
+  /* Cards con aire */
+  .duelo2v2-card.rv-card,
+  .liga-card.rv-card,
+  .te-torneo-card.rv-card {
+    margin-bottom: 0.75rem;
+  }
+
+  .riviera-organizer-reta.rv-page .tournament-details {
+    gap: 14px;
+  }
+
+  .four-components-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .matches-container-simplified.rv-card-soft {
+    padding: 12px 10px;
+  }
+
+  .omc-card.rv-card {
+    margin-bottom: 10px;
+  }
+
+  /* Americano organizador */
+  .americano-round.rv-card {
+    padding: 12px;
+  }
+
+  .americano-round__header h3 {
+    font-size: 1.2rem;
+  }
+
+  .americano-round__matches {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .americano-match-card.rv-card {
+    padding: 12px;
+  }
+
+  .americano-ranking .tabla-ranking {
+    min-width: 460px;
+    font-size: 13px;
+  }
+
+  .americano-ranking .tabla-ranking th,
+  .americano-ranking .tabla-ranking td {
+    padding: 8px 10px;
+  }
+
+  /* Tablas reta / TE */
+  .new-standings-table,
+  .te-standings-table {
+    min-width: 520px;
+  }
+
+  .tabla-ranking {
+    min-width: 480px;
+  }
+
+  /* Textos sin corte feo */
+  .duelo2v2-card__title,
+  .liga-list-item__title,
+  .te-torneo-card__info-col,
+  .omc-match-title__line,
+  .te-pub-match-winner__name {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .te-pub-match-winner--compact .te-pub-match-winner__name {
+    white-space: normal;
+    max-width: 100%;
+    text-align: center;
+  }
+
+  /* Liga pública */
+  .liga-pantalla__inner.rv-public-board {
+    padding-inline: max(14px, env(safe-area-inset-left, 0px))
+      max(14px, env(safe-area-inset-right, 0px));
+  }
+
+  .liga-pantalla-ranking,
+  .liga-pantalla-ranking-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  .liga-pantalla-ranking table {
+    min-width: 480px;
+  }
+
+  /* Duelo público */
+  .duelo2v2-public-board.rv-public-board {
+    padding-inline: max(14px, env(safe-area-inset-left, 0px))
+      max(14px, env(safe-area-inset-right, 0px));
+  }
+}
+
+/* Móvil compacto */
+@media (max-width: 389px) {
+  .home-inner .rv-mode-card__cta {
+    font-size: 0.75rem;
+  }
+
+  .te-public--americano.te-public--americano-wide .te-pub-match--wide {
+    padding: 0.65rem 0.7rem 0.6rem;
+  }
+}

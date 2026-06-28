@@ -7,6 +7,8 @@ import {
   parejaLabel,
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
+import { ModeHeader } from "../platform/ModeHeader";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { Duelo2v2MatchMeta } from "./Duelo2v2MatchMeta";
 import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo2v2Nav";
@@ -19,8 +21,8 @@ function estadoLabel(estado: Duelo2v2["estado"]): string {
 }
 
 function badgeClass(estado: Duelo2v2["estado"]): string {
-  if (estado === "finalizado") return "duelo2v2-badge duelo2v2-badge--done";
-  return "duelo2v2-badge duelo2v2-badge--live";
+  if (estado === "finalizado") return "duelo2v2-badge duelo2v2-badge--done rv-pill";
+  return "duelo2v2-badge duelo2v2-badge--live rv-pill";
 }
 
 export const Duelo2v2Home: React.FC = () => {
@@ -67,21 +69,19 @@ export const Duelo2v2Home: React.FC = () => {
 
   return (
     <Duelo2v2PageShell wide>
-      <div className="duelo2v2-toolbar riviera-back-toolbar">
+      <ActionBar className="duelo2v2-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateToAppHome()}>
           ← Volver al inicio
         </Button>
-      </div>
+      </ActionBar>
 
-      <header className="duelo2v2-header">
-        <h1>Duelo 2 vs 2</h1>
-        <p>
-          Encuentros entre dos parejas del registro Riviera Open. Suman al ranking
-          global (+25 participar, +100 ganar).
-        </p>
-      </header>
+      <ModeHeader
+        className="duelo2v2-header rv-mode-header"
+        title="Duelo 2 vs 2"
+        subtitle="Encuentros entre dos parejas del registro Riviera Open. Suman al ranking global (+25 participar, +100 ganar)."
+      />
 
-      <div className="duelo2v2-actions">
+      <ActionBar className="duelo2v2-actions">
         <Button
           type="button"
           variant="primary"
@@ -89,7 +89,7 @@ export const Duelo2v2Home: React.FC = () => {
         >
           Nuevo duelo
         </Button>
-      </div>
+      </ActionBar>
 
       {error && <p className="duelo2v2-error">{error}</p>}
       {loading && <p>Cargando…</p>}
@@ -99,7 +99,7 @@ export const Duelo2v2Home: React.FC = () => {
       )}
 
       {duelos.map((d) => (
-        <div key={d.id} className="duelo2v2-card" style={{ cursor: "default" }}>
+        <div key={d.id} className="duelo2v2-card rv-card" style={{ cursor: "default" }}>
           <div className="duelo2v2-card__title">
             {d.nombre}
             <span className={badgeClass(d.estado)}>{estadoLabel(d.estado)}</span>

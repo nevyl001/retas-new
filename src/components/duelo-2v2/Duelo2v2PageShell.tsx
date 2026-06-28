@@ -1,4 +1,5 @@
 import React from "react";
+import { GameModeShell } from "../platform/GameModeShell";
 import "./duelo2v2-page.css";
 
 export interface Duelo2v2PageShellProps {
@@ -33,7 +34,7 @@ export const Duelo2v2PageShell: React.FC<Duelo2v2PageShellProps> = ({
 
   return (
     <div className={pageClass}>
-      <div className={innerClass}>{children}</div>
+      <GameModeShell className={innerClass}>{children}</GameModeShell>
     </div>
   );
 };

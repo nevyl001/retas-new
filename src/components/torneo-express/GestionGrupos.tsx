@@ -28,6 +28,7 @@ import {
 } from "./torneoExpressNav";
 import type { TorneoExpressGrupo } from "../../lib/torneoExpress/types";
 import { Badge, Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
 import { TablerIcon } from "../ui/TablerIcon";
 import "./te-gestion-page.css";
 import "./te-fondos.css";
@@ -212,7 +213,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
 
   return (
     <TePageShell className="te-gestion-page">
-      <header className="te-header te-gestion-header">
+      <header className="te-header te-gestion-header rv-mode-header">
         <div className="te-gestion-header__brand">
           <h1 className="te-title te-gestion-title">{bundle.torneo.nombre}</h1>
           <div className="te-gestion-header__pills">
@@ -234,7 +235,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             </Badge>
           </div>
         </div>
-        <div className="te-header__actions te-gestion-header__actions">
+        <ActionBar className="te-header__actions te-gestion-header__actions">
           {faseTorneo === "grupos" && bundle.torneo.estado !== "finalizado" ? (
             <Button
               type="button"
@@ -349,7 +350,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             </span>
             Listado
           </Button>
-        </div>
+        </ActionBar>
       </header>
 
       <div

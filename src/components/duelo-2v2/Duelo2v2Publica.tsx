@@ -11,6 +11,8 @@ import {
 } from "../../services/duelo2v2Service";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
 import { Duelo2v2LiveBoard } from "./Duelo2v2LiveBoard";
+import { PublicModeShell } from "../platform/PublicModeShell";
+import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import "../../styles/riviera-public-celebrate.css";
 import "./duelo2v2-page.css";
 
@@ -103,21 +105,21 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
 
   if (loading) {
     return (
-      <div className="duelo2v2-page duelo2v2-page--public duelo2v2-publica">
-        <div className="duelo2v2-page__inner duelo2v2-page__inner--public">
-          <p className="duelo2v2-card__meta">Cargando encuentro…</p>
-        </div>
-      </div>
+      <Duelo2v2PageShell publicView className="duelo2v2-publica">
+        <PublicModeShell className="duelo2v2-public-board">
+          <p className="duelo2v2-card__meta rv-muted">Cargando encuentro…</p>
+        </PublicModeShell>
+      </Duelo2v2PageShell>
     );
   }
 
   if (!duelo || error) {
     return (
-      <div className="duelo2v2-page duelo2v2-page--public duelo2v2-publica">
-        <div className="duelo2v2-page__inner duelo2v2-page__inner--public">
+      <Duelo2v2PageShell publicView className="duelo2v2-publica">
+        <PublicModeShell className="duelo2v2-public-board">
           <p className="duelo2v2-error">{error ?? "Duelo no encontrado"}</p>
-        </div>
-      </div>
+        </PublicModeShell>
+      </Duelo2v2PageShell>
     );
   }
 
@@ -166,8 +168,8 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
   ] as const;
 
   return (
-    <div className="duelo2v2-page duelo2v2-page--public duelo2v2-publica">
-      <div className="duelo2v2-page__inner duelo2v2-page__inner--public">
+    <Duelo2v2PageShell publicView className="duelo2v2-publica">
+      <PublicModeShell className="duelo2v2-public-board">
         <Duelo2v2LiveBoard
           duelo={duelo}
           teamA={[...teamA]}
@@ -213,7 +215,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
           </p>
           <p className="duelo2v2-public-sync__line">Vista pública · solo lectura</p>
         </footer>
-      </div>
-    </div>
+      </PublicModeShell>
+    </Duelo2v2PageShell>
   );
 };

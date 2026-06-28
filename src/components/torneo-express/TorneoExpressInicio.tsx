@@ -4,6 +4,7 @@ import { CrearTorneoExpress } from "./CrearTorneoExpress";
 import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
 import { TePageShell } from "./TePageShell";
 import { Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
 import "./te-inicio-page.css";
 import "./te-fondos.css";
 
@@ -12,11 +13,11 @@ export const TorneoExpressInicio: React.FC = () => {
 
   return (
     <TePageShell className="te-inicio-page">
-      <div className="te-inicio-toolbar riviera-back-toolbar">
+      <ActionBar className="te-inicio-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateToAppHome()}>
           ← Volver al inicio
         </Button>
-      </div>
+      </ActionBar>
 
       <TorneoExpressTorneosSection refreshToken={refreshToken} />
 
@@ -24,7 +25,7 @@ export const TorneoExpressInicio: React.FC = () => {
         className="te-inicio-crear"
         aria-labelledby="te-crear-section-heading"
       >
-        <h2 id="te-crear-section-heading" className="te-inicio-crear__title">
+        <h2 id="te-crear-section-heading" className="te-inicio-crear__title rv-section-title">
           <span className="te-inicio-crear__icon" aria-hidden>
             🏆
           </span>

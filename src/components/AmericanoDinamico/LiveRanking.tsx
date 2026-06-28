@@ -16,6 +16,7 @@ import {
   TABLA_RANKING_CLASS,
   TABLA_WRAPPER_CLASS,
 } from "../standings/standingsTableColumns";
+import { RankingCard } from "../platform/RankingCard";
 import "./LiveRanking.css";
 
 interface LiveRankingProps {
@@ -40,12 +41,11 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
   );
 
   return (
-    <section className="americano-ranking">
-      <h3>Ranking en vivo</h3>
-      {caption ? <p className="americano-ranking__caption">{caption}</p> : null}
+    <RankingCard title="Ranking en vivo" className="americano-ranking rv-card">
+      {caption ? <p className="americano-ranking__caption rv-muted">{caption}</p> : null}
       <StandingsScoringHelp />
       <div
-        className={TABLA_WRAPPER_CLASS}
+        className={`${TABLA_WRAPPER_CLASS} rv-table-wrap`}
         style={
           {
             "--standings-sticky-bg": "#181818",
@@ -53,7 +53,7 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
           } as React.CSSProperties
         }
       >
-        <table className={TABLA_RANKING_CLASS}>
+        <table className={`${TABLA_RANKING_CLASS} rv-table`}>
           <thead>
             <StandingsTableHeader entity="jugador" />
           </thead>
@@ -84,6 +84,6 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
           </tbody>
         </table>
       </div>
-    </section>
+    </RankingCard>
   );
 };

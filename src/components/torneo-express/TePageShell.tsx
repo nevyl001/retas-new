@@ -1,4 +1,5 @@
 import React from "react";
+import { GameModeShell } from "../platform/GameModeShell";
 import "./torneo-express.css";
 import "./riviera-torneo-express.css";
 import "./te-fondos.css";
@@ -23,5 +24,5 @@ export const TePageShell: React.FC<TePageShellProps> = ({
     .filter(Boolean)
     .join(" ");
 
-  return <div className={classes}>{children}</div>;
+  return <GameModeShell className={classes}>{children}</GameModeShell>;
 };

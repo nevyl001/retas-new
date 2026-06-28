@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
+import { ActionBar } from "../platform/ActionBar";
 import "./RoundView.css";
 
 export interface RoundScorePayload {
@@ -107,7 +108,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
   };
 
   return (
-    <section className="americano-round">
+    <section className="americano-round rv-card">
       <header className="americano-round__header">
         <div>
           <h3>Ronda {round.roundNumber}</h3>
@@ -130,7 +131,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
           const { a, b } = readDraft(match, draftScores);
           const isEditing = editingMatchId === match.id;
           return (
-            <article key={match.id} className="americano-match-card">
+            <article key={match.id} className="americano-match-card rv-card rv-match-card">
               <div className="americano-match-card__top">
                 <span className="americano-match-card__court">
                   Cancha {match.court}
@@ -203,7 +204,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
         })}
       </div>
 
-      <div className="americano-round__bench card-like">
+      <div className="americano-round__bench card-like rv-card-soft">
         <h4>Descansando</h4>
         <div className="americano-round__bench-list">
           {round.benchPlayers.length === 0 ? (
@@ -220,10 +221,10 @@ export const RoundView: React.FC<RoundViewProps> = ({
         </div>
       </div>
 
-      <div className="americano-round__actions">
+      <ActionBar className="americano-round__actions">
         <button
           type="button"
-          className="americano-round-btn americano-round-btn--secondary"
+          className="americano-round-btn americano-round-btn--secondary rv-button-secondary"
           onClick={handleConfirm}
           disabled={!draftComplete}
         >
@@ -231,13 +232,13 @@ export const RoundView: React.FC<RoundViewProps> = ({
         </button>
         <button
           type="button"
-          className="americano-round-btn americano-round-btn--primary"
+          className="americano-round-btn americano-round-btn--primary rv-button-primary"
           onClick={onRoundFinalized}
           disabled={!canFinalizeRound}
         >
           Ronda finalizada
         </button>
-      </div>
+      </ActionBar>
       {!draftComplete && (
         <p className="americano-round__footer-hint">
           Completa todos los marcadores (≥ 0) para poder confirmar.

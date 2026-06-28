@@ -10,6 +10,8 @@ import {
 import { resolveDueloScheduleFromDraft } from "../../lib/duelo2v2/schedule";
 import { createDuelo2v2 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
+import { ModeHeader } from "../platform/ModeHeader";
 import {
   bothPairsReady,
   DueloPairBuilder,
@@ -90,7 +92,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
 
   return (
     <Duelo2v2PageShell wide>
-      <div className="duelo2v2-toolbar riviera-back-toolbar">
+      <ActionBar className="duelo2v2-toolbar riviera-back-toolbar">
         <Button
           type="button"
           variant="back"
@@ -98,12 +100,13 @@ export const Duelo2v2Nuevo: React.FC = () => {
         >
           ← Volver
         </Button>
-      </div>
+      </ActionBar>
 
-      <header className="duelo2v2-header">
-        <h1>Nuevo duelo 2 vs 2</h1>
-        <p>Agrega dos parejas del registro e inicia el encuentro.</p>
-      </header>
+      <ModeHeader
+        className="duelo2v2-header rv-mode-header"
+        title="Nuevo duelo 2 vs 2"
+        subtitle="Agrega dos parejas del registro e inicia el encuentro."
+      />
 
       {!user?.id ? (
         <p className="duelo2v2-error">Debes iniciar sesión para crear un duelo.</p>

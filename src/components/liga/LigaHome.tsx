@@ -3,6 +3,8 @@ import { navigateToAppHome } from "../../lib/appRouting";
 import type { Liga } from "../../lib/liga/types";
 import { deleteLiga, getLigas } from "../../services/ligaService";
 import { Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
+import { ModeHeader } from "../platform/ModeHeader";
 import { navigateLiga } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
@@ -21,9 +23,9 @@ function estadoLabel(estado: Liga["estado"]): string {
 }
 
 function badgeClass(estado: Liga["estado"]): string {
-  if (estado === "in_progress") return "liga-badge liga-badge--live";
-  if (estado === "completed") return "liga-badge liga-badge--done";
-  return "liga-badge";
+  if (estado === "in_progress") return "liga-badge liga-badge--live rv-pill";
+  if (estado === "completed") return "liga-badge liga-badge--done rv-pill";
+  return "liga-badge rv-pill";
 }
 
 export const LigaHome: React.FC = () => {
@@ -71,20 +73,19 @@ export const LigaHome: React.FC = () => {
 
   return (
     <LigaPageShell>
-      <div className="liga-toolbar riviera-back-toolbar">
+      <ActionBar className="liga-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateToAppHome()}>
           ← Volver al inicio
         </Button>
-      </div>
+      </ActionBar>
 
-      <header className="liga-header">
-        <h1 className="liga-title">Ligas</h1>
-        <p className="liga-subtitle">
-          Temporada con jornadas, parejas rotativas y ranking acumulado
-        </p>
-      </header>
+      <ModeHeader
+        className="liga-header rv-mode-header"
+        title="Ligas"
+        subtitle="Temporada con jornadas, parejas rotativas y ranking acumulado"
+      />
 
-      <div className="liga-actions">
+      <ActionBar className="liga-actions">
         <Button
           type="button"
           variant="primary"
@@ -92,14 +93,14 @@ export const LigaHome: React.FC = () => {
         >
           Nueva liga
         </Button>
-      </div>
+      </ActionBar>
 
       {error ? <p className="liga-error">{error}</p> : null}
 
       {loading ? (
         <p className="liga-subtitle">Cargando ligas…</p>
       ) : ligas.length === 0 ? (
-        <div className="liga-card liga-empty">
+        <div className="liga-card liga-empty rv-card rv-empty-state">
           <p>No tienes ligas creadas. Usa «Nueva liga» para empezar.</p>
         </div>
       ) : (

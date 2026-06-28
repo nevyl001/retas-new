@@ -1,4 +1,5 @@
 import React from "react";
+import { PublicModeShell } from "../../platform/PublicModeShell";
 import "./torneo-express-public.css";
 
 export const PublicTorneoExpressShell: React.FC<{
@@ -6,11 +7,9 @@ export const PublicTorneoExpressShell: React.FC<{
   className?: string;
 }> = ({ children, className = "" }) => {
   return (
-    <div
-      className={`te-public App--public-full-width ${className}`.trim()}
-    >
+    <div className={`te-public App--public-full-width ${className}`.trim()}>
       <div className="te-public__grain" aria-hidden />
-      <div className="te-public__inner">{children}</div>
+      <PublicModeShell className="te-public__inner">{children}</PublicModeShell>
     </div>
   );
 };

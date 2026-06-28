@@ -6,6 +6,8 @@ import { continueTournament } from "../lib/tournamentRouting";
 import { TournamentWinner } from "../lib/tournamentWinner";
 import { TournamentManager } from "./TournamentManager";
 import TournamentDetails from "./TournamentDetails";
+import { GameModeShell } from "./platform/GameModeShell";
+import { ActionBar } from "./platform/ActionBar";
 import { HomeDashboard } from "./home/HomeDashboard";
 
 interface MainLayoutProps {
@@ -141,13 +143,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             />
           )
         ) : (
-          <div className="reta-content riviera-organizer-reta">
+          <GameModeShell className="reta-content riviera-organizer-reta">
             {error ? (
               <div className="riviera-inline-error" role="alert">
                 {error}
               </div>
             ) : null}
-            <div className="reta-content__toolbar riviera-back-toolbar">
+            <ActionBar className="reta-content__toolbar riviera-back-toolbar">
               <Button
                 type="button"
                 variant="back"
@@ -158,7 +160,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               >
                 ← Volver al inicio
               </Button>
-            </div>
+            </ActionBar>
             <TournamentDetails
               selectedTournament={selectedTournament}
               pairs={pairs}
@@ -194,7 +196,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               onShowWinnerScreen={onShowWinnerScreen}
               onBackToHome={onBackToHome}
             />
-          </div>
+          </GameModeShell>
         )}
       </div>
     </>

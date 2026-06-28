@@ -1,4 +1,5 @@
 import React from "react";
+import { GameModeShell } from "../platform/GameModeShell";
 import "./liga-page.css";
 
 export interface LigaPageShellProps {
@@ -14,7 +15,7 @@ export const LigaPageShell: React.FC<LigaPageShellProps> = ({
   const pageClass = ["liga-page", className].filter(Boolean).join(" ");
   return (
     <div className={pageClass}>
-      <div className="liga-page__inner">{children}</div>
+      <GameModeShell className="liga-page__inner">{children}</GameModeShell>
     </div>
   );
 };

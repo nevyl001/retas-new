@@ -543,7 +543,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   return (
     <div
-      className={`omc-card${isSelected ? " selected" : ""}${
+      className={`omc-card rv-card rv-match-card${isSelected ? " selected" : ""}${
         isFinished ? " omc-card--done" : " omc-card--live"
       }`}
       onClick={() => onSelect(currentMatch.id)}

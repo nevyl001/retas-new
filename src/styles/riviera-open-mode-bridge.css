@@ -1,0 +1,259 @@
+/* =============================================
+   RIVIERA OPEN — Puente Fase 2 (modos de juego)
+   Unifica superficies legacy con tokens .rv-* / --ro-*
+   TODO: retirar reglas cuando cada modo migre por completo.
+============================================= */
+
+/* —— Contenedores de modo —— */
+.duelo2v2-page,
+.torneo-express-page,
+.liga-page,
+.americano-screen.rv-page,
+.reta-content.rv-page {
+  min-width: 0;
+  overflow-x: clip;
+}
+
+.duelo2v2-page__inner.rv-shell,
+.liga-page__inner.rv-shell,
+.te-public__inner.rv-public-board {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* —— Headers legacy → tipografía unificada —— */
+.duelo2v2-header.rv-mode-header,
+.liga-header.rv-mode-header,
+.te-header.rv-mode-header,
+.americano-tournament-banner.rv-mode-header {
+  margin-bottom: clamp(var(--ro-space-5), 4vw, var(--ro-space-8));
+}
+
+.duelo2v2-header.rv-mode-header .rv-mode-header__title,
+.liga-header.rv-mode-header .liga-title,
+.te-header.rv-mode-header .te-title,
+.te-header.rv-mode-header .te-gestion-title {
+  font-family: var(--ro-font-heading);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: var(--ro-text-primary);
+}
+
+.duelo2v2-header.rv-mode-header .rv-mode-header__sub,
+.liga-header.rv-mode-header .liga-subtitle,
+.te-header.rv-mode-header .te-subtitle {
+  color: var(--ro-text-secondary);
+  line-height: 1.55;
+  max-width: 42ch;
+}
+
+.americano-tournament-banner.rv-mode-header .americano-tournament-banner__kicker {
+  font-size: var(--ro-text-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ro-text-secondary);
+  margin: 0 0 var(--ro-space-2);
+}
+
+.americano-tournament-banner.rv-mode-header .americano-tournament-banner__name {
+  font-family: var(--ro-font-heading);
+  font-size: clamp(1.35rem, 4.5vw, 1.75rem);
+  margin: 0 0 var(--ro-space-2);
+}
+
+/* —— Toolbars y acciones —— */
+.riviera-back-toolbar.rv-action-bar,
+.duelo2v2-toolbar.rv-action-bar,
+.liga-toolbar.rv-action-bar,
+.te-inicio-toolbar.rv-action-bar,
+.americano-screen__header.rv-action-bar,
+.duelo2v2-actions.rv-action-bar,
+.liga-actions.rv-action-bar,
+.americano-round__actions.rv-action-bar,
+.te-header__actions.rv-action-bar,
+.te-gestion-header__actions.rv-action-bar {
+  padding-top: 0;
+  padding-bottom: clamp(var(--ro-space-3), 3vw, var(--ro-space-4));
+}
+
+/* —— Cards compartidas —— */
+.duelo2v2-card.rv-card,
+.liga-card.rv-card,
+.te-torneo-card.rv-card,
+.te-inicio-torneo-card.rv-card,
+.omc-card.rv-card,
+.americano-match-card.rv-card,
+.americano-round.rv-card,
+.americano-ranking.rv-card,
+.americano-round__bench.rv-card-soft,
+.start-tournament-section.rv-card,
+.public-link-section.rv-card,
+.matches-container-simplified.rv-card-soft,
+.elegant-player-manager.rv-card-soft,
+.elegant-pair-manager.rv-card-soft,
+.elegant-reta-status.rv-card-soft {
+  border: 0.5px solid var(--ro-border-subtle);
+  border-radius: var(--ro-radius-lg);
+  background: var(--ro-bg-card);
+  box-shadow: var(--ro-shadow-sm);
+}
+
+.duelo2v2-card.rv-card-soft,
+.liga-card.rv-card-soft,
+.omc-card.rv-card-soft {
+  background: var(--ro-bg-elevated);
+}
+
+/* —— Badges / pills —— */
+.duelo2v2-badge.rv-pill,
+.liga-badge.rv-pill,
+.te-categoria-pill.rv-pill,
+.te-gestion-fase-pill.rv-pill,
+.te-gestion-estado-pill.rv-pill,
+.riviera-badge.rv-pill {
+  font-size: var(--ro-text-label);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.duelo2v2-badge--live.rv-pill,
+.liga-badge--live.rv-pill {
+  color: var(--ro-success);
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.25);
+}
+
+.duelo2v2-badge--done.rv-pill,
+.liga-badge--done.rv-pill {
+  color: var(--ro-gold-light);
+  background: var(--ro-gold-dim);
+  border-color: var(--ro-gold-border);
+}
+
+/* —— Botones legacy → tokens —— */
+.americano-round-btn--primary,
+.duelo2v2-form button[type="submit"],
+.te-inicio-crear .riviera-btn--primary {
+  min-height: 44px;
+}
+
+.americano-round-btn--primary {
+  background: var(--ro-gold);
+  color: var(--ro-text-on-accent);
+  border: 0.5px solid var(--ro-gold-border);
+  border-radius: var(--ro-radius-md);
+  font-weight: 700;
+}
+
+.americano-round-btn--secondary {
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-primary);
+  border: 0.5px solid var(--ro-border);
+  border-radius: var(--ro-radius-md);
+  min-height: 44px;
+  font-weight: 600;
+}
+
+/* —— Tablas de ranking —— */
+.tabla-wrapper.rv-table-wrap,
+.new-standings-table-wrapper.rv-table-wrap,
+.te-standings-wrap.rv-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabla-ranking.rv-table,
+.new-standings-table.rv-table,
+.te-standings-table.rv-table {
+  font-size: var(--ro-text-body);
+}
+
+.tabla-ranking th,
+.new-standings-table th,
+.te-standings-table th {
+  font-size: var(--ro-text-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted);
+}
+
+/* —— Secciones —— */
+.home-section-title,
+.rv-section-title,
+.te-public-section__title,
+.te-inicio-crear__title,
+.liga-card__title,
+.americano-ranking h3,
+.americano-round__header h2 {
+  font-size: var(--ro-text-label);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted);
+}
+
+/* —— Empty states —— */
+.duelo2v2-card__meta:only-child,
+.liga-empty.rv-empty-state,
+.te-public-empty.rv-muted {
+  color: var(--ro-text-secondary);
+}
+
+.liga-empty.rv-empty-state {
+  padding: var(--ro-space-8) var(--ro-space-4);
+  border: 0.5px dashed var(--ro-border);
+  border-radius: var(--ro-radius-lg);
+  text-align: center;
+}
+
+/* —— Vista pública —— */
+.te-public__inner.rv-public-board,
+.duelo2v2-page__inner--public.rv-public-board,
+.liga-pantalla__inner.rv-public-board {
+  width: 100%;
+  max-width: min(1180px, 100%);
+  margin-inline: auto;
+}
+
+.te-pub-match.rv-match-card,
+.te-pub-match.rv-card {
+  min-width: 0;
+}
+
+/* —— Organizer reta —— */
+.riviera-organizer-reta.rv-page .tournament-details {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--ro-space-4), 3vw, var(--ro-space-6));
+}
+
+.riviera-organizer-reta .reta-content__toolbar.rv-action-bar {
+  margin-bottom: clamp(var(--ro-space-2), 2vw, var(--ro-space-4));
+}
+
+/* —— Mobile —— */
+@media (max-width: 540px) {
+  .duelo2v2-actions.rv-action-bar,
+  .liga-actions.rv-action-bar,
+  .americano-round__actions.rv-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .te-gestion-header__actions.rv-action-bar {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .duelo2v2-actions.rv-action-bar .riviera-btn,
+  .liga-actions.rv-action-bar .riviera-btn,
+  .americano-round__actions .americano-round-btn,
+  .te-gestion-header__actions.rv-action-bar .riviera-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -9,6 +9,8 @@ import {
   updateDuelo2v2Score,
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
+import { ModeHeader } from "../platform/ModeHeader";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
 import { Duelo2v2DetailsEditor } from "./Duelo2v2DetailsEditor";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
@@ -142,7 +144,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
 
   return (
     <Duelo2v2PageShell wide className="duelo2v2-gestionar">
-      <div className="duelo2v2-toolbar riviera-back-toolbar">
+      <ActionBar className="duelo2v2-toolbar riviera-back-toolbar">
         <Button
           type="button"
           variant="back"
@@ -150,13 +152,15 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
         >
           ← Mis duelos
         </Button>
-      </div>
+      </ActionBar>
 
-      <header className="duelo2v2-header">
-        <h1>{duelo.nombre}</h1>
-        {duelo.descripcion && <p>{duelo.descripcion}</p>}
+      <ModeHeader
+        className="duelo2v2-header rv-mode-header"
+        title={duelo.nombre}
+        subtitle={duelo.descripcion ?? undefined}
+      >
         <Duelo2v2MatchMeta duelo={duelo} />
-      </header>
+      </ModeHeader>
 
       <Duelo2v2DetailsEditor
         duelo={duelo}
@@ -205,7 +209,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       {error && <p className="duelo2v2-error">{error}</p>}
       {message && <p className="duelo2v2-message">{message}</p>}
 
-      <div className="duelo2v2-actions">
+      <ActionBar className="duelo2v2-actions">
         <Button type="button" variant="secondary" size="sm" onClick={() => void copyPublicLink()}>
           {copied ? "Enlace copiado" : "Copiar vista pública"}
         </Button>
@@ -219,7 +223,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             Finalizar y sumar al ranking
           </Button>
         )}
-      </div>
+      </ActionBar>
     </Duelo2v2PageShell>
   );
 };

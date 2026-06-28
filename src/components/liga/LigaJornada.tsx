@@ -17,6 +17,8 @@ import {
   updateScore,
 } from "../../services/ligaService";
 import { Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
+import { ModeHeader } from "../platform/ModeHeader";
 import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
@@ -315,7 +317,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
   return (
     <LigaPageShell>
-      <div className="liga-toolbar riviera-back-toolbar">
+      <ActionBar className="liga-toolbar riviera-back-toolbar">
         <Button
           type="button"
           variant="back"
@@ -323,21 +325,19 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         >
           ← {detalle.nombre}
         </Button>
-      </div>
+      </ActionBar>
 
-      <header className="liga-header">
-        <h1 className="liga-title">
-          Liga: {detalle.nombre} — Jornada {numero}
-        </h1>
-        <p className="liga-subtitle">
-          Estado: {jornadaEstadoLabel(jornada.estado)}
-          {totalPartidos > 0
+      <ModeHeader
+        className="liga-header rv-mode-header"
+        title={`Liga: ${detalle.nombre} — Jornada ${numero}`}
+        subtitle={`Estado: ${jornadaEstadoLabel(jornada.estado)}${
+          totalPartidos > 0
             ? ` · ${totalPartidos} partidos (${nParejas} parejas, todos vs todos)`
-            : null}
-        </p>
-      </header>
+            : ""
+        }`}
+      />
 
-      <div className="liga-jornada-toolbar">
+      <ActionBar className="liga-jornada-toolbar">
         <Button
           type="button"
           variant="secondary"
@@ -359,12 +359,12 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
           Para proyectar los partidos en vivo: copia el enlace y ábrelo en un navegador
           de la tele o tablet en cancha.
         </p>
-      </div>
+      </ActionBar>
 
       {message ? <p className="liga-success">{message}</p> : null}
       {error ? <p className="liga-error">{error}</p> : null}
 
-      <div className="liga-card">
+      <div className="liga-card rv-card">
         <h2 className="liga-card__title">Parejas de la jornada</h2>
         <div>
           {(jornada.parejas ?? []).map((p) => (
@@ -399,7 +399,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       <div className="liga-jornada-admin">
         <div className="liga-jornada-admin__main">
       {partidosByRonda.length > 0 && (
-        <div className="liga-card">
+        <div className="liga-card rv-card">
           <h2 className="liga-card__title">Partidos por ronda</h2>
           {partidosByRonda.map(([ronda, partidos]) => {
             const completa = rondaCompleta(partidos);

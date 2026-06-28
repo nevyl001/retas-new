@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { createLiga } from "../../services/ligaService";
 import { Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
+import { ModeHeader } from "../platform/ModeHeader";
 import { ligaGestionarPath, navigateLiga } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
@@ -37,20 +39,18 @@ export const LigaNueva: React.FC = () => {
 
   return (
     <LigaPageShell>
-      <div className="liga-toolbar riviera-back-toolbar">
+      <ActionBar className="liga-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateLiga("/liga")}>
           ← Ligas
         </Button>
         <Button type="button" variant="back" onClick={() => navigateToAppHome()}>
           Inicio
         </Button>
-      </div>
+      </ActionBar>
 
-      <header className="liga-header">
-        <h1 className="liga-title">Nueva liga</h1>
-      </header>
+      <ModeHeader className="liga-header rv-mode-header" title="Nueva liga" />
 
-      <form className="liga-card" onSubmit={handleSubmit}>
+      <form className="liga-card rv-card" onSubmit={handleSubmit}>
         <div className="liga-field">
           <label htmlFor="liga-nombre">Nombre</label>
           <input

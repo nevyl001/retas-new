@@ -20,6 +20,8 @@ import {
   startLiga,
 } from "../../services/ligaService";
 import { Button } from "../ui";
+import { ActionBar } from "../platform/ActionBar";
+import { ModeHeader } from "../platform/ModeHeader";
 import {
   ligaJornadaPath,
   navigateLiga,
@@ -256,20 +258,19 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
   return (
     <LigaPageShell>
-      <div className="liga-toolbar riviera-back-toolbar">
+      <ActionBar className="liga-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateLiga("/liga")}>
           ← Ligas
         </Button>
-      </div>
+      </ActionBar>
 
-      <header className="liga-header">
-        <h1 className="liga-title">Liga: {detalle.nombre}</h1>
-        <p className="liga-subtitle">
-          {detalle.inscripciones.length} inscritos · {estadoLigaLabel(detalle.estado)}
-        </p>
-      </header>
+      <ModeHeader
+        className="liga-header rv-mode-header"
+        title={`Liga: ${detalle.nombre}`}
+        subtitle={`${detalle.inscripciones.length} inscritos · ${estadoLigaLabel(detalle.estado)}`}
+      />
 
-      <div className="liga-actions">
+      <ActionBar className="liga-actions">
         <Button type="button" variant="ghost" size="sm" onClick={copyPublic}>
           Copiar enlace público
         </Button>
@@ -328,7 +329,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             Finalizar liga
           </Button>
         )}
-      </div>
+      </ActionBar>
 
       {calendarioStale && ligaEditable && (
         <div className="liga-banner liga-banner--warn" role="status">
@@ -370,7 +371,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
       {tab === "jugadores" && (
         <>
-          <div className="liga-card">
+          <div className="liga-card rv-card">
             <h2 className="liga-card__title">Inscripciones en esta liga</h2>
             <ul className="liga-list">
               {jugadoresPool.map((j) => {
@@ -430,7 +431,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       )}
 
       {tab === "jornadas" && (
-        <div className="liga-card">
+        <div className="liga-card rv-card">
           <h2 className="liga-card__title">Jornadas</h2>
           {detalle.jornadas.length === 0 ? (
             <p className="liga-empty">

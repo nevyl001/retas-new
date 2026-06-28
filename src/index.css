@@ -8,6 +8,8 @@
 @import "./styles/riviera-utilities.css";
 @import "./styles/riviera-open-patterns.css"; /* Maestro v1.0 — patrones compartidos */
 @import "./styles/riviera-open-components.css"; /* Fase 1 — clases .rv-* compartidas */
+@import "./styles/riviera-open-mode-bridge.css"; /* Fase 2 — unificación modos */
+@import "./styles/riviera-open-mobile-polish.css"; /* Revisión mobile-first final */
 @import "./styles/riviera-app-shell.css";
 @import "./styles/riviera-public-court.css";
 @import "./styles/riviera-public-tokens.css";
@@ -18,6 +20,7 @@ html,
 body {
   width: 100%;
   max-width: 100%;
+  overflow-x: clip;
 }
 
 #root {

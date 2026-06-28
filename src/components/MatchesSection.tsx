@@ -254,7 +254,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       : isTournamentFinished || tournament.is_finished;
 
   return (
-    <div className="matches-container-simplified">
+    <div className="matches-container-simplified rv-card-soft">
       <div className="matches-header-simplified">
         <h3>Partidos</h3>
         <span className="matches-count-simplified">{matches.length} total</span>

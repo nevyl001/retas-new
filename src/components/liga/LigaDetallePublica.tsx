@@ -6,6 +6,7 @@ import {
   getRanking,
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
+import { PublicModeShell } from "../platform/PublicModeShell";
 import "./liga-public-pantalla.css";
 
 const POLL_MS = 15_000;
@@ -79,9 +80,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     return (
       <div className="liga-pantalla App--public-full-width ro-public-view">
         <div className="liga-pantalla__grain" aria-hidden />
-        <div className="liga-pantalla__inner">
-          <p className="liga-pantalla__loading">Cargando liga…</p>
-        </div>
+        <PublicModeShell className="liga-pantalla__inner">
+          <p className="liga-pantalla__loading rv-muted">Cargando liga…</p>
+        </PublicModeShell>
       </div>
     );
   }
@@ -90,9 +91,9 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     return (
       <div className="liga-pantalla App--public-full-width ro-public-view">
         <div className="liga-pantalla__grain" aria-hidden />
-        <div className="liga-pantalla__inner">
+        <PublicModeShell className="liga-pantalla__inner">
           <p className="liga-pantalla__error">{error ?? "No disponible"}</p>
-        </div>
+        </PublicModeShell>
       </div>
     );
   }
@@ -117,7 +118,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   return (
     <div className="liga-pantalla App--public-full-width ro-public-view">
       <div className="liga-pantalla__grain" aria-hidden />
-      <div className="liga-pantalla__inner">
+      <PublicModeShell className="liga-pantalla__inner">
         <header className="liga-pantalla__header">
           <p className="liga-pantalla__eyebrow">Riviera Open · Liga</p>
           <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
@@ -279,7 +280,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
               })}`
             : ""}
         </footer>
-      </div>
+      </PublicModeShell>
     </div>
   );
 };

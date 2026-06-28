@@ -25,6 +25,8 @@ import {
   saveAmericanoDinamicoSnapshot,
 } from "../../lib/americanoDinamicoStorage";
 import { Button } from "../ui";
+import { ModeHeader } from "../platform/ModeHeader";
+import { AmericanoModeShell } from "./AmericanoModeShell";
 import "../public/riviera-public-americano.css";
 import "./AmericanoDinamicoScreen.css";
 
@@ -304,17 +306,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 
   const tournamentBanner =
     tournamentName || tournamentDescription ? (
-      <header className="americano-tournament-banner">
-        <p className="americano-tournament-banner__kicker">Americano</p>
-        {tournamentName ? (
-          <h2 className="americano-tournament-banner__name">{tournamentName}</h2>
-        ) : null}
-        {tournamentDescription ? (
-          <p className="americano-tournament-banner__desc">
-            {tournamentDescription}
-          </p>
-        ) : null}
-      </header>
+      <ModeHeader
+        className="americano-tournament-banner rv-mode-header"
+        eyebrow="Americano"
+        title={tournamentName || "Reta Pádel Americano"}
+        subtitle={tournamentDescription || undefined}
+      />
     ) : null;
 
   const syncWarning = !remoteSyncReady ? (
@@ -328,20 +325,15 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 
   if (hydrating && phase === "registration" && players.length === 0) {
     return (
-      <div className="americano-screen">
+      <AmericanoModeShell showToolbar={false}>
         <p className="americano-screen__loading">Cargando americano…</p>
-      </div>
+      </AmericanoModeShell>
     );
   }
 
   if (phase === "registration") {
     return (
-      <div className="americano-screen">
-        <div className="americano-screen__header riviera-back-toolbar">
-          <Button type="button" variant="back" onClick={goBackToRetas}>
-            ← Volver al inicio
-          </Button>
-        </div>
+      <AmericanoModeShell onBack={goBackToRetas}>
         {syncWarning}
         {tournamentBanner}
         {playersLoadError && (
@@ -356,18 +348,13 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           onToggleExistingPlayer={toggleExistingPlayer}
           onStartTournament={handleStartTournament}
         />
-      </div>
+      </AmericanoModeShell>
     );
   }
 
   if (phase === "playing") {
     return (
-      <div className="americano-screen">
-        <div className="americano-screen__header riviera-back-toolbar">
-          <Button type="button" variant="back" onClick={goBackToRetas}>
-            ← Volver al inicio
-          </Button>
-        </div>
+      <AmericanoModeShell onBack={goBackToRetas}>
         {syncWarning}
         {tournamentBanner}
         {resolvedTournamentId && publicAmericanoUrl ? (
@@ -424,17 +411,12 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             onEditScore={editScore}
           />
         </div>
-      </div>
+      </AmericanoModeShell>
     );
   }
 
   return (
-    <div className="americano-screen">
-      <div className="americano-screen__header riviera-back-toolbar">
-          <Button type="button" variant="back" onClick={goBackToRetas}>
-            ← Volver al inicio
-          </Button>
-      </div>
+    <AmericanoModeShell onBack={goBackToRetas}>
       {tournamentBanner}
       {resolvedTournamentId && publicAmericanoUrl ? (
         <section className="americano-public-link" aria-label="Enlace público">
@@ -497,7 +479,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           onEditScore={editScore}
         />
       </div>
-    </div>
+    </AmericanoModeShell>
   );
 };
 

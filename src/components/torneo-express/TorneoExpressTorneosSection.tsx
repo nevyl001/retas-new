@@ -169,7 +169,7 @@ export const TorneoExpressTorneosSection: React.FC<
     return (
       <li
         key={t.id}
-        className={`te-torneo-card${activo ? " te-torneo-card--activo" : " te-torneo-card--finalizado"}`}
+        className={`te-torneo-card rv-card${activo ? " te-torneo-card--activo" : " te-torneo-card--finalizado"}`}
       >
         <div className="te-torneo-card__inner">
           <div className="te-torneo-card__info-col">
@@ -298,7 +298,7 @@ export const TorneoExpressTorneosSection: React.FC<
   return (
     <section className="te-torneos-section" aria-labelledby="te-torneos-heading">
       <div className="te-torneos-section__head">
-        <h2 id="te-torneos-heading" className="te-torneos-section__title">
+        <h2 id="te-torneos-heading" className="te-torneos-section__title rv-section-title">
           Tus torneos
         </h2>
         {!cargandoTorneos && activosCount > 0 ? (

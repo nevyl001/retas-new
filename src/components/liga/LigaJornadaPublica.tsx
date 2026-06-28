@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
 import type { LigaDetalle, LigaJornada, LigaPartido } from "../../lib/liga/types";
 import { getLigaById } from "../../services/ligaService";
+import { PublicModeShell } from "../platform/PublicModeShell";
 import "./liga-public-pantalla.css";
 
 const POLL_MS = 12_000;
@@ -108,9 +109,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     return (
       <div className="liga-pantalla App--public-full-width ro-public-view">
         <div className="liga-pantalla__grain" aria-hidden />
-        <div className="liga-pantalla__inner">
+        <PublicModeShell className="liga-pantalla__inner">
           <p className="liga-pantalla__loading">Cargando jornada…</p>
-        </div>
+        </PublicModeShell>
       </div>
     );
   }
@@ -119,9 +120,9 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     return (
       <div className="liga-pantalla App--public-full-width ro-public-view">
         <div className="liga-pantalla__grain" aria-hidden />
-        <div className="liga-pantalla__inner">
+        <PublicModeShell className="liga-pantalla__inner">
           <p className="liga-pantalla__error">{error ?? "Jornada no encontrada"}</p>
-        </div>
+        </PublicModeShell>
       </div>
     );
   }
@@ -136,7 +137,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   return (
     <div className="liga-pantalla App--public-full-width ro-public-view">
       <div className="liga-pantalla__grain" aria-hidden />
-      <div className="liga-pantalla__inner">
+      <PublicModeShell className="liga-pantalla__inner">
         <header className="liga-pantalla__header">
           <p className="liga-pantalla__eyebrow">Riviera Open · Liga</p>
           <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
@@ -346,7 +347,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
               })}`
             : ""}
         </footer>
-      </div>
+      </PublicModeShell>
     </div>
   );
 };

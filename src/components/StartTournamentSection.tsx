@@ -86,7 +86,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
   const modeLabel = getStartFormatLabel(format);
 
   return (
-    <div className="start-tournament-section start-tournament-section--v2">
+    <div className="start-tournament-section start-tournament-section--v2 rv-card">
       <header className="start-tournament-section__header">
         <h3 className="start-tournament-section__title text-display">Iniciar reta</h3>
         <span
