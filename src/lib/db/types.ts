@@ -94,7 +94,7 @@ export interface AmericanoMatch {
 
 export interface AmericanoRound {
   roundNumber: number;
-  /** 1 = primera mitad de rondas, 2 = segunda mitad (emparejamiento por games). */
+  /** Siempre 1 en retas nuevas (rotación americana). Valor 2 solo en snapshots legacy. */
   phase: 1 | 2;
   matches: AmericanoMatch[];
   benchPlayers: AmericanoPlayer[];

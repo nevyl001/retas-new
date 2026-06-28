@@ -255,7 +255,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   }, [organizadorId, podiumPlayers]);
 
   return (
-    <PublicTorneoExpressShell className="te-public--americano">
+    <PublicTorneoExpressShell className="te-public--americano te-public--americano-wide">
       <header className="te-public-header te-public-header--americano te-pub-fade-in">
         <div className="te-public-header__brand">
           <p className="te-public-header__kicker">Americano · En vivo</p>
@@ -373,10 +373,14 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                       <span className="te-public-round-head__num">
                         Ronda {round.roundNumber}
                       </span>
-                      <span className="te-public-round-head__sep">·</span>
-                      <span className="te-public-round-head__phase">
-                        {phaseCaption}
-                      </span>
+                      {phaseCaption ? (
+                        <>
+                          <span className="te-public-round-head__sep">·</span>
+                          <span className="te-public-round-head__phase">
+                            {phaseCaption}
+                          </span>
+                        </>
+                      ) : null}
                       {inProgress && (
                         <span className="te-public-round-head__live">
                           <span className="te-pub-status__dot" aria-hidden />
@@ -394,7 +398,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                     </p>
                   )}
 
-                  <div className="te-pub-matches-grid">
+                  <div className="te-pub-matches-grid te-pub-matches-grid--wide">
                     {matches.map((m, matchIdx) => (
                       <PublicAmericanoMatchCard
                         key={m.id}

@@ -27,7 +27,9 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
   return (
     <section className="americano-history">
       <h3>Historial</h3>
-      {rounds.map((round, roundIndex) => (
+      {rounds.map((round, roundIndex) => {
+        const phaseCaption = americanoRoundPhaseCaption(round, totalRounds);
+        return (
         <article key={round.roundNumber} className="americano-history__round">
           <button
             className="americano-history__toggle"
@@ -35,8 +37,8 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
               setOpenRound((prev) => (prev === round.roundNumber ? null : round.roundNumber))
             }
           >
-            Ronda {round.roundNumber} ·{" "}
-            {americanoRoundPhaseCaption(round, totalRounds)}
+            Ronda {round.roundNumber}
+            {phaseCaption ? ` · ${phaseCaption}` : ""}
           </button>
 
           {openRound === round.roundNumber && (
@@ -92,7 +94,8 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
             </div>
           )}
         </article>
-      ))}
+        );
+      })}
     </section>
   );
 };

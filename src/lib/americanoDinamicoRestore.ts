@@ -1,6 +1,4 @@
 import { applyAmericanoResult } from "./americanoStandings";
-import { regenerateUnscoredSecondHalfRound } from "./americanoGenerator";
-import { rosterSeedMap } from "./americanoLiveStandings";
 import type { MutableRefObject } from "react";
 import type { AmericanoPlayer, AmericanoRound } from "./db/types";
 import type { AmericanoDinamicoSnapshotV1 } from "./americanoDinamicoStorage";
@@ -211,20 +209,9 @@ export function applyAmericanoSnapshotToState(
       snap.tournamentPhase === "finished" ? "finished" : "playing";
 
     const currentIdx = Math.max(0, rl.length - 1);
-    const seeds = rosterSeedMap(sourcePlayers);
-    let finalRounds = rl;
-    const refreshed = regenerateUnscoredSecondHalfRound(
-      pl,
-      rl,
-      currentIdx,
-      totalRoundsRef.current,
-      courtsRef.current,
-      seeds
-    );
-    if (refreshed) finalRounds = refreshed;
 
     setPlayers(pl);
-    setRounds(finalRounds);
+    setRounds(rl);
     setCurrentRoundIndex(currentIdx);
     setPhase(restoredPhase);
     return true;

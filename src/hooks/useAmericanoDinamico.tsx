@@ -11,12 +11,10 @@ import type { AmericanoPlayer, AmericanoRound } from "../lib/db/types";
 import {
   buildMatricesFromScoredRounds,
   generateAmericanoRound,
-  regenerateUnscoredSecondHalfRound,
 } from "../lib/americanoGenerator";
 import {
   computeAmericanoLiveRanking,
   filterScoredAmericanoRounds,
-  rosterSeedMap,
 } from "../lib/americanoLiveStandings";
 import {
   applyAmericanoResult,
@@ -110,29 +108,6 @@ function rebuildStateFromRounds(
   });
 
   return { players: rebuiltPlayers, rounds: rebuiltRounds };
-}
-
-function refreshUnscoredSecondHalfRoundsFrom(
-  players: AmericanoPlayer[],
-  allRounds: AmericanoRound[],
-  fromIndex: number,
-  totalRounds: number,
-  courts: number,
-  seedById: Map<string, number>
-): AmericanoRound[] {
-  let out = allRounds;
-  for (let i = Math.max(0, fromIndex); i < out.length; i++) {
-    const refreshed = regenerateUnscoredSecondHalfRound(
-      players,
-      out,
-      i,
-      totalRounds,
-      courts,
-      seedById
-    );
-    if (refreshed) out = refreshed;
-  }
-  return out;
 }
 
 export interface UseAmericanoDinamicoOptions {
@@ -274,14 +249,17 @@ export function useAmericanoDinamico(
         ? crypto.randomUUID()
         : `americano-${Date.now()}`);
 
-    const { partnerMatrix } = buildMatricesFromScoredRounds(seededPlayers, []);
+    const { partnerMatrix, rivalMatrix } = buildMatricesFromScoredRounds(seededPlayers, []);
     const r1 = generateAmericanoRound({
       allPlayers: seededPlayers,
       roundNumber: 1,
       totalRounds,
       courts: safeCourts,
       partnerMatrix,
+      rivalMatrix,
       lastBenchPlayerIds: new Set(),
+      priorRounds: [],
+      scoredRounds: [],
     });
 
     setPlayers(seededPlayers);
@@ -290,24 +268,12 @@ export function useAmericanoDinamico(
     setPhase("playing");
   };
 
-  const persistRebuiltState = useCallback(
-    (nextRounds: AmericanoRound[], refreshFromRoundIndex = 0) => {
-      const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
-      const rebuilt = rebuildStateFromRounds(nextRounds, template);
-      const seeds = rosterSeedMap(template);
-      const synced = refreshUnscoredSecondHalfRoundsFrom(
-        rebuilt.players,
-        rebuilt.rounds,
-        refreshFromRoundIndex,
-        totalRoundsRef.current,
-        courtsRef.current,
-        seeds
-      );
-      setRounds(synced);
-      setPlayers(rebuilt.players);
-    },
-    []
-  );
+  const persistRebuiltState = useCallback((nextRounds: AmericanoRound[]) => {
+    const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
+    const rebuilt = rebuildStateFromRounds(nextRounds, template);
+    setRounds(rebuilt.rounds);
+    setPlayers(rebuilt.players);
+  }, []);
 
   const commitRoundScores = useCallback(
     (scores: { matchId: string; scoreA: number; scoreB: number }[]) => {
@@ -327,7 +293,7 @@ export function useAmericanoDinamico(
           }),
         };
       });
-      persistRebuiltState(nextRounds, idx + 1);
+      persistRebuiltState(nextRounds);
 
       if (options?.organizadorId) {
         const round = nextRounds[idx];
@@ -355,7 +321,7 @@ export function useAmericanoDinamico(
           ),
         };
       });
-      persistRebuiltState(nextRounds, idx);
+      persistRebuiltState(nextRounds);
 
       if (options?.organizadorId) {
         const round = nextRounds[idx];
@@ -382,7 +348,7 @@ export function useAmericanoDinamico(
           ),
         };
       });
-      persistRebuiltState(nextRounds, roundIndex + 1);
+      persistRebuiltState(nextRounds);
     },
     [persistRebuiltState]
   );
@@ -414,7 +380,7 @@ export function useAmericanoDinamico(
     const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
     const rebuilt = rebuildStateFromRounds(prevRounds, template);
     const scoredRounds = filterScoredAmericanoRounds(rebuilt.rounds);
-    const { partnerMatrix } = buildMatricesFromScoredRounds(
+    const { partnerMatrix, rivalMatrix } = buildMatricesFromScoredRounds(
       rebuilt.players,
       scoredRounds
     );
@@ -430,9 +396,10 @@ export function useAmericanoDinamico(
       totalRounds: total,
       courts: courtsRef.current,
       partnerMatrix,
+      rivalMatrix,
       lastBenchPlayerIds: lastBenchIds,
+      priorRounds: rebuilt.rounds,
       scoredRounds,
-      seedById: rosterSeedMap(template),
     });
 
     setPlayers(rebuilt.players);

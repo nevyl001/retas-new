@@ -1,51 +1,30 @@
 import React from "react";
 import type { AmericanoSnapshotMatch } from "../../lib/americanoDinamicoStorage";
-import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
+import {
+  PublicRetaPairSide,
+  type PublicRetaPairPlayer,
+} from "./PublicRetaPairSide";
 import {
   TePubMatchOutcome,
+  TePubMatchStatus,
   tePubScoreNumModifier,
 } from "./tePubShared";
 
-function formatTeamLabel(
-  players: [{ id: string; name: string }, { id: string; name: string }],
+function teamPlayers(
+  pair: [{ id: string; name: string }, { id: string; name: string }],
   ratings?: Record<string, number>
-) {
-  const renderPlayer = (p: { id: string; name: string }) => (
-    <span key={p.name} className="te-pub-match__team-player">
-      {p.name}
-      <JugadorRatingChip
-        rating={ratings?.[p.id]}
-        className="te-pub-match__team-rating"
-      />
-    </span>
-  );
-
-  return (
-    <>
-      {renderPlayer(players[0])}
-      <span className="te-pub-match__team-sep"> / </span>
-      {renderPlayer(players[1])}
-    </>
-  );
+): PublicRetaPairPlayer[] {
+  return pair.map((p) => ({
+    id: p.id,
+    name: p.name,
+    rating: ratings?.[p.id] ?? null,
+  }));
 }
 
-function MatchStatus({ played, live }: { played: boolean; live: boolean }) {
-  if (played) {
-    return (
-      <span className="te-pub-status te-pub-status--played">
-        <span aria-hidden>✓</span> Jugado
-      </span>
-    );
-  }
-  if (live) {
-    return (
-      <span className="te-pub-status te-pub-status--live">
-        <span className="te-pub-status__dot" aria-hidden />
-        En vivo
-      </span>
-    );
-  }
-  return <span className="te-pub-status te-pub-status--pending">Pendiente</span>;
+function teamLabel(
+  pair: [{ id: string; name: string }, { id: string; name: string }]
+): string {
+  return `${pair[0].name} / ${pair[1].name}`;
 }
 
 export const PublicAmericanoMatchCard: React.FC<{
@@ -60,18 +39,22 @@ export const PublicAmericanoMatchCard: React.FC<{
   const bWins = played && (m.scoreB as number) > (m.scoreA as number);
   const isTie = played && (m.scoreA as number) === (m.scoreB as number);
   const winnerLabel = aWins
-    ? `${m.teamA[0].name} / ${m.teamA[1].name}`
+    ? teamLabel(m.teamA)
     : bWins
-      ? `${m.teamB[0].name} / ${m.teamB[1].name}`
+      ? teamLabel(m.teamB)
       : null;
 
   return (
     <article
-      className="te-pub-match te-pub-fade-in-up"
+      className="te-pub-match te-pub-match--wide te-pub-match--americano te-pub-fade-in-up"
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >
       <div className="te-pub-match__top">
-        <MatchStatus played={played} live={live && !played} />
+        <div className="te-pub-match__top-left">
+          <TePubMatchStatus
+            variant={played ? "played" : live ? "live" : "pending"}
+          />
+        </div>
         <span className="te-pub-cancha" title="Cancha">
           <span className="te-pub-cancha__icon" aria-hidden>
             🎾
@@ -80,36 +63,48 @@ export const PublicAmericanoMatchCard: React.FC<{
         </span>
       </div>
 
-      <div className="te-pub-match__score-block">
-        {played ? (
-          <div className="te-pub-score">
-            <span
-              className={`te-pub-score__num${tePubScoreNumModifier({ isWin: aWins, isTie })}`}
-            >
-              {m.scoreA}
-            </span>
-            <span className="te-pub-score__sep">—</span>
-            <span
-              className={`te-pub-score__num${tePubScoreNumModifier({ isWin: bWins, isTie })}`}
-            >
-              {m.scoreB}
-            </span>
-          </div>
-        ) : (
-          <span className="te-pub-score te-pub-score--pending te-pub-score--pending-label">
-            Marcador pendiente
-          </span>
-        )}
-      </div>
+      <div className="te-pub-match__faceoff">
+        <PublicRetaPairSide
+          players={teamPlayers(m.teamA, playerRatings)}
+          label={teamLabel(m.teamA)}
+          align="left"
+          isWinner={aWins}
+        />
 
-      <div className="te-pub-match__teams">
-        <span className={`te-pub-match__team${aWins ? " te-pub-match__team--win" : ""}`}>
-          {formatTeamLabel(m.teamA, playerRatings)}
-        </span>
-        <span className="te-pub-match__vs">vs</span>
-        <span className={`te-pub-match__team${bWins ? " te-pub-match__team--win" : ""}`}>
-          {formatTeamLabel(m.teamB, playerRatings)}
-        </span>
+        <div className="te-pub-match__score-block te-pub-match__score-block--center">
+          {played ? (
+            <div className="te-pub-score te-pub-score--faceoff">
+              <span
+                className={`te-pub-score__num${tePubScoreNumModifier({
+                  isWin: aWins,
+                  isTie,
+                })}`}
+              >
+                {m.scoreA}
+              </span>
+              <span className="te-pub-score__sep">—</span>
+              <span
+                className={`te-pub-score__num${tePubScoreNumModifier({
+                  isWin: bWins,
+                  isTie,
+                })}`}
+              >
+                {m.scoreB}
+              </span>
+            </div>
+          ) : (
+            <span className="te-pub-score te-pub-score--pending te-pub-score--pending-label">
+              Marcador pendiente
+            </span>
+          )}
+        </div>
+
+        <PublicRetaPairSide
+          players={teamPlayers(m.teamB, playerRatings)}
+          label={teamLabel(m.teamB)}
+          align="right"
+          isWinner={bWins}
+        />
       </div>
 
       <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />

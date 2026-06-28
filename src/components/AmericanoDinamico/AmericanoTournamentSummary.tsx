@@ -129,10 +129,14 @@ export const AmericanoTournamentSummary: React.FC<
           <p className="americano-summary__empty">No hay rondas guardadas.</p>
         ) : (
           snapshot.rounds.map((round) => {
+            const phaseCaption = americanoRoundPhaseCaption(
+              round,
+              totalForPhaseLabels
+            );
             const roundLabel = (
               <>
-                Ronda {round.roundNumber} ·{" "}
-                {americanoRoundPhaseCaption(round, totalForPhaseLabels)}
+                Ronda {round.roundNumber}
+                {phaseCaption ? <> · {phaseCaption}</> : null}
                 {round.benchPlayers.length > 0 && (
                   <span className="americano-summary__bench">
                     {" "}

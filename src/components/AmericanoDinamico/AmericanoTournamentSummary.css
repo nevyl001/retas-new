@@ -320,3 +320,60 @@
 .americano-summary--display .americano-summary__match {
   font-size: clamp(0.85rem, 1.6vw, 1.2rem);
 }
+
+@media (max-width: 900px) {
+  .americano-summary--display {
+    padding: 1rem 0.85rem 1.5rem;
+    border-radius: var(--radius-md);
+  }
+
+  .americano-summary--display .americano-summary__title {
+    font-size: clamp(1.35rem, 5.5vw, 1.85rem);
+  }
+
+  .americano-summary--display .americano-summary__podium {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .americano-summary--display .americano-summary__medal {
+    order: unset !important;
+  }
+
+  .americano-summary--display .americano-summary__medal--gold {
+    order: -1 !important;
+  }
+
+  .americano-summary--display .americano-summary__table {
+    font-size: 0.82rem;
+  }
+
+  .americano-summary--display .americano-summary__table th,
+  .americano-summary--display .americano-summary__table td {
+    padding: 0.55rem 0.4rem;
+  }
+
+  .americano-summary--display .americano-summary__match {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem 0.5rem;
+    padding: 0.65rem 0;
+  }
+
+  .americano-summary--display .americano-summary__teams {
+    flex: none;
+    width: 100%;
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+
+  .americano-summary--display .americano-summary__score {
+    font-size: 1.05rem;
+  }
+
+  .public-americano-board {
+    padding-left: max(0.85rem, calc(env(safe-area-inset-left, 0px) + 0.65rem));
+    padding-right: max(0.85rem, calc(env(safe-area-inset-right, 0px) + 0.65rem));
+  }
+}

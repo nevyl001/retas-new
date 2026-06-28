@@ -5,11 +5,9 @@ import {
   buildMatricesFromScoredRounds,
   generateAmericanoRound,
   initializeMatrix,
-  isFirstHalfRound,
   selectBenchPlayers,
-  sortAmericanoPlayersForPairing,
+  validateAmericanoRound,
 } from "./americanoGenerator";
-import { getAmericanoRanking } from "./americanoStandings";
 
 function makePlayers(total: number): AmericanoPlayer[] {
   return Array.from({ length: total }, (_, i) => ({
@@ -24,13 +22,29 @@ function makePlayers(total: number): AmericanoPlayer[] {
   }));
 }
 
-describe("isFirstHalfRound", () => {
-  test("first half for round 1..floor when 2r<=T", () => {
-    expect(isFirstHalfRound(1, 5)).toBe(true);
-    expect(isFirstHalfRound(2, 5)).toBe(true);
-    expect(isFirstHalfRound(3, 5)).toBe(false);
+function collectPlayingIds(round: AmericanoRound): Set<string> {
+  const playing = new Set<string>();
+  round.matches.forEach((match) => {
+    [match.teamA[0], match.teamA[1], match.teamB[0], match.teamB[1]].forEach(
+      (p) => {
+        expect(playing.has(p.id)).toBe(false);
+        playing.add(p.id);
+      }
+    );
   });
-});
+  return playing;
+}
+
+function scoreRound(round: AmericanoRound): AmericanoRound {
+  return {
+    ...round,
+    matches: round.matches.map((m, i) => ({
+      ...m,
+      scoreA: 6,
+      scoreB: 4 + (i % 2),
+    })),
+  };
+}
 
 describe("generateAmericanoRound", () => {
   test("throws with fewer than 4 players", () => {
@@ -57,137 +71,108 @@ describe("generateAmericanoRound", () => {
       partnerMatrix: pm,
       lastBenchPlayerIds: new Set(),
     });
-    const playing = new Set<string>();
-    round.matches.forEach((match) => {
-      [match.teamA[0], match.teamA[1], match.teamB[0], match.teamB[1]].forEach(
-        (p) => {
-          expect(playing.has(p.id)).toBe(false);
-          playing.add(p.id);
-        }
-      );
-    });
+    const playing = collectPlayingIds(round);
     expect(playing.size).toBe(8);
+    expect(round.phase).toBe(1);
   });
 
-  test("second half pairs 1st+2nd vs 3rd+4th by accumulated games", () => {
-    const ps = makePlayers(8);
-    ps[0].stats.pointsFor = 100;
-    ps[1].stats.pointsFor = 90;
-    ps[2].stats.pointsFor = 80;
-    ps[3].stats.pointsFor = 70;
-    ps[4].stats.pointsFor = 40;
-    ps[5].stats.pointsFor = 30;
-    ps[6].stats.pointsFor = 20;
-    ps[7].stats.pointsFor = 10;
-    const pm = initializeMatrix(ps);
-    const round = generateAmericanoRound({
-      allPlayers: ps,
-      roundNumber: 4,
+  test("12 players, 3 courts, 5 rounds — all play each round, 3 matches, distinct partners when possible", () => {
+    const ps = makePlayers(12);
+    const courts = 3;
+    const totalRounds = 5;
+    let rounds: AmericanoRound[] = [];
+    let partnerMatrix = initializeMatrix(ps);
+    let rivalMatrix = initializeMatrix(ps);
+    let lastBench = new Set<string>();
+
+    for (let r = 1; r <= totalRounds; r += 1) {
+      const round = generateAmericanoRound({
+        allPlayers: ps,
+        roundNumber: r,
+        totalRounds,
+        courts,
+        partnerMatrix,
+        rivalMatrix,
+        lastBenchPlayerIds: lastBench,
+        priorRounds: rounds,
+        scoredRounds: rounds,
+      });
+
+      expect(round.matches).toHaveLength(3);
+      expect(round.benchPlayers).toHaveLength(0);
+      const playing = collectPlayingIds(round);
+      expect(playing.size).toBe(12);
+
+      const validation = validateAmericanoRound(
+        round,
+        ps,
+        partnerMatrix,
+        rivalMatrix
+      );
+      expect(validation.ok).toBe(true);
+
+      rounds = [...rounds, scoreRound(round)];
+      const built = buildMatricesFromScoredRounds(ps, rounds);
+      partnerMatrix = built.partnerMatrix;
+      rivalMatrix = built.rivalMatrix;
+      lastBench = new Set(round.benchPlayers.map((p) => p.id));
+    }
+
+    const partnerCounts = new Map<string, Set<string>>();
+    ps.forEach((p) => partnerCounts.set(p.id, new Set()));
+    rounds.forEach((round) => {
+      round.matches.forEach((m) => {
+        partnerCounts.get(m.teamA[0].id)!.add(m.teamA[1].id);
+        partnerCounts.get(m.teamA[1].id)!.add(m.teamA[0].id);
+        partnerCounts.get(m.teamB[0].id)!.add(m.teamB[1].id);
+        partnerCounts.get(m.teamB[1].id)!.add(m.teamB[0].id);
+      });
+    });
+
+    ps.forEach((p) => {
+      expect(partnerCounts.get(p.id)!.size).toBe(5);
+    });
+  });
+
+  test("pairings ignore accumulated ranking stats", () => {
+    const psRanked = makePlayers(8);
+    psRanked[0].stats.pointsFor = 100;
+    psRanked[1].stats.pointsFor = 90;
+    psRanked[2].stats.pointsFor = 80;
+    psRanked[3].stats.pointsFor = 70;
+
+    const psFlat = makePlayers(8);
+    const pm = initializeMatrix(psFlat);
+
+    const matchIds = (round: AmericanoRound) =>
+      round.matches.map((m) =>
+        [
+          m.teamA[0].id,
+          m.teamA[1].id,
+          m.teamB[0].id,
+          m.teamB[1].id,
+        ].sort().join("|")
+      );
+
+    const rankedRound = generateAmericanoRound({
+      allPlayers: psRanked,
+      roundNumber: 3,
       totalRounds: 6,
       courts: 2,
       partnerMatrix: pm,
       lastBenchPlayerIds: new Set(),
-      scoredRounds: [],
     });
-    expect(round.phase).toBe(2);
-    const m0 = round.matches[0];
-    const idsA = new Set([m0.teamA[0].id, m0.teamA[1].id]);
-    expect(idsA.has("p-1")).toBe(true);
-    expect(idsA.has("p-2")).toBe(true);
-    const idsB = new Set([m0.teamB[0].id, m0.teamB[1].id]);
-    expect(idsB.has("p-3")).toBe(true);
-    expect(idsB.has("p-4")).toBe(true);
-  });
+    const flatRound = generateAmericanoRound({
+      allPlayers: psFlat,
+      roundNumber: 3,
+      totalRounds: 6,
+      courts: 2,
+      partnerMatrix: pm,
+      lastBenchPlayerIds: new Set(),
+    });
 
-  test("second half pairing order matches ranking table (FAV → DIF → H2H → PG)", () => {
-    const ps = makePlayers(8);
-    ps[2].name = "Chaparro";
-    ps[4].name = "IsraBe";
-
-    const prior: AmericanoRound[] = [
-      {
-        roundNumber: 1,
-        phase: 1,
-        benchPlayers: [],
-        matches: [
-          {
-            id: "m1",
-            court: 1,
-            teamA: [ps[0], ps[1]],
-            teamB: [ps[2], ps[3]],
-            scoreA: 10,
-            scoreB: 3,
-          },
-          {
-            id: "m2",
-            court: 2,
-            teamA: [ps[4], ps[7]],
-            teamB: [ps[5], ps[6]],
-            scoreA: 8,
-            scoreB: 6,
-          },
-        ],
-      },
-      {
-        roundNumber: 2,
-        phase: 1,
-        benchPlayers: [],
-        matches: [
-          {
-            id: "m3",
-            court: 1,
-            teamA: [ps[4], ps[3]],
-            teamB: [ps[2], ps[5]],
-            scoreA: 7,
-            scoreB: 4,
-          },
-          {
-            id: "m4",
-            court: 2,
-            teamA: [ps[0], ps[6]],
-            teamB: [ps[1], ps[7]],
-            scoreA: 6,
-            scoreB: 5,
-          },
-        ],
-      },
-      {
-        roundNumber: 3,
-        phase: 1,
-        benchPlayers: [],
-        matches: [
-          {
-            id: "m5",
-            court: 1,
-            teamA: [ps[4], ps[2]],
-            teamB: [ps[3], ps[1]],
-            scoreA: 6,
-            scoreB: 4,
-          },
-          {
-            id: "m6",
-            court: 2,
-            teamA: [ps[0], ps[5]],
-            teamB: [ps[6], ps[7]],
-            scoreA: 5,
-            scoreB: 5,
-          },
-        ],
-      },
-    ];
-
-    const ranked = getAmericanoRanking(ps, prior);
-    const sorted = sortAmericanoPlayersForPairing(ps, prior);
-    expect(sorted.map((p) => p.id)).toEqual(ranked.map((p) => p.id));
-
-    const chapIdx = ranked.findIndex((p) => p.id === "p-3");
-    const israIdx = ranked.findIndex((p) => p.id === "p-5");
-    if (chapIdx >= 0 && israIdx >= 0) {
-      const alphaWouldPreferChaparro = "Chaparro".localeCompare("IsraBe") < 0;
-      if (alphaWouldPreferChaparro && chapIdx !== israIdx) {
-        expect(israIdx).toBeLessThan(chapIdx);
-      }
-    }
+    expect(matchIds(rankedRound).sort()).toEqual(matchIds(flatRound).sort());
+    expect(rankedRound.phase).toBe(1);
   });
 
   test("court numbers stay within configured courts", () => {
@@ -244,5 +229,28 @@ describe("buildMatricesFromScoredRounds", () => {
     };
     const { partnerMatrix } = buildMatricesFromScoredRounds(ps, [round]);
     expect(partnerMatrix[ps[0].id][ps[1].id]).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("validateAmericanoRound", () => {
+  test("rejects duplicate player in same round", () => {
+    const ps = makePlayers(4);
+    const pm = initializeMatrix(ps);
+    const rm = initializeMatrix(ps);
+    const round: AmericanoRound = {
+      roundNumber: 1,
+      phase: 1,
+      benchPlayers: [],
+      matches: [
+        {
+          id: "m1",
+          court: 1,
+          teamA: [ps[0], ps[1]],
+          teamB: [ps[2], ps[0]],
+        },
+      ],
+    };
+    const result = validateAmericanoRound(round, ps, pm, rm);
+    expect(result.ok).toBe(false);
   });
 });

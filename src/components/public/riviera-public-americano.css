@@ -12,6 +12,158 @@
   max-width: 1100px;
 }
 
+/* Americano público — partidos lado a lado, escala compacta */
+.te-public.te-public--americano.te-public--americano-wide {
+  width: 100%;
+}
+
+.te-public--americano.te-public--americano-wide .te-public__inner {
+  width: 100%;
+  max-width: min(1180px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(0.75rem, 2vw, 1.5rem);
+  padding-right: clamp(0.75rem, 2vw, 1.5rem);
+  box-sizing: border-box;
+}
+
+.te-public--americano.te-public--americano-wide .te-public-header__title--event {
+  max-width: none;
+  font-size: clamp(1.4rem, 3.8vw, 2rem);
+}
+
+.te-public--americano.te-public--americano-wide .te-public-section,
+.te-public--americano.te-public--americano-wide .te-pub-matches-grid--wide,
+.te-public--americano.te-public--americano-wide .te-pub-standings-table-wrap,
+.te-public--americano.te-public--americano-wide .te-pub-standings-cards,
+.te-public--americano.te-public--americano-wide .ro-pub-celebrate--podium {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 2 canchas → 2 columnas; 3 canchas → 3; móvil → 1 */
+.te-public--americano.te-public--americano-wide .te-pub-matches-grid--wide {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  align-items: stretch;
+}
+
+@media (min-width: 560px) {
+  .te-public--americano.te-public--americano-wide .te-pub-matches-grid--wide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(> :nth-child(3):last-child),
+  .te-public--americano.te-public--americano-wide
+    .te-pub-matches-grid--wide:has(> :nth-child(4)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.te-public--americano.te-public--americano-wide .te-pub-match--wide {
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem 0.85rem 0.7rem;
+}
+
+.te-public--americano.te-public--americano-wide .te-pub-match__faceoff {
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.35rem 0.5rem;
+}
+
+.te-public--americano.te-public--americano-wide .te-pub-pair__avatar.rj-avatar--xl {
+  width: 46px;
+  height: 46px;
+  font-size: 0.95rem;
+  border-width: 2px;
+}
+
+.te-public--americano.te-public--americano-wide .te-pub-pair__player-name {
+  max-width: 4.25rem;
+  font-size: 0.62rem;
+}
+
+.te-public--americano.te-public--americano-wide .te-pub-pair__player {
+  gap: 0.25rem;
+}
+
+.te-public--americano.te-public--americano-wide .te-pub-score--faceoff .te-pub-score__num {
+  font-size: clamp(1.25rem, 2.8vw, 1.65rem);
+}
+
+.te-public--americano.te-public--americano-wide .te-pub-match-winner--compact {
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.55rem;
+}
+
+.te-public--americano.te-public--americano-wide
+  .te-pub-match-winner--compact
+  .te-pub-match-winner__name {
+  font-size: 0.72rem;
+}
+
+.te-public--americano.te-public--americano-wide .ro-pub-celebrate--podium .ro-pub-celebrate__headline {
+  font-size: clamp(1.25rem, 3.5vw, 1.65rem);
+}
+
+.te-public--americano.te-public--americano-wide .ro-pub-celebrate--podium .te-public-podium__title {
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  margin-bottom: 0.75rem;
+}
+
+.te-public--americano.te-public--americano-wide .te-public-podium__grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  align-items: end;
+  margin: 0.75rem 0;
+}
+
+.te-public--americano.te-public--americano-wide .te-public-podium__card {
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem 0.4rem;
+}
+
+.te-public--americano.te-public--americano-wide .te-public-podium__card[data-rank="1"] {
+  padding-top: 0.75rem;
+}
+
+.te-public--americano.te-public--americano-wide .te-public-podium__place {
+  font-size: 1rem;
+}
+
+.te-public--americano.te-public--americano-wide .te-public-podium__name {
+  font-size: 0.78rem;
+}
+
+.te-public--americano.te-public--americano-wide
+  .te-public-podium__card[data-rank="1"]
+  .te-public-podium__avatar
+  .rj-avatar {
+  width: 52px;
+  height: 52px;
+}
+
+@media (max-width: 559px) {
+  .te-public--americano.te-public--americano-wide .te-public-podium__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .te-public--americano.te-public--americano-wide .te-public-podium__card[data-rank="1"] {
+    order: -1 !important;
+  }
+}
+
 /* Header: nombre del evento protagonista (Americano, Round Robin, equipos) */
 .te-public--americano .te-public-header--americano,
 .te-public--reta .te-public-header--reta {
@@ -89,16 +241,8 @@
   margin-top: 0.35rem;
 }
 
-.te-pub-matches-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-@media (max-width: 640px) {
-  .te-pub-matches-grid {
-    grid-template-columns: 1fr;
-  }
+.te-pub-matches-grid--wide {
+  width: 100%;
 }
 
 .te-public-round-block {
@@ -226,7 +370,6 @@
   padding: var(--space-3) var(--space-2);
 }
 
-/* Orden visual podio: 2º | 1º | 3º */
 .te-public-podium__card[data-rank="1"] {
   order: 2;
   border-color: var(--ro-pub-gold-border, var(--border-accent));
@@ -359,6 +502,72 @@
 .te-public-error-block code {
   font-size: 0.8em;
   color: var(--text-secondary);
+}
+
+/* Vista pública americano — móvil y tablet */
+@media (max-width: 900px) {
+  .te-public--americano .te-public__inner,
+  .te-public--americano.te-public--americano-wide .te-public__inner {
+    max-width: none;
+    width: 100%;
+    padding-left: max(1rem, calc(env(safe-area-inset-left, 0px) + 0.85rem));
+    padding-right: max(1rem, calc(env(safe-area-inset-right, 0px) + 0.85rem));
+    padding-top: max(1.1rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));
+    padding-bottom: max(2rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem));
+  }
+
+  .te-public--americano .te-public-header--americano {
+    margin-bottom: 1.35rem;
+  }
+
+  .te-public--americano .te-public-header__title--event {
+    max-width: none;
+    font-size: clamp(1.55rem, 6.5vw, 2.1rem);
+  }
+
+  .te-public--americano .te-public-section {
+    margin-bottom: 1.65rem;
+  }
+
+  .te-public--americano .te-public-round-head__title {
+    font-size: clamp(1.15rem, 4.8vw, 1.45rem);
+  }
+
+  .te-public--americano .te-pub-standings-table-wrap {
+    display: none;
+  }
+
+  .te-public--americano .te-pub-standings-cards {
+    display: flex;
+  }
+
+  .te-public--americano .te-public-podium__grid {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .te-public--americano.te-public--americano-wide .te-public-podium__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .te-public--americano .te-public-podium__card {
+    order: unset !important;
+    padding-top: var(--space-3);
+  }
+
+  .te-public--americano .te-public-podium__card[data-rank="1"] {
+    order: -1 !important;
+  }
+
+  .te-public--americano .ro-pub-celebrate__inner {
+    padding-inline: 0.25rem;
+  }
+}
+
+@media (min-width: 901px) {
+  .te-public--americano .te-pub-standings-cards {
+    display: none;
+  }
 }
 
 /* Round Robin — vista pública ancho completo */
@@ -630,7 +839,8 @@
 @media (max-width: 768px) {
   /* Shell: márgenes + safe-area (iPhone, Galaxy, etc.) */
   .te-public--reta .te-public__inner,
-  .te-public--reta.te-public--reta-wide .te-public__inner {
+  .te-public--reta.te-public--reta-wide .te-public__inner,
+  .te-public--americano.te-public--americano-wide .te-public__inner {
     padding-left: max(1.2rem, calc(env(safe-area-inset-left, 0px) + 1rem));
     padding-right: max(1.2rem, calc(env(safe-area-inset-right, 0px) + 1rem));
     padding-top: max(1.35rem, calc(env(safe-area-inset-top, 0px) + 0.85rem));
@@ -908,7 +1118,8 @@
 /* Móviles grandes: Galaxy S25, iPhone Pro Max, etc. */
 @media (min-width: 390px) and (max-width: 768px) {
   .te-public--reta .te-public__inner,
-  .te-public--reta.te-public--reta-wide .te-public__inner {
+  .te-public--reta.te-public--reta-wide .te-public__inner,
+  .te-public--americano.te-public--americano-wide .te-public__inner {
     padding-left: max(1.4rem, calc(env(safe-area-inset-left, 0px) + 1.15rem));
     padding-right: max(1.4rem, calc(env(safe-area-inset-right, 0px) + 1.15rem));
   }
@@ -940,7 +1151,8 @@
 /* Móviles compactos */
 @media (max-width: 389px) {
   .te-public--reta .te-public__inner,
-  .te-public--reta.te-public--reta-wide .te-public__inner {
+  .te-public--reta.te-public--reta-wide .te-public__inner,
+  .te-public--americano.te-public--americano-wide .te-public__inner {
     padding-left: max(1rem, calc(env(safe-area-inset-left, 0px) + 0.75rem));
     padding-right: max(1rem, calc(env(safe-area-inset-right, 0px) + 0.75rem));
   }
@@ -1253,4 +1465,26 @@
   font-size: 0.85rem;
   color: var(--text-muted);
   font-style: italic;
+}
+
+/* Americano: no usar layout móvil apilado de reta; tarjetas compactas lado a lado */
+@media (max-width: 768px) {
+  .te-public--americano.te-public--americano-wide .te-pub-match.te-pub-match--wide {
+    display: block;
+  }
+
+  .te-public--americano.te-public--americano-wide .te-pub-match__faceoff {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important;
+    grid-template-areas: none !important;
+  }
+
+  .te-public--americano.te-public--americano-wide .te-pub-match__faceoff > :nth-child(2) {
+    justify-self: center;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
 }
