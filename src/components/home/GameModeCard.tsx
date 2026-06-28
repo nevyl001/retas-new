@@ -1,4 +1,5 @@
 import React from "react";
+import { ModeCard } from "../platform/ModeCard";
 import type { GameModeConfig } from "./gameModesConfig";
 
 interface GameModeCardProps extends GameModeConfig {
@@ -11,14 +12,21 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
   title,
   description,
   icon,
+  typeLabel,
   accentColor,
   disabled,
   index,
   onClick,
 }) => {
   return (
-    <button
-      type="button"
+    <ModeCard
+      title={title}
+      description={description}
+      typeLabel={disabled ? "Upgrade" : typeLabel}
+      icon={icon}
+      ctaLabel="Iniciar"
+      disabled={disabled}
+      onClick={onClick}
       className={`game-mode-card game-mode-card--${id}${
         disabled ? " game-mode-card--disabled" : ""
       }`}
@@ -28,26 +36,12 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
           animationDelay: `${index * 80}ms`,
         } as React.CSSProperties
       }
-      onClick={onClick}
-      disabled={disabled}
     >
-      <div className="game-mode-card__top">
-        <span className="game-mode-card__icon" aria-hidden>
-          {icon}
-        </span>
-        <div className="game-mode-card__badges">
-          {disabled ? (
-            <span className="game-mode-card__upgrade-badge">Upgrade</span>
-          ) : null}
-        </div>
-      </div>
-      <h3 className="game-mode-card__title">{title}</h3>
-      <p className="game-mode-card__desc">{description}</p>
       {disabled ? (
         <p className="game-mode-card__upgrade">
           ¿Deseas el upgrade del sistema? Contacta al administrador.
         </p>
       ) : null}
-    </button>
+    </ModeCard>
   );
 };

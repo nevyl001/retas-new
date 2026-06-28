@@ -1,0 +1,444 @@
+/* =============================================
+   RIVIERA OPEN — Componentes base (.rv-*)
+   Layout y superficies compartidas entre modos.
+   Tokens: riviera-open-tokens.css (--ro-* / --rv-*)
+============================================= */
+
+/* —— Página y shell —— */
+.rv-page {
+  width: 100%;
+  max-width: var(--ro-page-max);
+  margin-inline: auto;
+  color: var(--rv-text);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.rv-shell {
+  padding-inline: var(--ro-shell-padding-x);
+  padding-block: var(--ro-shell-padding-y);
+}
+
+/* —— Cards —— */
+.rv-card {
+  background: var(--rv-bg-card);
+  border: 0.5px solid var(--ro-border-subtle);
+  border-radius: var(--rv-radius);
+  box-shadow: var(--ro-shadow-sm);
+}
+
+.rv-card-soft {
+  background: var(--rv-bg-card-soft);
+  border-color: var(--ro-border);
+}
+
+.rv-kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ro-space-2);
+  padding: var(--ro-space-4) var(--ro-space-5);
+  min-width: 0;
+}
+
+.rv-kpi-card__label {
+  font-size: var(--ro-text-label);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rv-text-subtle);
+}
+
+.rv-kpi-card__value {
+  font-family: var(--ro-font-heading);
+  font-size: var(--ro-text-display);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--rv-text);
+}
+
+/* —— Botones —— */
+.rv-button-primary,
+.rv-button-secondary,
+.rv-button-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ro-space-2);
+  min-height: 44px;
+  padding: 0 var(--ro-space-5);
+  border-radius: var(--ro-radius-md);
+  font-family: var(--ro-font-body);
+  font-size: var(--ro-text-body);
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--ro-transition-base),
+    border-color var(--ro-transition-base),
+    color var(--ro-transition-base),
+    transform var(--ro-transition-fast);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rv-button-primary {
+  background: var(--ro-gold);
+  color: var(--ro-text-on-accent);
+  border: 0.5px solid var(--ro-gold-border);
+}
+
+.rv-button-primary:hover:not(:disabled) {
+  background: var(--ro-gold-light);
+}
+
+.rv-button-secondary {
+  background: var(--ro-bg-elevated);
+  color: var(--rv-text);
+  border: 0.5px solid var(--ro-border);
+}
+
+.rv-button-secondary:hover:not(:disabled) {
+  border-color: var(--ro-border-accent);
+  background: var(--ro-bg-surface);
+}
+
+.rv-button-ghost {
+  background: transparent;
+  color: var(--rv-text-muted);
+  border: 0.5px solid transparent;
+}
+
+.rv-button-ghost:hover:not(:disabled) {
+  color: var(--rv-text);
+  background: var(--ro-accent-dim);
+}
+
+.rv-button-primary:disabled,
+.rv-button-secondary:disabled,
+.rv-button-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* —— Tipografía de sección —— */
+.rv-section-title {
+  font-size: var(--ro-text-label);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rv-text-subtle);
+  margin: 0 0 var(--ro-space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--ro-space-3);
+}
+
+.rv-section-title::after {
+  content: "";
+  flex: 1;
+  height: 0.5px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent);
+}
+
+.rv-muted {
+  color: var(--rv-text-muted);
+  font-size: var(--ro-text-body);
+  line-height: 1.5;
+}
+
+/* —— Pills / badges —— */
+.rv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ro-space-1);
+  padding: 3px 10px;
+  border-radius: var(--ro-radius-full);
+  font-size: var(--ro-text-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  border: 0.5px solid transparent;
+}
+
+.rv-pill--gold {
+  color: var(--ro-gold-light);
+  background: var(--ro-gold-dim);
+  border-color: var(--ro-gold-border);
+}
+
+.rv-pill--muted {
+  color: var(--rv-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--ro-border);
+}
+
+.rv-pill--live {
+  color: var(--ro-success);
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.25);
+}
+
+.rv-pill--pending {
+  color: var(--rv-text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--ro-border-subtle);
+}
+
+/* —— Layout helpers —— */
+.rv-grid {
+  display: grid;
+  gap: var(--ro-space-3);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 540px) {
+  .rv-grid--modes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ro-space-4);
+  }
+}
+
+@media (min-width: 960px) {
+  .rv-grid--modes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ro-space-4);
+  }
+}
+
+.rv-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ro-space-4);
+}
+
+.rv-stack--lg {
+  gap: var(--ro-space-8);
+}
+
+/* —— Tablas —— */
+.rv-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ro-text-body);
+}
+
+.rv-table th,
+.rv-table td {
+  padding: var(--ro-space-3) var(--ro-space-4);
+  text-align: left;
+  border-bottom: 0.5px solid var(--ro-border-subtle);
+}
+
+.rv-table th {
+  font-size: var(--ro-text-label);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rv-text-subtle);
+}
+
+.rv-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* —— Headers de modo —— */
+.rv-mode-header {
+  margin-bottom: clamp(var(--ro-space-6), 5vw, var(--ro-space-10));
+  text-align: left;
+}
+
+.rv-mode-header__eyebrow {
+  font-size: var(--ro-text-label);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rv-text-muted);
+  margin: 0 0 var(--ro-space-2);
+}
+
+.rv-mode-header__title {
+  font-family: var(--ro-font-heading);
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--rv-text);
+  margin: 0 0 var(--ro-space-3);
+}
+
+.rv-mode-header__sub {
+  font-size: clamp(var(--ro-text-body), 2vw, var(--ro-text-body-lg));
+  color: var(--rv-text-muted);
+  margin: 0;
+  max-width: 42ch;
+}
+
+/* —— Tablero público —— */
+.rv-public-board {
+  width: 100%;
+  max-width: min(1180px, 100%);
+  margin-inline: auto;
+  padding-inline: var(--ro-shell-padding-x);
+  padding-block: var(--ro-space-5);
+}
+
+/* —— Mode card (home) —— */
+.rv-mode-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-height: 148px;
+  padding: var(--ro-space-5) var(--ro-space-4);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font-family: var(--ro-font-body);
+  transition:
+    transform var(--ro-transition-base),
+    border-color var(--ro-transition-base),
+    box-shadow var(--ro-transition-base);
+}
+
+.rv-mode-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--ro-border-accent);
+  box-shadow: var(--ro-shadow-md);
+}
+
+.rv-mode-card:disabled,
+.rv-mode-card--disabled {
+  cursor: not-allowed;
+}
+
+.rv-mode-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ro-space-3);
+  margin-bottom: var(--ro-space-3);
+}
+
+.rv-mode-card__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.rv-mode-card__title {
+  font-family: var(--ro-font-heading);
+  font-size: var(--ro-text-title);
+  font-weight: 700;
+  margin: 0 0 var(--ro-space-2);
+  color: var(--rv-text);
+}
+
+.rv-mode-card__desc {
+  font-size: var(--ro-text-body);
+  color: var(--rv-text-muted);
+  margin: 0;
+  line-height: 1.45;
+  flex: 1;
+}
+
+.rv-mode-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--ro-space-4);
+  min-height: 40px;
+  padding: 0 var(--ro-space-4);
+  border-radius: var(--ro-radius-md);
+  font-size: var(--ro-text-small);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--ro-gold-dim);
+  color: var(--ro-gold-light);
+  border: 0.5px solid var(--ro-gold-border);
+  align-self: flex-start;
+}
+
+/* —— Action bar —— */
+.rv-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ro-space-3);
+  padding: var(--ro-space-3) 0;
+}
+
+.rv-action-bar--sticky {
+  position: sticky;
+  top: 0;
+  z-index: var(--ro-z-sticky);
+  background: linear-gradient(180deg, var(--ro-bg-base) 70%, transparent);
+  padding-bottom: var(--ro-space-4);
+}
+
+/* —— Empty state —— */
+.rv-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ro-space-3);
+  padding: var(--ro-space-10) var(--ro-space-5);
+  text-align: center;
+  border-radius: var(--rv-radius);
+  border: 0.5px dashed var(--ro-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rv-empty-state__icon {
+  font-size: 2rem;
+  opacity: 0.85;
+}
+
+.rv-empty-state__title {
+  font-family: var(--ro-font-heading);
+  font-size: var(--ro-text-title);
+  font-weight: 700;
+  margin: 0;
+  color: var(--rv-text);
+}
+
+.rv-empty-state__desc {
+  margin: 0;
+  max-width: 36ch;
+  color: var(--rv-text-muted);
+  font-size: var(--ro-text-body);
+}
+
+/* —— Ranking card —— */
+.rv-ranking-card {
+  padding: var(--ro-space-4);
+  min-width: 0;
+}
+
+.rv-ranking-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ro-space-3);
+  margin-bottom: var(--ro-space-4);
+}
+
+.rv-ranking-card__title {
+  font-family: var(--ro-font-heading);
+  font-size: var(--ro-text-title);
+  font-weight: 700;
+  margin: 0;
+}
+
+/* —— Match card shell —— */
+.rv-match-card {
+  padding: var(--ro-space-4);
+  min-width: 0;
+}

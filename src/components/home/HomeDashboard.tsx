@@ -159,7 +159,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   );
 
   return (
-    <div className="home-inner">
+    <div className="home-inner rv-page">
       <HomeHeader userName={userProfile?.name} />
       <GameModesGrid onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
       {error && <p className="home-error">{error}</p>}

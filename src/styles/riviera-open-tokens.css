@@ -94,4 +94,34 @@
   /* SOMBRAS */
   --ro-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
   --ro-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.7);
+  --ro-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.85);
+
+  /* TRANSICIONES */
+  --ro-transition-fast: 150ms ease;
+  --ro-transition-base: 200ms ease;
+  --ro-transition-slow: 320ms ease;
+
+  /* LAYOUT */
+  --ro-page-max: min(1120px, 100%);
+  --ro-shell-padding-x: clamp(16px, 4vw, 28px);
+  --ro-shell-padding-y: clamp(12px, 2vw, 20px);
+
+  /* Z-INDEX */
+  --ro-z-base: 1;
+  --ro-z-dropdown: 40;
+  --ro-z-sticky: 50;
+  --ro-z-modal: 100;
+  --ro-z-toast: 120;
+
+  /* ALIAS SEMÁNTICOS (clases .rv-* en riviera-open-components.css) */
+  --rv-bg-page: var(--ro-bg-base);
+  --rv-bg-card: var(--ro-bg-card);
+  --rv-bg-card-soft: var(--ro-bg-elevated);
+  --rv-text: var(--ro-text-primary);
+  --rv-text-muted: var(--ro-text-secondary);
+  --rv-text-subtle: var(--ro-text-muted);
+  --rv-accent: var(--ro-gold);
+  --rv-accent-dim: var(--ro-gold-dim);
+  --rv-border: var(--ro-border);
+  --rv-radius: var(--ro-radius-lg);
 }

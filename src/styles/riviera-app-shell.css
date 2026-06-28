@@ -67,7 +67,8 @@
 @media (max-width: 768px) {
   .main-layout,
   .liga-page {
-    padding: clamp(20px, 4vw, 28px) clamp(16px, 4vw, 24px)
+    padding: clamp(16px, 4vw, 24px) clamp(14px, 3.8vw, 20px)
       max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
+    overflow-x: clip;
   }
 }
