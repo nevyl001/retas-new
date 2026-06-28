@@ -24,8 +24,8 @@ import {
   resolveAmericanoTournamentId,
   saveAmericanoDinamicoSnapshot,
 } from "../../lib/americanoDinamicoStorage";
-import { Button } from "../ui";
 import { ModeHeader } from "../platform/ModeHeader";
+import { PublicShareSection } from "../platform/PublicShareSection";
 import { AmericanoModeShell } from "./AmericanoModeShell";
 import "../public/riviera-public-americano.css";
 import "./AmericanoDinamicoScreen.css";
@@ -91,15 +91,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         : "",
     [resolvedTournamentId]
   );
-
-  const copyPublicAmericanoLink = React.useCallback(async () => {
-    if (!publicAmericanoUrl) return;
-    try {
-      await navigator.clipboard.writeText(publicAmericanoUrl);
-    } catch {
-      window.prompt("Copia este enlace:", publicAmericanoUrl);
-    }
-  }, [publicAmericanoUrl]);
 
   React.useEffect(() => {
     if (!resolvedTournamentId) return;
@@ -357,35 +348,15 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       <AmericanoModeShell onBack={goBackToRetas}>
         {syncWarning}
         {tournamentBanner}
-        {resolvedTournamentId && publicAmericanoUrl ? (
-          <section className="americano-public-link" aria-label="Enlace público">
-            <h3 className="americano-public-link__title">Vista pública en vivo</h3>
-            <p className="americano-public-link__text">
-              Comparte este enlace para que cualquiera vea en tiempo real quién juega
-              contra quién y el marcador (se actualiza solo).
-            </p>
-            <div className="americano-public-link__row">
-              <input
-                type="text"
-                readOnly
-                className="americano-public-link__input"
-                value={publicAmericanoUrl}
-                onFocus={(e) => e.target.select()}
-              />
-              <Button
-                type="button"
-                variant="primary"
-                className="americano-public-link__copy"
-                onClick={copyPublicAmericanoLink}
-              >
-                Copiar enlace
-              </Button>
-            </div>
-            <p className="americano-public-link__hint">
-              El marcador se sincroniza en la nube; comparte el enlace para verlo
-              en vivo desde cualquier dispositivo.
-            </p>
-          </section>
+        {publicAmericanoUrl ? (
+          <PublicShareSection
+            publicUrl={publicAmericanoUrl}
+            title="Enlace público"
+            infoLines={[
+              "Comparte este enlace para que cualquiera vea en tiempo real quién juega contra quién y el marcador.",
+              "El marcador se sincroniza en la nube; los participantes solo pueden ver, no editar.",
+            ]}
+          />
         ) : null}
         {currentRound && (
           <RoundView
@@ -418,27 +389,15 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   return (
     <AmericanoModeShell onBack={goBackToRetas}>
       {tournamentBanner}
-      {resolvedTournamentId && publicAmericanoUrl ? (
-        <section className="americano-public-link" aria-label="Enlace público">
-          <h3 className="americano-public-link__title">Vista pública (resultado final)</h3>
-          <div className="americano-public-link__row">
-            <input
-              type="text"
-              readOnly
-              className="americano-public-link__input"
-              value={publicAmericanoUrl}
-              onFocus={(e) => e.target.select()}
-            />
-            <Button
-              type="button"
-              variant="primary"
-              className="americano-public-link__copy"
-              onClick={copyPublicAmericanoLink}
-            >
-              Copiar enlace
-            </Button>
-          </div>
-        </section>
+      {publicAmericanoUrl ? (
+        <PublicShareSection
+          publicUrl={publicAmericanoUrl}
+          title="Enlace público"
+          infoLines={[
+            "Comparte este enlace para que cualquiera vea el podio, ranking e historial del americano.",
+            "Los participantes solo podrán ver los resultados, no podrán editar nada.",
+          ]}
+        />
       ) : null}
       <p className="americano-screen__finished">Americano finalizado</p>
       {podiumPlayers.length > 0 && (

@@ -11,6 +11,7 @@ import {
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
+import { PublicShareSection } from "../platform/PublicShareSection";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
 import { Duelo2v2DetailsEditor } from "./Duelo2v2DetailsEditor";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
@@ -32,7 +33,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
   const [ratingByJugadorId, setRatingByJugadorId] = useState<
     Record<string, RatingMovimientoPartido>
@@ -106,16 +106,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     }
   };
 
-  const copyPublicLink = async () => {
-    try {
-      await navigator.clipboard.writeText(publicDuelo2v2Url(dueloId));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setError("No se pudo copiar el enlace");
-    }
-  };
-
   if (loading) {
     return (
       <Duelo2v2PageShell wide>
@@ -161,6 +151,16 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       >
         <Duelo2v2MatchMeta duelo={duelo} />
       </ModeHeader>
+
+      <PublicShareSection
+        publicUrl={publicDuelo2v2Url(dueloId)}
+        title="Enlace público"
+        infoLines={[
+          "Comparte este enlace para que cualquiera vea el marcador y el resultado del duelo.",
+          "Los participantes solo podrán ver los resultados, no podrán editar nada.",
+        ]}
+        copyButtonLabel="Copiar vista pública"
+      />
 
       <Duelo2v2DetailsEditor
         duelo={duelo}
@@ -209,11 +209,8 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       {error && <p className="duelo2v2-error">{error}</p>}
       {message && <p className="duelo2v2-message">{message}</p>}
 
-      <ActionBar className="duelo2v2-actions">
-        <Button type="button" variant="secondary" size="sm" onClick={() => void copyPublicLink()}>
-          {copied ? "Enlace copiado" : "Copiar vista pública"}
-        </Button>
-        {!finalizado && (
+      {!finalizado ? (
+        <ActionBar className="duelo2v2-actions">
           <Button
             type="button"
             variant="primary"
@@ -222,8 +219,8 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           >
             Finalizar y sumar al ranking
           </Button>
-        )}
-      </ActionBar>
+        </ActionBar>
+      ) : null}
     </Duelo2v2PageShell>
   );
 };
