@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { getPlayers, type Player } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
-import { ensureLegacyPlayerForRivieraJugador } from "../lib/rivieraJugadores/playerPoolSync";
 import type { RivieraJugador } from "../lib/rivieraJugadores/types";
 import { JugadorAutocomplete } from "./jugadores/JugadorAutocomplete";
 import { navigateJugadoresLista } from "./jugadores/jugadoresGeneroNav";
@@ -31,7 +30,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   const [loading, setLoading] = useState(true);
   const [registrySearch, setRegistrySearch] = useState("");
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
-  const [linking, setLinking] = useState(false);
+  const [registryHint, setRegistryHint] = useState<string | null>(null);
 
   const loadPlayers = useCallback(async () => {
     if (!organizadorId) {
@@ -57,7 +56,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   const emptyHint = useMemo(
     () =>
       organizadorId
-        ? "Registra jugadores en el registro Riviera Open para usarlos aquí."
+        ? "Los jugadores se crean solo en Registro de jugadores (dashboard). Aquí solo eliges quién juega esta reta."
         : "Inicia sesión para cargar el registro de jugadores",
     [organizadorId]
   );
@@ -84,24 +83,21 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
     }
   };
 
-  const handleRegistrySelect = async (rj: RivieraJugador) => {
-    if (!organizadorId) return;
-    setLinking(true);
-    try {
-      const existing = players.find((p) => p.id === rj.legacy_player_id);
-      const pl =
-        existing ??
-        (await ensureLegacyPlayerForRivieraJugador(organizadorId, rj));
-      if (pl) {
-        await loadPlayers();
-        handlePlayerSelect(pl);
-        setRegistrySearch("");
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLinking(false);
+  const handleRegistrySelect = (rj: RivieraJugador) => {
+    setRegistryHint(null);
+    const pl = rj.legacy_player_id
+      ? players.find((p) => p.id === rj.legacy_player_id)
+      : undefined;
+
+    if (!pl) {
+      setRegistryHint(
+        "Este jugador aún no está disponible para retas. Créalo o completa su registro en «Registro de jugadores» del dashboard."
+      );
+      return;
     }
+
+    handlePlayerSelect(pl);
+    setRegistrySearch("");
   };
 
   if (loading) {
@@ -138,24 +134,38 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
         <div className="elegant-create-form">
           <div className="elegant-form-header">
             <h4>Buscar en el registro</h4>
-            <p>Selecciona un jugador ya registrado para usarlo en esta reta.</p>
+            <p>
+              Solo puedes elegir jugadores ya registrados. Para dar de alta a
+              alguien nuevo, usa «Registro de jugadores» en el dashboard.
+            </p>
           </div>
           <JugadorAutocomplete
             organizadorId={organizadorId}
             value={registrySearch}
             onChange={setRegistrySearch}
-            onSelect={(rj) => void handleRegistrySelect(rj)}
-            placeholder="Buscar en registro Riviera…"
+            onSelect={handleRegistrySelect}
+            placeholder="Buscar jugador registrado…"
+            requireLegacyLink
           />
-          {linking ? (
-            <p className="elegant-form-hint">Enlazando jugador…</p>
+          {registryHint ? (
+            <p className="elegant-form-hint" role="status">
+              {registryHint}{" "}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => navigateJugadoresLista("M")}
+              >
+                Abrir registro
+              </Button>
+            </p>
           ) : null}
         </div>
       ) : null}
 
       {players.length === 0 ? (
         <div className="elegant-empty-state">
-          <h4>No hay jugadores</h4>
+          <h4>No hay jugadores listos</h4>
           <p>{emptyHint}</p>
           <Button
             type="button"
@@ -163,7 +173,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
             size="sm"
             onClick={() => navigateJugadoresLista("M")}
           >
-            Registrar jugadores
+            Ir al registro de jugadores
           </Button>
         </div>
       ) : (

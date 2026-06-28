@@ -11,6 +11,8 @@ interface JugadorAutocompleteProps {
   onSelect: (jugador: RivieraJugador) => void;
   placeholder?: string;
   className?: string;
+  /** Solo jugadores ya listos para modos de juego (con legacy_player_id). */
+  requireLegacyLink?: boolean;
 }
 
 export const JugadorAutocomplete: React.FC<JugadorAutocompleteProps> = ({
@@ -20,6 +22,7 @@ export const JugadorAutocomplete: React.FC<JugadorAutocompleteProps> = ({
   onSelect,
   placeholder = "Buscar en registro Riviera…",
   className = "",
+  requireLegacyLink = false,
 }) => {
   const [suggestions, setSuggestions] = useState<RivieraJugador[]>([]);
   const [open, setOpen] = useState(false);
@@ -32,14 +35,17 @@ export const JugadorAutocomplete: React.FC<JugadorAutocompleteProps> = ({
     const t = setTimeout(async () => {
       try {
         const rows = await searchRivieraJugadoresQuick(organizadorId, value);
-        setSuggestions(rows);
-        setOpen(rows.length > 0);
+        const visible = requireLegacyLink
+          ? rows.filter((j) => Boolean(j.legacy_player_id))
+          : rows;
+        setSuggestions(visible);
+        setOpen(visible.length > 0);
       } catch {
         setSuggestions([]);
       }
     }, 250);
     return () => clearTimeout(t);
-  }, [organizadorId, value]);
+  }, [organizadorId, value, requireLegacyLink]);
 
   return (
     <div className={`rj-autocomplete ${className}`.trim()}>

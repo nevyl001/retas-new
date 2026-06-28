@@ -197,8 +197,9 @@ async function applyRivieraContactToLegacyPlayer(
 }
 
 /**
- * Pool único para retas y torneos: un `players` por nombre en riviera_jugadores.
- * Si hay filas duplicadas en el registro (mismo nombre), enlaza todas al mismo legacy.
+ * Pool para retas/torneos: solo jugadores ya enlazados desde el registro
+ * (`legacy_player_id`). No inserta filas en `players` — eso ocurre en
+ * JugadoresLista al crear un jugador nuevo.
  */
 export async function buildLegacyPlayersFromRivieraRegistry(
   organizadorId: string
@@ -215,38 +216,23 @@ export async function buildLegacyPlayersFromRivieraRegistry(
   }
 
   const out: Player[] = [];
-  /** Un `players.id` no puede representar dos nombres distintos (p. ej. Carlos R y Carlos Co). */
   const legacyIdToNameKey = new Map<string, string>();
+  const seenLegacyIds = new Set<string>();
 
   for (const rows of Array.from(byName.values())) {
     const canonical = pickCanonicalRivieraRow(rows);
-    let legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
-    if (!legacy) continue;
+    if (!canonical.legacy_player_id) continue;
 
-    if (!legacyMatchesRivieraName(legacy, canonical)) {
-      const created = await insertLegacyPlayer(canonical.nombre, organizadorId, {
-        email: isRealEmail(canonical.email) ? canonical.email : null,
-      });
-      await linkLegacyPlayerId(canonical.id, created.id);
-      legacy = created;
-    }
+    const legacy = await fetchPlayerById(canonical.legacy_player_id);
+    if (!legacy || !legacyMatchesRivieraName(legacy, canonical)) continue;
 
     const nameKey = normalizeName(canonical.nombre);
     const clashKey = legacyIdToNameKey.get(legacy.id);
-    if (clashKey && clashKey !== nameKey) {
-      const created = await insertLegacyPlayer(canonical.nombre, organizadorId, {
-        email: isRealEmail(canonical.email) ? canonical.email : null,
-      });
-      await linkLegacyPlayerId(canonical.id, created.id);
-      legacy = created;
-    }
-    legacyIdToNameKey.set(legacy.id, nameKey);
+    if (clashKey && clashKey !== nameKey) continue;
 
-    for (const other of rows) {
-      if (other.id !== canonical.id && other.legacy_player_id !== legacy.id) {
-        await linkLegacyPlayerId(other.id, legacy.id);
-      }
-    }
+    legacyIdToNameKey.set(legacy.id, nameKey);
+    if (seenLegacyIds.has(legacy.id)) continue;
+    seenLegacyIds.add(legacy.id);
 
     out.push(await applyRivieraContactToLegacyPlayer(canonical, legacy));
   }
