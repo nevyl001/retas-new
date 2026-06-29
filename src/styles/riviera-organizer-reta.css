@@ -891,11 +891,12 @@
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row__pts {
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__pts {
-  color: var(--ro-gold-light) !important;
+  color: var(--text-muted, #7a7a7a) !important;
+  font-weight: 500 !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row:nth-child(1) {

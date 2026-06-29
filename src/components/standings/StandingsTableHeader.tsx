@@ -16,6 +16,8 @@ import {
   STANDINGS_PTS_TABLE_TITLE,
   type StandingsEntityColumn,
 } from "./standingsTableConfig";
+import { criterionHeaderClass } from "../../utils/standingsCriterionHighlight";
+import "../../styles/standings-criterion.css";
 
 interface StandingsTableHeaderProps {
   entity: StandingsEntityColumn;
@@ -40,22 +42,34 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
       <th className={COL_PJ} title="Partidos jugados">
         PJ
       </th>
-      <th className={COL_PG} title="Partidos ganados">
+      <th
+        className={`${COL_PG} ${criterionHeaderClass("pg")}`}
+        title="Partidos ganados (3.er criterio de desempate)"
+      >
         PG
       </th>
       <th className={COL_PP} title="Partidos perdidos">
         PP
       </th>
-      <th className={COL_FAV} title="Juegos anotados a favor">
+      <th
+        className={`${COL_FAV} ${criterionHeaderClass("fav")}`}
+        title="Juegos a favor (1.er criterio)"
+      >
         FAV
       </th>
       <th className={COL_CON} title="Juegos recibidos en contra">
         CON
       </th>
-      <th className={COL_DIF} title="Diferencia (FAV − CON)">
+      <th
+        className={`${COL_DIF} ${criterionHeaderClass("dif")}`}
+        title="Diferencia FAV − CON (2.º criterio)"
+      >
         DIF
       </th>
-      <th className={COL_PTS} title={STANDINGS_PTS_TABLE_TITLE}>
+      <th
+        className={`${COL_PTS} standings-col-informative`}
+        title={STANDINGS_PTS_TABLE_TITLE}
+      >
         PTS
       </th>
     </tr>

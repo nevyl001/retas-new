@@ -1,6 +1,7 @@
 import React from "react";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
+import { TeamBadge } from "../teams/TeamBadge";
 import "../jugadores/riviera-jugadores.css";
 
 export type PublicRetaPairPlayer = {
@@ -16,7 +17,17 @@ export const PublicRetaPairSide: React.FC<{
   align?: "left" | "right";
   isWinner?: boolean;
   isTie?: boolean;
-}> = ({ players, label, align = "left", isWinner = false, isTie = false }) => {
+  teamLabel?: string | null;
+  teamIndex?: number | null;
+}> = ({
+  players,
+  label,
+  align = "left",
+  isWinner = false,
+  isTie = false,
+  teamLabel = null,
+  teamIndex = null,
+}) => {
   const [p1, p2] = players;
   const hasBothPlayers = Boolean(p1 && p2);
   const rowClass = isTie
@@ -31,7 +42,15 @@ export const PublicRetaPairSide: React.FC<{
       aria-label={label}
     >
       {hasBothPlayers ? (
-        <div className="te-pub-pair__showcase" aria-hidden>
+        <>
+          {teamLabel ? (
+            <TeamBadge
+              name={teamLabel}
+              teamIndex={teamIndex ?? undefined}
+              className="te-pub-pair__team"
+            />
+          ) : null}
+          <div className="te-pub-pair__showcase" aria-hidden>
           <div className="te-pub-pair__player">
             <JugadorAvatar
               fotoUrl={p1!.fotoUrl}
@@ -59,6 +78,7 @@ export const PublicRetaPairSide: React.FC<{
             />
           </div>
         </div>
+        </>
       ) : (
         <>
           <div className="te-pub-pair__avatars" aria-hidden>

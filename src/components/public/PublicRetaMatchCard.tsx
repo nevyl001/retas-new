@@ -25,6 +25,10 @@ export const PublicRetaMatchCard: React.FC<{
   games?: { id: string; pair1: number; pair2: number }[];
   remontadaRound?: number;
   encounterLabel?: string;
+  pair1TeamLabel?: string | null;
+  pair2TeamLabel?: string | null;
+  pair1TeamIndex?: number | null;
+  pair2TeamIndex?: number | null;
 }> = ({
   pair1Label,
   pair2Label,
@@ -41,6 +45,10 @@ export const PublicRetaMatchCard: React.FC<{
   games,
   remontadaRound,
   encounterLabel,
+  pair1TeamLabel = null,
+  pair2TeamLabel = null,
+  pair1TeamIndex = null,
+  pair2TeamIndex = null,
 }) => {
   const played = status === "finished" && hasResult;
   const pair1Wins = played && score1 > score2;
@@ -87,6 +95,8 @@ export const PublicRetaMatchCard: React.FC<{
           align="left"
           isWinner={pair1Wins}
           isTie={isTie}
+          teamLabel={pair1TeamLabel}
+          teamIndex={pair1TeamIndex}
         />
 
         <div className="te-pub-match__score-block te-pub-match__score-block--center">
@@ -123,6 +133,8 @@ export const PublicRetaMatchCard: React.FC<{
           align="right"
           isWinner={pair2Wins}
           isTie={isTie}
+          teamLabel={pair2TeamLabel}
+          teamIndex={pair2TeamIndex}
         />
       </div>
 

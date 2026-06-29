@@ -1,10 +1,12 @@
 import React from "react";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import "../jugadores/riviera-jugadores.css";
+import type { TeamWinnerCelebrateStatCard } from "../../lib/teamWinnerCelebrate";
 import {
   PublicRivieraCelebrateBrand,
   PublicRivieraCelebrateClosing,
 } from "./PublicRivieraCelebrateBrand";
+import { PublicRivieraSocialBar } from "./PublicRivieraSocialBar";
 
 const DEFAULT_MOTIVATIONAL = "Dominaron la cancha." as const;
 
@@ -21,30 +23,48 @@ export type PublicRetaRunnerUp = {
 };
 
 export const PublicRetaWinnerSection: React.FC<{
+  id?: string;
   title: string;
   subtitle?: string;
   torneoNombre?: string;
+  formatKicker?: string;
   fraseMotivacional?: string;
   participantesNote?: string;
-  stats?: { value: string | number; label: string }[];
+  stats?: TeamWinnerCelebrateStatCard[];
   winners?: PublicRetaWinnerAvatar[];
   runnersUp?: PublicRetaRunnerUp[];
+  /** Tarjeta lista para compartir: stats + redes Riviera Open */
+  shareable?: boolean;
 }> = ({
+  id,
   title,
   subtitle,
   torneoNombre,
+  formatKicker,
   fraseMotivacional = DEFAULT_MOTIVATIONAL,
   participantesNote,
   stats,
   winners,
   runnersUp,
+  shareable = false,
 }) => {
   const hasWinners = Boolean(winners && winners.length > 0);
   const hasRunnersUp = Boolean(runnersUp && runnersUp.length > 0);
+  const hasStats = Boolean(stats && stats.length > 0);
+  const isTeamShareCard = shareable && !hasWinners;
 
   return (
     <section
-      className="te-public-section ro-pub-celebrate ro-pub-celebrate--winners te-pub-fade-in"
+      id={id}
+      className={[
+        "te-public-section",
+        "ro-pub-celebrate",
+        "ro-pub-celebrate--winners",
+        "te-pub-fade-in",
+        isTeamShareCard ? "ro-pub-celebrate--team-share" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       aria-label="Ganadores Riviera Open"
     >
       <div className="ro-pub-celebrate__glow" aria-hidden />
@@ -74,20 +94,53 @@ export const PublicRetaWinnerSection: React.FC<{
             ))}
           </div>
         ) : (
-          <p className="ro-pub-celebrate__names">{title.replace(/\s*\/\s*/g, " · ")}</p>
+          <p
+            className={[
+              "ro-pub-celebrate__names",
+              isTeamShareCard ? "ro-pub-celebrate__names--team" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            {title.replace(/\s*\/\s*/g, " · ")}
+          </p>
         )}
+
         <p className="ro-pub-celebrate__motivational">{fraseMotivacional}</p>
         {subtitle ? <p className="ro-pub-celebrate__rank">{subtitle}</p> : null}
-        <PublicRivieraCelebrateClosing torneoNombre={torneoNombre} />
-        {stats && stats.length > 0 ? (
-          <div className="ro-pub-celebrate__stats" role="list">
-            {stats.map((s) => (
-              <div key={s.label} className="ro-pub-celebrate__stat" role="listitem">
+
+        {hasStats ? (
+          <div
+            className="ro-pub-celebrate__stats ro-pub-celebrate__stats--team"
+            role="list"
+            aria-label="Estadísticas del equipo ganador"
+          >
+            {stats!.map((s) => (
+              <div
+                key={s.label}
+                className={[
+                  "ro-pub-celebrate__stat",
+                  s.highlight ? "ro-pub-celebrate__stat--highlight" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                role="listitem"
+              >
                 <span className="ro-pub-celebrate__stat-value">{s.value}</span>
                 <span className="ro-pub-celebrate__stat-label">{s.label}</span>
               </div>
             ))}
           </div>
+        ) : null}
+
+        {formatKicker ? (
+          <p className="ro-pub-celebrate__format-kicker">{formatKicker}</p>
+        ) : null}
+
+        <PublicRivieraCelebrateClosing torneoNombre={torneoNombre} />
+
+        {shareable ? (
+          <PublicRivieraSocialBar compact className="ro-pub-celebrate__social" />
         ) : null}
 
         {participantesNote ? (

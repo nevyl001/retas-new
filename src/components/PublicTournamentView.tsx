@@ -9,6 +9,16 @@ import {
 } from "../lib/database";
 import { Match, Pair, Game, Tournament } from "../lib/database";
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
+import { isTeamsTournament } from "../lib/gameModeMapping";
+import {
+  getPairTeamIndex,
+  getPairTeamName,
+} from "../lib/teamConfigDisplay";
+import { resolveRetaStandingsHelpMode } from "../lib/standingsHelpMode";
+import {
+  buildTeamWinnerCelebrateStatCards,
+  teamStandingRowToWinnerStats,
+} from "../lib/teamWinnerCelebrate";
 import {
   computePairsWithStats,
   computeTeamStandings,
@@ -160,7 +170,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           : null
       );
       let resolvedMatches = matchesData;
-      if (matchesData.length > 0 && t && t.format !== "teams") {
+      if (matchesData.length > 0 && t && !isTeamsTournament(t)) {
         resolvedMatches = await repairMatchCourtRotation(
           pairsData,
           t.courts,
@@ -381,6 +391,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         pair2Label={getPairName(match.pair2_id)}
         pair1Players={getPairPlayers(match.pair1_id)}
         pair2Players={getPairPlayers(match.pair2_id)}
+        pair1TeamLabel={teamConfig ? getPairTeamName(match.pair1_id, teamConfig) : null}
+        pair2TeamLabel={teamConfig ? getPairTeamName(match.pair2_id, teamConfig) : null}
+        pair1TeamIndex={teamConfig ? getPairTeamIndex(match.pair1_id, teamConfig) : null}
+        pair2TeamIndex={teamConfig ? getPairTeamIndex(match.pair2_id, teamConfig) : null}
         score1={result.hasResult ? result.pair1Score : 0}
         score2={result.hasResult ? result.pair2Score : 0}
         hasResult={result.hasResult}
@@ -440,6 +454,21 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       return null;
     return computeTeamStandings(pairsWithStats, teamConfig);
   }, [teamConfig, pairsWithStats]);
+  const winningTeamRow = useMemo(() => {
+    if (!teamStandings?.length) return null;
+    const targetName = winningTeamName ?? teamStandings[0]?.name;
+    return (
+      teamStandings.find((row) => row.name === targetName) ?? teamStandings[0]
+    );
+  }, [teamStandings, winningTeamName]);
+
+  const teamWinnerCelebrateStats = useMemo(() => {
+    if (!winningTeamRow) return undefined;
+    return buildTeamWinnerCelebrateStatCards(
+      teamStandingRowToWinnerStats(winningTeamRow)
+    );
+  }, [winningTeamRow]);
+
   const sortedPairs = useMemo(
     () => sortPairsForStandings(pairsWithStats, standingsMatches, games),
     [pairsWithStats, standingsMatches, games]
@@ -531,10 +560,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     };
   }, [showWinner, organizadorId, winnerAvatarEntries]);
 
-  const formatKicker = teamStandings?.length
-    ? "Reta por equipos"
-    : "Round Robin";
-
   useEffect(() => {
     const defaultTitle = `${RIVIERA_APP_DISPLAY} — Retas y torneos de pádel`;
     document.title = publicTournamentName
@@ -589,6 +614,17 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       championshipConfig?.championshipEnabled ||
       championshipMatches.length > 0
   );
+
+  const formatKicker = teamStandings?.length
+    ? "Dual meet"
+    : remontadaActiva
+      ? "Round Robin · Remontada final"
+      : "Round Robin";
+
+  const standingsScoringMode = resolveRetaStandingsHelpMode({
+    hasTeamStandings: Boolean(teamStandings?.length),
+    remontadaActiva,
+  });
 
   // Calcular número de canchas desde los matches (el court más alto)
   const courts = matches.length > 0 
@@ -766,7 +802,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             : "Clasificación"
         }
         entityHeader={teamStandings?.length ? "EQUIPO" : "PAREJA"}
-        scrollHint
+        scoringMode={standingsScoringMode}
       />
 
       {showWinner &&
@@ -775,9 +811,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         (winningTeamName || teamStandings[0]?.name) && (
           <PublicRetaWinnerSection
             title={winningTeamName || teamStandings[0]?.name}
-            subtitle="Equipo ganador por puntos"
+            subtitle="Equipo ganador por games acumulados"
             torneoNombre={publicTournamentName ?? undefined}
-            winners={winnerAvatars}
+            formatKicker="Dual meet"
+            stats={teamWinnerCelebrateStats}
+            shareable
           />
         )}
 

@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Match, Pair, Game } from "../lib/database";
 import {
-  getGames, // Solo necesitamos getGames (match y pairs vienen como props)
+  getGames,
   createGame,
+  getNextGameNumber,
   deleteGame,
   updateMatch,
-  updateGame,
 } from "../lib/database";
 import { MatchResultCalculator } from "./MatchResultCalculator";
 import { aplicarRatingDesdePairs } from "../lib/rivieraJugadores/aplicarRatingPartido";
+import { TeamBadge } from "./teams/TeamBadge";
+import {
+  getPairTeamIndex,
+  getPairTeamName,
+  type TeamConfigLike,
+} from "../lib/teamConfigDisplay";
 
 const PencilIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -34,6 +40,7 @@ interface MatchCardWithResultsProps {
   onCorrectScore: (match: Match) => void;
   forceRefresh?: number;
   userId?: string;
+  teamConfig?: TeamConfigLike | null;
 }
 
 const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
@@ -46,6 +53,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   onCorrectScore,
   forceRefresh = 0,
   userId,
+  teamConfig = null,
 }) => {
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
   const [pair1, setPair1] = useState<Pair | null>(null);
@@ -186,6 +194,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       return;
     }
 
+    if (score1 === score2 && score1 === 0) {
+      setError("Ingresa el marcador del juego (no puede ser 0-0)");
+      return;
+    }
+
     if (!ownerId) {
       setError("No se pudo identificar al usuario para guardar el juego");
       return;
@@ -198,9 +211,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setSaving(true);
       setError(null);
 
-      const gameNumber = games.length + 1;
-      const newGame = await createGame(currentMatch.id, gameNumber, ownerId);
-      const savedGame = await updateGame(newGame.id, {
+      const gameNumber = await getNextGameNumber(currentMatch.id);
+      const savedGame = await createGame(currentMatch.id, gameNumber, ownerId, {
         pair1_games: score1,
         pair2_games: score2,
         is_tie_break: false,
@@ -211,9 +223,25 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setPair1Score("");
       setPair2Score("");
       setGames((prev) => [...prev, savedGame]);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("❌ Error agregando juego:", err);
-      setError("Error al agregar juego");
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? String((err as { code?: string }).code)
+          : "";
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message?: string }).message)
+          : "";
+      if (code === "23505" || message.toLowerCase().includes("duplicate")) {
+        setError("Ese juego ya está guardado. Pulsa «Actualizar».");
+      } else if (message) {
+        setError(
+          `No se pudo guardar el juego: ${message.slice(0, 120)}`
+        );
+      } else {
+        setError("Error al agregar juego. Revisa el marcador e inténtalo de nuevo.");
+      }
       await reloadGamesSilently();
     } finally {
       isUpdatingRef.current = false;
@@ -251,19 +279,17 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setSaving(true);
       setError(null);
 
+      const matchGames = await getGames(currentMatch.id);
       const result = await MatchResultCalculator.accumulateMatchStatistics(
         currentMatch,
-        games,
-        pairs // Usar prop en lugar de recargar
+        matchGames,
+        pairs
       );
 
       if (result.success) {
-        // Calcular marcador final del partido para guardarlo en el match
-        const matchGames = await getGames(currentMatch.id);
         let pair1FinalScore = 0;
         let pair2FinalScore = 0;
 
-        // Calcular sets ganados por cada pareja
         matchGames.forEach((game) => {
           if (game.pair1_games >= 6) {
             pair1FinalScore++;
@@ -456,6 +482,10 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const matchWinner = getMatchWinner();
   const pair1DisplayName = getPairName(pair1);
   const pair2DisplayName = getPairName(pair2);
+  const pair1TeamName = getPairTeamName(currentMatch.pair1_id, teamConfig);
+  const pair2TeamName = getPairTeamName(currentMatch.pair2_id, teamConfig);
+  const pair1TeamIndex = getPairTeamIndex(currentMatch.pair1_id, teamConfig);
+  const pair2TeamIndex = getPairTeamIndex(currentMatch.pair2_id, teamConfig);
   const pair1IsWinner = isFinished && matchWinner?.winner === "pair1";
   const pair2IsWinner = isFinished && matchWinner?.winner === "pair2";
   const pair1IsLoser = isFinished && matchWinner?.winner === "pair2";
@@ -619,6 +649,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               }`}
             >
               <div className="omc-team-row__info">
+                {pair1TeamName ? (
+                  <TeamBadge
+                    name={pair1TeamName}
+                    teamIndex={pair1TeamIndex ?? undefined}
+                    className="omc-team-badge"
+                  />
+                ) : null}
                 <span className="omc-team-name">{pair1DisplayName}</span>
               </div>
               {teamDisplayScores.score1 != null ? (
@@ -637,6 +674,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               }`}
             >
               <div className="omc-team-row__info">
+                {pair2TeamName ? (
+                  <TeamBadge
+                    name={pair2TeamName}
+                    teamIndex={pair2TeamIndex ?? undefined}
+                    className="omc-team-badge"
+                  />
+                ) : null}
                 <span className="omc-team-name">{pair2DisplayName}</span>
               </div>
               {teamDisplayScores.score2 != null ? (
@@ -676,12 +720,26 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           <>
             <div className="omc-team-row omc-team-row--pending">
               <div className="omc-team-row__info">
+                {pair1TeamName ? (
+                  <TeamBadge
+                    name={pair1TeamName}
+                    teamIndex={pair1TeamIndex ?? undefined}
+                    className="omc-team-badge"
+                  />
+                ) : null}
                 <span className="omc-team-name">{pair1DisplayName}</span>
               </div>
             </div>
             <span className="omc-vs-divider">vs</span>
             <div className="omc-team-row omc-team-row--pending">
               <div className="omc-team-row__info">
+                {pair2TeamName ? (
+                  <TeamBadge
+                    name={pair2TeamName}
+                    teamIndex={pair2TeamIndex ?? undefined}
+                    className="omc-team-badge"
+                  />
+                ) : null}
                 <span className="omc-team-name">{pair2DisplayName}</span>
               </div>
             </div>
@@ -694,29 +752,53 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           <section className="omc-register" onClick={stopCardClick}>
             <h6 className="omc-register__label">Registrar resultado</h6>
             <div className="omc-register__scores">
-              <input
-                type="number"
-                min={0}
-                max={7}
-                value={pair1Score}
-                onChange={(e) => setPair1Score(e.target.value)}
-                className="omc-register__input"
-                onClick={stopCardClick}
-                placeholder="0"
-                aria-label={`Puntos ${pair1DisplayName}`}
-              />
+              <div className="omc-register__side">
+                <div className="omc-register__pair-id">
+                  {pair1TeamName ? (
+                    <TeamBadge
+                      name={pair1TeamName}
+                      teamIndex={pair1TeamIndex ?? undefined}
+                      className="omc-register__team-badge"
+                    />
+                  ) : null}
+                  <span className="omc-register__pair-name">{pair1DisplayName}</span>
+                </div>
+                <input
+                  type="number"
+                  min={0}
+                  max={7}
+                  value={pair1Score}
+                  onChange={(e) => setPair1Score(e.target.value)}
+                  className="omc-register__input"
+                  onClick={stopCardClick}
+                  placeholder="0"
+                  aria-label={`Puntos ${pair1DisplayName}`}
+                />
+              </div>
               <span className="omc-register__vs">vs</span>
-              <input
-                type="number"
-                min={0}
-                max={7}
-                value={pair2Score}
-                onChange={(e) => setPair2Score(e.target.value)}
-                className="omc-register__input"
-                onClick={stopCardClick}
-                placeholder="0"
-                aria-label={`Puntos ${pair2DisplayName}`}
-              />
+              <div className="omc-register__side">
+                <div className="omc-register__pair-id">
+                  {pair2TeamName ? (
+                    <TeamBadge
+                      name={pair2TeamName}
+                      teamIndex={pair2TeamIndex ?? undefined}
+                      className="omc-register__team-badge"
+                    />
+                  ) : null}
+                  <span className="omc-register__pair-name">{pair2DisplayName}</span>
+                </div>
+                <input
+                  type="number"
+                  min={0}
+                  max={7}
+                  value={pair2Score}
+                  onChange={(e) => setPair2Score(e.target.value)}
+                  className="omc-register__input"
+                  onClick={stopCardClick}
+                  placeholder="0"
+                  aria-label={`Puntos ${pair2DisplayName}`}
+                />
+              </div>
             </div>
             <div className="omc-register__actions">
               <button
@@ -724,13 +806,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  addGame();
-                }}
-                onTouchStart={stopCardClick}
-                onTouchEnd={(e) => {
-                  stopCardClick(e);
-                  e.preventDefault();
-                  addGame();
+                  void addGame();
                 }}
                 className="omc-btn-add"
                 disabled={saving}
@@ -743,13 +819,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    finishMatch();
-                  }}
-                  onTouchStart={stopCardClick}
-                  onTouchEnd={(e) => {
-                    stopCardClick(e);
-                    e.preventDefault();
-                    finishMatch();
+                    void finishMatch();
                   }}
                   className="omc-btn-finish"
                   disabled={saving}
@@ -785,13 +855,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
-                      removeGame(game.id);
-                    }}
-                    onTouchStart={stopCardClick}
-                    onTouchEnd={(e) => {
-                      stopCardClick(e);
-                      e.preventDefault();
-                      removeGame(game.id);
+                      void removeGame(game.id);
                     }}
                     className="omc-btn-delete-game"
                     disabled={saving}
@@ -814,12 +878,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                e.preventDefault();
-                void reloadGamesSilently();
-              }}
-              onTouchStart={stopCardClick}
-              onTouchEnd={(e) => {
-                stopCardClick(e);
                 e.preventDefault();
                 void reloadGamesSilently();
               }}
@@ -871,6 +929,8 @@ export default React.memo(MatchCardWithResults, (prevProps, nextProps) => {
     (prevProps.match.round ?? 1) === (nextProps.match.round ?? 1) &&
     prevProps.maxCourts === nextProps.maxCourts &&
     prevProps.forceRefresh === nextProps.forceRefresh &&
+    prevProps.teamConfig?.teamNames === nextProps.teamConfig?.teamNames &&
+    prevProps.teamConfig?.pairToTeam === nextProps.teamConfig?.pairToTeam &&
     prevProps.pairs.length === nextProps.pairs.length &&
     prevProps.pairs.every((p, i) => p.id === nextProps.pairs[i]?.id)
   );

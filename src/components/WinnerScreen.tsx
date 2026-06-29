@@ -6,17 +6,20 @@ import {
   type PlayerAvatarLookupEntry,
 } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { RetaRoundRobinWinnerCelebrate } from "./reta/RetaRoundRobinWinnerCelebrate";
+import { PublicRetaWinnerSection } from "./public/PublicRetaWinnerSection";
 import type { PublicRetaWinnerAvatar } from "./public/PublicRetaWinnerSection";
+import {
+  buildTeamWinnerCelebrateStatCards,
+  type TeamWinnerCelebrateStats,
+} from "../lib/teamWinnerCelebrate";
 import "./WinnerHero.css";
 
 interface WinnerScreenProps {
   isVisible: boolean;
   winner: Pair | null;
   tournamentWinner: TournamentWinner | null;
-  /** Cuando el torneo es por equipos: nombre del equipo ganador (más puntos). */
   winningTeamName?: string | null;
-  /** Estadísticas del equipo ganador (puntos, sets, partidos). */
-  winningTeamStats?: { points: number; setsWon: number; matchesPlayed: number } | null;
+  winningTeamStats?: TeamWinnerCelebrateStats | null;
   userId?: string;
   torneoNombre?: string;
   onBackToManager: () => void;
@@ -44,6 +47,11 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
     ];
   }, [winner]);
 
+  const teamCelebrateStats = useMemo(() => {
+    if (!winningTeamStats) return undefined;
+    return buildTeamWinnerCelebrateStatCards(winningTeamStats);
+  }, [winningTeamStats]);
+
   useEffect(() => {
     if (!isVisible || !userId || winnerAvatarEntries.length === 0) {
       setWinnerAvatars([]);
@@ -70,50 +78,22 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
 
   if (winningTeamName) {
     return (
-      <div className="winner-page">
-        <div className="elegant-winner-screen">
-          <div className="elegant-winner-section">
-            <div className="winner-hero">
-              <span className="winner-hero__trophy" aria-hidden="true">
-                🏆
-              </span>
-              <p className="winner-hero__label">GANADORES</p>
-              <div className="winner-hero__name-card">
-                <div className="winner-hero__names">{winningTeamName}</div>
-              </div>
-              <p className="winner-hero__sub">Equipo ganador por puntos</p>
-            </div>
-            {winningTeamStats && (
-              <div className="elegant-winner-stats">
-                <div className="elegant-winner-stat">
-                  <span className="elegant-winner-stat-number">
-                    {winningTeamStats.points}
-                  </span>
-                  <span className="elegant-winner-stat-label">Puntos Totales</span>
-                </div>
-                <div className="elegant-winner-stat">
-                  <span className="elegant-winner-stat-number">
-                    {winningTeamStats.setsWon}
-                  </span>
-                  <span className="elegant-winner-stat-label">Sets</span>
-                </div>
-                <div className="elegant-winner-stat">
-                  <span className="elegant-winner-stat-number">
-                    {winningTeamStats.matchesPlayed}
-                  </span>
-                  <span className="elegant-winner-stat-label">Partidos Jugados</span>
-                </div>
-              </div>
-            )}
-            <div className="elegant-winner-actions">
-              <button
-                className="elegant-winner-back-btn"
-                onClick={onBackToManager}
-              >
-                🏠 Volver al Gestor
-              </button>
-            </div>
-          </div>
+      <div className="winner-page winner-page--team-share">
+        <PublicRetaWinnerSection
+          title={winningTeamName}
+          subtitle="Equipo ganador por games acumulados"
+          torneoNombre={torneoNombre}
+          formatKicker="Dual meet"
+          stats={teamCelebrateStats}
+          shareable
+        />
+        <div className="elegant-winner-actions elegant-winner-actions--overlay">
+          <button
+            className="elegant-winner-back-btn"
+            onClick={onBackToManager}
+          >
+            🏠 Volver al Gestor
+          </button>
         </div>
       </div>
     );

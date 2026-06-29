@@ -87,7 +87,7 @@ export const AmericanoTournamentSummary: React.FC<
 
       <div className="americano-summary__ranking-wrap">
         <h3 className="americano-summary__subtitle">Clasificación final</h3>
-        <StandingsScoringHelp compact />
+        <StandingsScoringHelp compact mode="americano" />
         <table className="americano-summary__table">
           <thead>
             <tr>

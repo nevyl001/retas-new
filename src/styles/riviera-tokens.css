@@ -71,7 +71,8 @@
   --medal-bronze-border: rgba(107, 107, 107, 0.35);
 
   /* ── Modos de juego ── */
-  --mode-equipos: var(--ro-mode-reta);
+  --mode-equipos: var(--ro-mode-equipos);
+  --mode-duelo: var(--ro-mode-duelo);
   --mode-robin: var(--ro-mode-liga);
   --mode-americano: var(--ro-mode-americano);
   --mode-torneo: var(--ro-mode-torneo);

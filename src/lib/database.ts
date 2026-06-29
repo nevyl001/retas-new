@@ -199,6 +199,70 @@ export const findResumableAmericanoTournament = async (
  * Config pública del torneo (lectura anónima). Tabla tournament_public_config con RLS: SELECT para anon.
  * Si la tabla no existe, devuelve null.
  */
+export type TournamentPublicConfigSnippet = {
+  format?: string | null;
+  team_config?: TournamentTeamConfig | null;
+};
+
+/** Config pública en lote (home, listados). Lectura anónima vía tournament_public_config. */
+export async function getTournamentsPublicConfigsByIds(
+  tournamentIds: string[]
+): Promise<Map<string, TournamentPublicConfigSnippet>> {
+  const unique = Array.from(
+    new Set(tournamentIds.map((id) => id.trim()).filter(Boolean))
+  );
+  if (unique.length === 0) return new Map();
+
+  try {
+    const { data, error } = await supabasePublicRead
+      .from("tournament_public_config")
+      .select("tournament_id, format, team_config")
+      .in("tournament_id", unique);
+
+    if (error) {
+      console.warn("getTournamentsPublicConfigsByIds:", error.message);
+      return new Map();
+    }
+
+    const map = new Map<string, TournamentPublicConfigSnippet>();
+    for (const row of data ?? []) {
+      const tid = row?.tournament_id as string | undefined;
+      if (!tid) continue;
+      map.set(tid, {
+        format: row.format ?? undefined,
+        team_config: (row.team_config as TournamentTeamConfig | null) ?? undefined,
+      });
+    }
+    return map;
+  } catch (e) {
+    console.warn("getTournamentsPublicConfigsByIds:", e);
+    return new Map();
+  }
+}
+
+export function mergeTournamentWithPublicConfig<T extends Tournament>(
+  tournament: T,
+  publicConfig?: TournamentPublicConfigSnippet | null
+): T {
+  if (!publicConfig) return tournament;
+
+  const format =
+    publicConfig.format === "teams" || publicConfig.format === "round_robin"
+      ? publicConfig.format
+      : tournament.format;
+  const team_config = publicConfig.team_config ?? tournament.team_config;
+
+  if (format === tournament.format && team_config === tournament.team_config) {
+    return tournament;
+  }
+
+  return {
+    ...tournament,
+    ...(format ? { format } : {}),
+    ...(team_config ? { team_config } : {}),
+  };
+}
+
 export const getTournamentPublicConfig = async (tournamentId: string): Promise<{ format: string; team_config: TournamentTeamConfig } | null> => {
   try {
     const { data, error } = await supabasePublicRead
@@ -981,38 +1045,97 @@ export const deleteMatchesByTournament = async (tournamentId: string) => {
 };
 
 // Funciones para Juegos
+export type CreateGameScores = Pick<
+  Game,
+  | "pair1_games"
+  | "pair2_games"
+  | "is_tie_break"
+  | "tie_break_pair1_points"
+  | "tie_break_pair2_points"
+>;
+
+export const getNextGameNumber = async (matchId: string): Promise<number> => {
+  const existing = await getGames(matchId);
+  if (existing.length === 0) return 1;
+  return Math.max(...existing.map((g) => g.game_number)) + 1;
+};
+
+const insertGameRow = async (row: Record<string, unknown>) =>
+  supabase.from("games").insert([row]).select().single();
+
+function isDuplicateGameError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  if (error.code === "23505") return true;
+  const msg = (error.message || "").toLowerCase();
+  return msg.includes("duplicate") || msg.includes("unique");
+}
+
+function formatGameInsertError(error: { code?: string; message?: string } | null): string {
+  if (!error) return "Error desconocido";
+  const code = error.code ? `[${error.code}] ` : "";
+  return `${code}${error.message || "Error al guardar"}`;
+}
+
 export const createGame = async (
   matchId: string,
   gameNumber: number,
-  userId: string
+  _userId: string,
+  scores?: Partial<CreateGameScores>
 ) => {
-  let { data, error } = await supabase
-    .from("games")
-    .insert([
-      {
-        match_id: matchId,
-        game_number: gameNumber,
-        user_id: userId,
-      },
-    ])
-    .select()
-    .single();
+  const scoresResolved = {
+    pair1_games: scores?.pair1_games ?? 0,
+    pair2_games: scores?.pair2_games ?? 0,
+    is_tie_break: scores?.is_tie_break ?? false,
+    tie_break_pair1_points: scores?.tie_break_pair1_points ?? 0,
+    tie_break_pair2_points: scores?.tie_break_pair2_points ?? 0,
+  };
 
-  if (isMissingColumnError(error, "games", "user_id")) {
-    ({ data, error } = await supabase
-      .from("games")
-      .insert([
-        {
-          match_id: matchId,
-          game_number: gameNumber,
-        },
-      ])
-      .select()
-      .single());
+  let gameNumberToUse = gameNumber;
+
+  for (let duplicateRetry = 0; duplicateRetry < 2; duplicateRetry++) {
+    // La tabla `games` en producción no tiene `user_id`; incluirlo devuelve PGRST204 (400).
+    let row: Record<string, unknown> = {
+      match_id: matchId,
+      game_number: gameNumberToUse,
+      pair1_games: scoresResolved.pair1_games,
+      pair2_games: scoresResolved.pair2_games,
+      is_tie_break: scoresResolved.is_tie_break,
+      tie_break_pair1_points: scoresResolved.tie_break_pair1_points,
+      tie_break_pair2_points: scoresResolved.tie_break_pair2_points,
+    };
+
+    for (let stripPass = 0; stripPass < 4; stripPass++) {
+      const { data, error } = await insertGameRow(row);
+      if (!error) return data;
+
+      if (isDuplicateGameError(error) && duplicateRetry === 0) {
+        gameNumberToUse = await getNextGameNumber(matchId);
+        break;
+      }
+
+      const optionalColumns = [
+        "is_tie_break",
+        "tie_break_pair1_points",
+        "tie_break_pair2_points",
+      ] as const;
+      const missingCol = optionalColumns.find(
+        (col) => col in row && isMissingColumnError(error, "games", col)
+      );
+      if (missingCol) {
+        const { [missingCol]: _removed, ...rest } = row;
+        row = rest;
+        continue;
+      }
+
+      const err = new Error(formatGameInsertError(error)) as Error & {
+        code?: string;
+      };
+      err.code = error.code;
+      throw err;
+    }
   }
 
-  if (error) throw error;
-  return data;
+  throw new Error("No se pudo guardar el juego (número de juego duplicado)");
 };
 
 export const getGames = async (matchId: string) => {

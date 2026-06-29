@@ -8,6 +8,7 @@ import {
   getTournamentGames,
 } from "../lib/database";
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
+import { isTeamsTournament } from "../lib/gameModeMapping";
 import { syncChampionshipConfigFromPublic } from "../lib/roundRobinChampionship";
 
 export const useTournamentData = () => {
@@ -122,12 +123,12 @@ export const useTournamentData = () => {
       );
 
       let resolvedMatches = matchesData;
-      if (matchesData.length > 0 && tournament.format !== "teams") {
+      if (matchesData.length > 0 && !isTeamsTournament(tournament)) {
         resolvedMatches = await repairMatchCourtRotation(
           pairsData,
           tournament.courts,
           matchesData,
-          tournament.format
+          isTeamsTournament(tournament) ? "teams" : tournament.format
         );
       }
 

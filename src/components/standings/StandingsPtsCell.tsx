@@ -11,7 +11,10 @@ export const StandingsPtsCell: React.FC<StandingsPtsCellProps> = ({
   pts,
   className = "te-pub-standings-row__pts",
 }) => (
-  <td className={`${COL_PTS} ${className}`.trim()} title={STANDINGS_PTS_TABLE_TITLE}>
+  <td
+    className={`${COL_PTS} standings-col-informative ${className}`.trim()}
+    title={STANDINGS_PTS_TABLE_TITLE}
+  >
     {pts}
   </td>
 );

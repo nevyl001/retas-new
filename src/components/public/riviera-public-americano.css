@@ -1047,10 +1047,6 @@
     display: flex;
   }
 
-  .te-public--reta .te-pub-standings-scroll-hint {
-    display: none;
-  }
-
   .te-public--reta .te-public-round-block {
     margin-bottom: 1.5rem;
   }
@@ -1356,6 +1352,28 @@
     max-width: 4rem;
     font-size: 0.6rem;
   }
+}
+
+/* Leyenda criterios de clasificación — vista pública reta */
+.te-public--reta .te-pub-standings-scoring-help {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md, 10px);
+  border: 0.5px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__title {
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__text strong {
+  color: var(--text-secondary);
+}
+
+.te-public--reta .te-pub-standings-scoring-help .standings-scoring-help__legend {
+  color: var(--text-muted);
 }
 
 .te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name {

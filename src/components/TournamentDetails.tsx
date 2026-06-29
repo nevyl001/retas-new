@@ -8,10 +8,12 @@ import {
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import { loadAmericanoDinamicoSnapshotMerged } from "../lib/americanoDinamicoSync";
 import { TournamentWinner } from "../lib/tournamentWinner";
+import type { TeamWinnerCelebrateStats } from "../lib/teamWinnerCelebrate";
 import FourComponentsGrid from "./FourComponentsGrid";
 import StartTournamentSection from "./StartTournamentSection";
 import PublicLinkSection from "./PublicLinkSection";
 import PairsDisplay from "./PairsDisplay";
+import { useResolvedTeamConfig } from "../hooks/useResolvedTeamConfig";
 import MatchesSection from "./MatchesSection";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
 
@@ -52,6 +54,8 @@ interface TournamentDetailsProps {
   isTournamentFinished: boolean;
   winner: Pair | null;
   tournamentWinner: TournamentWinner | null;
+  winningTeamName?: string | null;
+  winningTeamStats?: TeamWinnerCelebrateStats | null;
   onShowWinnerScreen: () => void;
   onBackToHome: () => void;
 }
@@ -88,9 +92,13 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   isTournamentFinished,
   winner,
   tournamentWinner,
+  winningTeamName,
+  winningTeamStats,
   onShowWinnerScreen,
   onBackToHome,
 }) => {
+  const teamConfig = useResolvedTeamConfig(selectedTournament, pairs);
+
   const [americanoSnapshot, setAmericanoSnapshot] =
     React.useState<AmericanoDinamicoSnapshotV1 | null>(null);
   const [americanoRemoteLoading, setAmericanoRemoteLoading] =
@@ -188,7 +196,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 
       {/* Americano dinámico no usa parejas/partidos clásicos en BD; evitar UI vacía engañosa */}
       {!americanoSnapshot && !(isAmericanoShell && americanoRemoteLoading) && (
-        <PairsDisplay pairs={pairs} pairStats={pairStats} />
+        <PairsDisplay pairs={pairs} pairStats={pairStats} teamConfig={teamConfig} />
       )}
 
       {isAmericanoShell && americanoRemoteLoading && (
@@ -242,6 +250,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           isTournamentFinished={isTournamentFinished}
           winner={winner}
           tournamentWinner={tournamentWinner}
+          winningTeamName={winningTeamName}
           onShowWinnerScreen={onShowWinnerScreen}
           onBackToHome={onBackToHome}
           onReloadMatches={loadTournamentData}

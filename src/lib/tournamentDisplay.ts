@@ -8,6 +8,7 @@ export type TournamentModeBadge =
   | "mode-equipos"
   | "mode-robin"
   | "mode-americano"
+  | "mode-duelo"
   | "mode-torneo";
 
 export type TournamentStatusBadge = "active" | "finished" | "pending";

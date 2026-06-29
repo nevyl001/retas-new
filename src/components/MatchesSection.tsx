@@ -24,20 +24,7 @@ import {
 } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { RetaRoundRobinWinnerCelebrate } from "./reta/RetaRoundRobinWinnerCelebrate";
 import type { PublicRetaWinnerAvatar } from "./public/PublicRetaWinnerSection";
-
-const TEAM_CONFIG_KEY = "rivieraapp_teams_";
-
-function getTeamConfig(tournamentId: string): { teamNames: string[]; pairToTeam: Record<string, number> } | null {
-  try {
-    const raw = localStorage.getItem(`${TEAM_CONFIG_KEY}${tournamentId}`);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (data?.teamNames?.length && data?.pairToTeam && typeof data.pairToTeam === "object") return data;
-    return null;
-  } catch {
-    return null;
-  }
-}
+import { useResolvedTeamConfig } from "../hooks/useResolvedTeamConfig";
 
 interface MatchesSectionProps {
   tournament: Tournament;
@@ -49,6 +36,7 @@ interface MatchesSectionProps {
   isTournamentFinished: boolean;
   winner: Pair | null;
   tournamentWinner: TournamentWinner | null;
+  winningTeamName?: string | null;
   onShowWinnerScreen: () => void;
   onBackToHome: () => void;
   onReloadMatches?: () => void;
@@ -67,6 +55,7 @@ function renderRoundBlock(
     roundTitle?: React.ReactNode;
     matchEncounterLabel?: (match: Match) => string | undefined;
     onAfterScoreSaved?: () => void | Promise<void>;
+    teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null;
   }
 ) {
   const {
@@ -78,6 +67,7 @@ function renderRoundBlock(
     roundTitle,
     matchEncounterLabel,
     onAfterScoreSaved,
+    teamConfig,
   } = opts;
 
   return (
@@ -119,6 +109,7 @@ function renderRoundBlock(
               }}
               forceRefresh={forceRefresh}
               userId={userId}
+              teamConfig={teamConfig}
             />
           </div>
           );
@@ -143,6 +134,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   isTournamentFinished,
   winner,
   tournamentWinner,
+  winningTeamName,
   onShowWinnerScreen,
   onBackToHome,
   onReloadMatches,
@@ -181,12 +173,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     };
   }, [userId, winnerAvatarEntries]);
 
-  const teamConfig = useMemo(() => {
-    if (tournament.format === "teams" && tournament.team_config?.teamNames?.length && tournament.team_config?.pairToTeam) {
-      return tournament.team_config;
-    }
-    return getTeamConfig(tournament.id);
-  }, [tournament.id, tournament.format, tournament.team_config]);
+  const teamConfig = useResolvedTeamConfig(tournament, pairs);
 
   const [configTick, setConfigTick] = useState(0);
   const championshipActive = isRoundRobinChampionshipActive(tournament);
@@ -284,6 +271,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     setForceRefresh,
     userId,
     onAfterScoreSaved: tryGenerateChampionship,
+    teamConfig,
   };
 
   const canShowWinnersButton =
@@ -401,8 +389,19 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         teamConfig={teamConfig}
       />
 
+      {isTournamentFinished && !championshipActive && winningTeamName && (
+        <p className="matches-team-winner" aria-label={`Equipo ganador: ${winningTeamName}`}>
+          <span className="matches-team-winner__icon" aria-hidden>
+            🏆
+          </span>
+          <span className="matches-team-winner__label">Ganador:</span>
+          <span className="matches-team-winner__name">{winningTeamName}</span>
+        </p>
+      )}
+
       {isTournamentFinished &&
         !championshipActive &&
+        !winningTeamName &&
         tournamentWinner &&
         winner && (
           <RetaRoundRobinWinnerCelebrate
@@ -430,7 +429,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         </div>
       )}
 
-      {canShowWinnersButton && winner && (
+      {canShowWinnersButton && winner && !winningTeamName && (
         <div className="winner-button-container">
           <button className="show-winner-button" onClick={onShowWinnerScreen}>
             🏆 Ver ganadores

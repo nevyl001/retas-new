@@ -7,6 +7,10 @@ import {
   upsertTournamentPublicConfig,
 } from "../lib/database";
 import { CircleRoundRobinScheduler } from "../components/CircleRoundRobinScheduler";
+import {
+  persistTournamentGameMode,
+  persistTournamentMode,
+} from "../lib/gameModeMapping";
 
 export const useTournamentActions = (
   setSelectedTournament: (tournament: Tournament | null) => void,
@@ -107,6 +111,15 @@ export const useTournamentActions = (
           }
           await upsertTournamentPublicConfig(selectedTournament.id, "teams", teamConfigPayload.team_config);
         }
+
+        persistTournamentGameMode(
+          selectedTournament.id,
+          format === "teams" ? "reta-equipos" : "round-robin"
+        );
+        persistTournamentMode(
+          selectedTournament.id,
+          format === "teams" ? "teams" : "round_robin"
+        );
 
         await loadTournamentData(updatedTournament);
         showToast(result.message, "success");

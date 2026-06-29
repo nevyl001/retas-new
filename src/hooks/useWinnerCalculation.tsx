@@ -4,30 +4,28 @@ import {
   Match,
   Tournament,
   getTournamentGames,
-  getTournamentPublicConfig,
   getTournamentPublicConfigExtended,
-  getTournamentById,
 } from "../lib/database";
+import { loadTeamConfigForTournament } from "../lib/teamConfigDisplay";
 import {
   computePairsWithStats,
   computeTeamStandings,
-  getTeamConfigFromStorage,
-  inferTeamConfigFromPairs,
-  fallbackTwoTeamsFromPairs,
-  type TeamConfig,
 } from "../lib/standingsUtils";
 import { resolveTournamentPodiumOutcome } from "../lib/resolveTournamentOutcome";
 import {
   loadChampionshipConfig,
   parseChampionshipConfig,
 } from "../lib/roundRobinChampionship";
+import type { TeamWinnerCelebrateStats } from "../lib/teamWinnerCelebrate";
+import { teamStandingRowToWinnerStats } from "../lib/teamWinnerCelebrate";
 import type { TournamentWinner } from "../lib/tournamentWinner";
 
 export const useWinnerCalculation = () => {
   const [tournamentWinner, setTournamentWinner] =
     useState<TournamentWinner | null>(null);
   const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
-  const [winningTeamStats, setWinningTeamStats] = useState<{ points: number; setsWon: number; matchesPlayed: number } | null>(null);
+  const [winningTeamStats, setWinningTeamStats] =
+    useState<TeamWinnerCelebrateStats | null>(null);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
 
   const calculateAndShowWinner = async (
@@ -39,53 +37,11 @@ export const useWinnerCalculation = () => {
     try {
       const tournament = options?.tournament;
       const tid = tournament?.id;
+      const teamConfig = tournament
+        ? await loadTeamConfigForTournament(tournament)
+        : null;
 
-      let teamConfig: TeamConfig | null =
-        tournament?.format === "teams" &&
-        tournament?.team_config?.teamNames?.length &&
-        tournament?.team_config?.pairToTeam
-          ? tournament.team_config
-          : null;
-
-      let formatIsTeams =
-        tournament?.format === "teams";
-
-      if (tid) {
-        const fromStorage = getTeamConfigFromStorage(tid);
-        try {
-          const [publicCfg, freshT] = await Promise.all([
-            getTournamentPublicConfig(tid),
-            getTournamentById(tid),
-          ]);
-          if (freshT?.format === "teams" || publicCfg?.format === "teams") {
-            formatIsTeams = true;
-          }
-          const fromPublic =
-            publicCfg?.format === "teams" &&
-            publicCfg?.team_config?.teamNames?.length &&
-            publicCfg?.team_config?.pairToTeam
-              ? publicCfg.team_config
-              : null;
-          const fromRow =
-            freshT?.format === "teams" &&
-            freshT?.team_config?.teamNames?.length &&
-            freshT?.team_config?.pairToTeam
-              ? freshT.team_config
-              : null;
-          teamConfig = teamConfig ?? fromPublic ?? fromRow ?? fromStorage;
-        } catch {
-          teamConfig = teamConfig ?? fromStorage;
-        }
-      }
-
-      if (formatIsTeams && !teamConfig && pairs.length >= 2) {
-        teamConfig =
-          inferTeamConfigFromPairs(pairs) ?? fallbackTwoTeamsFromPairs(pairs);
-      }
-
-      const isTeams = !!teamConfig;
-
-      if (isTeams && teamConfig) {
+      if (teamConfig) {
         setTournamentWinner(null);
         setWinningTeamStats(null);
         const games = tournament?.id ? await getTournamentGames(tournament.id) : [];
@@ -94,7 +50,7 @@ export const useWinnerCalculation = () => {
         const first = teamStandings?.[0];
         if (first) {
           setWinningTeamName(first.name);
-          setWinningTeamStats({ points: first.points, setsWon: first.setsWon, matchesPlayed: first.matchesPlayed });
+          setWinningTeamStats(teamStandingRowToWinnerStats(first));
         } else {
           setWinningTeamName(null);
         }

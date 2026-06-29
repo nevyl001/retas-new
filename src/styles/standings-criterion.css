@@ -1,0 +1,82 @@
+/* Criterios de clasificación: FAV (1°) → DIF (2°) → PG (3°). PTS solo informativo. */
+
+.standings-criterion-col {
+  position: relative;
+}
+
+.standings-criterion-col::after {
+  display: inline-block;
+  margin-left: 0.2rem;
+  font-size: 0.58em;
+  font-weight: 700;
+  vertical-align: super;
+  color: var(--ro-gold, #c9a227);
+  line-height: 1;
+}
+
+.standings-criterion-col--rank-1::after {
+  content: "1";
+}
+
+.standings-criterion-col--rank-2::after {
+  content: "2";
+}
+
+.standings-criterion-col--rank-3::after {
+  content: "3";
+}
+
+.te-pub-standings-row--leader .standings-criterion-cell--rank-1 {
+  color: var(--ro-gold-light, #e8c547);
+  font-weight: 700;
+}
+
+.te-pub-standings-row--leader .standings-criterion-cell--rank-2 {
+  color: var(--ro-gold, #c9a227);
+  font-weight: 600;
+}
+
+.te-pub-standings-row--leader .standings-criterion-cell--rank-3 {
+  color: rgba(232, 197, 71, 0.88);
+  font-weight: 600;
+}
+
+.te-pub-standings-row--leader .standings-criterion-cell--deciding {
+  text-shadow: 0 0 18px var(--ro-gold-glow, rgba(201, 162, 39, 0.35));
+}
+
+.te-pub-standings-row--leader .col-pts,
+.te-pub-standings-row--leader .te-pub-standings-row__pts,
+.te-pub-standings-row--leader .standings-col-informative {
+  color: var(--text-muted, #7a7a7a) !important;
+  font-weight: 500 !important;
+  text-shadow: none !important;
+}
+
+.standings-mobile-card--leader .standings-mobile-card__stat--criterion-1 .standings-mobile-card__stat-value {
+  color: var(--ro-gold-light, #e8c547);
+}
+
+.standings-mobile-card--leader .standings-mobile-card__stat--criterion-2 .standings-mobile-card__stat-value {
+  color: var(--ro-gold, #c9a227);
+}
+
+.standings-mobile-card--leader .standings-mobile-card__stat--criterion-3 .standings-mobile-card__stat-value {
+  color: rgba(232, 197, 71, 0.9);
+}
+
+.standings-mobile-card--leader .standings-mobile-card__stat--informative .standings-mobile-card__stat-value {
+  color: var(--text-muted, #7a7a7a);
+  font-weight: 600;
+}
+
+.te-pub-standing-card--leader .te-pub-standing-card__pts {
+  color: var(--text-muted, #7a7a7a) !important;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.te-pub-standing-card--leader .te-pub-standing-card__criterion-fav {
+  color: var(--ro-gold-light, #e8c547);
+  font-weight: 700;
+}

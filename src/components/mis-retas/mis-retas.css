@@ -182,11 +182,22 @@
   letter-spacing: 0.1em;
 }
 
-.mis-retas-page .riviera-badge--mode-equipos,
+.mis-retas-page .riviera-badge--mode-equipos {
+  background: var(--ro-gold-dim) !important;
+  color: var(--ro-gold-light) !important;
+  border: 0.5px solid var(--ro-gold-border) !important;
+}
+
+.mis-retas-page .riviera-badge--mode-duelo {
+  background: rgba(251, 146, 60, 0.12) !important;
+  color: #fdba74 !important;
+  border: 0.5px solid rgba(251, 146, 60, 0.35) !important;
+}
+
 .mis-retas-page .riviera-badge--mode-torneo {
-  background: var(--accent-gold-dim) !important;
-  color: rgba(255, 255, 255, 0.95) !important;
-  border: 0.5px solid rgba(255, 255, 255, 0.38) !important;
+  background: rgba(167, 139, 250, 0.12) !important;
+  color: #c4b5fd !important;
+  border: 0.5px solid rgba(167, 139, 250, 0.35) !important;
 }
 
 .mis-retas-page .riviera-badge--mode-robin {

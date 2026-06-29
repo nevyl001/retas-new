@@ -67,7 +67,7 @@ export const LiveRanking: React.FC<LiveRankingProps> = ({
   return (
     <RankingCard title="Ranking en vivo" className="americano-ranking rv-card">
       {caption ? <p className="americano-ranking__caption rv-muted">{caption}</p> : null}
-      <StandingsScoringHelp compact />
+      <StandingsScoringHelp compact mode="americano" />
       <StandingsMobileCards rows={mobileRows} />
       <div
         className={`${TABLA_WRAPPER_CLASS} standings-table-desktop rv-table-wrap`}

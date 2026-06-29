@@ -16,8 +16,14 @@ import {
   getTeamConfigFromStorage,
   inferTeamConfigFromPairs,
   sortPairsForStandings,
+  buildHeadToHeadFromMatches,
 } from "../lib/standingsUtils";
+import {
+  getDecidingCriterionBetween,
+  criterionCellClass,
+} from "../utils/standingsCriterionHighlight";
 import { matchesForStandingsTable } from "../lib/resolveTournamentOutcome";
+import { resolveRetaStandingsHelpMode } from "../lib/standingsHelpMode";
 import {
   loadChampionshipConfig,
 } from "../lib/roundRobinChampionship";
@@ -265,6 +271,48 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     return computeTeamStandings(pairsWithStats, effectiveTeamConfig);
   }, [pairsWithStats, effectiveTeamConfig]);
 
+  const h2hMatches = useMemo(
+    () => buildHeadToHeadFromMatches(standingsMatches, allGames),
+    [standingsMatches, allGames]
+  );
+
+  const leaderDecidingCriterion = useMemo(() => {
+    if (teamStandings && teamStandings.length >= 2) {
+      return getDecidingCriterionBetween(
+        {
+          id: String(teamStandings[0].teamIndex),
+          fav: teamStandings[0].points,
+          con: teamStandings[0].pointsReceived,
+          pg: teamStandings[0].pg,
+        },
+        {
+          id: String(teamStandings[1].teamIndex),
+          fav: teamStandings[1].points,
+          con: teamStandings[1].pointsReceived,
+          pg: teamStandings[1].pg,
+        }
+      );
+    }
+    if (sortedPairs.length >= 2) {
+      return getDecidingCriterionBetween(
+        {
+          id: sortedPairs[0].id,
+          fav: sortedPairs[0].points,
+          con: sortedPairs[0].pointsReceived,
+          pg: sortedPairs[0].pg,
+        },
+        {
+          id: sortedPairs[1].id,
+          fav: sortedPairs[1].points,
+          con: sortedPairs[1].pointsReceived,
+          pg: sortedPairs[1].pg,
+        },
+        h2hMatches
+      );
+    }
+    return "fav" as const;
+  }, [teamStandings, sortedPairs, h2hMatches]);
+
   const mobileCardRows = useMemo((): StandingsMobileCardRow[] => {
     if (teamStandings && teamStandings.length > 0) {
       return teamStandings.map((row, index) => ({
@@ -305,6 +353,15 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         return "";
     }
   };
+
+  const scoringMode = useMemo(
+    () =>
+      resolveRetaStandingsHelpMode({
+        hasTeamStandings: Boolean(teamStandings?.length),
+        remontadaActiva: Boolean(champConfig?.championshipEnabled),
+      }),
+    [teamStandings, champConfig]
+  );
 
   const recalculateStatistics = async () => {
     await loadTournamentData();
@@ -385,9 +442,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
 
       <div className="te-public-section__divider" aria-hidden />
 
-      <StandingsScoringHelp />
+      <StandingsScoringHelp mode={scoringMode} />
 
-      <StandingsMobileCards rows={mobileCardRows} />
+      <StandingsMobileCards
+        rows={mobileCardRows}
+        decidingCriterion={leaderDecidingCriterion}
+      />
 
       {/* Modo equipos: tabla por equipos (suma de puntos por equipo) */}
       {teamStandings && teamStandings.length > 0 ? (
@@ -405,10 +465,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
               <StandingsTableHeader entity="equipo" />
             </thead>
             <tbody>
-              {teamStandings.map((row, index) => (
+              {teamStandings.map((row, index) => {
+                const isLeader = index === 0;
+                return (
                 <tr
                   key={row.teamIndex}
-                  className={`te-pub-standings-row te-pub-fade-in-up${index === 0 ? " te-pub-standings-row--leader" : ""}`}
+                  className={`te-pub-standings-row te-pub-fade-in-up${isLeader ? " te-pub-standings-row--leader" : ""}`}
                 >
                   <td className={`te-pub-standings-row__pos ${COL_POS}`}>
                     <span className="te-pub-standings-row__pos-num">{index + 1}</span>
@@ -416,17 +478,33 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                   </td>
                   <td className={`te-pub-standings-row__name ${COL_ENTITY}`}>{row.name}</td>
                   <td className={COL_PJ}>{row.matchesPlayed}</td>
-                  <td className={COL_PG}>{row.pg}</td>
+                  <td
+                    className={`${COL_PG} ${
+                      isLeader ? criterionCellClass("pg", leaderDecidingCriterion) : ""
+                    }`}
+                  >
+                    {row.pg}
+                  </td>
                   <td className={COL_PP}>{row.pp}</td>
-                  <td className={COL_FAV}>{row.points}</td>
+                  <td
+                    className={`${COL_FAV} ${
+                      isLeader ? criterionCellClass("fav", leaderDecidingCriterion) : ""
+                    }`}
+                  >
+                    {row.points}
+                  </td>
                   <td className={COL_CON}>{row.pointsReceived}</td>
                   <StandingsDifCell
                     ptsFav={row.points}
                     ptsCon={row.pointsReceived}
+                    className={
+                      isLeader ? criterionCellClass("dif", leaderDecidingCriterion) : ""
+                    }
                   />
                   <StandingsPtsCell pts={row.puntosTorneo} />
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>
@@ -446,10 +524,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
             <StandingsTableHeader entity="pareja" />
           </thead>
           <tbody>
-            {sortedPairs.map((pair, index) => (
+            {sortedPairs.map((pair, index) => {
+              const isLeader = index === 0;
+              return (
               <tr
                 key={pair.id}
-                className={`te-pub-standings-row te-pub-fade-in-up${index === 0 ? " te-pub-standings-row--leader" : ""}`}
+                className={`te-pub-standings-row te-pub-fade-in-up${isLeader ? " te-pub-standings-row--leader" : ""}`}
               >
                 <td className={`te-pub-standings-row__pos ${COL_POS}`}>
                   <span className="te-pub-standings-row__pos-num">{index + 1}</span>
@@ -461,17 +541,33 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                   {pair.player1_name} / {pair.player2_name}
                 </td>
                 <td className={COL_PJ}>{pair.matchesPlayed}</td>
-                <td className={COL_PG}>{pair.pg}</td>
+                <td
+                  className={`${COL_PG} ${
+                    isLeader ? criterionCellClass("pg", leaderDecidingCriterion) : ""
+                  }`}
+                >
+                  {pair.pg}
+                </td>
                 <td className={COL_PP}>{pair.pp}</td>
-                <td className={COL_FAV}>{pair.points}</td>
+                <td
+                  className={`${COL_FAV} ${
+                    isLeader ? criterionCellClass("fav", leaderDecidingCriterion) : ""
+                  }`}
+                >
+                  {pair.points}
+                </td>
                 <td className={COL_CON}>{pair.pointsReceived}</td>
                 <StandingsDifCell
                   ptsFav={pair.points}
                   ptsCon={pair.pointsReceived}
+                  className={
+                    isLeader ? criterionCellClass("dif", leaderDecidingCriterion) : ""
+                  }
                 />
                 <StandingsPtsCell pts={pair.puntosTorneo} />
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>

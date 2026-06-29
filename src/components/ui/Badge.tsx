@@ -4,6 +4,7 @@ export type BadgeVariant =
   | "mode-equipos"
   | "mode-robin"
   | "mode-americano"
+  | "mode-duelo"
   | "mode-torneo"
   | "active"
   | "finished"

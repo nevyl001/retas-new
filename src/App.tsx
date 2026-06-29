@@ -63,6 +63,7 @@ import {
 import { Tournament, Player, getTournamentById, upsertTournamentPublicConfig } from "./lib/database";
 import { isRoundRobinTournamentComplete } from "./lib/roundRobinChampionship";
 import { readPersistedTournamentMode } from "./lib/gameModeMapping";
+import { loadTeamConfigForTournament, resolveEffectiveTeamConfig } from "./lib/teamConfigDisplay";
 
 // Custom Hooks
 import { useTournamentData } from "./hooks/useTournamentData";
@@ -582,11 +583,24 @@ function AppContent() {
     const isDesktop =
       typeof window !== "undefined" &&
       window.matchMedia("(min-width: 640px)").matches;
-    const isTeamsFormat = selectedTournament?.format === "teams";
+    const teamConfig = selectedTournament
+      ? await loadTeamConfigForTournament(selectedTournament)
+      : null;
+    const isTeamsFormat = Boolean(
+      teamConfig || selectedTournament?.format === "teams"
+    );
     const skipViewChange = isDesktop && !isTeamsFormat;
+    const tournamentForCalc =
+      teamConfig && selectedTournament
+        ? {
+            ...selectedTournament,
+            format: "teams" as const,
+            team_config: teamConfig,
+          }
+        : selectedTournament ?? undefined;
 
     await calculateAndShowWinner(pairs, matches, setCurrentView, {
-      tournament: selectedTournament ?? undefined,
+      tournament: tournamentForCalc,
       skipViewChange,
     });
 
@@ -633,24 +647,58 @@ function AppContent() {
   }, [matches, selectedTournament, championshipRevision]);
 
   const winner = useMemo(() => {
+    if (winningTeamName) return null;
+    if (selectedTournament && resolveEffectiveTeamConfig(selectedTournament)) {
+      return null;
+    }
     return (
       tournamentWinner?.pair || (sortedPairs.length > 0 ? sortedPairs[0] : null)
     );
-  }, [tournamentWinner, sortedPairs]);
+  }, [winningTeamName, selectedTournament, tournamentWinner, sortedPairs]);
 
   useEffect(() => {
-    if (
-      !isTournamentFinished ||
-      !selectedTournament ||
-      tournamentWinner ||
-      winningTeamName
-    ) {
+    if (!isTournamentFinished || !selectedTournament) {
       return;
     }
-    void calculateAndShowWinner(pairs, matches, () => {}, {
-      tournament: selectedTournament,
-      skipViewChange: true,
-    });
+
+    let cancelled = false;
+
+    void (async () => {
+      const teamConfig = await loadTeamConfigForTournament(selectedTournament);
+      if (cancelled) return;
+
+      const tournamentForCalc =
+        teamConfig != null
+          ? {
+              ...selectedTournament,
+              format: "teams" as const,
+              team_config: teamConfig,
+            }
+          : selectedTournament;
+
+      if (teamConfig) {
+        if (tournamentWinner || !winningTeamName) {
+          await calculateAndShowWinner(pairs, matches, () => {}, {
+            tournament: tournamentForCalc,
+            skipViewChange: true,
+          });
+        }
+        return;
+      }
+
+      if (tournamentWinner || winningTeamName) {
+        return;
+      }
+
+      await calculateAndShowWinner(pairs, matches, () => {}, {
+        tournament: tournamentForCalc,
+        skipViewChange: true,
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     isTournamentFinished,
     selectedTournament,
@@ -778,6 +826,8 @@ function AppContent() {
               isTournamentFinished={isTournamentFinished}
               winner={winner}
               tournamentWinner={tournamentWinner}
+              winningTeamName={winningTeamName}
+              winningTeamStats={winningTeamStats}
               onShowWinnerScreen={handleShowWinner}
               onBackToHome={handleBackToHome}
             />

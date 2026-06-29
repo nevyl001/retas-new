@@ -54,6 +54,8 @@
 
   /* MODOS DE JUEGO */
   --ro-mode-reta: #ffffff;
+  --ro-mode-equipos: #e8c547;
+  --ro-mode-duelo: #fb923c;
   --ro-mode-americano: #10b981;
   --ro-mode-liga: #3b82f6;
   --ro-mode-torneo: #8b5cf6;

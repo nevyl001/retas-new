@@ -1,4 +1,5 @@
 import type { GameModeId } from "../components/home/gameModesConfig";
+import type { TournamentTeamConfig } from "./db/types";
 import {
   TE_DRAFT_TOURNAMENT_KEY,
   TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
@@ -7,6 +8,7 @@ import {
   isMarkedAmericanoTournament,
   loadAmericanoDinamicoSnapshot,
 } from "./americanoDinamicoStorage";
+import { getTeamConfigFromStorage } from "./standingsUtils";
 
 export type TournamentDbFormat = "round_robin" | "teams";
 export type StartTournamentFormat = "roundRobin" | "teams";
@@ -67,12 +69,30 @@ export function getStartFormatLabel(format: StartTournamentFormat): string {
   return format === "teams" ? "Reta por Equipos" : "Round Robin";
 }
 
+/** Reta por equipos: columna `format` o `team_config` poblado. */
+export function isTeamsTournament(
+  tournament?: {
+    format?: string | null;
+    team_config?: TournamentTeamConfig | null;
+  } | null
+): boolean {
+  if (!tournament) return false;
+  if (tournament.format === "teams") return true;
+  const tc = tournament.team_config;
+  return Boolean(
+    tc?.teamNames?.length &&
+      tc?.pairToTeam &&
+      Object.keys(tc.pairToTeam).length > 0
+  );
+}
+
 export function persistTournamentMode(
   tournamentId: string,
   format: TournamentDbFormat
 ): void {
   try {
     sessionStorage.setItem(`${MODE_STORAGE_PREFIX}${tournamentId}`, format);
+    localStorage.setItem(`${MODE_STORAGE_PREFIX}${tournamentId}`, format);
   } catch {
     /* ignore */
   }
@@ -82,7 +102,9 @@ export function readPersistedTournamentMode(
   tournamentId: string
 ): TournamentDbFormat | null {
   try {
-    const v = sessionStorage.getItem(`${MODE_STORAGE_PREFIX}${tournamentId}`);
+    const v =
+      sessionStorage.getItem(`${MODE_STORAGE_PREFIX}${tournamentId}`) ??
+      localStorage.getItem(`${MODE_STORAGE_PREFIX}${tournamentId}`);
     if (v === "round_robin" || v === "teams") return v;
   } catch {
     /* ignore */
@@ -96,53 +118,69 @@ export function persistTournamentGameMode(
 ): void {
   try {
     sessionStorage.setItem(`${GAME_MODE_STORAGE_PREFIX}${tournamentId}`, modeId);
+    localStorage.setItem(`${GAME_MODE_STORAGE_PREFIX}${tournamentId}`, modeId);
   } catch {
     /* ignore */
   }
+}
+
+function isPersistedGameModeId(value: string | null): value is GameModeId {
+  return (
+    value === "reta-equipos" ||
+    value === "round-robin" ||
+    value === "americano" ||
+    value === "mini-torneo" ||
+    value === "liga" ||
+    value === "duelo-2v2"
+  );
 }
 
 export function readPersistedTournamentGameMode(
   tournamentId: string
 ): GameModeId | null {
   try {
-    const v = sessionStorage.getItem(
-      `${GAME_MODE_STORAGE_PREFIX}${tournamentId}`
-    );
-    if (
-      v === "reta-equipos" ||
-      v === "round-robin" ||
-      v === "americano" ||
-      v === "mini-torneo" ||
-      v === "liga" ||
-      v === "duelo-2v2"
-    ) {
-      return v;
-    }
+    const v =
+      sessionStorage.getItem(`${GAME_MODE_STORAGE_PREFIX}${tournamentId}`) ??
+      localStorage.getItem(`${GAME_MODE_STORAGE_PREFIX}${tournamentId}`);
+    if (isPersistedGameModeId(v)) return v;
   } catch {
     /* ignore */
   }
   return null;
 }
 
-/** Modo de juego de una reta (DB format > persistido > marca americano). */
+/** Modo de juego de una reta (equipos/DB > modos explícitos > round robin por defecto). */
 export function resolveTournamentGameMode(tournament: {
   id: string;
-  format?: string;
+  format?: string | null;
+  team_config?: TournamentTeamConfig | null;
 }): GameModeId {
+  if (tournament.format === "teams" || isTeamsTournament(tournament)) {
+    return "reta-equipos";
+  }
+  if (getTeamConfigFromStorage(tournament.id)) {
+    return "reta-equipos";
+  }
+
   const persistedMode = readPersistedTournamentGameMode(tournament.id);
-  if (persistedMode) return persistedMode;
+  if (persistedMode && persistedMode !== "round-robin") {
+    return persistedMode;
+  }
 
   if (tournament.format === "round_robin") return "round-robin";
-  if (tournament.format === "teams") return "reta-equipos";
 
   const persistedFormat = readPersistedTournamentMode(tournament.id);
-  if (persistedFormat === "round_robin") return "round-robin";
   if (persistedFormat === "teams") return "reta-equipos";
 
   if (isMarkedAmericanoTournament(tournament.id)) return "americano";
 
   const snap = loadAmericanoDinamicoSnapshot(tournament.id);
-  if (snap && !tournament.format && !persistedFormat) return "americano";
+  if (snap && !tournament.format && persistedFormat !== "round_robin") {
+    return "americano";
+  }
+
+  if (persistedMode === "round-robin") return "round-robin";
+  if (persistedFormat === "round_robin") return "round-robin";
 
   return "round-robin";
 }

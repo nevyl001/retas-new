@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   computeStandingDif,
   formatStandingDif,
   standingDifCellClass,
 } from "../../utils/standingsDisplay";
+import {
+  getDecidingCriterionBetween,
+  type StandingsCriterionKey,
+} from "../../utils/standingsCriterionHighlight";
 import "../../styles/standings-mobile-cards.css";
 
 export type StandingsMobileCardRow = {
@@ -27,7 +31,27 @@ function positionIcon(position: number): string {
 
 export const StandingsMobileCards: React.FC<{
   rows: StandingsMobileCardRow[];
-}> = ({ rows }) => {
+  decidingCriterion?: StandingsCriterionKey;
+}> = ({ rows, decidingCriterion: decidingProp }) => {
+  const decidingCriterion = useMemo(() => {
+    if (decidingProp) return decidingProp;
+    if (rows.length < 2) return "fav" as const;
+    return getDecidingCriterionBetween(
+      {
+        id: rows[0].key,
+        fav: rows[0].points,
+        con: rows[0].pointsReceived,
+        pg: rows[0].pg,
+      },
+      {
+        id: rows[1].key,
+        fav: rows[1].points,
+        con: rows[1].pointsReceived,
+        pg: rows[1].pg,
+      }
+    );
+  }, [rows, decidingProp]);
+
   if (rows.length === 0) return null;
 
   return (
@@ -50,16 +74,48 @@ export const StandingsMobileCards: React.FC<{
             </header>
 
             <div className="standings-mobile-card__stats">
+              <div
+                className={`standings-mobile-card__stat standings-mobile-card__stat--criterion-1${
+                  isLeader && decidingCriterion === "fav"
+                    ? " standings-mobile-card__stat--deciding"
+                    : ""
+                }`}
+              >
+                <span className="standings-mobile-card__stat-label">FAV</span>
+                <span className="standings-mobile-card__stat-value">
+                  {row.points}
+                </span>
+              </div>
+              <div
+                className={`standings-mobile-card__stat standings-mobile-card__stat--criterion-2 standings-mobile-card__stat--dif${
+                  isLeader && decidingCriterion === "dif"
+                    ? " standings-mobile-card__stat--deciding"
+                    : ""
+                }`}
+              >
+                <span className="standings-mobile-card__stat-label">DIF</span>
+                <span
+                  className={`standings-mobile-card__dif ${standingDifCellClass(dif)}`}
+                >
+                  {formatStandingDif(dif)}
+                </span>
+              </div>
+              <div
+                className={`standings-mobile-card__stat standings-mobile-card__stat--criterion-3${
+                  isLeader && decidingCriterion === "pg"
+                    ? " standings-mobile-card__stat--deciding"
+                    : ""
+                }`}
+              >
+                <span className="standings-mobile-card__stat-label">PG</span>
+                <span className="standings-mobile-card__stat-value standings-mobile-card__stat-value--win">
+                  {row.pg}
+                </span>
+              </div>
               <div className="standings-mobile-card__stat">
                 <span className="standings-mobile-card__stat-label">PJ</span>
                 <span className="standings-mobile-card__stat-value">
                   {row.matchesPlayed}
-                </span>
-              </div>
-              <div className="standings-mobile-card__stat">
-                <span className="standings-mobile-card__stat-label">PG</span>
-                <span className="standings-mobile-card__stat-value standings-mobile-card__stat-value--win">
-                  {row.pg}
                 </span>
               </div>
               <div className="standings-mobile-card__stat">
@@ -68,18 +124,10 @@ export const StandingsMobileCards: React.FC<{
                   {row.pp}
                 </span>
               </div>
-              <div className="standings-mobile-card__stat">
+              <div className="standings-mobile-card__stat standings-mobile-card__stat--informative">
                 <span className="standings-mobile-card__stat-label">PTS</span>
                 <span className="standings-mobile-card__stat-value standings-mobile-card__stat-value--pts">
                   {row.puntosTorneo}
-                </span>
-              </div>
-              <div className="standings-mobile-card__stat standings-mobile-card__stat--dif">
-                <span className="standings-mobile-card__stat-label">DIF</span>
-                <span
-                  className={`standings-mobile-card__dif ${standingDifCellClass(dif)}`}
-                >
-                  {formatStandingDif(dif)}
                 </span>
               </div>
             </div>

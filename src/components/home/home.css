@@ -567,13 +567,10 @@
   letter-spacing: 0.1em;
 }
 
-.recent-reta-card .riviera-badge--mode-equipos,
-.recent-reta-card .riviera-badge--mode-robin,
-.recent-reta-card .riviera-badge--mode-americano,
-.recent-reta-card .riviera-badge--mode-torneo {
-  background: var(--accent-gold-dim);
-  color: rgba(255, 255, 255, 0.95);
-  border: 0.5px solid rgba(255, 255, 255, 0.38);
+.recent-reta-card .riviera-badge--mode-equipos {
+  background: var(--ro-gold-dim);
+  color: var(--ro-gold-light);
+  border-color: var(--ro-gold-border);
 }
 
 .recent-reta-card .riviera-badge--mode-robin {
@@ -586,6 +583,18 @@
   background: rgba(74, 222, 128, 0.1);
   color: #86efac;
   border-color: rgba(74, 222, 128, 0.32);
+}
+
+.recent-reta-card .riviera-badge--mode-duelo {
+  background: rgba(251, 146, 60, 0.12);
+  color: #fdba74;
+  border-color: rgba(251, 146, 60, 0.35);
+}
+
+.recent-reta-card .riviera-badge--mode-torneo {
+  background: rgba(167, 139, 250, 0.12);
+  color: #c4b5fd;
+  border-color: rgba(167, 139, 250, 0.35);
 }
 
 .recent-reta-card .riviera-badge--active {

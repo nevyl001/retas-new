@@ -4,6 +4,7 @@ import { Button } from "./ui";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { continueTournament } from "../lib/tournamentRouting";
 import { TournamentWinner } from "../lib/tournamentWinner";
+import type { TeamWinnerCelebrateStats } from "../lib/teamWinnerCelebrate";
 import { TournamentManager } from "./TournamentManager";
 import TournamentDetails from "./TournamentDetails";
 import { GameModeShell } from "./platform/GameModeShell";
@@ -57,6 +58,8 @@ interface MainLayoutProps {
   isTournamentFinished: boolean;
   winner: Pair | null;
   tournamentWinner: TournamentWinner | null;
+  winningTeamName?: string | null;
+  winningTeamStats?: TeamWinnerCelebrateStats | null;
   onShowWinnerScreen: () => void;
   onBackToHome: () => void;
 }
@@ -95,6 +98,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   isTournamentFinished,
   winner,
   tournamentWinner,
+  winningTeamName,
+  winningTeamStats,
   onShowWinnerScreen,
   onBackToHome,
 }) => {
@@ -193,6 +198,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               isTournamentFinished={isTournamentFinished}
               winner={winner}
               tournamentWinner={tournamentWinner}
+              winningTeamName={winningTeamName}
+              winningTeamStats={winningTeamStats}
               onShowWinnerScreen={onShowWinnerScreen}
               onBackToHome={onBackToHome}
             />

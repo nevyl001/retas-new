@@ -395,6 +395,10 @@
 .riviera-organizer-reta .omc-team-row__info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
 }
 
 .riviera-organizer-reta .omc-team-label {
@@ -469,6 +473,23 @@
   color: var(--ro-gold-light, #e8c547);
   font-size: 34px;
   font-weight: 500;
+}
+
+.riviera-organizer-reta .omc-team-row--winner .team-badge--a,
+.riviera-organizer-reta .omc-team-row--winner .team-badge--b {
+  color: #fff;
+  background: rgba(0, 0, 0, 0.32);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.riviera-organizer-reta .omc-team-row--tie .team-badge {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-secondary);
+}
+
+.riviera-organizer-reta .omc-team-row--loser .team-badge {
+  opacity: 0.92;
 }
 
 .riviera-organizer-reta .omc-team-row--tie {
@@ -620,10 +641,45 @@
 
 .riviera-organizer-reta .omc-register__scores {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.riviera-organizer-reta .omc-register__side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  max-width: 9.5rem;
+}
+
+.riviera-organizer-reta .omc-register__pair-id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 100%;
+  text-align: center;
+}
+
+.riviera-organizer-reta .omc-register__pair-name {
+  display: block;
+  max-width: 100%;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.riviera-organizer-reta .omc-register__team-badge {
+  max-width: 100%;
 }
 
 .riviera-organizer-reta .omc-register__input {
@@ -960,6 +1016,41 @@
   margin: 0.2rem 0 0;
   font-size: 1rem;
   color: #fff;
+}
+
+.matches-team-winner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  margin: 0.85rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--ro-gold-border, rgba(201, 162, 39, 0.32));
+  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.1));
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.matches-team-winner__icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.matches-team-winner__label {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.matches-team-winner__name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--ro-gold-light, var(--accent-gold));
+  letter-spacing: 0.02em;
 }
 
 .rr-championship--public {

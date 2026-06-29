@@ -1,14 +1,22 @@
 import React from "react";
 import { Pair } from "../lib/database";
+import { TeamBadge } from "./teams/TeamBadge";
+import {
+  getPairTeamIndex,
+  getPairTeamName,
+  type TeamConfigLike,
+} from "../lib/teamConfigDisplay";
 
 interface PairsDisplayProps {
   pairs: Pair[];
   pairStats: Map<string, { sets: number; matches: number; points: number }>;
+  teamConfig?: TeamConfigLike | null;
 }
 
 export const PairsDisplay: React.FC<PairsDisplayProps> = ({
   pairs,
   pairStats,
+  teamConfig = null,
 }) => {
   if (pairs.length === 0) return null;
 
@@ -26,7 +34,11 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
 
       {/* Grid de Parejas Compacto */}
       <div className="compact-pairs-grid">
-        {pairs.map((pair, index) => (
+        {pairs.map((pair, index) => {
+          const teamName = getPairTeamName(pair.id, teamConfig);
+          const teamIndex = getPairTeamIndex(pair.id, teamConfig);
+
+          return (
           <div
             key={pair.id}
             className="compact-pair-card"
@@ -37,6 +49,13 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
 
             {/* Información de la Pareja */}
             <div className="compact-pair-info">
+              {teamName ? (
+                <TeamBadge
+                  name={teamName}
+                  teamIndex={teamIndex ?? undefined}
+                  className="compact-pair-team"
+                />
+              ) : null}
               <div className="compact-pair-names">
                 {pair.player1?.name || "Jugador 1"} /{" "}
                 {pair.player2?.name || "Jugador 2"}
@@ -72,7 +91,8 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
               <div className="compact-particle"></div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
     </div>
   );

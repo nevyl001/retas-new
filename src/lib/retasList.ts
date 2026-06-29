@@ -1,7 +1,12 @@
 import { GAME_MODES } from "../components/home/gameModesConfig";
 import { getDuelos2v2 } from "../services/duelo2v2Service";
 import type { Duelo2v2 } from "./duelo2v2/types";
-import { getTournaments, Tournament } from "./database";
+import {
+  getTournaments,
+  getTournamentsPublicConfigsByIds,
+  mergeTournamentWithPublicConfig,
+  Tournament,
+} from "./database";
 import { filterRetasForHomeDisplay } from "./gameModeMapping";
 import {
   formatTournamentCourtsLabel,
@@ -30,8 +35,16 @@ export async function loadUserRetasForHome(userId: string): Promise<HomeRetaItem
     getDuelos2v2().catch(() => [] as Duelo2v2[]),
   ]);
 
+  const homeTournaments = filterRetasForHomeDisplay(tournaments ?? []);
+  const publicConfigs = await getTournamentsPublicConfigsByIds(
+    homeTournaments.map((tournament) => tournament.id)
+  );
+  const enrichedTournaments = homeTournaments.map((tournament) =>
+    mergeTournamentWithPublicConfig(tournament, publicConfigs.get(tournament.id))
+  );
+
   const items: HomeRetaItem[] = [
-    ...filterRetasForHomeDisplay(tournaments ?? []).map((tournament) => ({
+    ...enrichedTournaments.map((tournament) => ({
       kind: "tournament" as const,
       tournament,
     })),
@@ -81,7 +94,7 @@ export function getRetaModeBadge(item: HomeRetaItem): {
 } {
   if (item.kind === "duelo-2v2") {
     const config = GAME_MODES.find((m) => m.id === "duelo-2v2");
-    return { variant: "mode-torneo", label: config?.title ?? "Duelo 2 vs 2" };
+    return { variant: "mode-duelo", label: config?.title ?? "Duelo 2 vs 2" };
   }
   return getTournamentModeBadge(item.tournament);
 }

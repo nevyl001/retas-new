@@ -1,0 +1,69 @@
+.team-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-badge--a {
+  color: var(--ro-gold-light, #e8c547);
+  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.14));
+  border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
+}
+
+.team-badge--b {
+  color: #c8d4e8;
+  background: rgba(120, 150, 200, 0.14);
+  border-color: rgba(140, 170, 220, 0.35);
+}
+
+.team-badge--neutral {
+  color: var(--text-secondary, #a0a0a0);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.compact-pair-team {
+  align-self: flex-start;
+  margin-bottom: 0.15rem;
+}
+
+.omc-team-badge {
+  margin-bottom: 0.2rem;
+  font-size: 0.68rem;
+  padding: 0.22rem 0.6rem;
+}
+
+.omc-register__team-badge {
+  max-width: 100%;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.65rem;
+}
+
+.omc-register__pair-name {
+  font-weight: 600;
+}
+
+.te-pub-pair__team {
+  margin-bottom: 0.4rem;
+}
+
+.te-pub-pair--right .te-pub-pair__team {
+  align-self: flex-end;
+}
+
+.te-pub-pair--left .te-pub-pair__team {
+  align-self: flex-start;
+}
