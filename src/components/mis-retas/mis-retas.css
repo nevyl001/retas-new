@@ -340,16 +340,40 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   font-size: 0.95rem;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: border-color var(--transition-fast), color var(--transition-fast),
     background var(--transition-fast);
+}
+
+.mis-retas-page .mis-reta-card__delete:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.mis-retas-page .mis-reta-card__delete-spinner {
+  animation: mis-reta-delete-spin 0.8s linear infinite;
+}
+
+@keyframes mis-reta-delete-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mis-retas-page .mis-reta-card--deleting {
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .mis-retas-page .riviera-btn-danger-icon:hover {

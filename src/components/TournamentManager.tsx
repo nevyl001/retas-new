@@ -46,6 +46,16 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [filter, setFilter] = useState<RetaFilterId>("all");
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(() => new Set());
+
+  const reloadRetas = async () => {
+    if (!user?.id) {
+      setRetas([]);
+      return;
+    }
+    const data = await loadUserRetasForHome(user.id);
+    setRetas(data);
+  };
 
   useEffect(() => {
     if (!user?.id) {
@@ -113,12 +123,15 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     }
 
     const id = getRetaId(item);
+    if (deletingIds.has(id)) return;
+
+    setDeletingIds((prev) => new Set(prev).add(id));
+    setError("");
+    setRetas((prev) => prev.filter((r) => getRetaId(r) !== id));
 
     try {
-      setError("");
       if (item.kind === "duelo-2v2") {
         await deleteDuelo2v2(id);
-        setRetas(retas.filter((r) => getRetaId(r) !== id));
         return;
       }
 
@@ -143,16 +156,23 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         }
       }
       await deleteTournament(id);
-      setRetas(retas.filter((r) => getRetaId(r) !== id));
       if (selectedTournament?.id === id) {
-        const remaining = retas
-          .filter((r) => getRetaId(r) !== id)
-          .find((r) => r.kind === "tournament");
-        onTournamentSelect(remaining?.kind === "tournament" ? remaining.tournament : null);
+        onTournamentSelect(null);
       }
     } catch (err) {
-      setError("Error al eliminar la reta");
+      setError("Error al eliminar la reta. Se actualizó la lista.");
       console.error(err);
+      try {
+        await reloadRetas();
+      } catch (reloadErr) {
+        console.error("Error al recargar retas tras fallo de borrado:", reloadErr);
+      }
+    } finally {
+      setDeletingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -185,8 +205,8 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           console.warn("syncRetaParticipaciones:", syncErr);
         }
       }
-      setRetas(
-        retas.map((item) =>
+      setRetas((prev) =>
+        prev.map((item) =>
           item.kind === "tournament" && item.tournament.id === tournament.id
             ? { ...item, tournament: { ...item.tournament, is_finished: true } }
             : item
@@ -280,6 +300,8 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
               item.kind === "tournament"
                 ? item.tournament.is_started && !item.tournament.is_finished
                 : item.duelo.estado === "en_juego";
+            const retaId = getRetaId(item);
+            const isDeleting = deletingIds.has(retaId);
             const statusCardClass = finished
               ? "mis-reta-card--status-finished"
               : active
@@ -289,22 +311,26 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
             return (
               <Card
-                key={`${item.kind}-${getRetaId(item)}`}
+                key={`${item.kind}-${retaId}`}
                 as="article"
                 variant="glass"
-                interactive
+                interactive={!isDeleting}
                 className={`mis-reta-card ${statusCardClass}${
                   isSelected ? " mis-reta-card--selected" : ""
-                }`}
-                onClick={() => handleOpenReta(item)}
+                }${isDeleting ? " mis-reta-card--deleting" : ""}`}
+                onClick={() => {
+                  if (!isDeleting) handleOpenReta(item);
+                }}
                 onKeyDown={(e) => {
+                  if (isDeleting) return;
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     handleOpenReta(item);
                   }
                 }}
                 role="button"
-                tabIndex={0}
+                tabIndex={isDeleting ? -1 : 0}
+                aria-busy={isDeleting}
               >
                 <div className="mis-reta-card__badges">
                   <Badge variant={mode.variant}>{mode.label}</Badge>
@@ -359,14 +385,23 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                       )}
                     <button
                       type="button"
-                      className="riviera-btn-danger-icon"
+                      className="riviera-btn-danger-icon mis-reta-card__delete"
                       aria-label="Eliminar reta"
+                      disabled={isDeleting || loading}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                      }}
                       onClick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         void handleDeleteReta(item);
                       }}
                     >
-                      🗑
+                      {isDeleting ? (
+                        <TablerIcon name="loader-2" size={18} className="mis-reta-card__delete-spinner" />
+                      ) : (
+                        "🗑"
+                      )}
                     </button>
                   </div>
                 </footer>
