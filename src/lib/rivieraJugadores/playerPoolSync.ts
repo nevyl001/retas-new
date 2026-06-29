@@ -1,4 +1,5 @@
 import type { Player } from "../db/types";
+import { isValidUuid, sanitizeUuid } from "../db/schemaHelpers";
 import { insertLegacyPlayer } from "../database";
 import { supabase } from "../supabaseClient";
 import {
@@ -305,24 +306,27 @@ export async function syncLegacyPlayersFromRivieraRegistry(
   lastLegacySyncAt[organizadorId] = now;
 }
 
-async function fetchLigaJugadorById(id: string): Promise<LigaJugador | null> {
+async function fetchLigaJugadorById(
+  id: string,
+  organizadorId: string
+): Promise<LigaJugador | null> {
+  const jugadorId = sanitizeUuid(id);
+  if (!jugadorId || !isValidUuid(organizadorId)) return null;
+
   const { data, error } = await supabase
     .from("liga_jugadores")
     .select("*")
-    .eq("id", id)
+    .eq("id", jugadorId)
+    .eq("organizador_id", organizadorId)
     .maybeSingle();
   if (error || !data) return null;
   return data as LigaJugador;
 }
 
-async function findLigaJugadorForRiviera(
-  organizadorId: string,
-  rj: RivieraJugador
-): Promise<LigaJugador | null> {
-  if (rj.legacy_liga_jugador_id) {
-    const linked = await fetchLigaJugadorById(rj.legacy_liga_jugador_id);
-    if (linked && linked.estado === "activo") return linked;
-  }
+async function loadActiveLigaJugadoresRows(
+  organizadorId: string
+): Promise<LigaJugador[]> {
+  if (!isValidUuid(organizadorId)) return [];
 
   const { data, error } = await supabase
     .from("liga_jugadores")
@@ -331,9 +335,22 @@ async function findLigaJugadorForRiviera(
     .eq("estado", "activo")
     .order("nombre");
 
-  if (error) return null;
+  if (error) return [];
+  return (data ?? []) as LigaJugador[];
+}
 
-  const pool = (data ?? []) as LigaJugador[];
+async function findLigaJugadorForRiviera(
+  organizadorId: string,
+  rj: RivieraJugador,
+  activePool?: LigaJugador[]
+): Promise<LigaJugador | null> {
+  const legacyLigaId = sanitizeUuid(rj.legacy_liga_jugador_id);
+  if (legacyLigaId) {
+    const linked = await fetchLigaJugadorById(legacyLigaId, organizadorId);
+    if (linked && linked.estado === "activo") return linked;
+  }
+
+  const pool = activePool ?? (await loadActiveLigaJugadoresRows(organizadorId));
   const nameKey = normalizeName(rj.nombre);
 
   if (isRealEmail(rj.email)) {
@@ -349,12 +366,20 @@ async function findLigaJugadorForRiviera(
 /** Crea o enlaza un registro en `liga_jugadores` para el mismo perfil Riviera. */
 export async function ensureLigaJugadorForRivieraJugador(
   organizadorId: string,
-  rj: RivieraJugador
+  rj: RivieraJugador,
+  activePool?: LigaJugador[]
 ): Promise<LigaJugador | null> {
+  if (!isValidUuid(organizadorId) || !isValidUuid(rj.id)) return null;
+
   try {
-    const existing = await findLigaJugadorForRiviera(organizadorId, rj);
+    const existing = await findLigaJugadorForRiviera(
+      organizadorId,
+      rj,
+      activePool
+    );
     if (existing) {
-      if (rj.legacy_liga_jugador_id !== existing.id) {
+      const linkedLegacyId = sanitizeUuid(rj.legacy_liga_jugador_id);
+      if (linkedLegacyId !== existing.id) {
         await linkLegacyLigaJugadorId(rj.id, existing.id);
       }
       const nombre = rj.nombre.trim();
@@ -377,12 +402,9 @@ export async function ensureLigaJugadorForRivieraJugador(
 
     const nameKey = normalizeName(rj.nombre);
     if (nameKey) {
-      const { data: sameNameRows } = await supabase
-        .from("liga_jugadores")
-        .select("*")
-        .eq("organizador_id", organizadorId)
-        .eq("estado", "activo");
-      const sameName = ((sameNameRows ?? []) as LigaJugador[]).filter(
+      const pool =
+        activePool ?? (await loadActiveLigaJugadoresRows(organizadorId));
+      const sameName = pool.filter(
         (j) => normalizeName(j.nombre) === nameKey
       );
       if (sameName.length > 0) {
@@ -392,6 +414,9 @@ export async function ensureLigaJugadorForRivieraJugador(
         );
         const linked = sameName.find((j) => j.id === canonicalId) ?? sameName[0]!;
         await linkLegacyLigaJugadorId(rj.id, linked.id);
+        if (activePool && !activePool.some((j) => j.id === linked.id)) {
+          activePool.push(linked);
+        }
         return linked;
       }
     }
@@ -413,6 +438,7 @@ export async function ensureLigaJugadorForRivieraJugador(
     if (error) throw error;
     const created = row as LigaJugador;
     await linkLegacyLigaJugadorId(rj.id, created.id);
+    if (activePool) activePool.push(created);
     return created;
   } catch (e) {
     console.warn("ensureLigaJugadorForRivieraJugador:", rj.nombre, e);
@@ -424,7 +450,11 @@ async function pickCanonicalLigaJugadorId(
   organizadorId: string,
   group: LigaJugador[]
 ): Promise<string> {
-  const ids = group.map((g) => g.id);
+  const ids = group
+    .map((g) => sanitizeUuid(g.id))
+    .filter((id): id is string => !!id);
+  if (!ids.length) return group[0]!.id;
+
   const { data: rivieraLinks } = await supabase
     .from("riviera_jugadores")
     .select("legacy_liga_jugador_id")
@@ -447,10 +477,14 @@ async function migrateLigaInscripciones(
   fromId: string,
   toId: string
 ): Promise<void> {
+  const from = sanitizeUuid(fromId);
+  const to = sanitizeUuid(toId);
+  if (!from || !to) return;
+
   const { data: rows, error } = await supabase
     .from("liga_inscripciones")
     .select("id, liga_id, puntos")
-    .eq("jugador_id", fromId);
+    .eq("jugador_id", from);
 
   if (error) throw error;
 
@@ -459,7 +493,7 @@ async function migrateLigaInscripciones(
       .from("liga_inscripciones")
       .select("id, puntos")
       .eq("liga_id", row.liga_id)
-      .eq("jugador_id", toId)
+      .eq("jugador_id", to)
       .maybeSingle();
 
     if (existing) {
@@ -475,7 +509,7 @@ async function migrateLigaInscripciones(
     } else {
       await supabase
         .from("liga_inscripciones")
-        .update({ jugador_id: toId })
+        .update({ jugador_id: to })
         .eq("id", row.id);
     }
   }
@@ -485,24 +519,32 @@ async function migrateLigaJornadaParejas(
   fromId: string,
   toId: string
 ): Promise<void> {
+  const from = sanitizeUuid(fromId);
+  const to = sanitizeUuid(toId);
+  if (!from || !to) return;
+
   await supabase
     .from("liga_jornada_parejas")
-    .update({ jugador1_id: toId })
-    .eq("jugador1_id", fromId);
+    .update({ jugador1_id: to })
+    .eq("jugador1_id", from);
   await supabase
     .from("liga_jornada_parejas")
-    .update({ jugador2_id: toId })
-    .eq("jugador2_id", fromId);
+    .update({ jugador2_id: to })
+    .eq("jugador2_id", from);
 }
 
 async function relinkRivieraLegacyLigaId(
   fromId: string,
   toId: string
 ): Promise<void> {
+  const from = sanitizeUuid(fromId);
+  const to = sanitizeUuid(toId);
+  if (!from || !to) return;
+
   await supabase
     .from("riviera_jugadores")
-    .update({ legacy_liga_jugador_id: toId })
-    .eq("legacy_liga_jugador_id", fromId);
+    .update({ legacy_liga_jugador_id: to })
+    .eq("legacy_liga_jugador_id", from);
 }
 
 /** Fusiona filas duplicadas en `liga_jugadores` (mismo nombre, mismo organizador). */
@@ -561,15 +603,127 @@ export async function syncLigaJugadoresFromRivieraRegistry(
   }
 
   const registry = await listRivieraJugadores(organizadorId);
+  const activePool = await loadActiveLigaJugadoresRows(organizadorId);
   const seenNames = new Set<string>();
   for (const rj of registry) {
     const nameKey = normalizeName(rj.nombre);
     if (!nameKey || seenNames.has(nameKey)) continue;
     seenNames.add(nameKey);
-    await ensureLigaJugadorForRivieraJugador(organizadorId, rj);
+    await ensureLigaJugadorForRivieraJugador(organizadorId, rj, activePool);
   }
   await consolidateDuplicateLigaJugadores(organizadorId);
+  await deactivateOrphanLigaJugadores(organizadorId);
   lastLigaSyncAt[organizadorId] = now;
+}
+
+/** Desactiva filas en liga_jugadores que ya no están en el registro Riviera activo. */
+async function deactivateOrphanLigaJugadores(
+  organizadorId: string
+): Promise<void> {
+  const registry = await listRivieraJugadores(organizadorId);
+  const allowed = new Set(
+    registry
+      .map((r) => sanitizeUuid(r.legacy_liga_jugador_id))
+      .filter((id): id is string => !!id)
+  );
+
+  const { data: activeRows, error } = await supabase
+    .from("liga_jugadores")
+    .select("id")
+    .eq("organizador_id", organizadorId)
+    .eq("estado", "activo");
+
+  if (error) {
+    console.warn("deactivateOrphanLigaJugadores:", error.message);
+    return;
+  }
+
+  const orphanIds = (activeRows ?? [])
+    .map((r) => sanitizeUuid(String(r.id ?? "")))
+    .filter((id): id is string => !!id && !allowed.has(id));
+
+  if (!orphanIds.length) return;
+
+  const { error: upErr } = await supabase
+    .from("liga_jugadores")
+    .update({ estado: "inactivo" })
+    .eq("organizador_id", organizadorId)
+    .in("id", orphanIds);
+
+  if (upErr) {
+    console.warn("deactivateOrphanLigaJugadores update:", upErr.message);
+  }
+}
+
+/** IDs de liga_jugadores enlazados al registro Riviera activo del organizador. */
+export async function getLinkedLigaJugadorIds(
+  organizadorId: string
+): Promise<string[]> {
+  const registry = await listRivieraJugadores(organizadorId);
+  return Array.from(
+    new Set(
+      registry
+        .map((r) => sanitizeUuid(r.legacy_liga_jugador_id))
+        .filter((id): id is string => !!id)
+    )
+  );
+}
+
+/**
+ * Pool autorizado para ligas: solo jugadores activos del organizador
+ * enlazados a su registro Riviera (nunca huérfanos ni de otros usuarios).
+ */
+export async function loadOrganizadorLigaJugadoresPool(
+  organizadorId: string,
+  opts?: { forceSync?: boolean }
+): Promise<LigaJugador[]> {
+  try {
+    await syncLigaJugadoresFromRivieraRegistry(organizadorId, {
+      force: opts?.forceSync ?? false,
+    });
+  } catch (e) {
+    console.warn("loadOrganizadorLigaJugadoresPool sync:", e);
+  }
+
+  const linkedIds = (await getLinkedLigaJugadorIds(organizadorId)).filter(
+    (id) => isValidUuid(id)
+  );
+  if (!linkedIds.length) return [];
+
+  const { data, error } = await supabase
+    .from("liga_jugadores")
+    .select("*")
+    .eq("organizador_id", organizadorId)
+    .eq("estado", "activo")
+    .in("id", linkedIds)
+    .order("nombre", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as LigaJugador[];
+}
+
+/** Rechaza IDs que no pertenezcan al registro activo del organizador. */
+export async function assertLigaJugadoresDelOrganizador(
+  organizadorId: string,
+  jugadorIds: string[]
+): Promise<void> {
+  const unique = Array.from(new Set(jugadorIds.map((id) => id.trim()).filter(Boolean)));
+  if (!unique.length) {
+    throw new Error("Selecciona al menos un jugador.");
+  }
+
+  const pool = await loadOrganizadorLigaJugadoresPool(organizadorId, {
+    forceSync: true,
+  });
+  const allowed = new Set(pool.map((j) => j.id));
+
+  for (const id of unique) {
+    if (!allowed.has(id)) {
+      throw new Error(
+        "El jugador seleccionado no pertenece a tu registro activo."
+      );
+    }
+  }
 }
 
 /** Propaga nombre y contacto del registro Riviera a `players` y `liga_jugadores` enlazados. */
@@ -602,7 +756,8 @@ export async function syncRivieraJugadorToLinkedPools(
     await ensureLegacyPlayerForRivieraJugador(organizadorId, rj);
   }
 
-  if (rj.legacy_liga_jugador_id) {
+  const legacyLigaId = sanitizeUuid(rj.legacy_liga_jugador_id);
+  if (legacyLigaId) {
     try {
       await supabase
         .from("liga_jugadores")
@@ -611,7 +766,7 @@ export async function syncRivieraJugadorToLinkedPools(
           telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
           ...(isRealEmail(rj.email) ? { email: rj.email!.trim() } : {}),
         })
-        .eq("id", rj.legacy_liga_jugador_id)
+        .eq("id", legacyLigaId)
         .eq("organizador_id", organizadorId);
     } catch (e) {
       console.warn("syncRivieraJugadorToLinkedPools liga:", e);

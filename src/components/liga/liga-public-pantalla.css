@@ -48,7 +48,7 @@
 .liga-pantalla__inner {
   position: relative;
   z-index: 2;
-  max-width: 1280px;
+  max-width: 1320px;
   margin: 0 auto;
   padding: 2.5rem var(--liga-space-lg) 2rem;
 }
@@ -104,6 +104,12 @@
   gap: 2rem;
 }
 
+/* Parejas fijas: ranking arriba a ancho completo, jornadas abajo */
+.liga-pantalla__layout--parejas {
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+
 @media (max-width: 960px) {
   .liga-pantalla__layout--liga {
     grid-template-columns: 1fr;
@@ -125,6 +131,50 @@
 .liga-pantalla-ranking--wide {
   position: sticky;
   top: var(--liga-space-md);
+}
+
+.liga-pantalla-ranking--parejas {
+  position: static;
+  padding: 1.5rem 1.35rem;
+}
+
+.liga-pantalla-ranking__scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -0.25rem;
+  padding: 0 0.25rem 0.15rem;
+}
+
+.liga-pantalla-ranking__table {
+  width: 100%;
+  min-width: 720px;
+}
+
+.liga-pantalla-ranking--parejas .liga-pantalla-ranking__name {
+  min-width: 10rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.liga-pantalla-ranking__stat {
+  font-family: var(--liga-pub-font-mono);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--liga-pub-text-muted);
+  width: 2.5rem;
+}
+
+.liga-pantalla-ranking--parejas th:not(:nth-child(2)) {
+  text-align: center;
+  width: 2.5rem;
+}
+
+.liga-pantalla-ranking--parejas .liga-pantalla-ranking__pts {
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--liga-pub-gold-light);
 }
 
 .liga-pantalla-ranking__title {
@@ -209,22 +259,49 @@
   gap: 1rem;
 }
 
+.liga-pantalla-jornadas__grid--parejas {
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.15rem;
+}
+
 @media (max-width: 960px) {
-  .liga-pantalla-jornadas__grid {
+  .liga-pantalla-jornadas__grid,
+  .liga-pantalla-jornadas__grid--parejas {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .liga-pantalla-jornadas__grid--parejas {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 .liga-pantalla-jornada-card {
   background: var(--liga-pub-surface);
   border: 1px solid var(--liga-pub-border-card);
-  border-radius: 4px;
-  padding: 1rem 1.1rem;
+  border-radius: 6px;
+  padding: 1.15rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
   box-shadow: var(--liga-pub-shadow);
   transition: border-color 150ms ease;
+  min-height: 0;
+}
+
+.liga-pantalla-jornada-card__body {
+  flex: 1;
+  min-height: 0;
+}
+
+.liga-pantalla-jornada-card__num {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--liga-pub-text);
 }
 
 .liga-pantalla-jornada-card:hover {
@@ -242,13 +319,95 @@
   gap: var(--liga-space-sm);
 }
 
-.liga-pantalla-jornada-card__num {
+/* Enfrentamientos en tarjetas de jornada (parejas fijas) */
+
+.liga-pantalla-matchups {
+  list-style: none;
   margin: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.liga-pantalla-matchup {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  align-items: center;
+  gap: 0.45rem 0.6rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 4px;
+  background: var(--liga-pub-surface-deep);
+  border: 1px solid var(--liga-pub-border-chip);
+}
+
+.liga-pantalla-matchup__team {
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--liga-pub-text);
+  min-width: 0;
+}
+
+.liga-pantalla-matchup__team:first-of-type {
+  text-align: right;
+}
+
+.liga-pantalla-matchup__team:last-of-type {
+  text-align: left;
+}
+
+.liga-pantalla-matchup__vs {
+  font-size: 0.62rem;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--liga-pub-text);
+  color: var(--liga-pub-text-muted);
+  padding: 0.15rem 0.35rem;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.liga-pantalla-matchup__score {
+  grid-column: 1 / -1;
+  justify-self: center;
+  font-family: var(--liga-pub-font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--liga-pub-gold-light);
+  letter-spacing: 0.06em;
+}
+
+.liga-pantalla-matchup__meta {
+  grid-column: 1 / -1;
+  justify-self: center;
+  font-size: 0.72rem;
+  color: var(--liga-pub-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.liga-pantalla-jornada-card__fecha {
+  font-size: 0.78em;
+  font-weight: 500;
+  color: var(--liga-pub-text-muted);
+}
+
+@media (max-width: 420px) {
+  .liga-pantalla-matchup {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 0.35rem;
+  }
+
+  .liga-pantalla-matchup__team:first-of-type,
+  .liga-pantalla-matchup__team:last-of-type {
+    text-align: center;
+  }
+
+  .liga-pantalla-matchup__vs {
+    justify-self: center;
+  }
 }
 
 /* Badges de estado */
@@ -468,6 +627,15 @@
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--liga-pub-text-muted);
+}
+
+.liga-pantalla-match__sets {
+  margin: 0.35rem 0;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--liga-pub-gold-light);
 }
 
 /* Ganador jornada */

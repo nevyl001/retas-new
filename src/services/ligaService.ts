@@ -4,16 +4,37 @@ import type {
   CreateLigaInput,
   Liga,
   LigaDetalle,
+  LigaEquipo,
   LigaJornada,
   LigaJornadaPareja,
   LigaJugador,
   LigaJugadorPoolItem,
   LigaPartido,
+  LigaVueltas,
   RankingItem,
   UpdateJugadorLigaInput,
 } from "../lib/liga/types";
-import { validateInscripcionesParaCalendario } from "../lib/liga/calendario";
+import {
+  validateEquiposParaCalendario,
+  validateInscripcionesParaCalendario,
+} from "../lib/liga/calendario";
+import {
+  fetchEquiposForLiga,
+  insertJornadasForLigaParejasFijas,
+  recalcularPuntosLigaEquipos,
+  resetPuntosEquiposLiga,
+} from "./ligaParejasFijasService";
 import { dedupeLigaJugadoresByName } from "../lib/liga/dedupeJugadores";
+import { sanitizeUuid } from "../lib/db/schemaHelpers";
+import {
+  computeParejasFijasMatchTotals,
+  parseSetScoresJson,
+  type LigaPartidoSetScore,
+} from "../lib/liga/parejasFijasMatchScore";
+import {
+  normalizeHoraInicio,
+  validateCancha,
+} from "../lib/liga/programacion";
 import { normalizePlayerNameKey } from "../lib/rivieraJugadores/playerNameKey";
 import type { RivieraJugadorCategoria } from "../lib/rivieraJugadores/types";
 
@@ -29,10 +50,18 @@ async function requireUserId(): Promise<string> {
 }
 
 function mapLiga(row: Record<string, unknown>): Liga {
+  const vueltasRaw = Number(row.vueltas ?? 1);
+  const vueltas: LigaVueltas =
+    vueltasRaw === 2 ? 2 : vueltasRaw === 3 ? 3 : 1;
   return {
     id: String(row.id),
     nombre: String(row.nombre),
     estado: row.estado as Liga["estado"],
+    modalidad:
+      row.modalidad === "parejas_fijas"
+        ? "parejas_fijas"
+        : "individual_rotativo",
+    vueltas,
     organizador_id: row.organizador_id ? String(row.organizador_id) : null,
     canchas_disponibles: Number(row.canchas_disponibles ?? 3),
     fecha_inicio: row.fecha_inicio ? String(row.fecha_inicio) : null,
@@ -42,6 +71,8 @@ function mapLiga(row: Record<string, unknown>): Liga {
       row.inscripciones_count != null
         ? Number(row.inscripciones_count)
         : undefined,
+    equipos_count:
+      row.equipos_count != null ? Number(row.equipos_count) : undefined,
   };
 }
 
@@ -133,6 +164,8 @@ export function buildPartidosRoundRobin(
 
 export async function createLiga(data: CreateLigaInput): Promise<Liga> {
   const uid = await requireUserId();
+  const modalidad = data.modalidad ?? "individual_rotativo";
+  const vueltas = data.vueltas ?? 1;
   const { data: row, error } = await supabase
     .from("ligas")
     .insert({
@@ -141,6 +174,8 @@ export async function createLiga(data: CreateLigaInput): Promise<Liga> {
       canchas_disponibles: data.canchas_disponibles ?? 3,
       fecha_inicio: data.fecha_inicio ?? null,
       fecha_fin: data.fecha_fin ?? null,
+      modalidad,
+      vueltas,
     })
     .select()
     .single();
@@ -161,12 +196,16 @@ export async function getLigas(): Promise<Liga[]> {
   if (!ligas?.length) return [];
 
   const ids = ligas.map((l) => l.id);
-  const { data: counts, error: cErr } = await supabase
-    .from("liga_inscripciones")
-    .select("liga_id")
-    .in("liga_id", ids);
+  const [{ data: counts, error: cErr }, { data: equipoCounts, error: eErr }] =
+    await Promise.all([
+      supabase.from("liga_inscripciones").select("liga_id").in("liga_id", ids),
+      supabase.from("liga_equipos").select("liga_id").in("liga_id", ids),
+    ]);
 
   if (cErr) throw new Error(cErr.message);
+  if (eErr && !eErr.message.includes("liga_equipos")) {
+    throw new Error(eErr.message);
+  }
 
   const countMap = new Map<string, number>();
   for (const row of counts ?? []) {
@@ -174,10 +213,17 @@ export async function getLigas(): Promise<Liga[]> {
     countMap.set(lid, (countMap.get(lid) ?? 0) + 1);
   }
 
+  const equiposMap = new Map<string, number>();
+  for (const row of equipoCounts ?? []) {
+    const lid = String(row.liga_id);
+    equiposMap.set(lid, (equiposMap.get(lid) ?? 0) + 1);
+  }
+
   return ligas.map((l) =>
     mapLiga({
       ...l,
       inscripciones_count: countMap.get(String(l.id)) ?? 0,
+      equipos_count: equiposMap.get(String(l.id)) ?? 0,
     } as Record<string, unknown>)
   );
 }
@@ -195,6 +241,7 @@ export async function getLigaById(ligaId: string): Promise<LigaDetalle> {
   const [
     { data: inscripciones, error: iErr },
     { data: jornadas, error: jErr },
+    equipos,
   ] = await Promise.all([
     supabase
       .from("liga_inscripciones")
@@ -205,6 +252,7 @@ export async function getLigaById(ligaId: string): Promise<LigaDetalle> {
       .select("*")
       .eq("liga_id", ligaId)
       .order("numero", { ascending: true }),
+    fetchEquiposForLiga(ligaId).catch(() => [] as LigaEquipo[]),
   ]);
 
   if (iErr) throw new Error(iErr.message);
@@ -238,12 +286,17 @@ export async function getLigaById(ligaId: string): Promise<LigaDetalle> {
         jugadoresById.set(j.id, j);
       }
     }
+    for (const eq of equipos) {
+      if (eq.jugador1) jugadoresById.set(eq.jugador1.id, eq.jugador1);
+      if (eq.jugador2) jugadoresById.set(eq.jugador2.id, eq.jugador2);
+    }
 
     parejas = (pRows ?? []).map((p) => ({
       id: String(p.id),
       jornada_id: String(p.jornada_id),
       jugador1_id: String(p.jugador1_id),
       jugador2_id: String(p.jugador2_id),
+      equipo_id: p.equipo_id ? String(p.equipo_id) : null,
       jugador1: jugadoresById.get(String(p.jugador1_id)),
       jugador2: jugadoresById.get(String(p.jugador2_id)),
     }));
@@ -255,7 +308,13 @@ export async function getLigaById(ligaId: string): Promise<LigaDetalle> {
       pareja2_id: String(m.pareja2_id),
       score_pareja1: m.score_pareja1 != null ? Number(m.score_pareja1) : null,
       score_pareja2: m.score_pareja2 != null ? Number(m.score_pareja2) : null,
+      set_scores: parseSetScoresJson(
+        (m as { set_scores?: unknown }).set_scores
+      ),
       cancha: m.cancha != null ? Number(m.cancha) : null,
+      hora_inicio: (m as { hora_inicio?: string | null }).hora_inicio
+        ? String((m as { hora_inicio?: string | null }).hora_inicio)
+        : null,
       ronda: Number(m.ronda),
       estado: m.estado as LigaPartido["estado"],
       created_at: String(m.created_at),
@@ -291,6 +350,11 @@ export async function getLigaById(ligaId: string): Promise<LigaDetalle> {
     partidosByJornada.set(m.jornada_id, list);
   }
 
+  for (const eq of equipos) {
+    if (eq.jugador1) jugadorMap.set(eq.jugador1.id, eq.jugador1);
+    if (eq.jugador2) jugadorMap.set(eq.jugador2.id, eq.jugador2);
+  }
+
   const jornadasDetalle: LigaJornada[] = (jornadas ?? []).map((j) => ({
     id: String(j.id),
     liga_id: String(j.liga_id),
@@ -308,6 +372,7 @@ export async function getLigaById(ligaId: string): Promise<LigaDetalle> {
   return {
     ...mapLiga(liga as Record<string, unknown>),
     inscripciones: insc,
+    equipos,
     jugadores: Array.from(jugadorMap.values()),
     jornadas: jornadasDetalle,
   };
@@ -355,7 +420,7 @@ export async function updateJugadorLiga(
   jugadorId: string,
   data: UpdateJugadorLigaInput
 ): Promise<LigaJugador> {
-  await requireUserId();
+  const uid = await requireUserId();
   const patch: Record<string, unknown> = {};
   if (data.nombre !== undefined) patch.nombre = data.nombre.trim();
   if (data.email !== undefined) patch.email = data.email?.trim() || null;
@@ -371,6 +436,7 @@ export async function updateJugadorLiga(
     .from("liga_jugadores")
     .update(patch)
     .eq("id", jugadorId)
+    .eq("organizador_id", uid)
     .select()
     .single();
 
@@ -522,8 +588,22 @@ export async function deleteLiga(ligaId: string): Promise<void> {
 /** Borra jornadas, puntos y vuelve la liga a «upcoming». */
 export async function resetLiga(ligaId: string): Promise<void> {
   await requireUserId();
+
+  const { data: liga, error: lErr } = await supabase
+    .from("ligas")
+    .select("modalidad")
+    .eq("id", ligaId)
+    .maybeSingle();
+
+  if (lErr) throw new Error(lErr.message);
+
   await deleteAllJornadasLiga(ligaId);
-  await resetPuntosLiga(ligaId);
+
+  if (liga?.modalidad === "parejas_fijas") {
+    await resetPuntosEquiposLiga(ligaId);
+  } else {
+    await resetPuntosLiga(ligaId);
+  }
 
   const { error } = await supabase
     .from("ligas")
@@ -544,16 +624,33 @@ export async function regenerarCalendarioLiga(
 ): Promise<void> {
   await requireUserId();
   const detalle = await getLigaById(ligaId);
-  const playerIds = detalle.inscripciones.map((i) => i.jugador_id);
 
-  validateInscripcionesParaCalendario(playerIds.length);
-  await deleteAllJornadasLiga(ligaId);
+  if (detalle.modalidad === "parejas_fijas") {
+    validateEquiposParaCalendario(detalle.equipos.length);
+    await deleteAllJornadasLiga(ligaId);
 
-  if (options?.resetPuntos) {
-    await resetPuntosLiga(ligaId);
+    if (options?.resetPuntos) {
+      await resetPuntosEquiposLiga(ligaId);
+    }
+
+    await insertJornadasForLigaParejasFijas(
+      ligaId,
+      detalle.equipos,
+      detalle.vueltas,
+      detalle.canchas_disponibles
+    );
+  } else {
+    const playerIds = detalle.inscripciones.map((i) => i.jugador_id);
+
+    validateInscripcionesParaCalendario(playerIds.length);
+    await deleteAllJornadasLiga(ligaId);
+
+    if (options?.resetPuntos) {
+      await resetPuntosLiga(ligaId);
+    }
+
+    await insertJornadasForLiga(ligaId, playerIds);
   }
-
-  await insertJornadasForLiga(ligaId, playerIds);
 
   const today = new Date().toISOString().slice(0, 10);
   const { error } = await supabase
@@ -607,32 +704,59 @@ async function enrichLigaJugadoresWithCategoria(
 
 export async function getJugadoresOrganizador(): Promise<LigaJugadorPoolItem[]> {
   const uid = await requireUserId();
-  try {
-    const { syncLigaJugadoresFromRivieraRegistry } = await import(
-      "../lib/rivieraJugadores/playerPoolSync"
-    );
-    await syncLigaJugadoresFromRivieraRegistry(uid);
-  } catch (syncErr) {
-    console.warn("Riviera → liga_jugadores sync skipped:", syncErr);
-  }
-  const { data, error } = await supabase
-    .from("liga_jugadores")
-    .select("*")
-    .eq("organizador_id", uid)
-    .eq("estado", "activo")
-    .order("nombre", { ascending: true });
+  const { loadOrganizadorLigaJugadoresPool } = await import(
+    "../lib/rivieraJugadores/playerPoolSync"
+  );
+  const { listRivieraJugadores } = await import(
+    "../lib/rivieraJugadores/rivieraJugadoresService"
+  );
 
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []).map((r) => mapJugador(r as Record<string, unknown>));
-  const deduped = dedupeLigaJugadoresByName(rows);
-  return enrichLigaJugadoresWithCategoria(uid, deduped);
+  const rows = await loadOrganizadorLigaJugadoresPool(uid);
+  if (!rows.length) return [];
+
+  const registry = await listRivieraJugadores(uid);
+
+  const linkedIds = rows.map((j) => j.id);
+  const categoriaByLigaId = new Map<string, RivieraJugadorCategoria>();
+  for (const rj of registry) {
+    const lid = sanitizeUuid(rj.legacy_liga_jugador_id);
+    if (lid && rj.categoria) {
+      categoriaByLigaId.set(lid, rj.categoria);
+    }
+  }
+
+  const deduped = dedupeLigaJugadoresByName(rows, {
+    rivieraLinkedIds: linkedIds,
+  });
+
+  const enriched = await enrichLigaJugadoresWithCategoria(uid, deduped);
+  return enriched.map((j) => ({
+    ...j,
+    categoria: categoriaByLigaId.get(j.id) ?? j.categoria,
+  }));
 }
 
 export async function inscribirJugador(
   ligaId: string,
   jugadorId: string
 ): Promise<void> {
-  await requireUserId();
+  const uid = await requireUserId();
+
+  const { data: liga, error: lErr } = await supabase
+    .from("ligas")
+    .select("organizador_id")
+    .eq("id", ligaId)
+    .maybeSingle();
+
+  if (lErr) throw new Error(lErr.message);
+  if (!liga || liga.organizador_id !== uid) {
+    throw new Error("No tienes permiso para inscribir en esta liga.");
+  }
+
+  const { assertLigaJugadoresDelOrganizador } = await import(
+    "../lib/rivieraJugadores/playerPoolSync"
+  );
+  await assertLigaJugadoresDelOrganizador(uid, [jugadorId]);
 
   const { data: existing } = await supabase
     .from("liga_inscripciones")
@@ -652,7 +776,6 @@ export async function inscribirJugador(
 
   if (error) throw new Error(error.message);
 
-  const uid = await requireUserId();
   void import("../lib/rivieraJugadores/syncParticipaciones")
     .then(({ syncLigaInscripcionRanking }) =>
       syncLigaInscripcionRanking(ligaId, jugadorId, uid)
@@ -689,8 +812,18 @@ export async function startLiga(ligaId: string): Promise<void> {
     );
   }
 
-  const playerIds = detalle.inscripciones.map((i) => i.jugador_id);
-  await insertJornadasForLiga(ligaId, playerIds);
+  if (detalle.modalidad === "parejas_fijas") {
+    validateEquiposParaCalendario(detalle.equipos.length);
+    await insertJornadasForLigaParejasFijas(
+      ligaId,
+      detalle.equipos,
+      detalle.vueltas,
+      detalle.canchas_disponibles
+    );
+  } else {
+    const playerIds = detalle.inscripciones.map((i) => i.jugador_id);
+    await insertJornadasForLiga(ligaId, playerIds);
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const { error: uErr } = await supabase
@@ -879,6 +1012,41 @@ export async function startJornada(jornadaId: string): Promise<void> {
     throw new Error("Esta jornada ya fue iniciada o finalizada.");
   }
 
+  const ligaRow = jornada.liga as {
+    canchas_disponibles?: number;
+    modalidad?: string;
+  };
+  const modalidad = ligaRow?.modalidad ?? "individual_rotativo";
+
+  if (modalidad === "parejas_fijas") {
+    const { data: existing, error: exErr } = await supabase
+      .from("liga_partidos")
+      .select("id")
+      .eq("jornada_id", jornadaId);
+
+    if (exErr) throw new Error(exErr.message);
+    if (!existing?.length) {
+      throw new Error("No hay partidos programados para esta jornada.");
+    }
+
+    const { error: actErr } = await supabase
+      .from("liga_partidos")
+      .update({ estado: "in_progress" })
+      .eq("jornada_id", jornadaId)
+      .eq("ronda", 1)
+      .eq("estado", "upcoming");
+
+    if (actErr) throw new Error(actErr.message);
+
+    const { error: uErr } = await supabase
+      .from("liga_jornadas")
+      .update({ estado: "in_progress" })
+      .eq("id", jornadaId);
+
+    if (uErr) throw new Error(uErr.message);
+    return;
+  }
+
   const { data: parejas, error: pErr } = await supabase
     .from("liga_jornada_parejas")
     .select("id")
@@ -891,8 +1059,7 @@ export async function startJornada(jornadaId: string): Promise<void> {
     );
   }
 
-  const liga = jornada.liga as { canchas_disponibles?: number };
-  const canchas = Math.max(1, Number(liga?.canchas_disponibles ?? 3));
+  const canchas = Math.max(1, Number(ligaRow?.canchas_disponibles ?? 3));
 
   const { data: existing } = await supabase
     .from("liga_partidos")
@@ -1023,6 +1190,192 @@ export async function updateScore(
   }
 }
 
+/** Resultado al mejor de 3 sets (parejas fijas): sets 1-2 normales, set 3 super tie-break a 10. */
+export async function updateScoreParejasFijas(
+  partidoId: string,
+  sets: LigaPartidoSetScore[],
+  force = false
+): Promise<void> {
+  const organizadorId = await requireUserId();
+  const totals = computeParejasFijasMatchTotals(sets);
+
+  const { data: partido, error: pErr } = await supabase
+    .from("liga_partidos")
+    .select("*")
+    .eq("id", partidoId)
+    .maybeSingle();
+
+  if (pErr) throw new Error(pErr.message);
+  if (!partido) throw new Error("Partido no encontrado.");
+
+  if (partido.estado === "completed" && !force) {
+    throw new Error(
+      "Este partido ya tiene resultado. Confirma para sobrescribir."
+    );
+  }
+
+  const { error: uErr } = await supabase
+    .from("liga_partidos")
+    .update({
+      score_pareja1: totals.gamesP1,
+      score_pareja2: totals.gamesP2,
+      set_scores: { sets },
+      estado: "completed",
+    })
+    .eq("id", partidoId);
+
+  if (uErr) throw new Error(uErr.message);
+
+  void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
+    ({ aplicarRatingLigaPartido }) =>
+      aplicarRatingLigaPartido(partidoId, organizadorId).catch((e) =>
+        console.warn("[rating] liga:", e)
+      )
+  );
+
+  const jornadaId = String(partido.jornada_id);
+  const ronda = Number(partido.ronda);
+
+  const { data: rondaPartidos, error: rErr } = await supabase
+    .from("liga_partidos")
+    .select("id, estado")
+    .eq("jornada_id", jornadaId)
+    .eq("ronda", ronda);
+
+  if (rErr) throw new Error(rErr.message);
+
+  const rondaCompleta = (rondaPartidos ?? []).every(
+    (p) => p.estado === "completed"
+  );
+
+  if (!rondaCompleta) return;
+
+  const { data: nextRonda } = await supabase
+    .from("liga_partidos")
+    .select("id")
+    .eq("jornada_id", jornadaId)
+    .eq("ronda", ronda + 1)
+    .limit(1);
+
+  if (nextRonda?.length) {
+    const { error: actErr } = await supabase
+      .from("liga_partidos")
+      .update({ estado: "in_progress" })
+      .eq("jornada_id", jornadaId)
+      .eq("ronda", ronda + 1)
+      .eq("estado", "upcoming");
+
+    if (actErr) throw new Error(actErr.message);
+    return;
+  }
+
+  const { data: jornadaRow, error: jRowErr } = await supabase
+    .from("liga_jornadas")
+    .select("liga_id")
+    .eq("id", jornadaId)
+    .maybeSingle();
+
+  if (jRowErr) throw new Error(jRowErr.message);
+
+  const { data: allPartidos, error: aErr } = await supabase
+    .from("liga_partidos")
+    .select("estado")
+    .eq("jornada_id", jornadaId);
+
+  if (aErr) throw new Error(aErr.message);
+
+  const jornadaLista = allPartidos ?? [];
+  const jornadaCompleta =
+    jornadaLista.length > 0 &&
+    jornadaLista.every((p) => p.estado === "completed");
+
+  if (jornadaCompleta && jornadaRow?.liga_id) {
+    await recalcularPuntosLiga(String(jornadaRow.liga_id));
+  }
+}
+
+export async function updateJornadaFecha(
+  jornadaId: string,
+  fecha: string | null
+): Promise<void> {
+  await requireUserId();
+
+  const fechaNorm = fecha?.trim() ? fecha.trim().slice(0, 10) : null;
+  if (fechaNorm && !/^\d{4}-\d{2}-\d{2}$/.test(fechaNorm)) {
+    throw new Error("Fecha inválida.");
+  }
+
+  const { error } = await supabase
+    .from("liga_jornadas")
+    .update({ fecha: fechaNorm })
+    .eq("id", jornadaId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function updatePartidoProgramacion(
+  partidoId: string,
+  input: { cancha?: number; hora_inicio?: string | null },
+  canchasDisponibles: number
+): Promise<void> {
+  await requireUserId();
+
+  const patch: { cancha?: number; hora_inicio?: string | null } = {};
+
+  if (input.cancha != null) {
+    validateCancha(input.cancha, canchasDisponibles);
+    patch.cancha = input.cancha;
+  }
+
+  if (input.hora_inicio !== undefined) {
+    patch.hora_inicio =
+      input.hora_inicio != null && input.hora_inicio.trim()
+        ? normalizeHoraInicio(input.hora_inicio)
+        : null;
+  }
+
+  if (!Object.keys(patch).length) return;
+
+  const { error } = await supabase
+    .from("liga_partidos")
+    .update(patch)
+    .eq("id", partidoId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function updateRondaProgramacion(
+  jornadaId: string,
+  ronda: number,
+  input: { hora_inicio?: string | null },
+  canchasDisponibles: number
+): Promise<void> {
+  await requireUserId();
+
+  const { data: partidos, error: pErr } = await supabase
+    .from("liga_partidos")
+    .select("id, cancha")
+    .eq("jornada_id", jornadaId)
+    .eq("ronda", ronda);
+
+  if (pErr) throw new Error(pErr.message);
+  if (!partidos?.length) return;
+
+  const horaNorm =
+    input.hora_inicio != null && input.hora_inicio.trim()
+      ? normalizeHoraInicio(input.hora_inicio)
+      : null;
+
+  for (const p of partidos) {
+    const cancha = p.cancha != null ? Number(p.cancha) : undefined;
+    await updatePartidoProgramacion(
+      String(p.id),
+      { cancha, hora_inicio: horaNorm },
+      canchasDisponibles
+    );
+  }
+}
+
 type PartidoPuntosRow = {
   score_pareja1: number | null;
   score_pareja2: number | null;
@@ -1073,6 +1426,19 @@ function computePuntosPorJugadorDesdePartidos(
 /** Recalcula el ranking acumulado desde todos los partidos completados de la liga. */
 export async function recalcularPuntosLiga(ligaId: string): Promise<void> {
   await requireUserId();
+
+  const { data: liga, error: lErr } = await supabase
+    .from("ligas")
+    .select("modalidad")
+    .eq("id", ligaId)
+    .maybeSingle();
+
+  if (lErr) throw new Error(lErr.message);
+
+  if (liga?.modalidad === "parejas_fijas") {
+    await recalcularPuntosLigaEquipos(ligaId);
+    return;
+  }
 
   const { error: resetErr } = await supabase
     .from("liga_inscripciones")
@@ -1351,3 +1717,11 @@ export function publicLigaJornadaUrl(ligaId: string, numero: number): string {
   }
   return `${window.location.origin}/public/liga/${ligaId}/jornada/${numero}`;
 }
+
+export {
+  createEquipoLiga,
+  deleteEquipoLiga,
+  getRankingEquipos,
+} from "./ligaParejasFijasService";
+
+export { buildFixedPairLeagueSchedule } from "../lib/liga/fixedPairSchedule";

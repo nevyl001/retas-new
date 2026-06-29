@@ -1,3 +1,21 @@
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** UUID v4 válido; rechaza `undefined`, cadenas vacías o literales corruptos. */
+export function isValidUuid(value: string | null | undefined): value is string {
+  if (!value || typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "undefined" || trimmed === "null") return false;
+  return UUID_RE.test(trimmed);
+}
+
+export function sanitizeUuid(
+  value: string | null | undefined
+): string | null {
+  if (!isValidUuid(value)) return null;
+  return value.trim();
+}
+
 /**
  * Columna inexistente en la tabla expuesta a PostgREST.
  * - PGRST204: mensaje típico de PostgREST ("'col' column of 'table'").

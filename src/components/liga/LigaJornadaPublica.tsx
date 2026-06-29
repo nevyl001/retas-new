@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
+import {
+  formatPartidoPublicScore,
+  partidoMatchWinnerSide,
+} from "../../lib/liga/publicDisplay";
+import { formatPartidoCanchaHorarioLabel } from "../../lib/liga/programacion";
 import type { LigaDetalle, LigaJornada, LigaPartido } from "../../lib/liga/types";
 import { getLigaById } from "../../services/ligaService";
 import { PublicModeShell } from "../platform/PublicModeShell";
@@ -27,13 +32,22 @@ function rondaLabel(estado: string): string {
   return "Pendiente";
 }
 
-function scoreDisplay(partido: LigaPartido): { s1: string; s2: string } {
+function scoreDisplay(
+  partido: LigaPartido,
+  esParejasFijas: boolean
+): { s1: string; s2: string; setsLabel: string | null } {
   if (partido.estado !== "completed") {
-    return { s1: "—", s2: "—" };
+    return { s1: "—", s2: "—", setsLabel: null };
   }
+
+  const setsLabel = esParejasFijas
+    ? formatPartidoPublicScore(partido, true)
+    : null;
+
   return {
     s1: String(partido.score_pareja1 ?? 0),
     s2: String(partido.score_pareja2 ?? 0),
+    setsLabel,
   };
 }
 
@@ -127,6 +141,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     );
   }
 
+  const esParejasFijas = detalle.modalidad === "parejas_fijas";
+
   const jornadaEstadoLabel =
     jornada.estado === "completed"
       ? "Finalizada"
@@ -142,7 +158,12 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
           <p className="liga-pantalla__eyebrow">Riviera Open · Liga</p>
           <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
           <p className="liga-pantalla__subtitle">
-            Jornada {numero} · {jornadaEstadoLabel}
+            Jornada {numero}
+            {jornada.fecha
+              ? ` · ${jornada.fecha.slice(8, 10)}/${jornada.fecha.slice(5, 7)}/${jornada.fecha.slice(0, 4)}`
+              : ""}
+            {" · "}
+            {jornadaEstadoLabel}
           </p>
         </header>
 
@@ -201,14 +222,17 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                     </div>
                     <div className="liga-pantalla-ronda__matches">
                       {partidos.map((partido) => {
-                        const { s1, s2 } = scoreDisplay(partido);
+                        const { s1, s2, setsLabel } = scoreDisplay(
+                          partido,
+                          esParejasFijas
+                        );
                         const pending = partido.estado !== "completed";
-                        const n1 = pending ? null : Number(s1);
-                        const n2 = pending ? null : Number(s2);
-                        const p1Wins =
-                          n1 != null && n2 != null && !Number.isNaN(n1) && n1 > n2;
-                        const p2Wins =
-                          n1 != null && n2 != null && !Number.isNaN(n2) && n2 > n1;
+                        const winner = partidoMatchWinnerSide(
+                          partido,
+                          esParejasFijas
+                        );
+                        const p1Wins = winner === 1;
+                        const p2Wins = winner === 2;
 
                         return (
                           <article
@@ -216,7 +240,11 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                             className="liga-pantalla-match"
                           >
                             <header className="liga-pantalla-match__head">
-                              Cancha {partido.cancha ?? "?"}
+                              {formatPartidoCanchaHorarioLabel(
+                                partido.cancha,
+                                partido.hora_inicio,
+                                jornada.fecha
+                              ) || `Cancha ${partido.cancha ?? "?"}`}
                             </header>
                             <div className="liga-pantalla-match__board">
                               <div
@@ -227,17 +255,23 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                                 <span className="liga-pantalla-match__name">
                                   {parejaNombre(partido.pareja1_id, jornada)}
                                 </span>
-                                <span
-                                  className={`liga-pantalla-match__pts${
-                                    pending
-                                      ? " liga-pantalla-match__pts--pending"
-                                      : ""
-                                  }`}
-                                >
-                                  {s1}
-                                </span>
+                                {!esParejasFijas || !setsLabel ? (
+                                  <span
+                                    className={`liga-pantalla-match__pts${
+                                      pending
+                                        ? " liga-pantalla-match__pts--pending"
+                                        : ""
+                                    }`}
+                                  >
+                                    {s1}
+                                  </span>
+                                ) : null}
                               </div>
-                              <p className="liga-pantalla-match__vs">vs</p>
+                              {esParejasFijas && setsLabel ? (
+                                <p className="liga-pantalla-match__sets">{setsLabel}</p>
+                              ) : (
+                                <p className="liga-pantalla-match__vs">vs</p>
+                              )}
                               <div
                                 className={`liga-pantalla-match__row${
                                   p2Wins ? " liga-pantalla-match__row--win" : ""
@@ -246,15 +280,17 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                                 <span className="liga-pantalla-match__name">
                                   {parejaNombre(partido.pareja2_id, jornada)}
                                 </span>
-                                <span
-                                  className={`liga-pantalla-match__pts${
-                                    pending
-                                      ? " liga-pantalla-match__pts--pending"
-                                      : ""
-                                  }`}
-                                >
-                                  {s2}
-                                </span>
+                                {!esParejasFijas || !setsLabel ? (
+                                  <span
+                                    className={`liga-pantalla-match__pts${
+                                      pending
+                                        ? " liga-pantalla-match__pts--pending"
+                                        : ""
+                                    }`}
+                                  >
+                                    {s2}
+                                  </span>
+                                ) : null}
                               </div>
                             </div>
                           </article>

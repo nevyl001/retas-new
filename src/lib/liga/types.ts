@@ -1,6 +1,9 @@
 import type { RivieraJugadorCategoria } from "../rivieraJugadores/types";
+import type { LigaPartidoSetScores } from "./parejasFijasMatchScore";
 
 export type LigaEstado = "upcoming" | "in_progress" | "completed";
+export type LigaModalidad = "individual_rotativo" | "parejas_fijas";
+export type LigaVueltas = 1 | 2 | 3;
 export type LigaJornadaEstado = "upcoming" | "in_progress" | "completed";
 export type LigaPartidoEstado = "upcoming" | "in_progress" | "completed";
 export type LigaJugadorGenero = "M" | "F";
@@ -10,12 +13,15 @@ export interface Liga {
   id: string;
   nombre: string;
   estado: LigaEstado;
+  modalidad: LigaModalidad;
+  vueltas: LigaVueltas;
   organizador_id: string | null;
   canchas_disponibles: number;
   fecha_inicio: string | null;
   fecha_fin: string | null;
   created_at: string;
   inscripciones_count?: number;
+  equipos_count?: number;
 }
 
 export interface LigaJugador {
@@ -35,6 +41,36 @@ export interface LigaJugadorPoolItem extends LigaJugador {
   categoria: RivieraJugadorCategoria | null;
 }
 
+export interface LigaEquipo {
+  id: string;
+  liga_id: string;
+  nombre: string | null;
+  jugador1_id: string;
+  jugador2_id: string;
+  puntos: number;
+  partidos_jugados: number;
+  partidos_ganados: number;
+  partidos_perdidos: number;
+  games_favor: number;
+  games_contra: number;
+  diferencia_games: number;
+  created_at: string;
+  jugador1?: LigaJugador;
+  jugador2?: LigaJugador;
+}
+
+export interface LigaEquipoRankingItem {
+  posicion: number;
+  equipo_id: string;
+  nombre: string;
+  puntos: number;
+  partidos_jugados: number;
+  partidos_ganados: number;
+  partidos_perdidos: number;
+  games_favor: number;
+  games_contra: number;
+  diferencia_games: number;
+}
 export interface LigaInscripcion {
   id: string;
   liga_id: string;
@@ -48,6 +84,7 @@ export interface LigaJornadaPareja {
   jornada_id: string;
   jugador1_id: string;
   jugador2_id: string;
+  equipo_id?: string | null;
   jugador1?: LigaJugador;
   jugador2?: LigaJugador;
 }
@@ -59,7 +96,11 @@ export interface LigaPartido {
   pareja2_id: string;
   score_pareja1: number | null;
   score_pareja2: number | null;
+  /** Detalle por sets (parejas fijas: 2 de 3, STB en set 3). */
+  set_scores?: LigaPartidoSetScores | null;
   cancha: number | null;
+  /** Hora de inicio (HH:mm o HH:mm:ss desde BD). */
+  hora_inicio?: string | null;
   ronda: number;
   estado: LigaPartidoEstado;
   created_at: string;
@@ -82,6 +123,7 @@ export interface LigaJornada {
 
 export interface LigaDetalle extends Liga {
   inscripciones: LigaInscripcion[];
+  equipos: LigaEquipo[];
   jugadores: LigaJugador[];
   jornadas: LigaJornada[];
 }
@@ -94,11 +136,25 @@ export interface RankingItem {
   jornadas_jugadas: number;
 }
 
+export function ligaModalidadLabel(modalidad: LigaModalidad): string {
+  return modalidad === "parejas_fijas"
+    ? "Liga por parejas fijas"
+    : "Liga individual con parejas rotativas";
+}
+
 export interface CreateLigaInput {
   nombre: string;
   fecha_inicio?: string | null;
   fecha_fin?: string | null;
   canchas_disponibles?: number;
+  modalidad?: LigaModalidad;
+  vueltas?: LigaVueltas;
+}
+
+export interface CreateLigaEquipoInput {
+  jugador1_id: string;
+  jugador2_id: string;
+  nombre?: string | null;
 }
 
 export interface AddJugadorLigaInput {

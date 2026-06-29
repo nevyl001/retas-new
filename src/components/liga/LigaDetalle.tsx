@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
-import type { LigaDetalle as LigaDetalleType } from "../../lib/liga/types";
+import type { LigaDetalle as LigaDetalleType, LigaEquipoRankingItem } from "../../lib/liga/types";
+import { ligaModalidadLabel } from "../../lib/liga/types";
 import {
   getLigaById,
   getRanking,
+  getRankingEquipos,
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
 import type { RankingItem } from "../../lib/liga/types";
 import { LigaRanking } from "./LigaRanking";
+import { LigaRankingEquipos } from "./LigaRankingEquipos";
 import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
 
@@ -21,6 +24,9 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
 }) => {
   const [detalle, setDetalle] = useState<LigaDetalleType | null>(null);
   const [ranking, setRanking] = useState<RankingItem[]>([]);
+  const [rankingEquipos, setRankingEquipos] = useState<LigaEquipoRankingItem[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,12 +34,15 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const [d, r] = await Promise.all([
-        getLigaById(ligaId),
-        getRanking(ligaId),
-      ]);
+      const d = await getLigaById(ligaId);
       setDetalle(d);
-      setRanking(r);
+      if (d.modalidad === "parejas_fijas") {
+        setRankingEquipos(await getRankingEquipos(ligaId));
+        setRanking([]);
+      } else {
+        setRanking(await getRanking(ligaId));
+        setRankingEquipos([]);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Liga no encontrada");
     } finally {
@@ -68,11 +77,15 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
       <header className="liga-header">
         <h1 className="liga-title">Liga: {detalle.nombre}</h1>
         <p className="liga-subtitle">
-          Vista pública · {detalle.estado.replace("_", " ")}
+          {ligaModalidadLabel(detalle.modalidad)} · {detalle.estado.replace("_", " ")}
         </p>
       </header>
 
-      <LigaRanking rows={ranking} title="Ranking acumulado" />
+      {detalle.modalidad === "parejas_fijas" ? (
+        <LigaRankingEquipos rows={rankingEquipos} />
+      ) : (
+        <LigaRanking rows={ranking} title="Ranking acumulado" />
+      )}
 
       <div className="liga-card">
         <h2 className="liga-card__title">Jornadas</h2>

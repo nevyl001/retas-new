@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Liga } from "../../lib/liga/types";
+import { ligaModalidadLabel } from "../../lib/liga/types";
 import { deleteLiga, getLigas } from "../../services/ligaService";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
@@ -82,7 +83,7 @@ export const LigaHome: React.FC = () => {
       <ModeHeader
         className="liga-header rv-mode-header"
         title="Ligas"
-        subtitle="Temporada con jornadas, parejas rotativas y ranking acumulado"
+        subtitle="Liga individual con parejas rotativas o liga por parejas fijas"
       />
 
       <ActionBar className="liga-actions">
@@ -110,7 +111,12 @@ export const LigaHome: React.FC = () => {
               <div className="liga-list-item__main">
                 <p className="liga-list-item__title">{liga.nombre}</p>
                 <p className="liga-list-item__meta">
-                  {liga.inscripciones_count ?? 0} jugadores ·{" "}
+                  {ligaModalidadLabel(liga.modalidad)}
+                  {" · "}
+                  {liga.modalidad === "parejas_fijas"
+                    ? `${liga.equipos_count ?? 0} parejas`
+                    : `${liga.inscripciones_count ?? 0} jugadores`}
+                  {" · "}
                   <span className={badgeClass(liga.estado)}>
                     {estadoLabel(liga.estado)}
                   </span>

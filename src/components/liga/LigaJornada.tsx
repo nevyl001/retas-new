@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
 import type {
   LigaDetalle,
+  LigaEquipoRankingItem,
   LigaJornada,
   LigaPartido,
   RankingItem,
@@ -12,10 +13,27 @@ import {
   finishJornada,
   getLigaById,
   getRanking,
+  getRankingEquipos,
   recalcularPuntosLiga,
   startJornada,
   updateScore,
+  updateScoreParejasFijas,
+  updateJornadaFecha,
+  updatePartidoProgramacion,
+  updateRondaProgramacion,
 } from "../../services/ligaService";
+import { buildSetsFromDraft, type ParejasFijasSetsDraft } from "../../lib/liga/parejasFijasMatchScore";
+import {
+  getSetsDraftForPartido,
+  LigaPartidoSetsScoreForm,
+} from "./LigaPartidoSetsScoreForm";
+import {
+  getProgramacionDraftForPartido,
+  jornadaFechaDraft,
+  LigaJornadaFechaCard,
+  LigaPartidoProgramacionFields,
+  type PartidoProgramacionDraft,
+} from "./LigaPartidoProgramacionFields";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
@@ -89,7 +107,22 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [scores, setScores] = useState<Record<string, { s1: string; s2: string }>>(
     {}
   );
+  const [setsDrafts, setSetsDrafts] = useState<
+    Record<string, ParejasFijasSetsDraft>
+  >({});
+  const [jornadaFechaDrafts, setJornadaFechaDrafts] = useState<
+    Record<string, string>
+  >({});
+  const [programacionDrafts, setProgramacionDrafts] = useState<
+    Record<string, PartidoProgramacionDraft>
+  >({});
+  const [rondaHoraDrafts, setRondaHoraDrafts] = useState<Record<number, string>>(
+    {}
+  );
   const [ranking, setRanking] = useState<RankingItem[]>([]);
+  const [rankingEquipos, setRankingEquipos] = useState<LigaEquipoRankingItem[]>(
+    []
+  );
   const [manualPuntos, setManualPuntos] = useState<Record<string, string>>({});
   const [showManualEdit, setShowManualEdit] = useState(false);
 
@@ -97,15 +130,21 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const [d, rank] = await Promise.all([
-        getLigaById(ligaId),
-        getRanking(ligaId),
-      ]);
+      const d = await getLigaById(ligaId);
       setDetalle(d);
-      setRanking(rank);
-      setManualPuntos(
-        Object.fromEntries(rank.map((r) => [r.jugador_id, String(r.puntos)]))
-      );
+      if (d.modalidad === "parejas_fijas") {
+        const rEq = await getRankingEquipos(ligaId);
+        setRankingEquipos(rEq);
+        setRanking([]);
+        setManualPuntos({});
+      } else {
+        const rank = await getRanking(ligaId);
+        setRanking(rank);
+        setRankingEquipos([]);
+        setManualPuntos(
+          Object.fromEntries(rank.map((r) => [r.jugador_id, String(r.puntos)]))
+        );
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error");
     } finally {
@@ -153,7 +192,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setError(null);
     try {
       await startJornada(jornada.id);
-      setMessage("Jornada iniciada. Partidos generados.");
+      setMessage(
+        detalle?.modalidad === "parejas_fijas"
+          ? "Jornada iniciada."
+          : "Jornada iniciada. Partidos generados."
+      );
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -188,6 +231,90 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         }
       }
       setError(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveScoreParejasFijas = async (partido: LigaPartido, force = false) => {
+    const draft = getSetsDraftForPartido(partido, setsDrafts);
+    setBusy(true);
+    setError(null);
+    try {
+      const sets = buildSetsFromDraft(draft);
+      await updateScoreParejasFijas(partido.id, sets, force);
+      setMessage("Resultado guardado.");
+      await load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error";
+      if (msg.includes("sobrescribir") && !force) {
+        if (window.confirm(`${msg} ¿Continuar?`)) {
+          await saveScoreParejasFijas(partido, true);
+          return;
+        }
+      }
+      setError(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveJornadaFecha = async () => {
+    if (!jornada) return;
+    const fecha = jornadaFechaDraft(jornada.fecha, jornadaFechaDrafts, jornada.id);
+    setBusy(true);
+    setError(null);
+    try {
+      await updateJornadaFecha(jornada.id, fecha || null);
+      setMessage("Día de jornada guardado.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const savePartidoProgramacion = async (partido: LigaPartido) => {
+    const draft = getProgramacionDraftForPartido(partido, programacionDrafts);
+    const cancha = Number(draft.cancha);
+    if (!draft.cancha || Number.isNaN(cancha)) {
+      setError("Selecciona una cancha.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await updatePartidoProgramacion(
+        partido.id,
+        { cancha, hora_inicio: draft.hora || null },
+        detalle?.canchas_disponibles ?? 1
+      );
+      setMessage("Cancha y horario guardados.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveRondaHorario = async (ronda: number) => {
+    if (!jornada) return;
+    const hora = rondaHoraDrafts[ronda] ?? "";
+    setBusy(true);
+    setError(null);
+    try {
+      await updateRondaProgramacion(
+        jornada.id,
+        ronda,
+        { hora_inicio: hora || null },
+        detalle?.canchas_disponibles ?? 1
+      );
+      setMessage(`Horario aplicado a la ronda ${ronda}.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -300,8 +427,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     );
   }
 
-  const puedeIniciar =
-    jornada.estado === "upcoming" && (jornada.parejas?.length ?? 0) >= 3;
+  const esParejasFijas = detalle.modalidad === "parejas_fijas";
+
+  const puedeIniciar = esParejasFijas
+    ? jornada.estado === "upcoming" && (jornada.partidos?.length ?? 0) > 0
+    : jornada.estado === "upcoming" && (jornada.parejas?.length ?? 0) >= 3;
 
   const todosPartidosCompletos =
     (jornada.partidos?.length ?? 0) > 0 &&
@@ -333,7 +463,9 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         title={`Liga: ${detalle.nombre} — Jornada ${numero}`}
         subtitle={`Estado: ${jornadaEstadoLabel(jornada.estado)}${
           totalPartidos > 0
-            ? ` · ${totalPartidos} partidos (${nParejas} parejas, todos vs todos)`
+            ? esParejasFijas
+              ? ` · ${totalPartidos} partidos programados`
+              : ` · ${totalPartidos} partidos (${nParejas} parejas, todos vs todos)`
             : ""
         }`}
       />
@@ -361,6 +493,25 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
       {message ? <p className="liga-success">{message}</p> : null}
       {error ? <p className="liga-error">{error}</p> : null}
+
+      {(jornada.partidos?.length ?? 0) > 0 && (
+        <LigaJornadaFechaCard
+          fecha={jornadaFechaDraft(
+            jornada.fecha,
+            jornadaFechaDrafts,
+            jornada.id
+          )}
+          disabled={busy}
+          busy={busy}
+          onChange={(fecha) =>
+            setJornadaFechaDrafts((prev) => ({
+              ...prev,
+              [jornada.id]: fecha,
+            }))
+          }
+          onSave={saveJornadaFecha}
+        />
+      )}
 
       <div className="liga-card rv-card">
         <h2 className="liga-card__title">Parejas de la jornada</h2>
@@ -428,11 +579,45 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                   </span>
                 </div>
 
+                <div className="liga-ronda-programacion">
+                  <label className="liga-programacion-field">
+                    <span className="liga-programacion-field__label">
+                      Horario ronda
+                    </span>
+                    <input
+                      type="time"
+                      value={rondaHoraDrafts[ronda] ?? ""}
+                      disabled={busy}
+                      onChange={(e) =>
+                        setRondaHoraDrafts((prev) => ({
+                          ...prev,
+                          [ronda]: e.target.value,
+                        }))
+                      }
+                      aria-label={`Horario ronda ${ronda}`}
+                    />
+                  </label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => saveRondaHorario(ronda)}
+                  >
+                    Aplicar a ronda
+                  </Button>
+                </div>
+
                 {partidos.map((partido) => {
                   const draft = scores[partido.id] ?? {
                     s1: String(partido.score_pareja1 ?? ""),
                     s2: String(partido.score_pareja2 ?? ""),
                   };
+                  const setsDraft = getSetsDraftForPartido(partido, setsDrafts);
+                  const progDraft = getProgramacionDraftForPartido(
+                    partido,
+                    programacionDrafts
+                  );
                   const bloqueado =
                     partido.estado === "upcoming" && rondaActiva !== ronda;
 
@@ -444,51 +629,80 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                       }`}
                     >
                       <p className="liga-partido-row__teams">
-                        Cancha {partido.cancha ?? "?"} —{" "}
                         {parejaLabel(partido.pareja1_id, jornada)} vs{" "}
                         {parejaLabel(partido.pareja2_id, jornada)}
                       </p>
-                      <div className="liga-score-row">
-                        <input
-                          type="number"
-                          min={0}
-                          value={draft.s1}
-                          disabled={bloqueado || busy}
-                          onChange={(e) =>
-                            setScores((prev) => ({
+                      <LigaPartidoProgramacionFields
+                        partido={partido}
+                        draft={progDraft}
+                        canchasDisponibles={detalle.canchas_disponibles}
+                        disabled={bloqueado}
+                        busy={busy}
+                        onChange={(next) =>
+                          setProgramacionDrafts((prev) => ({
+                            ...prev,
+                            [partido.id]: next,
+                          }))
+                        }
+                        onSave={() => savePartidoProgramacion(partido)}
+                      />
+                      {esParejasFijas ? (
+                        <LigaPartidoSetsScoreForm
+                          partido={partido}
+                          draft={setsDraft}
+                          disabled={bloqueado}
+                          busy={busy}
+                          onChange={(next) =>
+                            setSetsDrafts((prev) => ({
                               ...prev,
-                              [partido.id]: { ...draft, s1: e.target.value },
+                              [partido.id]: next,
                             }))
                           }
-                          aria-label="Puntos pareja 1"
+                          onSave={() => saveScoreParejasFijas(partido)}
                         />
-                        <span>—</span>
-                        <input
-                          type="number"
-                          min={0}
-                          value={draft.s2}
-                          disabled={bloqueado || busy}
-                          onChange={(e) =>
-                            setScores((prev) => ({
-                              ...prev,
-                              [partido.id]: { ...draft, s2: e.target.value },
-                            }))
-                          }
-                          aria-label="Puntos pareja 2"
-                        />
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          disabled={bloqueado || busy}
-                          onClick={() => saveScore(partido)}
-                        >
-                          Guardar
-                        </Button>
-                        {partido.estado === "completed" && (
-                          <span className="liga-badge liga-badge--done">✓</span>
-                        )}
-                      </div>
+                      ) : (
+                        <div className="liga-score-row">
+                          <input
+                            type="number"
+                            min={0}
+                            value={draft.s1}
+                            disabled={bloqueado || busy}
+                            onChange={(e) =>
+                              setScores((prev) => ({
+                                ...prev,
+                                [partido.id]: { ...draft, s1: e.target.value },
+                              }))
+                            }
+                            aria-label="Puntos pareja 1"
+                          />
+                          <span>—</span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={draft.s2}
+                            disabled={bloqueado || busy}
+                            onChange={(e) =>
+                              setScores((prev) => ({
+                                ...prev,
+                                [partido.id]: { ...draft, s2: e.target.value },
+                              }))
+                            }
+                            aria-label="Puntos pareja 2"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            disabled={bloqueado || busy}
+                            onClick={() => saveScore(partido)}
+                          >
+                            Guardar
+                          </Button>
+                          {partido.estado === "completed" && (
+                            <span className="liga-badge liga-badge--done">✓</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -545,6 +759,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         </div>
 
         <aside className="liga-jornada-admin__aside">
+          {!esParejasFijas && (
           <div className="liga-card liga-jornada-ranking-card">
             <h2 className="liga-card__title">Puntos de esta jornada</h2>
             <p className="liga-hint">
@@ -618,14 +833,58 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               </p>
             )}
           </div>
+          )}
 
           <div className="liga-card liga-jornada-ranking-card">
-            <h2 className="liga-card__title">Ranking acumulado</h2>
+            <h2 className="liga-card__title">
+              {esParejasFijas ? "Ranking por pareja" : "Ranking acumulado"}
+            </h2>
             <p className="liga-hint">
-              Puntos en base de datos de la liga. Al guardar resultados o
-              finalizar, se recalcula automáticamente.
+              {esParejasFijas
+                ? "Puntos = games acumulados. Se recalcula al guardar resultados."
+                : "Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."}
             </p>
-            {ranking.length === 0 ? (
+            {esParejasFijas ? (
+              rankingEquipos.length === 0 ? (
+                <p className="liga-empty">Sin puntos en la liga aún.</p>
+              ) : (
+                <table className="liga-ranking-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Pareja</th>
+                      <th>PJ</th>
+                      <th>PG</th>
+                      <th>PP</th>
+                      <th>GF</th>
+                      <th>GC</th>
+                      <th>DIF</th>
+                      <th>GAMES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rankingEquipos.map((row) => (
+                      <tr
+                        key={row.equipo_id}
+                        className={
+                          row.posicion <= 3 ? "liga-ranking-top" : undefined
+                        }
+                      >
+                        <td>{row.posicion}</td>
+                        <td>{row.nombre}</td>
+                        <td>{row.partidos_jugados}</td>
+                        <td>{row.partidos_ganados}</td>
+                        <td>{row.partidos_perdidos}</td>
+                        <td>{row.games_favor}</td>
+                        <td>{row.games_contra}</td>
+                        <td>{row.diferencia_games}</td>
+                        <td>{row.puntos}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            ) : ranking.length === 0 ? (
               <p className="liga-empty">Sin puntos en la liga aún.</p>
             ) : (
               <table className="liga-ranking-table">
@@ -655,6 +914,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               </table>
             )}
 
+            {!esParejasFijas && (
             <div className="liga-jornada-manual">
               <Button
                 type="button"
@@ -705,6 +965,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                 </div>
               )}
             </div>
+            )}
           </div>
         </aside>
       </div>

@@ -1,4 +1,4 @@
-import { isMissingColumnError } from "../db/schemaHelpers";
+import { isMissingColumnError, sanitizeUuid } from "../db/schemaHelpers";
 import { supabase, supabasePublicRead } from "../supabaseClient";
 import type {
   CreateRivieraJugadorInput,
@@ -365,11 +365,14 @@ export async function getRivieraJugadorBySlug(
 export async function getRivieraJugadorByLegacyLigaId(
   legacyLigaJugadorId: string
 ): Promise<RivieraJugador | null> {
+  const legacyId = sanitizeUuid(legacyLigaJugadorId);
+  if (!legacyId) return null;
+
   const { data, error } = await withJugadorSelectFallback((cols) =>
     supabase
       .from("riviera_jugadores")
       .select(cols)
-      .eq("legacy_liga_jugador_id", legacyLigaJugadorId)
+      .eq("legacy_liga_jugador_id", legacyId)
       .maybeSingle()
   );
 
@@ -643,10 +646,14 @@ export async function linkLegacyLigaJugadorId(
   rivieraJugadorId: string,
   legacyLigaJugadorId: string
 ): Promise<void> {
+  const rivieraId = sanitizeUuid(rivieraJugadorId);
+  const ligaId = sanitizeUuid(legacyLigaJugadorId);
+  if (!rivieraId || !ligaId) return;
+
   const { error } = await supabase
     .from("riviera_jugadores")
-    .update({ legacy_liga_jugador_id: legacyLigaJugadorId })
-    .eq("id", rivieraJugadorId);
+    .update({ legacy_liga_jugador_id: ligaId })
+    .eq("id", rivieraId);
   if (error) throw error;
 }
 
@@ -1285,6 +1292,13 @@ export async function deleteRivieraJugador(
       .delete()
       .eq("jugador_id", ligaJugadorId);
     if (ligaErr && !isMissingTableError(ligaErr)) throw ligaErr;
+
+    const { error: inactivoErr } = await supabase
+      .from("liga_jugadores")
+      .update({ estado: "inactivo" })
+      .eq("id", ligaJugadorId)
+      .eq("organizador_id", organizadorId);
+    if (inactivoErr && !isMissingTableError(inactivoErr)) throw inactivoErr;
   }
 
   const { error: delErr } = await supabase

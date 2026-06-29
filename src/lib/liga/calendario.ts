@@ -13,8 +13,37 @@ export function validateInscripcionesParaCalendario(count: number): void {
   }
 }
 
+export function validateEquiposParaCalendario(count: number): void {
+  if (count < 3) {
+    throw new Error("Se necesitan al menos 3 parejas inscritas.");
+  }
+}
+
+/** Equipos del calendario ≠ equipos inscritos actuales. */
+export function calendarioEquiposDesactualizado(detalle: LigaDetalle): boolean {
+  if (detalle.modalidad !== "parejas_fijas") return false;
+  if (detalle.estado === "upcoming" || detalle.jornadas.length === 0) {
+    return false;
+  }
+  const inscritos = new Set(detalle.equipos.map((e) => e.id));
+  const enCalendario = new Set<string>();
+  for (const j of detalle.jornadas) {
+    for (const p of j.parejas ?? []) {
+      if (p.equipo_id) enCalendario.add(p.equipo_id);
+    }
+  }
+  if (inscritos.size !== enCalendario.size) return true;
+  for (const id of Array.from(inscritos)) {
+    if (!enCalendario.has(id)) return true;
+  }
+  return false;
+}
+
 /** Inscritos actuales ≠ jugadores del calendario generado. */
 export function calendarioDesactualizado(detalle: LigaDetalle): boolean {
+  if (detalle.modalidad === "parejas_fijas") {
+    return calendarioEquiposDesactualizado(detalle);
+  }
   if (detalle.estado === "upcoming" || detalle.jornadas.length === 0) {
     return false;
   }
