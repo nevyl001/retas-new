@@ -5,6 +5,7 @@ import {
   resolveTournamentStartFormat,
 } from "../lib/gameModeMapping";
 import { Button, Card, Input } from "./ui";
+import { ModeHeader } from "./platform/ModeHeader";
 
 interface StartTournamentSectionProps {
   tournament: Tournament;
@@ -84,22 +85,21 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
   if (tournament.is_started) return null;
 
   const modeLabel = getStartFormatLabel(format);
+  const modeSubtitle =
+    format === "teams"
+      ? "Organiza equipos, asigna parejas e inicia la competencia."
+      : "Selecciona las parejas y lanza tu reta en round robin.";
 
   return (
     <div className="start-tournament-section start-tournament-section--v2 rv-card">
-      <header className="start-tournament-section__header">
-        <h3 className="start-tournament-section__title text-display">Iniciar reta</h3>
-        <span
-          className={`riviera-badge riviera-badge--${
-            format === "teams" ? "mode-equipos" : "mode-robin"
-          } start-tournament-section__mode-badge`}
-        >
-          {modeLabel}
-        </span>
-      </header>
+      <ModeHeader
+        className="start-tournament-section__mode-header rv-mode-header rv-mode-header--entry"
+        eyebrow="Riviera Open"
+        title={modeLabel}
+        subtitle={modeSubtitle}
+      />
 
       <Card variant="elevated" className="start-tournament-section__hero">
-        <p className="start-tournament-section__headline">Selecciona las parejas</p>
         <p className="start-tournament-section__pairs-ready">
           {pairs.length === 0
             ? "Aún no hay parejas — usa las secciones de abajo."
@@ -169,10 +169,6 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
           ))}
         </Card>
       )}
-
-      <p className="start-tournament-section__instructions">
-        Agrega jugadores, selecciona las parejas e inicia tu modo de juego. ¡Disfruta!
-      </p>
 
       <Button
         type="button"

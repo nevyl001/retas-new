@@ -25,15 +25,6 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
 
   return (
     <section className="americano-registration">
-      <div className="americano-registration__title-row">
-        <h2>Americano Dinamico</h2>
-        <span className="americano-registration__badge">Modo por jugadores</span>
-      </div>
-      <p className="americano-registration__subtitle">
-        Selecciona jugadores del registro Riviera Open y define cuantas rondas
-        quieres jugar.
-      </p>
-
       <p className="americano-registration__format-note" role="note">
         Formato americano equilibrado: las parejas se rotan automáticamente para
         evitar repetir compañero y repartir rivales. El ranking solo muestra

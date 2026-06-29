@@ -14,29 +14,12 @@
   padding: clamp(4px, 1vw, 8px) 0 clamp(8px, 1.5vw, 12px);
 }
 
-.riviera-organizer-reta .start-tournament-section__header {
-  align-items: flex-start;
-  margin-bottom: clamp(18px, 2.5vw, 24px);
-  padding-top: 0.15rem;
-}
-
-.riviera-organizer-reta .start-tournament-section__title {
-  font-size: clamp(1.35rem, 3vw, 1.65rem);
-  line-height: 1.15;
-}
-
-.riviera-organizer-reta .start-tournament-section__mode-badge {
-  margin-top: 0.15rem;
-  font-size: 0.62rem;
-  padding: 0.32rem 0.75rem;
+.riviera-organizer-reta .start-tournament-section__mode-header.rv-mode-header {
+  margin-bottom: clamp(16px, 4vw, 22px);
 }
 
 .riviera-organizer-reta .start-tournament-section__hero {
-  padding: clamp(1.35rem, 3vw, 1.65rem) clamp(1.2rem, 2.5vw, 1.5rem);
-  margin-bottom: clamp(14px, 2vw, 18px);
-}
-
-.riviera-organizer-reta .start-tournament-section__instructions {
+  padding: clamp(1.2rem, 3vw, 1.5rem) clamp(1.1rem, 2.5vw, 1.4rem);
   margin-bottom: clamp(14px, 2vw, 18px);
 }
 

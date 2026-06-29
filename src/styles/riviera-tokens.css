@@ -9,6 +9,7 @@
 :root {
   /* ── Superficies → --ro-* ── */
   --bg-base: var(--ro-bg-base);
+  --bg-canvas: var(--ro-bg-surface);
   --bg-deep: var(--ro-bg-deep);
   --bg-surface-solid: var(--ro-bg-surface);
   --bg-elevated: var(--ro-bg-elevated);

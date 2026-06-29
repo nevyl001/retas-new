@@ -162,6 +162,8 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
               <a
                 className="rj-btn rj-btn--ghost"
                 href={buildPublicRankingUrl(user.id, genero)}
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 Ranking {genero === "F" ? "femenil" : "varonil"}
               </a>

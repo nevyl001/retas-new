@@ -8,8 +8,7 @@ import {
   PUNTOS_RETA,
   PUNTOS_RETA_EQUIPOS,
 } from "../../lib/rivieraJugadores/rivieraRankingPoints";
-import { getPublicOrganizadorIdWithoutUser } from "../../lib/rivieraJugadores/publicOrganizador";
-import { buildPublicRankingUrl } from "./jugadoresPublicNav";
+import { navigateToAppHome } from "../../lib/appRouting";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import "./ranking-como-funciona.css";
 
@@ -137,8 +136,6 @@ function FormatoCard({
 }
 
 export const RankingComoFuncionaPage: React.FC = () => {
-  const rankingHref = buildPublicRankingUrl(getPublicOrganizadorIdWithoutUser());
-
   return (
     <JugadoresPublicShell variant="ranking" layout="rules">
       <div className="rkcf rkcf--page">
@@ -455,9 +452,13 @@ export const RankingComoFuncionaPage: React.FC = () => {
         </section>
 
         <section className="rkcf-cta rkcf-reveal">
-          <a href={rankingHref} className="rkcf-cta__btn">
-            Ver el ranking
-          </a>
+          <button
+            type="button"
+            className="rkcf-cta__btn"
+            onClick={() => navigateToAppHome()}
+          >
+            Volver al home
+          </button>
           <p className="rkcf-cta__note">
             Los puntos se actualizan automáticamente al cerrar cada evento.
           </p>

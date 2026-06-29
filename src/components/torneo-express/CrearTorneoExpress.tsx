@@ -377,122 +377,156 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   };
 
   return (
-    <div className="te-crear-grid">
-        <div className="te-crear-col te-crear-col--players">
-          {user?.id ? (
-            <TorneoExpressPlayerPanel
-              userId={user.id}
-              parejas={parejas}
-              onJugadoresChange={handleJugadoresChange}
-            />
+    <form className="te-crear-layout te-crear-form" onSubmit={handleSubmit}>
+      <div className="te-crear-layout__main">
+        <div className="te-crear-layout__panel">
+          {error ? <p className="te-error">{error}</p> : null}
+
+          {initializing ? (
+            <p className="te-subtitle">Preparando borrador…</p>
           ) : (
-            <aside className="te-players-panel torneo-express-card">
-              <p className="te-players-empty">Inicia sesión para gestionar jugadores</p>
-            </aside>
+            <>
+              <section
+                className="te-crear-step"
+                aria-labelledby="te-step-datos-heading"
+              >
+                <header className="te-crear-step__head">
+                  <span className="te-crear-step__badge">Paso 1</span>
+                  <h3 id="te-step-datos-heading" className="te-crear-step__title">
+                    Datos del torneo
+                  </h3>
+                </header>
+                <div className="te-crear-step__body">
+                  <div className="te-crear-form__fields">
+                    <div className="torneo-express-field">
+                      <label htmlFor="te-nombre">Nombre</label>
+                      <input
+                        id="te-nombre"
+                        value={nombre}
+                        onChange={(e) => setNombre(e.target.value)}
+                        placeholder="Ej. Riviera Open Mayo"
+                      />
+                    </div>
+
+                    <div className="torneo-express-field">
+                      <label htmlFor="te-categoria">Categoría</label>
+                      <input
+                        id="te-categoria"
+                        value={categoria}
+                        onChange={(e) => setCategoria(e.target.value)}
+                        placeholder="Ej. 4ta, 5ta, Open"
+                        autoComplete="off"
+                      />
+                    </div>
+
+                    <div className="torneo-express-field">
+                      <label htmlFor="te-grupos">Grupos</label>
+                      <input
+                        id="te-grupos"
+                        type="number"
+                        min={2}
+                        max={8}
+                        value={numGrupos}
+                        onChange={(e) => setNumGrupos(Number(e.target.value) || 2)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="te-crear-form__notices">
+                    <div className="te-crear-notif-hint" role="note">
+                      <strong>Notificaciones automáticas</strong>
+                      <p>
+                        Al crear el torneo, cada jugador con email real recibe
+                        aviso de inscripción y grupo.
+                      </p>
+                    </div>
+
+                    {jugadoresEnParejasSinEmail.length > 0 ? (
+                      <p className="te-crear-notif-warn" role="alert">
+                        {jugadoresEnParejasSinEmail.length} jugador(es) en tus
+                        parejas aún sin email:{" "}
+                        {jugadoresEnParejasSinEmail.map((j) => j.name).join(", ")}.
+                        Completa su contacto con 📧 antes de crear el torneo.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
+
+              <section
+                className="te-crear-step"
+                aria-labelledby="te-step-parejas-heading"
+              >
+                <header className="te-crear-step__head">
+                  <span className="te-crear-step__badge">Paso 2</span>
+                  <h3 id="te-step-parejas-heading" className="te-crear-step__title">
+                    Armar parejas
+                  </h3>
+                </header>
+                <div className="te-crear-step__body">
+                  <ArmarParejasPicker
+                    jugadoresPool={jugadoresPool}
+                    parejas={parejas}
+                    addingPair={addingPair}
+                    onFormarPareja={(j1, j2) => void formarPareja(j1, j2)}
+                    onEliminarPareja={(p) => void eliminarPareja(p)}
+                  />
+
+                  <AsignarParejasGrupos
+                    parejas={parejas}
+                    assignments={assignments}
+                    assignedIds={assignedIds}
+                    onAssignmentsChange={setAssignments}
+                    onTogglePair={togglePair}
+                  />
+                </div>
+              </section>
+
+              {!initializing ? (
+                <div className="te-crear-layout__cta">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="te-crear-submit"
+                    disabled={submitting || parejas.length < 2}
+                    loading={submitting}
+                  >
+                    {submitting ? "Creando…" : "Crear torneo y generar partidos"}
+                  </Button>
+                </div>
+              ) : null}
+            </>
           )}
         </div>
+      </div>
 
-        <div className="te-crear-col te-crear-col--form">
-          <form className="torneo-express-card te-crear-form" onSubmit={handleSubmit}>
-            <header className="te-crear-form__header">
-              <h1 className="te-title">
-                <span aria-hidden>🏆</span>
-                Nuevo torneo
-              </h1>
-              <p className="te-subtitle">Grupos + round robin por grupo</p>
-            </header>
-
-            {error && <p className="te-error">{error}</p>}
-
-            {initializing ? (
-              <p className="te-subtitle">Preparando borrador…</p>
+      <aside className="te-crear-layout__aside">
+        <section
+          className="te-crear-step te-crear-step--players"
+          aria-labelledby="te-step-jugadores-heading"
+        >
+          <header className="te-crear-step__head">
+            <span className="te-crear-step__badge">Paso 3</span>
+            <h3 id="te-step-jugadores-heading" className="te-crear-step__title">
+              Jugadores del registro
+            </h3>
+          </header>
+          <div className="te-crear-step__body te-crear-players-wrap">
+            {user?.id ? (
+              <TorneoExpressPlayerPanel
+                userId={user.id}
+                parejas={parejas}
+                onJugadoresChange={handleJugadoresChange}
+              />
             ) : (
-              <>
-                <div className="torneo-express-field">
-                  <label htmlFor="te-nombre">Nombre del torneo</label>
-                  <input
-                    id="te-nombre"
-                    value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
-                    placeholder="Ej. Riviera Open Mayo"
-                  />
-                </div>
-
-                <div className="torneo-express-field">
-                  <label htmlFor="te-categoria">Categoría</label>
-                  <input
-                    id="te-categoria"
-                    value={categoria}
-                    onChange={(e) => setCategoria(e.target.value)}
-                    placeholder="Ej. 4ta, 5ta, Open"
-                    autoComplete="off"
-                  />
-                </div>
-
-                <div className="torneo-express-field">
-                  <label htmlFor="te-grupos">Número de grupos</label>
-                  <input
-                    id="te-grupos"
-                    type="number"
-                    min={2}
-                    max={8}
-                    value={numGrupos}
-                    onChange={(e) => setNumGrupos(Number(e.target.value) || 2)}
-                  />
-                </div>
-
-                <div className="te-crear-notif-hint" role="note">
-                  <strong>Notificaciones automáticas</strong>
-                  <p>
-                    Al pulsar «Crear torneo», cada jugador con{" "}
-                    <strong>email real</strong> en el registro recibe aviso de
-                    inscripción y grupo por email.
-                    Los que marquen «⚠️ sin email» no recibirán nada.
-                  </p>
-                </div>
-
-                {jugadoresEnParejasSinEmail.length > 0 ? (
-                  <p className="te-crear-notif-warn" role="alert">
-                    {jugadoresEnParejasSinEmail.length} jugador(es) en tus parejas
-                    aún sin email:{" "}
-                    {jugadoresEnParejasSinEmail.map((j) => j.name).join(", ")}.
-                    Completa su contacto con 📧 antes de crear el torneo.
-                  </p>
-                ) : null}
-
-                <ArmarParejasPicker
-                  jugadoresPool={jugadoresPool}
-                  parejas={parejas}
-                  addingPair={addingPair}
-                  onFormarPareja={(j1, j2) => void formarPareja(j1, j2)}
-                  onEliminarPareja={(p) => void eliminarPareja(p)}
-                />
-
-                <AsignarParejasGrupos
-                  parejas={parejas}
-                  assignments={assignments}
-                  assignedIds={assignedIds}
-                  onAssignmentsChange={setAssignments}
-                  onTogglePair={togglePair}
-                />
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="te-crear-submit"
-                  disabled={submitting || parejas.length < 2}
-                  loading={submitting}
-                >
-                  <span className="te-crear-submit__icon" aria-hidden>
-                    ⚡
-                  </span>
-                  {submitting ? "Creando…" : "Crear torneo y generar partidos"}
-                </Button>
-              </>
+              <p className="te-players-empty">
+                Inicia sesión para gestionar jugadores
+              </p>
             )}
-          </form>
-        </div>
-    </div>
+          </div>
+        </section>
+      </aside>
+    </form>
   );
 };
 

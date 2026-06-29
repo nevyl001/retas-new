@@ -140,7 +140,7 @@ export const TorneoExpressTorneosSection: React.FC<
   const renderEliminarBtn = (t: TorneoExpressListItem) => (
     <Button
       type="button"
-      variant="secondary"
+      variant="ghost"
       size="sm"
       className="te-btn-eliminar-torneo"
       disabled={deleting}
@@ -172,7 +172,7 @@ export const TorneoExpressTorneosSection: React.FC<
         className={`te-torneo-card rv-card${activo ? " te-torneo-card--activo" : " te-torneo-card--finalizado"}`}
       >
         <div className="te-torneo-card__inner">
-          <div className="te-torneo-card__info-col">
+          <div className="te-torneo-card__body">
             <div className="te-torneo-card__meta-top">
               {enEliminatoria ? (
                 <Badge variant="live" className="te-torneo-card__badge-live">
@@ -192,42 +192,58 @@ export const TorneoExpressTorneosSection: React.FC<
                 </Badge>
               )}
               <span className="te-torneo-card__fecha">
-                Creado: {formatFecha(t.created_at)}
+                {formatFecha(t.created_at)}
               </span>
             </div>
 
             <h3 className="te-torneo-card__nombre">{t.nombre}</h3>
-            {formatTorneoExpressCategoria(t.categoria) ? (
-              <p className="te-torneo-card__categoria">
-                {formatTorneoExpressCategoria(t.categoria)}
-              </p>
-            ) : null}
-            <p className="te-torneo-card__info">
-              {t.grupoCount} {t.grupoCount === 1 ? "grupo" : "grupos"} ·{" "}
-              {t.parejaCount} {t.parejaCount === 1 ? "pareja" : "parejas"}
+            <p className="te-torneo-card__meta-line">
+              {formatTorneoExpressCategoria(t.categoria) ? (
+                <>
+                  <span className="te-torneo-card__meta-cat">
+                    {formatTorneoExpressCategoria(t.categoria)}
+                  </span>
+                  <span className="te-torneo-card__meta-sep" aria-hidden>
+                    ·
+                  </span>
+                </>
+              ) : null}
+              <span>
+                {t.grupoCount} {t.grupoCount === 1 ? "grupo" : "grupos"}
+              </span>
+              <span className="te-torneo-card__meta-sep" aria-hidden>
+                ·
+              </span>
+              <span>
+                {t.parejaCount} {t.parejaCount === 1 ? "pareja" : "parejas"}
+              </span>
             </p>
           </div>
 
-          <div className="te-torneo-card__actions-col">
-            {puedeGestionar ? (
-              <>
+          <footer className="te-torneo-card__footer">
+            <div className="te-torneo-card__actions-bar">
+              {puedeGestionar ? (
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
+                  className="te-torneo-card__btn-manage"
                   onClick={() =>
                     navigateTorneoExpress(`/torneo-express/${t.id}/gestionar`)
                   }
                 >
-                  Gestionar →
+                  Gestionar
                 </Button>
+              ) : null}
+
+              <div className="te-torneo-card__actions-links">
                 <Button
                   type="button"
                   variant="secondary"
                   size="sm"
                   onClick={() => openResultados(t.id)}
                 >
-                  {showResultados ? "Ocultar resultados" : "Ver resultados"}
+                  {showResultados ? "Ocultar" : "Resultados"}
                 </Button>
                 <Button
                   type="button"
@@ -235,14 +251,15 @@ export const TorneoExpressTorneosSection: React.FC<
                   size="sm"
                   onClick={() => openTablaGeneral(t.id)}
                 >
-                  {showTablaGeneral
-                    ? "Ocultar tabla general"
-                    : "Tabla general"}
+                  {showTablaGeneral ? "Ocultar" : "Tabla"}
                 </Button>
-                {enGrupos ? (
+              </div>
+
+              <div className="te-torneo-card__actions-end">
+                {puedeGestionar && enGrupos ? (
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
                     className="te-btn-finalizar-fase"
                     onClick={() => setBracketTorneo(t)}
@@ -251,31 +268,9 @@ export const TorneoExpressTorneosSection: React.FC<
                   </Button>
                 ) : null}
                 {renderEliminarBtn(t)}
-              </>
-            ) : (
-              <>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => openResultados(t.id)}
-                >
-                  {showResultados ? "Ocultar resultados" : "Ver resultados"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => openTablaGeneral(t.id)}
-                >
-                  {showTablaGeneral
-                    ? "Ocultar tabla general"
-                    : "Tabla general"}
-                </Button>
-                {renderEliminarBtn(t)}
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          </footer>
         </div>
 
         {showResultados && torneoResultados ? (

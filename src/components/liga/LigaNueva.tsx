@@ -53,7 +53,12 @@ export const LigaNueva: React.FC = () => {
         </Button>
       </ActionBar>
 
-      <ModeHeader className="liga-header rv-mode-header" title="Nueva liga" />
+      <ModeHeader
+        className="liga-header rv-mode-header rv-mode-header--entry"
+        eyebrow="Riviera Open"
+        title="Nueva liga"
+        subtitle="Nombre, fechas y modalidad de tu liga."
+      />
 
       <form className="liga-card rv-card" onSubmit={handleSubmit}>
         <div className="liga-field">

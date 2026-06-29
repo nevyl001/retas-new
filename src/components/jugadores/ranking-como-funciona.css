@@ -490,8 +490,10 @@
   color: var(--ro-bg-base);
   font-size: 15px;
   font-weight: 700;
+  font-family: inherit;
   text-decoration: none;
   border: 1px solid rgba(255, 255, 255, 0.55);
+  cursor: pointer;
   transition:
     background 0.2s ease,
     box-shadow 0.2s ease,

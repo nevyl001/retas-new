@@ -1,24 +1,25 @@
-/* Torneo Express — un solo fondo grafito; las cards se leen por borde, no por otro gris */
+/* Torneo Express — canvas grafito; header del sitio queda negro puro */
 
 .torneo-express-page {
-  --te-bg: var(--bg-base);
-  --te-panel: var(--bg-base);
+  --te-bg: var(--bg-canvas);
+  --te-panel: var(--bg-canvas);
   --te-card: var(--bg-base);
-  --riviera-bg-base: var(--bg-base);
+  --riviera-bg-base: var(--bg-canvas);
   --riviera-bg-card: var(--bg-base);
-  background: var(--bg-base);
+  background: var(--bg-canvas);
 }
 
 .torneo-express-page.te-inicio-page,
 .te-inicio-page {
-  --te-inicio-page-bg: var(--bg-base);
-  --te-inicio-surface: var(--bg-base);
+  --te-inicio-page-bg: var(--bg-canvas);
+  --te-inicio-surface: var(--bg-canvas);
   --te-inicio-surface-raised: var(--bg-base);
-  background: var(--bg-base);
+  background: var(--bg-canvas);
 }
 
 .te-gestion-page {
-  --te-gestion-surface: var(--bg-base);
+  --te-gestion-surface: var(--bg-canvas);
+  background: var(--bg-canvas);
 }
 
 .torneo-express-page .torneo-express-card,

@@ -103,7 +103,8 @@ export const Duelo2v2Nuevo: React.FC = () => {
       </ActionBar>
 
       <ModeHeader
-        className="duelo2v2-header rv-mode-header"
+        className="duelo2v2-header rv-mode-header rv-mode-header--entry"
+        eyebrow="Riviera Open"
         title="Nuevo duelo 2 vs 2"
         subtitle="Agrega dos parejas del registro e inicia el encuentro."
       />

@@ -15,7 +15,7 @@
 body {
   font-family: var(--font-body);
   font-weight: var(--font-weight-regular);
-  background-color: var(--bg-base);
+  background-color: var(--bg-canvas);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

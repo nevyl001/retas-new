@@ -326,7 +326,15 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return (
       <AmericanoModeShell onBack={goBackToRetas}>
         {syncWarning}
-        {tournamentBanner}
+        <ModeHeader
+          className="americano-entry-header americano-tournament-banner rv-mode-header rv-mode-header--entry"
+          eyebrow="Riviera Open"
+          title={tournamentName || "Americano Dinámico"}
+          subtitle={
+            tournamentDescription ||
+            "Selecciona jugadores del registro y define rondas y canchas."
+          }
+        />
         {playersLoadError && (
           <p className="americano-screen__error">
             {playersLoadError}

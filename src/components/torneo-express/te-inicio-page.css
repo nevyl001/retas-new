@@ -1,832 +1,846 @@
-/* Vista inicio Torneo Express — layout ancho y jerarquía visual */
+/* Torneo Express — inicio premium (override torneo-express.css) */
 
-.te-inicio-page {
-  --te-inicio-max: 1100px;
-  --te-inicio-pad-x: 24px;
-  --te-inicio-section-gap: 48px;
-  --te-inicio-page-bg: var(--ro-bg-surface);
+.torneo-express-page.te-inicio-page {
+  --te-inicio-max: 1200px;
+  --te-inicio-pad-x: clamp(20px, 3vw, 32px);
+  --te-inicio-section-gap: clamp(20px, 3vw, 28px);
+  --te-inicio-page-bg: var(--bg-canvas);
   --te-inicio-surface: var(--ro-bg-elevated);
-  --te-inicio-surface-raised: var(--ro-bg-elevated);
   --te-inicio-text-muted: var(--ro-text-muted);
   --te-inicio-text-secondary: var(--ro-text-secondary);
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 24px var(--te-inicio-pad-x)
-    calc(48px + env(safe-area-inset-bottom, 0px));
+  padding: clamp(16px, 2.5vw, 24px) var(--te-inicio-pad-x)
+    calc(40px + env(safe-area-inset-bottom, 0px));
   background: var(--te-inicio-page-bg);
   color: var(--ro-text-primary);
   box-sizing: border-box;
 }
 
-.te-inicio-page > * {
+.torneo-express-page.te-inicio-page > * {
   width: 100%;
-  max-width: var(--te-inicio-max);
+  max-width: none;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
 }
 
-.te-inicio-page .te-inicio-toolbar {
-  margin-bottom: 24px;
+.torneo-express-page.te-inicio-page .te-inicio-page__shell {
+  width: 100%;
+  max-width: var(--te-inicio-max);
+  margin-inline: auto;
 }
 
-/* —— Zona torneos —— */
-.te-inicio-page .te-torneos-section {
+/* —— Toolbar —— */
+.torneo-express-page.te-inicio-page .te-inicio-toolbar {
+  margin-bottom: clamp(12px, 2.5vw, 18px);
+}
+
+/* —— Header alineado izquierda —— */
+.torneo-express-page.te-inicio-page .te-inicio-page__intro {
+  text-align: left;
+  margin-bottom: clamp(18px, 3vw, 26px);
+  max-width: none;
+}
+
+.torneo-express-page.te-inicio-page .te-inicio-header.rv-mode-header {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.torneo-express-page.te-inicio-page .te-inicio-header .rv-mode-header__eyebrow {
+  margin-bottom: 8px;
+}
+
+.torneo-express-page.te-inicio-page .te-inicio-header .rv-mode-header__title {
+  font-size: clamp(1.9rem, 4.5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0 0 10px;
+  line-height: 1.1;
+}
+
+.torneo-express-page.te-inicio-page .te-inicio-header .rv-mode-header__sub {
+  margin: 0;
+  max-width: 52ch;
+  font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+  line-height: 1.5;
+  color: var(--te-inicio-text-secondary);
+}
+
+/* —— Tus torneos —— */
+.torneo-express-page.te-inicio-page .te-torneos-section {
   margin-bottom: var(--te-inicio-section-gap);
 }
 
-.te-inicio-page .te-torneos-section__head {
+.torneo-express-page.te-inicio-page .te-torneos-section__head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: clamp(10px, 2.5vw, 14px);
 }
 
-.te-inicio-page .te-torneos-section__title {
+.torneo-express-page.te-inicio-page .te-torneos-section__title {
   margin: 0;
-  font-family: var(--font-body);
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--ro-text-primary);
-  letter-spacing: -0.02em;
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(1.125rem, 2.2vw, 1.375rem);
+  font-weight: 700;
 }
 
-.te-inicio-page .te-torneos-section__count {
+.torneo-express-page.te-inicio-page .te-torneos-section__count {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 3px 10px;
   border-radius: 9999px;
   border: 0.5px solid var(--border-subtle);
-  background: var(--te-inicio-surface);
-  font-family: var(--font-body);
-  font-size: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 11px;
   font-weight: 600;
   color: var(--te-inicio-text-secondary);
 }
 
-.te-inicio-page .te-torneos-group__label {
-  margin: 0 0 12px;
-  font-family: var(--font-body);
-  font-size: 12px;
+.torneo-express-page.te-inicio-page .te-torneos-group__label {
+  margin: 0 0 10px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--te-inicio-text-muted);
 }
 
-.te-inicio-page .te-torneos-group + .te-torneos-group {
-  margin-top: 32px;
+.torneo-express-page.te-inicio-page .te-torneos-group + .te-torneos-group {
+  margin-top: clamp(16px, 4vw, 22px);
 }
 
-.te-inicio-page .te-torneos-cards {
-  gap: 16px;
-}
-
-.te-inicio-page .te-torneo-card {
-  padding: 0;
-  border-radius: 12px;
-  border: 0.5px solid var(--border-subtle);
-  background: var(--te-inicio-surface);
-  box-shadow: none;
-  opacity: 1;
-}
-
-.te-inicio-page .te-torneo-card--activo {
-  border-color: rgba(74, 222, 128, 0.2);
-}
-
-.te-inicio-page .te-torneo-card--finalizado {
-  opacity: 0.92;
-}
-
-.te-inicio-page .te-torneo-card__inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px;
-  align-items: center;
-  padding: 20px 24px;
-}
-
-.te-inicio-page .te-torneo-card__info-col {
+.torneo-express-page.te-inicio-page .te-torneos-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Event card compacta */
+.torneo-express-page.te-inicio-page .te-torneo-card {
+  padding: 0;
+  border-radius: var(--ro-radius-lg, 14px);
+  border: 0.5px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: none;
+  opacity: 1;
+  overflow: hidden;
+  transition: border-color 0.2s ease;
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card--activo {
+  border-color: rgba(61, 122, 92, 0.32);
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card--finalizado {
+  opacity: 0.9;
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card__inner {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(16px, 2.5vw, 22px) clamp(18px, 2.5vw, 26px);
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 
-.te-inicio-page .te-torneo-card__meta-top {
+.torneo-express-page.te-inicio-page .te-torneo-card__meta-top {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
 }
 
-.te-inicio-page .te-torneo-card__badge-live.riviera-badge {
+.torneo-express-page.te-inicio-page .te-torneo-card__badge-live.riviera-badge {
   background: var(--success-muted);
   color: var(--success);
-  border: 0.5px solid rgba(74, 222, 128, 0.35);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  border: 0.5px solid rgba(74, 222, 128, 0.3);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   border-radius: 9999px;
-  padding: 4px 10px;
+  padding: 3px 9px;
 }
 
-.te-inicio-page .te-torneo-card__badge-live.riviera-badge::before {
-  background: var(--success);
-}
-
-.te-inicio-page .te-torneo-card__badge-done.riviera-badge {
-  background: var(--bg-elevated);
+.torneo-express-page.te-inicio-page .te-torneo-card__badge-done.riviera-badge {
+  background: rgba(255, 255, 255, 0.04);
   color: var(--te-inicio-text-secondary);
   border: 0.5px solid var(--border-subtle);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   border-radius: 9999px;
-  padding: 4px 10px;
+  padding: 3px 9px;
 }
 
-.te-inicio-page .te-torneo-card__fecha {
-  font-size: 12px;
+.torneo-express-page.te-inicio-page .te-torneo-card__fecha {
+  font-size: 11px;
   color: var(--te-inicio-text-muted);
 }
 
-.te-inicio-page .te-torneo-card__nombre {
+.torneo-express-page.te-inicio-page .te-torneo-card__nombre {
   margin: 0;
-  font-family: var(--font-body);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.25;
-  color: var(--ro-text-primary);
+  font-family: var(--ro-font-heading, var(--font-body));
+  font-size: clamp(1.125rem, 2.2vw, 1.375rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
-.te-inicio-page .te-torneo-card__categoria,
-.te-inicio-page .te-torneo-card__info {
+.torneo-express-page.te-inicio-page .te-torneo-card__meta-line {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.4;
   color: var(--te-inicio-text-secondary);
 }
 
-.te-inicio-page .te-torneo-card__actions-col {
+.torneo-express-page.te-inicio-page .te-torneo-card__meta-cat {
+  font-weight: 600;
+  color: var(--te-inicio-text-muted);
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card__meta-sep {
+  margin: 0 0.35em;
+  opacity: 0.45;
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card__footer {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 0.5px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.07));
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card__actions-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card__btn-manage.riviera-btn {
+  width: 100%;
+  min-height: 42px;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card__actions-links {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
   gap: 8px;
-  flex-shrink: 0;
 }
 
-.te-inicio-page .te-torneo-card__actions-col .riviera-btn-primary {
+.torneo-express-page.te-inicio-page .te-torneo-card__actions-links .riviera-btn {
+  flex: 1 1 calc(50% - 4px);
   min-height: 40px;
-  font-weight: 600;
+  justify-content: center;
+  font-size: 0.875rem;
 }
 
-.te-inicio-page .te-torneo-card__actions-col .riviera-btn-secondary {
+.torneo-express-page.te-inicio-page .te-torneo-card__actions-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px 12px;
+}
+
+.torneo-express-page.te-inicio-page .te-torneo-card__actions-end .riviera-btn {
   min-height: 36px;
   font-size: 0.8125rem;
 }
 
-.te-inicio-page .te-btn-finalizar-fase {
-  border-color: rgba(248, 113, 113, 0.45) !important;
+.torneo-express-page.te-inicio-page .te-btn-finalizar-fase {
   color: var(--loss) !important;
   background: transparent !important;
 }
 
-.te-inicio-page .te-btn-finalizar-fase:hover:not(:disabled) {
-  background: var(--error-muted) !important;
-  border-color: var(--loss) !important;
-  color: var(--loss) !important;
-}
-
-.te-inicio-page .te-btn-eliminar-torneo {
-  border-color: rgba(248, 113, 113, 0.35) !important;
-  color: var(--loss) !important;
+.torneo-express-page.te-inicio-page .te-btn-eliminar-torneo {
+  color: var(--ro-text-muted) !important;
   background: transparent !important;
+  border-color: transparent !important;
+  opacity: 0.8;
 }
 
-.te-inicio-page .te-btn-eliminar-torneo:hover:not(:disabled) {
-  background: var(--error-muted) !important;
-  border-color: var(--loss) !important;
+.torneo-express-page.te-inicio-page .te-btn-eliminar-torneo:hover:not(:disabled) {
   color: var(--loss) !important;
+  opacity: 1;
 }
 
-.te-inicio-page .te-torneo-card__confirm,
-.te-inicio-page .te-torneo-card .te-resultados-panel,
-.te-inicio-page .te-torneo-card .te-tabla-general-panel {
-  margin: 0 24px 20px;
-  padding-top: 16px;
-  border-top: 0.5px solid var(--border-subtle);
+@media (min-width: 768px) {
+  .torneo-express-page.te-inicio-page .te-torneo-card__inner {
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(24px, 3vw, 40px);
+    padding: clamp(20px, 2.5vw, 26px) clamp(24px, 2.5vw, 32px);
+  }
+
+  .torneo-express-page.te-inicio-page .te-torneo-card__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .torneo-express-page.te-inicio-page .te-torneo-card__footer {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    flex: 0 0 auto;
+    min-width: min(320px, 34%);
+  }
+
+  .torneo-express-page.te-inicio-page .te-torneo-card__actions-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .torneo-express-page.te-inicio-page .te-torneo-card__btn-manage.riviera-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .torneo-express-page.te-inicio-page .te-torneo-card__actions-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .torneo-express-page.te-inicio-page .te-torneo-card__actions-links .riviera-btn {
+    flex: none;
+    width: 100%;
+  }
+
+  .torneo-express-page.te-inicio-page .te-torneo-card__actions-end {
+    justify-content: flex-end;
+  }
 }
 
-.te-inicio-page .te-torneos-empty {
-  padding: 24px;
-  border-radius: 12px;
-  background: var(--te-inicio-surface);
-  border: 0.5px solid var(--border-subtle);
-  color: var(--te-inicio-text-secondary);
-}
-
-.te-inicio-page .te-ver-todos-btn {
-  margin-top: 16px;
-  color: var(--te-inicio-text-secondary);
-}
-
-/* —— Sección crear —— */
-.te-inicio-page .te-inicio-crear {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.te-inicio-page .te-inicio-crear__title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 24px;
-  font-family: var(--font-body);
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--ro-text-primary);
-  letter-spacing: -0.02em;
-}
-
-.te-inicio-page .te-inicio-crear__icon {
-  font-size: 1.25rem;
-  line-height: 1;
-  opacity: 0.9;
-}
-
-.te-inicio-page .te-crear-grid {
-  gap: 24px;
-  align-items: stretch;
-}
-
-.te-inicio-page .te-crear-col .torneo-express-card,
-.te-inicio-page .te-crear-col .te-players-panel {
-  max-width: none;
-  margin: 0;
-  height: 100%;
-  border-radius: 16px;
-  border: 0.5px solid var(--border-subtle);
-  background: var(--te-inicio-surface-raised);
-  padding: 28px;
-  box-shadow: none;
-}
-
-.te-inicio-page .te-crear-form__header {
-  margin-bottom: 24px;
-}
-
-.te-inicio-page .te-crear-form__header .te-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 8px;
-  font-family: var(--font-body);
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--ro-text-primary);
-}
-
-.te-inicio-page .te-crear-form__header .te-subtitle {
-  margin: 0;
-  font-size: 14px;
-  color: var(--te-inicio-text-secondary);
-}
-
-.te-inicio-page .torneo-express-field {
-  margin-bottom: 16px;
-}
-
-.te-inicio-page .torneo-express-field label {
-  display: block;
-  margin-bottom: 8px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--te-inicio-text-muted);
-}
-
-.te-inicio-page .torneo-express-field input,
-.te-inicio-page .torneo-express-field select {
-  min-height: 40px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 0.5px solid var(--border-default);
-  background: var(--te-inicio-page-bg);
-  color: var(--ro-text-primary);
-  font-size: 15px;
-}
-
-.te-inicio-page .torneo-express-field input:focus,
-.te-inicio-page .torneo-express-field select:focus {
-  border-color: var(--accent-gold);
-  box-shadow: 0 0 0 3px var(--accent-gold-dim);
-}
-
-.te-inicio-page .te-armar-parejas {
-  margin: 24px 0 16px;
-  padding-top: 24px;
-  border-top: 0.5px solid var(--border-subtle);
-}
-
-.te-inicio-page .te-armar-parejas .te-section-title {
-  margin: 0 0 8px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: var(--ro-text-primary);
-}
-
-.te-inicio-page .te-armar-parejas > .te-subtitle {
-  margin: 0 0 16px;
-  font-size: 13px;
-  color: var(--te-inicio-text-secondary);
-}
-
-.te-inicio-page .te-armar-parejas__step {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  margin-bottom: 14px;
-}
-
-.te-inicio-page .te-armar-parejas__step-num {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ro-text-on-accent);
-  background: var(--accent-gold, var(--ro-accent));
-}
-
-.te-inicio-page .te-armar-parejas__meta {
-  margin: 0 0 10px;
-  font-size: 12px;
-  color: var(--te-inicio-text-muted);
-}
-
-.te-inicio-page .te-armar-parejas__pool {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-height: min(280px, 40vh);
-  overflow-y: auto;
-  padding: 12px;
-  border-radius: 12px;
-  border: 0.5px solid var(--border-subtle);
-  background: rgba(0, 0, 0, 0.25);
-  margin-bottom: 14px;
-}
-
-.te-inicio-page .te-jugador-pick {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 0.5px solid var(--border-default);
-  background: var(--bg-elevated, #1a1a1f);
-  color: var(--ro-text-primary);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    background 0.15s,
-    box-shadow 0.15s;
-}
-
-.te-inicio-page .te-jugador-pick:hover {
-  border-color: var(--border-strong);
-  background: var(--ro-bg-elevated);
-}
-
-.te-inicio-page .te-jugador-pick--selected {
-  border-color: var(--accent-gold);
-  background: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
-  color: #fff;
-}
-
-.te-inicio-page .te-jugador-pick__warn {
-  font-size: 11px;
-  line-height: 1;
-}
-
-.te-inicio-page .te-armar-parejas__actions {
-  margin-bottom: 18px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 0.5px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.te-inicio-page .te-armar-parejas__preview {
-  margin: 0 0 10px;
-  font-size: 14px;
-  color: var(--te-inicio-text-secondary);
-}
-
-.te-inicio-page .te-armar-parejas__hint {
-  margin: 0 0 10px;
-  font-size: 13px;
-  color: var(--te-inicio-text-muted);
-}
-
-.te-inicio-page .te-armar-parejas__action-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.te-inicio-page .te-armar-parejas__empty,
-.te-inicio-page .te-armar-parejas__all-paired {
-  margin: 0 0 12px;
-  font-size: 13px;
-  color: var(--te-inicio-text-muted);
-}
-
-.te-inicio-page .te-armar-parejas__formed {
-  margin-top: 8px;
+.torneo-express-page.te-inicio-page .te-torneo-card__confirm,
+.torneo-express-page.te-inicio-page .te-torneo-card .te-resultados-panel,
+.torneo-express-page.te-inicio-page .te-torneo-card .te-tabla-general-panel {
+  margin: 0 clamp(14px, 3.5vw, 18px) 16px;
   padding-top: 14px;
   border-top: 0.5px solid var(--border-subtle);
 }
 
-.te-inicio-page .te-armar-parejas__formed-title {
-  margin: 0 0 10px;
-  font-size: 12px;
+.torneo-express-page.te-inicio-page .te-torneos-empty {
+  padding: clamp(20px, 5vw, 28px);
+  border-radius: var(--ro-radius-lg, 14px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 0.5px dashed var(--ro-border, rgba(255, 255, 255, 0.1));
+  color: var(--te-inicio-text-secondary);
+  text-align: center;
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.torneo-express-page.te-inicio-page .te-torneos-empty p {
+  margin: 0;
+}
+
+.torneo-express-page.te-inicio-page .te-torneos-empty p + p {
+  margin-top: 6px;
+}
+
+.torneo-express-page.te-inicio-page .te-ver-todos-btn {
+  margin-top: 12px;
+  color: var(--te-inicio-text-secondary);
+}
+
+/* —— Crear nuevo torneo —— */
+.torneo-express-page.te-inicio-page .te-inicio-crear {
+  margin-top: 0;
+}
+
+.torneo-express-page.te-inicio-page .te-inicio-crear__title {
+  margin-bottom: clamp(14px, 2.5vw, 20px);
+  font-size: clamp(1.125rem, 2.2vw, 1.375rem);
   font-weight: 700;
-  letter-spacing: 0.06em;
+}
+
+/* Layout pasos: 58 / 42 desktop */
+.torneo-express-page.te-inicio-page .te-crear-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(16px, 2.5vw, 22px);
+  align-items: start;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-layout__panel,
+.torneo-express-page.te-inicio-page .te-crear-step--players {
+  border-radius: var(--ro-radius-lg, 14px);
+  border: 0.5px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.torneo-express-page.te-inicio-page .te-crear-layout__panel {
+  padding: clamp(20px, 2.5vw, 28px);
+}
+
+.torneo-express-page.te-inicio-page .te-crear-step--players {
+  padding: clamp(20px, 2.5vw, 28px);
+  margin-top: 0;
+  border-top: none;
+}
+
+@media (min-width: 900px) {
+  .torneo-express-page.te-inicio-page .te-crear-layout {
+    grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+    gap: clamp(20px, 2.5vw, 28px);
+  }
+
+  .torneo-express-page.te-inicio-page .te-crear-layout__main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .torneo-express-page.te-inicio-page .te-crear-layout__aside {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+  }
+}
+
+/* Pasos visuales */
+.torneo-express-page.te-inicio-page .te-crear-step + .te-crear-step {
+  margin-top: clamp(20px, 4vw, 28px);
+  padding-top: clamp(20px, 4vw, 28px);
+  border-top: 0.5px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.06));
+}
+
+.torneo-express-page.te-inicio-page .te-crear-layout__panel .te-crear-step:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-step__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-bottom: clamp(12px, 3vw, 16px);
+}
+
+.torneo-express-page.te-inicio-page .te-crear-step__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-green, #3d7a5c);
+  background: rgba(61, 122, 92, 0.12);
+  border: 0.5px solid rgba(61, 122, 92, 0.28);
+}
+
+.torneo-express-page.te-inicio-page .te-crear-step__title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 2.6vw, 1.05rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ro-text-primary);
+}
+
+.torneo-express-page.te-inicio-page .te-crear-step__body {
+  min-width: 0;
+}
+
+/* Formulario premium */
+.torneo-express-page.te-inicio-page .te-crear-form__fields {
+  display: grid;
+  gap: 0;
+}
+
+.torneo-express-page.te-inicio-page .torneo-express-field {
+  margin-bottom: 14px;
+}
+
+.torneo-express-page.te-inicio-page .torneo-express-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--te-inicio-text-secondary);
+}
+
+.torneo-express-page.te-inicio-page .torneo-express-field input,
+.torneo-express-page.te-inicio-page .torneo-express-field select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--ro-text-primary);
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.torneo-express-page.te-inicio-page .torneo-express-field input:focus,
+.torneo-express-page.te-inicio-page .torneo-express-field select:focus {
+  outline: none;
+  border-color: rgba(61, 122, 92, 0.45);
+  box-shadow: 0 0 0 2px rgba(61, 122, 92, 0.15);
+}
+
+.torneo-express-page.te-inicio-page .te-crear-form__notices {
+  margin-top: 4px;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-notif-hint {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-notif-hint strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--te-inicio-text-muted);
 }
 
-.te-inicio-page .te-pareja-formada__index {
-  flex-shrink: 0;
-  width: 22px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent-gold);
-  text-align: center;
+.torneo-express-page.te-inicio-page .te-crear-notif-hint p {
+  margin: 0;
+  color: var(--te-inicio-text-secondary);
 }
 
-.te-inicio-page .te-pareja-formada__names {
-  flex: 1;
-  min-width: 0;
-}
-
-.te-inicio-page .te-pareja-formada__sep {
-  margin: 0 6px;
-  opacity: 0.5;
-}
-
-.te-inicio-page .te-asignar-grupos {
-  margin: 20px 0 8px;
-  padding-top: 20px;
-  border-top: 0.5px solid var(--border-subtle);
-}
-
-.te-inicio-page .te-asignar-grupos__warn {
-  margin: 0 0 14px;
+.torneo-express-page.te-inicio-page .te-crear-notif-warn {
+  margin: 10px 0 0;
   padding: 10px 12px;
   border-radius: 10px;
-  font-size: 12px;
+  background: rgba(230, 126, 34, 0.08);
+  border: 0.5px solid rgba(230, 126, 34, 0.25);
+  color: #e8b88a;
+  font-size: 0.8125rem;
   line-height: 1.45;
-  color: var(--ro-accent);
-  background: rgba(255, 255, 255, 0.1);
-  border: 0.5px solid rgba(255, 255, 255, 0.35);
 }
 
-.te-inicio-page .te-asignar-grupos__ok {
-  margin: 0 0 14px;
-  font-size: 12px;
-  color: #86efac;
+/* Parejas y grupos */
+.torneo-express-page.te-inicio-page .te-armar-parejas {
+  margin: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
-.te-inicio-page .te-grupo-assignment__count {
-  margin-bottom: 10px !important;
-}
-
-.te-inicio-page .te-pareja-form-row--inline {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  gap: 8px;
-  align-items: end;
-  margin-bottom: 16px;
-}
-
-.te-inicio-page .te-pareja-form-row--inline .torneo-express-field {
-  margin-bottom: 0;
-}
-
-.te-inicio-page .te-pareja-form-row__sep {
-  align-self: center;
-  padding-bottom: 10px;
+.torneo-express-page.te-inicio-page .te-armar-parejas .te-section-title {
+  margin: 0 0 6px;
   font-size: 14px;
   font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.torneo-express-page.te-inicio-page .te-armar-parejas > .te-subtitle {
+  margin: 0 0 14px;
+  font-size: 13px;
   color: var(--te-inicio-text-muted);
 }
 
-.te-inicio-page .te-btn-agregar-pareja {
-  margin-bottom: 16px;
+.torneo-express-page.te-inicio-page .te-armar-parejas__pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: min(260px, 38vh);
+  overflow-y: auto;
+  padding: 12px;
+  border-radius: 12px;
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.12);
+  margin-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(61, 122, 92, 0.3) transparent;
 }
 
-.te-inicio-page .te-btn-agregar-pareja.riviera-btn-secondary {
-  border: 0.5px solid var(--border-default);
-  color: var(--te-inicio-text-secondary);
-  background: transparent;
-}
-
-.te-inicio-page .te-btn-agregar-pareja.riviera-btn-secondary:hover:not(:disabled) {
+.torneo-express-page.te-inicio-page .te-jugador-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--ro-text-primary);
-  border-color: var(--border-strong);
-  background: var(--bg-elevated);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s;
 }
 
-.te-inicio-page .te-crear-submit {
+.torneo-express-page.te-inicio-page .te-jugador-pick:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.torneo-express-page.te-inicio-page .te-jugador-pick--selected {
+  border-color: rgba(61, 122, 92, 0.5);
+  background: rgba(61, 122, 92, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(61, 122, 92, 0.2);
+}
+
+.torneo-express-page.te-inicio-page .te-jugador-pick__warn {
+  font-size: 10px;
+  opacity: 0.65;
+}
+
+.torneo-express-page.te-inicio-page .te-armar-parejas__actions {
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.torneo-express-page.te-inicio-page .te-asignar-grupos {
+  margin: 16px 0 0;
+  padding-top: 16px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+}
+
+.torneo-express-page.te-inicio-page .te-asignar-grupos__warn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* CTA dentro del panel izquierdo */
+.torneo-express-page.te-inicio-page .te-crear-layout__cta {
+  width: 100%;
+  margin-top: clamp(20px, 3vw, 28px);
+  padding-top: clamp(20px, 3vw, 28px);
+  border-top: 0.5px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.08));
+}
+
+.torneo-express-page.te-inicio-page .te-crear-submit.riviera-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  margin-top: 8px;
-  font-weight: 600;
-}
-
-.te-inicio-page .te-crear-submit__icon {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-/* —— Panel jugadores —— */
-.te-inicio-page .te-players-panel__head {
-  margin-bottom: 8px;
-}
-
-.te-inicio-page .te-players-panel__title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.te-inicio-page .te-players-panel__title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  width: 100%;
+  min-height: 48px;
   margin: 0;
-  font-family: var(--font-body);
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--ro-text-primary);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+  border-radius: 12px;
 }
 
-.te-inicio-page .te-players-panel__title-icon {
-  font-size: 1.1rem;
-  opacity: 0.85;
+.torneo-express-page.te-inicio-page .te-crear-submit.riviera-btn-primary:not(:disabled) {
+  background: var(--ro-green, #3d7a5c);
+  border-color: rgba(61, 122, 92, 0.5);
+  color: #fff;
 }
 
-.te-inicio-page .te-players-panel__subtitle {
+.torneo-express-page.te-inicio-page .te-crear-submit.riviera-btn-primary:hover:not(:disabled) {
+  background: #468f66;
+  border-color: rgba(61, 122, 92, 0.6);
+}
+
+/* —— Panel jugadores (Paso 3) —— */
+.torneo-express-page.te-inicio-page .te-crear-players-wrap .te-players-panel.torneo-express-card {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  max-width: none;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-players-wrap .te-players-panel__title {
   display: none;
 }
 
-.te-inicio-page .te-players-panel__title-row .riviera-btn-primary {
-  flex-shrink: 0;
-  min-height: 36px;
+.torneo-express-page.te-inicio-page .te-crear-players-wrap .te-players-panel__title-row {
+  justify-content: flex-end;
+  margin-bottom: 10px;
 }
 
-.te-inicio-page .te-players-search {
+.torneo-express-page.te-inicio-page .te-crear-players-wrap .te-players-panel__title-row .riviera-btn {
+  min-height: 34px;
+  font-size: 0.75rem;
+}
+
+.torneo-express-page.te-inicio-page .te-players-search {
   position: relative;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
-.te-inicio-page .te-players-search input {
+.torneo-express-page.te-inicio-page .te-players-search input {
   width: 100%;
-  min-height: 40px;
-  padding-left: 40px;
-  border-radius: 8px;
-  border: 0.5px solid var(--border-default);
-  background: var(--te-inicio-page-bg);
+  min-height: 44px;
+  padding: 0 12px 0 38px;
+  border-radius: 10px;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
   color: var(--ro-text-primary);
+  font-size: 16px;
   box-sizing: border-box;
 }
 
-.te-inicio-page .te-players-search__icon {
+.torneo-express-page.te-inicio-page .te-players-search input:focus {
+  outline: none;
+  border-color: rgba(61, 122, 92, 0.4);
+  box-shadow: 0 0 0 2px rgba(61, 122, 92, 0.12);
+}
+
+.torneo-express-page.te-inicio-page .te-players-search__icon {
   position: absolute;
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0.45;
+  font-size: 0.9rem;
 }
 
-.te-inicio-page .te-players-list-meta {
+.torneo-express-page.te-inicio-page .te-players-panel__hint--notif {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--te-inicio-text-secondary);
+  background: rgba(255, 255, 255, 0.02);
+  border: 0.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+
+.torneo-express-page.te-inicio-page .te-players-list-meta {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--te-inicio-text-muted);
 }
 
-.te-inicio-page .te-players-list {
-  border: 0.5px solid var(--border-subtle);
-  border-radius: 8px;
-  max-height: min(60vh, 560px);
+.torneo-express-page.te-inicio-page .te-players-list {
+  border: none;
+  border-radius: 10px;
+  max-height: min(340px, 38vh);
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable;
+  background: rgba(0, 0, 0, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(61, 122, 92, 0.28) transparent;
 }
 
-.te-inicio-page .te-players-list::-webkit-scrollbar {
-  width: 8px;
+.torneo-express-page.te-inicio-page .te-players-list::-webkit-scrollbar {
+  width: 5px;
 }
 
-.te-inicio-page .te-players-list::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.35);
+.torneo-express-page.te-inicio-page .te-players-list::-webkit-scrollbar-thumb {
+  background: rgba(61, 122, 92, 0.3);
   border-radius: 4px;
 }
 
-.te-inicio-page .te-players-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.04);
+.torneo-express-page.te-inicio-page .te-players-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.05);
+  background: transparent;
 }
 
-.te-inicio-page .te-players-add-form__label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted, #a8b4c4);
-  margin: 0.5rem 0 0.25rem;
+.torneo-express-page.te-inicio-page .te-players-row:last-child {
+  border-bottom: none;
 }
 
-.te-inicio-page .te-players-add-form__label:first-of-type {
-  margin-top: 0;
+.torneo-express-page.te-inicio-page .te-players-row--sin-contacto {
+  background: rgba(255, 180, 80, 0.03);
 }
 
-.te-inicio-page .te-players-panel__hint--notif {
-  margin: 0 0 0.65rem;
-  padding: 0.55rem 0.65rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: var(--text-muted, #b8c5d6);
-  background: rgba(212, 175, 55, 0.08);
-  border: 1px solid rgba(212, 175, 55, 0.22);
-  border-radius: 8px;
-}
-
-.te-inicio-page .te-players-row__main {
+.torneo-express-page.te-inicio-page .te-players-row__main {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
   flex: 1;
 }
 
-.te-inicio-page .te-players-row--sin-contacto {
-  background: rgba(255, 180, 80, 0.06);
+.torneo-express-page.te-inicio-page .te-players-row__name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--ro-text-primary);
 }
 
-.te-inicio-page .te-players-row__contact-badge {
-  font-size: 0.68rem;
+.torneo-express-page.te-inicio-page .te-players-row__contact-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
-.te-inicio-page .te-players-row__contact-badge--ok {
-  color: #7dcea0;
+.torneo-express-page.te-inicio-page .te-players-row__contact-badge--ok {
+  color: #8fd4a8;
+  background: rgba(74, 222, 128, 0.1);
+  border: 0.5px solid rgba(74, 222, 128, 0.2);
 }
 
-.te-inicio-page .te-players-row__contact-badge--warn {
-  color: #f0b27a;
+.torneo-express-page.te-inicio-page .te-players-row__contact-badge--warn {
+  color: #d4a574;
+  background: rgba(230, 126, 34, 0.08);
+  border: 0.5px solid rgba(230, 126, 34, 0.18);
 }
 
-.te-inicio-page .te-players-icon-btn--contact:hover:not(:disabled) {
-  background: rgba(212, 175, 55, 0.15);
-}
-
-.te-inicio-page .te-crear-notif-hint {
-  margin: 0 0 1rem;
-  padding: 0.75rem 0.85rem;
-  border-radius: 8px;
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.28);
-  font-size: 0.85rem;
-  line-height: 1.45;
-}
-
-.te-inicio-page .te-crear-notif-hint p {
-  margin: 0.35rem 0 0;
-  color: var(--text-muted, #b8c5d6);
-}
-
-.te-inicio-page .te-crear-notif-warn {
-  margin: 0 0 1rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: 8px;
-  background: rgba(230, 126, 34, 0.12);
-  border: 1px solid rgba(230, 126, 34, 0.35);
-  color: #f5cba7;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.te-inicio-page .te-players-row {
-  padding: 10px 12px;
-  border-bottom: 0.5px solid var(--border-subtle);
-  background: transparent;
-}
-
-.te-inicio-page .te-players-row:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.te-inicio-page .te-players-row:last-child {
-  border-bottom: none;
-}
-
-.te-inicio-page .te-players-row__name {
-  font-size: 14px;
-  color: var(--ro-text-primary);
-}
-
-.te-inicio-page .te-players-icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.torneo-express-page.te-inicio-page .te-players-icon-btn {
   width: 32px;
   height: 32px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-  opacity: 0.75;
-  transition: background 0.15s ease, opacity 0.15s ease;
+  border-radius: 8px;
+  opacity: 0.7;
 }
 
-.te-inicio-page .te-players-icon-btn:hover:not(:disabled) {
+.torneo-express-page.te-inicio-page .te-players-icon-btn:hover:not(:disabled) {
   opacity: 1;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
 }
 
-.te-inicio-page .te-players-icon-btn--danger:hover:not(:disabled) {
-  background: var(--error-muted);
-}
-
-.te-inicio-page .te-players-icon-btn--ok:hover:not(:disabled) {
-  background: var(--success-muted);
-}
-
-@media (max-width: 768px) {
-  .te-inicio-page {
-    --te-inicio-pad-x: 16px;
-    padding-top: 16px;
+/* Mobile 390px polish */
+@media (max-width: 480px) {
+  .torneo-express-page.te-inicio-page {
+    padding-top: 10px;
+    padding-bottom: calc(36px + env(safe-area-inset-bottom, 0px));
   }
 
-  .te-inicio-page .te-torneo-card__inner {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  .torneo-express-page.te-inicio-page .te-inicio-header .rv-mode-header__title {
+    font-size: 1.75rem;
   }
 
-  .te-inicio-page .te-torneo-card__actions-col {
-    justify-content: flex-start;
-    width: 100%;
-  }
-
-  .te-inicio-page .te-crear-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .te-inicio-page .te-crear-col--players {
-    order: 1;
-  }
-
-  .te-inicio-page .te-crear-col--form {
-    order: 2;
-  }
-
-  .te-inicio-page .te-pareja-form-row--inline {
-    grid-template-columns: 1fr;
-  }
-
-  .te-inicio-page .te-pareja-form-row__sep {
-    display: none;
+  .torneo-express-page.te-inicio-page .te-torneo-card__actions-links .riviera-btn {
+    flex: 1 1 100%;
   }
 }

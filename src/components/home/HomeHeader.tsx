@@ -10,10 +10,14 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({ userName }) => {
 
   return (
     <ModeHeader
-      className="home-header rv-mode-header"
-      eyebrow={`Hola, ${displayName}`}
+      className="home-header rv-mode-header rv-mode-header--entry"
+      eyebrow="Riviera Open"
       title="¿Qué quieres jugar hoy?"
-      subtitle="Elige un modo y lanza tu reta en menos de un minuto."
+      subtitle={
+        userName?.trim()
+          ? `Hola, ${displayName}. Elige un modo y lanza tu reta en menos de un minuto.`
+          : "Elige un modo y lanza tu reta en menos de un minuto."
+      }
     />
   );
 };

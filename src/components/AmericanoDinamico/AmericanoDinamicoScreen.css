@@ -1,7 +1,7 @@
 /* Americano dinámico — shell (Riviera Gold) */
 
 .americano-screen {
-  background: var(--bg-base);
+  background: var(--bg-canvas);
   font-family: var(--font-body);
   color: var(--text-primary);
   min-height: 100vh;
@@ -26,13 +26,15 @@
   margin-bottom: 20px;
 }
 
-.americano-tournament-banner {
-  margin-bottom: 18px;
-  padding: 14px 18px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-left: 3px solid var(--accent-gold);
-  border-radius: var(--radius-lg);
+.americano-tournament-banner.rv-mode-header {
+  padding: 0;
+  background: transparent;
+  border: none;
+  margin-bottom: clamp(24px, 6vw, 40px);
+}
+
+.americano-entry-header.rv-mode-header .rv-mode-header__sub {
+  max-width: 42ch;
 }
 
 .americano-tournament-banner__kicker {

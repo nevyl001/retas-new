@@ -2,7 +2,7 @@
 
 .rj-page {
   min-height: 100%;
-  background: var(--bg-base, var(--ro-bg-base));
+  background: var(--bg-canvas);
   color: var(--ro-text-primary);
   padding-bottom: 2rem;
 }

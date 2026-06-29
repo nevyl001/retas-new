@@ -71,6 +71,7 @@ import { usePairManagement } from "./hooks/usePairManagement";
 import { useTournamentActions } from "./hooks/useTournamentActions";
 import { useToastNotifications } from "./hooks/useToastNotifications";
 import { useWinnerCalculation } from "./hooks/useWinnerCalculation";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 function parsePublicAmericanoTournamentId(pathname: string): string | null {
   const m = pathname.match(/^\/public\/americano\/([^/?#]+)/i);
@@ -759,29 +760,40 @@ function AppContent() {
           currentView !== "admin-user" && <UserHeader />}
 
         {currentView === "torneo-express" && (
-          <TorneoExpressRouter key={appPathname} pathname={appPathname} />
+          <ErrorBoundary>
+            <TorneoExpressRouter key={appPathname} pathname={appPathname} />
+          </ErrorBoundary>
         )}
 
         {currentView === "liga" && (
-          <LigaRouter key={appPathname} pathname={appPathname} />
+          <ErrorBoundary>
+            <LigaRouter key={appPathname} pathname={appPathname} />
+          </ErrorBoundary>
         )}
 
         {currentView === "duelo-2v2" && (
-          <Duelo2v2Router key={appPathname} pathname={appPathname} />
+          <ErrorBoundary>
+            <Duelo2v2Router key={appPathname} pathname={appPathname} />
+          </ErrorBoundary>
         )}
 
         {currentView === "public-pantalla" && (
-          <PublicPantallaRouter key={appPathname} pathname={appPathname} />
+          <ErrorBoundary>
+            <PublicPantallaRouter key={appPathname} pathname={appPathname} />
+          </ErrorBoundary>
         )}
 
         {currentView === "jugadores" && (
-          <JugadoresRouter key={appPathname} pathname={appPathname} />
+          <ErrorBoundary>
+            <JugadoresRouter key={appPathname} pathname={appPathname} />
+          </ErrorBoundary>
         )}
 
         {currentView === "legal" && <PrivacidadTerminosPage />}
 
         {currentView === "main" && !isAmericanoRoute && (
-          <>
+          <ErrorBoundary>
+            <>
             {restoringRetaFromUrl && retaIdFromPath && !selectedTournament ? (
               <div className="loading-container">
                 <div className="loading-spinner">
@@ -832,11 +844,13 @@ function AppContent() {
               onBackToHome={handleBackToHome}
             />
             )}
-          </>
+            </>
+          </ErrorBoundary>
         )}
 
         {currentView === "americano-dinamico" && (
-          <AmericanoDinamicoScreen
+          <ErrorBoundary>
+            <AmericanoDinamicoScreen
             tournamentId={americanoTournamentId}
             userId={americanoUserId ?? user?.id ?? undefined}
             onTournamentStatusChange={(updates) => {
@@ -850,21 +864,28 @@ function AppContent() {
               }
             }}
           />
+          </ErrorBoundary>
         )}
 
         {currentView === "public" && publicTournamentId && (
-          <PublicTournamentView tournamentId={publicTournamentId} />
+          <ErrorBoundary>
+            <PublicTournamentView tournamentId={publicTournamentId} />
+          </ErrorBoundary>
         )}
 
         {currentView === "public-americano" && publicAmericanoTournamentId && (
-          <PublicAmericanoView tournamentId={publicAmericanoTournamentId} />
+          <ErrorBoundary>
+            <PublicAmericanoView tournamentId={publicAmericanoTournamentId} />
+          </ErrorBoundary>
         )}
 
         {currentView === "public-americano-pantalla" &&
           publicAmericanoBoardTournamentId && (
-            <PublicAmericanoResultsBoard
-              tournamentId={publicAmericanoBoardTournamentId}
-            />
+            <ErrorBoundary>
+              <PublicAmericanoResultsBoard
+                tournamentId={publicAmericanoBoardTournamentId}
+              />
+            </ErrorBoundary>
           )}
 
         {currentView === "auth-callback" && (
@@ -888,7 +909,8 @@ function AppContent() {
 
         {/* Rutas de Admin */}
         {currentView === "admin-login" && (
-          <>
+          <ErrorBoundary>
+            <>
             {console.log("🔍 Renderizando AdminLogin")}
             <AdminLogin
               onLoginSuccess={() => {
@@ -899,30 +921,35 @@ function AppContent() {
                 setCurrentView("admin-dashboard");
               }}
             />
-          </>
+            </>
+          </ErrorBoundary>
         )}
         {currentView === "admin-dashboard" && (
-          <AdminRoute
-            onUnauthorized={() => {
-              console.log("🔄 Admin no autorizado, cambiando a admin-login");
-              window.history.replaceState({}, "", "/admin-login");
-              setCurrentView("admin-login");
-            }}
-          >
-            <AdminDashboard />
-          </AdminRoute>
+          <ErrorBoundary>
+            <AdminRoute
+              onUnauthorized={() => {
+                console.log("🔄 Admin no autorizado, cambiando a admin-login");
+                window.history.replaceState({}, "", "/admin-login");
+                setCurrentView("admin-login");
+              }}
+            >
+              <AdminDashboard />
+            </AdminRoute>
+          </ErrorBoundary>
         )}
         {currentView === "admin-user" && (
-          <AdminRoute
-            onUnauthorized={() => {
-              window.history.replaceState({}, "", "/admin-login");
-              setCurrentView("admin-login");
-            }}
-          >
-            <AdminUserManagePage
-              userId={parseAdminUserIdFromPath(appPathname) ?? ""}
-            />
-          </AdminRoute>
+          <ErrorBoundary>
+            <AdminRoute
+              onUnauthorized={() => {
+                window.history.replaceState({}, "", "/admin-login");
+                setCurrentView("admin-login");
+              }}
+            >
+              <AdminUserManagePage
+                userId={parseAdminUserIdFromPath(appPathname) ?? ""}
+              />
+            </AdminRoute>
+          </ErrorBoundary>
         )}
       </ProtectedRoute>
 

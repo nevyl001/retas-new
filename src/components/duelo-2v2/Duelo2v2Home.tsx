@@ -76,7 +76,8 @@ export const Duelo2v2Home: React.FC = () => {
       </ActionBar>
 
       <ModeHeader
-        className="duelo2v2-header rv-mode-header"
+        className="duelo2v2-header rv-mode-header rv-mode-header--entry"
+        eyebrow="Riviera Open"
         title="Duelo 2 vs 2"
         subtitle="Encuentros entre dos parejas del registro Riviera Open. Suman al ranking global (+25 participar, +100 ganar)."
       />

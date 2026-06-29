@@ -43,6 +43,12 @@
   border-bottom: 0.5px solid var(--liga-border);
 }
 
+.liga-header.rv-mode-header {
+  margin-bottom: clamp(24px, 6vw, 40px);
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
 .liga-eyebrow {
   font-size: 11px;
   letter-spacing: 0.12em;

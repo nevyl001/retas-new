@@ -81,7 +81,8 @@ export const LigaHome: React.FC = () => {
       </ActionBar>
 
       <ModeHeader
-        className="liga-header rv-mode-header"
+        className="liga-header rv-mode-header rv-mode-header--entry"
+        eyebrow="Riviera Open"
         title="Ligas"
         subtitle="Liga individual con parejas rotativas o liga por parejas fijas"
       />

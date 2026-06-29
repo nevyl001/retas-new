@@ -254,7 +254,13 @@
   text-align: left;
 }
 
-.rv-mode-header__eyebrow {
+  /* Entrada a modos — eyebrow marca unificado */
+  .rv-mode-header--entry .rv-mode-header__eyebrow {
+    color: var(--ro-green, #3d7a5c);
+    letter-spacing: 0.18em;
+  }
+
+  .rv-mode-header__eyebrow {
   font-size: var(--ro-text-label);
   font-weight: 600;
   letter-spacing: 0.16em;

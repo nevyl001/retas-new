@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { GameModeId } from "./gameModesConfig";
 import { GAME_MODES } from "./gameModesConfig";
+import { ModeHeader } from "../platform/ModeHeader";
 import { Button, Modal } from "../ui";
 
 export interface QuickStartPayload {
@@ -89,8 +90,6 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
         </footer>
       }
     >
-      <div className="home-sheet__accent-line" aria-hidden />
-
       <header className="home-sheet__header">
         <button
           type="button"
@@ -100,23 +99,13 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
         >
           ←
         </button>
-        <div
-          className="home-sheet__head-main"
-          style={
-            { "--sheet-mode-accent": mode.accentColor } as React.CSSProperties
-          }
-        >
-          <span className="home-sheet__mode-icon" aria-hidden>
-            {mode.icon}
-          </span>
-          <div className="home-sheet__head-text">
-            <p className="home-sheet__kicker">Nueva reta</p>
-            <h2 id="quick-start-title" className="home-sheet__title">
-              {mode.title}
-            </h2>
-            <p className="home-sheet__subtitle">{mode.description}</p>
-          </div>
-        </div>
+        <ModeHeader
+          className="home-sheet__mode-header rv-mode-header rv-mode-header--entry"
+          eyebrow="Riviera Open"
+          title={mode.title}
+          titleId="quick-start-title"
+          subtitle={mode.description}
+        />
       </header>
 
       <div className="home-sheet__fields">

@@ -25,14 +25,20 @@
 .duelo2v2-header.rv-mode-header,
 .liga-header.rv-mode-header,
 .te-header.rv-mode-header,
-.americano-tournament-banner.rv-mode-header {
+.te-inicio-header.rv-mode-header,
+.americano-entry-header.rv-mode-header,
+.americano-tournament-banner.rv-mode-header,
+.start-tournament-section__mode-header.rv-mode-header,
+.mis-retas-page__mode-header.rv-mode-header {
   margin-bottom: clamp(var(--ro-space-5), 4vw, var(--ro-space-8));
 }
 
 .duelo2v2-header.rv-mode-header .rv-mode-header__title,
 .liga-header.rv-mode-header .liga-title,
 .te-header.rv-mode-header .te-title,
-.te-header.rv-mode-header .te-gestion-title {
+.te-header.rv-mode-header .te-gestion-title,
+.start-tournament-section__mode-header.rv-mode-header .rv-mode-header__title,
+.mis-retas-page__mode-header.rv-mode-header .rv-mode-header__title {
   font-family: var(--ro-font-heading);
   font-size: clamp(1.5rem, 5vw, 2rem);
   font-weight: 700;
@@ -43,24 +49,12 @@
 
 .duelo2v2-header.rv-mode-header .rv-mode-header__sub,
 .liga-header.rv-mode-header .liga-subtitle,
-.te-header.rv-mode-header .te-subtitle {
+.te-header.rv-mode-header .te-subtitle,
+.start-tournament-section__mode-header.rv-mode-header .rv-mode-header__sub,
+.mis-retas-page__mode-header.rv-mode-header .rv-mode-header__sub {
   color: var(--ro-text-secondary);
   line-height: 1.55;
   max-width: 42ch;
-}
-
-.americano-tournament-banner.rv-mode-header .americano-tournament-banner__kicker {
-  font-size: var(--ro-text-label);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ro-text-secondary);
-  margin: 0 0 var(--ro-space-2);
-}
-
-.americano-tournament-banner.rv-mode-header .americano-tournament-banner__name {
-  font-family: var(--ro-font-heading);
-  font-size: clamp(1.35rem, 4.5vw, 1.75rem);
-  margin: 0 0 var(--ro-space-2);
 }
 
 /* —— Toolbars y acciones —— */
@@ -68,6 +62,7 @@
 .duelo2v2-toolbar.rv-action-bar,
 .liga-toolbar.rv-action-bar,
 .te-inicio-toolbar.rv-action-bar,
+.mis-retas-page__toolbar.rv-action-bar,
 .americano-screen__header.rv-action-bar,
 .duelo2v2-actions.rv-action-bar,
 .liga-actions.rv-action-bar,

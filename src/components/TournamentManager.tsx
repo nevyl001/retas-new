@@ -27,6 +27,8 @@ import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo-2v2/duelo2v2Nav
 import { useUser } from "../contexts/UserContext";
 import { Badge, Button, Card } from "./ui";
 import { TablerIcon } from "./ui/TablerIcon";
+import { ActionBar } from "./platform/ActionBar";
+import { ModeHeader } from "./platform/ModeHeader";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
 import "./mis-retas/mis-retas.css";
 
@@ -232,14 +234,20 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
   return (
     <div className="tournament-manager mis-retas-page">
-      <header className="mis-retas-page__header">
-        {onBack && (
+      {onBack ? (
+        <ActionBar className="mis-retas-page__toolbar riviera-back-toolbar">
           <Button type="button" variant="back" onClick={onBack}>
             ← Volver
           </Button>
-        )}
-        <h1 className="mis-retas-page__title">Mis Retas</h1>
-      </header>
+        </ActionBar>
+      ) : null}
+
+      <ModeHeader
+        className="mis-retas-page__mode-header rv-mode-header rv-mode-header--entry"
+        eyebrow="Riviera Open"
+        title="Mis retas"
+        subtitle="Administra tus retas creadas y continúa donde te quedaste."
+      />
 
       {error ? (
         <p className="mis-retas-page__error" role="alert">
