@@ -75,14 +75,18 @@ export function TePubMatchOutcome({
   }
   if (isTie) {
     return (
-      <div className="te-pub-match-winner te-pub-match-winner--tie">
+      <div
+        className="te-pub-match-winner te-pub-match-winner--compact te-pub-match-winner--tie"
+        aria-label="Empate"
+      >
         <span className="te-pub-match-winner__icon" aria-hidden>
           ⇄
         </span>
-        <div className="te-pub-match-winner__body">
-          <span className="te-pub-match-winner__label">Empate</span>
-          <span className="te-pub-match-winner__name">Marcador igualado</span>
-        </div>
+        <span className="te-pub-match-winner__label">Empate</span>
+        <span className="te-pub-match-winner__sep" aria-hidden>
+          ·
+        </span>
+        <span className="te-pub-match-winner__name">Marcador igualado</span>
       </div>
     );
   }

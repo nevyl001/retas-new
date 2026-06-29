@@ -885,7 +885,13 @@
 
 .te-pub-pair--win .te-pub-pair__label,
 .te-pub-pair--win .te-pub-pair__player-name {
-  color: var(--accent-gold);
+  color: var(--ro-gold-light, #e8c547);
+}
+
+.te-pub-pair--tie .te-pub-pair__label,
+.te-pub-pair--tie .te-pub-pair__player-name {
+  color: var(--ro-gold-light, #e8c547);
+  font-weight: 700;
 }
 
 .te-pub-pair__showcase {
@@ -945,6 +951,14 @@
   box-shadow:
     0 0 0 2px rgba(255, 255, 255, 0.22),
     0 14px 36px rgba(255, 255, 255, 0.2),
+    0 10px 28px rgba(0, 0, 0, 0.38);
+}
+
+.te-pub-pair--tie .te-pub-pair__avatar {
+  border-color: var(--ro-gold, #c9a227);
+  box-shadow:
+    0 0 0 2px var(--ro-gold-border, rgba(201, 162, 39, 0.38)),
+    0 14px 36px var(--ro-gold-glow, rgba(201, 162, 39, 0.22)),
     0 10px 28px rgba(0, 0, 0, 0.38);
 }
 
@@ -1157,6 +1171,13 @@
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.2),
       0 6px 16px rgba(255, 255, 255, 0.15),
+      0 4px 12px rgba(0, 0, 0, 0.32);
+  }
+
+  .te-pub-pair--tie .te-pub-pair__avatar {
+    box-shadow:
+      0 0 0 1px var(--ro-gold-border, rgba(201, 162, 39, 0.38)),
+      0 6px 16px var(--ro-gold-glow, rgba(201, 162, 39, 0.2)),
       0 4px 12px rgba(0, 0, 0, 0.32);
   }
 
@@ -1394,17 +1415,34 @@
   line-height: 1.3;
 }
 
+.te-pub-match-winner--tie {
+  border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
+  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.12));
+  box-shadow: inset 3px 0 0 var(--ro-gold, #c9a227);
+}
+
 .te-pub-match-winner--tie .te-pub-match-winner__icon {
-  color: var(--text-muted);
+  color: var(--ro-gold, #c9a227);
+}
+
+.te-pub-match-winner--tie .te-pub-match-winner__label {
+  color: var(--ro-gold, #c9a227);
 }
 
 .te-pub-match-winner--tie .te-pub-match-winner__name {
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: var(--ro-gold-light, #e8c547);
+}
+
+.te-pub-match--tie {
+  box-shadow:
+    inset 0 0 0 1px var(--ro-gold-border, rgba(201, 162, 39, 0.28)),
+    0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
 .te-pub-score__num--tie {
-  color: var(--text-primary);
+  color: var(--ro-gold-light, #e8c547);
+  font-weight: 700;
 }
 
 .te-pub-games {

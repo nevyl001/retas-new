@@ -15,15 +15,19 @@ export const PublicRetaPairSide: React.FC<{
   label: string;
   align?: "left" | "right";
   isWinner?: boolean;
-}> = ({ players, label, align = "left", isWinner = false }) => {
+  isTie?: boolean;
+}> = ({ players, label, align = "left", isWinner = false, isTie = false }) => {
   const [p1, p2] = players;
   const hasBothPlayers = Boolean(p1 && p2);
+  const rowClass = isTie
+    ? " te-pub-pair--tie"
+    : isWinner
+      ? " te-pub-pair--win"
+      : "";
 
   return (
     <div
-      className={`te-pub-pair te-pub-pair--${align}${
-        isWinner ? " te-pub-pair--win" : ""
-      }`}
+      className={`te-pub-pair te-pub-pair--${align}${rowClass}`}
       aria-label={label}
     >
       {hasBothPlayers ? (

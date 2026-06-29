@@ -1094,6 +1094,11 @@
   font-weight: 600;
 }
 
+.te-pub-match__team--tie {
+  color: var(--ro-gold-light, #e8c547);
+  font-weight: 700;
+}
+
 .te-pub-match__vs {
   font-size: 1.2rem;
   font-weight: 500;

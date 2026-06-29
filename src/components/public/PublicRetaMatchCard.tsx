@@ -54,7 +54,7 @@ export const PublicRetaMatchCard: React.FC<{
     <article
       className={`te-pub-match te-pub-match--wide te-pub-fade-in-up${
         remontadaRound != null ? " te-pub-match--remontada" : ""
-      }`}
+      }${isTie ? " te-pub-match--tie" : ""}`}
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >
       <div className="te-pub-match__top">
@@ -86,6 +86,7 @@ export const PublicRetaMatchCard: React.FC<{
           label={pair1Label}
           align="left"
           isWinner={pair1Wins}
+          isTie={isTie}
         />
 
         <div className="te-pub-match__score-block te-pub-match__score-block--center">
@@ -121,6 +122,7 @@ export const PublicRetaMatchCard: React.FC<{
           label={pair2Label}
           align="right"
           isWinner={pair2Wins}
+          isTie={isTie}
         />
       </div>
 

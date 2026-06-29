@@ -50,7 +50,7 @@ export const TePublicMatchCard: React.FC<{
 
   return (
     <article
-      className="te-pub-match te-pub-fade-in-up"
+      className={`te-pub-match te-pub-fade-in-up${isTie ? " te-pub-match--tie" : ""}`}
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >
       <div className="te-pub-match__top">
@@ -85,7 +85,7 @@ export const TePublicMatchCard: React.FC<{
       <div className="te-pub-match__teams">
         <span
           className={`te-pub-match__team${
-            localWins ? " te-pub-match__team--win" : ""
+            localWins ? " te-pub-match__team--win" : isTie ? " te-pub-match__team--tie" : ""
           }`}
         >
           {localLabel}
@@ -93,7 +93,7 @@ export const TePublicMatchCard: React.FC<{
         <span className="te-pub-match__vs">vs</span>
         <span
           className={`te-pub-match__team${
-            visitWins ? " te-pub-match__team--win" : ""
+            visitWins ? " te-pub-match__team--win" : isTie ? " te-pub-match__team--tie" : ""
           }`}
         >
           {visitLabel}

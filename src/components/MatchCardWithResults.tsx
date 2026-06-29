@@ -460,6 +460,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const pair2IsWinner = isFinished && matchWinner?.winner === "pair2";
   const pair1IsLoser = isFinished && matchWinner?.winner === "pair2";
   const pair2IsLoser = isFinished && matchWinner?.winner === "pair1";
+  const isTie = isFinished && matchWinner?.winner === "tie";
 
   /** Marcador en fila: puntos del juego (6, 2…), no pair1_score del match (cuenta de sets). */
   const teamDisplayScores = (() => {
@@ -490,7 +491,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     <div
       className={`omc-card rv-card rv-match-card${isSelected ? " selected" : ""}${
         isFinished ? " omc-card--done" : " omc-card--live"
-      }`}
+      }${isTie ? " omc-card--tie" : ""}`}
       onClick={() => onSelect(currentMatch.id)}
     >
       <header className="omc-header" onClick={stopCardClick}>
@@ -608,11 +609,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           <>
             <div
               className={`omc-team-row${
-                pair1IsWinner
-                  ? " omc-team-row--winner"
-                  : pair1IsLoser
-                    ? " omc-team-row--loser"
-                    : ""
+                isTie
+                  ? " omc-team-row--tie"
+                  : pair1IsWinner
+                    ? " omc-team-row--winner"
+                    : pair1IsLoser
+                      ? " omc-team-row--loser"
+                      : ""
               }`}
             >
               <div className="omc-team-row__info">
@@ -624,11 +627,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             </div>
             <div
               className={`omc-team-row${
-                pair2IsWinner
-                  ? " omc-team-row--winner"
-                  : pair2IsLoser
-                    ? " omc-team-row--loser"
-                    : ""
+                isTie
+                  ? " omc-team-row--tie"
+                  : pair2IsWinner
+                    ? " omc-team-row--winner"
+                    : pair2IsLoser
+                      ? " omc-team-row--loser"
+                      : ""
               }`}
             >
               <div className="omc-team-row__info">
@@ -639,9 +644,30 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               ) : null}
             </div>
 
+            {isTie ? (
+              <div className="omc-tie-banner" role="status" aria-label="Empate">
+                <span className="omc-tie-banner__icon" aria-hidden>
+                  ⇄
+                </span>
+                <span className="omc-tie-banner__label">Empate</span>
+                {teamDisplayScores.score1 != null &&
+                teamDisplayScores.score2 != null ? (
+                  <span className="omc-tie-banner__score">
+                    {teamDisplayScores.score1}–{teamDisplayScores.score2}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+
             {games.length > 0 && (
-              <div className="omc-result-strip">
-                <span className="omc-result-strip__label">Resultado</span>
+              <div
+                className={`omc-result-strip${
+                  isTie ? " omc-result-strip--tie" : ""
+                }`}
+              >
+                <span className="omc-result-strip__label">
+                  {isTie ? "Empate" : "Resultado"}
+                </span>
                 <span className="omc-result-strip__value">{gamesSummary}</span>
               </div>
             )}
