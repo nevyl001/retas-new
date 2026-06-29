@@ -786,22 +786,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         tournamentWinner && (
           <RetaRoundRobinWinnerCelebrate
             pairLabel={`${tournamentWinner.pair.player1_name} / ${tournamentWinner.pair.player2_name}`}
+            pairId={tournamentWinner.pair.id}
             torneoNombre={publicTournamentName ?? undefined}
             rankLabel={
               championshipConfig?.championshipEnabled
-                ? "Ganadores · Remontada Final"
-                : "Ganadores de la reta"
+                ? "1.er lugar · Remontada Final"
+                : "1.er lugar"
             }
+            tournamentWinner={tournamentWinner}
             winners={winnerAvatars}
-            stats={[
-              { value: tournamentWinner.totalSets, label: "Sets ganados" },
-              { value: tournamentWinner.matchesPlayed, label: "Partidos" },
-              { value: tournamentWinner.totalPoints, label: "Puntos" },
-              {
-                value: `${tournamentWinner.winPercentage.toFixed(1)}%`,
-                label: "Efectividad",
-              },
-            ]}
           />
         )}
 

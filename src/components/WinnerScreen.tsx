@@ -124,21 +124,10 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
       <div className="elegant-winner-screen elegant-winner-screen--share">
         <RetaRoundRobinWinnerCelebrate
           pairLabel={`${winner!.player1_name} / ${winner!.player2_name}`}
+          pairId={winner!.id}
           torneoNombre={torneoNombre}
+          tournamentWinner={tournamentWinner}
           winners={winnerAvatars}
-          stats={
-            tournamentWinner
-              ? [
-                  { value: tournamentWinner.totalSets, label: "Sets ganados" },
-                  { value: tournamentWinner.matchesPlayed, label: "Partidos" },
-                  { value: tournamentWinner.totalPoints, label: "Puntos" },
-                  {
-                    value: `${tournamentWinner.winPercentage.toFixed(1)}%`,
-                    label: "Efectividad",
-                  },
-                ]
-              : undefined
-          }
         />
         <div className="elegant-winner-actions">
           <button className="elegant-winner-back-btn" onClick={onBackToManager}>

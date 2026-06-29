@@ -407,17 +407,10 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         winner && (
           <RetaRoundRobinWinnerCelebrate
             pairLabel={`${winner.player1_name} / ${winner.player2_name}`}
+            pairId={winner.id}
             torneoNombre={tournament.name}
+            tournamentWinner={tournamentWinner}
             winners={winnerAvatars}
-            stats={[
-              { value: tournamentWinner.totalSets, label: "Sets ganados" },
-              { value: tournamentWinner.matchesPlayed, label: "Partidos" },
-              { value: tournamentWinner.totalPoints, label: "Puntos" },
-              {
-                value: `${tournamentWinner.winPercentage.toFixed(1)}%`,
-                label: "Efectividad",
-              },
-            ]}
           />
         )}
 

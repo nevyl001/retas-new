@@ -128,6 +128,13 @@ function PodiumStats({
   );
 }
 
+export type PodiumCopyOverrides = {
+  badge?: string;
+  title?: string;
+  rank?: string;
+  message?: string;
+};
+
 export const PodiumCard: React.FC<{
   position: PodiumPosition;
   entry: PublicFinalistEntry;
@@ -135,6 +142,9 @@ export const PodiumCard: React.FC<{
   torneoNombre: string;
   pairPlayersById: Record<string, PublicRetaPairPlayer[]>;
   stats?: PublicEliminatoriaPodiumStats | null;
+  copyOverrides?: PodiumCopyOverrides;
+  id?: string;
+  className?: string;
 }> = ({
   position,
   entry,
@@ -142,8 +152,15 @@ export const PodiumCard: React.FC<{
   torneoNombre,
   pairPlayersById,
   stats,
+  copyOverrides,
+  id,
+  className = "",
 }) => {
   const variant = PODIUM_VARIANT[position];
+  const badge = copyOverrides?.badge ?? variant.badge;
+  const title = copyOverrides?.title ?? variant.title;
+  const rank = copyOverrides?.rank ?? variant.rank;
+  const message = copyOverrides?.message ?? variant.message;
   const [name1, name2] = parsePairLabel(entry.label);
 
   const players = useMemo(() => {
@@ -164,24 +181,28 @@ export const PodiumCard: React.FC<{
 
   const subtitle = [
     categoria ? `Categoría · ${categoria.toUpperCase()}` : null,
-    variant.rank,
+    rank,
   ]
     .filter(Boolean)
     .join(" · ");
 
   return (
     <section
+      id={id}
       className={[
         "podium-card",
         "te-pub-fade-in",
         `podium-card--${variant.modifier}`,
-      ].join(" ")}
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={
         {
           "--podium-accent": variant.accent,
         } as React.CSSProperties
       }
-      aria-label={`${variant.badge} — ${variant.rank}`}
+      aria-label={`${badge} — ${rank}`}
     >
       <span className="podium-card__corner podium-card__corner--tl" aria-hidden />
       <span className="podium-card__corner podium-card__corner--tr" aria-hidden />
@@ -191,11 +212,11 @@ export const PodiumCard: React.FC<{
       <div className="podium-card__inner">
         <p className="podium-card__torneo-name">{torneoNombre}</p>
         <div className="podium-card__gold-line" aria-hidden />
-        <p className="podium-card__badge">{variant.badge}</p>
-        <h2 className="podium-card__title">{variant.title}</h2>
+        <p className="podium-card__badge">{badge}</p>
+        <h2 className="podium-card__title">{title}</h2>
         {subtitle ? <p className="podium-card__subtitle">{subtitle}</p> : null}
 
-        <div className="podium-card__players" aria-label={variant.badge}>
+        <div className="podium-card__players" aria-label={badge}>
           <div className="podium-card__player">
             <PodiumAvatar player={players[0]} />
             <p className="podium-card__player-name">{players[0].name}</p>
@@ -215,7 +236,7 @@ export const PodiumCard: React.FC<{
           </div>
         </div>
 
-        <p className="podium-card__quote">{variant.message}</p>
+        <p className="podium-card__quote">{message}</p>
 
         {stats ? (
           <PodiumStats stats={stats} accent={variant.accent} />

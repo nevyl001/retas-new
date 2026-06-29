@@ -1,4 +1,5 @@
 import type { Game, Match, Pair } from "./database";
+import { computeStandingDif } from "../utils/standingsDisplay";
 import {
   partitionMatches,
   resolveChampionshipPodium,
@@ -6,6 +7,7 @@ import {
 } from "./roundRobinChampionship";
 import {
   computePairsWithStats,
+  getPairStandingDiff,
   sortPairsForStandings,
   type PairWithStats,
 } from "./standingsUtils";
@@ -23,13 +25,20 @@ function pairToTournamentWinner(
 ): TournamentWinner {
   const matchesPlayed = stats?.matchesPlayed ?? 0;
   const pg = stats?.pg ?? 0;
+  const pp = stats?.pp ?? 0;
+  const points = stats?.points ?? 0;
+  const pointsReceived = stats?.pointsReceived ?? 0;
   return {
     pair,
-    totalPoints: stats?.points ?? 0,
+    totalPoints: points,
+    totalPointsReceived: pointsReceived,
     totalSets: stats?.setsWon ?? 0,
     totalGames: stats?.gamesWon ?? 0,
     matchesPlayed,
     winPercentage: matchesPlayed > 0 ? (pg / matchesPlayed) * 100 : 0,
+    victorias: pg,
+    derrotas: pp,
+    difJuegos: stats ? getPairStandingDiff(stats) : computeStandingDif(points, pointsReceived),
   };
 }
 

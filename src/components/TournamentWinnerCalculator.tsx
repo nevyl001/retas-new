@@ -1,6 +1,7 @@
 import { Pair, Match, Game } from "../lib/database";
 import { getGames } from "../lib/database";
 import type { TournamentWinner } from "../lib/tournamentWinner";
+import { computeStandingDif } from "../utils/standingsDisplay";
 
 export type { TournamentWinner };
 
@@ -31,10 +32,12 @@ export class TournamentWinnerCalculator {
         string,
         {
           totalPoints: number;
+          totalPointsReceived: number;
           totalSets: number;
           totalGames: number;
           matchesPlayed: number;
           wins: number;
+          losses: number;
         }
       >();
 
@@ -42,10 +45,12 @@ export class TournamentWinnerCalculator {
       for (const pair of pairs) {
         pairStats.set(pair.id, {
           totalPoints: 0,
+          totalPointsReceived: 0,
           totalSets: 0,
           totalGames: 0,
           matchesPlayed: 0,
           wins: 0,
+          losses: 0,
         });
       }
 
@@ -61,21 +66,27 @@ export class TournamentWinnerCalculator {
             // Acumular para pareja 1
             const pair1Stats = pairStats.get(match.pair1_id)!;
             pair1Stats.totalPoints += matchStats.pair1Points;
+            pair1Stats.totalPointsReceived += matchStats.pair2Points;
             pair1Stats.totalSets += matchStats.pair1Sets;
             pair1Stats.totalGames += matchStats.pair1Games;
             pair1Stats.matchesPlayed += 1;
             if (matchStats.pair1Points > matchStats.pair2Points) {
               pair1Stats.wins += 1;
+            } else if (matchStats.pair2Points > matchStats.pair1Points) {
+              pair1Stats.losses += 1;
             }
 
             // Acumular para pareja 2
             const pair2Stats = pairStats.get(match.pair2_id)!;
             pair2Stats.totalPoints += matchStats.pair2Points;
+            pair2Stats.totalPointsReceived += matchStats.pair1Points;
             pair2Stats.totalSets += matchStats.pair2Sets;
             pair2Stats.totalGames += matchStats.pair2Games;
             pair2Stats.matchesPlayed += 1;
             if (matchStats.pair2Points > matchStats.pair1Points) {
               pair2Stats.wins += 1;
+            } else if (matchStats.pair1Points > matchStats.pair2Points) {
+              pair2Stats.losses += 1;
             }
 
             console.log(`📊 Partido ${match.id}:`);
@@ -100,10 +111,17 @@ export class TournamentWinnerCalculator {
           candidates.push({
             pair,
             totalPoints: stats.totalPoints,
+            totalPointsReceived: stats.totalPointsReceived,
             totalSets: stats.totalSets,
             totalGames: stats.totalGames,
             matchesPlayed: stats.matchesPlayed,
             winPercentage,
+            victorias: stats.wins,
+            derrotas: stats.losses,
+            difJuegos: computeStandingDif(
+              stats.totalPoints,
+              stats.totalPointsReceived
+            ),
           });
 
           console.log(
