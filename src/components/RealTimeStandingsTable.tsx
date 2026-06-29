@@ -27,6 +27,10 @@ import { StandingsPtsCell } from "./standings/StandingsPtsCell";
 import { StandingsScoringHelp } from "./standings/StandingsScoringHelp";
 import { StandingsTableHeader } from "./standings/StandingsTableHeader";
 import {
+  StandingsMobileCards,
+  type StandingsMobileCardRow,
+} from "./standings/StandingsMobileCards";
+import {
   COL_CON,
   COL_ENTITY,
   COL_FAV,
@@ -39,6 +43,7 @@ import {
 } from "./standings/standingsTableColumns";
 import "./ModernStandingsTable.css";
 import "./torneo-express/public/torneo-express-public.css";
+import "../styles/standings-mobile-cards.css";
 
 export interface TeamConfig {
   teamNames: string[];
@@ -260,6 +265,34 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     return computeTeamStandings(pairsWithStats, effectiveTeamConfig);
   }, [pairsWithStats, effectiveTeamConfig]);
 
+  const mobileCardRows = useMemo((): StandingsMobileCardRow[] => {
+    if (teamStandings && teamStandings.length > 0) {
+      return teamStandings.map((row, index) => ({
+        key: `team-${row.teamIndex}`,
+        position: index + 1,
+        label: row.name,
+        matchesPlayed: row.matchesPlayed,
+        pg: row.pg,
+        pp: row.pp,
+        points: row.points,
+        pointsReceived: row.pointsReceived,
+        puntosTorneo: row.puntosTorneo,
+      }));
+    }
+
+    return sortedPairs.map((pair, index) => ({
+      key: pair.id,
+      position: index + 1,
+      label: `${pair.player1_name} / ${pair.player2_name}`,
+      matchesPlayed: pair.matchesPlayed,
+      pg: pair.pg,
+      pp: pair.pp,
+      points: pair.points,
+      pointsReceived: pair.pointsReceived,
+      puntosTorneo: pair.puntosTorneo,
+    }));
+  }, [teamStandings, sortedPairs]);
+
   const getPositionIcon = (position: number) => {
     switch (position) {
       case 1:
@@ -354,10 +387,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
 
       <StandingsScoringHelp />
 
+      <StandingsMobileCards rows={mobileCardRows} />
+
       {/* Modo equipos: tabla por equipos (suma de puntos por equipo) */}
       {teamStandings && teamStandings.length > 0 ? (
         <div
-          className={`new-standings-table-wrapper te-pub-standings-table-wrap rv-table-wrap ${TABLA_WRAPPER_CLASS}`}
+          className={`new-standings-table-wrapper standings-table-desktop te-pub-standings-table-wrap rv-table-wrap ${TABLA_WRAPPER_CLASS}`}
           style={
             {
               "--standings-sticky-bg": "var(--bg-card)",
@@ -398,7 +433,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       ) : (
         /* Modo round robin: tabla por parejas */
         <div
-          className={`new-standings-table-wrapper te-pub-standings-table-wrap rv-table-wrap ${TABLA_WRAPPER_CLASS}`}
+          className={`new-standings-table-wrapper standings-table-desktop te-pub-standings-table-wrap rv-table-wrap ${TABLA_WRAPPER_CLASS}`}
           style={
             {
               "--standings-sticky-bg": "var(--bg-card)",

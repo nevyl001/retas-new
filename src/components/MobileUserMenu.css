@@ -1,22 +1,14 @@
 /* =====================================================
-   MOBILE USER MENU - SIMPLE Y FUNCIONAL
+   MOBILE USER MENU — panel desplegable compacto
    ===================================================== */
 
 .mobile-user-menu {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
   width: 100%;
-  max-width: 100%;
-  padding: 0;
-  margin: 0;
   box-sizing: border-box;
 }
-
-/* =====================================================
-   INFORMACIÓN DEL USUARIO
-   ===================================================== */
 
 .mobile-user-info {
   display: flex;
@@ -27,14 +19,12 @@
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
-  margin: 0;
 }
 
 .mobile-user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   overflow: hidden;
   display: flex;
@@ -57,7 +47,6 @@
   color: var(--color-accent-text);
   font-weight: 600;
   font-size: 14px;
-  text-shadow: none;
 }
 
 .mobile-user-details {
@@ -71,8 +60,8 @@
 .mobile-user-name {
   color: var(--color-accent);
   font-weight: 600;
-  font-size: 14px;
-  line-height: 1;
+  font-size: clamp(0.875rem, 3.6vw, 0.9375rem);
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -80,223 +69,74 @@
 
 .mobile-user-email {
   color: var(--color-text-muted);
-  font-size: 11px;
-  line-height: 1;
+  font-size: clamp(0.75rem, 2.8vw, 0.8125rem);
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* =====================================================
-   OPCIONES DEL MENÚ
-   ===================================================== */
-
 .mobile-menu-options {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  gap: var(--space-xs);
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 .mobile-menu-option {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: var(--space-sm);
   background: var(--color-bg-surface);
   border: 1px solid var(--color-border-subtle);
   color: var(--color-text-primary);
-  font-size: 1rem;
+  font-size: clamp(0.875rem, 3.2vw, 0.9375rem);
   font-weight: var(--font-weight-semibold);
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md);
+  min-height: 44px;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-base);
-  text-align: center;
+  text-align: left;
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
   box-sizing: border-box;
-  margin: 0 auto;
 }
 
-.mobile-menu-option:hover {
-  background: rgba(255, 215, 0, 0.2);
-  border-color: rgba(255, 215, 0, 0.4);
+.mobile-menu-option:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.35);
   color: var(--ro-accent);
-  transform: translateX(3px);
+}
+
+.mobile-menu-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .mobile-menu-icon {
-  font-size: 1.25rem;
-  width: auto;
-  text-align: center;
+  font-size: 1.125rem;
   flex-shrink: 0;
 }
 
 .mobile-menu-text {
   flex: 1;
-}
-
-.mobile-menu-divider {
-  border: none;
-  border-top: 1px solid rgba(255, 215, 0, 0.2);
-  margin: 8px 0;
-}
-
-.mobile-menu-admin {
-  background: rgba(0, 212, 255, 0.1);
-  border-color: rgba(0, 212, 255, 0.3);
-  color: var(--text-secondary);
-  font-weight: 600;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-}
-
-.mobile-menu-admin:hover {
-  background: rgba(0, 212, 255, 0.2);
-  border-color: rgba(0, 212, 255, 0.5);
-  color: var(--text-secondary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mobile-menu-logout {
   background: var(--color-bg-surface);
-  border: 2px solid rgba(220, 38, 38, 0.5);
-  color: rgba(220, 38, 38, 1);
-  font-weight: var(--font-weight-semibold);
-  font-size: 1.0625rem;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-  padding: var(--space-md) var(--space-xl);
+  border: 2px solid rgba(220, 38, 38, 0.45);
+  color: rgba(248, 113, 113, 1);
 }
 
-.mobile-menu-logout:hover {
-  background: rgba(220, 38, 38, 0.15);
-  border-color: rgba(220, 38, 38, 0.8);
-  color: rgba(220, 38, 38, 1);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
-}
-
-/* =====================================================
-   RESPONSIVE
-   ===================================================== */
-
-@media (max-width: 480px) {
-  .mobile-user-menu {
-    width: 100%;
-    max-width: 100%;
-    gap: var(--space-sm);
-    padding: 0;
-    margin: 0;
-  }
-
-  .mobile-user-info {
-    padding: var(--space-sm) var(--space-md);
-  }
-
-  .mobile-menu-option {
-    padding: var(--space-md) var(--space-lg);
-    font-size: 0.9375rem;
-  }
-
-  .mobile-menu-logout {
-    font-size: 1rem;
-    padding: var(--space-md) var(--space-lg);
-  }
-
-  .mobile-menu-icon {
-    font-size: 1.125rem;
-  }
-}
-
-/* iPhone 17 Pro Max y pantallas móviles grandes (430px - 480px) */
-@media (max-width: 480px) and (min-width: 430px) {
-  .mobile-user-menu {
-    padding: 0 10px;
-    margin: 0 -20px;
-  }
-
-  .mobile-user-info {
-    padding: 6px 8px;
-  }
-
-  .mobile-user-name {
-    font-size: 13px;
-  }
-
-  .mobile-user-email {
-    font-size: 10px;
-  }
-}
-
-/* Pantallas móviles extra grandes (iPhone Pro Max) */
-@media (max-width: 430px) {
-  .mobile-user-menu {
-    padding: 0 8px;
-    margin: 0 -16px;
-  }
-
-  .mobile-user-info {
-    padding: 5px 6px;
-  }
-
-  .mobile-user-name {
-    font-size: 12px;
-  }
-
-  .mobile-user-email {
-    font-size: 9px;
-  }
-
-  .mobile-user-info {
-    padding: 6px 10px;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .mobile-user-avatar {
-    width: 28px;
-    height: 28px;
-  }
-
-  .mobile-user-avatar-initials {
-    font-size: 12px;
-  }
-
-  .mobile-user-name {
-    font-size: 12px;
-  }
-
-  .mobile-user-email {
-    font-size: 10px;
-  }
-
-  .mobile-menu-options {
-    gap: 4px;
-    width: 100%;
-    max-width: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .mobile-menu-option {
-    padding: 8px 2px;
-    font-size: 10px;
-  }
-
-  .mobile-menu-icon {
-    font-size: 12px;
-    width: 14px;
-  }
+.mobile-menu-logout:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.65);
+  color: rgba(252, 165, 165, 1);
+  transform: none;
 }

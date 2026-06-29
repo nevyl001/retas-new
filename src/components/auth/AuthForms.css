@@ -392,9 +392,14 @@
 
 .auth-password-field__toggle {
   position: absolute;
-  right: 0.35rem;
+  right: 0.2rem;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   border: none;
   background: transparent;
   color: rgba(245, 158, 11, 0.9);
@@ -402,7 +407,7 @@
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
-  padding: 0.35rem 0.5rem;
+  padding: 0.35rem 0.75rem;
   border-radius: 6px;
 }
 
