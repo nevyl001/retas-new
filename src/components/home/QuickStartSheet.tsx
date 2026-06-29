@@ -132,6 +132,8 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={80}
+            autoComplete="off"
+            enterKeyHint="next"
           />
         </label>
 
@@ -144,7 +146,8 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={300}
-            rows={3}
+            rows={2}
+            enterKeyHint="done"
           />
         </label>
 

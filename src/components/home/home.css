@@ -867,6 +867,7 @@
   background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  overscroll-behavior: none;
   animation: home-sheet-overlay-in 0.28s ease both;
 }
 
@@ -885,13 +886,14 @@
 
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 520px;
-  max-height: min(92vh, 780px);
-  overflow-y: auto;
-  overflow-x: hidden;
+  max-height: min(92dvh, 780px);
+  overflow: hidden;
   box-sizing: border-box;
-  padding: 0 var(--ro-space-5, 1.25rem) max(var(--ro-space-5, 1.25rem), env(safe-area-inset-bottom));
+  padding: 0;
   background: linear-gradient(
     180deg,
     var(--ro-bg-elevated) 0%,
@@ -908,18 +910,28 @@
 }
 
 .home-sheet .riviera-modal__body {
-  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-bottom: 1rem;
+  padding: 0 var(--ro-space-4, 16px) var(--ro-space-3, 12px);
 }
 
 .home-sheet .riviera-modal__footer {
-  padding: 0;
-  margin-top: var(--ro-space-2, 8px);
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: var(--ro-space-3, 12px) var(--ro-space-4, 16px)
+    max(var(--ro-space-4, 16px), env(safe-area-inset-bottom));
   border-top: 1px solid var(--ro-border-subtle);
   background: linear-gradient(
     180deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.35) 100%
+    rgba(15, 15, 15, 0.94) 0%,
+    var(--ro-bg-surface) 100%
   );
+  box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.45);
 }
 
 @keyframes home-sheet-rise {
@@ -999,6 +1011,8 @@
   font-size: 1.125rem;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition:
     border-color var(--transition-fast, 0.15s),
     color var(--transition-fast, 0.15s),
@@ -1107,13 +1121,13 @@
   flex: 1 1 100%;
   width: 100%;
   box-sizing: border-box;
-  padding: 0.75rem 0.9rem;
+  padding: 0.8rem 0.9rem;
   border: 1px solid var(--ro-border);
   border-radius: var(--ro-radius-sm, 8px);
   background: var(--ro-bg-input);
   color: var(--ro-text-primary);
   font-family: var(--ro-font-body, var(--font-body));
-  font-size: 1rem;
+  font-size: 16px;
   line-height: 1.4;
   transition:
     border-color var(--transition-fast, 0.15s),
@@ -1164,6 +1178,8 @@
   line-height: 1;
   cursor: pointer;
   font-family: var(--ro-font-body, var(--font-body));
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition:
     background var(--transition-fast, 0.15s),
     border-color var(--transition-fast, 0.15s),
@@ -1259,11 +1275,14 @@
   font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--ro-text-secondary);
-  max-width: 18rem;
+  max-width: none;
 }
 
 .home-sheet__optional-link {
-  margin: 8px 0 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 4px 0 0;
   padding: 0;
   border: none;
   background: none;
@@ -1274,6 +1293,8 @@
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .home-sheet__optional-link:hover {
@@ -1282,37 +1303,55 @@
 
 .home-sheet__switch {
   flex-shrink: 0;
-  width: 48px;
-  height: 28px;
-  margin-top: 2px;
-  padding: 0;
+  width: 52px;
+  height: 30px;
+  min-width: 52px;
+  min-height: 44px;
+  margin-top: 0;
+  padding: 7px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.home-sheet__switch::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 52px;
+  height: 30px;
+  transform: translateY(-50%);
   border: 1px solid var(--ro-border);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.4);
-  cursor: pointer;
-  position: relative;
   transition: background 0.2s, border-color 0.2s;
 }
 
-.home-sheet__switch--on {
+.home-sheet__switch--on::before {
   background: rgba(201, 162, 39, 0.35);
   border-color: var(--ro-gold-border);
 }
 
 .home-sheet__switch-thumb {
   position: absolute;
-  top: 3px;
+  top: 50%;
   left: 3px;
   width: 20px;
   height: 20px;
+  margin-top: -10px;
   border-radius: 50%;
   background: var(--ro-text-primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   transition: transform 0.2s;
+  z-index: 1;
 }
 
 .home-sheet__switch--on .home-sheet__switch-thumb {
-  transform: translateX(20px);
+  transform: translateX(22px);
   background: var(--ro-gold-light);
 }
 
@@ -1348,6 +1387,8 @@
   font-size: 1.125rem;
   line-height: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   transition: border-color 0.15s, background 0.15s;
 }
 
@@ -1366,7 +1407,7 @@
 }
 
 .home-sheet__hint {
-  margin: var(--ro-space-4, 16px) 0 var(--ro-space-3, 12px);
+  margin: var(--ro-space-3, 12px) 0 0;
   font-family: var(--ro-font-body, var(--font-body));
   font-size: var(--ro-text-small, 0.8125rem);
   line-height: 1.5;
@@ -1374,13 +1415,12 @@
 }
 
 .home-sheet__footer {
-  padding-top: var(--ro-space-4, 16px);
-  padding-bottom: max(var(--ro-space-2, 8px), env(safe-area-inset-bottom));
+  padding: 0;
 }
 
 .home-sheet__submit.riviera-btn.riviera-btn-primary {
   width: 100%;
-  min-height: 48px;
+  min-height: 52px;
   padding: 14px var(--ro-space-4, 16px);
   border: 1px solid var(--ro-gold-border);
   border-radius: var(--ro-radius-md, 12px);
@@ -1395,6 +1435,8 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     0 8px 24px rgba(201, 162, 39, 0.18);
@@ -1429,12 +1471,90 @@
 @media (max-width: 767px) {
   .home-sheet.riviera-modal,
   .home-sheet {
-    padding-left: var(--ro-space-4, 16px);
-    padding-right: var(--ro-space-4, 16px);
+    max-height: min(94dvh, 820px);
+    border-radius: 20px 20px 0 0;
+  }
+
+  .home-sheet .riviera-modal__body {
+    padding-left: max(var(--ro-space-4, 16px), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--ro-space-4, 16px), env(safe-area-inset-right, 0px));
+  }
+
+  .home-sheet .riviera-modal__footer {
+    padding-left: max(var(--ro-space-4, 16px), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--ro-space-4, 16px), env(safe-area-inset-right, 0px));
   }
 
   .home-sheet__header {
-    margin-bottom: var(--ro-space-4, 16px);
+    margin-bottom: var(--ro-space-3, 12px);
+  }
+
+  .home-sheet__accent-line {
+    margin-top: var(--ro-space-2, 8px);
+  }
+
+  .home-sheet__handle {
+    margin-bottom: var(--ro-space-3, 12px);
+  }
+
+  .home-sheet__fields {
+    gap: var(--ro-space-3, 12px);
+  }
+
+  .home-sheet__textarea {
+    min-height: 4.25rem;
+  }
+
+  .home-sheet__optional-head {
+    align-items: center;
+  }
+
+  .home-sheet__optional-head > div {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+@media (max-width: 380px) {
+  .home-sheet__head-main {
+    gap: var(--ro-space-2, 8px);
+  }
+
+  .home-sheet__mode-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .home-sheet__title {
+    font-size: 1.125rem;
+  }
+
+  .home-sheet__subtitle {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .home-sheet__kicker {
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+  }
+
+  .home-sheet__courts-stepper {
+    gap: var(--ro-space-3, 12px);
+  }
+}
+
+@media (max-width: 767px) and (max-height: 700px) {
+  .home-sheet__subtitle {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .home-sheet__textarea {
+    min-height: 3.5rem;
   }
 }
 
