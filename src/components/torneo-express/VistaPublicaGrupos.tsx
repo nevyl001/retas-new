@@ -57,7 +57,10 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
   }
 
   return (
-    <PublicTorneoExpressShell className="te-public--grupos-wide">
+    <PublicTorneoExpressShell
+      className="te-public--grupos-wide"
+      organizadorId={bundle.torneo.organizador_id}
+    >
       <TEPublicGrupos
         {...gruposProps}
         onCopyLink={copyLink}

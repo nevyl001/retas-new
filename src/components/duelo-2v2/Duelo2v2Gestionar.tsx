@@ -1,3 +1,4 @@
+import { useClubModeEyebrow } from "../../club-experience";
 import React, { useCallback, useEffect, useState } from "react";
 import type { Duelo2v2, Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
 import { fetchRatingMovimientosByPartidoRef } from "../../lib/rivieraJugadores/rivieraJugadoresService";
@@ -28,6 +29,7 @@ interface Duelo2v2GestionarProps {
 export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   dueloId,
 }) => {
+  const modeEyebrow = useClubModeEyebrow();
   const [duelo, setDuelo] = useState<Duelo2v2 | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -146,6 +148,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
 
       <ModeHeader
         className="duelo2v2-header rv-mode-header"
+        eyebrow={modeEyebrow}
         title={duelo.nombre}
         subtitle={duelo.descripcion ?? undefined}
       >

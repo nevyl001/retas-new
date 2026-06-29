@@ -1,0 +1,108 @@
+/**
+ * Etapa D — Club Experience en vistas públicas (visitante sin sesión).
+ * Scoped bajo .club-experience-scope[data-club="hack-padel"].
+ * Riviera permanece sin overrides (data-club="riviera").
+ */
+
+/* —— Identidad pública —— */
+[data-club="hack-padel"].club-experience-scope .club-identity__mother {
+  color: color-mix(in srgb, var(--brand-accent) 65%, #ffffff);
+}
+
+[data-club="hack-padel"].club-experience-scope .te-public-header__club-identity,
+[data-club="hack-padel"].club-experience-scope .liga-pantalla__club-identity,
+[data-club="hack-padel"].club-experience-scope .public-pantalla__club-identity,
+[data-club="hack-padel"].club-experience-scope .rjp-ranking-header__club-identity {
+  margin-bottom: 0.35rem;
+}
+
+/* —— Torneo Express público —— */
+[data-club="hack-padel"].club-experience-scope .te-public-header__kicker,
+[data-club="hack-padel"].club-experience-scope .te-public-header__line {
+  border-color: color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}
+
+[data-club="hack-padel"].club-experience-scope .te-public-header__categoria-pill,
+[data-club="hack-padel"].club-experience-scope .te-public-header__grupo-pill {
+  border-color: color-mix(in srgb, var(--brand-accent) 28%, var(--ro-border));
+}
+
+[data-club="hack-padel"].club-experience-scope .te-public-round-head__live,
+[data-club="hack-padel"].club-experience-scope .te-pub-status__dot {
+  color: var(--brand-accent);
+}
+
+[data-club="hack-padel"].club-experience-scope .te-pub-status__dot {
+  background: var(--brand-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--brand-accent) 55%, transparent);
+}
+
+[data-club="hack-padel"].club-experience-scope .te-public-loading__pulse {
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, transparent);
+}
+
+[data-club="hack-padel"].club-experience-scope .te-public-section__divider,
+[data-club="hack-padel"].club-experience-scope .ro-divider-gold {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--brand-accent) 55%, #ffffff),
+    transparent
+  );
+}
+
+/* —— Liga pública —— */
+[data-club="hack-padel"].club-experience-scope .liga-pantalla__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+[data-club="hack-padel"].club-experience-scope .liga-pantalla-ronda__badge--live {
+  background: color-mix(in srgb, var(--brand-accent) 88%, transparent);
+  color: #000000;
+  border-color: color-mix(in srgb, var(--brand-accent) 65%, #ffffff);
+}
+
+[data-club="hack-padel"].club-experience-scope .liga-pantalla-ranking__table tbody tr:first-child td {
+  color: color-mix(in srgb, var(--brand-accent) 85%, #ffffff);
+}
+
+/* —— Duelo 2v2 público —— */
+[data-club="hack-padel"].club-experience-scope .duelo2v2-page--public .duelo2v2-live-dot {
+  background: var(--brand-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--brand-accent) 55%, transparent);
+}
+
+[data-club="hack-padel"].club-experience-scope .duelo2v2-page--public .duelo2v2-live-team--winner {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, var(--ro-border));
+}
+
+[data-club="hack-padel"].club-experience-scope .duelo2v2-page--public .duelo2v2-live-board__winner-badge {
+  background: color-mix(in srgb, var(--brand-accent) 90%, transparent);
+  color: #000000;
+}
+
+/* —— Celebrate / podio —— */
+[data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__wordmark,
+[data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__riviera-line {
+  color: color-mix(in srgb, var(--brand-accent) 88%, #ffffff);
+}
+
+[data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__closing {
+  color: color-mix(in srgb, var(--brand-accent) 70%, #ffffff);
+}
+
+/* —— Ranking público jugadores —— */
+[data-club="hack-padel"].club-experience-scope .rjp-ranking-header__brand {
+  color: color-mix(in srgb, var(--brand-accent) 80%, #ffffff);
+}
+
+[data-club="hack-padel"].club-experience-scope .rjp-ranking-podio__pos--1 {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, var(--ro-border));
+}
+
+/* —— Focus —— */
+[data-club="hack-padel"].club-experience-scope a:focus-visible,
+[data-club="hack-padel"].club-experience-scope button:focus-visible {
+  outline-color: var(--brand-accent);
+}

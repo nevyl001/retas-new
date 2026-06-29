@@ -34,6 +34,11 @@
   align-items: flex-start;
 }
 
+.te-gestion-page .te-gestion-header__eyebrow {
+  flex: 1 1 100%;
+  width: 100%;
+}
+
 .te-gestion-page .te-gestion-back-toolbar {
   margin-bottom: clamp(10px, 2.5vw, 14px);
 }

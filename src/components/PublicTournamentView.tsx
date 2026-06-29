@@ -36,6 +36,7 @@ import {
 import {
   RIVIERA_APP_DISPLAY,
 } from "../lib/rivieraBranding";
+import { ClubIdentity, useClubExperience } from "../club-experience";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { PublicRetaMatchCard } from "./public/PublicRetaMatchCard";
 import type { PublicRetaPairPlayer } from "./public/PublicRetaPairSide";
@@ -72,6 +73,41 @@ import "./public/riviera-public-americano.css";
 interface PublicTournamentViewProps {
   tournamentId: string;
 }
+
+const RetaPublicHeader: React.FC<{
+  formatKicker: string;
+  publicTournamentName: string | null;
+  publicTournamentDescription: string | null;
+}> = ({ formatKicker, publicTournamentName, publicTournamentDescription }) => {
+  const { isClubBranded } = useClubExperience();
+
+  return (
+    <header className="te-public-header te-public-header--reta te-pub-fade-in">
+      <div className="te-public-header__brand">
+        {isClubBranded ? (
+          <ClubIdentity
+            variant="compact"
+            showTagline={false}
+            logoSurface="dark"
+            className="te-public-header__club-identity"
+          />
+        ) : null}
+        <p className="te-public-header__kicker">{formatKicker} · En vivo</p>
+        <h1 className="te-public-header__title te-public-header__title--event">
+          {publicTournamentName || "Resultados en tiempo real"}
+        </h1>
+        <div className="te-public-header__line" aria-hidden />
+        <div className="te-public-header__meta">
+          {publicTournamentDescription ? (
+            <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
+              {publicTournamentDescription}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </header>
+  );
+};
 
 /** Parsea team config desde el hash de la URL (#teams=...) para que móvil muestre tabla por equipos aunque falle la API */
 function parseTeamConfigFromHash(): TeamConfig | null {
@@ -572,7 +608,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   if (loading) {
     return (
-      <PublicTorneoExpressShell className="te-public--reta te-public--reta-wide">
+      <PublicTorneoExpressShell
+        className="te-public--reta te-public--reta-wide"
+        organizadorId={organizadorId}
+      >
         <div className="te-public-loading">
           <div className="te-public-loading__pulse" aria-hidden />
           <p>Cargando resultados de la reta…</p>
@@ -583,7 +622,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   if (error) {
     return (
-      <PublicTorneoExpressShell className="te-public--reta te-public--reta-wide">
+      <PublicTorneoExpressShell
+        className="te-public--reta te-public--reta-wide"
+        organizadorId={organizadorId}
+      >
         <p className="te-public-error">{error}</p>
       </PublicTorneoExpressShell>
     );
@@ -632,23 +674,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     : 1;
 
   return (
-    <PublicTorneoExpressShell className="te-public--reta te-public--reta-wide">
-      <header className="te-public-header te-public-header--reta te-pub-fade-in">
-        <div className="te-public-header__brand">
-          <p className="te-public-header__kicker">{formatKicker} · En vivo</p>
-          <h1 className="te-public-header__title te-public-header__title--event">
-            {publicTournamentName || "Resultados en tiempo real"}
-          </h1>
-          <div className="te-public-header__line" aria-hidden />
-          <div className="te-public-header__meta">
-            {publicTournamentDescription ? (
-              <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
-                {publicTournamentDescription}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </header>
+    <PublicTorneoExpressShell
+      className="te-public--reta te-public--reta-wide"
+      organizadorId={organizadorId}
+    >
+      <RetaPublicHeader
+        formatKicker={formatKicker}
+        publicTournamentName={publicTournamentName}
+        publicTournamentDescription={publicTournamentDescription}
+      />
 
       <section className="te-public-section te-pub-fade-in">
         <h2 className="te-public-section__title">Partidos por ronda</h2>

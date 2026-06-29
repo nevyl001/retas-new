@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useClubModeEyebrow } from "../../club-experience";
 import type { GameModeId } from "./gameModesConfig";
 import { GAME_MODES } from "./gameModesConfig";
 import { ModeHeader } from "../platform/ModeHeader";
@@ -39,6 +40,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
   const [championshipEnabled, setChampionshipEnabled] = useState(false);
   const [championshipRounds, setChampionshipRounds] = useState(2);
   const [showRemontadaHelp, setShowRemontadaHelp] = useState(false);
+  const modeEyebrow = useClubModeEyebrow();
 
   if (!modeId) return null;
 
@@ -101,7 +103,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
         </button>
         <ModeHeader
           className="home-sheet__mode-header rv-mode-header rv-mode-header--entry"
-          eyebrow="Riviera Open"
+          eyebrow={modeEyebrow}
           title={mode.title}
           titleId="quick-start-title"
           subtitle={mode.description}

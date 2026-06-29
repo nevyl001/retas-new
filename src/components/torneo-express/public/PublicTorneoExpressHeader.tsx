@@ -1,4 +1,5 @@
 import React from "react";
+import { ClubIdentity, useClubExperience } from "../../../club-experience";
 import { Button } from "../../ui";
 
 export const PublicTorneoExpressHeader: React.FC<{
@@ -17,10 +18,22 @@ export const PublicTorneoExpressHeader: React.FC<{
   onCopyLink,
   copyMsg,
   extraActions,
-}) => (
+}) => {
+  const { isClubBranded } = useClubExperience();
+
+  return (
   <header className="te-public-header te-pub-fade-in">
     <div className="te-public-header__brand">
-      <p className="te-public-header__kicker te-label-eyebrow">Riviera Open</p>
+      {isClubBranded ? (
+        <ClubIdentity
+          variant="compact"
+          showTagline={false}
+          logoSurface="dark"
+          className="te-public-header__club-identity"
+        />
+      ) : (
+        <p className="te-public-header__kicker te-label-eyebrow">Riviera Open</p>
+      )}
       <h1 className="te-public-header__title">{torneoNombre}</h1>
       <div className="te-public-header__line" aria-hidden />
       <div className="te-public-header__meta">
@@ -45,4 +58,5 @@ export const PublicTorneoExpressHeader: React.FC<{
     </div>
     {copyMsg && <p className="te-public-header__copy-msg">{copyMsg}</p>}
   </header>
-);
+  );
+};

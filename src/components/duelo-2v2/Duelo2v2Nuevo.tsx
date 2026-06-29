@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useClubModeEyebrow } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
 import {
   CANCHA_DEFAULT_VALUE,
@@ -22,6 +23,7 @@ import { navigateDuelo2v2, publicDuelo2v2Path } from "./duelo2v2Nav";
 import "./duelo2v2-page.css";
 
 export const Duelo2v2Nuevo: React.FC = () => {
+  const modeEyebrow = useClubModeEyebrow();
   const { user } = useUser();
   const defaultSchedule = useMemo(() => {
     const now = new Date();
@@ -104,7 +106,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
 
       <ModeHeader
         className="duelo2v2-header rv-mode-header rv-mode-header--entry"
-        eyebrow="Riviera Open"
+        eyebrow={modeEyebrow}
         title="Nuevo duelo 2 vs 2"
         subtitle="Agrega dos parejas del registro e inicia el encuentro."
       />

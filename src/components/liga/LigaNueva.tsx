@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { LigaModalidad, LigaVueltas } from "../../lib/liga/types";
 import { createLiga } from "../../services/ligaService";
@@ -10,6 +11,7 @@ import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
 
 export const LigaNueva: React.FC = () => {
+  const modeEyebrow = useClubModeEyebrow();
   const [nombre, setNombre] = useState("");
   const [fechaInicio, setFechaInicio] = useState("");
   const [canchas, setCanchas] = useState(3);
@@ -55,7 +57,7 @@ export const LigaNueva: React.FC = () => {
 
       <ModeHeader
         className="liga-header rv-mode-header rv-mode-header--entry"
-        eyebrow="Riviera Open"
+        eyebrow={modeEyebrow}
         title="Nueva liga"
         subtitle="Nombre, fechas y modalidad de tu liga."
       />

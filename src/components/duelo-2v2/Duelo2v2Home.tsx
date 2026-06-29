@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
 import {
@@ -26,6 +27,7 @@ function badgeClass(estado: Duelo2v2["estado"]): string {
 }
 
 export const Duelo2v2Home: React.FC = () => {
+  const modeEyebrow = useClubModeEyebrow();
   const [duelos, setDuelos] = useState<Duelo2v2[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export const Duelo2v2Home: React.FC = () => {
 
       <ModeHeader
         className="duelo2v2-header rv-mode-header rv-mode-header--entry"
-        eyebrow="Riviera Open"
+        eyebrow={modeEyebrow}
         title="Duelo 2 vs 2"
         subtitle="Encuentros entre dos parejas del registro Riviera Open. Suman al ranking global (+25 participar, +100 ganar)."
       />

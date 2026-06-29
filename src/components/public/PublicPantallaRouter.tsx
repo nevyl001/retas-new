@@ -76,7 +76,7 @@ export const PublicPantallaRouter: React.FC<{ pathname: string }> = ({
       data-pantalla-mode={mode}
     >
       <p className="public-pantalla__mode-label" aria-hidden>
-        Riviera Open · {MODE_LABELS[mode]}
+        {MODE_LABELS[mode]}
       </p>
       {content}
     </div>

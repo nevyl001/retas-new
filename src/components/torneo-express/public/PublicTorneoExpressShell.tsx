@@ -1,15 +1,19 @@
 import React from "react";
+import { ClubExperienceScope } from "../../../club-experience";
 import { PublicModeShell } from "../../platform/PublicModeShell";
 import "./torneo-express-public.css";
 
 export const PublicTorneoExpressShell: React.FC<{
   children: React.ReactNode;
   className?: string;
-}> = ({ children, className = "" }) => {
+  organizadorId?: string | null;
+}> = ({ children, className = "", organizadorId = null }) => {
   return (
-    <div className={`te-public App--public-full-width ${className}`.trim()}>
-      <div className="te-public__grain" aria-hidden />
-      <PublicModeShell className="te-public__inner">{children}</PublicModeShell>
-    </div>
+    <ClubExperienceScope organizadorId={organizadorId}>
+      <div className={`te-public App--public-full-width ${className}`.trim()}>
+        <div className="te-public__grain" aria-hidden />
+        <PublicModeShell className="te-public__inner">{children}</PublicModeShell>
+      </div>
+    </ClubExperienceScope>
   );
 };

@@ -1,3 +1,4 @@
+import { useClubModeEyebrow } from "../../club-experience";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
@@ -106,6 +107,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   ligaId,
   numero,
 }) => {
+  const modeEyebrow = useClubModeEyebrow();
   const [detalle, setDetalle] = useState<LigaDetalle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -509,6 +511,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
       <ModeHeader
         className="liga-header rv-mode-header"
+        eyebrow={modeEyebrow}
         title={`Liga: ${detalle.nombre} — Jornada ${numero}`}
         subtitle={`Estado: ${jornadaEstadoLabel(jornada.estado)}${
           totalPartidos > 0

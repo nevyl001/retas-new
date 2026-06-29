@@ -1,0 +1,379 @@
+/**
+ * Etapa C — Club Experience en vistas internas.
+ * Solo aplica bajo [data-club="hack-padel"] (usuario logueado con manifiesto activo).
+ * Riviera Open permanece como fallback para el resto.
+ */
+
+/* —— Shell: header (Etapa B) —— */
+[data-club="hack-padel"] .user-header {
+  border-bottom-color: color-mix(in srgb, var(--brand-accent) 35%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .user-profile-btn:hover,
+[data-club="hack-padel"] .user-header-mobile-btn:hover {
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .club-identity__mother {
+  color: color-mix(in srgb, var(--brand-accent) 65%, #ffffff);
+}
+
+/* —— Home —— */
+[data-club="hack-padel"] .main-layout .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .home-inner .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+[data-club="hack-padel"] .main-layout .game-mode-card:hover:not(:disabled),
+[data-club="hack-padel"] .main-layout .game-mode-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent) 50%, var(--ro-border));
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px color-mix(in srgb, var(--brand-accent) 22%, transparent);
+}
+
+[data-club="hack-padel"] .main-layout .game-mode-card::before {
+  background: var(--brand-accent);
+  opacity: 0.55;
+}
+
+[data-club="hack-padel"] .main-layout .game-mode-card .rv-mode-card__cta {
+  color: color-mix(in srgb, var(--brand-accent) 88%, #ffffff);
+}
+
+[data-club="hack-padel"] .main-layout .home-quick-card:hover,
+[data-club="hack-padel"] .main-layout .home-quick-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .main-layout .home-empty-retas__icon {
+  color: color-mix(in srgb, var(--brand-accent) 75%, #ffffff);
+}
+
+[data-club="hack-padel"] .main-layout .recent-reta-card--status-active {
+  border-color: color-mix(in srgb, var(--brand-accent) 42%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .main-layout .recent-reta-card .riviera-badge--active {
+  color: #000000;
+  background: color-mix(in srgb, var(--brand-accent) 85%, transparent);
+  border-color: color-mix(in srgb, var(--brand-accent) 60%, #ffffff);
+}
+
+/* —— Botones primarios (vistas internas) —— */
+[data-club="hack-padel"] .main-layout .rv-button-primary,
+[data-club="hack-padel"] .liga-page .rv-button-primary,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .rv-button-primary,
+[data-club="hack-padel"] .torneo-express-page.te-inicio-page .rv-button-primary,
+[data-club="hack-padel"] .te-gestion-page .rv-button-primary,
+[data-club="hack-padel"] .riviera-organizer-reta .rv-button-primary {
+  background: var(--brand-accent);
+  color: #000000;
+  border-color: color-mix(in srgb, var(--brand-accent) 80%, #ffffff);
+}
+
+[data-club="hack-padel"] .main-layout .rv-button-primary:hover:not(:disabled),
+[data-club="hack-padel"] .liga-page .rv-button-primary:hover:not(:disabled),
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .rv-button-primary:hover:not(:disabled),
+[data-club="hack-padel"] .torneo-express-page.te-inicio-page .rv-button-primary:hover:not(:disabled),
+[data-club="hack-padel"] .te-gestion-page .rv-button-primary:hover:not(:disabled),
+[data-club="hack-padel"] .riviera-organizer-reta .rv-button-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-accent) 88%, #ffffff);
+}
+
+/* —— Headers de modo (entrada) —— */
+[data-club="hack-padel"] .liga-page .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .torneo-express-page.te-inicio-page .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .te-gestion-page .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .riviera-organizer-reta .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .mis-retas-page .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .americano-entry-header .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+/* —— Quick start sheet —— */
+[data-club="hack-padel"] .home-sheet .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.1em;
+}
+
+[data-club="hack-padel"] .home-sheet__switch--on {
+  background: color-mix(in srgb, var(--brand-accent) 22%, transparent);
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .home-sheet__switch--on .home-sheet__switch-thumb {
+  background: var(--brand-accent);
+}
+
+/* —— Badges LIVE / activos —— */
+[data-club="hack-padel"] .liga-page .liga-badge--live.rv-pill,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-badge--live.rv-pill,
+[data-club="hack-padel"] .riviera-organizer-reta .omc-status--live,
+[data-club="hack-padel"] .te-gestion-page .te-gestion-estado-pill.riviera-badge--live,
+[data-club="hack-padel"] .main-layout .rv-pill--live {
+  color: #000000;
+  background: color-mix(in srgb, var(--brand-accent) 88%, transparent);
+  border-color: color-mix(in srgb, var(--brand-accent) 65%, #ffffff);
+}
+
+[data-club="hack-padel"] .riviera-organizer-reta .omc-status--live::before {
+  background: var(--brand-accent);
+}
+
+/* —— Chips / tabs activos —— */
+[data-club="hack-padel"] .mis-retas-page .riviera-filter-chip--active,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-player-chip--selected,
+[data-club="hack-padel"] .liga-page .liga-equipo-seleccion__chip:hover:not(:disabled),
+[data-club="hack-padel"] .te-gestion-page .te-grupos-tab--active {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, var(--ro-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-accent) 20%, transparent);
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-grupos-tab--active {
+  color: var(--brand-accent);
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-player-chip--selected {
+  background: color-mix(in srgb, var(--brand-accent) 12%, var(--ro-bg-surface));
+}
+
+/* —— Cards activas / listas —— */
+[data-club="hack-padel"] .liga-page .liga-list-item:hover,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-card:hover,
+[data-club="hack-padel"] .main-layout .mis-reta-card:hover,
+[data-club="hack-padel"] .main-layout .mis-reta-card--selected {
+  border-color: color-mix(in srgb, var(--brand-accent) 38%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .liga-page .rv-empty-state,
+[data-club="hack-padel"] .main-layout .mis-retas-empty,
+[data-club="hack-padel"] .main-layout .home-empty-retas {
+  border-color: color-mix(in srgb, var(--brand-accent) 18%, var(--ro-border));
+}
+
+/* —— Focus —— */
+[data-club="hack-padel"] .main-layout a:focus-visible,
+[data-club="hack-padel"] .main-layout button:focus-visible,
+[data-club="hack-padel"] .main-layout input:focus-visible,
+[data-club="hack-padel"] .liga-page a:focus-visible,
+[data-club="hack-padel"] .liga-page button:focus-visible,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) a:focus-visible,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) button:focus-visible,
+[data-club="hack-padel"] .torneo-express-page.te-inicio-page a:focus-visible,
+[data-club="hack-padel"] .torneo-express-page.te-inicio-page button:focus-visible,
+[data-club="hack-padel"] .te-gestion-page a:focus-visible,
+[data-club="hack-padel"] .te-gestion-page button:focus-visible {
+  outline-color: var(--brand-accent);
+}
+
+/* —— Paso badges TE crear —— */
+[data-club="hack-padel"] .torneo-express-page.te-inicio-page .te-crear-step__badge {
+  color: #000000;
+  background: color-mix(in srgb, var(--brand-accent) 90%, transparent);
+  border-color: color-mix(in srgb, var(--brand-accent) 70%, #ffffff);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Etapa C.2 — Gestión interna profunda (organizador privado)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* —— Botones primarios: american + reta detail —— */
+[data-club="hack-padel"] .americano-screen .rv-button-primary,
+[data-club="hack-padel"] .americano-screen .americano-round-btn--primary,
+[data-club="hack-padel"] .americano-primary-btn {
+  background: var(--brand-accent);
+  color: #000000;
+  border-color: color-mix(in srgb, var(--brand-accent) 80%, #ffffff);
+}
+
+[data-club="hack-padel"] .americano-screen .rv-button-primary:hover:not(:disabled),
+[data-club="hack-padel"] .americano-screen .americano-round-btn--primary:hover:not(:disabled),
+[data-club="hack-padel"] .americano-primary-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-accent) 88%, #ffffff);
+}
+
+/* —— Torneo Express gestión —— */
+[data-club="hack-padel"] .te-gestion-page .te-gestion-header__eyebrow,
+[data-club="hack-padel"] .te-gestion-page .te-gestion-title {
+  color: var(--effective-text, var(--ro-text-primary));
+}
+
+[data-club="hack-padel"] .te-gestion-page .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .te-gestion-page .te-gestion-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-gestion-fase-pill.riviera-badge,
+[data-club="hack-padel"] .te-gestion-page .te-categoria-pill--neutral {
+  border-color: color-mix(in srgb, var(--brand-accent) 22%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-gestion-estado-pill.riviera-badge--finished {
+  border-color: color-mix(in srgb, var(--brand-accent) 25%, var(--ro-border));
+  color: color-mix(in srgb, var(--brand-accent) 70%, #ffffff);
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-gestion-estado-pill.riviera-badge--pending {
+  border-color: var(--ro-border);
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-gestion-estado-pill.riviera-badge--live::before {
+  background: var(--brand-accent);
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-grupos-tab-item__row--active {
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-partido-card:hover,
+[data-club="hack-padel"] .te-gestion-page .te-gestion-card:hover,
+[data-club="hack-padel"] .te-gestion-page .torneo-express-card:hover {
+  border-color: color-mix(in srgb, var(--brand-accent) 35%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-empty-list,
+[data-club="hack-padel"] .te-gestion-page .te-players-empty,
+[data-club="hack-padel"] .torneo-express-page.te-inicio-page .te-torneos-empty {
+  border-color: color-mix(in srgb, var(--brand-accent) 16%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .te-gestion-page .te-grupos-tab-edit__input:focus {
+  border-color: color-mix(in srgb, var(--brand-accent) 50%, var(--ro-border));
+  outline-color: var(--brand-accent);
+}
+
+/* —— Liga gestión —— */
+[data-club="hack-padel"] .liga-page .liga-header .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+[data-club="hack-padel"] .liga-page .liga-tab--active {
+  background: var(--brand-accent);
+  color: #000000;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}
+
+[data-club="hack-padel"] .liga-page .liga-badge--in_progress,
+[data-club="hack-padel"] .liga-page .liga-badge--live {
+  background: color-mix(in srgb, var(--brand-accent) 88%, transparent);
+  color: #000000;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--brand-accent) 30%, transparent);
+}
+
+[data-club="hack-padel"] .liga-page .liga-badge--completed,
+[data-club="hack-padel"] .liga-page .liga-badge--done {
+  border-color: color-mix(in srgb, var(--brand-accent) 35%, var(--ro-border));
+  color: color-mix(in srgb, var(--brand-accent) 75%, #ffffff);
+}
+
+[data-club="hack-padel"] .liga-page .liga-empty,
+[data-club="hack-padel"] .liga-page .rv-empty-state {
+  border-color: color-mix(in srgb, var(--brand-accent) 16%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .liga-page .liga-list-item--selected,
+[data-club="hack-padel"] .liga-page .liga-jornada-row--active {
+  border-color: color-mix(in srgb, var(--brand-accent) 42%, var(--ro-border));
+}
+
+/* —— Duelo 2v2 gestión —— */
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-header .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-badge--live {
+  background: color-mix(in srgb, var(--brand-accent) 88%, transparent);
+  color: #000000;
+  border-color: color-mix(in srgb, var(--brand-accent) 65%, #ffffff);
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-badge--done {
+  border-color: color-mix(in srgb, var(--brand-accent) 30%, var(--ro-border));
+  color: color-mix(in srgb, var(--brand-accent) 70%, #ffffff);
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-live-dot {
+  background: var(--brand-accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--brand-accent) 55%, transparent);
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-live-team--winner {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, var(--ro-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-accent) 25%, transparent);
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-live-board__winner-badge {
+  background: color-mix(in srgb, var(--brand-accent) 90%, transparent);
+  color: #000000;
+  border-color: color-mix(in srgb, var(--brand-accent) 70%, #ffffff);
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-live-board__pulse {
+  color: var(--brand-accent);
+}
+
+/* —— Americano gestión —— */
+[data-club="hack-padel"] .americano-screen .rv-mode-header__eyebrow,
+[data-club="hack-padel"] .americano-screen .americano-tournament-banner .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+[data-club="hack-padel"] .americano-screen .americano-match-card:hover,
+[data-club="hack-padel"] .americano-screen .americano-round:hover {
+  border-color: color-mix(in srgb, var(--brand-accent) 38%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .americano-screen .americano-registration__empty,
+[data-club="hack-padel"] .americano-screen .americano-round__bench-empty,
+[data-club="hack-padel"] .americano-screen .americano-summary__empty {
+  color: color-mix(in srgb, var(--brand-accent) 55%, var(--ro-text-muted));
+}
+
+[data-club="hack-padel"] .americano-screen .americano-ranking h3 {
+  border-bottom: 1px solid color-mix(in srgb, var(--brand-accent) 22%, transparent);
+  padding-bottom: 0.35rem;
+}
+
+[data-club="hack-padel"] .americano-screen .tabla-ranking tbody tr:first-child td {
+  color: color-mix(in srgb, var(--brand-accent) 85%, #ffffff);
+}
+
+/* —— Mis retas / organizer reta —— */
+[data-club="hack-padel"] .mis-retas-page .riviera-badge--active,
+[data-club="hack-padel"] .riviera-organizer-reta .riviera-badge--active,
+[data-club="hack-padel"] .main-layout .mis-reta-card--status-active {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, var(--ro-border));
+}
+
+[data-club="hack-padel"] .mis-retas-page .riviera-badge--active,
+[data-club="hack-padel"] .riviera-organizer-reta .riviera-badge--active {
+  color: #000000;
+  background: color-mix(in srgb, var(--brand-accent) 85%, transparent);
+}
+
+[data-club="hack-padel"] .mis-retas-page .riviera-badge--active::before,
+[data-club="hack-padel"] .riviera-organizer-reta .riviera-badge--active::before {
+  background: var(--brand-accent);
+}
+
+[data-club="hack-padel"] .riviera-organizer-reta .start-tournament-section .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+/* —— Focus gestión —— */
+[data-club="hack-padel"] .americano-screen a:focus-visible,
+[data-club="hack-padel"] .americano-screen button:focus-visible,
+[data-club="hack-padel"] .americano-screen input:focus-visible,
+[data-club="hack-padel"] .mis-retas-page a:focus-visible,
+[data-club="hack-padel"] .mis-retas-page button:focus-visible {
+  outline-color: var(--brand-accent);
+}

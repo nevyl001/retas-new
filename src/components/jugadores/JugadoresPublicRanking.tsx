@@ -1,5 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ClubExperienceScope,
+  ClubIdentity,
+  useClubExperience,
+} from "../../club-experience";
+import {
   JUGADOR_CATEGORIA_LABELS,
   JUGADOR_CATEGORIA_SHORT_LABELS,
   JUGADOR_CATEGORIAS_ORDER,
@@ -167,11 +172,26 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
 
   const listWide = jugadoresFiltrados.length > 8;
 
+  const RankingBrandHeader: React.FC = () => {
+    const { isClubBranded } = useClubExperience();
+    return isClubBranded ? (
+      <ClubIdentity
+        variant="compact"
+        showTagline={false}
+        logoSurface="dark"
+        className="rjp-ranking-header__club-identity"
+      />
+    ) : (
+      <p className="rjp-ranking-header__brand">Riviera Open</p>
+    );
+  };
+
   return (
+    <ClubExperienceScope organizadorId={orgId}>
     <JugadoresPublicShell variant="ranking">
       <div className="rjp-ranking">
         <header className="rjp-ranking-header">
-          <p className="rjp-ranking-header__brand">Riviera Open</p>
+          <RankingBrandHeader />
           <h1 className="rjp-ranking-header__title">
             {RIVIERA_GENERO_RANKING_TITLE[genero]}
           </h1>
@@ -331,5 +351,6 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
         </footer>
       </div>
     </JugadoresPublicShell>
+    </ClubExperienceScope>
   );
 };

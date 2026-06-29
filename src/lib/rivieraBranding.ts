@@ -3,7 +3,7 @@ import {
   RIVIERA_DEFAULT_SLOGAN,
   RIVIERA_MOTHER_BRAND_NAME,
   RIVIERA_PRODUCT_NAME,
-} from "../branding/motherBrand";
+} from "../club-experience/motherBrand";
 
 /** @deprecated Importar desde `branding/motherBrand` o `branding`. */
 export const RIVIERA_APP_DISPLAY = RIVIERA_PRODUCT_NAME;

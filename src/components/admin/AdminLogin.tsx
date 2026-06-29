@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
-import { BrandSignature } from "../../branding";
+import { ClubIdentity } from "../../club-experience";
 import { RIVIERA_MOTHER_BRAND_NAME } from "../../lib/rivieraBranding";
 import "./AdminLogin.css";
 
@@ -50,7 +50,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
       <main className="admin-login-card">
         <header className="admin-login-card__header">
           <div className="admin-login-brand">
-            <BrandSignature variant="auth" showTagline logoSurface="dark" />
+            <ClubIdentity variant="auth" showTagline logoSurface="dark" />
           </div>
           <h1 className="admin-login-card__title">Administración</h1>
           <p className="admin-login-card__subtitle">

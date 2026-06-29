@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { CrearTorneoExpress } from "./CrearTorneoExpress";
 import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
@@ -10,6 +11,7 @@ import "./te-inicio-page.css";
 import "./te-fondos.css";
 
 export const TorneoExpressInicio: React.FC = () => {
+  const modeEyebrow = useClubModeEyebrow();
   const [refreshToken, setRefreshToken] = useState(0);
 
   return (
@@ -24,7 +26,7 @@ export const TorneoExpressInicio: React.FC = () => {
         <div className="te-inicio-page__intro">
           <ModeHeader
             className="te-inicio-header te-header rv-mode-header rv-mode-header--entry"
-            eyebrow="Riviera Open"
+            eyebrow={modeEyebrow}
             title="Torneo Express"
             subtitle="Grupos y round robin por grupo. Crea, gestiona y lanza tus torneos en minutos."
           />

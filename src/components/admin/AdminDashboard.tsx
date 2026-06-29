@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { BrandSignature } from "../../branding";
+import { ClubIdentity } from "../../club-experience";
 import { useAdmin } from "../../contexts/AdminContext";
 import { supabase } from "../../lib/supabaseClient";
 import { UserManagement } from "./UserManagement";
@@ -265,7 +265,7 @@ export const AdminDashboard: React.FC = () => {
     <div className="admin-dash">
       <header className="admin-dash__header">
         <div className="admin-dash__brand">
-          <BrandSignature variant="compact" showTagline={false} logoSurface="dark" />
+          <ClubIdentity variant="compact" showTagline={false} logoSurface="dark" />
         </div>
         <div className="admin-dash__header-title-wrap">
           <h1 className="admin-dash__title">Panel de administración</h1>

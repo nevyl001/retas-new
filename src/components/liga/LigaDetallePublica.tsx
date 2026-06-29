@@ -16,6 +16,7 @@ import {
   getRankingEquipos,
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
+import { ClubExperienceScope, PublicClubModeEyebrow } from "../../club-experience";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import "./liga-public-pantalla.css";
 
@@ -97,23 +98,27 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
   if (loading && !detalle) {
     return (
-      <div className="liga-pantalla App--public-full-width ro-public-view">
-        <div className="liga-pantalla__grain" aria-hidden />
-        <PublicModeShell className="liga-pantalla__inner">
-          <p className="liga-pantalla__loading rv-muted">Cargando liga…</p>
-        </PublicModeShell>
-      </div>
+      <ClubExperienceScope organizadorId={null}>
+        <div className="liga-pantalla App--public-full-width ro-public-view">
+          <div className="liga-pantalla__grain" aria-hidden />
+          <PublicModeShell className="liga-pantalla__inner">
+            <p className="liga-pantalla__loading rv-muted">Cargando liga…</p>
+          </PublicModeShell>
+        </div>
+      </ClubExperienceScope>
     );
   }
 
   if (!detalle) {
     return (
-      <div className="liga-pantalla App--public-full-width ro-public-view">
-        <div className="liga-pantalla__grain" aria-hidden />
-        <PublicModeShell className="liga-pantalla__inner">
-          <p className="liga-pantalla__error">{error ?? "No disponible"}</p>
-        </PublicModeShell>
-      </div>
+      <ClubExperienceScope organizadorId={null}>
+        <div className="liga-pantalla App--public-full-width ro-public-view">
+          <div className="liga-pantalla__grain" aria-hidden />
+          <PublicModeShell className="liga-pantalla__inner">
+            <p className="liga-pantalla__error">{error ?? "No disponible"}</p>
+          </PublicModeShell>
+        </div>
+      </ClubExperienceScope>
     );
   }
 
@@ -141,6 +146,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       );
 
   return (
+    <ClubExperienceScope organizadorId={detalle.organizador_id}>
     <div
       className={`liga-pantalla App--public-full-width ro-public-view${
         esParejasFijas ? " liga-pantalla--liga-fijas" : ""
@@ -149,7 +155,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       <div className="liga-pantalla__grain" aria-hidden />
       <PublicModeShell className="liga-pantalla__inner">
         <header className="liga-pantalla__header">
-          <p className="liga-pantalla__eyebrow">Riviera Open · Liga</p>
+          <PublicClubModeEyebrow modeLabel="Liga" />
           <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
           <p className="liga-pantalla__subtitle">
             {ligaModalidadLabel(detalle.modalidad)} · {estadoLigaLabel(detalle.estado)} ·{" "}
@@ -473,5 +479,6 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
         </footer>
       </PublicModeShell>
     </div>
+    </ClubExperienceScope>
   );
 };

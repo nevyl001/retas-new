@@ -6,6 +6,11 @@ import {
 } from "../lib/database";
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
+import {
+  ClubExperienceScope,
+  ClubIdentity,
+  useClubExperience,
+} from "../club-experience";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
 import {
   RIVIERA_APP_DISPLAY,
@@ -19,6 +24,39 @@ const POLL_MS = 8000;
 interface PublicAmericanoResultsBoardProps {
   tournamentId: string;
 }
+
+const AmericanoResultsBoardHeader: React.FC<{
+  tournamentName: string | null;
+  tournamentDescription: string | null;
+}> = ({ tournamentName, tournamentDescription }) => {
+  const { isClubBranded, manifest } = useClubExperience();
+
+  return (
+    <header className="public-americano-board__header">
+      <div className="public-americano-board__brand">
+        {isClubBranded ? (
+          <ClubIdentity
+            variant="compact"
+            showTagline={false}
+            logoSurface="dark"
+            className="public-americano-board__club-identity"
+          />
+        ) : null}
+        <h1 className="public-americano-board__title">
+          {tournamentName || "Resultados"}
+        </h1>
+        {tournamentDescription ? (
+          <p className="public-americano-board__desc">{tournamentDescription}</p>
+        ) : null}
+        <p className="public-americano-board__tagline">
+          {isClubBranded
+            ? `${manifest.displayName} · Pantalla de resultados`
+            : RIVIERA_PUBLIC_DESCRIPTION}
+        </p>
+      </div>
+    </header>
+  );
+};
 
 function mergeFetch(
   prev: FetchAmericanoLivePublicResult | null,
@@ -39,6 +77,7 @@ export const PublicAmericanoResultsBoard: React.FC<
   const [tournamentDescription, setTournamentDescription] = useState<
     string | null
   >(null);
+  const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedRef = React.useRef<FetchAmericanoLivePublicResult | null>(
     null
@@ -77,6 +116,9 @@ export const PublicAmericanoResultsBoard: React.FC<
           ? tournament.description.trim()
           : "";
       setTournamentDescription(desc || null);
+      setOrganizadorId(
+        typeof tournament?.user_id === "string" ? tournament.user_id : null
+      );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(msg);
@@ -94,6 +136,7 @@ export const PublicAmericanoResultsBoard: React.FC<
     setSnapshot(null);
     setTournamentName(null);
     setTournamentDescription(null);
+    setOrganizadorId(null);
     setLoadError(null);
   }, [tournamentId]);
 
@@ -114,20 +157,12 @@ export const PublicAmericanoResultsBoard: React.FC<
   }, [tournamentName]);
 
   return (
+    <ClubExperienceScope organizadorId={organizadorId}>
     <div className="public-americano-board">
-      <header className="public-americano-board__header">
-        <div className="public-americano-board__brand">
-          <h1 className="public-americano-board__title">
-            {tournamentName || "Resultados"}
-          </h1>
-          {tournamentDescription ? (
-            <p className="public-americano-board__desc">{tournamentDescription}</p>
-          ) : null}
-          <p className="public-americano-board__tagline">
-            {RIVIERA_PUBLIC_DESCRIPTION}
-          </p>
-        </div>
-      </header>
+      <AmericanoResultsBoardHeader
+        tournamentName={tournamentName}
+        tournamentDescription={tournamentDescription}
+      />
 
       {loadError && (
         <p className="public-americano-board__error" role="alert">
@@ -152,6 +187,7 @@ export const PublicAmericanoResultsBoard: React.FC<
         </footer>
       )}
     </div>
+    </ClubExperienceScope>
   );
 };
 

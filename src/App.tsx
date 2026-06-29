@@ -10,7 +10,7 @@ import "./App.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { UserProvider, useUser } from "./contexts/UserContext";
 import { AccountFeaturesProvider } from "./contexts/AccountFeaturesContext";
-import { BrandProvider } from "./branding";
+import { ClubExperienceProvider } from "./club-experience";
 
 // Components
 import MainLayout from "./components/MainLayout";
@@ -1039,13 +1039,13 @@ function App() {
   return (
     <ThemeProvider>
       <UserProvider>
-        <BrandProvider>
-          <AccountFeaturesProvider>
-            <AdminProvider>
+        <AccountFeaturesProvider>
+          <AdminProvider>
+            <ClubExperienceProvider>
               <AppContent />
-            </AdminProvider>
-          </AccountFeaturesProvider>
-        </BrandProvider>
+            </ClubExperienceProvider>
+          </AdminProvider>
+        </AccountFeaturesProvider>
       </UserProvider>
     </ThemeProvider>
   );

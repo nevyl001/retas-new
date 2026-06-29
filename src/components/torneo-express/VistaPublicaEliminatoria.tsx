@@ -57,7 +57,10 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
   }
 
   return (
-    <PublicTorneoExpressShell className="te-public--eliminatoria">
+    <PublicTorneoExpressShell
+      className="te-public--eliminatoria"
+      organizadorId={bundle.torneo.organizador_id}
+    >
       <TEPublicEliminatoria
         bundle={bundle}
         labelMap={eliminatoriaLabelMap}

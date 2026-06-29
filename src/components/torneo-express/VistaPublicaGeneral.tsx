@@ -53,7 +53,7 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
   }
 
   return (
-    <PublicTorneoExpressShell>
+    <PublicTorneoExpressShell organizadorId={bundle.torneo.organizador_id}>
       <PublicTorneoExpressHeader
         torneoNombre={bundle.torneo.nombre}
         categoria={bundle.torneo.categoria}

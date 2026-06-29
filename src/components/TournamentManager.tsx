@@ -24,6 +24,7 @@ import {
 } from "../lib/retasList";
 import { deleteDuelo2v2 } from "../services/duelo2v2Service";
 import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo-2v2/duelo2v2Nav";
+import { useClubModeEyebrow } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
 import { Badge, Button, Card } from "./ui";
 import { TablerIcon } from "./ui/TablerIcon";
@@ -44,6 +45,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   onBack,
 }) => {
   const { user } = useUser();
+  const modeEyebrow = useClubModeEyebrow();
   const [retas, setRetas] = useState<HomeRetaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
@@ -244,7 +246,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
       <ModeHeader
         className="mis-retas-page__mode-header rv-mode-header rv-mode-header--entry"
-        eyebrow="Riviera Open"
+        eyebrow={modeEyebrow}
         title="Mis retas"
         subtitle="Administra tus retas creadas y continúa donde te quedaste."
       />

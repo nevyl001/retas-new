@@ -1,3 +1,4 @@
+import { useClubModeEyebrow } from "../../club-experience";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   calendarioDesactualizado,
@@ -59,6 +60,7 @@ function equipoNombre(e: LigaEquipo): string {
 }
 
 export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
+  const modeEyebrow = useClubModeEyebrow();
   const [detalle, setDetalle] = useState<LigaDetalle | null>(null);
   const [jugadoresPool, setJugadoresPool] = useState<LigaJugadorPoolItem[]>([]);
   const [tab, setTab] = useState<"jugadores" | "parejas" | "jornadas">("jugadores");
@@ -345,6 +347,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
 
       <ModeHeader
         className="liga-header rv-mode-header"
+        eyebrow={modeEyebrow}
         title={`Liga: ${detalle.nombre}`}
         subtitle={`${ligaModalidadLabel(detalle.modalidad)} · ${
           esParejasFijas

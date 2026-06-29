@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrandSignature } from "../branding";
+import { ClubIdentity } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
 import "./MobileUserMenu.css";
 
@@ -71,7 +71,7 @@ export const MobileUserMenu: React.FC<{
       </div>
 
       <div className="mobile-menu-brand" aria-hidden="true">
-        <BrandSignature variant="menu" showTagline={false} logoSurface="dark" />
+        <ClubIdentity variant="menu" showTagline={false} logoSurface="dark" />
       </div>
     </div>
   );

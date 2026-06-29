@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Liga } from "../../lib/liga/types";
 import { ligaModalidadLabel } from "../../lib/liga/types";
@@ -30,6 +31,7 @@ function badgeClass(estado: Liga["estado"]): string {
 }
 
 export const LigaHome: React.FC = () => {
+  const modeEyebrow = useClubModeEyebrow();
   const [ligas, setLigas] = useState<Liga[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +84,7 @@ export const LigaHome: React.FC = () => {
 
       <ModeHeader
         className="liga-header rv-mode-header rv-mode-header--entry"
-        eyebrow="Riviera Open"
+        eyebrow={modeEyebrow}
         title="Ligas"
         subtitle="Liga individual con parejas rotativas o liga por parejas fijas"
       />

@@ -14,6 +14,7 @@ import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
 import {
   RIVIERA_APP_DISPLAY,
 } from "../lib/rivieraBranding";
+import { ClubIdentity, useClubExperience } from "../club-experience";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { resolvePlayerAvatars, resolvePlayerPublicProfiles } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
@@ -30,6 +31,40 @@ const POLL_MS = 4000;
 interface PublicAmericanoViewProps {
   tournamentId: string;
 }
+
+const AmericanoPublicHeader: React.FC<{
+  tournamentName: string | null;
+  tournamentDescription: string | null;
+}> = ({ tournamentName, tournamentDescription }) => {
+  const { isClubBranded } = useClubExperience();
+
+  return (
+    <header className="te-public-header te-public-header--americano te-pub-fade-in">
+      <div className="te-public-header__brand">
+        {isClubBranded ? (
+          <ClubIdentity
+            variant="compact"
+            showTagline={false}
+            logoSurface="dark"
+            className="te-public-header__club-identity"
+          />
+        ) : null}
+        <p className="te-public-header__kicker">Americano · En vivo</p>
+        <h1 className="te-public-header__title te-public-header__title--event">
+          {tournamentName || "Torneo Americano"}
+        </h1>
+        <div className="te-public-header__line" aria-hidden />
+        <div className="te-public-header__meta">
+          {tournamentDescription ? (
+            <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
+              {tournamentDescription}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </header>
+  );
+};
 
 function applyFetchResult(
   prev: FetchAmericanoLivePublicResult | null,
@@ -255,23 +290,14 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   }, [organizadorId, podiumPlayers]);
 
   return (
-    <PublicTorneoExpressShell className="te-public--americano te-public--americano-wide">
-      <header className="te-public-header te-public-header--americano te-pub-fade-in">
-        <div className="te-public-header__brand">
-          <p className="te-public-header__kicker">Americano · En vivo</p>
-          <h1 className="te-public-header__title te-public-header__title--event">
-            {tournamentName || "Torneo Americano"}
-          </h1>
-          <div className="te-public-header__line" aria-hidden />
-          <div className="te-public-header__meta">
-            {tournamentDescription ? (
-              <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
-                {tournamentDescription}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </header>
+    <PublicTorneoExpressShell
+      className="te-public--americano te-public--americano-wide"
+      organizadorId={organizadorId}
+    >
+      <AmericanoPublicHeader
+        tournamentName={tournamentName}
+        tournamentDescription={tournamentDescription}
+      />
 
       {loadError && (
         <div className="te-public-error te-public-error-block te-pub-fade-in">
@@ -422,7 +448,6 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                 <PublicRivieraCelebrateBrand />
                 <div className="ro-divider-gold" aria-hidden />
                 <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
-                <p className="ro-pub-celebrate__riviera-line">Riviera Open</p>
                 <p className="te-public-podium__badge">Americano finalizado</p>
                 <h3 className="te-public-podium__title">
                   Los 3 primeros lugares

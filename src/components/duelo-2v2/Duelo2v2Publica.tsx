@@ -3,6 +3,7 @@ import { fetchRivieraJugadorProfilesByIds } from "../../lib/rivieraJugadores/pub
 import { fetchRatingMovimientosByPartidoRef } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { DUELO_2V2_PUBLIC_POLL_INTERVAL_MS } from "../../lib/duelo2v2/publicPoll";
+import { ClubExperienceScope } from "../../club-experience";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
 import {
   getDuelo2v2ById,
@@ -105,21 +106,25 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
 
   if (loading) {
     return (
+      <ClubExperienceScope organizadorId={null}>
       <Duelo2v2PageShell publicView className="duelo2v2-publica">
         <PublicModeShell className="duelo2v2-public-board">
           <p className="duelo2v2-card__meta rv-muted">Cargando encuentro…</p>
         </PublicModeShell>
       </Duelo2v2PageShell>
+      </ClubExperienceScope>
     );
   }
 
   if (!duelo || error) {
     return (
+      <ClubExperienceScope organizadorId={null}>
       <Duelo2v2PageShell publicView className="duelo2v2-publica">
         <PublicModeShell className="duelo2v2-public-board">
           <p className="duelo2v2-error">{error ?? "Duelo no encontrado"}</p>
         </PublicModeShell>
       </Duelo2v2PageShell>
+      </ClubExperienceScope>
     );
   }
 
@@ -168,6 +173,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
   ] as const;
 
   return (
+    <ClubExperienceScope organizadorId={duelo.organizador_id}>
     <Duelo2v2PageShell publicView className="duelo2v2-publica">
       <PublicModeShell className="duelo2v2-public-board">
         <Duelo2v2LiveBoard
@@ -217,5 +223,6 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
         </footer>
       </PublicModeShell>
     </Duelo2v2PageShell>
+    </ClubExperienceScope>
   );
 };

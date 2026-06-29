@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useClubModeEyebrow } from "../club-experience";
 import { Tournament, Pair } from "../lib/database";
 import {
   getStartFormatLabel,
@@ -25,6 +26,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
   loading,
   onStartTournament,
 }) => {
+  const modeEyebrow = useClubModeEyebrow();
   const format = useMemo(
     () => resolveTournamentStartFormat(tournament),
     [tournament]
@@ -94,7 +96,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
     <div className="start-tournament-section start-tournament-section--v2 rv-card">
       <ModeHeader
         className="start-tournament-section__mode-header rv-mode-header rv-mode-header--entry"
-        eyebrow="Riviera Open"
+        eyebrow={modeEyebrow}
         title={modeLabel}
         subtitle={modeSubtitle}
       />

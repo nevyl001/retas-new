@@ -1,3 +1,4 @@
+import { useClubModeEyebrow } from "../../club-experience";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
 import { eliminatoriaUltimaRondaCompleta, eliminatoriaBracketSize } from "../../lib/torneoExpress/bracketRounds";
@@ -34,6 +35,7 @@ import "./te-gestion-page.css";
 import "./te-fondos.css";
 
 export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
+  const modeEyebrow = useClubModeEyebrow();
   const {
     bundle,
     loading,
@@ -224,6 +226,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       </ActionBar>
 
       <header className="te-header te-gestion-header rv-mode-header">
+        <p className="rv-mode-header__eyebrow te-gestion-header__eyebrow">{modeEyebrow}</p>
         <div className="te-gestion-header__brand">
           <h1 className="te-title te-gestion-title">{bundle.torneo.nombre}</h1>
           <div className="te-gestion-header__pills">

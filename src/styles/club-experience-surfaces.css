@@ -1,0 +1,26 @@
+/* Superficies con experiencia de club — fondos y ambientación (Etapa B.5) */
+
+[data-club="hack-padel"] .home-inner.rv-page,
+[data-brand="hack-padel"] .home-inner.rv-page {
+  position: relative;
+}
+
+[data-club="hack-padel"] .home-inner.rv-page::before,
+[data-brand="hack-padel"] .home-inner.rv-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.06;
+  background-image: var(--club-home-background-image);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+
+[data-club="hack-padel"] .home-inner.rv-page > *,
+[data-brand="hack-padel"] .home-inner.rv-page > * {
+  position: relative;
+  z-index: 1;
+}

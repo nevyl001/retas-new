@@ -31,12 +31,12 @@
   flex: 1 1 auto;
 }
 
-.user-header-logo .brand-signature--partner.brand-signature--header .brand-signature__name {
+.user-header-logo .club-identity--partner.club-identity--header .club-identity__name {
   font-size: 1.125rem;
   letter-spacing: 0.06em;
 }
 
-.user-header-logo .brand-signature--partner.brand-signature--header .brand-signature__mother {
+.user-header-logo .club-identity--partner.club-identity--header .club-identity__mother {
   margin-top: 1px;
 }
 
@@ -289,11 +289,11 @@
     justify-content: space-between;
   }
 
-  .user-header-logo .brand-signature--header .brand-signature__tagline {
+  .user-header-logo .club-identity--header .club-identity__tagline {
     display: none;
   }
 
-  .user-header-logo .brand-signature--header .brand-signature__name {
+  .user-header-logo .club-identity--header .club-identity__name {
     font-size: clamp(1.05rem, 4.5vw, 1.25rem);
     line-height: 1.15;
   }

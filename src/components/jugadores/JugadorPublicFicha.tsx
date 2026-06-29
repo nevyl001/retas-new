@@ -1,4 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ClubExperienceScope,
+  PublicClubModeEyebrow,
+} from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
 import {
   JUGADOR_CATEGORIA_AVATAR_BADGE,
@@ -265,6 +269,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   };
 
   return (
+    <ClubExperienceScope organizadorId={jugador.organizador_id ?? orgId}>
     <JugadoresPublicShell variant="ficha">
       <div className="rjp-ficha">
         <FichaTopbar rankingUrl={rankingUrl} />
@@ -291,7 +296,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
               <div className="rjp-ficha-hero__content">
                 <div className="rjp-ficha-hero__top">
-                  <p className="rjp-ficha-hero__brand">Riviera Open · Jugador</p>
+                  <PublicClubModeEyebrow
+                    modeLabel="Jugador"
+                    className="rjp-ficha-hero__brand"
+                    clubIdentityClassName="rjp-ficha-hero__club-identity"
+                  />
                   {hasPhoto ? (
                     <span className="rjp-ficha-hero__cat-badge">{catBadge}</span>
                   ) : null}
@@ -413,5 +422,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         </footer>
       </div>
     </JugadoresPublicShell>
+    </ClubExperienceScope>
   );
 };
