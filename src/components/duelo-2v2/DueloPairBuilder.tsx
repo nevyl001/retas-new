@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { listRivieraJugadores } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RivieraJugador } from "../../lib/rivieraJugadores/types";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
@@ -77,6 +77,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<RivieraJugador[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const selectionBarRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,6 +95,14 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (selected.length === 0) return;
+    selectionBarRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }, [selected]);
 
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -159,6 +168,48 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
           onChange={(e) => setFilter(e.target.value)}
         />
 
+        {selected.length > 0 && nextPairSlot ? (
+          <div
+            ref={selectionBarRef}
+            className="duelo2v2-roster__selection-bar"
+            role="region"
+            aria-label="Confirmar pareja seleccionada"
+          >
+            <p className="duelo2v2-roster__selection-preview">
+              {selected.length === 2 ? (
+                <>
+                  Pareja: <strong>{selected[0].nombre}</strong> +{" "}
+                  <strong>{selected[1].nombre}</strong>
+                </>
+              ) : (
+                <>
+                  Seleccionado: <strong>{selected[0].nombre}</strong> — elige el
+                  segundo jugador
+                </>
+              )}
+            </p>
+            <div className="duelo2v2-roster__selection-actions">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                disabled={selected.length !== 2}
+                onClick={addPair}
+              >
+                Agregar pareja {nextPairSlot === "b" ? "2" : "1"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelected([])}
+              >
+                Limpiar
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
         {loading && <p className="duelo2v2-card__meta">Cargando jugadores…</p>}
         {error && <p className="duelo2v2-error">{error}</p>}
 
@@ -196,22 +247,6 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
                   </button>
                 );
               })}
-            </div>
-
-            <div className="duelo2v2-roster__actions">
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={selected.length !== 2 || !nextPairSlot}
-                onClick={addPair}
-              >
-                Agregar pareja {nextPairSlot === "b" ? "2" : "1"}
-              </Button>
-              {selected.length > 0 && (
-                <Button type="button" variant="ghost" size="sm" onClick={() => setSelected([])}>
-                  Limpiar selección
-                </Button>
-              )}
             </div>
           </>
         )}

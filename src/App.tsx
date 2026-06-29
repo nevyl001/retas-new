@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  Suspense,
+  lazy,
+} from "react";
 import "./App.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { UserProvider, useUser } from "./contexts/UserContext";
@@ -7,43 +14,25 @@ import { AccountFeaturesProvider } from "./contexts/AccountFeaturesContext";
 // Components
 import MainLayout from "./components/MainLayout";
 import WinnerScreen from "./components/WinnerScreen";
-import PublicTournamentView from "./components/PublicTournamentView";
-import PublicAmericanoView from "./components/PublicAmericanoView";
-import PublicAmericanoResultsBoard from "./components/PublicAmericanoResultsBoard";
 import { ModernToast } from "./components/ModernToast";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { UserHeader } from "./components/UserHeader";
 import { AuthCallback } from "./components/auth/AuthCallback";
 import { ResetPasswordPage } from "./components/auth/ResetPasswordPage";
 import { AdminProvider, useAdmin } from "./contexts/AdminContext";
-import { AdminLogin } from "./components/admin/AdminLogin";
-import { AdminDashboard } from "./components/admin/AdminDashboard";
-import { AdminUserManagePage } from "./components/admin/AdminUserManagePage";
 import { AdminRoute } from "./components/admin/AdminRoute";
 import { parseAdminUserIdFromPath } from "./lib/admin/adminNav";
 import { testConnection } from "./lib/supabaseClient";
-import { AmericanoDinamicoScreen } from "./components/AmericanoDinamico/AmericanoDinamicoScreen";
 import {
   AMERICANO_SESSION_TOURNAMENT_KEY,
   readAmericanoActiveTournamentId,
   readAmericanoTournamentIdFromSession,
 } from "./lib/americanoDinamicoStorage";
-import {
-  isTorneoExpressPublicPath,
-  TorneoExpressRouter,
-} from "./components/torneo-express/TorneoExpressRouter";
-import { isLigaPublicPath, LigaRouter } from "./components/liga/LigaRouter";
-import {
-  Duelo2v2Router,
-  isDuelo2v2PublicPath,
-} from "./components/duelo-2v2/Duelo2v2Router";
-import {
-  PublicPantallaRouter,
-} from "./components/public/PublicPantallaRouter";
-import {
-  isJugadoresPublicPath,
-  JugadoresRouter,
-} from "./components/jugadores/JugadoresRouter";
+import { isTorneoExpressPublicPath } from "./components/torneo-express/TorneoExpressRouter";
+import { isLigaPublicPath } from "./components/liga/LigaRouter";
+import { isDuelo2v2PublicPath } from "./components/duelo-2v2/Duelo2v2Router";
+import { isJugadoresPublicPath } from "./components/jugadores/JugadoresRouter";
+import { LoadingFallback } from "./components/LoadingFallback";
 import { PrivacidadTerminosPage } from "./components/legal/PrivacidadTerminosPage";
 import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
 import {
@@ -72,6 +61,63 @@ import { useTournamentActions } from "./hooks/useTournamentActions";
 import { useToastNotifications } from "./hooks/useToastNotifications";
 import { useWinnerCalculation } from "./hooks/useWinnerCalculation";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+
+const TorneoExpressRouter = lazy(() =>
+  import("./components/torneo-express/TorneoExpressRouter").then((module) => ({
+    default: module.TorneoExpressRouter,
+  }))
+);
+const LigaRouter = lazy(() =>
+  import("./components/liga/LigaRouter").then((module) => ({
+    default: module.LigaRouter,
+  }))
+);
+const Duelo2v2Router = lazy(() =>
+  import("./components/duelo-2v2/Duelo2v2Router").then((module) => ({
+    default: module.Duelo2v2Router,
+  }))
+);
+const PublicPantallaRouter = lazy(() =>
+  import("./components/public/PublicPantallaRouter").then((module) => ({
+    default: module.PublicPantallaRouter,
+  }))
+);
+const JugadoresRouter = lazy(() =>
+  import("./components/jugadores/JugadoresRouter").then((module) => ({
+    default: module.JugadoresRouter,
+  }))
+);
+const AmericanoDinamicoScreen = lazy(() =>
+  import("./components/AmericanoDinamico/AmericanoDinamicoScreen").then(
+    (module) => ({
+      default: module.AmericanoDinamicoScreen,
+    })
+  )
+);
+const AdminLogin = lazy(() =>
+  import("./components/admin/AdminLogin").then((module) => ({
+    default: module.AdminLogin,
+  }))
+);
+const AdminDashboard = lazy(() =>
+  import("./components/admin/AdminDashboard").then((module) => ({
+    default: module.AdminDashboard,
+  }))
+);
+const AdminUserManagePage = lazy(() =>
+  import("./components/admin/AdminUserManagePage").then((module) => ({
+    default: module.AdminUserManagePage,
+  }))
+);
+const PublicTournamentView = lazy(
+  () => import("./components/PublicTournamentView")
+);
+const PublicAmericanoView = lazy(
+  () => import("./components/PublicAmericanoView")
+);
+const PublicAmericanoResultsBoard = lazy(
+  () => import("./components/PublicAmericanoResultsBoard")
+);
 
 function parsePublicAmericanoTournamentId(pathname: string): string | null {
   const m = pathname.match(/^\/public\/americano\/([^/?#]+)/i);
@@ -761,31 +807,41 @@ function AppContent() {
 
         {currentView === "torneo-express" && (
           <ErrorBoundary>
-            <TorneoExpressRouter key={appPathname} pathname={appPathname} />
+            <Suspense fallback={<LoadingFallback />}>
+              <TorneoExpressRouter key={appPathname} pathname={appPathname} />
+            </Suspense>
           </ErrorBoundary>
         )}
 
         {currentView === "liga" && (
           <ErrorBoundary>
-            <LigaRouter key={appPathname} pathname={appPathname} />
+            <Suspense fallback={<LoadingFallback />}>
+              <LigaRouter key={appPathname} pathname={appPathname} />
+            </Suspense>
           </ErrorBoundary>
         )}
 
         {currentView === "duelo-2v2" && (
           <ErrorBoundary>
-            <Duelo2v2Router key={appPathname} pathname={appPathname} />
+            <Suspense fallback={<LoadingFallback />}>
+              <Duelo2v2Router key={appPathname} pathname={appPathname} />
+            </Suspense>
           </ErrorBoundary>
         )}
 
         {currentView === "public-pantalla" && (
           <ErrorBoundary>
-            <PublicPantallaRouter key={appPathname} pathname={appPathname} />
+            <Suspense fallback={<LoadingFallback />}>
+              <PublicPantallaRouter key={appPathname} pathname={appPathname} />
+            </Suspense>
           </ErrorBoundary>
         )}
 
         {currentView === "jugadores" && (
           <ErrorBoundary>
-            <JugadoresRouter key={appPathname} pathname={appPathname} />
+            <Suspense fallback={<LoadingFallback />}>
+              <JugadoresRouter key={appPathname} pathname={appPathname} />
+            </Suspense>
           </ErrorBoundary>
         )}
 
@@ -850,7 +906,8 @@ function AppContent() {
 
         {currentView === "americano-dinamico" && (
           <ErrorBoundary>
-            <AmericanoDinamicoScreen
+            <Suspense fallback={<LoadingFallback />}>
+              <AmericanoDinamicoScreen
             tournamentId={americanoTournamentId}
             userId={americanoUserId ?? user?.id ?? undefined}
             onTournamentStatusChange={(updates) => {
@@ -864,27 +921,34 @@ function AppContent() {
               }
             }}
           />
+            </Suspense>
           </ErrorBoundary>
         )}
 
         {currentView === "public" && publicTournamentId && (
           <ErrorBoundary>
-            <PublicTournamentView tournamentId={publicTournamentId} />
+            <Suspense fallback={<LoadingFallback />}>
+              <PublicTournamentView tournamentId={publicTournamentId} />
+            </Suspense>
           </ErrorBoundary>
         )}
 
         {currentView === "public-americano" && publicAmericanoTournamentId && (
           <ErrorBoundary>
-            <PublicAmericanoView tournamentId={publicAmericanoTournamentId} />
+            <Suspense fallback={<LoadingFallback />}>
+              <PublicAmericanoView tournamentId={publicAmericanoTournamentId} />
+            </Suspense>
           </ErrorBoundary>
         )}
 
         {currentView === "public-americano-pantalla" &&
           publicAmericanoBoardTournamentId && (
             <ErrorBoundary>
-              <PublicAmericanoResultsBoard
-                tournamentId={publicAmericanoBoardTournamentId}
-              />
+              <Suspense fallback={<LoadingFallback />}>
+                <PublicAmericanoResultsBoard
+                  tournamentId={publicAmericanoBoardTournamentId}
+                />
+              </Suspense>
             </ErrorBoundary>
           )}
 
@@ -910,6 +974,7 @@ function AppContent() {
         {/* Rutas de Admin */}
         {currentView === "admin-login" && (
           <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
             <>
             {console.log("🔍 Renderizando AdminLogin")}
             <AdminLogin
@@ -922,10 +987,12 @@ function AppContent() {
               }}
             />
             </>
+            </Suspense>
           </ErrorBoundary>
         )}
         {currentView === "admin-dashboard" && (
           <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
             <AdminRoute
               onUnauthorized={() => {
                 console.log("🔄 Admin no autorizado, cambiando a admin-login");
@@ -935,10 +1002,12 @@ function AppContent() {
             >
               <AdminDashboard />
             </AdminRoute>
+            </Suspense>
           </ErrorBoundary>
         )}
         {currentView === "admin-user" && (
           <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
             <AdminRoute
               onUnauthorized={() => {
                 window.history.replaceState({}, "", "/admin-login");
@@ -949,6 +1018,7 @@ function AppContent() {
                 userId={parseAdminUserIdFromPath(appPathname) ?? ""}
               />
             </AdminRoute>
+            </Suspense>
           </ErrorBoundary>
         )}
       </ProtectedRoute>
