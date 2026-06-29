@@ -53,4 +53,19 @@ describe("parejasFijasMatchScore", () => {
     draft.set2 = { p1: "2", p2: "6" };
     expect(() => buildSetsFromDraft(draft)).toThrow(/super tie-break/i);
   });
+
+  it("corrige 2-1 a 2-0 ignorando set 3 obsoleto", () => {
+    const draft = emptyParejasFijasSetsDraft();
+    draft.set1 = { p1: "6", p2: "2" };
+    draft.set2 = { p1: "6", p2: "2" };
+    draft.set3 = { p1: "4", p2: "10" };
+
+    const sets = buildSetsFromDraft(draft);
+    const totals = computeParejasFijasMatchTotals(sets);
+
+    expect(sets).toHaveLength(2);
+    expect(totals.gamesP1).toBe(12);
+    expect(totals.gamesP2).toBe(4);
+    expect(totals.p1WonMatch).toBe(true);
+  });
 });

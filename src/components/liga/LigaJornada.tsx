@@ -19,10 +19,16 @@ import {
   updateScore,
   updateScoreParejasFijas,
   updateJornadaFecha,
+  updateJornadaHorarioPartidos,
   updatePartidoProgramacion,
   updateRondaProgramacion,
 } from "../../services/ligaService";
-import { buildSetsFromDraft, type ParejasFijasSetsDraft } from "../../lib/liga/parejasFijasMatchScore";
+import {
+  buildSetsFromDraft,
+  normalizeParejasFijasDraft,
+  validateParejasFijasDraft,
+  type ParejasFijasSetsDraft,
+} from "../../lib/liga/parejasFijasMatchScore";
 import {
   getSetsDraftForPartido,
   LigaPartidoSetsScoreForm,
@@ -119,6 +125,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const [rondaHoraDrafts, setRondaHoraDrafts] = useState<Record<number, string>>(
     {}
   );
+  const [jornadaHoraDraft, setJornadaHoraDraft] = useState("");
   const [ranking, setRanking] = useState<RankingItem[]>([]);
   const [rankingEquipos, setRankingEquipos] = useState<LigaEquipoRankingItem[]>(
     []
@@ -186,6 +193,14 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     return null;
   }, [partidosByRonda]);
 
+  const partidosJornadaOrdenados = useMemo(
+    () =>
+      [...(jornada?.partidos ?? [])].sort(
+        (a, b) => (a.cancha ?? 0) - (b.cancha ?? 0)
+      ),
+    [jornada]
+  );
+
   const handleStartJornada = async () => {
     if (!jornada) return;
     setBusy(true);
@@ -236,24 +251,38 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     }
   };
 
-  const saveScoreParejasFijas = async (partido: LigaPartido, force = false) => {
-    const draft = getSetsDraftForPartido(partido, setsDrafts);
+  const saveScoreParejasFijas = async (partido: LigaPartido) => {
+    const draft = normalizeParejasFijasDraft(
+      getSetsDraftForPartido(partido, setsDrafts)
+    );
+    const validationError = validateParejasFijasDraft(draft);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const sets = buildSetsFromDraft(draft);
-      await updateScoreParejasFijas(partido.id, sets, force);
-      setMessage("Resultado guardado.");
+      const { setScoresPersisted } = await updateScoreParejasFijas(
+        partido.id,
+        sets
+      );
+      setSetsDrafts((prev) => {
+        const next = { ...prev };
+        delete next[partido.id];
+        return next;
+      });
+      setMessage(
+        setScoresPersisted
+          ? partido.estado === "completed"
+            ? "Resultado corregido."
+            : "Resultado guardado."
+          : "Resultado guardado (games totales). Para detalle por sets, ejecuta la migración SQL set_scores en Supabase."
+      );
       await load();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error";
-      if (msg.includes("sobrescribir") && !force) {
-        if (window.confirm(`${msg} ¿Continuar?`)) {
-          await saveScoreParejasFijas(partido, true);
-          return;
-        }
-      }
-      setError(msg);
+      setError(err instanceof Error ? err.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -312,6 +341,25 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         detalle?.canchas_disponibles ?? 1
       );
       setMessage(`Horario aplicado a la ronda ${ronda}.`);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveJornadaHorario = async () => {
+    if (!jornada) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateJornadaHorarioPartidos(
+        jornada.id,
+        jornadaHoraDraft || null,
+        detalle?.canchas_disponibles ?? 1
+      );
+      setMessage("Horario aplicado a todos los partidos.");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -535,7 +583,13 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
             {!puedeIniciar && (
               <p className="liga-error">Se requieren al menos 3 parejas.</p>
             )}
-            {puedeIniciar && nParejas >= 3 && (
+            {puedeIniciar && esParejasFijas && (
+              <p className="liga-hint">
+                Cada pareja juega un partido esta jornada (en paralelo en distintas
+                canchas).
+              </p>
+            )}
+            {puedeIniciar && !esParejasFijas && nParejas >= 3 && (
               <p className="liga-hint">
                 Se generarán {partidosEsperados} partidos en varias rondas (máx.{" "}
                 {detalle.canchas_disponibles} canchas por ronda).
@@ -547,7 +601,89 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
       <div className="liga-jornada-admin">
         <div className="liga-jornada-admin__main">
-      {partidosByRonda.length > 0 && (
+      {esParejasFijas && partidosJornadaOrdenados.length > 0 && (
+        <div className="liga-card rv-card">
+          <h2 className="liga-card__title">Partidos de la jornada</h2>
+          <p className="liga-hint">
+            Cada pareja juega un enfrentamiento distinto. Ajusta cancha y horario
+            para rotar entre canchas.
+          </p>
+          <div className="liga-ronda-programacion liga-jornada-horario-bulk">
+            <label className="liga-programacion-field">
+              <span className="liga-programacion-field__label">
+                Horario jornada
+              </span>
+              <input
+                type="time"
+                value={jornadaHoraDraft}
+                disabled={busy}
+                onChange={(e) => setJornadaHoraDraft(e.target.value)}
+                aria-label="Horario de la jornada"
+              />
+            </label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={saveJornadaHorario}
+            >
+              Aplicar a todos
+            </Button>
+          </div>
+          {partidosJornadaOrdenados.map((partido) => {
+            const setsDraft = getSetsDraftForPartido(partido, setsDrafts);
+            const progDraft = getProgramacionDraftForPartido(
+              partido,
+              programacionDrafts
+            );
+            const bloqueado = jornada.estado === "upcoming";
+
+            return (
+              <div
+                key={partido.id}
+                className={`liga-partido-row${
+                  bloqueado ? " liga-partido-row--locked" : ""
+                }`}
+              >
+                <p className="liga-partido-row__teams">
+                  {parejaLabel(partido.pareja1_id, jornada)} vs{" "}
+                  {parejaLabel(partido.pareja2_id, jornada)}
+                </p>
+                <LigaPartidoProgramacionFields
+                  partido={partido}
+                  draft={progDraft}
+                  canchasDisponibles={detalle.canchas_disponibles}
+                  disabled={bloqueado}
+                  busy={busy}
+                  onChange={(next) =>
+                    setProgramacionDrafts((prev) => ({
+                      ...prev,
+                      [partido.id]: next,
+                    }))
+                  }
+                  onSave={() => savePartidoProgramacion(partido)}
+                />
+                <LigaPartidoSetsScoreForm
+                  partido={partido}
+                  draft={setsDraft}
+                  disabled={bloqueado}
+                  busy={busy}
+                  onChange={(next) =>
+                    setSetsDrafts((prev) => ({
+                      ...prev,
+                      [partido.id]: next,
+                    }))
+                  }
+                  onSave={() => saveScoreParejasFijas(partido)}
+                />
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!esParejasFijas && partidosByRonda.length > 0 && (
         <div className="liga-card rv-card">
           <h2 className="liga-card__title">Partidos por ronda</h2>
           {partidosByRonda.map(([ronda, partidos]) => {
@@ -613,7 +749,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                     s1: String(partido.score_pareja1 ?? ""),
                     s2: String(partido.score_pareja2 ?? ""),
                   };
-                  const setsDraft = getSetsDraftForPartido(partido, setsDrafts);
                   const progDraft = getProgramacionDraftForPartido(
                     partido,
                     programacionDrafts
@@ -646,63 +781,47 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                         }
                         onSave={() => savePartidoProgramacion(partido)}
                       />
-                      {esParejasFijas ? (
-                        <LigaPartidoSetsScoreForm
-                          partido={partido}
-                          draft={setsDraft}
-                          disabled={bloqueado}
-                          busy={busy}
-                          onChange={(next) =>
-                            setSetsDrafts((prev) => ({
+                      <div className="liga-score-row">
+                        <input
+                          type="number"
+                          min={0}
+                          value={draft.s1}
+                          disabled={bloqueado || busy}
+                          onChange={(e) =>
+                            setScores((prev) => ({
                               ...prev,
-                              [partido.id]: next,
+                              [partido.id]: { ...draft, s1: e.target.value },
                             }))
                           }
-                          onSave={() => saveScoreParejasFijas(partido)}
+                          aria-label="Puntos pareja 1"
                         />
-                      ) : (
-                        <div className="liga-score-row">
-                          <input
-                            type="number"
-                            min={0}
-                            value={draft.s1}
-                            disabled={bloqueado || busy}
-                            onChange={(e) =>
-                              setScores((prev) => ({
-                                ...prev,
-                                [partido.id]: { ...draft, s1: e.target.value },
-                              }))
-                            }
-                            aria-label="Puntos pareja 1"
-                          />
-                          <span>—</span>
-                          <input
-                            type="number"
-                            min={0}
-                            value={draft.s2}
-                            disabled={bloqueado || busy}
-                            onChange={(e) =>
-                              setScores((prev) => ({
-                                ...prev,
-                                [partido.id]: { ...draft, s2: e.target.value },
-                              }))
-                            }
-                            aria-label="Puntos pareja 2"
-                          />
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            disabled={bloqueado || busy}
-                            onClick={() => saveScore(partido)}
-                          >
-                            Guardar
-                          </Button>
-                          {partido.estado === "completed" && (
-                            <span className="liga-badge liga-badge--done">✓</span>
-                          )}
-                        </div>
-                      )}
+                        <span>—</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={draft.s2}
+                          disabled={bloqueado || busy}
+                          onChange={(e) =>
+                            setScores((prev) => ({
+                              ...prev,
+                              [partido.id]: { ...draft, s2: e.target.value },
+                            }))
+                          }
+                          aria-label="Puntos pareja 2"
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={bloqueado || busy}
+                          onClick={() => saveScore(partido)}
+                        >
+                          Guardar
+                        </Button>
+                        {partido.estado === "completed" && (
+                          <span className="liga-badge liga-badge--done">✓</span>
+                        )}
+                      </div>
                     </div>
                   );
                 })}

@@ -133,3 +133,44 @@ export function listJornadaPublicMatches(
     programacion: null,
   }));
 }
+
+export type LigaProgramaPartido = {
+  jornadaNumero: number;
+  jornadaId: string;
+  jornadaFecha: string | null;
+  jornadaEstado: LigaJornada["estado"];
+  partidoId: string;
+  local: string;
+  visitante: string;
+  programacion: string | null;
+  score: string | null;
+};
+
+/** Calendario completo de la liga (parejas fijas): todas las jornadas y enfrentamientos. */
+export function listLigaProgramaCompleto(
+  jornadas: LigaJornada[],
+  equipos: LigaEquipo[]
+): LigaProgramaPartido[] {
+  const rows: LigaProgramaPartido[] = [];
+  const ordenadas = [...jornadas].sort((a, b) => a.numero - b.numero);
+
+  for (const jornada of ordenadas) {
+    const partidos = listJornadaPublicMatches(jornada, equipos, true);
+    for (const m of partidos) {
+      if (!m.visitante) continue;
+      rows.push({
+        jornadaNumero: jornada.numero,
+        jornadaId: jornada.id,
+        jornadaFecha: jornada.fecha,
+        jornadaEstado: jornada.estado,
+        partidoId: m.id,
+        local: m.local,
+        visitante: m.visitante,
+        programacion: m.programacion,
+        score: m.score,
+      });
+    }
+  }
+
+  return rows;
+}

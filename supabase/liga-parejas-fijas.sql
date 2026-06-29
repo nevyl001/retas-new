@@ -85,3 +85,16 @@ CREATE POLICY leq_mutate_auth ON public.liga_equipos
         AND l.organizador_id = auth.uid()
     )
   );
+
+-- ── partidos: marcador por sets y horario editable ──
+ALTER TABLE public.liga_partidos
+  ADD COLUMN IF NOT EXISTS set_scores jsonb;
+
+ALTER TABLE public.liga_partidos
+  ADD COLUMN IF NOT EXISTS hora_inicio time;
+
+COMMENT ON COLUMN public.liga_partidos.set_scores IS
+  'Parejas fijas: { "sets": [{ "p1": 6, "p2": 4, "kind": "regular" }, ...] }. score_pareja1/2 = games totales.';
+
+COMMENT ON COLUMN public.liga_partidos.hora_inicio IS
+  'Hora de inicio del partido (editable en la jornada).';

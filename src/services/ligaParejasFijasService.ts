@@ -6,6 +6,7 @@ import type {
   LigaJugador,
   LigaVueltas,
 } from "../lib/liga/types";
+import { isMissingColumnError } from "../lib/db/schemaHelpers";
 import { validateEquiposParaCalendario } from "../lib/liga/calendario";
 import { buildFixedPairLeagueSchedule } from "../lib/liga/fixedPairSchedule";
 import {
@@ -303,33 +304,44 @@ export async function recalcularPuntosLigaEquipos(ligaId: string): Promise<void>
   for (const j of jornadas ?? []) {
     const jornadaId = String(j.id);
 
-    const { data: partidos, error: pErr } = await supabase
+    const partidosRes = await supabase
       .from("liga_partidos")
       .select(
         "score_pareja1, score_pareja2, set_scores, pareja1_id, pareja2_id, estado"
       )
       .eq("jornada_id", jornadaId);
 
+    let partidos:
+      | Array<{
+          score_pareja1: number | null;
+          score_pareja2: number | null;
+          set_scores?: unknown;
+          pareja1_id: string;
+          pareja2_id: string;
+          estado: string;
+        }>
+      | null = partidosRes.data;
+    let pErr = partidosRes.error;
+
+    if (
+      pErr &&
+      isMissingColumnError(pErr, "liga_partidos", "set_scores")
+    ) {
+      const fallback = await supabase
+        .from("liga_partidos")
+        .select(
+          "score_pareja1, score_pareja2, pareja1_id, pareja2_id, estado"
+        )
+        .eq("jornada_id", jornadaId);
+      partidos = fallback.data;
+      pErr = fallback.error;
+    }
+
     if (pErr) throw new Error(pErr.message);
 
     const lista = partidos ?? [];
     const jornadaCompleta =
       lista.length > 0 && lista.every((p) => p.estado === "completed");
-
-    if (!jornadaCompleta) {
-      const { error: flagErr } = await supabase
-        .from("liga_jornadas")
-        .update({ puntos_aplicados: false })
-        .eq("id", jornadaId);
-      if (
-        flagErr &&
-        !flagErr.message.includes("puntos_aplicados") &&
-        !flagErr.message.includes("column")
-      ) {
-        throw new Error(flagErr.message);
-      }
-      continue;
-    }
 
     const { data: parejas, error: parErr } = await supabase
       .from("liga_jornada_parejas")
@@ -356,7 +368,9 @@ export async function recalcularPuntosLigaEquipos(ligaId: string): Promise<void>
           m.score_pareja1 != null ? Number(m.score_pareja1) : null,
         score_pareja2:
           m.score_pareja2 != null ? Number(m.score_pareja2) : null,
-        set_scores: parseSetScoresJson(m.set_scores),
+        set_scores: parseSetScoresJson(
+          (m as { set_scores?: unknown }).set_scores
+        ),
       });
       if (!totals) continue;
 
@@ -376,6 +390,21 @@ export async function recalcularPuntosLigaEquipos(ligaId: string): Promise<void>
       );
       statsByEquipo.set(eq1, st1);
       statsByEquipo.set(eq2, st2);
+    }
+
+    if (!jornadaCompleta) {
+      const { error: flagErr } = await supabase
+        .from("liga_jornadas")
+        .update({ puntos_aplicados: false })
+        .eq("id", jornadaId);
+      if (
+        flagErr &&
+        !flagErr.message.includes("puntos_aplicados") &&
+        !flagErr.message.includes("column")
+      ) {
+        throw new Error(flagErr.message);
+      }
+      continue;
     }
 
     const patch: { estado: string; puntos_aplicados?: boolean } = {

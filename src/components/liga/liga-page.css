@@ -540,6 +540,26 @@
   align-items: center;
   gap: var(--liga-space-md);
   margin-top: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.liga-sets-form__error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #e8a0a0;
+  line-height: 1.35;
+}
+
+.liga-sets-form__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--liga-text-muted);
+  line-height: 1.35;
+}
+
+.liga-sets-form__saved-hint {
+  font-size: 0.72rem;
+  color: var(--liga-text-muted);
 }
 
 .liga-jornada-programacion {
@@ -564,6 +584,11 @@
   flex-wrap: wrap;
   gap: var(--liga-space-md);
   padding: 0 clamp(12px, 2vw, var(--liga-space-lg)) 10px;
+  border-bottom: 0.5px solid var(--liga-border-subtle);
+}
+
+.liga-jornada-horario-bulk {
+  padding: 0 clamp(12px, 2vw, var(--liga-space-lg)) 12px;
   border-bottom: 0.5px solid var(--liga-border-subtle);
 }
 

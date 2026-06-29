@@ -4,21 +4,30 @@
 
 .liga-pantalla {
   --liga-pub-bg: #0a0a0a;
-  --liga-pub-surface: #131313;
-  --liga-pub-surface-deep: #1a1a1a;
-  --liga-pub-border: #1f1f1f;
+  --liga-pub-surface: #121212;
+  --liga-pub-surface-deep: #181818;
+  --liga-pub-border: #222222;
   --liga-pub-border-card: #1e1e1e;
   --liga-pub-border-chip: #2a2a2a;
-  --liga-pub-text: #f5f0e8;
-  --liga-pub-text-muted: #6b6b6b;
-  --liga-pub-text-hint: #4a4a4a;
-  --liga-pub-green: var(--ro-green, #2d6a4f);
-  --liga-pub-green-dim: var(--ro-green-dim, rgba(45, 106, 79, 0.08));
-  --liga-pub-green-border: var(--ro-green-border, rgba(45, 106, 79, 0.22));
-  --liga-pub-gold: var(--ro-pub-gold, var(--ro-gold, #c9a227));
-  --liga-pub-gold-light: var(--ro-pub-gold-light, var(--ro-gold-light, #e8c547));
-  --liga-pub-gold-dim: var(--ro-pub-gold-dim, var(--ro-gold-dim));
-  --liga-pub-gold-border: var(--ro-pub-gold-border, var(--ro-gold-border));
+  --liga-pub-text: #f2efe8;
+  --liga-pub-text-muted: #8a8680;
+  --liga-pub-text-hint: #5c5a56;
+  --liga-pub-green: var(--ro-green, #3d7a5c);
+  --liga-pub-green-dim: var(--ro-green-dim, rgba(61, 122, 92, 0.1));
+  --liga-pub-green-border: var(--ro-green-border, rgba(61, 122, 92, 0.28));
+  /* Dorado sutil — solo acentos puntuales */
+  --liga-pub-gold: #c4ad72;
+  --liga-pub-gold-light: #d8c896;
+  --liga-pub-gold-muted: #9a8758;
+  --liga-pub-gold-dim: rgba(196, 173, 114, 0.09);
+  --liga-pub-gold-border: rgba(196, 173, 114, 0.28);
+  --liga-pub-gold-border-strong: rgba(196, 173, 114, 0.42);
+  /* Neutros champagne — texto y bordes base */
+  --liga-pub-accent: #b5aa9a;
+  --liga-pub-accent-soft: #8f8a82;
+  --liga-pub-accent-dim: rgba(255, 255, 255, 0.05);
+  --liga-pub-accent-border: rgba(255, 255, 255, 0.1);
+  --liga-pub-accent-border-strong: rgba(255, 255, 255, 0.16);
   --liga-pub-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
   --liga-pub-font-display: var(--liga-font-display);
   --liga-pub-font-body: var(--liga-font-body);
@@ -58,6 +67,24 @@
   margin-bottom: 2.5rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid var(--liga-pub-border);
+  position: relative;
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla__header::after,
+.liga-pantalla--jornada-fijas .liga-pantalla__header::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -1px;
+  transform: translateX(-50%);
+  width: min(120px, 28%);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--liga-pub-gold-border-strong),
+    transparent
+  );
 }
 
 .liga-pantalla__eyebrow {
@@ -173,8 +200,8 @@
 .liga-pantalla-ranking--parejas .liga-pantalla-ranking__pts {
   text-align: center;
   font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--liga-pub-gold-light);
+  font-weight: 600;
+  color: var(--liga-pub-text);
 }
 
 .liga-pantalla-ranking__title {
@@ -223,8 +250,12 @@
 }
 
 .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__name {
-  color: var(--liga-pub-gold);
+  color: var(--liga-pub-text);
   font-weight: 600;
+}
+
+.liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__rank {
+  color: var(--liga-pub-gold);
 }
 
 .liga-pantalla-ranking__rank {
@@ -492,12 +523,14 @@
   text-decoration: none;
   transition:
     background 150ms ease,
-    color 150ms ease;
+    color 150ms ease,
+    border-color 150ms ease;
 }
 
 .liga-pantalla-jornada-card__link:hover {
   background: var(--liga-pub-gold-dim);
-  color: var(--liga-pub-text);
+  border-color: var(--liga-pub-gold-border-strong);
+  color: var(--liga-pub-gold-light);
 }
 
 .liga-pantalla-jornada-card__hint {
@@ -549,6 +582,10 @@
   gap: 0.85rem;
 }
 
+.liga-pantalla-ronda__matches--jornada {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
 .liga-pantalla-match {
   background: var(--liga-pub-surface-deep);
   border: 1px solid var(--liga-pub-border-card);
@@ -584,6 +621,7 @@
 
 .liga-pantalla-match__row--win {
   background: var(--liga-pub-gold-dim);
+  border-left: 2px solid var(--liga-pub-gold);
 }
 
 .liga-pantalla-match__name {
@@ -595,7 +633,7 @@
 }
 
 .liga-pantalla-match__row--win .liga-pantalla-match__name {
-  color: var(--liga-pub-gold-light);
+  color: var(--liga-pub-text);
   font-weight: 600;
 }
 
@@ -606,12 +644,12 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-align: right;
-  color: var(--liga-pub-gold);
+  color: var(--liga-pub-text-muted);
   line-height: 1;
 }
 
 .liga-pantalla-match__row--win .liga-pantalla-match__pts {
-  color: var(--liga-pub-gold-light);
+  color: var(--liga-pub-text);
 }
 
 .liga-pantalla-match__pts--pending {
@@ -632,10 +670,10 @@
 .liga-pantalla-match__sets {
   margin: 0.35rem 0;
   text-align: center;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.88rem;
+  font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--liga-pub-gold-light);
+  color: var(--liga-pub-text-muted);
 }
 
 /* Ganador jornada */
@@ -656,7 +694,7 @@
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--liga-pub-gold-light);
+  color: var(--liga-pub-gold-muted);
 }
 
 .liga-pantalla-winner__title {
@@ -690,8 +728,12 @@
 }
 
 .liga-pantalla-ranking-winner td {
-  color: var(--liga-pub-gold) !important;
+  color: var(--liga-pub-text) !important;
   font-weight: 600;
+}
+
+.liga-pantalla-ranking-winner .liga-pantalla-ranking__rank {
+  color: var(--liga-pub-green) !important;
 }
 
 /* ─── Cierre de temporada ─── */
@@ -712,7 +754,7 @@
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--liga-pub-gold-light);
+  color: var(--liga-pub-accent-soft);
 }
 
 .liga-pantalla-cierre__title {
@@ -766,7 +808,7 @@
   order: 2;
   padding-top: 1.35rem;
   padding-bottom: 1.5rem;
-  border-color: var(--liga-pub-gold);
+  border-color: var(--liga-pub-gold-border-strong);
 }
 
 .liga-pantalla-podium__place--2 {
@@ -808,7 +850,7 @@
 
 .liga-pantalla-podium__place--1 .liga-pantalla-podium__name {
   font-size: clamp(1.15rem, 3vw, 1.45rem);
-  color: var(--liga-pub-gold);
+  color: var(--liga-pub-text);
 }
 
 .liga-pantalla-podium__pts {
@@ -880,4 +922,232 @@
   text-align: center;
   padding: 3rem;
   color: #c45c5c;
+}
+
+/* ─── Jornada pública parejas fijas: centrado, sin cajas grises ─── */
+
+.liga-pantalla--jornada-fijas,
+.liga-pantalla--liga-fijas {
+  --ro-pub-gold: var(--liga-pub-gold);
+  --ro-pub-gold-light: var(--liga-pub-gold-light);
+  --ro-pub-gold-dim: var(--liga-pub-gold-dim);
+  --ro-pub-gold-border: var(--liga-pub-gold-border);
+  --ro-pub-gold-glow: transparent;
+  --ro-pub-schedule: var(--liga-pub-gold-muted);
+  --ro-pub-schedule-dim: var(--liga-pub-gold-dim);
+  --ro-pub-schedule-border: var(--liga-pub-gold-border);
+  --ro-medal-gold: var(--liga-pub-gold);
+  --accent-gold: var(--liga-pub-gold);
+  --accent-gold-light: var(--liga-pub-gold-light);
+  --accent-gold-dim: var(--liga-pub-gold-dim);
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla__inner {
+  max-width: 1080px;
+}
+
+.liga-pantalla-parejas--center {
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-pareja {
+  background: transparent;
+  border-color: var(--liga-pub-gold-border);
+  color: var(--liga-pub-text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  padding: 0.4rem 0.75rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-pareja:hover {
+  border-color: var(--liga-pub-gold-border-strong);
+  color: var(--liga-pub-gold-light);
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla__layout--parejas {
+  max-width: 960px;
+  margin: 0 auto;
+  gap: 2.75rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla__rondas {
+  align-items: center;
+  width: 100%;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ronda__matches--jornada {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.15rem;
+  width: 100%;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match {
+  background: transparent;
+  border: 1px solid var(--liga-pub-gold-border);
+  border-radius: 6px;
+  box-shadow: none;
+  width: 100%;
+  max-width: 290px;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__head {
+  background: transparent;
+  border-bottom: 1px solid var(--liga-pub-gold-border);
+  color: var(--liga-pub-gold-muted);
+  letter-spacing: 0.14em;
+  padding: 0.55rem 0.75rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__board {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__row {
+  justify-content: center;
+  padding: 0.45rem 0.25rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__name {
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__row--win {
+  background: var(--liga-pub-gold-dim);
+  border-left: 2px solid var(--liga-pub-gold);
+  border-radius: 4px;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__vs {
+  margin: 0.25rem 0;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-match__pending {
+  margin: 0.45rem 0 0;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--liga-pub-text-muted);
+}
+
+.liga-pantalla-ranking--jornada-fijas {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 auto;
+  max-width: 620px;
+  width: 100%;
+  text-align: center;
+  position: static;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__title,
+.liga-pantalla--liga-fijas .liga-pantalla-ranking__title,
+.liga-pantalla--liga-fijas .liga-pantalla-jornadas__title {
+  color: var(--liga-pub-gold-muted);
+  letter-spacing: 0.22em;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__hint {
+  margin-bottom: 1.35rem;
+  font-size: 0.72rem;
+  color: var(--liga-pub-text-hint);
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__scroll {
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__table {
+  min-width: 0;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking__title {
+  margin-bottom: 0.45rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking th {
+  border-bottom: 1px solid var(--liga-pub-gold-border);
+  padding-bottom: 0.65rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0.7rem 0.45rem;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking-top td {
+  background: transparent;
+}
+
+.liga-pantalla--jornada-fijas .liga-pantalla__footer {
+  margin-top: 3rem;
+  letter-spacing: 0.06em;
+}
+
+/* ─── Liga pública parejas fijas: sin fondos grises, diseño de tarjetas ─── */
+
+.liga-pantalla--liga-fijas .liga-pantalla__inner {
+  max-width: 1100px;
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla__layout--parejas {
+  gap: 2.5rem;
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-ranking--parejas {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 0 0.5rem;
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-ranking th {
+  border-bottom: 1px solid var(--liga-pub-gold-border);
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-ranking td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-jornada-card {
+  background: transparent;
+  box-shadow: none;
+  border-color: var(--liga-pub-gold-border);
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-jornada-card:hover {
+  border-color: var(--liga-pub-gold-border-strong);
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-matchup {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-ranking--parejas .liga-pantalla-ranking__pts {
+  color: var(--liga-pub-text);
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__pts {
+  color: var(--liga-pub-gold-light);
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__rank,
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__rank {
+  color: var(--liga-pub-gold);
+}
+
+.liga-pantalla--liga-fijas .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__name,
+.liga-pantalla--jornada-fijas .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__name {
+  color: var(--liga-pub-gold-light);
 }

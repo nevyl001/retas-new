@@ -207,8 +207,9 @@ function parseDraftSet(
 
 /** Convierte el formulario de sets en filas validadas listas para guardar. */
 export function buildSetsFromDraft(draft: ParejasFijasSetsDraft): LigaPartidoSetScore[] {
-  const raw1 = parseDraftSet(draft.set1, "Set 1");
-  const raw2 = parseDraftSet(draft.set2, "Set 2");
+  const normalized = normalizeParejasFijasDraft(draft);
+  const raw1 = parseDraftSet(normalized.set1, "Set 1");
+  const raw2 = parseDraftSet(normalized.set2, "Set 2");
   if (!raw1 || !raw2) {
     throw new Error("Registra al menos el set 1 y el set 2.");
   }
@@ -225,7 +226,7 @@ export function buildSetsFromDraft(draft: ParejasFijasSetsDraft): LigaPartidoSet
   const w2 = setWinner(set2);
 
   if (w1 !== w2) {
-    const raw3 = parseDraftSet(draft.set3, "Set 3 (super tie-break)");
+    const raw3 = parseDraftSet(normalized.set3, "Set 3 (super tie-break)");
     if (!raw3) {
       throw new Error(
         "Van 1-1 en sets: registra el super tie-break (set 3, muerte súbita a 10)."
@@ -237,12 +238,27 @@ export function buildSetsFromDraft(draft: ParejasFijasSetsDraft): LigaPartidoSet
     return [set1, set2, set3];
   }
 
-  const raw3 = parseDraftSet(draft.set3, "Set 3");
-  if (raw3) {
-    throw new Error("Con 2-0 en sets no se juega tercer set; déjalo vacío.");
-  }
-
   return [set1, set2];
+}
+
+/** Limpia set 3 si ya no aplica (p. ej. corrección de 2-1 a 2-0). */
+export function normalizeParejasFijasDraft(
+  draft: ParejasFijasSetsDraft
+): ParejasFijasSetsDraft {
+  if (needsSuperTiebreakDraft(draft)) return draft;
+  return { ...draft, set3: { p1: "", p2: "" } };
+}
+
+/** Validación previa al guardar; devuelve mensaje de error o null si está listo. */
+export function validateParejasFijasDraft(
+  draft: ParejasFijasSetsDraft
+): string | null {
+  try {
+    buildSetsFromDraft(draft);
+    return null;
+  } catch (err) {
+    return err instanceof Error ? err.message : "Marcador inválido.";
+  }
 }
 
 export function draftFromSetScores(

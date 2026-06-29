@@ -3,6 +3,10 @@ import type { Game } from "../database";
 import { supabase } from "../supabaseClient";
 import { getMatchScoresForStandings } from "../standingsUtils";
 import { getOrCreateJugadorId } from "./jugadorIdResolver";
+import {
+  parseSetScoresJson,
+  resolveParejasFijasPartidoTotals,
+} from "../liga/parejasFijasMatchScore";
 
 export type RatingModoJuego =
   | "reta_rr"
@@ -275,16 +279,26 @@ export async function aplicarRatingLigaPartido(
 ): Promise<void> {
   const { data: partido } = await supabase
     .from("liga_partidos")
-    .select("id, pareja1_id, pareja2_id, score_pareja1, score_pareja2")
+    .select(
+      "id, pareja1_id, pareja2_id, score_pareja1, score_pareja2, set_scores"
+    )
     .eq("id", partidoId)
     .maybeSingle();
   if (!partido) return;
-  const s1 = Number(partido.score_pareja1);
-  const s2 = Number(partido.score_pareja2);
-  if (!Number.isFinite(s1) || !Number.isFinite(s2) || s1 === s2) return;
+
+  const totals = resolveParejasFijasPartidoTotals({
+    score_pareja1:
+      partido.score_pareja1 != null ? Number(partido.score_pareja1) : null,
+    score_pareja2:
+      partido.score_pareja2 != null ? Number(partido.score_pareja2) : null,
+    set_scores: parseSetScoresJson(
+      (partido as { set_scores?: unknown }).set_scores
+    ),
+  });
+  if (!totals) return;
 
   const { data: parejas } = await supabase
-    .from("liga_parejas")
+    .from("liga_jornada_parejas")
     .select(
       "id, jugador1_id, jugador2_id, jugador1:liga_jugadores(nombre), jugador2:liga_jugadores(nombre)"
     )
@@ -330,7 +344,7 @@ export async function aplicarRatingLigaPartido(
     j2: teamA[1],
     j3: teamB[0],
     j4: teamB[1],
-    ganador: s1 > s2 ? "a" : "b",
+    ganador: totals.p1WonMatch ? "a" : "b",
     modoJuego: "liga",
     partidoRef: `liga:${partidoId}`,
     descripcion: "Liga · jornada",

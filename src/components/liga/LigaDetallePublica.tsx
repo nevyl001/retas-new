@@ -141,7 +141,11 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       );
 
   return (
-    <div className="liga-pantalla App--public-full-width ro-public-view">
+    <div
+      className={`liga-pantalla App--public-full-width ro-public-view${
+        esParejasFijas ? " liga-pantalla--liga-fijas" : ""
+      }`}
+    >
       <div className="liga-pantalla__grain" aria-hidden />
       <PublicModeShell className="liga-pantalla__inner">
         <header className="liga-pantalla__header">
@@ -269,11 +273,14 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
           </section>
 
           <section
+            id="programa-juego"
             className={`liga-pantalla-jornadas${
               esParejasFijas ? " liga-pantalla-jornadas--parejas" : ""
             }`}
           >
-            <h2 className="liga-pantalla-jornadas__title">Jornadas</h2>
+            <h2 className="liga-pantalla-jornadas__title">
+              {esParejasFijas ? "Programa de juego" : "Jornadas"}
+            </h2>
             {detalle.jornadas.length === 0 ? (
               <p className="liga-pantalla__loading">
                 El calendario se publicará pronto.

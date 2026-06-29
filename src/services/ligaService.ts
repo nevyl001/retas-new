@@ -25,7 +25,7 @@ import {
   resetPuntosEquiposLiga,
 } from "./ligaParejasFijasService";
 import { dedupeLigaJugadoresByName } from "../lib/liga/dedupeJugadores";
-import { sanitizeUuid } from "../lib/db/schemaHelpers";
+import { isMissingColumnError, sanitizeUuid } from "../lib/db/schemaHelpers";
 import {
   computeParejasFijasMatchTotals,
   parseSetScoresJson,
@@ -1033,7 +1033,6 @@ export async function startJornada(jornadaId: string): Promise<void> {
       .from("liga_partidos")
       .update({ estado: "in_progress" })
       .eq("jornada_id", jornadaId)
-      .eq("ronda", 1)
       .eq("estado", "upcoming");
 
     if (actErr) throw new Error(actErr.message);
@@ -1190,12 +1189,54 @@ export async function updateScore(
   }
 }
 
+const SET_SCORES_MIGRATION_HINT =
+  "Ejecuta supabase/liga-partidos-set-scores.sql en el SQL Editor de Supabase.";
+
+async function updateLigaPartidoScoreParejasFijas(
+  partidoId: string,
+  totals: ReturnType<typeof computeParejasFijasMatchTotals>,
+  sets: LigaPartidoSetScore[]
+): Promise<{ setScoresPersisted: boolean }> {
+  const fullPatch = {
+    score_pareja1: totals.gamesP1,
+    score_pareja2: totals.gamesP2,
+    set_scores: { sets },
+    estado: "completed" as const,
+  };
+
+  const { error: uErr } = await supabase
+    .from("liga_partidos")
+    .update(fullPatch)
+    .eq("id", partidoId);
+
+  if (!uErr) return { setScoresPersisted: true };
+
+  if (!isMissingColumnError(uErr, "liga_partidos", "set_scores")) {
+    throw new Error(uErr.message);
+  }
+
+  const { error: fallbackErr } = await supabase
+    .from("liga_partidos")
+    .update({
+      score_pareja1: totals.gamesP1,
+      score_pareja2: totals.gamesP2,
+      estado: "completed",
+    })
+    .eq("id", partidoId);
+
+  if (fallbackErr) throw new Error(fallbackErr.message);
+
+  console.warn(
+    `[liga] Columna set_scores ausente; games guardados sin detalle por sets. ${SET_SCORES_MIGRATION_HINT}`
+  );
+  return { setScoresPersisted: false };
+}
+
 /** Resultado al mejor de 3 sets (parejas fijas): sets 1-2 normales, set 3 super tie-break a 10. */
 export async function updateScoreParejasFijas(
   partidoId: string,
-  sets: LigaPartidoSetScore[],
-  force = false
-): Promise<void> {
+  sets: LigaPartidoSetScore[]
+): Promise<{ setScoresPersisted: boolean }> {
   const organizadorId = await requireUserId();
   const totals = computeParejasFijasMatchTotals(sets);
 
@@ -1208,23 +1249,11 @@ export async function updateScoreParejasFijas(
   if (pErr) throw new Error(pErr.message);
   if (!partido) throw new Error("Partido no encontrado.");
 
-  if (partido.estado === "completed" && !force) {
-    throw new Error(
-      "Este partido ya tiene resultado. Confirma para sobrescribir."
-    );
-  }
-
-  const { error: uErr } = await supabase
-    .from("liga_partidos")
-    .update({
-      score_pareja1: totals.gamesP1,
-      score_pareja2: totals.gamesP2,
-      set_scores: { sets },
-      estado: "completed",
-    })
-    .eq("id", partidoId);
-
-  if (uErr) throw new Error(uErr.message);
+  const { setScoresPersisted } = await updateLigaPartidoScoreParejasFijas(
+    partidoId,
+    totals,
+    sets
+  );
 
   void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
     ({ aplicarRatingLigaPartido }) =>
@@ -1234,40 +1263,6 @@ export async function updateScoreParejasFijas(
   );
 
   const jornadaId = String(partido.jornada_id);
-  const ronda = Number(partido.ronda);
-
-  const { data: rondaPartidos, error: rErr } = await supabase
-    .from("liga_partidos")
-    .select("id, estado")
-    .eq("jornada_id", jornadaId)
-    .eq("ronda", ronda);
-
-  if (rErr) throw new Error(rErr.message);
-
-  const rondaCompleta = (rondaPartidos ?? []).every(
-    (p) => p.estado === "completed"
-  );
-
-  if (!rondaCompleta) return;
-
-  const { data: nextRonda } = await supabase
-    .from("liga_partidos")
-    .select("id")
-    .eq("jornada_id", jornadaId)
-    .eq("ronda", ronda + 1)
-    .limit(1);
-
-  if (nextRonda?.length) {
-    const { error: actErr } = await supabase
-      .from("liga_partidos")
-      .update({ estado: "in_progress" })
-      .eq("jornada_id", jornadaId)
-      .eq("ronda", ronda + 1)
-      .eq("estado", "upcoming");
-
-    if (actErr) throw new Error(actErr.message);
-    return;
-  }
 
   const { data: jornadaRow, error: jRowErr } = await supabase
     .from("liga_jornadas")
@@ -1277,21 +1272,11 @@ export async function updateScoreParejasFijas(
 
   if (jRowErr) throw new Error(jRowErr.message);
 
-  const { data: allPartidos, error: aErr } = await supabase
-    .from("liga_partidos")
-    .select("estado")
-    .eq("jornada_id", jornadaId);
-
-  if (aErr) throw new Error(aErr.message);
-
-  const jornadaLista = allPartidos ?? [];
-  const jornadaCompleta =
-    jornadaLista.length > 0 &&
-    jornadaLista.every((p) => p.estado === "completed");
-
-  if (jornadaCompleta && jornadaRow?.liga_id) {
+  if (jornadaRow?.liga_id) {
     await recalcularPuntosLiga(String(jornadaRow.liga_id));
   }
+
+  return { setScoresPersisted };
 }
 
 export async function updateJornadaFecha(
@@ -1364,6 +1349,37 @@ export async function updateRondaProgramacion(
   const horaNorm =
     input.hora_inicio != null && input.hora_inicio.trim()
       ? normalizeHoraInicio(input.hora_inicio)
+      : null;
+
+  for (const p of partidos) {
+    const cancha = p.cancha != null ? Number(p.cancha) : undefined;
+    await updatePartidoProgramacion(
+      String(p.id),
+      { cancha, hora_inicio: horaNorm },
+      canchasDisponibles
+    );
+  }
+}
+
+/** Aplica el mismo horario a todos los partidos de la jornada (parejas fijas). */
+export async function updateJornadaHorarioPartidos(
+  jornadaId: string,
+  hora_inicio: string | null,
+  canchasDisponibles: number
+): Promise<void> {
+  await requireUserId();
+
+  const { data: partidos, error: pErr } = await supabase
+    .from("liga_partidos")
+    .select("id, cancha")
+    .eq("jornada_id", jornadaId);
+
+  if (pErr) throw new Error(pErr.message);
+  if (!partidos?.length) return;
+
+  const horaNorm =
+    hora_inicio != null && hora_inicio.trim()
+      ? normalizeHoraInicio(hora_inicio)
       : null;
 
   for (const p of partidos) {
