@@ -854,16 +854,20 @@
   border-top: 1px solid var(--border-subtle);
 }
 
-/* —— Modal creación de reta (QuickStart) — Riviera Open premium —— */
+/* —— Modal creación de reta (QuickStart) — centrado en mobile —— */
 .riviera-modal-overlay.home-sheet-overlay {
   z-index: 10000;
   isolation: isolate;
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding: 0;
+  padding:
+    max(var(--ro-space-4, 16px), env(safe-area-inset-top, 0px))
+    max(var(--ro-space-4, 16px), env(safe-area-inset-right, 0px))
+    max(var(--ro-space-4, 16px), env(safe-area-inset-bottom, 0px))
+    max(var(--ro-space-4, 16px), env(safe-area-inset-left, 0px));
   background: rgba(0, 0, 0, 0.88);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -888,25 +892,29 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  width: 100%;
+  width: min(100%, 520px);
   max-width: 520px;
-  max-height: min(92dvh, 780px);
+  max-height: min(88dvh, 780px);
   overflow: hidden;
   box-sizing: border-box;
   padding: 0;
+  margin: auto;
   background: linear-gradient(
     180deg,
     var(--ro-bg-elevated) 0%,
     var(--ro-bg-surface) 100%
   );
   border: 1px solid var(--ro-gold-border);
-  border-bottom: none;
-  border-radius: var(--ro-radius-lg, 16px) var(--ro-radius-lg, 16px) 0 0;
+  border-radius: var(--ro-radius-lg, 16px);
   box-shadow:
-    0 -8px 48px rgba(0, 0, 0, 0.55),
+    0 24px 64px rgba(0, 0, 0, 0.65),
     0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 0 32px var(--ro-gold-glow);
-  animation: home-sheet-rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+    0 0 40px var(--ro-gold-glow);
+  animation: home-sheet-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.home-sheet.riviera-modal.riviera-modal--lg {
+  max-width: 520px;
 }
 
 .home-sheet .riviera-modal__body {
@@ -934,35 +942,32 @@
   box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.45);
 }
 
-@keyframes home-sheet-rise {
+@keyframes home-sheet-pop {
   from {
     opacity: 0;
-    transform: translateY(28px);
+    transform: translateY(10px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 @media (min-width: 768px) {
   .riviera-modal-overlay.home-sheet-overlay {
-    align-items: center;
     padding: var(--ro-space-4, 16px);
   }
 
   .home-sheet.riviera-modal,
   .home-sheet {
-    border-radius: var(--ro-radius-lg, 16px);
-    border-bottom: 1px solid var(--ro-gold-border);
-    max-height: 88vh;
+    max-height: min(88vh, 780px);
   }
 }
 
 .home-sheet__accent-line {
   width: 48px;
   height: 2px;
-  margin: var(--ro-space-3, 12px) auto var(--ro-space-2, 8px);
+  margin: var(--ro-space-4, 16px) auto var(--ro-space-2, 8px);
   border-radius: var(--ro-radius-full, 999px);
   background: linear-gradient(
     90deg,
@@ -972,20 +977,6 @@
     var(--ro-gold) 80%,
     transparent
   );
-}
-
-.home-sheet__handle {
-  width: 36px;
-  height: 4px;
-  margin: 0 auto var(--ro-space-4, 16px);
-  border-radius: var(--ro-radius-full, 999px);
-  background: rgba(255, 255, 255, 0.14);
-}
-
-@media (min-width: 768px) {
-  .home-sheet__handle {
-    display: none;
-  }
 }
 
 .home-sheet__header {
@@ -1471,29 +1462,22 @@
 @media (max-width: 767px) {
   .home-sheet.riviera-modal,
   .home-sheet {
-    max-height: min(94dvh, 820px);
-    border-radius: 20px 20px 0 0;
+    width: min(100%, 520px);
+    max-height: min(86dvh, 760px);
+    border-radius: 18px;
   }
 
   .home-sheet .riviera-modal__body {
-    padding-left: max(var(--ro-space-4, 16px), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--ro-space-4, 16px), env(safe-area-inset-right, 0px));
+    padding-left: var(--ro-space-4, 16px);
+    padding-right: var(--ro-space-4, 16px);
   }
 
   .home-sheet .riviera-modal__footer {
-    padding-left: max(var(--ro-space-4, 16px), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--ro-space-4, 16px), env(safe-area-inset-right, 0px));
+    padding-left: var(--ro-space-4, 16px);
+    padding-right: var(--ro-space-4, 16px);
   }
 
   .home-sheet__header {
-    margin-bottom: var(--ro-space-3, 12px);
-  }
-
-  .home-sheet__accent-line {
-    margin-top: var(--ro-space-2, 8px);
-  }
-
-  .home-sheet__handle {
     margin-bottom: var(--ro-space-3, 12px);
   }
 

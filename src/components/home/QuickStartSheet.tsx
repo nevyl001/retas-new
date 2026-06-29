@@ -54,7 +54,6 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
     <Modal
       open
       onClose={onClose}
-      sheet
       hideClose
       size="lg"
       ariaLabelledBy="quick-start-title"
@@ -91,7 +90,6 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
       }
     >
       <div className="home-sheet__accent-line" aria-hidden />
-      <div className="home-sheet__handle" aria-hidden />
 
       <header className="home-sheet__header">
         <button
