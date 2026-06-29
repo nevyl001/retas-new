@@ -34,7 +34,7 @@ export const useWinnerCalculation = () => {
     pairs: Pair[],
     matches: Match[],
     setCurrentView: (view: "main" | "winner" | "public") => void,
-    options?: { tournament?: Tournament | null }
+    options?: { tournament?: Tournament | null; skipViewChange?: boolean }
   ) => {
     try {
       const tournament = options?.tournament;
@@ -99,7 +99,9 @@ export const useWinnerCalculation = () => {
           setWinningTeamName(null);
         }
         setShowWinnerScreen(true);
-        setCurrentView("winner");
+        if (!options?.skipViewChange) {
+          setCurrentView("winner");
+        }
         return;
       }
 
@@ -126,11 +128,15 @@ export const useWinnerCalculation = () => {
       );
       setTournamentWinner(outcome.winner);
       setShowWinnerScreen(true);
-      setCurrentView("winner");
+      if (!options?.skipViewChange) {
+        setCurrentView("winner");
+      }
     } catch (error) {
       console.error("❌ Error al calcular ganador:", error);
       setShowWinnerScreen(true);
-      setCurrentView("winner");
+      if (!options?.skipViewChange) {
+        setCurrentView("winner");
+      }
     }
   };
 

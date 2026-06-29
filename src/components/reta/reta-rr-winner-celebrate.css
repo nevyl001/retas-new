@@ -1,0 +1,214 @@
+.reta-rr-celebrate {
+  margin-top: clamp(1.25rem, 3vw, 2rem);
+}
+
+.reta-rr-celebrate .ro-pub-celebrate__inner {
+  max-width: min(100%, 28rem);
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .reta-rr-celebrate .ro-pub-celebrate__inner {
+    max-width: min(100%, 52rem);
+    padding: 1.35rem 1.75rem 1.5rem;
+  }
+
+  .reta-rr-celebrate__card {
+    padding: 1.5rem 1.35rem 1.35rem;
+  }
+
+  .riviera-organizer-reta .reta-rr-celebrate {
+    scroll-margin-top: 5rem;
+  }
+}
+
+.reta-rr-celebrate__card {
+  margin: 0.35rem 0 0.5rem;
+  padding: 1.35rem 1.15rem 1.25rem;
+}
+
+.reta-rr-celebrate__players {
+  margin-top: 0.15rem;
+}
+
+.reta-rr-celebrate__rank {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.reta-rr-celebrate__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+@media (min-width: 480px) {
+  .reta-rr-celebrate__stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.reta-rr-celebrate__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 3.4rem;
+  padding: 0.55rem 0.4rem;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 179, 8, 0.22);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.reta-rr-celebrate__stat-value {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.reta-rr-celebrate__stat-label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.reta-rr-celebrate__social.ro-pub-social {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.65rem 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.reta-rr-celebrate__social .ro-pub-social__handle {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: rgba(234, 179, 8, 0.9);
+}
+
+.reta-rr-celebrate__social .ro-pub-social__list {
+  gap: 0.4rem;
+}
+
+.reta-rr-celebrate__social .ro-pub-social__link {
+  padding: 0.45rem;
+  min-width: 2.15rem;
+  min-height: 2.15rem;
+  border-radius: 50%;
+  border-color: rgba(234, 179, 8, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.reta-rr-celebrate__social .ro-pub-social__link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(234, 179, 8, 0.45);
+  background: rgba(234, 179, 8, 0.1);
+  color: #fff;
+}
+
+.reta-rr-celebrate__social .ro-pub-social__link--instagram:hover,
+.reta-rr-celebrate__social .ro-pub-social__link--tiktok:hover,
+.reta-rr-celebrate__social .ro-pub-social__link--facebook:hover {
+  border-color: rgba(234, 179, 8, 0.45);
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.reta-rr-celebrate__social .ro-pub-social__icon {
+  opacity: 0.92;
+}
+
+.reta-rr-celebrate__torneo-mobile {
+  display: none;
+}
+
+.riviera-organizer-reta .reta-rr-celebrate {
+  margin-top: 1.5rem;
+}
+
+.elegant-winner-screen--share {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0.75rem 1.5rem;
+}
+
+.elegant-winner-screen--share .reta-rr-celebrate {
+  margin-top: 0;
+  width: 100%;
+}
+
+.elegant-winner-screen--share .reta-rr-celebrate .ro-pub-celebrate__inner {
+  max-width: min(100%, 32rem);
+}
+
+@media (max-width: 639px) {
+  .reta-rr-celebrate__desktop-only {
+    display: none !important;
+  }
+
+  .reta-rr-celebrate {
+    margin-top: 1rem;
+    padding: 0;
+  }
+
+  .reta-rr-celebrate .ro-pub-celebrate__inner {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .reta-rr-celebrate__card {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px;
+    padding: 1.25rem 1rem 1.15rem;
+    box-shadow:
+      0 0 0 1px rgba(234, 179, 8, 0.35),
+      0 12px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  .reta-rr-celebrate__torneo-mobile {
+    display: block;
+    margin: 0.65rem 0 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(234, 179, 8, 0.75);
+  }
+
+  .riviera-organizer-reta .reta-rr-celebrate {
+    margin-top: 1rem;
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+  }
+
+  .elegant-winner-screen--share {
+    padding: 0.75rem 0.5rem 1rem;
+  }
+
+  .elegant-winner-screen--share .reta-rr-celebrate .ro-pub-celebrate__inner {
+    max-width: 100%;
+  }
+}

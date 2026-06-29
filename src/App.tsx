@@ -578,10 +578,26 @@ function AppContent() {
     return startTournament(selectedTournament!, pairs, user?.id || "", opts);
   };
   const handleReset = () => resetTournament(selectedTournament!, pairs);
-  const handleShowWinner = () =>
-    calculateAndShowWinner(pairs, matches, setCurrentView, {
+  const handleShowWinner = async () => {
+    const isDesktop =
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 640px)").matches;
+    const isTeamsFormat = selectedTournament?.format === "teams";
+    const skipViewChange = isDesktop && !isTeamsFormat;
+
+    await calculateAndShowWinner(pairs, matches, setCurrentView, {
       tournament: selectedTournament ?? undefined,
+      skipViewChange,
     });
+
+    if (skipViewChange) {
+      requestAnimationFrame(() => {
+        document
+          .getElementById("reta-winner-celebrate")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  };
   const handleHideWinner = () => hideWinnerScreen(setCurrentView);
 
   const handleBackToHome = () => {
@@ -621,6 +637,29 @@ function AppContent() {
       tournamentWinner?.pair || (sortedPairs.length > 0 ? sortedPairs[0] : null)
     );
   }, [tournamentWinner, sortedPairs]);
+
+  useEffect(() => {
+    if (
+      !isTournamentFinished ||
+      !selectedTournament ||
+      tournamentWinner ||
+      winningTeamName
+    ) {
+      return;
+    }
+    void calculateAndShowWinner(pairs, matches, () => {}, {
+      tournament: selectedTournament,
+      skipViewChange: true,
+    });
+  }, [
+    isTournamentFinished,
+    selectedTournament,
+    tournamentWinner,
+    winningTeamName,
+    pairs,
+    matches,
+    calculateAndShowWinner,
+  ]);
 
   const isTorneoExpressPublic =
     currentView === "torneo-express" && isTorneoExpressPublicPath(appPathname);
@@ -791,6 +830,8 @@ function AppContent() {
             tournamentWinner={tournamentWinner}
             winningTeamName={winningTeamName}
             winningTeamStats={winningTeamStats}
+            userId={user?.id}
+            torneoNombre={selectedTournament?.name}
             onBackToManager={handleHideWinner}
           />
         )}

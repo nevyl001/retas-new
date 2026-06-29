@@ -36,9 +36,9 @@ import {
 import { PublicRetaRestingPairsSection } from "./public/PublicRetaRestingPairsSection";
 import {
   PublicRetaWinnerSection,
-  type PublicRetaRunnerUp,
   type PublicRetaWinnerAvatar,
 } from "./public/PublicRetaWinnerSection";
+import { RetaRoundRobinWinnerCelebrate } from "./reta/RetaRoundRobinWinnerCelebrate";
 import {
   resolvePlayerAvatars,
   resolvePlayerPublicProfiles,
@@ -91,8 +91,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [tournamentWinner, setTournamentWinner] =
     useState<TournamentWinner | null>(null);
-  const [podiumSecond, setPodiumSecond] = useState<Pair | null>(null);
-  const [podiumThird, setPodiumThird] = useState<Pair | null>(null);
   const [showWinner, setShowWinner] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(parseTeamConfigFromHash);
@@ -107,10 +105,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
     []
   );
-  const [podiumAvatars, setPodiumAvatars] = useState<{
-    second: PublicRetaWinnerAvatar[];
-    third: PublicRetaWinnerAvatar[];
-  }>({ second: [], third: [] });
   const [playerProfiles, setPlayerProfiles] = useState<
     Record<string, PlayerPublicProfile>
   >({});
@@ -196,8 +190,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         setShowWinner(false);
         setWinningTeamName(null);
         setTournamentWinner(null);
-        setPodiumSecond(null);
-        setPodiumThird(null);
       } else {
         if (resolvedTeamConfig) {
           const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
@@ -216,8 +208,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               champCfg
             );
             setTournamentWinner(outcome.winner);
-            setPodiumSecond(outcome.secondPair);
-            setPodiumThird(outcome.thirdPair);
             setShowWinner(true);
           } catch (err) {
             console.error("Error calculating winner:", err);
@@ -541,70 +531,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     };
   }, [showWinner, organizadorId, winnerAvatarEntries]);
 
-  const podiumAvatarEntries = useMemo(() => {
-    const toEntries = (pair: Pair | undefined): PlayerAvatarLookupEntry[] =>
-      pair
-        ? [
-            { id: pair.player1_id, name: pair.player1_name },
-            { id: pair.player2_id, name: pair.player2_name },
-          ]
-        : [];
-    return {
-      second: toEntries(podiumSecond ?? undefined),
-      third: toEntries(podiumThird ?? undefined),
-    };
-  }, [podiumSecond, podiumThird]);
-
-  useEffect(() => {
-    const allEntries = [
-      ...podiumAvatarEntries.second,
-      ...podiumAvatarEntries.third,
-    ];
-    if (!showWinner || !organizadorId || allEntries.length === 0) {
-      setPodiumAvatars({ second: [], third: [] });
-      return;
-    }
-    let cancelled = false;
-    void resolvePlayerAvatars(organizadorId, allEntries, {
-      publicOnly: true,
-    }).then((map) => {
-      if (cancelled) return;
-      const toAvatars = (entries: PlayerAvatarLookupEntry[]) =>
-        entries.map((e) => ({
-          name: e.name,
-          fotoUrl: map[e.id] ?? null,
-        }));
-      setPodiumAvatars({
-        second: toAvatars(podiumAvatarEntries.second),
-        third: toAvatars(podiumAvatarEntries.third),
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [showWinner, organizadorId, podiumAvatarEntries]);
-
-  const runnersUp = useMemo((): PublicRetaRunnerUp[] => {
-    const items: PublicRetaRunnerUp[] = [];
-    const second = podiumSecond;
-    const third = podiumThird;
-    if (second) {
-      items.push({
-        place: 2,
-        title: `${second.player1_name} / ${second.player2_name}`,
-        avatars: podiumAvatars.second,
-      });
-    }
-    if (third) {
-      items.push({
-        place: 3,
-        title: `${third.player1_name} / ${third.player2_name}`,
-        avatars: podiumAvatars.third,
-      });
-    }
-    return items;
-  }, [podiumSecond, podiumThird, podiumAvatars]);
-
   const formatKicker = teamStandings?.length
     ? "Reta por equipos"
     : "Round Robin";
@@ -858,18 +784,22 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {showWinner &&
         (!teamStandings || teamStandings.length === 0) &&
         tournamentWinner && (
-          <PublicRetaWinnerSection
-            title={`${tournamentWinner.pair.player1_name} / ${tournamentWinner.pair.player2_name}`}
+          <RetaRoundRobinWinnerCelebrate
+            pairLabel={`${tournamentWinner.pair.player1_name} / ${tournamentWinner.pair.player2_name}`}
             torneoNombre={publicTournamentName ?? undefined}
+            rankLabel={
+              championshipConfig?.championshipEnabled
+                ? "Ganadores · Remontada Final"
+                : "Ganadores de la reta"
+            }
             winners={winnerAvatars}
-            runnersUp={runnersUp.length > 0 ? runnersUp : undefined}
             stats={[
               { value: tournamentWinner.totalSets, label: "Sets ganados" },
-              { value: tournamentWinner.matchesPlayed, label: "Partidos jugados" },
-              { value: tournamentWinner.totalPoints, label: "Puntos totales" },
+              { value: tournamentWinner.matchesPlayed, label: "Partidos" },
+              { value: tournamentWinner.totalPoints, label: "Puntos" },
               {
                 value: `${tournamentWinner.winPercentage.toFixed(1)}%`,
-                label: "% victoria",
+                label: "Efectividad",
               },
             ]}
           />

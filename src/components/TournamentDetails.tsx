@@ -241,6 +241,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           setForceRefresh={setForceRefresh}
           isTournamentFinished={isTournamentFinished}
           winner={winner}
+          tournamentWinner={tournamentWinner}
           onShowWinnerScreen={onShowWinnerScreen}
           onBackToHome={onBackToHome}
           onReloadMatches={loadTournamentData}

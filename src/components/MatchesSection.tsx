@@ -17,6 +17,13 @@ import {
   championshipMatchEncounterLabel,
   sortChampionshipRoundMatches,
 } from "../lib/roundRobinChampionship";
+import type { TournamentWinner } from "../lib/tournamentWinner";
+import {
+  resolvePlayerAvatars,
+  type PlayerAvatarLookupEntry,
+} from "../lib/rivieraJugadores/publicPlayerAvatars";
+import { RetaRoundRobinWinnerCelebrate } from "./reta/RetaRoundRobinWinnerCelebrate";
+import type { PublicRetaWinnerAvatar } from "./public/PublicRetaWinnerSection";
 
 const TEAM_CONFIG_KEY = "rivieraapp_teams_";
 
@@ -41,6 +48,7 @@ interface MatchesSectionProps {
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
   isTournamentFinished: boolean;
   winner: Pair | null;
+  tournamentWinner: TournamentWinner | null;
   onShowWinnerScreen: () => void;
   onBackToHome: () => void;
   onReloadMatches?: () => void;
@@ -134,11 +142,45 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   setForceRefresh,
   isTournamentFinished,
   winner,
+  tournamentWinner,
   onShowWinnerScreen,
   onBackToHome,
   onReloadMatches,
   userId,
 }) => {
+  const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
+    []
+  );
+
+  const winnerAvatarEntries = useMemo((): PlayerAvatarLookupEntry[] => {
+    if (!isTournamentFinished || !winner) return [];
+    return [
+      { id: winner.player1_id, name: winner.player1_name },
+      { id: winner.player2_id, name: winner.player2_name },
+    ];
+  }, [isTournamentFinished, winner]);
+
+  useEffect(() => {
+    if (!userId || winnerAvatarEntries.length === 0) {
+      setWinnerAvatars([]);
+      return;
+    }
+    let cancelled = false;
+    void resolvePlayerAvatars(userId, winnerAvatarEntries).then((map) => {
+      if (cancelled) return;
+      setWinnerAvatars(
+        winnerAvatarEntries.map((e) => ({
+          name: e.name,
+          fotoUrl: map[e.id] ?? null,
+          jugadorId: e.id,
+        }))
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, winnerAvatarEntries]);
+
   const teamConfig = useMemo(() => {
     if (tournament.format === "teams" && tournament.team_config?.teamNames?.length && tournament.team_config?.pairToTeam) {
       return tournament.team_config;
@@ -358,6 +400,26 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         forceRefresh={forceRefresh}
         teamConfig={teamConfig}
       />
+
+      {isTournamentFinished &&
+        !championshipActive &&
+        tournamentWinner &&
+        winner && (
+          <RetaRoundRobinWinnerCelebrate
+            pairLabel={`${winner.player1_name} / ${winner.player2_name}`}
+            torneoNombre={tournament.name}
+            winners={winnerAvatars}
+            stats={[
+              { value: tournamentWinner.totalSets, label: "Sets ganados" },
+              { value: tournamentWinner.matchesPlayed, label: "Partidos" },
+              { value: tournamentWinner.totalPoints, label: "Puntos" },
+              {
+                value: `${tournamentWinner.winPercentage.toFixed(1)}%`,
+                label: "Efectividad",
+              },
+            ]}
+          />
+        )}
 
       {isTournamentFinished && championshipActive && championPair && (
         <div className="rr-championship__winner">
