@@ -57,6 +57,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
       sheet
       hideClose
       size="lg"
+      ariaLabelledBy="quick-start-title"
       overlayClassName="home-sheet-overlay"
       className="home-sheet"
       bodyClassName="home-sheet__body"
@@ -84,143 +85,170 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
               })
             }
           >
-            {submitting ? "Creando…" : "⚡ Crear y continuar →"}
+            {submitting ? "Creando reta…" : "Iniciar reta"}
           </Button>
         </footer>
       }
     >
+      <div className="home-sheet__accent-line" aria-hidden />
       <div className="home-sheet__handle" aria-hidden />
+
       <header className="home-sheet__header">
-        <button type="button" className="home-sheet__back" onClick={onClose}>
+        <button
+          type="button"
+          className="home-sheet__back"
+          onClick={onClose}
+          aria-label="Volver"
+        >
           ←
         </button>
-        <span className="home-sheet__mode-icon">{mode.icon}</span>
-        <h2 id="quick-start-title" className="home-sheet__title">
-          {mode.title}
-        </h2>
+        <div
+          className="home-sheet__head-main"
+          style={
+            { "--sheet-mode-accent": mode.accentColor } as React.CSSProperties
+          }
+        >
+          <span className="home-sheet__mode-icon" aria-hidden>
+            {mode.icon}
+          </span>
+          <div className="home-sheet__head-text">
+            <p className="home-sheet__kicker">Nueva reta</p>
+            <h2 id="quick-start-title" className="home-sheet__title">
+              {mode.title}
+            </h2>
+            <p className="home-sheet__subtitle">{mode.description}</p>
+          </div>
+        </div>
       </header>
 
-      <label className="home-sheet__label">
-        Nombre de la reta (opcional)
-        <input
-          type="text"
-          className="riviera-input"
-          placeholder="Reta del domingo…"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={80}
-        />
-      </label>
+      <div className="home-sheet__fields">
+        <label className="home-sheet__field">
+          <span className="home-sheet__field-label">Nombre de la reta</span>
+          <span className="home-sheet__field-optional">Opcional</span>
+          <input
+            type="text"
+            className="home-sheet__input riviera-input"
+            placeholder="Reta del domingo…"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={80}
+          />
+        </label>
 
-      <label className="home-sheet__label">
-        Descripción (opcional)
-        <textarea
-          className="home-sheet__textarea riviera-textarea riviera-input"
-          placeholder="Ej: Reta de verano, grupo de amigos…"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          maxLength={300}
-          rows={3}
-        />
-      </label>
+        <label className="home-sheet__field">
+          <span className="home-sheet__field-label">Descripción</span>
+          <span className="home-sheet__field-optional">Opcional</span>
+          <textarea
+            className="home-sheet__textarea riviera-textarea riviera-input"
+            placeholder="Ej: Reta de verano, grupo de amigos…"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            maxLength={300}
+            rows={3}
+          />
+        </label>
 
-      {!isAmericano && (
-        <>
-          <p className="home-sheet__label">Canchas disponibles</p>
-          <div className="home-sheet__courts-stepper">
-            <button
-              type="button"
-              className="home-sheet__courts-step"
-              onClick={() => setCourts((c) => clampCourts(c - 1))}
-              aria-label="Menos canchas"
-            >
-              −
-            </button>
-            <input
-              id="home-sheet-courts"
-              type="number"
-              className="home-sheet__courts-input riviera-input"
-              min={MIN_COURTS}
-              max={MAX_COURTS}
-              value={courts}
-              onChange={(e) => setCourts(clampCourts(Number(e.target.value)))}
-            />
-            <button
-              type="button"
-              className="home-sheet__courts-step"
-              onClick={() => setCourts((c) => clampCourts(c + 1))}
-              aria-label="Más canchas"
-            >
-              +
-            </button>
-          </div>
-        </>
-      )}
-
-      {isRoundRobin && (
-        <div
-          className={`home-sheet__optional${championshipEnabled ? " home-sheet__optional--on" : ""}`}
-        >
-          <div className="home-sheet__optional-head">
-            <div>
-              <p className="home-sheet__optional-kicker">Opcional</p>
-              <p className="home-sheet__optional-title">⚡ Remontada Final</p>
-              {!showRemontadaHelp ? (
-                <button
-                  type="button"
-                  className="home-sheet__optional-link"
-                  onClick={() => setShowRemontadaHelp(true)}
-                >
-                  ¿Cómo funciona?
-                </button>
-              ) : (
-                <p className="home-sheet__optional-sub">
-                  Tras el Round Robin: semifinal #1 vs #4 y #2 vs #3; final entre
-                  ganadores y partido por 3er lugar entre perdedores.
-                </p>
-              )}
+        {!isAmericano && (
+          <div className="home-sheet__field">
+            <span className="home-sheet__field-label">Canchas disponibles</span>
+            <div className="home-sheet__courts-stepper">
+              <button
+                type="button"
+                className="home-sheet__courts-step"
+                onClick={() => setCourts((c) => clampCourts(c - 1))}
+                disabled={courts <= MIN_COURTS}
+                aria-label="Menos canchas"
+              >
+                −
+              </button>
+              <input
+                id="home-sheet-courts"
+                type="number"
+                className="home-sheet__courts-input riviera-input"
+                min={MIN_COURTS}
+                max={MAX_COURTS}
+                value={courts}
+                onChange={(e) => setCourts(clampCourts(Number(e.target.value)))}
+                aria-label="Número de canchas"
+              />
+              <button
+                type="button"
+                className="home-sheet__courts-step"
+                onClick={() => setCourts((c) => clampCourts(c + 1))}
+                disabled={courts >= MAX_COURTS}
+                aria-label="Más canchas"
+              >
+                +
+              </button>
             </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={championshipEnabled}
-              aria-label="Activar Remontada Final"
-              className={`home-sheet__switch${championshipEnabled ? " home-sheet__switch--on" : ""}`}
-              onClick={() => setChampionshipEnabled((v) => !v)}
-            >
-              <span className="home-sheet__switch-thumb" aria-hidden />
-            </button>
           </div>
-          {championshipEnabled && (
-            <div className="home-sheet__optional-extra">
-              <span className="home-sheet__optional-extra-lbl">Rondas extra</span>
-              <div className="home-sheet__mini-stepper">
-                <button
-                  type="button"
-                  className="home-sheet__mini-step"
-                  onClick={() =>
-                    setChampionshipRounds((r) => clampChampRounds(r - 1))
-                  }
-                  aria-label="Menos rondas"
-                >
-                  −
-                </button>
-                <span className="home-sheet__mini-val">{championshipRounds}</span>
-                <button
-                  type="button"
-                  className="home-sheet__mini-step"
-                  onClick={() =>
-                    setChampionshipRounds((r) => clampChampRounds(r + 1))
-                  }
-                  aria-label="Más rondas"
-                >
-                  +
-                </button>
+        )}
+
+        {isRoundRobin && (
+          <div
+            className={`home-sheet__optional${championshipEnabled ? " home-sheet__optional--on" : ""}`}
+          >
+            <div className="home-sheet__optional-head">
+              <div>
+                <p className="home-sheet__optional-kicker">Opcional</p>
+                <p className="home-sheet__optional-title">Remontada Final</p>
+                {!showRemontadaHelp ? (
+                  <button
+                    type="button"
+                    className="home-sheet__optional-link"
+                    onClick={() => setShowRemontadaHelp(true)}
+                  >
+                    ¿Cómo funciona?
+                  </button>
+                ) : (
+                  <p className="home-sheet__optional-sub">
+                    Tras el Round Robin: semifinal #1 vs #4 y #2 vs #3; final entre
+                    ganadores y partido por 3er lugar entre perdedores.
+                  </p>
+                )}
               </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={championshipEnabled}
+                aria-label="Activar Remontada Final"
+                className={`home-sheet__switch${championshipEnabled ? " home-sheet__switch--on" : ""}`}
+                onClick={() => setChampionshipEnabled((v) => !v)}
+              >
+                <span className="home-sheet__switch-thumb" aria-hidden />
+              </button>
             </div>
-          )}
-        </div>
-      )}
+            {championshipEnabled && (
+              <div className="home-sheet__optional-extra">
+                <span className="home-sheet__optional-extra-lbl">Rondas extra</span>
+                <div className="home-sheet__mini-stepper">
+                  <button
+                    type="button"
+                    className="home-sheet__mini-step"
+                    onClick={() =>
+                      setChampionshipRounds((r) => clampChampRounds(r - 1))
+                    }
+                    aria-label="Menos rondas"
+                  >
+                    −
+                  </button>
+                  <span className="home-sheet__mini-val">{championshipRounds}</span>
+                  <button
+                    type="button"
+                    className="home-sheet__mini-step"
+                    onClick={() =>
+                      setChampionshipRounds((r) => clampChampRounds(r + 1))
+                    }
+                    aria-label="Más rondas"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <p className="home-sheet__hint">
         {isAmericano
