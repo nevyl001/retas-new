@@ -165,10 +165,45 @@
 
 .riviera-organizer-reta .omc-header__top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.riviera-organizer-reta .omc-header__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.riviera-organizer-reta .omc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.riviera-organizer-reta .omc-pill {
+  padding: 3px 9px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-radius: 999px;
+}
+
+.riviera-organizer-reta .omc-pill--court {
+  color: #7dd3fc;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+}
+
+.riviera-organizer-reta .omc-pill--round {
+  color: #c4b5fd;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.28);
 }
 
 .riviera-organizer-reta .omc-match-title {
@@ -190,9 +225,19 @@
   display: block;
   font-size: 10px;
   font-weight: 500;
-  color: #333;
+  color: rgba(255, 255, 255, 0.45);
   margin: 2px 0;
   letter-spacing: 0.04em;
+}
+
+.riviera-organizer-reta .omc-match-title__line--winner {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.riviera-organizer-reta .omc-match-title__line--loser {
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
 }
 
 .riviera-organizer-reta .omc-status {
@@ -210,9 +255,9 @@
 }
 
 .riviera-organizer-reta .omc-status--live {
-  color: #ff4444;
-  background: rgba(255, 68, 68, 0.12);
-  border: 1px solid rgba(255, 68, 68, 0.25);
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.35);
 }
 
 .riviera-organizer-reta .omc-status--live::before {
@@ -220,39 +265,18 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #ff4444;
+  background: #4ade80;
   animation: pulse-dot 1.2s ease-in-out infinite;
 }
 
 .riviera-organizer-reta .omc-status--done {
-  color: #888;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 .riviera-organizer-reta .omc-header__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.riviera-organizer-reta .omc-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.riviera-organizer-reta .omc-pill {
-  padding: 2px 8px;
-  font-family: var(--font-body);
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--text-muted);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  display: none;
 }
 
 .riviera-organizer-reta .omc-pencil-btn {
@@ -355,7 +379,7 @@
 
 /* —— Body: equipos —— */
 .riviera-organizer-reta .omc-body {
-  padding: 0;
+  padding: 2px 0 0;
 }
 
 .riviera-organizer-reta .omc-team-row {
@@ -404,12 +428,12 @@
 
 /* Pendiente / en curso */
 .riviera-organizer-reta .omc-team-row--pending {
-  background: rgba(255, 255, 255, 0.02);
-  border-left-color: transparent;
+  background: rgba(255, 255, 255, 0.05);
+  border-left-color: rgba(255, 255, 255, 0.12);
 }
 
 .riviera-organizer-reta .omc-team-row--pending .omc-team-name {
-  color: #aaa;
+  color: #e4e4e7;
 }
 
 .riviera-organizer-reta .omc-vs-divider {
@@ -418,24 +442,33 @@
   font-family: var(--font-body);
   font-size: 10px;
   font-weight: 500;
-  color: #333;
+  color: rgba(255, 255, 255, 0.4);
   padding: 2px 0;
   line-height: 1;
 }
 
 /* Finalizado: ganador / perdedor */
 .riviera-organizer-reta .omc-team-row--winner {
-  background: var(--accent-gold-dim);
+  background: rgba(212, 175, 55, 0.14);
   border-left-color: var(--accent-gold);
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.25);
+}
+
+.riviera-organizer-reta .omc-team-row--winner .omc-team-label {
+  color: rgba(212, 175, 55, 0.9);
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-name {
-  color: var(--accent-gold);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-score {
   color: var(--accent-gold);
-  font-size: 32px;
+  font-size: 34px;
+  font-weight: 500;
 }
 
 .riviera-organizer-reta .omc-team-row--loser {
@@ -444,58 +477,46 @@
 }
 
 .riviera-organizer-reta .omc-team-row--loser .omc-team-name {
-  color: var(--ro-text-secondary);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .riviera-organizer-reta .omc-team-row--loser .omc-team-score {
-  color: var(--ro-text-muted);
+  color: rgba(255, 255, 255, 0.45);
 }
 
-/* Barra ganador */
-.riviera-organizer-reta .omc-winner-bar {
+/* Resultado (sustituye barra de ganador + línea de juegos) */
+.riviera-organizer-reta .omc-result-strip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px 12px;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 12px 10px;
   padding: 8px 12px;
-  background: var(--accent-gold-dim);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
 }
 
-.riviera-organizer-reta .omc-winner-bar__icon {
+.riviera-organizer-reta .omc-result-strip__label {
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  color: #888;
-}
-
-.riviera-organizer-reta .omc-winner-bar__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.riviera-organizer-reta .omc-winner-bar__tag {
   font-family: var(--font-body);
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #888;
+  color: rgba(255, 255, 255, 0.45);
 }
 
-.riviera-organizer-reta .omc-winner-bar__name {
+.riviera-organizer-reta .omc-result-strip__value {
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 500;
-  /* GOLD-AUDIT: evaluar si es necesario (nombre ganador; no es score grande) */
-  color: var(--accent-gold);
-  line-height: 1.3;
+  font-weight: 600;
+  color: #f4f4f5;
+  text-align: right;
+  line-height: 1.35;
 }
 
-/* Juegos (finalizado) */
+/* Juegos (legacy — ya no se usa en tarjeta) */
 .riviera-organizer-reta .omc-games-line {
   padding: 8px 12px 10px;
   font-family: var(--font-body);
@@ -512,7 +533,8 @@
 /* —— Registrar resultado —— */
 .riviera-organizer-reta .omc-register {
   padding: 10px 12px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .riviera-organizer-reta .omc-register__label {
@@ -520,10 +542,10 @@
   margin: 0 0 10px;
   font-family: var(--font-body);
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ro-text-muted);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .riviera-organizer-reta .omc-register__scores {
@@ -539,11 +561,11 @@
   padding: 8px 4px;
   font-family: var(--font-body);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   text-align: center;
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 6px;
   -moz-appearance: textfield;
 }
@@ -556,16 +578,15 @@
 
 .riviera-organizer-reta .omc-register__input:focus {
   outline: none;
-  /* GOLD-AUDIT: evaluar si es necesario */
-  border-color: var(--text-secondary);
-  box-shadow: var(--text-secondary);
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
 }
 
 .riviera-organizer-reta .omc-register__vs {
   font-family: var(--font-body);
   font-size: 10px;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .riviera-organizer-reta .omc-register__actions {
@@ -579,17 +600,18 @@
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 500;
-  color: var(--ro-text-secondary);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e4e4e7;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 6px;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .riviera-organizer-reta .omc-btn-add:hover:not(:disabled) {
-  color: #aaa;
-  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .riviera-organizer-reta .omc-btn-finish {
@@ -597,17 +619,17 @@
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.45);
   border-radius: 6px;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .riviera-organizer-reta .omc-btn-finish:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--text-secondary);
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--accent-gold);
 }
 
 .riviera-organizer-reta .omc-btn-reopen {
@@ -703,17 +725,17 @@
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 500;
-  color: #a0a0b0;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #d4d4d8;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 6px;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .riviera-organizer-reta .omc-footer-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  color: #f0f0f0;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
 }
 
 .riviera-organizer-reta .omc-footer-btn--ghost {
@@ -899,13 +921,8 @@
     font-size: 12px;
   }
 
-  /* Nombres solo en el cuerpo del marcador (evita repetición) */
-  .riviera-organizer-reta .omc-match-title {
-    display: none;
-  }
-
   .riviera-organizer-reta .omc-header__top {
-    justify-content: flex-end;
+    align-items: flex-start;
   }
 
   .riviera-organizer-reta .omc-status {

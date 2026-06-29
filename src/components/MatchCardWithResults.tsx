@@ -22,26 +22,6 @@ const PencilIcon: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const TrophyIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    aria-hidden
-    focusable="false"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M8 21h8" />
-    <path d="M12 17v4" />
-    <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
-    <path d="M5 4H3v2a3 3 0 0 0 3 3" />
-    <path d="M19 4h2v2a3 3 0 0 1-3 3" />
-  </svg>
-);
-
 interface MatchCardWithResultsProps {
   match: Match;
   pairs: Pair[]; // Agregado: recibir pairs como prop para evitar cargas redundantes
@@ -72,6 +52,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const [pair2, setPair2] = useState<Pair | null>(null);
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [pair1Score, setPair1Score] = useState("");
@@ -80,43 +61,38 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const [roundInput, setRoundInput] = useState("");
   const [metaSaving, setMetaSaving] = useState(false);
   const [isEditingMeta, setIsEditingMeta] = useState(false);
-  const isUpdatingRef = useRef(false); // Prevenir múltiples actualizaciones simultáneas
+  const isUpdatingRef = useRef(false);
+  const gamesLoadedRef = useRef(false);
 
   /** Tope al editar cancha en el partido: no limitar solo a `tournament.courts` (a menudo 1) o el guardado siempre queda en 1. */
   const courtEditCap = Math.max(1, maxCourts, 32);
 
-  // Función optimizada para recargar datos locales SIN múltiples actualizaciones
-  const refreshFromServer = useCallback(async () => {
-    // Prevenir múltiples actualizaciones simultáneas
-    if (isUpdatingRef.current) {
-      console.log("⏳ Actualización ya en progreso, ignorando...");
-      return;
-    }
+  const syncPairsFromProps = useCallback(() => {
+    const p1 = pairs.find((p) => p.id === match.pair1_id);
+    const p2 = pairs.find((p) => p.id === match.pair2_id);
+    setPair1(p1 || null);
+    setPair2(p2 || null);
+  }, [match.pair1_id, match.pair2_id, pairs]);
 
+  /** Recarga juegos sin skeleton ni recarga del torneo completo. */
+  const reloadGamesSilently = useCallback(async () => {
     try {
-      isUpdatingRef.current = true;
-
-      // Actualizar desde props (vienen actualizados del padre)
-      setCurrentMatch(match);
-      const p1 = pairs.find((p) => p.id === match.pair1_id);
-      const p2 = pairs.find((p) => p.id === match.pair2_id);
-      setPair1(p1 || null);
-      setPair2(p2 || null);
-
-      // Solo recargar juegos (único dato que necesita actualizarse)
       const matchGames = await getGames(match.id);
       setGames(matchGames);
-
-      // Solo actualizar tabla UNA VEZ al final usando match del prop (ya viene actualizado del padre)
-      if (onCorrectScore) {
-        onCorrectScore(match);
-      }
+      setCurrentMatch(match);
+      syncPairsFromProps();
     } catch (err) {
-      console.error("❌ Error recargando datos:", err);
-    } finally {
-      isUpdatingRef.current = false;
+      console.error("❌ Error recargando juegos:", err);
     }
-  }, [match, pairs, onCorrectScore]);
+  }, [match, syncPairsFromProps]);
+
+  /** Avisa al padre para actualizar standings / remontada (debounced vía forceRefresh). */
+  const notifyParent = useCallback(
+    (updatedMatch: Match = match) => {
+      onCorrectScore?.(updatedMatch);
+    },
+    [match, onCorrectScore]
+  );
 
   // Obtener nombre de pareja
   const getPairName = (pair: Pair | null): string => {
@@ -150,35 +126,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     }
   };
 
-  // Obtener etiqueta del ganador
-  const getWinnerLabel = () => {
-    const result = getMatchWinner();
-    if (!result) return null;
-
-    if (result.winner === "pair1") {
-      return {
-        text: `Ganador: ${getPairName(pair1)}`,
-        type: "winner" as const,
-        icon: "🏆",
-        winnerPairName: getPairName(pair1),
-      };
-    } else if (result.winner === "pair2") {
-      return {
-        text: `Ganador: ${getPairName(pair2)}`,
-        type: "winner" as const,
-        icon: "🏆",
-        winnerPairName: getPairName(pair2),
-      };
-    } else {
-      return {
-        text: "Empate",
-        type: "tie" as const,
-        icon: "🤝",
-        winnerPairName: undefined as string | undefined,
-      };
-    }
-  };
-
   const saveCourtAndRound = async () => {
     if (!currentMatch) return;
 
@@ -198,9 +145,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setCurrentMatch(updated);
       setCourtInput(String(court));
       setRoundInput(String(round));
-      if (onCorrectScore) {
-        onCorrectScore(updated);
-      }
+      notifyParent(updated);
       setIsEditingMeta(false);
     } catch (err) {
       console.error("❌ Error guardando cancha/ronda:", err);
@@ -246,16 +191,16 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       return;
     }
 
+    if (isUpdatingRef.current) return;
+
     try {
-      setLoading(true);
+      isUpdatingRef.current = true;
+      setSaving(true);
       setError(null);
 
-      // Crear juego
       const gameNumber = games.length + 1;
       const newGame = await createGame(currentMatch.id, gameNumber, ownerId);
-
-      // Actualizar con puntuación
-      await updateGame(newGame.id, {
+      const savedGame = await updateGame(newGame.id, {
         pair1_games: score1,
         pair2_games: score2,
         is_tie_break: false,
@@ -263,19 +208,16 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         tie_break_pair2_points: 0,
       });
 
-      // Limpiar inputs inmediatamente
       setPair1Score("");
       setPair2Score("");
-
-      // UNA SOLA actualización al final (esto actualiza todo)
-      await refreshFromServer();
-
-      console.log("✅ Juego agregado y UI actualizada");
+      setGames((prev) => [...prev, savedGame]);
     } catch (err) {
       console.error("❌ Error agregando juego:", err);
       setError("Error al agregar juego");
+      await reloadGamesSilently();
     } finally {
-      setLoading(false);
+      isUpdatingRef.current = false;
+      setSaving(false);
     }
   };
 
@@ -284,20 +226,17 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     if (!currentMatch) return;
 
     try {
-      setLoading(true);
+      setSaving(true);
       setError(null);
 
       await deleteGame(gameId);
-
-      // UNA SOLA actualización al final (esto actualiza todo)
-      await refreshFromServer();
-
-      console.log("✅ Juego eliminado");
+      setGames((prev) => prev.filter((g) => g.id !== gameId));
     } catch (err) {
       console.error("❌ Error eliminando juego:", err);
       setError("Error al eliminar juego");
+      await reloadGamesSilently();
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -305,12 +244,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const finishMatch = async () => {
     if (!currentMatch) return;
 
+    if (isUpdatingRef.current) return;
+
     try {
-      setLoading(true);
+      isUpdatingRef.current = true;
+      setSaving(true);
       setError(null);
 
-      // Usar pairs recibidos como prop (ya están disponibles, no recargar)
-      // Acumular estadísticas
       const result = await MatchResultCalculator.accumulateMatchStatistics(
         currentMatch,
         games,
@@ -362,13 +302,18 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           }
         }
 
-        // Cerrar el editor después de finalizar
         setIsEditing(false);
-
-        // UNA SOLA actualización al final (esto actualiza todo, incluyendo status)
-        await refreshFromServer();
-
-        console.log("✅ Partido finalizado, juegos:", matchGames.length);
+        setCurrentMatch((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "finished",
+                pair1_score: pair1FinalScore,
+                pair2_score: pair2FinalScore,
+              }
+            : prev
+        );
+        notifyParent();
       } else {
         setError("Error: " + result.message);
       }
@@ -376,7 +321,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       console.error("❌ Error finalizando partido:", err);
       setError("Error al finalizar partido");
     } finally {
-      setLoading(false);
+      isUpdatingRef.current = false;
+      setSaving(false);
     }
   };
 
@@ -385,48 +331,48 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     if (!currentMatch) return;
 
     try {
-      setLoading(true);
+      setSaving(true);
       setError(null);
 
-      // Marcar como no finalizado
       await updateMatch(currentMatch.id, { status: "pending" });
-
-      // UNA SOLA actualización al final
-      await refreshFromServer();
-
-      console.log("✅ Partido reabierto");
+      setCurrentMatch((prev) =>
+        prev ? { ...prev, status: "pending" } : prev
+      );
+      notifyParent();
     } catch (err) {
       console.error("❌ Error reabriendo partido:", err);
       setError("Error al reabrir partido");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  // Cargar datos al montar - OPTIMIZADO: solo cargar juegos, usar props para match y pairs
   useEffect(() => {
-    // Inicializar estado desde props inmediatamente (sin llamadas a BD)
-    setCurrentMatch(match);
-    const p1 = pairs.find((p) => p.id === match.pair1_id);
-    const p2 = pairs.find((p) => p.id === match.pair2_id);
-    setPair1(p1 || null);
-    setPair2(p2 || null);
+    gamesLoadedRef.current = false;
+  }, [match.id]);
 
-    // Solo cargar juegos (único dato específico del card que necesita BD)
+  useEffect(() => {
+    setCurrentMatch(match);
+    syncPairsFromProps();
+  }, [match, syncPairsFromProps]);
+
+  useEffect(() => {
     let isMounted = true;
+    const showSkeleton = !gamesLoadedRef.current;
+
     const fetchGames = async () => {
       try {
-        setLoading(true);
+        if (showSkeleton) setLoading(true);
         const matchGames = await getGames(match.id);
         if (!isMounted) return;
         setGames(matchGames);
-        console.log("✅ Juegos cargados para partido:", match.id);
+        gamesLoadedRef.current = true;
       } catch (err) {
         if (!isMounted) return;
         console.error("❌ Error cargando juegos:", err);
         setError("Error cargando juegos");
       } finally {
-        if (isMounted) {
+        if (isMounted && showSkeleton) {
           setLoading(false);
         }
       }
@@ -437,7 +383,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [match.id, match, pairs]); // Recargar cuando cambia el match o pairs
+  }, [match.id]);
 
   // Actualizar estado cuando el prop match cambia (sin recargar de BD)
   useEffect(() => {
@@ -507,7 +453,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   }
 
   const isFinished = currentMatch.status === "finished";
-  const winnerLabel = getWinnerLabel();
   const matchWinner = getMatchWinner();
   const pair1DisplayName = getPairName(pair1);
   const pair2DisplayName = getPairName(pair2);
@@ -550,56 +495,52 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     >
       <header className="omc-header" onClick={stopCardClick}>
         <div className="omc-header__top">
-          <h5 className="omc-match-title">
-            <span className="omc-match-title__line">{pair1DisplayName}</span>
-            <span className="omc-match-title__vs">vs</span>
-            <span className="omc-match-title__line">{pair2DisplayName}</span>
-          </h5>
-          <span
-            className={`omc-status ${
-              isFinished ? "omc-status--done" : "omc-status--live"
-            }`}
-          >
-            {isFinished ? "FINALIZADO" : "EN CURSO"}
-          </span>
-        </div>
-
-        <div className="omc-header__meta">
           <div className="omc-pills">
-            <span className="omc-pill">Cancha {currentMatch.court}</span>
-            <span className="omc-pill">
+            <span className="omc-pill omc-pill--court">
+              Cancha {currentMatch.court}
+            </span>
+            <span className="omc-pill omc-pill--round">
               {roundLabelOverride ?? `Ronda ${currentMatch.round || 1}`}
             </span>
           </div>
-          {!isEditingMeta ? (
-            <button
-              type="button"
-              className="omc-pencil-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                openMetaEditor();
-              }}
-              title="Editar cancha y ronda"
-              aria-label="Editar cancha y ronda"
-              disabled={metaSaving}
+          <div className="omc-header__actions">
+            <span
+              className={`omc-status ${
+                isFinished ? "omc-status--done" : "omc-status--live"
+              }`}
             >
-              <PencilIcon className="omc-pencil-icon" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="omc-pencil-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                cancelMetaEdit();
-              }}
-              title="Cerrar sin guardar"
-              aria-label="Cerrar edición de cancha y ronda"
-              disabled={metaSaving}
-            >
-              ×
-            </button>
-          )}
+              {isFinished ? "FINALIZADO" : "EN CURSO"}
+            </span>
+            {!isEditingMeta ? (
+              <button
+                type="button"
+                className="omc-pencil-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openMetaEditor();
+                }}
+                title="Editar cancha y ronda"
+                aria-label="Editar cancha y ronda"
+                disabled={metaSaving}
+              >
+                <PencilIcon className="omc-pencil-icon" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="omc-pencil-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  cancelMetaEdit();
+                }}
+                title="Cerrar sin guardar"
+                aria-label="Cerrar edición de cancha y ronda"
+                disabled={metaSaving}
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
 
         <hr className="omc-header__rule" />
@@ -675,7 +616,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               }`}
             >
               <div className="omc-team-row__info">
-                <span className="omc-team-label">Pareja 1</span>
                 <span className="omc-team-name">{pair1DisplayName}</span>
               </div>
               {teamDisplayScores.score1 != null ? (
@@ -692,7 +632,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               }`}
             >
               <div className="omc-team-row__info">
-                <span className="omc-team-label">Pareja 2</span>
                 <span className="omc-team-name">{pair2DisplayName}</span>
               </div>
               {teamDisplayScores.score2 != null ? (
@@ -700,37 +639,23 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               ) : null}
             </div>
 
-            {winnerLabel?.type === "winner" && winnerLabel.winnerPairName && (
-              <div className="omc-winner-bar">
-                <TrophyIcon className="omc-winner-bar__icon" />
-                <div className="omc-winner-bar__text">
-                  <span className="omc-winner-bar__tag">Ganador</span>
-                  <span className="omc-winner-bar__name">
-                    {winnerLabel.winnerPairName}
-                  </span>
-                </div>
-              </div>
-            )}
-
             {games.length > 0 && (
-              <p className="omc-games-line">
-                <span className="omc-games-line__label">Juegos:</span>
-                {gamesSummary}
-              </p>
+              <div className="omc-result-strip">
+                <span className="omc-result-strip__label">Resultado</span>
+                <span className="omc-result-strip__value">{gamesSummary}</span>
+              </div>
             )}
           </>
         ) : (
           <>
             <div className="omc-team-row omc-team-row--pending">
               <div className="omc-team-row__info">
-                <span className="omc-team-label">Pareja 1</span>
                 <span className="omc-team-name">{pair1DisplayName}</span>
               </div>
             </div>
             <span className="omc-vs-divider">vs</span>
             <div className="omc-team-row omc-team-row--pending">
               <div className="omc-team-row__info">
-                <span className="omc-team-label">Pareja 2</span>
                 <span className="omc-team-name">{pair2DisplayName}</span>
               </div>
             </div>
@@ -782,7 +707,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                   addGame();
                 }}
                 className="omc-btn-add"
-                disabled={loading}
+                disabled={saving}
               >
                 Agregar juego
               </button>
@@ -801,7 +726,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                     finishMatch();
                   }}
                   className="omc-btn-finish"
-                  disabled={loading}
+                  disabled={saving}
                 >
                   Finalizar partido
                 </button>
@@ -813,7 +738,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                     reopenMatch();
                   }}
                   className="omc-btn-reopen"
-                  disabled={loading}
+                  disabled={saving}
                 >
                   Reabrir partido
                 </button>
@@ -843,7 +768,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                       removeGame(game.id);
                     }}
                     className="omc-btn-delete-game"
-                    disabled={loading}
+                    disabled={saving}
                   >
                     Eliminar
                   </button>
@@ -864,17 +789,17 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                refreshFromServer();
+                void reloadGamesSilently();
               }}
               onTouchStart={stopCardClick}
-              onTouchEnd={async (e) => {
+              onTouchEnd={(e) => {
                 stopCardClick(e);
                 e.preventDefault();
-                await refreshFromServer();
+                void reloadGamesSilently();
               }}
               className="omc-footer-btn"
               title="Actualizar datos"
-              disabled={loading}
+              disabled={saving}
             >
               Actualizar
             </button>

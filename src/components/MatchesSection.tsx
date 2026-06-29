@@ -108,7 +108,6 @@ function renderRoundBlock(
               isSelected={false}
               onSelect={() => {}}
               onCorrectScore={async () => {
-                await onReloadMatches?.();
                 await onAfterScoreSaved?.();
                 setForceRefresh((prev) => prev + 1);
               }}
