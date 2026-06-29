@@ -14,7 +14,7 @@ const RR_WINNER_COPY = {
   title: "¡Ganadores!",
   rank: "1.er lugar",
   message:
-    "Una reta inolvidable. Gracias por dejarlo todo en la cancha y por elevarla.",
+    "Dejaron huella en cada partido. La cancha lo confirma: la reta es suya.",
 };
 
 function parsePairLabel(label: string): [string, string] {
