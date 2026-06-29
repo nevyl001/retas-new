@@ -274,28 +274,51 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             const puntos = rankingPuntosJugador(j);
             const esPrimero = pos === 1;
             return (
-              <div key={j.id} className="rj-card-wrap">
+              <article key={j.id} className="rj-card">
+                <div className="rj-card__top">
+                  <span
+                    className={`rj-card__rank${
+                      esPrimero ? " rj-card__rank--gold" : ""
+                    }`}
+                  >
+                    {esPrimero ? (
+                      <TablerIcon name="trophy" size={12} />
+                    ) : (
+                      `#${pos}`
+                    )}
+                  </span>
+                  <span className="rj-card__pts">
+                    {puntos.toLocaleString("es-MX")} pts
+                  </span>
+                  <div className="rj-card__actions">
+                    {permiteAjustePuntosManuales ? (
+                      <button
+                        type="button"
+                        className="rj-card__edit"
+                        title="Sumar o restar puntos"
+                        aria-label={`Ajustar puntos de ${j.nombre}`}
+                        onClick={() => setAjusteJugador(j)}
+                      >
+                        <TablerIcon name="pencil" size={14} aria-hidden={false} />
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="rj-card__delete"
+                      title="Eliminar jugador"
+                      aria-label={`Eliminar a ${j.nombre}`}
+                      disabled={deletingId === j.id}
+                      onClick={() => void handleDeleteJugador(j)}
+                    >
+                      <TablerIcon name="trash" size={14} aria-hidden={false} />
+                    </button>
+                  </div>
+                </div>
                 <button
                   type="button"
-                  className="rj-card"
+                  className="rj-card__body"
                   onClick={() => navigateJugadorFicha(j.slug)}
                 >
-                  <div className="rj-card__top">
-                    <span
-                      className={`rj-card__rank${
-                        esPrimero ? " rj-card__rank--gold" : ""
-                      }`}
-                    >
-                      {esPrimero ? (
-                        <TablerIcon name="trophy" size={12} />
-                      ) : (
-                        `#${pos}`
-                      )}
-                    </span>
-                    <span className="rj-card__pts">
-                      {puntos.toLocaleString("es-MX")} pts
-                    </span>
-                  </div>
                   <JugadorAvatar
                     fotoUrl={j.foto_url}
                     nombre={j.nombre}
@@ -311,30 +334,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                     {j.stats?.total_partidos ?? 0} partidos · {pct(j)} victorias
                   </p>
                 </button>
-                <div className="rj-card__actions">
-                  {permiteAjustePuntosManuales ? (
-                    <button
-                      type="button"
-                      className="rj-card__edit"
-                      title="Sumar o restar puntos"
-                      aria-label={`Ajustar puntos de ${j.nombre}`}
-                      onClick={() => setAjusteJugador(j)}
-                    >
-                      <TablerIcon name="pencil" size={14} aria-hidden={false} />
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="rj-card__delete"
-                    title="Eliminar jugador"
-                    aria-label={`Eliminar a ${j.nombre}`}
-                    disabled={deletingId === j.id}
-                    onClick={() => void handleDeleteJugador(j)}
-                  >
-                    <TablerIcon name="trash" size={14} aria-hidden={false} />
-                  </button>
-                </div>
-              </div>
+              </article>
             );
           })}
         </div>
