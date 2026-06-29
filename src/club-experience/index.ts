@@ -93,10 +93,21 @@ export {
   applyClubExperienceTheme,
   clearClubExperienceTheme,
   applyClubFavicon,
+  applyClubKeyToDocument,
   applyBrandThemeTokens,
   clearBrandThemeTokens,
   applyBrandFavicon,
 } from "./applyClubExperienceTheme";
+
+export {
+  bootstrapClubExperienceTheme,
+  applyClubExperienceForOrganizador,
+  resolveBootstrapOrganizadorId,
+  persistClubExperienceCache,
+  clearClubExperienceCache,
+  resetClubExperienceTheme,
+  CLUB_EXPERIENCE_CACHE_KEY,
+} from "./clubExperienceBootstrap";
 
 export { useClubModeEyebrow } from "./useClubModeEyebrow";
 

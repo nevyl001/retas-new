@@ -1,8 +1,11 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { bootstrapClubExperienceTheme } from "./club-experience/clubExperienceBootstrap";
 import "./index.css";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+
+bootstrapClubExperienceTheme();
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement

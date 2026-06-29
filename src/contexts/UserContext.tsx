@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
+import { resetClubExperienceTheme } from "../club-experience/clubExperienceBootstrap";
 import { supabase } from "../lib/supabaseClient";
 import { AUTH_CONFIG, getAuthEmailRedirectUrl } from "../config/auth";
 
@@ -176,6 +177,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         console.error("Error al cerrar sesión:", error);
         throw error;
       }
+
+      resetClubExperienceTheme();
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
       throw error;

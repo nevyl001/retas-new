@@ -1,15 +1,17 @@
 import React, {
   createContext,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useMemo,
 } from "react";
 import { useAdmin } from "../contexts/AdminContext";
 import { useUser } from "../contexts/UserContext";
 import {
-  applyClubExperienceTheme,
-  applyClubFavicon,
-  clearClubExperienceTheme,
+  applyClubExperienceForOrganizador,
+  resetClubExperienceTheme,
+  resolveBootstrapOrganizadorId,
+} from "./clubExperienceBootstrap";
+import {
   getClubExperienceScopeStyle,
 } from "./applyClubExperienceTheme";
 import {
@@ -32,11 +34,6 @@ const ClubExperienceContext = createContext<
   ClubExperienceContextValue | undefined
 >(undefined);
 
-function applyClubKeyToDocument(brandingKey: string): void {
-  document.documentElement.setAttribute("data-brand", brandingKey);
-  document.documentElement.setAttribute("data-club", brandingKey);
-}
-
 interface ClubExperienceProviderProps {
   children: React.ReactNode;
 }
@@ -45,10 +42,13 @@ interface ClubExperienceProviderProps {
 export const ClubExperienceProvider: React.FC<ClubExperienceProviderProps> = ({
   children,
 }) => {
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const { isAdminLoggedIn } = useAdmin();
-  const organizadorId =
-    isAdminLoggedIn ? null : (user?.id ?? null);
+  const bootstrapOrganizadorId = useMemo(() => resolveBootstrapOrganizadorId(), []);
+
+  const organizadorId = isAdminLoggedIn
+    ? null
+    : user?.id ?? (userLoading ? bootstrapOrganizadorId : null);
 
   const manifest = useMemo(
     () => resolveClubManifest(organizadorId),
@@ -59,17 +59,30 @@ export const ClubExperienceProvider: React.FC<ClubExperienceProviderProps> = ({
     [organizadorId]
   );
 
-  useEffect(() => {
-    applyClubKeyToDocument(manifest.brandingKey);
-    applyClubExperienceTheme(manifest);
-    if (isClubBranded) {
-      applyClubFavicon(manifest);
+  useLayoutEffect(() => {
+    if (isAdminLoggedIn) {
+      resetClubExperienceTheme();
+      return;
     }
-    return () => {
-      applyClubKeyToDocument("riviera");
-      clearClubExperienceTheme();
-    };
-  }, [manifest, isClubBranded]);
+
+    if (userLoading && !user?.id && bootstrapOrganizadorId) {
+      applyClubExperienceForOrganizador(bootstrapOrganizadorId);
+      return;
+    }
+
+    if (!userLoading && !user?.id) {
+      resetClubExperienceTheme();
+      return;
+    }
+
+    applyClubExperienceForOrganizador(organizadorId);
+  }, [
+    bootstrapOrganizadorId,
+    isAdminLoggedIn,
+    organizadorId,
+    user?.id,
+    userLoading,
+  ]);
 
   const value = useMemo(
     () => ({

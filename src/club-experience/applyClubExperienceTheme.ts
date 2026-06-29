@@ -1,6 +1,11 @@
 import type { CSSProperties } from "react";
 import type { BrandManifest } from "./types";
 
+export function applyClubKeyToDocument(brandingKey: string): void {
+  document.documentElement.setAttribute("data-brand", brandingKey);
+  document.documentElement.setAttribute("data-club", brandingKey);
+}
+
 /** Tokens de marca en un contenedor scoped (vistas públicas sin tocar `<html>`). */
 export function getClubExperienceScopeStyle(
   manifest: BrandManifest
