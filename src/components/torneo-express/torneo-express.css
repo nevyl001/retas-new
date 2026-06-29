@@ -1580,6 +1580,32 @@ button.te-partido-chip--cancha:disabled {
   border-top: 1px solid var(--te-border);
 }
 
+.te-armar-parejas__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 1rem;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--te-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.te-armar-parejas__preview,
+.te-armar-parejas__hint {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--te-text-muted);
+}
+
+.te-armar-parejas__action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .te-pareja-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
