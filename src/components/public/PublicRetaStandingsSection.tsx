@@ -38,7 +38,7 @@ export const PublicRetaStandingsSection: React.FC<{
         </p>
       ) : null}
 
-      <div className="te-pub-standings-table-wrap te-pub-fade-in te-pub-fade-in--delay-1">
+      <div className="te-pub-standings-table-wrap standings-table-desktop te-pub-fade-in te-pub-fade-in--delay-1">
         <table className="te-pub-standings-table">
           <thead>
             <tr>

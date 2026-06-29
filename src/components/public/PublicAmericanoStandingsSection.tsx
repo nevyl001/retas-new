@@ -23,7 +23,7 @@ export const PublicAmericanoStandingsSection: React.FC<{
       <h2 className="te-public-section__title">{title}</h2>
       <div className="te-public-section__divider" aria-hidden />
 
-      <div className="te-pub-standings-table-wrap te-pub-fade-in te-pub-fade-in--delay-1">
+      <div className="te-pub-standings-table-wrap standings-table-desktop te-pub-fade-in te-pub-fade-in--delay-1">
         <table className="te-pub-standings-table">
           <thead>
             <tr>

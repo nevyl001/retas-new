@@ -138,12 +138,13 @@
 
 /* Posiciones especiales */
 .new-first-place {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-accent-border);
+  background: var(--ro-gold-dim);
+  border: 1px solid var(--ro-gold-border);
+  box-shadow: inset 3px 0 0 var(--ro-gold);
 }
 
 .new-first-place td {
-  color: var(--color-accent) !important;
+  color: var(--ro-gold-light) !important;
   font-weight: var(--font-weight-semibold);
 }
 

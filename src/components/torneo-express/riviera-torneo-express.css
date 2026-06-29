@@ -346,7 +346,7 @@
 /* —— Tabla / scoring help —— */
 .torneo-express-page .te-standings-wrap {
   --standings-sticky-bg: var(--bg-surface);
-  --standings-sticky-bg-leader: rgba(255, 255, 255, 0.1);
+  --standings-sticky-bg-leader: var(--ro-gold-dim);
   border-color: var(--border-subtle);
   border-radius: var(--radius-md);
 }
@@ -370,7 +370,8 @@
 }
 
 .torneo-express-page .te-standings-table tr.te-row-top td {
-  color: var(--text-primary);
+  color: var(--ro-gold-light);
+  background: var(--ro-gold-dim);
 }
 
 .torneo-express-page .te-standings-block .standings-scoring-help {
@@ -647,8 +648,8 @@
 
   .torneo-express-page .te-standings-table tbody tr.te-row-top,
   .torneo-express-page .te-standings-table tbody tr:first-child {
-    border-color: rgba(255, 255, 255, 0.35);
-    box-shadow: inset 3px 0 0 var(--accent-gold);
+    border-color: var(--ro-gold-border);
+    box-shadow: inset 3px 0 0 var(--ro-gold);
   }
 
   /* Cabecera de card: pareja + posición */

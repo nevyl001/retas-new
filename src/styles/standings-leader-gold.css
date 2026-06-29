@@ -1,0 +1,110 @@
+/* Clasificación — fila líder en tabla (desktop), mismo dorado que tarjetas mobile */
+
+.te-pub-standings-row--leader td {
+  background: var(--ro-gold-dim) !important;
+}
+
+.te-pub-standings-row--leader td:first-child,
+.te-pub-standings-row--leader .te-pub-standings-row__pos-num {
+  border-left: 3px solid var(--ro-gold);
+  color: var(--ro-gold) !important;
+  font-weight: 600;
+}
+
+.te-pub-standings-row--leader .te-pub-standings-row__name {
+  color: var(--ro-gold-light) !important;
+  font-weight: 600;
+}
+
+.te-pub-standings-row--leader .te-pub-standings-row__pts {
+  color: var(--ro-gold-light) !important;
+  font-weight: 700;
+}
+
+.te-pub-standings-table tbody tr:first-child td {
+  background: var(--ro-gold-dim);
+}
+
+.te-pub-standings-table tbody tr:first-child td:first-child,
+.te-pub-standings-table tbody tr:first-child .te-pub-standings-row__pos-num {
+  border-left: 3px solid var(--ro-gold);
+  color: var(--ro-gold);
+}
+
+.te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
+  color: var(--ro-gold-light);
+  font-weight: 600;
+}
+
+.new-first-place {
+  background: var(--ro-gold-dim) !important;
+  border: 1px solid var(--ro-gold-border) !important;
+  box-shadow: inset 3px 0 0 var(--ro-gold);
+}
+
+.new-first-place td {
+  color: var(--ro-gold-light) !important;
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.new-first-place .col-pos,
+.new-first-place td.col-pos {
+  color: var(--ro-gold) !important;
+}
+
+.te-standings-table tr.te-row-top td {
+  background: var(--ro-gold-dim);
+}
+
+.te-standings-table tr.te-row-top td:first-child,
+.te-standings-table tr.te-row-top .col-pos {
+  border-left: 3px solid var(--ro-gold);
+  color: var(--ro-gold);
+  font-weight: 600;
+}
+
+.te-standings-table tr.te-row-top .te-cell-name,
+.te-standings-table tr.te-row-top .col-entity {
+  color: var(--ro-gold-light);
+  font-weight: 600;
+}
+
+.americano-ranking tr.americano-ranking__leader td {
+  background: var(--ro-gold-dim);
+}
+
+.americano-ranking tr.americano-ranking__leader td:first-child,
+.americano-ranking tr.americano-ranking__leader .col-pos {
+  border-left: 3px solid var(--ro-gold);
+  color: var(--ro-gold);
+  font-weight: 600;
+}
+
+.americano-ranking tr.americano-ranking__leader .col-entity {
+  color: var(--ro-gold-light);
+  font-weight: 600;
+}
+
+.americano-summary__leader td {
+  background: var(--ro-gold-dim);
+}
+
+.americano-summary__leader td:first-child {
+  border-left: 3px solid var(--ro-gold);
+}
+
+.americano-summary__table tbody tr.americano-summary__leader td {
+  color: var(--ro-gold-light);
+  font-weight: 600;
+}
+
+.americano-summary__table tbody tr.americano-summary__leader td:first-child,
+.americano-summary__table tbody tr.americano-summary__leader .col-pos {
+  color: var(--ro-gold);
+}
+
+.te-standings-wrap,
+.te-pub-standings-table-wrap,
+.tabla-wrapper {
+  --standings-sticky-bg-leader: var(--ro-gold-dim);
+}

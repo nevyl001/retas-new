@@ -12,9 +12,15 @@
   min-width: 520px;
 }
 
+@media (max-width: 768px) {
+  .te-pub-standings-scroll-hint {
+    display: none !important;
+  }
+}
+
 @media (max-width: 640px) {
-  .tabla-wrapper::after,
-  .te-pub-standings-table-wrap::after {
+  .tabla-wrapper:not(.standings-table-desktop)::after,
+  .te-pub-standings-table-wrap:not(.standings-table-desktop)::after {
     content: "Desliza →";
     display: block;
     margin-top: 6px;
@@ -75,16 +81,16 @@
 
   .te-standings-table tr.te-row-top .col-pos,
   .te-standings-table tr.te-row-top .col-entity {
-    background-color: var(--standings-sticky-bg-leader, #1f1a0a);
+    background-color: var(--standings-sticky-bg-leader, var(--ro-gold-dim));
   }
 
   .new-standings-table tr.new-first-place .col-pos,
   .new-standings-table tr.new-first-place .col-entity {
-    background-color: var(--standings-sticky-bg-leader, #1f1a0a);
+    background-color: var(--standings-sticky-bg-leader, var(--ro-gold-dim));
   }
 
   .americano-ranking tr.americano-ranking__leader .col-pos,
   .americano-ranking tr.americano-ranking__leader .col-entity {
-    background-color: var(--standings-sticky-bg-leader, #1f1a0a);
+    background-color: var(--standings-sticky-bg-leader, var(--ro-gold-dim));
   }
 }

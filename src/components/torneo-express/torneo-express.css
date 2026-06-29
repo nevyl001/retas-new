@@ -1051,7 +1051,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-standings-wrap {
   --standings-sticky-bg: var(--riviera-bg-elevated);
-  --standings-sticky-bg-leader: var(--text-secondary);
+  --standings-sticky-bg-leader: var(--ro-gold-dim);
 }
 
 .te-score-inputs {

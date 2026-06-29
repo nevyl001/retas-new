@@ -1025,6 +1025,18 @@
     margin-bottom: 1.15rem;
   }
 
+  .te-public--reta .te-pub-standings-table-wrap {
+    display: none !important;
+  }
+
+  .te-public--reta .te-pub-standings-cards {
+    display: flex;
+  }
+
+  .te-public--reta .te-pub-standings-scroll-hint {
+    display: none;
+  }
+
   .te-public--reta .te-public-round-block {
     margin-bottom: 1.5rem;
   }
@@ -1326,13 +1338,18 @@
 }
 
 .te-public--reta .te-pub-standings-row--leader .te-pub-standings-row__name {
-  color: var(--text-primary);
+  color: var(--ro-gold-light);
   font-weight: 600;
 }
 
 .te-public--reta .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__name {
-  color: var(--text-primary);
+  color: var(--ro-gold-light);
   font-weight: 600;
+}
+
+.te-public--reta .te-pub-standings-row--leader td,
+.te-public--reta .te-pub-standings-table tbody tr:first-child td {
+  background: var(--ro-gold-dim);
 }
 
 .te-pub-match-winner {

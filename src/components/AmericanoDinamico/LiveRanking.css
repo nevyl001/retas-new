@@ -58,13 +58,19 @@
 .americano-ranking .tabla-ranking tbody tr:first-child td:first-child,
 .americano-ranking tr.americano-ranking__leader td:first-child,
 .americano-ranking tr.americano-ranking__leader .col-pos {
-  border-left: 3px solid var(--accent-gold);
-  color: var(--accent-gold);
+  border-left: 3px solid var(--ro-gold);
+  color: var(--ro-gold);
   font-weight: 600;
 }
 
 .americano-ranking tr.americano-ranking__leader td {
+  background: var(--ro-gold-dim);
   color: var(--text-primary);
+}
+
+.americano-ranking tr.americano-ranking__leader .col-entity {
+  color: var(--ro-gold-light);
+  font-weight: 600;
 }
 
 .americano-ranking__leader {
@@ -88,7 +94,7 @@
 }
 
 .americano-ranking .standings-scoring-help--compact strong {
-  color: var(--accent-gold);
+  color: var(--ro-gold);
   font-weight: 600;
 }
 
@@ -111,7 +117,7 @@
 }
 
 .americano-ranking .standings-scoring-help__text strong {
-  color: var(--accent-gold);
+  color: var(--ro-gold);
   font-weight: 600;
 }
 

@@ -846,22 +846,26 @@
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader td {
-  background: var(--text-secondary) !important;
+  background: var(--ro-gold-dim) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader {
-  box-shadow: var(--shadow-card) !important;
+  box-shadow: none !important;
   border: none !important;
   background: transparent !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader td,
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__name {
-  color: var(--text-secondary) !important;
+  color: var(--ro-gold-light) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__pos-num {
-  color: var(--text-secondary) !important;
+  color: var(--ro-gold) !important;
+}
+
+.riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader td:first-child {
+  border-left: 3px solid var(--ro-gold) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row__name {
@@ -888,7 +892,10 @@
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row__pts {
   font-weight: 700 !important;
-  color: var(--text-secondary) !important;
+}
+
+.riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__pts {
+  color: var(--ro-gold-light) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row:nth-child(1) {
