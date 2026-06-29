@@ -111,7 +111,7 @@ export const PublicRetaMatchCard: React.FC<{
             </div>
           ) : (
             <span className="te-pub-score te-pub-score--pending te-pub-score--pending-label">
-              Pendiente
+              Sin marcador
             </span>
           )}
         </div>

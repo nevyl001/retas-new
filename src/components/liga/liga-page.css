@@ -624,6 +624,35 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
 
+.liga-jornada-share.public-link-section {
+  margin-bottom: var(--liga-space-lg);
+}
+
+.liga-page .public-link-section {
+  margin-bottom: var(--liga-space-lg);
+}
+
+.liga-page .public-link-actions {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .liga-page .public-link-actions,
+  .liga-jornada-share .public-link-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .liga-page .public-link-button,
+  .liga-page .public-link-preview,
+  .liga-jornada-share .public-link-button,
+  .liga-jornada-share .public-link-preview {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
 .liga-jornada-toolbar {
   margin-bottom: var(--liga-space-lg);
   padding: 1rem 1.1rem;

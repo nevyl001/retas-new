@@ -139,13 +139,111 @@
 }
 
 .americano-podium h3 {
-  margin: 0 0 20px;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 400;
-  letter-spacing: 0.05em;
+  margin: 0 0 1rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+}
+
+.americano-podium .te-public-podium__grid {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin: 0;
+}
+
+.americano-podium .te-public-podium__card {
+  flex: 1;
+  min-width: 0;
+  padding: 1rem 0.75rem;
+}
+
+.americano-podium .te-public-podium__card[data-rank="1"] {
+  order: 2;
+  padding-top: 1.25rem;
+}
+
+.americano-podium .te-public-podium__card[data-rank="2"] {
+  order: 1;
+}
+
+.americano-podium .te-public-podium__card[data-rank="3"] {
+  order: 3;
+}
+
+.americano-podium .te-public-podium__place {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  margin-bottom: 0.35rem;
+  color: var(--text-muted);
+}
+
+.americano-podium .te-public-podium__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.americano-podium .te-public-podium__card[data-rank="1"],
+.americano-podium .te-public-podium__card--gold {
+  border-color: rgba(212, 175, 55, 0.45);
+  background: rgba(212, 175, 55, 0.1);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.08);
+}
+
+.americano-podium .te-public-podium__card[data-rank="1"] .te-public-podium__place,
+.americano-podium .te-public-podium__card--gold .te-public-podium__place,
+.americano-podium .te-public-podium__card[data-rank="1"] .te-public-podium__name,
+.americano-podium .te-public-podium__card--gold .te-public-podium__name {
+  color: var(--accent-gold);
+}
+
+.americano-podium .te-public-podium__card[data-rank="1"] .te-public-podium__avatar .rj-avatar {
+  border-color: var(--accent-gold);
+}
+
+.americano-podium .te-public-podium__card--silver,
+.americano-podium .te-public-podium__card[data-rank="2"] {
+  border-color: rgba(184, 188, 196, 0.45);
+  background: rgba(184, 188, 196, 0.1);
+}
+
+.americano-podium .te-public-podium__card[data-rank="2"] .te-public-podium__place,
+.americano-podium .te-public-podium__card--silver .te-public-podium__place {
+  color: #b8bcc4;
+}
+
+.americano-podium .te-public-podium__card[data-rank="2"] .te-public-podium__name {
+  color: #d1d5db;
+}
+
+.americano-podium .te-public-podium__card[data-rank="2"] .te-public-podium__avatar .rj-avatar {
+  border-color: #b8bcc4;
+}
+
+.americano-podium .te-public-podium__card--bronze,
+.americano-podium .te-public-podium__card[data-rank="3"] {
+  border-color: rgba(205, 154, 106, 0.45);
+  background: rgba(205, 154, 106, 0.1);
+}
+
+.americano-podium .te-public-podium__card[data-rank="3"] .te-public-podium__place,
+.americano-podium .te-public-podium__card--bronze .te-public-podium__place {
+  color: #cd9a6a;
+}
+
+.americano-podium .te-public-podium__card[data-rank="3"] .te-public-podium__name {
+  color: #e0b88a;
+}
+
+.americano-podium .te-public-podium__card[data-rank="3"] .te-public-podium__avatar .rj-avatar {
+  border-color: #cd9a6a;
 }
 
 .americano-podium__grid {
@@ -254,6 +352,67 @@
 @media (max-width: 720px) {
   .americano-screen {
     padding: var(--space-4) var(--space-4) var(--space-8);
+  }
+
+  .americano-screen__finished {
+    font-size: 0.82rem;
+    padding: 12px 16px;
+  }
+
+  .americano-podium {
+    padding: 1.15rem 0.85rem;
+  }
+
+  .americano-podium h3 {
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    margin-bottom: 0.85rem;
+  }
+
+  .americano-podium .te-public-podium__grid {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .americano-podium .te-public-podium__card[data-rank="1"],
+  .americano-podium .te-public-podium__card[data-rank="2"],
+  .americano-podium .te-public-podium__card[data-rank="3"] {
+    order: unset;
+    padding: 0.85rem 0.75rem;
+  }
+
+  .americano-podium .te-public-podium__card[data-rank="1"] {
+    padding-top: 1rem;
+  }
+
+  .americano-podium .te-public-podium__card[data-rank="1"] .te-public-podium__avatar .rj-avatar {
+    width: 56px;
+    height: 56px;
+  }
+
+  .americano-podium .te-public-podium__place {
+    font-size: 0.68rem;
+  }
+
+  .americano-screen .public-link-section {
+    padding: 1rem;
+  }
+
+  .americano-screen .public-link-section h3 {
+    font-size: 1.05rem;
+  }
+
+  .americano-screen .public-link-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .americano-screen .public-link-button,
+  .americano-screen .public-link-preview {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
   }
 
   .americano-podium__grid {

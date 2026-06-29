@@ -47,14 +47,16 @@ body,
   border-color: var(--ro-border);
 }
 
-/* —— 3. Menos gradientes en cards públicas —— */
-.te-pub-match--wide {
+/* —— 3. Menos gradientes en cards públicas (no reta/americano — conservan estilo premium) —— */
+.te-public:not(.te-public--reta):not(.te-public--reta-wide):not(.te-public--americano)
+  .te-pub-match--wide {
   background: var(--ro-bg-card);
   border: 0.5px solid var(--ro-border-subtle);
   box-shadow: var(--ro-shadow-sm);
 }
 
-.te-pub-match__faceoff {
+.te-public:not(.te-public--reta):not(.te-public--reta-wide):not(.te-public--americano)
+  .te-pub-match__faceoff {
   background: rgba(255, 255, 255, 0.03);
   border: 0.5px solid var(--ro-border-subtle);
 }
@@ -144,6 +146,10 @@ body,
   /* Headers más compactos */
   .rv-mode-header {
     margin-bottom: clamp(14px, 4vw, 22px);
+  }
+
+  .americano-tournament-banner.rv-mode-header .americano-tournament-banner__name {
+    font-size: clamp(1.1rem, 4.5vw, 1.45rem);
   }
 
   .rv-mode-header__title,
@@ -295,11 +301,6 @@ body,
     min-width: 480px;
   }
 
-  /* Duelo público */
-  .duelo2v2-public-board.rv-public-board {
-    padding-inline: max(14px, env(safe-area-inset-left, 0px))
-      max(14px, env(safe-area-inset-right, 0px));
-  }
 }
 
 /* Móvil compacto */

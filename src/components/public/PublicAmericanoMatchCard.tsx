@@ -108,6 +108,17 @@ export const PublicAmericanoMatchCard: React.FC<{
       </div>
 
       <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
+
+      {played && (
+        <div className="te-pub-games te-pub-games--solo">
+          <p className="te-pub-games__title">Resultado</p>
+          <div className="te-pub-games__list">
+            <span className="te-pub-games__chip">
+              {m.scoreA}-{m.scoreB}
+            </span>
+          </div>
+        </div>
+      )}
     </article>
   );
 };

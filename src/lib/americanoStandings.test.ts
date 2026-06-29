@@ -53,6 +53,7 @@ describe("getAmericanoRanking — tabla FAV → DIF → H2H → PG", () => {
       },
       {
         roundNumber: 3,
+        /** Valor legacy en fixture: el generador actual no produce phase 2. */
         phase: 2,
         benchPlayers: [],
         matches: [

@@ -36,6 +36,17 @@
   font-size: 14px;
 }
 
+.americano-registration__format-note {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 214, 0, 0.22);
+  background: rgba(255, 214, 0, 0.06);
+  color: var(--color-text-secondary, #c8c8c8);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .americano-registration__controls {
   display: flex;
   gap: 8px;

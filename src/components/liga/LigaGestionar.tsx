@@ -22,6 +22,7 @@ import {
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
+import { PublicShareSection } from "../platform/PublicShareSection";
 import {
   ligaJornadaPath,
   navigateLiga,
@@ -228,15 +229,6 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     }
   };
 
-  const copyPublic = async () => {
-    try {
-      await navigator.clipboard.writeText(publicLigaUrl(ligaId));
-      setMessage("Enlace público copiado.");
-    } catch {
-      setError("No se pudo copiar el enlace.");
-    }
-  };
-
   if (loading && !detalle) {
     return (
       <LigaPageShell>
@@ -270,10 +262,24 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         subtitle={`${detalle.inscripciones.length} inscritos · ${estadoLigaLabel(detalle.estado)}`}
       />
 
+      <PublicShareSection
+        publicUrl={publicLigaUrl(ligaId)}
+        title="Enlace público"
+        infoLines={[
+          "Comparte este enlace para que cualquiera vea el ranking y las jornadas de la liga.",
+          "Los visitantes solo podrán ver los resultados, no podrán editar nada.",
+        ]}
+        onCopy={async () => {
+          try {
+            await navigator.clipboard.writeText(publicLigaUrl(ligaId));
+            setMessage("Enlace público copiado.");
+          } catch {
+            setError("No se pudo copiar el enlace.");
+          }
+        }}
+      />
+
       <ActionBar className="liga-actions">
-        <Button type="button" variant="ghost" size="sm" onClick={copyPublic}>
-          Copiar enlace público
-        </Button>
         {detalle.estado !== "completed" && detalle.jornadas.length === 0 && (
           <Button
             type="button"

@@ -94,7 +94,11 @@ export interface AmericanoMatch {
 
 export interface AmericanoRound {
   roundNumber: number;
-  /** Siempre 1 en retas nuevas (rotación americana). Valor 2 solo en snapshots legacy. */
+  /**
+   * Compatibilidad de snapshot. En el modo actual `generateAmericanoRound()` siempre
+   * asigna `1` (rotación americana equilibrada). No hay fase 2 ni emparejamientos por ranking.
+   * El valor `2` puede aparecer solo en snapshots legacy.
+   */
   phase: 1 | 2;
   matches: AmericanoMatch[];
   benchPlayers: AmericanoPlayer[];

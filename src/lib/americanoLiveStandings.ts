@@ -90,7 +90,7 @@ export function rosterSeedMap(
   return new Map(roster.map((p, i) => [p.id, i]));
 }
 
-/** Única fuente de verdad: tabla = emparejamientos 2.ª mitad. */
+/** Clasificación en vivo desde rondas puntuadas (no influye en emparejamientos). */
 export function computeAmericanoLiveRanking(
   roster: AmericanoPlayer[],
   rounds: AmericanoRound[]

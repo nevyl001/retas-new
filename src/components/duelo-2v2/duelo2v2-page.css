@@ -20,6 +20,36 @@
   background: transparent !important;
 }
 
+/* Vista pública 2vs2 — mismo ancho útil que Round Robin / Remontada */
+.duelo2v2-page.duelo2v2-publica.duelo2v2-page--public {
+  padding-inline: 0;
+  padding-top: clamp(1rem, 3vw, 2rem);
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}
+
+.duelo2v2-publica .duelo2v2-page__inner--public.rv-shell {
+  max-width: none;
+  width: 100%;
+  padding-inline: 0;
+}
+
+.duelo2v2-publica .duelo2v2-public-board.rv-public-board {
+  max-width: none;
+  width: 100%;
+  margin-inline: 0;
+  padding-inline: clamp(1.25rem, 5vw, 3rem);
+  padding-block: clamp(1rem, 3vw, 1.5rem);
+}
+
+@media (max-width: 768px) {
+  .duelo2v2-publica .duelo2v2-public-board.rv-public-board {
+    padding-left: max(1.2rem, calc(env(safe-area-inset-left, 0px) + 1rem));
+    padding-right: max(1.2rem, calc(env(safe-area-inset-right, 0px) + 1rem));
+    padding-top: max(1.35rem, calc(env(safe-area-inset-top, 0px) + 0.85rem));
+    padding-bottom: max(2.25rem, calc(env(safe-area-inset-bottom, 0px) + 1.25rem));
+  }
+}
+
 .duelo2v2-page__inner {
   width: 100%;
   max-width: 720px;
@@ -563,6 +593,7 @@
 /* —— Vista pública en vivo —— */
 .duelo2v2-live-board {
   width: 100%;
+  max-width: none;
 }
 
 .duelo2v2-live-board__brand {
@@ -628,8 +659,9 @@
 }
 
 /* —— Celebración duelo: card ganadores + card motivación perdedores —— */
+.duelo2v2-publica .duelo2v2-celebrate .ro-pub-celebrate__inner,
 .duelo2v2-celebrate .ro-pub-celebrate__inner {
-  max-width: min(100%, 36rem);
+  max-width: 100%;
   margin: 0 auto;
 }
 
@@ -642,8 +674,9 @@
 }
 
 @media (min-width: 768px) {
+  .duelo2v2-publica .duelo2v2-celebrate .ro-pub-celebrate__inner,
   .duelo2v2-celebrate .ro-pub-celebrate__inner {
-    max-width: min(100%, 56rem);
+    max-width: min(100%, 72rem);
   }
 
   .duelo2v2-celebrate__outcome-cards {

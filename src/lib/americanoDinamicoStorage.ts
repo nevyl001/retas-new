@@ -147,6 +147,7 @@ export interface AmericanoSnapshotMatch {
 
 export interface AmericanoSnapshotRound {
   roundNumber: number;
+  /** `1` en retas nuevas; `2` solo en snapshots legacy (sin efecto en el generador actual). */
   phase: 1 | 2;
   benchPlayers: AmericanoSnapshotPlayer[];
   matches: AmericanoSnapshotMatch[];

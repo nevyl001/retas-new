@@ -34,6 +34,12 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         quieres jugar.
       </p>
 
+      <p className="americano-registration__format-note" role="note">
+        Formato americano equilibrado: las parejas se rotan automáticamente para
+        evitar repetir compañero y repartir rivales. El ranking solo muestra
+        posiciones; no forma partidos.
+      </p>
+
       <div className="americano-registration__meta card">
         <p>
           <strong>Total jugadores:</strong> {players.length}

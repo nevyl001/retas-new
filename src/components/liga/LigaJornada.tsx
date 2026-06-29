@@ -19,6 +19,7 @@ import {
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
+import { PublicShareSection } from "../platform/PublicShareSection";
 import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
 import "./liga-page.css";
@@ -337,29 +338,26 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         }`}
       />
 
-      <ActionBar className="liga-jornada-toolbar">
-        <Button
-          type="button"
-          variant="secondary"
-          className="liga-jornada-toolbar__tv-link"
-          onClick={async () => {
-            try {
-              await navigator.clipboard.writeText(
-                publicLigaJornadaUrl(ligaId, numero)
-              );
-              setMessage("Enlace copiado. Ábrelo en la TV o pantalla de la cancha.");
-            } catch {
-              setError("No se pudo copiar el enlace.");
-            }
-          }}
-        >
-          Enlace para TV / pantalla
-        </Button>
-        <p className="liga-jornada-toolbar__hint">
-          Para proyectar los partidos en vivo: copia el enlace y ábrelo en un navegador
-          de la tele o tablet en cancha.
-        </p>
-      </ActionBar>
+      <PublicShareSection
+        className="liga-jornada-share"
+        publicUrl={publicLigaJornadaUrl(ligaId, numero)}
+        title="Enlace para TV / pantalla"
+        infoLines={[
+          "Para proyectar los partidos en vivo: copia el enlace o ábrelo en la TV o tablet en cancha.",
+        ]}
+        copyButtonLabel="Copiar enlace"
+        previewLabel="Abrir vista pública"
+        onCopy={async () => {
+          try {
+            await navigator.clipboard.writeText(
+              publicLigaJornadaUrl(ligaId, numero)
+            );
+            setMessage("Enlace copiado. También puedes abrir la vista pública.");
+          } catch {
+            setError("No se pudo copiar el enlace.");
+          }
+        }}
+      />
 
       {message ? <p className="liga-success">{message}</p> : null}
       {error ? <p className="liga-error">{error}</p> : null}

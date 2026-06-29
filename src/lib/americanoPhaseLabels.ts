@@ -1,5 +1,6 @@
 /**
- * Etiquetas de ronda para Reta Pádel Americano (sin fases por ranking).
+ * Etiquetas de ronda para Reta Pádel Americano.
+ * El generador actual siempre usa `phase: 1`; no existe fase competitiva por ranking.
  */
 export function americanoPhaseLabel(_phase: number): string {
   return "Rotación americana";

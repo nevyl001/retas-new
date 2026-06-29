@@ -651,6 +651,7 @@ export function generateAmericanoRound(
     courtUsage
   );
 
+  /** Modo actual: una sola fase (rotación equilibrada). `phase: 2` no se genera. */
   const round: AmericanoRound = {
     roundNumber,
     phase: 1,
