@@ -58,7 +58,6 @@ function renderRoundBlock(
     userId?: string;
     roundTitle?: React.ReactNode;
     matchEncounterLabel?: (match: Match) => string | undefined;
-    onReloadMatches?: () => void | Promise<void>;
     onAfterScoreSaved?: () => void | Promise<void>;
   }
 ) {
@@ -70,7 +69,6 @@ function renderRoundBlock(
     userId,
     roundTitle,
     matchEncounterLabel,
-    onReloadMatches,
     onAfterScoreSaved,
   } = opts;
 
@@ -243,7 +241,6 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     forceRefresh,
     setForceRefresh,
     userId,
-    onReloadMatches,
     onAfterScoreSaved: tryGenerateChampionship,
   };
 
