@@ -189,7 +189,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                         <th title="Games a favor">GF</th>
                         <th title="Games en contra">GC</th>
                         <th title="Diferencia de games">DIF</th>
-                        <th>GAMES</th>
+                        <th title="Puntos ranking (3 victoria 2-0, 2 con STB)">PTS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -423,10 +423,10 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
                         <p className="liga-pantalla-podium__name">{row.nombre}</p>
                         <p className="liga-pantalla-podium__pts">
                           {row.puntos}{" "}
-                          <span className="liga-pantalla-podium__pts-label">games</span>
+                          <span className="liga-pantalla-podium__pts-label">pts</span>
                         </p>
                         <p className="liga-pantalla-podium__meta">
-                          {row.games_favor} games · DIF {row.diferencia_games >= 0 ? "+" : ""}
+                          {row.games_favor} GF · DIF {row.diferencia_games >= 0 ? "+" : ""}
                           {row.diferencia_games}
                         </p>
                       </article>

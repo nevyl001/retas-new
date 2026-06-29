@@ -8,8 +8,12 @@ export function dateInputValue(fecha: string | null | undefined): string {
 export function timeInputValue(hora: string | null | undefined): string {
   if (!hora) return "";
   const trimmed = hora.trim();
-  if (/^\d{2}:\d{2}/.test(trimmed)) return trimmed.slice(0, 5);
-  return trimmed;
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return "";
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (h < 0 || h > 23 || m < 0 || m > 59) return "";
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
 export function formatPartidoHorarioLabel(
@@ -35,10 +39,13 @@ export function formatFechaLegible(isoDate: string): string {
 export function normalizeHoraInicio(raw: string): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  if (!/^\d{2}:\d{2}$/.test(trimmed)) {
+  // <input type="time"> puede enviar HH:MM o HH:MM:SS según navegador/step
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?(?:\.\d+)?$/);
+  if (!match) {
     throw new Error("Horario inválido. Usa formato HH:MM (ej. 09:30).");
   }
-  const [h, min] = trimmed.split(":").map(Number);
+  const h = Number(match[1]);
+  const min = Number(match[2]);
   if (h < 0 || h > 23 || min < 0 || min > 59) {
     throw new Error("Horario inválido.");
   }

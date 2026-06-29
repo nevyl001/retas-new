@@ -73,7 +73,7 @@ export const LigaPartidoProgramacionFields: React.FC<
           type="time"
           value={draft.hora}
           disabled={disabled || busy}
-          onChange={(e) => onChange({ ...draft, hora: e.target.value })}
+          onChange={(e) => onChange({ ...draft, hora: timeInputValue(e.target.value) })}
           aria-label={`Horario partido ${partido.id}`}
         />
       </label>

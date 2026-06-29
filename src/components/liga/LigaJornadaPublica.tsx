@@ -166,12 +166,12 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     });
   }, [partidosByRonda]);
 
-  const jornadaStats = useMemo(
-    () => computeJornadaPublicStats(jornada),
-    [jornada]
-  );
-
   const esParejasFijas = detalle?.modalidad === "parejas_fijas";
+
+  const jornadaStats = useMemo(
+    () => computeJornadaPublicStats(jornada, { parejasFijas: esParejasFijas }),
+    [jornada, esParejasFijas]
+  );
 
   const equiposById = useMemo(
     () => new Map((detalle?.equipos ?? []).map((e) => [e.id, e])),
@@ -287,7 +287,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
             <p className="liga-pantalla-winner__meta">
               Pareja ganadora de la jornada · {jornadaStats.ganadorPareja.victorias}{" "}
               {jornadaStats.ganadorPareja.victorias === 1 ? "victoria" : "victorias"} ·{" "}
-              {jornadaStats.ganadorPareja.puntos} pts en games
+              {jornadaStats.ganadorPareja.puntos} pts
             </p>
           </div>
         )}
@@ -494,7 +494,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                   Ranking de la jornada
                 </h2>
                 <p className="liga-pantalla-ranking__hint">
-                  Games acumulados por pareja (sin rotación)
+                  Puntos: 3 si gana en 2 sets, 2 si gana en super tie-break, 0 si pierde.
                 </p>
                 {jornadaStats.rankingParejas.length === 0 ? (
                   <p className="liga-pantalla__loading">Sin parejas en jornada.</p>
@@ -507,7 +507,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
                           <th>Pareja</th>
                           <th title="Partido ganado">PG</th>
                           <th title="Partido perdido">PP</th>
-                          <th>GAMES</th>
+                          <th title="Puntos de la jornada">PTS</th>
                         </tr>
                       </thead>
                       <tbody>

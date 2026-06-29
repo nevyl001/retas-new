@@ -2,6 +2,7 @@ import {
   buildSetsFromDraft,
   computeParejasFijasMatchTotals,
   emptyParejasFijasSetsDraft,
+  parejasFijasVictoryRankingPoints,
   validateRegularSet,
   validateSuperTiebreakSet,
 } from "./parejasFijasMatchScore";
@@ -67,5 +68,22 @@ describe("parejasFijasMatchScore", () => {
     expect(totals.gamesP1).toBe(12);
     expect(totals.gamesP2).toBe(4);
     expect(totals.p1WonMatch).toBe(true);
+  });
+
+  it("puntos ranking: 2-0 → 3, 2-1 STB → 2, derrota → 0", () => {
+    const straight = computeParejasFijasMatchTotals([
+      { p1: 6, p2: 2, kind: "regular" },
+      { p1: 6, p2: 2, kind: "regular" },
+    ]);
+    expect(parejasFijasVictoryRankingPoints(straight, true)).toBe(3);
+    expect(parejasFijasVictoryRankingPoints(straight, false)).toBe(0);
+
+    const stb = computeParejasFijasMatchTotals([
+      { p1: 6, p2: 2, kind: "regular" },
+      { p1: 2, p2: 6, kind: "regular" },
+      { p1: 10, p2: 8, kind: "super_tiebreak" },
+    ]);
+    expect(parejasFijasVictoryRankingPoints(stb, true)).toBe(2);
+    expect(parejasFijasVictoryRankingPoints(stb, false)).toBe(0);
   });
 });

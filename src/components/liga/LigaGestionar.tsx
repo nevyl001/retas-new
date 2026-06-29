@@ -668,7 +668,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
                       <p className="liga-list-item__title">{equipoNombre(eq)}</p>
                         <p className="liga-list-item__meta">
                         {eq.partidos_jugados > 0
-                          ? `${eq.puntos} games · ${eq.partidos_jugados} PJ`
+                          ? `${eq.puntos} pts · ${eq.partidos_jugados} PJ`
                           : "Sin partidos jugados"}
                       </p>
                     </div>

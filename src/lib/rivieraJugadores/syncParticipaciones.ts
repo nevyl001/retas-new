@@ -1480,7 +1480,9 @@ export async function syncLigaJornada(
     }
 
     const eventoNombre = `Liga ${detalle.nombre} - Jornada ${jornada.numero}`;
-    const jornadaStats = computeJornadaPublicStats(jornada);
+    const jornadaStats = computeJornadaPublicStats(jornada, {
+      parejasFijas: detalle.modalidad === "parejas_fijas",
+    });
     const partidosDetalleByJugador =
       buildLigaJornadaPartidosDetalleByJugadorId(jornada);
     const posByJugador = new Map(

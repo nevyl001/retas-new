@@ -21,6 +21,27 @@ export type ParejasFijasMatchTotals = {
   display: string;
 };
 
+/** Puntos ranking: victoria 2-0 → 3, victoria 2-1 (STB) → 2, derrota → 0. */
+export const PAREJAS_FIJAS_PUNTOS_VICTORIA_2_SETS = 3;
+export const PAREJAS_FIJAS_PUNTOS_VICTORIA_STB = 2;
+
+export function parejasFijasSetsPlayed(
+  totals: Pick<ParejasFijasMatchTotals, "setsP1" | "setsP2">
+): number {
+  return totals.setsP1 + totals.setsP2;
+}
+
+export function parejasFijasVictoryRankingPoints(
+  totals: Pick<ParejasFijasMatchTotals, "setsP1" | "setsP2" | "p1WonMatch">,
+  forP1: boolean
+): number {
+  const won = forP1 ? totals.p1WonMatch : !totals.p1WonMatch;
+  if (!won) return 0;
+  return parejasFijasSetsPlayed(totals) <= 2
+    ? PAREJAS_FIJAS_PUNTOS_VICTORIA_2_SETS
+    : PAREJAS_FIJAS_PUNTOS_VICTORIA_STB;
+}
+
 export type SetScoreDraft = {
   p1: string;
   p2: string;

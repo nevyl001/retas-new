@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
+import { timeInputValue } from "../../lib/liga/programacion";
 import type {
   LigaDetalle,
   LigaEquipoRankingItem,
@@ -166,6 +167,13 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const jornada = useMemo(
     () => detalle?.jornadas.find((j) => j.numero === numero),
     [detalle, numero]
+  );
+
+  const esParejasFijas = detalle?.modalidad === "parejas_fijas";
+
+  const jornadaStats = useMemo(
+    () => computeJornadaPublicStats(jornada, { parejasFijas: esParejasFijas }),
+    [jornada, esParejasFijas]
   );
 
   const partidosByRonda = useMemo(() => {
@@ -383,11 +391,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     }
   };
 
-  const jornadaStats = useMemo(
-    () => computeJornadaPublicStats(jornada),
-    [jornada]
-  );
-
   const handleFinalizarJornada = async () => {
     if (!jornada) return;
     const msg = jornada.puntos_aplicados
@@ -474,8 +477,6 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       </LigaPageShell>
     );
   }
-
-  const esParejasFijas = detalle.modalidad === "parejas_fijas";
 
   const puedeIniciar = esParejasFijas
     ? jornada.estado === "upcoming" && (jornada.partidos?.length ?? 0) > 0
@@ -617,7 +618,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                 type="time"
                 value={jornadaHoraDraft}
                 disabled={busy}
-                onChange={(e) => setJornadaHoraDraft(e.target.value)}
+                onChange={(e) => setJornadaHoraDraft(timeInputValue(e.target.value))}
                 aria-label="Horario de la jornada"
               />
             </label>
@@ -727,7 +728,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                       onChange={(e) =>
                         setRondaHoraDrafts((prev) => ({
                           ...prev,
-                          [ronda]: e.target.value,
+                          [ronda]: timeInputValue(e.target.value),
                         }))
                       }
                       aria-label={`Horario ronda ${ronda}`}
@@ -960,7 +961,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
             </h2>
             <p className="liga-hint">
               {esParejasFijas
-                ? "Puntos = games acumulados. Se recalcula al guardar resultados."
+                ? "Puntos: 3 victoria en 2 sets, 2 con super tie-break. Se recalcula al guardar resultados."
                 : "Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."}
             </p>
             {esParejasFijas ? (
@@ -978,7 +979,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                       <th>GF</th>
                       <th>GC</th>
                       <th>DIF</th>
-                      <th>GAMES</th>
+                      <th>PTS</th>
                     </tr>
                   </thead>
                   <tbody>

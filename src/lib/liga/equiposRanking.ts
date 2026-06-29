@@ -1,4 +1,4 @@
-/** Stats acumuladas por equipo en liga parejas_fijas (puntos = games a favor). */
+/** Stats acumuladas por equipo en liga parejas_fijas. */
 export type EquipoRankingStats = {
   puntos: number;
   partidos_jugados: number;
@@ -21,18 +21,18 @@ export function emptyEquipoRankingStats(): EquipoRankingStats {
 
 /**
  * Aplica un partido completado.
- * Puntos ranking = games a favor. PG/PP = ganador del partido (sets en parejas fijas).
+ * Puntos ranking = 3 (2-0), 2 (2-1 STB) o 0. PG/PP = ganador del partido.
  */
 export function applyPartidoToEquipoRankingStats(
   stats: EquipoRankingStats,
   gamesFor: number,
   gamesAgainst: number,
-  matchWon?: boolean | null
+  matchWon?: boolean | null,
+  rankingPoints?: number
 ): void {
   stats.partidos_jugados += 1;
   stats.games_favor += gamesFor;
   stats.games_contra += gamesAgainst;
-  stats.puntos += gamesFor;
 
   const won =
     matchWon === true
@@ -47,6 +47,7 @@ export function applyPartidoToEquipoRankingStats(
 
   if (won === true) {
     stats.partidos_ganados += 1;
+    stats.puntos += rankingPoints ?? 0;
   } else if (won === false) {
     stats.partidos_perdidos += 1;
   }

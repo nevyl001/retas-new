@@ -35,7 +35,7 @@ export const LigaRankingEquipos: React.FC<LigaRankingEquiposProps> = ({
               <th>GF</th>
               <th>GC</th>
               <th>DIF</th>
-              <th>GAMES</th>
+              <th title="Puntos ranking (3/2/0)">PTS</th>
             </tr>
           </thead>
           <tbody>

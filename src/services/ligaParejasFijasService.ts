@@ -18,7 +18,9 @@ import {
 } from "../lib/liga/equiposRanking";
 import {
   parseSetScoresJson,
+  parejasFijasVictoryRankingPoints,
   resolveParejasFijasPartidoTotals,
+  type ParejasFijasMatchTotals,
 } from "../lib/liga/parejasFijasMatchScore";
 
 function mapJugador(row: Record<string, unknown>): LigaJugador {
@@ -183,11 +185,20 @@ function emptyEquipoStats(): EquipoStats {
 
 function applyPartidoToEquipoStats(
   stats: EquipoStats,
-  gamesFor: number,
-  gamesAgainst: number,
-  matchWon: boolean
+  totals: ParejasFijasMatchTotals,
+  forP1: boolean
 ): void {
-  applyPartidoToEquipoRankingStats(stats, gamesFor, gamesAgainst, matchWon);
+  const gamesFor = forP1 ? totals.gamesP1 : totals.gamesP2;
+  const gamesAgainst = forP1 ? totals.gamesP2 : totals.gamesP1;
+  const matchWon = forP1 ? totals.p1WonMatch : !totals.p1WonMatch;
+  const rankingPoints = parejasFijasVictoryRankingPoints(totals, forP1);
+  applyPartidoToEquipoRankingStats(
+    stats,
+    gamesFor,
+    gamesAgainst,
+    matchWon,
+    rankingPoints
+  );
 }
 
 export async function insertJornadasForLigaParejasFijas(
@@ -376,18 +387,8 @@ export async function recalcularPuntosLigaEquipos(ligaId: string): Promise<void>
 
       const st1 = statsByEquipo.get(eq1) ?? emptyEquipoStats();
       const st2 = statsByEquipo.get(eq2) ?? emptyEquipoStats();
-      applyPartidoToEquipoStats(
-        st1,
-        totals.gamesP1,
-        totals.gamesP2,
-        totals.p1WonMatch
-      );
-      applyPartidoToEquipoStats(
-        st2,
-        totals.gamesP2,
-        totals.gamesP1,
-        !totals.p1WonMatch
-      );
+      applyPartidoToEquipoStats(st1, totals, true);
+      applyPartidoToEquipoStats(st2, totals, false);
       statsByEquipo.set(eq1, st1);
       statsByEquipo.set(eq2, st2);
     }
@@ -432,7 +433,7 @@ export async function recalcularPuntosLigaEquipos(ligaId: string): Promise<void>
     const { error: upErr } = await supabase
       .from("liga_equipos")
       .update({
-        puntos: st.games_favor,
+        puntos: st.puntos,
         partidos_jugados: st.partidos_jugados,
         partidos_ganados: st.partidos_ganados,
         partidos_perdidos: st.partidos_perdidos,
