@@ -7,6 +7,7 @@ import {
 import { buildMarketingOfficialRankingsUrl, getOfficialRankingsPageUrl } from "../../lib/rivieraOfficialSite";
 import { buildInternalClubRankingUrl } from "../jugadores/jugadoresPublicNav";
 import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
+import { updateUserEmailAdmin } from "../../lib/admin/updateUserEmailAdmin";
 import { navigateAdminDashboard } from "../../lib/admin/adminNav";
 import { AccountControlsPanel } from "./AccountControlsPanel";
 import "./AdminDashboard.css";
@@ -45,7 +46,11 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [successNotice, setSuccessNotice] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailDraft, setEmailDraft] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
 
   const loadUser = useCallback(async () => {
     setLoading(true);
@@ -70,9 +75,6 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
     void loadUser();
   }, [loadUser]);
 
-  const internalRankingUrl = buildInternalClubRankingUrl(userId, "M");
-  const officialSiteRankingUrl = buildMarketingOfficialRankingsUrl(userId);
-
   const handleDelete = async () => {
     if (!user) return;
     if (
@@ -93,6 +95,65 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
         e instanceof Error ? e.message : "No se pudo eliminar el usuario"
       );
       setDeleting(false);
+    }
+  };
+
+  const handleStartEmailEdit = () => {
+    if (!user) return;
+    setEmailDraft(user.email);
+    setEditingEmail(true);
+    setNotice("");
+    setSuccessNotice("");
+  };
+
+  const handleCancelEmailEdit = () => {
+    setEditingEmail(false);
+    setEmailDraft("");
+  };
+
+  const handleSaveEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    const trimmed = emailDraft.trim();
+    if (!trimmed) {
+      setNotice("El correo electrónico es obligatorio.");
+      setSuccessNotice("");
+      return;
+    }
+
+    if (trimmed.toLowerCase() === user.email.trim().toLowerCase()) {
+      setEditingEmail(false);
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `¿Cambiar el correo de "${user.email}" a "${trimmed}"?\n\nEl usuario deberá iniciar sesión con el correo nuevo.`
+      )
+    ) {
+      return;
+    }
+
+    setSavingEmail(true);
+    setNotice("");
+    setSuccessNotice("");
+
+    try {
+      const result = await updateUserEmailAdmin({
+        targetUserId: user.id,
+        newEmail: trimmed,
+      });
+      setUser((prev) => (prev ? { ...prev, email: result.email } : prev));
+      setEditingEmail(false);
+      setEmailDraft("");
+      setSuccessNotice("Correo actualizado en la cuenta de acceso y en el perfil.");
+    } catch (err) {
+      setNotice(
+        err instanceof Error ? err.message : "No se pudo actualizar el correo"
+      );
+    } finally {
+      setSavingEmail(false);
     }
   };
 
@@ -123,6 +184,9 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
       </div>
     );
   }
+
+  const internalRankingUrl = buildInternalClubRankingUrl(userId, "M");
+  const officialSiteRankingUrl = buildMarketingOfficialRankingsUrl(userId);
 
   return (
     <div className="admin-dash admin-user-page">
@@ -155,6 +219,12 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
         </div>
       ) : null}
 
+      {successNotice ? (
+        <div className="admin-dash__banner admin-dash__banner--ok" role="status">
+          {successNotice}
+        </div>
+      ) : null}
+
       <section className="admin-user-page__hero">
         <div className="admin-user-page__identity">
           <div className="admin-user-page__avatar">
@@ -168,7 +238,59 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
           </div>
           <div>
             <h2 className="admin-user-page__name">{user.name || user.email}</h2>
-            <p className="admin-user-page__email">{user.email}</p>
+            <div className="admin-user-page__email-block">
+              {editingEmail ? (
+                <form
+                  className="admin-user-page__email-edit"
+                  onSubmit={(e) => void handleSaveEmail(e)}
+                >
+                  <label className="admin-user-page__email-hint" htmlFor="admin-user-email">
+                    Nuevo correo de acceso
+                  </label>
+                  <input
+                    id="admin-user-email"
+                    type="email"
+                    className="admin-user-page__email-input"
+                    value={emailDraft}
+                    onChange={(e) => setEmailDraft(e.target.value)}
+                    autoComplete="off"
+                    disabled={savingEmail}
+                    required
+                  />
+                  <p className="admin-user-page__email-hint">
+                    Se actualiza en Auth (login) y en el perfil de la cuenta.
+                  </p>
+                  <div className="admin-user-page__email-actions">
+                    <button
+                      type="submit"
+                      className="admin-user-page__email-btn admin-user-page__email-btn--primary"
+                      disabled={savingEmail}
+                    >
+                      {savingEmail ? "Guardando…" : "Guardar correo"}
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-user-page__email-btn"
+                      onClick={handleCancelEmailEdit}
+                      disabled={savingEmail}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="admin-user-page__email-row">
+                  <p className="admin-user-page__email">{user.email}</p>
+                  <button
+                    type="button"
+                    className="admin-user-page__email-btn"
+                    onClick={handleStartEmailEdit}
+                  >
+                    Cambiar correo
+                  </button>
+                </div>
+              )}
+            </div>
             <p className="admin-user-page__meta">
               Registro: {formatDate(user.created_at)} · ID:{" "}
               <code className="admin-user-page__id">{user.id}</code>

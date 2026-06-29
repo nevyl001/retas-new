@@ -99,6 +99,89 @@
   color: var(--admin-text-muted);
 }
 
+.admin-user-page__email-block {
+  margin-top: 0.25rem;
+}
+
+.admin-user-page__email-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.admin-user-page__email-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-top: 0.25rem;
+  max-width: 28rem;
+}
+
+.admin-user-page__email-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: #18181b;
+  color: var(--admin-text);
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.admin-user-page__email-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.admin-user-page__email-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.admin-user-page__email-btn {
+  padding: 0.375rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: transparent;
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.admin-user-page__email-btn:hover:not(:disabled) {
+  color: var(--admin-text);
+  border-color: #3f3f46;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-user-page__email-btn--primary {
+  background: var(--admin-text);
+  border-color: var(--admin-text);
+  color: var(--admin-bg);
+}
+
+.admin-user-page__email-btn--primary:hover:not(:disabled) {
+  background: #e4e4e7;
+  border-color: #e4e4e7;
+  color: var(--admin-bg);
+}
+
+.admin-user-page__email-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-user-page__email-hint {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--admin-text-muted);
+  line-height: 1.4;
+}
+
 .admin-user-page__meta {
   margin: 0.5rem 0 0;
   font-size: 0.75rem;
