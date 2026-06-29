@@ -874,6 +874,17 @@
   color: var(--ro-accent);
 }
 
+.rj-ficha-readonly-notice {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .rj-edit-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1168,8 +1179,27 @@
   vertical-align: top;
 }
 
-.te-pub-match__team-sep {
-  display: inline-block;
-  margin: 0 0.35rem;
-  vertical-align: middle;
+.rj-granted-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rj-granted-badge--inline {
+  margin: 0;
+}
+
+.rj-autocomplete__item .rj-granted-badge {
+  margin-top: 0;
 }

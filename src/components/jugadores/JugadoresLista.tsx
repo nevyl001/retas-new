@@ -307,9 +307,13 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                     <button
                       type="button"
                       className="rj-card__delete"
-                      title="Eliminar jugador"
+                      title={
+                        j.concedidoPorAdmin
+                          ? "El acceso se gestiona desde Admin Principal"
+                          : "Eliminar jugador"
+                      }
                       aria-label={`Eliminar a ${j.nombre}`}
-                      disabled={deletingId === j.id}
+                      disabled={deletingId === j.id || j.concedidoPorAdmin}
                       onClick={() => void handleDeleteJugador(j)}
                     >
                       <TablerIcon name="trash" size={14} aria-hidden={false} />
@@ -329,6 +333,15 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                   <div className="rj-card__name-row">
                     <p className="rj-card__name">{j.nombre}</p>
                     <JugadorPaisBadge codigo={j.pais_codigo} size="sm" />
+                    {j.concedidoPorAdmin ? (
+                      <span
+                        className="rj-granted-badge rj-granted-badge--inline"
+                        title="Acceso concedido por Admin Principal"
+                      >
+                        <TablerIcon name="share-3" size={11} />
+                        <span>Concedido</span>
+                      </span>
+                    ) : null}
                   </div>
                   <JugadorCategoriaBadge categoria={j.categoria} />
                   <JugadorPerfilMeta jugador={j} variant="card" />

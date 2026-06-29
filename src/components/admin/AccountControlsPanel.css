@@ -280,3 +280,37 @@
 .account-controls__toggle--block .account-controls__toggle-label {
   line-height: 1.4;
 }
+
+.account-controls__player--selected {
+  border-color: var(--admin-accent, #c9a227);
+  box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.35);
+}
+
+.account-controls__player-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.account-controls__player-select {
+  display: inline-flex;
+  margin-top: 0.1rem;
+  cursor: pointer;
+}
+
+.account-controls__player-select input {
+  accent-color: var(--admin-accent, #c9a227);
+}
+
+.account-controls__player-text {
+  min-width: 0;
+}
+
+.account-controls__bulk-actions--grant {
+  margin-top: 0.35rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--admin-input-border, #27272a);
+  align-items: center;
+  justify-content: space-between;
+}

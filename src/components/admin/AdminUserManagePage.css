@@ -86,6 +86,10 @@
   color: var(--admin-text-muted);
 }
 
+.admin-user-page__name-block {
+  margin-bottom: 0.15rem;
+}
+
 .admin-user-page__name {
   margin: 0;
   font-size: 1.5rem;

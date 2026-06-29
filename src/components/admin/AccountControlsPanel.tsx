@@ -13,6 +13,8 @@ import {
 import { GAME_MODE_LABELS } from "../../lib/admin/organizadorGameModes";
 import { getOfficialRankingsPageUrl } from "../../lib/rivieraOfficialSite";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
+import { GrantPlayerAccessModal } from "./GrantPlayerAccessModal";
+import { PlayerAccessListModal } from "./PlayerAccessListModal";
 import "./AccountControlsPanel.css";
 
 interface AccountControlsPanelProps {
@@ -51,6 +53,13 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   const [busyJugadorId, setBusyJugadorId] = useState<string | null>(null);
   const [playerSearch, setPlayerSearch] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [selectedJugadorIds, setSelectedJugadorIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [grantModalOpen, setGrantModalOpen] = useState(false);
+  const [accessListJugador, setAccessListJugador] = useState<AdminJugadorRow | null>(
+    null
+  );
 
   const jugadoresFiltrados = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
@@ -69,6 +78,47 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     const on = jugadoresEditables.filter((j) => j.visible_publico).length;
     return { all: on === n, some: on > 0 && on < n, count: on };
   }, [jugadoresEditables]);
+
+  const selectionBulk = useMemo(() => {
+    const visibleIds = jugadoresFiltrados.map((j) => j.id);
+    const selectedVisible = visibleIds.filter((id) => selectedJugadorIds.has(id));
+    const n = visibleIds.length;
+    if (n === 0) {
+      return { all: false, some: false, count: 0, visibleIds };
+    }
+    const on = selectedVisible.length;
+    return {
+      all: on === n,
+      some: on > 0 && on < n,
+      count: on,
+      visibleIds,
+    };
+  }, [jugadoresFiltrados, selectedJugadorIds]);
+
+  const selectedJugadoresForGrant = useMemo(
+    () => jugadores.filter((j) => selectedJugadorIds.has(j.id)),
+    [jugadores, selectedJugadorIds]
+  );
+
+  const toggleJugadorSelection = (jugadorId: string) => {
+    setSelectedJugadorIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(jugadorId)) next.delete(jugadorId);
+      else next.add(jugadorId);
+      return next;
+    });
+  };
+
+  const setSelectionForVisible = (selected: boolean) => {
+    setSelectedJugadorIds((prev) => {
+      const next = new Set(prev);
+      for (const id of selectionBulk.visibleIds) {
+        if (selected) next.add(id);
+        else next.delete(id);
+      }
+      return next;
+    });
+  };
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -289,6 +339,10 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         <strong>{getOfficialRankingsPageUrl()}</strong> solo aparece quien tú
         actives con «Sitio oficial» (por defecto nadie se publica).
       </p>
+      <p className="account-controls__hint account-controls__hint--tight">
+        Puedes otorgar acceso a jugadores de esta cuenta a otro organizador. Quitar
+        acceso no borra jugadores ni historial.
+      </p>
 
       <form className="account-controls__add-form" onSubmit={(e) => void handleAddJugador(e)}>
         <input
@@ -403,6 +457,37 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                 Quitar del sitio
               </button>
             </div>
+            <div className="account-controls__bulk-actions account-controls__bulk-actions--grant">
+              <label
+                className="account-controls__bulk-toggle"
+                title="Seleccionar jugadores visibles para otorgar acceso"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectionBulk.all}
+                  ref={(el) => {
+                    if (el) el.indeterminate = selectionBulk.some;
+                  }}
+                  disabled={bulkBusy || selectionBulk.visibleIds.length === 0}
+                  onChange={() => setSelectionForVisible(!selectionBulk.all)}
+                />
+                <span>
+                  Seleccionar visibles ({selectionBulk.count}/
+                  {selectionBulk.visibleIds.length})
+                </span>
+              </label>
+              <button
+                type="button"
+                className="account-controls__btn account-controls__btn--primary"
+                disabled={bulkBusy || selectedJugadoresForGrant.length === 0}
+                onClick={() => setGrantModalOpen(true)}
+              >
+                Otorgar acceso
+                {selectedJugadoresForGrant.length > 0
+                  ? ` (${selectedJugadoresForGrant.length})`
+                  : ""}
+              </button>
+            </div>
           </div>
 
           <ul className="account-controls__player-list">
@@ -414,14 +499,25 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                 key={j.id}
                 className={`account-controls__player${
                   archivado ? " account-controls__player--archived" : ""
-                }`}
+                }${selectedJugadorIds.has(j.id) ? " account-controls__player--selected" : ""}`}
               >
                 <div className="account-controls__player-main">
-                  <span className="account-controls__player-name">{j.nombre}</span>
-                  <span className="account-controls__player-meta">
-                    {j.categoria.replace(/_/g, " ")} · {j.puntos_totales} pts
-                    {archivado ? " · archivado" : ""}
-                  </span>
+                  <label className="account-controls__player-select">
+                    <input
+                      type="checkbox"
+                      checked={selectedJugadorIds.has(j.id)}
+                      disabled={busy || bulkBusy}
+                      onChange={() => toggleJugadorSelection(j.id)}
+                      aria-label={`Seleccionar ${j.nombre}`}
+                    />
+                  </label>
+                  <div className="account-controls__player-text">
+                    <span className="account-controls__player-name">{j.nombre}</span>
+                    <span className="account-controls__player-meta">
+                      {j.categoria.replace(/_/g, " ")} · {j.puntos_totales} pts
+                      {archivado ? " · archivado" : ""}
+                    </span>
+                  </div>
                 </div>
                 <div className="account-controls__player-actions">
                   <label
@@ -461,6 +557,25 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
                   )}
                   <button
                     type="button"
+                    className="account-controls__btn account-controls__btn--ghost"
+                    disabled={busy}
+                    onClick={() => setAccessListJugador(j)}
+                  >
+                    Ver accesos
+                  </button>
+                  <button
+                    type="button"
+                    className="account-controls__btn account-controls__btn--ghost"
+                    disabled={busy}
+                    onClick={() => {
+                      setSelectedJugadorIds(new Set([j.id]));
+                      setGrantModalOpen(true);
+                    }}
+                  >
+                    Otorgar acceso
+                  </button>
+                  <button
+                    type="button"
                     className="account-controls__btn account-controls__btn--danger"
                     disabled={busy}
                     onClick={() => void handleRemoveJugador(j)}
@@ -481,6 +596,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   );
 
   return (
+    <>
     <div
       className={`account-controls${
         layout === "page" ? " account-controls--page" : ""
@@ -516,5 +632,26 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         </>
       )}
     </div>
+      <GrantPlayerAccessModal
+        open={grantModalOpen}
+        onClose={() => setGrantModalOpen(false)}
+        sourceOrganizadorId={organizadorId}
+        jugadorIds={selectedJugadoresForGrant.map((j) => j.id)}
+        jugadorLabels={selectedJugadoresForGrant.map((j) => j.nombre)}
+        onGranted={(message) => {
+          setNotice(message);
+          setSelectedJugadorIds(new Set());
+        }}
+        onError={(message) => setError(message)}
+      />
+      <PlayerAccessListModal
+        open={accessListJugador != null}
+        onClose={() => setAccessListJugador(null)}
+        jugadorId={accessListJugador?.id ?? ""}
+        jugadorNombre={accessListJugador?.nombre ?? ""}
+        onNotice={(message) => setNotice(message)}
+        onError={(message) => setError(message)}
+      />
+    </>
   );
 };

@@ -12,7 +12,7 @@ import type { ClubOrganizerBinding } from "./types";
  * Solo UUID — nunca email en componentes.
  * ═══════════════════════════════════════════════════════════════════
  *
- * Hack Pádel (cuenta de prueba, upgrade premium):
+ * Hack Padel (cuenta de prueba, upgrade premium):
  *   Nombre visible: Hackpadel
  *   Email (referencia humana): aaronduran2020@gmail.com
  */

@@ -10,6 +10,10 @@ import {
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { computePublicProfileStats } from "../../lib/rivieraJugadores/historialDisplay";
 import {
+  applyGrantedSourceDisplayToJugador,
+  loadGrantedSourceDisplayData,
+} from "../../lib/rivieraJugadores/organizerPlayerAccess";
+import {
   deleteParticipacionJugador,
   deleteRivieraJugador,
   getRivieraJugadorBySlug,
@@ -86,15 +90,32 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setInstagram(j.instagram_url ?? "");
         setFacebook(j.facebook_url ?? "");
         setTiktok(j.tiktok_url ?? "");
-        const h = await listParticipaciones(j.id, 100);
-        setHistorial(h);
-        try {
-          const rebuilt = await rebuildJugadorStats(j.id);
-          if (rebuilt) {
-            setJugador({ ...j, stats: rebuilt });
+
+        const isGrantedReadOnly = Boolean(j.concedidoPorAdmin);
+        const sourceJugadorId = j.grantedAccess?.sourceJugadorId;
+
+        if (isGrantedReadOnly && sourceJugadorId) {
+          const [h, sourceDisplay] = await Promise.all([
+            listParticipaciones(sourceJugadorId, 100),
+            loadGrantedSourceDisplayData(sourceJugadorId),
+          ]);
+          setHistorial(h);
+          setJugador(
+            sourceDisplay
+              ? applyGrantedSourceDisplayToJugador(j, sourceDisplay)
+              : j
+          );
+        } else {
+          const h = await listParticipaciones(j.id, 100);
+          setHistorial(h);
+          try {
+            const rebuilt = await rebuildJugadorStats(j.id);
+            if (rebuilt) {
+              setJugador({ ...j, stats: rebuilt });
+            }
+          } catch (e) {
+            console.warn("[riviera-jugadores] sync stats en ficha:", e);
           }
-        } catch (e) {
-          console.warn("[riviera-jugadores] sync stats en ficha:", e);
         }
       }
     } finally {
@@ -111,8 +132,12 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       setHistorialRating([]);
       return;
     }
+    const ratingJugadorId =
+      jugador.concedidoPorAdmin && jugador.grantedAccess?.sourceJugadorId
+        ? jugador.grantedAccess.sourceJugadorId
+        : jugador.id;
     let active = true;
-    obtenerHistorialRating(jugador.id, 10)
+    obtenerHistorialRating(ratingJugadorId, 10)
       .then((rows) => {
         if (active) setHistorialRating(rows);
       })
@@ -122,7 +147,11 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     return () => {
       active = false;
     };
-  }, [jugador?.id]);
+  }, [
+    jugador?.id,
+    jugador?.concedidoPorAdmin,
+    jugador?.grantedAccess?.sourceJugadorId,
+  ]);
 
   const handleSaveProfile = async () => {
     if (!jugador) return;
@@ -260,6 +289,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   }
 
   const s = jugador.stats;
+  const isGrantedReadOnly = Boolean(jugador.concedidoPorAdmin);
   const retasCount = histStats.retasClasicas;
   const torneosCount = histStats.torneosExpress;
   const ligasCount = histStats.ligas;
@@ -288,29 +318,40 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           </button>
         </nav>
 
+        {isGrantedReadOnly ? (
+          <p className="rj-ficha-readonly-notice" role="status">
+            Acceso concedido — solo el club dueño del registro puede editar este
+            perfil.
+          </p>
+        ) : null}
+
         <header className="rj-ficha-header">
           <div className="rj-ficha-header__avatar-wrap">
             <JugadorAvatar fotoUrl={jugador.foto_url} nombre={jugador.nombre} size="lg" />
-            <button
-              type="button"
-              className="rj-ficha-header__upload"
-              title="Cambiar foto"
-              disabled={uploading}
-              onClick={() => fileRef.current?.click()}
-            >
-              {uploading ? "…" : "📷"}
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void handlePhoto(f);
-                e.target.value = "";
-              }}
-            />
+            {!isGrantedReadOnly ? (
+              <>
+                <button
+                  type="button"
+                  className="rj-ficha-header__upload"
+                  title="Cambiar foto"
+                  disabled={uploading}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  {uploading ? "…" : "📷"}
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void handlePhoto(f);
+                    e.target.value = "";
+                  }}
+                />
+              </>
+            ) : null}
           </div>
           <div>
             <div className="rj-ficha-header__name-row">
@@ -342,35 +383,37 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           </div>
         </header>
 
-        <div className="rj-ficha-actions">
-          <button
-            type="button"
-            className="rj-btn rj-btn--ghost"
-            onClick={() => setEditOpen((v) => !v)}
-          >
-            {editOpen ? "Cerrar edición" : "Editar perfil"}
-          </button>
-          {user?.id && (
-            <a
+        {!isGrantedReadOnly ? (
+          <div className="rj-ficha-actions">
+            <button
+              type="button"
               className="rj-btn rj-btn--ghost"
-              href={buildPublicJugadorPath(jugador.slug, user.id)}
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() => setEditOpen((v) => !v)}
             >
-              Ver perfil público
-            </a>
-          )}
-          <button
-            type="button"
-            className="rj-btn rj-btn--danger"
-            disabled={deleting}
-            onClick={() => void handleDelete()}
-          >
-            {deleting ? "Eliminando…" : "Eliminar jugador"}
-          </button>
-        </div>
+              {editOpen ? "Cerrar edición" : "Editar perfil"}
+            </button>
+            {user?.id && (
+              <a
+                className="rj-btn rj-btn--ghost"
+                href={buildPublicJugadorPath(jugador.slug, user.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver perfil público
+              </a>
+            )}
+            <button
+              type="button"
+              className="rj-btn rj-btn--danger"
+              disabled={deleting}
+              onClick={() => void handleDelete()}
+            >
+              {deleting ? "Eliminando…" : "Eliminar jugador"}
+            </button>
+          </div>
+        ) : null}
 
-        {editOpen && (
+        {!isGrantedReadOnly && editOpen && (
           <section className="rj-edit-panel">
             <h2 className="rj-edit-panel__title">Datos del jugador</h2>
             <div className="rj-field">
@@ -615,7 +658,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             participaciones={historial}
             categoriaFallback={jugador?.categoria}
             variant="admin"
-            onDelete={handleDeleteParticipacion}
+            onDelete={isGrantedReadOnly ? undefined : handleDeleteParticipacion}
             deletingId={deletingHistId}
           />
         )}

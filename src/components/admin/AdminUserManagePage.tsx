@@ -8,6 +8,7 @@ import { buildMarketingOfficialRankingsUrl, getOfficialRankingsPageUrl } from ".
 import { buildInternalClubRankingUrl } from "../jugadores/jugadoresPublicNav";
 import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
 import { updateUserEmailAdmin } from "../../lib/admin/updateUserEmailAdmin";
+import { updateUserNameAdmin } from "../../lib/admin/updateUserNameAdmin";
 import { navigateAdminDashboard } from "../../lib/admin/adminNav";
 import { AccountControlsPanel } from "./AccountControlsPanel";
 import "./AdminDashboard.css";
@@ -51,6 +52,9 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
   const [editingEmail, setEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
 
   const loadUser = useCallback(async () => {
     setLoading(true);
@@ -102,6 +106,7 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
     if (!user) return;
     setEmailDraft(user.email);
     setEditingEmail(true);
+    setEditingName(false);
     setNotice("");
     setSuccessNotice("");
   };
@@ -109,6 +114,66 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
   const handleCancelEmailEdit = () => {
     setEditingEmail(false);
     setEmailDraft("");
+  };
+
+  const handleStartNameEdit = () => {
+    if (!user) return;
+    setNameDraft(user.name || "");
+    setEditingName(true);
+    setEditingEmail(false);
+    setNotice("");
+    setSuccessNotice("");
+  };
+
+  const handleCancelNameEdit = () => {
+    setEditingName(false);
+    setNameDraft("");
+  };
+
+  const handleSaveName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    const trimmed = nameDraft.trim();
+    if (!trimmed) {
+      setNotice("El nombre es obligatorio.");
+      setSuccessNotice("");
+      return;
+    }
+
+    if (trimmed === (user.name || "").trim()) {
+      setEditingName(false);
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `¿Cambiar el nombre de "${user.name || user.email}" a "${trimmed}"?`
+      )
+    ) {
+      return;
+    }
+
+    setSavingName(true);
+    setNotice("");
+    setSuccessNotice("");
+
+    try {
+      const result = await updateUserNameAdmin({
+        targetUserId: user.id,
+        newName: trimmed,
+      });
+      setUser((prev) => (prev ? { ...prev, name: result.name } : prev));
+      setEditingName(false);
+      setNameDraft("");
+      setSuccessNotice("Nombre actualizado en el perfil de la cuenta.");
+    } catch (err) {
+      setNotice(
+        err instanceof Error ? err.message : "No se pudo actualizar el nombre"
+      );
+    } finally {
+      setSavingName(false);
+    }
   };
 
   const handleSaveEmail = async (e: React.FormEvent) => {
@@ -237,7 +302,60 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
             )}
           </div>
           <div>
-            <h2 className="admin-user-page__name">{user.name || user.email}</h2>
+            <div className="admin-user-page__name-block">
+              {editingName ? (
+                <form
+                  className="admin-user-page__email-edit"
+                  onSubmit={(e) => void handleSaveName(e)}
+                >
+                  <label className="admin-user-page__email-hint" htmlFor="admin-user-name">
+                    Nuevo nombre de la cuenta
+                  </label>
+                  <input
+                    id="admin-user-name"
+                    type="text"
+                    className="admin-user-page__email-input"
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    autoComplete="off"
+                    disabled={savingName}
+                    required
+                    maxLength={120}
+                  />
+                  <p className="admin-user-page__email-hint">
+                    Se actualiza en el perfil de la cuenta al guardar.
+                  </p>
+                  <div className="admin-user-page__email-actions">
+                    <button
+                      type="submit"
+                      className="admin-user-page__email-btn admin-user-page__email-btn--primary"
+                      disabled={savingName}
+                    >
+                      {savingName ? "Guardando…" : "Guardar nombre"}
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-user-page__email-btn"
+                      onClick={handleCancelNameEdit}
+                      disabled={savingName}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="admin-user-page__email-row">
+                  <h2 className="admin-user-page__name">{user.name || user.email}</h2>
+                  <button
+                    type="button"
+                    className="admin-user-page__email-btn"
+                    onClick={handleStartNameEdit}
+                  >
+                    Cambiar nombre
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="admin-user-page__email-block">
               {editingEmail ? (
                 <form

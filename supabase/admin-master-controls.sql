@@ -218,4 +218,56 @@ CREATE POLICY rj_select_anon ON public.riviera_jugadores
     AND public.is_organizador_ranking_publico(organizador_id)
   );
 
+-- ── Admin maestro: cambiar nombre de organizador ──
+CREATE OR REPLACE FUNCTION public.admin_update_organizador_name(
+  p_user_id uuid,
+  p_new_name text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  v_name text := trim(p_new_name);
+BEGIN
+  IF NOT public.is_master_admin() THEN
+    RAISE EXCEPTION 'Solo Admin Principal puede cambiar el nombre';
+  END IF;
+
+  IF p_user_id IS NULL OR v_name IS NULL OR v_name = '' THEN
+    RAISE EXCEPTION 'Nombre inválido';
+  END IF;
+
+  IF char_length(v_name) > 120 THEN
+    RAISE EXCEPTION 'El nombre es demasiado largo';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM public.users u WHERE u.id = p_user_id) THEN
+    RAISE EXCEPTION 'Usuario no encontrado';
+  END IF;
+
+  UPDATE public.users
+  SET
+    name = v_name,
+    updated_at = now()
+  WHERE id = p_user_id;
+
+  UPDATE auth.users
+  SET
+    raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::jsonb)
+      || jsonb_build_object('name', v_name),
+    updated_at = now()
+  WHERE id = p_user_id;
+
+  RETURN jsonb_build_object(
+    'ok', true,
+    'user_id', p_user_id,
+    'name', v_name
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.admin_update_organizador_name(uuid, text) TO authenticated;
+
 NOTIFY pgrst, 'reload schema';

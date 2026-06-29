@@ -114,6 +114,12 @@ export type { RetaPartidoDetalle } from "./buildRetaPartidosDetalle";
 
 export interface RivieraJugadorWithStats extends RivieraJugador {
   stats?: JugadorStats | null;
+  /** Jugador con acceso concedido por Admin Principal (visible para este organizador). */
+  concedidoPorAdmin?: boolean;
+  grantedAccess?: {
+    accessId: string;
+    sourceJugadorId: string;
+  };
 }
 
 export interface RatingHistorialEntry {

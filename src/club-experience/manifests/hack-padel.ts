@@ -2,12 +2,12 @@ import { createBrandManifest } from "../manifestFactory";
 import { RIVIERA_MOTHER_BRAND_NAME } from "../motherBrand";
 import type { BrandManifest } from "../types";
 
-/** Manifiesto Hack Pádel — primer club con experiencia personalizada. */
+/** Manifiesto Hack Padel — primer club con experiencia personalizada. */
 export const HACK_PADEL_MANIFEST: BrandManifest = createBrandManifest({
   id: "hack-padel",
   brandingKey: "hack-padel",
   active: true,
-  displayName: "Hack Pádel",
+  displayName: "Hack Padel",
   motherBrand: RIVIERA_MOTHER_BRAND_NAME,
   slogans: {
     primary: "Organiza. Juega. Compite.",
@@ -66,12 +66,12 @@ export const HACK_PADEL_MANIFEST: BrandManifest = createBrandManifest({
   home: {
     welcomeTitle: "¿Qué quieres jugar hoy?",
     welcomeSubtitle:
-      "Bienvenido a tu ecosistema Hack Pádel. Elige un modo y lanza tu reta.",
+      "Bienvenido a tu ecosistema Hack Padel. Elige un modo y lanza tu reta.",
     eyebrow: null,
     backgroundImage: "/brands/hack-padel/hero-bg.jpg",
     emptyStateTitle: null,
     emptyStateText:
-      "Elige un modo arriba y comienza tu experiencia Hack Pádel.",
+      "Elige un modo arriba y comienza tu experiencia Hack Padel.",
   },
   landing: {
     subtitle: "Tu club, tu ranking, tu experiencia con Riviera Open.",
@@ -80,7 +80,7 @@ export const HACK_PADEL_MANIFEST: BrandManifest = createBrandManifest({
   },
   badges: {
     liveLabel: "EN VIVO",
-    partnerBadge: "Hack Pádel",
+    partnerBadge: "Hack Padel",
   },
 });
 

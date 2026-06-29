@@ -15,6 +15,7 @@ import {
 } from "./rivieraJugadoresService";
 import type { RivieraJugador } from "./types";
 import { normalizePlayerNameKey } from "./playerNameKey";
+import { resolveJugadorIdForOrganizer } from "./organizerPlayerAccess";
 
 const SYNC_TTL_MS = 45_000;
 const lastLegacySyncAt: Record<string, number> = {};
@@ -248,13 +249,29 @@ export async function ensureLegacyPlayerForRivieraJugador(
   rj: RivieraJugador
 ): Promise<Player | null> {
   try {
-    const existing = await findLegacyPlayerForRiviera(organizadorId, rj);
-    if (existing) {
-      if (rj.legacy_player_id !== existing.id) {
-        await linkLegacyPlayerId(rj.id, existing.id);
+    const effectiveId = await resolveJugadorIdForOrganizer(
+      organizadorId,
+      rj.id
+    );
+    let effectiveRj = rj;
+    if (effectiveId !== rj.id) {
+      const { data, error: fetchErr } = await supabase
+        .from("riviera_jugadores")
+        .select("*")
+        .eq("id", effectiveId)
+        .maybeSingle();
+      if (!fetchErr && data) {
+        effectiveRj = data as RivieraJugador;
       }
-      if (!legacyMatchesRivieraName(existing, rj)) {
-        const nombre = rj.nombre.trim();
+    }
+
+    const existing = await findLegacyPlayerForRiviera(organizadorId, effectiveRj);
+    if (existing) {
+      if (effectiveRj.legacy_player_id !== existing.id) {
+        await linkLegacyPlayerId(effectiveRj.id, existing.id);
+      }
+      if (!legacyMatchesRivieraName(existing, effectiveRj)) {
+        const nombre = effectiveRj.nombre.trim();
         const { error: nameErr } = await supabase
           .from("players")
           .update({ name: nombre })
@@ -266,16 +283,16 @@ export async function ensureLegacyPlayerForRivieraJugador(
           ...existing,
           name: nombre,
         };
-        return applyRivieraContactToLegacyPlayer(rj, refreshed);
+        return applyRivieraContactToLegacyPlayer(effectiveRj, refreshed);
       }
-      return applyRivieraContactToLegacyPlayer(rj, existing);
+      return applyRivieraContactToLegacyPlayer(effectiveRj, existing);
     }
 
-    const created = await insertLegacyPlayer(rj.nombre, organizadorId, {
-      email: isRealEmail(rj.email) ? rj.email : null,
+    const created = await insertLegacyPlayer(effectiveRj.nombre, organizadorId, {
+      email: isRealEmail(effectiveRj.email) ? effectiveRj.email : null,
     });
-    await linkLegacyPlayerId(rj.id, created.id);
-    return applyRivieraContactToLegacyPlayer(rj, created);
+    await linkLegacyPlayerId(effectiveRj.id, created.id);
+    return applyRivieraContactToLegacyPlayer(effectiveRj, created);
   } catch (e) {
     console.warn("ensureLegacyPlayerForRivieraJugador:", rj.nombre, e);
     return null;
@@ -372,24 +389,40 @@ export async function ensureLigaJugadorForRivieraJugador(
   if (!isValidUuid(organizadorId) || !isValidUuid(rj.id)) return null;
 
   try {
+    const effectiveId = await resolveJugadorIdForOrganizer(
+      organizadorId,
+      rj.id
+    );
+    let effectiveRj = rj;
+    if (effectiveId !== rj.id) {
+      const { data, error: fetchErr } = await supabase
+        .from("riviera_jugadores")
+        .select("*")
+        .eq("id", effectiveId)
+        .maybeSingle();
+      if (!fetchErr && data) {
+        effectiveRj = data as RivieraJugador;
+      }
+    }
+
     const existing = await findLigaJugadorForRiviera(
       organizadorId,
-      rj,
+      effectiveRj,
       activePool
     );
     if (existing) {
-      const linkedLegacyId = sanitizeUuid(rj.legacy_liga_jugador_id);
+      const linkedLegacyId = sanitizeUuid(effectiveRj.legacy_liga_jugador_id);
       if (linkedLegacyId !== existing.id) {
-        await linkLegacyLigaJugadorId(rj.id, existing.id);
+        await linkLegacyLigaJugadorId(effectiveRj.id, existing.id);
       }
-      const nombre = rj.nombre.trim();
+      const nombre = effectiveRj.nombre.trim();
       if (nombre && normalizeName(existing.nombre) !== normalizeName(nombre)) {
         const { data: synced, error: upErr } = await supabase
           .from("liga_jugadores")
           .update({
             nombre,
-            telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
-            ...(isRealEmail(rj.email) ? { email: rj.email!.trim() } : {}),
+            telefono: effectiveRj.telefono?.trim() || effectiveRj.whatsapp?.trim() || null,
+            ...(isRealEmail(effectiveRj.email) ? { email: effectiveRj.email!.trim() } : {}),
           })
           .eq("id", existing.id)
           .eq("organizador_id", organizadorId)
@@ -400,7 +433,7 @@ export async function ensureLigaJugadorForRivieraJugador(
       return existing;
     }
 
-    const nameKey = normalizeName(rj.nombre);
+    const nameKey = normalizeName(effectiveRj.nombre);
     if (nameKey) {
       const pool =
         activePool ?? (await loadActiveLigaJugadoresRows(organizadorId));
@@ -413,7 +446,7 @@ export async function ensureLigaJugadorForRivieraJugador(
           sameName
         );
         const linked = sameName.find((j) => j.id === canonicalId) ?? sameName[0]!;
-        await linkLegacyLigaJugadorId(rj.id, linked.id);
+        await linkLegacyLigaJugadorId(effectiveRj.id, linked.id);
         if (activePool && !activePool.some((j) => j.id === linked.id)) {
           activePool.push(linked);
         }
@@ -424,10 +457,10 @@ export async function ensureLigaJugadorForRivieraJugador(
     const { data: row, error } = await supabase
       .from("liga_jugadores")
       .insert({
-        nombre: rj.nombre.trim(),
-        email: isRealEmail(rj.email) ? rj.email!.trim() : null,
-        telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
-        genero: rj.genero ?? null,
+        nombre: effectiveRj.nombre.trim(),
+        email: isRealEmail(effectiveRj.email) ? effectiveRj.email!.trim() : null,
+        telefono: effectiveRj.telefono?.trim() || effectiveRj.whatsapp?.trim() || null,
+        genero: effectiveRj.genero ?? null,
         nivel: null,
         organizador_id: organizadorId,
         estado: "activo",
@@ -437,7 +470,7 @@ export async function ensureLigaJugadorForRivieraJugador(
 
     if (error) throw error;
     const created = row as LigaJugador;
-    await linkLegacyLigaJugadorId(rj.id, created.id);
+    await linkLegacyLigaJugadorId(effectiveRj.id, created.id);
     if (activePool) activePool.push(created);
     return created;
   } catch (e) {

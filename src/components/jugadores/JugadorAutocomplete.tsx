@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { searchRivieraJugadoresQuick } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import {
+  isGrantedJugadorRow,
+  resolveGrantedJugadorForOrganizerUse,
+} from "../../lib/rivieraJugadores/organizerPlayerAccess";
 import type { RivieraJugador } from "../../lib/rivieraJugadores/types";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
@@ -71,13 +75,29 @@ export const JugadorAutocomplete: React.FC<JugadorAutocompleteProps> = ({
                 style={{ width: "100%", border: "none", background: "none", color: "inherit" }}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
-                  onSelect(j);
-                  onChange(j.nombre);
-                  setOpen(false);
+                  void (async () => {
+                    const resolved = isGrantedJugadorRow(j)
+                      ? await resolveGrantedJugadorForOrganizerUse(
+                          organizadorId,
+                          j
+                        )
+                      : j;
+                    onSelect(resolved);
+                    onChange(resolved.nombre);
+                    setOpen(false);
+                  })();
                 }}
               >
                 <JugadorAvatar fotoUrl={j.foto_url} nombre={j.nombre} size="sm" />
                 <span style={{ flex: 1, textAlign: "left" }}>{j.nombre}</span>
+                {isGrantedJugadorRow(j) ? (
+                  <span
+                    className="rj-granted-badge"
+                    title="Acceso concedido por Admin Principal"
+                  >
+                    Concedido
+                  </span>
+                ) : null}
                 <JugadorCategoriaBadge categoria={j.categoria} />
               </button>
             </li>
