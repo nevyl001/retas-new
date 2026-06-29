@@ -28,6 +28,16 @@
 
 .user-header-logo {
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+.user-header-logo .brand-signature--partner.brand-signature--header .brand-signature__name {
+  font-size: 1.125rem;
+  letter-spacing: 0.06em;
+}
+
+.user-header-logo .brand-signature--partner.brand-signature--header .brand-signature__mother {
+  margin-top: 1px;
 }
 
 .user-header-logo h1 {
@@ -279,13 +289,13 @@
     justify-content: space-between;
   }
 
-  .user-header-logo h1 {
-    font-size: clamp(1.05rem, 4.5vw, 1.25rem);
-    line-height: 1.15;
+  .user-header-logo .brand-signature--header .brand-signature__tagline {
+    display: none;
   }
 
-  .user-header-tagline {
-    display: none;
+  .user-header-logo .brand-signature--header .brand-signature__name {
+    font-size: clamp(1.05rem, 4.5vw, 1.25rem);
+    line-height: 1.15;
   }
 }
 

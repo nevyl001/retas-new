@@ -82,12 +82,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
     <div className="auth-form-container">
       <div className="auth-form-card">
         <header className="auth-form-header">
-          <div className="auth-form-header__brand">
-            <span className="auth-form-header__brand-icon" aria-hidden>
-              🏆
-            </span>
-            <span className="auth-form-header__brand-name">RivieraApp</span>
-          </div>
           <h1>Crea tu cuenta</h1>
           <p>Empieza a organizar tus retas en minutos</p>
         </header>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
-import { RIVIERA_APP_TAGLINE } from "../../lib/rivieraBranding";
+import { BrandSignature } from "../../branding";
+import { RIVIERA_MOTHER_BRAND_NAME } from "../../lib/rivieraBranding";
 import "./AdminLogin.css";
 
 interface AdminLoginProps {
@@ -48,17 +49,9 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
 
       <main className="admin-login-card">
         <header className="admin-login-card__header">
-          <div className="admin-login-brand" aria-hidden="true">
-            <img
-              src="/logo-riviera.png"
-              alt=""
-              className="admin-login-brand__logo"
-              width={40}
-              height={40}
-            />
+          <div className="admin-login-brand">
+            <BrandSignature variant="auth" showTagline logoSurface="dark" />
           </div>
-          <p className="admin-login-card__eyebrow">RivieraApp</p>
-          <p className="admin-login-card__tagline">{RIVIERA_APP_TAGLINE}</p>
           <h1 className="admin-login-card__title">Administración</h1>
           <p className="admin-login-card__subtitle">
             Inicia sesión con tu cuenta de administrador
@@ -126,7 +119,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
         <footer className="admin-login-card__footer">
           <span>Panel restringido</span>
           <span className="admin-login-card__dot" aria-hidden="true" />
-          <span>RivieraApp</span>
+          <span>{RIVIERA_MOTHER_BRAND_NAME}</span>
         </footer>
       </main>
     </div>

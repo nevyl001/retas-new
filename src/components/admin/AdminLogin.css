@@ -82,21 +82,13 @@
 
 .admin-login-brand {
   display: flex;
-  align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
   margin: 0 auto 1rem;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.admin-login-brand__logo {
-  display: block;
-  width: 2rem;
-  height: 2rem;
-  object-fit: contain;
+.admin-login-brand .brand-signature--auth {
+  flex-direction: column;
+  align-items: center;
 }
 
 .admin-login-card__eyebrow {

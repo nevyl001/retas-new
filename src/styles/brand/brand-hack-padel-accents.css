@@ -41,6 +41,6 @@
   outline-color: var(--brand-accent);
 }
 
-[data-brand="hack-padel"] .co-brand__mother {
+[data-brand="hack-padel"] .brand-signature__mother {
   color: color-mix(in srgb, var(--brand-accent) 65%, #ffffff);
 }

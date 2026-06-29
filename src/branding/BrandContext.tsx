@@ -6,6 +6,11 @@ import React, {
 } from "react";
 import { useUser } from "../contexts/UserContext";
 import { resolveBrand, isCoBrandedOrganizer } from "./brandResolver";
+import {
+  applyBrandFavicon,
+  applyBrandThemeTokens,
+  clearBrandThemeTokens,
+} from "./applyBrandTheme";
 import type { BrandConfig } from "./types";
 
 interface BrandContextValue {
@@ -37,10 +42,15 @@ export const BrandProvider: React.FC<BrandProviderProps> = ({ children }) => {
 
   useEffect(() => {
     applyBrandToDocument(brand.key);
+    applyBrandThemeTokens(brand);
+    if (isCoBranded) {
+      applyBrandFavicon(brand);
+    }
     return () => {
       applyBrandToDocument("riviera");
+      clearBrandThemeTokens();
     };
-  }, [brand.key]);
+  }, [brand, isCoBranded]);
 
   const value = useMemo(
     () => ({ brand, isCoBranded, organizadorId }),

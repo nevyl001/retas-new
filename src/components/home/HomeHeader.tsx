@@ -1,5 +1,5 @@
 import React from "react";
-import { useBrand } from "../../branding";
+import { getHomeEyebrow, useBrand } from "../../branding";
 import { ModeHeader } from "../platform/ModeHeader";
 
 interface HomeHeaderProps {
@@ -9,9 +9,7 @@ interface HomeHeaderProps {
 export const HomeHeader: React.FC<HomeHeaderProps> = ({ userName }) => {
   const { brand, isCoBranded } = useBrand();
   const displayName = userName?.trim() || "Organizador";
-  const eyebrow = isCoBranded
-    ? `${brand.displayName} ${brand.coBrandLine}`
-    : brand.motherBrandName;
+  const eyebrow = getHomeEyebrow(brand, isCoBranded);
 
   return (
     <ModeHeader

@@ -140,3 +140,13 @@
   color: rgba(252, 165, 165, 1);
   transform: none;
 }
+
+.mobile-menu-brand {
+  margin-top: 0.25rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.mobile-menu-brand .brand-signature--menu {
+  width: 100%;
+}

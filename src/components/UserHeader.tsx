@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../contexts/UserContext";
-import { CoBrandMark } from "../branding";
+import { BrandSignature, useBrand } from "../branding";
 import { MobileUserMenu } from "./MobileUserMenu";
 import "./UserHeader.css";
 
 export const UserHeader: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
+  const { isCoBranded } = useBrand();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -96,7 +97,7 @@ export const UserHeader: React.FC = () => {
       <div className="user-header-content">
         <div className="user-header-main">
           <div className="user-header-logo">
-            <CoBrandMark variant="header" />
+            <BrandSignature variant="header" showTagline={!isCoBranded} />
           </div>
 
           <div className="user-header-actions desktop-only">

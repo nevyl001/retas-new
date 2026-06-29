@@ -1,8 +1,22 @@
-/** Nombre corto de producto (vistas públicas, pestaña, etc.) */
-export const RIVIERA_APP_DISPLAY = "RivieraApp";
+import {
+  RIVIERA_CO_BRAND_ATTRIBUTION,
+  RIVIERA_DEFAULT_SLOGAN,
+  RIVIERA_MOTHER_BRAND_NAME,
+  RIVIERA_PRODUCT_NAME,
+} from "../branding/motherBrand";
+
+/** @deprecated Importar desde `branding/motherBrand` o `branding`. */
+export const RIVIERA_APP_DISPLAY = RIVIERA_PRODUCT_NAME;
 
 /** Tagline de producto — header, auth, vistas públicas, meta */
-export const RIVIERA_APP_TAGLINE = "Organiza. Juega. Compite.";
+export const RIVIERA_APP_TAGLINE = RIVIERA_DEFAULT_SLOGAN;
+
+export {
+  RIVIERA_MOTHER_BRAND_NAME,
+  RIVIERA_CO_BRAND_ATTRIBUTION,
+  RIVIERA_PRODUCT_NAME,
+  RIVIERA_DEFAULT_SLOGAN,
+};
 
 /**
  * Descripción unificada: enlaces compartidos (OG), manifest y cabeceras públicas.

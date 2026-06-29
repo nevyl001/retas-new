@@ -1,22 +1,16 @@
-import {
-  getBrandConfigByKey,
-  resolveBrandKeyForOrganizador,
-} from "./brandRegistry";
+import { brandConfigSource } from "./brandConfigSource";
 import { RIVIERA_DEFAULT_BRAND } from "./defaultBrand";
 import type { BrandConfig } from "./types";
 
 export function resolveBrand(
   organizadorId: string | null | undefined
 ): BrandConfig {
-  const key = resolveBrandKeyForOrganizador(organizadorId);
-  if (key === "riviera") {
-    return RIVIERA_DEFAULT_BRAND;
-  }
-  return getBrandConfigByKey(key);
+  return brandConfigSource.resolveForOrganizador(organizadorId);
 }
 
 export function isCoBrandedOrganizer(
   organizadorId: string | null | undefined
 ): boolean {
-  return resolveBrandKeyForOrganizador(organizadorId) !== "riviera";
+  const brand = brandConfigSource.resolveForOrganizador(organizadorId);
+  return brand.key !== RIVIERA_DEFAULT_BRAND.key && brand.active;
 }

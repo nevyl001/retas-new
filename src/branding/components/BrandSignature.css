@@ -1,0 +1,115 @@
+.brand-signature {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.brand-signature__logo {
+  flex-shrink: 0;
+  width: auto;
+  height: 2.25rem;
+  max-width: 2.75rem;
+  object-fit: contain;
+}
+
+.brand-signature--auth .brand-signature__logo {
+  height: 3rem;
+  max-width: 3.25rem;
+}
+
+.brand-signature--inline .brand-signature__logo {
+  height: 1.75rem;
+  max-width: 2rem;
+}
+
+.brand-signature--menu .brand-signature__logo {
+  height: 1.5rem;
+  max-width: 1.75rem;
+}
+
+.brand-signature__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.brand-signature__name {
+  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-weight: var(--brand-heading-weight, 700);
+  letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
+  font-size: 1.125rem;
+  line-height: 1.15;
+  color: var(--effective-text, var(--ro-text-primary));
+}
+
+.brand-signature--partner .brand-signature__name {
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+
+.brand-signature--inline .brand-signature__name {
+  font-size: 0.9375rem;
+  text-transform: none;
+}
+
+.brand-signature--menu .brand-signature__name {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.brand-signature__mother {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--effective-muted, var(--ro-text-muted));
+  line-height: 1.3;
+}
+
+.brand-signature__mother--compact {
+  font-size: 0.75rem;
+}
+
+.brand-signature--menu .brand-signature__mother--compact {
+  font-size: 0.6875rem;
+}
+
+.brand-signature__tagline {
+  font-size: 0.75rem;
+  color: var(--effective-muted, var(--ro-text-secondary));
+  line-height: 1.35;
+}
+
+.brand-signature--compact,
+.brand-signature--menu {
+  flex-wrap: wrap;
+}
+
+.brand-signature--compact .brand-signature__text,
+.brand-signature--menu .brand-signature__text {
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+@media (max-width: 430px) {
+  .brand-signature--header.brand-signature--partner
+    .brand-signature__mother:not(.brand-signature__mother--compact) {
+    display: none;
+  }
+
+  .brand-signature--header.brand-signature--partner .brand-signature__name {
+    font-size: clamp(0.8125rem, 3.6vw, 0.9375rem);
+    line-height: 1.2;
+  }
+
+  .brand-signature--header.brand-signature--partner .brand-signature__name::after {
+    content: " · Riviera Open";
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--effective-muted, var(--ro-text-muted));
+  }
+}

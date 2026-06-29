@@ -1,14 +1,30 @@
+import { createBrandConfig } from "./brandConfigFactory";
+import {
+  RIVIERA_DEFAULT_SLOGAN,
+  RIVIERA_MOTHER_BRAND_NAME,
+  RIVIERA_PRODUCT_NAME,
+} from "./motherBrand";
 import type { BrandConfig } from "./types";
 
-/** Marca madre — fallback para cualquier organizador sin entrada en el índice. */
-export const RIVIERA_DEFAULT_BRAND: BrandConfig = {
+/** Marca madre — fallback para cualquier organizador sin branding activo. */
+export const RIVIERA_DEFAULT_BRAND: BrandConfig = createBrandConfig({
   key: "riviera",
-  displayName: "RivieraApp",
-  motherBrandName: "Riviera Open",
-  coBrandLine: "by Riviera Open",
-  coBrandCompact: "RivieraApp · Riviera Open",
-  logoUrl: "/logo-riviera.png",
-  slogan: "Organiza. Juega. Compite.",
+  active: true,
+  displayName: RIVIERA_PRODUCT_NAME,
+  motherBrandName: RIVIERA_MOTHER_BRAND_NAME,
+  assets: {
+    logoLight: "/logo-riviera.png",
+    logoDark: "/logo-riviera.png",
+    favicon: "/favicon.ico",
+    heroImage: null,
+    iconSquare: "/logo-riviera.png",
+  },
+  messaging: {
+    slogan: RIVIERA_DEFAULT_SLOGAN,
+    authSubtitle:
+      "Crea retas, gestiona torneos y sigue el ranking de tu grupo.",
+    authProof: "Usado por +200 jugadores activos",
+  },
   colors: {
     primary: "#000000",
     secondary: "#4C4C4C",
@@ -28,4 +44,4 @@ export const RIVIERA_DEFAULT_BRAND: BrandConfig = {
     headingWeight: 700,
     headingLetterSpacing: "-0.02em",
   },
-};
+});
