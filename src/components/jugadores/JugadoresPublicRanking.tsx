@@ -41,6 +41,7 @@ import {
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
 import { RankingInternoDisclaimer } from "./RankingInternoDisclaimer";
 import { RankingPodio } from "./RankingPodio";
+import { RankingPtsDisplay } from "./RankingPtsDisplay";
 import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
 import "./riviera-jugadores-public-ranking.css";
 
@@ -290,6 +291,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                 <RankingPodio
                   jugadores={jugadoresFiltrados.slice(0, 3)}
                   ranks={rankingRanks.slice(0, 3)}
+                  clubOrganizadorId={orgId}
                   onSelect={(slug) => {
                     const j = jugadoresFiltrados.find((row) => row.slug === slug);
                     if (j) openPlayer(j);
@@ -323,12 +325,12 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                             </span>
                             <span className="rjp-ranking-card__meta">
                               <JugadorPaisBadge codigo={j.pais_codigo} size="sm" />
-                              <span className="rjp-ranking-card__pts">
-                                {(j.stats?.puntos_totales ?? 0).toLocaleString(
-                                  "es-MX"
-                                )}{" "}
-                                pts
-                              </span>
+                              <RankingPtsDisplay
+                                jugador={j}
+                                clubOrganizadorId={orgId}
+                                className="rjp-ranking-card__pts"
+                                variant="stacked"
+                              />
                             </span>
                           </div>
                           <TablerIcon

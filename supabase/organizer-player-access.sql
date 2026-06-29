@@ -2,6 +2,7 @@
 -- Ejecutar en Supabase SQL Editor después de admin-master-controls.sql
 --
 -- No migra historial, no recalcula rankings, no crea global_players.
+-- Diseño Fase 2 (carrera global + perfiles locales): docs/JUGADOR-GLOBAL-FASE-2.md
 
 -- ── Tabla de accesos ──
 CREATE TABLE IF NOT EXISTS public.organizer_player_access (

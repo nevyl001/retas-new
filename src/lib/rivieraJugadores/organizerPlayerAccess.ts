@@ -144,14 +144,28 @@ export async function loadGrantedSourceDisplayData(
 
 export function applyGrantedSourceDisplayToJugador(
   jugador: RivieraJugadorWithStats,
-  source: NonNullable<Awaited<ReturnType<typeof loadGrantedSourceDisplayData>>>
+  source: NonNullable<Awaited<ReturnType<typeof loadGrantedSourceDisplayData>>>,
+  ownerOrganizadorId?: string | null
 ): RivieraJugadorWithStats {
+  const hasLocalRating = (jugador.rating_partidos ?? 0) > 0;
   return {
     ...jugador,
-    stats: source.stats ?? jugador.stats,
-    rating: source.rating,
-    rating_partidos: source.ratingPartidos,
-    rating_fiabilidad: source.ratingFiabilidad,
+    statsOrigenConcedido: source.stats ?? null,
+    rating: hasLocalRating ? jugador.rating : source.rating,
+    rating_partidos: hasLocalRating
+      ? jugador.rating_partidos
+      : source.ratingPartidos,
+    rating_fiabilidad: hasLocalRating
+      ? jugador.rating_fiabilidad
+      : source.ratingFiabilidad,
+    grantedAccess: jugador.grantedAccess
+      ? {
+          ...jugador.grantedAccess,
+          ownerOrganizadorId:
+            ownerOrganizadorId?.trim() ||
+            jugador.grantedAccess.ownerOrganizadorId,
+        }
+      : undefined,
   };
 }
 

@@ -1,14 +1,21 @@
 import React from "react";
 import { JugadorAvatar } from "./JugadorAvatar";
+import { RankingPtsDisplay } from "./RankingPtsDisplay";
+import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 
-export type RankingPodioJugador = {
-  id: string;
-  nombre: string;
-  foto_url?: string | null;
-  pais_codigo?: string | null;
-  stats?: { puntos_totales?: number | null } | null;
-  slug?: string;
-};
+export type RankingPodioJugador = Pick<
+  RivieraJugadorWithStats,
+  "id" | "nombre" | "foto_url" | "pais_codigo" | "stats" | "slug"
+> &
+  Partial<
+    Pick<
+      RivieraJugadorWithStats,
+      | "concedidoPorAdmin"
+      | "statsOrigenConcedido"
+      | "grantedAccess"
+      | "organizador_id"
+    >
+  >;
 
 type MedalKey = "gold" | "silver" | "bronze";
 
@@ -28,8 +35,9 @@ export const RankingPodio: React.FC<{
   jugadores: RankingPodioJugador[];
   /** Posiciones reales (empates comparten número). Índice alineado con `jugadores`. */
   ranks?: number[];
+  clubOrganizadorId?: string | null;
   onSelect: (slug: string) => void;
-}> = ({ jugadores, ranks, onSelect }) => {
+}> = ({ jugadores, ranks, clubOrganizadorId = null, onSelect }) => {
   if (jugadores.length === 0) return null;
 
   return (
@@ -67,9 +75,12 @@ export const RankingPodio: React.FC<{
               />
             </div>
             <span className="rjp-podio__name">{jugador.nombre}</span>
-            <span className="rjp-podio__pts">
-              {(jugador.stats?.puntos_totales ?? 0).toLocaleString("es-MX")} pts
-            </span>
+            <RankingPtsDisplay
+              jugador={jugador as RivieraJugadorWithStats}
+              clubOrganizadorId={clubOrganizadorId}
+              className="rjp-podio__pts"
+              variant="stacked"
+            />
             <span className="rjp-podio__platform" aria-hidden />
           </button>
         );

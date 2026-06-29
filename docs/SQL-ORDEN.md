@@ -17,6 +17,25 @@ Luego crea jugadores de nuevo en **Registro de jugadores Riviera Open**.
 
 Hazlos directamente en el **SQL Editor** de Supabase (o con migraciones de Supabase CLI si las adoptáis más adelante). El esquema canónico vive en la base de datos del proyecto, no en archivos del repo.
 
+### Documentación de arquitectura
+
+| Tema | Archivo |
+|------|---------|
+| Jugador global, perfiles locales, rankings (Fase 2) | `docs/JUGADOR-GLOBAL-FASE-2.md` |
+| Ranking oficial Riviera Open | `docs/RANKING-OFICIAL-RIVIERAOPEN.md` |
+| Ranking oficial acumulado multi-club (diseño) | `docs/RANKING-OFICIAL-MULTI-CLUB.md` |
+| Acceso concedido entre organizadores (Fase 1) | `supabase/organizer-player-access.sql` |
+| **ROMC-1** — esquema identidad + ledger (sin dual-write) | `supabase/riviera-official-multi-club-romc1.sql` |
+| **ROMC-2** — dual-write ledger oficial (emisores + RPC) | `supabase/riviera-official-multi-club-romc2.sql` |
+
+### Orden recomendado (esquema nuevo)
+
+1. `admin-master-controls.sql`
+2. `organizer-player-access.sql`
+3. `riviera-official-multi-club-romc1.sql` (ROMC-1)
+4. `riviera-official-multi-club-romc2.sql` (ROMC-2)
+5. Validación ROMC-1: `docs/ROMC-1-CHECKLIST.md`
+
 ## Seguridad RLS (alerta Supabase)
 
 Si recibes **"Table publicly accessible"** / `rls_disabled_in_public`:

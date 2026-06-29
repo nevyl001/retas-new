@@ -28,8 +28,8 @@ import {
 } from "../../lib/rivieraJugadores/genero";
 import {
   rankingPosicionesFromSorted,
-  rankingPuntosJugador,
 } from "../../lib/rivieraJugadores/rankingPosition";
+import { rankingPuntosJugadorLista } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
 import { navigateJugadoresLista } from "./jugadoresGeneroNav";
@@ -107,7 +107,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   };
 
   const handleDeleteJugador = async (j: RivieraJugadorWithStats) => {
-    if (!user?.id) return;
+    if (!user?.id || j.concedidoPorAdmin) return;
     const ok = window.confirm(
       `¿Eliminar a «${j.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas. Esta acción no se puede deshacer.`
     );
@@ -128,8 +128,8 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
 
   const { jugadoresOrdenados, rankById } = useMemo(() => {
     const sorted = [...jugadores].sort((a, b) => {
-      const pa = rankingPuntosJugador(a);
-      const pb = rankingPuntosJugador(b);
+      const pa = rankingPuntosJugadorLista(a);
+      const pb = rankingPuntosJugadorLista(b);
       if (pb !== pa) return pb - pa;
       return a.nombre.localeCompare(b.nombre, "es");
     });
@@ -273,7 +273,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
         <div className="rj-grid">
           {jugadoresOrdenados.map((j) => {
             const pos = rankById.get(j.id) ?? 0;
-            const puntos = rankingPuntosJugador(j);
+            const puntos = rankingPuntosJugadorLista(j);
             const esPrimero = pos === 1;
             return (
               <article key={j.id} className="rj-card">
@@ -292,6 +292,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                   <span className="rj-card__pts">
                     {puntos.toLocaleString("es-MX")} pts
                   </span>
+                  {!j.concedidoPorAdmin ? (
                   <div className="rj-card__actions">
                     {permiteAjustePuntosManuales ? (
                       <button
@@ -307,18 +308,15 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                     <button
                       type="button"
                       className="rj-card__delete"
-                      title={
-                        j.concedidoPorAdmin
-                          ? "El acceso se gestiona desde Admin Principal"
-                          : "Eliminar jugador"
-                      }
+                      title="Eliminar jugador"
                       aria-label={`Eliminar a ${j.nombre}`}
-                      disabled={deletingId === j.id || j.concedidoPorAdmin}
+                      disabled={deletingId === j.id}
                       onClick={() => void handleDeleteJugador(j)}
                     >
                       <TablerIcon name="trash" size={14} aria-hidden={false} />
                     </button>
                   </div>
+                  ) : null}
                 </div>
                 <button
                   type="button"
@@ -346,6 +344,12 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                   <JugadorCategoriaBadge categoria={j.categoria} />
                   <JugadorPerfilMeta jugador={j} variant="card" />
                   <p className="rj-card__stats">
+                    {(j.rating_partidos ?? 0) > 0 ? (
+                      <>
+                        Nivel {(j.rating ?? 3).toFixed(2)}
+                        {" · "}
+                      </>
+                    ) : null}
                     {j.stats?.total_partidos ?? 0} partidos · {pct(j)} victorias
                   </p>
                 </button>

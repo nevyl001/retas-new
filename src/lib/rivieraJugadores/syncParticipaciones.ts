@@ -53,6 +53,7 @@ import {
   rebuildJugadorStats,
   registrarParticipacion,
 } from "./rivieraJugadoresService";
+import { tryWriteRivieraOfficialLedger } from "./rivieraOfficialLedger";
 import type { JugadorResultado, JugadorTipoEvento } from "./types";
 import type { Duelo2v2 } from "../duelo2v2/types";
 import {
@@ -282,10 +283,13 @@ async function safeRegistrar(params: {
     const puntos = sumaRanking
       ? Math.max(0, params.puntosObtenidos ?? 0)
       : 0;
-    await registrarParticipacion({
+    const participacionId = await registrarParticipacion({
       ...params,
       puntosObtenidos: puntos,
     });
+    if (participacionId) {
+      await tryWriteRivieraOfficialLedger(participacionId);
+    }
     if (sumaRanking) {
       await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
     }
@@ -394,6 +398,7 @@ async function upsertParticipacionRanking(params: {
       return;
     }
     await rebuildJugadorStats(params.jugadorId);
+    await tryWriteRivieraOfficialLedger(existing.id);
     return;
   }
 
