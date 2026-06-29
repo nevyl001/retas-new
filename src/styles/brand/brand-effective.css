@@ -1,0 +1,15 @@
+/* Variables efectivas — componentes usan estas con fallback Riviera. */
+
+:root {
+  --effective-primary: var(--brand-primary, var(--ro-bg-base));
+  --effective-secondary: var(--brand-secondary, #4c4c4c);
+  --effective-accent: var(--brand-accent, var(--ro-accent));
+  --effective-surface: var(--brand-surface, var(--ro-bg-surface));
+  --effective-surface-alt: var(--brand-surface-alt, var(--ro-bg-elevated));
+  --effective-border: var(--brand-border, var(--ro-border));
+  --effective-text: var(--brand-text, var(--ro-text-primary));
+  --effective-muted: var(--brand-muted, var(--ro-text-muted));
+  --effective-success: var(--brand-success, var(--ro-success));
+  --effective-warning: var(--brand-warning, #fbbf24);
+  --effective-danger: var(--brand-danger, var(--ro-error));
+}

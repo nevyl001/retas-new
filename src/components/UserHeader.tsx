@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "../contexts/UserContext";
-import { RIVIERA_APP_TAGLINE } from "../lib/rivieraBranding";
+import { CoBrandMark } from "../branding";
 import { MobileUserMenu } from "./MobileUserMenu";
 import "./UserHeader.css";
 
@@ -96,8 +96,7 @@ export const UserHeader: React.FC = () => {
       <div className="user-header-content">
         <div className="user-header-main">
           <div className="user-header-logo">
-            <h1>RivieraApp</h1>
-            <span className="user-header-tagline">{RIVIERA_APP_TAGLINE}</span>
+            <CoBrandMark variant="header" />
           </div>
 
           <div className="user-header-actions desktop-only">

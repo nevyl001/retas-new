@@ -1,0 +1,46 @@
+/* Acentos principales — solo bajo [data-brand="hack-padel"] en <html>. */
+
+[data-brand="hack-padel"] .user-header {
+  border-bottom-color: color-mix(in srgb, var(--brand-accent) 35%, var(--ro-border));
+}
+
+[data-brand="hack-padel"] .user-profile-btn:hover,
+[data-brand="hack-padel"] .user-header-mobile-btn:hover {
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, var(--ro-border));
+}
+
+[data-brand="hack-padel"] .rv-button-primary {
+  background: var(--brand-accent);
+  color: #000000;
+  border-color: color-mix(in srgb, var(--brand-accent) 80%, #ffffff);
+}
+
+[data-brand="hack-padel"] .rv-button-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-accent) 88%, #ffffff);
+}
+
+[data-brand="hack-padel"] .home-mode-card:hover,
+[data-brand="hack-padel"] .home-mode-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent) 55%, var(--ro-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand-accent) 25%, transparent);
+}
+
+[data-brand="hack-padel"] .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+  letter-spacing: 0.12em;
+}
+
+[data-brand="hack-padel"] .auth-form-panel__card-wrap .auth-submit-btn,
+[data-brand="hack-padel"] .auth-page button[type="submit"] {
+  border-color: color-mix(in srgb, var(--brand-accent) 50%, transparent);
+}
+
+[data-brand="hack-padel"] a:focus-visible,
+[data-brand="hack-padel"] button:focus-visible,
+[data-brand="hack-padel"] input:focus-visible {
+  outline-color: var(--brand-accent);
+}
+
+[data-brand="hack-padel"] .co-brand__mother {
+  color: color-mix(in srgb, var(--brand-accent) 65%, #ffffff);
+}

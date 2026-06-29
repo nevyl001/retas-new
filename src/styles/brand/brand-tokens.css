@@ -1,0 +1,38 @@
+/* Capa de marca — no reemplaza tokens Riviera (--ro-*). */
+
+:root,
+[data-brand="riviera"] {
+  --brand-primary: var(--ro-bg-base);
+  --brand-secondary: #4c4c4c;
+  --brand-accent: var(--ro-accent);
+  --brand-surface: var(--ro-bg-surface);
+  --brand-surface-alt: var(--ro-bg-elevated);
+  --brand-border: var(--ro-border);
+  --brand-text: var(--ro-text-primary);
+  --brand-muted: var(--ro-text-muted);
+  --brand-success: var(--ro-success);
+  --brand-warning: #fbbf24;
+  --brand-danger: var(--ro-error);
+  --brand-font-heading: var(--ro-font-heading);
+  --brand-font-body: var(--ro-font-body);
+  --brand-heading-weight: 700;
+  --brand-heading-letter-spacing: -0.02em;
+}
+
+[data-brand="hack-padel"] {
+  --brand-primary: #000000;
+  --brand-secondary: #4c4c4c;
+  --brand-accent: #bfff00;
+  --brand-surface: #000000;
+  --brand-surface-alt: #0f0f0f;
+  --brand-border: #4c4c4c;
+  --brand-text: #ffffff;
+  --brand-muted: #4c4c4c;
+  --brand-success: #bfff00;
+  --brand-warning: #fbbf24;
+  --brand-danger: #f87171;
+  --brand-font-heading: Montserrat, var(--ro-font-heading, system-ui, sans-serif);
+  --brand-font-body: Montserrat, var(--ro-font-body, system-ui, sans-serif);
+  --brand-heading-weight: 700;
+  --brand-heading-letter-spacing: 0.04em;
+}

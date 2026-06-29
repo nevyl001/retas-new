@@ -10,6 +10,7 @@ import "./App.css";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { UserProvider, useUser } from "./contexts/UserContext";
 import { AccountFeaturesProvider } from "./contexts/AccountFeaturesContext";
+import { BrandProvider } from "./branding";
 
 // Components
 import MainLayout from "./components/MainLayout";
@@ -1038,11 +1039,13 @@ function App() {
   return (
     <ThemeProvider>
       <UserProvider>
-        <AccountFeaturesProvider>
-          <AdminProvider>
-            <AppContent />
-          </AdminProvider>
-        </AccountFeaturesProvider>
+        <BrandProvider>
+          <AccountFeaturesProvider>
+            <AdminProvider>
+              <AppContent />
+            </AdminProvider>
+          </AccountFeaturesProvider>
+        </BrandProvider>
       </UserProvider>
     </ThemeProvider>
   );

@@ -12,6 +12,9 @@
 @import "./styles/riviera-open-mobile-polish.css"; /* Revisión mobile-first final */
 @import "./styles/standings-leader-gold.css";
 @import "./styles/standings-criterion.css";
+@import "./styles/brand/brand-tokens.css";
+@import "./styles/brand/brand-effective.css";
+@import "./styles/brand/brand-hack-padel-accents.css";
 @import "./styles/riviera-app-shell.css";
 @import "./styles/riviera-public-court.css";
 @import "./styles/riviera-public-tokens.css";

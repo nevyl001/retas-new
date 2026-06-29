@@ -1,0 +1,84 @@
+.co-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.co-brand__logo {
+  flex-shrink: 0;
+  width: auto;
+  height: 2.25rem;
+  max-width: 2.75rem;
+  object-fit: contain;
+}
+
+.co-brand--auth .co-brand__logo {
+  height: 3rem;
+  max-width: 3.25rem;
+}
+
+.co-brand__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.co-brand__name {
+  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-weight: var(--brand-heading-weight, 700);
+  letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
+  font-size: 1.125rem;
+  line-height: 1.15;
+  color: var(--effective-text, var(--ro-text-primary));
+}
+
+.co-brand--partner .co-brand__name {
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+
+.co-brand__mother {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--effective-muted, var(--ro-text-muted));
+  line-height: 1.3;
+}
+
+.co-brand__mother--compact {
+  font-size: 0.75rem;
+}
+
+.co-brand__tagline {
+  font-size: 0.75rem;
+  color: var(--effective-muted, var(--ro-text-secondary));
+  line-height: 1.35;
+}
+
+.co-brand--compact {
+  flex-wrap: wrap;
+}
+
+.co-brand--compact .co-brand__text {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+}
+
+@media (max-width: 430px) {
+  .co-brand--header.co-brand--partner .co-brand__mother:not(.co-brand__mother--compact) {
+    display: none;
+  }
+
+  .co-brand--header.co-brand--partner .co-brand__name::after {
+    content: " · Riviera Open";
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--effective-muted, var(--ro-text-muted));
+  }
+}
