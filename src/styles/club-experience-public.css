@@ -16,6 +16,11 @@
   margin-bottom: 0.35rem;
 }
 
+/* Ranking: una sola línea de marca (evita HACK PADEL duplicado + salto de layout) */
+.rjp-ranking-header__club-identity.club-identity--compact .club-identity__name {
+  display: none;
+}
+
 /* —— Torneo Express público —— */
 [data-club="hack-padel"].club-experience-scope .te-public-header__kicker,
 [data-club="hack-padel"].club-experience-scope .te-public-header__line {
@@ -86,6 +91,36 @@
 [data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__wordmark,
 [data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__riviera-line {
   color: color-mix(in srgb, var(--brand-accent) 88%, #ffffff);
+}
+
+[data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__club-identity {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 0.3rem;
+}
+
+[data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__club-identity .club-identity__logo {
+  height: auto;
+  max-height: clamp(2.5rem, 9vw, 3.5rem);
+  max-width: min(18rem, 90vw);
+  width: auto;
+  object-fit: contain;
+}
+
+[data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__club-identity .club-identity__name {
+  display: none;
+}
+
+[data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__club-identity .club-identity__text {
+  align-items: center;
+  text-align: center;
+}
+
+[data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__club-identity .club-identity__tagline {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 [data-club="hack-padel"].club-experience-scope .ro-pub-celebrate__closing {

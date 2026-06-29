@@ -15,7 +15,7 @@ export const HACK_PADEL_MANIFEST: BrandManifest = createBrandManifest({
   },
   logos: {
     light: "/brands/hack-padel/logo-light.png",
-    dark: "/brands/hack-padel/logo.png",
+    dark: "/brands/hack-padel/logo-transparent.png",
     favicon: "/brands/hack-padel/favicon.png",
     square: "/brands/hack-padel/icon.png",
   },

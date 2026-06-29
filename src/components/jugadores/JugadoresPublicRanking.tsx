@@ -51,12 +51,23 @@ interface JugadoresPublicRankingProps {
   genero?: RivieraJugadorGenero;
 }
 
+function resolvePublicRankingOrgId(routeOrganizadorId?: string): string | null {
+  return (
+    routeOrganizadorId?.trim() ||
+    getPublicOrganizadorIdFromPath() ||
+    getPublicOrganizadorIdWithoutUser() ||
+    null
+  );
+}
+
 export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   organizadorId: routeOrganizadorId,
   genero = "M",
 }) => {
-  const [orgId, setOrgId] = useState<string | null>(null);
-  const [orgReady, setOrgReady] = useState(false);
+  const [orgId, setOrgId] = useState<string | null>(() =>
+    resolvePublicRankingOrgId(routeOrganizadorId)
+  );
+  const [orgReady, setOrgReady] = useState(true);
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,13 +95,12 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
       return;
     }
 
-    const fromUrl =
-      routeOrganizadorId?.trim() ||
-      getPublicOrganizadorIdWithoutUser() ||
-      null;
+    const fromUrl = resolvePublicRankingOrgId(routeOrganizadorId);
     setOrgId(fromUrl);
     setOrgReady(true);
   }, [routeOrganizadorId, genero]);
+
+  const scopeOrgId = orgId ?? routeOrganizadorId?.trim() ?? null;
 
   const openPlayer = useCallback(
     (j: RivieraJugadorWithStats) => {
@@ -188,7 +198,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   };
 
   return (
-    <ClubExperienceScope organizadorId={orgId}>
+    <ClubExperienceScope organizadorId={scopeOrgId}>
     <JugadoresPublicShell variant="ranking">
       <div className="rjp-ranking">
         <header className="rjp-ranking-header">

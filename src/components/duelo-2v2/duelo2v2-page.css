@@ -537,6 +537,24 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
+@media (min-width: 640px) {
+  .duelo2v2-roster__selection-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .duelo2v2-roster__selection-preview {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .duelo2v2-roster__selection-actions {
+    flex-shrink: 0;
+  }
+}
+
 .duelo2v2-roster__selection-preview {
   margin: 0;
   font-size: 0.875rem;
@@ -557,8 +575,18 @@
 }
 
 .duelo2v2-roster__selection-actions .riviera-btn-primary {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 40px;
+}
+
+@media (max-width: 639px) {
+  .duelo2v2-roster__selection-actions {
+    width: 100%;
+  }
+
+  .duelo2v2-roster__selection-actions .riviera-btn-primary {
+    flex: 1 1 auto;
+  }
 }
 
 .duelo2v2-players-grid {
@@ -633,6 +661,16 @@
   margin-bottom: clamp(1rem, 3vw, 2rem);
   display: flex;
   justify-content: center;
+}
+
+.duelo2v2-page--public .duelo2v2-live-board__brand .ro-pub-celebrate__brand {
+  margin-bottom: 0;
+  gap: 0.5rem;
+}
+
+.duelo2v2-page--public .duelo2v2-live-board__brand .ro-divider-gold--wide {
+  max-width: min(12rem, 55vw);
+  opacity: 0.85;
 }
 
 .duelo2v2-live-board__header {

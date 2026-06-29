@@ -96,6 +96,15 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .rjp-ranking-header,
+  .rjp-ranking-intro,
+  .rjp-header,
+  .rjp-ranking-panel {
+    animation: none !important;
+  }
+}
+
 .rjp-header {
   margin-bottom: 1.25rem;
   animation: rjp-fade-in 0.45s ease-out both;
