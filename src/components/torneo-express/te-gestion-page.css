@@ -34,6 +34,22 @@
   align-items: flex-start;
 }
 
+.te-gestion-page .te-gestion-back-toolbar {
+  margin-bottom: clamp(10px, 2.5vw, 14px);
+}
+
+.te-gestion-page .te-gestion-back-toolbar .riviera-btn {
+  width: 100%;
+  justify-content: flex-start;
+  min-height: 40px;
+}
+
+@media (min-width: 640px) {
+  .te-gestion-page .te-gestion-back-toolbar .riviera-btn {
+    width: auto;
+  }
+}
+
 .te-gestion-page .te-gestion-title {
   margin: 0 0 0.65rem;
   font-family: var(--font-body);

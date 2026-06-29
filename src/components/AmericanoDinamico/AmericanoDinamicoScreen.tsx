@@ -361,8 +361,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             publicUrl={publicAmericanoUrl}
             title="Enlace público"
             infoLines={[
-              "Comparte este enlace para que cualquiera vea en tiempo real quién juega contra quién y el marcador.",
-              "El marcador se sincroniza en la nube; los participantes solo pueden ver, no editar.",
+              "Comparte el enlace para ver marcador y emparejamientos en vivo.",
             ]}
           />
         ) : null}
@@ -401,10 +400,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         <PublicShareSection
           publicUrl={publicAmericanoUrl}
           title="Enlace público"
-          infoLines={[
-            "Comparte este enlace para que cualquiera vea el podio, ranking e historial del americano.",
-            "Los participantes solo podrán ver los resultados, no podrán editar nada.",
-          ]}
+          infoLines={["Comparte el enlace para ver podio y ranking del americano."]}
         />
       ) : null}
       <p className="americano-screen__finished">Americano finalizado</p>

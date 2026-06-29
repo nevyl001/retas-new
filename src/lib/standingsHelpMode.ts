@@ -20,7 +20,7 @@ export function getStandingsSchedulingNoteText(mode: StandingsHelpMode): string 
     case "dual-meet":
       return "En un dual meet cada equipo suma games y partidos de sus parejas; esta tabla ordena el marcador global por equipo.";
     case "round-robin":
-      return "En el round robin cada pareja enfrenta al resto según el calendario; la tabla ordena el acumulado de la fase.";
+      return "La tabla ordena el acumulado de la fase.";
     case "remontada-final":
       return "Esta tabla corresponde al round robin. La remontada final define al campeón entre los mejores clasificados.";
     case "americano":

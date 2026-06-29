@@ -1,0 +1,40 @@
+/* Enlace público — compacto en móvil (reta, liga, americano, duelo, etc.) */
+
+@media (max-width: 768px) {
+  .public-link-section {
+    padding: 0.75rem 0.85rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .public-link-section h3 {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase;
+    margin: 0 0 0.45rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .public-link-info {
+    margin-bottom: 0.55rem !important;
+    padding: 0.45rem 0.55rem !important;
+    border-radius: 8px !important;
+  }
+
+  .public-link-info p {
+    font-size: 0.75rem !important;
+    line-height: 1.35 !important;
+    margin: 0 !important;
+  }
+
+  .public-link-actions {
+    gap: 0.45rem !important;
+  }
+
+  .public-link-button,
+  .public-link-preview {
+    min-height: 40px !important;
+    padding: 0.45rem 0.85rem !important;
+    font-size: 0.8125rem !important;
+  }
+}

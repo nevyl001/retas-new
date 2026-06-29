@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import "../../styles/public-link-section.css";
 
 export interface PublicShareSectionProps {
   publicUrl: string;
@@ -15,10 +16,7 @@ export const PublicShareSection: React.FC<PublicShareSectionProps> = ({
   publicUrl,
   onCopy,
   title = "Enlace público",
-  infoLines = [
-    "Comparte este enlace con los participantes para que vean los resultados en tiempo real.",
-    "Los participantes solo podrán ver los resultados, no podrán editar nada.",
-  ],
+  infoLines = ["Comparte el enlace para ver resultados en vivo (solo lectura)."],
   copyButtonLabel = "Copiar enlace",
   copiedLabel = "Enlace copiado",
   previewLabel = "Ver vista pública",
@@ -47,9 +45,7 @@ export const PublicShareSection: React.FC<PublicShareSectionProps> = ({
       <h3>{title}</h3>
       {infoLines.length > 0 ? (
         <div className="public-link-info">
-          {infoLines.map((line) => (
-            <p key={line}>{line}</p>
-          ))}
+          <p>{infoLines.join(" ")}</p>
         </div>
       ) : null}
       <div className="public-link-actions">

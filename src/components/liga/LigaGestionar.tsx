@@ -358,10 +358,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       <PublicShareSection
         publicUrl={publicLigaUrl(ligaId)}
         title="Enlace público"
-        infoLines={[
-          "Comparte este enlace para que cualquiera vea el ranking y las jornadas de la liga.",
-          "Los visitantes solo podrán ver los resultados, no podrán editar nada.",
-        ]}
+        infoLines={["Comparte el enlace para ver ranking y jornadas (solo lectura)."]}
         onCopy={async () => {
           try {
             await navigator.clipboard.writeText(publicLigaUrl(ligaId));

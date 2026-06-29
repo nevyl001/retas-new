@@ -155,10 +155,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       <PublicShareSection
         publicUrl={publicDuelo2v2Url(dueloId)}
         title="Enlace público"
-        infoLines={[
-          "Comparte este enlace para que cualquiera vea el marcador y el resultado del duelo.",
-          "Los participantes solo podrán ver los resultados, no podrán editar nada.",
-        ]}
+        infoLines={["Comparte el enlace para ver el marcador del duelo (solo lectura)."]}
         copyButtonLabel="Copiar vista pública"
       />
 

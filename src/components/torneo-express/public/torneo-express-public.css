@@ -610,26 +610,17 @@
 
 /* Leyenda puntaje / columnas */
 .te-pub-scoring-help {
-  margin-bottom: 1.25rem;
-  padding: 0.85rem 1rem;
+  margin-bottom: 0.65rem;
+  padding: 0.45rem 0.6rem;
   border-radius: var(--radius-md);
   border: 0.5px solid var(--border-subtle);
   background: rgba(0, 0, 0, 0.22);
 }
 
-.te-pub-scoring-help__title {
-  margin: 0 0 0.4rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
 .te-pub-scoring-help__text {
-  margin: 0 0 0.65rem;
-  font-size: 0.75rem;
-  line-height: 1.45;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
   color: var(--text-muted);
 }
 

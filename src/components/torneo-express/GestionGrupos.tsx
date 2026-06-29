@@ -203,7 +203,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           variant="secondary"
           onClick={() => navigateTorneoExpress("/torneo-express")}
         >
-          Volver al listado
+          Volver a todos los torneos
         </Button>
       </TePageShell>
     );
@@ -213,6 +213,16 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
 
   return (
     <TePageShell className="te-gestion-page">
+      <ActionBar className="te-gestion-back-toolbar riviera-back-toolbar">
+        <Button
+          type="button"
+          variant="back"
+          onClick={() => navigateTorneoExpress("/torneo-express")}
+        >
+          ← Volver a todos los torneos
+        </Button>
+      </ActionBar>
+
       <header className="te-header te-gestion-header rv-mode-header">
         <div className="te-gestion-header__brand">
           <h1 className="te-title te-gestion-title">{bundle.torneo.nombre}</h1>
@@ -338,17 +348,6 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               ⊞
             </span>
             Ver tabla general
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => navigateTorneoExpress("/torneo-express")}
-          >
-            <span className="te-btn-icon" aria-hidden>
-              ≡
-            </span>
-            Listado
           </Button>
         </ActionBar>
       </header>

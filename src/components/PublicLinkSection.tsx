@@ -1,5 +1,6 @@
 import React, { useMemo, useEffect } from "react";
 import { Tournament, upsertTournamentPublicConfig } from "../lib/database";
+import "../styles/public-link-section.css";
 
 const TEAM_CONFIG_KEY = "rivieraapp_teams_";
 
@@ -42,14 +43,7 @@ export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
     <div className="public-link-section">
       <h3>Enlace público</h3>
       <div className="public-link-info">
-        <p>
-          Comparte este enlace con los participantes para que vean los
-          resultados en tiempo real
-        </p>
-        <p>
-          Los participantes solo podrán ver los resultados, no podrán editar
-          nada
-        </p>
+        <p>Comparte el enlace para ver resultados en vivo (solo lectura).</p>
       </div>
       <div className="public-link-actions">
         <button

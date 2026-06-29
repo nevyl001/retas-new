@@ -53,6 +53,40 @@
   margin: 0 0 0.75rem !important;
 }
 
+@media (max-width: 768px) {
+  .riviera-organizer-reta .public-link-section {
+    padding: 0.75rem 0.85rem !important;
+  }
+
+  .riviera-organizer-reta .public-link-section h3 {
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    margin-bottom: 0.45rem !important;
+  }
+
+  .riviera-organizer-reta .public-link-info {
+    margin-bottom: 0.55rem !important;
+    padding: 0.45rem 0.55rem !important;
+  }
+
+  .riviera-organizer-reta .public-link-info p {
+    font-size: 0.75rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .riviera-organizer-reta .riviera-standings .standings-scoring-help {
+    margin-bottom: 0.55rem !important;
+    padding: 0.4rem 0.55rem !important;
+  }
+
+  .riviera-organizer-reta .riviera-standings .standings-scoring-help__text,
+  .riviera-organizer-reta .riviera-standings .standings-scoring-help__legend {
+    font-size: 0.7rem !important;
+    line-height: 1.32 !important;
+  }
+}
+
 .riviera-organizer-reta .public-link-info {
   background: rgba(255, 255, 255, 0.03) !important;
   border: 1px solid var(--border-subtle) !important;
