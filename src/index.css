@@ -42,5 +42,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-canvas);
   color: var(--text-primary);
+}
+
+html:not([data-brand="hack-padel"]):not([data-club="hack-padel"]) body {
   transition: background-color var(--transition-base), color var(--transition-base);
 }

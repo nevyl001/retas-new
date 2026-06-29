@@ -32,11 +32,14 @@ function readSupabaseSessionUserId(): string | null {
 
       const parsed = JSON.parse(raw) as {
         user?: { id?: string };
+        session?: { user?: { id?: string } };
         currentSession?: { user?: { id?: string } };
       };
 
       const userId =
-        parsed.user?.id?.trim() || parsed.currentSession?.user?.id?.trim();
+        parsed.user?.id?.trim() ||
+        parsed.session?.user?.id?.trim() ||
+        parsed.currentSession?.user?.id?.trim();
       if (userId) return userId;
     }
   } catch {

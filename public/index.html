@@ -3,6 +3,8 @@
 
 <head>
     <meta charset="utf-8" />
+    <script src="%PUBLIC_URL%/club-theme-early.js"></script>
+    <link rel="stylesheet" href="%PUBLIC_URL%/club-theme-early.css" />
     <!-- Favicon: cache buster para que Android/navegador no usen icono viejo en caché -->
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png?v=8" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-192x192.png?v=8" />
@@ -68,21 +70,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=Stack+Sans+Headline:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
-    <script>
-        (function () {
-            try {
-                var raw = localStorage.getItem("ro_club_experience_v1");
-                if (!raw) return;
-                var cache = JSON.parse(raw);
-                if (!cache || !cache.brandingKey || cache.brandingKey === "riviera") return;
-                var root = document.documentElement;
-                root.setAttribute("data-club", cache.brandingKey);
-                root.setAttribute("data-brand", cache.brandingKey);
-            } catch (e) {
-                /* ignore */
-            }
-        })();
-    </script>
     <title>Riviera · Gestión de pádel</title>
 </head>
 

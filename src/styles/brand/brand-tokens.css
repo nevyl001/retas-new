@@ -19,7 +19,8 @@
   --brand-heading-letter-spacing: -0.02em;
 }
 
-[data-brand="hack-padel"] {
+[data-brand="hack-padel"],
+[data-club="hack-padel"] {
   --brand-primary: #000000;
   --brand-secondary: #4c4c4c;
   --brand-accent: #bfff00;
@@ -35,4 +36,10 @@
   --brand-font-body: Montserrat, var(--ro-font-body, system-ui, sans-serif);
   --brand-heading-weight: 700;
   --brand-heading-letter-spacing: 0.04em;
+  --bg-canvas: var(--brand-surface);
+  --bg-base: var(--brand-surface);
+  --accent-gold: var(--brand-accent);
+  --accent-gold-light: var(--brand-accent);
+  --accent-gold-dim: color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
 }
