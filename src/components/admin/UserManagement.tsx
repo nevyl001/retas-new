@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { useAdmin } from "../../contexts/AdminContext";
 import { navigateAdminUser } from "../../lib/admin/adminNav";
 import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
+import { AdminCreateUserModal } from "./AdminCreateUserModal";
 import "./UserManagement.css";
 
 const DRAFT_DESCRIPTION = "Parejas en armado para torneo";
@@ -143,10 +144,14 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   );
   const [authCleanupNoticeError, setAuthCleanupNoticeError] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent === true;
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
 
       const { data: usersData, error: usersError } = await supabase
         .from("users")
@@ -270,7 +275,9 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     } catch (error) {
       console.error("Error inesperado:", error);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [adminUser?.user_id]);
 
@@ -374,12 +381,19 @@ export const UserManagement: React.FC<UserManagementProps> = ({
 
   if (loading) {
     return (
-      <div className="user-management-loading">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Cargando usuarios...</p>
+      <>
+        <div className="user-management-loading">
+          <div className="loading-spinner">
+            <div className="spinner"></div>
+            <p>Cargando usuarios...</p>
+          </div>
         </div>
-      </div>
+        <AdminCreateUserModal
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          onCreated={() => loadUsers({ silent: true })}
+        />
+      </>
     );
   }
 
@@ -396,8 +410,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         <div className="header-controls">
           <button
             type="button"
+            className="create-user-btn"
+            onClick={() => setCreateModalOpen(true)}
+          >
+            Crear usuario
+          </button>
+          <button
+            type="button"
             className="refresh-btn"
-            onClick={loadUsers}
+            onClick={() => void loadUsers()}
             title="Actualizar lista"
           >
             Actualizar
@@ -565,6 +586,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           </div>
         )}
       </div>
+
+      <AdminCreateUserModal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onCreated={() => loadUsers({ silent: true })}
+      />
     </div>
   );
 };

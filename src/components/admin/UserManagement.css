@@ -174,7 +174,8 @@
 }
 
 .sort-btn,
-.refresh-btn {
+.refresh-btn,
+.create-user-btn {
   padding: 8px 14px;
   border-radius: 8px;
   background: transparent;
@@ -184,6 +185,17 @@
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
+}
+
+.create-user-btn {
+  background: var(--admin-text);
+  border-color: var(--admin-text);
+  color: var(--admin-bg);
+}
+
+.create-user-btn:hover {
+  background: #e4e4e7;
+  border-color: #e4e4e7;
 }
 
 .sort-btn:hover,
