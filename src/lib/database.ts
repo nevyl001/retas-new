@@ -1118,9 +1118,17 @@ export const createGame = async (
         "tie_break_pair1_points",
         "tie_break_pair2_points",
       ] as const;
-      const missingCol = optionalColumns.find(
-        (col) => col in row && isMissingColumnError(error, "games", col)
-      );
+      const currentRow = row;
+      let missingCol: (typeof optionalColumns)[number] | undefined;
+      for (const col of optionalColumns) {
+        if (
+          col in currentRow &&
+          isMissingColumnError(error, "games", col)
+        ) {
+          missingCol = col;
+          break;
+        }
+      }
       if (missingCol) {
         const { [missingCol]: _removed, ...rest } = row;
         row = rest;
