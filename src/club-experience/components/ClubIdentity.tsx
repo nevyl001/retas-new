@@ -21,6 +21,8 @@ interface ClubIdentityProps {
   variant?: ClubIdentityVariant;
   showTagline?: boolean;
   logoSurface?: ClubLogoSurface;
+  /** Logo horizontal del club; oculta el nombre duplicado y deja solo la atribución madre. */
+  wordmarkOnly?: boolean;
   className?: string;
 }
 
@@ -33,6 +35,7 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   variant = "header",
   showTagline = true,
   logoSurface = "auto",
+  wordmarkOnly = false,
   className = "",
 }) => {
   const { manifest, isClubBranded } = useClubExperience();
@@ -42,6 +45,13 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   const showLogo = Boolean(logoUrl) && !logoFailed;
   const attribution = getMotherAttributionLine(manifest);
   const compactLine = getCoBrandCompactLine(manifest);
+  const partnerWordmark = isClubBranded && wordmarkOnly;
+  const motherLine =
+    partnerWordmark || variant === "compact" || variant === "menu"
+      ? partnerWordmark
+        ? attribution
+        : compactLine
+      : attribution;
 
   const logoSize = variant === "auth" ? 56 : variant === "inline" ? 32 : 40;
 
@@ -74,12 +84,14 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
 
   return (
     <div
-      className={`club-identity club-identity--partner club-identity--${variant} ${className}`.trim()}
+      className={`club-identity club-identity--partner club-identity--${variant}${
+        partnerWordmark ? " club-identity--wordmark" : ""
+      } ${className}`.trim()}
     >
       {showLogo ? (
         <img
           src={logoUrl!}
-          alt=""
+          alt={partnerWordmark ? manifest.displayName : ""}
           className="club-identity__logo"
           width={logoSize}
           height={logoSize}
@@ -87,10 +99,12 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
         />
       ) : null}
       <div className="club-identity__text">
-        <span className="club-identity__name">{manifest.displayName}</span>
-        {variant === "compact" || variant === "menu" ? (
+        {!partnerWordmark ? (
+          <span className="club-identity__name">{manifest.displayName}</span>
+        ) : null}
+        {variant === "compact" || variant === "menu" || partnerWordmark ? (
           <span className="club-identity__mother club-identity__mother--compact">
-            {compactLine}
+            {motherLine}
           </span>
         ) : (
           <span className="club-identity__mother">{attribution}</span>

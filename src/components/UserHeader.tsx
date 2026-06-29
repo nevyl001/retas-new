@@ -97,7 +97,7 @@ export const UserHeader: React.FC = () => {
       <div className="user-header-content">
         <div className="user-header-main">
           <div className="user-header-logo">
-            <ClubIdentity variant="header" showTagline={!isClubBranded} />
+            <ClubIdentity variant="header" showTagline={!isClubBranded} wordmarkOnly={isClubBranded} />
           </div>
 
           <div className="user-header-actions desktop-only">

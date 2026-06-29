@@ -93,6 +93,35 @@
   gap: 0.1rem;
 }
 
+.club-identity--wordmark {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.club-identity--wordmark .club-identity__logo {
+  height: auto;
+  max-height: 2.25rem;
+  max-width: min(11rem, 42vw);
+  width: auto;
+  object-fit: contain;
+}
+
+.club-identity--header.club-identity--wordmark .club-identity__logo {
+  max-height: 2.5rem;
+  max-width: min(12rem, 48vw);
+}
+
+.club-identity--compact.club-identity--wordmark .club-identity__logo {
+  max-height: 2.75rem;
+  max-width: min(14rem, 75vw);
+}
+
+.club-identity--wordmark .club-identity__text {
+  align-items: flex-start;
+  gap: 0;
+}
+
 @media (max-width: 430px) {
   .club-identity--header.club-identity--partner
     .club-identity__mother:not(.club-identity__mother--compact) {

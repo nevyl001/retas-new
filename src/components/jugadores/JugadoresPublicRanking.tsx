@@ -60,14 +60,30 @@ function resolvePublicRankingOrgId(routeOrganizadorId?: string): string | null {
   );
 }
 
+function RankingBrandHeader() {
+  const { isClubBranded } = useClubExperience();
+  if (!isClubBranded) {
+    return <p className="rjp-ranking-header__brand">Riviera Open</p>;
+  }
+  return (
+    <ClubIdentity
+      variant="compact"
+      showTagline={false}
+      logoSurface="dark"
+      wordmarkOnly
+      className="rjp-ranking-header__club-identity"
+    />
+  );
+}
+
 export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   organizadorId: routeOrganizadorId,
   genero = "M",
 }) => {
-  const [orgId, setOrgId] = useState<string | null>(() =>
-    resolvePublicRankingOrgId(routeOrganizadorId)
+  const orgId = useMemo(
+    () => resolvePublicRankingOrgId(routeOrganizadorId),
+    [routeOrganizadorId]
   );
-  const [orgReady, setOrgReady] = useState(true);
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,12 +108,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     const pathOrg = getPublicOrganizadorIdFromPath();
     if (queryOrg && !pathOrg && !routeOrganizadorId) {
       navigateAppTo(buildInternalClubRankingUrl(queryOrg, genero));
-      return;
     }
-
-    const fromUrl = resolvePublicRankingOrgId(routeOrganizadorId);
-    setOrgId(fromUrl);
-    setOrgReady(true);
   }, [routeOrganizadorId, genero]);
 
   const scopeOrgId = orgId ?? routeOrganizadorId?.trim() ?? null;
@@ -114,14 +125,12 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   );
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
-    if (!orgReady) return;
-
     const silent = opts?.silent ?? false;
 
     if (!orgId) {
       setJugadores([]);
       setError(
-        "No hay ranking en esta ruta. Abre el ranking desde Registro Riviera Open."
+        "No hay ranking en esta ruta. Abre el ranking desde el registro de jugadores."
       );
       if (!silent) setLoading(false);
       return;
@@ -141,7 +150,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
         setLoading(false);
       }
     }
-  }, [orgId, categoria, genero, orgReady]);
+  }, [orgId, categoria, genero]);
 
   const loadRef = useRef(load);
   loadRef.current = load;
@@ -159,14 +168,14 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   }, [orgId]);
 
   useEffect(() => {
-    if (!orgReady) return;
+    if (!orgId) return;
 
     const id = window.setInterval(() => {
       void loadRef.current({ silent: true });
     }, RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS);
 
     return () => window.clearInterval(id);
-  }, [orgReady, orgId]);
+  }, [orgId]);
 
   const personaLabel =
     genero === "F"
@@ -182,20 +191,6 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     : `${jugadoresFiltrados.length} ${personaLabel} · ${JUGADOR_CATEGORIA_LABELS[categoria]}`;
 
   const listWide = jugadoresFiltrados.length > 8;
-
-  const RankingBrandHeader: React.FC = () => {
-    const { isClubBranded } = useClubExperience();
-    return isClubBranded ? (
-      <ClubIdentity
-        variant="compact"
-        showTagline={false}
-        logoSurface="dark"
-        className="rjp-ranking-header__club-identity"
-      />
-    ) : (
-      <p className="rjp-ranking-header__brand">Riviera Open</p>
-    );
-  };
 
   return (
     <ClubExperienceScope organizadorId={scopeOrgId}>

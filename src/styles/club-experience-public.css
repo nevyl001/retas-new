@@ -16,9 +16,9 @@
   margin-bottom: 0.35rem;
 }
 
-/* Ranking: una sola línea de marca (evita HACK PADEL duplicado + salto de layout) */
-.rjp-ranking-header__club-identity.club-identity--compact .club-identity__name {
-  display: none;
+/* Ranking: logo del club + atribución (sin duplicar el nombre en texto) */
+[data-club="hack-padel"].club-experience-scope .rjp-ranking-header__club-identity.club-identity--wordmark {
+  align-items: flex-start;
 }
 
 /* —— Torneo Express público —— */

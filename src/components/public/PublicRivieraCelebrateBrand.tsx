@@ -15,6 +15,7 @@ export const PublicRivieraCelebrateBrand: React.FC<{
           variant="compact"
           showTagline={showTagline}
           logoSurface="dark"
+          wordmarkOnly
           className="ro-pub-celebrate__club-identity"
         />
         <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />

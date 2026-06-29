@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ClubIdentity } from "../club-experience";
+import { ClubIdentity, useClubExperience } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
 import "./MobileUserMenu.css";
 
@@ -8,6 +8,7 @@ export const MobileUserMenu: React.FC<{
   isSigningOut?: boolean;
 }> = ({ onLogout, isSigningOut = false }) => {
   const { user, userProfile, signOut } = useUser();
+  const { isClubBranded } = useClubExperience();
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
 
   useEffect(() => {
@@ -71,7 +72,12 @@ export const MobileUserMenu: React.FC<{
       </div>
 
       <div className="mobile-menu-brand" aria-hidden="true">
-        <ClubIdentity variant="menu" showTagline={false} logoSurface="dark" />
+        <ClubIdentity
+          variant="menu"
+          showTagline={false}
+          logoSurface="dark"
+          wordmarkOnly={isClubBranded}
+        />
       </div>
     </div>
   );

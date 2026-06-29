@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useClubExperience } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { useUser } from "../../contexts/UserContext";
 import { useAccountFeatures } from "../../contexts/AccountFeaturesContext";
@@ -48,6 +49,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
 }) => {
   const genero = generoProp;
   const { user } = useUser();
+  const { manifest, isClubBranded } = useClubExperience();
   const { permiteAjustePuntosManuales } = useAccountFeatures();
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,6 +141,10 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     return { jugadoresOrdenados: sorted, rankById: map };
   }, [jugadores]);
 
+  const pageTitle = isClubBranded
+    ? `Registro de jugadores en ${manifest.displayName}`
+    : "Registro Riviera Open";
+
   return (
     <div className="rj-page">
       <div className="rj-page__inner">
@@ -151,7 +157,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
         </button>
         <div className="rj-page__top">
           <div>
-            <h1 className="rj-page__title">Registro Riviera Open</h1>
+            <h1 className="rj-page__title">{pageTitle}</h1>
             <p className="rj-page__sub">
               Perfiles, categoría y estadísticas de tus{" "}
               {RIVIERA_GENERO_REGISTRY_TITLE[genero]}
