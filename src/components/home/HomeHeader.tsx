@@ -20,7 +20,7 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({ userName }) => {
   return (
     <ModeHeader
       className="home-header rv-mode-header rv-mode-header--entry"
-      eyebrow={eyebrow}
+      eyebrow={eyebrow || undefined}
       title={title}
       subtitle={subtitle}
     />

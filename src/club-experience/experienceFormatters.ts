@@ -20,7 +20,7 @@ export function getHomeEyebrow(
     return manifest.home.eyebrow.trim();
   }
   if (isClubBranded) {
-    return `${manifest.displayName} ${getMotherAttributionLine(manifest)}`;
+    return "";
   }
   return manifest.motherBrand || RIVIERA_MOTHER_BRAND_NAME;
 }

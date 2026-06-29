@@ -66,12 +66,11 @@ export const HACK_PADEL_MANIFEST: BrandManifest = createBrandManifest({
   home: {
     welcomeTitle: "¿Qué quieres jugar hoy?",
     welcomeSubtitle:
-      "Bienvenido a tu ecosistema Hack Padel. Elige un modo y lanza tu reta.",
+      "Ligas, torneos, americanos y duelos: elige cómo quieres jugar.",
     eyebrow: null,
     backgroundImage: "/brands/hack-padel/hero-bg.jpg",
     emptyStateTitle: null,
-    emptyStateText:
-      "Elige un modo arriba y comienza tu experiencia Hack Padel.",
+    emptyStateText: "Elige un modo arriba para empezar a jugar.",
   },
   landing: {
     subtitle: "Tu club, tu ranking, tu experiencia con Riviera Open.",
