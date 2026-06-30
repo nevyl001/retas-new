@@ -1,314 +1,308 @@
-/* Auth — Riviera Gold (Fase 3) */
+/* Auth — Riviera Open split-screen login */
 
 .auth-page {
+  --riviera-black: #0a0a0a;
+  --riviera-ink: #070707;
+  --riviera-card: rgba(24, 24, 24, 0.92);
+  --riviera-border: rgba(255, 255, 255, 0.1);
+  --riviera-white: #ffffff;
+  --riviera-muted: #9ca3af;
+  --riviera-gold: #d4a843;
+  --riviera-gold-soft: #e5c878;
+
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
-  background: var(--bg-base);
-  color: var(--text-primary);
+  flex-direction: column;
+  background: var(--riviera-black);
+  color: var(--riviera-white);
   position: relative;
+  overflow-x: hidden;
+  font-family: var(--ro-font-body, Inter, system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+.auth-page--riviera-premium {
+  --accent-gold: var(--riviera-gold);
+  --accent-gold-light: var(--riviera-gold-soft);
+  --accent-gold-dim: rgba(212, 168, 67, 0.14);
+}
+
+.auth-page--riviera-premium .auth-toggle-btn,
+.auth-page--riviera-premium .auth-password-field__toggle {
+  color: var(--riviera-gold);
+}
+
+.auth-page--riviera-premium .auth-toggle-btn:hover,
+.auth-page--riviera-premium .auth-password-field__toggle:hover:not(:disabled) {
+  color: var(--riviera-gold-soft);
+}
+
+.auth-page--riviera-premium .riviera-input:focus,
+.auth-page--riviera-premium .auth-password-field__input:focus {
+  border-color: var(--riviera-gold);
+  box-shadow: 0 0 0 1px var(--riviera-gold);
+}
+
+/* ── Columna izquierda — hero editorial ── */
+
+.auth-visual-panel {
+  position: relative;
+  flex: 0 0 auto;
+  min-height: 42vh;
+  background: var(--riviera-black);
   overflow: hidden;
 }
 
-/* Panel visual (desktop) / fondo (mobile) */
-.auth-visual-panel {
-  display: none;
-  position: relative;
-  flex: 1 1 60%;
-  min-height: 100vh;
-  background:
-    linear-gradient(
-      135deg,
-      rgba(0, 0, 0, 0.85) 0%,
-      rgba(10, 10, 10, 0.7) 50%,
-      rgba(0, 0, 0, 0.9) 100%
-    ),
-    radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 60% 80%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
-  background-color: var(--bg-elevated);
-}
-
-.auth-visual-panel::before {
-  content: "";
+.auth-visual-panel__photo {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  background-image: url("../../assets/cancha-riviera.jpg");
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
+
+.auth-visual-panel__overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(10, 10, 10, 0.72) 0%,
+      rgba(10, 10, 10, 0.55) 50%,
+      rgba(10, 10, 10, 0.65) 100%
+    ),
+    rgba(10, 10, 10, 0.35);
+  pointer-events: none;
+}
+
+.auth-visual-panel__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.auth-visual-panel__fade {
+  display: none;
   pointer-events: none;
 }
 
 .auth-visual-panel__inner {
   position: relative;
   z-index: 1;
-  height: 100%;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: inherit;
+  padding: 2.5rem 1.5rem;
+  box-sizing: border-box;
+}
+
+.auth-hero-copy {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 3rem 4rem;
-  max-width: 560px;
-  margin: 0 auto;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 520px;
+  margin: 0;
+  padding: 0;
 }
 
-.auth-visual-brand {
-  display: block;
-  margin-bottom: 2.5rem;
+.auth-hero-copy__logo {
+  margin: 0 0 2.75rem;
 }
 
-.auth-visual-brand .club-identity--auth {
+.auth-hero-copy__logo .club-identity--auth {
   flex-direction: row;
   align-items: center;
+  gap: 0.85rem;
 }
 
-.auth-visual-brand .club-identity--auth .club-identity__name {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
+.auth-hero-copy__logo .club-identity--auth .club-identity__logo {
+  width: 44px;
+  height: 44px;
+}
+
+.auth-hero-copy__logo .club-identity--auth .club-identity__name {
+  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
+  font-size: 1.125rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--riviera-white);
 }
 
-.auth-visual-brand__logo {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
-  flex-shrink: 0;
-  margin-bottom: 0;
-  background: transparent;
+.auth-hero-copy__logo .club-identity__tagline {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--riviera-gold);
+  margin-top: 0.2rem;
 }
 
-.auth-visual-brand__name {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
+.auth-hero-copy__headline {
+  margin: 0 0 1rem;
+  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
+  font-size: clamp(2.25rem, 5vw, 3.75rem);
   font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.04em;
-}
-
-.auth-brand-tagline {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  color: var(--text-muted);
-}
-
-.auth-visual-panel__inner > .auth-brand-tagline {
-  margin: 0 0 1.25rem;
-  font-size: clamp(2rem, 4.5vw, 3rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  line-height: 1.1;
-}
-
-.auth-brand-tagline--hero {
-  margin: 0 0 12px;
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-  line-height: 1.1;
-}
-
-.auth-visual-title {
-  margin: 0 0 1.25rem;
-  font-size: clamp(2.5rem, 5vw, 3.5rem);
-  font-weight: 800;
-  color: var(--text-primary);
   line-height: 1.05;
   letter-spacing: -0.02em;
+  color: var(--riviera-white);
 }
 
-.auth-visual-subtitle {
-  margin: 0 0 2rem;
-  font-size: 1.05rem;
-  color: var(--text-secondary);
+.auth-hero-copy__subtitle {
+  margin: 0 0 2.5rem;
+  font-size: 1rem;
   line-height: 1.6;
+  color: var(--riviera-muted);
+  max-width: 24rem;
+}
+
+.auth-hero-copy__markers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  row-gap: 1rem;
+  margin: 0 0 2rem;
+  padding: 0;
+  list-style: none;
+  max-width: 28rem;
+}
+
+.auth-hero-copy__marker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0;
+}
+
+.auth-hero-copy__marker-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--riviera-white);
+  line-height: 1.35;
+}
+
+.auth-hero-copy__marker-title::before {
+  content: "— ";
+  color: var(--riviera-gold);
+  font-weight: 400;
+}
+
+.auth-hero-copy__marker-desc {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--riviera-muted);
+  padding-left: 1rem;
+}
+
+.auth-hero-copy__proof {
+  margin: 0 0 1.125rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--riviera-gold);
+}
+
+.auth-hero-copy__tagline {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
   max-width: 22rem;
 }
 
-.auth-visual-proof {
-  margin: 0;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-secondary);
-  opacity: 0.85;
-}
+/* ── Columna derecha — formulario ── */
 
-.auth-public-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 1.5rem;
-}
-
-.auth-public-links--mobile {
-  justify-content: center;
-  margin-top: 1rem;
-  margin-bottom: 0.25rem;
-}
-
-.auth-public-links__item {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-cream, var(--ro-text-primary));
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.auth-public-links__item:hover,
-.auth-public-links__item:focus-visible {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.55);
-  color: var(--ro-text-primary);
-}
-
-/* Panel formulario */
 .auth-form-panel {
-  flex: 1 1 40%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 2rem 1.25rem;
   position: relative;
-  background: var(--bg-elevated);
-}
-
-.auth-page-foot {
-  position: relative;
+  background: var(--riviera-ink);
   z-index: 1;
-  width: 100%;
-  max-width: 420px;
-  margin-top: clamp(1.25rem, 3vw, 1.75rem);
-  padding-top: 0;
-  border-top: none;
+  box-sizing: border-box;
 }
 
-.auth-page-foot .app-site-foot__link {
-  font-size: 0.6875rem;
-  letter-spacing: 0.03em;
-  line-height: 1.5;
-  max-width: 18rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.auth-form-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(0, 0, 0, 0.75) 0%,
-      rgba(10, 10, 10, 0.5) 40%,
-      rgba(0, 0, 0, 0.85) 100%
-    );
-  pointer-events: none;
+.auth-form-panel__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: min(100%, 480px);
+  margin: 0 auto;
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .auth-form-panel__card-wrap {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
-  max-width: 420px;
 }
 
-/* Branding mobile (solo ≤767px) */
+.auth-page-foot {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  margin-top: 2rem;
+  padding-top: 0.5rem;
+  border-top: none;
+  text-align: center;
+}
+
+.auth-page-foot.app-site-foot {
+  margin-top: 2rem;
+}
+
+.auth-page-foot .app-site-foot__link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+  color: var(--riviera-gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  max-width: none;
+  margin: 0 auto 1rem;
+  display: inline-block;
+}
+
+.auth-page-foot .app-site-foot__link:hover {
+  color: var(--riviera-gold-soft);
+}
+
+.auth-page-foot .app-site-foot__brand {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--riviera-muted);
+}
+
+/* ── Mobile hero (oculto — usa panel visual) ── */
+
 .auth-mobile-hero {
   display: none;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 24px;
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 420px;
-}
-
-.auth-mobile-hero .club-identity--auth {
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.auth-mobile-hero .club-identity--auth .club-identity__name {
-  font-family: var(--font-display);
-  font-size: 1.375rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.logo-img {
-  display: block;
-  object-fit: contain;
-  background: transparent;
-}
-
-.auth-mobile-hero__logo {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 12px;
-}
-
-.auth-mobile-hero__name {
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: 0.04em;
-  margin-bottom: 16px;
-}
-
-.auth-mobile-hero__title {
-  margin: 0 0 12px;
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.auth-mobile-hero__subtitle {
-  margin: 0 0 16px;
-  font-size: 14px;
-  color: var(--text-muted);
-  line-height: 1.55;
-  max-width: 280px;
-}
-
-.auth-mobile-hero__proof {
-  margin: 0;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-secondary);
 }
 
 @keyframes authLogoIn {
   from {
     opacity: 0;
-    transform: translateY(-12px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
@@ -320,66 +314,167 @@
   animation: authLogoIn 0.4s ease forwards;
 }
 
-/* Desktop split */
-@media (min-width: 968px) {
-  .auth-visual-panel {
-    display: block;
-  }
-
-  .auth-mobile-hero {
-    display: none;
-  }
-
-  .auth-form-panel {
-    padding: 2.5rem 3rem;
-  }
-
-  .auth-form-panel::before {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  .auth-logo {
+    animation: none;
   }
 }
 
+/* ── Desktop split screen ── */
+
+@media (min-width: 968px) {
+  .auth-page {
+    flex-direction: row;
+    align-items: stretch;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .auth-visual-panel {
+    flex: 1 1 58%;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .auth-visual-panel__fade {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 18%;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--riviera-ink) 100%
+    );
+    z-index: 2;
+  }
+
+  .auth-visual-panel__inner {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 3rem clamp(3rem, 6vw, 6.25rem);
+  }
+
+  .auth-form-panel {
+    flex: 1 1 42%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(3.75rem, 5vh, 5rem) clamp(3.75rem, 5vw, 5rem);
+    background: var(--riviera-ink);
+  }
+
+  .auth-form-panel__stack {
+    width: min(100%, 480px);
+    margin: 0;
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .auth-page-foot {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: clamp(2.5rem, 4vh, 3.5rem);
+    width: min(100%, 480px);
+    max-width: calc(100% - (2 * clamp(3.75rem, 5vw, 5rem)));
+    margin-top: 0;
+    padding-top: 1.5rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .auth-visual-panel__inner {
+    padding-left: 6.25rem;
+    padding-right: 3rem;
+  }
+}
+
+/* ── Mobile stack ── */
+
 @media (max-width: 967px) {
   .auth-page {
-    flex-direction: column;
-    background: var(--bg-base);
-  color: var(--text-primary);
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .auth-visual-panel {
+    min-height: auto;
+  }
+
+  .auth-visual-panel__inner {
+    padding: max(1.5rem, env(safe-area-inset-top, 0px)) 1.25rem 2rem;
+  }
+
+  .auth-hero-copy__logo {
+    margin-bottom: 1.75rem;
+  }
+
+  .auth-hero-copy__headline {
+    font-size: clamp(2rem, 8vw, 2.75rem);
+  }
+
+  .auth-hero-copy__subtitle {
+    margin-bottom: 2rem;
+    font-size: 0.9375rem;
+  }
+
+  .auth-hero-copy__markers {
+    margin-bottom: 1.5rem;
+    column-gap: 1.25rem;
+    row-gap: 0.85rem;
   }
 
   .auth-form-panel {
     flex: 1;
-    width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-    padding: 16px;
-    justify-content: center;
-    align-items: center;
-    background: var(--bg-base);
-  color: var(--text-primary);
-  }
-
-  .auth-form-panel::before {
-    display: none;
-  }
-
-  .auth-form-panel__card-wrap {
-    max-width: 420px;
-  }
-}
-
-@media (max-width: 767px) {
-  .auth-form-panel {
+    padding: 1.25rem 1rem max(1.5rem, env(safe-area-inset-bottom, 0px));
     justify-content: flex-start;
-    padding-top: max(24px, env(safe-area-inset-top, 0px));
-    overflow-y: auto;
   }
 
   .auth-page-foot {
     margin-top: auto;
-    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    padding-top: 2rem;
   }
+}
 
-  .auth-mobile-hero {
-    display: flex;
-  }
+/* Riviera madre: anula acentos Hack en login */
+html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
+  .auth-page--riviera-premium
+  button[type="submit"].btn-auth-primary {
+  background: var(--riviera-white);
+  color: var(--riviera-black);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
+  .auth-page--riviera-premium
+  button[type="submit"].btn-auth-primary:hover:not(:disabled) {
+  background: var(--riviera-gold-soft);
+  color: var(--riviera-black);
+  border-color: rgba(229, 200, 120, 0.5);
+}
+
+html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
+  .auth-page--riviera-premium
+  button[type="submit"]:focus-visible {
+  outline: 2px solid var(--riviera-gold);
+  outline-offset: 3px;
+}
+
+html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
+  .auth-page--riviera-premium
+  input:focus-visible,
+html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
+  .auth-page--riviera-premium
+  button.auth-toggle-btn:focus-visible {
+  outline-color: var(--riviera-gold);
 }

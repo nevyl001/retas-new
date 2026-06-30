@@ -93,7 +93,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
               loading={loading}
               disabled={loading}
             >
-              {loading ? "Entrando…" : "Entrar al juego →"}
+              {loading ? (
+                "Entrando…"
+              ) : (
+                <>
+                  ENTRAR AL JUEGO{" "}
+                  <span className="auth-cta-arrow" aria-hidden="true">
+                    →
+                  </span>
+                </>
+              )}
             </Button>
           </div>
         </form>

@@ -1,4 +1,4 @@
-/* Auth forms — Court Night card */
+/* Auth forms — Riviera Open premium card */
 
 .auth-form-container {
   width: 100%;
@@ -9,18 +9,18 @@
 @keyframes authCardIn {
   from {
     opacity: 0;
-    transform: translateY(24px) scale(0.98);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
 @keyframes authFieldIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -29,55 +29,52 @@
 }
 
 .auth-form-card {
+  position: relative;
   width: 100%;
-  background: var(--bg-elevated);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  padding: 2.25rem 2rem 2rem;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 20px 60px rgba(0, 0, 0, 0.6),
-    0 0 80px rgba(245, 158, 11, 0.04);
-  animation: authCardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  box-sizing: border-box;
+  background: var(--riviera-card, rgba(24, 24, 24, 0.92));
+  border: 1px solid var(--riviera-border, rgba(255, 255, 255, 0.1));
+  border-radius: 1rem;
+  padding: clamp(2.5rem, 3vw, 3rem);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  animation: authCardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.auth-form-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.auth-form-header__brand {
+.auth-form-card::before {
   display: none;
 }
 
-.auth-form-header__brand-icon {
-  font-size: 1.35rem;
+@media (prefers-reduced-motion: reduce) {
+  .auth-form-card {
+    animation: none;
+  }
+
+  .auth-field,
+  .auth-cta {
+    animation: none;
+    opacity: 1;
+  }
 }
 
-.auth-form-header__brand-name {
-  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.04em;
+.auth-form-header {
+  text-align: left;
+  margin-bottom: 1.5rem;
 }
 
 .auth-form-header h1 {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.4rem;
   font-family: var(--font-display, var(--ro-font-heading), sans-serif);
-  font-size: 2rem;
+  font-size: 1.875rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--riviera-white, #ffffff);
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .auth-form-header p {
   margin: 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--riviera-muted, #9ca3af);
   line-height: 1.5;
 }
 
@@ -87,113 +84,142 @@
   gap: 0;
 }
 
-.auth-field.riviera-field {
-  margin-bottom: 1.25rem;
+.auth-page .auth-field.riviera-field {
+  margin-bottom: 1rem;
 }
 
 .auth-field {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
   opacity: 0;
-  animation: authFieldIn 0.45s ease forwards;
+  animation: authFieldIn 0.4s ease forwards;
 }
 
 .auth-field:nth-child(1) {
-  animation-delay: 0.1s;
+  animation-delay: 0.06s;
 }
 
 .auth-field:nth-child(2) {
-  animation-delay: 0.18s;
+  animation-delay: 0.12s;
 }
 
 .auth-field:nth-child(3) {
-  animation-delay: 0.26s;
+  animation-delay: 0.18s;
 }
 
 .auth-field:nth-child(4) {
-  animation-delay: 0.34s;
+  animation-delay: 0.24s;
 }
 
-.auth-label {
+.auth-page .riviera-label {
   display: block;
-  font-size: 12px;
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-  margin-bottom: 8px;
-  font-family: var(--font-ui, var(--ro-font-body), sans-serif);
+  color: var(--riviera-muted, #9ca3af);
+  margin-bottom: 0.5rem;
 }
 
-.auth-input {
+.auth-page .riviera-input,
+.auth-page .auth-password-field__input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  height: 3.375rem;
+  min-height: 3.375rem;
+  max-height: 3.5rem;
   padding: 14px 16px;
-  color: #fff;
-  font-size: 15px;
-  font-family: var(--font-ui, var(--ro-font-body), sans-serif);
-  transition: all 200ms ease;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  color: var(--riviera-white, #ffffff);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  transition:
+    border-color 0.22s ease,
+    box-shadow 0.22s ease,
+    background-color 0.22s ease;
   outline: none;
 }
 
-.auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.25);
+.auth-page .riviera-input::placeholder,
+.auth-page .auth-password-field__input::placeholder {
+  color: rgba(142, 142, 142, 0.85);
 }
 
-.auth-input:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
+.auth-page .riviera-input:hover:not(:disabled),
+.auth-page .auth-password-field__input:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.07);
 }
 
-.auth-input:focus {
-  border-color: rgba(245, 158, 11, 0.5);
-  background: rgba(245, 158, 11, 0.04);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.08);
+.auth-page .riviera-input:focus,
+.auth-page .auth-password-field__input:focus {
+  border-color: var(--riviera-gold, #d4a843);
+  background: rgba(212, 168, 67, 0.04);
+  box-shadow: 0 0 0 1px var(--riviera-gold, #d4a843);
 }
 
-.auth-input:disabled {
+.auth-page .riviera-input:disabled,
+.auth-page .auth-password-field__input:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
 .auth-cta {
-  margin-top: 0.5rem;
+  margin-top: 0.35rem;
   opacity: 0;
-  animation: authFieldIn 0.45s ease forwards;
-  animation-delay: 0.38s;
+  animation: authFieldIn 0.4s ease forwards;
+  animation-delay: 0.28s;
 }
 
 .auth-cta--register {
-  animation-delay: 0.46s;
+  animation-delay: 0.34s;
 }
 
 .btn-auth-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   width: 100%;
-  padding: 15px 24px;
-  background: var(--accent-gold);
-  color: var(--text-inverse);
-  font-size: 14px;
+  height: 3.375rem;
+  min-height: 3.375rem;
+  max-height: 3.5rem;
+  padding: 0 1.25rem;
+  background: var(--riviera-white, #ffffff);
+  color: var(--riviera-black, #0a0a0a);
+  font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   border: none;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   cursor: pointer;
-  transition: all 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.25);
-  font-family: var(--font-ui, var(--ro-font-body), sans-serif);
+  transition:
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.24s ease,
+    background-color 0.24s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  font-family: inherit;
 }
 
 .btn-auth-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--glow-gold);
-  background: var(--accent-gold-light);
+  transform: translateY(-1px);
+  background: var(--riviera-gold-soft, #e5c878);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.btn-auth-primary:hover:not(:disabled) .auth-cta-arrow {
+  transform: translateX(3px);
 }
 
 .btn-auth-primary:active:not(:disabled) {
-  transform: scale(0.98) translateY(0);
+  transform: translateY(0);
+}
+
+.btn-auth-primary:focus-visible {
+  outline: 2px solid var(--riviera-gold, #c9a24b);
+  outline-offset: 3px;
 }
 
 .btn-auth-primary:disabled {
@@ -203,11 +229,25 @@
   box-shadow: none;
 }
 
+.auth-page button.btn-auth-primary.riviera-btn--lg {
+  height: 3.375rem;
+  min-height: 3.375rem;
+  max-height: 3.5rem;
+  padding: 0 1.25rem;
+  font-size: 0.9375rem;
+  border-radius: 0.75rem;
+}
+
+.auth-cta-arrow {
+  display: inline-block;
+  transition: transform 0.22s ease;
+}
+
 .auth-error {
   margin-bottom: 1rem;
   padding: 0.75rem 1rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.28);
   border-radius: 10px;
   animation: authFieldIn 0.35s ease forwards;
 }
@@ -221,15 +261,15 @@
 
 .auth-footer {
   text-align: center;
-  margin-top: 1.75rem;
+  margin-top: 1.25rem;
   padding-top: 0;
   border-top: none;
 }
 
 .auth-footer p {
   margin: 0;
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-size: 0.8125rem;
+  color: var(--riviera-muted, #9ca3af);
   line-height: 1.5;
 }
 
@@ -238,21 +278,26 @@
   border: none;
   padding: 0;
   margin: 0;
-  color: var(--accent-gold);
+  color: var(--riviera-gold, #d4a843);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: inherit;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
   font-family: inherit;
-  transition: color 150ms ease;
+  transition: color 0.2s ease;
 }
 
 .auth-toggle-btn:hover {
-  color: var(--ro-accent-hover);
+  color: var(--riviera-gold-soft, #e5c878);
 }
 
-/* Registro exitoso */
+.auth-toggle-btn:focus-visible {
+  outline: 2px solid var(--riviera-gold, #c9a24b);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .auth-success-card {
   text-align: center;
 }
@@ -262,111 +307,32 @@
   font-family: var(--font-display, var(--ro-font-heading), sans-serif);
   font-size: 1.75rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--riviera-white, #f5f2ea);
 }
 
 .auth-success-card p {
   margin: 0 0 0.75rem;
   font-size: 0.9rem;
-  color: #9ca3af;
+  color: var(--riviera-muted, #8e8e8e);
   line-height: 1.55;
 }
 
 .auth-success-card strong {
-  color: #fff;
+  color: var(--riviera-white, #f5f2ea);
 }
 
 .auth-success-note {
   margin: 1.25rem 0 1.5rem !important;
   padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--riviera-border, rgba(255, 255, 255, 0.12));
   border-radius: 10px;
   font-size: 0.8rem !important;
   text-align: left;
 }
 
-@media (max-width: 640px) {
-  .auth-form-card {
-    width: 100%;
-    max-width: 420px;
-    padding: 32px 24px;
-    border-radius: 16px;
-    background: #1a1a1a;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .auth-form-header {
-    margin-bottom: 1.5rem;
-  }
-
-  .auth-form-header h1 {
-    font-size: 1.75rem;
-  }
-
-  .auth-form-header p {
-    font-size: 0.875rem;
-    color: #888;
-  }
-
-  .auth-form-content {
-    gap: 0;
-  }
-
-  .auth-field {
-    margin-bottom: 20px;
-  }
-
-  .auth-label {
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    color: #888;
-    margin-bottom: 6px;
-  }
-
-  .auth-input {
-    height: 52px;
-    padding: 0 16px;
-    font-size: 16px;
-    border-radius: 10px;
-    background: #2a2a2a;
-    border: 1px solid #333;
-    color: #fff;
-  }
-
-  .auth-cta {
-    margin-top: 24px;
-  }
-
-  .btn-auth-primary {
-    height: 52px;
-    padding: 0 16px;
-    border-radius: 10px;
-    background: var(--accent-gold-light);
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: #000;
-    box-shadow: 0 4px 16px rgba(245, 166, 35, 0.25);
-  }
-
-  .btn-auth-primary:hover:not(:disabled) {
-    background: var(--accent-gold-light);
-    transform: translateY(-1px);
-  }
-
-  .auth-footer {
-    margin-top: 20px;
-  }
-
-  .auth-footer p {
-    font-size: 14px;
-    color: #888;
-  }
-}
-
 .auth-forgot-row {
-  margin: -0.35rem 0 0.85rem;
+  margin: -0.15rem 0 0.65rem;
   text-align: right;
 }
 
@@ -402,20 +368,66 @@
   min-height: 44px;
   border: none;
   background: transparent;
-  color: rgba(245, 158, 11, 0.9);
-  font-size: 0.75rem;
+  color: var(--riviera-gold, #d4a843);
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .auth-password-field__toggle:hover:not(:disabled) {
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(201, 162, 75, 0.1);
+  color: var(--riviera-gold-soft, #e5c878);
+}
+
+.auth-password-field__toggle:focus-visible {
+  outline: 2px solid var(--riviera-gold, #c9a24b);
+  outline-offset: 1px;
 }
 
 .auth-password-field__toggle:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .auth-form-card {
+    padding: 2rem 1.5rem;
+    border-radius: 1rem;
+  }
+
+  .auth-form-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .auth-form-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .auth-page .riviera-input,
+  .auth-page .auth-password-field__input {
+    height: 3.25rem;
+    min-height: 3.25rem;
+  }
+
+  .btn-auth-primary {
+    height: 3.25rem;
+    min-height: 3.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-auth-primary:hover:not(:disabled) .auth-cta-arrow {
+    transform: none;
+  }
+
+  .btn-auth-primary:hover:not(:disabled) {
+    transform: none;
+  }
 }
