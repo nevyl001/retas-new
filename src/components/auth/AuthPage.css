@@ -453,7 +453,21 @@
   }
 
   .auth-hero-copy__logo .club-identity--auth {
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .auth-hero-copy__logo .club-identity--auth .club-identity__text {
+    align-items: center;
+    text-align: center;
+  }
+
+  .auth-hero-copy__logo .club-identity--auth .club-identity__logo {
+    width: 52px;
+    height: 52px;
+    max-width: none;
   }
 
   .auth-hero-copy__headline {
