@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { resolveJugadorIdForOrganizer } from "./organizerPlayerAccess";
 import {
   createRivieraJugador,
   ensureRivieraJugadorVisibleEnRanking,
@@ -6,6 +7,13 @@ import {
   getRivieraJugadorByLegacyPlayerId,
 } from "./rivieraJugadoresService";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
+
+const TEMP_LOG_PREFIX = "TEMP_MULTICLUB_PHASE_2_1";
+
+/** Logs temporales Fase 2.1 — fáciles de buscar y remover. */
+export function logMulticlubPhase21(payload: Record<string, unknown>): void {
+  console.info(TEMP_LOG_PREFIX, payload);
+}
 
 async function slugExistsForOrg(
   organizadorId: string,
@@ -127,4 +135,55 @@ export async function getOrCreateJugadorId(params: {
     console.error("[riviera-jugadores] getOrCreateJugadorId:", e);
     return null;
   }
+}
+
+/**
+ * Resuelve el jugador operativo del organizador anfitrión antes de escribir
+ * participaciones (incluye grants → local_jugador_id).
+ */
+export async function resolveJugadorIdForParticipacion(params: {
+  organizadorId: string;
+  jugadorId?: string | null;
+  nombre?: string;
+  legacyPlayerId?: string;
+  legacyLigaJugadorId?: string;
+  email?: string | null;
+  tipoEvento?: string;
+  eventoId?: string;
+}): Promise<string | null> {
+  const organizadorId = params.organizadorId.trim();
+  if (!organizadorId) return null;
+
+  const originalJugadorId = params.jugadorId?.trim() || null;
+  let candidate: string | null = null;
+
+  if (originalJugadorId) {
+    candidate = originalJugadorId;
+  } else if (params.nombre?.trim()) {
+    candidate = await getOrCreateJugadorId({
+      nombre: params.nombre,
+      organizadorId,
+      legacyPlayerId: params.legacyPlayerId,
+      legacyLigaJugadorId: params.legacyLigaJugadorId,
+      email: params.email,
+    });
+  }
+
+  if (!candidate) return null;
+
+  const resolved = await resolveJugadorIdForOrganizer(organizadorId, candidate);
+  const finalId = await finalizeJugadorIdForRanking(resolved);
+
+  if (finalId && finalId !== originalJugadorId) {
+    logMulticlubPhase21({
+      action: "identity_resolved",
+      organizadorId,
+      tipoEvento: params.tipoEvento ?? null,
+      eventoId: params.eventoId ?? null,
+      jugadorOriginal: originalJugadorId,
+      jugadorResuelto: finalId,
+    });
+  }
+
+  return finalId;
 }

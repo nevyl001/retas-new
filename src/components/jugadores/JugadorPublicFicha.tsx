@@ -15,6 +15,10 @@ import {
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
 import {
+  fetchOfficialRankingPosicionForJugador,
+  loadRomcOfficialPlayerView,
+} from "../../lib/rivieraJugadores/rivieraOfficialActivity";
+import {
   getRankingPosicionEnCategoria,
   getRankingPosicionOficialEnCategoria,
   getRivieraJugadorInternalClubById,
@@ -84,7 +88,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   >([]);
   const [rankingPos, setRankingPos] = useState<number | null>(null);
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
+  const [officialPuntos, setOfficialPuntos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const isOfficialGlobalProfile = Boolean(playerId && !internalClub);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,12 +104,21 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           : await getRivieraJugadorPublicBySlug(slug ?? "", orgId ?? undefined);
       setJugador(j);
       if (j) {
-        const [h, pos] = await Promise.all([
-          listParticipacionesPublic(
-            j.id,
-            100,
-            internalClub || orgId ? orgId ?? undefined : undefined
-          ),
+        const h = await listParticipacionesPublic(
+          j.id,
+          100,
+          internalClub || orgId ? orgId ?? undefined : undefined
+        );
+
+        const [posRpc, posList, romcView] = await Promise.all([
+          playerId && !internalClub
+            ? fetchOfficialRankingPosicionForJugador(
+                j.id,
+                j.organizador_id,
+                j.categoria,
+                normalizeRivieraGenero(j.genero) ?? "M"
+              )
+            : Promise.resolve(null),
           internalClub && orgId
             ? getRankingPosicionEnCategoria(
                 orgId,
@@ -125,13 +141,52 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 normalizeRivieraGenero(j.genero) ?? "M"
               )
             : Promise.resolve(null),
+          loadRomcOfficialPlayerView(j.id, { localParticipaciones: h }),
         ]);
-        setHistorial(h);
+
+        const pos = posRpc ?? posList;
+
+        const historialMerged = romcView.hasRomcData ? romcView.historial : h;
+        setHistorial(historialMerged);
+        const puntosOficialEfectivos = romcView.hasRomcData
+          ? romcView.puntosOficiales
+          : null;
+        setOfficialPuntos(puntosOficialEfectivos);
         setRankingPos(pos);
         try {
           const rebuilt = await rebuildJugadorStats(j.id);
           if (rebuilt) {
-            setJugador({ ...j, stats: rebuilt });
+            const stats =
+              romcView.hasRomcData && puntosOficialEfectivos != null
+                ? { ...rebuilt, puntos_totales: puntosOficialEfectivos }
+                : rebuilt;
+            setJugador({ ...j, stats });
+          } else if (romcView.hasRomcData && puntosOficialEfectivos != null) {
+            setJugador({
+              ...j,
+              stats: {
+                ...(j.stats ?? {
+                  jugador_id: j.id,
+                  total_partidos: 0,
+                  victorias: 0,
+                  derrotas: 0,
+                  empates: 0,
+                  participaciones_solo: 0,
+                  pct_victorias: 0,
+                  total_retas: 0,
+                  total_torneos_express: 0,
+                  total_ligas: 0,
+                  total_americanos: 0,
+                  sets_favor_total: 0,
+                  sets_contra_total: 0,
+                  racha_actual: "",
+                  ultima_actividad: null,
+                  puntos_totales: 0,
+                  updated_at: new Date().toISOString(),
+                }),
+                puntos_totales: puntosOficialEfectivos,
+              },
+            });
           }
         } catch (e) {
           console.warn("[riviera-jugadores] sync stats en ficha pública:", e);
@@ -142,7 +197,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [slug, orgId, playerId, internalClub]);
+  }, [slug, orgId, playerId, internalClub, isOfficialGlobalProfile]);
 
   useEffect(() => {
     void load();
@@ -255,7 +310,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     );
   }
 
-  const puntos = jugador.stats?.puntos_totales ?? 0;
+  const puntos =
+    officialPuntos != null
+      ? officialPuntos
+      : jugador.stats?.puntos_totales ?? 0;
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);

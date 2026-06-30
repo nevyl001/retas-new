@@ -14,13 +14,17 @@ export function getCoBrandCompactLine(manifest: BrandManifest): string {
 
 export function getHomeEyebrow(
   manifest: BrandManifest,
-  isClubBranded: boolean
+  isClubBranded: boolean,
+  organizerDisplayName?: string | null
 ): string {
   if (manifest.home.eyebrow?.trim()) {
     return manifest.home.eyebrow.trim();
   }
   if (isClubBranded) {
     return "";
+  }
+  if (organizerDisplayName?.trim()) {
+    return organizerDisplayName.trim();
   }
   return manifest.motherBrand || RIVIERA_MOTHER_BRAND_NAME;
 }

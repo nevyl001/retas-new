@@ -276,8 +276,8 @@ BEGIN
     v_source.instagram_url,
     v_source.facebook_url,
     v_source.tiktok_url,
-    false,
     CASE WHEN v_access.is_public_ranking THEN true ELSE false END,
+    true,
     v_grantee,
     'activo'
   )

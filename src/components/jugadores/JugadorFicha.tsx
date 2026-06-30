@@ -9,6 +9,7 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { computePublicProfileStats } from "../../lib/rivieraJugadores/historialDisplay";
+import { loadRomcOfficialPlayerView } from "../../lib/rivieraJugadores/rivieraOfficialActivity";
 import {
   applyGrantedSourceDisplayToJugador,
   loadGrantedSourceDisplayData,
@@ -91,27 +92,93 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setFacebook(j.facebook_url ?? "");
         setTiktok(j.tiktok_url ?? "");
 
+        const romcJugadorId = j.id;
         const isGrantedReadOnly = Boolean(j.concedidoPorAdmin);
         const sourceJugadorId = j.grantedAccess?.sourceJugadorId;
 
         if (isGrantedReadOnly && sourceJugadorId) {
-          const [h, sourceDisplay] = await Promise.all([
-            listParticipaciones(sourceJugadorId, 100),
+          const h = await listParticipaciones(romcJugadorId, 100);
+          const [sourceDisplay, romcView] = await Promise.all([
             loadGrantedSourceDisplayData(sourceJugadorId),
+            loadRomcOfficialPlayerView(romcJugadorId, { localParticipaciones: h }),
           ]);
-          setHistorial(h);
-          setJugador(
+          const historialMerged = romcView.hasRomcData
+            ? romcView.historial
+            : h;
+          setHistorial(historialMerged);
+          let nextJugador =
             sourceDisplay
               ? applyGrantedSourceDisplayToJugador(j, sourceDisplay)
-              : j
-          );
+              : j;
+          if (romcView.hasRomcData && romcView.puntosOficiales != null) {
+            nextJugador = {
+              ...nextJugador,
+              stats: {
+                ...(nextJugador.stats ?? {
+                  jugador_id: nextJugador.id,
+                  total_partidos: 0,
+                  victorias: 0,
+                  derrotas: 0,
+                  empates: 0,
+                  participaciones_solo: 0,
+                  pct_victorias: 0,
+                  total_retas: 0,
+                  total_torneos_express: 0,
+                  total_ligas: 0,
+                  total_americanos: 0,
+                  sets_favor_total: 0,
+                  sets_contra_total: 0,
+                  racha_actual: "",
+                  ultima_actividad: null,
+                  puntos_totales: 0,
+                  updated_at: new Date().toISOString(),
+                }),
+                puntos_totales: romcView.puntosOficiales,
+              },
+            };
+          }
+          setJugador(nextJugador);
         } else {
           const h = await listParticipaciones(j.id, 100);
-          setHistorial(h);
+          const romcView = await loadRomcOfficialPlayerView(j.id, {
+            localParticipaciones: h,
+          });
+          const historialMerged = romcView.hasRomcData ? romcView.historial : h;
+          setHistorial(historialMerged);
           try {
             const rebuilt = await rebuildJugadorStats(j.id);
             if (rebuilt) {
-              setJugador({ ...j, stats: rebuilt });
+              const stats =
+                romcView.hasRomcData && romcView.puntosOficiales != null
+                  ? { ...rebuilt, puntos_totales: romcView.puntosOficiales }
+                  : rebuilt;
+              setJugador({ ...j, stats });
+            } else if (romcView.hasRomcData && romcView.puntosOficiales != null) {
+              setJugador({
+                ...j,
+                stats: {
+                  ...(j.stats ?? {
+                    jugador_id: j.id,
+                    total_partidos: 0,
+                    victorias: 0,
+                    derrotas: 0,
+                    empates: 0,
+                    participaciones_solo: 0,
+                    pct_victorias: 0,
+                    total_retas: 0,
+                    total_torneos_express: 0,
+                    total_ligas: 0,
+                    total_americanos: 0,
+                    sets_favor_total: 0,
+                    sets_contra_total: 0,
+                    racha_actual: "",
+                    ultima_actividad: null,
+                    puntos_totales: 0,
+                    updated_at: new Date().toISOString(),
+                  }),
+                  puntos_totales: romcView.puntosOficiales,
+                },
+              });
             }
           } catch (e) {
             console.warn("[riviera-jugadores] sync stats en ficha:", e);

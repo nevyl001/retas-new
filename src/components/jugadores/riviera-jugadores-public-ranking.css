@@ -291,6 +291,12 @@
   gap: 2px;
 }
 
+.rjp-ranking-dual-pts__total {
+  color: var(--accent-gold);
+  font-weight: 700;
+  font-size: 12px;
+}
+
 .rjp-ranking-dual-pts__local {
   color: var(--accent-gold);
 }

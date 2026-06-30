@@ -110,6 +110,7 @@ export {
 } from "./clubExperienceBootstrap";
 
 export { useClubModeEyebrow } from "./useClubModeEyebrow";
+export { useOrganizerDisplayName } from "./useOrganizerDisplayName";
 
 export {
   ClubExperienceProvider,

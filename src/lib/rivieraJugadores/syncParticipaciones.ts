@@ -63,7 +63,10 @@ import {
 import { buildAmericanoPartidosDetalleForPlayer } from "./buildAmericanoPartidosDetalle";
 import { buildDuelo2vs2PartidosDetalle } from "./buildDuelo2vs2PartidosDetalle";
 import { buildLigaJornadaPartidosDetalleByJugadorId } from "./buildLigaJornadaPartidosDetalle";
-import { getOrCreateJugadorId } from "./jugadorIdResolver";
+import {
+  logMulticlubPhase21,
+  resolveJugadorIdForParticipacion,
+} from "./jugadorIdResolver";
 import {
   aplicarRatingDuelo2v2,
   aplicarRatingRetaFinishedMatches,
@@ -76,12 +79,16 @@ import {
   type PartidoDetalle,
 } from "../shared/buildPartidosDetalle";
 
-const jugadorSumaRankingCache = new Map<string, boolean>();
+const TEMP_POINTS_LOG_PREFIX = "TEMP_MULTICLUB_POINTS_2_1_B";
 
-async function jugadorSumaAlRanking(jugadorId: string): Promise<boolean> {
-  const cached = jugadorSumaRankingCache.get(jugadorId);
-  if (cached !== undefined) return cached;
+function logMulticlubPoints21B(payload: Record<string, unknown>): void {
+  console.info(TEMP_POINTS_LOG_PREFIX, payload);
+}
 
+async function readJugadorSumaRankingState(jugadorId: string): Promise<{
+  sumaRanking: boolean;
+  estado: string | null;
+}> {
   try {
     const { data, error } = await supabase
       .from("riviera_jugadores")
@@ -90,18 +97,17 @@ async function jugadorSumaAlRanking(jugadorId: string): Promise<boolean> {
       .maybeSingle();
 
     if (error || !data) {
-      jugadorSumaRankingCache.set(jugadorId, true);
-      return true;
+      return { sumaRanking: true, estado: null };
     }
 
-    const ok =
-      data.estado !== "archivado" &&
-      (data as { suma_ranking?: boolean }).suma_ranking !== false;
-    jugadorSumaRankingCache.set(jugadorId, ok);
-    return ok;
+    return {
+      sumaRanking:
+        data.estado !== "archivado" &&
+        (data as { suma_ranking?: boolean }).suma_ranking !== false,
+      estado: (data.estado as string | null) ?? null,
+    };
   } catch {
-    jugadorSumaRankingCache.set(jugadorId, true);
-    return true;
+    return { sumaRanking: true, estado: null };
   }
 }
 
@@ -228,6 +234,22 @@ async function registrarPuntosRanking(params: {
     ...params.calcParams,
   });
 
+  const subtipoForLog =
+    params.upsertSubtipo ??
+    (typeof params.metadata?.subtipo === "string"
+      ? params.metadata.subtipo
+      : null);
+
+  logMulticlubPoints21B({
+    action: "puntos_calculados",
+    jugadorId: params.jugadorId,
+    puntosCalculados: total,
+    desglose,
+    tipoEvento: params.tipoEvento,
+    eventoId: params.eventoId,
+    subtipo: subtipoForLog,
+  });
+
   const metadata = rankingMetadata(desglose, params.metadata);
   const subtipo =
     params.upsertSubtipo ??
@@ -279,18 +301,56 @@ async function safeRegistrar(params: {
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   try {
-    const sumaRanking = await jugadorSumaAlRanking(params.jugadorId);
-    const puntos = sumaRanking
-      ? Math.max(0, params.puntosObtenidos ?? 0)
-      : 0;
+    const rankingState = await readJugadorSumaRankingState(params.jugadorId);
+    const puntosCalculados = Math.max(0, params.puntosObtenidos ?? 0);
+    const puntos = rankingState.sumaRanking ? puntosCalculados : 0;
+    const subtipo =
+      typeof params.metadata?.subtipo === "string"
+        ? params.metadata.subtipo
+        : null;
+
+    logMulticlubPoints21B({
+      action: "safe_registrar_gate",
+      jugadorId: params.jugadorId,
+      sumaRanking: rankingState.sumaRanking,
+      estado: rankingState.estado,
+      puntosCalculados,
+      puntosFinales: puntos,
+      subtipo,
+      eventoId: params.eventoId,
+      tipoEvento: params.tipoEvento,
+    });
+
     const participacionId = await registrarParticipacion({
       ...params,
       puntosObtenidos: puntos,
     });
     if (participacionId) {
       await tryWriteRivieraOfficialLedger(participacionId);
+      logMulticlubPhase21({
+        action: "participacion_inserted",
+        participacionId,
+        jugadorId: params.jugadorId,
+        tipoEvento: params.tipoEvento,
+        eventoId: params.eventoId,
+      });
+      await rebuildJugadorStats(params.jugadorId);
+      logMulticlubPhase21({
+        action: "stats_rebuilt",
+        jugadorId: params.jugadorId,
+        tipoEvento: params.tipoEvento,
+        eventoId: params.eventoId,
+      });
+      logMulticlubPoints21B({
+        action: "stats_rebuilt",
+        jugadorId: params.jugadorId,
+        puntosFinales: puntos,
+        tipoEvento: params.tipoEvento,
+        eventoId: params.eventoId,
+        subtipo,
+      });
     }
-    if (sumaRanking) {
+    if (rankingState.sumaRanking) {
       await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
     }
   } catch (e) {
@@ -377,8 +437,21 @@ async function upsertParticipacionRanking(params: {
     detSummary.jugados > 0
       ? detSummary.setsContra
       : (params.setsContra ?? existing?.sets_contra ?? 0);
-  const sumaRanking = await jugadorSumaAlRanking(params.jugadorId);
-  const puntosObtenidos = sumaRanking ? params.puntosObtenidos : 0;
+  const rankingState = await readJugadorSumaRankingState(params.jugadorId);
+  const puntosCalculados = params.puntosObtenidos;
+  const puntosObtenidos = rankingState.sumaRanking ? puntosCalculados : 0;
+
+  logMulticlubPoints21B({
+    action: existing ? "upsert_update_gate" : "upsert_insert_gate",
+    jugadorId: params.jugadorId,
+    sumaRanking: rankingState.sumaRanking,
+    estado: rankingState.estado,
+    puntosCalculados,
+    puntosFinales: puntosObtenidos,
+    subtipo: params.subtipo,
+    eventoId: params.eventoId,
+    tipoEvento: params.tipoEvento,
+  });
 
   if (existing) {
     const { error } = await supabase
@@ -398,6 +471,27 @@ async function upsertParticipacionRanking(params: {
       return;
     }
     await rebuildJugadorStats(params.jugadorId);
+    logMulticlubPhase21({
+      action: "participacion_updated",
+      participacionId: existing.id,
+      jugadorId: params.jugadorId,
+      tipoEvento: params.tipoEvento,
+      eventoId: params.eventoId,
+    });
+    logMulticlubPhase21({
+      action: "stats_rebuilt",
+      jugadorId: params.jugadorId,
+      tipoEvento: params.tipoEvento,
+      eventoId: params.eventoId,
+    });
+    logMulticlubPoints21B({
+      action: "stats_rebuilt",
+      jugadorId: params.jugadorId,
+      puntosFinales: puntosObtenidos,
+      tipoEvento: params.tipoEvento,
+      eventoId: params.eventoId,
+      subtipo: params.subtipo,
+    });
     await tryWriteRivieraOfficialLedger(existing.id);
     return;
   }
@@ -742,11 +836,13 @@ async function syncRetaParticipacionesInner(params: {
   const touchedJugadorIds = new Set<string>();
 
   for (const st of Array.from(agg.values())) {
-    const jugadorId = await getOrCreateJugadorId({
+    const jugadorId = await resolveJugadorIdForParticipacion({
       nombre: st.nombre,
       organizadorId,
       legacyPlayerId: st.legacyPlayerId,
       email: st.email,
+      tipoEvento: "reta",
+      eventoId: tournament.id,
     });
     if (!jugadorId) continue;
     touchedJugadorIds.add(jugadorId);
@@ -1172,12 +1268,14 @@ async function flushTorneoExpressPlayerAgg(
   clasificadosPlayerIds: Set<string>
 ): Promise<void> {
   for (const st of Array.from(agg.values())) {
-    const jugadorId = await getOrCreateJugadorId({
+    const jugadorId = await resolveJugadorIdForParticipacion({
       nombre: st.nombre,
       organizadorId,
       legacyPlayerId: st.legacyPlayerId,
       legacyLigaJugadorId: st.legacyLigaJugadorId,
       email: st.email,
+      tipoEvento: "torneo_express",
+      eventoId: torneoId,
     });
     if (!jugadorId) continue;
 
@@ -1506,10 +1604,12 @@ export async function syncLigaJornada(
     const touchedJugadorIds = new Set<string>();
 
     for (const st of Array.from(agg.values())) {
-      const jugadorId = await getOrCreateJugadorId({
+      const jugadorId = await resolveJugadorIdForParticipacion({
         nombre: st.nombre,
         organizadorId: userId,
         legacyLigaJugadorId: st.legacyLigaJugadorId,
+        tipoEvento: "liga",
+        eventoId: jornada.id,
       });
       if (!jugadorId) continue;
       touchedJugadorIds.add(jugadorId);
@@ -1599,10 +1699,12 @@ export async function syncLigaInscripcionRanking(
     const jugadorLiga = detalle.jugadores.find((j) => j.id === legacyLigaJugadorId);
     const nombre = jugadorLiga?.nombre ?? "Jugador";
 
-    const jugadorId = await getOrCreateJugadorId({
+    const jugadorId = await resolveJugadorIdForParticipacion({
       nombre,
       organizadorId,
       legacyLigaJugadorId,
+      tipoEvento: "liga",
+      eventoId: ligaId,
     });
     if (!jugadorId) return;
 
@@ -1646,10 +1748,12 @@ export async function syncLigaFinalPodio(
 
       const ins = ranking[i];
       const nombre = ins.jugador?.nombre ?? "Jugador";
-      const jugadorId = await getOrCreateJugadorId({
+      const jugadorId = await resolveJugadorIdForParticipacion({
         nombre,
         organizadorId,
         legacyLigaJugadorId: ins.jugador_id,
+        tipoEvento: "liga",
+        eventoId: ligaId,
       });
       if (!jugadorId) continue;
 
@@ -1784,10 +1888,12 @@ export async function syncAmericanoParticipaciones(
     for (const jugador of ranked) {
       posicion += 1;
       const st = statsMap.get(jugador.id);
-      const jugadorId = await getOrCreateJugadorId({
+      const jugadorId = await resolveJugadorIdForParticipacion({
         nombre: jugador.name,
         organizadorId: userId,
         legacyPlayerId: jugador.id.includes("-") ? jugador.id : undefined,
+        tipoEvento: "americano",
+        eventoId: sesionId,
       });
       if (!jugadorId) {
         console.warn(
@@ -2021,12 +2127,13 @@ export async function syncDuelo2v2Participaciones(params: {
 
   try {
     for (const slot of slots) {
-      const jugadorId =
-        slot.jugadorId ??
-        (await getOrCreateJugadorId({
-          nombre: slot.nombre,
-          organizadorId,
-        }));
+      const jugadorId = await resolveJugadorIdForParticipacion({
+        organizadorId,
+        jugadorId: slot.jugadorId,
+        nombre: slot.nombre,
+        tipoEvento: "duelo_2v2",
+        eventoId: duelo.id,
+      });
       if (!jugadorId) continue;
 
       const posicion = slot.esGanador ? 1 : 2;
@@ -2079,8 +2186,6 @@ export async function syncDuelo2v2Participaciones(params: {
         upsertSubtipo: "duelo_2v2_cierre",
         metadata,
       });
-
-      await rebuildJugadorStats(jugadorId);
     }
   } catch (e) {
     console.error("[riviera-jugadores] syncDuelo2v2Participaciones:", e);

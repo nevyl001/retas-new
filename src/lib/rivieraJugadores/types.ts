@@ -114,6 +114,8 @@ export type { RetaPartidoDetalle } from "./buildRetaPartidosDetalle";
 
 export interface RivieraJugadorWithStats extends RivieraJugador {
   stats?: JugadorStats | null;
+  /** Puntos ROMC globales (todos los clubes); prioridad en ranking oficial. */
+  officialPuntosGlobal?: number | null;
   /** Puntos del club dueño del registro (solo lectura en destino concedido). */
   statsOrigenConcedido?: JugadorStats | null;
   /** Jugador con acceso concedido por Admin Principal (visible para este organizador). */

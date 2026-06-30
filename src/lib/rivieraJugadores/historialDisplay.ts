@@ -286,6 +286,10 @@ export function participacionToHistorialItem(
     detalleParts.push("Round Robin");
   }
   if (row.pareja_con) detalleParts.push(`Pareja: ${row.pareja_con}`);
+  const sourceClub = metaStr(meta, "source_club_name");
+  if ((meta.romc_global === true || meta.romc_cross_club === true) && sourceClub) {
+    detalleParts.push(sourceClub);
+  }
   if (row.tipo_evento === "liga" && ligaNombre) {
     detalleParts.push(
       jornadaNum ? `${ligaNombre} · Jornada ${jornadaNum}` : ligaNombre

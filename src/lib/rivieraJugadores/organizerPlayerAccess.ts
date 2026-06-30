@@ -182,6 +182,58 @@ export async function ensureGrantedPlayerLocal(
   return String(data);
 }
 
+/**
+ * Clon local de jugador concedido: siempre suma ranking interno del club anfitrión.
+ * is_public_ranking solo controla visible_publico (ranking público del club).
+ */
+export async function ensureGrantedLocalPlayerSumsRanking(
+  organizadorId: string,
+  localJugadorId: string
+): Promise<void> {
+  const { data: grant, error: grantErr } = await supabase
+    .from("organizer_player_access")
+    .select("is_public_ranking")
+    .eq("grantee_organizer_id", organizadorId)
+    .eq("local_jugador_id", localJugadorId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (grantErr) {
+    if (isMissingAccessFeatureError(grantErr)) return;
+    throw grantErr;
+  }
+  if (!grant) return;
+
+  const { data: row, error: rowErr } = await supabase
+    .from("riviera_jugadores")
+    .select("suma_ranking, visible_publico, estado")
+    .eq("id", localJugadorId)
+    .maybeSingle();
+
+  if (rowErr || !row) return;
+
+  const patch: Record<string, boolean> = {};
+  if (row.suma_ranking === false) {
+    patch.suma_ranking = true;
+  }
+  if (grant.is_public_ranking === true && row.visible_publico === false) {
+    patch.visible_publico = true;
+  }
+  if (Object.keys(patch).length === 0) return;
+
+  const { error: updateErr } = await supabase
+    .from("riviera_jugadores")
+    .update(patch)
+    .eq("id", localJugadorId);
+
+  if (updateErr && !isMissingAccessFeatureError(updateErr)) {
+    console.warn(
+      "[riviera-jugadores] ensureGrantedLocalPlayerSumsRanking:",
+      updateErr
+    );
+  }
+}
+
 /** Resuelve el id operativo del jugador para el organizador actual. */
 export async function resolveJugadorIdForOrganizer(
   organizadorId: string,
@@ -211,13 +263,19 @@ export async function resolveJugadorIdForOrganizer(
   }
   if (!grant) return jugadorId;
 
-  if (grant.local_jugador_id) return String(grant.local_jugador_id);
+  if (grant.local_jugador_id) {
+    const localId = String(grant.local_jugador_id);
+    await ensureGrantedLocalPlayerSumsRanking(organizadorId, localId);
+    return localId;
+  }
 
   const sourceId =
     String(grant.jugador_id) === jugadorId
       ? jugadorId
       : String(grant.jugador_id);
-  return ensureGrantedPlayerLocal(sourceId);
+  const localId = await ensureGrantedPlayerLocal(sourceId);
+  await ensureGrantedLocalPlayerSumsRanking(organizadorId, localId);
+  return localId;
 }
 
 export async function adminGrantOrganizerPlayerAccess(

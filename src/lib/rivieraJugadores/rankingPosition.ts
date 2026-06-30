@@ -2,6 +2,9 @@ import type { RivieraJugadorWithStats } from "./types";
 
 /** Puntos usados para ordenar el ranking público. */
 export function rankingPuntosJugador(j: RivieraJugadorWithStats): number {
+  if (j.officialPuntosGlobal != null && Number.isFinite(j.officialPuntosGlobal)) {
+    return j.officialPuntosGlobal;
+  }
   return j.stats?.puntos_totales ?? 0;
 }
 

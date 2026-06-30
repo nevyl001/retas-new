@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useClubExperience } from "../ClubExperienceContext";
+import { useOrganizerDisplayName } from "../useOrganizerDisplayName";
 import {
   getCoBrandCompactLine,
   getMotherAttributionLine,
@@ -38,7 +39,8 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   wordmarkOnly = false,
   className = "",
 }) => {
-  const { manifest, isClubBranded } = useClubExperience();
+  const { manifest, isClubBranded, organizadorId } = useClubExperience();
+  const organizerDisplayName = useOrganizerDisplayName(organizadorId);
   const [logoFailed, setLogoFailed] = useState(false);
 
   const logoUrl = resolveClubLogo(manifest, logoSurface);
@@ -71,7 +73,7 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
           />
         ) : null}
         <div className="club-identity__text">
-          <span className="club-identity__name">{manifest.displayName}</span>
+          <span className="club-identity__name">{organizerDisplayName}</span>
           {showTagline ? (
             <span className="club-identity__tagline">
               {manifest.slogans.primary}

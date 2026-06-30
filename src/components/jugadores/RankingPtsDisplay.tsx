@@ -2,10 +2,10 @@ import React from "react";
 import {
   getOrganizadorClubDisplayName,
   hasDualRankingConcedido,
+  rankingPuntosGlobalDisplay,
   rankingPuntosOrigenConcedido,
   resolveOrigenConcedidoOrganizadorId,
 } from "../../lib/rivieraJugadores/grantedRankingDisplay";
-import { rankingPuntosJugador } from "../../lib/rivieraJugadores/rankingPosition";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 
 type RankingPtsDisplayProps = {
@@ -21,14 +21,15 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   className = "",
   variant = "inline",
 }) => {
-  const localPts = rankingPuntosJugador(jugador);
+  const localPts = jugador.stats?.puntos_totales ?? 0;
+  const totalPts = rankingPuntosGlobalDisplay(jugador);
   const clubName = getOrganizadorClubDisplayName(clubOrganizadorId);
+  const stacked = variant === "stacked";
 
   if (hasDualRankingConcedido(jugador)) {
     const origenId = resolveOrigenConcedidoOrganizadorId(jugador);
     const origenName = getOrganizadorClubDisplayName(origenId);
     const origenPts = rankingPuntosOrigenConcedido(jugador);
-    const stacked = variant === "stacked";
 
     return (
       <span
@@ -36,6 +37,9 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
           stacked ? " rjp-ranking-dual-pts--stacked" : ""
         }${className ? ` ${className}` : ""}`}
       >
+        <span className="rjp-ranking-dual-pts__total">
+          {totalPts.toLocaleString("es-MX")} pts total
+        </span>
         <span className="rjp-ranking-dual-pts__local">
           {clubName}: {localPts.toLocaleString("es-MX")} pts
         </span>
@@ -46,9 +50,29 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
     );
   }
 
+  if (
+    jugador.officialPuntosGlobal != null &&
+    jugador.officialPuntosGlobal !== localPts
+  ) {
+    return (
+      <span
+        className={`rjp-ranking-dual-pts${
+          stacked ? " rjp-ranking-dual-pts--stacked" : ""
+        }${className ? ` ${className}` : ""}`}
+      >
+        <span className="rjp-ranking-dual-pts__total">
+          {totalPts.toLocaleString("es-MX")} pts total
+        </span>
+        <span className="rjp-ranking-dual-pts__origen">
+          {clubName}: {localPts.toLocaleString("es-MX")} pts
+        </span>
+      </span>
+    );
+  }
+
   return (
     <span className={className}>
-      {localPts.toLocaleString("es-MX")} pts
+      {totalPts.toLocaleString("es-MX")} pts
     </span>
   );
 };

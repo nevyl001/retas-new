@@ -1189,6 +1189,7 @@ function mapSitioOficialRow(
   const puntos = Number(row.puntos_totales ?? j.stats?.puntos_totales ?? 0);
   const partidos = Number(row.total_partidos ?? j.stats?.total_partidos ?? 0);
   const victorias = Number(row.victorias ?? j.stats?.victorias ?? 0);
+  j.officialPuntosGlobal = puntos;
   j.stats = {
     ...(j.stats ?? {
       jugador_id: j.id,
@@ -1343,12 +1344,16 @@ export async function listInternalClubJugadoresRanking(
   if (!error && data) {
     const rows = (data as Record<string, unknown>[]).map(mapSitioOficialRow);
     const filtered = rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
-    return mergeGrantedJugadoresIntoRanking(
+    const merged = await mergeGrantedJugadoresIntoRanking(
       organizadorId,
       categoria,
       genero,
       filtered
     );
+    const { enrichJugadoresWithOfficialPuntos } = await import(
+      "./rivieraOfficialActivity"
+    );
+    return enrichJugadoresWithOfficialPuntos(merged);
   }
 
   if (error && !isMissingTableError(error) && !isMissingRpcError(error)) {
@@ -1390,12 +1395,16 @@ export async function listInternalClubJugadoresRanking(
     if (pb !== pa) return pb - pa;
     return a.nombre.localeCompare(b.nombre, "es");
   });
-  return mergeGrantedJugadoresIntoRanking(
+  const merged = await mergeGrantedJugadoresIntoRanking(
     organizadorId,
     categoria,
     genero,
     sorted
   );
+  const { enrichJugadoresWithOfficialPuntos } = await import(
+    "./rivieraOfficialActivity"
+  );
+  return enrichJugadoresWithOfficialPuntos(merged);
 }
 
 export async function getRivieraJugadorPublicBySlug(

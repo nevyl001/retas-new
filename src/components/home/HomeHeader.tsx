@@ -4,6 +4,7 @@ import {
   getHomeWelcomeSubtitle,
   getHomeWelcomeTitle,
   useClubExperience,
+  useOrganizerDisplayName,
 } from "../../club-experience";
 import { ModeHeader } from "../platform/ModeHeader";
 
@@ -12,8 +13,9 @@ interface HomeHeaderProps {
 }
 
 export const HomeHeader: React.FC<HomeHeaderProps> = ({ userName }) => {
-  const { manifest, isClubBranded } = useClubExperience();
-  const eyebrow = getHomeEyebrow(manifest, isClubBranded);
+  const { manifest, isClubBranded, organizadorId } = useClubExperience();
+  const organizerName = useOrganizerDisplayName(organizadorId);
+  const eyebrow = getHomeEyebrow(manifest, isClubBranded, organizerName);
   const title = getHomeWelcomeTitle(manifest);
   const subtitle = getHomeWelcomeSubtitle(manifest, userName);
 

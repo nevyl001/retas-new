@@ -105,6 +105,16 @@ BEGIN
   INSERT INTO public.organizador_game_modes (organizador_id)
   VALUES (NEW.id)
   ON CONFLICT (organizador_id) DO NOTHING;
+
+  INSERT INTO public.riviera_official_ranking_emitters (
+    organizador_id,
+    is_active,
+    notes
+  )
+  VALUES (NEW.id, true, 'Auto: registro organizador')
+  ON CONFLICT (organizador_id) DO UPDATE
+  SET is_active = true, updated_at = now();
+
   RETURN NEW;
 END;
 $$;

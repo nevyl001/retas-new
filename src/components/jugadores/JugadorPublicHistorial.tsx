@@ -4,6 +4,7 @@ import type {
   JugadorTipoEvento,
   RivieraJugadorCategoria,
 } from "../../lib/rivieraJugadores/types";
+import { filterParticipacionesHistorialVisible } from "../../lib/rivieraJugadores/historialDisplay";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 
@@ -51,15 +52,20 @@ export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
   const [activeTab, setActiveTab] = useState<HistorialTab>("todos");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const visibleParticipaciones = useMemo(
+    () => filterParticipacionesHistorialVisible(participaciones),
+    [participaciones]
+  );
+
   const counts = useMemo(() => {
     const base: Record<HistorialTab, number> = {
-      todos: participaciones.length,
+      todos: visibleParticipaciones.length,
       torneos: 0,
       liga: 0,
       americano: 0,
       retas: 0,
     };
-    for (const row of participaciones) {
+    for (const row of visibleParticipaciones) {
       if (row.tipo_evento === "torneo_express") base.torneos += 1;
       if (row.tipo_evento === "liga") base.liga += 1;
       if (row.tipo_evento === "americano") base.americano += 1;
@@ -68,14 +74,14 @@ export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
       }
     }
     return base;
-  }, [participaciones]);
+  }, [visibleParticipaciones]);
 
   const filtered = useMemo(
     () =>
-      participaciones.filter((row) =>
+      visibleParticipaciones.filter((row) =>
         matchesHistorialTab(row.tipo_evento, activeTab)
       ),
-    [participaciones, activeTab]
+    [visibleParticipaciones, activeTab]
   );
 
   const pageSize = PAGE_SIZE;

@@ -1,6 +1,8 @@
 -- Vista y helpers para www.rivieraopen.com (sitio oficial).
 -- La app Riviera (appriviera) y el sitio oficial comparten esta base de datos.
 -- Ejecutar después de admin-master-controls.sql
+-- IMPORTANTE: Para puntos/historial multiclub (ROMC), ejecutar también
+-- supabase/riviera-official-player-activity-romc2b.sql (reemplaza puntos en vista y RPCs).
 
 -- ── ¿Este jugador debe aparecer en rivieraopen.com? ──
 CREATE OR REPLACE FUNCTION public.is_jugador_visible_sitio_oficial(p_jugador_id uuid)

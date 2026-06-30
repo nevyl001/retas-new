@@ -3,6 +3,7 @@ import {
   ClubExperienceScope,
   ClubIdentity,
   useClubExperience,
+  useOrganizerDisplayName,
 } from "../../club-experience";
 import {
   JUGADOR_CATEGORIA_LABELS,
@@ -10,7 +11,9 @@ import {
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
 import { RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS } from "../../lib/rivieraJugadores/publicPoll";
-import { listInternalClubJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { listInternalClubJugadoresRanking, listOfficialSiteJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { isOrganizadorRankingPublico } from "../../lib/admin/accountControls";
+import { resolveOrganizerDisplayName } from "../../lib/organizer/organizerDisplayName";
 import { subscribeRivieraRanking } from "../../lib/rivieraJugadores/subscribeRivieraRanking";
 import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
 import { navigateAppTo } from "../../lib/appRouting";
@@ -62,17 +65,29 @@ function resolvePublicRankingOrgId(routeOrganizadorId?: string): string | null {
 
 function RankingBrandHeader() {
   const { isClubBranded } = useClubExperience();
-  if (!isClubBranded) {
-    return <p className="rjp-ranking-header__brand">Riviera Open</p>;
+  const organizerName = useOrganizerDisplayName();
+
+  if (isClubBranded) {
+    return (
+      <ClubIdentity
+        variant="compact"
+        showTagline={false}
+        logoSurface="dark"
+        wordmarkOnly
+        className="rjp-ranking-header__club-identity"
+      />
+    );
   }
+
+  return <p className="rjp-ranking-header__brand">{organizerName}</p>;
+}
+
+function RankingFooter() {
+  const organizerName = useOrganizerDisplayName();
   return (
-    <ClubIdentity
-      variant="compact"
-      showTagline={false}
-      logoSurface="dark"
-      wordmarkOnly
-      className="rjp-ranking-header__club-identity"
-    />
+    <footer className="rjp-ranking-footer">
+      {organizerName} · Vive el pádel diferente
+    </footer>
   );
 }
 
@@ -141,7 +156,11 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     }
     setError(null);
     try {
-      const rows = await listInternalClubJugadoresRanking(orgId, categoria, genero);
+      void resolveOrganizerDisplayName(orgId);
+      const publicado = await isOrganizadorRankingPublico(orgId);
+      const rows = publicado
+        ? await listOfficialSiteJugadoresRanking(orgId, categoria, genero)
+        : await listInternalClubJugadoresRanking(orgId, categoria, genero);
       setJugadores(rows);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el ranking");
@@ -353,9 +372,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
           </div>
         </section>
 
-        <footer className="rjp-ranking-footer">
-          Riviera Open · Vive el pádel diferente
-        </footer>
+        <RankingFooter />
       </div>
     </JugadoresPublicShell>
     </ClubExperienceScope>

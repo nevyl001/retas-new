@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS public.riviera_official_ranking_emitters (
 );
 
 COMMENT ON TABLE public.riviera_official_ranking_emitters IS
-  'Organizadores cuyas participaciones locales pueden sumar al ranking oficial Riviera. Default: no listado = no autorizado.';
+  'ROMC: por defecto todos los organizadores (public.users) emiten al ranking oficial Riviera. '
+  'Solo is_active=false bloquea un club. Ver riviera-official-ranking-emitters-default-all.sql.';
 
 ALTER TABLE public.riviera_official_ranking_emitters ENABLE ROW LEVEL SECURITY;
 
@@ -40,12 +41,20 @@ STABLE
 SECURITY DEFINER
 SET search_path = public
 AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.riviera_official_ranking_emitters e
-    WHERE e.organizador_id = p_organizador_id
-      AND e.is_active = true
-  );
+  SELECT CASE
+    WHEN p_organizador_id IS NULL THEN false
+    WHEN EXISTS (
+      SELECT 1
+      FROM public.riviera_official_ranking_emitters e
+      WHERE e.organizador_id = p_organizador_id
+        AND e.is_active = false
+    ) THEN false
+    ELSE EXISTS (
+      SELECT 1
+      FROM public.users u
+      WHERE u.id = p_organizador_id
+    )
+  END;
 $$;
 
 REVOKE ALL ON FUNCTION public._is_official_ranking_emitter(uuid) FROM PUBLIC;
@@ -191,7 +200,7 @@ BEGIN
     RETURN jsonb_build_object('status', 'skipped', 'reason', 'ajuste_manual');
   END IF;
 
-  IF NOT (v_p.tipo_evento = ANY (v_valid_types)) THEN
+  IF NOT (v_p.tipo_evento::text = ANY (v_valid_types)) THEN
     RETURN jsonb_build_object(
       'status', 'skipped',
       'reason', 'invalid_event_type',

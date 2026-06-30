@@ -1,5 +1,6 @@
 import React from "react";
 import { useClubExperience } from "../ClubExperienceContext";
+import { useOrganizerDisplayName } from "../useOrganizerDisplayName";
 import { ClubIdentity } from "./ClubIdentity";
 
 interface PublicClubModeEyebrowProps {
@@ -15,6 +16,7 @@ export const PublicClubModeEyebrow: React.FC<PublicClubModeEyebrowProps> = ({
   clubIdentityClassName = "liga-pantalla__club-identity",
 }) => {
   const { isClubBranded } = useClubExperience();
+  const organizerName = useOrganizerDisplayName();
 
   if (isClubBranded) {
     return (
@@ -27,5 +29,5 @@ export const PublicClubModeEyebrow: React.FC<PublicClubModeEyebrowProps> = ({
     );
   }
 
-  return <p className={className}>Riviera Open · {modeLabel}</p>;
+  return <p className={className}>{organizerName} · {modeLabel}</p>;
 };
