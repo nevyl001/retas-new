@@ -1,5 +1,8 @@
 import { supabase } from "../supabaseClient";
-import { rankingPuntosJugador } from "./rankingPosition";
+import {
+  mergeJugadorStatsPuntosTotales,
+  rankingPuntosJugador,
+} from "./rankingPosition";
 import type {
   JugadorParticipacion,
   JugadorResultado,
@@ -393,9 +396,13 @@ export async function enrichJugadoresWithOfficialPuntos(
     jugadores.map(async (j) => {
       const global = await fetchOfficialDisplayPuntosForJugador(j.id);
       if (global == null) return j;
+      const stats = j.stats
+        ? mergeJugadorStatsPuntosTotales(j.stats, global)
+        : j.stats;
       return {
         ...j,
         officialPuntosGlobal: global,
+        stats,
       };
     })
   );

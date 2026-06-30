@@ -1,11 +1,38 @@
-import type { RivieraJugadorWithStats } from "./types";
+import type { JugadorStats, RivieraJugadorWithStats } from "./types";
+
+/** Puntos del registro local del club (incluye ajustes manuales). */
+export function jugadorPuntosLocales(j: RivieraJugadorWithStats): number {
+  return j.stats?.puntos_totales ?? 0;
+}
+
+/**
+ * Puntos efectivos para ranking y fichas.
+ * Respeta ajustes manuales del organizador (registro local) y no los pisa con ROMC
+ * cuando el local es mayor; si ROMC supera al local, gana el oficial.
+ */
+export function resolveJugadorPuntosRanking(j: RivieraJugadorWithStats): number {
+  const local = jugadorPuntosLocales(j);
+  const official = j.officialPuntosGlobal;
+  if (official == null || !Number.isFinite(official)) return local;
+  return Math.max(local, official);
+}
+
+export function mergeJugadorStatsPuntosTotales(
+  stats: JugadorStats,
+  officialRomcPuntos?: number | null
+): JugadorStats {
+  if (officialRomcPuntos == null || !Number.isFinite(officialRomcPuntos)) {
+    return stats;
+  }
+  return {
+    ...stats,
+    puntos_totales: Math.max(stats.puntos_totales, officialRomcPuntos),
+  };
+}
 
 /** Puntos usados para ordenar el ranking público. */
 export function rankingPuntosJugador(j: RivieraJugadorWithStats): number {
-  if (j.officialPuntosGlobal != null && Number.isFinite(j.officialPuntosGlobal)) {
-    return j.officialPuntosGlobal;
-  }
-  return j.stats?.puntos_totales ?? 0;
+  return resolveJugadorPuntosRanking(j);
 }
 
 /**

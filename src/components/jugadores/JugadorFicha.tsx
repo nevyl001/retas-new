@@ -10,6 +10,7 @@ import {
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { computePublicProfileStats } from "../../lib/rivieraJugadores/historialDisplay";
 import { loadRomcOfficialPlayerView } from "../../lib/rivieraJugadores/rivieraOfficialActivity";
+import { mergeJugadorStatsPuntosTotales } from "../../lib/rivieraJugadores/rankingPosition";
 import {
   applyGrantedSourceDisplayToJugador,
   loadGrantedSourceDisplayData,
@@ -110,31 +111,14 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             sourceDisplay
               ? applyGrantedSourceDisplayToJugador(j, sourceDisplay)
               : j;
-          if (romcView.hasRomcData && romcView.puntosOficiales != null) {
+          if (romcView.hasRomcData && romcView.puntosOficiales != null && nextJugador.stats) {
             nextJugador = {
               ...nextJugador,
-              stats: {
-                ...(nextJugador.stats ?? {
-                  jugador_id: nextJugador.id,
-                  total_partidos: 0,
-                  victorias: 0,
-                  derrotas: 0,
-                  empates: 0,
-                  participaciones_solo: 0,
-                  pct_victorias: 0,
-                  total_retas: 0,
-                  total_torneos_express: 0,
-                  total_ligas: 0,
-                  total_americanos: 0,
-                  sets_favor_total: 0,
-                  sets_contra_total: 0,
-                  racha_actual: "",
-                  ultima_actividad: null,
-                  puntos_totales: 0,
-                  updated_at: new Date().toISOString(),
-                }),
-                puntos_totales: romcView.puntosOficiales,
-              },
+              stats: mergeJugadorStatsPuntosTotales(
+                nextJugador.stats,
+                romcView.puntosOficiales
+              ),
+              officialPuntosGlobal: romcView.puntosOficiales,
             };
           }
           setJugador(nextJugador);
@@ -148,36 +132,22 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           try {
             const rebuilt = await rebuildJugadorStats(j.id);
             if (rebuilt) {
-              const stats =
-                romcView.hasRomcData && romcView.puntosOficiales != null
-                  ? { ...rebuilt, puntos_totales: romcView.puntosOficiales }
-                  : rebuilt;
-              setJugador({ ...j, stats });
-            } else if (romcView.hasRomcData && romcView.puntosOficiales != null) {
               setJugador({
                 ...j,
-                stats: {
-                  ...(j.stats ?? {
-                    jugador_id: j.id,
-                    total_partidos: 0,
-                    victorias: 0,
-                    derrotas: 0,
-                    empates: 0,
-                    participaciones_solo: 0,
-                    pct_victorias: 0,
-                    total_retas: 0,
-                    total_torneos_express: 0,
-                    total_ligas: 0,
-                    total_americanos: 0,
-                    sets_favor_total: 0,
-                    sets_contra_total: 0,
-                    racha_actual: "",
-                    ultima_actividad: null,
-                    puntos_totales: 0,
-                    updated_at: new Date().toISOString(),
-                  }),
-                  puntos_totales: romcView.puntosOficiales,
-                },
+                stats: mergeJugadorStatsPuntosTotales(
+                  rebuilt,
+                  romcView.puntosOficiales
+                ),
+                officialPuntosGlobal: romcView.puntosOficiales ?? undefined,
+              });
+            } else if (j.stats) {
+              setJugador({
+                ...j,
+                stats: mergeJugadorStatsPuntosTotales(
+                  j.stats,
+                  romcView.puntosOficiales
+                ),
+                officialPuntosGlobal: romcView.puntosOficiales ?? undefined,
               });
             }
           } catch (e) {
@@ -284,10 +254,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       });
       setHistorial(romcView.hasRomcData ? romcView.historial : h);
       if (rebuilt) {
-        const stats =
-          romcView.hasRomcData && romcView.puntosOficiales != null
-            ? { ...rebuilt, puntos_totales: romcView.puntosOficiales }
-            : rebuilt;
+        const stats = mergeJugadorStatsPuntosTotales(rebuilt, romcView.puntosOficiales);
         setJugador({ ...jugador, stats });
       } else {
         await load();

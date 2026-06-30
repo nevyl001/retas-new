@@ -4,7 +4,7 @@ import {
   RIVIERA_PRODUCT_NAME,
 } from "../../club-experience";
 import { getCachedOrganizerDisplayName } from "../organizer/organizerDisplayName";
-import { rankingPuntosJugador } from "./rankingPosition";
+import { resolveJugadorPuntosRanking } from "./rankingPosition";
 import type { RivieraJugadorWithStats } from "./types";
 
 export function getOrganizadorClubDisplayName(
@@ -23,13 +23,10 @@ export function rankingPuntosOrigenConcedido(j: RivieraJugadorWithStats): number
 
 /** Total global ROMC para ranking (todos los clubes). */
 export function rankingPuntosGlobalDisplay(j: RivieraJugadorWithStats): number {
-  if (j.officialPuntosGlobal != null && Number.isFinite(j.officialPuntosGlobal)) {
-    return j.officialPuntosGlobal;
-  }
   if (hasDualRankingConcedido(j)) {
     return (j.stats?.puntos_totales ?? 0) + rankingPuntosOrigenConcedido(j);
   }
-  return j.stats?.puntos_totales ?? 0;
+  return resolveJugadorPuntosRanking(j);
 }
 
 export function hasDualRankingConcedido(j: RivieraJugadorWithStats): boolean {
@@ -38,13 +35,10 @@ export function hasDualRankingConcedido(j: RivieraJugadorWithStats): boolean {
 
 /** Puntos mostrados en el registro interno (lista de jugadores del club). */
 export function rankingPuntosJugadorLista(j: RivieraJugadorWithStats): number {
-  if (j.officialPuntosGlobal != null && Number.isFinite(j.officialPuntosGlobal)) {
-    return j.officialPuntosGlobal;
-  }
   if (j.concedidoPorAdmin && j.statsOrigenConcedido) {
     return rankingPuntosOrigenConcedido(j);
   }
-  return rankingPuntosJugador(j);
+  return resolveJugadorPuntosRanking(j);
 }
 
 export function resolveOrigenConcedidoOrganizadorId(

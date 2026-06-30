@@ -52,7 +52,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
 
   if (
     jugador.officialPuntosGlobal != null &&
-    jugador.officialPuntosGlobal !== localPts
+    jugador.officialPuntosGlobal > localPts
   ) {
     return (
       <span

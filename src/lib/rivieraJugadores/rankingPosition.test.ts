@@ -1,4 +1,8 @@
-import { rankingPosicionesFromSorted } from "./rankingPosition";
+import {
+  rankingPosicionesFromSorted,
+  resolveJugadorPuntosRanking,
+  mergeJugadorStatsPuntosTotales,
+} from "./rankingPosition";
 import type { RivieraJugadorWithStats } from "./types";
 
 function j(puntos: number, id: string): RivieraJugadorWithStats {
@@ -88,5 +92,33 @@ describe("rankingPosicionesFromSorted", () => {
     expect(rankingPosicionesFromSorted(list)).toEqual([
       1, 2, 2, 4, 5, 6, 6, 8,
     ]);
+  });
+});
+
+describe("resolveJugadorPuntosRanking", () => {
+  it("respeta ajuste manual local aunque ROMC oficial sea menor", () => {
+    const jugador = { ...j(150, "nevyl"), officialPuntosGlobal: 120 };
+    expect(resolveJugadorPuntosRanking(jugador)).toBe(150);
+  });
+
+  it("usa ROMC cuando supera al registro local del club", () => {
+    const jugador = { ...j(80, "axel"), officialPuntosGlobal: 120 };
+    expect(resolveJugadorPuntosRanking(jugador)).toBe(120);
+  });
+
+  it("sin ROMC usa puntos locales", () => {
+    expect(resolveJugadorPuntosRanking(j(70, "alan"))).toBe(70);
+  });
+});
+
+describe("mergeJugadorStatsPuntosTotales", () => {
+  it("conserva ajuste manual cuando oficial es menor", () => {
+    const stats = j(150, "nevyl").stats!;
+    expect(mergeJugadorStatsPuntosTotales(stats, 120).puntos_totales).toBe(150);
+  });
+
+  it("sube al oficial cuando ROMC es mayor", () => {
+    const stats = j(80, "axel").stats!;
+    expect(mergeJugadorStatsPuntosTotales(stats, 120).puntos_totales).toBe(120);
   });
 });

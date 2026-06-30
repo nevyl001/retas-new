@@ -20,6 +20,7 @@ import {
   fetchOfficialRankingPosicionForJugador,
   loadRomcOfficialPlayerView,
 } from "../../lib/rivieraJugadores/rivieraOfficialActivity";
+import { mergeJugadorStatsPuntosTotales, resolveJugadorPuntosRanking } from "../../lib/rivieraJugadores/rankingPosition";
 import {
   getRankingPosicionEnCategoria,
   getRankingPosicionOficialEnCategoria,
@@ -28,7 +29,6 @@ import {
   getRivieraJugadorPublicBySlug,
   listParticipacionesPublic,
   obtenerHistorialRatingPublic,
-  rebuildJugadorStats,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
@@ -154,44 +154,33 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           : null;
         setOfficialPuntos(puntosOficialEfectivos);
         setRankingPos(pos);
-        try {
-          const rebuilt = await rebuildJugadorStats(j.id);
-          if (rebuilt) {
-            const stats =
-              romcView.hasRomcData && puntosOficialEfectivos != null
-                ? { ...rebuilt, puntos_totales: puntosOficialEfectivos }
-                : rebuilt;
-            setJugador({ ...j, stats });
-          } else if (romcView.hasRomcData && puntosOficialEfectivos != null) {
-            setJugador({
-              ...j,
-              stats: {
-                ...(j.stats ?? {
-                  jugador_id: j.id,
-                  total_partidos: 0,
-                  victorias: 0,
-                  derrotas: 0,
-                  empates: 0,
-                  participaciones_solo: 0,
-                  pct_victorias: 0,
-                  total_retas: 0,
-                  total_torneos_express: 0,
-                  total_ligas: 0,
-                  total_americanos: 0,
-                  sets_favor_total: 0,
-                  sets_contra_total: 0,
-                  racha_actual: "",
-                  ultima_actividad: null,
-                  puntos_totales: 0,
-                  updated_at: new Date().toISOString(),
-                }),
-                puntos_totales: puntosOficialEfectivos,
-              },
-            });
-          }
-        } catch (e) {
-          console.warn("[riviera-jugadores] sync stats en ficha pública:", e);
-        }
+        const statsBase = j.stats ?? {
+          jugador_id: j.id,
+          total_partidos: 0,
+          victorias: 0,
+          derrotas: 0,
+          empates: 0,
+          participaciones_solo: 0,
+          pct_victorias: 0,
+          total_retas: 0,
+          total_torneos_express: 0,
+          total_ligas: 0,
+          total_americanos: 0,
+          sets_favor_total: 0,
+          sets_contra_total: 0,
+          racha_actual: "",
+          ultima_actividad: null,
+          puntos_totales: 0,
+          updated_at: new Date().toISOString(),
+        };
+        setJugador({
+          ...j,
+          stats: mergeJugadorStatsPuntosTotales(
+            statsBase,
+            puntosOficialEfectivos
+          ),
+          officialPuntosGlobal: puntosOficialEfectivos ?? undefined,
+        });
       } else {
         setRankingPos(null);
       }
@@ -311,10 +300,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     );
   }
 
-  const puntos =
-    officialPuntos != null
-      ? officialPuntos
-      : jugador.stats?.puntos_totales ?? 0;
+  const puntos = resolveJugadorPuntosRanking({
+    ...jugador,
+    officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
+  });
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);

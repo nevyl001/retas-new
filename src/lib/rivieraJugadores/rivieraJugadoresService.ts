@@ -24,7 +24,7 @@ import {
   listActiveGrantedAccessForOrganizer,
   loadGrantedSourceDisplayData,
 } from "./organizerPlayerAccess";
-import { rankingPuntosJugador } from "./rankingPosition";
+import { mergeJugadorStatsPuntosTotales, rankingPuntosJugador } from "./rankingPosition";
 
 const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -1218,10 +1218,10 @@ function mapSitioOficialRow(
   row: Record<string, unknown>
 ): RivieraJugadorWithStats {
   const j = mapJugadorRowFromService(row);
-  const puntos = Number(row.puntos_totales ?? j.stats?.puntos_totales ?? 0);
+  const romcPts = Number(row.puntos_totales ?? j.stats?.puntos_totales ?? 0);
   const partidos = Number(row.total_partidos ?? j.stats?.total_partidos ?? 0);
   const victorias = Number(row.victorias ?? j.stats?.victorias ?? 0);
-  j.officialPuntosGlobal = puntos;
+  j.officialPuntosGlobal = romcPts;
   j.stats = {
     ...(j.stats ?? {
       jugador_id: j.id,
@@ -1242,11 +1242,79 @@ function mapSitioOficialRow(
       puntos_totales: 0,
       updated_at: "",
     }),
-    puntos_totales: puntos,
+    puntos_totales: romcPts,
     total_partidos: partidos,
     victorias,
   };
   return j;
+}
+
+/** Fusiona jugador_stats local (ajustes manuales) con puntos ROMC del ranking oficial. */
+async function enrichOfficialSiteRankingWithLocalPuntos(
+  jugadores: RivieraJugadorWithStats[]
+): Promise<RivieraJugadorWithStats[]> {
+  if (jugadores.length === 0) return jugadores;
+
+  const ids = jugadores.map((j) => j.id);
+  const { data, error } = await supabase
+    .from("jugador_stats")
+    .select("jugador_id, puntos_totales")
+    .in("jugador_id", ids);
+
+  if (error) {
+    console.warn("[riviera-jugadores] enrich local puntos sitio oficial:", error);
+    return jugadores;
+  }
+
+  const localById = new Map(
+    (data ?? []).map((row) => [
+      String(row.jugador_id),
+      Number(row.puntos_totales ?? 0),
+    ])
+  );
+
+  const enriched = jugadores.map((j) => {
+    const romcPts = j.officialPuntosGlobal ?? j.stats?.puntos_totales ?? 0;
+    const localPts = localById.get(j.id);
+    const statsBase = j.stats ?? {
+      jugador_id: j.id,
+      total_partidos: 0,
+      victorias: 0,
+      derrotas: 0,
+      empates: 0,
+      participaciones_solo: 0,
+      pct_victorias: 0,
+      total_retas: 0,
+      total_torneos_express: 0,
+      total_ligas: 0,
+      total_americanos: 0,
+      sets_favor_total: 0,
+      sets_contra_total: 0,
+      racha_actual: "",
+      ultima_actividad: null,
+      puntos_totales: 0,
+      updated_at: "",
+    };
+    let stats = mergeJugadorStatsPuntosTotales(statsBase, romcPts);
+    if (localPts != null) {
+      stats = {
+        ...stats,
+        puntos_totales: Math.max(stats.puntos_totales, localPts),
+      };
+    }
+    return {
+      ...j,
+      officialPuntosGlobal: romcPts,
+      stats,
+    };
+  });
+
+  return [...enriched].sort((a, b) => {
+    const pa = rankingPuntosJugador(a);
+    const pb = rankingPuntosJugador(b);
+    if (pb !== pa) return pb - pa;
+    return a.nombre.localeCompare(b.nombre, "es");
+  });
 }
 
 export async function getRivieraJugadorPublicById(
@@ -1292,7 +1360,8 @@ export async function listOfficialSiteJugadoresRanking(
 
   if (!error && data) {
     const rows = (data as Record<string, unknown>[]).map(mapSitioOficialRow);
-    return rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
+    const filtered = rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
+    return enrichOfficialSiteRankingWithLocalPuntos(filtered);
   }
 
   if (
@@ -1331,12 +1400,7 @@ export async function listOfficialSiteJugadoresRanking(
   const filtered = rows.filter((row) =>
     isJugadorInGeneroBracket(row.genero, genero)
   );
-  return [...filtered].sort((a, b) => {
-    const pa = a.stats?.puntos_totales ?? 0;
-    const pb = b.stats?.puntos_totales ?? 0;
-    if (pb !== pa) return pb - pa;
-    return a.nombre.localeCompare(b.nombre, "es");
-  });
+  return enrichOfficialSiteRankingWithLocalPuntos(filtered);
 }
 
 export async function getRankingPosicionOficialEnCategoria(
