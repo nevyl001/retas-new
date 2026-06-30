@@ -391,6 +391,12 @@ function isMissingRpcError(error: { code?: string; message?: string; status?: nu
   );
 }
 
+function isRlsPolicyError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const msg = (error.message ?? "").toLowerCase();
+  return error.code === "42501" || msg.includes("row-level security");
+}
+
 async function fetchInternalClubJugadorRow(
   organizadorId: string,
   opts: { slug?: string; jugadorId?: string }
@@ -559,6 +565,7 @@ async function persistJugadorStats(stats: JugadorStats): Promise<JugadorStats> {
 
   if (error) {
     if (isMissingTableError(error)) return stats;
+    if (isRlsPolicyError(error)) return stats;
     console.warn("[riviera-jugadores] persist jugador_stats:", error);
   }
 
@@ -1050,8 +1057,25 @@ export async function rebuildJugadorStats(
     p_jugador_id: jugadorId,
   });
 
-  if (rpcErr && !isMissingTableError(rpcErr) && !isMissingRpcError(rpcErr)) {
+  const rpcMissing =
+    rpcErr &&
+    (isMissingTableError(rpcErr) || isMissingRpcError(rpcErr));
+
+  if (!rpcErr) {
+    try {
+      return await fetchJugadorStatsRow(jugadorId);
+    } catch {
+      return null;
+    }
+  }
+
+  if (rpcErr && !rpcMissing) {
     console.warn("[riviera-jugadores] refresh_jugador_stats:", rpcErr);
+    try {
+      return await fetchJugadorStatsRow(jugadorId);
+    } catch {
+      return null;
+    }
   }
 
   try {

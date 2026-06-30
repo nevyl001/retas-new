@@ -41,15 +41,33 @@ function isMissingRatingRpc(error: { code?: string; message?: string } | null): 
 
 /** Re-importar historial vuelve a llamar al RPC; el partido ya puede estar registrado. */
 function isDuplicateRatingHistorialError(
-  error: { code?: string; message?: string; details?: string } | null
+  error: { code?: string; message?: string; details?: string; status?: number } | null
 ): boolean {
   if (!error) return false;
   const msg = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
   return (
+    error.status === 409 ||
     error.code === "23505" ||
     msg.includes("rating_historial_jugador_partido_uidx") ||
-    msg.includes("duplicate key value")
+    msg.includes("duplicate key value") ||
+    msg.includes("conflict")
   );
+}
+
+async function ratingPartidoYaAplicado(
+  partidoRef: string,
+  jugadorId: string
+): Promise<boolean> {
+  if (!partidoRef || !jugadorId) return false;
+  const { data, error } = await supabase
+    .from("rating_historial")
+    .select("id")
+    .eq("partido_ref", partidoRef)
+    .eq("jugador_id", jugadorId)
+    .limit(1)
+    .maybeSingle();
+  if (error) return false;
+  return !!data;
 }
 
 /** Llama al RPC de Supabase que actualiza rating de los 4 jugadores. */
@@ -58,6 +76,10 @@ export async function aplicarRatingPartido(
 ): Promise<boolean> {
   const { j1, j2, j3, j4, ganador, modoJuego, partidoRef, descripcion } = params;
   if (!j1 || !j2 || !j3 || !j4) return false;
+
+  if (partidoRef && (await ratingPartidoYaAplicado(partidoRef, j1))) {
+    return true;
+  }
 
   const { error } = await supabase.rpc("aplicar_rating_partido", {
     p_j1: j1,

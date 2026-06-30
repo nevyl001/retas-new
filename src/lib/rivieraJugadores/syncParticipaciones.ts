@@ -343,21 +343,6 @@ async function safeRegistrar(params: {
         tipoEvento: params.tipoEvento,
         eventoId: params.eventoId,
       });
-      await rebuildJugadorStats(params.jugadorId);
-      logMulticlubPhase21({
-        action: "stats_rebuilt",
-        jugadorId: params.jugadorId,
-        tipoEvento: params.tipoEvento,
-        eventoId: params.eventoId,
-      });
-      logMulticlubPoints21B({
-        action: "stats_rebuilt",
-        jugadorId: params.jugadorId,
-        puntosFinales: puntos,
-        tipoEvento: params.tipoEvento,
-        eventoId: params.eventoId,
-        subtipo,
-      });
     }
     if (rankingState.sumaRanking) {
       await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
@@ -483,27 +468,12 @@ async function upsertParticipacionRanking(params: {
       console.error("[riviera-jugadores] upsertParticipacionRanking:", error);
       return;
     }
-    await rebuildJugadorStats(params.jugadorId);
     logMulticlubPhase21({
       action: "participacion_updated",
       participacionId: existing.id,
       jugadorId: params.jugadorId,
       tipoEvento: params.tipoEvento,
       eventoId: params.eventoId,
-    });
-    logMulticlubPhase21({
-      action: "stats_rebuilt",
-      jugadorId: params.jugadorId,
-      tipoEvento: params.tipoEvento,
-      eventoId: params.eventoId,
-    });
-    logMulticlubPoints21B({
-      action: "stats_rebuilt",
-      jugadorId: params.jugadorId,
-      puntosFinales: puntosObtenidos,
-      tipoEvento: params.tipoEvento,
-      eventoId: params.eventoId,
-      subtipo: params.subtipo,
     });
     await tryWriteRivieraOfficialLedger(existing.id);
     return;
@@ -2138,6 +2108,8 @@ export async function syncDuelo2v2Participaciones(params: {
     console.warn("[rating] duelo 2v2 sync:", e);
   }
 
+  const touchedJugadorIds = new Set<string>();
+
   try {
     for (const slot of slots) {
       const jugadorId = await resolveJugadorIdForParticipacion({
@@ -2148,6 +2120,7 @@ export async function syncDuelo2v2Participaciones(params: {
         eventoId: duelo.id,
       });
       if (!jugadorId) continue;
+      touchedJugadorIds.add(jugadorId);
 
       const posicion = slot.esGanador ? 1 : 2;
       const resultado: JugadorResultado = slot.esGanador ? "victoria" : "derrota";
@@ -2200,6 +2173,7 @@ export async function syncDuelo2v2Participaciones(params: {
         metadata,
       });
     }
+    await refreshJugadorStatsBatch(touchedJugadorIds);
   } catch (e) {
     console.error("[riviera-jugadores] syncDuelo2v2Participaciones:", e);
   }

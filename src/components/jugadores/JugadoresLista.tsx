@@ -19,7 +19,6 @@ import {
   deleteRivieraJugador,
   listRivieraJugadores,
   promoteImportedRivieraJugadores,
-  rebuildJugadorStats,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
@@ -185,10 +184,6 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                     ]);
                     const { retas: nRetas, americanos: nAmericanos, ligas: nLigas, duelos: nDuelos } =
                       resumen;
-                    const todos = await listRivieraJugadores(user.id);
-                    await Promise.allSettled(
-                      todos.map((j) => rebuildJugadorStats(j.id))
-                    );
                     await load();
                     const total = nRetas + nAmericanos + nLigas + nDuelos;
                     const promoNote =
