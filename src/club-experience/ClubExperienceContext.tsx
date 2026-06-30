@@ -58,10 +58,10 @@ export const ClubExperienceProvider: React.FC<ClubExperienceProviderProps> = ({
   const { user, loading: userLoading } = useUser();
   const { isAdminLoggedIn } = useAdmin();
   const bootstrapOrganizadorId = useMemo(() => resolveBootstrapOrganizadorId(), []);
-  const [, brandingRevision] = useReducer((n: number) => n + 1, 0);
+  const [brandingRevision, bumpBrandingRevision] = useReducer((n: number) => n + 1, 0);
   const [, transitionRevision] = useReducer((n: number) => n + 1, 0);
 
-  useEffect(() => subscribeBranding(() => brandingRevision()), []);
+  useEffect(() => subscribeBranding(() => bumpBrandingRevision()), []);
   useEffect(() => subscribeBrandingTransition(() => transitionRevision()), []);
 
   const isBrandingReady = getIsBrandingReady();
@@ -72,6 +72,7 @@ export const ClubExperienceProvider: React.FC<ClubExperienceProviderProps> = ({
     : user?.id ?? (userLoading ? bootstrapOrganizadorId : null);
 
   const branding = useMemo(() => {
+    void brandingRevision;
     const applied = getAppliedBranding();
     if (applied) return applied;
     return resolveBrandingSync(organizadorId);
@@ -130,18 +131,18 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
     };
   }, [organizadorId]);
 
-  const manifest = useMemo(
-    () => resolveClubManifest(organizadorId),
-    [organizadorId, bindingRevision]
-  );
-  const isClubBranded = useMemo(
-    () => isClubBrandedOrganizer(organizadorId),
-    [organizadorId, bindingRevision]
-  );
-  const branding = useMemo(
-    () => resolveBrandingSync(organizadorId ?? null),
-    [organizadorId, bindingRevision]
-  );
+  const manifest = useMemo(() => {
+    void bindingRevision;
+    return resolveClubManifest(organizadorId);
+  }, [organizadorId, bindingRevision]);
+  const isClubBranded = useMemo(() => {
+    void bindingRevision;
+    return isClubBrandedOrganizer(organizadorId);
+  }, [organizadorId, bindingRevision]);
+  const branding = useMemo(() => {
+    void bindingRevision;
+    return resolveBrandingSync(organizadorId ?? null);
+  }, [organizadorId, bindingRevision]);
 
   const value = useMemo(
     () => ({

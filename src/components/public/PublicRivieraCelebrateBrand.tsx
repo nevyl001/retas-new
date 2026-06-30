@@ -1,6 +1,5 @@
 import React from "react";
 import { ClubIdentity, useClubExperience } from "../../club-experience";
-import { useOrganizerDisplayName } from "../../club-experience/useOrganizerDisplayName";
 
 export const PublicRivieraCelebrateBrand: React.FC<{
   showTagline?: boolean;
