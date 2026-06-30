@@ -12,8 +12,6 @@ import "./AuthPage.css";
 const AUTH_SUBTITLE =
   "Retas, torneos y ranking oficial en un solo lugar.";
 
-const AUTH_HERO_TAGLINE = "Tu próximo partido te está esperando.";
-
 const AUTH_MARKERS = [
   { key: "torneos", title: "Torneos", desc: "Ligas y express" },
   { key: "ranking", title: "Ranking Oficial", desc: "Posición y puntos" },
@@ -70,8 +68,6 @@ export const AuthPage: React.FC = () => {
             </ul>
 
             <p className="auth-hero-copy__proof">{landingProof}</p>
-
-            <p className="auth-hero-copy__tagline">{AUTH_HERO_TAGLINE}</p>
           </div>
         </div>
       </div>

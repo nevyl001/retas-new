@@ -29,9 +29,114 @@ function profileFromRow(row: Record<string, unknown>): PlayerPublicProfile {
   };
 }
 
+function mergeProfile(
+  current: PlayerPublicProfile,
+  incoming: PlayerPublicProfile
+): PlayerPublicProfile {
+  return {
+    fotoUrl: current.fotoUrl ?? incoming.fotoUrl,
+    rating:
+      current.rating !== DEFAULT_PROFILE.rating
+        ? current.rating
+        : incoming.rating,
+  };
+}
+
+type AvatarReadContext = {
+  client: typeof supabase;
+  applyVisiblePublicoFilter: boolean;
+};
+
+async function getSessionUserId(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user?.id ?? null;
+}
+
+async function getAvatarReadContext(opts?: {
+  publicOnly?: boolean;
+  organizadorId?: string;
+}): Promise<AvatarReadContext> {
+  if (opts?.publicOnly && opts.organizadorId) {
+    const uid = await getSessionUserId();
+    if (uid === opts.organizadorId) {
+      return { client: supabase, applyVisiblePublicoFilter: false };
+    }
+    return { client: supabasePublicRead, applyVisiblePublicoFilter: false };
+  }
+  if (opts?.publicOnly) {
+    return { client: supabasePublicRead, applyVisiblePublicoFilter: false };
+  }
+  return { client: supabase, applyVisiblePublicoFilter: false };
+}
+
+async function fetchEventAvatarsByRivieraIds(
+  ids: string[]
+): Promise<Map<string, PlayerPublicProfile>> {
+  const map = new Map<string, PlayerPublicProfile>();
+  if (ids.length === 0) return map;
+
+  const { data, error } = await supabase.rpc("riviera_event_player_avatars", {
+    p_jugador_ids: ids,
+  });
+
+  if (error) {
+    if (!error.message?.includes("riviera_event_player_avatars")) {
+      console.warn("[publicPlayerAvatars] riviera_event_player_avatars:", error.message);
+    }
+    return map;
+  }
+
+  for (const row of data ?? []) {
+    const profile = profileFromRow(row as Record<string, unknown>);
+    map.set(String((row as { id: string }).id), profile);
+  }
+  return map;
+}
+
+async function fetchEventAvatarsByLegacyIds(
+  organizadorId: string,
+  legacyIds: string[]
+): Promise<Map<string, PlayerPublicProfile>> {
+  const map = new Map<string, PlayerPublicProfile>();
+  if (!organizadorId || legacyIds.length === 0) return map;
+
+  const { data, error } = await supabase.rpc(
+    "riviera_event_legacy_player_avatars",
+    {
+      p_organizador_id: organizadorId,
+      p_legacy_player_ids: legacyIds,
+    }
+  );
+
+  if (error) {
+    if (!error.message?.includes("riviera_event_legacy_player_avatars")) {
+      console.warn(
+        "[publicPlayerAvatars] riviera_event_legacy_player_avatars:",
+        error.message
+      );
+    }
+    return map;
+  }
+
+  for (const row of data ?? []) {
+    const legacyId = String((row as { legacy_player_id: string }).legacy_player_id);
+    map.set(legacyId, profileFromRow(row as Record<string, unknown>));
+  }
+  return map;
+}
+
+function idsMissingFoto(
+  result: Record<string, PlayerPublicProfile>,
+  entries: PlayerAvatarLookupEntry[]
+): string[] {
+  return entries
+    .filter((e) => !result[e.id]?.fotoUrl)
+    .map((e) => e.id);
+}
+
 /**
- * Resuelve foto y rating del registro Riviera por legacy_player_id o nombre.
- * `publicOnly`: solo jugadores visibles al público (vista /public/...).
+ * Resuelve foto y rating del registro Riviera por legacy_player_id, riviera id o nombre.
+ * `publicOnly`: vistas /public/... — usa RPC de evento para cedidos sin visible_publico.
  */
 export async function resolvePlayerPublicProfiles(
   organizadorId: string,
@@ -42,14 +147,18 @@ export async function resolvePlayerPublicProfiles(
   for (const e of entries) result[e.id] = { ...DEFAULT_PROFILE };
   if (!organizadorId || entries.length === 0) return result;
 
-  const client = opts?.publicOnly ? supabasePublicRead : supabase;
+  const { client, applyVisiblePublicoFilter } = await getAvatarReadContext({
+    ...opts,
+    organizadorId,
+  });
+
   let q = client
     .from("riviera_jugadores")
-    .select("legacy_player_id, nombre, foto_url, rating")
+    .select("id, legacy_player_id, nombre, foto_url, rating")
     .eq("organizador_id", organizadorId)
     .eq("estado", "activo");
 
-  if (opts?.publicOnly) {
+  if (applyVisiblePublicoFilter) {
     q = q.eq("visible_publico", true);
   }
 
@@ -60,10 +169,10 @@ export async function resolvePlayerPublicProfiles(
   ) {
     let qBase = client
       .from("riviera_jugadores")
-      .select("legacy_player_id, nombre, foto_url")
+      .select("id, legacy_player_id, nombre, foto_url")
       .eq("organizador_id", organizadorId)
       .eq("estado", "activo");
-    if (opts?.publicOnly) {
+    if (applyVisiblePublicoFilter) {
       qBase = qBase.eq("visible_publico", true);
     }
     const retry = await qBase;
@@ -71,25 +180,44 @@ export async function resolvePlayerPublicProfiles(
     error = retry.error;
   }
 
-  if (error || !data) return result;
+  if (!error && data) {
+    const byLegacyId = new Map<string, PlayerPublicProfile>();
+    const byRivieraId = new Map<string, PlayerPublicProfile>();
+    const byName = new Map<string, PlayerPublicProfile>();
 
-  const byLegacyId = new Map<string, PlayerPublicProfile>();
-  const byName = new Map<string, PlayerPublicProfile>();
-
-  for (const row of data) {
-    const profile = profileFromRow(row as Record<string, unknown>);
-    if (row.legacy_player_id) {
-      byLegacyId.set(String(row.legacy_player_id), profile);
+    for (const row of data) {
+      const profile = profileFromRow(row as Record<string, unknown>);
+      if (row.id) {
+        byRivieraId.set(String(row.id), profile);
+      }
+      if (row.legacy_player_id) {
+        byLegacyId.set(String(row.legacy_player_id), profile);
+      }
+      const key = normalizePlayerNameKey(String(row.nombre ?? ""));
+      if (key) byName.set(key, profile);
     }
-    const key = normalizePlayerNameKey(String(row.nombre ?? ""));
-    if (key) byName.set(key, profile);
+
+    for (const e of entries) {
+      result[e.id] =
+        byLegacyId.get(e.id) ??
+        byRivieraId.get(e.id) ??
+        byName.get(normalizePlayerNameKey(e.name)) ??
+        DEFAULT_PROFILE;
+    }
   }
 
-  for (const e of entries) {
-    result[e.id] =
-      byLegacyId.get(e.id) ??
-      byName.get(normalizePlayerNameKey(e.name)) ??
-      DEFAULT_PROFILE;
+  const missingLegacy = idsMissingFoto(result, entries);
+  if (missingLegacy.length > 0) {
+    const fromRpc = await fetchEventAvatarsByLegacyIds(
+      organizadorId,
+      missingLegacy
+    );
+    for (const id of missingLegacy) {
+      const profile = fromRpc.get(id);
+      if (profile) {
+        result[id] = mergeProfile(result[id], profile);
+      }
+    }
   }
 
   return result;
@@ -98,7 +226,7 @@ export async function resolvePlayerPublicProfiles(
 /** Perfiles por id de riviera_jugadores (duelos 2v2, etc.). */
 export async function fetchRivieraJugadorProfilesByIds(
   ids: (string | null)[],
-  opts?: { publicOnly?: boolean }
+  opts?: { publicOnly?: boolean; organizadorId?: string }
 ): Promise<Map<string, PlayerPublicProfile>> {
   const valid = Array.from(
     new Set(ids.filter((id): id is string => Boolean(id)))
@@ -107,7 +235,8 @@ export async function fetchRivieraJugadorProfilesByIds(
   for (const id of valid) map.set(id, { ...DEFAULT_PROFILE });
   if (valid.length === 0) return map;
 
-  const client = opts?.publicOnly ? supabasePublicRead : supabase;
+  const { client } = await getAvatarReadContext(opts);
+
   let { data, error } = await client
     .from("riviera_jugadores")
     .select("id, foto_url, rating")
@@ -125,11 +254,23 @@ export async function fetchRivieraJugadorProfilesByIds(
     error = retry.error;
   }
 
-  if (error || !data) return map;
-
-  for (const row of data) {
-    map.set(String(row.id), profileFromRow(row as Record<string, unknown>));
+  if (!error && data) {
+    for (const row of data) {
+      map.set(String(row.id), profileFromRow(row as Record<string, unknown>));
+    }
   }
+
+  const missing = valid.filter((id) => !map.get(id)?.fotoUrl);
+  if (missing.length > 0) {
+    const fromRpc = await fetchEventAvatarsByRivieraIds(missing);
+    for (const id of missing) {
+      const profile = fromRpc.get(id);
+      if (profile) {
+        map.set(id, mergeProfile(map.get(id) ?? { ...DEFAULT_PROFILE }, profile));
+      }
+    }
+  }
+
   return map;
 }
 

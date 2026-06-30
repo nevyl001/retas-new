@@ -22,9 +22,13 @@ interface Duelo2v2PublicaProps {
 }
 
 async function fetchJugadorProfiles(
-  ids: (string | null)[]
+  ids: (string | null)[],
+  organizadorId?: string | null
 ): Promise<Map<string, { fotoUrl: string | null; rating: number }>> {
-  return fetchRivieraJugadorProfilesByIds(ids, { publicOnly: true });
+  return fetchRivieraJugadorProfilesByIds(ids, {
+    publicOnly: true,
+    organizadorId: organizadorId ?? undefined,
+  });
 }
 
 export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => {
@@ -58,7 +62,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
         d.pareja_a_j2_id,
         d.pareja_b_j1_id,
         d.pareja_b_j2_id,
-      ]);
+      ], d.organizador_id);
       setProfiles(profileMap);
       if (d.estado === "finalizado" && d.ganador) {
         const moves = await fetchRatingMovimientosByPartidoRef(`duelo2v2:${d.id}`);
