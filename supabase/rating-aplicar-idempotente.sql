@@ -1,32 +1,6 @@
--- Sistema de rating Playtomic-style (1.00–7.00) para Riviera Open
--- Ejecutar en Supabase SQL Editor si aún no existe.
+-- Idempotencia al re-importar historial (evita 409 rating_historial_jugador_partido_uidx).
+-- Ejecutar en Supabase SQL Editor si aplicar_rating_partido ya existe en prod.
 
-ALTER TABLE public.riviera_jugadores
-  ADD COLUMN IF NOT EXISTS rating numeric DEFAULT 3.00,
-  ADD COLUMN IF NOT EXISTS rating_partidos integer DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS rating_fiabilidad numeric DEFAULT 0.20;
-
-CREATE TABLE IF NOT EXISTS public.rating_historial (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  jugador_id uuid NOT NULL REFERENCES public.riviera_jugadores(id) ON DELETE CASCADE,
-  fecha timestamptz NOT NULL DEFAULT now(),
-  rating_antes numeric NOT NULL,
-  rating_despues numeric NOT NULL,
-  delta numeric NOT NULL,
-  modo_juego text NOT NULL,
-  descripcion text,
-  partido_ref text
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS rating_historial_jugador_partido_uidx
-  ON public.rating_historial (jugador_id, partido_ref)
-  WHERE partido_ref IS NOT NULL;
-
-CREATE INDEX IF NOT EXISTS rating_historial_jugador_fecha_idx
-  ON public.rating_historial (jugador_id, fecha DESC);
-
--- Aplica rating Elo-style a los 4 jugadores de un partido 2v2.
--- p_ganador: 'a' = pareja 1 (j1+j2), 'b' = pareja 2 (j3+j4)
 CREATE OR REPLACE FUNCTION public.aplicar_rating_partido(
   p_j1 uuid,
   p_j2 uuid,
@@ -142,19 +116,3 @@ BEGIN
   END LOOP;
 END;
 $$;
-
-GRANT EXECUTE ON FUNCTION public.aplicar_rating_partido(
-  uuid, uuid, uuid, uuid, text, text, text, text
-) TO anon, authenticated;
-
-GRANT SELECT ON public.rating_historial TO anon, authenticated;
-
-ALTER TABLE public.rating_historial ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS rating_historial_select_public ON public.rating_historial;
-
-CREATE POLICY rating_historial_select_public ON public.rating_historial
-  FOR SELECT TO anon, authenticated
-  USING (true);
-
-NOTIFY pgrst, 'reload schema';

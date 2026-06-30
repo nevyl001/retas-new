@@ -39,6 +39,19 @@ function isMissingRatingRpc(error: { code?: string; message?: string } | null): 
   );
 }
 
+/** Re-importar historial vuelve a llamar al RPC; el partido ya puede estar registrado. */
+function isDuplicateRatingHistorialError(
+  error: { code?: string; message?: string; details?: string } | null
+): boolean {
+  if (!error) return false;
+  const msg = `${error.message ?? ""} ${error.details ?? ""}`.toLowerCase();
+  return (
+    error.code === "23505" ||
+    msg.includes("rating_historial_jugador_partido_uidx") ||
+    msg.includes("duplicate key value")
+  );
+}
+
 /** Llama al RPC de Supabase que actualiza rating de los 4 jugadores. */
 export async function aplicarRatingPartido(
   params: AplicarRatingPartidoParams
@@ -64,11 +77,13 @@ export async function aplicarRatingPartido(
       );
       return false;
     }
+    if (isDuplicateRatingHistorialError(error)) {
+      return true;
+    }
     console.error("[rating] RPC error:", error.message, error.code, error);
     throw error;
   }
 
-  console.info(`[rating] aplicado: ${partidoRef} (${modoJuego})`);
   return true;
 }
 

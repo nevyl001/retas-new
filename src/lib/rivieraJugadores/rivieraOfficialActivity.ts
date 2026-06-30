@@ -10,8 +10,6 @@ import type {
   RivieraJugadorWithStats,
 } from "./types";
 
-const TEMP_ROMC_LOG_PREFIX = "TEMP_MULTICLUB_ROMC_2_2_B";
-
 export interface OfficialLedgerActivityRow {
   ledger_id: string;
   participacion_id: string;

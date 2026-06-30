@@ -29,6 +29,7 @@ import {
   rankingPuntosJugador,
   sortJugadoresByClubLocalPuntos,
 } from "./rankingPosition";
+import { computeJugadorStatsFromParticipaciones } from "./rebuildJugadorStats";
 
 const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -523,9 +524,6 @@ async function fetchJugadorStatsRow(
 async function computeStatsFromParticipaciones(
   jugadorId: string
 ): Promise<JugadorStats> {
-  const { computeJugadorStatsFromParticipaciones } = await import(
-    "./rebuildJugadorStats"
-  );
   const rows = await listParticipaciones(jugadorId, 500);
   const stats = computeJugadorStatsFromParticipaciones(jugadorId, rows);
   return {
@@ -1733,6 +1731,32 @@ export async function deleteRivieraJugador(
   organizadorId: string,
   jugadorId: string
 ): Promise<void> {
+  const { data, error: rpcErr } = await supabase.rpc("delete_riviera_jugador", {
+    p_organizador_id: organizadorId,
+    p_jugador_id: jugadorId,
+  });
+
+  if (!rpcErr) {
+    const payload = data as { status?: string } | null;
+    if (payload?.status === "deleted") return;
+  }
+
+  const rpcMsg = (rpcErr?.message ?? "").toLowerCase();
+  const rpcMissing =
+    rpcErr &&
+    (isMissingRpcError(rpcErr) ||
+      rpcMsg.includes("delete_riviera_jugador"));
+
+  if (rpcErr && !rpcMissing) {
+    throw new Error(rpcErr.message || "No se pudo eliminar el jugador.");
+  }
+
+  if (rpcErr && rpcMissing) {
+    console.warn(
+      "[riviera-jugadores] delete_riviera_jugador RPC no disponible; usando fallback. Ejecuta supabase/delete-riviera-jugador.sql"
+    );
+  }
+
   const { data: row, error: fetchErr } = await supabase
     .from("riviera_jugadores")
     .select("id, legacy_liga_jugador_id")
@@ -1750,11 +1774,35 @@ export async function deleteRivieraJugador(
     throw new Error("Jugador no encontrado o sin permiso para eliminarlo.");
   }
 
+  const { data: participaciones } = await supabase
+    .from("jugador_participaciones")
+    .select("id")
+    .eq("jugador_id", jugadorId);
+
+  for (const part of participaciones ?? []) {
+    const partId = String((part as { id: string }).id);
+    await supabase.rpc("reverse_riviera_official_ledger_for_participacion", {
+      p_participacion_id: partId,
+    });
+  }
+
   const { error: partErr } = await supabase
     .from("jugador_participaciones")
     .delete()
     .eq("jugador_id", jugadorId);
-  if (partErr && !isMissingTableError(partErr)) throw partErr;
+  if (partErr && !isMissingTableError(partErr)) {
+    throw new Error(
+      partErr.message.includes("409") || partErr.code === "23503"
+        ? "No se pudo eliminar el historial (ranking oficial enlazado). Ejecuta supabase/delete-riviera-jugador.sql en Supabase."
+        : partErr.message
+    );
+  }
+
+  const { error: ratingErr } = await supabase
+    .from("rating_historial")
+    .delete()
+    .eq("jugador_id", jugadorId);
+  if (ratingErr && !isMissingTableError(ratingErr)) throw ratingErr;
 
   const { error: statsErr } = await supabase
     .from("jugador_stats")
@@ -1788,7 +1836,11 @@ export async function deleteRivieraJugador(
     if (isMissingTableError(delErr)) {
       throw new Error("No se pudo eliminar el jugador del registro.");
     }
-    throw delErr;
+    throw new Error(
+      delErr.message.includes("409") || delErr.code === "23503"
+        ? "No se pudo eliminar el jugador (perfil oficial o duelos enlazados). Ejecuta supabase/delete-riviera-jugador.sql en Supabase."
+        : delErr.message
+    );
   }
 }
 
