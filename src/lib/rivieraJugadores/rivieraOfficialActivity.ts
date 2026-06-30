@@ -29,17 +29,19 @@ export interface OfficialLedgerActivityRow {
 /** @deprecated Use OfficialLedgerActivityRow */
 export type OfficialCrossClubActivityRow = OfficialLedgerActivityRow;
 
-function logRomcPhase22B(payload: Record<string, unknown>): void {
-  console.info(TEMP_ROMC_LOG_PREFIX, payload);
+function logRomcPhase22B(_payload: Record<string, unknown>): void {
+  /* logs de depuración ROMC desactivados */
 }
 
-function isMissingRomcRpc(error: { code?: string; message?: string } | null): boolean {
+function isMissingRomcRpc(error: { code?: string; message?: string; status?: number } | null): boolean {
   if (!error) return false;
   const msg = (error.message ?? "").toLowerCase();
   return (
+    error.status === 405 ||
     error.code === "42883" ||
     error.code === "PGRST202" ||
     msg.includes("could not find the function") ||
+    msg.includes("method not allowed") ||
     msg.includes("list_riviera_official_player_activity") ||
     msg.includes("list_riviera_official_cross_club_activity") ||
     msg.includes("list_riviera_official_legacy_participaciones") ||
@@ -59,7 +61,9 @@ export async function fetchOfficialDisplayPuntosForJugador(
 
   if (error) {
     if (isMissingRomcRpc(error)) return null;
-    console.warn("[riviera-official-activity] display_puntos:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[riviera-official-activity] display_puntos:", error);
+    }
     return null;
   }
 
@@ -90,7 +94,9 @@ export async function listOfficialPlayerActivity(
     if (isMissingRomcRpc(error)) {
       return listOfficialCrossClubActivity(jugadorId, limit);
     }
-    console.warn("[riviera-official-activity] player_activity:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[riviera-official-activity] player_activity:", error);
+    }
     return [];
   }
 
@@ -164,7 +170,9 @@ export async function listOfficialLegacyParticipaciones(
 
   if (error) {
     if (isMissingRomcRpc(error)) return [];
-    console.warn("[riviera-official-activity] legacy_participaciones:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[riviera-official-activity] legacy_participaciones:", error);
+    }
     return [];
   }
 

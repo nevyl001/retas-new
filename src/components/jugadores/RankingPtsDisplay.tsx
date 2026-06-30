@@ -1,8 +1,9 @@
 import React from "react";
+import { useOrganizerDisplayName } from "../../club-experience";
 import {
-  getOrganizadorClubDisplayName,
   hasDualRankingConcedido,
   rankingPuntosGlobalDisplay,
+  rankingPuntosInternoClubDisplay,
   rankingPuntosOrigenConcedido,
   resolveOrigenConcedidoOrganizadorId,
 } from "../../lib/rivieraJugadores/grantedRankingDisplay";
@@ -11,6 +12,8 @@ import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 type RankingPtsDisplayProps = {
   jugador: RivieraJugadorWithStats;
   clubOrganizadorId: string | null;
+  /** Ranking interno del club anfitrión (Hack, etc.) — pts = solo en este club. */
+  internalClub?: boolean;
   className?: string;
   variant?: "inline" | "stacked";
 };
@@ -18,19 +21,39 @@ type RankingPtsDisplayProps = {
 export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   jugador,
   clubOrganizadorId,
+  internalClub = false,
   className = "",
   variant = "inline",
 }) => {
   const localPts = jugador.stats?.puntos_totales ?? 0;
+  const clubPts = rankingPuntosInternoClubDisplay(jugador);
   const totalPts = rankingPuntosGlobalDisplay(jugador);
-  const clubName = getOrganizadorClubDisplayName(clubOrganizadorId);
+  const clubName = useOrganizerDisplayName(clubOrganizadorId);
+  const origenId = resolveOrigenConcedidoOrganizadorId(jugador);
+  const origenName = useOrganizerDisplayName(origenId);
   const stacked = variant === "stacked";
 
   if (hasDualRankingConcedido(jugador)) {
-    const origenId = resolveOrigenConcedidoOrganizadorId(jugador);
-    const origenName = getOrganizadorClubDisplayName(origenId);
     const origenPts = rankingPuntosOrigenConcedido(jugador);
-    const localPts = jugador.stats?.puntos_totales ?? 0;
+
+    if (internalClub) {
+      return (
+        <span
+          className={`rjp-ranking-dual-pts${
+            stacked ? " rjp-ranking-dual-pts--stacked" : ""
+          }${className ? ` ${className}` : ""}`}
+        >
+          <span className="rjp-ranking-dual-pts__total">
+            {clubName}: {clubPts.toLocaleString("es-MX")} pts
+          </span>
+          {origenPts > 0 ? (
+            <span className="rjp-ranking-dual-pts__origen">
+              {origenName}: {origenPts.toLocaleString("es-MX")} pts
+            </span>
+          ) : null}
+        </span>
+      );
+    }
 
     return (
       <span
@@ -41,21 +64,18 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
         <span className="rjp-ranking-dual-pts__total">
           {totalPts.toLocaleString("es-MX")} pts total
         </span>
-        {localPts > 0 && localPts !== totalPts ? (
-          <span className="rjp-ranking-dual-pts__local">
-            {clubName}: {localPts.toLocaleString("es-MX")} pts
-          </span>
-        ) : null}
-        {origenPts > 0 && origenPts !== totalPts && origenPts !== localPts ? (
-          <span className="rjp-ranking-dual-pts__origen">
-            {origenName}: {origenPts.toLocaleString("es-MX")} pts
-          </span>
-        ) : null}
+        <span className="rjp-ranking-dual-pts__local">
+          {clubName}: {localPts.toLocaleString("es-MX")} pts
+        </span>
+        <span className="rjp-ranking-dual-pts__origen">
+          {origenName}: {origenPts.toLocaleString("es-MX")} pts
+        </span>
       </span>
     );
   }
 
   if (
+    !internalClub &&
     jugador.officialPuntosGlobal != null &&
     jugador.officialPuntosGlobal > localPts
   ) {
@@ -75,9 +95,10 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
     );
   }
 
+  const displayPts = internalClub ? clubPts : totalPts;
   return (
     <span className={className}>
-      {totalPts.toLocaleString("es-MX")} pts
+      {displayPts.toLocaleString("es-MX")} pts
     </span>
   );
 };

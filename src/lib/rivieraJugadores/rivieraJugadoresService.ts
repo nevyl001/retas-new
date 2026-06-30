@@ -24,7 +24,11 @@ import {
   listActiveGrantedAccessForOrganizer,
   loadGrantedSourceDisplayData,
 } from "./organizerPlayerAccess";
-import { mergeJugadorStatsPuntosTotales, rankingPuntosJugador } from "./rankingPosition";
+import {
+  mergeJugadorStatsPuntosTotales,
+  rankingPuntosJugador,
+  sortJugadoresByClubLocalPuntos,
+} from "./rankingPosition";
 
 const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -147,6 +151,28 @@ export function mapJugadorRowFromService(
   };
 }
 
+function emptyLocalJugadorStats(jugadorId: string): JugadorStats {
+  return {
+    jugador_id: jugadorId,
+    total_partidos: 0,
+    victorias: 0,
+    derrotas: 0,
+    empates: 0,
+    participaciones_solo: 0,
+    pct_victorias: 0,
+    total_retas: 0,
+    total_torneos_express: 0,
+    total_ligas: 0,
+    total_americanos: 0,
+    sets_favor_total: 0,
+    sets_contra_total: 0,
+    racha_actual: "",
+    ultima_actividad: null,
+    puntos_totales: 0,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 async function fetchSourceJugadorForGrant(
   sourceJugadorId: string
 ): Promise<Record<string, unknown> | null> {
@@ -173,7 +199,32 @@ async function enrichGrantedJugadorFromSource(
   return applyGrantedSourceDisplayToJugador(
     jugador,
     display,
-    ownerOrganizadorId ?? jugador.organizador_id
+    ownerOrganizadorId ?? undefined
+  );
+}
+
+/** Cedidos en ranking interno: stats/rating del club dueño + metadata de acceso. */
+async function enrichInternalClubJugadorGrant(
+  organizadorId: string,
+  jugador: RivieraJugadorWithStats
+): Promise<RivieraJugadorWithStats> {
+  const meta = await findGrantedAccessMetaForJugador(organizadorId, jugador.id);
+  if (!meta) return jugador;
+
+  const ownerOrgId = meta.ownerOrganizadorId;
+  const withMeta: RivieraJugadorWithStats = {
+    ...jugador,
+    concedidoPorAdmin: true,
+    grantedAccess: {
+      accessId: meta.accessId,
+      sourceJugadorId: meta.sourceJugadorId,
+      ownerOrganizadorId: ownerOrgId,
+    },
+  };
+  return enrichGrantedJugadorFromSource(
+    withMeta,
+    meta.sourceJugadorId,
+    ownerOrgId
   );
 }
 
@@ -194,17 +245,17 @@ async function mergeGrantedJugadoresIntoRanking(
       const existing = ownById.get(grant.local_jugador_id);
       if (!existing || existing.categoria !== categoria) continue;
 
-      const source = await fetchSourceJugadorForGrant(grant.jugador_id);
+      const ownerOrgId = grant.owner_organizador_id;
       existing.concedidoPorAdmin = true;
       existing.grantedAccess = {
         accessId: grant.id,
         sourceJugadorId: grant.jugador_id,
-        ownerOrganizadorId: source ? String(source.organizador_id) : undefined,
+        ownerOrganizadorId: ownerOrgId,
       };
       const enriched = await enrichGrantedJugadorFromSource(
         existing,
         grant.jugador_id,
-        source ? String(source.organizador_id) : undefined
+        ownerOrgId
       );
       Object.assign(existing, enriched);
       continue;
@@ -222,36 +273,30 @@ async function mergeGrantedJugadoresIntoRanking(
       grant.local_display_name?.trim() ||
       String(source.nombre ?? "Jugador");
 
+    const sourceId = String(source.id ?? grant.jugador_id);
     let mapped = mapJugadorRowFromService({
       ...source,
       nombre,
       categoria: categoriaRow,
-      stats: null,
+      stats: emptyLocalJugadorStats(sourceId),
     });
     if (!isJugadorInGeneroBracket(mapped.genero, genero)) continue;
 
     mapped = await enrichGrantedJugadorFromSource(
       mapped,
       grant.jugador_id,
-      String(source.organizador_id)
+      grant.owner_organizador_id
     );
     mapped.concedidoPorAdmin = true;
     mapped.grantedAccess = {
       accessId: grant.id,
       sourceJugadorId: grant.jugador_id,
-      ownerOrganizadorId: String(source.organizador_id),
+      ownerOrganizadorId: grant.owner_organizador_id,
     };
     merged.push(mapped);
   }
 
-  merged.sort((a, b) => {
-    const pa = rankingPuntosJugador(a);
-    const pb = rankingPuntosJugador(b);
-    if (pb !== pa) return pb - pa;
-    return a.nombre.localeCompare(b.nombre, "es");
-  });
-
-  return merged;
+  return sortJugadoresByClubLocalPuntos(merged);
 }
 
 async function mergeGrantedJugadoresIntoList(
@@ -268,17 +313,17 @@ async function mergeGrantedJugadoresIntoList(
     if (grant.local_jugador_id) {
       const existing = ownById.get(grant.local_jugador_id);
       if (existing) {
-        const source = await fetchSourceJugadorForGrant(grant.jugador_id);
+        const ownerOrgId = grant.owner_organizador_id;
         existing.concedidoPorAdmin = true;
         existing.grantedAccess = {
           accessId: grant.id,
           sourceJugadorId: grant.jugador_id,
-          ownerOrganizadorId: source ? String(source.organizador_id) : undefined,
+          ownerOrganizadorId: ownerOrgId,
         };
         const enriched = await enrichGrantedJugadorFromSource(
           existing,
           grant.jugador_id,
-          source ? String(source.organizador_id) : undefined
+          ownerOrgId
         );
         Object.assign(existing, enriched);
       }
@@ -304,13 +349,13 @@ async function mergeGrantedJugadoresIntoList(
     mapped = await enrichGrantedJugadorFromSource(
       mapped,
       grant.jugador_id,
-      String(source.organizador_id)
+      grant.owner_organizador_id
     );
     mapped.concedidoPorAdmin = true;
     mapped.grantedAccess = {
       accessId: grant.id,
       sourceJugadorId: grant.jugador_id,
-      ownerOrganizadorId: String(source.organizador_id),
+      ownerOrganizadorId: grant.owner_organizador_id,
     };
     merged.push(mapped);
   }
@@ -360,7 +405,9 @@ async function fetchInternalClubJugadorRow(
   const { data, error } = await supabase.rpc(rpcName, rpcParams);
   if (!error && data) {
     const row = Array.isArray(data) ? data[0] : data;
-    return row ? mapInternalClubJugadorRow(row as Record<string, unknown>) : null;
+    if (!row) return null;
+    const mapped = mapInternalClubJugadorRow(row as Record<string, unknown>);
+    return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
   }
   if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
     throw error;
@@ -387,16 +434,74 @@ async function fetchInternalClubJugadorRow(
     if (isMissingTableError(fallbackError)) return null;
     throw fallbackError;
   }
-  return fallbackData
-    ? mapJugadorRowFromService(fallbackData as unknown as Record<string, unknown>)
-    : null;
+  if (!fallbackData) return null;
+  const mapped = mapJugadorRowFromService(
+    fallbackData as unknown as Record<string, unknown>
+  );
+  return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
+}
+
+/** Cedido sin perfil local en el club: ficha por ID del jugador origen. */
+async function fetchGrantedJugadorForInternalClub(
+  organizadorId: string,
+  jugadorId: string
+): Promise<RivieraJugadorWithStats | null> {
+  const trimmedId = jugadorId.trim();
+  const meta = await findGrantedAccessMetaForJugador(organizadorId, trimmedId);
+  if (!meta) return null;
+
+  if (
+    meta.localJugadorId &&
+    meta.sourceJugadorId === trimmedId &&
+    meta.localJugadorId !== trimmedId
+  ) {
+    return fetchInternalClubJugadorRow(organizadorId, {
+      jugadorId: meta.localJugadorId,
+    });
+  }
+
+  const source = await fetchSourceJugadorForGrant(meta.sourceJugadorId);
+  if (!source) return null;
+
+  const grants = await listActiveGrantedAccessForOrganizer(organizadorId);
+  const grant = grants.find((g) => g.id === meta.accessId);
+  if (!grant) return null;
+
+  const nombre =
+    grant.local_display_name?.trim() ||
+    String(source.nombre ?? "Jugador");
+  const categoria =
+    grant.local_category?.trim() ||
+    String(source.categoria ?? "open");
+  const sourceId = String(source.id ?? meta.sourceJugadorId);
+
+  let mapped = mapJugadorRowFromService({
+    ...source,
+    nombre,
+    categoria,
+    stats: emptyLocalJugadorStats(sourceId),
+  });
+  mapped = await enrichGrantedJugadorFromSource(
+    mapped,
+    meta.sourceJugadorId,
+    meta.ownerOrganizadorId
+  );
+  mapped.concedidoPorAdmin = true;
+  mapped.grantedAccess = {
+    accessId: meta.accessId,
+    sourceJugadorId: meta.sourceJugadorId,
+    ownerOrganizadorId: meta.ownerOrganizadorId,
+  };
+  return mapped;
 }
 
 export async function getRivieraJugadorInternalClubById(
   jugadorId: string,
   organizadorId: string
 ): Promise<RivieraJugadorWithStats | null> {
-  return fetchInternalClubJugadorRow(organizadorId, { jugadorId });
+  const direct = await fetchInternalClubJugadorRow(organizadorId, { jugadorId });
+  if (direct) return direct;
+  return fetchGrantedJugadorForInternalClub(organizadorId, jugadorId);
 }
 
 async function fetchJugadorStatsRow(
@@ -520,9 +625,6 @@ export async function listRivieraJugadores(
   }
 
   rows = await mergeGrantedJugadoresIntoList(organizadorId, rows);
-
-  const { enrichJugadoresWithOfficialPuntos } = await import("./rivieraOfficialActivity");
-  rows = await enrichJugadoresWithOfficialPuntos(rows);
 
   if (opts?.search?.trim()) {
     const sq = opts.search.trim().toLowerCase();
@@ -1454,7 +1556,7 @@ export async function listInternalClubJugadoresRanking(
   );
 
   if (!error && data) {
-    const rows = (data as Record<string, unknown>[]).map(mapSitioOficialRow);
+    const rows = (data as Record<string, unknown>[]).map(mapInternalClubJugadorRow);
     const filtered = rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
     const merged = await mergeGrantedJugadoresIntoRanking(
       organizadorId,
@@ -1462,10 +1564,7 @@ export async function listInternalClubJugadoresRanking(
       genero,
       filtered
     );
-    const { enrichJugadoresWithOfficialPuntos } = await import(
-      "./rivieraOfficialActivity"
-    );
-    return enrichJugadoresWithOfficialPuntos(merged);
+    return stripOfficialPuntosFromInternalClubRanking(merged);
   }
 
   if (error && !isMissingTableError(error) && !isMissingRpcError(error)) {
@@ -1513,10 +1612,18 @@ export async function listInternalClubJugadoresRanking(
     genero,
     sorted
   );
-  const { enrichJugadoresWithOfficialPuntos } = await import(
-    "./rivieraOfficialActivity"
+  return stripOfficialPuntosFromInternalClubRanking(merged);
+}
+
+function stripOfficialPuntosFromInternalClubRanking(
+  jugadores: RivieraJugadorWithStats[]
+): RivieraJugadorWithStats[] {
+  return sortJugadoresByClubLocalPuntos(
+    jugadores.map((j) => ({
+      ...j,
+      officialPuntosGlobal: undefined,
+    }))
   );
-  return enrichJugadoresWithOfficialPuntos(merged);
 }
 
 export async function getRivieraJugadorPublicBySlug(
@@ -1609,13 +1716,13 @@ export async function getRankingPosicionEnCategoria(
   categoria: string,
   genero: RivieraJugadorGenero = "M"
 ): Promise<number | null> {
-  const { rankingPosicionEnLista } = await import("./rankingPosition");
+  const { rankingPosicionEnListaForClub } = await import("./rankingPosition");
   const list = await listInternalClubJugadoresRanking(
     organizadorId,
     categoria,
     genero
   );
-  return rankingPosicionEnLista(list, jugadorId);
+  return rankingPosicionEnListaForClub(list, jugadorId);
 }
 
 /**

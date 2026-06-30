@@ -20,7 +20,10 @@ import {
   fetchOfficialRankingPosicionForJugador,
   loadRomcOfficialPlayerView,
 } from "../../lib/rivieraJugadores/rivieraOfficialActivity";
-import { mergeJugadorStatsPuntosTotales, resolveJugadorPuntosRanking } from "../../lib/rivieraJugadores/rankingPosition";
+import { mergeJugadorStatsPuntosTotales, resolveJugadorPuntosRanking, isJugadorConcedidoEnClub, jugadorPuntosOrigenConcedido, rankingPuntosClubLocal } from "../../lib/rivieraJugadores/rankingPosition";
+import {
+  prefetchOrganizerDisplayNames,
+} from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import {
   getRankingPosicionEnCategoria,
   getRankingPosicionOficialEnCategoria,
@@ -93,6 +96,8 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
   const [officialPuntos, setOfficialPuntos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const origenOrgId = jugador?.grantedAccess?.ownerOrganizadorId?.trim() || null;
+  const origenClubName = useOrganizerDisplayName(origenOrgId);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,6 +110,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           : await getRivieraJugadorPublicBySlug(slug ?? "", orgId ?? undefined);
       setJugador(j);
       if (j) {
+        void prefetchOrganizerDisplayNames([
+          orgId,
+          j.grantedAccess?.ownerOrganizadorId,
+        ]);
         const h = await listParticipacionesPublic(
           j.id,
           100,
@@ -142,12 +151,28 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 normalizeRivieraGenero(j.genero) ?? "M"
               )
             : Promise.resolve(null),
-          loadRomcOfficialPlayerView(j.id, { localParticipaciones: h }),
+          internalClub
+            ? Promise.resolve({
+                hasRomcData: false,
+                historial: h,
+                puntosOficiales: null,
+              })
+            : loadRomcOfficialPlayerView(j.id, { localParticipaciones: h }),
         ]);
 
         const pos = posRpc ?? posList;
 
-        const historialMerged = romcView.hasRomcData ? romcView.historial : h;
+        const isGrantedInternal = Boolean(
+          internalClub &&
+            j.concedidoPorAdmin &&
+            j.grantedAccess?.sourceJugadorId
+        );
+        const historialMerged =
+          internalClub || isGrantedInternal
+            ? h
+            : romcView.hasRomcData
+            ? romcView.historial
+            : h;
         setHistorial(historialMerged);
         const puntosOficialEfectivos = romcView.hasRomcData
           ? romcView.puntosOficiales
@@ -173,14 +198,18 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           puntos_totales: 0,
           updated_at: new Date().toISOString(),
         };
-        setJugador({
-          ...j,
-          stats: mergeJugadorStatsPuntosTotales(
-            statsBase,
-            puntosOficialEfectivos
-          ),
-          officialPuntosGlobal: puntosOficialEfectivos ?? undefined,
-        });
+        if (isGrantedInternal) {
+          setJugador({ ...j, stats: statsBase });
+        } else {
+          setJugador({
+            ...j,
+            stats: mergeJugadorStatsPuntosTotales(
+              statsBase,
+              puntosOficialEfectivos
+            ),
+            officialPuntosGlobal: puntosOficialEfectivos ?? undefined,
+          });
+        }
       } else {
         setRankingPos(null);
       }
@@ -198,8 +227,12 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       setHistorialRating([]);
       return;
     }
+    const ratingJugadorId =
+      jugador.concedidoPorAdmin && jugador.grantedAccess?.sourceJugadorId
+        ? jugador.grantedAccess.sourceJugadorId
+        : jugador.id;
     let active = true;
-    obtenerHistorialRatingPublic(jugador.id, 10)
+    obtenerHistorialRatingPublic(ratingJugadorId, 10)
       .then((rows) => {
         if (active) setHistorialRating(rows);
       })
@@ -209,7 +242,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     return () => {
       active = false;
     };
-  }, [jugador?.id]);
+  }, [
+    jugador?.id,
+    jugador?.concedidoPorAdmin,
+    jugador?.grantedAccess?.sourceJugadorId,
+  ]);
 
   const rankingUrl = internalClub
     ? buildPublicRankingUrl(
@@ -300,10 +337,15 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     );
   }
 
-  const puntos = resolveJugadorPuntosRanking({
-    ...jugador,
-    officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
-  });
+  const puntos = internalClub
+    ? rankingPuntosClubLocal(jugador)
+    : resolveJugadorPuntosRanking({
+        ...jugador,
+        officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
+      });
+  const puntosOrigen = jugadorPuntosOrigenConcedido(jugador);
+  const showDualPuntosFicha =
+    internalClub && isJugadorConcedidoEnClub(jugador) && puntosOrigen > 0;
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);
@@ -424,10 +466,24 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                           size={14}
                           className="rjp-ficha-stat__icon"
                         />
-                        <span className="rjp-ficha-stat__lbl">Puntos totales</span>
-                        <span className="rjp-ficha-stat__val">
-                          {puntos.toLocaleString("es-MX")}
+                        <span className="rjp-ficha-stat__lbl">
+                          {showDualPuntosFicha ? "Puntos en club" : "Puntos totales"}
                         </span>
+                        {showDualPuntosFicha ? (
+                          <span className="rjp-ficha-stat__val rjp-ficha-dual-pts">
+                            <span className="rjp-ficha-dual-pts__main">
+                              {puntos.toLocaleString("es-MX")}
+                            </span>
+                            <span className="rjp-ficha-dual-pts__origen">
+                              {origenClubName}:{" "}
+                              {puntosOrigen.toLocaleString("es-MX")} pts
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="rjp-ficha-stat__val">
+                            {puntos.toLocaleString("es-MX")}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

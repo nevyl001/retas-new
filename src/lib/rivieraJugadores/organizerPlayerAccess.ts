@@ -20,6 +20,7 @@ function isMissingAccessFeatureError(
 export interface OrganizerPlayerAccessRow {
   id: string;
   jugador_id: string;
+  owner_organizador_id: string;
   local_jugador_id: string | null;
   local_display_name: string | null;
   local_category: string | null;
@@ -55,7 +56,9 @@ export async function listActiveGrantedAccessForOrganizer(
 ): Promise<OrganizerPlayerAccessRow[]> {
   const { data, error } = await supabase
     .from("organizer_player_access")
-    .select("id, jugador_id, local_jugador_id, local_display_name, local_category")
+    .select(
+      "id, jugador_id, owner_organizador_id, local_jugador_id, local_display_name, local_category"
+    )
     .eq("grantee_organizer_id", granteeOrganizerId)
     .eq("is_active", true);
 
@@ -67,6 +70,7 @@ export async function listActiveGrantedAccessForOrganizer(
   return (data ?? []).map((row) => ({
     id: String(row.id),
     jugador_id: String(row.jugador_id),
+    owner_organizador_id: String(row.owner_organizador_id),
     local_jugador_id: row.local_jugador_id ? String(row.local_jugador_id) : null,
     local_display_name: row.local_display_name ? String(row.local_display_name) : null,
     local_category: row.local_category ? String(row.local_category) : null,
@@ -76,6 +80,7 @@ export async function listActiveGrantedAccessForOrganizer(
 export interface GrantedAccessMeta {
   accessId: string;
   sourceJugadorId: string;
+  ownerOrganizadorId: string;
   localJugadorId: string | null;
 }
 
@@ -85,7 +90,7 @@ export async function findGrantedAccessMetaForJugador(
 ): Promise<GrantedAccessMeta | null> {
   const { data, error } = await supabase
     .from("organizer_player_access")
-    .select("id, jugador_id, local_jugador_id")
+    .select("id, jugador_id, owner_organizador_id, local_jugador_id")
     .eq("grantee_organizer_id", granteeOrganizerId)
     .eq("is_active", true)
     .or(`jugador_id.eq.${jugadorId},local_jugador_id.eq.${jugadorId}`)
@@ -100,6 +105,7 @@ export async function findGrantedAccessMetaForJugador(
   return {
     accessId: String(data.id),
     sourceJugadorId: String(data.jugador_id),
+    ownerOrganizadorId: String(data.owner_organizador_id),
     localJugadorId: data.local_jugador_id ? String(data.local_jugador_id) : null,
   };
 }

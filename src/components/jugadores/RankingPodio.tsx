@@ -36,8 +36,9 @@ export const RankingPodio: React.FC<{
   /** Posiciones reales (empates comparten número). Índice alineado con `jugadores`. */
   ranks?: number[];
   clubOrganizadorId?: string | null;
+  internalClub?: boolean;
   onSelect: (slug: string) => void;
-}> = ({ jugadores, ranks, clubOrganizadorId = null, onSelect }) => {
+}> = ({ jugadores, ranks, clubOrganizadorId = null, internalClub = false, onSelect }) => {
   if (jugadores.length === 0) return null;
 
   return (
@@ -78,6 +79,7 @@ export const RankingPodio: React.FC<{
             <RankingPtsDisplay
               jugador={jugador as RivieraJugadorWithStats}
               clubOrganizadorId={clubOrganizadorId}
+              internalClub={internalClub}
               className="rjp-podio__pts"
               variant="stacked"
             />

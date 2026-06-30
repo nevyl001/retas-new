@@ -2,6 +2,7 @@ import {
   rankingPosicionesFromSorted,
   resolveJugadorPuntosRanking,
   mergeJugadorStatsPuntosTotales,
+  rankingPuntosClubLocal,
 } from "./rankingPosition";
 import type { RivieraJugadorWithStats } from "./types";
 
@@ -108,6 +109,34 @@ describe("resolveJugadorPuntosRanking", () => {
 
   it("sin ROMC usa puntos locales", () => {
     expect(resolveJugadorPuntosRanking(j(70, "alan"))).toBe(70);
+  });
+
+  it("jugador concedido: respeta ajuste manual del club dueño (origen)", () => {
+    const hackLocal = {
+      ...j(120, "nevyl-hack"),
+      officialPuntosGlobal: 120,
+      statsOrigenConcedido: j(150, "nevyl-riviera").stats!,
+      concedidoPorAdmin: true,
+      grantedAccess: { accessId: "grant-1", sourceJugadorId: "nevyl-riviera" },
+    };
+    expect(resolveJugadorPuntosRanking(hackLocal)).toBe(150);
+  });
+});
+
+describe("rankingPuntosClubLocal", () => {
+  it("cedido en club anfitrión: solo puntos locales, sin origen Riviera", () => {
+    const jugador = {
+      ...j(120, "nevyl-hack"),
+      statsOrigenConcedido: j(150, "nevyl-riviera").stats!,
+      concedidoPorAdmin: true,
+      grantedAccess: { accessId: "grant-1", sourceJugadorId: "nevyl-riviera" },
+    };
+    expect(rankingPuntosClubLocal(jugador)).toBe(120);
+  });
+
+  it("jugador propio del club: incluye ROMC y ajustes manuales", () => {
+    const jugador = { ...j(150, "nevyl"), officialPuntosGlobal: 120 };
+    expect(rankingPuntosClubLocal(jugador)).toBe(150);
   });
 });
 

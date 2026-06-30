@@ -15,7 +15,11 @@ import { listInternalClubJugadoresRanking, listOfficialSiteJugadoresRanking } fr
 import { isOrganizadorRankingPublico } from "../../lib/admin/accountControls";
 import { resolveOrganizerDisplayName } from "../../lib/organizer/organizerDisplayName";
 import { subscribeRivieraRanking } from "../../lib/rivieraJugadores/subscribeRivieraRanking";
-import { rankingPosicionesFromSorted } from "../../lib/rivieraJugadores/rankingPosition";
+import { rankingPosicionesFromSortedForClub } from "../../lib/rivieraJugadores/rankingPosition";
+import {
+  prefetchOrganizerDisplayNames,
+  resolveOrigenConcedidoOrganizadorId,
+} from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import { navigateAppTo } from "../../lib/appRouting";
 import {
   getPublicOrganizadorIdFromPath,
@@ -108,7 +112,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   const jugadoresFiltrados = jugadores;
 
   const rankingRanks = useMemo(
-    () => rankingPosicionesFromSorted(jugadoresFiltrados),
+    () => rankingPosicionesFromSortedForClub(jugadoresFiltrados),
     [jugadoresFiltrados]
   );
 
@@ -162,6 +166,10 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
         ? await listOfficialSiteJugadoresRanking(orgId, categoria, genero)
         : await listInternalClubJugadoresRanking(orgId, categoria, genero);
       setJugadores(rows);
+      void prefetchOrganizerDisplayNames([
+        orgId,
+        ...rows.map((j) => resolveOrigenConcedidoOrganizadorId(j)),
+      ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el ranking");
     } finally {
@@ -316,6 +324,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                   jugadores={jugadoresFiltrados.slice(0, 3)}
                   ranks={rankingRanks.slice(0, 3)}
                   clubOrganizadorId={orgId}
+                  internalClub
                   onSelect={(slug) => {
                     const j = jugadoresFiltrados.find((row) => row.slug === slug);
                     if (j) openPlayer(j);
@@ -352,6 +361,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                               <RankingPtsDisplay
                                 jugador={j}
                                 clubOrganizadorId={orgId}
+                                internalClub
                                 className="rjp-ranking-card__pts"
                                 variant="stacked"
                               />

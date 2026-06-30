@@ -28,7 +28,7 @@ import {
   RIVIERA_GENERO_REGISTRY_TITLE,
 } from "../../lib/rivieraJugadores/genero";
 import {
-  rankingPosicionesFromSorted,
+  rankingPosicionesFromSortedForClub,
 } from "../../lib/rivieraJugadores/rankingPosition";
 import { rankingPuntosJugadorLista, jugadorListaPartidosDisplay, jugadorListaPctVictoriasDisplay } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
@@ -132,7 +132,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
       if (pb !== pa) return pb - pa;
       return a.nombre.localeCompare(b.nombre, "es");
     });
-    const ranks = rankingPosicionesFromSorted(sorted);
+    const ranks = rankingPosicionesFromSortedForClub(sorted);
     const map = new Map<string, number>();
     sorted.forEach((j, i) => map.set(j.id, ranks[i] ?? i + 1));
     return { jugadoresOrdenados: sorted, rankById: map };
