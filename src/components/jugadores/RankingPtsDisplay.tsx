@@ -30,6 +30,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
     const origenId = resolveOrigenConcedidoOrganizadorId(jugador);
     const origenName = getOrganizadorClubDisplayName(origenId);
     const origenPts = rankingPuntosOrigenConcedido(jugador);
+    const localPts = jugador.stats?.puntos_totales ?? 0;
 
     return (
       <span
@@ -40,12 +41,16 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
         <span className="rjp-ranking-dual-pts__total">
           {totalPts.toLocaleString("es-MX")} pts total
         </span>
-        <span className="rjp-ranking-dual-pts__local">
-          {clubName}: {localPts.toLocaleString("es-MX")} pts
-        </span>
-        <span className="rjp-ranking-dual-pts__origen">
-          {origenName}: {origenPts.toLocaleString("es-MX")} pts
-        </span>
+        {localPts > 0 && localPts !== totalPts ? (
+          <span className="rjp-ranking-dual-pts__local">
+            {clubName}: {localPts.toLocaleString("es-MX")} pts
+          </span>
+        ) : null}
+        {origenPts > 0 && origenPts !== totalPts && origenPts !== localPts ? (
+          <span className="rjp-ranking-dual-pts__origen">
+            {origenName}: {origenPts.toLocaleString("es-MX")} pts
+          </span>
+        ) : null}
       </span>
     );
   }

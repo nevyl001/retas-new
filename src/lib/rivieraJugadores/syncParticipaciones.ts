@@ -67,6 +67,7 @@ import {
   logMulticlubPhase21,
   resolveJugadorIdForParticipacion,
 } from "./jugadorIdResolver";
+import { isParticipacionExcluded } from "./participacionExclusions";
 import {
   aplicarRatingDuelo2v2,
   aplicarRatingRetaFinishedMatches,
@@ -219,6 +220,10 @@ async function registrarPuntosRanking(params: {
   skipIfSubtipoExists?: string;
   upsertSubtipo?: string;
 }): Promise<void> {
+  if (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId)) {
+    return;
+  }
+
   if (params.skipIfSubtipoExists) {
     const exists = await tieneParticipacionSubtipo(
       params.jugadorId,
@@ -300,6 +305,10 @@ async function safeRegistrar(params: {
   parejaCon?: string;
   metadata?: Record<string, unknown>;
 }): Promise<void> {
+  if (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId)) {
+    return;
+  }
+
   try {
     const rankingState = await readJugadorSumaRankingState(params.jugadorId);
     const puntosCalculados = Math.max(0, params.puntosObtenidos ?? 0);
@@ -412,6 +421,10 @@ async function upsertParticipacionRanking(params: {
   metadata: Record<string, unknown>;
   force?: boolean;
 }): Promise<void> {
+  if (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId)) {
+    return;
+  }
+
   const incomingDetalle = parsePartidosDetalle(params.metadata.partidos_detalle);
   const existing = await getParticipacionBySubtipo(
     params.jugadorId,

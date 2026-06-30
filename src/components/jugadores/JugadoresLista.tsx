@@ -30,7 +30,7 @@ import {
 import {
   rankingPosicionesFromSorted,
 } from "../../lib/rivieraJugadores/rankingPosition";
-import { rankingPuntosJugadorLista } from "../../lib/rivieraJugadores/grantedRankingDisplay";
+import { rankingPuntosJugadorLista, jugadorListaPartidosDisplay, jugadorListaPctVictoriasDisplay } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
 import { navigateJugadoresLista } from "./jugadoresGeneroNav";
@@ -103,11 +103,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     };
   }, [user?.id, load]);
 
-  const pct = (j: RivieraJugadorWithStats) => {
-    const s = j.stats;
-    if (!s?.total_partidos) return "—";
-    return `${Number(s.pct_victorias).toFixed(0)}%`;
-  };
+  const pct = (j: RivieraJugadorWithStats) => jugadorListaPctVictoriasDisplay(j);
 
   const handleDeleteJugador = async (j: RivieraJugadorWithStats) => {
     if (!user?.id || j.concedidoPorAdmin) return;
@@ -355,7 +351,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                         {" · "}
                       </>
                     ) : null}
-                    {j.stats?.total_partidos ?? 0} partidos · {pct(j)} victorias
+                    {jugadorListaPartidosDisplay(j)} partidos · {pct(j)} victorias
                   </p>
                 </button>
               </article>

@@ -521,6 +521,9 @@ export async function listRivieraJugadores(
 
   rows = await mergeGrantedJugadoresIntoList(organizadorId, rows);
 
+  const { enrichJugadoresWithOfficialPuntos } = await import("./rivieraOfficialActivity");
+  rows = await enrichJugadoresWithOfficialPuntos(rows);
+
   if (opts?.search?.trim()) {
     const sq = opts.search.trim().toLowerCase();
     rows = rows.filter((r) => r.nombre.toLowerCase().includes(sq));
@@ -983,14 +986,27 @@ export async function deleteParticipacionJugador(
   );
 
   if (!rpcErr) {
-    const payload = rpcData as { status?: string } | null;
+    const payload = rpcData as {
+      status?: string;
+      rebuilt_jugador_ids?: string[];
+      source_jugador_id?: string;
+    } | null;
     if (payload?.status === "deleted") {
-      try {
-        return await rebuildJugadorStats(jugadorId);
-      } catch (e) {
-        console.warn("[riviera-jugadores] rebuild tras delete linked:", e);
-        return null;
+      const ids = new Set<string>([jugadorId]);
+      if (payload.source_jugador_id) ids.add(payload.source_jugador_id);
+      for (const id of payload.rebuilt_jugador_ids ?? []) {
+        if (id) ids.add(id);
       }
+      let primary: JugadorStats | null = null;
+      for (const id of Array.from(ids)) {
+        try {
+          const stats = await rebuildJugadorStats(id);
+          if (id === jugadorId) primary = stats;
+        } catch (e) {
+          console.warn("[riviera-jugadores] rebuild tras delete linked:", id, e);
+        }
+      }
+      return primary ?? (await fetchJugadorStatsRow(jugadorId));
     }
   }
 
