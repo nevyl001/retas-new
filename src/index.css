@@ -47,3 +47,18 @@ body {
 html:not([data-brand="hack-padel"]):not([data-club="hack-padel"]) body {
   transition: background-color var(--transition-base), color var(--transition-base);
 }
+
+html[data-brand="hack-padel"],
+html[data-club="hack-padel"] {
+  background-color: #000000;
+  color-scheme: dark;
+}
+
+html[data-brand="hack-padel"] body,
+html[data-club="hack-padel"] body,
+html[data-brand="hack-padel"] #root,
+html[data-club="hack-padel"] #root {
+  background-color: #000000;
+  color: #ffffff;
+  transition: none !important;
+}

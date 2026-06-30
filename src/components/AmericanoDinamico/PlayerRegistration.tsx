@@ -1,4 +1,9 @@
 import React, { useState } from "react";
+import {
+  getRegistryEmptyMessage,
+  getRegistrySectionLabel,
+  useBranding,
+} from "../../club-experience";
 import type { AmericanoPlayer } from "../../lib/db/types";
 import type { Player } from "../../lib/database";
 import "./PlayerRegistration.css";
@@ -20,6 +25,8 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
 }) => {
   const [totalRounds, setTotalRounds] = useState(3);
   const [courts, setCourts] = useState(1);
+  const { nombre: organizerName } = useBranding();
+  const registryTitle = getRegistrySectionLabel(organizerName);
 
   const benchPerRound = players.length % 4 !== 0 ? players.length % 4 : 0;
 
@@ -62,13 +69,13 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       </div>
 
       <div className="americano-registration__db card">
-        <h4>Registro Riviera Open</h4>
+        <h4>{registryTitle}</h4>
         <p className="americano-registration__hint">
           Toca un jugador para seleccionarlo o deseleccionarlo.
         </p>
         {availablePlayers.length === 0 ? (
           <p className="americano-registration__empty">
-            No hay jugadores en el registro. Créalos en Registro Riviera Open.
+            {getRegistryEmptyMessage(organizerName)}
           </p>
         ) : null}
         <div className="americano-registration__db-grid">

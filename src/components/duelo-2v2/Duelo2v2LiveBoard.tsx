@@ -1,6 +1,5 @@
 import React from "react";
-import { useClubExperience } from "../../club-experience";
-import { getMotherAttributionLine } from "../../club-experience/experienceFormatters";
+import { useOrganizerDisplayName } from "../../club-experience";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import { PublicRivieraCelebrateBrand } from "../public/PublicRivieraCelebrateBrand";
@@ -47,10 +46,8 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
   const ganadorB = duelo.ganador === "b";
   const tieneGanador = Boolean(duelo.ganador);
   const status = getDueloPublicStatus(duelo, clockNow);
-  const { manifest, isClubBranded } = useClubExperience();
-  const brandLine = isClubBranded
-    ? `${manifest.displayName} ${getMotherAttributionLine(manifest)}`
-    : "Riviera Open";
+  const organizerName = useOrganizerDisplayName();
+  const brandLine = organizerName;
 
   return (
     <section

@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ClubExperienceScope,
   PublicClubModeEyebrow,
+  getOrganizerCelebrateTagline,
+  useOrganizerDisplayName,
 } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
 import {
@@ -82,6 +84,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           user?.id,
           typeof window !== "undefined" ? window.location.pathname : undefined
         );
+  const organizerName = useOrganizerDisplayName(orgId ?? undefined);
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [historial, setHistorial] = useState<
     Awaited<ReturnType<typeof listParticipacionesPublic>>
@@ -474,7 +477,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         </div>
 
         <footer className="rjp-ficha-footer">
-          Riviera Open · Vive el pádel diferente
+          {getOrganizerCelebrateTagline(organizerName)}
         </footer>
       </div>
     </JugadoresPublicShell>

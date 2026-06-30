@@ -46,6 +46,25 @@
   color: var(--admin-text, #fafafa);
 }
 
+.account-controls__subtitle {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--admin-text, #fafafa);
+}
+
+.account-controls__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.account-controls__field-label {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted, #71717a);
+}
+
 .account-controls__hint {
   margin: 0 0 0.75rem;
   font-size: 0.75rem;

@@ -8,6 +8,11 @@ import React, {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
+import {
+  beginBrandingTransition,
+  endBrandingTransition,
+} from "../branding/brandingTransition";
+import { clearTenantBranding } from "../branding/BrandingService";
 
 const LEGACY_ADMIN_SESSION_KEY = "admin_session";
 
@@ -168,6 +173,12 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       }
 
       setAdminUser(admin);
+      beginBrandingTransition("session-login");
+      try {
+        clearTenantBranding();
+      } finally {
+        endBrandingTransition("session-login");
+      }
       return { success: true };
     } catch {
       return { success: false, error: "Error interno del servidor" };
@@ -192,6 +203,13 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       localStorage.removeItem(LEGACY_ADMIN_SESSION_KEY);
     } catch {
       /* ignore */
+    }
+
+    beginBrandingTransition("session-logout");
+    try {
+      clearTenantBranding();
+    } finally {
+      endBrandingTransition("session-logout");
     }
 
     window.location.replace("/admin-login");

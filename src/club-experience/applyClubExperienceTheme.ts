@@ -74,6 +74,17 @@ export function applyClubExperienceTheme(manifest: BrandManifest): void {
     "--club-dashboard-background-image",
     images.dashboardBackground ? `url(${images.dashboardBackground})` : "none"
   );
+
+  root.style.setProperty("--bg-canvas", colors.surface);
+  root.style.setProperty("--bg-base", colors.surface);
+  root.style.setProperty("--accent-gold", colors.accent);
+  root.style.setProperty("--accent-gold-light", colors.accent);
+  root.style.setProperty("--ro-accent", colors.accent);
+  root.style.setProperty(
+    "--ro-border-accent",
+    `color-mix(in srgb, ${colors.accent} 35%, transparent)`
+  );
+  root.style.setProperty("--ro-surface", colors.surfaceAlt);
 }
 
 export function clearClubExperienceTheme(): void {
@@ -97,6 +108,13 @@ export function clearClubExperienceTheme(): void {
     "--club-home-background-image",
     "--club-login-background-image",
     "--club-dashboard-background-image",
+    "--bg-canvas",
+    "--bg-base",
+    "--accent-gold",
+    "--accent-gold-light",
+    "--ro-accent",
+    "--ro-border-accent",
+    "--ro-surface",
   ];
   props.forEach((prop) => root.style.removeProperty(prop));
 }

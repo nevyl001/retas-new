@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ClubIdentity, useClubExperience } from "../club-experience";
+import { ClubIdentity } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
 import { MobileUserMenu } from "./MobileUserMenu";
 import "./UserHeader.css";
 
 export const UserHeader: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
-  const { isClubBranded } = useClubExperience();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -97,7 +96,7 @@ export const UserHeader: React.FC = () => {
       <div className="user-header-content">
         <div className="user-header-main">
           <div className="user-header-logo">
-            <ClubIdentity variant="header" showTagline={!isClubBranded} wordmarkOnly={isClubBranded} />
+            <ClubIdentity variant="header" showTagline={false} />
           </div>
 
           <div className="user-header-actions desktop-only">

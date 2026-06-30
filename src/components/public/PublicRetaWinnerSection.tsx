@@ -1,4 +1,5 @@
 import React from "react";
+import { getWinnersSectionAriaLabel, useBranding } from "../../club-experience";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import "../jugadores/riviera-jugadores.css";
 import type { TeamWinnerCelebrateStatCard } from "../../lib/teamWinnerCelebrate";
@@ -48,6 +49,7 @@ export const PublicRetaWinnerSection: React.FC<{
   runnersUp,
   shareable = false,
 }) => {
+  const { nombre: organizerName } = useBranding();
   const hasWinners = Boolean(winners && winners.length > 0);
   const hasRunnersUp = Boolean(runnersUp && runnersUp.length > 0);
   const hasStats = Boolean(stats && stats.length > 0);
@@ -65,7 +67,7 @@ export const PublicRetaWinnerSection: React.FC<{
       ]
         .filter(Boolean)
         .join(" ")}
-      aria-label="Ganadores Riviera Open"
+      aria-label={getWinnersSectionAriaLabel(organizerName)}
     >
       <div className="ro-pub-celebrate__glow" aria-hidden />
       <div className="ro-pub-celebrate__inner">

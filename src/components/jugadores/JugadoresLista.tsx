@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useClubExperience } from "../../club-experience";
+import { useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { useUser } from "../../contexts/UserContext";
 import { useAccountFeatures } from "../../contexts/AccountFeaturesContext";
@@ -49,7 +49,8 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
 }) => {
   const genero = generoProp;
   const { user } = useUser();
-  const { manifest, isClubBranded } = useClubExperience();
+  const { organizadorId } = useClubExperience();
+  const organizerName = useOrganizerDisplayName(organizadorId ?? user?.id);
   const { permiteAjustePuntosManuales } = useAccountFeatures();
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,9 +142,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     return { jugadoresOrdenados: sorted, rankById: map };
   }, [jugadores]);
 
-  const pageTitle = isClubBranded
-    ? `Registro de jugadores en ${manifest.displayName}`
-    : "Registro Riviera Open";
+  const pageTitle = `Registro ${organizerName}`;
 
   return (
     <div className="rj-page">

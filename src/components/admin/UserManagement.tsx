@@ -427,7 +427,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({
       </div>
       <p className="user-management-hint">
         Pulsa <strong>Gestionar</strong> en una cuenta para bloquear modos de
-        juego y controlar qué jugadores suman al ranking del sitio web.
+        juego, activar el upgrade visual premium y controlar qué jugadores suman
+        al ranking del sitio web.
       </p>
 
       {authCleanupNotice && (

@@ -1,10 +1,25 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="branding-bootstrapping">
 
 <head>
     <meta charset="utf-8" />
-    <script src="%PUBLIC_URL%/club-theme-early.js"></script>
-    <link rel="stylesheet" href="%PUBLIC_URL%/club-theme-early.css" />
+    <style>
+      html.branding-bootstrapping,
+      html.branding-bootstrapping body,
+      html.branding-bootstrapping #root {
+        background-color: #000000;
+        color: #ffffff;
+        transition: none !important;
+      }
+      html.branding-transitioning #root {
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+      html.branding-transitioning body {
+        background-color: #000000;
+        transition: none !important;
+      }
+    </style>
     <!-- Favicon: cache buster para que Android/navegador no usen icono viejo en caché -->
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png?v=8" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-192x192.png?v=8" />

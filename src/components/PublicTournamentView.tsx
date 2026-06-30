@@ -33,10 +33,7 @@ import {
   matchesForStandingsTable,
   resolveTournamentPodiumOutcome,
 } from "../lib/resolveTournamentOutcome";
-import {
-  RIVIERA_APP_DISPLAY,
-} from "../lib/rivieraBranding";
-import { ClubIdentity, useClubExperience } from "../club-experience";
+import { ClubIdentity, formatTenantDocumentTitle, useClubExperience, useOrganizerDisplayName } from "../club-experience";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { PublicRetaMatchCard } from "./public/PublicRetaMatchCard";
 import type { PublicRetaPairPlayer } from "./public/PublicRetaPairSide";
@@ -89,6 +86,7 @@ const RetaPublicHeader: React.FC<{
             variant="compact"
             showTagline={false}
             logoSurface="dark"
+            wordmarkOnly
             className="te-public-header__club-identity"
           />
         ) : null}
@@ -148,6 +146,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [championshipConfig, setChampionshipConfig] =
     useState<RoundRobinChampionshipConfig | null>(null);
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
+  const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
   const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
     []
   );
@@ -597,14 +596,20 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   }, [showWinner, organizadorId, winnerAvatarEntries]);
 
   useEffect(() => {
-    const defaultTitle = `${RIVIERA_APP_DISPLAY} — Retas y torneos de pádel`;
-    document.title = publicTournamentName
-      ? `${publicTournamentName} · ${RIVIERA_APP_DISPLAY}`
-      : defaultTitle;
+    const defaultTitle = formatTenantDocumentTitle(
+      null,
+      organizerName,
+      "Retas y torneos de pádel"
+    );
+    document.title = formatTenantDocumentTitle(
+      publicTournamentName,
+      organizerName,
+      "Retas y torneos de pádel"
+    );
     return () => {
       document.title = defaultTitle;
     };
-  }, [publicTournamentName]);
+  }, [publicTournamentName, organizerName]);
 
   if (loading) {
     return (
@@ -864,6 +869,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               championshipConfig?.championshipEnabled
                 ? "1.er lugar · Remontada Final"
                 : "1.er lugar"
+            }
+            statsLayout={
+              championshipConfig?.championshipEnabled ? "default" : "round-robin"
             }
             tournamentWinner={tournamentWinner}
             winners={winnerAvatars}

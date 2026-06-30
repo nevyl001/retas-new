@@ -77,6 +77,23 @@ export {
   getLandingProofLine,
   getAuthSubtitle,
   getAuthProof,
+  getRegistryPageTitle,
+  getRegistrySectionLabel,
+  getRegistryEmptyMessage,
+  getOrganizerRegistryCardSubtitle,
+  getDueloRegistryHint,
+  getDueloHomeSubtitle,
+  getDuelo2v2ModeDescription,
+  getOrganizerCelebrateTagline,
+  formatTenantDocumentTitle,
+  getAccountModeDisabledMessage,
+  getLigaVictoriaCelebrateMessage,
+  getDueloWinnerCelebrateMessage,
+  getDueloLoserCelebrateMessage,
+  getWinnersSectionAriaLabel,
+  getOrganizerCelebrateParticipantesNote,
+  getDueloFinalizarConfirmMessage,
+  getPodiumFinalAriaLabel,
 } from "./experienceFormatters";
 
 export { resolveClubLogo, resolveBrandLogo } from "./resolveClubLogo";
@@ -116,6 +133,7 @@ export {
   ClubExperienceProvider,
   ClubExperienceScope,
   useClubExperience,
+  useBranding,
   BrandProvider,
   BrandScope,
   useBrand,
@@ -127,3 +145,12 @@ export {
   CoBrandMark,
 } from "./components/ClubIdentity";
 export { PublicClubModeEyebrow } from "./components/PublicClubModeEyebrow";
+
+export type { TenantBranding } from "../branding/types";
+export {
+  bootstrapAppBranding,
+  clearTenantBranding,
+  getAppliedBranding,
+  resolveBranding,
+  resolveBrandingSync,
+} from "../branding";

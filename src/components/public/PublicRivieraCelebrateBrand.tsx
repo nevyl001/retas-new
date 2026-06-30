@@ -1,31 +1,24 @@
 import React from "react";
 import { ClubIdentity, useClubExperience } from "../../club-experience";
-import { getMotherAttributionLine } from "../../club-experience/experienceFormatters";
+import { useOrganizerDisplayName } from "../../club-experience/useOrganizerDisplayName";
 
 export const PublicRivieraCelebrateBrand: React.FC<{
   showTagline?: boolean;
 }> = ({ showTagline = true }) => {
   const { manifest, isClubBranded } = useClubExperience();
 
-  if (isClubBranded) {
-    return (
-      <header className="ro-pub-celebrate__brand">
-        <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
+  return (
+    <header className="ro-pub-celebrate__brand">
+      <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
+      {isClubBranded ? (
         <ClubIdentity
           variant="compact"
-          showTagline={showTagline}
+          showTagline={false}
           logoSurface="dark"
           wordmarkOnly
           className="ro-pub-celebrate__club-identity"
         />
-        <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
-      </header>
-    );
-  }
-
-  return (
-    <header className="ro-pub-celebrate__brand">
-      <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
+      ) : null}
       <p className="ro-pub-celebrate__wordmark">
         <span>R I V I E R A</span>
         <span className="ro-pub-celebrate__wordmark-sep" aria-hidden>
@@ -46,18 +39,13 @@ export const PublicRivieraCelebrateBrand: React.FC<{
 export const PublicRivieraCelebrateClosing: React.FC<{
   torneoNombre?: string;
 }> = ({ torneoNombre }) => {
-  const { manifest, isClubBranded } = useClubExperience();
-  const closing = isClubBranded
-    ? `${manifest.displayName} ${getMotherAttributionLine(manifest)}`
-    : "Vive Riviera Open";
-
   return (
     <footer className="ro-pub-celebrate__footer">
       <div className="ro-divider-gold" aria-hidden />
       {torneoNombre ? (
         <p className="ro-pub-celebrate__torneo">{torneoNombre}</p>
       ) : null}
-      <p className="ro-pub-celebrate__closing">{closing}</p>
+      <p className="ro-pub-celebrate__closing">Vive Riviera Open</p>
     </footer>
   );
 };

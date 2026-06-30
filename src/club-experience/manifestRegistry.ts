@@ -16,6 +16,23 @@ export function listRegisteredManifestKeys(): ClubBrandingKey[] {
   return Object.keys(MANIFESTS_BY_KEY);
 }
 
+/** Manifiestos disponibles para asignar como upgrade premium (excluye riviera). */
+export function listPremiumManifestOptions(): Array<{
+  key: ClubBrandingKey;
+  label: string;
+}> {
+  return listRegisteredManifestKeys()
+    .filter((key) => key !== RIVIERA_DEFAULT_MANIFEST.brandingKey)
+    .map((key) => {
+      const manifest = getManifestByKey(key);
+      return {
+        key,
+        label: manifest.displayName?.trim() || key,
+      };
+    })
+    .filter((option) => getManifestByKey(option.key).active);
+}
+
 export { resolveBrandingKeyForOrganizador };
 
 /** @deprecated Usar getManifestByKey */

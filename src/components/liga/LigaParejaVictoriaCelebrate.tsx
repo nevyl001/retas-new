@@ -1,16 +1,15 @@
 import React, { useMemo } from "react";
+import { getLigaVictoriaCelebrateMessage, useBranding } from "../../club-experience";
 import { PodiumCard } from "../torneo-express/public/PodiumCard";
 import type { PublicRetaPairPlayer } from "../public/PublicRetaPairSide";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
 import type { PublicEliminatoriaPodiumStats } from "../../lib/torneoExpress/publicEliminatoriaPodiumStats";
 import "./liga-pareja-victoria-celebrate.css";
 
-const VICTORIA_COPY = {
+const VICTORIA_COPY_BASE = {
   badge: "VICTORIA",
   title: "¡Felicidades!",
-  message:
-    "Dejaron todo en la cancha. Así se compite en Riviera Open.",
-};
+} as const;
 
 function parsePairLabel(label: string): [string, string] {
   const parts = label.split(/\s*\/\s*/).map((s) => s.trim()).filter(Boolean);
@@ -59,6 +58,7 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
   stats,
   winners,
 }) => {
+  const { nombre: organizerName } = useBranding();
   const pairPlayersById = useMemo(
     () => buildPairPlayersById(pairLabel, pairId, winners),
     [pairLabel, pairId, winners]
@@ -66,10 +66,11 @@ export const LigaParejaVictoriaCelebrate: React.FC<{
 
   const copyOverrides = useMemo(
     () => ({
-      ...VICTORIA_COPY,
+      ...VICTORIA_COPY_BASE,
+      message: getLigaVictoriaCelebrateMessage(organizerName),
       ...(rankLabel ? { rank: rankLabel } : {}),
     }),
-    [rankLabel]
+    [organizerName, rankLabel]
   );
 
   return (

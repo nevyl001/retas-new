@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { useOrganizerDisplayName } from "../../club-experience";
 import { buildMarketingOfficialRankingsUrl, getOfficialRankingsPageUrl } from "../../lib/rivieraOfficialSite";
 import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
@@ -14,6 +15,7 @@ export const RankingOfficialOutbound: React.FC<RankingOfficialOutboundProps> = (
   organizadorId,
   genero = "M",
 }) => {
+  const organizerName = useOrganizerDisplayName(organizadorId);
   const targetUrl = buildMarketingOfficialRankingsUrl(organizadorId, genero);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export const RankingOfficialOutbound: React.FC<RankingOfficialOutboundProps> = (
     <JugadoresPublicShell variant="ranking">
       <div className="rjp-ranking">
         <header className="rjp-ranking-header">
-          <p className="rjp-ranking-header__brand">Riviera Open</p>
+          <p className="rjp-ranking-header__brand">{organizerName}</p>
           <h1 className="rjp-ranking-header__title">Ranking oficial</h1>
           <p className="rjp-ranking-header__sub">
             El ranking público vive en el sitio oficial de Riviera Open. Te

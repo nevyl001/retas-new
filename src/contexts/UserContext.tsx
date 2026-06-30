@@ -1,6 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { resetClubExperienceTheme } from "../club-experience/clubExperienceBootstrap";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
+import {
+  clearTenantBranding,
+  getAppliedBranding,
+  resolveAndApplyBranding,
+} from "../branding/BrandingService";
+import { brandingDevLog } from "../branding/brandingDevLog";
+import {
+  beginBrandingTransition,
+  endBrandingTransition,
+  getIsBrandingReady,
+  type BrandingTransitionReason,
+} from "../branding/brandingTransition";
 import { supabase } from "../lib/supabaseClient";
 import { AUTH_CONFIG, getAuthEmailRedirectUrl } from "../config/auth";
 
@@ -36,11 +47,41 @@ interface UserProviderProps {
   children: React.ReactNode;
 }
 
+function resolveSessionTransitionReason(
+  event: AuthChangeEvent | "init",
+  previousUserId: string | null,
+  nextUserId: string | null
+): BrandingTransitionReason {
+  if (!nextUserId) {
+    return event === "init" ? "bootstrap" : "session-logout";
+  }
+  if (!previousUserId) {
+    return event === "SIGNED_IN" ? "session-login" : "session-restore";
+  }
+  if (previousUserId !== nextUserId) return "user-change";
+  return "session-restore";
+}
+
+function normalizeUserId(userId: string | null | undefined): string | null {
+  const normalized = userId?.trim().toLowerCase();
+  return normalized || null;
+}
+
+function brandingAlreadyAppliedForUser(userId: string): boolean {
+  const applied = getAppliedBranding();
+  return (
+    normalizeUserId(applied?.organizadorId) === userId &&
+    getIsBrandingReady()
+  );
+}
+
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
+  const applySessionGenerationRef = useRef(0);
 
   const fetchUserProfile = useCallback(async (userId: string, userEmail?: string, userName?: string) => {
     try {
@@ -52,7 +93,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       if (error) {
         console.error("Error obteniendo perfil:", error);
-        // Si no existe el perfil, crear uno básico
         if (error.code === "PGRST116") {
           const { data: newProfile, error: createError } = await supabase
             .from("users")
@@ -80,47 +120,123 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   }, []);
 
-  // Restaurar sesión antes de redirigir (getSession + listener)
   useEffect(() => {
     let isMounted = true;
 
-    const applySession = (session: Session | null) => {
-      if (!isMounted) return;
+    const applySession = async (
+      nextSession: Session | null,
+      event: AuthChangeEvent | "init"
+    ) => {
+      const generation = ++applySessionGenerationRef.current;
+      const nextUserId = normalizeUserId(nextSession?.user?.id);
+      const previousUserId = userIdRef.current;
+      const reason = resolveSessionTransitionReason(
+        event,
+        previousUserId,
+        nextUserId
+      );
 
-      setSession(session);
-
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfile(
-          session.user.id,
-          session.user.email,
-          session.user.user_metadata?.name
-        );
-      } else {
+      if (event === "init" && !nextUserId && getIsBrandingReady()) {
+        setSession(null);
+        setUser(null);
         setUserProfile(null);
+        userIdRef.current = null;
+        setLoading(false);
+        brandingDevLog("UserContext.applySession:skip-init-anonymous", {});
+        return;
+      }
+
+      if (
+        event === "init" &&
+        nextUserId &&
+        nextSession?.user &&
+        brandingAlreadyAppliedForUser(nextUserId)
+      ) {
+        setSession(nextSession);
+        setUser(nextSession.user);
+        userIdRef.current = nextUserId;
+        setLoading(false);
+        fetchUserProfile(
+          nextSession.user.id,
+          nextSession.user.email,
+          nextSession.user.user_metadata?.name
+        );
+        brandingDevLog("UserContext.applySession:skip-init-restored", {
+          orgId: nextUserId,
+        });
+        return;
+      }
+
+      setLoading(true);
+      beginBrandingTransition(reason);
+
+      brandingDevLog("UserContext.applySession:start", {
+        event,
+        reason,
+        orgId: nextUserId,
+        previousOrgId: previousUserId,
+      });
+
+      try {
+        if (nextUserId && nextSession?.user) {
+          const branding = await resolveAndApplyBranding(nextUserId);
+          if (!isMounted || generation !== applySessionGenerationRef.current) {
+            return;
+          }
+
+          brandingDevLog("UserContext.applySession:branding-ready", {
+            orgId: nextUserId,
+            brandingKey: branding.brandingKey,
+          });
+
+          setSession(nextSession);
+          setUser(nextSession.user);
+          userIdRef.current = nextUserId;
+          fetchUserProfile(
+            nextSession.user.id,
+            nextSession.user.email,
+            nextSession.user.user_metadata?.name
+          );
+        } else {
+          clearTenantBranding();
+          if (!isMounted || generation !== applySessionGenerationRef.current) {
+            return;
+          }
+
+          setSession(null);
+          setUser(null);
+          setUserProfile(null);
+          userIdRef.current = null;
+        }
+      } finally {
+        if (isMounted && generation === applySessionGenerationRef.current) {
+          endBrandingTransition(reason);
+          setLoading(false);
+          brandingDevLog("UserContext.applySession:done", {
+            orgId: nextUserId,
+            event,
+          });
+        }
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       if (!isMounted) return;
-      applySession(session);
-      setLoading(false);
+      void applySession(initialSession, "init");
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!isMounted) return;
-      applySession(session);
-      setLoading(false);
+      void applySession(nextSession, event);
     });
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchUserProfile]);
 
   const signUp = async (email: string, password: string, name: string) => {
     try {
@@ -151,34 +267,40 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
+      beginBrandingTransition("session-login");
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        endBrandingTransition("session-login");
+        setLoading(false);
         return { error };
       }
 
       return { error: null };
     } catch (error) {
+      endBrandingTransition("session-login");
+      setLoading(false);
       return { error };
     }
   };
 
   const signOut = async () => {
     try {
-      setUser(null);
-      setUserProfile(null);
-      setSession(null);
+      setLoading(true);
+      beginBrandingTransition("session-logout");
 
       const { error } = await supabase.auth.signOut();
       if (error) {
+        endBrandingTransition("session-logout");
+        setLoading(false);
         console.error("Error al cerrar sesión:", error);
         throw error;
       }
-
-      resetClubExperienceTheme();
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
       throw error;

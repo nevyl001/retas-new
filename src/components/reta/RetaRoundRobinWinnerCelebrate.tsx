@@ -59,17 +59,20 @@ export const RetaRoundRobinWinnerCelebrate: React.FC<{
   fraseMotivacional?: string;
   tournamentWinner?: TournamentWinner | null;
   podiumStats?: PublicEliminatoriaPodiumStats | null;
+  /** Round robin sin remontada: muestra GAF/GEC como la tabla de clasificación. */
+  statsLayout?: "default" | "round-robin";
   winners?: PublicRetaWinnerAvatar[];
   className?: string;
 }> = ({
   pairLabel,
   pairId,
-  torneoNombre = "Riviera Open",
+  torneoNombre,
   categoria = null,
   rankLabel,
   fraseMotivacional,
   tournamentWinner,
   podiumStats,
+  statsLayout = "default",
   winners,
   className = "",
 }) => {
@@ -104,9 +107,10 @@ export const RetaRoundRobinWinnerCelebrate: React.FC<{
         position={1}
         entry={{ label: pairLabel, parejaId: pairId ?? null }}
         categoria={categoria}
-        torneoNombre={torneoNombre}
+        torneoNombre={torneoNombre ?? ""}
         pairPlayersById={pairPlayersById}
         stats={stats}
+        statsLayout={statsLayout}
         copyOverrides={copyOverrides}
         className="reta-rr-celebrate__podium"
       />

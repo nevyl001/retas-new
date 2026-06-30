@@ -45,7 +45,9 @@ export async function fetchOrganizadorAccountSettings(
     if (
       isMissingTableError(error) ||
       isMissingColumnError(error, "permite_ajuste_puntos_manuales") ||
-      isMissingColumnError(error, "visible_ranking_oficial")
+      isMissingColumnError(error, "visible_ranking_oficial") ||
+      isMissingColumnError(error, "premium_branding_enabled") ||
+      isMissingColumnError(error, "branding_key")
     ) {
       return rowToAccountSettings(DEFAULT_ORGANIZADOR_GAME_MODES);
     }
@@ -73,7 +75,9 @@ export async function upsertOrganizadorAccountSettings(
     ...inputFromEnabledModes(
       settings.modes,
       settings.permiteAjustePuntosManuales,
-      settings.visibleRankingOficial
+      settings.visibleRankingOficial,
+      settings.premiumBrandingEnabled,
+      settings.brandingKey
     ),
     updated_at: new Date().toISOString(),
   };
@@ -97,6 +101,8 @@ export async function upsertOrganizadorGameModes(
     modes,
     permiteAjustePuntosManuales: current.permiteAjustePuntosManuales,
     visibleRankingOficial: current.visibleRankingOficial,
+    premiumBrandingEnabled: current.premiumBrandingEnabled,
+    brandingKey: current.brandingKey,
   });
 }
 

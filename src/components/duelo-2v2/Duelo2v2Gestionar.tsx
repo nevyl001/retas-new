@@ -1,4 +1,8 @@
-import { useClubModeEyebrow } from "../../club-experience";
+import {
+  getDueloFinalizarConfirmMessage,
+  useBranding,
+  useClubModeEyebrow,
+} from "../../club-experience";
 import React, { useCallback, useEffect, useState } from "react";
 import type { Duelo2v2, Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
 import { fetchRatingMovimientosByPartidoRef } from "../../lib/rivieraJugadores/rivieraJugadoresService";
@@ -30,6 +34,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   dueloId,
 }) => {
   const modeEyebrow = useClubModeEyebrow();
+  const { nombre: organizerName } = useBranding();
   const [duelo, setDuelo] = useState<Duelo2v2 | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -84,9 +89,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
 
   const handleFinalizar = async () => {
     if (
-      !window.confirm(
-        "¿Finalizar el duelo? Se registrarán los puntos en el ranking Riviera Open y aparecerá en el historial de los jugadores."
-      )
+      !window.confirm(getDueloFinalizarConfirmMessage(organizerName))
     ) {
       return;
     }

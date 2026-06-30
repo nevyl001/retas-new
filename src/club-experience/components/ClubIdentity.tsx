@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { useClubExperience } from "../ClubExperienceContext";
 import { useOrganizerDisplayName } from "../useOrganizerDisplayName";
-import {
-  getCoBrandCompactLine,
-  getMotherAttributionLine,
-} from "../experienceFormatters";
+import { RIVIERA_PRODUCT_NAME } from "../motherBrand";
 import {
   resolveClubLogo,
   type ClubLogoSurface,
@@ -22,15 +19,14 @@ interface ClubIdentityProps {
   variant?: ClubIdentityVariant;
   showTagline?: boolean;
   logoSurface?: ClubLogoSurface;
-  /** Logo horizontal del club; oculta el nombre duplicado y deja solo la atribución madre. */
+  /** Solo logo del upgrade (sin bloque de texto). */
   wordmarkOnly?: boolean;
   className?: string;
 }
 
 /**
- * Representa la identidad visual completa del club en la UI.
- * Riviera Open sola → logo + nombre + slogan.
- * Club con experiencia → nombre del club + "by Riviera Open".
+ * Identidad en UI: siempre Riviera Open + nombre del organizador.
+ * Upgrade premium → solo cambia logo y estilos (clase `club-identity--premium`).
  */
 export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   variant = "header",
@@ -45,78 +41,52 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
 
   const logoUrl = resolveClubLogo(manifest, logoSurface);
   const showLogo = Boolean(logoUrl) && !logoFailed;
-  const attribution = getMotherAttributionLine(manifest);
-  const compactLine = getCoBrandCompactLine(manifest);
-  const partnerWordmark = isClubBranded && wordmarkOnly;
-  const motherLine =
-    partnerWordmark || variant === "compact" || variant === "menu"
-      ? partnerWordmark
-        ? attribution
-        : compactLine
-      : attribution;
-
   const logoSize = variant === "auth" ? 56 : variant === "inline" ? 32 : 40;
 
-  if (!isClubBranded) {
-    return (
-      <div
-        className={`club-identity club-identity--mother club-identity--${variant} ${className}`.trim()}
-      >
-        {showLogo ? (
-          <img
-            src={logoUrl!}
-            alt=""
-            className="club-identity__logo"
-            width={logoSize}
-            height={logoSize}
-            onError={() => setLogoFailed(true)}
-          />
-        ) : null}
-        <div className="club-identity__text">
-          <span className="club-identity__name">{organizerDisplayName}</span>
-          {showTagline ? (
-            <span className="club-identity__tagline">
-              {manifest.slogans.primary}
-            </span>
-          ) : null}
-        </div>
-      </div>
-    );
-  }
+  const organizerLabel = organizerDisplayName?.trim() || "";
+  const showOrganizerLine =
+    !wordmarkOnly &&
+    Boolean(organizerLabel) &&
+    organizerLabel.localeCompare(RIVIERA_PRODUCT_NAME, undefined, {
+      sensitivity: "accent",
+    }) !== 0;
+  const preferOrganizerOverTagline =
+    variant === "header" || variant === "compact" || variant === "menu";
+  const showSloganLine =
+    !wordmarkOnly &&
+    showTagline &&
+    !(preferOrganizerOverTagline && showOrganizerLine);
+  const logoOnly = wordmarkOnly && isClubBranded && showLogo;
 
   return (
     <div
-      className={`club-identity club-identity--partner club-identity--${variant}${
-        partnerWordmark ? " club-identity--wordmark" : ""
-      } ${className}`.trim()}
+      className={`club-identity club-identity--mother club-identity--${variant}${
+        isClubBranded ? " club-identity--premium" : ""
+      }${logoOnly ? " club-identity--logo-only" : ""} ${className}`.trim()}
     >
       {showLogo ? (
         <img
           src={logoUrl!}
-          alt={partnerWordmark ? manifest.displayName : ""}
+          alt=""
           className="club-identity__logo"
           width={logoSize}
           height={logoSize}
           onError={() => setLogoFailed(true)}
         />
       ) : null}
-      <div className="club-identity__text">
-        {!partnerWordmark ? (
-          <span className="club-identity__name">{manifest.displayName}</span>
-        ) : null}
-        {variant === "compact" || variant === "menu" || partnerWordmark ? (
-          <span className="club-identity__mother club-identity__mother--compact">
-            {motherLine}
-          </span>
-        ) : (
-          <span className="club-identity__mother">{attribution}</span>
-        )}
-        {showTagline && manifest.slogans.primary ? (
-          <span className="club-identity__tagline">
-            {manifest.slogans.primary}
-          </span>
-        ) : null}
-      </div>
+      {!logoOnly ? (
+        <div className="club-identity__text">
+          <span className="club-identity__name">{RIVIERA_PRODUCT_NAME}</span>
+          {showOrganizerLine ? (
+            <span className="club-identity__organizer">{organizerLabel}</span>
+          ) : null}
+          {showSloganLine ? (
+            <span className="club-identity__tagline">
+              {manifest.slogans.primary}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getDueloRegistryHint, useOrganizerDisplayName } from "../../club-experience";
 import { listRivieraJugadores } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RivieraJugador } from "../../lib/rivieraJugadores/types";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
@@ -72,6 +73,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   onPairAChange,
   onPairBChange,
 }) => {
+  const organizerName = useOrganizerDisplayName(organizadorId);
   const [jugadores, setJugadores] = useState<RivieraJugador[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
@@ -150,7 +152,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
           <div>
             <h2 className="duelo2v2-roster__title">Agregar parejas</h2>
             <p className="duelo2v2-roster__sub">
-              Jugadores de tu registro Riviera Open · elige 2 y pulsa agregar pareja
+              {getDueloRegistryHint(organizerName)}
             </p>
           </div>
           {selected.length > 0 && (

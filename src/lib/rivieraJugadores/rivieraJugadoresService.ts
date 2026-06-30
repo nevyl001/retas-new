@@ -965,14 +965,46 @@ export async function rebuildJugadorStats(
 }
 
 /**
- * Elimina una participación del historial, recalcula estadísticas y puntos
- * de ranking. Solo el organizador dueño del jugador puede ejecutarlo.
+ * Elimina una participación del historial (local o de otro club enlazado ROMC),
+ * recalcula estadísticas y revierte ledger oficial si aplica.
  */
 export async function deleteParticipacionJugador(
   organizadorId: string,
   jugadorId: string,
   participacionId: string
 ): Promise<JugadorStats | null> {
+  const { data: rpcData, error: rpcErr } = await supabase.rpc(
+    "delete_jugador_participacion_linked",
+    {
+      p_organizador_id: organizadorId,
+      p_view_jugador_id: jugadorId,
+      p_participacion_id: participacionId,
+    }
+  );
+
+  if (!rpcErr) {
+    const payload = rpcData as { status?: string } | null;
+    if (payload?.status === "deleted") {
+      try {
+        return await rebuildJugadorStats(jugadorId);
+      } catch (e) {
+        console.warn("[riviera-jugadores] rebuild tras delete linked:", e);
+        return null;
+      }
+    }
+  }
+
+  const rpcMsg = (rpcErr?.message ?? "").toLowerCase();
+  const rpcMissing =
+    rpcErr &&
+    (rpcErr.code === "42883" ||
+      rpcErr.code === "PGRST202" ||
+      rpcMsg.includes("delete_jugador_participacion_linked"));
+
+  if (rpcErr && !rpcMissing) {
+    throw new Error(rpcErr.message || "No se pudo eliminar el registro");
+  }
+
   const { data: jugador, error: jugErr } = await supabase
     .from("riviera_jugadores")
     .select("id")

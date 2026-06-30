@@ -32,6 +32,11 @@ import { GameModesGrid } from "./GameModesGrid";
 import { QuickStartSheet, QuickStartPayload } from "./QuickStartSheet";
 import { RecentRetasSection } from "./RecentRetasSection";
 import { AppSiteFooter } from "../legal/AppSiteFooter";
+import {
+  getAccountModeDisabledMessage,
+  getOrganizerRegistryCardSubtitle,
+  useBranding,
+} from "../../club-experience";
 import "./home.css";
 
 interface HomeDashboardProps {
@@ -46,6 +51,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   onShowAllRetas,
 }) => {
   const { userProfile } = useUser();
+  const { nombre: organizerName } = useBranding();
   const { isModeEnabled } = useAccountFeatures();
   const [sheetMode, setSheetMode] = useState<GameModeId | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -57,7 +63,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       setError(null);
       if (!isModeEnabled(modeId)) {
         setError(
-          `${GAME_MODE_LABELS[modeId]} no está habilitado para tu cuenta. Contacta a Riviera Open.`
+          getAccountModeDisabledMessage(GAME_MODE_LABELS[modeId], organizerName)
         );
         return;
       }
@@ -95,7 +101,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       }
       setSheetMode(modeId);
     },
-    [userId, isModeEnabled]
+    [userId, isModeEnabled, organizerName]
   );
 
   const handleQuickStart = useCallback(
@@ -178,7 +184,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <span className="home-quick-card__body">
               <span className="home-quick-card__title">Registro de jugadores</span>
               <span className="home-quick-card__sub">
-                Riviera Open · fichas, categorías e historial
+                {getOrganizerRegistryCardSubtitle(organizerName)}
               </span>
             </span>
             <TablerIcon

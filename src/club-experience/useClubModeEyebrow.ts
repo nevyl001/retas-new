@@ -1,8 +1,9 @@
 import { getHomeEyebrow } from "./experienceFormatters";
 import { useClubExperience } from "./ClubExperienceContext";
+import { useOrganizerDisplayName } from "./useOrganizerDisplayName";
 
-/** Eyebrow unificado para headers internos de modo (sin hardcodear Riviera Open). */
 export function useClubModeEyebrow(): string {
-  const { manifest, isClubBranded } = useClubExperience();
-  return getHomeEyebrow(manifest, isClubBranded);
+  const { manifest, isClubBranded, organizadorId } = useClubExperience();
+  const organizerName = useOrganizerDisplayName(organizadorId);
+  return getHomeEyebrow(manifest, isClubBranded, organizerName);
 }

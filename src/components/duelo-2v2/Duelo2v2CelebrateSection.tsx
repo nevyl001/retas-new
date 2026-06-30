@@ -1,4 +1,10 @@
 import React from "react";
+import {
+  getDueloLoserCelebrateMessage,
+  getDueloWinnerCelebrateMessage,
+  getOrganizerCelebrateParticipantesNote,
+  useBranding,
+} from "../../club-experience";
 import { computeDueloScore } from "../../lib/duelo2v2/scoring";
 import type { Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
@@ -90,6 +96,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
   finalizado,
   ratingByJugadorId,
 }) => {
+  const { nombre: organizerName } = useBranding();
   const summary = computeDueloScore(detalle);
   const ganadorA = ganador === "a";
   const hasRating = Boolean(
@@ -105,17 +112,17 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
   const gamesWin = ganadorA ? summary.gamesTotalA : summary.gamesTotalB;
   const gamesLoss = ganadorA ? summary.gamesTotalB : summary.gamesTotalA;
 
-  const winnerMessage = finalizado
-    ? hasRating
-      ? "¡Victoria confirmada! Subieron su nivel y sumaron puntos al ranking Riviera Open. Sigan así en la cancha."
-      : "¡Victoria confirmada! Sumaron puntos al ranking Riviera Open. Sigan dominando la cancha."
-    : "¡Se llevan la victoria! Gran duelo en Riviera Open.";
+  const winnerMessage = getDueloWinnerCelebrateMessage(
+    finalizado,
+    hasRating,
+    organizerName
+  );
 
-  const loserMessage = finalizado
-    ? hasRating
-      ? "Este duelo también cuenta. Sigan entrenando, sigan mejorando y verán su nivel subir partido a partido. ¡La revancha está más cerca de lo que creen!"
-      : "Gran esfuerzo en la cancha. Sigan entrenando, jugando y mejorando — cada duelo los acerca más arriba en Riviera Open."
-    : "Gran duelo. Sigan entrenando y mejorando — la revancha y el siguiente nivel los esperan en Riviera Open.";
+  const loserMessage = getDueloLoserCelebrateMessage(
+    finalizado,
+    hasRating,
+    organizerName
+  );
 
   return (
     <section
@@ -200,8 +207,7 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
         <PublicRivieraCelebrateClosing torneoNombre={torneoNombre} />
 
         <p className="ro-pub-celebrate__participantes-note">
-          Gracias a los cuatro jugadores por competir y seguir escribiendo su
-          historia en Riviera Open.
+          {getOrganizerCelebrateParticipantesNote(organizerName)}
         </p>
       </div>
     </section>

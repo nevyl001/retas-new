@@ -12,9 +12,12 @@ import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
 import { resolveAmericanoRankingFromSnapshot } from "../lib/americanoSnapshotRoster";
 import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
 import {
-  RIVIERA_APP_DISPLAY,
-} from "../lib/rivieraBranding";
-import { ClubIdentity, useClubExperience } from "../club-experience";
+  ClubIdentity,
+  formatTenantDocumentTitle,
+  getPodiumFinalAriaLabel,
+  useClubExperience,
+  useOrganizerDisplayName,
+} from "../club-experience";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { resolvePlayerAvatars, resolvePlayerPublicProfiles } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
@@ -46,6 +49,7 @@ const AmericanoPublicHeader: React.FC<{
             variant="compact"
             showTagline={false}
             logoSurface="dark"
+            wordmarkOnly
             className="te-public-header__club-identity"
           />
         ) : null}
@@ -107,6 +111,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedFetchRef =
     React.useRef<FetchAmericanoLivePublicResult | null>(null);
+  const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
 
   useEffect(() => {
     lastMergedFetchRef.current = null;
@@ -120,14 +125,20 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   }, [tournamentId]);
 
   useEffect(() => {
-    const defaultTitle = `${RIVIERA_APP_DISPLAY} — Americano en vivo`;
-    document.title = tournamentName
-      ? `${tournamentName} · ${RIVIERA_APP_DISPLAY}`
-      : defaultTitle;
+    const defaultTitle = formatTenantDocumentTitle(
+      null,
+      organizerName,
+      "Americano en vivo"
+    );
+    document.title = formatTenantDocumentTitle(
+      tournamentName,
+      organizerName,
+      "Americano en vivo"
+    );
     return () => {
       document.title = defaultTitle;
     };
-  }, [tournamentName]);
+  }, [tournamentName, organizerName]);
 
   const load = useCallback(async () => {
     try {
@@ -442,7 +453,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           {showFinishedPodium && (
             <section
               className="te-public-section ro-pub-celebrate ro-pub-celebrate--podium te-pub-fade-in"
-              aria-label="Podio final Riviera Open"
+              aria-label={getPodiumFinalAriaLabel(organizerName)}
             >
               <div className="ro-pub-celebrate__inner">
                 <PublicRivieraCelebrateBrand />

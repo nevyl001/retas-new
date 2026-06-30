@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useMemo } from "react";
+import { getDuelo2v2ModeDescription, useBranding } from "../../club-experience";
 import { GameModeCard } from "./GameModeCard";
 import {
   ORGANIZED_GAME_MODES,
@@ -39,6 +40,17 @@ export const GameModesGrid: React.FC<GameModesGridProps> = ({
   onModeSelect,
   isModeEnabled,
 }) => {
+  const { nombre } = useBranding();
+  const quickModes = useMemo(
+    () =>
+      QUICK_GAME_MODES.map((mode) =>
+        mode.id === "duelo-2v2"
+          ? { ...mode, description: getDuelo2v2ModeDescription(nombre) }
+          : mode
+      ),
+    [nombre]
+  );
+
   return (
     <div className="game-modes-groups rv-stack rv-stack--lg">
       <section className="game-modes-section" aria-labelledby="game-modes-quick-heading">
@@ -46,7 +58,7 @@ export const GameModesGrid: React.FC<GameModesGridProps> = ({
           Retas rápidas
         </h2>
         <div className="game-modes-grid rv-grid rv-grid--modes">
-          {renderModeCards(QUICK_GAME_MODES, 0, isModeEnabled, onModeSelect)}
+          {renderModeCards(quickModes, 0, isModeEnabled, onModeSelect)}
         </div>
       </section>
 

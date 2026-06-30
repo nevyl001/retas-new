@@ -72,6 +72,22 @@
   font-size: 0.75rem;
 }
 
+.club-identity__organizer {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--effective-muted, var(--ro-text-secondary));
+  line-height: 1.3;
+}
+
+.club-identity--header .club-identity__organizer {
+  font-size: 0.75rem;
+}
+
+.club-identity--menu .club-identity__organizer {
+  font-size: 0.6875rem;
+}
+
 .club-identity--menu .club-identity__mother--compact {
   font-size: 0.6875rem;
 }
@@ -97,6 +113,30 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.25rem;
+}
+
+.club-identity--logo-only {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.club-identity--logo-only .club-identity__logo {
+  height: auto;
+  max-height: 2.25rem;
+  max-width: min(11rem, 42vw);
+  width: auto;
+  object-fit: contain;
+}
+
+.club-identity--header.club-identity--logo-only .club-identity__logo {
+  max-height: 2.5rem;
+  max-width: min(12rem, 48vw);
+}
+
+.club-identity--compact.club-identity--logo-only .club-identity__logo {
+  max-height: 2.75rem;
+  max-width: min(14rem, 75vw);
 }
 
 .club-identity--wordmark .club-identity__logo {

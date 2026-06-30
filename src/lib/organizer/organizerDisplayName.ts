@@ -1,12 +1,11 @@
-import {
-  getManifestByKey,
-  isClubBrandedOrganizer,
-  resolveBrandingKeyForOrganizador,
-} from "../../club-experience";
 import { RIVIERA_PRODUCT_NAME } from "../../club-experience/motherBrand";
 import { supabase } from "../supabaseClient";
 
 const organizerNameCache = new Map<string, string>();
+
+export function clearOrganizerDisplayNameCache(): void {
+  organizerNameCache.clear();
+}
 
 function cacheKey(organizadorId: string): string {
   return organizadorId.trim().toLowerCase();
@@ -28,12 +27,7 @@ export function rememberOrganizerDisplayName(
   return trimmed;
 }
 
-function manifestDisplayName(organizadorId: string): string {
-  const key = resolveBrandingKeyForOrganizador(organizadorId);
-  return getManifestByKey(key)?.displayName ?? RIVIERA_PRODUCT_NAME;
-}
-
-/** Resolución síncrona (caché o manifiesto premium). */
+/** Resolución síncrona (caché o hint del perfil). */
 export function getOrganizerDisplayNameSync(
   organizadorId: string | null | undefined,
   hintName?: string | null
@@ -43,10 +37,6 @@ export function getOrganizerDisplayNameSync(
   const cached = getCachedOrganizerDisplayName(organizadorId);
   if (cached) return cached;
 
-  if (isClubBrandedOrganizer(organizadorId)) {
-    return rememberOrganizerDisplayName(organizadorId, manifestDisplayName(organizadorId));
-  }
-
   if (hintName?.trim()) {
     return rememberOrganizerDisplayName(organizadorId, hintName.trim());
   }
@@ -54,7 +44,7 @@ export function getOrganizerDisplayNameSync(
   return RIVIERA_PRODUCT_NAME;
 }
 
-/** Nombre del club: manifiesto premium o users.name vía RPC. */
+/** Nombre del club/organizador desde users.name vía RPC (upgrade no cambia el texto). */
 export async function resolveOrganizerDisplayName(
   organizadorId: string | null | undefined,
   options?: { hintName?: string | null }
@@ -63,10 +53,6 @@ export async function resolveOrganizerDisplayName(
 
   const cached = getCachedOrganizerDisplayName(organizadorId);
   if (cached) return cached;
-
-  if (isClubBrandedOrganizer(organizadorId)) {
-    return rememberOrganizerDisplayName(organizadorId, manifestDisplayName(organizadorId));
-  }
 
   if (options?.hintName?.trim()) {
     return rememberOrganizerDisplayName(organizadorId, options.hintName.trim());

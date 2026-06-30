@@ -85,10 +85,52 @@ function PodiumAvatar({ player }: { player: PublicRetaPairPlayer }) {
 function PodiumStats({
   stats,
   accent,
+  layout = "default",
 }: {
   stats: PublicEliminatoriaPodiumStats;
   accent: string;
+  layout?: "default" | "round-robin";
 }) {
+  if (layout === "round-robin") {
+    return (
+      <div className="podium-card__stats" aria-label="Resumen Round Robin">
+        <div className="podium-card__stat">
+          <span className="podium-card__stat-label">Juegos a favor</span>
+          <span
+            className="podium-card__stat-value"
+            style={{ color: accent }}
+          >
+            {stats.juegosFavor}
+          </span>
+        </div>
+        <div className="podium-card__stat">
+          <span className="podium-card__stat-label">Juegos en contra</span>
+          <span className="podium-card__stat-value podium-card__stat-value--losses">
+            {stats.juegosContra}
+          </span>
+        </div>
+        <div className="podium-card__stat">
+          <span className="podium-card__stat-label">Partidos</span>
+          <span
+            className="podium-card__stat-value"
+            style={{ color: accent }}
+          >
+            {stats.partidos}
+          </span>
+        </div>
+        <div className="podium-card__stat">
+          <span className="podium-card__stat-label">Dif. juegos</span>
+          <span
+            className="podium-card__stat-value"
+            style={{ color: accent }}
+          >
+            {formatPublicPodiumDif(stats.dif)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="podium-card__stats" aria-label="Resumen del torneo">
       <div className="podium-card__stat">
@@ -142,6 +184,7 @@ export const PodiumCard: React.FC<{
   torneoNombre: string;
   pairPlayersById: Record<string, PublicRetaPairPlayer[]>;
   stats?: PublicEliminatoriaPodiumStats | null;
+  statsLayout?: "default" | "round-robin";
   copyOverrides?: PodiumCopyOverrides;
   id?: string;
   className?: string;
@@ -152,6 +195,7 @@ export const PodiumCard: React.FC<{
   torneoNombre,
   pairPlayersById,
   stats,
+  statsLayout = "default",
   copyOverrides,
   id,
   className = "",
@@ -239,7 +283,7 @@ export const PodiumCard: React.FC<{
         <p className="podium-card__quote">{message}</p>
 
         {stats ? (
-          <PodiumStats stats={stats} accent={variant.accent} />
+          <PodiumStats stats={stats} accent={variant.accent} layout={statsLayout} />
         ) : null}
 
         <div className="podium-card__footer-divider" aria-hidden />

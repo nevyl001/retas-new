@@ -1,5 +1,5 @@
 import React from "react";
-import { ClubIdentity, useClubExperience } from "../../../club-experience";
+import { ClubIdentity, useClubExperience, useOrganizerDisplayName } from "../../../club-experience";
 import { Button } from "../../ui";
 
 export const PublicTorneoExpressHeader: React.FC<{
@@ -20,6 +20,7 @@ export const PublicTorneoExpressHeader: React.FC<{
   extraActions,
 }) => {
   const { isClubBranded } = useClubExperience();
+  const organizerName = useOrganizerDisplayName();
 
   return (
   <header className="te-public-header te-pub-fade-in">
@@ -29,11 +30,11 @@ export const PublicTorneoExpressHeader: React.FC<{
           variant="compact"
           showTagline={false}
           logoSurface="dark"
+          wordmarkOnly
           className="te-public-header__club-identity"
         />
-      ) : (
-        <p className="te-public-header__kicker te-label-eyebrow">Riviera Open</p>
-      )}
+      ) : null}
+      <p className="te-public-header__kicker te-label-eyebrow">{organizerName}</p>
       <h1 className="te-public-header__title">{torneoNombre}</h1>
       <div className="te-public-header__line" aria-hidden />
       <div className="te-public-header__meta">

@@ -20,6 +20,8 @@ export interface OrganizadorGameModesRow {
   duelo_2v2: boolean;
   permite_ajuste_puntos_manuales: boolean;
   visible_ranking_oficial: boolean;
+  premium_branding_enabled: boolean;
+  branding_key: string | null;
   updated_at?: string;
 }
 
@@ -32,6 +34,8 @@ export interface OrganizadorAccountSettings {
   modes: Record<GameModeId, boolean>;
   permiteAjustePuntosManuales: boolean;
   visibleRankingOficial: boolean;
+  premiumBrandingEnabled: boolean;
+  brandingKey: string | null;
 }
 
 /** Defaults para cuentas nuevas sin fila en BD (coincide con column DEFAULT de SQL). */
@@ -44,6 +48,8 @@ export const DEFAULT_ORGANIZADOR_GAME_MODES: OrganizadorGameModesInput = {
   duelo_2v2: true,
   permite_ajuste_puntos_manuales: true,
   visible_ranking_oficial: false,
+  premium_branding_enabled: false,
+  branding_key: null,
 };
 
 export const GAME_MODE_LABELS: Record<GameModeId, string> = {
@@ -80,7 +86,9 @@ export function isGameModeEnabled(
 export function inputFromEnabledModes(
   modes: Record<GameModeId, boolean>,
   permiteAjustePuntosManuales: boolean,
-  visibleRankingOficial: boolean
+  visibleRankingOficial: boolean,
+  premiumBrandingEnabled: boolean,
+  brandingKey: string | null
 ): OrganizadorGameModesInput {
   return {
     reta_equipos: modes["reta-equipos"],
@@ -91,6 +99,8 @@ export function inputFromEnabledModes(
     duelo_2v2: modes["duelo-2v2"],
     permite_ajuste_puntos_manuales: permiteAjustePuntosManuales,
     visible_ranking_oficial: visibleRankingOficial,
+    premium_branding_enabled: premiumBrandingEnabled,
+    branding_key: brandingKey?.trim() || null,
   };
 }
 
@@ -102,5 +112,7 @@ export function rowToAccountSettings(
     modes: rowToEnabledModes(base),
     permiteAjustePuntosManuales: base.permite_ajuste_puntos_manuales !== false,
     visibleRankingOficial: base.visible_ranking_oficial === true,
+    premiumBrandingEnabled: base.premium_branding_enabled === true,
+    brandingKey: base.branding_key?.trim() || null,
   };
 }

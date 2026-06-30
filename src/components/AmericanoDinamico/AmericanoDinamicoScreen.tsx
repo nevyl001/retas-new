@@ -1,5 +1,5 @@
 import React from "react";
-import { useClubExperience, useClubModeEyebrow } from "../../club-experience";
+import { useClubModeEyebrow } from "../../club-experience";
 import { useAmericanoDinamico } from "../../hooks/useAmericanoDinamico";
 import { PlayerRegistration } from "./PlayerRegistration";
 import { RoundView } from "./RoundView";
@@ -47,7 +47,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   onTournamentStatusChange,
 }) => {
   const { user } = useUser();
-  const { isClubBranded } = useClubExperience();
   const modeEyebrow = useClubModeEyebrow();
   const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
   const effectiveUserId = userId || user?.id || null;
@@ -302,7 +301,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     tournamentName || tournamentDescription ? (
       <ModeHeader
         className="americano-tournament-banner rv-mode-header"
-        eyebrow={isClubBranded ? modeEyebrow : "Americano"}
+        eyebrow={modeEyebrow || "Americano"}
         title={tournamentName || "Reta Pádel Americano"}
         subtitle={tournamentDescription || undefined}
       />

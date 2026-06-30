@@ -18,16 +18,20 @@ export const PublicClubModeEyebrow: React.FC<PublicClubModeEyebrowProps> = ({
   const { isClubBranded } = useClubExperience();
   const organizerName = useOrganizerDisplayName();
 
-  if (isClubBranded) {
-    return (
-      <ClubIdentity
-        variant="compact"
-        showTagline={false}
-        logoSurface="dark"
-        className={clubIdentityClassName}
-      />
-    );
-  }
-
-  return <p className={className}>{organizerName} · {modeLabel}</p>;
+  return (
+    <>
+      {isClubBranded ? (
+        <ClubIdentity
+          variant="compact"
+          showTagline={false}
+          logoSurface="dark"
+          wordmarkOnly
+          className={clubIdentityClassName}
+        />
+      ) : null}
+      <p className={className}>
+        {organizerName} · {modeLabel}
+      </p>
+    </>
+  );
 };

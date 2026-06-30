@@ -12,6 +12,7 @@ import {
 } from "../../lib/admin/accountControls";
 import { GAME_MODE_LABELS } from "../../lib/admin/organizadorGameModes";
 import { getOfficialRankingsPageUrl } from "../../lib/rivieraOfficialSite";
+import { listPremiumManifestOptions } from "../../club-experience/manifestRegistry";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
 import { GrantPlayerAccessModal } from "./GrantPlayerAccessModal";
 import { PlayerAccessListModal } from "./PlayerAccessListModal";
@@ -33,6 +34,10 @@ const CATEGORIAS: RivieraJugadorCategoria[] = [
   "6ta_fuerza",
 ];
 
+const PREMIUM_MANIFEST_OPTIONS = listPremiumManifestOptions();
+const DEFAULT_PREMIUM_MANIFEST_KEY =
+  PREMIUM_MANIFEST_OPTIONS[0]?.key ?? "hack-padel";
+
 export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   organizadorId,
   accountLabel,
@@ -41,6 +46,8 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   const [modes, setModes] = useState<Record<GameModeId, boolean> | null>(null);
   const [permiteAjustePuntos, setPermiteAjustePuntos] = useState(true);
   const [visibleRanking, setVisibleRanking] = useState(false);
+  const [premiumBrandingEnabled, setPremiumBrandingEnabled] = useState(false);
+  const [brandingKey, setBrandingKey] = useState<string>(DEFAULT_PREMIUM_MANIFEST_KEY);
   const [jugadores, setJugadores] = useState<AdminJugadorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingModes, setSavingModes] = useState(false);
@@ -131,6 +138,8 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
       setModes(settings.modes);
       setPermiteAjustePuntos(settings.permiteAjustePuntosManuales);
       setVisibleRanking(settings.visibleRankingOficial);
+      setPremiumBrandingEnabled(settings.premiumBrandingEnabled);
+      setBrandingKey(settings.brandingKey ?? DEFAULT_PREMIUM_MANIFEST_KEY);
       setJugadores(j);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar controles");
@@ -158,8 +167,14 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         modes,
         permiteAjustePuntosManuales: permiteAjustePuntos,
         visibleRankingOficial: visibleRanking,
+        premiumBrandingEnabled,
+        brandingKey: premiumBrandingEnabled ? brandingKey : null,
       });
-      setNotice("Configuración guardada.");
+      setNotice(
+        premiumBrandingEnabled
+          ? "Configuración guardada. El upgrade visual aplica al volver a entrar en la cuenta."
+          : "Configuración guardada."
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar la configuración");
     } finally {
@@ -317,6 +332,39 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
           Cada jugador entra al ranking interno del club por defecto; solo aparece
           en el sitio oficial si activas «Sitio oficial» en ese jugador.
         </p>
+      </div>
+      <div className="account-controls__permiso-block">
+        <h5 className="account-controls__subtitle">Experiencia visual premium</h5>
+        <label className="account-controls__toggle account-controls__toggle--block">
+          <input
+            type="checkbox"
+            checked={premiumBrandingEnabled}
+            onChange={() => setPremiumBrandingEnabled((v) => !v)}
+          />
+          <span className="account-controls__toggle-label">
+            Activar upgrade de estilos, colores y logos
+          </span>
+        </label>
+        <p className="account-controls__hint account-controls__hint--tight">
+          Solo cambia la apariencia (tema y logo del club). Los textos siguen
+          mostrando Riviera Open + nombre del organizador.
+        </p>
+        {premiumBrandingEnabled && (
+          <label className="account-controls__field">
+            <span className="account-controls__field-label">Manifiesto visual</span>
+            <select
+              className="account-controls__select"
+              value={brandingKey}
+              onChange={(e) => setBrandingKey(e.target.value)}
+            >
+              {PREMIUM_MANIFEST_OPTIONS.map((option) => (
+                <option key={option.key} value={option.key}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
       <button
         type="button"

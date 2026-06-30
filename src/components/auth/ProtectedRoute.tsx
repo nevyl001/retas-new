@@ -1,4 +1,5 @@
 import React from "react";
+import { useClubExperience } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
 import { normalizeAppPathname, pathRequiresUserSession } from "../../lib/appRouting";
 import { isJugadoresPublicPath } from "../jugadores/JugadoresRouter";
@@ -26,6 +27,7 @@ function isPublicAppPath(pathname: string): boolean {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useUser();
+  const { isBrandingReady, isBrandingTransitioning } = useClubExperience();
   const currentPath =
     typeof window !== "undefined" ? window.location.pathname : "";
 
@@ -33,7 +35,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <>{children}</>;
   }
 
-  if (loading) {
+  if (loading || isBrandingTransitioning || !isBrandingReady) {
     return (
       <div className="loading-container">
         <div className="loading-spinner">

@@ -57,7 +57,7 @@ export const GAME_MODES: GameModeConfig[] = [
   {
     id: "duelo-2v2",
     title: "Duelo 2 vs 2",
-    description: "Dos parejas del registro · suma al ranking Riviera Open",
+    description: "Dos parejas del registro · suma al ranking del club",
     icon: "⚔️",
     gradient:
       "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",

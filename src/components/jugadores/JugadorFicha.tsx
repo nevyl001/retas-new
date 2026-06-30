@@ -279,9 +279,16 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         participacionId
       );
       const h = await listParticipaciones(jugador.id, 100);
-      setHistorial(h);
+      const romcView = await loadRomcOfficialPlayerView(jugador.id, {
+        localParticipaciones: h,
+      });
+      setHistorial(romcView.hasRomcData ? romcView.historial : h);
       if (rebuilt) {
-        setJugador({ ...jugador, stats: rebuilt });
+        const stats =
+          romcView.hasRomcData && romcView.puntosOficiales != null
+            ? { ...rebuilt, puntos_totales: romcView.puntosOficiales }
+            : rebuilt;
+        setJugador({ ...jugador, stats });
       } else {
         await load();
       }

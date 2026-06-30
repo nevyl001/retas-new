@@ -1,19 +1,26 @@
 import React, {
   createContext,
   useContext,
-  useLayoutEffect,
+  useEffect,
   useMemo,
+  useReducer,
 } from "react";
 import { useAdmin } from "../contexts/AdminContext";
 import { useUser } from "../contexts/UserContext";
 import {
-  applyClubExperienceForOrganizador,
-  resetClubExperienceTheme,
-  resolveBootstrapOrganizadorId,
-} from "./clubExperienceBootstrap";
+  getAppliedBranding,
+  resolveBrandingSync,
+  subscribeBranding,
+} from "../branding/BrandingService";
 import {
-  getClubExperienceScopeStyle,
-} from "./applyClubExperienceTheme";
+  getIsBrandingReady,
+  getIsBrandingTransitioning,
+  subscribeBrandingTransition,
+} from "../branding/brandingTransition";
+import type { TenantBranding } from "../branding/types";
+import { syncRuntimeBindingForOrganizador } from "../lib/branding/organizerBrandingSettings";
+import { getClubExperienceScopeStyle } from "./applyClubExperienceTheme";
+import { resolveBootstrapOrganizadorId } from "./clubExperienceBootstrap";
 import {
   isClubBrandedOrganizer,
   resolveClubManifest,
@@ -22,8 +29,11 @@ import type { BrandManifest } from "./types";
 
 export interface ClubExperienceContextValue {
   manifest: BrandManifest;
+  branding: TenantBranding;
   isClubBranded: boolean;
   organizadorId: string | null;
+  isBrandingReady: boolean;
+  isBrandingTransitioning: boolean;
   /** @deprecated Usar manifest */
   brand: BrandManifest;
   /** @deprecated Usar isClubBranded */
@@ -38,61 +48,57 @@ interface ClubExperienceProviderProps {
   children: React.ReactNode;
 }
 
-/** Resuelve la experiencia del club por sesión del organizador logueado. */
+/**
+ * Consume branding ya aplicado por BrandingService (bootstrap + sesión).
+ * No resuelve ni aplica CSS al documento.
+ */
 export const ClubExperienceProvider: React.FC<ClubExperienceProviderProps> = ({
   children,
 }) => {
   const { user, loading: userLoading } = useUser();
   const { isAdminLoggedIn } = useAdmin();
   const bootstrapOrganizadorId = useMemo(() => resolveBootstrapOrganizadorId(), []);
+  const [, brandingRevision] = useReducer((n: number) => n + 1, 0);
+  const [, transitionRevision] = useReducer((n: number) => n + 1, 0);
+
+  useEffect(() => subscribeBranding(() => brandingRevision()), []);
+  useEffect(() => subscribeBrandingTransition(() => transitionRevision()), []);
+
+  const isBrandingReady = getIsBrandingReady();
+  const isBrandingTransitioning = getIsBrandingTransitioning();
 
   const organizadorId = isAdminLoggedIn
     ? null
     : user?.id ?? (userLoading ? bootstrapOrganizadorId : null);
 
-  const manifest = useMemo(
-    () => resolveClubManifest(organizadorId),
-    [organizadorId]
-  );
-  const isClubBranded = useMemo(
-    () => isClubBrandedOrganizer(organizadorId),
-    [organizadorId]
-  );
+  const branding = useMemo(() => {
+    const applied = getAppliedBranding();
+    if (applied) return applied;
+    return resolveBrandingSync(organizadorId);
+  }, [organizadorId, brandingRevision]);
 
-  useLayoutEffect(() => {
-    if (isAdminLoggedIn) {
-      resetClubExperienceTheme();
-      return;
-    }
-
-    if (userLoading && !user?.id && bootstrapOrganizadorId) {
-      applyClubExperienceForOrganizador(bootstrapOrganizadorId);
-      return;
-    }
-
-    if (!userLoading && !user?.id) {
-      resetClubExperienceTheme();
-      return;
-    }
-
-    applyClubExperienceForOrganizador(organizadorId);
-  }, [
-    bootstrapOrganizadorId,
-    isAdminLoggedIn,
-    organizadorId,
-    user?.id,
-    userLoading,
-  ]);
+  const manifest = branding.manifest;
+  const isClubBranded = branding.isClubBranded;
 
   const value = useMemo(
     () => ({
       manifest,
+      branding,
       isClubBranded,
       organizadorId,
+      isBrandingReady,
+      isBrandingTransitioning,
       brand: manifest,
       isCoBranded: isClubBranded,
     }),
-    [manifest, isClubBranded, organizadorId]
+    [
+      manifest,
+      branding,
+      isClubBranded,
+      organizadorId,
+      isBrandingReady,
+      isBrandingTransitioning,
+    ]
   );
 
   return (
@@ -107,29 +113,48 @@ interface ClubExperienceScopeProps {
   children: React.ReactNode;
 }
 
-/** Para vistas públicas futuras — anida experiencia sin cambiar el documento global. */
+/** Scoped: tokens en contenedor, sin mutar `<html>`. */
 export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
   organizadorId,
   children,
 }) => {
+  const [bindingRevision, bumpBindingRevision] = useReducer((n: number) => n + 1, 0);
+
+  useEffect(() => {
+    let cancelled = false;
+    void syncRuntimeBindingForOrganizador(organizadorId).then(() => {
+      if (!cancelled) bumpBindingRevision();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [organizadorId]);
+
   const manifest = useMemo(
     () => resolveClubManifest(organizadorId),
-    [organizadorId]
+    [organizadorId, bindingRevision]
   );
   const isClubBranded = useMemo(
     () => isClubBrandedOrganizer(organizadorId),
-    [organizadorId]
+    [organizadorId, bindingRevision]
+  );
+  const branding = useMemo(
+    () => resolveBrandingSync(organizadorId ?? null),
+    [organizadorId, bindingRevision]
   );
 
   const value = useMemo(
     () => ({
       manifest,
+      branding,
       isClubBranded,
       organizadorId: organizadorId ?? null,
+      isBrandingReady: getIsBrandingReady(),
+      isBrandingTransitioning: getIsBrandingTransitioning(),
       brand: manifest,
       isCoBranded: isClubBranded,
     }),
-    [manifest, isClubBranded, organizadorId]
+    [manifest, branding, isClubBranded, organizadorId]
   );
 
   return (
@@ -149,16 +174,24 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
 export function useClubExperience(): ClubExperienceContextValue {
   const ctx = useContext(ClubExperienceContext);
   if (!ctx) {
-    const manifest = resolveClubManifest(null);
+    const branding = getAppliedBranding() ?? resolveBrandingSync(null);
     return {
-      manifest,
-      isClubBranded: false,
-      organizadorId: null,
-      brand: manifest,
-      isCoBranded: false,
+      manifest: branding.manifest,
+      branding,
+      isClubBranded: branding.isClubBranded,
+      organizadorId: branding.organizadorId,
+      isBrandingReady: getIsBrandingReady(),
+      isBrandingTransitioning: getIsBrandingTransitioning(),
+      brand: branding.manifest,
+      isCoBranded: branding.isClubBranded,
     };
   }
   return ctx;
+}
+
+/** Branding del tenant actual — preferir sobre manifest suelto en UI nueva. */
+export function useBranding(): TenantBranding {
+  return useClubExperience().branding;
 }
 
 /** @deprecated Usar ClubExperienceProvider */

@@ -9,13 +9,11 @@ import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
 import {
   ClubExperienceScope,
   ClubIdentity,
+  formatTenantDocumentTitle,
   useClubExperience,
+  useOrganizerDisplayName,
 } from "../club-experience";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
-import {
-  RIVIERA_APP_DISPLAY,
-  RIVIERA_PUBLIC_DESCRIPTION,
-} from "../lib/rivieraBranding";
 import "./PublicAmericanoResultsBoard.css";
 import "../styles/riviera-public-board.css";
 
@@ -29,7 +27,8 @@ const AmericanoResultsBoardHeader: React.FC<{
   tournamentName: string | null;
   tournamentDescription: string | null;
 }> = ({ tournamentName, tournamentDescription }) => {
-  const { isClubBranded, manifest } = useClubExperience();
+  const { isClubBranded } = useClubExperience();
+  const organizerName = useOrganizerDisplayName();
 
   return (
     <header className="public-americano-board__header">
@@ -39,6 +38,7 @@ const AmericanoResultsBoardHeader: React.FC<{
             variant="compact"
             showTagline={false}
             logoSurface="dark"
+            wordmarkOnly
             className="public-americano-board__club-identity"
           />
         ) : null}
@@ -49,9 +49,7 @@ const AmericanoResultsBoardHeader: React.FC<{
           <p className="public-americano-board__desc">{tournamentDescription}</p>
         ) : null}
         <p className="public-americano-board__tagline">
-          {isClubBranded
-            ? `${manifest.displayName} · Pantalla de resultados`
-            : RIVIERA_PUBLIC_DESCRIPTION}
+          {organizerName} · Pantalla de resultados
         </p>
       </div>
     </header>
@@ -78,6 +76,7 @@ export const PublicAmericanoResultsBoard: React.FC<
     string | null
   >(null);
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
+  const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedRef = React.useRef<FetchAmericanoLivePublicResult | null>(
     null
@@ -147,14 +146,20 @@ export const PublicAmericanoResultsBoard: React.FC<
   }, [load]);
 
   useEffect(() => {
-    const defaultTitle = `${RIVIERA_APP_DISPLAY} — Pantalla de resultados`;
-    document.title = tournamentName
-      ? `${tournamentName} · ${RIVIERA_APP_DISPLAY}`
-      : defaultTitle;
+    const defaultTitle = formatTenantDocumentTitle(
+      null,
+      organizerName,
+      "Pantalla de resultados"
+    );
+    document.title = formatTenantDocumentTitle(
+      tournamentName,
+      organizerName,
+      "Pantalla de resultados"
+    );
     return () => {
       document.title = defaultTitle;
     };
-  }, [tournamentName]);
+  }, [tournamentName, organizerName]);
 
   return (
     <ClubExperienceScope organizadorId={organizadorId}>

@@ -11,6 +11,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { UserProvider, useUser } from "./contexts/UserContext";
 import { AccountFeaturesProvider } from "./contexts/AccountFeaturesContext";
 import { ClubExperienceProvider } from "./club-experience";
+import { BrandingTransitionGate } from "./branding/BrandingTransitionGate";
 
 // Components
 import MainLayout from "./components/MainLayout";
@@ -1042,7 +1043,9 @@ function App() {
         <AccountFeaturesProvider>
           <AdminProvider>
             <ClubExperienceProvider>
-              <AppContent />
+              <BrandingTransitionGate>
+                <AppContent />
+              </BrandingTransitionGate>
             </ClubExperienceProvider>
           </AdminProvider>
         </AccountFeaturesProvider>

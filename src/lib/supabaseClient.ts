@@ -11,8 +11,16 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    storageKey: "riviera-app-auth",
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});
 
+/** Lecturas públicas sin sesión — storageKey distinto para evitar GoTrueClient duplicado en la misma clave. */
 export const supabasePublicRead = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: false,
