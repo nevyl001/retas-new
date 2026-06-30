@@ -91,8 +91,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [officialPuntos, setOfficialPuntos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isOfficialGlobalProfile = Boolean(playerId && !internalClub);
-
   const load = useCallback(async () => {
     setLoading(true);
     try {
@@ -197,7 +195,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [slug, orgId, playerId, internalClub, isOfficialGlobalProfile]);
+  }, [slug, orgId, playerId, internalClub]);
 
   useEffect(() => {
     void load();
