@@ -345,7 +345,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       });
   const puntosOrigen = jugadorPuntosOrigenConcedido(jugador);
   const showDualPuntosFicha =
-    internalClub && isJugadorConcedidoEnClub(jugador) && puntosOrigen > 0;
+    internalClub &&
+    isJugadorConcedidoEnClub(jugador) &&
+    Boolean(origenOrgId);
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);

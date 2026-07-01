@@ -46,7 +46,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
           <span className="rjp-ranking-dual-pts__total">
             {clubName}: {clubPts.toLocaleString("es-MX")} pts
           </span>
-          {origenPts > 0 ? (
+          {origenId ? (
             <span className="rjp-ranking-dual-pts__origen">
               {origenName}: {origenPts.toLocaleString("es-MX")} pts
             </span>

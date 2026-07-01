@@ -29,7 +29,8 @@ import {
 import {
   rankingPosicionesFromSortedForClub,
 } from "../../lib/rivieraJugadores/rankingPosition";
-import { rankingPuntosJugadorLista, jugadorListaPartidosDisplay, jugadorListaPctVictoriasDisplay } from "../../lib/rivieraJugadores/grantedRankingDisplay";
+import { rankingPuntosJugadorLista, jugadorListaPartidosDisplay, jugadorListaPctVictoriasDisplay, prefetchOrganizerDisplayNames, resolveOrigenConcedidoOrganizadorId } from "../../lib/rivieraJugadores/grantedRankingDisplay";
+import { GrantedPlayerOriginBadge } from "./GrantedPlayerOriginBadge";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
 import { navigateJugadoresLista } from "./jugadoresGeneroNav";
@@ -74,6 +75,10 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
         activosRecientes: recientes,
         genero,
       });
+      void prefetchOrganizerDisplayNames([
+        user.id,
+        ...data.map((j) => resolveOrigenConcedidoOrganizadorId(j)),
+      ]);
       setJugadores(data);
     } catch (e) {
       setError(
@@ -328,13 +333,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                     <p className="rj-card__name">{j.nombre}</p>
                     <JugadorPaisBadge codigo={j.pais_codigo} size="sm" />
                     {j.concedidoPorAdmin ? (
-                      <span
-                        className="rj-granted-badge rj-granted-badge--inline"
-                        title="Acceso concedido por Admin Principal"
-                      >
-                        <TablerIcon name="share-3" size={11} />
-                        <span>Concedido</span>
-                      </span>
+                      <GrantedPlayerOriginBadge jugador={j} />
                     ) : null}
                   </div>
                   <JugadorCategoriaBadge categoria={j.categoria} />

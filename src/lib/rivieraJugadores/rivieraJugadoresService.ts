@@ -244,7 +244,13 @@ async function mergeGrantedJugadoresIntoRanking(
   for (const grant of grants) {
     if (grant.local_jugador_id) {
       const existing = ownById.get(grant.local_jugador_id);
-      if (!existing || existing.categoria !== categoria) continue;
+      if (
+        !existing ||
+        existing.categoria !== categoria ||
+        !isJugadorInGeneroBracket(existing.genero, genero)
+      ) {
+        continue;
+      }
 
       const ownerOrgId = grant.owner_organizador_id;
       existing.concedidoPorAdmin = true;
@@ -261,6 +267,8 @@ async function mergeGrantedJugadoresIntoRanking(
       Object.assign(existing, enriched);
       continue;
     }
+
+    if (mergedIncludesGrantedSource(merged, grant.jugador_id)) continue;
 
     const source = await fetchSourceJugadorForGrant(grant.jugador_id);
     if (!source) continue;
@@ -300,9 +308,21 @@ async function mergeGrantedJugadoresIntoRanking(
   return sortJugadoresByClubLocalPuntos(merged);
 }
 
+function mergedIncludesGrantedSource(
+  rows: RivieraJugadorWithStats[],
+  sourceJugadorId: string
+): boolean {
+  return rows.some(
+    (row) =>
+      row.id === sourceJugadorId ||
+      row.grantedAccess?.sourceJugadorId === sourceJugadorId
+  );
+}
+
 async function mergeGrantedJugadoresIntoList(
   organizadorId: string,
-  ownRows: RivieraJugadorWithStats[]
+  ownRows: RivieraJugadorWithStats[],
+  genero?: RivieraJugadorGenero
 ): Promise<RivieraJugadorWithStats[]> {
   const grants = await listActiveGrantedAccessForOrganizer(organizadorId);
   if (grants.length === 0) return ownRows;
@@ -331,6 +351,8 @@ async function mergeGrantedJugadoresIntoList(
       continue;
     }
 
+    if (mergedIncludesGrantedSource(merged, grant.jugador_id)) continue;
+
     const source = await fetchSourceJugadorForGrant(grant.jugador_id);
     if (!source) continue;
 
@@ -347,6 +369,9 @@ async function mergeGrantedJugadoresIntoList(
       categoria,
       stats: null,
     });
+
+    if (genero && !isJugadorInGeneroBracket(mapped.genero, genero)) continue;
+
     mapped = await enrichGrantedJugadorFromSource(
       mapped,
       grant.jugador_id,
@@ -629,7 +654,7 @@ export async function listRivieraJugadores(
     });
   }
 
-  rows = await mergeGrantedJugadoresIntoList(organizadorId, rows);
+  rows = await mergeGrantedJugadoresIntoList(organizadorId, rows, opts?.genero);
 
   if (opts?.search?.trim()) {
     const sq = opts.search.trim().toLowerCase();
@@ -664,15 +689,7 @@ export async function getRivieraJugadorBySlug(
 
   if (data) {
     const own = mapJugadorRowFromService(data as unknown as Record<string, unknown>);
-    const meta = await findGrantedAccessMetaForJugador(organizadorId, own.id);
-    if (meta) {
-      own.concedidoPorAdmin = true;
-      own.grantedAccess = {
-        accessId: meta.accessId,
-        sourceJugadorId: meta.sourceJugadorId,
-      };
-    }
-    return own;
+    return enrichInternalClubJugadorGrant(organizadorId, own);
   }
 
   const { data: grantedRow, error: grantedErr } = await withJugadorSelectFallback<
@@ -705,8 +722,13 @@ export async function getRivieraJugadorBySlug(
   mapped.grantedAccess = {
     accessId: meta.accessId,
     sourceJugadorId: meta.sourceJugadorId,
+    ownerOrganizadorId: meta.ownerOrganizadorId,
   };
-  return mapped;
+  return enrichGrantedJugadorFromSource(
+    mapped,
+    meta.sourceJugadorId,
+    meta.ownerOrganizadorId
+  );
 }
 
 export async function getRivieraJugadorByLegacyLigaId(

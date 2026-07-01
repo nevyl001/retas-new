@@ -1,5 +1,6 @@
 import { getOrganizerDisplayNameSync, resolveOrganizerDisplayName } from "../organizer/organizerDisplayName";
 import {
+  isJugadorConcedidoEnClub,
   rankingPuntosClubLocal,
   resolveJugadorPuntosRanking,
 } from "./rankingPosition";
@@ -80,7 +81,19 @@ export function jugadorListaPctVictoriasDisplay(j: RivieraJugadorWithStats): str
 export function resolveOrigenConcedidoOrganizadorId(
   j: RivieraJugadorWithStats
 ): string | null {
-  return j.grantedAccess?.ownerOrganizadorId?.trim() || null;
+  const fromGrant = j.grantedAccess?.ownerOrganizadorId?.trim();
+  if (fromGrant) return fromGrant;
+
+  if (
+    isJugadorConcedidoEnClub(j) &&
+    j.grantedAccess?.sourceJugadorId &&
+    j.id === j.grantedAccess.sourceJugadorId
+  ) {
+    const ownerFromRow = j.organizador_id?.trim();
+    if (ownerFromRow) return ownerFromRow;
+  }
+
+  return null;
 }
 
 /** Precarga nombres reales de clubes (users.name vía RPC) para cedidos en ranking/ficha. */
