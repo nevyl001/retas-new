@@ -3,6 +3,7 @@ import type { Game } from "../database";
 import { supabase } from "../supabaseClient";
 import { getMatchScoresForStandings } from "../standingsUtils";
 import { getOrCreateJugadorId } from "./jugadorIdResolver";
+import { resolveJugadorIdForOrganizer } from "./organizerPlayerAccess";
 import {
   parseSetScoresJson,
   resolveParejasFijasPartidoTotals,
@@ -118,21 +119,32 @@ export function aplicarRatingPartidoSafe(
   });
 }
 
+async function resolveJugadorIdForRating(
+  organizadorId: string,
+  jugadorId: string
+): Promise<string> {
+  return resolveJugadorIdForOrganizer(organizadorId, jugadorId);
+}
+
 export async function resolverRivieraIdsDesdePair(
   organizadorId: string,
   pair: Pick<Pair, "player1_id" | "player2_id" | "player1_name" | "player2_name">
 ): Promise<[string, string] | null> {
-  const j1 = await getOrCreateJugadorId({
+  const j1Raw = await getOrCreateJugadorId({
     organizadorId,
     legacyPlayerId: pair.player1_id,
     nombre: pair.player1_name || "Jugador 1",
   });
-  const j2 = await getOrCreateJugadorId({
+  const j2Raw = await getOrCreateJugadorId({
     organizadorId,
     legacyPlayerId: pair.player2_id,
     nombre: pair.player2_name || "Jugador 2",
   });
-  if (!j1 || !j2) return null;
+  if (!j1Raw || !j2Raw) return null;
+  const [j1, j2] = await Promise.all([
+    resolveJugadorIdForRating(organizadorId, j1Raw),
+    resolveJugadorIdForRating(organizadorId, j2Raw),
+  ]);
   return [j1, j2];
 }
 
@@ -170,17 +182,21 @@ export async function resolverRivieraIdsLigaPareja(
   nombre1: string,
   nombre2: string
 ): Promise<[string, string] | null> {
-  const j1 = await getOrCreateJugadorId({
+  const j1Raw = await getOrCreateJugadorId({
     organizadorId,
     legacyLigaJugadorId: jugador1Id,
     nombre: nombre1,
   });
-  const j2 = await getOrCreateJugadorId({
+  const j2Raw = await getOrCreateJugadorId({
     organizadorId,
     legacyLigaJugadorId: jugador2Id,
     nombre: nombre2,
   });
-  if (!j1 || !j2) return null;
+  if (!j1Raw || !j2Raw) return null;
+  const [j1, j2] = await Promise.all([
+    resolveJugadorIdForRating(organizadorId, j1Raw),
+    resolveJugadorIdForRating(organizadorId, j2Raw),
+  ]);
   return [j1, j2];
 }
 
@@ -282,20 +298,44 @@ export async function aplicarRatingTorneoExpressEliminatoriaPartido(
   });
 }
 
-export async function aplicarRatingDuelo2v2(duelo: {
+export async function resolveDuelo2v2RatingPlayerIds(
+  organizadorId: string,
+  duelo: {
+    pareja_a_j1_id: string | null;
+    pareja_a_j2_id: string | null;
+    pareja_b_j1_id: string | null;
+    pareja_b_j2_id: string | null;
+  }
+): Promise<{ j1: string; j2: string; j3: string; j4: string } | null> {
+  const [j1, j2, j3, j4] = await Promise.all([
+    duelo.pareja_a_j1_id
+      ? resolveJugadorIdForRating(organizadorId, duelo.pareja_a_j1_id)
+      : Promise.resolve(null),
+    duelo.pareja_a_j2_id
+      ? resolveJugadorIdForRating(organizadorId, duelo.pareja_a_j2_id)
+      : Promise.resolve(null),
+    duelo.pareja_b_j1_id
+      ? resolveJugadorIdForRating(organizadorId, duelo.pareja_b_j1_id)
+      : Promise.resolve(null),
+    duelo.pareja_b_j2_id
+      ? resolveJugadorIdForRating(organizadorId, duelo.pareja_b_j2_id)
+      : Promise.resolve(null),
+  ]);
+  if (!j1 || !j2 || !j3 || !j4) return null;
+  return { j1, j2, j3, j4 };
+}
+
+export async function aplicarRatingDuelo2v2(params: {
   id: string;
   nombre: string;
   ganador: "a" | "b" | null;
-  pareja_a_j1_id: string | null;
-  pareja_a_j2_id: string | null;
-  pareja_b_j1_id: string | null;
-  pareja_b_j2_id: string | null;
+  j1: string;
+  j2: string;
+  j3: string;
+  j4: string;
 }): Promise<boolean> {
-  if (!duelo.ganador) return false;
-  const j1 = duelo.pareja_a_j1_id;
-  const j2 = duelo.pareja_a_j2_id;
-  const j3 = duelo.pareja_b_j1_id;
-  const j4 = duelo.pareja_b_j2_id;
+  if (!params.ganador) return false;
+  const { j1, j2, j3, j4 } = params;
   if (!j1 || !j2 || !j3 || !j4) return false;
 
   return aplicarRatingPartido({
@@ -303,10 +343,10 @@ export async function aplicarRatingDuelo2v2(duelo: {
     j2,
     j3,
     j4,
-    ganador: duelo.ganador,
+    ganador: params.ganador,
     modoJuego: "duelo_2v2",
-    partidoRef: `duelo2v2:${duelo.id}`,
-    descripcion: duelo.nombre,
+    partidoRef: `duelo2v2:${params.id}`,
+    descripcion: params.nombre,
   });
 }
 
@@ -410,7 +450,7 @@ export async function aplicarRatingAmericanoPartido(
     return;
   }
 
-  const [a1, a2, b1, b2] = await Promise.all([
+  const [a1Raw, a2Raw, b1Raw, b2Raw] = await Promise.all([
     getOrCreateJugadorId({
       organizadorId,
       legacyPlayerId: match.teamA[0].id,
@@ -432,7 +472,14 @@ export async function aplicarRatingAmericanoPartido(
       nombre: match.teamB[1].name,
     }),
   ]);
-  if (!a1 || !a2 || !b1 || !b2) return;
+  if (!a1Raw || !a2Raw || !b1Raw || !b2Raw) return;
+
+  const [a1, a2, b1, b2] = await Promise.all([
+    resolveJugadorIdForRating(organizadorId, a1Raw),
+    resolveJugadorIdForRating(organizadorId, a2Raw),
+    resolveJugadorIdForRating(organizadorId, b1Raw),
+    resolveJugadorIdForRating(organizadorId, b2Raw),
+  ]);
 
   aplicarRatingPartidoSafe({
     j1: a1,

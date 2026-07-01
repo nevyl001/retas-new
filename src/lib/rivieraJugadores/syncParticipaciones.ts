@@ -71,6 +71,7 @@ import { isParticipacionExcluded } from "./participacionExclusions";
 import {
   aplicarRatingDuelo2v2,
   aplicarRatingRetaFinishedMatches,
+  resolveDuelo2v2RatingPlayerIds,
 } from "./aplicarRatingPartido";
 import {
   enrichMetadataWithPartidosDetalle,
@@ -2100,9 +2101,17 @@ export async function syncDuelo2v2Participaciones(params: {
   ];
 
   try {
-    const ratingApplied = await aplicarRatingDuelo2v2(duelo);
-    if (ratingApplied) {
-      console.info(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
+    const resolvedIds = await resolveDuelo2v2RatingPlayerIds(organizadorId, duelo);
+    if (resolvedIds) {
+      const ratingApplied = await aplicarRatingDuelo2v2({
+        id: duelo.id,
+        nombre: duelo.nombre,
+        ganador: duelo.ganador,
+        ...resolvedIds,
+      });
+      if (ratingApplied) {
+        console.info(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
+      }
     }
   } catch (e) {
     console.warn("[rating] duelo 2v2 sync:", e);

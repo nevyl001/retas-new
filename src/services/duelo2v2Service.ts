@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
-import { aplicarRatingDuelo2v2 } from "../lib/rivieraJugadores/aplicarRatingPartido";
+import { aplicarRatingDuelo2v2, resolveDuelo2v2RatingPlayerIds } from "../lib/rivieraJugadores/aplicarRatingPartido";
 import { syncDuelo2v2Participaciones } from "../lib/rivieraJugadores/syncParticipaciones";
 import type {
   CreateDuelo2v2Input,
@@ -247,7 +247,15 @@ export async function finalizarDuelo2v2(id: string): Promise<Duelo2v2> {
   const finalizado = mapDuelo(data as Record<string, unknown>);
 
   try {
-    await aplicarRatingDuelo2v2(finalizado);
+    const resolvedIds = await resolveDuelo2v2RatingPlayerIds(uid, finalizado);
+    if (resolvedIds) {
+      await aplicarRatingDuelo2v2({
+        id: finalizado.id,
+        nombre: finalizado.nombre,
+        ganador: finalizado.ganador,
+        ...resolvedIds,
+      });
+    }
   } catch (e) {
     console.warn("[rating] finalizar duelo 2v2:", e);
   }
