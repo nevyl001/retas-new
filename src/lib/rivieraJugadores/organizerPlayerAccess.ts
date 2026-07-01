@@ -84,6 +84,70 @@ export interface GrantedAccessMeta {
   localJugadorId: string | null;
 }
 
+/** Grant activo por id de jugador origen o clon local (sin filtrar club anfitrión). */
+export async function findGrantedAccessMetaGlobal(
+  jugadorId: string
+): Promise<(GrantedAccessMeta & { granteeOrganizerId: string }) | null> {
+  const id = jugadorId.trim();
+  if (!id) return null;
+
+  const { data, error } = await supabase
+    .from("organizer_player_access")
+    .select(
+      "id, jugador_id, owner_organizador_id, local_jugador_id, grantee_organizer_id"
+    )
+    .eq("is_active", true)
+    .or(`jugador_id.eq.${id},local_jugador_id.eq.${id}`)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingAccessFeatureError(error)) return null;
+    throw error;
+  }
+  if (!data) return null;
+
+  return {
+    accessId: String(data.id),
+    sourceJugadorId: String(data.jugador_id),
+    ownerOrganizadorId: String(data.owner_organizador_id),
+    localJugadorId: data.local_jugador_id ? String(data.local_jugador_id) : null,
+    granteeOrganizerId: String(data.grantee_organizer_id),
+  };
+}
+
+export async function enrichJugadorWithGlobalGrantedAccess(
+  jugador: RivieraJugadorWithStats
+): Promise<RivieraJugadorWithStats> {
+  const meta = await findGrantedAccessMetaGlobal(jugador.id);
+  if (!meta) return jugador;
+
+  const isLocalClone =
+    meta.localJugadorId != null && meta.localJugadorId === jugador.id;
+  const isConcedido =
+    isLocalClone || meta.sourceJugadorId.trim() !== jugador.id.trim();
+
+  const withMeta: RivieraJugadorWithStats = {
+    ...jugador,
+    concedidoPorAdmin: jugador.concedidoPorAdmin || isConcedido,
+    grantedAccess: {
+      accessId: meta.accessId,
+      sourceJugadorId: meta.sourceJugadorId,
+      ownerOrganizadorId: meta.ownerOrganizadorId,
+    },
+  };
+
+  if (!isConcedido) return withMeta;
+
+  const display = await loadGrantedSourceDisplayData(meta.sourceJugadorId);
+  if (!display) return withMeta;
+
+  return applyGrantedSourceDisplayToJugador(
+    withMeta,
+    display,
+    meta.ownerOrganizadorId
+  );
+}
+
 export async function findGrantedAccessMetaForJugador(
   granteeOrganizerId: string,
   jugadorId: string
@@ -153,17 +217,12 @@ export function applyGrantedSourceDisplayToJugador(
   source: NonNullable<Awaited<ReturnType<typeof loadGrantedSourceDisplayData>>>,
   ownerOrganizadorId?: string | null
 ): RivieraJugadorWithStats {
-  const hasLocalRating = (jugador.rating_partidos ?? 0) > 0;
   return {
     ...jugador,
     statsOrigenConcedido: source.stats ?? null,
-    rating: hasLocalRating ? jugador.rating : source.rating,
-    rating_partidos: hasLocalRating
-      ? jugador.rating_partidos
-      : source.ratingPartidos,
-    rating_fiabilidad: hasLocalRating
-      ? jugador.rating_fiabilidad
-      : source.ratingFiabilidad,
+    rating: source.rating,
+    rating_partidos: source.ratingPartidos,
+    rating_fiabilidad: source.ratingFiabilidad,
     grantedAccess: jugador.grantedAccess
       ? {
           ...jugador.grantedAccess,
@@ -238,6 +297,29 @@ export async function ensureGrantedLocalPlayerSumsRanking(
       updateErr
     );
   }
+}
+
+export async function listGrantedLocalJugadorIdsForSource(
+  sourceJugadorId: string
+): Promise<string[]> {
+  const id = sourceJugadorId.trim();
+  if (!id) return [];
+
+  const { data, error } = await supabase
+    .from("organizer_player_access")
+    .select("local_jugador_id")
+    .eq("jugador_id", id)
+    .eq("is_active", true)
+    .not("local_jugador_id", "is", null);
+
+  if (error) {
+    if (isMissingAccessFeatureError(error)) return [];
+    throw error;
+  }
+
+  return (data ?? [])
+    .map((row) => (row.local_jugador_id ? String(row.local_jugador_id) : ""))
+    .filter(Boolean);
 }
 
 /** Resuelve el id operativo del jugador para el organizador actual. */

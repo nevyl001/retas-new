@@ -18,8 +18,14 @@ import {
 } from "../../lib/rivieraJugadores/historialDisplay";
 import {
   fetchOfficialRankingPosicionForJugador,
-  loadRomcOfficialPlayerView,
 } from "../../lib/rivieraJugadores/rivieraOfficialActivity";
+import {
+  enrichJugadorConcedidoClubView,
+} from "../../lib/rivieraJugadores/concedidoClubView";
+import {
+  loadUnifiedParticipacionesForJugador,
+  loadUnifiedRatingViewForJugador,
+} from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
 import { mergeJugadorStatsPuntosTotales, resolveJugadorPuntosRanking, isJugadorConcedidoEnClub, jugadorPuntosOrigenConcedido, rankingPuntosClubLocal } from "../../lib/rivieraJugadores/rankingPosition";
 import {
   prefetchOrganizerDisplayNames,
@@ -31,6 +37,7 @@ import {
   getRivieraJugadorPublicById,
   getRivieraJugadorPublicBySlug,
   listParticipacionesPublic,
+  obtenerHistorialRating,
   obtenerHistorialRatingPublic,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
@@ -102,85 +109,90 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const j =
+      let jugadorBase =
         internalClub && playerId && orgId
           ? await getRivieraJugadorInternalClubById(playerId, orgId)
           : playerId
           ? await getRivieraJugadorPublicById(playerId)
           : await getRivieraJugadorPublicBySlug(slug ?? "", orgId ?? undefined);
-      setJugador(j);
-      if (j) {
+      setJugador(jugadorBase);
+      if (jugadorBase) {
+        if (internalClub && orgId) {
+          jugadorBase = await enrichJugadorConcedidoClubView(orgId, jugadorBase);
+        }
         void prefetchOrganizerDisplayNames([
           orgId,
-          j.grantedAccess?.ownerOrganizadorId,
+          jugadorBase.grantedAccess?.ownerOrganizadorId,
         ]);
-        const h = await listParticipacionesPublic(
-          j.id,
-          100,
-          internalClub || orgId ? orgId ?? undefined : undefined
-        );
+        const unified = await loadUnifiedParticipacionesForJugador(jugadorBase, {
+          limit: 100,
+          organizadorId: internalClub || orgId ? orgId ?? null : null,
+          listParticipaciones: (id, lim, org) =>
+            listParticipacionesPublic(id, lim, org ?? undefined),
+        });
+        if (internalClub && orgId) {
+          jugadorBase = await enrichJugadorConcedidoClubView(orgId, jugadorBase, {
+            participaciones: unified.historial,
+          });
+        }
+        const ratingView = await loadUnifiedRatingViewForJugador(jugadorBase, {
+          limite: 10,
+          organizadorId: internalClub || orgId ? orgId ?? null : null,
+          participacionesHistorial: unified.historial,
+          fetchHistorial: user?.id
+            ? obtenerHistorialRating
+            : obtenerHistorialRatingPublic,
+        });
+        jugadorBase = {
+          ...jugadorBase,
+          rating: ratingView.jugador.rating,
+          rating_partidos: ratingView.jugador.rating_partidos,
+          rating_fiabilidad: ratingView.jugador.rating_fiabilidad,
+        };
+        setHistorial(unified.historial);
+        setHistorialRating(ratingView.historial);
 
-        const [posRpc, posList, romcView] = await Promise.all([
+        const [posRpc, posList] = await Promise.all([
           playerId && !internalClub
             ? fetchOfficialRankingPosicionForJugador(
-                j.id,
-                j.organizador_id,
-                j.categoria,
-                normalizeRivieraGenero(j.genero) ?? "M"
+                jugadorBase.id,
+                jugadorBase.organizador_id,
+                jugadorBase.categoria,
+                normalizeRivieraGenero(jugadorBase.genero) ?? "M"
               )
             : Promise.resolve(null),
           internalClub && orgId
             ? getRankingPosicionEnCategoria(
                 orgId,
-                j.id,
-                j.categoria,
-                normalizeRivieraGenero(j.genero) ?? "M"
+                jugadorBase.id,
+                jugadorBase.categoria,
+                normalizeRivieraGenero(jugadorBase.genero) ?? "M"
               )
             : playerId
             ? getRankingPosicionOficialEnCategoria(
-                j.id,
-                j.organizador_id,
-                j.categoria,
-                normalizeRivieraGenero(j.genero) ?? "M"
+                jugadorBase.id,
+                jugadorBase.organizador_id,
+                jugadorBase.categoria,
+                normalizeRivieraGenero(jugadorBase.genero) ?? "M"
               )
             : orgId
             ? getRankingPosicionEnCategoria(
                 orgId,
-                j.id,
-                j.categoria,
-                normalizeRivieraGenero(j.genero) ?? "M"
+                jugadorBase.id,
+                jugadorBase.categoria,
+                normalizeRivieraGenero(jugadorBase.genero) ?? "M"
               )
             : Promise.resolve(null),
-          internalClub
-            ? Promise.resolve({
-                hasRomcData: false,
-                historial: h,
-                puntosOficiales: null,
-              })
-            : loadRomcOfficialPlayerView(j.id, { localParticipaciones: h }),
         ]);
 
         const pos = posRpc ?? posList;
-
-        const isGrantedInternal = Boolean(
-          internalClub &&
-            j.concedidoPorAdmin &&
-            j.grantedAccess?.sourceJugadorId
-        );
-        const historialMerged =
-          internalClub || isGrantedInternal
-            ? h
-            : romcView.hasRomcData
-            ? romcView.historial
-            : h;
-        setHistorial(historialMerged);
-        const puntosOficialEfectivos = romcView.hasRomcData
-          ? romcView.puntosOficiales
+        const puntosOficialEfectivos = unified.romcView.hasRomcData
+          ? unified.romcView.puntosOficiales
           : null;
         setOfficialPuntos(puntosOficialEfectivos);
         setRankingPos(pos);
-        const statsBase = j.stats ?? {
-          jugador_id: j.id,
+        const statsBase = jugadorBase.stats ?? {
+          jugador_id: jugadorBase.id,
           total_partidos: 0,
           victorias: 0,
           derrotas: 0,
@@ -198,55 +210,35 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           puntos_totales: 0,
           updated_at: new Date().toISOString(),
         };
-        if (isGrantedInternal) {
-          setJugador({ ...j, stats: statsBase });
-        } else {
-          setJugador({
-            ...j,
-            stats: mergeJugadorStatsPuntosTotales(
-              statsBase,
-              puntosOficialEfectivos
-            ),
-            officialPuntosGlobal: puntosOficialEfectivos ?? undefined,
-          });
-        }
+        const withStats =
+          internalClub && jugadorBase.concedidoPorAdmin
+            ? {
+                ...jugadorBase,
+                stats: statsBase,
+                statsOrigenConcedido: jugadorBase.statsOrigenConcedido,
+                grantedAccess: jugadorBase.grantedAccess,
+                concedidoPorAdmin: true,
+              }
+            : {
+                ...jugadorBase,
+                stats: mergeJugadorStatsPuntosTotales(
+                  statsBase,
+                  puntosOficialEfectivos
+                ),
+                officialPuntosGlobal: puntosOficialEfectivos ?? undefined,
+              };
+        setJugador(withStats);
       } else {
         setRankingPos(null);
       }
     } finally {
       setLoading(false);
     }
-  }, [slug, orgId, playerId, internalClub]);
+  }, [slug, orgId, playerId, internalClub, user?.id]);
 
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (!jugador?.id) {
-      setHistorialRating([]);
-      return;
-    }
-    const ratingJugadorId =
-      jugador.concedidoPorAdmin && jugador.grantedAccess?.sourceJugadorId
-        ? jugador.grantedAccess.sourceJugadorId
-        : jugador.id;
-    let active = true;
-    obtenerHistorialRatingPublic(ratingJugadorId, 10)
-      .then((rows) => {
-        if (active) setHistorialRating(rows);
-      })
-      .catch(() => {
-        if (active) setHistorialRating([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, [
-    jugador?.id,
-    jugador?.concedidoPorAdmin,
-    jugador?.grantedAccess?.sourceJugadorId,
-  ]);
 
   const rankingUrl = internalClub
     ? buildPublicRankingUrl(
@@ -379,7 +371,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                   src={jugador.foto_url}
                   alt=""
                   decoding="async"
-                  fetchPriority="high"
                 />
               )}
               <div className="rjp-ficha-hero__dim" aria-hidden />

@@ -31,15 +31,100 @@ function logRomcPhase22B(_payload: Record<string, unknown>): void {
   /* logs de depuración ROMC desactivados */
 }
 
-function isMissingRomcRpc(error: { code?: string; message?: string; status?: number } | null): boolean {
+let legacyParticipacionesRpcAvailable: boolean | null = null;
+let romcRpcSuiteDisabled = false;
+type RomcSuiteState = "unknown" | "ready" | "broken";
+let romcSuiteState: RomcSuiteState = "unknown";
+let romcSuiteInit: Promise<boolean> | null = null;
+
+const ROMC_SUITE_SESSION_KEY = "riviera_romc_suite";
+
+function hydrateRomcSuiteFromSession(): void {
+  if (romcSuiteState !== "unknown") return;
+  try {
+    const stored = sessionStorage.getItem(ROMC_SUITE_SESSION_KEY);
+    if (stored === "broken") markRomcRpcSuiteUnavailable();
+    else if (stored === "ready") {
+      romcSuiteState = "ready";
+      legacyParticipacionesRpcAvailable = true;
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+function persistRomcSuiteState(): void {
+  try {
+    if (romcSuiteState === "ready") {
+      sessionStorage.setItem(ROMC_SUITE_SESSION_KEY, "ready");
+    } else if (romcSuiteState === "broken") {
+      sessionStorage.setItem(ROMC_SUITE_SESSION_KEY, "broken");
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+export function romcRpcSuiteUnavailable(): boolean {
+  hydrateRomcSuiteFromSession();
+  return (
+    romcRpcSuiteDisabled ||
+    romcSuiteState === "broken" ||
+    legacyParticipacionesRpcAvailable === false
+  );
+}
+
+function markRomcRpcSuiteUnavailable(): void {
+  romcRpcSuiteDisabled = true;
+  romcSuiteState = "broken";
+  legacyParticipacionesRpcAvailable = false;
+  persistRomcSuiteState();
+}
+
+/** Una sola prueba ROMC por sesión (máx. 1 POST si ROMC no está desplegado). */
+async function ensureRomcSuiteInitialized(): Promise<boolean> {
+  hydrateRomcSuiteFromSession();
+  if (romcSuiteState === "ready") return true;
+  if (romcSuiteState === "broken" || romcRpcSuiteDisabled) return false;
+
+  if (!romcSuiteInit) {
+    romcSuiteInit = (async () => {
+      const { error } = await supabase.rpc(
+        "list_riviera_official_legacy_participaciones",
+        {
+          p_riviera_jugador_id: "00000000-0000-0000-0000-000000000000",
+          p_limit: 1,
+        }
+      );
+
+      if (error) {
+        markRomcRpcSuiteUnavailable();
+        return false;
+      }
+
+      romcSuiteState = "ready";
+      legacyParticipacionesRpcAvailable = true;
+      persistRomcSuiteState();
+      return true;
+    })();
+  }
+
+  return romcSuiteInit;
+}
+
+function isBrokenRomcRpcError(
+  error: { code?: string; message?: string; status?: number } | null
+): boolean {
   if (!error) return false;
   const msg = (error.message ?? "").toLowerCase();
   return (
     error.status === 405 ||
+    error.code === "25006" ||
     error.code === "42883" ||
     error.code === "PGRST202" ||
     msg.includes("could not find the function") ||
     msg.includes("method not allowed") ||
+    msg.includes("read-only transaction") ||
     msg.includes("list_riviera_official_player_activity") ||
     msg.includes("list_riviera_official_cross_club_activity") ||
     msg.includes("list_riviera_official_legacy_participaciones") ||
@@ -49,19 +134,25 @@ function isMissingRomcRpc(error: { code?: string; message?: string; status?: num
   );
 }
 
+/** @deprecated alias */
+function isMissingRomcRpc(
+  error: { code?: string; message?: string; status?: number } | null
+): boolean {
+  return isBrokenRomcRpcError(error);
+}
+
 export async function fetchOfficialDisplayPuntosForJugador(
   jugadorId: string
 ): Promise<number | null> {
+  if (romcRpcSuiteUnavailable()) return null;
+
   const { data, error } = await supabase.rpc(
     "riviera_official_display_puntos_for_jugador",
     { p_riviera_jugador_id: jugadorId }
   );
 
   if (error) {
-    if (isMissingRomcRpc(error)) return null;
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[riviera-official-activity] display_puntos:", error);
-    }
+    markRomcRpcSuiteUnavailable();
     return null;
   }
 
@@ -80,6 +171,8 @@ export async function listOfficialPlayerActivity(
   jugadorId: string,
   limit = 100
 ): Promise<OfficialLedgerActivityRow[]> {
+  if (romcRpcSuiteUnavailable()) return [];
+
   const { data, error } = await supabase.rpc(
     "list_riviera_official_player_activity",
     {
@@ -89,12 +182,7 @@ export async function listOfficialPlayerActivity(
   );
 
   if (error) {
-    if (isMissingRomcRpc(error)) {
-      return listOfficialCrossClubActivity(jugadorId, limit);
-    }
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[riviera-official-activity] player_activity:", error);
-    }
+    markRomcRpcSuiteUnavailable();
     return [];
   }
 
@@ -106,6 +194,8 @@ export async function listOfficialCrossClubActivity(
   jugadorId: string,
   limit = 100
 ): Promise<OfficialLedgerActivityRow[]> {
+  if (romcRpcSuiteUnavailable()) return [];
+
   const { data, error } = await supabase.rpc(
     "list_riviera_official_cross_club_activity",
     {
@@ -115,8 +205,7 @@ export async function listOfficialCrossClubActivity(
   );
 
   if (error) {
-    if (isMissingRomcRpc(error)) return [];
-    console.warn("[riviera-official-activity] cross_club_activity:", error);
+    markRomcRpcSuiteUnavailable();
     return [];
   }
 
@@ -158,6 +247,8 @@ export async function listOfficialLegacyParticipaciones(
   jugadorId: string,
   limit = 100
 ): Promise<JugadorParticipacion[]> {
+  if (romcRpcSuiteUnavailable()) return [];
+
   const { data, error } = await supabase.rpc(
     "list_riviera_official_legacy_participaciones",
     {
@@ -167,13 +258,11 @@ export async function listOfficialLegacyParticipaciones(
   );
 
   if (error) {
-    if (isMissingRomcRpc(error)) return [];
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[riviera-official-activity] legacy_participaciones:", error);
-    }
+    markRomcRpcSuiteUnavailable();
     return [];
   }
 
+  legacyParticipacionesRpcAvailable = true;
   const rows = (data ?? []) as JugadorParticipacion[];
   logRomcPhase22B({
     action: "official_legacy_participaciones",
@@ -314,12 +403,36 @@ export async function loadRomcOfficialPlayerView(
   const limit = options?.limit ?? 100;
   const localParticipaciones = options?.localParticipaciones ?? [];
 
-  const [ledgerActivity, legacyParticipaciones, displayPuntos] =
-    await Promise.all([
-      listOfficialPlayerActivity(jugadorId, limit),
-      listOfficialLegacyParticipaciones(jugadorId, limit),
-      fetchOfficialDisplayPuntosForJugador(jugadorId),
-    ]);
+  if (!(await ensureRomcSuiteInitialized())) {
+    return {
+      historial: localParticipaciones,
+      puntosOficiales: null,
+      hasRomcData: false,
+    };
+  }
+
+  const ledgerActivity = await listOfficialPlayerActivity(jugadorId, limit);
+  if (romcRpcSuiteUnavailable()) {
+    return {
+      historial: localParticipaciones,
+      puntosOficiales: null,
+      hasRomcData: false,
+    };
+  }
+
+  const legacyParticipaciones = await listOfficialLegacyParticipaciones(
+    jugadorId,
+    limit
+  );
+  if (romcRpcSuiteUnavailable()) {
+    return {
+      historial: localParticipaciones,
+      puntosOficiales: null,
+      hasRomcData: false,
+    };
+  }
+
+  const displayPuntos = await fetchOfficialDisplayPuntosForJugador(jugadorId);
 
   const hasRomcData =
     ledgerActivity.length > 0 ||

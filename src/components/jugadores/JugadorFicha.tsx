@@ -9,12 +9,15 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { computePublicProfileStats } from "../../lib/rivieraJugadores/historialDisplay";
-import { loadRomcOfficialPlayerView } from "../../lib/rivieraJugadores/rivieraOfficialActivity";
-import { mergeJugadorStatsPuntosTotales } from "../../lib/rivieraJugadores/rankingPosition";
 import {
   applyGrantedSourceDisplayToJugador,
   loadGrantedSourceDisplayData,
 } from "../../lib/rivieraJugadores/organizerPlayerAccess";
+import { mergeJugadorStatsPuntosTotales } from "../../lib/rivieraJugadores/rankingPosition";
+import {
+  loadUnifiedParticipacionesForJugador,
+  loadUnifiedRatingViewForJugador,
+} from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
 import {
   deleteParticipacionJugador,
   deleteRivieraJugador,
@@ -93,67 +96,59 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setFacebook(j.facebook_url ?? "");
         setTiktok(j.tiktok_url ?? "");
 
-        const romcJugadorId = j.id;
-        const isGrantedReadOnly = Boolean(j.concedidoPorAdmin);
-        const sourceJugadorId = j.grantedAccess?.sourceJugadorId;
+        const unified = await loadUnifiedParticipacionesForJugador(j, {
+          limit: 100,
+          listParticipaciones: (id, lim) => listParticipaciones(id, lim),
+        });
+        setHistorial(unified.historial);
 
-        if (isGrantedReadOnly && sourceJugadorId) {
-          const h = await listParticipaciones(romcJugadorId, 100);
-          const [sourceDisplay, romcView] = await Promise.all([
-            loadGrantedSourceDisplayData(sourceJugadorId),
-            loadRomcOfficialPlayerView(romcJugadorId, { localParticipaciones: h }),
-          ]);
-          const historialMerged = romcView.hasRomcData
-            ? romcView.historial
-            : h;
-          setHistorial(historialMerged);
-          let nextJugador =
-            sourceDisplay
-              ? applyGrantedSourceDisplayToJugador(j, sourceDisplay)
-              : j;
-          if (romcView.hasRomcData && romcView.puntosOficiales != null && nextJugador.stats) {
-            nextJugador = {
-              ...nextJugador,
-              stats: mergeJugadorStatsPuntosTotales(
-                nextJugador.stats,
-                romcView.puntosOficiales
-              ),
-              officialPuntosGlobal: romcView.puntosOficiales,
-            };
+        let nextJugador = j;
+        if (j.concedidoPorAdmin && j.grantedAccess?.sourceJugadorId) {
+          const sourceDisplay = await loadGrantedSourceDisplayData(
+            j.grantedAccess.sourceJugadorId
+          );
+          if (sourceDisplay) {
+            nextJugador = applyGrantedSourceDisplayToJugador(j, sourceDisplay);
           }
-          setJugador(nextJugador);
         } else {
-          const h = await listParticipaciones(j.id, 100);
-          const romcView = await loadRomcOfficialPlayerView(j.id, {
-            localParticipaciones: h,
-          });
-          const historialMerged = romcView.hasRomcData ? romcView.historial : h;
-          setHistorial(historialMerged);
           try {
             const rebuilt = await rebuildJugadorStats(j.id);
             if (rebuilt) {
-              setJugador({
-                ...j,
-                stats: mergeJugadorStatsPuntosTotales(
-                  rebuilt,
-                  romcView.puntosOficiales
-                ),
-                officialPuntosGlobal: romcView.puntosOficiales ?? undefined,
-              });
-            } else if (j.stats) {
-              setJugador({
-                ...j,
-                stats: mergeJugadorStatsPuntosTotales(
-                  j.stats,
-                  romcView.puntosOficiales
-                ),
-                officialPuntosGlobal: romcView.puntosOficiales ?? undefined,
-              });
+              nextJugador = { ...j, stats: rebuilt };
             }
           } catch (e) {
             console.warn("[riviera-jugadores] sync stats en ficha:", e);
           }
         }
+
+        if (
+          unified.romcView.hasRomcData &&
+          unified.romcView.puntosOficiales != null &&
+          nextJugador.stats
+        ) {
+          nextJugador = {
+            ...nextJugador,
+            stats: mergeJugadorStatsPuntosTotales(
+              nextJugador.stats,
+              unified.romcView.puntosOficiales
+            ),
+            officialPuntosGlobal: unified.romcView.puntosOficiales,
+          };
+        }
+
+        const ratingView = await loadUnifiedRatingViewForJugador(nextJugador, {
+          limite: 10,
+          organizadorId: user?.id ?? null,
+          participacionesHistorial: unified.historial,
+          fetchHistorial: obtenerHistorialRating,
+        });
+        setHistorialRating(ratingView.historial);
+        setJugador({
+          ...ratingView.jugador,
+          stats: nextJugador.stats,
+          officialPuntosGlobal: nextJugador.officialPuntosGlobal,
+          statsOrigenConcedido: nextJugador.statsOrigenConcedido,
+        });
       }
     } finally {
       setLoading(false);
@@ -163,32 +158,6 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   useEffect(() => {
     load();
   }, [load]);
-
-  useEffect(() => {
-    if (!jugador?.id) {
-      setHistorialRating([]);
-      return;
-    }
-    const ratingJugadorId =
-      jugador.concedidoPorAdmin && jugador.grantedAccess?.sourceJugadorId
-        ? jugador.grantedAccess.sourceJugadorId
-        : jugador.id;
-    let active = true;
-    obtenerHistorialRating(ratingJugadorId, 10)
-      .then((rows) => {
-        if (active) setHistorialRating(rows);
-      })
-      .catch(() => {
-        if (active) setHistorialRating([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, [
-    jugador?.id,
-    jugador?.concedidoPorAdmin,
-    jugador?.grantedAccess?.sourceJugadorId,
-  ]);
 
   const handleSaveProfile = async () => {
     if (!jugador) return;
@@ -248,13 +217,16 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         jugador.id,
         participacionId
       );
-      const h = await listParticipaciones(jugador.id, 100);
-      const romcView = await loadRomcOfficialPlayerView(jugador.id, {
-        localParticipaciones: h,
+      const unified = await loadUnifiedParticipacionesForJugador(jugador, {
+        limit: 100,
+        listParticipaciones: (id, lim) => listParticipaciones(id, lim),
       });
-      setHistorial(romcView.hasRomcData ? romcView.historial : h);
+      setHistorial(unified.historial);
       if (rebuilt) {
-        const stats = mergeJugadorStatsPuntosTotales(rebuilt, romcView.puntosOficiales);
+        const stats = mergeJugadorStatsPuntosTotales(
+          rebuilt,
+          unified.romcView.puntosOficiales
+        );
         setJugador({ ...jugador, stats });
       } else {
         await load();

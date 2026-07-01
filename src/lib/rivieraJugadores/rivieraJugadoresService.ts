@@ -20,10 +20,15 @@ import {
 } from "./genero";
 import {
   applyGrantedSourceDisplayToJugador,
+  enrichJugadorWithGlobalGrantedAccess,
   findGrantedAccessMetaForJugador,
   listActiveGrantedAccessForOrganizer,
   loadGrantedSourceDisplayData,
 } from "./organizerPlayerAccess";
+import {
+  enrichJugadorConcedidoClubView,
+  enrichJugadoresConcedidoClubViewBatch,
+} from "./concedidoClubView";
 import {
   mergeJugadorStatsPuntosTotales,
   rankingPuntosJugador,
@@ -222,10 +227,13 @@ async function enrichInternalClubJugadorGrant(
       ownerOrganizadorId: ownerOrgId,
     },
   };
-  return enrichGrantedJugadorFromSource(
-    withMeta,
-    meta.sourceJugadorId,
-    ownerOrgId
+  return enrichJugadorConcedidoClubView(
+    organizadorId,
+    await enrichGrantedJugadorFromSource(
+      withMeta,
+      meta.sourceJugadorId,
+      ownerOrgId
+    )
   );
 }
 
@@ -236,8 +244,6 @@ async function mergeGrantedJugadoresIntoRanking(
   ownRows: RivieraJugadorWithStats[]
 ): Promise<RivieraJugadorWithStats[]> {
   const grants = await listActiveGrantedAccessForOrganizer(organizadorId);
-  if (grants.length === 0) return ownRows;
-
   const ownById = new Map(ownRows.map((r) => [r.id, r]));
   const merged = [...ownRows];
 
@@ -305,7 +311,11 @@ async function mergeGrantedJugadoresIntoRanking(
     merged.push(mapped);
   }
 
-  return sortJugadoresByClubLocalPuntos(merged);
+  const enriched = await enrichJugadoresConcedidoClubViewBatch(
+    organizadorId,
+    merged
+  );
+  return sortJugadoresByClubLocalPuntos(enriched);
 }
 
 function mergedIncludesGrantedSource(
@@ -1497,7 +1507,9 @@ export async function getRivieraJugadorPublicById(
     if (isMissingTableError(error)) return null;
     throw error;
   }
-  return data ? mapJugadorRowFromService(data as unknown as Record<string, unknown>) : null;
+  if (!data) return null;
+  const mapped = mapJugadorRowFromService(data as unknown as Record<string, unknown>);
+  return enrichJugadorWithGlobalGrantedAccess(mapped);
 }
 
 /** Ranking oficial global (todos los clubs con jugadores publicados). */
@@ -1749,7 +1761,7 @@ export async function getRivieraJugadorPublicBySlug(
   const { isJugadorVisibleSitioOficial } = await import("../admin/accountControls");
   if (!(await isJugadorVisibleSitioOficial(j.id))) return null;
 
-  return j;
+  return enrichJugadorWithGlobalGrantedAccess(j);
 }
 
 /** Ranking público por categoría y género (orden: más puntos, luego nombre). */
