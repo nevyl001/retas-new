@@ -206,10 +206,23 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     jugador: AdminJugadorRow,
     patch: Parameters<typeof updateJugadorAdminControls>[1]
   ) => {
+    if (patch.visible_publico === true && !visibleRanking) {
+      setError(
+        "Primero activa «Publicar club en ranking oficial» y pulsa Guardar configuración."
+      );
+      return;
+    }
+
     setBusyJugadorId(jugador.id);
     setError("");
+    setNotice("");
     try {
       await updateJugadorAdminControls(jugador.id, patch);
+      if (patch.visible_publico === true) {
+        setNotice(`«${jugador.nombre}» publicado en el sitio oficial.`);
+      } else if (patch.visible_publico === false) {
+        setNotice(`«${jugador.nombre}» quitado del sitio oficial.`);
+      }
       await loadAll();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo actualizar el jugador");
@@ -222,6 +235,13 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
     patch: Parameters<typeof bulkUpdateJugadoresAdminControls>[2],
     label: string
   ) => {
+    if (patch.visible_publico === true && !visibleRanking) {
+      setError(
+        "Primero activa «Publicar club en ranking oficial» y pulsa Guardar configuración."
+      );
+      return;
+    }
+
     const ids = jugadoresEditables.map((j) => j.id);
     if (ids.length === 0) return;
 
