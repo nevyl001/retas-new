@@ -45,7 +45,6 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
 }) => {
   const [modes, setModes] = useState<Record<GameModeId, boolean> | null>(null);
   const [permiteAjustePuntos, setPermiteAjustePuntos] = useState(true);
-  const [visibleRanking, setVisibleRanking] = useState(false);
   const [premiumBrandingEnabled, setPremiumBrandingEnabled] = useState(false);
   const [brandingKey, setBrandingKey] = useState<string>(DEFAULT_PREMIUM_MANIFEST_KEY);
   const [jugadores, setJugadores] = useState<AdminJugadorRow[]>([]);
@@ -137,7 +136,6 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
       ]);
       setModes(settings.modes);
       setPermiteAjustePuntos(settings.permiteAjustePuntosManuales);
-      setVisibleRanking(settings.visibleRankingOficial);
       setPremiumBrandingEnabled(settings.premiumBrandingEnabled);
       setBrandingKey(settings.brandingKey ?? DEFAULT_PREMIUM_MANIFEST_KEY);
       setJugadores(j);
@@ -167,27 +165,10 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
       await upsertOrganizadorAccountSettings(organizadorId, {
         modes,
         permiteAjustePuntosManuales: permiteAjustePuntos,
-        visibleRankingOficial: visibleRanking,
+        visibleRankingOficial: before.visibleRankingOficial,
         premiumBrandingEnabled,
         brandingKey: premiumBrandingEnabled ? brandingKey : null,
       });
-      if (before.visibleRankingOficial && !visibleRanking) {
-        const ids = jugadores
-          .filter((j) => j.estado !== "archivado" && j.visible_publico)
-          .map((j) => j.id);
-        if (ids.length > 0) {
-          await bulkUpdateJugadoresAdminControlsForOrganizer(
-            organizadorId,
-            ids,
-            { visible_publico: false }
-          );
-          setNotice(
-            `Configuración guardada. ${ids.length} jugador(es) quitados del sitio oficial.`
-          );
-          await loadAll();
-          return;
-        }
-      }
       setNotice(
         premiumBrandingEnabled
           ? "Configuración guardada. El upgrade visual aplica al volver a entrar en la cuenta."
@@ -234,7 +215,6 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         patch
       );
       if (patch.visible_publico === true) {
-        setVisibleRanking(true);
         setNotice(`«${jugador.nombre}» publicado en el sitio oficial.`);
       } else if (patch.visible_publico === false) {
         setNotice(`«${jugador.nombre}» quitado del sitio oficial.`);
@@ -263,9 +243,6 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         ids,
         patch
       );
-      if (patch.visible_publico === true) {
-        setVisibleRanking(true);
-      }
       const scope =
         playerSearch.trim() && jugadoresFiltrados.length < jugadores.length
           ? ` (${n} visibles)`
@@ -353,24 +330,6 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         </p>
       </div>
       <div className="account-controls__permiso-block">
-        <label className="account-controls__toggle account-controls__toggle--block">
-          <input
-            type="checkbox"
-            checked={visibleRanking}
-            onChange={() => setVisibleRanking((v) => !v)}
-          />
-          <span className="account-controls__toggle-label">
-            Club publicado en sitio oficial (atajo para quitar todos)
-          </span>
-        </label>
-        <p className="account-controls__hint account-controls__hint--tight">
-          Cada jugador se publica con «Sitio oficial» en su fila. Este interruptor
-          solo sirve para <strong>quitar a todos</strong> del sitio de una vez
-          (desactívalo y guarda). No hace falta activarlo para publicar jugadores
-          individuales.
-        </p>
-      </div>
-      <div className="account-controls__permiso-block">
         <h5 className="account-controls__subtitle">Experiencia visual premium</h5>
         <label className="account-controls__toggle account-controls__toggle--block">
           <input
@@ -421,8 +380,9 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
       </h4>
       <p className="account-controls__hint">
         El ranking interno del club incluye a todos los jugadores activos. En{" "}
-        <strong>{getOfficialRankingsPageUrl()}</strong> solo aparece quien tú
-        actives con «Sitio oficial» (por defecto nadie se publica).
+        <strong>{getOfficialRankingsPageUrl()}</strong> solo aparece quien marques
+        con «Sitio oficial» — funciona igual en todos los clubes, sin configuración
+        extra por cuenta.
       </p>
       <p className="account-controls__hint account-controls__hint--tight">
         Puedes otorgar acceso a jugadores de esta cuenta a otro organizador. Quitar

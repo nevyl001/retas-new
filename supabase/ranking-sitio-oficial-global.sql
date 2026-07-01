@@ -233,4 +233,89 @@ COMMENT ON FUNCTION public.riviera_organizadores_ranking_oficial() IS
 
 GRANT EXECUTE ON FUNCTION public.riviera_organizadores_ranking_oficial() TO anon, authenticated;
 
+-- ── is_organizador_ranking_publico: derivado de jugadores publicados (no manual por club) ──
+CREATE OR REPLACE FUNCTION public.is_organizador_ranking_publico(p_org_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.riviera_jugadores rj
+    WHERE rj.organizador_id = p_org_id
+      AND rj.estado = 'activo'
+      AND rj.visible_publico IS TRUE
+      AND COALESCE(rj.suma_ranking, true) = true
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_organizador_ranking_publico(uuid) TO anon, authenticated;
+
+-- ── Anon: solo filas con «Sitio oficial» explícito (sin gate extra por club) ──
+DROP POLICY IF EXISTS rj_select_anon ON public.riviera_jugadores;
+CREATE POLICY rj_select_anon ON public.riviera_jugadores
+  FOR SELECT TO anon
+  USING (
+    estado = 'activo'
+    AND visible_publico IS TRUE
+    AND COALESCE(suma_ranking, true) = true
+  );
+
+-- ── Trigger: visible_ranking_oficial del club sigue al admin (visible_publico por jugador) ──
+CREATE OR REPLACE FUNCTION public.sync_organizador_ranking_oficial_from_players()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_org_id uuid;
+  v_has_public boolean;
+BEGIN
+  v_org_id := COALESCE(NEW.organizador_id, OLD.organizador_id);
+  IF v_org_id IS NULL THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.riviera_jugadores rj
+    WHERE rj.organizador_id = v_org_id
+      AND rj.estado = 'activo'
+      AND rj.visible_publico IS TRUE
+      AND COALESCE(rj.suma_ranking, true) = true
+  ) INTO v_has_public;
+
+  INSERT INTO public.organizador_game_modes (organizador_id, visible_ranking_oficial, updated_at)
+  VALUES (v_org_id, v_has_public, now())
+  ON CONFLICT (organizador_id) DO UPDATE
+  SET visible_ranking_oficial = EXCLUDED.visible_ranking_oficial,
+      updated_at = EXCLUDED.updated_at;
+
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_sync_organizador_ranking_oficial ON public.riviera_jugadores;
+CREATE TRIGGER trg_sync_organizador_ranking_oficial
+  AFTER INSERT OR UPDATE OF visible_publico, estado, suma_ranking
+  OR DELETE
+  ON public.riviera_jugadores
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_organizador_ranking_oficial_from_players();
+
+-- Alinear clubs existentes con jugadores ya publicados en admin
+UPDATE public.organizador_game_modes ogm
+SET visible_ranking_oficial = EXISTS (
+  SELECT 1
+  FROM public.riviera_jugadores rj
+  WHERE rj.organizador_id = ogm.organizador_id
+    AND rj.estado = 'activo'
+    AND rj.visible_publico IS TRUE
+    AND COALESCE(rj.suma_ranking, true) = true
+),
+updated_at = now();
+
 NOTIFY pgrst, 'reload schema';

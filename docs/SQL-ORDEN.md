@@ -20,7 +20,7 @@ El esquema canónico vive en la base de datos de producción. En el repo solo qu
 | `tournament-public-config-championship.sql` | Config remontada final RR |
 | `rls-enable-public-schema.sql` | Habilitar RLS (Security Advisor) |
 | `fix-security-definer-views.sql` | Corregir vistas SECURITY DEFINER |
-| `ranking-sitio-oficial-global.sql` | Visibilidad sitio oficial solo por jugador (`visible_publico`) + RPC global |
+| `ranking-sitio-oficial-global.sql` | Sitio oficial solo por `visible_publico` + trigger auto-sync club + RPC global |
 
 ## Volver a empezar (borrar datos, no el esquema)
 

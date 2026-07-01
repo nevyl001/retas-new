@@ -46,7 +46,7 @@ COMMENT ON COLUMN public.organizador_game_modes.permite_ajuste_puntos_manuales I
   'Si false, el organizador no puede usar ajuste manual de puntos; solo cuenta el historial de partidos.';
 
 COMMENT ON COLUMN public.organizador_game_modes.visible_ranking_oficial IS
-  'Si true, los jugadores de esta cuenta pueden aparecer en www.rivieraopen.com (ranking y perfiles).';
+  'Auto-sincronizado: true si el club tiene al menos un jugador con visible_publico. No editar manualmente.';
 
 ALTER TABLE public.organizador_game_modes ENABLE ROW LEVEL SECURITY;
 
