@@ -370,6 +370,21 @@ BEGIN
             updated_at = now()
         WHERE grantee_organizer_id = p_grantee_organizer_id
           AND jugador_id = v_jugador_id;
+
+        UPDATE public.riviera_jugadores rj
+        SET estado = 'activo',
+            suma_ranking = true,
+            visible_publico = CASE
+              WHEN coalesce(p_is_public_ranking, opa.is_public_ranking) THEN true
+              ELSE rj.visible_publico
+            END,
+            updated_at = now()
+        FROM public.organizer_player_access opa
+        WHERE opa.grantee_organizer_id = p_grantee_organizer_id
+          AND opa.jugador_id = v_jugador_id
+          AND opa.local_jugador_id = rj.id
+          AND rj.organizador_id = p_grantee_organizer_id;
+
         v_reactivated := v_reactivated + 1;
       END IF;
     ELSE
@@ -405,13 +420,16 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_grant_organizer_player_access(uuid[], uuid, boolean) TO authenticated;
 
--- ── Admin: quitar acceso (soft) ──
+-- ── Admin: quitar acceso (soft) + ocultar clon local del club anfitrión ──
 CREATE OR REPLACE FUNCTION public.admin_revoke_organizer_player_access(p_access_id uuid)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+  v_local_id uuid;
+  v_grantee_id uuid;
 BEGIN
   IF NOT public.is_master_admin() THEN
     RAISE EXCEPTION 'Solo Admin Principal puede quitar acceso';
@@ -420,10 +438,22 @@ BEGIN
   UPDATE public.organizer_player_access
   SET is_active = false,
       updated_at = now()
-  WHERE id = p_access_id;
+  WHERE id = p_access_id
+  RETURNING local_jugador_id, grantee_organizer_id
+  INTO v_local_id, v_grantee_id;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Acceso no encontrado';
+  END IF;
+
+  IF v_local_id IS NOT NULL AND v_grantee_id IS NOT NULL THEN
+    UPDATE public.riviera_jugadores rj
+    SET estado = 'archivado',
+        suma_ranking = false,
+        visible_publico = false,
+        updated_at = now()
+    WHERE rj.id = v_local_id
+      AND rj.organizador_id = v_grantee_id;
   END IF;
 END;
 $$;
@@ -473,3 +503,16 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_list_organizer_player_access(uuid) TO authenticated;
+
+-- Clones locales huérfanos: acceso revocado pero perfil aún activo en el club anfitrión.
+UPDATE public.riviera_jugadores rj
+SET estado = 'archivado',
+    suma_ranking = false,
+    visible_publico = false,
+    updated_at = now()
+FROM public.organizer_player_access opa
+WHERE opa.local_jugador_id = rj.id
+  AND opa.is_active = false
+  AND rj.estado <> 'archivado';
+
+NOTIFY pgrst, 'reload schema';

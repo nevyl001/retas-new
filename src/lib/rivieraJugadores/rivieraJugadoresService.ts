@@ -21,8 +21,11 @@ import {
 import {
   applyGrantedSourceDisplayToJugador,
   enrichJugadorWithGlobalGrantedAccess,
+  excludeRevokedGrantLocalClones,
   findGrantedAccessMetaForJugador,
+  isRevokedGrantLocalJugador,
   listActiveGrantedAccessForOrganizer,
+  listRevokedGrantLocalJugadorIds,
   loadGrantedSourceDisplayData,
 } from "./organizerPlayerAccess";
 import {
@@ -243,9 +246,11 @@ async function mergeGrantedJugadoresIntoRanking(
   genero: RivieraJugadorGenero,
   ownRows: RivieraJugadorWithStats[]
 ): Promise<RivieraJugadorWithStats[]> {
+  const revokedLocalIds = await listRevokedGrantLocalJugadorIds(organizadorId);
+  const ownRowsFiltered = excludeRevokedGrantLocalClones(ownRows, revokedLocalIds);
   const grants = await listActiveGrantedAccessForOrganizer(organizadorId);
-  const ownById = new Map(ownRows.map((r) => [r.id, r]));
-  const merged = [...ownRows];
+  const ownById = new Map(ownRowsFiltered.map((r) => [r.id, r]));
+  const merged = [...ownRowsFiltered];
 
   for (const grant of grants) {
     if (grant.local_jugador_id) {
@@ -334,11 +339,14 @@ async function mergeGrantedJugadoresIntoList(
   ownRows: RivieraJugadorWithStats[],
   genero?: RivieraJugadorGenero
 ): Promise<RivieraJugadorWithStats[]> {
+  const revokedLocalIds = await listRevokedGrantLocalJugadorIds(organizadorId);
   const grants = await listActiveGrantedAccessForOrganizer(organizadorId);
-  if (grants.length === 0) return ownRows;
+  if (grants.length === 0) {
+    return excludeRevokedGrantLocalClones(ownRows, revokedLocalIds);
+  }
 
   const ownById = new Map(ownRows.map((r) => [r.id, r]));
-  const merged = [...ownRows];
+  const merged = excludeRevokedGrantLocalClones([...ownRows], revokedLocalIds);
 
   for (const grant of grants) {
     if (grant.local_jugador_id) {
@@ -449,6 +457,7 @@ async function fetchInternalClubJugadorRow(
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) return null;
     const mapped = mapInternalClubJugadorRow(row as Record<string, unknown>);
+    if (await isRevokedGrantLocalJugador(trimmedOrg, mapped.id)) return null;
     return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
   }
   if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
@@ -480,6 +489,7 @@ async function fetchInternalClubJugadorRow(
   const mapped = mapJugadorRowFromService(
     fallbackData as unknown as Record<string, unknown>
   );
+  if (await isRevokedGrantLocalJugador(trimmedOrg, mapped.id)) return null;
   return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
 }
 
@@ -699,6 +709,7 @@ export async function getRivieraJugadorBySlug(
 
   if (data) {
     const own = mapJugadorRowFromService(data as unknown as Record<string, unknown>);
+    if (await isRevokedGrantLocalJugador(organizadorId, own.id)) return null;
     return enrichInternalClubJugadorGrant(organizadorId, own);
   }
 
@@ -1895,6 +1906,22 @@ export async function deleteRivieraJugador(
   organizadorId: string,
   jugadorId: string
 ): Promise<void> {
+  if (await isRevokedGrantLocalJugador(organizadorId, jugadorId)) {
+    throw new Error(
+      "Este jugador ya no tiene acceso concedido en este club. No se puede eliminar desde aquí."
+    );
+  }
+
+  const grantMeta = await findGrantedAccessMetaForJugador(
+    organizadorId,
+    jugadorId
+  );
+  if (grantMeta) {
+    throw new Error(
+      "No puedes eliminar un jugador con acceso concedido. Quita el acceso desde Admin Principal."
+    );
+  }
+
   const { data, error: rpcErr } = await supabase.rpc("delete_riviera_jugador", {
     p_organizador_id: organizadorId,
     p_jugador_id: jugadorId,

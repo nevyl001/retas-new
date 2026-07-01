@@ -51,6 +51,49 @@ export interface AdminOrganizerOption {
   email: string;
 }
 
+export async function listRevokedGrantLocalJugadorIds(
+  granteeOrganizerId: string
+): Promise<Set<string>> {
+  const org = granteeOrganizerId.trim();
+  if (!org) return new Set();
+
+  const { data, error } = await supabase
+    .from("organizer_player_access")
+    .select("local_jugador_id")
+    .eq("grantee_organizer_id", org)
+    .eq("is_active", false)
+    .not("local_jugador_id", "is", null);
+
+  if (error) {
+    if (isMissingAccessFeatureError(error)) return new Set();
+    throw error;
+  }
+
+  return new Set(
+    (data ?? [])
+      .map((row) =>
+        row.local_jugador_id ? String(row.local_jugador_id).trim() : ""
+      )
+      .filter(Boolean)
+  );
+}
+
+export function excludeRevokedGrantLocalClones<T extends { id: string }>(
+  rows: T[],
+  revokedLocalIds: Set<string>
+): T[] {
+  if (revokedLocalIds.size === 0) return rows;
+  return rows.filter((row) => !revokedLocalIds.has(row.id));
+}
+
+export async function isRevokedGrantLocalJugador(
+  granteeOrganizerId: string,
+  jugadorId: string
+): Promise<boolean> {
+  const revoked = await listRevokedGrantLocalJugadorIds(granteeOrganizerId);
+  return revoked.has(jugadorId.trim());
+}
+
 export async function listActiveGrantedAccessForOrganizer(
   granteeOrganizerId: string
 ): Promise<OrganizerPlayerAccessRow[]> {
