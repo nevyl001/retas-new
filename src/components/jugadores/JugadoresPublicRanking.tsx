@@ -11,8 +11,7 @@ import {
   JUGADOR_CATEGORIAS_ORDER,
 } from "../../lib/rivieraJugadores/constants";
 import { RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS } from "../../lib/rivieraJugadores/publicPoll";
-import { listInternalClubJugadoresRanking, listOfficialSiteJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
-import { isOrganizadorRankingPublico } from "../../lib/admin/accountControls";
+import { listInternalClubJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { resolveOrganizerDisplayName } from "../../lib/organizer/organizerDisplayName";
 import { subscribeRivieraRanking } from "../../lib/rivieraJugadores/subscribeRivieraRanking";
 import { rankingPosicionesFromSortedForClub } from "../../lib/rivieraJugadores/rankingPosition";
@@ -161,10 +160,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     setError(null);
     try {
       void resolveOrganizerDisplayName(orgId);
-      const publicado = await isOrganizadorRankingPublico(orgId);
-      const rows = publicado
-        ? await listOfficialSiteJugadoresRanking(orgId, categoria, genero)
-        : await listInternalClubJugadoresRanking(orgId, categoria, genero);
+      const rows = await listInternalClubJugadoresRanking(orgId, categoria, genero);
       setJugadores(rows);
       void prefetchOrganizerDisplayNames([
         orgId,
