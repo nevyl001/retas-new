@@ -229,15 +229,15 @@ export async function removeJugadorForAdmin(
 export async function isOrganizadorRankingPublico(
   organizadorId: string
 ): Promise<boolean> {
-  const { data, error } = await supabase.rpc("is_organizador_ranking_publico", {
-    p_org_id: organizadorId,
-  });
+  const { count, error } = await supabase
+    .from("riviera_jugadores")
+    .select("id", { count: "exact", head: true })
+    .eq("organizador_id", organizadorId)
+    .eq("estado", "activo")
+    .eq("visible_publico", true);
 
   if (error) {
-    if (
-      isMissingTableError(error) ||
-      error.message?.includes("is_organizador_ranking_publico")
-    ) {
+    if (isMissingTableError(error)) {
       const settings = await fetchOrganizadorAccountSettings(organizadorId);
       return settings.visibleRankingOficial;
     }
@@ -245,7 +245,41 @@ export async function isOrganizadorRankingPublico(
     return false;
   }
 
-  return data === true;
+  return (count ?? 0) > 0;
+}
+
+/** Marca el club como publicado (compatibilidad con datos legacy). */
+export async function ensureOrganizadorRankingPublico(
+  organizadorId: string
+): Promise<void> {
+  const current = await fetchOrganizadorAccountSettings(organizadorId);
+  if (current.visibleRankingOficial) return;
+  await upsertOrganizadorAccountSettings(organizadorId, {
+    ...current,
+    visibleRankingOficial: true,
+  });
+}
+
+export async function updateJugadorAdminControlsForOrganizer(
+  organizadorId: string,
+  jugadorId: string,
+  patch: Parameters<typeof updateJugadorAdminControls>[1]
+): Promise<void> {
+  if (patch.visible_publico === true) {
+    await ensureOrganizadorRankingPublico(organizadorId);
+  }
+  await updateJugadorAdminControls(jugadorId, patch);
+}
+
+export async function bulkUpdateJugadoresAdminControlsForOrganizer(
+  organizadorId: string,
+  jugadorIds: string[],
+  patch: Parameters<typeof bulkUpdateJugadoresAdminControls>[2]
+): Promise<number> {
+  if (patch.visible_publico === true) {
+    await ensureOrganizadorRankingPublico(organizadorId);
+  }
+  return bulkUpdateJugadoresAdminControls(organizadorId, jugadorIds, patch);
 }
 
 export interface OrganizadorRankingOficial {

@@ -1,6 +1,26 @@
 # Scripts SQL (Supabase)
 
-Las migraciones del proyecto **ya están aplicadas** en el Supabase de producción. No hay archivos `.sql` de migración en el repositorio.
+El esquema canónico vive en la base de datos de producción. En el repo solo quedan scripts **operativos** (referenciados por la app o útiles para mantenimiento). Los parches incrementales ya aplicados se eliminaron del repositorio.
+
+## Scripts que permanecen en `supabase/`
+
+| Archivo | Uso |
+|---------|-----|
+| `reset-datos-operativos.sql` | Vaciar datos operativos (no borra cuentas) |
+| `admin-master-controls.sql` | Admin maestro (prerrequisito ROMC) |
+| `organizer-player-access.sql` | Grants entre clubes (Fase 1) |
+| `riviera-official-multi-club-romc1.sql` | ROMC-1 — identidad + ledger |
+| `riviera-official-multi-club-romc2.sql` | ROMC-2 — dual-write ledger |
+| `rating-sistema.sql` | RPC `aplicar_rating_partido` |
+| `duelos-2v2.sql` | Tabla y esquema duelo 2 vs 2 |
+| `delete-riviera-jugador.sql` | RPC eliminar jugador con limpieza |
+| `organizer-display-name.sql` | RPC nombre del club |
+| `liga-partidos-set-scores.sql` | Sets en partidos de liga |
+| `tournament-public-config-americano.sql` | Config pública americano |
+| `tournament-public-config-championship.sql` | Config remontada final RR |
+| `rls-enable-public-schema.sql` | Habilitar RLS (Security Advisor) |
+| `fix-security-definer-views.sql` | Corregir vistas SECURITY DEFINER |
+| `ranking-sitio-oficial-global.sql` | Visibilidad sitio oficial solo por jugador (`visible_publico`) + RPC global |
 
 ## Volver a empezar (borrar datos, no el esquema)
 

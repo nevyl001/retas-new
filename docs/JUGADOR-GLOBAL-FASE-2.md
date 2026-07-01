@@ -406,7 +406,6 @@ Fase 2 debe documentar la opción elegida; no mezclar rating Riviera con rating 
 | `src/lib/rivieraJugadores/organizerPlayerAccess.ts` | Cliente acceso y resolución de id |
 | `src/lib/rivieraJugadores/grantedRankingDisplay.ts` | UI dual ranking (solo visual, Fase 1) |
 | `src/lib/rivieraJugadores/syncParticipaciones.ts` | Punto de enganche dual-write |
-| `supabase/visible-publico-sitio-oficial-opt-in.sql` | Opt-in ranking oficial |
 | `docs/RANKING-OFICIAL-RIVIERAOPEN.md` | Reglas ranking público |
 
 ---

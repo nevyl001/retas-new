@@ -1500,16 +1500,64 @@ export async function getRivieraJugadorPublicById(
   return data ? mapJugadorRowFromService(data as unknown as Record<string, unknown>) : null;
 }
 
-/** Ranking oficial global (clubs publicados vía admin maestro). */
+/** Ranking oficial global (todos los clubs con jugadores publicados). */
+export async function listOfficialSiteJugadoresRankingGlobal(
+  categoria: string,
+  genero: RivieraJugadorGenero = "M"
+): Promise<RivieraJugadorWithStats[]> {
+  const generoParam = genero === "F" ? "F" : "M";
+  const { data, error } = await supabase.rpc("riviera_ranking_sitio_oficial_global", {
+    p_categoria: categoria,
+    p_genero: generoParam,
+  });
+
+  if (!error && data) {
+    const rows = (data as Record<string, unknown>[]).map(mapSitioOficialRow);
+    const filtered = rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
+    return enrichOfficialSiteRankingWithLocalPuntos(filtered);
+  }
+
+  if (
+    error &&
+    !isMissingTableError(error) &&
+    !error.message?.includes("riviera_ranking_sitio_oficial_global")
+  ) {
+    throw error;
+  }
+
+  let q = supabase.from("riviera_jugadores_sitio_oficial").select("*").eq("categoria", categoria);
+
+  if (genero === "F") {
+    q = q.eq("genero", "F");
+  } else {
+    q = q.or("genero.eq.M,genero.is.null");
+  }
+
+  const { data: viewData, error: viewError } = await q.order("nombre");
+
+  if (viewError) {
+    if (
+      isMissingTableError(viewError) ||
+      viewError.message?.includes("riviera_jugadores_sitio_oficial")
+    ) {
+      return [];
+    }
+    throw viewError;
+  }
+
+  const rows = ((viewData ?? []) as Record<string, unknown>[]).map(mapSitioOficialRow);
+  const filtered = rows.filter((row) =>
+    isJugadorInGeneroBracket(row.genero, genero)
+  );
+  return enrichOfficialSiteRankingWithLocalPuntos(filtered);
+}
+
+/** Ranking oficial por club (solo jugadores con «Sitio oficial» en admin). */
 export async function listOfficialSiteJugadoresRanking(
   organizadorId: string,
   categoria: string,
   genero: RivieraJugadorGenero = "M"
 ): Promise<RivieraJugadorWithStats[]> {
-  const { isOrganizadorRankingPublico } = await import("../admin/accountControls");
-  const publicado = await isOrganizadorRankingPublico(organizadorId);
-  if (!publicado) return [];
-
   const generoParam = genero === "F" ? "F" : "M";
   const { data, error } = await supabase.rpc(
     "riviera_ranking_sitio_oficial_por_organizador",

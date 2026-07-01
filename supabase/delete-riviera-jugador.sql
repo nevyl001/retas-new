@@ -1,6 +1,5 @@
 -- Elimina un jugador del registro del organizador con limpieza ROMC / rating / duelos.
--- Ejecutar en Supabase SQL Editor después de jugador-participacion-exclusiones.sql
--- y riviera-official-ledger-reversal-on-delete.sql
+-- Ejecutar en Supabase SQL Editor si falta el RPC delete_riviera_jugador.
 
 CREATE OR REPLACE FUNCTION public.delete_riviera_jugador(
   p_organizador_id uuid,
