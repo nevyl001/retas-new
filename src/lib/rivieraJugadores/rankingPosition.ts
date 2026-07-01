@@ -92,6 +92,35 @@ export function rankingPosicionEnLista(
   return idx >= 0 ? ranks[idx]! : null;
 }
 
+/** Busca posición probando varios ids (cedidos: clon local + origen). */
+export function rankingPosicionEnListaByIds(
+  jugadores: RivieraJugadorWithStats[],
+  jugadorIds: string[]
+): number | null {
+  const wanted = new Set(
+    jugadorIds.map((id) => id.trim()).filter((id) => id.length > 0)
+  );
+  if (wanted.size === 0) return null;
+
+  for (const id of Array.from(wanted)) {
+    const pos = rankingPosicionEnLista(jugadores, id);
+    if (pos != null) return pos;
+  }
+  return null;
+}
+
+/** Orden canónico del ranking sitio oficial (global o por club). */
+export function sortJugadoresForOfficialSiteRanking(
+  jugadores: RivieraJugadorWithStats[]
+): RivieraJugadorWithStats[] {
+  return [...jugadores].sort((a, b) => {
+    const pa = rankingPuntosJugador(a);
+    const pb = rankingPuntosJugador(b);
+    if (pb !== pa) return pb - pa;
+    return a.nombre.localeCompare(b.nombre, "es");
+  });
+}
+
 /** Posiciones para ranking interno del club (cedidos = solo puntos locales). */
 export function rankingPosicionesFromSortedForClub(
   jugadores: RivieraJugadorWithStats[]

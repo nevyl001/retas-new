@@ -203,6 +203,49 @@ COMMENT ON FUNCTION public.riviera_ranking_sitio_oficial_global(text, text) IS
 
 GRANT EXECUTE ON FUNCTION public.riviera_ranking_sitio_oficial_global(text, text) TO anon, authenticated;
 
+-- ── Posición # en ranking global (ficha rivieraopen.com /players/{id}) ──
+DROP FUNCTION IF EXISTS public.riviera_ranking_posicion_sitio_oficial_global(uuid, text, text);
+
+CREATE OR REPLACE FUNCTION public.riviera_ranking_posicion_sitio_oficial_global(
+  p_jugador_id uuid,
+  p_categoria text,
+  p_genero text DEFAULT 'M'
+)
+RETURNS integer
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_pos integer := 0;
+  v_prev_pts integer := NULL;
+  v_row record;
+  v_idx integer := 0;
+BEGIN
+  FOR v_row IN
+    SELECT v.id, v.puntos_totales
+    FROM public.riviera_ranking_sitio_oficial_global(p_categoria, p_genero) v
+    ORDER BY v.puntos_totales DESC, v.nombre ASC
+  LOOP
+    v_idx := v_idx + 1;
+    IF v_prev_pts IS NULL OR v_row.puntos_totales <> v_prev_pts THEN
+      v_pos := v_idx;
+      v_prev_pts := v_row.puntos_totales;
+    END IF;
+    IF v_row.id = p_jugador_id THEN
+      RETURN v_pos;
+    END IF;
+  END LOOP;
+  RETURN 0;
+END;
+$$;
+
+COMMENT ON FUNCTION public.riviera_ranking_posicion_sitio_oficial_global(uuid, text, text) IS
+  'Posición en ranking global sitio oficial (todos los clubes). Usar en ficha pública, no por-organizador.';
+
+GRANT EXECUTE ON FUNCTION public.riviera_ranking_posicion_sitio_oficial_global(uuid, text, text) TO anon, authenticated;
+
 -- ── Clubs con al menos un jugador publicado en sitio oficial ──
 CREATE OR REPLACE FUNCTION public.riviera_organizadores_ranking_oficial()
 RETURNS TABLE (

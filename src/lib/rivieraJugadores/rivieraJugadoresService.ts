@@ -1631,13 +1631,71 @@ export async function getRankingPosicionOficialEnCategoria(
   categoria: string,
   genero: RivieraJugadorGenero = "M"
 ): Promise<number | null> {
-  const { rankingPosicionEnLista } = await import("./rankingPosition");
+  const {
+    rankingPosicionEnListaByIds,
+    sortJugadoresForOfficialSiteRanking,
+  } = await import("./rankingPosition");
   const list = await listOfficialSiteJugadoresRanking(
     organizadorId,
     categoria,
     genero
   );
-  return rankingPosicionEnLista(list, jugadorId);
+  const sorted = sortJugadoresForOfficialSiteRanking(list);
+  return rankingPosicionEnListaByIds(sorted, [jugadorId]);
+}
+
+/**
+ * Posición en el ranking global de rivieraopen.com (todos los clubes publicados).
+ * Nunca usar el ranking por-organizador para la ficha de jugadores en sitio oficial.
+ */
+export async function getRankingPosicionOficialGlobalEnCategoria(
+  jugadorId: string,
+  categoria: string,
+  genero: RivieraJugadorGenero = "M",
+  altJugadorId?: string | null
+): Promise<number | null> {
+  const {
+    rankingPosicionEnListaByIds,
+    sortJugadoresForOfficialSiteRanking,
+  } = await import("./rankingPosition");
+  const list = await listOfficialSiteJugadoresRankingGlobal(categoria, genero);
+  const sorted = sortJugadoresForOfficialSiteRanking(list);
+  const ids = [jugadorId, altJugadorId?.trim()].filter(
+    (id): id is string => Boolean(id)
+  );
+  return rankingPosicionEnListaByIds(sorted, ids);
+}
+
+/** Única entrada para la ficha pública: evita mezclar ranking club vs global. */
+export async function resolveRankingPosicionForPublicFicha(
+  jugador: RivieraJugadorWithStats,
+  options: { orgId?: string | null }
+): Promise<number | null> {
+  const { resolvePublicFichaRankingTarget } = await import("./publicFichaRanking");
+  const { normalizeRivieraGenero } = await import("./genero");
+  const genero = normalizeRivieraGenero(jugador.genero) ?? "M";
+  const target = resolvePublicFichaRankingTarget(jugador, options);
+
+  if (target === "global") {
+    return getRankingPosicionOficialGlobalEnCategoria(
+      jugador.id,
+      jugador.categoria,
+      genero,
+      jugador.grantedAccess?.sourceJugadorId
+    );
+  }
+
+  const org = options.orgId?.trim();
+  if (target === "club" && org) {
+    return getRankingPosicionEnCategoria(
+      org,
+      jugador.id,
+      jugador.categoria,
+      genero
+    );
+  }
+
+  return null;
 }
 
 /**

@@ -17,29 +17,33 @@ import {
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
 import {
-  fetchOfficialRankingPosicionForJugador,
-} from "../../lib/rivieraJugadores/rivieraOfficialActivity";
-import {
   enrichJugadorConcedidoClubView,
 } from "../../lib/rivieraJugadores/concedidoClubView";
 import {
   loadUnifiedParticipacionesForJugador,
   loadUnifiedRatingViewForJugador,
 } from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
-import { mergeJugadorStatsPuntosTotales, resolveJugadorPuntosRanking, isJugadorConcedidoEnClub, jugadorPuntosOrigenConcedido, rankingPuntosClubLocal } from "../../lib/rivieraJugadores/rankingPosition";
 import {
-  prefetchOrganizerDisplayNames,
-} from "../../lib/rivieraJugadores/grantedRankingDisplay";
+  isJugadorConcedidoEnClub,
+  jugadorPuntosOrigenConcedido,
+  mergeJugadorStatsPuntosTotales,
+  rankingPuntosClubLocal,
+  resolveJugadorPuntosRanking,
+} from "../../lib/rivieraJugadores/rankingPosition";
+import { prefetchOrganizerDisplayNames } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import {
-  getRankingPosicionEnCategoria,
-  getRankingPosicionOficialEnCategoria,
   getRivieraJugadorInternalClubById,
   getRivieraJugadorPublicById,
   getRivieraJugadorPublicBySlug,
   listParticipacionesPublic,
   obtenerHistorialRating,
   obtenerHistorialRatingPublic,
+  resolveRankingPosicionForPublicFicha,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import {
+  rankingLabelForPublicFicha,
+  shouldUseClubLocalPuntosOnPublicFicha,
+} from "../../lib/rivieraJugadores/publicFichaRanking";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
 import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
@@ -152,40 +156,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         setHistorial(unified.historial);
         setHistorialRating(ratingView.historial);
 
-        const [posRpc, posList] = await Promise.all([
-          playerId && !internalClub
-            ? fetchOfficialRankingPosicionForJugador(
-                jugadorBase.id,
-                jugadorBase.organizador_id,
-                jugadorBase.categoria,
-                normalizeRivieraGenero(jugadorBase.genero) ?? "M"
-              )
-            : Promise.resolve(null),
-          internalClub && orgId
-            ? getRankingPosicionEnCategoria(
-                orgId,
-                jugadorBase.id,
-                jugadorBase.categoria,
-                normalizeRivieraGenero(jugadorBase.genero) ?? "M"
-              )
-            : playerId
-            ? getRankingPosicionOficialEnCategoria(
-                jugadorBase.id,
-                jugadorBase.organizador_id,
-                jugadorBase.categoria,
-                normalizeRivieraGenero(jugadorBase.genero) ?? "M"
-              )
-            : orgId
-            ? getRankingPosicionEnCategoria(
-                orgId,
-                jugadorBase.id,
-                jugadorBase.categoria,
-                normalizeRivieraGenero(jugadorBase.genero) ?? "M"
-              )
-            : Promise.resolve(null),
-        ]);
+        const pos = await resolveRankingPosicionForPublicFicha(jugadorBase, {
+          orgId: internalClub || orgId ? orgId : null,
+        });
 
-        const pos = posRpc ?? posList;
         const puntosOficialEfectivos = unified.romcView.hasRomcData
           ? unified.romcView.puntosOficiales
           : null;
@@ -329,7 +303,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     );
   }
 
-  const puntos = internalClub
+  const puntos = shouldUseClubLocalPuntosOnPublicFicha(jugador, internalClub)
     ? rankingPuntosClubLocal(jugador)
     : resolveJugadorPuntosRanking({
         ...jugador,
@@ -444,7 +418,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                           size={14}
                           className="rjp-ficha-stat__icon"
                         />
-                        <span className="rjp-ficha-stat__lbl">Ranking</span>
+                        <span className="rjp-ficha-stat__lbl">
+                          {rankingLabelForPublicFicha(jugador)}
+                        </span>
                         <span
                           className={`rjp-ficha-stat__val${
                             rankingPos == null ? " rjp-ficha-stat__val--empty" : ""
