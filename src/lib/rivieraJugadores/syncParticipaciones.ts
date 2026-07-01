@@ -349,6 +349,13 @@ async function safeRegistrar(params: {
       await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
     }
   } catch (e) {
+    const msg =
+      e && typeof e === "object" && "message" in e
+        ? String((e as { message?: string }).message ?? "")
+        : "";
+    if (msg.includes("No autorizado para registrar participación")) {
+      return;
+    }
     console.error("[riviera-jugadores] safeRegistrar:", e);
   }
 }

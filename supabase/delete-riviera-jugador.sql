@@ -26,7 +26,7 @@ BEGIN
     RAISE EXCEPTION 'Sin permiso para eliminar este jugador';
   END IF;
 
-  SELECT rj.id, rj.legacy_liga_jugador_id
+  SELECT rj.id, rj.nombre, rj.legacy_player_id, rj.legacy_liga_jugador_id
   INTO v_row
   FROM public.riviera_jugadores rj
   WHERE rj.id = p_jugador_id
@@ -170,6 +170,16 @@ BEGIN
       WHERE id = v_liga_jugador_id
         AND organizador_id = p_organizador_id;
     END IF;
+  END IF;
+
+  -- No recrear en import/backfill tras borrado definitivo.
+  IF to_regclass('public.riviera_jugador_import_blocklist') IS NOT NULL THEN
+    PERFORM public.register_riviera_jugador_import_blocklist(
+      p_organizador_id,
+      v_row.nombre,
+      v_row.legacy_player_id,
+      v_liga_jugador_id
+    );
   END IF;
 
   IF to_regclass('public.organizer_player_access') IS NOT NULL THEN

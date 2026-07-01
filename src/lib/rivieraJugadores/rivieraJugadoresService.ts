@@ -37,6 +37,10 @@ import {
   rankingPuntosJugador,
   sortJugadoresByClubLocalPuntos,
 } from "./rankingPosition";
+import {
+  registerJugadorImportBlocklist,
+  isJugadorImportBlocked,
+} from "./jugadorImportBlocklist";
 import { computeJugadorStatsFromParticipaciones } from "./rebuildJugadorStats";
 
 const JUGADOR_SELECT_BASE =
@@ -1053,6 +1057,15 @@ export async function ensureRivieraJugadorForLegacyPlayer(
   legacyPlayer: { id: string; name: string; email?: string | null }
 ): Promise<RivieraJugador | null> {
   try {
+    if (
+      await isJugadorImportBlocked(organizadorId, {
+        nombre: legacyPlayer.name,
+        legacyPlayerId: legacyPlayer.id,
+      })
+    ) {
+      return null;
+    }
+
     const existing = await getRivieraJugadorByLegacyPlayerId(legacyPlayer.id);
     if (existing) return existing;
 
@@ -1950,7 +1963,7 @@ export async function deleteRivieraJugador(
 
   const { data: row, error: fetchErr } = await supabase
     .from("riviera_jugadores")
-    .select("id, legacy_liga_jugador_id")
+    .select("id, nombre, legacy_player_id, legacy_liga_jugador_id")
     .eq("id", jugadorId)
     .eq("organizador_id", organizadorId)
     .maybeSingle();
@@ -2016,6 +2029,12 @@ export async function deleteRivieraJugador(
       .eq("organizador_id", organizadorId);
     if (inactivoErr && !isMissingTableError(inactivoErr)) throw inactivoErr;
   }
+
+  await registerJugadorImportBlocklist(organizadorId, {
+    nombre: String(row.nombre ?? ""),
+    legacyPlayerId: (row.legacy_player_id as string | null) ?? null,
+    legacyLigaJugadorId: ligaJugadorId ?? null,
+  });
 
   const { error: delErr } = await supabase
     .from("riviera_jugadores")
