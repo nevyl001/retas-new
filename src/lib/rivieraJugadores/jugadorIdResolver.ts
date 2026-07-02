@@ -2,7 +2,10 @@ import { supabase } from "../supabaseClient";
 import { isJugadorImportBlocked } from "./jugadorImportBlocklist";
 import {
   isRevokedGrantLocalJugador,
+  listActiveGrantedAccessForOrganizer,
+  prepareGrantedPlayersForParticipacionSync,
   resolveJugadorIdForOrganizer,
+  ensureGrantedPlayerLocal,
 } from "./organizerPlayerAccess";
 import {
   createRivieraJugador,
@@ -10,7 +13,9 @@ import {
   getRivieraJugadorByLegacyLigaId,
   getRivieraJugadorByLegacyPlayerId,
   linkLegacyPlayerId,
+  listRivieraJugadoresByLegacyPlayerId,
 } from "./rivieraJugadoresService";
+import { normalizePlayerNameKey } from "./playerNameKey";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 
 const TEMP_LOG_PREFIX = "TEMP_MULTICLUB_PHASE_2_1";
@@ -81,6 +86,115 @@ async function resolveLocalJugadorIdForOrganizer(
   return finalizeJugadorIdForRanking(localId);
 }
 
+/** players.id de la reta → clon local del club anfitrión (cedidos incluidos). */
+export async function resolveLocalJugadorIdByLegacyPlayerId(
+  organizadorId: string,
+  legacyPlayerId: string
+): Promise<string | null> {
+  const org = organizadorId.trim();
+  const legacy = legacyPlayerId.trim();
+  if (!org || !legacy) return null;
+
+  const finalizeLocal = async (rivieraRowId: string): Promise<string | null> => {
+    const resolved = await resolveJugadorIdForOrganizer(org, rivieraRowId);
+    const localId = await findWritableLocalJugadorId(org, resolved);
+    if (!localId) return null;
+    await linkLegacyPlayerId(localId, legacy);
+    return finalizeJugadorIdForRanking(localId);
+  };
+
+  const localRows = await listRivieraJugadoresByLegacyPlayerId(legacy, org);
+  for (const row of localRows) {
+    const id = await finalizeLocal(row.id);
+    if (id) return id;
+  }
+
+  const grants = await listActiveGrantedAccessForOrganizer(org);
+  for (const grant of grants) {
+    const sourceId = grant.jugador_id.trim();
+    if (!sourceId) continue;
+
+    const [{ data: source }, localProfile] = await Promise.all([
+      supabase
+        .from("riviera_jugadores")
+        .select("legacy_player_id")
+        .eq("id", sourceId)
+        .maybeSingle(),
+      grant.local_jugador_id
+        ? supabase
+            .from("riviera_jugadores")
+            .select("legacy_player_id")
+            .eq("id", grant.local_jugador_id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+
+    const sourceLegacy = source?.legacy_player_id?.trim() ?? "";
+    const localLegacy = localProfile.data?.legacy_player_id?.trim() ?? "";
+    if (sourceLegacy !== legacy && localLegacy !== legacy) continue;
+
+    let localId = grant.local_jugador_id?.trim() || null;
+    if (!localId) {
+      localId = await ensureGrantedPlayerLocal(sourceId);
+    }
+    const writable = await findWritableLocalJugadorId(org, localId);
+    if (!writable) continue;
+    await linkLegacyPlayerId(writable, legacy);
+    return finalizeJugadorIdForRanking(writable);
+  }
+
+  const globalRows = await listRivieraJugadoresByLegacyPlayerId(legacy);
+  const preferred =
+    globalRows.find((row) => row.organizador_id !== org) ?? globalRows[0];
+  if (preferred) {
+    return finalizeLocal(preferred.id);
+  }
+
+  return null;
+}
+
+async function resolveLocalJugadorIdByGrantedName(
+  organizadorId: string,
+  nombre: string
+): Promise<string | null> {
+  const org = organizadorId.trim();
+  const nameKey = normalizePlayerNameKey(nombre);
+  if (!org || !nameKey) return null;
+
+  const grants = await listActiveGrantedAccessForOrganizer(org);
+  for (const grant of grants) {
+    const displayKey = normalizePlayerNameKey(grant.local_display_name ?? "");
+    let matches = displayKey === nameKey;
+
+    if (!matches) {
+      const { data: source } = await supabase
+        .from("riviera_jugadores")
+        .select("nombre")
+        .eq("id", grant.jugador_id)
+        .maybeSingle();
+      matches = normalizePlayerNameKey(String(source?.nombre ?? "")) === nameKey;
+    }
+    if (!matches) continue;
+
+    const sourceId = grant.jugador_id.trim();
+    let localId = grant.local_jugador_id?.trim() || null;
+    if (!localId) {
+      localId = await ensureGrantedPlayerLocal(sourceId);
+    }
+    const writable = await findWritableLocalJugadorId(org, localId);
+    if (!writable) continue;
+    return finalizeJugadorIdForRanking(writable);
+  }
+
+  return null;
+}
+
+export async function prepareParticipacionIdentityForOrganizer(
+  organizadorId: string
+): Promise<void> {
+  await prepareGrantedPlayersForParticipacionSync(organizadorId);
+}
+
 export async function getOrCreateJugadorId(params: {
   nombre: string;
   organizadorId: string;
@@ -118,7 +232,9 @@ export async function getOrCreateJugadorId(params: {
 
       // Cedido: legacy_player_id puede estar solo en el perfil origen (otro club).
       const byLegacyGlobal = await getRivieraJugadorByLegacyPlayerId(
-        params.legacyPlayerId
+        params.legacyPlayerId,
+        undefined,
+        { preferExcludingOrganizadorId: params.organizadorId }
       );
       if (byLegacyGlobal) {
         const local = await resolveLocalJugadorIdForOrganizer(
@@ -233,6 +349,46 @@ export async function resolveJugadorIdForParticipacion(params: {
   const legacyPlayerId = params.legacyPlayerId?.trim();
   const legacyLigaJugadorId = params.legacyLigaJugadorId?.trim();
   const originalJugadorId = params.jugadorId?.trim() || null;
+
+  if (legacyPlayerId) {
+    const byLegacy = await resolveLocalJugadorIdByLegacyPlayerId(
+      organizadorId,
+      legacyPlayerId
+    );
+    if (byLegacy) {
+      if (originalJugadorId && byLegacy !== originalJugadorId) {
+        logMulticlubPhase21({
+          action: "identity_resolved",
+          organizadorId,
+          tipoEvento: params.tipoEvento ?? null,
+          eventoId: params.eventoId ?? null,
+          jugadorOriginal: originalJugadorId,
+          jugadorResuelto: byLegacy,
+          via: "legacy_player_id",
+        });
+      }
+      return byLegacy;
+    }
+  }
+
+  if (nombre) {
+    const byGrantName = await resolveLocalJugadorIdByGrantedName(
+      organizadorId,
+      nombre
+    );
+    if (byGrantName) {
+      logMulticlubPhase21({
+        action: "identity_resolved",
+        organizadorId,
+        tipoEvento: params.tipoEvento ?? null,
+        eventoId: params.eventoId ?? null,
+        jugadorOriginal: originalJugadorId,
+        jugadorResuelto: byGrantName,
+        via: "granted_name",
+      });
+      return byGrantName;
+    }
+  }
 
   if (
     nombre &&

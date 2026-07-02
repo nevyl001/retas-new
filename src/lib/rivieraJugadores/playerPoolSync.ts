@@ -99,7 +99,7 @@ function pickBestLegacyMatch(
     const row = p as Player & { user_id?: string | null };
     let score = 0;
     if (rj.legacy_player_id && p.id === rj.legacy_player_id) score += 100;
-    if (row.user_id === organizadorId) score += 10;
+    if (row.user_id === organizadorId) score += 50;
     return { p, score };
   });
   scored.sort((a, b) => b.score - a.score);
@@ -110,19 +110,60 @@ function legacyMatchesRivieraName(legacy: Player, rj: RivieraJugador): boolean {
   return normalizeName(legacy.name) === normalizeName(rj.nombre);
 }
 
+async function searchLegacyPlayersForOrganizer(
+  nombre: string,
+  organizadorId: string
+): Promise<Player[]> {
+  const trimmed = nombre.trim();
+  if (!trimmed) return [];
+
+  const { data, error } = await supabase
+    .from("players")
+    .select("*")
+    .eq("user_id", organizadorId)
+    .ilike("name", trimmed);
+
+  if (error) {
+    console.warn("searchLegacyPlayersForOrganizer:", error);
+    return [];
+  }
+
+  const key = normalizeName(trimmed);
+  return ((data ?? []) as Player[]).filter(
+    (p) => normalizeName(p.name) === key
+  );
+}
+
 async function findLegacyPlayerForRiviera(
   organizadorId: string,
   rj: RivieraJugador
 ): Promise<Player | null> {
   if (rj.legacy_player_id) {
     const linked = await fetchPlayerById(rj.legacy_player_id);
-    if (linked) return linked;
+    if (linked) {
+      const row = linked as Player & { user_id?: string | null };
+      if (!row.user_id || row.user_id === organizadorId) {
+        return linked;
+      }
+    }
+  }
+
+  const orgScoped = await searchLegacyPlayersForOrganizer(
+    rj.nombre,
+    organizadorId
+  );
+  const orgMatch = pickBestLegacyMatch(orgScoped, organizadorId, rj);
+  if (orgMatch && legacyMatchesRivieraName(orgMatch, rj)) {
+    return orgMatch;
   }
 
   const globalByName = await searchLegacyPlayersByName(rj.nombre);
   const globalMatch = pickBestLegacyMatch(globalByName, organizadorId, rj);
   if (globalMatch && legacyMatchesRivieraName(globalMatch, rj)) {
-    return globalMatch;
+    const row = globalMatch as Player & { user_id?: string | null };
+    if (!row.user_id || row.user_id === organizadorId) {
+      return globalMatch;
+    }
   }
 
   return null;

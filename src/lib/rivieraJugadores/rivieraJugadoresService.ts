@@ -780,10 +780,16 @@ export async function getRivieraJugadorByLegacyLigaId(
   return (data as unknown as RivieraJugador | null) ?? null;
 }
 
-export async function getRivieraJugadorByLegacyPlayerId(
+export interface GetRivieraJugadorByLegacyOptions {
+  /** Si hay varios perfiles con el mismo legacy (origen + clon cedido), prioriza el de otro club. */
+  preferExcludingOrganizadorId?: string;
+}
+
+export async function listRivieraJugadoresByLegacyPlayerId(
   legacyPlayerId: string,
-  organizadorId?: string
-): Promise<RivieraJugador | null> {
+  organizadorId?: string,
+  limit = 20
+): Promise<RivieraJugador[]> {
   const { data, error } = await withJugadorSelectFallback((cols) => {
     let q = supabase
       .from("riviera_jugadores")
@@ -792,14 +798,42 @@ export async function getRivieraJugadorByLegacyPlayerId(
     if (organizadorId?.trim()) {
       q = q.eq("organizador_id", organizadorId.trim());
     }
-    return q.maybeSingle();
+    return q.limit(limit);
   });
 
   if (error) {
-    if (isMissingTableError(error)) return null;
+    if (isMissingTableError(error)) return [];
     throw error;
   }
-  return (data as unknown as RivieraJugador | null) ?? null;
+  return (data ?? []) as unknown as RivieraJugador[];
+}
+
+function pickRivieraJugadorByLegacy(
+  rows: RivieraJugador[],
+  options?: GetRivieraJugadorByLegacyOptions
+): RivieraJugador | null {
+  if (!rows.length) return null;
+  if (rows.length === 1) return rows[0];
+
+  const exclude = options?.preferExcludingOrganizadorId?.trim();
+  if (exclude) {
+    const source = rows.find((r) => r.organizador_id !== exclude);
+    if (source) return source;
+  }
+  return rows[0];
+}
+
+export async function getRivieraJugadorByLegacyPlayerId(
+  legacyPlayerId: string,
+  organizadorId?: string,
+  options?: GetRivieraJugadorByLegacyOptions
+): Promise<RivieraJugador | null> {
+  const rows = await listRivieraJugadoresByLegacyPlayerId(
+    legacyPlayerId,
+    organizadorId,
+    organizadorId?.trim() ? 5 : 20
+  );
+  return pickRivieraJugadorByLegacy(rows, options);
 }
 
 export async function slugExistsForOrg(
@@ -1696,11 +1730,24 @@ export async function getRankingPosicionOficialGlobalEnCategoria(
 /** Única entrada para la ficha pública: evita mezclar ranking club vs global. */
 export async function resolveRankingPosicionForPublicFicha(
   jugador: RivieraJugadorWithStats,
-  options: { orgId?: string | null }
+  options: { orgId?: string | null; internalClub?: boolean }
 ): Promise<number | null> {
   const { resolvePublicFichaRankingTarget } = await import("./publicFichaRanking");
   const { normalizeRivieraGenero } = await import("./genero");
   const genero = normalizeRivieraGenero(jugador.genero) ?? "M";
+  const org = options.orgId?.trim();
+
+  if (options.internalClub && org) {
+    const { PUBLIC_ORGANIZER_RPC_FALLBACK } = await import("./publicOrganizador");
+    return getRankingPosicionEnCategoria(
+      org,
+      jugador.id,
+      jugador.categoria,
+      genero,
+      PUBLIC_ORGANIZER_RPC_FALLBACK
+    );
+  }
+
   const target = resolvePublicFichaRankingTarget(jugador, options);
 
   if (target === "global") {
@@ -1712,7 +1759,6 @@ export async function resolveRankingPosicionForPublicFicha(
     );
   }
 
-  const org = options.orgId?.trim();
   if (target === "club" && org) {
     const { PUBLIC_ORGANIZER_RPC_FALLBACK } = await import("./publicOrganizador");
     return getRankingPosicionEnCategoria(

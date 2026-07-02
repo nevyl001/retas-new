@@ -34,14 +34,10 @@ export function isJugadorConcedidoEnClub(j: RivieraJugadorWithStats): boolean {
 
 /**
  * Puntos para ranking interno del club anfitrión.
- * Cedidos: solo partidos y puntos ganados EN ESTE club (perfil local).
- * Propios: local + ROMC/ajustes vía resolveJugadorPuntosRanking.
+ * Solo stats del perfil en ese club (cedidos: clon local; propios: registro del club).
  */
 export function rankingPuntosClubLocal(j: RivieraJugadorWithStats): number {
-  if (isJugadorConcedidoEnClub(j)) {
-    return jugadorPuntosLocales(j);
-  }
-  return resolveJugadorPuntosRanking(j);
+  return jugadorPuntosLocales(j);
 }
 
 export function mergeJugadorStatsPuntosTotales(

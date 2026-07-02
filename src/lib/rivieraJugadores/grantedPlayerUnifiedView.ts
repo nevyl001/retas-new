@@ -93,6 +93,10 @@ export async function discoverLinkedJugadorIds(
     if (id) ids.add(id);
   }
 
+  for (const localId of await listGrantedLocalJugadorIdsForSource(jugadorId)) {
+    ids.add(localId);
+  }
+
   if (!options?.skipRomcLegacy && !romcRpcSuiteUnavailable()) {
     const legacy = await listOfficialLegacyParticipaciones(jugadorId, 50);
     for (const row of legacy) {

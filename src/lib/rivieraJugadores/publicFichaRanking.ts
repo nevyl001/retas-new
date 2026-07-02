@@ -41,7 +41,7 @@ export function rankingLabelForPublicFicha(
     : "Ranking";
 }
 
-/** Puntos mostrados en hero de ficha: global si sitio oficial, locales si solo club interno. */
+/** Puntos mostrados en hero de ficha interna del club: solo lo ganado en ese organizador. */
 export function shouldUseClubLocalPuntosOnPublicFicha(
   jugador: Pick<
     RivieraJugadorWithStats,
@@ -49,5 +49,6 @@ export function shouldUseClubLocalPuntosOnPublicFicha(
   >,
   internalClub: boolean
 ): boolean {
-  return internalClub && !isJugadorPublicadoSitioOficial(jugador);
+  void jugador;
+  return internalClub;
 }

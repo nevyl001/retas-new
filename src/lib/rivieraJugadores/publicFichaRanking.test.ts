@@ -70,13 +70,13 @@ function j(
 }
 
 describe("publicFichaRanking", () => {
-  it("jugador con sitio oficial usa ranking global aunque venga del club Hack", () => {
+  it("jugador con sitio oficial en ficha interna del club usa puntos locales", () => {
     const aime = j(25, "aime", { visible_publico: true });
     expect(resolvePublicFichaRankingTarget(aime, { orgId: "hack" })).toBe(
       "global"
     );
     expect(rankingLabelForPublicFicha(aime)).toBe("Ranking Riviera Open");
-    expect(shouldUseClubLocalPuntosOnPublicFicha(aime, true)).toBe(false);
+    expect(shouldUseClubLocalPuntosOnPublicFicha(aime, true)).toBe(true);
   });
 
   it("jugador solo interno del club usa ranking del club", () => {

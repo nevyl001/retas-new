@@ -134,9 +134,9 @@ describe("rankingPuntosClubLocal", () => {
     expect(rankingPuntosClubLocal(jugador)).toBe(120);
   });
 
-  it("jugador propio del club: incluye ROMC y ajustes manuales", () => {
-    const jugador = { ...j(150, "nevyl"), officialPuntosGlobal: 120 };
-    expect(rankingPuntosClubLocal(jugador)).toBe(150);
+  it("jugador propio del club: solo puntos del registro local", () => {
+    const jugador = { ...j(120, "nevyl"), officialPuntosGlobal: 200 };
+    expect(rankingPuntosClubLocal(jugador)).toBe(120);
   });
 });
 

@@ -165,6 +165,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
         const pos = await resolveRankingPosicionForPublicFicha(jugadorBase, {
           orgId: internalClub || orgId ? orgId : null,
+          internalClub,
         });
 
         const puntosOficialEfectivos = unified.romcView.hasRomcData
@@ -199,6 +200,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 statsOrigenConcedido: jugadorBase.statsOrigenConcedido,
                 grantedAccess: jugadorBase.grantedAccess,
                 concedidoPorAdmin: true,
+              }
+            : internalClub
+            ? {
+                ...jugadorBase,
+                stats: statsBase,
               }
             : {
                 ...jugadorBase,

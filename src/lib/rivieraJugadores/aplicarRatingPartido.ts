@@ -2,8 +2,8 @@ import type { Match, Pair } from "../database";
 import type { Game } from "../database";
 import { supabase } from "../supabaseClient";
 import { getMatchScoresForStandings } from "../standingsUtils";
-import { getOrCreateJugadorId } from "./jugadorIdResolver";
-import { resolveJugadorIdForOrganizer } from "./organizerPlayerAccess";
+import { resolveJugadorIdForParticipacion } from "./jugadorIdResolver";
+import { resolveJugadorIdForRating } from "./organizerPlayerAccess";
 import {
   parseSetScoresJson,
   resolveParejasFijasPartidoTotals,
@@ -119,31 +119,98 @@ export function aplicarRatingPartidoSafe(
   });
 }
 
-async function resolveJugadorIdForRating(
-  organizadorId: string,
-  jugadorId: string
-): Promise<string> {
-  return resolveJugadorIdForOrganizer(organizadorId, jugadorId);
+async function rebuildRatingFieldsFromHistorial(jugadorId: string): Promise<void> {
+  const id = jugadorId.trim();
+  if (!id) return;
+
+  const { data, error } = await supabase
+    .from("rating_historial")
+    .select("rating_despues")
+    .eq("jugador_id", id)
+    .order("fecha", { ascending: true });
+
+  if (error) {
+    console.warn("[rating] rebuildRatingFieldsFromHistorial:", error);
+    return;
+  }
+
+  const rows = data ?? [];
+  const partidos = rows.length;
+  const rating =
+    partidos > 0 ? Number(rows[partidos - 1]?.rating_despues ?? 3) : 3;
+  const fiab = Math.min(0.2 + partidos * 0.04, 0.95);
+
+  const { error: updateErr } = await supabase
+    .from("riviera_jugadores")
+    .update({
+      rating: Math.round(rating * 100) / 100,
+      rating_partidos: partidos,
+      rating_fiabilidad: Math.round(fiab * 100) / 100,
+    })
+    .eq("id", id);
+
+  if (updateErr) {
+    console.warn("[rating] rebuildRatingFieldsFromHistorial update:", updateErr);
+  }
+}
+
+async function reconcileRatingPartidoRef(
+  partidoRef: string,
+  canonicalIds: string[]
+): Promise<void> {
+  if (!partidoRef) return;
+
+  const { data, error } = await supabase
+    .from("rating_historial")
+    .select("jugador_id")
+    .eq("partido_ref", partidoRef);
+
+  if (error || !data?.length) return;
+
+  const canonical = new Set(canonicalIds.filter(Boolean));
+  const existing = new Set(data.map((row) => String(row.jugador_id)));
+  const alreadyCanonical =
+    existing.size === canonical.size &&
+    Array.from(existing).every((id) => canonical.has(id));
+  if (alreadyCanonical) return;
+
+  const affected = new Set([...Array.from(existing), ...Array.from(canonical)]);
+  const { error: delErr } = await supabase
+    .from("rating_historial")
+    .delete()
+    .eq("partido_ref", partidoRef);
+
+  if (delErr) {
+    console.warn("[rating] reconcileRatingPartidoRef:", delErr);
+    return;
+  }
+
+  await Promise.all(
+    Array.from(affected).map((id) => rebuildRatingFieldsFromHistorial(id))
+  );
 }
 
 export async function resolverRivieraIdsDesdePair(
   organizadorId: string,
   pair: Pick<Pair, "player1_id" | "player2_id" | "player1_name" | "player2_name">
 ): Promise<[string, string] | null> {
-  const j1Raw = await getOrCreateJugadorId({
+  const j1Op = await resolveJugadorIdForParticipacion({
     organizadorId,
     legacyPlayerId: pair.player1_id,
     nombre: pair.player1_name || "Jugador 1",
+    tipoEvento: "reta",
   });
-  const j2Raw = await getOrCreateJugadorId({
+  const j2Op = await resolveJugadorIdForParticipacion({
     organizadorId,
     legacyPlayerId: pair.player2_id,
     nombre: pair.player2_name || "Jugador 2",
+    tipoEvento: "reta",
   });
-  if (!j1Raw || !j2Raw) return null;
+  if (!j1Op || !j2Op) return null;
+
   const [j1, j2] = await Promise.all([
-    resolveJugadorIdForRating(organizadorId, j1Raw),
-    resolveJugadorIdForRating(organizadorId, j2Raw),
+    resolveJugadorIdForRating(organizadorId, j1Op),
+    resolveJugadorIdForRating(organizadorId, j2Op),
   ]);
   return [j1, j2];
 }
@@ -162,6 +229,8 @@ export async function aplicarRatingDesdePairs(
   const [a1, a2] = (await resolverRivieraIdsDesdePair(organizadorId, pairA)) ?? [];
   const [b1, b2] = (await resolverRivieraIdsDesdePair(organizadorId, pairB)) ?? [];
   if (!a1 || !a2 || !b1 || !b2) return;
+
+  await reconcileRatingPartidoRef(opts.partidoRef, [a1, a2, b1, b2]);
 
   await aplicarRatingPartido({
     j1: a1,
@@ -182,20 +251,22 @@ export async function resolverRivieraIdsLigaPareja(
   nombre1: string,
   nombre2: string
 ): Promise<[string, string] | null> {
-  const j1Raw = await getOrCreateJugadorId({
+  const j1Op = await resolveJugadorIdForParticipacion({
     organizadorId,
     legacyLigaJugadorId: jugador1Id,
     nombre: nombre1,
+    tipoEvento: "liga",
   });
-  const j2Raw = await getOrCreateJugadorId({
+  const j2Op = await resolveJugadorIdForParticipacion({
     organizadorId,
     legacyLigaJugadorId: jugador2Id,
     nombre: nombre2,
+    tipoEvento: "liga",
   });
-  if (!j1Raw || !j2Raw) return null;
+  if (!j1Op || !j2Op) return null;
   const [j1, j2] = await Promise.all([
-    resolveJugadorIdForRating(organizadorId, j1Raw),
-    resolveJugadorIdForRating(organizadorId, j2Raw),
+    resolveJugadorIdForRating(organizadorId, j1Op),
+    resolveJugadorIdForRating(organizadorId, j2Op),
   ]);
   return [j1, j2];
 }
@@ -450,36 +521,43 @@ export async function aplicarRatingAmericanoPartido(
     return;
   }
 
-  const [a1Raw, a2Raw, b1Raw, b2Raw] = await Promise.all([
-    getOrCreateJugadorId({
+  const [a1Op, a2Op, b1Op, b2Op] = await Promise.all([
+    resolveJugadorIdForParticipacion({
       organizadorId,
       legacyPlayerId: match.teamA[0].id,
       nombre: match.teamA[0].name,
+      tipoEvento: "americano",
     }),
-    getOrCreateJugadorId({
+    resolveJugadorIdForParticipacion({
       organizadorId,
       legacyPlayerId: match.teamA[1].id,
       nombre: match.teamA[1].name,
+      tipoEvento: "americano",
     }),
-    getOrCreateJugadorId({
+    resolveJugadorIdForParticipacion({
       organizadorId,
       legacyPlayerId: match.teamB[0].id,
       nombre: match.teamB[0].name,
+      tipoEvento: "americano",
     }),
-    getOrCreateJugadorId({
+    resolveJugadorIdForParticipacion({
       organizadorId,
       legacyPlayerId: match.teamB[1].id,
       nombre: match.teamB[1].name,
+      tipoEvento: "americano",
     }),
   ]);
-  if (!a1Raw || !a2Raw || !b1Raw || !b2Raw) return;
+  if (!a1Op || !a2Op || !b1Op || !b2Op) return;
 
   const [a1, a2, b1, b2] = await Promise.all([
-    resolveJugadorIdForRating(organizadorId, a1Raw),
-    resolveJugadorIdForRating(organizadorId, a2Raw),
-    resolveJugadorIdForRating(organizadorId, b1Raw),
-    resolveJugadorIdForRating(organizadorId, b2Raw),
+    resolveJugadorIdForRating(organizadorId, a1Op),
+    resolveJugadorIdForRating(organizadorId, a2Op),
+    resolveJugadorIdForRating(organizadorId, b1Op),
+    resolveJugadorIdForRating(organizadorId, b2Op),
   ]);
+
+  const partidoRef = `americano:${match.id}`;
+  await reconcileRatingPartidoRef(partidoRef, [a1, a2, b1, b2]);
 
   aplicarRatingPartidoSafe({
     j1: a1,

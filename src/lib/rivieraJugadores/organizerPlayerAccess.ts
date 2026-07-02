@@ -342,6 +342,39 @@ export async function ensureGrantedLocalPlayerSumsRanking(
   }
 }
 
+/** Asegura clon local + suma_ranking para cada cedido antes de sync/backfill de puntos. */
+export async function prepareGrantedPlayersForParticipacionSync(
+  granteeOrganizerId: string
+): Promise<string[]> {
+  const org = granteeOrganizerId.trim();
+  if (!org) return [];
+
+  const grants = await listActiveGrantedAccessForOrganizer(org);
+  const localIds: string[] = [];
+
+  for (const grant of grants) {
+    try {
+      const sourceId = grant.jugador_id.trim();
+      if (!sourceId) continue;
+
+      let localId = grant.local_jugador_id?.trim() || null;
+      if (!localId) {
+        localId = await ensureGrantedPlayerLocal(sourceId);
+      }
+      await ensureGrantedLocalPlayerSumsRanking(org, localId);
+      localIds.push(localId);
+    } catch (e) {
+      console.warn(
+        "[riviera-jugadores] prepareGrantedPlayersForParticipacionSync:",
+        grant.jugador_id,
+        e
+      );
+    }
+  }
+
+  return localIds;
+}
+
 export async function listGrantedLocalJugadorIdsForSource(
   sourceJugadorId: string
 ): Promise<string[]> {
@@ -407,6 +440,26 @@ export async function resolveJugadorIdForOrganizer(
   const localId = await ensureGrantedPlayerLocal(sourceId);
   await ensureGrantedLocalPlayerSumsRanking(organizadorId, localId);
   return localId;
+}
+
+/**
+ * Rating global del jugador: cedidos en club anfitrión → perfil origen (canónico).
+ * Puntos/participaciones siguen en el clon local; el nivel viaja con el jugador.
+ */
+export async function resolveJugadorIdForRating(
+  organizadorId: string,
+  jugadorId: string
+): Promise<string> {
+  const resolved = await resolveJugadorIdForOrganizer(organizadorId, jugadorId);
+  const meta = await findGrantedAccessMetaForJugador(organizadorId, resolved);
+  if (
+    meta?.sourceJugadorId &&
+    meta.localJugadorId &&
+    meta.localJugadorId === resolved
+  ) {
+    return meta.sourceJugadorId;
+  }
+  return resolved;
 }
 
 export async function adminGrantOrganizerPlayerAccess(

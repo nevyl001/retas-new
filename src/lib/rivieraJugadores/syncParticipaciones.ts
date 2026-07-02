@@ -65,6 +65,7 @@ import { buildDuelo2vs2PartidosDetalle } from "./buildDuelo2vs2PartidosDetalle";
 import { buildLigaJornadaPartidosDetalleByJugadorId } from "./buildLigaJornadaPartidosDetalle";
 import {
   logMulticlubPhase21,
+  prepareParticipacionIdentityForOrganizer,
   resolveJugadorIdForParticipacion,
 } from "./jugadorIdResolver";
 import { isParticipacionExcluded } from "./participacionExclusions";
@@ -689,6 +690,7 @@ async function syncRetaParticipacionesInner(params: {
   const { organizadorId, tournament, pairs, matches } = params;
 
   try {
+    await prepareParticipacionIdentityForOrganizer(organizadorId);
     const { syncLegacyPlayersFromRivieraRegistry } = await import(
       "./playerPoolSync"
     );
@@ -844,7 +846,15 @@ async function syncRetaParticipacionesInner(params: {
       tipoEvento: "reta",
       eventoId: tournament.id,
     });
-    if (!jugadorId) continue;
+    if (!jugadorId) {
+      console.warn("[riviera-jugadores] syncReta sin jugador resuelto:", {
+        retaId: tournament.id,
+        retaNombre: tournament.name,
+        nombre: st.nombre,
+        legacyPlayerId: st.legacyPlayerId,
+      });
+      continue;
+    }
     touchedJugadorIds.add(jugadorId);
 
     const pair = pairs.find(
@@ -2283,6 +2293,7 @@ export type BackfillHistorialResumen = {
 export async function backfillHistorialJugadores(
   organizadorId: string
 ): Promise<BackfillHistorialResumen> {
+  await prepareParticipacionIdentityForOrganizer(organizadorId);
   const [retas, americanos, ligas, duelos] = await Promise.all([
     backfillRetasHistorial(organizadorId),
     backfillAmericanoHistorial(organizadorId),
