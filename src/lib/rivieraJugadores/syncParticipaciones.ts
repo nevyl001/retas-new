@@ -687,6 +687,15 @@ async function syncRetaParticipacionesInner(params: {
   matches: Match[];
 }): Promise<void> {
   const { organizadorId, tournament, pairs, matches } = params;
+
+  try {
+    const { syncLegacyPlayersFromRivieraRegistry } = await import(
+      "./playerPoolSync"
+    );
+    await syncLegacyPlayersFromRivieraRegistry(organizadorId, { force: true });
+  } catch (e) {
+    console.warn("[riviera-jugadores] syncReta legacy pool:", e);
+  }
   const pairById = new Map(pairs.map((p) => [p.id, p]));
   const agg = new Map<string, PlayerAgg>();
 

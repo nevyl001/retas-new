@@ -9,6 +9,7 @@ import {
   ensureRivieraJugadorVisibleEnRanking,
   getRivieraJugadorByLegacyLigaId,
   getRivieraJugadorByLegacyPlayerId,
+  linkLegacyPlayerId,
 } from "./rivieraJugadoresService";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 
@@ -59,6 +60,27 @@ async function finalizeJugadorIdForRanking(
   return jugadorId;
 }
 
+/** Cedidos: legacy en origen → clon local del club anfitrión + enlace players. */
+async function resolveLocalJugadorIdForOrganizer(
+  organizadorId: string,
+  rivieraJugadorId: string,
+  legacyPlayerId?: string
+): Promise<string | null> {
+  const resolved = await resolveJugadorIdForOrganizer(
+    organizadorId,
+    rivieraJugadorId
+  );
+  const localId = await findWritableLocalJugadorId(organizadorId, resolved);
+  if (!localId) return null;
+
+  const legacy = legacyPlayerId?.trim();
+  if (legacy) {
+    await linkLegacyPlayerId(localId, legacy);
+  }
+
+  return finalizeJugadorIdForRanking(localId);
+}
+
 export async function getOrCreateJugadorId(params: {
   nombre: string;
   organizadorId: string;
@@ -85,7 +107,27 @@ export async function getOrCreateJugadorId(params: {
         params.legacyPlayerId,
         params.organizadorId
       );
-      if (byPlayer) return finalizeJugadorIdForRanking(byPlayer.id);
+      if (byPlayer) {
+        const local = await resolveLocalJugadorIdForOrganizer(
+          params.organizadorId,
+          byPlayer.id,
+          params.legacyPlayerId
+        );
+        if (local) return local;
+      }
+
+      // Cedido: legacy_player_id puede estar solo en el perfil origen (otro club).
+      const byLegacyGlobal = await getRivieraJugadorByLegacyPlayerId(
+        params.legacyPlayerId
+      );
+      if (byLegacyGlobal) {
+        const local = await resolveLocalJugadorIdForOrganizer(
+          params.organizadorId,
+          byLegacyGlobal.id,
+          params.legacyPlayerId
+        );
+        if (local) return local;
+      }
     }
 
     if (params.legacyLigaJugadorId) {

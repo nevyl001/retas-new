@@ -19,6 +19,7 @@ jest.mock("./rivieraJugadoresService", () => ({
   ensureRivieraJugadorVisibleEnRanking: jest.fn(),
   getRivieraJugadorByLegacyLigaId: jest.fn(),
   getRivieraJugadorByLegacyPlayerId: jest.fn(),
+  linkLegacyPlayerId: jest.fn(),
 }));
 
 import { supabase } from "../supabaseClient";
@@ -34,6 +35,7 @@ import {
 import {
   getRivieraJugadorByLegacyPlayerId,
   ensureRivieraJugadorVisibleEnRanking,
+  linkLegacyPlayerId,
 } from "./rivieraJugadoresService";
 
 const mockBlocked = isJugadorImportBlocked as jest.MockedFunction<
@@ -51,13 +53,36 @@ const mockResolveOrg = resolveJugadorIdForOrganizer as jest.MockedFunction<
 const mockRevoked = isRevokedGrantLocalJugador as jest.MockedFunction<
   typeof isRevokedGrantLocalJugador
 >;
+const mockLinkLegacy = linkLegacyPlayerId as jest.MockedFunction<
+  typeof linkLegacyPlayerId
+>;
+
+function mockWritableLocalJugador(localId: string | null): void {
+  (supabase.from as jest.Mock).mockReturnValue({
+    select: jest.fn().mockReturnValue({
+      eq: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          maybeSingle: jest.fn().mockResolvedValue(
+            localId
+              ? { data: { id: localId, estado: "activo" }, error: null }
+              : { data: null, error: null }
+          ),
+        }),
+      }),
+    }),
+  });
+}
 
 describe("getOrCreateJugadorId blocklist", () => {
   beforeEach(() => {
     mockBlocked.mockReset();
     mockByLegacy.mockReset();
     mockVisible.mockReset();
+    mockResolveOrg.mockReset();
+    mockLinkLegacy.mockReset();
+    (supabase.from as jest.Mock).mockReset();
     mockVisible.mockResolvedValue(undefined);
+    mockLinkLegacy.mockResolvedValue(undefined);
   });
 
   it("no crea jugador si está en blocklist de import", async () => {
@@ -75,9 +100,11 @@ describe("getOrCreateJugadorId blocklist", () => {
 
   it("sigue resolviendo jugadores no bloqueados", async () => {
     mockBlocked.mockResolvedValue(false);
-    mockByLegacy.mockResolvedValue({
+    mockByLegacy.mockResolvedValueOnce({
       id: "jugador-existente",
     } as Awaited<ReturnType<typeof getRivieraJugadorByLegacyPlayerId>>);
+    mockResolveOrg.mockResolvedValue("jugador-existente");
+    mockWritableLocalJugador("jugador-existente");
 
     const id = await getOrCreateJugadorId({
       nombre: "Aime",
@@ -87,6 +114,34 @@ describe("getOrCreateJugadorId blocklist", () => {
 
     expect(id).toBe("jugador-existente");
     expect(mockVisible).toHaveBeenCalledWith("jugador-existente");
+    expect(mockLinkLegacy).toHaveBeenCalledWith("jugador-existente", "legacy-aime");
+  });
+
+  it("cedido: legacy en perfil origen resuelve al clon local del club", async () => {
+    mockBlocked.mockResolvedValue(false);
+    mockByLegacy
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: "source-riviera-daniel",
+      } as Awaited<ReturnType<typeof getRivieraJugadorByLegacyPlayerId>>);
+    mockResolveOrg.mockResolvedValue("local-hack-daniel");
+    mockWritableLocalJugador("local-hack-daniel");
+
+    const id = await getOrCreateJugadorId({
+      nombre: "Daniel N",
+      organizadorId: "org-hack",
+      legacyPlayerId: "legacy-daniel",
+    });
+
+    expect(id).toBe("local-hack-daniel");
+    expect(mockResolveOrg).toHaveBeenCalledWith(
+      "org-hack",
+      "source-riviera-daniel"
+    );
+    expect(mockLinkLegacy).toHaveBeenCalledWith(
+      "local-hack-daniel",
+      "legacy-daniel"
+    );
   });
 });
 
