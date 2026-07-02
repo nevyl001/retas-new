@@ -13,15 +13,14 @@ import {
   endBrandingTransition,
 } from "../branding/brandingTransition";
 import { clearTenantBranding } from "../branding/BrandingService";
+import {
+  fetchMasterAdminByAuthId,
+  type MasterAdminUser,
+} from "../lib/admin/masterAdminAuth";
 
 const LEGACY_ADMIN_SESSION_KEY = "admin_session";
 
-export interface AdminUser {
-  id: string;
-  user_id: string;
-  email: string;
-  created_at: string;
-}
+export type AdminUser = MasterAdminUser;
 
 interface AdminContextType {
   adminUser: AdminUser | null;
@@ -51,17 +50,7 @@ interface AdminProviderProps {
 async function fetchAdminUserByAuthId(
   authUserId: string
 ): Promise<AdminUser | null> {
-  const { data, error } = await supabase
-    .from("admin_users")
-    .select("id, user_id, email, created_at")
-    .eq("user_id", authUserId)
-    .maybeSingle();
-
-  if (error || !data) {
-    return null;
-  }
-
-  return data;
+  return fetchMasterAdminByAuthId(authUserId);
 }
 
 async function resolveAdminFromSession(
@@ -212,7 +201,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       endBrandingTransition("session-logout");
     }
 
-    window.location.replace("/admin-login");
+    window.location.replace("/");
   };
 
   const value: AdminContextType = {

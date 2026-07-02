@@ -20,7 +20,7 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({
         onUnauthorized();
       } else {
         // Usar history.pushState en lugar de window.location.href
-        window.history.pushState({}, "", "/admin-login");
+        window.history.pushState({}, "", "/");
         window.dispatchEvent(new PopStateEvent("popstate"));
       }
     }

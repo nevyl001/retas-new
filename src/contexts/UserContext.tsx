@@ -14,6 +14,11 @@ import {
 } from "../branding/brandingTransition";
 import { supabase } from "../lib/supabaseClient";
 import { AUTH_CONFIG, getAuthEmailRedirectUrl } from "../config/auth";
+import {
+  fetchMasterAdminByAuthId,
+  navigateToAdminDashboard,
+} from "../lib/admin/masterAdminAuth";
+import { normalizeAppPathname } from "../lib/appRouting";
 
 interface UserProfile {
   id: string;
@@ -152,19 +157,22 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         nextSession?.user &&
         brandingAlreadyAppliedForUser(nextUserId)
       ) {
-        setSession(nextSession);
-        setUser(nextSession.user);
-        userIdRef.current = nextUserId;
-        setLoading(false);
-        fetchUserProfile(
-          nextSession.user.id,
-          nextSession.user.email,
-          nextSession.user.user_metadata?.name
-        );
-        brandingDevLog("UserContext.applySession:skip-init-restored", {
-          orgId: nextUserId,
-        });
-        return;
+        const masterAdminEarly = await fetchMasterAdminByAuthId(nextUserId);
+        if (!masterAdminEarly) {
+          setSession(nextSession);
+          setUser(nextSession.user);
+          userIdRef.current = nextUserId;
+          setLoading(false);
+          fetchUserProfile(
+            nextSession.user.id,
+            nextSession.user.email,
+            nextSession.user.user_metadata?.name
+          );
+          brandingDevLog("UserContext.applySession:skip-init-restored", {
+            orgId: nextUserId,
+          });
+          return;
+        }
       }
 
       setLoading(true);
@@ -179,24 +187,51 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       try {
         if (nextUserId && nextSession?.user) {
-          const branding = await resolveAndApplyBranding(nextUserId);
-          if (!isMounted || generation !== applySessionGenerationRef.current) {
-            return;
+          const masterAdmin = await fetchMasterAdminByAuthId(nextUserId);
+          if (masterAdmin) {
+            clearTenantBranding();
+            if (!isMounted || generation !== applySessionGenerationRef.current) {
+              return;
+            }
+
+            setSession(nextSession);
+            setUser(nextSession.user);
+            userIdRef.current = nextUserId;
+            fetchUserProfile(
+              nextSession.user.id,
+              nextSession.user.email,
+              nextSession.user.user_metadata?.name
+            );
+
+            const atAppHome =
+              typeof window !== "undefined" &&
+              normalizeAppPathname(window.location.pathname) === "/";
+            if (
+              atAppHome &&
+              (event === "SIGNED_IN" || event === "init")
+            ) {
+              navigateToAdminDashboard();
+            }
+          } else {
+            const branding = await resolveAndApplyBranding(nextUserId);
+            if (!isMounted || generation !== applySessionGenerationRef.current) {
+              return;
+            }
+
+            brandingDevLog("UserContext.applySession:branding-ready", {
+              orgId: nextUserId,
+              brandingKey: branding.brandingKey,
+            });
+
+            setSession(nextSession);
+            setUser(nextSession.user);
+            userIdRef.current = nextUserId;
+            fetchUserProfile(
+              nextSession.user.id,
+              nextSession.user.email,
+              nextSession.user.user_metadata?.name
+            );
           }
-
-          brandingDevLog("UserContext.applySession:branding-ready", {
-            orgId: nextUserId,
-            brandingKey: branding.brandingKey,
-          });
-
-          setSession(nextSession);
-          setUser(nextSession.user);
-          userIdRef.current = nextUserId;
-          fetchUserProfile(
-            nextSession.user.id,
-            nextSession.user.email,
-            nextSession.user.user_metadata?.name
-          );
         } else {
           clearTenantBranding();
           if (!isMounted || generation !== applySessionGenerationRef.current) {

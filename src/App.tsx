@@ -96,11 +96,6 @@ const AmericanoDinamicoScreen = lazy(() =>
     })
   )
 );
-const AdminLogin = lazy(() =>
-  import("./components/admin/AdminLogin").then((module) => ({
-    default: module.AdminLogin,
-  }))
-);
 const AdminDashboard = lazy(() =>
   import("./components/admin/AdminDashboard").then((module) => ({
     default: module.AdminDashboard,
@@ -145,7 +140,7 @@ function parsePublicAmericanoBoardTournamentId(pathname: string): string | null 
 
 function AppContent() {
   const { user, loading: authLoading } = useUser();
-  const { isAdminLoggedIn } = useAdmin();
+  const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
   const appPathname = useSyncPathname();
 
   // Estados básicos
@@ -155,6 +150,10 @@ function AppContent() {
   // Inicializar currentView basado en la URL actual (solo una vez)
   const [currentView, setCurrentView] = useState<AppView>(() => {
     const currentPath = normalizeAppPathname(window.location.pathname);
+    if (currentPath === "/admin-login") {
+      window.history.replaceState({}, "", "/");
+      return "main";
+    }
     const view = resolveAppViewFromPath(currentPath);
     console.log("🔍 Inicializando currentView basado en path:", currentPath, "→", view);
     return view;
@@ -170,37 +169,44 @@ function AppContent() {
     console.log("🔍 AppContent - currentView:", currentView);
   }, [isAdminLoggedIn, currentView]);
 
-  // Efecto para detectar cuando el admin se loguea
+  // Admin maestro: login normal o /admin-login → dashboard
   useEffect(() => {
-    console.log(
-      "🔍 useEffect admin login - isAdminLoggedIn:",
-      isAdminLoggedIn,
-      "currentView:",
-      currentView
-    );
+    if (adminLoading || !isAdminLoggedIn) return;
 
-    if (isAdminLoggedIn && currentView === "admin-login") {
-      console.log("🔄 Admin logueado detectado, cambiando a admin-dashboard");
+    if (currentView === "admin-login") {
+      window.history.replaceState({}, "", "/admin-dashboard");
+      setCurrentView("admin-dashboard");
+      return;
+    }
+
+    if (
+      currentView === "main" &&
+      normalizeAppPathname(window.location.pathname) === "/" &&
+      !parseRetaIdFromPath(window.location.pathname)
+    ) {
       window.history.replaceState({}, "", "/admin-dashboard");
       setCurrentView("admin-dashboard");
     }
-  }, [isAdminLoggedIn, currentView]);
+  }, [isAdminLoggedIn, adminLoading, currentView]);
 
-  // Efecto para detectar cuando el admin se desloguea
+  // /admin-login sin sesión admin → login normal en /
+  useEffect(() => {
+    if (adminLoading || isAdminLoggedIn || currentView !== "admin-login") return;
+    window.history.replaceState({}, "", "/");
+    setCurrentView("main");
+  }, [isAdminLoggedIn, adminLoading, currentView]);
+
+  // Admin deslogueado: volver al inicio de sesión normal
   useEffect(() => {
     if (
+      !adminLoading &&
       !isAdminLoggedIn &&
-      (currentView === "admin-dashboard" ||
-        currentView === "admin-user" ||
-        currentView === "admin-login")
+      (currentView === "admin-dashboard" || currentView === "admin-user")
     ) {
-      console.log("🔄 Admin deslogueado detectado, cambiando a admin-login");
-      if (currentView === "admin-dashboard" || currentView === "admin-user") {
-        window.history.replaceState({}, "", "/admin-login");
-      }
-      setCurrentView("admin-login");
+      window.history.replaceState({}, "", "/");
+      setCurrentView("main");
     }
-  }, [isAdminLoggedIn, currentView]);
+  }, [isAdminLoggedIn, adminLoading, currentView]);
 
   // Inicializar ID de vista pública desde la URL para no hacer peticiones con null
   const [publicTournamentId, setPublicTournamentId] = useState<string | null>(
@@ -973,33 +979,13 @@ function AppContent() {
           />
         )}
 
-        {/* Rutas de Admin */}
-        {currentView === "admin-login" && (
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-            <>
-            {console.log("🔍 Renderizando AdminLogin")}
-            <AdminLogin
-              onLoginSuccess={() => {
-                console.log(
-                  "🔄 onLoginSuccess llamado - Redirigiendo a admin dashboard..."
-                );
-                window.history.replaceState({}, "", "/admin-dashboard");
-                setCurrentView("admin-dashboard");
-              }}
-            />
-            </>
-            </Suspense>
-          </ErrorBoundary>
-        )}
         {currentView === "admin-dashboard" && (
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
             <AdminRoute
               onUnauthorized={() => {
-                console.log("🔄 Admin no autorizado, cambiando a admin-login");
-                window.history.replaceState({}, "", "/admin-login");
-                setCurrentView("admin-login");
+                window.history.replaceState({}, "", "/");
+                setCurrentView("main");
               }}
             >
               <AdminDashboard />
@@ -1012,8 +998,8 @@ function AppContent() {
             <Suspense fallback={<LoadingFallback />}>
             <AdminRoute
               onUnauthorized={() => {
-                window.history.replaceState({}, "", "/admin-login");
-                setCurrentView("admin-login");
+                window.history.replaceState({}, "", "/");
+                setCurrentView("main");
               }}
             >
               <AdminUserManagePage
