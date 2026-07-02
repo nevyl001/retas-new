@@ -11,6 +11,20 @@ export type PlayerPublicProfile = {
 
 const DEFAULT_PROFILE: PlayerPublicProfile = { fotoUrl: null, rating: 3.0 };
 
+function isDefaultRating(rating: number): boolean {
+  return rating === DEFAULT_PROFILE.rating;
+}
+
+function preferCanonicalRating(current: number, incoming: number): number {
+  if (!isDefaultRating(current) && isDefaultRating(incoming)) {
+    return current;
+  }
+  if (!isDefaultRating(incoming)) {
+    return incoming;
+  }
+  return current;
+}
+
 function normalizeRating(raw: unknown): number {
   if (raw != null && Number.isFinite(Number(raw))) {
     return Number(raw);
@@ -35,10 +49,7 @@ function mergeProfile(
 ): PlayerPublicProfile {
   return {
     fotoUrl: current.fotoUrl ?? incoming.fotoUrl,
-    rating:
-      current.rating !== DEFAULT_PROFILE.rating
-        ? current.rating
-        : incoming.rating,
+    rating: preferCanonicalRating(current.rating, incoming.rating),
   };
 }
 
@@ -125,12 +136,19 @@ async function fetchEventAvatarsByLegacyIds(
   return map;
 }
 
-function idsMissingFoto(
+function idsNeedingEventProfileRpc(
   result: Record<string, PlayerPublicProfile>,
-  entries: PlayerAvatarLookupEntry[]
+  entries: PlayerAvatarLookupEntry[],
+  publicOnly?: boolean
 ): string[] {
+  if (publicOnly) {
+    return entries.map((e) => e.id);
+  }
   return entries
-    .filter((e) => !result[e.id]?.fotoUrl)
+    .filter((e) => {
+      const profile = result[e.id] ?? DEFAULT_PROFILE;
+      return !profile.fotoUrl || isDefaultRating(profile.rating);
+    })
     .map((e) => e.id);
 }
 
@@ -206,13 +224,17 @@ export async function resolvePlayerPublicProfiles(
     }
   }
 
-  const missingLegacy = idsMissingFoto(result, entries);
-  if (missingLegacy.length > 0) {
+  const legacyRpcIds = idsNeedingEventProfileRpc(
+    result,
+    entries,
+    opts?.publicOnly
+  );
+  if (legacyRpcIds.length > 0) {
     const fromRpc = await fetchEventAvatarsByLegacyIds(
       organizadorId,
-      missingLegacy
+      legacyRpcIds
     );
-    for (const id of missingLegacy) {
+    for (const id of legacyRpcIds) {
       const profile = fromRpc.get(id);
       if (profile) {
         result[id] = mergeProfile(result[id], profile);
@@ -260,10 +282,15 @@ export async function fetchRivieraJugadorProfilesByIds(
     }
   }
 
-  const missing = valid.filter((id) => !map.get(id)?.fotoUrl);
-  if (missing.length > 0) {
-    const fromRpc = await fetchEventAvatarsByRivieraIds(missing);
-    for (const id of missing) {
+  const rpcIds = opts?.publicOnly
+    ? valid
+    : valid.filter((id) => {
+        const profile = map.get(id) ?? DEFAULT_PROFILE;
+        return !profile.fotoUrl || isDefaultRating(profile.rating);
+      });
+  if (rpcIds.length > 0) {
+    const fromRpc = await fetchEventAvatarsByRivieraIds(rpcIds);
+    for (const id of rpcIds) {
       const profile = fromRpc.get(id);
       if (profile) {
         map.set(id, mergeProfile(map.get(id) ?? { ...DEFAULT_PROFILE }, profile));
