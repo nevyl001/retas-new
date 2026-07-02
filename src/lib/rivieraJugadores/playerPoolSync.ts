@@ -202,10 +202,19 @@ async function applyRivieraContactToLegacyPlayer(
  * Pool para retas/torneos: solo jugadores ya enlazados desde el registro
  * (`legacy_player_id`). No inserta filas en `players` — eso ocurre en
  * JugadoresLista al crear un jugador nuevo.
+ *
+ * Cedidos con clon local: `ensure_granted_player_local` no copia legacy_player_id;
+ * aquí se enlaza antes de armar el pool para round robin / retas por equipos.
  */
 export async function buildLegacyPlayersFromRivieraRegistry(
   organizadorId: string
 ): Promise<Player[]> {
+  try {
+    await syncLegacyPlayersFromRivieraRegistry(organizadorId);
+  } catch (e) {
+    console.warn("[riviera-jugadores] buildLegacyPlayers sync:", e);
+  }
+
   const registry = await listRivieraJugadores(organizadorId);
   const byName = new Map<string, RivieraJugador[]>();
 
@@ -222,10 +231,18 @@ export async function buildLegacyPlayersFromRivieraRegistry(
   const seenLegacyIds = new Set<string>();
 
   for (const rows of Array.from(byName.values())) {
-    const canonical = pickCanonicalRivieraRow(rows);
-    if (!canonical.legacy_player_id) continue;
+    let canonical = pickCanonicalRivieraRow(rows);
+    let legacy: Player | null = null;
 
-    const legacy = await fetchPlayerById(canonical.legacy_player_id);
+    if (canonical.legacy_player_id) {
+      legacy = await fetchPlayerById(canonical.legacy_player_id);
+    } else {
+      legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
+      if (legacy) {
+        canonical = { ...canonical, legacy_player_id: legacy.id };
+      }
+    }
+
     if (!legacy || !legacyMatchesRivieraName(legacy, canonical)) continue;
 
     const nameKey = normalizeName(canonical.nombre);

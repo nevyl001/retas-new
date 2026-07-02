@@ -13,6 +13,7 @@ import {
 import {
   ensureLegacyPlayerForRivieraJugador,
   ensureLigaJugadorForRivieraJugador,
+  syncLegacyPlayersFromRivieraRegistry,
 } from "../../lib/rivieraJugadores/playerPoolSync";
 import {
   createRivieraJugador,
@@ -69,6 +70,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     setLoading(true);
     setError(null);
     try {
+      await syncLegacyPlayersFromRivieraRegistry(user.id);
       const data = await listRivieraJugadores(user.id, {
         search,
         nivel: nivelFilter || undefined,
