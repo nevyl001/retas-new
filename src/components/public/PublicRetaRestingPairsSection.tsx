@@ -1,5 +1,6 @@
 import React from "react";
 import type { Pair, Match } from "../../lib/database";
+import { pairPlayersDisplayLabel } from "../../lib/pairPlayerNames";
 
 function resolveRoundMatches(matches: Match[], round: number): Match[] {
   if (!matches.length) return [];
@@ -41,7 +42,7 @@ export const PublicRetaRestingPairsSection: React.FC<{
       <div className="te-pub-resting__pills">
         {restingPairs.map((pair) => (
           <span key={pair.id} className="te-pub-resting__pill">
-            {pair.player1_name} / {pair.player2_name}
+            {pairPlayersDisplayLabel(pair)}
           </span>
         ))}
       </div>

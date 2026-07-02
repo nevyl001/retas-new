@@ -50,17 +50,19 @@ export function dedupePlayersForSelect(
 
 /**
  * Alinea un jugador al pool canónico.
- * Prioriza el nombre (evita Carlos R con el UUID de Carlos Co).
+ * Prioriza id exacto; por nombre solo si hay un único match (evita dos David R distintos).
  */
 export function resolvePlayerInPool(player: Player, pool: Player[]): Player {
-  const key = normalizePlayerNameKey(player.name);
-  if (key) {
-    const byName = pool.find((p) => normalizePlayerNameKey(p.name) === key);
-    if (byName) return byName;
-  }
-
   const byId = pool.find((p) => p.id === player.id);
   if (byId) return byId;
+
+  const key = normalizePlayerNameKey(player.name);
+  if (key) {
+    const nameMatches = pool.filter(
+      (p) => normalizePlayerNameKey(p.name) === key
+    );
+    if (nameMatches.length === 1) return nameMatches[0]!;
+  }
 
   return player;
 }

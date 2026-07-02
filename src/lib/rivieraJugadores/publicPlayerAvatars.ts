@@ -1,6 +1,5 @@
 import { isMissingColumnError } from "../db/schemaHelpers";
 import { supabase, supabasePublicRead } from "../supabaseClient";
-import { normalizePlayerNameKey } from "./playerNameKey";
 
 export type PlayerAvatarLookupEntry = { id: string; name: string };
 
@@ -51,6 +50,113 @@ function mergeProfile(
     fotoUrl: current.fotoUrl ?? incoming.fotoUrl,
     rating: preferCanonicalRating(current.rating, incoming.rating),
   };
+}
+
+type LegacyProfileRow = {
+  organizador_id?: string | null;
+  legacy_player_id?: string | null;
+  foto_url?: unknown;
+  rating?: unknown;
+  rating_partidos?: unknown;
+};
+
+/** Mismo legacy_player_id en varios clubes: más historial de rating; empate → club anfitrión. */
+function pickCanonicalLegacyProfileRow(
+  organizadorId: string,
+  rows: LegacyProfileRow[]
+): LegacyProfileRow | null {
+  if (!rows.length) return null;
+  const host = organizadorId.trim();
+  const sorted = [...rows].sort((a, b) => {
+    const ap = Number(a.rating_partidos ?? 0);
+    const bp = Number(b.rating_partidos ?? 0);
+    if (bp !== ap) return bp - ap;
+    const ar = normalizeRating(a.rating);
+    const br = normalizeRating(b.rating);
+    if (!isDefaultRating(ar) && isDefaultRating(br)) return -1;
+    if (!isDefaultRating(br) && isDefaultRating(ar)) return 1;
+    const aHost = host && String(a.organizador_id ?? "").trim() === host ? 1 : 0;
+    const bHost = host && String(b.organizador_id ?? "").trim() === host ? 1 : 0;
+    if (bHost !== aHost) return bHost - aHost;
+    return br - ar;
+  });
+  return sorted[0] ?? null;
+}
+
+async function fetchCanonicalProfilesByLegacyPlayerIds(
+  organizadorId: string,
+  legacyIds: string[],
+  options?: { allowAuthenticatedFallback?: boolean }
+): Promise<Map<string, PlayerPublicProfile>> {
+  const map = new Map<string, PlayerPublicProfile>();
+  const ids = Array.from(new Set(legacyIds.map((id) => id.trim()).filter(Boolean)));
+  if (!organizadorId.trim() || ids.length === 0) return map;
+
+  const cols =
+    "legacy_player_id, organizador_id, foto_url, rating, rating_partidos";
+  const rowMap = new Map<string, LegacyProfileRow[]>();
+
+  const ingest = (rows: LegacyProfileRow[] | null | undefined) => {
+    for (const row of rows ?? []) {
+      const legacy = String(row.legacy_player_id ?? "").trim();
+      if (!legacy) continue;
+      const list = rowMap.get(legacy) ?? [];
+      list.push(row);
+      rowMap.set(legacy, list);
+    }
+  };
+
+  const { data: publicData, error: publicError } = await supabasePublicRead
+    .from("riviera_jugadores")
+    .select(cols)
+    .in("legacy_player_id", ids)
+    .eq("estado", "activo");
+
+  if (publicError) {
+    console.warn(
+      "[publicPlayerAvatars] canonical legacy public read:",
+      publicError.message
+    );
+  } else {
+    ingest(publicData as LegacyProfileRow[]);
+  }
+
+  if (options?.allowAuthenticatedFallback) {
+    const missing = ids.filter((id) => {
+      const picked = pickCanonicalLegacyProfileRow(
+        organizadorId,
+        rowMap.get(id) ?? []
+      );
+      return !picked || isDefaultRating(normalizeRating(picked.rating));
+    });
+    if (missing.length > 0) {
+      const { data: authData, error: authError } = await supabase
+        .from("riviera_jugadores")
+        .select(cols)
+        .in("legacy_player_id", missing)
+        .eq("estado", "activo");
+      if (authError) {
+        console.warn(
+          "[publicPlayerAvatars] canonical legacy auth read:",
+          authError.message
+        );
+      } else {
+        ingest(authData as LegacyProfileRow[]);
+      }
+    }
+  }
+
+  for (const legacyId of ids) {
+    const picked = pickCanonicalLegacyProfileRow(
+      organizadorId,
+      rowMap.get(legacyId) ?? []
+    );
+    if (picked) {
+      map.set(legacyId, profileFromRow(picked as Record<string, unknown>));
+    }
+  }
+
+  return map;
 }
 
 type AvatarReadContext = {
@@ -141,20 +247,21 @@ function idsNeedingEventProfileRpc(
   entries: PlayerAvatarLookupEntry[],
   publicOnly?: boolean
 ): string[] {
-  if (publicOnly) {
-    return entries.map((e) => e.id);
-  }
   return entries
     .filter((e) => {
       const profile = result[e.id] ?? DEFAULT_PROFILE;
+      if (publicOnly) {
+        // Jugador propio del club con rating real: no buscar en otros clubes.
+        return isDefaultRating(profile.rating);
+      }
       return !profile.fotoUrl || isDefaultRating(profile.rating);
     })
     .map((e) => e.id);
 }
 
 /**
- * Resuelve foto y rating del registro Riviera por legacy_player_id, riviera id o nombre.
- * `publicOnly`: vistas /public/... — usa RPC de evento para cedidos sin visible_publico.
+ * Resuelve foto y rating por legacy_player_id o id de riviera_jugadores (nunca solo por nombre).
+ * `publicOnly`: vistas /public/... — rating canónico del perfil origen para cedidos.
  */
 export async function resolvePlayerPublicProfiles(
   organizadorId: string,
@@ -201,7 +308,6 @@ export async function resolvePlayerPublicProfiles(
   if (!error && data) {
     const byLegacyId = new Map<string, PlayerPublicProfile>();
     const byRivieraId = new Map<string, PlayerPublicProfile>();
-    const byName = new Map<string, PlayerPublicProfile>();
 
     for (const row of data) {
       const profile = profileFromRow(row as Record<string, unknown>);
@@ -211,33 +317,47 @@ export async function resolvePlayerPublicProfiles(
       if (row.legacy_player_id) {
         byLegacyId.set(String(row.legacy_player_id), profile);
       }
-      const key = normalizePlayerNameKey(String(row.nombre ?? ""));
-      if (key) byName.set(key, profile);
     }
 
     for (const e of entries) {
       result[e.id] =
         byLegacyId.get(e.id) ??
         byRivieraId.get(e.id) ??
-        byName.get(normalizePlayerNameKey(e.name)) ??
         DEFAULT_PROFILE;
     }
   }
 
-  const legacyRpcIds = idsNeedingEventProfileRpc(
+  const needsCanonical = idsNeedingEventProfileRpc(
     result,
     entries,
     opts?.publicOnly
   );
-  if (legacyRpcIds.length > 0) {
-    const fromRpc = await fetchEventAvatarsByLegacyIds(
+  if (needsCanonical.length > 0) {
+    const fromLegacyCanon = await fetchCanonicalProfilesByLegacyPlayerIds(
       organizadorId,
-      legacyRpcIds
+      needsCanonical,
+      { allowAuthenticatedFallback: client === supabase }
     );
-    for (const id of legacyRpcIds) {
-      const profile = fromRpc.get(id);
+    for (const id of needsCanonical) {
+      const profile = fromLegacyCanon.get(id);
       if (profile) {
         result[id] = mergeProfile(result[id], profile);
+      }
+    }
+
+    const stillDefault = needsCanonical.filter((id) =>
+      isDefaultRating(result[id]?.rating ?? DEFAULT_PROFILE.rating)
+    );
+    if (stillDefault.length > 0) {
+      const fromRpc = await fetchEventAvatarsByLegacyIds(
+        organizadorId,
+        stillDefault
+      );
+      for (const id of stillDefault) {
+        const profile = fromRpc.get(id);
+        if (profile) {
+          result[id] = mergeProfile(result[id], profile);
+        }
       }
     }
   }
@@ -261,7 +381,7 @@ export async function fetchRivieraJugadorProfilesByIds(
 
   let { data, error } = await client
     .from("riviera_jugadores")
-    .select("id, foto_url, rating")
+    .select("id, legacy_player_id, foto_url, rating, rating_partidos")
     .in("id", valid);
 
   if (
@@ -270,30 +390,65 @@ export async function fetchRivieraJugadorProfilesByIds(
   ) {
     const retry = await client
       .from("riviera_jugadores")
-      .select("id, foto_url")
+      .select("id, legacy_player_id, foto_url")
       .in("id", valid);
     data = retry.data as typeof data;
     error = retry.error;
   }
 
+  const legacyByRivieraId = new Map<string, string>();
   if (!error && data) {
     for (const row of data) {
-      map.set(String(row.id), profileFromRow(row as Record<string, unknown>));
+      const rivieraId = String(row.id);
+      map.set(rivieraId, profileFromRow(row as Record<string, unknown>));
+      if (row.legacy_player_id) {
+        legacyByRivieraId.set(rivieraId, String(row.legacy_player_id));
+      }
     }
   }
 
-  const rpcIds = opts?.publicOnly
+  const needsCanon = opts?.publicOnly
     ? valid
     : valid.filter((id) => {
         const profile = map.get(id) ?? DEFAULT_PROFILE;
         return !profile.fotoUrl || isDefaultRating(profile.rating);
       });
-  if (rpcIds.length > 0) {
-    const fromRpc = await fetchEventAvatarsByRivieraIds(rpcIds);
-    for (const id of rpcIds) {
-      const profile = fromRpc.get(id);
+
+  if (needsCanon.length > 0) {
+    const legacyIds = Array.from(
+      new Set(
+        needsCanon.map((id) => legacyByRivieraId.get(id) ?? id).filter(Boolean)
+      )
+    );
+    const fromLegacyCanon = await fetchCanonicalProfilesByLegacyPlayerIds(
+      opts?.organizadorId ?? "",
+      legacyIds,
+      { allowAuthenticatedFallback: client === supabase }
+    );
+    for (const rivieraId of needsCanon) {
+      const legacyId = legacyByRivieraId.get(rivieraId) ?? rivieraId;
+      const profile = fromLegacyCanon.get(legacyId);
       if (profile) {
-        map.set(id, mergeProfile(map.get(id) ?? { ...DEFAULT_PROFILE }, profile));
+        map.set(
+          rivieraId,
+          mergeProfile(map.get(rivieraId) ?? { ...DEFAULT_PROFILE }, profile)
+        );
+      }
+    }
+
+    const stillDefault = needsCanon.filter((id) =>
+      isDefaultRating(map.get(id)?.rating ?? DEFAULT_PROFILE.rating)
+    );
+    if (stillDefault.length > 0) {
+      const fromRpc = await fetchEventAvatarsByRivieraIds(stillDefault);
+      for (const id of stillDefault) {
+        const profile = fromRpc.get(id);
+        if (profile) {
+          map.set(
+            id,
+            mergeProfile(map.get(id) ?? { ...DEFAULT_PROFILE }, profile)
+          );
+        }
       }
     }
   }

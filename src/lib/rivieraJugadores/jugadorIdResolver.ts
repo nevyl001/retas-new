@@ -145,7 +145,9 @@ export async function resolveLocalJugadorIdByLegacyPlayerId(
 
   const globalRows = await listRivieraJugadoresByLegacyPlayerId(legacy);
   const preferred =
-    globalRows.find((row) => row.organizador_id !== org) ?? globalRows[0];
+    globalRows.find((row) => row.organizador_id === org) ??
+    globalRows.find((row) => row.organizador_id !== org) ??
+    globalRows[0];
   if (preferred) {
     return finalizeLocal(preferred.id);
   }

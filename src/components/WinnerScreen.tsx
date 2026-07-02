@@ -12,6 +12,11 @@ import {
   buildTeamWinnerCelebrateStatCards,
   type TeamWinnerCelebrateStats,
 } from "../lib/teamWinnerCelebrate";
+import {
+  pairPlayer1DisplayName,
+  pairPlayer2DisplayName,
+  pairPlayersDisplayLabel,
+} from "../lib/pairPlayerNames";
 import "./WinnerHero.css";
 
 interface WinnerScreenProps {
@@ -42,8 +47,8 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
   const winnerAvatarEntries = useMemo((): PlayerAvatarLookupEntry[] => {
     if (!winner) return [];
     return [
-      { id: winner.player1_id, name: winner.player1_name },
-      { id: winner.player2_id, name: winner.player2_name },
+      { id: winner.player1_id, name: pairPlayer1DisplayName(winner) },
+      { id: winner.player2_id, name: pairPlayer2DisplayName(winner) },
     ];
   }, [winner]);
 
@@ -103,7 +108,7 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
     <div className="winner-page">
       <div className="elegant-winner-screen elegant-winner-screen--share">
         <RetaRoundRobinWinnerCelebrate
-          pairLabel={`${winner!.player1_name} / ${winner!.player2_name}`}
+          pairLabel={pairPlayersDisplayLabel(winner!)}
           pairId={winner!.id}
           torneoNombre={torneoNombre}
           tournamentWinner={tournamentWinner}

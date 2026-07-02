@@ -8,6 +8,7 @@ import {
   type HeadToHeadMatch,
   type UnifiedStandingStats,
 } from "./unifiedStandings";
+import { pairPlayersDisplayLabel } from "./pairPlayerNames";
 
 export interface TeamConfig {
   teamNames: string[];
@@ -94,7 +95,7 @@ export function sortPairsForStandings(
 ): PairWithStats[] {
   const entities = pairs.map((p, i) => ({
     id: p.id,
-    label: `${p.player1_name}/${p.player2_name}`,
+    label: pairPlayersDisplayLabel(p),
     seed: i,
     stats: pairToUnifiedStats(p),
   }));

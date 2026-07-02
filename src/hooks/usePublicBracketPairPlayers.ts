@@ -6,6 +6,10 @@ import {
 } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { fetchPairsByIdsPublic } from "../services/torneoExpressService";
 import type { PublicRetaPairPlayer } from "../components/public/PublicRetaPairSide";
+import {
+  pairPlayer1DisplayName,
+  pairPlayer2DisplayName,
+} from "../lib/pairPlayerNames";
 
 export function usePublicBracketPairPlayers(
   organizadorId: string | null | undefined,
@@ -37,8 +41,8 @@ export function usePublicBracketPairPlayers(
       try {
         const pairs = await fetchPairsByIdsPublic(pairIds);
         const entries: PlayerAvatarLookupEntry[] = pairs.flatMap((p) => [
-          { id: p.player1_id, name: p.player1_name },
-          { id: p.player2_id, name: p.player2_name },
+          { id: p.player1_id, name: pairPlayer1DisplayName(p) },
+          { id: p.player2_id, name: pairPlayer2DisplayName(p) },
         ]);
         const profiles = await resolvePlayerPublicProfiles(organizadorId, entries, {
           publicOnly: true,
@@ -50,13 +54,13 @@ export function usePublicBracketPairPlayers(
           next[pair.id] = [
             {
               id: pair.player1_id,
-              name: pair.player1_name,
+              name: pairPlayer1DisplayName(pair),
               fotoUrl: profiles[pair.player1_id]?.fotoUrl ?? null,
               rating: profiles[pair.player1_id]?.rating ?? 3,
             },
             {
               id: pair.player2_id,
-              name: pair.player2_name,
+              name: pairPlayer2DisplayName(pair),
               fotoUrl: profiles[pair.player2_id]?.fotoUrl ?? null,
               rating: profiles[pair.player2_id]?.rating ?? 3,
             },

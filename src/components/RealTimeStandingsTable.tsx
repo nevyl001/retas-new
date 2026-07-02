@@ -18,6 +18,7 @@ import {
   sortPairsForStandings,
   buildHeadToHeadFromMatches,
 } from "../lib/standingsUtils";
+import { pairPlayersDisplayLabel } from "../lib/pairPlayerNames";
 import {
   getDecidingCriterionBetween,
   criterionCellClass,
@@ -331,7 +332,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     return sortedPairs.map((pair, index) => ({
       key: pair.id,
       position: index + 1,
-      label: `${pair.player1_name} / ${pair.player2_name}`,
+      label: pairPlayersDisplayLabel(pair),
       matchesPlayed: pair.matchesPlayed,
       pg: pair.pg,
       pp: pair.pp,
@@ -538,7 +539,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
                   </span>
                 </td>
                 <td className={`te-pub-standings-row__name ${COL_ENTITY}`}>
-                  {pair.player1_name} / {pair.player2_name}
+                  {pairPlayersDisplayLabel(pair)}
                 </td>
                 <td className={COL_PJ}>{pair.matchesPlayed}</td>
                 <td

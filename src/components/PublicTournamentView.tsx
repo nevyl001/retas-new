@@ -48,6 +48,11 @@ import {
 } from "./public/PublicRetaWinnerSection";
 import { RetaRoundRobinWinnerCelebrate } from "./reta/RetaRoundRobinWinnerCelebrate";
 import {
+  pairPlayer1DisplayName,
+  pairPlayer2DisplayName,
+  pairPlayersDisplayLabel,
+} from "../lib/pairPlayerNames";
+import {
   resolvePlayerAvatars,
   resolvePlayerPublicProfiles,
   type PlayerAvatarLookupEntry,
@@ -330,8 +335,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     const entries: PlayerAvatarLookupEntry[] = [];
     for (const pair of pairs) {
       for (const row of [
-        { id: pair.player1_id, name: pair.player1_name || pair.player1?.name },
-        { id: pair.player2_id, name: pair.player2_name || pair.player2?.name },
+        { id: pair.player1_id, name: pairPlayer1DisplayName(pair) },
+        { id: pair.player2_id, name: pairPlayer2DisplayName(pair) },
       ]) {
         if (!row.id || seen.has(row.id)) continue;
         seen.add(row.id);
@@ -363,9 +368,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const getPairName = (pairId: string) => {
     const pair = pairs.find((p) => p.id === pairId);
     if (!pair) return "Pareja no encontrada";
-    const n1 = pair.player1_name || pair.player1?.name || "Jugador 1";
-    const n2 = pair.player2_name || pair.player2?.name || "Jugador 2";
-    return `${n1} / ${n2}`;
+    return pairPlayersDisplayLabel(pair);
   };
 
   const getPairPlayers = useCallback(
@@ -375,13 +378,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       return [
         {
           id: pair.player1_id,
-          name: pair.player1_name || pair.player1?.name || "Jugador 1",
+          name: pairPlayer1DisplayName(pair),
           fotoUrl: playerProfiles[pair.player1_id]?.fotoUrl ?? null,
           rating: playerProfiles[pair.player1_id]?.rating ?? 3,
         },
         {
           id: pair.player2_id,
-          name: pair.player2_name || pair.player2?.name || "Jugador 2",
+          name: pairPlayer2DisplayName(pair),
           fotoUrl: playerProfiles[pair.player2_id]?.fotoUrl ?? null,
           rating: playerProfiles[pair.player2_id]?.rating ?? 3,
         },

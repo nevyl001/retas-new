@@ -25,19 +25,6 @@ function normalizeName(n: string): string {
   return normalizePlayerNameKey(n);
 }
 
-function pickCanonicalRivieraRow(rows: RivieraJugador[]): RivieraJugador {
-  return [...rows].sort((a, b) => {
-    let scoreA = 0;
-    let scoreB = 0;
-    if (a.legacy_player_id) scoreA += 20;
-    if (b.legacy_player_id) scoreB += 20;
-    if (isRealEmail(a.email)) scoreA += 10;
-    if (isRealEmail(b.email)) scoreB += 10;
-    if (scoreB !== scoreA) return scoreB - scoreA;
-    return (a.created_at ?? "").localeCompare(b.created_at ?? "");
-  })[0];
-}
-
 function isRealEmail(email: string | null | undefined): boolean {
   if (!email?.trim()) return false;
   return !email.trim().toLowerCase().endsWith("@padel.local");
@@ -51,29 +38,6 @@ async function fetchPlayerById(id: string): Promise<Player | null> {
     .maybeSingle();
   if (error || !data) return null;
   return data as Player;
-}
-
-/** Busca en `players` por nombre (incluye filas sin user_id del esquema legacy). */
-async function searchLegacyPlayersByName(
-  nombre: string
-): Promise<Player[]> {
-  const trimmed = nombre.trim();
-  if (!trimmed) return [];
-
-  const { data, error } = await supabase
-    .from("players")
-    .select("*")
-    .ilike("name", trimmed);
-
-  if (error) {
-    console.warn("searchLegacyPlayersByName:", error);
-    return [];
-  }
-
-  const key = normalizeName(trimmed);
-  return ((data ?? []) as Player[]).filter(
-    (p) => normalizeName(p.name) === key
-  );
 }
 
 function pickBestLegacyMatch(
@@ -155,15 +119,6 @@ async function findLegacyPlayerForRiviera(
   const orgMatch = pickBestLegacyMatch(orgScoped, organizadorId, rj);
   if (orgMatch && legacyMatchesRivieraName(orgMatch, rj)) {
     return orgMatch;
-  }
-
-  const globalByName = await searchLegacyPlayersByName(rj.nombre);
-  const globalMatch = pickBestLegacyMatch(globalByName, organizadorId, rj);
-  if (globalMatch && legacyMatchesRivieraName(globalMatch, rj)) {
-    const row = globalMatch as Player & { user_id?: string | null };
-    if (!row.user_id || row.user_id === organizadorId) {
-      return globalMatch;
-    }
   }
 
   return null;
@@ -257,22 +212,11 @@ export async function buildLegacyPlayersFromRivieraRegistry(
   }
 
   const registry = await listRivieraJugadores(organizadorId);
-  const byName = new Map<string, RivieraJugador[]>();
-
-  for (const rj of registry) {
-    const nameKey = normalizeName(rj.nombre);
-    if (!nameKey) continue;
-    const group = byName.get(nameKey) ?? [];
-    group.push(rj);
-    byName.set(nameKey, group);
-  }
-
   const out: Player[] = [];
-  const legacyIdToNameKey = new Map<string, string>();
   const seenLegacyIds = new Set<string>();
 
-  for (const rows of Array.from(byName.values())) {
-    let canonical = pickCanonicalRivieraRow(rows);
+  for (const row of registry) {
+    let canonical = row;
     let legacy: Player | null = null;
 
     if (canonical.legacy_player_id) {
@@ -285,12 +229,6 @@ export async function buildLegacyPlayersFromRivieraRegistry(
     }
 
     if (!legacy || !legacyMatchesRivieraName(legacy, canonical)) continue;
-
-    const nameKey = normalizeName(canonical.nombre);
-    const clashKey = legacyIdToNameKey.get(legacy.id);
-    if (clashKey && clashKey !== nameKey) continue;
-
-    legacyIdToNameKey.set(legacy.id, nameKey);
     if (seenLegacyIds.has(legacy.id)) continue;
     seenLegacyIds.add(legacy.id);
 
@@ -371,11 +309,7 @@ export async function syncLegacyPlayersFromRivieraRegistry(
   }
 
   const registry = await listRivieraJugadores(organizadorId);
-  const seenNames = new Set<string>();
   for (const rj of registry) {
-    const nameKey = normalizeName(rj.nombre);
-    if (!nameKey || seenNames.has(nameKey)) continue;
-    seenNames.add(nameKey);
     await ensureLegacyPlayerForRivieraJugador(organizadorId, rj);
   }
   lastLegacySyncAt[organizadorId] = now;
@@ -695,11 +629,7 @@ export async function syncLigaJugadoresFromRivieraRegistry(
 
   const registry = await listRivieraJugadores(organizadorId);
   const activePool = await loadActiveLigaJugadoresRows(organizadorId);
-  const seenNames = new Set<string>();
   for (const rj of registry) {
-    const nameKey = normalizeName(rj.nombre);
-    if (!nameKey || seenNames.has(nameKey)) continue;
-    seenNames.add(nameKey);
     await ensureLigaJugadorForRivieraJugador(organizadorId, rj, activePool);
   }
   await consolidateDuplicateLigaJugadores(organizadorId);
@@ -817,7 +747,7 @@ export async function assertLigaJugadoresDelOrganizador(
   }
 }
 
-/** Propaga nombre y contacto del registro Riviera a `players` y `liga_jugadores` enlazados. */
+/** Propaga nombre y contacto del registro Riviera a `players`, retas, duelos y liga. */
 export async function syncRivieraJugadorToLinkedPools(
   organizadorId: string,
   rj: RivieraJugador
@@ -825,19 +755,17 @@ export async function syncRivieraJugadorToLinkedPools(
   const nombre = rj.nombre.trim();
   if (!nombre) return;
 
+  const { propagatePlayerNameAcrossEvents } = await import("../pairPlayerNames");
+  await propagatePlayerNameAcrossEvents({
+    nombre,
+    legacyPlayerId: rj.legacy_player_id,
+    rivieraJugadorId: rj.id,
+  });
+
   if (rj.legacy_player_id) {
     try {
       const legacy = await fetchPlayerById(rj.legacy_player_id);
       if (legacy) {
-        if (!legacyMatchesRivieraName(legacy, rj)) {
-          const { error: nameErr } = await supabase
-            .from("players")
-            .update({ name: nombre })
-            .eq("id", legacy.id);
-          if (nameErr) {
-            console.warn("syncRivieraJugadorToLinkedPools rename:", nameErr);
-          }
-        }
         await applyRivieraContactToLegacyPlayer(rj, legacy);
       }
     } catch (e) {

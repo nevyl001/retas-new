@@ -1,5 +1,6 @@
 import React from "react";
 import { Pair, Match } from "../lib/database";
+import { pairPlayersDisplayLabel } from "../lib/pairPlayerNames";
 import "./RestingPairsSection.css";
 
 interface RestingPairsSectionProps {
@@ -67,7 +68,7 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
         {restingPairs.map((pair) => (
           <div key={pair.id} className="resting-pair-card">
             <span className="resting-pair-name">
-              {pair.player1_name} / {pair.player2_name}
+              {pairPlayersDisplayLabel(pair)}
             </span>
           </div>
         ))}
