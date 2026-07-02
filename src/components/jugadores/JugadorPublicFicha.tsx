@@ -46,7 +46,10 @@ import {
 } from "../../lib/rivieraJugadores/publicFichaRanking";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
-import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrganizador";
+import {
+  PUBLIC_ORGANIZER_RPC_FALLBACK,
+  resolvePublicOrganizadorId,
+} from "../../lib/rivieraJugadores/publicOrganizador";
 import type {
   RatingHistorialEntry,
   RivieraJugadorWithStats,
@@ -122,7 +125,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       setJugador(jugadorBase);
       if (jugadorBase) {
         if (internalClub && orgId) {
-          jugadorBase = await enrichJugadorConcedidoClubView(orgId, jugadorBase);
+          jugadorBase = await enrichJugadorConcedidoClubView(orgId, jugadorBase, {
+            rpc: PUBLIC_ORGANIZER_RPC_FALLBACK,
+          });
         }
         void prefetchOrganizerDisplayNames([
           orgId,
@@ -137,6 +142,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         if (internalClub && orgId) {
           jugadorBase = await enrichJugadorConcedidoClubView(orgId, jugadorBase, {
             participaciones: unified.historial,
+            rpc: PUBLIC_ORGANIZER_RPC_FALLBACK,
           });
         }
         const ratingView = await loadUnifiedRatingViewForJugador(jugadorBase, {
@@ -146,6 +152,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           fetchHistorial: user?.id
             ? obtenerHistorialRating
             : obtenerHistorialRatingPublic,
+          rpc: internalClub || orgId ? PUBLIC_ORGANIZER_RPC_FALLBACK : undefined,
         });
         jugadorBase = {
           ...jugadorBase,

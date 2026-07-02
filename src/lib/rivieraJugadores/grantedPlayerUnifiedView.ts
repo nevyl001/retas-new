@@ -1,5 +1,10 @@
 import { supabase, supabasePublicRead } from "../supabaseClient";
 import {
+  isMissingRatingRpcInfrastructureError,
+  shouldFallbackRatingRpcError,
+  type RatingRpcFallbackOptions,
+} from "./ratingRpcErrors";
+import {
   listGrantedLocalJugadorIdsForSource,
   loadGrantedSourceDisplayData,
 } from "./organizerPlayerAccess";
@@ -61,6 +66,19 @@ let ratingUnifiedRpcAvailable: boolean | null = null;
 
 function markRatingRpcUnavailable(): void {
   ratingUnifiedRpcAvailable = false;
+}
+
+function handleRatingRpcError(
+  error: { code?: string; message?: string; status?: number },
+  options?: RatingRpcFallbackOptions
+): boolean {
+  if (!shouldFallbackRatingRpcError(error, options)) {
+    return false;
+  }
+  if (isMissingRatingRpcInfrastructureError(error)) {
+    markRatingRpcUnavailable();
+  }
+  return true;
 }
 
 export async function discoverLinkedJugadorIds(
@@ -208,24 +226,10 @@ async function loadCanonicalFromDiscoveredProfiles(
   };
 }
 
-function isMissingRatingRpcError(
-  error: { code?: string; message?: string; status?: number } | null
-): boolean {
-  if (!error) return false;
-  const msg = (error.message ?? "").toLowerCase();
-  return (
-    error.status === 404 ||
-    error.code === "42883" ||
-    error.code === "PGRST202" ||
-    msg.includes("could not find the function") ||
-    msg.includes("riviera_rating_canonico_para_jugador") ||
-    msg.includes("riviera_rating_historial_unificado")
-  );
-}
-
 export async function fetchRatingCanonicoParaJugador(
   organizadorId: string,
-  jugadorId: string
+  jugadorId: string,
+  options?: RatingRpcFallbackOptions
 ): Promise<CanonicalRatingSnapshot | null> {
   if (ratingUnifiedRpcAvailable === false) return null;
 
@@ -239,8 +243,7 @@ export async function fetchRatingCanonicoParaJugador(
   });
 
   if (error) {
-    if (isMissingRatingRpcError(error)) {
-      markRatingRpcUnavailable();
+    if (handleRatingRpcError(error, options)) {
       return null;
     }
     throw error;
@@ -268,7 +271,8 @@ export async function fetchRatingCanonicoParaJugador(
 export async function fetchRatingHistorialUnificado(
   organizadorId: string,
   jugadorId: string,
-  limite = 10
+  limite = 10,
+  options?: RatingRpcFallbackOptions
 ): Promise<RatingHistorialEntry[]> {
   if (ratingUnifiedRpcAvailable === false) return [];
 
@@ -283,8 +287,7 @@ export async function fetchRatingHistorialUnificado(
   });
 
   if (error) {
-    if (isMissingRatingRpcError(error)) {
-      markRatingRpcUnavailable();
+    if (handleRatingRpcError(error, options)) {
       return [];
     }
     throw error;
@@ -379,12 +382,17 @@ export async function loadCanonicalRatingSnapshot(
     usePublicRead?: boolean;
     organizadorId?: string | null;
     participacionesHistorial?: JugadorParticipacion[];
+    rpc?: RatingRpcFallbackOptions;
   }
 ): Promise<CanonicalRatingSnapshot> {
   const participaciones = options?.participacionesHistorial ?? [];
   const org = options?.organizadorId?.trim();
   if (org) {
-    const rpcCanon = await fetchRatingCanonicoParaJugador(org, jugador.id);
+    const rpcCanon = await fetchRatingCanonicoParaJugador(
+      org,
+      jugador.id,
+      options?.rpc
+    );
     if (rpcCanon) return rpcCanon;
   }
 
@@ -530,13 +538,19 @@ export async function loadUnifiedRatingHistorialForJugador(
     organizadorId?: string | null;
     participacionesHistorial?: JugadorParticipacion[];
     fetchHistorial: (jugadorId: string, limite: number) => Promise<RatingHistorialEntry[]>;
+    rpc?: RatingRpcFallbackOptions;
   }
 ): Promise<RatingHistorialEntry[]> {
   const limite = options.limite ?? 10;
   const participaciones = options.participacionesHistorial ?? [];
   const org = options.organizadorId?.trim();
   if (org) {
-    const rpcHistorial = await fetchRatingHistorialUnificado(org, jugador.id, limite);
+    const rpcHistorial = await fetchRatingHistorialUnificado(
+      org,
+      jugador.id,
+      limite,
+      options.rpc
+    );
     if (rpcHistorial.length > 0) return rpcHistorial;
   }
 
@@ -561,6 +575,7 @@ export async function loadUnifiedRatingViewForJugador(
     participacionesHistorial?: JugadorParticipacion[];
     fetchHistorial: (jugadorId: string, limite: number) => Promise<RatingHistorialEntry[]>;
     usePublicRead?: boolean;
+    rpc?: RatingRpcFallbackOptions;
   }
 ): Promise<{ historial: RatingHistorialEntry[]; jugador: RivieraJugadorWithStats }> {
   const participaciones = options.participacionesHistorial ?? [];
@@ -568,6 +583,7 @@ export async function loadUnifiedRatingViewForJugador(
     usePublicRead: options.usePublicRead,
     organizadorId: options.organizadorId,
     participacionesHistorial: participaciones,
+    rpc: options.rpc,
   });
   const historial = await loadUnifiedRatingHistorialForJugador(jugador, options);
 

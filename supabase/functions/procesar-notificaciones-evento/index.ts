@@ -65,16 +65,22 @@ interface PairWithContactRow {
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-notificaciones-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const NOTIFICACIONES_WEBHOOK_SECRET =
+  Deno.env.get("NOTIFICACIONES_WEBHOOK_SECRET") ?? "";
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase env vars.");
+}
+
+if (!NOTIFICACIONES_WEBHOOK_SECRET) {
+  throw new Error("Missing NOTIFICACIONES_WEBHOOK_SECRET env var.");
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -86,6 +92,22 @@ function jsonResponse(status: number, payload: unknown): Response {
     status,
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
+}
+
+/** Comparación en tiempo constante para evitar filtrar el secret por timing. */
+function secretsEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+function isAuthorizedWebhook(req: Request): boolean {
+  const provided = req.headers.get("x-notificaciones-secret")?.trim() ?? "";
+  if (!provided) return false;
+  return secretsEqual(provided, NOTIFICACIONES_WEBHOOK_SECRET);
 }
 
 function isFakeEmail(email: string | null | undefined): boolean {
@@ -400,6 +422,10 @@ Deno.serve(async (req) => {
   }
   if (req.method !== "POST") {
     return jsonResponse(405, { error: "Method not allowed" });
+  }
+
+  if (!isAuthorizedWebhook(req)) {
+    return jsonResponse(401, { error: "Unauthorized" });
   }
 
   let body: Record<string, unknown>;

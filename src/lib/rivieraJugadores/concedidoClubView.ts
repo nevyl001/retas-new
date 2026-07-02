@@ -1,6 +1,11 @@
 import { supabase, supabasePublicRead } from "../supabaseClient";
 import type { JugadorParticipacion, JugadorStats, RivieraJugadorWithStats } from "./types";
 import { discoverLinkedJugadorIds } from "./grantedPlayerUnifiedView";
+import {
+  isMissingRatingRpcInfrastructureError,
+  shouldFallbackRatingRpcError,
+  type RatingRpcFallbackOptions,
+} from "./ratingRpcErrors";
 
 export type ConcedidoClubMeta = {
   isConcedido: boolean;
@@ -12,25 +17,6 @@ export type ConcedidoClubMeta = {
 };
 
 let concedidoClubRpcAvailable: boolean | null = null;
-
-function isMissingConcedidoRpcError(
-  error: { code?: string; message?: string; status?: number } | null
-): boolean {
-  if (!error) return false;
-  const msg = (error.message ?? "").toLowerCase();
-  return (
-    error.status === 404 ||
-    error.status === 405 ||
-    error.code === "25006" ||
-    error.code === "42883" ||
-    error.code === "PGRST202" ||
-    msg.includes("could not find the function") ||
-    msg.includes("method not allowed") ||
-    msg.includes("read-only transaction") ||
-    msg.includes("riviera_rating_canonico_para_jugador") ||
-    msg.includes("riviera_concedidos_ranking_enriquecimiento")
-  );
-}
 
 let concedidosRankingBatchRpcAvailable: boolean | null = null;
 
@@ -57,9 +43,10 @@ function mapConcedidoRankingBatchRow(
   };
 }
 
-/** Una sola llamada RPC para todo el ranking público (anon-safe). */
+/** Una sola llamada RPC para enriquecer ranking del club (requiere sesión tras PR2). */
 export async function fetchConcedidosRankingMetaBatch(
-  granteeOrganizadorId: string
+  granteeOrganizadorId: string,
+  options?: RatingRpcFallbackOptions
 ): Promise<Map<string, ConcedidoClubMeta>> {
   const map = new Map<string, ConcedidoClubMeta>();
   if (concedidosRankingBatchRpcAvailable === false) return map;
@@ -73,8 +60,10 @@ export async function fetchConcedidosRankingMetaBatch(
   );
 
   if (error) {
-    if (isMissingConcedidoRpcError(error)) {
-      concedidosRankingBatchRpcAvailable = false;
+    if (shouldFallbackRatingRpcError(error, options)) {
+      if (isMissingRatingRpcInfrastructureError(error)) {
+        concedidosRankingBatchRpcAvailable = false;
+      }
       return map;
     }
     throw error;
@@ -104,15 +93,16 @@ function resolveConcedidoMetaFromBatch(
 
 export async function enrichJugadoresConcedidoClubViewBatch(
   granteeOrganizadorId: string | null | undefined,
-  jugadores: RivieraJugadorWithStats[]
+  jugadores: RivieraJugadorWithStats[],
+  options?: RatingRpcFallbackOptions
 ): Promise<RivieraJugadorWithStats[]> {
   const org = granteeOrganizadorId?.trim();
   if (!org || jugadores.length === 0) return jugadores;
 
-  const batch = await fetchConcedidosRankingMetaBatch(org);
+  const batch = await fetchConcedidosRankingMetaBatch(org, options);
   if (concedidosRankingBatchRpcAvailable === false) {
     return Promise.all(
-      jugadores.map((j) => enrichJugadorConcedidoClubView(org, j))
+      jugadores.map((j) => enrichJugadorConcedidoClubView(org, j, { rpc: options }))
     );
   }
 
@@ -120,7 +110,7 @@ export async function enrichJugadoresConcedidoClubViewBatch(
     return Promise.all(
       jugadores.map((j) =>
         j.concedidoPorAdmin
-          ? enrichJugadorConcedidoClubView(org, j)
+          ? enrichJugadorConcedidoClubView(org, j, { rpc: options })
           : Promise.resolve(j)
       )
     );
@@ -134,7 +124,8 @@ export async function enrichJugadoresConcedidoClubViewBatch(
 
 export async function fetchConcedidoClubMeta(
   granteeOrganizadorId: string,
-  jugadorId: string
+  jugadorId: string,
+  options?: RatingRpcFallbackOptions
 ): Promise<ConcedidoClubMeta | null> {
   if (concedidoClubRpcAvailable === false) return null;
 
@@ -148,8 +139,10 @@ export async function fetchConcedidoClubMeta(
   });
 
   if (error) {
-    if (isMissingConcedidoRpcError(error)) {
-      concedidoClubRpcAvailable = false;
+    if (shouldFallbackRatingRpcError(error, options)) {
+      if (isMissingRatingRpcInfrastructureError(error)) {
+        concedidoClubRpcAvailable = false;
+      }
       return null;
     }
     throw error;
@@ -304,7 +297,7 @@ export function applyConcedidoClubMeta(
 export async function enrichJugadorConcedidoClubView(
   granteeOrganizadorId: string | null | undefined,
   jugador: RivieraJugadorWithStats,
-  options?: { participaciones?: JugadorParticipacion[] }
+  options?: { participaciones?: JugadorParticipacion[]; rpc?: RatingRpcFallbackOptions }
 ): Promise<RivieraJugadorWithStats> {
   if (
     jugador.concedidoPorAdmin &&
@@ -325,7 +318,7 @@ export async function enrichJugadorConcedidoClubView(
   const org = granteeOrganizadorId?.trim();
   let meta: ConcedidoClubMeta | null = null;
   if (org) {
-    meta = await fetchConcedidoClubMeta(org, jugador.id);
+    meta = await fetchConcedidoClubMeta(org, jugador.id, options?.rpc);
   }
   if (!meta?.isConcedido) {
     meta = await fetchConcedidoClubMetaFallback(

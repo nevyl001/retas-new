@@ -24,6 +24,7 @@ import {
   getPublicOrganizadorIdFromPath,
   getPublicOrganizadorIdFromSearch,
   getPublicOrganizadorIdWithoutUser,
+  PUBLIC_ORGANIZER_RPC_FALLBACK,
 } from "../../lib/rivieraJugadores/publicOrganizador";
 import type {
   RivieraJugadorCategoria,
@@ -160,7 +161,12 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     setError(null);
     try {
       void resolveOrganizerDisplayName(orgId);
-      const rows = await listInternalClubJugadoresRanking(orgId, categoria, genero);
+      const rows = await listInternalClubJugadoresRanking(
+        orgId,
+        categoria,
+        genero,
+        PUBLIC_ORGANIZER_RPC_FALLBACK
+      );
       setJugadores(rows);
       void prefetchOrganizerDisplayNames([
         orgId,

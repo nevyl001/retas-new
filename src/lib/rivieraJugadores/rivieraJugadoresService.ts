@@ -32,6 +32,7 @@ import {
   enrichJugadorConcedidoClubView,
   enrichJugadoresConcedidoClubViewBatch,
 } from "./concedidoClubView";
+import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
 import {
   mergeJugadorStatsPuntosTotales,
   rankingPuntosJugador,
@@ -248,7 +249,8 @@ async function mergeGrantedJugadoresIntoRanking(
   organizadorId: string,
   categoria: string,
   genero: RivieraJugadorGenero,
-  ownRows: RivieraJugadorWithStats[]
+  ownRows: RivieraJugadorWithStats[],
+  rpcOptions?: RatingRpcFallbackOptions
 ): Promise<RivieraJugadorWithStats[]> {
   const revokedLocalIds = await listRevokedGrantLocalJugadorIds(organizadorId);
   const ownRowsFiltered = excludeRevokedGrantLocalClones(ownRows, revokedLocalIds);
@@ -322,7 +324,8 @@ async function mergeGrantedJugadoresIntoRanking(
 
   const enriched = await enrichJugadoresConcedidoClubViewBatch(
     organizadorId,
-    merged
+    merged,
+    rpcOptions
   );
   return sortJugadoresByClubLocalPuntos(enriched);
 }
@@ -1711,11 +1714,13 @@ export async function resolveRankingPosicionForPublicFicha(
 
   const org = options.orgId?.trim();
   if (target === "club" && org) {
+    const { PUBLIC_ORGANIZER_RPC_FALLBACK } = await import("./publicOrganizador");
     return getRankingPosicionEnCategoria(
       org,
       jugador.id,
       jugador.categoria,
-      genero
+      genero,
+      PUBLIC_ORGANIZER_RPC_FALLBACK
     );
   }
 
@@ -1729,7 +1734,8 @@ export async function resolveRankingPosicionForPublicFicha(
 export async function listInternalClubJugadoresRanking(
   organizadorId: string,
   categoria: string,
-  genero: RivieraJugadorGenero = "M"
+  genero: RivieraJugadorGenero = "M",
+  options?: RatingRpcFallbackOptions
 ): Promise<RivieraJugadorWithStats[]> {
   const generoParam = genero === "F" ? "F" : "M";
   const { data, error } = await supabase.rpc(
@@ -1748,7 +1754,8 @@ export async function listInternalClubJugadoresRanking(
       organizadorId,
       categoria,
       genero,
-      filtered
+      filtered,
+      options
     );
     return stripOfficialPuntosFromInternalClubRanking(merged);
   }
@@ -1796,7 +1803,8 @@ export async function listInternalClubJugadoresRanking(
     organizadorId,
     categoria,
     genero,
-    sorted
+    sorted,
+    options
   );
   return stripOfficialPuntosFromInternalClubRanking(merged);
 }
@@ -1900,13 +1908,15 @@ export async function getRankingPosicionEnCategoria(
   organizadorId: string,
   jugadorId: string,
   categoria: string,
-  genero: RivieraJugadorGenero = "M"
+  genero: RivieraJugadorGenero = "M",
+  rpcOptions?: RatingRpcFallbackOptions
 ): Promise<number | null> {
   const { rankingPosicionEnListaForClub } = await import("./rankingPosition");
   const list = await listInternalClubJugadoresRanking(
     organizadorId,
     categoria,
-    genero
+    genero,
+    rpcOptions
   );
   return rankingPosicionEnListaForClub(list, jugadorId);
 }

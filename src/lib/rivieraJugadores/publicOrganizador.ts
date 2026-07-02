@@ -1,4 +1,10 @@
 import { supabase } from "../supabaseClient";
+import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
+
+/** Vistas públicas del club: ante 42501 en RPCs de rating, degradar a lectura RLS pública. */
+export const PUBLIC_ORGANIZER_RPC_FALLBACK: RatingRpcFallbackOptions = {
+  publicRpcContext: true,
+};
 
 /** UUID del club/organizador para rankings públicos (build-time, un solo club). */
 export function getPublicOrganizadorIdFromEnv(): string | null {

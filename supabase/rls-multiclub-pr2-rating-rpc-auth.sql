@@ -1,10 +1,125 @@
--- Rating unificado para jugadores cedidos entre clubes.
--- Mismo patrón que riviera_participaciones_interno: SECURITY DEFINER + p_organizador_id.
--- Ejecutar TODO el archivo (incluye DROP al inicio).
+-- =============================================================================
+-- RLS multi-club — PR2: autorización caller en RPCs de rating / cedidos
+-- =============================================================================
+-- Ejecutar después de: rating-unificado-cedidos.sql, organizer-player-access.sql,
+--   admin-master-controls.sql (is_master_admin).
+--
+-- Cierra invocación anon y parámetros libres en SECURITY DEFINER.
+-- =============================================================================
 
-DROP FUNCTION IF EXISTS public.riviera_rating_canonico_para_jugador(uuid, uuid) CASCADE;
-DROP FUNCTION IF EXISTS public.riviera_rating_historial_unificado(uuid, uuid, integer) CASCADE;
-DROP FUNCTION IF EXISTS public.riviera_concedidos_ranking_enriquecimiento(uuid) CASCADE;
+-- ── Helpers internos (no expuestos a anon) ──
+
+CREATE OR REPLACE FUNCTION public._assert_rating_rpc_authenticated()
+RETURNS uuid
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'No autorizado'
+      USING ERRCODE = '42501';
+  END IF;
+  RETURN v_uid;
+END;
+$$;
+
+COMMENT ON FUNCTION public._assert_rating_rpc_authenticated() IS
+  'PR2: exige sesión authenticated (rechaza anon).';
+
+CREATE OR REPLACE FUNCTION public._assert_rating_rpc_organizador_caller(p_organizador_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_uid uuid;
+BEGIN
+  IF p_organizador_id IS NULL THEN
+    RAISE EXCEPTION 'organizador_id requerido'
+      USING ERRCODE = '22023';
+  END IF;
+
+  v_uid := public._assert_rating_rpc_authenticated();
+
+  IF public.is_master_admin() THEN
+    RETURN;
+  END IF;
+
+  IF v_uid = p_organizador_id THEN
+    RETURN;
+  END IF;
+
+  -- Grant activo: grantee autenticado consultando su club anfitrión
+  IF EXISTS (
+    SELECT 1
+    FROM public.organizer_player_access opa
+    WHERE opa.is_active = true
+      AND opa.grantee_organizer_id = v_uid
+      AND opa.grantee_organizer_id = p_organizador_id
+  ) THEN
+    RETURN;
+  END IF;
+
+  -- Grant activo: owner autenticado consultando su club origen
+  IF EXISTS (
+    SELECT 1
+    FROM public.organizer_player_access opa
+    WHERE opa.is_active = true
+      AND opa.owner_organizador_id = v_uid
+      AND opa.owner_organizador_id = p_organizador_id
+  ) THEN
+    RETURN;
+  END IF;
+
+  RAISE EXCEPTION 'No autorizado para este organizador'
+    USING ERRCODE = '42501';
+END;
+$$;
+
+COMMENT ON FUNCTION public._assert_rating_rpc_organizador_caller(uuid) IS
+  'PR2: caller = organizador, master admin, o cuenta con grant activo en ese club.';
+
+CREATE OR REPLACE FUNCTION public._assert_concedidos_ranking_caller(p_grantee_organizer_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_uid uuid;
+BEGIN
+  IF p_grantee_organizer_id IS NULL THEN
+    RAISE EXCEPTION 'grantee_organizer_id requerido'
+      USING ERRCODE = '22023';
+  END IF;
+
+  v_uid := public._assert_rating_rpc_authenticated();
+
+  IF public.is_master_admin() THEN
+    RETURN;
+  END IF;
+
+  IF v_uid = p_grantee_organizer_id THEN
+    RETURN;
+  END IF;
+
+  RAISE EXCEPTION 'No autorizado para el mapa de cedidos de este club'
+    USING ERRCODE = '42501';
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public._assert_rating_rpc_authenticated() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public._assert_rating_rpc_organizador_caller(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public._assert_concedidos_ranking_caller(uuid) FROM PUBLIC;
+
+-- ── riviera_rating_canonico_para_jugador ──
 
 CREATE OR REPLACE FUNCTION public.riviera_rating_canonico_para_jugador(
   p_organizador_id uuid,
@@ -35,9 +150,7 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  IF to_regprocedure('public._assert_rating_rpc_organizador_caller(uuid)') IS NOT NULL THEN
-    PERFORM public._assert_rating_rpc_organizador_caller(p_organizador_id);
-  END IF;
+  PERFORM public._assert_rating_rpc_organizador_caller(p_organizador_id);
 
   SELECT opa.jugador_id, opa.local_jugador_id
   INTO v_source, v_local
@@ -97,6 +210,8 @@ BEGIN
 END;
 $$;
 
+-- ── riviera_rating_historial_unificado ──
+
 CREATE OR REPLACE FUNCTION public.riviera_rating_historial_unificado(
   p_organizador_id uuid,
   p_jugador_id uuid,
@@ -125,9 +240,7 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  IF to_regprocedure('public._assert_rating_rpc_organizador_caller(uuid)') IS NOT NULL THEN
-    PERFORM public._assert_rating_rpc_organizador_caller(p_organizador_id);
-  END IF;
+  PERFORM public._assert_rating_rpc_organizador_caller(p_organizador_id);
 
   SELECT opa.jugador_id, opa.local_jugador_id
   INTO v_source, v_local
@@ -142,12 +255,10 @@ BEGIN
   LIMIT 1;
 
   IF v_source IS NULL THEN
-    IF to_regprocedure('public._assert_rating_rpc_organizador_caller(uuid)') IS NOT NULL THEN
-      IF NOT public.is_master_admin()
-         AND auth.uid() IS DISTINCT FROM p_organizador_id THEN
-        RAISE EXCEPTION 'No autorizado para historial de este jugador'
-          USING ERRCODE = '42501';
-      END IF;
+    IF NOT public.is_master_admin()
+       AND auth.uid() IS DISTINCT FROM p_organizador_id THEN
+      RAISE EXCEPTION 'No autorizado para historial de este jugador'
+        USING ERRCODE = '42501';
     END IF;
 
     IF NOT EXISTS (
@@ -181,9 +292,8 @@ BEGIN
 END;
 $$;
 
--- Metadata de cedidos para ranking del club anfitrión.
--- Tras desplegar PR2, aplicar supabase/rls-multiclub-pr2-rating-rpc-auth.sql
--- (solo authenticated + validación auth.uid / master admin / grant).
+-- ── riviera_concedidos_ranking_enriquecimiento ──
+
 CREATE OR REPLACE FUNCTION public.riviera_concedidos_ranking_enriquecimiento(
   p_grantee_organizer_id uuid
 )
@@ -200,9 +310,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF to_regprocedure('public._assert_concedidos_ranking_caller(uuid)') IS NOT NULL THEN
-    PERFORM public._assert_concedidos_ranking_caller(p_grantee_organizer_id);
-  END IF;
+  PERFORM public._assert_concedidos_ranking_caller(p_grantee_organizer_id);
 
   RETURN QUERY
   SELECT
@@ -220,6 +328,8 @@ BEGIN
     AND opa.jugador_id IS DISTINCT FROM opa.local_jugador_id;
 END;
 $$;
+
+-- ── Permisos: solo authenticated ──
 
 REVOKE ALL ON FUNCTION public.riviera_rating_canonico_para_jugador(uuid, uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.riviera_rating_canonico_para_jugador(uuid, uuid) FROM anon;
