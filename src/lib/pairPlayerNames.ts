@@ -1,4 +1,3 @@
-import type { Pair } from "./db/types";
 import { supabase } from "./supabaseClient";
 
 type PairNameSource = {
