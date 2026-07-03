@@ -525,8 +525,8 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       <PublicShareSection
         className="liga-jornada-share"
         publicUrl={publicLigaJornadaUrl(ligaId, numero)}
-        title="Enlace TV"
-        infoLines={["Proyecta esta jornada en TV o tablet."]}
+        title="Enlace vista pública"
+        infoLines={["Proyecta esta jornada en vista pública (TV o tablet)."]}
         copyButtonLabel="Copiar enlace"
         previewLabel="Abrir vista pública"
         onCopy={async () => {

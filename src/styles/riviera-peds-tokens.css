@@ -1,0 +1,143 @@
+/* =============================================================================
+   RIVIERA APP — PEDS v1.0 (Public Experience Design System)
+   Sprint 1 — Tokens estructurales únicamente.
+
+   NO importar hasta Sprint 2+ (no wired en index.css).
+
+   REGLAS:
+   • Solo estructura: espacio, radio, sombra neutra, motion, tipografía, grid, densidad.
+   • CERO tokens de color de marca (--pub-primary, --pub-gold, etc.).
+   • Colores y branding → ClubExperience (--club-*, data-club).
+   • Sombras usan negro neutro solo para elevación, no identidad de club.
+
+   USO FUTURO (Sprint 2):
+   Aplicar en contenedor PublicShell, p. ej.:
+     .ro-public-view.peds-scope { ...hereda tokens... }
+   ============================================================================= */
+
+.peds-scope {
+  /* ── Densidad (multiplicador de espaciado y tipo en modo) ── */
+  --pub-density-factor: 1;
+  --pub-density-compact: 0.85;
+  --pub-density-comfortable: 1;
+  --pub-density-expanded: 1.15;
+
+  /* ── Espaciado — escala 4px base ── */
+  --pub-space-0: 0;
+  --pub-space-1: 0.25rem; /*  4px */
+  --pub-space-2: 0.5rem; /*  8px */
+  --pub-space-3: 0.75rem; /* 12px */
+  --pub-space-4: 1rem; /* 16px */
+  --pub-space-5: 1.25rem; /* 20px */
+  --pub-space-6: 1.5rem; /* 24px */
+  --pub-space-8: 2rem; /* 32px */
+  --pub-space-10: 2.5rem; /* 40px */
+  --pub-space-12: 3rem; /* 48px */
+  --pub-space-16: 4rem; /* 64px */
+
+  /* Aliases semánticos estructurales */
+  --pub-space-inline: var(--pub-space-2);
+  --pub-space-stack: var(--pub-space-4);
+  --pub-space-section: var(--pub-space-6);
+  --pub-space-hero: var(--pub-space-8);
+  --pub-space-page-x: max(var(--pub-space-5), env(safe-area-inset-left, 0px));
+  --pub-space-page-bottom: max(var(--pub-space-10), env(safe-area-inset-bottom, 0px));
+
+  /* ── Radio ── */
+  --pub-radius-none: 0;
+  --pub-radius-sm: 0.375rem; /*  6px */
+  --pub-radius-md: 0.625rem; /* 10px */
+  --pub-radius-lg: 0.875rem; /* 14px */
+  --pub-radius-xl: 1.125rem; /* 18px */
+  --pub-radius-full: 9999px;
+
+  /* ── Sombras — elevación neutra (no branding) ── */
+  --pub-shadow-none: none;
+  --pub-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --pub-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
+  --pub-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --pub-shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.34);
+  --pub-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* ── Motion ── */
+  --pub-motion-duration-instant: 0ms;
+  --pub-motion-duration-fast: 150ms;
+  --pub-motion-duration-normal: 200ms;
+  --pub-motion-duration-slow: 250ms;
+  --pub-motion-duration-score: 300ms;
+
+  --pub-motion-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --pub-motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --pub-motion-ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
+
+  --pub-motion-fade: opacity var(--pub-motion-duration-normal) var(--pub-motion-ease-default);
+  --pub-motion-slide: transform var(--pub-motion-duration-slow) var(--pub-motion-ease-out);
+  --pub-motion-scale: transform var(--pub-motion-duration-normal) var(--pub-motion-ease-out);
+  --pub-motion-hover: var(--pub-motion-duration-fast) var(--pub-motion-ease-default);
+
+  /* ── Tipografía — familia hereda club; escala es estructura PEDS ── */
+  --pub-font-display: var(--font-display, var(--ro-font-heading, inherit));
+  --pub-font-body: var(--font-body, var(--ro-font-body, inherit));
+  --pub-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --pub-font-weight-regular: 400;
+  --pub-font-weight-medium: 500;
+  --pub-font-weight-semibold: 600;
+  --pub-font-weight-bold: 700;
+  --pub-font-weight-extrabold: 800;
+
+  --pub-font-size-display: 0.625rem; /* 10px — eyebrow modo */
+  --pub-font-size-h1: clamp(1.5rem, 7vw, 2.25rem);
+  --pub-font-size-h2: 0.75rem; /* 12px — sección uppercase */
+  --pub-font-size-h3: 0.875rem; /* 14px — ronda / subsección */
+  --pub-font-size-body: 0.875rem; /* 14px */
+  --pub-font-size-caption: 0.75rem; /* 12px */
+  --pub-font-size-badge: 0.6875rem; /* 11px */
+  --pub-font-size-meta: 0.8125rem; /* 13px */
+  --pub-font-size-score: clamp(1.75rem, 8vw, 2.5rem);
+
+  --pub-line-height-tight: 1.15;
+  --pub-line-height-snug: 1.25;
+  --pub-line-height-normal: 1.45;
+  --pub-line-height-relaxed: 1.6;
+
+  --pub-letter-spacing-tight: -0.02em;
+  --pub-letter-spacing-normal: 0;
+  --pub-letter-spacing-wide: 0.08em;
+  --pub-letter-spacing-section: 0.18em;
+
+  /* ── Grid — mobile first ── */
+  --pub-grid-columns: 4;
+  --pub-grid-gutter: var(--pub-space-4);
+  --pub-grid-margin: var(--pub-space-5);
+  --pub-inner-max: min(100%, 680px);
+  --pub-inner-max-wide: min(100%, 1100px);
+
+  /* ── Z-index estructural (stacking contexts) ── */
+  --pub-z-base: 0;
+  --pub-z-elevated: 1;
+  --pub-z-sticky: 10;
+  --pub-z-overlay: 100;
+}
+
+/* Densidad por atributo (Sprint 6 TV / ficha) — sin color */
+.peds-scope[data-pub-density="compact"] {
+  --pub-density-factor: var(--pub-density-compact);
+}
+
+.peds-scope[data-pub-density="comfortable"] {
+  --pub-density-factor: var(--pub-density-comfortable);
+}
+
+.peds-scope[data-pub-density="expanded"] {
+  --pub-density-factor: var(--pub-density-expanded);
+}
+
+/* Desktop grid — solo estructura */
+@media (min-width: 768px) {
+  .peds-scope {
+    --pub-grid-columns: 12;
+    --pub-grid-gutter: var(--pub-space-5);
+    --pub-inner-max: var(--pub-inner-max-wide);
+  }
+}

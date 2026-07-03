@@ -1,5 +1,7 @@
 export { GameModeShell } from "./GameModeShell";
 export { PublicModeShell } from "./PublicModeShell";
+export { PublicShell } from "./PublicShell";
+export type { PublicShellProps, PubDensity } from "./PublicShell";
 export { ModeHeader } from "./ModeHeader";
 export { ModeCard } from "./ModeCard";
 export { StatusBadge, type StatusBadgeVariant } from "./StatusBadge";

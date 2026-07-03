@@ -115,7 +115,7 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Ver pantalla
+                      Vista pública
                     </a>
                   )}
                 </div>

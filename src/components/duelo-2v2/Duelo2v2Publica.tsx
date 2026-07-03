@@ -1,15 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ClubExperienceScope,
+  ClubIdentity,
+  useClubExperience,
+  useOrganizerDisplayName,
+} from "../../club-experience";
+import { isPubDsV2Enabled } from "../../config/peds";
 import { fetchRivieraJugadorProfilesByIds } from "../../lib/rivieraJugadores/publicPlayerAvatars";
 import { fetchRatingMovimientosByPartidoRef } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { DUELO_2V2_PUBLIC_POLL_INTERVAL_MS } from "../../lib/duelo2v2/publicPoll";
-import { ClubExperienceScope } from "../../club-experience";
+import { getDueloPublicStatus } from "../../lib/duelo2v2/schedule";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
+import { formatPartidoFecha } from "../../lib/torneoExpress/partidoSchedule";
 import {
   getDuelo2v2ById,
   parejaLabel,
   subscribeDuelo2v2,
 } from "../../services/duelo2v2Service";
+import { StatusBadge, type StatusBadgeVariant } from "../platform/StatusBadge";
+import { PublicHero } from "../public/peds";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
 import { Duelo2v2LiveBoard } from "./Duelo2v2LiveBoard";
 import { PublicModeShell } from "../platform/PublicModeShell";
@@ -20,6 +30,60 @@ import "./duelo2v2-page.css";
 interface Duelo2v2PublicaProps {
   dueloId: string;
 }
+
+function dueloStatusBadgeVariant(
+  tone: NonNullable<ReturnType<typeof getDueloPublicStatus>>["tone"]
+): StatusBadgeVariant {
+  if (tone === "live") return "live";
+  if (tone === "done") return "gold";
+  if (tone === "upcoming") return "pending";
+  return "muted";
+}
+
+interface Duelo2v2PublicHeroProps {
+  duelo: Duelo2v2;
+  clockNow: Date;
+}
+
+const Duelo2v2PublicHero: React.FC<Duelo2v2PublicHeroProps> = ({
+  duelo,
+  clockNow,
+}) => {
+  const { isClubBranded } = useClubExperience();
+  const organizerName = useOrganizerDisplayName(duelo.organizador_id);
+  const status = getDueloPublicStatus(duelo, clockNow);
+  const fechaLabel = duelo.programado_en
+    ? formatPartidoFecha(duelo.programado_en)
+    : undefined;
+
+  return (
+    <PublicHero
+      logoClub={
+        isClubBranded ? (
+          <ClubIdentity
+            variant="compact"
+            showTagline={false}
+            logoSurface="dark"
+            wordmarkOnly
+            className="peds-hero__club-identity"
+          />
+        ) : undefined
+      }
+      estado={
+        status ? (
+          <StatusBadge variant={dueloStatusBadgeVariant(status.tone)}>
+            {status.label}
+          </StatusBadge>
+        ) : undefined
+      }
+      nombreEvento={duelo.nombre}
+      club={organizerName}
+      categoria={duelo.descripcion || undefined}
+      fecha={fechaLabel}
+      meta="Duelo 2 vs 2"
+    />
+  );
+};
 
 async function fetchJugadorProfiles(
   ids: (string | null)[],
@@ -180,11 +244,15 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
     <ClubExperienceScope organizadorId={duelo.organizador_id}>
     <Duelo2v2PageShell publicView className="duelo2v2-publica">
       <PublicModeShell className="duelo2v2-public-board">
+        {isPubDsV2Enabled ? (
+          <Duelo2v2PublicHero duelo={duelo} clockNow={clockNow} />
+        ) : null}
         <Duelo2v2LiveBoard
           duelo={duelo}
           teamA={[...teamA]}
           teamB={[...teamB]}
-          showBrand={!tieneGanador}
+          showBrand={!tieneGanador && !isPubDsV2Enabled}
+          hidePublicHeader={isPubDsV2Enabled}
           clockNow={clockNow}
         />
 

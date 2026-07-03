@@ -5,6 +5,7 @@ import {
   useClubExperience,
   useOrganizerDisplayName,
 } from "../../club-experience";
+import { isPubDsV2Enabled } from "../../config/peds";
 import {
   JUGADOR_CATEGORIA_LABELS,
   JUGADOR_CATEGORIA_SHORT_LABELS,
@@ -32,10 +33,14 @@ import type {
 } from "../../lib/rivieraJugadores/types";
 import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
 import {
+  RIVIERA_GENERO_LABELS,
   RIVIERA_GENERO_RANKING_TITLE,
   RIVIERA_GENERO_REGISTRY_TITLE,
 } from "../../lib/rivieraJugadores/genero";
 import { TablerIcon } from "../ui/TablerIcon";
+import { PublicModeShell } from "../platform/PublicModeShell";
+import { StatusBadge } from "../platform/StatusBadge";
+import { PublicHero } from "../public/peds";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
@@ -94,6 +99,36 @@ function RankingFooter() {
     </footer>
   );
 }
+
+interface RankingPublicHeroProps {
+  genero: RivieraJugadorGenero;
+}
+
+const RankingPublicHero: React.FC<RankingPublicHeroProps> = ({ genero }) => {
+  const { isClubBranded } = useClubExperience();
+  const organizerName = useOrganizerDisplayName();
+
+  return (
+    <PublicHero
+      logoClub={
+        isClubBranded ? (
+          <ClubIdentity
+            variant="compact"
+            showTagline={false}
+            logoSurface="dark"
+            wordmarkOnly
+            className="peds-hero__club-identity"
+          />
+        ) : undefined
+      }
+      estado={<StatusBadge variant="muted">Ranking interno</StatusBadge>}
+      nombreEvento={RIVIERA_GENERO_RANKING_TITLE[genero]}
+      club={organizerName}
+      categoria={RIVIERA_GENERO_LABELS[genero]}
+      meta="Ranking"
+    />
+  );
+};
 
 export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   organizadorId: routeOrganizadorId,
@@ -224,18 +259,32 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   return (
     <ClubExperienceScope organizadorId={scopeOrgId}>
     <JugadoresPublicShell variant="ranking">
+      <PublicModeShell className="rjp-ranking-shell">
       <div className="rjp-ranking">
-        <header className="rjp-ranking-header">
-          <RankingBrandHeader />
-          <h1 className="rjp-ranking-header__title">
-            {RIVIERA_GENERO_RANKING_TITLE[genero]}
-          </h1>
-          <RankingInternoDisclaimer organizadorId={orgId} />
-          <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
-            Ver reglas completas
-            <TablerIcon name="chevron-right" size={18} />
-          </a>
-        </header>
+        {isPubDsV2Enabled ? (
+          <>
+            <RankingPublicHero genero={genero} />
+            <div className="rjp-ranking-header rjp-ranking-header--peds-extras">
+              <RankingInternoDisclaimer organizadorId={orgId} />
+              <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
+                Ver reglas completas
+                <TablerIcon name="chevron-right" size={18} />
+              </a>
+            </div>
+          </>
+        ) : (
+          <header className="rjp-ranking-header">
+            <RankingBrandHeader />
+            <h1 className="rjp-ranking-header__title">
+              {RIVIERA_GENERO_RANKING_TITLE[genero]}
+            </h1>
+            <RankingInternoDisclaimer organizadorId={orgId} />
+            <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
+              Ver reglas completas
+              <TablerIcon name="chevron-right" size={18} />
+            </a>
+          </header>
+        )}
 
         <JugadoresGeneroTabs
           className="rjp-ranking-genero-tabs"
@@ -386,6 +435,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
 
         <RankingFooter />
       </div>
+      </PublicModeShell>
     </JugadoresPublicShell>
     </ClubExperienceScope>
   );

@@ -18,7 +18,10 @@ import {
   useClubExperience,
   useOrganizerDisplayName,
 } from "../club-experience";
+import { isPubDsV2Enabled } from "../config/peds";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
+import { StatusBadge } from "./platform/StatusBadge";
+import { PublicHero } from "./public/peds";
 import { resolvePlayerAvatars, resolvePlayerPublicProfiles } from "../lib/rivieraJugadores/publicPlayerAvatars";
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
 import { PublicAmericanoPodiumCard } from "./public/PublicAmericanoPodiumCard";
@@ -112,6 +115,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   const lastMergedFetchRef =
     React.useRef<FetchAmericanoLivePublicResult | null>(null);
   const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
+  const { isClubBranded } = useClubExperience();
 
   useEffect(() => {
     lastMergedFetchRef.current = null;
@@ -305,10 +309,31 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       className="te-public--americano te-public--americano-wide"
       organizadorId={organizadorId}
     >
-      <AmericanoPublicHeader
-        tournamentName={tournamentName}
-        tournamentDescription={tournamentDescription}
-      />
+      {isPubDsV2Enabled ? (
+        <PublicHero
+          logoClub={
+            isClubBranded ? (
+              <ClubIdentity
+                variant="compact"
+                showTagline={false}
+                logoSurface="dark"
+                wordmarkOnly
+                className="peds-hero__club-identity"
+              />
+            ) : undefined
+          }
+          estado={<StatusBadge variant="live">En vivo</StatusBadge>}
+          nombreEvento={tournamentName || "Torneo Americano"}
+          club={organizerName}
+          categoria={tournamentDescription}
+          meta="Americano"
+        />
+      ) : (
+        <AmericanoPublicHeader
+          tournamentName={tournamentName}
+          tournamentDescription={tournamentDescription}
+        />
+      )}
 
       {loadError && (
         <div className="te-public-error te-public-error-block te-pub-fade-in">

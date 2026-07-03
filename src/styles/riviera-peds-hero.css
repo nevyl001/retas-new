@@ -1,0 +1,107 @@
+/* =============================================================================
+   PEDS v1 — PublicHero (Sprint 3)
+   Solo estructura y tipografía. Colores → ClubExperience (--brand-accent, --text-*).
+   Requiere ancestro .peds-scope para tokens --pub-* (Sprint 2).
+   ============================================================================= */
+
+.peds-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--pub-space-2, 0.5rem);
+  margin-block-end: var(--pub-space-section, 1.5rem);
+  width: 100%;
+  min-width: 0;
+}
+
+.peds-hero__logo {
+  margin-block-end: var(--pub-space-1, 0.25rem);
+}
+
+.peds-hero__logo .club-identity--wordmark {
+  align-items: flex-start;
+}
+
+.peds-hero__estado {
+  display: flex;
+  align-items: center;
+}
+
+.peds-hero__evento {
+  margin: 0;
+  font-family: var(--pub-font-body, var(--font-body, inherit));
+  font-size: var(--pub-font-size-h1, clamp(1.5rem, 7vw, 2.25rem));
+  font-weight: var(--pub-font-weight-bold, 700);
+  line-height: var(--pub-line-height-tight, 1.15);
+  letter-spacing: var(--pub-letter-spacing-tight, -0.02em);
+  color: var(--text-primary);
+  max-width: 22ch;
+}
+
+.peds-hero__club {
+  margin: 0;
+  font-family: var(--pub-font-body, var(--font-body, inherit));
+  font-size: var(--pub-font-size-meta, 0.8125rem);
+  font-weight: var(--pub-font-weight-medium, 500);
+  line-height: var(--pub-line-height-normal, 1.45);
+  color: var(--text-secondary);
+  letter-spacing: var(--pub-letter-spacing-normal, 0);
+}
+
+.peds-hero__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pub-space-2, 0.5rem);
+  margin-block-start: var(--pub-space-1, 0.25rem);
+}
+
+.peds-hero__categoria,
+.peds-hero__fecha {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--pub-radius-full, 9999px);
+  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 28%, var(--border-subtle, rgba(255, 255, 255, 0.12)));
+  background: var(--bg-elevated, rgba(255, 255, 255, 0.04));
+  font-family: var(--pub-font-body, var(--font-body, inherit));
+  font-size: var(--pub-font-size-badge, 0.6875rem);
+  font-weight: var(--pub-font-weight-semibold, 600);
+  letter-spacing: var(--pub-letter-spacing-wide, 0.08em);
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--text-secondary);
+}
+
+.peds-hero__meta {
+  margin: var(--pub-space-1, 0.25rem) 0 0;
+  font-family: var(--pub-font-display, var(--font-display, inherit));
+  font-size: var(--pub-font-size-display, 0.625rem);
+  font-weight: var(--pub-font-weight-semibold, 600);
+  letter-spacing: var(--pub-letter-spacing-section, 0.18em);
+  text-transform: uppercase;
+  line-height: var(--pub-line-height-snug, 1.25);
+  color: var(--brand-accent, var(--accent-gold));
+}
+
+.peds-hero__divider {
+  width: 100%;
+  max-width: min(280px, 72vw);
+  height: 3px;
+  margin-block: var(--pub-space-4, 1rem) var(--pub-space-2, 0.5rem);
+  border-radius: var(--pub-radius-full, 9999px);
+  background: linear-gradient(
+    90deg,
+    var(--brand-accent, var(--accent-gold)) 0%,
+    color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 45%, transparent) 55%,
+    transparent 100%
+  );
+  transform-origin: left center;
+  animation: te-pub-line-grow var(--motion-enter, 0.25s) ease-out 0.25s both;
+}
+
+@media (min-width: 430px) {
+  .peds-hero__evento {
+    max-width: 26ch;
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { AmericanoDinamicoSnapshotV1 } from "../../lib/americanoDinamicoStorage";
-import { buildPublicPantallaUrl } from "../../lib/publicPantalla";
+import { buildPublicVistaPublicaUrl } from "../../lib/publicVistaPublica";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import { resolveAmericanoRankingFromSnapshot } from "../../lib/americanoSnapshotRoster";
 import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
@@ -31,7 +31,7 @@ export const AmericanoTournamentSummary: React.FC<
 
   const openResultsBoard = () => {
     if (!tournamentId || typeof window === "undefined") return;
-    const url = buildPublicPantallaUrl("americano", tournamentId);
+    const url = buildPublicVistaPublicaUrl("americano", tournamentId);
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -51,7 +51,7 @@ export const AmericanoTournamentSummary: React.FC<
               className="americano-summary__screen-btn"
               onClick={openResultsBoard}
             >
-              Ver resultados (pantalla)
+              Ver vista pública
             </button>
           ) : null}
         </div>

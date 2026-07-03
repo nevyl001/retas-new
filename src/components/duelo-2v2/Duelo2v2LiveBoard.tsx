@@ -20,6 +20,8 @@ interface Duelo2v2LiveBoardProps {
   teamA: [DueloPlayerView, DueloPlayerView];
   teamB: [DueloPlayerView, DueloPlayerView];
   showBrand?: boolean;
+  /** Oculta marca Riviera y header interno cuando el hero vive en el padre (PEDS). */
+  hidePublicHeader?: boolean;
   clockNow?: Date;
   className?: string;
 }
@@ -39,6 +41,7 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
   teamA,
   teamB,
   showBrand = true,
+  hidePublicHeader = false,
   clockNow,
   className,
 }) => {
@@ -54,22 +57,24 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
       className={`duelo2v2-live-board${className ? ` ${className}` : ""}`}
       aria-label="Encuentro 2 vs 2"
     >
-      {showBrand && (
+      {!hidePublicHeader && showBrand ? (
         <div className="duelo2v2-live-board__brand">
           <PublicRivieraCelebrateBrand showTagline />
         </div>
-      )}
+      ) : null}
 
-      <header className="duelo2v2-live-board__header">
-        <h1 className="duelo2v2-live-board__title">{duelo.nombre}</h1>
-        <p className="duelo2v2-live-board__sub">
-          Duelo 2 vs 2 · {brandLine}
-          {status ? (
-            <span className={STATUS_CLASS[status.tone]}> · {status.label}</span>
-          ) : null}
-        </p>
-        <Duelo2v2MatchMeta duelo={duelo} className="duelo2v2-live-board__meta" />
-      </header>
+      {!hidePublicHeader ? (
+        <header className="duelo2v2-live-board__header">
+          <h1 className="duelo2v2-live-board__title">{duelo.nombre}</h1>
+          <p className="duelo2v2-live-board__sub">
+            Duelo 2 vs 2 · {brandLine}
+            {status ? (
+              <span className={STATUS_CLASS[status.tone]}> · {status.label}</span>
+            ) : null}
+          </p>
+          <Duelo2v2MatchMeta duelo={duelo} className="duelo2v2-live-board__meta" />
+        </header>
+      ) : null}
 
       <div className="duelo2v2-live-board__arena">
         <div

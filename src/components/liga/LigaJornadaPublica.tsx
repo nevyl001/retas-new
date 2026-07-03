@@ -17,14 +17,36 @@ import {
   type PlayerPublicProfile,
 } from "../../lib/rivieraJugadores/publicPlayerAvatars";
 import { getLigaById } from "../../services/ligaService";
-import { ClubExperienceScope, PublicClubModeEyebrow } from "../../club-experience";
+import { ClubExperienceScope, ClubIdentity, PublicClubModeEyebrow, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { isPubDsV2Enabled } from "../../config/peds";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
 import { PublicModeShell } from "../platform/PublicModeShell";
+import { StatusBadge } from "../platform/StatusBadge";
+import { PublicHero } from "../public/peds";
 import { LigaParejaVictoriaCelebrate } from "./LigaParejaVictoriaCelebrate";
 import "./liga-pareja-victoria-celebrate.css";
 import "./liga-public-pantalla.css";
 
 const POLL_MS = 12_000;
+
+function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
+  if (estado === "completed") return "Finalizada";
+  if (estado === "in_progress") return "En curso";
+  return "Próxima";
+}
+
+function jornadaEstadoBadgeVariant(
+  estado: LigaJornada["estado"]
+): "live" | "gold" | "pending" {
+  if (estado === "in_progress") return "live";
+  if (estado === "completed") return "gold";
+  return "pending";
+}
+
+function formatJornadaFechaPublica(fecha: string | null | undefined): string | null {
+  if (!fecha) return null;
+  return `${fecha.slice(8, 10)}/${fecha.slice(5, 7)}/${fecha.slice(0, 4)}`;
+}
 
 interface LigaJornadaPublicaProps {
   ligaId: string;
@@ -77,6 +99,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const [playerProfiles, setPlayerProfiles] = useState<
     Record<string, PlayerPublicProfile>
   >({});
+  const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
+  const { isClubBranded } = useClubExperience();
 
   const load = useCallback(async () => {
     try {
@@ -241,12 +265,8 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   const nombrePareja = (parejaId: string) =>
     parejaNombre(parejaId, jornada, equiposById);
 
-  const jornadaEstadoLabel =
-    jornada.estado === "completed"
-      ? "Finalizada"
-      : jornada.estado === "in_progress"
-        ? "En curso"
-        : "Próxima";
+  const jornadaEstadoText = jornadaEstadoLabel(jornada.estado);
+  const jornadaFechaText = formatJornadaFechaPublica(jornada.fecha);
 
   return (
     <ClubExperienceScope organizadorId={detalle.organizador_id}>
@@ -257,18 +277,44 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
     >
       <div className="liga-pantalla__grain" aria-hidden />
       <PublicModeShell className="liga-pantalla__inner">
-        <header className="liga-pantalla__header">
-          <PublicClubModeEyebrow modeLabel="Liga" />
-          <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
-          <p className="liga-pantalla__subtitle">
-            Jornada {numero}
-            {jornada.fecha
-              ? ` · ${jornada.fecha.slice(8, 10)}/${jornada.fecha.slice(5, 7)}/${jornada.fecha.slice(0, 4)}`
-              : ""}
-            {" · "}
-            {jornadaEstadoLabel}
-          </p>
-        </header>
+        {isPubDsV2Enabled ? (
+          <PublicHero
+            logoClub={
+              isClubBranded ? (
+                <ClubIdentity
+                  variant="compact"
+                  showTagline={false}
+                  logoSurface="dark"
+                  wordmarkOnly
+                  className="peds-hero__club-identity"
+                />
+              ) : undefined
+            }
+            estado={
+              <StatusBadge variant={jornadaEstadoBadgeVariant(jornada.estado)}>
+                {jornadaEstadoText}
+              </StatusBadge>
+            }
+            nombreEvento={detalle.nombre}
+            club={organizerName}
+            categoria={`Jornada ${numero}`}
+            fecha={jornadaFechaText}
+            meta="Liga"
+          />
+        ) : (
+          <header className="liga-pantalla__header">
+            <PublicClubModeEyebrow modeLabel="Liga" />
+            <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
+            <p className="liga-pantalla__subtitle">
+              Jornada {numero}
+              {jornada.fecha
+                ? ` · ${jornada.fecha.slice(8, 10)}/${jornada.fecha.slice(5, 7)}/${jornada.fecha.slice(0, 4)}`
+                : ""}
+              {" · "}
+              {jornadaEstadoText}
+            </p>
+          </header>
+        )}
 
         <div
           className={`liga-pantalla-parejas${

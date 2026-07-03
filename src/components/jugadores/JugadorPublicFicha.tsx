@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ClubExperienceScope,
+  ClubIdentity,
   PublicClubModeEyebrow,
   getOrganizerCelebrateTagline,
+  useClubExperience,
   useOrganizerDisplayName,
 } from "../../club-experience";
+import { isPubDsV2Enabled } from "../../config/peds";
 import { useUser } from "../../contexts/UserContext";
 import {
   JUGADOR_CATEGORIA_AVATAR_BADGE,
@@ -55,6 +58,9 @@ import type {
   RivieraJugadorWithStats,
 } from "../../lib/rivieraJugadores/types";
 import { TablerIcon } from "../ui/TablerIcon";
+import { PublicModeShell } from "../platform/PublicModeShell";
+import { StatusBadge } from "../platform/StatusBadge";
+import { PublicHero } from "../public/peds";
 import { JugadorAvatarHero } from "./JugadorAvatarHero";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
@@ -87,6 +93,47 @@ function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
     </nav>
   );
 }
+
+interface FichaPublicHeroProps {
+  jugador: RivieraJugadorWithStats;
+  rankingPos: number | null;
+  organizadorId?: string | null;
+}
+
+const FichaPublicHero: React.FC<FichaPublicHeroProps> = ({
+  jugador,
+  rankingPos,
+  organizadorId,
+}) => {
+  const { isClubBranded } = useClubExperience();
+  const organizerName = useOrganizerDisplayName(organizadorId ?? jugador.organizador_id);
+  const rankingLabel = rankingLabelForPublicFicha(jugador);
+
+  return (
+    <PublicHero
+      logoClub={
+        isClubBranded ? (
+          <ClubIdentity
+            variant="compact"
+            showTagline={false}
+            logoSurface="dark"
+            wordmarkOnly
+            className="peds-hero__club-identity"
+          />
+        ) : undefined
+      }
+      estado={
+        <StatusBadge variant={rankingPos != null ? "gold" : "muted"}>
+          {rankingPos != null ? `${rankingLabel} #${rankingPos}` : "Sin posición en ranking"}
+        </StatusBadge>
+      }
+      nombreEvento={jugador.nombre}
+      club={organizerName}
+      categoria={JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
+      meta="Jugador"
+    />
+  );
+};
 
 export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   slug,
@@ -342,8 +389,17 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   return (
     <ClubExperienceScope organizadorId={jugador.organizador_id ?? orgId}>
     <JugadoresPublicShell variant="ficha">
+      <PublicModeShell className="rjp-ficha-shell">
       <div className="rjp-ficha">
         <FichaTopbar rankingUrl={rankingUrl} />
+
+        {isPubDsV2Enabled ? (
+          <FichaPublicHero
+            jugador={jugador}
+            rankingPos={rankingPos}
+            organizadorId={orgId}
+          />
+        ) : null}
 
         <div className="rjp-ficha__layout">
           <div className="rjp-ficha__col rjp-ficha__col--profile">
@@ -365,16 +421,20 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
               <div className="rjp-ficha-hero__gold-line" aria-hidden />
 
               <div className="rjp-ficha-hero__content">
-                <div className="rjp-ficha-hero__top">
-                  <PublicClubModeEyebrow
-                    modeLabel="Jugador"
-                    className="rjp-ficha-hero__brand"
-                    clubIdentityClassName="rjp-ficha-hero__club-identity"
-                  />
-                  {hasPhoto ? (
-                    <span className="rjp-ficha-hero__cat-badge">{catBadge}</span>
-                  ) : null}
-                </div>
+                {!isPubDsV2Enabled || hasPhoto ? (
+                  <div className="rjp-ficha-hero__top">
+                    {!isPubDsV2Enabled ? (
+                      <PublicClubModeEyebrow
+                        modeLabel="Jugador"
+                        className="rjp-ficha-hero__brand"
+                        clubIdentityClassName="rjp-ficha-hero__club-identity"
+                      />
+                    ) : null}
+                    {hasPhoto ? (
+                      <span className="rjp-ficha-hero__cat-badge">{catBadge}</span>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 {!hasPhoto && (
                   <JugadorAvatarHero
@@ -393,7 +453,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 >
                   <div className="rjp-ficha-hero__main">
                     <div className="rjp-ficha-hero__name-row">
-                      <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
+                      {!isPubDsV2Enabled ? (
+                        <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
+                      ) : null}
                       <JugadorPaisBadge
                         codigo={jugador.pais_codigo}
                         size="md"
@@ -402,10 +464,12 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                     </div>
 
                     <div className="rjp-ficha-hero__pills">
-                      <span className="rjp-ficha-pill rjp-ficha-pill--open">
-                        <TablerIcon name="trophy" size={14} />
-                        {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
-                      </span>
+                      {!isPubDsV2Enabled ? (
+                        <span className="rjp-ficha-pill rjp-ficha-pill--open">
+                          <TablerIcon name="trophy" size={14} />
+                          {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
+                        </span>
+                      ) : null}
                       {perfilMeta.map((item) => (
                         <span
                           key={item.label}
@@ -507,6 +571,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           {getOrganizerCelebrateTagline(organizerName)}
         </footer>
       </div>
+      </PublicModeShell>
     </JugadoresPublicShell>
     </ClubExperienceScope>
   );

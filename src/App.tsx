@@ -42,9 +42,14 @@ import {
   navigateToReta,
   normalizeAppPathname,
   parseRetaIdFromPath,
+  PATH_SYNC_EVENT,
   resolveAppViewFromPath,
   type AppView,
 } from "./lib/appRouting";
+import {
+  parsePublicAmericanoVistaPublicaPath,
+  resolvePublicVistaPublicaRedirect,
+} from "./lib/publicVistaPublica";
 import {
   continueTournament,
   getRouteForTournament,
@@ -77,11 +82,6 @@ const LigaRouter = lazy(() =>
 const Duelo2v2Router = lazy(() =>
   import("./components/duelo-2v2/Duelo2v2Router").then((module) => ({
     default: module.Duelo2v2Router,
-  }))
-);
-const PublicPantallaRouter = lazy(() =>
-  import("./components/public/PublicPantallaRouter").then((module) => ({
-    default: module.PublicPantallaRouter,
   }))
 );
 const JugadoresRouter = lazy(() =>
@@ -128,20 +128,22 @@ function parsePublicAmericanoTournamentId(pathname: string): string | null {
 }
 
 function parsePublicAmericanoBoardTournamentId(pathname: string): string | null {
-  const m = pathname.match(/^\/public\/americano-pantalla\/([^/?#]+)/i);
-  const raw = m?.[1];
-  if (!raw) return null;
-  try {
-    return decodeURIComponent(raw).trim() || null;
-  } catch {
-    return raw.trim() || null;
-  }
+  return parsePublicAmericanoVistaPublicaPath(pathname);
 }
 
 function AppContent() {
   const { user, loading: authLoading } = useUser();
   const { isAdminLoggedIn, loading: adminLoading } = useAdmin();
   const appPathname = useSyncPathname();
+
+  useEffect(() => {
+    const redirect = resolvePublicVistaPublicaRedirect(appPathname);
+    if (!redirect) return;
+    const normalized = normalizeAppPathname(redirect);
+    if (normalizeAppPathname(appPathname) === normalized) return;
+    window.history.replaceState({}, "", normalized + window.location.search);
+    window.dispatchEvent(new CustomEvent(PATH_SYNC_EVENT));
+  }, [appPathname]);
 
   // Estados básicos
   const [selectedTournament, setSelectedTournament] =
@@ -214,12 +216,12 @@ function AppContent() {
       if (typeof window === "undefined") return null;
       const path = window.location.pathname;
       const norm = normalizeAppPathname(path);
-      if (/^\/public\/americano-pantalla\//i.test(norm)) return null;
+      if (/^\/public\/vista-publica\/americano\//i.test(norm)) return null;
       if (/^\/public\/americano\//i.test(norm)) return null;
       if (/^\/public\/liga\//i.test(norm)) return null;
       const m = path.match(/^\/public\/([^/?#]+)/);
       const seg = m?.[1];
-      if (!seg || seg === "americano" || seg === "americano-pantalla") return null;
+      if (!seg || seg === "americano" || seg === "vista-publica") return null;
       return seg;
     }
   );
@@ -312,7 +314,7 @@ function AppContent() {
         setRestoringRetaFromUrl(false);
       }
 
-      if (/^\/public\/americano-pantalla\//i.test(currentPath)) {
+      if (/^\/public\/vista-publica\/americano\//i.test(currentPath)) {
         setPublicAmericanoBoardTournamentId(
           parsePublicAmericanoBoardTournamentId(currentPath)
         );
@@ -332,20 +334,15 @@ function AppContent() {
         setPublicTournamentId(null);
         setPublicAmericanoTournamentId(null);
         setPublicAmericanoBoardTournamentId(null);
-      } else if (/^\/public\/pantalla\//i.test(currentPath)) {
-        setPublicTournamentId(null);
-        setPublicAmericanoTournamentId(null);
-        setPublicAmericanoBoardTournamentId(null);
       } else if (currentPath.startsWith("/public/")) {
         const m = currentPath.match(/^\/public\/([^/?#]+)/);
         const seg = m?.[1];
         setPublicTournamentId(
           seg &&
             seg !== "americano" &&
-            seg !== "americano-pantalla" &&
+            seg !== "vista-publica" &&
             seg !== "liga" &&
-            seg !== "duelo-2v2" &&
-            seg !== "pantalla"
+            seg !== "duelo-2v2"
             ? seg
             : null
         );
@@ -776,13 +773,10 @@ function AppContent() {
   const isJugadoresPublic =
     currentView === "jugadores" && isJugadoresPublicPath(appPathname);
 
-  const isPublicPantalla = currentView === "public-pantalla";
-
   const isPublicSpectatorView =
     currentView === "public" ||
     currentView === "public-americano" ||
-    currentView === "public-americano-pantalla" ||
-    isPublicPantalla ||
+    currentView === "public-vista-publica-americano" ||
     isTorneoExpressPublic ||
     isLigaPublic ||
     isDuelo2v2Public ||
@@ -803,8 +797,7 @@ function AppContent() {
         {/* Solo mostrar UserHeader cuando NO estemos en vista pública NI en admin */}
         {currentView !== "public" &&
           currentView !== "public-americano" &&
-          currentView !== "public-americano-pantalla" &&
-          currentView !== "public-pantalla" &&
+          currentView !== "public-vista-publica-americano" &&
           !isTorneoExpressPublic &&
           !isLigaPublic &&
           !isDuelo2v2Public &&
@@ -833,14 +826,6 @@ function AppContent() {
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <Duelo2v2Router key={appPathname} pathname={appPathname} />
-            </Suspense>
-          </ErrorBoundary>
-        )}
-
-        {currentView === "public-pantalla" && (
-          <ErrorBoundary>
-            <Suspense fallback={<LoadingFallback />}>
-              <PublicPantallaRouter key={appPathname} pathname={appPathname} />
             </Suspense>
           </ErrorBoundary>
         )}
@@ -949,7 +934,7 @@ function AppContent() {
           </ErrorBoundary>
         )}
 
-        {currentView === "public-americano-pantalla" &&
+        {currentView === "public-vista-publica-americano" &&
           publicAmericanoBoardTournamentId && (
             <ErrorBoundary>
               <Suspense fallback={<LoadingFallback />}>

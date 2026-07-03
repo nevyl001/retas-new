@@ -34,7 +34,10 @@ import {
   resolveTournamentPodiumOutcome,
 } from "../lib/resolveTournamentOutcome";
 import { ClubIdentity, formatTenantDocumentTitle, useClubExperience, useOrganizerDisplayName } from "../club-experience";
+import { isPubDsV2Enabled } from "../config/peds";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
+import { StatusBadge } from "./platform/StatusBadge";
+import { PublicHero } from "./public/peds";
 import { PublicRetaMatchCard } from "./public/PublicRetaMatchCard";
 import type { PublicRetaPairPlayer } from "./public/PublicRetaPairSide";
 import {
@@ -152,6 +155,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     useState<RoundRobinChampionshipConfig | null>(null);
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
+  const { isClubBranded } = useClubExperience();
   const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
     []
   );
@@ -686,11 +690,32 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       className="te-public--reta te-public--reta-wide"
       organizadorId={organizadorId}
     >
-      <RetaPublicHeader
-        formatKicker={formatKicker}
-        publicTournamentName={publicTournamentName}
-        publicTournamentDescription={publicTournamentDescription}
-      />
+      {isPubDsV2Enabled ? (
+        <PublicHero
+          logoClub={
+            isClubBranded ? (
+              <ClubIdentity
+                variant="compact"
+                showTagline={false}
+                logoSurface="dark"
+                wordmarkOnly
+                className="peds-hero__club-identity"
+              />
+            ) : undefined
+          }
+          estado={<StatusBadge variant="live">En vivo</StatusBadge>}
+          nombreEvento={publicTournamentName || "Resultados en tiempo real"}
+          club={organizerName}
+          categoria={publicTournamentDescription}
+          meta={formatKicker}
+        />
+      ) : (
+        <RetaPublicHeader
+          formatKicker={formatKicker}
+          publicTournamentName={publicTournamentName}
+          publicTournamentDescription={publicTournamentDescription}
+        />
+      )}
 
       <section className="te-public-section te-pub-fade-in">
         <h2 className="te-public-section__title">Partidos por ronda</h2>

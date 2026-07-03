@@ -49,7 +49,7 @@ const AmericanoResultsBoardHeader: React.FC<{
           <p className="public-americano-board__desc">{tournamentDescription}</p>
         ) : null}
         <p className="public-americano-board__tagline">
-          {organizerName} · Pantalla de resultados
+          {organizerName} · Vista pública
         </p>
       </div>
     </header>

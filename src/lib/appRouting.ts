@@ -9,8 +9,7 @@ export type AppView =
   | "winner"
   | "public"
   | "public-americano"
-  | "public-americano-pantalla"
-  | "public-pantalla"
+  | "public-vista-publica-americano"
   | "americano-dinamico"
   | "torneo-express"
   | "liga"
@@ -98,9 +97,9 @@ export function resolveAppViewFromPath(pathname: string): AppView {
     return "jugadores";
   }
   if (currentPath.startsWith("/torneo-express")) return "torneo-express";
-  if (/^\/public\/pantalla\//i.test(currentPath)) return "public-pantalla";
-  if (/^\/public\/americano-pantalla\//i.test(currentPath))
-    return "public-americano-pantalla";
+  if (/^\/public\/vista-publica\/americano\//i.test(currentPath)) {
+    return "public-vista-publica-americano";
+  }
   if (/^\/public\/americano\//i.test(currentPath)) return "public-americano";
   if (currentPath.startsWith("/public/")) return "public";
   if (parseRetaIdFromPath(currentPath)) return "main";

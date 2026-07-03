@@ -16,11 +16,22 @@ import {
   getRankingEquipos,
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
-import { ClubExperienceScope, PublicClubModeEyebrow } from "../../club-experience";
+import { ClubExperienceScope, ClubIdentity, PublicClubModeEyebrow, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { isPubDsV2Enabled } from "../../config/peds";
 import { PublicModeShell } from "../platform/PublicModeShell";
+import { StatusBadge } from "../platform/StatusBadge";
+import { PublicHero } from "../public/peds";
 import "./liga-public-pantalla.css";
 
 const POLL_MS = 15_000;
+
+function estadoLigaBadgeVariant(
+  estado: LigaDetalle["estado"]
+): "live" | "gold" | "pending" {
+  if (estado === "in_progress") return "live";
+  if (estado === "completed") return "gold";
+  return "pending";
+}
 
 function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
   switch (estado) {
@@ -66,6 +77,8 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
+  const { isClubBranded } = useClubExperience();
 
   const load = useCallback(async () => {
     try {
@@ -154,17 +167,42 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
     >
       <div className="liga-pantalla__grain" aria-hidden />
       <PublicModeShell className="liga-pantalla__inner">
-        <header className="liga-pantalla__header">
-          <PublicClubModeEyebrow modeLabel="Liga" />
-          <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
-          <p className="liga-pantalla__subtitle">
-            {ligaModalidadLabel(detalle.modalidad)} · {estadoLigaLabel(detalle.estado)} ·{" "}
-            {esParejasFijas
-              ? `${detalle.equipos.length} parejas`
-              : `${detalle.inscripciones.length} jugadores`}{" "}
-            · {detalle.jornadas.length} jornadas
-          </p>
-        </header>
+        {isPubDsV2Enabled ? (
+          <PublicHero
+            logoClub={
+              isClubBranded ? (
+                <ClubIdentity
+                  variant="compact"
+                  showTagline={false}
+                  logoSurface="dark"
+                  wordmarkOnly
+                  className="peds-hero__club-identity"
+                />
+              ) : undefined
+            }
+            estado={
+              <StatusBadge variant={estadoLigaBadgeVariant(detalle.estado)}>
+                {estadoLigaLabel(detalle.estado)}
+              </StatusBadge>
+            }
+            nombreEvento={detalle.nombre}
+            club={organizerName}
+            categoria={ligaModalidadLabel(detalle.modalidad)}
+            meta="Liga"
+          />
+        ) : (
+          <header className="liga-pantalla__header">
+            <PublicClubModeEyebrow modeLabel="Liga" />
+            <h1 className="liga-pantalla__title">{detalle.nombre}</h1>
+            <p className="liga-pantalla__subtitle">
+              {ligaModalidadLabel(detalle.modalidad)} · {estadoLigaLabel(detalle.estado)} ·{" "}
+              {esParejasFijas
+                ? `${detalle.equipos.length} parejas`
+                : `${detalle.inscripciones.length} jugadores`}{" "}
+              · {detalle.jornadas.length} jornadas
+            </p>
+          </header>
+        )}
 
         <div
           className={`liga-pantalla__layout liga-pantalla__layout--liga${
