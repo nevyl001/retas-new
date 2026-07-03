@@ -1,0 +1,124 @@
+-- Perfiles públicos (foto + rating) para vistas /public/ de retas y torneos.
+-- Resuelve jugadores cedidos vía organizer_player_access sin sesión authenticated.
+-- Ejecutar en Supabase SQL Editor (staging → prod).
+
+CREATE OR REPLACE FUNCTION public.riviera_public_event_legacy_player_profiles(
+  p_organizador_id uuid,
+  p_legacy_player_ids uuid[]
+)
+RETURNS TABLE (
+  legacy_player_id uuid,
+  foto_url text,
+  rating numeric
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  WITH ids AS (
+    SELECT DISTINCT unnest(p_legacy_player_ids) AS lid
+  ),
+  local AS (
+    SELECT DISTINCT ON (i.lid)
+      i.lid,
+      rj.id AS rj_id,
+      rj.foto_url AS local_foto,
+      COALESCE(rj.rating, 3)::numeric AS local_rating,
+      COALESCE(rj.rating_partidos, 0) AS local_partidos
+    FROM ids i
+    LEFT JOIN public.riviera_jugadores rj
+      ON rj.estado = 'activo'
+      AND rj.organizador_id = p_organizador_id
+      AND (rj.legacy_player_id = i.lid OR rj.id = i.lid)
+    ORDER BY i.lid, COALESCE(rj.rating_partidos, 0) DESC NULLS LAST
+  ),
+  access AS (
+    SELECT DISTINCT ON (l.lid)
+      l.lid,
+      opa.jugador_id AS source_id
+    FROM local l
+    JOIN public.organizer_player_access opa
+      ON opa.grantee_organizer_id = p_organizador_id
+      AND opa.is_active = true
+      AND (
+        (l.rj_id IS NOT NULL AND opa.local_jugador_id = l.rj_id)
+        OR (l.rj_id IS NOT NULL AND opa.jugador_id = l.rj_id)
+      )
+    ORDER BY l.lid, opa.updated_at DESC NULLS LAST
+  ),
+  source AS (
+    SELECT
+      a.lid,
+      src.foto_url AS source_foto,
+      COALESCE(src.rating, 3)::numeric AS source_rating,
+      COALESCE(src.rating_partidos, 0) AS source_partidos
+    FROM access a
+    JOIN public.riviera_jugadores src
+      ON src.id = a.source_id
+      AND src.estado = 'activo'
+  ),
+  canon AS (
+    SELECT DISTINCT ON (i.lid)
+      i.lid,
+      rj.foto_url AS canon_foto,
+      COALESCE(rj.rating, 3)::numeric AS canon_rating,
+      COALESCE(rj.rating_partidos, 0) AS canon_partidos
+    FROM ids i
+    JOIN public.riviera_jugadores rj
+      ON rj.estado = 'activo'
+      AND rj.legacy_player_id = i.lid
+    ORDER BY
+      i.lid,
+      COALESCE(rj.rating_partidos, 0) DESC NULLS LAST,
+      CASE WHEN COALESCE(rj.rating, 3) = 3 THEN 1 ELSE 0 END,
+      CASE WHEN rj.organizador_id = p_organizador_id THEN 1 ELSE 0 END DESC,
+      COALESCE(rj.rating, 3) DESC
+  )
+  SELECT
+    i.lid AS legacy_player_id,
+    COALESCE(l.local_foto, s.source_foto, c.canon_foto) AS foto_url,
+    CASE
+      WHEN s.source_partidos > 0 AND s.source_rating <> 3 THEN s.source_rating
+      WHEN c.canon_partidos > 0 AND c.canon_rating <> 3 THEN c.canon_rating
+      WHEN l.local_partidos > 0 AND l.local_rating <> 3 THEN l.local_rating
+      WHEN s.source_rating IS NOT NULL AND s.source_rating <> 3 THEN s.source_rating
+      WHEN c.canon_rating IS NOT NULL AND c.canon_rating <> 3 THEN c.canon_rating
+      ELSE COALESCE(l.local_rating, s.source_rating, c.canon_rating, 3)
+    END AS rating
+  FROM ids i
+  LEFT JOIN local l ON l.lid = i.lid
+  LEFT JOIN source s ON s.lid = i.lid
+  LEFT JOIN canon c ON c.lid = i.lid;
+$$;
+
+COMMENT ON FUNCTION public.riviera_public_event_legacy_player_profiles(uuid, uuid[]) IS
+  'Vista pública anon: foto y rating por legacy players.id, incluye cedidos (organizer_player_access).';
+
+GRANT EXECUTE ON FUNCTION public.riviera_public_event_legacy_player_profiles(uuid, uuid[]) TO anon, authenticated;
+
+-- Alias legacy usado por el cliente antes de este migration.
+CREATE OR REPLACE FUNCTION public.riviera_event_legacy_player_avatars(
+  p_organizador_id uuid,
+  p_legacy_player_ids uuid[]
+)
+RETURNS TABLE (
+  legacy_player_id uuid,
+  foto_url text,
+  rating numeric
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT *
+  FROM public.riviera_public_event_legacy_player_profiles(
+    p_organizador_id,
+    p_legacy_player_ids
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.riviera_event_legacy_player_avatars(uuid, uuid[]) TO anon, authenticated;
+
+NOTIFY pgrst, 'reload schema';

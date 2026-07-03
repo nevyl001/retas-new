@@ -371,7 +371,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   useEffect(() => {
     if (!organizadorId || playerAvatarEntries.length === 0) {
-      setPlayerProfiles({});
       return;
     }
     let cancelled = false;

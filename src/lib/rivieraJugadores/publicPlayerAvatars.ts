@@ -210,36 +210,63 @@ async function fetchEventAvatarsByRivieraIds(
   return map;
 }
 
-async function fetchEventAvatarsByLegacyIds(
+function legacyLookupIds(
+  entryIds: string[],
+  legacyKeyByEntryId: Map<string, string>
+): string[] {
+  return Array.from(
+    new Set(
+      entryIds.map((id) => legacyKeyByEntryId.get(id) ?? id).filter(Boolean)
+    )
+  );
+}
+
+async function fetchPublicEventLegacyProfiles(
   organizadorId: string,
   legacyIds: string[]
 ): Promise<Map<string, PlayerPublicProfile>> {
   const map = new Map<string, PlayerPublicProfile>();
-  if (!organizadorId || legacyIds.length === 0) return map;
+  const ids = Array.from(new Set(legacyIds.map((id) => id.trim()).filter(Boolean)));
+  if (!organizadorId.trim() || ids.length === 0) return map;
 
-  const { data, error } = await supabase.rpc(
+  const rpcNames = [
+    "riviera_public_event_legacy_player_profiles",
     "riviera_event_legacy_player_avatars",
-    {
+  ] as const;
+
+  for (const rpcName of rpcNames) {
+    const { data, error } = await supabasePublicRead.rpc(rpcName, {
       p_organizador_id: organizadorId,
-      p_legacy_player_ids: legacyIds,
-    }
-  );
+      p_legacy_player_ids: ids,
+    });
 
-  if (error) {
-    if (!error.message?.includes("riviera_event_legacy_player_avatars")) {
-      console.warn(
-        "[publicPlayerAvatars] riviera_event_legacy_player_avatars:",
-        error.message
+    if (error) {
+      if (
+        !error.message?.includes(rpcName) &&
+        !error.message?.includes("Could not find the function")
+      ) {
+        console.warn(`[publicPlayerAvatars] ${rpcName}:`, error.message);
+      }
+      continue;
+    }
+
+    for (const row of data ?? []) {
+      const legacyId = String(
+        (row as { legacy_player_id: string }).legacy_player_id
       );
+      map.set(legacyId, profileFromRow(row as Record<string, unknown>));
     }
-    return map;
+    if (map.size > 0) return map;
   }
 
-  for (const row of data ?? []) {
-    const legacyId = String((row as { legacy_player_id: string }).legacy_player_id);
-    map.set(legacyId, profileFromRow(row as Record<string, unknown>));
-  }
   return map;
+}
+
+async function fetchEventAvatarsByLegacyIds(
+  organizadorId: string,
+  legacyIds: string[]
+): Promise<Map<string, PlayerPublicProfile>> {
+  return fetchPublicEventLegacyProfiles(organizadorId, legacyIds);
 }
 
 function idsNeedingEventProfileRpc(
@@ -305,6 +332,8 @@ export async function resolvePlayerPublicProfiles(
     error = retry.error;
   }
 
+  const legacyKeyByEntryId = new Map<string, string>();
+
   if (!error && data) {
     const byLegacyId = new Map<string, PlayerPublicProfile>();
     const byRivieraId = new Map<string, PlayerPublicProfile>();
@@ -315,11 +344,22 @@ export async function resolvePlayerPublicProfiles(
         byRivieraId.set(String(row.id), profile);
       }
       if (row.legacy_player_id) {
-        byLegacyId.set(String(row.legacy_player_id), profile);
+        const legacyId = String(row.legacy_player_id);
+        byLegacyId.set(legacyId, profile);
+        if (row.id) {
+          legacyKeyByEntryId.set(String(row.id), legacyId);
+        }
       }
     }
 
     for (const e of entries) {
+      const matchedByRiviera = byRivieraId.get(e.id);
+      if (matchedByRiviera && byLegacyId.has(e.id) === false) {
+        const row = data.find((r) => String(r.id) === e.id);
+        if (row?.legacy_player_id) {
+          legacyKeyByEntryId.set(e.id, String(row.legacy_player_id));
+        }
+      }
       result[e.id] =
         byLegacyId.get(e.id) ??
         byRivieraId.get(e.id) ??
@@ -333,13 +373,15 @@ export async function resolvePlayerPublicProfiles(
     opts?.publicOnly
   );
   if (needsCanonical.length > 0) {
+    const canonicalIds = legacyLookupIds(needsCanonical, legacyKeyByEntryId);
     const fromLegacyCanon = await fetchCanonicalProfilesByLegacyPlayerIds(
       organizadorId,
-      needsCanonical,
+      canonicalIds,
       { allowAuthenticatedFallback: client === supabase }
     );
     for (const id of needsCanonical) {
-      const profile = fromLegacyCanon.get(id);
+      const legacyKey = legacyKeyByEntryId.get(id) ?? id;
+      const profile = fromLegacyCanon.get(legacyKey);
       if (profile) {
         result[id] = mergeProfile(result[id], profile);
       }
@@ -349,12 +391,13 @@ export async function resolvePlayerPublicProfiles(
       isDefaultRating(result[id]?.rating ?? DEFAULT_PROFILE.rating)
     );
     if (stillDefault.length > 0) {
-      const fromRpc = await fetchEventAvatarsByLegacyIds(
+      const fromRpc = await fetchPublicEventLegacyProfiles(
         organizadorId,
-        stillDefault
+        legacyLookupIds(stillDefault, legacyKeyByEntryId)
       );
       for (const id of stillDefault) {
-        const profile = fromRpc.get(id);
+        const legacyKey = legacyKeyByEntryId.get(id) ?? id;
+        const profile = fromRpc.get(legacyKey);
         if (profile) {
           result[id] = mergeProfile(result[id], profile);
         }

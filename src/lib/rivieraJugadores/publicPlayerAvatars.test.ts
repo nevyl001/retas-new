@@ -8,6 +8,7 @@ jest.mock("../supabaseClient", () => ({
   },
   supabasePublicRead: {
     from: jest.fn(),
+    rpc: jest.fn(),
   },
 }));
 
@@ -41,6 +42,10 @@ describe("resolvePlayerPublicProfiles", () => {
       data: { session: null },
     });
     (supabase.rpc as jest.Mock).mockResolvedValue({ data: [], error: null });
+    (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
+      data: [],
+      error: null,
+    });
   });
 
   it("en publicOnly usa rating del perfil origen por legacy_player_id sin depender del RPC", async () => {
@@ -124,7 +129,64 @@ describe("resolvePlayerPublicProfiles", () => {
 
     expect(profiles[legacyId].rating).toBe(2.82);
     expect(profiles[legacyId].fotoUrl).toBe("https://example.com/daniel.jpg");
-    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(supabasePublicRead.rpc).not.toHaveBeenCalled();
+  });
+
+  it("en publicOnly resuelve cedido con rating origen vía RPC público (anon móvil)", async () => {
+    const legacyId = "said-legacy-player-id";
+    const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
+
+    mockRivieraJugadoresQuery(supabasePublicRead.from as jest.Mock, [
+      {
+        id: "said-local-clone",
+        legacy_player_id: legacyId,
+        nombre: "Said C",
+        foto_url: null,
+        rating: 3.0,
+      },
+    ]);
+
+    (supabasePublicRead.from as jest.Mock).mockImplementation(() => ({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({
+            data: [
+              {
+                id: "said-local-clone",
+                legacy_player_id: legacyId,
+                nombre: "Said C",
+                foto_url: null,
+                rating: 3.0,
+              },
+            ],
+            error: null,
+          }),
+        }),
+        in: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      }),
+    }));
+
+    (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
+      data: [
+        {
+          legacy_player_id: legacyId,
+          foto_url: null,
+          rating: 2.87,
+        },
+      ],
+      error: null,
+    });
+
+    const profiles = await resolvePlayerPublicProfiles(
+      hackOrg,
+      [{ id: legacyId, name: "Said C" }],
+      { publicOnly: true }
+    );
+
+    expect(profiles[legacyId].rating).toBe(2.87);
+    expect(supabasePublicRead.rpc).toHaveBeenCalled();
   });
 
   it("cuando el RPC no existe, el fallback legacy sigue resolviendo el rating", async () => {
