@@ -33,7 +33,7 @@ import {
   matchesForStandingsTable,
   resolveTournamentPodiumOutcome,
 } from "../lib/resolveTournamentOutcome";
-import { ClubIdentity, formatTenantDocumentTitle, useClubExperience, useOrganizerDisplayName } from "../club-experience";
+import { ClubIdentity, formatTenantDocumentTitle, isClubBrandedOrganizer, useClubExperience, useOrganizerDisplayName } from "../club-experience";
 import { isPubDsV2Enabled } from "../config/peds";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { StatusBadge } from "./platform/StatusBadge";
@@ -83,13 +83,19 @@ const RetaPublicHeader: React.FC<{
   formatKicker: string;
   publicTournamentName: string | null;
   publicTournamentDescription: string | null;
-}> = ({ formatKicker, publicTournamentName, publicTournamentDescription }) => {
+  showClubBranding?: boolean;
+}> = ({
+  formatKicker,
+  publicTournamentName,
+  publicTournamentDescription,
+  showClubBranding = false,
+}) => {
   const { isClubBranded } = useClubExperience();
 
   return (
     <header className="te-public-header te-public-header--reta te-pub-fade-in">
       <div className="te-public-header__brand">
-        {isClubBranded ? (
+        {isClubBranded || showClubBranding ? (
           <ClubIdentity
             variant="compact"
             showTagline={false}
@@ -155,7 +161,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     useState<RoundRobinChampionshipConfig | null>(null);
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
-  const { isClubBranded } = useClubExperience();
+  const showClubBranding = isClubBrandedOrganizer(organizadorId);
   const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
     []
   );
@@ -178,11 +184,21 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           ? publicConfig.team_config
           : null;
 
+      const tournamentPromise = getTournamentByIdPublic(tournamentId);
+      void tournamentPromise.then((tournamentEarly) => {
+        const earlyOrgId =
+          typeof tournamentEarly?.user_id === "string" &&
+          tournamentEarly.user_id.trim()
+            ? tournamentEarly.user_id.trim()
+            : null;
+        if (earlyOrgId) setOrganizadorId(earlyOrgId);
+      });
+
       const [matchesData, pairsData, gamesData, tournament] = await Promise.all([
         getMatches(tournamentId),
         getPairs(tournamentId),
         getTournamentGames(tournamentId),
-        getTournamentByIdPublic(tournamentId),
+        tournamentPromise,
       ]);
 
       const hashTeamConfig = parseTeamConfigFromHash();
@@ -693,7 +709,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {isPubDsV2Enabled ? (
         <PublicHero
           logoClub={
-            isClubBranded ? (
+            showClubBranding ? (
               <ClubIdentity
                 variant="compact"
                 showTagline={false}
@@ -714,6 +730,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           formatKicker={formatKicker}
           publicTournamentName={publicTournamentName}
           publicTournamentDescription={publicTournamentDescription}
+          showClubBranding={showClubBranding}
         />
       )}
 
