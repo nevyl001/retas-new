@@ -262,13 +262,6 @@ async function fetchPublicEventLegacyProfiles(
   return map;
 }
 
-async function fetchEventAvatarsByLegacyIds(
-  organizadorId: string,
-  legacyIds: string[]
-): Promise<Map<string, PlayerPublicProfile>> {
-  return fetchPublicEventLegacyProfiles(organizadorId, legacyIds);
-}
-
 function idsNeedingEventProfileRpc(
   result: Record<string, PlayerPublicProfile>,
   entries: PlayerAvatarLookupEntry[],
