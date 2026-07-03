@@ -89,17 +89,35 @@ export const PublicRetaMatchCard: React.FC<{
       </div>
 
       <div className="te-pub-match__faceoff">
-        <PublicRetaPairSide
-          players={pair1Players}
-          label={pair1Label}
-          align="left"
-          isWinner={pair1Wins}
-          isTie={isTie}
-          teamLabel={pair1TeamLabel}
-          teamIndex={pair1TeamIndex}
-        />
+        <div className="te-pub-match__slot te-pub-match__slot--pair1">
+          <PublicRetaPairSide
+            players={pair1Players}
+            label={pair1Label}
+            align="left"
+            isWinner={pair1Wins}
+            isTie={isTie}
+            teamLabel={pair1TeamLabel}
+            teamIndex={pair1TeamIndex}
+          />
+        </div>
 
-        <div className="te-pub-match__score-block te-pub-match__score-block--center">
+        <span className="te-pub-match__vs" aria-hidden>
+          VS
+        </span>
+
+        <div className="te-pub-match__slot te-pub-match__slot--pair2">
+          <PublicRetaPairSide
+            players={pair2Players}
+            label={pair2Label}
+            align="right"
+            isWinner={pair2Wins}
+            isTie={isTie}
+            teamLabel={pair2TeamLabel}
+            teamIndex={pair2TeamIndex}
+          />
+        </div>
+
+        <div className="te-pub-match__score-block te-pub-match__score-block--center te-pub-match__slot te-pub-match__slot--score">
           {hasResult ? (
             <div className="te-pub-score te-pub-score--faceoff">
               <span
@@ -126,16 +144,6 @@ export const PublicRetaMatchCard: React.FC<{
             </span>
           )}
         </div>
-
-        <PublicRetaPairSide
-          players={pair2Players}
-          label={pair2Label}
-          align="right"
-          isWinner={pair2Wins}
-          isTie={isTie}
-          teamLabel={pair2TeamLabel}
-          teamIndex={pair2TeamIndex}
-        />
       </div>
 
       <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
