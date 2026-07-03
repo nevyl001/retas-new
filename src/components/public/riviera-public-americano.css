@@ -740,7 +740,7 @@
     "pair1 vs pair2"
     "score score score";
   gap: 0.65rem 0.85rem;
-  align-items: center;
+  align-items: start;
   margin-top: 0.55rem;
   padding: 1rem 0.65rem 0.85rem;
   border-radius: var(--radius-md);
@@ -770,6 +770,7 @@
   align-items: center;
   justify-content: center;
   align-self: center;
+  justify-self: center;
   flex-shrink: 0;
   width: 2.35rem;
   height: 2.35rem;
@@ -1152,6 +1153,44 @@
     text-overflow: unset;
     word-break: break-word;
     line-height: 1.2;
+  }
+
+  /*
+   * Reta móvil: la regla desktop (pair1 | vs | pair2) tiene más especificidad que
+   * .te-pub-match__faceoff genérico. Blink recorta el rating con align-items:center
+   * + min-width:0 en celdas grid; start + overflow visible lo corrige.
+   */
+  .te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-match__faceoff {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-areas:
+      "pair1 vs pair2"
+      "score score score";
+    align-items: start;
+    gap: 0.55rem 0.45rem;
+    padding: 0.75rem 0.5rem 0.65rem;
+  }
+
+  .te-public--reta.te-public--reta-wide .te-pub-match__slot--pair1,
+  .te-public--reta.te-public--reta-wide .te-pub-match__slot--pair2,
+  .te-public--reta.te-public--reta-wide .te-pub-pair,
+  .te-public--reta.te-public--reta-wide .te-pub-pair__showcase,
+  .te-public--reta.te-public--reta-wide .te-pub-pair__player {
+    overflow: visible;
+  }
+
+  .te-public--reta.te-public--reta-wide .te-pub-pair__player-rating {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.12rem;
+    font-size: clamp(0.58rem, 2.4vw, 0.68rem);
+    padding: 0.1rem 0.38rem;
+    line-height: 1.2;
+  }
+
+  .te-public--reta.te-public--reta-wide .te-pub-match__vs {
+    align-self: center;
   }
 
   .te-pub-match__vs {

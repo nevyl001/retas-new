@@ -21,7 +21,7 @@ export const JugadorAvatar: React.FC<JugadorAvatarProps> = ({
 
   if (fotoUrl) {
     return (
-      <span className={cls} style={{ width: px, height: px }} aria-hidden>
+      <span className={cls} aria-hidden>
         <img
           className="rj-avatar__img"
           src={fotoUrl}
@@ -36,11 +36,7 @@ export const JugadorAvatar: React.FC<JugadorAvatarProps> = ({
   }
 
   return (
-    <span
-      className={cls}
-      style={{ width: px, height: px }}
-      aria-hidden
-    >
+    <span className={cls} aria-hidden>
       {initial}
     </span>
   );
