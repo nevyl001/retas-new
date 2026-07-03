@@ -762,7 +762,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               <div>
                 <h3 className="rr-championship__title">REMONTADA FINAL</h3>
                 <p className="rr-championship__subtitle">
-                  Los mejores se vuelven a ver las caras
+                  Una oportunidad más de demostrar tu potencial
                   {championshipMatches.length > 0
                     ? ` · ${championshipMatches.length} partido${
                         championshipMatches.length === 1 ? "" : "s"

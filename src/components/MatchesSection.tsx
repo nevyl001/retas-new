@@ -237,7 +237,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                 <div>
                   <h3 className="rr-championship__title">REMONTADA FINAL</h3>
                   <p className="rr-championship__subtitle">
-                    Los mejores se vuelven a ver las caras
+                    Una oportunidad más de demostrar tu potencial
                   </p>
                 </div>
               </header>
