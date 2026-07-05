@@ -9,6 +9,7 @@ import { computeDueloScore } from "../../lib/duelo2v2/scoring";
 import type { Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
 import {
   PublicRivieraCelebrateBrand,
   PublicRivieraCelebrateClosing,
@@ -75,7 +76,14 @@ function TeamPlayers({
               />
             </div>
             <span className="duelo2v2-celebrate__player-name">{p.name}</span>
-            {move ? <RatingMoveBadge move={move} /> : null}
+            {move ? (
+              <RatingMoveBadge move={move} />
+            ) : p.rating != null ? (
+              <JugadorRatingChip
+                rating={p.rating}
+                className="duelo2v2-celebrate__rating-fallback"
+              />
+            ) : null}
           </div>
         );
       })}

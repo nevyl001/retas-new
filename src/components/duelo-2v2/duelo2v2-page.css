@@ -1023,6 +1023,10 @@
   border: 1px solid rgba(248, 113, 113, 0.35);
 }
 
+.duelo2v2-celebrate__rating-fallback {
+  margin-top: 6px;
+}
+
 .duelo2v2-celebrate__rating-summary {
   width: 100%;
   max-width: 28rem;

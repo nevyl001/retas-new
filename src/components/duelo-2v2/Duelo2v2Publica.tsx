@@ -7,7 +7,7 @@ import {
 } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { fetchRivieraJugadorProfilesByIds } from "../../lib/rivieraJugadores/publicPlayerAvatars";
-import { fetchRatingMovimientosByPartidoRef } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { fetchDuelo2v2RatingBySlot } from "../../lib/duelo2v2/duelo2v2RatingDisplay";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { DUELO_2V2_PUBLIC_POLL_INTERVAL_MS } from "../../lib/duelo2v2/publicPoll";
 import { getDueloPublicStatus } from "../../lib/duelo2v2/schedule";
@@ -129,9 +129,13 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
       ], d.organizador_id);
       setProfiles(profileMap);
       if (d.estado === "finalizado" && d.ganador) {
-        const moves = await fetchRatingMovimientosByPartidoRef(`duelo2v2:${d.id}`);
         setRatingByJugadorId(
-          Object.fromEntries(moves.map((m) => [m.jugadorId, m]))
+          await fetchDuelo2v2RatingBySlot(d.organizador_id, d.id, [
+            d.pareja_a_j1_id,
+            d.pareja_a_j2_id,
+            d.pareja_b_j1_id,
+            d.pareja_b_j2_id,
+          ])
         );
       } else {
         setRatingByJugadorId({});
@@ -264,11 +268,13 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
               name: p.nombre,
               fotoUrl: p.fotoUrl,
               jugadorId: p.id,
+              rating: p.rating,
             }))}
             teamB={teamB.map((p) => ({
               name: p.nombre,
               fotoUrl: p.fotoUrl,
               jugadorId: p.id,
+              rating: p.rating,
             }))}
             ganador={duelo.ganador}
             setsA={duelo.sets_pareja_a}

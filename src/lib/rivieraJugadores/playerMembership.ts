@@ -220,6 +220,22 @@ export async function addOrganizerMembershipByRivieraId(
   return parseAddOrganizerMembershipResult(data);
 }
 
+/** Jugador agregado por membresía/concesión que el club puede dar de baja sin borrar la carrera. */
+export function canLeaveOrganizerMembershipForJugador(
+  jugador: {
+    concedidoPorAdmin?: boolean;
+    grantedAccess?: { ownerOrganizadorId?: string } | null;
+  },
+  organizadorId: string | null | undefined
+): boolean {
+  const orgId = organizadorId?.trim();
+  if (!orgId) return false;
+  if (!jugador.concedidoPorAdmin || !jugador.grantedAccess) return false;
+  const ownerId = jugador.grantedAccess.ownerOrganizadorId?.trim();
+  if (ownerId && ownerId === orgId) return false;
+  return true;
+}
+
 /** Baja de membresía (soft) del organizador autenticado. */
 export async function leaveOrganizerMembership(
   localJugadorId: string
@@ -272,6 +288,9 @@ export function mapPlayerMembershipUiError(error: unknown): string {
   }
   if (lower.includes("membresía activa no encontrada")) {
     return "No hay una membresía activa para este jugador.";
+  }
+  if (lower.includes("abandonar la membresía de registro")) {
+    return "Este jugador pertenece a tu registro; no puedes quitarlo con esta acción.";
   }
   if (lower.includes("autenticación requerida") || lower.includes("no autenticado")) {
     return "Debes iniciar sesión para continuar.";

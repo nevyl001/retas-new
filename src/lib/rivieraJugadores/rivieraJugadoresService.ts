@@ -2228,25 +2228,59 @@ export async function obtenerHistorialRatingPublic(
 export async function fetchRatingMovimientosByPartidoRef(
   partidoRef: string
 ): Promise<RatingMovimientoPartido[]> {
+  const ref = partidoRef?.trim();
+  if (!ref) return [];
+
+  const parseRows = (rows: unknown[]): RatingMovimientoPartido[] =>
+    rows.map((row) => {
+      const r = row as Record<string, unknown>;
+      return {
+        jugadorId: String(r.jugador_id),
+        ratingAntes: Number(r.rating_antes ?? 0),
+        ratingDespues: Number(r.rating_despues ?? 0),
+        delta: Number(r.delta ?? 0),
+      };
+    });
+
+  const selectCols = "jugador_id, rating_antes, rating_despues, delta";
+
+  const dueloMatch = ref.match(
+    /^duelo2v2:([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i
+  );
+  if (dueloMatch) {
+    const dueloId = dueloMatch[1];
+    for (const client of [supabasePublicRead, supabase] as const) {
+      const { data, error } = await client.rpc("get_public_duelo2v2_rating_moves", {
+        p_duelo_id: dueloId,
+      });
+      if (!error && (data?.length ?? 0) > 0) {
+        return parseRows(data ?? []);
+      }
+    }
+  }
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData.session) {
+    const { data, error } = await supabase
+      .from("rating_historial")
+      .select(selectCols)
+      .eq("partido_ref", ref);
+    if (!error && (data?.length ?? 0) > 0) {
+      return parseRows(data ?? []);
+    }
+  }
+
   const { data, error } = await supabasePublicRead
     .from("rating_historial")
-    .select("jugador_id, rating_antes, rating_despues, delta")
-    .eq("partido_ref", partidoRef);
+    .select(selectCols)
+    .eq("partido_ref", ref);
 
   if (error) {
     if (isMissingTableError(error)) return [];
     return [];
   }
 
-  return (data ?? []).map((row) => {
-    const r = row as Record<string, unknown>;
-    return {
-      jugadorId: String(r.jugador_id),
-      ratingAntes: Number(r.rating_antes ?? 0),
-      ratingDespues: Number(r.rating_despues ?? 0),
-      delta: Number(r.delta ?? 0),
-    };
-  });
+  return parseRows(data ?? []);
 }
 
 export type { JugadorStats };

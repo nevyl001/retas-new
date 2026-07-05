@@ -1,5 +1,6 @@
 import {
   addOrganizerMembershipByRivieraId,
+  canLeaveOrganizerMembershipForJugador,
   leaveOrganizerMembership,
   listOrganizerMemberships,
   normalizeRivieraIdInput,
@@ -234,5 +235,46 @@ describe("mapPlayerMembershipUiError", () => {
     expect(mapPlayerMembershipUiError({ message: "duplicate key" })).toMatch(
       /ya está en tu organizador/
     );
+
+    expect(
+      mapPlayerMembershipUiError(
+        new Error("No puedes abandonar la membresía de registro del jugador")
+      )
+    ).toMatch(/pertenece a tu registro/);
+  });
+});
+
+describe("canLeaveOrganizerMembershipForJugador", () => {
+  const orgId = "org-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+  const ownerId = "org-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+
+  it("permite baja cuando hay acceso concedido desde otro club", () => {
+    expect(
+      canLeaveOrganizerMembershipForJugador(
+        {
+          concedidoPorAdmin: true,
+          grantedAccess: { ownerOrganizadorId: ownerId },
+        },
+        orgId
+      )
+    ).toBe(true);
+  });
+
+  it("no permite baja del registro propio", () => {
+    expect(
+      canLeaveOrganizerMembershipForJugador(
+        {
+          concedidoPorAdmin: true,
+          grantedAccess: { ownerOrganizadorId: orgId },
+        },
+        orgId
+      )
+    ).toBe(false);
+  });
+
+  it("no aplica a jugadores propios del registro", () => {
+    expect(
+      canLeaveOrganizerMembershipForJugador({ concedidoPorAdmin: false }, orgId)
+    ).toBe(false);
   });
 });

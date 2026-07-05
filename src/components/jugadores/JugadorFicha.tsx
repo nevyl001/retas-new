@@ -19,6 +19,12 @@ import {
   loadUnifiedRatingViewForJugador,
 } from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
 import {
+  canLeaveOrganizerMembershipForJugador,
+  leaveOrganizerMembership,
+  mapPlayerMembershipUiError,
+} from "../../lib/rivieraJugadores/playerMembership";
+import { syncLegacyPlayersFromRivieraRegistry } from "../../lib/rivieraJugadores/playerPoolSync";
+import {
   deleteParticipacionJugador,
   deleteRivieraJugador,
   getRivieraJugadorBySlug,
@@ -75,6 +81,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [facebook, setFacebook] = useState("");
   const [tiktok, setTiktok] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [deletingHistId, setDeletingHistId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -258,6 +265,25 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     }
   };
 
+  const handleLeaveFromClub = async () => {
+    if (!user?.id || !jugador) return;
+    if (!canLeaveOrganizerMembershipForJugador(jugador, user.id)) return;
+    const ok = window.confirm(
+      `¿Quitar a «${jugador.nombre}» de tu club?\n\nEl jugador conservará su historial Riviera en su club de registro. Solo dejará de aparecer en tu organizador.`
+    );
+    if (!ok) return;
+    setLeaving(true);
+    try {
+      await leaveOrganizerMembership(jugador.id);
+      await syncLegacyPlayersFromRivieraRegistry(user.id);
+      navigateJugadores();
+    } catch (e) {
+      alert(mapPlayerMembershipUiError(e));
+    } finally {
+      setLeaving(false);
+    }
+  };
+
   const handlePhoto = async (file: File) => {
     if (!user?.id || !jugador) return;
     setUploading(true);
@@ -304,6 +330,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
 
   const s = jugador.stats;
   const isGrantedReadOnly = Boolean(jugador.concedidoPorAdmin);
+  const canLeaveFromClub = canLeaveOrganizerMembershipForJugador(jugador, user?.id);
   const retasCount = histStats.retasClasicas;
   const torneosCount = histStats.torneosExpress;
   const ligasCount = histStats.ligas;
@@ -337,6 +364,19 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             Acceso concedido — solo el club dueño del registro puede editar este
             perfil.
           </p>
+        ) : null}
+
+        {canLeaveFromClub ? (
+          <div className="rj-ficha-actions">
+            <button
+              type="button"
+              className="rj-btn rj-btn--danger"
+              disabled={leaving}
+              onClick={() => void handleLeaveFromClub()}
+            >
+              {leaving ? "Quitando…" : "Quitar del club"}
+            </button>
+          </div>
         ) : null}
 
         <header className="rj-ficha-header">

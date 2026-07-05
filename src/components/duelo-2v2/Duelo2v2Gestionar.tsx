@@ -5,7 +5,8 @@ import {
 } from "../../club-experience";
 import React, { useCallback, useEffect, useState } from "react";
 import type { Duelo2v2, Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
-import { fetchRatingMovimientosByPartidoRef } from "../../lib/rivieraJugadores/rivieraJugadoresService";
+import { fetchDuelo2v2RatingBySlot } from "../../lib/duelo2v2/duelo2v2RatingDisplay";
+import { ensureDuelo2v2RatingApplied } from "../../lib/duelo2v2/duelo2v2RatingApply";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import {
   finalizarDuelo2v2,
@@ -54,9 +55,14 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       setDuelo(d);
       setEditorKey((k) => k + 1);
       if (d.estado === "finalizado" && d.ganador) {
-        const moves = await fetchRatingMovimientosByPartidoRef(`duelo2v2:${d.id}`);
+        await ensureDuelo2v2RatingApplied(d.organizador_id, d);
         setRatingByJugadorId(
-          Object.fromEntries(moves.map((m) => [m.jugadorId, m]))
+          await fetchDuelo2v2RatingBySlot(d.organizador_id, d.id, [
+            d.pareja_a_j1_id,
+            d.pareja_a_j2_id,
+            d.pareja_b_j1_id,
+            d.pareja_b_j2_id,
+          ])
         );
       } else {
         setRatingByJugadorId({});
@@ -99,11 +105,23 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     try {
       const updated = await finalizarDuelo2v2(dueloId);
       setDuelo(updated);
-      const moves = await fetchRatingMovimientosByPartidoRef(`duelo2v2:${updated.id}`);
-      setRatingByJugadorId(
-        Object.fromEntries(moves.map((m) => [m.jugadorId, m]))
+      await ensureDuelo2v2RatingApplied(updated.organizador_id, updated);
+      const ratingMap = await fetchDuelo2v2RatingBySlot(
+        updated.organizador_id,
+        updated.id,
+        [
+          updated.pareja_a_j1_id,
+          updated.pareja_a_j2_id,
+          updated.pareja_b_j1_id,
+          updated.pareja_b_j2_id,
+        ]
       );
-      setMessage("Duelo finalizado. Rating y puntos aplicados al ranking.");
+      setRatingByJugadorId(ratingMap);
+      setMessage(
+        Object.keys(ratingMap).length > 0
+          ? "Duelo finalizado. Rating y puntos aplicados al ranking."
+          : "Duelo finalizado. Puntos aplicados; el nivel no se registró (revisa consola o permisos de rating)."
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo finalizar");
     } finally {

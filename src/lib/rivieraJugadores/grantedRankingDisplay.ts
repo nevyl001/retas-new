@@ -16,18 +16,34 @@ export function rankingPuntosOrigenConcedido(j: RivieraJugadorWithStats): number
   return j.statsOrigenConcedido?.puntos_totales ?? 0;
 }
 
-/** Puntos mostrados en tarjeta del ranking interno del club (solo este club). */
-export function rankingPuntosInternoClubDisplay(j: RivieraJugadorWithStats): number {
-  return rankingPuntosClubLocal(j);
-}
-
-/** Total global / sitio oficial (cedidos: local + origen). */
-export function rankingPuntosGlobalDisplay(j: RivieraJugadorWithStats): number {
+/**
+ * Puntos de carrera Riviera (todos los clubes) para la fila del club de registro.
+ * Ej.: cedido con 20 pts en Hackpadel y 0 en el registro origen → 20.
+ */
+export function rankingPuntosCarreraRivieraDisplay(
+  j: RivieraJugadorWithStats
+): number {
   if (j.officialPuntosGlobal != null && Number.isFinite(j.officialPuntosGlobal)) {
     return j.officialPuntosGlobal;
   }
   if (hasDualRankingConcedido(j)) {
     return (j.stats?.puntos_totales ?? 0) + rankingPuntosOrigenConcedido(j);
+  }
+  return resolveJugadorPuntosRanking(j);
+}
+
+/** Puntos mostrados en tarjeta del ranking interno del club (solo este club). */
+export function rankingPuntosInternoClubDisplay(j: RivieraJugadorWithStats): number {
+  return rankingPuntosClubLocal(j);
+}
+
+/** Total global / sitio oficial (cedidos: carrera en todos los clubes). */
+export function rankingPuntosGlobalDisplay(j: RivieraJugadorWithStats): number {
+  if (j.officialPuntosGlobal != null && Number.isFinite(j.officialPuntosGlobal)) {
+    return j.officialPuntosGlobal;
+  }
+  if (hasDualRankingConcedido(j)) {
+    return rankingPuntosCarreraRivieraDisplay(j);
   }
   return resolveJugadorPuntosRanking(j);
 }

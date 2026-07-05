@@ -46,6 +46,11 @@ import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { navigateJugadorFicha } from "./jugadoresNav";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
 import { AgregarJugadorExistenteModal } from "./AgregarJugadorExistenteModal";
+import {
+  canLeaveOrganizerMembershipForJugador,
+  leaveOrganizerMembership,
+  mapPlayerMembershipUiError,
+} from "../../lib/rivieraJugadores/playerMembership";
 import "./riviera-jugadores.css";
 
 export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
@@ -130,6 +135,25 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
       setError(
         e instanceof Error ? e.message : "No se pudo eliminar el jugador."
       );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleLeaveFromClub = async (j: RivieraJugadorWithStats) => {
+    if (!user?.id || !canLeaveOrganizerMembershipForJugador(j, user.id)) return;
+    const ok = window.confirm(
+      `¿Quitar a «${j.nombre}» de tu club?\n\nEl jugador conservará su historial Riviera en su club de registro. Solo dejará de aparecer en tu organizador.`
+    );
+    if (!ok) return;
+    setDeletingId(j.id);
+    setError(null);
+    try {
+      await leaveOrganizerMembership(j.id);
+      await syncLegacyPlayersFromRivieraRegistry(user.id);
+      await load();
+    } catch (e) {
+      setError(mapPlayerMembershipUiError(e));
     } finally {
       setDeletingId(null);
     }
@@ -306,30 +330,44 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                   <span className="rj-card__pts">
                     {puntos.toLocaleString("es-MX")} pts
                   </span>
-                  {!j.concedidoPorAdmin ? (
-                  <div className="rj-card__actions">
-                    {permiteAjustePuntosManuales ? (
-                      <button
-                        type="button"
-                        className="rj-card__edit"
-                        title="Sumar o restar puntos"
-                        aria-label={`Ajustar puntos de ${j.nombre}`}
-                        onClick={() => setAjusteJugador(j)}
-                      >
-                        <TablerIcon name="pencil" size={14} aria-hidden={false} />
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      className="rj-card__delete"
-                      title="Eliminar jugador"
-                      aria-label={`Eliminar a ${j.nombre}`}
-                      disabled={deletingId === j.id}
-                      onClick={() => void handleDeleteJugador(j)}
-                    >
-                      <TablerIcon name="trash" size={14} aria-hidden={false} />
-                    </button>
-                  </div>
+                  {!j.concedidoPorAdmin ||
+                  canLeaveOrganizerMembershipForJugador(j, user?.id) ? (
+                    <div className="rj-card__actions">
+                      {!j.concedidoPorAdmin && permiteAjustePuntosManuales ? (
+                        <button
+                          type="button"
+                          className="rj-card__edit"
+                          title="Sumar o restar puntos"
+                          aria-label={`Ajustar puntos de ${j.nombre}`}
+                          onClick={() => setAjusteJugador(j)}
+                        >
+                          <TablerIcon name="pencil" size={14} aria-hidden={false} />
+                        </button>
+                      ) : null}
+                      {!j.concedidoPorAdmin ? (
+                        <button
+                          type="button"
+                          className="rj-card__delete"
+                          title="Eliminar jugador"
+                          aria-label={`Eliminar a ${j.nombre}`}
+                          disabled={deletingId === j.id}
+                          onClick={() => void handleDeleteJugador(j)}
+                        >
+                          <TablerIcon name="trash" size={14} aria-hidden={false} />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="rj-card__delete"
+                          title="Quitar del club"
+                          aria-label={`Quitar a ${j.nombre} del club`}
+                          disabled={deletingId === j.id}
+                          onClick={() => void handleLeaveFromClub(j)}
+                        >
+                          <TablerIcon name="trash" size={14} aria-hidden={false} />
+                        </button>
+                      )}
+                    </div>
                   ) : null}
                 </div>
                 <button

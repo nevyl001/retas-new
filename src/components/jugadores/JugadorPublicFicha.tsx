@@ -28,12 +28,14 @@ import {
 } from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
 import {
   isJugadorConcedidoEnClub,
-  jugadorPuntosOrigenConcedido,
   mergeJugadorStatsPuntosTotales,
   rankingPuntosClubLocal,
   resolveJugadorPuntosRanking,
 } from "../../lib/rivieraJugadores/rankingPosition";
-import { prefetchOrganizerDisplayNames } from "../../lib/rivieraJugadores/grantedRankingDisplay";
+import {
+  prefetchOrganizerDisplayNames,
+  rankingPuntosCarreraRivieraDisplay,
+} from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import {
   getRivieraJugadorInternalClubById,
   getRivieraJugadorPublicById,
@@ -377,7 +379,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         ...jugador,
         officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
       });
-  const puntosOrigen = jugadorPuntosOrigenConcedido(jugador);
+  const puntosOrigen = rankingPuntosCarreraRivieraDisplay({
+    ...jugador,
+    officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
+  });
   const showDualPuntosFicha =
     internalClub &&
     isJugadorConcedidoEnClub(jugador) &&

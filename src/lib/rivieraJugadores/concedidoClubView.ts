@@ -1,4 +1,5 @@
 import { supabase, supabasePublicRead } from "../supabaseClient";
+import { fetchOfficialDisplayPuntosForJugador } from "./rivieraOfficialActivity";
 import type { JugadorParticipacion, JugadorStats, RivieraJugadorWithStats } from "./types";
 import { discoverLinkedJugadorIds } from "./grantedPlayerUnifiedView";
 import {
@@ -329,5 +330,18 @@ export async function enrichJugadorConcedidoClubView(
   }
   if (!meta?.isConcedido) return jugador;
 
-  return applyConcedidoClubMeta(jugador, meta);
+  const withMeta = applyConcedidoClubMeta(jugador, meta);
+  const sourceId = meta.sourceJugadorId?.trim();
+  if (!sourceId) return withMeta;
+
+  try {
+    const romcPts = await fetchOfficialDisplayPuntosForJugador(sourceId);
+    if (romcPts != null && Number.isFinite(romcPts)) {
+      return { ...withMeta, officialPuntosGlobal: romcPts };
+    }
+  } catch (e) {
+    console.warn("[riviera-jugadores] ROMC puntos cedido:", sourceId, e);
+  }
+
+  return withMeta;
 }
