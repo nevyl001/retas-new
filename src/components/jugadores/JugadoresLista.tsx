@@ -39,6 +39,7 @@ import { navigateJugadoresLista } from "./jugadoresGeneroNav";
 import { JugadorAjustePuntosModal } from "./JugadorAjustePuntosModal";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
+import { LoadingProgressHint } from "../ui/LoadingProgressHint";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
 import { RivieraIdBadgeFromJugador } from "./RivieraIdBadge";
@@ -75,22 +76,28 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!user?.id) return;
+    const orgId = organizadorId ?? user?.id;
+    if (!orgId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      await syncLegacyPlayersFromRivieraRegistry(user.id);
-      const data = await listRivieraJugadores(user.id, {
+      const data = await listRivieraJugadores(orgId, {
         search,
         nivel: nivelFilter || undefined,
         activosRecientes: recientes,
         genero,
       });
       void prefetchOrganizerDisplayNames([
-        user.id,
+        orgId,
         ...data.map((j) => resolveOrigenConcedidoOrganizadorId(j)),
       ]);
       setJugadores(data);
+      void syncLegacyPlayersFromRivieraRegistry(orgId).catch((e) => {
+        console.warn("[jugadores-lista] sync legacy en segundo plano:", e);
+      });
     } catch (e) {
       setError(
         e instanceof Error
@@ -100,7 +107,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     } finally {
       setLoading(false);
     }
-  }, [user?.id, search, nivelFilter, recientes, genero]);
+  }, [organizadorId, user?.id, search, nivelFilter, recientes, genero]);
 
   useEffect(() => {
     const t = setTimeout(load, search ? 280 : 0);
@@ -110,13 +117,13 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
-    void promoteImportedRivieraJugadores(user.id).then((n) => {
+    void promoteImportedRivieraJugadores(organizadorId ?? user.id).then((n) => {
       if (!cancelled && n > 0) void load();
     });
     return () => {
       cancelled = true;
     };
-  }, [user?.id, load]);
+  }, [organizadorId, user?.id, load]);
 
   const pct = (j: RivieraJugadorWithStats) => jugadorListaPctVictoriasDisplay(j);
 
@@ -300,7 +307,13 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
         </div>
 
         {error && <p className="rj-empty">{error}</p>}
-        {loading && !error && <p className="rj-empty">Cargando jugadores…</p>}
+        {loading && !error && (
+          <LoadingProgressHint
+            active
+            label="Cargando jugadores"
+            className="rj-loading-hint"
+          />
+        )}
         {!loading && !error && jugadores.length === 0 && (
           <p className="rj-empty">
             Aún no hay {RIVIERA_GENERO_REGISTRY_TITLE[genero]} en el registro.

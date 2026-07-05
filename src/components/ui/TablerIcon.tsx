@@ -7,7 +7,7 @@ interface TablerIconProps {
   "aria-hidden"?: boolean;
 }
 
-/** Icono outline Tabler (`ti-*`). Requiere tabler-icons.min.css en index.html. */
+/** Icono outline Tabler (`ti-*`). CSS empaquetado desde @tabler/icons-webfont (ver index.tsx). */
 export const TablerIcon: React.FC<TablerIconProps> = ({
   name,
   size = 16,

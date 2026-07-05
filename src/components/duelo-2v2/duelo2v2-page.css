@@ -367,6 +367,18 @@
   align-items: stretch;
 }
 
+.duelo2v2-pairs-submit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: -0.25rem;
+}
+
+.duelo2v2-pairs-submit button {
+  min-width: 200px;
+}
+
 .duelo2v2-pair-slot {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;

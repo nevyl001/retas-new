@@ -19,6 +19,8 @@ interface DueloPairBuilderProps {
   pairB: DueloPair | null;
   onPairAChange: (pair: DueloPair | null) => void;
   onPairBChange: (pair: DueloPair | null) => void;
+  /** Acciones (p. ej. Iniciar juego) justo debajo de las parejas cuando están listas. */
+  submitSlot?: React.ReactNode;
 }
 
 export function bothPairsReady(
@@ -72,6 +74,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   pairB,
   onPairAChange,
   onPairBChange,
+  submitSlot,
 }) => {
   const organizerName = useOrganizerDisplayName(organizadorId);
   const [jugadores, setJugadores] = useState<RivieraJugador[]>([]);
@@ -113,6 +116,17 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   }, [jugadores, filter]);
 
   const nextPairSlot = !pairA ? "a" : !pairB ? "b" : null;
+  const pairsComplete = nextPairSlot === null;
+
+  const handleClearPairA = () => {
+    onPairAChange(null);
+    setSelected([]);
+  };
+
+  const handleClearPairB = () => {
+    onPairBChange(null);
+    setSelected([]);
+  };
 
   const togglePlayer = (j: RivieraJugador) => {
     if (pairA && (pairA.j1.id === j.id || pairA.j2.id === j.id)) return;
@@ -142,11 +156,16 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   return (
     <section className="duelo2v2-pair-builder" aria-label="Agregar parejas">
       <div className="duelo2v2-pairs-row">
-        <PairCard label="Pareja 1" pair={pairA} onClear={() => onPairAChange(null)} />
+        <PairCard label="Pareja 1" pair={pairA} onClear={handleClearPairA} />
         <div className="duelo2v2-vs duelo2v2-vs--large">VS</div>
-        <PairCard label="Pareja 2" pair={pairB} onClear={() => onPairBChange(null)} />
+        <PairCard label="Pareja 2" pair={pairB} onClear={handleClearPairB} />
       </div>
 
+      {pairsComplete && submitSlot ? (
+        <div className="duelo2v2-pairs-submit">{submitSlot}</div>
+      ) : null}
+
+      {!pairsComplete ? (
       <div className="duelo2v2-roster">
         <div className="duelo2v2-roster__head">
           <div>
@@ -253,6 +272,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
           </>
         )}
       </div>
+      ) : null}
     </section>
   );
 };

@@ -1,3 +1,4 @@
+import "@tabler/icons-webfont/dist/tabler-icons.min.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { bootstrapAppBranding } from "./branding/bootstrapAppBranding";

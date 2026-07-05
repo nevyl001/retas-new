@@ -19,7 +19,7 @@ import {
   type DueloPair,
 } from "./DueloPairBuilder";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
-import { navigateDuelo2v2, publicDuelo2v2Path } from "./duelo2v2Nav";
+import { navigateDuelo2v2, duelo2v2GestionarPath } from "./duelo2v2Nav";
 import "./duelo2v2-page.css";
 
 export const Duelo2v2Nuevo: React.FC = () => {
@@ -84,7 +84,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
         pareja_b_j1_nombre: pairB.j1.nombre,
         pareja_b_j2_nombre: pairB.j2.nombre,
       });
-      navigateDuelo2v2(publicDuelo2v2Path(duelo.id));
+      navigateDuelo2v2(duelo2v2GestionarPath(duelo.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar el duelo");
     } finally {
@@ -173,15 +173,15 @@ export const Duelo2v2Nuevo: React.FC = () => {
             pairB={pairB}
             onPairAChange={setPairA}
             onPairBChange={setPairB}
+            submitSlot={
+              <>
+                {error && <p className="duelo2v2-error">{error}</p>}
+                <Button type="submit" variant="primary" disabled={!canSubmit || busy}>
+                  {busy ? "Iniciando…" : "Iniciar juego"}
+                </Button>
+              </>
+            }
           />
-
-          {error && <p className="duelo2v2-error">{error}</p>}
-
-          <div className="duelo2v2-form__submit">
-            <Button type="submit" variant="primary" disabled={!canSubmit || busy}>
-              {busy ? "Iniciando…" : "Iniciar juego"}
-            </Button>
-          </div>
         </form>
       )}
     </Duelo2v2PageShell>
