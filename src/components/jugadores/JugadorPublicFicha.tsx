@@ -26,12 +26,7 @@ import {
   loadUnifiedParticipacionesForJugador,
   loadUnifiedRatingViewForJugador,
 } from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
-import {
-  isJugadorConcedidoEnClub,
-  mergeJugadorStatsPuntosTotales,
-  rankingPuntosClubLocal,
-  resolveJugadorPuntosRanking,
-} from "../../lib/rivieraJugadores/rankingPosition";
+import { mergeJugadorStatsPuntosTotales } from "../../lib/rivieraJugadores/rankingPosition";
 import {
   prefetchOrganizerDisplayNames,
   rankingPuntosCarreraRivieraDisplay,
@@ -47,7 +42,7 @@ import {
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import {
   rankingLabelForPublicFicha,
-  shouldUseClubLocalPuntosOnPublicFicha,
+  resolveRegistrationOrganizadorIdForPublicFicha,
 } from "../../lib/rivieraJugadores/publicFichaRanking";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
@@ -71,6 +66,7 @@ import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
+import { getOrganizerDisplayNameSync } from "../../lib/organizer/organizerDisplayName";
 import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
 import { buildPublicRankingUrl, navigatePublicJugadores } from "./jugadoresPublicNav";
 import "./riviera-jugadores-public-ficha.css";
@@ -100,16 +96,15 @@ function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
 interface FichaPublicHeroProps {
   jugador: RivieraJugadorWithStats;
   rankingPos: number | null;
-  organizadorId?: string | null;
 }
 
 const FichaPublicHero: React.FC<FichaPublicHeroProps> = ({
   jugador,
   rankingPos,
-  organizadorId,
 }) => {
   const { isClubBranded } = useClubExperience();
-  const organizerName = useOrganizerDisplayName(organizadorId ?? jugador.organizador_id);
+  const registrationOrgId = resolveRegistrationOrganizadorIdForPublicFicha(jugador);
+  const organizerName = useOrganizerDisplayName(registrationOrgId ?? undefined);
   const rankingLabel = rankingLabelForPublicFicha(jugador);
 
   return (
@@ -158,7 +153,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           user?.id,
           typeof window !== "undefined" ? window.location.pathname : undefined
         );
-  const organizerName = useOrganizerDisplayName(orgId ?? undefined);
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [historial, setHistorial] = useState<
     Awaited<ReturnType<typeof listParticipacionesPublic>>
@@ -167,8 +161,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
   const [officialPuntos, setOfficialPuntos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const origenOrgId = jugador?.grantedAccess?.ownerOrganizadorId?.trim() || null;
-  const origenClubName = useOrganizerDisplayName(origenOrgId);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -189,6 +181,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         void prefetchOrganizerDisplayNames([
           orgId,
           jugadorBase.grantedAccess?.ownerOrganizadorId,
+          resolveRegistrationOrganizadorIdForPublicFicha(jugadorBase),
         ]);
         const unified = await loadUnifiedParticipacionesForJugador(jugadorBase, {
           limit: 100,
@@ -373,20 +366,13 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     );
   }
 
-  const puntos = shouldUseClubLocalPuntosOnPublicFicha(jugador, internalClub)
-    ? rankingPuntosClubLocal(jugador)
-    : resolveJugadorPuntosRanking({
-        ...jugador,
-        officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
-      });
-  const puntosOrigen = rankingPuntosCarreraRivieraDisplay({
+  const registrationOrgId = jugador
+    ? resolveRegistrationOrganizadorIdForPublicFicha(jugador)
+    : null;
+  const puntos = rankingPuntosCarreraRivieraDisplay({
     ...jugador,
     officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
   });
-  const showDualPuntosFicha =
-    internalClub &&
-    isJugadorConcedidoEnClub(jugador) &&
-    Boolean(origenOrgId);
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);
@@ -407,11 +393,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         <FichaTopbar rankingUrl={rankingUrl} />
 
         {isPubDsV2Enabled ? (
-          <FichaPublicHero
-            jugador={jugador}
-            rankingPos={rankingPos}
-            organizadorId={orgId}
-          />
+          <FichaPublicHero jugador={jugador} rankingPos={rankingPos} />
         ) : null}
 
         <div className="rjp-ficha__layout">
@@ -526,24 +508,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                           size={14}
                           className="rjp-ficha-stat__icon"
                         />
-                        <span className="rjp-ficha-stat__lbl">
-                          {showDualPuntosFicha ? "Puntos en club" : "Puntos totales"}
+                        <span className="rjp-ficha-stat__lbl">Puntos totales</span>
+                        <span className="rjp-ficha-stat__val">
+                          {puntos.toLocaleString("es-MX")}
                         </span>
-                        {showDualPuntosFicha ? (
-                          <span className="rjp-ficha-stat__val rjp-ficha-dual-pts">
-                            <span className="rjp-ficha-dual-pts__main">
-                              {puntos.toLocaleString("es-MX")}
-                            </span>
-                            <span className="rjp-ficha-dual-pts__origen">
-                              {origenClubName}:{" "}
-                              {puntosOrigen.toLocaleString("es-MX")} pts
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="rjp-ficha-stat__val">
-                            {puntos.toLocaleString("es-MX")}
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -582,7 +550,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         </div>
 
         <footer className="rjp-ficha-footer">
-          {getOrganizerCelebrateTagline(organizerName)}
+          {getOrganizerCelebrateTagline(
+            getOrganizerDisplayNameSync(registrationOrgId)
+          )}
         </footer>
       </div>
       </PublicModeShell>

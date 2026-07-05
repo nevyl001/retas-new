@@ -70,21 +70,21 @@ function j(
 }
 
 describe("publicFichaRanking", () => {
-  it("jugador con sitio oficial en ficha interna del club usa puntos locales", () => {
+  it("ficha pública siempre usa carrera Riviera total, no puntos locales del club vista", () => {
     const aime = j(25, "aime", { visible_publico: true });
     expect(resolvePublicFichaRankingTarget(aime, { orgId: "hack" })).toBe(
       "global"
     );
     expect(rankingLabelForPublicFicha(aime)).toBe("Ranking Riviera Open");
-    expect(shouldUseClubLocalPuntosOnPublicFicha(aime, true)).toBe(true);
+    expect(shouldUseClubLocalPuntosOnPublicFicha(aime, true)).toBe(false);
   });
 
-  it("jugador solo interno del club usa ranking del club", () => {
+  it("jugador solo interno del club sigue resolviendo ranking del club", () => {
     const local = j(100, "local", { visible_publico: false });
     expect(resolvePublicFichaRankingTarget(local, { orgId: "hack" })).toBe(
       "club"
     );
-    expect(shouldUseClubLocalPuntosOnPublicFicha(local, true)).toBe(true);
+    expect(shouldUseClubLocalPuntosOnPublicFicha(local, true)).toBe(false);
   });
 
   it("archivado o sin suma_ranking no cuenta como sitio oficial", () => {
