@@ -129,7 +129,6 @@ describe("resolvePlayerPublicProfiles", () => {
 
     expect(profiles[legacyId].rating).toBe(2.82);
     expect(profiles[legacyId].fotoUrl).toBe("https://example.com/daniel.jpg");
-    expect(supabasePublicRead.rpc).not.toHaveBeenCalled();
   });
 
   it("en publicOnly resuelve cedido con rating origen vía RPC público (anon móvil)", async () => {
@@ -485,5 +484,33 @@ describe("resolvePlayerPublicProfiles", () => {
 
     expect(profiles[hackDavidId].rating).toBe(3.15);
     expect(canonicalQueryCount).toBe(0);
+  });
+
+  it("cedido sin clon local enlazado por legacy id resuelve rating origen vía RPC", async () => {
+    const originLegacyId = "origin-daniel-legacy";
+    const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
+
+    mockRivieraJugadoresQuery(supabasePublicRead.from as jest.Mock, []);
+
+    (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
+      data: [
+        {
+          legacy_player_id: originLegacyId,
+          foto_url: "https://example.com/daniel.jpg",
+          rating: 2.82,
+        },
+      ],
+      error: null,
+    });
+
+    const profiles = await resolvePlayerPublicProfiles(
+      hackOrg,
+      [{ id: originLegacyId, name: "Daniel N" }],
+      { publicOnly: true }
+    );
+
+    expect(profiles[originLegacyId].rating).toBe(2.82);
+    expect(profiles[originLegacyId].fotoUrl).toBe("https://example.com/daniel.jpg");
+    expect(supabasePublicRead.rpc).toHaveBeenCalled();
   });
 });

@@ -293,13 +293,38 @@ async function fetchEventAvatarsByRivieraIds(
 
 function legacyLookupIds(
   entryIds: string[],
-  legacyKeyByEntryId: Map<string, string>
+  legacyKeyByEntryId: Map<string, string>,
+  rivieraIdByEntryId?: Map<string, string>
 ): string[] {
-  return Array.from(
-    new Set(
-      entryIds.map((id) => legacyKeyByEntryId.get(id) ?? id).filter(Boolean)
-    )
-  );
+  const ids = new Set<string>();
+  for (const entryId of entryIds) {
+    const legacyKey = legacyKeyByEntryId.get(entryId) ?? entryId;
+    if (legacyKey) ids.add(legacyKey);
+    const rivieraId = rivieraIdByEntryId?.get(entryId);
+    if (rivieraId) ids.add(rivieraId);
+    ids.add(entryId);
+  }
+  return Array.from(ids);
+}
+
+function applyPublicLegacyRpcProfiles(
+  result: Record<string, PlayerPublicProfile>,
+  entryIds: string[],
+  legacyKeyByEntryId: Map<string, string>,
+  rivieraIdByEntryId: Map<string, string>,
+  fromRpc: Map<string, PlayerPublicProfile>
+): void {
+  for (const entryId of entryIds) {
+    const legacyKey = legacyKeyByEntryId.get(entryId) ?? entryId;
+    const rivieraId = rivieraIdByEntryId.get(entryId);
+    const profile =
+      fromRpc.get(legacyKey) ??
+      (rivieraId ? fromRpc.get(rivieraId) : undefined) ??
+      fromRpc.get(entryId);
+    if (profile) {
+      result[entryId] = mergeProfile(result[entryId] ?? { ...DEFAULT_PROFILE }, profile);
+    }
+  }
 }
 
 async function fetchPublicEventLegacyProfiles(
@@ -407,6 +432,7 @@ export async function resolvePlayerPublicProfiles(
   }
 
   const legacyKeyByEntryId = new Map<string, string>();
+  const rivieraIdByEntryId = new Map<string, string>();
   const eventNameByEntryId = new Map(
     entries.map((e) => [e.id, e.name?.trim() ?? ""])
   );
@@ -420,6 +446,8 @@ export async function resolvePlayerPublicProfiles(
         result[e.id] = profileFromRow(picked as Record<string, unknown>);
         const legacyKey = String(picked.legacy_player_id ?? picked.id ?? e.id);
         legacyKeyByEntryId.set(e.id, legacyKey);
+        const rivieraId = String(picked.id ?? "").trim();
+        if (rivieraId) rivieraIdByEntryId.set(e.id, rivieraId);
       } else {
         result[e.id] = { ...DEFAULT_PROFILE };
         legacyKeyByEntryId.set(e.id, e.id);
@@ -442,38 +470,66 @@ export async function resolvePlayerPublicProfiles(
       }
     }
 
-    const canonicalIds = legacyLookupIds(needsCanonical, legacyKeyByEntryId);
-    const fromLegacyCanon = await fetchCanonicalProfilesByLegacyPlayerIds(
-      organizadorId,
-      canonicalIds,
-      {
-        allowAuthenticatedFallback: client === supabase,
-        eventNameByLegacyId,
-      }
+    if (opts?.publicOnly) {
+      const fromRpcFirst = await fetchPublicEventLegacyProfiles(
+        organizadorId,
+        legacyLookupIds(needsCanonical, legacyKeyByEntryId, rivieraIdByEntryId)
+      );
+      applyPublicLegacyRpcProfiles(
+        result,
+        needsCanonical,
+        legacyKeyByEntryId,
+        rivieraIdByEntryId,
+        fromRpcFirst
+      );
+    }
+
+    const stillNeedCanon = needsCanonical.filter((id) =>
+      isDefaultRating(result[id]?.rating ?? DEFAULT_PROFILE.rating)
     );
-    for (const id of needsCanonical) {
-      const legacyKey = legacyKeyByEntryId.get(id) ?? id;
-      const profile = fromLegacyCanon.get(legacyKey);
-      if (profile) {
-        result[id] = mergeProfile(result[id], profile);
+
+    if (stillNeedCanon.length > 0) {
+      const canonicalIds = legacyLookupIds(
+        stillNeedCanon,
+        legacyKeyByEntryId,
+        rivieraIdByEntryId
+      );
+      const fromLegacyCanon = await fetchCanonicalProfilesByLegacyPlayerIds(
+        organizadorId,
+        canonicalIds,
+        {
+          allowAuthenticatedFallback: client === supabase,
+          eventNameByLegacyId,
+        }
+      );
+      for (const id of stillNeedCanon) {
+        const legacyKey = legacyKeyByEntryId.get(id) ?? id;
+        const rivieraId = rivieraIdByEntryId.get(id);
+        const profile =
+          fromLegacyCanon.get(legacyKey) ??
+          (rivieraId ? fromLegacyCanon.get(rivieraId) : undefined) ??
+          fromLegacyCanon.get(id);
+        if (profile) {
+          result[id] = mergeProfile(result[id] ?? { ...DEFAULT_PROFILE }, profile);
+        }
       }
     }
 
     const stillDefault = needsCanonical.filter((id) =>
       isDefaultRating(result[id]?.rating ?? DEFAULT_PROFILE.rating)
     );
-    if (stillDefault.length > 0) {
+    if (stillDefault.length > 0 && !opts?.publicOnly) {
       const fromRpc = await fetchPublicEventLegacyProfiles(
         organizadorId,
-        legacyLookupIds(stillDefault, legacyKeyByEntryId)
+        legacyLookupIds(stillDefault, legacyKeyByEntryId, rivieraIdByEntryId)
       );
-      for (const id of stillDefault) {
-        const legacyKey = legacyKeyByEntryId.get(id) ?? id;
-        const profile = fromRpc.get(legacyKey);
-        if (profile) {
-          result[id] = mergeProfile(result[id], profile);
-        }
-      }
+      applyPublicLegacyRpcProfiles(
+        result,
+        stillDefault,
+        legacyKeyByEntryId,
+        rivieraIdByEntryId,
+        fromRpc
+      );
     }
   }
 

@@ -34,18 +34,38 @@ AS $$
     ORDER BY i.lid, COALESCE(rj.rating_partidos, 0) DESC NULLS LAST
   ),
   access AS (
-    SELECT DISTINCT ON (l.lid)
-      l.lid,
-      opa.jugador_id AS source_id
-    FROM local l
-    JOIN public.organizer_player_access opa
-      ON opa.grantee_organizer_id = p_organizador_id
-      AND opa.is_active = true
-      AND (
-        (l.rj_id IS NOT NULL AND opa.local_jugador_id = l.rj_id)
-        OR (l.rj_id IS NOT NULL AND opa.jugador_id = l.rj_id)
-      )
-    ORDER BY l.lid, opa.updated_at DESC NULLS LAST
+    SELECT DISTINCT ON (lid)
+      lid,
+      source_id
+    FROM (
+      SELECT
+        i.lid,
+        opa.jugador_id AS source_id,
+        opa.updated_at
+      FROM ids i
+      LEFT JOIN local l ON l.lid = i.lid
+      JOIN public.organizer_player_access opa
+        ON opa.grantee_organizer_id = p_organizador_id
+        AND opa.is_active = true
+        AND (
+          (l.rj_id IS NOT NULL AND opa.local_jugador_id = l.rj_id)
+          OR (l.rj_id IS NOT NULL AND opa.jugador_id = l.rj_id)
+        )
+      UNION ALL
+      SELECT
+        i.lid,
+        opa.jugador_id AS source_id,
+        opa.updated_at
+      FROM ids i
+      JOIN public.organizer_player_access opa
+        ON opa.grantee_organizer_id = p_organizador_id
+        AND opa.is_active = true
+      JOIN public.riviera_jugadores src_match
+        ON src_match.id = opa.jugador_id
+        AND src_match.estado = 'activo'
+        AND src_match.legacy_player_id = i.lid
+    ) grants
+    ORDER BY lid, updated_at DESC NULLS LAST
   ),
   source AS (
     SELECT

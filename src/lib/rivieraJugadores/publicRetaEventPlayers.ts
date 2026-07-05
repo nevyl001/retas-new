@@ -377,6 +377,10 @@ export async function fetchRetaEventParticipacionPlayers(
   return fetchRetaEventPlayersFromTable(org, eventoId);
 }
 
+function isDefaultRatingValue(rating: number): boolean {
+  return rating === DEFAULT_PROFILE.rating;
+}
+
 function profileFromEventRow(
   row: RetaEventPlayerRow | null,
   canonical: PlayerPublicProfile | undefined
@@ -386,9 +390,19 @@ function profileFromEventRow(
   const rowRating =
     row.rating != null && Number.isFinite(row.rating) ? row.rating : null;
 
+  let rating = rowRating ?? canonical?.rating ?? DEFAULT_PROFILE.rating;
+  if (
+    rowRating != null &&
+    canonical?.rating != null &&
+    isDefaultRatingValue(rowRating) &&
+    !isDefaultRatingValue(canonical.rating)
+  ) {
+    rating = canonical.rating;
+  }
+
   return {
     fotoUrl: row.fotoUrl ?? canonical?.fotoUrl ?? null,
-    rating: rowRating ?? canonical?.rating ?? DEFAULT_PROFILE.rating,
+    rating,
   };
 }
 
