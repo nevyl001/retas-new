@@ -31,13 +31,19 @@
   flex: 1 1 auto;
 }
 
+.user-header-logo .club-identity--premium.club-identity--header .club-identity__name,
 .user-header-logo .club-identity--partner.club-identity--header .club-identity__name {
   font-size: 1.125rem;
   letter-spacing: 0.06em;
 }
 
+.user-header-logo .club-identity--premium.club-identity--header .club-identity__mother,
 .user-header-logo .club-identity--partner.club-identity--header .club-identity__mother {
   margin-top: 1px;
+}
+
+.user-header-logo .club-identity--stacked {
+  gap: 0.3rem;
 }
 
 .user-header-logo h1 {

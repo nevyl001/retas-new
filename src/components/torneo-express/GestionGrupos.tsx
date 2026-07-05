@@ -226,7 +226,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       </ActionBar>
 
       <header className="te-header te-gestion-header rv-mode-header">
-        <p className="rv-mode-header__eyebrow te-gestion-header__eyebrow">{modeEyebrow}</p>
+        {modeEyebrow ? (
+          <p className="rv-mode-header__eyebrow te-gestion-header__eyebrow">
+            {modeEyebrow}
+          </p>
+        ) : null}
         <div className="te-gestion-header__brand">
           <h1 className="te-title te-gestion-title">{bundle.torneo.nombre}</h1>
           <div className="te-gestion-header__pills">

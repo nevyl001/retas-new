@@ -20,6 +20,10 @@ export function resolveClubLogo(
   return logos.dark ?? logos.light ?? logos.square;
 }
 
+export function manifestHasClubLogo(manifest: BrandManifest): boolean {
+  return Boolean(resolveClubLogo(manifest));
+}
+
 /** @deprecated Usar resolveClubLogo */
 export const resolveBrandLogo = resolveClubLogo;
 

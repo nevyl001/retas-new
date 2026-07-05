@@ -44,8 +44,10 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   const logoSize = variant === "auth" ? 56 : variant === "inline" ? 32 : 40;
 
   const organizerLabel = organizerDisplayName?.trim() || "";
+  const clubLogoIdentifiesOrganizer = isClubBranded && showLogo;
   const showOrganizerLine =
     !wordmarkOnly &&
+    !clubLogoIdentifiesOrganizer &&
     Boolean(organizerLabel) &&
     organizerLabel.localeCompare(RIVIERA_PRODUCT_NAME, undefined, {
       sensitivity: "accent",
@@ -57,12 +59,16 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
     showTagline &&
     !(preferOrganizerOverTagline && showOrganizerLine);
   const logoOnly = wordmarkOnly && isClubBranded && showLogo;
+  const useStackedClubHeader =
+    isClubBranded && showLogo && variant === "header" && !wordmarkOnly;
 
   return (
     <div
       className={`club-identity club-identity--mother club-identity--${variant}${
         isClubBranded ? " club-identity--premium" : ""
-      }${logoOnly ? " club-identity--logo-only" : ""} ${className}`.trim()}
+      }${logoOnly ? " club-identity--logo-only" : ""}${
+        useStackedClubHeader ? " club-identity--stacked" : ""
+      } ${className}`.trim()}
     >
       {showLogo ? (
         <img
@@ -76,15 +82,26 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
       ) : null}
       {!logoOnly ? (
         <div className="club-identity__text">
-          <span className="club-identity__name">{RIVIERA_PRODUCT_NAME}</span>
-          {showOrganizerLine ? (
-            <span className="club-identity__organizer">{organizerLabel}</span>
-          ) : null}
-          {showSloganLine ? (
-            <span className="club-identity__tagline">
-              {manifest.slogans.primary}
+          {useStackedClubHeader ? (
+            <span className="club-identity__attribution">
+              <span className="club-identity__attribution-by">by</span>{" "}
+              <span className="club-identity__attribution-brand">
+                {RIVIERA_PRODUCT_NAME}
+              </span>
             </span>
-          ) : null}
+          ) : (
+            <>
+              <span className="club-identity__name">{RIVIERA_PRODUCT_NAME}</span>
+              {showOrganizerLine ? (
+                <span className="club-identity__organizer">{organizerLabel}</span>
+              ) : null}
+              {showSloganLine ? (
+                <span className="club-identity__tagline">
+                  {manifest.slogans.primary}
+                </span>
+              ) : null}
+            </>
+          )}
         </div>
       ) : null}
     </div>

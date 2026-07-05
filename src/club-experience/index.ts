@@ -96,7 +96,11 @@ export {
   getPodiumFinalAriaLabel,
 } from "./experienceFormatters";
 
-export { resolveClubLogo, resolveBrandLogo } from "./resolveClubLogo";
+export {
+  resolveClubLogo,
+  resolveBrandLogo,
+  manifestHasClubLogo,
+} from "./resolveClubLogo";
 export type { ClubLogoSurface, BrandLogoSurface } from "./resolveClubLogo";
 
 export {

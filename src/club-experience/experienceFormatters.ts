@@ -3,6 +3,7 @@ import {
   RIVIERA_MOTHER_BRAND_NAME,
   RIVIERA_PRODUCT_NAME,
 } from "./motherBrand";
+import { manifestHasClubLogo } from "./resolveClubLogo";
 import type { BrandManifest } from "./types";
 
 function resolveOrganizerLabel(organizerDisplayName?: string | null): string {
@@ -126,11 +127,15 @@ export function getCoBrandCompactLine(manifest: BrandManifest): string {
 
 export function getHomeEyebrow(
   manifest: BrandManifest,
-  _isClubBranded: boolean,
+  isClubBranded: boolean,
   organizerDisplayName?: string | null
 ): string {
   if (manifest.home.eyebrow?.trim()) {
     return manifest.home.eyebrow.trim();
+  }
+  // El logo del club en el header ya identifica al organizador; no repetir nombre.
+  if (isClubBranded && manifestHasClubLogo(manifest)) {
+    return "";
   }
   if (organizerDisplayName?.trim()) {
     return organizerDisplayName.trim();
