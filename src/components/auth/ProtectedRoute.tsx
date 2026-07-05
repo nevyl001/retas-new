@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useClubExperience } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
-import { normalizeAppPathname, pathRequiresUserSession } from "../../lib/appRouting";
+import {
+  normalizeAppPathname,
+  pathRequiresUserSession,
+  resetProtectedPathToAppHome,
+} from "../../lib/appRouting";
 import { isJugadoresPublicPath } from "../jugadores/JugadoresRouter";
 import { isLigaPublicPath } from "../liga/LigaRouter";
 import { isTorneoExpressPublicPath } from "../torneo-express/TorneoExpressRouter";
@@ -30,6 +34,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isBrandingReady, isBrandingTransitioning } = useClubExperience();
   const currentPath =
     typeof window !== "undefined" ? window.location.pathname : "";
+
+  useEffect(() => {
+    if (loading || user || isBrandingTransitioning || !isBrandingReady) return;
+    if (!pathRequiresUserSession(normalizeAppPathname(currentPath))) return;
+    resetProtectedPathToAppHome();
+  }, [
+    loading,
+    user,
+    currentPath,
+    isBrandingTransitioning,
+    isBrandingReady,
+  ]);
 
   if (isPublicAppPath(currentPath)) {
     return <>{children}</>;

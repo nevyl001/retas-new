@@ -18,7 +18,7 @@ import {
   fetchMasterAdminByAuthId,
   navigateToAdminDashboard,
 } from "../lib/admin/masterAdminAuth";
-import { normalizeAppPathname } from "../lib/appRouting";
+import { normalizeAppPathname, resetProtectedPathToAppHome } from "../lib/appRouting";
 
 interface UserProfile {
   id: string;
@@ -187,6 +187,14 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       try {
         if (nextUserId && nextSession?.user) {
+          if (
+            previousUserId &&
+            previousUserId !== nextUserId &&
+            (event === "SIGNED_IN" || event === "USER_UPDATED")
+          ) {
+            resetProtectedPathToAppHome();
+          }
+
           const masterAdmin = await fetchMasterAdminByAuthId(nextUserId);
           if (masterAdmin) {
             clearTenantBranding();
@@ -242,6 +250,10 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           setUser(null);
           setUserProfile(null);
           userIdRef.current = null;
+
+          if (event === "SIGNED_OUT") {
+            resetProtectedPathToAppHome();
+          }
         }
       } finally {
         if (isMounted && generation === applySessionGenerationRef.current) {
@@ -336,6 +348,8 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         console.error("Error al cerrar sesión:", error);
         throw error;
       }
+
+      resetProtectedPathToAppHome();
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
       throw error;

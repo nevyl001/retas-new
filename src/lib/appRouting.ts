@@ -60,6 +60,17 @@ export function navigateToAppHome(): void {
   navigateAppTo("/");
 }
 
+/** Tras cerrar sesión: quitar rutas privadas de la barra (evita que el siguiente login herede la URL). */
+export function resetProtectedPathToAppHome(): void {
+  if (typeof window === "undefined") return;
+  const path = normalizeAppPathname(window.location.pathname);
+  if (!pathRequiresUserSession(path) || path === "/") return;
+
+  window.history.replaceState({}, "", "/");
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  window.dispatchEvent(new Event(PATH_SYNC_EVENT));
+}
+
 export function navigateToReta(tournamentId: string): void {
   const id = tournamentId.trim();
   if (!id) {
