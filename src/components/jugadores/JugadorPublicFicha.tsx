@@ -30,6 +30,7 @@ import { mergeJugadorStatsPuntosTotales, rankingPuntosClubLocal } from "../../li
 import {
   prefetchOrganizerDisplayNames,
   rankingPuntosCarreraRivieraDisplay,
+  resolveOrigenConcedidoOrganizadorId,
 } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import {
   getRivieraJugadorInternalClubById,
@@ -373,12 +374,20 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const registrationOrgId = jugador
     ? resolveRegistrationOrganizadorIdForPublicFicha(jugador)
     : null;
+  const puntosInterno = rankingPuntosClubLocal(jugador);
+  const puntosTotal = rankingPuntosCarreraRivieraDisplay({
+    ...jugador,
+    officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
+  });
   const puntos = shouldUseClubLocalPuntosOnPublicFicha(jugador, internalClub)
-    ? rankingPuntosClubLocal(jugador)
-    : rankingPuntosCarreraRivieraDisplay({
-        ...jugador,
-        officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
-      });
+    ? puntosInterno
+    : puntosTotal;
+  const origenOrgId = resolveOrigenConcedidoOrganizadorId(jugador);
+  const showDualPuntosFicha =
+    internalClub &&
+    Boolean(origenOrgId) &&
+    jugador.concedidoPorAdmin &&
+    puntosTotal > puntosInterno;
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);
@@ -519,11 +528,25 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                           className="rjp-ficha-stat__icon"
                         />
                         <span className="rjp-ficha-stat__lbl">
-                          {internalClub ? "Puntos en club" : "Puntos totales"}
+                          {internalClub
+                            ? "Puntos ranking interno"
+                            : "Puntos totales"}
                         </span>
-                        <span className="rjp-ficha-stat__val">
-                          {puntos.toLocaleString("es-MX")}
-                        </span>
+                        {showDualPuntosFicha ? (
+                          <span className="rjp-ficha-stat__val rjp-ficha-dual-pts">
+                            <span className="rjp-ficha-dual-pts__main">
+                              {puntosInterno.toLocaleString("es-MX")}
+                            </span>
+                            <span className="rjp-ficha-dual-pts__origen">
+                              Total Riviera:{" "}
+                              {puntosTotal.toLocaleString("es-MX")} pts
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="rjp-ficha-stat__val">
+                            {puntos.toLocaleString("es-MX")}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

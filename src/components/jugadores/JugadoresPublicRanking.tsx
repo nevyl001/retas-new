@@ -408,7 +408,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                             <span className="rjp-ranking-card__name">
                               {j.nombre}
                             </span>
-                            <RivieraIdBadgeFromJugador jugador={j} />
+                            <RivieraIdBadgeFromJugador jugador={j} embedded />
                             <span className="rjp-ranking-card__meta">
                               <JugadorPaisBadge codigo={j.pais_codigo} size="sm" />
                               <RankingPtsDisplay

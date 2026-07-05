@@ -387,7 +387,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                       <GrantedPlayerOriginBadge jugador={j} />
                     ) : null}
                   </div>
-                  <RivieraIdBadgeFromJugador jugador={j} />
+                  <RivieraIdBadgeFromJugador jugador={j} embedded />
                   <JugadorCategoriaBadge categoria={j.categoria} />
                   <JugadorPerfilMeta jugador={j} variant="card" />
                   <p className="rj-card__stats">

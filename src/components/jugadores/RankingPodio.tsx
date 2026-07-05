@@ -77,7 +77,7 @@ export const RankingPodio: React.FC<{
               />
             </div>
             <span className="rjp-podio__name">{jugador.nombre}</span>
-            <RivieraIdBadgeFromJugador jugador={jugador} />
+            <RivieraIdBadgeFromJugador jugador={jugador} embedded />
             <RankingPtsDisplay
               jugador={jugador as RivieraJugadorWithStats}
               clubOrganizadorId={clubOrganizadorId}
