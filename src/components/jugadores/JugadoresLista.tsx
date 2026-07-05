@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { useUser } from "../../contexts/UserContext";
+import { supabase } from "../../lib/supabaseClient";
 import { useAccountFeatures } from "../../contexts/AccountFeaturesContext";
 import {
   JUGADOR_CATEGORIA_LABELS,
@@ -40,9 +41,11 @@ import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
+import { RivieraIdBadgeFromJugador } from "./RivieraIdBadge";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { navigateJugadorFicha } from "./jugadoresNav";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
+import { AgregarJugadorExistenteModal } from "./AgregarJugadorExistenteModal";
 import "./riviera-jugadores.css";
 
 export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
@@ -59,6 +62,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   const [nivelFilter, setNivelFilter] = useState("");
   const [recientes, setRecientes] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [existingModalOpen, setExistingModalOpen] = useState(false);
   const [ajusteJugador, setAjusteJugador] =
     useState<RivieraJugadorWithStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -220,6 +224,13 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             ) : null}
             <button
               type="button"
+              className="rj-btn rj-btn--ghost"
+              onClick={() => setExistingModalOpen(true)}
+            >
+              Agregar jugador existente
+            </button>
+            <button
+              type="button"
               className="rj-btn rj-btn--primary"
               onClick={() => setModalOpen(true)}
             >
@@ -338,6 +349,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                       <GrantedPlayerOriginBadge jugador={j} />
                     ) : null}
                   </div>
+                  <RivieraIdBadgeFromJugador jugador={j} />
                   <JugadorCategoriaBadge categoria={j.categoria} />
                   <JugadorPerfilMeta jugador={j} variant="card" />
                   <p className="rj-card__stats">
@@ -355,6 +367,28 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
           })}
         </div>
       </div>
+
+      <AgregarJugadorExistenteModal
+        open={existingModalOpen}
+        onClose={() => setExistingModalOpen(false)}
+        onAdded={async (membership) => {
+          if (!user?.id) return;
+          const { data: localRow } = await supabase
+            .from("riviera_jugadores")
+            .select("*")
+            .eq("id", membership.localJugadorId)
+            .maybeSingle();
+          if (localRow) {
+            const local = localRow as RivieraJugadorWithStats;
+            await Promise.all([
+              ensureLegacyPlayerForRivieraJugador(user.id, local),
+              ensureLigaJugadorForRivieraJugador(user.id, local),
+            ]);
+          }
+          await syncLegacyPlayersFromRivieraRegistry(user.id);
+          await load();
+        }}
+      />
 
       <NuevoJugadorModal
         open={modalOpen}

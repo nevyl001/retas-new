@@ -71,6 +71,8 @@ export interface RivieraJugador {
   rating: number;
   rating_partidos: number;
   rating_fiabilidad: number;
+  /** Identificador público legible (RIV-00000001). Solo lectura UI. */
+  riviera_id?: string | null;
 }
 
 export interface JugadorStats {

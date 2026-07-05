@@ -41,6 +41,7 @@ import { buildPublicJugadorPath, buildPublicRankingUrl } from "./jugadoresPublic
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
+import { RivieraIdShareBlock } from "./RivieraIdShareBlock";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 import { RatingNivel } from "./RatingNivel";
 import { navigateJugadorFicha, navigateJugadores } from "./jugadoresNav";
@@ -371,6 +372,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
               <h1 className="rj-ficha-header__name">{jugador.nombre}</h1>
               <JugadorPaisBadge codigo={jugador.pais_codigo} size="md" />
             </div>
+            <RivieraIdShareBlock jugador={jugador} variant="private" />
             <JugadorCategoriaBadge categoria={jugador.categoria} />
             <JugadorPerfilMeta jugador={jugador} variant="inline" />
             {jugador.club && (

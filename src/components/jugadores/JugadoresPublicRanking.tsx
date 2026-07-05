@@ -43,6 +43,7 @@ import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
+import { RivieraIdBadgeFromJugador } from "./RivieraIdBadge";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import {
   buildInternalClubRankingUrl,
@@ -407,6 +408,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                             <span className="rjp-ranking-card__name">
                               {j.nombre}
                             </span>
+                            <RivieraIdBadgeFromJugador jugador={j} />
                             <span className="rjp-ranking-card__meta">
                               <JugadorPaisBadge codigo={j.pais_codigo} size="sm" />
                               <RankingPtsDisplay

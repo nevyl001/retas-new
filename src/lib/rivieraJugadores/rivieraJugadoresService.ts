@@ -1,5 +1,6 @@
 import { isMissingColumnError, sanitizeUuid } from "../db/schemaHelpers";
 import { supabase, supabasePublicRead } from "../supabaseClient";
+import { RIVIERA_IDENTITY_ENSURE_ENABLED } from "../../config/careerIdentity";
 import type {
   CreateRivieraJugadorInput,
   JugadorParticipacion,
@@ -43,6 +44,10 @@ import {
   isJugadorImportBlocked,
 } from "./jugadorImportBlocklist";
 import { computeJugadorStatsFromParticipaciones } from "./rebuildJugadorStats";
+import {
+  enrichJugadorWithRivieraId,
+  enrichJugadoresWithRivieraId,
+} from "./rivieraIdDisplay";
 
 const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -559,8 +564,12 @@ export async function getRivieraJugadorInternalClubById(
   organizadorId: string
 ): Promise<RivieraJugadorWithStats | null> {
   const direct = await fetchInternalClubJugadorRow(organizadorId, { jugadorId });
-  if (direct) return direct;
-  return fetchGrantedJugadorForInternalClub(organizadorId, jugadorId);
+  if (direct) return enrichJugadorWithRivieraId(direct);
+  const granted = await fetchGrantedJugadorForInternalClub(
+    organizadorId,
+    jugadorId
+  );
+  return granted ? enrichJugadorWithRivieraId(granted) : null;
 }
 
 async function fetchJugadorStatsRow(
@@ -691,7 +700,7 @@ export async function listRivieraJugadores(
     rows = rows.filter((r) => r.categoria === opts.nivel);
   }
 
-  return rows;
+  return enrichJugadoresWithRivieraId(rows);
 }
 
 export async function getRivieraJugadorBySlug(
@@ -717,7 +726,9 @@ export async function getRivieraJugadorBySlug(
   if (data) {
     const own = mapJugadorRowFromService(data as unknown as Record<string, unknown>);
     if (await isRevokedGrantLocalJugador(organizadorId, own.id)) return null;
-    return enrichInternalClubJugadorGrant(organizadorId, own);
+    return enrichJugadorWithRivieraId(
+      await enrichInternalClubJugadorGrant(organizadorId, own)
+    );
   }
 
   const { data: grantedRow, error: grantedErr } = await withJugadorSelectFallback<
@@ -752,10 +763,12 @@ export async function getRivieraJugadorBySlug(
     sourceJugadorId: meta.sourceJugadorId,
     ownerOrganizadorId: meta.ownerOrganizadorId,
   };
-  return enrichGrantedJugadorFromSource(
-    mapped,
-    meta.sourceJugadorId,
-    meta.ownerOrganizadorId
+  return enrichJugadorWithRivieraId(
+    await enrichGrantedJugadorFromSource(
+      mapped,
+      meta.sourceJugadorId,
+      meta.ownerOrganizadorId
+    )
   );
 }
 
@@ -896,7 +909,16 @@ export async function createRivieraJugador(
   );
 
   if (error) throw error;
-  return data as unknown as RivieraJugador;
+  const jugador = data as unknown as RivieraJugador;
+
+  if (RIVIERA_IDENTITY_ENSURE_ENABLED) {
+    const { ensureRivieraIdentity } = await import("./careerIdentity");
+    void ensureRivieraIdentity(jugador.id).catch((err) => {
+      console.warn("[careerIdentity] ensure after create failed:", jugador.id, err);
+    });
+  }
+
+  return jugador;
 }
 
 export async function updateRivieraJugador(
@@ -1570,7 +1592,9 @@ export async function getRivieraJugadorPublicById(
   }
   if (!data) return null;
   const mapped = mapJugadorRowFromService(data as unknown as Record<string, unknown>);
-  return enrichJugadorWithGlobalGrantedAccess(mapped);
+  return enrichJugadorWithRivieraId(
+    await enrichJugadorWithGlobalGrantedAccess(mapped)
+  );
 }
 
 /** Ranking oficial global (todos los clubs con jugadores publicados). */
@@ -1587,7 +1611,9 @@ export async function listOfficialSiteJugadoresRankingGlobal(
   if (!error && data) {
     const rows = (data as Record<string, unknown>[]).map(mapSitioOficialRow);
     const filtered = rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
-    return enrichOfficialSiteRankingWithLocalPuntos(filtered);
+    return enrichJugadoresWithRivieraId(
+      await enrichOfficialSiteRankingWithLocalPuntos(filtered)
+    );
   }
 
   if (
@@ -1622,7 +1648,9 @@ export async function listOfficialSiteJugadoresRankingGlobal(
   const filtered = rows.filter((row) =>
     isJugadorInGeneroBracket(row.genero, genero)
   );
-  return enrichOfficialSiteRankingWithLocalPuntos(filtered);
+  return enrichJugadoresWithRivieraId(
+    await enrichOfficialSiteRankingWithLocalPuntos(filtered)
+  );
 }
 
 /** Ranking oficial por club (solo jugadores con «Sitio oficial» en admin). */
@@ -1644,7 +1672,9 @@ export async function listOfficialSiteJugadoresRanking(
   if (!error && data) {
     const rows = (data as Record<string, unknown>[]).map(mapSitioOficialRow);
     const filtered = rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
-    return enrichOfficialSiteRankingWithLocalPuntos(filtered);
+    return enrichJugadoresWithRivieraId(
+      await enrichOfficialSiteRankingWithLocalPuntos(filtered)
+    );
   }
 
   if (
@@ -1683,7 +1713,9 @@ export async function listOfficialSiteJugadoresRanking(
   const filtered = rows.filter((row) =>
     isJugadorInGeneroBracket(row.genero, genero)
   );
-  return enrichOfficialSiteRankingWithLocalPuntos(filtered);
+  return enrichJugadoresWithRivieraId(
+    await enrichOfficialSiteRankingWithLocalPuntos(filtered)
+  );
 }
 
 export async function getRankingPosicionOficialEnCategoria(
@@ -1803,7 +1835,9 @@ export async function listInternalClubJugadoresRanking(
       filtered,
       options
     );
-    return stripOfficialPuntosFromInternalClubRanking(merged);
+    return enrichJugadoresWithRivieraId(
+      stripOfficialPuntosFromInternalClubRanking(merged)
+    );
   }
 
   if (error && !isMissingTableError(error) && !isMissingRpcError(error)) {
@@ -1852,7 +1886,9 @@ export async function listInternalClubJugadoresRanking(
     sorted,
     options
   );
-  return stripOfficialPuntosFromInternalClubRanking(merged);
+  return enrichJugadoresWithRivieraId(
+    stripOfficialPuntosFromInternalClubRanking(merged)
+  );
 }
 
 function stripOfficialPuntosFromInternalClubRanking(
@@ -1874,7 +1910,10 @@ export async function getRivieraJugadorPublicBySlug(
   const trimmedOrg = organizadorId?.trim();
 
   if (trimmedOrg) {
-    return fetchInternalClubJugadorRow(trimmedOrg, { slug: trimmedSlug });
+    const row = await fetchInternalClubJugadorRow(trimmedOrg, {
+      slug: trimmedSlug,
+    });
+    return row ? enrichJugadorWithRivieraId(row) : null;
   }
 
   const { data, error } = await withJugadorSelectFallback((cols) => {
@@ -1897,7 +1936,7 @@ export async function getRivieraJugadorPublicBySlug(
   const { isJugadorVisibleSitioOficial } = await import("../admin/accountControls");
   if (!(await isJugadorVisibleSitioOficial(j.id))) return null;
 
-  return enrichJugadorWithGlobalGrantedAccess(j);
+  return enrichJugadorWithRivieraId(await enrichJugadorWithGlobalGrantedAccess(j));
 }
 
 /** Ranking público por categoría y género (orden: más puntos, luego nombre). */
@@ -1941,12 +1980,13 @@ export async function listPublicJugadoresRanking(
   const filtered = rows.filter((row) =>
     isJugadorInGeneroBracket(row.genero, genero)
   );
-  return [...filtered].sort((a, b) => {
+  const sorted = [...filtered].sort((a, b) => {
     const pa = a.stats?.puntos_totales ?? 0;
     const pb = b.stats?.puntos_totales ?? 0;
     if (pb !== pa) return pb - pa;
     return a.nombre.localeCompare(b.nombre, "es");
   });
+  return enrichJugadoresWithRivieraId(sorted);
 }
 
 /** Posición # en el ranking interno del club (empates comparten número). */

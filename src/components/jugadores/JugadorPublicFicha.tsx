@@ -63,6 +63,7 @@ import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
 import { JugadorAvatarHero } from "./JugadorAvatarHero";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
+import { RivieraIdShareBlock } from "./RivieraIdShareBlock";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
 import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
@@ -110,6 +111,7 @@ const FichaPublicHero: React.FC<FichaPublicHeroProps> = ({
   const rankingLabel = rankingLabelForPublicFicha(jugador);
 
   return (
+    <>
     <PublicHero
       logoClub={
         isClubBranded ? (
@@ -132,6 +134,12 @@ const FichaPublicHero: React.FC<FichaPublicHeroProps> = ({
       categoria={JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
       meta="Jugador"
     />
+    <RivieraIdShareBlock
+      jugador={jugador}
+      variant="public"
+      className="rjp-ficha-hero__riviera-id"
+    />
+  </>
   );
 };
 
@@ -462,6 +470,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                         className="rjp-ficha-hero__pais"
                       />
                     </div>
+                    <RivieraIdShareBlock jugador={jugador} variant="public" />
 
                     <div className="rjp-ficha-hero__pills">
                       {!isPubDsV2Enabled ? (

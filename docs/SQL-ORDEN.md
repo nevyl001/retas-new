@@ -11,6 +11,17 @@ El esquema canónico vive en la base de datos de producción. En el repo solo qu
 | `organizer-player-access.sql` | Grants entre clubes (Fase 1) |
 | `riviera-official-multi-club-romc1.sql` | ROMC-1 — identidad + ledger |
 | `riviera-official-multi-club-romc2.sql` | ROMC-2 — dual-write ledger |
+| `riviera-career-identity-2.0.1-ddl.sql` | **Sprint 2.0.1** — Riviera ID Foundation (DDL aditivo identity) |
+| `riviera-career-identity-2.0.1-validate.sql` | Validación read-only post Sprint 2.0.1 |
+| `riviera-career-identity-2.0.2-engine.sql` | **Sprint 2.0.2** — Riviera ID Engine (secuencia + ensure RPC) |
+| `riviera-career-identity-2.0.2-validate.sql` | Validación read-only post Sprint 2.0.2 |
+| `riviera-career-identity-2.0.2-test-scenarios.sql` | Escenarios de prueba staging Sprint 2.0.2 |
+| `riviera-career-identity-2.0.2a-integration.sql` | **Sprint 2.0.2A** — admin_create → ensure (punto único) |
+| `riviera-player-sharing-requests-2.1.0.sql` | Sprint 2.1.0 — solicitudes compartir (obsoleto; no desplegar) |
+| `riviera-player-membership-2.1.1-schema.sql` | **RIVIERA 2.1.1** — Player Membership schema evolution |
+| `riviera-player-membership-2.1.1-validate.sql` | Validación read-only post 2.1.1 |
+| `riviera-player-membership-2.1.2-rpcs.sql` | **RIVIERA 2.1.2** — Player Membership RPCs |
+| `riviera-player-membership-2.1.2-validate.sql` | Validación read-only post 2.1.2 |
 | `rating-sistema.sql` | RPC `aplicar_rating_partido` |
 | `duelos-2v2.sql` | Tabla y esquema duelo 2 vs 2 |
 | `delete-riviera-jugador.sql` | RPC eliminar jugador con limpieza |
@@ -48,6 +59,17 @@ Hazlos directamente en el **SQL Editor** de Supabase (o con migraciones de Supab
 | Acceso concedido entre organizadores (Fase 1) | `supabase/organizer-player-access.sql` |
 | **ROMC-1** — esquema identidad + ledger (sin dual-write) | `supabase/riviera-official-multi-club-romc1.sql` |
 | **ROMC-2** — dual-write ledger oficial (emisores + RPC) | `supabase/riviera-official-multi-club-romc2.sql` |
+| **Sprint 2.0.1** — Riviera ID Foundation (Carrera Deportiva DDL) | `supabase/riviera-career-identity-2.0.1-ddl.sql` |
+| Sprint 2.0.1 — checklist de pruebas | `docs/RIVIERA-CAREER-IDENTITY-2.0.1-CHECKLIST.md` |
+| **Sprint 2.0.2** — Riviera ID Engine | `supabase/riviera-career-identity-2.0.2-engine.sql` |
+| Sprint 2.0.2 — checklist de pruebas | `docs/RIVIERA-CAREER-IDENTITY-2.0.2-CHECKLIST.md` |
+| **Sprint 2.0.2A** — Integración ensure con app + admin | `supabase/riviera-career-identity-2.0.2a-integration.sql` |
+| Sprint 2.0.2A — checklist | `docs/RIVIERA-CAREER-IDENTITY-2.0.2A-CHECKLIST.md` |
+| Sprint 2.1.0 — sharing requests (obsoleto) | `supabase/riviera-player-sharing-requests-2.1.0.sql` |
+| **RIVIERA 2.1.1** — Player Membership schema | `supabase/riviera-player-membership-2.1.1-schema.sql` |
+| RIVIERA 2.1.1 — checklist | `docs/RIVIERA-PLAYER-MEMBERSHIP-2.1.1-CHECKLIST.md` |
+| **RIVIERA 2.1.2** — Player Membership RPCs | `supabase/riviera-player-membership-2.1.2-rpcs.sql` |
+| RIVIERA 2.1.2 — checklist | `docs/RIVIERA-PLAYER-MEMBERSHIP-2.1.2-CHECKLIST.md` |
 
 ### Orden recomendado (esquema nuevo)
 
@@ -56,6 +78,16 @@ Hazlos directamente en el **SQL Editor** de Supabase (o con migraciones de Supab
 3. `riviera-official-multi-club-romc1.sql` (ROMC-1)
 4. `riviera-official-multi-club-romc2.sql` (ROMC-2)
 5. Validación ROMC-1: `docs/ROMC-1-CHECKLIST.md`
+6. **`riviera-career-identity-2.0.1-ddl.sql`** (Sprint 2.0.1 — Riviera ID Foundation)
+7. Validación Sprint 2.0.1: `riviera-career-identity-2.0.1-validate.sql` + `docs/RIVIERA-CAREER-IDENTITY-2.0.1-CHECKLIST.md`
+8. **`riviera-career-identity-2.0.2-engine.sql`** (Sprint 2.0.2 — Riviera ID Engine)
+9. Validación Sprint 2.0.2: `riviera-career-identity-2.0.2-validate.sql` + `docs/RIVIERA-CAREER-IDENTITY-2.0.2-CHECKLIST.md`
+10. **`riviera-career-identity-2.0.2a-integration.sql`** (Sprint 2.0.2A — integración app)
+11. Checklist 2.0.2A: `docs/RIVIERA-CAREER-IDENTITY-2.0.2A-CHECKLIST.md`
+12. **`riviera-player-membership-2.1.1-schema.sql`** (RIVIERA 2.1.1 — membership schema)
+13. Validación 2.1.1: `riviera-player-membership-2.1.1-validate.sql` + checklist
+14. **`riviera-player-membership-2.1.2-rpcs.sql`** (RIVIERA 2.1.2 — membership RPCs)
+15. Validación 2.1.2: `riviera-player-membership-2.1.2-validate.sql` + checklist
 
 ## Seguridad RLS (alerta Supabase)
 

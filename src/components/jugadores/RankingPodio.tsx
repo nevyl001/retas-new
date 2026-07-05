@@ -1,11 +1,12 @@
 import React from "react";
 import { JugadorAvatar } from "./JugadorAvatar";
+import { RivieraIdBadgeFromJugador } from "./RivieraIdBadge";
 import { RankingPtsDisplay } from "./RankingPtsDisplay";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 
 export type RankingPodioJugador = Pick<
   RivieraJugadorWithStats,
-  "id" | "nombre" | "foto_url" | "pais_codigo" | "stats" | "slug"
+  "id" | "nombre" | "foto_url" | "pais_codigo" | "stats" | "slug" | "riviera_id"
 > &
   Partial<
     Pick<
@@ -76,6 +77,7 @@ export const RankingPodio: React.FC<{
               />
             </div>
             <span className="rjp-podio__name">{jugador.nombre}</span>
+            <RivieraIdBadgeFromJugador jugador={jugador} />
             <RankingPtsDisplay
               jugador={jugador as RivieraJugadorWithStats}
               clubOrganizadorId={clubOrganizadorId}

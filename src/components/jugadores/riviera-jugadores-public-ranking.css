@@ -263,6 +263,10 @@
   text-overflow: ellipsis;
 }
 
+.rjp-ranking-card__body .rj-riviera-id {
+  margin-top: 3px;
+}
+
 .rjp-ranking-card__meta {
   display: flex;
   align-items: center;
@@ -725,6 +729,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rjp-podio__slot .rj-riviera-id {
+  margin-top: 2px;
+  max-width: 100%;
 }
 
 .rjp-podio__pts {
