@@ -13,7 +13,10 @@ jest.mock("../supabaseClient", () => ({
 }));
 
 import { supabase, supabasePublicRead } from "../supabaseClient";
-import { resolvePlayerPublicProfiles } from "./publicPlayerAvatars";
+import {
+  fetchRivieraJugadorProfilesByIds,
+  resolvePlayerPublicProfiles,
+} from "./publicPlayerAvatars";
 
 function mockRivieraJugadoresQuery(
   client: jest.Mock,
@@ -512,5 +515,107 @@ describe("resolvePlayerPublicProfiles", () => {
     expect(profiles[originLegacyId].rating).toBe(2.82);
     expect(profiles[originLegacyId].fotoUrl).toBe("https://example.com/daniel.jpg");
     expect(supabasePublicRead.rpc).toHaveBeenCalled();
+  });
+});
+
+describe("fetchRivieraJugadorProfilesByIds", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (supabase.auth.getSession as jest.Mock).mockResolvedValue({
+      data: { session: null },
+    });
+    (supabase.rpc as jest.Mock).mockResolvedValue({ data: [], error: null });
+    (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
+      data: [],
+      error: null,
+    });
+  });
+
+  it("en publicOnly resuelve rating canónico vía RPC público por riviera_jugador id", async () => {
+    const rivieraCloneId = "devyl-riviera-clone-id";
+    const legacyId = "devyl-legacy-player-id";
+    const rivieraOrg = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
+
+    (supabasePublicRead.from as jest.Mock).mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        in: jest.fn().mockResolvedValue({
+          data: [
+            {
+              id: rivieraCloneId,
+              legacy_player_id: legacyId,
+              foto_url: "https://example.com/devyl.jpg",
+              rating: 3.0,
+              rating_partidos: 0,
+            },
+          ],
+          error: null,
+        }),
+      }),
+    });
+
+    (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
+      data: [
+        {
+          jugador_id: rivieraCloneId,
+          foto_url: "https://example.com/devyl.jpg",
+          rating: 3.14,
+        },
+      ],
+      error: null,
+    });
+
+    const map = await fetchRivieraJugadorProfilesByIds([rivieraCloneId], {
+      publicOnly: true,
+      organizadorId: rivieraOrg,
+    });
+
+    expect(map.get(rivieraCloneId)?.rating).toBe(3.14);
+    expect(supabasePublicRead.rpc).toHaveBeenCalledWith(
+      "riviera_public_riviera_jugador_profiles",
+      expect.objectContaining({
+        p_organizador_id: rivieraOrg,
+        p_jugador_ids: [rivieraCloneId],
+      })
+    );
+  });
+
+  it("en publicOnly con riviera id sin legacy resuelve vía RPC cuando el id coincide", async () => {
+    const rivieraId = "terry-riviera-id";
+    const rivieraOrg = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
+
+    (supabasePublicRead.from as jest.Mock).mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        in: jest.fn().mockResolvedValue({
+          data: [
+            {
+              id: rivieraId,
+              legacy_player_id: null,
+              foto_url: null,
+              rating: 3.0,
+              rating_partidos: 0,
+            },
+          ],
+          error: null,
+        }),
+      }),
+    });
+
+    (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
+      data: [
+        {
+          jugador_id: rivieraId,
+          foto_url: null,
+          rating: 2.97,
+        },
+      ],
+      error: null,
+    });
+
+    const map = await fetchRivieraJugadorProfilesByIds([rivieraId], {
+      publicOnly: true,
+      organizadorId: rivieraOrg,
+    });
+
+    expect(map.get(rivieraId)?.rating).toBe(2.97);
   });
 });

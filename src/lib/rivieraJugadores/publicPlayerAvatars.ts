@@ -268,26 +268,79 @@ async function getAvatarReadContext(opts?: {
 }
 
 async function fetchEventAvatarsByRivieraIds(
-  ids: string[]
+  ids: string[],
+  organizadorId?: string
 ): Promise<Map<string, PlayerPublicProfile>> {
   const map = new Map<string, PlayerPublicProfile>();
   if (ids.length === 0) return map;
 
-  const { data, error } = await supabase.rpc("riviera_event_player_avatars", {
-    p_jugador_ids: ids,
+  const rpcAttempts: Array<{
+    client: typeof supabase;
+    name: string;
+    params: Record<string, unknown>;
+    mapRow: (row: Record<string, unknown>) => { key: string; profile: PlayerPublicProfile };
+  }> = [];
+
+  if (organizadorId?.trim()) {
+    rpcAttempts.push({
+      client: supabasePublicRead,
+      name: "riviera_public_riviera_jugador_profiles",
+      params: {
+        p_organizador_id: organizadorId,
+        p_jugador_ids: ids,
+      },
+      mapRow: (row) => ({
+        key: String(row.jugador_id),
+        profile: profileFromRow(row),
+      }),
+    });
+    rpcAttempts.push({
+      client: supabasePublicRead,
+      name: "riviera_event_player_avatars",
+      params: {
+        p_organizador_id: organizadorId,
+        p_jugador_ids: ids,
+      },
+      mapRow: (row) => ({
+        key: String(row.id),
+        profile: profileFromRow(row),
+      }),
+    });
+  }
+
+  rpcAttempts.push({
+    client: supabase,
+    name: "riviera_event_player_avatars",
+    params: { p_jugador_ids: ids },
+    mapRow: (row) => ({
+      key: String(row.id),
+      profile: profileFromRow(row),
+    }),
   });
 
-  if (error) {
-    if (!error.message?.includes("riviera_event_player_avatars")) {
-      console.warn("[publicPlayerAvatars] riviera_event_player_avatars:", error.message);
+  for (const attempt of rpcAttempts) {
+    const { data, error } = await attempt.client.rpc(
+      attempt.name,
+      attempt.params
+    );
+
+    if (error) {
+      if (
+        !error.message?.includes(attempt.name) &&
+        !error.message?.includes("Could not find the function")
+      ) {
+        console.warn(`[publicPlayerAvatars] ${attempt.name}:`, error.message);
+      }
+      continue;
     }
-    return map;
+
+    for (const row of data ?? []) {
+      const mapped = attempt.mapRow(row as Record<string, unknown>);
+      map.set(mapped.key, mapped.profile);
+    }
+    if (map.size > 0) return map;
   }
 
-  for (const row of data ?? []) {
-    const profile = profileFromRow(row as Record<string, unknown>);
-    map.set(String((row as { id: string }).id), profile);
-  }
   return map;
 }
 
@@ -585,20 +638,13 @@ export async function fetchRivieraJugadorProfilesByIds(
         return !profile.fotoUrl || isDefaultRating(profile.rating);
       });
 
-  if (needsCanon.length > 0) {
-    const legacyIds = Array.from(
-      new Set(
-        needsCanon.map((id) => legacyByRivieraId.get(id) ?? id).filter(Boolean)
-      )
-    );
-    const fromLegacyCanon = await fetchCanonicalProfilesByLegacyPlayerIds(
-      opts?.organizadorId ?? "",
-      legacyIds,
-      { allowAuthenticatedFallback: client === supabase }
+  if (needsCanon.length > 0 && opts?.publicOnly && opts.organizadorId?.trim()) {
+    const fromRivieraRpc = await fetchEventAvatarsByRivieraIds(
+      needsCanon,
+      opts.organizadorId
     );
     for (const rivieraId of needsCanon) {
-      const legacyId = legacyByRivieraId.get(rivieraId) ?? rivieraId;
-      const profile = fromLegacyCanon.get(legacyId);
+      const profile = fromRivieraRpc.get(rivieraId);
       if (profile) {
         map.set(
           rivieraId,
@@ -606,12 +652,77 @@ export async function fetchRivieraJugadorProfilesByIds(
         );
       }
     }
+  }
 
-    const stillDefault = needsCanon.filter((id) =>
+  const stillNeedCanon = needsCanon.filter((id) =>
+    isDefaultRating(map.get(id)?.rating ?? DEFAULT_PROFILE.rating)
+  );
+
+  if (stillNeedCanon.length > 0) {
+    const canonIds = Array.from(
+      new Set(
+        stillNeedCanon
+          .map((id) => legacyByRivieraId.get(id) ?? id)
+          .filter(Boolean)
+      )
+    );
+
+    if (opts?.publicOnly && opts.organizadorId?.trim()) {
+      const fromPublicRpc = await fetchPublicEventLegacyProfiles(
+        opts.organizadorId,
+        canonIds
+      );
+      for (const rivieraId of stillNeedCanon) {
+        const legacyId = legacyByRivieraId.get(rivieraId) ?? rivieraId;
+        const profile =
+          fromPublicRpc.get(legacyId) ?? fromPublicRpc.get(rivieraId);
+        if (profile) {
+          map.set(
+            rivieraId,
+            mergeProfile(map.get(rivieraId) ?? { ...DEFAULT_PROFILE }, profile)
+          );
+        }
+      }
+    }
+
+    const stillAfterLegacyRpc = stillNeedCanon.filter((id) =>
       isDefaultRating(map.get(id)?.rating ?? DEFAULT_PROFILE.rating)
     );
-    if (stillDefault.length > 0) {
-      const fromRpc = await fetchEventAvatarsByRivieraIds(stillDefault);
+
+    if (stillAfterLegacyRpc.length > 0) {
+      const legacyCanonIds = Array.from(
+        new Set(
+          stillAfterLegacyRpc
+            .map((id) => legacyByRivieraId.get(id) ?? id)
+            .filter(Boolean)
+        )
+      );
+      const fromLegacyCanon = await fetchCanonicalProfilesByLegacyPlayerIds(
+        opts?.organizadorId ?? "",
+        legacyCanonIds,
+        { allowAuthenticatedFallback: client === supabase }
+      );
+      for (const rivieraId of stillAfterLegacyRpc) {
+        const legacyId = legacyByRivieraId.get(rivieraId) ?? rivieraId;
+        const profile =
+          fromLegacyCanon.get(legacyId) ?? fromLegacyCanon.get(rivieraId);
+        if (profile) {
+          map.set(
+            rivieraId,
+            mergeProfile(map.get(rivieraId) ?? { ...DEFAULT_PROFILE }, profile)
+          );
+        }
+      }
+    }
+
+    const stillDefault = stillNeedCanon.filter((id) =>
+      isDefaultRating(map.get(id)?.rating ?? DEFAULT_PROFILE.rating)
+    );
+    if (stillDefault.length > 0 && !opts?.publicOnly) {
+      const fromRpc = await fetchEventAvatarsByRivieraIds(
+        stillDefault,
+        opts?.organizadorId
+      );
       for (const id of stillDefault) {
         const profile = fromRpc.get(id);
         if (profile) {
