@@ -2,9 +2,9 @@ import React from "react";
 import { useOrganizerDisplayName } from "../../club-experience";
 import {
   hasDualRankingConcedido,
-  rankingPuntosCarreraRivieraDisplay,
   rankingPuntosGlobalDisplay,
   rankingPuntosInternoClubDisplay,
+  rankingPuntosOrigenConcedido,
   resolveOrigenConcedidoOrganizadorId,
 } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
@@ -34,7 +34,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   const stacked = variant === "stacked";
 
   if (hasDualRankingConcedido(jugador)) {
-    const carreraPts = rankingPuntosCarreraRivieraDisplay(jugador);
+    const origenLocalPts = rankingPuntosOrigenConcedido(jugador);
 
     if (internalClub) {
       return (
@@ -48,7 +48,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
           </span>
           {origenId ? (
             <span className="rjp-ranking-dual-pts__origen">
-              {origenName}: {carreraPts.toLocaleString("es-MX")} pts
+              {origenName}: {origenLocalPts.toLocaleString("es-MX")} pts
             </span>
           ) : null}
         </span>
@@ -68,7 +68,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
           {clubName}: {localPts.toLocaleString("es-MX")} pts
         </span>
         <span className="rjp-ranking-dual-pts__origen">
-          {origenName}: {carreraPts.toLocaleString("es-MX")} pts
+          {origenName}: {origenLocalPts.toLocaleString("es-MX")} pts
         </span>
       </span>
     );

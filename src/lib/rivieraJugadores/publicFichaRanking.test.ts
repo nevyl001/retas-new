@@ -70,21 +70,30 @@ function j(
 }
 
 describe("publicFichaRanking", () => {
-  it("ficha pública siempre usa carrera Riviera total, no puntos locales del club vista", () => {
+  it("ficha interna del club usa puntos locales y ranking del club", () => {
+    const aime = j(25, "aime", { visible_publico: true });
+    expect(
+      resolvePublicFichaRankingTarget(aime, { orgId: "hack", internalClub: true })
+    ).toBe("club");
+    expect(rankingLabelForPublicFicha(aime, true)).toBe("Ranking");
+    expect(shouldUseClubLocalPuntosOnPublicFicha(aime, true)).toBe(true);
+  });
+
+  it("ficha oficial usa ranking global aunque haya org en la ruta", () => {
     const aime = j(25, "aime", { visible_publico: true });
     expect(resolvePublicFichaRankingTarget(aime, { orgId: "hack" })).toBe(
       "global"
     );
     expect(rankingLabelForPublicFicha(aime)).toBe("Ranking Riviera Open");
-    expect(shouldUseClubLocalPuntosOnPublicFicha(aime, true)).toBe(false);
+    expect(shouldUseClubLocalPuntosOnPublicFicha(aime, false)).toBe(false);
   });
 
-  it("jugador solo interno del club sigue resolviendo ranking del club", () => {
+  it("jugador solo interno del club usa ranking del club", () => {
     const local = j(100, "local", { visible_publico: false });
-    expect(resolvePublicFichaRankingTarget(local, { orgId: "hack" })).toBe(
-      "club"
-    );
-    expect(shouldUseClubLocalPuntosOnPublicFicha(local, true)).toBe(false);
+    expect(
+      resolvePublicFichaRankingTarget(local, { orgId: "hack", internalClub: true })
+    ).toBe("club");
+    expect(shouldUseClubLocalPuntosOnPublicFicha(local, true)).toBe(true);
   });
 
   it("archivado o sin suma_ranking no cuenta como sitio oficial", () => {

@@ -27,16 +27,19 @@ export function resolvePublicFichaRankingTarget(
     RivieraJugadorWithStats,
     "visible_publico" | "estado" | "suma_ranking"
   >,
-  options: { orgId?: string | null }
+  options: { orgId?: string | null; internalClub?: boolean }
 ): PublicFichaRankingTarget {
+  if (options.internalClub && options.orgId?.trim()) return "club";
   if (isJugadorPublicadoSitioOficial(jugador)) return "global";
   if (options.orgId?.trim()) return "club";
   return "none";
 }
 
 export function rankingLabelForPublicFicha(
-  jugador: Pick<RivieraJugadorWithStats, "visible_publico" | "estado" | "suma_ranking">
+  jugador: Pick<RivieraJugadorWithStats, "visible_publico" | "estado" | "suma_ranking">,
+  internalClub = false
 ): string {
+  if (internalClub) return "Ranking";
   return isJugadorPublicadoSitioOficial(jugador)
     ? "Ranking Riviera Open"
     : "Ranking";
@@ -53,7 +56,7 @@ export function resolveRegistrationOrganizadorIdForPublicFicha(
   );
 }
 
-/** La ficha pública siempre muestra carrera Riviera total, no puntos locales del club vista. */
+/** Ficha desde ranking interno del club: solo puntos ganados en ese organizador. */
 export function shouldUseClubLocalPuntosOnPublicFicha(
   jugador: Pick<
     RivieraJugadorWithStats,
@@ -62,6 +65,5 @@ export function shouldUseClubLocalPuntosOnPublicFicha(
   internalClub: boolean
 ): boolean {
   void jugador;
-  void internalClub;
-  return false;
+  return internalClub;
 }

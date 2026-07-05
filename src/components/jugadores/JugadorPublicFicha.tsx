@@ -26,7 +26,7 @@ import {
   loadUnifiedParticipacionesForJugador,
   loadUnifiedRatingViewForJugador,
 } from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
-import { mergeJugadorStatsPuntosTotales } from "../../lib/rivieraJugadores/rankingPosition";
+import { mergeJugadorStatsPuntosTotales, rankingPuntosClubLocal } from "../../lib/rivieraJugadores/rankingPosition";
 import {
   prefetchOrganizerDisplayNames,
   rankingPuntosCarreraRivieraDisplay,
@@ -43,6 +43,7 @@ import {
 import {
   rankingLabelForPublicFicha,
   resolveRegistrationOrganizadorIdForPublicFicha,
+  shouldUseClubLocalPuntosOnPublicFicha,
 } from "../../lib/rivieraJugadores/publicFichaRanking";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
@@ -96,16 +97,18 @@ function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
 interface FichaPublicHeroProps {
   jugador: RivieraJugadorWithStats;
   rankingPos: number | null;
+  internalClub?: boolean;
 }
 
 const FichaPublicHero: React.FC<FichaPublicHeroProps> = ({
   jugador,
   rankingPos,
+  internalClub = false,
 }) => {
   const { isClubBranded } = useClubExperience();
   const registrationOrgId = resolveRegistrationOrganizadorIdForPublicFicha(jugador);
   const organizerName = useOrganizerDisplayName(registrationOrgId ?? undefined);
-  const rankingLabel = rankingLabelForPublicFicha(jugador);
+  const rankingLabel = rankingLabelForPublicFicha(jugador, internalClub);
 
   return (
     <>
@@ -185,7 +188,8 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         ]);
         const unified = await loadUnifiedParticipacionesForJugador(jugadorBase, {
           limit: 100,
-          organizadorId: internalClub || orgId ? orgId ?? null : null,
+          organizadorId: internalClub && orgId ? orgId : internalClub || orgId ? orgId ?? null : null,
+          scopedToOrganizadorHistorial: internalClub && Boolean(orgId),
           listParticipaciones: (id, lim, org) =>
             listParticipacionesPublic(id, lim, org ?? undefined),
         });
@@ -369,10 +373,12 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const registrationOrgId = jugador
     ? resolveRegistrationOrganizadorIdForPublicFicha(jugador)
     : null;
-  const puntos = rankingPuntosCarreraRivieraDisplay({
-    ...jugador,
-    officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
-  });
+  const puntos = shouldUseClubLocalPuntosOnPublicFicha(jugador, internalClub)
+    ? rankingPuntosClubLocal(jugador)
+    : rankingPuntosCarreraRivieraDisplay({
+        ...jugador,
+        officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
+      });
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);
@@ -393,7 +399,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         <FichaTopbar rankingUrl={rankingUrl} />
 
         {isPubDsV2Enabled ? (
-          <FichaPublicHero jugador={jugador} rankingPos={rankingPos} />
+          <FichaPublicHero
+            jugador={jugador}
+            rankingPos={rankingPos}
+            internalClub={internalClub}
+          />
         ) : null}
 
         <div className="rjp-ficha__layout">
@@ -492,7 +502,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                           className="rjp-ficha-stat__icon"
                         />
                         <span className="rjp-ficha-stat__lbl">
-                          {rankingLabelForPublicFicha(jugador)}
+                          {rankingLabelForPublicFicha(jugador, internalClub)}
                         </span>
                         <span
                           className={`rjp-ficha-stat__val${
@@ -508,7 +518,9 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                           size={14}
                           className="rjp-ficha-stat__icon"
                         />
-                        <span className="rjp-ficha-stat__lbl">Puntos totales</span>
+                        <span className="rjp-ficha-stat__lbl">
+                          {internalClub ? "Puntos en club" : "Puntos totales"}
+                        </span>
                         <span className="rjp-ficha-stat__val">
                           {puntos.toLocaleString("es-MX")}
                         </span>

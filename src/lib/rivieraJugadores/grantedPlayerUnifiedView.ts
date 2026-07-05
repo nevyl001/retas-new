@@ -496,6 +496,8 @@ export async function loadUnifiedParticipacionesForJugador(
   options: {
     limit?: number;
     organizadorId?: string | null;
+    /** Ranking interno: historial solo en este club (sin mezclar ROMC global). */
+    scopedToOrganizadorHistorial?: boolean;
     listParticipaciones: (
       jugadorId: string,
       limit: number,
@@ -518,6 +520,18 @@ export async function loadUnifiedParticipacionesForJugador(
   const linkedResolved = await resolveLinkedJugadorIds(jugador, mergedLocal, {
     skipRomcLegacy: true,
   });
+
+  if (options.scopedToOrganizadorHistorial && options.organizadorId?.trim()) {
+    return {
+      historial: mergedLocal,
+      romcView: {
+        historial: mergedLocal,
+        puntosOficiales: null,
+        hasRomcData: false,
+      },
+      linkedJugadorIds: linkedResolved,
+    };
+  }
 
   const romcView = romcRpcSuiteUnavailable()
     ? {

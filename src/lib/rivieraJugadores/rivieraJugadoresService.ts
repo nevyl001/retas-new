@@ -1768,7 +1768,10 @@ export async function resolveRankingPosicionForPublicFicha(
   const { normalizeRivieraGenero } = await import("./genero");
   const genero = normalizeRivieraGenero(jugador.genero) ?? "M";
   const org = options.orgId?.trim();
-  const target = resolvePublicFichaRankingTarget(jugador, options);
+  const target = resolvePublicFichaRankingTarget(jugador, {
+    orgId: options.orgId,
+    internalClub: options.internalClub,
+  });
 
   if (target === "global") {
     return getRankingPosicionOficialGlobalEnCategoria(
