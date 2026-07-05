@@ -24,6 +24,16 @@ export function pairPlayer2DisplayName(pair: PairNameSource): string {
   return cleanName(pair.player2?.name, cleanName(pair.player2_name, "Jugador 2"));
 }
 
+/** Nombre con el que se inscribió en el evento (snapshot en `pairs`). Vista pública / histórico. */
+export function pairPlayer1SnapshotName(pair: PairNameSource): string {
+  return cleanName(pair.player1_name, "Jugador 1");
+}
+
+/** Nombre con el que se inscribió en el evento (snapshot en `pairs`). Vista pública / histórico. */
+export function pairPlayer2SnapshotName(pair: PairNameSource): string {
+  return cleanName(pair.player2_name, "Jugador 2");
+}
+
 export function pairPlayersDisplayLabel(pair: PairNameSource): string {
   return `${pairPlayer1DisplayName(pair)} / ${pairPlayer2DisplayName(pair)}`;
 }

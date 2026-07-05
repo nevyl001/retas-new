@@ -205,6 +205,10 @@
   text-wrap: balance;
 }
 
+.podium-card__player-rating {
+  margin-top: 6px;
+}
+
 .podium-card__trophy-wrap {
   display: flex;
   align-items: center;

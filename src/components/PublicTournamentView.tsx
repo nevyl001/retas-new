@@ -56,11 +56,8 @@ import {
   pairPlayersDisplayLabel,
 } from "../lib/pairPlayerNames";
 import {
-  resolvePlayerAvatars,
-  resolvePlayerPublicProfiles,
-  type PlayerAvatarLookupEntry,
-  type PlayerPublicProfile,
-} from "../lib/rivieraJugadores/publicPlayerAvatars";
+  resolvePublicRetaTournamentPairPlayers,
+} from "../lib/rivieraJugadores/publicRetaEventPlayers";
 import {
   championshipMatchEncounterLabel,
   championshipRoundLabel,
@@ -162,11 +159,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
   const showClubBranding = isClubBrandedOrganizer(organizadorId);
-  const [winnerAvatars, setWinnerAvatars] = useState<PublicRetaWinnerAvatar[]>(
-    []
-  );
-  const [playerProfiles, setPlayerProfiles] = useState<
-    Record<string, PlayerPublicProfile>
+  const [pairPlayersByPairId, setPairPlayersByPairId] = useState<
+    Record<string, PublicRetaPairPlayer[]>
   >({});
   const configFetchOnDemandRef = useRef(false);
 
@@ -350,66 +344,61 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return () => clearInterval(interval);
   }, [tournamentId, loadTournamentData]);
 
-  const playerAvatarEntries = useMemo((): PlayerAvatarLookupEntry[] => {
-    const seen = new Set<string>();
-    const entries: PlayerAvatarLookupEntry[] = [];
-    for (const pair of pairs) {
-      for (const row of [
-        { id: pair.player1_id, name: pairPlayer1DisplayName(pair) },
-        { id: pair.player2_id, name: pairPlayer2DisplayName(pair) },
-      ]) {
-        if (!row.id || seen.has(row.id)) continue;
-        seen.add(row.id);
-        entries.push({
-          id: row.id,
-          name: row.name?.trim() || "Jugador",
-        });
-      }
-    }
-    return entries;
-  }, [pairs]);
-
   useEffect(() => {
-    if (!organizadorId || playerAvatarEntries.length === 0) {
+    if (!organizadorId || pairs.length === 0 || !tournamentId) {
+      setPairPlayersByPairId({});
       return;
     }
     let cancelled = false;
-    void resolvePlayerPublicProfiles(organizadorId, playerAvatarEntries, {
-      publicOnly: true,
-    }).then((map) => {
-      if (!cancelled) setPlayerProfiles(map);
+    void resolvePublicRetaTournamentPairPlayers(
+      organizadorId,
+      tournamentId,
+      pairs,
+      { publicOnly: true }
+    ).then((map) => {
+      if (!cancelled) setPairPlayersByPairId(map);
     });
     return () => {
       cancelled = true;
     };
-  }, [organizadorId, playerAvatarEntries]);
+  }, [organizadorId, tournamentId, pairs]);
 
-  const getPairName = (pairId: string) => {
-    const pair = pairs.find((p) => p.id === pairId);
-    if (!pair) return "Pareja no encontrada";
-    return pairPlayersDisplayLabel(pair);
-  };
+  const formatPairLabel = useCallback(
+    (pairId: string): string => {
+      const resolved = pairPlayersByPairId[pairId];
+      if (resolved?.length >= 2) {
+        return `${resolved[0]!.name} / ${resolved[1]!.name}`;
+      }
+      const pair = pairs.find((p) => p.id === pairId);
+      if (!pair) return "Pareja no encontrada";
+      return pairPlayersDisplayLabel(pair);
+    },
+    [pairPlayersByPairId, pairs]
+  );
 
   const getPairPlayers = useCallback(
     (pairId: string): PublicRetaPairPlayer[] => {
+      const resolved = pairPlayersByPairId[pairId];
+      if (resolved?.length >= 2) return resolved;
+
       const pair = pairs.find((p) => p.id === pairId);
       if (!pair) return [];
       return [
         {
           id: pair.player1_id,
           name: pairPlayer1DisplayName(pair),
-          fotoUrl: playerProfiles[pair.player1_id]?.fotoUrl ?? null,
-          rating: playerProfiles[pair.player1_id]?.rating ?? 3,
+          fotoUrl: null,
+          rating: 3,
         },
         {
           id: pair.player2_id,
           name: pairPlayer2DisplayName(pair),
-          fotoUrl: playerProfiles[pair.player2_id]?.fotoUrl ?? null,
-          rating: playerProfiles[pair.player2_id]?.rating ?? 3,
+          fotoUrl: null,
+          rating: 3,
         },
       ];
     },
-    [pairs, playerProfiles]
+    [pairPlayersByPairId, pairs]
   );
 
   const renderPublicMatchCard = (
@@ -437,15 +426,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       (pair1Won || pair2Won)
     ) {
       winnerLabel = pair1Won
-        ? getPairName(match.pair1_id)
-        : getPairName(match.pair2_id);
+        ? formatPairLabel(match.pair1_id)
+        : formatPairLabel(match.pair2_id);
     }
 
     return (
       <PublicRetaMatchCard
         key={match.id}
-        pair1Label={getPairName(match.pair1_id)}
-        pair2Label={getPairName(match.pair2_id)}
+        pair1Label={formatPairLabel(match.pair1_id)}
+        pair2Label={formatPairLabel(match.pair2_id)}
         pair1Players={getPairPlayers(match.pair1_id)}
         pair2Players={getPairPlayers(match.pair2_id)}
         pair1TeamLabel={teamConfig ? getPairTeamName(match.pair1_id, teamConfig) : null}
@@ -546,7 +535,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     }
     return sortedPairs.map((pair) => ({
       id: pair.id,
-      name: `${pair.player1_name} / ${pair.player2_name}`,
+      name: formatPairLabel(pair.id),
       pj: pair.matchesPlayed,
       pg: pair.pg,
       pp: pair.pp,
@@ -554,16 +543,33 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       con: pair.pointsReceived,
       pts: pair.puntosTorneo,
     }));
-  }, [teamStandings, sortedPairs]);
+  }, [teamStandings, sortedPairs, formatPairLabel]);
 
-  const winnerAvatarEntries = useMemo((): PlayerAvatarLookupEntry[] => {
+  const winnerAvatars = useMemo((): PublicRetaWinnerAvatar[] => {
     if (!showWinner) return [];
 
     if (tournamentWinner?.pair) {
+      const resolved = pairPlayersByPairId[tournamentWinner.pair.id];
+      if (resolved?.length >= 2) {
+        return resolved.map((player) => ({
+          name: player.name,
+          fotoUrl: player.fotoUrl ?? null,
+          jugadorId: player.id,
+          rating: player.rating,
+        }));
+      }
       const p = tournamentWinner.pair;
       return [
-        { id: p.player1_id, name: p.player1_name },
-        { id: p.player2_id, name: p.player2_name },
+        {
+          name: pairPlayer1DisplayName(p),
+          fotoUrl: null,
+          jugadorId: p.player1_id,
+        },
+        {
+          name: pairPlayer2DisplayName(p),
+          fotoUrl: null,
+          jugadorId: p.player2_id,
+        },
       ];
     }
 
@@ -576,9 +582,25 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             (pair) => teamConfig.pairToTeam[pair.id] === teamIdx
           );
           if (teamPair) {
+            const resolved = pairPlayersByPairId[teamPair.id];
+            if (resolved?.length >= 2) {
+              return resolved.map((player) => ({
+                name: player.name,
+                fotoUrl: player.fotoUrl ?? null,
+                jugadorId: player.id,
+              }));
+            }
             return [
-              { id: teamPair.player1_id, name: teamPair.player1_name },
-              { id: teamPair.player2_id, name: teamPair.player2_name },
+              {
+                name: pairPlayer1DisplayName(teamPair),
+                fotoUrl: null,
+                jugadorId: teamPair.player1_id,
+              },
+              {
+                name: pairPlayer2DisplayName(teamPair),
+                fotoUrl: null,
+                jugadorId: teamPair.player2_id,
+              },
             ];
           }
         }
@@ -593,29 +615,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     pairs,
     winningTeamName,
     teamStandings,
+    pairPlayersByPairId,
   ]);
-
-  useEffect(() => {
-    if (!showWinner || !organizadorId || winnerAvatarEntries.length === 0) {
-      setWinnerAvatars([]);
-      return;
-    }
-    let cancelled = false;
-    void resolvePlayerAvatars(organizadorId, winnerAvatarEntries, {
-      publicOnly: true,
-    }).then((map) => {
-      if (cancelled) return;
-      setWinnerAvatars(
-        winnerAvatarEntries.map((e) => ({
-          name: e.name,
-          fotoUrl: map[e.id] ?? null,
-        }))
-      );
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [showWinner, organizadorId, winnerAvatarEntries]);
 
   useEffect(() => {
     const defaultTitle = formatTenantDocumentTitle(
@@ -789,6 +790,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   matches={matches}
                   round={roundNum}
                   courts={courts}
+                  pairLabelById={Object.fromEntries(
+                    pairs.map((pair) => [pair.id, formatPairLabel(pair.id)])
+                  )}
                 />
               </div>
             );
@@ -906,8 +910,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         (!teamStandings || teamStandings.length === 0) &&
         tournamentWinner && (
           <RetaRoundRobinWinnerCelebrate
-            pairLabel={`${tournamentWinner.pair.player1_name} / ${tournamentWinner.pair.player2_name}`}
+            pairLabel={formatPairLabel(tournamentWinner.pair.id)}
             pairId={tournamentWinner.pair.id}
+            pairPlayers={getPairPlayers(tournamentWinner.pair.id)}
             torneoNombre={publicTournamentName ?? undefined}
             rankLabel={
               championshipConfig?.championshipEnabled

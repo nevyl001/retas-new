@@ -1,5 +1,6 @@
 import { isMissingColumnError } from "../db/schemaHelpers";
 import { supabase, supabasePublicRead } from "../supabaseClient";
+import { normalizePlayerNameKey } from "./playerNameKey";
 
 export type PlayerAvatarLookupEntry = { id: string; name: string };
 
@@ -55,19 +56,95 @@ function mergeProfile(
 type LegacyProfileRow = {
   organizador_id?: string | null;
   legacy_player_id?: string | null;
+  nombre?: string | null;
   foto_url?: unknown;
   rating?: unknown;
   rating_partidos?: unknown;
 };
 
+type OrganizadorRivieraRow = {
+  id?: string;
+  legacy_player_id?: string | null;
+  nombre?: string | null;
+  foto_url?: unknown;
+  rating?: unknown;
+};
+
+function entryNameKey(name?: string): string {
+  const trimmed = name?.trim();
+  return trimmed ? normalizePlayerNameKey(trimmed) : "";
+}
+
+function rowsLinkedToEntryId(
+  rows: OrganizadorRivieraRow[],
+  entryId: string
+): OrganizadorRivieraRow[] {
+  const id = entryId.trim();
+  if (!id) return [];
+  return rows.filter(
+    (row) =>
+      String(row.legacy_player_id ?? "").trim() === id ||
+      String(row.id ?? "").trim() === id
+  );
+}
+
+function rowsMatchingEventName(
+  rows: OrganizadorRivieraRow[],
+  eventName?: string
+): OrganizadorRivieraRow[] {
+  const key = entryNameKey(eventName);
+  if (!key) return [];
+  return rows.filter(
+    (row) => normalizePlayerNameKey(String(row.nombre ?? "")) === key
+  );
+}
+
+/**
+ * Perfil del organizador por legacy `players.id` (id único). Sin resolver por nombre.
+ */
+function resolveOrganizadorRowForEventEntry(
+  rows: OrganizadorRivieraRow[],
+  entry: PlayerAvatarLookupEntry
+): OrganizadorRivieraRow | null {
+  if (!rows.length) return null;
+
+  const linked = rowsLinkedToEntryId(rows, entry.id);
+  if (linked.length === 1) {
+    return linked[0]!;
+  }
+
+  if (linked.length > 1) {
+    const nameKey = entryNameKey(entry.name);
+    if (nameKey) {
+      const linkedByName = rowsMatchingEventName(linked, entry.name);
+      if (linkedByName.length === 1) return linkedByName[0]!;
+    }
+    return linked[0] ?? null;
+  }
+
+  return null;
+}
+
 /** Mismo legacy_player_id en varios clubes: más historial de rating; empate → club anfitrión. */
 function pickCanonicalLegacyProfileRow(
   organizadorId: string,
-  rows: LegacyProfileRow[]
+  rows: LegacyProfileRow[],
+  eventName?: string
 ): LegacyProfileRow | null {
   if (!rows.length) return null;
+
+  const nameKey = entryNameKey(eventName);
+  let pool = rows;
+  if (nameKey) {
+    const byName = rows.filter(
+      (row) => normalizePlayerNameKey(String(row.nombre ?? "")) === nameKey
+    );
+    if (byName.length === 1) return byName[0]!;
+    if (byName.length > 1) pool = byName;
+  }
+
   const host = organizadorId.trim();
-  const sorted = [...rows].sort((a, b) => {
+  const sorted = [...pool].sort((a, b) => {
     const ap = Number(a.rating_partidos ?? 0);
     const bp = Number(b.rating_partidos ?? 0);
     if (bp !== ap) return bp - ap;
@@ -86,14 +163,17 @@ function pickCanonicalLegacyProfileRow(
 async function fetchCanonicalProfilesByLegacyPlayerIds(
   organizadorId: string,
   legacyIds: string[],
-  options?: { allowAuthenticatedFallback?: boolean }
+  options?: {
+    allowAuthenticatedFallback?: boolean;
+    eventNameByLegacyId?: Map<string, string>;
+  }
 ): Promise<Map<string, PlayerPublicProfile>> {
   const map = new Map<string, PlayerPublicProfile>();
   const ids = Array.from(new Set(legacyIds.map((id) => id.trim()).filter(Boolean)));
   if (!organizadorId.trim() || ids.length === 0) return map;
 
   const cols =
-    "legacy_player_id, organizador_id, foto_url, rating, rating_partidos";
+    "legacy_player_id, organizador_id, nombre, foto_url, rating, rating_partidos";
   const rowMap = new Map<string, LegacyProfileRow[]>();
 
   const ingest = (rows: LegacyProfileRow[] | null | undefined) => {
@@ -149,7 +229,8 @@ async function fetchCanonicalProfilesByLegacyPlayerIds(
   for (const legacyId of ids) {
     const picked = pickCanonicalLegacyProfileRow(
       organizadorId,
-      rowMap.get(legacyId) ?? []
+      rowMap.get(legacyId) ?? [],
+      options?.eventNameByLegacyId?.get(legacyId)
     );
     if (picked) {
       map.set(legacyId, profileFromRow(picked as Record<string, unknown>));
@@ -326,37 +407,23 @@ export async function resolvePlayerPublicProfiles(
   }
 
   const legacyKeyByEntryId = new Map<string, string>();
+  const eventNameByEntryId = new Map(
+    entries.map((e) => [e.id, e.name?.trim() ?? ""])
+  );
 
   if (!error && data) {
-    const byLegacyId = new Map<string, PlayerPublicProfile>();
-    const byRivieraId = new Map<string, PlayerPublicProfile>();
-
-    for (const row of data) {
-      const profile = profileFromRow(row as Record<string, unknown>);
-      if (row.id) {
-        byRivieraId.set(String(row.id), profile);
-      }
-      if (row.legacy_player_id) {
-        const legacyId = String(row.legacy_player_id);
-        byLegacyId.set(legacyId, profile);
-        if (row.id) {
-          legacyKeyByEntryId.set(String(row.id), legacyId);
-        }
-      }
-    }
+    const orgRows = data as OrganizadorRivieraRow[];
 
     for (const e of entries) {
-      const matchedByRiviera = byRivieraId.get(e.id);
-      if (matchedByRiviera && byLegacyId.has(e.id) === false) {
-        const row = data.find((r) => String(r.id) === e.id);
-        if (row?.legacy_player_id) {
-          legacyKeyByEntryId.set(e.id, String(row.legacy_player_id));
-        }
+      const picked = resolveOrganizadorRowForEventEntry(orgRows, e);
+      if (picked) {
+        result[e.id] = profileFromRow(picked as Record<string, unknown>);
+        const legacyKey = String(picked.legacy_player_id ?? picked.id ?? e.id);
+        legacyKeyByEntryId.set(e.id, legacyKey);
+      } else {
+        result[e.id] = { ...DEFAULT_PROFILE };
+        legacyKeyByEntryId.set(e.id, e.id);
       }
-      result[e.id] =
-        byLegacyId.get(e.id) ??
-        byRivieraId.get(e.id) ??
-        DEFAULT_PROFILE;
     }
   }
 
@@ -366,11 +433,23 @@ export async function resolvePlayerPublicProfiles(
     opts?.publicOnly
   );
   if (needsCanonical.length > 0) {
+    const eventNameByLegacyId = new Map<string, string>();
+    for (const id of needsCanonical) {
+      const legacyKey = legacyKeyByEntryId.get(id) ?? id;
+      const eventName = eventNameByEntryId.get(id);
+      if (eventName) {
+        eventNameByLegacyId.set(legacyKey, eventName);
+      }
+    }
+
     const canonicalIds = legacyLookupIds(needsCanonical, legacyKeyByEntryId);
     const fromLegacyCanon = await fetchCanonicalProfilesByLegacyPlayerIds(
       organizadorId,
       canonicalIds,
-      { allowAuthenticatedFallback: client === supabase }
+      {
+        allowAuthenticatedFallback: client === supabase,
+        eventNameByLegacyId,
+      }
     );
     for (const id of needsCanonical) {
       const legacyKey = legacyKeyByEntryId.get(id) ?? id;

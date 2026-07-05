@@ -257,6 +257,98 @@ describe("resolvePlayerPublicProfiles", () => {
     expect(profiles[legacyId].rating).toBe(2.93);
   });
 
+  it("con legacy id de David Rus no sustituye por David R aunque el nombre venga abreviado", async () => {
+    const davidRLegacyId = "aaaa1111-1111-1111-1111-111111111111";
+    const davidRusLegacyId = "bbbb2222-2222-2222-2222-222222222222";
+    const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
+
+    (supabasePublicRead.from as jest.Mock).mockImplementation(() => ({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({
+            data: [
+              {
+                id: "rj-david-r",
+                legacy_player_id: davidRLegacyId,
+                nombre: "David R",
+                foto_url: "https://example.com/david-r.jpg",
+                rating: 3.05,
+              },
+              {
+                id: "rj-david-rus",
+                legacy_player_id: davidRusLegacyId,
+                nombre: "David Rus",
+                foto_url: null,
+                rating: 3.15,
+              },
+            ],
+            error: null,
+          }),
+        }),
+        in: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      }),
+    }));
+
+    const profiles = await resolvePlayerPublicProfiles(
+      hackOrg,
+      [{ id: davidRusLegacyId, name: "David R" }],
+      { publicOnly: true }
+    );
+
+    expect(profiles[davidRusLegacyId].rating).toBe(3.15);
+    expect(profiles[davidRusLegacyId].fotoUrl).toBeNull();
+    expect(supabasePublicRead.rpc).not.toHaveBeenCalled();
+  });
+
+  it("si el legacy id no enlaza, resuelve por nombre único del evento", async () => {
+    const davidRLegacyId = "aaaa1111-1111-1111-1111-111111111111";
+    const davidRusLegacyId = "bbbb2222-2222-2222-2222-222222222222";
+    const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
+
+    (supabasePublicRead.from as jest.Mock).mockImplementation(() => ({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({
+            data: [
+              {
+                id: "rj-david-r",
+                legacy_player_id: davidRLegacyId,
+                nombre: "David R",
+                foto_url: "https://example.com/david-r.jpg",
+                rating: 3.05,
+              },
+              {
+                id: "rj-david-rus",
+                legacy_player_id: davidRusLegacyId,
+                nombre: "David Rus",
+                foto_url: null,
+                rating: 3.15,
+              },
+            ],
+            error: null,
+          }),
+        }),
+        in: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      }),
+    }));
+
+    const profiles = await resolvePlayerPublicProfiles(
+      hackOrg,
+      [{ id: davidRLegacyId, name: "David Rus" }],
+      { publicOnly: true }
+    );
+
+    expect(profiles[davidRLegacyId].rating).toBe(3.05);
+    expect(profiles[davidRLegacyId].fotoUrl).toBe(
+      "https://example.com/david-r.jpg"
+    );
+    expect(supabasePublicRead.rpc).not.toHaveBeenCalled();
+  });
+
   it("no mezcla dos David R distintos: solo resuelve por legacy_player_id, no por nombre", async () => {
     const hackDavidId = "aaaa1111-1111-1111-1111-111111111111";
     const rivieraDavidId = "bbbb2222-2222-2222-2222-222222222222";

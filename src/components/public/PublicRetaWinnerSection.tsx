@@ -15,6 +15,7 @@ export type PublicRetaWinnerAvatar = {
   name: string;
   fotoUrl?: string | null;
   jugadorId?: string | null;
+  rating?: number | null;
 };
 
 export type PublicRetaRunnerUp = {

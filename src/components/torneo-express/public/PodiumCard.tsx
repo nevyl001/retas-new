@@ -6,6 +6,7 @@ import {
 } from "../../../lib/torneoExpress/publicEliminatoriaPodiumStats";
 import { PublicRivieraSocialBar } from "../../public/PublicRivieraSocialBar";
 import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
+import { JugadorRatingChip } from "../../jugadores/JugadorRatingChip";
 import { TablerIcon } from "../../ui/TablerIcon";
 import "./te-public-podium-card.css";
 
@@ -264,6 +265,12 @@ export const PodiumCard: React.FC<{
           <div className="podium-card__player">
             <PodiumAvatar player={players[0]} />
             <p className="podium-card__player-name">{players[0].name}</p>
+            {players[0].rating != null ? (
+              <JugadorRatingChip
+                rating={players[0].rating}
+                className="podium-card__player-rating"
+              />
+            ) : null}
           </div>
 
           <div className="podium-card__trophy-wrap" aria-hidden>
@@ -277,6 +284,12 @@ export const PodiumCard: React.FC<{
           <div className="podium-card__player">
             <PodiumAvatar player={players[1]} />
             <p className="podium-card__player-name">{players[1].name}</p>
+            {players[1].rating != null ? (
+              <JugadorRatingChip
+                rating={players[1].rating}
+                className="podium-card__player-rating"
+              />
+            ) : null}
           </div>
         </div>
 

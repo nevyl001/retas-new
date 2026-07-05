@@ -68,6 +68,7 @@ import {
   prepareParticipacionIdentityForOrganizer,
   resolveJugadorIdForParticipacion,
 } from "./jugadorIdResolver";
+import { repairRetaPairLegacyPlayerIds } from "./repairRetaPairLegacyIds";
 import { isParticipacionExcluded } from "./participacionExclusions";
 import {
   aplicarRatingDuelo2v2,
@@ -861,6 +862,32 @@ async function syncRetaParticipacionesInner(params: {
       (p) =>
         p.player1_id === st.legacyPlayerId || p.player2_id === st.legacyPlayerId
     );
+
+    if (st.legacyPlayerId) {
+      await repairRetaPairLegacyPlayerIds(
+        tournament.id,
+        st.legacyPlayerId,
+        jugadorId
+      );
+    }
+
+    const { data: jugadorRiviera } = await supabase
+      .from("riviera_jugadores")
+      .select("legacy_player_id, nombre")
+      .eq("id", jugadorId)
+      .maybeSingle();
+
+    const canonicalLegacyPlayerId =
+      jugadorRiviera?.legacy_player_id?.trim() || st.legacyPlayerId || null;
+    const pairSlot =
+      pair && st.legacyPlayerId
+        ? pair.player1_id === st.legacyPlayerId
+          ? 1
+          : pair.player2_id === st.legacyPlayerId
+            ? 2
+            : null
+        : null;
+
     const pairStats = pair
       ? sortedPairs.find((p) => p.id === pair.id)
       : undefined;
@@ -949,6 +976,11 @@ async function syncRetaParticipacionesInner(params: {
         modalidad_label: modalidadLabel,
         reta_id: tournament.id,
         reta_nombre: tournament.name,
+        ...(pair?.id ? { pair_id: pair.id } : {}),
+        ...(pairSlot != null ? { pair_slot: pairSlot } : {}),
+        ...(canonicalLegacyPlayerId
+          ? { canonical_legacy_player_id: canonicalLegacyPlayerId }
+          : {}),
         ...(tournament.description?.trim()
           ? { evento_descripcion: tournament.description.trim() }
           : {}),

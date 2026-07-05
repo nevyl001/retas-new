@@ -121,4 +121,52 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.riviera_event_legacy_player_avatars(uuid, uuid[]) TO anon, authenticated;
 
+-- Jugadores de reta pública por participaciones (bypass RLS / visible_publico).
+-- DROP necesario: PostgreSQL no permite cambiar columnas de RETURNS TABLE con CREATE OR REPLACE.
+DROP FUNCTION IF EXISTS public.riviera_public_reta_event_players(uuid, uuid);
+
+CREATE FUNCTION public.riviera_public_reta_event_players(
+  p_organizador_id uuid,
+  p_tournament_id uuid
+)
+RETURNS TABLE (
+  jugador_id uuid,
+  legacy_player_id uuid,
+  nombre text,
+  foto_url text,
+  rating numeric,
+  pair_id uuid,
+  pair_slot integer,
+  canonical_legacy_player_id uuid
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT DISTINCT ON (jp.jugador_id)
+    jp.jugador_id,
+    rj.legacy_player_id,
+    rj.nombre,
+    rj.foto_url,
+    COALESCE(rj.rating, 3)::numeric AS rating,
+    NULLIF(jp.metadata->>'pair_id', '')::uuid AS pair_id,
+    NULLIF(jp.metadata->>'pair_slot', '')::integer AS pair_slot,
+    NULLIF(jp.metadata->>'canonical_legacy_player_id', '')::uuid
+      AS canonical_legacy_player_id
+  FROM public.jugador_participaciones jp
+  INNER JOIN public.riviera_jugadores rj
+    ON rj.id = jp.jugador_id
+  WHERE jp.evento_id = p_tournament_id
+    AND jp.tipo_evento = 'reta'
+    AND rj.organizador_id = p_organizador_id
+    AND rj.estado = 'activo'
+  ORDER BY jp.jugador_id, jp.fecha DESC NULLS LAST, jp.created_at DESC NULLS LAST;
+$$;
+
+COMMENT ON FUNCTION public.riviera_public_reta_event_players(uuid, uuid) IS
+  'Vista pública anon: jugadores que participaron en una reta (por riviera_jugador_id).';
+
+GRANT EXECUTE ON FUNCTION public.riviera_public_reta_event_players(uuid, uuid) TO anon, authenticated;
+
 NOTIFY pgrst, 'reload schema';

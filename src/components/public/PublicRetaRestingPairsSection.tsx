@@ -24,7 +24,8 @@ export const PublicRetaRestingPairsSection: React.FC<{
   matches: Match[];
   round: number;
   courts: number;
-}> = ({ pairs, matches, round, courts }) => {
+  pairLabelById?: Record<string, string>;
+}> = ({ pairs, matches, round, courts, pairLabelById = {} }) => {
   const restingPairs = getRestingPairs(pairs, matches, round);
   if (restingPairs.length === 0) return null;
 
@@ -42,7 +43,7 @@ export const PublicRetaRestingPairsSection: React.FC<{
       <div className="te-pub-resting__pills">
         {restingPairs.map((pair) => (
           <span key={pair.id} className="te-pub-resting__pill">
-            {pairPlayersDisplayLabel(pair)}
+            {pairLabelById[pair.id] ?? pairPlayersDisplayLabel(pair)}
           </span>
         ))}
       </div>

@@ -25,9 +25,14 @@ function parsePairLabel(label: string): [string, string] {
 function buildPairPlayersById(
   pairLabel: string,
   pairId: string | undefined,
-  winners: PublicRetaWinnerAvatar[] | undefined
+  winners: PublicRetaWinnerAvatar[] | undefined,
+  pairPlayers?: PublicRetaPairPlayer[]
 ): Record<string, PublicRetaPairPlayer[]> {
   const key = pairId ?? pairLabel;
+  if (pairPlayers && pairPlayers.length >= 2) {
+    return { [key]: pairPlayers };
+  }
+
   const [name1, name2] = parsePairLabel(pairLabel);
 
   const players: PublicRetaPairPlayer[] = [
@@ -36,6 +41,7 @@ function buildPairPlayersById(
           id: winners[0].jugadorId ?? `${key}-1`,
           name: winners[0].name,
           fotoUrl: winners[0].fotoUrl,
+          rating: winners[0].rating,
         }
       : { id: `${key}-1`, name: name1 },
     winners?.[1]
@@ -43,6 +49,7 @@ function buildPairPlayersById(
           id: winners[1].jugadorId ?? `${key}-2`,
           name: winners[1].name,
           fotoUrl: winners[1].fotoUrl,
+          rating: winners[1].rating,
         }
       : { id: `${key}-2`, name: name2 },
   ];
@@ -62,6 +69,7 @@ export const RetaRoundRobinWinnerCelebrate: React.FC<{
   /** Round robin sin remontada: muestra GAF/GEC como la tabla de clasificación. */
   statsLayout?: "default" | "round-robin";
   winners?: PublicRetaWinnerAvatar[];
+  pairPlayers?: PublicRetaPairPlayer[];
   className?: string;
 }> = ({
   pairLabel,
@@ -74,11 +82,12 @@ export const RetaRoundRobinWinnerCelebrate: React.FC<{
   podiumStats,
   statsLayout = "default",
   winners,
+  pairPlayers,
   className = "",
 }) => {
   const pairPlayersById = useMemo(
-    () => buildPairPlayersById(pairLabel, pairId, winners),
-    [pairLabel, pairId, winners]
+    () => buildPairPlayersById(pairLabel, pairId, winners, pairPlayers),
+    [pairLabel, pairId, winners, pairPlayers]
   );
 
   const stats = useMemo(
