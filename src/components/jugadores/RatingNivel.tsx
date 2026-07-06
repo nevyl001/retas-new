@@ -44,6 +44,7 @@ interface RatingNivelProps {
   historial?: RatingHistorialEntry[];
   /** standalone = fuera de la card del jugador */
   layout?: "embedded" | "standalone";
+  density?: "default" | "compact";
 }
 
 export const RatingNivel: React.FC<RatingNivelProps> = ({
@@ -52,6 +53,7 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
   partidosJugados,
   historial = [],
   layout = "embedded",
+  density = "default",
 }) => {
   const badge = fiabilidadBadge(fiabilidad, partidosJugados);
   const ratingLabel = rating.toFixed(2);
@@ -65,7 +67,7 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
   const evolutionSvg = useMemo(() => {
     if (evolutionPoints.length < 2) return null;
     const w = 280;
-    const h = 48;
+    const h = density === "compact" ? 36 : 48;
     const pad = 4;
     const min = Math.min(...evolutionPoints) - 0.05;
     const max = Math.max(...evolutionPoints) + 0.05;
@@ -76,7 +78,10 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
       return `${x},${y}`;
     });
     return { w, h, polyline: coords.join(" ") };
-  }, [evolutionPoints]);
+  }, [evolutionPoints, density]);
+
+  const isCompactStandalone =
+    layout === "standalone" && density === "compact";
 
   const cardStyle: React.CSSProperties | undefined =
     layout === "embedded"
@@ -91,9 +96,17 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
         }
       : undefined;
 
+  const movementLimit = isCompactStandalone ? 4 : historial.length;
+  const visibleHistorial = historial.slice(0, movementLimit);
+
   return (
     <section
-      className={layout === "standalone" ? "rjp-ficha-rating__inner" : undefined}
+      className={[
+        layout === "standalone" ? "rjp-ficha-rating__inner" : "",
+        isCompactStandalone ? "rjp-rating-nivel--compact" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={cardStyle}
       aria-label="Nivel de juego"
     >
@@ -196,7 +209,7 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
         </p>
       ) : null}
 
-      {historial.length > 0 ? (
+      {visibleHistorial.length > 0 ? (
         <div>
           <p
             style={{
@@ -211,16 +224,21 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
             Últimos movimientos
           </p>
           <ul
-            style={{
-              listStyle: "none",
-              margin: 0,
-              padding: 0,
-              display: "flex",
-              flexDirection: "column",
-              gap: "0.45rem",
-            }}
+            className={isCompactStandalone ? "rjp-rating-nivel__moves" : undefined}
+            style={
+              isCompactStandalone
+                ? undefined
+                : {
+                    listStyle: "none",
+                    margin: 0,
+                    padding: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.45rem",
+                  }
+            }
           >
-            {historial.map((item) => {
+            {visibleHistorial.map((item) => {
               const up = item.delta >= 0;
               const deltaColor = up ? "#34d399" : "#f87171";
               const arrow = up ? "▲" : "▼";
@@ -228,14 +246,21 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
               return (
                 <li
                   key={item.id}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "auto 1fr auto auto",
-                    gap: "0.5rem",
-                    alignItems: "center",
-                    fontSize: "0.78rem",
-                    color: "rgba(255, 255, 255, 0.82)",
-                  }}
+                  className={
+                    isCompactStandalone ? "rjp-rating-nivel__move" : undefined
+                  }
+                  style={
+                    isCompactStandalone
+                      ? undefined
+                      : {
+                          display: "grid",
+                          gridTemplateColumns: "auto 1fr auto auto",
+                          gap: "0.5rem",
+                          alignItems: "center",
+                          fontSize: "0.78rem",
+                          color: "rgba(255, 255, 255, 0.82)",
+                        }
+                  }
                 >
                   <span style={{ color: deltaColor, fontWeight: 700, minWidth: "3.5rem" }}>
                     {arrow} {deltaSign}

@@ -8,22 +8,22 @@ import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 type JugadorPuntosBreakdownProps = {
   jugador: RivieraJugadorWithStats;
   clubOrganizadorId: string | null;
-  internalClub?: boolean;
+  hasOrgContext?: boolean;
   className?: string;
 };
 
 export const JugadorPuntosBreakdown: React.FC<JugadorPuntosBreakdownProps> = ({
   jugador,
   clubOrganizadorId,
-  internalClub = false,
+  hasOrgContext = false,
   className = "",
 }) => {
   const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
-    internalClub,
+    hasOrgContext,
   });
 
   if (lines.length === 0) {
-    const pts = simpleJugadorPuntosDisplay(jugador, internalClub);
+    const pts = simpleJugadorPuntosDisplay(jugador, hasOrgContext);
     return (
       <span className={`rjp-ficha-stat__val${className ? ` ${className}` : ""}`}>
         {pts.toLocaleString("es-MX")}
@@ -42,8 +42,7 @@ export const JugadorPuntosBreakdown: React.FC<JugadorPuntosBreakdownProps> = ({
           key={line.key}
           className={`rjp-pts-breakdown__line rjp-pts-breakdown__line--${line.role}`}
         >
-          {line.role === "total" ? line.clubLabel : `${line.clubLabel}:`}{" "}
-          {line.puntos.toLocaleString("es-MX")} pts
+          {line.clubLabel}: {line.puntos.toLocaleString("es-MX")} pts
         </span>
       ))}
     </span>

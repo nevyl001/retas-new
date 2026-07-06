@@ -54,9 +54,20 @@ export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
   const [activeTab, setActiveTab] = useState<HistorialTab>("todos");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
+  const mergedParticipaciones = useMemo(() => {
+    const seen = new Set<string>();
+    const merged: JugadorParticipacion[] = [];
+    for (const row of [...participaciones, ...otrosClubesParticipaciones]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      merged.push(row);
+    }
+    return merged;
+  }, [participaciones, otrosClubesParticipaciones]);
+
   const visibleParticipaciones = useMemo(
-    () => filterParticipacionesHistorialVisible(participaciones),
-    [participaciones]
+    () => filterParticipacionesHistorialVisible(mergedParticipaciones),
+    [mergedParticipaciones]
   );
 
   const counts = useMemo(() => {

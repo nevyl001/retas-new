@@ -111,7 +111,7 @@ export function parseJugadoresPath(pathname: string): JugadoresRoute {
       segment = pub[1];
     }
     if (UUID_RE.test(segment)) {
-      return { kind: "publicFicha", playerId: segment, internalClub: true };
+      return { kind: "publicFicha", playerId: segment };
     }
     return { kind: "publicFicha", slug: segment };
   }

@@ -27,19 +27,28 @@ export function resolvePublicFichaRankingTarget(
     RivieraJugadorWithStats,
     "visible_publico" | "estado" | "suma_ranking"
   >,
-  options: { orgId?: string | null; internalClub?: boolean }
+  options: {
+    orgId?: string | null;
+    /** @deprecated Usar preferClubRanking */
+    internalClub?: boolean;
+    /** Org en URL: mostrar ranking del club actual. */
+    preferClubRanking?: boolean;
+  }
 ): PublicFichaRankingTarget {
-  if (options.internalClub && options.orgId?.trim()) return "club";
+  const org = options.orgId?.trim();
+  const preferClub =
+    options.preferClubRanking ?? options.internalClub ?? false;
+  if (org && preferClub) return "club";
   if (isJugadorPublicadoSitioOficial(jugador)) return "global";
-  if (options.orgId?.trim()) return "club";
+  if (org) return "club";
   return "none";
 }
 
 export function rankingLabelForPublicFicha(
   jugador: Pick<RivieraJugadorWithStats, "visible_publico" | "estado" | "suma_ranking">,
-  internalClub = false
+  hasOrgContext = false
 ): string {
-  if (internalClub) return "Ranking";
+  if (hasOrgContext) return "Ranking";
   return isJugadorPublicadoSitioOficial(jugador)
     ? "Ranking Riviera Open"
     : "Ranking";

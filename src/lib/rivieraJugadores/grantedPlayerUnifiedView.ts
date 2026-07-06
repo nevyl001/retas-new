@@ -6,8 +6,10 @@ import {
 } from "./ratingRpcErrors";
 import {
   listGrantedLocalJugadorIdsForSource,
+  listMulticlubSiblingProfilesForSource,
   loadGrantedSourceDisplayData,
 } from "./organizerPlayerAccess";
+import { fetchPublicCareerJugadorIds } from "./publicCareerLinkage";
 import {
   enrichParticipacionesOrganizadorFromEvents,
   filterParticipacionesForOrganizador,
@@ -93,9 +95,18 @@ export async function discoverLinkedJugadorIds(
 ): Promise<string[]> {
   const ids = new Set<string>([jugadorId.trim()]);
 
+  const publicCareerIds = await fetchPublicCareerJugadorIds(jugadorId);
+  if (publicCareerIds) {
+    for (const id of publicCareerIds) ids.add(id);
+  }
+
   for (const row of participaciones) {
     const id = row.jugador_id?.trim();
     if (id) ids.add(id);
+  }
+
+  for (const sibling of await listMulticlubSiblingProfilesForSource(jugadorId)) {
+    ids.add(sibling.jugadorId);
   }
 
   for (const localId of await listGrantedLocalJugadorIdsForSource(jugadorId)) {

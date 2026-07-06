@@ -1,5 +1,6 @@
 import { isMissingColumnError, sanitizeUuid } from "../db/schemaHelpers";
 import { supabase, supabasePublicRead } from "../supabaseClient";
+import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
 import { RIVIERA_IDENTITY_ENSURE_ENABLED } from "../../config/careerIdentity";
 import type {
   CreateRivieraJugadorInput,
@@ -443,6 +444,8 @@ function isMissingRpcError(error: { code?: string; message?: string; status?: nu
     msg.includes("could not find the function") ||
     msg.includes("riviera_jugador_interno") ||
     msg.includes("riviera_participaciones_interno") ||
+    msg.includes("riviera_list_career_participaciones_public") ||
+    msg.includes("get_public_career_jugador_ids") ||
     msg.includes("riviera_ranking_interno") ||
     msg.includes("refresh_jugador_stats")
   );
@@ -1424,6 +1427,11 @@ export async function listParticipacionesPublic(
     return [];
   }
 
+  const careerRows = await listCareerParticipacionesPublic(jugadorId, limit);
+  if (careerRows) {
+    return enrichParticipacionesOrganizadorFromEvents(careerRows);
+  }
+
   const { data, error } = await supabasePublicRead
     .from("jugador_participaciones")
     .select("*")
@@ -1830,7 +1838,11 @@ export async function getRankingPosicionOficialGlobalEnCategoria(
 /** Única entrada para la ficha pública: evita mezclar ranking club vs global. */
 export async function resolveRankingPosicionForPublicFicha(
   jugador: RivieraJugadorWithStats,
-  options: { orgId?: string | null; internalClub?: boolean }
+  options: {
+    orgId?: string | null;
+    internalClub?: boolean;
+    preferClubRanking?: boolean;
+  }
 ): Promise<number | null> {
   const { resolvePublicFichaRankingTarget } = await import("./publicFichaRanking");
   const { normalizeRivieraGenero } = await import("./genero");
@@ -1839,6 +1851,7 @@ export async function resolveRankingPosicionForPublicFicha(
   const target = resolvePublicFichaRankingTarget(jugador, {
     orgId: options.orgId,
     internalClub: options.internalClub,
+    preferClubRanking: options.preferClubRanking,
   });
 
   if (target === "global") {

@@ -22,7 +22,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   variant = "stacked",
 }) => {
   const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
-    internalClub,
+    hasOrgContext: internalClub,
   });
 
   if (lines.length === 0) {
@@ -47,8 +47,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
           key={line.key}
           className={`rjp-pts-breakdown__line rjp-pts-breakdown__line--${line.role}`}
         >
-          {line.role === "total" ? line.clubLabel : `${line.clubLabel}:`}{" "}
-          {line.puntos.toLocaleString("es-MX")} pts
+          {line.clubLabel}: {line.puntos.toLocaleString("es-MX")} pts
         </span>
       ))}
     </span>

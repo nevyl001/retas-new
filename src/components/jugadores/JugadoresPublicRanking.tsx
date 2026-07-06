@@ -5,7 +5,6 @@ import {
   useClubExperience,
   useOrganizerDisplayName,
 } from "../../club-experience";
-import { isPubDsV2Enabled } from "../../config/peds";
 import {
   JUGADOR_CATEGORIA_LABELS,
   JUGADOR_CATEGORIA_SHORT_LABELS,
@@ -40,7 +39,6 @@ import {
 import { TablerIcon } from "../ui/TablerIcon";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
-import { PublicHero } from "../public/peds";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { RivieraIdBadgeFromJugador } from "./RivieraIdBadge";
@@ -73,25 +71,6 @@ function resolvePublicRankingOrgId(routeOrganizadorId?: string): string | null {
   );
 }
 
-function RankingBrandHeader() {
-  const { isClubBranded } = useClubExperience();
-  const organizerName = useOrganizerDisplayName();
-
-  if (isClubBranded) {
-    return (
-      <ClubIdentity
-        variant="compact"
-        showTagline={false}
-        logoSurface="dark"
-        wordmarkOnly
-        className="rjp-ranking-header__club-identity"
-      />
-    );
-  }
-
-  return <p className="rjp-ranking-header__brand">{organizerName}</p>;
-}
-
 function RankingFooter() {
   const organizerName = useOrganizerDisplayName();
   return (
@@ -101,35 +80,33 @@ function RankingFooter() {
   );
 }
 
-interface RankingPublicHeroProps {
-  genero: RivieraJugadorGenero;
-}
-
-const RankingPublicHero: React.FC<RankingPublicHeroProps> = ({ genero }) => {
+function RankingUnifiedHeader({ genero }: { genero: RivieraJugadorGenero }) {
   const { isClubBranded } = useClubExperience();
   const organizerName = useOrganizerDisplayName();
 
   return (
-    <PublicHero
-      logoClub={
-        isClubBranded ? (
+    <header className="rjp-ranking-header">
+      <div className="rjp-ranking-header__top">
+        {isClubBranded ? (
           <ClubIdentity
             variant="compact"
             showTagline={false}
             logoSurface="dark"
             wordmarkOnly
-            className="peds-hero__club-identity"
+            className="rjp-ranking-header__club-identity"
           />
-        ) : undefined
-      }
-      estado={<StatusBadge variant="muted">Ranking interno</StatusBadge>}
-      nombreEvento={RIVIERA_GENERO_RANKING_TITLE[genero]}
-      club={organizerName}
-      categoria={RIVIERA_GENERO_LABELS[genero]}
-      meta="Ranking"
-    />
+        ) : (
+          <p className="rjp-ranking-header__brand">{organizerName}</p>
+        )}
+        <StatusBadge variant="muted">Ranking interno</StatusBadge>
+      </div>
+      <h1 className="rjp-ranking-header__title">
+        {RIVIERA_GENERO_RANKING_TITLE[genero]}
+      </h1>
+      <p className="rjp-ranking-header__genero">{RIVIERA_GENERO_LABELS[genero]}</p>
+    </header>
   );
-};
+}
 
 export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   organizadorId: routeOrganizadorId,
@@ -262,30 +239,15 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     <JugadoresPublicShell variant="ranking">
       <PublicModeShell className="rjp-ranking-shell">
       <div className="rjp-ranking">
-        {isPubDsV2Enabled ? (
-          <>
-            <RankingPublicHero genero={genero} />
-            <div className="rjp-ranking-header rjp-ranking-header--peds-extras">
-              <RankingInternoDisclaimer organizadorId={orgId} />
-              <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
-                Ver reglas completas
-                <TablerIcon name="chevron-right" size={18} />
-              </a>
-            </div>
-          </>
-        ) : (
-          <header className="rjp-ranking-header">
-            <RankingBrandHeader />
-            <h1 className="rjp-ranking-header__title">
-              {RIVIERA_GENERO_RANKING_TITLE[genero]}
-            </h1>
-            <RankingInternoDisclaimer organizadorId={orgId} />
-            <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
-              Ver reglas completas
-              <TablerIcon name="chevron-right" size={18} />
-            </a>
-          </header>
-        )}
+        <RankingUnifiedHeader genero={genero} />
+
+        <div className="rjp-ranking-header__extras">
+          <RankingInternoDisclaimer organizadorId={orgId} />
+          <a className="rjp-ranking-header__cta" href={buildRankingComoFuncionaPath()}>
+            Ver reglas completas
+            <TablerIcon name="chevron-right" size={18} />
+          </a>
+        </div>
 
         <JugadoresGeneroTabs
           className="rjp-ranking-genero-tabs"
@@ -401,7 +363,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                           <JugadorAvatar
                             fotoUrl={j.foto_url}
                             nombre={j.nombre}
-                            size="md"
+                            size="lg"
                             className="rjp-ranking-card__avatar"
                           />
                           <div className="rjp-ranking-card__body">

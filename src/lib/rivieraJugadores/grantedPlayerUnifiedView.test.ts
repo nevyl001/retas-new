@@ -1,5 +1,10 @@
 jest.mock("./organizerPlayerAccess", () => ({
   listGrantedLocalJugadorIdsForSource: jest.fn().mockResolvedValue([]),
+  listMulticlubSiblingProfilesForSource: jest.fn().mockResolvedValue([]),
+}));
+
+jest.mock("./publicCareerLinkage", () => ({
+  fetchPublicCareerJugadorIds: jest.fn().mockResolvedValue(null),
 }));
 
 import {
