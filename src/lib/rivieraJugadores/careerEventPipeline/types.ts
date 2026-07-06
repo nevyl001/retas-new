@@ -24,7 +24,10 @@ export type CareerEventAssertionCode =
   | "missing_player_identity"
   | "missing_stats"
   | "duplicate_participacion"
-  | "sync_failed";
+  | "sync_failed"
+  | "missing_parent_event"
+  | "ambiguous_profile_link"
+  | "career_integrity_blocked";
 
 export type CareerEventAssertionFailure = {
   code: CareerEventAssertionCode;

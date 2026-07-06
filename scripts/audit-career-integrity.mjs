@@ -73,19 +73,25 @@ function runOfflineChecks() {
   }
 
   const resolver = readSrc("src/lib/rivieraJugadores/jugadorIdResolver.ts");
-  if (!resolver.includes("ensureOfficialProfileLinkForParticipacion")) {
-    ok = fail("resolveJugadorIdForParticipacion sin ensureOfficialProfileLink");
+  if (!resolver.includes("requireOfficialProfileLinkForParticipacion")) {
+    ok = fail("resolveJugadorIdForParticipacion sin requireOfficialProfileLink");
   } else {
-    ok = pass("resolveJugadorIdForParticipacion enlaza huérfanos preventivamente") && ok;
+    ok = pass("resolveJugadorIdForParticipacion exige link antes de participar") && ok;
   }
 
   const pipeline = readSrc(
     "src/lib/rivieraJugadores/careerEventPipeline/pipeline.ts"
   );
-  if (!pipeline.includes("ensureOfficialProfileLinkForParticipacion")) {
-    ok = fail("finalizeCareerEvent sin ensureOfficialProfileLink");
+  if (!pipeline.includes("validateCareerEventPreClose")) {
+    ok = fail("finalizeCareerEvent sin validateCareerEventPreClose");
   } else {
-    ok = pass("finalizeCareerEvent previene huérfanos") && ok;
+    ok = pass("finalizeCareerEvent valida pre-cierre") && ok;
+  }
+
+  if (existsSync(resolve(root, "supabase/career-profile-link-integrity.sql"))) {
+    ok = pass("Existe supabase/career-profile-link-integrity.sql") && ok;
+  } else {
+    ok = fail("Falta supabase/career-profile-link-integrity.sql") && ok;
   }
 
   for (const sql of [
@@ -93,6 +99,10 @@ function runOfflineChecks() {
     "supabase/repair-orphan-career-profile-links.sql",
     "supabase/diagnose-career-event-host-organizer.sql",
     "supabase/repair-career-event-host-organizer.sql",
+    "supabase/diagnose-historical-orphan-parent-participaciones.sql",
+    "supabase/repair-historical-orphan-parent-participaciones.sql",
+    "supabase/career-event-host-manual-overrides.sql",
+    "supabase/seed-career-event-host-manual-overrides.sql",
   ]) {
     if (!existsSync(resolve(root, sql))) {
       ok = fail(`Falta ${sql}`);
@@ -127,7 +137,7 @@ async function runOnlineChecks(sb, fix) {
   if (orphanErr) {
     if (orphanErr.message?.includes("does not exist")) {
       ok = fail(
-        "RPC _riviera_orphan_profile_audit no desplegado — ejecutar diagnose-orphan-career-profiles.sql"
+        "RPC _riviera_orphan_profile_audit no desplegado — ejecutar career-profile-link-integrity.sql"
       );
     } else {
       ok = fail(`orphan audit: ${orphanErr.message}`);
@@ -174,28 +184,52 @@ async function runOnlineChecks(sb, fix) {
   if (metaErr) {
     ok = fail(`participaciones: ${metaErr.message}`) && ok;
   } else {
-    const missingOrg = (metaBad ?? []).filter(
-      (r) => !String(r.metadata?.organizador_id ?? "").trim()
+    const isHistoricalOrphanDebt = (metadata) => {
+      const status = String(metadata?.integrity_status ?? "");
+      return (
+        status === "orphan_parent_review" ||
+        status === "repaired_orphan_parent" ||
+        metadata?.repaired_from_orphan_parent === true ||
+        metadata?.repaired_from_orphan_parent === "true"
+      );
+    };
+
+    const missingOrgCritical = (metaBad ?? []).filter((r) => {
+      if (String(r.metadata?.organizador_id ?? "").trim()) return false;
+      if (isHistoricalOrphanDebt(r.metadata)) return false;
+      return true;
+    });
+    const missingOrgHistorical = (metaBad ?? []).filter(
+      (r) =>
+        !String(r.metadata?.organizador_id ?? "").trim() &&
+        isHistoricalOrphanDebt(r.metadata)
     );
     const missingClub = (metaBad ?? []).filter(
-      (r) => !String(r.metadata?.club_name ?? "").trim()
+      (r) =>
+        String(r.metadata?.organizador_id ?? "").trim() &&
+        !String(r.metadata?.club_name ?? "").trim()
     );
-    if (missingOrg.length > 0) {
+    if (missingOrgCritical.length > 0) {
       ok =
         fail(
-          `${missingOrg.length} participaciones con puntos sin metadata.organizador_id`
+          `${missingOrgCritical.length} participaciones con puntos sin metadata.organizador_id`
         ) && ok;
       if (fix) {
         console.log(
-          "  → Ejecutar supabase/repair-career-event-host-organizer.sql en SQL Editor"
+          "  → Ejecutar supabase/repair-historical-orphan-parent-participaciones.sql"
         );
       }
     } else {
       ok = pass("Participaciones con puntos tienen metadata.organizador_id") && ok;
     }
+    if (missingOrgHistorical.length > 0) {
+      console.warn(
+        `⚠ REVIEW_HISTORICO: ${missingOrgHistorical.length} participaciones orphan_parent_review sin org`
+      );
+    }
     if (missingClub.length > 0) {
       console.warn(
-        `⚠ ${missingClub.length} participaciones con puntos sin metadata.club_name`
+        `⚠ ${missingClub.length} participaciones con puntos sin metadata.club_name (no crítico si tienen org)`
       );
     }
   }

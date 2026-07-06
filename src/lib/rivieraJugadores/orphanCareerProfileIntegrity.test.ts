@@ -8,11 +8,12 @@ jest.mock("./rivieraJugadoresService", () => ({
 
 jest.mock("./orphanProfileLink", () => ({
   ensureOfficialProfileLinkForParticipacion: jest.fn(),
+  requireOfficialProfileLinkForParticipacion: jest.fn(),
 }));
 
 import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
 import { listParticipacionesPublic } from "./rivieraJugadoresService";
-import { ensureOfficialProfileLinkForParticipacion } from "./orphanProfileLink";
+import { requireOfficialProfileLinkForParticipacion } from "./orphanProfileLink";
 import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
 import { computeCareerPointsByClubFromParticipaciones } from "./careerPointsByClub";
 import {
@@ -209,17 +210,16 @@ describe("orphan career profile integrity", () => {
     expect(career.puntosByOrg.get(HACKPADEL) ?? 0).toBe(0);
   });
 
-  it("8) resolveJugadorIdForParticipacion invoca ensureOfficialProfileLink", async () => {
-    (ensureOfficialProfileLinkForParticipacion as jest.Mock).mockResolvedValue({
+  it("8) resolveJugadorIdForParticipacion usa requireOfficialProfileLink", async () => {
+    (requireOfficialProfileLinkForParticipacion as jest.Mock).mockResolvedValue({
       linked: true,
-      linkCreated: true,
-      rivieraId: "RIV-00000009",
+      confidence: "OK",
+      reason: "perfil ya enlazado",
     });
 
     const { resolveJugadorIdForParticipacion } = await import("./jugadorIdResolver");
-    // Smoke: el módulo exporta la función y el mock está cableado en pipeline/resolver.
     expect(typeof resolveJugadorIdForParticipacion).toBe("function");
-    expect(ensureOfficialProfileLinkForParticipacion).toBeDefined();
+    expect(requireOfficialProfileLinkForParticipacion).toBeDefined();
   });
 });
 

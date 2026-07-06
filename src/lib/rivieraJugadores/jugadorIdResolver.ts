@@ -15,7 +15,11 @@ import {
   linkLegacyPlayerId,
   listRivieraJugadoresByLegacyPlayerId,
 } from "./rivieraJugadoresService";
-import { ensureOfficialProfileLinkForParticipacion } from "./orphanProfileLink";
+import { ensureRivieraIdentity } from "./careerIdentity";
+import {
+  requireOfficialProfileLinkForParticipacion,
+} from "./orphanProfileLink";
+import { isCareerIntegrityException } from "./careerIntegrity";
 import { normalizePlayerNameKey } from "./playerNameKey";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 
@@ -443,20 +447,31 @@ export async function resolveJugadorIdForParticipacion(params: {
   const finalId = await finalizeJugadorIdForRanking(localId);
 
   if (finalId) {
-    const linkResult = await ensureOfficialProfileLinkForParticipacion(
-      finalId,
-      organizadorId
-    );
-    if (linkResult.linkCreated) {
-      logMulticlubPhase21({
-        action: "orphan_profile_linked",
-        organizadorId,
-        tipoEvento: params.tipoEvento ?? null,
-        eventoId: params.eventoId ?? null,
-        jugadorId: finalId,
-        rivieraId: linkResult.rivieraId ?? null,
-        officialPlayerKey: linkResult.officialPlayerKey ?? null,
-      });
+    try {
+      await ensureRivieraIdentity(finalId);
+      const linkResult = await requireOfficialProfileLinkForParticipacion(
+        finalId,
+        organizadorId
+      );
+      if (linkResult.linkCreated) {
+        logMulticlubPhase21({
+          action: "orphan_profile_linked",
+          organizadorId,
+          tipoEvento: params.tipoEvento ?? null,
+          eventoId: params.eventoId ?? null,
+          jugadorId: finalId,
+          rivieraId: linkResult.rivieraId ?? null,
+          officialPlayerKey: linkResult.officialPlayerKey ?? null,
+          confidence: linkResult.confidence,
+        });
+      }
+    } catch (e) {
+      if (isCareerIntegrityException(e)) {
+        console.error("[riviera-jugadores] career_integrity_blocked", e.toStructuredLog());
+        throw e;
+      }
+      console.warn("[riviera-jugadores] identity/link guard:", e);
+      throw e;
     }
   }
 

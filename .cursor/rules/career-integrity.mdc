@@ -24,9 +24,8 @@ npm run verify:career-integrity
 - Insertar participaciones fuera de `syncParticipaciones` / `careerEventPipeline`
 - Calcular puntos fuera de `resolvePlayerPointsBreakdown` / `playerPointsBreakdown`
 - Crear jugador participante sin resolver Riviera ID / `official_player_key`
-- Usar `jugador.organizador_id` como club anfitrión de puntos
-- Fixes visuales para esconder inconsistencias de datos
-- Crear `riviera_jugadores` para eventos sin `ensureOfficialProfileLinkForParticipacion`
+- Auto-link con solo `cross_club_profile` (siempre REVIEW)
+- Continuar participación si `requireOfficialProfileLinkForParticipacion` falla
 
 ## Fuentes canónicas
 

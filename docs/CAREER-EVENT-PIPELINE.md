@@ -290,9 +290,13 @@ supabase/repair-orphan-career-profile-links.sql
 
 ### Prevención (app)
 
-1. `resolveJugadorIdForParticipacion` → `ensureOfficialProfileLinkForParticipacion`
-2. `finalizeCareerEvent` → mismo guard tras sync
-3. `assertCareerEventIntegrity` → falla si falta `profile_link`
+1. `resolveJugadorIdForParticipacion` → `ensureRivieraIdentity` + `requireOfficialProfileLinkForParticipacion` (lanza si REVIEW/LOW)
+2. `validateCareerEventPreClose` antes de sync (padre + integridad por jugador)
+3. `assertCareerEventIntegrity` post-sync
+
+**HIGH estricto:** solo `grant_*`, `same_legacy`, `host_club_overlap`. `cross_club_profile` solo → **REVIEW** (sin auto-link).
+
+Histórico Daniel/Sebastian (solo cross-club): reparar con SQL manual tras revisión admin, no auto-link en runtime.
 
 ### Auditoría continua
 

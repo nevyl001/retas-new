@@ -1,5 +1,6 @@
 import type { CareerEventContext, FinalizeCareerEventInput } from "./types";
 import { CAREER_EVENT_KIND_TO_TIPO } from "./types";
+import { isCareerIntegrityException } from "../careerIntegrity";
 
 export type CareerEventHandlerResult = {
   context: CareerEventContext;
@@ -115,6 +116,9 @@ export async function runCareerEventSync(
       }
     }
   } catch (e) {
+    if (isCareerIntegrityException(e)) {
+      throw e;
+    }
     syncError =
       e && typeof e === "object" && "message" in e
         ? String((e as { message?: string }).message)

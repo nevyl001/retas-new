@@ -102,7 +102,45 @@ Solo HIGH se repara automáticamente.
 
 ---
 
-## Flujo de lectura canónico
+## Reglas estrictas de auto-link (congelación)
+
+| Confidence | Auto-link | Acción app |
+|------------|-----------|------------|
+| **OK** | N/A (ya enlazado) | Continúa |
+| **HIGH** | Sí, solo con evidencia **fuerte** | `grant_*`, `same_legacy`, `host_club_overlap` |
+| **REVIEW** | **No** | `CareerIntegrityException` + log estructurado |
+| **LOW** | **No** | `CareerIntegrityException` + log estructurado |
+
+`cross_club_profile` **solo** → siempre **REVIEW**, nunca HIGH.
+
+### Guard pre-participación
+
+```
+resolveJugadorIdForParticipacion:
+  ensureRivieraIdentity()
+  requireOfficialProfileLinkForParticipacion()  → lanza si no OK/HIGH-link
+  return finalId   // solo si enlazado
+```
+
+### Guard pre-cierre (pipeline)
+
+`validateCareerEventPreClose` antes de sync:
+
+1. Evento padre existe en DB
+2. Cada participante resuelto tiene `profile_link` + `official_player_key` + `riviera_id`
+
+Si falla → **no sync**, **no puntos**, **no rating**.
+
+### SQL canónico
+
+Ejecutar en prod: `supabase/career-profile-link-integrity.sql`
+
+### Auditoría diaria
+
+```bash
+npm run audit:event-parent-integrity
+```
+
 
 ```
 jugador_participaciones

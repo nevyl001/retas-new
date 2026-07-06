@@ -1,15 +1,17 @@
 import { clearOrganizerDisplayNameCache } from "../../organizer/organizerDisplayName";
-import { ensureRivieraIdentity } from "../careerIdentity";
-import { ensureOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
+import { isCareerIntegrityException } from "../careerIntegrity";
 import { prepareParticipacionIdentityForOrganizer } from "../jugadorIdResolver";
+import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
 import { rebuildJugadorStats } from "../rivieraJugadoresService";
 import { assertCareerEventIntegrity } from "./assertions";
 import { runCareerEventSync } from "./handlers";
+import { validateCareerEventPreClose } from "./preCloseGuards";
 import type {
   CareerEventAssertionFailure,
   CareerEventPipelineResult,
   FinalizeCareerEventInput,
 } from "./types";
+import { CAREER_EVENT_KIND_TO_TIPO } from "./types";
 
 const LOG_PREFIX = "[career-event-pipeline]";
 
@@ -18,22 +20,6 @@ async function refreshJugadorStatsBatch(
 ): Promise<void> {
   const unique = Array.from(new Set(Array.from(jugadorIds).filter(Boolean)));
   await Promise.allSettled(unique.map((id) => rebuildJugadorStats(id)));
-}
-
-async function ensureIdentitiesForPlayers(
-  jugadorIds: string[],
-  organizadorId: string
-): Promise<void> {
-  await Promise.allSettled(
-    jugadorIds.map(async (id) => {
-      try {
-        await ensureOfficialProfileLinkForParticipacion(id, organizadorId);
-        await ensureRivieraIdentity(id);
-      } catch (e) {
-        console.warn(LOG_PREFIX, "ensureIdentitiesForPlayers:", id, e);
-      }
-    })
-  );
 }
 
 function defaultRatingPartidoRefs(
@@ -47,6 +33,31 @@ function defaultRatingPartidoRefs(
 
 function defaultRequireRating(input: FinalizeCareerEventInput): boolean {
   return input.kind === "duelo_2v2" || input.kind === "reta";
+}
+
+function integrityFailureFromError(
+  error: unknown,
+  input: FinalizeCareerEventInput
+): CareerEventAssertionFailure {
+  if (isCareerIntegrityException(error)) {
+    return {
+      code:
+        error.confidence === "REVIEW"
+          ? "ambiguous_profile_link"
+          : "career_integrity_blocked",
+      message: error.message,
+      jugadorId: error.jugadorId,
+      details: {
+        ...error.toStructuredLog(),
+        kind: input.kind,
+      },
+    };
+  }
+  return {
+    code: "career_integrity_blocked",
+    message: error instanceof Error ? error.message : String(error),
+    details: { kind: input.kind },
+  };
 }
 
 /**
@@ -80,25 +91,48 @@ export async function processCareerEvent(
     }
   }
 
-  const syncResult = await runCareerEventSync(input);
-
-  if (syncResult.syncError) {
-    failures.push({
-      code: "sync_failed",
-      message: syncResult.syncError,
-      details: { kind: input.kind },
-    });
-  }
-
-  const touchedJugadorIds = syncResult.touchedJugadorIds;
-
-  if (!options.skipIdentityEnsure && touchedJugadorIds.length > 0) {
-    await ensureIdentitiesForPlayers(touchedJugadorIds, input.organizadorId);
-  }
-
-  await refreshJugadorStatsBatch(touchedJugadorIds);
+  let syncResult: Awaited<ReturnType<typeof runCareerEventSync>> | null = null;
+  let touchedJugadorIds: string[] = [];
 
   if (!options.skipAssertions) {
+    const preClose = await validateCareerEventPreClose(
+      input,
+      async (ref, organizadorId) =>
+        resolveJugadorIdForParticipacion({
+          organizadorId,
+          jugadorId: ref.jugadorId,
+          nombre: ref.nombre,
+          legacyPlayerId: ref.legacyPlayerId,
+          tipoEvento: input.kind,
+        })
+    );
+    if (!preClose.ok) {
+      failures.push(...preClose.failures);
+    }
+  }
+
+  if (failures.length === 0) {
+    try {
+      syncResult = await runCareerEventSync(input);
+      if (syncResult.syncError) {
+        failures.push({
+          code: "sync_failed",
+          message: syncResult.syncError,
+          details: { kind: input.kind },
+        });
+      }
+      touchedJugadorIds = syncResult.touchedJugadorIds;
+    } catch (e) {
+      failures.push(integrityFailureFromError(e, input));
+      console.error(LOG_PREFIX, "sync blocked by integrity", e);
+    }
+  }
+
+  if (touchedJugadorIds.length > 0) {
+    await refreshJugadorStatsBatch(touchedJugadorIds);
+  }
+
+  if (!options.skipAssertions && syncResult && failures.length === 0) {
     const assertionFailures = await assertCareerEventIntegrity({
       context: syncResult.context,
       touchedJugadorIds,
@@ -117,8 +151,15 @@ export async function processCareerEvent(
 
   const result: CareerEventPipelineResult = {
     ok,
-    processed: !syncResult.syncError,
-    context: syncResult.context,
+    processed: ok && Boolean(syncResult) && !syncResult?.syncError,
+    context:
+      syncResult?.context ?? {
+        kind: input.kind,
+        organizadorId: input.organizadorId,
+        hostOrganizadorId: input.organizadorId,
+        eventoId: "",
+        tipoEvento: CAREER_EVENT_KIND_TO_TIPO[input.kind],
+      },
     touchedJugadorIds,
     failures,
     durationMs,
@@ -129,7 +170,7 @@ export async function processCareerEvent(
   } else {
     console.info(LOG_PREFIX, "complete", {
       kind: input.kind,
-      eventoId: syncResult.context.eventoId,
+      eventoId: syncResult?.context.eventoId,
       players: touchedJugadorIds.length,
       durationMs,
     });

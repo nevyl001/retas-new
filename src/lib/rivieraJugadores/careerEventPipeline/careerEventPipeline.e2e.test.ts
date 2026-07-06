@@ -22,6 +22,29 @@ jest.mock("../syncParticipaciones", () => ({
 
 jest.mock("../jugadorIdResolver", () => ({
   prepareParticipacionIdentityForOrganizer: jest.fn().mockResolvedValue(undefined),
+  resolveJugadorIdForParticipacion: jest.fn().mockResolvedValue(
+    "11111111-1111-4111-8111-111111111111"
+  ),
+}));
+
+jest.mock("./preCloseGuards", () => ({
+  validateCareerEventPreClose: jest.fn().mockResolvedValue({
+    ok: true,
+    failures: [],
+  }),
+}));
+
+jest.mock("../orphanProfileLink", () => ({
+  requireOfficialProfileLinkForParticipacion: jest.fn().mockResolvedValue({
+    linked: true,
+    confidence: "OK",
+    reason: "perfil ya enlazado",
+  }),
+  ensureOfficialProfileLinkForParticipacion: jest.fn().mockResolvedValue({
+    linked: true,
+    confidence: "OK",
+    reason: "perfil ya enlazado",
+  }),
 }));
 
 jest.mock("../careerIdentity", () => ({
@@ -55,6 +78,7 @@ import {
   computeCareerPointsByClubFromParticipaciones,
 } from "../careerPointsByClub";
 import { finalizeCareerEvent } from "./pipeline";
+import { validateCareerEventPreClose } from "./preCloseGuards";
 import { syncDuelo2v2Participaciones } from "../syncParticipaciones";
 import type { JugadorParticipacion } from "../types";
 
@@ -169,6 +193,10 @@ type ParticipacionRow = {
 describe("finalizeCareerEvent E2E", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (validateCareerEventPreClose as jest.Mock).mockResolvedValue({
+      ok: true,
+      failures: [],
+    });
   });
 
   it("ejecuta pipeline completo para duelo 2v2", async () => {
