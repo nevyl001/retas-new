@@ -1,4 +1,6 @@
 import { supabase } from "../supabaseClient";
+import { resolveOrigenConcedidoOrganizadorId } from "./grantedRankingDisplay";
+import type { RivieraJugadorWithStats } from "./types";
 import type {
   AddOrganizerMembershipResult,
   LeaveOrganizerMembershipResult,
@@ -220,20 +222,100 @@ export async function addOrganizerMembershipByRivieraId(
   return parseAddOrganizerMembershipResult(data);
 }
 
-/** Jugador agregado por membresía/concesión que el club puede dar de baja sin borrar la carrera. */
-export function canLeaveOrganizerMembershipForJugador(
-  jugador: {
-    concedidoPorAdmin?: boolean;
-    grantedAccess?: { ownerOrganizadorId?: string } | null;
-  },
+/** Club de registro / origen del jugador (no el club que muestra la lista). */
+export function resolvePlayerHomeOrganizadorId(
+  jugador: Pick<
+    RivieraJugadorWithStats,
+    | "id"
+    | "organizador_id"
+    | "concedidoPorAdmin"
+    | "grantedAccess"
+  >
+): string | null {
+  const fromBadge = resolveOrigenConcedidoOrganizadorId(
+    jugador as RivieraJugadorWithStats
+  );
+  if (fromBadge) return fromBadge;
+
+  const ownerId = jugador.grantedAccess?.ownerOrganizadorId?.trim();
+  if (ownerId) return ownerId;
+
+  if (!jugador.concedidoPorAdmin) {
+    return jugador.organizador_id?.trim() || null;
+  }
+
+  const sourceId = jugador.grantedAccess?.sourceJugadorId?.trim();
+  if (sourceId && sourceId === jugador.id.trim()) {
+    return jugador.organizador_id?.trim() || null;
+  }
+
+  return null;
+}
+
+/**
+ * Quitar del club actual (membresía / cedido / importado).
+ * No borra Riviera ID, historial global ni resultados.
+ */
+export function canRemovePlayerFromCurrentClub(
+  jugador: Pick<
+    RivieraJugadorWithStats,
+    | "id"
+    | "organizador_id"
+    | "concedidoPorAdmin"
+    | "grantedAccess"
+  >,
   organizadorId: string | null | undefined
 ): boolean {
   const orgId = organizadorId?.trim();
   if (!orgId) return false;
-  if (!jugador.concedidoPorAdmin || !jugador.grantedAccess) return false;
-  const ownerId = jugador.grantedAccess.ownerOrganizadorId?.trim();
-  if (ownerId && ownerId === orgId) return false;
-  return true;
+  if (jugador.organizador_id?.trim() !== orgId) return false;
+
+  const homeId = resolvePlayerHomeOrganizadorId(jugador);
+  if (homeId && homeId === orgId) return false;
+  if (homeId && homeId !== orgId) return true;
+
+  if (jugador.concedidoPorAdmin && jugador.grantedAccess) {
+    const sourceId = jugador.grantedAccess.sourceJugadorId?.trim();
+    if (sourceId && sourceId !== jugador.id.trim()) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Eliminar jugador global (solo club de registro / creador).
+ * Acción destructiva: historial local del club origen.
+ */
+export function canDeleteGlobalPlayer(
+  jugador: Pick<
+    RivieraJugadorWithStats,
+    | "id"
+    | "organizador_id"
+    | "concedidoPorAdmin"
+    | "grantedAccess"
+  >,
+  organizadorId: string | null | undefined
+): boolean {
+  const orgId = organizadorId?.trim();
+  if (!orgId) return false;
+  if (canRemovePlayerFromCurrentClub(jugador, orgId)) return false;
+  if (jugador.concedidoPorAdmin) return false;
+  return jugador.organizador_id?.trim() === orgId;
+}
+
+/** @deprecated Usar canRemovePlayerFromCurrentClub */
+export function canLeaveOrganizerMembershipForJugador(
+  jugador: Parameters<typeof canRemovePlayerFromCurrentClub>[0],
+  organizadorId: string | null | undefined
+): boolean {
+  return canRemovePlayerFromCurrentClub(jugador, organizadorId);
+}
+
+/** Baja de membresía (soft) del organizador autenticado — solo vínculo local. */
+export async function removePlayerFromCurrentClub(
+  localJugadorId: string
+): Promise<LeaveOrganizerMembershipResult | null> {
+  return leaveOrganizerMembership(localJugadorId);
 }
 
 /** Baja de membresía (soft) del organizador autenticado. */

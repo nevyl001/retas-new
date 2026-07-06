@@ -48,9 +48,10 @@ import { navigateJugadorFicha } from "./jugadoresNav";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
 import { AgregarJugadorExistenteModal } from "./AgregarJugadorExistenteModal";
 import {
-  canLeaveOrganizerMembershipForJugador,
-  leaveOrganizerMembership,
+  canDeleteGlobalPlayer,
+  canRemovePlayerFromCurrentClub,
   mapPlayerMembershipUiError,
+  removePlayerFromCurrentClub,
 } from "../../lib/rivieraJugadores/playerMembership";
 import "./riviera-jugadores.css";
 
@@ -128,15 +129,16 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   const pct = (j: RivieraJugadorWithStats) => jugadorListaPctVictoriasDisplay(j);
 
   const handleDeleteJugador = async (j: RivieraJugadorWithStats) => {
-    if (!user?.id || j.concedidoPorAdmin) return;
+    const orgId = organizadorId ?? user?.id;
+    if (!orgId || !canDeleteGlobalPlayer(j, orgId)) return;
     const ok = window.confirm(
-      `¿Eliminar a «${j.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas. Esta acción no se puede deshacer.`
+      `¿Eliminar a «${j.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas en tu club. Esta acción no se puede deshacer.`
     );
     if (!ok) return;
     setDeletingId(j.id);
     setError(null);
     try {
-      await deleteRivieraJugador(user.id, j.id);
+      await deleteRivieraJugador(orgId, j.id);
       await load();
     } catch (e) {
       setError(
@@ -148,16 +150,17 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   };
 
   const handleLeaveFromClub = async (j: RivieraJugadorWithStats) => {
-    if (!user?.id || !canLeaveOrganizerMembershipForJugador(j, user.id)) return;
+    const orgId = organizadorId ?? user?.id;
+    if (!orgId || !canRemovePlayerFromCurrentClub(j, orgId)) return;
     const ok = window.confirm(
-      `¿Quitar a «${j.nombre}» de tu club?\n\nEl jugador conservará su historial Riviera en su club de registro. Solo dejará de aparecer en tu organizador.`
+      `¿Quitar a «${j.nombre}» de tu club?\n\nEsto solo quitará al jugador de tu club. Su Riviera ID, historial y resultados se conservarán.`
     );
     if (!ok) return;
     setDeletingId(j.id);
     setError(null);
     try {
-      await leaveOrganizerMembership(j.id);
-      await syncLegacyPlayersFromRivieraRegistry(user.id);
+      await removePlayerFromCurrentClub(j.id);
+      await syncLegacyPlayersFromRivieraRegistry(orgId);
       await load();
     } catch (e) {
       setError(mapPlayerMembershipUiError(e));
@@ -326,6 +329,9 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             const pos = rankById.get(j.id) ?? 0;
             const puntos = rankingPuntosJugadorLista(j);
             const esPrimero = pos === 1;
+            const orgId = organizadorId ?? user?.id;
+            const canRemove = canRemovePlayerFromCurrentClub(j, orgId);
+            const canDelete = canDeleteGlobalPlayer(j, orgId);
             return (
               <article key={j.id} className="rj-card">
                 <div className="rj-card__top">
@@ -343,10 +349,9 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                   <span className="rj-card__pts">
                     {puntos.toLocaleString("es-MX")} pts
                   </span>
-                  {!j.concedidoPorAdmin ||
-                  canLeaveOrganizerMembershipForJugador(j, user?.id) ? (
+                  {canRemove || canDelete ? (
                     <div className="rj-card__actions">
-                      {!j.concedidoPorAdmin && permiteAjustePuntosManuales ? (
+                      {canDelete && !canRemove && permiteAjustePuntosManuales ? (
                         <button
                           type="button"
                           className="rj-card__edit"
@@ -357,7 +362,18 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                           <TablerIcon name="pencil" size={14} aria-hidden={false} />
                         </button>
                       ) : null}
-                      {!j.concedidoPorAdmin ? (
+                      {canRemove ? (
+                        <button
+                          type="button"
+                          className="rj-card__delete"
+                          title="Quitar de mi club"
+                          aria-label={`Quitar a ${j.nombre} de tu club`}
+                          disabled={deletingId === j.id}
+                          onClick={() => void handleLeaveFromClub(j)}
+                        >
+                          <TablerIcon name="trash" size={14} aria-hidden={false} />
+                        </button>
+                      ) : canDelete ? (
                         <button
                           type="button"
                           className="rj-card__delete"
@@ -368,18 +384,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
                         >
                           <TablerIcon name="trash" size={14} aria-hidden={false} />
                         </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="rj-card__delete"
-                          title="Quitar del club"
-                          aria-label={`Quitar a ${j.nombre} del club`}
-                          disabled={deletingId === j.id}
-                          onClick={() => void handleLeaveFromClub(j)}
-                        >
-                          <TablerIcon name="trash" size={14} aria-hidden={false} />
-                        </button>
-                      )}
+                      ) : null}
                     </div>
                   ) : null}
                 </div>

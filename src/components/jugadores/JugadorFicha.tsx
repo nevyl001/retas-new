@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useClubExperience } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
 import {
   EN_CANCHA_LABELS,
@@ -11,9 +12,10 @@ import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { computePublicProfileStats } from "../../lib/rivieraJugadores/historialDisplay";
 import { loadOrganizerScopedPlayerView } from "../../lib/rivieraJugadores/playerClubDisplay";
 import {
-  canLeaveOrganizerMembershipForJugador,
-  leaveOrganizerMembership,
+  canDeleteGlobalPlayer,
+  canRemovePlayerFromCurrentClub,
   mapPlayerMembershipUiError,
+  removePlayerFromCurrentClub,
 } from "../../lib/rivieraJugadores/playerMembership";
 import { syncLegacyPlayersFromRivieraRegistry } from "../../lib/rivieraJugadores/playerPoolSync";
 import {
@@ -51,6 +53,8 @@ interface JugadorFichaProps {
 
 export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const { user } = useUser();
+  const { organizadorId } = useClubExperience();
+  const activeOrgId = organizadorId ?? user?.id ?? null;
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [tab, setTab] = useState<"historial" | "stats">("historial");
   const [historial, setHistorial] = useState<
@@ -81,10 +85,10 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
-    if (!user?.id) return;
+    if (!activeOrgId) return;
     setLoading(true);
     try {
-      const j = await getRivieraJugadorBySlug(user.id, slug);
+      const j = await getRivieraJugadorBySlug(activeOrgId, slug);
       setJugador(j);
       if (j) {
         setNombre(j.nombre);
@@ -99,7 +103,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setFacebook(j.facebook_url ?? "");
         setTiktok(j.tiktok_url ?? "");
 
-        const scoped = await loadOrganizerScopedPlayerView(user.id, j, {
+        const scoped = await loadOrganizerScopedPlayerView(activeOrgId, j, {
           listParticipaciones: listParticipacionesForOrganizador,
           fetchParticipacionesRaw: listParticipaciones,
           fetchHistorialRating: obtenerHistorialRating,
@@ -112,7 +116,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, slug]);
+  }, [activeOrgId, slug]);
 
   useEffect(() => {
     load();
@@ -195,14 +199,14 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   };
 
   const handleDelete = async () => {
-    if (!user?.id || !jugador) return;
+    if (!activeOrgId || !jugador || !canDeleteGlobalPlayer(jugador, activeOrgId)) return;
     const ok = window.confirm(
-      `¿Eliminar a «${jugador.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas. Esta acción no se puede deshacer.`
+      `¿Eliminar a «${jugador.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas en tu club. Esta acción no se puede deshacer.`
     );
     if (!ok) return;
     setDeleting(true);
     try {
-      await deleteRivieraJugador(user.id, jugador.id);
+      await deleteRivieraJugador(activeOrgId, jugador.id);
       navigateJugadores();
     } catch (e) {
       alert(e instanceof Error ? e.message : "No se pudo eliminar el jugador");
@@ -212,16 +216,16 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   };
 
   const handleLeaveFromClub = async () => {
-    if (!user?.id || !jugador) return;
-    if (!canLeaveOrganizerMembershipForJugador(jugador, user.id)) return;
+    if (!activeOrgId || !jugador) return;
+    if (!canRemovePlayerFromCurrentClub(jugador, activeOrgId)) return;
     const ok = window.confirm(
-      `¿Quitar a «${jugador.nombre}» de tu club?\n\nEl jugador conservará su historial Riviera en su club de registro. Solo dejará de aparecer en tu organizador.`
+      `¿Quitar a «${jugador.nombre}» de tu club?\n\nEsto solo quitará al jugador de tu club. Su Riviera ID, historial y resultados se conservarán.`
     );
     if (!ok) return;
     setLeaving(true);
     try {
-      await leaveOrganizerMembership(jugador.id);
-      await syncLegacyPlayersFromRivieraRegistry(user.id);
+      await removePlayerFromCurrentClub(jugador.id);
+      await syncLegacyPlayersFromRivieraRegistry(activeOrgId);
       navigateJugadores();
     } catch (e) {
       alert(mapPlayerMembershipUiError(e));
@@ -275,8 +279,9 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   }
 
   const s = jugador.stats;
-  const isGrantedReadOnly = Boolean(jugador.concedidoPorAdmin);
-  const canLeaveFromClub = canLeaveOrganizerMembershipForJugador(jugador, user?.id);
+  const canRemove = canRemovePlayerFromCurrentClub(jugador, activeOrgId);
+  const canDelete = canDeleteGlobalPlayer(jugador, activeOrgId);
+  const isGrantedReadOnly = canRemove;
   const retasCount = histStats.retasClasicas;
   const torneosCount = histStats.torneosExpress;
   const ligasCount = histStats.ligas;
@@ -307,12 +312,12 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
 
         {isGrantedReadOnly ? (
           <p className="rj-ficha-readonly-notice" role="status">
-            Acceso concedido — solo el club dueño del registro puede editar este
-            perfil.
+            Jugador vinculado desde otro club — solo puedes quitarlo de tu lista
+            local. Su carrera global no se modifica.
           </p>
         ) : null}
 
-        {canLeaveFromClub ? (
+        {canRemove ? (
           <div className="rj-ficha-actions">
             <button
               type="button"
@@ -320,7 +325,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
               disabled={leaving}
               onClick={() => void handleLeaveFromClub()}
             >
-              {leaving ? "Quitando…" : "Quitar del club"}
+              {leaving ? "Quitando…" : "Quitar de mi club"}
             </button>
           </div>
         ) : null}
@@ -384,7 +389,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           </div>
         </header>
 
-        {!isGrantedReadOnly ? (
+        {!isGrantedReadOnly && canDelete ? (
           <div className="rj-ficha-actions">
             <button
               type="button"
@@ -393,16 +398,16 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             >
               {editOpen ? "Cerrar edición" : "Editar perfil"}
             </button>
-            {user?.id && (
+            {activeOrgId ? (
               <a
                 className="rj-btn rj-btn--ghost"
-                href={buildPublicJugadorPath(jugador.slug, user.id)}
+                href={buildPublicJugadorPath(jugador.slug, activeOrgId)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 Ver perfil público
               </a>
-            )}
+            ) : null}
             <button
               type="button"
               className="rj-btn rj-btn--danger"

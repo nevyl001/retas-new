@@ -47,6 +47,7 @@ import {
   registerJugadorImportBlocklist,
   isJugadorImportBlocked,
 } from "./jugadorImportBlocklist";
+import { canDeleteGlobalPlayer } from "./playerMembership";
 import { computeJugadorStatsFromParticipaciones } from "./rebuildJugadorStats";
 import {
   enrichJugadorWithRivieraId,
@@ -2132,6 +2133,7 @@ export async function getRankingPosicionEnCategoria(
 /**
  * Elimina un jugador del registro Riviera y todo su historial de ranking
  * (participaciones y estadísticas). No borra retas/torneos ya jugados en `players`.
+ * Solo el club de registro puede ejecutar esta acción (ver canDeleteGlobalPlayer).
  */
 export async function deleteRivieraJugador(
   organizadorId: string,
@@ -2149,7 +2151,8 @@ export async function deleteRivieraJugador(
   );
   if (grantMeta) {
     throw new Error(
-      "No puedes eliminar un jugador con acceso concedido. Quita el acceso desde Admin Principal."
+      "Este jugador está vinculado a tu club por Riviera ID o acceso concedido. " +
+        "Usa «Quitar de mi club» — no se borra su historial global."
     );
   }
 
@@ -2194,6 +2197,16 @@ export async function deleteRivieraJugador(
   }
   if (!row) {
     throw new Error("Jugador no encontrado o sin permiso para eliminarlo.");
+  }
+
+  const jugadorRow = mapJugadorRowFromService(
+    row as unknown as Record<string, unknown>
+  );
+  if (!canDeleteGlobalPlayer(jugadorRow, organizadorId)) {
+    throw new Error(
+      "Solo el club de registro puede eliminar este jugador globalmente. " +
+        "Para quitarlo de tu club usa «Quitar de mi club»."
+    );
   }
 
   const { data: participaciones } = await supabase
@@ -2270,6 +2283,14 @@ export async function deleteRivieraJugador(
         : delErr.message
     );
   }
+}
+
+/** Alias explícito: eliminación global destructiva (solo club origen). */
+export async function deleteGlobalPlayer(
+  organizadorId: string,
+  jugadorId: string
+): Promise<void> {
+  return deleteRivieraJugador(organizadorId, jugadorId);
 }
 
 export async function searchRivieraJugadoresQuick(
