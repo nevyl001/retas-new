@@ -188,7 +188,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [effectiveOrgId, setEffectiveOrgId] = useState<string | null>(urlOrgId);
   const [rankingPos, setRankingPos] = useState<number | null>(null);
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
-  const [officialPuntos, setOfficialPuntos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -256,7 +255,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
             orgId: scopedOrgId,
             internalClub,
           });
-          setOfficialPuntos(jugadorBase.officialPuntosGlobal ?? null);
           setRankingPos(pos);
           setJugador(jugadorBase);
         } else {
@@ -311,7 +309,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         const puntosOficialEfectivos = unified.romcView.hasRomcData
           ? unified.romcView.puntosOficiales
           : null;
-        setOfficialPuntos(puntosOficialEfectivos);
         setRankingPos(pos);
         const statsBase = jugadorBase.stats ?? {
           jugador_id: jugadorBase.id,
@@ -455,7 +452,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       partidosPerdidos: perdidas,
       winRate,
     };
-  }, [historial, historialCompleto, historialOtrosClubes.length, internalClub, jugador?.stats]);
+  }, [historial, historialCompleto, internalClub, jugador?.stats]);
 
   const recentActivity = useMemo(() => historialItems.slice(0, 3), [historialItems]);
 
