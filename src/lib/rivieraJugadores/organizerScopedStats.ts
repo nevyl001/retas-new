@@ -1,15 +1,17 @@
-import { supabase } from "../supabaseClient";
+import { supabasePublicRead } from "../supabaseClient";
 import {
   buildMulticlubGranteePuntosFromParticipaciones,
 } from "./nativeMulticlubHomeView";
 import {
   enrichParticipacionesOrganizadorFromEvents,
 } from "./participacionesOrganizadorScope";
+import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 /**
  * Enriquece filas del ranking con líneas multiclub para display.
  * NO recalcula stats.puntos_totales — el ranking ordena con jugador_stats de BD.
+ * Usa RPC de carrera pública para que anon vea el mismo desglose que authenticated.
  */
 export async function enrichJugadoresOrganizerScopedStats(
   organizadorId: string,
@@ -25,30 +27,37 @@ export async function enrichJugadoresOrganizerScopedStats(
 
   if (nativeIds.length === 0) return jugadores;
 
-  const { data, error } = await supabase
-    .from("jugador_participaciones")
-    .select("*")
-    .in("jugador_id", nativeIds)
-    .order("fecha", { ascending: false })
-    .limit(Math.min(nativeIds.length * 200, 5000));
-
-  if (error) {
-    console.warn("[riviera-jugadores] enrichJugadoresOrganizerScopedStats:", error);
-    return jugadores;
-  }
-
-  const rawByJugador = new Map<string, JugadorParticipacion[]>();
-  for (const raw of data ?? []) {
-    const row = raw as JugadorParticipacion;
-    const list = rawByJugador.get(row.jugador_id) ?? [];
-    list.push(row);
-    rawByJugador.set(row.jugador_id, list);
-  }
-
   const enrichedByJugador = new Map<string, JugadorParticipacion[]>();
+
   await Promise.all(
-    Array.from(rawByJugador.entries()).map(async ([jid, rows]) => {
-      enrichedByJugador.set(jid, await enrichParticipacionesOrganizadorFromEvents(rows));
+    nativeIds.map(async (jid) => {
+      let rows: JugadorParticipacion[] | null =
+        await listCareerParticipacionesPublic(jid, 200);
+
+      if (!rows) {
+        const { data, error } = await supabasePublicRead
+          .from("jugador_participaciones")
+          .select("*")
+          .eq("jugador_id", jid)
+          .order("fecha", { ascending: false })
+          .limit(200);
+
+        if (error) {
+          console.warn(
+            "[riviera-jugadores] enrichJugadoresOrganizerScopedStats:",
+            error
+          );
+          return;
+        }
+        rows = (data ?? []) as JugadorParticipacion[];
+      }
+
+      if (rows.length === 0) return;
+
+      enrichedByJugador.set(
+        jid,
+        await enrichParticipacionesOrganizadorFromEvents(rows)
+      );
     })
   );
 

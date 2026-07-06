@@ -140,16 +140,38 @@ async function fetchRivieraIdsViaEnsure(ids: string[]): Promise<Map<string, stri
   return map;
 }
 
-/** RPC 2.1.3B — lectura pública para perfiles visible_publico (anon ok). */
+/** RPC 2.1.3B + batch ranking — lectura pública (anon ok). */
 async function fetchPublicRivieraIdsViaRpc(ids: string[]): Promise<Map<string, string>> {
   if (ids.length === 0) return new Map();
 
   const map = new Map<string, string>();
-  const clients = [supabasePublicRead, supabase];
+
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+
+  for (const client of [supabasePublicRead, supabase]) {
+    try {
+      const { data, error } = await client.rpc(
+        "get_public_riviera_ids_for_jugadores",
+        { p_jugador_ids: uniqueIds }
+      );
+      if (!error && data?.length) {
+        for (const row of data as { jugador_id?: string; riviera_id?: string }[]) {
+          const jugadorId = String(row.jugador_id ?? "").trim();
+          if (jugadorId && isValidRivieraId(row.riviera_id)) {
+            map.set(jugadorId, row.riviera_id!);
+          }
+        }
+        if (map.size > 0) return map;
+      }
+    } catch {
+      /* RPC no desplegado */
+    }
+  }
 
   await Promise.all(
-    ids.map(async (id) => {
-      for (const client of clients) {
+    uniqueIds.map(async (id) => {
+      if (map.has(id)) return;
+      for (const client of [supabasePublicRead, supabase]) {
         try {
           const { data, error } = await client.rpc(
             "get_public_riviera_id_for_jugador",
@@ -161,7 +183,7 @@ async function fetchPublicRivieraIdsViaRpc(ids: string[]): Promise<Map<string, s
             break;
           }
         } catch {
-          // RPC no desplegado aún
+          /* RPC no desplegado aún */
         }
       }
     })
@@ -192,25 +214,29 @@ async function fetchRivieraIdsFromOrganizerMemberships(): Promise<
 /** Mapa jugador_id → riviera_id usando consultas/RPC existentes. */
 export async function fetchRivieraIdMapForJugadorIds(
   ids: string[],
-  opts?: { allowEnsure?: boolean; ensureLimit?: number }
+  opts?: { allowEnsure?: boolean; ensureLimit?: number; publicRanking?: boolean }
 ): Promise<Map<string, string>> {
   const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
   if (uniqueIds.length === 0) return new Map();
 
-  const [byCanonical, byProfileLink, byMembership, byPublicRpc] =
-    await Promise.all([
-      fetchRivieraIdsByCanonicalJugadorIds(uniqueIds),
-      fetchRivieraIdsByProfileLinks(uniqueIds),
-      fetchRivieraIdsFromOrganizerMemberships(),
-      fetchPublicRivieraIdsViaRpc(uniqueIds),
-    ]);
+  const [byCanonical, byProfileLink, byPublicRpc] = await Promise.all([
+    fetchRivieraIdsByCanonicalJugadorIds(uniqueIds, [supabasePublicRead, supabase]),
+    fetchRivieraIdsByProfileLinks(uniqueIds, [supabasePublicRead, supabase]),
+    fetchPublicRivieraIdsViaRpc(uniqueIds),
+  ]);
 
-  let merged = mergeRivieraIdMaps(
-    byCanonical,
-    byProfileLink,
-    byMembership,
-    byPublicRpc
-  );
+  let merged = mergeRivieraIdMaps(byCanonical, byProfileLink, byPublicRpc);
+
+  if (!opts?.publicRanking) {
+    const [byMembership] = await Promise.all([
+      fetchRivieraIdsFromOrganizerMemberships(),
+    ]);
+    merged = mergeRivieraIdMaps(merged, byMembership);
+  }
+
+  if (opts?.publicRanking) {
+    return merged;
+  }
 
   if (opts?.allowEnsure !== false) {
     const missing = uniqueIds.filter((id) => !merged.has(id));
@@ -240,12 +266,12 @@ export function applyRivieraIdToJugador<T extends RivieraJugadorWithStats>(
 
 export async function enrichJugadoresWithRivieraId<
   T extends RivieraJugadorWithStats,
->(jugadores: T[]): Promise<T[]> {
+>(jugadores: T[], opts?: { publicRanking?: boolean }): Promise<T[]> {
   if (jugadores.length === 0) return jugadores;
 
   const idMap = await fetchRivieraIdMapForJugadorIds(
     collectJugadorIdsForRivieraLookup(jugadores),
-    { ensureLimit: 25 }
+    { ensureLimit: opts?.publicRanking ? 0 : 25, publicRanking: opts?.publicRanking }
   );
   if (idMap.size === 0) return jugadores;
 
@@ -254,10 +280,11 @@ export async function enrichJugadoresWithRivieraId<
 
 export async function enrichJugadorWithRivieraId<
   T extends RivieraJugadorWithStats,
->(jugador: T): Promise<T> {
+>(jugador: T, opts?: { publicRanking?: boolean }): Promise<T> {
   const lookupIds = collectJugadorIdsForRivieraLookup([jugador]);
   const idMap = await fetchRivieraIdMapForJugadorIds(lookupIds, {
-    ensureLimit: lookupIds.length,
+    ensureLimit: opts?.publicRanking ? 0 : lookupIds.length,
+    publicRanking: opts?.publicRanking,
   });
   return applyRivieraIdToJugador(jugador, idMap);
 }

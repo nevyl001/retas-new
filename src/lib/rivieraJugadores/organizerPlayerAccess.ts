@@ -1,4 +1,4 @@
-import { supabase } from "../supabaseClient";
+import { supabase, supabasePublicRead } from "../supabaseClient";
 import type { JugadorStats, RivieraJugador, RivieraJugadorWithStats } from "./types";
 
 function isMissingAccessFeatureError(
@@ -92,6 +92,39 @@ export async function isRevokedGrantLocalJugador(
 ): Promise<boolean> {
   const revoked = await listRevokedGrantLocalJugadorIds(granteeOrganizerId);
   return revoked.has(jugadorId.trim());
+}
+
+export async function listActiveGrantedAccessForOrganizerPublic(
+  granteeOrganizerId: string
+): Promise<OrganizerPlayerAccessRow[]> {
+  const org = granteeOrganizerId.trim();
+  if (!org) return [];
+
+  for (const client of [supabasePublicRead, supabase]) {
+    try {
+      const { data, error } = await client.rpc("list_public_grants_for_ranking", {
+        p_grantee_organizador_id: org,
+      });
+      if (!error && data) {
+        return (data ?? []).map((row: Record<string, unknown>) => ({
+          id: String(row.id),
+          jugador_id: String(row.jugador_id),
+          owner_organizador_id: String(row.owner_organizador_id),
+          local_jugador_id: row.local_jugador_id
+            ? String(row.local_jugador_id)
+            : null,
+          local_display_name: row.local_display_name
+            ? String(row.local_display_name)
+            : null,
+          local_category: row.local_category ? String(row.local_category) : null,
+        }));
+      }
+    } catch {
+      /* RPC no desplegado */
+    }
+  }
+
+  return listActiveGrantedAccessForOrganizer(org);
 }
 
 export async function listActiveGrantedAccessForOrganizer(
@@ -195,6 +228,23 @@ export async function findGrantedAccessMetaForJugador(
   granteeOrganizerId: string,
   jugadorId: string
 ): Promise<GrantedAccessMeta | null> {
+  const org = granteeOrganizerId.trim();
+  const id = jugadorId.trim();
+  if (!org || !id) return null;
+
+  const grants = await listActiveGrantedAccessForOrganizerPublic(org);
+  const fromList = grants.find(
+    (g) => g.jugador_id === id || g.local_jugador_id === id
+  );
+  if (fromList) {
+    return {
+      accessId: fromList.id,
+      sourceJugadorId: fromList.jugador_id,
+      ownerOrganizadorId: fromList.owner_organizador_id,
+      localJugadorId: fromList.local_jugador_id,
+    };
+  }
+
   const { data, error } = await supabase
     .from("organizer_player_access")
     .select("id, jugador_id, owner_organizador_id, local_jugador_id")
@@ -226,12 +276,12 @@ export async function loadGrantedSourceDisplayData(
   ratingFiabilidad: number;
 } | null> {
   const [statsRes, jugadorRes] = await Promise.all([
-    supabase
+    supabasePublicRead
       .from("jugador_stats")
       .select("*")
       .eq("jugador_id", sourceJugadorId)
       .maybeSingle(),
-    supabase
+    supabasePublicRead
       .from("riviera_jugadores")
       .select("rating, rating_partidos, rating_fiabilidad")
       .eq("id", sourceJugadorId)

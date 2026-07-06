@@ -26,7 +26,7 @@ import {
   excludeRevokedGrantLocalClones,
   findGrantedAccessMetaForJugador,
   isRevokedGrantLocalJugador,
-  listActiveGrantedAccessForOrganizer,
+  listActiveGrantedAccessForOrganizerPublic,
   listRevokedGrantLocalJugadorIds,
   loadGrantedSourceDisplayData,
 } from "./organizerPlayerAccess";
@@ -198,17 +198,17 @@ function emptyLocalJugadorStats(jugadorId: string): JugadorStats {
 async function fetchSourceJugadorForGrant(
   sourceJugadorId: string
 ): Promise<Record<string, unknown> | null> {
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .select("*")
-    .eq("id", sourceJugadorId)
-    .maybeSingle();
+  for (const client of [supabasePublicRead, supabase]) {
+    const { data, error } = await client
+      .from("riviera_jugadores")
+      .select("*")
+      .eq("id", sourceJugadorId)
+      .maybeSingle();
 
-  if (error) {
-    if (isMissingTableError(error)) return null;
-    throw error;
+    if (!error && data) return data as Record<string, unknown>;
+    if (error && !isMissingTableError(error) && client === supabase) throw error;
   }
-  return data as Record<string, unknown> | null;
+  return null;
 }
 
 async function enrichGrantedJugadorFromSource(
@@ -262,7 +262,7 @@ async function mergeGrantedJugadoresIntoRanking(
 ): Promise<RivieraJugadorWithStats[]> {
   const revokedLocalIds = await listRevokedGrantLocalJugadorIds(organizadorId);
   const ownRowsFiltered = excludeRevokedGrantLocalClones(ownRows, revokedLocalIds);
-  const grants = await listActiveGrantedAccessForOrganizer(organizadorId);
+  const grants = await listActiveGrantedAccessForOrganizerPublic(organizadorId);
   const ownById = new Map(ownRowsFiltered.map((r) => [r.id, r]));
   const merged = [...ownRowsFiltered];
 
@@ -355,7 +355,7 @@ async function mergeGrantedJugadoresIntoList(
   genero?: RivieraJugadorGenero
 ): Promise<RivieraJugadorWithStats[]> {
   const revokedLocalIds = await listRevokedGrantLocalJugadorIds(organizadorId);
-  const grants = await listActiveGrantedAccessForOrganizer(organizadorId);
+  const grants = await listActiveGrantedAccessForOrganizerPublic(organizadorId);
   if (grants.length === 0) {
     return excludeRevokedGrantLocalClones(ownRows, revokedLocalIds);
   }
@@ -469,7 +469,7 @@ async function fetchInternalClubJugadorRow(
     ? { p_organizador_id: trimmedOrg, p_jugador_id: opts.jugadorId.trim() }
     : { p_organizador_id: trimmedOrg, p_slug: (opts.slug ?? "").trim() };
 
-  const { data, error } = await supabase.rpc(rpcName, rpcParams);
+  const { data, error } = await supabasePublicRead.rpc(rpcName, rpcParams);
   if (!error && data) {
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) return null;
@@ -478,12 +478,25 @@ async function fetchInternalClubJugadorRow(
     return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
   }
   if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
-    throw error;
+    const { data: authData, error: authError } = await supabase.rpc(
+      rpcName,
+      rpcParams
+    );
+    if (!authError && authData) {
+      const row = Array.isArray(authData) ? authData[0] : authData;
+      if (!row) return null;
+      const mapped = mapInternalClubJugadorRow(row as Record<string, unknown>);
+      if (await isRevokedGrantLocalJugador(trimmedOrg, mapped.id)) return null;
+      return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
+    }
+    if (!isMissingRpcError(authError) && !isMissingTableError(authError)) {
+      throw authError ?? error;
+    }
   }
 
   const { data: fallbackData, error: fallbackError } =
     await withJugadorSelectFallback((cols) => {
-      let q = supabase
+      let q = supabasePublicRead
         .from("riviera_jugadores")
         .select(jugadorSelectWithStats(cols))
         .eq("organizador_id", trimmedOrg)
@@ -532,7 +545,7 @@ async function fetchGrantedJugadorForInternalClub(
   const source = await fetchSourceJugadorForGrant(meta.sourceJugadorId);
   if (!source) return null;
 
-  const grants = await listActiveGrantedAccessForOrganizer(organizadorId);
+  const grants = await listActiveGrantedAccessForOrganizerPublic(organizadorId);
   const grant = grants.find((g) => g.id === meta.accessId);
   if (!grant) return null;
 
@@ -569,12 +582,12 @@ export async function getRivieraJugadorInternalClubById(
   organizadorId: string
 ): Promise<RivieraJugadorWithStats | null> {
   const direct = await fetchInternalClubJugadorRow(organizadorId, { jugadorId });
-  if (direct) return enrichJugadorWithRivieraId(direct);
+  if (direct) return enrichJugadorWithRivieraId(direct, { publicRanking: true });
   const granted = await fetchGrantedJugadorForInternalClub(
     organizadorId,
     jugadorId
   );
-  return granted ? enrichJugadorWithRivieraId(granted) : null;
+  return granted ? enrichJugadorWithRivieraId(granted, { publicRanking: true }) : null;
 }
 
 async function fetchJugadorStatsRow(
@@ -1395,19 +1408,26 @@ export async function listParticipacionesPublic(
 ): Promise<JugadorParticipacion[]> {
   const org = organizadorId?.trim();
   if (org) {
-    const { data, error } = await supabase.rpc("riviera_participaciones_interno", {
-      p_organizador_id: org,
-      p_jugador_id: jugadorId,
-      p_limit: limit,
-    });
-    if (!error && data) {
-      return filterParticipacionesForOrganizador(
-        (data ?? []) as JugadorParticipacion[],
-        org
-      );
-    }
-    if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
-      throw error;
+    for (const client of [supabasePublicRead, supabase]) {
+      const { data, error } = await client.rpc("riviera_participaciones_interno", {
+        p_organizador_id: org,
+        p_jugador_id: jugadorId,
+        p_limit: limit,
+      });
+      if (!error && data) {
+        return filterParticipacionesForOrganizador(
+          (data ?? []) as JugadorParticipacion[],
+          org
+        );
+      }
+      if (
+        error &&
+        !isMissingRpcError(error) &&
+        !isMissingTableError(error) &&
+        client === supabase
+      ) {
+        throw error;
+      }
     }
 
     const { data: fallbackData, error: fallbackError } = await supabasePublicRead
@@ -1888,17 +1908,32 @@ export async function listInternalClubJugadoresRanking(
   options?: RatingRpcFallbackOptions
 ): Promise<RivieraJugadorWithStats[]> {
   const generoParam = genero === "F" ? "F" : "M";
-  const { data, error } = await supabase.rpc(
-    "riviera_ranking_interno_por_organizador",
-    {
-      p_organizador_id: organizadorId,
-      p_categoria: categoria,
-      p_genero: generoParam,
-    }
-  );
+  const rpcParams = {
+    p_organizador_id: organizadorId,
+    p_categoria: categoria,
+    p_genero: generoParam,
+  };
 
+  let resolvedData: unknown = null;
+  const { data, error } = await supabasePublicRead.rpc(
+    "riviera_ranking_interno_por_organizador",
+    rpcParams
+  );
   if (!error && data) {
-    const rows = (data as Record<string, unknown>[]).map(mapInternalClubJugadorRow);
+    resolvedData = data;
+  } else if (error && !isMissingTableError(error) && !isMissingRpcError(error)) {
+    const { data: authData, error: authError } = await supabase.rpc(
+      "riviera_ranking_interno_por_organizador",
+      rpcParams
+    );
+    if (authError) throw authError;
+    resolvedData = authData;
+  }
+
+  if (resolvedData) {
+    const rows = (resolvedData as Record<string, unknown>[]).map(
+      mapInternalClubJugadorRow
+    );
     const filtered = rows.filter((row) => isJugadorInGeneroBracket(row.genero, genero));
     const merged = await mergeGrantedJugadoresIntoRanking(
       organizadorId,
@@ -1909,7 +1944,8 @@ export async function listInternalClubJugadoresRanking(
     );
     const scoped = await enrichJugadoresOrganizerScopedStats(organizadorId, merged);
     return enrichJugadoresWithRivieraId(
-      stripOfficialPuntosFromInternalClubRanking(scoped)
+      stripOfficialPuntosFromInternalClubRanking(scoped),
+      { publicRanking: true }
     );
   }
 
@@ -1918,7 +1954,7 @@ export async function listInternalClubJugadoresRanking(
   }
 
   const { data: viewData, error: viewError } = await withJugadorSelectFallback((cols) => {
-    let q = supabase
+    let q = supabasePublicRead
       .from("riviera_jugadores")
       .select(jugadorSelectWithStats(cols))
       .eq("organizador_id", organizadorId)
@@ -1961,7 +1997,8 @@ export async function listInternalClubJugadoresRanking(
   );
   const scoped = await enrichJugadoresOrganizerScopedStats(organizadorId, merged);
   return enrichJugadoresWithRivieraId(
-    stripOfficialPuntosFromInternalClubRanking(scoped)
+    stripOfficialPuntosFromInternalClubRanking(scoped),
+    { publicRanking: true }
   );
 }
 
@@ -1987,7 +2024,7 @@ export async function getRivieraJugadorPublicBySlug(
     const row = await fetchInternalClubJugadorRow(trimmedOrg, {
       slug: trimmedSlug,
     });
-    return row ? enrichJugadorWithRivieraId(row) : null;
+    return row ? enrichJugadorWithRivieraId(row, { publicRanking: true }) : null;
   }
 
   const { data, error } = await withJugadorSelectFallback((cols) => {

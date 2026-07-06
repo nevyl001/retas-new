@@ -3,7 +3,6 @@ import {
   ClubExperienceScope,
   getOrganizerCelebrateTagline,
 } from "../../club-experience";
-import { useUser } from "../../contexts/UserContext";
 import {
   JUGADOR_CATEGORIA_AVATAR_BADGE,
   JUGADOR_CATEGORIA_LABELS,
@@ -74,7 +73,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   slug,
   playerId,
 }) => {
-  const { user } = useUser();
   const viewingOrgId = getPublicOrganizadorIdWithoutUser(
     typeof window !== "undefined" ? window.location.pathname : undefined
   );
@@ -93,7 +91,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         playerId,
         slug,
         viewingOrgId,
-        isAuthenticated: Boolean(user?.id),
         ratingRpc: viewingOrgId ? PUBLIC_ORGANIZER_RPC_FALLBACK : undefined,
       });
 
@@ -122,7 +119,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [slug, viewingOrgId, playerId, user?.id]);
+  }, [slug, viewingOrgId, playerId]);
 
   useEffect(() => {
     void load();

@@ -15,9 +15,7 @@ import {
   getRivieraJugadorInternalClubById,
   getRivieraJugadorPublicById,
   getRivieraJugadorPublicBySlug,
-  listParticipaciones,
   listParticipacionesPublic,
-  obtenerHistorialRating,
   obtenerHistorialRatingPublic,
   resolveRankingPosicionForPublicFicha,
 } from "./rivieraJugadoresService";
@@ -46,7 +44,6 @@ export type GetPublicPlayerProfileDataParams = {
   playerId?: string;
   slug?: string;
   viewingOrgId: string | null;
-  isAuthenticated: boolean;
   ratingRpc?: RatingRpcFallbackOptions;
   historialLimit?: number;
 };
@@ -75,7 +72,7 @@ function emptyStats(jugadorId: string): JugadorStats {
 
 /**
  * Carga unificada de ficha pública: carrera global por Riviera ID.
- * `viewingOrgId` solo afecta branding, ranking local y puntos locales.
+ * Siempre usa lectura pública (anon = admin logueado en la misma UI).
  */
 export async function getPublicPlayerProfileData(
   params: GetPublicPlayerProfileDataParams
@@ -84,7 +81,6 @@ export async function getPublicPlayerProfileData(
     playerId,
     slug,
     viewingOrgId,
-    isAuthenticated,
     ratingRpc,
     historialLimit = 100,
   } = params;
@@ -112,13 +108,7 @@ export async function getPublicPlayerProfileData(
   }
 
   const fetchParticipaciones = (id: string, limit: number) =>
-    isAuthenticated
-      ? listParticipaciones(id, limit)
-      : listParticipacionesPublic(id, limit);
-
-  const fetchHistorial = isAuthenticated
-    ? obtenerHistorialRating
-    : obtenerHistorialRatingPublic;
+    listParticipacionesPublic(id, limit);
 
   const unified = await loadUnifiedParticipacionesForJugador(jugador, {
     limit: historialLimit,
@@ -153,7 +143,7 @@ export async function getPublicPlayerProfileData(
     limite: 10,
     organizadorId: null,
     participacionesHistorial: historialGlobal,
-    fetchHistorial,
+    fetchHistorial: obtenerHistorialRatingPublic,
     rpc: hasOrgContext ? ratingRpc : undefined,
   });
 
