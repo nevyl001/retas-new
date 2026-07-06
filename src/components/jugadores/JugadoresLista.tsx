@@ -90,6 +90,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
         nivel: nivelFilter || undefined,
         activosRecientes: recientes,
         genero,
+        skipCareerEnrich: true,
       });
       void prefetchOrganizerDisplayNames([
         orgId,

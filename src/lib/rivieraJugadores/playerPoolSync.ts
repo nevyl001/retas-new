@@ -308,7 +308,9 @@ export async function syncLegacyPlayersFromRivieraRegistry(
     return;
   }
 
-  const registry = await listRivieraJugadores(organizadorId);
+  const registry = await listRivieraJugadores(organizadorId, {
+    skipCareerEnrich: true,
+  });
   for (const rj of registry) {
     await ensureLegacyPlayerForRivieraJugador(organizadorId, rj);
   }

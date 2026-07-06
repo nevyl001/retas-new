@@ -162,7 +162,9 @@ function AppContent() {
       return "main";
     }
     const view = resolveAppViewFromPath(currentPath);
-    console.log("🔍 Inicializando currentView basado en path:", currentPath, "→", view);
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔍 Inicializando currentView basado en path:", currentPath, "→", view);
+    }
     return view;
   });
 
@@ -172,8 +174,10 @@ function AppContent() {
 
   // Log solo cuando cambien los valores (no en cada render)
   useEffect(() => {
-    console.log("🔍 AppContent - isAdminLoggedIn:", isAdminLoggedIn);
-    console.log("🔍 AppContent - currentView:", currentView);
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔍 AppContent - isAdminLoggedIn:", isAdminLoggedIn);
+      console.log("🔍 AppContent - currentView:", currentView);
+    }
   }, [isAdminLoggedIn, currentView]);
 
   // Admin maestro: login normal o /admin-login → dashboard

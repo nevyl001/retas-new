@@ -680,6 +680,8 @@ export async function listRivieraJugadores(
     nivel?: string;
     activosRecientes?: boolean;
     genero?: RivieraJugadorGenero;
+    /** Omite RPC de carrera por jugador (lista / sync legacy). Default false. */
+    skipCareerEnrich?: boolean;
   }
 ): Promise<RivieraJugadorWithStats[]> {
   const buildQuery = (selectCols: string) => {
@@ -740,7 +742,9 @@ export async function listRivieraJugadores(
     rows = rows.filter((r) => r.categoria === opts.nivel);
   }
 
-  rows = await enrichJugadoresOrganizerScopedStats(organizadorId, rows);
+  if (!opts?.skipCareerEnrich) {
+    rows = await enrichJugadoresOrganizerScopedStats(organizadorId, rows);
+  }
   return enrichJugadoresWithRivieraId(rows);
 }
 
