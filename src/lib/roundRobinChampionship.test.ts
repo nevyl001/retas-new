@@ -4,8 +4,10 @@ import {
   buildChampionshipMatchupsForRound,
   buildChampionshipSemifinalMatchups,
   championshipMatchEncounterLabel,
+  enrichChampionshipConfigForPartition,
   isChampionshipFinalMatch,
   isChampionshipThirdPlaceMatch,
+  partitionMatches,
   resolveChampionshipPodium,
   sortChampionshipRoundMatches,
 } from "./roundRobinChampionship";
@@ -328,5 +330,66 @@ describe("Remontada Final matchups", () => {
     expect(podium?.first?.id).toBe("p1");
     expect(podium?.second?.id).toBe("p2");
     expect(podium?.third?.id).toBe("p4");
+  });
+});
+
+/** Simula calendario RR impar (7 parejas → 7 rondas, 3 partidos/ronda). */
+function mockOddPairCountRoundRobinMatches(
+  pairCount: number,
+  rounds: number,
+  matchesPerRound: number
+): Match[] {
+  const pairIds = Array.from({ length: pairCount }, (_, i) => `pair-${i + 1}`);
+  const out: Match[] = [];
+  let id = 0;
+  for (let r = 1; r <= rounds; r++) {
+    for (let m = 0; m < matchesPerRound; m++) {
+      const p1 = pairIds[(r + m) % pairCount];
+      const p2 = pairIds[(r + m + 1) % pairCount];
+      out.push({
+        id: `m-${id++}`,
+        tournament_id: "t-odd-rr",
+        pair1_id: p1,
+        pair2_id: p2,
+        pair1_name: p1,
+        pair2_name: p2,
+        pair1_score: 0,
+        pair2_score: 0,
+        court: m + 1,
+        round: r,
+        status: "scheduled",
+        created_at: "",
+      });
+    }
+  }
+  return out;
+}
+
+describe("partitionMatches — sin opt-in de remontada", () => {
+  it("7 parejas / 7 rondas RR no activa remontada final", () => {
+    const matches = mockOddPairCountRoundRobinMatches(7, 7, 3);
+    expect(Math.max(...matches.map((m) => m.round ?? 0))).toBe(7);
+
+    const enriched = enrichChampionshipConfigForPartition(matches, null);
+    expect(enriched?.championshipEnabled).toBeFalsy();
+
+    const { regular, championship } = partitionMatches(
+      matches,
+      "t-odd-rr",
+      null
+    );
+    expect(championship).toHaveLength(0);
+    expect(regular).toHaveLength(matches.length);
+  });
+
+  it("no infiere remontada solo porque maxRound > pairCount - 1", () => {
+    const matches = mockOddPairCountRoundRobinMatches(7, 7, 3);
+    const cfg = enrichChampionshipConfigForPartition(matches, {
+      championshipEnabled: false,
+      championshipRounds: 2,
+      championshipRoundsGenerated: 0,
+    });
+    expect(cfg?.championshipEnabled).toBe(false);
+    expect(cfg?.regularRoundsMax).toBeUndefined();
   });
 });

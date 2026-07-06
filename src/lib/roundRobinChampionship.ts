@@ -367,25 +367,6 @@ export function enrichChampionshipConfigForPartition(
     }
   }
 
-  const pairIds = new Set<string>();
-  for (const m of matches) {
-    pairIds.add(m.pair1_id);
-    pairIds.add(m.pair2_id);
-  }
-  const pairCount = pairIds.size;
-  if (pairCount >= 2) {
-    const expectedRegularRounds = pairCount - 1;
-    const maxRound = Math.max(...matches.map((m) => m.round ?? 1));
-    if (maxRound > expectedRegularRounds) {
-      return {
-        championshipEnabled: true,
-        championshipRounds: maxRound - expectedRegularRounds,
-        championshipRoundsGenerated: maxRound - expectedRegularRounds,
-        regularRoundsMax: expectedRegularRounds,
-      };
-    }
-  }
-
   return cfg;
 }
 
