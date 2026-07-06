@@ -2207,6 +2207,7 @@ export async function syncDuelo2v2Participaciones(params: {
           subtipo: "duelo_2v2_cierre",
           modalidad: "duelo_2v2",
           modalidad_label: "Duelo 2 vs 2",
+          organizador_id: organizadorId,
           posicion: posicion,
           posicion_final: posicion,
           total_participantes: 4,

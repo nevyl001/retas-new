@@ -539,18 +539,105 @@
   color: var(--ro-text-muted);
 }
 
+/* Desglose multiclub: otros clubes → club → Total Riviera */
+.rjp-pts-breakdown {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.rjp-pts-breakdown--stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.rjp-pts-breakdown--ficha {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--rjp-ficha-text-3);
+}
+
+.rjp-ficha-stat:nth-child(2) .rjp-pts-breakdown--ficha {
+  color: var(--rjp-ficha-text-3);
+}
+
+.rjp-pts-breakdown__line--other {
+  color: var(--rjp-ficha-text-3);
+  font-weight: 500;
+}
+
+.rjp-pts-breakdown__line--home {
+  color: var(--rjp-ficha-gold);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.rjp-pts-breakdown__line--total {
+  color: var(--rjp-ficha-gold);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.rjp-ficha-historial__otros-clubes {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 0.5px solid var(--ro-border-subtle);
+}
+
+.rjp-ficha-historial__otros-label {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rjp-ficha-text-3);
+}
+
 .rjp-ficha-dual-pts {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--rjp-ficha-text-3);
+}
+
+.rjp-ficha-stat:nth-child(2) .rjp-ficha-stat__val.rjp-ficha-dual-pts {
+  color: var(--rjp-ficha-text-3);
+}
+
+.rjp-ficha-dual-pts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.rjp-ficha-dual-pts__line {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--rjp-ficha-text-3);
+  line-height: 1.35;
+}
+
+.rjp-ficha-dual-pts__club {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rjp-ficha-gold);
+  line-height: 1.35;
 }
 
 .rjp-ficha-dual-pts__main {
-  font-size: 20px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--rjp-ficha-gold);
-  line-height: 1.2;
+  line-height: 1.35;
 }
 
 .rjp-ficha-dual-pts__origen {

@@ -33,12 +33,14 @@ import {
   enrichJugadorConcedidoClubView,
   enrichJugadoresConcedidoClubViewBatch,
 } from "./concedidoClubView";
+import { filterParticipacionesForOrganizador, enrichParticipacionesOrganizadorFromEvents } from "./participacionesOrganizadorScope";
 import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
 import {
   mergeJugadorStatsPuntosTotales,
   rankingPuntosJugador,
   sortJugadoresByClubLocalPuntos,
 } from "./rankingPosition";
+import { enrichJugadoresOrganizerScopedStats } from "./organizerScopedStats";
 import {
   registerJugadorImportBlocklist,
   isJugadorImportBlocked,
@@ -591,8 +593,18 @@ async function fetchJugadorStatsRow(
 async function computeStatsFromParticipaciones(
   jugadorId: string
 ): Promise<JugadorStats> {
+  const { data: jugadorRow } = await supabase
+    .from("riviera_jugadores")
+    .select("organizador_id")
+    .eq("id", jugadorId)
+    .maybeSingle();
+
   const rows = await listParticipaciones(jugadorId, 500);
-  const stats = computeJugadorStatsFromParticipaciones(jugadorId, rows);
+  const stats = computeJugadorStatsFromParticipaciones(
+    jugadorId,
+    rows,
+    (jugadorRow as { organizador_id?: string } | null)?.organizador_id ?? null
+  );
   return {
     ...stats,
     updated_at: new Date().toISOString(),
@@ -700,6 +712,7 @@ export async function listRivieraJugadores(
     rows = rows.filter((r) => r.categoria === opts.nivel);
   }
 
+  rows = await enrichJugadoresOrganizerScopedStats(organizadorId, rows);
   return enrichJugadoresWithRivieraId(rows);
 }
 
@@ -1331,7 +1344,41 @@ export async function listParticipaciones(
     if (isMissingTableError(error)) return [];
     throw error;
   }
-  return (data ?? []) as JugadorParticipacion[];
+  return enrichParticipacionesOrganizadorFromEvents(
+    (data ?? []) as JugadorParticipacion[]
+  );
+}
+
+/** Historial scoped al club (admin autenticado). Misma lógica que vista pública interna. */
+export async function listParticipacionesForOrganizador(
+  jugadorId: string,
+  limit = 100,
+  organizadorId?: string | null
+): Promise<JugadorParticipacion[]> {
+  const org = organizadorId?.trim();
+  if (!org) return listParticipaciones(jugadorId, limit);
+
+  const { data, error } = await supabase.rpc("riviera_participaciones_interno", {
+    p_organizador_id: org,
+    p_jugador_id: jugadorId,
+    p_limit: limit,
+  });
+
+  if (!error && data) {
+    return filterParticipacionesForOrganizador(
+      (data ?? []) as JugadorParticipacion[],
+      org
+    );
+  }
+
+  if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
+    throw error;
+  }
+
+  return filterParticipacionesForOrganizador(
+    await listParticipaciones(jugadorId, limit),
+    org
+  );
 }
 
 /**
@@ -1351,11 +1398,30 @@ export async function listParticipacionesPublic(
       p_limit: limit,
     });
     if (!error && data) {
-      return (data ?? []) as JugadorParticipacion[];
+      return filterParticipacionesForOrganizador(
+        (data ?? []) as JugadorParticipacion[],
+        org
+      );
     }
     if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
       throw error;
     }
+
+    const { data: fallbackData, error: fallbackError } = await supabasePublicRead
+      .from("jugador_participaciones")
+      .select("*")
+      .eq("jugador_id", jugadorId)
+      .order("fecha", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (!fallbackError && fallbackData?.length) {
+      return filterParticipacionesForOrganizador(
+        fallbackData as JugadorParticipacion[],
+        org
+      );
+    }
+    return [];
   }
 
   const { data, error } = await supabasePublicRead
@@ -1370,7 +1436,9 @@ export async function listParticipacionesPublic(
     if (isMissingTableError(error)) return [];
     throw error;
   }
-  return (data ?? []) as JugadorParticipacion[];
+  return enrichParticipacionesOrganizadorFromEvents(
+    (data ?? []) as JugadorParticipacion[]
+  );
 }
 
 export async function registrarParticipacion(
@@ -1826,8 +1894,9 @@ export async function listInternalClubJugadoresRanking(
       filtered,
       options
     );
+    const scoped = await enrichJugadoresOrganizerScopedStats(organizadorId, merged);
     return enrichJugadoresWithRivieraId(
-      stripOfficialPuntosFromInternalClubRanking(merged)
+      stripOfficialPuntosFromInternalClubRanking(scoped)
     );
   }
 
@@ -1877,8 +1946,9 @@ export async function listInternalClubJugadoresRanking(
     sorted,
     options
   );
+  const scoped = await enrichJugadoresOrganizerScopedStats(organizadorId, merged);
   return enrichJugadoresWithRivieraId(
-    stripOfficialPuntosFromInternalClubRanking(merged)
+    stripOfficialPuntosFromInternalClubRanking(scoped)
   );
 }
 

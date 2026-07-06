@@ -22,20 +22,26 @@ import {
 import {
   enrichJugadorConcedidoClubView,
 } from "../../lib/rivieraJugadores/concedidoClubView";
+import { loadOrganizerScopedPlayerView } from "../../lib/rivieraJugadores/playerClubDisplay";
+import {
+  filterParticipacionesForOrganizador,
+  sumPuntosFromParticipaciones,
+} from "../../lib/rivieraJugadores/participacionesOrganizadorScope";
 import {
   loadUnifiedParticipacionesForJugador,
   loadUnifiedRatingViewForJugador,
 } from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
-import { mergeJugadorStatsPuntosTotales, rankingPuntosClubLocal } from "../../lib/rivieraJugadores/rankingPosition";
+import {
+  mergeJugadorStatsPuntosTotales,
+} from "../../lib/rivieraJugadores/rankingPosition";
 import {
   prefetchOrganizerDisplayNames,
-  rankingPuntosCarreraRivieraDisplay,
-  resolveOrigenConcedidoOrganizadorId,
 } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import {
   getRivieraJugadorInternalClubById,
   getRivieraJugadorPublicById,
   getRivieraJugadorPublicBySlug,
+  listParticipaciones,
   listParticipacionesPublic,
   obtenerHistorialRating,
   obtenerHistorialRatingPublic,
@@ -44,8 +50,8 @@ import {
 import {
   rankingLabelForPublicFicha,
   resolveRegistrationOrganizadorIdForPublicFicha,
-  shouldUseClubLocalPuntosOnPublicFicha,
 } from "../../lib/rivieraJugadores/publicFichaRanking";
+import { getOrganizerDisplayNameSync } from "../../lib/organizer/organizerDisplayName";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
 import {
@@ -63,12 +69,12 @@ import { PublicHero } from "../public/peds";
 import { JugadorAvatarHero } from "./JugadorAvatarHero";
 import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { RivieraIdShareBlock } from "./RivieraIdShareBlock";
+import { JugadorPuntosBreakdown } from "./JugadorPuntosBreakdown";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
 import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
-import { getOrganizerDisplayNameSync } from "../../lib/organizer/organizerDisplayName";
 import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
 import { buildPublicRankingUrl, navigatePublicJugadores } from "./jugadoresPublicNav";
 import "./riviera-jugadores-public-ficha.css";
@@ -78,6 +84,21 @@ interface JugadorPublicFichaProps {
   playerId?: string;
   /** Perfil desde ranking interno del club (/public/jugadores/{uuid}?org=). */
   internalClub?: boolean;
+}
+
+function resolveEffectiveInternalClubOrganizadorId(
+  internalClub: boolean,
+  urlOrgId: string | null,
+  jugador: RivieraJugadorWithStats | null,
+  userId: string | null | undefined
+): string | null {
+  if (!internalClub) return urlOrgId;
+  return (
+    urlOrgId?.trim() ||
+    jugador?.organizador_id?.trim() ||
+    userId?.trim() ||
+    null
+  );
 }
 
 function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
@@ -150,7 +171,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   internalClub = false,
 }) => {
   const { user } = useUser();
-  const orgId =
+  const urlOrgId =
     playerId && !internalClub
       ? null
       : resolvePublicOrganizadorId(
@@ -161,6 +182,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [historial, setHistorial] = useState<
     Awaited<ReturnType<typeof listParticipacionesPublic>>
   >([]);
+  const [historialOtrosClubes, setHistorialOtrosClubes] = useState<
+    Awaited<ReturnType<typeof listParticipacionesPublic>>
+  >([]);
+  const [effectiveOrgId, setEffectiveOrgId] = useState<string | null>(urlOrgId);
   const [rankingPos, setRankingPos] = useState<number | null>(null);
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
   const [officialPuntos, setOfficialPuntos] = useState<number | null>(null);
@@ -170,44 +195,104 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     setLoading(true);
     try {
       let jugadorBase =
-        internalClub && playerId && orgId
-          ? await getRivieraJugadorInternalClubById(playerId, orgId)
+        internalClub && playerId && urlOrgId
+          ? await getRivieraJugadorInternalClubById(playerId, urlOrgId)
           : playerId
           ? await getRivieraJugadorPublicById(playerId)
-          : await getRivieraJugadorPublicBySlug(slug ?? "", orgId ?? undefined);
+          : await getRivieraJugadorPublicBySlug(slug ?? "", urlOrgId ?? undefined);
+
+      const scopedOrgId = resolveEffectiveInternalClubOrganizadorId(
+        internalClub,
+        urlOrgId,
+        jugadorBase,
+        user?.id
+      );
+      setEffectiveOrgId(scopedOrgId);
+
+      if (
+        internalClub &&
+        playerId &&
+        scopedOrgId &&
+        jugadorBase &&
+        jugadorBase.organizador_id !== scopedOrgId
+      ) {
+        const internalRow = await getRivieraJugadorInternalClubById(
+          playerId,
+          scopedOrgId
+        );
+        if (internalRow) jugadorBase = internalRow;
+      }
+
       setJugador(jugadorBase);
       if (jugadorBase) {
-        if (internalClub && orgId) {
-          jugadorBase = await enrichJugadorConcedidoClubView(orgId, jugadorBase, {
+        if (internalClub && scopedOrgId) {
+          jugadorBase = await enrichJugadorConcedidoClubView(scopedOrgId, jugadorBase, {
             rpc: PUBLIC_ORGANIZER_RPC_FALLBACK,
           });
         }
         void prefetchOrganizerDisplayNames([
-          orgId,
+          scopedOrgId,
           jugadorBase.grantedAccess?.ownerOrganizadorId,
           resolveRegistrationOrganizadorIdForPublicFicha(jugadorBase),
+          ...(jugadorBase.multiclubGranteePuntos?.map((g) => g.organizadorId) ?? []),
         ]);
+
+        if (internalClub && scopedOrgId) {
+          const scoped = await loadOrganizerScopedPlayerView(scopedOrgId, jugadorBase, {
+            listParticipaciones: (id, lim, org) =>
+              listParticipacionesPublic(id, lim, org),
+            fetchParticipacionesRaw: (id, lim) => listParticipaciones(id, lim),
+            fetchHistorialRating: user?.id
+              ? obtenerHistorialRating
+              : obtenerHistorialRatingPublic,
+            ratingRpc: PUBLIC_ORGANIZER_RPC_FALLBACK,
+          });
+          jugadorBase = scoped.jugador;
+          setHistorial(scoped.historial);
+          setHistorialOtrosClubes(scoped.historialOtrosClubes ?? []);
+          setHistorialRating(scoped.historialRating);
+
+          const pos = await resolveRankingPosicionForPublicFicha(jugadorBase, {
+            orgId: scopedOrgId,
+            internalClub,
+          });
+          setOfficialPuntos(jugadorBase.officialPuntosGlobal ?? null);
+          setRankingPos(pos);
+          setJugador(jugadorBase);
+        } else {
         const unified = await loadUnifiedParticipacionesForJugador(jugadorBase, {
           limit: 100,
-          organizadorId: internalClub && orgId ? orgId : internalClub || orgId ? orgId ?? null : null,
-          scopedToOrganizadorHistorial: internalClub && Boolean(orgId),
+          organizadorId:
+            internalClub && scopedOrgId
+              ? scopedOrgId
+              : internalClub || scopedOrgId
+              ? scopedOrgId ?? null
+              : null,
+          scopedToOrganizadorHistorial: internalClub && Boolean(scopedOrgId),
           listParticipaciones: (id, lim, org) =>
             listParticipacionesPublic(id, lim, org ?? undefined),
         });
-        if (internalClub && orgId) {
-          jugadorBase = await enrichJugadorConcedidoClubView(orgId, jugadorBase, {
-            participaciones: unified.historial,
+        const scopedHistorial =
+          internalClub && scopedOrgId
+            ? filterParticipacionesForOrganizador(
+                unified.historial,
+                scopedOrgId
+              )
+            : unified.historial;
+
+        if (internalClub && scopedOrgId) {
+          jugadorBase = await enrichJugadorConcedidoClubView(scopedOrgId, jugadorBase, {
             rpc: PUBLIC_ORGANIZER_RPC_FALLBACK,
           });
         }
         const ratingView = await loadUnifiedRatingViewForJugador(jugadorBase, {
           limite: 10,
-          organizadorId: internalClub || orgId ? orgId ?? null : null,
-          participacionesHistorial: unified.historial,
+          organizadorId: internalClub || scopedOrgId ? scopedOrgId ?? null : null,
+          participacionesHistorial: scopedHistorial,
           fetchHistorial: user?.id
             ? obtenerHistorialRating
             : obtenerHistorialRatingPublic,
-          rpc: internalClub || orgId ? PUBLIC_ORGANIZER_RPC_FALLBACK : undefined,
+          rpc: internalClub || scopedOrgId ? PUBLIC_ORGANIZER_RPC_FALLBACK : undefined,
         });
         jugadorBase = {
           ...jugadorBase,
@@ -215,11 +300,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           rating_partidos: ratingView.jugador.rating_partidos,
           rating_fiabilidad: ratingView.jugador.rating_fiabilidad,
         };
-        setHistorial(unified.historial);
+        setHistorial(scopedHistorial);
         setHistorialRating(ratingView.historial);
 
         const pos = await resolveRankingPosicionForPublicFicha(jugadorBase, {
-          orgId: internalClub || orgId ? orgId : null,
+          orgId: internalClub || scopedOrgId ? scopedOrgId : null,
           internalClub,
         });
 
@@ -247,11 +332,19 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           puntos_totales: 0,
           updated_at: new Date().toISOString(),
         };
+        const scopedPuntos =
+          internalClub && scopedHistorial.length > 0
+            ? sumPuntosFromParticipaciones(scopedHistorial)
+            : statsBase.puntos_totales;
+        const statsForView =
+          internalClub && scopedHistorial.length > 0
+            ? { ...statsBase, puntos_totales: scopedPuntos }
+            : statsBase;
         const withStats =
           internalClub && jugadorBase.concedidoPorAdmin
             ? {
                 ...jugadorBase,
-                stats: statsBase,
+                stats: statsForView,
                 statsOrigenConcedido: jugadorBase.statsOrigenConcedido,
                 grantedAccess: jugadorBase.grantedAccess,
                 concedidoPorAdmin: true,
@@ -259,7 +352,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
             : internalClub
             ? {
                 ...jugadorBase,
-                stats: statsBase,
+                stats: statsForView,
               }
             : {
                 ...jugadorBase,
@@ -270,13 +363,14 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                 officialPuntosGlobal: puntosOficialEfectivos ?? undefined,
               };
         setJugador(withStats);
+        }
       } else {
         setRankingPos(null);
       }
     } finally {
       setLoading(false);
     }
-  }, [slug, orgId, playerId, internalClub, user?.id]);
+  }, [slug, urlOrgId, playerId, internalClub, user?.id]);
 
   useEffect(() => {
     void load();
@@ -284,7 +378,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
   const rankingUrl = internalClub
     ? buildPublicRankingUrl(
-        orgId,
+        effectiveOrgId ?? urlOrgId,
         normalizeRivieraGenero(jugador?.genero) ?? "M"
       )
     : playerId
@@ -293,27 +387,38 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         normalizeRivieraGenero(jugador?.genero) ?? "M"
       )
     : buildPublicRankingUrl(
-        orgId,
+        effectiveOrgId ?? urlOrgId,
         normalizeRivieraGenero(jugador?.genero) ?? "M"
       );
 
+  const historialCompleto = useMemo(
+    () => [...historial, ...historialOtrosClubes],
+    [historial, historialOtrosClubes]
+  );
+
   const historialItems = useMemo(
     () =>
-      filterParticipacionesHistorialVisible(historial)
+      filterParticipacionesHistorialVisible(historialCompleto)
         .map((row) =>
           participacionToHistorialItem(row, {
             categoriaFallback: jugador?.categoria,
           })
         )
         .sort((a, b) => b.fecha.localeCompare(a.fecha)),
-    [historial, jugador?.categoria]
+    [historialCompleto, jugador?.categoria]
   );
 
   const profileStats = useMemo(() => {
-    const fromHist = computePublicProfileStats(historial);
-    const teStats = jugador?.stats?.total_torneos_express ?? 0;
-    const partidosStats = jugador?.stats?.total_partidos ?? 0;
-    const tieneHistorial = historial.length > 0;
+    const statsHistorial = internalClub ? historial : historialCompleto;
+    const fromHist = computePublicProfileStats(statsHistorial);
+    const statsOnlyFromHistorial = internalClub && historial.length > 0;
+    const teStats = statsOnlyFromHistorial
+      ? fromHist.torneosExpress
+      : jugador?.stats?.total_torneos_express ?? 0;
+    const partidosStats = statsOnlyFromHistorial
+      ? fromHist.eventosJugados
+      : jugador?.stats?.total_partidos ?? 0;
+    const tieneHistorial = statsHistorial.length > 0;
     const victorias = tieneHistorial
       ? fromHist.partidosGanados
       : jugador?.stats?.victorias ?? 0;
@@ -332,21 +437,25 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
     return {
       ...fromHist,
-      torneosExpress: Math.max(fromHist.torneosExpress, teStats),
-      eventosJugados: Math.max(
-        fromHist.eventosJugados,
-        partidosStats,
-        jugador?.stats?.total_retas ?? 0,
-        fromHist.retasClasicas +
-          fromHist.americanos +
-          fromHist.ligas +
-          fromHist.torneosExpress
-      ),
+      torneosExpress: statsOnlyFromHistorial
+        ? fromHist.torneosExpress
+        : Math.max(fromHist.torneosExpress, teStats),
+      eventosJugados: statsOnlyFromHistorial
+        ? fromHist.eventosJugados
+        : Math.max(
+            fromHist.eventosJugados,
+            partidosStats,
+            jugador?.stats?.total_retas ?? 0,
+            fromHist.retasClasicas +
+              fromHist.americanos +
+              fromHist.ligas +
+              fromHist.torneosExpress
+          ),
       victorias,
       partidosPerdidos: perdidas,
       winRate,
     };
-  }, [historial, jugador?.stats]);
+  }, [historial, historialCompleto, historialOtrosClubes.length, internalClub, jugador?.stats]);
 
   const recentActivity = useMemo(() => historialItems.slice(0, 3), [historialItems]);
 
@@ -363,7 +472,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       <JugadoresPublicShell variant="ficha">
         <FichaTopbar rankingUrl={rankingUrl} />
         <p className="rjp-ficha-empty">
-          {orgId
+          {effectiveOrgId ?? urlOrgId
             ? "Jugador no encontrado en este club."
             : "Jugador no encontrado o no está visible al público."}
         </p>
@@ -374,20 +483,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const registrationOrgId = jugador
     ? resolveRegistrationOrganizadorIdForPublicFicha(jugador)
     : null;
-  const puntosInterno = rankingPuntosClubLocal(jugador);
-  const puntosTotal = rankingPuntosCarreraRivieraDisplay({
-    ...jugador,
-    officialPuntosGlobal: officialPuntos ?? jugador.officialPuntosGlobal,
-  });
-  const puntos = shouldUseClubLocalPuntosOnPublicFicha(jugador, internalClub)
-    ? puntosInterno
-    : puntosTotal;
-  const origenOrgId = resolveOrigenConcedidoOrganizadorId(jugador);
-  const showDualPuntosFicha =
-    internalClub &&
-    Boolean(origenOrgId) &&
-    jugador.concedidoPorAdmin &&
-    puntosTotal > puntosInterno;
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
   const perfilMeta = getJugadorPerfilMeta(jugador);
@@ -401,7 +496,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   };
 
   return (
-    <ClubExperienceScope organizadorId={jugador.organizador_id ?? orgId}>
+    <ClubExperienceScope organizadorId={jugador.organizador_id ?? effectiveOrgId ?? urlOrgId}>
     <JugadoresPublicShell variant="ficha">
       <PublicModeShell className="rjp-ficha-shell">
       <div className="rjp-ficha">
@@ -532,21 +627,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                             ? "Puntos ranking interno"
                             : "Puntos totales"}
                         </span>
-                        {showDualPuntosFicha ? (
-                          <span className="rjp-ficha-stat__val rjp-ficha-dual-pts">
-                            <span className="rjp-ficha-dual-pts__main">
-                              {puntosInterno.toLocaleString("es-MX")}
-                            </span>
-                            <span className="rjp-ficha-dual-pts__origen">
-                              Total Riviera:{" "}
-                              {puntosTotal.toLocaleString("es-MX")} pts
-                            </span>
-                          </span>
-                        ) : (
-                          <span className="rjp-ficha-stat__val">
-                            {puntos.toLocaleString("es-MX")}
-                          </span>
-                        )}
+                        <JugadorPuntosBreakdown
+                          jugador={jugador}
+                          clubOrganizadorId={effectiveOrgId ?? urlOrgId}
+                          internalClub={internalClub}
+                        />
                       </div>
                     </div>
                   </div>
@@ -570,6 +655,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           <div className="rjp-ficha__col rjp-ficha__col--historial">
             <JugadorPublicHistorial
               participaciones={historial}
+              otrosClubesParticipaciones={historialOtrosClubes}
               categoriaFallback={jugador.categoria}
             />
           </div>

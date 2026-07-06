@@ -42,11 +42,13 @@ function matchesHistorialTab(
 
 interface JugadorPublicHistorialProps {
   participaciones: JugadorParticipacion[];
+  otrosClubesParticipaciones?: JugadorParticipacion[];
   categoriaFallback?: RivieraJugadorCategoria;
 }
 
 export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
   participaciones,
+  otrosClubesParticipaciones = [],
   categoriaFallback,
 }) => {
   const [activeTab, setActiveTab] = useState<HistorialTab>("todos");
@@ -155,6 +157,18 @@ export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
           </button>
         ) : null}
       </div>
+
+      {otrosClubesParticipaciones.length > 0 ? (
+        <div className="rjp-ficha-historial__otros-clubes">
+          <p className="rjp-ficha-historial__otros-label">Otros clubes</p>
+          <JugadorHistorialList
+            participaciones={otrosClubesParticipaciones}
+            categoriaFallback={categoriaFallback}
+            variant="public"
+            showResumen={false}
+          />
+        </div>
+      ) : null}
     </section>
   );
 };

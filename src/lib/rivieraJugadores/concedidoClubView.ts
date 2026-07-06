@@ -1,7 +1,7 @@
 import { supabase, supabasePublicRead } from "../supabaseClient";
+import { findGrantedAccessMetaForJugador } from "./organizerPlayerAccess";
 import { fetchOfficialDisplayPuntosForJugador } from "./rivieraOfficialActivity";
-import type { JugadorParticipacion, JugadorStats, RivieraJugadorWithStats } from "./types";
-import { discoverLinkedJugadorIds } from "./grantedPlayerUnifiedView";
+import type { JugadorStats, RivieraJugadorWithStats } from "./types";
 import {
   isMissingRatingRpcInfrastructureError,
   shouldFallbackRatingRpcError,
@@ -192,45 +192,36 @@ async function fetchOrigenStatsPublic(
   return data as JugadorStats;
 }
 
-async function fetchOwnerOrganizadorIdPublic(
-  sourceJugadorId: string
-): Promise<string | null> {
-  const { data, error } = await supabasePublicRead
-    .from("riviera_jugadores")
-    .select("organizador_id")
-    .eq("id", sourceJugadorId)
-    .maybeSingle();
-
-  if (error || !data?.organizador_id) return null;
-  return String(data.organizador_id);
-}
-
-async function fetchConcedidoClubMetaFallback(
-  jugador: RivieraJugadorWithStats,
-  participaciones: JugadorParticipacion[] = [],
-  options?: { skipRomcLegacy?: boolean }
+/** Cedido solo si hay grant activo hacia el club anfitrión (no por ids enlazados). */
+async function fetchConcedidoClubMetaFromGrant(
+  granteeOrganizadorId: string,
+  jugador: RivieraJugadorWithStats
 ): Promise<ConcedidoClubMeta | null> {
-  const linkedIds = await discoverLinkedJugadorIds(jugador.id, participaciones, {
-    skipRomcLegacy: options?.skipRomcLegacy,
-  });
-  const localId = jugador.id.trim();
-  const sourceId = linkedIds.find((id) => id !== localId);
-  if (!sourceId) return null;
+  const meta = await findGrantedAccessMetaForJugador(
+    granteeOrganizadorId,
+    jugador.id
+  );
+  if (!meta) return null;
 
-  const [origenStats, ownerOrgId] = await Promise.all([
-    fetchOrigenStatsPublic(sourceId),
-    fetchOwnerOrganizadorIdPublic(sourceId),
-  ]);
+  const sourceId = meta.sourceJugadorId.trim();
+  const localId = (meta.localJugadorId ?? jugador.id).trim();
+  if (!sourceId || sourceId === localId) return null;
 
-  if (!origenStats && !ownerOrgId) return null;
+  const jugadorId = jugador.id.trim();
+  const isLocalClone = jugadorId === localId;
+  const isSourceWithLocalClone =
+    jugadorId === sourceId && Boolean(meta.localJugadorId?.trim());
+  if (!isLocalClone && !isSourceWithLocalClone) return null;
+
+  const origenStats = await fetchOrigenStatsPublic(sourceId);
 
   return {
     isConcedido: true,
     sourceJugadorId: sourceId,
     localJugadorId: localId,
-    ownerOrganizadorId: ownerOrgId ?? undefined,
+    ownerOrganizadorId: meta.ownerOrganizadorId || undefined,
     origenPuntosTotales: origenStats?.puntos_totales ?? 0,
-    localPuntosTotales: jugador.stats?.puntos_totales ?? 0,
+    localPuntosTotales: isLocalClone ? jugador.stats?.puntos_totales ?? 0 : 0,
   };
 }
 
@@ -298,7 +289,7 @@ export function applyConcedidoClubMeta(
 export async function enrichJugadorConcedidoClubView(
   granteeOrganizadorId: string | null | undefined,
   jugador: RivieraJugadorWithStats,
-  options?: { participaciones?: JugadorParticipacion[]; rpc?: RatingRpcFallbackOptions }
+  options?: { rpc?: RatingRpcFallbackOptions }
 ): Promise<RivieraJugadorWithStats> {
   if (
     jugador.concedidoPorAdmin &&
@@ -321,12 +312,11 @@ export async function enrichJugadorConcedidoClubView(
   if (org) {
     meta = await fetchConcedidoClubMeta(org, jugador.id, options?.rpc);
   }
-  if (!meta?.isConcedido) {
-    meta = await fetchConcedidoClubMetaFallback(
-      jugador,
-      options?.participaciones ?? [],
-      { skipRomcLegacy: true }
-    );
+  if (meta?.isConcedido === false) {
+    return jugador;
+  }
+  if (!meta?.isConcedido && org) {
+    meta = await fetchConcedidoClubMetaFromGrant(org, jugador);
   }
   if (!meta?.isConcedido) return jugador;
 

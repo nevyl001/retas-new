@@ -4,6 +4,7 @@ import {
   participacionCuentaComoDerrota,
   participacionCuentaComoVictoria,
 } from "./historialDisplay";
+import { filterParticipacionesForOrganizador } from "./participacionesOrganizadorScope";
 import type { JugadorParticipacion, JugadorStats } from "./types";
 
 function isLigaInscripcion(row: JugadorParticipacion): boolean {
@@ -62,10 +63,11 @@ function computeRachaActual(participaciones: JugadorParticipacion[]): string {
   return formatRacha(streakType, count);
 }
 
-/** Recalcula jugador_stats a partir de todas las participaciones en BD. */
+/** Recalcula jugador_stats a partir de participaciones scoped al club del jugador. */
 export function computeJugadorStatsFromParticipaciones(
   jugadorId: string,
-  participaciones: JugadorParticipacion[]
+  participaciones: JugadorParticipacion[],
+  organizadorId?: string | null
 ): Omit<JugadorStats, "updated_at"> {
   let victorias = 0;
   let derrotas = 0;
@@ -78,9 +80,15 @@ export function computeJugadorStatsFromParticipaciones(
   let setsContra = 0;
   let puntosTotales = 0;
 
-  const visible = participaciones.filter((p) => !isParticipacionAjusteManual(p));
+  const org = organizadorId?.trim();
+  const scoped =
+    org && org.length > 0
+      ? filterParticipacionesForOrganizador(participaciones, org)
+      : participaciones;
 
-  for (const row of participaciones) {
+  const visible = scoped.filter((p) => !isParticipacionAjusteManual(p));
+
+  for (const row of scoped) {
     puntosTotales += Math.max(0, row.puntos_obtenidos ?? 0);
   }
 
@@ -88,7 +96,7 @@ export function computeJugadorStatsFromParticipaciones(
     setsFavor += row.sets_favor ?? 0;
     setsContra += row.sets_contra ?? 0;
 
-    if (row.tipo_evento === "reta") totalRetas += 1;
+    if (row.tipo_evento === "reta" || row.tipo_evento === "duelo_2v2") totalRetas += 1;
     else if (row.tipo_evento === "torneo_express") totalTorneosExpress += 1;
     else if (row.tipo_evento === "liga") totalLigas += 1;
     else if (row.tipo_evento === "americano") totalAmericanos += 1;

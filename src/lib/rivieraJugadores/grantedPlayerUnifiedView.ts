@@ -9,6 +9,11 @@ import {
   loadGrantedSourceDisplayData,
 } from "./organizerPlayerAccess";
 import {
+  enrichParticipacionesOrganizadorFromEvents,
+  filterParticipacionesForOrganizador,
+} from "./participacionesOrganizadorScope";
+import { filterHomeClubHistorial } from "./nativeMulticlubHomeView";
+import {
   listOfficialLegacyParticipaciones,
   loadRomcOfficialPlayerView,
   romcRpcSuiteUnavailable,
@@ -506,6 +511,29 @@ export async function loadUnifiedParticipacionesForJugador(
   }
 ): Promise<UnifiedJugadorParticipacionesView> {
   const limit = options.limit ?? 100;
+
+  if (options.scopedToOrganizadorHistorial && options.organizadorId?.trim()) {
+    const org = options.organizadorId.trim();
+    const homeOrg = jugador.organizador_id?.trim() ?? org;
+    const rawRows = await options.listParticipaciones(jugador.id, limit, org);
+    const enriched = await enrichParticipacionesOrganizadorFromEvents(rawRows);
+    const scopedHistorial =
+      homeOrg === org && !jugador.concedidoPorAdmin
+        ? filterHomeClubHistorial(enriched, homeOrg)
+        : filterParticipacionesForOrganizador(enriched, org, {
+            jugadorHomeOrganizadorId: homeOrg,
+          });
+    return {
+      historial: scopedHistorial,
+      romcView: {
+        historial: scopedHistorial,
+        puntosOficiales: null,
+        hasRomcData: false,
+      },
+      linkedJugadorIds: [jugador.id.trim()],
+    };
+  }
+
   const linkedJugadorIds = await resolveLinkedJugadorIds(jugador, [], {
     skipRomcLegacy: true,
   });
@@ -520,18 +548,6 @@ export async function loadUnifiedParticipacionesForJugador(
   const linkedResolved = await resolveLinkedJugadorIds(jugador, mergedLocal, {
     skipRomcLegacy: true,
   });
-
-  if (options.scopedToOrganizadorHistorial && options.organizadorId?.trim()) {
-    return {
-      historial: mergedLocal,
-      romcView: {
-        historial: mergedLocal,
-        puntosOficiales: null,
-        hasRomcData: false,
-      },
-      linkedJugadorIds: linkedResolved,
-    };
-  }
 
   const romcView = romcRpcSuiteUnavailable()
     ? {

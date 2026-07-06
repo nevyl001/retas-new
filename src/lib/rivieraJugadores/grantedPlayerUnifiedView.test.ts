@@ -1,9 +1,18 @@
+jest.mock("./organizerPlayerAccess", () => ({
+  listGrantedLocalJugadorIdsForSource: jest.fn().mockResolvedValue([]),
+}));
+
 import {
   applyUnifiedRatingFieldsToJugador,
   dedupeParticipacionesById,
   dedupeRatingHistorial,
+  loadUnifiedParticipacionesForJugador,
 } from "./grantedPlayerUnifiedView";
-import type { JugadorParticipacion, RatingHistorialEntry } from "./types";
+import type {
+  JugadorParticipacion,
+  RatingHistorialEntry,
+  RivieraJugadorWithStats,
+} from "./types";
 
 describe("grantedPlayerUnifiedView", () => {
   it("dedupeParticipacionesById fusiona origen y clon local", () => {
@@ -191,5 +200,52 @@ describe("grantedPlayerUnifiedView", () => {
 
     expect(jugador.rating).toBe(3.14);
     expect(jugador.rating_partidos).toBe(9);
+  });
+
+  it("scopedToOrganizadorHistorial solo carga participaciones del perfil en ese club", async () => {
+    const clubTestParticipacion: JugadorParticipacion = {
+      id: "p-club-test",
+      jugador_id: "ossy-club-test",
+      tipo_evento: "torneo_express",
+      evento_id: "e1",
+      evento_nombre: "Riviera Open Rush Padelito",
+      fecha: "2026-06-12",
+      puntos_obtenidos: 50,
+      resultado: "participación",
+      pareja_con: null,
+      sets_favor: 0,
+      sets_contra: 0,
+      metadata: { organizador_id: "club-test" },
+      created_at: "2026-06-12T10:00:00Z",
+    };
+
+    const listParticipaciones = jest
+      .fn()
+      .mockResolvedValueOnce([clubTestParticipacion]);
+
+    const view = await loadUnifiedParticipacionesForJugador(
+      {
+        id: "ossy-club-test",
+        nombre: "Ossy",
+        slug: "ossy",
+        categoria: "quinta_fuerza",
+        estado: "activo",
+        organizador_id: "club-test",
+      } as unknown as RivieraJugadorWithStats,
+      {
+        limit: 100,
+        organizadorId: "club-test",
+        scopedToOrganizadorHistorial: true,
+        listParticipaciones,
+      }
+    );
+
+    expect(listParticipaciones).toHaveBeenCalledTimes(1);
+    expect(listParticipaciones).toHaveBeenCalledWith(
+      "ossy-club-test",
+      100,
+      "club-test"
+    );
+    expect(view.historial).toEqual([clubTestParticipacion]);
   });
 });

@@ -15,6 +15,8 @@ export type RankingPodioJugador = Pick<
       | "statsOrigenConcedido"
       | "grantedAccess"
       | "organizador_id"
+      | "multiclubGranteePuntos"
+      | "officialPuntosGlobal"
     >
   >;
 

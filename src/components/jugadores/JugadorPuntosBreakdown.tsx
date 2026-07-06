@@ -5,21 +5,18 @@ import {
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 
-type RankingPtsDisplayProps = {
+type JugadorPuntosBreakdownProps = {
   jugador: RivieraJugadorWithStats;
   clubOrganizadorId: string | null;
-  /** Ranking interno del club anfitrión — pts = solo en este club. */
   internalClub?: boolean;
   className?: string;
-  variant?: "inline" | "stacked";
 };
 
-export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
+export const JugadorPuntosBreakdown: React.FC<JugadorPuntosBreakdownProps> = ({
   jugador,
   clubOrganizadorId,
   internalClub = false,
   className = "",
-  variant = "stacked",
 }) => {
   const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
     internalClub,
@@ -28,19 +25,17 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   if (lines.length === 0) {
     const pts = simpleJugadorPuntosDisplay(jugador, internalClub);
     return (
-      <span className={className}>
-        {pts.toLocaleString("es-MX")} pts
+      <span className={`rjp-ficha-stat__val${className ? ` ${className}` : ""}`}>
+        {pts.toLocaleString("es-MX")}
       </span>
     );
   }
 
-  const stacked = variant === "stacked";
-
   return (
     <span
-      className={`rjp-pts-breakdown${
-        stacked ? " rjp-pts-breakdown--stacked" : ""
-      }${className ? ` ${className}` : ""}`}
+      className={`rjp-ficha-stat__val rjp-pts-breakdown rjp-pts-breakdown--stacked rjp-pts-breakdown--ficha${
+        className ? ` ${className}` : ""
+      }`}
     >
       {lines.map((line) => (
         <span

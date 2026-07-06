@@ -9,15 +9,7 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { computePublicProfileStats } from "../../lib/rivieraJugadores/historialDisplay";
-import {
-  applyGrantedSourceDisplayToJugador,
-  loadGrantedSourceDisplayData,
-} from "../../lib/rivieraJugadores/organizerPlayerAccess";
-import { mergeJugadorStatsPuntosTotales } from "../../lib/rivieraJugadores/rankingPosition";
-import {
-  loadUnifiedParticipacionesForJugador,
-  loadUnifiedRatingViewForJugador,
-} from "../../lib/rivieraJugadores/grantedPlayerUnifiedView";
+import { loadOrganizerScopedPlayerView } from "../../lib/rivieraJugadores/playerClubDisplay";
 import {
   canLeaveOrganizerMembershipForJugador,
   leaveOrganizerMembership,
@@ -29,8 +21,8 @@ import {
   deleteRivieraJugador,
   getRivieraJugadorBySlug,
   listParticipaciones,
+  listParticipacionesForOrganizador,
   obtenerHistorialRating,
-  rebuildJugadorStats,
   updateRivieraJugador,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { uploadJugadorAvatar } from "../../lib/rivieraJugadores/uploadAvatar";
@@ -62,7 +54,10 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [tab, setTab] = useState<"historial" | "stats">("historial");
   const [historial, setHistorial] = useState<
-    Awaited<ReturnType<typeof listParticipaciones>>
+    Awaited<ReturnType<typeof listParticipacionesForOrganizador>>
+  >([]);
+  const [historialOtrosClubes, setHistorialOtrosClubes] = useState<
+    Awaited<ReturnType<typeof listParticipacionesForOrganizador>>
   >([]);
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,59 +99,15 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setFacebook(j.facebook_url ?? "");
         setTiktok(j.tiktok_url ?? "");
 
-        const unified = await loadUnifiedParticipacionesForJugador(j, {
-          limit: 100,
-          listParticipaciones: (id, lim) => listParticipaciones(id, lim),
+        const scoped = await loadOrganizerScopedPlayerView(user.id, j, {
+          listParticipaciones: listParticipacionesForOrganizador,
+          fetchParticipacionesRaw: listParticipaciones,
+          fetchHistorialRating: obtenerHistorialRating,
         });
-        setHistorial(unified.historial);
-
-        let nextJugador = j;
-        if (j.concedidoPorAdmin && j.grantedAccess?.sourceJugadorId) {
-          const sourceDisplay = await loadGrantedSourceDisplayData(
-            j.grantedAccess.sourceJugadorId
-          );
-          if (sourceDisplay) {
-            nextJugador = applyGrantedSourceDisplayToJugador(j, sourceDisplay);
-          }
-        } else {
-          try {
-            const rebuilt = await rebuildJugadorStats(j.id);
-            if (rebuilt) {
-              nextJugador = { ...j, stats: rebuilt };
-            }
-          } catch (e) {
-            console.warn("[riviera-jugadores] sync stats en ficha:", e);
-          }
-        }
-
-        if (
-          unified.romcView.hasRomcData &&
-          unified.romcView.puntosOficiales != null &&
-          nextJugador.stats
-        ) {
-          nextJugador = {
-            ...nextJugador,
-            stats: mergeJugadorStatsPuntosTotales(
-              nextJugador.stats,
-              unified.romcView.puntosOficiales
-            ),
-            officialPuntosGlobal: unified.romcView.puntosOficiales,
-          };
-        }
-
-        const ratingView = await loadUnifiedRatingViewForJugador(nextJugador, {
-          limite: 10,
-          organizadorId: user?.id ?? null,
-          participacionesHistorial: unified.historial,
-          fetchHistorial: obtenerHistorialRating,
-        });
-        setHistorialRating(ratingView.historial);
-        setJugador({
-          ...ratingView.jugador,
-          stats: nextJugador.stats,
-          officialPuntosGlobal: nextJugador.officialPuntosGlobal,
-          statsOrigenConcedido: nextJugador.statsOrigenConcedido,
-        });
+        setHistorial(scoped.historial);
+        setHistorialOtrosClubes(scoped.historialOtrosClubes ?? []);
+        setHistorialRating(scoped.historialRating);
+        setJugador(scoped.jugador);
       }
     } finally {
       setLoading(false);
@@ -220,25 +171,20 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     if (!ok) return;
     setDeletingHistId(participacionId);
     try {
-      const rebuilt = await deleteParticipacionJugador(
+      await deleteParticipacionJugador(
         user.id,
         jugador.id,
         participacionId
       );
-      const unified = await loadUnifiedParticipacionesForJugador(jugador, {
-        limit: 100,
-        listParticipaciones: (id, lim) => listParticipaciones(id, lim),
+      const scoped = await loadOrganizerScopedPlayerView(user.id, jugador, {
+        listParticipaciones: listParticipacionesForOrganizador,
+        fetchParticipacionesRaw: listParticipaciones,
+        fetchHistorialRating: obtenerHistorialRating,
       });
-      setHistorial(unified.historial);
-      if (rebuilt) {
-        const stats = mergeJugadorStatsPuntosTotales(
-          rebuilt,
-          unified.romcView.puntosOficiales
-        );
-        setJugador({ ...jugador, stats });
-      } else {
-        await load();
-      }
+      setHistorial(scoped.historial);
+      setHistorialOtrosClubes(scoped.historialOtrosClubes ?? []);
+      setHistorialRating(scoped.historialRating);
+      setJugador(scoped.jugador);
     } catch (e) {
       alert(
         e instanceof Error ? e.message : "No se pudo eliminar el registro"
@@ -299,8 +245,8 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   };
 
   const histStats = useMemo(
-    () => computePublicProfileStats(historial),
-    [historial]
+    () => computePublicProfileStats([...historial, ...historialOtrosClubes]),
+    [historial, historialOtrosClubes]
   );
   const partidosDecididos =
     histStats.partidosGanados + histStats.partidosPerdidos;
@@ -709,13 +655,26 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         </div>
 
         {tab === "historial" && (
-          <JugadorHistorialList
-            participaciones={historial}
-            categoriaFallback={jugador?.categoria}
-            variant="admin"
-            onDelete={isGrantedReadOnly ? undefined : handleDeleteParticipacion}
-            deletingId={deletingHistId}
-          />
+          <>
+            <JugadorHistorialList
+              participaciones={historial}
+              categoriaFallback={jugador?.categoria}
+              variant="admin"
+              onDelete={isGrantedReadOnly ? undefined : handleDeleteParticipacion}
+              deletingId={deletingHistId}
+            />
+            {historialOtrosClubes.length > 0 ? (
+              <div style={{ marginTop: "1.25rem" }}>
+                <p className="rjp-ficha-historial__otros-label">Otros clubes</p>
+                <JugadorHistorialList
+                  participaciones={historialOtrosClubes}
+                  categoriaFallback={jugador?.categoria}
+                  variant="admin"
+                  showResumen={false}
+                />
+              </div>
+            ) : null}
+          </>
         )}
 
         {tab === "stats" && (

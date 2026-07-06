@@ -127,6 +127,12 @@ export interface RivieraJugadorWithStats extends RivieraJugador {
     sourceJugadorId: string;
     ownerOrganizadorId?: string;
   };
+  /** Jugador nativo del club con actividad en clubes cedidos (clones). */
+  multiclubGranteePuntos?: Array<{
+    organizadorId: string;
+    localJugadorId: string;
+    puntosTotales: number;
+  }>;
 }
 
 export interface RatingHistorialEntry {

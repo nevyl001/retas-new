@@ -378,12 +378,33 @@ export async function prepareGrantedPlayersForParticipacionSync(
 export async function listGrantedLocalJugadorIdsForSource(
   sourceJugadorId: string
 ): Promise<string[]> {
+  const grants = await listGranteeClubsForSourceJugador(sourceJugadorId);
+  return grants.map((g) => g.localJugadorId);
+}
+
+export async function listGranteeClubsForSourceJugador(
+  sourceJugadorId: string
+): Promise<Array<{ granteeOrganizadorId: string; localJugadorId: string }>> {
   const id = sourceJugadorId.trim();
   if (!id) return [];
 
-  const { data, error } = await supabase
+  const byLocal = new Map<string, string>();
+
+  const addRows = (
+    rows: Array<{ grantee_organizer_id?: string; local_jugador_id?: string }> | null
+  ) => {
+    for (const row of rows ?? []) {
+      const granteeOrganizadorId = String(row.grantee_organizer_id ?? "").trim();
+      const localJugadorId = String(row.local_jugador_id ?? "").trim();
+      if (granteeOrganizadorId && localJugadorId) {
+        byLocal.set(localJugadorId, granteeOrganizadorId);
+      }
+    }
+  };
+
+  const { data: direct, error } = await supabase
     .from("organizer_player_access")
-    .select("local_jugador_id")
+    .select("grantee_organizer_id, local_jugador_id")
     .eq("jugador_id", id)
     .eq("is_active", true)
     .not("local_jugador_id", "is", null);
@@ -392,10 +413,100 @@ export async function listGrantedLocalJugadorIdsForSource(
     if (isMissingAccessFeatureError(error)) return [];
     throw error;
   }
+  addRows(direct);
 
-  return (data ?? [])
-    .map((row) => (row.local_jugador_id ? String(row.local_jugador_id) : ""))
-    .filter(Boolean);
+  const siblingIds = await listSiblingJugadorIdsViaProfileLink(id);
+  if (siblingIds.length > 0) {
+    const { data: bySibling, error: siblingErr } = await supabase
+      .from("organizer_player_access")
+      .select("grantee_organizer_id, local_jugador_id")
+      .in("jugador_id", siblingIds)
+      .eq("is_active", true)
+      .not("local_jugador_id", "is", null);
+
+    if (!siblingErr) addRows(bySibling);
+  }
+
+  return Array.from(byLocal.entries()).map(([localJugadorId, granteeOrganizadorId]) => ({
+    granteeOrganizadorId,
+    localJugadorId,
+  }));
+}
+
+async function listSiblingJugadorIdsViaProfileLink(
+  sourceJugadorId: string
+): Promise<string[]> {
+  const sourceId = sourceJugadorId.trim();
+  if (!sourceId) return [];
+
+  const { data: sourceLink, error: linkErr } = await supabase
+    .from("riviera_official_player_profile_link")
+    .select("official_player_key")
+    .eq("riviera_jugador_id", sourceId)
+    .maybeSingle();
+
+  if (linkErr || !sourceLink) return [];
+
+  const officialPlayerKey = String(
+    (sourceLink as { official_player_key?: string }).official_player_key ?? ""
+  ).trim();
+  if (!officialPlayerKey) return [];
+
+  const { data: siblingLinks, error: sibLinkErr } = await supabase
+    .from("riviera_official_player_profile_link")
+    .select("riviera_jugador_id")
+    .eq("official_player_key", officialPlayerKey)
+    .neq("riviera_jugador_id", sourceId);
+
+  if (sibLinkErr) return [];
+
+  return Array.from(
+    new Set(
+      (siblingLinks ?? [])
+        .map((row) =>
+          String((row as { riviera_jugador_id?: string }).riviera_jugador_id ?? "").trim()
+        )
+        .filter(Boolean)
+    )
+  );
+}
+
+/** Perfiles del mismo jugador en otros clubes (grants + misma Carrera / profile_link). */
+export async function listMulticlubSiblingProfilesForSource(
+  sourceJugadorId: string
+): Promise<Array<{ jugadorId: string; organizadorId: string }>> {
+  const sourceId = sourceJugadorId.trim();
+  if (!sourceId) return [];
+
+  const byId = new Map<string, string>();
+
+  for (const grant of await listGranteeClubsForSourceJugador(sourceId)) {
+    byId.set(grant.localJugadorId, grant.granteeOrganizadorId);
+  }
+
+  const siblingIds = await listSiblingJugadorIdsViaProfileLink(sourceId);
+  if (siblingIds.length > 0) {
+    const { data: siblings, error: sibErr } = await supabase
+      .from("riviera_jugadores")
+      .select("id, organizador_id")
+      .in("id", siblingIds)
+      .eq("estado", "activo");
+
+    if (!sibErr) {
+      for (const row of siblings ?? []) {
+        const id = String((row as { id?: string }).id ?? "").trim();
+        const org = String(
+          (row as { organizador_id?: string }).organizador_id ?? ""
+        ).trim();
+        if (id && org && !byId.has(id)) byId.set(id, org);
+      }
+    }
+  }
+
+  return Array.from(byId.entries()).map(([jugadorId, organizadorId]) => ({
+    jugadorId,
+    organizadorId,
+  }));
 }
 
 /** Resuelve el id operativo del jugador para el organizador actual. */
