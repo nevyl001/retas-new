@@ -19,6 +19,20 @@ export type JugadorPuntosBreakdownLine = {
   role: "home" | "other" | "total";
 };
 
+/** Etiqueta del club anfitrión en esta vista de ranking (no genérico "Local"). */
+function homeClubLabelForRankingView(
+  viewingOrganizadorId: string | null | undefined,
+  jugador: RivieraJugadorWithStats
+): string {
+  const viewOrg = viewingOrganizadorId?.trim();
+  if (viewOrg) return getOrganizerDisplayNameSync(viewOrg);
+
+  const homeOrg = jugador.organizador_id?.trim();
+  if (homeOrg) return getOrganizerDisplayNameSync(homeOrg);
+
+  return getOrganizerDisplayNameSync(null);
+}
+
 export function simpleJugadorPuntosDisplay(
   jugador: RivieraJugadorWithStats,
   hasOrgContext = false
@@ -29,7 +43,7 @@ export function simpleJugadorPuntosDisplay(
 }
 
 /**
- * Líneas compactas: otros clubes → Local → Total.
+ * Líneas compactas: otros clubes → club de esta vista → Total.
  * Vacío = un solo número en UI.
  */
 export function buildJugadorPuntosBreakdown(
@@ -43,6 +57,7 @@ export function buildJugadorPuntosBreakdown(
   const grantees = jugador.multiclubGranteePuntos ?? [];
   const clubLocalPts = rankingPuntosInternoClubDisplay(jugador);
   const totalRiviera = rankingPuntosGlobalDisplay(jugador);
+  const homeClubLabel = homeClubLabelForRankingView(viewOrg, jugador);
 
   if (
     hasOrgContext &&
@@ -66,7 +81,7 @@ export function buildJugadorPuntosBreakdown(
     if (homePts > 0) {
       lines.push({
         key: viewOrg,
-        clubLabel: "Local",
+        clubLabel: homeClubLabel,
         puntos: homePts,
         role: "home",
       });
@@ -99,7 +114,7 @@ export function buildJugadorPuntosBreakdown(
     if (clubLocalPts > 0 || viewOrg) {
       lines.push({
         key: viewOrg ?? homeOrg ?? "local",
-        clubLabel: "Local",
+        clubLabel: homeClubLabel,
         puntos: clubLocalPts,
         role: "home",
       });
@@ -127,7 +142,7 @@ export function buildJugadorPuntosBreakdown(
     if (clubLocalPts > 0) {
       lines.push({
         key: viewOrg ?? homeOrg ?? "local",
-        clubLabel: "Local",
+        clubLabel: homeClubLabel,
         puntos: clubLocalPts,
         role: "home",
       });
@@ -145,7 +160,7 @@ export function buildJugadorPuntosBreakdown(
 
   if (hasOrgContext && clubLocalPts > 0 && totalRiviera > clubLocalPts) {
     return [
-      { key: "local", clubLabel: "Local", puntos: clubLocalPts, role: "home" },
+      { key: viewOrg ?? homeOrg ?? "local", clubLabel: homeClubLabel, puntos: clubLocalPts, role: "home" },
       { key: "total", clubLabel: "Total", puntos: totalRiviera, role: "total" },
     ];
   }
