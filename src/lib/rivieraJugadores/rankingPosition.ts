@@ -1,4 +1,5 @@
 import type { JugadorStats, RivieraJugadorWithStats } from "./types";
+import { careerResultFromJugador } from "./playerPointsBreakdown";
 
 /** Puntos del registro local del club (incluye ajustes manuales). */
 export function jugadorPuntosLocales(j: RivieraJugadorWithStats): number {
@@ -34,9 +35,22 @@ export function isJugadorConcedidoEnClub(j: RivieraJugadorWithStats): boolean {
 
 /**
  * Puntos para ranking interno del club anfitrión.
- * Solo stats del perfil en ese club (cedidos: clon local; propios: registro del club).
+ * Prioriza carrera canónica (metadata.organizador_id); fallback stats locales.
  */
-export function rankingPuntosClubLocal(j: RivieraJugadorWithStats): number {
+export function rankingPuntosClubLocal(
+  j: RivieraJugadorWithStats,
+  organizadorId?: string | null
+): number {
+  const org = organizadorId?.trim();
+  if (org) {
+    const career = careerResultFromJugador(j);
+    if (career?.puntosByOrg.has(org)) {
+      return career.puntosByOrg.get(org) ?? 0;
+    }
+    if (j.pointsBreakdown && j.pointsBreakdown.currentClubPoints != null) {
+      return j.pointsBreakdown.currentClubPoints;
+    }
+  }
   return jugadorPuntosLocales(j);
 }
 
@@ -117,14 +131,16 @@ export function sortJugadoresForOfficialSiteRanking(
   });
 }
 
-/** Posiciones para ranking interno del club (cedidos = solo puntos locales). */
+/** Posiciones para ranking interno del club (cedidos = puntos en club anfitrión). */
 export function rankingPosicionesFromSortedForClub(
-  jugadores: RivieraJugadorWithStats[]
+  jugadores: RivieraJugadorWithStats[],
+  organizadorId?: string | null
 ): number[] {
   const ranks: number[] = [];
   for (let i = 0; i < jugadores.length; i++) {
-    const pts = rankingPuntosClubLocal(jugadores[i]);
-    const prevPts = i > 0 ? rankingPuntosClubLocal(jugadores[i - 1]) : null;
+    const pts = rankingPuntosClubLocal(jugadores[i], organizadorId);
+    const prevPts =
+      i > 0 ? rankingPuntosClubLocal(jugadores[i - 1], organizadorId) : null;
     if (i === 0 || pts !== prevPts) {
       ranks.push(i + 1);
     } else {
@@ -135,11 +151,12 @@ export function rankingPosicionesFromSortedForClub(
 }
 
 export function sortJugadoresByClubLocalPuntos(
-  jugadores: RivieraJugadorWithStats[]
+  jugadores: RivieraJugadorWithStats[],
+  organizadorId?: string | null
 ): RivieraJugadorWithStats[] {
   return [...jugadores].sort((a, b) => {
-    const pa = rankingPuntosClubLocal(a);
-    const pb = rankingPuntosClubLocal(b);
+    const pa = rankingPuntosClubLocal(a, organizadorId);
+    const pb = rankingPuntosClubLocal(b, organizadorId);
     if (pb !== pa) return pb - pa;
     return a.nombre.localeCompare(b.nombre, "es");
   });

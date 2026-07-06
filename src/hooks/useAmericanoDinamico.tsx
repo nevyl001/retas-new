@@ -434,15 +434,16 @@ export function useAmericanoDinamico(
     const roster = playersRef.current;
     const allRounds = roundsRef.current;
 
-    void import("../lib/rivieraJugadores/syncParticipaciones")
-      .then(({ syncAmericanoParticipaciones }) =>
-        syncAmericanoParticipaciones(
-          sesionIdRef.current,
-          label,
+    void import("../lib/rivieraJugadores/careerEventPipeline")
+      .then(({ finalizeCareerEvent }) =>
+        finalizeCareerEvent({
+          kind: "americano",
+          organizadorId: options.organizadorId!,
+          sesionId: sesionIdRef.current,
+          nombre: label,
           roster,
-          allRounds,
-          options.organizadorId!
-        )
+          rounds: allRounds,
+        })
       )
       .catch((err) =>
         console.error(

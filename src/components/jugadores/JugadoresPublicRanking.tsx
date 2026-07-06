@@ -125,8 +125,8 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   const jugadoresFiltrados = jugadores;
 
   const rankingRanks = useMemo(
-    () => rankingPosicionesFromSortedForClub(jugadoresFiltrados),
-    [jugadoresFiltrados]
+    () => rankingPosicionesFromSortedForClub(jugadoresFiltrados, orgId),
+    [jugadoresFiltrados, orgId]
   );
 
   useEffect(() => {

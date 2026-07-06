@@ -266,3 +266,18 @@ export async function attachCareerPuntosToJugador(
 }
 
 export { careerFieldsFromResult };
+
+/** Puntos acumulados en un club (desde carrera enriquecida; no usa club origen del jugador). */
+export function getPlayerPointsByOrganizer(
+  career: CareerPointsByClubResult,
+  organizadorId: string | null | undefined
+): number {
+  const org = organizadorId?.trim();
+  if (!org) return 0;
+  return career.puntosByOrg.get(org) ?? 0;
+}
+
+/** Total global de puntos de carrera (suma de todos los clubes). */
+export function getPlayerGlobalPoints(career: CareerPointsByClubResult): number {
+  return career.total;
+}

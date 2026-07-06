@@ -2,6 +2,7 @@ import {
   JUGADOR_CATEGORIA_LABELS,
   TIPO_EVENTO_LABELS,
 } from "./constants";
+import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
 import type {
   JugadorParticipacion,
   JugadorTipoEvento,
@@ -286,6 +287,11 @@ export function participacionToHistorialItem(
     detalleParts.push("Round Robin");
   }
   if (row.pareja_con) detalleParts.push(`Pareja: ${row.pareja_con}`);
+  const eventOrgId = metaStr(meta, "organizador_id");
+  const eventClubLabel =
+    metaStr(meta, "club_name") ??
+    (eventOrgId ? getOrganizerDisplayNameSync(eventOrgId) : undefined);
+  if (eventClubLabel) detalleParts.push(eventClubLabel);
   const sourceClub = metaStr(meta, "source_club_name");
   if ((meta.romc_global === true || meta.romc_cross_club === true) && sourceClub) {
     detalleParts.push(sourceClub);

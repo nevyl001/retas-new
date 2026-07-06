@@ -114,6 +114,8 @@ export interface JugadorParticipacion {
 /** Detalle partido a partido en metadata.partidos_detalle (reta_cierre). */
 export type { RetaPartidoDetalle } from "./buildRetaPartidosDetalle";
 
+import type { PlayerPointsBreakdown } from "./playerPointsBreakdown";
+
 export interface RivieraJugadorWithStats extends RivieraJugador {
   stats?: JugadorStats | null;
   /** Puntos ROMC globales (todos los clubes); prioridad en ranking oficial. */
@@ -140,6 +142,8 @@ export interface RivieraJugadorWithStats extends RivieraJugador {
   }>;
   /** Total de carrera sumando todos los clubes. */
   careerPuntosTotal?: number;
+  /** Desglose canónico de puntos (ranking + ficha). */
+  pointsBreakdown?: PlayerPointsBreakdown;
 }
 
 export interface RatingHistorialEntry {

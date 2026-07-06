@@ -13,6 +13,18 @@ export {
   resolveLinkedJugadorIdsForIdentity,
 } from "./playerIdentityService";
 
+export {
+  getPlayerGlobalPoints,
+  getPlayerPointsByOrganizer,
+} from "./careerPointsByClub";
+
+export {
+  resolvePlayerPointsBreakdown,
+  breakdownFromCareerResult,
+  type PlayerPointsBreakdown,
+  type PlayerPointsBreakdownClub,
+} from "./playerPointsBreakdown";
+
 export type {
   GetPublicPlayerProfileInput as GetPublicPlayerProfileDataParams,
   PublicPlayerProfileData,

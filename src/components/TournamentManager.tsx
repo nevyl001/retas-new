@@ -6,7 +6,7 @@ import {
   updateTournament,
   Tournament,
 } from "../lib/database";
-import { syncRetaParticipaciones } from "../lib/rivieraJugadores/syncParticipaciones";
+import { finalizeCareerEvent } from "../lib/rivieraJugadores/careerEventPipeline";
 import {
   getRetaCreatedAt,
   getRetaDescription,
@@ -148,11 +148,13 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           ]);
           const hasFinished = matches.some((m) => m.status === "finished");
           if (tournament.is_finished || hasFinished) {
-            await syncRetaParticipaciones({
+            await finalizeCareerEvent({
+              kind: "reta",
               organizadorId: user.id,
               tournament,
               pairs,
               matches,
+              options: { skipAssertions: true },
             });
           }
         } catch (syncErr) {
@@ -199,9 +201,10 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
             getPairs(tournament.id),
             getMatches(tournament.id),
           ]);
-          await syncRetaParticipaciones({
+          await finalizeCareerEvent({
+            kind: "reta",
             organizadorId: user.id,
-            tournament,
+            tournament: { ...tournament, is_finished: true },
             pairs,
             matches,
           });

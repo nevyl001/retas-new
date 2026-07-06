@@ -776,9 +776,14 @@ export async function inscribirJugador(
 
   if (error) throw new Error(error.message);
 
-  void import("../lib/rivieraJugadores/syncParticipaciones")
-    .then(({ syncLigaInscripcionRanking }) =>
-      syncLigaInscripcionRanking(ligaId, jugadorId, uid)
+  void import("../lib/rivieraJugadores/careerEventPipeline")
+    .then(({ finalizeCareerEvent }) =>
+      finalizeCareerEvent({
+        kind: "liga_inscripcion",
+        organizadorId: uid,
+        ligaId,
+        jugadorId,
+      })
     )
     .catch((err) =>
       console.error("[riviera-jugadores] sync inscripción liga:", err)
@@ -1597,13 +1602,14 @@ export async function finishJornada(jornadaId: string): Promise<void> {
 
   if (!jErr && jornada?.liga_id != null && jornada.numero != null) {
     // Registro Riviera Open: una participación por jugador y jornada.
-    void import("../lib/rivieraJugadores/syncParticipaciones")
-      .then(({ syncLigaJornada }) =>
-        syncLigaJornada(
-          String(jornada.liga_id),
-          Number(jornada.numero),
-          userId
-        )
+    void import("../lib/rivieraJugadores/careerEventPipeline")
+      .then(({ finalizeCareerEvent }) =>
+        finalizeCareerEvent({
+          kind: "liga_jornada",
+          organizadorId: userId,
+          ligaId: String(jornada.liga_id),
+          jornadaNumero: Number(jornada.numero),
+        })
       )
       .catch((err) =>
         console.error(
@@ -1662,8 +1668,14 @@ export async function finishLiga(ligaId: string): Promise<void> {
   if (error) throw new Error(error.message);
 
   const uid = await requireUserId();
-  void import("../lib/rivieraJugadores/syncParticipaciones")
-    .then(({ syncLigaFinalPodio }) => syncLigaFinalPodio(ligaId, uid))
+  void import("../lib/rivieraJugadores/careerEventPipeline")
+    .then(({ finalizeCareerEvent }) =>
+      finalizeCareerEvent({
+        kind: "liga_podio",
+        organizadorId: uid,
+        ligaId,
+      })
+    )
     .catch((err) =>
       console.error("[riviera-jugadores] sync podio final liga:", err)
     );

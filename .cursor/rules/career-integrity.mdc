@@ -1,0 +1,55 @@
+---
+description: Integridad de carrera Riviera ID — identidad, puntos, ranking, participaciones
+globs:
+  - src/lib/rivieraJugadores/**
+  - src/components/jugadores/**
+  - supabase/**
+  - scripts/audit-career-integrity.mjs
+  - docs/CAREER-*.md
+alwaysApply: false
+---
+
+# Career Integrity — AppRiviera
+
+## Verificación obligatoria
+
+Antes de merge/deploy, cualquier cambio en jugadores, ranking, puntos, participaciones, rating, retas, duelos, torneos, ligas o americanos debe pasar:
+
+```bash
+npm run verify:career-integrity
+```
+
+## PROHIBIDO
+
+- Insertar participaciones fuera de `syncParticipaciones` / `careerEventPipeline`
+- Calcular puntos fuera de `resolvePlayerPointsBreakdown` / `playerPointsBreakdown`
+- Crear jugador participante sin resolver Riviera ID / `official_player_key`
+- Usar `jugador.organizador_id` como club anfitrión de puntos
+- Fixes visuales para esconder inconsistencias de datos
+- Crear `riviera_jugadores` para eventos sin `ensureOfficialProfileLinkForParticipacion`
+
+## Fuentes canónicas
+
+| Acción | Ubicación |
+|--------|-----------|
+| Finalizar evento | `finalizeCareerEvent` |
+| Escribir participación | `resolveJugadorIdForParticipacion` |
+| Fusionar carrera | `mergeCareerParticipacionesForIdentity` |
+| Puntos UI | `resolvePlayerPointsBreakdown` |
+| Enlazar perfil | `ensureOfficialProfileLinkForParticipacion` |
+| Identidad Riviera | `ensureRivieraIdentity` |
+
+## Perfiles huérfanos
+
+Participaciones en perfiles sin `riviera_official_player_profile_link` no fusionan en la app.
+
+- Detectar: `supabase/diagnose-orphan-career-profiles.sql`
+- Reparar HIGH: `supabase/repair-orphan-career-profile-links.sql`
+- Docs: `docs/CAREER-INTEGRITY-AUDIT.md`
+
+## Metadata de host
+
+Club anfitrión = `metadata.organizador_id` desde evento padre, no club origen del jugador.
+
+- Detectar: `supabase/diagnose-career-event-host-organizer.sql`
+- Reparar: `supabase/repair-career-event-host-organizer.sql`

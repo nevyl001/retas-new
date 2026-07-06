@@ -1,6 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
-import { aplicarRatingDuelo2v2, resolveDuelo2v2RatingPlayerIds } from "../lib/rivieraJugadores/aplicarRatingPartido";
-import { syncDuelo2v2Participaciones } from "../lib/rivieraJugadores/syncParticipaciones";
+import { finalizeCareerEvent } from "../lib/rivieraJugadores/careerEventPipeline";
 import type {
   CreateDuelo2v2Input,
   Duelo2v2,
@@ -246,24 +245,18 @@ export async function finalizarDuelo2v2(id: string): Promise<Duelo2v2> {
   if (error) throw new Error(formatDueloDbError(error));
   const finalizado = mapDuelo(data as Record<string, unknown>);
 
-  try {
-    const resolvedIds = await resolveDuelo2v2RatingPlayerIds(uid, finalizado);
-    if (resolvedIds) {
-      await aplicarRatingDuelo2v2({
-        id: finalizado.id,
-        nombre: finalizado.nombre,
-        ganador: finalizado.ganador,
-        ...resolvedIds,
-      });
-    }
-  } catch (e) {
-    console.warn("[rating] finalizar duelo 2v2:", e);
-  }
-
-  await syncDuelo2v2Participaciones({
+  const pipelineResult = await finalizeCareerEvent({
+    kind: "duelo_2v2",
     organizadorId: uid,
     duelo: finalizado,
   });
+
+  if (!pipelineResult.ok) {
+    console.error(
+      "[career-event-pipeline] duelo 2v2 incompleto:",
+      pipelineResult.failures
+    );
+  }
 
   return finalizado;
 }

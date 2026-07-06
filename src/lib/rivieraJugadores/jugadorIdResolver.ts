@@ -15,6 +15,7 @@ import {
   linkLegacyPlayerId,
   listRivieraJugadoresByLegacyPlayerId,
 } from "./rivieraJugadoresService";
+import { ensureOfficialProfileLinkForParticipacion } from "./orphanProfileLink";
 import { normalizePlayerNameKey } from "./playerNameKey";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 
@@ -440,6 +441,24 @@ export async function resolveJugadorIdForParticipacion(params: {
   }
 
   const finalId = await finalizeJugadorIdForRanking(localId);
+
+  if (finalId) {
+    const linkResult = await ensureOfficialProfileLinkForParticipacion(
+      finalId,
+      organizadorId
+    );
+    if (linkResult.linkCreated) {
+      logMulticlubPhase21({
+        action: "orphan_profile_linked",
+        organizadorId,
+        tipoEvento: params.tipoEvento ?? null,
+        eventoId: params.eventoId ?? null,
+        jugadorId: finalId,
+        rivieraId: linkResult.rivieraId ?? null,
+        officialPlayerKey: linkResult.officialPlayerKey ?? null,
+      });
+    }
+  }
 
   if (finalId && finalId !== originalJugadorId) {
     logMulticlubPhase21({

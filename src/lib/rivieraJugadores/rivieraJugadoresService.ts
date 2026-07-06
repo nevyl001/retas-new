@@ -1956,7 +1956,7 @@ export async function listInternalClubJugadoresRanking(
     );
     const scoped = await enrichJugadoresOrganizerScopedStats(organizadorId, merged);
     return enrichJugadoresWithRivieraId(
-      stripOfficialPuntosFromInternalClubRanking(scoped),
+      stripOfficialPuntosFromInternalClubRanking(scoped, organizadorId),
       { publicRanking: true }
     );
   }
@@ -2009,19 +2009,21 @@ export async function listInternalClubJugadoresRanking(
   );
   const scoped = await enrichJugadoresOrganizerScopedStats(organizadorId, merged);
   return enrichJugadoresWithRivieraId(
-    stripOfficialPuntosFromInternalClubRanking(scoped),
+    stripOfficialPuntosFromInternalClubRanking(scoped, organizadorId),
     { publicRanking: true }
   );
 }
 
 function stripOfficialPuntosFromInternalClubRanking(
-  jugadores: RivieraJugadorWithStats[]
+  jugadores: RivieraJugadorWithStats[],
+  organizadorId: string
 ): RivieraJugadorWithStats[] {
   return sortJugadoresByClubLocalPuntos(
     jugadores.map((j) => ({
       ...j,
       officialPuntosGlobal: undefined,
-    }))
+    })),
+    organizadorId
   );
 }
 

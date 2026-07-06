@@ -105,6 +105,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
       void prefetchOrganizerDisplayNames([
         profile.viewingOrgId,
+        profile.identity.homeOrganizadorId,
         profile.jugador.grantedAccess?.ownerOrganizadorId,
         resolveRegistrationOrganizadorIdForPublicFicha(profile.jugador),
         ...(profile.jugador.careerPuntosByClub?.map((g) => g.organizadorId) ?? []),
@@ -208,9 +209,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     );
   }
 
-  const registrationOrgId = resolveRegistrationOrganizadorIdForPublicFicha(jugador);
-  const organizerName = registrationOrgId
-    ? getOrganizerDisplayNameSync(registrationOrgId)
+  const registrationOrgId =
+    jugador.grantedAccess?.ownerOrganizadorId?.trim() ??
+    resolveRegistrationOrganizadorIdForPublicFicha(jugador);
+  const viewingClubName = viewingOrgId
+    ? getOrganizerDisplayNameSync(viewingOrgId)
     : null;
   const redes = getRedesPublicas(jugador);
   const rankingVal = rankingPos != null ? `#${rankingPos}` : "—";
@@ -278,8 +281,15 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                   </div>
 
                   <div className="rjp-ficha-hero__meta">
-                    {organizerName ? (
-                      <span className="rjp-ficha-hero__meta-club">{organizerName}</span>
+                    {registrationOrgId ? (
+                      <span className="rjp-ficha-hero__meta-club">
+                        Club origen: {getOrganizerDisplayNameSync(registrationOrgId)}
+                      </span>
+                    ) : null}
+                    {hasOrgContext && viewingClubName && registrationOrgId !== viewingOrgId ? (
+                      <span className="rjp-ficha-hero__meta-club">
+                        Viendo desde: {viewingClubName}
+                      </span>
                     ) : null}
                     <span className="rjp-ficha-hero__meta-cat">
                       {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}

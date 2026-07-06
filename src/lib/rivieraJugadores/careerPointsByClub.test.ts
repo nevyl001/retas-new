@@ -157,4 +157,25 @@ describe("attachCareerPuntosToJugador", () => {
       ])
     );
   });
+
+  it("getPlayerPointsByOrganizer y getPlayerGlobalPoints (Caso A/B)", async () => {
+    const { getPlayerGlobalPoints, getPlayerPointsByOrganizer } = await import(
+      "./careerPointsByClub"
+    );
+    const rows = [
+      partido("a", SEBASTIAN_CANONICAL, CLUB_TEST_REAL, 50),
+      partido("b", SEBASTIAN_HACKPADEL, HACKPADEL_REAL, 50),
+    ];
+    const career = computeCareerPointsByClubFromParticipaciones(rows, {
+      jugadorHomeOrgById: new Map([
+        [SEBASTIAN_CANONICAL, CLUB_TEST_REAL],
+        [SEBASTIAN_HACKPADEL, HACKPADEL_REAL],
+      ]),
+    });
+
+    expect(getPlayerGlobalPoints(career)).toBe(100);
+    expect(getPlayerPointsByOrganizer(career, HACKPADEL_REAL)).toBe(50);
+    expect(getPlayerPointsByOrganizer(career, CLUB_TEST_REAL)).toBe(50);
+    expect(getPlayerPointsByOrganizer(career, RIVIERA_OPEN_REAL)).toBe(0);
+  });
 });

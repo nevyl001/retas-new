@@ -90,8 +90,6 @@ AS $$
         || jsonb_build_object('organizador_id', d.organizador_id::text)
       WHEN t.id IS NOT NULL THEN COALESCE(jp.metadata, '{}'::jsonb)
         || jsonb_build_object('organizador_id', t.organizador_id::text)
-      WHEN rj.organizador_id IS NOT NULL THEN COALESCE(jp.metadata, '{}'::jsonb)
-        || jsonb_build_object('organizador_id', rj.organizador_id::text)
       ELSE COALESCE(jp.metadata, '{}'::jsonb)
     END AS metadata,
     jp.created_at

@@ -1700,9 +1700,13 @@ export async function finalizarTorneoExpressEliminatoria(
   }
 
   // Registro Riviera Open: historial por jugador (no bloquea la finalización).
-  void import("../lib/rivieraJugadores/syncParticipaciones")
-    .then(({ syncTorneoExpressParticipaciones }) =>
-      syncTorneoExpressParticipaciones(torneoId, user.id)
+  void import("../lib/rivieraJugadores/careerEventPipeline")
+    .then(({ finalizeCareerEvent }) =>
+      finalizeCareerEvent({
+        kind: "torneo_express",
+        organizadorId: user.id,
+        torneoId,
+      })
     )
     .catch((err) =>
       console.error(

@@ -11,6 +11,8 @@ import {
   computeCareerPointsByClubFromParticipaciones,
   type CareerPointsByClubResult,
 } from "./careerPointsByClub";
+import { resolvePlayerPointsBreakdown } from "./playerPointsBreakdown";
+import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
 import { enrichJugadorConcedidoClubView } from "./concedidoClubView";
 import {
   dedupeParticipacionesById,
@@ -23,7 +25,6 @@ import {
 import { enrichParticipacionesOrganizadorFromEvents } from "./participacionesOrganizadorScope";
 import {
   fetchPublicCareerJugadorIds,
-  listCareerParticipacionesPublic,
 } from "./publicCareerLinkage";
 import { mergeJugadorStatsPuntosTotales } from "./rankingPosition";
 import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
@@ -435,24 +436,16 @@ export async function resolvePlayerCareer(
   identity: ResolvedPlayerIdentity,
   limit = 500
 ): Promise<PlayerCareerBundle> {
-  const canonical = identity.canonicalJugadorId.trim();
-  let rows = (await listCareerParticipacionesPublic(canonical, limit)) ?? [];
-
-  if (rows.length === 0) {
-    const lists = await Promise.all(
-      identity.linkedJugadorIds.map((id) =>
-        listCareerParticipacionesPublic(id, limit)
-      )
-    );
-    rows = lists.flatMap((list) => list ?? []);
-  }
-
-  const deduped = dedupeParticipacionesById(rows);
+  const participaciones = await mergeCareerParticipacionesForIdentity(
+    identity,
+    limit
+  );
+  const deduped = dedupeParticipacionesById(participaciones).slice(0, limit);
 
   return {
     participaciones: deduped,
-    duplicateCount: rows.length - deduped.length,
-    source: rows.length > 0 ? "career_rpc" : "merged_linked",
+    duplicateCount: participaciones.length - deduped.length,
+    source: deduped.length > 0 ? "merged_linked" : "career_rpc",
   };
 }
 
@@ -602,6 +595,14 @@ export async function getPublicPlayerProfileData(
     ratingRpc,
   });
   jugador = { ...localContext.jugador, ...careerFields };
+
+  const pointsBreakdown = await resolvePlayerPointsBreakdown({
+    jugador,
+    identity,
+    currentOrganizadorId: org,
+    participaciones: historialGlobal,
+  });
+  jugador = { ...jugador, pointsBreakdown };
 
   const debug: PlayerIdentityDebugSnapshot | undefined = includeDebug
     ? {

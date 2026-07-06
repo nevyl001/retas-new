@@ -11,6 +11,10 @@ jest.mock("./publicCareerLinkage", () => ({
   listCareerParticipacionesPublic: jest.fn(),
 }));
 
+jest.mock("./careerParticipacionesMerge", () => ({
+  mergeCareerParticipacionesForIdentity: jest.fn(),
+}));
+
 jest.mock("./organizerPlayerAccess", () => ({
   listGrantedLocalJugadorIdsForSource: jest.fn(async () => []),
   listMulticlubSiblingProfilesForSource: jest.fn(async () => []),
@@ -39,6 +43,7 @@ import {
   resolveLinkedJugadorIdsForIdentity,
   resolvePlayerCareer,
 } from "./playerIdentityService";
+import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
 import { fetchPublicCareerJugadorIds, listCareerParticipacionesPublic } from "./publicCareerLinkage";
 import {
   listGrantedLocalJugadorIdsForSource,
@@ -124,7 +129,10 @@ describe("playerIdentityService", () => {
       part("p-b", CLUB_B, 50),
       part("p-d", CLUB_D, 100),
     ];
-    (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue(rows);
+    (mergeCareerParticipacionesForIdentity as jest.Mock).mockResolvedValue([
+      ...rows,
+      rows[0],
+    ]);
 
     const career = await resolvePlayerCareer(
       identity([CANONICAL, "aaa", "bbb"]),
@@ -132,7 +140,7 @@ describe("playerIdentityService", () => {
     );
 
     expect(career.participaciones).toHaveLength(3);
-    expect(career.duplicateCount).toBe(0);
+    expect(career.duplicateCount).toBe(1);
   });
 
   it("jugador fake: Club A 20 + B 50 + D 100 = Total 170", async () => {
@@ -141,7 +149,7 @@ describe("playerIdentityService", () => {
       part("p-b", CLUB_B, 50),
       part("p-d", CLUB_D, 100),
     ];
-    (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue(rows);
+    (mergeCareerParticipacionesForIdentity as jest.Mock).mockResolvedValue(rows);
 
     const id = identity([CANONICAL]);
     const career = await resolvePlayerCareer(id, 500);
