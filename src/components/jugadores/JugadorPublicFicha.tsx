@@ -107,6 +107,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         profile.viewingOrgId,
         profile.jugador.grantedAccess?.ownerOrganizadorId,
         resolveRegistrationOrganizadorIdForPublicFicha(profile.jugador),
+        ...(profile.jugador.careerPuntosByClub?.map((g) => g.organizadorId) ?? []),
         ...(profile.jugador.multiclubGranteePuntos?.map((g) => g.organizadorId) ?? []),
       ]);
 
@@ -335,6 +336,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                       jugador={jugador}
                       clubOrganizadorId={viewingOrgId}
                       hasOrgContext={hasOrgContext}
+                      profileCard
                     />
                   </div>
                 </div>

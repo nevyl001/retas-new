@@ -36,6 +36,7 @@ import {
 } from "./concedidoClubView";
 import { filterParticipacionesForOrganizador, enrichParticipacionesOrganizadorFromEvents } from "./participacionesOrganizadorScope";
 import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
+import { PUBLIC_ORGANIZER_RPC_FALLBACK } from "./publicOrganizador";
 import {
   mergeJugadorStatsPuntosTotales,
   rankingPuntosJugador,
@@ -228,7 +229,8 @@ async function enrichGrantedJugadorFromSource(
 /** Cedidos en ranking interno: stats/rating del club dueño + metadata de acceso. */
 async function enrichInternalClubJugadorGrant(
   organizadorId: string,
-  jugador: RivieraJugadorWithStats
+  jugador: RivieraJugadorWithStats,
+  rpc?: RatingRpcFallbackOptions
 ): Promise<RivieraJugadorWithStats> {
   const meta = await findGrantedAccessMetaForJugador(organizadorId, jugador.id);
   if (!meta) return jugador;
@@ -249,7 +251,8 @@ async function enrichInternalClubJugadorGrant(
       withMeta,
       meta.sourceJugadorId,
       ownerOrgId
-    )
+    ),
+    { rpc }
   );
 }
 
@@ -475,7 +478,11 @@ async function fetchInternalClubJugadorRow(
     if (!row) return null;
     const mapped = mapInternalClubJugadorRow(row as Record<string, unknown>);
     if (await isRevokedGrantLocalJugador(trimmedOrg, mapped.id)) return null;
-    return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
+    return enrichInternalClubJugadorGrant(
+      trimmedOrg,
+      mapped,
+      PUBLIC_ORGANIZER_RPC_FALLBACK
+    );
   }
   if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
     const { data: authData, error: authError } = await supabase.rpc(
@@ -520,7 +527,11 @@ async function fetchInternalClubJugadorRow(
     fallbackData as unknown as Record<string, unknown>
   );
   if (await isRevokedGrantLocalJugador(trimmedOrg, mapped.id)) return null;
-  return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
+  return enrichInternalClubJugadorGrant(
+    trimmedOrg,
+    mapped,
+    PUBLIC_ORGANIZER_RPC_FALLBACK
+  );
 }
 
 /** Cedido sin perfil local en el club: ficha por ID del jugador origen. */

@@ -1,16 +1,13 @@
 import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
 import {
-  hasDualRankingConcedido,
-  rankingPuntosGlobalDisplay,
-  rankingPuntosInternoClubDisplay,
-  rankingPuntosOrigenConcedido,
-  resolveOrigenConcedidoOrganizadorId,
-} from "./grantedRankingDisplay";
-import {
-  isNativeMulticlubHomeRankingDisplay,
-  nativeMulticlubCareerPuntosTotal,
-} from "./nativeMulticlubHomeView";
+  type CareerPointsByClubResult,
+  shouldShowCareerPointsBreakdown,
+  sortCareerClubsForDisplay,
+} from "./careerPointsByClub";
+import { rankingPuntosGlobalDisplay, rankingPuntosInternoClubDisplay } from "./grantedRankingDisplay";
 import type { RivieraJugadorWithStats } from "./types";
+
+/** GUARD: No usar stats.puntos_totales local si existe careerPuntosByClub en ficha pública. */
 
 export type JugadorPuntosBreakdownLine = {
   key: string;
@@ -19,151 +16,132 @@ export type JugadorPuntosBreakdownLine = {
   role: "home" | "other" | "total";
 };
 
-/** Etiqueta del club anfitrión en esta vista de ranking (no genérico "Local"). */
-function homeClubLabelForRankingView(
-  viewingOrganizadorId: string | null | undefined,
-  jugador: RivieraJugadorWithStats
-): string {
-  const viewOrg = viewingOrganizadorId?.trim();
-  if (viewOrg) return getOrganizerDisplayNameSync(viewOrg);
-
-  const homeOrg = jugador.organizador_id?.trim();
-  if (homeOrg) return getOrganizerDisplayNameSync(homeOrg);
-
-  return getOrganizerDisplayNameSync(null);
-}
-
 export function simpleJugadorPuntosDisplay(
   jugador: RivieraJugadorWithStats,
-  hasOrgContext = false
+  hasOrgContext = false,
+  viewingOrganizadorId?: string | null
 ): number {
+  if (jugador.careerPuntosByClub && jugador.careerPuntosByClub.length > 0) {
+    const viewOrg = viewingOrganizadorId?.trim();
+    if (hasOrgContext && viewOrg) {
+      const local = jugador.careerPuntosByClub.find(
+        (entry) => entry.organizadorId === viewOrg
+      );
+      if (local) return local.puntos;
+    }
+    if (jugador.careerPuntosTotal != null && Number.isFinite(jugador.careerPuntosTotal)) {
+      return jugador.careerPuntosTotal;
+    }
+    return jugador.careerPuntosByClub.reduce((sum, entry) => sum + entry.puntos, 0);
+  }
+
   return hasOrgContext
     ? rankingPuntosInternoClubDisplay(jugador)
     : rankingPuntosGlobalDisplay(jugador);
 }
 
+function careerResultFromJugador(
+  jugador: RivieraJugadorWithStats
+): CareerPointsByClubResult | null {
+  if (!jugador.careerPuntosByClub || jugador.careerPuntosByClub.length === 0) {
+    return null;
+  }
+
+  const puntosByOrg = new Map(
+    jugador.careerPuntosByClub.map((entry) => [entry.organizadorId, entry.puntos])
+  );
+  const total =
+    jugador.careerPuntosTotal ??
+    jugador.careerPuntosByClub.reduce((sum, entry) => sum + entry.puntos, 0);
+
+  return {
+    byClub: jugador.careerPuntosByClub,
+    total,
+    puntosByOrg,
+  };
+}
+
+function buildLinesFromCareer(
+  career: CareerPointsByClubResult,
+  viewingOrganizadorId: string | null | undefined,
+  options?: { localPuntos?: number; profileCard?: boolean }
+): JugadorPuntosBreakdownLine[] {
+  const viewOrg = viewingOrganizadorId?.trim() || null;
+  const byClub = [...career.byClub];
+  if (viewOrg && !byClub.some((entry) => entry.organizadorId === viewOrg)) {
+    byClub.push({ organizadorId: viewOrg, puntos: 0 });
+  }
+
+  const displayCareer: CareerPointsByClubResult = {
+    ...career,
+    byClub,
+    puntosByOrg: new Map([
+      ...Array.from(career.puntosByOrg.entries()),
+      ...(viewOrg && !career.puntosByOrg.has(viewOrg)
+        ? [[viewOrg, 0] as const]
+        : []),
+    ]),
+  };
+
+  const shouldShow =
+    options?.profileCard ||
+    shouldShowCareerPointsBreakdown(displayCareer, viewOrg, {
+      localPuntos: options?.localPuntos,
+    });
+
+  if (!shouldShow) return [];
+
+  const sorted = sortCareerClubsForDisplay(byClub, viewOrg);
+  const lines: JugadorPuntosBreakdownLine[] = [];
+
+  for (const entry of sorted) {
+    if (entry.puntos <= 0 && entry.organizadorId !== viewOrg) continue;
+    lines.push({
+      key: entry.organizadorId,
+      clubLabel: getOrganizerDisplayNameSync(entry.organizadorId),
+      puntos: entry.puntos,
+      role: entry.organizadorId === viewOrg ? "home" : "other",
+    });
+  }
+
+  if (lines.length === 0) return [];
+
+  const clubsWithPoints = lines.filter((line) => line.role !== "total" && line.puntos > 0);
+  if (clubsWithPoints.length === 1 && career.total === clubsWithPoints[0]!.puntos) {
+    return [];
+  }
+
+  lines.push({
+    key: "total",
+    clubLabel: "Total",
+    puntos: career.total,
+    role: "total",
+  });
+
+  return lines;
+}
+
 /**
- * Líneas compactas: otros clubes → club de esta vista → Total.
- * Vacío = un solo número en UI.
+ * Desglose de puntos por club desde carrera global (Riviera ID).
  */
 export function buildJugadorPuntosBreakdown(
   jugador: RivieraJugadorWithStats,
   viewingOrganizadorId: string | null | undefined,
-  options: { hasOrgContext?: boolean } = {}
+  options: { hasOrgContext?: boolean; profileCard?: boolean } = {}
 ): JugadorPuntosBreakdownLine[] {
   const viewOrg = viewingOrganizadorId?.trim() || null;
-  const hasOrgContext = options.hasOrgContext ?? Boolean(viewOrg);
-  const homeOrg = jugador.organizador_id?.trim() || null;
-  const grantees = jugador.multiclubGranteePuntos ?? [];
-  const clubLocalPts = rankingPuntosInternoClubDisplay(jugador);
-  const totalRiviera = rankingPuntosGlobalDisplay(jugador);
-  const homeClubLabel = homeClubLabelForRankingView(viewOrg, jugador);
+  const localPuntos = rankingPuntosInternoClubDisplay(jugador);
+  const career = careerResultFromJugador(jugador);
 
-  if (
-    hasOrgContext &&
-    viewOrg &&
-    isNativeMulticlubHomeRankingDisplay(jugador, viewOrg) &&
-    grantees.length > 0
-  ) {
-    const homePts = jugador.stats?.puntos_totales ?? 0;
-    const lines: JugadorPuntosBreakdownLine[] = [];
-
-    for (const grantee of grantees) {
-      if (grantee.puntosTotales <= 0) continue;
-      lines.push({
-        key: grantee.organizadorId,
-        clubLabel: getOrganizerDisplayNameSync(grantee.organizadorId),
-        puntos: grantee.puntosTotales,
-        role: "other",
-      });
-    }
-
-    if (homePts > 0) {
-      lines.push({
-        key: viewOrg,
-        clubLabel: homeClubLabel,
-        puntos: homePts,
-        role: "home",
-      });
-    }
-
-    lines.push({
-      key: "total",
-      clubLabel: "Total",
-      puntos: nativeMulticlubCareerPuntosTotal(jugador),
-      role: "total",
+  if (career) {
+    const lines = buildLinesFromCareer(career, viewOrg, {
+      localPuntos,
+      profileCard: options.profileCard,
     });
-
-    return lines;
+    if (lines.length > 0) return lines;
   }
 
-  if (hasDualRankingConcedido(jugador) && hasOrgContext) {
-    const origenId = resolveOrigenConcedidoOrganizadorId(jugador);
-    const origenPts = rankingPuntosOrigenConcedido(jugador);
-    const lines: JugadorPuntosBreakdownLine[] = [];
-
-    if (origenId && origenPts > 0 && origenId !== viewOrg) {
-      lines.push({
-        key: origenId,
-        clubLabel: getOrganizerDisplayNameSync(origenId),
-        puntos: origenPts,
-        role: "other",
-      });
-    }
-
-    if (clubLocalPts > 0 || viewOrg) {
-      lines.push({
-        key: viewOrg ?? homeOrg ?? "local",
-        clubLabel: homeClubLabel,
-        puntos: clubLocalPts,
-        role: "home",
-      });
-    }
-
-    if (lines.length > 0) {
-      lines.push({
-        key: "total",
-        clubLabel: "Total",
-        puntos: totalRiviera,
-        role: "total",
-      });
-    }
-
-    return lines.length > 1 ? lines : [];
-  }
-
-  if (
-    hasOrgContext &&
-    jugador.officialPuntosGlobal != null &&
-    jugador.officialPuntosGlobal !== clubLocalPts
-  ) {
-    const lines: JugadorPuntosBreakdownLine[] = [];
-
-    if (clubLocalPts > 0) {
-      lines.push({
-        key: viewOrg ?? homeOrg ?? "local",
-        clubLabel: homeClubLabel,
-        puntos: clubLocalPts,
-        role: "home",
-      });
-    }
-
-    lines.push({
-      key: "total",
-      clubLabel: "Total",
-      puntos: jugador.officialPuntosGlobal,
-      role: "total",
-    });
-
-    return lines;
-  }
-
-  if (hasOrgContext && clubLocalPts > 0 && totalRiviera > clubLocalPts) {
-    return [
-      { key: viewOrg ?? homeOrg ?? "local", clubLabel: homeClubLabel, puntos: clubLocalPts, role: "home" },
-      { key: "total", clubLabel: "Total", puntos: totalRiviera, role: "total" },
-    ];
-  }
+  if (options.profileCard) return [];
 
   return [];
 }

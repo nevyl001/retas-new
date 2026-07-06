@@ -1,17 +1,19 @@
 import { supabasePublicRead } from "../supabaseClient";
 import {
-  buildMulticlubGranteePuntosFromParticipaciones,
-} from "./nativeMulticlubHomeView";
+  attachCareerPuntosToJugador,
+  buildJugadorHomeOrgMapFromParticipaciones,
+  careerFieldsFromResult,
+  computeCareerPointsByClubFromParticipaciones,
+} from "./careerPointsByClub";
+import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
 import {
   enrichParticipacionesOrganizadorFromEvents,
 } from "./participacionesOrganizadorScope";
-import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 /**
- * Enriquece filas del ranking con líneas multiclub para display.
+ * Enriquece filas del ranking con carrera global por club.
  * NO recalcula stats.puntos_totales — el ranking ordena con jugador_stats de BD.
- * Usa RPC de carrera pública para que anon vea el mismo desglose que authenticated.
  */
 export async function enrichJugadoresOrganizerScopedStats(
   organizadorId: string,
@@ -25,22 +27,28 @@ export async function enrichJugadoresOrganizerScopedStats(
     .map((j) => j.id)
     .filter(Boolean);
 
-  if (nativeIds.length === 0) return jugadores;
+  if (nativeIds.length === 0) {
+    return Promise.all(
+      jugadores.map((j) => attachCareerPuntosToJugador(j))
+    );
+  }
 
-  const enrichedByJugador = new Map<string, JugadorParticipacion[]>();
+  const enrichedByJugador = new Map<
+    string,
+    ReturnType<typeof computeCareerPointsByClubFromParticipaciones>
+  >();
 
   await Promise.all(
     nativeIds.map(async (jid) => {
-      let rows: JugadorParticipacion[] | null =
-        await listCareerParticipacionesPublic(jid, 200);
+      let rows = await listCareerParticipacionesPublic(jid, 500);
 
-      if (!rows) {
+      if (!rows?.length) {
         const { data, error } = await supabasePublicRead
           .from("jugador_participaciones")
           .select("*")
           .eq("jugador_id", jid)
           .order("fecha", { ascending: false })
-          .limit(200);
+          .limit(500);
 
         if (error) {
           console.warn(
@@ -52,37 +60,35 @@ export async function enrichJugadoresOrganizerScopedStats(
         rows = (data ?? []) as JugadorParticipacion[];
       }
 
-      if (rows.length === 0) return;
+      if (!rows.length) return;
 
+      const enriched = await enrichParticipacionesOrganizadorFromEvents(rows);
+      const homeMap = await buildJugadorHomeOrgMapFromParticipaciones(
+        enriched,
+        [jid]
+      );
       enrichedByJugador.set(
         jid,
-        await enrichParticipacionesOrganizadorFromEvents(rows)
+        computeCareerPointsByClubFromParticipaciones(enriched, {
+          jugadorHomeOrgById: homeMap,
+        })
       );
     })
   );
 
-  return jugadores.map((j) => {
-    const homeOrg = j.organizador_id?.trim();
-    if (homeOrg !== org || j.concedidoPorAdmin) return j;
+  return Promise.all(
+    jugadores.map(async (j) => {
+      const homeOrg = j.organizador_id?.trim();
+      if (homeOrg === org && !j.concedidoPorAdmin) {
+        const career = enrichedByJugador.get(j.id);
+        if (!career) return j;
+        return {
+          ...j,
+          ...careerFieldsFromResult(j, career, homeOrg),
+        };
+      }
 
-    const rows = enrichedByJugador.get(j.id) ?? [];
-    const multiclubGranteePuntos = buildMulticlubGranteePuntosFromParticipaciones(
-      j.id,
-      rows,
-      homeOrg
-    );
-    if (multiclubGranteePuntos.length === 0) return j;
-
-    const homePts = j.stats?.puntos_totales ?? 0;
-    const granteePts = multiclubGranteePuntos.reduce(
-      (sum, g) => sum + g.puntosTotales,
-      0
-    );
-
-    return {
-      ...j,
-      multiclubGranteePuntos,
-      officialPuntosGlobal: homePts + granteePts,
-    };
-  });
+      return attachCareerPuntosToJugador(j);
+    })
+  );
 }

@@ -133,6 +133,13 @@ export interface RivieraJugadorWithStats extends RivieraJugador {
     localJugadorId: string;
     puntosTotales: number;
   }>;
+  /** Puntos por club desde carrera global (Riviera ID). */
+  careerPuntosByClub?: Array<{
+    organizadorId: string;
+    puntos: number;
+  }>;
+  /** Total de carrera sumando todos los clubes. */
+  careerPuntosTotal?: number;
 }
 
 export interface RatingHistorialEntry {

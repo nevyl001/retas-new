@@ -9,6 +9,8 @@ type JugadorPuntosBreakdownProps = {
   jugador: RivieraJugadorWithStats;
   clubOrganizadorId: string | null;
   hasOrgContext?: boolean;
+  /** Card de perfil público: siempre usa careerPuntosByClub, sin fallback local. */
+  profileCard?: boolean;
   className?: string;
 };
 
@@ -16,14 +18,20 @@ export const JugadorPuntosBreakdown: React.FC<JugadorPuntosBreakdownProps> = ({
   jugador,
   clubOrganizadorId,
   hasOrgContext = false,
+  profileCard = false,
   className = "",
 }) => {
   const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
     hasOrgContext,
+    profileCard,
   });
 
   if (lines.length === 0) {
-    const pts = simpleJugadorPuntosDisplay(jugador, hasOrgContext);
+    const pts = simpleJugadorPuntosDisplay(
+      jugador,
+      hasOrgContext,
+      clubOrganizadorId
+    );
     return (
       <span className={`rjp-ficha-stat__val${className ? ` ${className}` : ""}`}>
         {pts.toLocaleString("es-MX")}

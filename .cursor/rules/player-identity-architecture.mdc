@@ -1,0 +1,33 @@
+---
+description: Arquitectura congelada de identidad de jugador (Riviera ID primero). Revisar antes de tocar jugadores, ranking, historial, puntos o fichas públicas.
+globs: src/lib/rivieraJugadores/**/*,src/components/jugadores/**/*,supabase/riviera-player*.sql,supabase/riviera-career*.sql
+alwaysApply: false
+---
+
+# Player Identity Architecture (CONGELADA)
+
+Lee **`docs/ARCHITECTURE-PLAYER-IDENTITY.md`** antes de modificar código en este ámbito.
+
+## Regla innegociable
+
+Identidad global primero (Riviera ID) → carrera/historial/puntos/rating globales → club solo contexto (branding + ranking local).
+
+**Nunca** org-first. **Nunca** duplicar lógica de identidad fuera de `PlayerIdentityService`.
+
+## Servicios oficiales
+
+- `resolve_public_player_identity()` (SQL)
+- `PlayerIdentityService` / `resolvePlayerIdentity()`
+- `getPublicPlayerProfileData()`
+
+## Si el cambio rompe la arquitectura
+
+Corregir el **motor**, no parchear el componente. Es bug crítico.
+
+## Antes de cerrar
+
+```bash
+npm run verify:public-player
+```
+
+Validar Sebastian, Terry, David R. Debug: `/admin/dev/player-debug`.

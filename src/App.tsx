@@ -106,6 +106,11 @@ const AdminUserManagePage = lazy(() =>
     default: module.AdminUserManagePage,
   }))
 );
+const AdminPlayerDebugPage = lazy(() =>
+  import("./components/admin/AdminPlayerDebugPage").then((module) => ({
+    default: module.AdminPlayerDebugPage,
+  }))
+);
 const PublicTournamentView = lazy(
   () => import("./components/PublicTournamentView")
 );
@@ -203,7 +208,7 @@ function AppContent() {
     if (
       !adminLoading &&
       !isAdminLoggedIn &&
-      (currentView === "admin-dashboard" || currentView === "admin-user")
+      (currentView === "admin-dashboard" || currentView === "admin-user" || currentView === "admin-dev-player-debug")
     ) {
       window.history.replaceState({}, "", "/");
       setCurrentView("main");
@@ -975,6 +980,20 @@ function AppContent() {
             >
               <AdminDashboard />
             </AdminRoute>
+            </Suspense>
+          </ErrorBoundary>
+        )}
+        {currentView === "admin-dev-player-debug" && (
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminRoute
+                onUnauthorized={() => {
+                  window.history.replaceState({}, "", "/");
+                  setCurrentView("main");
+                }}
+              >
+                <AdminPlayerDebugPage />
+              </AdminRoute>
             </Suspense>
           </ErrorBoundary>
         )}

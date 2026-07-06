@@ -335,21 +335,21 @@ export async function resolveLinkedJugadorIds(
   participaciones: JugadorParticipacion[] = [],
   options?: { skipRomcLegacy?: boolean }
 ): Promise<string[]> {
-  if (jugador.grantedAccess?.sourceJugadorId?.trim()) {
-    const ids = new Set<string>();
-    const sourceId = jugador.grantedAccess.sourceJugadorId.trim();
-    ids.add(jugador.id.trim());
-    ids.add(sourceId);
+  // GUARD: siempre carrera/discovery primero — nunca reemplazar por rama grant sola.
+  const anchor =
+    jugador.grantedAccess?.sourceJugadorId?.trim() || jugador.id.trim();
+  const ids = new Set(await discoverLinkedJugadorIds(anchor, participaciones, options));
+  ids.add(jugador.id.trim());
 
-    const localClones = await listGrantedLocalJugadorIdsForSource(sourceId);
-    for (const localId of localClones) {
+  const sourceId = jugador.grantedAccess?.sourceJugadorId?.trim();
+  if (sourceId) {
+    ids.add(sourceId);
+    for (const localId of await listGrantedLocalJugadorIdsForSource(sourceId)) {
       ids.add(localId);
     }
-
-    return Array.from(ids);
   }
 
-  return discoverLinkedJugadorIds(jugador.id, participaciones, options);
+  return Array.from(ids);
 }
 
 function pickCanonicalJugadorId(

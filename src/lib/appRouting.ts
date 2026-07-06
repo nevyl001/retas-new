@@ -20,6 +20,7 @@ export type AppView =
   | "admin-login"
   | "admin-dashboard"
   | "admin-user"
+  | "admin-dev-player-debug"
   | "legal";
 
 export function normalizeAppPathname(pathname: string): string {
@@ -89,6 +90,7 @@ export function resolveAppViewFromPath(pathname: string): AppView {
   if (currentPath === "/admin-login") return "admin-login";
   if (/^\/admin-dashboard\/usuario\/[^/]+$/i.test(currentPath)) return "admin-user";
   if (currentPath === "/admin-dashboard") return "admin-dashboard";
+  if (currentPath === "/admin/dev/player-debug") return "admin-dev-player-debug";
   if (currentPath === "/americano-dinamico") return "americano-dinamico";
   if (currentPath.startsWith("/liga") || /^\/public\/liga\//i.test(currentPath))
     return "liga";
@@ -135,6 +137,7 @@ export function pathRequiresUserSession(pathname: string): boolean {
     return false;
   }
   if (path === "/admin-login" || path === "/admin-dashboard") return false;
+  if (path === "/admin/dev/player-debug") return false;
   if (path === "/auth/callback") return false;
   if (path === "/auth/reset-password") return false;
   if (path === "/privacidad-terminos") return false;
