@@ -237,6 +237,22 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       setGames(gamesData || []);
       setLastUpdate(new Date());
 
+      const orgId =
+        typeof t?.user_id === "string" && t.user_id.trim()
+          ? t.user_id.trim()
+          : null;
+      if (orgId && pairsData.length > 0) {
+        const pairPlayers = await resolvePublicRetaTournamentPairPlayers(
+          orgId,
+          tournamentId,
+          pairsData,
+          { publicOnly: true }
+        );
+        setPairPlayersByPairId(pairPlayers);
+      } else {
+        setPairPlayersByPairId({});
+      }
+
       console.log("🔄 Vista pública actualizada:", new Date().toLocaleTimeString());
 
       const champCfg: RoundRobinChampionshipConfig | null =
@@ -344,25 +360,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     return () => clearInterval(interval);
   }, [tournamentId, loadTournamentData]);
 
-  useEffect(() => {
-    if (!organizadorId || pairs.length === 0 || !tournamentId) {
-      setPairPlayersByPairId({});
-      return;
-    }
-    let cancelled = false;
-    void resolvePublicRetaTournamentPairPlayers(
-      organizadorId,
-      tournamentId,
-      pairs,
-      { publicOnly: true }
-    ).then((map) => {
-      if (!cancelled) setPairPlayersByPairId(map);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [organizadorId, tournamentId, pairs]);
-
   const formatPairLabel = useCallback(
     (pairId: string): string => {
       const resolved = pairPlayersByPairId[pairId];
@@ -388,13 +385,13 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           id: pair.player1_id,
           name: pairPlayer1DisplayName(pair),
           fotoUrl: null,
-          rating: 3,
+          rating: null,
         },
         {
           id: pair.player2_id,
           name: pairPlayer2DisplayName(pair),
           fotoUrl: null,
-          rating: 3,
+          rating: null,
         },
       ];
     },

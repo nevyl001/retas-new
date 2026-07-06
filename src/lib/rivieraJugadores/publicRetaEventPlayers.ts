@@ -5,9 +5,11 @@ import {
   pairPlayer2DisplayName,
 } from "../pairPlayerNames";
 import {
-  resolvePlayerPublicProfiles,
-  type PlayerPublicProfile,
-} from "./publicPlayerAvatars";
+  collectPublicPlayerRefsFromPairs,
+  getPublicPlayersIdentityMap,
+  publicIdentityToResolvedRating,
+  type PublicPlayerIdentity,
+} from "./publicPlayersIdentity";
 
 export type RetaEventPlayerRow = {
   jugadorId: string;
@@ -28,8 +30,6 @@ export type PublicRetaResolvedPlayer = {
   /** true cuando el jugador proviene de participaciones del evento (no snapshot de pairs) */
   fromParticipacion: boolean;
 };
-
-const DEFAULT_PROFILE: PlayerPublicProfile = { fotoUrl: null, rating: 3 };
 
 function indexEventPlayersByLegacyId(
   players: RetaEventPlayerRow[]
@@ -377,49 +377,31 @@ export async function fetchRetaEventParticipacionPlayers(
   return fetchRetaEventPlayersFromTable(org, eventoId);
 }
 
-function isDefaultRatingValue(rating: number): boolean {
-  return rating === DEFAULT_PROFILE.rating;
-}
-
-function profileFromEventRow(
-  row: RetaEventPlayerRow | null,
-  canonical: PlayerPublicProfile | undefined
-): PlayerPublicProfile {
-  if (!row) return { ...DEFAULT_PROFILE };
-
-  const rowRating =
-    row.rating != null && Number.isFinite(row.rating) ? row.rating : null;
-
-  let rating = rowRating ?? canonical?.rating ?? DEFAULT_PROFILE.rating;
-  if (
-    rowRating != null &&
-    canonical?.rating != null &&
-    isDefaultRatingValue(rowRating) &&
-    !isDefaultRatingValue(canonical.rating)
-  ) {
-    rating = canonical.rating;
-  }
-
-  return {
-    fotoUrl: row.fotoUrl ?? canonical?.fotoUrl ?? null,
-    rating,
-  };
-}
-
 function toResolvedPlayer(
-  row: RetaEventPlayerRow | null,
-  profile: PlayerPublicProfile,
-  fallbackLegacyId: string,
-  fallbackName: string
-): PublicRetaResolvedPlayer | null {
-  if (!row) return null;
-  const legacyId = row.legacyPlayerId.trim() || fallbackLegacyId;
+  legacyId: string,
+  fallbackName: string,
+  identity: PublicPlayerIdentity | undefined,
+  eventRow: RetaEventPlayerRow | null
+): PublicRetaResolvedPlayer {
+  const name =
+    eventRow?.nombre.trim() ||
+    identity?.nombre.trim() ||
+    fallbackName;
+  const fotoUrl =
+    (eventRow?.fotoUrl?.trim() || null) ??
+    identity?.fotoUrl ??
+    null;
+  const rating = publicIdentityToResolvedRating(
+    identity,
+    eventRow?.rating ?? null
+  );
+
   return {
     id: legacyId,
-    name: row.nombre.trim() || fallbackName,
-    fotoUrl: profile.fotoUrl,
-    rating: profile.rating,
-    fromParticipacion: true,
+    name,
+    fotoUrl,
+    rating,
+    fromParticipacion: Boolean(eventRow),
   };
 }
 
@@ -430,10 +412,15 @@ export async function resolvePublicRetaTournamentPairPlayers(
   organizadorId: string,
   tournamentId: string,
   pairs: Pair[],
-  opts?: { publicOnly?: boolean }
+  _opts?: { publicOnly?: boolean }
 ): Promise<Record<string, PublicRetaResolvedPlayer[]>> {
   const result: Record<string, PublicRetaResolvedPlayer[]> = {};
   if (!organizadorId.trim() || pairs.length === 0) return result;
+
+  const identityMap = await getPublicPlayersIdentityMap(
+    organizadorId,
+    collectPublicPlayerRefsFromPairs(pairs)
+  );
 
   const eventPlayers = await fetchRetaEventParticipacionPlayers(
     organizadorId,
@@ -447,60 +434,27 @@ export async function resolvePublicRetaTournamentPairPlayers(
     fromMetadata
   );
 
-  const assignedRows = new Map<string, RetaEventPlayerRow>();
-  for (const slots of Array.from(assignedByPairId.values())) {
-    for (const row of slots) {
-      if (!row?.legacyPlayerId) continue;
-      assignedRows.set(row.legacyPlayerId, row);
-    }
-  }
-
-  let canonicalProfiles: Record<string, PlayerPublicProfile> = {};
-  if (assignedRows.size > 0) {
-    canonicalProfiles =
-      (await resolvePlayerPublicProfiles(
-        organizadorId,
-        Array.from(assignedRows.values()).map((row) => ({
-          id: row.legacyPlayerId,
-          name: row.nombre,
-        })),
-        opts
-      )) ?? {};
-  }
-
   for (const pair of pairs) {
     const assigned = assignedByPairId.get(pair.id) ?? [null, null];
-    const [row1, row2] = assigned;
+    const [assigned1, assigned2] = assigned;
 
-    if (!row1 || !row2) {
-      continue;
-    }
-
-    const profile1 = profileFromEventRow(
-      row1,
-      canonicalProfiles[row1.legacyPlayerId]
-    );
-    const profile2 = profileFromEventRow(
-      row2,
-      canonicalProfiles[row2.legacyPlayerId]
-    );
+    const legacy1 = pair.player1_id.trim();
+    const legacy2 = pair.player2_id.trim();
 
     const player1 = toResolvedPlayer(
-      row1,
-      profile1,
-      pair.player1_id,
-      pairPlayer1DisplayName(pair)
+      legacy1,
+      pairPlayer1DisplayName(pair),
+      identityMap.get(legacy1),
+      assigned1
     );
     const player2 = toResolvedPlayer(
-      row2,
-      profile2,
-      pair.player2_id,
-      pairPlayer2DisplayName(pair)
+      legacy2,
+      pairPlayer2DisplayName(pair),
+      identityMap.get(legacy2),
+      assigned2
     );
 
-    if (player1 && player2) {
-      result[pair.id] = [player1, player2];
-    }
+    result[pair.id] = [player1, player2];
   }
 
   return result;

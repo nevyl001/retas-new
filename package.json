@@ -25,6 +25,7 @@
     "test:career-integrity": "react-scripts test --watchAll=false --testPathPattern=orphanCareerProfileIntegrity.test.ts",
     "audit:career-integrity": "node scripts/audit-career-integrity.mjs",
     "audit:event-parent-integrity": "node scripts/audit-event-parent-integrity.mjs",
+    "audit:public-event-hydration": "node scripts/audit-public-event-player-hydration.mjs",
     "diagnose:career-host": "node scripts/diagnose-career-event-host-organizer.mjs",
     "verify:career-integrity": "npm run test:career-pipeline && npm run test:player-points && npm run test:career-integrity && npm run test:career-integrity-strict && npm run audit:career-integrity -- --offline && npm run verify:public-player",
     "test:career-integrity-strict": "react-scripts test --watchAll=false --testPathPattern=careerIntegrity.strict.test.ts",
