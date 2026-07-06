@@ -367,15 +367,22 @@
   align-items: stretch;
 }
 
+.duelo2v2-pair-builder--complete .duelo2v2-pairs-row {
+  margin-bottom: 0;
+}
+
 .duelo2v2-pairs-submit {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.75rem;
-  margin-top: -0.25rem;
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.duelo2v2-pairs-submit button {
+.duelo2v2-pairs-submit .riviera-btn-primary,
+.duelo2v2-pairs-submit .rv-button-primary {
   min-width: 200px;
 }
 

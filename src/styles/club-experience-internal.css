@@ -319,6 +319,25 @@
   color: var(--brand-accent);
 }
 
+/* —— Duelo 2v2 nuevo: parejas listas —— */
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-pair-builder--complete .duelo2v2-pairs-submit {
+  border-top-color: color-mix(in srgb, var(--brand-accent) 22%, rgba(255, 255, 255, 0.08));
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-pairs-submit .riviera-btn-primary,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-pairs-submit .rv-button-primary,
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-roster__selection-actions .riviera-btn-primary {
+  background: var(--brand-accent);
+  color: #000000;
+  border-color: var(--brand-accent);
+}
+
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-pairs-submit .riviera-btn-primary:hover:not(:disabled),
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-pairs-submit .rv-button-primary:hover:not(:disabled),
+[data-club="hack-padel"] .duelo2v2-page:not(.duelo2v2-page--public) .duelo2v2-roster__selection-actions .riviera-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
 /* —— Americano gestión —— */
 [data-club="hack-padel"] .americano-screen .rv-mode-header__eyebrow,
 [data-club="hack-padel"] .americano-screen .americano-tournament-banner .rv-mode-header__eyebrow {

@@ -116,7 +116,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   }, [jugadores, filter]);
 
   const nextPairSlot = !pairA ? "a" : !pairB ? "b" : null;
-  const pairsComplete = nextPairSlot === null;
+  const pairsComplete = bothPairsReady(pairA, pairB);
 
   const handleClearPairA = () => {
     onPairAChange(null);
@@ -154,18 +154,24 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   };
 
   return (
-    <section className="duelo2v2-pair-builder" aria-label="Agregar parejas">
+    <section
+      className={`duelo2v2-pair-builder${
+        pairsComplete ? " duelo2v2-pair-builder--complete" : ""
+      }`}
+      aria-label="Agregar parejas"
+      data-pairs-complete={pairsComplete ? "true" : "false"}
+    >
       <div className="duelo2v2-pairs-row">
         <PairCard label="Pareja 1" pair={pairA} onClear={handleClearPairA} />
         <div className="duelo2v2-vs duelo2v2-vs--large">VS</div>
         <PairCard label="Pareja 2" pair={pairB} onClear={handleClearPairB} />
       </div>
 
-      {pairsComplete && submitSlot ? (
-        <div className="duelo2v2-pairs-submit">{submitSlot}</div>
-      ) : null}
-
-      {!pairsComplete ? (
+      {pairsComplete ? (
+        submitSlot ? (
+          <div className="duelo2v2-pairs-submit">{submitSlot}</div>
+        ) : null
+      ) : (
       <div className="duelo2v2-roster">
         <div className="duelo2v2-roster__head">
           <div>
@@ -272,7 +278,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
           </>
         )}
       </div>
-      ) : null}
+      )}
     </section>
   );
 };
