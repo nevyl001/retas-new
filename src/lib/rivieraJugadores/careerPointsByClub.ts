@@ -6,6 +6,10 @@ import {
   resolveParticipacionOrganizadorId,
 } from "./participacionesOrganizadorScope";
 import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
+import {
+  logRankingPointsAudit,
+  snapshotFromCareer,
+} from "./rankingPointsAudit";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 export type CareerClubPoints = {
@@ -259,10 +263,17 @@ export async function attachCareerPuntosToJugador(
 
   const homeOrg = jugador.organizador_id?.trim() ?? "";
 
-  return {
+  const enrichedJugador = {
     ...jugador,
     ...careerFieldsFromResult(jugador, career, homeOrg),
   };
+  logRankingPointsAudit(
+    "careerPointsByClub.attachCareerPuntosToJugador",
+    enrichedJugador,
+    snapshotFromCareer(career, options?.viewingOrganizadorId),
+    { linkedIds, participacionCount: rows.length }
+  );
+  return enrichedJugador;
 }
 
 export { careerFieldsFromResult };

@@ -53,6 +53,7 @@ import {
   enrichJugadorWithRivieraId,
   enrichJugadoresWithRivieraId,
 } from "./rivieraIdDisplay";
+import { logRankingPointsAuditFromJugador } from "./rankingPointsAudit";
 
 const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -1578,7 +1579,14 @@ function mapInternalClubJugadorRow(
     puntos_totales: Number(row.puntos_totales ?? 0),
     updated_at: String(row.stats_updated_at ?? row.updated_at ?? ""),
   };
-  return mapJugadorRowFromService({ ...row, stats });
+  const mapped = mapJugadorRowFromService({ ...row, stats });
+  logRankingPointsAuditFromJugador(
+    "rivieraJugadoresService.mapInternalClubJugadorRow (SQL RPC)",
+    mapped,
+    String(row.organizador_id ?? mapped.organizador_id ?? ""),
+    { statsPuntosTotales: stats.puntos_totales }
+  );
+  return mapped;
 }
 
 function mapSitioOficialRow(
@@ -1959,10 +1967,15 @@ export async function listInternalClubJugadoresRanking(
       options
     );
     const scoped = await enrichJugadoresOrganizerScopedStats(organizadorId, merged);
-    return enrichJugadoresWithRivieraId(
-      stripOfficialPuntosFromInternalClubRanking(scoped, organizadorId),
-      { publicRanking: true }
-    );
+    const stripped = stripOfficialPuntosFromInternalClubRanking(scoped, organizadorId);
+    for (const j of stripped) {
+      logRankingPointsAuditFromJugador(
+        "rivieraJugadoresService.listInternalClubJugadoresRanking (post-enrich)",
+        j,
+        organizadorId
+      );
+    }
+    return enrichJugadoresWithRivieraId(stripped, { publicRanking: true });
   }
 
   if (error && !isMissingTableError(error) && !isMissingRpcError(error)) {

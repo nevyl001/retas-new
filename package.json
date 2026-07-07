@@ -24,6 +24,7 @@
     "test:player-points": "react-scripts test --watchAll=false --testPathPattern=playerPointsBreakdown.test.ts",
     "test:career-integrity": "react-scripts test --watchAll=false --testPathPattern=orphanCareerProfileIntegrity.test.ts",
     "audit:career-integrity": "node scripts/audit-career-integrity.mjs",
+    "audit:ranking-points-daniel": "node scripts/audit-ranking-points-daniel.mjs",
     "audit:event-parent-integrity": "node scripts/audit-event-parent-integrity.mjs",
     "audit:public-event-hydration": "node scripts/audit-public-event-player-hydration.mjs",
     "diagnose:career-host": "node scripts/diagnose-career-event-host-organizer.mjs",

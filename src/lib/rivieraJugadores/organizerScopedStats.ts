@@ -3,6 +3,7 @@ import {
   breakdownFromCareerResult,
   careerResultFromJugador,
 } from "./playerPointsBreakdown";
+import { logRankingPointsAudit, snapshotFromBreakdown } from "./rankingPointsAudit";
 import type { RivieraJugadorWithStats } from "./types";
 
 /**
@@ -27,6 +28,12 @@ export async function enrichJugadoresOrganizerScopedStats(
       if (!career) return enriched;
 
       const breakdown = breakdownFromCareerResult(career, org);
+      logRankingPointsAudit(
+        "organizerScopedStats.enrichJugadoresOrganizerScopedStats",
+        enriched,
+        snapshotFromBreakdown(breakdown, org),
+        { viewingOrganizadorId: org }
+      );
       return {
         ...enriched,
         pointsBreakdown: breakdown,

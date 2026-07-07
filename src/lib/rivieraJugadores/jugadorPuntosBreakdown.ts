@@ -6,6 +6,11 @@ import {
 import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
 import { sortCareerClubsForDisplay } from "./careerPointsByClub";
 import { rankingPuntosInternoClubDisplay } from "./grantedRankingDisplay";
+import {
+  logRankingPointsAudit,
+  snapshotFromBreakdown,
+  snapshotFromDisplayLines,
+} from "./rankingPointsAudit";
 import type { RivieraJugadorWithStats } from "./types";
 
 export type JugadorPuntosBreakdownLine = {
@@ -89,10 +94,23 @@ export function buildJugadorPuntosBreakdown(
 
   if (career) {
     const breakdown = breakdownFromCareerResult(career, viewOrg);
+    logRankingPointsAudit(
+      "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (career)",
+      jugador,
+      snapshotFromBreakdown(breakdown, viewOrg),
+      { viewingOrganizadorId: viewOrg }
+    );
     const lines = breakdownToDisplayLines(breakdown, viewOrg, {
       forceBreakdown: Boolean(options.hasOrgContext || options.profileCard),
     });
-    if (lines.length > 0) return lines;
+    if (lines.length > 0) {
+      logRankingPointsAudit(
+        "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (display lines)",
+        jugador,
+        snapshotFromDisplayLines(lines, viewOrg)
+      );
+      return lines;
+    }
   }
 
   if (options.profileCard || options.hasOrgContext) {
@@ -102,14 +120,25 @@ export function buildJugadorPuntosBreakdown(
       viewingOrganizadorId
     );
     if (viewOrg) {
-      return [
+      const fallbackLines = [
         {
           key: viewOrg,
           clubLabel: getOrganizerDisplayNameSync(viewOrg),
           puntos: pts,
-          role: "home",
+          role: "home" as const,
         },
       ];
+      logRankingPointsAudit(
+        "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (FALLBACK stats→club)",
+        jugador,
+        { clubPoints: pts, rivieraPoints: 0, totalPoints: pts },
+        {
+          warning:
+            "career ausente — stats.puntos_totales etiquetado como club actual",
+          statsPuntosTotales: jugador.stats?.puntos_totales,
+        }
+      );
+      return fallbackLines;
     }
   }
 

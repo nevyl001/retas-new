@@ -3,6 +3,7 @@ import {
   buildJugadorPuntosBreakdown,
   simpleJugadorPuntosDisplay,
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
+import { logRankingPointsAuditFromJugador } from "../../lib/rivieraJugadores/rankingPointsAudit";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 
 type RankingPtsDisplayProps = {
@@ -24,6 +25,13 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
     hasOrgContext: internalClub,
   });
+
+  logRankingPointsAuditFromJugador(
+    "RankingPtsDisplay (React)",
+    jugador,
+    clubOrganizadorId,
+    { lineCount: lines.length }
+  );
 
   if (lines.length === 0) {
     const pts = simpleJugadorPuntosDisplay(jugador, internalClub);
