@@ -29,6 +29,7 @@ import {
 import { mergeJugadorStatsPuntosTotales } from "./rankingPosition";
 import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
 import {
+  getRivieraJugadorBySlug,
   getRivieraJugadorInternalClubById,
   getRivieraJugadorPublicById,
   getRivieraJugadorPublicBySlug,
@@ -113,6 +114,20 @@ export type GetPublicPlayerProfileInput = {
   ratingRpc?: RatingRpcFallbackOptions;
   historialLimit?: number;
   includeDebug?: boolean;
+};
+
+export type GetAdminPlayerProfileInput = {
+  organizadorId: string;
+  slug: string;
+  /** Perfil local del club (evita doble fetch si ya se resolvió). */
+  localJugador?: RivieraJugadorWithStats;
+  historialLimit?: number;
+  ratingRpc?: RatingRpcFallbackOptions;
+};
+
+export type AdminPlayerProfileData = PublicPlayerProfileData & {
+  /** Perfil local del club activo — id usado para edición y permisos admin. */
+  localJugador: RivieraJugadorWithStats;
 };
 
 type IdentityRpcRow = {
@@ -633,6 +648,65 @@ export async function getPublicPlayerProfileData(
     historialRating: ratingView.historial,
     career,
     debug,
+  };
+}
+
+/**
+ * Combina el perfil local del club (ediciones/permisos) con carrera global del motor de identidad.
+ * GUARD: historial, stats y rating provienen del mismo historialGlobal que la ficha pública.
+ */
+export function mergeLocalJugadorWithGlobalCareer(
+  localJugador: RivieraJugadorWithStats,
+  globalProfile: PublicPlayerProfileData
+): RivieraJugadorWithStats {
+  const globalJugador = globalProfile.jugador;
+  return {
+    ...localJugador,
+    riviera_id: globalJugador.riviera_id ?? localJugador.riviera_id,
+    rating: globalJugador.rating,
+    rating_partidos: globalJugador.rating_partidos,
+    rating_fiabilidad: globalJugador.rating_fiabilidad,
+    careerPuntosByClub: globalJugador.careerPuntosByClub,
+    careerPuntosTotal: globalJugador.careerPuntosTotal,
+    multiclubGranteePuntos: globalJugador.multiclubGranteePuntos,
+    ...(globalJugador.officialPuntosGlobal != null
+      ? { officialPuntosGlobal: globalJugador.officialPuntosGlobal }
+      : {}),
+    pointsBreakdown: globalJugador.pointsBreakdown,
+  };
+}
+
+/**
+ * Ficha admin — mismo motor global que la ficha pública.
+ * Resuelve identidad por official_player_key; el perfil local conserva id/slug del club.
+ */
+export async function getAdminPlayerProfileData(
+  params: GetAdminPlayerProfileInput
+): Promise<AdminPlayerProfileData | null> {
+  const org = params.organizadorId.trim();
+  const slug = params.slug.trim();
+  if (!org || !slug) return null;
+
+  const localJugador =
+    params.localJugador ?? (await getRivieraJugadorBySlug(org, slug));
+  if (!localJugador) return null;
+
+  const globalProfile = await getPublicPlayerProfileData({
+    playerId: localJugador.id,
+    viewingOrgId: org,
+    historialLimit: params.historialLimit ?? 100,
+    ratingRpc: params.ratingRpc,
+  });
+  if (!globalProfile) return null;
+
+  const jugador = mergeLocalJugadorWithGlobalCareer(localJugador, globalProfile);
+
+  return {
+    ...globalProfile,
+    jugador,
+    localJugador,
+    historialMain: globalProfile.historialGlobal,
+    historialOtrosClubes: [],
   };
 }
 

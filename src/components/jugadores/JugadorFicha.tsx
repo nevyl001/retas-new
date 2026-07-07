@@ -10,7 +10,7 @@ import {
 } from "../../lib/rivieraJugadores/constants";
 import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
 import { computePublicProfileStats } from "../../lib/rivieraJugadores/historialDisplay";
-import { loadOrganizerScopedPlayerView } from "../../lib/rivieraJugadores/playerClubDisplay";
+import { getAdminPlayerProfileData } from "../../lib/rivieraJugadores/getAdminPlayerProfileData";
 import {
   canDeleteGlobalPlayer,
   canRemovePlayerFromCurrentClub,
@@ -22,14 +22,12 @@ import {
   deleteParticipacionJugador,
   deleteRivieraJugador,
   getRivieraJugadorBySlug,
-  listParticipaciones,
-  listParticipacionesForOrganizador,
-  obtenerHistorialRating,
   updateRivieraJugador,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { uploadJugadorAvatar } from "../../lib/rivieraJugadores/uploadAvatar";
 import type {
   EnCancha,
+  JugadorParticipacion,
   ManoDominante,
   RatingHistorialEntry,
   RivieraJugadorCategoria,
@@ -57,12 +55,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const activeOrgId = organizadorId ?? user?.id ?? null;
   const [jugador, setJugador] = useState<RivieraJugadorWithStats | null>(null);
   const [tab, setTab] = useState<"historial" | "stats">("historial");
-  const [historial, setHistorial] = useState<
-    Awaited<ReturnType<typeof listParticipacionesForOrganizador>>
-  >([]);
-  const [historialOtrosClubes, setHistorialOtrosClubes] = useState<
-    Awaited<ReturnType<typeof listParticipacionesForOrganizador>>
-  >([]);
+  const [historial, setHistorial] = useState<JugadorParticipacion[]>([]);
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -103,15 +96,16 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         setFacebook(j.facebook_url ?? "");
         setTiktok(j.tiktok_url ?? "");
 
-        const scoped = await loadOrganizerScopedPlayerView(activeOrgId, j, {
-          listParticipaciones: listParticipacionesForOrganizador,
-          fetchParticipacionesRaw: listParticipaciones,
-          fetchHistorialRating: obtenerHistorialRating,
+        const profile = await getAdminPlayerProfileData({
+          organizadorId: activeOrgId,
+          slug,
+          localJugador: j,
         });
-        setHistorial(scoped.historial);
-        setHistorialOtrosClubes(scoped.historialOtrosClubes ?? []);
-        setHistorialRating(scoped.historialRating);
-        setJugador(scoped.jugador);
+        if (profile) {
+          setHistorial(profile.historialGlobal);
+          setHistorialRating(profile.historialRating);
+          setJugador(profile.jugador);
+        }
       }
     } finally {
       setLoading(false);
@@ -180,15 +174,16 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         jugador.id,
         participacionId
       );
-      const scoped = await loadOrganizerScopedPlayerView(user.id, jugador, {
-        listParticipaciones: listParticipacionesForOrganizador,
-        fetchParticipacionesRaw: listParticipaciones,
-        fetchHistorialRating: obtenerHistorialRating,
+      const profile = await getAdminPlayerProfileData({
+        organizadorId: user.id,
+        slug: jugador.slug,
+        localJugador: jugador,
       });
-      setHistorial(scoped.historial);
-      setHistorialOtrosClubes(scoped.historialOtrosClubes ?? []);
-      setHistorialRating(scoped.historialRating);
-      setJugador(scoped.jugador);
+      if (profile) {
+        setHistorial(profile.historialGlobal);
+        setHistorialRating(profile.historialRating);
+        setJugador(profile.jugador);
+      }
     } catch (e) {
       alert(
         e instanceof Error ? e.message : "No se pudo eliminar el registro"
@@ -249,8 +244,8 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   };
 
   const histStats = useMemo(
-    () => computePublicProfileStats([...historial, ...historialOtrosClubes]),
-    [historial, historialOtrosClubes]
+    () => computePublicProfileStats(historial),
+    [historial]
   );
   const partidosDecididos =
     histStats.partidosGanados + histStats.partidosPerdidos;
@@ -660,26 +655,13 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
         </div>
 
         {tab === "historial" && (
-          <>
-            <JugadorHistorialList
-              participaciones={historial}
-              categoriaFallback={jugador?.categoria}
-              variant="admin"
-              onDelete={isGrantedReadOnly ? undefined : handleDeleteParticipacion}
-              deletingId={deletingHistId}
-            />
-            {historialOtrosClubes.length > 0 ? (
-              <div style={{ marginTop: "1.25rem" }}>
-                <p className="rjp-ficha-historial__otros-label">Otros clubes</p>
-                <JugadorHistorialList
-                  participaciones={historialOtrosClubes}
-                  categoriaFallback={jugador?.categoria}
-                  variant="admin"
-                  showResumen={false}
-                />
-              </div>
-            ) : null}
-          </>
+          <JugadorHistorialList
+            participaciones={historial}
+            categoriaFallback={jugador?.categoria}
+            variant="admin"
+            onDelete={isGrantedReadOnly ? undefined : handleDeleteParticipacion}
+            deletingId={deletingHistId}
+          />
         )}
 
         {tab === "stats" && (

@@ -4,6 +4,8 @@
  */
 export {
   getPublicPlayerProfileData,
+  getAdminPlayerProfileData,
+  mergeLocalJugadorWithGlobalCareer,
   debugPlayerIdentity,
   resolvePlayerIdentity,
   resolvePlayerCareer,
@@ -27,7 +29,9 @@ export {
 
 export type {
   GetPublicPlayerProfileInput as GetPublicPlayerProfileDataParams,
+  GetAdminPlayerProfileInput,
   PublicPlayerProfileData,
+  AdminPlayerProfileData,
   PlayerIdentityInput,
   ResolvedPlayerIdentity,
   PlayerCareerBundle,
