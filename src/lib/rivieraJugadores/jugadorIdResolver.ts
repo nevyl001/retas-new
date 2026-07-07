@@ -335,11 +335,7 @@ export async function getOrCreateJugadorId(params: {
   }
 }
 
-/**
- * Resuelve el jugador operativo del organizador anfitrión antes de escribir
- * participaciones (incluye grants → local_jugador_id).
- */
-export async function resolveJugadorIdForParticipacion(params: {
+export type ResolveJugadorIdForParticipacionParams = {
   organizadorId: string;
   jugadorId?: string | null;
   nombre?: string;
@@ -348,7 +344,15 @@ export async function resolveJugadorIdForParticipacion(params: {
   email?: string | null;
   tipoEvento?: string;
   eventoId?: string;
-}): Promise<string | null> {
+};
+
+/**
+ * Resuelve el jugador operativo del organizador anfitrión antes de escribir
+ * participaciones (incluye grants → local_jugador_id).
+ */
+export async function resolveJugadorIdForParticipacion(
+  params: ResolveJugadorIdForParticipacionParams
+): Promise<string | null> {
   const organizadorId = params.organizadorId.trim();
   if (!organizadorId) return null;
 

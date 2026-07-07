@@ -93,6 +93,8 @@ export async function processCareerEvent(
 
   let syncResult: Awaited<ReturnType<typeof runCareerEventSync>> | null = null;
   let touchedJugadorIds: string[] = [];
+  let excludedFromPreClose: string[] = [];
+  let eventBlocked = false;
 
   if (!options.skipAssertions) {
     const preClose = await validateCareerEventPreClose(
@@ -106,14 +108,19 @@ export async function processCareerEvent(
           tipoEvento: input.kind,
         })
     );
-    if (!preClose.ok) {
-      failures.push(...preClose.failures);
-    }
+    failures.push(...preClose.failures);
+    excludedFromPreClose = preClose.excludedJugadorIds;
+    eventBlocked = preClose.eventBlocked;
   }
 
-  if (failures.length === 0) {
+  if (!eventBlocked) {
     try {
-      syncResult = await runCareerEventSync(input);
+      syncResult = await runCareerEventSync(input, {
+        excludeJugadorIds: excludedFromPreClose,
+      });
+      if (syncResult.syncFailures?.length) {
+        failures.push(...syncResult.syncFailures);
+      }
       if (syncResult.syncError) {
         failures.push({
           code: "sync_failed",
@@ -132,7 +139,7 @@ export async function processCareerEvent(
     await refreshJugadorStatsBatch(touchedJugadorIds);
   }
 
-  if (!options.skipAssertions && syncResult && failures.length === 0) {
+  if (!options.skipAssertions && syncResult && touchedJugadorIds.length > 0) {
     const assertionFailures = await assertCareerEventIntegrity({
       context: syncResult.context,
       touchedJugadorIds,
@@ -141,7 +148,9 @@ export async function processCareerEvent(
       ratingPartidoRefs:
         options.ratingPartidoRefs ?? defaultRatingPartidoRefs(input),
     });
-    failures.push(...assertionFailures);
+    if (assertionFailures?.length) {
+      failures.push(...assertionFailures);
+    }
   }
 
   clearOrganizerDisplayNameCache();
@@ -151,7 +160,10 @@ export async function processCareerEvent(
 
   const result: CareerEventPipelineResult = {
     ok,
-    processed: ok && Boolean(syncResult) && !syncResult?.syncError,
+    processed:
+      Boolean(syncResult) &&
+      !syncResult?.syncError &&
+      touchedJugadorIds.length > 0,
     context:
       syncResult?.context ?? {
         kind: input.kind,

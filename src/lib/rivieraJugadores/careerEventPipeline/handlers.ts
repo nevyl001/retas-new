@@ -6,6 +6,11 @@ export type CareerEventHandlerResult = {
   context: CareerEventContext;
   touchedJugadorIds: string[];
   syncError?: string;
+  syncFailures?: import("./types").CareerEventAssertionFailure[];
+};
+
+export type CareerEventSyncRunOptions = {
+  excludeJugadorIds?: string[];
 };
 
 /**
@@ -13,7 +18,8 @@ export type CareerEventHandlerResult = {
  * Delega en syncParticipaciones (única implementación de reglas por formato).
  */
 export async function runCareerEventSync(
-  input: FinalizeCareerEventInput
+  input: FinalizeCareerEventInput,
+  runOptions?: CareerEventSyncRunOptions
 ): Promise<CareerEventHandlerResult> {
   const {
     syncRetaParticipaciones,
@@ -28,9 +34,11 @@ export async function runCareerEventSync(
 
   const kind = input.kind;
   const organizadorId = input.organizadorId;
+  const excludeJugadorIds = runOptions?.excludeJugadorIds;
   let eventoId = "";
   let touchedJugadorIds: string[] = [];
   let syncError: string | undefined;
+  let syncFailures: import("./types").CareerEventAssertionFailure[] | undefined;
   let participacionEventoId: string | undefined;
 
   try {
@@ -42,9 +50,11 @@ export async function runCareerEventSync(
           tournament: input.tournament,
           pairs: input.pairs,
           matches: input.matches,
+          excludeJugadorIds,
         });
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
+        syncFailures = outcome.syncFailures;
         break;
       }
       case "duelo_2v2": {
@@ -52,9 +62,11 @@ export async function runCareerEventSync(
         const outcome = await syncDuelo2v2Participaciones({
           organizadorId,
           duelo: input.duelo,
+          excludeJugadorIds,
         });
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
+        syncFailures = outcome.syncFailures;
         break;
       }
       case "americano": {
@@ -64,20 +76,24 @@ export async function runCareerEventSync(
           input.nombre,
           input.roster,
           input.rounds,
-          organizadorId
+          organizadorId,
+          { excludeJugadorIds }
         );
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
+        syncFailures = outcome.syncFailures;
         break;
       }
       case "torneo_express": {
         eventoId = input.torneoId;
         const outcome = await syncTorneoExpressParticipaciones(
           input.torneoId,
-          organizadorId
+          organizadorId,
+          { excludeJugadorIds }
         );
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
+        syncFailures = outcome.syncFailures;
         break;
       }
       case "liga_jornada": {
@@ -85,18 +101,23 @@ export async function runCareerEventSync(
         const outcome = await syncLigaJornada(
           input.ligaId,
           input.jornadaNumero,
-          organizadorId
+          organizadorId,
+          { excludeJugadorIds }
         );
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
+        syncFailures = outcome.syncFailures;
         if (participacionEventoId) eventoId = participacionEventoId;
         break;
       }
       case "liga_podio": {
         eventoId = input.ligaId;
-        const outcome = await syncLigaFinalPodio(input.ligaId, organizadorId);
+        const outcome = await syncLigaFinalPodio(input.ligaId, organizadorId, {
+          excludeJugadorIds,
+        });
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
+        syncFailures = outcome.syncFailures;
         break;
       }
       case "liga_inscripcion": {
@@ -104,10 +125,12 @@ export async function runCareerEventSync(
         const outcome = await syncLigaInscripcionRanking(
           input.ligaId,
           input.jugadorId,
-          organizadorId
+          organizadorId,
+          { excludeJugadorIds }
         );
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
+        syncFailures = outcome.syncFailures;
         break;
       }
       default: {
@@ -142,5 +165,5 @@ export async function runCareerEventSync(
     tipoEvento: CAREER_EVENT_KIND_TO_TIPO[kind],
   };
 
-  return { context, touchedJugadorIds, syncError };
+  return { context, touchedJugadorIds, syncError, syncFailures };
 }

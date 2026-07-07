@@ -6,13 +6,19 @@ import {
 } from "../careerIntegrity";
 import { isValidRivieraId } from "../rivieraIdDisplay";
 import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
+import { careerAssertionFailureFromError } from "./careerEventPlayerSync";
 import type { CareerEventAssertionFailure, FinalizeCareerEventInput } from "./types";
 
 const LOG_PREFIX = "[career-event-pipeline:pre-close]";
 
 export type PreCloseValidationResult = {
+  /** true solo si el evento padre existe y el sync puede intentarse */
   ok: boolean;
   failures: CareerEventAssertionFailure[];
+  /** Jugadores que no pasaron integridad — excluidos del sync de este evento */
+  excludedJugadorIds: string[];
+  /** Fallo a nivel evento (padre ausente) — bloquea sync para todos */
+  eventBlocked: boolean;
 };
 
 async function assertParentEventExists(
@@ -244,32 +250,66 @@ export async function validateCareerEventPreClose(
   ) => Promise<string | null>
 ): Promise<PreCloseValidationResult> {
   const failures: CareerEventAssertionFailure[] = [];
+  const excludedJugadorIds: string[] = [];
   const org = input.organizadorId.trim();
 
   const parentFailure = await assertParentEventExists(input);
-  if (parentFailure) failures.push(parentFailure);
+  if (parentFailure) {
+    failures.push(parentFailure);
+    console.error(LOG_PREFIX, "pre-close event blocked", {
+      kind: input.kind,
+      failure: parentFailure,
+    });
+    return {
+      ok: false,
+      failures,
+      excludedJugadorIds,
+      eventBlocked: true,
+    };
+  }
 
   const refs = collectProspectiveJugadorRefs(input);
   const resolvedIds = new Set<string>();
 
   for (const ref of refs) {
-    const resolvedId = await resolveParticipant(ref, org);
+    let resolvedId: string | null = null;
+    try {
+      resolvedId = await resolveParticipant(ref, org);
+    } catch (error) {
+      failures.push(
+        careerAssertionFailureFromError(error, {
+          nombre: ref.nombre,
+          legacyPlayerId: ref.legacyPlayerId,
+          kind: input.kind,
+        })
+      );
+      continue;
+    }
     if (!resolvedId) continue;
     if (resolvedIds.has(resolvedId)) continue;
     resolvedIds.add(resolvedId);
 
     const playerFailure = await assertJugadorCareerIntegrity(resolvedId, org);
-    if (playerFailure) failures.push(playerFailure);
+    if (playerFailure) {
+      failures.push(playerFailure);
+      excludedJugadorIds.push(resolvedId);
+    }
   }
 
   if (failures.length > 0) {
-    console.error(LOG_PREFIX, "pre-close blocked", {
+    console.warn(LOG_PREFIX, "pre-close player exclusions", {
       kind: input.kind,
+      excludedCount: excludedJugadorIds.length,
       failures,
     });
   }
 
-  return { ok: failures.length === 0, failures };
+  return {
+    ok: true,
+    failures,
+    excludedJugadorIds,
+    eventBlocked: false,
+  };
 }
 
 export { CareerIntegrityException };

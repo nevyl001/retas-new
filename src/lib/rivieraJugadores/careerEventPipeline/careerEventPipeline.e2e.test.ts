@@ -31,6 +31,8 @@ jest.mock("./preCloseGuards", () => ({
   validateCareerEventPreClose: jest.fn().mockResolvedValue({
     ok: true,
     failures: [],
+    excludedJugadorIds: [],
+    eventBlocked: false,
   }),
 }));
 
@@ -196,6 +198,8 @@ describe("finalizeCareerEvent E2E", () => {
     (validateCareerEventPreClose as jest.Mock).mockResolvedValue({
       ok: true,
       failures: [],
+      excludedJugadorIds: [],
+      eventBlocked: false,
     });
   });
 

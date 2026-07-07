@@ -67,8 +67,13 @@ import { buildLigaJornadaPartidosDetalleByJugadorId } from "./buildLigaJornadaPa
 import {
   logMulticlubPhase21,
   prepareParticipacionIdentityForOrganizer,
-  resolveJugadorIdForParticipacion,
 } from "./jugadorIdResolver";
+import {
+  resolveJugadorForEventSync,
+  runPlayerParticipacionSync,
+  toExcludedJugadorIdSet,
+} from "./careerEventPipeline/careerEventPlayerSync";
+import type { CareerEventAssertionFailure } from "./careerEventPipeline/types";
 import { repairRetaPairLegacyPlayerIds } from "./repairRetaPairLegacyIds";
 import { isParticipacionExcluded } from "./participacionExclusions";
 import {
@@ -214,6 +219,12 @@ export type CareerEventSyncOutcome = {
   touchedJugadorIds: string[];
   /** evento_id en jugador_participaciones (puede diferir del id lógico del evento). */
   participacionEventoId?: string;
+  /** Fallos aislados por jugador durante el sync (no abortan al resto). */
+  syncFailures?: import("./careerEventPipeline/types").CareerEventAssertionFailure[];
+};
+
+export type CareerEventSyncOptions = {
+  excludeJugadorIds?: string[];
 };
 
 export async function collectJugadorIdsForCareerEvent(
@@ -722,8 +733,11 @@ async function syncRetaParticipacionesInner(params: {
   tournament: Tournament;
   pairs: Pair[];
   matches: Match[];
+  excludeJugadorIds?: string[];
 }): Promise<CareerEventSyncOutcome> {
   const { organizadorId, tournament, pairs, matches } = params;
+  const excluded = toExcludedJugadorIdSet(params.excludeJugadorIds);
+  const syncFailures: CareerEventAssertionFailure[] = [];
 
   try {
     await prepareParticipacionIdentityForOrganizer(organizadorId);
@@ -874,182 +888,195 @@ async function syncRetaParticipacionesInner(params: {
   const touchedJugadorIds = new Set<string>();
 
   for (const st of Array.from(agg.values())) {
-    const jugadorId = await resolveJugadorIdForParticipacion({
-      nombre: st.nombre,
-      organizadorId,
-      legacyPlayerId: st.legacyPlayerId,
-      email: st.email,
-      tipoEvento: "reta",
-      eventoId: tournament.id,
-    });
-    if (!jugadorId) {
-      console.warn("[riviera-jugadores] syncReta sin jugador resuelto:", {
-        retaId: tournament.id,
-        retaNombre: tournament.name,
-        nombre: st.nombre,
-        legacyPlayerId: st.legacyPlayerId,
-      });
-      continue;
-    }
-    touchedJugadorIds.add(jugadorId);
+    await runPlayerParticipacionSync(
+      syncFailures,
+      { nombre: st.nombre, legacyPlayerId: st.legacyPlayerId },
+      async () => {
+        const { jugadorId, failure } = await resolveJugadorForEventSync(
+          {
+            nombre: st.nombre,
+            organizadorId,
+            legacyPlayerId: st.legacyPlayerId,
+            email: st.email,
+            tipoEvento: "reta",
+            eventoId: tournament.id,
+          },
+          excluded
+        );
+        if (failure) {
+          syncFailures.push(failure);
+          return;
+        }
+        if (!jugadorId) {
+          console.warn("[riviera-jugadores] syncReta sin jugador resuelto:", {
+            retaId: tournament.id,
+            retaNombre: tournament.name,
+            nombre: st.nombre,
+            legacyPlayerId: st.legacyPlayerId,
+          });
+          return;
+        }
+        touchedJugadorIds.add(jugadorId);
 
-    const pair = pairs.find(
-      (p) =>
-        p.player1_id === st.legacyPlayerId || p.player2_id === st.legacyPlayerId
-    );
+        const pair = pairs.find(
+          (p) =>
+            p.player1_id === st.legacyPlayerId || p.player2_id === st.legacyPlayerId
+        );
 
-    if (st.legacyPlayerId) {
-      await repairRetaPairLegacyPlayerIds(
-        tournament.id,
-        st.legacyPlayerId,
-        jugadorId
-      );
-    }
+        if (st.legacyPlayerId) {
+          await repairRetaPairLegacyPlayerIds(
+            tournament.id,
+            st.legacyPlayerId,
+            jugadorId
+          );
+        }
 
-    const { data: jugadorRiviera } = await supabase
-      .from("riviera_jugadores")
-      .select("legacy_player_id, nombre")
-      .eq("id", jugadorId)
-      .maybeSingle();
+        const { data: jugadorRiviera } = await supabase
+          .from("riviera_jugadores")
+          .select("legacy_player_id, nombre")
+          .eq("id", jugadorId)
+          .maybeSingle();
 
-    const canonicalLegacyPlayerId =
-      jugadorRiviera?.legacy_player_id?.trim() || st.legacyPlayerId || null;
-    const pairSlot =
-      pair && st.legacyPlayerId
-        ? pair.player1_id === st.legacyPlayerId
-          ? 1
-          : pair.player2_id === st.legacyPlayerId
-            ? 2
-            : null
-        : null;
+        const canonicalLegacyPlayerId =
+          jugadorRiviera?.legacy_player_id?.trim() || st.legacyPlayerId || null;
+        const pairSlot =
+          pair && st.legacyPlayerId
+            ? pair.player1_id === st.legacyPlayerId
+              ? 1
+              : pair.player2_id === st.legacyPlayerId
+                ? 2
+                : null
+            : null;
 
-    const pairStats = pair
-      ? sortedPairs.find((p) => p.id === pair.id)
-      : undefined;
-    const rankRegular = pair ? regularPairRank.get(pair.id) : undefined;
-    const rank = pair ? pairRank.get(pair.id) : undefined;
-    const posicionFinal =
-      pair && podioPosByPairId.has(pair.id)
-        ? podioPosByPairId.get(pair.id)!
-        : rankRegular?.pos ?? rank?.pos;
-    const totalParticipantes =
-      rankRegular?.total ?? rank?.total ?? sortedPairs.length;
+        const pairStats = pair
+          ? sortedPairs.find((p) => p.id === pair.id)
+          : undefined;
+        const rankRegular = pair ? regularPairRank.get(pair.id) : undefined;
+        const rank = pair ? pairRank.get(pair.id) : undefined;
+        const posicionFinal =
+          pair && podioPosByPairId.has(pair.id)
+            ? podioPosByPairId.get(pair.id)!
+            : rankRegular?.pos ?? rank?.pos;
+        const totalParticipantes =
+          rankRegular?.total ?? rank?.total ?? sortedPairs.length;
 
-    const partidosDetalle =
-      partidosDetalleByPlayer.get(st.legacyPlayerId ?? "") ?? [];
-    const detSummary = summarizePartidosDetalle(partidosDetalle);
+        const partidosDetalle =
+          partidosDetalleByPlayer.get(st.legacyPlayerId ?? "") ?? [];
+        const detSummary = summarizePartidosDetalle(partidosDetalle);
 
-    const partidosGanados =
-      detSummary.jugados > 0 ? detSummary.ganados : (pairStats?.pg ?? st.wins);
-    const partidosPerdidos =
-      detSummary.jugados > 0 ? detSummary.perdidos : (pairStats?.pp ?? st.losses);
-    const partidosEmpatados =
-      detSummary.jugados > 0 ? detSummary.empatados : st.draws;
-    const partidosJugados =
-      detSummary.jugados > 0
-        ? detSummary.jugados
-        : (pairStats?.matchesPlayed ??
-          partidosGanados + partidosPerdidos + partidosEmpatados);
+        const partidosGanados =
+          detSummary.jugados > 0 ? detSummary.ganados : (pairStats?.pg ?? st.wins);
+        const partidosPerdidos =
+          detSummary.jugados > 0 ? detSummary.perdidos : (pairStats?.pp ?? st.losses);
+        const partidosEmpatados =
+          detSummary.jugados > 0 ? detSummary.empatados : st.draws;
+        const partidosJugados =
+          detSummary.jugados > 0
+            ? detSummary.jugados
+            : (pairStats?.matchesPlayed ??
+              partidosGanados + partidosPerdidos + partidosEmpatados);
 
-    const setsFavorReta =
-      detSummary.jugados > 0
-        ? detSummary.setsFavor
-        : (pairStats?.points ?? st.setsFavor);
-    const setsContraReta =
-      detSummary.jugados > 0
-        ? detSummary.setsContra
-        : (pairStats?.pointsReceived ?? st.setsContra);
+        const setsFavorReta =
+          detSummary.jugados > 0
+            ? detSummary.setsFavor
+            : (pairStats?.points ?? st.setsFavor);
+        const setsContraReta =
+          detSummary.jugados > 0
+            ? detSummary.setsContra
+            : (pairStats?.pointsReceived ?? st.setsContra);
 
-    let equipoGanador = false;
-    let posicionEquipo: number | null = null;
-    if (esEquipos && pair && teamConfig) {
-      const teamIdx = teamConfig.pairToTeam[pair.id];
-      if (teamIdx != null) {
-        posicionEquipo = teamPosByIndex.get(teamIdx) ?? null;
-        equipoGanador =
-          winningTeamIndex != null && teamIdx === winningTeamIndex;
-      }
-    }
-
-    const { data: perfilRiviera } = await supabase
-      .from("riviera_jugadores")
-      .select("categoria")
-      .eq("id", jugadorId)
-      .maybeSingle();
-
-    let resultadoReta = resultadoFromRecord(
-      partidosGanados,
-      partidosPerdidos,
-      partidosEmpatados
-    );
-    if (!esEquipos && posicionFinal === 1) {
-      resultadoReta = "victoria";
-    } else if (esEquipos && equipoGanador) {
-      resultadoReta = "victoria";
-    }
-
-    const metadata = enrichMetadataWithPartidosDetalle(
-      {
-        subtipo: "reta_cierre",
-        ...hostClubMetadata(organizadorId),
-        ...(partidosDetalle.length === 0
-          ? {
-              partidos_ganados: partidosGanados,
-              partidos_perdidos: partidosPerdidos,
-              partidos_jugados: partidosJugados,
-              partidos_empatados: partidosEmpatados,
-            }
-          : {}),
-        ...(champCfg?.championshipEnabled && regularRoundsMax != null
-          ? {
-              remontada_activa: true,
-              regular_rondas_max: regularRoundsMax,
-            }
-          : {}),
-        ...(rankRegular?.pos != null ? { posicion_rr: rankRegular.pos } : {}),
-        formato: tournament.format ?? "round_robin",
-        modalidad,
-        modalidad_label: modalidadLabel,
-        reta_id: tournament.id,
-        reta_nombre: tournament.name,
-        ...(pair?.id ? { pair_id: pair.id } : {}),
-        ...(pairSlot != null ? { pair_slot: pairSlot } : {}),
-        ...(canonicalLegacyPlayerId
-          ? { canonical_legacy_player_id: canonicalLegacyPlayerId }
-          : {}),
-        ...(tournament.description?.trim()
-          ? { evento_descripcion: tournament.description.trim() }
-          : {}),
-        ...(perfilRiviera?.categoria
-          ? { jugador_categoria: perfilRiviera.categoria }
-          : {}),
-        posicion: posicionFinal,
-        total_participantes: totalParticipantes,
-        lugar: posicionFinal
-          ? formatLugarOrdinal(posicionFinal, totalParticipantes)
-          : "Participación",
-        equipo_ganador: esEquipos ? equipoGanador : undefined,
-      },
-      partidosDetalle
-    );
-
-    await registrarPuntosRanking({
-      jugadorId,
-      tipoEvento: "reta",
-      eventoId: tournament.id,
-      eventoNombre: tournament.name,
-      resultado: resultadoReta,
-      formato: formatoRanking,
-      calcParams: esEquipos
-        ? {
-            posicion_final: posicionEquipo,
-            equipo_ganador: equipoGanador,
+        let equipoGanador = false;
+        let posicionEquipo: number | null = null;
+        if (esEquipos && pair && teamConfig) {
+          const teamIdx = teamConfig.pairToTeam[pair.id];
+          if (teamIdx != null) {
+            posicionEquipo = teamPosByIndex.get(teamIdx) ?? null;
+            equipoGanador =
+              winningTeamIndex != null && teamIdx === winningTeamIndex;
           }
-        : { posicion_final: posicionFinal ?? null },
-      setsFavor: setsFavorReta,
-      setsContra: setsContraReta,
-      metadata,
-    });
+        }
+
+        const { data: perfilRiviera } = await supabase
+          .from("riviera_jugadores")
+          .select("categoria")
+          .eq("id", jugadorId)
+          .maybeSingle();
+
+        let resultadoReta = resultadoFromRecord(
+          partidosGanados,
+          partidosPerdidos,
+          partidosEmpatados
+        );
+        if (!esEquipos && posicionFinal === 1) {
+          resultadoReta = "victoria";
+        } else if (esEquipos && equipoGanador) {
+          resultadoReta = "victoria";
+        }
+
+        const metadata = enrichMetadataWithPartidosDetalle(
+          {
+            subtipo: "reta_cierre",
+            ...hostClubMetadata(organizadorId),
+            ...(partidosDetalle.length === 0
+              ? {
+                  partidos_ganados: partidosGanados,
+                  partidos_perdidos: partidosPerdidos,
+                  partidos_jugados: partidosJugados,
+                  partidos_empatados: partidosEmpatados,
+                }
+              : {}),
+            ...(champCfg?.championshipEnabled && regularRoundsMax != null
+              ? {
+                  remontada_activa: true,
+                  regular_rondas_max: regularRoundsMax,
+                }
+              : {}),
+            ...(rankRegular?.pos != null ? { posicion_rr: rankRegular.pos } : {}),
+            formato: tournament.format ?? "round_robin",
+            modalidad,
+            modalidad_label: modalidadLabel,
+            reta_id: tournament.id,
+            reta_nombre: tournament.name,
+            ...(pair?.id ? { pair_id: pair.id } : {}),
+            ...(pairSlot != null ? { pair_slot: pairSlot } : {}),
+            ...(canonicalLegacyPlayerId
+              ? { canonical_legacy_player_id: canonicalLegacyPlayerId }
+              : {}),
+            ...(tournament.description?.trim()
+              ? { evento_descripcion: tournament.description.trim() }
+              : {}),
+            ...(perfilRiviera?.categoria
+              ? { jugador_categoria: perfilRiviera.categoria }
+              : {}),
+            posicion: posicionFinal,
+            total_participantes: totalParticipantes,
+            lugar: posicionFinal
+              ? formatLugarOrdinal(posicionFinal, totalParticipantes)
+              : "Participación",
+            equipo_ganador: esEquipos ? equipoGanador : undefined,
+          },
+          partidosDetalle
+        );
+
+        await registrarPuntosRanking({
+          jugadorId,
+          tipoEvento: "reta",
+          eventoId: tournament.id,
+          eventoNombre: tournament.name,
+          resultado: resultadoReta,
+          formato: formatoRanking,
+          calcParams: esEquipos
+            ? {
+                posicion_final: posicionEquipo,
+                equipo_ganador: equipoGanador,
+              }
+            : { posicion_final: posicionFinal ?? null },
+          setsFavor: setsFavorReta,
+          setsContra: setsContraReta,
+          metadata,
+        });
+      }
+    );
   }
 
   try {
@@ -1072,6 +1099,7 @@ async function syncRetaParticipacionesInner(params: {
   return {
     touchedJugadorIds: Array.from(touchedJugadorIds),
     participacionEventoId: tournament.id,
+    syncFailures: syncFailures.length > 0 ? syncFailures : undefined,
   };
 }
 
@@ -1081,12 +1109,21 @@ export async function syncRetaParticipaciones(params: {
   tournament: Tournament;
   pairs: Pair[];
   matches: Match[];
+  excludeJugadorIds?: string[];
 }): Promise<CareerEventSyncOutcome> {
   try {
     return await syncRetaParticipacionesInner(params);
   } catch (e) {
     console.error("[riviera-jugadores] syncRetaParticipaciones:", e);
-    return { touchedJugadorIds: [] };
+    return {
+      touchedJugadorIds: [],
+      syncFailures: [
+        {
+          code: "sync_failed",
+          message: e instanceof Error ? e.message : String(e),
+        },
+      ],
+    };
   }
 }
 
@@ -1347,92 +1384,112 @@ async function flushTorneoExpressPlayerAgg(
   subcampeonParejaId: string | null,
   pairMap: Map<string, Pair>,
   placementCtx: ReturnType<typeof buildExpressPlacementContext>,
-  clasificadosPlayerIds: Set<string>
-): Promise<string[]> {
+  clasificadosPlayerIds: Set<string>,
+  excludeJugadorIds?: string[]
+): Promise<CareerEventSyncOutcome> {
+  const excluded = toExcludedJugadorIdSet(excludeJugadorIds);
+  const syncFailures: CareerEventAssertionFailure[] = [];
   const touchedJugadorIds: string[] = [];
   for (const st of Array.from(agg.values())) {
-    const jugadorId = await resolveJugadorIdForParticipacion({
-      nombre: st.nombre,
-      organizadorId,
-      legacyPlayerId: st.legacyPlayerId,
-      legacyLigaJugadorId: st.legacyLigaJugadorId,
-      email: st.email,
-      tipoEvento: "torneo_express",
-      eventoId: torneoId,
-    });
-    if (!jugadorId) continue;
-    touchedJugadorIds.push(jugadorId);
+    await runPlayerParticipacionSync(
+      syncFailures,
+      { nombre: st.nombre, legacyPlayerId: st.legacyPlayerId },
+      async () => {
+        const { jugadorId, failure } = await resolveJugadorForEventSync(
+          {
+            nombre: st.nombre,
+            organizadorId,
+            legacyPlayerId: st.legacyPlayerId,
+            legacyLigaJugadorId: st.legacyLigaJugadorId,
+            email: st.email,
+            tipoEvento: "torneo_express",
+            eventoId: torneoId,
+          },
+          excluded
+        );
+        if (failure) {
+          syncFailures.push(failure);
+          return;
+        }
+        if (!jugadorId) return;
+        touchedJugadorIds.push(jugadorId);
 
-    const { posicion_final } = resolveExpressPlayerPosicion(
-      st.legacyPlayerId,
-      placementCtx
+        const { posicion_final } = resolveExpressPlayerPosicion(
+          st.legacyPlayerId,
+          placementCtx
+        );
+        const paso_fase_grupos = st.legacyPlayerId
+          ? clasificadosPlayerIds.has(st.legacyPlayerId)
+          : false;
+        const paso_semifinal = st.legacyPlayerId
+          ? placementCtx.semiPlayerIds.has(st.legacyPlayerId)
+          : false;
+        const llego_final = st.legacyPlayerId
+          ? placementCtx.finalPlayerIds.has(st.legacyPlayerId)
+          : false;
+
+        let resultado = resultadoFromRecord(st.wins, st.losses, st.draws);
+        if (posicion_final === 1) resultado = "victoria";
+        else if (posicion_final === 2) resultado = "derrota";
+
+        await registrarPuntosRanking({
+          jugadorId,
+          tipoEvento: "torneo_express",
+          eventoId: torneoId,
+          eventoNombre,
+          resultado,
+          formato: "express",
+          calcParams: {
+            posicion_final,
+            paso_fase_grupos,
+            paso_semifinal,
+            llego_final,
+          },
+          setsFavor: st.setsFavor,
+          setsContra: st.setsContra,
+          metadata: {
+            subtipo: "express_cierre",
+            ...hostClubMetadata(organizadorId),
+            partidos_ganados: st.wins,
+            partidos_perdidos: st.losses,
+            partidos_empatados: st.draws,
+            puntos_juego_acumulados: st.puntosObtenidos,
+            posicion_final,
+            paso_fase_grupos,
+            paso_semifinal,
+            llego_final,
+            lugar:
+              posicion_final != null
+                ? formatLugarOrdinal(posicion_final)
+                : llego_final
+                  ? "Final"
+                  : paso_semifinal
+                    ? "Semifinal"
+                    : paso_fase_grupos
+                      ? "Eliminatoria"
+                      : "Participación",
+            modalidad: "torneo_express",
+            modalidad_label: "Torneo Express",
+            campeon_torneo: posicion_final === 1,
+            subcampeon_torneo: posicion_final === 2,
+            pareja_campeon_id: campeonParejaId,
+            pareja_subcampeon_id: subcampeonParejaId,
+            torneo_express_id: torneoId,
+          },
+        });
+      }
     );
-    const paso_fase_grupos = st.legacyPlayerId
-      ? clasificadosPlayerIds.has(st.legacyPlayerId)
-      : false;
-    const paso_semifinal = st.legacyPlayerId
-      ? placementCtx.semiPlayerIds.has(st.legacyPlayerId)
-      : false;
-    const llego_final = st.legacyPlayerId
-      ? placementCtx.finalPlayerIds.has(st.legacyPlayerId)
-      : false;
-
-    let resultado = resultadoFromRecord(st.wins, st.losses, st.draws);
-    if (posicion_final === 1) resultado = "victoria";
-    else if (posicion_final === 2) resultado = "derrota";
-
-    await registrarPuntosRanking({
-      jugadorId,
-      tipoEvento: "torneo_express",
-      eventoId: torneoId,
-      eventoNombre,
-      resultado,
-      formato: "express",
-      calcParams: {
-        posicion_final,
-        paso_fase_grupos,
-        paso_semifinal,
-        llego_final,
-      },
-      setsFavor: st.setsFavor,
-      setsContra: st.setsContra,
-      metadata: {
-        subtipo: "express_cierre",
-        ...hostClubMetadata(organizadorId),
-        partidos_ganados: st.wins,
-        partidos_perdidos: st.losses,
-        partidos_empatados: st.draws,
-        puntos_juego_acumulados: st.puntosObtenidos,
-        posicion_final,
-        paso_fase_grupos,
-        paso_semifinal,
-        llego_final,
-        lugar:
-          posicion_final != null
-            ? formatLugarOrdinal(posicion_final)
-            : llego_final
-              ? "Final"
-              : paso_semifinal
-                ? "Semifinal"
-                : paso_fase_grupos
-                  ? "Eliminatoria"
-                  : "Participación",
-        modalidad: "torneo_express",
-        modalidad_label: "Torneo Express",
-        campeon_torneo: posicion_final === 1,
-        subcampeon_torneo: posicion_final === 2,
-        pareja_campeon_id: campeonParejaId,
-        pareja_subcampeon_id: subcampeonParejaId,
-        torneo_express_id: torneoId,
-      },
-    });
   }
-  return touchedJugadorIds;
+  return {
+    touchedJugadorIds,
+    syncFailures: syncFailures.length > 0 ? syncFailures : undefined,
+  };
 }
 
 export async function syncTorneoExpressParticipaciones(
   torneoId: string,
-  userId: string
+  userId: string,
+  options?: CareerEventSyncOptions
 ): Promise<CareerEventSyncOutcome> {
   try {
     const bundle = await fetchTorneoExpressBundle(torneoId);
@@ -1547,7 +1604,7 @@ export async function syncTorneoExpressParticipaciones(
     );
     const clasificadosPlayerIds = clasificadosPlayerIdsFromBundle(bundle, pairMap);
 
-    const touchedJugadorIds = await flushTorneoExpressPlayerAgg(
+    const expressOutcome = await flushTorneoExpressPlayerAgg(
       agg,
       userId,
       torneoId,
@@ -1556,11 +1613,13 @@ export async function syncTorneoExpressParticipaciones(
       subcampeonParejaId,
       pairMap,
       placementCtx,
-      clasificadosPlayerIds
+      clasificadosPlayerIds,
+      options?.excludeJugadorIds
     );
     return {
-      touchedJugadorIds,
+      touchedJugadorIds: expressOutcome.touchedJugadorIds,
       participacionEventoId: torneoId,
+      syncFailures: expressOutcome.syncFailures,
     };
   } catch (e) {
     console.error("[riviera-jugadores] syncTorneoExpressParticipaciones:", e);
@@ -1575,7 +1634,8 @@ export async function syncTorneoExpressParticipaciones(
 export async function syncLigaJornada(
   ligaId: string,
   jornadaNumero: number,
-  userId: string
+  userId: string,
+  options?: CareerEventSyncOptions
 ): Promise<CareerEventSyncOutcome> {
   try {
     const detalle = await getLigaById(ligaId);
@@ -1693,90 +1753,104 @@ export async function syncLigaJornada(
     }
 
     const touchedJugadorIds = new Set<string>();
+    const excluded = toExcludedJugadorIdSet(options?.excludeJugadorIds);
+    const syncFailures: CareerEventAssertionFailure[] = [];
 
     for (const st of Array.from(agg.values())) {
-      const jugadorId = await resolveJugadorIdForParticipacion({
-        nombre: st.nombre,
-        organizadorId: userId,
-        legacyLigaJugadorId: st.legacyLigaJugadorId,
-        tipoEvento: "liga",
-        eventoId: jornada.id,
-      });
-      if (!jugadorId) continue;
-      touchedJugadorIds.add(jugadorId);
+      await runPlayerParticipacionSync(
+        syncFailures,
+        { nombre: st.nombre, legacyPlayerId: st.legacyLigaJugadorId },
+        async () => {
+          const { jugadorId, failure } = await resolveJugadorForEventSync(
+            {
+              nombre: st.nombre,
+              organizadorId: userId,
+              legacyLigaJugadorId: st.legacyLigaJugadorId,
+              tipoEvento: "liga",
+              eventoId: jornada.id,
+            },
+            excluded
+          );
+          if (failure) {
+            syncFailures.push(failure);
+            return;
+          }
+          if (!jugadorId) return;
+          touchedJugadorIds.add(jugadorId);
 
-      const posicion = st.legacyLigaJugadorId
-        ? posByJugador.get(st.legacyLigaJugadorId)
-        : undefined;
+          const posicion = st.legacyLigaJugadorId
+            ? posByJugador.get(st.legacyLigaJugadorId)
+            : undefined;
 
-      const ganoJornada =
-        !!st.legacyLigaJugadorId &&
-        jornadaWinnerIds.has(st.legacyLigaJugadorId);
+          const ganoJornada =
+            !!st.legacyLigaJugadorId &&
+            jornadaWinnerIds.has(st.legacyLigaJugadorId);
 
-      const partidosDetalle = st.legacyLigaJugadorId
-        ? (partidosDetalleByJugador.get(st.legacyLigaJugadorId) ?? [])
-        : [];
-      const detSummary = summarizePartidosDetalle(partidosDetalle);
-      const partidosJugados =
-        detSummary.jugados > 0
-          ? detSummary.jugados
-          : st.wins + st.losses + st.draws;
-      const setsFavorLiga =
-        detSummary.jugados > 0 ? detSummary.setsFavor : st.setsFavor;
-      const setsContraLiga =
-        detSummary.jugados > 0 ? detSummary.setsContra : st.setsContra;
+          const partidosDetalle = st.legacyLigaJugadorId
+            ? (partidosDetalleByJugador.get(st.legacyLigaJugadorId) ?? [])
+            : [];
+          const detSummary = summarizePartidosDetalle(partidosDetalle);
+          const partidosJugados =
+            detSummary.jugados > 0
+              ? detSummary.jugados
+              : st.wins + st.losses + st.draws;
+          const setsFavorLiga =
+            detSummary.jugados > 0 ? detSummary.setsFavor : st.setsFavor;
+          const setsContraLiga =
+            detSummary.jugados > 0 ? detSummary.setsContra : st.setsContra;
 
-      const metadata = enrichMetadataWithPartidosDetalle(
-        {
-          subtipo: "liga_jornada",
-          ...hostClubMetadata(userId),
-          liga_id: ligaId,
-          liga_nombre: detalle.nombre,
-          jornada_numero: jornada.numero,
-          jornada_ganada: ganoJornada,
-          ...(partidosDetalle.length === 0
-            ? {
-                partidos_ganados: st.wins,
-                partidos_perdidos: st.losses,
-                partidos_jugados: partidosJugados,
-                partidos_empatados: st.draws,
-              }
-            : {}),
-          modalidad: "liga",
-          modalidad_label: "Liga",
-          posicion_jornada: posicion,
-          total_participantes: totalJugadores,
-          lugar:
-            ganoJornada
-              ? `Ganador jornada ${jornada.numero}`
-              : posicion != null && posicion > 0
-                ? formatLugarOrdinal(posicion, totalJugadores)
-                : "Participación en jornada",
-        },
-        partidosDetalle
+          const metadata = enrichMetadataWithPartidosDetalle(
+            {
+              subtipo: "liga_jornada",
+              ...hostClubMetadata(userId),
+              liga_id: ligaId,
+              liga_nombre: detalle.nombre,
+              jornada_numero: jornada.numero,
+              jornada_ganada: ganoJornada,
+              ...(partidosDetalle.length === 0
+                ? {
+                    partidos_ganados: st.wins,
+                    partidos_perdidos: st.losses,
+                    partidos_jugados: partidosJugados,
+                    partidos_empatados: st.draws,
+                  }
+                : {}),
+              modalidad: "liga",
+              modalidad_label: "Liga",
+              posicion_jornada: posicion,
+              total_participantes: totalJugadores,
+              lugar:
+                ganoJornada
+                  ? `Ganador jornada ${jornada.numero}`
+                  : posicion != null && posicion > 0
+                    ? formatLugarOrdinal(posicion, totalJugadores)
+                    : "Participación en jornada",
+            },
+            partidosDetalle
+          );
+
+          await registrarPuntosRanking({
+            jugadorId,
+            tipoEvento: "liga",
+            eventoId: jornada.id,
+            eventoNombre,
+            resultado: "participación",
+            formato: "liga",
+            calcParams: { jornadas_ganadas: ganoJornada ? 1 : 0 },
+            setsFavor: setsFavorLiga,
+            setsContra: setsContraLiga,
+            parejaCon: (st as PlayerAgg & { lastPareja?: string }).lastPareja,
+            upsertSubtipo: "liga_jornada",
+            metadata,
+          });
+        }
       );
-
-      // Siempre «participación» por jornada: un registro por jugador/jornada (evita
-      // duplicar puntos si se vuelve a finalizar la misma jornada).
-      await registrarPuntosRanking({
-        jugadorId,
-        tipoEvento: "liga",
-        eventoId: jornada.id,
-        eventoNombre,
-        resultado: "participación",
-        formato: "liga",
-        calcParams: { jornadas_ganadas: ganoJornada ? 1 : 0 },
-        setsFavor: setsFavorLiga,
-        setsContra: setsContraLiga,
-        parejaCon: (st as PlayerAgg & { lastPareja?: string }).lastPareja,
-        upsertSubtipo: "liga_jornada",
-        metadata,
-      });
     }
 
     return {
       touchedJugadorIds: Array.from(touchedJugadorIds),
       participacionEventoId: jornada.id,
+      syncFailures: syncFailures.length > 0 ? syncFailures : undefined,
     };
   } catch (e) {
     console.error("[riviera-jugadores] syncLigaJornada:", e);
@@ -1788,20 +1862,29 @@ export async function syncLigaJornada(
 export async function syncLigaInscripcionRanking(
   ligaId: string,
   legacyLigaJugadorId: string,
-  organizadorId: string
+  organizadorId: string,
+  options?: CareerEventSyncOptions
 ): Promise<CareerEventSyncOutcome> {
+  const syncFailures: CareerEventAssertionFailure[] = [];
   try {
     const detalle = await getLigaById(ligaId);
     const jugadorLiga = detalle.jugadores.find((j) => j.id === legacyLigaJugadorId);
     const nombre = jugadorLiga?.nombre ?? "Jugador";
 
-    const jugadorId = await resolveJugadorIdForParticipacion({
-      nombre,
-      organizadorId,
-      legacyLigaJugadorId,
-      tipoEvento: "liga",
-      eventoId: ligaId,
-    });
+    const { jugadorId, failure } = await resolveJugadorForEventSync(
+      {
+        nombre,
+        organizadorId,
+        legacyLigaJugadorId,
+        tipoEvento: "liga",
+        eventoId: ligaId,
+      },
+      toExcludedJugadorIdSet(options?.excludeJugadorIds)
+    );
+    if (failure) {
+      syncFailures.push(failure);
+      return { touchedJugadorIds: [], syncFailures };
+    }
     if (!jugadorId) return { touchedJugadorIds: [] };
 
     await registrarPuntosRanking({
@@ -1836,9 +1919,12 @@ export async function syncLigaInscripcionRanking(
 /** Podio final al cerrar la liga (+500 / +250 / +100). */
 export async function syncLigaFinalPodio(
   ligaId: string,
-  organizadorId: string
+  organizadorId: string,
+  options?: CareerEventSyncOptions
 ): Promise<CareerEventSyncOutcome> {
   const touchedJugadorIds = new Set<string>();
+  const syncFailures: CareerEventAssertionFailure[] = [];
+  const excluded = toExcludedJugadorIdSet(options?.excludeJugadorIds);
   try {
     const detalle = await getLigaById(ligaId);
     const ranking = [...detalle.inscripciones].sort(
@@ -1851,42 +1937,56 @@ export async function syncLigaFinalPodio(
 
       const ins = ranking[i];
       const nombre = ins.jugador?.nombre ?? "Jugador";
-      const jugadorId = await resolveJugadorIdForParticipacion({
-        nombre,
-        organizadorId,
-        legacyLigaJugadorId: ins.jugador_id,
-        tipoEvento: "liga",
-        eventoId: ligaId,
-      });
-      if (!jugadorId) continue;
-      touchedJugadorIds.add(jugadorId);
+      await runPlayerParticipacionSync(
+        syncFailures,
+        { nombre, legacyPlayerId: ins.jugador_id },
+        async () => {
+          const { jugadorId, failure } = await resolveJugadorForEventSync(
+            {
+              nombre,
+              organizadorId,
+              legacyLigaJugadorId: ins.jugador_id,
+              tipoEvento: "liga",
+              eventoId: ligaId,
+            },
+            excluded
+          );
+          if (failure) {
+            syncFailures.push(failure);
+            return;
+          }
+          if (!jugadorId) return;
+          touchedJugadorIds.add(jugadorId);
 
-      const resultado: JugadorResultado =
-        posicion === 1 ? "victoria" : posicion === 2 ? "derrota" : "empate";
+          const resultado: JugadorResultado =
+            posicion === 1 ? "victoria" : posicion === 2 ? "derrota" : "empate";
 
-      await registrarPuntosRanking({
-        jugadorId,
-        tipoEvento: "liga",
-        eventoId: ligaId,
-        eventoNombre: `Liga ${detalle.nombre} — Podio final`,
-        resultado,
-        formato: "liga",
-        calcParams: { posicion_final: posicion },
-        metadata: {
-          subtipo: "liga_podio_final",
-          ...hostClubMetadata(organizadorId),
-          liga_id: ligaId,
-          liga_nombre: detalle.nombre,
-          posicion_final: posicion,
-          modalidad: "liga",
-          modalidad_label: "Liga",
-          lugar: formatLugarOrdinal(posicion, ranking.length),
-        },
-      });
+          await registrarPuntosRanking({
+            jugadorId,
+            tipoEvento: "liga",
+            eventoId: ligaId,
+            eventoNombre: `Liga ${detalle.nombre} — Podio final`,
+            resultado,
+            formato: "liga",
+            calcParams: { posicion_final: posicion },
+            metadata: {
+              subtipo: "liga_podio_final",
+              ...hostClubMetadata(organizadorId),
+              liga_id: ligaId,
+              liga_nombre: detalle.nombre,
+              posicion_final: posicion,
+              modalidad: "liga",
+              modalidad_label: "Liga",
+              lugar: formatLugarOrdinal(posicion, ranking.length),
+            },
+          });
+        }
+      );
     }
     return {
       touchedJugadorIds: Array.from(touchedJugadorIds),
       participacionEventoId: ligaId,
+      syncFailures: syncFailures.length > 0 ? syncFailures : undefined,
     };
   } catch (e) {
     console.error("[riviera-jugadores] syncLigaFinalPodio:", e);
@@ -1991,7 +2091,8 @@ export async function syncAmericanoParticipaciones(
   nombre: string,
   jugadores: AmericanoPlayer[],
   rounds: AmericanoRound[],
-  userId: string
+  userId: string,
+  options?: CareerEventSyncOptions
 ): Promise<CareerEventSyncOutcome> {
   try {
     const statsMap = buildAmericanoPlayerStandingStats(jugadores, rounds);
@@ -1999,124 +2100,141 @@ export async function syncAmericanoParticipaciones(
     const ranked = getAmericanoRanking(jugadores, rounds);
     const fechaFallback = new Date().toISOString();
     const touchedJugadorIds = new Set<string>();
+    const syncFailures: CareerEventAssertionFailure[] = [];
+    const excluded = toExcludedJugadorIdSet(options?.excludeJugadorIds);
 
     let posicion = 0;
     for (const jugador of ranked) {
       posicion += 1;
+      const currentPosicion = posicion;
       const st = statsMap.get(jugador.id);
-      const jugadorId = await resolveJugadorIdForParticipacion({
-        nombre: jugador.name,
-        organizadorId: userId,
-        legacyPlayerId: jugador.id.includes("-") ? jugador.id : undefined,
-        tipoEvento: "americano",
-        eventoId: sesionId,
-      });
-      if (!jugadorId) {
-        console.warn(
-          "[riviera-jugadores] americano sin perfil Riviera:",
-          jugador.name
-        );
-        continue;
-      }
-      touchedJugadorIds.add(jugadorId);
-
-      const partidosDetalle = buildAmericanoPartidosDetalleForPlayer(
-        jugador.id,
-        rounds,
-        fechaFallback
-      );
-      const detSummary = summarizePartidosDetalle(partidosDetalle);
-
-      const podioPos = posicion <= 3 ? posicion : null;
-      const calcParams: Omit<CalcularPuntosEventoParams, "formato"> = {
-        victorias_americano: st?.pg ?? 0,
-        posicion_final: podioPos,
-      };
-      const { total, desglose } = calcularPuntosEventoDesglose({
-        formato: "americano",
-        ...calcParams,
-      });
-      const metadata = enrichMetadataWithPartidosDetalle(
-        rankingMetadata(desglose, {
-          subtipo: "americano_cierre",
-          ...hostClubMetadata(userId),
-          partidos:
-            detSummary.jugados > 0
-              ? detSummary.jugados
-              : (st?.pj ?? jugador.stats.gamesPlayed),
-          ...(partidosDetalle.length === 0
-            ? {
-                partidos_jugados: st?.pj ?? jugador.stats.gamesPlayed,
-                partidos_ganados: st?.pg ?? 0,
-                partidos_perdidos: st?.pp ?? 0,
-                partidos_empatados: st?.pe ?? 0,
-              }
-            : {}),
-          banquillo: jugador.stats.roundsOnBench,
-          victorias_ranking: st?.pg ?? 0,
-          posicion_final: posicion,
-          posicion,
-          total_participantes: ranked.length,
-          lugar: formatLugarOrdinal(posicion, ranked.length),
-          modalidad: "americano",
-          modalidad_label: "Pádel Americano",
-          puntos_a_favor: jugador.stats.pointsFor,
-          puntos_en_contra: jugador.stats.pointsAgainst,
-        }),
-        partidosDetalle
-      );
-      const resultado: JugadorResultado =
-        podioPos === 1
-          ? "victoria"
-          : podioPos === 2
-            ? "derrota"
-            : podioPos === 3
-              ? "empate"
-              : "participación";
-
-      const setsFavor =
-        detSummary.jugados > 0 ? detSummary.setsFavor : jugador.stats.pointsFor;
-      const setsContra =
-        detSummary.jugados > 0
-          ? detSummary.setsContra
-          : jugador.stats.pointsAgainst;
-
-      const existing = await getParticipacionAmericanoCierre(
-        jugadorId,
-        sesionId
-      );
-      if (existing) {
-        const aplicados = existing.puntos_obtenidos ?? 0;
-        const delta = total - aplicados;
-        if (delta !== 0) {
-          await adjustRankingPuntosManual(
-            userId,
-            jugadorId,
-            delta,
-            `Corrección ${eventoNombre}`,
-            { bypassPermisoCheck: true }
+      await runPlayerParticipacionSync(
+        syncFailures,
+        { nombre: jugador.name, legacyPlayerId: jugador.id },
+        async () => {
+          const { jugadorId, failure } = await resolveJugadorForEventSync(
+            {
+              nombre: jugador.name,
+              organizadorId: userId,
+              legacyPlayerId: jugador.id.includes("-") ? jugador.id : undefined,
+              tipoEvento: "americano",
+              eventoId: sesionId,
+            },
+            excluded
           );
-        }
-      }
+          if (failure) {
+            syncFailures.push(failure);
+            return;
+          }
+          if (!jugadorId) {
+            console.warn(
+              "[riviera-jugadores] americano sin perfil Riviera:",
+              jugador.name
+            );
+            return;
+          }
+          touchedJugadorIds.add(jugadorId);
 
-      await registrarPuntosRanking({
-        jugadorId,
-        tipoEvento: "americano",
-        eventoId: sesionId,
-        eventoNombre,
-        resultado,
-        formato: "americano",
-        calcParams,
-        setsFavor,
-        setsContra,
-        metadata: metadata as Record<string, unknown>,
-        upsertSubtipo: "americano_cierre",
-      });
+          const partidosDetalle = buildAmericanoPartidosDetalleForPlayer(
+            jugador.id,
+            rounds,
+            fechaFallback
+          );
+          const detSummary = summarizePartidosDetalle(partidosDetalle);
+
+          const podioPos = currentPosicion <= 3 ? currentPosicion : null;
+          const calcParams: Omit<CalcularPuntosEventoParams, "formato"> = {
+            victorias_americano: st?.pg ?? 0,
+            posicion_final: podioPos,
+          };
+          const { total, desglose } = calcularPuntosEventoDesglose({
+            formato: "americano",
+            ...calcParams,
+          });
+          const metadata = enrichMetadataWithPartidosDetalle(
+            rankingMetadata(desglose, {
+              subtipo: "americano_cierre",
+              ...hostClubMetadata(userId),
+              partidos:
+                detSummary.jugados > 0
+                  ? detSummary.jugados
+                  : (st?.pj ?? jugador.stats.gamesPlayed),
+              ...(partidosDetalle.length === 0
+                ? {
+                    partidos_jugados: st?.pj ?? jugador.stats.gamesPlayed,
+                    partidos_ganados: st?.pg ?? 0,
+                    partidos_perdidos: st?.pp ?? 0,
+                    partidos_empatados: st?.pe ?? 0,
+                  }
+                : {}),
+              banquillo: jugador.stats.roundsOnBench,
+              victorias_ranking: st?.pg ?? 0,
+              posicion_final: currentPosicion,
+              posicion: currentPosicion,
+              total_participantes: ranked.length,
+              lugar: formatLugarOrdinal(currentPosicion, ranked.length),
+              modalidad: "americano",
+              modalidad_label: "Pádel Americano",
+              puntos_a_favor: jugador.stats.pointsFor,
+              puntos_en_contra: jugador.stats.pointsAgainst,
+            }),
+            partidosDetalle
+          );
+          const resultado: JugadorResultado =
+            podioPos === 1
+              ? "victoria"
+              : podioPos === 2
+                ? "derrota"
+                : podioPos === 3
+                  ? "empate"
+                  : "participación";
+
+          const setsFavor =
+            detSummary.jugados > 0 ? detSummary.setsFavor : jugador.stats.pointsFor;
+          const setsContra =
+            detSummary.jugados > 0
+              ? detSummary.setsContra
+              : jugador.stats.pointsAgainst;
+
+          const existing = await getParticipacionAmericanoCierre(
+            jugadorId,
+            sesionId
+          );
+          if (existing) {
+            const aplicados = existing.puntos_obtenidos ?? 0;
+            const delta = total - aplicados;
+            if (delta !== 0) {
+              await adjustRankingPuntosManual(
+                userId,
+                jugadorId,
+                delta,
+                `Corrección ${eventoNombre}`,
+                { bypassPermisoCheck: true }
+              );
+            }
+          }
+
+          await registrarPuntosRanking({
+            jugadorId,
+            tipoEvento: "americano",
+            eventoId: sesionId,
+            eventoNombre,
+            resultado,
+            formato: "americano",
+            calcParams,
+            setsFavor,
+            setsContra,
+            metadata: metadata as Record<string, unknown>,
+            upsertSubtipo: "americano_cierre",
+          });
+        }
+      );
     }
 
     return {
       touchedJugadorIds: Array.from(touchedJugadorIds),
       participacionEventoId: sesionId,
+      syncFailures: syncFailures.length > 0 ? syncFailures : undefined,
     };
   } catch (e) {
     console.error("[riviera-jugadores] syncAmericanoParticipaciones:", e);
@@ -2181,6 +2299,7 @@ export async function backfillAmericanoHistorial(
 export async function syncDuelo2v2Participaciones(params: {
   organizadorId: string;
   duelo: Duelo2v2;
+  excludeJugadorIds?: string[];
 }): Promise<CareerEventSyncOutcome> {
   const { organizadorId, duelo } = params;
   if (duelo.estado !== "finalizado" || !duelo.ganador) {
@@ -2258,80 +2377,91 @@ export async function syncDuelo2v2Participaciones(params: {
   }
 
   const touchedJugadorIds = new Set<string>();
+  const syncFailures: CareerEventAssertionFailure[] = [];
+  const excluded = toExcludedJugadorIdSet(params.excludeJugadorIds);
 
-  try {
-    for (const slot of slots) {
-      const jugadorId = await resolveJugadorIdForParticipacion({
-        organizadorId,
-        jugadorId: slot.jugadorId,
-        nombre: slot.nombre,
-        tipoEvento: "duelo_2v2",
-        eventoId: duelo.id,
-      });
-      if (!jugadorId) continue;
-      touchedJugadorIds.add(jugadorId);
+  for (const slot of slots) {
+    await runPlayerParticipacionSync(
+      syncFailures,
+      { jugadorId: slot.jugadorId ?? undefined, nombre: slot.nombre },
+      async () => {
+        const { jugadorId, failure } = await resolveJugadorForEventSync(
+          {
+            organizadorId,
+            jugadorId: slot.jugadorId,
+            nombre: slot.nombre,
+            tipoEvento: "duelo_2v2",
+            eventoId: duelo.id,
+          },
+          excluded
+        );
+        if (failure) {
+          syncFailures.push(failure);
+          return;
+        }
+        if (!jugadorId) return;
+        touchedJugadorIds.add(jugadorId);
 
-      const posicion = slot.esGanador ? 1 : 2;
-      const resultado: JugadorResultado = slot.esGanador ? "victoria" : "derrota";
+        const posicion = slot.esGanador ? 1 : 2;
+        const resultado: JugadorResultado = slot.esGanador ? "victoria" : "derrota";
 
-      const partidosDetalle = buildDuelo2vs2PartidosDetalle({
-        duelo,
-        esParejaA: slot.esParejaA,
-      });
-      const detSummary = summarizePartidosDetalle(partidosDetalle);
-      const setsFavor =
-        detSummary.jugados > 0 ? detSummary.setsFavor : slot.setsFavor;
-      const setsContra =
-        detSummary.jugados > 0 ? detSummary.setsContra : slot.setsContra;
+        const partidosDetalle = buildDuelo2vs2PartidosDetalle({
+          duelo,
+          esParejaA: slot.esParejaA,
+        });
+        const detSummary = summarizePartidosDetalle(partidosDetalle);
+        const setsFavor =
+          detSummary.jugados > 0 ? detSummary.setsFavor : slot.setsFavor;
+        const setsContra =
+          detSummary.jugados > 0 ? detSummary.setsContra : slot.setsContra;
 
-      const metadata = enrichMetadataWithPartidosDetalle(
-        {
-          subtipo: "duelo_2v2_cierre",
-          modalidad: "duelo_2v2",
-          modalidad_label: "Duelo 2 vs 2",
-          organizador_id: organizadorId,
-          club_name: getOrganizerDisplayNameSync(organizadorId),
-          posicion: posicion,
-          posicion_final: posicion,
-          total_participantes: 4,
-          lugar: slot.esGanador ? "Campeón" : "2do lugar",
-          placement: slot.esGanador ? "campeon" : "subcampeon",
-          campeon_torneo: slot.esGanador,
-          ...(partidosDetalle.length === 0
-            ? {
-                partidos_ganados: slot.esGanador ? 1 : 0,
-                partidos_perdidos: slot.esGanador ? 0 : 1,
-                partidos_jugados: 1,
-              }
-            : {}),
-          fecha,
-        },
-        partidosDetalle
-      );
+        const metadata = enrichMetadataWithPartidosDetalle(
+          {
+            subtipo: "duelo_2v2_cierre",
+            modalidad: "duelo_2v2",
+            modalidad_label: "Duelo 2 vs 2",
+            organizador_id: organizadorId,
+            club_name: getOrganizerDisplayNameSync(organizadorId),
+            posicion: posicion,
+            posicion_final: posicion,
+            total_participantes: 4,
+            lugar: slot.esGanador ? "Campeón" : "2do lugar",
+            placement: slot.esGanador ? "campeon" : "subcampeon",
+            campeon_torneo: slot.esGanador,
+            ...(partidosDetalle.length === 0
+              ? {
+                  partidos_ganados: slot.esGanador ? 1 : 0,
+                  partidos_perdidos: slot.esGanador ? 0 : 1,
+                  partidos_jugados: 1,
+                }
+              : {}),
+            fecha,
+          },
+          partidosDetalle
+        );
 
-      await registrarPuntosRanking({
-        jugadorId,
-        tipoEvento: "duelo_2v2",
-        eventoId: duelo.id,
-        eventoNombre,
-        resultado,
-        formato: "duelo_2v2",
-        calcParams: { ganador_duelo: slot.esGanador },
-        setsFavor,
-        setsContra,
-        parejaCon: slot.parejaCon,
-        upsertSubtipo: "duelo_2v2_cierre",
-        metadata,
-      });
-    }
-    return {
-      touchedJugadorIds: Array.from(touchedJugadorIds),
-      participacionEventoId: duelo.id,
-    };
-  } catch (e) {
-    console.error("[riviera-jugadores] syncDuelo2v2Participaciones:", e);
-    return { touchedJugadorIds: [] };
+        await registrarPuntosRanking({
+          jugadorId,
+          tipoEvento: "duelo_2v2",
+          eventoId: duelo.id,
+          eventoNombre,
+          resultado,
+          formato: "duelo_2v2",
+          calcParams: { ganador_duelo: slot.esGanador },
+          setsFavor,
+          setsContra,
+          parejaCon: slot.parejaCon,
+          upsertSubtipo: "duelo_2v2_cierre",
+          metadata,
+        });
+      }
+    );
   }
+  return {
+    touchedJugadorIds: Array.from(touchedJugadorIds),
+    participacionEventoId: duelo.id,
+    syncFailures: syncFailures.length > 0 ? syncFailures : undefined,
+  };
 }
 
 function mapDueloRowForBackfill(row: Record<string, unknown>): Duelo2v2 {
