@@ -2,7 +2,6 @@ import {
   breakdownFromCareerResult,
   careerResultFromJugador,
   type CareerPointsBreakdownView,
-  type PlayerPointsBreakdown,
 } from "./playerPointsBreakdown";
 import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
 import { sortCareerClubsForDisplay } from "./careerPointsByClub";

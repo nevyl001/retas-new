@@ -38,7 +38,6 @@ import { filterParticipacionesForOrganizador, enrichParticipacionesOrganizadorFr
 import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
 import { PUBLIC_ORGANIZER_RPC_FALLBACK } from "./publicOrganizador";
 import {
-  mergeJugadorStatsPuntosTotales,
   rankingPuntosJugador,
   sortJugadoresByClubLocalPuntos,
 } from "./rankingPosition";
