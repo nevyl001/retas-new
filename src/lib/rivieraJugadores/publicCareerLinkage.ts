@@ -1,4 +1,4 @@
-import { supabasePublicRead } from "../supabaseClient";
+import { supabase, supabasePublicRead } from "../supabaseClient";
 import type { JugadorParticipacion } from "./types";
 
 function isMissingCareerRpcError(error: {
@@ -13,7 +13,8 @@ function isMissingCareerRpcError(error: {
     error.code === "42883" ||
     error.code === "PGRST202" ||
     msg.includes("get_public_career_jugador_ids") ||
-    msg.includes("riviera_list_career_participaciones_public")
+    msg.includes("riviera_list_career_participaciones_public") ||
+    msg.includes("riviera_list_participaciones_for_jugador_ids")
   );
 }
 
@@ -73,4 +74,36 @@ export async function listCareerParticipacionesPublic(
   }
 
   return (data ?? []) as JugadorParticipacion[];
+}
+
+/**
+ * Participaciones globales por lista explícita de jugador_id (SECURITY DEFINER).
+ * Fuente canónica del motor de carrera cuando la identidad ya resolvió todos los perfiles.
+ */
+export async function listParticipacionesForJugadorIds(
+  jugadorIds: string[],
+  limit = 500
+): Promise<JugadorParticipacion[] | null> {
+  const ids = Array.from(new Set(jugadorIds.map((id) => id.trim()).filter(Boolean)));
+  if (ids.length === 0) return [];
+
+  for (const client of [supabasePublicRead, supabase]) {
+    const { data, error } = await client.rpc(
+      "riviera_list_participaciones_for_jugador_ids",
+      {
+        p_jugador_ids: ids,
+        p_limit: limit,
+      }
+    );
+
+    if (error) {
+      if (isMissingCareerRpcError(error)) continue;
+      console.warn("[riviera-jugadores] listParticipacionesForJugadorIds:", error);
+      continue;
+    }
+
+    return (data ?? []) as JugadorParticipacion[];
+  }
+
+  return null;
 }

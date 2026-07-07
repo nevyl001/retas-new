@@ -1,3 +1,14 @@
+jest.mock("./careerLinkedProfileDiscovery", () => ({
+  discoverCareerLinkedProfiles: jest.fn(async ({ seedJugadorIds, anchorJugadorId }) => ({
+    linkedJugadorIds: seedJugadorIds?.length
+      ? seedJugadorIds
+      : [anchorJugadorId],
+    linkedProfiles: (seedJugadorIds?.length ? seedJugadorIds : [anchorJugadorId]).map(
+      (id: string) => ({ jugadorId: id, organizadorId: "" })
+    ),
+  })),
+}));
+
 jest.mock("./careerPointsByClub", () => {
   const actual = jest.requireActual("./careerPointsByClub");
   return {
@@ -34,8 +45,26 @@ jest.mock("./rivieraIdDisplay", () => ({
 }));
 
 jest.mock("../supabaseClient", () => ({
-  supabasePublicRead: { rpc: jest.fn(), from: jest.fn() },
-  supabase: {},
+  supabasePublicRead: {
+    rpc: jest.fn(),
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        in: jest.fn().mockResolvedValue({ data: [], error: null }),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+    })),
+  },
+  supabase: {
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        in: jest.fn().mockResolvedValue({ data: [], error: null }),
+        eq: jest.fn().mockReturnThis(),
+        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+        not: jest.fn().mockReturnThis(),
+      })),
+    })),
+  },
 }));
 
 import { supabasePublicRead } from "../supabaseClient";
@@ -43,6 +72,7 @@ import {
   resolveLinkedJugadorIdsForIdentity,
   resolvePlayerCareer,
 } from "./playerIdentityService";
+import { discoverCareerLinkedProfiles } from "./careerLinkedProfileDiscovery";
 import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
 import { fetchPublicCareerJugadorIds, listCareerParticipacionesPublic } from "./publicCareerLinkage";
 import {
@@ -101,6 +131,16 @@ function identity(linkedIds: string[]): ResolvedPlayerIdentity {
 describe("playerIdentityService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (discoverCareerLinkedProfiles as jest.Mock).mockImplementation(
+      async ({ seedJugadorIds, anchorJugadorId }) => ({
+        linkedJugadorIds: seedJugadorIds?.length
+          ? seedJugadorIds
+          : [anchorJugadorId],
+        linkedProfiles: (seedJugadorIds?.length ? seedJugadorIds : [anchorJugadorId]).map(
+          (id: string) => ({ jugadorId: id, organizadorId: "" })
+        ),
+      })
+    );
     (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
       data: null,
       error: { code: "PGRST202" },

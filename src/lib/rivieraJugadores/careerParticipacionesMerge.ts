@@ -1,7 +1,9 @@
 import { dedupeParticipacionesById } from "./grantedPlayerUnifiedView";
 import { enrichParticipacionesOrganizadorFromEvents } from "./participacionesOrganizadorScope";
-import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
-import { listParticipacionesPublic } from "./rivieraJugadoresService";
+import {
+  listCareerParticipacionesPublic,
+  listParticipacionesForJugadorIds,
+} from "./publicCareerLinkage";
 import type { JugadorParticipacion } from "./types";
 
 export type CareerParticipacionesMergeInput = {
@@ -29,8 +31,8 @@ export function careerProfileIdsForIdentity(
 }
 
 /**
- * Historial global deduplicado: RPC de carrera + fallback org-scoped por perfil enlazado.
- * El evento pertenece al club donde se jugó (metadata.organizador_id / duelo), no al club origen.
+ * Historial global deduplicado por participacion.id.
+ * GUARD: nunca filtrar por viewingOrganizadorId — la carrera es global.
  */
 export async function mergeCareerParticipacionesForIdentity(
   identity: CareerParticipacionesMergeInput,
@@ -39,24 +41,17 @@ export async function mergeCareerParticipacionesForIdentity(
   const ids = careerProfileIdsForIdentity(identity);
   if (ids.length === 0) return [];
 
-  const careerLists = await Promise.all(
-    ids.map((id) => listCareerParticipacionesPublic(id, limit))
+  const sources: JugadorParticipacion[][] = [];
+
+  const byIds = await listParticipacionesForJugadorIds(ids, limit);
+  if (byIds?.length) sources.push(byIds);
+
+  const careerRows = await listCareerParticipacionesPublic(
+    identity.anchorJugadorId,
+    limit
   );
+  if (careerRows?.length) sources.push(careerRows);
 
-  let merged = dedupeParticipacionesById(
-    careerLists.flatMap((list) => list ?? [])
-  );
-
-  const viewOrg = identity.viewingOrganizadorId?.trim();
-  const supplementTasks: Promise<JugadorParticipacion[]>[] = [];
-  for (const id of ids) {
-    if (viewOrg) {
-      supplementTasks.push(listParticipacionesPublic(id, limit, viewOrg));
-    }
-    supplementTasks.push(listParticipacionesPublic(id, limit, null));
-  }
-  const supplemented = await Promise.all(supplementTasks);
-  merged = dedupeParticipacionesById([...merged, ...supplemented.flat()]);
-
+  const merged = dedupeParticipacionesById(sources.flat());
   return enrichParticipacionesOrganizadorFromEvents(merged);
 }

@@ -1,18 +1,19 @@
 jest.mock("./publicCareerLinkage", () => ({
   listCareerParticipacionesPublic: jest.fn(),
+  listParticipacionesForJugadorIds: jest.fn(),
 }));
 
-jest.mock("./rivieraJugadoresService", () => ({
-  listParticipacionesPublic: jest.fn(),
-}));
+jest.mock("./rivieraJugadoresService", () => ({}));
 
 jest.mock("./orphanProfileLink", () => ({
   ensureOfficialProfileLinkForParticipacion: jest.fn(),
   requireOfficialProfileLinkForParticipacion: jest.fn(),
 }));
 
-import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
-import { listParticipacionesPublic } from "./rivieraJugadoresService";
+import {
+  listCareerParticipacionesPublic,
+  listParticipacionesForJugadorIds,
+} from "./publicCareerLinkage";
 import { requireOfficialProfileLinkForParticipacion } from "./orphanProfileLink";
 import { mergeCareerParticipacionesForIdentity } from "./careerParticipacionesMerge";
 import { computeCareerPointsByClubFromParticipaciones } from "./careerPointsByClub";
@@ -71,7 +72,8 @@ function identity(linkedIds: string[], anchor: string) {
 describe("orphan career profile integrity", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (listParticipacionesPublic as jest.Mock).mockResolvedValue([]);
+    (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue([]);
+    (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue([]);
   });
 
   it("1) oficial + huérfano: tras link, merge incluye ambos y breakdown suma", async () => {
@@ -81,6 +83,10 @@ describe("orphan career profile integrity", () => {
       part("hp-25", DANIEL_ORPHAN, HACKPADEL, 25, "Lunes Mixta"),
     ];
 
+    (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue([
+      ...officialRows,
+      ...orphanRows,
+    ]);
     (listCareerParticipacionesPublic as jest.Mock).mockImplementation(
       async (id: string) => {
         if (id === DANIEL_OFFICIAL) return [...officialRows, ...orphanRows];
@@ -116,6 +122,7 @@ describe("orphan career profile integrity", () => {
       part("dn-h1", DANIEL_ORPHAN, HACKPADEL, 50, "Reta Nocturna"),
       part("dn-h2", DANIEL_ORPHAN, HACKPADEL, 25, "Lunes Mixta"),
     ];
+    (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue(rows);
     (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue(rows);
 
     const merged = await mergeCareerParticipacionesForIdentity(
@@ -134,6 +141,7 @@ describe("orphan career profile integrity", () => {
       part("sb-ro", SEBASTIAN_OFFICIAL, RIVIERA_OPEN, 25, "Riviera"),
       part("sb-hp", SEBASTIAN_ORPHAN, HACKPADEL, 25, "Lunes Mixta"),
     ];
+    (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue(rows);
     (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue(rows);
 
     const merged = await mergeCareerParticipacionesForIdentity(
@@ -152,6 +160,7 @@ describe("orphan career profile integrity", () => {
       part("mc-h", DANIEL_OFFICIAL, HACKPADEL, 50, "Hack"),
       part("mc-r", DANIEL_OFFICIAL, RIVIERA_OPEN, 30, "Riviera"),
     ];
+    (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue(rows);
     (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue(rows);
 
     const merged = await mergeCareerParticipacionesForIdentity(
@@ -168,6 +177,7 @@ describe("orphan career profile integrity", () => {
     const rows = [
       part("imp-hp", CT1_OFFICIAL, HACKPADEL, 50, "Torneo HackPadel"),
     ];
+    (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue(rows);
     (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue(rows);
 
     const merged = await mergeCareerParticipacionesForIdentity(
@@ -184,6 +194,7 @@ describe("orphan career profile integrity", () => {
 
   it("6) reimportación: dedupe evita duplicar historial/puntos", async () => {
     const row = part("dup-1", CT1_OFFICIAL, HACKPADEL, 50, "Evento");
+    (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue([row, row]);
     (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue([row, row]);
 
     const merged = await mergeCareerParticipacionesForIdentity(
@@ -197,6 +208,7 @@ describe("orphan career profile integrity", () => {
 
   it("7) sin huérfano en linkedIds: carrera incompleta (regresión pre-repair)", async () => {
     const officialOnly = [part("pre-0", DANIEL_OFFICIAL, RIVIERA_OPEN, 75, "Riviera")];
+    (listParticipacionesForJugadorIds as jest.Mock).mockResolvedValue(officialOnly);
     (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue(officialOnly);
 
     const merged = await mergeCareerParticipacionesForIdentity(

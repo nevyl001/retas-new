@@ -18,11 +18,8 @@ import {
   dedupeParticipacionesById,
   loadUnifiedRatingViewForJugador,
 } from "./grantedPlayerUnifiedView";
-import {
-  listGrantedLocalJugadorIdsForSource,
-  listMulticlubSiblingProfilesForSource,
-} from "./organizerPlayerAccess";
 import { enrichParticipacionesOrganizadorFromEvents } from "./participacionesOrganizadorScope";
+import { discoverCareerLinkedProfiles } from "./careerLinkedProfileDiscovery";
 import {
   fetchPublicCareerJugadorIds,
 } from "./publicCareerLinkage";
@@ -242,27 +239,31 @@ export async function resolveLinkedJugadorIdsForIdentity(
       }
     }
   } else {
+    source = "career_rpc";
     const careerIds = await fetchPublicCareerJugadorIds(anchor);
     if (careerIds) {
       for (const id of careerIds) ids.add(id);
     }
 
-    for (const sibling of await listMulticlubSiblingProfilesForSource(anchor)) {
-      ids.add(sibling.jugadorId);
-      profileMap.set(sibling.jugadorId, sibling.organizadorId);
-    }
-
-    for (const localId of await listGrantedLocalJugadorIdsForSource(anchor)) {
-      ids.add(localId);
-    }
-
     const rivieraMap = await fetchRivieraIdMapForJugadorIds(
       [anchor, ...Array.from(ids)],
-      {
-      publicRanking: true,
-    }
+      { publicRanking: true }
     );
     rivieraId = rivieraMap.get(anchor) ?? rivieraMap.get(canonicalJugadorId) ?? null;
+  }
+
+  const discovered = await discoverCareerLinkedProfiles({
+    anchorJugadorId: anchor,
+    rivieraId,
+    officialPlayerKey,
+    seedJugadorIds: Array.from(ids),
+  });
+  for (const profile of discovered.linkedProfiles) {
+    ids.add(profile.jugadorId);
+    if (profile.organizadorId) profileMap.set(profile.jugadorId, profile.organizadorId);
+  }
+  if (discovered.linkedJugadorIds.length > ids.size) {
+    source = source === "identity_rpc" ? "identity_rpc" : "sibling_discovery";
   }
 
   const linkedProfiles = Array.from(ids).map((jugadorId) => ({
