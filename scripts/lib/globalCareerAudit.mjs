@@ -81,17 +81,18 @@ export async function rpcParticipacionesForIds(supabase, jugadorIds, limit = 500
 
 export async function fetchDbParticipaciones(supabase, jugadorIds) {
   if (jugadorIds.length === 0) return [];
-  const { data, error } = await supabase
-    .from("jugador_participaciones")
-    .select("id, jugador_id, evento_nombre, puntos_obtenidos, metadata, tipo_evento, evento_id")
-    .in("jugador_id", jugadorIds);
-  if (error) throw new Error(`jugador_participaciones: ${error.message}`);
-  return (data ?? []).map((row) => ({
-    ...row,
-    id: String(row.id),
-    jugador_id: String(row.jugador_id),
-    puntos_obtenidos: Number(row.puntos_obtenidos ?? 0),
-  }));
+
+  const viaRpc = await rpcParticipacionesForIds(supabase, jugadorIds, 500);
+  if (viaRpc) {
+    return viaRpc;
+  }
+
+  const careerRows = await rpcCareerParticipaciones(supabase, jugadorIds[0] ?? "");
+  if (careerRows.length > 0) {
+    return careerRows;
+  }
+
+  return [];
 }
 
 export function setsEqual(a, b) {

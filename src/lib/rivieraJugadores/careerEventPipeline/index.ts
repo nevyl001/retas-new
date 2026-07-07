@@ -3,6 +3,7 @@ export {
   processCareerEvent,
 } from "./pipeline";
 export { assertCareerEventIntegrity } from "./assertions";
+export { formatCareerPipelineSuccessMessage } from "./formatPipelineSuccess";
 export type {
   CareerEventKind,
   CareerEventAssertionCode,

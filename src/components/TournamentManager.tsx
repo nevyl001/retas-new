@@ -6,7 +6,11 @@ import {
   updateTournament,
   Tournament,
 } from "../lib/database";
-import { finalizeCareerEvent } from "../lib/rivieraJugadores/careerEventPipeline";
+import {
+  finalizeCareerEvent,
+  formatCareerPipelineSuccessMessage,
+  type CareerEventPipelineResult,
+} from "../lib/rivieraJugadores/careerEventPipeline";
 import {
   getRetaCreatedAt,
   getRetaDescription,
@@ -196,13 +200,14 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       setLoading(true);
       await updateTournament(tournament.id, { is_finished: true });
       let pipelineWarning: string | null = null;
+      let pipelineResult: CareerEventPipelineResult | null = null;
       if (user?.id) {
         try {
           const [pairs, matches] = await Promise.all([
             getPairs(tournament.id),
             getMatches(tournament.id),
           ]);
-          const pipelineResult = await finalizeCareerEvent({
+          pipelineResult = await finalizeCareerEvent({
             kind: "reta",
             organizadorId: user.id,
             tournament: { ...tournament, is_finished: true },
@@ -218,7 +223,11 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
             setError(pipelineWarning);
           }
         } catch (syncErr) {
-          console.warn("syncRetaParticipaciones:", syncErr);
+          const detail =
+            syncErr instanceof Error ? syncErr.message : String(syncErr);
+          console.warn("[career-event-pipeline] reta sync error:", syncErr);
+          pipelineWarning = `Reta finalizada, pero el historial no se registró: ${detail}`;
+          setError(pipelineWarning);
         }
       }
       setRetas((prev) =>
@@ -232,7 +241,13 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         onTournamentSelect({ ...tournament, is_finished: true });
       }
       if (!pipelineWarning) {
-        alert("¡Reta finalizada exitosamente! 🏆");
+        if (pipelineResult?.ok) {
+          alert(
+            formatCareerPipelineSuccessMessage(pipelineResult, tournament.name)
+          );
+        } else {
+          alert("¡Reta finalizada exitosamente! 🏆");
+        }
       }
     } catch (err) {
       console.error("Error finalizando reta:", err);
