@@ -107,7 +107,7 @@ describe("orphan career profile integrity", () => {
 
     const breakdown = breakdownFromCareerResult(career, HACKPADEL);
     expect(breakdown.currentClubPoints).toBe(75);
-    expect(breakdown.globalTotalPoints).toBe(150);
+    expect(breakdown.careerTotalAllClubs).toBe(150);
   });
 
   it("2) Daniel N: RIV-00000009 + huérfano → HackPadel 75 pts", async () => {

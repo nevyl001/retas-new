@@ -2,6 +2,10 @@ jest.mock("./publicCareerLinkage", () => ({
   listCareerParticipacionesPublic: jest.fn(),
 }));
 
+jest.mock("./rivieraOfficialActivity", () => ({
+  resolveOfficialGlobalPuntos: jest.fn(),
+}));
+
 jest.mock("../supabaseClient", () => ({
   supabasePublicRead: { from: jest.fn() },
   supabase: {},
@@ -15,6 +19,7 @@ import {
   sortCareerClubsForDisplay,
 } from "./careerPointsByClub";
 import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 const RIVIERA_OPEN = "2770b522-0000-4000-8000-000000000001";
@@ -116,6 +121,7 @@ describe("attachCareerPuntosToJugador", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (resolveOfficialGlobalPuntos as jest.Mock).mockResolvedValue(null);
     (listCareerParticipacionesPublic as jest.Mock).mockResolvedValue(
       sharedParticipaciones
     );
@@ -156,6 +162,24 @@ describe("attachCareerPuntosToJugador", () => {
         { organizadorId: HACKPADEL_REAL, puntos: 25 },
       ])
     );
+    expect(result.officialPuntosGlobal).toBeUndefined();
+  });
+
+  it("officialPuntosGlobal viene del ledger ROMC, no de career.total", async () => {
+    (resolveOfficialGlobalPuntos as jest.Mock).mockResolvedValue(99);
+
+    const jugador = {
+      id: SEBASTIAN_CANONICAL,
+      organizador_id: RIVIERA_OPEN_REAL,
+    } as RivieraJugadorWithStats;
+
+    const result = await attachCareerPuntosToJugador(jugador, {
+      linkedJugadorIds: [SEBASTIAN_CANONICAL, SEBASTIAN_HACKPADEL],
+    });
+
+    expect(result.careerPuntosTotal).toBe(50);
+    expect(result.officialPuntosGlobal).toBe(99);
+    expect(resolveOfficialGlobalPuntos).toHaveBeenCalledWith(SEBASTIAN_CANONICAL);
   });
 
   it("getPlayerPointsByOrganizer y getPlayerGlobalPoints (Caso A/B)", async () => {

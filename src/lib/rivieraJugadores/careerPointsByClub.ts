@@ -6,6 +6,7 @@ import {
   resolveParticipacionOrganizadorId,
 } from "./participacionesOrganizadorScope";
 import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import {
   logRankingPointsAudit,
   snapshotFromCareer,
@@ -195,7 +196,7 @@ function careerFieldsFromResult(
   homeOrg: string
 ): Pick<
   RivieraJugadorWithStats,
-  "careerPuntosByClub" | "careerPuntosTotal" | "multiclubGranteePuntos" | "officialPuntosGlobal"
+  "careerPuntosByClub" | "careerPuntosTotal" | "multiclubGranteePuntos"
 > {
   const multiclubGranteePuntos = career.byClub
     .filter((entry) => entry.organizadorId !== homeOrg && entry.puntos > 0)
@@ -210,7 +211,6 @@ function careerFieldsFromResult(
     careerPuntosTotal: career.total,
     multiclubGranteePuntos:
       multiclubGranteePuntos.length > 0 ? multiclubGranteePuntos : undefined,
-    officialPuntosGlobal: career.total,
   };
 }
 
@@ -262,10 +262,12 @@ export async function attachCareerPuntosToJugador(
   if (career.byClub.length === 0 && career.total === 0) return jugador;
 
   const homeOrg = jugador.organizador_id?.trim() ?? "";
+  const officialGlobal = await resolveOfficialGlobalPuntos(jugador.id);
 
   const enrichedJugador = {
     ...jugador,
     ...careerFieldsFromResult(jugador, career, homeOrg),
+    ...(officialGlobal != null ? { officialPuntosGlobal: officialGlobal } : {}),
   };
   logRankingPointsAudit(
     "careerPointsByClub.attachCareerPuntosToJugador",

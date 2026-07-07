@@ -5,6 +5,7 @@ import {
   resolveParticipacionOrganizadorId,
   sumPuntosFromParticipaciones,
 } from "./participacionesOrganizadorScope";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 /** Jugador nativo en su club origen con puntos en clubes cedidos (clones). */
@@ -82,15 +83,12 @@ export async function enrichNativeMulticlubHomeClubView(
 
   if (multiclubGranteePuntos.length === 0) return jugador;
 
-  const careerTotal = nativeMulticlubCareerPuntosTotal({
-    ...jugador,
-    multiclubGranteePuntos,
-  });
+  const officialGlobal = await resolveOfficialGlobalPuntos(jugador.id);
 
   return {
     ...jugador,
     multiclubGranteePuntos,
-    officialPuntosGlobal: careerTotal,
+    ...(officialGlobal != null ? { officialPuntosGlobal: officialGlobal } : {}),
   };
 }
 

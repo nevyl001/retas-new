@@ -1,8 +1,8 @@
 # Ranking Oficial Riviera Multi-Club — Arquitectura y plan
 
-**Estado:** 🔒 Diseño aprobado conceptualmente — **no implementar** sin aprobación explícita.  
-**Última actualización:** 2026-06-24  
-**Relacionado:** `docs/RANKING-OFICIAL-RIVIERAOPEN.md`, `docs/JUGADOR-GLOBAL-FASE-2.md`, `supabase/organizer-player-access.sql`
+**Estado:** ROMC-1/ROMC-2 **implementados en repo** (SQL + enganche TS); aplicación en Supabase y UI global **pendiente de validación en prod**. Ver auditoría: `docs/ADR-ranking-local-vs-global.md`.  
+**Última actualización:** 2026-07-07  
+**Relacionado:** `docs/ADR-ranking-local-vs-global.md`, `docs/RANKING-OFICIAL-RIVIERAOPEN.md`, `docs/JUGADOR-GLOBAL-FASE-2.md`, `supabase/organizer-player-access.sql`
 
 ---
 
@@ -440,4 +440,4 @@ Confirmación: **rating y puntos oficiales son sistemas separados**.
 
 ---
 
-*No implementar hasta aprobación explícita del producto.*
+*ROMC-2 dual-write está en código; ver `docs/ADR-ranking-local-vs-global.md` para reglas LOCAL vs GLOBAL y decisiones pendientes (alta automática de `official_player_key`).*

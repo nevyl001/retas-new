@@ -2,7 +2,6 @@ import { getOrganizerDisplayNameSync, resolveOrganizerDisplayName } from "../org
 import {
   isJugadorConcedidoEnClub,
   rankingPuntosClubLocal,
-  resolveJugadorPuntosRanking,
 } from "./rankingPosition";
 import type { RivieraJugadorWithStats } from "./types";
 
@@ -17,19 +16,15 @@ export function rankingPuntosOrigenConcedido(j: RivieraJugadorWithStats): number
 }
 
 /**
- * Puntos de carrera Riviera (todos los clubes) para la fila del club de registro.
- * Ej.: cedido con 20 pts en Hackpadel y 0 en el registro origen → 20.
+ * Puntos de carrera Riviera (ledger ROMC) para la fila del club de registro.
  */
 export function rankingPuntosCarreraRivieraDisplay(
   j: RivieraJugadorWithStats
-): number {
+): number | null {
   if (j.officialPuntosGlobal != null && Number.isFinite(j.officialPuntosGlobal)) {
     return j.officialPuntosGlobal;
   }
-  if (hasDualRankingConcedido(j)) {
-    return (j.stats?.puntos_totales ?? 0) + rankingPuntosOrigenConcedido(j);
-  }
-  return resolveJugadorPuntosRanking(j);
+  return null;
 }
 
 /** Puntos mostrados en tarjeta del ranking interno del club (solo este club). */
@@ -37,23 +32,23 @@ export function rankingPuntosInternoClubDisplay(j: RivieraJugadorWithStats): num
   return rankingPuntosClubLocal(j);
 }
 
-/** Total global / sitio oficial (cedidos: carrera en todos los clubes). */
-export function rankingPuntosGlobalDisplay(j: RivieraJugadorWithStats): number {
-  if (j.officialPuntosGlobal != null && Number.isFinite(j.officialPuntosGlobal)) {
-    return j.officialPuntosGlobal;
-  }
-  if (hasDualRankingConcedido(j)) {
-    return rankingPuntosCarreraRivieraDisplay(j);
-  }
-  return resolveJugadorPuntosRanking(j);
+/** Total global / sitio oficial desde ledger ROMC; null = no disponible (no estimar con local). */
+export function rankingPuntosGlobalDisplay(
+  j: RivieraJugadorWithStats
+): number | null {
+  return rankingPuntosCarreraRivieraDisplay(j);
+}
+
+function globalDisplayPuntosForSort(j: RivieraJugadorWithStats): number {
+  return rankingPuntosGlobalDisplay(j) ?? -1;
 }
 
 export function sortJugadoresByGlobalDisplayPuntos(
   jugadores: RivieraJugadorWithStats[]
 ): RivieraJugadorWithStats[] {
   return [...jugadores].sort((a, b) => {
-    const pa = rankingPuntosGlobalDisplay(a);
-    const pb = rankingPuntosGlobalDisplay(b);
+    const pa = globalDisplayPuntosForSort(a);
+    const pb = globalDisplayPuntosForSort(b);
     if (pb !== pa) return pb - pa;
     return a.nombre.localeCompare(b.nombre, "es");
   });
@@ -64,8 +59,8 @@ export function rankingPosicionesFromGlobalDisplay(
 ): number[] {
   const ranks: number[] = [];
   for (let i = 0; i < jugadores.length; i++) {
-    const pts = rankingPuntosGlobalDisplay(jugadores[i]);
-    const prevPts = i > 0 ? rankingPuntosGlobalDisplay(jugadores[i - 1]) : null;
+    const pts = globalDisplayPuntosForSort(jugadores[i]);
+    const prevPts = i > 0 ? globalDisplayPuntosForSort(jugadores[i - 1]) : null;
     if (i === 0 || pts !== prevPts) {
       ranks.push(i + 1);
     } else {

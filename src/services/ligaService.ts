@@ -785,6 +785,14 @@ export async function inscribirJugador(
         jugadorId,
       })
     )
+    .then((result) => {
+      if (result && !result.ok) {
+        console.error(
+          "[riviera-jugadores] sync inscripción liga incompleto:",
+          { ligaId, jugadorId, organizadorId: uid, failures: result.failures }
+        );
+      }
+    })
     .catch((err) =>
       console.error("[riviera-jugadores] sync inscripción liga:", err)
     );
@@ -1611,6 +1619,20 @@ export async function finishJornada(jornadaId: string): Promise<void> {
           jornadaNumero: Number(jornada.numero),
         })
       )
+      .then((result) => {
+        if (result && !result.ok) {
+          console.error(
+            "[riviera-jugadores] sync tras finalizar jornada de liga incompleto:",
+            {
+              ligaId: jornada.liga_id,
+              jornadaNumero: jornada.numero,
+              jornadaId,
+              organizadorId: userId,
+              failures: result.failures,
+            }
+          );
+        }
+      })
       .catch((err) =>
         console.error(
           "[riviera-jugadores] sync tras finalizar jornada de liga:",
@@ -1676,6 +1698,14 @@ export async function finishLiga(ligaId: string): Promise<void> {
         ligaId,
       })
     )
+    .then((result) => {
+      if (result && !result.ok) {
+        console.error(
+          "[riviera-jugadores] sync podio final liga incompleto:",
+          { ligaId, organizadorId: uid, failures: result.failures }
+        );
+      }
+    })
     .catch((err) =>
       console.error("[riviera-jugadores] sync podio final liga:", err)
     );

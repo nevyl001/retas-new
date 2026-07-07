@@ -12,15 +12,17 @@ export function jugadorPuntosOrigenConcedido(j: RivieraJugadorWithStats): number
 }
 
 /**
- * Puntos efectivos para ranking global / sitio oficial.
- * Respeta ajustes manuales y ROMC; en concedidos incluye el club dueño (origen).
+ * Puntos efectivos para ordenar ranking global / sitio oficial.
+ * Sin ledger ROMC (officialPuntosGlobal null) → 0 en ordenación; no sustituir con local.
+ * Con ROMC: max(ledger, ajuste manual local, origen concedido) para reflejar overrides.
  */
 export function resolveJugadorPuntosRanking(j: RivieraJugadorWithStats): number {
-  const candidates = [jugadorPuntosLocales(j)];
   const official = j.officialPuntosGlobal;
-  if (official != null && Number.isFinite(official)) {
-    candidates.push(official);
+  if (official == null || !Number.isFinite(official)) {
+    return 0;
   }
+
+  const candidates = [official, jugadorPuntosLocales(j)];
   const origen = jugadorPuntosOrigenConcedido(j);
   if (origen > 0) {
     candidates.push(origen);

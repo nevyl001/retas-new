@@ -38,6 +38,7 @@ function j(puntos: number, id: string): RivieraJugadorWithStats {
     rating_fiabilidad: 0.2,
     created_at: "",
     updated_at: "",
+    officialPuntosGlobal: puntos,
     stats: {
       jugador_id: id,
       total_partidos: 0,
@@ -107,8 +108,9 @@ describe("resolveJugadorPuntosRanking", () => {
     expect(resolveJugadorPuntosRanking(jugador)).toBe(120);
   });
 
-  it("sin ROMC usa puntos locales", () => {
-    expect(resolveJugadorPuntosRanking(j(70, "alan"))).toBe(70);
+  it("sin ROMC no usa puntos locales para orden global", () => {
+    const { officialPuntosGlobal: _omit, ...base } = j(70, "alan");
+    expect(resolveJugadorPuntosRanking(base as RivieraJugadorWithStats)).toBe(0);
   });
 
   it("jugador concedido: respeta ajuste manual del club dueño (origen)", () => {

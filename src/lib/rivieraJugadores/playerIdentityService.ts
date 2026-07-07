@@ -568,7 +568,9 @@ export async function getPublicPlayerProfileData(
     careerPuntosByClub: careerJugador.careerPuntosByClub ?? career.byClub,
     careerPuntosTotal: careerJugador.careerPuntosTotal ?? career.total,
     multiclubGranteePuntos: careerJugador.multiclubGranteePuntos,
-    officialPuntosGlobal: careerJugador.officialPuntosGlobal ?? career.total,
+    ...(careerJugador.officialPuntosGlobal != null
+      ? { officialPuntosGlobal: careerJugador.officialPuntosGlobal }
+      : {}),
   };
   jugador = { ...jugador, ...careerFields };
 
@@ -582,12 +584,14 @@ export async function getPublicPlayerProfileData(
 
   jugador = { ...ratingView.jugador, ...careerFields };
 
-  if (!hasOrgContext) {
+  if (!hasOrgContext && careerJugador.officialPuntosGlobal != null) {
     const statsBase = jugador.stats ?? emptyStats(jugador.id);
     jugador = {
       ...jugador,
-      stats: mergeJugadorStatsPuntosTotales(statsBase, career.total),
-      officialPuntosGlobal: career.total,
+      stats: mergeJugadorStatsPuntosTotales(
+        statsBase,
+        careerJugador.officialPuntosGlobal
+      ),
     };
   }
 

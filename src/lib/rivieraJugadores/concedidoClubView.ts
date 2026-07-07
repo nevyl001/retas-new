@@ -1,6 +1,6 @@
 import { supabase, supabasePublicRead } from "../supabaseClient";
 import { findGrantedAccessMetaForJugador } from "./organizerPlayerAccess";
-import { fetchOfficialDisplayPuntosForJugador } from "./rivieraOfficialActivity";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import type { JugadorStats, RivieraJugadorWithStats } from "./types";
 import {
   isMissingRatingRpcInfrastructureError,
@@ -325,7 +325,7 @@ export async function enrichJugadorConcedidoClubView(
   if (!sourceId) return withMeta;
 
   try {
-    const romcPts = await fetchOfficialDisplayPuntosForJugador(sourceId);
+    const romcPts = await resolveOfficialGlobalPuntos(sourceId);
     if (romcPts != null && Number.isFinite(romcPts)) {
       return { ...withMeta, officialPuntosGlobal: romcPts };
     }

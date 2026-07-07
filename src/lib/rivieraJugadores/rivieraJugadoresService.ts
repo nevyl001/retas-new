@@ -42,6 +42,7 @@ import {
   rankingPuntosJugador,
   sortJugadoresByClubLocalPuntos,
 } from "./rankingPosition";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import { enrichJugadoresOrganizerScopedStats } from "./organizerScopedStats";
 import {
   registerJugadorImportBlocklist,
@@ -1593,52 +1594,38 @@ function mapSitioOficialRow(
   row: Record<string, unknown>
 ): RivieraJugadorWithStats {
   const j = mapJugadorRowFromService(row);
-  const romcPts = Number(row.puntos_totales ?? j.stats?.puntos_totales ?? 0);
   const partidos = Number(row.total_partidos ?? j.stats?.total_partidos ?? 0);
   const victorias = Number(row.victorias ?? j.stats?.victorias ?? 0);
-  j.officialPuntosGlobal = romcPts;
-  j.stats = {
-    ...(j.stats ?? {
-      jugador_id: j.id,
-      total_partidos: 0,
-      victorias: 0,
-      derrotas: 0,
-      empates: 0,
-      participaciones_solo: 0,
-      pct_victorias: 0,
-      total_retas: 0,
-      total_torneos_express: 0,
-      total_ligas: 0,
-      total_americanos: 0,
-      sets_favor_total: 0,
-      sets_contra_total: 0,
-      racha_actual: "",
-      ultima_actividad: null,
-      puntos_totales: 0,
-      updated_at: "",
-    }),
-    puntos_totales: romcPts,
-    total_partidos: partidos,
-    victorias,
-  };
+  if (j.stats) {
+    j.stats = {
+      ...j.stats,
+      total_partidos: partidos,
+      victorias,
+    };
+  }
   return j;
 }
 
-/** Fusiona jugador_stats local (ajustes manuales) con puntos ROMC del ranking oficial. */
+/** Fusiona jugador_stats local (ajustes manuales) con puntos ROMC del ledger global. */
 async function enrichOfficialSiteRankingWithLocalPuntos(
   jugadores: RivieraJugadorWithStats[]
 ): Promise<RivieraJugadorWithStats[]> {
   if (jugadores.length === 0) return jugadores;
 
   const ids = jugadores.map((j) => j.id);
-  const { data, error } = await supabase
-    .from("jugador_stats")
-    .select("jugador_id, puntos_totales")
-    .in("jugador_id", ids);
+  const [statsResult, officialPairs] = await Promise.all([
+    supabase.from("jugador_stats").select("jugador_id, puntos_totales").in("jugador_id", ids),
+    Promise.all(
+      jugadores.map(async (j) => ({
+        id: j.id,
+        official: await resolveOfficialGlobalPuntos(j.id),
+      }))
+    ),
+  ]);
 
+  const { data, error } = statsResult;
   if (error) {
     console.warn("[riviera-jugadores] enrich local puntos sitio oficial:", error);
-    return jugadores;
   }
 
   const localById = new Map(
@@ -1647,9 +1634,12 @@ async function enrichOfficialSiteRankingWithLocalPuntos(
       Number(row.puntos_totales ?? 0),
     ])
   );
+  const officialById = new Map(
+    officialPairs.map((entry) => [entry.id, entry.official] as const)
+  );
 
   const enriched = jugadores.map((j) => {
-    const romcPts = j.officialPuntosGlobal ?? j.stats?.puntos_totales ?? 0;
+    const romcPts = officialById.get(j.id) ?? null;
     const localPts = localById.get(j.id);
     const statsBase = j.stats ?? {
       jugador_id: j.id,
@@ -1670,7 +1660,7 @@ async function enrichOfficialSiteRankingWithLocalPuntos(
       puntos_totales: 0,
       updated_at: "",
     };
-    let stats = mergeJugadorStatsPuntosTotales(statsBase, romcPts);
+    let stats = statsBase;
     if (localPts != null) {
       stats = {
         ...stats,
@@ -1679,7 +1669,7 @@ async function enrichOfficialSiteRankingWithLocalPuntos(
     }
     return {
       ...j,
-      officialPuntosGlobal: romcPts,
+      ...(romcPts != null ? { officialPuntosGlobal: romcPts } : {}),
       stats,
     };
   });
@@ -1899,12 +1889,19 @@ export async function resolveRankingPosicionForPublicFicha(
   });
 
   if (target === "global") {
-    return getRankingPosicionOficialGlobalEnCategoria(
+    if (
+      jugador.officialPuntosGlobal == null ||
+      !Number.isFinite(jugador.officialPuntosGlobal)
+    ) {
+      return null;
+    }
+    const pos = await getRankingPosicionOficialGlobalEnCategoria(
       jugador.id,
       jugador.categoria,
       genero,
       jugador.grantedAccess?.sourceJugadorId
     );
+    return pos != null && pos > 0 ? pos : null;
   }
 
   if (target === "club" && org) {

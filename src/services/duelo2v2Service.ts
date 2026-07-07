@@ -219,11 +219,17 @@ export async function updateDuelo2v2Score(
   return mapDuelo(data as Record<string, unknown>);
 }
 
-export async function finalizarDuelo2v2(id: string): Promise<Duelo2v2> {
+export type FinalizarDuelo2v2Result = {
+  duelo: Duelo2v2;
+  careerSyncOk: boolean;
+  careerSyncMessage?: string;
+};
+
+export async function finalizarDuelo2v2(id: string): Promise<FinalizarDuelo2v2Result> {
   const uid = await requireUserId();
   const duelo = await getDuelo2v2ById(id);
   if (!duelo) throw new Error("Duelo no encontrado.");
-  if (duelo.estado === "finalizado") return duelo;
+  if (duelo.estado === "finalizado") return { duelo, careerSyncOk: true };
   if (!duelo.ganador) {
     throw new Error(
       "Registra los sets con al menos 2 ganados por una pareja (al mejor de 3). Si van 1–1, el set decisivo debe tener ganador."
@@ -251,14 +257,19 @@ export async function finalizarDuelo2v2(id: string): Promise<Duelo2v2> {
     duelo: finalizado,
   });
 
-  if (!pipelineResult.ok) {
+  const careerSyncOk = pipelineResult.ok;
+  let careerSyncMessage: string | undefined;
+  if (!careerSyncOk) {
+    careerSyncMessage =
+      pipelineResult.failures.map((f) => f.message).join("; ") ||
+      "No se pudo registrar el historial del duelo.";
     console.error(
       "[career-event-pipeline] duelo 2v2 incompleto:",
       pipelineResult.failures
     );
   }
 
-  return finalizado;
+  return { duelo: finalizado, careerSyncOk, careerSyncMessage };
 }
 
 export async function deleteDuelo2v2(id: string): Promise<void> {

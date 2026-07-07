@@ -7,12 +7,12 @@ import {
   buildMulticlubGranteePuntosFromParticipaciones,
   filterHomeClubHistorial,
   filterOtherClubHistorial,
-  nativeMulticlubCareerPuntosTotal,
 } from "./nativeMulticlubHomeView";
 import {
   enrichParticipacionesOrganizadorFromEvents,
   filterParticipacionesForOrganizador,
 } from "./participacionesOrganizadorScope";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import { computeJugadorStatsFromParticipaciones } from "./rebuildJugadorStats";
 import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
 import type {
@@ -101,13 +101,11 @@ export async function loadOrganizerScopedPlayerView(
       homeOrg
     );
     if (multiclubGranteePuntos.length > 0) {
+      const officialGlobal = await resolveOfficialGlobalPuntos(jugadorBase.id);
       jugadorBase = {
         ...jugadorBase,
         multiclubGranteePuntos,
-        officialPuntosGlobal: nativeMulticlubCareerPuntosTotal({
-          ...jugadorBase,
-          multiclubGranteePuntos,
-        }),
+        ...(officialGlobal != null ? { officialPuntosGlobal: officialGlobal } : {}),
       };
     }
   }

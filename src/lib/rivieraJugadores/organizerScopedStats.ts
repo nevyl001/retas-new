@@ -1,8 +1,5 @@
 import { attachCareerPuntosToJugador } from "./careerPointsByClub";
-import {
-  breakdownFromCareerResult,
-  careerResultFromJugador,
-} from "./playerPointsBreakdown";
+import { resolvePlayerPointsBreakdown } from "./playerPointsBreakdown";
 import { logRankingPointsAudit, snapshotFromBreakdown } from "./rankingPointsAudit";
 import type { RivieraJugadorWithStats } from "./types";
 
@@ -24,19 +21,21 @@ export async function enrichJugadoresOrganizerScopedStats(
         includeViewingOrgWithZero: true,
       });
 
-      const career = careerResultFromJugador(enriched);
-      if (!career) return enriched;
+      const pointsBreakdown = await resolvePlayerPointsBreakdown({
+        jugador: enriched,
+        currentOrganizadorId: org,
+      });
 
-      const breakdown = breakdownFromCareerResult(career, org);
       logRankingPointsAudit(
         "organizerScopedStats.enrichJugadoresOrganizerScopedStats",
         enriched,
-        snapshotFromBreakdown(breakdown, org),
+        snapshotFromBreakdown(pointsBreakdown, org),
         { viewingOrganizadorId: org }
       );
+
       return {
         ...enriched,
-        pointsBreakdown: breakdown,
+        pointsBreakdown,
       };
     })
   );

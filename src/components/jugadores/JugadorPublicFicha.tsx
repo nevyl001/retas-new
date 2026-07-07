@@ -38,6 +38,7 @@ import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { isValidRivieraId } from "../../lib/rivieraJugadores/rivieraIdDisplay";
 import { RivieraIdBadge } from "./RivieraIdBadge";
 import { JugadorPuntosBreakdown } from "./JugadorPuntosBreakdown";
+import { JugadorOfficialRomcPuntos } from "./JugadorOfficialRomcPuntos";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
 import { RatingNivel } from "./RatingNivel";
 import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
@@ -340,7 +341,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                   </div>
                   <div className="rjp-ficha-stat">
                     <span className="rjp-ficha-stat__lbl">
-                      {hasOrgContext ? "Puntos" : "Puntos"}
+                      {hasOrgContext ? "Puntos en este club" : "Total carrera"}
                     </span>
                     <JugadorPuntosBreakdown
                       jugador={jugador}
@@ -349,6 +350,14 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                       profileCard
                     />
                   </div>
+                  {!hasOrgContext || jugador.visible_publico ? (
+                    <div className="rjp-ficha-stat">
+                      <span className="rjp-ficha-stat__lbl">
+                        Ranking Oficial Riviera Open
+                      </span>
+                      <JugadorOfficialRomcPuntos jugador={jugador} />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </section>

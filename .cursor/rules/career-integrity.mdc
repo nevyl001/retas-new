@@ -6,6 +6,7 @@ globs:
   - supabase/**
   - scripts/audit-career-integrity.mjs
   - docs/CAREER-*.md
+  - docs/ADR-ranking-local-vs-global.md
 alwaysApply: false
 ---
 
@@ -26,17 +27,50 @@ npm run verify:career-integrity
 - Crear jugador participante sin resolver Riviera ID / `official_player_key`
 - Auto-link con solo `cross_club_profile` (siempre REVIEW)
 - Continuar participación si `requireOfficialProfileLinkForParticipacion` falla
+- **Calcular puntos globales Riviera sumando clubes locales a mano** — usar `riviera_official_player_totals` (ROMC), no `careerPuntosTotal` / suma de `metadata.organizador_id`
+- Inventar campos globales en `jugador_participaciones` — el ledger global es `riviera_official_points_ledger`
 
 ## Fuentes canónicas
 
 | Acción | Ubicación |
 |--------|-----------|
 | Finalizar evento | `finalizeCareerEvent` |
-| Escribir participación | `resolveJugadorIdForParticipacion` |
-| Fusionar carrera | `mergeCareerParticipacionesForIdentity` |
-| Puntos UI | `resolvePlayerPointsBreakdown` |
+| Escribir participación local | `resolveJugadorIdForParticipacion` + `hostClubMetadata` en `syncParticipaciones` |
+| Club local de una participación (lectura) | `resolveParticipacionOrganizadorId()` en `participacionesOrganizadorScope.ts` |
+| Fusionar carrera / historial | `mergeCareerParticipacionesForIdentity` |
+| Puntos UI por club (local) | `resolvePlayerPointsBreakdown` / `computeCareerPointsByClubFromParticipaciones` |
 | Enlazar perfil | `ensureOfficialProfileLinkForParticipacion` |
 | Identidad Riviera | `ensureRivieraIdentity` |
+
+## Ranking Global Riviera (ROMC)
+
+Dos dimensiones **separadas** (mismo cierre de evento, tablas distintas):
+
+| Dimensión | Escritura | Lectura |
+|-----------|-----------|---------|
+| **LOCAL** | `jugador_participaciones.metadata.organizador_id` | `resolveParticipacionOrganizadorId()` |
+| **GLOBAL** | `tryWriteRivieraOfficialLedger` → `riviera_official_points_ledger` | `riviera_official_player_totals` |
+
+Tablas ROMC: `riviera_official_player_identity`, `riviera_official_player_profile_link`, `riviera_official_points_ledger`, `riviera_official_player_totals`, `riviera_official_ranking_emitters`.
+
+Gating emisor: `_is_official_ranking_emitter` — todos los clubes emiten por default; solo `is_active=false` bloquea.
+
+Documentación: `docs/ADR-ranking-local-vs-global.md`, `docs/RANKING-OFICIAL-MULTI-CLUB.md`.
+
+## Fuente de verdad del club local — orden de precedencia
+
+`riviera_official_points_ledger` **NO** participa en esta jerarquía (responde al ranking global, no al club local).
+
+```text
+evento padre en vivo
+  > override manual aprobado (career_event_host_manual_overrides; solo si padre eliminado)
+  > metadata cacheada (metadata.organizador_id / club_name)
+  > [huérfana — sin club]
+```
+
+**El perfil del jugador (`riviera_jugadores.organizador_id` / home) NUNCA gana.**
+
+Queda prohibido que distintas pantallas o funciones usen fuentes distintas para «¿en qué club local se jugó esta participación?». Toda lectura debe pasar por `resolveParticipacionOrganizadorId()` — nunca leer `metadata.organizador_id` directo en un componente ni reconstruir el club con lógica propia.
 
 ## Perfiles huérfanos
 
@@ -46,9 +80,11 @@ Participaciones en perfiles sin `riviera_official_player_profile_link` no fusion
 - Reparar HIGH: `supabase/repair-orphan-career-profile-links.sql`
 - Docs: `docs/CAREER-INTEGRITY-AUDIT.md`
 
-## Metadata de host
+## Metadata de host (cache local)
 
-Club anfitrión = `metadata.organizador_id` desde evento padre, no club origen del jugador.
+Club anfitrión = `metadata.organizador_id` desde evento padre al cerrar, no club origen del jugador.
 
 - Detectar: `supabase/diagnose-career-event-host-organizer.sql`
-- Reparar: `supabase/repair-career-event-host-organizer.sql`
+- Reparar desde padre vivo: `supabase/repair-career-event-host-organizer.sql`
+- Padre eliminado: solo `career_event_host_manual_overrides` aprobados
+- ADR: `docs/ADR-ranking-local-vs-global.md`

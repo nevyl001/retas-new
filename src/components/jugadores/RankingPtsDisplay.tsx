@@ -1,7 +1,8 @@
 import React from "react";
 import {
   buildJugadorPuntosBreakdown,
-  simpleJugadorPuntosDisplay,
+  resolveCareerTotalAllClubsDisplay,
+  resolveOfficialPuntosDisplay,
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
 import { logRankingPointsAuditFromJugador } from "../../lib/rivieraJugadores/rankingPointsAudit";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
@@ -22,6 +23,28 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   className = "",
   variant = "stacked",
 }) => {
+  if (!internalClub) {
+    const official = resolveOfficialPuntosDisplay(jugador);
+    logRankingPointsAuditFromJugador(
+      "RankingPtsDisplay (ROMC global)",
+      jugador,
+      clubOrganizadorId,
+      { officialKind: official.kind }
+    );
+    if (official.kind === "unavailable") {
+      return (
+        <span className={`rjp-pts--na${className ? ` ${className}` : ""}`} title="Ranking oficial no disponible">
+          —
+        </span>
+      );
+    }
+    return (
+      <span className={className}>
+        {official.puntos.toLocaleString("es-MX")} pts
+      </span>
+    );
+  }
+
   const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
     hasOrgContext: internalClub,
   });
@@ -34,7 +57,11 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   );
 
   if (lines.length === 0) {
-    const pts = simpleJugadorPuntosDisplay(jugador, internalClub);
+    const pts = resolveCareerTotalAllClubsDisplay(
+      jugador,
+      internalClub,
+      clubOrganizadorId
+    );
     return (
       <span className={className}>
         {pts.toLocaleString("es-MX")} pts

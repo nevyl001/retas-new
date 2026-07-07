@@ -1,6 +1,7 @@
 import {
   breakdownFromCareerResult,
   careerResultFromJugador,
+  type CareerPointsBreakdownView,
   type PlayerPointsBreakdown,
 } from "./playerPointsBreakdown";
 import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
@@ -17,11 +18,28 @@ export type JugadorPuntosBreakdownLine = {
   key: string;
   clubLabel: string;
   puntos: number;
-  role: "home" | "other" | "total";
+  role: "home" | "other" | "total" | "career-total";
 };
 
+/** ROMC disponible (incluye 0 real) vs sin dato oficial. */
+export type OfficialPuntosDisplay =
+  | { kind: "available"; puntos: number }
+  | { kind: "unavailable" };
+
+export function resolveOfficialPuntosDisplay(
+  jugador: RivieraJugadorWithStats
+): OfficialPuntosDisplay {
+  const fromBreakdown = jugador.pointsBreakdown?.officialGlobalPoints;
+  const value =
+    fromBreakdown !== undefined ? fromBreakdown : jugador.officialPuntosGlobal ?? null;
+  if (value != null && Number.isFinite(value)) {
+    return { kind: "available", puntos: value };
+  }
+  return { kind: "unavailable" };
+}
+
 export function breakdownToDisplayLines(
-  breakdown: PlayerPointsBreakdown,
+  breakdown: CareerPointsBreakdownView,
   currentOrganizadorId: string | null | undefined,
   options?: { forceBreakdown?: boolean }
 ): JugadorPuntosBreakdownLine[] {
@@ -47,42 +65,64 @@ export function breakdownToDisplayLines(
 
   if (lines.length === 0) return [];
 
-  if (multiClub && breakdown.globalTotalPoints > 0) {
+  if (multiClub && breakdown.careerTotalAllClubs > 0) {
     lines.push({
-      key: "total",
-      clubLabel: "Total",
-      puntos: breakdown.globalTotalPoints,
-      role: "total",
+      key: "career-total",
+      clubLabel: "Total carrera",
+      puntos: breakdown.careerTotalAllClubs,
+      role: "career-total",
     });
   }
 
   return lines;
 }
 
-/**
- * Puntos simples (sin desglose) desde breakdown canónico o fallback local.
- */
-export function simpleJugadorPuntosDisplay(
+/** Puntos de carrera local (todos los clubes); nunca ROMC. */
+export function resolveCareerTotalAllClubsDisplay(
   jugador: RivieraJugadorWithStats,
   hasOrgContext = false,
   viewingOrganizadorId?: string | null
 ): number {
+  if (jugador.pointsBreakdown) {
+    if (hasOrgContext && viewingOrganizadorId?.trim()) {
+      return jugador.pointsBreakdown.currentClubPoints;
+    }
+    return jugador.pointsBreakdown.careerTotalAllClubs;
+  }
+
   const career = careerResultFromJugador(jugador);
   if (career) {
     const breakdown = breakdownFromCareerResult(career, viewingOrganizadorId);
     if (hasOrgContext && viewingOrganizadorId?.trim()) {
       return breakdown.currentClubPoints;
     }
-    return breakdown.globalTotalPoints;
+    return breakdown.careerTotalAllClubs;
   }
 
-  return hasOrgContext
-    ? rankingPuntosInternoClubDisplay(jugador)
-    : jugador.stats?.puntos_totales ?? 0;
+  if (hasOrgContext) {
+    return rankingPuntosInternoClubDisplay(jugador);
+  }
+
+  return jugador.stats?.puntos_totales ?? 0;
 }
 
 /**
- * Desglose visual de puntos — siempre desde career canónico en el jugador.
+ * @deprecated Usar resolveCareerTotalAllClubsDisplay (carrera) o resolveOfficialPuntosDisplay (ROMC).
+ */
+export function simpleJugadorPuntosDisplay(
+  jugador: RivieraJugadorWithStats,
+  hasOrgContext = false,
+  viewingOrganizadorId?: string | null
+): number {
+  return resolveCareerTotalAllClubsDisplay(
+    jugador,
+    hasOrgContext,
+    viewingOrganizadorId
+  );
+}
+
+/**
+ * Desglose visual de puntos de carrera (local por club) — nunca ROMC.
  */
 export function buildJugadorPuntosBreakdown(
   jugador: RivieraJugadorWithStats,
@@ -90,17 +130,20 @@ export function buildJugadorPuntosBreakdown(
   options: { hasOrgContext?: boolean; profileCard?: boolean } = {}
 ): JugadorPuntosBreakdownLine[] {
   const viewOrg = viewingOrganizadorId?.trim() || null;
-  const career = careerResultFromJugador(jugador);
+  const breakdown = jugador.pointsBreakdown;
+  const career = breakdown ? null : careerResultFromJugador(jugador);
+  const resolvedBreakdown: CareerPointsBreakdownView | null =
+    breakdown ??
+    (career ? breakdownFromCareerResult(career, viewOrg) : null);
 
-  if (career) {
-    const breakdown = breakdownFromCareerResult(career, viewOrg);
+  if (resolvedBreakdown) {
     logRankingPointsAudit(
       "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (career)",
       jugador,
-      snapshotFromBreakdown(breakdown, viewOrg),
+      snapshotFromBreakdown(resolvedBreakdown, viewOrg),
       { viewingOrganizadorId: viewOrg }
     );
-    const lines = breakdownToDisplayLines(breakdown, viewOrg, {
+    const lines = breakdownToDisplayLines(resolvedBreakdown, viewOrg, {
       forceBreakdown: Boolean(options.hasOrgContext || options.profileCard),
     });
     if (lines.length > 0) {
@@ -114,7 +157,7 @@ export function buildJugadorPuntosBreakdown(
   }
 
   if (options.profileCard || options.hasOrgContext) {
-    const pts = simpleJugadorPuntosDisplay(
+    const pts = resolveCareerTotalAllClubsDisplay(
       jugador,
       options.hasOrgContext,
       viewingOrganizadorId

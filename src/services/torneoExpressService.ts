@@ -1708,6 +1708,14 @@ export async function finalizarTorneoExpressEliminatoria(
         torneoId,
       })
     )
+    .then((result) => {
+      if (result && !result.ok) {
+        console.error(
+          "[riviera-jugadores] sync tras finalizar torneo express incompleto:",
+          { torneoId, organizadorId: user.id, failures: result.failures }
+        );
+      }
+    })
     .catch((err) =>
       console.error(
         "[riviera-jugadores] sync tras finalizar torneo express:",

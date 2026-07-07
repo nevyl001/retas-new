@@ -74,6 +74,19 @@ export function romcRpcSuiteUnavailable(): boolean {
   );
 }
 
+/** Solo tests — reinicia estado ROMC en memoria y sessionStorage. */
+export function resetRomcSuiteStateForTests(): void {
+  romcRpcSuiteDisabled = false;
+  romcSuiteState = "unknown";
+  legacyParticipacionesRpcAvailable = null;
+  romcSuiteInit = null;
+  try {
+    sessionStorage.removeItem(ROMC_SUITE_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 function markRomcRpcSuiteUnavailable(): void {
   romcRpcSuiteDisabled = true;
   romcSuiteState = "broken";
@@ -141,7 +154,11 @@ function isMissingRomcRpc(
   return isBrokenRomcRpcError(error);
 }
 
-export async function fetchOfficialDisplayPuntosForJugador(
+/**
+ * Puntos globales ROMC desde riviera_official_player_totals (vía official_player_key).
+ * null = ledger no disponible o jugador sin identidad oficial — nunca sustituir con suma local.
+ */
+export async function resolveOfficialGlobalPuntos(
   jugadorId: string
 ): Promise<number | null> {
   if (romcRpcSuiteUnavailable()) return null;
@@ -152,20 +169,26 @@ export async function fetchOfficialDisplayPuntosForJugador(
   );
 
   if (error) {
-    markRomcRpcSuiteUnavailable();
+    if (isBrokenRomcRpcError(error)) markRomcRpcSuiteUnavailable();
     return null;
   }
 
-  const puntos = typeof data === "number" ? data : Number(data ?? 0);
+  if (data == null) return null;
+
+  const puntos = typeof data === "number" ? data : Number(data);
+  if (!Number.isFinite(puntos)) return null;
+
   logRomcPhase22B({
     action: "official_display_puntos",
     jugadorId,
     puntosOficiales: puntos,
-    fuente:
-      "riviera_official_ledger_points + riviera_official_legacy_points (todos los clubes)",
+    fuente: "riviera_official_player_totals (official_player_key)",
   });
-  return Number.isFinite(puntos) ? puntos : 0;
+  return puntos;
 }
+
+/** @deprecated Use resolveOfficialGlobalPuntos */
+export const fetchOfficialDisplayPuntosForJugador = resolveOfficialGlobalPuntos;
 
 export async function listOfficialPlayerActivity(
   jugadorId: string,
@@ -432,7 +455,7 @@ export async function loadRomcOfficialPlayerView(
     };
   }
 
-  const displayPuntos = await fetchOfficialDisplayPuntosForJugador(jugadorId);
+  const displayPuntos = await resolveOfficialGlobalPuntos(jugadorId);
 
   const hasRomcData =
     ledgerActivity.length > 0 ||
@@ -453,9 +476,7 @@ export async function loadRomcOfficialPlayerView(
     ledgerActivity,
     jugadorId
   );
-  const puntosOficiales =
-    displayPuntos ??
-    (historial.length > 0 ? sumParticipacionesPuntos(historial) : null);
+  const puntosOficiales = displayPuntos;
 
   logRomcPhase22B({
     action: "official_player_view_loaded",
@@ -513,7 +534,7 @@ export async function enrichJugadoresWithOfficialPuntos(
 
   const enriched = await Promise.all(
     jugadores.map(async (j) => {
-      const global = await fetchOfficialDisplayPuntosForJugador(j.id);
+      const global = await resolveOfficialGlobalPuntos(j.id);
       if (global == null) return j;
       const stats = j.stats
         ? mergeJugadorStatsPuntosTotales(j.stats, global)

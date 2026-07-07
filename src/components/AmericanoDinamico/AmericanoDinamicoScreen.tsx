@@ -75,6 +75,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     nextRound,
     hydrating,
     remoteSyncReady,
+    participacionSyncError,
+    retryParticipacionSync,
   } = useAmericanoDinamico(tournamentId ?? null, {
     organizadorId: effectiveUserId,
     sessionLabel: tournamentName || "Sesión",
@@ -406,6 +408,21 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         />
       ) : null}
       <p className="americano-screen__finished">Americano finalizado</p>
+      {participacionSyncError && (
+        <div className="americano-screen__error" role="alert">
+          <p>
+            El americano terminó, pero no se registró en el historial de
+            jugadores: {participacionSyncError}
+          </p>
+          <button
+            type="button"
+            className="americano-screen__retry-sync"
+            onClick={() => retryParticipacionSync()}
+          >
+            Reintentar registro
+          </button>
+        </div>
+      )}
       {podiumPlayers.length > 0 && (
         <section className="americano-podium te-public-podium">
           <h3>Felicidades a los 3 primeros lugares</h3>

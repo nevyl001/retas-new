@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Player Identity Architecture (CONGELADA)
 
-Lee **`docs/ARCHITECTURE-PLAYER-IDENTITY.md`** antes de modificar código en este ámbito.
+Lee **`docs/ARCHITECTURE-PLAYER-IDENTITY.md`** y **`docs/ADR-ranking-local-vs-global.md`** antes de modificar código en este ámbito (identidad `official_player_key` vs dimensión LOCAL/GLOBAL ROMC).
 
 ## Regla innegociable
 

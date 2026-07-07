@@ -11,6 +11,9 @@ El esquema canónico vive en la base de datos de producción. En el repo solo qu
 | `organizer-player-access.sql` | Grants entre clubes (Fase 1) |
 | `riviera-official-multi-club-romc1.sql` | ROMC-1 — identidad + ledger |
 | `riviera-official-multi-club-romc2.sql` | ROMC-2 — dual-write ledger |
+| `riviera-official-ledger-fix-source-organizador.sql` | ROMC-2 fix — `source_organizer_id` desde metadata |
+| `riviera-official-display-puntos-for-jugador.sql` | RPC puente — puntos globales desde `riviera_official_player_totals` |
+| `riviera-official-site-ranking-fix-nulls.sql` | Sprint 2.1 — vista sitio oficial sin COALESCE local; `NULLS LAST` en rankings |
 | `riviera-career-identity-2.0.1-ddl.sql` | **Sprint 2.0.1** — Riviera ID Foundation (DDL aditivo identity) |
 | `riviera-career-identity-2.0.1-validate.sql` | Validación read-only post Sprint 2.0.1 |
 | `riviera-career-identity-2.0.2-engine.sql` | **Sprint 2.0.2** — Riviera ID Engine (secuencia + ensure RPC) |
@@ -77,7 +80,10 @@ Hazlos directamente en el **SQL Editor** de Supabase (o con migraciones de Supab
 2. `organizer-player-access.sql`
 3. `riviera-official-multi-club-romc1.sql` (ROMC-1)
 4. `riviera-official-multi-club-romc2.sql` (ROMC-2)
-5. Validación ROMC-1: `docs/ROMC-1-CHECKLIST.md`
+5. `riviera-official-ledger-fix-source-organizador.sql` (ROMC-2 fix metadata source org)
+6. `riviera-official-display-puntos-for-jugador.sql` (RPC lectura puntos globales ROMC)
+7. `riviera-official-site-ranking-fix-nulls.sql` (Sprint 2.1 — ranking sitio oficial sin fallback local)
+8. Validación ROMC-1: `docs/ROMC-1-CHECKLIST.md`
 6. **`riviera-career-identity-2.0.1-ddl.sql`** (Sprint 2.0.1 — Riviera ID Foundation)
 7. Validación Sprint 2.0.1: `riviera-career-identity-2.0.1-validate.sql` + `docs/RIVIERA-CAREER-IDENTITY-2.0.1-CHECKLIST.md`
 8. **`riviera-career-identity-2.0.2-engine.sql`** (Sprint 2.0.2 — Riviera ID Engine)

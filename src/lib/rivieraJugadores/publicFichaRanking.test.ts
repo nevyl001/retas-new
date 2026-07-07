@@ -65,6 +65,7 @@ function j(
       puntos_totales: puntos,
       updated_at: "",
     },
+    officialPuntosGlobal: puntos,
     ...opts,
   };
 }

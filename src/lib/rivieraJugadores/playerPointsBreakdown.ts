@@ -16,6 +16,7 @@ import {
   resolvePlayerPoints,
   type ResolvedPlayerIdentity,
 } from "./playerIdentityService";
+import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 export type PlayerPointsBreakdownClub = {
@@ -26,14 +27,23 @@ export type PlayerPointsBreakdownClub = {
 
 export type PlayerPointsBreakdown = {
   currentClubPoints: number;
-  globalTotalPoints: number;
+  /** Suma local en todos los clubes (carrera); nunca es el ledger ROMC. */
+  careerTotalAllClubs: number;
+  /** Puntos ledger ROMC; null = sin identidad oficial / RPC no disponible. */
+  officialGlobalPoints: number | null;
   pointsByClub: PlayerPointsBreakdownClub[];
 };
+
+/** Vista de carrera local (sin ROMC) para desglose por club. */
+export type CareerPointsBreakdownView = Pick<
+  PlayerPointsBreakdown,
+  "currentClubPoints" | "careerTotalAllClubs" | "pointsByClub"
+>;
 
 export function breakdownFromCareerResult(
   career: CareerPointsByClubResult,
   currentOrganizadorId: string | null | undefined
-): PlayerPointsBreakdown {
+): CareerPointsBreakdownView {
   const viewOrg = currentOrganizadorId?.trim() || null;
   const byClub = sortCareerClubsForDisplay(career.byClub, viewOrg);
 
@@ -51,7 +61,7 @@ export function breakdownFromCareerResult(
 
   return {
     currentClubPoints,
-    globalTotalPoints: career.total,
+    careerTotalAllClubs: career.total,
     pointsByClub,
   };
 }
@@ -77,6 +87,25 @@ export function careerResultFromJugador(
   };
 }
 
+async function resolveOfficialGlobalPointsForJugador(
+  jugador: RivieraJugadorWithStats
+): Promise<number | null> {
+  if (jugador.officialPuntosGlobal != null && Number.isFinite(jugador.officialPuntosGlobal)) {
+    return jugador.officialPuntosGlobal;
+  }
+  return resolveOfficialGlobalPuntos(jugador.id);
+}
+
+async function withOfficialGlobalPoints(
+  jugador: RivieraJugadorWithStats,
+  breakdown: CareerPointsBreakdownView
+): Promise<PlayerPointsBreakdown> {
+  return {
+    ...breakdown,
+    officialGlobalPoints: await resolveOfficialGlobalPointsForJugador(jugador),
+  };
+}
+
 export type ResolvePlayerPointsBreakdownInput = {
   jugador: RivieraJugadorWithStats;
   identity?: ResolvedPlayerIdentity | null;
@@ -85,7 +114,7 @@ export type ResolvePlayerPointsBreakdownInput = {
 };
 
 /**
- * Única fuente de verdad para puntos por club / total global / club actual.
+ * Única fuente de verdad para puntos por club / total carrera / ROMC oficial.
  */
 export async function resolvePlayerPointsBreakdown(
   input: ResolvePlayerPointsBreakdownInput
@@ -117,18 +146,27 @@ export async function resolvePlayerPointsBreakdown(
       viewingOrganizadorId: viewOrg,
       includeViewingOrgWithZero: Boolean(viewOrg),
     });
-    return breakdownFromCareerResult(career, viewOrg);
+    return withOfficialGlobalPoints(
+      jugador,
+      breakdownFromCareerResult(career, viewOrg)
+    );
   }
 
   if (identity) {
     const careerBundle = await resolvePlayerCareer(identity, 500);
     const career = await resolvePlayerPoints(identity, careerBundle);
-    return breakdownFromCareerResult(career, viewOrg);
+    return withOfficialGlobalPoints(
+      jugador,
+      breakdownFromCareerResult(career, viewOrg)
+    );
   }
 
   const existing = careerResultFromJugador(jugador);
   if (existing && (existing.total > 0 || existing.byClub.length > 0)) {
-    return breakdownFromCareerResult(existing, viewOrg);
+    return withOfficialGlobalPoints(
+      jugador,
+      breakdownFromCareerResult(existing, viewOrg)
+    );
   }
 
   const enrichedJugador = await attachCareerPuntosToJugador(jugador, {
@@ -138,9 +176,9 @@ export async function resolvePlayerPointsBreakdown(
 
   const career = careerResultFromJugador(enrichedJugador);
   if (!career) {
-    return {
+    return withOfficialGlobalPoints(jugador, {
       currentClubPoints: jugador.stats?.puntos_totales ?? 0,
-      globalTotalPoints: jugador.stats?.puntos_totales ?? 0,
+      careerTotalAllClubs: jugador.stats?.puntos_totales ?? 0,
       pointsByClub: viewOrg
         ? [
             {
@@ -150,8 +188,11 @@ export async function resolvePlayerPointsBreakdown(
             },
           ]
         : [],
-    };
+    });
   }
 
-  return breakdownFromCareerResult(career, viewOrg);
+  return withOfficialGlobalPoints(
+    enrichedJugador,
+    breakdownFromCareerResult(career, viewOrg)
+  );
 }

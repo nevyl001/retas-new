@@ -87,8 +87,8 @@ function j(
 }
 
 describe("rankingPuntosCarreraRivieraDisplay", () => {
-  it("suma puntos del club anfitrión aunque el registro origen tenga 0", () => {
-    expect(rankingPuntosCarreraRivieraDisplay(j({}))).toBe(20);
+  it("sin ledger ROMC devuelve null (no estimar con local)", () => {
+    expect(rankingPuntosCarreraRivieraDisplay(j({}))).toBeNull();
   });
 
   it("prioriza officialPuntosGlobal del ledger ROMC", () => {
@@ -97,7 +97,8 @@ describe("rankingPuntosCarreraRivieraDisplay", () => {
     ).toBe(35);
   });
 
-  it("rankingPuntosGlobalDisplay coincide con carrera para cedidos", () => {
-    expect(rankingPuntosGlobalDisplay(j({}))).toBe(20);
+  it("rankingPuntosGlobalDisplay coincide con ledger ROMC", () => {
+    expect(rankingPuntosGlobalDisplay(j({ officialPuntosGlobal: 35 }))).toBe(35);
+    expect(rankingPuntosGlobalDisplay(j({}))).toBeNull();
   });
 });

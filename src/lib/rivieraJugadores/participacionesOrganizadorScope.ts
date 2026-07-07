@@ -6,15 +6,45 @@ export type ParticipacionOrganizadorScopeOptions = {
   jugadorHomeOrganizadorId?: string | null;
 };
 
-/** Club al que pertenece una participación (metadata o club del perfil). */
+/**
+ * Club al que pertenece una participación.
+ *
+ * IMPORTANTE: NUNCA se debe "adivinar" el club usando el perfil de origen
+ * del jugador (jugadorHomeOrganizadorId). Antes, si faltaba
+ * metadata.organizador_id (evento padre borrado, fila legacy, fallo de
+ * enrichment, race condition), esta función asignaba la participación al
+ * club de origen del perfil aunque el jugador hubiera jugado en otro club —
+ * causando que todo lo "sin metadata limpia" se apilara en un solo club.
+ *
+ * Ahora: si falta metadata.organizador_id, la participación se trata como
+ * huérfana (retorna null) y se excluye de la atribución por club, en vez de
+ * asignarse a ciegas. Debe corregirse en origen (ver
+ * supabase/diagnose-participaciones-organizador-huerfanas.sql).
+ *
+ * @param jugadorHomeOrganizadorId Ya no se usa para resolver el club; se
+ * mantiene el parámetro por compatibilidad de firma con los llamadores
+ * existentes. No lo elimines sin revisar todos los call sites.
+ */
 export function resolveParticipacionOrganizadorId(
   row: JugadorParticipacion,
   jugadorHomeOrganizadorId?: string | null
 ): string | null {
   const metaOrg = String(row.metadata?.organizador_id ?? "").trim();
   if (metaOrg) return metaOrg;
-  const home = jugadorHomeOrganizadorId?.trim();
-  return home || null;
+
+  if (typeof console !== "undefined") {
+    console.warn(
+      "[riviera-jugadores] participación huérfana: falta metadata.organizador_id, se excluye de la atribución por club",
+      {
+        jugadorId: row.jugador_id,
+        eventoId: row.evento_id,
+        tipoEvento: row.tipo_evento,
+        participacionId: (row as { id?: string }).id,
+      }
+    );
+  }
+
+  return null;
 }
 
 /** Participaciones visibles en ranking/ficha interna de un organizador. */

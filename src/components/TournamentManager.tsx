@@ -195,19 +195,28 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       setError("");
       setLoading(true);
       await updateTournament(tournament.id, { is_finished: true });
+      let pipelineWarning: string | null = null;
       if (user?.id) {
         try {
           const [pairs, matches] = await Promise.all([
             getPairs(tournament.id),
             getMatches(tournament.id),
           ]);
-          await finalizeCareerEvent({
+          const pipelineResult = await finalizeCareerEvent({
             kind: "reta",
             organizadorId: user.id,
             tournament: { ...tournament, is_finished: true },
             pairs,
             matches,
           });
+          if (!pipelineResult.ok) {
+            const detail =
+              pipelineResult.failures.map((f) => f.message).join("; ") ||
+              "No se pudo registrar el historial de la reta.";
+            console.warn("[career-event-pipeline] reta incompleta:", pipelineResult);
+            pipelineWarning = `Reta finalizada, pero el historial no se registró por completo: ${detail}`;
+            setError(pipelineWarning);
+          }
         } catch (syncErr) {
           console.warn("syncRetaParticipaciones:", syncErr);
         }
@@ -222,7 +231,9 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       if (selectedTournament?.id === tournament.id) {
         onTournamentSelect({ ...tournament, is_finished: true });
       }
-      alert("¡Reta finalizada exitosamente! 🏆");
+      if (!pipelineWarning) {
+        alert("¡Reta finalizada exitosamente! 🏆");
+      }
     } catch (err) {
       console.error("Error finalizando reta:", err);
       setError("Error al finalizar la reta: " + (err as Error).message);

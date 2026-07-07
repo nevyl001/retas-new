@@ -1,7 +1,7 @@
 import React from "react";
 import {
   buildJugadorPuntosBreakdown,
-  simpleJugadorPuntosDisplay,
+  resolveCareerTotalAllClubsDisplay,
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 
@@ -9,7 +9,7 @@ type JugadorPuntosBreakdownProps = {
   jugador: RivieraJugadorWithStats;
   clubOrganizadorId: string | null;
   hasOrgContext?: boolean;
-  /** Card de perfil público: siempre usa careerPuntosByClub, sin fallback local. */
+  /** Card de perfil público: desglose de carrera local por club. */
   profileCard?: boolean;
   className?: string;
 };
@@ -27,14 +27,14 @@ export const JugadorPuntosBreakdown: React.FC<JugadorPuntosBreakdownProps> = ({
   });
 
   if (lines.length === 0) {
-    const pts = simpleJugadorPuntosDisplay(
+    const pts = resolveCareerTotalAllClubsDisplay(
       jugador,
       hasOrgContext,
       clubOrganizadorId
     );
     return (
       <span className={`rjp-ficha-stat__val${className ? ` ${className}` : ""}`}>
-        {pts.toLocaleString("es-MX")}
+        {pts.toLocaleString("es-MX")} pts
       </span>
     );
   }

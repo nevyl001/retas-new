@@ -141,9 +141,65 @@ export function useAmericanoDinamico(
         : `americano-${Date.now()}`)
   );
   const participacionSyncedRef = useRef(false);
+  const participacionSyncInFlightRef = useRef(false);
+  const [participacionSyncError, setParticipacionSyncError] = useState<string | null>(
+    null
+  );
+
+  const runParticipacionSync = useCallback(async () => {
+    if (!options?.organizadorId || playersRef.current.length === 0) return;
+    if (participacionSyncedRef.current || participacionSyncInFlightRef.current) {
+      return;
+    }
+
+    participacionSyncInFlightRef.current = true;
+    setParticipacionSyncError(null);
+
+    const label = options.sessionLabel?.trim() || "Sesión";
+    try {
+      const { finalizeCareerEvent } = await import(
+        "../lib/rivieraJugadores/careerEventPipeline"
+      );
+      const result = await finalizeCareerEvent({
+        kind: "americano",
+        organizadorId: options.organizadorId,
+        sesionId: sesionIdRef.current,
+        nombre: label,
+        roster: playersRef.current,
+        rounds: roundsRef.current,
+      });
+
+      if (result.ok) {
+        participacionSyncedRef.current = true;
+        setParticipacionSyncError(null);
+      } else {
+        const detail =
+          result.failures.map((f) => f.message).join("; ") ||
+          "No se pudo registrar el historial del americano.";
+        console.error(
+          "[riviera-jugadores] sync tras finalizar americano incompleto:",
+          result
+        );
+        setParticipacionSyncError(detail);
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Error al registrar el historial.";
+      console.error("[riviera-jugadores] sync tras finalizar americano:", err);
+      setParticipacionSyncError(message);
+    } finally {
+      participacionSyncInFlightRef.current = false;
+    }
+  }, [options?.organizadorId, options?.sessionLabel]);
+
+  const retryParticipacionSync = useCallback(() => {
+    participacionSyncedRef.current = false;
+    void runParticipacionSync();
+  }, [runParticipacionSync]);
 
   useEffect(() => {
     participacionSyncedRef.current = false;
+    setParticipacionSyncError(null);
     setHydrating(Boolean(resolvedTournamentId));
     setRemoteSyncReady(true);
   }, [resolvedTournamentId]);
@@ -426,32 +482,8 @@ export function useAmericanoDinamico(
 
   useEffect(() => {
     if (phase !== "finished") return;
-    if (!options?.organizadorId || participacionSyncedRef.current) return;
-    if (players.length === 0) return;
-
-    participacionSyncedRef.current = true;
-    const label = options.sessionLabel?.trim() || "Sesión";
-    const roster = playersRef.current;
-    const allRounds = roundsRef.current;
-
-    void import("../lib/rivieraJugadores/careerEventPipeline")
-      .then(({ finalizeCareerEvent }) =>
-        finalizeCareerEvent({
-          kind: "americano",
-          organizadorId: options.organizadorId!,
-          sesionId: sesionIdRef.current,
-          nombre: label,
-          roster,
-          rounds: allRounds,
-        })
-      )
-      .catch((err) =>
-        console.error(
-          "[riviera-jugadores] sync tras finalizar americano:",
-          err
-        )
-      );
-  }, [phase, options?.organizadorId, options?.sessionLabel, players.length]);
+    void runParticipacionSync();
+  }, [phase, options?.organizadorId, players.length, runParticipacionSync]);
 
   return {
     players,
@@ -461,6 +493,8 @@ export function useAmericanoDinamico(
     totalRounds: totalRoundsRef.current,
     hydrating,
     remoteSyncReady,
+    participacionSyncError,
+    retryParticipacionSync,
     removePlayer,
     toggleExistingPlayer,
     startTournament,

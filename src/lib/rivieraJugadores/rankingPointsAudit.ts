@@ -3,7 +3,7 @@
  * Rastrea clubPoints / rivieraPoints / totalPoints por capa del pipeline.
  */
 import type { CareerPointsByClubResult } from "./careerPointsByClub";
-import type { PlayerPointsBreakdown } from "./playerPointsBreakdown";
+import type { CareerPointsBreakdownView, PlayerPointsBreakdown } from "./playerPointsBreakdown";
 import type { JugadorPuntosBreakdownLine } from "./jugadorPuntosBreakdown";
 import type { RivieraJugadorWithStats } from "./types";
 
@@ -53,7 +53,7 @@ export function snapshotFromCareer(
 }
 
 export function snapshotFromBreakdown(
-  breakdown: PlayerPointsBreakdown,
+  breakdown: CareerPointsBreakdownView | PlayerPointsBreakdown,
   viewingOrganizadorId?: string | null
 ): RankingPointsAuditSnapshot {
   const viewOrg = viewingOrganizadorId?.trim() || HACKPADEL;
@@ -66,7 +66,7 @@ export function snapshotFromBreakdown(
   return {
     clubPoints: clubLine?.points ?? breakdown.currentClubPoints,
     rivieraPoints: rivieraLine?.points ?? 0,
-    totalPoints: breakdown.globalTotalPoints,
+    totalPoints: breakdown.careerTotalAllClubs,
   };
 }
 
@@ -77,7 +77,9 @@ export function snapshotFromDisplayLines(
   const viewOrg = viewingOrganizadorId?.trim() || HACKPADEL;
   const clubLine = lines.find((l) => l.key === viewOrg);
   const rivieraLine = lines.find((l) => l.key === RIVIERA_OPEN);
-  const totalLine = lines.find((l) => l.key === "total");
+  const totalLine = lines.find(
+    (l) => l.key === "career-total" || l.key === "total"
+  );
   const clubPoints = clubLine?.puntos ?? 0;
   const rivieraPoints = rivieraLine?.puntos ?? 0;
   const totalPoints =

@@ -47,7 +47,7 @@ describe("resolvePlayerPointsBreakdown / breakdownFromCareerResult", () => {
     const c = career([{ org: HACKPADEL, pts: 50 }]);
     const b = breakdownFromCareerResult(c, HACKPADEL);
     expect(b.currentClubPoints).toBe(50);
-    expect(b.globalTotalPoints).toBe(50);
+    expect(b.careerTotalAllClubs).toBe(50);
     expect(b.pointsByClub).toHaveLength(1);
     expect(b.pointsByClub[0].points).toBe(50);
   });
@@ -59,7 +59,7 @@ describe("resolvePlayerPointsBreakdown / breakdownFromCareerResult", () => {
     ]);
     const bHack = breakdownFromCareerResult(c, HACKPADEL);
     expect(bHack.currentClubPoints).toBe(50);
-    expect(bHack.globalTotalPoints).toBe(75);
+    expect(bHack.careerTotalAllClubs).toBe(75);
 
     const bTest = breakdownFromCareerResult(c, CLUB_TEST);
     expect(bTest.currentClubPoints).toBe(25);
@@ -80,7 +80,7 @@ describe("resolvePlayerPointsBreakdown / breakdownFromCareerResult", () => {
     const c = career([], 0);
     const b = breakdownFromCareerResult(c, HACKPADEL);
     expect(b.currentClubPoints).toBe(0);
-    expect(b.globalTotalPoints).toBe(0);
+    expect(b.careerTotalAllClubs).toBe(0);
     expect(Number.isFinite(b.currentClubPoints)).toBe(true);
   });
 });
@@ -111,7 +111,7 @@ describe("buildJugadorPuntosBreakdown (ranking card UI)", () => {
     const lines = buildJugadorPuntosBreakdown(j, HACKPADEL, {
       hasOrgContext: true,
     });
-    expect(lines.some((l) => l.role === "total" && l.puntos === 75)).toBe(true);
+    expect(lines.some((l) => l.role === "career-total" && l.puntos === 75)).toBe(true);
   });
 
   it("currentClubPoints coherente con ranking local", () => {
@@ -121,7 +121,7 @@ describe("buildJugadorPuntosBreakdown (ranking card UI)", () => {
       careerPuntosByClub: c.byClub,
       careerPuntosTotal: 50,
       stats: { puntos_totales: 50 } as never,
-      pointsBreakdown: b,
+      pointsBreakdown: { ...b, officialGlobalPoints: null },
     });
     const { rankingPuntosClubLocal } = require("./rankingPosition");
     expect(rankingPuntosClubLocal(j, HACKPADEL)).toBe(50);
