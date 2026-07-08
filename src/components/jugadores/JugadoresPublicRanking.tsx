@@ -53,7 +53,7 @@ import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
 import { RankingInternoDisclaimer } from "./RankingInternoDisclaimer";
 import { RankingPodio } from "./RankingPodio";
 import { RankingPtsDisplay } from "./RankingPtsDisplay";
-import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
+import { RankingPuntosTeaser, RankingPuntosTeaserPills } from "./RankingPuntosTeaser";
 import "./riviera-jugadores-public-ranking.css";
 
 interface JugadoresPublicRankingProps {
@@ -266,8 +266,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
           aria-expanded={teaserOpen}
         >
           <span className="rjp-ranking-teaser-toggle__pills">
-            Liga <strong>600</strong> · Torneo <strong>600</strong> · Americano{" "}
-            <strong>140</strong> · Reta <strong>100</strong>
+            <RankingPuntosTeaserPills />
           </span>
           <span
             className="rjp-ranking-teaser-toggle__chevron"

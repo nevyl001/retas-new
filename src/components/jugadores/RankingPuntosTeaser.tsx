@@ -1,6 +1,7 @@
 import React from "react";
 import {
   PUNTOS_AMERICANO,
+  PUNTOS_DUELO_2V2,
   PUNTOS_EXPRESS,
   PUNTOS_LIGA,
   PUNTOS_RETA,
@@ -24,44 +25,64 @@ const americanoMax = calcularPuntosEvento({
 
 const LIGA_MAX = PUNTOS_LIGA.BASE_INSCRIPCION + PUNTOS_LIGA.PRIMER_LUGAR;
 const RETA_MAX = PUNTOS_RETA.PRIMER_LUGAR;
+const DUELO_MAX = PUNTOS_DUELO_2V2.GANADOR;
 
 const MODALIDADES = [
   {
     id: "liga",
     icon: "trophy",
     nombre: "Liga",
-    linea: `+${PUNTOS_LIGA.BASE_INSCRIPCION} inscripción · +${PUNTOS_LIGA.GANAR_JORNADA} jornada · podio ${PUNTOS_LIGA.PRIMER_LUGAR}/${PUNTOS_LIGA.SEGUNDO_LUGAR}/${PUNTOS_LIGA.TERCER_LUGAR}`,
+    linea: `Inscripción ${PUNTOS_LIGA.BASE_INSCRIPCION} · jornada ganada +${PUNTOS_LIGA.GANAR_JORNADA} · podio ${PUNTOS_LIGA.PRIMER_LUGAR}/${PUNTOS_LIGA.SEGUNDO_LUGAR}/${PUNTOS_LIGA.TERCER_LUGAR}`,
     maxPts: LIGA_MAX,
   },
   {
     id: "torneo",
     icon: "bolt",
-    nombre: "Torneo",
-    linea: `+${PUNTOS_EXPRESS.PARTICIPACION} participar · fases y podio hasta campeón`,
+    nombre: "Torneo Express",
+    linea: `Participación ${PUNTOS_EXPRESS.PARTICIPACION} + grupos ${PUNTOS_EXPRESS.PASAR_FASE_GRUPOS} + semis ${PUNTOS_EXPRESS.PASAR_SEMIFINAL} + final ${PUNTOS_EXPRESS.LLEGAR_FINAL} + podio ${PUNTOS_EXPRESS.PRIMER_LUGAR}/${PUNTOS_EXPRESS.SEGUNDO_LUGAR}/${PUNTOS_EXPRESS.TERCER_LUGAR}`,
     maxPts: expressCampeon,
   },
   {
     id: "americano",
     icon: "refresh",
     nombre: "Americano",
-    linea: `+${PUNTOS_AMERICANO.PARTICIPACION} · +${PUNTOS_AMERICANO.POR_VICTORIA}/victoria · podio ${PUNTOS_AMERICANO.PRIMER_LUGAR}/${PUNTOS_AMERICANO.SEGUNDO_LUGAR}/${PUNTOS_AMERICANO.TERCER_LUGAR}`,
+    linea: `Base ${PUNTOS_AMERICANO.PARTICIPACION} + ${PUNTOS_AMERICANO.POR_VICTORIA} por victoria + podio ${PUNTOS_AMERICANO.PRIMER_LUGAR}/${PUNTOS_AMERICANO.SEGUNDO_LUGAR}/${PUNTOS_AMERICANO.TERCER_LUGAR} · ej. campeón 6 vict. ≈ ${americanoMax}`,
     maxPts: americanoMax,
   },
   {
     id: "reta",
     icon: "ball-tennis",
     nombre: "Reta",
-    linea: `Podio ${PUNTOS_RETA.PRIMER_LUGAR}/${PUNTOS_RETA.SEGUNDO_LUGAR}/${PUNTOS_RETA.TERCER_LUGAR} · +${PUNTOS_RETA.PARTICIPACION} participar`,
+    linea: `1° ${PUNTOS_RETA.PRIMER_LUGAR} · 2° ${PUNTOS_RETA.SEGUNDO_LUGAR} · 3° ${PUNTOS_RETA.TERCER_LUGAR} · 4°+ ${PUNTOS_RETA.PARTICIPACION}`,
     maxPts: RETA_MAX,
+  },
+  {
+    id: "duelo",
+    icon: "swords",
+    nombre: "Duelo 2v2",
+    linea: `Ganador ${PUNTOS_DUELO_2V2.GANADOR} · perdedor ${PUNTOS_DUELO_2V2.PERDEDOR}`,
+    maxPts: DUELO_MAX,
   },
 ] as const;
 
-const EXPRESS_FASES = [
+const EXPRESS_DETALLE = [
   { label: "Participar", pts: PUNTOS_EXPRESS.PARTICIPACION },
   { label: "Pasar grupos", pts: PUNTOS_EXPRESS.PASAR_FASE_GRUPOS },
   { label: "Semifinal", pts: PUNTOS_EXPRESS.PASAR_SEMIFINAL },
   { label: "Final", pts: PUNTOS_EXPRESS.LLEGAR_FINAL },
+  { label: "Podio 1.º", pts: PUNTOS_EXPRESS.PRIMER_LUGAR },
+  { label: "Podio 2.º", pts: PUNTOS_EXPRESS.SEGUNDO_LUGAR },
+  { label: "Podio 3.º", pts: PUNTOS_EXPRESS.TERCER_LUGAR },
 ] as const;
+
+/** Resumen compacto para el toggle del ranking público. */
+export const RankingPuntosTeaserPills: React.FC = () => (
+  <>
+    Liga <strong>{LIGA_MAX}</strong> · Torneo Express <strong>{expressCampeon}</strong> ·
+    Americano <strong>{americanoMax}</strong> · Reta <strong>{RETA_MAX}</strong> · Duelo{" "}
+    <strong>{DUELO_MAX}</strong>
+  </>
+);
 
 export const RankingPuntosTeaser: React.FC = () => {
   return (
@@ -96,10 +117,10 @@ export const RankingPuntosTeaser: React.FC = () => {
         aria-labelledby="rjp-express-title"
       >
         <h2 id="rjp-express-title" className="rjp-ranking-section-label">
-          Torneo — por fase
+          Torneo Express — por fase
         </h2>
         <div className="rjp-ranking-express__grid">
-          {EXPRESS_FASES.map((f) => (
+          {EXPRESS_DETALLE.map((f) => (
             <div key={f.label} className="rjp-ranking-express__cell">
               <span className="rjp-ranking-express__label">{f.label}</span>
               <span className="rjp-ranking-express__pts">
@@ -108,9 +129,9 @@ export const RankingPuntosTeaser: React.FC = () => {
             </div>
           ))}
           <div className="rjp-ranking-express__cell rjp-ranking-express__cell--total">
-            <span className="rjp-ranking-express__label">Campeón + podio</span>
+            <span className="rjp-ranking-express__label">Campeón (total acumulado)</span>
             <span className="rjp-ranking-express__pts rjp-ranking-express__pts--hero">
-              {expressCampeon.toLocaleString("es-MX")} pts
+              ≈ {expressCampeon.toLocaleString("es-MX")} pts
             </span>
           </div>
         </div>
