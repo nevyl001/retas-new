@@ -1,0 +1,42 @@
+name: Auditoría diaria de integridad de carrera
+
+# Corre sola todos los días contra producción (usa la misma anon key
+# pública que ya usa la app en el navegador — no requiere service_role).
+# También se puede disparar a mano desde la pestaña Actions de GitHub.
+on:
+  schedule:
+    - cron: "0 13 * * *" # 07:00 hora CDMX (UTC-6) aprox.
+  workflow_dispatch: {}
+
+concurrency:
+  group: audit-career-integrity
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Auditoría de integridad de carrera (online, producción)
+        run: npm run audit:career-integrity
+        env:
+          REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
+
+      # Si la auditoría falla (huérfanos HIGH con puntos, metadata rota, etc.),
+      # el paso anterior sale con exit code 1 y este job se marca en rojo.
+      # Actívalo desde GitHub: Settings → Notifications, o conecta un paso de
+      # Slack/email aquí si quieres alerta activa en vez de solo revisar el tab Actions.
