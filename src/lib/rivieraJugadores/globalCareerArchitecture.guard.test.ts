@@ -95,6 +95,19 @@ describe("arquitectura congelada — carrera global multiclub", () => {
     );
   });
 
+  it("ranking público no llama RPC auth-only de cedidos", () => {
+    expectIncludes(
+      "src/lib/rivieraJugadores/concedidoClubView.ts",
+      "if (options?.publicRpcContext) return map;",
+      "skip cedidos batch en público"
+    );
+    expectIncludes(
+      "src/lib/rivieraJugadores/participacionesOrganizadorScope.ts",
+      "process.env.NODE_ENV === \"production\"",
+      "huérfanas silenciosas en producción"
+    );
+  });
+
   it("artefactos de auditoría y SQL existen", () => {
     const required = [
       "supabase/audit-global-career-architecture.sql",

@@ -6,6 +6,34 @@ export type ParticipacionOrganizadorScopeOptions = {
   jugadorHomeOrganizadorId?: string | null;
 };
 
+/** Dedup de warnings: una vez por participación (o evento) por sesión de página. */
+const orphanOrganizadorsWarned = new Set<string>();
+let orphanOrganizadorsWarnedCount = 0;
+const ORPHAN_WARN_CAP = 3;
+
+function warnOrphanParticipacionOnce(row: JugadorParticipacion): void {
+  if (process.env.NODE_ENV === "production") return;
+  if (typeof console === "undefined") return;
+
+  const key =
+    String((row as { id?: string }).id ?? "").trim() ||
+    `${row.jugador_id}|${row.tipo_evento}|${row.evento_id}`;
+  if (!key || orphanOrganizadorsWarned.has(key)) return;
+  if (orphanOrganizadorsWarnedCount >= ORPHAN_WARN_CAP) return;
+
+  orphanOrganizadorsWarned.add(key);
+  orphanOrganizadorsWarnedCount += 1;
+  console.warn(
+    "[riviera-jugadores] participación huérfana: falta metadata.organizador_id, se excluye de la atribución por club",
+    {
+      jugadorId: row.jugador_id,
+      eventoId: row.evento_id,
+      tipoEvento: row.tipo_evento,
+      participacionId: (row as { id?: string }).id,
+    }
+  );
+}
+
 /**
  * Club al que pertenece una participación.
  *
@@ -32,18 +60,7 @@ export function resolveParticipacionOrganizadorId(
   const metaOrg = String(row.metadata?.organizador_id ?? "").trim();
   if (metaOrg) return metaOrg;
 
-  if (typeof console !== "undefined") {
-    console.warn(
-      "[riviera-jugadores] participación huérfana: falta metadata.organizador_id, se excluye de la atribución por club",
-      {
-        jugadorId: row.jugador_id,
-        eventoId: row.evento_id,
-        tipoEvento: row.tipo_evento,
-        participacionId: (row as { id?: string }).id,
-      }
-    );
-  }
-
+  warnOrphanParticipacionOnce(row);
   return null;
 }
 

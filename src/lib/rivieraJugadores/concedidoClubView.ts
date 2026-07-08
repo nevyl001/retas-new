@@ -4,6 +4,7 @@ import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import type { JugadorStats, RivieraJugadorWithStats } from "./types";
 import {
   isMissingRatingRpcInfrastructureError,
+  isRpcAuthorizationDeniedError,
   shouldFallbackRatingRpcError,
   type RatingRpcFallbackOptions,
 } from "./ratingRpcErrors";
@@ -44,12 +45,18 @@ function mapConcedidoRankingBatchRow(
   };
 }
 
-/** Una sola llamada RPC para enriquecer ranking del club (requiere sesión tras PR2). */
+/**
+ * Batch de cedidos para ranking del club anfitrión.
+ * RPC solo authenticated (PR2). En ranking público NO se llama — evita 403 en consola;
+ * el enriquecimiento degrada a grants/lectura RLS vía enrichJugadorConcedidoClubView.
+ */
 export async function fetchConcedidosRankingMetaBatch(
   granteeOrganizadorId: string,
   options?: RatingRpcFallbackOptions
 ): Promise<Map<string, ConcedidoClubMeta>> {
   const map = new Map<string, ConcedidoClubMeta>();
+  // Ranking público: saltar RPC auth-only (no dispara red 403).
+  if (options?.publicRpcContext) return map;
   if (concedidosRankingBatchRpcAvailable === false) return map;
 
   const org = granteeOrganizadorId.trim();
@@ -62,7 +69,10 @@ export async function fetchConcedidosRankingMetaBatch(
 
   if (error) {
     if (shouldFallbackRatingRpcError(error, options)) {
-      if (isMissingRatingRpcInfrastructureError(error)) {
+      if (
+        isMissingRatingRpcInfrastructureError(error) ||
+        isRpcAuthorizationDeniedError(error)
+      ) {
         concedidosRankingBatchRpcAvailable = false;
       }
       return map;
@@ -100,6 +110,13 @@ export async function enrichJugadoresConcedidoClubViewBatch(
   const org = granteeOrganizadorId?.trim();
   if (!org || jugadores.length === 0) return jugadores;
 
+  // Ranking / ficha pública: degradar a grants + RLS, nunca RPC auth-only.
+  if (options?.publicRpcContext) {
+    return Promise.all(
+      jugadores.map((j) => enrichJugadorConcedidoClubView(org, j, { rpc: options }))
+    );
+  }
+
   const batch = await fetchConcedidosRankingMetaBatch(org, options);
   if (concedidosRankingBatchRpcAvailable === false) {
     return Promise.all(
@@ -128,6 +145,8 @@ export async function fetchConcedidoClubMeta(
   jugadorId: string,
   options?: RatingRpcFallbackOptions
 ): Promise<ConcedidoClubMeta | null> {
+  // Vista pública: no llamar RPCs authenticated (evita 403); usar grant + RLS.
+  if (options?.publicRpcContext) return null;
   if (concedidoClubRpcAvailable === false) return null;
 
   const org = granteeOrganizadorId.trim();
@@ -141,7 +160,10 @@ export async function fetchConcedidoClubMeta(
 
   if (error) {
     if (shouldFallbackRatingRpcError(error, options)) {
-      if (isMissingRatingRpcInfrastructureError(error)) {
+      if (
+        isMissingRatingRpcInfrastructureError(error) ||
+        isRpcAuthorizationDeniedError(error)
+      ) {
         concedidoClubRpcAvailable = false;
       }
       return null;

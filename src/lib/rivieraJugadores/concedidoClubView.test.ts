@@ -10,12 +10,15 @@ jest.mock("./organizerPlayerAccess", () => ({
 
 jest.mock("./rivieraOfficialActivity", () => ({
   fetchOfficialDisplayPuntosForJugador: jest.fn().mockResolvedValue(null),
+  resolveOfficialGlobalPuntos: jest.fn().mockResolvedValue(null),
 }));
 
 import { supabase, supabasePublicRead } from "../supabaseClient";
 import {
   applyConcedidoClubMeta,
   enrichJugadorConcedidoClubView,
+  enrichJugadoresConcedidoClubViewBatch,
+  fetchConcedidosRankingMetaBatch,
 } from "./concedidoClubView";
 import { findGrantedAccessMetaForJugador } from "./organizerPlayerAccess";
 import type { RivieraJugadorWithStats } from "./types";
@@ -68,6 +71,24 @@ describe("concedidoClubView", () => {
         }),
       }),
     });
+  });
+
+  it("ranking público no llama riviera_concedidos_ranking_enriquecimiento (evita 403)", async () => {
+    const batch = await fetchConcedidosRankingMetaBatch("hack-org", {
+      publicRpcContext: true,
+    });
+    expect(batch.size).toBe(0);
+    expect(supabase.rpc).not.toHaveBeenCalled();
+
+    await enrichJugadoresConcedidoClubViewBatch(
+      "hack-org",
+      [jugador({ id: "j1", concedidoPorAdmin: true })],
+      { publicRpcContext: true }
+    );
+
+    const rpcNames = (supabase.rpc as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(rpcNames).not.toContain("riviera_concedidos_ranking_enriquecimiento");
+    expect(rpcNames).not.toContain("riviera_rating_canonico_para_jugador");
   });
 
   it("nativo en club origen con clon en otro club no se marca como cedido", async () => {

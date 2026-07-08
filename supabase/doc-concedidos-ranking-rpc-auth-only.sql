@@ -1,0 +1,13 @@
+-- Documentación: riviera_concedidos_ranking_enriquecimiento NO debe ser pública (anon).
+--
+-- Causa del 403 en ranking /ranking/o/{org}/varonil:
+--   PR2 (rls-multiclub-pr2-rating-rpc-auth.sql) revoca EXECUTE a anon y otorga
+--   solo a authenticated + assert de caller. El ranking público llamaba la RPC
+--   de todos modos; el navegador mostraba 403 aunque el JS degradara.
+--
+-- Decisión:
+--   La RPC permanece auth-only. El fix es de cliente (publicRpcContext):
+--   - no llamar riviera_concedidos_ranking_enriquecimiento en ranking público
+--   - enriquecer cedidos vía grants públicos + RLS
+--
+-- NO ejecutar GRANT a anon. No abrir esta RPC al público.
