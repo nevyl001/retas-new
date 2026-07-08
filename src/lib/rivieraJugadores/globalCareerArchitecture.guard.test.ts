@@ -77,6 +77,24 @@ describe("arquitectura congelada — carrera global multiclub", () => {
     );
   });
 
+  it("ranking interno enriquece con motor global antes del render", () => {
+    expectIncludes(
+      "src/lib/rivieraJugadores/organizerScopedStats.ts",
+      "resolvePlayerIdentity",
+      "ranking enrich identity"
+    );
+    expectIncludes(
+      "src/lib/rivieraJugadores/organizerScopedStats.ts",
+      "resolvePlayerCareer",
+      "ranking enrich career"
+    );
+    expectIncludes(
+      "src/components/jugadores/RankingPtsDisplay.tsx",
+      "isRankingPointsBreakdownPending",
+      "ranking pts guard"
+    );
+  });
+
   it("artefactos de auditoría y SQL existen", () => {
     const required = [
       "supabase/audit-global-career-architecture.sql",

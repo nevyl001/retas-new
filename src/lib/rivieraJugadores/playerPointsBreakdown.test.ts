@@ -5,6 +5,7 @@ import {
 import {
   buildJugadorPuntosBreakdown,
   breakdownToDisplayLines,
+  isRankingPointsBreakdownPending,
 } from "./jugadorPuntosBreakdown";
 import type { CareerPointsByClubResult } from "./careerPointsByClub";
 import type { RivieraJugadorWithStats } from "./types";
@@ -125,6 +126,35 @@ describe("buildJugadorPuntosBreakdown (ranking card UI)", () => {
     });
     const { rankingPuntosClubLocal } = require("./rankingPosition");
     expect(rankingPuntosClubLocal(j, HACKPADEL)).toBe(50);
+  });
+
+  it("RIVIERA ID sin breakdown: no usa fallback stats locales", () => {
+    const j = jugador({
+      riviera_id: "RIV-00000075",
+      stats: { puntos_totales: 50 } as never,
+    });
+    expect(isRankingPointsBreakdownPending(j, { hasOrgContext: true })).toBe(true);
+    const lines = buildJugadorPuntosBreakdown(j, HACKPADEL, {
+      hasOrgContext: true,
+    });
+    expect(lines).toEqual([]);
+  });
+
+  it("RIVIERA ID con breakdown completo: no pendiente", () => {
+    const c = career([
+      { org: HACKPADEL, pts: 100 },
+      { org: CLUB_TEST, pts: 450 },
+    ]);
+    const b = breakdownFromCareerResult(c, HACKPADEL);
+    const j = jugador({
+      riviera_id: "RIV-00000075",
+      pointsBreakdown: { ...b, officialGlobalPoints: null },
+    });
+    expect(isRankingPointsBreakdownPending(j, { hasOrgContext: true })).toBe(false);
+    const lines = buildJugadorPuntosBreakdown(j, HACKPADEL, {
+      hasOrgContext: true,
+    });
+    expect(lines.some((l) => l.role === "career-total")).toBe(true);
   });
 });
 

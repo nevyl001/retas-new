@@ -1,6 +1,7 @@
 import React from "react";
 import {
   buildJugadorPuntosBreakdown,
+  isRankingPointsBreakdownPending,
   resolveCareerTotalAllClubsDisplay,
   resolveOfficialPuntosDisplay,
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
@@ -48,6 +49,17 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
   const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
     hasOrgContext: internalClub,
   });
+
+  if (isRankingPointsBreakdownPending(jugador, { hasOrgContext: internalClub })) {
+    return (
+      <span
+        className={`rjp-pts--na${className ? ` ${className}` : ""}`}
+        aria-busy="true"
+      >
+        Cargando carrera…
+      </span>
+    );
+  }
 
   logRankingPointsAuditFromJugador(
     "RankingPtsDisplay (React)",

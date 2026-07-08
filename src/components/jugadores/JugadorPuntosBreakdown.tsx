@@ -1,6 +1,7 @@
 import React from "react";
 import {
   buildJugadorPuntosBreakdown,
+  isRankingPointsBreakdownPending,
   resolveCareerTotalAllClubsDisplay,
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
@@ -25,6 +26,17 @@ export const JugadorPuntosBreakdown: React.FC<JugadorPuntosBreakdownProps> = ({
     hasOrgContext,
     profileCard,
   });
+
+  if (isRankingPointsBreakdownPending(jugador, { hasOrgContext })) {
+    return (
+      <span
+        className={`rjp-ficha-stat__val rjp-pts--na${className ? ` ${className}` : ""}`}
+        aria-busy="true"
+      >
+        Cargando carrera…
+      </span>
+    );
+  }
 
   if (lines.length === 0) {
     const pts = resolveCareerTotalAllClubsDisplay(

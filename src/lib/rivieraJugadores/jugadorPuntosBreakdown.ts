@@ -6,6 +6,7 @@ import {
 import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
 import { sortCareerClubsForDisplay } from "./careerPointsByClub";
 import { rankingPuntosInternoClubDisplay } from "./grantedRankingDisplay";
+import { isValidRivieraId } from "./rivieraIdDisplay";
 import {
   logRankingPointsAudit,
   snapshotFromBreakdown,
@@ -19,6 +20,24 @@ export type JugadorPuntosBreakdownLine = {
   puntos: number;
   role: "home" | "other" | "total" | "career-total";
 };
+
+/**
+ * Jugador con Riviera ID: el breakdown global aún no está listo (evita flash de stats locales).
+ */
+export function isRankingPointsBreakdownPending(
+  jugador: RivieraJugadorWithStats,
+  options?: { hasOrgContext?: boolean }
+): boolean {
+  if (!options?.hasOrgContext) return false;
+  const rid = jugador.riviera_id?.trim();
+  if (!rid || !isValidRivieraId(rid)) return false;
+  return !jugador.pointsBreakdown;
+}
+
+function jugadorHasOfficialIdentity(jugador: RivieraJugadorWithStats): boolean {
+  const rid = jugador.riviera_id?.trim();
+  return Boolean(rid && isValidRivieraId(rid));
+}
 
 /** ROMC disponible (incluye 0 real) vs sin dato oficial. */
 export type OfficialPuntosDisplay =
@@ -156,6 +175,16 @@ export function buildJugadorPuntosBreakdown(
   }
 
   if (options.profileCard || options.hasOrgContext) {
+    if (jugadorHasOfficialIdentity(jugador)) {
+      logRankingPointsAudit(
+        "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (RIVIERA_ID sin breakdown)",
+        jugador,
+        { clubPoints: 0, rivieraPoints: 0, totalPoints: 0 },
+        { warning: "breakdown pendiente — no usar stats locales como definitivos" }
+      );
+      return [];
+    }
+
     const pts = resolveCareerTotalAllClubsDisplay(
       jugador,
       options.hasOrgContext,
