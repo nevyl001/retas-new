@@ -1,4 +1,8 @@
 import { supabase, supabasePublicRead } from "../supabaseClient";
+import {
+  fetchPublicCareerJugadorIds,
+  fetchPublicIdentityRows,
+} from "./publicCareerLinkage";
 import type { JugadorStats, RivieraJugador, RivieraJugadorWithStats } from "./types";
 
 function isMissingAccessFeatureError(
@@ -124,7 +128,7 @@ export async function listActiveGrantedAccessForOrganizerPublic(
     }
   }
 
-  return listActiveGrantedAccessForOrganizer(org);
+  return [];
 }
 
 export async function listActiveGrantedAccessForOrganizer(
@@ -167,28 +171,30 @@ export async function findGrantedAccessMetaGlobal(
   const id = jugadorId.trim();
   if (!id) return null;
 
-  const { data, error } = await supabase
-    .from("organizer_player_access")
-    .select(
-      "id, jugador_id, owner_organizador_id, local_jugador_id, grantee_organizer_id"
-    )
-    .eq("is_active", true)
-    .or(`jugador_id.eq.${id},local_jugador_id.eq.${id}`)
-    .maybeSingle();
+  const identityRows = await fetchPublicIdentityRows(id, null);
+  if (identityRows?.length) {
+    const canonical =
+      identityRows.find((row) => row.canonical_jugador_id)?.canonical_jugador_id?.trim() ||
+      identityRows[0]?.anchor_jugador_id?.trim() ||
+      null;
 
-  if (error) {
-    if (isMissingAccessFeatureError(error)) return null;
-    throw error;
+    for (const row of identityRows) {
+      const linked = row.linked_jugador_id?.trim();
+      const org = row.linked_organizador_id?.trim();
+      if (linked === id && canonical && canonical !== id && org) {
+        return {
+          accessId: "",
+          sourceJugadorId: canonical,
+          ownerOrganizadorId:
+            row.home_organizador_id?.trim() || org,
+          localJugadorId: id,
+          granteeOrganizerId: org,
+        };
+      }
+    }
   }
-  if (!data) return null;
 
-  return {
-    accessId: String(data.id),
-    sourceJugadorId: String(data.jugador_id),
-    ownerOrganizadorId: String(data.owner_organizador_id),
-    localJugadorId: data.local_jugador_id ? String(data.local_jugador_id) : null,
-    granteeOrganizerId: String(data.grantee_organizer_id),
-  };
+  return null;
 }
 
 export async function enrichJugadorWithGlobalGrantedAccess(
@@ -438,43 +444,46 @@ export async function listGranteeClubsForSourceJugador(
   const id = sourceJugadorId.trim();
   if (!id) return [];
 
-  const byLocal = new Map<string, string>();
-
-  const addRows = (
-    rows: Array<{ grantee_organizer_id?: string; local_jugador_id?: string }> | null
-  ) => {
-    for (const row of rows ?? []) {
-      const granteeOrganizadorId = String(row.grantee_organizer_id ?? "").trim();
-      const localJugadorId = String(row.local_jugador_id ?? "").trim();
-      if (granteeOrganizadorId && localJugadorId) {
-        byLocal.set(localJugadorId, granteeOrganizadorId);
-      }
+  const identityRows = await fetchPublicIdentityRows(id, null);
+  if (identityRows?.length) {
+    const byLocal = new Map<string, string>();
+    for (const row of identityRows) {
+      const linked = row.linked_jugador_id?.trim();
+      const org = row.linked_organizador_id?.trim();
+      if (!linked || linked === id || !org) continue;
+      byLocal.set(linked, org);
     }
-  };
+    if (byLocal.size > 0) {
+      return Array.from(byLocal.entries()).map(([localJugadorId, granteeOrganizadorId]) => ({
+        granteeOrganizadorId,
+        localJugadorId,
+      }));
+    }
+  }
 
-  const { data: direct, error } = await supabase
-    .from("organizer_player_access")
-    .select("grantee_organizer_id, local_jugador_id")
-    .eq("jugador_id", id)
-    .eq("is_active", true)
-    .not("local_jugador_id", "is", null);
+  const careerIds = await fetchPublicCareerJugadorIds(id);
+  if (!careerIds || careerIds.length <= 1) return [];
+
+  const byLocal = new Map<string, string>();
+  const { data, error } = await supabasePublicRead
+    .from("riviera_jugadores")
+    .select("id, organizador_id")
+    .in("id", careerIds.filter((jid) => jid !== id))
+    .eq("estado", "activo");
 
   if (error) {
-    if (isMissingAccessFeatureError(error)) return [];
-    throw error;
+    console.warn("[riviera-jugadores] listGranteeClubsForSourceJugador:", error);
+    return [];
   }
-  addRows(direct);
 
-  const siblingIds = await listSiblingJugadorIdsViaProfileLink(id);
-  if (siblingIds.length > 0) {
-    const { data: bySibling, error: siblingErr } = await supabase
-      .from("organizer_player_access")
-      .select("grantee_organizer_id, local_jugador_id")
-      .in("jugador_id", siblingIds)
-      .eq("is_active", true)
-      .not("local_jugador_id", "is", null);
-
-    if (!siblingErr) addRows(bySibling);
+  for (const row of data ?? []) {
+    const localJugadorId = String((row as { id?: string }).id ?? "").trim();
+    const granteeOrganizadorId = String(
+      (row as { organizador_id?: string }).organizador_id ?? ""
+    ).trim();
+    if (localJugadorId && granteeOrganizadorId) {
+      byLocal.set(localJugadorId, granteeOrganizadorId);
+    }
   }
 
   return Array.from(byLocal.entries()).map(([localJugadorId, granteeOrganizadorId]) => ({
@@ -489,36 +498,21 @@ async function listSiblingJugadorIdsViaProfileLink(
   const sourceId = sourceJugadorId.trim();
   if (!sourceId) return [];
 
-  const { data: sourceLink, error: linkErr } = await supabase
-    .from("riviera_official_player_profile_link")
-    .select("official_player_key")
-    .eq("riviera_jugador_id", sourceId)
-    .maybeSingle();
+  const identityRows = await fetchPublicIdentityRows(sourceId, null);
+  if (identityRows?.length) {
+    return Array.from(
+      new Set(
+        identityRows
+          .map((row) => row.linked_jugador_id?.trim() ?? "")
+          .filter((linked) => linked && linked !== sourceId)
+      )
+    );
+  }
 
-  if (linkErr || !sourceLink) return [];
+  const careerIds = await fetchPublicCareerJugadorIds(sourceId);
+  if (!careerIds) return [];
 
-  const officialPlayerKey = String(
-    (sourceLink as { official_player_key?: string }).official_player_key ?? ""
-  ).trim();
-  if (!officialPlayerKey) return [];
-
-  const { data: siblingLinks, error: sibLinkErr } = await supabase
-    .from("riviera_official_player_profile_link")
-    .select("riviera_jugador_id")
-    .eq("official_player_key", officialPlayerKey)
-    .neq("riviera_jugador_id", sourceId);
-
-  if (sibLinkErr) return [];
-
-  return Array.from(
-    new Set(
-      (siblingLinks ?? [])
-        .map((row) =>
-          String((row as { riviera_jugador_id?: string }).riviera_jugador_id ?? "").trim()
-        )
-        .filter(Boolean)
-    )
-  );
+  return careerIds.filter((linked) => linked && linked !== sourceId);
 }
 
 /** Perfiles del mismo jugador en otros clubes (grants + misma Carrera / profile_link). */
@@ -536,7 +530,7 @@ export async function listMulticlubSiblingProfilesForSource(
 
   const siblingIds = await listSiblingJugadorIdsViaProfileLink(sourceId);
   if (siblingIds.length > 0) {
-    const { data: siblings, error: sibErr } = await supabase
+    const { data: siblings, error: sibErr } = await supabasePublicRead
       .from("riviera_jugadores")
       .select("id, organizador_id")
       .in("id", siblingIds)

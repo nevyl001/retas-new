@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   buildJugadorPuntosBreakdown,
   isRankingPointsBreakdownPending,
   resolveCareerTotalAllClubsDisplay,
   resolveOfficialPuntosDisplay,
 } from "../../lib/rivieraJugadores/jugadorPuntosBreakdown";
-import { logRankingPointsAuditFromJugador } from "../../lib/rivieraJugadores/rankingPointsAudit";
 import type { RivieraJugadorWithStats } from "../../lib/rivieraJugadores/types";
 
 type RankingPtsDisplayProps = {
@@ -17,21 +16,40 @@ type RankingPtsDisplayProps = {
   variant?: "inline" | "stacked";
 };
 
-export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
+function rankingPtsJugadorSignature(jugador: RivieraJugadorWithStats): string {
+  return [
+    jugador.id,
+    jugador.riviera_id ?? "",
+    jugador.careerPuntosTotal ?? "",
+    jugador.officialPuntosGlobal ?? "",
+    jugador.stats?.puntos_totales ?? "",
+    jugador.pointsBreakdown?.careerTotalAllClubs ?? "",
+    jugador.pointsBreakdown?.currentClubPoints ?? "",
+    jugador.careerPuntosByClub?.map((c) => `${c.organizadorId}:${c.puntos}`).join("|") ?? "",
+  ].join("::");
+}
+
+function RankingPtsDisplayInner({
   jugador,
   clubOrganizadorId,
   internalClub = false,
   className = "",
   variant = "stacked",
-}) => {
+}: RankingPtsDisplayProps) {
+  const jugadorSignature = rankingPtsJugadorSignature(jugador);
+
+  const lines = useMemo(
+    () =>
+      internalClub
+        ? buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
+            hasOrgContext: internalClub,
+          })
+        : null,
+    [internalClub, clubOrganizadorId, jugadorSignature]
+  );
+
   if (!internalClub) {
     const official = resolveOfficialPuntosDisplay(jugador);
-    logRankingPointsAuditFromJugador(
-      "RankingPtsDisplay (ROMC global)",
-      jugador,
-      clubOrganizadorId,
-      { officialKind: official.kind }
-    );
     if (official.kind === "unavailable") {
       return (
         <span className={`rjp-pts--na${className ? ` ${className}` : ""}`} title="Ranking oficial no disponible">
@@ -46,10 +64,6 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
     );
   }
 
-  const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
-    hasOrgContext: internalClub,
-  });
-
   if (isRankingPointsBreakdownPending(jugador, { hasOrgContext: internalClub })) {
     return (
       <span
@@ -61,14 +75,7 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
     );
   }
 
-  logRankingPointsAuditFromJugador(
-    "RankingPtsDisplay (React)",
-    jugador,
-    clubOrganizadorId,
-    { lineCount: lines.length }
-  );
-
-  if (lines.length === 0) {
+  if (!lines || lines.length === 0) {
     const pts = resolveCareerTotalAllClubsDisplay(
       jugador,
       internalClub,
@@ -99,4 +106,20 @@ export const RankingPtsDisplay: React.FC<RankingPtsDisplayProps> = ({
       ))}
     </span>
   );
-};
+}
+
+function propsAreEqual(
+  prev: RankingPtsDisplayProps,
+  next: RankingPtsDisplayProps
+): boolean {
+  return (
+    prev.clubOrganizadorId === next.clubOrganizadorId &&
+    prev.internalClub === next.internalClub &&
+    prev.variant === next.variant &&
+    prev.className === next.className &&
+    rankingPtsJugadorSignature(prev.jugador) ===
+      rankingPtsJugadorSignature(next.jugador)
+  );
+}
+
+export const RankingPtsDisplay = React.memo(RankingPtsDisplayInner, propsAreEqual);

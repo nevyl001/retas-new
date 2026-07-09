@@ -219,6 +219,10 @@ export async function fetchRivieraIdMapForJugadorIds(
   const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
   if (uniqueIds.length === 0) return new Map();
 
+  if (opts?.publicRanking) {
+    return fetchPublicRivieraIdsViaRpc(uniqueIds);
+  }
+
   const [byCanonical, byProfileLink, byPublicRpc] = await Promise.all([
     fetchRivieraIdsByCanonicalJugadorIds(uniqueIds, [supabasePublicRead, supabase]),
     fetchRivieraIdsByProfileLinks(uniqueIds, [supabasePublicRead, supabase]),

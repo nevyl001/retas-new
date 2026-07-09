@@ -20,22 +20,8 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-/** Lecturas públicas sin sesión — storage aislado para no duplicar GoTrue en la misma clave. */
-const noopStorage = {
-  getItem: () => null,
-  setItem: () => {},
-  removeItem: () => {},
-};
-
-export const supabasePublicRead = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
-    storageKey: "riviera-public-read",
-    storage: noopStorage,
-  },
-});
+/** Alias del singleton — evita múltiples GoTrueClient en el mismo browser context. */
+export const supabasePublicRead = supabase;
 
 export const testConnection = async (): Promise<boolean> => {
   try {

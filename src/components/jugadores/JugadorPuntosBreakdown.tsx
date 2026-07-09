@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   buildJugadorPuntosBreakdown,
   isRankingPointsBreakdownPending,
@@ -15,17 +15,35 @@ type JugadorPuntosBreakdownProps = {
   className?: string;
 };
 
-export const JugadorPuntosBreakdown: React.FC<JugadorPuntosBreakdownProps> = ({
+function breakdownJugadorSignature(jugador: RivieraJugadorWithStats): string {
+  return [
+    jugador.id,
+    jugador.riviera_id ?? "",
+    jugador.careerPuntosTotal ?? "",
+    jugador.pointsBreakdown?.careerTotalAllClubs ?? "",
+    jugador.pointsBreakdown?.currentClubPoints ?? "",
+    jugador.careerPuntosByClub?.map((c) => `${c.organizadorId}:${c.puntos}`).join("|") ?? "",
+    jugador.stats?.puntos_totales ?? "",
+  ].join("::");
+}
+
+function JugadorPuntosBreakdownInner({
   jugador,
   clubOrganizadorId,
   hasOrgContext = false,
   profileCard = false,
   className = "",
-}) => {
-  const lines = buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
-    hasOrgContext,
-    profileCard,
-  });
+}: JugadorPuntosBreakdownProps) {
+  const jugadorSignature = breakdownJugadorSignature(jugador);
+
+  const lines = useMemo(
+    () =>
+      buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
+        hasOrgContext,
+        profileCard,
+      }),
+    [clubOrganizadorId, hasOrgContext, profileCard, jugadorSignature]
+  );
 
   if (isRankingPointsBreakdownPending(jugador, { hasOrgContext })) {
     return (
@@ -67,4 +85,23 @@ export const JugadorPuntosBreakdown: React.FC<JugadorPuntosBreakdownProps> = ({
       ))}
     </span>
   );
-};
+}
+
+function propsAreEqual(
+  prev: JugadorPuntosBreakdownProps,
+  next: JugadorPuntosBreakdownProps
+): boolean {
+  return (
+    prev.clubOrganizadorId === next.clubOrganizadorId &&
+    prev.hasOrgContext === next.hasOrgContext &&
+    prev.profileCard === next.profileCard &&
+    prev.className === next.className &&
+    breakdownJugadorSignature(prev.jugador) ===
+      breakdownJugadorSignature(next.jugador)
+  );
+}
+
+export const JugadorPuntosBreakdown = React.memo(
+  JugadorPuntosBreakdownInner,
+  propsAreEqual
+);

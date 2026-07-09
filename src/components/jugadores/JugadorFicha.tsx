@@ -107,6 +107,8 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           setJugador(profile.jugador);
         }
       }
+    } catch (e) {
+      console.warn("[JugadorFicha] load:", e);
     } finally {
       setLoading(false);
     }

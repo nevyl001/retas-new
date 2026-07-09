@@ -19,6 +19,15 @@ jest.mock("./careerPointsByClub", () => {
 
 jest.mock("./publicCareerLinkage", () => ({
   fetchPublicCareerJugadorIds: jest.fn(),
+  fetchPublicIdentityRows: jest.fn().mockResolvedValue(null),
+  linkedProfilesFromIdentityRows: jest.fn((rows: unknown[], anchor: string) => ({
+    linkedJugadorIds: [anchor],
+    linkedProfiles: [{ jugadorId: anchor, organizadorId: "" }],
+    rivieraId: null,
+    officialPlayerKey: null,
+    canonicalJugadorId: anchor,
+    homeOrganizadorId: null,
+  })),
   listCareerParticipacionesPublic: jest.fn(),
 }));
 

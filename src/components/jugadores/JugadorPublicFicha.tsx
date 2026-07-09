@@ -119,6 +119,13 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       setHistorialOtrosClubes(profile.historialOtrosClubes);
       setHistorialRating(profile.historialRating);
       setRankingPos(profile.localRankingPos);
+    } catch (e) {
+      console.warn("[JugadorPublicFicha] load:", e);
+      setJugador(null);
+      setRankingPos(null);
+      setHistorial([]);
+      setHistorialOtrosClubes([]);
+      setHistorialRating([]);
     } finally {
       setLoading(false);
     }

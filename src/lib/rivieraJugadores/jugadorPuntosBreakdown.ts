@@ -7,11 +7,6 @@ import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
 import { sortCareerClubsForDisplay } from "./careerPointsByClub";
 import { rankingPuntosInternoClubDisplay } from "./grantedRankingDisplay";
 import { isValidRivieraId } from "./rivieraIdDisplay";
-import {
-  logRankingPointsAudit,
-  snapshotFromBreakdown,
-  snapshotFromDisplayLines,
-} from "./rankingPointsAudit";
 import type { RivieraJugadorWithStats } from "./types";
 
 export type JugadorPuntosBreakdownLine = {
@@ -155,33 +150,16 @@ export function buildJugadorPuntosBreakdown(
     (career ? breakdownFromCareerResult(career, viewOrg) : null);
 
   if (resolvedBreakdown) {
-    logRankingPointsAudit(
-      "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (career)",
-      jugador,
-      snapshotFromBreakdown(resolvedBreakdown, viewOrg),
-      { viewingOrganizadorId: viewOrg }
-    );
     const lines = breakdownToDisplayLines(resolvedBreakdown, viewOrg, {
       forceBreakdown: Boolean(options.hasOrgContext || options.profileCard),
     });
     if (lines.length > 0) {
-      logRankingPointsAudit(
-        "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (display lines)",
-        jugador,
-        snapshotFromDisplayLines(lines, viewOrg)
-      );
       return lines;
     }
   }
 
   if (options.profileCard || options.hasOrgContext) {
     if (jugadorHasOfficialIdentity(jugador)) {
-      logRankingPointsAudit(
-        "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (RIVIERA_ID sin breakdown)",
-        jugador,
-        { clubPoints: 0, rivieraPoints: 0, totalPoints: 0 },
-        { warning: "breakdown pendiente — no usar stats locales como definitivos" }
-      );
       return [];
     }
 
@@ -191,7 +169,7 @@ export function buildJugadorPuntosBreakdown(
       viewingOrganizadorId
     );
     if (viewOrg) {
-      const fallbackLines = [
+      return [
         {
           key: viewOrg,
           clubLabel: getOrganizerDisplayNameSync(viewOrg),
@@ -199,17 +177,6 @@ export function buildJugadorPuntosBreakdown(
           role: "home" as const,
         },
       ];
-      logRankingPointsAudit(
-        "jugadorPuntosBreakdown.buildJugadorPuntosBreakdown (FALLBACK stats→club)",
-        jugador,
-        { clubPoints: pts, rivieraPoints: 0, totalPoints: pts },
-        {
-          warning:
-            "career ausente — stats.puntos_totales etiquetado como club actual",
-          statsPuntosTotales: jugador.stats?.puntos_totales,
-        }
-      );
-      return fallbackLines;
     }
   }
 

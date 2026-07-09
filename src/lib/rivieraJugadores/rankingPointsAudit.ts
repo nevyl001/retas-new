@@ -1,6 +1,6 @@
 /**
- * Logs temporales de auditoría — contrato puntos ranking (dev only).
- * Rastrea clubPoints / rivieraPoints / totalPoints por capa del pipeline.
+ * Logs temporales de auditoría — contrato puntos ranking.
+ * Solo activos con REACT_APP_RANKING_POINTS_AUDIT=true (nunca en prod por defecto).
  */
 import type { CareerPointsByClubResult } from "./careerPointsByClub";
 import type { CareerPointsBreakdownView, PlayerPointsBreakdown } from "./playerPointsBreakdown";
@@ -13,6 +13,10 @@ const RIVIERA_OPEN = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
 const AUDIT_SLUGS = new Set(["daniel-n"]);
 const AUDIT_RIVIERA_IDS = new Set(["RIV-00000009"]);
 const AUDIT_NAMES = new Set(["daniel n"]);
+
+/** Evita spam del mismo layer+jugador en re-renders o polls cercanos. */
+const AUDIT_DEDUPE_MS = 10_000;
+const recentAuditKeys = new Map<string, number>();
 
 export type RankingPointsAuditSnapshot = {
   clubPoints: number;
@@ -34,8 +38,28 @@ function isAuditTarget(jugador: {
   return false;
 }
 
+export function isRankingPointsAuditEnabled(): boolean {
+  return process.env.REACT_APP_RANKING_POINTS_AUDIT === "true";
+}
+
 function shouldLog(): boolean {
-  return process.env.NODE_ENV === "development";
+  return isRankingPointsAuditEnabled();
+}
+
+function shouldEmitAudit(layer: string, jugadorId?: string): boolean {
+  const id = jugadorId?.trim();
+  if (!id) return true;
+  const key = `${layer}:${id}`;
+  const now = Date.now();
+  const last = recentAuditKeys.get(key);
+  if (last != null && now - last < AUDIT_DEDUPE_MS) return false;
+  recentAuditKeys.set(key, now);
+  return true;
+}
+
+/** Solo para tests — limpia dedupe entre casos. */
+export function resetRankingPointsAuditDedupeForTests(): void {
+  recentAuditKeys.clear();
 }
 
 export function snapshotFromCareer(
@@ -99,6 +123,7 @@ export function logRankingPointsAudit(
   extra?: Record<string, unknown>
 ): void {
   if (!shouldLog() || !isAuditTarget(jugador)) return;
+  if (!shouldEmitAudit(layer, jugador.id)) return;
 
   console.info("[ranking-points-audit]", {
     layer,
@@ -118,6 +143,7 @@ export function logRankingPointsAuditFromJugador(
   extra?: Record<string, unknown>
 ): void {
   if (!shouldLog() || !isAuditTarget(jugador)) return;
+  if (!shouldEmitAudit(layer, jugador.id)) return;
 
   const viewOrg = viewingOrganizadorId?.trim() || HACKPADEL;
   const statsTotal = jugador.stats?.puntos_totales ?? null;

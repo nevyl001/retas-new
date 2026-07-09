@@ -22,6 +22,8 @@ import { enrichParticipacionesOrganizadorFromEvents } from "./participacionesOrg
 import { discoverCareerLinkedProfiles } from "./careerLinkedProfileDiscovery";
 import {
   fetchPublicCareerJugadorIds,
+  fetchPublicIdentityRows,
+  linkedProfilesFromIdentityRows,
 } from "./publicCareerLinkage";
 import { mergeJugadorStatsPuntosTotales } from "./rankingPosition";
 import type { RatingRpcFallbackOptions } from "./ratingRpcErrors";
@@ -34,7 +36,6 @@ import {
   resolveRankingPosicionForPublicFicha,
 } from "./rivieraJugadoresService";
 import { fetchRivieraIdMapForJugadorIds, isValidRivieraId } from "./rivieraIdDisplay";
-import { supabasePublicRead } from "../supabaseClient";
 import type {
   JugadorParticipacion,
   JugadorStats,
@@ -127,73 +128,17 @@ export type AdminPlayerProfileData = PublicPlayerProfileData & {
   localJugador: RivieraJugadorWithStats;
 };
 
-type IdentityRpcRow = {
-  anchor_jugador_id?: string;
-  canonical_jugador_id?: string;
-  riviera_id?: string | null;
-  official_player_key?: string | null;
-  home_organizador_id?: string | null;
-  linked_jugador_id?: string;
-  linked_organizador_id?: string | null;
-};
-
-function isMissingIdentityRpcError(error: {
-  code?: string;
-  message?: string;
-  status?: number;
-} | null): boolean {
-  if (!error) return false;
-  const msg = (error.message ?? "").toLowerCase();
-  return (
-    error.status === 404 ||
-    error.code === "42883" ||
-    error.code === "PGRST202" ||
-    msg.includes("resolve_public_player_identity")
-  );
-}
-
-async function fetchIdentityFromRpc(
-  jugadorId?: string | null,
-  rivieraId?: string | null
-): Promise<IdentityRpcRow[] | null> {
-  const params: Record<string, string | null> = {
-    p_jugador_id: jugadorId?.trim() || null,
-    p_riviera_id: rivieraId?.trim() || null,
-  };
-  if (!params.p_jugador_id && !params.p_riviera_id) return null;
-
-  const { data, error } = await supabasePublicRead.rpc(
-    "resolve_public_player_identity",
-    params
-  );
-  if (error) {
-    if (isMissingIdentityRpcError(error)) return null;
-    console.warn("[player-identity] resolve_public_player_identity:", error);
-    return null;
-  }
-  return (data ?? []) as IdentityRpcRow[];
-}
-
 async function resolveAnchorJugadorIdFromRivieraId(
   rivieraId: string
 ): Promise<string | null> {
-  const rows = await fetchIdentityFromRpc(null, rivieraId);
+  const rows = await fetchPublicIdentityRows(null, rivieraId);
   if (rows?.length) {
     const anchor = rows[0]?.anchor_jugador_id?.trim();
     if (anchor) return anchor;
+    const canonical = rows[0]?.canonical_jugador_id?.trim();
+    if (canonical) return canonical;
   }
-
-  const { data } = await supabasePublicRead
-    .from("riviera_official_player_identity")
-    .select("canonical_riviera_jugador_id")
-    .eq("riviera_id", rivieraId.trim())
-    .maybeSingle();
-
-  const canonical = String(
-    (data as { canonical_riviera_jugador_id?: string } | null)
-      ?.canonical_riviera_jugador_id ?? ""
-  ).trim();
-  return canonical || null;
+  return null;
 }
 
 /** Única fuente de linked IDs — siempre carrera/identidad primero, nunca solo grant. */
@@ -216,33 +161,26 @@ export async function resolveLinkedJugadorIdsForIdentity(
   let canonicalJugadorId = anchor;
   let homeOrganizadorId: string | null = null;
   let source: PlayerIdentityResolutionSource = "career_rpc";
+  let identityExpanded = false;
 
-  const rpcRows = await fetchIdentityFromRpc(anchor, null);
+  const rpcRows = await fetchPublicIdentityRows(anchor, null);
   if (rpcRows && rpcRows.length > 0) {
     source = "identity_rpc";
-    for (const row of rpcRows) {
-      const linked = row.linked_jugador_id?.trim();
-      const org = row.linked_organizador_id?.trim();
-      if (linked) {
-        ids.add(linked);
-        if (org) profileMap.set(linked, org);
-      }
-      if (!rivieraId && row.riviera_id) rivieraId = String(row.riviera_id);
-      if (!officialPlayerKey && row.official_player_key) {
-        officialPlayerKey = String(row.official_player_key);
-      }
-      if (row.canonical_jugador_id) {
-        canonicalJugadorId = String(row.canonical_jugador_id).trim();
-      }
-      if (!homeOrganizadorId && row.home_organizador_id) {
-        homeOrganizadorId = String(row.home_organizador_id).trim();
-      }
+    identityExpanded = rpcRows.length > 1;
+    const parsed = linkedProfilesFromIdentityRows(rpcRows, anchor);
+    for (const id of parsed.linkedJugadorIds) ids.add(id);
+    for (const profile of parsed.linkedProfiles) {
+      if (profile.organizadorId) profileMap.set(profile.jugadorId, profile.organizadorId);
     }
+    rivieraId = parsed.rivieraId;
+    officialPlayerKey = parsed.officialPlayerKey;
+    canonicalJugadorId = parsed.canonicalJugadorId;
+    homeOrganizadorId = parsed.homeOrganizadorId;
   } else {
-    source = "career_rpc";
     const careerIds = await fetchPublicCareerJugadorIds(anchor);
     if (careerIds) {
       for (const id of careerIds) ids.add(id);
+      identityExpanded = careerIds.length > 1;
     }
 
     const rivieraMap = await fetchRivieraIdMapForJugadorIds(
@@ -252,18 +190,20 @@ export async function resolveLinkedJugadorIdsForIdentity(
     rivieraId = rivieraMap.get(anchor) ?? rivieraMap.get(canonicalJugadorId) ?? null;
   }
 
-  const discovered = await discoverCareerLinkedProfiles({
-    anchorJugadorId: anchor,
-    rivieraId,
-    officialPlayerKey,
-    seedJugadorIds: Array.from(ids),
-  });
-  for (const profile of discovered.linkedProfiles) {
-    ids.add(profile.jugadorId);
-    if (profile.organizadorId) profileMap.set(profile.jugadorId, profile.organizadorId);
-  }
-  if (discovered.linkedJugadorIds.length > ids.size) {
-    source = source === "identity_rpc" ? "identity_rpc" : "sibling_discovery";
+  if (!identityExpanded) {
+    const discovered = await discoverCareerLinkedProfiles({
+      anchorJugadorId: anchor,
+      rivieraId,
+      officialPlayerKey,
+      seedJugadorIds: Array.from(ids),
+    });
+    for (const profile of discovered.linkedProfiles) {
+      ids.add(profile.jugadorId);
+      if (profile.organizadorId) profileMap.set(profile.jugadorId, profile.organizadorId);
+    }
+    if (discovered.linkedJugadorIds.length > ids.size) {
+      source = source === "identity_rpc" ? "identity_rpc" : "sibling_discovery";
+    }
   }
 
   const linkedProfiles = Array.from(ids).map((jugadorId) => ({

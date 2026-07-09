@@ -1964,13 +1964,6 @@ export async function listInternalClubJugadoresRanking(
     );
     const scoped = await enrichJugadoresOrganizerScopedStats(organizadorId, merged);
     const stripped = stripOfficialPuntosFromInternalClubRanking(scoped, organizadorId);
-    for (const j of stripped) {
-      logRankingPointsAuditFromJugador(
-        "rivieraJugadoresService.listInternalClubJugadoresRanking (post-enrich)",
-        j,
-        organizadorId
-      );
-    }
     return enrichJugadoresWithRivieraId(stripped, { publicRanking: true });
   }
 

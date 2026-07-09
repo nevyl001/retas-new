@@ -105,12 +105,14 @@ export async function discoverLinkedJugadorIds(
     if (id) ids.add(id);
   }
 
-  for (const sibling of await listMulticlubSiblingProfilesForSource(jugadorId)) {
-    ids.add(sibling.jugadorId);
-  }
+  if (!publicCareerIds || publicCareerIds.length <= 1) {
+    for (const sibling of await listMulticlubSiblingProfilesForSource(jugadorId)) {
+      ids.add(sibling.jugadorId);
+    }
 
-  for (const localId of await listGrantedLocalJugadorIdsForSource(jugadorId)) {
-    ids.add(localId);
+    for (const localId of await listGrantedLocalJugadorIdsForSource(jugadorId)) {
+      ids.add(localId);
+    }
   }
 
   if (!options?.skipRomcLegacy && !romcRpcSuiteUnavailable()) {
