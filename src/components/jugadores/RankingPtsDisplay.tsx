@@ -36,8 +36,6 @@ function RankingPtsDisplayInner({
   className = "",
   variant = "stacked",
 }: RankingPtsDisplayProps) {
-  const jugadorSignature = rankingPtsJugadorSignature(jugador);
-
   const lines = useMemo(
     () =>
       internalClub
@@ -45,7 +43,7 @@ function RankingPtsDisplayInner({
             hasOrgContext: internalClub,
           })
         : null,
-    [internalClub, clubOrganizadorId, jugadorSignature]
+    [internalClub, clubOrganizadorId, jugador]
   );
 
   if (!internalClub) {

@@ -34,15 +34,13 @@ function JugadorPuntosBreakdownInner({
   profileCard = false,
   className = "",
 }: JugadorPuntosBreakdownProps) {
-  const jugadorSignature = breakdownJugadorSignature(jugador);
-
   const lines = useMemo(
     () =>
       buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
         hasOrgContext,
         profileCard,
       }),
-    [clubOrganizadorId, hasOrgContext, profileCard, jugadorSignature]
+    [clubOrganizadorId, hasOrgContext, profileCard, jugador]
   );
 
   if (isRankingPointsBreakdownPending(jugador, { hasOrgContext })) {
