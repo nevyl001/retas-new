@@ -183,15 +183,19 @@ async function assertJugadorCareerIntegrity(
 ): Promise<CareerEventAssertionFailure | null> {
   try {
     await ensureRivieraIdentity(jugadorId);
-    await requireOfficialProfileLinkForParticipacion(jugadorId, organizadorId);
+    const linkResult = await requireOfficialProfileLinkForParticipacion(
+      jugadorId,
+      organizadorId
+    );
 
-    const { data: link } = await supabase
-      .from("riviera_official_player_profile_link")
-      .select("official_player_key")
-      .eq("riviera_jugador_id", jugadorId)
-      .maybeSingle();
-
-    if (!link?.official_player_key) {
+    // El RPC (SECURITY DEFINER) ya confirmó el enlace y devuelve
+    // official_player_key + riviera_id directamente. NO re-consultar
+    // riviera_official_player_profile_link por cliente: esa tabla está
+    // protegida por RLS y el organizador autenticado no tiene SELECT
+    // directo, así que la re-consulta regresa vacío aunque el enlace
+    // sí exista — eso excluía a TODOS los jugadores del cierre.
+    const officialPlayerKey = linkResult.officialPlayerKey;
+    if (!officialPlayerKey) {
       return {
         code: "missing_player_identity",
         message: `Sin official_player_key tras enlace: ${jugadorId}`,
@@ -199,20 +203,13 @@ async function assertJugadorCareerIntegrity(
       };
     }
 
-    const { data: identity } = await supabase
-      .from("riviera_official_player_identity")
-      .select("riviera_id, official_player_key")
-      .eq("official_player_key", link.official_player_key)
-      .maybeSingle();
-
-    const rivieraId =
-      typeof identity?.riviera_id === "string" ? identity.riviera_id : null;
+    const rivieraId = linkResult.rivieraId ?? null;
     if (!rivieraId || !isValidRivieraId(rivieraId)) {
       return {
         code: "missing_riviera_id",
         message: `Sin Riviera ID válido para jugador ${jugadorId}`,
         jugadorId,
-        details: { official_player_key: link.official_player_key },
+        details: { official_player_key: officialPlayerKey },
       };
     }
 
