@@ -112,6 +112,11 @@ export type GetPublicPlayerProfileInput = {
   ratingRpc?: RatingRpcFallbackOptions;
   historialLimit?: number;
   includeDebug?: boolean;
+  /**
+   * Omite listInternalClubJugadoresRanking (ranking completo del club).
+   * Ficha admin no muestra localRankingPos; ficha pública debe dejarlo en false (default).
+   */
+  skipRankingPosicion?: boolean;
 };
 
 export type GetAdminPlayerProfileInput = {
@@ -121,6 +126,8 @@ export type GetAdminPlayerProfileInput = {
   localJugador?: RivieraJugadorWithStats;
   historialLimit?: number;
   ratingRpc?: RatingRpcFallbackOptions;
+  /** Default true: la ficha admin no muestra posición en ranking del club. */
+  skipRankingPosicion?: boolean;
 };
 
 export type AdminPlayerProfileData = PublicPlayerProfileData & {
@@ -438,7 +445,11 @@ export async function resolvePlayerHistory(
 export async function resolvePlayerLocalContext(
   identity: ResolvedPlayerIdentity,
   jugador: RivieraJugadorWithStats,
-  options?: { ratingRpc?: RatingRpcFallbackOptions }
+  options?: {
+    ratingRpc?: RatingRpcFallbackOptions;
+    /** Omite ranking completo del club cuando la UI no muestra localRankingPos. */
+    skipRankingPosicion?: boolean;
+  }
 ): Promise<{
   jugador: RivieraJugadorWithStats;
   localRankingPos: number | null;
@@ -452,10 +463,12 @@ export async function resolvePlayerLocalContext(
     });
   }
 
-  const localRankingPos = await resolveRankingPosicionForPublicFicha(enriched, {
-    orgId: org,
-    preferClubRanking: Boolean(org),
-  });
+  const localRankingPos = options?.skipRankingPosicion
+    ? null
+    : await resolveRankingPosicionForPublicFicha(enriched, {
+        orgId: org,
+        preferClubRanking: Boolean(org),
+      });
 
   return { jugador: enriched, localRankingPos };
 }
@@ -494,6 +507,7 @@ export async function getPublicPlayerProfileData(
     ratingRpc,
     historialLimit = 100,
     includeDebug = false,
+    skipRankingPosicion = false,
   } = params;
 
   const org = viewingOrgId?.trim() || null;
@@ -553,6 +567,7 @@ export async function getPublicPlayerProfileData(
 
   const localContext = await resolvePlayerLocalContext(identity, jugador, {
     ratingRpc,
+    skipRankingPosicion,
   });
   jugador = { ...localContext.jugador, ...careerFields };
 
@@ -637,6 +652,7 @@ export async function getAdminPlayerProfileData(
     viewingOrgId: org,
     historialLimit: params.historialLimit ?? 100,
     ratingRpc: params.ratingRpc,
+    skipRankingPosicion: params.skipRankingPosicion ?? true,
   });
   if (!globalProfile) return null;
 

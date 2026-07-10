@@ -104,6 +104,7 @@ import { supabasePublicRead } from "../supabaseClient";
 import {
   getAdminPlayerProfileData,
   mergeLocalJugadorWithGlobalCareer,
+  resolvePlayerLocalContext,
 } from "./playerIdentityService";
 import { attachCareerPuntosToJugador } from "./careerPointsByClub";
 import { loadUnifiedRatingViewForJugador } from "./grantedPlayerUnifiedView";
@@ -113,6 +114,7 @@ import {
   getRivieraJugadorBySlug,
   getRivieraJugadorInternalClubById,
   getRivieraJugadorPublicById,
+  resolveRankingPosicionForPublicFicha,
 } from "./rivieraJugadoresService";
 import {
   listGrantedLocalJugadorIdsForSource,
@@ -275,5 +277,49 @@ describe("admin player profile — motor global unificado", () => {
     );
     expect(src).not.toContain("loadOrganizerScopedPlayerView");
     expect(src).toContain("getAdminPlayerProfileData");
+  });
+
+  it("admin omite ranking del club (no llama resolveRankingPosicionForPublicFicha)", async () => {
+    const localJugador = {
+      id: ALEJANDRO_RO,
+      slug: "alejandro-r",
+      nombre: "Alejandro R",
+      organizador_id: RIVIERA,
+      rating: 2.5,
+      rating_partidos: 1,
+      rating_fiabilidad: 0.2,
+    } as never;
+
+    (getRivieraJugadorBySlug as jest.Mock).mockResolvedValue(localJugador);
+    (resolveRankingPosicionForPublicFicha as jest.Mock).mockClear();
+
+    await getAdminPlayerProfileData({
+      organizadorId: RIVIERA,
+      slug: "alejandro-r",
+    });
+
+    expect(resolveRankingPosicionForPublicFicha).not.toHaveBeenCalled();
+  });
+
+  it("resolvePlayerLocalContext con skipRankingPosicion omite ranking", async () => {
+    (resolveRankingPosicionForPublicFicha as jest.Mock).mockClear();
+
+    const identity = {
+      viewingOrganizadorId: RIVIERA,
+    } as never;
+    const jugador = { id: ALEJANDRO_RO } as never;
+
+    const skipped = await resolvePlayerLocalContext(identity, jugador, {
+      skipRankingPosicion: true,
+    });
+    expect(skipped.localRankingPos).toBeNull();
+    expect(resolveRankingPosicionForPublicFicha).not.toHaveBeenCalled();
+
+    (resolveRankingPosicionForPublicFicha as jest.Mock).mockResolvedValue(3);
+    const withRanking = await resolvePlayerLocalContext(identity, jugador, {
+      skipRankingPosicion: false,
+    });
+    expect(withRanking.localRankingPos).toBe(3);
+    expect(resolveRankingPosicionForPublicFicha).toHaveBeenCalledTimes(1);
   });
 });
