@@ -1,6 +1,8 @@
 import {
   computePublicProfileStats,
   extractPartidosFromParticipacion,
+  formatHistorialFecha,
+  participacionToHistorialItem,
 } from "./historialDisplay";
 import type { JugadorParticipacion } from "./types";
 
@@ -78,5 +80,35 @@ describe("computePublicProfileStats", () => {
     expect(stats.eventosJugados).toBe(2);
     expect(stats.ligas).toBe(1);
     expect(stats.retasClasicas).toBe(1);
+  });
+});
+
+describe("participacionToHistorialItem fecha", () => {
+  it("corrige fecha legacy vespertina con created_at", () => {
+    const item = participacionToHistorialItem(
+      row({
+        tipo_evento: "duelo_2v2",
+        evento_nombre: "Hack 5ta fza",
+        fecha: "2026-07-10",
+        created_at: "2026-07-10T00:30:00.000Z",
+        metadata: { subtipo: "duelo_2v2_cierre" },
+      })
+    );
+    expect(item.fecha).toBe("2026-07-09");
+    expect(formatHistorialFecha(item.fecha)).toBe("9 jul 2026");
+  });
+
+  it("no retrocede fecha legacy matutina cuando hay created_at", () => {
+    const item = participacionToHistorialItem(
+      row({
+        tipo_evento: "reta",
+        evento_nombre: "Reta mañana",
+        fecha: "2026-07-09",
+        created_at: "2026-07-09T16:00:00.000Z",
+        metadata: { subtipo: "reta_cierre" },
+      })
+    );
+    expect(item.fecha).toBe("2026-07-09");
+    expect(formatHistorialFecha(item.fecha)).toBe("9 jul 2026");
   });
 });

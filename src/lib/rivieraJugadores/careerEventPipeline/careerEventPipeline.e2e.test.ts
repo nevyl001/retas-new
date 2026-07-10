@@ -41,11 +41,15 @@ jest.mock("../orphanProfileLink", () => ({
     linked: true,
     confidence: "OK",
     reason: "perfil ya enlazado",
+    officialPlayerKey: "opk-test",
+    rivieraId: "RIV-00000102",
   }),
   ensureOfficialProfileLinkForParticipacion: jest.fn().mockResolvedValue({
     linked: true,
     confidence: "OK",
     reason: "perfil ya enlazado",
+    officialPlayerKey: "opk-test",
+    rivieraId: "RIV-00000102",
   }),
 }));
 
@@ -75,6 +79,7 @@ jest.mock("../../organizer/organizerDisplayName", () => ({
 }));
 
 import { supabase } from "../../supabaseClient";
+import { ensureRivieraIdentity } from "../careerIdentity";
 import { mergeCareerParticipacionesForIdentity } from "../careerParticipacionesMerge";
 import {
   computeCareerPointsByClubFromParticipaciones,
@@ -82,6 +87,7 @@ import {
 import { finalizeCareerEvent } from "./pipeline";
 import { validateCareerEventPreClose } from "./preCloseGuards";
 import { syncDuelo2v2Participaciones } from "../syncParticipaciones";
+import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
 import type { JugadorParticipacion } from "../types";
 
 jest.mock("../careerParticipacionesMerge", () => ({
@@ -200,6 +206,13 @@ describe("finalizeCareerEvent E2E", () => {
       failures: [],
       excludedJugadorIds: [],
       eventBlocked: false,
+    });
+    (ensureRivieraIdentity as jest.Mock).mockResolvedValue({
+      rivieraId: "RIV-00000102",
+    });
+    (requireOfficialProfileLinkForParticipacion as jest.Mock).mockResolvedValue({
+      officialPlayerKey: "opk-test",
+      rivieraId: "RIV-00000102",
     });
   });
 

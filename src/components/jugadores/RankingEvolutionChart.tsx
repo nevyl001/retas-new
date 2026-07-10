@@ -1,20 +1,10 @@
 import React from "react";
 import type { RankingEvolutionPoint } from "../../lib/rivieraJugadores/historialDisplay";
+import { formatHistorialFecha } from "../../lib/rivieraJugadores/historialDisplay";
 import "./RankingEvolutionChart.css";
 
 interface RankingEvolutionChartProps {
   points: RankingEvolutionPoint[];
-}
-
-function formatFecha(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-    });
-  } catch {
-    return iso;
-  }
 }
 
 export const RankingEvolutionChart: React.FC<RankingEvolutionChartProps> = ({
@@ -47,9 +37,9 @@ export const RankingEvolutionChart: React.FC<RankingEvolutionChartProps> = ({
               <div
                 className="rjp-evolution__bar"
                 style={{ height: `${heightPct}%` }}
-                title={`${p.eventoNombre}: +${p.delta} pts (${formatFecha(p.fecha)})`}
+                title={`${p.eventoNombre}: +${p.delta} pts (${formatHistorialFecha(p.fecha)})`}
               />
-              <span className="rjp-evolution__label">{formatFecha(p.fecha)}</span>
+              <span className="rjp-evolution__label">{formatHistorialFecha(p.fecha)}</span>
             </div>
           );
         })}

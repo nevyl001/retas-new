@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import {
   filterParticipacionesHistorialVisible,
+  formatHistorialFecha,
   groupHistorialResumen,
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
@@ -17,18 +18,6 @@ interface JugadorHistorialListProps {
   showResumen?: boolean;
   onDelete?: (participacionId: string, eventoNombre: string) => void;
   deletingId?: string | null;
-}
-
-function formatFecha(iso: string): string {
-  try {
-    return new Date(iso + "T12:00:00").toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
 }
 
 export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
@@ -132,7 +121,7 @@ export const JugadorHistorialList: React.FC<JugadorHistorialListProps> = ({
                 <p className="rj-historial-timeline__detalle">{it.detalle}</p>
               )}
               <p className="rj-historial-timeline__fecha">
-                {formatFecha(it.fecha)}
+                {formatHistorialFecha(it.fecha)}
                 {it.puntos != null && it.puntos > 0 && (
                   <span className="rj-historial-timeline__pts">
                     {" "}

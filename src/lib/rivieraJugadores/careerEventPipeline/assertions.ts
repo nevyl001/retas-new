@@ -1,5 +1,7 @@
 import { supabase } from "../../supabaseClient";
+import { ensureRivieraIdentity } from "../careerIdentity";
 import { isValidRivieraId } from "../rivieraIdDisplay";
+import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
 import type {
   CareerEventAssertionFailure,
   CareerEventContext,
@@ -66,33 +68,25 @@ async function hasJugadorStats(jugadorId: string): Promise<boolean> {
   return !!data;
 }
 
-async function loadRivieraIdentity(jugadorId: string): Promise<{
+async function loadRivieraIdentity(
+  jugadorId: string,
+  organizadorId: string
+): Promise<{
   rivieraId: string | null;
   hasProfileLink: boolean;
 }> {
-  const { data: jugador, error: jugadorError } = await supabase
-    .from("riviera_jugadores")
-    .select("riviera_id")
-    .eq("id", jugadorId)
-    .maybeSingle();
-
-  if (jugadorError || !jugador) {
-    return { rivieraId: null, hasProfileLink: false };
-  }
-
-  const rivieraId =
-    typeof jugador.riviera_id === "string" ? jugador.riviera_id : null;
-
-  const { data: link } = await supabase
-    .from("riviera_official_player_profile_link")
-    .select("official_player_key")
-    .eq("riviera_jugador_id", jugadorId)
-    .limit(1)
-    .maybeSingle();
+  const identity = await ensureRivieraIdentity(jugadorId);
+  const linkResult = await requireOfficialProfileLinkForParticipacion(
+    jugadorId,
+    organizadorId
+  );
 
   return {
-    rivieraId,
-    hasProfileLink: !!link?.official_player_key,
+    rivieraId:
+      (typeof identity?.rivieraId === "string" ? identity.rivieraId : null) ??
+      linkResult.rivieraId ??
+      null,
+    hasProfileLink: Boolean(linkResult.officialPlayerKey),
   };
 }
 
@@ -236,7 +230,10 @@ export async function assertCareerEventIntegrity(
       }
     }
 
-    const identity = await loadRivieraIdentity(jugadorId);
+    const identity = await loadRivieraIdentity(
+      jugadorId,
+      context.organizadorId
+    );
     if (!identity.rivieraId || !isValidRivieraId(identity.rivieraId)) {
       failures.push({
         code: "missing_riviera_id",

@@ -1,4 +1,5 @@
 import { isMissingColumnError, sanitizeUuid } from "../db/schemaHelpers";
+import { toMexicoCalendarDate } from "../matchDate";
 import { supabase, supabasePublicRead } from "../supabaseClient";
 import { listCareerParticipacionesPublic } from "./publicCareerLinkage";
 import { RIVIERA_IDENTITY_ENSURE_ENABLED } from "../../config/careerIdentity";
@@ -1500,7 +1501,7 @@ export async function registrarParticipacion(
     p_sets_contra: params.setsContra ?? 0,
     p_puntos_obtenidos: params.puntosObtenidos ?? 0,
     p_metadata: params.metadata ?? {},
-    p_fecha: params.fecha ?? new Date().toISOString().slice(0, 10),
+    p_fecha: params.fecha ?? toMexicoCalendarDate(new Date().toISOString()),
   });
 
   if (error) {

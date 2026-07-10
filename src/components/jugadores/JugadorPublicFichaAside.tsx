@@ -1,16 +1,11 @@
 import React from "react";
 import type { HistorialItemView } from "../../lib/rivieraJugadores/historialDisplay";
+import { formatHistorialFecha } from "../../lib/rivieraJugadores/historialDisplay";
 import { TablerIcon } from "../ui/TablerIcon";
 
 function formatFechaCorta(iso: string): string {
-  try {
-    return new Date(iso + "T12:00:00").toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "short",
-    });
-  } catch {
-    return iso;
-  }
+  const full = formatHistorialFecha(iso);
+  return full.replace(/\s+\d{4}$/, "");
 }
 
 interface JugadorPublicFichaAsideProps {

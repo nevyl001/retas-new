@@ -3,6 +3,10 @@ import type { AmericanoPlayer, AmericanoRound } from "../db/types";
 import { getGames, getMatches, getPairs, getTournaments } from "../database";
 import { computeJornadaPublicStats } from "../liga/jornadaStats";
 import { formatLugarOrdinal } from "./historialDisplay";
+import {
+  buildParticipacionFechaFields,
+  latestIsoTimestamp,
+} from "../matchDate";
 import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
 import { supabase } from "../supabaseClient";
 import { rebuildAmericanoFromSnapshot } from "../americanoSnapshotRoster";
@@ -267,6 +271,7 @@ async function registrarPuntosRanking(params: {
   metadata?: Record<string, unknown>;
   skipIfSubtipoExists?: string;
   upsertSubtipo?: string;
+  eventoEn?: string;
 }): Promise<void> {
   if (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId)) {
     return;
@@ -303,7 +308,12 @@ async function registrarPuntosRanking(params: {
     subtipo: subtipoForLog,
   });
 
-  const metadata = rankingMetadata(desglose, params.metadata);
+  const metadata = rankingMetadata(desglose, {
+    ...(params.metadata ?? {}),
+    ...(params.eventoEn
+      ? buildParticipacionFechaFields(params.eventoEn)
+      : {}),
+  });
   const subtipo =
     params.upsertSubtipo ??
     (typeof params.metadata?.subtipo === "string"
@@ -323,6 +333,7 @@ async function registrarPuntosRanking(params: {
       puntosObtenidos: total,
       parejaCon: params.parejaCon,
       metadata,
+      fecha: typeof metadata.fecha === "string" ? metadata.fecha : undefined,
     });
     return;
   }
@@ -338,6 +349,7 @@ async function registrarPuntosRanking(params: {
     puntosObtenidos: total,
     parejaCon: params.parejaCon,
     metadata,
+    fecha: typeof metadata.fecha === "string" ? metadata.fecha : undefined,
   });
 }
 
@@ -352,6 +364,7 @@ async function safeRegistrar(params: {
   puntosObtenidos?: number;
   parejaCon?: string;
   metadata?: Record<string, unknown>;
+  fecha?: string;
 }): Promise<void> {
   if (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId)) {
     return;
@@ -460,6 +473,7 @@ async function upsertParticipacionRanking(params: {
   parejaCon?: string;
   metadata: Record<string, unknown>;
   force?: boolean;
+  fecha?: string;
 }): Promise<void> {
   if (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId)) {
     return;
@@ -545,6 +559,7 @@ async function upsertParticipacionRanking(params: {
     puntosObtenidos,
     parejaCon: params.parejaCon,
     metadata: mergedMeta,
+    fecha: params.fecha,
   });
 }
 
@@ -784,6 +799,10 @@ async function syncRetaParticipacionesInner(params: {
   }
 
   const finishedMatches = matches.filter((m) => m.status === "finished");
+  const eventoEn = latestIsoTimestamp(
+    ...finishedMatches.map((match) => match.created_at),
+    tournament.created_at
+  );
   const { gamesByMatchId, allGames } = await loadGamesByMatchId(
     finishedMatches,
     getGames
@@ -1074,6 +1093,7 @@ async function syncRetaParticipacionesInner(params: {
           setsFavor: setsFavorReta,
           setsContra: setsContraReta,
           metadata,
+          eventoEn,
         });
       }
     );
@@ -1385,7 +1405,8 @@ async function flushTorneoExpressPlayerAgg(
   pairMap: Map<string, Pair>,
   placementCtx: ReturnType<typeof buildExpressPlacementContext>,
   clasificadosPlayerIds: Set<string>,
-  excludeJugadorIds?: string[]
+  excludeJugadorIds?: string[],
+  eventoEn?: string
 ): Promise<CareerEventSyncOutcome> {
   const excluded = toExcludedJugadorIdSet(excludeJugadorIds);
   const syncFailures: CareerEventAssertionFailure[] = [];
@@ -1476,6 +1497,7 @@ async function flushTorneoExpressPlayerAgg(
             pareja_subcampeon_id: subcampeonParejaId,
             torneo_express_id: torneoId,
           },
+          eventoEn,
         });
       }
     );
@@ -1603,6 +1625,13 @@ export async function syncTorneoExpressParticipaciones(
       pairMap
     );
     const clasificadosPlayerIds = clasificadosPlayerIdsFromBundle(bundle, pairMap);
+    const eventoEn = latestIsoTimestamp(
+      bundle.torneo.created_at,
+      ...Object.values(bundle.partidosPorGrupo)
+        .flat()
+        .map((partido) => partido.programado_en),
+      ...bundle.eliminatoriaPartidos.map((partido) => partido.programado_en)
+    );
 
     const expressOutcome = await flushTorneoExpressPlayerAgg(
       agg,
@@ -1614,7 +1643,8 @@ export async function syncTorneoExpressParticipaciones(
       pairMap,
       placementCtx,
       clasificadosPlayerIds,
-      options?.excludeJugadorIds
+      options?.excludeJugadorIds,
+      eventoEn
     );
     return {
       touchedJugadorIds: expressOutcome.touchedJugadorIds,
@@ -1734,6 +1764,11 @@ export async function syncLigaJornada(
     }
 
     const eventoNombre = `Liga ${detalle.nombre} - Jornada ${jornada.numero}`;
+    const eventoEn = latestIsoTimestamp(
+      jornada.created_at,
+      jornada.fecha,
+      ...(jornada.partidos ?? []).map((partido) => partido.created_at)
+    );
     const jornadaStats = computeJornadaPublicStats(jornada, {
       parejasFijas: detalle.modalidad === "parejas_fijas",
     });
@@ -1842,6 +1877,7 @@ export async function syncLigaJornada(
             parejaCon: (st as PlayerAgg & { lastPareja?: string }).lastPareja,
             upsertSubtipo: "liga_jornada",
             metadata,
+            eventoEn,
           });
         }
       );
@@ -2226,6 +2262,7 @@ export async function syncAmericanoParticipaciones(
             setsContra,
             metadata: metadata as Record<string, unknown>,
             upsertSubtipo: "americano_cierre",
+            eventoEn: fechaFallback,
           });
         }
       );
@@ -2307,10 +2344,11 @@ export async function syncDuelo2v2Participaciones(params: {
   }
 
   const eventoNombre = duelo.nombre.trim() || "Duelo 2 vs 2";
-  const fecha =
-    duelo.finalizado_at?.slice(0, 10) ??
-    duelo.updated_at.slice(0, 10) ??
-    new Date().toISOString().slice(0, 10);
+  const eventoEn = latestIsoTimestamp(
+    duelo.programado_en,
+    duelo.finalizado_at,
+    duelo.updated_at
+  );
 
   const slots: Array<{
     jugadorId: string | null;
@@ -2435,7 +2473,6 @@ export async function syncDuelo2v2Participaciones(params: {
                   partidos_jugados: 1,
                 }
               : {}),
-            fecha,
           },
           partidosDetalle
         );
@@ -2453,6 +2490,7 @@ export async function syncDuelo2v2Participaciones(params: {
           parejaCon: slot.parejaCon,
           upsertSubtipo: "duelo_2v2_cierre",
           metadata,
+          eventoEn,
         });
       }
     );

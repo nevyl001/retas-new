@@ -1,4 +1,10 @@
 import {
+  formatMatchDateShortFromCalendar,
+  formatMatchDateShort,
+  resolveParticipacionFechaInstant,
+  toMexicoCalendarDate,
+} from "../matchDate";
+import {
   JUGADOR_CATEGORIA_LABELS,
   TIPO_EVENTO_LABELS,
 } from "./constants";
@@ -305,13 +311,15 @@ export function participacionToHistorialItem(
   const detalle =
     detalleParts.length > 0 ? detalleParts.join(" · ") : undefined;
 
+  const fechaInstant = resolveParticipacionFechaInstant(row);
+
   return {
     id: row.id,
     modalidadId,
     modalidadLabel,
     modalidadIcon: MODALIDAD_ICONS[modalidadId] ?? "🏆",
     eventoNombre: row.evento_nombre,
-    fecha: row.fecha,
+    fecha: toMexicoCalendarDate(fechaInstant),
     lugarLabel,
     detalle,
     categoriaLabel,
@@ -499,17 +507,30 @@ export function computeRankingEvolution(
 ): RankingEvolutionPoint[] {
   const visible = filterParticipacionesHistorialVisible(participaciones)
     .filter((p) => (p.puntos_obtenidos ?? 0) > 0)
-    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+    .sort((a, b) =>
+      resolveParticipacionFechaInstant(a).localeCompare(
+        resolveParticipacionFechaInstant(b)
+      )
+    );
 
   let acumulado = 0;
   return visible.map((p) => {
     const delta = p.puntos_obtenidos ?? 0;
     acumulado += delta;
+    const fechaInstant = resolveParticipacionFechaInstant(p);
     return {
-      fecha: p.fecha,
+      fecha: toMexicoCalendarDate(fechaInstant),
       eventoNombre: p.evento_nombre,
       delta,
       puntosAcumulados: acumulado,
     };
   });
+}
+
+/** Formato corto de fecha de historial (ej. "9 jul 2026"). */
+export function formatHistorialFecha(fecha: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return formatMatchDateShortFromCalendar(fecha);
+  }
+  return formatMatchDateShort(fecha);
 }

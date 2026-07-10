@@ -1,3 +1,9 @@
+import {
+  APP_TIMEZONE,
+  formatMatchDateWeekday,
+  formatMatchTime,
+  toMexicoCalendarDate,
+} from "../matchDate";
 import type { TorneoExpressPartido } from "./types";
 
 /** ISO usado para mostrar/editar (programado_en o created_at). */
@@ -7,9 +13,7 @@ export function partidoScheduleIso(partido: TorneoExpressPartido): string {
 
 export function formatPartidoFecha(iso: string): string {
   try {
-    const d = new Date(iso);
-    const wd = d.toLocaleDateString("es-MX", { weekday: "long" });
-    return `${wd.charAt(0).toUpperCase() + wd.slice(1)} ${d.getDate()}`;
+    return formatMatchDateWeekday(iso);
   } catch {
     return "—";
   }
@@ -17,10 +21,7 @@ export function formatPartidoFecha(iso: string): string {
 
 export function formatPartidoHora(iso: string): string {
   try {
-    return new Date(iso).toLocaleTimeString("es-MX", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return formatMatchTime(iso);
   } catch {
     return "—";
   }
@@ -30,18 +31,24 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-/** Valor para `<input type="date">` en zona local. */
+/** Valor para `<input type="date">` en zona local (México). */
 export function partidoDateInputValue(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  return toMexicoCalendarDate(iso);
 }
 
-/** Valor para `<input type="time">` en zona local. */
+/** Valor para `<input type="time">` en zona local (México). */
 export function partidoTimeInputValue(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "12:00";
-  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: APP_TIMEZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const hour = parts.find((p) => p.type === "hour")?.value ?? "12";
+  const minute = parts.find((p) => p.type === "minute")?.value ?? "00";
+  return `${pad2(Number(hour))}:${pad2(Number(minute))}`;
 }
 
 export function combinePartidoDateAndTime(

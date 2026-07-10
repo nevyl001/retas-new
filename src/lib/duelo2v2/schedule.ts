@@ -4,6 +4,7 @@ import {
   partidoDateInputValue,
   partidoTimeInputValue,
 } from "../torneoExpress/partidoSchedule";
+import { APP_TIMEZONE } from "../matchDate";
 import { canchaDraftFromStored } from "../torneoExpress/canchaDisplay";
 import type { Duelo2v2 } from "./types";
 
@@ -25,6 +26,7 @@ export function formatDueloHorarioRange(
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: APP_TIMEZONE,
   };
   const inicioFull = inicioDate.toLocaleTimeString("es-MX", timeOpts);
   const finFull = finDate.toLocaleTimeString("es-MX", timeOpts);
