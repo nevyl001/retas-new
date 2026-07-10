@@ -40,6 +40,7 @@ import { validateCareerEventPreClose } from "./preCloseGuards";
 import { syncRetaParticipaciones } from "../syncParticipaciones";
 import {
   resolveJugadorForEventSync,
+  runParallelPlayerParticipacionSync,
   runPlayerParticipacionSync,
 } from "./careerEventPlayerSync";
 import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
@@ -195,5 +196,46 @@ describe("runPlayerParticipacionSync", () => {
     expect(touched).toEqual([GOOD_A, GOOD_B]);
     expect(failures).toHaveLength(1);
     expect(failures[0].jugadorId).toBe(AMBIGUOUS);
+  });
+});
+
+describe("runParallelPlayerParticipacionSync", () => {
+  it("ejecuta en paralelo y mergea failures sin mutación compartida", async () => {
+    const touched: string[] = [];
+
+    const outcome = await runParallelPlayerParticipacionSync([
+      {
+        ctx: { jugadorId: GOOD_A },
+        fn: async () => {
+          touched.push(GOOD_A);
+          return { jugadorId: GOOD_A };
+        },
+      },
+      {
+        ctx: { jugadorId: AMBIGUOUS },
+        fn: async () => {
+          throw new CareerIntegrityException({
+            code: "ambiguous_profile_link",
+            message: "ambiguo",
+            confidence: "REVIEW",
+            reason: "review",
+            jugadorId: AMBIGUOUS,
+          });
+        },
+      },
+      {
+        ctx: { jugadorId: GOOD_B },
+        fn: async () => {
+          touched.push(GOOD_B);
+          return { jugadorId: GOOD_B };
+        },
+      },
+    ]);
+
+    expect(touched).toEqual(expect.arrayContaining([GOOD_A, GOOD_B]));
+    expect(touched).toHaveLength(2);
+    expect(outcome.touchedJugadorIds).toEqual([GOOD_A, GOOD_B]);
+    expect(outcome.syncFailures).toHaveLength(1);
+    expect(outcome.syncFailures[0].jugadorId).toBe(AMBIGUOUS);
   });
 });

@@ -1,6 +1,13 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useClubModeEyebrow } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
+import {
+  clearDuelo2v2CreateDraft,
+  pairToDraftIds,
+  readDuelo2v2CreateDraft,
+  rehydrateDueloPairFromDraft,
+  writeDuelo2v2CreateDraft,
+} from "../../lib/duelo2v2/duelo2v2CreateDraft";
 import {
   CANCHA_DEFAULT_VALUE,
   normalizeCanchaForSave,
@@ -9,6 +16,7 @@ import {
   partidoDateInputValue,
 } from "../../lib/torneoExpress/partidoSchedule";
 import { resolveDueloScheduleFromDraft } from "../../lib/duelo2v2/schedule";
+import { listRivieraJugadores } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { createDuelo2v2 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
@@ -42,6 +50,8 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const [pairB, setPairB] = useState<DueloPair | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const draftRestoreStarted = useRef(false);
 
   const canSubmit =
     nombre.trim().length > 0 &&
@@ -52,9 +62,86 @@ export const Duelo2v2Nuevo: React.FC = () => {
     bothPairsReady(pairA, pairB) &&
     Boolean(user?.id);
 
+  useEffect(() => {
+    const organizadorId = user?.id?.trim();
+    if (!organizadorId) {
+      setDraftReady(false);
+      draftRestoreStarted.current = false;
+      return;
+    }
+
+    if (draftRestoreStarted.current) return;
+    draftRestoreStarted.current = true;
+
+    let cancelled = false;
+
+    const restoreDraft = async () => {
+      const stored = readDuelo2v2CreateDraft(organizadorId);
+      if (!stored) {
+        if (!cancelled) setDraftReady(true);
+        return;
+      }
+
+      setNombre(stored.nombre);
+      setCancha(stored.cancha);
+      setDraftDate(stored.draftDate);
+      setDraftTimeStart(stored.draftTimeStart);
+      setDraftTimeEnd(stored.draftTimeEnd);
+
+      if (!stored.pairA && !stored.pairB) {
+        if (!cancelled) setDraftReady(true);
+        return;
+      }
+
+      try {
+        const jugadores = await listRivieraJugadores(organizadorId, {
+          skipCareerEnrich: true,
+        });
+        if (cancelled) return;
+        setPairA(rehydrateDueloPairFromDraft(jugadores, stored.pairA));
+        setPairB(rehydrateDueloPairFromDraft(jugadores, stored.pairB));
+      } catch (e) {
+        console.warn("[duelo-2v2] no se pudo rehidratar borrador de parejas:", e);
+      } finally {
+        if (!cancelled) setDraftReady(true);
+      }
+    };
+
+    void restoreDraft();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    const organizadorId = user?.id?.trim();
+    if (!organizadorId || !draftReady) return;
+
+    writeDuelo2v2CreateDraft(organizadorId, {
+      nombre,
+      cancha,
+      draftDate,
+      draftTimeStart,
+      draftTimeEnd,
+      pairA: pairToDraftIds(pairA),
+      pairB: pairToDraftIds(pairB),
+    });
+  }, [
+    user?.id,
+    draftReady,
+    nombre,
+    cancha,
+    draftDate,
+    draftTimeStart,
+    draftTimeEnd,
+    pairA,
+    pairB,
+  ]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit || !pairA || !pairB) return;
+    if (!canSubmit || !pairA || !pairB || !user?.id) return;
 
     setBusy(true);
     setError(null);
@@ -84,6 +171,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
         pareja_b_j1_nombre: pairB.j1.nombre,
         pareja_b_j2_nombre: pairB.j2.nombre,
       });
+      clearDuelo2v2CreateDraft(user.id);
       navigateDuelo2v2(duelo2v2GestionarPath(duelo.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar el duelo");
