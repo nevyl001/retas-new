@@ -16,7 +16,10 @@ import {
 } from "./rivieraJugadoresService";
 import type { RivieraJugador } from "./types";
 import { normalizePlayerNameKey } from "./playerNameKey";
-import { resolveJugadorIdForOrganizer } from "./organizerPlayerAccess";
+import {
+  isGrantedJugadorRow,
+  resolveJugadorIdForOrganizer,
+} from "./organizerPlayerAccess";
 
 const SYNC_TTL_MS = 45_000;
 const lastLegacySyncAt: Record<string, number> = {};
@@ -195,6 +198,11 @@ async function applyRivieraContactToLegacyPlayer(
   }
 }
 
+/** Sync masivo: no crear/enlazar legacy para cedidos ni filas ya enlazadas. */
+function shouldSkipBulkLegacyEnsure(row: RivieraJugador): boolean {
+  return isGrantedJugadorRow(row) || Boolean(row.legacy_player_id);
+}
+
 /**
  * Pool para retas/torneos: solo jugadores ya enlazados desde el registro
  * (`legacy_player_id`). No inserta filas en `players` — eso ocurre en
@@ -222,6 +230,8 @@ export async function buildLegacyPlayersFromRivieraRegistry(
 
     if (canonical.legacy_player_id) {
       legacy = await fetchPlayerById(canonical.legacy_player_id);
+    } else if (isGrantedJugadorRow(row)) {
+      continue;
     } else {
       legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
       if (legacy) {
@@ -321,6 +331,7 @@ export async function syncLegacyPlayersFromRivieraRegistry(
     skipCareerEnrich: true,
   });
   for (const rj of registry) {
+    if (shouldSkipBulkLegacyEnsure(rj)) continue;
     await ensureLegacyPlayerForRivieraJugador(organizadorId, rj);
   }
   lastLegacySyncAt[organizadorId] = now;
