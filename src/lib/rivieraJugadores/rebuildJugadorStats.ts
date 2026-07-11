@@ -89,7 +89,7 @@ export function computeJugadorStatsFromParticipaciones(
   const visible = scoped.filter((p) => !isParticipacionAjusteManual(p));
 
   for (const row of scoped) {
-    puntosTotales += Math.max(0, row.puntos_obtenidos ?? 0);
+    puntosTotales += row.puntos_obtenidos ?? 0;
   }
 
   for (const row of visible) {

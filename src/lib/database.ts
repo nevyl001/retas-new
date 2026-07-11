@@ -1044,6 +1044,48 @@ export const deleteMatchesByTournament = async (tournamentId: string) => {
   if (error) throw error;
 };
 
+export type SafeMatchDeleteOutcome =
+  | { outcome: "deleted"; warning?: string }
+  | { outcome: "cancelled"; warning: string }
+  | { outcome: "noop" };
+
+/**
+ * Borra partidos de una reta tras archivar en rivieraopen.com (si hay finalizados).
+ * Si el archivado falla o está incompleto, pide confirmación explícita al organizador.
+ */
+export async function deleteMatchesByTournamentSafely(
+  tournamentId: string,
+  confirmDestructive: (prompt: string) => boolean
+): Promise<SafeMatchDeleteOutcome> {
+  const { decideSafeMatchDeletion } = await import("./retaArchive/retaArchiveApi");
+  const matches = await getMatches(tournamentId);
+  if (matches.length === 0) {
+    return { outcome: "noop" };
+  }
+
+  const finishedCount = matches.filter((m) => m.status === "finished").length;
+  if (finishedCount > 0) {
+    const decision = await decideSafeMatchDeletion(
+      tournamentId,
+      finishedCount,
+      confirmDestructive
+    );
+    if (!decision.proceed) {
+      return {
+        outcome: "cancelled",
+        warning:
+          decision.warning ??
+          "Operación cancelada para preservar el detalle de partidos.",
+      };
+    }
+    await deleteMatchesByTournament(tournamentId);
+    return { outcome: "deleted", warning: decision.warning };
+  }
+
+  await deleteMatchesByTournament(tournamentId);
+  return { outcome: "deleted" };
+}
+
 // Funciones para Juegos
 export type CreateGameScores = Pick<
   Game,

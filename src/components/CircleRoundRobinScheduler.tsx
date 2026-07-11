@@ -2,7 +2,8 @@ import {
   Pair,
   Match,
   createMatch,
-  deleteMatchesByTournament,
+  deleteMatchesByTournamentSafely,
+  getMatches,
 } from "../lib/database";
 import { generateCircleRoundRobinSchedule } from "../lib/circleRoundRobinSchedule";
 
@@ -443,9 +444,28 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      // Eliminar partidos existentes
-      console.log("🗑️ Eliminando partidos existentes...");
-      await deleteMatchesByTournament(tournamentId);
+      // Eliminar partidos existentes (con gate de archivado si hay finalizados)
+      const existingMatches = await getMatches(tournamentId);
+      if (existingMatches.length > 0) {
+        console.log("🗑️ Verificando archivado antes de eliminar partidos existentes...");
+        const deleteGate = await deleteMatchesByTournamentSafely(
+          tournamentId,
+          (prompt) => window.confirm(prompt)
+        );
+        if (deleteGate.outcome === "cancelled") {
+          return {
+            success: false,
+            message:
+              deleteGate.warning ??
+              "No se reprogramó la reta: se conservaron los partidos existentes.",
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
+          console.warn("[reta-archive]", deleteGate.warning);
+        }
+      }
 
       // Generar partidos usando el método del círculo
       const matches = this.generateCircleRoundRobin(pairs, courts);
@@ -551,8 +571,27 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      console.log("🗑️ Eliminando partidos existentes...");
-      await deleteMatchesByTournament(tournamentId);
+      const existingMatches = await getMatches(tournamentId);
+      if (existingMatches.length > 0) {
+        console.log("🗑️ Verificando archivado antes de eliminar partidos existentes...");
+        const deleteGate = await deleteMatchesByTournamentSafely(
+          tournamentId,
+          (prompt) => window.confirm(prompt)
+        );
+        if (deleteGate.outcome === "cancelled") {
+          return {
+            success: false,
+            message:
+              deleteGate.warning ??
+              "No se reprogramó la reta: se conservaron los partidos existentes.",
+            matches: [],
+            totalRounds: 0,
+          };
+        }
+        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
+          console.warn("[reta-archive]", deleteGate.warning);
+        }
+      }
 
       const matches = this.generateTeamsSchedule(pairs, courts, teamsCount, pairToTeam);
       if (matches.length === 0) {

@@ -3,6 +3,7 @@ import {
   getPairs,
   getMatches,
   deleteTournament,
+  deleteMatchesByTournamentSafely,
   updateTournament,
   Tournament,
 } from "../lib/database";
@@ -144,12 +145,10 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       }
 
       const tournament = item.tournament;
+      const [pairs, matches] = await Promise.all([getPairs(id), getMatches(id)]);
+
       if (user?.id) {
         try {
-          const [pairs, matches] = await Promise.all([
-            getPairs(id),
-            getMatches(id),
-          ]);
           const hasFinished = matches.some((m) => m.status === "finished");
           if (tournament.is_finished || hasFinished) {
             await finalizeCareerEvent({
@@ -165,6 +164,24 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           console.warn("syncRetaParticipaciones antes de eliminar:", syncErr);
         }
       }
+
+      if (matches.length > 0) {
+        const deleteGate = await deleteMatchesByTournamentSafely(id, (prompt) =>
+          window.confirm(prompt)
+        );
+        if (deleteGate.outcome === "cancelled") {
+          setError(
+            deleteGate.warning ??
+              "Eliminación cancelada para preservar el detalle de partidos."
+          );
+          await reloadRetas();
+          return;
+        }
+        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
+          console.warn("[reta-archive]", deleteGate.warning);
+        }
+      }
+
       await deleteTournament(id);
       if (selectedTournament?.id === id) {
         onTournamentSelect(null);
@@ -198,38 +215,51 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     try {
       setError("");
       setLoading(true);
-      await updateTournament(tournament.id, { is_finished: true });
-      let pipelineWarning: string | null = null;
-      let pipelineResult: CareerEventPipelineResult | null = null;
-      if (user?.id) {
-        try {
-          const [pairs, matches] = await Promise.all([
-            getPairs(tournament.id),
-            getMatches(tournament.id),
-          ]);
-          pipelineResult = await finalizeCareerEvent({
-            kind: "reta",
-            organizadorId: user.id,
-            tournament: { ...tournament, is_finished: true },
-            pairs,
-            matches,
-          });
-          if (!pipelineResult.ok) {
-            const detail =
-              pipelineResult.failures.map((f) => f.message).join("; ") ||
-              "No se pudo registrar el historial de la reta.";
-            console.warn("[career-event-pipeline] reta incompleta:", pipelineResult);
-            pipelineWarning = `Reta finalizada, pero el historial no se registró por completo: ${detail}`;
-            setError(pipelineWarning);
-          }
-        } catch (syncErr) {
-          const detail =
-            syncErr instanceof Error ? syncErr.message : String(syncErr);
-          console.warn("[career-event-pipeline] reta sync error:", syncErr);
-          pipelineWarning = `Reta finalizada, pero el historial no se registró: ${detail}`;
-          setError(pipelineWarning);
-        }
+
+      if (!user?.id) {
+        const msg = "No se pudo cerrar la reta: sesión no disponible.";
+        setError(msg);
+        alert(msg);
+        return;
       }
+
+      const [pairs, matches] = await Promise.all([
+        getPairs(tournament.id),
+        getMatches(tournament.id),
+      ]);
+
+      let pipelineResult: CareerEventPipelineResult;
+      try {
+        pipelineResult = await finalizeCareerEvent({
+          kind: "reta",
+          organizadorId: user.id,
+          tournament: { ...tournament, is_finished: true },
+          pairs,
+          matches,
+        });
+      } catch (syncErr) {
+        const detail =
+          syncErr instanceof Error ? syncErr.message : String(syncErr);
+        console.warn("[career-event-pipeline] reta sync error:", syncErr);
+        const msg = `No se pudo cerrar la reta. Intenta de nuevo.\n\n${detail}`;
+        setError(msg);
+        alert(msg);
+        return;
+      }
+
+      if (!pipelineResult.ok) {
+        const detail =
+          pipelineResult.failures.map((f) => f.message).join("; ") ||
+          "No se pudo registrar el historial de la reta.";
+        console.warn("[career-event-pipeline] reta incompleta:", pipelineResult);
+        const msg = `No se pudo cerrar la reta. Intenta de nuevo.\n\n${detail}`;
+        setError(msg);
+        alert(msg);
+        return;
+      }
+
+      await updateTournament(tournament.id, { is_finished: true });
+
       setRetas((prev) =>
         prev.map((item) =>
           item.kind === "tournament" && item.tournament.id === tournament.id
@@ -240,18 +270,14 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       if (selectedTournament?.id === tournament.id) {
         onTournamentSelect({ ...tournament, is_finished: true });
       }
-      if (!pipelineWarning) {
-        if (pipelineResult?.ok) {
-          alert(
-            formatCareerPipelineSuccessMessage(pipelineResult, tournament.name)
-          );
-        } else {
-          alert("¡Reta finalizada exitosamente! 🏆");
-        }
-      }
+
+      alert(formatCareerPipelineSuccessMessage(pipelineResult, tournament.name));
     } catch (err) {
       console.error("Error finalizando reta:", err);
-      setError("Error al finalizar la reta: " + (err as Error).message);
+      const detail = err instanceof Error ? err.message : String(err);
+      const msg = `No se pudo cerrar la reta. Intenta de nuevo.\n\n${detail}`;
+      setError(msg);
+      alert(msg);
     } finally {
       setLoading(false);
     }

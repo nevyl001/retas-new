@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   Tournament,
   Pair,
-  deleteMatchesByTournament,
+  deleteMatchesByTournamentSafely,
   updateTournament,
   upsertTournamentPublicConfig,
 } from "../lib/database";
@@ -150,7 +150,21 @@ export const useTournamentActions = (
         setLoading(true);
 
         console.log("🗑️ Eliminando partidos...");
-        await deleteMatchesByTournament(selectedTournament.id);
+        const deleteGate = await deleteMatchesByTournamentSafely(
+          selectedTournament.id,
+          (prompt) => window.confirm(prompt)
+        );
+        if (deleteGate.outcome === "cancelled") {
+          showToast(
+            deleteGate.warning ??
+              "Reset cancelado para preservar el detalle de partidos.",
+            "info"
+          );
+          return;
+        }
+        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
+          showToast(deleteGate.warning, "info");
+        }
         console.log("✅ Partidos eliminados");
 
         console.log("🔄 Marcando reta como no iniciada...");
