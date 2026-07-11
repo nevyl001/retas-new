@@ -1,3 +1,4 @@
+import { waitForSupabaseSession } from "../waitForSupabaseSession";
 import type { Player } from "../db/types";
 import { isValidUuid, sanitizeUuid } from "../db/schemaHelpers";
 import { insertLegacyPlayer } from "../database";
@@ -305,6 +306,14 @@ export async function syncLegacyPlayersFromRivieraRegistry(
     lastLegacySyncAt[organizadorId] &&
     now - lastLegacySyncAt[organizadorId] < SYNC_TTL_MS
   ) {
+    return;
+  }
+
+  const sessionReady = await waitForSupabaseSession();
+  if (!sessionReady) {
+    console.debug(
+      "[riviera-jugadores] syncLegacyPlayersFromRivieraRegistry skipped: session not ready"
+    );
     return;
   }
 

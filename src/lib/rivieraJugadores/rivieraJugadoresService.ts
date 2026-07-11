@@ -26,10 +26,13 @@ import {
   enrichJugadorWithGlobalGrantedAccess,
   excludeRevokedGrantLocalClones,
   findGrantedAccessMetaForJugador,
+  grantedAccessFromMeta,
+  grantedAccessFromRow,
   isRevokedGrantLocalJugador,
   listActiveGrantedAccessForOrganizerPublic,
   listRevokedGrantLocalJugadorIds,
   loadGrantedSourceDisplayData,
+  syncGrantedLocalsFromSource,
 } from "./organizerPlayerAccess";
 import {
   enrichJugadorConcedidoClubView,
@@ -242,11 +245,7 @@ async function enrichInternalClubJugadorGrant(
   const withMeta: RivieraJugadorWithStats = {
     ...jugador,
     concedidoPorAdmin: true,
-    grantedAccess: {
-      accessId: meta.accessId,
-      sourceJugadorId: meta.sourceJugadorId,
-      ownerOrganizadorId: ownerOrgId,
-    },
+    grantedAccess: grantedAccessFromMeta(meta),
   };
   return enrichJugadorConcedidoClubView(
     organizadorId,
@@ -285,11 +284,7 @@ async function mergeGrantedJugadoresIntoRanking(
 
       const ownerOrgId = grant.owner_organizador_id;
       existing.concedidoPorAdmin = true;
-      existing.grantedAccess = {
-        accessId: grant.id,
-        sourceJugadorId: grant.jugador_id,
-        ownerOrganizadorId: ownerOrgId,
-      };
+      existing.grantedAccess = grantedAccessFromRow(grant);
       const enriched = await enrichGrantedJugadorFromSource(
         existing,
         grant.jugador_id,
@@ -328,11 +323,7 @@ async function mergeGrantedJugadoresIntoRanking(
       grant.owner_organizador_id
     );
     mapped.concedidoPorAdmin = true;
-    mapped.grantedAccess = {
-      accessId: grant.id,
-      sourceJugadorId: grant.jugador_id,
-      ownerOrganizadorId: grant.owner_organizador_id,
-    };
+    mapped.grantedAccess = grantedAccessFromRow(grant);
     merged.push(mapped);
   }
 
@@ -375,11 +366,7 @@ async function mergeGrantedJugadoresIntoList(
       if (existing) {
         const ownerOrgId = grant.owner_organizador_id;
         existing.concedidoPorAdmin = true;
-        existing.grantedAccess = {
-          accessId: grant.id,
-          sourceJugadorId: grant.jugador_id,
-          ownerOrganizadorId: ownerOrgId,
-        };
+        existing.grantedAccess = grantedAccessFromRow(grant);
         const enriched = await enrichGrantedJugadorFromSource(
           existing,
           grant.jugador_id,
@@ -417,11 +404,7 @@ async function mergeGrantedJugadoresIntoList(
       grant.owner_organizador_id
     );
     mapped.concedidoPorAdmin = true;
-    mapped.grantedAccess = {
-      accessId: grant.id,
-      sourceJugadorId: grant.jugador_id,
-      ownerOrganizadorId: grant.owner_organizador_id,
-    };
+    mapped.grantedAccess = grantedAccessFromRow(grant);
     merged.push(mapped);
   }
 
@@ -583,11 +566,7 @@ async function fetchGrantedJugadorForInternalClub(
     meta.ownerOrganizadorId
   );
   mapped.concedidoPorAdmin = true;
-  mapped.grantedAccess = {
-    accessId: meta.accessId,
-    sourceJugadorId: meta.sourceJugadorId,
-    ownerOrganizadorId: meta.ownerOrganizadorId,
-  };
+  mapped.grantedAccess = grantedAccessFromMeta(meta);
   return mapped;
 }
 
@@ -805,11 +784,7 @@ export async function getRivieraJugadorBySlug(
     grantedRow as unknown as Record<string, unknown>
   );
   mapped.concedidoPorAdmin = true;
-  mapped.grantedAccess = {
-    accessId: meta.accessId,
-    sourceJugadorId: meta.sourceJugadorId,
-    ownerOrganizadorId: meta.ownerOrganizadorId,
-  };
+  mapped.grantedAccess = grantedAccessFromMeta(meta);
   return enrichJugadorWithRivieraId(
     await enrichGrantedJugadorFromSource(
       mapped,
@@ -1051,6 +1026,7 @@ export async function updateRivieraJugador(
     const { syncRivieraJugadorToLinkedPools } = await import("./playerPoolSync");
     await syncRivieraJugadorToLinkedPools(updated.organizador_id, updated);
   }
+  await syncGrantedLocalsFromSource(updated.id);
   if (updated.visible_publico !== false && updated.estado !== "archivado") {
     await ensureRivieraJugadorVisibleEnRanking(updated.id);
   }

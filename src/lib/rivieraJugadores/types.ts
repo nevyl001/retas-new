@@ -128,6 +128,10 @@ export interface RivieraJugadorWithStats extends RivieraJugador {
     accessId: string;
     sourceJugadorId: string;
     ownerOrganizadorId?: string;
+    /** Override del club cedido (organizer_player_access.local_display_name). */
+    localDisplayName?: string | null;
+    /** Override del club cedido (organizer_player_access.local_category). */
+    localCategory?: string | null;
   };
   /** Jugador nativo del club con actividad en clubes cedidos (clones). */
   multiclubGranteePuntos?: Array<{

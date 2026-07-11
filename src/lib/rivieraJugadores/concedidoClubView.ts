@@ -303,6 +303,8 @@ export function applyConcedidoClubMeta(
         meta.ownerOrganizadorId ??
         jugador.grantedAccess?.ownerOrganizadorId ??
         "",
+      localDisplayName: jugador.grantedAccess?.localDisplayName,
+      localCategory: jugador.grantedAccess?.localCategory,
     },
   };
 }
