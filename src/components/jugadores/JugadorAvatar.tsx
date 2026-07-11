@@ -1,4 +1,5 @@
 import React from "react";
+import { useRetryableImage } from "../../hooks/useRetryableImage";
 
 interface JugadorAvatarProps {
   fotoUrl?: string | null;
@@ -18,18 +19,20 @@ export const JugadorAvatar: React.FC<JugadorAvatarProps> = ({
   const px = SIZE_PX[size];
   const initial = (nombre.trim()[0] ?? "?").toUpperCase();
   const cls = ["rj-avatar", `rj-avatar--${size}`, className].filter(Boolean).join(" ");
+  const { src, onError } = useRetryableImage(fotoUrl);
 
-  if (fotoUrl) {
+  if (src) {
     return (
       <span className={cls} aria-hidden>
         <img
           className="rj-avatar__img"
-          src={fotoUrl}
+          src={src}
           alt=""
           width={px}
           height={px}
           loading="lazy"
           decoding="async"
+          onError={onError}
         />
       </span>
     );

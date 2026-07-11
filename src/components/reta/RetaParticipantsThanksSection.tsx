@@ -1,4 +1,5 @@
 import React from "react";
+import { useRetryableImage } from "../../hooks/useRetryableImage";
 import type { PublicRetaPairPlayer } from "../public/PublicRetaPairSide";
 import { PublicRivieraSocialBar } from "../public/PublicRivieraSocialBar";
 import "../torneo-express/public/te-public-podium-card.css";
@@ -19,15 +20,18 @@ const THANKS_COPY = {
 
 function ThanksAvatar({ player }: { player: PublicRetaPairPlayer }) {
   const initial = (player.name.trim()[0] ?? "?").toUpperCase();
+  const { src, onError } = useRetryableImage(player.fotoUrl);
   return (
     <span className="reta-thanks__avatar">
-      {player.fotoUrl ? (
+      {src ? (
+        // Carga eager: esta tarjeta está pensada para capturarse/compartirse,
+        // así que todos los avatares deben estar presentes al renderizar.
         <img
           className="reta-thanks__avatar-img"
-          src={player.fotoUrl}
+          src={src}
           alt=""
-          loading="lazy"
           decoding="async"
+          onError={onError}
         />
       ) : (
         <span className="reta-thanks__avatar-initial" aria-hidden>

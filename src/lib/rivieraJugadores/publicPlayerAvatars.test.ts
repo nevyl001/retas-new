@@ -259,7 +259,7 @@ describe("resolvePlayerPublicProfiles", () => {
     expect(profiles[legacyId].rating).toBe(2.93);
   });
 
-  it("con legacy id de David Rus no sustituye por David R aunque el nombre venga abreviado", async () => {
+  it("con legacy id de David Rus y foto local vacía busca foto canónica vía RPC", async () => {
     const davidRLegacyId = "aaaa1111-1111-1111-1111-111111111111";
     const davidRusLegacyId = "bbbb2222-2222-2222-2222-222222222222";
     const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
@@ -293,6 +293,17 @@ describe("resolvePlayerPublicProfiles", () => {
       }),
     }));
 
+    (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
+      data: [
+        {
+          legacy_player_id: davidRusLegacyId,
+          foto_url: "https://example.com/david-rus-origen.jpg",
+          rating: 3.15,
+        },
+      ],
+      error: null,
+    });
+
     const profiles = await resolvePlayerPublicProfiles(
       hackOrg,
       [{ id: davidRusLegacyId, name: "David R" }],
@@ -300,8 +311,10 @@ describe("resolvePlayerPublicProfiles", () => {
     );
 
     expect(profiles[davidRusLegacyId].rating).toBe(3.15);
-    expect(profiles[davidRusLegacyId].fotoUrl).toBeNull();
-    expect(supabasePublicRead.rpc).not.toHaveBeenCalled();
+    expect(profiles[davidRusLegacyId].fotoUrl).toBe(
+      "https://example.com/david-rus-origen.jpg"
+    );
+    expect(supabasePublicRead.rpc).toHaveBeenCalled();
   });
 
   it("si el legacy id no enlaza, resuelve por nombre único del evento", async () => {
@@ -489,6 +502,54 @@ describe("resolvePlayerPublicProfiles", () => {
     expect(canonicalQueryCount).toBe(0);
   });
 
+  it("jugador propio con rating real y foto local vacía busca foto sin cambiar rating", async () => {
+    const ponchoLegacyId = "cccc3333-3333-3333-3333-333333333333";
+    const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
+
+    (supabasePublicRead.from as jest.Mock).mockImplementation(() => ({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({
+            data: [
+              {
+                id: "rj-poncho",
+                legacy_player_id: ponchoLegacyId,
+                nombre: "Poncho G",
+                foto_url: null,
+                rating: 3.12,
+              },
+            ],
+            error: null,
+          }),
+        }),
+        in: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      }),
+    }));
+
+    (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
+      data: [
+        {
+          legacy_player_id: ponchoLegacyId,
+          foto_url: "https://example.com/poncho.jpg",
+          rating: 3.12,
+        },
+      ],
+      error: null,
+    });
+
+    const profiles = await resolvePlayerPublicProfiles(
+      hackOrg,
+      [{ id: ponchoLegacyId, name: "Poncho G" }],
+      { publicOnly: true }
+    );
+
+    expect(profiles[ponchoLegacyId].rating).toBe(3.12);
+    expect(profiles[ponchoLegacyId].fotoUrl).toBe("https://example.com/poncho.jpg");
+    expect(supabasePublicRead.rpc).toHaveBeenCalled();
+  });
+
   it("cedido sin clon local enlazado por legacy id resuelve rating origen vía RPC", async () => {
     const originLegacyId = "origin-daniel-legacy";
     const hackOrg = "e724de97-3552-4a01-a269-f621e6f1ed26";
@@ -583,22 +644,29 @@ describe("fetchRivieraJugadorProfilesByIds", () => {
     const rivieraId = "terry-riviera-id";
     const rivieraOrg = "2770b522-9064-4c7b-a729-4a0ea7e3f6e8";
 
-    (supabasePublicRead.from as jest.Mock).mockReturnValue({
+    (supabasePublicRead.from as jest.Mock).mockImplementation(() => ({
       select: jest.fn().mockReturnValue({
-        in: jest.fn().mockResolvedValue({
-          data: [
-            {
-              id: rivieraId,
-              legacy_player_id: null,
-              foto_url: null,
-              rating: 3.0,
-              rating_partidos: 0,
-            },
-          ],
-          error: null,
+        in: jest.fn().mockImplementation((col: string) => {
+          if (col === "id") {
+            return Promise.resolve({
+              data: [
+                {
+                  id: rivieraId,
+                  legacy_player_id: null,
+                  foto_url: null,
+                  rating: 3.0,
+                  rating_partidos: 0,
+                },
+              ],
+              error: null,
+            });
+          }
+          return {
+            eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+          };
         }),
       }),
-    });
+    }));
 
     (supabasePublicRead.rpc as jest.Mock).mockResolvedValue({
       data: [

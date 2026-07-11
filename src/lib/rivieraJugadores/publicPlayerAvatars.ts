@@ -421,19 +421,21 @@ async function fetchPublicEventLegacyProfiles(
   return map;
 }
 
+function profileNeedsCanonicalLookup(profile: PlayerPublicProfile): boolean {
+  // Rating real del club local: no reemplazar por otro club.
+  // Pero si falta foto, sí buscar en RPC/canónico (cedidos u origen).
+  return !profile.fotoUrl || isDefaultRating(profile.rating);
+}
+
 function idsNeedingEventProfileRpc(
   result: Record<string, PlayerPublicProfile>,
   entries: PlayerAvatarLookupEntry[],
-  publicOnly?: boolean
+  _publicOnly?: boolean
 ): string[] {
   return entries
     .filter((e) => {
       const profile = result[e.id] ?? DEFAULT_PROFILE;
-      if (publicOnly) {
-        // Jugador propio del club con rating real: no buscar en otros clubes.
-        return isDefaultRating(profile.rating);
-      }
-      return !profile.fotoUrl || isDefaultRating(profile.rating);
+      return profileNeedsCanonicalLookup(profile);
     })
     .map((e) => e.id);
 }
@@ -538,7 +540,7 @@ export async function resolvePlayerPublicProfiles(
     }
 
     const stillNeedCanon = needsCanonical.filter((id) =>
-      isDefaultRating(result[id]?.rating ?? DEFAULT_PROFILE.rating)
+      profileNeedsCanonicalLookup(result[id] ?? DEFAULT_PROFILE)
     );
 
     if (stillNeedCanon.length > 0) {
@@ -655,7 +657,7 @@ export async function fetchRivieraJugadorProfilesByIds(
   }
 
   const stillNeedCanon = needsCanon.filter((id) =>
-    isDefaultRating(map.get(id)?.rating ?? DEFAULT_PROFILE.rating)
+    profileNeedsCanonicalLookup(map.get(id) ?? DEFAULT_PROFILE)
   );
 
   if (stillNeedCanon.length > 0) {
@@ -686,7 +688,7 @@ export async function fetchRivieraJugadorProfilesByIds(
     }
 
     const stillAfterLegacyRpc = stillNeedCanon.filter((id) =>
-      isDefaultRating(map.get(id)?.rating ?? DEFAULT_PROFILE.rating)
+      profileNeedsCanonicalLookup(map.get(id) ?? DEFAULT_PROFILE)
     );
 
     if (stillAfterLegacyRpc.length > 0) {
