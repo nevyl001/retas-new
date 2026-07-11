@@ -5,7 +5,7 @@ const MODO_JUEGO_LABELS: Record<string, string> = {
   reta_rr: "Round Robin",
   americano: "Americano",
   equipos: "Reta Equipos",
-  duelo_2v2: "Duelo 2v2",
+  duelo_2v2: "Duelo 2 vs 2",
   torneo: "Torneo",
 };
 

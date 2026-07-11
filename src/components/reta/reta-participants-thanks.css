@@ -1,0 +1,191 @@
+/* Roster compartible — agradecimiento a los participantes no ganadores.
+   Reutiliza el marco .podium-card (esquinas, dorado/negro, footer, social).
+   Mobile-first: escala avatares/columnas según cantidad de parejas. */
+
+.reta-thanks-wrap {
+  margin-top: clamp(1rem, 2.5vw, 1.5rem);
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .reta-thanks-wrap {
+    max-width: min(100%, 52rem);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.reta-thanks {
+  --podium-accent: var(--ro-medal-gold);
+}
+
+.reta-thanks__inner {
+  padding: 28px 18px 22px;
+}
+
+.reta-thanks__title {
+  font-size: clamp(28px, 8vw, 44px);
+  font-style: italic;
+}
+
+.reta-thanks__message {
+  margin-top: 12px;
+  max-width: 30rem;
+}
+
+.reta-thanks__grid {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 10px;
+}
+
+@media (min-width: 400px) {
+  .reta-thanks__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 560px) {
+  .reta-thanks__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px 12px;
+  }
+}
+
+.reta-thanks__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--ro-pub-gold-border, rgba(201, 168, 76, 0.2));
+  background: rgba(18, 16, 12, 0.4);
+}
+
+.reta-thanks__pos {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1;
+  color: var(--podium-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.reta-thanks__avatars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reta-thanks__avatars > .reta-thanks__avatar + .reta-thanks__avatar {
+  margin-left: -14px;
+}
+
+.reta-thanks__avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--ro-pub-gold-dim, rgba(201, 162, 39, 0.12));
+  outline: 2px solid var(--podium-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(10, 9, 7, 0.9);
+}
+
+.reta-thanks__avatar-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 50%;
+}
+
+.reta-thanks__avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--podium-accent);
+}
+
+.reta-thanks__names {
+  margin: 0;
+  max-width: 100%;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--accent-gold);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* Densidad media (6-8 parejas): avatares un poco más chicos */
+.reta-thanks[data-density="dense"] .reta-thanks__avatar {
+  width: 46px;
+  height: 46px;
+}
+
+.reta-thanks[data-density="dense"] .reta-thanks__avatar-initial {
+  font-size: 17px;
+}
+
+.reta-thanks[data-density="dense"] .reta-thanks__names {
+  font-size: 11px;
+}
+
+/* Densidad alta (9+ parejas): compactar aún más y permitir 3 col en móvil */
+.reta-thanks[data-density="xdense"] .reta-thanks__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 8px;
+}
+
+.reta-thanks[data-density="xdense"] .reta-thanks__item {
+  padding: 9px 4px;
+}
+
+.reta-thanks[data-density="xdense"] .reta-thanks__avatar {
+  width: 40px;
+  height: 40px;
+}
+
+.reta-thanks[data-density="xdense"] .reta-thanks__avatar-initial {
+  font-size: 15px;
+}
+
+.reta-thanks[data-density="xdense"] .reta-thanks__names {
+  font-size: 10px;
+}
+
+@media (min-width: 560px) {
+  .reta-thanks[data-density="xdense"] .reta-thanks__grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 359px) {
+  .reta-thanks__grid {
+    gap: 12px 8px;
+  }
+
+  .reta-thanks__avatar {
+    width: 48px;
+    height: 48px;
+  }
+}

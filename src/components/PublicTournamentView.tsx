@@ -51,6 +51,10 @@ import {
 } from "./public/PublicRetaWinnerSection";
 import { RetaRoundRobinWinnerCelebrate } from "./reta/RetaRoundRobinWinnerCelebrate";
 import {
+  RetaParticipantsThanksSection,
+  type RetaThanksParticipant,
+} from "./reta/RetaParticipantsThanksSection";
+import {
   pairPlayer1DisplayName,
   pairPlayer2DisplayName,
   pairPlayersDisplayLabel,
@@ -81,11 +85,13 @@ const RetaPublicHeader: React.FC<{
   publicTournamentName: string | null;
   publicTournamentDescription: string | null;
   showClubBranding?: boolean;
+  finalizado?: boolean;
 }> = ({
   formatKicker,
   publicTournamentName,
   publicTournamentDescription,
   showClubBranding = false,
+  finalizado = false,
 }) => {
   const { isClubBranded } = useClubExperience();
 
@@ -101,7 +107,9 @@ const RetaPublicHeader: React.FC<{
             className="te-public-header__club-identity"
           />
         ) : null}
-        <p className="te-public-header__kicker">{formatKicker} · En vivo</p>
+        <p className="te-public-header__kicker">
+          {formatKicker} · {finalizado ? "Finalizada" : "En vivo"}
+        </p>
         <h1 className="te-public-header__title te-public-header__title--event">
           {publicTournamentName || "Resultados en tiempo real"}
         </h1>
@@ -146,7 +154,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [tournamentWinner, setTournamentWinner] =
     useState<TournamentWinner | null>(null);
+  const [podiumSecondId, setPodiumSecondId] = useState<string | null>(null);
+  const [podiumThirdId, setPodiumThirdId] = useState<string | null>(null);
   const [showWinner, setShowWinner] = useState(false);
+  const [tournamentFinished, setTournamentFinished] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [teamConfig, setTeamConfig] = useState<TeamConfig | null>(parseTeamConfigFromHash);
   const [winningTeamName, setWinningTeamName] = useState<string | null>(null);
@@ -218,6 +229,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       setPublicTournamentDescription(
         rawDesc && rawDesc !== nameNorm ? rawDesc : null
       );
+      setTournamentFinished(Boolean(t?.is_finished));
       setOrganizadorId(
         typeof t?.user_id === "string" && t.user_id.trim()
           ? t.user_id.trim()
@@ -270,12 +282,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         setShowWinner(false);
         setWinningTeamName(null);
         setTournamentWinner(null);
+        setPodiumSecondId(null);
+        setPodiumThirdId(null);
       } else {
         if (resolvedTeamConfig) {
           const pairsWithStats = computePairsWithStats(pairsData, matchesData, gamesData || []);
           const standings = computeTeamStandings(pairsWithStats, resolvedTeamConfig);
           setWinningTeamName(standings?.[0]?.name ?? null);
           setTournamentWinner(null);
+          setPodiumSecondId(null);
+          setPodiumThirdId(null);
           setShowWinner(true);
         } else {
           setWinningTeamName(null);
@@ -288,6 +304,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               champCfg
             );
             setTournamentWinner(outcome.winner);
+            setPodiumSecondId(outcome.secondPair?.id ?? null);
+            setPodiumThirdId(outcome.thirdPair?.id ?? null);
             setShowWinner(true);
           } catch (err) {
             console.error("Error calculating winner:", err);
@@ -615,6 +633,48 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     pairPlayersByPairId,
   ]);
 
+  const thanksParticipants = useMemo((): RetaThanksParticipant[] => {
+    if (!showWinner) return [];
+    // Equipos / dual meet quedan fuera de este roster (estructura distinta).
+    if (teamStandings && teamStandings.length > 0) return [];
+    const winnerId = tournamentWinner?.pair.id ?? null;
+    if (!winnerId) return [];
+
+    const sortedIds = sortedPairs.map((pair) => pair.id);
+
+    let orderedIds: string[];
+    if (championshipConfig?.championshipEnabled) {
+      // Remontada: podio 1-3 desde el bracket; el resto (4+) desde la tabla RR.
+      const podiumIds = [winnerId, podiumSecondId, podiumThirdId].filter(
+        (id): id is string => Boolean(id)
+      );
+      const rest = sortedIds.filter((id) => !podiumIds.includes(id));
+      orderedIds = [...podiumIds, ...rest];
+    } else {
+      orderedIds = sortedIds;
+    }
+
+    return orderedIds
+      .map((id, idx) => ({ pairId: id, position: idx + 1 }))
+      .filter((entry) => entry.pairId !== winnerId)
+      .map((entry) => ({
+        pairId: entry.pairId,
+        position: entry.position,
+        players: getPairPlayers(entry.pairId),
+        pairLabel: formatPairLabel(entry.pairId),
+      }));
+  }, [
+    showWinner,
+    teamStandings,
+    tournamentWinner,
+    sortedPairs,
+    championshipConfig,
+    podiumSecondId,
+    podiumThirdId,
+    getPairPlayers,
+    formatPairLabel,
+  ]);
+
   useEffect(() => {
     const defaultTitle = formatTenantDocumentTitle(
       null,
@@ -698,6 +758,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     ? Math.max(...matches.map(m => m.court || 1))
     : 1;
 
+  const tournamentFinalizado = showWinner || tournamentFinished;
+
   return (
     <PublicTorneoExpressShell
       className="te-public--reta te-public--reta-wide"
@@ -716,7 +778,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               />
             ) : undefined
           }
-          estado={<StatusBadge variant="live">En vivo</StatusBadge>}
+          estado={
+            <StatusBadge variant={tournamentFinalizado ? "gold" : "live"}>
+              {tournamentFinalizado ? "Finalizada" : "En vivo"}
+            </StatusBadge>
+          }
           nombreEvento={publicTournamentName || "Resultados en tiempo real"}
           club={organizerName}
           categoria={publicTournamentDescription}
@@ -728,6 +794,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           publicTournamentName={publicTournamentName}
           publicTournamentDescription={publicTournamentDescription}
           showClubBranding={showClubBranding}
+          finalizado={tournamentFinalizado}
         />
       )}
 
@@ -921,6 +988,16 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             }
             tournamentWinner={tournamentWinner}
             winners={winnerAvatars}
+          />
+        )}
+
+      {showWinner &&
+        (!teamStandings || teamStandings.length === 0) &&
+        tournamentWinner &&
+        thanksParticipants.length > 0 && (
+          <RetaParticipantsThanksSection
+            participants={thanksParticipants}
+            torneoNombre={publicTournamentName ?? undefined}
           />
         )}
 
