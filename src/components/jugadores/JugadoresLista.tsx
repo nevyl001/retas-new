@@ -197,66 +197,6 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             </p>
           </div>
           <div className="rj-page__top-actions">
-            {user?.id ? (
-              <a
-                className="rj-btn rj-btn--ghost"
-                href={buildPublicRankingUrl(user.id, genero)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Ranking {genero === "F" ? "femenil" : "varonil"}
-              </a>
-            ) : null}
-            {user?.id ? (
-              <button
-                type="button"
-                className="rj-btn rj-btn--ghost"
-                disabled={backfilling}
-                title="Importa historial y recalcula rating de retas, americanos, ligas y duelos finalizados"
-                onClick={async () => {
-                  if (!user?.id) return;
-                  setBackfilling(true);
-                  try {
-                    const [resumen, nPromoted] = await Promise.all([
-                      backfillHistorialJugadores(user.id),
-                      promoteImportedRivieraJugadores(user.id),
-                    ]);
-                    const { retas: nRetas, americanos: nAmericanos, ligas: nLigas, duelos: nDuelos } =
-                      resumen;
-                    await load();
-                    const total = nRetas + nAmericanos + nLigas + nDuelos;
-                    const promoNote =
-                      nPromoted > 0
-                        ? ` ${nPromoted} jugador(es) activados en ranking público.`
-                        : "";
-                    alert(
-                      total > 0
-                        ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s), ${nLigas} jornada(s) de liga, ${nDuelos} duelo(s). Se recalculó el rating de partidos ya cerrados.${promoNote}`
-                        : nPromoted > 0
-                          ? `${nPromoted} jugador(es) activados en ranking público.`
-                          : "No hay eventos cerrados para importar."
-                    );
-                  } catch (e) {
-                    alert(
-                      e instanceof Error
-                        ? e.message
-                        : "No se pudo actualizar el historial"
-                    );
-                  } finally {
-                    setBackfilling(false);
-                  }
-                }}
-              >
-                {backfilling ? "Importando…" : "Importar historial"}
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="rj-btn rj-btn--ghost"
-              onClick={() => setExistingModalOpen(true)}
-            >
-              Agregar jugador existente
-            </button>
             <button
               type="button"
               className="rj-btn rj-btn--primary"
@@ -264,6 +204,77 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             >
               + {RIVIERA_GENERO_NEW_LABEL[genero]}
             </button>
+            <details className="rj-page__more">
+              <summary className="rj-btn rj-btn--ghost rj-page__more-summary">
+                Más ⋯
+              </summary>
+              <div className="rj-page__more-menu">
+                {user?.id ? (
+                  <a
+                    className="rj-btn rj-btn--ghost"
+                    href={buildPublicRankingUrl(user.id, genero)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ranking {genero === "F" ? "femenil" : "varonil"}
+                  </a>
+                ) : null}
+                {user?.id ? (
+                  <button
+                    type="button"
+                    className="rj-btn rj-btn--ghost"
+                    disabled={backfilling}
+                    title="Importa historial y recalcula rating de retas, americanos, ligas y duelos finalizados"
+                    onClick={async () => {
+                      if (!user?.id) return;
+                      setBackfilling(true);
+                      try {
+                        const [resumen, nPromoted] = await Promise.all([
+                          backfillHistorialJugadores(user.id),
+                          promoteImportedRivieraJugadores(user.id),
+                        ]);
+                        const {
+                          retas: nRetas,
+                          americanos: nAmericanos,
+                          ligas: nLigas,
+                          duelos: nDuelos,
+                        } = resumen;
+                        await load();
+                        const total = nRetas + nAmericanos + nLigas + nDuelos;
+                        const promoNote =
+                          nPromoted > 0
+                            ? ` ${nPromoted} jugador(es) activados en ranking público.`
+                            : "";
+                        alert(
+                          total > 0
+                            ? `Historial actualizado: ${nRetas} reta(s), ${nAmericanos} americano(s), ${nLigas} jornada(s) de liga, ${nDuelos} duelo(s). Se recalculó el rating de partidos ya cerrados.${promoNote}`
+                            : nPromoted > 0
+                              ? `${nPromoted} jugador(es) activados en ranking público.`
+                              : "No hay eventos cerrados para importar."
+                        );
+                      } catch (e) {
+                        alert(
+                          e instanceof Error
+                            ? e.message
+                            : "No se pudo actualizar el historial"
+                        );
+                      } finally {
+                        setBackfilling(false);
+                      }
+                    }}
+                  >
+                    {backfilling ? "Importando…" : "Importar historial"}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="rj-btn rj-btn--ghost"
+                  onClick={() => setExistingModalOpen(true)}
+                >
+                  Agregar jugador existente
+                </button>
+              </div>
+            </details>
           </div>
         </div>
 

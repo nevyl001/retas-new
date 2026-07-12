@@ -330,10 +330,15 @@ body,
   }
 
   .rj-card__edit,
-  .rj-card__delete,
-  .rj-row__icon-btn {
+  .rj-card__delete {
     min-width: var(--ro-touch-target-min);
     min-height: var(--ro-touch-target-min);
+  }
+
+  /* Filas compactas de registro: 40px por diseño (no forzar 44) */
+  .rj-list .rj-row__icon-btn {
+    min-width: 40px;
+    min-height: 40px;
   }
 
   .torneo-express-page.te-inicio-page .te-torneo-card__actions-end .riviera-btn,
