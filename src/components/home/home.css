@@ -598,7 +598,7 @@
 
 .recent-reta-card {
   width: 100%;
-  padding: 18px 18px 16px;
+  padding: 14px 14px 12px;
   background: var(--bg-card);
   border: 0.5px solid var(--border-subtle);
   border-radius: var(--radius-lg, 14px);
@@ -611,7 +611,33 @@
     box-shadow 180ms ease;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+}
+
+.recent-reta-card--compact {
+  padding: 12px 12px 10px;
+  gap: 4px;
+}
+
+.recent-reta-card--compact .recent-reta-card__badges {
+  gap: 0.35rem;
+}
+
+.recent-reta-card--compact .recent-reta-card__name {
+  font-size: 0.9375rem;
+}
+
+.recent-reta-card--compact .recent-reta-card__meta {
+  font-size: 0.6875rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recent-reta-card--compact .recent-reta-card__btn {
+  margin-top: 4px;
+  font-size: 0.75rem;
 }
 
 .recent-reta-card:nth-child(1) {
@@ -753,6 +779,39 @@
 
 .recent-reta-card__btn:hover {
   color: rgba(255, 255, 255, 0.85);
+}
+
+.recent-retas-section--active {
+  margin-bottom: clamp(20px, 4vw, 28px);
+}
+
+.recent-retas-section--recent {
+  margin-bottom: clamp(16px, 3.5vw, 24px);
+}
+
+.recent-retas-view-all {
+  margin-bottom: clamp(24px, 5vw, 36px);
+  text-align: center;
+}
+
+.recent-retas-view-all__btn {
+  min-height: var(--ro-touch-target-min, 44px);
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ro-border, var(--border-default));
+  border-radius: var(--ro-radius-full, 999px);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ro-text-secondary, var(--text-secondary));
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.recent-retas-view-all__btn:hover {
+  color: var(--ro-text-primary, var(--text-primary));
+  border-color: var(--ro-border-accent, var(--border-accent));
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* —— Vacío / utilidades —— */
@@ -907,12 +966,30 @@
   color: var(--ro-accent);
 }
 
-.home-quick-card--retas .home-quick-card__icon {
+.home-quick-links--tertiary {
+  margin-top: clamp(20px, 4vw, 32px);
+}
+
+.home-quick-links__grid--compact {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .home-quick-links__grid--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.home-quick-card--legal {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.home-quick-card--legal .home-quick-card__icon {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.home-quick-card--retas .home-quick-card__icon .ti {
+.home-quick-card--legal .home-quick-card__icon .ti {
   color: #9a9aa8;
 }
 
@@ -1569,6 +1646,10 @@
   }
 
   .home-quick-links--secondary {
+    display: none;
+  }
+
+  .home-quick-links--tertiary .home-quick-card__sub {
     display: none;
   }
 }

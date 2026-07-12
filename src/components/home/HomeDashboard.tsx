@@ -14,10 +14,10 @@ import { useAccountFeatures } from "../../contexts/AccountFeaturesContext";
 import { GAME_MODE_LABELS } from "../../lib/admin/organizadorGameModes";
 import { navigateLiga } from "../liga/ligaNav";
 import { navigateDuelo2v2 } from "../duelo-2v2/duelo2v2Nav";
-import { navigateAppTo } from "../../lib/appRouting";
-import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
-import { navigateJugadores } from "../jugadores/jugadoresNav";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
+import { navigateAppTo } from "../../lib/appRouting";
+import { buildPrivacidadTerminosPath } from "../../lib/legalNav";
+import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
 import { TablerIcon } from "../ui/TablerIcon";
 import type { GameModeId } from "./gameModesConfig";
 import {
@@ -29,13 +29,11 @@ import {
 import { initChampionshipConfig } from "../../lib/roundRobinChampionship";
 import { HomeHeader } from "./HomeHeader";
 import { HomeCreateEventCta } from "./HomeCreateEventCta";
-import { GameModesGrid } from "./GameModesGrid";
 import { QuickStartSheet, QuickStartPayload } from "./QuickStartSheet";
 import { RecentRetasSection } from "./RecentRetasSection";
 import { AppSiteFooter } from "../legal/AppSiteFooter";
 import {
   getAccountModeDisabledMessage,
-  getOrganizerRegistryCardSubtitle,
   useBranding,
 } from "../../club-experience";
 import "./home.css";
@@ -167,40 +165,27 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
   return (
     <div className="home-inner rv-page">
-      <HomeHeader userName={userProfile?.name} />
+      <HomeHeader
+        userName={userProfile?.name}
+        title="¿Qué quieres organizar hoy?"
+        subtitle="Crea un evento o continúa uno en curso."
+      />
       <HomeCreateEventCta
         onModeSelect={handleModeSelect}
         isModeEnabled={isModeEnabled}
       />
       {error && <p className="home-error">{error}</p>}
-      <RecentRetasSection userId={userId} onSelectTournament={onTournamentSelect} />
-      <GameModesGrid onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
+      <RecentRetasSection
+        userId={userId}
+        onSelectTournament={onTournamentSelect}
+        onShowAll={onShowAllRetas}
+      />
       <section
-        className="home-quick-links home-quick-links--secondary"
-        aria-label="Accesos de organización"
+        className="home-quick-links home-quick-links--tertiary"
+        aria-label="Accesos rápidos"
       >
-        <h2 className="home-section-title">Organización</h2>
-        <div className="home-quick-links__grid">
-          <button
-            type="button"
-            className="home-quick-card home-quick-card--jugadores"
-            onClick={() => navigateJugadores()}
-          >
-            <span className="home-quick-card__icon" aria-hidden>
-              <TablerIcon name="users" size={22} />
-            </span>
-            <span className="home-quick-card__body">
-              <span className="home-quick-card__title">Registro de jugadores</span>
-              <span className="home-quick-card__sub">
-                {getOrganizerRegistryCardSubtitle(organizerName)}
-              </span>
-            </span>
-            <TablerIcon
-              name="chevron-right"
-              size={20}
-              className="home-quick-card__chev"
-            />
-          </button>
+        <h2 className="home-section-title">Accesos rápidos</h2>
+        <div className="home-quick-links__grid home-quick-links__grid--compact">
           <button
             type="button"
             className="home-quick-card home-quick-card--ranking"
@@ -212,7 +197,7 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             <span className="home-quick-card__body">
               <span className="home-quick-card__title">Cómo funciona el ranking</span>
               <span className="home-quick-card__sub">
-                Sistema de puntos Riviera Open · comparte con jugadores
+                Sistema de puntos y niveles del club
               </span>
             </span>
             <TablerIcon
@@ -221,28 +206,26 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               className="home-quick-card__chev"
             />
           </button>
-          {onShowAllRetas && (
-            <button
-              type="button"
-              className="home-quick-card home-quick-card--retas"
-              onClick={onShowAllRetas}
-            >
-              <span className="home-quick-card__icon" aria-hidden>
-                <TablerIcon name="layout-list" size={22} />
+          <button
+            type="button"
+            className="home-quick-card home-quick-card--legal"
+            onClick={() => navigateAppTo(buildPrivacidadTerminosPath())}
+          >
+            <span className="home-quick-card__icon" aria-hidden>
+              <TablerIcon name="file-text" size={22} />
+            </span>
+            <span className="home-quick-card__body">
+              <span className="home-quick-card__title">Aviso legal</span>
+              <span className="home-quick-card__sub">
+                Privacidad y términos de uso
               </span>
-              <span className="home-quick-card__body">
-                <span className="home-quick-card__title">Gestionar mis retas</span>
-                <span className="home-quick-card__sub">
-                  Ver, abrir y administrar todas tus retas
-                </span>
-              </span>
-              <TablerIcon
-                name="chevron-right"
-                size={20}
-                className="home-quick-card__chev"
-              />
-            </button>
-          )}
+            </span>
+            <TablerIcon
+              name="chevron-right"
+              size={20}
+              className="home-quick-card__chev"
+            />
+          </button>
         </div>
       </section>
       <QuickStartSheet

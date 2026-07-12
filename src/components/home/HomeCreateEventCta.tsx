@@ -54,7 +54,6 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
         <div
           id="home-create-event-picker"
           className="home-create-event__picker"
-          role="listbox"
           aria-label="Seleccionar modalidad"
         >
           <p className="home-create-event__picker-hint">
@@ -71,7 +70,6 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
                     <li key={mode.id}>
                       <button
                         type="button"
-                        role="option"
                         className="home-create-event__picker-item"
                         disabled={!enabled}
                         onClick={() => handleSelect(mode.id)}
@@ -111,7 +109,6 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
                     <li key={mode.id}>
                       <button
                         type="button"
-                        role="option"
                         className="home-create-event__picker-item"
                         disabled={!enabled}
                         onClick={() => handleSelect(mode.id)}

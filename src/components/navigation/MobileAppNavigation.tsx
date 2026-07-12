@@ -94,7 +94,7 @@ export const MobileAppNavigation: React.FC<MobileAppNavigationProps> = ({
         className="mobile-app-navigation"
         aria-label="Navegación principal"
       >
-        <ul className="mobile-app-navigation__list" role="list">
+        <ul className="mobile-app-navigation__list">
           {TABS.map((tab) => {
             const isActive =
               tab.id === "mas" ? moreOpen : activeTab === tab.id;

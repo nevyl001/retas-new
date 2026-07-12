@@ -13,11 +13,13 @@ import { Badge } from "../ui";
 interface RecentRetaCardProps {
   item: HomeRetaItem;
   onContinue: () => void;
+  compact?: boolean;
 }
 
 export const RecentRetaCard: React.FC<RecentRetaCardProps> = ({
   item,
   onContinue,
+  compact = false,
 }) => {
   const mode = getRetaModeBadge(item);
   const status = getRetaStatusBadge(item);
@@ -32,7 +34,9 @@ export const RecentRetaCard: React.FC<RecentRetaCardProps> = ({
 
   return (
     <article
-      className={`recent-reta-card ${statusClass}`}
+      className={`recent-reta-card ${statusClass}${
+        compact ? " recent-reta-card--compact" : ""
+      }`}
     >
       <div className="recent-reta-card__badges">
         <Badge variant={mode.variant} className="recent-reta-card__mode">

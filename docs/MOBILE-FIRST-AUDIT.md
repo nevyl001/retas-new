@@ -611,10 +611,13 @@ AppRiviera tiene **buena base mobile-first parcial**: `overflow-x: clip`, shells
 |------|--------|
 | CTA principal «Crear evento» | Implementado — `HomeCreateEventCta.tsx` |
 | Picker de modalidades → `handleModeSelect` / QuickStartSheet | Implementado |
-| Eventos activos/recientes antes del grid | Implementado — `RecentRetasSection` reordenado |
-| Tarjetas modo más compactas en móvil | Implementado — `home.css` |
-| Accesos duplicados ocultos en móvil | Implementado — `.home-quick-links--secondary { display: none }` |
-| Desktop sin cambios relevantes | Implementado |
+| Home simplificado (sin grid de modos duplicado) | Implementado — se eliminaron «Retas rápidas» y «Competencias organizadas» del Home |
+| Eventos activos (máx. 3) + recientes (máx. 3) | Implementado — `RecentRetasSection` + `partitionHomeRetas` |
+| «Ver todos los eventos» cuando hay más | Implementado |
+| Accesos rápidos sin duplicar bottom nav | Implementado — ranking cómo funciona + aviso legal |
+| Tarjetas evento compactas | Implementado — `recent-reta-card--compact` |
+| `GameModesGrid` | Sin uso en Home — disponible para limpieza posterior |
+| ESLint CI build (aria-selected / role list) | Corregido — `HomeCreateEventCta`, `MobileAppNavigation` |
 
 ### Header / duplicación
 
