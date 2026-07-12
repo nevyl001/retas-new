@@ -1,3 +1,4 @@
+import { useCallback, useRef, useState } from "react";
 import {
   Player,
   Pair,
@@ -9,21 +10,20 @@ import {
 export const usePairManagement = (
   pairs: Pair[],
   setPairs: (pairs: Pair[]) => void,
-  selectedTournament: any,
+  selectedTournament: { id: string } | null | undefined,
   setSelectedPlayers: (players: Player[]) => void,
   setError: (error: string) => void,
   showToast: (message: string, type?: "success" | "error" | "info") => void,
   userId?: string
 ) => {
+  const [isCreatingPair, setIsCreatingPair] = useState(false);
+  const creatingRef = useRef(false);
+
   const deletePair = async (pairId: string) => {
     try {
       setError("");
-      console.log("Eliminando pareja:", pairId);
-
       await deletePairFromDB(pairId);
       setPairs(pairs.filter((p) => p.id !== pairId));
-
-      console.log("Pareja eliminada exitosamente");
       showToast("Pareja eliminada exitosamente", "success");
     } catch (err) {
       console.error("Error eliminando pareja:", err);
@@ -38,9 +38,6 @@ export const usePairManagement = (
   ) => {
     try {
       setError("");
-      console.log("Actualizando pareja:", pairId);
-      console.log("Nuevos jugadores:", player1.name, "+", player2.name);
-
       await updatePair(pairId, {
         player1_id: player1.id,
         player2_id: player2.id,
@@ -60,22 +57,22 @@ export const usePairManagement = (
           return pair;
         })
       );
-
-      console.log("Pareja actualizada exitosamente");
     } catch (err) {
       console.error("Error actualizando pareja:", err);
       setError("Error al actualizar la pareja: " + (err as Error).message);
     }
   };
 
-  const addPair = async (player1: Player, player2: Player) => {
-    if (!selectedTournament) {
-      setError("No hay reta seleccionada");
-      return;
-    }
+  const addPair = useCallback(
+    async (player1: Player, player2: Player) => {
+      if (!selectedTournament?.id) {
+        setError("No hay reta seleccionada");
+        return;
+      }
 
-    try {
-      setError("");
+      if (creatingRef.current) {
+        return;
+      }
 
       const existingPairLocal = pairs.find((pair) => {
         const sameIds =
@@ -98,25 +95,48 @@ export const usePairManagement = (
         return;
       }
 
-      const newPair = await createPair(
-        selectedTournament.id,
-        player1.id,
-        player2.id,
-        userId || ""
-      );
-      setPairs([...pairs, newPair]);
-      setSelectedPlayers([]);
+      creatingRef.current = true;
+      setIsCreatingPair(true);
+      setError("");
 
-      console.log("Pair added successfully");
-    } catch (err) {
-      console.error("Error creating pair:", err);
-      setError("Error al crear la pareja: " + (err as Error).message);
-    }
-  };
+      try {
+        const newPair = await createPair(
+          selectedTournament.id,
+          player1.id,
+          player2.id,
+          userId
+        );
+        setPairs([...pairs, newPair]);
+        setSelectedPlayers([]);
+        showToast("Pareja creada", "success");
+      } catch (err) {
+        console.error("Error creating pair:", err);
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? String((err as { message: unknown }).message)
+            : (err as Error).message;
+        setError("Error al crear la pareja: " + message);
+        // Conservar selección: no limpiar selectedPlayers
+      } finally {
+        creatingRef.current = false;
+        setIsCreatingPair(false);
+      }
+    },
+    [
+      pairs,
+      selectedTournament,
+      setPairs,
+      setSelectedPlayers,
+      setError,
+      showToast,
+      userId,
+    ]
+  );
 
   return {
     deletePair,
     updatePairPlayers,
     addPair,
+    isCreatingPair,
   };
 };

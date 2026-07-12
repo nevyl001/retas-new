@@ -45,6 +45,7 @@ interface MainLayoutProps {
 
   // Actions
   addPair: (player1: Player, player2: Player) => void;
+  isCreatingPair?: boolean;
   updatePairPlayers: (pairId: string, player1: Player, player2: Player) => void;
   deletePair: (pairId: string) => void;
   onReset: () => Promise<void>;
@@ -92,6 +93,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   error,
   setError,
   addPair,
+  isCreatingPair = false,
   updatePairPlayers,
   deletePair,
   onReset,
@@ -222,6 +224,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               setSelectedPlayers={setSelectedPlayers}
               setError={setError}
               addPair={addPair}
+              isCreatingPair={isCreatingPair}
               updatePairPlayers={updatePairPlayers}
               deletePair={deletePair}
               userId={userId}

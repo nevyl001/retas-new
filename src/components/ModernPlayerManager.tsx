@@ -21,6 +21,7 @@ interface ModernPlayerManagerProps {
   loading?: boolean;
   error?: string | null;
   onRefreshPlayers?: () => Promise<void> | void;
+  isCreatingPair?: boolean;
 }
 
 export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
@@ -33,6 +34,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   loading: loadingProp,
   error: errorProp,
   onRefreshPlayers,
+  isCreatingPair = false,
 }) => {
   const { user } = useUser();
   const organizadorId = (userId ?? user?.id)?.trim() || undefined;
@@ -97,6 +99,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   );
 
   const handlePlayerSelect = (player: Player) => {
+    if (isCreatingPair) return;
     if (playersInPairs.includes(player.id)) {
       alert(
         `No puedes seleccionar a ${player.name} porque ya está en una pareja. Debes eliminar su pareja actual primero.`
@@ -119,6 +122,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   };
 
   const handleRegistrySelect = (rj: RivieraJugador) => {
+    if (isCreatingPair) return;
     setRegistryHint(null);
     const pl = rj.legacy_player_id
       ? players.find((p) => p.id === rj.legacy_player_id)
@@ -156,6 +160,11 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
             <div className="elegant-player-count">{players.length}</div>
           </div>
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            {isCreatingPair ? (
+              <span className="elegant-form-hint" role="status">
+                Creando pareja…
+              </span>
+            ) : null}
             {onRefreshPlayers ? (
               <Button
                 type="button"
@@ -243,8 +252,16 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                 key={player.id}
                 className={`elegant-player-card ${
                   isSelected ? "selected" : ""
-                } ${isInPair ? "in-pair" : ""} ${isHovered ? "hovered" : ""}`}
+                } ${isInPair ? "in-pair" : ""} ${isHovered ? "hovered" : ""} ${
+                  isCreatingPair ? "disabled" : ""
+                }`}
                 onClick={() => handlePlayerSelect(player)}
+                aria-disabled={isCreatingPair}
+                style={
+                  isCreatingPair
+                    ? { opacity: 0.65, pointerEvents: "none" }
+                    : undefined
+                }
                 onMouseEnter={() => setHoveredPlayer(player.id)}
                 onMouseLeave={() => setHoveredPlayer(null)}
               >

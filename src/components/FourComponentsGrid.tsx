@@ -25,6 +25,7 @@ interface FourComponentsGridProps {
   setSelectedPlayers: (players: Player[]) => void;
   setError: (error: string) => void;
   addPair: (player1: Player, player2: Player) => void;
+  isCreatingPair?: boolean;
   updatePairPlayers: (pairId: string, player1: Player, player2: Player) => void;
   deletePair: (pairId: string) => void;
   loading: boolean;
@@ -52,6 +53,7 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
   setSelectedPlayers,
   setError,
   addPair,
+  isCreatingPair = false,
   updatePairPlayers,
   deletePair,
   loading,
@@ -88,7 +90,8 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
       pairs,
       setError,
       addPair,
-      setSelectedPlayers
+      setSelectedPlayers,
+      { isCreatingPair }
     );
   };
 
@@ -124,6 +127,7 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
                   loading={playerPoolLoading}
                   error={playerPoolError}
                   onRefreshPlayers={refreshPlayerPool}
+                  isCreatingPair={isCreatingPair}
                 />
               </div>
             )}

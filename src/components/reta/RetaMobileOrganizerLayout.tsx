@@ -56,6 +56,7 @@ export interface RetaMobileOrganizerLayoutProps {
   setSelectedPlayers: (players: Player[]) => void;
   setError: (error: string) => void;
   addPair: (player1: Player, player2: Player) => void;
+  isCreatingPair?: boolean;
   updatePairPlayers: (pairId: string, player1: Player, player2: Player) => void;
   deletePair: (pairId: string) => void;
   userId?: string;
@@ -103,6 +104,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
   setSelectedPlayers,
   setError,
   addPair,
+  isCreatingPair = false,
   updatePairPlayers,
   deletePair,
   userId,
@@ -267,6 +269,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
           setSelectedPlayers={setSelectedPlayers}
           setError={setError}
           addPair={addPair}
+          isCreatingPair={isCreatingPair}
           updatePairPlayers={updatePairPlayers}
           deletePair={deletePair}
           loading={loading}

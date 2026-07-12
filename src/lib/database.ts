@@ -1,5 +1,9 @@
 import { supabase, supabasePublicRead } from "./supabaseClient";
 import { GLOBAL_TOURNAMENT_ID, isMissingColumnError } from "./db/schemaHelpers";
+import {
+  buildCreatePairPayload,
+  PAIR_SELECT_WITH_PLAYERS,
+} from "./createPairPayload";
 import type {
   Game,
   Match,
@@ -781,18 +785,29 @@ export const updatePlayer = async (id: string, name: string) => {
 };
 
 // Funciones para Parejas
+/**
+ * Inserta una pareja en `pairs` con un único request.
+ * No envía `user_id` (columna inexistente → PGRST204 / 400 histórico).
+ * `@param _userId` se conserva por compatibilidad de callers; no se persiste.
+ */
 export const createPair = async (
   tournamentId: string,
   player1Id: string,
   player2Id: string,
-  userId: string
+  _userId?: string
 ) => {
-  console.log("=== CREATING PAIR IN DATABASE ===");
-  console.log("Tournament ID:", tournamentId);
-  console.log("Player 1 ID:", player1Id);
-  console.log("Player 2 ID:", player2Id);
+  // Validación temprana (sin round-trip) — nombres se completan tras fetch
+  const precheck = buildCreatePairPayload({
+    tournamentId,
+    player1Id,
+    player2Id,
+    player1Name: "pending",
+    player2Name: "pending",
+  });
+  if (!precheck.ok) {
+    throw new Error(precheck.error);
+  }
 
-  // First, get the player names from the players table
   const { data: player1, error: player1Error } = await supabase
     .from("players")
     .select("name")
@@ -815,62 +830,36 @@ export const createPair = async (
     throw player2Error;
   }
 
-  console.log("Player 1 name:", player1.name);
-  console.log("Player 2 name:", player2.name);
+  const built = buildCreatePairPayload({
+    tournamentId,
+    player1Id,
+    player2Id,
+    player1Name: player1.name,
+    player2Name: player2.name,
+  });
+
+  if (!built.ok) {
+    throw new Error(built.error);
+  }
 
   const { data, error } = await supabase
     .from("pairs")
-    .insert([
-      {
-        tournament_id: tournamentId,
-        player1_id: player1Id,
-        player2_id: player2Id,
-        player1_name: player1.name,
-        player2_name: player2.name,
-        user_id: userId,
-      },
-    ])
-    .select(
-      `
-      *,
-      player1:players!player1_id(*),
-      player2:players!player2_id(*)
-    `
-    )
+    .insert([built.payload])
+    .select(PAIR_SELECT_WITH_PLAYERS)
     .single();
 
-  let pairData = data;
-  let pairError = error;
-
-  if (isMissingColumnError(pairError, "pairs", "user_id")) {
-    ({ data: pairData, error: pairError } = await supabase
-      .from("pairs")
-      .insert([
-        {
-          tournament_id: tournamentId,
-          player1_id: player1Id,
-          player2_id: player2Id,
-          player1_name: player1.name,
-          player2_name: player2.name,
-        },
-      ])
-      .select(
-        `
-      *,
-      player1:players!player1_id(*),
-      player2:players!player2_id(*)
-    `
-      )
-      .single());
+  if (error) {
+    console.error("[pair-create] supabase error", {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      payload: built.payload,
+    });
+    throw error;
   }
 
-  if (pairError) {
-    console.error("Database error creating pair:", pairError);
-    throw pairError;
-  }
-
-  console.log("Pair created in database:", pairData);
-  return pairData;
+  return data;
 };
 
 export const getPairs = async (tournamentId: string) => {

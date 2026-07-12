@@ -508,7 +508,8 @@ function AppContent() {
   } = useWinnerCalculation();
 
   // Pair management
-  const { deletePair, updatePairPlayers, addPair } = usePairManagement(
+  const { deletePair, updatePairPlayers, addPair, isCreatingPair } =
+    usePairManagement(
     pairs,
     setPairs,
     selectedTournament,
@@ -898,6 +899,7 @@ function AppContent() {
               error={error}
               setError={setError}
               addPair={addPair}
+              isCreatingPair={isCreatingPair}
               updatePairPlayers={updatePairPlayers}
               deletePair={deletePair}
               onReset={handleReset}
