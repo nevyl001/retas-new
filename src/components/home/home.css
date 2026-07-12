@@ -1,59 +1,68 @@
 /* Riviera Gold — Home / Dashboard (contenido; shell en riviera-app-shell.css) */
 
-.home-inner {
+/* Contenedor más estrecho: evita el vacío del shell a 1280px */
+.home-inner,
+.main-layout > .home-inner {
   width: 100%;
-  max-width: 1120px;
+  max-width: 880px;
   min-width: 0;
   margin-inline: auto;
   overflow-x: clip;
 }
 
 .main-layout > .home-inner {
-  padding-top: clamp(6px, 1.5vw, 12px);
+  padding-top: clamp(4px, 1vw, 8px);
 }
 
 /* —— Hero banda Variante C —— */
 .home-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  row-gap: 0.75rem;
-  margin-bottom: clamp(14px, 3vw, 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
 }
 
 .home-inner .home-header.rv-mode-header {
   margin-bottom: 0;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .home-inner .rv-mode-header__eyebrow {
   margin-bottom: 6px;
+  letter-spacing: 0.12em;
+  color: var(--ro-accent, #3d7a5c);
 }
 
 .home-inner .rv-mode-header__title {
-  font-size: clamp(1.35rem, 4.5vw, 1.85rem);
+  font-size: clamp(1.4rem, 3.2vw, 1.75rem);
   margin-bottom: 6px;
-  line-height: 1.2;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
 }
 
 .home-inner .rv-mode-header__sub {
-  font-size: clamp(0.8125rem, 2.8vw, 0.9375rem);
+  font-size: clamp(0.8125rem, 2.2vw, 0.9rem);
   line-height: 1.45;
-  max-width: 42ch;
+  max-width: 36ch;
   margin: 0;
 }
 
-/* —— CTA Nuevo evento (compacto) —— */
+/* —— CTA Nuevo evento (compacto, junto al título) —— */
 .home-create-event {
   margin: 0;
+  flex: 0 0 auto;
 }
 
 .home-create-event__cta {
-  width: min(100%, 300px);
-  max-width: 300px;
+  width: min(100%, 280px);
+  max-width: 280px;
   min-height: 48px;
   height: 48px;
-  padding: 0 1.15rem;
+  padding: 0 1.1rem;
   justify-content: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   font-size: 0.875rem;
   font-weight: 600;
   box-shadow: none;
@@ -61,33 +70,34 @@
 
 @media (min-width: 768px) {
   .home-hero {
-    grid-template-columns: minmax(0, 1fr) auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
     column-gap: 1.25rem;
-    align-items: start;
-    margin-bottom: clamp(16px, 2.5vw, 22px);
+    row-gap: 0.85rem;
+    margin-bottom: 1.5rem;
   }
 
   .home-hero .home-header {
-    grid-column: 1;
-    grid-row: 1;
+    flex: 1 1 0;
+    max-width: none;
   }
 
   .home-hero .home-create-event {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-    /* Alinea el CTA con la fila del título (después del eyebrow) */
-    padding-top: 1.55rem;
+    /* Sin padding artificial: alineado al centro del bloque de título */
+    padding-top: 0;
+    align-self: center;
   }
 
   .home-hero .home-create-event__picker {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    flex: 1 1 100%;
+    width: 100%;
   }
 
   .home-create-event__cta {
-    width: 290px;
-    max-width: 290px;
+    width: 260px;
+    max-width: 260px;
   }
 }
 
@@ -364,15 +374,15 @@
 }
 
 .home-section-title {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-muted, var(--ro-text-muted));
-  margin: 0 0 12px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 10px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-family: var(--font-body);
 }
 
@@ -382,7 +392,7 @@
   height: 0.5px;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.12) 0%,
     transparent 100%
   );
 }
@@ -621,7 +631,7 @@
 
 /* —— Retas recientes —— */
 .recent-retas-section {
-  margin-bottom: clamp(18px, 3.5vw, 28px);
+  margin-bottom: 1.25rem;
 }
 
 .recent-retas-scroll {
@@ -630,27 +640,23 @@
   gap: 10px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .recent-retas-scroll {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1024px) {
-  .recent-retas-scroll {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* auto-fit: 1–2 cards llenan el ancho; 3 quedan compactas */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 12px;
   }
 }
 
 /* Un solo activo: más protagonismo sin cambiar datos */
 .recent-retas-section--active .recent-retas-scroll:has(> .recent-reta-card:only-child) {
   grid-template-columns: minmax(0, 1fr);
-  max-width: 420px;
+  max-width: 360px;
 }
 
 @media (min-width: 768px) {
   .recent-retas-section--active .recent-retas-scroll:has(> .recent-reta-card:only-child) {
-    max-width: 480px;
+    max-width: 400px;
   }
 }
 
@@ -840,23 +846,23 @@
 }
 
 .recent-retas-section--active {
-  margin-bottom: clamp(14px, 2.8vw, 20px);
+  margin-bottom: 1.1rem;
 }
 
 .recent-retas-section--recent {
-  margin-bottom: clamp(12px, 2.5vw, 18px);
+  margin-bottom: 0.85rem;
 }
 
 .recent-retas-view-all {
-  margin-bottom: clamp(16px, 3.5vw, 24px);
-  text-align: center;
+  margin: 0 0 1.25rem;
+  text-align: left;
 }
 
 .recent-retas-view-all__btn {
-  min-height: var(--ro-touch-target-min, 44px);
-  padding: 0.5rem 1rem;
+  min-height: 40px;
+  padding: 0.45rem 0.9rem;
   border: 1px solid var(--ro-border, var(--border-default));
-  border-radius: var(--ro-radius-full, 999px);
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
   color: var(--ro-text-secondary, var(--text-secondary));
   font-family: var(--font-body);
@@ -919,28 +925,33 @@
   margin: 0 0 1rem;
 }
 
-/* —— Accesos: jugadores y retas —— */
+/* —— Accesos: jugadores y ranking —— */
 .home-quick-links {
-  margin-top: clamp(32px, 5vw, 48px);
-  padding-top: clamp(8px, 2vw, 12px);
+  margin-top: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.home-quick-links--tertiary {
+  margin-top: 0.35rem;
+  padding-top: 0;
 }
 
 .home-quick-links__grid {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: 1fr;
 }
 
 @media (min-width: 640px) {
   .home-quick-links__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 12px;
   }
 }
 
 @media (min-width: 960px) {
   .home-quick-links__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1024,10 +1035,6 @@
   color: var(--ro-accent);
 }
 
-.home-quick-links--tertiary {
-  margin-top: clamp(12px, 2.5vw, 20px);
-}
-
 .home-quick-links__grid--compact {
   grid-template-columns: 1fr;
 }
@@ -1040,7 +1047,7 @@
 
 @media (min-width: 960px) {
   .home-quick-links__grid--compact {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1678,13 +1685,13 @@
   }
 
   .home-hero {
-    margin-bottom: 14px;
-    row-gap: 0.65rem;
+    margin-bottom: 1rem;
+    gap: 0.65rem;
   }
 
   .home-create-event__cta {
-    width: min(100%, 280px);
-    max-width: 280px;
+    width: min(100%, 260px);
+    max-width: 260px;
   }
 
   .home-inner .recent-retas-section {

@@ -16,7 +16,6 @@ import { navigateLiga } from "../liga/ligaNav";
 import { navigateDuelo2v2 } from "../duelo-2v2/duelo2v2Nav";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import { navigateAppTo } from "../../lib/appRouting";
-import { buildPrivacidadTerminosPath } from "../../lib/legalNav";
 import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
 import { TablerIcon } from "../ui/TablerIcon";
@@ -222,26 +221,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
               <span className="home-quick-card__title">Cómo funciona el ranking</span>
               <span className="home-quick-card__sub">
                 Sistema de puntos y niveles del club
-              </span>
-            </span>
-            <TablerIcon
-              name="chevron-right"
-              size={20}
-              className="home-quick-card__chev"
-            />
-          </button>
-          <button
-            type="button"
-            className="home-quick-card home-quick-card--legal"
-            onClick={() => navigateAppTo(buildPrivacidadTerminosPath())}
-          >
-            <span className="home-quick-card__icon" aria-hidden>
-              <TablerIcon name="file-text" size={22} />
-            </span>
-            <span className="home-quick-card__body">
-              <span className="home-quick-card__title">Aviso legal</span>
-              <span className="home-quick-card__sub">
-                Privacidad y términos de uso
               </span>
             </span>
             <TablerIcon

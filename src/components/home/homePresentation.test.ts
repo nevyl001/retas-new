@@ -169,7 +169,8 @@ describe("home presentation", () => {
       expect(html).toContain("Registro de jugadores");
       expect(html).toContain("Accesos rápidos");
       expect(html).toContain("Cómo funciona el ranking");
-      expect(html).toContain("Aviso legal");
+      expect(html).not.toContain("Aviso legal");
+      expect(html).toContain("Aviso de Privacidad y Términos y Condiciones");
     });
   });
 });
