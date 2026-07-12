@@ -134,6 +134,12 @@ describe("mobileAppNavigation", () => {
       expect(navigateAppToMock).toHaveBeenCalledWith(buildMisEventosPath());
     });
 
+    it("navega a inicio sin query de eventos", () => {
+      const { navigateToAppHome } = require("./appRouting");
+      navigateMobileNavTab("inicio");
+      expect(navigateToAppHome).toHaveBeenCalled();
+    });
+
     it("navega al ranking interno del organizador", () => {
       navigateMobileNavTab("ranking", "org-99");
       expect(navigateAppToMock).toHaveBeenCalledWith("/ranking/o/org-99/varonil");

@@ -1,8 +1,11 @@
 import React from "react";
 import "../styles/riviera-organizer.css";
 import { useSyncPathname } from "./torneo-express/torneoExpressNav";
-import { navigateToAppHome } from "../lib/appRouting";
-import { isMisEventosSearch } from "../lib/mobileAppNavigation";
+import { navigateToAppHome, PATH_SYNC_EVENT } from "../lib/appRouting";
+import {
+  isMisEventosSearch,
+  navigateToMisEventos,
+} from "../lib/mobileAppNavigation";
 import { Button } from "./ui";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { continueTournament } from "../lib/tournamentRouting";
@@ -107,17 +110,32 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onBackToHome,
 }) => {
   const appPathname = useSyncPathname();
+  const [locationSearch, setLocationSearch] = React.useState(() =>
+    typeof window !== "undefined" ? window.location.search : ""
+  );
   const [showAllRetas, setShowAllRetas] = React.useState(() =>
     typeof window !== "undefined" ? isMisEventosSearch(window.location.search) : false
   );
+
+  React.useEffect(() => {
+    const syncSearch = () => {
+      setLocationSearch(window.location.search);
+    };
+    window.addEventListener("popstate", syncSearch);
+    window.addEventListener(PATH_SYNC_EVENT, syncSearch);
+    return () => {
+      window.removeEventListener("popstate", syncSearch);
+      window.removeEventListener(PATH_SYNC_EVENT, syncSearch);
+    };
+  }, []);
 
   React.useEffect(() => {
     if (selectedTournament) {
       setShowAllRetas(false);
       return;
     }
-    setShowAllRetas(isMisEventosSearch(window.location.search));
-  }, [appPathname, selectedTournament]);
+    setShowAllRetas(isMisEventosSearch(locationSearch));
+  }, [appPathname, locationSearch, selectedTournament]);
 
   const handleTournamentSelect = React.useCallback(
     (tournament: Tournament | null) => {
@@ -163,7 +181,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <HomeDashboard
               userId={userId}
               onTournamentSelect={handleTournamentSelect}
-              onShowAllRetas={() => setShowAllRetas(true)}
+              onShowAllRetas={() => navigateToMisEventos()}
             />
           )
         ) : (
