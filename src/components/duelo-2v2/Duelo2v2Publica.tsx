@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ClubExperienceScope,
-  ClubIdentity,
+  PublicEventBrandIdentity,
   useClubExperience,
   useOrganizerDisplayName,
 } from "../../club-experience";
@@ -59,15 +59,7 @@ const Duelo2v2PublicHero: React.FC<Duelo2v2PublicHeroProps> = ({
   return (
     <PublicHero
       logoClub={
-        isClubBranded ? (
-          <ClubIdentity
-            variant="compact"
-            showTagline={false}
-            logoSurface="dark"
-            wordmarkOnly
-            className="peds-hero__club-identity"
-          />
-        ) : undefined
+        <PublicEventBrandIdentity className="peds-hero__club-identity" />
       }
       estado={
         status ? (
@@ -77,7 +69,7 @@ const Duelo2v2PublicHero: React.FC<Duelo2v2PublicHeroProps> = ({
         ) : undefined
       }
       nombreEvento={duelo.nombre}
-      club={organizerName}
+      club={isClubBranded ? organizerName : undefined}
       categoria={duelo.descripcion || undefined}
       fecha={fechaLabel}
       meta="Duelo 2 vs 2"

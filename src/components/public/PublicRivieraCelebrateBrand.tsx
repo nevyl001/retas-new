@@ -1,23 +1,15 @@
 import React from "react";
-import { ClubIdentity, useClubExperience } from "../../club-experience";
+import { PublicEventBrandIdentity, useClubExperience } from "../../club-experience";
 
 export const PublicRivieraCelebrateBrand: React.FC<{
   showTagline?: boolean;
 }> = ({ showTagline = true }) => {
-  const { manifest, isClubBranded } = useClubExperience();
+  const { manifest } = useClubExperience();
 
   return (
     <header className="ro-pub-celebrate__brand">
       <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
-      {isClubBranded ? (
-        <ClubIdentity
-          variant="compact"
-          showTagline={false}
-          logoSurface="dark"
-          wordmarkOnly
-          className="ro-pub-celebrate__club-identity"
-        />
-      ) : null}
+      <PublicEventBrandIdentity className="ro-pub-celebrate__club-identity" />
       <p className="ro-pub-celebrate__wordmark">
         <span>R I V I E R A</span>
         <span className="ro-pub-celebrate__wordmark-sep" aria-hidden>

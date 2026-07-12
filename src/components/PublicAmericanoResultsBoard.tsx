@@ -8,8 +8,8 @@ import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorag
 import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
 import {
   ClubExperienceScope,
-  ClubIdentity,
   formatTenantDocumentTitle,
+  PublicEventBrandIdentity,
   useClubExperience,
   useOrganizerDisplayName,
 } from "../club-experience";
@@ -33,15 +33,7 @@ const AmericanoResultsBoardHeader: React.FC<{
   return (
     <header className="public-americano-board__header">
       <div className="public-americano-board__brand">
-        {isClubBranded ? (
-          <ClubIdentity
-            variant="compact"
-            showTagline={false}
-            logoSurface="dark"
-            wordmarkOnly
-            className="public-americano-board__club-identity"
-          />
-        ) : null}
+        <PublicEventBrandIdentity className="public-americano-board__club-identity" />
         <h1 className="public-americano-board__title">
           {tournamentName || "Resultados"}
         </h1>
@@ -49,7 +41,9 @@ const AmericanoResultsBoardHeader: React.FC<{
           <p className="public-americano-board__desc">{tournamentDescription}</p>
         ) : null}
         <p className="public-americano-board__tagline">
-          {organizerName} · Vista pública
+          {isClubBranded
+            ? `${organizerName} · Vista pública`
+            : "Vista pública"}
         </p>
       </div>
     </header>

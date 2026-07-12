@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClubExperienceScope,
-  ClubIdentity,
-  useClubExperience,
+  PublicEventBrandIdentity,
   useOrganizerDisplayName,
 } from "../../club-experience";
 import {
@@ -81,23 +80,10 @@ function RankingFooter() {
 }
 
 function RankingUnifiedHeader({ genero }: { genero: RivieraJugadorGenero }) {
-  const { isClubBranded } = useClubExperience();
-  const organizerName = useOrganizerDisplayName();
-
   return (
     <header className="rjp-ranking-header">
       <div className="rjp-ranking-header__top">
-        {isClubBranded ? (
-          <ClubIdentity
-            variant="compact"
-            showTagline={false}
-            logoSurface="dark"
-            wordmarkOnly
-            className="rjp-ranking-header__club-identity"
-          />
-        ) : (
-          <p className="rjp-ranking-header__brand">{organizerName}</p>
-        )}
+        <PublicEventBrandIdentity className="rjp-ranking-header__club-identity" />
         <StatusBadge variant="muted">Ranking interno</StatusBadge>
       </div>
       <h1 className="rjp-ranking-header__title">

@@ -1,7 +1,7 @@
 import React from "react";
 import { useClubExperience } from "../ClubExperienceContext";
 import { useOrganizerDisplayName } from "../useOrganizerDisplayName";
-import { ClubIdentity } from "./ClubIdentity";
+import { PublicEventBrandIdentity } from "./PublicEventBrandIdentity";
 
 interface PublicClubModeEyebrowProps {
   modeLabel: string;
@@ -20,17 +20,9 @@ export const PublicClubModeEyebrow: React.FC<PublicClubModeEyebrowProps> = ({
 
   return (
     <>
-      {isClubBranded ? (
-        <ClubIdentity
-          variant="compact"
-          showTagline={false}
-          logoSurface="dark"
-          wordmarkOnly
-          className={clubIdentityClassName}
-        />
-      ) : null}
+      <PublicEventBrandIdentity className={clubIdentityClassName} />
       <p className={className}>
-        {organizerName} · {modeLabel}
+        {isClubBranded ? `${organizerName} · ${modeLabel}` : modeLabel}
       </p>
     </>
   );

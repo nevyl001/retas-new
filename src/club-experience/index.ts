@@ -148,6 +148,7 @@ export {
   BrandSignature,
   CoBrandMark,
 } from "./components/ClubIdentity";
+export { PublicEventBrandIdentity } from "./components/PublicEventBrandIdentity";
 export { PublicClubModeEyebrow } from "./components/PublicClubModeEyebrow";
 
 export type { TenantBranding } from "../branding/types";

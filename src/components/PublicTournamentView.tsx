@@ -33,7 +33,7 @@ import {
   matchesForStandingsTable,
   resolveTournamentPodiumOutcome,
 } from "../lib/resolveTournamentOutcome";
-import { ClubIdentity, formatTenantDocumentTitle, isClubBrandedOrganizer, useClubExperience, useOrganizerDisplayName } from "../club-experience";
+import { formatTenantDocumentTitle, isClubBrandedOrganizer, PublicEventBrandIdentity, useOrganizerDisplayName } from "../club-experience";
 import { isPubDsV2Enabled } from "../config/peds";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { StatusBadge } from "./platform/StatusBadge";
@@ -84,29 +84,17 @@ const RetaPublicHeader: React.FC<{
   formatKicker: string;
   publicTournamentName: string | null;
   publicTournamentDescription: string | null;
-  showClubBranding?: boolean;
   finalizado?: boolean;
 }> = ({
   formatKicker,
   publicTournamentName,
   publicTournamentDescription,
-  showClubBranding = false,
   finalizado = false,
 }) => {
-  const { isClubBranded } = useClubExperience();
-
   return (
     <header className="te-public-header te-public-header--reta te-pub-fade-in">
       <div className="te-public-header__brand">
-        {isClubBranded || showClubBranding ? (
-          <ClubIdentity
-            variant="compact"
-            showTagline={false}
-            logoSurface="dark"
-            wordmarkOnly
-            className="te-public-header__club-identity"
-          />
-        ) : null}
+        <PublicEventBrandIdentity className="te-public-header__club-identity" />
         <p className="te-public-header__kicker">
           {formatKicker} · {finalizado ? "Finalizada" : "En vivo"}
         </p>
@@ -768,15 +756,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {isPubDsV2Enabled ? (
         <PublicHero
           logoClub={
-            showClubBranding ? (
-              <ClubIdentity
-                variant="compact"
-                showTagline={false}
-                logoSurface="dark"
-                wordmarkOnly
-                className="peds-hero__club-identity"
-              />
-            ) : undefined
+            <PublicEventBrandIdentity className="peds-hero__club-identity" />
           }
           estado={
             <StatusBadge variant={tournamentFinalizado ? "gold" : "live"}>
@@ -784,7 +764,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             </StatusBadge>
           }
           nombreEvento={publicTournamentName || "Resultados en tiempo real"}
-          club={organizerName}
+          club={showClubBranding ? organizerName : undefined}
           categoria={publicTournamentDescription}
           meta={formatKicker}
         />
@@ -793,7 +773,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           formatKicker={formatKicker}
           publicTournamentName={publicTournamentName}
           publicTournamentDescription={publicTournamentDescription}
-          showClubBranding={showClubBranding}
           finalizado={tournamentFinalizado}
         />
       )}

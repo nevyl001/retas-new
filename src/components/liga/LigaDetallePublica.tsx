@@ -16,7 +16,7 @@ import {
   getRankingEquipos,
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
-import { ClubExperienceScope, ClubIdentity, PublicClubModeEyebrow, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
@@ -170,15 +170,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
         {isPubDsV2Enabled ? (
           <PublicHero
             logoClub={
-              isClubBranded ? (
-                <ClubIdentity
-                  variant="compact"
-                  showTagline={false}
-                  logoSurface="dark"
-                  wordmarkOnly
-                  className="peds-hero__club-identity"
-                />
-              ) : undefined
+              <PublicEventBrandIdentity className="peds-hero__club-identity" />
             }
             estado={
               <StatusBadge variant={estadoLigaBadgeVariant(detalle.estado)}>
@@ -186,7 +178,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
               </StatusBadge>
             }
             nombreEvento={detalle.nombre}
-            club={organizerName}
+            club={isClubBranded ? organizerName : undefined}
             categoria={ligaModalidadLabel(detalle.modalidad)}
             meta="Liga"
           />

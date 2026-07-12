@@ -12,9 +12,9 @@ import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
 import { resolveAmericanoRankingFromSnapshot } from "../lib/americanoSnapshotRoster";
 import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
 import {
-  ClubIdentity,
   formatTenantDocumentTitle,
   getPodiumFinalAriaLabel,
+  PublicEventBrandIdentity,
   useClubExperience,
   useOrganizerDisplayName,
 } from "../club-experience";
@@ -42,20 +42,10 @@ const AmericanoPublicHeader: React.FC<{
   tournamentName: string | null;
   tournamentDescription: string | null;
 }> = ({ tournamentName, tournamentDescription }) => {
-  const { isClubBranded } = useClubExperience();
-
   return (
     <header className="te-public-header te-public-header--americano te-pub-fade-in">
       <div className="te-public-header__brand">
-        {isClubBranded ? (
-          <ClubIdentity
-            variant="compact"
-            showTagline={false}
-            logoSurface="dark"
-            wordmarkOnly
-            className="te-public-header__club-identity"
-          />
-        ) : null}
+        <PublicEventBrandIdentity className="te-public-header__club-identity" />
         <p className="te-public-header__kicker">Americano · En vivo</p>
         <h1 className="te-public-header__title te-public-header__title--event">
           {tournamentName || "Torneo Americano"}
@@ -312,19 +302,11 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
       {isPubDsV2Enabled ? (
         <PublicHero
           logoClub={
-            isClubBranded ? (
-              <ClubIdentity
-                variant="compact"
-                showTagline={false}
-                logoSurface="dark"
-                wordmarkOnly
-                className="peds-hero__club-identity"
-              />
-            ) : undefined
+            <PublicEventBrandIdentity className="peds-hero__club-identity" />
           }
           estado={<StatusBadge variant="live">En vivo</StatusBadge>}
           nombreEvento={tournamentName || "Torneo Americano"}
-          club={organizerName}
+          club={isClubBranded ? organizerName : undefined}
           categoria={tournamentDescription}
           meta="Americano"
         />

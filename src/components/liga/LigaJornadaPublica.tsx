@@ -17,7 +17,7 @@ import {
   type PlayerPublicProfile,
 } from "../../lib/rivieraJugadores/publicPlayerAvatars";
 import { getLigaById } from "../../services/ligaService";
-import { ClubExperienceScope, ClubIdentity, PublicClubModeEyebrow, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
 import { PublicModeShell } from "../platform/PublicModeShell";
@@ -280,15 +280,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         {isPubDsV2Enabled ? (
           <PublicHero
             logoClub={
-              isClubBranded ? (
-                <ClubIdentity
-                  variant="compact"
-                  showTagline={false}
-                  logoSurface="dark"
-                  wordmarkOnly
-                  className="peds-hero__club-identity"
-                />
-              ) : undefined
+              <PublicEventBrandIdentity className="peds-hero__club-identity" />
             }
             estado={
               <StatusBadge variant={jornadaEstadoBadgeVariant(jornada.estado)}>
@@ -296,7 +288,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
               </StatusBadge>
             }
             nombreEvento={detalle.nombre}
-            club={organizerName}
+            club={isClubBranded ? organizerName : undefined}
             categoria={`Jornada ${numero}`}
             fecha={jornadaFechaText}
             meta="Liga"
