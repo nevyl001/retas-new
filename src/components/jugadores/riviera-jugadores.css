@@ -1116,22 +1116,19 @@
 .rj-page__top-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
 }
 
-/* Escritorio: el menú "Más" se disuelve; botones secundarios quedan en línea */
-@media (min-width: 768px) {
-  .rj-page__more {
-    display: contents;
-  }
+.rj-page__actions-desktop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
 
-  .rj-page__more-summary {
-    display: none;
-  }
-
-  .rj-page__more-menu {
-    display: contents;
-  }
+/* Más ⋯ solo en móvil */
+.rj-page__more {
+  display: none;
 }
 
 /* Móvil: cabecera compacta — lista visible antes */
@@ -1168,6 +1165,10 @@
     gap: 0.4rem;
   }
 
+  .rj-page__actions-desktop {
+    display: none;
+  }
+
   .rj-page__top-actions > .rj-btn--primary {
     flex: 1 1 auto;
     min-height: 42px;
@@ -1177,6 +1178,7 @@
   }
 
   .rj-page__more {
+    display: block;
     position: relative;
     flex: 0 0 auto;
   }
