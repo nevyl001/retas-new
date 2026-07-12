@@ -93,18 +93,117 @@
 }
 
 .reta-danger-zone {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(248, 113, 113, 0.25);
+  margin-top: 1.25rem;
+  padding: 1rem 0.9rem;
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-radius: var(--ro-radius-lg, 14px);
+  background: rgba(248, 113, 113, 0.06);
+  display: grid;
+  gap: 0.65rem;
 }
 
 .reta-danger-zone__title {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--loss, #f87171);
+}
+
+.reta-danger-zone__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--ro-text-secondary, var(--text-secondary));
+}
+
+.reta-config-status {
+  padding: 0.15rem 0 0.25rem;
+}
+
+.reta-config-status__title {
+  margin: 0 0 0.65rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--ro-text-primary, var(--text-primary));
+}
+
+.reta-config-status__grid {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.reta-config-status__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  border-radius: var(--ro-radius-md, 10px);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.reta-config-status__row dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted, var(--text-muted));
+}
+
+.reta-config-status__row dd {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ro-text-primary, var(--text-primary));
+}
+
+.reta-config-status__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--ro-text-muted, #71717a);
+}
+
+.reta-config-status__dot--done {
+  background: #4ade80;
+}
+
+.reta-config-status__dot--live {
+  background: var(--ro-accent, #eab308);
+}
+
+.reta-config-debug {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  padding-top: 0.75rem;
+}
+
+.reta-config-debug__summary {
+  cursor: pointer;
+  list-style: none;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ro-text-muted, var(--text-muted));
+}
+
+.reta-config-debug__summary::-webkit-details-marker {
+  display: none;
+}
+
+.reta-config-debug__body {
+  padding: 0.5rem 0 0.25rem;
 }
 
 .duelo2v2-equipos-panel {

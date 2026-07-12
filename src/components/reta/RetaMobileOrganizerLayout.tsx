@@ -22,7 +22,7 @@ import PublicLinkSection from "../PublicLinkSection";
 import PairsDisplay from "../PairsDisplay";
 import MatchesSection from "../MatchesSection";
 import { AmericanoTournamentSummary } from "../AmericanoDinamico/AmericanoTournamentSummary";
-import { TournamentStatusContent } from "../TournamentStatusContent";
+import { TournamentStatusContent, RetaConfigDangerReset } from "../TournamentStatusContent";
 import { DebugPanelContent } from "../DebugPanelContent";
 import RealTimeStandingsTable from "../RealTimeStandingsTable";
 import { testConnection } from "../../lib/supabaseClient";
@@ -98,7 +98,6 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
   setShowPairManager,
   showTournamentStatus,
   setShowTournamentStatus,
-  showDebugInfo,
   setShowDebugInfo,
   selectedPlayers,
   setSelectedPlayers,
@@ -282,52 +281,40 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
       </ModeSectionPanel>
 
       <ModeSectionPanel id="configuracion" activeId={activeTab}>
-        <div className="reta-danger-zone">
-          <h3 className="reta-danger-zone__title">Zona de peligro</h3>
-          <TournamentStatusContent
-            tournament={selectedTournament}
-            pairsCount={pairs.length}
-            loading={loading}
-            onReset={onReset}
-          />
-        </div>
-        <div className="component-card debug-panel-card" style={{ marginTop: "1rem" }}>
-          <div className="component-header">
-            <div className="component-icon">🔧</div>
-            <div className="component-title">
-              <h3>Panel de Debug</h3>
-            </div>
-            <button
-              type="button"
-              className="component-toggle-btn"
-              onClick={() => setShowDebugInfo(!showDebugInfo)}
-            >
-              {showDebugInfo ? "❌" : "👁️"}
-            </button>
+        <TournamentStatusContent
+          tournament={selectedTournament}
+          pairsCount={pairs.length}
+          loading={loading}
+          onReset={onReset}
+          showReset={false}
+          compact
+        />
+        <RetaConfigDangerReset loading={loading} onReset={onReset} />
+        <details className="reta-config-debug">
+          <summary className="reta-config-debug__summary">
+            Herramientas avanzadas
+          </summary>
+          <div className="reta-config-debug__body">
+            <DebugPanelContent
+              status={selectedTournament.is_started ? "✅ Iniciado" : "⏳ Pendiente"}
+              pairsCount={pairs.length}
+              matchesCount={matches.length}
+              onTestConnection={async () => {
+                const result = await testConnection();
+                alert(result ? "✅ Conexión exitosa" : "❌ Error de conexión");
+              }}
+              onReloadData={() => {
+                loadTournamentData();
+                setForceRefresh((prev) => prev + 1);
+              }}
+              onVerifyStatus={async () => {
+                alert(
+                  `Parejas: ${pairs.length}\nPartidos: ${matches.length}`
+                );
+              }}
+            />
           </div>
-          {showDebugInfo && (
-            <div className="component-content">
-              <DebugPanelContent
-                status={selectedTournament.is_started ? "✅ Iniciado" : "⏳ Pendiente"}
-                pairsCount={pairs.length}
-                matchesCount={matches.length}
-                onTestConnection={async () => {
-                  const result = await testConnection();
-                  alert(result ? "✅ Conexión exitosa" : "❌ Error de conexión");
-                }}
-                onReloadData={() => {
-                  loadTournamentData();
-                  setForceRefresh((prev) => prev + 1);
-                }}
-                onVerifyStatus={async () => {
-                  alert(
-                    `Parejas: ${pairs.length}\nPartidos: ${matches.length}`
-                  );
-                }}
-              />
-            </div>
-          )}
-        </div>
+        </details>
       </ModeSectionPanel>
 
       {stickyLabel ? (

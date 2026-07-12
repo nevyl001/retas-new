@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "./ui";
 
 interface TournamentStatusContentProps {
   tournament: {
@@ -8,18 +9,69 @@ interface TournamentStatusContentProps {
   pairsCount: number;
   loading: boolean;
   onReset: () => void;
+  /** Incluye el botón de reset (desktop). En móvil el reset va en Zona de peligro. */
+  showReset?: boolean;
+  /** Layout denso para el tab Config. móvil. */
+  compact?: boolean;
 }
 
 export const TournamentStatusContent: React.FC<
   TournamentStatusContentProps
-> = ({ tournament, pairsCount, loading, onReset }) => {
-  console.log("🔄 TournamentStatusContent renderizado:", {
-    loading,
-    pairsCount,
-  });
+> = ({
+  tournament,
+  pairsCount,
+  loading,
+  onReset,
+  showReset = true,
+  compact = false,
+}) => {
+  const estadoLabel = tournament.is_finished
+    ? "Finalizada"
+    : tournament.is_started
+      ? "En progreso"
+      : "Pendiente";
+  const infoLabel = tournament.is_finished
+    ? "Exitosa"
+    : tournament.is_started
+      ? "Activa"
+      : "Sin iniciar";
+
+  if (compact) {
+    return (
+      <div className="reta-config-status">
+        <h3 className="reta-config-status__title">Estado de la reta</h3>
+        <dl className="reta-config-status__grid">
+          <div className="reta-config-status__row">
+            <dt>Estado</dt>
+            <dd>
+              <span
+                className={`reta-config-status__dot${
+                  tournament.is_finished
+                    ? " reta-config-status__dot--done"
+                    : tournament.is_started
+                      ? " reta-config-status__dot--live"
+                      : ""
+                }`}
+                aria-hidden
+              />
+              {estadoLabel}
+            </dd>
+          </div>
+          <div className="reta-config-status__row">
+            <dt>Parejas</dt>
+            <dd>{pairsCount}</dd>
+          </div>
+          <div className="reta-config-status__row">
+            <dt>Info</dt>
+            <dd>{infoLabel}</dd>
+          </div>
+        </dl>
+      </div>
+    );
+  }
+
   return (
     <div className="elegant-reta-status">
-      {/* Header Elegante */}
       <div className="elegant-status-header">
         <div className="elegant-header-content">
           <div className="elegant-header-title">
@@ -28,7 +80,6 @@ export const TournamentStatusContent: React.FC<
         </div>
       </div>
 
-      {/* Indicadores de Estado Elegantes */}
       <div className="elegant-status-indicators">
         <div className="elegant-status-card">
           <div className="elegant-status-icon">
@@ -36,9 +87,7 @@ export const TournamentStatusContent: React.FC<
           </div>
           <div className="elegant-status-info">
             <span className="elegant-status-label">ESTADO</span>
-            <span className="elegant-status-value">
-              {tournament.is_finished ? "Finalizada" : "En Progreso"}
-            </span>
+            <span className="elegant-status-value">{estadoLabel}</span>
           </div>
         </div>
 
@@ -58,78 +107,84 @@ export const TournamentStatusContent: React.FC<
           </div>
           <div className="elegant-status-info">
             <span className="elegant-status-label">INFO</span>
-            <span className="elegant-status-value">
-              {tournament.is_finished ? "Exitosa" : "Activa"}
-            </span>
+            <span className="elegant-status-value">{infoLabel}</span>
           </div>
         </div>
       </div>
 
-      {/* Información Detallada Elegante */}
       <div className="elegant-status-details">
         <div className="elegant-detail-item">
-          <span className="elegant-detail-icon">✅</span>
+          <span className="elegant-detail-icon" aria-hidden>
+            ✓
+          </span>
           <span className="elegant-detail-text">
             {tournament.is_finished
               ? "La reta ha sido finalizada exitosamente"
-              : "La reta ya está iniciada y en progreso"}
+              : tournament.is_started
+                ? "La reta ya está iniciada y en progreso"
+                : "La reta aún no ha iniciado"}
           </span>
         </div>
         <div className="elegant-detail-item">
-          <span className="elegant-detail-icon">👥</span>
+          <span className="elegant-detail-icon" aria-hidden>
+            👥
+          </span>
           <span className="elegant-detail-text">
             Tienes {pairsCount} parejas registradas
           </span>
         </div>
-        <div className="elegant-detail-item">
-          <span className="elegant-detail-icon">📊</span>
-          <span className="elegant-detail-text">
-            Estado de la reta:{" "}
-            {tournament.is_finished ? "Finalizada" : "Iniciada"}
-          </span>
-        </div>
       </div>
 
-      {/* Botón de Reset Elegante */}
-      <button
-        className="elegant-reset-btn"
-        onClick={(e) => {
-          console.log(
-            "🔄 Click en botón de reset detectado, loading:",
-            loading
-          );
-          e.preventDefault();
-          e.stopPropagation();
-          if (!loading) {
-            console.log("✅ Ejecutando función onReset");
-            onReset();
-          } else {
-            console.log("❌ Botón deshabilitado por loading");
-          }
-        }}
-        disabled={loading}
-        type="button"
-        style={{
-          pointerEvents: loading ? "none" : "auto",
-          position: "relative",
-          zIndex: 1000,
-        }}
-      >
-        <div className="elegant-reset-content">
-          <span className="elegant-reset-icon">{loading ? "⏳" : "🔄"}</span>
-          <span className="elegant-reset-text">
-            {loading ? "Reseteando..." : "Resetear Reta"}
-          </span>
-        </div>
-        <div className="elegant-reset-background"></div>
-      </button>
-
-      {/* Efectos de Partículas Elegantes */}
-      <div className="elegant-status-particles">
-        <div className="elegant-status-particle"></div>
-        <div className="elegant-status-particle"></div>
-        <div className="elegant-status-particle"></div>
-      </div>
+      {showReset ? (
+        <button
+          className="elegant-reset-btn"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!loading) onReset();
+          }}
+          disabled={loading}
+          type="button"
+        >
+          <div className="elegant-reset-content">
+            <span className="elegant-reset-icon" aria-hidden>
+              {loading ? "⏳" : "↻"}
+            </span>
+            <span className="elegant-reset-text">
+              {loading ? "Reseteando..." : "Resetear Reta"}
+            </span>
+          </div>
+        </button>
+      ) : null}
     </div>
   );
 };
+
+type RetaConfigDangerResetProps = {
+  loading: boolean;
+  onReset: () => void;
+};
+
+/** Acción destructiva del tab Config. móvil — separada del estado. */
+export const RetaConfigDangerReset: React.FC<RetaConfigDangerResetProps> = ({
+  loading,
+  onReset,
+}) => (
+  <div className="reta-danger-zone">
+    <h3 className="reta-danger-zone__title">Zona de peligro</h3>
+    <p className="reta-danger-zone__hint">
+      Resetear borra partidos y clasificación. Las parejas se mantienen.
+    </p>
+    <Button
+      type="button"
+      variant="danger"
+      disabled={loading}
+      loading={loading}
+      onClick={() => {
+        if (!loading) onReset();
+      }}
+    >
+      {loading ? "Reseteando…" : "Resetear reta"}
+    </Button>
+  </div>
+);
