@@ -274,6 +274,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
           loadTournamentData={loadTournamentData}
           setForceRefresh={setForceRefresh}
           mobileFilter="jugadores"
+          userId={userId}
         />
       </ModeSectionPanel>
 

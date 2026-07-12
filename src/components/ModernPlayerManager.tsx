@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { getPlayers, type Player } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
 import type { RivieraJugador } from "../lib/rivieraJugadores/types";
+import { shouldShowPlayerPoolLoading } from "../hooks/organizerPlayerPoolLogic";
 import { JugadorAutocomplete } from "./jugadores/JugadorAutocomplete";
 import { navigateJugadoresLista } from "./jugadores/jugadoresGeneroNav";
 import { Button } from "./ui";
@@ -13,7 +14,13 @@ interface ModernPlayerManagerProps {
   allowMultipleSelection?: boolean;
   playersInPairs?: string[];
   userId?: string;
+  /** @deprecated tournamentId no afecta el pool; se ignora */
   tournamentId?: string;
+  /** Pool compartido desde el padre (FourComponentsGrid) */
+  players?: Player[];
+  loading?: boolean;
+  error?: string | null;
+  onRefreshPlayers?: () => Promise<void> | void;
 }
 
 export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
@@ -22,36 +29,64 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   allowMultipleSelection = false,
   playersInPairs = [],
   userId,
-  tournamentId,
+  players: playersProp,
+  loading: loadingProp,
+  error: errorProp,
+  onRefreshPlayers,
 }) => {
   const { user } = useUser();
-  const organizadorId = userId ?? user?.id;
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
+  const organizadorId = (userId ?? user?.id)?.trim() || undefined;
+  const usesExternalPool = playersProp !== undefined;
+
+  const [internalPlayers, setInternalPlayers] = useState<Player[]>([]);
+  const [internalLoading, setInternalLoading] = useState(!usesExternalPool);
+  const [internalError, setInternalError] = useState<string | null>(null);
   const [registrySearch, setRegistrySearch] = useState("");
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
   const [registryHint, setRegistryHint] = useState<string | null>(null);
 
-  const loadPlayers = useCallback(async () => {
+  React.useEffect(() => {
+    if (usesExternalPool) return;
     if (!organizadorId) {
-      setLoading(false);
+      setInternalPlayers([]);
+      setInternalLoading(false);
+      setInternalError(null);
       return;
     }
 
-    try {
-      setLoading(true);
-      const data = await getPlayers(organizadorId, tournamentId);
-      setPlayers(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [organizadorId, tournamentId]);
+    let cancelled = false;
+    const requestId = { current: 0 };
+    const run = async () => {
+      const id = ++requestId.current;
+      const isFirst = internalPlayers.length === 0;
+      if (isFirst) setInternalLoading(true);
+      try {
+        const data = await getPlayers(organizadorId);
+        if (cancelled || id !== requestId.current) return;
+        setInternalPlayers(data);
+        setInternalError(null);
+      } catch (err) {
+        if (cancelled || id !== requestId.current) return;
+        setInternalError(
+          err instanceof Error ? err.message : "Error al cargar jugadores"
+        );
+      } finally {
+        if (!cancelled && id === requestId.current) {
+          setInternalLoading(false);
+        }
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+      requestId.current += 1;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pool interno solo por organizer
+  }, [usesExternalPool, organizadorId]);
 
-  useEffect(() => {
-    loadPlayers();
-  }, [loadPlayers]);
+  const players = usesExternalPool ? playersProp! : internalPlayers;
+  const loading = usesExternalPool ? Boolean(loadingProp) : internalLoading;
+  const error = usesExternalPool ? errorProp ?? null : internalError;
 
   const emptyHint = useMemo(
     () =>
@@ -100,7 +135,8 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
     setRegistrySearch("");
   };
 
-  if (loading) {
+  // Primera carga sin datos: spinner. Con datos o refetch: no ocultar lista.
+  if (shouldShowPlayerPoolLoading(loading, players.length)) {
     return (
       <div className="elegant-player-manager">
         <div className="elegant-loading">
@@ -119,16 +155,35 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
             <h3>Jugadores</h3>
             <div className="elegant-player-count">{players.length}</div>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => navigateJugadoresLista("M")}
-          >
-            Ir al registro
-          </Button>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            {onRefreshPlayers ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={loading}
+                onClick={() => void onRefreshPlayers()}
+              >
+                Actualizar
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateJugadoresLista("M")}
+            >
+              Ir al registro
+            </Button>
+          </div>
         </div>
       </div>
+
+      {error ? (
+        <p className="elegant-form-hint" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       {organizadorId ? (
         <div className="elegant-create-form">

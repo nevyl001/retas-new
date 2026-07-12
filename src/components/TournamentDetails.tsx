@@ -220,6 +220,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
         onReset={onReset}
         loadTournamentData={loadTournamentData}
         setForceRefresh={setForceRefresh}
+        userId={userId}
       />
 
       {/* Sección de Enlace Público */}
