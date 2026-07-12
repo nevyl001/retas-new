@@ -167,15 +167,17 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
   return (
     <div className="home-inner rv-page">
-      <HomeHeader
-        userName={userProfile?.name}
-        title="¿Qué quieres organizar hoy?"
-        subtitle="Crea un evento o continúa uno en curso."
-      />
-      <HomeCreateEventCta
-        onModeSelect={handleModeSelect}
-        isModeEnabled={isModeEnabled}
-      />
+      <div className="home-hero">
+        <HomeHeader
+          userName={userProfile?.name}
+          title="¿Qué quieres organizar hoy?"
+          subtitle="Crea un evento o continúa uno en curso."
+        />
+        <HomeCreateEventCta
+          onModeSelect={handleModeSelect}
+          isModeEnabled={isModeEnabled}
+        />
+      </div>
       {error && <p className="home-error">{error}</p>}
       <RecentRetasSection
         userId={userId}

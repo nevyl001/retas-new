@@ -160,13 +160,16 @@ describe("home presentation", () => {
       );
 
       expect(html).toContain("home-create-event__cta");
+      expect(html).toContain("Nuevo evento");
       expect((html.match(/home-create-event__cta/g) || []).length).toBe(1);
+      expect(html).toContain("home-hero");
       expect(html).not.toContain("Retas rápidas");
       expect(html).not.toContain("Competencias organizadas");
       expect(html).not.toContain("Gestionar mis retas");
       expect(html).toContain("Registro de jugadores");
       expect(html).toContain("Accesos rápidos");
       expect(html).toContain("Cómo funciona el ranking");
+      expect(html).toContain("Aviso legal");
     });
   });
 });

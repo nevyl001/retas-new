@@ -2,47 +2,93 @@
 
 .home-inner {
   width: 100%;
-  max-width: 100%;
+  max-width: 1120px;
   min-width: 0;
+  margin-inline: auto;
   overflow-x: clip;
 }
 
 .main-layout > .home-inner {
-  padding-top: clamp(8px, 2vw, 16px);
+  padding-top: clamp(6px, 1.5vw, 12px);
 }
 
-/* —— Home premium (mobile-first) —— */
+/* —— Hero banda Variante C —— */
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 0.75rem;
+  margin-bottom: clamp(14px, 3vw, 20px);
+}
+
 .home-inner .home-header.rv-mode-header {
-  margin-bottom: clamp(28px, 7vw, 48px);
+  margin-bottom: 0;
 }
 
 .home-inner .rv-mode-header__eyebrow {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .home-inner .rv-mode-header__title {
-  font-size: clamp(1.5rem, 6vw, 2.25rem);
-  margin-bottom: 12px;
+  font-size: clamp(1.35rem, 4.5vw, 1.85rem);
+  margin-bottom: 6px;
+  line-height: 1.2;
 }
 
 .home-inner .rv-mode-header__sub {
-  font-size: clamp(0.875rem, 3.2vw, 1rem);
-  line-height: 1.55;
-  max-width: 38ch;
+  font-size: clamp(0.8125rem, 2.8vw, 0.9375rem);
+  line-height: 1.45;
+  max-width: 42ch;
+  margin: 0;
 }
 
-/* —— CTA Crear evento (Fase 2) —— */
+/* —— CTA Nuevo evento (compacto) —— */
 .home-create-event {
-  margin-bottom: clamp(16px, 4vw, 24px);
+  margin: 0;
 }
 
 .home-create-event__cta {
-  width: 100%;
+  width: min(100%, 300px);
+  max-width: 300px;
+  min-height: 48px;
+  height: 48px;
+  padding: 0 1.15rem;
   justify-content: center;
-  gap: 0.5rem;
-  min-height: var(--ro-touch-target-min, 44px);
-  font-size: 1rem;
-  box-shadow: var(--ro-shadow-md, 0 4px 16px rgba(0, 0, 0, 0.7));
+  gap: 0.45rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+@media (min-width: 768px) {
+  .home-hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 1.25rem;
+    align-items: start;
+    margin-bottom: clamp(16px, 2.5vw, 22px);
+  }
+
+  .home-hero .home-header {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .home-hero .home-create-event {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    /* Alinea el CTA con la fila del título (después del eyebrow) */
+    padding-top: 1.55rem;
+  }
+
+  .home-hero .home-create-event__picker {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .home-create-event__cta {
+    width: 290px;
+    max-width: 290px;
+  }
 }
 
 .home-create-event__picker {
@@ -323,7 +369,7 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted, var(--ro-text-muted));
-  margin: 0 0 20px;
+  margin: 0 0 12px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -575,30 +621,42 @@
 
 /* —— Retas recientes —— */
 .recent-retas-section {
-  margin-bottom: clamp(32px, 5vw, 48px);
+  margin-bottom: clamp(18px, 3.5vw, 28px);
 }
 
 .recent-retas-scroll {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 10px;
 }
 
 @media (min-width: 768px) {
   .recent-retas-scroll {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 1024px) {
   .recent-retas-scroll {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Un solo activo: más protagonismo sin cambiar datos */
+.recent-retas-section--active .recent-retas-scroll:has(> .recent-reta-card:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 420px;
+}
+
+@media (min-width: 768px) {
+  .recent-retas-section--active .recent-retas-scroll:has(> .recent-reta-card:only-child) {
+    max-width: 480px;
   }
 }
 
 .recent-reta-card {
   width: 100%;
-  padding: 14px 14px 12px;
+  padding: 12px 12px 10px;
   background: var(--bg-card);
   border: 0.5px solid var(--border-subtle);
   border-radius: var(--radius-lg, 14px);
@@ -611,11 +669,11 @@
     box-shadow 180ms ease;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .recent-reta-card--compact {
-  padding: 12px 12px 10px;
+  padding: 11px 12px 9px;
   gap: 4px;
 }
 
@@ -782,15 +840,15 @@
 }
 
 .recent-retas-section--active {
-  margin-bottom: clamp(20px, 4vw, 28px);
+  margin-bottom: clamp(14px, 2.8vw, 20px);
 }
 
 .recent-retas-section--recent {
-  margin-bottom: clamp(16px, 3.5vw, 24px);
+  margin-bottom: clamp(12px, 2.5vw, 18px);
 }
 
 .recent-retas-view-all {
-  margin-bottom: clamp(24px, 5vw, 36px);
+  margin-bottom: clamp(16px, 3.5vw, 24px);
   text-align: center;
 }
 
@@ -967,7 +1025,7 @@
 }
 
 .home-quick-links--tertiary {
-  margin-top: clamp(20px, 4vw, 32px);
+  margin-top: clamp(12px, 2.5vw, 20px);
 }
 
 .home-quick-links__grid--compact {
@@ -1613,14 +1671,24 @@
   }
 }
 
-/* —— Home mobile-first Fase 2 —— */
+/* —— Home mobile-first —— */
 @media (max-width: 767px) {
   .home-inner .home-header.rv-mode-header {
-    margin-bottom: clamp(14px, 4vw, 20px);
+    margin-bottom: 0;
+  }
+
+  .home-hero {
+    margin-bottom: 14px;
+    row-gap: 0.65rem;
+  }
+
+  .home-create-event__cta {
+    width: min(100%, 280px);
+    max-width: 280px;
   }
 
   .home-inner .recent-retas-section {
-    margin-bottom: clamp(20px, 5vw, 28px);
+    margin-bottom: clamp(14px, 3.5vw, 20px);
   }
 
   .home-inner .game-modes-groups {

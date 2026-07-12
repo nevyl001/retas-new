@@ -38,17 +38,19 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
   };
 
   return (
-    <section className="home-create-event" aria-label="Crear evento">
-      <button
-        type="button"
-        className="home-create-event__cta riviera-btn riviera-btn-primary riviera-btn--lg"
-        onClick={() => setPickerOpen((open) => !open)}
-        aria-expanded={pickerOpen}
-        aria-controls="home-create-event-picker"
-      >
-        <TablerIcon name="plus" size={20} aria-hidden />
-        Crear evento
-      </button>
+    <>
+      <div className="home-create-event" aria-label="Crear evento">
+        <button
+          type="button"
+          className="home-create-event__cta riviera-btn riviera-btn-primary riviera-btn--md"
+          onClick={() => setPickerOpen((open) => !open)}
+          aria-expanded={pickerOpen}
+          aria-controls="home-create-event-picker"
+        >
+          <TablerIcon name="plus" size={18} aria-hidden />
+          Nuevo evento
+        </button>
+      </div>
 
       {pickerOpen ? (
         <div
@@ -139,6 +141,6 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
           </div>
         </div>
       ) : null}
-    </section>
+    </>
   );
 };
