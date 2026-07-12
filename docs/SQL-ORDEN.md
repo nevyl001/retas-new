@@ -36,6 +36,8 @@ El esquema canónico vive en la base de datos de producción. En el repo solo qu
 | `fix-security-definer-views.sql` | Corregir vistas SECURITY DEFINER |
 | `ranking-sitio-oficial-global.sql` | Sitio oficial solo por `visible_publico` + trigger auto-sync club + RPC global + posición ficha |
 | `rating-unificado-cedidos.sql` | Rating e historial unificados para jugadores cedidos (ficha pública por club) |
+| `torneo-express-evento-fase1.sql` | **Torneo FASE 1** — tabla `torneo_express_evento` + `torneo_express.evento_id` (nullable) + RLS |
+| `torneo-express-evento-flyers-storage.sql` | **Torneo** — bucket Storage `evento-flyers` (flyers públicos del Evento) |
 
 ## Volver a empezar (borrar datos, no el esquema)
 
@@ -73,6 +75,9 @@ Hazlos directamente en el **SQL Editor** de Supabase (o con migraciones de Supab
 | RIVIERA 2.1.1 — checklist | `docs/RIVIERA-PLAYER-MEMBERSHIP-2.1.1-CHECKLIST.md` |
 | **RIVIERA 2.1.2** — Player Membership RPCs | `supabase/riviera-player-membership-2.1.2-rpcs.sql` |
 | RIVIERA 2.1.2 — checklist | `docs/RIVIERA-PLAYER-MEMBERSHIP-2.1.2-CHECKLIST.md` |
+| Torneo multi-categoría + agenda (arquitectura) | `docs/TOURNAMENT-MULTI-CATEGORY-ARCHITECTURE.md` |
+| **Torneo FASE 1** — Evento (`torneo_express_evento`) | `supabase/torneo-express-evento-fase1.sql` |
+| **Torneo** — Storage flyers de Evento | `supabase/torneo-express-evento-flyers-storage.sql` |
 
 ### Orden recomendado (esquema nuevo)
 
@@ -94,6 +99,8 @@ Hazlos directamente en el **SQL Editor** de Supabase (o con migraciones de Supab
 13. Validación 2.1.1: `riviera-player-membership-2.1.1-validate.sql` + checklist
 14. **`riviera-player-membership-2.1.2-rpcs.sql`** (RIVIERA 2.1.2 — membership RPCs)
 15. Validación 2.1.2: `riviera-player-membership-2.1.2-validate.sql` + checklist
+16. **`torneo-express-evento-fase1.sql`** (Torneo FASE 1 — Evento contenedor; requiere `torneo_express` + RLS TE base)
+17. **`torneo-express-evento-flyers-storage.sql`** (bucket público `evento-flyers` + políticas Storage)
 
 ## Seguridad RLS (alerta Supabase)
 

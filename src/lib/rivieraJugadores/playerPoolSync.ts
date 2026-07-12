@@ -44,6 +44,30 @@ async function fetchPlayerById(id: string): Promise<Player | null> {
   return data as Player;
 }
 
+/** Lectura batch pura: mismo shape que fetchPlayerById, sin efectos secundarios. */
+async function fetchPlayersByIds(ids: string[]): Promise<Map<string, Player>> {
+  const unique = Array.from(
+    new Set(ids.map((id) => id.trim()).filter(Boolean))
+  );
+  const byId = new Map<string, Player>();
+  if (!unique.length) return byId;
+
+  const { data, error } = await supabase
+    .from("players")
+    .select("*")
+    .in("id", unique);
+
+  if (error) {
+    console.warn("fetchPlayersByIds:", error.message);
+    return byId;
+  }
+
+  for (const row of (data ?? []) as Player[]) {
+    byId.set(row.id, row);
+  }
+  return byId;
+}
+
 function pickBestLegacyMatch(
   candidates: Player[],
   organizadorId: string,
@@ -221,7 +245,14 @@ export async function buildLegacyPlayersFromRivieraRegistry(
   }
 
   const registry = await listRivieraJugadores(organizadorId);
-  const out: Player[] = [];
+
+  // Lecturas puras en batch; ensure/creación sigue secuencial (identidad / linking).
+  const linkedIds = registry
+    .map((row) => row.legacy_player_id?.trim())
+    .filter((id): id is string => Boolean(id));
+  const playersById = await fetchPlayersByIds(linkedIds);
+
+  const pending: Array<{ canonical: RivieraJugador; legacy: Player }> = [];
   const seenLegacyIds = new Set<string>();
 
   for (const row of registry) {
@@ -229,13 +260,15 @@ export async function buildLegacyPlayersFromRivieraRegistry(
     let legacy: Player | null = null;
 
     if (canonical.legacy_player_id) {
-      legacy = await fetchPlayerById(canonical.legacy_player_id);
+      legacy = playersById.get(canonical.legacy_player_id) ?? null;
     } else if (isGrantedJugadorRow(row)) {
       continue;
     } else {
+      // Efectos secundarios (insert/link): secuencial para evitar carreras.
       legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
       if (legacy) {
         canonical = { ...canonical, legacy_player_id: legacy.id };
+        playersById.set(legacy.id, legacy);
       }
     }
 
@@ -243,8 +276,15 @@ export async function buildLegacyPlayersFromRivieraRegistry(
     if (seenLegacyIds.has(legacy.id)) continue;
     seenLegacyIds.add(legacy.id);
 
-    out.push(await applyRivieraContactToLegacyPlayer(canonical, legacy));
+    pending.push({ canonical, legacy });
   }
+
+  // Contact merge puede escribir, pero cada legacy.id es único aquí → paralelo OK.
+  const out = await Promise.all(
+    pending.map(({ canonical, legacy }) =>
+      applyRivieraContactToLegacyPlayer(canonical, legacy)
+    )
+  );
 
   const { dedupeLegacyPlayersByName } = await import("../database");
   return dedupeLegacyPlayersByName(out);

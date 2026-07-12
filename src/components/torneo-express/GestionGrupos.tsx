@@ -552,6 +552,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const mostrarEliminatoria = enEliminatoria && vista === "eliminatoria";
   const stickyActionLabel = isMobile && teNextAction ? teNextAction.label : null;
   const categoriaLabel = formatTorneoExpressCategoria(bundle.torneo.categoria);
+  const headerTitle = categoriaLabel || bundle.torneo.nombre;
+  const headerEventName =
+    categoriaLabel && categoriaLabel !== bundle.torneo.nombre
+      ? bundle.torneo.nombre
+      : null;
 
   const publicLinks = (
     <div
@@ -635,8 +640,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         <div className="mode-mobile-shell mode-mobile-shell--tabbed te-mobile-shell">
           <ModeEventHeader
             eyebrow={modeEyebrow}
-            title={bundle.torneo.nombre}
-            modality={[categoriaLabel, fasePill].filter(Boolean).join(" · ")}
+            title={headerTitle}
+            modality={[headerEventName, fasePill].filter(Boolean).join(" · ")}
             statusLabel={teStatus.label}
             statusVariant={teStatus.variant}
             summary={teSummary}
@@ -765,13 +770,11 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           </p>
         ) : null}
         <div className="te-gestion-header__brand">
-          <h1 className="te-title te-gestion-title">{bundle.torneo.nombre}</h1>
+          <h1 className="te-title te-gestion-title">{headerTitle}</h1>
+          {headerEventName ? (
+            <p className="te-gestion-header__event">{headerEventName}</p>
+          ) : null}
           <div className="te-gestion-header__pills">
-            {formatTorneoExpressCategoria(bundle.torneo.categoria) ? (
-              <span className="te-categoria-pill te-categoria-pill--neutral">
-                {formatTorneoExpressCategoria(bundle.torneo.categoria)}
-              </span>
-            ) : null}
             {fasePill ? (
               <Badge variant="scheduled" className="te-gestion-fase-pill">
                 {fasePill}

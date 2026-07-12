@@ -37,7 +37,12 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
+  // Solo al abrir: body lock + Escape + focus inicial del panel.
+  // No depender de onClose (identidad nueva en cada render del padre
+  // re-ejecutaba focus() y robaba el cursor de los inputs).
   useEffect(() => {
     if (!open) return;
 
@@ -46,7 +51,7 @@ export const Modal: React.FC<ModalProps> = ({
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        onCloseRef.current();
       }
     };
 
@@ -57,7 +62,7 @@ export const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = prevOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) {
     return null;
@@ -75,7 +80,7 @@ export const Modal: React.FC<ModalProps> = ({
         .filter(Boolean)
         .join(" ")}
       role="presentation"
-      onClick={onClose}
+      onClick={() => onCloseRef.current()}
     >
       <div
         ref={panelRef}
@@ -103,7 +108,7 @@ export const Modal: React.FC<ModalProps> = ({
                 variant="ghost"
                 size="sm"
                 className="riviera-modal__close"
-                onClick={onClose}
+                onClick={() => onCloseRef.current()}
                 aria-label="Cerrar"
               >
                 ✕

@@ -99,10 +99,11 @@
 
 .te-grupo-wrap {
   min-width: 0;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.18);
-  border: 0.5px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  padding: var(--ro-space-4, 1rem);
+  background: var(--ro-bg-card);
+  border: 1px solid var(--ro-border);
+  border-radius: var(--ro-radius-lg);
+  box-shadow: var(--ro-shadow-sm);
 }
 
 .te-grupo-head {
@@ -162,13 +163,14 @@
 .te-partido-item {
   display: grid;
   grid-template-columns: auto 1px minmax(0, 1fr) auto;
-  gap: 8px 10px;
+  gap: 10px 12px;
   align-items: center;
-  padding: 9px 12px;
-  background: var(--bg-card);
-  border: 0.5px solid var(--border-default);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-1);
+  padding: 12px 14px;
+  margin-bottom: var(--ro-space-2, 0.5rem);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
+  border-radius: var(--ro-radius-lg);
+  box-shadow: var(--ro-shadow-sm);
 }
 
 .te-partido-meta {
@@ -281,26 +283,28 @@
 .te-team-name {
   min-width: 0;
   overflow: hidden;
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ro-text-primary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .te-team-name--winner {
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 800;
+  color: var(--ro-text-primary);
 }
 
 .te-team-score {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-disabled);
+  font-family: var(--ro-font-heading, var(--font-display));
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--ro-text-muted);
   text-align: center;
 }
 
 .te-team-score--winner {
-  color: var(--accent-gold);
+  color: var(--ro-accent);
 }
 
 .te-score-pending {
@@ -332,23 +336,23 @@
 }
 
 .te-badge-live {
-  color: var(--win);
-  background: rgba(74, 222, 128, 0.1);
-  border: 0.5px solid rgba(74, 222, 128, 0.2);
+  color: var(--ro-accent);
+  background: var(--ro-accent-dim);
+  border: 1px solid var(--ro-border-accent);
 }
 
 .te-badge-live__dot {
   width: 5px;
   height: 5px;
-  background: var(--win);
+  background: var(--ro-accent);
   border-radius: 50%;
-  box-shadow: 0 0 6px var(--win);
+  box-shadow: 0 0 6px var(--ro-accent-dim);
 }
 
 .te-badge-proximo {
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
-  border: 0.5px solid rgba(255, 255, 255, 0.15);
+  color: var(--ro-text-muted);
+  background: var(--ro-bg-surface);
+  border: 1px solid var(--ro-border);
 }
 
 .te-grupo-standing-full {
@@ -372,22 +376,33 @@
 .te-grupo-standing-full .te-pub-standings-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  padding: 0.15rem;
+  background: var(--ro-bg-card);
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: var(--ro-radius-md);
 }
 
 .te-grupo-standing-full .te-pub-standings-table {
   width: 100%;
-  min-width: 0;
-  font-size: 0.72rem;
+  min-width: 480px;
+  font-size: 0.75rem;
 }
 
 .te-grupo-standing-full .te-pub-standings-table thead th {
-  padding: 0.55rem 0.35rem;
-  font-size: 0.58rem;
+  padding: 0.6rem 0.35rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ro-text-muted);
 }
 
 .te-grupo-standing-full .te-pub-standings-row td {
-  padding: 0.5rem 0.35rem;
-  font-size: 0.72rem;
+  padding: 0.55rem 0.35rem;
+  font-size: 0.75rem;
+}
+
+.te-grupo-standing-full .te-pub-standings-row--leader td {
+  background: var(--ro-accent-dim);
 }
 
 .te-grupo-standing-full .te-pub-standings-row__pos {

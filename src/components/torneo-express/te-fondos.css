@@ -18,8 +18,9 @@
 }
 
 .te-gestion-page {
-  --te-gestion-surface: var(--bg-canvas);
-  background: var(--bg-canvas);
+  --te-gestion-surface: var(--ro-bg-card);
+  --te-gestion-card-shadow: var(--ro-shadow-sm);
+  background: var(--ro-bg-deep);
 }
 
 .torneo-express-page .torneo-express-card,
@@ -38,9 +39,16 @@
 .te-gestion-page .torneo-express-card,
 .te-gestion-page .te-gestion-card,
 .te-gestion-page .te-grupos-card,
-.te-gestion-page .te-notif-panel,
+.te-gestion-page .te-notif-panel {
+  background: var(--ro-bg-card);
+  border: 1px solid var(--ro-border);
+  box-shadow: var(--ro-shadow-sm);
+}
+
 .te-gestion-page .te-partido-card {
-  background: var(--bg-base);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
+  box-shadow: var(--ro-shadow-sm);
 }
 
 /* Bloques internos: inset suave, no otro gris plano */

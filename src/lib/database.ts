@@ -729,7 +729,12 @@ export function dedupeLegacyPlayersByName(players: Player[]): Player[] {
  * Pool de jugadores para retas/torneos.
  * Con organizador: solo riviera_jugadores (fuente del ranking), enlazados a `players`.
  * Sin organizador: lectura legacy deduplicada (admin).
+ *
+ * Coalesce in-flight: llamadas concurrentes al mismo userId comparten una sola
+ * promesa (p. ej. StrictMode / remount del armador) sin cambiar el resultado.
  */
+const inflightLegacyPoolByUser = new Map<string, Promise<Player[]>>();
+
 export const fetchLegacyPlayersPool = async (
   userId?: string
 ): Promise<Player[]> => {
@@ -746,23 +751,26 @@ export const fetchLegacyPlayersPool = async (
     return dedupeLegacyPlayersByName((data ?? []) as Player[]);
   }
 
-  const { buildLegacyPlayersFromRivieraRegistry } = await import(
-    "./rivieraJugadores/playerPoolSync"
-  );
-  return buildLegacyPlayersFromRivieraRegistry(userId);
+  const existing = inflightLegacyPoolByUser.get(userId);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    try {
+      const { buildLegacyPlayersFromRivieraRegistry } = await import(
+        "./rivieraJugadores/playerPoolSync"
+      );
+      return await buildLegacyPlayersFromRivieraRegistry(userId);
+    } finally {
+      inflightLegacyPoolByUser.delete(userId);
+    }
+  })();
+
+  inflightLegacyPoolByUser.set(userId, promise);
+  return promise;
 };
 
-export const getPlayers = async (userId?: string, tournamentId?: string) => {
-  console.log(
-    "Fetching global players for user:",
-    userId,
-    "tournament (ignored for pool):",
-    tournamentId
-  );
-
-  const data = await fetchLegacyPlayersPool(userId);
-  console.log("Players fetched successfully:", data.length, "players");
-  return data;
+export const getPlayers = async (userId?: string, _tournamentId?: string) => {
+  return fetchLegacyPlayersPool(userId);
 };
 
 export const deletePlayer = async (id: string) => {

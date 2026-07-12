@@ -67,7 +67,7 @@ export const GAME_MODES: GameModeConfig[] = [
   },
   {
     id: "mini-torneo",
-    title: "Torneo Express",
+    title: "Torneos",
     description: "Grupos + round robin, tabla pública",
     icon: "⚡",
     gradient:

@@ -110,6 +110,7 @@ export function resolveAppViewFromPath(pathname: string): AppView {
     return "jugadores";
   }
   if (currentPath.startsWith("/torneo-express")) return "torneo-express";
+  if (currentPath.startsWith("/eventos/")) return "torneo-express";
   if (/^\/public\/vista-publica\/americano\//i.test(currentPath)) {
     return "public-vista-publica-americano";
   }
@@ -136,6 +137,7 @@ export function pathRequiresUserSession(pathname: string): boolean {
   ) {
     return false;
   }
+  if (/^\/eventos\/[^/]+\/?$/i.test(path)) return false;
   if (path === "/admin-login" || path === "/admin-dashboard") return false;
   if (path === "/admin/dev/player-debug") return false;
   if (path === "/auth/callback") return false;

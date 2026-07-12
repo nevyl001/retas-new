@@ -522,7 +522,7 @@ function PartidoRow({
         <div className="te-partido-actions">
           <Button
             type="button"
-            variant="primary"
+            variant="secondary"
             size="sm"
             className="te-partido-save-btn"
             disabled={saving}

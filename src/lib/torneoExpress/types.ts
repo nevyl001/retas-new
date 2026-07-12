@@ -3,6 +3,37 @@ export type PartidoExpressEstado = "pendiente" | "jugado";
 export type TorneoExpressFaseTorneo = "grupos" | "eliminatoria" | "cerrado";
 export type TorneoExpressFaseEliminacion = "semifinal" | "cuartos" | "octavos";
 
+/** Ciclo de vida del Evento contenedor (organizativo; no altera estado deportivo). */
+export type TorneoExpressEventoEstado =
+  | "draft"
+  | "published"
+  | "in_progress"
+  | "completed"
+  | "archived";
+
+export type TorneoExpressEventoLogoSource = "flyer" | "club";
+
+/** Evento contenedor multi-categoría (`torneo_express_evento`). */
+export interface TorneoExpressEvento {
+  id: string;
+  nombre: string;
+  organizador_id: string;
+  slug: string | null;
+  estado: TorneoExpressEventoEstado;
+  flyer_url: string | null;
+  logo_source: TorneoExpressEventoLogoSource;
+  timezone: string;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  created_at: string;
+}
+
+export interface TorneoExpressEventoConCategorias {
+  evento: TorneoExpressEvento;
+  /** Filas `torneo_express` con este `evento_id` (categorías aisladas). */
+  categorias: TorneoExpress[];
+}
+
 /** Marcador por set en partidos al mejor de 3. */
 export interface PartidoSetScore {
   local: number;
@@ -22,6 +53,8 @@ export interface TorneoExpress {
   fase_eliminacion?: TorneoExpressFaseEliminacion | null;
   bracket_slots?: unknown;
   fase_grupos_finalizada_at?: string | null;
+  /** FK opcional al Evento contenedor (Fase 1). NULL = legacy / standalone. */
+  evento_id?: string | null;
 }
 
 export interface TorneoExpressEliminatoriaPartido {

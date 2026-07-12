@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   dedupeLegacyPlayersByName,
   getPlayers,
@@ -44,16 +44,16 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     email: string;
   } | null>(null);
 
-  const syncJugadores = useCallback(
-    (list: Player[]) => {
-      const sorted = dedupePlayersForSelect(
-        dedupePlayersById(dedupeLegacyPlayersByName(list))
-      );
-      setJugadores(sorted);
-      onJugadoresChange(sorted);
-    },
-    [onJugadoresChange]
-  );
+  const onJugadoresChangeRef = useRef(onJugadoresChange);
+  onJugadoresChangeRef.current = onJugadoresChange;
+
+  const syncJugadores = useCallback((list: Player[]) => {
+    const sorted = dedupePlayersForSelect(
+      dedupePlayersById(dedupeLegacyPlayersByName(list))
+    );
+    setJugadores(sorted);
+    onJugadoresChangeRef.current(sorted);
+  }, []);
 
   const cargarJugadores = useCallback(async () => {
     if (!userId) return;
@@ -68,9 +68,28 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     }
   }, [userId, syncJugadores]);
 
+  // Una sola carga por userId; getPlayers además coalesce in-flight.
   useEffect(() => {
-    cargarJugadores();
-  }, [cargarJugadores]);
+    let cancelled = false;
+    if (!userId) return;
+
+    setCargandoJugadores(true);
+    void (async () => {
+      try {
+        const data = await getPlayers(userId);
+        if (cancelled) return;
+        syncJugadores(data ?? []);
+      } catch {
+        if (!cancelled) setError("No se pudieron cargar los jugadores");
+      } finally {
+        if (!cancelled) setCargandoJugadores(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, syncJugadores]);
 
   useEffect(() => {
     if (!error) return;

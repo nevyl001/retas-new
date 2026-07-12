@@ -30,6 +30,10 @@ import type {
   TorneoExpress,
   TorneoExpressBundle,
   TorneoExpressEliminatoriaPartido,
+  TorneoExpressEvento,
+  TorneoExpressEventoConCategorias,
+  TorneoExpressEventoEstado,
+  TorneoExpressEventoLogoSource,
   TorneoExpressFaseEliminacion,
   TorneoExpressGrupo,
   TorneoExpressGrupoPareja,
@@ -523,22 +527,26 @@ export type TorneoExpressListItem = TorneoExpress & {
   parejaCount: number;
 };
 
-export async function fetchTorneosExpressByOrganizador(): Promise<
-  TorneoExpressListItem[]
-> {
+export async function fetchTorneosExpressByOrganizador(
+  opts?: { standaloneOnly?: boolean }
+): Promise<TorneoExpressListItem[]> {
   const user = await requireAuthUser();
+  // Default: solo torneos sueltos (sin Evento). Categorías van en el detalle del Evento.
+  const standaloneOnly = opts?.standaloneOnly !== false;
 
-  const { data, error } = await supabase
-    .from("torneo_express")
-    .select("*, torneo_express_grupos(id)")
-    .eq("organizador_id", user.id)
-    .order("created_at", { ascending: false });
+  const applyStandaloneFilter = <T extends { is: (col: string, val: null) => T }>(
+    query: T,
+    enabled: boolean
+  ): T => (enabled ? query.is("evento_id", null) : query);
 
-  if (!error && data) {
-    const mapped = data.map((row) => {
-      const grupos = (row as { torneo_express_grupos?: { id: string }[] })
-        .torneo_express_grupos;
-      const { torneo_express_grupos: _g, ...torneo } = row as TorneoExpress & {
+  const mapJoinedRows = (
+    rows: Record<string, unknown>[]
+  ): TorneoExpressListItem[] => {
+    const mapped = rows.map((row) => {
+      const grupos = (
+        row as { torneo_express_grupos?: { id: string }[] }
+      ).torneo_express_grupos;
+      const { torneo_express_grupos: _g, ...torneo } = row as unknown as TorneoExpress & {
         torneo_express_grupos?: { id: string }[];
       };
       void _g;
@@ -548,17 +556,70 @@ export async function fetchTorneosExpressByOrganizador(): Promise<
         parejaCount: 0,
       };
     });
-    return enrichTorneoListWithParejaCounts(mapped);
+    // Cinturón: si el filtro SQL falló o no aplicó, no listar categorías de Evento.
+    const scoped = standaloneOnly
+      ? mapped.filter((t) => !t.evento_id)
+      : mapped;
+    return scoped;
+  };
+
+  let joined = applyStandaloneFilter(
+    supabase
+      .from("torneo_express")
+      .select("*, torneo_express_grupos(id)")
+      .eq("organizador_id", user.id)
+      .order("created_at", { ascending: false }),
+    standaloneOnly
+  );
+  let { data, error } = await joined;
+
+  // Solo si la columna evento_id no existe: reintentar sin filtro (todo es “suelto”).
+  if (
+    error &&
+    standaloneOnly &&
+    isMissingColumnError(error, "torneo_express", "evento_id")
+  ) {
+    ({ data, error } = await supabase
+      .from("torneo_express")
+      .select("*, torneo_express_grupos(id)")
+      .eq("organizador_id", user.id)
+      .order("created_at", { ascending: false }));
   }
 
-  const { data: torneos, error: tErr } = await supabase
-    .from("torneo_express")
-    .select("*")
-    .eq("organizador_id", user.id)
-    .order("created_at", { ascending: false });
+  if (!error && data) {
+    return enrichTorneoListWithParejaCounts(
+      mapJoinedRows(data as Record<string, unknown>[])
+    );
+  }
+
+  let flat = applyStandaloneFilter(
+    supabase
+      .from("torneo_express")
+      .select("*")
+      .eq("organizador_id", user.id)
+      .order("created_at", { ascending: false }),
+    standaloneOnly
+  );
+  let { data: torneos, error: tErr } = await flat;
+
+  if (
+    tErr &&
+    standaloneOnly &&
+    isMissingColumnError(tErr, "torneo_express", "evento_id")
+  ) {
+    ({ data: torneos, error: tErr } = await supabase
+      .from("torneo_express")
+      .select("*")
+      .eq("organizador_id", user.id)
+      .order("created_at", { ascending: false }));
+  }
+
   throwIfError(tErr ?? error, "fetchTorneosExpressByOrganizador");
 
-  const list = (torneos ?? []) as TorneoExpress[];
+  let list = (torneos ?? []) as TorneoExpress[];
+  if (standaloneOnly) {
+    list = list.filter((t) => !t.evento_id);
+  }
   if (list.length === 0) return [];
 
   const ids = list.map((t) => t.id);
@@ -1074,6 +1135,82 @@ export async function saveGrupoNombre(
     throw new Error("No se pudo actualizar el nombre del grupo");
   }
   return data as TorneoExpressGrupo;
+}
+
+export async function saveTorneoExpressCategoria(
+  torneoId: string,
+  categoria: string
+): Promise<TorneoExpress> {
+  const user = await requireAuthUser();
+  const trimmed = categoria.trim();
+  if (!trimmed) {
+    throw new Error("La categoría no puede estar vacía");
+  }
+  if (trimmed.length > 80) {
+    throw new Error(
+      "El nombre de la categoría es demasiado largo (máx. 80 caracteres)"
+    );
+  }
+
+  const { data: torneo, error: tErr } = await supabase
+    .from("torneo_express")
+    .select("id, organizador_id, evento_id, categoria")
+    .eq("id", torneoId)
+    .maybeSingle();
+  throwIfError(tErr, "saveTorneoExpressCategoria.fetch");
+  if (!torneo) {
+    throw new Error("Categoría no encontrada");
+  }
+  if (torneo.organizador_id !== user.id) {
+    throw new Error("No tienes permiso para editar esta categoría");
+  }
+
+  const current = (torneo.categoria as string | null)?.trim() ?? "";
+  if (current.toLowerCase() === trimmed.toLowerCase()) {
+    const { data: full, error: fErr } = await supabase
+      .from("torneo_express")
+      .select("*")
+      .eq("id", torneoId)
+      .single();
+    throwIfError(fErr, "saveTorneoExpressCategoria.refetch");
+    if (!full) throw new Error("Categoría no encontrada");
+    return full as TorneoExpress;
+  }
+
+  if (torneo.evento_id) {
+    const { data: siblings, error: sErr } = await supabase
+      .from("torneo_express")
+      .select("id, categoria")
+      .eq("evento_id", torneo.evento_id)
+      .neq("id", torneoId);
+    throwIfError(sErr, "saveTorneoExpressCategoria.siblings");
+
+    const duplicate = (siblings ?? []).some((row: { categoria?: string | null }) => {
+      const other = row.categoria?.trim().toLowerCase() ?? "";
+      return other !== "" && other === trimmed.toLowerCase();
+    });
+    if (duplicate) {
+      throw new Error(`Ya existe una categoría «${trimmed}» en este evento`);
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("torneo_express")
+    .update({ categoria: trimmed })
+    .eq("id", torneoId)
+    .select()
+    .single();
+
+  if (error && isMissingColumnError(error, "torneo_express", "categoria")) {
+    throw new Error(
+      "Falta la columna torneo_express.categoria en la base de datos"
+    );
+  }
+  throwIfError(error, "saveTorneoExpressCategoria.update");
+  if (!data) {
+    throw new Error("No se pudo actualizar la categoría");
+  }
+  return data as TorneoExpress;
 }
 
 export async function savePartidosOrden(
@@ -1879,4 +2016,327 @@ export async function saveEliminatoriaProgramado(
   throwIfError(error, "update programado eliminatoria");
   if (!data) throw new Error("No se pudo guardar fecha y hora");
   return data as TorneoExpressEliminatoriaPartido;
+}
+
+// ---------------------------------------------------------------------------
+// Evento contenedor (Fase 2 — sin partidos / standings / career)
+// ---------------------------------------------------------------------------
+
+const EVENTO_ESTADOS: readonly TorneoExpressEventoEstado[] = [
+  "draft",
+  "published",
+  "in_progress",
+  "completed",
+  "archived",
+] as const;
+
+const EVENTO_LOGO_SOURCES: readonly TorneoExpressEventoLogoSource[] = [
+  "flyer",
+  "club",
+] as const;
+
+function mapTorneoExpressEvento(row: Record<string, unknown>): TorneoExpressEvento {
+  const estadoRaw = String(row.estado ?? "draft");
+  const estado = (EVENTO_ESTADOS as readonly string[]).includes(estadoRaw)
+    ? (estadoRaw as TorneoExpressEventoEstado)
+    : "draft";
+  const logoRaw = String(row.logo_source ?? "club");
+  const logo_source = (EVENTO_LOGO_SOURCES as readonly string[]).includes(logoRaw)
+    ? (logoRaw as TorneoExpressEventoLogoSource)
+    : "club";
+
+  return {
+    id: String(row.id),
+    nombre: String(row.nombre ?? ""),
+    organizador_id: String(row.organizador_id),
+    slug: row.slug == null || row.slug === "" ? null : String(row.slug),
+    estado,
+    flyer_url:
+      row.flyer_url == null || row.flyer_url === ""
+        ? null
+        : String(row.flyer_url),
+    logo_source,
+    timezone: String(row.timezone ?? "America/Mexico_City"),
+    fecha_inicio:
+      row.fecha_inicio == null || row.fecha_inicio === ""
+        ? null
+        : String(row.fecha_inicio),
+    fecha_fin:
+      row.fecha_fin == null || row.fecha_fin === ""
+        ? null
+        : String(row.fecha_fin),
+    created_at: String(row.created_at ?? ""),
+  };
+}
+
+function isEventoTableMissing(error: { message?: string; code?: string } | null): boolean {
+  if (!error) return false;
+  const msg = (error.message ?? "").toLowerCase();
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    (msg.includes("torneo_express_evento") &&
+      (msg.includes("does not exist") || msg.includes("could not find")))
+  );
+}
+
+export async function createEvento(input: {
+  nombre: string;
+  timezone?: string;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
+}): Promise<TorneoExpressEvento> {
+  const user = await requireAuthUser();
+  const nombre = input.nombre.trim();
+  if (!nombre) throw new Error("El nombre del evento es obligatorio");
+
+  const base: Record<string, unknown> = {
+    nombre,
+    organizador_id: user.id,
+  };
+  if (input.timezone?.trim()) {
+    base.timezone = input.timezone.trim();
+  }
+  if (input.fecha_inicio !== undefined) {
+    base.fecha_inicio = input.fecha_inicio;
+  }
+  if (input.fecha_fin !== undefined) {
+    base.fecha_fin = input.fecha_fin;
+  }
+
+  const attempts: Record<string, unknown>[] = [
+    base,
+    { nombre, organizador_id: user.id },
+  ];
+
+  let lastError: { message: string; code?: string } | null = null;
+  for (const payload of attempts) {
+    const { data, error } = await supabase
+      .from("torneo_express_evento")
+      .insert(payload)
+      .select()
+      .single();
+
+    if (!error && data) {
+      return mapTorneoExpressEvento(data as Record<string, unknown>);
+    }
+    lastError = error;
+    if (!error) continue;
+    if (isEventoTableMissing(error)) {
+      throw new Error(
+        "Falta la tabla torneo_express_evento. Ejecuta supabase/torneo-express-evento-fase1.sql"
+      );
+    }
+    if (
+      ("timezone" in payload ||
+        "fecha_inicio" in payload ||
+        "fecha_fin" in payload) &&
+      (isMissingColumnError(error, "torneo_express_evento", "timezone") ||
+        isMissingColumnError(error, "torneo_express_evento", "fecha_inicio") ||
+        isMissingColumnError(error, "torneo_express_evento", "fecha_fin"))
+    ) {
+      continue;
+    }
+    break;
+  }
+
+  throw new Error(
+    `Error en createEvento: ${lastError?.message ?? "sin detalle"}`
+  );
+}
+
+export async function fetchEventosByOrganizador(): Promise<TorneoExpressEvento[]> {
+  const user = await requireAuthUser();
+  const { data, error } = await supabase
+    .from("torneo_express_evento")
+    .select("*")
+    .eq("organizador_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (isEventoTableMissing(error)) {
+    console.warn("[torneoExpress] torneo_express_evento no disponible:", error?.message);
+    return [];
+  }
+  throwIfError(error, "fetchEventosByOrganizador");
+  return ((data ?? []) as Record<string, unknown>[]).map(mapTorneoExpressEvento);
+}
+
+export async function fetchEventoById(
+  eventoId: string
+): Promise<TorneoExpressEvento | null> {
+  const id = eventoId.trim();
+  if (!id) return null;
+
+  const { data, error } = await supabase
+    .from("torneo_express_evento")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (isEventoTableMissing(error)) {
+    console.warn("[torneoExpress] torneo_express_evento no disponible:", error?.message);
+    return null;
+  }
+  throwIfError(error, "fetchEventoById");
+  if (!data) return null;
+  return mapTorneoExpressEvento(data as Record<string, unknown>);
+}
+
+/** Lectura pública por slug (anon vía RLS de evento publicado). */
+export async function fetchEventoBySlug(
+  slug: string
+): Promise<TorneoExpressEvento | null> {
+  const s = slug.trim();
+  if (!s) return null;
+
+  const { data, error } = await supabase
+    .from("torneo_express_evento")
+    .select("*")
+    .eq("slug", s)
+    .maybeSingle();
+
+  if (isEventoTableMissing(error)) {
+    console.warn("[torneoExpress] torneo_express_evento no disponible:", error?.message);
+    return null;
+  }
+  throwIfError(error, "fetchEventoBySlug");
+  if (!data) return null;
+  return mapTorneoExpressEvento(data as Record<string, unknown>);
+}
+
+export async function fetchEventoConCategorias(
+  eventoId: string
+): Promise<TorneoExpressEventoConCategorias | null> {
+  const evento = await fetchEventoById(eventoId);
+  if (!evento) return null;
+
+  const { data, error } = await supabase
+    .from("torneo_express")
+    .select("*")
+    .eq("evento_id", evento.id)
+    .order("created_at", { ascending: true });
+
+  if (error && isMissingColumnError(error, "torneo_express", "evento_id")) {
+    console.warn(
+      "[torneoExpress] columna evento_id ausente; categorías vacías:",
+      error.message
+    );
+    return { evento, categorias: [] };
+  }
+  throwIfError(error, "fetchEventoConCategorias.categorias");
+
+  return {
+    evento,
+    categorias: (data ?? []) as TorneoExpress[],
+  };
+}
+
+/** Contenedor público: evento por slug + categorías visibles bajo RLS. */
+export async function fetchEventoPublicoPorSlug(
+  slug: string
+): Promise<TorneoExpressEventoConCategorias | null> {
+  const evento = await fetchEventoBySlug(slug);
+  if (!evento) return null;
+
+  const { data, error } = await supabase
+    .from("torneo_express")
+    .select("*")
+    .eq("evento_id", evento.id)
+    .order("created_at", { ascending: true });
+
+  if (error && isMissingColumnError(error, "torneo_express", "evento_id")) {
+    return { evento, categorias: [] };
+  }
+  throwIfError(error, "fetchEventoPublicoPorSlug.categorias");
+
+  return {
+    evento,
+    categorias: (data ?? []) as TorneoExpress[],
+  };
+}
+
+export async function updateEvento(
+  eventoId: string,
+  patch: Partial<
+    Pick<
+      TorneoExpressEvento,
+      | "nombre"
+      | "estado"
+      | "slug"
+      | "flyer_url"
+      | "logo_source"
+      | "timezone"
+      | "fecha_inicio"
+      | "fecha_fin"
+    >
+  >
+): Promise<TorneoExpressEvento> {
+  await requireAuthUser();
+  const id = eventoId.trim();
+  if (!id) throw new Error("eventoId inválido");
+
+  const payload: Record<string, unknown> = {};
+  if (patch.nombre !== undefined) {
+    const nombre = patch.nombre.trim();
+    if (!nombre) throw new Error("El nombre del evento es obligatorio");
+    payload.nombre = nombre;
+  }
+  if (patch.estado !== undefined) payload.estado = patch.estado;
+  if (patch.slug !== undefined) {
+    payload.slug = patch.slug?.trim() ? patch.slug.trim() : null;
+  }
+  if (patch.flyer_url !== undefined) {
+    payload.flyer_url = patch.flyer_url?.trim() ? patch.flyer_url.trim() : null;
+  }
+  if (patch.logo_source !== undefined) payload.logo_source = patch.logo_source;
+  if (patch.timezone !== undefined) {
+    const tz = patch.timezone.trim();
+    if (!tz) throw new Error("timezone inválida");
+    payload.timezone = tz;
+  }
+  if (patch.fecha_inicio !== undefined) payload.fecha_inicio = patch.fecha_inicio;
+  if (patch.fecha_fin !== undefined) payload.fecha_fin = patch.fecha_fin;
+
+  if (Object.keys(payload).length === 0) {
+    const current = await fetchEventoById(id);
+    if (!current) throw new Error("Evento no encontrado");
+    return current;
+  }
+
+  const { data, error } = await supabase
+    .from("torneo_express_evento")
+    .update(payload)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (isEventoTableMissing(error)) {
+    throw new Error(
+      "Falta la tabla torneo_express_evento. Ejecuta supabase/torneo-express-evento-fase1.sql"
+    );
+  }
+  throwIfError(error, "updateEvento");
+  if (!data) throw new Error("No se pudo actualizar el evento");
+  return mapTorneoExpressEvento(data as Record<string, unknown>);
+}
+
+export async function linkTorneoToEvento(
+  torneoId: string,
+  eventoId: string | null
+): Promise<void> {
+  await requireAuthUser();
+  const id = torneoId.trim();
+  if (!id) throw new Error("torneoId inválido");
+
+  const { error } = await supabase
+    .from("torneo_express")
+    .update({ evento_id: eventoId })
+    .eq("id", id);
+
+  if (error && isMissingColumnError(error, "torneo_express", "evento_id")) {
+    throw new Error(
+      "Falta la columna torneo_express.evento_id. Ejecuta supabase/torneo-express-evento-fase1.sql"
+    );
+  }
+  throwIfError(error, "linkTorneoToEvento");
 }

@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  PublicEventBrandIdentity,
   useClubExperience,
   useOrganizerDisplayName,
 } from "../../../club-experience";
@@ -29,7 +28,6 @@ export const PublicTorneoExpressHeader: React.FC<{
   return (
     <header className="te-public-header te-pub-fade-in">
       <div className="te-public-header__brand">
-        <PublicEventBrandIdentity className="te-public-header__club-identity" />
         {isClubBranded ? (
           <p className="te-public-header__kicker te-label-eyebrow">
             {organizerName}

@@ -126,7 +126,9 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
       <header className="te-grupos-hero te-pub-fade-in">
         <div className="te-grupos-hero__top">
           <div>
-            <p className="te-grupos-eyebrow">RIVIERA OPEN</p>
+            <p className="te-grupos-eyebrow">
+              TORNEO · {bundle.torneo.nombre.trim().toUpperCase()}
+            </p>
             <h1 className="te-grupos-title">{bundle.torneo.nombre}</h1>
             <p className="te-elim-tagline">{model.motivationalMessage}</p>
           </div>

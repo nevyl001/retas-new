@@ -1,6 +1,11 @@
 import React from "react";
 import { GestionGrupos } from "./GestionGrupos";
 import { TorneoExpressInicio } from "./TorneoExpressInicio";
+import { CrearTorneoExpressPage } from "./CrearTorneoExpressPage";
+import { EventosLista } from "./EventosLista";
+import { EventoDetalle } from "./EventoDetalle";
+import { EventoNuevaCategoria } from "./EventoNuevaCategoria";
+import { VistaPublicaEvento } from "./public/VistaPublicaEvento";
 import { TePageShell } from "./TePageShell";
 import { VistaPublicaEliminatoria } from "./VistaPublicaEliminatoria";
 import { VistaPublicaGeneral } from "./VistaPublicaGeneral";
@@ -10,6 +15,10 @@ import { VistaPublicaGrupos } from "./VistaPublicaGrupos";
 export type TorneoExpressRoute =
   | { kind: "home" }
   | { kind: "nuevo" }
+  | { kind: "eventos" }
+  | { kind: "evento"; eventoId: string }
+  | { kind: "evento-nueva-categoria"; eventoId: string }
+  | { kind: "evento-publico"; slug: string }
   | { kind: "gestionar"; torneoId: string }
   | { kind: "grupo"; torneoId: string; grupoId: string }
   | { kind: "general"; torneoId: string }
@@ -21,6 +30,22 @@ export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
   const path = pathname.replace(/\/+$/, "") || "/";
   if (path === "/torneo-express") return { kind: "home" };
   if (path === "/torneo-express/nuevo") return { kind: "nuevo" };
+  if (path === "/torneo-express/eventos") return { kind: "eventos" };
+
+  // Público: /eventos/{slug} (arquitectura multi-categoría)
+  const eventoPublico = path.match(/^\/eventos\/([^/]+)$/);
+  if (eventoPublico) {
+    return { kind: "evento-publico", slug: decodeURIComponent(eventoPublico[1]) };
+  }
+
+  const nuevaCat = path.match(
+    /^\/torneo-express\/evento\/([^/]+)\/nueva-categoria$/
+  );
+  if (nuevaCat) {
+    return { kind: "evento-nueva-categoria", eventoId: nuevaCat[1] };
+  }
+  const evento = path.match(/^\/torneo-express\/evento\/([^/]+)$/);
+  if (evento) return { kind: "evento", eventoId: evento[1] };
   const gestionar = path.match(/^\/torneo-express\/([^/]+)\/gestionar$/);
   if (gestionar) return { kind: "gestionar", torneoId: gestionar[1] };
   const grupo = path.match(/^\/torneo-express\/([^/]+)\/grupo\/([^/]+)$/);
@@ -37,6 +62,7 @@ export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
 export function isTorneoExpressPublicPath(pathname: string): boolean {
   const route = parseTorneoExpressPath(pathname);
   return (
+    route.kind === "evento-publico" ||
     route.kind === "grupo" ||
     route.kind === "general" ||
     route.kind === "grupos" ||
@@ -51,8 +77,17 @@ export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
 
   switch (route.kind) {
     case "home":
-    case "nuevo":
       return <TorneoExpressInicio />;
+    case "nuevo":
+      return <CrearTorneoExpressPage />;
+    case "eventos":
+      return <EventosLista />;
+    case "evento":
+      return <EventoDetalle eventoId={route.eventoId} />;
+    case "evento-nueva-categoria":
+      return <EventoNuevaCategoria eventoId={route.eventoId} />;
+    case "evento-publico":
+      return <VistaPublicaEvento slug={route.slug} />;
     case "gestionar":
       return <GestionGrupos torneoId={route.torneoId} />;
     case "grupo":

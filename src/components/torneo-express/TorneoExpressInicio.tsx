@@ -1,18 +1,20 @@
 import React, { useState } from "react";
 import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
-import { CrearTorneoExpress } from "./CrearTorneoExpress";
+import { CrearEventoModal } from "./CrearEventoModal";
 import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
 import { TePageShell } from "./TePageShell";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
+import { navigateTorneoExpress } from "./torneoExpressNav";
 import "./te-inicio-page.css";
 import "./te-fondos.css";
+import "./te-eventos.css";
 
 export const TorneoExpressInicio: React.FC = () => {
   const modeEyebrow = useClubModeEyebrow();
-  const [refreshToken, setRefreshToken] = useState(0);
+  const [createEventoOpen, setCreateEventoOpen] = useState(false);
 
   return (
     <TePageShell className="te-inicio-page">
@@ -27,26 +29,83 @@ export const TorneoExpressInicio: React.FC = () => {
           <ModeHeader
             className="te-inicio-header te-header rv-mode-header rv-mode-header--entry"
             eyebrow={modeEyebrow}
-            title="Torneo Express"
-            subtitle="Grupos y round robin por grupo. Crea, gestiona y lanza tus torneos en minutos."
+            title="Torneo"
+            subtitle="Grupos y round robin por grupo. Crea un Evento con varias categorías, o un Torneo Express."
           />
         </div>
 
-        <TorneoExpressTorneosSection refreshToken={refreshToken} />
+        <div className="te-inicio-create-actions">
+          <section
+            className="te-eventos-home-card"
+            aria-labelledby="te-eventos-home-title"
+          >
+            <div className="te-eventos-home-card__copy">
+              <h2 id="te-eventos-home-title" className="te-eventos-home-card__title">
+                Eventos
+              </h2>
+              <p className="te-eventos-home-card__sub">
+                Varias categorías (4ta, 5ta, Open…) bajo un mismo evento.
+              </p>
+            </div>
+            <div className="te-eventos-home-card__actions">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => navigateTorneoExpress("/torneo-express/eventos")}
+              >
+                Ver eventos
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => setCreateEventoOpen(true)}
+              >
+                Crear evento
+              </Button>
+            </div>
+          </section>
 
-        <section
-          className="te-inicio-crear te-inicio-crear__shell"
-          aria-labelledby="te-crear-section-heading"
-        >
-          <h2 id="te-crear-section-heading" className="te-inicio-crear__title rv-section-title">
-            Crear nuevo torneo
-          </h2>
+          <section
+            className="te-eventos-home-card"
+            aria-labelledby="te-torneo-express-home-title"
+          >
+            <div className="te-eventos-home-card__copy">
+              <h2
+                id="te-torneo-express-home-title"
+                className="te-eventos-home-card__title"
+              >
+                Torneo Express
+              </h2>
+              <p className="te-eventos-home-card__sub">
+                Una sola categoría. Rápido, igual que siempre.
+              </p>
+            </div>
+            <div className="te-eventos-home-card__actions">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => navigateTorneoExpress("/torneo-express/nuevo")}
+              >
+                Crear torneo
+              </Button>
+            </div>
+          </section>
+        </div>
 
-          <CrearTorneoExpress
-            onTorneoCreated={() => setRefreshToken((n) => n + 1)}
-          />
-        </section>
+        <TorneoExpressTorneosSection />
       </div>
+
+      <CrearEventoModal
+        open={createEventoOpen}
+        onClose={() => setCreateEventoOpen(false)}
+        onCreated={(id) => {
+          setCreateEventoOpen(false);
+          navigateTorneoExpress(`/torneo-express/evento/${id}`);
+        }}
+      />
     </TePageShell>
   );
 };

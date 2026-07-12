@@ -14,6 +14,7 @@ import {
   createTorneoExpressWithGroups,
   fetchPairsForTournament,
   formatSupabaseError,
+  linkTorneoToEvento,
   pruneDraftPairsForTournament,
 } from "../../services/torneoExpressService";
 import { navigateTorneoExpress } from "./torneoExpressNav";
@@ -41,11 +42,21 @@ type PlayerWithContact = Player & {
 };
 
 interface CrearTorneoExpressProps {
-  onTorneoCreated?: () => void;
+  /** Si viene, el torneo creado se vincula a este Evento (categoría). */
+  eventoId?: string;
+  /** Callback tras crear (y vincular si hay eventoId). */
+  onTorneoCreated?: (torneoId: string) => void;
+  /**
+   * Si true y hay eventoId, tras crear vuelve al detalle del evento
+   * en lugar de ir a gestionar. Default: true cuando hay eventoId.
+   */
+  returnToEventoAfterCreate?: boolean;
 }
 
 export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
+  eventoId,
   onTorneoCreated,
+  returnToEventoAfterCreate,
 }) => {
   const { user } = useUser();
   const [nombre, setNombre] = useState("");
@@ -367,8 +378,22 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         keepPairIds: keepIds,
       });
       sessionStorage.removeItem(TE_DRAFT_TOURNAMENT_KEY);
-      onTorneoCreated?.();
-      navigateTorneoExpress(`/torneo-express/${torneoId}/gestionar`);
+
+      const linkedEventoId = eventoId?.trim() || null;
+      if (linkedEventoId) {
+        await linkTorneoToEvento(torneoId, linkedEventoId);
+      }
+
+      onTorneoCreated?.(torneoId);
+
+      const goBackToEvento =
+        Boolean(linkedEventoId) &&
+        (returnToEventoAfterCreate ?? true);
+      if (goBackToEvento && linkedEventoId) {
+        navigateTorneoExpress(`/torneo-express/evento/${linkedEventoId}`);
+      } else {
+        navigateTorneoExpress(`/torneo-express/${torneoId}/gestionar`);
+      }
     } catch (err) {
       setError(formatSupabaseError(err));
     } finally {

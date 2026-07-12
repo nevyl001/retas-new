@@ -1,0 +1,280 @@
+/* Vista pública del Evento — Riviera Open (tokens --ro-*). */
+
+.te-public--evento .te-public__inner {
+  max-width: 920px;
+  padding-top: 0.65rem;
+}
+
+/* —— Banner flyer: marco = imagen; landscape llena ancho —— */
+.te-public-evento-banner {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 0 0 var(--ro-space-4, 1.15rem);
+  padding: 0;
+  line-height: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.te-public-evento-banner__img {
+  display: block;
+  margin: 0;
+  object-fit: contain;
+  object-position: center;
+  border-radius: var(--ro-radius-xl, 18px);
+  border: 1px solid var(--ro-pub-gold-border, var(--ro-gold-border));
+  box-shadow:
+    var(--ro-shadow-md),
+    0 0 40px var(--ro-pub-gold-glow, var(--ro-gold-glow));
+}
+
+/* Horizontal: 100% del contenido, altura natural — sin barras laterales */
+.te-public-evento-banner--landscape .te-public-evento-banner__img {
+  width: 100%;
+  height: auto;
+  max-height: none;
+}
+
+/* Vertical: altura acotada, centrado, sin caja negra */
+.te-public-evento-banner--portrait .te-public-evento-banner__img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: min(48vh, 420px);
+}
+
+/* Cuadrado: ancho contenido con tope moderado */
+.te-public-evento-banner--square .te-public-evento-banner__img {
+  width: min(100%, 420px);
+  height: auto;
+  max-height: min(48vh, 420px);
+}
+
+/* —— Header del evento —— */
+.te-public-evento-header {
+  margin-bottom: var(--ro-space-5, 1.5rem);
+}
+
+.te-public-evento-header__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--ro-font-heading, var(--font-display, inherit));
+  font-size: clamp(1.65rem, 5vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--ro-text-primary, var(--te-text, var(--text-primary)));
+}
+
+.te-public-evento-header__dates {
+  margin: 0;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  color: var(--ro-pub-gold-light, var(--ro-gold-light, var(--accent-gold-light)));
+}
+
+/* —— Roles de juego: cards Riviera (oro, no arcoíris) —— */
+.te-public-evento-roles {
+  margin-bottom: var(--ro-space-6, 2rem);
+}
+
+.te-public-evento-roles__title {
+  margin: 0 0 0.35rem;
+  font-size: var(--ro-pub-text-section, 0.75rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ro-pub-gold, var(--ro-gold, var(--accent-gold)));
+}
+
+.te-public-evento-roles__hint {
+  margin: 0 0 var(--ro-space-4, 1.15rem);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--ro-text-secondary, var(--text-secondary));
+}
+
+.te-public-evento-roles__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ro-space-3, 0.85rem);
+}
+
+.te-public-evento-role-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 1.05rem 1.15rem 1.05rem 1.2rem;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: var(--ro-text-primary, var(--text-primary));
+  background:
+    linear-gradient(
+      135deg,
+      var(--ro-pub-gold-dim, var(--ro-gold-dim)) 0%,
+      transparent 42%
+    ),
+    var(--ro-bg-card, var(--ro-bg-elevated, var(--bg-elevated)));
+  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  border-radius: var(--ro-radius-xl, 18px);
+  box-shadow: var(--ro-shadow-sm);
+  overflow: hidden;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.15s ease,
+    background 0.18s ease;
+}
+
+.te-public-evento-role-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.85rem;
+  bottom: 0.85rem;
+  width: 3px;
+  border-radius: var(--ro-radius-full, 999px);
+  background: linear-gradient(
+    180deg,
+    var(--ro-pub-gold-light, var(--ro-gold-light)),
+    var(--ro-pub-gold, var(--ro-gold))
+  );
+  box-shadow: 0 0 12px var(--ro-pub-gold-glow, var(--ro-gold-glow));
+}
+
+.te-public-evento-role-card:hover,
+.te-public-evento-role-card:focus-visible {
+  border-color: var(--ro-pub-gold-border, var(--ro-gold-border));
+  box-shadow:
+    0 0 0 1px var(--ro-pub-gold-border, var(--ro-gold-border)),
+    var(--ro-shadow-md),
+    0 0 28px var(--ro-pub-gold-glow, var(--ro-gold-glow));
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.te-public-evento-role-card:active {
+  transform: scale(0.992);
+}
+
+.te-public-evento-role-card__mark {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  margin-left: 0.15rem;
+  border-radius: var(--ro-radius-full, 999px);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ro-pub-gold-light, var(--ro-gold-light, var(--accent-gold-light)));
+  background: var(--ro-pub-gold-dim, var(--ro-gold-dim));
+  border: 1px solid var(--ro-pub-gold-border, var(--ro-gold-border));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.te-public-evento-role-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.te-public-evento-role-card__label {
+  font-family: var(--ro-font-heading, var(--font-display, inherit));
+  font-size: clamp(1.2rem, 4.2vw, 1.45rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.te-public-evento-role-card__meta {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--ro-text-muted, var(--text-muted));
+}
+
+.te-public-evento-role-card__chevron {
+  flex-shrink: 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--ro-pub-gold, var(--ro-gold, var(--accent-gold)));
+  opacity: 0.85;
+  line-height: 1;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.te-public-evento-role-card:hover .te-public-evento-role-card__chevron,
+.te-public-evento-role-card:focus-visible .te-public-evento-role-card__chevron {
+  transform: translateX(3px);
+  opacity: 1;
+  color: var(--ro-pub-gold-light, var(--ro-gold-light));
+}
+
+.te-public-evento__status {
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+  color: var(--ro-text-secondary, var(--text-secondary));
+}
+
+@media (min-width: 768px) {
+  .te-public-evento-banner {
+    margin-bottom: var(--ro-space-5, 1.5rem);
+  }
+
+  .te-public-evento-banner--landscape .te-public-evento-banner__img {
+    /* Escritorio: ancho de columna, sin full-bleed infinito */
+    max-width: 100%;
+  }
+
+  .te-public-evento-banner--portrait .te-public-evento-banner__img {
+    max-height: min(52vh, 460px);
+  }
+
+  .te-public-evento-banner--square .te-public-evento-banner__img {
+    width: min(100%, 380px);
+    max-height: 380px;
+  }
+
+  .te-public-evento-banner__img {
+    border-radius: var(--ro-radius-xl, 20px);
+  }
+
+  .te-public-evento-roles__list {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--ro-space-4, 1rem);
+  }
+
+  .te-public-evento-role-card {
+    min-height: 5.25rem;
+    padding: 1.25rem 1.35rem 1.25rem 1.35rem;
+  }
+
+  .te-public-evento-role-card__label {
+    font-size: 1.5rem;
+  }
+
+  .te-public-evento-role-card__mark {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .te-public-evento-banner--portrait .te-public-evento-banner__img {
+    max-height: min(44vh, 360px);
+  }
+
+  .te-public-evento-banner--square .te-public-evento-banner__img {
+    width: min(100%, 100%);
+    max-height: min(44vh, 360px);
+  }
+}

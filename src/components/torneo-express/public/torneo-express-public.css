@@ -146,6 +146,25 @@
   animation: te-pub-fade-in-up var(--motion-enter) ease-out both;
 }
 
+/* Marca Riviera / club — siempre visible en vistas públicas TE */
+.te-public-brand-bar {
+  margin-bottom: var(--ro-space-4, 1rem);
+  padding-bottom: var(--ro-space-3, 0.75rem);
+  border-bottom: 1px solid var(--ro-border-subtle);
+}
+
+.te-public-brand-bar .te-public-header__club-identity {
+  margin: 0;
+}
+
+.te-public--grupos-wide .te-public-brand-bar {
+  margin-bottom: var(--ro-space-3, 0.75rem);
+}
+
+.te-public--evento .te-public-brand-bar {
+  margin-bottom: var(--ro-space-4, 1rem);
+}
+
 /* Header */
 .te-public-header {
   margin-bottom: 3rem;
