@@ -18,6 +18,7 @@ import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import { navigateAppTo } from "../../lib/appRouting";
 import { buildPrivacidadTerminosPath } from "../../lib/legalNav";
 import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
+import { navigateJugadores } from "../jugadores/jugadoresNav";
 import { TablerIcon } from "../ui/TablerIcon";
 import type { GameModeId } from "./gameModesConfig";
 import {
@@ -34,6 +35,7 @@ import { RecentRetasSection } from "./RecentRetasSection";
 import { AppSiteFooter } from "../legal/AppSiteFooter";
 import {
   getAccountModeDisabledMessage,
+  getOrganizerRegistryCardSubtitle,
   useBranding,
 } from "../../club-experience";
 import "./home.css";
@@ -186,6 +188,26 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       >
         <h2 className="home-section-title">Accesos rápidos</h2>
         <div className="home-quick-links__grid home-quick-links__grid--compact">
+          <button
+            type="button"
+            className="home-quick-card home-quick-card--jugadores"
+            onClick={() => navigateJugadores()}
+          >
+            <span className="home-quick-card__icon" aria-hidden>
+              <TablerIcon name="users" size={22} />
+            </span>
+            <span className="home-quick-card__body">
+              <span className="home-quick-card__title">Registro de jugadores</span>
+              <span className="home-quick-card__sub">
+                {getOrganizerRegistryCardSubtitle(organizerName)}
+              </span>
+            </span>
+            <TablerIcon
+              name="chevron-right"
+              size={20}
+              className="home-quick-card__chev"
+            />
+          </button>
           <button
             type="button"
             className="home-quick-card home-quick-card--ranking"

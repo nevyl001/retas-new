@@ -20,6 +20,7 @@ jest.mock("../../contexts/AccountFeaturesContext", () => ({
 jest.mock("../../club-experience", () => ({
   useBranding: () => ({ nombre: "Club Test" }),
   getAccountModeDisabledMessage: () => "Modo deshabilitado",
+  getOrganizerRegistryCardSubtitle: () => "Gestiona el registro de jugadores",
   useClubExperience: () => ({
     manifest: {
       home: {
@@ -163,7 +164,7 @@ describe("home presentation", () => {
       expect(html).not.toContain("Retas rápidas");
       expect(html).not.toContain("Competencias organizadas");
       expect(html).not.toContain("Gestionar mis retas");
-      expect(html).not.toContain("Registro de jugadores");
+      expect(html).toContain("Registro de jugadores");
       expect(html).toContain("Accesos rápidos");
       expect(html).toContain("Cómo funciona el ranking");
     });

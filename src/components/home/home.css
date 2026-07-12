@@ -980,6 +980,12 @@
   }
 }
 
+@media (min-width: 960px) {
+  .home-quick-links__grid--compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .home-quick-card--legal {
   border-color: rgba(255, 255, 255, 0.12);
 }
