@@ -73,6 +73,7 @@ describe("duelo2v2CreateDraft", () => {
 
   it("guarda y lee un borrador por organizador", () => {
     const storage = mockStorage();
+    const recentSavedAt = new Date(Date.now() - 60_000).toISOString();
     writeDuelo2v2CreateDraft(
       ORG,
       {
@@ -85,7 +86,7 @@ describe("duelo2v2CreateDraft", () => {
         pairB: null,
       },
       storage,
-      "2026-07-09T12:00:00.000Z"
+      recentSavedAt
     );
 
     expect(storage.getItem(duelo2v2DraftStorageKey(ORG))).toBeTruthy();
