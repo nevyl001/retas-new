@@ -32,19 +32,12 @@ import {
   rankingPosicionesFromSortedForClub,
 } from "../../lib/rivieraJugadores/rankingPosition";
 import { rankingPuntosJugadorLista, jugadorListaPartidosDisplay, jugadorListaPctVictoriasDisplay, prefetchOrganizerDisplayNames, resolveOrigenConcedidoOrganizadorId } from "../../lib/rivieraJugadores/grantedRankingDisplay";
-import { GrantedPlayerOriginBadge } from "./GrantedPlayerOriginBadge";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
 import { navigateJugadoresLista } from "./jugadoresGeneroNav";
 import { JugadorAjustePuntosModal } from "./JugadorAjustePuntosModal";
-import { JugadorAvatar } from "./JugadorAvatar";
-import { JugadorPaisBadge } from "./JugadorPaisBadge";
 import { LoadingProgressHint } from "../ui/LoadingProgressHint";
-import { TablerIcon } from "../ui/TablerIcon";
-import { JugadorCategoriaBadge } from "./JugadorCategoriaBadge";
-import { RivieraIdBadgeFromJugador } from "./RivieraIdBadge";
-import { JugadorPerfilMeta } from "./JugadorPerfilMeta";
-import { navigateJugadorFicha } from "./jugadoresNav";
+import { JugadorCompactRow } from "./JugadorCompactRow";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
 import { AgregarJugadorExistenteModal } from "./AgregarJugadorExistenteModal";
 import {
@@ -325,101 +318,41 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
           </p>
         )}
 
-        <div className="rj-grid">
+        <div className="rj-list" role="list">
+          <div className="rj-list__head" aria-hidden="true">
+            <span>Rank</span>
+            <span>Jugador</span>
+            <span>Categoría</span>
+            <span>Puntos</span>
+            <span>Partidos</span>
+            <span>% Vic.</span>
+            <span>Acciones</span>
+          </div>
           {jugadoresOrdenados.map((j) => {
             const pos = rankById.get(j.id) ?? 0;
             const puntos = rankingPuntosJugadorLista(j);
-            const esPrimero = pos === 1;
             const orgId = organizadorId ?? user?.id;
             const canRemove = canRemovePlayerFromCurrentClub(j, orgId);
             const canDelete = canDeleteGlobalPlayer(j, orgId);
             return (
-              <article key={j.id} className="rj-card">
-                <div className="rj-card__top">
-                  <span
-                    className={`rj-card__rank${
-                      esPrimero ? " rj-card__rank--gold" : ""
-                    }`}
-                  >
-                    {esPrimero ? (
-                      <TablerIcon name="trophy" size={12} />
-                    ) : (
-                      `#${pos}`
-                    )}
-                  </span>
-                  <span className="rj-card__pts">
-                    {puntos.toLocaleString("es-MX")} pts
-                  </span>
-                  {canRemove || canDelete ? (
-                    <div className="rj-card__actions">
-                      {canDelete && !canRemove && permiteAjustePuntosManuales ? (
-                        <button
-                          type="button"
-                          className="rj-card__edit"
-                          title="Sumar o restar puntos"
-                          aria-label={`Ajustar puntos de ${j.nombre}`}
-                          onClick={() => setAjusteJugador(j)}
-                        >
-                          <TablerIcon name="pencil" size={14} aria-hidden={false} />
-                        </button>
-                      ) : null}
-                      {canRemove ? (
-                        <button
-                          type="button"
-                          className="rj-card__delete"
-                          title="Quitar de mi club"
-                          aria-label={`Quitar a ${j.nombre} de tu club`}
-                          disabled={deletingId === j.id}
-                          onClick={() => void handleLeaveFromClub(j)}
-                        >
-                          <TablerIcon name="trash" size={14} aria-hidden={false} />
-                        </button>
-                      ) : canDelete ? (
-                        <button
-                          type="button"
-                          className="rj-card__delete"
-                          title="Eliminar jugador"
-                          aria-label={`Eliminar a ${j.nombre}`}
-                          disabled={deletingId === j.id}
-                          onClick={() => void handleDeleteJugador(j)}
-                        >
-                          <TablerIcon name="trash" size={14} aria-hidden={false} />
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className="rj-card__body"
-                  onClick={() => navigateJugadorFicha(j.slug)}
-                >
-                  <JugadorAvatar
-                    fotoUrl={j.foto_url}
-                    nombre={j.nombre}
-                    size="md"
-                  />
-                  <div className="rj-card__name-row">
-                    <p className="rj-card__name">{j.nombre}</p>
-                    <JugadorPaisBadge codigo={j.pais_codigo} size="sm" />
-                    {j.concedidoPorAdmin ? (
-                      <GrantedPlayerOriginBadge jugador={j} />
-                    ) : null}
-                  </div>
-                  <RivieraIdBadgeFromJugador jugador={j} embedded />
-                  <JugadorCategoriaBadge categoria={j.categoria} />
-                  <JugadorPerfilMeta jugador={j} variant="card" />
-                  <p className="rj-card__stats">
-                    {(j.rating_partidos ?? 0) > 0 ? (
-                      <>
-                        Nivel {(j.rating ?? 3).toFixed(2)}
-                        {" · "}
-                      </>
-                    ) : null}
-                    {jugadorListaPartidosDisplay(j)} partidos · {pct(j)} victorias
-                  </p>
-                </button>
-              </article>
+              <div key={j.id} role="listitem">
+                <JugadorCompactRow
+                  jugador={j}
+                  rank={pos}
+                  puntos={puntos}
+                  partidosLabel={String(jugadorListaPartidosDisplay(j))}
+                  pctLabel={pct(j)}
+                  showAjustePuntos={Boolean(
+                    canDelete && !canRemove && permiteAjustePuntosManuales
+                  )}
+                  canRemove={canRemove}
+                  canDelete={canDelete}
+                  deleting={deletingId === j.id}
+                  onAjustePuntos={() => setAjusteJugador(j)}
+                  onRemoveFromClub={() => void handleLeaveFromClub(j)}
+                  onDelete={() => void handleDeleteJugador(j)}
+                />
+              </div>
             );
           })}
         </div>

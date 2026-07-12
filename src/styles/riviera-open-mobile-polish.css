@@ -330,7 +330,8 @@ body,
   }
 
   .rj-card__edit,
-  .rj-card__delete {
+  .rj-card__delete,
+  .rj-row__icon-btn {
     min-width: var(--ro-touch-target-min);
     min-height: var(--ro-touch-target-min);
   }
