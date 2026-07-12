@@ -140,6 +140,21 @@ describe("rankingPuntosClubLocal", () => {
     const jugador = { ...j(120, "nevyl"), officialPuntosGlobal: 200 };
     expect(rankingPuntosClubLocal(jugador)).toBe(120);
   });
+
+  it("con organizadorId prioriza carrera del club sobre stats locales", () => {
+    const hack = "org-hackpadel";
+    const jugador: RivieraJugadorWithStats = {
+      ...j(100, "nevyl"),
+      organizador_id: hack,
+      careerPuntosByClub: [
+        { organizadorId: hack, puntos: 220 },
+        { organizadorId: "org-riviera", puntos: 225 },
+      ],
+      careerPuntosTotal: 445,
+    };
+    expect(rankingPuntosClubLocal(jugador, hack)).toBe(220);
+    expect(rankingPuntosClubLocal(jugador)).toBe(100);
+  });
 });
 
 describe("mergeJugadorStatsPuntosTotales", () => {

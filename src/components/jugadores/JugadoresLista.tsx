@@ -78,12 +78,12 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     setLoading(true);
     setError(null);
     try {
+      // Misma fuente que ranking/ficha: carrera por club (no stats locales del clon).
       const data = await listRivieraJugadores(orgId, {
         search,
         nivel: nivelFilter || undefined,
         activosRecientes: recientes,
         genero,
-        skipCareerEnrich: true,
       });
       void prefetchOrganizerDisplayNames([
         orgId,
@@ -163,18 +163,26 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     }
   };
 
+  const orgIdForPoints = organizadorId ?? user?.id ?? null;
+
   const { jugadoresOrdenados, rankById } = useMemo(() => {
-    const sorted = [...jugadores].sort((a, b) => {
-      const pa = rankingPuntosJugadorLista(a);
-      const pb = rankingPuntosJugadorLista(b);
+    // Ranking (posición / trofeo) sigue por puntos del club (carrera en este org).
+    const byPoints = [...jugadores].sort((a, b) => {
+      const pa = rankingPuntosJugadorLista(a, orgIdForPoints);
+      const pb = rankingPuntosJugadorLista(b, orgIdForPoints);
       if (pb !== pa) return pb - pa;
       return a.nombre.localeCompare(b.nombre, "es");
     });
-    const ranks = rankingPosicionesFromSortedForClub(sorted);
+    const ranks = rankingPosicionesFromSortedForClub(byPoints, orgIdForPoints);
     const map = new Map<string, number>();
-    sorted.forEach((j, i) => map.set(j.id, ranks[i] ?? i + 1));
+    byPoints.forEach((j, i) => map.set(j.id, ranks[i] ?? i + 1));
+
+    // Lista del registro: orden alfabético (más fácil de encontrar jugadores).
+    const sorted = [...jugadores].sort((a, b) =>
+      a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" })
+    );
     return { jugadoresOrdenados: sorted, rankById: map };
-  }, [jugadores]);
+  }, [jugadores, orgIdForPoints]);
 
   const handleImportHistorial = useCallback(async () => {
     if (!user?.id) return;
@@ -350,7 +358,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
           </div>
           {jugadoresOrdenados.map((j) => {
             const pos = rankById.get(j.id) ?? 0;
-            const puntos = rankingPuntosJugadorLista(j);
+            const puntos = rankingPuntosJugadorLista(j, orgIdForPoints);
             const orgId = organizadorId ?? user?.id;
             const canRemove = canRemovePlayerFromCurrentClub(j, orgId);
             const canDelete = canDeleteGlobalPlayer(j, orgId);

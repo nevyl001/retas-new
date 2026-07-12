@@ -28,8 +28,11 @@ export function rankingPuntosCarreraRivieraDisplay(
 }
 
 /** Puntos mostrados en tarjeta del ranking interno del club (solo este club). */
-export function rankingPuntosInternoClubDisplay(j: RivieraJugadorWithStats): number {
-  return rankingPuntosClubLocal(j);
+export function rankingPuntosInternoClubDisplay(
+  j: RivieraJugadorWithStats,
+  organizadorId?: string | null
+): number {
+  return rankingPuntosClubLocal(j, organizadorId);
 }
 
 /** Total global / sitio oficial desde ledger ROMC; null = no disponible (no estimar con local). */
@@ -74,9 +77,15 @@ export function hasDualRankingConcedido(j: RivieraJugadorWithStats): boolean {
   return Boolean(j.concedidoPorAdmin && j.grantedAccess?.sourceJugadorId);
 }
 
-/** Puntos en registro y ranking interno del club anfitrión. */
-export function rankingPuntosJugadorLista(j: RivieraJugadorWithStats): number {
-  return rankingPuntosClubLocal(j);
+/**
+ * Puntos en registro y ranking interno del club anfitrión.
+ * Requiere organizadorId + carrera enriquecida para coincidir con ficha/ranking.
+ */
+export function rankingPuntosJugadorLista(
+  j: RivieraJugadorWithStats,
+  organizadorId?: string | null
+): number {
+  return rankingPuntosClubLocal(j, organizadorId);
 }
 
 export function jugadorListaPartidosDisplay(j: RivieraJugadorWithStats): number {

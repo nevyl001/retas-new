@@ -113,7 +113,7 @@ export function resolveCareerTotalAllClubsDisplay(
   }
 
   if (hasOrgContext) {
-    return rankingPuntosInternoClubDisplay(jugador);
+    return rankingPuntosInternoClubDisplay(jugador, viewingOrganizadorId);
   }
 
   return jugador.stats?.puntos_totales ?? 0;
