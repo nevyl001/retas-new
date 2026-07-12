@@ -108,6 +108,30 @@
   --ro-shell-padding-x: clamp(16px, 4vw, 28px);
   --ro-shell-padding-y: clamp(12px, 2vw, 20px);
 
+  /*
+   * MOBILE-FIRST FOUNDATION (Fase 1)
+   * Breakpoints oficiales — referencia documental.
+   * No usar en @media: var() no es válido en condiciones de media queries estándar.
+   * En media queries usar los valores numéricos (480px, 768px, 1024px, 1200px).
+   */
+  --ro-breakpoint-sm: 480px;
+  --ro-breakpoint-md: 768px;
+  --ro-breakpoint-lg: 1024px;
+  --ro-breakpoint-xl: 1200px;
+
+  /* Safe areas (iOS notch / home indicator) */
+  --ro-safe-top: env(safe-area-inset-top, 0px);
+  --ro-safe-right: env(safe-area-inset-right, 0px);
+  --ro-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ro-safe-left: env(safe-area-inset-left, 0px);
+
+  /* Padding horizontal móvil (alineado con shells actuales ≤768px) */
+  --ro-mobile-page-padding: clamp(14px, 3.8vw, 18px);
+
+  /* Táctil e inputs móviles */
+  --ro-touch-target-min: 44px;
+  --ro-input-font-size-mobile: 16px;
+
   /* Z-INDEX */
   --ro-z-base: 1;
   --ro-z-dropdown: 40;

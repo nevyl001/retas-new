@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { StandingsDifCell } from "../standings/StandingsDifCell";
 import { StandingsPtsCell } from "../standings/StandingsPtsCell";
 import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
 import { StandingsTableHeader } from "../standings/StandingsTableHeader";
+import { StandingsMobileCards } from "../standings/StandingsMobileCards";
+import { teStandingRowToMobileRow } from "../../lib/modePresentation/standingsRowAdapters";
 import {
   COL_CON,
   COL_ENTITY,
@@ -16,6 +18,7 @@ import {
 } from "../standings/standingsTableColumns";
 import { GrupoBadge } from "./GrupoBadge";
 import type { StandingRowExpress } from "../../lib/torneoExpress/types";
+import "../../styles/standings-mobile-cards.css";
 
 interface TablaGrupoProps {
   rows: StandingRowExpress[];
@@ -28,10 +31,18 @@ export const TablaGrupo: React.FC<TablaGrupoProps> = ({
   showGrupoColumn = false,
   scoringHelpVariant = "default",
 }) => {
+  const mobileRows = useMemo(
+    () => rows.map((row, index) => teStandingRowToMobileRow(row, index)),
+    [rows]
+  );
+
   return (
     <div className="te-standings-block">
       <StandingsScoringHelp variant={scoringHelpVariant} />
-      <div className={`te-standings-wrap ${TABLA_WRAPPER_CLASS}`}>
+      <div className="te-standings-mobile-cards">
+        <StandingsMobileCards rows={mobileRows} />
+      </div>
+      <div className={`te-standings-wrap te-standings-table-desktop ${TABLA_WRAPPER_CLASS}`}>
         <table className={`te-standings-table ${TABLA_RANKING_CLASS}`}>
           <thead>
             <StandingsTableHeader

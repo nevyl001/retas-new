@@ -189,12 +189,12 @@ body,
 
   /* Padding shells */
   .torneo-express-page.rv-page {
-    padding: clamp(14px, 3.5vw, 20px) clamp(14px, 3.8vw, 18px)
-      calc(48px + env(safe-area-inset-bottom, 0px));
+    padding: clamp(14px, 3.5vw, 20px) var(--ro-mobile-page-padding)
+      calc(48px + var(--ro-safe-bottom));
   }
 
   .americano-screen.rv-page {
-    padding: 12px clamp(14px, 3.8vw, 18px) calc(40px + env(safe-area-inset-bottom, 0px));
+    padding: 12px var(--ro-mobile-page-padding) calc(40px + var(--ro-safe-bottom));
   }
 
   .duelo2v2-page__inner.rv-shell {
@@ -286,8 +286,7 @@ body,
 
   /* Liga pública */
   .liga-pantalla__inner.rv-public-board {
-    padding-inline: max(14px, env(safe-area-inset-left, 0px))
-      max(14px, env(safe-area-inset-right, 0px));
+    padding-inline: max(14px, var(--ro-safe-left)) max(14px, var(--ro-safe-right));
   }
 
   .liga-pantalla-ranking,
@@ -301,6 +300,46 @@ body,
     min-width: 480px;
   }
 
+}
+
+/* —— Móvil compacto (≤479px): fundación táctil Fase 1 —— */
+@media (max-width: 479px) {
+  .riviera-btn,
+  .riviera-btn--sm {
+    min-height: var(--ro-touch-target-min);
+  }
+
+  .rj-btn {
+    min-height: var(--ro-touch-target-min);
+  }
+
+  .riviera-btn-danger-icon,
+  .riviera-modal__close,
+  .te-bracket-modal__close {
+    min-width: var(--ro-touch-target-min);
+    min-height: var(--ro-touch-target-min);
+  }
+
+  .elegant-delete-btn,
+  .elegant-edit-btn,
+  .elegant-edit-save-btn,
+  .elegant-edit-cancel-btn,
+  .reta-btn-delete {
+    min-width: var(--ro-touch-target-min);
+    min-height: var(--ro-touch-target-min);
+  }
+
+  .rj-card__edit,
+  .rj-card__delete {
+    min-width: var(--ro-touch-target-min);
+    min-height: var(--ro-touch-target-min);
+  }
+
+  .torneo-express-page.te-inicio-page .te-torneo-card__actions-end .riviera-btn,
+  .te-gestion-page .te-partido-meta-edit__actions .riviera-btn-primary,
+  .te-gestion-page .te-partido-meta-edit__actions .riviera-btn-ghost {
+    min-height: var(--ro-touch-target-min);
+  }
 }
 
 /* Móvil compacto */

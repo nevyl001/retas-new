@@ -35,6 +35,10 @@ import { isLigaPublicPath } from "./components/liga/LigaRouter";
 import { isDuelo2v2PublicPath } from "./components/duelo-2v2/Duelo2v2Router";
 import { isJugadoresPublicPath } from "./components/jugadores/JugadoresRouter";
 import { LoadingFallback } from "./components/LoadingFallback";
+import { MobileAppNavigation } from "./components/navigation/MobileAppNavigation";
+import {
+  shouldShowMobileAppNavigation,
+} from "./lib/mobileAppNavigation";
 import { PrivacidadTerminosPage } from "./components/legal/PrivacidadTerminosPage";
 import { useSyncPathname } from "./components/torneo-express/torneoExpressNav";
 import {
@@ -791,11 +795,23 @@ function AppContent() {
     isDuelo2v2Public ||
     isJugadoresPublic;
 
+  const showMobileAppNav =
+    !authLoading &&
+    Boolean(user) &&
+    shouldShowMobileAppNavigation({
+      pathname: appPathname,
+      currentView,
+      hasUser: Boolean(user),
+      isPublicSpectatorView,
+      userOrganizadorId: user?.id,
+    });
+
   const appShellClass = [
     "App",
     isPublicSpectatorView ? "App--public-full-width ro-public-view" : "",
     isJugadoresPublic ? "App--jugadores-public" : "",
     currentView === "legal" ? "App--legal" : "",
+    showMobileAppNav ? "has-mobile-app-navigation" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -1026,6 +1042,8 @@ function AppContent() {
         onClose={hideToast}
         duration={4000}
       />
+
+      {showMobileAppNav ? <MobileAppNavigation pathname={appPathname} /> : null}
     </div>
   );
 }

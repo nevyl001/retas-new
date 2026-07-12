@@ -1,25 +1,20 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ClubIdentity } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
-import { MobileUserMenu } from "./MobileUserMenu";
 import "./UserHeader.css";
 
 export const UserHeader: React.FC = () => {
   const { user, userProfile, signOut } = useUser();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const mobileButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
     setIsSigningOut(true);
     setShowDropdown(false);
-    setShowMobileMenu(false);
 
     try {
       await signOut();
@@ -52,26 +47,16 @@ export const UserHeader: React.FC = () => {
       ) {
         setShowDropdown(false);
       }
-
-      if (
-        showMobileMenu &&
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(target) &&
-        mobileButtonRef.current &&
-        !mobileButtonRef.current.contains(target)
-      ) {
-        setShowMobileMenu(false);
-      }
     };
 
-    if (showDropdown || showMobileMenu) {
+    if (showDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showDropdown, showMobileMenu]);
+  }, [showDropdown]);
 
   useEffect(() => {
     setAvatarLoadFailed(false);
@@ -137,30 +122,8 @@ export const UserHeader: React.FC = () => {
             </div>
           </div>
 
-          <div className="user-header-mobile mobile-only">
-            <button
-              ref={mobileButtonRef}
-              type="button"
-              className="user-header-mobile-btn"
-              onClick={() => setShowMobileMenu((open) => !open)}
-              aria-expanded={showMobileMenu}
-              aria-haspopup="menu"
-              aria-label="Menú de usuario"
-            >
-              <div className="user-avatar">{avatarContent}</div>
-              <span className="user-header-mobile-chevron" aria-hidden>
-                {showMobileMenu ? "▲" : "▼"}
-              </span>
-            </button>
-
-            {showMobileMenu && (
-              <div ref={mobileMenuRef} className="user-header-mobile-panel">
-                <MobileUserMenu
-                  onLogout={handleSignOut}
-                  isSigningOut={isSigningOut}
-                />
-              </div>
-            )}
+          <div className="user-header-mobile mobile-only" aria-hidden>
+            <div className="user-header-mobile-avatar user-avatar">{avatarContent}</div>
           </div>
         </div>
       </div>

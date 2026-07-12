@@ -81,12 +81,17 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
           <p className="te-grupos-card__standings-hint">
             Vista del bracket confirmado con resultados en vivo.
           </p>
-          <BracketCuadroPanel
-            bracketSlots={bundle.torneo.bracket_slots}
-            fase={fase}
-            partidos={bundle.eliminatoriaPartidos}
-            labelMap={labelMap}
-          />
+          <p className="te-bracket-scroll-hint">
+            Desliza horizontalmente para ver el cuadro completo.
+          </p>
+          <div className="te-bracket-scroll-container">
+            <BracketCuadroPanel
+              bracketSlots={bundle.torneo.bracket_slots}
+              fase={fase}
+              partidos={bundle.eliminatoriaPartidos}
+              labelMap={labelMap}
+            />
+          </div>
         </aside>
       </div>
     </div>

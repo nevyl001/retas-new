@@ -28,6 +28,8 @@ interface MatchesSectionProps {
   onBackToHome: () => void;
   onReloadMatches?: () => void;
   userId?: string;
+  hideStandings?: boolean;
+  hideBackButton?: boolean;
 }
 
 function renderRoundBlock(
@@ -121,6 +123,8 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   onBackToHome,
   onReloadMatches,
   userId,
+  hideStandings = false,
+  hideBackButton = false,
 }) => {
   const teamConfig = useResolvedTeamConfig(tournament, pairs);
 
@@ -312,17 +316,21 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         </>
       )}
 
-      <RealTimeStandingsTable
-        tournamentId={tournament.id}
-        forceRefresh={forceRefresh}
-        teamConfig={teamConfig}
-      />
+      {!hideStandings ? (
+        <RealTimeStandingsTable
+          tournamentId={tournament.id}
+          forceRefresh={forceRefresh}
+          teamConfig={teamConfig}
+        />
+      ) : null}
 
-      <div className="back-home-button-container riviera-back-toolbar">
-        <Button type="button" variant="back" onClick={onBackToHome}>
-          ← Volver al inicio
-        </Button>
-      </div>
+      {!hideBackButton ? (
+        <div className="back-home-button-container riviera-back-toolbar">
+          <Button type="button" variant="back" onClick={onBackToHome}>
+            ← Volver al inicio
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 };

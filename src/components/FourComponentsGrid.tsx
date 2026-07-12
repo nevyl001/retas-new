@@ -29,6 +29,7 @@ interface FourComponentsGridProps {
   onReset: () => Promise<void>;
   loadTournamentData: () => void;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
+  mobileFilter?: "jugadores" | "config" | null;
 }
 
 export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
@@ -53,6 +54,7 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
   onReset,
   loadTournamentData,
   setForceRefresh,
+  mobileFilter = null,
 }) => {
   const { validatePlayerSelection } = usePlayerValidation();
 
@@ -68,6 +70,8 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
 
   return (
     <div className="four-components-grid">
+      {(!mobileFilter || mobileFilter === "jugadores") && (
+      <>
       {/* Gestión de Jugadores */}
       <div className="component-card player-management-section">
         <div className="component-header">
@@ -127,7 +131,11 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
           </div>
         )}
       </div>
+      </>
+      )}
 
+      {(!mobileFilter || mobileFilter === "config") && (
+      <>
       {/* Panel de Estado de la Reta */}
       <div className="component-card reta-status-card">
         <div className="component-header">
@@ -220,6 +228,8 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 };

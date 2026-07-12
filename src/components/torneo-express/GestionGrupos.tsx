@@ -1,7 +1,9 @@
 import { useClubModeEyebrow } from "../../club-experience";
 import React, { useEffect, useMemo, useState } from "react";
+import { useMobileViewport } from "../../hooks/useMobileViewport";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
 import { eliminatoriaUltimaRondaCompleta, eliminatoriaBracketSize } from "../../lib/torneoExpress/bracketRounds";
+import { isGrupoPartidosCompletos } from "../../lib/torneoExpress/grupoCompletion";
 import {
   copyToClipboard,
   publicEliminatoriaUrl,
@@ -30,6 +32,19 @@ import {
 import type { TorneoExpressGrupo } from "../../lib/torneoExpress/types";
 import { Badge, Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
+import {
+  EmptyState,
+  ModeEventHeader,
+  ModeSectionPanel,
+  ModeSectionTabs,
+  MobileStickyActionFooter,
+} from "../platform";
+import {
+  resolveTeNextAction,
+  resolveTeStatusLabel,
+  resolveTeSummary,
+  type TeMobileTabId,
+} from "../../lib/modePresentation/teNextAction";
 import { TablerIcon } from "../ui/TablerIcon";
 import "./te-gestion-page.css";
 import "./te-fondos.css";
@@ -77,6 +92,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const [bracketOpen, setBracketOpen] = useState(false);
   const [resetElimOpen, setResetElimOpen] = useState(false);
   const [vista, setVista] = useState<"grupos" | "eliminatoria">("grupos");
+  const [mobileTab, setMobileTab] = useState<TeMobileTabId>("resumen");
+  const isMobile = useMobileViewport(767);
   const [confirmFinalizar, setConfirmFinalizar] = useState(false);
   const [actionToast, setActionToast] = useState<{
     message: string;
@@ -172,6 +189,327 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const puedeReiniciarEliminatoria =
     faseTorneo === "eliminatoria" && bundle?.torneo.estado !== "finalizado";
 
+  const hasPendingGrupoPartidos = useMemo(() => {
+    if (!bundle || faseTorneo !== "grupos") return false;
+    return Object.values(bundle.partidosPorGrupo)
+      .flat()
+      .some((p) => p.estado === "pendiente");
+  }, [bundle, faseTorneo]);
+
+  const allGruposCompletos = useMemo(() => {
+    if (!bundle || faseTorneo !== "grupos") return false;
+    const grupos = Object.values(bundle.partidosPorGrupo);
+    return (
+      grupos.length > 0 &&
+      grupos.every((partidos) => isGrupoPartidosCompletos(partidos))
+    );
+  }, [bundle, faseTorneo]);
+
+  const teStatus = resolveTeStatusLabel({
+    faseTorneo,
+    estado: bundle?.torneo.estado ?? "pendiente",
+  });
+
+  const teNextAction = bundle
+    ? resolveTeNextAction({
+        faseTorneo,
+        estado: bundle.torneo.estado,
+        puedeFinalizarTorneo,
+        hasPendingGrupoPartidos,
+        allGruposCompletos,
+      })
+    : null;
+
+  const teSummary = bundle
+    ? resolveTeSummary({
+        gruposCount: bundle.grupos.length,
+        faseTorneo,
+        estado: bundle.torneo.estado,
+      })
+    : "";
+
+  const teMobileTabs = useMemo(
+    () => [
+      { id: "resumen", label: "Resumen" },
+      { id: "grupos", label: "Grupos" },
+      { id: "partidos", label: "Partidos" },
+      { id: "eliminacion", label: "Eliminación" },
+      { id: "configuracion", label: "Config." },
+    ],
+    []
+  );
+
+  const renderGrupoSelector = () => (
+    <div
+      className="te-grupos-card__tabs"
+      role="tablist"
+      aria-label="Seleccionar grupo"
+    >
+      {bundle!.grupos.map((g) => (
+        <div key={g.id} className="te-grupos-tab-item">
+          {editingGrupoId === g.id ? (
+            <div
+              className="te-grupos-tab-edit"
+              role="group"
+              aria-label={`Renombrar ${g.nombre}`}
+            >
+              <input
+                type="text"
+                className="te-grupos-tab-edit__input"
+                value={draftGrupoNombre}
+                onChange={(e) => setDraftGrupoNombre(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void commitEditGrupo(g.id);
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelEditGrupo();
+                  }
+                }}
+                disabled={savingGrupoNombreId === g.id}
+                maxLength={80}
+                autoFocus
+                aria-label="Nuevo nombre del grupo"
+              />
+              <button
+                type="button"
+                className="te-grupos-tab-edit__btn te-grupos-tab-edit__btn--ok"
+                onClick={() => void commitEditGrupo(g.id)}
+                disabled={savingGrupoNombreId === g.id}
+                aria-label="Guardar nombre"
+              >
+                ✓
+              </button>
+              <button
+                type="button"
+                className="te-grupos-tab-edit__btn"
+                onClick={cancelEditGrupo}
+                disabled={savingGrupoNombreId === g.id}
+                aria-label="Cancelar"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <div
+              className={`te-grupos-tab-item__row${
+                g.id === grupoId ? " te-grupos-tab-item__row--active" : ""
+              }`}
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={g.id === grupoId}
+                className={`te-grupos-tab${
+                  g.id === grupoId ? " te-grupos-tab--active" : ""
+                }`}
+                onClick={() => setActiveGrupoId(g.id)}
+              >
+                <GrupoBadge nombre={g.nombre} orden={g.orden} />
+              </button>
+              <button
+                type="button"
+                className="te-grupos-tab__edit"
+                onClick={() => startEditGrupo(g)}
+                aria-label={`Renombrar ${g.nombre}`}
+                title="Renombrar grupo"
+              >
+                <TablerIcon name="pencil" size={14} aria-hidden={false} />
+              </button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+
+  const renderPartidosBlock = () => {
+    if (!grupo) {
+      return (
+        <EmptyState
+          title="Sin grupo seleccionado"
+          description="Selecciona un grupo para ver los partidos."
+        />
+      );
+    }
+
+    return (
+      <>
+        <h3 className="te-grupos-card__active-name te-label-section">
+          {grupo.nombre}
+        </h3>
+        <h3 className="te-grupos-card__partidos-title te-label-section">
+          Partidos
+        </h3>
+        <p className="te-grupos-card__partidos-hint">
+          Captura resultados, horarios y canchas de cada juego.
+        </p>
+        {(!partidosOrdenDisponible ||
+          !partidosCanchaDisponible ||
+          !partidosProgramadoDisponible) && (
+          <div className="te-partidos-migration-hint" role="alert">
+            <p>
+              Faltan columnas en Supabase para{" "}
+              {[
+                !partidosOrdenDisponible && "orden",
+                !partidosCanchaDisponible && "cancha",
+                !partidosProgramadoDisponible && "programado_en",
+              ]
+                .filter(Boolean)
+                .join(", ")}
+              .
+            </p>
+            <p className="te-partidos-migration-hint__sql">
+              Revisa el esquema de <strong>torneo_express_partidos</strong> en
+              Supabase y recarga.
+            </p>
+          </div>
+        )}
+        <PartidosGrupo
+          partidos={bundle!.partidosPorGrupo[grupo.id] ?? []}
+          parejas={bundle!.parejasPorGrupo[grupo.id] ?? []}
+          editable={faseTorneo === "grupos"}
+          allowReorder={partidosOrdenDisponible}
+          canchaEditable={partidosCanchaDisponible}
+          horarioEditable={partidosProgramadoDisponible}
+          savingPartidoId={savingPartidoId}
+          savingCanchaId={savingCanchaId}
+          savingProgramadoId={savingProgramadoId}
+          savingOrden={savingOrden}
+          onSaveResultado={faseTorneo === "grupos" ? saveResultado : undefined}
+          onSaveCancha={
+            faseTorneo === "grupos" && partidosCanchaDisponible
+              ? saveCancha
+              : undefined
+          }
+          onSaveProgramado={
+            faseTorneo === "grupos" && partidosProgramadoDisponible
+              ? saveProgramado
+              : undefined
+          }
+          onSaveOrden={
+            faseTorneo === "grupos" && partidosOrdenDisponible
+              ? saveOrden
+              : undefined
+          }
+        />
+      </>
+    );
+  };
+
+  const renderConfigActions = () => (
+    <div className="te-gestion-config-panel">
+      <ActionBar className="te-header__actions te-gestion-header__actions te-gestion-config-panel__actions">
+        {faseTorneo === "grupos" && bundle!.torneo.estado !== "finalizado" ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="te-btn-finalizar-fase"
+            onClick={() => setBracketOpen(true)}
+          >
+            Finalizar fase
+          </Button>
+        ) : null}
+        {puedeReanudarEliminatoria ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="te-btn-finalizar-fase"
+            loading={reabriendoTorneo}
+            disabled={reabriendoTorneo}
+            onClick={() => {
+              void reabrirTorneoEliminatoria();
+            }}
+          >
+            Reanudar eliminatoria
+          </Button>
+        ) : null}
+        {puedeReiniciarEliminatoria ? (
+          <Button
+            type="button"
+            variant="danger"
+            size="sm"
+            className="te-btn-finalizar-fase"
+            disabled={reiniciandoEliminatoria}
+            onClick={() => setResetElimOpen(true)}
+          >
+            <span className="te-btn-icon" aria-hidden>
+              ↻
+            </span>
+            Reiniciar eliminatoria
+          </Button>
+        ) : null}
+        {puedeFinalizarTorneo ? (
+          confirmFinalizar ? (
+            <div className="te-gestion-finalizar-confirm">
+              <p className="te-gestion-finalizar-confirm__text">
+                ¿Confirmas que el torneo ha terminado? Esta acción no se puede
+                deshacer.
+              </p>
+              <div className="te-gestion-finalizar-confirm__actions">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  loading={finalizandoTorneo}
+                  disabled={finalizandoTorneo}
+                  onClick={() => {
+                    void finalizarTorneoEliminatoria().finally(() =>
+                      setConfirmFinalizar(false)
+                    );
+                  }}
+                >
+                  Sí, finalizar torneo
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={finalizandoTorneo}
+                  onClick={() => setConfirmFinalizar(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="te-btn-finalizar-fase"
+              onClick={() => setConfirmFinalizar(true)}
+            >
+              Finalizar torneo
+            </Button>
+          )
+        ) : null}
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setTorneoExpressGeneralBack(
+              torneoId,
+              `/torneo-express/${torneoId}/gestionar`
+            );
+            navigateTorneoExpress(`/torneo-express/${torneoId}/general`);
+          }}
+        >
+          <span className="te-btn-icon" aria-hidden>
+            ⊞
+          </span>
+          Ver tabla general
+        </Button>
+      </ActionBar>
+      <TorneoExpressNotificacionesPanel torneoExpressId={torneoId} />
+    </div>
+  );
+
   const showActionToast = (
     message: string,
     type: "success" | "error"
@@ -212,9 +550,77 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   }
 
   const mostrarEliminatoria = enEliminatoria && vista === "eliminatoria";
+  const stickyActionLabel = isMobile && teNextAction ? teNextAction.label : null;
+  const categoriaLabel = formatTorneoExpressCategoria(bundle.torneo.categoria);
+
+  const publicLinks = (
+    <div
+      className="te-public-links-compact"
+      role="group"
+      aria-label="Enlaces públicos"
+    >
+      {enEliminatoria ? (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="te-public-link-btn"
+          onClick={() => copyLink(publicEliminatoriaUrl(torneoId))}
+        >
+          <span className="te-btn-icon" aria-hidden>
+            ⎘
+          </span>
+          Cuadro eliminatorio
+        </Button>
+      ) : null}
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        className="te-public-link-btn"
+        onClick={() => copyLink(publicGruposUrl(torneoId))}
+      >
+        <span className="te-btn-icon" aria-hidden>
+          ⎘
+        </span>
+        Tablas por grupo
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        className="te-public-link-btn"
+        onClick={() => copyLink(publicGeneralUrl(torneoId))}
+      >
+        <span className="te-btn-icon" aria-hidden>
+          ⎘
+        </span>
+        Tabla general
+      </Button>
+      {grupo && !mostrarEliminatoria ? (
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="te-public-link-btn"
+          onClick={() => copyLink(publicGrupoUrl(torneoId, grupo.id))}
+        >
+          <span className="te-btn-icon" aria-hidden>
+            ⎘
+          </span>
+          Grupo activo
+        </Button>
+      ) : null}
+      {copyMsg ? <span className="te-copy-ok">{copyMsg}</span> : null}
+    </div>
+  );
 
   return (
-    <TePageShell className="te-gestion-page">
+    <TePageShell
+      className={`te-gestion-page${
+        stickyActionLabel ? " has-mobile-sticky-action" : ""
+      }`}
+    >
       <ActionBar className="te-gestion-back-toolbar riviera-back-toolbar">
         <Button
           type="button"
@@ -225,6 +631,133 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         </Button>
       </ActionBar>
 
+      {isMobile ? (
+        <div className="mode-mobile-shell mode-mobile-shell--tabbed te-mobile-shell">
+          <ModeEventHeader
+            eyebrow={modeEyebrow}
+            title={bundle.torneo.nombre}
+            modality={[categoriaLabel, fasePill].filter(Boolean).join(" · ")}
+            statusLabel={teStatus.label}
+            statusVariant={teStatus.variant}
+            summary={teSummary}
+            nextActionLabel={teNextAction?.label}
+            onNextAction={
+              teNextAction
+                ? () => setMobileTab(teNextAction.tabId)
+                : undefined
+            }
+          />
+          <ModeSectionTabs
+            tabs={teMobileTabs}
+            activeId={mobileTab}
+            onChange={(id) => setMobileTab(id as TeMobileTabId)}
+            ariaLabel="Secciones del torneo express"
+          />
+
+          <ModeSectionPanel id="resumen" activeId={mobileTab}>
+            {publicLinks}
+            {error ? <p className="te-error">{error}</p> : null}
+            {actionToast ? (
+              <div
+                className={`te-gestion-toast te-gestion-toast--${actionToast.type}`}
+                role="status"
+                aria-live="polite"
+              >
+                {actionToast.message}
+              </div>
+            ) : null}
+          </ModeSectionPanel>
+
+          <ModeSectionPanel id="grupos" activeId={mobileTab}>
+            <div className="torneo-express-card te-grupos-card te-gestion-card">
+              <h2 className="te-grupos-card__title te-label-section">Grupos</h2>
+              {renderGrupoSelector()}
+              {grupo ? (
+                <>
+                  <h3 className="te-grupos-card__active-name te-label-section">
+                    {grupo.nombre}
+                  </h3>
+                  <p className="te-grupos-card__standings-hint">
+                    Se actualiza sola al guardar resultados en los partidos.
+                  </p>
+                  <TablaGrupo
+                    rows={standingsByGrupo[grupo.id] ?? []}
+                    scoringHelpVariant="express"
+                  />
+                </>
+              ) : (
+                <EmptyState
+                  title="Sin grupos"
+                  description="Todavía no hay grupos en este torneo."
+                />
+              )}
+            </div>
+          </ModeSectionPanel>
+
+          <ModeSectionPanel id="partidos" activeId={mobileTab}>
+            <div className="torneo-express-card te-grupos-card te-gestion-card">
+              {renderGrupoSelector()}
+              {renderPartidosBlock()}
+            </div>
+          </ModeSectionPanel>
+
+          <ModeSectionPanel id="eliminacion" activeId={mobileTab}>
+            {enEliminatoria ? (
+              <GestionEliminatoria
+                bundle={bundle}
+                labelMap={eliminatoriaLabelMap}
+                editable={
+                  faseTorneo === "eliminatoria" || faseTorneo === "cerrado"
+                }
+                savingEliminatoriaId={savingEliminatoriaId}
+                savingEliminatoriaCanchaId={savingEliminatoriaCanchaId}
+                savingEliminatoriaProgramadoId={savingEliminatoriaProgramadoId}
+                onSaveResultado={saveEliminatoriaResultado}
+                onSaveCancha={saveEliminatoriaCancha}
+                onSaveProgramado={saveEliminatoriaProgramado}
+              />
+            ) : (
+              <EmptyState
+                title="Eliminatoria pendiente"
+                description="Finaliza la fase de grupos para configurar el cuadro eliminatorio."
+              />
+            )}
+          </ModeSectionPanel>
+
+          <ModeSectionPanel id="configuracion" activeId={mobileTab}>
+            {renderConfigActions()}
+          </ModeSectionPanel>
+
+          {stickyActionLabel ? (
+            <MobileStickyActionFooter>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => {
+                  if (!teNextAction) return;
+                  if (
+                    teNextAction.label === "Finalizar fase" ||
+                    (teNextAction.label === "Finalizar torneo" &&
+                      !confirmFinalizar)
+                  ) {
+                    if (teNextAction.label === "Finalizar fase") {
+                      setBracketOpen(true);
+                    } else {
+                      setConfirmFinalizar(true);
+                    }
+                    setMobileTab("configuracion");
+                    return;
+                  }
+                  setMobileTab(teNextAction.tabId);
+                }}
+              >
+                {stickyActionLabel}
+              </Button>
+            </MobileStickyActionFooter>
+          ) : null}
+        </div>
+      ) : (
+        <>
       <header className="te-header te-gestion-header rv-mode-header">
         {modeEyebrow ? (
           <p className="rv-mode-header__eyebrow te-gestion-header__eyebrow">
@@ -359,65 +892,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         </ActionBar>
       </header>
 
-      <div
-        className="te-public-links-compact"
-        role="group"
-        aria-label="Enlaces públicos"
-      >
-        {enEliminatoria ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="te-public-link-btn"
-            onClick={() => copyLink(publicEliminatoriaUrl(torneoId))}
-          >
-            <span className="te-btn-icon" aria-hidden>
-              ⎘
-            </span>
-            Cuadro eliminatorio
-          </Button>
-        ) : null}
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="te-public-link-btn"
-          onClick={() => copyLink(publicGruposUrl(torneoId))}
-        >
-          <span className="te-btn-icon" aria-hidden>
-            ⎘
-          </span>
-          Tablas por grupo
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="te-public-link-btn"
-          onClick={() => copyLink(publicGeneralUrl(torneoId))}
-        >
-          <span className="te-btn-icon" aria-hidden>
-            ⎘
-          </span>
-          Tabla general
-        </Button>
-        {grupo && !mostrarEliminatoria ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="te-public-link-btn"
-            onClick={() => copyLink(publicGrupoUrl(torneoId, grupo.id))}
-          >
-            <span className="te-btn-icon" aria-hidden>
-              ⎘
-            </span>
-            Grupo activo
-          </Button>
-        ) : null}
-        {copyMsg ? <span className="te-copy-ok">{copyMsg}</span> : null}
-      </div>
+      {publicLinks}
 
       {error && <p className="te-error">{error}</p>}
 
@@ -645,6 +1120,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       )}
 
       <TorneoExpressNotificacionesPanel torneoExpressId={torneoId} />
+        </>
+      )}
 
       <TorneoExpressResetEliminatoriaModal
         open={resetElimOpen}

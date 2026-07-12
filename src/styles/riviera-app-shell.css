@@ -1,5 +1,12 @@
 /* Shell unificado — Home y Liga (Torneo Express usa su propio .torneo-express-page) */
 
+:root {
+  --mobile-app-navigation-height: 56px;
+  --mobile-app-navigation-offset: calc(
+    var(--mobile-app-navigation-height) + var(--ro-safe-bottom, env(safe-area-inset-bottom, 0px)) + 8px
+  );
+}
+
 .main-layout,
 .liga-page {
   position: relative;
@@ -70,5 +77,15 @@
     padding: clamp(16px, 4vw, 24px) clamp(14px, 3.8vw, 20px)
       max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
     overflow-x: clip;
+  }
+
+  .has-mobile-app-navigation .main-layout,
+  .has-mobile-app-navigation .liga-page,
+  .has-mobile-app-navigation .torneo-express-page:not(.te-public),
+  .has-mobile-app-navigation .duelo2v2-page:not(.duelo2v2-page--public),
+  .has-mobile-app-navigation .rj-page,
+  .has-mobile-app-navigation .americano-screen.rv-page,
+  .has-mobile-app-navigation .mis-retas-page.tournament-manager {
+    padding-bottom: var(--mobile-app-navigation-offset);
   }
 }

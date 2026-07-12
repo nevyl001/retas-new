@@ -1,5 +1,8 @@
 import React from "react";
 import "../styles/riviera-organizer.css";
+import { useSyncPathname } from "./torneo-express/torneoExpressNav";
+import { navigateToAppHome } from "../lib/appRouting";
+import { isMisEventosSearch } from "../lib/mobileAppNavigation";
 import { Button } from "./ui";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { continueTournament } from "../lib/tournamentRouting";
@@ -103,7 +106,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   onShowWinnerScreen,
   onBackToHome,
 }) => {
-  const [showAllRetas, setShowAllRetas] = React.useState(false);
+  const appPathname = useSyncPathname();
+  const [showAllRetas, setShowAllRetas] = React.useState(() =>
+    typeof window !== "undefined" ? isMisEventosSearch(window.location.search) : false
+  );
+
+  React.useEffect(() => {
+    if (selectedTournament) {
+      setShowAllRetas(false);
+      return;
+    }
+    setShowAllRetas(isMisEventosSearch(window.location.search));
+  }, [appPathname, selectedTournament]);
 
   const handleTournamentSelect = React.useCallback(
     (tournament: Tournament | null) => {
@@ -137,7 +151,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <div className="home-inner">
               <TournamentManager
                 onTournamentSelect={handleTournamentSelect}
-                onBack={() => setShowAllRetas(false)}
+                onBack={() => {
+                  setShowAllRetas(false);
+                  if (isMisEventosSearch(window.location.search)) {
+                    navigateToAppHome();
+                  }
+                }}
               />
             </div>
           ) : (
@@ -148,7 +167,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             />
           )
         ) : (
-          <GameModeShell className="reta-content riviera-organizer-reta">
+          <GameModeShell className="reta-content riviera-organizer-reta has-mobile-sticky-action">
             {error ? (
               <div className="riviera-inline-error" role="alert">
                 {error}

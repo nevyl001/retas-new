@@ -226,6 +226,18 @@
   flex-shrink: 0;
 }
 
+.user-header-mobile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
 .user-header-mobile-btn {
   display: inline-flex;
   align-items: center;

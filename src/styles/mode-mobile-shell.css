@@ -1,0 +1,279 @@
+/* Mode mobile shell — Fase 3 internal navigation */
+
+.mode-section-tabs {
+  display: none;
+  gap: 0.35rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.25rem 0 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--ro-border-subtle, var(--border-subtle));
+}
+
+.mode-section-tabs__btn {
+  flex: 0 0 auto;
+  min-height: var(--ro-touch-target-min, 44px);
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--ro-border, var(--border-default));
+  border-radius: var(--ro-radius-full, 999px);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ro-text-secondary, var(--text-secondary));
+  font-family: var(--ro-font-body, var(--font-body));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.mode-section-tabs__btn:hover {
+  color: var(--ro-text-primary, var(--text-primary));
+  border-color: var(--ro-border-accent, var(--border-accent));
+}
+
+.mode-section-tabs__btn:focus-visible {
+  outline: 2px solid var(--ro-accent, var(--accent-gold));
+  outline-offset: 2px;
+}
+
+.mode-section-tabs__btn--active {
+  color: var(--ro-text-primary, var(--text-primary));
+  border-color: var(--ro-accent, #ffffff);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mode-section-panel--inactive {
+  display: none;
+}
+
+.mode-event-header {
+  display: none;
+  margin-bottom: 1rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  border-radius: var(--ro-radius-lg, 14px);
+  background: var(--ro-bg-card, var(--bg-card));
+}
+
+.mode-event-header__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted, var(--text-muted));
+}
+
+.mode-event-header__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.mode-event-header__title {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.25;
+  color: var(--ro-text-primary, var(--text-primary));
+}
+
+.mode-event-header__modality,
+.mode-event-header__summary {
+  margin: 0.45rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ro-text-secondary, var(--text-secondary));
+}
+
+.mode-event-header__next {
+  width: 100%;
+  margin-top: 0.75rem;
+  justify-content: center;
+}
+
+.reta-danger-zone {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.reta-danger-zone__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--loss, #f87171);
+}
+
+.duelo2v2-equipos-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.duelo2v2-equipo-card {
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  border-radius: var(--ro-radius-lg, 14px);
+  background: var(--ro-bg-card, var(--bg-card));
+}
+
+.duelo2v2-equipo-card__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted, var(--text-muted));
+}
+
+.duelo2v2-equipo-card__name {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ro-text-primary, var(--text-primary));
+}
+
+.duelo2v2-equipo-card__players {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ro-text-secondary, var(--text-secondary));
+  font-size: 0.875rem;
+}
+
+.americano-screen__jugadores-compact {
+  padding: 0.75rem 0;
+}
+
+.americano-screen__jugadores-count {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  color: var(--ro-text-secondary, var(--text-secondary));
+}
+
+.americano-screen__jugadores-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.americano-screen__jugadores-list li {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  border-radius: var(--ro-radius-md, 10px);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.875rem;
+}
+
+.te-gestion-config-panel__actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.te-gestion-config-panel .te-gestion-finalizar-confirm {
+  width: 100%;
+}
+
+.mobile-sticky-action-footer {
+  display: none;
+}
+
+:root {
+  --mobile-sticky-action-height: 64px;
+  --mobile-sticky-action-offset: calc(
+    var(--mobile-sticky-action-height) + var(--ro-safe-bottom, env(safe-area-inset-bottom, 0px)) + 8px
+  );
+}
+
+.liga-ranking-table-desktop,
+.te-standings-table-desktop {
+  display: block;
+}
+
+.liga-ranking-mobile-cards,
+.te-standings-mobile-cards {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mode-section-tabs,
+  .mode-event-header {
+    display: flex;
+  }
+
+  .mode-event-header {
+    flex-direction: column;
+  }
+
+  .mode-mobile-shell--tabbed .reta-desktop-only {
+    display: none !important;
+  }
+
+  .mobile-sticky-action-footer {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: calc(var(--ro-z-sticky, 50) + 2);
+    padding-bottom: var(--ro-safe-bottom, env(safe-area-inset-bottom, 0px));
+    background: var(--ro-bg-deep, var(--bg-base));
+    border-top: 1px solid var(--ro-border, var(--border-subtle));
+    box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .mobile-sticky-action-footer__inner {
+    display: flex;
+    gap: 0.5rem;
+    min-height: var(--mobile-sticky-action-height);
+    padding: 0.5rem var(--ro-mobile-page-padding, 14px);
+    align-items: center;
+  }
+
+  .mobile-sticky-action-footer__inner .riviera-btn {
+    flex: 1;
+    min-height: var(--ro-touch-target-min, 44px);
+  }
+
+  .has-mobile-sticky-action .main-layout,
+  .has-mobile-sticky-action .liga-page,
+  .has-mobile-sticky-action .torneo-express-page:not(.te-public),
+  .has-mobile-sticky-action .duelo2v2-page:not(.duelo2v2-page--public),
+  .has-mobile-sticky-action .americano-screen.rv-page,
+  .has-mobile-sticky-action .reta-content.rv-page {
+    padding-bottom: var(--mobile-sticky-action-offset);
+  }
+
+  .liga-ranking-table-desktop,
+  .te-standings-table-desktop,
+  .liga-jornada-ranking-table-wrap .liga-ranking-table {
+    display: none !important;
+  }
+
+  .liga-ranking-mobile-cards,
+  .te-standings-mobile-cards {
+    display: flex;
+  }
+
+  .te-bracket-scroll-hint {
+    display: block;
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: var(--ro-text-muted, var(--text-muted));
+  }
+
+  .te-bracket-scroll-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .mode-mobile-shell--tabbed .reta-mobile-only {
+    display: none !important;
+  }
+}

@@ -470,3 +470,61 @@ select.riviera-input:disabled {
     transform: translateY(0);
   }
 }
+
+/* ── Móvil compacto (≤479px): inputs sin zoom iOS ── */
+@media (max-width: 479px) {
+  .riviera-input,
+  .riviera-textarea,
+  select.riviera-input,
+  select.riviera-select,
+  .riviera-select {
+    font-size: var(--ro-input-font-size-mobile);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(
+      [type="color"]
+    ):not([type="hidden"]):not([type="file"]),
+  select:not([multiple]),
+  textarea {
+    font-size: var(--ro-input-font-size-mobile);
+  }
+}
+
+/* ── Modal sheet móvil: viewport dinámico + scroll interno ── */
+@media (max-width: 479px) {
+  .riviera-modal-overlay--sheet {
+    align-items: flex-end;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .riviera-modal-overlay--sheet .riviera-modal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    max-height: 100dvh;
+    margin: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .riviera-modal-overlay--sheet .riviera-modal__header {
+    flex-shrink: 0;
+  }
+
+  .riviera-modal-overlay--sheet .riviera-modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  .riviera-modal-overlay--sheet .riviera-modal__footer {
+    flex-shrink: 0;
+    padding-bottom: calc(var(--space-4) + var(--ro-safe-bottom));
+  }
+}

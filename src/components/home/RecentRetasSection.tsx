@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { Tournament } from "../../lib/database";
-import { loadUserRetasForHome, type HomeRetaItem } from "../../lib/retasList";
+import {
+  getRetaCreatedAt,
+  isRetaActive,
+  loadUserRetasForHome,
+  type HomeRetaItem,
+} from "../../lib/retasList";
 import { duelo2v2GestionarPath, navigateDuelo2v2 } from "../duelo-2v2/duelo2v2Nav";
 import { EmptyStateRetas } from "./EmptyStateRetas";
 import { RecentRetaCard } from "./RecentRetaCard";
@@ -47,12 +52,22 @@ export const RecentRetasSection: React.FC<RecentRetasSectionProps> = ({
     onSelectTournament(item.tournament);
   };
 
-  const recent = retas.slice(0, 8);
+  const recent = useMemo(() => {
+    const sorted = [...retas].sort((a, b) => {
+      const aActive = isRetaActive(a) ? 1 : 0;
+      const bActive = isRetaActive(b) ? 1 : 0;
+      if (aActive !== bActive) return bActive - aActive;
+      return (
+        new Date(getRetaCreatedAt(b)).getTime() - new Date(getRetaCreatedAt(a)).getTime()
+      );
+    });
+    return sorted.slice(0, 8);
+  }, [retas]);
 
   return (
     <section className="recent-retas-section" aria-labelledby="recent-retas-heading">
       <h2 id="recent-retas-heading" className="home-section-title">
-        Retas recientes
+        Eventos activos y recientes
       </h2>
       {loading && <p className="home-muted">Cargando retas…</p>}
       {!loading && recent.length === 0 && <EmptyStateRetas />}

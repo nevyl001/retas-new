@@ -1,5 +1,12 @@
 import React from "react";
 import { useClubModeEyebrow } from "../../club-experience";
+import { useMobileViewport } from "../../hooks/useMobileViewport";
+import {
+  resolveAmericanoNextAction,
+  resolveAmericanoStatusLabel,
+  resolveAmericanoSummary,
+  type AmericanoMobileTabId,
+} from "../../lib/modePresentation/americanoNextAction";
 import { useAmericanoDinamico } from "../../hooks/useAmericanoDinamico";
 import { PlayerRegistration } from "./PlayerRegistration";
 import { RoundView } from "./RoundView";
@@ -26,6 +33,11 @@ import {
   saveAmericanoDinamicoSnapshot,
 } from "../../lib/americanoDinamicoStorage";
 import { ModeHeader } from "../platform/ModeHeader";
+import {
+  ModeEventHeader,
+  ModeSectionPanel,
+  ModeSectionTabs,
+} from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import { AmericanoModeShell } from "./AmericanoModeShell";
 import "../public/riviera-public-americano.css";
@@ -48,6 +60,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 }) => {
   const { user } = useUser();
   const modeEyebrow = useClubModeEyebrow();
+  const isMobile = useMobileViewport(767);
+  const [playingTab, setPlayingTab] = React.useState<AmericanoMobileTabId>("ronda");
   const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
   const effectiveUserId = userId || user?.id || null;
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
@@ -356,19 +370,94 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   }
 
   if (phase === "playing") {
-    return (
-      <AmericanoModeShell onBack={goBackToRetas}>
-        {syncWarning}
-        {tournamentBanner}
-        {publicAmericanoUrl ? (
-          <PublicShareSection
-            publicUrl={publicAmericanoUrl}
-            title="Enlace público"
-            infoLines={[
-              "Comparte el enlace para ver marcador y emparejamientos en vivo.",
-            ]}
+    const americanoStatus = resolveAmericanoStatusLabel({ phase });
+    const americanoNextAction = resolveAmericanoNextAction({
+      phase,
+      playersCount: players.length,
+      hasCurrentRound: Boolean(currentRound),
+    });
+    const americanoSummary = resolveAmericanoSummary({
+      phase,
+      playersCount: players.length,
+      currentRound: currentRound?.roundNumber ?? 0,
+      totalRounds,
+    });
+    const americanoTabs = [
+      { id: "ronda", label: "Ronda" },
+      { id: "partidos", label: "Partidos" },
+      { id: "ranking", label: "Ranking" },
+      { id: "jugadores", label: "Jugadores" },
+    ];
+
+    const jugadoresPanel = (
+      <div className="americano-screen__jugadores-compact">
+        <p className="americano-screen__jugadores-count">
+          {players.length} jugadores en el torneo
+        </p>
+        <ul className="americano-screen__jugadores-list">
+          {rosterForUi.map((p) => (
+            <li key={p.id}>{p.name}</li>
+          ))}
+        </ul>
+      </div>
+    );
+
+    const playingBody = isMobile ? (
+      <div className="mode-mobile-shell mode-mobile-shell--tabbed americano-mobile-shell">
+        <ModeEventHeader
+          eyebrow={modeEyebrow || "Americano"}
+          title={tournamentName || "Americano Dinámico"}
+          modality="Americano dinámico"
+          statusLabel={americanoStatus.label}
+          statusVariant={americanoStatus.variant}
+          summary={americanoSummary}
+          nextActionLabel={americanoNextAction?.label}
+          onNextAction={
+            americanoNextAction
+              ? () => setPlayingTab(americanoNextAction.tabId)
+              : undefined
+          }
+        />
+        <ModeSectionTabs
+          tabs={americanoTabs}
+          activeId={playingTab}
+          onChange={(id) => setPlayingTab(id as AmericanoMobileTabId)}
+          ariaLabel="Secciones del americano"
+        />
+        <ModeSectionPanel id="ronda" activeId={playingTab}>
+          {currentRound ? (
+            <RoundView
+              key={currentRound.roundNumber}
+              round={currentRound}
+              totalRounds={totalRounds}
+              onCommitRound={commitRoundScores}
+              onRoundFinalized={nextRound}
+            />
+          ) : (
+            <p className="americano-screen__loading">Preparando ronda…</p>
+          )}
+        </ModeSectionPanel>
+        <ModeSectionPanel id="partidos" activeId={playingTab}>
+          <RoundHistory
+            rounds={rounds}
+            totalRounds={totalRounds}
+            onEditScore={editScore}
           />
-        ) : null}
+        </ModeSectionPanel>
+        <ModeSectionPanel id="ranking" activeId={playingTab}>
+          <LiveRanking
+            ranked={ranking}
+            roster={rosterForUi}
+            rounds={rounds}
+            caption="Acumulado de todo el americano: suma cada ronda en cuanto confirmes los marcadores."
+          />
+        </ModeSectionPanel>
+        <ModeSectionPanel id="jugadores" activeId={playingTab}>
+          {jugadoresPanel}
+        </ModeSectionPanel>
+      </div>
+    ) : (
+      <>
         {currentRound && (
           <RoundView
             key={currentRound.roundNumber}
@@ -393,6 +482,23 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             onEditScore={editScore}
           />
         </div>
+      </>
+    );
+
+    return (
+      <AmericanoModeShell onBack={goBackToRetas}>
+        {syncWarning}
+        {tournamentBanner}
+        {publicAmericanoUrl ? (
+          <PublicShareSection
+            publicUrl={publicAmericanoUrl}
+            title="Enlace público"
+            infoLines={[
+              "Comparte el enlace para ver marcador y emparejamientos en vivo.",
+            ]}
+          />
+        ) : null}
+        {playingBody}
       </AmericanoModeShell>
     );
   }

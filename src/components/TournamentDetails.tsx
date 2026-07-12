@@ -16,6 +16,7 @@ import PairsDisplay from "./PairsDisplay";
 import { useResolvedTeamConfig } from "../hooks/useResolvedTeamConfig";
 import MatchesSection from "./MatchesSection";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
+import { RetaMobileOrganizerLayout } from "./reta/RetaMobileOrganizerLayout";
 
 interface TournamentDetailsProps {
   selectedTournament: Tournament;
@@ -153,6 +154,40 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   }, [selectedTournament.id, refreshAmericanoSnapshot]);
 
   return (
+    <RetaMobileOrganizerLayout
+      selectedTournament={selectedTournament}
+      pairs={pairs}
+      matches={matches}
+      pairStats={pairStats}
+      matchesByRound={matchesByRound}
+      loading={loading}
+      showPlayerManager={showPlayerManager}
+      setShowPlayerManager={setShowPlayerManager}
+      showPairManager={showPairManager}
+      setShowPairManager={setShowPairManager}
+      showTournamentStatus={showTournamentStatus}
+      setShowTournamentStatus={setShowTournamentStatus}
+      showDebugInfo={showDebugInfo}
+      setShowDebugInfo={setShowDebugInfo}
+      selectedPlayers={selectedPlayers}
+      setSelectedPlayers={setSelectedPlayers}
+      setError={setError}
+      addPair={addPair}
+      updatePairPlayers={updatePairPlayers}
+      deletePair={deletePair}
+      userId={userId}
+      onReset={onReset}
+      loadTournamentData={loadTournamentData}
+      setForceRefresh={setForceRefresh}
+      forceRefresh={forceRefresh}
+      onStartTournament={onStartTournament}
+      onCopyPublicLink={onCopyPublicLink}
+      generatePublicLink={generatePublicLink}
+      onBackToHome={onBackToHome}
+      isAmericanoShell={isAmericanoShell}
+      americanoSnapshot={americanoSnapshot}
+      americanoRemoteLoading={americanoRemoteLoading}
+      desktopContent={
     <div className="tournament-details">
       {/* Sección para iniciar torneo */}
       <StartTournamentSection
@@ -253,6 +288,8 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
         />
       )}
     </div>
+      }
+    />
   );
 };
 

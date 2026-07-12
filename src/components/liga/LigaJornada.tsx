@@ -48,6 +48,8 @@ import { ModeHeader } from "../platform/ModeHeader";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
 import { LigaPageShell } from "./LigaPageShell";
+import { LigaSimpleRankingDual } from "./LigaSimpleRankingDual";
+import type { SimpleRankingPresentationRow } from "../../lib/modePresentation/standingsRowAdapters";
 import "./liga-page.css";
 
 interface LigaJornadaProps {
@@ -176,6 +178,57 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
   const jornadaStats = useMemo(
     () => computeJornadaPublicStats(jornada, { parejasFijas: esParejasFijas }),
     [jornada, esParejasFijas]
+  );
+
+  const jornadaJugadoresRows = useMemo<SimpleRankingPresentationRow[]>(
+    () =>
+      jornadaStats.rankingJugadores.map((row) => ({
+        key: row.jugadorId,
+        position: row.posicion,
+        label: row.nombre,
+        points: row.puntos,
+      })),
+    [jornadaStats.rankingJugadores]
+  );
+
+  const jornadaParejasRows = useMemo<SimpleRankingPresentationRow[]>(
+    () =>
+      jornadaStats.rankingParejas.map((row) => ({
+        key: row.parejaId,
+        position: row.posicion,
+        label: row.nombre,
+        points: row.puntos,
+        pg: row.victorias,
+      })),
+    [jornadaStats.rankingParejas]
+  );
+
+  const rankingEquiposRows = useMemo<SimpleRankingPresentationRow[]>(
+    () =>
+      rankingEquipos.map((row) => ({
+        key: row.equipo_id,
+        position: row.posicion,
+        label: row.nombre,
+        points: row.puntos,
+        matchesPlayed: row.partidos_jugados,
+        pg: row.partidos_ganados,
+        pp: row.partidos_perdidos,
+        pointsFav: row.games_favor,
+        pointsCon: row.games_contra,
+      })),
+    [rankingEquipos]
+  );
+
+  const rankingJugadoresRows = useMemo<SimpleRankingPresentationRow[]>(
+    () =>
+      ranking.map((row) => ({
+        key: row.jugador_id,
+        position: row.posicion,
+        label: row.nombre,
+        points: row.puntos,
+        matchesPlayed: row.jornadas_jugadas,
+      })),
+    [ranking]
   );
 
   const partidosByRonda = useMemo(() => {
@@ -881,70 +934,37 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
 
         <aside className="liga-jornada-admin__aside">
           {!esParejasFijas && (
-          <div className="liga-card liga-jornada-ranking-card">
-            <h2 className="liga-card__title">Puntos de esta jornada</h2>
-            <p className="liga-hint">
-              Calculado desde los partidos guardados (games por jugador).
-            </p>
-            {jornadaStats.rankingJugadores.length === 0 ? (
-              <p className="liga-empty">Sin resultados aún.</p>
-            ) : (
-              <table className="liga-ranking-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Jugador</th>
-                    <th>Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jornadaStats.rankingJugadores.map((row) => (
-                    <tr
-                      key={row.jugadorId}
-                      className={
-                        row.posicion <= 3 ? "liga-ranking-top" : undefined
-                      }
-                    >
-                      <td>{row.posicion}</td>
-                      <td>{row.nombre}</td>
-                      <td>{row.puntos}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+          <>
+            <LigaSimpleRankingDual
+              title="Puntos de esta jornada"
+              hint="Calculado desde los partidos guardados (games por jugador)."
+              rows={jornadaJugadoresRows}
+              columns={[
+                { key: "pos", header: "#", render: (r) => r.position },
+                { key: "nombre", header: "Jugador", render: (r) => r.label },
+                { key: "pts", header: "Pts", render: (r) => r.points },
+              ]}
+              topRowClassName={(r) =>
+                r.position <= 3 ? "liga-ranking-top" : undefined
+              }
+            />
 
-            {jornadaStats.rankingParejas.length > 0 && (
-              <>
-                <h3 className="liga-jornada-ranking-card__subtitle">Parejas</h3>
-                <table className="liga-ranking-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Pareja</th>
-                      <th>V</th>
-                      <th>Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {jornadaStats.rankingParejas.map((row) => (
-                      <tr
-                        key={row.parejaId}
-                        className={
-                          row.parejaId === jornadaStats.ganadorPareja?.parejaId
-                            ? "liga-ranking-top"
-                            : undefined
-                        }
-                      >
-                        <td>{row.posicion}</td>
-                        <td>{row.nombre}</td>
-                        <td>{row.victorias}</td>
-                        <td>{row.puntos}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </>
+            {jornadaParejasRows.length > 0 && (
+              <LigaSimpleRankingDual
+                title="Parejas"
+                rows={jornadaParejasRows}
+                columns={[
+                  { key: "pos", header: "#", render: (r) => r.position },
+                  { key: "nombre", header: "Pareja", render: (r) => r.label },
+                  { key: "v", header: "V", render: (r) => r.pg ?? 0 },
+                  { key: "pts", header: "Pts", render: (r) => r.points },
+                ]}
+                topRowClassName={(r) =>
+                  r.key === jornadaStats.ganadorPareja?.parejaId
+                    ? "liga-ranking-top"
+                    : undefined
+                }
+              />
             )}
 
             {jornadaStats.ganadorPareja && todosPartidosCompletos && (
@@ -953,7 +973,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                 {jornadaStats.ganadorPareja.victorias} victorias)
               </p>
             )}
-          </div>
+          </>
           )}
 
           <div className="liga-card liga-jornada-ranking-card">
@@ -966,73 +986,51 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
                 : "Puntos en base de datos de la liga. Al guardar resultados o finalizar, se recalcula automáticamente."}
             </p>
             {esParejasFijas ? (
-              rankingEquipos.length === 0 ? (
-                <p className="liga-empty">Sin puntos en la liga aún.</p>
-              ) : (
-                <table className="liga-ranking-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Pareja</th>
-                      <th>PJ</th>
-                      <th>PG</th>
-                      <th>PP</th>
-                      <th>GF</th>
-                      <th>GC</th>
-                      <th>DIF</th>
-                      <th>PTS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rankingEquipos.map((row) => (
-                      <tr
-                        key={row.equipo_id}
-                        className={
-                          row.posicion <= 3 ? "liga-ranking-top" : undefined
-                        }
-                      >
-                        <td>{row.posicion}</td>
-                        <td>{row.nombre}</td>
-                        <td>{row.partidos_jugados}</td>
-                        <td>{row.partidos_ganados}</td>
-                        <td>{row.partidos_perdidos}</td>
-                        <td>{row.games_favor}</td>
-                        <td>{row.games_contra}</td>
-                        <td>{row.diferencia_games}</td>
-                        <td>{row.puntos}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )
-            ) : ranking.length === 0 ? (
-              <p className="liga-empty">Sin puntos en la liga aún.</p>
+              <LigaSimpleRankingDual
+                title=""
+                rows={rankingEquiposRows}
+                embedded
+                emptyMessage="Sin puntos en la liga aún."
+                columns={[
+                  { key: "pos", header: "#", render: (r) => r.position },
+                  { key: "nombre", header: "Pareja", render: (r) => r.label },
+                  { key: "pj", header: "PJ", render: (r) => r.matchesPlayed ?? 0 },
+                  { key: "pg", header: "PG", render: (r) => r.pg ?? 0 },
+                  { key: "pp", header: "PP", render: (r) => r.pp ?? 0 },
+                  { key: "gf", header: "GF", render: (r) => r.pointsFav ?? 0 },
+                  { key: "gc", header: "GC", render: (r) => r.pointsCon ?? 0 },
+                  {
+                    key: "dif",
+                    header: "DIF",
+                    render: (r) =>
+                      (r.pointsFav ?? 0) - (r.pointsCon ?? 0),
+                  },
+                  { key: "pts", header: "PTS", render: (r) => r.points },
+                ]}
+                topRowClassName={(r) =>
+                  r.position <= 3 ? "liga-ranking-top" : undefined
+                }
+              />
             ) : (
-              <table className="liga-ranking-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Jugador</th>
-                    <th>Pts</th>
-                    <th>Jorn.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ranking.map((row) => (
-                    <tr
-                      key={row.jugador_id}
-                      className={
-                        row.posicion <= 3 ? "liga-ranking-top" : undefined
-                      }
-                    >
-                      <td>{row.posicion}</td>
-                      <td>{row.nombre}</td>
-                      <td>{row.puntos}</td>
-                      <td>{row.jornadas_jugadas}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <LigaSimpleRankingDual
+                title=""
+                rows={rankingJugadoresRows}
+                embedded
+                emptyMessage="Sin puntos en la liga aún."
+                columns={[
+                  { key: "pos", header: "#", render: (r) => r.position },
+                  { key: "nombre", header: "Jugador", render: (r) => r.label },
+                  { key: "pts", header: "Pts", render: (r) => r.points },
+                  {
+                    key: "jorn",
+                    header: "Jorn.",
+                    render: (r) => r.matchesPlayed ?? 0,
+                  },
+                ]}
+                topRowClassName={(r) =>
+                  r.position <= 3 ? "liga-ranking-top" : undefined
+                }
+              />
             )}
 
             {!esParejasFijas && (

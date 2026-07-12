@@ -28,6 +28,7 @@ import {
 } from "../../lib/gameModeMapping";
 import { initChampionshipConfig } from "../../lib/roundRobinChampionship";
 import { HomeHeader } from "./HomeHeader";
+import { HomeCreateEventCta } from "./HomeCreateEventCta";
 import { GameModesGrid } from "./GameModesGrid";
 import { QuickStartSheet, QuickStartPayload } from "./QuickStartSheet";
 import { RecentRetasSection } from "./RecentRetasSection";
@@ -167,10 +168,17 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   return (
     <div className="home-inner rv-page">
       <HomeHeader userName={userProfile?.name} />
-      <GameModesGrid onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
+      <HomeCreateEventCta
+        onModeSelect={handleModeSelect}
+        isModeEnabled={isModeEnabled}
+      />
       {error && <p className="home-error">{error}</p>}
       <RecentRetasSection userId={userId} onSelectTournament={onTournamentSelect} />
-      <section className="home-quick-links" aria-label="Accesos de organización">
+      <GameModesGrid onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
+      <section
+        className="home-quick-links home-quick-links--secondary"
+        aria-label="Accesos de organización"
+      >
         <h2 className="home-section-title">Organización</h2>
         <div className="home-quick-links__grid">
           <button

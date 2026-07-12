@@ -336,7 +336,7 @@
   }
 
   .new-standings-table {
-    min-width: 820px;
+    min-width: unset;
   }
 
   .new-standings-table th,

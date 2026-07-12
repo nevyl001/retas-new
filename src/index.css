@@ -18,6 +18,7 @@
 @import "./styles/brand/brand-tokens.css";
 @import "./styles/brand/brand-effective.css";
 @import "./styles/riviera-app-shell.css";
+@import "./styles/mode-mobile-shell.css";
 @import "./styles/riviera-public-court.css";
 @import "./styles/riviera-public-tokens.css";
 @import "./styles/riviera-public-system.css";
