@@ -71,6 +71,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   const [tournamentName, setTournamentName] = React.useState<string>("");
   const [tournamentDescription, setTournamentDescription] =
     React.useState<string>("");
+  const [tournamentCourts, setTournamentCourts] = React.useState(2);
   const finishedPersistedRef = React.useRef(false);
 
   const {
@@ -121,6 +122,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         setTournamentDescription(
           typeof t.description === "string" ? t.description.trim() : ""
         );
+        const loadedCourts = Math.max(1, Math.floor(Number(t.courts)) || 1);
+        setTournamentCourts(loadedCourts);
       } catch {
         if (!cancelled) {
           setTournamentName("");
@@ -364,6 +367,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           onRemovePlayer={removePlayer}
           onToggleExistingPlayer={toggleExistingPlayer}
           onStartTournament={handleStartTournament}
+          initialCourts={tournamentCourts}
         />
       </AmericanoModeShell>
     );

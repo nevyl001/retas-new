@@ -1735,6 +1735,14 @@
   color: var(--ro-text-muted);
 }
 
+.home-sheet__field-hint {
+  margin: var(--ro-space-2, 8px) 0 0;
+  font-family: var(--ro-font-body, var(--font-body));
+  font-size: var(--ro-text-small, 0.8125rem);
+  line-height: 1.45;
+  color: var(--ro-text-muted);
+}
+
 .home-sheet__footer {
   padding: 0;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   getRegistryEmptyMessage,
   getRegistrySectionLabel,
@@ -14,6 +14,8 @@ interface PlayerRegistrationProps {
   onRemovePlayer: (id: string) => void;
   onToggleExistingPlayer: (player: Player) => void;
   onStartTournament: (totalRounds: number, courts: number) => void;
+  /** Canchas ya definidas al crear la reta (QuickStart / DB). */
+  initialCourts?: number;
 }
 
 export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
@@ -22,13 +24,23 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   onRemovePlayer,
   onToggleExistingPlayer,
   onStartTournament,
+  initialCourts = 1,
 }) => {
   const [totalRounds, setTotalRounds] = useState(3);
-  const [courts, setCourts] = useState(1);
+  const [courts, setCourts] = useState(() =>
+    Math.min(20, Math.max(1, Math.floor(initialCourts) || 1))
+  );
   const { nombre: organizerName } = useBranding();
   const registryTitle = getRegistrySectionLabel(organizerName);
 
-  const benchPerRound = players.length % 4 !== 0 ? players.length % 4 : 0;
+  // Cuando llega el valor de DB (async), alinear el input si el usuario no lo cambió.
+  useEffect(() => {
+    const next = Math.min(20, Math.max(1, Math.floor(initialCourts) || 1));
+    setCourts(next);
+  }, [initialCourts]);
+
+  const maxMatches = Math.min(Math.floor(players.length / 4), courts);
+  const benchPerRound = Math.max(0, players.length - maxMatches * 4);
 
   return (
     <section className="americano-registration">
@@ -41,6 +53,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       <div className="americano-registration__meta card">
         <p>
           <strong>Total jugadores:</strong> {players.length}
+        </p>
+        <p>
+          <strong>Partidos por ronda:</strong> {maxMatches}
         </p>
         <p>
           <strong>Descansan por ronda:</strong> {benchPerRound}
@@ -124,7 +139,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           </label>
         </div>
         <p className="americano-registration__courts-hint">
-          Las canchas rotan cada ronda para repartir mejor los partidos.
+          Solo hay tantos partidos simultáneos como canchas. Con 1 cancha juega
+          un partido y el resto descansa; con 2 canchas, dos partidos (Cancha 1 y
+          2), y así sucesivamente. Las canchas rotan entre rondas.
         </p>
         <button
           className="americano-btn americano-btn--primary americano-registration__start-btn"

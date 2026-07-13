@@ -492,11 +492,17 @@ export function validateAmericanoRound(
   round: AmericanoRound,
   allPlayers: AmericanoPlayer[],
   partnerMatrix: PartnerMatrix,
-  rivalMatrix: RivalMatrix
+  rivalMatrix: RivalMatrix,
+  courts: number = Number.POSITIVE_INFINITY
 ): AmericanoRoundValidation {
   const errors: string[] = [];
-  const expectedBench = allPlayers.length % 4;
-  const playingIds = new Set<string>();
+  const maxMatchesByPlayers = Math.floor(allPlayers.length / 4);
+  const effectiveCourts = Number.isFinite(courts)
+    ? Math.max(1, Math.floor(courts) || 1)
+    : maxMatchesByPlayers;
+  const expectedMatches = Math.min(maxMatchesByPlayers, effectiveCourts);
+  const expectedBench = allPlayers.length - expectedMatches * 4;
+  const assignedIds = new Set<string>();
   let partnerRepeats = 0;
   let rivalRepeats = 0;
 
@@ -506,9 +512,6 @@ export function validateAmericanoRound(
     );
   }
 
-  const expectedMatches = Math.floor(
-    (allPlayers.length - expectedBench) / 4
-  );
   if (round.matches.length !== expectedMatches) {
     errors.push(
       `Partidos incorrectos: esperado ${expectedMatches}, hay ${round.matches.length}.`
@@ -516,10 +519,10 @@ export function validateAmericanoRound(
   }
 
   for (const p of round.benchPlayers) {
-    if (playingIds.has(p.id)) {
+    if (assignedIds.has(p.id)) {
       errors.push(`Jugador en banquillo y en pista: ${p.name}`);
     }
-    playingIds.add(p.id);
+    assignedIds.add(p.id);
   }
 
   for (const match of round.matches) {
@@ -529,10 +532,10 @@ export function validateAmericanoRound(
       match.teamB[0],
       match.teamB[1],
     ]) {
-      if (playingIds.has(p.id)) {
+      if (assignedIds.has(p.id)) {
         errors.push(`Jugador repetido en la misma ronda: ${p.name}`);
       }
-      playingIds.add(p.id);
+      assignedIds.add(p.id);
     }
 
     if (
@@ -555,8 +558,14 @@ export function validateAmericanoRound(
     }
   }
 
-  if (playingIds.size + round.benchPlayers.length !== allPlayers.length) {
+  if (assignedIds.size !== allPlayers.length) {
     errors.push("No todos los jugadores están asignados en la ronda.");
+  }
+
+  for (const p of allPlayers) {
+    if (!assignedIds.has(p.id)) {
+      errors.push(`Jugador sin asignar: ${p.name}`);
+    }
   }
 
   return {
@@ -584,6 +593,7 @@ export interface GenerateAmericanoRoundParams {
 /**
  * Genera una ronda de Reta Pádel Americano: rotación equilibrada por costo.
  * El ranking acumulado no influye en los emparejamientos.
+ * `courts` limita partidos simultáneos (capacidad de canchas), no solo la etiqueta.
  */
 export function generateAmericanoRound(
   params: GenerateAmericanoRoundParams
@@ -606,7 +616,12 @@ export function generateAmericanoRound(
     params.rivalMatrix ??
     buildMatricesFromScoredRounds(allPlayers, scoredRounds).rivalMatrix;
 
-  const benchCount = allPlayers.length % 4;
+  // Capacidad real: N canchas ⇒ como máximo N partidos simultáneos (4N activos).
+  // El resto descansa. Si solo hay 1 cancha con 8 jugadores → 1 partido + 4 en banquillo.
+  const maxMatchesByPlayers = Math.floor(allPlayers.length / 4);
+  const effectiveCourts = Math.max(1, Math.floor(Number(courts)) || 1);
+  const maxMatches = Math.min(maxMatchesByPlayers, effectiveCourts);
+  const benchCount = allPlayers.length - maxMatches * 4;
   const courtUsage = buildCourtUsageFromRounds(priorRounds);
 
   const benchCandidates = enumerateBenchCandidates(allPlayers, benchCount);
@@ -663,7 +678,8 @@ export function generateAmericanoRound(
     round,
     allPlayers,
     partnerMatrix,
-    rivalMatrix
+    rivalMatrix,
+    effectiveCourts
   );
   if (!validation.ok) {
     console.warn("[americano] validación de ronda:", validation.errors);

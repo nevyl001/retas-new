@@ -19,7 +19,7 @@ DECLARE
   v_marco uuid := 'c46767cf-74fd-4e03-9e39-5c5773319f20';
   -- >>> PEGAR NOMBRE REAL DEL BACKUP (una sola edición) <<<
   -- Ejemplo: 'jugador_participaciones_historical_orphan_backup_20260713_162944'
-  v_backup text := 'jugador_participaciones_historical_orphan_backup_YYYYMMDD_HHMMSS';
+  v_backup text := 'jugador_participaciones_historical_orphan_backup_20260713_16253';
   v_backup_n integer := 0;
   v_marco_hit integer := 0;
   v_ledger_hit integer := 0;

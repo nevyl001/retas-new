@@ -213,6 +213,40 @@ describe("generateAmericanoRound", () => {
     expect(round.phase).toBe(1);
   });
 
+  test("with 8 players and 2 courts: two matches on courts 1 and 2", () => {
+    const ps = makePlayers(8);
+    const pm = initializeMatrix(ps);
+    const round = generateAmericanoRound({
+      allPlayers: ps,
+      roundNumber: 1,
+      totalRounds: 6,
+      courts: 2,
+      partnerMatrix: pm,
+      lastBenchPlayerIds: new Set(),
+    });
+    expect(round.matches).toHaveLength(2);
+    expect(round.benchPlayers).toHaveLength(0);
+    const courtsUsed = new Set(round.matches.map((m) => m.court));
+    expect(courtsUsed).toEqual(new Set([1, 2]));
+  });
+
+  test("with 8 players and 1 court: only one match, four rest", () => {
+    const ps = makePlayers(8);
+    const pm = initializeMatrix(ps);
+    const round = generateAmericanoRound({
+      allPlayers: ps,
+      roundNumber: 1,
+      totalRounds: 6,
+      courts: 1,
+      partnerMatrix: pm,
+      lastBenchPlayerIds: new Set(),
+    });
+    expect(round.matches).toHaveLength(1);
+    expect(round.benchPlayers).toHaveLength(4);
+    expect(round.matches[0].court).toBe(1);
+    expect(collectPlayingIds(round).size).toBe(4);
+  });
+
   test("court numbers stay within configured courts", () => {
     const ps = makePlayers(8);
     const pm = initializeMatrix(ps);

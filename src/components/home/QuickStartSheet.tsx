@@ -36,7 +36,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
 }) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [courts, setCourts] = useState(1);
+  const [courts, setCourts] = useState(2);
   const [championshipEnabled, setChampionshipEnabled] = useState(false);
   const [championshipRounds, setChampionshipRounds] = useState(2);
   const [showRemontadaHelp, setShowRemontadaHelp] = useState(false);
@@ -77,7 +77,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
                 modeId,
                 name: name.trim() || `Reta ${mode.title}`,
                 description: description.trim() || undefined,
-                courts: isAmericano ? 1 : courts,
+                courts,
                 ...(isRoundRobin
                   ? {
                       championshipEnabled,
@@ -140,41 +140,45 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
           />
         </label>
 
-        {!isAmericano && (
-          <div className="home-sheet__field">
-            <span className="home-sheet__field-label">Canchas disponibles</span>
-            <div className="home-sheet__courts-stepper">
-              <button
-                type="button"
-                className="home-sheet__courts-step"
-                onClick={() => setCourts((c) => clampCourts(c - 1))}
-                disabled={courts <= MIN_COURTS}
-                aria-label="Menos canchas"
-              >
-                −
-              </button>
-              <input
-                id="home-sheet-courts"
-                type="number"
-                className="home-sheet__courts-input riviera-input"
-                min={MIN_COURTS}
-                max={MAX_COURTS}
-                value={courts}
-                onChange={(e) => setCourts(clampCourts(Number(e.target.value)))}
-                aria-label="Número de canchas"
-              />
-              <button
-                type="button"
-                className="home-sheet__courts-step"
-                onClick={() => setCourts((c) => clampCourts(c + 1))}
-                disabled={courts >= MAX_COURTS}
-                aria-label="Más canchas"
-              >
-                +
-              </button>
-            </div>
+        <div className="home-sheet__field">
+          <span className="home-sheet__field-label">Canchas disponibles</span>
+          <div className="home-sheet__courts-stepper">
+            <button
+              type="button"
+              className="home-sheet__courts-step"
+              onClick={() => setCourts((c) => clampCourts(c - 1))}
+              disabled={courts <= MIN_COURTS}
+              aria-label="Menos canchas"
+            >
+              −
+            </button>
+            <input
+              id="home-sheet-courts"
+              type="number"
+              className="home-sheet__courts-input riviera-input"
+              min={MIN_COURTS}
+              max={MAX_COURTS}
+              value={courts}
+              onChange={(e) => setCourts(clampCourts(Number(e.target.value)))}
+              aria-label="Número de canchas"
+            />
+            <button
+              type="button"
+              className="home-sheet__courts-step"
+              onClick={() => setCourts((c) => clampCourts(c + 1))}
+              disabled={courts >= MAX_COURTS}
+              aria-label="Más canchas"
+            >
+              +
+            </button>
           </div>
-        )}
+          {isAmericano ? (
+            <p className="home-sheet__field-hint">
+              En Americano solo juegan tantos partidos como canchas; el resto
+              descansa esa ronda.
+            </p>
+          ) : null}
+        </div>
 
         {isRoundRobin && (
           <div
