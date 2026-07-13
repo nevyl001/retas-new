@@ -238,6 +238,13 @@ function shouldSkipBulkLegacyEnsure(row: RivieraJugador): boolean {
 export async function buildLegacyPlayersFromRivieraRegistry(
   organizadorId: string
 ): Promise<Player[]> {
+  const {
+    getCachedLegacyPlayersPool,
+    setCachedLegacyPlayersPool,
+  } = await import("./playersPoolCache");
+  const cached = getCachedLegacyPlayersPool(organizadorId);
+  if (cached) return cached;
+
   try {
     await syncLegacyPlayersFromRivieraRegistry(organizadorId);
   } catch (e) {
@@ -287,7 +294,9 @@ export async function buildLegacyPlayersFromRivieraRegistry(
   );
 
   const { dedupeLegacyPlayersByName } = await import("../database");
-  return dedupeLegacyPlayersByName(out);
+  const deduped = dedupeLegacyPlayersByName(out);
+  setCachedLegacyPlayersPool(organizadorId, deduped);
+  return deduped;
 }
 
 /** Crea o enlaza un registro en `players` para un jugador del ecosistema Riviera. */

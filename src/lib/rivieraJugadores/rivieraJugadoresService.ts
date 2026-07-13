@@ -30,6 +30,7 @@ import {
   grantedAccessFromRow,
   isRevokedGrantLocalJugador,
   listActiveGrantedAccessForOrganizerPublic,
+  listGranteeClubsForSourceJugador,
   listRevokedGrantLocalJugadorIds,
   loadGrantedSourceDisplayData,
   syncGrantedLocalsFromSource,
@@ -58,6 +59,7 @@ import {
   enrichJugadoresWithRivieraId,
 } from "./rivieraIdDisplay";
 import { logRankingPointsAuditFromJugador } from "./rankingPointsAudit";
+import { invalidatePlayersPool } from "./playersPoolCache";
 
 const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -665,6 +667,17 @@ export async function listRivieraJugadores(
     skipCareerEnrich?: boolean;
   }
 ): Promise<RivieraJugadorWithStats[]> {
+  const {
+    buildRivieraListCacheKey,
+    getCachedRivieraJugadoresList,
+    setCachedRivieraJugadoresList,
+  } = await import("./playersPoolCache");
+  const cacheKey = buildRivieraListCacheKey(organizadorId, opts);
+  if (cacheKey) {
+    const cached = getCachedRivieraJugadoresList(cacheKey);
+    if (cached) return cached;
+  }
+
   const buildQuery = (selectCols: string) => {
     let q = supabase
       .from("riviera_jugadores")
@@ -726,7 +739,11 @@ export async function listRivieraJugadores(
   if (!opts?.skipCareerEnrich) {
     rows = await enrichJugadoresOrganizerScopedStats(organizadorId, rows);
   }
-  return enrichJugadoresWithRivieraId(rows);
+  rows = await enrichJugadoresWithRivieraId(rows);
+  if (cacheKey) {
+    setCachedRivieraJugadoresList(cacheKey, rows);
+  }
+  return rows;
 }
 
 export async function getRivieraJugadorBySlug(
@@ -940,6 +957,7 @@ export async function createRivieraJugador(
     });
   }
 
+  invalidatePlayersPool(organizadorId);
   return jugador;
 }
 
@@ -1030,6 +1048,15 @@ export async function updateRivieraJugador(
   if (updated.visible_publico !== false && updated.estado !== "archivado") {
     await ensureRivieraJugadorVisibleEnRanking(updated.id);
   }
+  invalidatePlayersPool(organizadorId);
+  try {
+    const grants = await listGranteeClubsForSourceJugador(updated.id);
+    for (const g of grants) {
+      invalidatePlayersPool(g.granteeOrganizadorId);
+    }
+  } catch (e) {
+    console.warn("[playersPoolCache] invalidate grantees after update:", e);
+  }
   return updated;
 }
 
@@ -1100,6 +1127,9 @@ export async function promoteImportedRivieraJugadores(
         count += 1;
       }
     }
+    if (count > 0) {
+      invalidatePlayersPool(organizadorId);
+    }
     return count;
   } catch (e) {
     console.warn("promoteImportedRivieraJugadores:", e);
@@ -1116,6 +1146,14 @@ export async function linkLegacyPlayerId(
     .update({ legacy_player_id: legacyPlayerId })
     .eq("id", rivieraJugadorId);
   if (error) throw error;
+
+  const { data: row } = await supabase
+    .from("riviera_jugadores")
+    .select("organizador_id")
+    .eq("id", rivieraJugadorId)
+    .maybeSingle();
+  const org = row?.organizador_id ? String(row.organizador_id) : "";
+  if (org) invalidatePlayersPool(org);
 }
 
 export async function linkLegacyLigaJugadorId(
@@ -2148,7 +2186,10 @@ export async function deleteRivieraJugador(
 
   if (!rpcErr) {
     const payload = data as { status?: string } | null;
-    if (payload?.status === "deleted") return;
+    if (payload?.status === "deleted") {
+      invalidatePlayersPool(organizadorId);
+      return;
+    }
   }
 
   const rpcMsg = (rpcErr?.message ?? "").toLowerCase();
@@ -2268,6 +2309,7 @@ export async function deleteRivieraJugador(
         : delErr.message
     );
   }
+  invalidatePlayersPool(organizadorId);
 }
 
 /** Alias explícito: eliminación global destructiva (solo club origen). */

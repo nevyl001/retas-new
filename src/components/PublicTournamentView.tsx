@@ -33,7 +33,7 @@ import {
   matchesForStandingsTable,
   resolveTournamentPodiumOutcome,
 } from "../lib/resolveTournamentOutcome";
-import { formatTenantDocumentTitle, isClubBrandedOrganizer, PublicEventBrandIdentity, useOrganizerDisplayName } from "../club-experience";
+import { formatTenantDocumentTitle, isClubBrandedOrganizer, useOrganizerDisplayName } from "../club-experience";
 import { isPubDsV2Enabled } from "../config/peds";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { StatusBadge } from "./platform/StatusBadge";
@@ -94,7 +94,7 @@ const RetaPublicHeader: React.FC<{
   return (
     <header className="te-public-header te-public-header--reta te-pub-fade-in">
       <div className="te-public-header__brand">
-        <PublicEventBrandIdentity className="te-public-header__club-identity" />
+        {/* Marca: PublicTorneoExpressShell (te-public-brand-bar) */}
         <p className="te-public-header__kicker">
           {formatKicker} · {finalizado ? "Finalizada" : "En vivo"}
         </p>
@@ -755,9 +755,6 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     >
       {isPubDsV2Enabled ? (
         <PublicHero
-          logoClub={
-            <PublicEventBrandIdentity className="peds-hero__club-identity" />
-          }
           estado={
             <StatusBadge variant={tournamentFinalizado ? "gold" : "live"}>
               {tournamentFinalizado ? "Finalizada" : "En vivo"}

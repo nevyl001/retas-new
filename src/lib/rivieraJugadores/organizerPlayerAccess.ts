@@ -5,6 +5,7 @@ import {
   fetchPublicIdentityRows,
 } from "./publicCareerLinkage";
 import type { JugadorStats, RivieraJugador, RivieraJugadorWithStats } from "./types";
+import { invalidatePlayersPool } from "./playersPoolCache";
 
 function isMissingAccessFeatureError(
   error: { code?: string; message?: string; status?: number } | null
@@ -739,21 +740,42 @@ export async function adminGrantOrganizerPlayerAccess(
   }
 
   const raw = (data ?? {}) as Record<string, unknown>;
-  return {
+  const result = {
     granted: Number(raw.granted ?? 0),
     reactivated: Number(raw.reactivated ?? 0),
     skipped: Number(raw.skipped ?? 0),
   };
+  if (result.granted > 0 || result.reactivated > 0) {
+    invalidatePlayersPool(granteeOrganizerId);
+  }
+  return result;
 }
 
 export async function adminRevokeOrganizerPlayerAccess(
   accessId: string
 ): Promise<void> {
+  let granteeOrganizerId: string | null = null;
+  try {
+    const { data: row } = await supabase
+      .from("organizer_player_access")
+      .select("grantee_organizer_id")
+      .eq("id", accessId)
+      .maybeSingle();
+    granteeOrganizerId = row?.grantee_organizer_id
+      ? String(row.grantee_organizer_id)
+      : null;
+  } catch {
+    granteeOrganizerId = null;
+  }
+
   const { error } = await supabase.rpc("admin_revoke_organizer_player_access", {
     p_access_id: accessId,
   });
   if (error) {
     throw new Error(error.message || "No se pudo quitar el acceso");
+  }
+  if (granteeOrganizerId) {
+    invalidatePlayersPool(granteeOrganizerId);
   }
 }
 

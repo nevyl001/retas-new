@@ -1,5 +1,6 @@
 import { supabase } from "../supabaseClient";
 import { resolveOrigenConcedidoOrganizadorId } from "./grantedRankingDisplay";
+import { invalidatePlayersPool } from "./playersPoolCache";
 import type { RivieraJugadorWithStats } from "./types";
 import type {
   AddOrganizerMembershipResult,
@@ -18,6 +19,19 @@ export type {
 } from "./playerMembership.types";
 
 const RIVIERA_ID_EXACT = /^RIV-[0-9]{8}$/;
+
+/** Best-effort: limpia caché del pool del organizador autenticado. */
+async function invalidatePoolForCurrentOrganizer(): Promise<void> {
+  try {
+    const getUser = supabase.auth?.getUser;
+    if (typeof getUser !== "function") return;
+    const { data } = await getUser.call(supabase.auth);
+    const orgId = data?.user?.id?.trim();
+    if (orgId) invalidatePlayersPool(orgId);
+  } catch {
+    // TTL de la caché cubre el caso; no fallar la mutación por invalidación.
+  }
+}
 
 function isJoinedVia(value: unknown): value is PlayerMembershipJoinedVia {
   return (
@@ -219,7 +233,9 @@ export async function addOrganizerMembershipByRivieraId(
   );
 
   if (error) throw error;
-  return parseAddOrganizerMembershipResult(data);
+  const result = parseAddOrganizerMembershipResult(data);
+  await invalidatePoolForCurrentOrganizer();
+  return result;
 }
 
 /** Club de registro / origen del jugador (no el club que muestra la lista). */
@@ -330,7 +346,9 @@ export async function leaveOrganizerMembership(
   });
 
   if (error) throw error;
-  return parseLeaveOrganizerMembershipResult(data);
+  const result = parseLeaveOrganizerMembershipResult(data);
+  await invalidatePoolForCurrentOrganizer();
+  return result;
 }
 
 /** Lista membresías activas del organizador autenticado. */

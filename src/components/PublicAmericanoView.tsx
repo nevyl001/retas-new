@@ -14,7 +14,6 @@ import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
 import {
   formatTenantDocumentTitle,
   getPodiumFinalAriaLabel,
-  PublicEventBrandIdentity,
   useClubExperience,
   useOrganizerDisplayName,
 } from "../club-experience";
@@ -45,7 +44,7 @@ const AmericanoPublicHeader: React.FC<{
   return (
     <header className="te-public-header te-public-header--americano te-pub-fade-in">
       <div className="te-public-header__brand">
-        <PublicEventBrandIdentity className="te-public-header__club-identity" />
+        {/* Marca: PublicTorneoExpressShell (te-public-brand-bar) */}
         <p className="te-public-header__kicker">Americano · En vivo</p>
         <h1 className="te-public-header__title te-public-header__title--event">
           {tournamentName || "Torneo Americano"}
@@ -301,9 +300,6 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     >
       {isPubDsV2Enabled ? (
         <PublicHero
-          logoClub={
-            <PublicEventBrandIdentity className="peds-hero__club-identity" />
-          }
           estado={<StatusBadge variant="live">En vivo</StatusBadge>}
           nombreEvento={tournamentName || "Torneo Americano"}
           club={isClubBranded ? organizerName : undefined}

@@ -756,6 +756,12 @@ export const fetchLegacyPlayersPool = async (
 
   const promise = (async () => {
     try {
+      const { getCachedLegacyPlayersPool } = await import(
+        "./rivieraJugadores/playersPoolCache"
+      );
+      const cached = getCachedLegacyPlayersPool(userId);
+      if (cached) return cached;
+
       const { buildLegacyPlayersFromRivieraRegistry } = await import(
         "./rivieraJugadores/playerPoolSync"
       );

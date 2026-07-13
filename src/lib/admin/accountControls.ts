@@ -269,6 +269,10 @@ export async function updateJugadorAdminControlsForOrganizer(
     await ensureOrganizadorRankingPublico(organizadorId);
   }
   await updateJugadorAdminControls(jugadorId, patch);
+  const { invalidatePlayersPool } = await import(
+    "../rivieraJugadores/playersPoolCache"
+  );
+  invalidatePlayersPool(organizadorId);
 }
 
 export async function bulkUpdateJugadoresAdminControlsForOrganizer(
@@ -279,7 +283,16 @@ export async function bulkUpdateJugadoresAdminControlsForOrganizer(
   if (patch.visible_publico === true) {
     await ensureOrganizadorRankingPublico(organizadorId);
   }
-  return bulkUpdateJugadoresAdminControls(organizadorId, jugadorIds, patch);
+  const count = await bulkUpdateJugadoresAdminControls(
+    organizadorId,
+    jugadorIds,
+    patch
+  );
+  const { invalidatePlayersPool } = await import(
+    "../rivieraJugadores/playersPoolCache"
+  );
+  invalidatePlayersPool(organizadorId);
+  return count;
 }
 
 export interface OrganizadorRankingOficial {
