@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
+import { hasCategoriaEliminatoria } from "../../lib/torneoExpress/categoriaPublicPhase";
 import {
   copyToClipboard,
   publicGruposUrl,
@@ -30,6 +31,15 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
         : null,
     [bundle, standingsByGrupo]
   );
+
+  const faseFinalHref = useMemo(() => {
+    if (!bundle) return undefined;
+    const hasElim = hasCategoriaEliminatoria(
+      bundle.torneo.fase_torneo,
+      bundle.eliminatoriaPartidos.length
+    );
+    return hasElim ? `/torneo-express/${torneoId}/eliminatoria` : undefined;
+  }, [bundle, torneoId]);
 
   const copyLink = async () => {
     const ok = await copyToClipboard(publicGruposUrl(torneoId));
@@ -65,6 +75,7 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
         {...gruposProps}
         onCopyLink={copyLink}
         copyMsg={copyMsg || undefined}
+        faseFinalHref={faseFinalHref}
       />
       <PublicTorneoExpressSyncFooter lastRefreshedAt={lastRefreshedAt} />
     </PublicTorneoExpressShell>

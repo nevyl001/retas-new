@@ -53,6 +53,8 @@ export interface TEPublicGruposProps {
   singleGrupo?: boolean;
   onCopyLink?: () => void;
   copyMsg?: string;
+  /** Si la categoría ya tiene cuadro, enlace a la vista pública de eliminatoria. */
+  faseFinalHref?: string;
 }
 
 const DEFAULT_CLASIFICAN = 2;
@@ -251,6 +253,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   singleGrupo = false,
   onCopyLink,
   copyMsg,
+  faseFinalHref,
 }) => {
   const subInfo = useMemo(() => {
     const totalParejas = grupos.reduce(
@@ -294,11 +297,21 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
             <h1 className="te-grupos-title">{heroTitle}</h1>
             <p className="te-grupos-sub">{subInfo}</p>
           </div>
-          {onCopyLink ? (
+          {onCopyLink || faseFinalHref ? (
             <div className="te-grupos-hero__actions">
-              <Button type="button" variant="secondary" size="sm" onClick={onCopyLink}>
-                Copiar enlace
-              </Button>
+              {faseFinalHref ? (
+                <a
+                  href={faseFinalHref}
+                  className="te-public-phase-nav-link"
+                >
+                  Ver fase final
+                </a>
+              ) : null}
+              {onCopyLink ? (
+                <Button type="button" variant="secondary" size="sm" onClick={onCopyLink}>
+                  Copiar enlace
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </div>

@@ -29,6 +29,32 @@
 
 .te-grupos-hero__actions {
   flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.te-public-phase-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--ro-radius-md, 10px);
+  border: 1px solid var(--ro-pub-gold-border, var(--ro-gold-border, var(--accent-gold)));
+  background: var(--ro-pub-gold-dim, var(--ro-gold-dim, transparent));
+  color: var(--ro-pub-gold-light, var(--ro-gold-light, var(--accent-gold-light)));
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.te-public-phase-nav-link:hover,
+.te-public-phase-nav-link:focus-visible {
+  color: var(--ro-text-primary, var(--text-primary));
+  outline: none;
+  box-shadow: 0 0 0 1px var(--ro-pub-gold-border, var(--ro-gold-border));
 }
 
 .te-grupos-eyebrow {

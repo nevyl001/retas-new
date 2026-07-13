@@ -59,6 +59,8 @@ export interface TEPublicEliminatoriaProps {
   lastRefreshedAt: Date | null;
   onCopyLink?: () => void;
   copyMsg?: string;
+  /** Enlace secundario a grupos (siempre accesible tras generar eliminatoria). */
+  gruposHref?: string;
 }
 
 export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
@@ -67,6 +69,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   lastRefreshedAt,
   onCopyLink,
   copyMsg,
+  gruposHref,
 }) => {
   const [spinning, setSpinning] = useState(false);
   const prevRefreshRef = useRef<Date | null>(null);
@@ -132,11 +135,18 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
             <h1 className="te-grupos-title">{bundle.torneo.nombre}</h1>
             <p className="te-elim-tagline">{model.motivationalMessage}</p>
           </div>
-          {onCopyLink ? (
+          {onCopyLink || gruposHref ? (
             <div className="te-grupos-hero__actions">
-              <Button type="button" variant="secondary" size="sm" onClick={onCopyLink}>
-                Copiar enlace
-              </Button>
+              {gruposHref ? (
+                <a href={gruposHref} className="te-public-phase-nav-link">
+                  Ver grupos y resultados
+                </a>
+              ) : null}
+              {onCopyLink ? (
+                <Button type="button" variant="secondary" size="sm" onClick={onCopyLink}>
+                  Copiar enlace
+                </Button>
+              ) : null}
               {copyMsg ? (
                 <p className="te-grupos-copy-msg">{copyMsg}</p>
               ) : null}

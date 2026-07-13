@@ -44,14 +44,22 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
   const enEliminatoria =
     bundle?.torneo.fase_torneo === "eliminatoria" ||
     bundle?.torneo.fase_torneo === "cerrado";
+  const hasElimPartidos = (bundle?.eliminatoriaPartidos.length ?? 0) > 0;
 
-  if (!bundle || !enEliminatoria) {
+  if (!bundle || !enEliminatoria || !hasElimPartidos) {
     return (
       <PublicTorneoExpressShell className="te-public--eliminatoria">
         <p className="te-public-error">
           {error ??
             "Este torneo aún no tiene fase eliminatoria o no fue encontrado."}
         </p>
+        {bundle ? (
+          <p className="te-public-error">
+            <a href={`/torneo-express/${torneoId}/grupos`}>
+              Ver grupos y resultados
+            </a>
+          </p>
+        ) : null}
       </PublicTorneoExpressShell>
     );
   }
@@ -67,6 +75,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
         lastRefreshedAt={lastRefreshedAt}
         onCopyLink={copyLink}
         copyMsg={copyMsg || undefined}
+        gruposHref={`/torneo-express/${torneoId}/grupos`}
       />
     </PublicTorneoExpressShell>
   );

@@ -38,6 +38,7 @@ import type {
   TorneoExpressEventoConCategorias,
   TorneoExpressEventoEstado,
   TorneoExpressEventoLogoSource,
+  TorneoExpressEventoPublico,
   TorneoExpressFaseEliminacion,
   TorneoExpressGrupo,
   TorneoExpressGrupoPareja,
@@ -2344,7 +2345,7 @@ export async function fetchEventoConCategorias(
 /** Contenedor público: evento por slug + categorías visibles bajo RLS. */
 export async function fetchEventoPublicoPorSlug(
   slug: string
-): Promise<TorneoExpressEventoConCategorias | null> {
+): Promise<TorneoExpressEventoPublico | null> {
   const evento = await fetchEventoBySlug(slug);
   if (!evento) return null;
 
@@ -2355,13 +2356,45 @@ export async function fetchEventoPublicoPorSlug(
     .order("created_at", { ascending: true });
 
   if (error && isMissingColumnError(error, "torneo_express", "evento_id")) {
-    return { evento, categorias: [] };
+    return { evento, categorias: [], eliminatoriaPartidosByTorneoId: {} };
   }
   throwIfError(error, "fetchEventoPublicoPorSlug.categorias");
 
+  const categorias = (data ?? []) as TorneoExpress[];
+  const eliminatoriaPartidosByTorneoId: TorneoExpressEventoPublico["eliminatoriaPartidosByTorneoId"] =
+    {};
+
+  const torneoIds = categorias.map((c) => c.id).filter(Boolean);
+  if (torneoIds.length > 0) {
+    const { data: elimRows, error: elimErr } = await supabase
+      .from("torneo_express_eliminatoria_partidos")
+      .select("torneo_id, ronda, orden, estado, es_bye, ganador_id")
+      .in("torneo_id", torneoIds);
+
+    if (elimErr) {
+      if (!isBracketSchemaError(elimErr)) {
+        throwIfError(elimErr, "fetchEventoPublicoPorSlug.eliminatoria");
+      }
+    } else {
+      for (const row of elimRows ?? []) {
+        const torneoId = String(
+          (row as { torneo_id?: string }).torneo_id ?? ""
+        );
+        if (!torneoId) continue;
+        if (!eliminatoriaPartidosByTorneoId[torneoId]) {
+          eliminatoriaPartidosByTorneoId[torneoId] = [];
+        }
+        eliminatoriaPartidosByTorneoId[torneoId].push(
+          row as TorneoExpressEventoPublico["eliminatoriaPartidosByTorneoId"][string][number]
+        );
+      }
+    }
+  }
+
   return {
     evento,
-    categorias: (data ?? []) as TorneoExpress[],
+    categorias,
+    eliminatoriaPartidosByTorneoId,
   };
 }
 

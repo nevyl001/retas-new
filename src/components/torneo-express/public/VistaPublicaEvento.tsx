@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import type {
   TorneoExpress,
   TorneoExpressEvento,
+  TorneoExpressEventoPublico,
 } from "../../../lib/torneoExpress/types";
+import { buildCategoriaPublicPhasePresentation } from "../../../lib/torneoExpress/categoriaPublicPhase";
 import { formatTorneoExpressCategoria } from "../../../lib/torneoExpress/formatCategoria";
 import {
   fetchEventoPublicoPorSlug,
@@ -35,11 +37,13 @@ function categoryLabel(cat: TorneoExpress): string {
 type EventoPublicoBodyProps = {
   evento: TorneoExpressEvento;
   categorias: TorneoExpress[];
+  eliminatoriaPartidosByTorneoId: TorneoExpressEventoPublico["eliminatoriaPartidosByTorneoId"];
 };
 
 const EventoPublicoBody: React.FC<EventoPublicoBodyProps> = ({
   evento,
   categorias,
+  eliminatoriaPartidosByTorneoId,
 }) => {
   const showFlyerBanner =
     evento.logo_source === "flyer" && Boolean(evento.flyer_url?.trim());
@@ -101,31 +105,58 @@ const EventoPublicoBody: React.FC<EventoPublicoBodyProps> = ({
           </p>
         ) : (
           <ul className="te-public-evento-roles__list">
-            {categorias.map((cat) => (
-              <li key={cat.id}>
-                <a
-                  href={`/torneo-express/${cat.id}/grupos`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="te-public-evento-role-card"
-                >
-                  <span className="te-public-evento-role-card__mark" aria-hidden>
-                    RO
-                  </span>
-                  <span className="te-public-evento-role-card__body">
-                    <span className="te-public-evento-role-card__label">
-                      {categoryLabel(cat)}
-                    </span>
-                    <span className="te-public-evento-role-card__meta">
-                      Grupos · Eliminatoria
-                    </span>
-                  </span>
-                  <span className="te-public-evento-role-card__chevron" aria-hidden>
-                    ›
-                  </span>
-                </a>
-              </li>
-            ))}
+            {categorias.map((cat) => {
+              const phase = buildCategoriaPublicPhasePresentation(
+                cat,
+                eliminatoriaPartidosByTorneoId[cat.id] ?? []
+              );
+              return (
+                <li key={cat.id}>
+                  <article className="te-public-evento-role-card">
+                    <a
+                      href={phase.primaryHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="te-public-evento-role-card__primary"
+                    >
+                      <span
+                        className="te-public-evento-role-card__mark"
+                        aria-hidden
+                      >
+                        RO
+                      </span>
+                      <span className="te-public-evento-role-card__body">
+                        <span className="te-public-evento-role-card__label">
+                          {categoryLabel(cat)}
+                        </span>
+                        <span className="te-public-evento-role-card__meta">
+                          {phase.phaseLabel}
+                        </span>
+                        <span className="te-public-evento-role-card__action">
+                          {phase.primaryActionLabel}
+                        </span>
+                      </span>
+                      <span
+                        className="te-public-evento-role-card__chevron"
+                        aria-hidden
+                      >
+                        ›
+                      </span>
+                    </a>
+                    {phase.secondaryHref && phase.secondaryActionLabel ? (
+                      <a
+                        href={phase.secondaryHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="te-public-evento-role-card__secondary"
+                      >
+                        {phase.secondaryActionLabel}
+                      </a>
+                    ) : null}
+                  </article>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -146,6 +177,8 @@ export const VistaPublicaEvento: React.FC<VistaPublicaEventoProps> = ({
 }) => {
   const [evento, setEvento] = useState<TorneoExpressEvento | null>(null);
   const [categorias, setCategorias] = useState<TorneoExpress[]>([]);
+  const [eliminatoriaPartidosByTorneoId, setEliminatoriaPartidosByTorneoId] =
+    useState<TorneoExpressEventoPublico["eliminatoriaPartidosByTorneoId"]>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -160,16 +193,19 @@ export const VistaPublicaEvento: React.FC<VistaPublicaEventoProps> = ({
         if (!data) {
           setEvento(null);
           setCategorias([]);
+          setEliminatoriaPartidosByTorneoId({});
           setError("Evento no encontrado o no publicado");
           return;
         }
         setEvento(data.evento);
         setCategorias(data.categorias);
+        setEliminatoriaPartidosByTorneoId(data.eliminatoriaPartidosByTorneoId);
       } catch (e) {
         if (!cancelled) {
           setError(formatSupabaseError(e));
           setEvento(null);
           setCategorias([]);
+          setEliminatoriaPartidosByTorneoId({});
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -190,7 +226,11 @@ export const VistaPublicaEvento: React.FC<VistaPublicaEventoProps> = ({
       ) : null}
       {error ? <p className="te-error">{error}</p> : null}
       {!loading && evento ? (
-        <EventoPublicoBody evento={evento} categorias={categorias} />
+        <EventoPublicoBody
+          evento={evento}
+          categorias={categorias}
+          eliminatoriaPartidosByTorneoId={eliminatoriaPartidosByTorneoId}
+        />
       ) : null}
     </PublicTorneoExpressShell>
   );

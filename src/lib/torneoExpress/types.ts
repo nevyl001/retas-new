@@ -34,6 +34,24 @@ export interface TorneoExpressEventoConCategorias {
   categorias: TorneoExpress[];
 }
 
+/** Lectura pública del Evento + evidencia de eliminatoria por categoría. */
+export interface TorneoExpressEventoPublico
+  extends TorneoExpressEventoConCategorias {
+  /**
+   * Partidos eliminatorios indexados por `torneo_express.id` (nunca por evento_id).
+   * Vacío si esa categoría aún no tiene cuadro generado.
+   */
+  eliminatoriaPartidosByTorneoId: Record<
+    string,
+    Array<
+      Pick<
+        TorneoExpressEliminatoriaPartido,
+        "torneo_id" | "ronda" | "orden" | "estado" | "es_bye" | "ganador_id"
+      >
+    >
+  >;
+}
+
 /** Marcador por set en partidos al mejor de 3. */
 export interface PartidoSetScore {
   local: number;
