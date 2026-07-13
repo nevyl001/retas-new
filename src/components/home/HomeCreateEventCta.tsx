@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { getDuelo2v2ModeDescription, useBranding } from "../../club-experience";
 import { TablerIcon } from "../ui/TablerIcon";
 import {
@@ -19,6 +19,7 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
 }) => {
   const { nombre } = useBranding();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const modes = React.useMemo(
     () =>
@@ -30,6 +31,31 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
     [nombre]
   );
 
+  const closePicker = () => setPickerOpen(false);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closePicker();
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      const root = rootRef.current;
+      if (!root) return;
+      if (e.target instanceof Node && !root.contains(e.target)) {
+        closePicker();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [pickerOpen]);
+
   const handleSelect = (modeId: GameModeId) => {
     const enabled = isModeEnabled ? isModeEnabled(modeId) : true;
     if (!enabled) return;
@@ -39,108 +65,140 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
 
   return (
     <>
-      <div className="home-create-event" aria-label="Crear evento">
+      {pickerOpen ? (
+        <div
+          className="home-create-event__backdrop"
+          aria-hidden
+          onClick={closePicker}
+        />
+      ) : null}
+      <div
+        ref={rootRef}
+        className={[
+          "home-create-event",
+          pickerOpen ? "home-create-event--open" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-label="Crear evento"
+      >
         <button
           type="button"
-          className="home-create-event__cta riviera-btn riviera-btn-primary riviera-btn--md"
+          className={[
+            "home-create-event__cta",
+            "riviera-btn",
+            pickerOpen ? "riviera-btn-secondary" : "riviera-btn-primary",
+            "riviera-btn--md",
+          ].join(" ")}
           onClick={() => setPickerOpen((open) => !open)}
           aria-expanded={pickerOpen}
           aria-controls="home-create-event-picker"
+          aria-label={
+            pickerOpen ? "Cerrar selector de modalidades" : "Nuevo evento"
+          }
         >
-          <TablerIcon name="plus" size={18} aria-hidden />
-          Nuevo evento
+          <TablerIcon name={pickerOpen ? "x" : "plus"} size={18} aria-hidden />
+          {pickerOpen ? "Cerrar" : "Nuevo evento"}
         </button>
-      </div>
 
-      {pickerOpen ? (
-        <div
-          id="home-create-event-picker"
-          className="home-create-event__picker"
-          aria-label="Seleccionar modalidad"
-        >
-          <p className="home-create-event__picker-hint">
-            Elige la modalidad para tu evento
-          </p>
-          <div className="home-create-event__picker-groups">
-            <div className="home-create-event__picker-group">
-              <span className="home-create-event__picker-label">Retas rápidas</span>
-              <ul className="home-create-event__picker-list" role="presentation">
-                {QUICK_GAME_MODES.map((mode) => {
-                  const full = modes.find((m) => m.id === mode.id)!;
-                  const enabled = isModeEnabled ? isModeEnabled(mode.id) : true;
-                  return (
-                    <li key={mode.id}>
-                      <button
-                        type="button"
-                        className="home-create-event__picker-item"
-                        disabled={!enabled}
-                        onClick={() => handleSelect(mode.id)}
-                      >
-                        <span className="home-create-event__picker-icon" aria-hidden>
-                          {full.icon}
-                        </span>
-                        <span className="home-create-event__picker-text">
-                          <span className="home-create-event__picker-name">
-                            {full.title}
+        {pickerOpen ? (
+          <div
+            id="home-create-event-picker"
+            className="home-create-event__picker"
+            aria-label="Seleccionar modalidad"
+          >
+            <p className="home-create-event__picker-hint">
+              Elige la modalidad para tu evento
+            </p>
+            <div className="home-create-event__picker-groups">
+              <div className="home-create-event__picker-group">
+                <span className="home-create-event__picker-label">
+                  Retas rápidas
+                </span>
+                <ul className="home-create-event__picker-list" role="presentation">
+                  {QUICK_GAME_MODES.map((mode) => {
+                    const full = modes.find((m) => m.id === mode.id)!;
+                    const enabled = isModeEnabled ? isModeEnabled(mode.id) : true;
+                    return (
+                      <li key={mode.id}>
+                        <button
+                          type="button"
+                          className="home-create-event__picker-item"
+                          disabled={!enabled}
+                          onClick={() => handleSelect(mode.id)}
+                        >
+                          <span
+                            className="home-create-event__picker-icon"
+                            aria-hidden
+                          >
+                            {full.icon}
                           </span>
-                          <span className="home-create-event__picker-desc">
-                            {full.description}
+                          <span className="home-create-event__picker-text">
+                            <span className="home-create-event__picker-name">
+                              {full.title}
+                            </span>
+                            <span className="home-create-event__picker-desc">
+                              {full.description}
+                            </span>
                           </span>
-                        </span>
-                        <TablerIcon
-                          name="chevron-right"
-                          size={18}
-                          className="home-create-event__picker-chev"
-                          aria-hidden
-                        />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-            <div className="home-create-event__picker-group">
-              <span className="home-create-event__picker-label">
-                Competencias organizadas
-              </span>
-              <ul className="home-create-event__picker-list" role="presentation">
-                {ORGANIZED_GAME_MODES.map((mode) => {
-                  const full = modes.find((m) => m.id === mode.id)!;
-                  const enabled = isModeEnabled ? isModeEnabled(mode.id) : true;
-                  return (
-                    <li key={mode.id}>
-                      <button
-                        type="button"
-                        className="home-create-event__picker-item"
-                        disabled={!enabled}
-                        onClick={() => handleSelect(mode.id)}
-                      >
-                        <span className="home-create-event__picker-icon" aria-hidden>
-                          {full.icon}
-                        </span>
-                        <span className="home-create-event__picker-text">
-                          <span className="home-create-event__picker-name">
-                            {full.title}
+                          <TablerIcon
+                            name="chevron-right"
+                            size={18}
+                            className="home-create-event__picker-chev"
+                            aria-hidden
+                          />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div className="home-create-event__picker-group">
+                <span className="home-create-event__picker-label">
+                  Competencias organizadas
+                </span>
+                <ul className="home-create-event__picker-list" role="presentation">
+                  {ORGANIZED_GAME_MODES.map((mode) => {
+                    const full = modes.find((m) => m.id === mode.id)!;
+                    const enabled = isModeEnabled ? isModeEnabled(mode.id) : true;
+                    return (
+                      <li key={mode.id}>
+                        <button
+                          type="button"
+                          className="home-create-event__picker-item"
+                          disabled={!enabled}
+                          onClick={() => handleSelect(mode.id)}
+                        >
+                          <span
+                            className="home-create-event__picker-icon"
+                            aria-hidden
+                          >
+                            {full.icon}
                           </span>
-                          <span className="home-create-event__picker-desc">
-                            {full.description}
+                          <span className="home-create-event__picker-text">
+                            <span className="home-create-event__picker-name">
+                              {full.title}
+                            </span>
+                            <span className="home-create-event__picker-desc">
+                              {full.description}
+                            </span>
                           </span>
-                        </span>
-                        <TablerIcon
-                          name="chevron-right"
-                          size={18}
-                          className="home-create-event__picker-chev"
-                          aria-hidden
-                        />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+                          <TablerIcon
+                            name="chevron-right"
+                            size={18}
+                            className="home-create-event__picker-chev"
+                            aria-hidden
+                          />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </>
   );
 };

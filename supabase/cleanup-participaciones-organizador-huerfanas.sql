@@ -1,0 +1,11 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- OBSOLETO — no ejecutar.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Flujo actual:
+--   1) diagnose-participaciones-organizador-huerfanas.sql
+--      · excepciones_conservar (Marco) → repair-marco-reta-5ta-fuerza-organizador.sql
+--      · candidatos_delete_confirmados (Test interclubes ×3) → backup → delete
+--   2) backup-participaciones-organizador-huerfanas.sql
+--   3) delete-participaciones-organizador-huerfanas.sql
+--
+SELECT 'OBSOLETO — usa diagnose / backup / delete / repair-marco' AS aviso;

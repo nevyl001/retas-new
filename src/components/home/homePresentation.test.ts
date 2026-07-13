@@ -126,6 +126,8 @@ describe("home presentation", () => {
       );
 
       expect(html).toContain("Crear evento");
+      expect(html).toContain("Nuevo evento");
+      expect(html).not.toContain(">Cerrar<");
       expect(html).not.toContain('role="option"');
       expect(html).not.toContain('role="listbox"');
     });

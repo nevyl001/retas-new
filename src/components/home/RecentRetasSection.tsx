@@ -78,17 +78,20 @@ export const RecentRetasSection: React.FC<RecentRetasSectionProps> = ({
     onSelectTournament(item.tournament);
   };
 
-  const { active, recent, hasMore } = useMemo(
+  const { active, recent } = useMemo(
     () => partitionHomeRetas(retas),
     [retas]
   );
+
+  const showViewAll =
+    Boolean(onShowAll) && !loading && retas.length > 0;
 
   return (
     <>
       {loading && <p className="home-muted">Cargando eventos…</p>}
       {!loading && retas.length === 0 && <EmptyStateRetas />}
 
-      {!loading && active.length > 0 && (
+      {!loading && retas.length > 0 && (
         <section
           className="recent-retas-section recent-retas-section--active"
           aria-labelledby="active-retas-heading"
@@ -96,16 +99,22 @@ export const RecentRetasSection: React.FC<RecentRetasSectionProps> = ({
           <h2 id="active-retas-heading" className="home-section-title">
             Eventos activos
           </h2>
-          <div className="recent-retas-scroll">
-            {active.map((item) => (
-              <RecentRetaCard
-                key={`active-${item.kind}-${item.kind === "tournament" ? item.tournament.id : item.duelo.id}`}
-                item={item}
-                compact
-                onContinue={() => handleContinue(item)}
-              />
-            ))}
-          </div>
+          {active.length > 0 ? (
+            <div className="recent-retas-scroll recent-retas-scroll--active">
+              {active.map((item) => (
+                <RecentRetaCard
+                  key={`active-${item.kind}-${item.kind === "tournament" ? item.tournament.id : item.duelo.id}`}
+                  item={item}
+                  variant="featured"
+                  onContinue={() => handleContinue(item)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="recent-retas-empty-active">
+              No tienes eventos en curso. Crea uno nuevo para empezar.
+            </p>
+          )}
         </section>
       )}
 
@@ -114,15 +123,18 @@ export const RecentRetasSection: React.FC<RecentRetasSectionProps> = ({
           className="recent-retas-section recent-retas-section--recent"
           aria-labelledby="recent-retas-heading"
         >
-          <h2 id="recent-retas-heading" className="home-section-title">
+          <h2
+            id="recent-retas-heading"
+            className="home-section-title home-section-title--muted"
+          >
             Eventos recientes
           </h2>
-          <div className="recent-retas-scroll">
+          <div className="recent-retas-list recent-retas-list--recent">
             {recent.map((item) => (
               <RecentRetaCard
                 key={`recent-${item.kind}-${item.kind === "tournament" ? item.tournament.id : item.duelo.id}`}
                 item={item}
-                compact
+                variant="row"
                 onContinue={() => handleContinue(item)}
               />
             ))}
@@ -130,7 +142,7 @@ export const RecentRetasSection: React.FC<RecentRetasSectionProps> = ({
         </section>
       )}
 
-      {!loading && hasMore && onShowAll ? (
+      {showViewAll ? (
         <div className="recent-retas-view-all">
           <button
             type="button"
