@@ -1,6 +1,6 @@
 import React from "react";
 import { useClubModeEyebrow } from "../../club-experience";
-import { CrearTorneoExpress } from "./CrearTorneoExpress";
+import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
 import { TePageShell } from "./TePageShell";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
@@ -8,21 +8,25 @@ import { ModeHeader } from "../platform/ModeHeader";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import "./te-inicio-page.css";
 import "./te-fondos.css";
+import "./te-eventos.css";
 
-/** Contenedor de `/torneo-express/nuevo`: torneo suelto (sin evento). */
-export const CrearTorneoExpressPage: React.FC = () => {
+/**
+ * Lista de Torneos Express sueltos (una categoría, sin evento_id).
+ * Paralelo a EventosLista para multi-categoría.
+ */
+export const TorneosExpressLista: React.FC = () => {
   const modeEyebrow = useClubModeEyebrow();
 
   return (
-    <TePageShell className="te-inicio-page">
+    <TePageShell className="te-inicio-page te-eventos-page">
       <div className="te-inicio-page__shell">
         <ActionBar className="te-inicio-toolbar riviera-back-toolbar">
           <Button
             type="button"
             variant="back"
-            onClick={() => navigateTorneoExpress("/torneo-express/lista")}
+            onClick={() => navigateTorneoExpress("/torneo-express")}
           >
-            ← Volver a Torneos Express
+            ← Volver a Torneos
           </Button>
         </ActionBar>
 
@@ -30,23 +34,22 @@ export const CrearTorneoExpressPage: React.FC = () => {
           <ModeHeader
             className="te-inicio-header te-header rv-mode-header rv-mode-header--entry"
             eyebrow={modeEyebrow}
-            title="Crear torneo"
-            subtitle="Torneo suelto: una sola categoría, sin Evento. Parejas, grupos y partidos como siempre."
+            title="Torneo Express"
+            subtitle="Torneos de una sola categoría (sin Evento). Cada uno se gestiona por separado."
           />
         </div>
 
-        <section
-          className="te-inicio-crear te-inicio-crear__shell"
-          aria-labelledby="te-crear-page-heading"
-        >
-          <h2
-            id="te-crear-page-heading"
-            className="te-inicio-crear__title rv-section-title"
+        <div className="te-eventos-toolbar">
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => navigateTorneoExpress("/torneo-express/nuevo")}
           >
-            Datos del torneo
-          </h2>
-          <CrearTorneoExpress />
-        </section>
+            Crear torneo
+          </Button>
+        </div>
+
+        <TorneoExpressTorneosSection listMode />
       </div>
     </TePageShell>
   );

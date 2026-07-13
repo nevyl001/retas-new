@@ -12,6 +12,7 @@ import {
   fetchEventoConCategorias,
   formatSupabaseError,
   saveTorneoExpressCategoria,
+  syncEventoEstadoFromCategorias,
   updateEvento,
 } from "../../services/torneoExpressService";
 import { useUser } from "../../contexts/UserContext";
@@ -27,7 +28,7 @@ const EVENTO_ESTADO_LABEL: Record<TorneoExpressEvento["estado"], string> = {
   draft: "Borrador",
   published: "Publicado",
   in_progress: "En curso",
-  completed: "Completado",
+  completed: "Finalizado",
   archived: "Archivado",
 };
 
@@ -151,6 +152,14 @@ export const EventoDetalle: React.FC<EventoDetalleProps> = ({ eventoId }) => {
       setCategorias(data.categorias);
       setLogoSource(data.evento.logo_source);
       setFlyerUrl(data.evento.flyer_url ?? "");
+      const synced = await syncEventoEstadoFromCategorias(data.evento.id).catch(
+        () => null
+      );
+      if (synced) {
+        setEvento(synced);
+        setLogoSource(synced.logo_source);
+        setFlyerUrl(synced.flyer_url ?? "");
+      }
     } catch (e) {
       setError(formatSupabaseError(e));
       setEvento(null);

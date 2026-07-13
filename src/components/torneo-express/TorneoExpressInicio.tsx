@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useClubModeEyebrow } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { CrearEventoModal } from "./CrearEventoModal";
-import { TorneoExpressTorneosSection } from "./TorneoExpressTorneosSection";
 import { TePageShell } from "./TePageShell";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
@@ -85,6 +84,14 @@ export const TorneoExpressInicio: React.FC = () => {
             <div className="te-eventos-home-card__actions">
               <Button
                 type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => navigateTorneoExpress("/torneo-express/lista")}
+              >
+                Ver torneos
+              </Button>
+              <Button
+                type="button"
                 variant="primary"
                 size="sm"
                 onClick={() => navigateTorneoExpress("/torneo-express/nuevo")}
@@ -94,8 +101,6 @@ export const TorneoExpressInicio: React.FC = () => {
             </div>
           </section>
         </div>
-
-        <TorneoExpressTorneosSection />
       </div>
 
       <CrearEventoModal

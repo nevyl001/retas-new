@@ -5,6 +5,7 @@ import { CrearTorneoExpressPage } from "./CrearTorneoExpressPage";
 import { EventosLista } from "./EventosLista";
 import { EventoDetalle } from "./EventoDetalle";
 import { EventoNuevaCategoria } from "./EventoNuevaCategoria";
+import { TorneosExpressLista } from "./TorneosExpressLista";
 import { VistaPublicaEvento } from "./public/VistaPublicaEvento";
 import { TePageShell } from "./TePageShell";
 import { VistaPublicaEliminatoria } from "./VistaPublicaEliminatoria";
@@ -16,6 +17,7 @@ export type TorneoExpressRoute =
   | { kind: "home" }
   | { kind: "nuevo" }
   | { kind: "eventos" }
+  | { kind: "lista-express" }
   | { kind: "evento"; eventoId: string }
   | { kind: "evento-nueva-categoria"; eventoId: string }
   | { kind: "evento-publico"; slug: string }
@@ -31,6 +33,7 @@ export function parseTorneoExpressPath(pathname: string): TorneoExpressRoute {
   if (path === "/torneo-express") return { kind: "home" };
   if (path === "/torneo-express/nuevo") return { kind: "nuevo" };
   if (path === "/torneo-express/eventos") return { kind: "eventos" };
+  if (path === "/torneo-express/lista") return { kind: "lista-express" };
 
   // Público: /eventos/{slug} (arquitectura multi-categoría)
   const eventoPublico = path.match(/^\/eventos\/([^/]+)$/);
@@ -82,6 +85,8 @@ export const TorneoExpressRouter: React.FC<{ pathname: string }> = ({
       return <CrearTorneoExpressPage />;
     case "eventos":
       return <EventosLista />;
+    case "lista-express":
+      return <TorneosExpressLista />;
     case "evento":
       return <EventoDetalle eventoId={route.eventoId} />;
     case "evento-nueva-categoria":

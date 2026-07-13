@@ -137,7 +137,20 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.te-eventos-page .te-btn-eliminar-torneo {
+  color: var(--ro-text-muted, var(--text-muted)) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  opacity: 0.8;
+}
+
+.te-eventos-page .te-btn-eliminar-torneo:hover:not(:disabled) {
+  color: var(--loss, #f87171) !important;
+  opacity: 1;
 }
 
 .te-evento-detalle__header {

@@ -568,6 +568,13 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     categoriaLabel && categoriaLabel !== bundle.torneo.nombre
       ? bundle.torneo.nombre
       : null;
+  const parentEventoId = bundle.torneo.evento_id?.trim() || null;
+  const backHref = parentEventoId
+    ? `/torneo-express/evento/${parentEventoId}`
+    : "/torneo-express/lista";
+  const backLabel = parentEventoId
+    ? "← Volver a categorías del evento"
+    : "← Volver a Torneos Express";
 
   const publicLinks = (
     <div
@@ -641,9 +648,9 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         <Button
           type="button"
           variant="back"
-          onClick={() => navigateTorneoExpress("/torneo-express")}
+          onClick={() => navigateTorneoExpress(backHref)}
         >
-          ← Volver a todos los torneos
+          {backLabel}
         </Button>
       </ActionBar>
 

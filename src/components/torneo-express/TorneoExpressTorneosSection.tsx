@@ -41,15 +41,17 @@ function sortTorneos(list: TorneoExpressListItem[]): TorneoExpressListItem[] {
 
 interface TorneoExpressTorneosSectionProps {
   refreshToken?: number;
+  /** Lista dedicada: muestra todos sin truncar. */
+  listMode?: boolean;
 }
 
 export const TorneoExpressTorneosSection: React.FC<
   TorneoExpressTorneosSectionProps
-> = ({ refreshToken = 0 }) => {
+> = ({ refreshToken = 0, listMode = false }) => {
   const [torneos, setTorneos] = useState<TorneoExpressListItem[]>([]);
   const [cargandoTorneos, setCargandoTorneos] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(listMode);
   const [resultadosTorneoId, setResultadosTorneoId] = useState<string | null>(null);
   const [tablaGeneralTorneoId, setTablaGeneralTorneoId] = useState<string | null>(
     null
@@ -294,7 +296,7 @@ export const TorneoExpressTorneosSection: React.FC<
     <section className="te-torneos-section" aria-labelledby="te-torneos-heading">
       <div className="te-torneos-section__head">
         <h2 id="te-torneos-heading" className="te-torneos-section__title rv-section-title">
-          Tus torneos
+          {listMode ? "Tus Torneos Express" : "Tus torneos"}
         </h2>
         {!cargandoTorneos && activosCount > 0 ? (
           <span className="te-torneos-section__count">
@@ -315,8 +317,8 @@ export const TorneoExpressTorneosSection: React.FC<
 
       {!cargandoTorneos && sorted.length === 0 && (
         <div className="te-torneos-empty">
-          <p>Aún no tienes torneos.</p>
-          <p>Crea uno abajo para comenzar.</p>
+          <p>Aún no tienes Torneos Express.</p>
+          <p>Crea uno con «Crear torneo» para comenzar.</p>
         </div>
       )}
 
@@ -351,7 +353,7 @@ export const TorneoExpressTorneosSection: React.FC<
         </>
       )}
 
-      {!cargandoTorneos && hayMas && !showAll && (
+      {!cargandoTorneos && hayMas && !showAll && !listMode && (
         <Button
           type="button"
           variant="ghost"

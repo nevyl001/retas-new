@@ -28,6 +28,7 @@ import {
   buildPersistPayload,
   getSetsValidationMessage,
 } from "../lib/torneoExpress/partidoSets";
+import { resolveEventoEstadoFromCategorias } from "../lib/torneoExpress/eventoEstadoFromCategorias";
 import type {
   GrupoAssignmentDraft,
   PartidoSetScore,
@@ -1426,6 +1427,14 @@ export async function deleteTorneoExpress(torneoId: string): Promise<void> {
     throw new Error("No tienes permiso para eliminar este torneo");
   }
 
+  const { error: elimErr } = await supabase
+    .from("torneo_express_eliminatoria_partidos")
+    .delete()
+    .eq("torneo_id", torneoId);
+  if (elimErr && !isBracketSchemaError(elimErr)) {
+    throwIfError(elimErr, "deleteTorneoExpress.eliminatoria");
+  }
+
   const { data: grupos, error: gErr } = await supabase
     .from("torneo_express_grupos")
     .select("id")
@@ -1459,6 +1468,50 @@ export async function deleteTorneoExpress(torneoId: string): Promise<void> {
     .delete()
     .eq("id", torneoId);
   throwIfError(torneoDelErr, "deleteTorneoExpress.torneo");
+}
+
+/**
+ * Elimina el Evento y todas sus categorías hijas (torneo_express + datos deportivos).
+ * El FK es ON DELETE SET NULL: por eso las categorías se borran explícitamente primero.
+ */
+export async function deleteEvento(eventoId: string): Promise<void> {
+  const user = await requireAuthUser();
+  const id = eventoId.trim();
+  if (!id) throw new Error("eventoId inválido");
+
+  const evento = await fetchEventoById(id);
+  if (!evento) {
+    throw new Error("Evento no encontrado");
+  }
+  if (evento.organizador_id !== user.id) {
+    throw new Error("No tienes permiso para eliminar este evento");
+  }
+
+  const { data: categorias, error: catErr } = await supabase
+    .from("torneo_express")
+    .select("id")
+    .eq("evento_id", id);
+  if (catErr && isMissingColumnError(catErr, "torneo_express", "evento_id")) {
+    // Sin columna: solo borrar el contenedor.
+  } else {
+    throwIfError(catErr, "deleteEvento.categorias");
+    for (const row of categorias ?? []) {
+      const catId = String((row as { id?: string }).id ?? "");
+      if (catId) await deleteTorneoExpress(catId);
+    }
+  }
+
+  const { error: delErr } = await supabase
+    .from("torneo_express_evento")
+    .delete()
+    .eq("id", id);
+
+  if (isEventoTableMissing(delErr)) {
+    throw new Error(
+      "Falta la tabla torneo_express_evento. Ejecuta supabase/torneo-express-evento-fase1.sql"
+    );
+  }
+  throwIfError(delErr, "deleteEvento");
 }
 
 export function publicGrupoUrl(torneoId: string, grupoId: string): string {
@@ -1777,7 +1830,9 @@ export async function reabrirTorneoExpressEliminatoria(
 
   await avanzarEliminatoriaSiCompleta(torneoId);
   const fresh = await fetchTorneoExpress(torneoId);
-  return fresh ?? updated;
+  const result = fresh ?? updated;
+  await syncParentEventoAfterCategoriaChange(result);
+  return result;
 }
 
 /** Borra eliminatoria y vuelve a «grupos listos para bracket». No toca fase de grupos. */
@@ -1903,6 +1958,8 @@ export async function finalizarTorneoExpressEliminatoria(
   if (!updated) {
     throw new Error("No se pudo cargar el torneo tras finalizar");
   }
+
+  await syncParentEventoAfterCategoriaChange(updated);
 
   // Registro Riviera Open: historial por jugador (no bloquea la finalización).
   void import("../lib/rivieraJugadores/careerEventPipeline")
@@ -2461,6 +2518,44 @@ export async function updateEvento(
   throwIfError(error, "updateEvento");
   if (!data) throw new Error("No se pudo actualizar el evento");
   return mapTorneoExpressEvento(data as Record<string, unknown>);
+}
+
+/**
+ * Ajusta `torneo_express_evento.estado` según las categorías hijas.
+ * Solo aplica a eventos published / in_progress / completed (no draft/archived).
+ */
+export async function syncEventoEstadoFromCategorias(
+  eventoId: string
+): Promise<TorneoExpressEvento | null> {
+  const id = eventoId.trim();
+  if (!id) return null;
+
+  const bundle = await fetchEventoConCategorias(id);
+  if (!bundle) return null;
+
+  const next = resolveEventoEstadoFromCategorias(
+    bundle.evento.estado,
+    bundle.categorias
+  );
+  if (next === bundle.evento.estado) return bundle.evento;
+
+  try {
+    return await updateEvento(id, { estado: next });
+  } catch (e) {
+    console.warn(
+      "[torneoExpress] syncEventoEstadoFromCategorias:",
+      e instanceof Error ? e.message : e
+    );
+    return bundle.evento;
+  }
+}
+
+async function syncParentEventoAfterCategoriaChange(
+  torneo: Pick<TorneoExpress, "evento_id"> | null | undefined
+): Promise<void> {
+  const eventoId = torneo?.evento_id?.trim();
+  if (!eventoId) return;
+  await syncEventoEstadoFromCategorias(eventoId);
 }
 
 export async function linkTorneoToEvento(
