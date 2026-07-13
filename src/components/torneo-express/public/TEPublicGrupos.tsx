@@ -5,6 +5,7 @@ import {
   formatPartidoHora,
   partidoScheduleIso,
 } from "../../../lib/torneoExpress/partidoSchedule";
+import { matchWinnerSideFromPartido } from "../../../lib/torneoExpress/partidoSets";
 import { sortPartidosByOrden } from "../../../lib/torneoExpress/roundRobin";
 import type {
   StandingRowExpress,
@@ -12,6 +13,7 @@ import type {
   TorneoExpressPartido,
 } from "../../../lib/torneoExpress/types";
 import { Button } from "../../ui";
+import { PartidoSetsScoreDisplay } from "../PartidoSetsScoreDisplay";
 import { PublicGrupoLeaderCelebrate } from "./PublicGrupoLeaderCelebrate";
 import { PublicStandingsSection } from "./PublicStandingsSection";
 import { PublicStandingsScoringHelp } from "./PublicStandingsScoringHelp";
@@ -25,9 +27,11 @@ export interface TEPublicGruposPartido {
   cancha: string;
   pareja1: string;
   pareja2: string;
+  /** @deprecated Preferir partidoExpress + PartidoSetsScoreDisplay */
   score1: number | null;
   score2: number | null;
   estado: TEPartidoEstadoPublico;
+  partidoExpress: TorneoExpressPartido;
 }
 
 export interface TEPublicGruposGrupo {
@@ -82,6 +86,7 @@ function mapPartidosForGrupo(
       score1: played ? (partido.puntos_local ?? 0) : null,
       score2: played ? (partido.puntos_visitante ?? 0) : null,
       estado: resolvePartidoEstado(partido, enVivoId),
+      partidoExpress: partido,
     };
   });
 }
@@ -179,16 +184,11 @@ function PartidoStatusBadge({ estado }: { estado: TEPartidoEstadoPublico }) {
 
 function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
   const played = partido.estado === "finalizado";
-  const team1Wins =
-    played &&
-    partido.score1 != null &&
-    partido.score2 != null &&
-    partido.score1 > partido.score2;
-  const team2Wins =
-    played &&
-    partido.score1 != null &&
-    partido.score2 != null &&
-    partido.score2 > partido.score1;
+  const winnerSide = played
+    ? matchWinnerSideFromPartido(partido.partidoExpress)
+    : null;
+  const team1Wins = winnerSide === "local";
+  const team2Wins = winnerSide === "visitante";
 
   return (
     <article className="te-partido-item">
@@ -213,17 +213,6 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
           >
             {partido.pareja1}
           </span>
-          {played ? (
-            <span
-              className={`te-team-score${
-                team1Wins ? " te-team-score--winner" : ""
-              }`}
-            >
-              {partido.score1}
-            </span>
-          ) : (
-            <span className="te-score-pending">—</span>
-          )}
         </div>
         <div className="te-team-row">
           <span
@@ -233,18 +222,17 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
           >
             {partido.pareja2}
           </span>
-          {played ? (
-            <span
-              className={`te-team-score${
-                team2Wins ? " te-team-score--winner" : ""
-              }`}
-            >
-              {partido.score2}
-            </span>
-          ) : (
-            <span className="te-score-pending">—</span>
-          )}
         </div>
+        {played ? (
+          <div className="te-partido-sets-wrap">
+            <PartidoSetsScoreDisplay
+              partido={partido.partidoExpress}
+              variant="inline"
+            />
+          </div>
+        ) : (
+          <span className="te-score-pending">—</span>
+        )}
       </div>
 
       <div className="te-partido-badge">

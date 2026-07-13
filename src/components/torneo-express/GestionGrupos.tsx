@@ -346,6 +346,17 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         <p className="te-grupos-card__partidos-hint">
           Captura resultados, horarios y canchas de cada juego.
         </p>
+        {faseTorneo !== "grupos" ? (
+          <p className="te-partidos-migration-hint" role="status">
+            La eliminatoria ya fue generada. Para corregir resultados de grupos
+            primero debes reiniciar la fase eliminatoria.
+            {/* TODO(transaccional): reiniciar eliminatoria + reabrir edición de
+                grupos de forma atómica. Archivos: torneoExpressService.ts
+                (resetEliminatoriaTorneoExpress), GestionGrupos.tsx,
+                TorneoExpressResetEliminatoriaModal.tsx. Campos: fase_torneo,
+                fase_eliminacion, bracket_slots, torneo_express_eliminatoria_partidos. */}
+          </p>
+        ) : null}
         {(!partidosOrdenDisponible ||
           !partidosCanchaDisponible ||
           !partidosProgramadoDisponible) && (
@@ -711,9 +722,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               <GestionEliminatoria
                 bundle={bundle}
                 labelMap={eliminatoriaLabelMap}
-                editable={
-                  faseTorneo === "eliminatoria" || faseTorneo === "cerrado"
-                }
+                editable={faseTorneo === "eliminatoria"}
                 savingEliminatoriaId={savingEliminatoriaId}
                 savingEliminatoriaCanchaId={savingEliminatoriaCanchaId}
                 savingEliminatoriaProgramadoId={savingEliminatoriaProgramadoId}
@@ -944,7 +953,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         <GestionEliminatoria
           bundle={bundle}
           labelMap={eliminatoriaLabelMap}
-          editable={faseTorneo === "eliminatoria" || faseTorneo === "cerrado"}
+          editable={faseTorneo === "eliminatoria"}
           savingEliminatoriaId={savingEliminatoriaId}
           savingEliminatoriaCanchaId={savingEliminatoriaCanchaId}
           savingEliminatoriaProgramadoId={savingEliminatoriaProgramadoId}
@@ -1052,6 +1061,18 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 <p className="te-grupos-card__partidos-hint">
                   Captura resultados, horarios y canchas de cada juego.
                 </p>
+                {faseTorneo !== "grupos" ? (
+                  <p className="te-partidos-migration-hint" role="status">
+                    La eliminatoria ya fue generada. Para corregir resultados de
+                    grupos primero debes reiniciar la fase eliminatoria.
+                    {/* TODO(transaccional): reiniciar eliminatoria + reabrir
+                        edición de grupos de forma atómica. Archivos:
+                        torneoExpressService.ts (resetEliminatoriaTorneoExpress),
+                        GestionGrupos.tsx, TorneoExpressResetEliminatoriaModal.tsx.
+                        Campos: fase_torneo, fase_eliminacion, bracket_slots,
+                        torneo_express_eliminatoria_partidos. */}
+                  </p>
+                ) : null}
                 {(!partidosOrdenDisponible ||
                   !partidosCanchaDisponible ||
                   !partidosProgramadoDisponible) && (

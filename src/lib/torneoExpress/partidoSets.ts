@@ -1,4 +1,5 @@
 /** Marcador por set (local = pareja_local, visitante = pareja_visitante). */
+import type { MatchResult } from "../../utils/standings";
 import type { PartidoSetScore } from "./types";
 
 export type { PartidoSetScore };
@@ -12,8 +13,8 @@ export interface PartidoSetsSource {
   estado?: string;
 }
 
-const MAX_SETS = 3;
-const SETS_TO_WIN = 2;
+export const MAX_SETS = 3;
+export const SETS_TO_WIN = 2;
 
 function isValidSetScore(n: unknown): n is number {
   return typeof n === "number" && Number.isFinite(n) && n >= 0;
@@ -124,11 +125,77 @@ export function countSetWins(sets: PartidoSetScore[]): {
   return { local, visitante };
 }
 
+/** Suma de games de todos los sets (para FAV/CON/DIF en clasificación). */
+export function totalGamesFromSets(sets: PartidoSetScore[]): {
+  local: number;
+  visitante: number;
+} {
+  let local = 0;
+  let visitante = 0;
+  for (const s of sets) {
+    local += s.local;
+    visitante += s.visitante;
+  }
+  return { local, visitante };
+}
+
+/**
+ * Deriva MatchResult para standings desde sets_resultado (fuente de verdad)
+ * o puntos_* legacy (compatibilidad histórica).
+ */
+export function partidoToMatchResult(partido: {
+  pareja_local_id: string;
+  pareja_visitante_id: string;
+  puntos_local?: number | null;
+  puntos_visitante?: number | null;
+  sets_resultado?: unknown;
+  ganador_id?: string | null;
+  estado?: string;
+}): MatchResult | null {
+  if (partido.estado !== "jugado") return null;
+
+  const stored = parseSetsResultado(partido.sets_resultado);
+  if (stored && stored.length > 0) {
+    const games = totalGamesFromSets(stored);
+    return {
+      pairAId: partido.pareja_local_id,
+      pairBId: partido.pareja_visitante_id,
+      gamesA: games.local,
+      gamesB: games.visitante,
+      winnerId: partido.ganador_id,
+    };
+  }
+
+  const pl = partido.puntos_local ?? 0;
+  const pv = partido.puntos_visitante ?? 0;
+
+  // Eliminatoria legacy multi-set sin JSON: solo tally de sets, sin games detallados.
+  if (looksLikeSetWinTally(pl, pv)) {
+    return {
+      pairAId: partido.pareja_local_id,
+      pairBId: partido.pareja_visitante_id,
+      gamesA: 0,
+      gamesB: 0,
+      winnerId: partido.ganador_id,
+    };
+  }
+
+  return {
+    pairAId: partido.pareja_local_id,
+    pairBId: partido.pareja_visitante_id,
+    gamesA: pl,
+    gamesB: pv,
+    winnerId: partido.ganador_id,
+  };
+}
+
 /** Ganador del partido; con 1 set basta ganar ese set; con 2+ aplica al mejor de 3. */
 export function detectMatchWinner(
   sets: PartidoSetScore[]
 ): PartidoSetsSide | null {
   if (sets.length === 0) return null;
+  if (sets.length > MAX_SETS) return null;
+  if (sets.some((s) => s.local === s.visitante)) return null;
   if (sets.length === 1) {
     return setWinnerSide(sets[0]);
   }
@@ -168,6 +235,41 @@ export function emptySetDraft(): PartidoSetScore {
   return { local: 0, visitante: 0 };
 }
 
+/** Mensaje de validación para UI; null si se puede guardar. */
+export function getSetsValidationMessage(
+  sets: PartidoSetScore[]
+): string | null {
+  if (sets.length === 0) {
+    return "Agrega al menos un set.";
+  }
+  if (sets.length > MAX_SETS) {
+    return "No se permiten más de 3 sets.";
+  }
+  for (let i = 0; i < sets.length; i += 1) {
+    const s = sets[i];
+    if (!isSetComplete(s)) {
+      return `Completa el Set ${i + 1}.`;
+    }
+    if (s.local < 0 || s.visitante < 0) {
+      return "Los marcadores no pueden ser negativos.";
+    }
+    if (s.local === s.visitante) {
+      return `El Set ${i + 1} no puede terminar empatado.`;
+    }
+  }
+  const winner = detectMatchWinner(sets);
+  if (winner) return null;
+
+  const wins = countSetWins(sets);
+  if (sets.length === 2 && wins.local === 1 && wins.visitante === 1) {
+    return "El partido está empatado a un set. Agrega el tercer set.";
+  }
+  if (sets.length >= 2 && wins.local < SETS_TO_WIN && wins.visitante < SETS_TO_WIN) {
+    return "Ninguna pareja ha ganado 2 sets todavía.";
+  }
+  return "Completa todos los sets y asegúrate de que haya un ganador.";
+}
+
 /** Formato gestión: "6-2 / 3-6 / 7-5" o "6 — 2" si un solo set. */
 export function formatSetsInline(sets: PartidoSetScore[]): string {
   if (sets.length === 0) return "—";
@@ -189,7 +291,7 @@ export function formatSetsCompact(sets: PartidoSetScore[]): string {
 export interface PersistSetsPayload {
   puntos_local: number;
   puntos_visitante: number;
-  sets_resultado: PartidoSetScore[] | null;
+  sets_resultado: PartidoSetScore[];
   ganadorSide: PartidoSetsSide;
 }
 
@@ -197,7 +299,7 @@ export interface PersistSetsPayload {
 export function buildPersistPayload(
   sets: PartidoSetScore[]
 ): PersistSetsPayload | null {
-  if (!allSetsComplete(sets)) return null;
+  if (getSetsValidationMessage(sets) !== null) return null;
   const winner = detectMatchWinner(sets);
   if (!winner) return null;
 

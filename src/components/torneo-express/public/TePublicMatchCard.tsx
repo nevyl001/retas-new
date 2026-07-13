@@ -1,33 +1,12 @@
 import React from "react";
 import type { TorneoExpressPartido } from "../../../lib/torneoExpress/types";
+import { matchWinnerSideFromPartido } from "../../../lib/torneoExpress/partidoSets";
 import {
   TePubMatchOutcome,
   TePubMatchStatus,
-  tePubScoreNumModifier,
 } from "../../public/tePubShared";
-import { useCountUp } from "./useCountUp";
+import { PartidoSetsScoreDisplay } from "../PartidoSetsScoreDisplay";
 import { TePublicMatchMeta } from "./TePublicMatchMeta";
-
-function AnimatedScore({
-  value,
-  isWin,
-  isTie,
-  animate,
-}: {
-  value: number;
-  isWin: boolean;
-  isTie: boolean;
-  animate: boolean;
-}) {
-  const displayed = useCountUp(value, { enabled: animate });
-  return (
-    <span
-      className={`te-pub-score__num${tePubScoreNumModifier({ isWin, isTie })}`}
-    >
-      {displayed}
-    </span>
-  );
-}
 
 export const TePublicMatchCard: React.FC<{
   partido: TorneoExpressPartido;
@@ -37,11 +16,10 @@ export const TePublicMatchCard: React.FC<{
   index: number;
 }> = ({ partido, localLabel, visitLabel, enVivo, index }) => {
   const played = partido.estado === "jugado";
-  const pl = partido.puntos_local ?? 0;
-  const pv = partido.puntos_visitante ?? 0;
-  const localWins = played && pl > pv;
-  const visitWins = played && pv > pl;
-  const isTie = played && pl === pv;
+  const winnerSide = played ? matchWinnerSideFromPartido(partido) : null;
+  const localWins = winnerSide === "local";
+  const visitWins = winnerSide === "visitante";
+  const isTie = played && !winnerSide;
   const winnerLabel = localWins
     ? localLabel
     : visitWins
@@ -62,21 +40,11 @@ export const TePublicMatchCard: React.FC<{
 
       <div className="te-pub-match__score-block">
         {played ? (
-          <div className="te-pub-score">
-            <AnimatedScore
-              value={pl}
-              isWin={localWins}
-              isTie={isTie}
-              animate={played}
-            />
-            <span className="te-pub-score__sep">—</span>
-            <AnimatedScore
-              value={pv}
-              isWin={visitWins}
-              isTie={isTie}
-              animate={played}
-            />
-          </div>
+          <PartidoSetsScoreDisplay
+            partido={partido}
+            variant="inline"
+            className="te-pub-score"
+          />
         ) : (
           <span className="te-pub-score te-pub-score--pending">—</span>
         )}

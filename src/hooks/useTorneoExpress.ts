@@ -166,14 +166,16 @@ export function useTorneoExpress(
   }, [bundle]);
 
   const saveResultado = useCallback(
-    async (partidoId: string, puntosLocal: number, puntosVisitante: number) => {
+    async (partidoId: string, sets: PartidoSetScore[]) => {
       setSavingPartidoId(partidoId);
       setError(null);
       try {
-        await savePartidoResultado(partidoId, puntosLocal, puntosVisitante);
+        await savePartidoResultado(partidoId, sets);
         await reload();
       } catch (e) {
         setError(e instanceof Error ? e.message : "No se pudo guardar el resultado");
+        // Reflejar estado real si el update parcial/remoto ya ocurrió.
+        await reload({ silent: true }).catch(() => undefined);
         throw e;
       } finally {
         setSavingPartidoId(null);
@@ -259,6 +261,8 @@ export function useTorneoExpress(
         setError(
           e instanceof Error ? e.message : "No se pudo guardar el resultado"
         );
+        // Tras fallo de propagación, recargar para no mostrar llave inconsistente.
+        await reload({ silent: true }).catch(() => undefined);
         throw e;
       } finally {
         setSavingEliminatoriaId(null);

@@ -1,9 +1,9 @@
 import { resolveMatchWinner, type MatchResult } from "../../utils/standings";
 import { computeStandingDif } from "../../utils/standingsDisplay";
+import { partidoToMatchResult } from "./partidoSets";
 import type {
   TorneoExpressBundle,
   TorneoExpressEliminatoriaPartido,
-  TorneoExpressPartido,
 } from "./types";
 
 export interface PublicEliminatoriaPodiumStats {
@@ -15,28 +15,20 @@ export interface PublicEliminatoriaPodiumStats {
   dif: number;
 }
 
-function grupoPartidoToMatch(partido: TorneoExpressPartido): MatchResult {
-  return {
-    pairAId: partido.pareja_local_id,
-    pairBId: partido.pareja_visitante_id,
-    gamesA: partido.puntos_local ?? 0,
-    gamesB: partido.puntos_visitante ?? 0,
-    winnerId: partido.ganador_id,
-  };
-}
-
 function eliminatoriaPartidoToMatch(
   partido: TorneoExpressEliminatoriaPartido
 ): MatchResult | null {
   if (partido.estado !== "jugado" || partido.es_bye) return null;
   if (!partido.pareja_local_id || !partido.pareja_visitante_id) return null;
-  return {
-    pairAId: partido.pareja_local_id,
-    pairBId: partido.pareja_visitante_id,
-    gamesA: partido.puntos_local ?? 0,
-    gamesB: partido.puntos_visitante ?? 0,
-    winnerId: partido.ganador_id,
-  };
+  return partidoToMatchResult({
+    pareja_local_id: partido.pareja_local_id,
+    pareja_visitante_id: partido.pareja_visitante_id,
+    puntos_local: partido.puntos_local,
+    puntos_visitante: partido.puntos_visitante,
+    sets_resultado: partido.sets_resultado,
+    ganador_id: partido.ganador_id,
+    estado: partido.estado,
+  });
 }
 
 export function buildPublicPodiumStatsForPair(
@@ -56,7 +48,8 @@ export function buildPublicPodiumStatsForPair(
       ) {
         continue;
       }
-      matches.push(grupoPartidoToMatch(partido));
+      const match = partidoToMatchResult(partido);
+      if (match) matches.push(match);
     }
   }
 

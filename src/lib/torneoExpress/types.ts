@@ -101,7 +101,7 @@ export interface TorneoExpressPartido {
   pareja_visitante_id: string;
   puntos_local: number | null;
   puntos_visitante: number | null;
-  /** JSON [{local, visitante}, ...] en eliminatoria multi-set. */
+  /** JSON [{local, visitante}, ...] — fuente de verdad del marcador por sets. */
   sets_resultado?: PartidoSetScore[] | null;
   ganador_id: string | null;
   estado: PartidoExpressEstado;

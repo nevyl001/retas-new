@@ -9,7 +9,7 @@ interface StandingsScoringHelpProps {
   className?: string;
   /** Versión de una línea para tablas reducidas (p. ej. resumen americano). */
   compact?: boolean;
-  /** Torneo Express: PG → DIF → H2H */
+  /** Torneo Express: PG → FAV → DIF → H2H */
   variant?: "default" | "express";
   /** Tipo de reta/torneo para el párrafo contextual (evita mencionar americano en dual meet, etc.). */
   mode?: StandingsHelpMode;
@@ -23,8 +23,8 @@ function buildBriefOrderText(
   if (isExpress) {
     return (
       <>
-        Orden: <strong>PG</strong> → <strong>DIF</strong> → H2H ·{" "}
-        <strong>PTS</strong> = referencia
+        Orden: <strong>PG</strong> → <strong>FAV</strong> → <strong>DIF</strong> →
+        H2H · <strong>PTS</strong> = referencia
       </>
     );
   }

@@ -12,12 +12,16 @@ import {
   programadoDraftFromPartido,
   programadoIsoFromDraft,
 } from "../../lib/torneoExpress/partidoSchedule";
+import { matchWinnerSideFromPartido } from "../../lib/torneoExpress/partidoSets";
 import type {
+  PartidoSetScore,
   TorneoExpressGrupoPareja,
   TorneoExpressPartido,
 } from "../../lib/torneoExpress/types";
 import { Badge, Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
+import { PartidoSetsResultModal } from "./PartidoSetsResultModal";
+import { PartidoSetsScoreDisplay } from "./PartidoSetsScoreDisplay";
 
 interface PartidosGrupoProps {
   partidos: TorneoExpressPartido[];
@@ -32,8 +36,7 @@ interface PartidosGrupoProps {
   horarioEditable?: boolean;
   onSaveResultado?: (
     partidoId: string,
-    puntosLocal: number,
-    puntosVisitante: number
+    sets: PartidoSetScore[]
   ) => Promise<void>;
   onSaveCancha?: (partidoId: string, cancha: string | null) => Promise<void>;
   onSaveProgramado?: (
@@ -322,249 +325,197 @@ function PartidoRow({
   onSaveProgramado?: PartidosGrupoProps["onSaveProgramado"];
 }) {
   const played = partido.estado === "jugado";
-  const puntosLocal = partido.puntos_local ?? 0;
-  const puntosVisitante = partido.puntos_visitante ?? 0;
-  const pair1Won = played && puntosLocal > puntosVisitante;
-  const pair2Won = played && puntosVisitante > puntosLocal;
-  const [editing, setEditing] = useState(false);
+  const [setsModalOpen, setSetsModalOpen] = useState(false);
   const [canchaEditOpen, setCanchaEditOpen] = useState(false);
   const [horarioEditOpen, setHorarioEditOpen] = useState(false);
-  const [pl, setPl] = useState(String(partido.puntos_local ?? ""));
-  const [pv, setPv] = useState(String(partido.puntos_visitante ?? ""));
-  useEffect(() => {
-    setPl(String(partido.puntos_local ?? ""));
-    setPv(String(partido.puntos_visitante ?? ""));
-    if (partido.estado === "jugado") setEditing(false);
-  }, [partido.id, partido.puntos_local, partido.puntos_visitante, partido.estado]);
 
-  const showInputs = editable && onSave && (!played || editing);
+  const winnerSide = played ? matchWinnerSideFromPartido(partido) : null;
+  const pair1Won = winnerSide === "local";
+  const pair2Won = winnerSide === "visitante";
+
   const scheduleIso = partidoScheduleIso(partido);
   const fechaLabel = formatPartidoFecha(scheduleIso);
   const horaLabel = formatPartidoHora(scheduleIso);
   const canchaLabel = formatCanchaDisplay(partido.cancha);
   const metaBusy = savingCancha || savingProgramado;
+  const canEditResult = editable && !!onSave;
+
   return (
-    <div className="te-partido-row te-partido-card">
-      <div className="te-partido-row__toolbar">
-        {dragHandle ?? <span />}
-        <PartidoStatusBadge partido={partido} enJuego={enJuego} />
-      </div>
-
-      <div className="te-partido-meta-chips">
-        {horarioEditable && onSaveProgramado ? (
-          <button
-            type="button"
-            className="te-partido-chip"
-            disabled={metaBusy}
-            onClick={() => setHorarioEditOpen(true)}
-            aria-label={`Editar día (${fechaLabel})`}
-          >
-            <span className="te-partido-chip__icon" aria-hidden>
-              📅
-            </span>
-            {fechaLabel}
-          </button>
-        ) : (
-          <span className="te-partido-chip">
-            <span className="te-partido-chip__icon" aria-hidden>
-              📅
-            </span>
-            {fechaLabel}
-          </span>
-        )}
-        {horarioEditable && onSaveProgramado ? (
-          <button
-            type="button"
-            className="te-partido-chip"
-            disabled={metaBusy}
-            onClick={() => setHorarioEditOpen(true)}
-            aria-label={`Editar hora (${horaLabel})`}
-          >
-            <span className="te-partido-chip__icon" aria-hidden>
-              🕐
-            </span>
-            {horaLabel}
-          </button>
-        ) : (
-          <span className="te-partido-chip">
-            <span className="te-partido-chip__icon" aria-hidden>
-              🕐
-            </span>
-            {horaLabel}
-          </span>
-        )}
-        {canchaEditable && onSaveCancha ? (
-          <button
-            type="button"
-            className="te-partido-chip te-partido-chip--cancha"
-            disabled={metaBusy}
-            onClick={() => setCanchaEditOpen(true)}
-            aria-label={`Editar cancha (${canchaLabel})`}
-          >
-            <span className="te-partido-chip__icon" aria-hidden>
-              📍
-            </span>
-            {canchaLabel}
-          </button>
-        ) : (
-          <span className="te-partido-chip te-partido-chip--cancha">
-            <span className="te-partido-chip__icon" aria-hidden>
-              📍
-            </span>
-            {canchaLabel}
-          </span>
-        )}
-      </div>
-
-      <div className="te-partido-matchup">
-        <span
-          className={`te-partido-team te-partido-team--local${
-            pair1Won
-              ? " te-partido-team--winner"
-              : pair2Won
-                ? " te-partido-team--loser"
-                : ""
-          }`}
-        >
-          {localLabel}
-        </span>
-        {showInputs ? (
-          <div className="te-score-inputs">
-            <input
-              type="number"
-              min={0}
-              value={pl}
-              onChange={(e) => setPl(e.target.value)}
-              aria-label={`Puntos ${localLabel}`}
-            />
-            <input
-              type="number"
-              min={0}
-              value={pv}
-              onChange={(e) => setPv(e.target.value)}
-              aria-label={`Puntos ${visitLabel}`}
-            />
-          </div>
-        ) : (
-          <span
-            className={`te-partido-score-center${played ? "" : " is-pending"}`}
-            aria-label={
-              played
-                ? `Marcador ${puntosLocal} a ${puntosVisitante}`
-                : "Sin resultado"
-            }
-          >
-            {played ? (
-              <>
-                <span
-                  className={`te-partido-score-num${
-                    pair1Won ? " te-partido-score-num--win" : ""
-                  }`}
-                >
-                  {puntosLocal}
-                </span>
-                <span className="te-partido-score-sep" aria-hidden>
-                  –
-                </span>
-                <span
-                  className={`te-partido-score-num${
-                    pair2Won ? " te-partido-score-num--win" : ""
-                  }`}
-                >
-                  {puntosVisitante}
-                </span>
-              </>
-            ) : (
-              "—"
-            )}
-          </span>
-        )}
-        <span
-          className={`te-partido-team te-partido-team--visit${
-            pair2Won
-              ? " te-partido-team--winner"
-              : pair1Won
-                ? " te-partido-team--loser"
-                : ""
-          }`}
-        >
-          {visitLabel}
-        </span>
-      </div>
-
-      {((horarioEditOpen && horarioEditable && onSaveProgramado) ||
-        (canchaEditOpen && canchaEditable && onSaveCancha)) && (
-        <div className="te-partido-meta-edit">
-          {horarioEditOpen && horarioEditable && onSaveProgramado ? (
-            <PartidoHorarioField
-              partido={partido}
-              horarioEditable={horarioEditable}
-              savingProgramado={savingProgramado}
-              onSaveProgramado={onSaveProgramado}
-              forceEdit
-              onClose={() => setHorarioEditOpen(false)}
-            />
-          ) : null}
-          {canchaEditOpen && canchaEditable && onSaveCancha ? (
-            <PartidoCanchaField
-              partido={partido}
-              canchaEditable={canchaEditable}
-              savingCancha={savingCancha}
-              onSaveCancha={onSaveCancha}
-              forceEdit
-              onClose={() => setCanchaEditOpen(false)}
-            />
-          ) : null}
+    <>
+      <div className="te-partido-row te-partido-card">
+        <div className="te-partido-row__toolbar">
+          {dragHandle ?? <span />}
+          <PartidoStatusBadge partido={partido} enJuego={enJuego} />
         </div>
-      )}
 
-      {showInputs ? (
-        <div className="te-partido-actions">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="te-partido-save-btn"
-            disabled={saving}
-            loading={saving}
-            onClick={() =>
-              void onSave(partido.id, Number(pl) || 0, Number(pv) || 0).then(
-                () => setEditing(false)
-              )
-            }
-          >
-            {saving ? "Guardando…" : "Guardar resultado"}
-          </Button>
-          {played && (
-            <Button
+        <div className="te-partido-meta-chips">
+          {horarioEditable && onSaveProgramado ? (
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              className="te-partido-edit-btn"
-              onClick={() => setEditing(false)}
+              className="te-partido-chip"
+              disabled={metaBusy}
+              onClick={() => setHorarioEditOpen(true)}
+              aria-label={`Editar día (${fechaLabel})`}
             >
-              Cancelar
-            </Button>
+              <span className="te-partido-chip__icon" aria-hidden>
+                📅
+              </span>
+              {fechaLabel}
+            </button>
+          ) : (
+            <span className="te-partido-chip">
+              <span className="te-partido-chip__icon" aria-hidden>
+                📅
+              </span>
+              {fechaLabel}
+            </span>
+          )}
+          {horarioEditable && onSaveProgramado ? (
+            <button
+              type="button"
+              className="te-partido-chip"
+              disabled={metaBusy}
+              onClick={() => setHorarioEditOpen(true)}
+              aria-label={`Editar hora (${horaLabel})`}
+            >
+              <span className="te-partido-chip__icon" aria-hidden>
+                🕐
+              </span>
+              {horaLabel}
+            </button>
+          ) : (
+            <span className="te-partido-chip">
+              <span className="te-partido-chip__icon" aria-hidden>
+                🕐
+              </span>
+              {horaLabel}
+            </span>
+          )}
+          {canchaEditable && onSaveCancha ? (
+            <button
+              type="button"
+              className="te-partido-chip te-partido-chip--cancha"
+              disabled={metaBusy}
+              onClick={() => setCanchaEditOpen(true)}
+              aria-label={`Editar cancha (${canchaLabel})`}
+            >
+              <span className="te-partido-chip__icon" aria-hidden>
+                📍
+              </span>
+              {canchaLabel}
+            </button>
+          ) : (
+            <span className="te-partido-chip te-partido-chip--cancha">
+              <span className="te-partido-chip__icon" aria-hidden>
+                📍
+              </span>
+              {canchaLabel}
+            </span>
           )}
         </div>
-      ) : (
-        editable &&
-        onSave &&
-        played && (
+
+        <div className="te-partido-matchup">
+          <span
+            className={`te-partido-team te-partido-team--local${
+              pair1Won
+                ? " te-partido-team--winner"
+                : pair2Won
+                  ? " te-partido-team--loser"
+                  : ""
+            }`}
+          >
+            {localLabel}
+          </span>
+          {played ? (
+            <PartidoSetsScoreDisplay
+              partido={partido}
+              variant="inline"
+              className="te-partido-score-center"
+            />
+          ) : (
+            <span className="te-partido-score-center is-pending">—</span>
+          )}
+          <span
+            className={`te-partido-team te-partido-team--visit${
+              pair2Won
+                ? " te-partido-team--winner"
+                : pair1Won
+                  ? " te-partido-team--loser"
+                  : ""
+            }`}
+          >
+            {visitLabel}
+          </span>
+        </div>
+
+        {((horarioEditOpen && horarioEditable && onSaveProgramado) ||
+          (canchaEditOpen && canchaEditable && onSaveCancha)) && (
+          <div className="te-partido-meta-edit">
+            {horarioEditOpen && horarioEditable && onSaveProgramado ? (
+              <PartidoHorarioField
+                partido={partido}
+                horarioEditable={horarioEditable}
+                savingProgramado={savingProgramado}
+                onSaveProgramado={onSaveProgramado}
+                forceEdit
+                onClose={() => setHorarioEditOpen(false)}
+              />
+            ) : null}
+            {canchaEditOpen && canchaEditable && onSaveCancha ? (
+              <PartidoCanchaField
+                partido={partido}
+                canchaEditable={canchaEditable}
+                savingCancha={savingCancha}
+                onSaveCancha={onSaveCancha}
+                forceEdit
+                onClose={() => setCanchaEditOpen(false)}
+              />
+            ) : null}
+          </div>
+        )}
+
+        {canEditResult && played ? (
           <div className="te-partido-actions te-partido-actions--score te-partido-actions--corner">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className="te-partido-edit-btn"
-              onClick={() => setEditing(true)}
+              onClick={() => setSetsModalOpen(true)}
             >
-              Editar resultado
+              Corregir resultado
             </Button>
           </div>
-        )
-      )}
-    </div>
+        ) : null}
+
+        {canEditResult && !played ? (
+          <div className="te-partido-actions">
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              loading={saving}
+              disabled={saving}
+              onClick={() => setSetsModalOpen(true)}
+            >
+              Capturar resultado
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      {canEditResult ? (
+        <PartidoSetsResultModal
+          open={setsModalOpen}
+          onClose={() => setSetsModalOpen(false)}
+          localLabel={localLabel}
+          visitLabel={visitLabel}
+          initialPartido={partido}
+          saving={saving}
+          onSave={(sets) => onSave!(partido.id, sets)}
+        />
+      ) : null}
+    </>
   );
 }
 

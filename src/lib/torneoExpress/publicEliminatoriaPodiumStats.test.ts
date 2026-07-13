@@ -72,6 +72,37 @@ describe("publicEliminatoriaPodiumStats", () => {
     });
   });
 
+  it("suma games de sets_resultado en BO3 (no el tally 2-1)", () => {
+    const withBo3: TorneoExpressBundle = {
+      ...bundle,
+      partidosPorGrupo: {
+        g1: [
+          {
+            id: "m1",
+            grupo_id: "g1",
+            pareja_local_id: "p1",
+            pareja_visitante_id: "p2",
+            puntos_local: 2,
+            puntos_visitante: 1,
+            sets_resultado: [
+              { local: 6, visitante: 4 },
+              { local: 3, visitante: 6 },
+              { local: 6, visitante: 2 },
+            ],
+            ganador_id: "p1",
+            estado: "jugado",
+            orden: 1,
+            created_at: "",
+          },
+        ],
+      },
+      eliminatoriaPartidos: [],
+    };
+    const stats = buildPublicPodiumStatsForPair(withBo3, "p1");
+    expect(stats?.juegosFavor).toBe(15);
+    expect(stats?.juegosContra).toBe(12);
+  });
+
   it("formatea diferencia positiva", () => {
     expect(formatPublicPodiumDif(5)).toBe("+5");
     expect(formatPublicPodiumDif(-2)).toBe("-2");

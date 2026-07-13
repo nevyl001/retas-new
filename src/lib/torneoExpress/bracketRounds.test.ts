@@ -1,8 +1,10 @@
 import {
   buildSiguienteRondaPartidos,
   buildTercerLugarPartido,
+  computeWinnerChangePropagation,
   eliminatoriaUltimaRondaCompleta,
   labelRondaEliminatoria,
+  nextRoundSlotForCruce,
   RONDA_TERCER_LUGAR,
   rondaCompleta,
   totalRondasEliminatoria,
@@ -160,5 +162,93 @@ describe("bracketRounds", () => {
     expect(labelRondaEliminatoria("cuartos", RONDA_TERCER_LUGAR)).toBe(
       "Tercer lugar"
     );
+  });
+
+  it("computeWinnerChangePropagation actualiza downstream y reinicia resultado", () => {
+    const partidos = [
+      mkPartido({
+        id: "semi-0",
+        ronda: 1,
+        cruce_index: 0,
+        pareja_local_id: "a",
+        pareja_visitante_id: "b",
+        ganador_id: "a",
+        estado: "jugado",
+      }),
+      mkPartido({
+        id: "semi-1",
+        ronda: 1,
+        cruce_index: 1,
+        pareja_local_id: "c",
+        pareja_visitante_id: "d",
+        ganador_id: "c",
+        estado: "jugado",
+      }),
+      mkPartido({
+        id: "final",
+        ronda: 2,
+        cruce_index: 0,
+        pareja_local_id: "a",
+        pareja_visitante_id: "c",
+        ganador_id: "a",
+        estado: "jugado",
+        puntos_local: 6,
+        puntos_visitante: 2,
+      }),
+      mkPartido({
+        id: "tercer",
+        ronda: RONDA_TERCER_LUGAR,
+        cruce_index: 0,
+        pareja_local_id: "b",
+        pareja_visitante_id: "d",
+        ganador_id: "b",
+        estado: "jugado",
+      }),
+    ];
+
+    const patches = computeWinnerChangePropagation(
+      partidos,
+      {
+        id: "semi-0",
+        ronda: 1,
+        cruce_index: 0,
+        ganador_id: "a",
+        es_bye: false,
+      },
+      "b",
+      { totalRondas: 2 }
+    );
+
+    const finalPatch = patches.find((p) => p.id === "final");
+    expect(finalPatch).toMatchObject({
+      pareja_local_id: "b",
+      estado: "pendiente",
+      ganador_id: null,
+      puntos_local: null,
+      puntos_visitante: null,
+    });
+
+    const tercerPatch = patches.find((p) => p.id === "tercer");
+    expect(tercerPatch).toMatchObject({
+      pareja_local_id: "a",
+      pareja_visitante_id: "d",
+      estado: "pendiente",
+      ganador_id: null,
+    });
+  });
+
+  it("nextRoundSlotForCruce mapea lados correctamente", () => {
+    expect(nextRoundSlotForCruce(0)).toEqual({
+      nextCruceIndex: 0,
+      side: "local",
+    });
+    expect(nextRoundSlotForCruce(1)).toEqual({
+      nextCruceIndex: 0,
+      side: "visitante",
+    });
+    expect(nextRoundSlotForCruce(2)).toEqual({
+      nextCruceIndex: 1,
+      side: "local",
+    });
   });
 });

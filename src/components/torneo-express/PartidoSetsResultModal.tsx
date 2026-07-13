@@ -8,6 +8,7 @@ import {
   emptySetDraft,
   formatSetWinsForWinner,
   getPartidoSets,
+  getSetsValidationMessage,
 } from "../../lib/torneoExpress/partidoSets";
 import type { PartidoSetScore } from "../../lib/torneoExpress/types";
 import { Button } from "../ui";
@@ -76,7 +77,14 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
 
   const winner = useMemo(() => detectMatchWinner(sets), [sets]);
   const wins = useMemo(() => countSetWins(sets), [sets]);
-  const canSave = useMemo(() => buildPersistPayload(sets) !== null, [sets]);
+  const validationMessage = useMemo(
+    () => getSetsValidationMessage(sets),
+    [sets]
+  );
+  const canSave = useMemo(
+    () => buildPersistPayload(sets) !== null && validationMessage === null,
+    [sets, validationMessage]
+  );
 
   const updateSet = (
     index: number,
@@ -119,6 +127,8 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
     winner && winnerLabel
       ? formatSetWinsForWinner(winner, wins)
       : null;
+
+  const isSingleSetMode = sets.length === 1;
 
   return (
     <Modal
@@ -196,7 +206,7 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
               disabled={saving}
               onClick={addSet}
             >
-              + Agregar set
+              + Añadir set
             </Button>
           ) : (
             <span />
@@ -218,14 +228,21 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
           <p className="te-sets-modal__winner">
             Ganador detectado automáticamente:{" "}
             <strong>
-              ✓ {winnerLabel} ({winsForDisplay?.winnerSets ?? 0} sets a{" "}
-              {winsForDisplay?.loserSets ?? 0})
+              ✓ {winnerLabel}
+              {isSingleSetMode
+                ? ""
+                : ` (${winsForDisplay?.winnerSets ?? 0} sets a ${
+                    winsForDisplay?.loserSets ?? 0
+                  })`}
             </strong>
+          </p>
+        ) : validationMessage ? (
+          <p className="te-sets-modal__hint" role="status">
+            {validationMessage}
           </p>
         ) : (
           <p className="te-sets-modal__hint">
-            Ingresa los marcadores de cada set. El ganador se detecta al llegar
-            a 2 sets ganados.
+            Un set = partido a un set. Añade un segundo set para mejor de 3.
           </p>
         )}
       </div>

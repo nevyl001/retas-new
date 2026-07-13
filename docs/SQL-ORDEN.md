@@ -38,6 +38,7 @@ El esquema canónico vive en la base de datos de producción. En el repo solo qu
 | `rating-unificado-cedidos.sql` | Rating e historial unificados para jugadores cedidos (ficha pública por club) |
 | `torneo-express-evento-fase1.sql` | **Torneo FASE 1** — tabla `torneo_express_evento` + `torneo_express.evento_id` (nullable) + RLS |
 | `torneo-express-evento-flyers-storage.sql` | **Torneo** — bucket Storage `evento-flyers` (flyers públicos del Evento) |
+| `torneo-express-partidos-sets-resultado.sql` | **Torneo** — columna `sets_resultado` (JSONB) en partidos de grupos y eliminatoria |
 
 ## Volver a empezar (borrar datos, no el esquema)
 
@@ -76,8 +77,10 @@ Hazlos directamente en el **SQL Editor** de Supabase (o con migraciones de Supab
 | **RIVIERA 2.1.2** — Player Membership RPCs | `supabase/riviera-player-membership-2.1.2-rpcs.sql` |
 | RIVIERA 2.1.2 — checklist | `docs/RIVIERA-PLAYER-MEMBERSHIP-2.1.2-CHECKLIST.md` |
 | Torneo multi-categoría + agenda (arquitectura) | `docs/TOURNAMENT-MULTI-CATEGORY-ARCHITECTURE.md` |
+| **Torneo** — Sets multi-marcador + clasificación PG→FAV→DIF→H2H | `docs/TORNEO-EXPRESS-SETS-Y-CLASIFICACION.md` |
 | **Torneo FASE 1** — Evento (`torneo_express_evento`) | `supabase/torneo-express-evento-fase1.sql` |
 | **Torneo** — Storage flyers de Evento | `supabase/torneo-express-evento-flyers-storage.sql` |
+| **Torneo** — Sets multi-marcador (`sets_resultado`) | `supabase/torneo-express-partidos-sets-resultado.sql` |
 
 ### Orden recomendado (esquema nuevo)
 
@@ -101,6 +104,7 @@ Hazlos directamente en el **SQL Editor** de Supabase (o con migraciones de Supab
 15. Validación 2.1.2: `riviera-player-membership-2.1.2-validate.sql` + checklist
 16. **`torneo-express-evento-fase1.sql`** (Torneo FASE 1 — Evento contenedor; requiere `torneo_express` + RLS TE base)
 17. **`torneo-express-evento-flyers-storage.sql`** (bucket público `evento-flyers` + políticas Storage)
+18. **`torneo-express-partidos-sets-resultado.sql`** (`sets_resultado` JSONB en partidos TE grupos + eliminatoria)
 
 ## Seguridad RLS (alerta Supabase)
 

@@ -82,6 +82,8 @@ Campos de agenda **ya existentes** (auditar esquema real antes de migrar): `canc
 
 Campos nuevos previstos (nullable, aditivos, con `isMissingColumnError`): `programado_fin`, `schedule_source`, `schedule_locked`.
 
+Marcador multi-set: columna `sets_resultado` (JSONB). Detalle operativo en `docs/TORNEO-EXPRESS-SETS-Y-CLASIFICACION.md`. Migración: `supabase/torneo-express-partidos-sets-resultado.sql`.
+
 **No** fusionar tablas ni crear una tercera tabla de partidos.
 
 ### 4.4 Migraciones

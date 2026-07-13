@@ -36,7 +36,9 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
 }) => {
   const fase = bundle.torneo.fase_eliminacion ?? "cuartos";
   const faseLabel = torneoExpressFaseLabel(bundle.torneo.fase_torneo);
-  const cerrado = bundle.torneo.fase_torneo === "cerrado";
+  const cerrado =
+    bundle.torneo.fase_torneo === "cerrado" ||
+    bundle.torneo.estado === "finalizado";
 
   return (
     <div className="torneo-express-card te-grupos-card te-gestion-card te-elim-gestion">
@@ -56,7 +58,7 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
           </h3>
           <p className="te-grupos-card__partidos-hint">
             {cerrado
-              ? "Torneo finalizado. Puedes corregir resultados si hace falta."
+              ? "Torneo cerrado. Los resultados ya no se pueden modificar."
               : "Al completar una ronda se generan los cruces siguientes. El torneo solo se cierra cuando confirmes «Finalizar torneo»."}
           </p>
           <PartidosEliminatoria
@@ -64,11 +66,11 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
             fase={fase}
             bracketSlots={bundle.torneo.bracket_slots}
             labelMap={labelMap}
-            editable
+            editable={editable && !cerrado}
             savingPartidoId={savingEliminatoriaId}
             savingCanchaId={savingEliminatoriaCanchaId}
             savingProgramadoId={savingEliminatoriaProgramadoId}
-            onSaveResultado={onSaveResultado}
+            onSaveResultado={editable && !cerrado ? onSaveResultado : undefined}
             onSaveCancha={onSaveCancha}
             onSaveProgramado={onSaveProgramado}
           />

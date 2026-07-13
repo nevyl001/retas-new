@@ -29,24 +29,30 @@ interface TablaGrupoProps {
 export const TablaGrupo: React.FC<TablaGrupoProps> = ({
   rows,
   showGrupoColumn = false,
-  scoringHelpVariant = "default",
+  scoringHelpVariant = "express",
 }) => {
   const mobileRows = useMemo(
     () => rows.map((row, index) => teStandingRowToMobileRow(row, index)),
     [rows]
   );
+  const criterionOrder =
+    scoringHelpVariant === "express" ? "express" : "americano";
 
   return (
     <div className="te-standings-block">
       <StandingsScoringHelp variant={scoringHelpVariant} />
       <div className="te-standings-mobile-cards">
-        <StandingsMobileCards rows={mobileRows} />
+        <StandingsMobileCards
+          rows={mobileRows}
+          criterionOrder={criterionOrder}
+        />
       </div>
       <div className={`te-standings-wrap te-standings-table-desktop ${TABLA_WRAPPER_CLASS}`}>
         <table className={`te-standings-table ${TABLA_RANKING_CLASS}`}>
           <thead>
             <StandingsTableHeader
               entity="pareja"
+              criterionOrder={criterionOrder}
               middleColumns={
                 showGrupoColumn ? (
                   <th title="Grupo del torneo">GRUPO</th>

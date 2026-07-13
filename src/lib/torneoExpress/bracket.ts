@@ -21,10 +21,11 @@ import type {
 
 export { validarChoques } from "./resolverBracket";
 
+/** Desempate entre clasificados de distintos grupos: PG → FAV → DIF → seed. */
 function compareQualifiers(a: BracketQualifier, b: BracketQualifier): number {
-  if (b.puntos !== a.puntos) return b.puntos - a.puntos;
-  if (b.dif !== a.dif) return b.dif - a.dif;
+  if (b.pg !== a.pg) return b.pg - a.pg;
   if (b.ptsFav !== a.ptsFav) return b.ptsFav - a.ptsFav;
+  if (b.dif !== a.dif) return b.dif - a.dif;
   return a.seed - b.seed;
 }
 

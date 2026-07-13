@@ -7,6 +7,7 @@ import {
 import {
   getDecidingCriterionBetween,
   type StandingsCriterionKey,
+  type StandingsCriterionOrder,
 } from "../../utils/standingsCriterionHighlight";
 import "../../styles/standings-mobile-cards.css";
 
@@ -32,10 +33,13 @@ function positionIcon(position: number): string {
 export const StandingsMobileCards: React.FC<{
   rows: StandingsMobileCardRow[];
   decidingCriterion?: StandingsCriterionKey;
-}> = ({ rows, decidingCriterion: decidingProp }) => {
+  criterionOrder?: StandingsCriterionOrder;
+}> = ({ rows, decidingCriterion: decidingProp, criterionOrder = "americano" }) => {
   const decidingCriterion = useMemo(() => {
     if (decidingProp) return decidingProp;
-    if (rows.length < 2) return "fav" as const;
+    if (rows.length < 2) {
+      return criterionOrder === "express" ? ("pg" as const) : ("fav" as const);
+    }
     return getDecidingCriterionBetween(
       {
         id: rows[0].key,
@@ -48,9 +52,22 @@ export const StandingsMobileCards: React.FC<{
         fav: rows[1].points,
         con: rows[1].pointsReceived,
         pg: rows[1].pg,
-      }
+      },
+      [],
+      criterionOrder
     );
-  }, [rows, decidingProp]);
+  }, [rows, decidingProp, criterionOrder]);
+
+  const rankClass = (key: StandingsCriterionKey) => {
+    if (criterionOrder === "express") {
+      if (key === "pg") return "standings-mobile-card__stat--criterion-1";
+      if (key === "fav") return "standings-mobile-card__stat--criterion-2";
+      return "standings-mobile-card__stat--criterion-3";
+    }
+    if (key === "fav") return "standings-mobile-card__stat--criterion-1";
+    if (key === "dif") return "standings-mobile-card__stat--criterion-2";
+    return "standings-mobile-card__stat--criterion-3";
+  };
 
   if (rows.length === 0) return null;
 
@@ -75,7 +92,7 @@ export const StandingsMobileCards: React.FC<{
 
             <div className="standings-mobile-card__stats">
               <div
-                className={`standings-mobile-card__stat standings-mobile-card__stat--criterion-1${
+                className={`standings-mobile-card__stat ${rankClass("fav")}${
                   isLeader && decidingCriterion === "fav"
                     ? " standings-mobile-card__stat--deciding"
                     : ""
@@ -87,7 +104,7 @@ export const StandingsMobileCards: React.FC<{
                 </span>
               </div>
               <div
-                className={`standings-mobile-card__stat standings-mobile-card__stat--criterion-2 standings-mobile-card__stat--dif${
+                className={`standings-mobile-card__stat ${rankClass("dif")} standings-mobile-card__stat--dif${
                   isLeader && decidingCriterion === "dif"
                     ? " standings-mobile-card__stat--deciding"
                     : ""
@@ -101,7 +118,7 @@ export const StandingsMobileCards: React.FC<{
                 </span>
               </div>
               <div
-                className={`standings-mobile-card__stat standings-mobile-card__stat--criterion-3${
+                className={`standings-mobile-card__stat ${rankClass("pg")}${
                   isLeader && decidingCriterion === "pg"
                     ? " standings-mobile-card__stat--deciding"
                     : ""

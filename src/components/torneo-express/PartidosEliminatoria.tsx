@@ -412,7 +412,7 @@ function EliminatoriaPartidoCard({
                 setSetsModalOpen(true);
               }}
             >
-              Editar resultado
+              Corregir resultado
             </Button>
           </div>
         ) : null}

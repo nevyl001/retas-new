@@ -11,6 +11,7 @@ import {
   type PairStanding,
 } from "../../utils/standings";
 import { computeStandingDif } from "../../utils/standingsDisplay";
+import { partidoToMatchResult } from "./partidoSets";
 
 function standingToExpressRow(
   s: PairStanding,
@@ -33,22 +34,21 @@ function standingToExpressRow(
   };
 }
 
+/** Standings: games desde sets_resultado (o puntos_* legacy). */
 function partidosToMatches(partidos: TorneoExpressPartido[]): MatchResult[] {
-  return partidos
-    .filter((p) => p.estado === "jugado")
-    .map((p) => ({
-      pairAId: p.pareja_local_id,
-      pairBId: p.pareja_visitante_id,
-      gamesA: p.puntos_local ?? 0,
-      gamesB: p.puntos_visitante ?? 0,
-      winnerId: p.ganador_id,
-    }));
+  const matches: MatchResult[] = [];
+  for (const p of partidos) {
+    const m = partidoToMatchResult(p);
+    if (m) matches.push(m);
+  }
+  return matches;
 }
 
-/** Torneo Express: PG → DIF → enfrentamiento directo. */
+/** Torneo Express: PG → FAV → DIF → H2H → seed. */
 function createExpressStandingsComparator(matches: MatchResult[]) {
   return (a: PairStanding, b: PairStanding): number => {
     if (b.PG !== a.PG) return b.PG - a.PG;
+    if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
     if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
     const h2h = getHeadToHead(a.pairId, b.pairId, matches);
     if (h2h !== 0) return h2h;

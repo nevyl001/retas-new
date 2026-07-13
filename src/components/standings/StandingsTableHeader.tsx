@@ -16,20 +16,28 @@ import {
   STANDINGS_PTS_TABLE_TITLE,
   type StandingsEntityColumn,
 } from "./standingsTableConfig";
-import { criterionHeaderClass } from "../../utils/standingsCriterionHighlight";
+import {
+  criterionHeaderClass,
+  type StandingsCriterionOrder,
+} from "../../utils/standingsCriterionHighlight";
 import "../../styles/standings-criterion.css";
 
 interface StandingsTableHeaderProps {
   entity: StandingsEntityColumn;
   /** Columnas extra entre entidad y PJ (p. ej. Grupo en torneo express). */
   middleColumns?: React.ReactNode;
+  /** Orden de criterios en superíndices (default = americano). */
+  criterionOrder?: StandingsCriterionOrder;
 }
 
 export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
   entity,
   middleColumns,
+  criterionOrder = "americano",
 }) => {
   const entityHeader = STANDINGS_ENTITY_HEADERS[entity];
+  const isExpress = criterionOrder === "express";
+
   return (
     <tr>
       <th className={COL_POS} title="Posición">
@@ -43,8 +51,12 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
         PJ
       </th>
       <th
-        className={`${COL_PG} ${criterionHeaderClass("pg")}`}
-        title="Partidos ganados (3.er criterio de desempate)"
+        className={`${COL_PG} ${criterionHeaderClass("pg", criterionOrder)}`}
+        title={
+          isExpress
+            ? "Partidos ganados (1.er criterio)"
+            : "Partidos ganados (3.er criterio de desempate)"
+        }
       >
         PG
       </th>
@@ -52,8 +64,12 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
         PP
       </th>
       <th
-        className={`${COL_FAV} ${criterionHeaderClass("fav")}`}
-        title="Juegos a favor (1.er criterio)"
+        className={`${COL_FAV} ${criterionHeaderClass("fav", criterionOrder)}`}
+        title={
+          isExpress
+            ? "Juegos a favor (2.º criterio)"
+            : "Juegos a favor (1.er criterio)"
+        }
       >
         FAV
       </th>
@@ -61,8 +77,12 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
         CON
       </th>
       <th
-        className={`${COL_DIF} ${criterionHeaderClass("dif")}`}
-        title="Diferencia FAV − CON (2.º criterio)"
+        className={`${COL_DIF} ${criterionHeaderClass("dif", criterionOrder)}`}
+        title={
+          isExpress
+            ? "Diferencia FAV − CON (3.er criterio)"
+            : "Diferencia FAV − CON (2.º criterio)"
+        }
       >
         DIF
       </th>
