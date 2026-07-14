@@ -53,6 +53,7 @@ import {
   isJugadorImportBlocked,
 } from "./jugadorImportBlocklist";
 import { canDeleteGlobalPlayer } from "./playerMembership";
+import { formatSupabaseErrorMessage } from "./supabaseErrorMessage";
 import { computeJugadorStatsFromParticipaciones } from "./rebuildJugadorStats";
 import {
   enrichJugadorWithRivieraId,
@@ -2192,14 +2193,26 @@ export async function deleteRivieraJugador(
     }
   }
 
+  // Solo caer al fallback si la función NO existe.
+  // Antes: cualquier message con "delete_riviera_jugador" se trataba como
+  // missing y se tragaba el RAISE EXCEPTION (P0001) de negocio.
   const rpcMsg = (rpcErr?.message ?? "").toLowerCase();
   const rpcMissing =
-    rpcErr &&
+    !!rpcErr &&
     (isMissingRpcError(rpcErr) ||
-      rpcMsg.includes("delete_riviera_jugador"));
+      (rpcMsg.includes("could not find the function") &&
+        rpcMsg.includes("delete_riviera_jugador")));
 
   if (rpcErr && !rpcMissing) {
-    throw new Error(rpcErr.message || "No se pudo eliminar el jugador.");
+    console.error("[riviera-jugadores] delete_riviera_jugador RPC error:", {
+      message: rpcErr.message,
+      details: (rpcErr as { details?: string }).details,
+      hint: (rpcErr as { hint?: string }).hint,
+      code: rpcErr.code,
+    });
+    throw new Error(
+      formatSupabaseErrorMessage(rpcErr, "No se pudo eliminar el jugador.")
+    );
   }
 
   if (rpcErr && rpcMissing) {

@@ -895,6 +895,18 @@
   font-size: 0.9375rem;
 }
 
+.rj-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fecaca;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
 .rj-modal-backdrop {
   position: fixed;
   inset: 0;

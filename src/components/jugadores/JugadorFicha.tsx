@@ -206,7 +206,10 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
       await deleteRivieraJugador(activeOrgId, jugador.id);
       navigateJugadores();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "No se pudo eliminar el jugador");
+      const msg =
+        e instanceof Error ? e.message : "No se pudo eliminar el jugador";
+      console.error("[jugador-ficha] deleteRivieraJugador failed:", e);
+      alert(msg);
     } finally {
       setDeleting(false);
     }

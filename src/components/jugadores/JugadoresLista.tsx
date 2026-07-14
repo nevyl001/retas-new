@@ -135,9 +135,11 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
       await deleteRivieraJugador(orgId, j.id);
       await load();
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "No se pudo eliminar el jugador."
-      );
+      const msg =
+        e instanceof Error ? e.message : "No se pudo eliminar el jugador.";
+      console.error("[jugadores-lista] deleteRivieraJugador failed:", e);
+      setError(msg);
+      window.alert(msg);
     } finally {
       setDeletingId(null);
     }
@@ -331,7 +333,11 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
           </label>
         </div>
 
-        {error && <p className="rj-empty">{error}</p>}
+        {error && (
+          <p className="rj-error" role="alert">
+            {error}
+          </p>
+        )}
         {loading && !error && (
           <LoadingProgressHint
             active
