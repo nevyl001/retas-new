@@ -29,6 +29,7 @@ import {
   grantedAccessFromMeta,
   grantedAccessFromRow,
   isRevokedGrantLocalJugador,
+  listActiveGrantedAccessForOrganizer,
   listActiveGrantedAccessForOrganizerPublic,
   listGranteeClubsForSourceJugador,
   listRevokedGrantLocalJugadorIds,
@@ -235,6 +236,25 @@ async function enrichGrantedJugadorFromSource(
   );
 }
 
+/**
+ * Grants para merge en lista/ranking internos (sesión autenticada).
+ * NO usar solo list_public_grants_for_ranking: esa RPC exige
+ * is_organizador_ranking_publico(club) y si el club (p.ej. Club Test) no
+ * publica ranking, devuelve [] → cedidos sin badge "Desde…" en lista,
+ * aunque la ficha sí los detecte vía lectura directa de OPA.
+ */
+async function listGrantsForInternalClubMerge(organizadorId: string) {
+  try {
+    return await listActiveGrantedAccessForOrganizer(organizadorId);
+  } catch (e) {
+    console.warn(
+      "[riviera-jugadores] listActiveGrantedAccessForOrganizer falló; público:",
+      e
+    );
+    return listActiveGrantedAccessForOrganizerPublic(organizadorId);
+  }
+}
+
 /** Cedidos en ranking interno: stats/rating del club dueño + metadata de acceso. */
 async function enrichInternalClubJugadorGrant(
   organizadorId: string,
@@ -270,7 +290,7 @@ async function mergeGrantedJugadoresIntoRanking(
 ): Promise<RivieraJugadorWithStats[]> {
   const revokedLocalIds = await listRevokedGrantLocalJugadorIds(organizadorId);
   const ownRowsFiltered = excludeRevokedGrantLocalClones(ownRows, revokedLocalIds);
-  const grants = await listActiveGrantedAccessForOrganizerPublic(organizadorId);
+  const grants = await listGrantsForInternalClubMerge(organizadorId);
   const ownById = new Map(ownRowsFiltered.map((r) => [r.id, r]));
   const merged = [...ownRowsFiltered];
 
@@ -355,7 +375,7 @@ async function mergeGrantedJugadoresIntoList(
   genero?: RivieraJugadorGenero
 ): Promise<RivieraJugadorWithStats[]> {
   const revokedLocalIds = await listRevokedGrantLocalJugadorIds(organizadorId);
-  const grants = await listActiveGrantedAccessForOrganizerPublic(organizadorId);
+  const grants = await listGrantsForInternalClubMerge(organizadorId);
   if (grants.length === 0) {
     return excludeRevokedGrantLocalClones(ownRows, revokedLocalIds);
   }
