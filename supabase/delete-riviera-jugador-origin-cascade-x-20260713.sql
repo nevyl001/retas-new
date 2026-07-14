@@ -217,14 +217,11 @@ BEGIN
     RETURN;
   END IF;
 
-  IF to_regprocedure(
-       'public.register_riviera_jugador_import_blocklist(uuid, text, uuid, uuid)'
-     ) IS NOT NULL THEN
-    PERFORM public.register_riviera_jugador_import_blocklist(
-      p_organizador_id, p_nombre, p_legacy_player_id, p_legacy_liga_jugador_id
-    );
-    RETURN;
-  END IF;
+  -- NUNCA llamar register_riviera_jugador_import_blocklist desde aquí:
+  -- esa RPC exige auth.uid() = p_organizador_id. Al purgar clones cedidos
+  -- p_organizador_id es el club anfitrión ≠ auth.uid() del origen →
+  -- RAISE EXCEPTION 'Sin permiso' (corto) y aborta todo el delete.
+  -- Insert directo (SECURITY DEFINER) = mismo efecto, sin ese gate.
 
   INSERT INTO public.riviera_jugador_import_blocklist (
     organizador_id, nombre, nombre_key, legacy_player_id, legacy_liga_jugador_id
@@ -275,6 +272,8 @@ DECLARE
   v_liga_jugador_id uuid;
   v_deleted_participaciones integer := 0;
   v_bt text;
+  v_ident_key uuid;
+  v_alt_canonical uuid;
 BEGIN
   IF p_jugador_id IS NULL OR p_organizador_id IS NULL THEN
     RETURN jsonb_build_object('status', 'skipped', 'reason', 'missing_params');
@@ -389,7 +388,45 @@ BEGIN
        OR registration_jugador_id = p_jugador_id;
   END IF;
 
-  -- ROMC: desvincular este perfil; identity se limpia al final del origen si no quedan links
+  -- ROMC: soltar identity.canonical ANTES de borrar el perfil (si no, FK 409).
+  IF to_regclass('public.riviera_official_player_identity') IS NOT NULL THEN
+    FOR v_ident_key IN
+      SELECT i.official_player_key
+      FROM public.riviera_official_player_identity i
+      WHERE i.canonical_riviera_jugador_id = p_jugador_id
+    LOOP
+      v_alt_canonical := NULL;
+      IF to_regclass('public.riviera_official_player_profile_link') IS NOT NULL THEN
+        SELECT l.riviera_jugador_id INTO v_alt_canonical
+        FROM public.riviera_official_player_profile_link l
+        WHERE l.official_player_key = v_ident_key
+          AND l.riviera_jugador_id IS DISTINCT FROM p_jugador_id
+        ORDER BY l.created_at
+        LIMIT 1;
+      END IF;
+      IF v_alt_canonical IS NOT NULL THEN
+        UPDATE public.riviera_official_player_identity
+        SET canonical_riviera_jugador_id = v_alt_canonical
+        WHERE official_player_key = v_ident_key;
+      ELSE
+        IF to_regclass('public.riviera_official_player_profile_link') IS NOT NULL THEN
+          DELETE FROM public.riviera_official_player_profile_link
+          WHERE official_player_key = v_ident_key;
+        END IF;
+        IF to_regclass('public.riviera_official_player_totals') IS NOT NULL THEN
+          DELETE FROM public.riviera_official_player_totals
+          WHERE official_player_key = v_ident_key;
+        END IF;
+        IF to_regclass('public.riviera_official_points_ledger') IS NOT NULL THEN
+          DELETE FROM public.riviera_official_points_ledger
+          WHERE official_player_key = v_ident_key;
+        END IF;
+        DELETE FROM public.riviera_official_player_identity
+        WHERE official_player_key = v_ident_key;
+      END IF;
+    END LOOP;
+  END IF;
+
   IF to_regclass('public.riviera_official_player_profile_link') IS NOT NULL THEN
     DELETE FROM public.riviera_official_player_profile_link
     WHERE riviera_jugador_id = p_jugador_id;
@@ -464,7 +501,7 @@ CREATE OR REPLACE FUNCTION public.delete_riviera_jugador(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_row record;
@@ -476,13 +513,29 @@ DECLARE
   v_locals_purged integer := 0;
   v_locals_skipped integer := 0;
   v_origin_purge jsonb;
+  v_actor uuid;
 BEGIN
   IF p_organizador_id IS NULL OR p_jugador_id IS NULL THEN
     RAISE EXCEPTION 'Parámetros incompletos';
   END IF;
 
-  IF auth.uid() IS DISTINCT FROM p_organizador_id THEN
-    RAISE EXCEPTION 'Sin permiso para eliminar este jugador';
+  -- Identidad JWT del request (requiere _request_auth_uid del auth-uid-fix).
+  BEGIN
+    v_actor := public._request_auth_uid();
+  EXCEPTION
+    WHEN undefined_function THEN
+      v_actor := auth.uid();
+  END;
+
+  IF v_actor IS NULL THEN
+    RAISE EXCEPTION
+      'Sin sesión autenticada (auth.uid/JWT null). Reintenta tras iniciar sesión.';
+  END IF;
+
+  IF v_actor IS DISTINCT FROM p_organizador_id THEN
+    RAISE EXCEPTION
+      'Sin permiso para eliminar este jugador (auth=% organizador=%)',
+      v_actor, p_organizador_id;
   END IF;
 
   SELECT
