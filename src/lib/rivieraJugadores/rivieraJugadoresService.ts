@@ -2158,19 +2158,46 @@ export async function getRankingPosicionEnCategoria(
  * Elimina un jugador del registro Riviera y todo su historial de ranking
  * (participaciones y estadísticas). No borra retas/torneos ya jugados en `players`.
  * Solo el club de registro puede ejecutar esta acción (ver canDeleteGlobalPlayer).
+ *
+ * IMPORTANTE: `p_organizador_id` en la RPC DEBE ser `auth.uid()`.
+ * Por eso este método resuelve la sesión real y no confía ciegamente en
+ * organizadorId de branding / ClubExperience (pueden diferir tras cache o admin).
  */
 export async function deleteRivieraJugador(
   organizadorId: string,
   jugadorId: string
 ): Promise<void> {
-  if (await isRevokedGrantLocalJugador(organizadorId, jugadorId)) {
+  const { data: authData, error: authErr } = await supabase.auth.getUser();
+  const sessionUserId = authData.user?.id?.trim() || null;
+  if (authErr || !sessionUserId) {
+    throw new Error(
+      "Sesión inválida o expirada. Vuelve a iniciar sesión e intenta de nuevo."
+    );
+  }
+
+  const requestedOrgId = organizadorId?.trim() || "";
+  if (requestedOrgId && requestedOrgId !== sessionUserId) {
+    console.warn(
+      "[riviera-jugadores] deleteRivieraJugador: organizadorId ≠ auth.uid(); se usa la sesión",
+      {
+        requestedOrgId,
+        sessionUserId,
+        jugadorId,
+      }
+    );
+  }
+
+  // Siempre el UID de sesión (= auth.uid() en Postgres).
+  const effectiveOrgId = sessionUserId;
+
+  if (await isRevokedGrantLocalJugador(effectiveOrgId, jugadorId)) {
     throw new Error(
       "Este jugador ya no tiene acceso concedido en este club. No se puede eliminar desde aquí."
     );
   }
 
   const grantMeta = await findGrantedAccessMetaForJugador(
-    organizadorId,
+    effectiveOrgId,
     jugadorId
   );
   if (grantMeta) {
@@ -2181,14 +2208,14 @@ export async function deleteRivieraJugador(
   }
 
   const { data, error: rpcErr } = await supabase.rpc("delete_riviera_jugador", {
-    p_organizador_id: organizadorId,
+    p_organizador_id: effectiveOrgId,
     p_jugador_id: jugadorId,
   });
 
   if (!rpcErr) {
     const payload = data as { status?: string } | null;
     if (payload?.status === "deleted") {
-      invalidatePlayersPool(organizadorId);
+      invalidatePlayersPool(effectiveOrgId);
       return;
     }
   }
@@ -2209,6 +2236,9 @@ export async function deleteRivieraJugador(
       details: (rpcErr as { details?: string }).details,
       hint: (rpcErr as { hint?: string }).hint,
       code: rpcErr.code,
+      p_organizador_id: effectiveOrgId,
+      requestedOrgId,
+      jugadorId,
     });
     throw new Error(
       formatSupabaseErrorMessage(rpcErr, "No se pudo eliminar el jugador.")
@@ -2225,7 +2255,7 @@ export async function deleteRivieraJugador(
     .from("riviera_jugadores")
     .select("id, nombre, legacy_player_id, legacy_liga_jugador_id")
     .eq("id", jugadorId)
-    .eq("organizador_id", organizadorId)
+    .eq("organizador_id", effectiveOrgId)
     .maybeSingle();
 
   if (fetchErr) {
@@ -2241,7 +2271,7 @@ export async function deleteRivieraJugador(
   const jugadorRow = mapJugadorRowFromService(
     row as unknown as Record<string, unknown>
   );
-  if (!canDeleteGlobalPlayer(jugadorRow, organizadorId)) {
+  if (!canDeleteGlobalPlayer(jugadorRow, effectiveOrgId)) {
     throw new Error(
       "Solo el club de registro puede eliminar este jugador globalmente. " +
         "Para quitarlo de tu club usa «Quitar de mi club»."
@@ -2296,11 +2326,11 @@ export async function deleteRivieraJugador(
       .from("liga_jugadores")
       .update({ estado: "inactivo" })
       .eq("id", ligaJugadorId)
-      .eq("organizador_id", organizadorId);
+      .eq("organizador_id", effectiveOrgId);
     if (inactivoErr && !isMissingTableError(inactivoErr)) throw inactivoErr;
   }
 
-  await registerJugadorImportBlocklist(organizadorId, {
+  await registerJugadorImportBlocklist(effectiveOrgId, {
     nombre: String(row.nombre ?? ""),
     legacyPlayerId: (row.legacy_player_id as string | null) ?? null,
     legacyLigaJugadorId: ligaJugadorId ?? null,
@@ -2310,7 +2340,7 @@ export async function deleteRivieraJugador(
     .from("riviera_jugadores")
     .delete()
     .eq("id", jugadorId)
-    .eq("organizador_id", organizadorId);
+    .eq("organizador_id", effectiveOrgId);
 
   if (delErr) {
     if (isMissingTableError(delErr)) {
@@ -2322,7 +2352,7 @@ export async function deleteRivieraJugador(
         : delErr.message
     );
   }
-  invalidatePlayersPool(organizadorId);
+  invalidatePlayersPool(effectiveOrgId);
 }
 
 /** Alias explícito: eliminación global destructiva (solo club origen). */

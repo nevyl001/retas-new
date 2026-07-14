@@ -123,8 +123,36 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   const pct = (j: RivieraJugadorWithStats) => jugadorListaPctVictoriasDisplay(j);
 
   const handleDeleteJugador = async (j: RivieraJugadorWithStats) => {
-    const orgId = organizadorId ?? user?.id;
-    if (!orgId || !canDeleteGlobalPlayer(j, orgId)) return;
+    const clubOrganizadorId = organizadorId ?? null;
+    const contextUserId = user?.id ?? null;
+    const { data: authData } = await supabase.auth.getUser();
+    const sessionAuthUid = authData.user?.id ?? null;
+
+    // Diagnóstico temporal: comparar IDs antes de borrar.
+    console.log("[jugadores-lista] delete diag", {
+      clubOrganizadorId,
+      contextUserId,
+      sessionAuthUid,
+      jugadorId: j.id,
+      jugadorOrganizorId: j.organizador_id,
+      mismatchClubVsSession:
+        Boolean(clubOrganizadorId && sessionAuthUid) &&
+        clubOrganizadorId !== sessionAuthUid,
+      mismatchContextVsSession:
+        Boolean(contextUserId && sessionAuthUid) &&
+        contextUserId !== sessionAuthUid,
+    });
+
+    // La RPC exige p_organizador_id = auth.uid(). Usar siempre la sesión.
+    const orgId = sessionAuthUid ?? contextUserId;
+    if (!orgId || !canDeleteGlobalPlayer(j, orgId)) {
+      if (sessionAuthUid && j.organizador_id !== sessionAuthUid) {
+        window.alert(
+          "No puedes eliminar este jugador: tu sesión no es el club de origen."
+        );
+      }
+      return;
+    }
     const ok = window.confirm(
       `¿Eliminar a «${j.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas en tu club. Esta acción no se puede deshacer.`
     );

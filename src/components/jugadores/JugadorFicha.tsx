@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useClubExperience } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
+import { supabase } from "../../lib/supabaseClient";
 import {
   EN_CANCHA_LABELS,
   EN_CANCHA_ORDER,
@@ -196,14 +197,26 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   };
 
   const handleDelete = async () => {
-    if (!activeOrgId || !jugador || !canDeleteGlobalPlayer(jugador, activeOrgId)) return;
+    if (!jugador) return;
+    const { data: authData } = await supabase.auth.getUser();
+    const sessionAuthUid = authData.user?.id ?? null;
+    console.log("[jugador-ficha] delete diag", {
+      clubOrganizadorId: organizadorId,
+      contextUserId: user?.id ?? null,
+      sessionAuthUid,
+      activeOrgId,
+      jugadorId: jugador.id,
+      jugadorOrganizorId: jugador.organizador_id,
+    });
+    const orgId = sessionAuthUid ?? activeOrgId;
+    if (!orgId || !canDeleteGlobalPlayer(jugador, orgId)) return;
     const ok = window.confirm(
       `¿Eliminar a «${jugador.nombre}» del registro?\n\nSe borrarán su historial, puntos y estadísticas en tu club. Esta acción no se puede deshacer.`
     );
     if (!ok) return;
     setDeleting(true);
     try {
-      await deleteRivieraJugador(activeOrgId, jugador.id);
+      await deleteRivieraJugador(orgId, jugador.id);
       navigateJugadores();
     } catch (e) {
       const msg =
