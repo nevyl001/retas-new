@@ -2,9 +2,6 @@ import { attachCareerPuntosToJugador } from "./careerPointsByClub";
 import {
   getOrLoadCareerIdentityBundle,
   type CareerIdentityBundle,
-  // TEMPORAL (medición Fase 2-3) — retirar en Fase 8.
-  __getCareerIdentityCacheDevStats,
-  __resetCareerIdentityCacheDevStats,
 } from "./careerIdentityCache";
 import {
   resolvePlayerCareer,
@@ -13,10 +10,6 @@ import {
 import { resolvePlayerPointsBreakdown } from "./playerPointsBreakdown";
 import { logRankingPointsAudit, snapshotFromBreakdown } from "./rankingPointsAudit";
 import type { RivieraJugadorWithStats } from "./types";
-// TEMPORAL (medición Fase 2-3) — retirar en Fase 8.
-import { debugLog } from "../debug/debugLog";
-
-const DEV = process.env.NODE_ENV !== "production";
 
 /**
  * Enriquece filas del ranking con carrera global por club (todos los perfiles).
@@ -29,35 +22,9 @@ export async function enrichJugadoresOrganizerScopedStats(
   const org = organizadorId.trim();
   if (!org || jugadores.length === 0) return jugadores;
 
-  // TEMPORAL (medición Fase 2-3) — retirar en Fase 8. No cambia el orden ni
-  // la concurrencia de Promise.all, solo mide alrededor de la misma llamada.
-  // Nota: si dos cargas se superponen (p. ej. JugadoresLista + ranking
-  // interno en simultáneo), el reset de una puede pisar el conteo de la
-  // otra — para medir limpio, correr una vista a la vez.
-  if (DEV) __resetCareerIdentityCacheDevStats();
-  const t0 = DEV ? performance.now() : 0;
-
-  const result = await Promise.all(
+  return Promise.all(
     jugadores.map(async (j) => enrichJugadorOrganizerScopedStats(org, j))
   );
-
-  if (DEV) {
-    const totalMs = performance.now() - t0;
-    const stats = __getCareerIdentityCacheDevStats();
-    const count = jugadores.length;
-    debugLog("[career-cache] enrich-summary", {
-      jugadores: count,
-      hits: stats.hits,
-      misses: stats.misses,
-      dedupeHits: stats.dedupeHits,
-      expired: stats.expired,
-      loadersEjecutados: stats.loaderCalls,
-      totalMs: Math.round(totalMs),
-      avgMsPorJugador: count > 0 ? Math.round(totalMs / count) : 0,
-    });
-  }
-
-  return result;
 }
 
 /**

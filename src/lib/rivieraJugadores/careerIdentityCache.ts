@@ -20,11 +20,6 @@
  */
 import type { ResolvedPlayerIdentity } from "./playerIdentityService";
 import type { JugadorParticipacion } from "./types";
-// TEMPORAL (medición Fase 2-3) — retirar junto con el resto marcado TEMPORAL
-// en este archivo y en organizerScopedStats.ts al cerrar la validación.
-import { debugLog } from "../debug/debugLog";
-
-const DEV = process.env.NODE_ENV !== "production";
 
 export type CareerIdentityBundle = {
   identity: ResolvedPlayerIdentity;
@@ -41,42 +36,6 @@ const MAX_ENTRIES = 500;
 
 const cache = new Map<string, CacheEntry>();
 const inFlight = new Map<string, Promise<CareerIdentityBundle | null>>();
-
-// TEMPORAL (medición Fase 2-3) — contadores de solo desarrollo, sin ids
-// personales ni objetos completos, solo conteos y milisegundos.
-type DevStats = {
-  hits: number;
-  misses: number;
-  dedupeHits: number;
-  expired: number;
-  loaderCalls: number;
-  loaderTotalMs: number;
-};
-let devStats: DevStats = {
-  hits: 0,
-  misses: 0,
-  dedupeHits: 0,
-  expired: 0,
-  loaderCalls: 0,
-  loaderTotalMs: 0,
-};
-
-/** TEMPORAL — snapshot de contadores desde que se creó el módulo o el último reset. */
-export function __getCareerIdentityCacheDevStats(): Readonly<DevStats> {
-  return { ...devStats };
-}
-
-/** TEMPORAL — reinicia los contadores (usar al empezar a medir una carga). */
-export function __resetCareerIdentityCacheDevStats(): void {
-  devStats = {
-    hits: 0,
-    misses: 0,
-    dedupeHits: 0,
-    expired: 0,
-    loaderCalls: 0,
-    loaderTotalMs: 0,
-  };
-}
 
 function buildKey(organizadorId: string, anchorJugadorId: string): string | null {
   const org = organizadorId.trim();
@@ -122,47 +81,18 @@ export async function getOrLoadCareerIdentityBundle(
 
   const cached = cache.get(key);
   if (cached && isFresh(cached.cachedAt)) {
-    if (DEV) {
-      devStats.hits++;
-      debugLog("[career-cache] hit");
-    }
     return cached.bundle;
   }
   if (cached) {
-    // TEMPORAL — distingue "expiró" de "nunca estuvo" solo para medición.
-    if (DEV) {
-      devStats.expired++;
-      debugLog("[career-cache] expired");
-    }
     cache.delete(key);
   }
 
   const existingInFlight = inFlight.get(key);
   if (existingInFlight) {
-    if (DEV) {
-      devStats.dedupeHits++;
-      debugLog("[career-cache] dedupe");
-    }
     return existingInFlight;
   }
 
-  if (DEV) {
-    devStats.misses++;
-    debugLog("[career-cache] miss");
-  }
-
-  const promise = (async () => {
-    // TEMPORAL — tiempo del loader (identity + career), sin datos personales.
-    const t0 = DEV ? performance.now() : 0;
-    const result = await loader();
-    if (DEV) {
-      const ms = performance.now() - t0;
-      devStats.loaderCalls++;
-      devStats.loaderTotalMs += ms;
-      debugLog("[career-cache] loader-complete", { ms: Math.round(ms) });
-    }
-    return result;
-  })();
+  const promise = (async () => loader())();
 
   inFlight.set(key, promise);
 
