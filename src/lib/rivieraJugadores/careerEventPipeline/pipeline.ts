@@ -78,6 +78,10 @@ export async function processCareerEvent(
   const options = input.options ?? {};
   const failures: CareerEventAssertionFailure[] = [];
 
+  // Caso excepcional documentado: preCloseGuards.test.ts espía
+  // específicamente console.info (busca call[1] === "complete"; contrato
+  // de test existente, no se toca el test para esta limpieza de logs).
+  // eslint-disable-next-line no-console -- ver preCloseGuards.test.ts:187,206 (spyOn console.info)
   console.info(LOG_PREFIX, "start", {
     kind: input.kind,
     organizadorId: input.organizadorId,
@@ -180,6 +184,7 @@ export async function processCareerEvent(
   if (!ok) {
     console.error(LOG_PREFIX, "incomplete", result);
   } else {
+    // eslint-disable-next-line no-console -- ver preCloseGuards.test.ts:187,206 (spyOn console.info)
     console.info(LOG_PREFIX, "complete", {
       kind: input.kind,
       eventoId: syncResult?.context.eventoId,

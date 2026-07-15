@@ -11,6 +11,7 @@ import {
   persistTournamentGameMode,
   persistTournamentMode,
 } from "../lib/gameModeMapping";
+import { debugLog } from "../lib/debug/debugLog";
 
 export const useTournamentActions = (
   setSelectedTournament: (tournament: Tournament | null) => void,
@@ -43,10 +44,12 @@ export const useTournamentActions = (
       setLoading(true);
       setError("");
 
-      console.log("🚀 Iniciando reta:", selectedTournament.name);
-      console.log("📊 Parejas:", pairs.length);
-      console.log("🏟️ Canchas:", selectedTournament.courts);
-      console.log("🧩 Formato:", opts?.format || "roundRobin");
+      debugLog("[tournament-actions] iniciando reta:", {
+        nombre: selectedTournament.name,
+        parejas: pairs.length,
+        canchas: selectedTournament.courts,
+        formato: opts?.format || "roundRobin",
+      });
 
       const format = opts?.format || "roundRobin";
       const result = await CircleRoundRobinScheduler.scheduleByFormat(
@@ -139,17 +142,14 @@ export const useTournamentActions = (
     selectedTournament: Tournament,
     pairs: Pair[]
   ) => {
-    console.log("🔄 Botón de reset clickeado");
     if (
       window.confirm(
         "¿Estás seguro de que quieres resetear la reta? Esto eliminará todos los partidos existentes y reseteará las estadísticas de todas las parejas."
       )
     ) {
       try {
-        console.log("🔄 Iniciando proceso de reset...");
         setLoading(true);
 
-        console.log("🗑️ Eliminando partidos...");
         const deleteGate = await deleteMatchesByTournamentSafely(
           selectedTournament.id,
           (prompt) => window.confirm(prompt)
@@ -165,21 +165,16 @@ export const useTournamentActions = (
         if (deleteGate.outcome === "deleted" && deleteGate.warning) {
           showToast(deleteGate.warning, "info");
         }
-        console.log("✅ Partidos eliminados");
 
-        console.log("🔄 Marcando reta como no iniciada...");
         await updateTournament(selectedTournament.id, { is_started: false });
-        console.log("✅ Reta marcada como no iniciada");
 
         setSelectedTournament({ ...selectedTournament, is_started: false });
         setMatches([]);
 
-        console.log("🔄 Recargando datos de la reta...");
         await loadTournamentData();
-        console.log("✅ Datos recargados");
 
         showToast("¡Reta reseteada exitosamente!", "success");
-        console.log("🎉 Reset completado exitosamente");
+        debugLog("[tournament-actions] reset completado:", selectedTournament.id);
       } catch (error) {
         console.error("❌ Error al resetear la reta:", error);
         setError("Error al resetear la reta: " + (error as Error).message);

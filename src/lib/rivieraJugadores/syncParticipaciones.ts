@@ -99,8 +99,11 @@ import {
 
 const TEMP_POINTS_LOG_PREFIX = "TEMP_MULTICLUB_POINTS_2_1_B";
 
+// Audit trail temporal de puntos multiclub (Fase 2.1B). console.warn (no
+// console.info) para quedar permitido por la regla no-console sin disable;
+// mismo momento de emisión de siempre.
 function logMulticlubPoints21B(payload: Record<string, unknown>): void {
-  console.info(TEMP_POINTS_LOG_PREFIX, payload);
+  console.warn(TEMP_POINTS_LOG_PREFIX, payload);
 }
 
 async function readJugadorSumaRankingState(jugadorId: string): Promise<{
@@ -1140,7 +1143,7 @@ async function syncRetaParticipacionesInner(params: {
         : "Reta Round Robin",
     });
     if (ratingApplied > 0) {
-      console.info(`[rating] reta ${tournament.id}: ${ratingApplied} partido(s)`);
+      console.warn(`[rating] reta ${tournament.id}: ${ratingApplied} partido(s)`);
     }
   } catch (e) {
     console.warn("[rating] sync reta:", e);
@@ -2446,7 +2449,7 @@ export async function syncDuelo2v2Participaciones(params: {
         ...resolvedIds,
       });
       if (ratingApplied) {
-        console.info(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
+        console.warn(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
       }
     }
   } catch (e) {

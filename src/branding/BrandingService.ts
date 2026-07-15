@@ -17,7 +17,7 @@ import {
   resolveOrganizerDisplayName,
 } from "../lib/organizer/organizerDisplayName";
 import { syncRuntimeBindingForOrganizador } from "../lib/branding/organizerBrandingSettings";
-import { brandingDevLog, brandingDevLogHtmlTransition } from "./brandingDevLog";
+import { debugLog } from "../lib/debug/debugLog";
 import { CLUB_EXPERIENCE_CACHE_KEY } from "./constants";
 import type { TenantBranding } from "./types";
 
@@ -120,7 +120,7 @@ export function getAppliedBranding(): TenantBranding | null {
 export function applyBrandingToDocument(branding: TenantBranding): void {
   if (brandingMatchesApplied(branding)) {
     document.documentElement.classList.remove("branding-bootstrapping");
-    brandingDevLog("apply:skipped-idempotent", {
+    debugLog("[branding] apply:skipped-idempotent", {
       brandingKey: branding.brandingKey,
       organizadorId: branding.organizadorId,
     });
@@ -146,8 +146,11 @@ export function applyBrandingToDocument(branding: TenantBranding): void {
 
   appliedBranding = branding;
   document.documentElement.classList.remove("branding-bootstrapping");
-  brandingDevLogHtmlTransition("apply:done", beforeClub);
-  brandingDevLog("apply:brandingKey", {
+  debugLog("[branding] apply:done", {
+    htmlDataClubBefore: beforeClub,
+    htmlDataClubAfter: document.documentElement.getAttribute("data-club"),
+  });
+  debugLog("[branding] apply:brandingKey", {
     brandingKey: branding.brandingKey,
     organizadorId: branding.organizadorId,
     isClubBranded,

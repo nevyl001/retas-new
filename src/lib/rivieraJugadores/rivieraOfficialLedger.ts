@@ -24,8 +24,11 @@ export interface RivieraOfficialLedgerResult {
   raw?: Record<string, unknown>;
 }
 
+// Audit trail temporal del ledger oficial ROMC (Fase 2.2). console.warn (no
+// console.info) para quedar permitido por la regla no-console sin disable;
+// mismo momento de emisión de siempre.
 function logRomcPhase22(payload: Record<string, unknown>): void {
-  console.info(TEMP_ROMC_LOG_PREFIX, payload);
+  console.warn(TEMP_ROMC_LOG_PREFIX, payload);
 }
 
 function parseLedgerRpcResult(

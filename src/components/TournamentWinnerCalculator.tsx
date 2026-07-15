@@ -2,6 +2,7 @@ import { Pair, Match, Game } from "../lib/database";
 import { getGames } from "../lib/database";
 import type { TournamentWinner } from "../lib/tournamentWinner";
 import { computeStandingDif } from "../utils/standingsDisplay";
+import { debugLog } from "../lib/debug/debugLog";
 
 export type { TournamentWinner };
 
@@ -14,8 +15,6 @@ export class TournamentWinnerCalculator {
     matches: Match[]
   ): Promise<TournamentWinner | null> {
     try {
-      console.log("🏆 === CALCULANDO GANADOR DE LA RETA ===");
-
       // Obtener todos los juegos de todos los partidos
       const allGames: Game[] = [];
       for (const match of matches) {
@@ -24,8 +23,6 @@ export class TournamentWinnerCalculator {
           allGames.push(...matchGames);
         }
       }
-
-      console.log(`📊 Total de juegos encontrados: ${allGames.length}`);
 
       // Calcular estadísticas acumuladas para cada pareja
       const pairStats = new Map<
@@ -88,14 +85,6 @@ export class TournamentWinnerCalculator {
             } else if (matchStats.pair1Points > matchStats.pair2Points) {
               pair2Stats.losses += 1;
             }
-
-            console.log(`📊 Partido ${match.id}:`);
-            console.log(
-              `   Pareja 1 (${match.pair1_id}): ${matchStats.pair1Points} pts, ${matchStats.pair1Sets} sets, ${matchStats.pair1Games} juegos`
-            );
-            console.log(
-              `   Pareja 2 (${match.pair2_id}): ${matchStats.pair2Points} pts, ${matchStats.pair2Sets} sets, ${matchStats.pair2Games} juegos`
-            );
           }
         }
       }
@@ -123,17 +112,6 @@ export class TournamentWinnerCalculator {
               stats.totalPointsReceived
             ),
           });
-
-          console.log(
-            `🏆 Candidato: ${pair.player1?.name} / ${pair.player2?.name}`
-          );
-          console.log(`   Puntos totales: ${stats.totalPoints}`);
-          console.log(`   Sets totales: ${stats.totalSets}`);
-          console.log(`   Juegos totales: ${stats.totalGames}`);
-          console.log(`   Partidos jugados: ${stats.matchesPlayed}`);
-          console.log(
-            `   Porcentaje de victorias: ${winPercentage.toFixed(1)}%`
-          );
         }
       }
 
@@ -165,22 +143,19 @@ export class TournamentWinnerCalculator {
 
       const winner = candidates.length > 0 ? candidates[0] : null;
 
-      if (winner) {
-        console.log(
-          `🏆 GANADOR DE LA RETA: ${winner.pair.player1?.name} / ${winner.pair.player2?.name}`
-        );
-        console.log(`   Puntos totales: ${winner.totalPoints}`);
-        console.log(`   Sets totales: ${winner.totalSets}`);
-        console.log(`   Juegos totales: ${winner.totalGames}`);
-        console.log(`   Partidos jugados: ${winner.matchesPlayed}`);
-        console.log(
-          `   Porcentaje de victorias: ${winner.winPercentage.toFixed(1)}%`
-        );
-      } else {
-        console.log("❌ No se encontró ganador");
-      }
-
-      console.log("🏆 === FIN CALCULACIÓN GANADOR ===");
+      debugLog(
+        "[tournament-winner]",
+        winner
+          ? {
+              ganador: `${winner.pair.player1?.name} / ${winner.pair.player2?.name}`,
+              puntos: winner.totalPoints,
+              sets: winner.totalSets,
+              juegos: winner.totalGames,
+              partidos: winner.matchesPlayed,
+              pctVictorias: Number(winner.winPercentage.toFixed(1)),
+            }
+          : "sin ganador (sin partidos finalizados)"
+      );
       return winner;
     } catch (error) {
       console.error("❌ Error al calcular ganador de la reta:", error);

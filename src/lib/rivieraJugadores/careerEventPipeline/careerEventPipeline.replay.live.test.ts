@@ -122,7 +122,6 @@ describeLive("career-event-pipeline live replay", () => {
           failures,
         };
 
-        // eslint-disable-next-line no-console
         console.info("[replay-career-pipeline] assertions-only", result);
         expect(result.processed).toBe(true);
         expect(result.failures).toEqual([]);
@@ -138,7 +137,6 @@ describeLive("career-event-pipeline live replay", () => {
         duelo,
       });
 
-      // eslint-disable-next-line no-console
       console.info("[replay-career-pipeline] result", {
         ok: result.ok,
         processed: result.processed,

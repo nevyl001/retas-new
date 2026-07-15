@@ -1,5 +1,6 @@
 import { waitForSupabaseSession } from "../waitForSupabaseSession";
 import { supabase, supabasePublicRead } from "../supabaseClient";
+import { debugLog } from "../debug/debugLog";
 import {
   fetchPublicCareerJugadorIds,
   fetchPublicIdentityRows,
@@ -416,7 +417,7 @@ export async function syncGrantedLocalsFromSource(
 
   const sessionReady = await waitForSupabaseSession();
   if (!sessionReady) {
-    console.debug(
+    debugLog(
       "[riviera-jugadores] syncGrantedLocalsFromSource skipped: session not ready"
     );
     return;

@@ -15,7 +15,6 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({
 
   useEffect(() => {
     if (!loading && !isAdminLoggedIn) {
-      console.log("❌ Admin no autorizado, redirigiendo...");
       if (onUnauthorized) {
         onUnauthorized();
       } else {

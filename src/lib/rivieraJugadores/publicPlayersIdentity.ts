@@ -1,5 +1,6 @@
 import type { Pair } from "../db/types";
 import { supabasePublicRead } from "../supabaseClient";
+import { debugLog } from "../debug/debugLog";
 import {
   pairPlayer1DisplayName,
   pairPlayer2DisplayName,
@@ -197,8 +198,8 @@ export function logPublicPlayerHydration(stats: {
   missingRating: number;
   sampleMissing: string[];
 }): void {
-  if (process.env.NODE_ENV !== "development") return;
-  console.info("[public-player-hydration]", stats);
+  // debugLog ya es no-op fuera de desarrollo; mismo comportamiento que antes.
+  debugLog("[public-player-hydration]", stats);
 }
 
 /**

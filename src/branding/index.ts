@@ -25,8 +25,6 @@ export {
 
 export type { BrandingTransitionReason } from "./brandingTransition";
 
-export { brandingDevLog } from "./brandingDevLog";
-
 export {
   readClubExperienceCache,
   resolveBootstrapOrganizadorId,

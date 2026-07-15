@@ -12,6 +12,7 @@ import { UserProvider, useUser } from "./contexts/UserContext";
 import { AccountFeaturesProvider } from "./contexts/AccountFeaturesContext";
 import { ClubExperienceProvider } from "./club-experience";
 import { BrandingTransitionGate } from "./branding/BrandingTransitionGate";
+import { debugLog } from "./lib/debug/debugLog";
 
 // Components
 import MainLayout from "./components/MainLayout";
@@ -165,24 +166,12 @@ function AppContent() {
       window.history.replaceState({}, "", "/");
       return "main";
     }
-    const view = resolveAppViewFromPath(currentPath);
-    if (process.env.NODE_ENV === "development") {
-      console.log("🔍 Inicializando currentView basado en path:", currentPath, "→", view);
-    }
-    return view;
+    return resolveAppViewFromPath(currentPath);
   });
 
   const [restoringRetaFromUrl, setRestoringRetaFromUrl] = useState(() =>
     Boolean(parseRetaIdFromPath(window.location.pathname))
   );
-
-  // Log solo cuando cambien los valores (no en cada render)
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("🔍 AppContent - isAdminLoggedIn:", isAdminLoggedIn);
-      console.log("🔍 AppContent - currentView:", currentView);
-    }
-  }, [isAdminLoggedIn, currentView]);
 
   // Admin maestro: login normal o /admin-login → dashboard
   useEffect(() => {
@@ -594,7 +583,7 @@ function AppContent() {
     if (selectedTournament && forceRefresh > 0) {
       // Debounce: esperar 300ms antes de recargar para agrupar múltiples actualizaciones
       const timeoutId = setTimeout(() => {
-        console.log("🔄 Recargando datos debido a forceRefresh:", forceRefresh);
+        debugLog("[app] recargando datos por forceRefresh:", forceRefresh);
         loadTournamentData(selectedTournament);
       }, 300);
 

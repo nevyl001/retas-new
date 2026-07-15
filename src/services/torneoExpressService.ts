@@ -29,8 +29,6 @@ import {
   getSetsValidationMessage,
 } from "../lib/torneoExpress/partidoSets";
 import { resolveEventoEstadoFromCategorias } from "../lib/torneoExpress/eventoEstadoFromCategorias";
-// TEMPORAL — diagnóstico Realtime; borrar junto con lib/torneoExpress/realtimeDevLog.ts
-import { teRealtimeDevLog } from "../lib/torneoExpress/realtimeDevLog";
 import type {
   GrupoAssignmentDraft,
   PartidoSetScore,
@@ -1336,20 +1334,15 @@ export function subscribeTorneoExpress(
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let ready = false;
 
-  const channelName = `torneo-express:${torneoId}:${grupoIds.slice(0, 8).join("-") || "solo"}`;
-  const channel = supabase.channel(channelName);
-  teRealtimeDevLog("canal creado", { channelName, torneoId, grupoIds });
+  const channel = supabase.channel(
+    `torneo-express:${torneoId}:${grupoIds.slice(0, 8).join("-") || "solo"}`
+  );
 
-  const handler = (table: string, filter: string) => (payload: unknown) => {
-    teRealtimeDevLog("postgres_changes recibido", { table, filter, payload });
+  const handler = () => {
     if (cancelled || !ready) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      if (cancelled) return;
-      teRealtimeDevLog("callback de refetch ejecutado (debounce disparado)", {
-        torneoId,
-      });
-      onChange();
+      if (!cancelled) onChange();
     }, 500);
   };
 
@@ -1362,7 +1355,7 @@ export function subscribeTorneoExpress(
         table: "torneo_express_partidos",
         filter: `grupo_id=eq.${grupoId}`,
       },
-      handler("torneo_express_partidos", `grupo_id=eq.${grupoId}`)
+      handler
     );
     channel.on(
       "postgres_changes",
@@ -1372,7 +1365,7 @@ export function subscribeTorneoExpress(
         table: "torneo_express_grupo_parejas",
         filter: `grupo_id=eq.${grupoId}`,
       },
-      handler("torneo_express_grupo_parejas", `grupo_id=eq.${grupoId}`)
+      handler
     );
   });
 
@@ -1384,7 +1377,7 @@ export function subscribeTorneoExpress(
       table: "torneo_express_grupos",
       filter: `torneo_id=eq.${torneoId}`,
     },
-    handler("torneo_express_grupos", `torneo_id=eq.${torneoId}`)
+    handler
   );
 
   channel.on(
@@ -1395,7 +1388,7 @@ export function subscribeTorneoExpress(
       table: "torneo_express_eliminatoria_partidos",
       filter: `torneo_id=eq.${torneoId}`,
     },
-    handler("torneo_express_eliminatoria_partidos", `torneo_id=eq.${torneoId}`)
+    handler
   );
 
   channel.on(
@@ -1406,11 +1399,10 @@ export function subscribeTorneoExpress(
       table: "torneo_express",
       filter: `id=eq.${torneoId}`,
     },
-    handler("torneo_express", `id=eq.${torneoId}`)
+    handler
   );
 
   channel.subscribe((status) => {
-    teRealtimeDevLog("estado de la suscripción", { channelName, status });
     if (cancelled) return;
     if (status === "SUBSCRIBED") {
       setTimeout(() => {
@@ -1884,7 +1876,9 @@ export async function resetEliminatoriaTorneoExpress(
     throw new Error("No se puede reiniciar un torneo finalizado");
   }
 
-  console.info("[torneo-express] resetEliminatoria", {
+  // Auditoría de acción destructiva/irreversible (no es error, se conserva
+  // como console.warn para trazabilidad de quién reinició la eliminatoria).
+  console.warn("[torneo-express] resetEliminatoria", {
     torneoId,
     userId: user.id,
     at: new Date().toISOString(),

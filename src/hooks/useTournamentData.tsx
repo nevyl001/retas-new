@@ -10,6 +10,7 @@ import {
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
 import { isTeamsTournament } from "../lib/gameModeMapping";
 import { syncChampionshipConfigFromPublic } from "../lib/roundRobinChampionship";
+import { debugLog } from "../lib/debug/debugLog";
 
 export const useTournamentData = () => {
   const [pairs, setPairs] = useState<Pair[]>([]);
@@ -27,8 +28,6 @@ export const useTournamentData = () => {
     matchesData: Match[],
     tournamentId: string
   ) => {
-    console.log("🧮 Calculando estadísticas de parejas...");
-
     const statsMap = new Map<
       string,
       { sets: number; matches: number; points: number }
@@ -41,7 +40,7 @@ export const useTournamentData = () => {
 
     try {
       const allGames = await getTournamentGames(tournamentId);
-      console.log("🎮 Juegos cargados:", allGames.length);
+      debugLog("[tournament-data] juegos cargados:", allGames.length);
 
       // Procesar cada partido finalizado
       matchesData.forEach((match) => {
@@ -86,7 +85,7 @@ export const useTournamentData = () => {
         }
       });
 
-      console.log("📊 Estadísticas calculadas para", statsMap.size, "parejas");
+      debugLog("[tournament-data] estadísticas calculadas para", statsMap.size, "parejas");
       setPairStats(statsMap);
     } catch (error) {
       console.error("Error calculando estadísticas:", error);
@@ -98,7 +97,7 @@ export const useTournamentData = () => {
 
     // Prevenir múltiples recargas simultáneas
     if (isLoadingRef.current) {
-      console.log("⏳ Ya hay una recarga en progreso, ignorando...");
+      debugLog("[tournament-data] recarga ya en progreso, ignorando");
       return;
     }
 
@@ -106,21 +105,20 @@ export const useTournamentData = () => {
       isLoadingRef.current = true;
       setLoading(true);
       setLoadError(null);
-      console.log("Loading tournament data for:", tournament.name);
 
       const [pairsData, matchesData] = await Promise.all([
         getPairs(tournament.id),
         getMatches(tournament.id),
       ]);
 
-      console.log("Pairs loaded:", pairsData.length, "pairs");
-      setPairs(pairsData);
-
-      console.log(
-        "Matches loaded from database:",
+      debugLog(
+        "[tournament-data] cargado:",
+        pairsData.length,
+        "parejas,",
         matchesData.length,
-        "matches"
+        "partidos"
       );
+      setPairs(pairsData);
 
       let resolvedMatches = matchesData;
       if (matchesData.length > 0 && !isTeamsTournament(tournament)) {

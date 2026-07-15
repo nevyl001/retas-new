@@ -123,25 +123,9 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   const pct = (j: RivieraJugadorWithStats) => jugadorListaPctVictoriasDisplay(j);
 
   const handleDeleteJugador = async (j: RivieraJugadorWithStats) => {
-    const clubOrganizadorId = organizadorId ?? null;
     const contextUserId = user?.id ?? null;
     const { data: authData } = await supabase.auth.getUser();
     const sessionAuthUid = authData.user?.id ?? null;
-
-    // Diagnóstico temporal: comparar IDs antes de borrar.
-    console.log("[jugadores-lista] delete diag", {
-      clubOrganizadorId,
-      contextUserId,
-      sessionAuthUid,
-      jugadorId: j.id,
-      jugadorOrganizorId: j.organizador_id,
-      mismatchClubVsSession:
-        Boolean(clubOrganizadorId && sessionAuthUid) &&
-        clubOrganizadorId !== sessionAuthUid,
-      mismatchContextVsSession:
-        Boolean(contextUserId && sessionAuthUid) &&
-        contextUserId !== sessionAuthUid,
-    });
 
     // La RPC exige p_organizador_id = auth.uid(). Usar siempre la sesión.
     const orgId = sessionAuthUid ?? contextUserId;

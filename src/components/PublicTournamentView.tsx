@@ -28,6 +28,7 @@ import {
 } from "../lib/standingsUtils";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
+import { debugLog } from "../lib/debug/debugLog";
 import type { TournamentWinner } from "../lib/tournamentWinner";
 import {
   matchesForStandingsTable,
@@ -253,7 +254,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         setPairPlayersByPairId({});
       }
 
-      console.log("🔄 Vista pública actualizada:", new Date().toLocaleTimeString());
+      debugLog("🔄 Vista pública actualizada:", new Date().toLocaleTimeString());
 
       const champCfg: RoundRobinChampionshipConfig | null =
         parseChampionshipConfig(publicConfig?.championship_config) ??

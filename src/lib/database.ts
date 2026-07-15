@@ -1,4 +1,5 @@
 import { supabase, supabasePublicRead } from "./supabaseClient";
+import { debugLog } from "./debug/debugLog";
 import { GLOBAL_TOURNAMENT_ID, isMissingColumnError } from "./db/schemaHelpers";
 import {
   buildCreatePairPayload,
@@ -40,7 +41,7 @@ export const createTournament = async (
   courts: number = 1,
   format?: "round_robin" | "teams"
 ) => {
-  console.log("Creating tournament:", { name, description, courts, userId, format });
+  debugLog("Creating tournament:", { name, description, courts, userId, format });
 
   const base = {
     name,
@@ -94,7 +95,6 @@ export const createTournament = async (
     throw error;
   }
 
-  console.log("Tournament created successfully:", data);
   return data;
 };
 
@@ -653,11 +653,7 @@ export const createPlayer = async (
   userId: string,
   tournamentId?: string
 ) => {
-  console.log("Creating player:", { name, userId, tournamentId });
-
   const data = await insertLegacyPlayer(name, userId, { tournamentId });
-
-  console.log("Player created successfully:", data);
 
   try {
     const { ensureRivieraJugadorForLegacyPlayer } = await import(
@@ -877,9 +873,6 @@ export const createPair = async (
 };
 
 export const getPairs = async (tournamentId: string) => {
-  console.log("=== FETCHING PAIRS FROM DATABASE ===");
-  console.log("Tournament ID:", tournamentId);
-
   const { data, error } = await supabase
     .from("pairs")
     .select(
@@ -897,7 +890,6 @@ export const getPairs = async (tournamentId: string) => {
     throw error;
   }
 
-  console.log("Pairs fetched from database:", data);
   return data;
 };
 
@@ -938,13 +930,6 @@ export const createMatch = async (
   userId: string,
   matchType?: "roundrobin" | "championship"
 ) => {
-  console.log("=== CREATING MATCH IN DATABASE ===");
-  console.log("Tournament ID:", tournamentId);
-  console.log("Pair 1 ID:", pair1Id);
-  console.log("Pair 2 ID:", pair2Id);
-  console.log("Court:", court);
-  console.log("Round:", round);
-
   // First, get the pair names from the pairs table
   const { data: pair1, error: pair1Error } = await supabase
     .from("pairs")
@@ -970,9 +955,6 @@ export const createMatch = async (
 
   const pair1Name = `${pair1.player1_name}/${pair1.player2_name}`;
   const pair2Name = `${pair2.player1_name}/${pair2.player2_name}`;
-
-  console.log("Pair 1 name:", pair1Name);
-  console.log("Pair 2 name:", pair2Name);
 
   // Crear el objeto de inserción sin el campo round por ahora
   const insertData: any = {
@@ -1011,7 +993,6 @@ export const createMatch = async (
     throw error;
   }
 
-  console.log("Match created in database:", data);
   return data;
 };
 

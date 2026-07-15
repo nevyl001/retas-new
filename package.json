@@ -43,12 +43,6 @@
     "email-hero-assets": "node scripts/generate-email-hero-assets.mjs",
     "gen:types": "supabase gen types typescript --project-id giswxhmgjepoobdoljb --schema public > src/lib/database.types.ts"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",

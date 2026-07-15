@@ -200,14 +200,6 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     if (!jugador) return;
     const { data: authData } = await supabase.auth.getUser();
     const sessionAuthUid = authData.user?.id ?? null;
-    console.log("[jugador-ficha] delete diag", {
-      clubOrganizadorId: organizadorId,
-      contextUserId: user?.id ?? null,
-      sessionAuthUid,
-      activeOrgId,
-      jugadorId: jugador.id,
-      jugadorOrganizorId: jugador.organizador_id,
-    });
     const orgId = sessionAuthUid ?? activeOrgId;
     if (!orgId || !canDeleteGlobalPlayer(jugador, orgId)) return;
     const ok = window.confirm(

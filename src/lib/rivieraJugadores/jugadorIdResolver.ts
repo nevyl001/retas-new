@@ -25,9 +25,13 @@ import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 
 const TEMP_LOG_PREFIX = "TEMP_MULTICLUB_PHASE_2_1";
 
-/** Logs temporales Fase 2.1 — fáciles de buscar y remover. */
+/**
+ * Audit trail temporal Fase 2.1 (identidad multiclub) — fáciles de buscar y
+ * remover. console.warn (no console.info) para que quede permitido por la
+ * regla no-console sin necesitar disable; mismo momento de emisión de siempre.
+ */
 export function logMulticlubPhase21(payload: Record<string, unknown>): void {
-  console.info(TEMP_LOG_PREFIX, payload);
+  console.warn(TEMP_LOG_PREFIX, payload);
 }
 
 async function slugExistsForOrg(

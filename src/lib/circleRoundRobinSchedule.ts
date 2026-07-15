@@ -1,4 +1,5 @@
 import { Match, Pair, updateMatch } from "./database";
+import { debugLog } from "./debug/debugLog";
 
 export type ScheduledRoundRobinMatch = {
   pair1: Pair;
@@ -241,9 +242,8 @@ export async function repairMatchCourtRotation(
     return matches;
   }
 
-  console.log(
-    `🔄 Reparando rotación de canchas en ${repairs.length} partido(s)...`,
-    repairs
+  debugLog(
+    `[circle-rr] reparando rotación de canchas en ${repairs.length} partido(s)`
   );
 
   const repairById = new Map(repairs.map((r) => [r.id, r.court]));

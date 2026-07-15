@@ -14,8 +14,6 @@ export const AuthCallback: React.FC<AuthCallbackProps> = ({ onSuccess }) => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        console.log("🔄 Procesando callback de autenticación...");
-
         // Obtener la sesión actual
         const { data, error } = await supabase.auth.getSession();
 
@@ -29,7 +27,6 @@ export const AuthCallback: React.FC<AuthCallbackProps> = ({ onSuccess }) => {
         }
 
         if (data.session) {
-          console.log("✅ Usuario autenticado exitosamente");
           // Redirigir al dashboard después de 2 segundos
           setTimeout(() => {
             if (onSuccess) {
@@ -39,7 +36,6 @@ export const AuthCallback: React.FC<AuthCallbackProps> = ({ onSuccess }) => {
             }
           }, 2000);
         } else {
-          console.log("⚠️ No hay sesión activa");
           setError(
             "No se pudo confirmar tu cuenta. Por favor, intenta de nuevo."
           );

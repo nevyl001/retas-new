@@ -1,4 +1,4 @@
-import { brandingDevLog } from "./brandingDevLog";
+import { debugLog } from "../lib/debug/debugLog";
 
 export type BrandingTransitionReason =
   | "bootstrap"
@@ -44,7 +44,7 @@ export function beginBrandingTransition(reason: BrandingTransitionReason): void 
   brandingTransitioning = true;
   brandingReady = false;
   syncTransitionDomClass();
-  brandingDevLog("transition:begin", { reason });
+  debugLog("[branding] transition:begin", { reason });
   notifyTransitionListeners();
 }
 
@@ -52,7 +52,7 @@ export function endBrandingTransition(reason?: BrandingTransitionReason): void {
   brandingTransitioning = false;
   brandingReady = true;
   syncTransitionDomClass();
-  brandingDevLog("transition:end", { reason });
+  debugLog("[branding] transition:end", { reason });
   notifyTransitionListeners();
 }
 
@@ -61,6 +61,6 @@ export function markBrandingBootstrapReady(): void {
   brandingReady = true;
   brandingTransitioning = false;
   syncTransitionDomClass();
-  brandingDevLog("bootstrap:ready");
+  debugLog("[branding] bootstrap:ready");
   notifyTransitionListeners();
 }

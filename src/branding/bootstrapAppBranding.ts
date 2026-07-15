@@ -1,6 +1,6 @@
 import { supabase } from "../lib/supabaseClient";
 import { getPublicOrganizadorIdFromPath } from "../lib/rivieraJugadores/publicOrganizador";
-import { brandingDevLog } from "./brandingDevLog";
+import { debugLog } from "../lib/debug/debugLog";
 import {
   beginBrandingTransition,
   endBrandingTransition,
@@ -39,19 +39,19 @@ export async function bootstrapAppBranding(): Promise<void> {
   try {
     if (typeof window === "undefined") {
       clearTenantBranding();
-      brandingDevLog("bootstrap:resolved", { orgId: null, source: "ssr" });
+      debugLog("[branding] bootstrap:resolved", { orgId: null, source: "ssr" });
       return;
     }
 
     const pathOrg = getPublicOrganizadorIdFromPath();
     if (pathOrg) {
-      brandingDevLog("bootstrap:resolved", { orgId: pathOrg, source: "path" });
+      debugLog("[branding] bootstrap:resolved", { orgId: pathOrg, source: "path" });
       await resolveAndApplyBranding(pathOrg);
       return;
     }
 
     if (isMotherBrandOnlyPath(window.location.pathname)) {
-      brandingDevLog("bootstrap:resolved", {
+      debugLog("[branding] bootstrap:resolved", {
         orgId: null,
         source: "mother-path",
         path: window.location.pathname,
@@ -65,7 +65,7 @@ export async function bootstrapAppBranding(): Promise<void> {
     } = await supabase.auth.getSession();
 
     if (session?.user?.id) {
-      brandingDevLog("bootstrap:resolved", {
+      debugLog("[branding] bootstrap:resolved", {
         orgId: session.user.id,
         source: "session-restore",
       });
@@ -73,7 +73,7 @@ export async function bootstrapAppBranding(): Promise<void> {
       return;
     }
 
-    brandingDevLog("bootstrap:resolved", { orgId: null, source: "anonymous" });
+    debugLog("[branding] bootstrap:resolved", { orgId: null, source: "anonymous" });
     clearTenantBranding();
   } finally {
     endBrandingTransition("bootstrap");

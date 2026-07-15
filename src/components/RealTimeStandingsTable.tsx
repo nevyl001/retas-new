@@ -32,6 +32,7 @@ import {
   loadChampionshipConfig,
 } from "../lib/roundRobinChampionship";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
+import { debugLog } from "../lib/debug/debugLog";
 import { StandingsDifCell } from "./standings/StandingsDifCell";
 import { StandingsPtsCell } from "./standings/StandingsPtsCell";
 import { StandingsScoringHelp } from "./standings/StandingsScoringHelp";
@@ -130,7 +131,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
 
     // Prevenir múltiples recargas simultáneas
     if (isLoadingRef.current) {
-      console.log("⏳ Ya hay una recarga en progreso en RealTimeStandingsTable, ignorando...");
+      debugLog("⏳ Ya hay una recarga en progreso en RealTimeStandingsTable, ignorando...");
       return;
     }
 
@@ -144,10 +145,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
         getMatches(tournamentId),
       ]);
 
-      console.log("🔍 Datos cargados:");
-      console.log("- Parejas:", pairsData.length);
-      console.log("- Partidos:", matchesData.length);
-      console.log(
+      debugLog("🔍 Datos cargados:");
+      debugLog("- Parejas:", pairsData.length);
+      debugLog("- Partidos:", matchesData.length);
+      debugLog(
         "- Partidos finalizados:",
         matchesData.filter((m) => m.status === "finished").length
       );
@@ -161,13 +162,13 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       const allGamesData = gamesArrays.flat();
       setAllGames(allGamesData);
 
-      console.log("- Juegos cargados:", allGamesData.length);
+      debugLog("- Juegos cargados:", allGamesData.length);
 
       // Log de algunos partidos para debug
       matchesData.forEach((match, index) => {
         if (index < 3) {
           // Solo primeros 3 para no saturar log
-          console.log(`Partido ${index + 1}:`, {
+          debugLog(`Partido ${index + 1}:`, {
             id: match.id,
             status: match.status,
             pair1_score: match.pair1_score,
@@ -190,10 +191,10 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       });
 
       if (finishedWithoutScores.length > 0) {
-        console.log(
+        console.warn(
           `⚠️ ENCONTRADOS ${finishedWithoutScores.length} partidos finalizados sin marcador final`
         );
-        console.log("💡 Usa el botón 'Actualizar Scores' para corregir esto");
+        console.warn("💡 Usa el botón 'Actualizar Scores' para corregir esto");
       }
     } catch (error) {
       console.error("Error cargando datos:", error);
@@ -221,7 +222,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     // Auto-refresh cada 60s como fallback (si Realtime falla o no está disponible)
     // Con Realtime activo, esto solo se usará como respaldo
     const interval = setInterval(() => {
-      console.log("⏰ Polling de respaldo (60s) - Realtime debería actualizar antes");
+      debugLog("⏰ Polling de respaldo (60s) - Realtime debería actualizar antes");
       loadTournamentData();
     }, 60000); // Aumentado a 60s ya que Realtime debería actualizar antes
 
@@ -374,7 +375,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   // Función para actualizar marcadores de partidos finalizados que no tienen pair1_score/pair2_score
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const updateFinishedMatchScores = async () => {
-    console.log("🔄 Actualizando marcadores de partidos finalizados...");
+    debugLog("🔄 Actualizando marcadores de partidos finalizados...");
 
     const finishedMatches = matches.filter((m) => {
       if (m.status !== "finished") return false;
@@ -401,7 +402,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
           }
         });
 
-        console.log(
+        debugLog(
           `📊 Actualizando partido ${match.id}: ${pair1FinalScore} - ${pair2FinalScore}`
         );
 

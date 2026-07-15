@@ -6,6 +6,7 @@ import {
   getTournamentPublicConfigExtended,
 } from "./database";
 import { assignCourtsInChunk } from "./circleRoundRobinSchedule";
+import { debugLog } from "./debug/debugLog";
 import {
   computePairsWithStats,
   getMatchScoresForStandings,
@@ -140,7 +141,7 @@ function reconcileChampionshipConfig(
       cfg.regularRoundsMax ?? resolveRegularRoundsMax(regular, cfg),
   };
   saveChampionshipConfig(tournamentId, fixed);
-  console.info(
+  debugLog(
     `[remontada-final] Contador de rondas corregido: ${cfg.championshipRoundsGenerated} → ${actualGenerated}`
   );
   return fixed;
@@ -187,7 +188,7 @@ export async function syncChampionshipConfigPublic(
     if (readError || !row || !("championship_config" in row)) {
       if (!warnedMissingChampionshipColumn) {
         warnedMissingChampionshipColumn = true;
-        console.info(
+        console.warn(
           "[remontada-final] La columna championship_config no está en Supabase; la remontada sigue en localStorage. Ejecuta supabase/tournament-public-config-championship.sql si quieres publicarla."
         );
       }
@@ -752,7 +753,7 @@ async function backfillThirdPlaceMatchIfMissing(params: {
   );
   persistMatchType(row.id, "championship");
 
-  console.log(
+  debugLog(
     `[remontada-final] Partido de 3er lugar generado (round DB ${finalRoundNum}).`
   );
 
@@ -804,7 +805,7 @@ export async function maybeGenerateChampionshipRound(params: {
 
   if (!areAllMatchesFinished(regular)) {
     const pending = regular.filter((m) => m.status !== "finished").length;
-    console.log(
+    debugLog(
       `[remontada-final] RR aún en curso (${pending} partido(s) pendiente(s)).`
     );
     return [];
@@ -861,7 +862,7 @@ export async function maybeGenerateChampionshipRound(params: {
     regularRoundsMax: cfg.regularRoundsMax ?? regularMax,
   });
 
-  console.log(
+  debugLog(
     `[remontada-final] Ronda ${nextIndex} generada: ${created.length} partido(s) (round DB ${roundNum}).`
   );
 

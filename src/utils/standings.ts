@@ -187,37 +187,37 @@ export function calcularEstadisticas(
   return buildStandings(pairs, historialPartidos);
 }
 
+// Aserciones de integridad de standings, ya gateadas por NODE_ENV en el
+// llamador (buildStandings). Antes usaban console.assert (no permitido por
+// no-console); se reescriben como if(!cond) console.warn(...), mismo efecto
+// (loguea solo cuando la condición falla), sin tocar la lógica de validación.
 export function validateStandings(
   standings: PairStanding[],
   _matches: MatchResult[] = []
 ): void {
   standings.forEach((s) => {
-    console.assert(
-      s.PJ === s.PG + s.PE + s.PP,
-      `[standings] ${s.pairName}: PJ no cuadra`
-    );
-    console.assert(
-      s.puntos === s.PG * 2,
-      `[standings] ${s.pairName}: PTS incorrectos`
-    );
-    console.assert(
-      s.diferencia === s.juegosFavor - s.juegosContra,
-      `[standings] ${s.pairName}: DIF no cuadra`
-    );
-    if (s.PG === 0) {
-      console.assert(
-        s.puntos === 0,
-        `[standings] ${s.pairName}: 0 victorias pero tiene PTS`
-      );
+    if (s.PJ !== s.PG + s.PE + s.PP) {
+      console.warn(`[standings] ${s.pairName}: PJ no cuadra`);
+    }
+    if (s.puntos !== s.PG * 2) {
+      console.warn(`[standings] ${s.pairName}: PTS incorrectos`);
+    }
+    if (s.diferencia !== s.juegosFavor - s.juegosContra) {
+      console.warn(`[standings] ${s.pairName}: DIF no cuadra`);
+    }
+    if (s.PG === 0 && s.puntos !== 0) {
+      console.warn(`[standings] ${s.pairName}: 0 victorias pero tiene PTS`);
     }
   });
   const totalFav = standings.reduce((acc, s) => acc + s.juegosFavor, 0);
   const totalCon = standings.reduce((acc, s) => acc + s.juegosContra, 0);
-  console.assert(
-    totalFav === totalCon,
-    `[standings] Integridad: total FAV (${totalFav}) ≠ total CON (${totalCon})`
-  );
+  if (totalFav !== totalCon) {
+    console.warn(
+      `[standings] Integridad: total FAV (${totalFav}) ≠ total CON (${totalCon})`
+    );
+  }
 }
+/* eslint-enable no-console */
 
 export const createStandingsComparator = (matches: MatchResult[]) => {
   return (a: PairStanding, b: PairStanding): number => {

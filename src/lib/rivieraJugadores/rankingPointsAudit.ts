@@ -125,6 +125,11 @@ export function logRankingPointsAudit(
   if (!shouldLog() || !isAuditTarget(jugador)) return;
   if (!shouldEmitAudit(layer, jugador.id)) return;
 
+  // Caso excepcional documentado: rankingPointsAudit.test.ts espía
+  // específicamente console.info (contrato de test existente, no se toca
+  // el test para esta limpieza de logs). No puede convertirse a warn/error
+  // sin romper esa aserción.
+  // eslint-disable-next-line no-console -- ver rankingPointsAudit.test.ts:25 (spyOn console.info)
   console.info("[ranking-points-audit]", {
     layer,
     jugadorId: jugador.id,

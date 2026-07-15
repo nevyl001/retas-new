@@ -5,7 +5,7 @@ import {
   getAppliedBranding,
   resolveAndApplyBranding,
 } from "../branding/BrandingService";
-import { brandingDevLog } from "../branding/brandingDevLog";
+import { debugLog } from "../lib/debug/debugLog";
 import {
   beginBrandingTransition,
   endBrandingTransition,
@@ -147,7 +147,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         setUserProfile(null);
         userIdRef.current = null;
         setLoading(false);
-        brandingDevLog("UserContext.applySession:skip-init-anonymous", {});
+        debugLog("[branding] UserContext.applySession:skip-init-anonymous", {});
         return;
       }
 
@@ -168,7 +168,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
             nextSession.user.email,
             nextSession.user.user_metadata?.name
           );
-          brandingDevLog("UserContext.applySession:skip-init-restored", {
+          debugLog("[branding] UserContext.applySession:skip-init-restored", {
             orgId: nextUserId,
           });
           return;
@@ -178,7 +178,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       setLoading(true);
       beginBrandingTransition(reason);
 
-      brandingDevLog("UserContext.applySession:start", {
+      debugLog("[branding] UserContext.applySession:start", {
         event,
         reason,
         orgId: nextUserId,
@@ -226,7 +226,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
               return;
             }
 
-            brandingDevLog("UserContext.applySession:branding-ready", {
+            debugLog("[branding] UserContext.applySession:branding-ready", {
               orgId: nextUserId,
               brandingKey: branding.brandingKey,
             });
@@ -259,7 +259,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         if (isMounted && generation === applySessionGenerationRef.current) {
           endBrandingTransition(reason);
           setLoading(false);
-          brandingDevLog("UserContext.applySession:done", {
+          debugLog("[branding] UserContext.applySession:done", {
             orgId: nextUserId,
             event,
           });
