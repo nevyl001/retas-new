@@ -288,6 +288,20 @@
   flex-direction: column;
 }
 
+/* Fase 2A — revisión de robustez responsive. La regla compartida
+ * `.has-mobile-sticky-action .liga-page` (mode-mobile-shell.css) usa
+ * combinador descendiente, pero has-mobile-sticky-action se aplica al MISMO
+ * elemento que .liga-page (LigaPageShell), no a un ancestro — por lo que
+ * nunca coincide y el sticky footer tapaba el final del contenido. Bug
+ * compartido con Reta/TE/Duelo (no se toca, fuera de alcance); se corrige
+ * aquí solo para Liga con un selector compuesto, sin modificar la regla
+ * compartida ni otros modos. */
+@media (max-width: 767px) {
+  .liga-page.has-mobile-sticky-action {
+    padding-bottom: var(--mobile-sticky-action-offset);
+  }
+}
+
 /* LigaJornadaView: el ModeHeader de escritorio se oculta solo en móvil para
  * no duplicar con el ModeEventHeader nuevo (visible únicamente ≤767px por su
  * propio comportamiento compartido, sin overrides). Selector de 2 clases,

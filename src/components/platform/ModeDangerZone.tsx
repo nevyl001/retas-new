@@ -21,6 +21,6 @@ export const ModeDangerZone: React.FC<{
   <div className={["mode-danger-zone", className].filter(Boolean).join(" ")}>
     <h3 className="mode-danger-zone__title">{title}</h3>
     {hint ? <p className="mode-danger-zone__hint">{hint}</p> : null}
-    {children}
+    <div className="mode-danger-zone__actions">{children}</div>
   </div>
 );
