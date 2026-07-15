@@ -20,7 +20,6 @@ import {
 } from "../branding/brandingTransition";
 import type { TenantBranding } from "../branding/types";
 import { syncRuntimeBindingForOrganizador } from "../lib/branding/organizerBrandingSettings";
-import { debugLog } from "../lib/debug/debugLog";
 import {
   getClubExperienceScopeStyle,
   getNeutralPublicScopeStyle,
@@ -174,9 +173,6 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
 
     if (pendingUntilOrganizador && !normalizedOrgId) {
       setBrandingStatus("pending");
-      debugLog("[branding-flash] branding-scope: pending", {
-        reason: "awaiting-organizador",
-      });
       return () => {
         cancelled = true;
       };
@@ -187,10 +183,6 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
         if (cancelled) return;
         bumpBindingRevision();
         setBrandingStatus("resolved");
-        debugLog("[branding-flash] branding-scope: resolved", {
-          organizadorId: null,
-          source: "mother-scope",
-        });
       });
       return () => {
         cancelled = true;
@@ -200,19 +192,12 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
     const alreadyApplied = appliedMatchesOrganizador(normalizedOrgId);
     if (!alreadyApplied) {
       setBrandingStatus("pending");
-      debugLog("[branding-flash] branding-scope: pending", {
-        reason: "awaiting-binding",
-        organizadorId: normalizedOrgId,
-      });
     }
 
     void syncRuntimeBindingForOrganizador(normalizedOrgId).then(() => {
       if (cancelled) return;
       bumpBindingRevision();
       setBrandingStatus("resolved");
-      debugLog("[branding-flash] branding-scope: resolved", {
-        organizadorId: normalizedOrgId,
-      });
     });
 
     return () => {

@@ -4,7 +4,6 @@ import {
   PublicEventBrandIdentity,
   useClubExperience,
 } from "../../../club-experience";
-import { debugLog } from "../../../lib/debug/debugLog";
 import { PublicModeShell } from "../../platform/PublicModeShell";
 import "./torneo-express-public.css";
 
@@ -12,18 +11,7 @@ const PublicTorneoExpressShellInner: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = "" }) => {
-  const { isScopeBrandingReady, brandingStatus, organizadorId } =
-    useClubExperience();
-
-  if (brandingStatus === "pending") {
-    debugLog("[branding-flash] public-route: loading-resource", {
-      organizadorId,
-    });
-  } else if (organizadorId) {
-    debugLog("[branding-flash] public-route: organizer-resolved", {
-      organizadorId,
-    });
-  }
+  const { isScopeBrandingReady } = useClubExperience();
 
   return (
     <div className={`te-public App--public-full-width ${className}`.trim()}>

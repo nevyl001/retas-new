@@ -1,7 +1,6 @@
 import React from "react";
 import { useClubExperience } from "../ClubExperienceContext";
 import { ClubIdentity } from "./ClubIdentity";
-import { debugLog } from "../../lib/debug/debugLog";
 
 type PublicEventBrandIdentityProps = {
   className?: string;
@@ -23,10 +22,6 @@ export const PublicEventBrandIdentity: React.FC<
   if (!isScopeBrandingReady || brandingStatus === "pending") {
     return null;
   }
-
-  debugLog("[branding-flash] public-identity: rendered", {
-    isClubBranded,
-  });
 
   return (
     <ClubIdentity
