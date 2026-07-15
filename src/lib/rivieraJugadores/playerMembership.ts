@@ -1,6 +1,7 @@
 import { supabase } from "../supabaseClient";
 import { resolveOrigenConcedidoOrganizadorId } from "./grantedRankingDisplay";
 import { invalidatePlayersPool } from "./playersPoolCache";
+import { invalidateCareerIdentityCacheForPlayer } from "./careerIdentityCache";
 import type { RivieraJugadorWithStats } from "./types";
 import type {
   AddOrganizerMembershipResult,
@@ -235,6 +236,13 @@ export async function addOrganizerMembershipByRivieraId(
   if (error) throw error;
   const result = parseAddOrganizerMembershipResult(data);
   await invalidatePoolForCurrentOrganizer();
+  // Vincular por Riviera ID crea/reactiva un clon local enlazado al perfil
+  // origen: cambia linkedJugadorIds visto desde ambos lados. Se conocen los
+  // dos ids exactos en el resultado, así que se invalida por jugador.
+  if (result) {
+    invalidateCareerIdentityCacheForPlayer(result.localJugadorId);
+    invalidateCareerIdentityCacheForPlayer(result.sourceJugadorId);
+  }
   return result;
 }
 
@@ -348,6 +356,15 @@ export async function leaveOrganizerMembership(
   if (error) throw error;
   const result = parseLeaveOrganizerMembershipResult(data);
   await invalidatePoolForCurrentOrganizer();
+  // Salir del club rompe el vínculo entre el clon local y el perfil origen:
+  // ambos lados quedarían con un bundle de identidad/carrera obsoleto
+  // (todavía enlazados) si no se invalida.
+  if (result) {
+    if (result.localJugadorId) {
+      invalidateCareerIdentityCacheForPlayer(result.localJugadorId);
+    }
+    invalidateCareerIdentityCacheForPlayer(result.sourceJugadorId);
+  }
   return result;
 }
 

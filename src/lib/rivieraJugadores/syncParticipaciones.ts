@@ -22,6 +22,8 @@ import { isAmericanoTournament } from "../gameModeMapping";
 import { loadAmericanoDinamicoSnapshot } from "../americanoDinamicoStorage";
 import { fetchTorneoExpressBundle } from "../../services/torneoExpressService";
 import { getLigaById } from "../../services/ligaService";
+import { invalidatePlayersPool } from "./playersPoolCache";
+import { invalidateCareerIdentityCache } from "./careerIdentityCache";
 import {
   eliminatoriaBracketSize,
   isRondaTercerLugar,
@@ -2634,5 +2636,12 @@ export async function backfillHistorialJugadores(
     backfillLigaJornadaHistorial(organizadorId),
     backfillDuelosHistorial(organizadorId),
   ]);
+  // Backfill masivo: escribe jugador_participaciones para potencialmente
+  // muchos jugadores del organizador y el resumen solo trae conteos por
+  // tipo de evento (no ids). Sin ids precisos y siendo una acción poco
+  // frecuente (botón explícito "Importar historial"), se invalida por
+  // organizador en vez de intentar adivinar jugadores o limpiar todo.
+  invalidatePlayersPool(organizadorId);
+  invalidateCareerIdentityCache(organizadorId);
   return { retas, americanos, ligas, duelos };
 }

@@ -7,6 +7,10 @@ import {
 } from "./publicCareerLinkage";
 import type { JugadorStats, RivieraJugador, RivieraJugadorWithStats } from "./types";
 import { invalidatePlayersPool } from "./playersPoolCache";
+import {
+  invalidateCareerIdentityCache,
+  invalidateCareerIdentityCacheForPlayer,
+} from "./careerIdentityCache";
 
 function isMissingAccessFeatureError(
   error: { code?: string; message?: string; status?: number } | null
@@ -748,6 +752,16 @@ export async function adminGrantOrganizerPlayerAccess(
   };
   if (result.granted > 0 || result.reactivated > 0) {
     invalidatePlayersPool(granteeOrganizerId);
+    // Otorgar acceso cambia linkedJugadorIds/homeOrganizadorId de los
+    // jugadores origen (ahora un club más los enlaza) y crea/reactiva una
+    // vista local en el club receptor. El id del clon local no se conoce
+    // aquí (puede no existir todavía), así que se invalida por jugador para
+    // el origen (ids conocidos con precisión) y por organizador para el
+    // receptor (fallback seguro sin adivinar el id del clon).
+    for (const jugadorId of jugadorIds) {
+      invalidateCareerIdentityCacheForPlayer(jugadorId);
+    }
+    invalidateCareerIdentityCache(granteeOrganizerId);
   }
   return result;
 }
@@ -756,14 +770,22 @@ export async function adminRevokeOrganizerPlayerAccess(
   accessId: string
 ): Promise<void> {
   let granteeOrganizerId: string | null = null;
+  let sourceJugadorId: string | null = null;
+  let localJugadorId: string | null = null;
   try {
+    // Solo lectura: se extiende el select existente para poder invalidar
+    // por jugador (preciso) en vez de solo por organizador.
     const { data: row } = await supabase
       .from("organizer_player_access")
-      .select("grantee_organizer_id")
+      .select("grantee_organizer_id, jugador_id, local_jugador_id")
       .eq("id", accessId)
       .maybeSingle();
     granteeOrganizerId = row?.grantee_organizer_id
       ? String(row.grantee_organizer_id)
+      : null;
+    sourceJugadorId = row?.jugador_id ? String(row.jugador_id) : null;
+    localJugadorId = row?.local_jugador_id
+      ? String(row.local_jugador_id)
       : null;
   } catch {
     granteeOrganizerId = null;
@@ -777,6 +799,17 @@ export async function adminRevokeOrganizerPlayerAccess(
   }
   if (granteeOrganizerId) {
     invalidatePlayersPool(granteeOrganizerId);
+    // Revocar rompe el vínculo entre el club receptor y el jugador origen:
+    // el clon local (si existía) deja de reflejar la carrera del origen.
+    // Se invalida por jugador (origen + clon local, si se conocen) y, si no
+    // se pudo leer ninguno de los dos, se cae a invalidación por
+    // organizador (fallback seguro, revoke es poco frecuente).
+    if (sourceJugadorId || localJugadorId) {
+      if (sourceJugadorId) invalidateCareerIdentityCacheForPlayer(sourceJugadorId);
+      if (localJugadorId) invalidateCareerIdentityCacheForPlayer(localJugadorId);
+    } else {
+      invalidateCareerIdentityCache(granteeOrganizerId);
+    }
   }
 }
 

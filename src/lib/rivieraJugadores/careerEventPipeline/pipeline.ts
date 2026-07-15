@@ -3,6 +3,8 @@ import { isCareerIntegrityException } from "../careerIntegrity";
 import { prepareParticipacionIdentityForOrganizer } from "../jugadorIdResolver";
 import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
 import { rebuildJugadorStats } from "../rivieraJugadoresService";
+import { invalidatePlayersPool } from "../playersPoolCache";
+import { invalidateCareerIdentityCacheForPlayer } from "../careerIdentityCache";
 import { assertCareerEventIntegrity } from "./assertions";
 import { runCareerEventSync } from "./handlers";
 import { validateCareerEventPreClose } from "./preCloseGuards";
@@ -141,6 +143,13 @@ export async function processCareerEvent(
 
   if (touchedJugadorIds.length > 0) {
     await refreshJugadorStatsBatch(touchedJugadorIds);
+    // Cerrar el evento escribe nuevas jugador_participaciones para cada
+    // jugador tocado: el historial cacheado en careerIdentityCache quedaría
+    // incompleto (sin la participación recién creada) si no se invalida.
+    invalidatePlayersPool(input.organizadorId);
+    for (const id of touchedJugadorIds) {
+      invalidateCareerIdentityCacheForPlayer(id);
+    }
   }
 
   if (!options.skipAssertions && syncResult && touchedJugadorIds.length > 0) {

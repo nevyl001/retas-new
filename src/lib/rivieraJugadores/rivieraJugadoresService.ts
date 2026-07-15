@@ -62,6 +62,7 @@ import {
 } from "./rivieraIdDisplay";
 import { logRankingPointsAuditFromJugador } from "./rankingPointsAudit";
 import { invalidatePlayersPool } from "./playersPoolCache";
+import { invalidateCareerIdentityCacheForPlayer } from "./careerIdentityCache";
 
 const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -1327,6 +1328,10 @@ export async function deleteParticipacionJugador(
           console.warn("[riviera-jugadores] rebuild tras delete linked:", id, e);
         }
       }
+      invalidatePlayersPool(organizadorId);
+      for (const id of Array.from(ids)) {
+        invalidateCareerIdentityCacheForPlayer(id);
+      }
       return primary ?? (await fetchJugadorStatsRow(jugadorId));
     }
   }
@@ -1388,6 +1393,9 @@ export async function deleteParticipacionJugador(
     }
     throw delErr;
   }
+
+  invalidatePlayersPool(organizadorId);
+  invalidateCareerIdentityCacheForPlayer(jugadorId);
 
   try {
     return await rebuildJugadorStats(jugadorId);
@@ -1546,6 +1554,12 @@ export async function registrarParticipacion(
     }
     throw error;
   }
+  // registrarParticipacion no recibe organizadorId en su firma (solo
+  // jugadorId), así que aquí solo se invalida por jugador en todos los
+  // organizadores (seguro, no requiere conocer el club). La invalidación
+  // completa de playersPoolCache para el flujo de ajuste manual vive en
+  // adjustRankingPuntosManual, que sí tiene organizadorId.
+  invalidateCareerIdentityCacheForPlayer(params.jugadorId);
   return data as string;
 }
 
@@ -1591,6 +1605,8 @@ export async function adjustRankingPuntosManual(
       organizador_id: organizadorId,
     },
   });
+  invalidatePlayersPool(organizadorId);
+  invalidateCareerIdentityCacheForPlayer(jugadorId);
 }
 
 function mapInternalClubJugadorRow(
@@ -2233,9 +2249,23 @@ export async function deleteRivieraJugador(
   });
 
   if (!rpcErr) {
-    const payload = data as { status?: string } | null;
+    const payload = data as {
+      status?: string;
+      details?: Array<{ jugador_id?: string }>;
+    } | null;
     if (payload?.status === "deleted") {
       invalidatePlayersPool(effectiveOrgId);
+      // Borrar el origen deja obsoleto su propio bundle cacheado. Si la RPC
+      // (versión cascada) reporta clones propagados en `details[].jugador_id`,
+      // se invalidan también esos ids — lectura best-effort, sin asumir un
+      // contrato rígido no cubierto por test (payload puede variar según la
+      // versión de la RPC desplegada).
+      invalidateCareerIdentityCacheForPlayer(jugadorId);
+      for (const detail of payload.details ?? []) {
+        if (detail?.jugador_id) {
+          invalidateCareerIdentityCacheForPlayer(detail.jugador_id);
+        }
+      }
       return;
     }
   }
@@ -2373,6 +2403,7 @@ export async function deleteRivieraJugador(
     );
   }
   invalidatePlayersPool(effectiveOrgId);
+  invalidateCareerIdentityCacheForPlayer(jugadorId);
 }
 
 /** Alias explícito: eliminación global destructiva (solo club origen). */
