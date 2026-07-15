@@ -10,6 +10,7 @@ export const ModeEventHeader: React.FC<{
   summary?: string;
   nextActionLabel?: string;
   onNextAction?: () => void;
+  className?: string;
 }> = ({
   eyebrow,
   title,
@@ -19,8 +20,9 @@ export const ModeEventHeader: React.FC<{
   summary,
   nextActionLabel,
   onNextAction,
+  className = "",
 }) => (
-  <header className="mode-event-header">
+  <header className={["mode-event-header", className].filter(Boolean).join(" ")}>
     {eyebrow ? <p className="mode-event-header__eyebrow">{eyebrow}</p> : null}
     <div className="mode-event-header__top">
       <h2 className="mode-event-header__title">{title}</h2>

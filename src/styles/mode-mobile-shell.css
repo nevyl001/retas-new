@@ -371,6 +371,38 @@
   }
 }
 
+/* ── ModeDangerZone (Fase 1 — capa aditiva) ──────────────────────
+ * Ver docs/GAME-MODES-UI-ARCHITECTURE.md, secciones 6.4 y 7.10.
+ * Mismos valores visuales que .reta-danger-zone (arriba), generalizados
+ * con tokens --mode-*. Clases nuevas, sin consumidores todavía — no
+ * afecta a .reta-danger-zone ni a ninguna pantalla existente.
+ */
+.mode-danger-zone {
+  margin-top: 1.25rem;
+  padding: 1rem 0.9rem;
+  border: 1px solid var(--mode-danger-border, rgba(248, 113, 113, 0.28));
+  border-radius: var(--mode-radius, var(--ro-radius-lg, 14px));
+  background: var(--mode-danger-bg, rgba(248, 113, 113, 0.06));
+  display: grid;
+  gap: 0.65rem;
+}
+
+.mode-danger-zone__title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--loss, #f87171);
+}
+
+.mode-danger-zone__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--ro-text-secondary, var(--text-secondary));
+}
+
 @media (min-width: 768px) {
   .mode-mobile-shell--tabbed .reta-mobile-only {
     display: none !important;

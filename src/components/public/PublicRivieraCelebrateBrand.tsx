@@ -3,13 +3,17 @@ import { PublicEventBrandIdentity, useClubExperience } from "../../club-experien
 
 export const PublicRivieraCelebrateBrand: React.FC<{
   showTagline?: boolean;
-}> = ({ showTagline = true }) => {
+  /** Oculta el logo/nombre del club (ícono Riviera Open + nombre de cuenta). */
+  showClubIdentity?: boolean;
+}> = ({ showTagline = true, showClubIdentity = true }) => {
   const { manifest } = useClubExperience();
 
   return (
     <header className="ro-pub-celebrate__brand">
       <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
-      <PublicEventBrandIdentity className="ro-pub-celebrate__club-identity" />
+      {showClubIdentity ? (
+        <PublicEventBrandIdentity className="ro-pub-celebrate__club-identity" />
+      ) : null}
       <p className="ro-pub-celebrate__wordmark">
         <span>R I V I E R A</span>
         <span className="ro-pub-celebrate__wordmark-sep" aria-hidden>

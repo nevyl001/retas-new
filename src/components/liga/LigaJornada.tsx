@@ -44,6 +44,7 @@ import {
 } from "./LigaPartidoProgramacionFields";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
+import { ModeEventHeader } from "../platform";
 import { ModeHeader } from "../platform/ModeHeader";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import { ligaGestionarPath, navigateLiga, publicLigaJornadaUrl } from "./ligaNav";
@@ -88,6 +89,19 @@ function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
       return "Finalizada";
     default:
       return estado;
+  }
+}
+
+export function jornadaEstadoStatusVariant(
+  estado: LigaJornada["estado"]
+): "live" | "pending" | "gold" | "muted" {
+  switch (estado) {
+    case "in_progress":
+      return "live";
+    case "completed":
+      return "gold";
+    default:
+      return "pending";
   }
 }
 
@@ -562,8 +576,11 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         </Button>
       </ActionBar>
 
+      {/* Desktop: header actual sin cambios, oculto solo en móvil (≤767px)
+       * para no duplicar con ModeEventHeader — ver docs/GAME-MODES-UI-ARCHITECTURE.md
+       * Fase 2A punto 2 ("LigaJornadaView en su vista móvil"). */}
       <ModeHeader
-        className="liga-header rv-mode-header"
+        className="liga-header rv-mode-header liga-jornada-header-desktop"
         eyebrow={modeEyebrow}
         title={`Liga: ${detalle.nombre} — Jornada ${numero}`}
         subtitle={`Estado: ${jornadaEstadoLabel(jornada.estado)}${
@@ -573,6 +590,25 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               : ` · ${totalPartidos} partidos (${nParejas} parejas, todos vs todos)`
             : ""
         }`}
+      />
+
+      {/* Móvil (≤767px): mismo contenido (nombre de la liga, jornada, estado,
+       * info de partidos), reorganizado en las mismas piezas de ModeEventHeader.
+       * Usa su propia visibilidad móvil-only por defecto (mode-mobile-shell.css),
+       * sin overrides — nunca coexiste visualmente con el header de arriba. */}
+      <ModeEventHeader
+        eyebrow={modeEyebrow}
+        title={`Jornada ${numero}`}
+        modality={detalle.nombre}
+        statusLabel={jornadaEstadoLabel(jornada.estado)}
+        statusVariant={jornadaEstadoStatusVariant(jornada.estado)}
+        summary={
+          totalPartidos > 0
+            ? esParejasFijas
+              ? `${totalPartidos} partidos programados`
+              : `${totalPartidos} partidos (${nParejas} parejas, todos vs todos)`
+            : undefined
+        }
       />
 
       <PublicShareSection

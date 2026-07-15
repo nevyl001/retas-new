@@ -1,5 +1,6 @@
 import { useClubModeEyebrow } from "../../club-experience";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useMobileViewport } from "../../hooks/useMobileViewport";
 import {
   calendarioDesactualizado,
   tieneJornadasEnCurso,
@@ -26,7 +27,13 @@ import {
 } from "../../services/ligaService";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
-import { ModeHeader } from "../platform/ModeHeader";
+import {
+  ModeDangerZone,
+  ModeEventHeader,
+  ModeSectionPanel,
+  ModeSectionTabs,
+  MobileStickyActionFooter,
+} from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import {
   ligaJornadaPath,
@@ -39,7 +46,9 @@ interface LigaGestionarProps {
   ligaId: string;
 }
 
-function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
+type LigaGestionarTab = "jugadores" | "parejas" | "jornadas";
+
+export function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
   switch (estado) {
     case "upcoming":
       return "Próxima";
@@ -52,6 +61,38 @@ function estadoLigaLabel(estado: LigaDetalle["estado"]): string {
   }
 }
 
+export function estadoLigaStatusVariant(
+  estado: LigaDetalle["estado"]
+): "live" | "pending" | "gold" | "muted" {
+  switch (estado) {
+    case "in_progress":
+      return "live";
+    case "completed":
+      return "gold";
+    default:
+      return "pending";
+  }
+}
+
+/**
+ * Tabs de LigaGestionar — orden obligatorio Jugadores/Parejas → Jornadas
+ * (docs/GAME-MODES-UI-ARCHITECTURE.md, Fase 2A punto 3). Extraída para
+ * poder testear el orden/textos sin renderizar el componente completo.
+ */
+export function buildLigaGestionarTabs(
+  esParejasFijas: boolean
+): { id: string; label: string }[] {
+  return esParejasFijas
+    ? [
+        { id: "parejas", label: "Parejas" },
+        { id: "jornadas", label: "Jornadas" },
+      ]
+    : [
+        { id: "jugadores", label: "Jugadores" },
+        { id: "jornadas", label: "Jornadas" },
+      ];
+}
+
 function equipoNombre(e: LigaEquipo): string {
   return (
     e.nombre?.trim() ||
@@ -61,9 +102,10 @@ function equipoNombre(e: LigaEquipo): string {
 
 export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const modeEyebrow = useClubModeEyebrow();
+  const isMobile = useMobileViewport(767);
   const [detalle, setDetalle] = useState<LigaDetalle | null>(null);
   const [jugadoresPool, setJugadoresPool] = useState<LigaJugadorPoolItem[]>([]);
-  const [tab, setTab] = useState<"jugadores" | "parejas" | "jornadas">("jugadores");
+  const [tab, setTab] = useState<LigaGestionarTab>("jugadores");
   const [seleccionParejaIds, setSeleccionParejaIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -337,24 +379,46 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     );
   }
 
+  const ligaTabs = buildLigaGestionarTabs(esParejasFijas);
+
+  const iniciarLigaTitle = !puedeIniciar
+    ? esParejasFijas
+      ? "Necesitas al menos 3 parejas inscritas"
+      : "Necesitas al menos 4 inscritos y cantidad par"
+    : undefined;
+
+  // CTA primaria real según el estado actual de la liga (misma condición de
+  // siempre: sin jornadas generadas y liga no finalizada). En móvil se
+  // relocaliza al sticky footer; en desktop sigue en la barra de acciones.
+  // Nunca se renderizan ambas instancias a la vez (docs/GAME-MODES-UI-ARCHITECTURE.md
+  // Sección 6.6 y Fase 2A punto 5).
+  const ctaIniciarVisible =
+    detalle.estado !== "completed" && detalle.jornadas.length === 0;
+  const stickyLabel = isMobile && ctaIniciarVisible ? "Iniciar liga" : null;
+
   return (
-    <LigaPageShell>
+    <LigaPageShell className={stickyLabel ? "has-mobile-sticky-action" : ""}>
       <ActionBar className="liga-toolbar riviera-back-toolbar">
         <Button type="button" variant="back" onClick={() => navigateLiga("/liga")}>
           ← Ligas
         </Button>
       </ActionBar>
 
-      <ModeHeader
-        className="liga-header rv-mode-header"
+      <ModeEventHeader
+        className="liga-event-header"
         eyebrow={modeEyebrow}
         title={`Liga: ${detalle.nombre}`}
-        subtitle={`${ligaModalidadLabel(detalle.modalidad)} · ${
+        modality={ligaModalidadLabel(detalle.modalidad)}
+        statusLabel={estadoLigaLabel(detalle.estado)}
+        statusVariant={estadoLigaStatusVariant(detalle.estado)}
+        summary={`${
           esParejasFijas
             ? `${detalle.equipos.length} parejas`
             : `${detalle.inscripciones.length} inscritos`
-        } · ${estadoLigaLabel(detalle.estado)}${
-          esParejasFijas ? ` · ${detalle.vueltas} vuelta${detalle.vueltas > 1 ? "s" : ""}` : ""
+        }${
+          esParejasFijas
+            ? ` · ${detalle.vueltas} vuelta${detalle.vueltas > 1 ? "s" : ""}`
+            : ""
         }`}
       />
 
@@ -373,19 +437,13 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       />
 
       <ActionBar className="liga-actions">
-        {detalle.estado !== "completed" && detalle.jornadas.length === 0 && (
+        {ctaIniciarVisible && !isMobile && (
           <Button
             type="button"
             variant="primary"
             disabled={!puedeIniciar || busy}
             onClick={handleStartLiga}
-            title={
-              !puedeIniciar
-                ? esParejasFijas
-                  ? "Necesitas al menos 3 parejas inscritas"
-                  : "Necesitas al menos 4 inscritos y cantidad par"
-                : undefined
-            }
+            title={iniciarLigaTitle}
           >
             Iniciar liga
           </Button>
@@ -400,6 +458,19 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             Regenerar calendario
           </Button>
         )}
+        {puedeFinalizarLiga && (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={busy}
+            onClick={handleFinishLiga}
+          >
+            Finalizar liga
+          </Button>
+        )}
+      </ActionBar>
+
+      <ModeDangerZone title="Zona de peligro">
         {ligaEditable && (
           <Button
             type="button"
@@ -420,17 +491,7 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         >
           Eliminar liga
         </Button>
-        {puedeFinalizarLiga && (
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={busy}
-            onClick={handleFinishLiga}
-          >
-            Finalizar liga
-          </Button>
-        )}
-      </ActionBar>
+      </ModeDangerZone>
 
       {calendarioStale && ligaEditable && (
         <div className="liga-banner liga-banner--warn" role="status">
@@ -461,35 +522,16 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       {message ? <p className="liga-success">{message}</p> : null}
       {error ? <p className="liga-error">{error}</p> : null}
 
-      <div className="liga-tabs">
-        {esParejasFijas ? (
-          <button
-            type="button"
-            className={`liga-tab${tab === "parejas" ? " liga-tab--active" : ""}`}
-            onClick={() => setTab("parejas")}
-          >
-            Parejas
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={`liga-tab${tab === "jugadores" ? " liga-tab--active" : ""}`}
-            onClick={() => setTab("jugadores")}
-          >
-            Jugadores
-          </button>
-        )}
-        <button
-          type="button"
-          className={`liga-tab${tab === "jornadas" ? " liga-tab--active" : ""}`}
-          onClick={() => setTab("jornadas")}
-        >
-          Jornadas
-        </button>
-      </div>
+      <ModeSectionTabs
+        className="liga-section-tabs"
+        tabs={ligaTabs}
+        activeId={tab}
+        onChange={(id) => setTab(id as LigaGestionarTab)}
+        ariaLabel="Secciones de la liga"
+      />
 
-      {tab === "jugadores" && !esParejasFijas && (
-        <>
+      {!esParejasFijas && (
+        <ModeSectionPanel id="jugadores" activeId={tab}>
           <div className="liga-card rv-card">
             <h2 className="liga-card__title">Inscripciones en esta liga</h2>
             <ul className="liga-list">
@@ -546,11 +588,11 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               </div>
             )}
           </div>
-        </>
+        </ModeSectionPanel>
       )}
 
-      {tab === "parejas" && esParejasFijas && (
-        <>
+      {esParejasFijas && (
+        <ModeSectionPanel id="parejas" activeId={tab}>
           {ligaEditable && detalle.jornadas.length === 0 && (
             <form
               className="liga-card rv-card liga-equipo-form"
@@ -703,10 +745,10 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
               </div>
             )}
           </div>
-        </>
+        </ModeSectionPanel>
       )}
 
-      {tab === "jornadas" && (
+      <ModeSectionPanel id="jornadas" activeId={tab}>
         <div className="liga-card rv-card">
           <h2 className="liga-card__title">Jornadas</h2>
           {detalle.jornadas.length === 0 ? (
@@ -745,7 +787,21 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             </ul>
           )}
         </div>
-      )}
+      </ModeSectionPanel>
+
+      {stickyLabel ? (
+        <MobileStickyActionFooter>
+          <Button
+            type="button"
+            variant="primary"
+            disabled={!puedeIniciar || busy}
+            onClick={handleStartLiga}
+            title={iniciarLigaTitle}
+          >
+            {stickyLabel}
+          </Button>
+        </MobileStickyActionFooter>
+      ) : null}
     </LigaPageShell>
   );
 };

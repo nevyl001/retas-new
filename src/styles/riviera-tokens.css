@@ -259,6 +259,27 @@
   --te-text-muted: var(--text-muted);
   --te-red: var(--danger);
   --te-live: var(--live);
+
+  /* ── MODO DE JUEGO (Fase 1 — capa aditiva) ──────────────────────
+   * Ver docs/GAME-MODES-UI-ARCHITECTURE.md, Sección 8.2.
+   * Solo alias/valores nuevos para homogeneizar Reta, Liga, Americano,
+   * Duelo 2v2 y Torneo Express en fases futuras. NO reemplaza ningún
+   * token ni clase existente — nada los consume todavía.
+   * Valores reales de Torneo Express (referencia visual), Sección 3
+   * del documento de arquitectura.
+   */
+  --mode-page-padding-mobile: var(--ro-mobile-page-padding);
+  --mode-page-padding-desktop: var(--ro-shell-padding-x);
+  --mode-content-max: 1200px;
+  --mode-content-max-public: 900px;
+  --mode-section-gap: clamp(20px, 3vw, 28px);
+  --mode-card-gap: 10px;
+  --mode-card-padding: 1.25rem 1.5rem 2rem;
+  --mode-radius: var(--ro-radius-lg);
+  --mode-sticky-footer-height: var(--mobile-sticky-action-height, 64px);
+  --mode-tab-min-height: var(--ro-touch-target-min);
+  --mode-danger-bg: rgba(248, 113, 113, 0.06);
+  --mode-danger-border: rgba(248, 113, 113, 0.28);
 }
 
 @media (prefers-reduced-motion: reduce) {

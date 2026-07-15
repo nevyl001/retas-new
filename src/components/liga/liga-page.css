@@ -11,9 +11,21 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1100px;
+  max-width: var(--mode-content-max, 1100px);
   margin: 0 auto;
   box-sizing: border-box;
+}
+
+/* Fase 2A — un solo punto de padding exterior (docs/GAME-MODES-UI-ARCHITECTURE.md,
+ * secciones 6.2 y 10). El padding real de la página vive en .liga-page
+ * (riviera-app-shell.css, compartido con .main-layout). GameModeShell aplica
+ * además la clase .rv-shell a este mismo nodo (.liga-page__inner), que sumaba
+ * un segundo padding sobre el mismo eje. Se neutraliza aquí sin tocar la regla
+ * compartida .rv-shell (usada por otros modos) ni riviera-open-mobile-polish.css.
+ */
+.liga-page .liga-page__inner.rv-shell {
+  padding-inline: 0;
+  padding-block: 0;
 }
 
 .liga-page--public .liga-page__inner {
@@ -256,6 +268,34 @@
   color: var(--liga-bg);
   font-weight: 700;
   box-shadow: var(--liga-shadow-gold);
+}
+
+/* ── Fase 2A — ModeSectionTabs / ModeEventHeader en Liga ──────────
+ * docs/GAME-MODES-UI-ARCHITECTURE.md, secciones 6.3, 6.5 y 10 (Fase 2A).
+ * Liga no tenía distinción móvil/desktop (una sola vista tab-gated a
+ * cualquier ancho) — los componentes compartidos son visibles solo en
+ * móvil por defecto (mode-mobile-shell.css). Estas dos reglas los hacen
+ * visibles también en desktop SOLO para Liga (selectores de 2 clases,
+ * más específicos que las reglas compartidas de 1 clase — no requieren
+ * !important y no afectan a Reta/Duelo/Americano/Torneo Express).
+ */
+.liga-section-tabs.mode-section-tabs {
+  display: flex;
+}
+
+.liga-event-header.mode-event-header {
+  display: flex;
+  flex-direction: column;
+}
+
+/* LigaJornadaView: el ModeHeader de escritorio se oculta solo en móvil para
+ * no duplicar con el ModeEventHeader nuevo (visible únicamente ≤767px por su
+ * propio comportamiento compartido, sin overrides). Selector de 2 clases,
+ * no afecta a .rv-mode-header en ningún otro lugar. */
+@media (max-width: 767px) {
+  .liga-jornada-header-desktop.rv-mode-header {
+    display: none;
+  }
 }
 
 /* ─── Forms ─── */

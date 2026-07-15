@@ -13,3 +13,4 @@ export { ModeSectionTabs } from "./ModeSectionTabs";
 export { ModeSectionPanel } from "./ModeSectionPanel";
 export { ModeEventHeader } from "./ModeEventHeader";
 export { MobileStickyActionFooter } from "./MobileStickyActionFooter";
+export { ModeDangerZone } from "./ModeDangerZone";
