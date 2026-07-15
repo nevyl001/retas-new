@@ -196,6 +196,19 @@
   cursor: not-allowed;
 }
 
+/* Bloqueado (upgrade requerido): sigue siendo clickeable — el click abre
+ * WhatsApp para solicitar el desbloqueo, en vez de quedar inerte. */
+.home-create-event__picker-item--locked {
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.home-create-event__picker-item--locked:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--ro-border-accent, var(--border-accent));
+  opacity: 0.8;
+}
+
 .home-create-event__picker-icon {
   flex-shrink: 0;
   font-size: 1.25rem;

@@ -3,9 +3,15 @@ import { PublicEventBrandIdentity, useClubExperience } from "../../club-experien
 
 export const PublicRivieraCelebrateBrand: React.FC<{
   showTagline?: boolean;
-  /** Oculta el logo/nombre del club (ícono Riviera Open + nombre de cuenta). */
+  /**
+   * Muestra el logo/nombre del club (ícono Riviera Open + nombre de cuenta).
+   * Por default oculto: se ve mal en la cabecera de la celebración y ya
+   * queda repetido con el wordmark "RIVIERA · OPEN" de abajo. Homogéneo en
+   * todas las vistas (Reta, Liga, Duelo, Americano, Round Robin) — para
+   * mostrarlo hay que pasar showClubIdentity explícitamente en true.
+   */
   showClubIdentity?: boolean;
-}> = ({ showTagline = true, showClubIdentity = true }) => {
+}> = ({ showTagline = true, showClubIdentity = false }) => {
   const { manifest } = useClubExperience();
 
   return (

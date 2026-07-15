@@ -11,6 +11,7 @@ import {
   resolveRetaStatusLabel,
 } from "./retaNextAction";
 import {
+  ligaEquipoRankingItemToMobileRow,
   ligaRankingItemToMobileRow,
   simpleRankingToMobileRow,
   teStandingRowToMobileRow,
@@ -106,6 +107,50 @@ describe("modePresentation", () => {
       );
       expect(te.position).toBe(1);
       expect(te.label).toBe("Pareja B");
+    });
+
+    it("adapta filas de ranking por equipo de liga (Fase 2B) sin reordenar", () => {
+      const rows = [
+        {
+          posicion: 1,
+          equipo_id: "eq-1",
+          nombre: "Líderes A",
+          puntos: 12,
+          partidos_jugados: 4,
+          partidos_ganados: 3,
+          partidos_perdidos: 1,
+          games_favor: 30,
+          games_contra: 20,
+          diferencia_games: 10,
+        },
+        {
+          posicion: 2,
+          equipo_id: "eq-2",
+          nombre: "Segundos B",
+          puntos: 9,
+          partidos_jugados: 4,
+          partidos_ganados: 2,
+          partidos_perdidos: 2,
+          games_favor: 25,
+          games_contra: 22,
+          diferencia_games: 3,
+        },
+      ];
+
+      const mobile = rows.map((row) => ligaEquipoRankingItemToMobileRow(row));
+      expect(mobile.map((r) => r.position)).toEqual([1, 2]);
+      expect(mobile.map((r) => r.label)).toEqual(["Líderes A", "Segundos B"]);
+      expect(mobile[0]).toEqual({
+        key: "eq-1",
+        position: 1,
+        label: "Líderes A",
+        matchesPlayed: 4,
+        pg: 3,
+        pp: 1,
+        points: 30,
+        pointsReceived: 20,
+        puntosTorneo: 12,
+      });
     });
   });
 

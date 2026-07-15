@@ -1,4 +1,4 @@
-import type { RankingItem } from "../liga/types";
+import type { LigaEquipoRankingItem, RankingItem } from "../liga/types";
 import type { StandingRowExpress } from "../torneoExpress/types";
 import type { StandingsMobileCardRow } from "../../components/standings/StandingsMobileCards";
 
@@ -12,6 +12,27 @@ export function ligaRankingItemToMobileRow(row: RankingItem): StandingsMobileCar
     pp: 0,
     points: 0,
     pointsReceived: 0,
+    puntosTorneo: row.puntos,
+  };
+}
+
+/**
+ * Fase 2B — solo presentación: mapea el mismo LigaEquipoRankingItem que ya
+ * consume la tabla desktop de LigaRankingEquipos, sin recalcular ni
+ * reordenar nada (misma fuente de datos, mismo orden que llega en `rows`).
+ */
+export function ligaEquipoRankingItemToMobileRow(
+  row: LigaEquipoRankingItem
+): StandingsMobileCardRow {
+  return {
+    key: row.equipo_id,
+    position: row.posicion,
+    label: row.nombre,
+    matchesPlayed: row.partidos_jugados,
+    pg: row.partidos_ganados,
+    pp: row.partidos_perdidos,
+    points: row.games_favor,
+    pointsReceived: row.games_contra,
     puntosTorneo: row.puntos,
   };
 }

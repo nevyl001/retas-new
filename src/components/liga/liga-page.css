@@ -329,6 +329,7 @@
 .liga-field input,
 .liga-field select {
   width: 100%;
+  min-height: var(--mode-tab-min-height, 44px);
   padding: 0.65rem 0.75rem;
   border-radius: var(--liga-radius-sm);
   border: 0.5px solid var(--liga-border);
@@ -542,6 +543,7 @@
 .liga-score-row input,
 .liga-score-input {
   width: 52px;
+  min-height: var(--mode-tab-min-height, 44px);
   text-align: center;
   background: rgba(255, 255, 255, 0.06);
   border: 0.5px solid var(--liga-border);
@@ -670,13 +672,23 @@
 .liga-programacion-field input[type="date"],
 .liga-programacion-field input[type="time"] {
   min-width: 120px;
+  min-height: var(--mode-tab-min-height, 44px);
   background: rgba(255, 255, 255, 0.06);
   border: 0.5px solid var(--liga-border);
   border-radius: var(--liga-radius-sm);
   color: var(--liga-text);
-  font-size: 0.9rem;
+  /* 16px min en móvil evita el zoom automático de iOS al enfocar. */
+  font-size: max(0.9rem, var(--ro-input-font-size-mobile, 16px));
   padding: 0.45rem 0.55rem;
   font-family: inherit;
+}
+
+@media (min-width: 768px) {
+  .liga-programacion-field select,
+  .liga-programacion-field input[type="date"],
+  .liga-programacion-field input[type="time"] {
+    font-size: 0.9rem;
+  }
 }
 
 /* ─── Chips & links ─── */
@@ -905,12 +917,14 @@
 
 .liga-jornada-manual__input {
   width: 4.5rem;
+  min-height: var(--mode-tab-min-height, 44px);
   padding: 0.35rem 0.4rem;
   text-align: center;
   border-radius: var(--liga-radius-sm);
   border: 0.5px solid var(--liga-border);
   background: rgba(255, 255, 255, 0.06);
   color: var(--liga-text);
+  font-size: var(--ro-input-font-size-mobile, 16px);
   font-family: inherit;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }

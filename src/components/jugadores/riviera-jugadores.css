@@ -323,8 +323,19 @@
     display: none;
   }
 
-  /* Badge "concedido" fuera de la fila móvil (vive en la ficha) */
+  /* Badge "concedido": en móvil solo el ícono (mismo criterio que la
+   * bandera de país arriba, que también oculta su texto y deja el emoji).
+   * El nombre del club de origen sigue disponible vía title/aria-label
+   * y completo en la ficha del jugador. */
   .rj-row .rj-granted-badge {
+    flex-shrink: 0;
+    padding: 0;
+    gap: 0;
+    border: none;
+    background: transparent;
+  }
+
+  .rj-row .rj-granted-badge__label {
     display: none;
   }
 

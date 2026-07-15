@@ -1,5 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import type { LigaEquipoRankingItem } from "../../lib/liga/types";
+import { ligaEquipoRankingItemToMobileRow } from "../../lib/modePresentation/standingsRowAdapters";
+import { StandingsMobileCards } from "../standings/StandingsMobileCards";
+import "../../styles/standings-mobile-cards.css";
 import "./liga-page.css";
 
 interface LigaRankingEquiposProps {
@@ -11,6 +14,14 @@ export const LigaRankingEquipos: React.FC<LigaRankingEquiposProps> = ({
   rows,
   title = "Ranking por pareja",
 }) => {
+  // Fase 2B — solo presentación: mismo `rows` (mismo cálculo, mismo orden)
+  // que ya recibe la tabla desktop; el mapeo a StandingsMobileCardRow no
+  // reordena ni recalcula nada, solo re-etiqueta los mismos campos.
+  const mobileRows = useMemo(
+    () => rows.map((row) => ligaEquipoRankingItemToMobileRow(row)),
+    [rows]
+  );
+
   if (!rows.length) {
     return (
       <div className="liga-card">
@@ -23,7 +34,10 @@ export const LigaRankingEquipos: React.FC<LigaRankingEquiposProps> = ({
   return (
     <div className="liga-card">
       <h2 className="liga-card__title">{title}</h2>
-      <div className="liga-ranking-scroll">
+      <div className="liga-ranking-mobile-cards">
+        <StandingsMobileCards rows={mobileRows} />
+      </div>
+      <div className="liga-ranking-table-desktop liga-ranking-scroll">
         <table className="liga-ranking-table">
           <thead>
             <tr>

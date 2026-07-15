@@ -72,7 +72,7 @@ export const PublicRetaWinnerSection: React.FC<{
     >
       <div className="ro-pub-celebrate__glow" aria-hidden />
       <div className="ro-pub-celebrate__inner">
-        <PublicRivieraCelebrateBrand showTagline={false} showClubIdentity={false} />
+        <PublicRivieraCelebrateBrand showTagline={false} />
 
         <p className="ro-pub-celebrate__badge">Ganadores</p>
         <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>

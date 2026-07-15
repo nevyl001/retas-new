@@ -7,6 +7,7 @@ import {
   QUICK_GAME_MODES,
   type GameModeId,
 } from "./gameModesConfig";
+import { UNLOCK_GAME_MODES_WHATSAPP_URL } from "./unlockGameModesWhatsApp";
 
 interface HomeCreateEventCtaProps {
   onModeSelect: (modeId: GameModeId) => void;
@@ -61,6 +62,19 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
     if (!enabled) return;
     setPickerOpen(false);
     onModeSelect(modeId);
+  };
+
+  /**
+   * Modos bloqueados: en vez de quedar inertes (disabled), el click abre
+   * WhatsApp directo con el administrador para solicitar el desbloqueo —
+   * mismo mensaje/número que GameModeCard (grid de inicio).
+   */
+  const handleItemClick = (modeId: GameModeId, enabled: boolean) => {
+    if (!enabled) {
+      window.open(UNLOCK_GAME_MODES_WHATSAPP_URL, "_blank", "noopener,noreferrer");
+      return;
+    }
+    handleSelect(modeId);
   };
 
   return (
@@ -123,9 +137,15 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
                       <li key={mode.id}>
                         <button
                           type="button"
-                          className="home-create-event__picker-item"
-                          disabled={!enabled}
-                          onClick={() => handleSelect(mode.id)}
+                          className={`home-create-event__picker-item${
+                            enabled ? "" : " home-create-event__picker-item--locked"
+                          }`}
+                          aria-label={
+                            enabled
+                              ? undefined
+                              : `${full.title} — bloqueado, contactar administrador por WhatsApp`
+                          }
+                          onClick={() => handleItemClick(mode.id, enabled)}
                         >
                           <span
                             className="home-create-event__picker-icon"
@@ -138,11 +158,13 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
                               {full.title}
                             </span>
                             <span className="home-create-event__picker-desc">
-                              {full.description}
+                              {enabled
+                                ? full.description
+                                : "Bloqueado · toca para desbloquear por WhatsApp"}
                             </span>
                           </span>
                           <TablerIcon
-                            name="chevron-right"
+                            name={enabled ? "chevron-right" : "brand-whatsapp"}
                             size={18}
                             className="home-create-event__picker-chev"
                             aria-hidden
@@ -165,9 +187,15 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
                       <li key={mode.id}>
                         <button
                           type="button"
-                          className="home-create-event__picker-item"
-                          disabled={!enabled}
-                          onClick={() => handleSelect(mode.id)}
+                          className={`home-create-event__picker-item${
+                            enabled ? "" : " home-create-event__picker-item--locked"
+                          }`}
+                          aria-label={
+                            enabled
+                              ? undefined
+                              : `${full.title} — bloqueado, contactar administrador por WhatsApp`
+                          }
+                          onClick={() => handleItemClick(mode.id, enabled)}
                         >
                           <span
                             className="home-create-event__picker-icon"
@@ -180,11 +208,13 @@ export const HomeCreateEventCta: React.FC<HomeCreateEventCtaProps> = ({
                               {full.title}
                             </span>
                             <span className="home-create-event__picker-desc">
-                              {full.description}
+                              {enabled
+                                ? full.description
+                                : "Bloqueado · toca para desbloquear por WhatsApp"}
                             </span>
                           </span>
                           <TablerIcon
-                            name="chevron-right"
+                            name={enabled ? "chevron-right" : "brand-whatsapp"}
                             size={18}
                             className="home-create-event__picker-chev"
                             aria-hidden

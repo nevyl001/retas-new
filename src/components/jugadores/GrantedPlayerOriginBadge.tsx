@@ -34,9 +34,10 @@ export const GrantedPlayerOriginBadge: React.FC<GrantedPlayerOriginBadgeProps> =
         className ? ` ${className}` : ""
       }`}
       title={title}
+      aria-label={title}
     >
       <TablerIcon name="share-3" size={11} />
-      <span>{label}</span>
+      <span className="rj-granted-badge__label">{label}</span>
     </span>
   );
 };
