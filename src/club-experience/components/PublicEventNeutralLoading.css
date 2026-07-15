@@ -1,0 +1,30 @@
+/* Loader público sin color/logo de tenant */
+.public-event-neutral-loading {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #a1a1aa;
+  min-height: 8rem;
+  box-sizing: border-box;
+}
+
+.public-event-neutral-loading p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.public-event-neutral-loading__pulse {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  border: 2px solid #3f3f46;
+  border-top-color: #a1a1aa;
+  animation: public-event-neutral-spin 0.8s linear infinite;
+}
+
+@keyframes public-event-neutral-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

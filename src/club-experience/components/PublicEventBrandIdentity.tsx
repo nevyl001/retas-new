@@ -1,6 +1,7 @@
 import React from "react";
 import { useClubExperience } from "../ClubExperienceContext";
 import { ClubIdentity } from "./ClubIdentity";
+import { debugLog } from "../../lib/debug/debugLog";
 
 type PublicEventBrandIdentityProps = {
   className?: string;
@@ -9,14 +10,23 @@ type PublicEventBrandIdentityProps = {
 /**
  * Slot de marca en vistas públicas de eventos.
  * Reutiliza ClubIdentity (mismo componente del home / UserHeader).
- * - Sin upgrade: logo Riviera Open + "Riviera Open" + nombre de la cuenta
- *   (mismo patrón que el home; sin wordmarkOnly).
- * - Con upgrade: solo logo del club (wordmarkOnly), como hoy en público.
+ * - Pending (org desconocido / binding en curso): no renderiza nada.
+ * - Sin upgrade: logo Riviera Open + "Riviera Open" + nombre de la cuenta.
+ * - Con upgrade: solo logo del club (wordmarkOnly).
  */
 export const PublicEventBrandIdentity: React.FC<
   PublicEventBrandIdentityProps
 > = ({ className = "" }) => {
-  const { isClubBranded } = useClubExperience();
+  const { isClubBranded, isScopeBrandingReady, brandingStatus } =
+    useClubExperience();
+
+  if (!isScopeBrandingReady || brandingStatus === "pending") {
+    return null;
+  }
+
+  debugLog("[branding-flash] public-identity: rendered", {
+    isClubBranded,
+  });
 
   return (
     <ClubIdentity

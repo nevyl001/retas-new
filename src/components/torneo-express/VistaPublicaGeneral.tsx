@@ -6,6 +6,7 @@ import { PublicStandingsSection } from "./public/PublicStandingsSection";
 import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { PublicTorneoExpressSyncFooter } from "./public/PublicTorneoExpressSyncFooter";
+import { PublicEventNeutralLoading } from "../../club-experience";
 import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 import { Button } from "../ui";
 import {
@@ -36,10 +37,7 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
   if (loading && !bundle) {
     return (
       <PublicTorneoExpressShell>
-        <div className="te-public-loading">
-          <div className="te-public-loading__pulse" aria-hidden />
-          <p>Cargando tabla general…</p>
-        </div>
+        <PublicEventNeutralLoading message="Cargando tabla general…" />
       </PublicTorneoExpressShell>
     );
   }

@@ -146,11 +146,17 @@
   animation: te-pub-fade-in-up var(--motion-enter) ease-out both;
 }
 
-/* Marca Riviera / club — siempre visible en vistas públicas TE */
+/* Marca Riviera / club — visible solo cuando el branding del scope está listo */
 .te-public-brand-bar {
   margin-bottom: var(--ro-space-4, 1rem);
   padding-bottom: var(--ro-space-3, 0.75rem);
   border-bottom: 1px solid var(--ro-border-subtle);
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.te-public-brand-bar--pending {
+  border-bottom-color: transparent;
 }
 
 .te-public-brand-bar .te-public-header__club-identity {

@@ -36,6 +36,33 @@ export function getClubExperienceScopeStyle(
   };
 }
 
+/**
+ * Tokens neutrales mientras el organizador / binding público aún no está listo.
+ * Evita pintar Riviera o un tenant anterior como fallback transitorio.
+ */
+export function getNeutralPublicScopeStyle(): CSSProperties {
+  return {
+    ["--brand-primary" as string]: "#71717a",
+    ["--brand-secondary" as string]: "#52525b",
+    ["--brand-accent" as string]: "#a1a1aa",
+    ["--brand-surface" as string]: "#0f0f0f",
+    ["--brand-surface-alt" as string]: "#1a1a1a",
+    ["--brand-border" as string]: "#2a2a2a",
+    ["--brand-text" as string]: "#ffffff",
+    ["--brand-muted" as string]: "#a1a1aa",
+    ["--brand-success" as string]: "#4ade80",
+    ["--brand-warning" as string]: "#fbbf24",
+    ["--brand-danger" as string]: "#f87171",
+    ["--brand-font-heading" as string]:
+      'var(--ro-font-heading, "Stack Sans Headline", system-ui, sans-serif)',
+    ["--brand-font-body" as string]:
+      'var(--ro-font-body, "Inter", system-ui, sans-serif)',
+    ["--brand-heading-weight" as string]: "700",
+    ["--brand-heading-letter-spacing" as string]: "-0.02em",
+    ["--club-home-background-image" as string]: "none",
+  };
+}
+
 /** Inyecta tokens de experiencia del club en <html> para CSS y temas dinámicos. */
 export function applyClubExperienceTheme(manifest: BrandManifest): void {
   const root = document.documentElement;

@@ -11,6 +11,7 @@ import {
   formatSupabaseError,
 } from "../../../services/torneoExpressService";
 import { PublicTorneoExpressShell } from "./PublicTorneoExpressShell";
+import { PublicEventNeutralLoading } from "../../../club-experience";
 import "./te-evento-publico.css";
 
 function formatFecha(iso: string | null): string | null {
@@ -222,7 +223,7 @@ export const VistaPublicaEvento: React.FC<VistaPublicaEventoProps> = ({
       organizadorId={evento?.organizador_id ?? null}
     >
       {loading ? (
-        <p className="te-public-evento__status">Cargando evento…</p>
+        <PublicEventNeutralLoading message="Cargando evento…" />
       ) : null}
       {error ? <p className="te-error">{error}</p> : null}
       {!loading && evento ? (

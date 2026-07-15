@@ -170,7 +170,7 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
 
   if (loading) {
     return (
-      <ClubExperienceScope organizadorId={null}>
+      <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
       <Duelo2v2PageShell publicView className="duelo2v2-publica">
         <PublicModeShell className="duelo2v2-public-board">
           <p className="duelo2v2-card__meta rv-muted">Cargando encuentro…</p>
@@ -182,7 +182,10 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
 
   if (!duelo || error) {
     return (
-      <ClubExperienceScope organizadorId={null}>
+      <ClubExperienceScope
+        organizadorId={duelo?.organizador_id ?? null}
+        pendingUntilOrganizador={!duelo?.organizador_id}
+      >
       <Duelo2v2PageShell publicView className="duelo2v2-publica">
         <PublicModeShell className="duelo2v2-public-board">
           <p className="duelo2v2-error">{error ?? "Duelo no encontrado"}</p>
@@ -237,7 +240,10 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
   ] as const;
 
   return (
-    <ClubExperienceScope organizadorId={duelo.organizador_id}>
+    <ClubExperienceScope
+      organizadorId={duelo.organizador_id}
+      pendingUntilOrganizador
+    >
     <Duelo2v2PageShell publicView className="duelo2v2-publica">
       <PublicModeShell className="duelo2v2-public-board">
         {isPubDsV2Enabled ? (

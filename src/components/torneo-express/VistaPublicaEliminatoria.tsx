@@ -6,6 +6,7 @@ import {
 } from "../../services/torneoExpressService";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { TEPublicEliminatoria } from "./public/TEPublicEliminatoria";
+import { PublicEventNeutralLoading } from "../../club-experience";
 import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 
 export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
@@ -34,10 +35,10 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
   if (loading && !bundle) {
     return (
       <PublicTorneoExpressShell className="te-public--eliminatoria">
-        <div className="te-public-loading te-pub-elim-loading">
-          <div className="te-public-loading__pulse" aria-hidden />
-          <p>Cargando fase eliminatoria…</p>
-        </div>
+        <PublicEventNeutralLoading
+          className="te-pub-elim-loading"
+          message="Cargando fase eliminatoria…"
+        />
       </PublicTorneoExpressShell>
     );
   }

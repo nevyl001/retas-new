@@ -27,6 +27,7 @@ export type { BrandingTransitionReason } from "./brandingTransition";
 
 export {
   readClubExperienceCache,
+  getClubExperienceCacheIfMatches,
   resolveBootstrapOrganizadorId,
 } from "./organizerResolver";
 

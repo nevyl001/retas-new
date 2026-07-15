@@ -111,7 +111,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
   if (loading && !detalle) {
     return (
-      <ClubExperienceScope organizadorId={null}>
+      <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
         <div className="liga-pantalla App--public-full-width ro-public-view">
           <div className="liga-pantalla__grain" aria-hidden />
           <PublicModeShell className="liga-pantalla__inner">
@@ -124,7 +124,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
   if (!detalle) {
     return (
-      <ClubExperienceScope organizadorId={null}>
+      <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
         <div className="liga-pantalla App--public-full-width ro-public-view">
           <div className="liga-pantalla__grain" aria-hidden />
           <PublicModeShell className="liga-pantalla__inner">
@@ -159,7 +159,10 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       );
 
   return (
-    <ClubExperienceScope organizadorId={detalle.organizador_id}>
+    <ClubExperienceScope
+      organizadorId={detalle.organizador_id}
+      pendingUntilOrganizador
+    >
     <div
       className={`liga-pantalla App--public-full-width ro-public-view${
         esParejasFijas ? " liga-pantalla--liga-fijas" : ""

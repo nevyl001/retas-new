@@ -10,6 +10,7 @@ import {
   ClubExperienceScope,
   formatTenantDocumentTitle,
   PublicEventBrandIdentity,
+  PublicEventNeutralLoading,
   useClubExperience,
   useOrganizerDisplayName,
 } from "../club-experience";
@@ -27,24 +28,28 @@ const AmericanoResultsBoardHeader: React.FC<{
   tournamentName: string | null;
   tournamentDescription: string | null;
 }> = ({ tournamentName, tournamentDescription }) => {
-  const { isClubBranded } = useClubExperience();
+  const { isClubBranded, isScopeBrandingReady } = useClubExperience();
   const organizerName = useOrganizerDisplayName();
 
   return (
     <header className="public-americano-board__header">
       <div className="public-americano-board__brand">
-        <PublicEventBrandIdentity className="public-americano-board__club-identity" />
+        {isScopeBrandingReady ? (
+          <PublicEventBrandIdentity className="public-americano-board__club-identity" />
+        ) : null}
         <h1 className="public-americano-board__title">
           {tournamentName || "Resultados"}
         </h1>
         {tournamentDescription ? (
           <p className="public-americano-board__desc">{tournamentDescription}</p>
         ) : null}
-        <p className="public-americano-board__tagline">
-          {isClubBranded
-            ? `${organizerName} · Vista pública`
-            : "Vista pública"}
-        </p>
+        {isScopeBrandingReady ? (
+          <p className="public-americano-board__tagline">
+            {isClubBranded
+              ? `${organizerName} · Vista pública`
+              : "Vista pública"}
+          </p>
+        ) : null}
       </div>
     </header>
   );
@@ -156,36 +161,39 @@ export const PublicAmericanoResultsBoard: React.FC<
   }, [tournamentName, organizerName]);
 
   return (
-    <ClubExperienceScope organizadorId={organizadorId}>
-    <div className="public-americano-board">
-      <AmericanoResultsBoardHeader
-        tournamentName={tournamentName}
-        tournamentDescription={tournamentDescription}
-      />
+    <ClubExperienceScope
+      organizadorId={organizadorId}
+      pendingUntilOrganizador
+    >
+      <div className="public-americano-board">
+        <AmericanoResultsBoardHeader
+          tournamentName={tournamentName}
+          tournamentDescription={tournamentDescription}
+        />
 
-      {loadError && (
-        <p className="public-americano-board__error" role="alert">
-          {loadError}
-        </p>
-      )}
-
-      {!snapshot && !loadError && (
-        <p className="public-americano-board__waiting">Cargando resultados…</p>
-      )}
-
-      {snapshot && (
-        <AmericanoTournamentSummary snapshot={snapshot} variant="display" />
-      )}
-
-      {snapshot?.savedAt && (
-        <footer className="public-americano-board__footer" aria-live="polite">
-          <p className="public-americano-board__meta">
-            Actualización en tiempo real · Última actualización:{" "}
-            {new Date(snapshot.savedAt).toLocaleString()}
+        {loadError && (
+          <p className="public-americano-board__error" role="alert">
+            {loadError}
           </p>
-        </footer>
-      )}
-    </div>
+        )}
+
+        {!snapshot && !loadError ? (
+          <PublicEventNeutralLoading message="Cargando resultados…" />
+        ) : null}
+
+        {snapshot && (
+          <AmericanoTournamentSummary snapshot={snapshot} variant="display" />
+        )}
+
+        {snapshot?.savedAt && (
+          <footer className="public-americano-board__footer" aria-live="polite">
+            <p className="public-americano-board__meta">
+              Actualización en tiempo real · Última actualización:{" "}
+              {new Date(snapshot.savedAt).toLocaleString()}
+            </p>
+          </footer>
+        )}
+      </div>
     </ClubExperienceScope>
   );
 };

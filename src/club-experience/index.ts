@@ -127,8 +127,11 @@ export {
   persistClubExperienceCache,
   clearClubExperienceCache,
   resetClubExperienceTheme,
+  readClubExperienceCache,
   CLUB_EXPERIENCE_CACHE_KEY,
 } from "./clubExperienceBootstrap";
+
+export { getClubExperienceCacheIfMatches } from "../branding/organizerResolver";
 
 export { useClubModeEyebrow } from "./useClubModeEyebrow";
 export { useOrganizerDisplayName } from "./useOrganizerDisplayName";
@@ -149,7 +152,9 @@ export {
   CoBrandMark,
 } from "./components/ClubIdentity";
 export { PublicEventBrandIdentity } from "./components/PublicEventBrandIdentity";
+export { PublicEventNeutralLoading } from "./components/PublicEventNeutralLoading";
 export { PublicClubModeEyebrow } from "./components/PublicClubModeEyebrow";
+export type { ClubBrandingStatus } from "./ClubExperienceContext";
 
 export type { TenantBranding } from "../branding/types";
 export {

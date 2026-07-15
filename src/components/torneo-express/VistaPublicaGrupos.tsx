@@ -11,6 +11,7 @@ import {
 } from "./public/TEPublicGrupos";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { PublicTorneoExpressSyncFooter } from "./public/PublicTorneoExpressSyncFooter";
+import { PublicEventNeutralLoading } from "../../club-experience";
 import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 
 export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
@@ -50,10 +51,7 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
   if (loading && !bundle) {
     return (
       <PublicTorneoExpressShell>
-        <div className="te-public-loading">
-          <div className="te-public-loading__pulse" aria-hidden />
-          <p>Cargando fase de grupos…</p>
-        </div>
+        <PublicEventNeutralLoading message="Cargando fase de grupos…" />
       </PublicTorneoExpressShell>
     );
   }

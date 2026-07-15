@@ -238,7 +238,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   };
 
   return (
-    <ClubExperienceScope organizadorId={viewingOrgId ?? jugador.organizador_id}>
+    <ClubExperienceScope
+      organizadorId={viewingOrgId ?? jugador.organizador_id}
+      pendingUntilOrganizador
+    >
     <JugadoresPublicShell variant="ficha">
       <PublicModeShell className="rjp-ficha-shell">
       <div className="rjp-ficha">

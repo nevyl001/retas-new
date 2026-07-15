@@ -34,7 +34,7 @@ import {
   matchesForStandingsTable,
   resolveTournamentPodiumOutcome,
 } from "../lib/resolveTournamentOutcome";
-import { formatTenantDocumentTitle, isClubBrandedOrganizer, useOrganizerDisplayName } from "../club-experience";
+import { formatTenantDocumentTitle, isClubBrandedOrganizer, PublicEventNeutralLoading, useOrganizerDisplayName } from "../club-experience";
 import { isPubDsV2Enabled } from "../config/peds";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { StatusBadge } from "./platform/StatusBadge";
@@ -686,10 +686,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         className="te-public--reta te-public--reta-wide"
         organizadorId={organizadorId}
       >
-        <div className="te-public-loading">
-          <div className="te-public-loading__pulse" aria-hidden />
-          <p>Cargando resultados de la reta…</p>
-        </div>
+        <PublicEventNeutralLoading message="Cargando resultados de la reta…" />
       </PublicTorneoExpressShell>
     );
   }

@@ -27,6 +27,20 @@ export function readClubExperienceCache(): ClubExperienceCache | null {
   }
 }
 
+/**
+ * Caché anti-flash solo si el organizador esperado ya es conocido y coincide.
+ * Nunca devolver caché premium a ciegas para una ruta pública sin org.
+ */
+export function getClubExperienceCacheIfMatches(
+  expectedOrganizadorId: string | null | undefined
+): ClubExperienceCache | null {
+  const expected = expectedOrganizadorId?.trim().toLowerCase();
+  if (!expected) return null;
+  const cached = readClubExperienceCache();
+  if (!cached || cached.organizadorId !== expected) return null;
+  return cached;
+}
+
 /** Organizador inferido solo desde la URL (ranking público). Sin sesión ni caché. */
 export function resolveBootstrapOrganizadorId(): string | null {
   return getPublicOrganizadorIdFromPath();

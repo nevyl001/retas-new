@@ -221,7 +221,10 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   const listWide = jugadoresFiltrados.length > 8;
 
   return (
-    <ClubExperienceScope organizadorId={scopeOrgId}>
+    <ClubExperienceScope
+      organizadorId={scopeOrgId}
+      pendingUntilOrganizador={!scopeOrgId}
+    >
     <JugadoresPublicShell variant="ranking">
       <PublicModeShell className="rjp-ranking-shell">
       <div className="rjp-ranking">

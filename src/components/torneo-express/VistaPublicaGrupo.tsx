@@ -7,6 +7,7 @@ import {
 } from "./public/TEPublicGrupos";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { PublicTorneoExpressSyncFooter } from "./public/PublicTorneoExpressSyncFooter";
+import { PublicEventNeutralLoading } from "../../club-experience";
 import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 
 export const VistaPublicaGrupo: React.FC<{
@@ -38,10 +39,7 @@ export const VistaPublicaGrupo: React.FC<{
   if (loading && !bundle) {
     return (
       <PublicTorneoExpressShell>
-        <div className="te-public-loading">
-          <div className="te-public-loading__pulse" aria-hidden />
-          <p>Cargando grupo…</p>
-        </div>
+        <PublicEventNeutralLoading message="Cargando grupo…" />
       </PublicTorneoExpressShell>
     );
   }
