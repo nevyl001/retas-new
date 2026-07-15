@@ -589,6 +589,7 @@
 }
 
 .game-mode-card__upgrade {
+  display: block;
   margin: 12px 0 0;
   padding: 10px 12px;
   border-radius: 10px;
@@ -600,6 +601,14 @@
   font-weight: 600;
   position: relative;
   z-index: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.game-mode-card__upgrade:hover,
+.game-mode-card__upgrade:focus-visible {
+  background: rgba(212, 175, 55, 0.18);
+  border-color: rgba(212, 175, 55, 0.55);
 }
 
 .game-mode-card__top {

@@ -2,6 +2,12 @@ import React from "react";
 import { ModeCard } from "../platform/ModeCard";
 import type { GameModeConfig } from "./gameModesConfig";
 
+const UNLOCK_WHATSAPP_NUMBER = "525514745677";
+const UNLOCK_WHATSAPP_MESSAGE = "Me gustaría desbloquear todos los modos de juego";
+const UNLOCK_WHATSAPP_URL = `https://wa.me/${UNLOCK_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+  UNLOCK_WHATSAPP_MESSAGE
+)}`;
+
 interface GameModeCardProps extends GameModeConfig {
   index: number;
   onClick: () => void;
@@ -38,9 +44,15 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
       }
     >
       {disabled ? (
-        <p className="game-mode-card__upgrade">
-          ¿Deseas el upgrade del sistema? Contacta al administrador.
-        </p>
+        <a
+          className="game-mode-card__upgrade"
+          href={UNLOCK_WHATSAPP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          ¿Deseas el upgrade del sistema? Contacta al administrador por WhatsApp.
+        </a>
       ) : null}
     </ModeCard>
   );

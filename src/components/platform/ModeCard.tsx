@@ -30,7 +30,7 @@ export const ModeCard: React.FC<ModeCardProps> = ({
     className={`rv-card rv-mode-card${disabled ? " rv-mode-card--disabled" : ""} ${className}`.trim()}
     style={style}
     onClick={onClick}
-    disabled={disabled}
+    aria-disabled={disabled}
   >
     <div className="rv-mode-card__top">
       {icon ? (
