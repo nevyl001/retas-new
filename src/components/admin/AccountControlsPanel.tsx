@@ -14,6 +14,12 @@ import { GAME_MODE_LABELS } from "../../lib/admin/organizadorGameModes";
 import { getOfficialRankingsPageUrl } from "../../lib/rivieraOfficialSite";
 import { listPremiumManifestOptions } from "../../club-experience/manifestRegistry";
 import type { RivieraJugadorCategoria } from "../../lib/rivieraJugadores/types";
+import {
+  EMAIL_INVALID_MESSAGE,
+  EMAIL_REQUIRED_MESSAGE,
+  isValidEmailFormat,
+  normalizeEmailInput,
+} from "../../lib/rivieraJugadores/emailValidation";
 import { GrantPlayerAccessModal } from "./GrantPlayerAccessModal";
 import { PlayerAccessListModal } from "./PlayerAccessListModal";
 import "./AccountControlsPanel.css";
@@ -53,6 +59,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [newNombre, setNewNombre] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newCategoria, setNewCategoria] =
     useState<RivieraJugadorCategoria>("3ra_fuerza");
   const [addingJugador, setAddingJugador] = useState(false);
@@ -184,14 +191,25 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   const handleAddJugador = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNombre.trim()) return;
+    const email = normalizeEmailInput(newEmail);
+    if (!email) {
+      setError(EMAIL_REQUIRED_MESSAGE);
+      return;
+    }
+    if (!isValidEmailFormat(email)) {
+      setError(EMAIL_INVALID_MESSAGE);
+      return;
+    }
     setAddingJugador(true);
     setError("");
     try {
       await createJugadorForAdmin(organizadorId, {
         nombre: newNombre,
+        email,
         categoria: newCategoria,
       });
       setNewNombre("");
+      setNewEmail("");
       setNotice(`Jugador "${newNombre.trim()}" agregado.`);
       await loadAll();
     } catch (err) {
@@ -398,6 +416,15 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
           onChange={(e) => setNewNombre(e.target.value)}
           disabled={addingJugador}
         />
+        <input
+          type="email"
+          className="account-controls__input"
+          placeholder="Correo electrónico *"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          disabled={addingJugador}
+          required
+        />
         <select
           className="account-controls__select"
           value={newCategoria}
@@ -415,7 +442,7 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
         <button
           type="submit"
           className="account-controls__btn"
-          disabled={addingJugador || !newNombre.trim()}
+          disabled={addingJugador || !newNombre.trim() || !newEmail.trim()}
         >
           {addingJugador ? "Agregando…" : "Agregar jugador"}
         </button>

@@ -201,16 +201,22 @@ export async function bulkUpdateJugadoresAdminControls(
 
 export async function createJugadorForAdmin(
   organizadorId: string,
-  input: { nombre: string; categoria?: RivieraJugadorCategoria }
+  input: { nombre: string; email: string; categoria?: RivieraJugadorCategoria }
 ): Promise<void> {
   const nombre = input.nombre.trim();
   if (!nombre) throw new Error("El nombre es obligatorio");
+
+  const { normalizeRequiredEmail } = await import(
+    "../rivieraJugadores/emailValidation"
+  );
+  const email = normalizeRequiredEmail(input.email);
 
   const { createRivieraJugador } = await import(
     "../rivieraJugadores/rivieraJugadoresService"
   );
   await createRivieraJugador(organizadorId, {
     nombre,
+    email,
     categoria: input.categoria ?? "3ra_fuerza",
   });
 }

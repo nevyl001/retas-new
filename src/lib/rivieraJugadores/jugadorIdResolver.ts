@@ -313,10 +313,14 @@ export async function getOrCreateJugadorId(params: {
 
     if (error) {
       console.error("[riviera-jugadores] getOrCreateJugadorId insert:", error);
-      const createdViaService = await createRivieraJugador(params.organizadorId, {
-        nombre,
-        email: params.email ?? null,
-      });
+      // Fallback de sync/import (no es alta de producto): jugadores
+      // históricos/legacy suelen no tener correo — se preserva ese
+      // comportamiento explícitamente, sin exigirlo aquí.
+      const createdViaService = await createRivieraJugador(
+        params.organizadorId,
+        { nombre, email: params.email ?? null },
+        { skipEmailRequirement: true }
+      );
       if (params.legacyPlayerId) {
         await supabase
           .from("riviera_jugadores")

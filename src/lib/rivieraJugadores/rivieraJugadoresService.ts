@@ -63,6 +63,7 @@ import {
 import { logRankingPointsAuditFromJugador } from "./rankingPointsAudit";
 import { invalidatePlayersPool } from "./playersPoolCache";
 import { invalidateCareerIdentityCacheForPlayer } from "./careerIdentityCache";
+import { normalizeOptionalEmail, normalizeRequiredEmail } from "./emailValidation";
 
 const JUGADOR_SELECT_BASE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -935,8 +936,20 @@ export async function slugExistsForOrg(
 
 export async function createRivieraJugador(
   organizadorId: string,
-  input: CreateRivieraJugadorInput
+  input: CreateRivieraJugadorInput,
+  options?: {
+    /**
+     * SOLO para el fallback interno de getOrCreateJugadorId (sync/import de
+     * eventos, jugadores históricos). NO usar desde ningún formulario de
+     * alta de producto — ahí el correo debe ser siempre obligatorio.
+     */
+    skipEmailRequirement?: boolean;
+  }
 ): Promise<RivieraJugador> {
+  const email = options?.skipEmailRequirement
+    ? normalizeOptionalEmail(input.email)
+    : normalizeRequiredEmail(input.email);
+
   const baseSlug = slugifyJugadorNombre(input.nombre);
   const genero = input.genero ?? "M";
   const slug = await ensureUniqueSlug(baseSlug, (s) =>
@@ -949,7 +962,7 @@ export async function createRivieraJugador(
       .insert({
         nombre: input.nombre.trim(),
         slug,
-        email: input.email ?? null,
+        email,
         telefono: input.telefono ?? null,
         whatsapp: input.whatsapp ?? null,
         nivel: input.nivel ?? "intermedio",

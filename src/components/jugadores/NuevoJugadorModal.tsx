@@ -16,6 +16,12 @@ import {
   MANO_DOMINANTE_LABELS,
 } from "../../lib/rivieraJugadores/constants";
 import { PAISES_RIVIERA, paisSelectLabel } from "../../lib/rivieraJugadores/paises";
+import {
+  EMAIL_INVALID_MESSAGE,
+  EMAIL_REQUIRED_MESSAGE,
+  isValidEmailFormat,
+  normalizeEmailInput,
+} from "../../lib/rivieraJugadores/emailValidation";
 
 interface NuevoJugadorModalProps {
   open: boolean;
@@ -23,7 +29,7 @@ interface NuevoJugadorModalProps {
   onClose: () => void;
   onSubmit: (data: {
     nombre: string;
-    email?: string;
+    email: string;
     telefono?: string;
     categoria: RivieraJugadorCategoria;
     edad?: number | null;
@@ -56,12 +62,21 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim()) return;
+    const normalizedEmail = normalizeEmailInput(email);
+    if (!normalizedEmail) {
+      setError(EMAIL_REQUIRED_MESSAGE);
+      return;
+    }
+    if (!isValidEmailFormat(normalizedEmail)) {
+      setError(EMAIL_INVALID_MESSAGE);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       await onSubmit({
         nombre: nombre.trim(),
-        email: email.trim() || undefined,
+        email: normalizedEmail,
         telefono: telefono.trim() || undefined,
         categoria,
         edad: edad.trim() ? Number(edad) : null,
@@ -107,12 +122,13 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
             />
           </div>
           <div className="rj-field">
-            <label htmlFor="rj-email">Email</label>
+            <label htmlFor="rj-email">Email *</label>
             <input
               id="rj-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
           </div>
           <div className="rj-field">
@@ -213,7 +229,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
             <button
               type="submit"
               className="rj-btn rj-btn--primary"
-              disabled={saving || !nombre.trim()}
+              disabled={saving || !nombre.trim() || !email.trim()}
             >
               {saving ? "Guardando…" : "Crear"}
             </button>
