@@ -13,7 +13,7 @@ export const VistaPublicaGrupo: React.FC<{
   torneoId: string;
   grupoId: string;
 }> = ({ torneoId, grupoId }) => {
-  const { bundle, loading, error, standingsByGrupo, lastRefreshedAt } =
+  const { bundle, loading, error, standingsByGrupo, lastRefreshedAt, realtimeConnected } =
     useTorneoExpress(torneoId, {
       publicMode: true,
       realtime: true,
@@ -64,7 +64,10 @@ export const VistaPublicaGrupo: React.FC<{
         onCopyLink={copyLink}
         copyMsg={copyMsg || undefined}
       />
-      <PublicTorneoExpressSyncFooter lastRefreshedAt={lastRefreshedAt} />
+      <PublicTorneoExpressSyncFooter
+        lastRefreshedAt={lastRefreshedAt}
+        realtimeConnected={realtimeConnected}
+      />
     </PublicTorneoExpressShell>
   );
 };

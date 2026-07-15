@@ -16,6 +16,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     loading,
     error,
     lastRefreshedAt,
+    realtimeConnected,
     eliminatoriaLabelMap,
   } = useTorneoExpress(torneoId, {
     publicMode: true,
@@ -73,6 +74,7 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
         bundle={bundle}
         labelMap={eliminatoriaLabelMap}
         lastRefreshedAt={lastRefreshedAt}
+        realtimeConnected={realtimeConnected}
         onCopyLink={copyLink}
         copyMsg={copyMsg || undefined}
         gruposHref={`/torneo-express/${torneoId}/grupos`}

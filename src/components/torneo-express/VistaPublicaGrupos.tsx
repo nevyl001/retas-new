@@ -16,7 +16,7 @@ import { TE_PUBLIC_POLL_INTERVAL_MS } from "../../lib/torneoExpress/publicPoll";
 export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
   torneoId,
 }) => {
-  const { bundle, loading, error, standingsByGrupo, lastRefreshedAt } =
+  const { bundle, loading, error, standingsByGrupo, lastRefreshedAt, realtimeConnected } =
     useTorneoExpress(torneoId, {
       publicMode: true,
       realtime: true,
@@ -77,7 +77,10 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
         copyMsg={copyMsg || undefined}
         faseFinalHref={faseFinalHref}
       />
-      <PublicTorneoExpressSyncFooter lastRefreshedAt={lastRefreshedAt} />
+      <PublicTorneoExpressSyncFooter
+        lastRefreshedAt={lastRefreshedAt}
+        realtimeConnected={realtimeConnected}
+      />
     </PublicTorneoExpressShell>
   );
 };

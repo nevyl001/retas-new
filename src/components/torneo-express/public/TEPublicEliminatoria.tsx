@@ -15,9 +15,11 @@ import "./te-public-eliminatoria.css";
 function RefreshFooter({
   lastRefreshedAt,
   spinning,
+  realtimeConnected,
 }: {
   lastRefreshedAt: Date | null;
   spinning: boolean;
+  realtimeConnected?: boolean;
 }) {
   const [secondsAgo, setSecondsAgo] = useState(0);
 
@@ -47,7 +49,10 @@ function RefreshFooter({
         ↻
       </span>
       <span>
-        RIVIERA OPEN · Vista pública · Actualizado hace {secondsAgo}s
+        RIVIERA OPEN · Vista pública ·{" "}
+        {realtimeConnected
+          ? "En vivo"
+          : `Actualizado hace ${secondsAgo}s`}
       </span>
     </footer>
   );
@@ -61,6 +66,8 @@ export interface TEPublicEliminatoriaProps {
   copyMsg?: string;
   /** Enlace secundario a grupos (siempre accesible tras generar eliminatoria). */
   gruposHref?: string;
+  /** true si el canal Realtime está SUBSCRIBED; si no, se degrada a "Actualizado hace Ns". */
+  realtimeConnected?: boolean;
 }
 
 export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
@@ -70,6 +77,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   onCopyLink,
   copyMsg,
   gruposHref,
+  realtimeConnected,
 }) => {
   const [spinning, setSpinning] = useState(false);
   const prevRefreshRef = useRef<Date | null>(null);
@@ -245,7 +253,11 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         </>
       ) : null}
 
-      <RefreshFooter lastRefreshedAt={lastRefreshedAt} spinning={spinning} />
+      <RefreshFooter
+        lastRefreshedAt={lastRefreshedAt}
+        spinning={spinning}
+        realtimeConnected={realtimeConnected}
+      />
     </div>
   );
 };

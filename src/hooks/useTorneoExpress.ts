@@ -5,6 +5,8 @@ import {
   buildStandingsGeneral,
 } from "../lib/torneoExpress/standings";
 import type { PartidoSetScore, StandingRowExpress, TorneoExpressBundle } from "../lib/torneoExpress/types";
+// TEMPORAL — diagnóstico Realtime; borrar junto con lib/torneoExpress/realtimeDevLog.ts
+import { teRealtimeDevLog } from "../lib/torneoExpress/realtimeDevLog";
 import {
   checkPartidosCanchaColumnAvailable,
   checkPartidosOrdenColumnAvailable,
@@ -68,6 +70,7 @@ export function useTorneoExpress(
   const [savingGrupoNombreId, setSavingGrupoNombreId] = useState<string | null>(
     null
   );
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
 
   const reload = useCallback(async (opts?: { silent?: boolean }) => {
     if (!torneoId) {
@@ -75,6 +78,7 @@ export function useTorneoExpress(
       return;
     }
     const silent = opts?.silent ?? false;
+    teRealtimeDevLog("reload: inicio", { torneoId, silent });
     if (!silent) {
       setLoading(true);
     }
@@ -97,8 +101,25 @@ export function useTorneoExpress(
       setPartidosCanchaDisponible(canchaOk);
       setPartidosProgramadoDisponible(programadoOk);
       setLastRefreshedAt(new Date());
+      teRealtimeDevLog("reload: fin (ok)", {
+        torneoId,
+        silent,
+        grupos: data?.grupos.length ?? 0,
+        partidos: data
+          ? Object.values(data.partidosPorGrupo).reduce(
+              (sum, arr) => sum + arr.length,
+              0
+            )
+          : 0,
+        eliminatoriaPartidos: data?.eliminatoriaPartidos.length ?? 0,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar el torneo");
+      teRealtimeDevLog("reload: fin (error)", {
+        torneoId,
+        silent,
+        error: e instanceof Error ? e.message : String(e),
+      });
     } finally {
       if (!silent) {
         setLoading(false);
@@ -120,12 +141,27 @@ export function useTorneoExpress(
   reloadRef.current = reload;
 
   useEffect(() => {
-    if (!torneoId || !realtime) return;
+    if (!torneoId || !realtime) {
+      setRealtimeConnected(false);
+      return;
+    }
 
+    setRealtimeConnected(false);
     const grupoIds = grupoIdsKey ? grupoIdsKey.split(",").filter(Boolean) : [];
-    return subscribeTorneoExpress(torneoId, grupoIds, () => {
-      void reloadRef.current({ silent: true });
-    });
+    const unsubscribe = subscribeTorneoExpress(
+      torneoId,
+      grupoIds,
+      () => {
+        void reloadRef.current({ silent: true });
+      },
+      (status) => {
+        setRealtimeConnected(status === "SUBSCRIBED");
+      }
+    );
+    return () => {
+      setRealtimeConnected(false);
+      unsubscribe();
+    };
   }, [torneoId, realtime, grupoIdsKey]);
 
   useEffect(() => {
@@ -394,6 +430,7 @@ export function useTorneoExpress(
     setError,
     reload,
     lastRefreshedAt,
+    realtimeConnected,
     standingsByGrupo,
     standingsGeneral,
     saveResultado,

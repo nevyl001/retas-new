@@ -15,7 +15,7 @@ import {
 
 export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const { user } = useUser();
-  const { bundle, loading, error, standingsGeneral, lastRefreshedAt } =
+  const { bundle, loading, error, standingsGeneral, lastRefreshedAt, realtimeConnected } =
     useTorneoExpress(torneoId, {
       publicMode: true,
       realtime: true,
@@ -75,7 +75,10 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
         title="Tabla general"
       />
 
-      <PublicTorneoExpressSyncFooter lastRefreshedAt={lastRefreshedAt} />
+      <PublicTorneoExpressSyncFooter
+        lastRefreshedAt={lastRefreshedAt}
+        realtimeConnected={realtimeConnected}
+      />
     </PublicTorneoExpressShell>
   );
 };

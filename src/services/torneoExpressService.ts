@@ -29,6 +29,8 @@ import {
   getSetsValidationMessage,
 } from "../lib/torneoExpress/partidoSets";
 import { resolveEventoEstadoFromCategorias } from "../lib/torneoExpress/eventoEstadoFromCategorias";
+// TEMPORAL — diagnóstico Realtime; borrar junto con lib/torneoExpress/realtimeDevLog.ts
+import { teRealtimeDevLog } from "../lib/torneoExpress/realtimeDevLog";
 import type {
   GrupoAssignmentDraft,
   PartidoSetScore,
@@ -1318,24 +1320,36 @@ export async function savePartidosOrden(
 // Realtime y utilidades
 // ---------------------------------------------------------------------------
 
+export type TorneoExpressRealtimeStatus =
+  | "SUBSCRIBED"
+  | "CHANNEL_ERROR"
+  | "TIMED_OUT"
+  | "CLOSED";
+
 export function subscribeTorneoExpress(
   torneoId: string,
   grupoIds: string[],
-  onChange: () => void
+  onChange: () => void,
+  onStatusChange?: (status: TorneoExpressRealtimeStatus) => void
 ): () => void {
   let cancelled = false;
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let ready = false;
 
-  const channel = supabase.channel(
-    `torneo-express:${torneoId}:${grupoIds.slice(0, 8).join("-") || "solo"}`
-  );
+  const channelName = `torneo-express:${torneoId}:${grupoIds.slice(0, 8).join("-") || "solo"}`;
+  const channel = supabase.channel(channelName);
+  teRealtimeDevLog("canal creado", { channelName, torneoId, grupoIds });
 
-  const handler = () => {
+  const handler = (table: string, filter: string) => (payload: unknown) => {
+    teRealtimeDevLog("postgres_changes recibido", { table, filter, payload });
     if (cancelled || !ready) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-      if (!cancelled) onChange();
+      if (cancelled) return;
+      teRealtimeDevLog("callback de refetch ejecutado (debounce disparado)", {
+        torneoId,
+      });
+      onChange();
     }, 500);
   };
 
@@ -1348,7 +1362,7 @@ export function subscribeTorneoExpress(
         table: "torneo_express_partidos",
         filter: `grupo_id=eq.${grupoId}`,
       },
-      handler
+      handler("torneo_express_partidos", `grupo_id=eq.${grupoId}`)
     );
     channel.on(
       "postgres_changes",
@@ -1358,7 +1372,7 @@ export function subscribeTorneoExpress(
         table: "torneo_express_grupo_parejas",
         filter: `grupo_id=eq.${grupoId}`,
       },
-      handler
+      handler("torneo_express_grupo_parejas", `grupo_id=eq.${grupoId}`)
     );
   });
 
@@ -1370,7 +1384,7 @@ export function subscribeTorneoExpress(
       table: "torneo_express_grupos",
       filter: `torneo_id=eq.${torneoId}`,
     },
-    handler
+    handler("torneo_express_grupos", `torneo_id=eq.${torneoId}`)
   );
 
   channel.on(
@@ -1381,7 +1395,7 @@ export function subscribeTorneoExpress(
       table: "torneo_express_eliminatoria_partidos",
       filter: `torneo_id=eq.${torneoId}`,
     },
-    handler
+    handler("torneo_express_eliminatoria_partidos", `torneo_id=eq.${torneoId}`)
   );
 
   channel.on(
@@ -1392,14 +1406,24 @@ export function subscribeTorneoExpress(
       table: "torneo_express",
       filter: `id=eq.${torneoId}`,
     },
-    handler
+    handler("torneo_express", `id=eq.${torneoId}`)
   );
 
   channel.subscribe((status) => {
+    teRealtimeDevLog("estado de la suscripción", { channelName, status });
+    if (cancelled) return;
     if (status === "SUBSCRIBED") {
       setTimeout(() => {
-        ready = true;
+        if (!cancelled) ready = true;
       }, 600);
+      onStatusChange?.("SUBSCRIBED");
+      return;
+    }
+    // Degradar sin romper: no hay reintento aquí, la vista sigue funcionando
+    // con el bundle ya cargado + polling/recarga manual como respaldo.
+    if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+      ready = false;
+      onStatusChange?.(status);
     }
   });
 
