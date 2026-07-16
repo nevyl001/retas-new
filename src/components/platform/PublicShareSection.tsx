@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { copyTextToClipboard } from "../../lib/clipboard/copyTextToClipboard";
 import "../../styles/public-link-section.css";
 
 export interface PublicShareSectionProps {
@@ -30,10 +31,10 @@ export const PublicShareSection: React.FC<PublicShareSectionProps> = ({
     if (onCopy) {
       await onCopy();
     } else {
-      try {
-        await navigator.clipboard.writeText(publicUrl);
-      } catch {
+      const ok = await copyTextToClipboard(publicUrl);
+      if (!ok) {
         window.prompt("Copia este enlace:", publicUrl);
+        return;
       }
     }
     setCopied(true);

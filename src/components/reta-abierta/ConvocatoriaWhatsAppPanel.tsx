@@ -6,7 +6,6 @@ import type {
 import {
   buildRetaAbiertaPublicUrl,
   fetchOpenGameRegistrationConfig,
-  fetchOpenRegistrationPublic,
   listOpenGameRegistrationEntries,
   promoteOpenRegistrationEntry,
   removeOpenRegistrationEntry,
@@ -20,6 +19,8 @@ import {
   buildRetaAbiertaWhatsAppMessage,
   isoToDatetimeLocalValue,
 } from "../../lib/retaAbierta/whatsappShareMessage";
+import { buildShareDtoFromOrganizerState } from "../../lib/retaAbierta/buildShareDtoFromOrganizerState";
+import { copyTextToClipboard } from "../../lib/clipboard/copyTextToClipboard";
 import {
   assertConvocatoriaAllowedMode,
   isConvocatoriaAllowedMode,
@@ -69,22 +70,6 @@ function statusLabel(s: OpenRegistrationStatus): string {
     default:
       return s;
   }
-}
-
-async function copyTextToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-  const ta = document.createElement("textarea");
-  ta.value = text;
-  ta.setAttribute("readonly", "");
-  ta.style.position = "fixed";
-  ta.style.left = "-9999px";
-  document.body.appendChild(ta);
-  ta.select();
-  document.execCommand("copy");
-  document.body.removeChild(ta);
 }
 
 /**
@@ -309,6 +294,49 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       productHeadline: context.productHeadline,
     });
 
+  /** Mensaje desde cfg + entries ya en memoria — sin fetch (crítico en iOS). */
+  const buildLocalShareText = (
+    row: OpenRegistrationConfigRow,
+    url: string,
+    overrides?: {
+      scheduledAtIso?: string | null;
+      durationMinutes?: number | null;
+      locationLabel?: string | null;
+      categoryLabel?: string | null;
+    }
+  ) => {
+    const dto = buildShareDtoFromOrganizerState(row, entries, context);
+    const resolvedDuration =
+      overrides?.durationMinutes ??
+      (durationMinutes ||
+        context.defaultDurationMinutes ||
+        dto.duration_minutes ||
+        90);
+    return buildShareText(
+      {
+        ...dto,
+        scheduled_at:
+          overrides?.scheduledAtIso ??
+          dto.scheduled_at ??
+          context.defaultScheduledAt ??
+          null,
+        duration_minutes: resolvedDuration,
+        location_label:
+          overrides?.locationLabel ??
+          dto.location_label ??
+          context.defaultLocation ??
+          null,
+        category_label:
+          overrides?.categoryLabel?.trim() ||
+          categoryLabel.trim() ||
+          dto.category_label ||
+          context.defaultCategory ||
+          null,
+      },
+      url
+    );
+  };
+
   const onLaunchWhatsApp = async () => {
     setSaving(true);
     setError(null);
@@ -404,25 +432,21 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         setCategoryLabel(launchCategory);
       }
       const url = buildRetaAbiertaPublicUrl(row.public_slug);
-      const pub = await fetchOpenRegistrationPublic(row.public_slug);
-      if (!pub.ok) {
+      const text = buildLocalShareText(row, url, {
+        scheduledAtIso: launchScheduledIso,
+        durationMinutes: launchDuration,
+        locationLabel: launchLocation,
+        categoryLabel: launchCategory.trim() || null,
+      });
+      const copied = await copyTextToClipboard(text);
+      if (!copied) {
         setError(
-          "Convocatoria guardada, pero no se pudo armar el mensaje. Puedes copiar el enlace."
+          "Convocatoria guardada. No se pudo copiar el mensaje; pulsa «Copiar convocatoria actualizada»."
         );
-        await load(id);
-        return;
+      } else {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2800);
       }
-      const dtoForShare = {
-        ...pub.dto,
-        scheduled_at: pub.dto.scheduled_at || launchScheduledIso,
-        duration_minutes: pub.dto.duration_minutes ?? launchDuration,
-        location_label: pub.dto.location_label || launchLocation || null,
-        category_label: pub.dto.category_label || launchCategory || null,
-      };
-      const text = buildShareText(dtoForShare, url);
-      await copyTextToClipboard(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2800);
       await load(id);
     } catch (e) {
       setError(mapConvocatoriaUserError(e, "launch"));
@@ -431,38 +455,22 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     }
   };
 
-  const onCopy = async () => {
+  const onCopy = () => {
     if (!publicUrl || !cfg) return;
+    const text = buildLocalShareText(cfg, publicUrl);
     setSaving(true);
     setError(null);
     setShareNote(true);
-    try {
-      const pub = await fetchOpenRegistrationPublic(cfg.public_slug);
-      const resolvedDuration =
-        durationMinutes ||
-        context.defaultDurationMinutes ||
-        (pub.ok ? pub.dto.duration_minutes : null) ||
-        90;
-      const text = pub.ok
-        ? buildShareText(
-            {
-              ...pub.dto,
-              scheduled_at:
-                pub.dto.scheduled_at || context.defaultScheduledAt || null,
-              duration_minutes: resolvedDuration,
-              location_label:
-                pub.dto.location_label ||
-                context.defaultLocation ||
-                null,
-            },
-            publicUrl
-          )
-        : publicUrl;
-      await copyTextToClipboard(text);
+
+    void (async () => {
+      const copied = await copyTextToClipboard(text);
+      if (!copied) {
+        setError("No se pudo copiar el mensaje");
+        return;
+      }
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2800);
 
-      // Corrige duración guardada si quedó el default 90
       if (
         entityId &&
         context.defaultDurationMinutes != null &&
@@ -485,11 +493,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           /* no bloquear la copia */
         }
       }
-    } catch {
-      setError("No se pudo copiar el mensaje");
-    } finally {
+    })().finally(() => {
       setSaving(false);
-    }
+    });
   };
 
   if (!isConvocatoriaAllowedMode(context.mode)) {
