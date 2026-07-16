@@ -72,7 +72,11 @@ export const Duelo2v2LiveBoard: React.FC<Duelo2v2LiveBoardProps> = ({
               <span className={STATUS_CLASS[status.tone]}> · {status.label}</span>
             ) : null}
           </p>
-          <Duelo2v2MatchMeta duelo={duelo} className="duelo2v2-live-board__meta" />
+          <Duelo2v2MatchMeta
+            duelo={duelo}
+            clubName={organizerName}
+            className="duelo2v2-live-board__meta"
+          />
         </header>
       ) : null}
 
