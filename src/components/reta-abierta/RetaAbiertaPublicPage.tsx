@@ -347,9 +347,13 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     () => dto?.entries.filter((e) => e.status === "waitlist") ?? [],
     [dto]
   );
+  const preferredSideOverrides = useMemo(() => {
+    void tokenVersion;
+    return loadPreferredSides(slug);
+  }, [slug, tokenVersion]);
   const dueloLayout = useMemo(
-    () => buildDueloCourtLayout(confirmed, loadPreferredSides(slug)),
-    [confirmed, slug, tokenVersion]
+    () => buildDueloCourtLayout(confirmed, preferredSideOverrides),
+    [confirmed, preferredSideOverrides]
   );
   const isDueloMode = dto?.mode_type === "duelo_2v2";
 
