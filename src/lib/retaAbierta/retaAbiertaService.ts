@@ -376,7 +376,7 @@ export async function enrichPublicEntryPhotos(
 
   const stillMissing = stillNeedAfterCache.filter((e) => !fotoByEntryId.has(e.id));
   if (stillMissing.length > 0) {
-    const previews = await Promise.all(
+    const previewRows = await Promise.all(
       stillMissing.map(async (entry) => {
         const rivieraId = entry.riviera_id?.trim();
         if (!rivieraId) return null;
@@ -385,22 +385,63 @@ export async function enrichPublicEntryPhotos(
             dto.slug,
             rivieraId
           );
-          if (res.ok && res.preview.foto_url?.trim()) {
-            return { entryId: entry.id, rivieraId, foto: res.preview.foto_url.trim() };
-          }
+          if (!res.ok) return null;
+          return {
+            entryId: entry.id,
+            rivieraId,
+            foto: res.preview.foto_url?.trim() || null,
+            jugadorId: res.preview.jugador_id?.trim() || null,
+          };
         } catch {
-          /* ignore */
+          return null;
         }
-        return null;
       })
     );
-    for (const row of previews) {
+
+    const jugadorIds: string[] = [];
+    const entryByJugador = new Map<string, string[]>();
+    for (const row of previewRows) {
       if (!row) continue;
-      fotoByEntryId.set(row.entryId, row.foto);
-      publicEntryFotoCache.set(
-        publicEntryFotoCacheKey(dto.slug, row.rivieraId),
-        row.foto
-      );
+      if (row.foto) {
+        fotoByEntryId.set(row.entryId, row.foto);
+        publicEntryFotoCache.set(
+          publicEntryFotoCacheKey(dto.slug, row.rivieraId),
+          row.foto
+        );
+        continue;
+      }
+      if (row.jugadorId) {
+        jugadorIds.push(row.jugadorId);
+        const list = entryByJugador.get(row.jugadorId) ?? [];
+        list.push(row.entryId);
+        entryByJugador.set(row.jugadorId, list);
+      }
+    }
+
+    if (jugadorIds.length > 0 && dto.organizador_id.trim()) {
+      try {
+        const profiles = await fetchRivieraJugadorProfilesByIds(jugadorIds, {
+          publicOnly: true,
+          organizadorId: dto.organizador_id,
+        });
+        entryByJugador.forEach((entryIds, jugadorId) => {
+          const foto = profiles.get(jugadorId)?.fotoUrl?.trim();
+          if (!foto) return;
+          entryIds.forEach((entryId) => {
+            fotoByEntryId.set(entryId, foto);
+            const entry = stillMissing.find((e) => e.id === entryId);
+            const rivieraId = entry?.riviera_id?.trim();
+            if (rivieraId) {
+              publicEntryFotoCache.set(
+                publicEntryFotoCacheKey(dto.slug, rivieraId),
+                foto
+              );
+            }
+          });
+        });
+      } catch {
+        /* ignore */
+      }
     }
   }
 
