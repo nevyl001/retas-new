@@ -4,6 +4,7 @@ import {
   copyToClipboard,
   publicEliminatoriaUrl,
 } from "../../services/torneoExpressService";
+import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
 import { TEPublicEliminatoria } from "./public/TEPublicEliminatoria";
 import { PublicEventNeutralLoading } from "../../club-experience";
@@ -27,7 +28,10 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
   const [copyMsg, setCopyMsg] = useState("");
 
   const copyLink = async () => {
-    const ok = await copyToClipboard(publicEliminatoriaUrl(torneoId));
+    const play = publicEliminatoriaUrl(torneoId);
+    const ok = await copyToClipboard(
+      buildSharePublicOgUrlFromPlayUrl(play) || play
+    );
     setCopyMsg(ok ? "Enlace copiado" : "No se pudo copiar");
     setTimeout(() => setCopyMsg(""), 2500);
   };

@@ -428,14 +428,19 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
         infoLines={["Comparte el enlace para ver ranking y jornadas (solo lectura)."]}
         onCopy={async () => {
           try {
-            await navigator.clipboard.writeText(publicLigaUrl(ligaId));
+            const { buildSharePublicOgUrlFromPlayUrl } = await import(
+              "../../lib/retaAbierta/shareOgUrl"
+            );
+            const url =
+              buildSharePublicOgUrlFromPlayUrl(publicLigaUrl(ligaId)) ||
+              publicLigaUrl(ligaId);
+            await navigator.clipboard.writeText(url);
             setMessage("Enlace público copiado.");
           } catch {
             setError("No se pudo copiar el enlace.");
           }
         }}
       />
-
       <ActionBar className="liga-actions">
         {ctaIniciarVisible && !isMobile && (
           <Button

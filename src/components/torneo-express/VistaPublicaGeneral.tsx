@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
 import { copyToClipboard, publicGeneralUrl } from "../../services/torneoExpressService";
+import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import { PublicStandingsSection } from "./public/PublicStandingsSection";
 import { PublicTorneoExpressHeader } from "./public/PublicTorneoExpressHeader";
 import { PublicTorneoExpressShell } from "./public/PublicTorneoExpressShell";
@@ -29,7 +30,10 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
   };
 
   const copyLink = async () => {
-    const ok = await copyToClipboard(publicGeneralUrl(torneoId));
+    const play = publicGeneralUrl(torneoId);
+    const ok = await copyToClipboard(
+      buildSharePublicOgUrlFromPlayUrl(play) || play
+    );
     setCopyMsg(ok ? "Enlace copiado" : "No se pudo copiar");
     setTimeout(() => setCopyMsg(""), 2500);
   };

@@ -624,7 +624,12 @@ function AppContent() {
         await upsertTournamentPublicConfig(tournamentId, "teams", teamConfig);
       }
       const publicLink = generatePublicLink(tournamentId, teamConfig);
-      await navigator.clipboard.writeText(publicLink);
+      const { buildSharePublicOgUrlFromPlayUrl } = await import(
+        "./lib/retaAbierta/shareOgUrl"
+      );
+      const shareLink =
+        buildSharePublicOgUrlFromPlayUrl(publicLink) || publicLink;
+      await navigator.clipboard.writeText(shareLink);
       showToast("¡Enlace público copiado al portapapeles!", "success");
     } catch (err) {
       showToast("Error al copiar el enlace", "error");

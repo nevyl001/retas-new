@@ -5,6 +5,7 @@ import {
   copyToClipboard,
   publicGruposUrl,
 } from "../../services/torneoExpressService";
+import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import {
   buildTEPublicGruposProps,
   TEPublicGrupos,
@@ -43,7 +44,10 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
   }, [bundle, torneoId]);
 
   const copyLink = async () => {
-    const ok = await copyToClipboard(publicGruposUrl(torneoId));
+    const play = publicGruposUrl(torneoId);
+    const ok = await copyToClipboard(
+      buildSharePublicOgUrlFromPlayUrl(play) || play
+    );
     setCopyMsg(ok ? "Enlace copiado" : "No se pudo copiar");
     setTimeout(() => setCopyMsg(""), 2500);
   };

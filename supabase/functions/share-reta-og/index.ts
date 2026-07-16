@@ -1,19 +1,13 @@
 /**
- * Share OG Edge Function — crawlers (WhatsApp) need server HTML with og:*.
+ * Share OG HTML for WhatsApp/Facebook crawlers.
  *
- * Deploy (pendiente, no en esta fase):
- *   supabase functions deploy share-reta-og
+ * URLs:
+ *   ?slug=<public_slug>  → convocatoria → play /jugar/:slug
+ *   ?dest=<pathname>     → cualquier vista pública SPA
  *
- * URL que copia la app (Copiar convocatoria / WhatsApp):
- *   ${REACT_APP_SHARE_OG_BASE_URL}?slug=<public_slug>
- *   ej. https://<project>.supabase.co/functions/v1/share-reta-og?slug=ra-xxxx
- *
- * Fallback local sin env: origin + /share/reta/<slug> (requiere proxy/rewrite).
- *
- * Env función: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PUBLIC_APP_ORIGIN
- * Env FE: REACT_APP_SHARE_OG_BASE_URL
- *
- * No redirect inmediato. Meta refresh 8s + enlace "Abrir convocatoria".
+ * Deploy: supabase functions deploy share-reta-og
+ * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PUBLIC_APP_ORIGIN
+ * No redirect inmediato (meta refresh 8s + enlace).
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
@@ -65,23 +59,53 @@ function htmlPage(opts: {
   <meta http-equiv="refresh" content="8;url=${escapeHtml(opts.playUrl)}" />
 </head>
 <body>
-  <p><a href="${escapeHtml(opts.playUrl)}">Abrir convocatoria</a></p>
+  <p><a href="${escapeHtml(opts.playUrl)}">Abrir enlace</a></p>
   <script>setTimeout(function(){ location.replace(${JSON.stringify(opts.playUrl)}); }, 8500);</script>
 </body>
 </html>`;
 }
 
-serve(async (req) => {
-  const url = new URL(req.url);
-  const slug = (url.searchParams.get("slug") || "").trim();
-  if (!slug) {
-    return new Response("Missing slug", { status: 400 });
+type BrandCtx = {
+  title: string;
+  description: string;
+  organizadorId: string | null;
+};
+
+async function applyPremiumBrand(
+  sb: ReturnType<typeof createClient>,
+  ctx: BrandCtx
+): Promise<{ title: string; description: string; image: string }> {
+  let image = RIVIERA_OG_IMAGE;
+  let title = ctx.title;
+  const description = ctx.description;
+  if (!ctx.organizadorId) {
+    return { title, description, image };
   }
+  const { data: brand } = await sb.rpc("get_organizador_branding_public", {
+    p_org_id: ctx.organizadorId,
+  });
+  const row = Array.isArray(brand) ? brand[0] : brand;
+  if (row?.premium_branding_enabled === true && row?.branding_key) {
+    const key = String(row.branding_key);
+    image = `${APP_ORIGIN}/branding/${encodeURIComponent(key)}/og.png`;
+    const { data: display } = await sb.rpc("get_organizador_display_name", {
+      p_organizador_id: ctx.organizadorId,
+    });
+    const clubTitle =
+      typeof display === "string"
+        ? display
+        : Array.isArray(display)
+          ? String(display[0] || "")
+          : "";
+    if (clubTitle) title = `${ctx.title} · ${clubTitle}`;
+  }
+  return { title, description, image };
+}
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const sb = createClient(supabaseUrl, serviceKey);
-
+async function resolveFromSlug(
+  sb: ReturnType<typeof createClient>,
+  slug: string
+): Promise<BrandCtx | Response> {
   const { data: reg, error: regErr } = await sb
     .from("tournament_open_registration")
     .select(
@@ -96,9 +120,7 @@ serve(async (req) => {
 
   let title = RIVIERA_TITLE;
   let description = RIVIERA_DESC;
-  let image = RIVIERA_OG_IMAGE;
   let organizadorId: string | null = null;
-  let clubTitle: string | null = null;
 
   if (reg.mode_type === "reta" || reg.mode_type === "americano") {
     const { data: t } = await sb
@@ -127,35 +149,166 @@ serve(async (req) => {
     return new Response("Not found", { status: 404 });
   }
 
-  if (organizadorId) {
-    const { data: brand } = await sb.rpc("get_organizador_branding_public", {
-      p_org_id: organizadorId,
-    });
-    const row = Array.isArray(brand) ? brand[0] : brand;
-    if (row?.premium_branding_enabled === true && row?.branding_key) {
-      const key = String(row.branding_key);
-      image = `${APP_ORIGIN}/branding/${encodeURIComponent(key)}/og.png`;
-      const { data: display } = await sb.rpc("get_organizador_display_name", {
-        p_organizador_id: organizadorId,
-      });
-      clubTitle =
-        typeof display === "string"
-          ? display
-          : Array.isArray(display)
-            ? display[0]
-            : null;
-      if (clubTitle) title = `${title} · ${clubTitle}`;
-    }
+  return { title, description, organizadorId };
+}
+
+async function resolveFromDest(
+  sb: ReturnType<typeof createClient>,
+  dest: string
+): Promise<BrandCtx | Response> {
+  const path = dest.split("?")[0] || "";
+
+  const jugar = path.match(/^\/(?:jugar|reta-abierta)\/([^/]+)$/i);
+  if (jugar?.[1]) {
+    return resolveFromSlug(sb, decodeURIComponent(jugar[1]));
   }
 
-  const playUrl = `${APP_ORIGIN}/jugar/${encodeURIComponent(slug)}`;
+  const americano = path.match(
+    /^\/public\/(?:vista-publica\/)?americano\/([^/]+)$/i
+  );
+  if (americano?.[1]) {
+    const id = decodeURIComponent(americano[1]);
+    const { data: t } = await sb
+      .from("tournaments")
+      .select("id, name, user_id, lugar, description")
+      .eq("id", id)
+      .maybeSingle();
+    if (!t) return new Response("Not found", { status: 404 });
+    return {
+      title: t.name || RIVIERA_TITLE,
+      description: [t.description, t.lugar].filter(Boolean).join(" · ") ||
+        RIVIERA_DESC,
+      organizadorId: t.user_id,
+    };
+  }
+
+  const duelo = path.match(/^\/public\/duelo-2v2\/([^/]+)$/i);
+  if (duelo?.[1]) {
+    const id = decodeURIComponent(duelo[1]);
+    const { data: d } = await sb
+      .from("duelos_2v2")
+      .select("id, nombre, organizador_id, lugar")
+      .eq("id", id)
+      .maybeSingle();
+    if (!d) return new Response("Not found", { status: 404 });
+    return {
+      title: d.nombre || RIVIERA_TITLE,
+      description: d.lugar || RIVIERA_DESC,
+      organizadorId: d.organizador_id,
+    };
+  }
+
+  const liga = path.match(/^\/public\/liga\/([^/]+)(?:\/jornada\/\d+)?$/i);
+  if (liga?.[1]) {
+    const id = decodeURIComponent(liga[1]);
+    const { data: l } = await sb
+      .from("ligas")
+      .select("id, nombre, organizador_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (!l) return new Response("Not found", { status: 404 });
+    return {
+      title: l.nombre || RIVIERA_TITLE,
+      description: RIVIERA_DESC,
+      organizadorId: l.organizador_id,
+    };
+  }
+
+  const te = path.match(/^\/torneo-express\/([^/]+)/i);
+  if (te?.[1]) {
+    const id = decodeURIComponent(te[1]);
+    const { data: t } = await sb
+      .from("torneos_express")
+      .select("id, nombre, organizador_id")
+      .eq("id", id)
+      .maybeSingle();
+    if (!t) return new Response("Not found", { status: 404 });
+    return {
+      title: t.nombre || RIVIERA_TITLE,
+      description: RIVIERA_DESC,
+      organizadorId: t.organizador_id,
+    };
+  }
+
+  const evento = path.match(/^\/eventos\/([^/]+)$/i);
+  if (evento?.[1]) {
+    const slug = decodeURIComponent(evento[1]);
+    const { data: e } = await sb
+      .from("eventos")
+      .select("id, nombre, organizador_id, slug")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (!e) return new Response("Not found", { status: 404 });
+    return {
+      title: e.nombre || RIVIERA_TITLE,
+      description: RIVIERA_DESC,
+      organizadorId: e.organizador_id,
+    };
+  }
+
+  const pubReta = path.match(/^\/public\/([^/]+)$/i);
+  if (pubReta?.[1] && !["americano", "liga", "duelo-2v2", "jugadores", "vista-publica", "ranking-puntos"].includes(pubReta[1].toLowerCase())) {
+    const id = decodeURIComponent(pubReta[1]);
+    const { data: t } = await sb
+      .from("tournaments")
+      .select("id, name, user_id, lugar, description")
+      .eq("id", id)
+      .maybeSingle();
+    if (!t) return new Response("Not found", { status: 404 });
+    return {
+      title: t.name || RIVIERA_TITLE,
+      description: [t.description, t.lugar].filter(Boolean).join(" · ") ||
+        RIVIERA_DESC,
+      organizadorId: t.user_id,
+    };
+  }
+
+  return new Response("Not found", { status: 404 });
+}
+
+serve(async (req) => {
+  const url = new URL(req.url);
+  const slug = (url.searchParams.get("slug") || "").trim();
+  const destRaw = (url.searchParams.get("dest") || "").trim();
+
+  if (!slug && !destRaw) {
+    return new Response("Missing slug or dest", { status: 400 });
+  }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const sb = createClient(supabaseUrl, serviceKey);
+
+  let playUrl: string;
+  let resolved: BrandCtx | Response;
+
+  if (slug) {
+    resolved = await resolveFromSlug(sb, slug);
+    playUrl = `${APP_ORIGIN}/jugar/${encodeURIComponent(slug)}`;
+  } else {
+    const dest = destRaw.startsWith("/") ? destRaw : `/${destRaw}`;
+    resolved = await resolveFromDest(sb, dest);
+    playUrl = `${APP_ORIGIN}${dest}`;
+  }
+
+  if (resolved instanceof Response) return resolved;
+
+  const branded = await applyPremiumBrand(sb, resolved);
   const shareBase =
     Deno.env.get("PUBLIC_SHARE_CANONICAL_BASE") ||
     `${supabaseUrl}/functions/v1/share-reta-og`;
-  const canonical = `${shareBase}?slug=${encodeURIComponent(slug)}`;
+  const canonical = slug
+    ? `${shareBase}?slug=${encodeURIComponent(slug)}`
+    : `${shareBase}?dest=${encodeURIComponent(destRaw.startsWith("/") ? destRaw : `/${destRaw}`)}`;
 
   return new Response(
-    htmlPage({ title, description, image, playUrl, canonical }),
+    htmlPage({
+      title: branded.title,
+      description: branded.description,
+      image: branded.image,
+      playUrl,
+      canonical,
+    }),
     {
       headers: {
         "Content-Type": "text/html; charset=utf-8",

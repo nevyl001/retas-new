@@ -1,55 +1,43 @@
-# Share OG / WhatsApp (reta convocatoria)
+## Share OG / WhatsApp (público)
 
-## URL exacta que copia la app
+### URLs que debe copiar la app
 
-Con `REACT_APP_SHARE_OG_BASE_URL` definido:
+Convocatoria (`public_slug`):
 
 ```
 ${REACT_APP_SHARE_OG_BASE_URL}?slug=<public_slug>
 ```
 
-Ejemplo:
+Cualquier otra vista pública (resultados, liga, TE, duelo, etc.):
 
 ```
-https://<project-ref>.supabase.co/functions/v1/share-reta-og?slug=ra-abcd1234
+${REACT_APP_SHARE_OG_BASE_URL}?dest=<pathname>
 ```
 
-Sin env (fallback local/testeable):
+Ejemplos `dest`:
 
-```
-${window.location.origin}/share/reta/<public_slug>
-```
+- `/public/<tournamentId>`
+- `/public/americano/<id>`
+- `/public/duelo-2v2/<id>`
+- `/public/liga/<id>`
+- `/torneo-express/<id>/grupos`
 
-(requiere rewrite/proxy hacia la Edge Function en deploy).
+El HTML OG incluye enlace + meta refresh 8s hacia el destino SPA real
+(`${PUBLIC_APP_ORIGIN}` + path o `/jugar/:slug`).
 
-## Destino humano
+### Preview humano
 
-```
-${PUBLIC_APP_ORIGIN}/jugar/<public_slug>
-```
+El botón «Ver vista pública» sigue abriendo la URL SPA (`publicUrl`), no el OG.
 
-El HTML OG incluye enlace “Abrir convocatoria” + meta refresh a 8s (no inmediato).
+### Variables
 
-## Variables
+| Dónde | Variable |
+|-------|----------|
+| FE | `REACT_APP_SHARE_OG_BASE_URL` |
+| Edge | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `PUBLIC_APP_ORIGIN` |
 
-| Dónde | Variable | Uso |
-|-------|----------|-----|
-| FE (CRA) | `REACT_APP_SHARE_OG_BASE_URL` | Base del endpoint share-reta-og |
-| Edge | `SUPABASE_URL` | Cliente service |
-| Edge | `SUPABASE_SERVICE_ROLE_KEY` | Lectura registro + branding |
-| Edge | `PUBLIC_APP_ORIGIN` | Play URL + og image club |
-| Edge | `PUBLIC_SHARE_CANONICAL_BASE` | og:url opcional |
-
-## SQL relacionado (aplicar en Supabase, sin deploy FE)
-
-- `supabase/sql/patch-get-organizador-branding-public.sql`
-- `supabase/sql/patch-update-tournament-courts-unassign.sql`
-- `supabase/sql/verify-tournament-courts-updated-at.sql` (solo lectura)
-
-## Deploy pendiente
+### Deploy pendiente
 
 ```bash
 supabase functions deploy share-reta-og
 ```
-
-No ejecutado en esta fase.

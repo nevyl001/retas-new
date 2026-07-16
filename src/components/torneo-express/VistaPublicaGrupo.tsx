@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
 import { copyToClipboard, publicGrupoUrl } from "../../services/torneoExpressService";
+import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import {
   buildTEPublicGrupoProps,
   TEPublicGrupos,
@@ -31,7 +32,10 @@ export const VistaPublicaGrupo: React.FC<{
   );
 
   const copyLink = async () => {
-    const ok = await copyToClipboard(publicGrupoUrl(torneoId, grupoId));
+    const play = publicGrupoUrl(torneoId, grupoId);
+    const ok = await copyToClipboard(
+      buildSharePublicOgUrlFromPlayUrl(play) || play
+    );
     setCopyMsg(ok ? "Enlace copiado" : "No se pudo copiar");
     setTimeout(() => setCopyMsg(""), 2500);
   };

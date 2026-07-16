@@ -620,8 +620,12 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
         previewLabel="Abrir vista pública"
         onCopy={async () => {
           try {
+            const { buildSharePublicOgUrlFromPlayUrl } = await import(
+              "../../lib/retaAbierta/shareOgUrl"
+            );
+            const play = publicLigaJornadaUrl(ligaId, numero);
             await navigator.clipboard.writeText(
-              publicLigaJornadaUrl(ligaId, numero)
+              buildSharePublicOgUrlFromPlayUrl(play) || play
             );
             setMessage("Enlace copiado. También puedes abrir la vista pública.");
           } catch {
