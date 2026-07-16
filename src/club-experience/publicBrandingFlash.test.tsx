@@ -152,9 +152,9 @@ describe("public branding flash contract", () => {
       "pending"
     );
     expect(container.querySelector(".club-identity")).toBeNull();
-    // No heredar oro Riviera de <html> mientras pending (FOUC móvil).
-    expect(scope?.style.getPropertyValue("--ro-accent").trim()).toBe("#a1a1aa");
-    expect(scope?.style.getPropertyValue("--brand-accent").trim()).toBe("#a1a1aa");
+    // Pending = mismos acentos que Riviera Open (sin flash gris/oro).
+    expect(scope?.style.getPropertyValue("--ro-accent").trim()).toBe("#ffffff");
+    expect(scope?.style.getPropertyValue("--brand-accent").trim()).toBe("#ffffff");
   });
 
   it("loader neutro no incluye Riviera Open ni logo", () => {

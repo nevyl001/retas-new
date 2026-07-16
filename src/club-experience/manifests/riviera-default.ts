@@ -36,8 +36,8 @@ export const RIVIERA_DEFAULT_MANIFEST: BrandManifest = createBrandManifest({
   colors: {
     primary: "#000000",
     secondary: "#4C4C4C",
-    /** Acento Riviera (oro) — no blanco: las invitaciones públicas usan --ro-accent. */
-    accent: "#c9a227",
+    /** Misma acento que Riviera Open (`--ro-accent` en riviera-open-tokens). */
+    accent: "#ffffff",
     surface: "#0f0f0f",
     surfaceAlt: "#1a1a1a",
     border: "#2a2a2a",

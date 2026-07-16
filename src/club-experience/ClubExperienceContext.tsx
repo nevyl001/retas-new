@@ -29,6 +29,7 @@ import {
   isClubBrandedOrganizer,
   resolveClubManifest,
 } from "./manifestResolver";
+import { isPremiumBrandingEnabledForOrganizador } from "./organizerBindingResolver";
 import type { BrandManifest } from "./types";
 
 export type ClubBrandingStatus = "pending" | "resolved";
@@ -238,6 +239,13 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
     [manifest, branding, isClubBranded, normalizedOrgId, brandingStatus, isPending]
   );
 
+  // Clubs sin upgrade: siempre Riviera Open (pending = resolved visualmente).
+  // Premium (Hack): puede pintar manifiesto estático ya en pending; si no hay binding, madre.
+  const scopeStyleManifest =
+    isPending && !isPremiumBrandingEnabledForOrganizador(normalizedOrgId)
+      ? getNeutralPublicScopeStyle()
+      : getClubExperienceScopeStyle(manifest);
+
   return (
     <ClubExperienceContext.Provider value={value}>
       <div
@@ -245,11 +253,7 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
         data-club={isPending ? "pending" : manifest.brandingKey}
         data-branding-status={brandingStatus}
         className="club-experience-scope"
-        style={
-          isPending
-            ? getNeutralPublicScopeStyle()
-            : getClubExperienceScopeStyle(manifest)
-        }
+        style={scopeStyleManifest}
       >
         {children}
       </div>
