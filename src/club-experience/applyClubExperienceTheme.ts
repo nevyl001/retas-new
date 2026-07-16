@@ -46,12 +46,15 @@ export function getClubExperienceScopeStyle(
 /**
  * Tokens neutrales mientras el organizador / binding público aún no está listo.
  * Evita pintar Riviera o un tenant anterior como fallback transitorio.
+ * Incluye aliases legacy (`--ro-accent`, …) para que CSS de /jugar no herede
+ * el oro Riviera de `<html>` durante el pending (FOUC móvil / WhatsApp WebView).
  */
 export function getNeutralPublicScopeStyle(): CSSProperties {
+  const accent = "#a1a1aa";
   return {
     ["--brand-primary" as string]: "#71717a",
     ["--brand-secondary" as string]: "#52525b",
-    ["--brand-accent" as string]: "#a1a1aa",
+    ["--brand-accent" as string]: accent,
     ["--brand-surface" as string]: "#0f0f0f",
     ["--brand-surface-alt" as string]: "#1a1a1a",
     ["--brand-border" as string]: "#2a2a2a",
@@ -67,6 +70,11 @@ export function getNeutralPublicScopeStyle(): CSSProperties {
     ["--brand-heading-weight" as string]: "700",
     ["--brand-heading-letter-spacing" as string]: "-0.02em",
     ["--club-home-background-image" as string]: "none",
+    ["--accent-gold" as string]: accent,
+    ["--accent-gold-light" as string]: accent,
+    ["--ro-accent" as string]: accent,
+    ["--ro-border-accent" as string]:
+      "color-mix(in srgb, #a1a1aa 35%, transparent)",
   };
 }
 

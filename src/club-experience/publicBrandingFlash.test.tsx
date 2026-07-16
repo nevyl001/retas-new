@@ -145,13 +145,16 @@ describe("public branding flash contract", () => {
       );
     });
 
-    const scope = container.querySelector(".club-experience-scope");
+    const scope = container.querySelector(".club-experience-scope") as HTMLElement | null;
     expect(scope?.getAttribute("data-branding-status")).toBe("pending");
     expect(scope?.getAttribute("data-brand")).toBe("pending");
     expect(container.querySelector("[data-testid='probe']")?.getAttribute("data-status")).toBe(
       "pending"
     );
     expect(container.querySelector(".club-identity")).toBeNull();
+    // No heredar oro Riviera de <html> mientras pending (FOUC móvil).
+    expect(scope?.style.getPropertyValue("--ro-accent").trim()).toBe("#a1a1aa");
+    expect(scope?.style.getPropertyValue("--brand-accent").trim()).toBe("#a1a1aa");
   });
 
   it("loader neutro no incluye Riviera Open ni logo", () => {

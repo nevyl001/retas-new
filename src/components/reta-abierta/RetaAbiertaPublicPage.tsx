@@ -743,32 +743,6 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     return "Tu inscripción";
   };
 
-  if (loading) {
-    return (
-      <PublicTorneoExpressShell organizadorId={null}>
-        <div className="ra-public ra-public--skeleton" aria-busy="true">
-          <div className="ra-skel ra-skel--hero" />
-          <div className="ra-skel ra-skel--line" />
-          <div className="ra-skel ra-skel--line ra-skel--line-short" />
-          <div className="ra-skel ra-skel--cupo" />
-          <div className="ra-skel ra-skel--grid" />
-          <p className="ra-public__hint ra-skel-caption">Cargando convocatoria…</p>
-        </div>
-      </PublicTorneoExpressShell>
-    );
-  }
-
-  if (loadError || !dto) {
-    return (
-      <PublicTorneoExpressShell organizadorId={null}>
-        <div className="ra-public ra-public--error">
-          <h1>Convocatoria no disponible</h1>
-          <p>El link no es válido o las inscripciones no están activas.</p>
-        </div>
-      </PublicTorneoExpressShell>
-    );
-  }
-
   const isDuelo = isDueloMode;
   const humanError = toHumanActionError(actionError);
   const sideHint =
@@ -779,7 +753,22 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         : null;
 
   return (
-    <PublicTorneoExpressShell organizadorId={dto.organizador_id || null}>
+    <PublicTorneoExpressShell organizadorId={dto?.organizador_id || null}>
+      {loading ? (
+        <div className="ra-public ra-public--skeleton" aria-busy="true">
+          <div className="ra-skel ra-skel--hero" />
+          <div className="ra-skel ra-skel--line" />
+          <div className="ra-skel ra-skel--line ra-skel--line-short" />
+          <div className="ra-skel ra-skel--cupo" />
+          <div className="ra-skel ra-skel--grid" />
+          <p className="ra-public__hint ra-skel-caption">Cargando convocatoria…</p>
+        </div>
+      ) : loadError || !dto ? (
+        <div className="ra-public ra-public--error">
+          <h1>Convocatoria no disponible</h1>
+          <p>El link no es válido o las inscripciones no están activas.</p>
+        </div>
+      ) : (
       <div className="ra-public">
         <header className="ra-public__hero">
           <p className="ra-public__eyebrow">{modeLabel(dto.mode_type)}</p>
@@ -1320,6 +1309,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
           <p className="ra-public__hint ra-public__hint--ok">{successMessage}</p>
         ) : null}
       </div>
+      )}
     </PublicTorneoExpressShell>
   );
 };

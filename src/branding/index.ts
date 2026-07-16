@@ -32,3 +32,4 @@ export {
 } from "./organizerResolver";
 
 export { bootstrapAppBranding } from "./bootstrapAppBranding";
+export { shouldKeepDocumentMotherBrand } from "./documentMotherBrandPath";

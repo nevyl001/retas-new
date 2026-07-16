@@ -7,6 +7,7 @@ import {
   markBrandingBootstrapReady,
 } from "./brandingTransition";
 import { clearTenantBranding, resolveAndApplyBranding } from "./BrandingService";
+import { shouldKeepDocumentMotherBrand } from "./documentMotherBrandPath";
 
 function normalizePath(pathname: string): string {
   return pathname.replace(/\/+$/, "") || "/";
@@ -26,8 +27,9 @@ function isMotherBrandOnlyPath(pathname: string): boolean {
 /**
  * Resuelve y aplica branding antes del primer render de React.
  * - Ranking público con ?org o /ranking/o/{id} → club de la URL
+ * - Invitaciones /jugar /public /eventos → madre en <html> (scope aplica host)
  * - Login/auth sin sesión válida → Riviera madre (nunca Hack por caché vieja)
- * - Sesión Supabase válida → branding del organizador logueado
+ * - Sesión Supabase válida en rutas internas → branding del organizador logueado
  */
 export async function bootstrapAppBranding(): Promise<void> {
   if (typeof document !== "undefined") {
@@ -50,7 +52,10 @@ export async function bootstrapAppBranding(): Promise<void> {
       return;
     }
 
-    if (isMotherBrandOnlyPath(window.location.pathname)) {
+    if (
+      isMotherBrandOnlyPath(window.location.pathname) ||
+      shouldKeepDocumentMotherBrand(window.location.pathname)
+    ) {
       debugLog("[branding] bootstrap:resolved", {
         orgId: null,
         source: "mother-path",

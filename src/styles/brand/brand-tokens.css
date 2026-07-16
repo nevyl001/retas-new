@@ -19,8 +19,10 @@
   --brand-heading-letter-spacing: -0.02em;
 }
 
-[data-brand="hack-padel"],
-[data-club="hack-padel"] {
+html[data-brand="hack-padel"],
+html[data-club="hack-padel"],
+.club-experience-scope[data-brand="hack-padel"],
+.club-experience-scope[data-club="hack-padel"] {
   --brand-primary: #000000;
   --brand-secondary: #4c4c4c;
   --brand-accent: #bfff00;

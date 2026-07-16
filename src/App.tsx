@@ -12,6 +12,11 @@ import { UserProvider, useUser } from "./contexts/UserContext";
 import { AccountFeaturesProvider } from "./contexts/AccountFeaturesContext";
 import { ClubExperienceProvider } from "./club-experience";
 import { BrandingTransitionGate } from "./branding/BrandingTransitionGate";
+import {
+  clearTenantBranding,
+  resolveAndApplyBranding,
+} from "./branding/BrandingService";
+import { shouldKeepDocumentMotherBrand } from "./branding/documentMotherBrandPath";
 import { debugLog } from "./lib/debug/debugLog";
 
 // Components
@@ -802,6 +807,22 @@ function AppContent() {
     isDuelo2v2Public ||
     isJugadoresPublic ||
     isRetaAbiertaPublic;
+
+  // Invitaciones/públicas: <html> siempre madre. El club del anfitrión vive en el scope.
+  // Evita que sesión Hack pinte verde lime en convocatorias de otros clubs.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (
+      isPublicSpectatorView ||
+      shouldKeepDocumentMotherBrand(window.location.pathname)
+    ) {
+      clearTenantBranding();
+      return;
+    }
+    if (user?.id) {
+      void resolveAndApplyBranding(user.id);
+    }
+  }, [isPublicSpectatorView, user?.id, appPathname]);
 
   const showMobileAppNav =
     !authLoading &&

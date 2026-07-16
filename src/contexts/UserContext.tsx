@@ -5,6 +5,7 @@ import {
   getAppliedBranding,
   resolveAndApplyBranding,
 } from "../branding/BrandingService";
+import { shouldKeepDocumentMotherBrand } from "../branding/documentMotherBrandPath";
 import { debugLog } from "../lib/debug/debugLog";
 import {
   beginBrandingTransition,
@@ -221,15 +222,29 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
               navigateToAdminDashboard();
             }
           } else {
-            const branding = await resolveAndApplyBranding(nextUserId);
+            const path =
+              typeof window !== "undefined" ? window.location.pathname : "/";
+            if (shouldKeepDocumentMotherBrand(path)) {
+              clearTenantBranding();
+              debugLog("[branding] UserContext.applySession:mother-public-path", {
+                orgId: nextUserId,
+                path,
+              });
+            } else {
+              const branding = await resolveAndApplyBranding(nextUserId);
+              if (!isMounted || generation !== applySessionGenerationRef.current) {
+                return;
+              }
+
+              debugLog("[branding] UserContext.applySession:branding-ready", {
+                orgId: nextUserId,
+                brandingKey: branding.brandingKey,
+              });
+            }
+
             if (!isMounted || generation !== applySessionGenerationRef.current) {
               return;
             }
-
-            debugLog("[branding] UserContext.applySession:branding-ready", {
-              orgId: nextUserId,
-              brandingKey: branding.brandingKey,
-            });
 
             setSession(nextSession);
             setUser(nextSession.user);
