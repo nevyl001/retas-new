@@ -40,6 +40,7 @@ import type {
   OpenRegistrationPublicDto,
   OpenRegistrationPublicEntry,
 } from "../../lib/retaAbierta/types";
+import { copyTextToClipboard } from "../../lib/clipboard/copyTextToClipboard";
 import "./reta-abierta-public.css";
 
 type Step =
@@ -50,8 +51,6 @@ type Step =
   | "not_found"
   | "cancel_pick"
   | "cancel_confirm";
-
-import { copyTextToClipboard } from "../../lib/clipboard/copyTextToClipboard";
 
 function statusLabel(status: OpenRegistrationPublicDto["status"]): string {
   switch (status) {
