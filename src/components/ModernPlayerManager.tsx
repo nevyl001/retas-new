@@ -146,15 +146,12 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
       return;
     }
 
-    const needsNewLegacyLink = !rj.legacy_player_id?.trim();
     const rivieraLabel = rj.riviera_id?.trim() || rj.id;
-
-    if (needsNewLegacyLink) {
-      const ok = window.confirm(
-        `¿Vincular a ${rj.nombre} (${rivieraLabel}) al pool de retas de este club?\n\nSe usará su ficha Riviera existente (sin crear identidad nueva).`
-      );
-      if (!ok) return;
-    }
+    // Sin fila en pool: vincular o reparar puntero huérfano (acción explícita).
+    const ok = window.confirm(
+      `¿Agregar a ${rj.nombre} (${rivieraLabel}) al pool de retas de este club?\n\nSe usará su ficha Riviera existente (sin crear identidad nueva).`
+    );
+    if (!ok) return;
 
     void (async () => {
       setLinkingLegacy(true);

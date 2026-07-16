@@ -146,6 +146,12 @@ function defaultDeps(): LinkLegacyOnSelectDeps {
 /**
  * Vincula (o reutiliza) players.id para un riviera_jugador_id existente.
  * Idempotente por id. No crea Riviera ID ni identidad.
+ *
+ * Tres casos:
+ * 1) legacy_player_id + fila players existe → devolver (0 inserts)
+ * 2) legacy_player_id HUÉRFANO (fila players inexistente / no visible) →
+ *    crear players + re-vincular linkLegacyPlayerId (repara el puntero)
+ * 3) sin legacy_player_id → crear + vincular
  */
 export async function linkLegacyOnSelectForReta(
   organizadorId: string,
@@ -171,21 +177,21 @@ export async function linkLegacyOnSelectForReta(
   const existingLegacyId = rj.legacy_player_id?.trim() || null;
   if (existingLegacyId) {
     const existing = await deps.fetchPlayerById(existingLegacyId);
-    if (!existing) {
-      throw new Error(
-        "El jugador tiene legacy_player_id pero no existe la fila en players"
-      );
+    if (existing) {
+      // Caso 1: vínculo sano
+      return {
+        player: {
+          ...existing,
+          name: rj.nombre.trim() || existing.name,
+        },
+        created: false,
+        rivieraJugadorId: rj.id,
+      };
     }
-    return {
-      player: {
-        ...existing,
-        name: rj.nombre.trim() || existing.name,
-      },
-      created: false,
-      rivieraJugadorId: rj.id,
-    };
+    // Caso 2: puntero huérfano — cae a crear + re-vincular (abajo)
   }
 
+  // Caso 2 (huérfano) o 3 (sin legacy)
   const nombre = rj.nombre.trim();
   if (!nombre) {
     throw new Error("La ficha Riviera no tiene nombre");

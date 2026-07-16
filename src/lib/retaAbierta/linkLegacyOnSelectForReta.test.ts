@@ -147,6 +147,54 @@ describe("linkLegacyOnSelectForReta", () => {
     expect(result.player.id).toBe(existing.id);
   });
 
+  it("legacy_player_id HUÉRFANO (players inexistente) → crea y re-vincula, no falla", async () => {
+    const rivieraId = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
+    const orphanLegacyId = "dead-orphan-player-id";
+    let legacyId: string | null = orphanLegacyId;
+    let insertCount = 0;
+    let linkCount = 0;
+    const players = new Map<string, Player>();
+
+    const deps: Partial<LinkLegacyOnSelectDeps> = {
+      fetchRivieraJugadorById: async (id) => ({
+        id,
+        nombre: "Yusuke",
+        email: null,
+        legacy_player_id: legacyId,
+        foto_url: null,
+        rating: 3,
+      }),
+      // Puntero roto: el id está set pero la fila no existe
+      fetchPlayerById: async (id) => players.get(id) ?? null,
+      insertPlayerRow: async ({ name, email }) => {
+        insertCount += 1;
+        const p = makePlayer(`repaired-${insertCount}`, name, email);
+        players.set(p.id, p);
+        return p;
+      },
+      linkLegacyPlayerId: async (rjId, playerId) => {
+        expect(rjId).toBe(rivieraId);
+        expect(playerId).not.toBe(orphanLegacyId);
+        legacyId = playerId;
+        linkCount += 1;
+      },
+    };
+
+    const first = await linkLegacyOnSelectForReta("org-1", rivieraId, deps);
+    expect(first.created).toBe(true);
+    expect(insertCount).toBe(1);
+    expect(linkCount).toBe(1);
+    expect(first.player.id).toBe(legacyId);
+    expect(first.player.id).not.toBe(orphanLegacyId);
+
+    // Segunda selección: ya reparado → idempotente, 0 inserts más
+    const second = await linkLegacyOnSelectForReta("org-1", rivieraId, deps);
+    expect(second.created).toBe(false);
+    expect(insertCount).toBe(1);
+    expect(linkCount).toBe(1);
+    expect(second.player.id).toBe(first.player.id);
+  });
+
   it("no importa ensure crudo / find-by-name / createRivieraJugador", () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const src = require("fs").readFileSync(
