@@ -13,8 +13,10 @@ export function buildShareDtoFromOrganizerState(
 ): {
   name: string;
   scheduled_at: string | null;
+  scheduled_until: string | null;
   duration_minutes: number | null;
   location_label: string | null;
+  cancha_label: string | null;
   category_label: string | null;
   rama_label: string | null;
   capacity: number;
@@ -27,12 +29,28 @@ export function buildShareDtoFromOrganizerState(
   const confirmed = entries.filter((e) => e.status === "confirmed");
   const capacity = context.lockCapacity ? context.defaultCapacity : cfg.capacity;
 
+  const scheduled_at =
+    context.defaultScheduledAt ?? cfg.scheduled_at ?? null;
+  const duration_minutes =
+    context.defaultDurationMinutes ?? cfg.duration_minutes ?? 90;
+  let scheduled_until: string | null = null;
+  if (scheduled_at && duration_minutes > 0) {
+    const start = Date.parse(scheduled_at);
+    if (Number.isFinite(start)) {
+      scheduled_until = new Date(
+        start + duration_minutes * 60_000
+      ).toISOString();
+    }
+  }
+
   return {
-    name: cfg.title_public?.trim() || context.defaultTitle,
-    scheduled_at: cfg.scheduled_at ?? context.defaultScheduledAt ?? null,
-    duration_minutes:
-      cfg.duration_minutes ?? context.defaultDurationMinutes ?? 90,
-    location_label: cfg.location_label ?? context.defaultLocation ?? null,
+    // Nombre siempre desde entidad (context), no title_public stale.
+    name: context.defaultTitle,
+    scheduled_at,
+    scheduled_until,
+    duration_minutes,
+    location_label: context.defaultLocation ?? cfg.location_label ?? null,
+    cancha_label: context.defaultCancha ?? null,
     category_label: cfg.category_label ?? context.defaultCategory ?? null,
     rama_label: cfg.rama_label,
     capacity,

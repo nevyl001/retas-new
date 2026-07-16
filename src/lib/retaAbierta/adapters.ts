@@ -24,6 +24,8 @@ export function buildTournamentConvocatoriaContext(opts: {
   canchaLabel?: string;
   /** Inicio del encuentro (ISO). */
   scheduledAt?: string | null;
+  /** Fin del encuentro (ISO). */
+  scheduledUntil?: string | null;
   clubName?: string;
   tournamentFormat?: string | null;
   championshipEnabled?: boolean;
@@ -39,6 +41,11 @@ export function buildTournamentConvocatoriaContext(opts: {
 
   const club = opts.clubName?.trim() || undefined;
   const includeLugar = opts.includeLugar !== false;
+  const duration = durationMinutesBetween(
+    opts.scheduledAt,
+    opts.scheduledUntil,
+    opts.mode === "americano" ? 120 : 90
+  );
 
   return {
     mode: opts.mode,
@@ -50,7 +57,7 @@ export function buildTournamentConvocatoriaContext(opts: {
       : undefined,
     includeLugar,
     defaultCancha: opts.canchaLabel?.trim() || undefined,
-    defaultDurationMinutes: opts.mode === "americano" ? 120 : 90,
+    defaultDurationMinutes: duration,
     defaultScheduledAt: opts.scheduledAt ?? null,
     clubName: club,
     productHeadline,

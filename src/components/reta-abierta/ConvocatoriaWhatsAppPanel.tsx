@@ -30,6 +30,7 @@ import {
   readConvocatoriaLugarPrefs,
   writeConvocatoriaLugarPrefs,
 } from "../../lib/retaAbierta/convocatoriaLugarPrefs";
+import { syncConvocatoriaMetaToEntity } from "../../lib/retaAbierta/syncConvocatoriaMetaToEntity";
 import "./reta-abierta-organizer.css";
 
 export type EnsureDraftEntityResult = {
@@ -204,7 +205,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       const row = await fetchOpenGameRegistrationConfig(context.mode, id);
       setCfg(row);
       if (row) {
-        setTitlePublic(row.title_public || context.defaultTitle);
+        // Display desde entidad (context), no cache title_public / location_label.
+        setTitlePublic(context.defaultTitle);
         setStatus(row.status);
         setCapacity(context.lockCapacity ? context.defaultCapacity : row.capacity);
         setWaitlistEnabled(row.waitlist_enabled);
@@ -215,13 +217,15 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             : ""
         );
         setScheduledAt(
-          row.scheduled_at
-            ? isoToDatetimeLocalValue(row.scheduled_at)
-            : isoToDatetimeLocalValue(context.defaultScheduledAt)
+          context.defaultScheduledAt
+            ? isoToDatetimeLocalValue(context.defaultScheduledAt)
+            : row.scheduled_at
+              ? isoToDatetimeLocalValue(row.scheduled_at)
+              : ""
         );
         setDurationMinutes(
-          row.duration_minutes ??
-            context.defaultDurationMinutes ??
+          context.defaultDurationMinutes ??
+            row.duration_minutes ??
             90
         );
         setCategoryLabel(
@@ -238,15 +242,15 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             : context.includeLugar !== false
         );
         setLocationLabel(
-          row.location_label ??
+          context.defaultLocation ??
             prefs?.lugar ??
-            context.defaultLocation ??
+            row.location_label ??
             ""
         );
-        if (prefs?.cancha) {
-          setCanchaLabel(prefs.cancha);
-        } else if (context.defaultCancha) {
+        if (context.defaultCancha) {
           setCanchaLabel(context.defaultCancha);
+        } else if (prefs?.cancha) {
+          setCanchaLabel(prefs.cancha);
         }
         setDisplayRating(row.display_rating);
         setDisplayPhoto(row.display_photo);
@@ -340,6 +344,18 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       displayRating,
       displayPhoto,
       displayFullName,
+    }).then(async (row) => {
+      await syncConvocatoriaMetaToEntity({
+        mode: context.mode,
+        entityId: id,
+        name: context.defaultTitle,
+        locationLabel: loc.trim() || null,
+        canchaLabel: canchaLabel.trim() || null,
+        includeLugar,
+        scheduledAt: schedLocal,
+        durationMinutes: dur,
+      });
+      return row;
     });
   };
 

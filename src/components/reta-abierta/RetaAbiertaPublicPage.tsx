@@ -92,18 +92,26 @@ function formatWhen(dto: OpenRegistrationPublicDto): string {
     month: "short",
   });
 
-  // Misma fuente/formato que admin (rango inicio–fin) cuando hay fin.
-  const range = formatDueloHorarioRange(dto.scheduled_at, dto.scheduled_until);
-  if (range && dto.scheduled_until) {
+  let until = dto.scheduled_until ?? null;
+  if (
+    !until &&
+    dto.duration_minutes != null &&
+    dto.duration_minutes > 0
+  ) {
+    until = new Date(
+      d.getTime() + dto.duration_minutes * 60_000
+    ).toISOString();
+  }
+
+  const range = formatDueloHorarioRange(dto.scheduled_at, until);
+  if (range) {
     return `${datePart}, ${range}`;
   }
 
-  const timePart = d.toLocaleString("es-MX", {
+  return `${datePart}, ${d.toLocaleString("es-MX", {
     hour: "numeric",
     minute: "2-digit",
-  });
-  const base = `${datePart}, ${timePart}`;
-  return dto.duration_minutes ? `${base} · ${dto.duration_minutes} min` : base;
+  })}`;
 }
 
 function PlayerSlotCard({

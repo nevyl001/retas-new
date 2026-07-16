@@ -1,5 +1,7 @@
--- Read-only: comparar meta duelo (fuente de verdad) vs convocatoria abierta (vista /jugar).
--- Sustituye :duelo_id o filtra por nombre. Sin PII.
+-- Read-only: comparar meta entidad vs cache open_registration.
+-- Tras aplicar patch-convocatoria-public-meta-from-entity.sql,
+-- usar también verify-convocatoria-public-meta-from-entity.sql.
+-- Sin PII.
 
 -- 1) Entidad del juego
 SELECT

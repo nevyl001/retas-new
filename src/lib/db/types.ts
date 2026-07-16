@@ -17,6 +17,13 @@ export interface Tournament {
   team_config?: TournamentTeamConfig;
   /** Soft-archive desde Mis retas. NULL/undefined = visible en admin. */
   archived_at?: string | null;
+  /** Sede del encuentro (SoT para /jugar). Requiere patch-convocatoria-public-meta-from-entity. */
+  lugar?: string | null;
+  mostrar_lugar?: boolean | null;
+  /** Etiqueta de cancha (distinto de `courts`). */
+  cancha?: string | null;
+  programado_en?: string | null;
+  programado_hasta?: string | null;
 }
 
 export interface Player {

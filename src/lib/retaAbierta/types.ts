@@ -45,13 +45,13 @@ export interface OpenRegistrationPublicDto {
   approval_required: boolean;
   registration_deadline: string | null;
   scheduled_at: string | null;
-  /** Fin del encuentro (duelo: duelos_2v2.programado_hasta). */
+  /** Fin del encuentro (entidad: programado_hasta). */
   scheduled_until?: string | null;
   duration_minutes: number | null;
   category_label: string | null;
   rama_label: string | null;
   location_label: string | null;
-  /** Cancha del encuentro (duelo: duelos_2v2.cancha). Separada de location_label. */
+  /** Cancha del encuentro (entidad). Separada de location_label. */
   cancha_label?: string | null;
   display_rating: boolean;
   display_photo: boolean;
@@ -72,12 +72,14 @@ export interface OpenRegistrationConfigRow {
   waitlist_enabled: boolean;
   approval_required: boolean;
   registration_deadline: string | null;
+  /** @deprecated display — /jugar lee nombre de la entidad. Compat upsert. */
+  title_public: string | null;
+  /** @deprecated display — /jugar lee lugar de la entidad. Compat upsert. */
+  location_label: string | null;
   scheduled_at: string | null;
   duration_minutes: number | null;
   category_label: string | null;
   rama_label: string | null;
-  location_label: string | null;
-  title_public: string | null;
   display_rating: boolean;
   display_photo: boolean;
   display_full_name: boolean;
