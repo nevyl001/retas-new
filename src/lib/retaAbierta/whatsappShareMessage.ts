@@ -68,8 +68,8 @@ export function formatScheduledLabel(
 }
 
 /**
- * Una sola línea compacta para WhatsApp:
- * "domingo 12/7/2026, 11:00 a.m. · 90 min"
+ * Una sola línea compacta para WhatsApp (estilo Riviera, sin emojis):
+ * "jueves 16/7/2026, 5:00 p.m. · 120 min"
  */
 export function formatScheduledLabelCompact(
   iso: string | null,
@@ -111,30 +111,10 @@ function resolveHeadline(
   return convocatoriaProductHeadline({ mode });
 }
 
-function formatNivelOrRatingLine(opts: {
-  categoryLabel?: string | null;
-  ramaLabel?: string | null;
-  displayRating: boolean;
-  ratings: number[];
-}): string | null {
-  const cat = opts.categoryLabel?.trim();
-  if (cat) {
-    return cat.toLowerCase().startsWith("nivel") ? cat : cat;
-  }
-  const rama = opts.ramaLabel?.trim();
-  if (rama) return rama;
-  if (opts.displayRating && opts.ratings.length > 0) {
-    const min = Math.min(...opts.ratings);
-    const max = Math.max(...opts.ratings);
-    if (min === max) return min.toFixed(2);
-    return `${min.toFixed(2)} - ${max.toFixed(2)}`;
-  }
-  return null;
-}
-
 /**
- * Mensaje WhatsApp compacto (estilo convocatoria corta):
- * título, horario, lugar, cancha, nivel, jugadores, link.
+ * Mensaje WhatsApp Riviera: corto, claro, propio.
+ * Horario + lugar + cancha + jugadores + link + Riviera ID.
+ * ASCII-safe (✓ / ○), sin emojis de otros productos.
  */
 export function buildRetaAbiertaWhatsAppMessage(opts: {
   dto: Pick<
@@ -170,30 +150,26 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     clubName: opts.clubName,
   });
 
-  const ratings = confirmed
-    .map((e) => (e.rating != null ? Number(e.rating) : NaN))
-    .filter((n) => Number.isFinite(n));
-
-  const lines: string[] = [headline];
+  const lines: string[] = [headline, ""];
 
   lines.push(
-    `📅 ${formatScheduledLabelCompact(dto.scheduled_at, dto.duration_minutes)}`
+    formatScheduledLabelCompact(dto.scheduled_at, dto.duration_minutes)
   );
 
-  if (lugar) lines.push(`📍 ${lugar}`);
-  if (cancha) lines.push(`🏸 ${cancha}`);
+  if (lugar) lines.push(`Lugar: ${lugar}`);
+  if (cancha) lines.push(cancha);
 
-  const nivelLine = formatNivelOrRatingLine({
-    categoryLabel: dto.category_label,
-    ramaLabel: dto.rama_label,
-    displayRating: dto.display_rating,
-    ratings,
-  });
-  if (nivelLine) lines.push(`📊 ${nivelLine}`);
+  if (dto.rama_label?.trim()) lines.push(dto.rama_label.trim());
+  if (dto.category_label?.trim()) {
+    const cat = dto.category_label.trim();
+    lines.push(cat.toLowerCase().startsWith("nivel") ? cat : `Nivel ${cat}`);
+  }
+
+  lines.push("");
 
   if (mode === "americano") {
     lines.push(
-      `👥 ${dto.confirmed_count}/${dto.capacity} confirmados`
+      `${dto.confirmed_count} de ${dto.capacity} jugadores confirmados`
     );
   } else {
     for (const e of confirmed) {
@@ -202,16 +178,18 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
         dto.display_rating && e.rating != null
           ? ` (${Number(e.rating).toFixed(2)})`
           : "";
-      lines.push(`✅ ${name}${rating}`);
+      lines.push(`✓ ${name}${rating}`);
     }
     const openSlots = Math.max(dto.capacity - confirmed.length, 0);
     for (let i = 0; i < openSlots; i++) {
-      lines.push("⚪ ??");
+      lines.push("○ Disponible");
     }
   }
 
   lines.push("");
   lines.push(publicUrl);
+  lines.push("");
+  lines.push("Solo necesitas tu Riviera ID.");
 
   return lines.join("\n");
 }

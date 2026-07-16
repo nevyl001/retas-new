@@ -73,7 +73,7 @@ describe("WhatsApp share message por modo", () => {
     },
   ];
 
-  it("Reta: mensaje compacto con horario, lugar y cancha", () => {
+  it("Reta: mensaje compacto estilo Riviera", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {
         name: "Reta viernes",
@@ -93,17 +93,18 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Hack Pádel",
     });
     expect(text).toContain("RETA ABIERTA");
-    expect(text).toContain("📅");
-    expect(text).toContain("📍 Hack Pádel");
-    expect(text).toContain("🏸 Cancha 3");
-    expect(text).toContain("📊 5ta Fuerza");
-    expect(text).toContain("✅ Arturo Cortes (0.73)");
-    expect(text).toContain("⚪ ??");
+    expect(text).toContain("Lugar: Hack Pádel");
+    expect(text).toContain("Cancha 3");
+    expect(text).toContain("Nivel 5ta Fuerza");
+    expect(text).toContain("✓ Arturo Cortes (0.73)");
+    expect(text).toContain("○ Disponible");
     expect(text).toContain("https://app.example/jugar/ra-1");
+    expect(text).toContain("Solo necesitas tu Riviera ID.");
+    expect(text).not.toContain("📅");
+    expect(text).not.toContain("📍");
+    expect(text).not.toContain("⚪");
     expect(text).not.toContain("¿Quieres jugar?");
-    expect(text).not.toContain("Solo necesitas tu Riviera ID.");
-    expect(text).not.toContain("Jugadores");
-    expect(text.match(/⚪ \?\?/g)?.length).toBe(3);
+    expect(text.match(/○ Disponible/g)?.length).toBe(3);
   });
 
   it("Remontada Final: mismo mode_type reta, headline de producto", () => {
@@ -149,12 +150,13 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Hack Pádel",
     });
     expect(text).toContain("AMERICANO ABIERTO");
-    expect(text).toContain("📍 Hack");
-    expect(text).toContain("👥 6/16 confirmados");
-    expect(text).not.toContain("⚪ ??");
+    expect(text).toContain("Lugar: Hack");
+    expect(text).toContain("6 de 16 jugadores confirmados");
+    expect(text).toContain("Solo necesitas tu Riviera ID.");
+    expect(text).not.toContain("○ Disponible");
   });
 
-  it("Duelo: compacto con lugar, cancha y huecos ??", () => {
+  it("Duelo: compacto Riviera con lugar, cancha y Disponibles", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {
         name: "Duelo",
@@ -175,14 +177,14 @@ describe("WhatsApp share message por modo", () => {
       canchaLabel: "1",
     });
     expect(text).toContain("DUELO 2 VS 2");
-    expect(text).toContain("📍 Hack Pádel");
-    expect(text).toContain("🏸 Cancha 1");
-    expect(text).toContain("📊 5ta Fuerza");
-    expect(text).toContain("⚪ ??");
-    // Solo 1 entry confirmed en baseEntries → 3 huecos
-    expect(text.match(/⚪ \?\?/g)?.length).toBe(3);
-    expect(text.indexOf("📍 Hack Pádel")).toBeLessThan(
-      text.indexOf("🏸 Cancha 1")
+    expect(text).toContain("Lugar: Hack Pádel");
+    expect(text).toContain("Cancha 1");
+    expect(text).toContain("Nivel 5ta Fuerza");
+    expect(text).toContain("○ Disponible");
+    expect(text).toContain("Solo necesitas tu Riviera ID.");
+    expect(text.match(/○ Disponible/g)?.length).toBe(3);
+    expect(text.indexOf("Lugar: Hack Pádel")).toBeLessThan(
+      text.indexOf("Cancha 1")
     );
   });
 
@@ -206,9 +208,9 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Riviera Open",
       canchaLabel: "2",
     });
-    expect(text).toContain("📍 Club Alva Norte");
-    expect(text).toContain("🏸 Cancha 2");
-    expect(text).not.toContain("📍 Riviera Open");
+    expect(text).toContain("Lugar: Club Alva Norte");
+    expect(text).toContain("Cancha 2");
+    expect(text).not.toContain("Lugar: Riviera Open");
   });
 
   it("no imprime la etiqueta vacía Club cuando falta el origen", () => {
