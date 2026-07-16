@@ -18,6 +18,8 @@ export interface OpenRegistrationPublicEntry {
   id: string;
   status: OpenRegistrationEntryStatus;
   riviera_id: string;
+  /** Presente cuando la RPC pública lo expone (cedidos / multi-club). */
+  riviera_jugador_id?: string | null;
   nombre: string;
   foto_url: string | null;
   rating: number | null;

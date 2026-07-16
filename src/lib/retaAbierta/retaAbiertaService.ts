@@ -1,3 +1,4 @@
+import { fetchRivieraJugadorProfilesByIds } from "../rivieraJugadores/publicPlayerAvatars";
 import { supabase } from "../supabaseClient";
 import { mapConvocatoriaUserError } from "./convocatoriaErrors";
 import {
@@ -263,6 +264,10 @@ export function parsePublicDto(raw: unknown): OpenRegistrationPublicDto | null {
           status: (er.status as OpenRegistrationPublicDto["entries"][0]["status"]) ||
             "confirmed",
           riviera_id: String(er.riviera_id ?? ""),
+          riviera_jugador_id:
+            typeof er.riviera_jugador_id === "string" && er.riviera_jugador_id.trim()
+              ? er.riviera_jugador_id.trim()
+              : null,
           nombre: String(er.nombre ?? "Jugador"),
           foto_url: typeof er.foto_url === "string" ? er.foto_url : null,
           rating: typeof er.rating === "number" ? er.rating : null,
@@ -301,6 +306,116 @@ export function assertPublicDtoPrivacy(dto: OpenRegistrationPublicDto): string[]
   return leaks;
 }
 
+/**
+ * Completa foto_url de confirmados cuando el local cedido no trae imagen
+ * (misma resolución canónica que bracket / duelo público).
+ */
+const publicEntryFotoCache = new Map<string, string>();
+
+/** Solo tests. */
+export function clearPublicEntryFotoCacheForTests(): void {
+  publicEntryFotoCache.clear();
+}
+
+function publicEntryFotoCacheKey(slug: string, rivieraId: string): string {
+  return `${slug.trim()}::${rivieraId.trim().toUpperCase()}`;
+}
+
+export async function enrichPublicEntryPhotos(
+  dto: OpenRegistrationPublicDto
+): Promise<OpenRegistrationPublicDto> {
+  if (!dto.display_photo || dto.entries.length === 0) return dto;
+
+  const needsPhoto = dto.entries.filter(
+    (e) => !(typeof e.foto_url === "string" && e.foto_url.trim())
+  );
+  if (needsPhoto.length === 0) return dto;
+
+  const fotoByEntryId = new Map<string, string>();
+
+  for (const entry of needsPhoto) {
+    const rivieraId = entry.riviera_id?.trim();
+    if (!rivieraId) continue;
+    const cached = publicEntryFotoCache.get(
+      publicEntryFotoCacheKey(dto.slug, rivieraId)
+    );
+    if (cached) fotoByEntryId.set(entry.id, cached);
+  }
+
+  const stillNeedAfterCache = needsPhoto.filter((e) => !fotoByEntryId.has(e.id));
+
+  const idsForRpc = stillNeedAfterCache
+    .map((e) => e.riviera_jugador_id?.trim() || null)
+    .filter((id): id is string => Boolean(id));
+
+  if (idsForRpc.length > 0 && dto.organizador_id.trim()) {
+    try {
+      const profiles = await fetchRivieraJugadorProfilesByIds(idsForRpc, {
+        publicOnly: true,
+        organizadorId: dto.organizador_id,
+      });
+      for (const entry of stillNeedAfterCache) {
+        const rjId = entry.riviera_jugador_id?.trim();
+        if (!rjId) continue;
+        const foto = profiles.get(rjId)?.fotoUrl?.trim();
+        if (foto) {
+          fotoByEntryId.set(entry.id, foto);
+          const rivieraId = entry.riviera_id?.trim();
+          if (rivieraId) {
+            publicEntryFotoCache.set(
+              publicEntryFotoCacheKey(dto.slug, rivieraId),
+              foto
+            );
+          }
+        }
+      }
+    } catch {
+      /* fallback abajo */
+    }
+  }
+
+  const stillMissing = stillNeedAfterCache.filter((e) => !fotoByEntryId.has(e.id));
+  if (stillMissing.length > 0) {
+    const previews = await Promise.all(
+      stillMissing.map(async (entry) => {
+        const rivieraId = entry.riviera_id?.trim();
+        if (!rivieraId) return null;
+        try {
+          const res = await previewRivieraIdForOpenRegistration(
+            dto.slug,
+            rivieraId
+          );
+          if (res.ok && res.preview.foto_url?.trim()) {
+            return { entryId: entry.id, rivieraId, foto: res.preview.foto_url.trim() };
+          }
+        } catch {
+          /* ignore */
+        }
+        return null;
+      })
+    );
+    for (const row of previews) {
+      if (!row) continue;
+      fotoByEntryId.set(row.entryId, row.foto);
+      publicEntryFotoCache.set(
+        publicEntryFotoCacheKey(dto.slug, row.rivieraId),
+        row.foto
+      );
+    }
+  }
+
+  if (fotoByEntryId.size === 0) return dto;
+
+  return {
+    ...dto,
+    entries: dto.entries.map((e) => {
+      const foto = fotoByEntryId.get(e.id);
+      if (!foto) return e;
+      return { ...e, foto_url: foto };
+    }),
+  };
+}
+
 export async function fetchOpenRegistrationPublic(
   slug: string
 ): Promise<
@@ -318,7 +433,8 @@ export async function fetchOpenRegistrationPublic(
   }
   const dto = parsePublicDto(data);
   if (!dto) return { ok: false, error: "invalid_payload" };
-  return { ok: true, dto };
+  const withPhotos = await enrichPublicEntryPhotos(dto);
+  return { ok: true, dto: withPhotos };
 }
 
 export async function previewRivieraIdForOpenRegistration(
