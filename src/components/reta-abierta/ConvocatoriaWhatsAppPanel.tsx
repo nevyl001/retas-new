@@ -201,7 +201,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             : isoToDatetimeLocalValue(context.defaultScheduledAt)
         );
         setDurationMinutes(
-          row.duration_minutes ?? context.defaultDurationMinutes ?? 90
+          context.defaultDurationMinutes ??
+            row.duration_minutes ??
+            90
         );
         setCategoryLabel(
           row.category_label ?? context.defaultCategory ?? ""
@@ -327,7 +329,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           ? new Date(scheduledAt).toISOString()
           : context.defaultScheduledAt ?? null;
       let launchLocation = locationLabel;
-      let launchDuration = durationMinutes;
+      let launchDuration =
+        context.defaultDurationMinutes ?? durationMinutes;
       let launchTitle = titlePublic.trim() || context.defaultTitle;
       let launchCategory =
         categoryLabel.trim() ||
@@ -435,12 +438,53 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     setShareNote(true);
     try {
       const pub = await fetchOpenRegistrationPublic(cfg.public_slug);
+      const resolvedDuration =
+        durationMinutes ||
+        context.defaultDurationMinutes ||
+        (pub.ok ? pub.dto.duration_minutes : null) ||
+        90;
       const text = pub.ok
-        ? buildShareText(pub.dto, publicUrl)
+        ? buildShareText(
+            {
+              ...pub.dto,
+              scheduled_at:
+                pub.dto.scheduled_at || context.defaultScheduledAt || null,
+              duration_minutes: resolvedDuration,
+              location_label:
+                pub.dto.location_label ||
+                context.defaultLocation ||
+                null,
+            },
+            publicUrl
+          )
         : publicUrl;
       await copyTextToClipboard(text);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2800);
+
+      // Corrige duración guardada si quedó el default 90
+      if (
+        entityId &&
+        context.defaultDurationMinutes != null &&
+        cfg.duration_minutes !== context.defaultDurationMinutes
+      ) {
+        try {
+          const row = await savePayload(entityId, {
+            enabled: cfg.enabled,
+            status: cfg.status,
+            durationMinutes: context.defaultDurationMinutes,
+            categoryLabel:
+              categoryLabel.trim() ||
+              cfg.category_label ||
+              context.defaultCategory ||
+              null,
+          });
+          setCfg(row);
+          setDurationMinutes(context.defaultDurationMinutes);
+        } catch {
+          /* no bloquear la copia */
+        }
+      }
     } catch {
       setError("No se pudo copiar el mensaje");
     } finally {

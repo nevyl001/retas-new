@@ -16,7 +16,9 @@ import { resolveOpenRegistrationJoinStatus } from "./joinStatus";
 import { resolveAppViewFromPath, pathRequiresUserSession } from "../appRouting";
 import {
   CONVOCATORIA_IDENTITY_CONTRACT,
+  buildDueloConvocatoriaContext,
   defaultCapacityForMode,
+  durationMinutesBetween,
 } from "./adapters";
 import {
   assertConvocatoriaAllowedMode,
@@ -369,6 +371,27 @@ describe("errores UX sin SQL", () => {
     expect(
       mapConvocatoriaUserError("PGRST202: Could not find the function", "launch")
     ).toBe("No pudimos crear la convocatoria. Intenta nuevamente.");
+  });
+});
+
+describe("durationMinutesBetween / duelo convocatoria", () => {
+  it("calcula 120 minutos entre 5pm y 7pm", () => {
+    expect(
+      durationMinutesBetween(
+        "2026-07-16T17:00:00.000-06:00",
+        "2026-07-16T19:00:00.000-06:00"
+      )
+    ).toBe(120);
+  });
+
+  it("buildDueloConvocatoriaContext usa programado_hasta para duración", () => {
+    const ctx = buildDueloConvocatoriaContext({
+      dueloId: "d1",
+      name: "test2",
+      scheduledAt: "2026-07-16T23:00:00.000Z",
+      scheduledUntil: "2026-07-17T01:00:00.000Z",
+    });
+    expect(ctx.defaultDurationMinutes).toBe(120);
   });
 });
 

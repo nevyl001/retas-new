@@ -42,15 +42,39 @@ export function buildTournamentConvocatoriaContext(opts: {
   };
 }
 
+/** Minutos entre inicio y fin ISO; si no hay datos válidos, usa fallback. */
+export function durationMinutesBetween(
+  startIso: string | null | undefined,
+  endIso: string | null | undefined,
+  fallback = 90
+): number {
+  if (!startIso?.trim() || !endIso?.trim()) return fallback;
+  const start = Date.parse(startIso);
+  const end = Date.parse(endIso);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    return fallback;
+  }
+  return Math.max(1, Math.round((end - start) / 60000));
+}
+
 export function buildDueloConvocatoriaContext(opts: {
   dueloId: string;
   name: string;
   locationLabel?: string;
   scheduledAt?: string | null;
+  /** Fin del encuentro (programado_hasta) — se usa para calcular duración. */
+  scheduledUntil?: string | null;
   durationMinutes?: number | null;
   clubName?: string;
   categoryLabel?: string;
 }): ConvocatoriaAdapterContext {
+  const duration =
+    opts.durationMinutes != null &&
+    Number.isFinite(opts.durationMinutes) &&
+    opts.durationMinutes > 0
+      ? Math.round(opts.durationMinutes)
+      : durationMinutesBetween(opts.scheduledAt, opts.scheduledUntil, 90);
+
   return {
     mode: "duelo_2v2",
     entityId: opts.dueloId,
@@ -58,7 +82,7 @@ export function buildDueloConvocatoriaContext(opts: {
     defaultCapacity: 4,
     defaultLocation: opts.locationLabel,
     defaultCategory: opts.categoryLabel,
-    defaultDurationMinutes: opts.durationMinutes ?? 90,
+    defaultDurationMinutes: duration,
     defaultScheduledAt: opts.scheduledAt ?? null,
     clubName: opts.clubName,
     lockCapacity: true,

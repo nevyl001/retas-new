@@ -303,6 +303,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 name: duelo.nombre,
                 locationLabel: duelo.cancha ?? undefined,
                 scheduledAt: duelo.programado_en,
+                scheduledUntil: duelo.programado_hasta,
                 clubName: convocatoriaOrigin,
               })}
             />
@@ -397,6 +398,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           name: duelo.nombre,
           locationLabel: duelo.cancha ?? undefined,
           scheduledAt: duelo.programado_en,
+          scheduledUntil: duelo.programado_hasta,
           clubName: convocatoriaOrigin,
         })}
       />
