@@ -141,6 +141,58 @@ export function clearDuelo2v2CreateDraft(
   storage.removeItem(duelo2v2DraftStorageKey(org));
 }
 
+/**
+ * Limpia todo el estado temporal de creación de duelo en el cliente.
+ * No borra filas de base de datos.
+ */
+export function clearDuelo2v2CreateSession(
+  organizadorId: string,
+  storage: Storage = sessionStorage
+): void {
+  clearDuelo2v2CreateDraft(organizadorId, storage);
+}
+
+/** Alias semántico: leer borrador solo para decidir si mostrar “Continuar”. */
+export function peekDuelo2v2CreateDraft(
+  organizadorId: string,
+  storage: Storage = sessionStorage
+): Duelo2v2CreateDraft | null {
+  return readDuelo2v2CreateDraft(organizadorId, storage);
+}
+
+/** Marca un duelo en configuración como borrador pendiente (solo ID + meta básica). */
+export function markDuelo2v2PendingDraft(
+  organizadorId: string,
+  meta: {
+    openDueloId: string;
+    nombre?: string;
+    cancha?: string;
+    categoria?: string;
+    draftDate?: string;
+    draftTimeStart?: string;
+    draftTimeEnd?: string;
+  },
+  storage: Storage = sessionStorage
+): void {
+  const id = meta.openDueloId.trim();
+  if (!id) return;
+  writeDuelo2v2CreateDraft(
+    organizadorId,
+    {
+      nombre: meta.nombre ?? "",
+      cancha: meta.cancha ?? "",
+      categoria: meta.categoria ?? "",
+      draftDate: meta.draftDate ?? "",
+      draftTimeStart: meta.draftTimeStart ?? "",
+      draftTimeEnd: meta.draftTimeEnd ?? "",
+      pairA: null,
+      pairB: null,
+      openDueloId: id,
+    },
+    storage
+  );
+}
+
 export function pairToDraftIds(
   pair: { j1: RivieraJugador; j2: RivieraJugador } | null
 ): Duelo2v2PairDraftIds | null {

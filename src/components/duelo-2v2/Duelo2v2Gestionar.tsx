@@ -17,6 +17,11 @@ import { fetchDuelo2v2RatingBySlot } from "../../lib/duelo2v2/duelo2v2RatingDisp
 import { ensureDuelo2v2RatingApplied } from "../../lib/duelo2v2/duelo2v2RatingApply";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import {
+  clearDuelo2v2CreateSession,
+  markDuelo2v2PendingDraft,
+  peekDuelo2v2CreateDraft,
+} from "../../lib/duelo2v2/duelo2v2CreateDraft";
+import {
   finalizarDuelo2v2,
   getDuelo2v2ById,
   parejaLabel,
@@ -83,6 +88,21 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       if (!d) throw new Error("Duelo no encontrado");
       setDuelo(d);
       setEditorKey((k) => k + 1);
+
+      // Solo marca pendiente si sigue en configuración; limpia si ya no aplica.
+      if (d.estado === "configuracion") {
+        markDuelo2v2PendingDraft(d.organizador_id, {
+          openDueloId: d.id,
+          nombre: d.nombre,
+          cancha: d.cancha ?? "",
+        });
+      } else {
+        const pending = peekDuelo2v2CreateDraft(d.organizador_id);
+        if (pending?.openDueloId === d.id) {
+          clearDuelo2v2CreateSession(d.organizador_id);
+        }
+      }
+
       if (d.estado === "finalizado" && d.ganador) {
         await ensureDuelo2v2RatingApplied(d.organizador_id, d);
         setRatingByJugadorId(

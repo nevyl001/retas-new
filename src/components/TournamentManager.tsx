@@ -2,8 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   getPairs,
   getMatches,
-  deleteTournament,
-  deleteMatchesByTournamentSafely,
+  archiveTournament,
   updateTournament,
   Tournament,
 } from "../lib/database";
@@ -27,7 +26,7 @@ import {
   type HomeRetaItem,
   type RetaFilterId,
 } from "../lib/retasList";
-import { deleteDuelo2v2 } from "../services/duelo2v2Service";
+import { archiveDuelo2v2 } from "../services/duelo2v2Service";
 import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo-2v2/duelo2v2Nav";
 import { useClubModeEyebrow } from "../club-experience";
 import { useUser } from "../contexts/UserContext";
@@ -37,6 +36,9 @@ import { ActionBar } from "./platform/ActionBar";
 import { ModeHeader } from "./platform/ModeHeader";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
 import "./mis-retas/mis-retas.css";
+
+const ARCHIVE_RETA_CONFIRM =
+  "Esta reta dejará de aparecer en Mis retas, pero el resultado, los puntos, el rating y el historial de los jugadores se conservarán.";
 
 interface TournamentManagerProps {
   onTournamentSelect: (tournament: Tournament | null) => void;
@@ -121,11 +123,11 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     onTournamentSelect(item.tournament);
   };
 
-  const handleDeleteReta = async (item: HomeRetaItem) => {
+  const handleArchiveReta = async (item: HomeRetaItem) => {
     const name = getRetaName(item);
     if (
       !window.confirm(
-        `¿Estás seguro de que quieres eliminar «${name}»? Esta acción no se puede deshacer.`
+        `Archivar «${name}»?\n\n${ARCHIVE_RETA_CONFIRM}\n\nPulsa Aceptar para archivar o Cancelar para volver.`
       )
     ) {
       return;
@@ -140,59 +142,27 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
 
     try {
       if (item.kind === "duelo-2v2") {
-        await deleteDuelo2v2(id);
+        await archiveDuelo2v2(id);
         return;
       }
 
-      const tournament = item.tournament;
-      const [pairs, matches] = await Promise.all([getPairs(id), getMatches(id)]);
-
-      if (user?.id) {
-        try {
-          const hasFinished = matches.some((m) => m.status === "finished");
-          if (tournament.is_finished || hasFinished) {
-            await finalizeCareerEvent({
-              kind: "reta",
-              organizadorId: user.id,
-              tournament,
-              pairs,
-              matches,
-              options: { skipAssertions: true },
-            });
-          }
-        } catch (syncErr) {
-          console.warn("syncRetaParticipaciones antes de eliminar:", syncErr);
-        }
-      }
-
-      if (matches.length > 0) {
-        const deleteGate = await deleteMatchesByTournamentSafely(id, (prompt) =>
-          window.confirm(prompt)
-        );
-        if (deleteGate.outcome === "cancelled") {
-          setError(
-            deleteGate.warning ??
-              "Eliminación cancelada para preservar el detalle de partidos."
-          );
-          await reloadRetas();
-          return;
-        }
-        if (deleteGate.outcome === "deleted" && deleteGate.warning) {
-          console.warn("[reta-archive]", deleteGate.warning);
-        }
-      }
-
-      await deleteTournament(id);
+      // Retas: ya no se sincroniza carrera ni se borran matches al archivar.
+      // El soft-archive conserva el padre; la carrera sigue intacta.
+      await archiveTournament(id);
       if (selectedTournament?.id === id) {
         onTournamentSelect(null);
       }
     } catch (err) {
-      setError("Error al eliminar la reta. Se actualizó la lista.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Error al archivar la reta. Se actualizó la lista."
+      );
       console.error(err);
       try {
         await reloadRetas();
       } catch (reloadErr) {
-        console.error("Error al recargar retas tras fallo de borrado:", reloadErr);
+        console.error("Error al recargar retas tras fallo de archivo:", reloadErr);
       }
     } finally {
       setDeletingIds((prev) => {
@@ -451,7 +421,8 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                     <button
                       type="button"
                       className="riviera-btn-danger-icon mis-reta-card__delete"
-                      aria-label="Eliminar reta"
+                      aria-label="Archivar reta"
+                      title="Archivar reta"
                       disabled={isDeleting || loading}
                       onPointerDown={(e) => {
                         e.stopPropagation();
@@ -459,7 +430,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();
-                        void handleDeleteReta(item);
+                        void handleArchiveReta(item);
                       }}
                     >
                       {isDeleting ? (

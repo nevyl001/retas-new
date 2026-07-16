@@ -1,8 +1,11 @@
 import {
   clearDuelo2v2CreateDraft,
+  clearDuelo2v2CreateSession,
   DUELO_2V2_DRAFT_TTL_MS,
   duelo2v2DraftStorageKey,
   isDuelo2v2CreateDraftExpired,
+  markDuelo2v2PendingDraft,
+  peekDuelo2v2CreateDraft,
   readDuelo2v2CreateDraft,
   rehydrateDueloPairFromDraft,
   writeDuelo2v2CreateDraft,
@@ -159,6 +162,20 @@ describe("duelo2v2CreateDraft", () => {
     );
     clearDuelo2v2CreateDraft(ORG, storage);
     expect(readDuelo2v2CreateDraft(ORG, storage)).toBeNull();
+  });
+
+  it("clearDuelo2v2CreateSession y mark/peek pending draft", () => {
+    const storage = mockStorage();
+    markDuelo2v2PendingDraft(
+      ORG,
+      { openDueloId: "pending-1", nombre: "Pendiente" },
+      storage
+    );
+    const peeked = peekDuelo2v2CreateDraft(ORG, storage);
+    expect(peeked?.openDueloId).toBe("pending-1");
+    expect(peeked?.nombre).toBe("Pendiente");
+    clearDuelo2v2CreateSession(ORG, storage);
+    expect(peekDuelo2v2CreateDraft(ORG, storage)).toBeNull();
   });
 
   it("rehydrateDueloPairFromDraft devuelve null si falta algún jugador", () => {

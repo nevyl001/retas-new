@@ -86,6 +86,7 @@ function mapDuelo(row: Record<string, unknown>): Duelo2v2 {
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
     finalizado_at: row.finalizado_at ? String(row.finalizado_at) : null,
+    archived_at: row.archived_at ? String(row.archived_at) : null,
   };
 }
 
@@ -104,13 +105,35 @@ function resolveGanadorFromDetalle(
   };
 }
 
-export async function getDuelos2v2(): Promise<Duelo2v2[]> {
+export async function getDuelos2v2(opts?: {
+  includeArchived?: boolean;
+}): Promise<Duelo2v2[]> {
   const uid = await requireUserId();
-  const { data, error } = await supabase
+  const includeArchived = opts?.includeArchived === true;
+  let query = supabase
     .from("duelos_2v2")
     .select("*")
-    .eq("organizador_id", uid)
-    .order("created_at", { ascending: false });
+    .eq("organizador_id", uid);
+
+  if (!includeArchived) {
+    query = query.is("archived_at", null);
+  }
+
+  let { data, error } = await query.order("created_at", { ascending: false });
+
+  // Compat: columna archived_at aún no aplicada
+  if (
+    error &&
+    /archived_at|column .* does not exist|42703/i.test(error.message ?? "")
+  ) {
+    const fallback = await supabase
+      .from("duelos_2v2")
+      .select("*")
+      .eq("organizador_id", uid)
+      .order("created_at", { ascending: false });
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) throw new Error(formatDueloDbError(error));
   return (data ?? []).map((row) => mapDuelo(row as Record<string, unknown>));
@@ -306,6 +329,14 @@ export async function startDuelo2v2(opts: {
   }
 
   await closeOpenGameRegistration("duelo_2v2", duelo.id);
+  try {
+    const { clearDuelo2v2CreateSession } = await import(
+      "../lib/duelo2v2/duelo2v2CreateDraft"
+    );
+    clearDuelo2v2CreateSession(uid);
+  } catch {
+    /* ignore */
+  }
   return duelo;
 }
 
@@ -431,6 +462,15 @@ export async function finalizarDuelo2v2(id: string): Promise<FinalizarDuelo2v2Re
     );
   }
 
+  try {
+    const { clearDuelo2v2CreateSession } = await import(
+      "../lib/duelo2v2/duelo2v2CreateDraft"
+    );
+    clearDuelo2v2CreateSession(uid);
+  } catch {
+    /* ignore */
+  }
+
   return {
     duelo: finalizado,
     careerSyncOk,
@@ -442,10 +482,67 @@ export async function finalizarDuelo2v2(id: string): Promise<FinalizarDuelo2v2Re
   };
 }
 
+/**
+ * Soft-archive: oculta el duelo de Mis retas / listados admin.
+ * Conserva fila padre, participaciones, puntos, rating y ledger.
+ * No es DELETE físico.
+ */
+export async function archiveDuelo2v2(id: string): Promise<Duelo2v2> {
+  const uid = await requireUserId();
+  const current = await getDuelo2v2ById(id);
+  if (!current) throw new Error("Duelo no encontrado.");
+  if (current.archived_at) return current;
+  if (current.estado === "en_juego") {
+    throw new Error(
+      "No puedes archivar un duelo en curso. Finalízalo primero."
+    );
+  }
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("duelos_2v2")
+    .update({ archived_at: now, updated_at: now })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    if (/archived_at|column .* does not exist|42703/i.test(error.message ?? "")) {
+      throw new Error(
+        "Falta aplicar supabase/sql/patch-soft-archive-mis-retas.sql en Supabase para archivar sin borrar la carrera."
+      );
+    }
+    throw new Error(formatDueloDbError(error));
+  }
+
+  try {
+    const { clearDuelo2v2CreateSession } = await import(
+      "../lib/duelo2v2/duelo2v2CreateDraft"
+    );
+    clearDuelo2v2CreateSession(uid);
+  } catch {
+    /* ignore */
+  }
+
+  return mapDuelo(data as Record<string, unknown>);
+}
+
+/** @deprecated Usar archiveDuelo2v2 — ya no hace DELETE físico. */
 export async function deleteDuelo2v2(id: string): Promise<void> {
+  await archiveDuelo2v2(id);
+}
+
+export async function restoreArchivedDuelo2v2(id: string): Promise<Duelo2v2> {
   await requireUserId();
-  const { error } = await supabase.from("duelos_2v2").delete().eq("id", id);
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("duelos_2v2")
+    .update({ archived_at: null, updated_at: now })
+    .eq("id", id)
+    .select()
+    .single();
   if (error) throw new Error(formatDueloDbError(error));
+  return mapDuelo(data as Record<string, unknown>);
 }
 
 export function publicDuelo2v2Path(id: string): string {

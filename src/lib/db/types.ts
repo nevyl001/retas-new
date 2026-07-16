@@ -15,6 +15,8 @@ export interface Tournament {
   updated_at: string;
   format?: "round_robin" | "teams";
   team_config?: TournamentTeamConfig;
+  /** Soft-archive desde Mis retas. NULL/undefined = visible en admin. */
+  archived_at?: string | null;
 }
 
 export interface Player {

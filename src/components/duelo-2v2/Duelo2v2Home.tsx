@@ -3,7 +3,7 @@ import { useClubModeEyebrow, getDueloHomeSubtitle, useBranding } from "../../clu
 import { navigateToAppHome } from "../../lib/appRouting";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
 import {
-  deleteDuelo2v2,
+  archiveDuelo2v2,
   getDuelos2v2,
   parejaLabel,
 } from "../../services/duelo2v2Service";
@@ -15,6 +15,8 @@ import { Duelo2v2MatchMeta } from "./Duelo2v2MatchMeta";
 import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo2v2Nav";
 import "./duelo2v2-page.css";
 
+const ARCHIVE_RETA_CONFIRM =
+  "Esta reta dejará de aparecer en Mis retas, pero el resultado, los puntos, el rating y el historial de los jugadores se conservarán.";
 function estadoLabel(estado: Duelo2v2["estado"]): string {
   if (estado === "finalizado") return "Finalizado";
   if (estado === "en_juego") return "En curso";
@@ -51,20 +53,20 @@ export const Duelo2v2Home: React.FC = () => {
     load();
   }, [load]);
 
-  const handleDelete = async (duelo: Duelo2v2) => {
+  const handleArchive = async (duelo: Duelo2v2) => {
     if (
       !window.confirm(
-        `¿Eliminar «${duelo.nombre}»? Esta acción no se puede deshacer.`
+        `Archivar «${duelo.nombre}»?\n\n${ARCHIVE_RETA_CONFIRM}\n\nPulsa Aceptar para archivar o Cancelar para volver.`
       )
     ) {
       return;
     }
     setDeletingId(duelo.id);
     try {
-      await deleteDuelo2v2(duelo.id);
+      await archiveDuelo2v2(duelo.id);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo eliminar");
+      setError(e instanceof Error ? e.message : "No se pudo archivar");
     } finally {
       setDeletingId(null);
     }
@@ -130,9 +132,9 @@ export const Duelo2v2Home: React.FC = () => {
               variant="ghost"
               size="sm"
               disabled={deletingId === d.id}
-              onClick={() => void handleDelete(d)}
+              onClick={() => void handleArchive(d)}
             >
-              Eliminar
+              Archivar reta
             </Button>
           </div>
         </div>

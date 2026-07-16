@@ -31,6 +31,8 @@ export interface Duelo2v2 {
   created_at: string;
   updated_at: string;
   finalizado_at: string | null;
+  /** Soft-archive desde Mis retas; null = visible en admin. */
+  archived_at?: string | null;
 }
 
 export interface CreateDuelo2v2DraftInput {

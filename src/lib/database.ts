@@ -98,18 +98,36 @@ export const createTournament = async (
   return data;
 };
 
-export const getTournaments = async (userId?: string) => {
-  let query = supabase
-    .from("tournaments")
-    .select("*")
-    .order("created_at", { ascending: false });
+export const getTournaments = async (
+  userId?: string,
+  opts?: { includeArchived?: boolean }
+) => {
+  const includeArchived = opts?.includeArchived === true;
+  let query = supabase.from("tournaments").select("*");
 
-  // Si se proporciona userId, filtrar por usuario
+  if (!includeArchived) {
+    query = query.is("archived_at", null);
+  }
+
   if (userId) {
     query = query.eq("user_id", userId);
   }
 
-  const { data, error } = await query;
+  query = query.order("created_at", { ascending: false });
+
+  let { data, error } = await query;
+
+  if (
+    error &&
+    /archived_at|column .* does not exist|42703/i.test(error.message ?? "")
+  ) {
+    let fallback = supabase.from("tournaments").select("*");
+    if (userId) fallback = fallback.eq("user_id", userId);
+    fallback = fallback.order("created_at", { ascending: false });
+    const res = await fallback;
+    data = res.data;
+    error = res.error;
+  }
 
   if (error) {
     console.error("Error fetching tournaments:", error);
@@ -490,9 +508,41 @@ export const updateTournament = async (
 };
 
 export const deleteTournament = async (id: string) => {
-  const { error } = await supabase.from("tournaments").delete().eq("id", id);
+  await archiveTournament(id);
+};
 
+/**
+ * Soft-archive de reta: oculta de Mis retas; conserva padre + carrera.
+ */
+export const archiveTournament = async (id: string) => {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("tournaments")
+    .update({ archived_at: now })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    if (/archived_at|column .* does not exist|42703/i.test(error.message ?? "")) {
+      throw new Error(
+        "Falta aplicar supabase/sql/patch-soft-archive-mis-retas.sql en Supabase para archivar sin borrar la carrera."
+      );
+    }
+    throw error;
+  }
+  return data;
+};
+
+export const restoreArchivedTournament = async (id: string) => {
+  const { data, error } = await supabase
+    .from("tournaments")
+    .update({ archived_at: null })
+    .eq("id", id)
+    .select()
+    .single();
   if (error) throw error;
+  return data;
 };
 
 // Funciones para Jugadores

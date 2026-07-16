@@ -2115,7 +2115,10 @@ export async function backfillLigaJornadaHistorial(
 export async function backfillRetasHistorial(organizadorId: string): Promise<number> {
   let count = 0;
   try {
-    const tournaments = await getTournaments(organizadorId);
+    // Incluye archivadas: el soft-archive no debe impedir repair/backfill de carrera.
+    const tournaments = await getTournaments(organizadorId, {
+      includeArchived: true,
+    });
     for (const t of tournaments) {
       if (!t.is_finished) continue;
       const [pairs, matches] = await Promise.all([
@@ -2328,7 +2331,9 @@ export async function backfillAmericanoHistorial(
 ): Promise<number> {
   let count = 0;
   try {
-    const tournaments = await getTournaments(organizadorId);
+    const tournaments = await getTournaments(organizadorId, {
+      includeArchived: true,
+    });
     for (const t of tournaments) {
       if (!t.is_finished || !isAmericanoTournament(t)) continue;
 
