@@ -421,3 +421,6 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.get_tournament_open_registration_public(text) TO anon, authenticated;
+
+-- Recargar esquema PostgREST para que vea join(..., preferred_side)
+NOTIFY pgrst, 'reload schema';

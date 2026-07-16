@@ -52,8 +52,15 @@ describe("buildDueloCourtLayout", () => {
     expect(layout.parejaA[0]?.nombre).toBe("EnA");
     expect(layout.parejaB[0]?.nombre).toBe("EnB");
   });
-});
 
+  it("aplica overrides locales de lado", () => {
+    const layout = buildDueloCourtLayout([entry("1", "Yo")], {
+      "1": "B",
+    });
+    expect(layout.parejaA[0]).toBeNull();
+    expect(layout.parejaB[0]?.nombre).toBe("Yo");
+  });
+});
 describe("dueloSideHasOpenSlot", () => {
   it("detecta hueco en un lado", () => {
     const layout = buildDueloCourtLayout([

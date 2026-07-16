@@ -46,10 +46,17 @@ function placeInSlots(
  * Misma idea que `_open_reg_sync_duelo_slots`.
  */
 export function buildDueloCourtLayout(
-  confirmed: OpenRegistrationPublicEntry[]
+  confirmed: OpenRegistrationPublicEntry[],
+  sideOverrides?: Record<string, DueloCourtSide>
 ): DueloCourtLayout {
   const slots: DueloCourtSlot[] = [null, null, null, null];
-  const list = confirmed.slice(0, 4);
+  const list = confirmed.slice(0, 4).map((entry) => {
+    const override = sideOverrides?.[entry.id];
+    if (override === "A" || override === "B") {
+      return { ...entry, preferred_side: override };
+    }
+    return entry;
+  });
   const placed = new Set<string>();
 
   for (const entry of list) {

@@ -36,8 +36,16 @@ BEGIN
     missing := missing || 'fn get public; ';
   END IF;
 
-  IF to_regprocedure('public.join_tournament_open_registration(text,text)') IS NULL THEN
-    missing := missing || 'fn join; ';
+  IF to_regprocedure('public.join_tournament_open_registration(text,text,text)') IS NULL THEN
+    missing := missing || 'fn join(text,text,text) preferred_side; ';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='tournament_open_registration_entries'
+      AND column_name='preferred_side'
+  ) THEN
+    missing := missing || 'column entries.preferred_side; ';
   END IF;
 
   IF to_regprocedure('public.cancel_tournament_open_registration(text,text)') IS NULL THEN

@@ -20,6 +20,11 @@ import {
   type StoredCancellationEntry,
 } from "../../lib/retaAbierta/retaAbiertaService";
 import {
+  clearPreferredSide,
+  loadPreferredSides,
+  storePreferredSide,
+} from "../../lib/retaAbierta/preferredSideStorage";
+import {
   buildDueloCourtLayout,
   dueloCancelContextLabel,
   dueloSideHasOpenSlot,
@@ -343,8 +348,8 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     [dto]
   );
   const dueloLayout = useMemo(
-    () => buildDueloCourtLayout(confirmed),
-    [confirmed]
+    () => buildDueloCourtLayout(confirmed, loadPreferredSides(slug)),
+    [confirmed, slug, tokenVersion]
   );
   const isDueloMode = dto?.mode_type === "duelo_2v2";
 
@@ -379,6 +384,8 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     setActionError(null);
     setCancelRivieraInput("");
     setCopyFeedback(null);
+    setCancelTarget(null);
+
     let tokens = loadAllCancellationTokens(slug);
     if (
       joinManageToken &&
@@ -395,19 +402,36 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
       tokens = loadAllCancellationTokens(slug);
       setTokenVersion((v) => v + 1);
     }
+
     if (tokens.length === 0) {
       setActionError(
-        "No encontramos tu inscripción en este dispositivo."
+        "No encontramos tu inscripción en este dispositivo. Usa el enlace que copiaste al inscribirte."
       );
       return;
     }
-    setCancelCandidates(tokens);
-    if (tokens.length === 1) {
-      setCancelTarget(tokens[0]);
-      setStep("cancel_confirm");
-      return;
-    }
-    setCancelTarget(null);
+
+    // Enriquecer con nombre / Riviera ID / lado desde la convocatoria
+    const board = [...confirmed, ...waitlist];
+    const enriched: StoredCancellationEntry[] = tokens.map((t) => {
+      const byId = board.find((e) => e.id === t.entryId);
+      const byRiv = t.rivieraId
+        ? board.find(
+            (e) =>
+              normalizeRivieraIdLoose(e.riviera_id) ===
+              normalizeRivieraIdLoose(t.rivieraId || "")
+          )
+        : null;
+      const match = byId || byRiv;
+      return {
+        ...t,
+        nombre: t.nombre?.trim() || match?.nombre || t.nombre,
+        rivieraId: t.rivieraId || match?.riviera_id || t.rivieraId,
+        entryId: match?.id || t.entryId,
+      };
+    });
+
+    setCancelCandidates(enriched);
+    // Siempre elegir jugador primero; nunca saltar a confirmar ID
     setStep("cancel_pick");
   };
 
@@ -450,6 +474,13 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
       setSuccessMessage(res.result.message);
       setJoinManageToken(res.result.cancellation_token || null);
       setJoinEntryId(res.result.entry_id);
+      if (preferredSide === "A" || preferredSide === "B") {
+        storePreferredSide(
+          slug,
+          res.result.entry_id,
+          res.result.preferred_side || preferredSide
+        );
+      }
       setTokenVersion((v) => v + 1);
       setStep("done");
       await refresh();
@@ -537,6 +568,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         return;
       }
       removeCancellationToken(slug, cancelTarget.entryId);
+      clearPreferredSide(slug, cancelTarget.entryId);
       if (joinEntryId === cancelTarget.entryId) {
         setJoinManageToken(null);
         setJoinEntryId(null);
@@ -728,23 +760,29 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
             ) : null}
 
             {hasLocalCancel ? (
-              <button
-                type="button"
-                className="ra-btn ra-btn--ghost"
-                onClick={beginCancelFlow}
-                disabled={busy}
-              >
-                Cancelar mi asistencia
-              </button>
+              <div className="ra-actions ra-actions--cancel">
+                {actionError && step === "overview" ? (
+                  <p className="ra-error">{actionError}</p>
+                ) : null}
+                <button
+                  type="button"
+                  className="ra-btn ra-btn--ghost"
+                  onClick={beginCancelFlow}
+                  disabled={busy}
+                >
+                  Cancelar mi asistencia
+                </button>
+              </div>
             ) : null}
           </>
         )}
 
         {step === "cancel_pick" && (
-          <section className="ra-public__sheet" aria-label="Elegir inscripción">
-            <h2>¿A quién quieres cancelar?</h2>
+          <section className="ra-public__sheet" aria-label="Elegir jugador">
+            <h2>¿Qué jugador eres?</h2>
             <p className="ra-public__hint">
-              Elige la inscripción. Luego confirma con tu Riviera ID.
+              Selecciona tu nombre en la lista. Después te pediremos tu Riviera
+              ID para confirmar.
             </p>
             <ul className="ra-public__players ra-cancel-list">
               {cancelCandidates.map((c) => (
@@ -764,7 +802,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                       {c.rivieraId ? (
                         <span className="ra-player-card__sub">{c.rivieraId}</span>
                       ) : null}
-                      <span className="ra-cancel-option__cta">Seleccionar</span>
+                      <span className="ra-cancel-option__cta">Soy yo</span>
                     </div>
                   </button>
                 </li>
@@ -775,8 +813,9 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               type="button"
               className="ra-btn ra-btn--ghost"
               onClick={() => {
-                setStep("overview");
+                setStep(joinManageToken ? "done" : "overview");
                 setCancelTarget(null);
+                setCancelCandidates([]);
                 setActionError(null);
               }}
             >
@@ -822,12 +861,8 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 type="button"
                 className="ra-btn ra-btn--ghost"
                 onClick={() => {
-                  if (cancelCandidates.length > 1) {
-                    setStep("cancel_pick");
-                  } else {
-                    setStep(joinManageToken ? "done" : "overview");
-                    setCancelTarget(null);
-                  }
+                  setStep("cancel_pick");
+                  setCancelTarget(null);
                   setCancelRivieraInput("");
                   setActionError(null);
                 }}

@@ -100,6 +100,7 @@ export interface OpenRegistrationJoinResult {
   nombre: string;
   cancellation_token: string;
   message: string;
+  preferred_side?: "A" | "B" | null;
 }
 
 export interface OpenRegistrationOrganizerEntry {

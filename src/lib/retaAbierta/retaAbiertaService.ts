@@ -4,6 +4,7 @@ import {
   isConvocatoriaAllowedMode,
 } from "./modeWhitelist";
 import { normalizeRivieraIdLoose } from "./normalizeRivieraId";
+import { storePreferredSide } from "./preferredSideStorage";
 import type {
   OpenGameModeType,
   OpenRegistrationConfigRow,
@@ -261,10 +262,15 @@ export function parsePublicDto(raw: unknown): OpenRegistrationPublicDto | null {
           foto_url: typeof er.foto_url === "string" ? er.foto_url : null,
           rating: typeof er.rating === "number" ? er.rating : null,
           categoria: typeof er.categoria === "string" ? er.categoria : null,
-          preferred_side:
-            er.preferred_side === "A" || er.preferred_side === "B"
-              ? er.preferred_side
-              : null,
+          preferred_side: (() => {
+            const raw = er.preferred_side;
+            if (raw === "A" || raw === "B") return raw;
+            if (typeof raw === "string") {
+              const u = raw.trim().toUpperCase();
+              if (u === "A" || u === "B") return u as "A" | "B";
+            }
+            return null;
+          })(),
         };
       })
       .filter(Boolean) as OpenRegistrationPublicDto["entries"],
@@ -363,39 +369,31 @@ export async function joinOpenRegistration(
   const side =
     preferredSide === "A" || preferredSide === "B" ? preferredSide : null;
 
-  const baseParams: Record<string, string> = {
+  const params: Record<string, string> = {
     p_slug: slug.trim(),
     p_riviera_id: normalized,
   };
-
-  let data: unknown;
-  let error: { message: string } | null = null;
-
   if (side) {
-    const withSide = await supabase.rpc("join_tournament_open_registration", {
-      ...baseParams,
-      p_preferred_side: side,
-    });
-    data = withSide.data;
-    error = withSide.error;
-    // Compat: RPC antigua sin p_preferred_side
-    if (
-      error &&
-      /preferred_side|PGRST202|Could not find the function|function.*does not exist/i.test(
-        error.message
-      )
-    ) {
-      const fallback = await supabase.rpc("join_tournament_open_registration", baseParams);
-      data = fallback.data;
-      error = fallback.error;
-    }
-  } else {
-    const res = await supabase.rpc("join_tournament_open_registration", baseParams);
-    data = res.data;
-    error = res.error;
+    params.p_preferred_side = side;
   }
 
-  if (error) return { ok: false, error: error.message };
+  const { data, error } = await supabase.rpc(
+    "join_tournament_open_registration",
+    params
+  );
+
+  if (error) {
+    const msg = error.message || "";
+    if (
+      side &&
+      /preferred_side|PGRST202|Could not find the function|function.*does not exist|column.*does not exist/i.test(
+        msg
+      )
+    ) {
+      return { ok: false, error: "preferred_side_unavailable" };
+    }
+    return { ok: false, error: msg };
+  }
   const row = asRecord(data);
   if (!row || row.ok !== true) {
     return {
@@ -404,6 +402,22 @@ export async function joinOpenRegistration(
       status: typeof row?.status === "string" ? row.status : undefined,
     };
   }
+
+  const savedSideRaw = row.preferred_side;
+  const savedSide =
+    savedSideRaw === "A" || savedSideRaw === "B"
+      ? savedSideRaw
+      : typeof savedSideRaw === "string" &&
+          (savedSideRaw.toUpperCase() === "A" ||
+            savedSideRaw.toUpperCase() === "B")
+        ? (savedSideRaw.toUpperCase() as "A" | "B")
+        : null;
+
+  // Si el jugador eligió lado, el servidor debe devolverlo (SQL patch aplicado).
+  if (side && savedSide !== side) {
+    return { ok: false, error: "preferred_side_unavailable" };
+  }
+
   const result: OpenRegistrationJoinResult = {
     ok: true,
     entry_id: String(row.entry_id),
@@ -412,12 +426,16 @@ export async function joinOpenRegistration(
     nombre: String(row.nombre ?? ""),
     cancellation_token: String(row.cancellation_token ?? ""),
     message: String(row.message ?? "Registrado."),
+    preferred_side: savedSide,
   };
   if (result.cancellation_token) {
     storeCancellationToken(slug, result.entry_id, result.cancellation_token, {
       nombre: result.nombre,
       rivieraId: result.riviera_id,
     });
+  }
+  if (result.preferred_side === "A" || result.preferred_side === "B") {
+    storePreferredSide(slug, result.entry_id, result.preferred_side);
   }
   return { ok: true, result };
 }
@@ -676,6 +694,8 @@ export function mapJoinErrorMessage(error: string): string {
       return "Esta reta ya no está disponible.";
     case "not_found":
       return "No encontramos esta convocatoria.";
+    case "preferred_side_unavailable":
+      return "Aún no se puede guardar el lado (A/B). Hay que aplicar el SQL de convocatoria en Supabase y volver a intentar.";
     default:
       return "No se pudo completar la inscripción. Intenta de nuevo.";
   }
