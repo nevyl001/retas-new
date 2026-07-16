@@ -114,36 +114,66 @@ function formatWhen(dto: OpenRegistrationPublicDto): string {
   })}`;
 }
 
+/** Nunca mostrar SQL / códigos técnicos en la UI pública. */
+function toHumanActionError(raw: string | null | undefined): string | null {
+  if (!raw?.trim()) return null;
+  const t = raw.trim();
+  if (
+    /sql|postgres|pgrst|permission denied|column |42703|schema cache|supabase/i.test(
+      t
+    )
+  ) {
+    return "No pudimos confirmar tu lugar, intenta de nuevo.";
+  }
+  if (/aplicar el sql|hay que aplicar/i.test(t)) {
+    return "No pudimos confirmar tu lugar, intenta de nuevo.";
+  }
+  return t;
+}
+
 function PlayerSlotCard({
   entry,
   displayPhoto,
   displayRating,
   positionLabel,
   partnerName,
+  busy,
 }: {
   entry: DueloCourtSlot;
   displayPhoto: boolean;
   displayRating: boolean;
   positionLabel: string;
   partnerName: string | null;
+  busy?: boolean;
 }) {
   if (!entry) {
     return (
-      <div className="ra-player-card ra-player-card--open ra-duelo-slot">
+      <div
+        className={`ra-player-card ra-player-card--open ra-player-card--invite ra-duelo-slot${
+          busy ? " ra-player-card--busy" : ""
+        }`}
+      >
         <span className="ra-duelo-slot__pos">{positionLabel}</span>
-        <div className="ra-player-card__avatar" aria-hidden>
-          <span>+</span>
+        <div className="ra-player-card__avatar ra-player-card__avatar--invite" aria-hidden>
+          {busy ? <span className="ra-spinner" /> : <span>+</span>}
         </div>
         <div className="ra-player-card__body">
-          <strong>Disponible</strong>
-          <span className="ra-player-card__sub">Esperando jugador</span>
+          <strong>{busy ? "Uniendo…" : "Disponible"}</strong>
+          <span className="ra-player-card__sub">
+            {busy ? "Un momento" : "Toca para jugar aquí"}
+          </span>
         </div>
       </div>
     );
   }
   const cat = formatPublicCategoriaLabel(entry.categoria);
+  const ratingPart =
+    displayRating && entry.rating != null
+      ? Number(entry.rating).toFixed(2)
+      : null;
+  const subParts = [ratingPart, cat].filter(Boolean);
   return (
-    <div className="ra-player-card ra-duelo-slot">
+    <div className="ra-player-card ra-player-card--filled ra-duelo-slot">
       <span className="ra-duelo-slot__pos">{positionLabel}</span>
       <div className="ra-player-card__avatar" aria-hidden>
         {displayPhoto && entry.foto_url ? (
@@ -153,13 +183,12 @@ function PlayerSlotCard({
         )}
       </div>
       <div className="ra-player-card__body">
-        <strong>{entry.nombre}</strong>
-        <span className="ra-player-card__sub">
-          {displayRating && entry.rating != null
-            ? `${Number(entry.rating).toFixed(2)}`
-            : entry.riviera_id}
-          {cat ? ` · ${cat}` : ""}
-        </span>
+        <strong className="ra-player-card__name">{entry.nombre}</strong>
+        {subParts.length > 0 ? (
+          <span className="ra-player-card__sub">{subParts.join(" · ")}</span>
+        ) : (
+          <span className="ra-player-card__sub">{entry.riviera_id}</span>
+        )}
         {partnerName ? (
           <span className="ra-duelo-slot__partner">Con {partnerName}</span>
         ) : (
@@ -178,6 +207,8 @@ function DueloSideBlock({
   displayPhoto,
   displayRating,
   selectable,
+  joining,
+  sideFull,
   onSelectSide,
 }: {
   side: DueloCourtSide;
@@ -185,23 +216,42 @@ function DueloSideBlock({
   displayPhoto: boolean;
   displayRating: boolean;
   selectable: boolean;
+  joining?: boolean;
+  sideFull?: boolean;
   onSelectSide?: (side: DueloCourtSide) => void;
 }) {
   const pair = side === "A" ? layout.parejaA : layout.parejaB;
   const meta0 = dueloSlotMeta(layout, side, 0);
   const meta1 = dueloSlotMeta(layout, side, 1);
   const open = dueloSideHasOpenSlot(layout, side);
-  const canSelect = selectable && open && Boolean(onSelectSide);
+  const canSelect = selectable && open && Boolean(onSelectSide) && !joining;
+
+  const sideClass = [
+    "ra-duelo-side",
+    `ra-duelo-side--${side.toLowerCase()}`,
+    open ? "ra-duelo-side--open" : "ra-duelo-side--full",
+    canSelect ? "ra-duelo-side--pick" : "",
+    joining ? "ra-duelo-side--joining" : "",
+    sideFull ? "ra-duelo-side--taken" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const body = (
     <>
       <p className="ra-duelo-side__label">{meta0.sideLabel}</p>
+      {sideFull ? (
+        <p className="ra-duelo-side__banner" role="status">
+          Lado lleno
+        </p>
+      ) : null}
       <PlayerSlotCard
         entry={pair[0]}
         displayPhoto={displayPhoto}
         displayRating={displayRating}
         positionLabel={meta0.positionLabel}
         partnerName={meta0.partnerName}
+        busy={joining && !pair[0]}
       />
       <PlayerSlotCard
         entry={pair[1]}
@@ -209,9 +259,16 @@ function DueloSideBlock({
         displayRating={displayRating}
         positionLabel={meta1.positionLabel}
         partnerName={meta1.partnerName}
+        busy={joining && !pair[1] && Boolean(pair[0])}
       />
       {canSelect ? (
         <span className="ra-duelo-side__cta">Jugar en este lado</span>
+      ) : null}
+      {joining ? (
+        <span className="ra-duelo-side__cta ra-duelo-side__cta--busy">
+          <span className="ra-spinner ra-spinner--inline" aria-hidden />
+          Preparando…
+        </span>
       ) : null}
     </>
   );
@@ -220,18 +277,38 @@ function DueloSideBlock({
     return (
       <button
         type="button"
-        className={`ra-duelo-side ra-duelo-side--${side.toLowerCase()} ra-duelo-side--pick`}
+        className={sideClass}
         onClick={() => onSelectSide?.(side)}
+        aria-label={`Jugar en ${meta0.sideLabel}`}
       >
         {body}
       </button>
     );
   }
 
+  return <div className={sideClass}>{body}</div>;
+}
+
+function CupoChip({
+  confirmed,
+  capacity,
+  spotsLeft,
+}: {
+  confirmed: number;
+  capacity: number;
+  spotsLeft: number;
+}) {
+  const full = spotsLeft <= 0;
   return (
-    <div className={`ra-duelo-side ra-duelo-side--${side.toLowerCase()}`}>
-      {body}
-    </div>
+    <p
+      className={`ra-public__cupo-chip${full ? " ra-public__cupo-chip--full" : ""}`}
+      aria-live="polite"
+    >
+      <strong>
+        {confirmed} de {capacity}
+      </strong>
+      {full ? " · completa" : ` · ${spotsLeft} disponibles`}
+    </p>
   );
 }
 
@@ -245,8 +322,13 @@ function FlatPlayerCard({
   displayRating: boolean;
 }) {
   const cat = formatPublicCategoriaLabel(entry.categoria);
+  const ratingPart =
+    displayRating && entry.rating != null
+      ? Number(entry.rating).toFixed(2)
+      : null;
+  const subParts = [entry.riviera_id, ratingPart, cat].filter(Boolean);
   return (
-    <li className="ra-player-card">
+    <li className="ra-player-card ra-player-card--filled">
       <div className="ra-player-card__avatar" aria-hidden>
         {displayPhoto && entry.foto_url ? (
           <img src={entry.foto_url} alt="" />
@@ -255,14 +337,8 @@ function FlatPlayerCard({
         )}
       </div>
       <div className="ra-player-card__body">
-        <strong>{entry.nombre}</strong>
-        <span className="ra-player-card__sub">
-          {entry.riviera_id}
-          {displayRating && entry.rating != null
-            ? ` · ${Number(entry.rating).toFixed(2)}`
-            : ""}
-          {cat ? ` · ${cat}` : ""}
-        </span>
+        <strong className="ra-player-card__name">{entry.nombre}</strong>
+        <span className="ra-player-card__sub">{subParts.join(" · ")}</span>
       </div>
     </li>
   );
@@ -281,6 +357,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   const [preview, setPreview] = useState<OpenRegistrationPreview | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [joiningSide, setJoiningSide] = useState<DueloCourtSide | null>(null);
+  const [sideFullNotice, setSideFullNotice] = useState<DueloCourtSide | null>(
+    null
+  );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [joinStatus, setJoinStatus] = useState<string | null>(null);
   const [joinManageToken, setJoinManageToken] = useState<string | null>(null);
@@ -370,9 +450,40 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   );
   const hasLocalCancel = localTokens.length > 0 || Boolean(joinManageToken);
 
+  // Realtime: si el lado elegido se llena mientras el usuario confirma, avisar al instante.
+  useEffect(() => {
+    if (!isDueloMode) return;
+    if (!(preferredSide === "A" || preferredSide === "B")) return;
+    if (step !== "id" && step !== "confirm") return;
+    if (dueloSideHasOpenSlot(dueloLayout, preferredSide)) return;
+    setSideFullNotice(preferredSide);
+    setActionError("Este lado ya está lleno. Vuelve y elige otro.");
+    setStep("overview");
+    setJoiningSide(null);
+  }, [dueloLayout, preferredSide, step, isDueloMode]);
+
   const beginJoinForSide = (side: DueloCourtSide | null) => {
-    setPreferredSide(side);
     setActionError(null);
+    setSideFullNotice(null);
+
+    if (side === "A" || side === "B") {
+      if (!dueloSideHasOpenSlot(dueloLayout, side)) {
+        setSideFullNotice(side);
+        setActionError("Este lado ya está lleno. Elige el otro.");
+        return;
+      }
+      setJoiningSide(side);
+      setPreferredSide(side);
+      window.setTimeout(() => {
+        setJoiningSide(null);
+        setPreview(null);
+        setRivieraInput("");
+        setStep("id");
+      }, 280);
+      return;
+    }
+
+    setPreferredSide(null);
     setPreview(null);
     setRivieraInput("");
     setStep("id");
@@ -443,7 +554,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
           setStep("not_found");
           return;
         }
-        setActionError(mapJoinErrorMessage(res.error));
+        setActionError(toHumanActionError(mapJoinErrorMessage(res.error)));
         return;
       }
       setPreview(res.preview);
@@ -456,6 +567,17 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   const onConfirmJoin = async () => {
     if (!preview) return;
     setActionError(null);
+    if (
+      isDueloMode &&
+      (preferredSide === "A" || preferredSide === "B") &&
+      !dueloSideHasOpenSlot(dueloLayout, preferredSide)
+    ) {
+      setSideFullNotice(preferredSide);
+      setActionError("Este lado ya está lleno. Vuelve y elige otro.");
+      setStep("overview");
+      await refresh();
+      return;
+    }
     setBusy(true);
     try {
       const res = await joinOpenRegistration(
@@ -464,7 +586,26 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         isDueloMode ? preferredSide : null
       );
       if (!res.ok) {
-        setActionError(mapJoinErrorMessage(res.error));
+        const code = res.error;
+        if (
+          code === "full" ||
+          code === "preferred_side_unavailable" ||
+          /side|lleno|full/i.test(code)
+        ) {
+          setSideFullNotice(preferredSide);
+          setActionError(
+            preferredSide
+              ? "Este lado ya está lleno. Vuelve y elige otro."
+              : "Ya no hay lugares disponibles."
+          );
+          await refresh();
+          setStep("overview");
+          return;
+        }
+        setActionError(
+          toHumanActionError(mapJoinErrorMessage(res.error)) ||
+            "No pudimos confirmar tu lugar, intenta de nuevo."
+        );
         await refresh();
         return;
       }
@@ -561,7 +702,8 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         setActionError(
           res.error === "invalid_token"
             ? "El enlace de cancelación no es válido."
-            : mapJoinErrorMessage(res.error)
+            : toHumanActionError(mapJoinErrorMessage(res.error)) ||
+                "No pudimos cancelar tu lugar, intenta de nuevo."
         );
         return;
       }
@@ -607,8 +749,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         <div className="ra-public ra-public--skeleton" aria-busy="true">
           <div className="ra-skel ra-skel--hero" />
           <div className="ra-skel ra-skel--line" />
-          <div className="ra-skel ra-skel--line" />
+          <div className="ra-skel ra-skel--line ra-skel--line-short" />
+          <div className="ra-skel ra-skel--cupo" />
           <div className="ra-skel ra-skel--grid" />
+          <p className="ra-public__hint ra-skel-caption">Cargando convocatoria…</p>
         </div>
       </PublicTorneoExpressShell>
     );
@@ -626,6 +770,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   }
 
   const isDuelo = isDueloMode;
+  const humanError = toHumanActionError(actionError);
   const sideHint =
     preferredSide === "A"
       ? "Pareja 1 · Lado A"
@@ -639,15 +784,17 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         <header className="ra-public__hero">
           <p className="ra-public__eyebrow">{modeLabel(dto.mode_type)}</p>
           <h1 className="ra-public__title">{dto.name}</h1>
-          <span className={`ra-public__badge ra-public__badge--${dto.status}`}>
-            {statusLabel(dto.status)}
-          </span>
-          {dto.spots_left === 1 && dto.status === "open" ? (
-            <p className="ra-public__last">Último lugar</p>
-          ) : null}
-          {dto.spots_left === 0 && dto.status === "open" ? (
-            <p className="ra-public__full-inline">Completo</p>
-          ) : null}
+          <div className="ra-public__hero-row">
+            <span className={`ra-public__badge ra-public__badge--${dto.status}`}>
+              {statusLabel(dto.status)}
+            </span>
+            {dto.spots_left === 1 && dto.status === "open" ? (
+              <span className="ra-public__last">Último lugar</span>
+            ) : null}
+            {dto.spots_left === 0 && dto.status === "open" ? (
+              <span className="ra-public__full-inline">Completo</span>
+            ) : null}
+          </div>
           <div className="ra-public__meta-stack">
             {organizerName?.trim() ? (
               <p className="ra-public__meta ra-public__meta--club">
@@ -661,16 +808,12 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 canchaLabel: dto.cancha_label,
                 clubName: organizerName,
               });
-              return (
-                <>
-                  {lugar ? (
-                    <p className="ra-public__meta">Lugar: {lugar}</p>
-                  ) : null}
-                  {cancha ? (
-                    <p className="ra-public__meta">{cancha}</p>
-                  ) : null}
-                </>
-              );
+              const placeLine = [lugar ? `Lugar: ${lugar}` : null, cancha]
+                .filter(Boolean)
+                .join(" · ");
+              return placeLine ? (
+                <p className="ra-public__meta">{placeLine}</p>
+              ) : null;
             })()}
             {dto.category_label ? (
               <p className="ra-public__meta">
@@ -678,12 +821,6 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   dto.category_label}
               </p>
             ) : null}
-            <p className="ra-public__cupo">
-              {dto.confirmed_count} de {dto.capacity} jugadores
-              {dto.spots_left > 0
-                ? ` · ${dto.spots_left} disponibles`
-                : " · completa"}
-            </p>
           </div>
         </header>
 
@@ -691,10 +828,22 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
           <>
             {isDuelo ? (
               <section className="ra-duelo-board" aria-label="Cancha 2 vs 2">
-                <p className="ra-duelo-board__title">Cómo queda la cancha</p>
+                <div className="ra-duelo-board__head">
+                  <p className="ra-duelo-board__title">Cómo queda la cancha</p>
+                  <CupoChip
+                    confirmed={dto.confirmed_count}
+                    capacity={dto.capacity}
+                    spotsLeft={dto.spots_left}
+                  />
+                </div>
                 {canJoin && (dto.spots_left ?? 0) > 0 ? (
                   <p className="ra-duelo-board__hint">
                     Toca el lado donde quieres jugar
+                  </p>
+                ) : null}
+                {humanError && step === "overview" ? (
+                  <p className="ra-error ra-error--board" role="alert">
+                    {humanError}
                   </p>
                 ) : null}
                 <DueloSideBlock
@@ -702,7 +851,13 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   layout={dueloLayout}
                   displayPhoto={dto.display_photo}
                   displayRating={dto.display_rating}
-                  selectable={Boolean(canJoin && (dto.spots_left ?? 0) > 0)}
+                  selectable={Boolean(
+                    canJoin &&
+                      (dto.spots_left ?? 0) > 0 &&
+                      !joiningSide
+                  )}
+                  joining={joiningSide === "A"}
+                  sideFull={sideFullNotice === "A"}
                   onSelectSide={beginJoinForSide}
                 />
                 <div className="ra-duelo-vs" aria-hidden>
@@ -713,13 +868,29 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   layout={dueloLayout}
                   displayPhoto={dto.display_photo}
                   displayRating={dto.display_rating}
-                  selectable={Boolean(canJoin && (dto.spots_left ?? 0) > 0)}
+                  selectable={Boolean(
+                    canJoin &&
+                      (dto.spots_left ?? 0) > 0 &&
+                      !joiningSide
+                  )}
+                  joining={joiningSide === "B"}
+                  sideFull={sideFullNotice === "B"}
                   onSelectSide={beginJoinForSide}
                 />
               </section>
             ) : (
-              <section className="ra-public__section" aria-label="Confirmados">
-                <h2>Confirmados</h2>
+              <section
+                className="ra-public__section ra-public__section--roster"
+                aria-label="Confirmados"
+              >
+                <div className="ra-public__section-head">
+                  <h2>Confirmados</h2>
+                  <CupoChip
+                    confirmed={dto.confirmed_count}
+                    capacity={dto.capacity}
+                    spotsLeft={dto.spots_left}
+                  />
+                </div>
                 <ul className="ra-public__players">
                   {confirmed.map((e) => (
                     <FlatPlayerCard
@@ -733,13 +904,19 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                     (_, i) => (
                       <li
                         key={`open-${i}`}
-                        className="ra-player-card ra-player-card--open"
+                        className="ra-player-card ra-player-card--open ra-player-card--invite"
                       >
-                        <div className="ra-player-card__avatar" aria-hidden>
+                        <div
+                          className="ra-player-card__avatar ra-player-card__avatar--invite"
+                          aria-hidden
+                        >
                           <span>+</span>
                         </div>
                         <div className="ra-player-card__body">
                           <strong>Lugar disponible</strong>
+                          <span className="ra-player-card__sub">
+                            Únete con tu Riviera ID
+                          </span>
                         </div>
                       </li>
                     )
@@ -755,10 +932,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   {waitlist.map((e) => (
                     <li
                       key={e.id}
-                      className="ra-player-card ra-player-card--wait"
+                      className="ra-player-card ra-player-card--wait ra-player-card--filled"
                     >
                       <div className="ra-player-card__body">
-                        <strong>{e.nombre}</strong>
+                        <strong className="ra-player-card__name">{e.nombre}</strong>
                         <span className="ra-player-card__sub">
                           {e.riviera_id}
                         </span>
@@ -771,14 +948,18 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
 
             {hasLocalCancel ? (
               <div className="ra-actions ra-actions--cancel">
-                {actionError && step === "overview" ? (
-                  <p className="ra-error">{actionError}</p>
+                {humanError &&
+                step === "overview" &&
+                !isDuelo ? (
+                  <p className="ra-error" role="alert">
+                    {humanError}
+                  </p>
                 ) : null}
                 <button
                   type="button"
-                  className="ra-btn ra-btn--ghost"
+                  className="ra-btn ra-btn--ghost ra-btn--quiet"
                   onClick={beginCancelFlow}
-                  disabled={busy}
+                  disabled={busy || Boolean(joiningSide)}
                 >
                   Cancelar mi asistencia
                 </button>
@@ -818,7 +999,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 </li>
               ))}
             </ul>
-            {actionError ? <p className="ra-error">{actionError}</p> : null}
+            {humanError ? (
+              <p className="ra-error" role="alert">
+                {humanError}
+              </p>
+            ) : null}
             <button
               type="button"
               className="ra-btn ra-btn--ghost"
@@ -857,7 +1042,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               onChange={(e) => setCancelRivieraInput(e.target.value)}
               placeholder="RIV-00000001"
             />
-            {actionError ? <p className="ra-error">{actionError}</p> : null}
+            {humanError ? (
+              <p className="ra-error" role="alert">
+                {humanError}
+              </p>
+            ) : null}
             <div className="ra-actions">
               <button
                 type="button"
@@ -908,7 +1097,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               onChange={(e) => setRivieraInput(e.target.value)}
               placeholder="RIV-00000001"
             />
-            {actionError ? <p className="ra-error">{actionError}</p> : null}
+            {humanError ? (
+              <p className="ra-error" role="alert">
+                {humanError}
+              </p>
+            ) : null}
             <div className="ra-actions">
               <button
                 type="button"
@@ -960,7 +1153,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               La inscripción usa solo tu Riviera ID. Guarda el acceso de
               cancelación en este dispositivo.
             </p>
-            {actionError ? <p className="ra-error">{actionError}</p> : null}
+            {humanError ? (
+              <p className="ra-error" role="alert">
+                {humanError}
+              </p>
+            ) : null}
             <div className="ra-actions">
               <button
                 type="button"
@@ -968,7 +1165,14 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 onClick={() => void onConfirmJoin()}
                 disabled={busy}
               >
-                Confirmar asistencia
+                {busy ? (
+                  <>
+                    <span className="ra-spinner ra-spinner--inline" aria-hidden />
+                    Confirmando…
+                  </>
+                ) : (
+                  "Confirmar asistencia"
+                )}
               </button>
               <button
                 type="button"
@@ -1036,7 +1240,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
             <p className="ra-public__hint">
               Guarda este enlace para administrar o cancelar tu asistencia.
             </p>
-            {actionError ? <p className="ra-error">{actionError}</p> : null}
+            {humanError ? (
+              <p className="ra-error" role="alert">
+                {humanError}
+              </p>
+            ) : null}
             {copyFeedback ? (
               <p className="ra-public__hint ra-public__hint--ok">{copyFeedback}</p>
             ) : null}
