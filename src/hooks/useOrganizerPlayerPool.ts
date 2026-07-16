@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getPlayers, type Player } from "../lib/database";
+import { invalidatePlayersPool } from "../lib/rivieraJugadores/playersPoolCache";
 import {
   PoolRequestGate,
   commitPoolFetchResult,
@@ -50,6 +51,9 @@ export function useOrganizerPlayerPool(
       setError(null);
       return;
     }
+
+    // Evita servir el pool legacy cacheado 90s tras vínculo/convocatoria.
+    invalidatePlayersPool(organizerId);
 
     const requestId = gateRef.current.begin();
     const isFirstLoad = playersRef.current.length === 0;

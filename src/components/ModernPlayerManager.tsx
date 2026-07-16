@@ -2,6 +2,12 @@ import React, { useState, useMemo } from "react";
 import { getPlayers, type Player } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
 import type { RivieraJugador } from "../lib/rivieraJugadores/types";
+import { isGrantedJugadorRow } from "../lib/rivieraJugadores/organizerPlayerAccess";
+import {
+  findPoolPlayerByLegacyId,
+  hintWhenRegistryPlayerMissingFromRetaPool,
+} from "../lib/retaAbierta/registrySelectForReta";
+import { linkLegacyOnSelectForReta } from "../lib/retaAbierta/linkLegacyOnSelectForReta";
 import { shouldShowPlayerPoolLoading } from "../hooks/organizerPlayerPoolLogic";
 import { JugadorAutocomplete } from "./jugadores/JugadorAutocomplete";
 import { navigateJugadoresLista } from "./jugadores/jugadoresGeneroNav";
@@ -46,6 +52,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   const [registrySearch, setRegistrySearch] = useState("");
   const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
   const [registryHint, setRegistryHint] = useState<string | null>(null);
+  const [linkingLegacy, setLinkingLegacy] = useState(false);
 
   React.useEffect(() => {
     if (usesExternalPool) return;
@@ -122,21 +129,60 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   };
 
   const handleRegistrySelect = (rj: RivieraJugador) => {
-    if (isCreatingPair) return;
+    if (isCreatingPair || linkingLegacy) return;
     setRegistryHint(null);
-    const pl = rj.legacy_player_id
-      ? players.find((p) => p.id === rj.legacy_player_id)
-      : undefined;
 
-    if (!pl) {
-      setRegistryHint(
-        "Este jugador aún no está disponible para retas. Créalo o completa su registro en «Registro de jugadores» del dashboard."
-      );
+    // Match solo por legacy_player_id (riviera → players), nunca por nombre.
+    const pl = findPoolPlayerByLegacyId(players, rj.legacy_player_id);
+
+    if (pl) {
+      handlePlayerSelect(pl);
+      setRegistrySearch("");
       return;
     }
 
-    handlePlayerSelect(pl);
-    setRegistrySearch("");
+    if (!organizadorId) {
+      setRegistryHint("Inicia sesión para vincular jugadores al pool de retas.");
+      return;
+    }
+
+    const needsNewLegacyLink = !rj.legacy_player_id?.trim();
+    const rivieraLabel = rj.riviera_id?.trim() || rj.id;
+
+    if (needsNewLegacyLink) {
+      const ok = window.confirm(
+        `¿Vincular a ${rj.nombre} (${rivieraLabel}) al pool de retas de este club?\n\nSe usará su ficha Riviera existente (sin crear identidad nueva).`
+      );
+      if (!ok) return;
+    }
+
+    void (async () => {
+      setLinkingLegacy(true);
+      try {
+        const linked = await linkLegacyOnSelectForReta(organizadorId, rj.id);
+        if (onRefreshPlayers) {
+          await onRefreshPlayers();
+        }
+        handlePlayerSelect(linked.player);
+        setRegistrySearch("");
+        setRegistryHint(
+          linked.created
+            ? "Agregado al pool de retas."
+            : "Jugador ya vinculado — pool actualizado."
+        );
+      } catch (err) {
+        const hint = hintWhenRegistryPlayerMissingFromRetaPool({
+          rivieraJugadorId: rj.id,
+          legacyPlayerId: rj.legacy_player_id,
+          isGranted: isGrantedJugadorRow(rj),
+        });
+        setRegistryHint(
+          err instanceof Error ? err.message : hint.message
+        );
+      } finally {
+        setLinkingLegacy(false);
+      }
+    })();
   };
 
   // Primera carga sin datos: spinner. Con datos o refetch: no ocultar lista.
@@ -209,8 +255,12 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
             onChange={setRegistrySearch}
             onSelect={handleRegistrySelect}
             placeholder="Buscar jugador registrado…"
-            requireLegacyLink
           />
+          {linkingLegacy ? (
+            <p className="elegant-form-hint" role="status">
+              Vinculando al pool de retas…
+            </p>
+          ) : null}
           {registryHint ? (
             <p className="elegant-form-hint" role="status">
               {registryHint}{" "}

@@ -1,7 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
 import { useOrganizerPlayerPool } from "../hooks/useOrganizerPlayerPool";
+import { useRetaAbiertaRealtime } from "../lib/retaAbierta/useRetaAbiertaRealtime";
 import { ModernPlayerManager } from "./ModernPlayerManager";
 import { NewPairManager } from "./NewPairManager";
 import { TournamentStatusContent } from "./TournamentStatusContent";
@@ -78,6 +79,17 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
     error: playerPoolError,
     refresh: refreshPlayerPool,
   } = useOrganizerPlayerPool(organizerId);
+
+  // Inscritos/vínculos por convocatoria: invalidar pool sin recargar la página.
+  const onConvocatoriaOrFocusRefresh = useCallback(() => {
+    void refreshPlayerPool();
+  }, [refreshPlayerPool]);
+
+  useRetaAbiertaRealtime({
+    tournamentId: selectedTournament.id,
+    enabled: Boolean(selectedTournament.id),
+    onUpdate: onConvocatoriaOrFocusRefresh,
+  });
 
   const playersInPairs = useMemo(
     () => pairs.flatMap((pair) => [pair.player1_id, pair.player2_id]),
