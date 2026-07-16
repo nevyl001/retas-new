@@ -54,7 +54,8 @@ export interface Match {
   pair2_id: string;
   pair1_name: string;
   pair2_name: string;
-  court: number;
+  /** null = Por asignar (al reducir canchas). */
+  court: number | null;
   round?: number;
   /** Ronda regular vs remontada final (si la columna existe en Supabase). */
   match_type?: RoundRobinMatchType | string | null;

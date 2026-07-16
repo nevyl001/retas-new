@@ -70,7 +70,7 @@ export function loadChampionshipConfig(
   }
 }
 
-/** Trae config de remontada desde Supabase si falta o está desactualizada en localStorage. */
+/** Trae config de remontada desde Supabase. BD es autoridad para retas existentes. */
 export async function syncChampionshipConfigFromPublic(
   tournamentId: string
 ): Promise<RoundRobinChampionshipConfig | null> {
@@ -78,27 +78,19 @@ export async function syncChampionshipConfigFromPublic(
   try {
     const pub = await getTournamentPublicConfigExtended(tournamentId);
     const remote = parseChampionshipConfig(pub?.championship_config);
-    if (!remote) return local;
-
-    if (!local) {
+    if (remote) {
+      // Espejo caché; no dejar que LS gane sobre BD
       saveChampionshipConfig(tournamentId, remote);
       return remote;
     }
-
-    if (
-      !local.championshipEnabled &&
-      remote.championshipEnabled
-    ) {
-      const merged: RoundRobinChampionshipConfig = {
+    // Sin fila en BD: no activar por localStorage
+    if (local?.championshipEnabled) {
+      const disabled: RoundRobinChampionshipConfig = {
         ...local,
-        championshipEnabled: true,
-        championshipRounds: remote.championshipRounds,
-        regularRoundsMax: local.regularRoundsMax ?? remote.regularRoundsMax,
+        championshipEnabled: false,
       };
-      saveChampionshipConfig(tournamentId, merged);
-      return merged;
+      return disabled;
     }
-
     return local;
   } catch {
     return local;

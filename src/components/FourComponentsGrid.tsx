@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
 import { useOrganizerPlayerPool } from "../hooks/useOrganizerPlayerPool";
@@ -7,6 +7,7 @@ import { ModernPlayerManager } from "./ModernPlayerManager";
 import { NewPairManager } from "./NewPairManager";
 import { TournamentStatusContent } from "./TournamentStatusContent";
 import { DebugPanelContent } from "./DebugPanelContent";
+import { RetaConfigPanel } from "./reta/RetaConfigPanel";
 import { testConnection } from "../lib/supabaseClient";
 import { usePlayerValidation } from "../hooks/usePlayerValidation";
 
@@ -36,6 +37,8 @@ interface FourComponentsGridProps {
   mobileFilter?: "jugadores" | "config" | null;
   /** Preferido sobre selectedTournament.user_id si el torneo no lo trae */
   userId?: string;
+  /** Actualiza el torneo en el padre tras editar configuración */
+  onTournamentPatched?: (tournament: Tournament) => void;
 }
 
 export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
@@ -63,9 +66,11 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
   setForceRefresh,
   mobileFilter = null,
   userId: userIdProp,
+  onTournamentPatched,
 }) => {
   const { user } = useUser();
   const { validatePlayerSelection } = usePlayerValidation();
+  const [showRetaConfig, setShowRetaConfig] = useState(true);
 
   const organizerId =
     userIdProp?.trim() ||
@@ -176,6 +181,39 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
 
       {(!mobileFilter || mobileFilter === "config") && (
         <>
+          <div className="component-card reta-config-card">
+            <div className="component-header">
+              <div className="component-icon">⚙️</div>
+              <div className="component-title">
+                <h3>Configuración de la reta</h3>
+                <span className="component-subtitle">
+                  Nombre, canchas, horario y Remontada
+                </span>
+              </div>
+              <button
+                className="component-toggle-btn"
+                onClick={() => setShowRetaConfig(!showRetaConfig)}
+                aria-label="Mostrar u ocultar configuración"
+              >
+                {showRetaConfig ? "❌" : "👁️"}
+              </button>
+            </div>
+            {showRetaConfig && (
+              <div className="component-content">
+                <RetaConfigPanel
+                  tournament={selectedTournament}
+                  matches={matches}
+                  pairsCount={pairs.length}
+                  onSaved={(t) => {
+                    onTournamentPatched?.(t);
+                    loadTournamentData();
+                    setForceRefresh((prev) => prev + 1);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="component-card reta-status-card">
             <div className="component-header">
               <div className="component-icon">🏆</div>

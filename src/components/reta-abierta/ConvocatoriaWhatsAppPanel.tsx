@@ -14,6 +14,7 @@ import {
   setOpenGameRegistrationCapacity,
   upsertOpenRegistrationConfig,
 } from "../../lib/retaAbierta/retaAbiertaService";
+import { buildShareRetaOgUrl } from "../../lib/retaAbierta/shareOgUrl";
 import type {
   OpenRegistrationConfigRow,
   OpenRegistrationOrganizerEntry,
@@ -288,6 +289,11 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     () => (cfg?.public_slug ? buildRetaAbiertaPublicUrl(cfg.public_slug) : ""),
     [cfg?.public_slug]
   );
+  /** URL para WhatsApp / crawlers (OG dinámico). */
+  const shareOgUrl = useMemo(
+    () => (cfg?.public_slug ? buildShareRetaOgUrl(cfg.public_slug) : ""),
+    [cfg?.public_slug]
+  );
 
   const confirmed = entries.filter((e) => e.status === "confirmed");
   const waitlist = entries.filter((e) => e.status === "waitlist");
@@ -542,7 +548,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       if (launchCategory.trim()) {
         setCategoryLabel(launchCategory);
       }
-      const url = buildRetaAbiertaPublicUrl(row.public_slug);
+      const url = buildShareRetaOgUrl(row.public_slug);
       const text = buildLocalShareText(row, url, {
         scheduledAtIso: launchScheduledIso,
         durationMinutes: launchDuration,
@@ -568,7 +574,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   };
 
   const onCopy = () => {
-    if (!publicUrl || !cfg) return;
+    if (!shareOgUrl || !cfg) return;
     setSaving(true);
     setError(null);
     setShareNote(true);
@@ -622,7 +628,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         /* no bloquear la copia */
       }
 
-      const text = buildLocalShareText(cfg, publicUrl, {
+      const text = buildLocalShareText(cfg, shareOgUrl, {
         scheduledAtIso: scheduledIso,
         durationMinutes: dur,
         locationLabel: copyIncludeLugar ? loc || null : null,
