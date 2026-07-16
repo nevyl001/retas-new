@@ -4,10 +4,9 @@ import { useUser } from "../../contexts/UserContext";
 import { clearDuelo2v2CreateSession } from "../../lib/duelo2v2/duelo2v2CreateDraft";
 import {
   CANCHA_DEFAULT_VALUE,
-  normalizeCanchaForSave,
 } from "../../lib/torneoExpress/canchaDisplay";
 import { partidoDateInputValue } from "../../lib/torneoExpress/partidoSchedule";
-import { resolveDueloScheduleFromDraft } from "../../lib/duelo2v2/schedule";
+import { saveNewDuelo2v2 } from "../../lib/duelo2v2/saveNewDuelo";
 import {
   createDuelo2v2OpenDraft,
   getDuelos2v2,
@@ -131,29 +130,25 @@ export const Duelo2v2Nuevo: React.FC = () => {
     e.preventDefault();
     if (!canSubmit || !user?.id || saveLock.current) return;
 
-    const schedule = resolveDueloScheduleFromDraft(
-      draftDate,
-      draftTimeStart,
-      draftTimeEnd
-    );
-    if ("error" in schedule) {
-      setError(schedule.error);
-      return;
-    }
-
     saveLock.current = true;
     setBusy(true);
     setError(null);
     try {
-      // Siempre fila nueva: nunca reutilizar openDueloId / ensure con existingId.
-      const duelo = await createDuelo2v2OpenDraft({
-        nombre: nombre.trim(),
-        cancha: normalizeCanchaForSave(cancha),
-        programado_en: schedule.programado_en,
-        programado_hasta: schedule.programado_hasta,
-      });
-      clearDuelo2v2CreateSession(user.id);
-      navigateDuelo2v2(duelo2v2GestionarPath(duelo.id));
+      await saveNewDuelo2v2(
+        {
+          organizadorId: user.id,
+          nombre,
+          cancha,
+          draftDate,
+          draftTimeStart,
+          draftTimeEnd,
+        },
+        {
+          createDuelo2v2OpenDraft,
+          navigate: navigateDuelo2v2,
+          gestionarPath: duelo2v2GestionarPath,
+        }
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar el duelo");
       saveLock.current = false;
