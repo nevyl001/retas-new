@@ -1,0 +1,8 @@
+page.waitForURL: Timeout 20000ms exceeded.
+=========================== logs ===========================
+waiting for navigation until "load"
+============================================================
+    at openAnyFicha (/Users/nevyldev/Documents/Programacion/retas-new-main/.tmp-screenshots/capture-ficha-photo.cjs:49:18)
+    at async main (/Users/nevyldev/Documents/Programacion/retas-new-main/.tmp-screenshots/capture-ficha-photo.cjs:108:14) {
+  name: 'TimeoutError'
+}

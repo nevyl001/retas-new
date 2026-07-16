@@ -286,8 +286,8 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                     className="rjp-ficha-hero__photo"
                     src={jugador.foto_url}
                     alt={`Foto de ${jugador.nombre}`}
-                    width={400}
-                    height={500}
+                    width={800}
+                    height={600}
                     decoding="async"
                     loading="lazy"
                   />
@@ -310,61 +310,63 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
               )}
 
               <div className="rjp-ficha-hero__body">
-                <div className="rjp-ficha-hero__identity">
-                  <div className="rjp-ficha-hero__identity-head">
-                    <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
-                    {rankingPos != null ? (
-                      <span className="rjp-ficha-hero__rank-badge">
-                        {rankingLabel} #{rankingPos}
+                <div className="rjp-ficha-hero__main">
+                  <div className="rjp-ficha-hero__identity">
+                    <div className="rjp-ficha-hero__identity-head">
+                      <h1 className="rjp-ficha-hero__name">{jugador.nombre}</h1>
+                      {rankingPos != null ? (
+                        <span className="rjp-ficha-hero__rank-badge">
+                          {rankingLabel} #{rankingPos}
+                        </span>
+                      ) : null}
+                    </div>
+
+                    <div className="rjp-ficha-hero__meta">
+                      {registrationOrgId ? (
+                        <span className="rjp-ficha-hero__meta-club">
+                          Club origen: {getOrganizerDisplayNameSync(registrationOrgId)}
+                        </span>
+                      ) : null}
+                      {hasOrgContext && viewingClubName && registrationOrgId !== viewingOrgId ? (
+                        <span className="rjp-ficha-hero__meta-club">
+                          Viendo desde: {viewingClubName}
+                        </span>
+                      ) : null}
+                      <span className="rjp-ficha-hero__meta-cat">
+                        {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
                       </span>
+                    </div>
+
+                    {showRivieraId ? (
+                      <div className="rjp-ficha-hero__riviera">
+                        <span className="rjp-ficha-hero__riviera-lbl">Riviera ID</span>
+                        <RivieraIdBadge rivieraId={jugador.riviera_id!} size="md" />
+                      </div>
+                    ) : null}
+
+                    {!hasPhoto ? (
+                      <div className="rjp-ficha-hero__pais-row">
+                        <JugadorPaisBadge
+                          codigo={jugador.pais_codigo}
+                          size="md"
+                          className="rjp-ficha-hero__pais"
+                        />
+                      </div>
                     ) : null}
                   </div>
 
-                  <div className="rjp-ficha-hero__meta">
-                    {registrationOrgId ? (
-                      <span className="rjp-ficha-hero__meta-club">
-                        Club origen: {getOrganizerDisplayNameSync(registrationOrgId)}
+                  <div className="rjp-ficha-hero__pills">
+                    {perfilMeta.map((item) => (
+                      <span key={item.label} className="rjp-ficha-pill rjp-ficha-pill--compact">
+                        <TablerIcon
+                          name={metaIcon(item.label)}
+                          size={14}
+                          className="rjp-ficha-pill__icon"
+                        />
+                        <span className="rjp-ficha-pill__val">{item.value}</span>
                       </span>
-                    ) : null}
-                    {hasOrgContext && viewingClubName && registrationOrgId !== viewingOrgId ? (
-                      <span className="rjp-ficha-hero__meta-club">
-                        Viendo desde: {viewingClubName}
-                      </span>
-                    ) : null}
-                    <span className="rjp-ficha-hero__meta-cat">
-                      {JUGADOR_CATEGORIA_LABELS[jugador.categoria]}
-                    </span>
+                    ))}
                   </div>
-
-                  {showRivieraId ? (
-                    <div className="rjp-ficha-hero__riviera">
-                      <span className="rjp-ficha-hero__riviera-lbl">Riviera ID</span>
-                      <RivieraIdBadge rivieraId={jugador.riviera_id!} size="md" />
-                    </div>
-                  ) : null}
-
-                  {!hasPhoto ? (
-                    <div className="rjp-ficha-hero__pais-row">
-                      <JugadorPaisBadge
-                        codigo={jugador.pais_codigo}
-                        size="md"
-                        className="rjp-ficha-hero__pais"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="rjp-ficha-hero__pills">
-                  {perfilMeta.map((item) => (
-                    <span key={item.label} className="rjp-ficha-pill rjp-ficha-pill--compact">
-                      <TablerIcon
-                        name={metaIcon(item.label)}
-                        size={14}
-                        className="rjp-ficha-pill__icon"
-                      />
-                      <span className="rjp-ficha-pill__val">{item.value}</span>
-                    </span>
-                  ))}
                 </div>
 
                 <div className="rjp-ficha-hero__stats">

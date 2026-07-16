@@ -1,0 +1,68 @@
+[
+  {
+    "label": "320",
+    "overflowX": false,
+    "mediaW": 254,
+    "mediaH": 210,
+    "mediaPctViewport": 37,
+    "photoFractionOfHero": 99,
+    "aspect": "4 / 3",
+    "objectPosition": "50% 28%",
+    "profileCol": 288
+  },
+  {
+    "label": "390",
+    "overflowX": false,
+    "mediaW": 324,
+    "mediaH": 243,
+    "mediaPctViewport": 29,
+    "photoFractionOfHero": 99,
+    "aspect": "4 / 3",
+    "objectPosition": "50% 28%",
+    "profileCol": 358
+  },
+  {
+    "label": "768",
+    "overflowX": false,
+    "mediaW": 630,
+    "mediaH": 473,
+    "mediaPctViewport": 46,
+    "photoFractionOfHero": 100,
+    "aspect": "4 / 3",
+    "objectPosition": "50% 28%",
+    "profileCol": 664
+  },
+  {
+    "label": "1024",
+    "overflowX": false,
+    "mediaW": 358,
+    "mediaH": 269,
+    "mediaPctViewport": 35,
+    "photoFractionOfHero": 90,
+    "aspect": "4 / 3",
+    "objectPosition": "50% 28%",
+    "profileCol": 400
+  },
+  {
+    "label": "1280",
+    "overflowX": false,
+    "mediaW": 200,
+    "mediaH": 460,
+    "mediaPctViewport": 57,
+    "photoFractionOfHero": 48,
+    "aspect": "3 / 4",
+    "objectPosition": "50% 28%",
+    "profileCol": 420
+  },
+  {
+    "label": "1440",
+    "overflowX": false,
+    "mediaW": 210,
+    "mediaH": 460,
+    "mediaPctViewport": 51,
+    "photoFractionOfHero": 48,
+    "aspect": "3 / 4",
+    "objectPosition": "50% 28%",
+    "profileCol": 440
+  }
+]

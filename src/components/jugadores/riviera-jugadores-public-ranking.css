@@ -62,7 +62,7 @@
 
 /* Legacy header hooks (disclaimer / official link still used in rules) */
 .rjp-ranking-header__official-link {
-  color: var(--brand-accent, var(--accent-gold-light, #e8c547));
+  color: var(--brand-accent, var(--accent-gold-light, var(--text-secondary)));
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -129,7 +129,7 @@
   display: none;
 }
 
-.rjp-cat-chip {
+.rjp-ranking .rjp-cat-chip {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
@@ -151,29 +151,29 @@
     color 0.15s;
 }
 
-.rjp-cat-chip:focus-visible {
+.rjp-ranking .rjp-cat-chip:focus-visible {
   outline: 2px solid var(--brand-accent, var(--accent-gold));
   outline-offset: 2px;
 }
 
-.rjp-cat-chip__icon {
+.rjp-ranking .rjp-cat-chip__icon {
   color: var(--brand-accent, var(--accent-gold));
 }
 
-.rjp-cat-chip__short {
+.rjp-ranking .rjp-cat-chip__short {
   font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1.2;
 }
 
-.rjp-cat-chip__full {
+.rjp-ranking .rjp-cat-chip__full {
   display: none;
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.1;
 }
 
-.rjp-cat-chip--active {
+.rjp-ranking .rjp-cat-chip--active {
   background: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 18%, transparent);
   border-color: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 65%, transparent);
   color: var(--brand-accent, var(--accent-gold-light, #fff));
@@ -561,8 +561,8 @@
   color: var(--text-muted);
 }
 
-/* Pts helpers (shared) */
-.rjp-pts-breakdown {
+/* Pts helpers (scoped to ranking page) */
+.rjp-ranking .rjp-pts-breakdown {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px 8px;
@@ -571,45 +571,40 @@
   line-height: 1.35;
 }
 
-.rjp-pts-breakdown--stacked {
+.rjp-ranking .rjp-pts-breakdown--stacked {
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
 }
 
 /* Compactar desglose en ranking: pts del club anfitrión */
-.rjp-podio .rjp-pts-breakdown__line--other,
-.rjp-ranking-card .rjp-pts-breakdown__line--other,
-.rjp-podio .rjp-pts-breakdown__line--total,
-.rjp-ranking-card .rjp-pts-breakdown__line--total,
-.rjp-podio .rjp-pts-breakdown__line--career-total,
-.rjp-ranking-card .rjp-pts-breakdown__line--career-total {
+.rjp-ranking .rjp-podio .rjp-pts-breakdown__line--other,
+.rjp-ranking .rjp-ranking-card .rjp-pts-breakdown__line--other,
+.rjp-ranking .rjp-podio .rjp-pts-breakdown__line--total,
+.rjp-ranking .rjp-ranking-card .rjp-pts-breakdown__line--total,
+.rjp-ranking .rjp-podio .rjp-pts-breakdown__line--career-total,
+.rjp-ranking .rjp-ranking-card .rjp-pts-breakdown__line--career-total {
   display: none;
 }
 
-.rjp-podio .rjp-pts-breakdown__line--home ~ .rjp-pts-breakdown__line--total,
-.rjp-ranking-card .rjp-pts-breakdown__line--home ~ .rjp-pts-breakdown__line--total {
-  display: none;
-}
-
-.rjp-pts-breakdown__line--other {
+.rjp-ranking .rjp-pts-breakdown__line--other {
   color: var(--text-muted);
   font-weight: 500;
 }
 
-.rjp-pts-breakdown__line--home {
+.rjp-ranking .rjp-pts-breakdown__line--home {
   color: var(--brand-accent, var(--accent-gold));
   font-weight: 600;
   font-size: 12px;
 }
 
-.rjp-pts-breakdown__line--total {
+.rjp-ranking .rjp-pts-breakdown__line--total {
   color: var(--brand-accent, var(--accent-gold));
   font-weight: 700;
   font-size: 12px;
 }
 
-.rjp-ranking-dual-pts {
+.rjp-ranking .rjp-ranking-dual-pts {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 4px 8px;
@@ -618,23 +613,23 @@
   line-height: 1.35;
 }
 
-.rjp-ranking-dual-pts--stacked {
+.rjp-ranking .rjp-ranking-dual-pts--stacked {
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
 }
 
-.rjp-ranking-dual-pts__total {
+.rjp-ranking .rjp-ranking-dual-pts__total {
   color: var(--brand-accent, var(--accent-gold));
   font-weight: 700;
   font-size: 12px;
 }
 
-.rjp-ranking-dual-pts__local {
+.rjp-ranking .rjp-ranking-dual-pts__local {
   color: var(--brand-accent, var(--accent-gold));
 }
 
-.rjp-ranking-dual-pts__origen {
+.rjp-ranking .rjp-ranking-dual-pts__origen {
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -1098,16 +1093,16 @@
     scroll-snap-type: none;
   }
 
-  .rjp-cat-chip {
+  .rjp-ranking .rjp-cat-chip {
     border-radius: 12px;
     padding: 0.55rem 1rem;
   }
 
-  .rjp-cat-chip__short {
+  .rjp-ranking .rjp-cat-chip__short {
     display: none;
   }
 
-  .rjp-cat-chip__full {
+  .rjp-ranking .rjp-cat-chip__full {
     display: block;
   }
 

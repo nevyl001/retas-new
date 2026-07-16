@@ -1,0 +1,25 @@
+{
+  "catBefore": {
+    "text": "6ta6ta fuerza",
+    "stored": [
+      [
+        "rjp_public_ranking_categoria:e724de97-3552-4a01-a269-f621e6f1ed26:M",
+        "6ta_fuerza"
+      ]
+    ],
+    "meta": "Varonil·6ta fuerza·Hackpadel"
+  },
+  "after": {
+    "url": "/ranking/o/e724de97-3552-4a01-a269-f621e6f1ed26/varonil",
+    "text": "6ta6ta fuerza",
+    "meta": "Varonil·6ta fuerza·Hackpadel",
+    "stored": [
+      [
+        "rjp_public_ranking_categoria:e724de97-3552-4a01-a269-f621e6f1ed26:M",
+        "6ta_fuerza"
+      ]
+    ]
+  },
+  "restored": true,
+  "sameCat": true
+}

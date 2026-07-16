@@ -100,7 +100,9 @@
 }
 
 .rjp-ficha-skel__hero {
-  height: 220px;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  min-height: 210px;
 }
 
 .rjp-ficha-skel__row {
@@ -195,9 +197,11 @@
 .rjp-ficha-hero__media {
   position: relative;
   width: 100%;
-  /* Compacto en móvil: identidad visible sin ocupar casi todo el viewport */
-  height: clamp(140px, 36vw, 200px);
-  max-height: 200px;
+  /* Pasaporte: presencia real de la foto (no banner bajo) */
+  aspect-ratio: 4 / 3;
+  height: auto;
+  max-height: none;
+  min-height: clamp(210px, 58vw, 280px);
   flex-shrink: 0;
   overflow: hidden;
   background: var(--rjp-ficha-surface);
@@ -208,18 +212,19 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  /* Retratos deportivos: favorece cara/torso sin empujar al jugador abajo */
+  object-position: center 28%;
 }
 
 .rjp-ficha-hero__media-overlay {
   position: absolute;
   inset: auto 0 0;
-  height: 50%;
+  height: 36%;
   pointer-events: none;
   background: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(8, 8, 12, 0.88) 100%
+    rgba(8, 8, 12, 0.55) 100%
   );
 }
 
@@ -241,8 +246,14 @@
 
 .rjp-ficha-hero__avatar-wrap {
   display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 20px 16px 0;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: clamp(210px, 58vw, 280px);
+  padding: 0;
+  background: var(--rjp-ficha-surface);
+  border-bottom: 1px solid var(--rjp-ficha-border);
 }
 
 .rjp-ficha-avatar {
@@ -255,7 +266,7 @@
   border: 2px solid var(--rjp-ficha-accent-border);
   box-shadow: 0 0 0 3px var(--rjp-ficha-card);
   overflow: hidden;
-  background: var(--rjp-ficha-surface);
+  background: rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,7 +277,7 @@
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: center top;
+  object-position: center 28%;
 }
 
 .rjp-ficha-avatar__initial {
@@ -293,21 +304,25 @@
 
 .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-avatar,
 .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-avatar__circle {
-  width: 96px;
-  height: 96px;
+  width: clamp(88px, 28vw, 112px);
+  height: clamp(88px, 28vw, 112px);
   margin: 0;
 }
 
 .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-avatar__initial {
-  font-size: 36px;
+  font-size: clamp(36px, 12vw, 48px);
 }
 
 .rjp-ficha-hero__body {
-  padding: 16px;
+  padding: 12px 14px 14px;
+}
+
+.rjp-ficha-hero__main {
+  min-width: 0;
 }
 
 .rjp-ficha-hero__identity {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .rjp-ficha-hero__identity-head {
@@ -412,15 +427,15 @@
 .rjp-ficha-hero__pills {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .rjp-ficha-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 500;
@@ -430,7 +445,7 @@
 }
 
 .rjp-ficha-pill--compact {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--rjp-ficha-text);
 }
@@ -442,12 +457,12 @@
 .rjp-ficha-hero__stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .rjp-ficha-stat {
   text-align: left;
-  padding: 12px;
+  padding: 10px;
   border-radius: 12px;
   background: var(--rjp-ficha-surface);
   border: 1px solid var(--rjp-ficha-border);
@@ -456,18 +471,18 @@
 
 .rjp-ficha-stat__lbl {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--rjp-ficha-text-3);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   line-height: 1.25;
 }
 
 .rjp-ficha-stat__val {
   display: block;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--rjp-ficha-accent);
   line-height: 1.25;
@@ -971,7 +986,7 @@
 
   .rjp-ficha__layout {
     display: grid;
-    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
     grid-template-areas:
       "profile summary"
       "historial historial"
@@ -1024,28 +1039,31 @@
     border-radius: 18px;
   }
 
+  /* Foto arriba (4:3) — evita tira lateral en laptop */
   .rjp-ficha-hero--photo {
-    display: grid;
-    grid-template-columns: 120px minmax(0, 1fr);
-    align-items: stretch;
+    display: block;
   }
 
   .rjp-ficha-hero__media {
+    aspect-ratio: 4 / 3;
     height: auto;
     max-height: none;
-    min-height: 180px;
-    border-radius: 17px 0 0 17px;
+    min-height: 240px;
+    border-radius: 17px 17px 0 0;
+  }
+
+  .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-hero__avatar-wrap {
+    min-height: 240px;
+    border-radius: 17px 17px 0 0;
   }
 
   .rjp-ficha-hero__body {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    padding: 16px 18px 18px;
+    display: block;
   }
 
   .rjp-ficha-hero__stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 
   .rjp-ficha-aside__kpis {
@@ -1075,7 +1093,10 @@
 
   .rjp-ficha__layout {
     display: grid;
-    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(240px, 300px);
+    grid-template-columns:
+      minmax(460px, 1.15fr)
+      minmax(440px, 1.2fr)
+      minmax(240px, 0.65fr);
     grid-template-areas:
       "profile historial summary"
       "rating rating rating";
@@ -1127,33 +1148,74 @@
     border-radius: 18px;
   }
 
-  /* Pasaporte: foto lateral compacta */
-  .rjp-ficha-hero--photo {
+  /* Desktop: foto al lado del nombre/pills; puntos a ancho completo debajo.
+     Evita que la foto se estire con los stats y se vea como tira. */
+  .rjp-ficha-hero--photo,
+  .rjp-ficha-hero:not(.rjp-ficha-hero--photo) {
     display: grid;
-    grid-template-columns: 128px minmax(0, 1fr);
-    align-items: stretch;
+    grid-template-columns: minmax(240px, 1.05fr) minmax(0, 1fr);
+    grid-template-areas:
+      "media main"
+      "stats stats";
+    align-items: start;
+    column-gap: 0;
+    row-gap: 0;
   }
 
-  .rjp-ficha-hero__media {
+  .rjp-ficha-hero__media,
+  .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-hero__avatar-wrap {
+    grid-area: media;
+    aspect-ratio: 4 / 5;
+    width: 100%;
     height: auto;
+    min-height: 0;
     max-height: none;
-    min-height: 190px;
-    border-radius: 17px 0 0 17px;
+    align-self: start;
+    border-radius: 17px 0 0 0;
+  }
+
+  .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-hero__avatar-wrap {
+    border-right: 1px solid var(--rjp-ficha-border);
+    border-bottom: none;
   }
 
   .rjp-ficha-hero__body {
-    padding: 18px 18px 18px 16px;
+    display: contents;
+  }
+
+  .rjp-ficha-hero__main {
+    grid-area: main;
+    padding: 18px 18px 14px 16px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    gap: 10px;
+    min-width: 0;
   }
 
-  .rjp-ficha-hero__name {
-    font-size: 24px;
+  .rjp-ficha-hero__identity {
+    margin-bottom: 0;
+  }
+
+  .rjp-ficha-hero__pills {
+    margin-bottom: 0;
   }
 
   .rjp-ficha-hero__stats {
-    grid-template-columns: 1fr;
+    grid-area: stats;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    padding: 14px 16px 16px;
+    border-top: 1px solid var(--rjp-ficha-border);
+  }
+
+  .rjp-ficha-hero__name {
+    font-size: 26px;
+  }
+
+  .rjp-ficha-stat {
+    padding: 10px 12px;
   }
 
   .rjp-ficha-aside__kpis {
@@ -1191,12 +1253,25 @@
 
 @media (min-width: 1440px) {
   .rjp-public--ficha .rjp-public__inner {
-    max-width: 1320px;
+    max-width: 1440px;
   }
 
   .rjp-ficha__layout {
-    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(260px, 310px);
+    grid-template-columns:
+      minmax(480px, 1.15fr)
+      minmax(480px, 1.25fr)
+      minmax(260px, 0.7fr);
     gap: 28px;
+  }
+
+  .rjp-ficha-hero--photo,
+  .rjp-ficha-hero:not(.rjp-ficha-hero--photo) {
+    grid-template-columns: minmax(260px, 1.05fr) minmax(0, 1fr);
+  }
+
+  .rjp-ficha-hero__media,
+  .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-hero__avatar-wrap {
+    /* aspect-ratio 4/5 manda; sin min/max que deformen */
   }
 }
 

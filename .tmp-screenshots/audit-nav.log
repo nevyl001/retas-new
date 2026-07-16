@@ -1,0 +1,4 @@
+before {"text":"6ta6ta fuerza","stored":[["rjp_public_ranking_categoria:e724de97-3552-4a01-a269-f621e6f1ed26:M","6ta_fuerza"]],"meta":"Varonil·6ta fuerza·Hackpadel"}
+ficha url http://localhost:3000/public/jugadores/65f3be47-a607-4220-b4e8-448558fc8624?org=e724de97-3552-4a01-a269-f621e6f1ed26 ok true
+after {"url":"/ranking/o/e724de97-3552-4a01-a269-f621e6f1ed26/varonil","text":"6ta6ta fuerza","meta":"Varonil·6ta fuerza·Hackpadel","stored":[["rjp_public_ranking_categoria:e724de97-3552-4a01-a269-f621e6f1ed26:M","6ta_fuerza"]]}
+restored true

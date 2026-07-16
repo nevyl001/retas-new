@@ -53,6 +53,12 @@ import { RankingInternoDisclaimer } from "./RankingInternoDisclaimer";
 import { RankingPodio } from "./RankingPodio";
 import { RankingPtsDisplay } from "./RankingPtsDisplay";
 import { RankingPuntosTeaser } from "./RankingPuntosTeaser";
+import {
+  matchesRankingSearch,
+  readStoredPublicRankingCategoria,
+  splitRankingPresentation,
+  writeStoredPublicRankingCategoria,
+} from "./rankingPublicUi";
 import "./riviera-jugadores-public-ranking.css";
 
 interface JugadoresPublicRankingProps {
@@ -169,23 +175,6 @@ function RankingSkeleton() {
   );
 }
 
-function matchesRankingSearch(
-  jugador: RivieraJugadorWithStats,
-  query: string
-): boolean {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  const name = (jugador.nombre ?? "").toLowerCase();
-  const rivId = (jugador.riviera_id ?? "").toLowerCase();
-  const rivCompact = rivId.replace(/[\s-]/g, "");
-  const qCompact = q.replace(/[\s-]/g, "");
-  return (
-    name.includes(q) ||
-    rivId.includes(q) ||
-    (qCompact.length > 0 && rivCompact.includes(qCompact))
-  );
-}
-
 export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   organizadorId: routeOrganizadorId,
   genero = "M",
@@ -194,7 +183,14 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     () => resolvePublicRankingOrgId(routeOrganizadorId),
     [routeOrganizadorId]
   );
-  const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
+  const [categoria, setCategoria] = useState<RivieraJugadorCategoria>(() => {
+    const resolved =
+      routeOrganizadorId?.trim() ||
+      getPublicOrganizadorIdFromPath() ||
+      getPublicOrganizadorIdWithoutUser() ||
+      null;
+    return readStoredPublicRankingCategoria(resolved, genero) ?? "open";
+  });
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -213,11 +209,16 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   );
 
   const isSearching = searchQuery.trim().length > 0;
-  const showPodio = !isSearching && jugadoresVisibles.length >= 3;
-  const listJugadores = showPodio
-    ? jugadoresVisibles.slice(3)
-    : jugadoresVisibles;
-  const listRankOffset = showPodio ? 3 : 0;
+  const {
+    showPodio,
+    podio: podioJugadores,
+    list: listJugadores,
+    listOffset: listRankOffset,
+  } = useMemo(
+    () =>
+      splitRankingPresentation(jugadoresVisibles, { searching: isSearching }),
+    [jugadoresVisibles, isSearching]
+  );
 
   useEffect(() => {
     try {
@@ -232,6 +233,15 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
       navigateAppTo(buildInternalClubRankingUrl(queryOrg, genero));
     }
   }, [routeOrganizadorId, genero]);
+
+  useEffect(() => {
+    const stored = readStoredPublicRankingCategoria(orgId, genero);
+    setCategoria(stored ?? "open");
+  }, [orgId, genero]);
+
+  useEffect(() => {
+    writeStoredPublicRankingCategoria(orgId, genero, categoria);
+  }, [orgId, genero, categoria]);
 
   const scopeOrgId = orgId ?? routeOrganizadorId?.trim() ?? null;
 
@@ -457,7 +467,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                   <>
                     {showPodio ? (
                       <RankingPodio
-                        jugadores={jugadoresVisibles.slice(0, 3)}
+                        jugadores={podioJugadores}
                         ranks={rankingRanks.slice(0, 3)}
                         clubOrganizadorId={orgId}
                         internalClub

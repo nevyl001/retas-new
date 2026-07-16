@@ -6,7 +6,9 @@ export function applyClubKeyToDocument(brandingKey: string): void {
   document.documentElement.setAttribute("data-club", brandingKey);
 }
 
-/** Tokens de marca en un contenedor scoped (vistas públicas sin tocar `<html>`). */
+/** Tokens de marca en un contenedor scoped (vistas públicas sin tocar `<html>`).
+ * Incluye aliases legacy (`--accent-gold`, `--ro-accent`, …) solo en este scope
+ * para que ranking/ficha usen el acento del club sin redefinir el tema global. */
 export function getClubExperienceScopeStyle(
   manifest: BrandManifest
 ): CSSProperties {
