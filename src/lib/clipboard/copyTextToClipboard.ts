@@ -1,28 +1,11 @@
 /**
- * Copia texto al portapapeles con fallbacks para Safari/iOS.
- * En móvil, si está disponible, usa Web Share API (más fiable tras async).
+ * Copia texto al portapapeles.
+ * No usa navigator.share: el botón es "Copiar", no "Compartir".
+ * Fallbacks: clipboard API → execCommand (Safari/iOS).
  */
 export async function copyTextToClipboard(text: string): Promise<boolean> {
   const value = text.trim();
   if (!value) return false;
-
-  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-    try {
-      const canShare =
-        typeof navigator.canShare === "function"
-          ? navigator.canShare({ text: value })
-          : true;
-      if (canShare) {
-        await navigator.share({ text: value });
-        return true;
-      }
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") {
-        return false;
-      }
-      /* continuar con clipboard */
-    }
-  }
 
   try {
     if (navigator.clipboard?.writeText) {

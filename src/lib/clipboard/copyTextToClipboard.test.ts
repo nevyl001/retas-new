@@ -2,8 +2,6 @@ import { copyTextToClipboard, legacyExecCopy } from "./copyTextToClipboard";
 
 describe("copyTextToClipboard", () => {
   const originalClipboard = navigator.clipboard;
-  const originalShare = navigator.share;
-  const originalCanShare = navigator.canShare;
   const originalExec = document.execCommand;
 
   beforeEach(() => {
@@ -11,8 +9,8 @@ describe("copyTextToClipboard", () => {
       clipboard: {
         writeText: jest.fn().mockResolvedValue(undefined),
       },
-      share: undefined,
-      canShare: undefined,
+      share: jest.fn().mockResolvedValue(undefined),
+      canShare: jest.fn().mockReturnValue(true),
     });
     document.execCommand = jest.fn().mockReturnValue(true);
   });
@@ -20,8 +18,6 @@ describe("copyTextToClipboard", () => {
   afterEach(() => {
     Object.assign(navigator, {
       clipboard: originalClipboard,
-      share: originalShare,
-      canShare: originalCanShare,
     });
     document.execCommand = originalExec;
   });
@@ -32,6 +28,11 @@ describe("copyTextToClipboard", () => {
     expect(navigator.clipboard?.writeText).toHaveBeenCalledWith("hola");
   });
 
+  it("nunca llama navigator.share (botón es Copiar, no Compartir)", async () => {
+    await copyTextToClipboard("convocatoria");
+    expect(navigator.share).not.toHaveBeenCalled();
+  });
+
   it("hace fallback a execCommand si writeText falla", async () => {
     (navigator.clipboard!.writeText as jest.Mock).mockRejectedValue(
       new Error("denied")
@@ -39,18 +40,7 @@ describe("copyTextToClipboard", () => {
     const ok = await copyTextToClipboard("mensaje largo");
     expect(ok).toBe(true);
     expect(document.execCommand).toHaveBeenCalledWith("copy");
-  });
-
-  it("usa navigator.share cuando está disponible", async () => {
-    const share = jest.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, {
-      share,
-      canShare: jest.fn().mockReturnValue(true),
-    });
-    const ok = await copyTextToClipboard("convocatoria");
-    expect(ok).toBe(true);
-    expect(share).toHaveBeenCalledWith({ text: "convocatoria" });
-    expect(navigator.clipboard?.writeText).not.toHaveBeenCalled();
+    expect(navigator.share).not.toHaveBeenCalled();
   });
 
   it("retorna false con texto vacío", async () => {
