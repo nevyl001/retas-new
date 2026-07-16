@@ -1,5 +1,6 @@
 import type { OpenGameModeType, OpenRegistrationPublicDto } from "./types";
 import { convocatoriaProductHeadline } from "./modeWhitelist";
+import { formatDueloHorarioRange } from "../duelo2v2/schedule";
 
 /** Prefijo cancha legible (evita el "1" suelto en UI pública / WhatsApp). */
 export function formatCanchaLabel(raw: string | null | undefined): string | null {
@@ -123,8 +124,10 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     OpenRegistrationPublicDto,
     | "name"
     | "scheduled_at"
+    | "scheduled_until"
     | "duration_minutes"
     | "location_label"
+    | "cancha_label"
     | "category_label"
     | "rama_label"
     | "capacity"
@@ -150,15 +153,33 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
   const { lugar, cancha } = resolveLugarYCancha({
     locationLabel: dto.location_label,
-    canchaLabel: opts.canchaLabel,
+    canchaLabel: opts.canchaLabel ?? dto.cancha_label,
     clubName: opts.clubName,
   });
 
   const lines: string[] = [headline];
 
-  lines.push(
-    `🗓️ ${formatScheduledLabelCompact(dto.scheduled_at, dto.duration_minutes)}`
-  );
+  const range =
+    dto.scheduled_until &&
+    formatDueloHorarioRange(dto.scheduled_at, dto.scheduled_until);
+  if (range && dto.scheduled_at) {
+    const d = new Date(dto.scheduled_at);
+    const datePart = Number.isNaN(d.getTime())
+      ? null
+      : d.toLocaleString("es-MX", {
+          weekday: "long",
+          day: "numeric",
+          month: "numeric",
+          year: "numeric",
+        });
+    lines.push(
+      datePart ? `🗓️ ${datePart}, ${range}` : `🗓️ ${range}`
+    );
+  } else {
+    lines.push(
+      `🗓️ ${formatScheduledLabelCompact(dto.scheduled_at, dto.duration_minutes)}`
+    );
+  }
 
   if (includeLugar && lugar) lines.push(`📍 ${lugar}`);
   if (cancha) lines.push(`🎾 ${cancha}`);

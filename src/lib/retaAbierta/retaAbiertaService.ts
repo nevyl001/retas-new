@@ -240,6 +240,8 @@ export function parsePublicDto(raw: unknown): OpenRegistrationPublicDto | null {
         : null,
     scheduled_at:
       typeof row.scheduled_at === "string" ? row.scheduled_at : null,
+    scheduled_until:
+      typeof row.scheduled_until === "string" ? row.scheduled_until : null,
     duration_minutes:
       typeof row.duration_minutes === "number" ? row.duration_minutes : null,
     category_label:
@@ -247,6 +249,8 @@ export function parsePublicDto(raw: unknown): OpenRegistrationPublicDto | null {
     rama_label: typeof row.rama_label === "string" ? row.rama_label : null,
     location_label:
       typeof row.location_label === "string" ? row.location_label : null,
+    cancha_label:
+      typeof row.cancha_label === "string" ? row.cancha_label : null,
     display_rating: row.display_rating !== false,
     display_photo: row.display_photo !== false,
     entries: entriesRaw

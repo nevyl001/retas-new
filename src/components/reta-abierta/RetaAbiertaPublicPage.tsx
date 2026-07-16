@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useOrganizerDisplayName } from "../../club-experience";
 import { PublicTorneoExpressShell } from "../torneo-express/public/PublicTorneoExpressShell";
+import { formatDueloHorarioRange } from "../../lib/duelo2v2/schedule";
 import {
   buildRequestRivieraIdWhatsAppMessage,
   buildWhatsAppShareUrl,
@@ -84,16 +85,25 @@ function formatWhen(dto: OpenRegistrationPublicDto): string {
   if (!dto.scheduled_at) return "Fecha por confirmar";
   const d = new Date(dto.scheduled_at);
   if (Number.isNaN(d.getTime())) return "Fecha por confirmar";
-  const base = d.toLocaleString("es-MX", {
+
+  const datePart = d.toLocaleString("es-MX", {
     weekday: "short",
     day: "numeric",
     month: "short",
+  });
+
+  // Misma fuente/formato que admin (rango inicio–fin) cuando hay fin.
+  const range = formatDueloHorarioRange(dto.scheduled_at, dto.scheduled_until);
+  if (range && dto.scheduled_until) {
+    return `${datePart}, ${range}`;
+  }
+
+  const timePart = d.toLocaleString("es-MX", {
     hour: "numeric",
     minute: "2-digit",
   });
-  return dto.duration_minutes
-    ? `${base} · ${dto.duration_minutes} min`
-    : base;
+  const base = `${datePart}, ${timePart}`;
+  return dto.duration_minutes ? `${base} · ${dto.duration_minutes} min` : base;
 }
 
 function PlayerSlotCard({
@@ -640,6 +650,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
             {(() => {
               const { lugar, cancha } = resolveLugarYCancha({
                 locationLabel: dto.location_label,
+                canchaLabel: dto.cancha_label,
                 clubName: organizerName,
               });
               return (

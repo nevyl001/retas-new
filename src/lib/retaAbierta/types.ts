@@ -45,10 +45,14 @@ export interface OpenRegistrationPublicDto {
   approval_required: boolean;
   registration_deadline: string | null;
   scheduled_at: string | null;
+  /** Fin del encuentro (duelo: duelos_2v2.programado_hasta). */
+  scheduled_until?: string | null;
   duration_minutes: number | null;
   category_label: string | null;
   rama_label: string | null;
   location_label: string | null;
+  /** Cancha del encuentro (duelo: duelos_2v2.cancha). Separada de location_label. */
+  cancha_label?: string | null;
   display_rating: boolean;
   display_photo: boolean;
   entries: OpenRegistrationPublicEntry[];
