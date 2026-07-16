@@ -200,6 +200,9 @@ export function findCourtRotationRepairs(
   let missingIdeal = 0;
 
   for (const m of regular) {
+    // NULL = Por asignar a propósito (p.ej. reducción de canchas). No reasignar.
+    if (m.court == null) continue;
+
     const round = Number(m.round ?? 1);
     const key = matchPairingKey(round, m.pair1_id, m.pair2_id);
     const idealCourt = idealCourts.get(key);

@@ -5,9 +5,13 @@ import {
   type RetaEditPhase,
   type RetaConfigFieldKey,
 } from "../../lib/reta/retaConfigEditRules";
-
-const MIN_COURTS = 1;
-const MAX_COURTS = 20;
+import {
+  RETA_COURTS_MAX,
+  RETA_COURTS_MIN,
+  clampChampionshipRoundsShared,
+  clampRetaCourts,
+  clampRetaDurationMinutes,
+} from "../../lib/reta/retaConfigValidation";
 
 export type RetaConfigFieldsProps = {
   values: RetaConfigFormValues;
@@ -22,7 +26,11 @@ export type RetaConfigFieldsProps = {
 function FieldLock({ reason }: { reason?: string }) {
   if (!reason) return null;
   return (
-    <p className="home-sheet__field-optional" role="note" style={{ display: "block", marginTop: 4 }}>
+    <p
+      className="home-sheet__field-optional"
+      role="note"
+      style={{ display: "block", marginTop: 4 }}
+    >
       {reason}
     </p>
   );
@@ -88,14 +96,17 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
 
       <div className="home-sheet__field">
         <span className="home-sheet__field-label">Canchas disponibles</span>
-        <div className="home-sheet__stepper" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div
+          className="home-sheet__stepper"
+          style={{ display: "flex", alignItems: "center", gap: 12 }}
+        >
           <button
             type="button"
             className="home-sheet__stepper-btn"
             style={{ minWidth: 44, minHeight: 44 }}
-            disabled={courtsEd.locked || values.courts <= MIN_COURTS}
+            disabled={courtsEd.locked || values.courts <= RETA_COURTS_MIN}
             onClick={() =>
-              patch({ courts: Math.max(MIN_COURTS, values.courts - 1) })
+              patch({ courts: clampRetaCourts(values.courts - 1) })
             }
             aria-label="Menos canchas"
           >
@@ -108,9 +119,9 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             type="button"
             className="home-sheet__stepper-btn"
             style={{ minWidth: 44, minHeight: 44 }}
-            disabled={courtsEd.locked || values.courts >= MAX_COURTS}
+            disabled={courtsEd.locked || values.courts >= RETA_COURTS_MAX}
             onClick={() =>
-              patch({ courts: Math.min(MAX_COURTS, values.courts + 1) })
+              patch({ courts: clampRetaCourts(values.courts + 1) })
             }
             aria-label="Más canchas"
           >
@@ -144,7 +155,9 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
               value={values.duration_minutes}
               disabled={durEd.locked}
               onChange={(e) =>
-                patch({ duration_minutes: Number(e.target.value) || 90 })
+                patch({
+                  duration_minutes: clampRetaDurationMinutes(e.target.value),
+                })
               }
             />
           </label>
@@ -161,7 +174,10 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             />
           </label>
 
-          <label className="home-sheet__field" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <label
+            className="home-sheet__field"
+            style={{ display: "flex", gap: 8, alignItems: "center" }}
+          >
             <input
               type="checkbox"
               checked={values.mostrar_lugar}
@@ -193,7 +209,13 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             padding: 12,
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <span className="home-sheet__field-label">Remontada Final</span>
             <span className="home-sheet__field-optional">Opcional</span>
             <input
@@ -219,9 +241,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
                 value={values.championshipRounds}
                 onChange={(e) =>
                   patch({
-                    championshipRounds: Math.min(
-                      10,
-                      Math.max(1, Number(e.target.value) || 2)
+                    championshipRounds: clampChampionshipRoundsShared(
+                      e.target.value
                     ),
                   })
                 }

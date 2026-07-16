@@ -2,17 +2,17 @@
  * Guardado de configuración de reta.
  * Canchas: RPC atómica (courts + unassign). Remontada: BD canónica.
  */
-import { supabase } from "../supabaseClient";
-import type { Tournament, Match } from "../db/types";
 import {
   getTournamentPublicConfigExtended,
-  updateTournament,
 } from "../database";
+import { supabase } from "../supabaseClient";
+import type { Tournament, Match } from "../db/types";
 import {
   initChampionshipConfig,
   loadChampionshipConfig,
   parseChampionshipConfig,
   saveChampionshipConfig,
+  saveChampionshipConfigLocalOnly,
   clampChampionshipRounds,
   type RoundRobinChampionshipConfig,
 } from "../roundRobinChampionship";
@@ -23,6 +23,7 @@ import {
   type RetaEditPhase,
   type RetaConfigFieldKey,
 } from "./retaConfigEditRules";
+import { clampRetaCourts, clampRetaDurationMinutes } from "./retaConfigValidation";
 
 export type RetaConfigFormValues = {
   name: string;
@@ -148,7 +149,7 @@ export async function resolveCanonicalChampionshipConfig(
 
   // Espejo caché (no decide autoridad)
   if (dbParsed) {
-    saveChampionshipConfig(tournamentId, resolved);
+    saveChampionshipConfigLocalOnly(tournamentId, resolved);
   }
   return resolved;
 }
@@ -192,10 +193,7 @@ function pickAllowedUpdates(
     const startIso = datetimeLocalToIso(values.programado_en);
     if (startIso) {
       updates.programado_en = startIso;
-      const mins = Math.max(
-        15,
-        Math.min(480, Math.floor(values.duration_minutes) || 90)
-      );
+      const mins = clampRetaDurationMinutes(values.duration_minutes);
       updates.programado_hasta = new Date(
         Date.parse(startIso) + mins * 60_000
       ).toISOString();
@@ -306,7 +304,7 @@ export async function saveRetaConfig(
   ) {
     const courtsRes = await applyCourtsAtomically({
       tournamentId: tournament.id,
-      newCourts: Math.max(1, Math.min(20, Math.floor(values.courts) || 1)),
+      newCourts: clampRetaCourts(values.courts),
       expectedUpdatedAt: workingUpdatedAt,
     });
     if (!courtsRes.ok) {
@@ -397,30 +395,4 @@ export async function saveRetaConfig(
     tournament: workingTournament,
     message: messages.length ? messages.join(" ") : "Cambios guardados.",
   };
-}
-
-export async function saveRetaConfigFallback(
-  input: SaveRetaConfigInput
-): Promise<SaveRetaConfigResult> {
-  const result = await saveRetaConfig(input);
-  if (result.ok || result.conflict !== true) return result;
-  const updates = pickAllowedUpdates(
-    input.phase,
-    input.values,
-    input.tournament
-  );
-  if (!Object.keys(updates).length) return result;
-  try {
-    const data = await updateTournament(input.tournament.id, updates);
-    return {
-      ok: true,
-      tournament: { ...input.tournament, ...data },
-      message: "Cambios guardados.",
-    };
-  } catch (e) {
-    return {
-      ok: false,
-      error: e instanceof Error ? e.message : "Error al guardar",
-    };
-  }
 }

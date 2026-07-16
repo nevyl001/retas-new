@@ -1,21 +1,27 @@
 /**
- * Share OG HTML for WhatsApp/Facebook crawlers (CRA SPA cannot mutate og:* for them).
+ * Share OG Edge Function — crawlers (WhatsApp) need server HTML with og:*.
  *
- * Deploy: supabase functions deploy share-reta-og
- * URL compartida (WhatsApp):
- *   ${REACT_APP_SHARE_OG_BASE_URL}?slug=ra-xxxx
+ * Deploy (pendiente, no en esta fase):
+ *   supabase functions deploy share-reta-og
+ *
+ * URL que copia la app (Copiar convocatoria / WhatsApp):
+ *   ${REACT_APP_SHARE_OG_BASE_URL}?slug=<public_slug>
  *   ej. https://<project>.supabase.co/functions/v1/share-reta-og?slug=ra-xxxx
  *
- * Env en función: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PUBLIC_APP_ORIGIN
- * Env en FE: REACT_APP_SHARE_OG_BASE_URL
+ * Fallback local sin env: origin + /share/reta/<slug> (requiere proxy/rewrite).
  *
- * No meta-refresh inmediato (crawlers necesitan leer OG). Enlace + refresh 8s.
+ * Env función: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PUBLIC_APP_ORIGIN
+ * Env FE: REACT_APP_SHARE_OG_BASE_URL
+ *
+ * No redirect inmediato. Meta refresh 8s + enlace "Abrir convocatoria".
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const RIVIERA_OG_IMAGE = "https://appriviera.rivieraopen.com/icon-512x512.png";
 const RIVIERA_TITLE = "RivieraApp — Retas y torneos de pádel";
+const RIVIERA_DESC =
+  "Organiza. Juega. Compite. Crea retas y torneos de pádel.";
 const APP_ORIGIN =
   Deno.env.get("PUBLIC_APP_ORIGIN") || "https://appriviera.rivieraopen.com";
 
@@ -25,6 +31,13 @@ function escapeHtml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function shouldExpose(enabled: unknown, status: unknown): boolean {
+  if (enabled === false) return false;
+  const s = String(status || "").toLowerCase();
+  if (s === "draft" || s === "cancelled" || s === "closed") return false;
+  return true;
 }
 
 function htmlPage(opts: {
@@ -77,27 +90,15 @@ serve(async (req) => {
     .eq("public_slug", slug)
     .maybeSingle();
 
-  if (regErr || !reg) {
-    return new Response("Not found", { status: 404 });
-  }
-
-  const status = String(reg.status || "");
-  const enabled = reg.enabled !== false;
-  if (
-    !enabled ||
-    status === "draft" ||
-    status === "cancelled" ||
-    status === "closed"
-  ) {
-    // No exponer datos de convocatorias no públicas
+  if (regErr || !reg || !shouldExpose(reg.enabled, reg.status)) {
     return new Response("Not found", { status: 404 });
   }
 
   let title = RIVIERA_TITLE;
-  let description =
-    "Organiza. Juega. Compite. Crea retas y torneos de pádel.";
+  let description = RIVIERA_DESC;
   let image = RIVIERA_OG_IMAGE;
   let organizadorId: string | null = null;
+  let clubTitle: string | null = null;
 
   if (reg.mode_type === "reta" || reg.mode_type === "americano") {
     const { data: t } = await sb
@@ -133,32 +134,33 @@ serve(async (req) => {
     const row = Array.isArray(brand) ? brand[0] : brand;
     if (row?.premium_branding_enabled === true && row?.branding_key) {
       const key = String(row.branding_key);
-      const clubOg = `${APP_ORIGIN}/branding/${encodeURIComponent(key)}/og.png`;
-      // Fallback Riviera si el asset no está documentado: el crawler igual recibe URL absoluta;
-      // el FE/CDN debe servir el asset. Si falta, WhatsApp mostrará placeholder roto → preferimos
-      // Riviera solo cuando no hay branding_key (arriba). Aquí usamos club OG path.
-      image = clubOg;
+      image = `${APP_ORIGIN}/branding/${encodeURIComponent(key)}/og.png`;
+      const { data: display } = await sb.rpc("get_organizador_display_name", {
+        p_organizador_id: organizadorId,
+      });
+      clubTitle =
+        typeof display === "string"
+          ? display
+          : Array.isArray(display)
+            ? display[0]
+            : null;
+      if (clubTitle) title = `${title} · ${clubTitle}`;
     }
   }
 
   const playUrl = `${APP_ORIGIN}/jugar/${encodeURIComponent(slug)}`;
-  const canonical = `${
+  const shareBase =
     Deno.env.get("PUBLIC_SHARE_CANONICAL_BASE") ||
-    `${supabaseUrl}/functions/v1/share-reta-og`
-  }?slug=${encodeURIComponent(slug)}`;
+    `${supabaseUrl}/functions/v1/share-reta-og`;
+  const canonical = `${shareBase}?slug=${encodeURIComponent(slug)}`;
 
-  const html = htmlPage({
-    title,
-    description,
-    image,
-    playUrl,
-    canonical,
-  });
-
-  return new Response(html, {
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=60",
-    },
-  });
+  return new Response(
+    htmlPage({ title, description, image, playUrl, canonical }),
+    {
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, max-age=60",
+      },
+    }
+  );
 });

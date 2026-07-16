@@ -6,6 +6,7 @@ import {
   getTournamentPublicConfigExtended,
 } from "./database";
 import { assignCourtsInChunk } from "./circleRoundRobinSchedule";
+import { compareMatchCourt, isAssignedCourt } from "./matchCourt";
 import { debugLog } from "./debug/debugLog";
 import {
   computePairsWithStats,
@@ -40,9 +41,9 @@ export function parseChampionshipConfig(
 ): RoundRobinChampionshipConfig | null {
   if (!raw || typeof raw !== "object") return null;
   const parsed = raw as Partial<RoundRobinChampionshipConfig>;
-  if (!parsed.championshipEnabled) return null;
+  // Objeto presente en BD/LS = fuente explícita (incluye enabled:false).
   return {
-    championshipEnabled: true,
+    championshipEnabled: parsed.championshipEnabled === true,
     championshipRounds: clampChampionshipRounds(
       parsed.championshipRounds ?? DEFAULT_CONFIG.championshipRounds
     ),
@@ -77,19 +78,24 @@ export async function syncChampionshipConfigFromPublic(
   const local = loadChampionshipConfig(tournamentId);
   try {
     const pub = await getTournamentPublicConfigExtended(tournamentId);
-    const remote = parseChampionshipConfig(pub?.championship_config);
+    const hasRemoteKey =
+      pub != null &&
+      Object.prototype.hasOwnProperty.call(pub, "championship_config") &&
+      pub.championship_config != null;
+    const remote = hasRemoteKey
+      ? parseChampionshipConfig(pub.championship_config)
+      : null;
     if (remote) {
       // Espejo caché; no dejar que LS gane sobre BD
-      saveChampionshipConfig(tournamentId, remote);
+      saveChampionshipConfigLocalOnly(tournamentId, remote);
       return remote;
     }
     // Sin fila en BD: no activar por localStorage
     if (local?.championshipEnabled) {
-      const disabled: RoundRobinChampionshipConfig = {
+      return {
         ...local,
         championshipEnabled: false,
       };
-      return disabled;
     }
     return local;
   } catch {
@@ -141,13 +147,11 @@ function reconcileChampionshipConfig(
 
 let warnedMissingChampionshipColumn = false;
 
-/** Publica config de remontada para la vista pública (anon). */
+/** Publica config de remontada para la vista pública (anon). Incluye enabled:false. */
 export async function syncChampionshipConfigPublic(
   tournamentId: string,
   config: RoundRobinChampionshipConfig
 ): Promise<void> {
-  if (!config.championshipEnabled) return;
-
   try {
     const { supabase } = await import("./supabaseClient");
     const { data: existing } = await supabase
@@ -207,7 +211,8 @@ export async function syncChampionshipConfigPublic(
   }
 }
 
-export function saveChampionshipConfig(
+/** Caché local únicamente (no decide autoridad tras create). */
+export function saveChampionshipConfigLocalOnly(
   tournamentId: string,
   config: RoundRobinChampionshipConfig
 ): void {
@@ -223,6 +228,13 @@ export function saveChampionshipConfig(
       regularRoundsMax: config.regularRoundsMax,
     })
   );
+}
+
+export function saveChampionshipConfig(
+  tournamentId: string,
+  config: RoundRobinChampionshipConfig
+): void {
+  saveChampionshipConfigLocalOnly(tournamentId, config);
   void syncChampionshipConfigPublic(tournamentId, config);
 }
 
@@ -423,7 +435,7 @@ export function championshipMatchEncounterLabel(
     }
   }
   const orderedSemi = [...semiMatches].sort(
-    (a, b) => (a.court ?? 1) - (b.court ?? 1)
+    (a, b) => compareMatchCourt(a.court, b.court)
   );
   const semiIdx = orderedSemi.findIndex((m) => m.id === match.id);
   if (semiIdx >= 0) return `ENCUENTRO ${semiIdx + 1}`;
@@ -481,7 +493,7 @@ export function sortChampionshipRoundMatches(
   allGames: Game[] = []
 ): Match[] {
   const byCourt = [...roundMatches].sort(
-    (a, b) => (a.court ?? 1) - (b.court ?? 1)
+    (a, b) => compareMatchCourt(a.court, b.court)
   );
   if (
     totalRounds >= 2 &&
@@ -494,7 +506,7 @@ export function sortChampionshipRoundMatches(
       const bFinal = isChampionshipFinalMatch(b, semiMatches, allGames);
       if (aFinal && !bFinal) return -1;
       if (!aFinal && bFinal) return 1;
-      return (a.court ?? 1) - (b.court ?? 1);
+      return compareMatchCourt(a.court, b.court);
     });
   }
   return byCourt;
@@ -523,7 +535,7 @@ function findChampionshipFinalMatch(
   }
 
   return [...lastRoundMatches].sort(
-    (a, b) => (a.court ?? 1) - (b.court ?? 1)
+    (a, b) => compareMatchCourt(a.court, b.court)
   )[0];
 }
 
@@ -730,7 +742,7 @@ async function backfillThirdPlaceMatchIfMissing(params: {
   }
 
   const courts = Math.max(1, tournament.courts || 1);
-  const finalCourt = finalMatch.court ?? 1;
+  const finalCourt = isAssignedCourt(finalMatch.court) ? finalMatch.court : 1;
   const court =
     finalCourt === 1 ? Math.min(2, courts) : Math.min(1, courts);
 

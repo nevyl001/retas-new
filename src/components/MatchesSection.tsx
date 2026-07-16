@@ -17,6 +17,7 @@ import {
   sortChampionshipRoundMatches,
 } from "../lib/roundRobinChampionship";
 import { useResolvedTeamConfig } from "../hooks/useResolvedTeamConfig";
+import { compareMatchCourt } from "../lib/matchCourt";
 
 interface MatchesSectionProps {
   tournament: Tournament;
@@ -77,7 +78,7 @@ function renderRoundBlock(
       </div>
       <div className="matches-grid-simplified">
         {[...roundMatches]
-          .sort((a, b) => (a.court ?? 1) - (b.court ?? 1))
+          .sort((a, b) => compareMatchCourt(a.court, b.court))
           .map((match, matchIdx) => {
           const encounterLabel = matchEncounterLabel?.(match);
           return (

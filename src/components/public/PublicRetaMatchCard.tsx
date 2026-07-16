@@ -8,6 +8,7 @@ import {
   PublicRetaPairSide,
   type PublicRetaPairPlayer,
 } from "./PublicRetaPairSide";
+import { formatMatchCourtLabel } from "../../lib/matchCourt";
 
 export const PublicRetaMatchCard: React.FC<{
   pair1Label: string;
@@ -17,7 +18,7 @@ export const PublicRetaMatchCard: React.FC<{
   score1: number;
   score2: number;
   hasResult: boolean;
-  court: number;
+  court: number | null;
   status: "finished" | "active";
   live?: boolean;
   index: number;
@@ -84,7 +85,7 @@ export const PublicRetaMatchCard: React.FC<{
           <span className="te-pub-cancha__icon" aria-hidden>
             🎾
           </span>
-          Cancha {court}
+          {formatMatchCourtLabel(court)}
         </span>
       </div>
 

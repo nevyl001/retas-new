@@ -1,7 +1,12 @@
 -- Atomic: update tournaments.courts + unassign pending matches on removed courts.
--- Court NULL = "Por asignar" (already treated as such via `court ?? 1` in UI sorts).
+-- Court NULL = "Por asignar". REQUIERE matches.court nullable
+--   (aplicar antes: supabase/sql/patch-matches-court-nullable.sql).
 -- Never touches matches with results or in-progress statuses.
--- Optimistic lock on tournaments.updated_at.
+-- Optimistic lock on tournaments.updated_at (set explicitly; no auto-trigger required).
+--
+-- Atomicity: conflict checks happen BEFORE any write. On not_null_violation /
+-- any error after writes, RAISE so the transaction rolls back (RPC return of
+-- ok:false would still COMMIT — do not RETURN after partial writes).
 
 CREATE OR REPLACE FUNCTION public.update_tournament_courts_and_unassign(
   p_tournament_id uuid,
@@ -44,6 +49,7 @@ BEGIN
     END IF;
   END IF;
 
+  -- Conflict before any mutation
   IF p_expected_updated_at IS NOT NULL
      AND v_updated_at IS NOT NULL
      AND p_expected_updated_at <> v_updated_at THEN
@@ -54,21 +60,7 @@ BEGIN
     );
   END IF;
 
-  -- Unassign only future/pending on courts that will disappear
-  IF p_new_courts < coalesce(v_old_courts, 1) THEN
-    UPDATE public.matches m
-    SET court = NULL
-    WHERE m.tournament_id = p_tournament_id
-      AND m.court IS NOT NULL
-      AND m.court > p_new_courts
-      AND coalesce(m.pair1_score, m.pair2_score) IS NULL
-      AND lower(coalesce(m.status, '')) NOT IN (
-        'completed', 'finished', 'finalizado',
-        'in_progress', 'playing', 'en_juego', 'live', 'started'
-      );
-    GET DIAGNOSTICS v_unassigned = ROW_COUNT;
-  END IF;
-
+  -- 1) Update courts + bump updated_at (explicit; no trigger assumed)
   UPDATE public.tournaments
   SET
     courts = p_new_courts,
@@ -90,20 +82,37 @@ BEGIN
     );
   END IF;
 
+  -- 2) Unassign only future/pending on courts that disappear (no auto-reschedule)
+  IF p_new_courts < coalesce(v_old_courts, 1) THEN
+    BEGIN
+      UPDATE public.matches m
+      SET court = NULL
+      WHERE m.tournament_id = p_tournament_id
+        AND m.court IS NOT NULL
+        AND m.court > p_new_courts
+        AND coalesce(m.pair1_score, m.pair2_score) IS NULL
+        AND lower(coalesce(m.status, '')) NOT IN (
+          'completed', 'finished', 'finalizado',
+          'in_progress', 'playing', 'en_juego', 'live', 'started'
+        );
+      GET DIAGNOSTICS v_unassigned = ROW_COUNT;
+    EXCEPTION
+      WHEN not_null_violation THEN
+        -- Abort entire transaction (courts update rolls back)
+        RAISE EXCEPTION 'matches.court no acepta NULL; no se pudo desasignar de forma segura'
+          USING ERRCODE = 'check_violation';
+      WHEN undefined_column THEN
+        RAISE EXCEPTION 'matches.court no existe'
+          USING ERRCODE = 'undefined_column';
+    END;
+  END IF;
+
   RETURN jsonb_build_object(
     'ok', true,
     'courts', p_new_courts,
     'unassigned_count', v_unassigned,
     'updated_at', v_new_updated_at
   );
-EXCEPTION
-  WHEN undefined_column THEN
-    -- court NOT NULL in some schemas: leave courts unchanged and report
-    RETURN jsonb_build_object(
-      'ok', false,
-      'error', 'court_not_nullable',
-      'message', 'matches.court no acepta NULL en este esquema; no se pudo desasignar.'
-    );
 END;
 $$;
 
@@ -111,4 +120,4 @@ REVOKE ALL ON FUNCTION public.update_tournament_courts_and_unassign(uuid, intege
 GRANT EXECUTE ON FUNCTION public.update_tournament_courts_and_unassign(uuid, integer, timestamptz) TO authenticated;
 
 COMMENT ON FUNCTION public.update_tournament_courts_and_unassign(uuid, integer, timestamptz) IS
-  'Actualiza tournaments.courts y pone court=NULL en pendientes fuera de rango; no toca resultados ni en juego.';
+  'Actualiza tournaments.courts y pone court=NULL en pendientes fuera de rango; no toca resultados ni en juego; atómico.';

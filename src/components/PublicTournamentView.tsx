@@ -9,6 +9,7 @@ import {
 } from "../lib/database";
 import { Match, Pair, Game, Tournament } from "../lib/database";
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
+import { compareMatchCourt, maxAssignedCourt } from "../lib/matchCourt";
 import { isTeamsTournament } from "../lib/gameModeMapping";
 import {
   getPairTeamIndex,
@@ -75,6 +76,7 @@ import {
   sortChampionshipRoundMatches,
   type RoundRobinChampionshipConfig,
 } from "../lib/roundRobinChampionship";
+import { preferDbChampionshipOverLocal } from "../lib/reta/retaConfigEditRules";
 import "./public/riviera-public-americano.css";
 
 interface PublicTournamentViewProps {
@@ -256,9 +258,33 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
       debugLog("🔄 Vista pública actualizada:", new Date().toLocaleTimeString());
 
-      const champCfg: RoundRobinChampionshipConfig | null =
-        parseChampionshipConfig(publicConfig?.championship_config) ??
-        loadChampionshipConfig(tournamentId);
+      const remoteChamp = parseChampionshipConfig(
+        publicConfig?.championship_config
+      );
+      const localChamp = loadChampionshipConfig(tournamentId);
+      const preferredChamp = preferDbChampionshipOverLocal({
+        db: remoteChamp
+          ? {
+              championshipEnabled: remoteChamp.championshipEnabled,
+              championshipRounds: remoteChamp.championshipRounds,
+            }
+          : null,
+        local: localChamp
+          ? {
+              championshipEnabled: localChamp.championshipEnabled,
+              championshipRounds: localChamp.championshipRounds,
+            }
+          : null,
+      });
+      const champCfg: RoundRobinChampionshipConfig = remoteChamp
+        ? remoteChamp
+        : {
+            championshipEnabled: preferredChamp.championshipEnabled,
+            championshipRounds: preferredChamp.championshipRounds,
+            championshipRoundsGenerated:
+              localChamp?.championshipRoundsGenerated ?? 0,
+            regularRoundsMax: localChamp?.regularRoundsMax,
+          };
       setChampionshipConfig(champCfg);
 
       const tournamentComplete = isRoundRobinTournamentComplete(
@@ -448,7 +474,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         score1={result.hasResult ? result.pair1Score : 0}
         score2={result.hasResult ? result.pair2Score : 0}
         hasResult={result.hasResult}
-        court={match.court || 1}
+        court={match.court}
         status={match.status === "finished" ? "finished" : "active"}
         live={match.status !== "finished"}
         index={matchIdx}
@@ -739,10 +765,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     remontadaActiva,
   });
 
-  // Calcular número de canchas desde los matches (el court más alto)
-  const courts = matches.length > 0 
-    ? Math.max(...matches.map(m => m.court || 1))
-    : 1;
+  // Canchas en juego = máximo asignado (NULL = Por asignar, no cuenta)
+  const courts =
+    matches.length > 0 ? Math.max(1, maxAssignedCourt(matches.map((m) => m.court))) : 1;
 
   const tournamentFinalizado = showWinner || tournamentFinished;
 
@@ -815,7 +840,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
                 <div className="te-pub-matches-grid te-pub-matches-grid--wide">
                   {[...roundMatches]
-                    .sort((a, b) => (a.court ?? 1) - (b.court ?? 1))
+                    .sort((a, b) => compareMatchCourt(a.court, b.court))
                     .map((match, matchIdx) =>
                       renderPublicMatchCard(match, matchIdx, {
                         encounterLabel: `Encuentro ${matchIdx + 1}`,

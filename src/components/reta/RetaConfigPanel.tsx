@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { Tournament, Match } from "../../lib/database";
-import { loadChampionshipConfig } from "../../lib/roundRobinChampionship";
 import {
   deriveRetaEditPhase,
 } from "../../lib/reta/retaConfigEditRules";
 import {
+  resolveCanonicalChampionshipConfig,
   saveRetaConfig,
   tournamentToFormValues,
   type RetaConfigFormValues,
@@ -41,11 +41,10 @@ export const RetaConfigPanel: React.FC<Props> = ({
     ]
   );
 
-  const champ = loadChampionshipConfig(tournament.id);
   const [values, setValues] = useState<RetaConfigFormValues>(() =>
     tournamentToFormValues(tournament, {
-      championshipEnabled: Boolean(champ?.championshipEnabled),
-      championshipRounds: champ?.championshipRounds ?? 2,
+      championshipEnabled: false,
+      championshipRounds: 2,
     })
   );
   const [loadedUpdatedAt, setLoadedUpdatedAt] = useState(
@@ -55,27 +54,38 @@ export const RetaConfigPanel: React.FC<Props> = ({
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [champReady, setChampReady] = useState(false);
+  const saveGen = useRef(0);
 
   useEffect(() => {
-    const c = loadChampionshipConfig(tournament.id);
-    const next = tournamentToFormValues(tournament, {
-      championshipEnabled: Boolean(c?.championshipEnabled),
-      championshipRounds: c?.championshipRounds ?? 2,
-    });
-    setValues(next);
-    setBaseline(JSON.stringify(next));
-    setLoadedUpdatedAt(tournament.updated_at || null);
-    setStatus(null);
-    setError(null);
-  }, [tournament.id, tournament.updated_at]);
+    let cancelled = false;
+    setChampReady(false);
+    (async () => {
+      const c = await resolveCanonicalChampionshipConfig(tournament.id);
+      if (cancelled) return;
+      const next = tournamentToFormValues(tournament, {
+        championshipEnabled: c.championshipEnabled,
+        championshipRounds: c.championshipRounds,
+      });
+      setValues(next);
+      setBaseline(JSON.stringify(next));
+      setLoadedUpdatedAt(tournament.updated_at || null);
+      setStatus(null);
+      setError(null);
+      setChampReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tournament]);
 
   const dirty = JSON.stringify(values) !== baseline;
 
-  const handleCancel = () => {
-    const c = loadChampionshipConfig(tournament.id);
+  const handleCancel = async () => {
+    const c = await resolveCanonicalChampionshipConfig(tournament.id);
     const next = tournamentToFormValues(tournament, {
-      championshipEnabled: Boolean(c?.championshipEnabled),
-      championshipRounds: c?.championshipRounds ?? 2,
+      championshipEnabled: c.championshipEnabled,
+      championshipRounds: c.championshipRounds,
     });
     setValues(next);
     setBaseline(JSON.stringify(next));
@@ -85,6 +95,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
 
   const handleSave = async (courtsDecreaseConfirmed = false) => {
     if (saving || !dirty) return;
+    const gen = ++saveGen.current;
     setSaving(true);
     setError(null);
     setStatus(null);
@@ -97,6 +108,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
         loadedUpdatedAt,
         courtsDecreaseConfirmed,
       });
+      if (gen !== saveGen.current) return;
       if (!result.ok) {
         if (result.needsCourtsConfirm) {
           const ok = window.confirm(result.needsCourtsConfirm.message);
@@ -119,9 +131,10 @@ export const RetaConfigPanel: React.FC<Props> = ({
       setStatus(result.message);
       onSaved(result.tournament);
     } catch (e) {
+      if (gen !== saveGen.current) return;
       setError(e instanceof Error ? e.message : "Error al guardar");
     } finally {
-      setSaving(false);
+      if (gen === saveGen.current) setSaving(false);
     }
   };
 
@@ -136,10 +149,8 @@ export const RetaConfigPanel: React.FC<Props> = ({
         phase={phase}
         values={values}
         onChange={setValues}
-        disabled={saving}
-        showChampionship={
-          tournament.format !== "teams"
-        }
+        disabled={saving || !champReady}
+        showChampionship={tournament.format !== "teams"}
       />
       {error ? (
         <p className="elegant-form-hint" role="alert">
@@ -157,7 +168,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
           variant="ghost"
           size="md"
           disabled={saving || !dirty}
-          onClick={handleCancel}
+          onClick={() => void handleCancel()}
           style={{ minHeight: 44 }}
         >
           Cancelar
@@ -166,7 +177,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
           type="button"
           variant="primary"
           size="md"
-          disabled={saving || !dirty}
+          disabled={saving || !dirty || !champReady}
           loading={saving}
           onClick={() => void handleSave(false)}
           style={{ minHeight: 44 }}

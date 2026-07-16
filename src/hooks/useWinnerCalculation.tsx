@@ -4,7 +4,6 @@ import {
   Match,
   Tournament,
   getTournamentGames,
-  getTournamentPublicConfigExtended,
 } from "../lib/database";
 import { loadTeamConfigForTournament } from "../lib/teamConfigDisplay";
 import {
@@ -12,10 +11,7 @@ import {
   computeTeamStandings,
 } from "../lib/standingsUtils";
 import { resolveTournamentPodiumOutcome } from "../lib/resolveTournamentOutcome";
-import {
-  loadChampionshipConfig,
-  parseChampionshipConfig,
-} from "../lib/roundRobinChampionship";
+import { loadChampionshipConfig } from "../lib/roundRobinChampionship";
 import type { TeamWinnerCelebrateStats } from "../lib/teamWinnerCelebrate";
 import { teamStandingRowToWinnerStats } from "../lib/teamWinnerCelebrate";
 import type { TournamentWinner } from "../lib/tournamentWinner";
@@ -65,15 +61,18 @@ export const useWinnerCalculation = () => {
       setWinningTeamStats(null);
 
       const games = tid ? await getTournamentGames(tid) : [];
-      let champCfg = tid ? loadChampionshipConfig(tid) : null;
-      if (tid && !champCfg) {
-        try {
-          const publicCfg = await getTournamentPublicConfigExtended(tid);
-          champCfg = parseChampionshipConfig(publicCfg?.championship_config);
-        } catch {
-          /* ignore */
-        }
-      }
+      let champCfg = tid
+        ? await (async () => {
+            try {
+              const { resolveCanonicalChampionshipConfig } = await import(
+                "../lib/reta/updateRetaConfig"
+              );
+              return await resolveCanonicalChampionshipConfig(tid);
+            } catch {
+              return loadChampionshipConfig(tid);
+            }
+          })()
+        : null;
 
       const outcome = await resolveTournamentPodiumOutcome(
         pairs,

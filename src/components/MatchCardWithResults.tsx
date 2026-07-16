@@ -15,6 +15,7 @@ import {
   getPairTeamName,
   type TeamConfigLike,
 } from "../lib/teamConfigDisplay";
+import { formatMatchCourtLabel } from "../lib/matchCourt";
 
 const PencilIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg
@@ -165,7 +166,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   const openMetaEditor = useCallback(() => {
     setCourtInput(
-      String(Math.min(courtEditCap, Math.max(1, match.court ?? 1)))
+      String(
+        match.court == null || match.court <= 0
+          ? ""
+          : Math.min(courtEditCap, Math.max(1, match.court))
+      )
     );
     setRoundInput(String(Math.max(1, match.round ?? 1)));
     setError(null);
@@ -174,7 +179,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
   const cancelMetaEdit = useCallback(() => {
     setCourtInput(
-      String(Math.min(courtEditCap, Math.max(1, match.court ?? 1)))
+      String(
+        match.court == null || match.court <= 0
+          ? ""
+          : Math.min(courtEditCap, Math.max(1, match.court))
+      )
     );
     setRoundInput(String(Math.max(1, match.round ?? 1)));
     setIsEditingMeta(false);
@@ -449,7 +458,11 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   useEffect(() => {
     if (isEditingMeta) return;
     setCourtInput(
-      String(Math.min(courtEditCap, Math.max(1, match.court ?? 1)))
+      String(
+        match.court == null || match.court <= 0
+          ? ""
+          : Math.min(courtEditCap, Math.max(1, match.court))
+      )
     );
     setRoundInput(String(Math.max(1, match.round ?? 1)));
   }, [match.id, match.court, match.round, courtEditCap, isEditingMeta]);
@@ -524,7 +537,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         <div className="omc-header__top">
           <div className="omc-pills">
             <span className="omc-pill omc-pill--court">
-              Cancha {currentMatch.court}
+              {formatMatchCourtLabel(currentMatch.court)}
             </span>
             <span className="omc-pill omc-pill--round">
               {roundLabelOverride ?? `Ronda ${currentMatch.round || 1}`}

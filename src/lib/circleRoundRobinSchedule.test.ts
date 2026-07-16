@@ -104,4 +104,19 @@ describe("circleRoundRobinSchedule court rotation", () => {
     expect(repairs.length).toBeGreaterThan(0);
     expect(repairs.some((r) => r.court === 2)).toBe(true);
   });
+
+  test("null court (Por asignar) is never repaired / reassigned", () => {
+    const pairs = [
+      makePair("1", "Devyl", "Duran"),
+      makePair("2", "Nevyl", "Marlon"),
+      makePair("3", "Ferro", "Panchito"),
+      makePair("4", "pepito", "Ricar"),
+    ];
+    const nullCourt: Match = {
+      ...makeMatch("null-court", 1, 1, pairs[0], pairs[1]),
+      court: null,
+    };
+    const repairs = findCourtRotationRepairs(pairs, 2, [nullCourt]);
+    expect(repairs).toEqual([]);
+  });
 });
