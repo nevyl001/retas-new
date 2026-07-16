@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import type { RatingHistorialEntry } from "../../lib/rivieraJugadores/types";
+import "./RatingNivel.css";
 
 const MODO_JUEGO_LABELS: Record<string, string> = {
   reta_rr: "Round Robin",
@@ -17,13 +18,13 @@ function modoJuegoLabel(modo: string): string {
 function fiabilidadBadge(
   fiabilidad: number,
   partidosJugados: number
-): { label: string; color: string } | null {
+): { label: string; tone: "inicial" | "fiable" | "media" | "calibrando" } | null {
   if (partidosJugados === 0) {
-    return { label: "INICIAL", color: "rgba(255, 255, 255, 0.55)" };
+    return { label: "INICIAL", tone: "inicial" };
   }
-  if (fiabilidad >= 0.7) return { label: "FIABLE", color: "#34d399" };
-  if (fiabilidad >= 0.4) return { label: "MEDIA", color: "#fbbf24" };
-  return { label: "CALIBRANDO", color: "#fbbf24" };
+  if (fiabilidad >= 0.7) return { label: "FIABLE", tone: "fiable" };
+  if (fiabilidad >= 0.4) return { label: "MEDIA", tone: "media" };
+  return { label: "CALIBRANDO", tone: "calibrando" };
 }
 
 function formatFechaCorta(iso: string): string {
@@ -66,111 +67,52 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
 
   const evolutionSvg = useMemo(() => {
     if (evolutionPoints.length < 2) return null;
-    const w = 280;
-    const h = density === "compact" ? 36 : 48;
-    const pad = 4;
+    const w = 560;
+    const h = density === "compact" ? 72 : 96;
+    const padX = 8;
+    const padY = 10;
     const min = Math.min(...evolutionPoints) - 0.05;
     const max = Math.max(...evolutionPoints) + 0.05;
     const span = max - min || 0.1;
     const coords = evolutionPoints.map((val, i) => {
-      const x = pad + (i / (evolutionPoints.length - 1)) * (w - pad * 2);
-      const y = h - pad - ((val - min) / span) * (h - pad * 2);
+      const x = padX + (i / (evolutionPoints.length - 1)) * (w - padX * 2);
+      const y = h - padY - ((val - min) / span) * (h - padY * 2);
       return `${x},${y}`;
     });
-    return { w, h, polyline: coords.join(" ") };
+    return { w, h, polyline: coords.join(" "), minLabel: min.toFixed(2), maxLabel: max.toFixed(2) };
   }, [evolutionPoints, density]);
 
   const isCompactStandalone =
     layout === "standalone" && density === "compact";
 
-  const cardStyle: React.CSSProperties | undefined =
-    layout === "embedded"
-      ? {
-          marginTop: "0.85rem",
-          padding: "1rem 1.1rem",
-          borderRadius: "14px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          background: "rgba(255, 255, 255, 0.04)",
-          width: "100%",
-          boxSizing: "border-box",
-        }
-      : undefined;
-
-  const movementLimit = isCompactStandalone ? 4 : historial.length;
+  const movementLimit = isCompactStandalone ? 5 : historial.length;
   const visibleHistorial = historial.slice(0, movementLimit);
 
+  const rootClass = [
+    "rjp-rating-nivel",
+    layout === "standalone" ? "rjp-rating-nivel--standalone" : "rjp-rating-nivel--embedded",
+    density === "compact" ? "rjp-rating-nivel--compact" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <section
-      className={[
-        layout === "standalone" ? "rjp-ficha-rating__inner" : "",
-        isCompactStandalone ? "rjp-rating-nivel--compact" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      style={cardStyle}
-      aria-label="Nivel de juego"
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "0.75rem",
-          marginBottom: "0.5rem",
-        }}
-      >
+    <section className={rootClass} aria-label="Nivel de juego">
+      <div className="rjp-rating-nivel__head">
         <div>
-          <p
-            style={{
-              margin: 0,
-              fontSize: "0.62rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "rgba(255, 255, 255, 0.45)",
-            }}
-          >
-            Nivel
-          </p>
-          <p
-            style={{
-              margin: "0.15rem 0 0",
-              fontSize: "1.75rem",
-              fontWeight: 800,
-              lineHeight: 1,
-              color: "#a3e635",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {ratingLabel}
-          </p>
+          <p className="rjp-rating-nivel__eyebrow">Mi nivel</p>
+          <p className="rjp-rating-nivel__value">{ratingLabel}</p>
         </div>
         {badge ? (
           <span
-            style={{
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: badge.color,
-              padding: "0.28rem 0.55rem",
-              borderRadius: "999px",
-              border: `1px solid ${badge.color}55`,
-              background: `${badge.color}18`,
-            }}
+            className={`rjp-rating-nivel__badge rjp-rating-nivel__badge--${badge.tone}`}
           >
             {badge.label}
           </span>
         ) : null}
       </div>
 
-      <p
-        style={{
-          margin: "0 0 0.75rem",
-          fontSize: "0.78rem",
-          color: "rgba(255, 255, 255, 0.55)",
-        }}
-      >
+      <p className="rjp-rating-nivel__meta">
         {partidosJugados === 0
           ? "Nivel base 3.00 · aún sin partidos de rating"
           : `Fiabilidad del nivel: ${fiabPct}% · ${partidosJugados} partido${
@@ -179,106 +121,63 @@ export const RatingNivel: React.FC<RatingNivelProps> = ({
       </p>
 
       {evolutionSvg ? (
-        <svg
-          width="100%"
-          height={evolutionSvg.h}
-          viewBox={`0 0 ${evolutionSvg.w} ${evolutionSvg.h}`}
-          style={{ display: "block", marginBottom: "0.85rem" }}
-          aria-hidden
-        >
-          <polyline
-            fill="none"
-            stroke="#a3e635"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            points={evolutionSvg.polyline}
-          />
-        </svg>
+        <div className="rjp-rating-nivel__chart" aria-hidden>
+          <svg
+            width="100%"
+            height={evolutionSvg.h}
+            viewBox={`0 0 ${evolutionSvg.w} ${evolutionSvg.h}`}
+            preserveAspectRatio="none"
+          >
+            <polyline
+              className="rjp-rating-nivel__line"
+              fill="none"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points={evolutionSvg.polyline}
+            />
+          </svg>
+        </div>
       ) : partidosJugados === 0 ? (
-        <p
-          style={{
-            margin: "0 0 0.85rem",
-            fontSize: "0.8rem",
-            lineHeight: 1.45,
-            color: "rgba(255, 255, 255, 0.42)",
-            fontStyle: "italic",
-          }}
-        >
+        <p className="rjp-rating-nivel__empty">
           Juega tu primer partido competitivo para empezar a mover tu nivel
         </p>
-      ) : null}
+      ) : (
+        <p className="rjp-rating-nivel__empty">
+          Aún no hay suficientes movimientos para graficar la evolución
+        </p>
+      )}
 
       {visibleHistorial.length > 0 ? (
-        <div>
-          <p
-            style={{
-              margin: "0 0 0.5rem",
-              fontSize: "0.62rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "rgba(255, 255, 255, 0.4)",
-            }}
-          >
-            Últimos movimientos
-          </p>
-          <ul
-            className={isCompactStandalone ? "rjp-rating-nivel__moves" : undefined}
-            style={
-              isCompactStandalone
-                ? undefined
-                : {
-                    listStyle: "none",
-                    margin: 0,
-                    padding: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.45rem",
-                  }
-            }
-          >
+        <div className="rjp-rating-nivel__moves-wrap">
+          <p className="rjp-rating-nivel__moves-title">Últimos movimientos</p>
+          <ul className="rjp-rating-nivel__moves">
             {visibleHistorial.map((item) => {
               const up = item.delta >= 0;
-              const deltaColor = up ? "#34d399" : "#f87171";
-              const arrow = up ? "▲" : "▼";
               const deltaSign = up ? "+" : "";
               return (
-                <li
-                  key={item.id}
-                  className={
-                    isCompactStandalone ? "rjp-rating-nivel__move" : undefined
-                  }
-                  style={
-                    isCompactStandalone
-                      ? undefined
-                      : {
-                          display: "grid",
-                          gridTemplateColumns: "auto 1fr auto auto",
-                          gap: "0.5rem",
-                          alignItems: "center",
-                          fontSize: "0.78rem",
-                          color: "rgba(255, 255, 255, 0.82)",
-                        }
-                  }
-                >
-                  <span style={{ color: deltaColor, fontWeight: 700, minWidth: "3.5rem" }}>
-                    {arrow} {deltaSign}
+                <li key={item.id} className="rjp-rating-nivel__move">
+                  <span
+                    className={`rjp-rating-nivel__delta${
+                      up
+                        ? " rjp-rating-nivel__delta--up"
+                        : " rjp-rating-nivel__delta--down"
+                    }`}
+                  >
+                    <span aria-hidden>{up ? "▲" : "▼"}</span>{" "}
+                    <span className="rjp-rating-nivel__delta-sr">
+                      {up ? "Subió" : "Bajó"}{" "}
+                    </span>
+                    {deltaSign}
                     {item.delta.toFixed(2)}
                   </span>
-                  <span style={{ color: "rgba(255, 255, 255, 0.65)" }}>
+                  <span className="rjp-rating-nivel__modo">
                     {modoJuegoLabel(item.modo_juego)}
                   </span>
-                  <span
-                    style={{
-                      color: "#a3e635",
-                      fontWeight: 600,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
+                  <span className="rjp-rating-nivel__after">
                     {item.rating_despues.toFixed(2)}
                   </span>
-                  <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "0.72rem" }}>
+                  <span className="rjp-rating-nivel__date">
                     {formatFechaCorta(item.fecha)}
                   </span>
                 </li>

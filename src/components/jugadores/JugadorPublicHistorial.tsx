@@ -114,9 +114,9 @@ export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
           <TablerIcon name="trophy" size={16} />
         </span>
         <div>
-          <h2 className="rjp-ficha-historial__title">Historial completo</h2>
+          <h2 className="rjp-ficha-historial__title">Carrera Riviera</h2>
           <p className="rjp-ficha-historial__sub">
-            Retas, Round Robin, Torneos, Liga, Pádel Americano y más.
+            Historial oficial de participaciones en la plataforma.
           </p>
         </div>
       </header>

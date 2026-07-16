@@ -1,0 +1,7 @@
+open http://localhost:3000/ranking/o/e724de97-3552-4a01-a269-f621e6f1ed26/varonil
+links sample [
+  'https://www.rivieraopen.com/rankings?org=e724de97-3552-4a01-a269-f621e6f1ed26',
+  '/ranking/como-funciona'
+]
+clickables []
+done

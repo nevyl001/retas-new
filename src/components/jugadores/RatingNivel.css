@@ -1,0 +1,200 @@
+/* Nivel / rating — acentos desde branding activo */
+
+.rjp-rating-nivel {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rjp-rating-nivel--embedded {
+  margin-top: 0.85rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid var(--rjp-ficha-border, rgba(255, 255, 255, 0.1));
+  background: var(--rjp-ficha-surface, rgba(255, 255, 255, 0.04));
+}
+
+.rjp-rating-nivel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.rjp-rating-nivel__eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rjp-ficha-text-3, rgba(255, 255, 255, 0.45));
+}
+
+.rjp-rating-nivel__value {
+  margin: 4px 0 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--rjp-ficha-accent, var(--brand-accent, var(--ro-accent)));
+  font-variant-numeric: tabular-nums;
+}
+
+.rjp-rating-nivel--compact .rjp-rating-nivel__value {
+  font-size: 2rem;
+}
+
+.rjp-rating-nivel__badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.rjp-rating-nivel__badge--inicial {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.rjp-rating-nivel__badge--fiable {
+  color: var(--brand-success, #34d399);
+}
+
+.rjp-rating-nivel__badge--media,
+.rjp-rating-nivel__badge--calibrando {
+  color: var(--brand-warning, #fbbf24);
+}
+
+.rjp-rating-nivel__meta {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--rjp-ficha-text-2, rgba(255, 255, 255, 0.55));
+}
+
+.rjp-rating-nivel__chart {
+  margin: 0 0 16px;
+  min-height: 80px;
+}
+
+.rjp-rating-nivel__line {
+  stroke: var(--rjp-ficha-accent, var(--brand-accent, var(--ro-accent)));
+  stroke-width: 3;
+}
+
+.rjp-rating-nivel__empty {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--rjp-ficha-text-3, rgba(255, 255, 255, 0.42));
+  font-style: italic;
+}
+
+.rjp-rating-nivel__moves-title {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rjp-ficha-text-3, rgba(255, 255, 255, 0.4));
+}
+
+.rjp-rating-nivel__moves {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rjp-rating-nivel__move {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px 12px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--rjp-ficha-text, rgba(255, 255, 255, 0.82));
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.06));
+  min-height: 44px;
+}
+
+.rjp-rating-nivel__move:last-child {
+  border-bottom: none;
+}
+
+.rjp-rating-nivel__delta {
+  font-weight: 700;
+  min-width: 4.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.rjp-rating-nivel__delta--up {
+  color: var(--brand-success, #34d399);
+}
+
+.rjp-rating-nivel__delta--down {
+  color: var(--brand-danger, #f87171);
+}
+
+.rjp-rating-nivel__delta-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.rjp-rating-nivel__modo {
+  color: var(--rjp-ficha-text-2, rgba(255, 255, 255, 0.65));
+  min-width: 0;
+}
+
+.rjp-rating-nivel__after {
+  color: var(--rjp-ficha-accent, var(--brand-accent, var(--ro-accent)));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rjp-rating-nivel__date {
+  color: var(--rjp-ficha-text-3, rgba(255, 255, 255, 0.4));
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .rjp-rating-nivel__move {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "delta modo after"
+      "delta date after";
+  }
+
+  .rjp-rating-nivel__delta {
+    grid-area: delta;
+  }
+
+  .rjp-rating-nivel__modo {
+    grid-area: modo;
+  }
+
+  .rjp-rating-nivel__after {
+    grid-area: after;
+  }
+
+  .rjp-rating-nivel__date {
+    grid-area: date;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rjp-rating-nivel__line {
+    transition: none;
+  }
+}

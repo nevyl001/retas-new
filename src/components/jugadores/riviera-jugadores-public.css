@@ -1,16 +1,16 @@
 /* Vista pública jugadores — Riviera Open premium (fondo cancha + glass) */
 
 .App--jugadores-public.ro-public-view::before {
-  opacity: 0.16;
+  opacity: 0.12;
 }
 
 .App--jugadores-public.ro-public-view::after {
   background: linear-gradient(
     180deg,
-    rgba(8, 8, 10, 0.88) 0%,
-    rgba(12, 12, 14, 0.55) 28%,
-    rgba(10, 10, 12, 0.65) 55%,
-    rgba(6, 6, 8, 0.92) 100%
+    rgba(8, 8, 10, 0.9) 0%,
+    rgba(12, 12, 14, 0.62) 28%,
+    rgba(10, 10, 12, 0.72) 55%,
+    rgba(6, 6, 8, 0.94) 100%
   );
 }
 

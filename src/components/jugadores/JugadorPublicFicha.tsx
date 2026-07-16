@@ -41,7 +41,7 @@ import { JugadorPuntosBreakdown } from "./JugadorPuntosBreakdown";
 import { JugadorOfficialRomcPuntos } from "./JugadorOfficialRomcPuntos";
 import { JugadorPublicHistorial } from "./JugadorPublicHistorial";
 import { RatingNivel } from "./RatingNivel";
-import { JugadorPublicFichaAside } from "./JugadorPublicFichaAside";
+import { JugadorPublicFichaAside, JugadorPublicRecentResults } from "./JugadorPublicFichaAside";
 import { JugadorRedesPublicas } from "./JugadorRedesPublicas";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
 import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
@@ -57,16 +57,27 @@ interface JugadorPublicFichaProps {
 
 function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
   return (
-    <nav className="rjp-ficha-topbar">
+    <nav className="rjp-ficha-topbar" aria-label="Navegación del perfil">
       <button
         type="button"
         className="rjp-ficha-topbar__back"
         onClick={() => navigatePublicJugadores(rankingUrl)}
       >
-        <TablerIcon name="arrow-left" size={16} />
+        <TablerIcon name="arrow-left" size={18} />
         Ranking
       </button>
     </nav>
+  );
+}
+
+function FichaSkeleton() {
+  return (
+    <div className="rjp-ficha-skel" aria-busy="true" aria-label="Cargando perfil">
+      <div className="rjp-ficha-skel__block rjp-ficha-skel__hero" />
+      <div className="rjp-ficha-skel__block rjp-ficha-skel__row" />
+      <div className="rjp-ficha-skel__block rjp-ficha-skel__chart" />
+      <div className="rjp-ficha-skel__block rjp-ficha-skel__list" />
+    </div>
   );
 }
 
@@ -198,22 +209,37 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
   if (loading) {
     return (
-      <JugadoresPublicShell variant="ficha">
-        <p className="rjp-ficha-empty">Cargando perfil…</p>
-      </JugadoresPublicShell>
+      <ClubExperienceScope
+        organizadorId={viewingOrgId}
+        pendingUntilOrganizador
+      >
+        <JugadoresPublicShell variant="ficha">
+          <PublicModeShell className="rjp-ficha-shell">
+            <div className="rjp-ficha">
+              <FichaTopbar rankingUrl={rankingUrl} />
+              <FichaSkeleton />
+            </div>
+          </PublicModeShell>
+        </JugadoresPublicShell>
+      </ClubExperienceScope>
     );
   }
 
   if (!jugador) {
     return (
-      <JugadoresPublicShell variant="ficha">
-        <FichaTopbar rankingUrl={rankingUrl} />
-        <p className="rjp-ficha-empty">
-          {viewingOrgId
-            ? "Jugador no encontrado en este club."
-            : "Jugador no encontrado o no está visible al público."}
-        </p>
-      </JugadoresPublicShell>
+      <ClubExperienceScope
+        organizadorId={viewingOrgId}
+        pendingUntilOrganizador={!viewingOrgId}
+      >
+        <JugadoresPublicShell variant="ficha">
+          <FichaTopbar rankingUrl={rankingUrl} />
+          <p className="rjp-ficha-empty">
+            {viewingOrgId
+              ? "Jugador no encontrado en este club."
+              : "Jugador no encontrado o no está visible al público."}
+          </p>
+        </JugadoresPublicShell>
+      </ClubExperienceScope>
     );
   }
 
@@ -259,8 +285,11 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                   <img
                     className="rjp-ficha-hero__photo"
                     src={jugador.foto_url}
-                    alt=""
+                    alt={`Foto de ${jugador.nombre}`}
+                    width={400}
+                    height={500}
                     decoding="async"
+                    loading="lazy"
                   />
                   <div className="rjp-ficha-hero__media-overlay" aria-hidden />
                   <span className="rjp-ficha-hero__cat-badge">{catBadge}</span>
@@ -396,14 +425,18 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
             />
           </div>
 
-          <JugadorPublicFichaAside
-            retas={profileStats.eventosJugados}
-            torneosExpress={profileStats.torneosExpress}
-            victorias={profileStats.victorias}
-            partidosPerdidos={profileStats.partidosPerdidos}
-            winRate={profileStats.winRate}
-            recent={recentActivity}
-          />
+          <div className="rjp-ficha__col rjp-ficha__col--summary">
+            <JugadorPublicFichaAside
+              retas={profileStats.eventosJugados}
+              torneosExpress={profileStats.torneosExpress}
+              victorias={profileStats.victorias}
+              partidosPerdidos={profileStats.partidosPerdidos}
+              winRate={profileStats.winRate}
+            />
+            <div className="rjp-ficha__col--recent">
+              <JugadorPublicRecentResults recent={recentActivity} />
+            </div>
+          </div>
         </div>
 
         <footer className="rjp-ficha-footer">

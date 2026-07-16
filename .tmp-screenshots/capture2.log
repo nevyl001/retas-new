@@ -1,0 +1,19 @@
+open http://localhost:3000/ranking/o/e724de97-3552-4a01-a269-f621e6f1ed26/varonil
+chips 7
+chip 0 empty 1 rows 0 snippet RANKING INTERNO Ranking de jugadores  Varonil  Ranking interno de tu club. Todos los jugadores activos aparecen aquí. So
+chip 1 empty 1 rows 0 snippet RANKING INTERNO Ranking de jugadores  Varonil  Ranking interno de tu club. Todos los jugadores activos aparecen aquí. So
+chip 2 empty 1 rows 0 snippet RANKING INTERNO Ranking de jugadores  Varonil  Ranking interno de tu club. Todos los jugadores activos aparecen aquí. So
+chip 3 empty 1 rows 0 snippet RANKING INTERNO Ranking de jugadores  Varonil  Ranking interno de tu club. Todos los jugadores activos aparecen aquí. So
+chip 4 empty 0 rows 0 snippet RANKING INTERNO Ranking de jugadores  Varonil  Ranking interno de tu club. Todos los jugadores activos aparecen aquí. So
+chip 5 empty 0 rows 0 snippet RANKING INTERNO Ranking de jugadores  Varonil  Ranking interno de tu club. Todos los jugadores activos aparecen aquí. So
+click .rjp-ranking button:has-text('#')
+ficha http://localhost:3000/public/jugadores/e5b1076e-8a4b-44b3-adaa-1b5b7ad842c7?org=e724de97-3552-4a01-a269-f621e6f1ed26
+320x568 {"scrollWidth":320,"clientWidth":320,"hasOverflowX":false,"name":"Joel He","hasPhoto":false,"kariera":true,"activityRows":3,"rating":true,"dataBrand":"hack-padel","brandingStatus":"resolved","heroMediaH":0,"backH":44}
+375x667 {"scrollWidth":375,"clientWidth":375,"hasOverflowX":false,"name":"Joel He","hasPhoto":false,"kariera":true,"activityRows":3,"rating":true,"dataBrand":"hack-padel","brandingStatus":"resolved","heroMediaH":0,"backH":44}
+390x844 {"scrollWidth":390,"clientWidth":390,"hasOverflowX":false,"name":"Joel He","hasPhoto":false,"kariera":true,"activityRows":3,"rating":true,"dataBrand":"hack-padel","brandingStatus":"resolved","heroMediaH":0,"backH":44}
+430x932 {"scrollWidth":430,"clientWidth":430,"hasOverflowX":false,"name":"Joel He","hasPhoto":false,"kariera":true,"activityRows":3,"rating":true,"dataBrand":"hack-padel","brandingStatus":"resolved","heroMediaH":0,"backH":44}
+768x1024 {"scrollWidth":768,"clientWidth":768,"hasOverflowX":false,"name":"Joel He","hasPhoto":false,"kariera":true,"activityRows":3,"rating":true,"dataBrand":"hack-padel","brandingStatus":"resolved","heroMediaH":0,"backH":44}
+1024x768 {"scrollWidth":1024,"clientWidth":1024,"hasOverflowX":false,"name":"Joel He","hasPhoto":false,"kariera":true,"activityRows":3,"rating":true,"dataBrand":"hack-padel","brandingStatus":"resolved","heroMediaH":0,"backH":44}
+1280x800 {"scrollWidth":1280,"clientWidth":1280,"hasOverflowX":false,"name":"Joel He","hasPhoto":false,"kariera":true,"activityRows":3,"rating":true,"dataBrand":"hack-padel","brandingStatus":"resolved","heroMediaH":0,"backH":44}
+1440x900 {"scrollWidth":1440,"clientWidth":1440,"hasOverflowX":false,"name":"Joel He","hasPhoto":false,"kariera":true,"activityRows":3,"rating":true,"dataBrand":"hack-padel","brandingStatus":"resolved","heroMediaH":0,"backH":44}
+done
