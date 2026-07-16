@@ -75,4 +75,31 @@ describe("ConvocatoriaWhatsAppPanel presencia", () => {
       expect.arrayContaining(["liga", "torneo_express", "torneo"])
     );
   });
+
+  it("reta muestra campos de lugar y horario en la convocatoria", async () => {
+    const { buildTournamentConvocatoriaContext } = await import(
+      "../../lib/retaAbierta/adapters"
+    );
+    await act(async () => {
+      root.render(
+        <ConvocatoriaWhatsAppPanel
+          context={buildTournamentConvocatoriaContext({
+            mode: "reta",
+            tournamentId: "t-meetup-1",
+            name: "Round Robin sábado",
+            locationLabel: "Riviera Open",
+            clubName: "Riviera Open",
+            tournamentFormat: "round_robin",
+          })}
+        />
+      );
+    });
+
+    expect(
+      container.querySelector('[data-testid="convocatoria-meetup-fields"]')
+    ).not.toBeNull();
+    expect(container.textContent).toContain("Datos del encuentro");
+    expect(container.textContent).toContain("Incluir lugar en la convocatoria");
+    expect(container.textContent).toContain("Día y hora");
+  });
 });

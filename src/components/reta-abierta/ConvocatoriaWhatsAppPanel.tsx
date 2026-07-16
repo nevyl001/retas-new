@@ -26,6 +26,10 @@ import {
   isConvocatoriaAllowedMode,
 } from "../../lib/retaAbierta/modeWhitelist";
 import { mapConvocatoriaUserError } from "../../lib/retaAbierta/convocatoriaErrors";
+import {
+  readConvocatoriaLugarPrefs,
+  writeConvocatoriaLugarPrefs,
+} from "../../lib/retaAbierta/convocatoriaLugarPrefs";
 import "./reta-abierta-organizer.css";
 
 export type EnsureDraftEntityResult = {
@@ -118,11 +122,32 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [canchaLabel, setCanchaLabel] = useState(
     context.defaultCancha ?? ""
   );
+  const [includeLugar, setIncludeLugar] = useState(
+    context.includeLugar !== false
+  );
   const [displayRating, setDisplayRating] = useState(true);
   const [displayPhoto, setDisplayPhoto] = useState(true);
   const [displayFullName, setDisplayFullName] = useState(true);
 
   const clubName = (context.clubName ?? "").trim();
+
+  const persistLugarPrefs = useCallback(
+    (id: string, next?: { lugar?: string; mostrarLugar?: boolean; cancha?: string }) => {
+      if (!id.trim() || context.mode === "duelo_2v2") return;
+      writeConvocatoriaLugarPrefs(context.mode, id, {
+        lugar: next?.lugar ?? locationLabel,
+        mostrarLugar: next?.mostrarLugar ?? includeLugar,
+        cancha: next?.cancha ?? canchaLabel,
+      });
+    },
+    [context.mode, locationLabel, includeLugar, canchaLabel]
+  );
+
+  useEffect(() => {
+    if (context.includeLugar != null) {
+      setIncludeLugar(context.includeLugar !== false);
+    }
+  }, [context.includeLugar]);
 
   useEffect(() => {
     setEntityId(context.entityId.trim());
@@ -195,15 +220,34 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             : isoToDatetimeLocalValue(context.defaultScheduledAt)
         );
         setDurationMinutes(
-          context.defaultDurationMinutes ??
-            row.duration_minutes ??
+          row.duration_minutes ??
+            context.defaultDurationMinutes ??
             90
         );
         setCategoryLabel(
           row.category_label ?? context.defaultCategory ?? ""
         );
         setRamaLabel(row.rama_label ?? "");
-        setLocationLabel(row.location_label ?? context.defaultLocation ?? "");
+        const prefs =
+          context.mode !== "duelo_2v2"
+            ? readConvocatoriaLugarPrefs(context.mode, id)
+            : null;
+        setIncludeLugar(
+          prefs
+            ? prefs.mostrarLugar !== false
+            : context.includeLugar !== false
+        );
+        setLocationLabel(
+          row.location_label ??
+            prefs?.lugar ??
+            context.defaultLocation ??
+            ""
+        );
+        if (prefs?.cancha) {
+          setCanchaLabel(prefs.cancha);
+        } else if (context.defaultCancha) {
+          setCanchaLabel(context.defaultCancha);
+        }
         setDisplayRating(row.display_rating);
         setDisplayPhoto(row.display_photo);
         setDisplayFullName(row.display_full_name);
@@ -211,6 +255,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         setEntries(list);
       } else {
         setEntries([]);
+        if (context.mode !== "duelo_2v2") {
+          const prefs = readConvocatoriaLugarPrefs(context.mode, id);
+          if (prefs) {
+            setIncludeLugar(prefs.mostrarLugar !== false);
+            if (prefs.lugar) setLocationLabel(prefs.lugar);
+            if (prefs.cancha) setCanchaLabel(prefs.cancha);
+          }
+        }
       }
     } catch (e) {
       setError(mapConvocatoriaUserError(e, "load"));
@@ -291,21 +343,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     });
   };
 
-  const buildShareText = (
-    dto: Parameters<typeof buildRetaAbiertaWhatsAppMessage>[0]["dto"],
-    url: string
-  ) =>
-    buildRetaAbiertaWhatsAppMessage({
-      dto,
-      publicUrl: url,
-      clubName,
-      canchaLabel: canchaLabel.trim() || context.defaultCancha || null,
-      includeLugar: context.includeLugar !== false,
-      displayFullName,
-      productHeadline: context.productHeadline,
-    });
-
-  /** Mensaje desde cfg + entries ya en memoria — sin fetch (crítico en iOS). */
   const buildLocalShareText = (
     row: OpenRegistrationConfigRow,
     url: string,
@@ -314,6 +351,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       durationMinutes?: number | null;
       locationLabel?: string | null;
       categoryLabel?: string | null;
+      includeLugar?: boolean;
     }
   ) => {
     const dto = buildShareDtoFromOrganizerState(row, entries, context);
@@ -323,20 +361,42 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         context.defaultDurationMinutes ||
         dto.duration_minutes ||
         90);
-    return buildShareText(
-      {
-        ...dto,
-        scheduled_at:
-          overrides?.scheduledAtIso ??
-          dto.scheduled_at ??
-          context.defaultScheduledAt ??
-          null,
-        duration_minutes: resolvedDuration,
-        location_label:
-          overrides?.locationLabel ??
+    const localScheduledIso = scheduledAt
+      ? new Date(scheduledAt).toISOString()
+      : null;
+    const showLugar = overrides?.includeLugar ?? includeLugar;
+    const localLocation = locationLabel.trim() || null;
+    /** En gestionar (shareOnly), el horario del duelo viene del context/editor. */
+    const resolvedScheduled = shareOnly
+      ? overrides?.scheduledAtIso ??
+        context.defaultScheduledAt ??
+        localScheduledIso ??
+        dto.scheduled_at ??
+        null
+      : overrides?.scheduledAtIso ??
+        localScheduledIso ??
+        dto.scheduled_at ??
+        context.defaultScheduledAt ??
+        null;
+    const resolvedLocation = showLugar
+      ? shareOnly
+        ? overrides?.locationLabel ??
+          context.defaultLocation ??
+          localLocation ??
+          dto.location_label ??
+          null
+        : overrides?.locationLabel ??
+          localLocation ??
           dto.location_label ??
           context.defaultLocation ??
-          null,
+          null
+      : null;
+    return buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        ...dto,
+        scheduled_at: resolvedScheduled,
+        duration_minutes: resolvedDuration,
+        location_label: resolvedLocation,
         category_label:
           overrides?.categoryLabel?.trim() ||
           categoryLabel.trim() ||
@@ -344,8 +404,19 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           context.defaultCategory ||
           null,
       },
-      url
-    );
+      publicUrl: url,
+      clubName,
+      canchaLabel:
+        (shareOnly ? context.defaultCancha : null) ||
+        canchaLabel.trim() ||
+        context.defaultCancha ||
+        null,
+      includeLugar: shareOnly
+        ? context.includeLugar !== false
+        : showLugar,
+      displayFullName,
+      productHeadline: context.productHeadline,
+    });
   };
 
   const onLaunchWhatsApp = async () => {
@@ -368,14 +439,15 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           ? new Date(scheduledAt).toISOString()
           : context.defaultScheduledAt ?? null;
       let launchLocation = locationLabel;
-      let launchDuration =
-        context.defaultDurationMinutes ?? durationMinutes;
+      let launchDuration = durationMinutes || context.defaultDurationMinutes || 90;
       let launchTitle = titlePublic.trim() || context.defaultTitle;
       let launchCategory =
         categoryLabel.trim() ||
         context.defaultCategory?.trim() ||
         cfg?.category_label?.trim() ||
         "";
+      const launchIncludeLugar = includeLugar;
+      const launchCancha = canchaLabel.trim();
 
       if (!id) {
         if (!ensureDraftEntity) {
@@ -429,7 +501,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         enabled: true,
         status: "open",
         scheduledAtIso: launchScheduledIso,
-        locationLabel: launchLocation,
+        locationLabel: launchIncludeLugar
+          ? launchLocation
+          : launchLocation.trim() || clubName || "",
         durationMinutes: launchDuration,
         titlePublic: launchTitle,
         categoryLabel:
@@ -439,6 +513,11 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       });
       setCfg(row);
       setStatus("open");
+      persistLugarPrefs(id, {
+        lugar: launchLocation,
+        mostrarLugar: launchIncludeLugar,
+        cancha: launchCancha,
+      });
       if (launchCategory.trim()) {
         setCategoryLabel(launchCategory);
       }
@@ -446,8 +525,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       const text = buildLocalShareText(row, url, {
         scheduledAtIso: launchScheduledIso,
         durationMinutes: launchDuration,
-        locationLabel: launchLocation,
+        locationLabel: launchIncludeLugar ? launchLocation : null,
         categoryLabel: launchCategory.trim() || null,
+        includeLugar: launchIncludeLugar,
       });
       const copied = await copyTextToClipboard(text);
       if (!copied) {
@@ -468,30 +548,42 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
 
   const onCopy = () => {
     if (!publicUrl || !cfg) return;
-    const text = buildLocalShareText(cfg, publicUrl);
     setSaving(true);
     setError(null);
     setShareNote(true);
 
-    void (async () => {
-      const copied = await copyTextToClipboard(text);
-      if (!copied) {
-        setError("No se pudo copiar el mensaje");
-        return;
-      }
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2800);
+    const scheduledIso = shareOnly
+      ? context.defaultScheduledAt ??
+        (scheduledAt ? new Date(scheduledAt).toISOString() : null) ??
+        cfg.scheduled_at
+      : scheduledAt
+        ? new Date(scheduledAt).toISOString()
+        : cfg.scheduled_at ?? context.defaultScheduledAt ?? null;
+    const dur = shareOnly
+      ? context.defaultDurationMinutes ||
+        durationMinutes ||
+        cfg.duration_minutes ||
+        90
+      : durationMinutes ||
+        context.defaultDurationMinutes ||
+        cfg.duration_minutes ||
+        90;
+    const loc = shareOnly
+      ? (context.defaultLocation ?? locationLabel).trim()
+      : locationLabel.trim();
+    const copyIncludeLugar = shareOnly
+      ? context.includeLugar !== false
+      : includeLugar;
 
-      if (
-        entityId &&
-        context.defaultDurationMinutes != null &&
-        cfg.duration_minutes !== context.defaultDurationMinutes
-      ) {
-        try {
+    void (async () => {
+      try {
+        if (entityId && !shareOnly) {
           const row = await savePayload(entityId, {
             enabled: cfg.enabled,
             status: cfg.status,
-            durationMinutes: context.defaultDurationMinutes,
+            scheduledAtIso: scheduledIso,
+            durationMinutes: dur,
+            locationLabel: loc || clubName || "",
             categoryLabel:
               categoryLabel.trim() ||
               cfg.category_label ||
@@ -499,11 +591,29 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
               null,
           });
           setCfg(row);
-          setDurationMinutes(context.defaultDurationMinutes);
-        } catch {
-          /* no bloquear la copia */
+          persistLugarPrefs(entityId, {
+            lugar: loc,
+            mostrarLugar: includeLugar,
+            cancha: canchaLabel.trim(),
+          });
         }
+      } catch {
+        /* no bloquear la copia */
       }
+
+      const text = buildLocalShareText(cfg, publicUrl, {
+        scheduledAtIso: scheduledIso,
+        durationMinutes: dur,
+        locationLabel: copyIncludeLugar ? loc || null : null,
+        includeLugar: copyIncludeLugar,
+      });
+      const copied = await copyTextToClipboard(text);
+      if (!copied) {
+        setError("No se pudo copiar el mensaje");
+        return;
+      }
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2800);
     })().finally(() => {
       setSaving(false);
     });
@@ -527,8 +637,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     shareOnly ||
     hasShareLink ||
     (Boolean(cfg?.enabled) && cfg?.status !== "draft");
-  /** Ya lanzada o en gestionar: solo resumen + copiar; sin formulario. */
+  /** Ya lanzada o en gestionar: sin título/cupo/checks; sí lugar/horario. */
   const showConfigForm = !compact && !isLive && !shareOnly;
+  /** Lugar + horario en todos los modos de convocatoria (excepto shareOnly duelo). */
+  const showMeetupFields = !shareOnly && !compact;
 
   const onPrimaryShare = () => {
     if (hasShareLink) {
@@ -588,6 +700,65 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         </p>
       ) : null}
 
+      {showMeetupFields ? (
+        <div className="ra-org__meetup" data-testid="convocatoria-meetup-fields">
+          <p className="ra-org__meetup-title">Datos del encuentro</p>
+          <div className="ra-org__meetup-grid">
+            <label>
+              Día y hora
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+              />
+            </label>
+            <label>
+              Duración (min)
+              <input
+                type="number"
+                min={30}
+                max={360}
+                step={15}
+                value={durationMinutes}
+                onChange={(e) =>
+                  setDurationMinutes(Number(e.target.value) || 90)
+                }
+              />
+            </label>
+            <label>
+              Cancha
+              <input
+                value={canchaLabel}
+                onChange={(e) => setCanchaLabel(e.target.value)}
+                placeholder="Ej. 1"
+              />
+            </label>
+          </div>
+          <label className="ra-org__toggle">
+            <input
+              type="checkbox"
+              checked={includeLugar}
+              onChange={(e) => setIncludeLugar(e.target.checked)}
+            />
+            <span>Incluir lugar en la convocatoria</span>
+          </label>
+          {includeLugar ? (
+            <label className="ra-org__meetup-lugar">
+              Lugar
+              <input
+                value={locationLabel}
+                onChange={(e) => setLocationLabel(e.target.value)}
+                placeholder="Ej. Hack Pádel, Padelito…"
+              />
+            </label>
+          ) : (
+            <p className="ra-org__hint">
+              Ideal si tu club siempre juega en la misma sede.
+            </p>
+          )}
+        </div>
+      ) : null}
+
       {showConfigForm ? (
         <>
           <div className="ra-org__grid">
@@ -621,23 +792,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 value={categoryLabel}
                 onChange={(e) => setCategoryLabel(e.target.value)}
                 placeholder="Ej. 5ta Fuerza"
-              />
-            </label>
-            <label>
-              Lugar
-              <input
-                value={locationLabel}
-                onChange={(e) => setLocationLabel(e.target.value)}
-                placeholder="Ej. Club Hack Pádel"
-                disabled={context.includeLugar === false}
-              />
-            </label>
-            <label>
-              Cancha
-              <input
-                value={canchaLabel}
-                onChange={(e) => setCanchaLabel(e.target.value)}
-                placeholder="Ej. 1"
               />
             </label>
             <label>

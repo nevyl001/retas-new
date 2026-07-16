@@ -18,8 +18,12 @@ export function buildTournamentConvocatoriaContext(opts: {
   name: string;
   /** Lugar / sede. */
   locationLabel?: string;
+  /** Si false, omite lugar en el mensaje WhatsApp. */
+  includeLugar?: boolean;
   /** Número de cancha (opcional). */
   canchaLabel?: string;
+  /** Inicio del encuentro (ISO). */
+  scheduledAt?: string | null;
   clubName?: string;
   tournamentFormat?: string | null;
   championshipEnabled?: boolean;
@@ -34,15 +38,20 @@ export function buildTournamentConvocatoriaContext(opts: {
     });
 
   const club = opts.clubName?.trim() || undefined;
+  const includeLugar = opts.includeLugar !== false;
 
   return {
     mode: opts.mode,
     entityId: opts.tournamentId,
     defaultTitle: opts.name,
     defaultCapacity: defaultCapacityForMode(opts.mode),
-    defaultLocation: opts.locationLabel?.trim() || club,
+    defaultLocation: includeLugar
+      ? opts.locationLabel?.trim() || club
+      : undefined,
+    includeLugar,
     defaultCancha: opts.canchaLabel?.trim() || undefined,
     defaultDurationMinutes: opts.mode === "americano" ? 120 : 90,
+    defaultScheduledAt: opts.scheduledAt ?? null,
     clubName: club,
     productHeadline,
   };

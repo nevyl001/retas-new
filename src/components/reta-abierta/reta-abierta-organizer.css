@@ -31,6 +31,67 @@
   display: none;
 }
 
+/* Lugar / horario: visibles también con convocatoria ya lanzada */
+.ra-org__meetup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0 0 0.9rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+}
+
+.ra-org__meetup-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.ra-org__meetup-grid {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .ra-org__meetup-grid {
+    grid-template-columns: 1.4fr 0.7fr 0.7fr;
+  }
+}
+
+.ra-org__meetup-grid label,
+.ra-org__meetup-lugar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.ra-org__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ra-org__toggle input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ra-org__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.65;
+  line-height: 1.35;
+}
+
 .ra-org__summary p {
   margin: 0;
 }
