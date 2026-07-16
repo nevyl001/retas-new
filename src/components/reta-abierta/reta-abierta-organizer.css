@@ -17,6 +17,64 @@
   font-size: 0.9rem;
 }
 
+.ra-org__capacity {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.ra-org__capacity-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.ra-org__capacity-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ra-org__capacity-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  color: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ra-org__capacity-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ra-org__capacity-input {
+  width: 4.25rem;
+  min-height: 2.25rem;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  color: inherit;
+}
+
+.ra-org__capacity-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--ro-accent, #c9a227);
+}
+
 .ra-org__ready {
   margin: 0.35rem 0 0;
   font-weight: 600;

@@ -7,8 +7,11 @@ import {
   buildRetaAbiertaPublicUrl,
   fetchOpenGameRegistrationConfig,
   listOpenGameRegistrationEntries,
+  OPEN_REG_CAPACITY_MAX,
+  OPEN_REG_CAPACITY_MIN,
   promoteOpenRegistrationEntry,
   removeOpenRegistrationEntry,
+  setOpenGameRegistrationCapacity,
   upsertOpenRegistrationConfig,
 } from "../../lib/retaAbierta/retaAbiertaService";
 import type {
@@ -102,6 +105,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [titlePublic, setTitlePublic] = useState(context.defaultTitle);
   const [status, setStatus] = useState<OpenRegistrationStatus>("draft");
   const [capacity, setCapacity] = useState(context.defaultCapacity);
+  const [capacityBusy, setCapacityBusy] = useState(false);
+  const [capacityHint, setCapacityHint] = useState<string | null>(null);
   const [waitlistEnabled, setWaitlistEnabled] = useState(
     context.mode !== "duelo_2v2"
   );
@@ -657,6 +662,57 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const showConfigForm = !compact && !isLive && !shareOnly;
   /** Lugar + horario en todos los modos de convocatoria (excepto shareOnly duelo). */
   const showMeetupFields = !shareOnly && !compact;
+  /** Cupo editable solo si no es duelo (lockCapacity) y ya hay convocatoria. */
+  const showLiveCapacityControl =
+    !context.lockCapacity && Boolean(cfg) && (isLive || shareOnly);
+
+  const effectiveCapacity = context.lockCapacity
+    ? context.defaultCapacity
+    : cfg?.capacity ?? capacity;
+
+  const onAdjustCapacity = async (nextRaw: number) => {
+    if (!entityId || context.lockCapacity || capacityBusy) return;
+    const next = Math.max(
+      OPEN_REG_CAPACITY_MIN,
+      Math.min(OPEN_REG_CAPACITY_MAX, Math.round(nextRaw))
+    );
+    if (next === effectiveCapacity) return;
+    setCapacityHint(null);
+    setCapacityBusy(true);
+    setError(null);
+    try {
+      const res = await setOpenGameRegistrationCapacity(
+        context.mode,
+        entityId,
+        next
+      );
+      if (!res.ok) {
+        setCapacityHint(res.message);
+        setError(res.message);
+        return;
+      }
+      setCapacity(res.capacity);
+      setCfg((prev) =>
+        prev ? { ...prev, capacity: res.capacity } : prev
+      );
+      if (res.promoted_count > 0) {
+        setCapacityHint(
+          `Cupo actualizado a ${res.capacity}. Se confirmaron ${res.promoted_count} de la lista de espera.`
+        );
+        const list = await listOpenGameRegistrationEntries(
+          context.mode,
+          entityId
+        );
+        setEntries(list);
+      } else {
+        setCapacityHint(`Cupo actualizado a ${res.capacity}.`);
+      }
+    } catch (e) {
+      setError(mapConvocatoriaUserError(e, "action"));
+    } finally {
+      setCapacityBusy(false);
+    }
+  };
 
   const onPrimaryShare = () => {
     if (hasShareLink) {
@@ -688,18 +744,74 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           </p>
           <p>
             <strong>Confirmados:</strong> {confirmed.length} de{" "}
-            {context.lockCapacity ? context.defaultCapacity : cfg.capacity}
+            {effectiveCapacity}
             {waitlist.length > 0 ? ` · Espera: ${waitlist.length}` : ""}
-            {confirmed.length > 0 &&
-            confirmed.length <
-              (context.lockCapacity ? context.defaultCapacity : cfg.capacity)
-              ? ` · Faltan ${
-                  (context.lockCapacity
-                    ? context.defaultCapacity
-                    : cfg.capacity) - confirmed.length
-                }`
+            {confirmed.length > 0 && confirmed.length < effectiveCapacity
+              ? ` · Faltan ${effectiveCapacity - confirmed.length}`
               : ""}
           </p>
+          {showLiveCapacityControl ? (
+            <div
+              className="ra-org__capacity"
+              data-testid="convocatoria-capacity-control"
+            >
+              <span className="ra-org__capacity-label">Cupo</span>
+              <div className="ra-org__capacity-stepper">
+                <button
+                  type="button"
+                  className="ra-org__capacity-btn"
+                  aria-label="Bajar cupo"
+                  disabled={
+                    capacityBusy ||
+                    effectiveCapacity <=
+                      Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length)
+                  }
+                  onClick={() => void onAdjustCapacity(effectiveCapacity - 1)}
+                >
+                  −
+                </button>
+                <input
+                  className="ra-org__capacity-input"
+                  type="number"
+                  min={Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length)}
+                  max={OPEN_REG_CAPACITY_MAX}
+                  value={effectiveCapacity}
+                  disabled={capacityBusy}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    if (!Number.isFinite(n)) return;
+                    setCapacity(n);
+                  }}
+                  onBlur={(e) => {
+                    const n = Number(e.target.value);
+                    if (!Number.isFinite(n)) return;
+                    void onAdjustCapacity(n);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="ra-org__capacity-btn"
+                  aria-label="Subir cupo"
+                  disabled={
+                    capacityBusy || effectiveCapacity >= OPEN_REG_CAPACITY_MAX
+                  }
+                  onClick={() => void onAdjustCapacity(effectiveCapacity + 1)}
+                >
+                  +
+                </button>
+              </div>
+              {capacityHint ? (
+                <p className="ra-org__capacity-hint" role="status">
+                  {capacityHint}
+                </p>
+              ) : (
+                <p className="ra-org__hint">
+                  Mínimo {Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length)}{" "}
+                  (confirmados). Máximo {OPEN_REG_CAPACITY_MAX}.
+                </p>
+              )}
+            </div>
+          ) : null}
           {context.mode === "duelo_2v2" && confirmed.length >= 4 ? (
             <p className="ra-org__ready">
               Ya son los 4 jugadores. Organiza las parejas para iniciar el
@@ -790,10 +902,20 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 Cupo máximo
                 <input
                   type="number"
-                  min={1}
-                  max={64}
+                  min={OPEN_REG_CAPACITY_MIN}
+                  max={OPEN_REG_CAPACITY_MAX}
                   value={capacity}
-                  onChange={(e) => setCapacity(Number(e.target.value) || 4)}
+                  onChange={(e) =>
+                    setCapacity(
+                      Math.min(
+                        OPEN_REG_CAPACITY_MAX,
+                        Math.max(
+                          OPEN_REG_CAPACITY_MIN,
+                          Number(e.target.value) || OPEN_REG_CAPACITY_MIN
+                        )
+                      )
+                    )
+                  }
                 />
               </label>
             ) : (

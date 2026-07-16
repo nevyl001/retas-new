@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { mapConvocatoriaUserError } from "./convocatoriaErrors";
 import {
   assertConvocatoriaAllowedMode,
   isConvocatoriaAllowedMode,
@@ -573,6 +574,81 @@ export async function upsertOpenRegistrationConfig(
     throw new Error(error.message);
   }
   return data as OpenRegistrationConfigRow;
+}
+
+export const OPEN_REG_CAPACITY_MIN = 1;
+export const OPEN_REG_CAPACITY_MAX = 64;
+
+export type SetCapacityResult =
+  | {
+      ok: true;
+      capacity: number;
+      confirmed_count: number;
+      spots_left: number;
+      promoted_count: number;
+    }
+  | {
+      ok: false;
+      error: string;
+      message: string;
+      confirmed_count?: number;
+      requested_capacity?: number;
+    };
+
+/** Ajusta cupo en vivo (reta/americano). Rechaza duelo_2v2 en backend. */
+export async function setOpenGameRegistrationCapacity(
+  mode: OpenGameModeType,
+  entityId: string,
+  capacity: number
+): Promise<SetCapacityResult> {
+  assertConvocatoriaAllowedMode(mode);
+  const { data, error } = await supabase.rpc(
+    "set_open_game_registration_capacity",
+    {
+      p_mode_type: mode,
+      p_entity_id: entityId,
+      p_capacity: capacity,
+    }
+  );
+  if (error) {
+    return {
+      ok: false,
+      error: "rpc_error",
+      message: mapConvocatoriaUserError(error, "action"),
+    };
+  }
+  const row = asRecord(data);
+  if (!row || row.ok !== true) {
+    return {
+      ok: false,
+      error: String(row?.error ?? "set_capacity_failed"),
+      message:
+        typeof row?.message === "string" && row.message.trim()
+          ? row.message.trim()
+          : row?.error === "capacity_locked"
+            ? "El cupo del duelo 2 vs 2 es fijo (4 jugadores)."
+            : row?.error === "capacity_below_confirmed"
+              ? `Ya hay ${Number(row.confirmed_count) || "?"} confirmados. Saca inscritos en «Administrar inscritos» antes de bajar el cupo.`
+              : row?.error === "capacity_out_of_range"
+                ? `El cupo debe estar entre ${OPEN_REG_CAPACITY_MIN} y ${OPEN_REG_CAPACITY_MAX}.`
+                : "No pudimos actualizar el cupo. Intenta de nuevo.",
+      confirmed_count:
+        typeof row?.confirmed_count === "number"
+          ? row.confirmed_count
+          : undefined,
+      requested_capacity:
+        typeof row?.requested_capacity === "number"
+          ? row.requested_capacity
+          : undefined,
+    };
+  }
+  return {
+    ok: true,
+    capacity: Number(row.capacity) || capacity,
+    confirmed_count: Number(row.confirmed_count) || 0,
+    spots_left: Number(row.spots_left) || 0,
+    promoted_count: Number(row.promoted_count) || 0,
+  };
 }
 
 /**
