@@ -25,13 +25,12 @@ type MedalKey = "gold" | "silver" | "bronze";
 const SLOTS: {
   medal: MedalKey;
   playerIdx: number;
-  order: number;
+  rankFallback: string;
   avatarSize: "lg" | "md";
-  rankLabel: string;
 }[] = [
-  { medal: "silver", playerIdx: 1, order: -1, avatarSize: "md", rankLabel: "2" },
-  { medal: "gold", playerIdx: 0, order: 0, avatarSize: "lg", rankLabel: "1" },
-  { medal: "bronze", playerIdx: 2, order: 1, avatarSize: "md", rankLabel: "3" },
+  { medal: "gold", playerIdx: 0, rankFallback: "1", avatarSize: "lg" },
+  { medal: "silver", playerIdx: 1, rankFallback: "2", avatarSize: "md" },
+  { medal: "bronze", playerIdx: 2, rankFallback: "3", avatarSize: "md" },
 ];
 
 export const RankingPodio: React.FC<{
@@ -45,32 +44,27 @@ export const RankingPodio: React.FC<{
   if (jugadores.length === 0) return null;
 
   return (
-    <div className="rjp-podio" aria-label="Podio top 3">
-      {SLOTS.map(({ medal, playerIdx, order, avatarSize, rankLabel }) => {
+    <div className="rjp-podio" aria-label="Top 3 del ranking">
+      {SLOTS.map(({ medal, playerIdx, rankFallback, avatarSize }) => {
         const jugador = jugadores[playerIdx];
         if (!jugador) return null;
-        const displayRank = ranks?.[playerIdx] ?? rankLabel;
+        const displayRank = ranks?.[playerIdx] ?? rankFallback;
 
         return (
           <button
             key={medal}
             type="button"
             className={`rjp-podio__slot rjp-podio__slot--${medal}`}
-            style={{ order }}
             disabled={!jugador.slug}
+            aria-label={`Ver perfil de ${jugador.nombre}, posición ${displayRank}`}
             onClick={() => {
               if (jugador.slug) onSelect(jugador.slug);
             }}
           >
-            {displayRank === 1 ? (
-              <span className="rjp-podio__trophy" aria-hidden>
-                🏆
-              </span>
-            ) : null}
+            <span className="rjp-podio__rank" aria-hidden>
+              {displayRank}º
+            </span>
             <div className="rjp-podio__avatar-wrap">
-              <span className="rjp-podio__medal" aria-hidden>
-                {displayRank}
-              </span>
               <JugadorAvatar
                 fotoUrl={jugador.foto_url}
                 nombre={jugador.nombre}
@@ -87,7 +81,6 @@ export const RankingPodio: React.FC<{
               className="rjp-podio__pts"
               variant="stacked"
             />
-            <span className="rjp-podio__platform" aria-hidden />
           </button>
         );
       })}

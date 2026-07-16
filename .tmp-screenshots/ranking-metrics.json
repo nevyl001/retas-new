@@ -1,0 +1,272 @@
+[
+  {
+    "label": "320x568",
+    "brand": "riviera",
+    "overflowX": false,
+    "scrollWidth": 320,
+    "clientWidth": 320,
+    "firstViewportChildApprox": 134,
+    "tabs": [
+      {
+        "h": 44,
+        "text": "Varonil"
+      },
+      {
+        "h": 44,
+        "text": "Femenil"
+      }
+    ],
+    "chips": [
+      44,
+      44,
+      44
+    ],
+    "order": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "podioSlots": 3,
+    "rows": 1
+  },
+  {
+    "label": "375x667",
+    "brand": "riviera",
+    "overflowX": false,
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "firstViewportChildApprox": 134,
+    "tabs": [
+      {
+        "h": 44,
+        "text": "Varonil"
+      },
+      {
+        "h": 44,
+        "text": "Femenil"
+      }
+    ],
+    "chips": [
+      44,
+      44,
+      44
+    ],
+    "order": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "podioSlots": 3,
+    "rows": 1
+  },
+  {
+    "label": "390x844",
+    "brand": "riviera",
+    "overflowX": false,
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "firstViewportChildApprox": 134,
+    "tabs": [
+      {
+        "h": 44,
+        "text": "Varonil"
+      },
+      {
+        "h": 44,
+        "text": "Femenil"
+      }
+    ],
+    "chips": [
+      44,
+      44,
+      44
+    ],
+    "order": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "podioSlots": 3,
+    "rows": 1
+  },
+  {
+    "label": "430x932",
+    "brand": "riviera",
+    "overflowX": false,
+    "scrollWidth": 430,
+    "clientWidth": 430,
+    "firstViewportChildApprox": 134,
+    "tabs": [
+      {
+        "h": 44,
+        "text": "Varonil"
+      },
+      {
+        "h": 44,
+        "text": "Femenil"
+      }
+    ],
+    "chips": [
+      44,
+      44,
+      44
+    ],
+    "order": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "podioSlots": 3,
+    "rows": 1
+  },
+  {
+    "label": "768x1024",
+    "brand": "riviera",
+    "overflowX": false,
+    "scrollWidth": 768,
+    "clientWidth": 768,
+    "firstViewportChildApprox": 143,
+    "tabs": [
+      {
+        "h": 44,
+        "text": "Varonil"
+      },
+      {
+        "h": 44,
+        "text": "Femenil"
+      }
+    ],
+    "chips": [
+      44,
+      44,
+      44
+    ],
+    "order": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "podioSlots": 3,
+    "rows": 1
+  },
+  {
+    "label": "1024x768",
+    "brand": "riviera",
+    "overflowX": false,
+    "scrollWidth": 1024,
+    "clientWidth": 1024,
+    "firstViewportChildApprox": 110,
+    "tabs": [
+      {
+        "h": 44,
+        "text": "Varonil"
+      },
+      {
+        "h": 44,
+        "text": "Femenil"
+      }
+    ],
+    "chips": [
+      44,
+      44,
+      44
+    ],
+    "order": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "podioSlots": 3,
+    "rows": 1
+  },
+  {
+    "label": "1280x800",
+    "brand": "riviera",
+    "overflowX": false,
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "firstViewportChildApprox": 110,
+    "tabs": [
+      {
+        "h": 44,
+        "text": "Varonil"
+      },
+      {
+        "h": 44,
+        "text": "Femenil"
+      }
+    ],
+    "chips": [
+      44,
+      44,
+      44
+    ],
+    "order": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "podioSlots": 3,
+    "rows": 1
+  },
+  {
+    "label": "1440x900",
+    "brand": "riviera",
+    "overflowX": false,
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "firstViewportChildApprox": 110,
+    "tabs": [
+      {
+        "h": 44,
+        "text": "Varonil"
+      },
+      {
+        "h": 44,
+        "text": "Femenil"
+      }
+    ],
+    "chips": [
+      44,
+      44,
+      44
+    ],
+    "order": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
+    "podioSlots": 3,
+    "rows": 1
+  },
+  {
+    "label": "slow3g-ready",
+    "brand": "riviera",
+    "hasRivieraWord": false,
+    "heroText": "Ranking internoRanking de jugadoresVaronil·Open·Hackpadel0 jugadores"
+  }
+]

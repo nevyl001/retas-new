@@ -33,6 +33,11 @@ export function getClubExperienceScopeStyle(
     ["--club-home-background-image" as string]: homeBg
       ? `url(${homeBg})`
       : "none",
+    /* Alias legacy usados por CSS público (ranking, ficha, shells) */
+    ["--accent-gold" as string]: colors.accent,
+    ["--accent-gold-light" as string]: colors.accent,
+    ["--ro-accent" as string]: colors.accent,
+    ["--ro-border-accent" as string]: `color-mix(in srgb, ${colors.accent} 35%, transparent)`,
   };
 }
 
