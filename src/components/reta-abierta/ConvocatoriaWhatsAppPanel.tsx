@@ -324,7 +324,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       let launchDuration = durationMinutes;
       let launchTitle = titlePublic.trim() || context.defaultTitle;
       let launchCategory =
-        categoryLabel.trim() || context.defaultCategory?.trim() || "";
+        categoryLabel.trim() ||
+        context.defaultCategory?.trim() ||
+        cfg?.category_label?.trim() ||
+        "";
 
       if (!id) {
         if (!ensureDraftEntity) {
@@ -357,9 +360,17 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         }
       }
 
-      if (!launchCategory.trim()) {
+      // Re-lanzar convocatoria ya abierta: no exigir categoría otra vez
+      const alreadyLive =
+        Boolean(cfg?.enabled) && cfg?.status !== "draft" && Boolean(cfg?.public_slug);
+
+      if (!launchCategory.trim() && !alreadyLive) {
         setError("Indica la categoría / nivel antes de lanzar.");
         return;
+      }
+
+      if (alreadyLive && !launchCategory.trim()) {
+        launchCategory = cfg?.category_label?.trim() || "";
       }
 
       const row = await savePayload(id, {
@@ -369,11 +380,16 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         locationLabel: launchLocation,
         durationMinutes: launchDuration,
         titlePublic: launchTitle,
-        categoryLabel: launchCategory,
+        categoryLabel:
+          launchCategory.trim() ||
+          cfg?.category_label?.trim() ||
+          null,
       });
       setCfg(row);
       setStatus("open");
-      setCategoryLabel(launchCategory);
+      if (launchCategory.trim()) {
+        setCategoryLabel(launchCategory);
+      }
       const url = buildRetaAbiertaPublicUrl(row.public_slug);
       const pub = await fetchOpenRegistrationPublic(row.public_slug);
       if (!pub.ok) {
@@ -404,6 +420,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
 
   const onCopy = async () => {
     if (!publicUrl || !cfg) return;
+    setSaving(true);
+    setError(null);
+    setShareNote(true);
     try {
       const pub = await fetchOpenRegistrationPublic(cfg.public_slug);
       const text = pub.ok
@@ -414,6 +433,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       window.setTimeout(() => setCopied(false), 2800);
     } catch {
       setError("No se pudo copiar el mensaje");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -430,18 +451,46 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     );
   }
 
+  const isLive =
+    Boolean(cfg?.enabled) &&
+    cfg?.status !== "draft" &&
+    Boolean(cfg?.public_slug);
+  /** Ya lanzada: solo resumen + copiar; sin formulario de config. */
+  const showConfigForm = !compact && !isLive;
+
   return (
     <section
-      className={`ra-org${compact ? " ra-org--compact" : ""}`}
+      className={`ra-org${compact || isLive ? " ra-org--compact" : ""}`}
       data-testid="convocatoria-whatsapp-panel"
     >
       <h3>Convocatoria Riviera</h3>
       <p className="ra-org__muted">
-        Comparte este juego por WhatsApp: se copia el mensaje con todos los
-        datos para que lo pegues en el chat.
+        {isLive
+          ? "Convocatoria activa. Copia el mensaje con los jugadores actuales para WhatsApp."
+          : "Comparte este juego por WhatsApp: se copia el mensaje con todos los datos para que lo pegues en el chat."}
       </p>
 
-      {cfg?.enabled && cfg.status !== "draft" ? (
+      {isLive ? (
+        <div className="ra-org__summary">
+          <p>
+            <strong>Estado:</strong> {statusLabel(cfg!.status)}
+            {cfg?.category_label?.trim()
+              ? ` · ${cfg.category_label.trim()}`
+              : ""}
+          </p>
+          <p>
+            <strong>Confirmados:</strong> {confirmed.length} de{" "}
+            {context.lockCapacity ? context.defaultCapacity : cfg!.capacity}
+            {waitlist.length > 0 ? ` · Espera: ${waitlist.length}` : ""}
+          </p>
+          {context.mode === "duelo_2v2" && confirmed.length >= 4 ? (
+            <p className="ra-org__ready">
+              Ya están los 4 jugadores. Organiza las parejas para iniciar el
+              duelo.
+            </p>
+          ) : null}
+        </div>
+      ) : cfg?.enabled && cfg.status !== "draft" ? (
         <div className="ra-org__summary">
           <p>
             <strong>Estado:</strong> {statusLabel(cfg.status)}
@@ -453,16 +502,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           <p>
             <strong>Espera:</strong> {waitlist.length}
           </p>
-          {context.mode === "duelo_2v2" && confirmed.length >= 4 ? (
-            <p className="ra-org__ready">
-              Ya están los 4 jugadores. Organiza las parejas para iniciar el
-              duelo.
-            </p>
-          ) : null}
         </div>
       ) : null}
 
-      {!compact ? (
+      {showConfigForm ? (
         <>
           <div className="ra-org__grid">
             <label>
@@ -534,22 +577,19 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           type="button"
           className="ra-org__btn ra-org__btn--primary"
           data-testid="lanzar-por-whatsapp"
-          onClick={onLaunchWhatsApp}
+          onClick={() => void (isLive || publicUrl ? onCopy() : onLaunchWhatsApp())}
           disabled={saving}
         >
           {saving
             ? "Copiando…"
             : copied
               ? "¡Copiado! Pégalo en WhatsApp"
-              : publicUrl
+              : isLive || publicUrl
                 ? "Copiar convocatoria"
                 : "Lanzar y copiar"}
         </button>
         {publicUrl ? (
           <>
-            <button type="button" className="ra-org__btn" onClick={() => void onCopy()}>
-              {copied ? "Copiado" : "Copiar de nuevo"}
-            </button>
             <a
               className="ra-org__btn"
               href={publicUrl}
@@ -577,6 +617,11 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                     const row = await savePayload(entityId, {
                       enabled: true,
                       status: "paused",
+                      categoryLabel:
+                        categoryLabel.trim() ||
+                        cfg.category_label ||
+                        context.defaultCategory ||
+                        null,
                     });
                     setCfg(row);
                     setStatus("paused");
