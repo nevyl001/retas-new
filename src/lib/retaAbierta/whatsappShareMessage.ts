@@ -75,9 +75,11 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   const displayFullName = opts.displayFullName !== false;
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline);
-  const club = opts.clubName.trim() || "Club";
+  const club = opts.clubName.trim();
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
-  const lines: string[] = [headline, "", club, ""];
+  const lines: string[] = club
+    ? [headline, "", club, ""]
+    : [headline, ""];
 
   lines.push(formatScheduledLabel(dto.scheduled_at, dto.duration_minutes));
 

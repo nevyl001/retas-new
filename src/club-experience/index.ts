@@ -70,6 +70,7 @@ export {
   getMotherAttributionLine,
   getCoBrandCompactLine,
   getHomeEyebrow,
+  getConvocatoriaOriginName,
   getHomeWelcomeTitle,
   getHomeWelcomeSubtitle,
   getHomeEmptyState,
@@ -134,6 +135,7 @@ export {
 export { getClubExperienceCacheIfMatches } from "../branding/organizerResolver";
 
 export { useClubModeEyebrow } from "./useClubModeEyebrow";
+export { useConvocatoriaOriginName } from "./useConvocatoriaOriginName";
 export { useOrganizerDisplayName } from "./useOrganizerDisplayName";
 
 export {

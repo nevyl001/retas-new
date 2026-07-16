@@ -128,7 +128,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [displayPhoto, setDisplayPhoto] = useState(true);
   const [displayFullName, setDisplayFullName] = useState(true);
 
-  const clubName = (context.clubName ?? "").trim() || "Club";
+  const clubName = (context.clubName ?? "").trim();
 
   useEffect(() => {
     setEntityId(context.entityId.trim());

@@ -1,5 +1,8 @@
 import React from "react";
-import { useClubModeEyebrow } from "../../club-experience";
+import {
+  useClubModeEyebrow,
+  useConvocatoriaOriginName,
+} from "../../club-experience";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import {
   resolveAmericanoNextAction,
@@ -63,6 +66,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 }) => {
   const { user } = useUser();
   const modeEyebrow = useClubModeEyebrow();
+  const convocatoriaOrigin = useConvocatoriaOriginName();
   const isMobile = useMobileViewport(767);
   const [playingTab, setPlayingTab] = React.useState<AmericanoMobileTabId>("ronda");
   const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
@@ -371,7 +375,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               mode: "americano",
               tournamentId: resolvedTournamentId,
               name: tournamentName || "Americano",
-              clubName: modeEyebrow,
+              clubName: convocatoriaOrigin,
             })}
           />
         ) : null}

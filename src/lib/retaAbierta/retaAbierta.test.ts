@@ -177,6 +177,29 @@ describe("WhatsApp share message por modo", () => {
     expect(text).not.toMatch(/^1$/m);
   });
 
+  it("no imprime la etiqueta vacía Club cuando falta el origen", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Duelo",
+        mode_type: "duelo_2v2",
+        scheduled_at: null,
+        duration_minutes: null,
+        location_label: null,
+        category_label: null,
+        rama_label: null,
+        capacity: 4,
+        confirmed_count: 0,
+        spots_left: 4,
+        display_rating: false,
+        entries: [],
+      },
+      publicUrl: "https://app.example/jugar/ra-x",
+      clubName: "",
+    });
+    expect(text).toContain("DUELO 2 VS 2");
+    expect(text).not.toMatch(/^Club$/m);
+  });
+
   it("mensaje solicitar Riviera ID", () => {
     expect(buildRequestRivieraIdWhatsAppMessage("Reta viernes")).toContain(
       "todavía no tengo Riviera ID"

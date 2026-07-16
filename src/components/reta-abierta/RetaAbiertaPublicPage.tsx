@@ -1,17 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useOrganizerDisplayName } from "../../club-experience";
 import { PublicTorneoExpressShell } from "../torneo-express/public/PublicTorneoExpressShell";
 import {
   buildRequestRivieraIdWhatsAppMessage,
   buildWhatsAppShareUrl,
   formatCanchaLabel,
 } from "../../lib/retaAbierta/whatsappShareMessage";
+import { normalizeRivieraIdLoose } from "../../lib/retaAbierta/normalizeRivieraId";
 import {
   cancelOpenRegistration,
   buildManageRegistrationPath,
   fetchOpenRegistrationPublic,
   joinOpenRegistration,
   loadAllCancellationTokens,
-  loadCancellationToken,
   mapJoinErrorMessage,
   previewRivieraIdForOpenRegistration,
   removeCancellationToken,
@@ -21,6 +22,7 @@ import {
 import {
   buildDueloCourtLayout,
   dueloCancelContextLabel,
+  dueloSideHasOpenSlot,
   dueloSlotMeta,
   formatPublicCategoriaLabel,
   type DueloCourtLayout,
@@ -43,6 +45,31 @@ type Step =
   | "not_found"
   | "cancel_pick"
   | "cancel_confirm";
+
+async function copyTextToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fallback below */
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
 
 function statusLabel(status: OpenRegistrationPublicDto["status"]): string {
   switch (status) {
@@ -151,17 +178,24 @@ function DueloSideBlock({
   layout,
   displayPhoto,
   displayRating,
+  selectable,
+  onSelectSide,
 }: {
   side: DueloCourtSide;
   layout: DueloCourtLayout;
   displayPhoto: boolean;
   displayRating: boolean;
+  selectable: boolean;
+  onSelectSide?: (side: DueloCourtSide) => void;
 }) {
   const pair = side === "A" ? layout.parejaA : layout.parejaB;
   const meta0 = dueloSlotMeta(layout, side, 0);
   const meta1 = dueloSlotMeta(layout, side, 1);
-  return (
-    <div className={`ra-duelo-side ra-duelo-side--${side.toLowerCase()}`}>
+  const open = dueloSideHasOpenSlot(layout, side);
+  const canSelect = selectable && open && Boolean(onSelectSide);
+
+  const body = (
+    <>
       <p className="ra-duelo-side__label">{meta0.sideLabel}</p>
       <PlayerSlotCard
         entry={pair[0]}
@@ -177,6 +211,27 @@ function DueloSideBlock({
         positionLabel={meta1.positionLabel}
         partnerName={meta1.partnerName}
       />
+      {canSelect ? (
+        <span className="ra-duelo-side__cta">Jugar en este lado</span>
+      ) : null}
+    </>
+  );
+
+  if (canSelect) {
+    return (
+      <button
+        type="button"
+        className={`ra-duelo-side ra-duelo-side--${side.toLowerCase()} ra-duelo-side--pick`}
+        onClick={() => onSelectSide?.(side)}
+      >
+        {body}
+      </button>
+    );
+  }
+
+  return (
+    <div className={`ra-duelo-side ra-duelo-side--${side.toLowerCase()}`}>
+      {body}
     </div>
   );
 }
@@ -216,20 +271,29 @@ function FlatPlayerCard({
 
 export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   const [dto, setDto] = useState<OpenRegistrationPublicDto | null>(null);
+  const organizerName = useOrganizerDisplayName(dto?.organizador_id ?? null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState<Step>("overview");
   const [rivieraInput, setRivieraInput] = useState("");
+  const [preferredSide, setPreferredSide] = useState<DueloCourtSide | null>(
+    null
+  );
   const [preview, setPreview] = useState<OpenRegistrationPreview | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [joinStatus, setJoinStatus] = useState<string | null>(null);
+  const [joinManageToken, setJoinManageToken] = useState<string | null>(null);
+  const [joinEntryId, setJoinEntryId] = useState<string | null>(null);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [cancelCandidates, setCancelCandidates] = useState<
     StoredCancellationEntry[]
   >([]);
   const [cancelTarget, setCancelTarget] =
     useState<StoredCancellationEntry | null>(null);
+  const [cancelRivieraInput, setCancelRivieraInput] = useState("");
+  const [tokenVersion, setTokenVersion] = useState(0);
 
   const refresh = useCallback(async () => {
     const res = await fetchOpenRegistrationPublic(slug);
@@ -266,6 +330,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     const token = new URLSearchParams(window.location.search).get("cancel");
     if (token && token.length >= 16) {
       storeCancellationToken(slug, "from-url", token);
+      setTokenVersion((v) => v + 1);
     }
   }, [slug]);
 
@@ -289,13 +354,47 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     (dto.spots_left > 0 || dto.waitlist_enabled);
 
   const stickyCta =
-    canJoin && step === "overview" && (dto?.spots_left ?? 0) > 0;
+    canJoin &&
+    step === "overview" &&
+    (dto?.spots_left ?? 0) > 0 &&
+    !isDueloMode;
 
-  const hasLocalCancel = loadAllCancellationTokens(slug).length > 0;
+  const localTokens = useMemo(
+    () => loadAllCancellationTokens(slug),
+    // tokenVersion fuerza relectura tras join/cancel/store
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [slug, tokenVersion, step]
+  );
+  const hasLocalCancel = localTokens.length > 0 || Boolean(joinManageToken);
+
+  const beginJoinForSide = (side: DueloCourtSide | null) => {
+    setPreferredSide(side);
+    setActionError(null);
+    setPreview(null);
+    setRivieraInput("");
+    setStep("id");
+  };
 
   const beginCancelFlow = () => {
     setActionError(null);
-    const tokens = loadAllCancellationTokens(slug);
+    setCancelRivieraInput("");
+    setCopyFeedback(null);
+    let tokens = loadAllCancellationTokens(slug);
+    if (
+      joinManageToken &&
+      !tokens.some((t) => t.token === joinManageToken)
+    ) {
+      storeCancellationToken(
+        slug,
+        joinEntryId || "joined",
+        joinManageToken,
+        preview
+          ? { nombre: preview.nombre, rivieraId: preview.riviera_id }
+          : undefined
+      );
+      tokens = loadAllCancellationTokens(slug);
+      setTokenVersion((v) => v + 1);
+    }
     if (tokens.length === 0) {
       setActionError(
         "No encontramos tu inscripción en este dispositivo."
@@ -337,7 +436,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     setActionError(null);
     setBusy(true);
     try {
-      const res = await joinOpenRegistration(slug, preview.riviera_id);
+      const res = await joinOpenRegistration(
+        slug,
+        preview.riviera_id,
+        isDueloMode ? preferredSide : null
+      );
       if (!res.ok) {
         setActionError(mapJoinErrorMessage(res.error));
         await refresh();
@@ -345,10 +448,33 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
       }
       setJoinStatus(res.result.status);
       setSuccessMessage(res.result.message);
+      setJoinManageToken(res.result.cancellation_token || null);
+      setJoinEntryId(res.result.entry_id);
+      setTokenVersion((v) => v + 1);
       setStep("done");
       await refresh();
     } finally {
       setBusy(false);
+    }
+  };
+
+  const onCopyManageLink = async () => {
+    setActionError(null);
+    setCopyFeedback(null);
+    const token =
+      joinManageToken ||
+      loadAllCancellationTokens(slug).slice(-1)[0]?.token ||
+      null;
+    if (!token) {
+      setActionError("No hay enlace de inscripción en este dispositivo.");
+      return;
+    }
+    const manageUrl = `${window.location.origin}${buildManageRegistrationPath(slug, token)}`;
+    const ok = await copyTextToClipboard(manageUrl);
+    if (ok) {
+      setCopyFeedback("Enlace copiado. Guárdalo para cancelar después.");
+    } else {
+      setActionError("No se pudo copiar. Copia el enlace manualmente desde la barra.");
     }
   };
 
@@ -357,10 +483,51 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
       setActionError("Selecciona a quién quieres cancelar.");
       return;
     }
+    const typed = normalizeRivieraIdLoose(cancelRivieraInput);
+    if (!typed) {
+      setActionError("Escribe tu Riviera ID para confirmar que sales.");
+      return;
+    }
+
+    let expected = cancelTarget.rivieraId
+      ? normalizeRivieraIdLoose(cancelTarget.rivieraId)
+      : null;
+    if (!expected) {
+      const fromList = [...confirmed, ...waitlist].find(
+        (e) => e.id === cancelTarget.entryId
+      );
+      expected = fromList
+        ? normalizeRivieraIdLoose(fromList.riviera_id)
+        : null;
+    }
+    if (!expected && cancelTarget.entryId === "from-url") {
+      const matchById = [...confirmed, ...waitlist].find(
+        (e) => normalizeRivieraIdLoose(e.riviera_id) === typed
+      );
+      if (!matchById) {
+        setActionError(
+          "Ese Riviera ID no aparece en esta convocatoria. Revísalo."
+        );
+        return;
+      }
+      expected = typed;
+    }
+
+    if (!expected || expected !== typed) {
+      setActionError(
+        "El Riviera ID no coincide con esta inscripción. Revísalo e inténtalo de nuevo."
+      );
+      return;
+    }
+
     setBusy(true);
     setActionError(null);
     try {
-      const res = await cancelOpenRegistration(slug, cancelTarget.token);
+      const res = await cancelOpenRegistration(
+        slug,
+        cancelTarget.token,
+        cancelTarget.entryId
+      );
       if (!res.ok) {
         setActionError(
           res.error === "invalid_token"
@@ -370,6 +537,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         return;
       }
       removeCancellationToken(slug, cancelTarget.entryId);
+      if (joinEntryId === cancelTarget.entryId) {
+        setJoinManageToken(null);
+        setJoinEntryId(null);
+      }
+      setTokenVersion((v) => v + 1);
       setSuccessMessage(
         cancelTarget.nombre
           ? `Se canceló la asistencia de ${cancelTarget.nombre}.`
@@ -377,7 +549,9 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
       );
       setCancelTarget(null);
       setCancelCandidates([]);
+      setCancelRivieraInput("");
       setJoinStatus(null);
+      setPreferredSide(null);
       setStep("overview");
       await refresh();
     } finally {
@@ -422,6 +596,12 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   }
 
   const isDuelo = isDueloMode;
+  const sideHint =
+    preferredSide === "A"
+      ? "Pareja 1 · Lado A"
+      : preferredSide === "B"
+        ? "Pareja 2 · Lado B"
+        : null;
 
   return (
     <PublicTorneoExpressShell organizadorId={dto.organizador_id || null}>
@@ -439,6 +619,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
             <p className="ra-public__full-inline">Completo</p>
           ) : null}
           <div className="ra-public__meta-stack">
+            {organizerName?.trim() ? (
+              <p className="ra-public__meta ra-public__meta--club">
+                {organizerName.trim()}
+              </p>
+            ) : null}
             <p className="ra-public__meta">{formatWhen(dto)}</p>
             {formatCanchaLabel(dto.location_label) ? (
               <p className="ra-public__meta">
@@ -465,11 +650,18 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
             {isDuelo ? (
               <section className="ra-duelo-board" aria-label="Cancha 2 vs 2">
                 <p className="ra-duelo-board__title">Cómo queda la cancha</p>
+                {canJoin && (dto.spots_left ?? 0) > 0 ? (
+                  <p className="ra-duelo-board__hint">
+                    Toca el lado donde quieres jugar
+                  </p>
+                ) : null}
                 <DueloSideBlock
                   side="A"
                   layout={dueloLayout}
                   displayPhoto={dto.display_photo}
                   displayRating={dto.display_rating}
+                  selectable={Boolean(canJoin && (dto.spots_left ?? 0) > 0)}
+                  onSelectSide={beginJoinForSide}
                 />
                 <div className="ra-duelo-vs" aria-hidden>
                   <span>VS</span>
@@ -479,6 +671,8 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   layout={dueloLayout}
                   displayPhoto={dto.display_photo}
                   displayRating={dto.display_rating}
+                  selectable={Boolean(canJoin && (dto.spots_left ?? 0) > 0)}
+                  onSelectSide={beginJoinForSide}
                 />
               </section>
             ) : (
@@ -550,7 +744,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
           <section className="ra-public__sheet" aria-label="Elegir inscripción">
             <h2>¿A quién quieres cancelar?</h2>
             <p className="ra-public__hint">
-              Elige la inscripción. Luego te pediremos confirmación.
+              Elige la inscripción. Luego confirma con tu Riviera ID.
             </p>
             <ul className="ra-public__players ra-cancel-list">
               {cancelCandidates.map((c) => (
@@ -560,6 +754,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                     className="ra-player-card ra-cancel-option"
                     onClick={() => {
                       setCancelTarget(c);
+                      setCancelRivieraInput("");
                       setStep("cancel_confirm");
                       setActionError(null);
                     }}
@@ -592,24 +787,34 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
 
         {step === "cancel_confirm" && cancelTarget && (
           <section className="ra-public__sheet" aria-label="Confirmar cancelación">
-            <h2>¿Estás seguro?</h2>
+            <h2>Confirma tu Riviera ID</h2>
             <div className="ra-confirm-card">
               <strong>{resolveCancelLabel(cancelTarget)}</strong>
-              {cancelTarget.rivieraId ? (
-                <span>{cancelTarget.rivieraId}</span>
-              ) : null}
               <p className="ra-public__hint">
-                Se cancelará esta asistencia y se liberará el lugar en la
-                convocatoria.
+                Escribe tu Riviera ID para salirte de esta convocatoria y
+                liberar el lugar.
               </p>
             </div>
+            <label className="ra-label" htmlFor="ra-cancel-riviera-id">
+              Tu Riviera ID
+            </label>
+            <input
+              id="ra-cancel-riviera-id"
+              className="ra-input"
+              inputMode="text"
+              autoComplete="off"
+              autoCapitalize="characters"
+              value={cancelRivieraInput}
+              onChange={(e) => setCancelRivieraInput(e.target.value)}
+              placeholder="RIV-00000001"
+            />
             {actionError ? <p className="ra-error">{actionError}</p> : null}
             <div className="ra-actions">
               <button
                 type="button"
                 className="ra-btn ra-btn--danger"
                 onClick={() => void onConfirmCancel()}
-                disabled={busy}
+                disabled={busy || !cancelRivieraInput.trim()}
               >
                 Sí, cancelar asistencia
               </button>
@@ -620,9 +825,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   if (cancelCandidates.length > 1) {
                     setStep("cancel_pick");
                   } else {
-                    setStep("overview");
+                    setStep(joinManageToken ? "done" : "overview");
                     setCancelTarget(null);
                   }
+                  setCancelRivieraInput("");
                   setActionError(null);
                 }}
                 disabled={busy}
@@ -636,6 +842,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         {step === "id" && (
           <section className="ra-public__sheet" aria-label="Ingresar Riviera ID">
             <h2>Tu Riviera ID</h2>
+            {sideHint ? (
+              <p className="ra-public__hint ra-public__hint--side">
+                Entrarás en <strong>{sideHint}</strong>
+              </p>
+            ) : null}
             <p className="ra-public__hint">
               Formato RIV-00000001. No necesitas cuenta para inscribirte.
             </p>
@@ -667,6 +878,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 className="ra-btn ra-btn--ghost"
                 onClick={() => {
                   setStep("overview");
+                  setPreferredSide(null);
                   setActionError(null);
                 }}
               >
@@ -689,6 +901,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               </div>
               <strong>{preview.nombre}</strong>
               <span>{preview.riviera_id}</span>
+              {sideHint ? <span>{sideHint}</span> : null}
               {formatPublicCategoriaLabel(preview.categoria) ? (
                 <span>{formatPublicCategoriaLabel(preview.categoria)}</span>
               ) : null}
@@ -707,7 +920,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               <button
                 type="button"
                 className="ra-btn ra-btn--primary"
-                onClick={onConfirmJoin}
+                onClick={() => void onConfirmJoin()}
                 disabled={busy}
               >
                 Confirmar asistencia
@@ -770,44 +983,51 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   : "Asistencia confirmada"}
             </h2>
             <p>{successMessage}</p>
+            {sideHint ? (
+              <p className="ra-public__hint ra-public__hint--side">
+                Lado: <strong>{sideHint}</strong>
+              </p>
+            ) : null}
             <p className="ra-public__hint">
               Guarda este enlace para administrar o cancelar tu asistencia.
             </p>
-            {loadCancellationToken(slug)?.token ? (
+            {actionError ? <p className="ra-error">{actionError}</p> : null}
+            {copyFeedback ? (
+              <p className="ra-public__hint ra-public__hint--ok">{copyFeedback}</p>
+            ) : null}
+            <div className="ra-actions">
+              {(joinManageToken || hasLocalCancel) && (
+                <button
+                  type="button"
+                  className="ra-btn ra-btn--ghost"
+                  onClick={() => void onCopyManageLink()}
+                  disabled={busy}
+                >
+                  Copiar enlace de mi inscripción
+                </button>
+              )}
+              {(joinManageToken || hasLocalCancel) && (
+                <button
+                  type="button"
+                  className="ra-btn ra-btn--ghost"
+                  onClick={beginCancelFlow}
+                  disabled={busy}
+                >
+                  Cancelar asistencia
+                </button>
+              )}
               <button
                 type="button"
-                className="ra-btn ra-btn--ghost"
-                onClick={async () => {
-                  const t = loadCancellationToken(slug)?.token;
-                  if (!t) return;
-                  const manageUrl = `${window.location.origin}${buildManageRegistrationPath(slug, t)}`;
-                  try {
-                    await navigator.clipboard.writeText(manageUrl);
-                  } catch {
-                    /* ignore */
-                  }
+                className="ra-btn ra-btn--primary"
+                onClick={() => {
+                  setCopyFeedback(null);
+                  setActionError(null);
+                  setStep("overview");
                 }}
               >
-                Copiar enlace de mi inscripción
+                Ver convocatoria
               </button>
-            ) : null}
-            {hasLocalCancel ? (
-              <button
-                type="button"
-                className="ra-btn ra-btn--ghost"
-                onClick={beginCancelFlow}
-                disabled={busy}
-              >
-                Cancelar asistencia
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="ra-btn ra-btn--primary"
-              onClick={() => setStep("overview")}
-            >
-              Ver convocatoria
-            </button>
+            </div>
           </section>
         )}
 
@@ -816,10 +1036,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
             <button
               type="button"
               className="ra-btn ra-btn--primary ra-btn--block"
-              onClick={() => {
-                setStep("id");
-                setActionError(null);
-              }}
+              onClick={() => beginJoinForSide(null)}
             >
               Quiero jugar
             </button>
@@ -835,7 +1052,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
             <button
               type="button"
               className="ra-btn ra-btn--primary ra-btn--block"
-              onClick={() => setStep("id")}
+              onClick={() => beginJoinForSide(null)}
             >
               Unirme a lista de espera
             </button>

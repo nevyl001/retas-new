@@ -261,6 +261,10 @@ export function parsePublicDto(raw: unknown): OpenRegistrationPublicDto | null {
           foto_url: typeof er.foto_url === "string" ? er.foto_url : null,
           rating: typeof er.rating === "number" ? er.rating : null,
           categoria: typeof er.categoria === "string" ? er.categoria : null,
+          preferred_side:
+            er.preferred_side === "A" || er.preferred_side === "B"
+              ? er.preferred_side
+              : null,
         };
       })
       .filter(Boolean) as OpenRegistrationPublicDto["entries"],
@@ -347,7 +351,8 @@ export async function previewRivieraIdForOpenRegistration(
 
 export async function joinOpenRegistration(
   slug: string,
-  rivieraIdInput: string
+  rivieraIdInput: string,
+  preferredSide?: "A" | "B" | null
 ): Promise<
   | { ok: true; result: OpenRegistrationJoinResult }
   | { ok: false; error: string; status?: string }
@@ -355,10 +360,41 @@ export async function joinOpenRegistration(
   const normalized = normalizeRivieraIdLoose(rivieraIdInput);
   if (!normalized) return { ok: false, error: "invalid_riviera_id" };
 
-  const { data, error } = await supabase.rpc(
-    "join_tournament_open_registration",
-    { p_slug: slug.trim(), p_riviera_id: normalized }
-  );
+  const side =
+    preferredSide === "A" || preferredSide === "B" ? preferredSide : null;
+
+  const baseParams: Record<string, string> = {
+    p_slug: slug.trim(),
+    p_riviera_id: normalized,
+  };
+
+  let data: unknown;
+  let error: { message: string } | null = null;
+
+  if (side) {
+    const withSide = await supabase.rpc("join_tournament_open_registration", {
+      ...baseParams,
+      p_preferred_side: side,
+    });
+    data = withSide.data;
+    error = withSide.error;
+    // Compat: RPC antigua sin p_preferred_side
+    if (
+      error &&
+      /preferred_side|PGRST202|Could not find the function|function.*does not exist/i.test(
+        error.message
+      )
+    ) {
+      const fallback = await supabase.rpc("join_tournament_open_registration", baseParams);
+      data = fallback.data;
+      error = fallback.error;
+    }
+  } else {
+    const res = await supabase.rpc("join_tournament_open_registration", baseParams);
+    data = res.data;
+    error = res.error;
+  }
+
   if (error) return { ok: false, error: error.message };
   const row = asRecord(data);
   if (!row || row.ok !== true) {
@@ -388,7 +424,8 @@ export async function joinOpenRegistration(
 
 export async function cancelOpenRegistration(
   slug: string,
-  cancellationToken: string
+  cancellationToken: string,
+  entryId?: string
 ): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
   const { data, error } = await supabase.rpc(
     "cancel_tournament_open_registration",
@@ -402,7 +439,15 @@ export async function cancelOpenRegistration(
   if (!row || row.ok !== true) {
     return { ok: false, error: String(row?.error ?? "cancel_failed") };
   }
-  clearCancellationToken(slug);
+  if (entryId) {
+    removeCancellationToken(slug, entryId);
+  } else {
+    const match = loadAllCancellationTokens(slug).find(
+      (e) => e.token === cancellationToken.trim()
+    );
+    if (match) removeCancellationToken(slug, match.entryId);
+    else clearCancellationToken(slug);
+  }
   return {
     ok: true,
     message: String(row.message ?? "Inscripción cancelada."),

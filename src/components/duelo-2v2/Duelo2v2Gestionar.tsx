@@ -2,6 +2,7 @@ import {
   getDueloFinalizarConfirmMessage,
   useBranding,
   useClubModeEyebrow,
+  useConvocatoriaOriginName,
 } from "../../club-experience";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { Duelo2v2, Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
@@ -50,6 +51,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   dueloId,
 }) => {
   const modeEyebrow = useClubModeEyebrow();
+  const convocatoriaOrigin = useConvocatoriaOriginName();
   const { nombre: organizerName } = useBranding();
   const [duelo, setDuelo] = useState<Duelo2v2 | null>(null);
   const [loading, setLoading] = useState(true);
@@ -300,7 +302,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 name: duelo.nombre,
                 locationLabel: duelo.cancha ?? undefined,
                 scheduledAt: duelo.programado_en,
-                clubName: modeEyebrow,
+                clubName: convocatoriaOrigin,
               })}
             />
             <PublicShareSection
@@ -393,7 +395,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           name: duelo.nombre,
           locationLabel: duelo.cancha ?? undefined,
           scheduledAt: duelo.programado_en,
-          clubName: modeEyebrow,
+          clubName: convocatoriaOrigin,
         })}
       />
 

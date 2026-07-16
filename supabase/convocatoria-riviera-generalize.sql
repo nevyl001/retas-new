@@ -139,7 +139,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_tor_open_reg_mode_entity
 
 -- Entries: registration_id
 ALTER TABLE public.tournament_open_registration_entries
-  ADD COLUMN IF NOT EXISTS registration_id uuid;
+  ADD COLUMN IF NOT EXISTS registration_id uuid,
+  ADD COLUMN IF NOT EXISTS preferred_side text;
 
 UPDATE public.tournament_open_registration_entries e
 SET registration_id = r.id
@@ -417,15 +418,18 @@ $$;
 REVOKE ALL ON FUNCTION public._open_reg_sync_americano_roster(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public._open_reg_sync_americano_roster(uuid) FROM anon, authenticated;
 
--- Sync Duelo slots desde confirmados (orden de inscripción)
+-- Sync Duelo slots desde confirmados (preferred_side A/B + orden)
 CREATE OR REPLACE FUNCTION public._open_reg_sync_duelo_slots(p_duelo_id uuid)
 RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
-  ids uuid[] := ARRAY[]::uuid[];
-  names text[] := ARRAY[]::text[];
+  ids uuid[] := ARRAY[NULL, NULL, NULL, NULL];
+  names text[] := ARRAY[NULL, NULL, NULL, NULL];
   r record;
-  n int;
+  placed int := 0;
+  idx int;
+  try_idxs int[];
+  i int;
 BEGIN
   IF EXISTS (
     SELECT 1 FROM public.duelos_2v2 d
@@ -434,9 +438,43 @@ BEGIN
       AND d.pareja_b_j1_id IS NOT NULL AND d.pareja_b_j2_id IS NOT NULL
       AND coalesce(d.sets_pareja_a, 0) + coalesce(d.sets_pareja_b, 0) > 0
   ) THEN
-    -- Si ya hay marcador, no tocar slots
     RETURN;
   END IF;
+
+  FOR r IN
+    SELECT e.riviera_jugador_id,
+           coalesce(nullif(trim(e.display_name_snapshot), ''), rj.nombre) AS nombre,
+           opa.local_jugador_id,
+           upper(nullif(trim(e.preferred_side), '')) AS pref
+    FROM public.tournament_open_registration_entries e
+    JOIN public.tournament_open_registration cfg ON cfg.id = e.registration_id
+    JOIN public.riviera_jugadores rj ON rj.id = e.riviera_jugador_id
+    LEFT JOIN public.organizer_player_access opa
+      ON opa.jugador_id = e.riviera_jugador_id
+     AND opa.grantee_organizer_id = (SELECT organizador_id FROM public.duelos_2v2 WHERE id = p_duelo_id)
+     AND opa.is_active = true
+    WHERE cfg.entity_id = p_duelo_id
+      AND cfg.mode_type = 'duelo_2v2'
+      AND e.status = 'confirmed'
+      AND upper(nullif(trim(e.preferred_side), '')) IN ('A', 'B')
+    ORDER BY coalesce(e.confirmed_at, e.created_at)
+    LIMIT 4
+  LOOP
+    IF r.pref = 'A' THEN
+      try_idxs := ARRAY[1, 2, 3, 4];
+    ELSE
+      try_idxs := ARRAY[3, 4, 1, 2];
+    END IF;
+    FOREACH idx IN ARRAY try_idxs LOOP
+      IF ids[idx] IS NULL THEN
+        ids[idx] := coalesce(r.local_jugador_id, r.riviera_jugador_id);
+        names[idx] := r.nombre;
+        placed := placed + 1;
+        EXIT;
+      END IF;
+    END LOOP;
+    EXIT WHEN placed >= 4;
+  END LOOP;
 
   FOR r IN
     SELECT e.riviera_jugador_id,
@@ -452,25 +490,31 @@ BEGIN
     WHERE cfg.entity_id = p_duelo_id
       AND cfg.mode_type = 'duelo_2v2'
       AND e.status = 'confirmed'
+      AND coalesce(upper(nullif(trim(e.preferred_side), '')), '') NOT IN ('A', 'B')
     ORDER BY coalesce(e.confirmed_at, e.created_at)
     LIMIT 4
   LOOP
-    ids := ids || coalesce(r.local_jugador_id, r.riviera_jugador_id);
-    names := names || r.nombre;
+    FOR i IN 1..4 LOOP
+      IF ids[i] IS NULL THEN
+        ids[i] := coalesce(r.local_jugador_id, r.riviera_jugador_id);
+        names[i] := r.nombre;
+        placed := placed + 1;
+        EXIT;
+      END IF;
+    END LOOP;
+    EXIT WHEN placed >= 4;
   END LOOP;
 
-  n := coalesce(array_length(ids, 1), 0);
-
   UPDATE public.duelos_2v2 SET
-    pareja_a_j1_id = CASE WHEN n >= 1 THEN ids[1] ELSE NULL END,
-    pareja_a_j1_nombre = CASE WHEN n >= 1 THEN names[1] ELSE '' END,
-    pareja_a_j2_id = CASE WHEN n >= 2 THEN ids[2] ELSE NULL END,
-    pareja_a_j2_nombre = CASE WHEN n >= 2 THEN names[2] ELSE '' END,
-    pareja_b_j1_id = CASE WHEN n >= 3 THEN ids[3] ELSE NULL END,
-    pareja_b_j1_nombre = CASE WHEN n >= 3 THEN names[3] ELSE '' END,
-    pareja_b_j2_id = CASE WHEN n >= 4 THEN ids[4] ELSE NULL END,
-    pareja_b_j2_nombre = CASE WHEN n >= 4 THEN names[4] ELSE '' END,
-    estado = CASE WHEN n >= 4 THEN 'configuracion' ELSE 'configuracion' END,
+    pareja_a_j1_id = ids[1],
+    pareja_a_j1_nombre = coalesce(names[1], ''),
+    pareja_a_j2_id = ids[2],
+    pareja_a_j2_nombre = coalesce(names[2], ''),
+    pareja_b_j1_id = ids[3],
+    pareja_b_j1_nombre = coalesce(names[3], ''),
+    pareja_b_j2_id = ids[4],
+    pareja_b_j2_nombre = coalesce(names[4], ''),
+    estado = 'configuracion',
     updated_at = now()
   WHERE id = p_duelo_id;
 END;

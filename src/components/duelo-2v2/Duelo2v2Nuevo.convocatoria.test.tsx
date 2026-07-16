@@ -13,6 +13,7 @@ import * as path from "path";
 
 jest.mock("../../club-experience", () => ({
   useClubModeEyebrow: () => "Club Test",
+  useConvocatoriaOriginName: () => "Club Test",
 }));
 
 jest.mock("../../contexts/UserContext", () => ({

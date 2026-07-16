@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useClubModeEyebrow } from "../../club-experience";
+import { useClubModeEyebrow, useConvocatoriaOriginName } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
 import {
   clearDuelo2v2CreateDraft,
@@ -35,6 +35,7 @@ import "./duelo2v2-page.css";
 
 export const Duelo2v2Nuevo: React.FC = () => {
   const modeEyebrow = useClubModeEyebrow();
+  const convocatoriaOrigin = useConvocatoriaOriginName();
   const { user } = useUser();
   const defaultSchedule = useMemo(() => {
     const now = new Date();
@@ -266,7 +267,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
     locationLabel: cancha,
     scheduledAt: scheduleOk ? schedulePreview.programado_en : null,
     durationMinutes: Number.isFinite(durationPreview) ? durationPreview : 90,
-    clubName: modeEyebrow,
+    clubName: convocatoriaOrigin,
     categoryLabel: categoria.trim() || undefined,
   });
 

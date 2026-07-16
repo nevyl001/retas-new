@@ -244,7 +244,8 @@ BEGIN
         END,
         'foto_url', CASE WHEN v_cfg.display_photo THEN rj.foto_url ELSE NULL END,
         'rating', CASE WHEN v_cfg.display_rating THEN rj.rating ELSE NULL END,
-        'categoria', rj.categoria
+        'categoria', rj.categoria,
+        'preferred_side', e.preferred_side
       ) AS obj,
       coalesce(e.confirmed_at, e.created_at) AS sort_ts
     FROM public.tournament_open_registration_entries e
@@ -332,9 +333,12 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.preview_riviera_id_for_open_registration(text, text) TO anon, authenticated;
 
+DROP FUNCTION IF EXISTS public.join_tournament_open_registration(text, text);
+
 CREATE OR REPLACE FUNCTION public.join_tournament_open_registration(
   p_slug text,
-  p_riviera_id text
+  p_riviera_id text,
+  p_preferred_side text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, extensions AS $$
@@ -353,6 +357,7 @@ DECLARE
   v_access_id uuid;
   v_local_id uuid;
   v_finished boolean := false;
+  v_side text;
 BEGIN
   SELECT * INTO v_cfg
   FROM public.tournament_open_registration
@@ -396,6 +401,14 @@ BEGIN
   SELECT * INTO v_identity FROM public._resolve_identity_by_riviera_id(v_norm);
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'error', 'riviera_id_not_found', 'riviera_id', v_norm);
+  END IF;
+
+  v_side := upper(nullif(trim(p_preferred_side), ''));
+  IF v_side IS NOT NULL AND v_side NOT IN ('A', 'B') THEN
+    v_side := NULL;
+  END IF;
+  IF v_cfg.mode_type <> 'duelo_2v2' THEN
+    v_side := NULL;
   END IF;
 
   PERFORM pg_advisory_xact_lock(
@@ -463,7 +476,8 @@ BEGIN
 
   INSERT INTO public.tournament_open_registration_entries (
     registration_id, tournament_id, riviera_jugador_id, official_player_key,
-    riviera_id, status, source, cancellation_token_hash, display_name_snapshot, confirmed_at
+    riviera_id, status, source, cancellation_token_hash, display_name_snapshot,
+    confirmed_at, preferred_side
   ) VALUES (
     v_cfg.id,
     v_cfg.tournament_id,
@@ -474,7 +488,8 @@ BEGIN
     'public_riviera_id',
     v_token_hash,
     v_identity.display_name,
-    CASE WHEN v_status = 'confirmed' THEN now() ELSE NULL END
+    CASE WHEN v_status = 'confirmed' THEN now() ELSE NULL END,
+    v_side
   ) RETURNING id INTO v_entry_id;
 
   IF v_status = 'confirmed' THEN
@@ -492,6 +507,7 @@ BEGIN
     'riviera_id', v_identity.riviera_id,
     'nombre', v_identity.display_name,
     'cancellation_token', v_token,
+    'preferred_side', v_side,
     'message', CASE v_status
       WHEN 'confirmed' THEN 'Asistencia confirmada. Ya estás dentro.'
       WHEN 'waitlist' THEN 'Cupo lleno. Quedaste en lista de espera.'
@@ -502,7 +518,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.join_tournament_open_registration(text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.join_tournament_open_registration(text, text, text) TO anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.cancel_tournament_open_registration(
   p_slug text,

@@ -1,6 +1,7 @@
 import {
   buildDueloCourtLayout,
   dueloCancelContextLabel,
+  dueloSideHasOpenSlot,
   dueloSlotMeta,
   formatPublicCategoriaLabel,
 } from "./dueloCourtLayout";
@@ -41,6 +42,31 @@ describe("buildDueloCourtLayout", () => {
     expect(layout.parejaA[1]).toBeNull();
     expect(layout.parejaB[0]).toBeNull();
     expect(layout.parejaB[1]).toBeNull();
+  });
+
+  it("respeta preferred_side B aunque sea el primero en confirmar", () => {
+    const layout = buildDueloCourtLayout([
+      { ...entry("1", "EnB"), preferred_side: "B" },
+      { ...entry("2", "EnA"), preferred_side: "A" },
+    ]);
+    expect(layout.parejaA[0]?.nombre).toBe("EnA");
+    expect(layout.parejaB[0]?.nombre).toBe("EnB");
+  });
+});
+
+describe("dueloSideHasOpenSlot", () => {
+  it("detecta hueco en un lado", () => {
+    const layout = buildDueloCourtLayout([
+      { ...entry("1", "A1"), preferred_side: "A" },
+    ]);
+    expect(dueloSideHasOpenSlot(layout, "A")).toBe(true);
+    expect(dueloSideHasOpenSlot(layout, "B")).toBe(true);
+    const fullA = buildDueloCourtLayout([
+      { ...entry("1", "A1"), preferred_side: "A" },
+      { ...entry("2", "A2"), preferred_side: "A" },
+    ]);
+    expect(dueloSideHasOpenSlot(fullA, "A")).toBe(false);
+    expect(dueloSideHasOpenSlot(fullA, "B")).toBe(true);
   });
 });
 

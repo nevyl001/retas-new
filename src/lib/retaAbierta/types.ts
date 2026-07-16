@@ -22,6 +22,8 @@ export interface OpenRegistrationPublicEntry {
   foto_url: string | null;
   rating: number | null;
   categoria: string | null;
+  /** Duelo 2vs2: lado preferido al inscribirse. */
+  preferred_side?: "A" | "B" | null;
 }
 
 export interface OpenRegistrationPublicDto {

@@ -143,6 +143,30 @@ export function getHomeEyebrow(
   return manifest.motherBrand || RIVIERA_MOTHER_BRAND_NAME;
 }
 
+/**
+ * Nombre del club/organizador para Convocatoria (WhatsApp).
+ * Nunca vacío: a diferencia del eyebrow de home, el mensaje no tiene logo.
+ */
+export function getConvocatoriaOriginName(
+  manifest: BrandManifest,
+  isClubBranded: boolean,
+  organizerDisplayName?: string | null
+): string {
+  if (organizerDisplayName?.trim()) {
+    return organizerDisplayName.trim();
+  }
+  if (isClubBranded && manifest.displayName?.trim()) {
+    return manifest.displayName.trim();
+  }
+  if (manifest.home.eyebrow?.trim()) {
+    return manifest.home.eyebrow.trim();
+  }
+  if (manifest.displayName?.trim()) {
+    return manifest.displayName.trim();
+  }
+  return manifest.motherBrand || RIVIERA_MOTHER_BRAND_NAME;
+}
+
 export function getHomeWelcomeTitle(manifest: BrandManifest): string {
   return manifest.home.welcomeTitle;
 }
