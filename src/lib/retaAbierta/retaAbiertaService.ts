@@ -54,47 +54,138 @@ export function buildManageRegistrationPath(
   return `${buildRetaAbiertaPublicPath(slug)}?cancel=${encodeURIComponent(token)}`;
 }
 
+export type StoredCancellationEntry = {
+  entryId: string;
+  token: string;
+  nombre?: string;
+  rivieraId?: string;
+  savedAt: number;
+};
+
 export function storeCancellationToken(
   slug: string,
   entryId: string,
-  token: string
+  token: string,
+  meta?: { nombre?: string; rivieraId?: string }
 ): void {
   if (typeof window === "undefined") return;
   try {
+    const existing = loadAllCancellationTokens(slug);
+    const next: StoredCancellationEntry = {
+      entryId,
+      token,
+      nombre: meta?.nombre,
+      rivieraId: meta?.rivieraId,
+      savedAt: Date.now(),
+    };
+    const merged = [
+      ...existing.filter((e) => e.entryId !== entryId && e.token !== token),
+      next,
+    ];
     localStorage.setItem(
       `${CANCEL_TOKEN_KEY}${slug}`,
-      JSON.stringify({ entryId, token, savedAt: Date.now() })
+      JSON.stringify({ entries: merged, savedAt: Date.now() })
     );
   } catch {
     /* ignore */
   }
 }
 
-export function loadCancellationToken(
+export function loadAllCancellationTokens(
   slug: string
-): { entryId: string; token: string } | null {
-  if (typeof window === "undefined") return null;
+): StoredCancellationEntry[] {
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(`${CANCEL_TOKEN_KEY}${slug}`);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { entryId?: string; token?: string };
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as {
+      entries?: unknown;
+      entryId?: string;
+      token?: string;
+      nombre?: string;
+      rivieraId?: string;
+      savedAt?: number;
+    };
+    if (Array.isArray(parsed.entries)) {
+      return parsed.entries
+        .map((item) => {
+          if (!item || typeof item !== "object") return null;
+          const o = item as Record<string, unknown>;
+          if (
+            typeof o.entryId !== "string" ||
+            typeof o.token !== "string" ||
+            o.token.length < 16
+          ) {
+            return null;
+          }
+          return {
+            entryId: o.entryId,
+            token: o.token,
+            nombre: typeof o.nombre === "string" ? o.nombre : undefined,
+            rivieraId: typeof o.rivieraId === "string" ? o.rivieraId : undefined,
+            savedAt: typeof o.savedAt === "number" ? o.savedAt : Date.now(),
+          } satisfies StoredCancellationEntry;
+        })
+        .filter(Boolean) as StoredCancellationEntry[];
+    }
+    // Compat: formato legacy de un solo token
     if (
       typeof parsed.entryId === "string" &&
       typeof parsed.token === "string" &&
       parsed.token.length >= 16
     ) {
-      return { entryId: parsed.entryId, token: parsed.token };
+      return [
+        {
+          entryId: parsed.entryId,
+          token: parsed.token,
+          nombre: typeof parsed.nombre === "string" ? parsed.nombre : undefined,
+          rivieraId:
+            typeof parsed.rivieraId === "string" ? parsed.rivieraId : undefined,
+          savedAt: typeof parsed.savedAt === "number" ? parsed.savedAt : Date.now(),
+        },
+      ];
     }
   } catch {
     /* ignore */
   }
-  return null;
+  return [];
+}
+
+export function loadCancellationToken(
+  slug: string
+): { entryId: string; token: string } | null {
+  const all = loadAllCancellationTokens(slug);
+  if (all.length === 0) return null;
+  const last = all[all.length - 1];
+  return { entryId: last.entryId, token: last.token };
 }
 
 export function clearCancellationToken(slug: string): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(`${CANCEL_TOKEN_KEY}${slug}`);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function removeCancellationToken(
+  slug: string,
+  entryId: string
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const rest = loadAllCancellationTokens(slug).filter(
+      (e) => e.entryId !== entryId
+    );
+    if (rest.length === 0) {
+      clearCancellationToken(slug);
+      return;
+    }
+    localStorage.setItem(
+      `${CANCEL_TOKEN_KEY}${slug}`,
+      JSON.stringify({ entries: rest, savedAt: Date.now() })
+    );
   } catch {
     /* ignore */
   }
@@ -287,7 +378,10 @@ export async function joinOpenRegistration(
     message: String(row.message ?? "Registrado."),
   };
   if (result.cancellation_token) {
-    storeCancellationToken(slug, result.entry_id, result.cancellation_token);
+    storeCancellationToken(slug, result.entry_id, result.cancellation_token, {
+      nombre: result.nombre,
+      rivieraId: result.riviera_id,
+    });
   }
   return { ok: true, result };
 }

@@ -527,16 +527,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             </label>
           </div>
         </>
-      ) : (
-        <label className="ra-org__category-compact">
-          Categoría / nivel
-          <input
-            value={categoryLabel}
-            onChange={(e) => setCategoryLabel(e.target.value)}
-            placeholder="Ej. 5ta Fuerza"
-          />
-        </label>
-      )}
+      ) : null}
 
       <div className="ra-org__actions">
         <button

@@ -207,6 +207,11 @@
   color: #101820;
 }
 
+.ra-btn--danger {
+  background: #c43c2c;
+  color: #fff;
+}
+
 .ra-btn--ghost {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--ra-card-border);
@@ -274,10 +279,183 @@
   }
 }
 
-.ra-public--error {
-  padding: 2rem 1rem;
+.ra-public__meta-stack {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.ra-public__full {
+  margin-top: 1rem;
   text-align: center;
-  color: var(--ra-ink);
+  font-weight: 600;
+  color: var(--ra-muted);
+}
+
+.ra-public__hint--ok {
+  margin-top: 0.85rem;
+  color: var(--ro-accent, #c9a227);
+}
+
+.ra-confirm-card__rating {
+  margin-top: 0.35rem;
+  font-weight: 700;
+  color: var(--ro-accent, #c9a227);
+}
+
+/* Duelo 2 vs 2 — lados de cancha */
+.ra-duelo-board {
+  display: grid;
+  gap: 0.85rem;
+  margin: 1rem 0 1.25rem;
+  padding: 1rem 0.9rem 1.1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(201, 162, 39, 0.28);
+  background:
+    linear-gradient(180deg, rgba(24, 32, 28, 0.92), rgba(12, 16, 20, 0.88));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.ra-duelo-board__title {
+  margin: 0 0 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  text-align: center;
+}
+
+.ra-duelo-side {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.ra-duelo-side--a {
+  border-color: rgba(201, 162, 39, 0.35);
+}
+
+.ra-duelo-side--b {
+  border-color: rgba(90, 170, 255, 0.28);
+}
+
+.ra-duelo-side__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-accent, #c9a227);
+}
+
+.ra-duelo-side--b .ra-duelo-side__label {
+  color: #8ec5ff;
+}
+
+.ra-duelo-vs {
+  display: grid;
+  place-items: center;
+  margin: 0.1rem 0;
+}
+
+.ra-duelo-vs span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.2rem;
+  min-height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  font-family: var(--font-display, inherit);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #101820;
+  background: var(--ro-accent, #c9a227);
+}
+
+.ra-duelo-slot {
+  width: 100%;
+  position: relative;
+  padding-top: 1.15rem;
+}
+
+.ra-duelo-slot__pos {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.65rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ra-muted);
+}
+
+.ra-duelo-slot__partner {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ro-accent, #c9a227);
+}
+
+.ra-duelo-slot__partner--wait {
+  color: var(--ra-muted);
+  font-weight: 500;
+}
+
+.ra-cancel-list {
+  list-style: none;
+  margin: 0.75rem 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ra-cancel-option {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  background: var(--ra-card);
+  border: 1px solid var(--ra-card-border);
+  color: inherit;
+}
+
+.ra-cancel-option__cta {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ro-accent, #c9a227);
+}
+
+.ra-cancel-option:hover,
+.ra-cancel-option:focus-visible {
+  border-color: var(--ro-accent, #c9a227);
+  outline: none;
+}
+
+@media (min-width: 640px) {
+  .ra-duelo-board {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: auto 1fr;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .ra-duelo-board__title {
+    grid-column: 1 / -1;
+  }
+
+  .ra-duelo-vs {
+    align-self: center;
+  }
 }
 
 .ra-skel {

@@ -10,19 +10,39 @@ import {
   buildManageRegistrationPath,
   fetchOpenRegistrationPublic,
   joinOpenRegistration,
+  loadAllCancellationTokens,
   loadCancellationToken,
   mapJoinErrorMessage,
   previewRivieraIdForOpenRegistration,
+  removeCancellationToken,
   storeCancellationToken,
+  type StoredCancellationEntry,
 } from "../../lib/retaAbierta/retaAbiertaService";
+import {
+  buildDueloCourtLayout,
+  dueloCancelContextLabel,
+  dueloSlotMeta,
+  formatPublicCategoriaLabel,
+  type DueloCourtLayout,
+  type DueloCourtSlot,
+  type DueloCourtSide,
+} from "../../lib/retaAbierta/dueloCourtLayout";
 import { useRetaAbiertaRealtime } from "../../lib/retaAbierta/useRetaAbiertaRealtime";
 import type {
   OpenRegistrationPreview,
   OpenRegistrationPublicDto,
+  OpenRegistrationPublicEntry,
 } from "../../lib/retaAbierta/types";
 import "./reta-abierta-public.css";
 
-type Step = "overview" | "id" | "confirm" | "done" | "not_found";
+type Step =
+  | "overview"
+  | "id"
+  | "confirm"
+  | "done"
+  | "not_found"
+  | "cancel_pick"
+  | "cancel_confirm";
 
 function statusLabel(status: OpenRegistrationPublicDto["status"]): string {
   switch (status) {
@@ -68,6 +88,132 @@ function formatWhen(dto: OpenRegistrationPublicDto): string {
     : base;
 }
 
+function PlayerSlotCard({
+  entry,
+  displayPhoto,
+  displayRating,
+  positionLabel,
+  partnerName,
+}: {
+  entry: DueloCourtSlot;
+  displayPhoto: boolean;
+  displayRating: boolean;
+  positionLabel: string;
+  partnerName: string | null;
+}) {
+  if (!entry) {
+    return (
+      <div className="ra-player-card ra-player-card--open ra-duelo-slot">
+        <span className="ra-duelo-slot__pos">{positionLabel}</span>
+        <div className="ra-player-card__avatar" aria-hidden>
+          <span>+</span>
+        </div>
+        <div className="ra-player-card__body">
+          <strong>Disponible</strong>
+          <span className="ra-player-card__sub">Esperando jugador</span>
+        </div>
+      </div>
+    );
+  }
+  const cat = formatPublicCategoriaLabel(entry.categoria);
+  return (
+    <div className="ra-player-card ra-duelo-slot">
+      <span className="ra-duelo-slot__pos">{positionLabel}</span>
+      <div className="ra-player-card__avatar" aria-hidden>
+        {displayPhoto && entry.foto_url ? (
+          <img src={entry.foto_url} alt="" />
+        ) : (
+          <span>{entry.nombre.charAt(0)}</span>
+        )}
+      </div>
+      <div className="ra-player-card__body">
+        <strong>{entry.nombre}</strong>
+        <span className="ra-player-card__sub">
+          {displayRating && entry.rating != null
+            ? `${Number(entry.rating).toFixed(2)}`
+            : entry.riviera_id}
+          {cat ? ` · ${cat}` : ""}
+        </span>
+        {partnerName ? (
+          <span className="ra-duelo-slot__partner">Con {partnerName}</span>
+        ) : (
+          <span className="ra-duelo-slot__partner ra-duelo-slot__partner--wait">
+            Esperando compañero
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DueloSideBlock({
+  side,
+  layout,
+  displayPhoto,
+  displayRating,
+}: {
+  side: DueloCourtSide;
+  layout: DueloCourtLayout;
+  displayPhoto: boolean;
+  displayRating: boolean;
+}) {
+  const pair = side === "A" ? layout.parejaA : layout.parejaB;
+  const meta0 = dueloSlotMeta(layout, side, 0);
+  const meta1 = dueloSlotMeta(layout, side, 1);
+  return (
+    <div className={`ra-duelo-side ra-duelo-side--${side.toLowerCase()}`}>
+      <p className="ra-duelo-side__label">{meta0.sideLabel}</p>
+      <PlayerSlotCard
+        entry={pair[0]}
+        displayPhoto={displayPhoto}
+        displayRating={displayRating}
+        positionLabel={meta0.positionLabel}
+        partnerName={meta0.partnerName}
+      />
+      <PlayerSlotCard
+        entry={pair[1]}
+        displayPhoto={displayPhoto}
+        displayRating={displayRating}
+        positionLabel={meta1.positionLabel}
+        partnerName={meta1.partnerName}
+      />
+    </div>
+  );
+}
+
+function FlatPlayerCard({
+  entry,
+  displayPhoto,
+  displayRating,
+}: {
+  entry: OpenRegistrationPublicEntry;
+  displayPhoto: boolean;
+  displayRating: boolean;
+}) {
+  const cat = formatPublicCategoriaLabel(entry.categoria);
+  return (
+    <li className="ra-player-card">
+      <div className="ra-player-card__avatar" aria-hidden>
+        {displayPhoto && entry.foto_url ? (
+          <img src={entry.foto_url} alt="" />
+        ) : (
+          <span>{entry.nombre.charAt(0)}</span>
+        )}
+      </div>
+      <div className="ra-player-card__body">
+        <strong>{entry.nombre}</strong>
+        <span className="ra-player-card__sub">
+          {entry.riviera_id}
+          {displayRating && entry.rating != null
+            ? ` · ${Number(entry.rating).toFixed(2)}`
+            : ""}
+          {cat ? ` · ${cat}` : ""}
+        </span>
+      </div>
+    </li>
+  );
+}
+
 export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   const [dto, setDto] = useState<OpenRegistrationPublicDto | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -79,6 +225,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   const [actionError, setActionError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [joinStatus, setJoinStatus] = useState<string | null>(null);
+  const [cancelCandidates, setCancelCandidates] = useState<
+    StoredCancellationEntry[]
+  >([]);
+  const [cancelTarget, setCancelTarget] =
+    useState<StoredCancellationEntry | null>(null);
 
   const refresh = useCallback(async () => {
     const res = await fetchOpenRegistrationPublic(slug);
@@ -126,6 +277,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     () => dto?.entries.filter((e) => e.status === "waitlist") ?? [],
     [dto]
   );
+  const dueloLayout = useMemo(
+    () => buildDueloCourtLayout(confirmed),
+    [confirmed]
+  );
+  const isDueloMode = dto?.mode_type === "duelo_2v2";
 
   const canJoin =
     dto?.status === "open" &&
@@ -135,7 +291,26 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
   const stickyCta =
     canJoin && step === "overview" && (dto?.spots_left ?? 0) > 0;
 
-  const storedCancel = loadCancellationToken(slug);
+  const hasLocalCancel = loadAllCancellationTokens(slug).length > 0;
+
+  const beginCancelFlow = () => {
+    setActionError(null);
+    const tokens = loadAllCancellationTokens(slug);
+    if (tokens.length === 0) {
+      setActionError(
+        "No encontramos tu inscripción en este dispositivo."
+      );
+      return;
+    }
+    setCancelCandidates(tokens);
+    if (tokens.length === 1) {
+      setCancelTarget(tokens[0]);
+      setStep("cancel_confirm");
+      return;
+    }
+    setCancelTarget(null);
+    setStep("cancel_pick");
+  };
 
   const onPreview = async () => {
     setActionError(null);
@@ -177,18 +352,15 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     }
   };
 
-  const onCancel = async () => {
-    const token = loadCancellationToken(slug)?.token;
-    if (!token) {
-      setActionError(
-        "No encontramos tu token de cancelación en este dispositivo."
-      );
+  const onConfirmCancel = async () => {
+    if (!cancelTarget?.token) {
+      setActionError("Selecciona a quién quieres cancelar.");
       return;
     }
     setBusy(true);
     setActionError(null);
     try {
-      const res = await cancelOpenRegistration(slug, token);
+      const res = await cancelOpenRegistration(slug, cancelTarget.token);
       if (!res.ok) {
         setActionError(
           res.error === "invalid_token"
@@ -197,13 +369,32 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         );
         return;
       }
-      setSuccessMessage(res.message);
+      removeCancellationToken(slug, cancelTarget.entryId);
+      setSuccessMessage(
+        cancelTarget.nombre
+          ? `Se canceló la asistencia de ${cancelTarget.nombre}.`
+          : res.message
+      );
+      setCancelTarget(null);
+      setCancelCandidates([]);
       setJoinStatus(null);
       setStep("overview");
       await refresh();
     } finally {
       setBusy(false);
     }
+  };
+
+  const resolveCancelLabel = (c: StoredCancellationEntry): string => {
+    if (isDueloMode) {
+      const ctx = dueloCancelContextLabel(c.entryId, dueloLayout);
+      if (ctx) return ctx;
+    }
+    if (c.nombre?.trim()) return c.nombre.trim();
+    const fromList = [...confirmed, ...waitlist].find((e) => e.id === c.entryId);
+    if (fromList) return fromList.nombre;
+    if (c.rivieraId) return c.rivieraId;
+    return "Tu inscripción";
   };
 
   if (loading) {
@@ -230,15 +421,15 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     );
   }
 
+  const isDuelo = isDueloMode;
+
   return (
     <PublicTorneoExpressShell organizadorId={dto.organizador_id || null}>
       <div className="ra-public">
         <header className="ra-public__hero">
           <p className="ra-public__eyebrow">{modeLabel(dto.mode_type)}</p>
           <h1 className="ra-public__title">{dto.name}</h1>
-          <span
-            className={`ra-public__badge ra-public__badge--${dto.status}`}
-          >
+          <span className={`ra-public__badge ra-public__badge--${dto.status}`}>
             {statusLabel(dto.status)}
           </span>
           {dto.spots_left === 1 && dto.status === "open" ? (
@@ -247,76 +438,94 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
           {dto.spots_left === 0 && dto.status === "open" ? (
             <p className="ra-public__full-inline">Completo</p>
           ) : null}
-          <p className="ra-public__meta">{formatWhen(dto)}</p>
-          {formatCanchaLabel(dto.location_label) ? (
-            <p className="ra-public__meta">
-              {formatCanchaLabel(dto.location_label)}
+          <div className="ra-public__meta-stack">
+            <p className="ra-public__meta">{formatWhen(dto)}</p>
+            {formatCanchaLabel(dto.location_label) ? (
+              <p className="ra-public__meta">
+                {formatCanchaLabel(dto.location_label)}
+              </p>
+            ) : null}
+            {dto.category_label ? (
+              <p className="ra-public__meta">
+                {formatPublicCategoriaLabel(dto.category_label) ||
+                  dto.category_label}
+              </p>
+            ) : null}
+            <p className="ra-public__cupo">
+              {dto.confirmed_count} de {dto.capacity} jugadores
+              {dto.spots_left > 0
+                ? ` · ${dto.spots_left} disponibles`
+                : " · completa"}
             </p>
-          ) : null}
-          {dto.category_label ? (
-            <p className="ra-public__meta">{dto.category_label}</p>
-          ) : null}
-          <p className="ra-public__cupo">
-            {dto.confirmed_count} de {dto.capacity} jugadores
-            {dto.spots_left > 0
-              ? ` · ${dto.spots_left} disponibles`
-              : " · completa"}
-          </p>
+          </div>
         </header>
 
         {step === "overview" && (
           <>
-            <section className="ra-public__section" aria-label="Confirmados">
-              <h2>Confirmados</h2>
-              <ul className="ra-public__players">
-                {confirmed.map((e) => (
-                  <li key={e.id} className="ra-player-card">
-                    <div className="ra-player-card__avatar" aria-hidden>
-                      {dto.display_photo && e.foto_url ? (
-                        <img src={e.foto_url} alt="" />
-                      ) : (
-                        <span>{e.nombre.charAt(0)}</span>
-                      )}
-                    </div>
-                    <div className="ra-player-card__body">
-                      <strong>{e.nombre}</strong>
-                      <span className="ra-player-card__sub">
-                        {e.riviera_id}
-                        {dto.display_rating && e.rating != null
-                          ? ` · ${Number(e.rating).toFixed(2)}`
-                          : ""}
-                        {e.categoria ? ` · ${e.categoria}` : ""}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-                {Array.from({ length: Math.max(dto.spots_left, 0) }).map(
-                  (_, i) => (
-                    <li
-                      key={`open-${i}`}
-                      className="ra-player-card ra-player-card--open"
-                    >
-                      <div className="ra-player-card__avatar" aria-hidden>
-                        <span>+</span>
-                      </div>
-                      <div className="ra-player-card__body">
-                        <strong>Lugar disponible</strong>
-                      </div>
-                    </li>
-                  )
-                )}
-              </ul>
-            </section>
+            {isDuelo ? (
+              <section className="ra-duelo-board" aria-label="Cancha 2 vs 2">
+                <p className="ra-duelo-board__title">Cómo queda la cancha</p>
+                <DueloSideBlock
+                  side="A"
+                  layout={dueloLayout}
+                  displayPhoto={dto.display_photo}
+                  displayRating={dto.display_rating}
+                />
+                <div className="ra-duelo-vs" aria-hidden>
+                  <span>VS</span>
+                </div>
+                <DueloSideBlock
+                  side="B"
+                  layout={dueloLayout}
+                  displayPhoto={dto.display_photo}
+                  displayRating={dto.display_rating}
+                />
+              </section>
+            ) : (
+              <section className="ra-public__section" aria-label="Confirmados">
+                <h2>Confirmados</h2>
+                <ul className="ra-public__players">
+                  {confirmed.map((e) => (
+                    <FlatPlayerCard
+                      key={e.id}
+                      entry={e}
+                      displayPhoto={dto.display_photo}
+                      displayRating={dto.display_rating}
+                    />
+                  ))}
+                  {Array.from({ length: Math.max(dto.spots_left, 0) }).map(
+                    (_, i) => (
+                      <li
+                        key={`open-${i}`}
+                        className="ra-player-card ra-player-card--open"
+                      >
+                        <div className="ra-player-card__avatar" aria-hidden>
+                          <span>+</span>
+                        </div>
+                        <div className="ra-player-card__body">
+                          <strong>Lugar disponible</strong>
+                        </div>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </section>
+            )}
 
             {waitlist.length > 0 && dto.waitlist_enabled ? (
               <section className="ra-public__section">
                 <h2>Lista de espera ({waitlist.length})</h2>
                 <ul className="ra-public__players">
                   {waitlist.map((e) => (
-                    <li key={e.id} className="ra-player-card ra-player-card--wait">
+                    <li
+                      key={e.id}
+                      className="ra-player-card ra-player-card--wait"
+                    >
                       <div className="ra-player-card__body">
                         <strong>{e.nombre}</strong>
-                        <span className="ra-player-card__sub">{e.riviera_id}</span>
+                        <span className="ra-player-card__sub">
+                          {e.riviera_id}
+                        </span>
                       </div>
                     </li>
                   ))}
@@ -324,17 +533,104 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               </section>
             ) : null}
 
-            {storedCancel ? (
+            {hasLocalCancel ? (
               <button
                 type="button"
                 className="ra-btn ra-btn--ghost"
-                onClick={onCancel}
+                onClick={beginCancelFlow}
                 disabled={busy}
               >
                 Cancelar mi asistencia
               </button>
             ) : null}
           </>
+        )}
+
+        {step === "cancel_pick" && (
+          <section className="ra-public__sheet" aria-label="Elegir inscripción">
+            <h2>¿A quién quieres cancelar?</h2>
+            <p className="ra-public__hint">
+              Elige la inscripción. Luego te pediremos confirmación.
+            </p>
+            <ul className="ra-public__players ra-cancel-list">
+              {cancelCandidates.map((c) => (
+                <li key={`${c.entryId}-${c.token}`}>
+                  <button
+                    type="button"
+                    className="ra-player-card ra-cancel-option"
+                    onClick={() => {
+                      setCancelTarget(c);
+                      setStep("cancel_confirm");
+                      setActionError(null);
+                    }}
+                  >
+                    <div className="ra-player-card__body">
+                      <strong>{resolveCancelLabel(c)}</strong>
+                      {c.rivieraId ? (
+                        <span className="ra-player-card__sub">{c.rivieraId}</span>
+                      ) : null}
+                      <span className="ra-cancel-option__cta">Seleccionar</span>
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {actionError ? <p className="ra-error">{actionError}</p> : null}
+            <button
+              type="button"
+              className="ra-btn ra-btn--ghost"
+              onClick={() => {
+                setStep("overview");
+                setCancelTarget(null);
+                setActionError(null);
+              }}
+            >
+              Volver
+            </button>
+          </section>
+        )}
+
+        {step === "cancel_confirm" && cancelTarget && (
+          <section className="ra-public__sheet" aria-label="Confirmar cancelación">
+            <h2>¿Estás seguro?</h2>
+            <div className="ra-confirm-card">
+              <strong>{resolveCancelLabel(cancelTarget)}</strong>
+              {cancelTarget.rivieraId ? (
+                <span>{cancelTarget.rivieraId}</span>
+              ) : null}
+              <p className="ra-public__hint">
+                Se cancelará esta asistencia y se liberará el lugar en la
+                convocatoria.
+              </p>
+            </div>
+            {actionError ? <p className="ra-error">{actionError}</p> : null}
+            <div className="ra-actions">
+              <button
+                type="button"
+                className="ra-btn ra-btn--danger"
+                onClick={() => void onConfirmCancel()}
+                disabled={busy}
+              >
+                Sí, cancelar asistencia
+              </button>
+              <button
+                type="button"
+                className="ra-btn ra-btn--ghost"
+                onClick={() => {
+                  if (cancelCandidates.length > 1) {
+                    setStep("cancel_pick");
+                  } else {
+                    setStep("overview");
+                    setCancelTarget(null);
+                  }
+                  setActionError(null);
+                }}
+                disabled={busy}
+              >
+                No, volver
+              </button>
+            </div>
+          </section>
         )}
 
         {step === "id" && (
@@ -393,14 +689,18 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               </div>
               <strong>{preview.nombre}</strong>
               <span>{preview.riviera_id}</span>
-              {preview.categoria ? <span>{preview.categoria}</span> : null}
+              {formatPublicCategoriaLabel(preview.categoria) ? (
+                <span>{formatPublicCategoriaLabel(preview.categoria)}</span>
+              ) : null}
               {preview.rating != null ? (
-                <span>Rating {Number(preview.rating).toFixed(2)}</span>
+                <span className="ra-confirm-card__rating">
+                  Rating {Number(preview.rating).toFixed(2)}
+                </span>
               ) : null}
             </div>
             <p className="ra-public__hint ra-public__hint--warn">
-              En esta versión la inscripción usa solo tu Riviera ID (sin OTP).
-              Guarda el acceso de cancelación en este dispositivo.
+              La inscripción usa solo tu Riviera ID. Guarda el acceso de
+              cancelación en este dispositivo.
             </p>
             {actionError ? <p className="ra-error">{actionError}</p> : null}
             <div className="ra-actions">
@@ -457,10 +757,6 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 Solicitar Riviera ID al club
               </a>
             </div>
-            <p className="ra-public__hint">
-              Si el club no tiene teléfono público, comparte este mensaje
-              directamente con ellos.
-            </p>
           </section>
         )}
 
@@ -495,11 +791,11 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 Copiar enlace de mi inscripción
               </button>
             ) : null}
-            {loadCancellationToken(slug) ? (
+            {hasLocalCancel ? (
               <button
                 type="button"
                 className="ra-btn ra-btn--ghost"
-                onClick={onCancel}
+                onClick={beginCancelFlow}
                 disabled={busy}
               >
                 Cancelar asistencia
@@ -548,6 +844,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
 
         {step === "overview" && !canJoin && dto.status === "open" ? (
           <p className="ra-public__full">Convocatoria completa</p>
+        ) : null}
+
+        {successMessage && step === "overview" ? (
+          <p className="ra-public__hint ra-public__hint--ok">{successMessage}</p>
         ) : null}
       </div>
     </PublicTorneoExpressShell>
