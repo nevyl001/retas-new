@@ -1,0 +1,83 @@
+import type { ConvocatoriaAdapterContext, OpenGameModeType } from "./types";
+import { convocatoriaProductHeadline } from "./modeWhitelist";
+
+export function defaultCapacityForMode(mode: OpenGameModeType): number {
+  switch (mode) {
+    case "duelo_2v2":
+      return 4;
+    case "americano":
+      return 16;
+    default:
+      return 8;
+  }
+}
+
+export function buildTournamentConvocatoriaContext(opts: {
+  mode: "reta" | "americano";
+  tournamentId: string;
+  name: string;
+  locationLabel?: string;
+  tournamentFormat?: string | null;
+  championshipEnabled?: boolean;
+  productHeadline?: string;
+}): ConvocatoriaAdapterContext {
+  const productHeadline =
+    opts.productHeadline ??
+    convocatoriaProductHeadline({
+      mode: opts.mode,
+      tournamentFormat: opts.tournamentFormat,
+      championshipEnabled: opts.championshipEnabled,
+    });
+
+  return {
+    mode: opts.mode,
+    entityId: opts.tournamentId,
+    defaultTitle: opts.name,
+    defaultCapacity: defaultCapacityForMode(opts.mode),
+    defaultLocation: opts.locationLabel,
+    defaultDurationMinutes: opts.mode === "americano" ? 120 : 90,
+    productHeadline,
+  };
+}
+
+export function buildDueloConvocatoriaContext(opts: {
+  dueloId: string;
+  name: string;
+  locationLabel?: string;
+  scheduledAt?: string | null;
+}): ConvocatoriaAdapterContext {
+  return {
+    mode: "duelo_2v2",
+    entityId: opts.dueloId,
+    defaultTitle: opts.name,
+    defaultCapacity: 4,
+    defaultLocation: opts.locationLabel,
+    defaultDurationMinutes: 90,
+    defaultScheduledAt: opts.scheduledAt ?? null,
+    lockCapacity: true,
+    productHeadline: convocatoriaProductHeadline({ mode: "duelo_2v2" }),
+  };
+}
+
+/**
+ * Identidad global: Riviera ID → official identity → canonical riviera_jugadores.
+ * Acceso multi-club: organizer_player_access (joined_via=registration) + clon local.
+ * No se crea Riviera ID ni carrera ni puntos en la inscripción.
+ */
+export const CONVOCATORIA_IDENTITY_CONTRACT = {
+  globalKey: "riviera_official_player_identity.riviera_id / official_player_key",
+  resolveRpc: "_resolve_identity_by_riviera_id",
+  membership: "organizer_player_access",
+  localClone: "_ensure_granted_player_local_as",
+  noSportsOnJoin: true,
+} as const;
+
+/**
+ * Adaptadores de sincronización (SQL): solo mueven inscritos a la estructura del modo.
+ * No generan slug ni tokens — eso vive solo en las RPC comunes.
+ */
+export const CONVOCATORIA_SYNC_ADAPTERS = {
+  reta: "none — pool en tournament_open_registration_entries; admin arma parejas",
+  americano: "_open_reg_sync_americano_roster",
+  duelo_2v2: "_open_reg_sync_duelo_slots",
+} as const;

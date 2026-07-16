@@ -9,6 +9,7 @@ import {
 import { isJugadoresPublicPath } from "../jugadores/JugadoresRouter";
 import { isLigaPublicPath } from "../liga/LigaRouter";
 import { isTorneoExpressPublicPath } from "../torneo-express/TorneoExpressRouter";
+import { isRetaAbiertaPublicPath } from "../../lib/retaAbierta/retaAbiertaService";
 import { AuthPage } from "./AuthPage";
 
 interface ProtectedRouteProps {
@@ -22,6 +23,7 @@ function isPublicAppPath(pathname: string): boolean {
   if (isJugadoresPublicPath(path)) return true;
   if (isTorneoExpressPublicPath(path)) return true;
   if (isLigaPublicPath(path)) return true;
+  if (isRetaAbiertaPublicPath(path)) return true;
   if (path === "/admin-login" || path === "/admin-dashboard") return true;
   if (path === "/admin/dev/player-debug") return true;
   if (/^\/admin-dashboard\/usuario\//i.test(path)) return true;

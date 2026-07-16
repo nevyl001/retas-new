@@ -1,6 +1,7 @@
 import { supabase } from "../lib/supabaseClient";
 import { finalizeCareerEvent } from "../lib/rivieraJugadores/careerEventPipeline";
 import type {
+  CreateDuelo2v2DraftInput,
   CreateDuelo2v2Input,
   Duelo2v2,
   Duelo2v2Ganador,
@@ -127,6 +128,74 @@ export async function getDuelo2v2ById(id: string): Promise<Duelo2v2 | null> {
   return mapDuelo(data as Record<string, unknown>);
 }
 
+export async function createDuelo2v2OpenDraft(
+  input: CreateDuelo2v2DraftInput
+): Promise<Duelo2v2> {
+  const uid = await requireUserId();
+  const nombre = input.nombre.trim();
+  if (!nombre) {
+    throw new Error("El nombre del encuentro es obligatorio.");
+  }
+
+  const { data, error } = await supabase
+    .from("duelos_2v2")
+    .insert({
+      organizador_id: uid,
+      nombre,
+      descripcion: input.descripcion?.trim() || null,
+      cancha: input.cancha?.trim() || null,
+      programado_en: input.programado_en ?? null,
+      programado_hasta: input.programado_hasta ?? null,
+      estado: "configuracion",
+      pareja_a_j1_id: null,
+      pareja_a_j2_id: null,
+      pareja_a_j1_nombre: "",
+      pareja_a_j2_nombre: "",
+      pareja_b_j1_id: null,
+      pareja_b_j2_id: null,
+      pareja_b_j1_nombre: "",
+      pareja_b_j2_nombre: "",
+      sets_pareja_a: 0,
+      sets_pareja_b: 0,
+      detalle_sets: [],
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(formatDueloDbError(error));
+  return mapDuelo(data as Record<string, unknown>);
+}
+
+/**
+ * Reutiliza un duelo en configuracion si sigue siendo del organizador y sin marcador.
+ * Si no existe o no es reutilizable, crea uno nuevo.
+ */
+export async function ensureDuelo2v2OpenDraft(opts: {
+  existingId?: string | null;
+  input: CreateDuelo2v2DraftInput;
+}): Promise<Duelo2v2> {
+  const uid = await requireUserId();
+  const existingId = opts.existingId?.trim();
+  if (existingId) {
+    const current = await getDuelo2v2ById(existingId);
+    if (
+      current &&
+      current.organizador_id === uid &&
+      current.estado === "configuracion" &&
+      current.sets_pareja_a === 0 &&
+      current.sets_pareja_b === 0
+    ) {
+      return updateDuelo2v2Details(current.id, {
+        nombre: opts.input.nombre,
+        cancha: opts.input.cancha,
+        programado_en: opts.input.programado_en ?? null,
+        programado_hasta: opts.input.programado_hasta ?? null,
+      });
+    }
+  }
+  return createDuelo2v2OpenDraft(opts.input);
+}
+
 export async function createDuelo2v2(
   input: CreateDuelo2v2Input
 ): Promise<Duelo2v2> {
@@ -165,6 +234,79 @@ export async function createDuelo2v2(
 
   if (error) throw new Error(formatDueloDbError(error));
   return mapDuelo(data as Record<string, unknown>);
+}
+
+/**
+ * Inicia el duelo reutilizando el borrador de convocatoria si existe.
+ * Nunca crea un segundo duelo cuando ya hay openDueloId en configuracion.
+ */
+export async function startDuelo2v2(opts: {
+  input: CreateDuelo2v2Input;
+  existingDraftId?: string | null;
+}): Promise<Duelo2v2> {
+  const { closeOpenGameRegistration } = await import(
+    "../lib/retaAbierta/retaAbiertaService"
+  );
+  const uid = await requireUserId();
+  const input = opts.input;
+  const ids = [
+    input.pareja_a_j1_id,
+    input.pareja_a_j2_id,
+    input.pareja_b_j1_id,
+    input.pareja_b_j2_id,
+  ];
+  if (new Set(ids).size !== 4) {
+    throw new Error("Los cuatro jugadores deben ser distintos.");
+  }
+
+  let duelo: Duelo2v2;
+
+  if (opts.existingDraftId) {
+    const { data: current, error: readErr } = await supabase
+      .from("duelos_2v2")
+      .select("*")
+      .eq("id", opts.existingDraftId)
+      .maybeSingle();
+    if (readErr) throw new Error(formatDueloDbError(readErr));
+
+    if (
+      current &&
+      String(current.organizador_id) === uid &&
+      current.estado === "configuracion"
+    ) {
+      const { data, error } = await supabase
+        .from("duelos_2v2")
+        .update({
+          nombre: input.nombre.trim(),
+          descripcion: input.descripcion?.trim() || null,
+          cancha: input.cancha?.trim() || null,
+          programado_en: input.programado_en ?? null,
+          programado_hasta: input.programado_hasta ?? null,
+          estado: "en_juego",
+          pareja_a_j1_id: input.pareja_a_j1_id,
+          pareja_a_j2_id: input.pareja_a_j2_id,
+          pareja_a_j1_nombre: input.pareja_a_j1_nombre.trim(),
+          pareja_a_j2_nombre: input.pareja_a_j2_nombre.trim(),
+          pareja_b_j1_id: input.pareja_b_j1_id,
+          pareja_b_j2_id: input.pareja_b_j2_id,
+          pareja_b_j1_nombre: input.pareja_b_j1_nombre.trim(),
+          pareja_b_j2_nombre: input.pareja_b_j2_nombre.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", opts.existingDraftId)
+        .select()
+        .single();
+      if (error) throw new Error(formatDueloDbError(error));
+      duelo = mapDuelo(data as Record<string, unknown>);
+    } else {
+      duelo = await createDuelo2v2(input);
+    }
+  } else {
+    duelo = await createDuelo2v2(input);
+  }
+
+  await closeOpenGameRegistration("duelo_2v2", duelo.id);
+  return duelo;
 }
 
 export async function updateDuelo2v2Details(

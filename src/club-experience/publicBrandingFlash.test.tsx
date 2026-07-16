@@ -96,6 +96,8 @@ describe("public branding flash contract", () => {
 
   it("ruta pública sin org en path: getPublicOrganizadorIdFromPath no inventa org", () => {
     expect(getPublicOrganizadorIdFromPath("/reta/abc-123")).toBeNull();
+    expect(getPublicOrganizadorIdFromPath("/reta-abierta/ra-abc")).toBeNull();
+    expect(getPublicOrganizadorIdFromPath("/jugar/ra-abc")).toBeNull();
     expect(getPublicOrganizadorIdFromPath("/americano/xyz")).toBeNull();
     expect(getPublicOrganizadorIdFromPath("/duelo-2v2/abc")).toBeNull();
     expect(getPublicOrganizadorIdFromPath("/liga/abc")).toBeNull();

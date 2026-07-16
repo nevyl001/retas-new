@@ -15,6 +15,7 @@ export type AppView =
   | "liga"
   | "duelo-2v2"
   | "jugadores"
+  | "reta-abierta"
   | "auth-callback"
   | "auth-reset-password"
   | "admin-login"
@@ -109,8 +110,17 @@ export function resolveAppViewFromPath(pathname: string): AppView {
   ) {
     return "jugadores";
   }
-  if (currentPath.startsWith("/torneo-express")) return "torneo-express";
-  if (currentPath.startsWith("/eventos/")) return "torneo-express";
+  if (
+    currentPath.startsWith("/torneo-express") ||
+    currentPath.startsWith("/eventos/")
+  )
+    return "torneo-express";
+  if (
+    /^\/jugar\/[^/]+/i.test(currentPath) ||
+    /^\/reta-abierta\/[^/]+/i.test(currentPath)
+  ) {
+    return "reta-abierta";
+  }
   if (/^\/public\/vista-publica\/americano\//i.test(currentPath)) {
     return "public-vista-publica-americano";
   }
@@ -138,6 +148,8 @@ export function pathRequiresUserSession(pathname: string): boolean {
     return false;
   }
   if (/^\/eventos\/[^/]+\/?$/i.test(path)) return false;
+  if (/^\/jugar\/[^/]+/i.test(path)) return false;
+  if (/^\/reta-abierta\/[^/]+/i.test(path)) return false;
   if (path === "/admin-login" || path === "/admin-dashboard") return false;
   if (path === "/admin/dev/player-debug") return false;
   if (path === "/auth/callback") return false;

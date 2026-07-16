@@ -35,6 +35,10 @@ import { isTorneoExpressPublicPath } from "./components/torneo-express/TorneoExp
 import { isLigaPublicPath } from "./components/liga/LigaRouter";
 import { isDuelo2v2PublicPath } from "./components/duelo-2v2/Duelo2v2Router";
 import { isJugadoresPublicPath } from "./components/jugadores/JugadoresRouter";
+import {
+  isRetaAbiertaPublicPath,
+  parseRetaAbiertaSlugFromPath,
+} from "./lib/retaAbierta/retaAbiertaService";
 import { LoadingFallback } from "./components/LoadingFallback";
 import { MobileAppNavigation } from "./components/navigation/MobileAppNavigation";
 import {
@@ -124,6 +128,9 @@ const PublicAmericanoView = lazy(
 );
 const PublicAmericanoResultsBoard = lazy(
   () => import("./components/PublicAmericanoResultsBoard")
+);
+const RetaAbiertaPublicPage = lazy(
+  () => import("./components/reta-abierta/RetaAbiertaPublicPage")
 );
 
 function parsePublicAmericanoTournamentId(pathname: string): string | null {
@@ -775,6 +782,11 @@ function AppContent() {
 
   const isJugadoresPublic =
     currentView === "jugadores" && isJugadoresPublicPath(appPathname);
+  const isRetaAbiertaPublic =
+    currentView === "reta-abierta" && isRetaAbiertaPublicPath(appPathname);
+  const retaAbiertaSlug = isRetaAbiertaPublic
+    ? parseRetaAbiertaSlugFromPath(appPathname)
+    : null;
 
   const isPublicSpectatorView =
     currentView === "public" ||
@@ -783,7 +795,8 @@ function AppContent() {
     isTorneoExpressPublic ||
     isLigaPublic ||
     isDuelo2v2Public ||
-    isJugadoresPublic;
+    isJugadoresPublic ||
+    isRetaAbiertaPublic;
 
   const showMobileAppNav =
     !authLoading &&
@@ -817,6 +830,7 @@ function AppContent() {
           !isLigaPublic &&
           !isDuelo2v2Public &&
           !isJugadoresPublic &&
+          !isRetaAbiertaPublic &&
           currentView !== "admin-login" &&
           currentView !== "admin-dashboard" &&
           currentView !== "admin-user" && <UserHeader />}
@@ -849,6 +863,14 @@ function AppContent() {
           <ErrorBoundary>
             <Suspense fallback={<LoadingFallback />}>
               <JugadoresRouter key={appPathname} pathname={appPathname} />
+            </Suspense>
+          </ErrorBoundary>
+        )}
+
+        {currentView === "reta-abierta" && retaAbiertaSlug && (
+          <ErrorBoundary>
+            <Suspense fallback={<LoadingFallback />}>
+              <RetaAbiertaPublicPage key={retaAbiertaSlug} slug={retaAbiertaSlug} />
             </Suspense>
           </ErrorBoundary>
         )}

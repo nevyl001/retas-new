@@ -12,12 +12,13 @@ import {
   CANCHA_DEFAULT_VALUE,
   normalizeCanchaForSave,
 } from "../../lib/torneoExpress/canchaDisplay";
-import {
-  partidoDateInputValue,
-} from "../../lib/torneoExpress/partidoSchedule";
+import { partidoDateInputValue } from "../../lib/torneoExpress/partidoSchedule";
 import { resolveDueloScheduleFromDraft } from "../../lib/duelo2v2/schedule";
 import { listRivieraJugadores } from "../../lib/rivieraJugadores/rivieraJugadoresService";
-import { createDuelo2v2 } from "../../services/duelo2v2Service";
+import {
+  ensureDuelo2v2OpenDraft,
+  startDuelo2v2,
+} from "../../services/duelo2v2Service";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { ModeHeader } from "../platform/ModeHeader";
@@ -28,6 +29,8 @@ import {
 } from "./DueloPairBuilder";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { navigateDuelo2v2, duelo2v2GestionarPath } from "./duelo2v2Nav";
+import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
+import { buildDueloConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import "./duelo2v2-page.css";
 
 export const Duelo2v2Nuevo: React.FC = () => {
@@ -48,6 +51,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const [draftTimeEnd, setDraftTimeEnd] = useState(defaultSchedule.timeEnd);
   const [pairA, setPairA] = useState<DueloPair | null>(null);
   const [pairB, setPairB] = useState<DueloPair | null>(null);
+  const [openDueloId, setOpenDueloId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftReady, setDraftReady] = useState(false);
@@ -87,6 +91,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
       setDraftDate(stored.draftDate);
       setDraftTimeStart(stored.draftTimeStart);
       setDraftTimeEnd(stored.draftTimeEnd);
+      if (stored.openDueloId) setOpenDueloId(stored.openDueloId);
 
       if (!stored.pairA && !stored.pairB) {
         if (!cancelled) setDraftReady(true);
@@ -126,6 +131,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
       draftTimeEnd,
       pairA: pairToDraftIds(pairA),
       pairB: pairToDraftIds(pairB),
+      openDueloId,
     });
   }, [
     user?.id,
@@ -137,7 +143,50 @@ export const Duelo2v2Nuevo: React.FC = () => {
     draftTimeEnd,
     pairA,
     pairB,
+    openDueloId,
   ]);
+
+  const validateLaunchMinimum = (): string | null => {
+    if (!nombre.trim()) return "Escribe el nombre del encuentro.";
+    if (!cancha.trim()) return "Indica la cancha.";
+    if (!draftDate.trim() || !draftTimeStart.trim() || !draftTimeEnd.trim()) {
+      return "Completa día y horario.";
+    }
+    const schedule = resolveDueloScheduleFromDraft(
+      draftDate,
+      draftTimeStart,
+      draftTimeEnd
+    );
+    if ("error" in schedule) return schedule.error;
+    return null;
+  };
+
+  const ensureDraftEntity = async () => {
+    const schedule = resolveDueloScheduleFromDraft(
+      draftDate,
+      draftTimeStart,
+      draftTimeEnd
+    );
+    if ("error" in schedule) {
+      throw new Error(schedule.error);
+    }
+    const duelo = await ensureDuelo2v2OpenDraft({
+      existingId: openDueloId,
+      input: {
+        nombre: nombre.trim() || "Duelo 2 vs 2",
+        cancha: normalizeCanchaForSave(cancha),
+        programado_en: schedule.programado_en,
+        programado_hasta: schedule.programado_hasta,
+      },
+    });
+    setOpenDueloId(duelo.id);
+    return {
+      entityId: duelo.id,
+      title: duelo.nombre,
+      locationLabel: duelo.cancha ?? cancha,
+      scheduledAtIso: duelo.programado_en,
+    };
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,19 +206,22 @@ export const Duelo2v2Nuevo: React.FC = () => {
         return;
       }
 
-      const duelo = await createDuelo2v2({
-        nombre: nombre.trim(),
-        cancha: normalizeCanchaForSave(cancha),
-        programado_en: schedule.programado_en,
-        programado_hasta: schedule.programado_hasta,
-        pareja_a_j1_id: pairA.j1.id,
-        pareja_a_j2_id: pairA.j2.id,
-        pareja_a_j1_nombre: pairA.j1.nombre,
-        pareja_a_j2_nombre: pairA.j2.nombre,
-        pareja_b_j1_id: pairB.j1.id,
-        pareja_b_j2_id: pairB.j2.id,
-        pareja_b_j1_nombre: pairB.j1.nombre,
-        pareja_b_j2_nombre: pairB.j2.nombre,
+      const duelo = await startDuelo2v2({
+        existingDraftId: openDueloId,
+        input: {
+          nombre: nombre.trim(),
+          cancha: normalizeCanchaForSave(cancha),
+          programado_en: schedule.programado_en,
+          programado_hasta: schedule.programado_hasta,
+          pareja_a_j1_id: pairA.j1.id,
+          pareja_a_j2_id: pairA.j2.id,
+          pareja_a_j1_nombre: pairA.j1.nombre,
+          pareja_a_j2_nombre: pairA.j2.nombre,
+          pareja_b_j1_id: pairB.j1.id,
+          pareja_b_j2_id: pairB.j2.id,
+          pareja_b_j1_nombre: pairB.j1.nombre,
+          pareja_b_j2_nombre: pairB.j2.nombre,
+        },
       });
       clearDuelo2v2CreateDraft(user.id);
       navigateDuelo2v2(duelo2v2GestionarPath(duelo.id));
@@ -179,6 +231,12 @@ export const Duelo2v2Nuevo: React.FC = () => {
       setBusy(false);
     }
   };
+
+  const convocatoriaContext = buildDueloConvocatoriaContext({
+    dueloId: openDueloId ?? "",
+    name: nombre.trim() || "Duelo 2 vs 2",
+    locationLabel: cancha,
+  });
 
   return (
     <Duelo2v2PageShell wide>
@@ -196,7 +254,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
         className="duelo2v2-header rv-mode-header rv-mode-header--entry"
         eyebrow={modeEyebrow}
         title="Nuevo duelo 2 vs 2"
-        subtitle="Agrega dos parejas del registro e inicia el encuentro."
+        subtitle="Lanza por WhatsApp para completar los 4 jugadores, o agrégalos manualmente."
       />
 
       {!user?.id ? (
@@ -254,6 +312,14 @@ export const Duelo2v2Nuevo: React.FC = () => {
               />
             </label>
           </div>
+
+          <ConvocatoriaWhatsAppPanel
+            context={convocatoriaContext}
+            ensureDraftEntity={ensureDraftEntity}
+            onEntityReady={setOpenDueloId}
+            canLaunch={validateLaunchMinimum}
+            compact
+          />
 
           <DueloPairBuilder
             organizadorId={user.id}

@@ -12,6 +12,7 @@ import type { TeamWinnerCelebrateStats } from "../lib/teamWinnerCelebrate";
 import FourComponentsGrid from "./FourComponentsGrid";
 import StartTournamentSection from "./StartTournamentSection";
 import PublicLinkSection from "./PublicLinkSection";
+import { RetaAbiertaOrganizerPanel } from "./reta-abierta/RetaAbiertaOrganizerPanel";
 import PairsDisplay from "./PairsDisplay";
 import { useResolvedTeamConfig } from "../hooks/useResolvedTeamConfig";
 import MatchesSection from "./MatchesSection";
@@ -226,6 +227,8 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
         setForceRefresh={setForceRefresh}
         userId={userId}
       />
+
+      <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
 
       {/* Sección de Enlace Público */}
       <PublicLinkSection

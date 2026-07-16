@@ -10,8 +10,10 @@ import { CircleRoundRobinScheduler } from "../components/CircleRoundRobinSchedul
 import {
   persistTournamentGameMode,
   persistTournamentMode,
+  isAmericanoTournament,
 } from "../lib/gameModeMapping";
 import { debugLog } from "../lib/debug/debugLog";
+import { closeOpenGameRegistration } from "../lib/retaAbierta/retaAbiertaService";
 
 export const useTournamentActions = (
   setSelectedTournament: (tournament: Tournament | null) => void,
@@ -94,6 +96,11 @@ export const useTournamentActions = (
             throw updateErr;
           }
         }
+
+        await closeOpenGameRegistration(
+          isAmericanoTournament(selectedTournament) ? "americano" : "reta",
+          selectedTournament.id
+        );
 
         const updatedTournament: Tournament = {
           ...selectedTournament,

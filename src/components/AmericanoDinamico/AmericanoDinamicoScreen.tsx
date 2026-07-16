@@ -40,6 +40,9 @@ import {
 } from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import { AmericanoModeShell } from "./AmericanoModeShell";
+import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
+import { buildTournamentConvocatoriaContext } from "../../lib/retaAbierta/adapters";
+import { closeOpenGameRegistration } from "../../lib/retaAbierta/retaAbiertaService";
 import "../public/riviera-public-americano.css";
 import "./AmericanoDinamicoScreen.css";
 
@@ -255,6 +258,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           is_finished: false,
           courts: safeCourts,
         });
+        await closeOpenGameRegistration("americano", resolvedTournamentId);
         onTournamentStatusChange?.({
           is_started: true,
           is_finished: false,
@@ -361,6 +365,15 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             {playersLoadError}
           </p>
         )}
+        {resolvedTournamentId ? (
+          <ConvocatoriaWhatsAppPanel
+            context={buildTournamentConvocatoriaContext({
+              mode: "americano",
+              tournamentId: resolvedTournamentId,
+              name: tournamentName || "Americano",
+            })}
+          />
+        ) : null}
         <PlayerRegistration
           players={players}
           availablePlayers={availablePlayers}

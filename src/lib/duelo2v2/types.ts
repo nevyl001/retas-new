@@ -33,6 +33,14 @@ export interface Duelo2v2 {
   finalizado_at: string | null;
 }
 
+export interface CreateDuelo2v2DraftInput {
+  nombre: string;
+  descripcion?: string;
+  cancha?: string;
+  programado_en?: string | null;
+  programado_hasta?: string | null;
+}
+
 export interface CreateDuelo2v2Input {
   nombre: string;
   descripcion?: string;

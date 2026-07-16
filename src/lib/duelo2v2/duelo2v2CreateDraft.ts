@@ -16,6 +16,8 @@ export type Duelo2v2CreateDraft = {
   draftTimeEnd: string;
   pairA: Duelo2v2PairDraftIds | null;
   pairB: Duelo2v2PairDraftIds | null;
+  /** Duelo shell creado al lanzar convocatoria (idempotente). */
+  openDueloId?: string | null;
 };
 
 export function duelo2v2DraftStorageKey(organizadorId: string): string {
@@ -67,6 +69,10 @@ function parseDraft(raw: string): Duelo2v2CreateDraft | null {
       draftTimeEnd: parsed.draftTimeEnd,
       pairA,
       pairB,
+      openDueloId:
+        typeof parsed.openDueloId === "string" && parsed.openDueloId.trim()
+          ? parsed.openDueloId.trim()
+          : null,
     };
   } catch {
     return null;

@@ -19,6 +19,7 @@ import {
 import FourComponentsGrid from "../FourComponentsGrid";
 import StartTournamentSection from "../StartTournamentSection";
 import PublicLinkSection from "../PublicLinkSection";
+import { RetaAbiertaOrganizerPanel } from "../reta-abierta/RetaAbiertaOrganizerPanel";
 import PairsDisplay from "../PairsDisplay";
 import MatchesSection from "../MatchesSection";
 import { AmericanoTournamentSummary } from "../AmericanoDinamico/AmericanoTournamentSummary";
@@ -194,6 +195,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
           loading={loading}
           onStartTournament={onStartTournament}
         />
+        <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
         <PublicLinkSection
           tournament={selectedTournament}
           onCopyPublicLink={onCopyPublicLink}

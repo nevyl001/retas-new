@@ -32,6 +32,8 @@ import {
 import { ModeHeader } from "../platform/ModeHeader";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
+import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
+import { buildDueloConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import { Duelo2v2DetailsEditor } from "./Duelo2v2DetailsEditor";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { Duelo2v2ScoreEditor } from "./Duelo2v2ScoreEditor";
@@ -292,6 +294,13 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
 
           <ModeSectionPanel id="resumen" activeId={mobileTab}>
             <Duelo2v2MatchMeta duelo={duelo} />
+            <ConvocatoriaWhatsAppPanel
+              context={buildDueloConvocatoriaContext({
+                dueloId: duelo.id,
+                name: duelo.nombre,
+                locationLabel: duelo.cancha ?? undefined,
+              })}
+            />
             <PublicShareSection
               publicUrl={publicDuelo2v2Url(dueloId)}
               title="Enlace público"
@@ -375,6 +384,14 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       >
         <Duelo2v2MatchMeta duelo={duelo} />
       </ModeHeader>
+
+      <ConvocatoriaWhatsAppPanel
+        context={buildDueloConvocatoriaContext({
+          dueloId: duelo.id,
+          name: duelo.nombre,
+          locationLabel: duelo.cancha ?? undefined,
+        })}
+      />
 
       <PublicShareSection
         publicUrl={publicDuelo2v2Url(dueloId)}
