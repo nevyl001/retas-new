@@ -5,7 +5,10 @@ import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
 import { rebuildJugadorStats } from "../rivieraJugadoresService";
 import { invalidatePlayersPool } from "../playersPoolCache";
 import { invalidateCareerIdentityCacheForPlayer } from "../careerIdentityCache";
-import { assertCareerEventIntegrity } from "./assertions";
+import {
+  assertCareerEventIntegrity,
+  partitionAssertionFailures,
+} from "./assertions";
 import { runCareerEventSync } from "./handlers";
 import { validateCareerEventPreClose } from "./preCloseGuards";
 import type {
@@ -13,7 +16,7 @@ import type {
   CareerEventPipelineResult,
   FinalizeCareerEventInput,
 } from "./types";
-import { CAREER_EVENT_KIND_TO_TIPO } from "./types";
+import { CAREER_EVENT_KIND_TO_TIPO, getAssertionSeverity } from "./types";
 
 const LOG_PREFIX = "[career-event-pipeline]";
 
@@ -42,13 +45,15 @@ function integrityFailureFromError(
   input: FinalizeCareerEventInput
 ): CareerEventAssertionFailure {
   if (isCareerIntegrityException(error)) {
+    const code =
+      error.confidence === "REVIEW"
+        ? "ambiguous_profile_link"
+        : "career_integrity_blocked";
     return {
-      code:
-        error.confidence === "REVIEW"
-          ? "ambiguous_profile_link"
-          : "career_integrity_blocked",
+      code,
       message: error.message,
       jugadorId: error.jugadorId,
+      severity: getAssertionSeverity(code),
       details: {
         ...error.toStructuredLog(),
         kind: input.kind,
@@ -58,8 +63,18 @@ function integrityFailureFromError(
   return {
     code: "career_integrity_blocked",
     message: error instanceof Error ? error.message : String(error),
+    severity: "critical",
     details: { kind: input.kind },
   };
+}
+
+function normalizeFailures(
+  failures: CareerEventAssertionFailure[]
+): CareerEventAssertionFailure[] {
+  return failures.map((f) => ({
+    ...f,
+    severity: f.severity ?? getAssertionSeverity(f.code),
+  }));
 }
 
 /**
@@ -131,6 +146,7 @@ export async function processCareerEvent(
         failures.push({
           code: "sync_failed",
           message: syncResult.syncError,
+          severity: "critical",
           details: { kind: input.kind },
         });
       }
@@ -156,8 +172,7 @@ export async function processCareerEvent(
     const assertionFailures = await assertCareerEventIntegrity({
       context: syncResult.context,
       touchedJugadorIds,
-      requireRating:
-        options.requireRating ?? defaultRequireRating(input),
+      requireRating: options.requireRating ?? defaultRequireRating(input),
       ratingPartidoRefs:
         options.ratingPartidoRefs ?? defaultRatingPartidoRefs(input),
     });
@@ -168,15 +183,20 @@ export async function processCareerEvent(
 
   clearOrganizerDisplayNameCache();
 
-  const ok = failures.length === 0;
+  const normalized = normalizeFailures(failures);
+  const { criticalFailures, warnings } = partitionAssertionFailures(normalized);
+  const processed =
+    Boolean(syncResult) &&
+    !syncResult?.syncError &&
+    touchedJugadorIds.length > 0;
+  const ok = criticalFailures.length === 0 && !eventBlocked;
   const durationMs = Date.now() - started;
 
   const result: CareerEventPipelineResult = {
     ok,
-    processed:
-      Boolean(syncResult) &&
-      !syncResult?.syncError &&
-      touchedJugadorIds.length > 0,
+    processed,
+    resultSaved: !eventBlocked && Boolean(syncResult),
+    careerSynced: ok && processed,
     context:
       syncResult?.context ?? {
         kind: input.kind,
@@ -186,12 +206,26 @@ export async function processCareerEvent(
         tipoEvento: CAREER_EVENT_KIND_TO_TIPO[input.kind],
       },
     touchedJugadorIds,
-    failures,
+    failures: normalized,
+    criticalFailures,
+    warnings,
     durationMs,
   };
 
   if (!ok) {
-    console.error(LOG_PREFIX, "incomplete", result);
+    console.error(LOG_PREFIX, "incomplete", {
+      ...result,
+      warningCount: warnings.length,
+      criticalCount: criticalFailures.length,
+    });
+  } else if (warnings.length > 0) {
+    console.warn(LOG_PREFIX, "complete_with_warnings", {
+      kind: input.kind,
+      eventoId: syncResult?.context.eventoId,
+      players: touchedJugadorIds.length,
+      warnings,
+      durationMs,
+    });
   } else {
     // eslint-disable-next-line no-console -- ver preCloseGuards.test.ts:187,206 (spyOn console.info)
     console.info(LOG_PREFIX, "complete", {

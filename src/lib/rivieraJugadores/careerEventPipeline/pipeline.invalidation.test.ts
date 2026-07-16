@@ -22,6 +22,17 @@ jest.mock("../orphanProfileLink", () => ({
     officialPlayerKey: "opk-test",
     rivieraId: "RIV-00000001",
   }),
+  ensureOfficialProfileLinkForParticipacion: jest.fn().mockResolvedValue({
+    linked: true,
+    confidence: "OK",
+    reason: "perfil ya enlazado",
+    officialPlayerKey: "opk-test",
+    rivieraId: "RIV-00000001",
+  }),
+}));
+
+jest.mock("../organizerPlayerAccess", () => ({
+  resolveJugadorIdForRating: jest.fn(async (_org: string, id: string) => id),
 }));
 
 jest.mock("../jugadorIdResolver", () => ({
@@ -40,9 +51,13 @@ jest.mock("../rivieraJugadoresService", () => ({
   rebuildJugadorStats: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock("./assertions", () => ({
-  assertCareerEventIntegrity: jest.fn().mockResolvedValue([]),
-}));
+jest.mock("./assertions", () => {
+  const actual = jest.requireActual("./assertions") as typeof import("./assertions");
+  return {
+    ...actual,
+    assertCareerEventIntegrity: jest.fn().mockResolvedValue([]),
+  };
+});
 
 jest.mock("../../organizer/organizerDisplayName", () => ({
   clearOrganizerDisplayNameCache: jest.fn(),

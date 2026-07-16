@@ -53,6 +53,10 @@ jest.mock("../orphanProfileLink", () => ({
   }),
 }));
 
+jest.mock("../organizerPlayerAccess", () => ({
+  resolveJugadorIdForRating: jest.fn(async (_org: string, id: string) => id),
+}));
+
 jest.mock("../careerIdentity", () => ({
   ensureRivieraIdentity: jest.fn().mockResolvedValue({
     officialPlayerKey: "opk-test",
@@ -156,9 +160,36 @@ function mockSupabaseForAssertions(
     }
 
     if (table === "rating_historial") {
-      chain.maybeSingle = jest.fn().mockResolvedValue({
-        data: withRating ? { id: "rh-1" } : null,
-        error: null,
+      let partidoRef = "";
+      const buildRows = () =>
+        withRating
+          ? [
+              {
+                id: "rh-1",
+                rating_antes: 3,
+                rating_despues: 3.05,
+                delta: 0.05,
+                partido_ref: partidoRef || "duelo2v2:any",
+              },
+            ]
+          : [];
+      chain.eq = jest.fn((col: string, val: string) => {
+        if (col === "partido_ref") partidoRef = val;
+        return {
+          eq: jest.fn((col2: string, val2: string) => {
+            if (col2 === "partido_ref") partidoRef = val2;
+            return {
+              limit: jest.fn().mockResolvedValue({
+                data: buildRows(),
+                error: null,
+              }),
+            };
+          }),
+          limit: jest.fn().mockResolvedValue({
+            data: buildRows(),
+            error: null,
+          }),
+        };
       });
       return chain;
     }
@@ -208,12 +239,34 @@ describe("finalizeCareerEvent E2E", () => {
       eventBlocked: false,
     });
     (ensureRivieraIdentity as jest.Mock).mockResolvedValue({
-      rivieraId: "RIV-00000102",
-    });
-    (requireOfficialProfileLinkForParticipacion as jest.Mock).mockResolvedValue({
       officialPlayerKey: "opk-test",
       rivieraId: "RIV-00000102",
+      rivieraJugadorId: CANONICAL,
+      registrationJugadorId: CANONICAL,
     });
+    (requireOfficialProfileLinkForParticipacion as jest.Mock).mockResolvedValue({
+      linked: true,
+      officialPlayerKey: "opk-test",
+      rivieraId: "RIV-00000102",
+      confidence: "OK",
+      reason: "ok",
+    });
+    const { ensureOfficialProfileLinkForParticipacion } = jest.requireMock(
+      "../orphanProfileLink"
+    ) as { ensureOfficialProfileLinkForParticipacion: jest.Mock };
+    ensureOfficialProfileLinkForParticipacion.mockResolvedValue({
+      linked: true,
+      officialPlayerKey: "opk-test",
+      rivieraId: "RIV-00000102",
+      confidence: "OK",
+      reason: "ok",
+    });
+    const { resolveJugadorIdForRating } = jest.requireMock(
+      "../organizerPlayerAccess"
+    ) as { resolveJugadorIdForRating: jest.Mock };
+    resolveJugadorIdForRating.mockImplementation(
+      async (_org: string, id: string) => id
+    );
   });
 
   it("ejecuta pipeline completo para duelo 2v2", async () => {
@@ -253,8 +306,55 @@ describe("finalizeCareerEvent E2E", () => {
 
     expect(syncDuelo2v2Participaciones).toHaveBeenCalled();
     expect(result.ok).toBe(true);
+    expect(result.careerSynced).toBe(true);
+    expect(result.resultSaved).toBe(true);
+    expect(result.criticalFailures).toEqual([]);
     expect(result.touchedJugadorIds).toEqual(touched);
     expect(result.context.eventoId).toBe(dueloId);
+  });
+
+  it("ok:true con warnings diagnósticos (no incomplete)", async () => {
+    const dueloId = "duelo-warn-1";
+    const touched = [CANONICAL];
+
+    (syncDuelo2v2Participaciones as jest.Mock).mockResolvedValue({
+      touchedJugadorIds: touched,
+      participacionEventoId: dueloId,
+    });
+
+    mockSupabaseForAssertions(
+      [
+        {
+          id: "p-1",
+          jugador_id: CANONICAL,
+          puntos_obtenidos: 50,
+          metadata: {
+            organizador_id: HACKPADEL,
+            club_name: "HackPadel",
+            subtipo: "duelo_2v2_cierre",
+            puntos_aplicados: true,
+          },
+        },
+      ],
+      { withStats: false }
+    );
+
+    const result = await finalizeCareerEvent({
+      kind: "duelo_2v2",
+      organizadorId: HACKPADEL,
+      duelo: {
+        id: dueloId,
+        organizador_id: HACKPADEL,
+        nombre: "Warn",
+        estado: "finalizado",
+        ganador: "a",
+      } as never,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.careerSynced).toBe(true);
+    expect(result.criticalFailures).toEqual([]);
+    expect(result.warnings.some((w) => w.code === "missing_stats")).toBe(true);
   });
 
   it("reporta fallo estructurado si falta historial", async () => {

@@ -98,14 +98,13 @@ import {
   summarizePartidosDetalle,
   type PartidoDetalle,
 } from "../shared/buildPartidosDetalle";
+import { debugWarn } from "../debug/debugLog";
 
 const TEMP_POINTS_LOG_PREFIX = "TEMP_MULTICLUB_POINTS_2_1_B";
 
-// Audit trail temporal de puntos multiclub (Fase 2.1B). console.warn (no
-// console.info) para quedar permitido por la regla no-console sin disable;
-// mismo momento de emisión de siempre.
+/** Audit trail temporal de puntos multiclub — solo desarrollo. */
 function logMulticlubPoints21B(payload: Record<string, unknown>): void {
-  console.warn(TEMP_POINTS_LOG_PREFIX, payload);
+  debugWarn(TEMP_POINTS_LOG_PREFIX, payload);
 }
 
 async function readJugadorSumaRankingState(jugadorId: string): Promise<{

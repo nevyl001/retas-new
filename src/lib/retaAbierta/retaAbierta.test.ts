@@ -407,3 +407,22 @@ describe("app routing convocatoria", () => {
     expect(resolveAppViewFromPath("/torneo-express")).toBe("torneo-express");
   });
 });
+
+describe("convocatoria admin surface — sin SELECT directo", () => {
+  it("retaAbiertaService no consulta .from(tournament_open_registration*)", () => {
+    const fs = require("fs") as typeof import("fs");
+    const path = require("path") as typeof import("path");
+    const src = fs.readFileSync(
+      path.join(__dirname, "retaAbiertaService.ts"),
+      "utf8"
+    );
+    expect(src).not.toMatch(/\.from\(\s*["']tournament_open_registration["']/);
+    expect(src).not.toMatch(
+      /\.from\(\s*["']tournament_open_registration_entries["']/
+    );
+    expect(src).toMatch(/get_open_game_registration/);
+    expect(src).toMatch(/remove_open_game_registration_entry/);
+    expect(src).toMatch(/list_open_game_registration_entries/);
+    expect(src).toMatch(/close_open_game_registration/);
+  });
+});

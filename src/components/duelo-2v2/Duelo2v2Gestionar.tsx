@@ -132,12 +132,17 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     setError(null);
     setMessage(null);
     try {
-      const { duelo: updated, careerSyncOk, careerSyncMessage } =
-        await finalizarDuelo2v2(dueloId);
+      const {
+        duelo: updated,
+        careerSyncOk,
+        careerSyncMessage,
+        criticalFailures,
+      } = await finalizarDuelo2v2(dueloId);
       setDuelo(updated);
       if (!careerSyncOk) {
         setError(
-          careerSyncMessage ??
+          careerSyncMessage ||
+            criticalFailures.join("; ") ||
             "El duelo se finalizó, pero no se registró en el historial de jugadores."
         );
         return;

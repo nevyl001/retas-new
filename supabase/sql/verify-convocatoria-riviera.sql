@@ -56,6 +56,87 @@ BEGIN
     missing := missing || 'fn close_open_game_registration; ';
   END IF;
 
+  IF to_regprocedure('public.get_open_game_registration(text,uuid)') IS NULL THEN
+    missing := missing || 'fn get_open_game_registration; ';
+  END IF;
+
+  IF to_regprocedure('public.remove_open_game_registration_entry(uuid)') IS NULL THEN
+    missing := missing || 'fn remove_open_game_registration_entry; ';
+  END IF;
+
+  -- SECURITY DEFINER + search_path en RPCs admin nuevas
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'get_open_game_registration'
+      AND p.prosecdef = true
+      AND COALESCE(array_to_string(p.proconfig, ','), '') ILIKE '%search_path=public%'
+  ) THEN
+    missing := missing || 'get_open_game_registration security/search_path; ';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'remove_open_game_registration_entry'
+      AND p.prosecdef = true
+      AND COALESCE(array_to_string(p.proconfig, ','), '') ILIKE '%search_path=public%'
+  ) THEN
+    missing := missing || 'remove_open_game_registration_entry security/search_path; ';
+  END IF;
+
+  -- PUBLIC / anon sin EXECUTE en RPC admin
+  IF has_function_privilege(
+    'public',
+    'public.get_open_game_registration(text,uuid)',
+    'EXECUTE'
+  ) THEN
+    missing := missing || 'PUBLIC EXECUTE get_open_game_registration; ';
+  END IF;
+
+  IF has_function_privilege(
+    'public',
+    'public.remove_open_game_registration_entry(uuid)',
+    'EXECUTE'
+  ) THEN
+    missing := missing || 'PUBLIC EXECUTE remove_open_game_registration_entry; ';
+  END IF;
+
+  IF has_function_privilege(
+    'anon',
+    'public.get_open_game_registration(text,uuid)',
+    'EXECUTE'
+  ) THEN
+    missing := missing || 'anon EXECUTE get_open_game_registration; ';
+  END IF;
+
+  IF has_function_privilege(
+    'anon',
+    'public.remove_open_game_registration_entry(uuid)',
+    'EXECUTE'
+  ) THEN
+    missing := missing || 'anon EXECUTE remove_open_game_registration_entry; ';
+  END IF;
+
+  -- authenticated con EXECUTE
+  IF NOT has_function_privilege(
+    'authenticated',
+    'public.get_open_game_registration(text,uuid)',
+    'EXECUTE'
+  ) THEN
+    missing := missing || 'authenticated sin EXECUTE get_open_game_registration; ';
+  END IF;
+
+  IF NOT has_function_privilege(
+    'authenticated',
+    'public.remove_open_game_registration_entry(uuid)',
+    'EXECUTE'
+  ) THEN
+    missing := missing || 'authenticated sin EXECUTE remove; ';
+  END IF;
+
   IF to_regprocedure('public._assert_convocatoria_mode_allowed(text)') IS NULL THEN
     missing := missing || 'fn _assert_convocatoria_mode_allowed; ';
   END IF;
@@ -124,6 +205,8 @@ WHERE n.nspname = 'public'
   AND p.proname IN (
     'join_tournament_open_registration',
     'get_tournament_open_registration_public',
+    'get_open_game_registration',
+    'remove_open_game_registration_entry',
     'upsert_open_game_registration',
     'cancel_tournament_open_registration',
     'close_open_game_registration',

@@ -29,12 +29,27 @@ export type CareerEventAssertionCode =
   | "ambiguous_profile_link"
   | "career_integrity_blocked";
 
+/** critical = escritura/invariante real; diagnostic = auditoría secundaria. */
+export type CareerEventAssertionSeverity = "critical" | "diagnostic";
+
 export type CareerEventAssertionFailure = {
   code: CareerEventAssertionCode;
   message: string;
   jugadorId?: string;
   details?: Record<string, unknown>;
+  severity?: CareerEventAssertionSeverity;
 };
+
+const DIAGNOSTIC_ASSERTION_CODES = new Set<CareerEventAssertionCode>([
+  "missing_club_name",
+  "missing_stats",
+]);
+
+export function getAssertionSeverity(
+  code: CareerEventAssertionCode
+): CareerEventAssertionSeverity {
+  return DIAGNOSTIC_ASSERTION_CODES.has(code) ? "diagnostic" : "critical";
+}
 
 export type CareerEventPipelineOptions = {
   /** Si true, exige movimiento de rating para cada jugador (partidos con rating). */
@@ -56,11 +71,19 @@ export type CareerEventContext = {
 };
 
 export type CareerEventPipelineResult = {
+  /** true si no hay fallas críticas (warnings diagnósticos no lo invalidan). */
   ok: boolean;
   processed: boolean;
+  /** El resultado deportivo del evento quedó persistido / sync intentado. */
+  resultSaved: boolean;
+  /** Carrera sincronizada sin fallas críticas. */
+  careerSynced: boolean;
   context: CareerEventContext;
   touchedJugadorIds: string[];
+  /** Todas las fallas (críticas + diagnósticas). */
   failures: CareerEventAssertionFailure[];
+  criticalFailures: CareerEventAssertionFailure[];
+  warnings: CareerEventAssertionFailure[];
   durationMs: number;
 };
 

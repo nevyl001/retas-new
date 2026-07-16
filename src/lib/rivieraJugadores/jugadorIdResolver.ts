@@ -23,15 +23,15 @@ import { isCareerIntegrityException } from "./careerIntegrity";
 import { normalizePlayerNameKey } from "./playerNameKey";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 
+import { debugWarn } from "../debug/debugLog";
+
 const TEMP_LOG_PREFIX = "TEMP_MULTICLUB_PHASE_2_1";
 
 /**
- * Audit trail temporal Fase 2.1 (identidad multiclub) — fáciles de buscar y
- * remover. console.warn (no console.info) para que quede permitido por la
- * regla no-console sin necesitar disable; mismo momento de emisión de siempre.
+ * Audit trail temporal Fase 2.1 — solo desarrollo (no producción).
  */
 export function logMulticlubPhase21(payload: Record<string, unknown>): void {
-  console.warn(TEMP_LOG_PREFIX, payload);
+  debugWarn(TEMP_LOG_PREFIX, payload);
 }
 
 async function slugExistsForOrg(

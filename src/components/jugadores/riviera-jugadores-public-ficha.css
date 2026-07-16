@@ -36,7 +36,8 @@
   max-width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
-  overflow-x: clip;
+  /* Evita recortar la columna de resumen en desktop */
+  overflow-x: visible;
 }
 
 .rjp-ficha-shell {
@@ -899,7 +900,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 14rem;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .rjp-ficha-activity__meta {
@@ -1083,8 +1085,9 @@
 /* ——— Desktop amplio: 3 columnas + rating full width ——— */
 @media (min-width: 1200px) {
   .rjp-public--ficha .rjp-public__inner {
-    max-width: 1280px;
-    padding: 24px 32px 48px;
+    max-width: min(1360px, 100%);
+    padding: 24px 28px 48px;
+    box-sizing: border-box;
   }
 
   .rjp-ficha-topbar {
@@ -1093,25 +1096,31 @@
 
   .rjp-ficha__layout {
     display: grid;
+    /* fr flexibles: no forzar mins que sumen > viewport y recorten la 3ª col */
     grid-template-columns:
-      minmax(460px, 1.15fr)
-      minmax(440px, 1.2fr)
-      minmax(240px, 0.65fr);
+      minmax(0, 1.05fr)
+      minmax(0, 1.2fr)
+      minmax(300px, 0.95fr);
     grid-template-areas:
       "profile historial summary"
       "rating rating rating";
-    gap: 24px;
+    gap: 20px;
     align-items: start;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .rjp-ficha__col--profile {
     grid-area: profile;
     order: unset;
+    min-width: 0;
   }
 
   .rjp-ficha__col--historial {
     grid-area: historial;
     order: unset;
+    min-width: 0;
   }
 
   .rjp-ficha__col--summary {
@@ -1121,11 +1130,21 @@
     grid-area: summary;
     order: unset;
     margin: 0;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
   }
 
   .rjp-ficha-aside {
     order: unset;
     margin: 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .rjp-ficha-aside__kpis {
+    grid-template-columns: 1fr;
   }
 
   .rjp-ficha__col--rating {
@@ -1135,10 +1154,15 @@
 
   .rjp-ficha__col--recent {
     order: unset;
+    min-width: 0;
+    width: 100%;
   }
 
   .rjp-ficha__col--recent .rjp-ficha-card {
     margin: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .rjp-ficha-card,
@@ -1146,49 +1170,54 @@
     margin: 0;
     padding: 20px;
     border-radius: 18px;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
-  /* Desktop: foto al lado del nombre/pills; puntos a ancho completo debajo.
-     Evita que la foto se estire con los stats y se vea como tira. */
+  .rjp-ficha-activity__title {
+    white-space: normal;
+  }
+
+  .rjp-ficha-activity__event {
+    max-width: 100%;
+  }
+
+  /* Desktop: foto a ancho completo con presencia; identidad debajo (no lateral). */
   .rjp-ficha-hero--photo,
   .rjp-ficha-hero:not(.rjp-ficha-hero--photo) {
-    display: grid;
-    grid-template-columns: minmax(240px, 1.05fr) minmax(0, 1fr);
-    grid-template-areas:
-      "media main"
-      "stats stats";
-    align-items: start;
-    column-gap: 0;
-    row-gap: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .rjp-ficha-hero__media,
   .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-hero__avatar-wrap {
-    grid-area: media;
-    aspect-ratio: 4 / 5;
     width: 100%;
+    aspect-ratio: 4 / 3;
     height: auto;
-    min-height: 0;
-    max-height: none;
-    align-self: start;
-    border-radius: 17px 0 0 0;
+    min-height: 220px;
+    max-height: 360px;
+    align-self: stretch;
+    border-radius: 17px 17px 0 0;
+    border-right: none;
+    border-bottom: 1px solid var(--rjp-ficha-border);
   }
 
   .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-hero__avatar-wrap {
-    border-right: 1px solid var(--rjp-ficha-border);
-    border-bottom: none;
+    border-right: none;
+    border-bottom: 1px solid var(--rjp-ficha-border);
   }
 
   .rjp-ficha-hero__body {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
   }
 
   .rjp-ficha-hero__main {
-    grid-area: main;
-    padding: 18px 18px 14px 16px;
+    padding: 16px 18px 12px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 10px;
     min-width: 0;
   }
@@ -1202,16 +1231,19 @@
   }
 
   .rjp-ficha-hero__stats {
-    grid-area: stats;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: 1fr;
     gap: 8px;
-    padding: 14px 16px 16px;
+    padding: 12px 16px 16px;
     border-top: 1px solid var(--rjp-ficha-border);
   }
 
   .rjp-ficha-hero__name {
-    font-size: 26px;
+    font-size: 24px;
+    flex: 1 1 auto;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   .rjp-ficha-stat {
@@ -1253,25 +1285,28 @@
 
 @media (min-width: 1440px) {
   .rjp-public--ficha .rjp-public__inner {
-    max-width: 1440px;
+    max-width: min(1480px, 100%);
   }
 
   .rjp-ficha__layout {
     grid-template-columns:
-      minmax(480px, 1.15fr)
-      minmax(480px, 1.25fr)
-      minmax(260px, 0.7fr);
-    gap: 28px;
+      minmax(0, 1.1fr)
+      minmax(0, 1.25fr)
+      minmax(320px, 1fr);
+    gap: 24px;
   }
 
   .rjp-ficha-hero--photo,
   .rjp-ficha-hero:not(.rjp-ficha-hero--photo) {
-    grid-template-columns: minmax(260px, 1.05fr) minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
   }
 
   .rjp-ficha-hero__media,
   .rjp-ficha-hero:not(.rjp-ficha-hero--photo) .rjp-ficha-hero__avatar-wrap {
-    /* aspect-ratio 4/5 manda; sin min/max que deformen */
+    aspect-ratio: 4 / 3;
+    max-height: 400px;
+    min-height: 260px;
   }
 }
 

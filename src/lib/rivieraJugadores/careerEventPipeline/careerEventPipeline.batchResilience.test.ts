@@ -31,9 +31,13 @@ jest.mock("../rivieraJugadoresService", () => ({
   rebuildJugadorStats: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock("./assertions", () => ({
-  assertCareerEventIntegrity: jest.fn().mockResolvedValue([]),
-}));
+jest.mock("./assertions", () => {
+  const actual = jest.requireActual("./assertions") as typeof import("./assertions");
+  return {
+    ...actual,
+    assertCareerEventIntegrity: jest.fn().mockResolvedValue([]),
+  };
+});
 
 import { finalizeCareerEvent } from "./pipeline";
 import { validateCareerEventPreClose } from "./preCloseGuards";

@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { debugWarn } from "../debug/debugLog";
 
 const TEMP_ROMC_LOG_PREFIX = "TEMP_MULTICLUB_ROMC_2_2";
 
@@ -24,11 +25,9 @@ export interface RivieraOfficialLedgerResult {
   raw?: Record<string, unknown>;
 }
 
-// Audit trail temporal del ledger oficial ROMC (Fase 2.2). console.warn (no
-// console.info) para quedar permitido por la regla no-console sin disable;
-// mismo momento de emisión de siempre.
+// Audit trail temporal del ledger oficial ROMC (Fase 2.2) — solo desarrollo.
 function logRomcPhase22(payload: Record<string, unknown>): void {
-  console.warn(TEMP_ROMC_LOG_PREFIX, payload);
+  debugWarn(TEMP_ROMC_LOG_PREFIX, payload);
 }
 
 function parseLedgerRpcResult(

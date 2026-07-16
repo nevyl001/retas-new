@@ -482,25 +482,17 @@ export async function fetchOpenGameRegistrationConfig(
   mode: OpenGameModeType,
   entityId: string
 ): Promise<OpenRegistrationConfigRow | null> {
-  const { data, error } = await supabase
-    .from("tournament_open_registration")
-    .select("*")
-    .eq("mode_type", mode)
-    .eq("entity_id", entityId)
-    .maybeSingle();
-  if (!error && data) return data as OpenRegistrationConfigRow;
-
-  // Compat: filas v1 solo con tournament_id
-  if (mode === "reta" || mode === "americano") {
-    const fallback = await supabase
-      .from("tournament_open_registration")
-      .select("*")
-      .eq("tournament_id", entityId)
-      .maybeSingle();
-    if (fallback.error || !fallback.data) return null;
-    return fallback.data as OpenRegistrationConfigRow;
+  // Solo RPC admin: el SELECT directo a tournament_open_registration
+  // provoca 403 (RLS / sin superficie cliente). No hay fallback .from().
+  const { data, error } = await supabase.rpc("get_open_game_registration", {
+    p_mode_type: mode,
+    p_entity_id: entityId,
+  });
+  if (error) {
+    throw new Error(error.message);
   }
-  return null;
+  if (!data) return null;
+  return data as OpenRegistrationConfigRow;
 }
 
 export type UpsertOpenRegistrationInput = {
@@ -596,7 +588,7 @@ export async function closeOpenGameRegistration(
     });
     if (!error) return;
 
-    // Fallback sin crear fila nueva: solo cierra si ya existe convocatoria
+    // Fallback sin SELECT directo: get RPC → upsert closed solo si ya existe.
     const existing = await fetchOpenGameRegistrationConfig(mode, entityId);
     if (!existing) return;
     await upsertOpenRegistrationConfig({
@@ -660,16 +652,15 @@ export async function removeOpenRegistrationEntry(
   entryId: string,
   _entityId: string
 ): Promise<void> {
-  const { error } = await supabase
-    .from("tournament_open_registration_entries")
-    .update({
-      status: "removed",
-      cancelled_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      cancellation_token_hash: null,
-    })
-    .eq("id", entryId);
+  const { data, error } = await supabase.rpc(
+    "remove_open_game_registration_entry",
+    { p_entry_id: entryId }
+  );
   if (error) throw new Error(error.message);
+  const row = asRecord(data);
+  if (!row || row.ok !== true) {
+    throw new Error(String(row?.error ?? "remove_failed"));
+  }
 }
 
 export function mapJoinErrorMessage(error: string): string {
