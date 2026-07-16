@@ -297,6 +297,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           <ModeSectionPanel id="resumen" activeId={mobileTab}>
             <Duelo2v2MatchMeta duelo={duelo} />
             <ConvocatoriaWhatsAppPanel
+              shareOnly
               context={buildDueloConvocatoriaContext({
                 dueloId: duelo.id,
                 name: duelo.nombre,
@@ -390,6 +391,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       </ModeHeader>
 
       <ConvocatoriaWhatsAppPanel
+        shareOnly
         context={buildDueloConvocatoriaContext({
           dueloId: duelo.id,
           name: duelo.nombre,

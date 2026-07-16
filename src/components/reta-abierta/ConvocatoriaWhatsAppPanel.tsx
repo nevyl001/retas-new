@@ -47,6 +47,11 @@ interface Props {
   /** Validación previa ligera (nombre, cancha, etc.). */
   canLaunch?: () => string | null;
   compact?: boolean;
+  /**
+   * Pantalla gestionar: sin formulario de config; solo copiar mensaje
+   * actualizado (jugadores ya inscritos).
+   */
+  shareOnly?: boolean;
 }
 
 function statusLabel(s: OpenRegistrationStatus): string {
@@ -92,6 +97,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   onEntityReady,
   canLaunch,
   compact = false,
+  shareOnly = false,
 }) => {
   const [entityId, setEntityId] = useState(context.entityId.trim());
   const [cfg, setCfg] = useState<OpenRegistrationConfigRow | null>(null);
@@ -360,17 +366,21 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         }
       }
 
-      // Re-lanzar convocatoria ya abierta: no exigir categoría otra vez
+      // Re-lanzar / gestionar: no exigir categoría otra vez
       const alreadyLive =
-        Boolean(cfg?.enabled) && cfg?.status !== "draft" && Boolean(cfg?.public_slug);
+        Boolean(cfg?.public_slug) ||
+        (Boolean(cfg?.enabled) && cfg?.status !== "draft");
 
-      if (!launchCategory.trim() && !alreadyLive) {
+      if (!launchCategory.trim() && !alreadyLive && !shareOnly) {
         setError("Indica la categoría / nivel antes de lanzar.");
         return;
       }
 
-      if (alreadyLive && !launchCategory.trim()) {
-        launchCategory = cfg?.category_label?.trim() || "";
+      if (!launchCategory.trim()) {
+        launchCategory =
+          cfg?.category_label?.trim() ||
+          context.defaultCategory?.trim() ||
+          "";
       }
 
       const row = await savePayload(id, {
@@ -451,58 +461,70 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     );
   }
 
+  const hasShareLink = Boolean(cfg?.public_slug);
   const isLive =
-    Boolean(cfg?.enabled) &&
-    cfg?.status !== "draft" &&
-    Boolean(cfg?.public_slug);
-  /** Ya lanzada: solo resumen + copiar; sin formulario de config. */
-  const showConfigForm = !compact && !isLive;
+    shareOnly ||
+    hasShareLink ||
+    (Boolean(cfg?.enabled) && cfg?.status !== "draft");
+  /** Ya lanzada o en gestionar: solo resumen + copiar; sin formulario. */
+  const showConfigForm = !compact && !isLive && !shareOnly;
+
+  const onPrimaryShare = () => {
+    if (hasShareLink) {
+      void onCopy();
+      return;
+    }
+    void onLaunchWhatsApp();
+  };
 
   return (
     <section
-      className={`ra-org${compact || isLive ? " ra-org--compact" : ""}`}
+      className={`ra-org${compact || isLive || shareOnly ? " ra-org--compact" : ""}`}
       data-testid="convocatoria-whatsapp-panel"
     >
       <h3>Convocatoria Riviera</h3>
       <p className="ra-org__muted">
-        {isLive
-          ? "Convocatoria activa. Copia el mensaje con los jugadores actuales para WhatsApp."
+        {isLive || shareOnly
+          ? "Copia el mensaje actualizado con los jugadores que ya se inscribieron y pégalo en WhatsApp."
           : "Comparte este juego por WhatsApp: se copia el mensaje con todos los datos para que lo pegues en el chat."}
       </p>
 
-      {isLive ? (
+      {(shareOnly || isLive) && cfg ? (
         <div className="ra-org__summary">
           <p>
-            <strong>Estado:</strong> {statusLabel(cfg!.status)}
-            {cfg?.category_label?.trim()
+            <strong>Estado:</strong> {statusLabel(cfg.status)}
+            {cfg.category_label?.trim()
               ? ` · ${cfg.category_label.trim()}`
               : ""}
           </p>
           <p>
             <strong>Confirmados:</strong> {confirmed.length} de{" "}
-            {context.lockCapacity ? context.defaultCapacity : cfg!.capacity}
+            {context.lockCapacity ? context.defaultCapacity : cfg.capacity}
             {waitlist.length > 0 ? ` · Espera: ${waitlist.length}` : ""}
+            {confirmed.length > 0 &&
+            confirmed.length <
+              (context.lockCapacity ? context.defaultCapacity : cfg.capacity)
+              ? ` · Faltan ${
+                  (context.lockCapacity
+                    ? context.defaultCapacity
+                    : cfg.capacity) - confirmed.length
+                }`
+              : ""}
           </p>
           {context.mode === "duelo_2v2" && confirmed.length >= 4 ? (
             <p className="ra-org__ready">
-              Ya están los 4 jugadores. Organiza las parejas para iniciar el
+              Ya son los 4 jugadores. Organiza las parejas para iniciar el
               duelo.
             </p>
           ) : null}
         </div>
-      ) : cfg?.enabled && cfg.status !== "draft" ? (
-        <div className="ra-org__summary">
-          <p>
-            <strong>Estado:</strong> {statusLabel(cfg.status)}
-          </p>
-          <p>
-            <strong>Confirmados:</strong> {confirmed.length} de{" "}
-            {context.lockCapacity ? context.defaultCapacity : cfg.capacity}
-          </p>
-          <p>
-            <strong>Espera:</strong> {waitlist.length}
-          </p>
-        </div>
+      ) : null}
+
+      {shareOnly && !cfg && !loading ? (
+        <p className="ra-org__muted">
+          Aún no hay convocatoria activa. Pulsa el botón para crear el enlace y
+          copiar el mensaje.
+        </p>
       ) : null}
 
       {showConfigForm ? (
@@ -577,18 +599,18 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           type="button"
           className="ra-org__btn ra-org__btn--primary"
           data-testid="lanzar-por-whatsapp"
-          onClick={() => void (isLive || publicUrl ? onCopy() : onLaunchWhatsApp())}
+          onClick={onPrimaryShare}
           disabled={saving}
         >
           {saving
             ? "Copiando…"
             : copied
               ? "¡Copiado! Pégalo en WhatsApp"
-              : isLive || publicUrl
-                ? "Copiar convocatoria"
+              : hasShareLink
+                ? "Copiar convocatoria actualizada"
                 : "Lanzar y copiar"}
         </button>
-        {publicUrl ? (
+        {hasShareLink ? (
           <>
             <a
               className="ra-org__btn"
