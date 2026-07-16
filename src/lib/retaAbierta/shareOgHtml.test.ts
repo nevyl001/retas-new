@@ -83,7 +83,7 @@ describe("share-reta-og HTML + URL", () => {
     ).toBe(RIVIERA_OG_IMAGE);
   });
 
-  it("30. enlace copiado usa share-reta-og base", () => {
+  it("30. enlace copiado usa share-reta-og base cuando hay env", () => {
     const url = buildShareRetaOgUrlForTests(
       "ra-xxxx",
       "https://proj.supabase.co/functions/v1/share-reta-og"
@@ -95,6 +95,16 @@ describe("share-reta-og HTML + URL", () => {
     process.env.REACT_APP_SHARE_OG_BASE_URL =
       "https://proj.supabase.co/functions/v1/share-reta-og";
     expect(buildShareRetaOgUrl("ra-yyyy")).toContain("share-reta-og?slug=ra-yyyy");
+    process.env.REACT_APP_SHARE_OG_BASE_URL = prev;
+  });
+
+  it("sin REACT_APP_SHARE_OG_BASE_URL: fallback /jugar (no /share/public)", () => {
+    const prev = process.env.REACT_APP_SHARE_OG_BASE_URL;
+    delete process.env.REACT_APP_SHARE_OG_BASE_URL;
+    const url = buildShareRetaOgUrl("ra-c09d3480e5");
+    expect(url).toContain("/jugar/ra-c09d3480e5");
+    expect(url).not.toMatch(/\/share\/public/);
+    expect(url).not.toMatch(/\/share\/reta/);
     process.env.REACT_APP_SHARE_OG_BASE_URL = prev;
   });
 });

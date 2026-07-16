@@ -99,6 +99,8 @@ describe("WhatsApp OG URLs for all public dests", () => {
     expect(
       buildShareDestOgUrlForTests("/public/liga/abc", base)
     ).toContain("dest=%2Fpublic%2Fliga%2Fabc");
+    const prev = process.env.REACT_APP_SHARE_OG_BASE_URL;
+    process.env.REACT_APP_SHARE_OG_BASE_URL = base;
     expect(
       buildSharePublicOgUrlFromPlayUrl(
         "https://appriviera.rivieraopen.com/public/duelo-2v2/xyz"
@@ -107,6 +109,7 @@ describe("WhatsApp OG URLs for all public dests", () => {
     expect(
       buildSharePublicOgUrlFromPlayUrl("/torneo-express/tid/grupos")
     ).toMatch(/dest=/);
+    process.env.REACT_APP_SHARE_OG_BASE_URL = prev;
     expect(
       normalizePublicDestPath("https://x.com/public/abc#frag")
     ).toBe("/public/abc");
