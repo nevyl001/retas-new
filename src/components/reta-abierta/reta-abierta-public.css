@@ -1,8 +1,28 @@
+/* Vista pública Convocatoria Riviera — contraste legible sobre court bg */
+
+.ro-public-view:has(.ra-public)::before {
+  opacity: 0.22;
+}
+
+.ro-public-view:has(.ra-public)::after {
+  background: linear-gradient(
+    180deg,
+    rgba(8, 10, 12, 0.55) 0%,
+    rgba(8, 10, 12, 0.18) 34%,
+    rgba(8, 10, 12, 0.28) 62%,
+    rgba(8, 10, 12, 0.78) 100%
+  );
+}
+
 .ra-public {
   --ra-pad: max(16px, env(safe-area-inset-left));
+  --ra-ink: var(--te-text, #f4f6f8);
+  --ra-muted: color-mix(in srgb, var(--ra-ink) 68%, transparent);
+  --ra-card: rgba(18, 24, 30, 0.92);
+  --ra-card-border: rgba(255, 255, 255, 0.14);
   min-height: 100dvh;
   padding: 12px var(--ra-pad) calc(96px + env(safe-area-inset-bottom));
-  color: var(--ro-ink, #101820);
+  color: var(--ra-ink);
   box-sizing: border-box;
 }
 
@@ -15,13 +35,15 @@
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.7;
+  color: var(--ra-muted);
 }
 
 .ra-public__title {
   margin: 0.25rem 0 0.5rem;
   font-size: clamp(1.5rem, 5vw, 2rem);
   line-height: 1.15;
+  color: #fff;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
 
 .ra-public__badge {
@@ -32,24 +54,28 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: color-mix(in srgb, var(--ro-accent, #c9a227) 18%, transparent);
+  background: color-mix(in srgb, var(--ro-accent, #c9a227) 28%, transparent);
+  color: #101820;
 }
 
 .ra-public__badge--closed,
 .ra-public__badge--cancelled,
 .ra-public__badge--paused {
-  opacity: 0.85;
+  color: var(--ra-ink);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .ra-public__meta,
 .ra-public__cupo {
   margin: 0.35rem 0 0;
   font-size: 0.95rem;
+  color: var(--ra-ink);
 }
 
 .ra-public__section h2 {
   font-size: 1rem;
   margin: 1rem 0 0.5rem;
+  color: #fff;
 }
 
 .ra-public__players {
@@ -66,13 +92,15 @@
   align-items: center;
   padding: 0.75rem;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--ro-surface, #fff) 88%, #000 4%);
-  border: 1px solid color-mix(in srgb, var(--ro-ink, #101820) 10%, transparent);
+  background: var(--ra-card);
+  border: 1px solid var(--ra-card-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  color: var(--ra-ink);
 }
 
 .ra-player-card--open {
   border-style: dashed;
-  opacity: 0.85;
+  background: rgba(18, 24, 30, 0.72);
 }
 
 .ra-player-card__avatar {
@@ -82,9 +110,10 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--ro-accent, #c9a227) 25%, transparent);
+  background: color-mix(in srgb, var(--ro-accent, #c9a227) 35%, #101820);
   flex-shrink: 0;
   font-weight: 700;
+  color: #101820;
 }
 
 .ra-player-card__avatar--lg {
@@ -108,7 +137,7 @@
 
 .ra-player-card__sub {
   font-size: 0.8rem;
-  opacity: 0.75;
+  color: var(--ra-muted);
 }
 
 .ra-public__sheet {
@@ -117,12 +146,13 @@
 
 .ra-public__hint {
   font-size: 0.9rem;
-  opacity: 0.8;
+  color: var(--ra-muted);
 }
 
 .ra-public__hint--warn {
   border-left: 3px solid var(--ro-accent, #c9a227);
   padding-left: 0.65rem;
+  color: var(--ra-ink);
 }
 
 .ra-label {
@@ -130,6 +160,7 @@
   margin: 0.75rem 0 0.35rem;
   font-size: 0.85rem;
   font-weight: 600;
+  color: var(--ra-ink);
 }
 
 .ra-input {
@@ -138,8 +169,9 @@
   font-size: 16px;
   padding: 0.65rem 0.85rem;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--ro-ink, #101820) 18%, transparent);
-  background: var(--ro-surface, #fff);
+  border: 1px solid var(--ra-card-border);
+  background: rgba(12, 16, 20, 0.92);
+  color: #fff;
   box-sizing: border-box;
 }
 
@@ -176,9 +208,9 @@
 }
 
 .ra-btn--ghost {
-  background: transparent;
-  border: 1px solid color-mix(in srgb, var(--ro-ink, #101820) 18%, transparent);
-  color: inherit;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ra-card-border);
+  color: var(--ra-ink);
 }
 
 .ra-btn--block {
@@ -186,7 +218,7 @@
 }
 
 .ra-error {
-  color: #b42318;
+  color: #ffb4a8;
   font-size: 0.9rem;
 }
 
@@ -196,7 +228,8 @@
   gap: 0.25rem;
   padding: 1rem;
   border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--ro-ink, #101820) 10%, transparent);
+  border: 1px solid var(--ra-card-border);
+  background: var(--ra-card);
 }
 
 .ra-public__sticky {
@@ -208,9 +241,9 @@
     calc(12px + env(safe-area-inset-bottom));
   background: linear-gradient(
     to top,
-    color-mix(in srgb, var(--ro-bg, #0f1419) 92%, transparent),
-    color-mix(in srgb, var(--ro-bg, #0f1419) 70%, transparent) 70%,
-    transparent
+    rgba(8, 10, 12, 0.96) 0%,
+    rgba(8, 10, 12, 0.82) 55%,
+    transparent 100%
   );
   z-index: 20;
 }
@@ -244,11 +277,12 @@
 .ra-public--error {
   padding: 2rem 1rem;
   text-align: center;
+  color: var(--ra-ink);
 }
 
 .ra-skel {
   border-radius: 12px;
-  background: color-mix(in srgb, var(--ro-ink, #101820) 8%, transparent);
+  background: rgba(255, 255, 255, 0.08);
   animation: ra-pulse 1.2s ease-in-out infinite;
 }
 

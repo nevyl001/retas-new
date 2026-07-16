@@ -11,6 +11,8 @@ export type Duelo2v2CreateDraft = {
   savedAt: string;
   nombre: string;
   cancha: string;
+  /** Nivel / categoría pública de la convocatoria (ej. 5ta Fuerza). */
+  categoria: string;
   draftDate: string;
   draftTimeStart: string;
   draftTimeEnd: string;
@@ -64,6 +66,7 @@ function parseDraft(raw: string): Duelo2v2CreateDraft | null {
       savedAt: parsed.savedAt,
       nombre: parsed.nombre,
       cancha: parsed.cancha,
+      categoria: typeof parsed.categoria === "string" ? parsed.categoria : "",
       draftDate: parsed.draftDate,
       draftTimeStart: parsed.draftTimeStart,
       draftTimeEnd: parsed.draftTimeEnd,

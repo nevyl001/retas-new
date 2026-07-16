@@ -17,6 +17,7 @@ export function buildTournamentConvocatoriaContext(opts: {
   tournamentId: string;
   name: string;
   locationLabel?: string;
+  clubName?: string;
   tournamentFormat?: string | null;
   championshipEnabled?: boolean;
   productHeadline?: string;
@@ -36,6 +37,7 @@ export function buildTournamentConvocatoriaContext(opts: {
     defaultCapacity: defaultCapacityForMode(opts.mode),
     defaultLocation: opts.locationLabel,
     defaultDurationMinutes: opts.mode === "americano" ? 120 : 90,
+    clubName: opts.clubName,
     productHeadline,
   };
 }
@@ -45,6 +47,9 @@ export function buildDueloConvocatoriaContext(opts: {
   name: string;
   locationLabel?: string;
   scheduledAt?: string | null;
+  durationMinutes?: number | null;
+  clubName?: string;
+  categoryLabel?: string;
 }): ConvocatoriaAdapterContext {
   return {
     mode: "duelo_2v2",
@@ -52,8 +57,10 @@ export function buildDueloConvocatoriaContext(opts: {
     defaultTitle: opts.name,
     defaultCapacity: 4,
     defaultLocation: opts.locationLabel,
-    defaultDurationMinutes: 90,
+    defaultCategory: opts.categoryLabel,
+    defaultDurationMinutes: opts.durationMinutes ?? 90,
     defaultScheduledAt: opts.scheduledAt ?? null,
+    clubName: opts.clubName,
     lockCapacity: true,
     productHeadline: convocatoriaProductHeadline({ mode: "duelo_2v2" }),
   };

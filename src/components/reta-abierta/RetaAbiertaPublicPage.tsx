@@ -3,6 +3,7 @@ import { PublicTorneoExpressShell } from "../torneo-express/public/PublicTorneoE
 import {
   buildRequestRivieraIdWhatsAppMessage,
   buildWhatsAppShareUrl,
+  formatCanchaLabel,
 } from "../../lib/retaAbierta/whatsappShareMessage";
 import {
   cancelOpenRegistration,
@@ -247,8 +248,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
             <p className="ra-public__full-inline">Completo</p>
           ) : null}
           <p className="ra-public__meta">{formatWhen(dto)}</p>
-          {dto.location_label ? (
-            <p className="ra-public__meta">{dto.location_label}</p>
+          {formatCanchaLabel(dto.location_label) ? (
+            <p className="ra-public__meta">
+              {formatCanchaLabel(dto.location_label)}
+            </p>
           ) : null}
           {dto.category_label ? (
             <p className="ra-public__meta">{dto.category_label}</p>

@@ -299,6 +299,8 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 dueloId: duelo.id,
                 name: duelo.nombre,
                 locationLabel: duelo.cancha ?? undefined,
+                scheduledAt: duelo.programado_en,
+                clubName: modeEyebrow,
               })}
             />
             <PublicShareSection
@@ -390,6 +392,8 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           dueloId: duelo.id,
           name: duelo.nombre,
           locationLabel: duelo.cancha ?? undefined,
+          scheduledAt: duelo.programado_en,
+          clubName: modeEyebrow,
         })}
       />
 

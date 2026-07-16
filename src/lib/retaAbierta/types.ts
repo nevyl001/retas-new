@@ -124,6 +124,8 @@ export interface ConvocatoriaAdapterContext {
   defaultCategory?: string;
   defaultDurationMinutes?: number;
   defaultScheduledAt?: string | null;
+  /** Nombre del club para el mensaje (nunca la cancha). */
+  clubName?: string;
   /** Fija cupo (ej. duelo = 4). */
   lockCapacity?: boolean;
   /**

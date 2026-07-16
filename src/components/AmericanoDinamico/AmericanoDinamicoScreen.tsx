@@ -371,6 +371,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               mode: "americano",
               tournamentId: resolvedTournamentId,
               name: tournamentName || "Americano",
+              clubName: modeEyebrow,
             })}
           />
         ) : null}

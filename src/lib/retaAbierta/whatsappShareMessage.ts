@@ -1,6 +1,14 @@
 import type { OpenGameModeType, OpenRegistrationPublicDto } from "./types";
 import { convocatoriaProductHeadline } from "./modeWhitelist";
 
+/** Prefijo cancha legible (evita el "1" suelto en UI pública / WhatsApp). */
+export function formatCanchaLabel(raw: string | null | undefined): string | null {
+  const t = (raw ?? "").trim();
+  if (!t) return null;
+  if (/^cancha\b/i.test(t)) return t;
+  return `Cancha ${t}`;
+}
+
 function formatScheduledLabel(
   iso: string | null,
   durationMinutes: number | null
@@ -40,7 +48,7 @@ function resolveHeadline(
 
 /**
  * Mensaje WhatsApp único del servicio Convocatoria Riviera.
- * El texto pegado es una foto del momento; el link siempre está vivo.
+ * ASCII-safe (✓ / ○) para evitar caracteres rotos en algunos clientes.
  */
 export function buildRetaAbiertaWhatsAppMessage(opts: {
   dto: Pick<
@@ -61,22 +69,20 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   publicUrl: string;
   clubName: string;
   displayFullName?: boolean;
-  /** Headline de producto (REMONTADA FINAL, ROUND ROBIN, …). */
   productHeadline?: string;
 }): string {
-  const { dto, publicUrl, clubName } = opts;
+  const { dto, publicUrl } = opts;
   const displayFullName = opts.displayFullName !== false;
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline);
+  const club = opts.clubName.trim() || "Club";
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
-  const lines: string[] = [`🎾 ${headline}`, ""];
+  const lines: string[] = [headline, "", club, ""];
 
-  lines.push(clubName.trim() || "Club");
-  lines.push("");
   lines.push(formatScheduledLabel(dto.scheduled_at, dto.duration_minutes));
 
-  const court = dto.location_label?.trim();
-  if (court) lines.push(`Cancha ${court}`);
+  const court = formatCanchaLabel(dto.location_label);
+  if (court) lines.push(court);
 
   if (dto.rama_label?.trim()) lines.push(dto.rama_label.trim());
   if (dto.category_label?.trim()) {
@@ -98,11 +104,11 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
         dto.display_rating && e.rating != null
           ? ` (${Number(e.rating).toFixed(2)})`
           : "";
-      lines.push(`✅ ${name}${rating}`);
+      lines.push(`✓ ${name}${rating}`);
     }
     const openSlots = Math.max(dto.capacity - confirmed.length, 0);
     for (let i = 0; i < openSlots; i++) {
-      lines.push("⭕ Disponible");
+      lines.push("○ Disponible");
     }
   }
 
@@ -138,4 +144,13 @@ export function buildWhatsAppShareUrl(
   const q = encodeURIComponent(text);
   if (!phone) return `https://wa.me/?text=${q}`;
   return `https://wa.me/${phone}?text=${q}`;
+}
+
+/** ISO → valor datetime-local en zona del dispositivo. */
+export function isoToDatetimeLocalValue(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

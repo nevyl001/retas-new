@@ -46,6 +46,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
   }, []);
   const [nombre, setNombre] = useState("");
   const [cancha, setCancha] = useState(CANCHA_DEFAULT_VALUE);
+  const [categoria, setCategoria] = useState("");
   const [draftDate, setDraftDate] = useState(defaultSchedule.date);
   const [draftTimeStart, setDraftTimeStart] = useState(defaultSchedule.timeStart);
   const [draftTimeEnd, setDraftTimeEnd] = useState(defaultSchedule.timeEnd);
@@ -88,6 +89,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
 
       setNombre(stored.nombre);
       setCancha(stored.cancha);
+      setCategoria(stored.categoria ?? "");
       setDraftDate(stored.draftDate);
       setDraftTimeStart(stored.draftTimeStart);
       setDraftTimeEnd(stored.draftTimeEnd);
@@ -126,6 +128,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
     writeDuelo2v2CreateDraft(organizadorId, {
       nombre,
       cancha,
+      categoria,
       draftDate,
       draftTimeStart,
       draftTimeEnd,
@@ -138,6 +141,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
     draftReady,
     nombre,
     cancha,
+    categoria,
     draftDate,
     draftTimeStart,
     draftTimeEnd,
@@ -149,6 +153,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const validateLaunchMinimum = (): string | null => {
     if (!nombre.trim()) return "Escribe el nombre del encuentro.";
     if (!cancha.trim()) return "Indica la cancha.";
+    if (!categoria.trim()) return "Indica la categoría / nivel.";
     if (!draftDate.trim() || !draftTimeStart.trim() || !draftTimeEnd.trim()) {
       return "Completa día y horario.";
     }
@@ -180,11 +185,19 @@ export const Duelo2v2Nuevo: React.FC = () => {
       },
     });
     setOpenDueloId(duelo.id);
+    const startMs = Date.parse(schedule.programado_en);
+    const endMs = Date.parse(schedule.programado_hasta);
+    const durationMinutes =
+      Number.isFinite(startMs) && Number.isFinite(endMs) && endMs > startMs
+        ? Math.round((endMs - startMs) / 60000)
+        : 90;
     return {
       entityId: duelo.id,
       title: duelo.nombre,
       locationLabel: duelo.cancha ?? cancha,
-      scheduledAtIso: duelo.programado_en,
+      scheduledAtIso: duelo.programado_en ?? schedule.programado_en,
+      durationMinutes,
+      categoryLabel: categoria.trim(),
     };
   };
 
@@ -232,10 +245,29 @@ export const Duelo2v2Nuevo: React.FC = () => {
     }
   };
 
+  const schedulePreview = resolveDueloScheduleFromDraft(
+    draftDate,
+    draftTimeStart,
+    draftTimeEnd
+  );
+  const scheduleOk = !("error" in schedulePreview);
+  const durationPreview =
+    scheduleOk
+      ? Math.round(
+          (Date.parse(schedulePreview.programado_hasta) -
+            Date.parse(schedulePreview.programado_en)) /
+            60000
+        )
+      : 90;
+
   const convocatoriaContext = buildDueloConvocatoriaContext({
     dueloId: openDueloId ?? "",
     name: nombre.trim() || "Duelo 2 vs 2",
     locationLabel: cancha,
+    scheduledAt: scheduleOk ? schedulePreview.programado_en : null,
+    durationMinutes: Number.isFinite(durationPreview) ? durationPreview : 90,
+    clubName: modeEyebrow,
+    categoryLabel: categoria.trim() || undefined,
   });
 
   return (
@@ -283,6 +315,26 @@ export const Duelo2v2Nuevo: React.FC = () => {
                 placeholder="Ej. 1"
                 required
               />
+            </label>
+            <label className="duelo2v2-form__field">
+              <span className="duelo2v2-form__field-label">Categoría / nivel</span>
+              <input
+                type="text"
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                placeholder="Ej. 5ta Fuerza"
+                list="duelo-categoria-sugerencias"
+                required
+              />
+              <datalist id="duelo-categoria-sugerencias">
+                <option value="Open" />
+                <option value="1ra Fuerza" />
+                <option value="2da Fuerza" />
+                <option value="3ra Fuerza" />
+                <option value="4ta Fuerza" />
+                <option value="5ta Fuerza" />
+                <option value="6ta Fuerza" />
+              </datalist>
             </label>
             <label className="duelo2v2-form__field">
               <span className="duelo2v2-form__field-label">Día</span>

@@ -18,7 +18,7 @@ import type {
 } from "../../lib/retaAbierta/types";
 import {
   buildRetaAbiertaWhatsAppMessage,
-  buildWhatsAppShareUrl,
+  isoToDatetimeLocalValue,
 } from "../../lib/retaAbierta/whatsappShareMessage";
 import {
   assertConvocatoriaAllowedMode,
@@ -33,6 +33,7 @@ export type EnsureDraftEntityResult = {
   locationLabel?: string;
   scheduledAtIso?: string | null;
   durationMinutes?: number | null;
+  categoryLabel?: string | null;
 };
 
 interface Props {
@@ -65,6 +66,22 @@ function statusLabel(s: OpenRegistrationStatus): string {
   }
 }
 
+async function copyTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+}
+
 /**
  * Panel administrativo unificado: Convocatoria Riviera / Lanzar por WhatsApp.
  * No montar en Liga / Torneo Express / Torneos.
@@ -94,10 +111,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   );
   const [approvalRequired, setApprovalRequired] = useState(false);
   const [deadline, setDeadline] = useState("");
-  const [scheduledAt, setScheduledAt] = useState(() => {
-    if (!context.defaultScheduledAt) return "";
-    return context.defaultScheduledAt.slice(0, 16);
-  });
+  const [scheduledAt, setScheduledAt] = useState(() =>
+    isoToDatetimeLocalValue(context.defaultScheduledAt)
+  );
   const [durationMinutes, setDurationMinutes] = useState(
     context.defaultDurationMinutes ?? 90
   );
@@ -112,6 +128,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [displayPhoto, setDisplayPhoto] = useState(true);
   const [displayFullName, setDisplayFullName] = useState(true);
 
+  const clubName = (context.clubName ?? "").trim() || "Club";
+
   useEffect(() => {
     setEntityId(context.entityId.trim());
   }, [context.entityId]);
@@ -125,6 +143,23 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       setLocationLabel(context.defaultLocation);
     }
   }, [context.defaultLocation]);
+
+  useEffect(() => {
+    const next = context.defaultCategory?.trim();
+    if (next) setCategoryLabel(next);
+  }, [context.defaultCategory]);
+
+  useEffect(() => {
+    if (context.defaultScheduledAt) {
+      setScheduledAt(isoToDatetimeLocalValue(context.defaultScheduledAt));
+    }
+  }, [context.defaultScheduledAt]);
+
+  useEffect(() => {
+    if (context.defaultDurationMinutes != null) {
+      setDurationMinutes(context.defaultDurationMinutes);
+    }
+  }, [context.defaultDurationMinutes]);
 
   const load = useCallback(async (id: string) => {
     if (!id) {
@@ -151,12 +186,20 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         setApprovalRequired(row.approval_required);
         setDeadline(
           row.registration_deadline
-            ? row.registration_deadline.slice(0, 16)
+            ? isoToDatetimeLocalValue(row.registration_deadline)
             : ""
         );
-        setScheduledAt(row.scheduled_at ? row.scheduled_at.slice(0, 16) : "");
-        setDurationMinutes(row.duration_minutes ?? 90);
-        setCategoryLabel(row.category_label ?? "");
+        setScheduledAt(
+          row.scheduled_at
+            ? isoToDatetimeLocalValue(row.scheduled_at)
+            : isoToDatetimeLocalValue(context.defaultScheduledAt)
+        );
+        setDurationMinutes(
+          row.duration_minutes ?? context.defaultDurationMinutes ?? 90
+        );
+        setCategoryLabel(
+          row.category_label ?? context.defaultCategory ?? ""
+        );
         setRamaLabel(row.rama_label ?? "");
         setLocationLabel(row.location_label ?? context.defaultLocation ?? "");
         setDisplayRating(row.display_rating);
@@ -189,9 +232,40 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
 
   const savePayload = (
     id: string,
-    overrides?: { enabled?: boolean; status?: OpenRegistrationStatus }
+    overrides?: {
+      enabled?: boolean;
+      status?: OpenRegistrationStatus;
+      scheduledAtIso?: string | null;
+      locationLabel?: string;
+      durationMinutes?: number | null;
+      titlePublic?: string;
+      categoryLabel?: string | null;
+    }
   ) => {
     assertConvocatoriaAllowedMode(context.mode);
+    const schedLocal =
+      overrides?.scheduledAtIso != null
+        ? overrides.scheduledAtIso
+        : scheduledAt
+          ? new Date(scheduledAt).toISOString()
+          : context.defaultScheduledAt ?? null;
+    const loc =
+      overrides?.locationLabel != null
+        ? overrides.locationLabel
+        : locationLabel;
+    const dur =
+      overrides?.durationMinutes != null
+        ? overrides.durationMinutes
+        : durationMinutes;
+    const title =
+      overrides?.titlePublic != null
+        ? overrides.titlePublic
+        : titlePublic.trim() || context.defaultTitle;
+    const category =
+      overrides?.categoryLabel !== undefined
+        ? overrides.categoryLabel
+        : categoryLabel.trim() || context.defaultCategory || null;
+
     return upsertOpenRegistrationConfig({
       mode: context.mode,
       entityId: id,
@@ -202,17 +276,30 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       waitlistEnabled,
       approvalRequired,
       registrationDeadline: deadline ? new Date(deadline).toISOString() : null,
-      scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
-      durationMinutes,
-      categoryLabel: categoryLabel.trim() || null,
-      locationLabel: locationLabel.trim() || null,
-      titlePublic: titlePublic.trim() || context.defaultTitle,
+      scheduledAt: schedLocal,
+      durationMinutes: dur,
+      categoryLabel:
+        typeof category === "string" ? category.trim() || null : null,
+      locationLabel: loc.trim() || null,
+      titlePublic: title,
       ramaLabel: ramaLabel.trim() || null,
       displayRating,
       displayPhoto,
       displayFullName,
     });
   };
+
+  const buildShareText = (
+    dto: Parameters<typeof buildRetaAbiertaWhatsAppMessage>[0]["dto"],
+    url: string
+  ) =>
+    buildRetaAbiertaWhatsAppMessage({
+      dto,
+      publicUrl: url,
+      clubName,
+      displayFullName,
+      productHeadline: context.productHeadline,
+    });
 
   const onLaunchWhatsApp = async () => {
     setSaving(true);
@@ -229,6 +316,16 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       }
 
       let id = entityId;
+      let launchScheduledIso: string | null =
+        scheduledAt
+          ? new Date(scheduledAt).toISOString()
+          : context.defaultScheduledAt ?? null;
+      let launchLocation = locationLabel;
+      let launchDuration = durationMinutes;
+      let launchTitle = titlePublic.trim() || context.defaultTitle;
+      let launchCategory =
+        categoryLabel.trim() || context.defaultCategory?.trim() || "";
+
       if (!id) {
         if (!ensureDraftEntity) {
           throw new Error("Guarda el evento antes de lanzar la convocatoria.");
@@ -238,19 +335,45 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         if (!id) throw new Error("No se pudo crear el borrador del evento.");
         setEntityId(id);
         onEntityReady?.(id);
-        if (draft.title) setTitlePublic(draft.title);
-        if (draft.locationLabel) setLocationLabel(draft.locationLabel);
+        if (draft.title) {
+          launchTitle = draft.title;
+          setTitlePublic(draft.title);
+        }
+        if (draft.locationLabel) {
+          launchLocation = draft.locationLabel;
+          setLocationLabel(draft.locationLabel);
+        }
         if (draft.scheduledAtIso) {
-          setScheduledAt(draft.scheduledAtIso.slice(0, 16));
+          launchScheduledIso = draft.scheduledAtIso;
+          setScheduledAt(isoToDatetimeLocalValue(draft.scheduledAtIso));
         }
         if (draft.durationMinutes != null) {
+          launchDuration = draft.durationMinutes;
           setDurationMinutes(draft.durationMinutes);
+        }
+        if (draft.categoryLabel?.trim()) {
+          launchCategory = draft.categoryLabel.trim();
+          setCategoryLabel(launchCategory);
         }
       }
 
-      const row = await savePayload(id, { enabled: true, status: "open" });
+      if (!launchCategory.trim()) {
+        setError("Indica la categoría / nivel antes de lanzar.");
+        return;
+      }
+
+      const row = await savePayload(id, {
+        enabled: true,
+        status: "open",
+        scheduledAtIso: launchScheduledIso,
+        locationLabel: launchLocation,
+        durationMinutes: launchDuration,
+        titlePublic: launchTitle,
+        categoryLabel: launchCategory,
+      });
       setCfg(row);
       setStatus("open");
+      setCategoryLabel(launchCategory);
       const url = buildRetaAbiertaPublicUrl(row.public_slug);
       const pub = await fetchOpenRegistrationPublic(row.public_slug);
       if (!pub.ok) {
@@ -260,14 +383,17 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         await load(id);
         return;
       }
-      const text = buildRetaAbiertaWhatsAppMessage({
-        dto: pub.dto,
-        publicUrl: url,
-        clubName: locationLabel || "Club",
-        displayFullName,
-        productHeadline: context.productHeadline,
-      });
-      window.open(buildWhatsAppShareUrl("", text), "_blank", "noopener,noreferrer");
+      const dtoForShare = {
+        ...pub.dto,
+        scheduled_at: pub.dto.scheduled_at || launchScheduledIso,
+        duration_minutes: pub.dto.duration_minutes ?? launchDuration,
+        location_label: pub.dto.location_label || launchLocation || null,
+        category_label: pub.dto.category_label || launchCategory || null,
+      };
+      const text = buildShareText(dtoForShare, url);
+      await copyTextToClipboard(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2800);
       await load(id);
     } catch (e) {
       setError(mapConvocatoriaUserError(e, "launch"));
@@ -277,13 +403,17 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   };
 
   const onCopy = async () => {
-    if (!publicUrl) return;
+    if (!publicUrl || !cfg) return;
     try {
-      await navigator.clipboard.writeText(publicUrl);
+      const pub = await fetchOpenRegistrationPublic(cfg.public_slug);
+      const text = pub.ok
+        ? buildShareText(pub.dto, publicUrl)
+        : publicUrl;
+      await copyTextToClipboard(text);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      window.setTimeout(() => setCopied(false), 2800);
     } catch {
-      setError("No se pudo copiar el link");
+      setError("No se pudo copiar el mensaje");
     }
   };
 
@@ -307,8 +437,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     >
       <h3>Convocatoria Riviera</h3>
       <p className="ra-org__muted">
-        Comparte este juego por WhatsApp y deja que los jugadores se inscriban
-        solos con su Riviera ID.
+        Comparte este juego por WhatsApp: se copia el mensaje con todos los
+        datos para que lo pegues en el chat.
       </p>
 
       {cfg?.enabled && cfg.status !== "draft" ? (
@@ -364,6 +494,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
               <input
                 value={categoryLabel}
                 onChange={(e) => setCategoryLabel(e.target.value)}
+                placeholder="Ej. 5ta Fuerza"
               />
             </label>
             <label>
@@ -396,7 +527,16 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             </label>
           </div>
         </>
-      ) : null}
+      ) : (
+        <label className="ra-org__category-compact">
+          Categoría / nivel
+          <input
+            value={categoryLabel}
+            onChange={(e) => setCategoryLabel(e.target.value)}
+            placeholder="Ej. 5ta Fuerza"
+          />
+        </label>
+      )}
 
       <div className="ra-org__actions">
         <button
@@ -407,15 +547,17 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           disabled={saving}
         >
           {saving
-            ? "Lanzando…"
-            : publicUrl
-              ? "Compartir nuevamente"
-              : "Lanzar por WhatsApp"}
+            ? "Copiando…"
+            : copied
+              ? "¡Copiado! Pégalo en WhatsApp"
+              : publicUrl
+                ? "Copiar convocatoria"
+                : "Lanzar y copiar"}
         </button>
         {publicUrl ? (
           <>
-            <button type="button" className="ra-org__btn" onClick={onCopy}>
-              {copied ? "Copiado" : "Copiar enlace"}
+            <button type="button" className="ra-org__btn" onClick={() => void onCopy()}>
+              {copied ? "Copiado" : "Copiar de nuevo"}
             </button>
             <a
               className="ra-org__btn"
@@ -461,8 +603,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
 
       {shareNote ? (
         <p className="ra-org__muted">
-          El mensaje conserva la información del momento. El enlace siempre
-          muestra la lista actualizada.
+          Se copió el mensaje completo (fecha, cancha, cupos y enlace). Ábrelo
+          en WhatsApp y pégalo. El enlace siempre muestra la lista actualizada.
         </p>
       ) : null}
 

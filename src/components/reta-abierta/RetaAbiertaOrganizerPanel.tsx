@@ -2,6 +2,7 @@ import React from "react";
 import type { Tournament } from "../../lib/database";
 import { isAmericanoTournament } from "../../lib/gameModeMapping";
 import { loadChampionshipConfig } from "../../lib/roundRobinChampionship";
+import { useClubModeEyebrow } from "../../club-experience";
 import { buildTournamentConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import { ConvocatoriaWhatsAppPanel } from "./ConvocatoriaWhatsAppPanel";
 
@@ -19,6 +20,7 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
   tournament,
   modeOverride,
 }) => {
+  const clubName = useClubModeEyebrow();
   const mode =
     modeOverride ??
     (isAmericanoTournament(tournament) ? "americano" : "reta");
@@ -35,6 +37,7 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
         name: tournament.name,
         tournamentFormat: tournament.format,
         championshipEnabled,
+        clubName,
       })}
     />
   );

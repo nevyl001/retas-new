@@ -27,8 +27,20 @@
   display: none;
 }
 
-.ra-org--compact .ra-org__checks {
-  display: none;
+.ra-org__category-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0 0 0.85rem;
+  font-size: 0.85rem;
+}
+
+.ra-org__category-compact input {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
 }
 
 .ra-org__summary p {

@@ -62,7 +62,7 @@ describe("ConvocatoriaWhatsAppPanel presencia", () => {
       container.querySelector('[data-testid="lanzar-por-whatsapp"]')
     ).not.toBeNull();
     expect(container.textContent).toContain("Convocatoria Riviera");
-    expect(container.textContent).toContain("Lanzar por WhatsApp");
+    expect(container.textContent).toContain("Lanzar y copiar");
   });
 
   it("whitelist: reta/americano/duelo permitidos; liga/TE excluidos", () => {

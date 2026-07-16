@@ -79,6 +79,7 @@ describe("duelo2v2CreateDraft", () => {
       {
         nombre: "Test duelo",
         cancha: "1",
+        categoria: "5ta Fuerza",
         draftDate: "2026-07-09",
         draftTimeStart: "15:00",
         draftTimeEnd: "17:00",
@@ -92,8 +93,28 @@ describe("duelo2v2CreateDraft", () => {
     expect(storage.getItem(duelo2v2DraftStorageKey(ORG))).toBeTruthy();
     const draft = readDuelo2v2CreateDraft(ORG, storage);
     expect(draft?.nombre).toBe("Test duelo");
+    expect(draft?.categoria).toBe("5ta Fuerza");
     expect(draft?.pairA).toEqual({ j1Id: "j1", j2Id: "j2" });
     expect(draft?.pairB).toBeNull();
+  });
+
+  it("lee borradores viejos sin categoria como cadena vacía", () => {
+    const storage = mockStorage();
+    storage.setItem(
+      duelo2v2DraftStorageKey(ORG),
+      JSON.stringify({
+        savedAt: new Date().toISOString(),
+        nombre: "Legacy",
+        cancha: "1",
+        draftDate: "2026-07-09",
+        draftTimeStart: "15:00",
+        draftTimeEnd: "17:00",
+        pairA: null,
+        pairB: null,
+      })
+    );
+    const draft = readDuelo2v2CreateDraft(ORG, storage);
+    expect(draft?.categoria).toBe("");
   });
 
   it("expira borradores de más de 24h y los elimina", () => {
@@ -104,6 +125,7 @@ describe("duelo2v2CreateDraft", () => {
       {
         nombre: "Viejo",
         cancha: "1",
+        categoria: "",
         draftDate: "2026-07-09",
         draftTimeStart: "15:00",
         draftTimeEnd: "17:00",
@@ -126,6 +148,7 @@ describe("duelo2v2CreateDraft", () => {
       {
         nombre: "X",
         cancha: "1",
+        categoria: "",
         draftDate: "2026-07-09",
         draftTimeStart: "15:00",
         draftTimeEnd: "17:00",
