@@ -115,6 +115,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [locationLabel, setLocationLabel] = useState(
     context.defaultLocation ?? ""
   );
+  const [canchaLabel, setCanchaLabel] = useState(
+    context.defaultCancha ?? ""
+  );
   const [displayRating, setDisplayRating] = useState(true);
   const [displayPhoto, setDisplayPhoto] = useState(true);
   const [displayFullName, setDisplayFullName] = useState(true);
@@ -134,6 +137,12 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       setLocationLabel(context.defaultLocation);
     }
   }, [context.defaultLocation]);
+
+  useEffect(() => {
+    if (context.defaultCancha != null) {
+      setCanchaLabel(context.defaultCancha);
+    }
+  }, [context.defaultCancha]);
 
   useEffect(() => {
     const next = context.defaultCategory?.trim();
@@ -290,6 +299,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       dto,
       publicUrl: url,
       clubName,
+      canchaLabel: canchaLabel.trim() || context.defaultCancha || null,
       displayFullName,
       productHeadline: context.productHeadline,
     });
@@ -610,6 +620,22 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 value={categoryLabel}
                 onChange={(e) => setCategoryLabel(e.target.value)}
                 placeholder="Ej. 5ta Fuerza"
+              />
+            </label>
+            <label>
+              Lugar
+              <input
+                value={locationLabel}
+                onChange={(e) => setLocationLabel(e.target.value)}
+                placeholder="Ej. Club Hack Pádel"
+              />
+            </label>
+            <label>
+              Cancha
+              <input
+                value={canchaLabel}
+                onChange={(e) => setCanchaLabel(e.target.value)}
+                placeholder="Ej. 1"
               />
             </label>
             <label>

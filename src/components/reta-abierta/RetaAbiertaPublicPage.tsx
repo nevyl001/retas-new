@@ -4,7 +4,7 @@ import { PublicTorneoExpressShell } from "../torneo-express/public/PublicTorneoE
 import {
   buildRequestRivieraIdWhatsAppMessage,
   buildWhatsAppShareUrl,
-  formatCanchaLabel,
+  resolveLugarYCancha,
 } from "../../lib/retaAbierta/whatsappShareMessage";
 import { normalizeRivieraIdLoose } from "../../lib/retaAbierta/normalizeRivieraId";
 import {
@@ -637,11 +637,22 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               </p>
             ) : null}
             <p className="ra-public__meta">{formatWhen(dto)}</p>
-            {formatCanchaLabel(dto.location_label) ? (
-              <p className="ra-public__meta">
-                {formatCanchaLabel(dto.location_label)}
-              </p>
-            ) : null}
+            {(() => {
+              const { lugar, cancha } = resolveLugarYCancha({
+                locationLabel: dto.location_label,
+                clubName: organizerName,
+              });
+              return (
+                <>
+                  {lugar ? (
+                    <p className="ra-public__meta">Lugar: {lugar}</p>
+                  ) : null}
+                  {cancha ? (
+                    <p className="ra-public__meta">{cancha}</p>
+                  ) : null}
+                </>
+              );
+            })()}
             {dto.category_label ? (
               <p className="ra-public__meta">
                 {formatPublicCategoriaLabel(dto.category_label) ||

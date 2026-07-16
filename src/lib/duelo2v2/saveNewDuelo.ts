@@ -19,6 +19,7 @@ export type SaveNewDueloDeps = {
   ) => Promise<Duelo2v2>;
   navigate: (path: string) => void;
   gestionarPath: (id: string) => string;
+  afterCreate?: (duelo: Duelo2v2) => void;
 };
 
 /**
@@ -57,6 +58,7 @@ export async function saveNewDuelo2v2(
   });
 
   clearDuelo2v2CreateSession(form.organizadorId);
+  deps.afterCreate?.(duelo);
   deps.navigate(deps.gestionarPath(duelo.id));
   return duelo;
 }

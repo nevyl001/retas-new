@@ -35,6 +35,7 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
         mode,
         tournamentId: tournament.id,
         name: tournament.name,
+        locationLabel: clubName,
         tournamentFormat: tournament.format,
         championshipEnabled,
         clubName,

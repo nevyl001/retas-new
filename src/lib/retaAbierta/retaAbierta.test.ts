@@ -73,7 +73,7 @@ describe("WhatsApp share message por modo", () => {
     },
   ];
 
-  it("Reta: RETA ABIERTA con lugares Disponibles", () => {
+  it("Reta: mensaje compacto con horario, lugar y cancha", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {
         name: "Reta viernes",
@@ -93,15 +93,17 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Hack Pádel",
     });
     expect(text).toContain("RETA ABIERTA");
-    expect(text).toContain("Hack Pádel");
-    expect(text).toContain("Cancha 3");
-    expect(text).toContain("Nivel 5ta Fuerza");
-    expect(text).toContain("Jugadores");
-    expect(text).toContain("✓ Arturo Cortes (0.73)");
-    expect(text).toContain("○ Disponible");
-    expect(text).toContain("Solo necesitas tu Riviera ID.");
-    expect(text).not.toContain("\n1\n");
-    expect(text.match(/○ Disponible/g)?.length).toBe(3);
+    expect(text).toContain("📅");
+    expect(text).toContain("📍 Hack Pádel");
+    expect(text).toContain("🏸 Cancha 3");
+    expect(text).toContain("📊 5ta Fuerza");
+    expect(text).toContain("✅ Arturo Cortes (0.73)");
+    expect(text).toContain("⚪ ??");
+    expect(text).toContain("https://app.example/jugar/ra-1");
+    expect(text).not.toContain("¿Quieres jugar?");
+    expect(text).not.toContain("Solo necesitas tu Riviera ID.");
+    expect(text).not.toContain("Jugadores");
+    expect(text.match(/⚪ \?\?/g)?.length).toBe(3);
   });
 
   it("Remontada Final: mismo mode_type reta, headline de producto", () => {
@@ -127,7 +129,7 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("REMONTADA FINAL");
   });
 
-  it("Americano: resumen de cupo sin slots ○", () => {
+  it("Americano: resumen de cupo sin slots vacíos", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {
         name: "Americano sábado",
@@ -147,12 +149,12 @@ describe("WhatsApp share message por modo", () => {
       clubName: "Hack Pádel",
     });
     expect(text).toContain("AMERICANO ABIERTO");
-    expect(text).toContain("6 de 16 jugadores confirmados");
-    expect(text).toContain("Solo necesitas tu Riviera ID.");
-    expect(text).not.toContain("○ Disponible");
+    expect(text).toContain("📍 Hack");
+    expect(text).toContain("👥 6/16 confirmados");
+    expect(text).not.toContain("⚪ ??");
   });
 
-  it("Duelo: avisa si falta 1 y no usa cancha como club", () => {
+  it("Duelo: compacto con lugar, cancha y huecos ??", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {
         name: "Duelo",
@@ -170,13 +172,43 @@ describe("WhatsApp share message por modo", () => {
       },
       publicUrl: "https://app.example/jugar/ra-3",
       clubName: "Hack Pádel",
+      canchaLabel: "1",
     });
     expect(text).toContain("DUELO 2 VS 2");
-    expect(text).toContain("Hack Pádel");
-    expect(text).toContain("Cancha 1");
-    expect(text).toContain("Falta 1 jugador.");
-    expect(text.indexOf("Hack Pádel")).toBeLessThan(text.indexOf("Cancha 1"));
-    expect(text).not.toMatch(/^1$/m);
+    expect(text).toContain("📍 Hack Pádel");
+    expect(text).toContain("🏸 Cancha 1");
+    expect(text).toContain("📊 5ta Fuerza");
+    expect(text).toContain("⚪ ??");
+    // Solo 1 entry confirmed en baseEntries → 3 huecos
+    expect(text.match(/⚪ \?\?/g)?.length).toBe(3);
+    expect(text.indexOf("📍 Hack Pádel")).toBeLessThan(
+      text.indexOf("🏸 Cancha 1")
+    );
+  });
+
+  it("muestra Lugar y Cancha explícitos cuando vienen separados", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Duelo",
+        mode_type: "duelo_2v2",
+        scheduled_at: "2026-07-16T22:00:00.000Z",
+        duration_minutes: 120,
+        location_label: "Club Alva Norte",
+        category_label: null,
+        rama_label: null,
+        capacity: 4,
+        confirmed_count: 0,
+        spots_left: 4,
+        display_rating: false,
+        entries: [],
+      },
+      publicUrl: "https://app.example/jugar/ra-4",
+      clubName: "Riviera Open",
+      canchaLabel: "2",
+    });
+    expect(text).toContain("📍 Club Alva Norte");
+    expect(text).toContain("🏸 Cancha 2");
+    expect(text).not.toContain("📍 Riviera Open");
   });
 
   it("no imprime la etiqueta vacía Club cuando falta el origen", () => {

@@ -123,11 +123,14 @@ export interface ConvocatoriaAdapterContext {
   entityId: string;
   defaultTitle: string;
   defaultCapacity: number;
+  /** Lugar / sede (no la cancha). Se guarda en location_label. */
   defaultLocation?: string;
+  /** Número o etiqueta de cancha (separado del lugar). */
+  defaultCancha?: string;
   defaultCategory?: string;
   defaultDurationMinutes?: number;
   defaultScheduledAt?: string | null;
-  /** Nombre del club para el mensaje (nunca la cancha). */
+  /** Nombre del club para el mensaje (fallback de lugar). */
   clubName?: string;
   /** Fija cupo (ej. duelo = 4). */
   lockCapacity?: boolean;

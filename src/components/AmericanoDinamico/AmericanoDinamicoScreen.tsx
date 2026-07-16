@@ -375,6 +375,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               mode: "americano",
               tournamentId: resolvedTournamentId,
               name: tournamentName || "Americano",
+              locationLabel: convocatoriaOrigin,
               clubName: convocatoriaOrigin,
             })}
           />

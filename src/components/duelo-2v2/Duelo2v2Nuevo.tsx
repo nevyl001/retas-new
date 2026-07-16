@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useClubModeEyebrow } from "../../club-experience";
+import { useClubModeEyebrow, useConvocatoriaOriginName } from "../../club-experience";
 import { useUser } from "../../contexts/UserContext";
-import { clearDuelo2v2CreateSession } from "../../lib/duelo2v2/duelo2v2CreateDraft";
+import {
+  clearDuelo2v2CreateSession,
+  markDuelo2v2PendingDraft,
+} from "../../lib/duelo2v2/duelo2v2CreateDraft";
 import {
   CANCHA_DEFAULT_VALUE,
 } from "../../lib/torneoExpress/canchaDisplay";
@@ -25,6 +28,7 @@ import "./duelo2v2-page.css";
  */
 export const Duelo2v2Nuevo: React.FC = () => {
   const modeEyebrow = useClubModeEyebrow();
+  const convocatoriaOrigin = useConvocatoriaOriginName();
   const { user } = useUser();
   const defaultSchedule = useMemo(() => {
     const now = new Date();
@@ -36,6 +40,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
   }, []);
 
   const [nombre, setNombre] = useState("");
+  const [lugar, setLugar] = useState(convocatoriaOrigin);
   const [cancha, setCancha] = useState(CANCHA_DEFAULT_VALUE);
   const [categoria, setCategoria] = useState("");
   const [draftDate, setDraftDate] = useState(defaultSchedule.date);
@@ -51,6 +56,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
 
   const canSubmit =
     nombre.trim().length > 0 &&
+    lugar.trim().length > 0 &&
     cancha.trim().length > 0 &&
     draftDate.trim().length > 0 &&
     draftTimeStart.trim().length > 0 &&
@@ -118,6 +124,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
     setPendingDueloId(null);
     setPendingLabel(null);
     setNombre("");
+    setLugar(convocatoriaOrigin);
     setCancha(CANCHA_DEFAULT_VALUE);
     setCategoria("");
     setDraftDate(defaultSchedule.date);
@@ -147,6 +154,26 @@ export const Duelo2v2Nuevo: React.FC = () => {
           createDuelo2v2OpenDraft,
           navigate: navigateDuelo2v2,
           gestionarPath: duelo2v2GestionarPath,
+          afterCreate: (duelo) => {
+            markDuelo2v2PendingDraft(user.id, {
+              openDueloId: duelo.id,
+              nombre: duelo.nombre,
+              cancha: duelo.cancha ?? cancha,
+              categoria: categoria.trim(),
+              draftDate,
+              draftTimeStart,
+              draftTimeEnd,
+            });
+            // Persiste lugar en session para Gestionar → convocatoria.
+            try {
+              sessionStorage.setItem(
+                `duelo-2v2-lugar:${duelo.id}`,
+                lugar.trim()
+              );
+            } catch {
+              /* ignore */
+            }
+          },
         }
       );
     } catch (err) {
@@ -230,6 +257,16 @@ export const Duelo2v2Nuevo: React.FC = () => {
             </div>
 
             <div className="duelo2v2-form__schedule-row">
+              <label className="duelo2v2-form__field">
+                <span className="duelo2v2-form__field-label">Lugar</span>
+                <input
+                  type="text"
+                  value={lugar}
+                  onChange={(e) => setLugar(e.target.value)}
+                  placeholder="Ej. Club Hack Pádel"
+                  required
+                />
+              </label>
               <label className="duelo2v2-form__field">
                 <span className="duelo2v2-form__field-label">Cancha</span>
                 <input

@@ -16,7 +16,10 @@ export function buildTournamentConvocatoriaContext(opts: {
   mode: "reta" | "americano";
   tournamentId: string;
   name: string;
+  /** Lugar / sede. */
   locationLabel?: string;
+  /** Número de cancha (opcional). */
+  canchaLabel?: string;
   clubName?: string;
   tournamentFormat?: string | null;
   championshipEnabled?: boolean;
@@ -30,14 +33,17 @@ export function buildTournamentConvocatoriaContext(opts: {
       championshipEnabled: opts.championshipEnabled,
     });
 
+  const club = opts.clubName?.trim() || undefined;
+
   return {
     mode: opts.mode,
     entityId: opts.tournamentId,
     defaultTitle: opts.name,
     defaultCapacity: defaultCapacityForMode(opts.mode),
-    defaultLocation: opts.locationLabel,
+    defaultLocation: opts.locationLabel?.trim() || club,
+    defaultCancha: opts.canchaLabel?.trim() || undefined,
     defaultDurationMinutes: opts.mode === "americano" ? 120 : 90,
-    clubName: opts.clubName,
+    clubName: club,
     productHeadline,
   };
 }
@@ -60,7 +66,10 @@ export function durationMinutesBetween(
 export function buildDueloConvocatoriaContext(opts: {
   dueloId: string;
   name: string;
+  /** Lugar / sede (no la cancha). */
   locationLabel?: string;
+  /** Número o etiqueta de cancha. */
+  canchaLabel?: string;
   scheduledAt?: string | null;
   /** Fin del encuentro (programado_hasta) — se usa para calcular duración. */
   scheduledUntil?: string | null;
@@ -75,16 +84,19 @@ export function buildDueloConvocatoriaContext(opts: {
       ? Math.round(opts.durationMinutes)
       : durationMinutesBetween(opts.scheduledAt, opts.scheduledUntil, 90);
 
+  const club = opts.clubName?.trim() || undefined;
+
   return {
     mode: "duelo_2v2",
     entityId: opts.dueloId,
     defaultTitle: opts.name,
     defaultCapacity: 4,
-    defaultLocation: opts.locationLabel,
+    defaultLocation: opts.locationLabel?.trim() || club,
+    defaultCancha: opts.canchaLabel?.trim() || undefined,
     defaultCategory: opts.categoryLabel,
     defaultDurationMinutes: duration,
     defaultScheduledAt: opts.scheduledAt ?? null,
-    clubName: opts.clubName,
+    clubName: club,
     lockCapacity: true,
     productHeadline: convocatoriaProductHeadline({ mode: "duelo_2v2" }),
   };
