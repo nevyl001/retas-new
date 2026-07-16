@@ -68,6 +68,8 @@ export function buildDueloConvocatoriaContext(opts: {
   name: string;
   /** Lugar / sede (no la cancha). */
   locationLabel?: string;
+  /** Si false, omite lugar en el mensaje WhatsApp. */
+  includeLugar?: boolean;
   /** Número o etiqueta de cancha. */
   canchaLabel?: string;
   scheduledAt?: string | null;
@@ -85,13 +87,17 @@ export function buildDueloConvocatoriaContext(opts: {
       : durationMinutesBetween(opts.scheduledAt, opts.scheduledUntil, 90);
 
   const club = opts.clubName?.trim() || undefined;
+  const includeLugar = opts.includeLugar !== false;
 
   return {
     mode: "duelo_2v2",
     entityId: opts.dueloId,
     defaultTitle: opts.name,
     defaultCapacity: 4,
-    defaultLocation: opts.locationLabel?.trim() || club,
+    defaultLocation: includeLugar
+      ? opts.locationLabel?.trim() || club
+      : undefined,
+    includeLugar,
     defaultCancha: opts.canchaLabel?.trim() || undefined,
     defaultCategory: opts.categoryLabel,
     defaultDurationMinutes: duration,

@@ -10,6 +10,16 @@ import type {
   UpdateDuelo2v2ScoreInput,
 } from "../lib/duelo2v2/types";
 import { computeDueloScore } from "../lib/duelo2v2/scoring";
+import { writeDueloLugarPrefs } from "../lib/duelo2v2/dueloLugarPrefs";
+
+function isLugarColumnMissing(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) return false;
+  const msg = error.message ?? "";
+  return /lugar|mostrar_lugar|column .* does not exist|42703/i.test(msg);
+}
 
 async function requireUserId(): Promise<string> {
   const {
@@ -68,6 +78,9 @@ function mapDuelo(row: Record<string, unknown>): Duelo2v2 {
     nombre: String(row.nombre),
     descripcion: row.descripcion ? String(row.descripcion) : null,
     cancha: row.cancha != null ? String(row.cancha) : null,
+    lugar: row.lugar != null ? String(row.lugar) : null,
+    mostrar_lugar:
+      row.mostrar_lugar == null ? true : Boolean(row.mostrar_lugar),
     programado_en: row.programado_en ? String(row.programado_en) : null,
     programado_hasta: row.programado_hasta ? String(row.programado_hasta) : null,
     estado: row.estado as Duelo2v2["estado"],
@@ -160,33 +173,64 @@ export async function createDuelo2v2OpenDraft(
     throw new Error("El nombre del encuentro es obligatorio.");
   }
 
-  const { data, error } = await supabase
+  const insertBase = {
+    organizador_id: uid,
+    nombre,
+    descripcion: input.descripcion?.trim() || null,
+    cancha: input.cancha?.trim() || null,
+    programado_en: input.programado_en ?? null,
+    programado_hasta: input.programado_hasta ?? null,
+    estado: "configuracion" as const,
+    pareja_a_j1_id: null,
+    pareja_a_j2_id: null,
+    pareja_a_j1_nombre: "",
+    pareja_a_j2_nombre: "",
+    pareja_b_j1_id: null,
+    pareja_b_j2_id: null,
+    pareja_b_j1_nombre: "",
+    pareja_b_j2_nombre: "",
+    sets_pareja_a: 0,
+    sets_pareja_b: 0,
+    detalle_sets: [],
+  };
+
+  const lugarTrim = input.lugar?.trim() || null;
+  const mostrarLugar = input.mostrar_lugar !== false;
+  const insertWithLugar = {
+    ...insertBase,
+    ...(lugarTrim != null ? { lugar: lugarTrim } : {}),
+    mostrar_lugar: mostrarLugar,
+  };
+
+  let { data, error } = await supabase
     .from("duelos_2v2")
-    .insert({
-      organizador_id: uid,
-      nombre,
-      descripcion: input.descripcion?.trim() || null,
-      cancha: input.cancha?.trim() || null,
-      programado_en: input.programado_en ?? null,
-      programado_hasta: input.programado_hasta ?? null,
-      estado: "configuracion",
-      pareja_a_j1_id: null,
-      pareja_a_j2_id: null,
-      pareja_a_j1_nombre: "",
-      pareja_a_j2_nombre: "",
-      pareja_b_j1_id: null,
-      pareja_b_j2_id: null,
-      pareja_b_j1_nombre: "",
-      pareja_b_j2_nombre: "",
-      sets_pareja_a: 0,
-      sets_pareja_b: 0,
-      detalle_sets: [],
-    })
+    .insert(insertWithLugar)
     .select()
     .single();
 
+  if (error && isLugarColumnMissing(error)) {
+    const fallback = await supabase
+      .from("duelos_2v2")
+      .insert(insertBase)
+      .select()
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+  }
+
   if (error) throw new Error(formatDueloDbError(error));
-  return mapDuelo(data as Record<string, unknown>);
+  const mapped = mapDuelo(data as Record<string, unknown>);
+  if (lugarTrim || input.mostrar_lugar !== undefined) {
+    writeDueloLugarPrefs(mapped.id, {
+      lugar: lugarTrim ?? "",
+      mostrarLugar,
+    });
+  }
+  return {
+    ...mapped,
+    lugar: lugarTrim ?? mapped.lugar,
+    mostrar_lugar: mostrarLugar,
+  };
 }
 
 /**
@@ -211,6 +255,8 @@ export async function ensureDuelo2v2OpenDraft(opts: {
       return updateDuelo2v2Details(current.id, {
         nombre: opts.input.nombre,
         cancha: opts.input.cancha,
+        lugar: opts.input.lugar,
+        mostrar_lugar: opts.input.mostrar_lugar,
         programado_en: opts.input.programado_en ?? null,
         programado_hasta: opts.input.programado_hasta ?? null,
       });
@@ -350,21 +396,67 @@ export async function updateDuelo2v2Details(
     throw new Error("El nombre del encuentro es obligatorio.");
   }
 
-  const { data, error } = await supabase
+  const basePayload = {
+    nombre,
+    cancha: input.cancha?.trim() || null,
+    programado_en: input.programado_en ?? null,
+    programado_hasta: input.programado_hasta ?? null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const wantsLugar =
+    input.lugar !== undefined || input.mostrar_lugar !== undefined;
+  const lugarValue =
+    input.lugar !== undefined ? input.lugar?.trim() || null : undefined;
+  const mostrarLugarValue =
+    input.mostrar_lugar !== undefined ? input.mostrar_lugar !== false : undefined;
+
+  const fullPayload = wantsLugar
+    ? {
+        ...basePayload,
+        ...(lugarValue !== undefined ? { lugar: lugarValue } : {}),
+        ...(mostrarLugarValue !== undefined
+          ? { mostrar_lugar: mostrarLugarValue }
+          : {}),
+      }
+    : basePayload;
+
+  let { data, error } = await supabase
     .from("duelos_2v2")
-    .update({
-      nombre,
-      cancha: input.cancha?.trim() || null,
-      programado_en: input.programado_en ?? null,
-      programado_hasta: input.programado_hasta ?? null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(fullPayload)
     .eq("id", id)
     .select()
     .single();
 
+  if (error && wantsLugar && isLugarColumnMissing(error)) {
+    const fallback = await supabase
+      .from("duelos_2v2")
+      .update(basePayload)
+      .eq("id", id)
+      .select()
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+  }
+
   if (error) throw new Error(formatDueloDbError(error));
-  return mapDuelo(data as Record<string, unknown>);
+
+  const mapped = mapDuelo(data as Record<string, unknown>);
+  if (wantsLugar) {
+    writeDueloLugarPrefs(id, {
+      lugar: lugarValue ?? mapped.lugar ?? "",
+      mostrarLugar: mostrarLugarValue ?? mapped.mostrar_lugar !== false,
+    });
+    return {
+      ...mapped,
+      lugar: lugarValue !== undefined ? lugarValue : mapped.lugar,
+      mostrar_lugar:
+        mostrarLugarValue !== undefined
+          ? mostrarLugarValue
+          : mapped.mostrar_lugar,
+    };
+  }
+  return mapped;
 }
 
 export async function updateDuelo2v2Score(

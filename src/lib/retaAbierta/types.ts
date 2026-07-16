@@ -125,6 +125,11 @@ export interface ConvocatoriaAdapterContext {
   defaultCapacity: number;
   /** Lugar / sede (no la cancha). Se guarda en location_label. */
   defaultLocation?: string;
+  /**
+   * Si false, el mensaje WhatsApp omite la línea de lugar
+   * (clubes con sede fija / comunidad = sede). Default true.
+   */
+  includeLugar?: boolean;
   /** Número o etiqueta de cancha (separado del lugar). */
   defaultCancha?: string;
   defaultCategory?: string;

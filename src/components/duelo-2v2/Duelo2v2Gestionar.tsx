@@ -21,6 +21,7 @@ import {
   markDuelo2v2PendingDraft,
   peekDuelo2v2CreateDraft,
 } from "../../lib/duelo2v2/duelo2v2CreateDraft";
+import { resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
 import {
   finalizarDuelo2v2,
   getDuelo2v2ById,
@@ -50,15 +51,6 @@ import "./duelo2v2-page.css";
 
 interface Duelo2v2GestionarProps {
   dueloId: string;
-}
-
-function readDueloLugarSession(dueloId: string): string | null {
-  try {
-    const v = sessionStorage.getItem(`duelo-2v2-lugar:${dueloId}`)?.trim();
-    return v || null;
-  } catch {
-    return null;
-  }
 }
 
 export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
@@ -225,8 +217,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     duelo.pareja_b_j2_nombre
   );
   const finalizado = duelo.estado === "finalizado";
-  const lugarConvocatoria =
-    readDueloLugarSession(duelo.id) || convocatoriaOrigin;
+  const lugarResolved = resolveDueloLugarForShare(duelo, convocatoriaOrigin);
+  const lugarConvocatoria = lugarResolved.lugar || convocatoriaOrigin;
+  const includeLugar = lugarResolved.includeLugar;
 
   const dueloStatus = resolveDueloStatusLabel({ finalizado });
   const dueloNextAction = resolveDueloNextAction({
@@ -339,6 +332,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 dueloId: duelo.id,
                 name: duelo.nombre,
                 locationLabel: lugarConvocatoria,
+                includeLugar,
                 canchaLabel: duelo.cancha ?? undefined,
                 scheduledAt: duelo.programado_en,
                 scheduledUntil: duelo.programado_hasta,
@@ -435,6 +429,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           dueloId: duelo.id,
           name: duelo.nombre,
           locationLabel: lugarConvocatoria,
+          includeLugar,
           canchaLabel: duelo.cancha ?? undefined,
           scheduledAt: duelo.programado_en,
           scheduledUntil: duelo.programado_hasta,

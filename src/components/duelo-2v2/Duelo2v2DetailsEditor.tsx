@@ -9,7 +9,12 @@ import {
   dueloScheduleDraftFromDuelo,
   resolveDueloScheduleFromDraft,
 } from "../../lib/duelo2v2/schedule";
+import {
+  readDueloLugarPrefs,
+  writeDueloLugarPrefs,
+} from "../../lib/duelo2v2/dueloLugarPrefs";
 import { updateDuelo2v2Details } from "../../services/duelo2v2Service";
+import { useConvocatoriaOriginName } from "../../club-experience";
 import { Button } from "../ui";
 
 interface Duelo2v2DetailsEditorProps {
@@ -25,8 +30,11 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
   onSaved,
   onError,
 }) => {
+  const convocatoriaOrigin = useConvocatoriaOriginName();
   const [open, setOpen] = useState(false);
   const [nombre, setNombre] = useState(duelo.nombre);
+  const [mostrarLugar, setMostrarLugar] = useState(true);
+  const [lugar, setLugar] = useState("");
   const [cancha, setCancha] = useState(
     dueloCanchaDraftFromDuelo(duelo) || CANCHA_DEFAULT_VALUE
   );
@@ -38,16 +46,31 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
 
   useEffect(() => {
     const schedule = dueloScheduleDraftFromDuelo(duelo);
+    const prefs = readDueloLugarPrefs(duelo.id);
     setNombre(duelo.nombre);
     setCancha(dueloCanchaDraftFromDuelo(duelo) || CANCHA_DEFAULT_VALUE);
     setDraftDate(schedule.date);
     setDraftTimeStart(schedule.timeStart);
     setDraftTimeEnd(schedule.timeEnd);
+    const nextMostrar =
+      duelo.mostrar_lugar != null
+        ? duelo.mostrar_lugar !== false
+        : prefs
+          ? prefs.mostrarLugar !== false
+          : true;
+    setMostrarLugar(nextMostrar);
+    setLugar(
+      (duelo.lugar?.trim() ||
+        prefs?.lugar ||
+        convocatoriaOrigin ||
+        "").trim()
+    );
     setLocalError(null);
-  }, [duelo]);
+  }, [duelo, convocatoriaOrigin]);
 
   const canSave =
     nombre.trim().length > 0 &&
+    (!mostrarLugar || lugar.trim().length > 0) &&
     cancha.trim().length > 0 &&
     draftDate.trim().length > 0 &&
     draftTimeStart.trim().length > 0 &&
@@ -73,9 +96,16 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
     setBusy(true);
     setLocalError(null);
     try {
+      const lugarTrim = lugar.trim();
+      writeDueloLugarPrefs(duelo.id, {
+        lugar: lugarTrim,
+        mostrarLugar,
+      });
       const updated = await updateDuelo2v2Details(duelo.id, {
         nombre: nombre.trim(),
         cancha: normalizeCanchaForSave(cancha),
+        lugar: lugarTrim || null,
+        mostrar_lugar: mostrarLugar,
         programado_en: schedule.programado_en,
         programado_hasta: schedule.programado_hasta,
       });
@@ -107,9 +137,14 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
       </div>
 
       {open ? (
-        <form className="duelo2v2-form duelo2v2-details-editor__form" onSubmit={(e) => void handleSave(e)}>
+        <form
+          className="duelo2v2-form duelo2v2-details-editor__form"
+          onSubmit={(e) => void handleSave(e)}
+        >
           <div className="duelo2v2-form__name-row">
-            <label htmlFor={`duelo-edit-nombre-${duelo.id}`}>Nombre del encuentro</label>
+            <label htmlFor={`duelo-edit-nombre-${duelo.id}`}>
+              Nombre del encuentro
+            </label>
             <input
               id={`duelo-edit-nombre-${duelo.id}`}
               type="text"
@@ -117,6 +152,33 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
               onChange={(e) => setNombre(e.target.value)}
               required
             />
+          </div>
+
+          <div className="duelo2v2-form__lugar-block">
+            <label className="duelo2v2-form__toggle">
+              <input
+                type="checkbox"
+                checked={mostrarLugar}
+                onChange={(e) => setMostrarLugar(e.target.checked)}
+              />
+              <span>Incluir lugar en la convocatoria</span>
+            </label>
+            {mostrarLugar ? (
+              <label className="duelo2v2-form__field">
+                <span className="duelo2v2-form__field-label">Lugar</span>
+                <input
+                  type="text"
+                  value={lugar}
+                  onChange={(e) => setLugar(e.target.value)}
+                  placeholder="Ej. Hack Pádel, Padelito…"
+                  required
+                />
+              </label>
+            ) : (
+              <p className="duelo2v2-form__hint">
+                Ideal si tu club siempre juega en la misma sede.
+              </p>
+            )}
           </div>
 
           <div className="duelo2v2-form__schedule-row">

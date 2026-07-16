@@ -300,6 +300,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       publicUrl: url,
       clubName,
       canchaLabel: canchaLabel.trim() || context.defaultCancha || null,
+      includeLugar: context.includeLugar !== false,
       displayFullName,
       productHeadline: context.productHeadline,
     });
@@ -628,6 +629,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 value={locationLabel}
                 onChange={(e) => setLocationLabel(e.target.value)}
                 placeholder="Ej. Club Hack Pádel"
+                disabled={context.includeLugar === false}
               />
             </label>
             <label>

@@ -5,6 +5,7 @@ import {
   clearDuelo2v2CreateSession,
   markDuelo2v2PendingDraft,
 } from "../../lib/duelo2v2/duelo2v2CreateDraft";
+import { writeDueloLugarPrefs } from "../../lib/duelo2v2/dueloLugarPrefs";
 import {
   CANCHA_DEFAULT_VALUE,
 } from "../../lib/torneoExpress/canchaDisplay";
@@ -40,6 +41,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
   }, []);
 
   const [nombre, setNombre] = useState("");
+  const [mostrarLugar, setMostrarLugar] = useState(true);
   const [lugar, setLugar] = useState(convocatoriaOrigin);
   const [cancha, setCancha] = useState(CANCHA_DEFAULT_VALUE);
   const [categoria, setCategoria] = useState("");
@@ -56,7 +58,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
 
   const canSubmit =
     nombre.trim().length > 0 &&
-    lugar.trim().length > 0 &&
+    (!mostrarLugar || lugar.trim().length > 0) &&
     cancha.trim().length > 0 &&
     draftDate.trim().length > 0 &&
     draftTimeStart.trim().length > 0 &&
@@ -124,6 +126,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
     setPendingDueloId(null);
     setPendingLabel(null);
     setNombre("");
+    setMostrarLugar(true);
     setLugar(convocatoriaOrigin);
     setCancha(CANCHA_DEFAULT_VALUE);
     setCategoria("");
@@ -146,6 +149,8 @@ export const Duelo2v2Nuevo: React.FC = () => {
           organizadorId: user.id,
           nombre,
           cancha,
+          lugar: mostrarLugar ? lugar : "",
+          mostrarLugar,
           draftDate,
           draftTimeStart,
           draftTimeEnd,
@@ -164,15 +169,10 @@ export const Duelo2v2Nuevo: React.FC = () => {
               draftTimeStart,
               draftTimeEnd,
             });
-            // Persiste lugar en session para Gestionar → convocatoria.
-            try {
-              sessionStorage.setItem(
-                `duelo-2v2-lugar:${duelo.id}`,
-                lugar.trim()
-              );
-            } catch {
-              /* ignore */
-            }
+            writeDueloLugarPrefs(duelo.id, {
+              lugar: lugar.trim(),
+              mostrarLugar,
+            });
           },
         }
       );
@@ -256,17 +256,34 @@ export const Duelo2v2Nuevo: React.FC = () => {
               />
             </div>
 
-            <div className="duelo2v2-form__schedule-row">
-              <label className="duelo2v2-form__field">
-                <span className="duelo2v2-form__field-label">Lugar</span>
+            <div className="duelo2v2-form__lugar-block">
+              <label className="duelo2v2-form__toggle">
                 <input
-                  type="text"
-                  value={lugar}
-                  onChange={(e) => setLugar(e.target.value)}
-                  placeholder="Ej. Club Hack Pádel"
-                  required
+                  type="checkbox"
+                  checked={mostrarLugar}
+                  onChange={(e) => setMostrarLugar(e.target.checked)}
                 />
+                <span>Incluir lugar en la convocatoria</span>
               </label>
+              {mostrarLugar ? (
+                <label className="duelo2v2-form__field">
+                  <span className="duelo2v2-form__field-label">Lugar</span>
+                  <input
+                    type="text"
+                    value={lugar}
+                    onChange={(e) => setLugar(e.target.value)}
+                    placeholder="Ej. Hack Pádel, Padelito…"
+                    required
+                  />
+                </label>
+              ) : (
+                <p className="duelo2v2-form__hint">
+                  Ideal si tu club siempre juega en la misma sede.
+                </p>
+              )}
+            </div>
+
+            <div className="duelo2v2-form__schedule-row">
               <label className="duelo2v2-form__field">
                 <span className="duelo2v2-form__field-label">Cancha</span>
                 <input

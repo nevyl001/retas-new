@@ -68,7 +68,7 @@ export function formatScheduledLabel(
 }
 
 /**
- * Una sola línea compacta para WhatsApp (estilo Riviera, sin emojis):
+ * Una sola línea compacta:
  * "jueves 16/7/2026, 5:00 p.m. · 120 min"
  */
 export function formatScheduledLabelCompact(
@@ -94,6 +94,9 @@ export function formatScheduledLabelCompact(
   return base;
 }
 
+export const RIVIERA_WHATSAPP_MOTTO =
+  "🎾 Todos los juegos cuentan: suman a tu ranking.";
+
 function displayNameForShare(nombre: string, displayFullName: boolean): string {
   const t = nombre.trim();
   if (displayFullName || !t) return t || "Jugador";
@@ -112,9 +115,8 @@ function resolveHeadline(
 }
 
 /**
- * Mensaje WhatsApp Riviera: corto, claro, propio.
- * Horario + lugar + cancha + jugadores + link + Riviera ID.
- * ASCII-safe (✓ / ○), sin emojis de otros productos.
+ * Mensaje WhatsApp Riviera: compacto, propio.
+ * Emojis discretos · lugar opcional · Riviera ID · motto.
  */
 export function buildRetaAbiertaWhatsAppMessage(opts: {
   dto: Pick<
@@ -134,13 +136,15 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   >;
   publicUrl: string;
   clubName: string;
-  /** Número o etiqueta de cancha (separado del lugar). */
   canchaLabel?: string | null;
+  /** Si false, omite la línea de lugar (clubes con sede fija). Default true. */
+  includeLugar?: boolean;
   displayFullName?: boolean;
   productHeadline?: string;
 }): string {
   const { dto, publicUrl } = opts;
   const displayFullName = opts.displayFullName !== false;
+  const includeLugar = opts.includeLugar !== false;
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline);
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
@@ -150,22 +154,20 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     clubName: opts.clubName,
   });
 
-  const lines: string[] = [headline, ""];
+  const lines: string[] = [headline];
 
   lines.push(
-    formatScheduledLabelCompact(dto.scheduled_at, dto.duration_minutes)
+    `🗓️ ${formatScheduledLabelCompact(dto.scheduled_at, dto.duration_minutes)}`
   );
 
-  if (lugar) lines.push(`Lugar: ${lugar}`);
-  if (cancha) lines.push(cancha);
+  if (includeLugar && lugar) lines.push(`📍 ${lugar}`);
+  if (cancha) lines.push(`🎾 ${cancha}`);
 
   if (dto.rama_label?.trim()) lines.push(dto.rama_label.trim());
   if (dto.category_label?.trim()) {
     const cat = dto.category_label.trim();
     lines.push(cat.toLowerCase().startsWith("nivel") ? cat : `Nivel ${cat}`);
   }
-
-  lines.push("");
 
   if (mode === "americano") {
     lines.push(
@@ -186,10 +188,9 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     }
   }
 
-  lines.push("");
   lines.push(publicUrl);
-  lines.push("");
   lines.push("Solo necesitas tu Riviera ID.");
+  lines.push(RIVIERA_WHATSAPP_MOTTO);
 
   return lines.join("\n");
 }

@@ -8,6 +8,8 @@ export type SaveNewDueloFormInput = {
   organizadorId: string;
   nombre: string;
   cancha: string;
+  lugar?: string;
+  mostrarLugar?: boolean;
   draftDate: string;
   draftTimeStart: string;
   draftTimeEnd: string;
@@ -53,6 +55,8 @@ export async function saveNewDuelo2v2(
   const duelo = await deps.createDuelo2v2OpenDraft({
     nombre,
     cancha: normalizeCanchaForSave(form.cancha),
+    lugar: form.lugar?.trim() || undefined,
+    mostrar_lugar: form.mostrarLugar !== false,
     programado_en: schedule.programado_en,
     programado_hasta: schedule.programado_hasta,
   });

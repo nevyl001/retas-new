@@ -13,6 +13,10 @@ export interface Duelo2v2 {
   nombre: string;
   descripcion: string | null;
   cancha: string | null;
+  /** Sede donde se juega (puede diferir del nombre del club/comunidad). */
+  lugar?: string | null;
+  /** Si false, la convocatoria omite la línea de lugar. */
+  mostrar_lugar?: boolean | null;
   programado_en: string | null;
   programado_hasta: string | null;
   estado: Duelo2v2Estado;
@@ -39,6 +43,8 @@ export interface CreateDuelo2v2DraftInput {
   nombre: string;
   descripcion?: string;
   cancha?: string;
+  lugar?: string;
+  mostrar_lugar?: boolean;
   programado_en?: string | null;
   programado_hasta?: string | null;
 }
@@ -66,6 +72,8 @@ export interface UpdateDuelo2v2ScoreInput {
 export interface UpdateDuelo2v2DetailsInput {
   nombre: string;
   cancha?: string;
+  lugar?: string | null;
+  mostrar_lugar?: boolean;
   programado_en?: string | null;
   programado_hasta?: string | null;
 }

@@ -111,6 +111,38 @@
   max-width: 720px;
 }
 
+.duelo2v2-form__lugar-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-width: 520px;
+  margin-bottom: 0.15rem;
+}
+
+.duelo2v2-form__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  user-select: none;
+}
+
+.duelo2v2-form__toggle input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #fff;
+}
+
+.duelo2v2-form__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 @media (max-width: 900px) {
   .duelo2v2-form__schedule-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -336,7 +368,10 @@
 }
 
 .duelo2v2-details-editor__form {
-  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
 }
 
 .duelo2v2-details-editor__actions {
