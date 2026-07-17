@@ -162,6 +162,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             type="number"
             min={15}
             max={480}
+            step={15}
             className="home-sheet__input riviera-input"
             value={values.duration_minutes}
             disabled={durEd.locked}
