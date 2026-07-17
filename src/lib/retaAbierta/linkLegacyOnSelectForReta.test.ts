@@ -542,7 +542,7 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
 
     await expect(
       linkLegacyOnSelectForReta(org, rjId, deps)
-    ).rejects.toMatchObject({ code: "legacy_link_unverifiable" });
+    ).rejects.toMatchObject({ code: "RIVIERA_LEGACY_NOT_VERIFIABLE" });
     expect(insertCount).toBe(0);
     expect(linkCount).toBe(0);
   });
@@ -844,7 +844,7 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
 
     await expect(
       linkLegacyOnSelectForReta(org, localId, deps)
-    ).rejects.toMatchObject({ code: "legacy_link_unverifiable" });
+    ).rejects.toMatchObject({ code: "RIVIERA_LEGACY_NOT_VERIFIABLE" });
     expect(insertCount).toBe(0);
     expect(linkCount).toBe(0);
   });

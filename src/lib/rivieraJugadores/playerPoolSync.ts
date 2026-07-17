@@ -2,7 +2,6 @@ import { waitForSupabaseSession } from "../waitForSupabaseSession";
 import { debugLog } from "../debug/debugLog";
 import type { Player } from "../db/types";
 import { isValidUuid, sanitizeUuid } from "../db/schemaHelpers";
-import { insertLegacyPlayer } from "../database";
 import { supabase } from "../supabaseClient";
 import {
   groupLigaJugadoresByName,
@@ -12,7 +11,6 @@ import type { LigaJugador } from "../liga/types";
 import {
   getRivieraJugadorByLegacyPlayerId,
   linkLegacyLigaJugadorId,
-  linkLegacyPlayerId,
   listRivieraJugadores,
 } from "./rivieraJugadoresService";
 import type { RivieraJugador } from "./types";
@@ -21,6 +19,11 @@ import {
   isGrantedJugadorRow,
   resolveJugadorIdForOrganizer,
 } from "./organizerPlayerAccess";
+import {
+  LegacyLinkUnverifiableError,
+  assertResolvedLocalProfileSafe,
+  ensureLocalPlayersLegacyForRivieraJugador,
+} from "./localLegacyIdentity";
 
 const SYNC_TTL_MS = 45_000;
 const lastLegacySyncAt: Record<string, number> = {};
@@ -67,90 +70,6 @@ async function fetchPlayersByIds(ids: string[]): Promise<Map<string, Player>> {
     byId.set(row.id, row);
   }
   return byId;
-}
-
-function pickBestLegacyMatch(
-  candidates: Player[],
-  organizadorId: string,
-  rj: RivieraJugador
-): Player | null {
-  if (!candidates.length) return null;
-
-  const nameKey = normalizeName(rj.nombre);
-  let pool = candidates.filter((p) => normalizeName(p.name) === nameKey);
-  if (!pool.length) return null;
-
-  if (isRealEmail(rj.email)) {
-    const emailKey = rj.email!.trim().toLowerCase();
-    const byEmail = pool.filter(
-      (p) => p.email?.trim().toLowerCase() === emailKey
-    );
-    if (byEmail.length) pool = byEmail;
-  }
-
-  const scored = pool.map((p) => {
-    const row = p as Player & { user_id?: string | null };
-    let score = 0;
-    if (rj.legacy_player_id && p.id === rj.legacy_player_id) score += 100;
-    if (row.user_id === organizadorId) score += 50;
-    return { p, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  return scored[0]?.p ?? null;
-}
-
-function legacyMatchesRivieraName(legacy: Player, rj: RivieraJugador): boolean {
-  return normalizeName(legacy.name) === normalizeName(rj.nombre);
-}
-
-async function searchLegacyPlayersForOrganizer(
-  nombre: string,
-  organizadorId: string
-): Promise<Player[]> {
-  const trimmed = nombre.trim();
-  if (!trimmed) return [];
-
-  const { data, error } = await supabase
-    .from("players")
-    .select("*")
-    .eq("user_id", organizadorId)
-    .ilike("name", trimmed);
-
-  if (error) {
-    console.warn("searchLegacyPlayersForOrganizer:", error);
-    return [];
-  }
-
-  const key = normalizeName(trimmed);
-  return ((data ?? []) as Player[]).filter(
-    (p) => normalizeName(p.name) === key
-  );
-}
-
-async function findLegacyPlayerForRiviera(
-  organizadorId: string,
-  rj: RivieraJugador
-): Promise<Player | null> {
-  if (rj.legacy_player_id) {
-    const linked = await fetchPlayerById(rj.legacy_player_id);
-    if (linked) {
-      const row = linked as Player & { user_id?: string | null };
-      if (!row.user_id || row.user_id === organizadorId) {
-        return linked;
-      }
-    }
-  }
-
-  const orgScoped = await searchLegacyPlayersForOrganizer(
-    rj.nombre,
-    organizadorId
-  );
-  const orgMatch = pickBestLegacyMatch(orgScoped, organizadorId, rj);
-  if (orgMatch && legacyMatchesRivieraName(orgMatch, rj)) {
-    return orgMatch;
-  }
-
-  return null;
 }
 
 type LegacyPlayerContact = Player & {
@@ -229,12 +148,8 @@ function shouldSkipBulkLegacyEnsure(row: RivieraJugador): boolean {
 }
 
 /**
- * Pool para retas/torneos: solo jugadores ya enlazados desde el registro
- * (`legacy_player_id`). No inserta filas en `players` — eso ocurre en
- * JugadoresLista al crear un jugador nuevo.
- *
- * Cedidos con clon local: `ensure_granted_player_local` no copia legacy_player_id;
- * aquí se enlaza antes de armar el pool para round robin / retas por equipos.
+ * Pool para Americano / Torneo Express / retas: jugadores enlazados desde el registro.
+ * Ensure local fail-closed (sin matching por nombre). Homónimos no se fusionan.
  */
 export async function buildLegacyPlayersFromRivieraRegistry(
   organizadorId: string
@@ -254,7 +169,6 @@ export async function buildLegacyPlayersFromRivieraRegistry(
 
   const registry = await listRivieraJugadores(organizadorId);
 
-  // Lecturas puras en batch; ensure/creación sigue secuencial (identidad / linking).
   const linkedIds = registry
     .map((row) => row.legacy_player_id?.trim())
     .filter((id): id is string => Boolean(id));
@@ -269,88 +183,81 @@ export async function buildLegacyPlayersFromRivieraRegistry(
 
     if (canonical.legacy_player_id) {
       legacy = playersById.get(canonical.legacy_player_id) ?? null;
+      if (!legacy) {
+        // Legacy definido pero no visible: no crear duplicado (fail-closed por fila).
+        continue;
+      }
+      const owner = (legacy as Player & { user_id?: string | null }).user_id;
+      if (owner && owner !== organizadorId) continue;
     } else if (isGrantedJugadorRow(row)) {
       continue;
     } else {
-      // Efectos secundarios (insert/link): secuencial para evitar carreras.
-      legacy = await ensureLegacyPlayerForRivieraJugador(organizadorId, canonical);
-      if (legacy) {
+      try {
+        const ensured = await ensureLocalPlayersLegacyForRivieraJugador(
+          organizadorId,
+          canonical.id,
+          canonical
+        );
+        legacy = ensured.player;
         canonical = { ...canonical, legacy_player_id: legacy.id };
         playersById.set(legacy.id, legacy);
+      } catch (e) {
+        console.warn(
+          "[riviera-jugadores] buildLegacyPlayers ensure skip:",
+          canonical.id,
+          e
+        );
+        continue;
       }
     }
 
-    if (!legacy || !legacyMatchesRivieraName(legacy, canonical)) continue;
+    if (!legacy) continue;
     if (seenLegacyIds.has(legacy.id)) continue;
     seenLegacyIds.add(legacy.id);
 
     pending.push({ canonical, legacy });
   }
 
-  // Contact merge puede escribir, pero cada legacy.id es único aquí → paralelo OK.
   const out = await Promise.all(
     pending.map(({ canonical, legacy }) =>
       applyRivieraContactToLegacyPlayer(canonical, legacy)
     )
   );
 
-  const { dedupeLegacyPlayersByName } = await import("../database");
-  const deduped = dedupeLegacyPlayersByName(out);
+  // Dedupe solo por players.id — nunca por nombre (homónimos).
+  const byId = new Map<string, Player>();
+  for (const p of out) byId.set(p.id, p);
+  const deduped = Array.from(byId.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, "es")
+  );
   setCachedLegacyPlayersPool(organizadorId, deduped);
   return deduped;
 }
 
-/** Crea o enlaza un registro en `players` para un jugador del ecosistema Riviera. */
+/**
+ * Crea o reutiliza `players` para el perfil LOCAL del organizador.
+ * Fail-closed si legacy no verificable o cross-org. Sin matching por nombre.
+ */
 export async function ensureLegacyPlayerForRivieraJugador(
   organizadorId: string,
   rj: RivieraJugador
 ): Promise<Player | null> {
   try {
-    const effectiveId = await resolveJugadorIdForOrganizer(
+    const result = await ensureLocalPlayersLegacyForRivieraJugador(
       organizadorId,
-      rj.id
+      rj.id,
+      rj
     );
-    let effectiveRj = rj;
-    if (effectiveId !== rj.id) {
-      const { data, error: fetchErr } = await supabase
-        .from("riviera_jugadores")
-        .select("*")
-        .eq("id", effectiveId)
-        .maybeSingle();
-      if (!fetchErr && data) {
-        effectiveRj = data as RivieraJugador;
-      }
-    }
-
-    const existing = await findLegacyPlayerForRiviera(organizadorId, effectiveRj);
-    if (existing) {
-      if (effectiveRj.legacy_player_id !== existing.id) {
-        await linkLegacyPlayerId(effectiveRj.id, existing.id);
-      }
-      if (!legacyMatchesRivieraName(existing, effectiveRj)) {
-        const nombre = effectiveRj.nombre.trim();
-        const { error: nameErr } = await supabase
-          .from("players")
-          .update({ name: nombre })
-          .eq("id", existing.id);
-        if (nameErr) {
-          console.warn("ensureLegacyPlayerForRivieraJugador rename:", nameErr);
-        }
-        const refreshed = (await fetchPlayerById(existing.id)) ?? {
-          ...existing,
-          name: nombre,
-        };
-        return applyRivieraContactToLegacyPlayer(effectiveRj, refreshed);
-      }
-      return applyRivieraContactToLegacyPlayer(effectiveRj, existing);
-    }
-
-    const created = await insertLegacyPlayer(effectiveRj.nombre, organizadorId, {
-      email: isRealEmail(effectiveRj.email) ? effectiveRj.email : null,
-    });
-    await linkLegacyPlayerId(effectiveRj.id, created.id);
-    return applyRivieraContactToLegacyPlayer(effectiveRj, created);
+    return result.player;
   } catch (e) {
+    if (e instanceof LegacyLinkUnverifiableError) {
+      console.warn(
+        "ensureLegacyPlayerForRivieraJugador fail-closed:",
+        e.code,
+        rj.id
+      );
+      throw e;
+    }
     console.warn("ensureLegacyPlayerForRivieraJugador:", rj.nombre, e);
     return null;
   }
@@ -382,7 +289,15 @@ export async function syncLegacyPlayersFromRivieraRegistry(
   });
   for (const rj of registry) {
     if (shouldSkipBulkLegacyEnsure(rj)) continue;
-    await ensureLegacyPlayerForRivieraJugador(organizadorId, rj);
+    try {
+      await ensureLegacyPlayerForRivieraJugador(organizadorId, rj);
+    } catch (e) {
+      console.warn(
+        "[riviera-jugadores] syncLegacyPlayers skip:",
+        rj.id,
+        e instanceof LegacyLinkUnverifiableError ? e.code : e
+      );
+    }
   }
   lastLegacySyncAt[organizadorId] = now;
 }
@@ -420,31 +335,30 @@ async function loadActiveLigaJugadoresRows(
   return (data ?? []) as LigaJugador[];
 }
 
+/**
+ * Solo por `legacy_liga_jugador_id` explícito.
+ * Prohibido matching por nombre/email (Fase 3).
+ */
 async function findLigaJugadorForRiviera(
   organizadorId: string,
   rj: RivieraJugador,
-  activePool?: LigaJugador[]
+  _activePool?: LigaJugador[]
 ): Promise<LigaJugador | null> {
   const legacyLigaId = sanitizeUuid(rj.legacy_liga_jugador_id);
-  if (legacyLigaId) {
-    const linked = await fetchLigaJugadorById(legacyLigaId, organizadorId);
-    if (linked && linked.estado === "activo") return linked;
-  }
+  if (!legacyLigaId) return null;
 
-  const pool = activePool ?? (await loadActiveLigaJugadoresRows(organizadorId));
-  const nameKey = normalizeName(rj.nombre);
-
-  if (isRealEmail(rj.email)) {
-    const byEmail = pool.find(
-      (j) => j.email?.trim().toLowerCase() === rj.email!.trim().toLowerCase()
+  const linked = await fetchLigaJugadorById(legacyLigaId, organizadorId);
+  if (linked && linked.estado === "activo") return linked;
+  if (rj.legacy_liga_jugador_id?.trim()) {
+    throw new LegacyLinkUnverifiableError(
+      "No pudimos verificar el vínculo local de liga de este jugador. No se realizó ningún cambio.",
+      "RIVIERA_LEGACY_NOT_VERIFIABLE"
     );
-    if (byEmail) return byEmail;
   }
-
-  return pool.find((j) => normalizeName(j.nombre) === nameKey) ?? null;
+  return null;
 }
 
-/** Crea o enlaza un registro en `liga_jugadores` para el mismo perfil Riviera. */
+/** Crea o enlaza `liga_jugadores` para el perfil LOCAL. Sin matching por nombre. */
 export async function ensureLigaJugadorForRivieraJugador(
   organizadorId: string,
   rj: RivieraJugador,
@@ -469,6 +383,8 @@ export async function ensureLigaJugadorForRivieraJugador(
       }
     }
 
+    assertResolvedLocalProfileSafe(effectiveRj, effectiveId, organizadorId);
+
     const existing = await findLigaJugadorForRiviera(
       organizadorId,
       effectiveRj,
@@ -485,8 +401,13 @@ export async function ensureLigaJugadorForRivieraJugador(
           .from("liga_jugadores")
           .update({
             nombre,
-            telefono: effectiveRj.telefono?.trim() || effectiveRj.whatsapp?.trim() || null,
-            ...(isRealEmail(effectiveRj.email) ? { email: effectiveRj.email!.trim() } : {}),
+            telefono:
+              effectiveRj.telefono?.trim() ||
+              effectiveRj.whatsapp?.trim() ||
+              null,
+            ...(isRealEmail(effectiveRj.email)
+              ? { email: effectiveRj.email!.trim() }
+              : {}),
           })
           .eq("id", existing.id)
           .eq("organizador_id", organizadorId)
@@ -497,33 +418,17 @@ export async function ensureLigaJugadorForRivieraJugador(
       return existing;
     }
 
-    const nameKey = normalizeName(effectiveRj.nombre);
-    if (nameKey) {
-      const pool =
-        activePool ?? (await loadActiveLigaJugadoresRows(organizadorId));
-      const sameName = pool.filter(
-        (j) => normalizeName(j.nombre) === nameKey
-      );
-      if (sameName.length > 0) {
-        const canonicalId = await pickCanonicalLigaJugadorId(
-          organizadorId,
-          sameName
-        );
-        const linked = sameName.find((j) => j.id === canonicalId) ?? sameName[0]!;
-        await linkLegacyLigaJugadorId(effectiveRj.id, linked.id);
-        if (activePool && !activePool.some((j) => j.id === linked.id)) {
-          activePool.push(linked);
-        }
-        return linked;
-      }
-    }
-
     const { data: row, error } = await supabase
       .from("liga_jugadores")
       .insert({
         nombre: effectiveRj.nombre.trim(),
-        email: isRealEmail(effectiveRj.email) ? effectiveRj.email!.trim() : null,
-        telefono: effectiveRj.telefono?.trim() || effectiveRj.whatsapp?.trim() || null,
+        email: isRealEmail(effectiveRj.email)
+          ? effectiveRj.email!.trim()
+          : null,
+        telefono:
+          effectiveRj.telefono?.trim() ||
+          effectiveRj.whatsapp?.trim() ||
+          null,
         genero: effectiveRj.genero ?? null,
         nivel: null,
         organizador_id: organizadorId,
@@ -538,6 +443,7 @@ export async function ensureLigaJugadorForRivieraJugador(
     if (activePool) activePool.push(created);
     return created;
   } catch (e) {
+    if (e instanceof LegacyLinkUnverifiableError) throw e;
     console.warn("ensureLigaJugadorForRivieraJugador:", rj.nombre, e);
     return null;
   }

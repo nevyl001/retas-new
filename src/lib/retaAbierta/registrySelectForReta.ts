@@ -83,7 +83,7 @@ export function messageForRegistryLegacyLinkFailure(err: unknown): string {
   if (err instanceof Error && err.message.trim()) {
     return err.message;
   }
-  return "No se pudo vincular al pool de retas. No se modificó ningún vínculo.";
+  return "No pudimos verificar el vínculo local de este jugador. No se realizó ningún cambio.";
 }
 
 /**

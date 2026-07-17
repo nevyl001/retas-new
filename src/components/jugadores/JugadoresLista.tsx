@@ -416,10 +416,14 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             .maybeSingle();
           if (localRow) {
             const local = localRow as RivieraJugadorWithStats;
-            await Promise.all([
-              ensureLegacyPlayerForRivieraJugador(user.id, local),
-              ensureLigaJugadorForRivieraJugador(user.id, local),
-            ]);
+            try {
+              await Promise.all([
+                ensureLegacyPlayerForRivieraJugador(user.id, local),
+                ensureLigaJugadorForRivieraJugador(user.id, local),
+              ]);
+            } catch (e) {
+              console.warn("[jugadores] ensure legacy fail-closed:", e);
+            }
           }
           await syncLegacyPlayersFromRivieraRegistry(user.id);
           await load();
@@ -433,10 +437,14 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
         onSubmit={async (data) => {
           if (!user?.id) return;
           const created = await createRivieraJugador(user.id, data);
-          await Promise.all([
-            ensureLegacyPlayerForRivieraJugador(user.id, created),
-            ensureLigaJugadorForRivieraJugador(user.id, created),
-          ]);
+          try {
+            await Promise.all([
+              ensureLegacyPlayerForRivieraJugador(user.id, created),
+              ensureLigaJugadorForRivieraJugador(user.id, created),
+            ]);
+          } catch (e) {
+            console.warn("[jugadores] ensure legacy fail-closed:", e);
+          }
           await load();
         }}
       />
