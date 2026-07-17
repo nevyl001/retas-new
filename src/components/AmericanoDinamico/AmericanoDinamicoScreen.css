@@ -16,6 +16,28 @@
   max-width: min(1280px, 100%);
 }
 
+@media (max-width: 899px) {
+  .americano-screen:has(.qm-ws) {
+    padding: 12px var(--ro-mobile-page-padding, 16px)
+      calc(40px + var(--ro-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+
+  .americano-registration--workspace .americano-registration__db-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .americano-registration--workspace .americano-registration__db-item,
+  .americano-registration--workspace .americano-btn {
+    min-height: 44px;
+  }
+
+  .americano-registration--workspace .americano-registration__start input {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+
 .americano-screen__loading {
   padding: 2rem;
   text-align: center;

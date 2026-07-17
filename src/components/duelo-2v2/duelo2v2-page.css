@@ -92,6 +92,32 @@
   max-width: none;
 }
 
+@media (max-width: 899px) {
+  .duelo2v2-nuevo .duelo2v2-toolbar,
+  .duelo2v2-gestionar .duelo2v2-toolbar {
+    margin-bottom: 0.65rem;
+  }
+
+  .duelo2v2-form--workspace .duelo2v2-form__schedule-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .duelo2v2-form--workspace input,
+  .duelo2v2-form--workspace select {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .duelo2v2-equipos-panel {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
 .duelo2v2-form__name-row label {
   display: block;
   font-size: 0.85rem;

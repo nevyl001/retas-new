@@ -1,5 +1,5 @@
 /* =============================================================================
-   Quick Mode Workspace — preparación Round Robin (2 columnas)
+   Quick Mode Workspace — mobile-first, luego desktop 2 columnas
    Tokens: --brand-* / --ro-* / --rv-*  |  Sin dorado
    ============================================================================= */
 
@@ -8,22 +8,26 @@
   max-width: min(1280px, 100%);
   margin-inline: auto;
   box-sizing: border-box;
-  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  /* Espacio para CTA sticky + nav inferior de la app */
+  padding-bottom: calc(
+    5.75rem + var(--mobile-app-navigation-height, 0px) +
+      env(safe-area-inset-bottom, 0px)
+  );
 }
 
-@media (min-width: 768px) {
+@media (min-width: 900px) {
   .qm-ws {
     padding-bottom: var(--ro-space-4, 16px);
   }
 }
 
-/* —— Event header: 3 zonas —— */
+/* —— Event header: mobile stack → desktop 3 zonas —— */
 .qm-event-header {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--ro-space-3, 12px);
-  padding: var(--ro-space-3, 12px) 0;
-  margin-bottom: var(--ro-space-3, 12px);
+  gap: 0.65rem;
+  padding: 0.35rem 0 0.75rem;
+  margin-bottom: 0.65rem;
   border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
 }
 
@@ -33,28 +37,35 @@
     align-items: center;
     gap: var(--ro-space-4, 16px) var(--ro-space-5, 20px);
     padding: 0.65rem 0 0.85rem;
+    margin-bottom: var(--ro-space-3, 12px);
   }
 }
 
 .qm-event-header__club {
   margin: 0 0 0.1rem;
   font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-small, 0.8125rem);
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--brand-accent, var(--ro-accent, #fff));
+}
+
+@media (min-width: 900px) {
+  .qm-event-header__club {
+    font-size: var(--ro-text-small, 0.8125rem);
+  }
 }
 
 .qm-event-header__title-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.45rem 0.65rem;
+  gap: 0.35rem 0.5rem;
 }
 
 .qm-event-header__title {
   margin: 0;
   font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
-  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  font-size: clamp(1.1rem, 4.2vw, 1.5rem);
   font-weight: var(--brand-heading-weight, 700);
   letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
   line-height: 1.15;
@@ -87,14 +98,31 @@
 .qm-event-header__center,
 .qm-event-header__right-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem 1.15rem;
+  flex-wrap: nowrap;
+  gap: 0.55rem 0.85rem;
   margin: 0;
-  padding: 0;
+  padding: 0.15rem 0;
   list-style: none;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.qm-event-header__center::-webkit-scrollbar,
+.qm-event-header__right-meta::-webkit-scrollbar {
+  display: none;
 }
 
 @media (min-width: 900px) {
+  .qm-event-header__center,
+  .qm-event-header__right-meta {
+    flex-wrap: wrap;
+    overflow: visible;
+    padding: 0;
+    gap: 0.65rem 1.15rem;
+  }
+
   .qm-event-header__center {
     justify-content: center;
   }
@@ -177,42 +205,69 @@
   min-width: 0;
 }
 
-/* —— Stepper —— */
+/* —— Stepper (scroll horizontal en móvil) —— */
 .qm-stepper {
   margin: 0;
+  margin-inline: -0.15rem;
 }
 
 .qm-stepper__list {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
   margin: 0;
-  padding: 0;
+  padding: 0.1rem 0.15rem 0.35rem;
   list-style: none;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.qm-stepper__list::-webkit-scrollbar {
+  display: none;
 }
 
 .qm-stepper__item {
-  flex: 1 0 auto;
-  min-width: 7.25rem;
+  flex: 0 0 auto;
+  min-width: 5.75rem;
+  max-width: 9.5rem;
+  scroll-snap-align: center;
+}
+
+@media (min-width: 640px) {
+  .qm-stepper__item {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+  }
 }
 
 .qm-stepper__btn {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto auto;
-  column-gap: 0.5rem;
-  row-gap: 0.08rem;
+  column-gap: 0.4rem;
+  row-gap: 0.05rem;
   width: 100%;
-  min-height: var(--ro-touch-target-min, 44px);
-  padding: 0.5rem 0.6rem;
+  min-height: 48px;
+  padding: 0.45rem 0.55rem;
   border: 1px solid var(--ro-border, #2a2a2a);
   border-radius: var(--ro-radius-md, 10px);
   background: var(--ro-bg-card, #111);
   color: inherit;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (min-width: 900px) {
+  .qm-stepper__btn {
+    min-height: var(--ro-touch-target-min, 44px);
+    padding: 0.5rem 0.6rem;
+    column-gap: 0.5rem;
+  }
 }
 
 .qm-stepper__btn.is-active {
@@ -264,6 +319,22 @@
   font-size: 0.65rem;
   font-weight: 600;
   color: var(--ro-text-muted, #7a7a7a);
+}
+
+/* En móvil el estado “Pendiente/Activo” satura; basta label + count */
+@media (max-width: 899px) {
+  .qm-stepper__state {
+    display: none;
+  }
+
+  .qm-stepper__btn {
+    grid-template-rows: auto;
+    align-items: center;
+  }
+
+  .qm-stepper__index {
+    grid-row: auto;
+  }
 }
 
 .qm-stepper__btn.is-active .qm-stepper__state {
@@ -539,6 +610,9 @@
 @media (max-width: 899px) {
   .qm-ws__summary-toggle {
     display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    padding: 0.35rem 0.5rem;
   }
 
   .qm-ws__sidebar {
@@ -547,11 +621,22 @@
 
   .qm-ws.is-summary-open .qm-ws__sidebar {
     display: block;
+    order: -1;
+    margin-bottom: 0.35rem;
   }
 
   .qm-ws__body {
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .qm-ws__workbench {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .qm-ws__workbench-title {
+    font-size: 1.05rem;
   }
 
   .qm-ws__sticky-cta {
@@ -559,17 +644,29 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    /* Encima de la bottom nav de la app cuando existe */
+    bottom: var(--mobile-app-navigation-height, 0px);
     z-index: var(--ro-z-sticky, 50);
-    padding: 0.65rem var(--ro-mobile-page-padding, 16px)
-      calc(0.65rem + env(safe-area-inset-bottom, 0px));
-    background: color-mix(in srgb, var(--ro-bg-base, #000) 92%, transparent);
+    padding: 0.55rem var(--ro-mobile-page-padding, 16px)
+      calc(0.55rem + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--ro-bg-base, #000) 94%, transparent);
     border-top: 1px solid var(--ro-border, #2a2a2a);
+    backdrop-filter: blur(10px);
   }
 
   .qm-ws__sticky-cta .qm-primary-cta--sidebar {
-    max-width: 28rem;
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .qm-ws__sticky-cta .qm-primary-cta__btn {
+    min-height: 52px;
+    font-size: 1rem;
+  }
+
+  .qm-ws__sticky-cta .qm-primary-cta__hint {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
   }
 
   .qm-ws-panel__cta-desktop {
@@ -582,6 +679,20 @@
 
   .qm-event-header__right {
     order: 3;
+  }
+
+  .qm-event-header__right .qm-event-header__edit {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Inputs táctiles: evita zoom iOS */
+  .qm-ws input,
+  .qm-ws select,
+  .qm-ws textarea {
+    font-size: 16px;
+    min-height: 44px;
   }
 }
 

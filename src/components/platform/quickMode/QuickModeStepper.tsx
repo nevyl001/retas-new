@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 export type QuickModeStepStatus = "complete" | "active" | "pending";
 
@@ -16,23 +16,40 @@ export type QuickModeStepperProps = {
   className?: string;
 };
 
-/** Navegación de flujo de preparación (no tabs genéricas). */
+/** Navegación de flujo de preparación (no tabs genéricas). Mobile-first. */
 export function QuickModeStepper({
   steps,
   activeId,
   onChange,
   className = "",
 }: QuickModeStepperProps) {
+  const listRef = useRef<HTMLOListElement>(null);
+  const activeRef = useRef<HTMLLIElement>(null);
+
+  useEffect(() => {
+    const el = activeRef.current;
+    if (!el) return;
+    el.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [activeId]);
+
   return (
     <nav
       className={`qm-stepper ${className}`.trim()}
       aria-label="Progreso de preparación"
     >
-      <ol className="qm-stepper__list">
+      <ol ref={listRef} className="qm-stepper__list">
         {steps.map((step, index) => {
           const active = step.id === activeId;
           return (
-            <li key={step.id} className="qm-stepper__item">
+            <li
+              key={step.id}
+              ref={active ? activeRef : undefined}
+              className="qm-stepper__item"
+            >
               <button
                 type="button"
                 className={[

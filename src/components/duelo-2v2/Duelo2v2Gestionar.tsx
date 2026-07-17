@@ -4,15 +4,9 @@ import {
   useClubModeEyebrow,
   useConvocatoriaOriginName,
 } from "../../club-experience";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import type { Duelo2v2, Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
-import { useMobileViewport } from "../../hooks/useMobileViewport";
-import {
-  resolveDueloNextAction,
-  resolveDueloStatusLabel,
-  resolveDueloSummary,
-  type DueloMobileTabId,
-} from "../../lib/modePresentation/dueloNextAction";
+import { resolveDueloStatusLabel } from "../../lib/modePresentation/dueloNextAction";
 import { fetchDuelo2v2RatingBySlot } from "../../lib/duelo2v2/duelo2v2RatingDisplay";
 import { ensureDuelo2v2RatingApplied } from "../../lib/duelo2v2/duelo2v2RatingApply";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
@@ -30,12 +24,6 @@ import {
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
-import {
-  ModeEventHeader,
-  ModeSectionPanel,
-  ModeSectionTabs,
-  MobileStickyActionFooter,
-} from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import {
   QuickModeEventHeader,
@@ -51,7 +39,6 @@ import { buildDueloConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import { Duelo2v2DetailsEditor } from "./Duelo2v2DetailsEditor";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { Duelo2v2ScoreEditor } from "./Duelo2v2ScoreEditor";
-import { Duelo2v2MatchMeta } from "./Duelo2v2MatchMeta";
 import { navigateDuelo2v2, publicDuelo2v2Url } from "./duelo2v2Nav";
 import "../../styles/riviera-public-celebrate.css";
 import "./duelo2v2-page.css";
@@ -87,21 +74,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const [ratingByJugadorId, setRatingByJugadorId] = useState<
     Record<string, RatingMovimientoPartido>
   >({});
-  const isMobile = useMobileViewport(767);
-  const [mobileTab, setMobileTab] = useState<DueloMobileTabId>("resumen");
   const [step, setStep] = useState<GestionarStepId>("control");
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [convTouched, setConvTouched] = useState(false);
-
-  const dueloTabs = useMemo(
-    () => [
-      { id: "resumen", label: "Resumen" },
-      { id: "equipos", label: "Equipos" },
-      { id: "partidos", label: "Partidos" },
-      { id: "resultado", label: "Resultado" },
-    ],
-    []
-  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -150,15 +125,18 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     load();
   }, [load]);
 
+  const loadedDueloId = duelo?.id ?? null;
+  const loadedEstado = duelo?.estado ?? null;
+
   useEffect(() => {
-    if (!duelo || duelo.estado === "finalizado") return;
-    if (duelo.estado === "configuracion") {
+    if (!loadedDueloId || !loadedEstado || loadedEstado === "finalizado") return;
+    if (loadedEstado === "configuracion") {
       setStep("convocatoria");
       setConvTouched(false);
     } else {
       setStep("control");
     }
-  }, [duelo?.id, duelo?.estado]);
+  }, [loadedDueloId, loadedEstado]);
 
   const handleSaveScore = async (detalle: Duelo2v2SetDetalle[]) => {
     setBusy(true);
@@ -254,19 +232,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const includeLugar = lugarResolved.includeLugar;
 
   const dueloStatus = resolveDueloStatusLabel({ finalizado });
-  const dueloNextAction = resolveDueloNextAction({
-    finalizado,
-    hasGanador: Boolean(duelo.ganador),
-  });
-  const dueloSummary = resolveDueloSummary({
-    teamAName,
-    teamBName,
-    setsA: duelo.sets_pareja_a,
-    setsB: duelo.sets_pareja_b,
-    finalizado,
-  });
-  const stickyActionLabel =
-    isMobile && !finalizado && duelo.ganador ? "Finalizar duelo" : null;
 
   const equiposPanel = (
     <div className="duelo2v2-equipos-panel">
@@ -315,124 +280,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
         El resultado aparecerá cuando finalices el duelo.
       </p>
     );
-
-  if (isMobile) {
-    return (
-      <Duelo2v2PageShell
-        wide
-        className={`duelo2v2-gestionar${
-          stickyActionLabel ? " has-mobile-sticky-action" : ""
-        }`}
-      >
-        <ActionBar className="duelo2v2-toolbar riviera-back-toolbar">
-          <Button
-            type="button"
-            variant="back"
-            onClick={() => navigateDuelo2v2("/duelo-2v2")}
-          >
-            ← Mis duelos
-          </Button>
-        </ActionBar>
-
-        <div className="mode-mobile-shell mode-mobile-shell--tabbed duelo2v2-mobile-shell">
-          <ModeEventHeader
-            eyebrow={modeEyebrow}
-            title={duelo.nombre}
-            modality="Duelo 2 vs 2"
-            statusLabel={dueloStatus.label}
-            statusVariant={dueloStatus.variant}
-            summary={dueloSummary}
-            nextActionLabel={dueloNextAction?.label}
-            onNextAction={
-              dueloNextAction
-                ? () => setMobileTab(dueloNextAction.tabId)
-                : undefined
-            }
-          />
-          <ModeSectionTabs
-            tabs={dueloTabs}
-            activeId={mobileTab}
-            onChange={(id) => setMobileTab(id as DueloMobileTabId)}
-            ariaLabel="Secciones del duelo"
-          />
-
-          <ModeSectionPanel id="resumen" activeId={mobileTab}>
-            <Duelo2v2MatchMeta duelo={duelo} clubName={convocatoriaOrigin} />
-            <ConvocatoriaWhatsAppPanel
-              shareOnly
-              context={buildDueloConvocatoriaContext({
-                dueloId: duelo.id,
-                name: duelo.nombre,
-                locationLabel: lugarConvocatoria,
-                includeLugar,
-                canchaLabel: duelo.cancha ?? undefined,
-                scheduledAt: duelo.programado_en,
-                scheduledUntil: duelo.programado_hasta,
-                clubName: convocatoriaOrigin,
-              })}
-            />
-            <PublicShareSection
-              publicUrl={publicDuelo2v2Url(dueloId)}
-              title="Enlace público"
-              infoLines={[
-                "Comparte el enlace para ver el marcador del duelo (solo lectura).",
-              ]}
-              copyButtonLabel="Copiar vista pública"
-            />
-            <Duelo2v2DetailsEditor
-              duelo={duelo}
-              disabled={busy}
-              onSaved={(updated) => {
-                setDuelo(updated);
-                setMessage("Datos del encuentro actualizados.");
-                setError(null);
-              }}
-              onError={setError}
-            />
-          </ModeSectionPanel>
-
-          <ModeSectionPanel id="equipos" activeId={mobileTab}>
-            {equiposPanel}
-          </ModeSectionPanel>
-
-          <ModeSectionPanel id="partidos" activeId={mobileTab}>
-            {!finalizado ? (
-              <Duelo2v2ScoreEditor
-                key={editorKey}
-                teamAName={teamAName}
-                teamBName={teamBName}
-                initialDetalle={duelo.detalle_sets}
-                disabled={busy}
-                onSave={handleSaveScore}
-              />
-            ) : (
-              <p className="duelo2v2-message">Duelo finalizado.</p>
-            )}
-          </ModeSectionPanel>
-
-          <ModeSectionPanel id="resultado" activeId={mobileTab}>
-            {resultadoPanel}
-          </ModeSectionPanel>
-
-          {error && <p className="duelo2v2-error">{error}</p>}
-          {message && <p className="duelo2v2-message">{message}</p>}
-
-          {stickyActionLabel ? (
-            <MobileStickyActionFooter>
-              <Button
-                type="button"
-                variant="primary"
-                disabled={busy || !duelo.ganador}
-                onClick={() => void handleFinalizar()}
-              >
-                {stickyActionLabel}
-              </Button>
-            </MobileStickyActionFooter>
-          ) : null}
-        </div>
-      </Duelo2v2PageShell>
-    );
-  }
 
   return (
     <Duelo2v2PageShell wide className="duelo2v2-gestionar">
