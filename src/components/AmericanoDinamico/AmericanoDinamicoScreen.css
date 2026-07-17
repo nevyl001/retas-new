@@ -11,6 +11,11 @@
   box-sizing: border-box;
 }
 
+/* Prep workspace: misma caja que Round Robin (~1280) */
+.americano-screen:has(.qm-ws) {
+  max-width: min(1280px, 100%);
+}
+
 .americano-screen__loading {
   padding: 2rem;
   text-align: center;

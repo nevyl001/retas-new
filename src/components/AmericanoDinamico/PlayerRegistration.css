@@ -3,6 +3,25 @@
   gap: clamp(14px, 3.6vw, 18px);
 }
 
+.americano-registration--workspace {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
+.americano-registration__selected-title {
+  margin: 1rem 0 0.5rem;
+  font-size: var(--ro-text-label, 0.6875rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted, var(--color-text-secondary, #b8b8b8));
+}
+
+.americano-registration__conv {
+  min-width: 0;
+}
+
 .americano-registration .card {
   border: 0.5px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.08));
   border-radius: var(--ro-radius-lg, 14px);

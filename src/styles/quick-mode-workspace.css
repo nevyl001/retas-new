@@ -314,6 +314,16 @@
   border-bottom: 1px solid var(--ro-border-subtle, #1a1a1a);
 }
 
+.qm-ws__equipos-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.qm-ws__teams-org {
+  margin: 0;
+}
+
 .qm-ws__convocatoria .ra-org {
   margin: 0;
   max-width: none;

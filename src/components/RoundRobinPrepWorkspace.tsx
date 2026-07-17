@@ -9,13 +9,17 @@ import {
   listOpenRegistrationEntries,
 } from "../lib/retaAbierta/retaAbiertaService";
 import type { Match, Pair, Player, Tournament } from "../lib/database";
-import { getStartFormatLabel } from "../lib/gameModeMapping";
+import {
+  getStartFormatLabel,
+  resolveTournamentStartFormat,
+  type StartTournamentFormat,
+} from "../lib/gameModeMapping";
 import { ModernPlayerManager } from "./ModernPlayerManager";
 import { NewPairManager } from "./NewPairManager";
 import { RetaConfigPanel } from "./reta/RetaConfigPanel";
 import { RetaAbiertaOrganizerPanel } from "./reta-abierta/RetaAbiertaOrganizerPanel";
 import { RetaConfigDangerReset } from "./TournamentStatusContent";
-import { Modal } from "./ui";
+import { Card, Input, Modal } from "./ui";
 import {
   QuickModeEventHeader,
   QuickModePrepWorkspace,
@@ -30,6 +34,13 @@ export type RoundRobinPrepStepId =
   | "equipos"
   | "convocatoria"
   | "listo";
+
+type StartOpts = {
+  format: StartTournamentFormat;
+  teamsCount?: number;
+  teamNames?: string[];
+  pairToTeam?: Record<string, number>;
+};
 
 type Props = {
   tournament: Tournament;
@@ -47,7 +58,7 @@ type Props = {
   loadTournamentData: () => void;
   setForceRefresh: React.Dispatch<React.SetStateAction<number>>;
   onTournamentPatched?: (tournament: Tournament) => void;
-  onStartTournament: (opts: { format: "roundRobin" }) => void;
+  onStartTournament: (opts: StartOpts) => void;
   onReset: () => void | Promise<void>;
 };
 
@@ -101,7 +112,7 @@ function convStatusLabel(status: string | undefined): string {
 }
 
 /**
- * Workspace de preparación Round Robin (desktop 2-col + mobile stack).
+ * Workspace de preparación compartido: Round Robin + Reta por Equipos.
  * Solo UI; misma lógica de parejas / start / convocatoria.
  */
 export const RoundRobinPrepWorkspace: React.FC<Props> = ({
@@ -126,11 +137,19 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
   const club = useClubModeEyebrow();
   const { user } = useUser();
   const { validatePlayerSelection } = usePlayerValidation();
+  const format = useMemo(
+    () => resolveTournamentStartFormat(tournament),
+    [tournament]
+  );
+  const isTeams = format === "teams";
   const [step, setStep] = useState<RoundRobinPrepStepId>("jugadores");
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [convLine, setConvLine] = useState("Sin abrir · —");
   const [convTouched, setConvTouched] = useState(false);
+  const [teamsCount, setTeamsCount] = useState(2);
+  const [teamNames, setTeamNames] = useState<string[]>(["Equipo 1", "Equipo 2"]);
+  const [pairToTeam, setPairToTeam] = useState<Record<string, number>>({});
 
   const organizerId =
     userIdProp?.trim() ||
@@ -184,6 +203,45 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
     [pairs]
   );
 
+  const safeTeams = useMemo(
+    () =>
+      isTeams && teamsCount >= 2
+        ? Math.min(teamsCount, Math.max(2, pairs.length))
+        : 2,
+    [isTeams, teamsCount, pairs.length]
+  );
+
+  useEffect(() => {
+    if (!isTeams || teamsCount < 2 || pairs.length === 0) return;
+    const n = Math.min(teamsCount, pairs.length);
+    setTeamNames((prev) => {
+      const next = [...prev.slice(0, n)];
+      while (next.length < n) next.push(`Equipo ${next.length + 1}`);
+      return next;
+    });
+    const sortedPairs = [...pairs].sort((a, b) => a.id.localeCompare(b.id));
+    const next: Record<string, number> = {};
+    sortedPairs.forEach((p, idx) => {
+      next[p.id] = idx % n;
+    });
+    setPairToTeam(next);
+  }, [isTeams, teamsCount, pairs]);
+
+  const teamsPreview = useMemo(() => {
+    if (!isTeams || safeTeams < 2 || pairs.length < 2) return null;
+    const teams: Array<{ teamIndex: number; pairs: Pair[] }> = Array.from(
+      { length: safeTeams },
+      (_, i) => ({ teamIndex: i, pairs: [] })
+    );
+    pairs.forEach((p) => {
+      const teamIdx = pairToTeam[p.id] ?? 0;
+      if (teamIdx >= 0 && teamIdx < teams.length) {
+        teams[teamIdx].pairs.push(p);
+      }
+    });
+    return teams;
+  }, [isTeams, pairs, pairToTeam, safeTeams]);
+
   const handlePlayerSelect = (players: Player[]) => {
     validatePlayerSelection(
       players,
@@ -204,15 +262,20 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
 
   const jugadoresOk = playerPool.length > 0 || playersInPairs.length > 0;
   const equiposOk = pairs.length >= 2;
+  const isTeamsConfigValid =
+    !isTeams || (teamsCount >= 2 && teamsCount <= pairs.length);
   const canchasOk = (tournament.courts ?? 0) >= 1;
   const datosOk = Boolean(tournament.programado_en);
-  const canStart = !loading && equiposOk && !tournament.is_started;
+  const canStart =
+    !loading && equiposOk && isTeamsConfigValid && !tournament.is_started;
 
   const ctaHint = !equiposOk
     ? pairs.length === 1
       ? "Falta 1 pareja más"
       : "Faltan al menos 2 parejas"
-    : null;
+    : isTeams && !isTeamsConfigValid
+      ? "Revisa la organización de equipos"
+      : null;
 
   const goConvocatoria = () => {
     setStep("convocatoria");
@@ -269,13 +332,82 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
         isCreatingPair={isCreatingPair}
       />
     ) : step === "equipos" ? (
-      <NewPairManager
-        pairs={pairs}
-        onPairUpdate={updatePairPlayers}
-        onPairDelete={deletePair}
-        players={playerPool}
-        loading={playerPoolLoading}
-      />
+      <div className="qm-ws__equipos-stack">
+        <NewPairManager
+          pairs={pairs}
+          onPairUpdate={updatePairPlayers}
+          onPairDelete={deletePair}
+          players={playerPool}
+          loading={playerPoolLoading}
+        />
+        {isTeams && pairs.length >= 2 ? (
+          <Card variant="elevated" className="start-tournament-section__teams qm-ws__teams-org">
+            <p className="riviera-label">Organiza tus equipos</p>
+            <div className="start-tournament-section__teams-toolbar">
+              <Input
+                type="number"
+                label="Número de equipos"
+                className="start-tournament-section__teams-count"
+                min={2}
+                max={Math.max(2, pairs.length)}
+                value={teamsCount}
+                onChange={(e) =>
+                  setTeamsCount(parseInt(e.target.value || "2", 10))
+                }
+                disabled={loading}
+              />
+            </div>
+            {teamsPreview?.map((t) => (
+              <div
+                key={t.teamIndex}
+                className="start-tournament-section__team-block"
+              >
+                <Input
+                  type="text"
+                  value={teamNames[t.teamIndex] ?? `Equipo ${t.teamIndex + 1}`}
+                  onChange={(e) => {
+                    const next = [...teamNames];
+                    next[t.teamIndex] =
+                      e.target.value || `Equipo ${t.teamIndex + 1}`;
+                    setTeamNames(next);
+                  }}
+                  disabled={loading}
+                />
+                <div className="start-tournament-section__pair-list">
+                  {t.pairs.map((p) => (
+                    <div
+                      key={p.id}
+                      className="start-tournament-section__pair-row"
+                    >
+                      <span>
+                        {p.player1_name} / {p.player2_name}
+                      </span>
+                      <select
+                        className="riviera-input start-tournament-section__pair-move"
+                        value={pairToTeam[p.id] ?? t.teamIndex}
+                        onChange={(e) => {
+                          setPairToTeam((prev) => ({
+                            ...prev,
+                            [p.id]: parseInt(e.target.value, 10),
+                          }));
+                        }}
+                        disabled={loading}
+                      >
+                        {teamsPreview.map((other) => (
+                          <option key={other.teamIndex} value={other.teamIndex}>
+                            {teamNames[other.teamIndex] ??
+                              `Equipo ${other.teamIndex + 1}`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </Card>
+        ) : null}
+      </div>
     ) : step === "convocatoria" ? (
       <div className="qm-ws__convocatoria">
         <RetaAbiertaOrganizerPanel tournament={tournament} />
@@ -380,7 +512,13 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
     disabled: !canStart,
     loading,
     hint: ctaHint,
-    onClick: () => onStartTournament({ format: "roundRobin" as const }),
+    onClick: () =>
+      onStartTournament({
+        format,
+        teamsCount: isTeams ? teamsCount : undefined,
+        teamNames: isTeams ? teamNames : undefined,
+        pairToTeam: isTeams ? pairToTeam : undefined,
+      }),
   };
 
   const sidebarPanel = (
@@ -429,8 +567,11 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
         header={
           <QuickModeEventHeader
             club={club}
-            title={tournament.name?.trim() || "Round Robin"}
-            modality={getStartFormatLabel("roundRobin")}
+            title={
+              tournament.name?.trim() ||
+              (isTeams ? "Reta por Equipos" : "Round Robin")
+            }
+            modality={getStartFormatLabel(format)}
             statusLabel="Pendiente"
             centerMetrics={[
               { label: "Jugadores", value: playerPool.length },

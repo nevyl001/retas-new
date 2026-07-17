@@ -105,9 +105,10 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
 }) => {
   const teamConfig = useResolvedTeamConfig(selectedTournament, pairs);
 
-  const isRoundRobinPrep =
+  const isRetaQuickPrep =
     !selectedTournament.is_started &&
-    resolveTournamentStartFormat(selectedTournament) === "roundRobin";
+    (resolveTournamentStartFormat(selectedTournament) === "roundRobin" ||
+      resolveTournamentStartFormat(selectedTournament) === "teams");
 
   const [americanoSnapshot, setAmericanoSnapshot] =
     React.useState<AmericanoDinamicoSnapshotV1 | null>(null);
@@ -209,7 +210,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
         <p className="qm-competition__banner">Competencia en curso</p>
       ) : null}
 
-      {isRoundRobinPrep ? (
+      {isRetaQuickPrep ? (
         <RoundRobinPrepWorkspace
           tournament={selectedTournament}
           pairs={pairs}

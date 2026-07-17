@@ -159,11 +159,12 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
     return <>{desktopContent}</>;
   }
 
-  const isRoundRobinPrep =
+  const isRetaQuickPrep =
     !selectedTournament.is_started &&
-    resolveTournamentStartFormat(selectedTournament) === "roundRobin";
+    (resolveTournamentStartFormat(selectedTournament) === "roundRobin" ||
+      resolveTournamentStartFormat(selectedTournament) === "teams");
 
-  if (isRoundRobinPrep) {
+  if (isRetaQuickPrep) {
     return (
       <RoundRobinPrepWorkspace
         tournament={selectedTournament}
