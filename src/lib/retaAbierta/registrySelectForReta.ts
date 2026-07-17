@@ -4,6 +4,11 @@
  * No crea players ni legacy links.
  */
 
+import {
+  LegacyLinkUnverifiableError,
+  type LegacyLinkErrorCode,
+} from "./linkLegacyOnSelectForReta";
+
 export type RegistrySelectHint = {
   /** Mensaje para el admin (sin “créalo” si ya está en el registro). */
   message: string;
@@ -65,4 +70,42 @@ export function findPoolPlayerByLegacyId<T extends { id: string }>(
   const id = legacyPlayerId?.trim();
   if (!id) return undefined;
   return pool.find((p) => p.id === id);
+}
+
+/**
+ * Mensaje al organizador tras fallo de linkLegacyOnSelectForReta.
+ * Prioriza LegacyLinkUnverifiableError / códigos cross-org. Sin fallback por nombre.
+ */
+export function messageForRegistryLegacyLinkFailure(err: unknown): string {
+  if (err instanceof LegacyLinkUnverifiableError) {
+    return err.message;
+  }
+  if (err instanceof Error && err.message.trim()) {
+    return err.message;
+  }
+  return "No se pudo vincular al pool de retas. No se modificó ningún vínculo.";
+}
+
+/**
+ * Contrato de la capa UI tras un error de vínculo legacy.
+ * Garantiza: no continuar selección, no crear player, no buscar por nombre, sí limpiar loading.
+ */
+export function registryLegacyLinkUiAfterError(err: unknown): {
+  selectPlayer: false;
+  createPlayerFallback: false;
+  nameLookupFallback: false;
+  clearLoading: true;
+  hint: string;
+  errorCode: LegacyLinkErrorCode | null;
+} {
+  const errorCode =
+    err instanceof LegacyLinkUnverifiableError ? err.code : null;
+  return {
+    selectPlayer: false,
+    createPlayerFallback: false,
+    nameLookupFallback: false,
+    clearLoading: true,
+    hint: messageForRegistryLegacyLinkFailure(err),
+    errorCode,
+  };
 }

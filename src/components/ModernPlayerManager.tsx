@@ -2,10 +2,9 @@ import React, { useState, useMemo } from "react";
 import { getPlayers, type Player } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
 import type { RivieraJugador } from "../lib/rivieraJugadores/types";
-import { isGrantedJugadorRow } from "../lib/rivieraJugadores/organizerPlayerAccess";
 import {
   findPoolPlayerByLegacyId,
-  hintWhenRegistryPlayerMissingFromRetaPool,
+  messageForRegistryLegacyLinkFailure,
 } from "../lib/retaAbierta/registrySelectForReta";
 import { linkLegacyOnSelectForReta } from "../lib/retaAbierta/linkLegacyOnSelectForReta";
 import { shouldShowPlayerPoolLoading } from "../hooks/organizerPlayerPoolLogic";
@@ -147,9 +146,9 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
     }
 
     const rivieraLabel = rj.riviera_id?.trim() || rj.id;
-    // Sin fila en pool: vincular o reparar puntero huérfano (acción explícita).
+    // Sin fila en pool: crear/reutilizar players legacy del club (perfil operativo local).
     const ok = window.confirm(
-      `¿Agregar a ${rj.nombre} (${rivieraLabel}) al pool de retas de este club?\n\nSe usará su ficha Riviera existente (sin crear identidad nueva).`
+      `¿Agregar el perfil operativo de ${rj.nombre} (${rivieraLabel}) al pool de retas de este club?\n\nSe usará su ficha Riviera del club (sin crear identidad nueva ni tocar el perfil de origen).`
     );
     if (!ok) return;
 
@@ -164,18 +163,12 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
         setRegistrySearch("");
         setRegistryHint(
           linked.created
-            ? "Agregado al pool de retas."
-            : "Jugador ya vinculado — pool actualizado."
+            ? "Agregado al pool de retas de este club."
+            : "Jugador ya vinculado al pool de este club."
         );
       } catch (err) {
-        const hint = hintWhenRegistryPlayerMissingFromRetaPool({
-          rivieraJugadorId: rj.id,
-          legacyPlayerId: rj.legacy_player_id,
-          isGranted: isGrantedJugadorRow(rj),
-        });
-        setRegistryHint(
-          err instanceof Error ? err.message : hint.message
-        );
+        // Fail-closed: no seleccionar, no crear por nombre, mensaje al organizador.
+        setRegistryHint(messageForRegistryLegacyLinkFailure(err));
       } finally {
         setLinkingLegacy(false);
       }
