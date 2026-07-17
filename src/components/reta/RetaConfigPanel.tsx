@@ -151,6 +151,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
         onChange={setValues}
         disabled={saving || !champReady}
         showChampionship={tournament.format !== "teams"}
+        layout="essentials"
       />
       {error ? (
         <p className="elegant-form-hint" role="alert">

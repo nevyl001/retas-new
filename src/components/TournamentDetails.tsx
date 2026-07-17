@@ -11,6 +11,7 @@ import { TournamentWinner } from "../lib/tournamentWinner";
 import type { TeamWinnerCelebrateStats } from "../lib/teamWinnerCelebrate";
 import FourComponentsGrid from "./FourComponentsGrid";
 import StartTournamentSection from "./StartTournamentSection";
+import RoundRobinPrepWorkspace from "./RoundRobinPrepWorkspace";
 import PublicLinkSection from "./PublicLinkSection";
 import { RetaAbiertaOrganizerPanel } from "./reta-abierta/RetaAbiertaOrganizerPanel";
 import PairsDisplay from "./PairsDisplay";
@@ -18,6 +19,7 @@ import { useResolvedTeamConfig } from "../hooks/useResolvedTeamConfig";
 import MatchesSection from "./MatchesSection";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
 import { RetaMobileOrganizerLayout } from "./reta/RetaMobileOrganizerLayout";
+import { resolveTournamentStartFormat } from "../lib/gameModeMapping";
 
 interface TournamentDetailsProps {
   selectedTournament: Tournament;
@@ -102,6 +104,10 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   onBackToHome,
 }) => {
   const teamConfig = useResolvedTeamConfig(selectedTournament, pairs);
+
+  const isRoundRobinPrep =
+    !selectedTournament.is_started &&
+    resolveTournamentStartFormat(selectedTournament) === "roundRobin";
 
   const [americanoSnapshot, setAmericanoSnapshot] =
     React.useState<AmericanoDinamicoSnapshotV1 | null>(null);
@@ -192,53 +198,89 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       americanoSnapshot={americanoSnapshot}
       americanoRemoteLoading={americanoRemoteLoading}
       desktopContent={
-    <div className="tournament-details">
-      {/* Sección para iniciar torneo */}
-      <StartTournamentSection
-        tournament={selectedTournament}
-        pairs={pairs}
-        loading={loading}
-        onStartTournament={onStartTournament}
-      />
+    <div
+      className={
+        selectedTournament.is_started
+          ? "tournament-details qm-competition"
+          : "tournament-details"
+      }
+    >
+      {selectedTournament.is_started ? (
+        <p className="qm-competition__banner">Competencia en curso</p>
+      ) : null}
 
-      {/* Cuadrícula de 4 Componentes Uniformes */}
-      <FourComponentsGrid
-        selectedTournament={selectedTournament}
-        pairs={pairs}
-        matches={matches}
-        showPlayerManager={showPlayerManager}
-        setShowPlayerManager={setShowPlayerManager}
-        showPairManager={showPairManager}
-        setShowPairManager={setShowPairManager}
-        showTournamentStatus={showTournamentStatus}
-        setShowTournamentStatus={setShowTournamentStatus}
-        showDebugInfo={showDebugInfo}
-        setShowDebugInfo={setShowDebugInfo}
-        selectedPlayers={selectedPlayers}
-        setSelectedPlayers={setSelectedPlayers}
-        setError={setError}
-        addPair={addPair}
-        isCreatingPair={isCreatingPair}
-        updatePairPlayers={updatePairPlayers}
-        deletePair={deletePair}
-        loading={loading}
-        onReset={onReset}
-        loadTournamentData={loadTournamentData}
-        setForceRefresh={setForceRefresh}
-        userId={userId}
-      />
+      {isRoundRobinPrep ? (
+        <RoundRobinPrepWorkspace
+          tournament={selectedTournament}
+          pairs={pairs}
+          matches={matches}
+          loading={loading}
+          selectedPlayers={selectedPlayers}
+          setSelectedPlayers={setSelectedPlayers}
+          setError={setError}
+          addPair={addPair}
+          isCreatingPair={isCreatingPair}
+          updatePairPlayers={updatePairPlayers}
+          deletePair={deletePair}
+          userId={userId}
+          loadTournamentData={loadTournamentData}
+          setForceRefresh={setForceRefresh}
+          onStartTournament={(opts) => onStartTournament(opts)}
+          onReset={onReset}
+        />
+      ) : (
+        <>
+          <StartTournamentSection
+            tournament={selectedTournament}
+            pairs={pairs}
+            loading={loading}
+            onStartTournament={onStartTournament}
+          />
+          <FourComponentsGrid
+            selectedTournament={selectedTournament}
+            pairs={pairs}
+            matches={matches}
+            showPlayerManager={showPlayerManager}
+            setShowPlayerManager={setShowPlayerManager}
+            showPairManager={showPairManager}
+            setShowPairManager={setShowPairManager}
+            showTournamentStatus={showTournamentStatus}
+            setShowTournamentStatus={setShowTournamentStatus}
+            showDebugInfo={showDebugInfo}
+            setShowDebugInfo={setShowDebugInfo}
+            selectedPlayers={selectedPlayers}
+            setSelectedPlayers={setSelectedPlayers}
+            setError={setError}
+            addPair={addPair}
+            isCreatingPair={isCreatingPair}
+            updatePairPlayers={updatePairPlayers}
+            deletePair={deletePair}
+            loading={loading}
+            onReset={onReset}
+            loadTournamentData={loadTournamentData}
+            setForceRefresh={setForceRefresh}
+            userId={userId}
+            convocatoriaSlot={
+              selectedTournament.is_started ? undefined : (
+                <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
+              )
+            }
+          />
+        </>
+      )}
 
-      <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
-
-      {/* Sección de Enlace Público */}
-      <PublicLinkSection
-        tournament={selectedTournament}
-        onCopyPublicLink={onCopyPublicLink}
-        generatePublicLink={generatePublicLink}
-      />
+      {selectedTournament.is_started ? (
+        <PublicLinkSection
+          tournament={selectedTournament}
+          onCopyPublicLink={onCopyPublicLink}
+          generatePublicLink={generatePublicLink}
+        />
+      ) : null}
 
       {/* Americano dinámico no usa parejas/partidos clásicos en BD; evitar UI vacía engañosa */}
-      {!americanoSnapshot && !(isAmericanoShell && americanoRemoteLoading) && (
+      {selectedTournament.is_started &&
+        !americanoSnapshot &&
+        !(isAmericanoShell && americanoRemoteLoading) && (
         <PairsDisplay pairs={pairs} pairStats={pairStats} teamConfig={teamConfig} />
       )}
 
@@ -282,7 +324,9 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           </div>
         )}
 
-      {!americanoSnapshot && !(isAmericanoShell && americanoRemoteLoading) && (
+      {selectedTournament.is_started &&
+        !americanoSnapshot &&
+        !(isAmericanoShell && americanoRemoteLoading) && (
         <MatchesSection
           tournament={selectedTournament}
           matches={matches}

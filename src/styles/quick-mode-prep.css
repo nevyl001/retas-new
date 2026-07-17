@@ -1,0 +1,398 @@
+/* =============================================================================
+   Quick Mode Prep — lenguaje visual compartido
+   Round Robin · Americano · Equipos · Remontada · Duelo 2v2
+
+   Tokens de producto (sin dorado):
+   - Accent UI / club: --brand-accent → --ro-accent
+   - Texto / bordes / fondos: --ro-* / --rv-* / --brand-*
+   ============================================================================= */
+
+.qm-prep {
+  width: 100%;
+  max-width: min(960px, 100%);
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
+/* Compactar el hueco entre hero/CTA y acordeón en shell organizador */
+.tournament-details:has(.qm-prep),
+.riviera-organizer-reta .tournament-details:has(.qm-prep) {
+  gap: var(--ro-space-4, 16px);
+}
+
+/* —— Hero —— */
+.qm-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ro-space-2, 8px);
+  padding: var(--ro-space-4, 16px) 0 var(--ro-space-3, 12px);
+  margin-bottom: var(--ro-space-3, 12px);
+  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+}
+
+.qm-hero__eyebrow {
+  margin: 0;
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-small, 0.8125rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--brand-accent, var(--ro-accent, #fff));
+}
+
+.qm-hero__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ro-space-2, 8px) var(--ro-space-3, 12px);
+}
+
+.qm-hero__title {
+  margin: 0;
+  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-size: clamp(1.5rem, 3.2vw, 2rem);
+  font-weight: var(--brand-heading-weight, 700);
+  line-height: 1.15;
+  letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, #fff)));
+}
+
+.qm-hero__status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--ro-radius-full, 999px);
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-label, 0.6875rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--rv-text-subtle, var(--ro-text-muted, #7a7a7a));
+  background: var(--ro-accent-dim, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--ro-border, var(--brand-border, #2a2a2a));
+}
+
+.qm-hero__subtitle {
+  margin: 0;
+  max-width: 40rem;
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-body, 0.875rem);
+  line-height: 1.45;
+  color: var(--rv-text-muted, var(--ro-text-secondary, #a0a0a0));
+}
+
+.qm-hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ro-space-3, 12px) var(--ro-space-6, 24px);
+  margin: var(--ro-space-2, 8px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.qm-hero__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 3.5rem;
+}
+
+.qm-hero__stat-label {
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-label, 0.6875rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--rv-text-subtle, var(--ro-text-muted, #7a7a7a));
+}
+
+.qm-hero__stat-value {
+  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-size: 1.05rem;
+  font-weight: 650;
+  line-height: 1.2;
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, #fff)));
+}
+
+/* —— Primary CTA (mismo acento que riviera-btn-primary) —— */
+.qm-primary-cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ro-space-2, 8px);
+  margin: 0 0 var(--ro-space-5, 20px);
+}
+
+.qm-primary-cta__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--ro-touch-target-min, 44px);
+  padding: 0.95rem 1.25rem;
+  border: 1px solid var(--brand-accent, var(--ro-accent, #fff));
+  border-radius: var(--ro-radius-md, 10px);
+  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  color: var(--ro-text-on-accent, #000);
+  background: var(--brand-accent, var(--ro-accent, #fff));
+  box-shadow: none;
+  transition:
+    background var(--ro-transition-fast, 150ms ease),
+    border-color var(--ro-transition-fast, 150ms ease),
+    opacity var(--ro-transition-fast, 150ms ease);
+}
+
+.qm-primary-cta__btn:hover:not(:disabled) {
+  background: var(--ro-accent-hover, #e0e0e0);
+  border-color: var(--ro-accent-hover, #e0e0e0);
+}
+
+.qm-primary-cta__btn:active:not(:disabled) {
+  opacity: 0.92;
+}
+
+.qm-primary-cta__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qm-primary-cta__btn:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--ro-accent, #fff));
+  outline-offset: 2px;
+}
+
+.qm-primary-cta__hint {
+  margin: 0;
+  text-align: center;
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-small, 0.8125rem);
+  line-height: 1.4;
+  color: var(--rv-text-subtle, var(--ro-text-muted, #7a7a7a));
+}
+
+/* Club accent override for CTA hover when brand ≠ white */
+html[data-brand="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
+html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
+.club-experience-scope[data-brand="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
+.club-experience-scope[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+}
+
+/* —— Accordion (secciones de producto) —— */
+.qm-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ro-space-2, 8px);
+}
+
+.qm-accordion__item {
+  border-radius: var(--ro-radius-md, 10px);
+  background: var(--rv-bg-card, var(--ro-bg-card, #111));
+  border: 1px solid var(--ro-border, var(--brand-border, #2a2a2a));
+  overflow: hidden;
+  transition:
+    border-color var(--ro-transition-fast, 150ms ease),
+    background var(--ro-transition-fast, 150ms ease);
+}
+
+.qm-accordion__item.is-open {
+  background: var(--rv-bg-card-soft, var(--ro-bg-elevated, #1a1a1a));
+  border-color: var(--ro-border-accent, rgba(255, 255, 255, 0.15));
+  box-shadow: inset 3px 0 0 var(--brand-accent, var(--ro-accent, #fff));
+}
+
+.qm-accordion__trigger {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: var(--ro-space-3, 12px);
+  width: 100%;
+  min-height: var(--ro-touch-target-min, 44px);
+  padding: 0.85rem 1rem;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.qm-accordion__trigger:hover {
+  background: var(--ro-accent-dim, rgba(255, 255, 255, 0.08));
+}
+
+.qm-accordion__trigger:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--ro-accent, #fff));
+  outline-offset: -2px;
+}
+
+.qm-accordion__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--rv-text-muted, var(--ro-text-secondary, #a0a0a0));
+}
+
+.qm-accordion__chevron::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--ro-transition-fast, 150ms ease);
+}
+
+.qm-accordion__item.is-open .qm-accordion__chevron::before {
+  transform: rotate(45deg);
+}
+
+.qm-accordion__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.qm-accordion__title {
+  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, #fff)));
+}
+
+.qm-accordion__subtitle {
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-small, 0.8125rem);
+  line-height: 1.35;
+  color: var(--rv-text-subtle, var(--ro-text-muted, #7a7a7a));
+}
+
+.qm-accordion__meta {
+  justify-self: end;
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-small, 0.8125rem);
+  font-weight: 600;
+  color: var(--rv-text-muted, var(--ro-text-secondary, #a0a0a0));
+  white-space: nowrap;
+}
+
+.qm-accordion__panel {
+  padding: 0 1rem 1rem 1rem;
+  border-top: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+  animation: qm-panel-in 160ms ease;
+}
+
+@keyframes qm-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* —— Competition focus (post-start) —— */
+.qm-competition {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ro-space-4, 16px);
+  padding-top: var(--ro-space-2, 8px);
+}
+
+.qm-competition__banner {
+  margin: 0 0 var(--ro-space-3, 12px);
+  padding: 0.5rem 0;
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-small, 0.8125rem);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--brand-accent, var(--ro-accent, #fff));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+}
+
+.tournament-details.qm-competition .start-tournament-section {
+  display: none;
+}
+
+/* —— Detalles: essentials + advanced —— */
+.qm-details-essentials {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.qm-details-advanced {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+  padding-top: 0.5rem;
+}
+
+.qm-details-advanced > summary {
+  cursor: pointer;
+  list-style: none;
+  min-height: var(--ro-touch-target-min, 44px);
+  display: flex;
+  align-items: center;
+  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
+  font-size: var(--ro-text-small, 0.8125rem);
+  font-weight: 600;
+  color: var(--rv-text-muted, var(--ro-text-secondary, #a0a0a0));
+}
+
+.qm-details-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+
+.qm-details-advanced[open] > summary {
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, #fff)));
+  margin-bottom: 0.75rem;
+}
+
+/* Hide legacy component-card chrome when nested in qm accordion */
+.qm-accordion__panel .component-header,
+.qm-accordion__panel .component-toggle-btn {
+  display: none !important;
+}
+
+.qm-accordion__panel .component-card {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 0;
+}
+
+.qm-accordion__panel .component-content {
+  display: block !important;
+  padding: 0;
+}
+
+@media (max-width: 767px) {
+  .qm-hero {
+    padding-top: var(--ro-space-3, 12px);
+  }
+
+  .qm-hero__title {
+    font-size: clamp(1.35rem, 6vw, 1.75rem);
+  }
+
+  .qm-accordion__trigger {
+    padding: 0.9rem 0.9rem;
+  }
+
+  .qm-accordion__panel {
+    padding: 0 0.9rem 0.9rem;
+  }
+}

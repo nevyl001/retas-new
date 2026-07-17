@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import type { Tournament, Player, Pair, Match } from "../../lib/database";
 import type { AmericanoDinamicoSnapshotV1 } from "../../lib/americanoDinamicoStorage";
 import { useClubModeEyebrow } from "../../club-experience";
-import { getStartFormatLabel } from "../../lib/gameModeMapping";
+import { getStartFormatLabel, resolveTournamentStartFormat } from "../../lib/gameModeMapping";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import {
   resolveRetaNextAction,
@@ -18,6 +18,7 @@ import {
 } from "../platform";
 import FourComponentsGrid from "../FourComponentsGrid";
 import StartTournamentSection from "../StartTournamentSection";
+import RoundRobinPrepWorkspace from "../RoundRobinPrepWorkspace";
 import PublicLinkSection from "../PublicLinkSection";
 import { RetaAbiertaOrganizerPanel } from "../reta-abierta/RetaAbiertaOrganizerPanel";
 import PairsDisplay from "../PairsDisplay";
@@ -156,6 +157,33 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
 
   if (!isMobile) {
     return <>{desktopContent}</>;
+  }
+
+  const isRoundRobinPrep =
+    !selectedTournament.is_started &&
+    resolveTournamentStartFormat(selectedTournament) === "roundRobin";
+
+  if (isRoundRobinPrep) {
+    return (
+      <RoundRobinPrepWorkspace
+        tournament={selectedTournament}
+        pairs={pairs}
+        matches={matches}
+        loading={loading}
+        selectedPlayers={selectedPlayers}
+        setSelectedPlayers={setSelectedPlayers}
+        setError={setError}
+        addPair={addPair}
+        isCreatingPair={isCreatingPair}
+        updatePairPlayers={updatePairPlayers}
+        deletePair={deletePair}
+        userId={userId}
+        loadTournamentData={loadTournamentData}
+        setForceRefresh={setForceRefresh}
+        onStartTournament={(opts) => onStartTournament(opts)}
+        onReset={onReset}
+      />
+    );
   }
 
   const showMatchesPanels = !americanoSnapshot && !(isAmericanoShell && americanoRemoteLoading);

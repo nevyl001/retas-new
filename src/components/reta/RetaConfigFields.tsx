@@ -21,6 +21,11 @@ export type RetaConfigFieldsProps = {
   mode: "create" | "edit";
   showChampionship?: boolean;
   disabled?: boolean;
+  /**
+   * essentials = Nombre + Fecha + Canchas visibles; resto en Configuración avanzada.
+   * full = layout legacy (todos los campos a la vista).
+   */
+  layout?: "full" | "essentials";
 };
 
 function FieldLock({ reason }: { reason?: string }) {
@@ -43,7 +48,9 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   mode,
   showChampionship = true,
   disabled = false,
+  layout = "full",
 }) => {
+  const essentials = layout === "essentials";
   const patch = (partial: Partial<RetaConfigFormValues>) =>
     onChange({ ...values, ...partial });
 
@@ -64,200 +71,232 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const schedEd = ed("programado_en");
   const durEd = ed("duration_minutes");
 
-  return (
-    <div className="home-sheet__fields reta-config-fields">
+  const nameField = (
+    <label className="home-sheet__field">
+      <span className="home-sheet__field-label">Nombre de la reta</span>
+      <span className="home-sheet__field-optional">Opcional</span>
+      <input
+        type="text"
+        className="home-sheet__input riviera-input"
+        placeholder="Reta del domingo…"
+        value={values.name}
+        disabled={nameEd.locked}
+        onChange={(e) => patch({ name: e.target.value })}
+      />
+      {nameEd.locked ? <FieldLock reason={nameEd.reason} /> : null}
+    </label>
+  );
+
+  const courtsField = (
+    <div className="home-sheet__field">
+      <span className="home-sheet__field-label">Canchas disponibles</span>
+      <div
+        className="home-sheet__stepper"
+        style={{ display: "flex", alignItems: "center", gap: 12 }}
+      >
+        <button
+          type="button"
+          className="home-sheet__stepper-btn"
+          style={{ minWidth: 44, minHeight: 44 }}
+          disabled={courtsEd.locked || values.courts <= RETA_COURTS_MIN}
+          onClick={() => patch({ courts: clampRetaCourts(values.courts - 1) })}
+          aria-label="Menos canchas"
+        >
+          −
+        </button>
+        <span style={{ color: "var(--rv-accent, #c8f542)", fontWeight: 700 }}>
+          {values.courts}
+        </span>
+        <button
+          type="button"
+          className="home-sheet__stepper-btn"
+          style={{ minWidth: 44, minHeight: 44 }}
+          disabled={courtsEd.locked || values.courts >= RETA_COURTS_MAX}
+          onClick={() => patch({ courts: clampRetaCourts(values.courts + 1) })}
+          aria-label="Más canchas"
+        >
+          +
+        </button>
+      </div>
+      {courtsEd.reason ? <FieldLock reason={courtsEd.reason} /> : null}
+    </div>
+  );
+
+  const scheduleField =
+    mode === "edit" ? (
       <label className="home-sheet__field">
-        <span className="home-sheet__field-label">Nombre de la reta</span>
+        <span className="home-sheet__field-label">Día y hora</span>
+        <input
+          type="datetime-local"
+          className="home-sheet__input riviera-input"
+          value={values.programado_en}
+          disabled={schedEd.locked}
+          onChange={(e) => patch({ programado_en: e.target.value })}
+        />
+        {schedEd.locked ? <FieldLock reason={schedEd.reason} /> : null}
+      </label>
+    ) : null;
+
+  const descriptionField = (
+    <label className="home-sheet__field">
+      <span className="home-sheet__field-label">Descripción</span>
+      <span className="home-sheet__field-optional">Opcional</span>
+      <textarea
+        className="home-sheet__input riviera-input"
+        placeholder="Ej: Reta de verano, grupo de amigos…"
+        rows={3}
+        value={values.description}
+        disabled={descEd.locked}
+        onChange={(e) => patch({ description: e.target.value })}
+      />
+      {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
+    </label>
+  );
+
+  const editAdvancedFields =
+    mode === "edit" ? (
+      <>
+        <label className="home-sheet__field">
+          <span className="home-sheet__field-label">Duración (min)</span>
+          <input
+            type="number"
+            min={15}
+            max={480}
+            className="home-sheet__input riviera-input"
+            value={values.duration_minutes}
+            disabled={durEd.locked}
+            onChange={(e) =>
+              patch({
+                duration_minutes: clampRetaDurationMinutes(e.target.value),
+              })
+            }
+          />
+        </label>
+
+        <label className="home-sheet__field">
+          <span className="home-sheet__field-label">Cancha (etiqueta)</span>
+          <input
+            type="text"
+            className="home-sheet__input riviera-input"
+            placeholder="Ej. 1-2"
+            value={values.cancha}
+            disabled={canchaEd.locked}
+            onChange={(e) => patch({ cancha: e.target.value })}
+          />
+        </label>
+
+        <label
+          className="home-sheet__field"
+          style={{ display: "flex", gap: 8, alignItems: "center" }}
+        >
+          <input
+            type="checkbox"
+            checked={values.mostrar_lugar}
+            disabled={lugarEd.locked}
+            onChange={(e) => patch({ mostrar_lugar: e.target.checked })}
+          />
+          <span className="home-sheet__field-label">Incluir lugar</span>
+        </label>
+
+        <label className="home-sheet__field">
+          <span className="home-sheet__field-label">Lugar</span>
+          <input
+            type="text"
+            className="home-sheet__input riviera-input"
+            value={values.lugar}
+            disabled={lugarEd.locked || !values.mostrar_lugar}
+            onChange={(e) => patch({ lugar: e.target.value })}
+          />
+        </label>
+      </>
+    ) : null;
+
+  const championshipField = showChampionship ? (
+    <div
+      className="home-sheet__field"
+      style={{
+        border: "1px solid rgba(255,255,255,0.12)",
+        borderRadius: 12,
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span className="home-sheet__field-label">Remontada Final</span>
         <span className="home-sheet__field-optional">Opcional</span>
         <input
-          type="text"
-          className="home-sheet__input riviera-input"
-          placeholder="Reta del domingo…"
-          value={values.name}
-          disabled={nameEd.locked}
-          onChange={(e) => patch({ name: e.target.value })}
+          type="checkbox"
+          checked={values.championshipEnabled}
+          disabled={champEd.locked}
+          onChange={(e) => patch({ championshipEnabled: e.target.checked })}
+          aria-label="Activar Remontada Final"
+          style={{ minWidth: 44, minHeight: 24 }}
         />
-        {nameEd.locked ? <FieldLock reason={nameEd.reason} /> : null}
-      </label>
-
-      <label className="home-sheet__field">
-        <span className="home-sheet__field-label">Descripción</span>
-        <span className="home-sheet__field-optional">Opcional</span>
-        <textarea
-          className="home-sheet__input riviera-input"
-          placeholder="Ej: Reta de verano, grupo de amigos…"
-          rows={3}
-          value={values.description}
-          disabled={descEd.locked}
-          onChange={(e) => patch({ description: e.target.value })}
-        />
-        {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
-      </label>
-
-      <div className="home-sheet__field">
-        <span className="home-sheet__field-label">Canchas disponibles</span>
-        <div
-          className="home-sheet__stepper"
-          style={{ display: "flex", alignItems: "center", gap: 12 }}
-        >
-          <button
-            type="button"
-            className="home-sheet__stepper-btn"
-            style={{ minWidth: 44, minHeight: 44 }}
-            disabled={courtsEd.locked || values.courts <= RETA_COURTS_MIN}
-            onClick={() =>
-              patch({ courts: clampRetaCourts(values.courts - 1) })
-            }
-            aria-label="Menos canchas"
-          >
-            −
-          </button>
-          <span style={{ color: "var(--rv-accent, #c8f542)", fontWeight: 700 }}>
-            {values.courts}
-          </span>
-          <button
-            type="button"
-            className="home-sheet__stepper-btn"
-            style={{ minWidth: 44, minHeight: 44 }}
-            disabled={courtsEd.locked || values.courts >= RETA_COURTS_MAX}
-            onClick={() =>
-              patch({ courts: clampRetaCourts(values.courts + 1) })
-            }
-            aria-label="Más canchas"
-          >
-            +
-          </button>
-        </div>
-        {courtsEd.reason ? <FieldLock reason={courtsEd.reason} /> : null}
       </div>
+      {champEd.locked ? <FieldLock reason={champEd.reason} /> : null}
+      {values.championshipEnabled && !champEd.locked ? (
+        <label className="home-sheet__field" style={{ marginTop: 8 }}>
+          <span className="home-sheet__field-label">Rondas extra</span>
+          <input
+            type="number"
+            min={1}
+            max={10}
+            className="home-sheet__input riviera-input"
+            value={values.championshipRounds}
+            onChange={(e) =>
+              patch({
+                championshipRounds: clampChampionshipRoundsShared(e.target.value),
+              })
+            }
+          />
+        </label>
+      ) : null}
+    </div>
+  ) : null;
 
+  const footnote =
+    mode === "edit" ? (
+      <p className="home-sheet__field-optional" role="note">
+        Cupo, rating, fotos y lista de espera se editan en{" "}
+        <strong>Convocatoria</strong>.
+      </p>
+    ) : null;
+
+  if (essentials) {
+    return (
+      <div className="home-sheet__fields reta-config-fields qm-details-essentials">
+        {nameField}
+        {scheduleField}
+        {courtsField}
+        <details className="qm-details-advanced">
+          <summary>Configuración avanzada</summary>
+          {descriptionField}
+          {editAdvancedFields}
+          {championshipField}
+          {footnote}
+        </details>
+      </div>
+    );
+  }
+
+  return (
+    <div className="home-sheet__fields reta-config-fields">
+      {nameField}
+      {descriptionField}
+      {courtsField}
       {mode === "edit" ? (
         <>
-          <label className="home-sheet__field">
-            <span className="home-sheet__field-label">Día y hora</span>
-            <input
-              type="datetime-local"
-              className="home-sheet__input riviera-input"
-              value={values.programado_en}
-              disabled={schedEd.locked}
-              onChange={(e) => patch({ programado_en: e.target.value })}
-            />
-            {schedEd.locked ? <FieldLock reason={schedEd.reason} /> : null}
-          </label>
-
-          <label className="home-sheet__field">
-            <span className="home-sheet__field-label">Duración (min)</span>
-            <input
-              type="number"
-              min={15}
-              max={480}
-              className="home-sheet__input riviera-input"
-              value={values.duration_minutes}
-              disabled={durEd.locked}
-              onChange={(e) =>
-                patch({
-                  duration_minutes: clampRetaDurationMinutes(e.target.value),
-                })
-              }
-            />
-          </label>
-
-          <label className="home-sheet__field">
-            <span className="home-sheet__field-label">Cancha (etiqueta)</span>
-            <input
-              type="text"
-              className="home-sheet__input riviera-input"
-              placeholder="Ej. 1-2"
-              value={values.cancha}
-              disabled={canchaEd.locked}
-              onChange={(e) => patch({ cancha: e.target.value })}
-            />
-          </label>
-
-          <label
-            className="home-sheet__field"
-            style={{ display: "flex", gap: 8, alignItems: "center" }}
-          >
-            <input
-              type="checkbox"
-              checked={values.mostrar_lugar}
-              disabled={lugarEd.locked}
-              onChange={(e) => patch({ mostrar_lugar: e.target.checked })}
-            />
-            <span className="home-sheet__field-label">Incluir lugar</span>
-          </label>
-
-          <label className="home-sheet__field">
-            <span className="home-sheet__field-label">Lugar</span>
-            <input
-              type="text"
-              className="home-sheet__input riviera-input"
-              value={values.lugar}
-              disabled={lugarEd.locked || !values.mostrar_lugar}
-              onChange={(e) => patch({ lugar: e.target.value })}
-            />
-          </label>
+          {scheduleField}
+          {editAdvancedFields}
         </>
       ) : null}
-
-      {showChampionship ? (
-        <div
-          className="home-sheet__field"
-          style={{
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 12,
-            padding: 12,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span className="home-sheet__field-label">Remontada Final</span>
-            <span className="home-sheet__field-optional">Opcional</span>
-            <input
-              type="checkbox"
-              checked={values.championshipEnabled}
-              disabled={champEd.locked}
-              onChange={(e) =>
-                patch({ championshipEnabled: e.target.checked })
-              }
-              aria-label="Activar Remontada Final"
-              style={{ minWidth: 44, minHeight: 24 }}
-            />
-          </div>
-          {champEd.locked ? <FieldLock reason={champEd.reason} /> : null}
-          {values.championshipEnabled && !champEd.locked ? (
-            <label className="home-sheet__field" style={{ marginTop: 8 }}>
-              <span className="home-sheet__field-label">Rondas extra</span>
-              <input
-                type="number"
-                min={1}
-                max={10}
-                className="home-sheet__input riviera-input"
-                value={values.championshipRounds}
-                onChange={(e) =>
-                  patch({
-                    championshipRounds: clampChampionshipRoundsShared(
-                      e.target.value
-                    ),
-                  })
-                }
-              />
-            </label>
-          ) : null}
-        </div>
-      ) : null}
-
-      {mode === "edit" ? (
-        <p className="home-sheet__field-optional" role="note">
-          Cupo, rating, fotos y lista de espera se editan en{" "}
-          <strong>Convocatoria Riviera</strong> (panel inferior).
-        </p>
-      ) : null}
+      {championshipField}
+      {footnote}
     </div>
   );
 };

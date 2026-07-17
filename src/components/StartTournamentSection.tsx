@@ -5,8 +5,11 @@ import {
   getStartFormatLabel,
   resolveTournamentStartFormat,
 } from "../lib/gameModeMapping";
-import { Button, Card, Input } from "./ui";
-import { ModeHeader } from "./platform/ModeHeader";
+import { Card, Input } from "./ui";
+import {
+  QuickModeHero,
+  QuickModePrimaryCta,
+} from "./platform/quickMode";
 
 interface StartTournamentSectionProps {
   tournament: Tournament;
@@ -92,24 +95,57 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
       ? "Organiza equipos, asigna parejas e inicia la competencia."
       : "Selecciona las parejas y lanza tu reta en round robin.";
 
+  const eventName = tournament.name?.trim() || modeLabel;
+  const duration =
+    tournament.programado_en && tournament.programado_hasta
+      ? Math.round(
+          (new Date(tournament.programado_hasta).getTime() -
+            new Date(tournament.programado_en).getTime()) /
+            60000
+        )
+      : null;
+
+  const ctaHint =
+    pairs.length === 0
+      ? "Aún no hay parejas — abre Registro y Equipos abajo."
+      : pairs.length === 1
+        ? "Necesitas al menos 2 parejas para iniciar."
+        : format === "teams" && !isTeamsConfigValid
+          ? "Revisa la organización de equipos."
+          : null;
+
   return (
-    <div className="start-tournament-section start-tournament-section--v2 rv-card">
-      <ModeHeader
-        className="start-tournament-section__mode-header rv-mode-header rv-mode-header--entry"
+    <div className="start-tournament-section start-tournament-section--v2 qm-prep">
+      <QuickModeHero
         eyebrow={modeEyebrow}
-        title={modeLabel}
+        title={eventName}
         subtitle={modeSubtitle}
+        statusLabel="Preparación"
+        stats={[
+          { label: "Estado", value: "Pendiente" },
+          { label: "Equipos", value: pairs.length },
+          { label: "Canchas", value: tournament.courts ?? "—" },
+          {
+            label: "Duración",
+            value: duration != null && duration > 0 ? `${duration} min` : "—",
+          },
+        ]}
       />
 
-      <Card variant="elevated" className="start-tournament-section__hero">
-        <p className="start-tournament-section__pairs-ready">
-          {pairs.length === 0
-            ? "Aún no hay parejas — usa las secciones de abajo."
-            : pairs.length === 1
-            ? "1 pareja lista · necesitas al menos 2"
-            : `${pairs.length} parejas listas para jugar`}
-        </p>
-      </Card>
+      <QuickModePrimaryCta
+        label={loading ? "Iniciando…" : "Iniciar"}
+        disabled={!canStart}
+        loading={loading}
+        hint={ctaHint}
+        onClick={() =>
+          onStartTournament({
+            format,
+            teamsCount: format === "teams" ? teamsCount : undefined,
+            teamNames: format === "teams" ? teamNames : undefined,
+            pairToTeam: format === "teams" ? pairToTeam : undefined,
+          })
+        }
+      />
 
       {format === "teams" && pairs.length >= 2 && (
         <Card variant="elevated" className="start-tournament-section__teams">
@@ -122,7 +158,9 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
               min={2}
               max={Math.max(2, pairs.length)}
               value={teamsCount}
-              onChange={(e) => setTeamsCount(parseInt(e.target.value || "2", 10))}
+              onChange={(e) =>
+                setTeamsCount(parseInt(e.target.value || "2", 10))
+              }
               disabled={loading}
             />
           </div>
@@ -171,30 +209,6 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
           ))}
         </Card>
       )}
-
-      <Button
-        type="button"
-        variant="primary"
-        size="lg"
-        className="start-tournament-section__cta"
-        onClick={() =>
-          onStartTournament({
-            format,
-            teamsCount: format === "teams" ? teamsCount : undefined,
-            teamNames: format === "teams" ? teamNames : undefined,
-            pairToTeam: format === "teams" ? pairToTeam : undefined,
-          })
-        }
-        disabled={!canStart}
-      >
-        {loading
-          ? "Iniciando…"
-          : pairs.length < 2
-          ? "Iniciar"
-          : format === "teams" && !isTeamsConfigValid
-          ? "Revisa los equipos"
-          : "Iniciar"}
-      </Button>
     </div>
   );
 };

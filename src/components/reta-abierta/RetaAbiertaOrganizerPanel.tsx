@@ -10,6 +10,8 @@ interface Props {
   tournament: Tournament;
   /** Forzar modo cuando el torneo aún no está marcado como americano. */
   modeOverride?: "reta" | "americano";
+  /** Vista compacta (sidebar / resumen). */
+  compact?: boolean;
 }
 
 /**
@@ -19,6 +21,7 @@ interface Props {
 export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
   tournament,
   modeOverride,
+  compact = false,
 }) => {
   const clubName = useConvocatoriaOriginName();
   const mode =
@@ -31,6 +34,7 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
 
   return (
     <ConvocatoriaWhatsAppPanel
+      compact={compact}
       context={buildTournamentConvocatoriaContext({
         mode,
         tournamentId: tournament.id,

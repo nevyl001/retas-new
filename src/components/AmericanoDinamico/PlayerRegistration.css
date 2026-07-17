@@ -180,9 +180,9 @@
 }
 
 .americano-btn--primary {
-  background: var(--ro-gold, var(--color-accent, #c9a227));
-  color: #0a0a0a;
-  border-color: transparent;
+  background: var(--brand-accent, var(--ro-accent, #fff));
+  color: var(--ro-text-on-accent, #000);
+  border-color: var(--brand-accent, var(--ro-accent, #fff));
 }
 
 .americano-btn:disabled {

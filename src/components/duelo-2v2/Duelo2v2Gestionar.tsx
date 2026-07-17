@@ -36,8 +36,12 @@ import {
   ModeSectionTabs,
   MobileStickyActionFooter,
 } from "../platform";
-import { ModeHeader } from "../platform/ModeHeader";
 import { PublicShareSection } from "../platform/PublicShareSection";
+import {
+  QuickModeAccordion,
+  QuickModeAccordionItem,
+  QuickModeHero,
+} from "../platform/quickMode";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
 import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
 import { buildDueloConvocatoriaContext } from "../../lib/retaAbierta/adapters";
@@ -403,7 +407,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   }
 
   return (
-    <Duelo2v2PageShell wide className="duelo2v2-gestionar">
+    <Duelo2v2PageShell wide className="duelo2v2-gestionar qm-prep">
       <ActionBar className="duelo2v2-toolbar riviera-back-toolbar">
         <Button
           type="button"
@@ -414,95 +418,110 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
         </Button>
       </ActionBar>
 
-      <ModeHeader
-        className="duelo2v2-header rv-mode-header"
+      <QuickModeHero
         eyebrow={modeEyebrow}
         title={duelo.nombre}
         subtitle={duelo.descripcion ?? undefined}
-      >
-        <Duelo2v2MatchMeta duelo={duelo} clubName={convocatoriaOrigin} />
-      </ModeHeader>
-
-      <ConvocatoriaWhatsAppPanel
-        shareOnly
-        context={buildDueloConvocatoriaContext({
-          dueloId: duelo.id,
-          name: duelo.nombre,
-          locationLabel: lugarConvocatoria,
-          includeLugar,
-          canchaLabel: duelo.cancha ?? undefined,
-          scheduledAt: duelo.programado_en,
-          scheduledUntil: duelo.programado_hasta,
-          clubName: convocatoriaOrigin,
-        })}
+        statusLabel={dueloStatus.label}
+        stats={[
+          { label: "Equipo A", value: teamAName },
+          { label: "Equipo B", value: teamBName },
+          {
+            label: "Marcador",
+            value: `${duelo.sets_pareja_a ?? 0}–${duelo.sets_pareja_b ?? 0}`,
+          },
+        ]}
       />
 
-      <PublicShareSection
-        publicUrl={publicDuelo2v2Url(dueloId)}
-        title="Enlace público"
-        infoLines={["Comparte el enlace para ver el marcador del duelo (solo lectura)."]}
-        copyButtonLabel="Copiar vista pública"
-      />
+      {finalizado ? (
+        <div className="qm-competition">
+          {resultadoPanel}
+          {equiposPanel}
+        </div>
+      ) : (
+        <QuickModeAccordion defaultOpenId="control">
+          <QuickModeAccordionItem
+            id="convocatoria"
+            title="Convocatoria"
+            subtitle="Compartir e inscritos"
+          >
+            <ConvocatoriaWhatsAppPanel
+              shareOnly
+              context={buildDueloConvocatoriaContext({
+                dueloId: duelo.id,
+                name: duelo.nombre,
+                locationLabel: lugarConvocatoria,
+                includeLugar,
+                canchaLabel: duelo.cancha ?? undefined,
+                scheduledAt: duelo.programado_en,
+                scheduledUntil: duelo.programado_hasta,
+                clubName: convocatoriaOrigin,
+              })}
+            />
+            <PublicShareSection
+              publicUrl={publicDuelo2v2Url(dueloId)}
+              title="Enlace público"
+              infoLines={[
+                "Comparte el enlace para ver el marcador del duelo (solo lectura).",
+              ]}
+              copyButtonLabel="Copiar vista pública"
+            />
+          </QuickModeAccordionItem>
 
-      <Duelo2v2DetailsEditor
-        duelo={duelo}
-        disabled={busy}
-        onSaved={(updated) => {
-          setDuelo(updated);
-          setMessage("Datos del encuentro actualizados.");
-          setError(null);
-        }}
-        onError={setError}
-      />
+          <QuickModeAccordionItem
+            id="equipos"
+            title="Equipos"
+            subtitle="Parejas del duelo"
+          >
+            {equiposPanel}
+          </QuickModeAccordionItem>
 
-      {finalizado && duelo.ganador && (
-        <Duelo2v2CelebrateSection
-          teamAName={teamAName}
-          teamBName={teamBName}
-          teamA={[
-            { name: duelo.pareja_a_j1_nombre, jugadorId: duelo.pareja_a_j1_id },
-            { name: duelo.pareja_a_j2_nombre, jugadorId: duelo.pareja_a_j2_id },
-          ]}
-          teamB={[
-            { name: duelo.pareja_b_j1_nombre, jugadorId: duelo.pareja_b_j1_id },
-            { name: duelo.pareja_b_j2_nombre, jugadorId: duelo.pareja_b_j2_id },
-          ]}
-          ganador={duelo.ganador}
-          setsA={duelo.sets_pareja_a}
-          setsB={duelo.sets_pareja_b}
-          detalle={duelo.detalle_sets}
-          torneoNombre={duelo.nombre}
-          finalizado
-          ratingByJugadorId={ratingByJugadorId}
-        />
-      )}
+          <QuickModeAccordionItem
+            id="detalles"
+            title="Detalles"
+            subtitle="Nombre, horario y sede"
+          >
+            <Duelo2v2DetailsEditor
+              duelo={duelo}
+              disabled={busy}
+              onSaved={(updated) => {
+                setDuelo(updated);
+                setMessage("Datos del encuentro actualizados.");
+                setError(null);
+              }}
+              onError={setError}
+            />
+          </QuickModeAccordionItem>
 
-      {!finalizado && (
-        <Duelo2v2ScoreEditor
-          key={editorKey}
-          teamAName={teamAName}
-          teamBName={teamBName}
-          initialDetalle={duelo.detalle_sets}
-          disabled={busy}
-          onSave={handleSaveScore}
-        />
+          <QuickModeAccordionItem
+            id="control"
+            title="Control de competencia"
+            subtitle="Marcador y cierre"
+          >
+            <Duelo2v2ScoreEditor
+              key={editorKey}
+              teamAName={teamAName}
+              teamBName={teamBName}
+              initialDetalle={duelo.detalle_sets}
+              disabled={busy}
+              onSave={handleSaveScore}
+            />
+            <ActionBar className="duelo2v2-actions">
+              <Button
+                type="button"
+                variant="primary"
+                disabled={busy || !duelo.ganador}
+                onClick={() => void handleFinalizar()}
+              >
+                Finalizar y sumar al ranking
+              </Button>
+            </ActionBar>
+          </QuickModeAccordionItem>
+        </QuickModeAccordion>
       )}
 
       {error && <p className="duelo2v2-error">{error}</p>}
       {message && <p className="duelo2v2-message">{message}</p>}
-
-      {!finalizado ? (
-        <ActionBar className="duelo2v2-actions">
-          <Button
-            type="button"
-            variant="primary"
-            disabled={busy || !duelo.ganador}
-            onClick={() => void handleFinalizar()}
-          >
-            Finalizar y sumar al ranking
-          </Button>
-        </ActionBar>
-      ) : null}
     </Duelo2v2PageShell>
   );
 };

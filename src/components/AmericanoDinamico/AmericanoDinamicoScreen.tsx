@@ -355,31 +355,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return (
       <AmericanoModeShell onBack={goBackToRetas}>
         {syncWarning}
-        <ModeHeader
-          className="americano-entry-header americano-tournament-banner rv-mode-header rv-mode-header--entry"
-          eyebrow={modeEyebrow}
-          title={tournamentName || "Americano Dinámico"}
-          subtitle={
-            tournamentDescription ||
-            "Selecciona jugadores del registro y define rondas y canchas."
-          }
-        />
         {playersLoadError && (
-          <p className="americano-screen__error">
-            {playersLoadError}
-          </p>
+          <p className="americano-screen__error">{playersLoadError}</p>
         )}
-        {resolvedTournamentId ? (
-          <ConvocatoriaWhatsAppPanel
-            context={buildTournamentConvocatoriaContext({
-              mode: "americano",
-              tournamentId: resolvedTournamentId,
-              name: tournamentName || "Americano",
-              locationLabel: convocatoriaOrigin,
-              clubName: convocatoriaOrigin,
-            })}
-          />
-        ) : null}
         <PlayerRegistration
           players={players}
           availablePlayers={availablePlayers}
@@ -387,6 +365,25 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           onToggleExistingPlayer={toggleExistingPlayer}
           onStartTournament={handleStartTournament}
           initialCourts={tournamentCourts}
+          eyebrow={modeEyebrow}
+          eventTitle={tournamentName || "Americano Dinámico"}
+          eventSubtitle={
+            tournamentDescription ||
+            "Selecciona jugadores del registro y define rondas y canchas."
+          }
+          convocatoriaSlot={
+            resolvedTournamentId ? (
+              <ConvocatoriaWhatsAppPanel
+                context={buildTournamentConvocatoriaContext({
+                  mode: "americano",
+                  tournamentId: resolvedTournamentId,
+                  name: tournamentName || "Americano",
+                  locationLabel: convocatoriaOrigin,
+                  clubName: convocatoriaOrigin,
+                })}
+              />
+            ) : null
+          }
         />
       </AmericanoModeShell>
     );
@@ -510,6 +507,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 
     return (
       <AmericanoModeShell onBack={goBackToRetas}>
+        <div className="qm-competition">
         {syncWarning}
         {tournamentBanner}
         {publicAmericanoUrl ? (
@@ -522,6 +520,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           />
         ) : null}
         {playingBody}
+        </div>
       </AmericanoModeShell>
     );
   }

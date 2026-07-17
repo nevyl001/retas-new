@@ -6,6 +6,12 @@ import {
 } from "../../club-experience";
 import type { AmericanoPlayer } from "../../lib/db/types";
 import type { Player } from "../../lib/database";
+import {
+  QuickModeAccordion,
+  QuickModeAccordionItem,
+  QuickModeHero,
+  QuickModePrimaryCta,
+} from "../platform/quickMode";
 import "./PlayerRegistration.css";
 
 interface PlayerRegistrationProps {
@@ -16,6 +22,10 @@ interface PlayerRegistrationProps {
   onStartTournament: (totalRounds: number, courts: number) => void;
   /** Canchas ya definidas al crear la reta (QuickStart / DB). */
   initialCourts?: number;
+  convocatoriaSlot?: React.ReactNode;
+  eventTitle?: string;
+  eventSubtitle?: string | null;
+  eyebrow?: string | null;
 }
 
 export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
@@ -25,6 +35,10 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   onToggleExistingPlayer,
   onStartTournament,
   initialCourts = 1,
+  convocatoriaSlot,
+  eventTitle = "Americano",
+  eventSubtitle = "Parejas rotativas y ranking por puntos. Prepara el registro e inicia.",
+  eyebrow,
 }) => {
   const [totalRounds, setTotalRounds] = useState(3);
   const [courts, setCourts] = useState(() =>
@@ -33,7 +47,6 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const { nombre: organizerName } = useBranding();
   const registryTitle = getRegistrySectionLabel(organizerName);
 
-  // Cuando llega el valor de DB (async), alinear el input si el usuario no lo cambió.
   useEffect(() => {
     const next = Math.min(20, Math.max(1, Math.floor(initialCourts) || 1));
     setCourts(next);
@@ -43,114 +56,142 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const benchPerRound = Math.max(0, players.length - maxMatches * 4);
 
   return (
-    <section className="americano-registration">
-      <p className="americano-registration__format-note" role="note">
-        Formato americano equilibrado: las parejas se rotan automáticamente para
-        evitar repetir compañero y repartir rivales. El ranking solo muestra
-        posiciones; no forma partidos.
-      </p>
+    <section className="americano-registration qm-prep">
+      <QuickModeHero
+        eyebrow={eyebrow}
+        title={eventTitle}
+        subtitle={eventSubtitle}
+        statusLabel="Preparación"
+        stats={[
+          { label: "Jugadores", value: players.length },
+          { label: "Partidos/ronda", value: maxMatches },
+          { label: "Canchas", value: courts },
+          { label: "Descansan", value: benchPerRound },
+        ]}
+      />
 
-      <div className="americano-registration__meta card">
-        <p>
-          <strong>Total jugadores:</strong> {players.length}
-        </p>
-        <p>
-          <strong>Partidos por ronda:</strong> {maxMatches}
-        </p>
-        <p>
-          <strong>Descansan por ronda:</strong> {benchPerRound}
-        </p>
-      </div>
+      <QuickModePrimaryCta
+        label="Iniciar"
+        disabled={players.length < 4}
+        hint={
+          players.length < 4
+            ? "Selecciona al menos 4 jugadores en Registro."
+            : `${totalRounds} rondas · ${courts} cancha${courts === 1 ? "" : "s"}`
+        }
+        onClick={() => onStartTournament(totalRounds, courts)}
+      />
 
-      <div className="card">
-        <h4>Jugadores seleccionados</h4>
-        <ul className="americano-registration__list">
-          {players.length === 0 ? (
-            <li className="americano-registration__empty">Aun no has seleccionado jugadores.</li>
-          ) : (
-            players.map((player) => (
-              <li key={player.id}>
-                <span>{player.name}</span>
-                <button
-                  className="americano-btn americano-btn--danger"
-                  onClick={() => onRemovePlayer(player.id)}
-                >
-                  Quitar
-                </button>
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
-
-      <div className="americano-registration__db card">
-        <h4>{registryTitle}</h4>
-        <p className="americano-registration__hint">
-          Toca un jugador para seleccionarlo o deseleccionarlo.
-        </p>
-        {availablePlayers.length === 0 ? (
-          <p className="americano-registration__empty">
-            {getRegistryEmptyMessage(organizerName)}
-          </p>
-        ) : null}
-        <div className="americano-registration__db-grid">
-          {availablePlayers.map((player) => {
-            const selected = players.some((p) => p.id === player.id);
-            return (
-              <button
-                type="button"
-                key={player.id}
-                className={`americano-registration__db-item${
-                  selected ? " selected" : ""
-                }`}
-                onClick={() => onToggleExistingPlayer(player)}
-              >
-                {selected ? "✓ " : ""}{player.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="americano-registration__start card">
-        <div className="americano-registration__start-row">
-          <label>
-            Rondas:
-            <input
-              type="number"
-              min={1}
-              value={totalRounds}
-              onChange={(e) =>
-                setTotalRounds(Math.max(1, Number(e.target.value) || 1))
-              }
-            />
-          </label>
-          <label>
-            Canchas:
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={courts}
-              onChange={(e) =>
-                setCourts(Math.min(20, Math.max(1, Number(e.target.value) || 1)))
-              }
-            />
-          </label>
-        </div>
-        <p className="americano-registration__courts-hint">
-          Solo hay tantos partidos simultáneos como canchas. Con 1 cancha juega
-          un partido y el resto descansa; con 2 canchas, dos partidos (Cancha 1 y
-          2), y así sucesivamente. Las canchas rotan entre rondas.
-        </p>
-        <button
-          className="americano-btn americano-btn--primary americano-registration__start-btn"
-          onClick={() => onStartTournament(totalRounds, courts)}
-          disabled={players.length < 4}
+      <QuickModeAccordion defaultOpenId="registro">
+        <QuickModeAccordionItem
+          id="registro"
+          title="Registro"
+          subtitle={registryTitle}
+          meta={`${players.length} sel.`}
         >
-          Iniciar torneo
-        </button>
-      </div>
+          <p className="americano-registration__format-note" role="note">
+            Formato americano equilibrado: las parejas se rotan automáticamente.
+            El ranking solo muestra posiciones; no forma partidos.
+          </p>
+          <div className="americano-registration__db">
+            <p className="americano-registration__hint">
+              Toca un jugador para seleccionarlo o deseleccionarlo.
+            </p>
+            {availablePlayers.length === 0 ? (
+              <p className="americano-registration__empty">
+                {getRegistryEmptyMessage(organizerName)}
+              </p>
+            ) : null}
+            <div className="americano-registration__db-grid">
+              {availablePlayers.map((player) => {
+                const selected = players.some((p) => p.id === player.id);
+                return (
+                  <button
+                    type="button"
+                    key={player.id}
+                    className={`americano-registration__db-item${
+                      selected ? " selected" : ""
+                    }`}
+                    onClick={() => onToggleExistingPlayer(player)}
+                  >
+                    {selected ? "✓ " : ""}
+                    {player.name}
+                  </button>
+                );
+              })}
+            </div>
+            <h4 className="americano-registration__selected-title">
+              Seleccionados
+            </h4>
+            <ul className="americano-registration__list">
+              {players.length === 0 ? (
+                <li className="americano-registration__empty">
+                  Aún no has seleccionado jugadores.
+                </li>
+              ) : (
+                players.map((player) => (
+                  <li key={player.id}>
+                    <span>{player.name}</span>
+                    <button
+                      className="americano-btn americano-btn--danger"
+                      onClick={() => onRemovePlayer(player.id)}
+                    >
+                      Quitar
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        </QuickModeAccordionItem>
+
+        {convocatoriaSlot ? (
+          <QuickModeAccordionItem
+            id="convocatoria"
+            title="Convocatoria"
+            subtitle="Cupo, link y confirmados"
+          >
+            {convocatoriaSlot}
+          </QuickModeAccordionItem>
+        ) : null}
+
+        <QuickModeAccordionItem
+          id="detalles"
+          title="Detalles"
+          subtitle="Rondas y canchas"
+        >
+          <div className="americano-registration__start-row">
+            <label>
+              Rondas:
+              <input
+                type="number"
+                min={1}
+                value={totalRounds}
+                onChange={(e) =>
+                  setTotalRounds(Math.max(1, Number(e.target.value) || 1))
+                }
+              />
+            </label>
+            <label>
+              Canchas:
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={courts}
+                onChange={(e) =>
+                  setCourts(
+                    Math.min(20, Math.max(1, Number(e.target.value) || 1))
+                  )
+                }
+              />
+            </label>
+          </div>
+          <p className="americano-registration__courts-hint">
+            Solo hay tantos partidos simultáneos como canchas. Las canchas rotan
+            entre rondas.
+          </p>
+        </QuickModeAccordionItem>
+      </QuickModeAccordion>
     </section>
   );
 };

@@ -8,6 +8,8 @@
 @import "./styles/riviera-utilities.css";
 @import "./styles/riviera-open-patterns.css"; /* Maestro v1.0 — patrones compartidos */
 @import "./styles/riviera-open-components.css"; /* Fase 1 — clases .rv-* compartidas */
+@import "./styles/quick-mode-prep.css"; /* Modos rápidos — hero / accordion / CTA */
+@import "./styles/quick-mode-workspace.css"; /* Round Robin prep workspace 2-col */
 @import "./styles/riviera-open-mode-bridge.css"; /* Fase 2 — unificación modos */
 @import "./styles/riviera-open-mobile-polish.css"; /* Revisión mobile-first final */
 @import "./styles/standings-leader-gold.css";

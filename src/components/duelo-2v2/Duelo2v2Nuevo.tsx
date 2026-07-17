@@ -17,7 +17,7 @@ import {
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
-import { ModeHeader } from "../platform/ModeHeader";
+import { QuickModeHero } from "../platform/quickMode";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { navigateDuelo2v2, duelo2v2GestionarPath } from "./duelo2v2Nav";
 import "./duelo2v2-page.css";
@@ -185,7 +185,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
   };
 
   return (
-    <Duelo2v2PageShell wide>
+    <Duelo2v2PageShell wide className="qm-prep">
       <ActionBar className="duelo2v2-toolbar riviera-back-toolbar">
         <Button
           type="button"
@@ -196,11 +196,16 @@ export const Duelo2v2Nuevo: React.FC = () => {
         </Button>
       </ActionBar>
 
-      <ModeHeader
-        className="duelo2v2-header rv-mode-header rv-mode-header--entry"
+      <QuickModeHero
         eyebrow={modeEyebrow}
         title="Nuevo duelo 2 vs 2"
-        subtitle="Completa los datos y guarda el duelo. Después podrás compartir la convocatoria por WhatsApp."
+        subtitle="Completa los datos y guarda. Después podrás compartir la convocatoria."
+        statusLabel="Preparación"
+        stats={[
+          { label: "Formato", value: "2 vs 2" },
+          { label: "Cancha", value: cancha.trim() || "—" },
+          { label: "Día", value: draftDate || "—" },
+        ]}
       />
 
       {!user?.id ? (
@@ -348,16 +353,16 @@ export const Duelo2v2Nuevo: React.FC = () => {
 
             {error && <p className="duelo2v2-error">{error}</p>}
 
-            <ActionBar className="duelo2v2-actions">
-              <Button
+            <div className="qm-primary-cta">
+              <button
                 type="submit"
-                variant="primary"
+                className="qm-primary-cta__btn"
                 disabled={!canSubmit || busy}
                 data-testid="guardar-duelo"
               >
-                {busy ? "Guardando…" : "Guardar duelo"}
-              </Button>
-            </ActionBar>
+                {busy ? "…" : "Guardar duelo"}
+              </button>
+            </div>
           </form>
         </>
       )}

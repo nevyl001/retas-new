@@ -1,7 +1,6 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   createTournament,
-  findResumableAmericanoTournament,
   Tournament,
 } from "../../lib/database";
 import {
@@ -56,7 +55,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   const [sheetMode, setSheetMode] = useState<GameModeId | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const americanoResumeRef = useRef(false);
 
   const handleModeSelect = useCallback(
     async (modeId: GameModeId) => {
@@ -80,28 +78,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         navigateDuelo2v2("/duelo-2v2/nuevo");
         return;
       }
-      if (modeId === "americano") {
-        setSheetMode("americano");
-        if (!userId || americanoResumeRef.current) return;
-        americanoResumeRef.current = true;
-        void findResumableAmericanoTournament(userId)
-          .then((existing) => {
-            if (existing) {
-              setSheetMode(null);
-              navigateToAmericanoDinamico(existing.id, userId);
-            }
-          })
-          .catch(() => {
-            /* sheet ya abierto: crear nueva reta */
-          })
-          .finally(() => {
-            americanoResumeRef.current = false;
-          });
-        return;
-      }
+      // Americano (y demás modos de sheet): siempre flujo de crear nuevo.
+      // Los activos se retoman desde "En curso", no hijackean "Nuevo".
       setSheetMode(modeId);
     },
-    [userId, isModeEnabled, organizerName]
+    [isModeEnabled, organizerName]
   );
 
   const handleQuickStart = useCallback(
@@ -113,15 +94,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       setSubmitting(true);
       setError(null);
       try {
-        if (payload.modeId === "americano") {
-          const existing = await findResumableAmericanoTournament(userId);
-          if (existing) {
-            setSheetMode(null);
-            navigateToAmericanoDinamico(existing.id, userId);
-            return;
-          }
-        }
-
         const dbFormat = gameModeIdToTournamentFormat(payload.modeId);
         const tournament = await createTournament(
           payload.name,
