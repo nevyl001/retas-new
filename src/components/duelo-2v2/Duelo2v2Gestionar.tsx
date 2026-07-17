@@ -38,9 +38,12 @@ import {
 } from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import {
-  QuickModeAccordion,
-  QuickModeAccordionItem,
-  QuickModeHero,
+  QuickModeEventHeader,
+  QuickModePrepWorkspace,
+  QuickModePrimaryCta,
+  QuickModeStepper,
+  type QuickModeStep,
+  type QuickModeStepStatus,
 } from "../platform/quickMode";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
 import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
@@ -52,6 +55,18 @@ import { Duelo2v2MatchMeta } from "./Duelo2v2MatchMeta";
 import { navigateDuelo2v2, publicDuelo2v2Url } from "./duelo2v2Nav";
 import "../../styles/riviera-public-celebrate.css";
 import "./duelo2v2-page.css";
+
+type GestionarStepId = "convocatoria" | "parejas" | "detalles" | "control";
+
+function stepStatus(
+  id: GestionarStepId,
+  active: GestionarStepId,
+  complete: boolean
+): QuickModeStepStatus {
+  if (active === id) return "active";
+  if (complete) return "complete";
+  return "pending";
+}
 
 interface Duelo2v2GestionarProps {
   dueloId: string;
@@ -74,6 +89,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   >({});
   const isMobile = useMobileViewport(767);
   const [mobileTab, setMobileTab] = useState<DueloMobileTabId>("resumen");
+  const [step, setStep] = useState<GestionarStepId>("control");
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+  const [convTouched, setConvTouched] = useState(false);
 
   const dueloTabs = useMemo(
     () => [
@@ -131,6 +149,16 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!duelo || duelo.estado === "finalizado") return;
+    if (duelo.estado === "configuracion") {
+      setStep("convocatoria");
+      setConvTouched(false);
+    } else {
+      setStep("control");
+    }
+  }, [duelo?.id, duelo?.estado]);
 
   const handleSaveScore = async (detalle: Duelo2v2SetDetalle[]) => {
     setBusy(true);
@@ -407,7 +435,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   }
 
   return (
-    <Duelo2v2PageShell wide className="duelo2v2-gestionar qm-prep">
+    <Duelo2v2PageShell wide className="duelo2v2-gestionar">
       <ActionBar className="duelo2v2-toolbar riviera-back-toolbar">
         <Button
           type="button"
@@ -418,106 +446,283 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
         </Button>
       </ActionBar>
 
-      <QuickModeHero
-        eyebrow={modeEyebrow}
-        title={duelo.nombre}
-        subtitle={duelo.descripcion ?? undefined}
-        statusLabel={dueloStatus.label}
-        stats={[
-          { label: "Equipo A", value: teamAName },
-          { label: "Equipo B", value: teamBName },
-          {
-            label: "Marcador",
-            value: `${duelo.sets_pareja_a ?? 0}–${duelo.sets_pareja_b ?? 0}`,
-          },
-        ]}
-      />
-
       {finalizado ? (
-        <div className="qm-competition">
-          {resultadoPanel}
-          {equiposPanel}
-        </div>
-      ) : (
-        <QuickModeAccordion defaultOpenId="control">
-          <QuickModeAccordionItem
-            id="convocatoria"
-            title="Convocatoria"
-            subtitle="Compartir e inscritos"
-          >
-            <ConvocatoriaWhatsAppPanel
-              shareOnly
-              context={buildDueloConvocatoriaContext({
-                dueloId: duelo.id,
-                name: duelo.nombre,
-                locationLabel: lugarConvocatoria,
-                includeLugar,
-                canchaLabel: duelo.cancha ?? undefined,
-                scheduledAt: duelo.programado_en,
-                scheduledUntil: duelo.programado_hasta,
-                clubName: convocatoriaOrigin,
-              })}
-            />
-            <PublicShareSection
-              publicUrl={publicDuelo2v2Url(dueloId)}
-              title="Enlace público"
-              infoLines={[
-                "Comparte el enlace para ver el marcador del duelo (solo lectura).",
-              ]}
-              copyButtonLabel="Copiar vista pública"
-            />
-          </QuickModeAccordionItem>
-
-          <QuickModeAccordionItem
-            id="equipos"
-            title="Equipos"
-            subtitle="Parejas del duelo"
-          >
+        <>
+          <QuickModeEventHeader
+            club={modeEyebrow}
+            title={duelo.nombre}
+            modality="Duelo 2 vs 2"
+            statusLabel={dueloStatus.label}
+            centerMetrics={[
+              { label: "Equipo A", value: teamAName },
+              { label: "Equipo B", value: teamBName },
+              {
+                label: "Marcador",
+                value: `${duelo.sets_pareja_a ?? 0}–${duelo.sets_pareja_b ?? 0}`,
+              },
+            ]}
+            rightMeta={[
+              { label: "Cancha", value: duelo.cancha?.trim() || "—" },
+              {
+                label: "Lugar",
+                value: includeLugar ? lugarConvocatoria : "Oculto",
+              },
+            ]}
+          />
+          <div className="qm-competition">
+            {resultadoPanel}
             {equiposPanel}
-          </QuickModeAccordionItem>
+          </div>
+        </>
+      ) : (
+        (() => {
+          const pairsOk =
+            Boolean(duelo.pareja_a_j1_nombre?.trim()) &&
+            Boolean(duelo.pareja_a_j2_nombre?.trim()) &&
+            Boolean(duelo.pareja_b_j1_nombre?.trim()) &&
+            Boolean(duelo.pareja_b_j2_nombre?.trim());
+          const detallesOk = Boolean(duelo.nombre?.trim());
+          const canFinalizar = Boolean(duelo.ganador) && !busy;
 
-          <QuickModeAccordionItem
-            id="detalles"
-            title="Detalles"
-            subtitle="Nombre, horario y sede"
-          >
-            <Duelo2v2DetailsEditor
-              duelo={duelo}
-              disabled={busy}
-              onSaved={(updated) => {
-                setDuelo(updated);
-                setMessage("Datos del encuentro actualizados.");
-                setError(null);
-              }}
-              onError={setError}
-            />
-          </QuickModeAccordionItem>
+          const goConvocatoria = () => {
+            setConvTouched(true);
+            setStep("convocatoria");
+          };
 
-          <QuickModeAccordionItem
-            id="control"
-            title="Control de competencia"
-            subtitle="Marcador y cierre"
-          >
-            <Duelo2v2ScoreEditor
-              key={editorKey}
-              teamAName={teamAName}
-              teamBName={teamBName}
-              initialDetalle={duelo.detalle_sets}
-              disabled={busy}
-              onSave={handleSaveScore}
+          const steps: QuickModeStep[] = [
+            {
+              id: "convocatoria",
+              label: "Convocatoria",
+              status: stepStatus("convocatoria", step, convTouched),
+              count: convTouched ? "Revisada" : "Pendiente",
+            },
+            {
+              id: "parejas",
+              label: "Parejas",
+              status: stepStatus("parejas", step, pairsOk),
+              count: pairsOk ? "Listas" : "Pendiente",
+            },
+            {
+              id: "detalles",
+              label: "Detalles",
+              status: stepStatus("detalles", step, detallesOk),
+              count: detallesOk ? "OK" : "Pendiente",
+            },
+            {
+              id: "control",
+              label: "Control",
+              status: stepStatus("control", step, Boolean(duelo.ganador)),
+              count: duelo.ganador ? "Listo" : "En curso",
+            },
+          ];
+
+          const workbenchTitle =
+            step === "convocatoria"
+              ? "Convocatoria"
+              : step === "parejas"
+                ? "Parejas"
+                : step === "detalles"
+                  ? "Detalles"
+                  : "Control de competencia";
+
+          const convocatoriaBody = (
+            <>
+              <ConvocatoriaWhatsAppPanel
+                shareOnly
+                context={buildDueloConvocatoriaContext({
+                  dueloId: duelo.id,
+                  name: duelo.nombre,
+                  locationLabel: lugarConvocatoria,
+                  includeLugar,
+                  canchaLabel: duelo.cancha ?? undefined,
+                  scheduledAt: duelo.programado_en,
+                  scheduledUntil: duelo.programado_hasta,
+                  clubName: convocatoriaOrigin,
+                })}
+              />
+              <PublicShareSection
+                publicUrl={publicDuelo2v2Url(dueloId)}
+                title="Enlace público"
+                infoLines={[
+                  "Comparte el enlace para ver el marcador del duelo (solo lectura).",
+                ]}
+                copyButtonLabel="Copiar vista pública"
+              />
+            </>
+          );
+
+          const workbenchBody =
+            step === "convocatoria" ? (
+              <div className="qm-ws__convocatoria">{convocatoriaBody}</div>
+            ) : step === "parejas" ? (
+              equiposPanel
+            ) : step === "detalles" ? (
+              <Duelo2v2DetailsEditor
+                duelo={duelo}
+                disabled={busy}
+                onSaved={(updated) => {
+                  setDuelo(updated);
+                  setMessage("Datos del encuentro actualizados.");
+                  setError(null);
+                }}
+                onError={setError}
+              />
+            ) : (
+              <>
+                <Duelo2v2ScoreEditor
+                  key={editorKey}
+                  teamAName={teamAName}
+                  teamBName={teamBName}
+                  initialDetalle={duelo.detalle_sets}
+                  disabled={busy}
+                  onSave={handleSaveScore}
+                />
+                <p className="duelo2v2-card__meta" style={{ marginTop: "0.75rem" }}>
+                  Guarda el marcador y finaliza cuando haya ganador.
+                </p>
+              </>
+            );
+
+          const ctaProps =
+            canFinalizar
+              ? {
+                  variant: "sidebar" as const,
+                  label: busy ? "Finalizando…" : "Finalizar duelo",
+                  disabled: false,
+                  loading: busy,
+                  hint: "Suma el resultado al ranking",
+                  onClick: () => void handleFinalizar(),
+                }
+              : step === "control"
+                ? {
+                    variant: "sidebar" as const,
+                    label: "Finalizar duelo",
+                    disabled: true,
+                    loading: false,
+                    hint: "Registra el marcador hasta que haya ganador",
+                    onClick: () => undefined,
+                  }
+                : step === "convocatoria"
+                  ? {
+                      variant: "sidebar" as const,
+                      label: "Lanzar convocatoria",
+                      disabled: false,
+                      loading: false,
+                      hint: "Crea el enlace y copia el mensaje de WhatsApp",
+                      onClick: () => {
+                        const btn = document.querySelector(
+                          '[data-testid="lanzar-por-whatsapp"]'
+                        ) as HTMLButtonElement | null;
+                        btn?.click();
+                      },
+                    }
+                  : {
+                      variant: "sidebar" as const,
+                      label: "Lanzar convocatoria",
+                      disabled: false,
+                      loading: false,
+                      hint: "Abre el paso Convocatoria para copiar el link",
+                      onClick: goConvocatoria,
+                    };
+
+          return (
+            <QuickModePrepWorkspace
+              className={mobileSummaryOpen ? "is-summary-open" : ""}
+              header={
+                <QuickModeEventHeader
+                  club={modeEyebrow}
+                  title={duelo.nombre}
+                  modality="Duelo 2 vs 2"
+                  statusLabel={dueloStatus.label}
+                  centerMetrics={[
+                    { label: "Equipo A", value: teamAName },
+                    { label: "Equipo B", value: teamBName },
+                    {
+                      label: "Marcador",
+                      value: `${duelo.sets_pareja_a ?? 0}–${duelo.sets_pareja_b ?? 0}`,
+                    },
+                    { label: "Cancha", value: duelo.cancha?.trim() || "—" },
+                  ]}
+                  rightMeta={[
+                    {
+                      label: "Lugar",
+                      value: includeLugar ? lugarConvocatoria : "Oculto",
+                    },
+                    {
+                      label: "Estado",
+                      value:
+                        duelo.estado === "configuracion"
+                          ? "Preparación"
+                          : "En juego",
+                    },
+                  ]}
+                  onEditDetails={() => setStep("detalles")}
+                />
+              }
+              stepper={
+                <QuickModeStepper
+                  steps={steps}
+                  activeId={step}
+                  onChange={(id) => {
+                    const next = id as GestionarStepId;
+                    if (next === "convocatoria") setConvTouched(true);
+                    setStep(next);
+                  }}
+                />
+              }
+              workbench={
+                <>
+                  <div className="qm-ws__workbench-head">
+                    <h2 className="qm-ws__workbench-title">{workbenchTitle}</h2>
+                    <button
+                      type="button"
+                      className="qm-ws__text-btn qm-ws__summary-toggle"
+                      onClick={() => setMobileSummaryOpen((v) => !v)}
+                      aria-expanded={mobileSummaryOpen}
+                    >
+                      {mobileSummaryOpen ? "Ocultar resumen" : "Resumen"}
+                    </button>
+                  </div>
+                  <div className="qm-ws__workbench-body">{workbenchBody}</div>
+                </>
+              }
+              sidebar={
+                <div className="qm-ws-panel">
+                  <section className="qm-ws-panel__block">
+                    <h3 className="qm-ws-panel__label">Progreso</h3>
+                    <ul className="qm-ws-panel__progress">
+                      <li className={convTouched ? "is-ok" : ""}>Convocatoria</li>
+                      <li className={pairsOk ? "is-ok" : ""}>Parejas A / B</li>
+                      <li className={detallesOk ? "is-ok" : ""}>Detalles</li>
+                      <li className={duelo.ganador ? "is-ok" : ""}>
+                        Listo para finalizar
+                      </li>
+                    </ul>
+                  </section>
+                  <section className="qm-ws-panel__block">
+                    <h3 className="qm-ws-panel__label">Convocatoria</h3>
+                    <p className="qm-ws-panel__conv-line">
+                      {convTouched
+                        ? "Revisa o vuelve a lanzar el enlace"
+                        : "Lanza el link por WhatsApp desde este paso"}
+                    </p>
+                    <button
+                      type="button"
+                      className="qm-ws__text-btn"
+                      onClick={goConvocatoria}
+                    >
+                      Abrir convocatoria
+                    </button>
+                  </section>
+                  <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
+                    <QuickModePrimaryCta {...ctaProps} />
+                  </section>
+                </div>
+              }
+              stickyCta={<QuickModePrimaryCta {...ctaProps} />}
             />
-            <ActionBar className="duelo2v2-actions">
-              <Button
-                type="button"
-                variant="primary"
-                disabled={busy || !duelo.ganador}
-                onClick={() => void handleFinalizar()}
-              >
-                Finalizar y sumar al ranking
-              </Button>
-            </ActionBar>
-          </QuickModeAccordionItem>
-        </QuickModeAccordion>
+          );
+        })()
       )}
 
       {error && <p className="duelo2v2-error">{error}</p>}

@@ -97,13 +97,13 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         id: "jugadores",
         label: "Jugadores",
         status: stepStatus("jugadores", step, jugadoresOk),
-        meta: String(players.length),
+        count: String(players.length),
       },
       {
         id: "configuracion",
         label: "Configuración",
         status: stepStatus("configuracion", step, configOk),
-        meta: `${totalRounds}r · ${courts}c`,
+        count: `${totalRounds}r · ${courts}c`,
       },
       {
         id: "convocatoria",
@@ -113,13 +113,13 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           step,
           convTouched || Boolean(convocatoriaSlot)
         ),
-        meta: convTouched ? "Revisada" : "Pendiente",
+        count: convTouched ? "Revisada" : "Pendiente",
       },
       {
         id: "listo",
         label: "Listo",
         status: stepStatus("listo", step, canStart),
-        meta: canStart ? "OK" : "Pendiente",
+        count: canStart ? "OK" : "Pendiente",
       },
     ],
     [

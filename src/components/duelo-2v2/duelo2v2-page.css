@@ -84,6 +84,14 @@
   gap: clamp(1.25rem, 3vw, 2rem);
 }
 
+.duelo2v2-form--workspace {
+  gap: 1rem;
+}
+
+.duelo2v2-form--workspace .duelo2v2-form__name-row input {
+  max-width: none;
+}
+
 .duelo2v2-form__name-row label {
   display: block;
   font-size: 0.85rem;

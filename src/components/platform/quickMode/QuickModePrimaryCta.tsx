@@ -9,6 +9,7 @@ export type QuickModePrimaryCtaProps = {
   hint?: string | null;
   /** sidebar = tamaño normal (~48–52px), no full-bleed */
   variant?: "default" | "sidebar";
+  testId?: string;
 };
 
 /** CTA primario de preparación. */
@@ -20,6 +21,7 @@ export function QuickModePrimaryCta({
   className = "",
   hint,
   variant = "default",
+  testId,
 }: QuickModePrimaryCtaProps) {
   return (
     <div
@@ -30,6 +32,7 @@ export function QuickModePrimaryCta({
         className="qm-primary-cta__btn"
         onClick={onClick}
         disabled={disabled || loading}
+        data-testid={testId}
       >
         {loading ? "…" : label}
       </button>

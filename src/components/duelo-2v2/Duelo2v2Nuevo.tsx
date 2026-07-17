@@ -17,10 +17,29 @@ import {
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
-import { QuickModeHero } from "../platform/quickMode";
+import {
+  QuickModeEventHeader,
+  QuickModePrepWorkspace,
+  QuickModePrimaryCta,
+  QuickModeStepper,
+  type QuickModeStep,
+  type QuickModeStepStatus,
+} from "../platform/quickMode";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { navigateDuelo2v2, duelo2v2GestionarPath } from "./duelo2v2Nav";
 import "./duelo2v2-page.css";
+
+type NuevoStepId = "encuentro" | "horario" | "listo";
+
+function stepStatus(
+  id: NuevoStepId,
+  active: NuevoStepId,
+  complete: boolean
+): QuickModeStepStatus {
+  if (active === id) return "active";
+  if (complete) return "complete";
+  return "pending";
+}
 
 /**
  * Pantalla de alta: siempre empieza limpia.
@@ -40,6 +59,8 @@ export const Duelo2v2Nuevo: React.FC = () => {
     };
   }, []);
 
+  const [step, setStep] = useState<NuevoStepId>("encuentro");
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [nombre, setNombre] = useState("");
   const [mostrarLugar, setMostrarLugar] = useState(true);
   const [lugar, setLugar] = useState(convocatoriaOrigin);
@@ -56,14 +77,15 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const saveLock = useRef(false);
   const pendingProbeStarted = useRef(false);
 
-  const canSubmit =
-    nombre.trim().length > 0 &&
+  const encuentroOk =
+    nombre.trim().length > 0 && cancha.trim().length > 0;
+  const horarioOk =
     (!mostrarLugar || lugar.trim().length > 0) &&
-    cancha.trim().length > 0 &&
     draftDate.trim().length > 0 &&
     draftTimeStart.trim().length > 0 &&
-    draftTimeEnd.trim().length > 0 &&
-    Boolean(user?.id);
+    draftTimeEnd.trim().length > 0;
+  const canSubmit =
+    encuentroOk && horarioOk && Boolean(user?.id);
 
   /**
    * Al montar Nuevo:
@@ -134,10 +156,10 @@ export const Duelo2v2Nuevo: React.FC = () => {
     setDraftTimeStart(defaultSchedule.timeStart);
     setDraftTimeEnd(defaultSchedule.timeEnd);
     setError(null);
+    setStep("encuentro");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!canSubmit || !user?.id || saveLock.current) return;
 
     saveLock.current = true;
@@ -184,8 +206,238 @@ export const Duelo2v2Nuevo: React.FC = () => {
     }
   };
 
+  const steps: QuickModeStep[] = useMemo(
+    () => [
+      {
+        id: "encuentro",
+        label: "Encuentro",
+        status: stepStatus("encuentro", step, encuentroOk),
+        count: nombre.trim() || "Pendiente",
+      },
+      {
+        id: "horario",
+        label: "Horario",
+        status: stepStatus("horario", step, horarioOk),
+        count: draftDate || "Pendiente",
+      },
+      {
+        id: "listo",
+        label: "Listo",
+        status: stepStatus("listo", step, canSubmit),
+        count: canSubmit ? "OK" : "Pendiente",
+      },
+    ],
+    [step, encuentroOk, nombre, horarioOk, draftDate, canSubmit]
+  );
+
+  const ctaHint = !user?.id
+    ? "Inicia sesión para crear un duelo"
+    : !encuentroOk
+      ? "Completa nombre y cancha"
+      : !horarioOk
+        ? "Completa lugar y horario"
+        : "Luego podrás lanzar la convocatoria por WhatsApp";
+
+  const ctaProps = {
+    variant: "sidebar" as const,
+    label: busy
+      ? "Guardando…"
+      : canSubmit
+        ? "Guardar y lanzar convocatoria"
+        : "Guardar duelo",
+    disabled: !canSubmit || busy,
+    loading: busy,
+    hint: ctaHint,
+    testId: "guardar-duelo",
+    onClick: () => void handleSubmit(),
+  };
+
+  const workbenchTitle =
+    step === "encuentro"
+      ? "Encuentro"
+      : step === "horario"
+        ? "Lugar y horario"
+        : "Listo para guardar";
+
+  const workbenchBody =
+    step === "encuentro" ? (
+      <div className="duelo2v2-form duelo2v2-form--workspace">
+        <div className="duelo2v2-form__name-row">
+          <label htmlFor="duelo-nombre">Nombre del encuentro</label>
+          <input
+            id="duelo-nombre"
+            type="text"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Ej. Encuentro Riviera Open — Sábado"
+            required
+          />
+        </div>
+        <div className="duelo2v2-form__schedule-row">
+          <label className="duelo2v2-form__field">
+            <span className="duelo2v2-form__field-label">Cancha</span>
+            <input
+              type="text"
+              value={cancha}
+              onChange={(e) => setCancha(e.target.value)}
+              placeholder="Ej. 1"
+              required
+            />
+          </label>
+          <label className="duelo2v2-form__field">
+            <span className="duelo2v2-form__field-label">Categoría / nivel</span>
+            <input
+              type="text"
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+              placeholder="Ej. 5ta Fuerza"
+              list="duelo-categoria-sugerencias"
+            />
+            <datalist id="duelo-categoria-sugerencias">
+              <option value="Open" />
+              <option value="1ra Fuerza" />
+              <option value="2da Fuerza" />
+              <option value="3ra Fuerza" />
+              <option value="4ta Fuerza" />
+              <option value="5ta Fuerza" />
+              <option value="6ta Fuerza" />
+            </datalist>
+          </label>
+        </div>
+      </div>
+    ) : step === "horario" ? (
+      <div className="duelo2v2-form duelo2v2-form--workspace">
+        <div className="duelo2v2-form__lugar-block">
+          <label className="duelo2v2-form__toggle">
+            <input
+              type="checkbox"
+              checked={mostrarLugar}
+              onChange={(e) => setMostrarLugar(e.target.checked)}
+            />
+            <span>Incluir lugar en la convocatoria</span>
+          </label>
+          {mostrarLugar ? (
+            <label className="duelo2v2-form__field">
+              <span className="duelo2v2-form__field-label">Lugar</span>
+              <input
+                type="text"
+                value={lugar}
+                onChange={(e) => setLugar(e.target.value)}
+                placeholder="Ej. Hack Pádel, Padelito…"
+                required
+              />
+            </label>
+          ) : (
+            <p className="duelo2v2-form__hint">
+              Ideal si tu club siempre juega en la misma sede.
+            </p>
+          )}
+        </div>
+        <div className="duelo2v2-form__schedule-row">
+          <label className="duelo2v2-form__field">
+            <span className="duelo2v2-form__field-label">Día</span>
+            <input
+              type="date"
+              value={draftDate}
+              onChange={(e) => setDraftDate(e.target.value)}
+              required
+            />
+          </label>
+          <label className="duelo2v2-form__field">
+            <span className="duelo2v2-form__field-label">Hora inicio</span>
+            <input
+              type="time"
+              value={draftTimeStart}
+              onChange={(e) => setDraftTimeStart(e.target.value)}
+              required
+            />
+          </label>
+          <label className="duelo2v2-form__field">
+            <span className="duelo2v2-form__field-label">Hora fin</span>
+            <input
+              type="time"
+              value={draftTimeEnd}
+              onChange={(e) => setDraftTimeEnd(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+      </div>
+    ) : (
+      <ul className="qm-ws__ready-check">
+        <li className={encuentroOk ? "is-ok" : "is-miss"}>
+          <span className="qm-ws__ready-mark" aria-hidden>
+            {encuentroOk ? "OK" : "!"}
+          </span>
+          <span className="qm-ws__ready-copy">
+            {encuentroOk
+              ? `${nombre.trim()} · cancha ${cancha.trim()}`
+              : "Falta nombre o cancha"}
+          </span>
+          {!encuentroOk ? (
+            <button
+              type="button"
+              className="qm-ws__text-btn"
+              onClick={() => setStep("encuentro")}
+            >
+              Completar
+            </button>
+          ) : null}
+        </li>
+        <li className={horarioOk ? "is-ok" : "is-miss"}>
+          <span className="qm-ws__ready-mark" aria-hidden>
+            {horarioOk ? "OK" : "!"}
+          </span>
+          <span className="qm-ws__ready-copy">
+            {horarioOk
+              ? `${draftDate} · ${draftTimeStart}–${draftTimeEnd}`
+              : "Falta lugar u horario"}
+          </span>
+          {!horarioOk ? (
+            <button
+              type="button"
+              className="qm-ws__text-btn"
+              onClick={() => setStep("horario")}
+            >
+              Completar
+            </button>
+          ) : null}
+        </li>
+        <li className="is-soft">
+          <span className="qm-ws__ready-mark" aria-hidden>
+            ·
+          </span>
+          <span className="qm-ws__ready-copy">
+            Después de guardar podrás lanzar la convocatoria por WhatsApp.
+          </span>
+        </li>
+      </ul>
+    );
+
+  const sidebarPanel = (
+    <div className="qm-ws-panel">
+      <section className="qm-ws-panel__block">
+        <h3 className="qm-ws-panel__label">Progreso</h3>
+        <ul className="qm-ws-panel__progress">
+          <li className={encuentroOk ? "is-ok" : ""}>Nombre y cancha</li>
+          <li className={horarioOk ? "is-ok" : ""}>Lugar y horario</li>
+          <li className={canSubmit ? "is-ok" : ""}>Listo para guardar</li>
+        </ul>
+      </section>
+      <section className="qm-ws-panel__block">
+        <h3 className="qm-ws-panel__label">Siguiente</h3>
+        <p className="qm-ws-panel__conv-line">
+          Al guardar abres Convocatoria con «Lanzar y copiar» para WhatsApp.
+        </p>
+      </section>
+      <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
+        <QuickModePrimaryCta {...ctaProps} />
+      </section>
+    </div>
+  );
+
   return (
-    <Duelo2v2PageShell wide className="qm-prep">
+    <Duelo2v2PageShell wide className="duelo2v2-nuevo">
       <ActionBar className="duelo2v2-toolbar riviera-back-toolbar">
         <Button
           type="button"
@@ -195,18 +447,6 @@ export const Duelo2v2Nuevo: React.FC = () => {
           ← Volver
         </Button>
       </ActionBar>
-
-      <QuickModeHero
-        eyebrow={modeEyebrow}
-        title="Nuevo duelo 2 vs 2"
-        subtitle="Completa los datos y guarda. Después podrás compartir la convocatoria."
-        statusLabel="Preparación"
-        stats={[
-          { label: "Formato", value: "2 vs 2" },
-          { label: "Cancha", value: cancha.trim() || "—" },
-          { label: "Día", value: draftDate || "—" },
-        ]}
-      />
 
       {!user?.id ? (
         <p className="duelo2v2-error">Debes iniciar sesión para crear un duelo.</p>
@@ -248,122 +488,68 @@ export const Duelo2v2Nuevo: React.FC = () => {
             </section>
           ) : null}
 
-          <form className="duelo2v2-form" onSubmit={(e) => void handleSubmit(e)}>
-            <div className="duelo2v2-form__name-row">
-              <label htmlFor="duelo-nombre">Nombre del encuentro</label>
-              <input
-                id="duelo-nombre"
-                type="text"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-                placeholder="Ej. Encuentro Riviera Open — Sábado"
-                required
+          {error ? <p className="duelo2v2-error">{error}</p> : null}
+
+          <QuickModePrepWorkspace
+            className={mobileSummaryOpen ? "is-summary-open" : ""}
+            header={
+              <QuickModeEventHeader
+                club={modeEyebrow}
+                title="Nuevo duelo 2 vs 2"
+                modality="Duelo 2 vs 2"
+                statusLabel="Pendiente"
+                centerMetrics={[
+                  { label: "Formato", value: "2 vs 2" },
+                  { label: "Cancha", value: cancha.trim() || "—" },
+                  { label: "Día", value: draftDate || "—" },
+                  {
+                    label: "Horario",
+                    value:
+                      draftTimeStart && draftTimeEnd
+                        ? `${draftTimeStart}–${draftTimeEnd}`
+                        : "—",
+                  },
+                ]}
+                rightMeta={[
+                  {
+                    label: "Lugar",
+                    value: mostrarLugar ? lugar.trim() || "—" : "Oculto",
+                  },
+                  {
+                    label: "Categoría",
+                    value: categoria.trim() || "—",
+                  },
+                ]}
+                onEditDetails={() => setStep("horario")}
+                editDetailsLabel="Editar horario"
               />
-            </div>
-
-            <div className="duelo2v2-form__lugar-block">
-              <label className="duelo2v2-form__toggle">
-                <input
-                  type="checkbox"
-                  checked={mostrarLugar}
-                  onChange={(e) => setMostrarLugar(e.target.checked)}
-                />
-                <span>Incluir lugar en la convocatoria</span>
-              </label>
-              {mostrarLugar ? (
-                <label className="duelo2v2-form__field">
-                  <span className="duelo2v2-form__field-label">Lugar</span>
-                  <input
-                    type="text"
-                    value={lugar}
-                    onChange={(e) => setLugar(e.target.value)}
-                    placeholder="Ej. Hack Pádel, Padelito…"
-                    required
-                  />
-                </label>
-              ) : (
-                <p className="duelo2v2-form__hint">
-                  Ideal si tu club siempre juega en la misma sede.
-                </p>
-              )}
-            </div>
-
-            <div className="duelo2v2-form__schedule-row">
-              <label className="duelo2v2-form__field">
-                <span className="duelo2v2-form__field-label">Cancha</span>
-                <input
-                  type="text"
-                  value={cancha}
-                  onChange={(e) => setCancha(e.target.value)}
-                  placeholder="Ej. 1"
-                  required
-                />
-              </label>
-              <label className="duelo2v2-form__field">
-                <span className="duelo2v2-form__field-label">Categoría / nivel</span>
-                <input
-                  type="text"
-                  value={categoria}
-                  onChange={(e) => setCategoria(e.target.value)}
-                  placeholder="Ej. 5ta Fuerza"
-                  list="duelo-categoria-sugerencias"
-                />
-                <datalist id="duelo-categoria-sugerencias">
-                  <option value="Open" />
-                  <option value="1ra Fuerza" />
-                  <option value="2da Fuerza" />
-                  <option value="3ra Fuerza" />
-                  <option value="4ta Fuerza" />
-                  <option value="5ta Fuerza" />
-                  <option value="6ta Fuerza" />
-                </datalist>
-              </label>
-              <label className="duelo2v2-form__field">
-                <span className="duelo2v2-form__field-label">Día</span>
-                <input
-                  type="date"
-                  value={draftDate}
-                  onChange={(e) => setDraftDate(e.target.value)}
-                  required
-                />
-              </label>
-              <label className="duelo2v2-form__field">
-                <span className="duelo2v2-form__field-label">Hora inicio</span>
-                <input
-                  type="time"
-                  value={draftTimeStart}
-                  onChange={(e) => setDraftTimeStart(e.target.value)}
-                  required
-                />
-              </label>
-              <label className="duelo2v2-form__field">
-                <span className="duelo2v2-form__field-label">Hora fin</span>
-                <input
-                  type="time"
-                  value={draftTimeEnd}
-                  onChange={(e) => setDraftTimeEnd(e.target.value)}
-                  required
-                />
-              </label>
-            </div>
-
-            <p className="duelo2v2-card__meta" data-testid="duelo-nuevo-whatsapp-hint">
-              Después de guardar podrás compartir el duelo por WhatsApp.
-            </p>
-
-            {error && <p className="duelo2v2-error">{error}</p>}
-
-            <div className="qm-primary-cta">
-              <button
-                type="submit"
-                className="qm-primary-cta__btn"
-                disabled={!canSubmit || busy}
-                data-testid="guardar-duelo"
-              >
-                {busy ? "…" : "Guardar duelo"}
-              </button>
-            </div>
-          </form>
+            }
+            stepper={
+              <QuickModeStepper
+                steps={steps}
+                activeId={step}
+                onChange={(id) => setStep(id as NuevoStepId)}
+              />
+            }
+            workbench={
+              <>
+                <div className="qm-ws__workbench-head">
+                  <h2 className="qm-ws__workbench-title">{workbenchTitle}</h2>
+                  <button
+                    type="button"
+                    className="qm-ws__text-btn qm-ws__summary-toggle"
+                    onClick={() => setMobileSummaryOpen((v) => !v)}
+                    aria-expanded={mobileSummaryOpen}
+                  >
+                    {mobileSummaryOpen ? "Ocultar resumen" : "Resumen"}
+                  </button>
+                </div>
+                <div className="qm-ws__workbench-body">{workbenchBody}</div>
+              </>
+            }
+            sidebar={sidebarPanel}
+            stickyCta={<QuickModePrimaryCta {...ctaProps} />}
+          />
         </>
       )}
     </Duelo2v2PageShell>

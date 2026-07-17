@@ -133,7 +133,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     context.includeLugar !== false
   );
   const [displayRating, setDisplayRating] = useState(true);
-  const [displayPhoto, setDisplayPhoto] = useState(true);
   const [displayFullName, setDisplayFullName] = useState(true);
 
   const clubName = (context.clubName ?? "").trim();
@@ -259,7 +258,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           setCanchaLabel(prefs.cancha);
         }
         setDisplayRating(row.display_rating);
-        setDisplayPhoto(row.display_photo);
         setDisplayFullName(row.display_full_name);
         const list = await listOpenGameRegistrationEntries(context.mode, id);
         setEntries(list);
@@ -353,7 +351,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       titlePublic: title,
       ramaLabel: ramaLabel.trim() || null,
       displayRating,
-      displayPhoto,
+      displayPhoto: true,
       displayFullName,
     }).then(async (row) => {
       await syncConvocatoriaMetaToEntity({
@@ -957,14 +955,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 onChange={(e) => setWaitlistEnabled(e.target.checked)}
               />
               Permitir lista de espera
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={displayPhoto}
-                onChange={(e) => setDisplayPhoto(e.target.checked)}
-              />
-              Mostrar fotografía
             </label>
           </div>
         </>
