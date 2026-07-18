@@ -54,7 +54,89 @@ export type SaveRetaConfigResult =
       error: string;
       needsCourtsConfirm?: { message: string };
       conflict?: boolean;
+      sessionExpired?: boolean;
     };
+
+const SESSION_EXPIRED_MSG =
+  "Tu sesión expiró. Cierra sesión e inicia de nuevo para guardar los cambios.";
+
+const CONFLICT_MSG =
+  "La configuración cambió en otra sesión. Recarga los datos antes de guardar.";
+
+/** Compara updated_at por instante (ms), no por string crudo (evita falsos conflictos). */
+export function sameUpdatedAt(
+  a: string | null | undefined,
+  b: string | null | undefined
+): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const ta = Date.parse(a);
+  const tb = Date.parse(b);
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return false;
+  return ta === tb;
+}
+
+function isAuthFailureMessage(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("jwt") ||
+    m.includes("refresh token") ||
+    m.includes("not authenticated") ||
+    m.includes("unauthorized") ||
+    m.includes("session") ||
+    m.includes("401") ||
+    m.includes("403")
+  );
+}
+
+async function requireActiveSession(): Promise<
+  { ok: true } | { ok: false; error: string }
+> {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) {
+    return { ok: false, error: SESSION_EXPIRED_MSG };
+  }
+  return { ok: true };
+}
+
+async function classifyEmptyTournamentUpdate(
+  tournamentId: string,
+  expectedUpdatedAt: string | null
+): Promise<SaveRetaConfigResult> {
+  const session = await requireActiveSession();
+  if (!session.ok) {
+    return { ok: false, sessionExpired: true, error: session.error };
+  }
+
+  const { data: row, error } = await supabase
+    .from("tournaments")
+    .select("updated_at")
+    .eq("id", tournamentId)
+    .maybeSingle();
+
+  if (error) {
+    if (isAuthFailureMessage(error.message)) {
+      return { ok: false, sessionExpired: true, error: SESSION_EXPIRED_MSG };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  if (
+    row?.updated_at &&
+    expectedUpdatedAt &&
+    sameUpdatedAt(String(row.updated_at), expectedUpdatedAt)
+  ) {
+    // Misma versión en BD pero el UPDATE no devolvió fila → permiso/sesión, no conflicto.
+    return {
+      ok: false,
+      sessionExpired: true,
+      error: SESSION_EXPIRED_MSG,
+    };
+  }
+
+  return { ok: false, conflict: true, error: CONFLICT_MSG };
+}
 
 function durationMinutesBetween(
   fromIso: string,
@@ -211,7 +293,7 @@ async function applyCourtsAtomically(input: {
   expectedUpdatedAt: string | null;
 }): Promise<
   | { ok: true; updated_at: string | null; unassigned_count: number }
-  | { ok: false; error: string; conflict?: boolean }
+  | { ok: false; error: string; conflict?: boolean; sessionExpired?: boolean }
 > {
   const { data, error } = await supabase.rpc(
     "update_tournament_courts_and_unassign",
@@ -222,6 +304,9 @@ async function applyCourtsAtomically(input: {
     }
   );
   if (error) {
+    if (isAuthFailureMessage(error.message)) {
+      return { ok: false, sessionExpired: true, error: SESSION_EXPIRED_MSG };
+    }
     return {
       ok: false,
       error:
@@ -239,6 +324,9 @@ async function applyCourtsAtomically(input: {
     unassigned_count?: number;
   } | null;
   if (!row?.ok) {
+    if (row?.error === "forbidden") {
+      return { ok: false, sessionExpired: true, error: SESSION_EXPIRED_MSG };
+    }
     const conflict = row?.error === "conflict";
     return {
       ok: false,
@@ -246,7 +334,7 @@ async function applyCourtsAtomically(input: {
       error:
         row?.message ||
         (conflict
-          ? "La configuración cambió en otra sesión. Recarga los datos antes de guardar."
+          ? CONFLICT_MSG
           : row?.error || "No se pudieron actualizar las canchas"),
     };
   }
@@ -262,16 +350,20 @@ export async function saveRetaConfig(
 ): Promise<SaveRetaConfigResult> {
   const { tournament, matches, phase, values, loadedUpdatedAt } = input;
 
+  const session = await requireActiveSession();
+  if (!session.ok) {
+    return { ok: false, sessionExpired: true, error: session.error };
+  }
+
   if (
     loadedUpdatedAt &&
     tournament.updated_at &&
-    loadedUpdatedAt !== tournament.updated_at
+    !sameUpdatedAt(loadedUpdatedAt, tournament.updated_at)
   ) {
     return {
       ok: false,
       conflict: true,
-      error:
-        "La configuración cambió en otra sesión. Recarga los datos antes de guardar.",
+      error: CONFLICT_MSG,
     };
   }
 
@@ -311,6 +403,7 @@ export async function saveRetaConfig(
       return {
         ok: false,
         conflict: courtsRes.conflict,
+        sessionExpired: courtsRes.sessionExpired,
         error: courtsRes.error,
       };
     }
@@ -340,15 +433,13 @@ export async function saveRetaConfig(
     }
     const { data, error } = await query.select().maybeSingle();
     if (error) {
+      if (isAuthFailureMessage(error.message)) {
+        return { ok: false, sessionExpired: true, error: SESSION_EXPIRED_MSG };
+      }
       return { ok: false, error: error.message };
     }
     if (!data) {
-      return {
-        ok: false,
-        conflict: true,
-        error:
-          "La configuración cambió en otra sesión. Recarga los datos antes de guardar.",
-      };
+      return classifyEmptyTournamentUpdate(tournament.id, workingUpdatedAt);
     }
     workingTournament = { ...workingTournament, ...(data as Tournament) };
     workingUpdatedAt = (data as Tournament).updated_at || workingUpdatedAt;

@@ -121,7 +121,9 @@ export const RetaConfigPanel: React.FC<Props> = ({
           return;
         }
         setError(result.error);
-        if (result.conflict) {
+        if (result.sessionExpired) {
+          setStatus("Cierra sesión e inicia de nuevo; luego vuelve a guardar.");
+        } else if (result.conflict) {
           setStatus("Recarga la configuración (otra sesión la modificó).");
         }
         return;

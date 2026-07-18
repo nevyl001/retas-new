@@ -1,10 +1,14 @@
 const mockRpc = jest.fn();
 const mockFrom = jest.fn();
+const mockGetSession = jest.fn();
 
 jest.mock("../supabaseClient", () => ({
   supabase: {
     rpc: (...args: unknown[]) => mockRpc(...args),
     from: (...args: unknown[]) => mockFrom(...args),
+    auth: {
+      getSession: (...args: unknown[]) => mockGetSession(...args),
+    },
   },
 }));
 
@@ -55,6 +59,34 @@ function pending(court: number, id: string): Match {
 describe("saveRetaConfig — atomic courts + optimistic lock", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetSession.mockResolvedValue({
+      data: { session: { access_token: "tok" } },
+      error: null,
+    });
+  });
+
+  it("sesión ausente: no escribe y pide re-login (no falso conflicto)", async () => {
+    mockGetSession.mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
+    const values = tournamentToFormValues(baseTournament);
+    values.name = "Nuevo";
+    const result = await saveRetaConfig({
+      tournament: baseTournament,
+      matches: [],
+      phase: "draft",
+      values,
+      loadedUpdatedAt: baseTournament.updated_at,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.sessionExpired).toBe(true);
+      expect(result.error).toMatch(/sesión expiró/i);
+      expect(result.conflict).toBeFalsy();
+    }
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("7. sin confirmación de reducción no llama RPC", async () => {
@@ -176,7 +208,7 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
     values.courts = 2;
     values.name = "Intentado";
     const snapshot = JSON.stringify(values);
-    await saveRetaConfig({
+    const result = await saveRetaConfig({
       tournament: baseTournament,
       matches: [pending(4, "m1")],
       phase: "in_play",
@@ -185,6 +217,41 @@ describe("saveRetaConfig — atomic courts + optimistic lock", () => {
       courtsDecreaseConfirmed: true,
     });
     expect(JSON.stringify(values)).toBe(snapshot);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.sessionExpired).toBe(true);
+      expect(result.error).toMatch(/sesión expiró/i);
+    }
+  });
+
+  it("updated_at equivalente por instante no dispara falso conflicto", async () => {
+    const values = tournamentToFormValues(baseTournament);
+    values.name = "Nuevo";
+    const chain = {
+      update: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn().mockResolvedValue({
+        data: {
+          ...baseTournament,
+          name: "Nuevo",
+          updated_at: "2026-07-01T12:00:00.000+00:00",
+        },
+        error: null,
+      }),
+    };
+    mockFrom.mockReturnValue(chain);
+    const result = await saveRetaConfig({
+      tournament: {
+        ...baseTournament,
+        updated_at: "2026-07-01T12:00:00.000Z",
+      },
+      matches: [],
+      phase: "draft",
+      values,
+      loadedUpdatedAt: "2026-07-01T12:00:00.000+00:00",
+    });
+    expect(result.ok).toBe(true);
   });
 
   it("4b. éxito reporta unassigned_count", async () => {
