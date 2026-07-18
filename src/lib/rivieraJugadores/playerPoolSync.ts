@@ -3,10 +3,6 @@ import { debugLog } from "../debug/debugLog";
 import type { Player } from "../db/types";
 import { isValidUuid, sanitizeUuid } from "../db/schemaHelpers";
 import { supabase } from "../supabaseClient";
-import {
-  groupLigaJugadoresByName,
-  dedupeLigaJugadoresByName,
-} from "../liga/dedupeJugadores";
 import type { LigaJugador } from "../liga/types";
 import {
   getRivieraJugadorByLegacyPlayerId,
@@ -449,147 +445,11 @@ export async function ensureLigaJugadorForRivieraJugador(
   }
 }
 
-async function pickCanonicalLigaJugadorId(
-  organizadorId: string,
-  group: LigaJugador[]
-): Promise<string> {
-  const ids = group
-    .map((g) => sanitizeUuid(g.id))
-    .filter((id): id is string => !!id);
-  if (!ids.length) return group[0]!.id;
-
-  const { data: rivieraLinks } = await supabase
-    .from("riviera_jugadores")
-    .select("legacy_liga_jugador_id")
-    .eq("organizador_id", organizadorId)
-    .in("legacy_liga_jugador_id", ids);
-
-  const linked = new Set(
-    (rivieraLinks ?? [])
-      .map((r) => r.legacy_liga_jugador_id)
-      .filter((id): id is string => typeof id === "string" && !!id)
-  );
-
-  const canonical = dedupeLigaJugadoresByName(group, {
-    rivieraLinkedIds: Array.from(linked),
-  })[0];
-  return canonical?.id ?? group[0]!.id;
-}
-
-async function migrateLigaInscripciones(
-  fromId: string,
-  toId: string
-): Promise<void> {
-  const from = sanitizeUuid(fromId);
-  const to = sanitizeUuid(toId);
-  if (!from || !to) return;
-
-  const { data: rows, error } = await supabase
-    .from("liga_inscripciones")
-    .select("id, liga_id, puntos")
-    .eq("jugador_id", from);
-
-  if (error) throw error;
-
-  for (const row of rows ?? []) {
-    const { data: existing } = await supabase
-      .from("liga_inscripciones")
-      .select("id, puntos")
-      .eq("liga_id", row.liga_id)
-      .eq("jugador_id", to)
-      .maybeSingle();
-
-    if (existing) {
-      const mergedPts = Math.max(
-        Number(existing.puntos ?? 0),
-        Number(row.puntos ?? 0)
-      );
-      await supabase
-        .from("liga_inscripciones")
-        .update({ puntos: mergedPts })
-        .eq("id", existing.id);
-      await supabase.from("liga_inscripciones").delete().eq("id", row.id);
-    } else {
-      await supabase
-        .from("liga_inscripciones")
-        .update({ jugador_id: to })
-        .eq("id", row.id);
-    }
-  }
-}
-
-async function migrateLigaJornadaParejas(
-  fromId: string,
-  toId: string
-): Promise<void> {
-  const from = sanitizeUuid(fromId);
-  const to = sanitizeUuid(toId);
-  if (!from || !to) return;
-
-  await supabase
-    .from("liga_jornada_parejas")
-    .update({ jugador1_id: to })
-    .eq("jugador1_id", from);
-  await supabase
-    .from("liga_jornada_parejas")
-    .update({ jugador2_id: to })
-    .eq("jugador2_id", from);
-}
-
-async function relinkRivieraLegacyLigaId(
-  fromId: string,
-  toId: string
-): Promise<void> {
-  const from = sanitizeUuid(fromId);
-  const to = sanitizeUuid(toId);
-  if (!from || !to) return;
-
-  await supabase
-    .from("riviera_jugadores")
-    .update({ legacy_liga_jugador_id: to })
-    .eq("legacy_liga_jugador_id", from);
-}
-
-/** Fusiona filas duplicadas en `liga_jugadores` (mismo nombre, mismo organizador). */
+/** No-op: consolidación por nombre de liga_jugadores está prohibida (homónimos = personas distintas). */
 export async function consolidateDuplicateLigaJugadores(
-  organizadorId: string
+  _organizadorId: string
 ): Promise<void> {
-  const { data, error } = await supabase
-    .from("liga_jugadores")
-    .select("*")
-    .eq("organizador_id", organizadorId)
-    .eq("estado", "activo")
-    .order("nombre");
-
-  if (error || !data?.length) return;
-
-  const pool = data as LigaJugador[];
-  const groups = groupLigaJugadoresByName(pool);
-
-  for (const group of Array.from(groups.values())) {
-    if (group.length < 2) continue;
-
-    const canonicalId = await pickCanonicalLigaJugadorId(organizadorId, group);
-    const dupes = group.filter((j) => j.id !== canonicalId);
-
-    for (const dupe of dupes) {
-      try {
-        await migrateLigaInscripciones(dupe.id, canonicalId);
-        await migrateLigaJornadaParejas(dupe.id, canonicalId);
-        await relinkRivieraLegacyLigaId(dupe.id, canonicalId);
-        await supabase
-          .from("liga_jugadores")
-          .update({ estado: "inactivo" })
-          .eq("id", dupe.id);
-      } catch (e) {
-        console.warn(
-          "consolidateDuplicateLigaJugadores:",
-          dupe.nombre,
-          e
-        );
-      }
-    }
-  }
+  // Intencionalmente vacío.
 }
 
 export async function syncLigaJugadoresFromRivieraRegistry(

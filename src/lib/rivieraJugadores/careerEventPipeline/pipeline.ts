@@ -126,12 +126,14 @@ export async function processCareerEvent(
           jugadorId: ref.jugadorId,
           nombre: ref.nombre,
           legacyPlayerId: ref.legacyPlayerId,
+          legacyLigaJugadorId: ref.legacyLigaJugadorId,
           tipoEvento: input.kind,
         })
     );
     failures.push(...preClose.failures);
-    excludedFromPreClose = preClose.excludedJugadorIds;
-    eventBlocked = preClose.eventBlocked;
+    // Opción B: pre-close fallido → cero sync / rating / ledger de cierre
+    eventBlocked = preClose.eventBlocked || !preClose.ok;
+    excludedFromPreClose = eventBlocked ? [] : preClose.excludedJugadorIds;
   }
 
   if (!eventBlocked) {

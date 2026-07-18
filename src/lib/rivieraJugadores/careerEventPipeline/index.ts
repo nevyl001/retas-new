@@ -6,7 +6,13 @@ export {
   assertCareerEventIntegrity,
   partitionAssertionFailures,
 } from "./assertions";
-export { formatCareerPipelineSuccessMessage } from "./formatPipelineSuccess";
+export { formatCareerPipelineSuccessMessage, formatCareerPipelineFailureMessage } from "./formatPipelineSuccess";
+export {
+  collectProspectiveJugadorRefs,
+  formatIdentityPreCloseMessage,
+  validateCareerEventPreClose,
+} from "./preCloseGuards";
+export type { ProspectiveJugadorRef } from "./preCloseGuards";
 export type {
   CareerEventKind,
   CareerEventAssertionCode,

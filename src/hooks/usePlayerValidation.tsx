@@ -1,4 +1,5 @@
 import { Player, Pair } from "../lib/database";
+import { unorderedPairIdKey } from "../lib/rivieraJugadores/playerNameKey";
 
 export const usePlayerValidation = () => {
   const validatePlayerSelection = (
@@ -13,7 +14,6 @@ export const usePlayerValidation = () => {
       return;
     }
 
-    // Validación: Verificar si algún jugador ya está en una pareja
     const playersInPairs = players.filter((player) => {
       return pairs.some(
         (pair) => pair.player1_id === player.id || pair.player2_id === player.id
@@ -32,7 +32,6 @@ export const usePlayerValidation = () => {
       const player1 = players[0];
       const player2 = players[1];
 
-      // Mantener selección visible mientras se crea (o si falla)
       setSelectedPlayers(players);
 
       if (player1.id === player2.id) {
@@ -40,23 +39,11 @@ export const usePlayerValidation = () => {
         return;
       }
 
-      if (player1.name.toLowerCase() === player2.name.toLowerCase()) {
-        setError("No puedes seleccionar dos jugadores con el mismo nombre");
-        return;
-      }
-
+      const pairKey = unorderedPairIdKey(player1.id, player2.id);
       const existingPair = pairs.find((pair) => {
-        const sameIds =
-          (pair.player1_id === player1.id && pair.player2_id === player2.id) ||
-          (pair.player1_id === player2.id && pair.player2_id === player1.id);
-
-        const sameNames =
-          (pair.player1?.name.toLowerCase() === player1.name.toLowerCase() &&
-            pair.player2?.name.toLowerCase() === player2.name.toLowerCase()) ||
-          (pair.player1?.name.toLowerCase() === player2.name.toLowerCase() &&
-            pair.player2?.name.toLowerCase() === player1.name.toLowerCase());
-
-        return sameIds || sameNames;
+        return (
+          unorderedPairIdKey(pair.player1_id, pair.player2_id) === pairKey
+        );
       });
 
       if (existingPair) {
@@ -66,7 +53,6 @@ export const usePlayerValidation = () => {
         return;
       }
 
-      // Solo addPair limpia la selección tras éxito real
       void addPair(player1, player2);
       return;
     }

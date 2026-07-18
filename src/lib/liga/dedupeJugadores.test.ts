@@ -1,4 +1,4 @@
-import { dedupeLigaJugadoresByName } from "./dedupeJugadores";
+import { dedupeLigaJugadoresById } from "./dedupeJugadores";
 import type { LigaJugador } from "./types";
 
 function j(id: string, nombre: string, extra?: Partial<LigaJugador>): LigaJugador {
@@ -16,23 +16,26 @@ function j(id: string, nombre: string, extra?: Partial<LigaJugador>): LigaJugado
   };
 }
 
-describe("dedupeLigaJugadoresByName", () => {
-  it("deja un jugador por nombre normalizado", () => {
-    const out = dedupeLigaJugadoresByName([
+describe("dedupeLigaJugadoresById", () => {
+  it("conserva homónimos con IDs distintos", () => {
+    const out = dedupeLigaJugadoresById([
       j("a", "Isra"),
       j("b", "isra"),
       j("c", "Luis B"),
     ]);
-    expect(out).toHaveLength(2);
-    expect(out.map((x) => x.nombre).sort()).toEqual(["Isra", "Luis B"]);
+    expect(out).toHaveLength(3);
   });
 
-  it("prioriza fila enlazada a Riviera", () => {
-    const out = dedupeLigaJugadoresByName(
-      [j("dup", "Aaron Duran"), j("canon", "Aaron Duran", { email: "a@x.com" })],
+  it("deduplica el mismo id", () => {
+    const out = dedupeLigaJugadoresById(
+      [
+        j("canon", "Aaron Duran"),
+        j("canon", "Aaron Duran", { email: "a@x.com" }),
+      ],
       { rivieraLinkedIds: ["canon"] }
     );
     expect(out).toHaveLength(1);
     expect(out[0]!.id).toBe("canon");
+    expect(out[0]!.email).toBe("a@x.com");
   });
 });

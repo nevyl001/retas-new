@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   createPair,
   createTournament,
-  dedupeLegacyPlayersByName,
+  dedupeLegacyPlayersById,
   deletePair,
   getTournamentById,
   updatePair,
@@ -28,11 +28,11 @@ import {
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
 import {
-  dedupeParejaDraftsByPlayerName,
+  dedupeParejaDraftsByPlayerId,
   dedupePlayersById,
-  normalizePlayerNameKey,
   resolvePlayerInPool,
-  splitParejaDraftsByPlayerName,
+  splitParejaDraftsByPlayerId,
+  unorderedPairIdKey,
 } from "../../lib/rivieraJugadores/playerNameKey";
 import { playerNeedsEmailContact } from "../../services/torneoExpressNotificacionesService";
 import { Button } from "../ui";
@@ -84,7 +84,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   }, [parejas, jugadores]);
 
   const jugadoresPool = useMemo(
-    () => dedupeLegacyPlayersByName(dedupePlayersById(jugadores)),
+    () => dedupeLegacyPlayersById(dedupePlayersById(jugadores)),
     [jugadores]
   );
 
@@ -100,7 +100,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
 
   const handleJugadoresChange = useCallback(
     (list: Player[]) => {
-      const deduped = dedupeLegacyPlayersByName(dedupePlayersById(list));
+      const deduped = dedupeLegacyPlayersById(dedupePlayersById(list));
       setJugadores(deduped);
       syncParejasFromPlayers(deduped);
     },
@@ -156,7 +156,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         }
       }
       const preferIds = drafts.map((d) => d.id);
-      const { kept, droppedIds } = splitParejaDraftsByPlayerName(
+      const { kept, droppedIds } = splitParejaDraftsByPlayerId(
         drafts,
         preferIds
       );
@@ -255,18 +255,18 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const formarPareja = async (j1: Player, j2: Player) => {
     if (!user?.id || !draftTournamentId) return;
 
-    const k1 = normalizePlayerNameKey(j1.name);
-    const k2 = normalizePlayerNameKey(j2.name);
-    if (!k1 || !k2 || k1 === k2) {
+    if (!j1.id || !j2.id || j1.id === j2.id) {
       setError("Elige dos jugadores distintos");
       return;
     }
 
+    const pairKey = unorderedPairIdKey(j1.id, j2.id);
     const yaEnPareja = parejas.some((p) => {
-      const p1 = normalizePlayerNameKey(p.jugador1.name);
-      const p2 = normalizePlayerNameKey(p.jugador2.name);
+      const ids = [p.jugador1.id, p.jugador2.id];
       return (
-        (k1 && (p1 === k1 || p2 === k1)) || (k2 && (p1 === k2 || p2 === k2))
+        ids.includes(j1.id) ||
+        ids.includes(j2.id) ||
+        unorderedPairIdKey(p.jugador1.id, p.jugador2.id) === pairKey
       );
     });
     if (yaEnPareja) {
@@ -288,7 +288,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         player2_name: j2.name.trim(),
       });
       setParejas((prev) =>
-        dedupeParejaDraftsByPlayerName([
+        dedupeParejaDraftsByPlayerId([
           ...prev,
           {
             id: pair.id,

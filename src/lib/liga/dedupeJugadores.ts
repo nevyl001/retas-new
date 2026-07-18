@@ -1,4 +1,3 @@
-import { normalizePlayerNameKey } from "../rivieraJugadores/playerNameKey";
 import type { LigaJugador } from "./types";
 
 function scoreLigaJugador(
@@ -14,21 +13,23 @@ function scoreLigaJugador(
   return s;
 }
 
-/** Un jugador activo por nombre (para listados de liga). */
-export function dedupeLigaJugadoresByName(
+/**
+ * Un jugador por `liga_jugadores.id`. Homónimos con IDs distintos se conservan.
+ */
+export function dedupeLigaJugadoresById(
   jugadores: LigaJugador[],
   opts?: { preferIds?: string[]; rivieraLinkedIds?: string[] }
 ): LigaJugador[] {
   const preferIds = new Set(opts?.preferIds ?? []);
   const rivieraLinkedIds = new Set(opts?.rivieraLinkedIds ?? []);
-  const byName = new Map<string, LigaJugador>();
+  const byId = new Map<string, LigaJugador>();
 
   for (const j of jugadores) {
-    const key = normalizePlayerNameKey(j.nombre);
-    if (!key) continue;
-    const prev = byName.get(key);
+    const id = j.id?.trim();
+    if (!id) continue;
+    const prev = byId.get(id);
     if (!prev) {
-      byName.set(key, j);
+      byId.set(id, j);
       continue;
     }
     const scoreOpts = { preferIds, rivieraLinkedIds };
@@ -38,25 +39,32 @@ export function dedupeLigaJugadoresByName(
       nextScore > prevScore ||
       (nextScore === prevScore && j.created_at < prev.created_at)
     ) {
-      byName.set(key, j);
+      byId.set(id, j);
     }
   }
 
-  return Array.from(byName.values()).sort((a, b) =>
+  return Array.from(byId.values()).sort((a, b) =>
     a.nombre.localeCompare(b.nombre, "es")
   );
 }
 
-export function groupLigaJugadoresByName(
+/** @deprecated Use dedupeLigaJugadoresById — no dedupe por nombre. */
+export const dedupeLigaJugadoresByName = dedupeLigaJugadoresById;
+
+/** Agrupa por id (diagnóstico). No fusiona homónimos. */
+export function groupLigaJugadoresById(
   jugadores: LigaJugador[]
 ): Map<string, LigaJugador[]> {
   const groups = new Map<string, LigaJugador[]>();
   for (const j of jugadores) {
-    const key = normalizePlayerNameKey(j.nombre);
-    if (!key) continue;
-    const list = groups.get(key) ?? [];
+    const id = j.id?.trim();
+    if (!id) continue;
+    const list = groups.get(id) ?? [];
     list.push(j);
-    groups.set(key, list);
+    groups.set(id, list);
   }
   return groups;
 }
+
+/** @deprecated Use groupLigaJugadoresById */
+export const groupLigaJugadoresByName = groupLigaJugadoresById;

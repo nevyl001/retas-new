@@ -1,5 +1,6 @@
 import type { Match, Pair, Tournament } from "../db/types";
 import type { AmericanoPlayer, AmericanoRound } from "../db/types";
+import { isValidUuid } from "../db/schemaHelpers";
 import { getGames, getMatches, getPairs, getTournaments } from "../database";
 import { computeJornadaPublicStats } from "../liga/jornadaStats";
 import { formatLugarOrdinal } from "./historialDisplay";
@@ -2194,7 +2195,10 @@ export async function syncAmericanoParticipaciones(
               {
                 nombre: jugador.name,
                 organizadorId: userId,
-                legacyPlayerId: jugador.id.includes("-") ? jugador.id : undefined,
+                // DEUDA_FASE_4: sin players.riviera_jugador_id; solo UUID válido
+                // cuenta como legacy_player_id. ID no clasificable → fail-closed
+                // (resolve sin clave fuerte → null; no cae a nombre).
+                legacyPlayerId: isValidUuid(jugador.id) ? jugador.id : undefined,
                 tipoEvento: "americano",
                 eventoId: sesionId,
               },

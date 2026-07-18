@@ -41,3 +41,33 @@ export function formatCareerPipelineSuccessMessage(
     "Verifica en la ficha de cada jugador que el evento aparece en Historial desde cualquier club vinculado al mismo Riviera ID.",
   ].join("\n");
 }
+
+/**
+ * Mensaje cuando el pre-close u otras fallas críticas bloquean el cierre.
+ * Prefiere failures[].message (accionables) sobre códigos técnicos.
+ */
+export function formatCareerPipelineFailureMessage(
+  result: CareerEventPipelineResult,
+  eventName?: string
+): string {
+  const kindLabel = KIND_LABELS[result.context.kind] ?? "Evento";
+  const title = eventName?.trim()
+    ? `No se pudo cerrar ${kindLabel.toLowerCase()} «${eventName.trim()}»`
+    : `No se pudo cerrar ${kindLabel.toLowerCase()}`;
+
+  const details =
+    result.criticalFailures.length > 0
+      ? result.criticalFailures
+      : result.failures;
+
+  const lines = details.map((f) => f.message).filter(Boolean);
+  if (lines.length === 0) {
+    return [
+      title,
+      "",
+      "Revisa las identidades Riviera de los jugadores y vuelve a intentar.",
+    ].join("\n");
+  }
+
+  return [title, "", ...lines].join("\n");
+}

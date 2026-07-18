@@ -19,8 +19,10 @@ import { ensureRivieraIdentity } from "./careerIdentity";
 import {
   requireOfficialProfileLinkForParticipacion,
 } from "./orphanProfileLink";
-import { isCareerIntegrityException } from "./careerIntegrity";
-import { normalizePlayerNameKey } from "./playerNameKey";
+import {
+  CareerIntegrityException,
+  isCareerIntegrityException,
+} from "./careerIntegrity";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 
 import { debugWarn } from "../debug/debugLog";
@@ -72,6 +74,23 @@ async function finalizeJugadorIdForRanking(
   if (!jugadorId) return null;
   await ensureRivieraJugadorVisibleEnRanking(jugadorId);
   return jugadorId;
+}
+
+function failClosedExplicitJugadorId(
+  organizadorId: string,
+  jugadorId: string,
+  reason: string
+): never {
+  throw new CareerIntegrityException({
+    code: "missing_riviera_id",
+    message: `Identidad explícita no resoluble: ${reason}`,
+    confidence: "LOW",
+    reason,
+    actionSugerida: "Corregir riviera_jugador_id o reasignar el jugador con un ID fuerte",
+    jugadorId,
+    organizadorId,
+    details: { via: "explicit_riviera_jugador_id", failClosed: true },
+  });
 }
 
 /** Cedidos: legacy en origen → clon local del club anfitrión + enlace players. */
@@ -164,48 +183,20 @@ export async function resolveLocalJugadorIdByLegacyPlayerId(
   return null;
 }
 
-async function resolveLocalJugadorIdByGrantedName(
-  organizadorId: string,
-  nombre: string
-): Promise<string | null> {
-  const org = organizadorId.trim();
-  const nameKey = normalizePlayerNameKey(nombre);
-  if (!org || !nameKey) return null;
-
-  const grants = await listActiveGrantedAccessForOrganizer(org);
-  for (const grant of grants) {
-    const displayKey = normalizePlayerNameKey(grant.local_display_name ?? "");
-    let matches = displayKey === nameKey;
-
-    if (!matches) {
-      const { data: source } = await supabase
-        .from("riviera_jugadores")
-        .select("nombre")
-        .eq("id", grant.jugador_id)
-        .maybeSingle();
-      matches = normalizePlayerNameKey(String(source?.nombre ?? "")) === nameKey;
-    }
-    if (!matches) continue;
-
-    const sourceId = grant.jugador_id.trim();
-    let localId = grant.local_jugador_id?.trim() || null;
-    if (!localId) {
-      localId = await ensureGrantedPlayerLocal(sourceId);
-    }
-    const writable = await findWritableLocalJugadorId(org, localId);
-    if (!writable) continue;
-    return finalizeJugadorIdForRanking(writable);
-  }
-
-  return null;
-}
-
 export async function prepareParticipacionIdentityForOrganizer(
   organizadorId: string
 ): Promise<void> {
   await prepareGrantedPlayersForParticipacionSync(organizadorId);
 }
 
+/**
+ * Resuelve o crea identidad únicamente con claves fuertes.
+ * Nombre es solo etiqueta de presentación al crear (nunca clave de match).
+ *
+ * Política C:
+ * - con legacy_player_id / legacy_liga_jugador_id no resuelto → crear ligado a esa clave;
+ * - sin ninguna clave fuerte → null (unresolved / fail-closed en cierre-sync).
+ */
 export async function getOrCreateJugadorId(params: {
   nombre: string;
   organizadorId: string;
@@ -213,37 +204,41 @@ export async function getOrCreateJugadorId(params: {
   legacyLigaJugadorId?: string;
   email?: string | null;
 }): Promise<string | null> {
-  const nombre = params.nombre.trim();
-  if (!nombre) return null;
+  const nombre = params.nombre.trim() || "Jugador";
+  const legacyPlayerId = params.legacyPlayerId?.trim() || undefined;
+  const legacyLigaJugadorId = params.legacyLigaJugadorId?.trim() || undefined;
+
+  if (!legacyPlayerId && !legacyLigaJugadorId) {
+    return null;
+  }
 
   if (
     await isJugadorImportBlocked(params.organizadorId, {
       nombre,
-      legacyPlayerId: params.legacyPlayerId,
-      legacyLigaJugadorId: params.legacyLigaJugadorId,
+      legacyPlayerId,
+      legacyLigaJugadorId,
     })
   ) {
     return null;
   }
 
   try {
-    if (params.legacyPlayerId) {
+    if (legacyPlayerId) {
       const byPlayer = await getRivieraJugadorByLegacyPlayerId(
-        params.legacyPlayerId,
+        legacyPlayerId,
         params.organizadorId
       );
       if (byPlayer) {
         const local = await resolveLocalJugadorIdForOrganizer(
           params.organizadorId,
           byPlayer.id,
-          params.legacyPlayerId
+          legacyPlayerId
         );
         if (local) return local;
       }
 
-      // Cedido: legacy_player_id puede estar solo en el perfil origen (otro club).
       const byLegacyGlobal = await getRivieraJugadorByLegacyPlayerId(
-        params.legacyPlayerId,
+        legacyPlayerId,
         undefined,
         { preferExcludingOrganizadorId: params.organizadorId }
       );
@@ -251,40 +246,15 @@ export async function getOrCreateJugadorId(params: {
         const local = await resolveLocalJugadorIdForOrganizer(
           params.organizadorId,
           byLegacyGlobal.id,
-          params.legacyPlayerId
+          legacyPlayerId
         );
         if (local) return local;
       }
     }
 
-    if (params.legacyLigaJugadorId) {
-      const byLiga = await getRivieraJugadorByLegacyLigaId(
-        params.legacyLigaJugadorId
-      );
+    if (legacyLigaJugadorId) {
+      const byLiga = await getRivieraJugadorByLegacyLigaId(legacyLigaJugadorId);
       if (byLiga) return finalizeJugadorIdForRanking(byLiga.id);
-    }
-
-    const { data: byName } = await supabase
-      .from("riviera_jugadores")
-      .select("id")
-      .eq("organizador_id", params.organizadorId)
-      .ilike("nombre", nombre)
-      .limit(1)
-      .maybeSingle();
-
-    if (byName?.id) {
-      const updates: Record<string, string> = {};
-      if (params.legacyPlayerId) updates.legacy_player_id = params.legacyPlayerId;
-      if (params.legacyLigaJugadorId) {
-        updates.legacy_liga_jugador_id = params.legacyLigaJugadorId;
-      }
-      if (Object.keys(updates).length > 0) {
-        await supabase
-          .from("riviera_jugadores")
-          .update(updates)
-          .eq("id", byName.id);
-      }
-      return finalizeJugadorIdForRanking(byName.id);
     }
 
     const baseSlug = slugifyJugadorNombre(nombre);
@@ -300,9 +270,9 @@ export async function getOrCreateJugadorId(params: {
       visible_publico: false,
       email: params.email ?? null,
     };
-    if (params.legacyPlayerId) insert.legacy_player_id = params.legacyPlayerId;
-    if (params.legacyLigaJugadorId) {
-      insert.legacy_liga_jugador_id = params.legacyLigaJugadorId;
+    if (legacyPlayerId) insert.legacy_player_id = legacyPlayerId;
+    if (legacyLigaJugadorId) {
+      insert.legacy_liga_jugador_id = legacyLigaJugadorId;
     }
 
     const { data: created, error } = await supabase
@@ -312,25 +282,44 @@ export async function getOrCreateJugadorId(params: {
       .single();
 
     if (error) {
+      // Idempotencia: carrera o unique en legacy → re-resolver por clave fuerte.
+      if (legacyPlayerId) {
+        const again = await getRivieraJugadorByLegacyPlayerId(
+          legacyPlayerId,
+          params.organizadorId
+        );
+        if (again) {
+          const local = await resolveLocalJugadorIdForOrganizer(
+            params.organizadorId,
+            again.id,
+            legacyPlayerId
+          );
+          if (local) return local;
+        }
+      }
+      if (legacyLigaJugadorId) {
+        const againLiga = await getRivieraJugadorByLegacyLigaId(
+          legacyLigaJugadorId
+        );
+        if (againLiga) return finalizeJugadorIdForRanking(againLiga.id);
+      }
+
       console.error("[riviera-jugadores] getOrCreateJugadorId insert:", error);
-      // Fallback de sync/import (no es alta de producto): jugadores
-      // históricos/legacy suelen no tener correo — se preserva ese
-      // comportamiento explícitamente, sin exigirlo aquí.
       const createdViaService = await createRivieraJugador(
         params.organizadorId,
         { nombre, email: params.email ?? null },
         { skipEmailRequirement: true }
       );
-      if (params.legacyPlayerId) {
+      if (legacyPlayerId) {
         await supabase
           .from("riviera_jugadores")
-          .update({ legacy_player_id: params.legacyPlayerId })
+          .update({ legacy_player_id: legacyPlayerId })
           .eq("id", createdViaService.id);
       }
-      if (params.legacyLigaJugadorId) {
+      if (legacyLigaJugadorId) {
         await supabase
           .from("riviera_jugadores")
-          .update({ legacy_liga_jugador_id: params.legacyLigaJugadorId })
+          .update({ legacy_liga_jugador_id: legacyLigaJugadorId })
           .eq("id", createdViaService.id);
       }
       return finalizeJugadorIdForRanking(createdViaService.id);
@@ -354,104 +343,12 @@ export type ResolveJugadorIdForParticipacionParams = {
   eventoId?: string;
 };
 
-/**
- * Resuelve el jugador operativo del organizador anfitrión antes de escribir
- * participaciones (incluye grants → local_jugador_id).
- */
-export async function resolveJugadorIdForParticipacion(
-  params: ResolveJugadorIdForParticipacionParams
+async function finalizeResolvedParticipacionId(
+  localId: string,
+  organizadorId: string,
+  params: ResolveJugadorIdForParticipacionParams,
+  originalJugadorId: string | null
 ): Promise<string | null> {
-  const organizadorId = params.organizadorId.trim();
-  if (!organizadorId) return null;
-
-  const nombre = params.nombre?.trim() || "";
-  const legacyPlayerId = params.legacyPlayerId?.trim();
-  const legacyLigaJugadorId = params.legacyLigaJugadorId?.trim();
-  const originalJugadorId = params.jugadorId?.trim() || null;
-
-  if (legacyPlayerId) {
-    const byLegacy = await resolveLocalJugadorIdByLegacyPlayerId(
-      organizadorId,
-      legacyPlayerId
-    );
-    if (byLegacy) {
-      if (originalJugadorId && byLegacy !== originalJugadorId) {
-        logMulticlubPhase21({
-          action: "identity_resolved",
-          organizadorId,
-          tipoEvento: params.tipoEvento ?? null,
-          eventoId: params.eventoId ?? null,
-          jugadorOriginal: originalJugadorId,
-          jugadorResuelto: byLegacy,
-          via: "legacy_player_id",
-        });
-      }
-      return byLegacy;
-    }
-  }
-
-  if (nombre) {
-    const byGrantName = await resolveLocalJugadorIdByGrantedName(
-      organizadorId,
-      nombre
-    );
-    if (byGrantName) {
-      logMulticlubPhase21({
-        action: "identity_resolved",
-        organizadorId,
-        tipoEvento: params.tipoEvento ?? null,
-        eventoId: params.eventoId ?? null,
-        jugadorOriginal: originalJugadorId,
-        jugadorResuelto: byGrantName,
-        via: "granted_name",
-      });
-      return byGrantName;
-    }
-  }
-
-  if (
-    nombre &&
-    (await isJugadorImportBlocked(organizadorId, {
-      nombre,
-      legacyPlayerId,
-      legacyLigaJugadorId,
-    }))
-  ) {
-    return null;
-  }
-
-  let candidate: string | null = null;
-
-  if (originalJugadorId) {
-    candidate = originalJugadorId;
-  } else if (nombre) {
-    candidate = await getOrCreateJugadorId({
-      nombre,
-      organizadorId,
-      legacyPlayerId,
-      legacyLigaJugadorId,
-      email: params.email,
-    });
-  }
-
-  if (!candidate) return null;
-
-  const resolved = await resolveJugadorIdForOrganizer(organizadorId, candidate);
-  let localId = await findWritableLocalJugadorId(organizadorId, resolved);
-
-  // Duelos/retas con UUID huérfano tras borrar el jugador del registro.
-  if (!localId && nombre) {
-    localId = await getOrCreateJugadorId({
-      nombre,
-      organizadorId,
-      legacyPlayerId,
-      legacyLigaJugadorId,
-      email: params.email,
-    });
-  }
-
-  if (!localId) return null;
-
   if (await isRevokedGrantLocalJugador(organizadorId, localId)) {
     return null;
   }
@@ -465,7 +362,7 @@ export async function resolveJugadorIdForParticipacion(
         finalId,
         organizadorId
       );
-      if (linkResult.linkCreated) {
+      if (linkResult?.linkCreated) {
         logMulticlubPhase21({
           action: "orphan_profile_linked",
           organizadorId,
@@ -479,7 +376,10 @@ export async function resolveJugadorIdForParticipacion(
       }
     } catch (e) {
       if (isCareerIntegrityException(e)) {
-        console.error("[riviera-jugadores] career_integrity_blocked", e.toStructuredLog());
+        console.error(
+          "[riviera-jugadores] career_integrity_blocked",
+          e.toStructuredLog()
+        );
         throw e;
       }
       console.warn("[riviera-jugadores] identity/link guard:", e);
@@ -499,4 +399,112 @@ export async function resolveJugadorIdForParticipacion(
   }
 
   return finalId;
+}
+
+/**
+ * Resuelve el jugador operativo del organizador anfitrión antes de escribir
+ * participaciones. Orden: ID explícito → legacy_player → legacy_liga → create
+ * por legacy → unresolved. Cero resolución por nombre.
+ */
+export async function resolveJugadorIdForParticipacion(
+  params: ResolveJugadorIdForParticipacionParams
+): Promise<string | null> {
+  const organizadorId = params.organizadorId.trim();
+  if (!organizadorId) return null;
+
+  const nombre = params.nombre?.trim() || "";
+  const legacyPlayerId = params.legacyPlayerId?.trim() || undefined;
+  const legacyLigaJugadorId = params.legacyLigaJugadorId?.trim() || undefined;
+  const originalJugadorId = params.jugadorId?.trim() || null;
+
+  // 1) riviera_jugador_id explícito — fail-closed si no es writable.
+  if (originalJugadorId) {
+    if (
+      nombre &&
+      (await isJugadorImportBlocked(organizadorId, {
+        nombre,
+        legacyPlayerId,
+        legacyLigaJugadorId,
+      }))
+    ) {
+      return null;
+    }
+
+    const resolved = await resolveJugadorIdForOrganizer(
+      organizadorId,
+      originalJugadorId
+    );
+    const localId = await findWritableLocalJugadorId(organizadorId, resolved);
+    if (!localId) {
+      failClosedExplicitJugadorId(
+        organizadorId,
+        originalJugadorId,
+        "riviera_jugador_id explícito inválido, inaccesible o no writable en el organizador"
+      );
+    }
+
+    return finalizeResolvedParticipacionId(
+      localId,
+      organizadorId,
+      params,
+      originalJugadorId
+    );
+  }
+
+  // 2) legacy_player_id
+  if (legacyPlayerId) {
+    const byLegacy = await resolveLocalJugadorIdByLegacyPlayerId(
+      organizadorId,
+      legacyPlayerId
+    );
+    if (byLegacy) {
+      return finalizeResolvedParticipacionId(
+        byLegacy,
+        organizadorId,
+        params,
+        originalJugadorId
+      );
+    }
+  }
+
+  // 3) legacy_liga_jugador_id (vía getOrCreate: resolve o create ligado al legacy)
+  // 4–6) create por clave fuerte / unresolved — sin nombre como identidad
+  if (
+    nombre &&
+    (await isJugadorImportBlocked(organizadorId, {
+      nombre,
+      legacyPlayerId,
+      legacyLigaJugadorId,
+    }))
+  ) {
+    return null;
+  }
+
+  if (!legacyPlayerId && !legacyLigaJugadorId) {
+    return null;
+  }
+
+  const createdOrResolved = await getOrCreateJugadorId({
+    nombre: nombre || "Jugador",
+    organizadorId,
+    legacyPlayerId,
+    legacyLigaJugadorId,
+    email: params.email,
+  });
+
+  if (!createdOrResolved) return null;
+
+  const resolved = await resolveJugadorIdForOrganizer(
+    organizadorId,
+    createdOrResolved
+  );
+  const localId = await findWritableLocalJugadorId(organizadorId, resolved);
+  if (!localId) return null;
+
+  return finalizeResolvedParticipacionId(
+    localId,
+    organizadorId,
+    params,
+    originalJugadorId
+  );
 }

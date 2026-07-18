@@ -2,8 +2,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import type { Player } from "../../lib/database";
 import {
   dedupePlayersForSelect,
-  normalizePlayerNameKey,
-  playerNameKeysInPairs,
+  playerIdsInPairs,
 } from "../../lib/rivieraJugadores/playerNameKey";
 import {
   playerHasNotifiableEmail,
@@ -13,10 +12,6 @@ import type { ParejaDraft } from "./crearTorneoExpressTypes";
 import { Button } from "../ui";
 
 type PlayerWithContact = Player & { email_verified?: boolean | null };
-
-function playerByNameKey(pool: Player[], key: string): Player | undefined {
-  return pool.find((p) => normalizePlayerNameKey(p.name) === key);
-}
 
 export interface ArmarParejasPickerProps {
   jugadoresPool: Player[];
@@ -33,57 +28,51 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
   onFormarPareja,
   onEliminarPareja,
 }) => {
-  const [pickedKeys, setPickedKeys] = useState<string[]>([]);
+  const [pickedIds, setPickedIds] = useState<string[]>([]);
 
-  const nameKeysInPairs = useMemo(
-    () => playerNameKeysInPairs(parejas),
-    [parejas]
-  );
+  const idsInPairs = useMemo(() => playerIdsInPairs(parejas), [parejas]);
 
   const disponibles = useMemo(
     () =>
       dedupePlayersForSelect(
-        jugadoresPool.filter((j) => {
-          const key = normalizePlayerNameKey(j.name);
-          return key ? !nameKeysInPairs.has(key) : false;
-        })
+        jugadoresPool.filter((j) => j.id && !idsInPairs.has(j.id))
       ),
-    [jugadoresPool, nameKeysInPairs]
+    [jugadoresPool, idsInPairs]
   );
 
   const pickedPlayers = useMemo(() => {
-    return pickedKeys
-      .map((key) => playerByNameKey(disponibles, key))
+    return pickedIds
+      .map((id) => disponibles.find((p) => p.id === id))
       .filter((p): p is Player => !!p);
-  }, [pickedKeys, disponibles]);
+  }, [pickedIds, disponibles]);
 
-  const toggleJugador = useCallback((j: Player) => {
-    const key = normalizePlayerNameKey(j.name);
-    if (!key || nameKeysInPairs.has(key)) return;
+  const toggleJugador = useCallback(
+    (j: Player) => {
+      if (!j.id || idsInPairs.has(j.id)) return;
 
-    setPickedKeys((prev) => {
-      if (prev.includes(key)) {
-        return prev.filter((k) => k !== key);
-      }
-      if (prev.length >= 2) {
-        return [prev[1], key];
-      }
-      return [...prev, key];
-    });
-  }, [nameKeysInPairs]);
+      setPickedIds((prev) => {
+        if (prev.includes(j.id)) {
+          return prev.filter((id) => id !== j.id);
+        }
+        if (prev.length >= 2) {
+          return [prev[1], j.id];
+        }
+        return [...prev, j.id];
+      });
+    },
+    [idsInPairs]
+  );
 
-  const limpiarSeleccion = () => setPickedKeys([]);
+  const limpiarSeleccion = () => setPickedIds([]);
 
   const formarPareja = () => {
     if (pickedPlayers.length !== 2) return;
     onFormarPareja(pickedPlayers[0], pickedPlayers[1]);
-    setPickedKeys([]);
+    setPickedIds([]);
   };
 
   const puedeFormar =
-    pickedPlayers.length === 2 &&
-    normalizePlayerNameKey(pickedPlayers[0].name) !==
-      normalizePlayerNameKey(pickedPlayers[1].name);
+    pickedPlayers.length === 2 && pickedPlayers[0].id !== pickedPlayers[1].id;
 
   return (
     <section className="te-armar-parejas te-armar-parejas--picker">
@@ -110,8 +99,8 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
         <>
           <p className="te-armar-parejas__meta">
             Disponibles: {disponibles.length}
-            {pickedKeys.length > 0
-              ? ` · Seleccionados: ${pickedKeys.length}/2`
+            {pickedIds.length > 0
+              ? ` · Seleccionados: ${pickedIds.length}/2`
               : ""}
           </p>
           <div
@@ -120,12 +109,11 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
             aria-label="Jugadores disponibles para formar pareja"
           >
             {disponibles.map((j) => {
-              const key = normalizePlayerNameKey(j.name);
-              const selected = pickedKeys.includes(key);
+              const selected = pickedIds.includes(j.id);
               const sinEmail = playerNeedsEmailContact(j as PlayerWithContact);
               return (
                 <button
-                  key={key}
+                  key={j.id}
                   type="button"
                   className={`te-jugador-pick${
                     selected ? " te-jugador-pick--selected" : ""
@@ -138,93 +126,55 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
                     <span className="te-jugador-pick__warn" title="Sin email">
                       ⚠️
                     </span>
+                  ) : playerHasNotifiableEmail(j as PlayerWithContact) ? (
+                    <span className="te-jugador-pick__ok" title="Email listo">
+                      ✓
+                    </span>
                   ) : null}
                 </button>
               );
             })}
           </div>
-
-          <div className="te-armar-parejas__actions">
-            {pickedPlayers.length === 2 ? (
-              <p className="te-armar-parejas__preview">
-                Pareja: <strong>{pickedPlayers[0].name}</strong> +{" "}
-                <strong>{pickedPlayers[1].name}</strong>
-              </p>
-            ) : (
-              <p className="te-armar-parejas__hint">
-                {pickedKeys.length === 0
-                  ? "Elige el primer jugador"
-                  : "Elige el segundo jugador"}
-              </p>
-            )}
-            <div className="te-armar-parejas__action-row">
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                onClick={formarPareja}
-                disabled={!puedeFormar || addingPair}
-                loading={addingPair}
-              >
-                {addingPair ? "Guardando…" : "Formar pareja"}
-              </Button>
-              {pickedKeys.length > 0 ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={limpiarSeleccion}
-                  disabled={addingPair}
-                >
-                  Limpiar
-                </Button>
-              ) : null}
-            </div>
-          </div>
         </>
       ) : parejas.length > 0 ? (
-        <p className="te-armar-parejas__all-paired">
+        <p className="te-armar-parejas__empty">
           Todos los jugadores del registro ya están en una pareja.
         </p>
       ) : null}
 
+      <div className="te-armar-parejas__actions">
+        {pickedIds.length > 0 ? (
+          <Button type="button" variant="ghost" onClick={limpiarSeleccion}>
+            Limpiar selección
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          variant="primary"
+          disabled={!puedeFormar || addingPair}
+          onClick={formarPareja}
+        >
+          {addingPair ? "Formando…" : "Formar pareja"}
+        </Button>
+      </div>
+
       {parejas.length > 0 ? (
-        <div className="te-armar-parejas__formed">
-          <p className="te-armar-parejas__formed-title">
-            Parejas listas ({parejas.length})
-          </p>
-          <ul className="te-parejas-formadas">
-            {parejas.map((p, index) => {
-              const j1Ok = playerHasNotifiableEmail(
-                p.jugador1 as PlayerWithContact
-              );
-              const j2Ok = playerHasNotifiableEmail(
-                p.jugador2 as PlayerWithContact
-              );
-              return (
-                <li key={p.id} className="te-pareja-formada">
-                  <span className="te-pareja-formada__index">{index + 1}</span>
-                  <span className="te-pareja-formada__names">
-                    {p.jugador1.name}
-                    {!j1Ok ? " ⚠️" : ""}
-                    <span className="te-pareja-formada__sep">/</span>
-                    {p.jugador2.name}
-                    {!j2Ok ? " ⚠️" : ""}
-                  </span>
-                  <button
-                    type="button"
-                    className="te-players-icon-btn te-players-icon-btn--danger"
-                    onClick={() => onEliminarPareja(p)}
-                    aria-label={`Eliminar pareja ${p.jugador1.name} y ${p.jugador2.name}`}
-                    title="Eliminar pareja"
-                  >
-                    🗑️
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <ul className="te-armar-parejas__list">
+          {parejas.map((p) => (
+            <li key={p.id} className="te-armar-parejas__item">
+              <span>
+                {p.jugador1.name} / {p.jugador2.name}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onEliminarPareja(p)}
+              >
+                Quitar
+              </Button>
+            </li>
+          ))}
+        </ul>
       ) : null}
     </section>
   );

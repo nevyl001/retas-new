@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  dedupeLegacyPlayersByName,
+  dedupeLegacyPlayersById,
   getPlayers,
   type Player,
 } from "../../lib/database";
 import {
   dedupePlayersById,
   dedupePlayersForSelect,
-  normalizePlayerNameKey,
 } from "../../lib/rivieraJugadores/playerNameKey";
 import {
   playerHasNotifiableEmail,
@@ -49,7 +48,7 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
   const syncJugadores = useCallback((list: Player[]) => {
     const sorted = dedupePlayersForSelect(
-      dedupePlayersById(dedupeLegacyPlayersByName(list))
+      dedupePlayersById(dedupeLegacyPlayersById(list))
     );
     setJugadores(sorted);
     onJugadoresChangeRef.current(sorted);
@@ -219,7 +218,7 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
 
             return (
               <li
-                key={`${normalizePlayerNameKey(jugador.name)}-${jugador.id}`}
+                key={jugador.id}
                 className={`te-players-row${
                   !emailOk ? " te-players-row--sin-contacto" : ""
                 }`}

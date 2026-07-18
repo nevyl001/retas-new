@@ -66,17 +66,45 @@ describe("career batch resilience", () => {
     });
   });
 
-  it("ejecuta sync aunque pre-close excluya un jugador REVIEW", async () => {
+  it("NO ejecuta sync si pre-close reporta fallas de identidad (opción B)", async () => {
     (validateCareerEventPreClose as jest.Mock).mockResolvedValue({
-      ok: true,
+      ok: false,
       failures: [
         {
           code: "ambiguous_profile_link",
-          message: "Perfil ambiguo",
+          message:
+            'No se pudo cerrar la reta porque «Jugador» no tiene una identidad Riviera válida.',
           jugadorId: AMBIGUOUS,
         },
       ],
-      excludedJugadorIds: [AMBIGUOUS],
+      excludedJugadorIds: [],
+      eventBlocked: true,
+    });
+
+    const result = await finalizeCareerEvent({
+      kind: "reta",
+      organizadorId: ORG,
+      tournament: {
+        id: "reta-batch-1",
+        name: "Batch test",
+        is_finished: true,
+      } as never,
+      pairs: [],
+      matches: [],
+    });
+
+    expect(syncRetaParticipaciones).not.toHaveBeenCalled();
+    expect(result.processed).toBe(false);
+    expect(result.ok).toBe(false);
+    expect(result.touchedJugadorIds).toEqual([]);
+    expect(result.failures.some((f) => f.jugadorId === AMBIGUOUS)).toBe(true);
+  });
+
+  it("ejecuta sync exactamente una vez cuando pre-close.ok", async () => {
+    (validateCareerEventPreClose as jest.Mock).mockResolvedValue({
+      ok: true,
+      failures: [],
+      excludedJugadorIds: [],
       eventBlocked: false,
     });
 
@@ -98,16 +126,10 @@ describe("career batch resilience", () => {
       matches: [],
     });
 
-    expect(syncRetaParticipaciones).toHaveBeenCalledWith(
-      expect.objectContaining({
-        excludeJugadorIds: [AMBIGUOUS],
-      })
-    );
+    expect(syncRetaParticipaciones).toHaveBeenCalledTimes(1);
     expect(result.processed).toBe(true);
-    expect(result.ok).toBe(false);
+    expect(result.ok).toBe(true);
     expect(result.touchedJugadorIds).toEqual([GOOD_A, GOOD_B]);
-    expect(result.failures.some((f) => f.jugadorId === AMBIGUOUS)).toBe(true);
-    expect(result.touchedJugadorIds).not.toContain(AMBIGUOUS);
   });
 
   it("no ejecuta sync si el evento padre está bloqueado", async () => {

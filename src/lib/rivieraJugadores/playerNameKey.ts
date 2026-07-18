@@ -9,16 +9,21 @@ export function normalizePlayerNameKey(name: string): string {
     .replace(/\s+/g, " ");
 }
 
+/** Clave no ordenada de pareja por IDs fuertes. */
+export function unorderedPairIdKey(id1: string, id2: string): string {
+  return [id1, id2].map((x) => x.trim()).filter(Boolean).sort().join(":");
+}
+
 /**
- * Un solo jugador por nombre en listas/desplegables.
- * Prioriza el id ya seleccionado en J1/J2.
+ * Un jugador por `player.id` en listas/desplegables.
+ * Homónimos con IDs distintos se conservan.
  */
 export function dedupePlayersForSelect(
   players: Player[],
   preferPlayerIds: string[] = []
 ): Player[] {
   const prefer = new Set(preferPlayerIds.filter(Boolean));
-  const byName = new Map<string, Player>();
+  const byId = new Map<string, Player>();
 
   const keepScore = (p: Player): number => {
     let score = 0;
@@ -29,59 +34,43 @@ export function dedupePlayersForSelect(
   };
 
   for (const p of players) {
-    const key = normalizePlayerNameKey(p.name);
-    if (!key) continue;
-    const prev = byName.get(key);
+    const id = p.id?.trim();
+    if (!id) continue;
+    const prev = byId.get(id);
     if (!prev) {
-      byName.set(key, p);
+      byId.set(id, p);
       continue;
     }
     if (keepScore(p) > keepScore(prev)) {
-      byName.set(key, p);
-    } else if (keepScore(p) === keepScore(prev) && p.created_at < prev.created_at) {
-      byName.set(key, p);
+      byId.set(id, p);
+    } else if (
+      keepScore(p) === keepScore(prev) &&
+      p.created_at < prev.created_at
+    ) {
+      byId.set(id, p);
     }
   }
 
-  return Array.from(byName.values()).sort((a, b) =>
+  return Array.from(byId.values()).sort((a, b) =>
     a.name.localeCompare(b.name, "es")
   );
 }
 
 /**
- * Alinea un jugador al pool canónico.
- * Prioriza id exacto; por nombre solo si hay un único match (evita dos David R distintos).
+ * Alinea un jugador al pool canónico únicamente por ID fuerte.
+ * Sin match fuerte: unresolved → conserva el jugador original (no sustituye por nombre).
  */
 export function resolvePlayerInPool(player: Player, pool: Player[]): Player {
   const byId = pool.find((p) => p.id === player.id);
   if (byId) return byId;
-
-  const key = normalizePlayerNameKey(player.name);
-  if (key) {
-    const nameMatches = pool.filter(
-      (p) => normalizePlayerNameKey(p.name) === key
-    );
-    if (nameMatches.length === 1) return nameMatches[0]!;
-  }
-
   return player;
 }
 
 /**
- * Si varios jugadores comparten el mismo `players.id` (enlace legacy incorrecto),
- * conserva uno por nombre para no ocultar a nadie (p. ej. GusVa).
+ * Un registro por `players.id`. Homónimos con IDs distintos permanecen.
  */
 export function dedupePlayersById(players: Player[]): Player[] {
-  const byId = new Map<string, Player[]>();
-
-  for (const p of players) {
-    const group = byId.get(p.id) ?? [];
-    group.push(p);
-    byId.set(p.id, group);
-  }
-
-  const out: Player[] = [];
-  const seenNameKeys = new Set<string>();
+  const byId = new Map<string, Player>();
 
   const score = (p: Player): number => {
     let s = 0;
@@ -90,37 +79,41 @@ export function dedupePlayersById(players: Player[]): Player[] {
     return s;
   };
 
-  for (const group of Array.from(byId.values())) {
-    if (group.length === 1) {
-      const p = group[0];
-      const nk = normalizePlayerNameKey(p.name);
-      if (nk && seenNameKeys.has(nk)) continue;
-      if (nk) seenNameKeys.add(nk);
-      out.push(p);
+  for (const p of players) {
+    const id = p.id?.trim();
+    if (!id) continue;
+    const prev = byId.get(id);
+    if (!prev) {
+      byId.set(id, p);
       continue;
     }
-
-    const sorted = [...group].sort((a, b) => score(b) - score(a));
-    for (const p of sorted) {
-      const nk = normalizePlayerNameKey(p.name);
-      if (!nk || seenNameKeys.has(nk)) continue;
-      seenNameKeys.add(nk);
-      out.push(p);
+    if (score(p) > score(prev)) {
+      byId.set(id, p);
+    } else if (score(p) === score(prev) && p.created_at < prev.created_at) {
+      byId.set(id, p);
     }
   }
 
-  return out.sort((a, b) => a.name.localeCompare(b.name, "es"));
+  return Array.from(byId.values()).sort((a, b) =>
+    a.name.localeCompare(b.name, "es")
+  );
 }
 
-/** Evita dos parejas compartiendo el mismo jugador (p. ej. Carlos Co vs Carlos R). */
-export function dedupeParejaDraftsByPlayerName(
+/**
+ * Evita dos parejas compartiendo el mismo player.id.
+ * Homónimos (mismo nombre, distinto ID) son personas distintas.
+ */
+export function dedupeParejaDraftsByPlayerId(
   pairs: { id: string; jugador1: Player; jugador2: Player }[],
   preferPairIds: string[] = []
 ): typeof pairs {
-  return splitParejaDraftsByPlayerName(pairs, preferPairIds).kept;
+  return splitParejaDraftsByPlayerId(pairs, preferPairIds).kept;
 }
 
-export function splitParejaDraftsByPlayerName(
+/** @deprecated Use dedupeParejaDraftsByPlayerId — no dedupe por nombre. */
+export const dedupeParejaDraftsByPlayerName = dedupeParejaDraftsByPlayerId;
+
+export function splitParejaDraftsByPlayerId(
   pairs: { id: string; jugador1: Player; jugador2: Player }[],
   preferPairIds: string[] = []
 ): { kept: typeof pairs; droppedIds: string[] } {
@@ -137,24 +130,39 @@ export function splitParejaDraftsByPlayerName(
 
   for (let i = sorted.length - 1; i >= 0; i--) {
     const p = sorted[i];
-    const k1 = normalizePlayerNameKey(p.jugador1.name);
-    const k2 = normalizePlayerNameKey(p.jugador2.name);
-    if (!k1 || !k2 || k1 === k2) {
+    const id1 = p.jugador1.id?.trim() ?? "";
+    const id2 = p.jugador2.id?.trim() ?? "";
+    if (!id1 || !id2 || id1 === id2) {
       droppedIds.push(p.id);
       continue;
     }
-    if (used.has(k1) || used.has(k2)) {
+    if (used.has(id1) || used.has(id2)) {
       droppedIds.push(p.id);
       continue;
     }
-    used.add(k1);
-    used.add(k2);
+    used.add(id1);
+    used.add(id2);
     kept.unshift(p);
   }
 
   return { kept, droppedIds };
 }
 
+/** @deprecated Use splitParejaDraftsByPlayerId */
+export const splitParejaDraftsByPlayerName = splitParejaDraftsByPlayerId;
+
+export function playerIdsInPairs(
+  pairs: { jugador1: Player; jugador2: Player }[]
+): Set<string> {
+  const keys = new Set<string>();
+  for (const p of pairs) {
+    if (p.jugador1.id) keys.add(p.jugador1.id);
+    if (p.jugador2.id) keys.add(p.jugador2.id);
+  }
+  return keys;
+}
+
+/** @deprecated Prefer playerIdsInPairs — name keys are display-only. */
 export function playerNameKeysInPairs(
   pairs: { jugador1: Player; jugador2: Player }[]
 ): Set<string> {

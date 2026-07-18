@@ -7,19 +7,70 @@ import {
 import { isValidRivieraId } from "../rivieraIdDisplay";
 import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
 import { careerAssertionFailureFromError } from "./careerEventPlayerSync";
-import type { CareerEventAssertionFailure, FinalizeCareerEventInput } from "./types";
+import type {
+  CareerEventAssertionFailure,
+  CareerEventKind,
+  FinalizeCareerEventInput,
+} from "./types";
 
 const LOG_PREFIX = "[career-event-pipeline:pre-close]";
 
+/**
+ * DEUDA_FASE_4_ID_TYPES — Branded types recomendados (no implementados en este ciclo):
+ *   type RivieraJugadorId = string & { readonly __brand: "riviera_jugadores.id" }
+ *   type LegacyPlayerId = string & { readonly __brand: "players.id" }
+ *   type LegacyLigaJugadorId = string & { readonly __brand: "liga_jugadores.id" }
+ * Evitarían pasar players.id / liga_jugadores.id en el campo jugadorId a nivel de tipo.
+ */
+
+/** Ref tipada para pre-close / resolve. Nombre = solo display/diagnóstico. */
+export type ProspectiveJugadorRef = {
+  /** Exclusivamente public.riviera_jugadores.id */
+  jugadorId?: string;
+  /** Exclusivamente public.players.id */
+  legacyPlayerId?: string;
+  /** Exclusivamente public.liga_jugadores.id */
+  legacyLigaJugadorId?: string;
+  /** Solo presentación / mensajes de error */
+  nombre?: string;
+};
+
 export type PreCloseValidationResult = {
-  /** true solo si el evento padre existe y el sync puede intentarse */
+  /** true solo si no hay fallas y el sync puede intentarse */
   ok: boolean;
   failures: CareerEventAssertionFailure[];
-  /** Jugadores que no pasaron integridad — excluidos del sync de este evento */
+  /** Reservado: con bloqueo total queda vacío (sync no corre). */
   excludedJugadorIds: string[];
-  /** Fallo a nivel evento (padre ausente) — bloquea sync para todos */
+  /** true → el pipeline NO debe ejecutar sync/rating/ledger de cierre */
   eventBlocked: boolean;
 };
+
+const KIND_CLOSE_LABEL: Record<CareerEventKind, string> = {
+  reta: "la reta",
+  duelo_2v2: "el duelo",
+  americano: "el americano",
+  torneo_express: "el torneo express",
+  liga_jornada: "la jornada",
+  liga_podio: "la liga",
+  liga_inscripcion: "la inscripción",
+};
+
+export function formatIdentityPreCloseMessage(params: {
+  kind: CareerEventKind | string;
+  nombre?: string | null;
+  reason?: string;
+}): string {
+  const mode =
+    KIND_CLOSE_LABEL[params.kind as CareerEventKind] ?? "el evento";
+  const who = params.nombre?.trim()
+    ? `«${params.nombre.trim()}»`
+    : "un jugador";
+  return (
+    `No se pudo cerrar ${mode} porque ${who} no tiene una identidad Riviera válida. ` +
+    `Vuelve a seleccionarlo o vincula su Riviera ID y vuelve a intentar.` +
+    (params.reason?.trim() ? ` (${params.reason.trim()})` : "")
+  );
+}
 
 async function assertParentEventExists(
   input: FinalizeCareerEventInput
@@ -117,38 +168,42 @@ async function assertParentEventExists(
   }
 }
 
-function collectProspectiveJugadorRefs(
+/**
+ * Único productor de refs de pre-close.
+ * Contrato de tipado:
+ * - jugadorId → riviera_jugadores.id
+ * - legacyPlayerId → players.id
+ * - legacyLigaJugadorId → liga_jugadores.id
+ */
+export function collectProspectiveJugadorRefs(
   input: FinalizeCareerEventInput
-): Array<{ jugadorId?: string; nombre?: string; legacyPlayerId?: string }> {
-  const refs: Array<{
-    jugadorId?: string;
-    nombre?: string;
-    legacyPlayerId?: string;
-  }> = [];
+): ProspectiveJugadorRef[] {
+  const refs: ProspectiveJugadorRef[] = [];
 
   const push = (r: {
     jugadorId?: string | null;
     nombre?: string | null;
     legacyPlayerId?: string | null;
+    legacyLigaJugadorId?: string | null;
   }) => {
     const jugadorId = r.jugadorId?.trim() || undefined;
     const nombre = r.nombre?.trim() || undefined;
     const legacyPlayerId = r.legacyPlayerId?.trim() || undefined;
-    if (jugadorId || nombre || legacyPlayerId) {
-      refs.push({ jugadorId, nombre, legacyPlayerId });
+    const legacyLigaJugadorId = r.legacyLigaJugadorId?.trim() || undefined;
+    if (jugadorId || nombre || legacyPlayerId || legacyLigaJugadorId) {
+      refs.push({ jugadorId, nombre, legacyPlayerId, legacyLigaJugadorId });
     }
   };
 
   switch (input.kind) {
     case "reta":
       for (const pair of input.pairs) {
+        // players.id → solo legacyPlayerId (nunca jugadorId)
         push({
-          jugadorId: pair.player1_id,
           nombre: pair.player1_name,
           legacyPlayerId: pair.player1_id,
         });
         push({
-          jugadorId: pair.player2_id,
           nombre: pair.player2_name,
           legacyPlayerId: pair.player2_id,
         });
@@ -156,6 +211,7 @@ function collectProspectiveJugadorRefs(
       break;
     case "duelo_2v2": {
       const d = input.duelo;
+      // pareja_*_j*_id = riviera_jugadores.id
       push({ jugadorId: d.pareja_a_j1_id, nombre: d.pareja_a_j1_nombre });
       push({ jugadorId: d.pareja_a_j2_id, nombre: d.pareja_a_j2_nombre });
       push({ jugadorId: d.pareja_b_j1_id, nombre: d.pareja_b_j1_nombre });
@@ -164,11 +220,13 @@ function collectProspectiveJugadorRefs(
     }
     case "americano":
       for (const p of input.roster) {
+        // AmericanoPlayer.id = players.id
         push({ nombre: p.name, legacyPlayerId: p.id });
       }
       break;
     case "liga_inscripcion":
-      push({ jugadorId: input.jugadorId });
+      // input.jugadorId en FinalizeCareerEventInput = liga_jugadores.id
+      push({ legacyLigaJugadorId: input.jugadorId });
       break;
     default:
       break;
@@ -179,7 +237,8 @@ function collectProspectiveJugadorRefs(
 
 async function assertJugadorCareerIntegrity(
   jugadorId: string,
-  organizadorId: string
+  organizadorId: string,
+  ctx: { kind: CareerEventKind; nombre?: string }
 ): Promise<CareerEventAssertionFailure | null> {
   try {
     await ensureRivieraIdentity(jugadorId);
@@ -188,18 +247,17 @@ async function assertJugadorCareerIntegrity(
       organizadorId
     );
 
-    // El RPC (SECURITY DEFINER) ya confirmó el enlace y devuelve
-    // official_player_key + riviera_id directamente. NO re-consultar
-    // riviera_official_player_profile_link por cliente: esa tabla está
-    // protegida por RLS y el organizador autenticado no tiene SELECT
-    // directo, así que la re-consulta regresa vacío aunque el enlace
-    // sí exista — eso excluía a TODOS los jugadores del cierre.
     const officialPlayerKey = linkResult.officialPlayerKey;
     if (!officialPlayerKey) {
       return {
         code: "missing_player_identity",
-        message: `Sin official_player_key tras enlace: ${jugadorId}`,
+        message: formatIdentityPreCloseMessage({
+          kind: ctx.kind,
+          nombre: ctx.nombre,
+          reason: "sin official_player_key",
+        }),
         jugadorId,
+        details: { kind: ctx.kind, nombre: ctx.nombre },
       };
     }
 
@@ -207,9 +265,17 @@ async function assertJugadorCareerIntegrity(
     if (!rivieraId || !isValidRivieraId(rivieraId)) {
       return {
         code: "missing_riviera_id",
-        message: `Sin Riviera ID válido para jugador ${jugadorId}`,
+        message: formatIdentityPreCloseMessage({
+          kind: ctx.kind,
+          nombre: ctx.nombre,
+          reason: "sin Riviera ID válido",
+        }),
         jugadorId,
-        details: { official_player_key: officialPlayerKey },
+        details: {
+          kind: ctx.kind,
+          nombre: ctx.nombre,
+          official_player_key: officialPlayerKey,
+        },
       };
     }
 
@@ -222,32 +288,40 @@ async function assertJugadorCareerIntegrity(
           e.confidence === "REVIEW"
             ? "ambiguous_profile_link"
             : "career_integrity_blocked",
-        message: e.message,
+        message: formatIdentityPreCloseMessage({
+          kind: ctx.kind,
+          nombre: ctx.nombre,
+          reason: e.message,
+        }),
         jugadorId,
-        details: e.toStructuredLog(),
+        details: { ...e.toStructuredLog(), kind: ctx.kind, nombre: ctx.nombre },
       };
     }
     return {
       code: "career_integrity_blocked",
-      message: `Error de integridad para ${jugadorId}: ${String(e)}`,
+      message: formatIdentityPreCloseMessage({
+        kind: ctx.kind,
+        nombre: ctx.nombre,
+        reason: String(e),
+      }),
       jugadorId,
+      details: { kind: ctx.kind, nombre: ctx.nombre },
     };
   }
 }
 
 /**
- * Validación pre-cierre: evento padre + integridad de carrera por jugador participante.
- * Debe ejecutarse ANTES de sync/rating/puntos.
+ * Validación pre-cierre: evento padre + integridad de carrera por jugador.
+ * Si hay CUALQUIER falla → ok=false, eventBlocked=true (cero sync).
  */
 export async function validateCareerEventPreClose(
   input: FinalizeCareerEventInput,
   resolveParticipant: (
-    ref: { jugadorId?: string; nombre?: string; legacyPlayerId?: string },
+    ref: ProspectiveJugadorRef,
     organizadorId: string
   ) => Promise<string | null>
 ): Promise<PreCloseValidationResult> {
   const failures: CareerEventAssertionFailure[] = [];
-  const excludedJugadorIds: string[] = [];
   const org = input.organizadorId.trim();
 
   const parentFailure = await assertParentEventExists(input);
@@ -260,7 +334,7 @@ export async function validateCareerEventPreClose(
     return {
       ok: false,
       failures,
-      excludedJugadorIds,
+      excludedJugadorIds: [],
       eventBlocked: true,
     };
   }
@@ -273,38 +347,80 @@ export async function validateCareerEventPreClose(
     try {
       resolvedId = await resolveParticipant(ref, org);
     } catch (error) {
-      failures.push(
-        careerAssertionFailureFromError(error, {
-          nombre: ref.nombre,
-          legacyPlayerId: ref.legacyPlayerId,
+      const base = careerAssertionFailureFromError(error, {
+        nombre: ref.nombre,
+        legacyPlayerId: ref.legacyPlayerId,
+        kind: input.kind,
+      });
+      failures.push({
+        ...base,
+        message: formatIdentityPreCloseMessage({
           kind: input.kind,
-        })
-      );
+          nombre: ref.nombre,
+          reason: base.message,
+        }),
+        details: {
+          ...base.details,
+          legacyLigaJugadorId: ref.legacyLigaJugadorId,
+          actionSugerida:
+            "Vuelve a seleccionar al jugador o vincula su Riviera ID",
+        },
+      });
       continue;
     }
-    if (!resolvedId) continue;
+
+    if (!resolvedId) {
+      failures.push({
+        code: "missing_player_identity",
+        message: formatIdentityPreCloseMessage({
+          kind: input.kind,
+          nombre: ref.nombre,
+          reason: "identidad no resoluble con IDs fuertes",
+        }),
+        details: {
+          kind: input.kind,
+          nombre: ref.nombre,
+          legacyPlayerId: ref.legacyPlayerId,
+          legacyLigaJugadorId: ref.legacyLigaJugadorId,
+          jugadorId: ref.jugadorId,
+          actionSugerida:
+            "Vuelve a seleccionar al jugador o vincula su Riviera ID",
+        },
+      });
+      continue;
+    }
+
     if (resolvedIds.has(resolvedId)) continue;
     resolvedIds.add(resolvedId);
 
-    const playerFailure = await assertJugadorCareerIntegrity(resolvedId, org);
+    const playerFailure = await assertJugadorCareerIntegrity(
+      resolvedId,
+      org,
+      { kind: input.kind, nombre: ref.nombre }
+    );
     if (playerFailure) {
       failures.push(playerFailure);
-      excludedJugadorIds.push(resolvedId);
     }
   }
 
   if (failures.length > 0) {
-    console.warn(LOG_PREFIX, "pre-close player exclusions", {
+    console.warn(LOG_PREFIX, "pre-close blocked — sync will not run", {
       kind: input.kind,
-      excludedCount: excludedJugadorIds.length,
+      failureCount: failures.length,
       failures,
     });
+    return {
+      ok: false,
+      failures,
+      excludedJugadorIds: [],
+      eventBlocked: true,
+    };
   }
 
   return {
     ok: true,
-    failures,
-    excludedJugadorIds,
+    failures: [],
+    excludedJugadorIds: [],
     eventBlocked: false,
   };
 }

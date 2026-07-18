@@ -79,13 +79,7 @@ export const usePairManagement = (
           (pair.player1_id === player1.id && pair.player2_id === player2.id) ||
           (pair.player1_id === player2.id && pair.player2_id === player1.id);
 
-        const sameNames =
-          (pair.player1?.name.toLowerCase() === player1.name.toLowerCase() &&
-            pair.player2?.name.toLowerCase() === player2.name.toLowerCase()) ||
-          (pair.player1?.name.toLowerCase() === player2.name.toLowerCase() &&
-            pair.player2?.name.toLowerCase() === player1.name.toLowerCase());
-
-        return sameIds || sameNames;
+        return sameIds;
       });
 
       if (existingPairLocal) {

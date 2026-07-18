@@ -1,5 +1,6 @@
 import type { Match, Pair } from "../database";
 import type { Game } from "../database";
+import { isValidUuid } from "../db/schemaHelpers";
 import { supabase } from "../supabaseClient";
 import { getMatchScoresForStandings } from "../standingsUtils";
 import { resolveJugadorIdForParticipacion } from "./jugadorIdResolver";
@@ -524,25 +525,33 @@ export async function aplicarRatingAmericanoPartido(
   const [a1Op, a2Op, b1Op, b2Op] = await Promise.all([
     resolveJugadorIdForParticipacion({
       organizadorId,
-      legacyPlayerId: match.teamA[0].id,
+      legacyPlayerId: isValidUuid(match.teamA[0].id)
+        ? match.teamA[0].id
+        : undefined,
       nombre: match.teamA[0].name,
       tipoEvento: "americano",
     }),
     resolveJugadorIdForParticipacion({
       organizadorId,
-      legacyPlayerId: match.teamA[1].id,
+      legacyPlayerId: isValidUuid(match.teamA[1].id)
+        ? match.teamA[1].id
+        : undefined,
       nombre: match.teamA[1].name,
       tipoEvento: "americano",
     }),
     resolveJugadorIdForParticipacion({
       organizadorId,
-      legacyPlayerId: match.teamB[0].id,
+      legacyPlayerId: isValidUuid(match.teamB[0].id)
+        ? match.teamB[0].id
+        : undefined,
       nombre: match.teamB[0].name,
       tipoEvento: "americano",
     }),
     resolveJugadorIdForParticipacion({
       organizadorId,
-      legacyPlayerId: match.teamB[1].id,
+      legacyPlayerId: isValidUuid(match.teamB[1].id)
+        ? match.teamB[1].id
+        : undefined,
       nombre: match.teamB[1].name,
       tipoEvento: "americano",
     }),

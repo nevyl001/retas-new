@@ -8,6 +8,7 @@ import {
 } from "../lib/database";
 import {
   finalizeCareerEvent,
+  formatCareerPipelineFailureMessage,
   formatCareerPipelineSuccessMessage,
   type CareerEventPipelineResult,
 } from "../lib/rivieraJugadores/careerEventPipeline";
@@ -218,11 +219,11 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       }
 
       if (!pipelineResult.ok) {
-        const detail =
-          pipelineResult.failures.map((f) => f.message).join("; ") ||
-          "No se pudo registrar el historial de la reta.";
+        const msg = formatCareerPipelineFailureMessage(
+          pipelineResult,
+          tournament.name
+        );
         console.warn("[career-event-pipeline] reta incompleta:", pipelineResult);
-        const msg = `No se pudo cerrar la reta. Intenta de nuevo.\n\n${detail}`;
         setError(msg);
         alert(msg);
         return;

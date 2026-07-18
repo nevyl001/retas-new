@@ -22,7 +22,6 @@ import {
   type AmericanoDinamicoSnapshotV1,
 } from "./americanoDinamicoStorage";
 import { isAmericanoResumableAsync } from "./americanoDinamicoSync";
-import { normalizePlayerNameKey } from "./rivieraJugadores/playerNameKey";
 
 export type {
   Game,
@@ -547,54 +546,21 @@ export const restoreArchivedTournament = async (id: string) => {
 
 // Funciones para Jugadores
 
-function normalizeLegacyPlayerKey(name: string): string {
-  return normalizePlayerNameKey(name);
-}
-
-/** Busca jugador existente en el pool global (evita duplicados en players). */
+/** @deprecated No usar para identidad. Alta explícita crea siempre fila nueva. */
 export async function findLegacyPlayerExisting(
   name: string,
   email?: string | null,
   organizadorId?: string
 ): Promise<Player | null> {
-  const nameKey = normalizeLegacyPlayerKey(name);
-  const emailKey = email?.trim().toLowerCase();
-
-  if (emailKey) {
-    const { data: byEmail } = await supabase
-      .from("players")
-      .select("*")
-      .ilike("email", emailKey);
-    if (byEmail?.length) {
-      const match = (byEmail as Player[]).find(
-        (p) => normalizeLegacyPlayerKey(p.name) === nameKey
-      );
-      if (match) return match;
-    }
-  }
-
-  const { data: byName } = await supabase
-    .from("players")
-    .select("*")
-    .ilike("name", name.trim());
-  if (byName?.length) {
-    const matches = (byName as Player[]).filter(
-      (p) => normalizeLegacyPlayerKey(p.name) === nameKey
-    );
-    if (!matches.length) return null;
-    if (organizadorId) {
-      const withUser = matches.find(
-        (p) => (p as Player & { user_id?: string }).user_id === organizadorId
-      );
-      if (withUser) return withUser;
-    }
-    return matches[0];
-  }
-
+  // Conservado solo por compatibilidad de imports; no atribuye identidad en altas.
+  void name;
+  void email;
+  void organizadorId;
   return null;
 }
 
-/** Inserta en `players` sin tocar riviera_jugadores (usar playerPoolSync para enlazar). */
+/** Inserta en `players` sin tocar riviera_jugadores (usar playerPoolSync para enlazar).
+ * Alta explícita: siempre crea fila nueva. Homónimos con distinto id son válidos. */
 export const insertLegacyPlayer = async (
   name: string,
   userId: string,
@@ -604,26 +570,6 @@ export const insertLegacyPlayer = async (
   const email =
     options?.email?.trim() ||
     `${trimmed.toLowerCase().replace(/\s+/g, "")}@padel.local`;
-
-  const existing = await findLegacyPlayerExisting(trimmed, email, userId);
-  if (existing) {
-    if (userId && playersTableSupportsUserIdFilter !== false) {
-      const row = existing as Player & { user_id?: string | null };
-      if (!row.user_id) {
-        const { error: uidErr } = await supabase
-          .from("players")
-          .update({ user_id: userId })
-          .eq("id", existing.id);
-        if (
-          uidErr &&
-          isMissingColumnError(uidErr, "players", "user_id")
-        ) {
-          playersTableSupportsUserIdFilter = false;
-        }
-      }
-    }
-    return existing;
-  }
 
   const basePayload = {
     name: trimmed,
@@ -724,14 +670,7 @@ export const createPlayer = async (
 export type { RegistrarParticipacionParams } from "./rivieraJugadores/types";
 export { registrarParticipacion } from "./rivieraJugadores/rivieraJugadoresService";
 
-/** Evita repetir GET con filtro user_id si el esquema no tiene esa columna (42703 / PGRST204). */
-let playersTableSupportsUserIdFilter: boolean | null = null;
-
 type PlayerRow = Player & { user_id?: string | null };
-
-function normalizePlayerName(name: string): string {
-  return normalizePlayerNameKey(name);
-}
 
 function legacyPlayerKeepScore(p: PlayerRow): number {
   let score = 0;
@@ -741,35 +680,38 @@ function legacyPlayerKeepScore(p: PlayerRow): number {
   return score;
 }
 
-/** Un solo jugador por nombre (evita duplicados tras sync o migración). */
-export function dedupeLegacyPlayersByName(players: Player[]): Player[] {
-  const byName = new Map<string, PlayerRow>();
+/** Un solo jugador por `players.id`. Homónimos con IDs distintos se conservan. */
+export function dedupeLegacyPlayersById(players: Player[]): Player[] {
+  const byId = new Map<string, PlayerRow>();
 
   for (const raw of players) {
     const p = raw as PlayerRow;
-    const key = normalizePlayerName(p.name);
-    if (!key) continue;
-    const prev = byName.get(key);
+    const id = p.id?.trim();
+    if (!id) continue;
+    const prev = byId.get(id);
     if (!prev) {
-      byName.set(key, p);
+      byId.set(id, p);
       continue;
     }
     const prevScore = legacyPlayerKeepScore(prev);
     const nextScore = legacyPlayerKeepScore(p);
     if (nextScore > prevScore) {
-      byName.set(key, p);
+      byId.set(id, p);
       continue;
     }
     if (nextScore < prevScore) continue;
     if (p.created_at < prev.created_at) {
-      byName.set(key, p);
+      byId.set(id, p);
     }
   }
 
-  return Array.from(byName.values()).sort((a, b) =>
+  return Array.from(byId.values()).sort((a, b) =>
     a.name.localeCompare(b.name, "es")
   );
 }
+
+/** @deprecated Use dedupeLegacyPlayersById — no dedupe por nombre. */
+export const dedupeLegacyPlayersByName = dedupeLegacyPlayersById;
 
 /**
  * Pool de jugadores para retas/torneos.
@@ -792,9 +734,9 @@ export const fetchLegacyPlayersPool = async (
     if (error) {
       const retry = await supabase.from("players").select("*");
       if (retry.error) throw retry.error;
-      return dedupeLegacyPlayersByName((retry.data ?? []) as Player[]);
+      return dedupeLegacyPlayersById((retry.data ?? []) as Player[]);
     }
-    return dedupeLegacyPlayersByName((data ?? []) as Player[]);
+    return dedupeLegacyPlayersById((data ?? []) as Player[]);
   }
 
   const existing = inflightLegacyPoolByUser.get(userId);

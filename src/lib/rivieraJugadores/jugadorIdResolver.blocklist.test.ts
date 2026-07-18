@@ -26,12 +26,21 @@ jest.mock("./rivieraJugadoresService", () => ({
   listRivieraJugadoresByLegacyPlayerId: jest.fn(),
 }));
 
+jest.mock("./careerIdentity", () => ({
+  ensureRivieraIdentity: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock("./orphanProfileLink", () => ({
+  requireOfficialProfileLinkForParticipacion: jest.fn(),
+}));
+
 import { supabase } from "../supabaseClient";
 import { isJugadorImportBlocked } from "./jugadorImportBlocklist";
 import {
   getOrCreateJugadorId,
   resolveJugadorIdForParticipacion,
 } from "./jugadorIdResolver";
+import { isCareerIntegrityException } from "./careerIntegrity";
 import {
   isRevokedGrantLocalJugador,
   listActiveGrantedAccessForOrganizer,
@@ -43,6 +52,8 @@ import {
   linkLegacyPlayerId,
   listRivieraJugadoresByLegacyPlayerId,
 } from "./rivieraJugadoresService";
+import { ensureRivieraIdentity } from "./careerIdentity";
+import { requireOfficialProfileLinkForParticipacion } from "./orphanProfileLink";
 
 const mockBlocked = isJugadorImportBlocked as jest.MockedFunction<
   typeof isJugadorImportBlocked
@@ -68,6 +79,13 @@ const mockListByLegacy = listRivieraJugadoresByLegacyPlayerId as jest.MockedFunc
 const mockListGrants = listActiveGrantedAccessForOrganizer as jest.MockedFunction<
   typeof listActiveGrantedAccessForOrganizer
 >;
+const mockEnsureIdentity = ensureRivieraIdentity as jest.MockedFunction<
+  typeof ensureRivieraIdentity
+>;
+const mockRequireLink =
+  requireOfficialProfileLinkForParticipacion as jest.MockedFunction<
+    typeof requireOfficialProfileLinkForParticipacion
+  >;
 
 function mockWritableLocalJugador(localId: string | null): void {
   (supabase.from as jest.Mock).mockReturnValue({
@@ -99,6 +117,12 @@ describe("getOrCreateJugadorId blocklist", () => {
     mockLinkLegacy.mockResolvedValue(undefined);
     mockListByLegacy.mockResolvedValue([]);
     mockListGrants.mockResolvedValue([]);
+    mockEnsureIdentity.mockResolvedValue(undefined as never);
+    mockRequireLink.mockResolvedValue({
+      linked: true,
+      confidence: "OK",
+      reason: "ok",
+    } as never);
   });
 
   it("no crea jugador si está en blocklist de import", async () => {
@@ -159,6 +183,15 @@ describe("getOrCreateJugadorId blocklist", () => {
       "legacy-daniel"
     );
   });
+
+  it("sin clave fuerte: no crea (unresolved)", async () => {
+    mockBlocked.mockResolvedValue(false);
+    const id = await getOrCreateJugadorId({
+      nombre: "Solo Nombre",
+      organizadorId: "org-hack",
+    });
+    expect(id).toBeNull();
+  });
 });
 
 describe("resolveJugadorIdForParticipacion blocklist", () => {
@@ -169,14 +202,22 @@ describe("resolveJugadorIdForParticipacion blocklist", () => {
     mockVisible.mockReset();
     mockListByLegacy.mockReset();
     mockListGrants.mockReset();
+    mockByLegacy.mockReset();
     (supabase.from as jest.Mock).mockReset();
     mockVisible.mockResolvedValue(undefined);
     mockRevoked.mockResolvedValue(false);
     mockListByLegacy.mockResolvedValue([]);
     mockListGrants.mockResolvedValue([]);
+    mockByLegacy.mockResolvedValue(null);
+    mockEnsureIdentity.mockResolvedValue(undefined as never);
+    mockRequireLink.mockResolvedValue({
+      linked: true,
+      confidence: "OK",
+      reason: "ok",
+    } as never);
   });
 
-  it("omite duelo con UUID huérfano si el nombre está bloqueado", async () => {
+  it("omite duelo bloqueado con UUID explícito", async () => {
     mockBlocked.mockResolvedValue(true);
 
     const id = await resolveJugadorIdForParticipacion({
@@ -191,77 +232,26 @@ describe("resolveJugadorIdForParticipacion blocklist", () => {
     expect(mockResolveOrg).not.toHaveBeenCalled();
   });
 
-  it("retorna null si el UUID no pertenece al club y no hay nombre", async () => {
+  it("UUID explícito no writable: fail-closed (no cae a nombre)", async () => {
     mockBlocked.mockResolvedValue(false);
     mockResolveOrg.mockResolvedValue("uuid-ajeno");
-    (supabase.from as jest.Mock).mockReturnValue({
-      select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          eq: jest.fn().mockReturnValue({
-            maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-          }),
-        }),
-      }),
-    });
+    mockWritableLocalJugador(null);
 
-    const id = await resolveJugadorIdForParticipacion({
-      organizadorId: "org-hack",
-      jugadorId: "uuid-ajeno",
-      tipoEvento: "duelo_2v2",
-      eventoId: "duelo-1",
-    });
-
-    expect(id).toBeNull();
-  });
-
-  it("cedido: resuelve por nombre del grant aunque legacy no coincida", async () => {
-    mockBlocked.mockResolvedValue(false);
-    mockListByLegacy.mockResolvedValue([]);
-    mockListGrants.mockResolvedValue([
-      {
-        id: "grant-1",
-        jugador_id: "source-daniel",
-        owner_organizador_id: "org-riviera",
-        local_jugador_id: "local-hack-daniel",
-        local_display_name: null,
-        local_category: null,
-      },
-    ]);
-    (supabase.from as jest.Mock).mockImplementation(() => ({
-      select: jest.fn().mockReturnValue({
-        eq: jest.fn().mockImplementation((col: string) => {
-          if (col === "organizador_id") {
-            return {
-              maybeSingle: jest.fn().mockResolvedValue({
-                data: { id: "local-hack-daniel", estado: "activo" },
-                error: null,
-              }),
-            };
-          }
-          return {
-            eq: jest.fn().mockReturnValue({
-              maybeSingle: jest.fn().mockResolvedValue({
-                data: { id: "local-hack-daniel", estado: "activo" },
-                error: null,
-              }),
-            }),
-            maybeSingle: jest.fn().mockResolvedValue({
-              data: { nombre: "Daniel N" },
-              error: null,
-            }),
-          };
-        }),
-      }),
-    }));
-
-    const id = await resolveJugadorIdForParticipacion({
-      organizadorId: "org-hack",
-      nombre: "Daniel N",
-      legacyPlayerId: "players-id-solo-hack",
-      tipoEvento: "reta",
-      eventoId: "reta-lunes-mixta",
-    });
-
-    expect(id).toBe("local-hack-daniel");
+    let caught: unknown;
+    try {
+      await resolveJugadorIdForParticipacion({
+        organizadorId: "org-hack",
+        jugadorId: "uuid-ajeno",
+        nombre: "Alguien",
+        tipoEvento: "duelo_2v2",
+        eventoId: "duelo-1",
+      });
+    } catch (e) {
+      caught = e;
+    }
+    expect(isCareerIntegrityException(caught)).toBe(true);
+    if (isCareerIntegrityException(caught)) {
+      expect(caught.code).toBe("missing_riviera_id");
+    }
   });
 });

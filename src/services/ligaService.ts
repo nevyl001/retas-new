@@ -24,7 +24,7 @@ import {
   recalcularPuntosLigaEquipos,
   resetPuntosEquiposLiga,
 } from "./ligaParejasFijasService";
-import { dedupeLigaJugadoresByName } from "../lib/liga/dedupeJugadores";
+import { dedupeLigaJugadoresById } from "../lib/liga/dedupeJugadores";
 import { isMissingColumnError, sanitizeUuid } from "../lib/db/schemaHelpers";
 import {
   computeParejasFijasMatchTotals,
@@ -35,7 +35,6 @@ import {
   normalizeHoraInicio,
   validateCancha,
 } from "../lib/liga/programacion";
-import { normalizePlayerNameKey } from "../lib/rivieraJugadores/playerNameKey";
 import type { RivieraJugadorCategoria } from "../lib/rivieraJugadores/types";
 
 async function requireUserId(): Promise<string> {
@@ -383,21 +382,8 @@ export async function addJugadorLiga(
 ): Promise<LigaJugador> {
   const uid = await requireUserId();
   const nombreTrim = data.nombre.trim();
-  const nameKey = normalizePlayerNameKey(nombreTrim);
-
-  if (nameKey) {
-    const { data: existingRows } = await supabase
-      .from("liga_jugadores")
-      .select("*")
-      .eq("organizador_id", uid)
-      .eq("estado", "activo");
-    const match = (existingRows ?? []).find(
-      (r) => normalizePlayerNameKey(String(r.nombre ?? "")) === nameKey
-    );
-    if (match) {
-      return mapJugador(match as Record<string, unknown>);
-    }
-  }
+  // Alta explícita: siempre crea fila nueva. Homónimos con distinto id son válidos.
+  // No reutilizar por nombre.
 
   const { data: row, error } = await supabase
     .from("liga_jugadores")
@@ -681,7 +667,6 @@ async function enrichLigaJugadoresWithCategoria(
   }
 
   const byLigaId = new Map<string, RivieraJugadorCategoria>();
-  const byName = new Map<string, RivieraJugadorCategoria>();
 
   for (const row of data ?? []) {
     const cat = row.categoria as RivieraJugadorCategoria | null;
@@ -689,16 +674,12 @@ async function enrichLigaJugadoresWithCategoria(
     if (row.legacy_liga_jugador_id) {
       byLigaId.set(String(row.legacy_liga_jugador_id), cat);
     }
-    const key = normalizePlayerNameKey(String(row.nombre ?? ""));
-    if (key) byName.set(key, cat);
+    // No enriquecer por nombre: homónimos no deben heredar categoría ajena.
   }
 
   return jugadores.map((j) => ({
     ...j,
-    categoria:
-      byLigaId.get(j.id) ??
-      byName.get(normalizePlayerNameKey(j.nombre)) ??
-      null,
+    categoria: byLigaId.get(j.id) ?? null,
   }));
 }
 
@@ -725,7 +706,7 @@ export async function getJugadoresOrganizador(): Promise<LigaJugadorPoolItem[]> 
     }
   }
 
-  const deduped = dedupeLigaJugadoresByName(rows, {
+  const deduped = dedupeLigaJugadoresById(rows, {
     rivieraLinkedIds: linkedIds,
   });
 
