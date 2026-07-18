@@ -1,7 +1,10 @@
 import {
   breakdownFromCareerResult,
   careerResultFromJugador,
-  type CareerPointsBreakdownView,
+} from "./playerPointsBreakdown";
+import type {
+  CareerPointsBreakdownView,
+  PlayerPointsBreakdownClub,
 } from "./playerPointsBreakdown";
 import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
 import { sortCareerClubsForDisplay } from "./careerPointsByClub";
@@ -14,6 +17,15 @@ export type JugadorPuntosBreakdownLine = {
   clubLabel: string;
   puntos: number;
   role: "home" | "other" | "total" | "career-total";
+};
+
+/** Fila explícita por club (presentación; no altera puntos). */
+export type ClubPointsDisplayRow = {
+  organizerId: string;
+  clubName: string;
+  points: number;
+  isContextClub: boolean;
+  isRegistrationClub: boolean;
 };
 
 /**
@@ -51,10 +63,57 @@ export function resolveOfficialPuntosDisplay(
   return { kind: "unavailable" };
 }
 
+/**
+ * Construye filas por club con labels resueltos por organizador_id (caché/RPC).
+ * No usa club_name horneado ni hardcodea «Riviera Open».
+ */
+export function buildClubPointsDisplayRows(
+  pointsByClub: PlayerPointsBreakdownClub[],
+  options: {
+    contextualOrganizerId: string | null | undefined;
+    registrationOrganizerId?: string | null | undefined;
+  }
+): ClubPointsDisplayRow[] {
+  const viewOrg = options.contextualOrganizerId?.trim() || null;
+  const regOrg = options.registrationOrganizerId?.trim() || null;
+
+  const byId = new Map<string, number>();
+  for (const club of pointsByClub) {
+    const id = club.organizador_id?.trim();
+    if (!id) continue;
+    if (club.points <= 0 && id !== viewOrg) continue;
+    byId.set(id, club.points);
+  }
+
+  const rows: ClubPointsDisplayRow[] = Array.from(byId.entries()).map(
+    ([organizerId, points]) => ({
+      organizerId,
+      clubName: getOrganizerDisplayNameSync(organizerId),
+      points,
+      isContextClub: Boolean(viewOrg && organizerId === viewOrg),
+      isRegistrationClub: Boolean(regOrg && organizerId === regOrg),
+    })
+  );
+
+  rows.sort((a, b) => {
+    if (a.isContextClub !== b.isContextClub) return a.isContextClub ? -1 : 1;
+    if (a.isRegistrationClub !== b.isRegistrationClub) {
+      return a.isRegistrationClub ? -1 : 1;
+    }
+    if (b.points !== a.points) return b.points - a.points;
+    return a.clubName.localeCompare(b.clubName, "es");
+  });
+
+  return rows;
+}
+
 export function breakdownToDisplayLines(
   breakdown: CareerPointsBreakdownView,
   currentOrganizadorId: string | null | undefined,
-  options?: { forceBreakdown?: boolean }
+  options?: {
+    forceBreakdown?: boolean;
+    registrationOrganizerId?: string | null;
+  }
 ): JugadorPuntosBreakdownLine[] {
   const viewOrg = currentOrganizadorId?.trim() || null;
   const clubsWithPoints = breakdown.pointsByClub.filter((c) => c.points > 0);
@@ -64,19 +123,19 @@ export function breakdownToDisplayLines(
     return [];
   }
 
-  const lines: JugadorPuntosBreakdownLine[] = [];
+  const rows = buildClubPointsDisplayRows(breakdown.pointsByClub, {
+    contextualOrganizerId: viewOrg,
+    registrationOrganizerId: options?.registrationOrganizerId,
+  });
 
-  for (const club of breakdown.pointsByClub) {
-    if (club.points <= 0 && club.organizador_id !== viewOrg) continue;
-    lines.push({
-      key: club.organizador_id,
-      clubLabel: club.club_name || getOrganizerDisplayNameSync(club.organizador_id),
-      puntos: club.points,
-      role: club.organizador_id === viewOrg ? "home" : "other",
-    });
-  }
+  if (rows.length === 0) return [];
 
-  if (lines.length === 0) return [];
+  const lines: JugadorPuntosBreakdownLine[] = rows.map((row) => ({
+    key: row.organizerId,
+    clubLabel: row.clubName,
+    puntos: row.points,
+    role: row.isContextClub ? "home" : "other",
+  }));
 
   if (multiClub && breakdown.careerTotalAllClubs > 0) {
     lines.push({
@@ -140,7 +199,11 @@ export function simpleJugadorPuntosDisplay(
 export function buildJugadorPuntosBreakdown(
   jugador: RivieraJugadorWithStats,
   viewingOrganizadorId: string | null | undefined,
-  options: { hasOrgContext?: boolean; profileCard?: boolean } = {}
+  options: {
+    hasOrgContext?: boolean;
+    profileCard?: boolean;
+    registrationOrganizerId?: string | null;
+  } = {}
 ): JugadorPuntosBreakdownLine[] {
   const viewOrg = viewingOrganizadorId?.trim() || null;
   const breakdown = jugador.pointsBreakdown;
@@ -152,6 +215,7 @@ export function buildJugadorPuntosBreakdown(
   if (resolvedBreakdown) {
     const lines = breakdownToDisplayLines(resolvedBreakdown, viewOrg, {
       forceBreakdown: Boolean(options.hasOrgContext || options.profileCard),
+      registrationOrganizerId: options.registrationOrganizerId,
     });
     if (lines.length > 0) {
       return lines;

@@ -2,25 +2,26 @@
  * Fuente canónica de desglose de puntos por club.
  * Toda pantalla (ranking card, ficha, ranking global) debe consumir esto.
  */
-import { getOrganizerDisplayNameSync } from "../organizer/organizerDisplayName";
+import { getCachedOrganizerDisplayName } from "../organizer/organizerDisplayName";
 import {
-  type CareerPointsByClubResult,
   attachCareerPuntosToJugador,
   buildJugadorHomeOrgMapFromParticipaciones,
   computeCareerPointsByClubFromParticipaciones,
   sortCareerClubsForDisplay,
 } from "./careerPointsByClub";
+import type { CareerPointsByClubResult } from "./careerPointsByClub";
 import { enrichParticipacionesOrganizadorFromEvents } from "./participacionesOrganizadorScope";
 import {
   resolvePlayerCareer,
   resolvePlayerPoints,
-  type ResolvedPlayerIdentity,
 } from "./playerIdentityService";
+import type { ResolvedPlayerIdentity } from "./playerIdentityService";
 import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import type { JugadorParticipacion, RivieraJugadorWithStats } from "./types";
 
 export type PlayerPointsBreakdownClub = {
   organizador_id: string;
+  /** Hint opcional; la UI debe resolver el label por organizador_id (caché/RPC). */
   club_name: string;
   points: number;
 };
@@ -51,7 +52,8 @@ export function breakdownFromCareerResult(
     .filter((entry) => entry.puntos > 0 || entry.organizadorId === viewOrg)
     .map((entry) => ({
       organizador_id: entry.organizadorId,
-      club_name: getOrganizerDisplayNameSync(entry.organizadorId),
+      // Solo nombre ya resuelto en caché; nunca stamp del fallback madre.
+      club_name: getCachedOrganizerDisplayName(entry.organizadorId) ?? "",
       points: entry.puntos,
     }));
 
@@ -183,7 +185,7 @@ export async function resolvePlayerPointsBreakdown(
         ? [
             {
               organizador_id: viewOrg,
-              club_name: getOrganizerDisplayNameSync(viewOrg),
+              club_name: getCachedOrganizerDisplayName(viewOrg) ?? "",
               points: jugador.stats?.puntos_totales ?? 0,
             },
           ]

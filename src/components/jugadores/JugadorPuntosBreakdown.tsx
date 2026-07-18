@@ -12,6 +12,8 @@ type JugadorPuntosBreakdownProps = {
   hasOrgContext?: boolean;
   /** Card de perfil público: desglose de carrera local por club. */
   profileCard?: boolean;
+  /** Club de registro / origen (para ordenar tras el contextual). */
+  registrationOrganizerId?: string | null;
   className?: string;
 };
 
@@ -32,6 +34,7 @@ function JugadorPuntosBreakdownInner({
   clubOrganizadorId,
   hasOrgContext = false,
   profileCard = false,
+  registrationOrganizerId = null,
   className = "",
 }: JugadorPuntosBreakdownProps) {
   const lines = useMemo(
@@ -39,8 +42,15 @@ function JugadorPuntosBreakdownInner({
       buildJugadorPuntosBreakdown(jugador, clubOrganizadorId, {
         hasOrgContext,
         profileCard,
+        registrationOrganizerId,
       }),
-    [clubOrganizadorId, hasOrgContext, profileCard, jugador]
+    [
+      clubOrganizadorId,
+      hasOrgContext,
+      profileCard,
+      registrationOrganizerId,
+      jugador,
+    ]
   );
 
   if (isRankingPointsBreakdownPending(jugador, { hasOrgContext })) {
@@ -93,6 +103,7 @@ function propsAreEqual(
     prev.clubOrganizadorId === next.clubOrganizadorId &&
     prev.hasOrgContext === next.hasOrgContext &&
     prev.profileCard === next.profileCard &&
+    prev.registrationOrganizerId === next.registrationOrganizerId &&
     prev.className === next.className &&
     breakdownJugadorSignature(prev.jugador) ===
       breakdownJugadorSignature(next.jugador)

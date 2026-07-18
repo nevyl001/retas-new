@@ -115,13 +115,17 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         return;
       }
 
-      void prefetchOrganizerDisplayNames([
+      // Evita flash con labels fallback («Riviera Open»): nombres antes de pintar.
+      await prefetchOrganizerDisplayNames([
         profile.viewingOrgId,
         profile.identity.homeOrganizadorId,
         profile.jugador.grantedAccess?.ownerOrganizadorId,
         resolveRegistrationOrganizadorIdForPublicFicha(profile.jugador),
         ...(profile.jugador.careerPuntosByClub?.map((g) => g.organizadorId) ?? []),
         ...(profile.jugador.multiclubGranteePuntos?.map((g) => g.organizadorId) ?? []),
+        ...(profile.jugador.pointsBreakdown?.pointsByClub.map(
+          (c) => c.organizador_id
+        ) ?? []),
       ]);
 
       setJugador(profile.jugador);
@@ -389,6 +393,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                       clubOrganizadorId={viewingOrgId}
                       hasOrgContext={hasOrgContext}
                       profileCard
+                      registrationOrganizerId={registrationOrgId}
                     />
                   </div>
                   {!hasOrgContext || jugador.visible_publico ? (
