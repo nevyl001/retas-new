@@ -4,6 +4,9 @@
 /* eslint-disable testing-library/no-unnecessary-act */
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import "@testing-library/jest-dom";
 import { Duelo2v2Nuevo } from "./Duelo2v2Nuevo";
 import * as fs from "fs";
 import * as path from "path";
@@ -131,9 +134,12 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     expect(container.textContent).not.toMatch(/Confirmados:\s*4/);
     expect(container.textContent).not.toMatch(/4 de 4/);
     expect(container.textContent).not.toContain("Ya son los 4 jugadores");
+    // Convocatoria aún no activa: panel CTA ausente; copy solo anticipa el
+    // flujo post-guardar (copy actual del panel «Siguiente»).
     expect(container.textContent).toContain(
-      "Después de guardar podrás compartir el duelo por WhatsApp."
+      "Al guardar abres Convocatoria con «Lanzar y copiar» para WhatsApp."
     );
+    expect(container.textContent).not.toMatch(/Lanzar por WhatsApp/);
   });
 
   it("no llama get_open_game_registration al montar", async () => {
@@ -259,7 +265,8 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
   });
 
   it("doble submit en UI bloqueado por saveLock (una sola llamada a create)", async () => {
-    let resolveCreate: (v: unknown) => void = () => undefined;
+    const user = userEvent.setup();
+    let resolveCreate: ((v: unknown) => void) | undefined;
     (createDuelo2v2OpenDraft as jest.Mock).mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -269,41 +276,41 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
 
     await renderNuevo();
 
-    const setInput = async (el: Element, value: string) => {
-      await act(async () => {
-        const input = el as HTMLInputElement;
-        const proto = Object.getOwnPropertyDescriptor(
-          window.HTMLInputElement.prototype,
-          "value"
-        )?.set;
-        proto?.call(input, value);
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-      });
-    };
+    // cancha/lugar/horario ya tienen defaults; solo falta el nombre para canSubmit.
+    await user.type(
+      screen.getByLabelText(/Nombre del encuentro/i),
+      "Idempotente"
+    );
 
-    await setInput(container.querySelector("#duelo-nombre")!, "Idempotente");
-    const form = container.querySelector("form")!;
-    await act(async () => {
-      form.dispatchEvent(
-        new Event("submit", { bubbles: true, cancelable: true })
-      );
-      form.dispatchEvent(
-        new Event("submit", { bubbles: true, cancelable: true })
-      );
-    });
+    const botones = screen.getAllByTestId("guardar-duelo");
+    const boton = botones.find((el) => !(el as HTMLButtonElement).disabled);
+    expect(boton).toBeTruthy();
+    expect(boton).not.toBeDisabled();
 
-    // Sin estado React actualizado el lock puede no activarse; el flujo real
-    // se valida en saveNewDuelo.test.ts. Aquí solo verificamos que no crashea.
+    await Promise.all([user.click(boton!), user.click(boton!)]);
+
+    expect(createDuelo2v2OpenDraft).toHaveBeenCalledTimes(1);
+    expect(boton).toBeDisabled();
+
     await act(async () => {
-      resolveCreate({
+      resolveCreate?.({
         id: "once-1",
         nombre: "Idempotente",
-        estado: "configuracion",
+        cancha: "1",
+        programado_en: "2026-07-16T21:00:00.000Z",
+        programado_hasta: "2026-07-16T23:00:00.000Z",
         organizador_id: "org-1",
+        estado: "configuracion",
       });
       await Promise.resolve();
     });
+
+    await waitFor(() => {
+      expect(navigateDuelo2v2).toHaveBeenCalledWith(
+        "/duelo-2v2/once-1/gestionar"
+      );
+    });
+    expect(createDuelo2v2OpenDraft).toHaveBeenCalledTimes(1);
   });
 });
 
