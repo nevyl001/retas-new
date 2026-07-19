@@ -497,11 +497,11 @@ export async function enrichPublicProductMeta(
       }
       if (championship_enabled === undefined) {
         const champRaw = cfg.championship_config;
-        championship_enabled =
-          champRaw &&
-          typeof champRaw === "object" &&
-          (champRaw as { championshipEnabled?: unknown })
-            .championshipEnabled === true;
+        const champObj =
+          champRaw && typeof champRaw === "object"
+            ? (champRaw as { championshipEnabled?: unknown })
+            : null;
+        championship_enabled = champObj?.championshipEnabled === true;
       }
     }
   } catch {
