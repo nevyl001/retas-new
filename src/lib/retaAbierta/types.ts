@@ -154,8 +154,12 @@ export interface ConvocatoriaAdapterContext {
   /** Fija cupo (ej. duelo = 4). */
   lockCapacity?: boolean;
   /**
-   * Headline de producto para WhatsApp (ej. REMONTADA FINAL / ROUND ROBIN).
-   * No cambia mode_type; solo el mensaje compartido.
+   * Headline de producto para WhatsApp / /jugar
+   * (ej. ROUND ROBIN / REMONTADA FINAL / RETA POR EQUIPOS).
+   * No cambia mode_type; solo el copy.
    */
   productHeadline?: string;
+  /** round_robin | teams — para sincronizar tournament_public_config. */
+  tournamentFormat?: string | null;
+  championshipEnabled?: boolean;
 }

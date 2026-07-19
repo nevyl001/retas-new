@@ -365,6 +365,24 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         scheduledAt: schedLocal,
         durationMinutes: dur,
       });
+      // Publica format para que /jugar no caiga en label genérico.
+      if (
+        (context.mode === "reta" || context.mode === "americano") &&
+        id.trim()
+      ) {
+        try {
+          const { upsertTournamentPublicConfig } = await import(
+            "../../lib/database"
+          );
+          const fmt =
+            context.tournamentFormat === "teams" ? "teams" : "round_robin";
+          if (context.mode === "reta") {
+            await upsertTournamentPublicConfig(id, fmt, null);
+          }
+        } catch {
+          /* no bloquear convocatoria */
+        }
+      }
       return row;
     });
   };

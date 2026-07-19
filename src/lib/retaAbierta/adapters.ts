@@ -61,6 +61,13 @@ export function buildTournamentConvocatoriaContext(opts: {
     defaultScheduledAt: opts.scheduledAt ?? null,
     clubName: club,
     productHeadline,
+    tournamentFormat:
+      opts.tournamentFormat === "teams" || opts.tournamentFormat === "round_robin"
+        ? opts.tournamentFormat
+        : opts.mode === "reta"
+          ? "round_robin"
+          : opts.tournamentFormat ?? null,
+    championshipEnabled: Boolean(opts.championshipEnabled),
   };
 }
 

@@ -89,17 +89,18 @@ export function convocatoriaModeFromTournamentFormat(
   return "reta";
 }
 
-/** Headline de producto para el mensaje WhatsApp (mismo mode_type `reta`). */
+/** Headline de producto (WhatsApp + /jugar). Nunca genérico “RETA ABIERTA”. */
 export function convocatoriaProductHeadline(opts: {
   mode: OpenGameModeType;
   tournamentFormat?: string | null;
   championshipEnabled?: boolean;
 }): string {
-  if (opts.mode === "americano") return "AMERICANO ABIERTO";
+  if (opts.mode === "americano") return "AMERICANO";
   if (opts.mode === "duelo_2v2") return "DUELO 2 VS 2";
   if (opts.championshipEnabled) return "REMONTADA FINAL";
-  if (opts.tournamentFormat === "round_robin") return "ROUND ROBIN";
-  return "RETA ABIERTA";
+  if (opts.tournamentFormat === "teams") return "RETA POR EQUIPOS";
+  // round_robin explícito o reta sin format (mismo default que el admin).
+  return "ROUND ROBIN";
 }
 
 /** Eyebrow de /jugar: mismo criterio de producto que WhatsApp. */

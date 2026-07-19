@@ -93,7 +93,7 @@ describe("WhatsApp share message por modo", () => {
       publicUrl: "https://app.example/jugar/ra-1",
       clubName: "Hack Pádel",
     });
-    expect(text).toContain("RETA ABIERTA");
+    expect(text).toContain("ROUND ROBIN");
     expect(text).toContain("📍 Hack Pádel");
     expect(text).toContain("🎾 Cancha 3");
     expect(text).toContain("Nivel 5ta Fuerza");
@@ -150,7 +150,7 @@ describe("WhatsApp share message por modo", () => {
       publicUrl: "https://app.example/jugar/ra-2",
       clubName: "Hack Pádel",
     });
-    expect(text).toContain("AMERICANO ABIERTO");
+    expect(text).toContain("AMERICANO");
     expect(text).toContain("📍 Hack");
     expect(text).toContain("6 de 16 jugadores confirmados");
     expect(text).toContain("Solo necesitas tu Riviera ID.");
@@ -462,6 +462,19 @@ describe("whitelist servicio global", () => {
         championshipEnabled: false,
       })
     ).toBe("ROUND ROBIN");
+    expect(
+      convocatoriaProductHeadline({
+        mode: "reta",
+        tournamentFormat: "teams",
+        championshipEnabled: false,
+      })
+    ).toBe("RETA POR EQUIPOS");
+    expect(
+      convocatoriaProductHeadline({ mode: "reta" })
+    ).toBe("ROUND ROBIN");
+    expect(
+      convocatoriaProductHeadline({ mode: "duelo_2v2" })
+    ).toBe("DUELO 2 VS 2");
   });
 });
 

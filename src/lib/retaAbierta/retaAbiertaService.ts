@@ -468,32 +468,42 @@ export async function enrichPublicEntryPhotos(
 }
 
 /**
- * Si el RPC aún no expone formato/championship, completa desde
- * tournament_public_config / tournaments (lectura anon) para el eyebrow de /jugar.
+ * Headline / formato de producto para /jugar.
+ * mode_type `reta` es compartido (RR / equipos / remontada): hay que resolver format.
  */
 export async function enrichPublicProductMeta(
   dto: OpenRegistrationPublicDto
 ): Promise<OpenRegistrationPublicDto> {
-  if (dto.mode_type === "duelo_2v2") return dto;
-  if (
-    dto.tournament_format !== undefined &&
-    dto.championship_enabled !== undefined
-  ) {
-    return dto;
+  if (dto.mode_type === "duelo_2v2") {
+    return {
+      ...dto,
+      tournament_format: dto.tournament_format ?? null,
+      championship_enabled: false,
+    };
+  }
+  if (dto.mode_type === "americano") {
+    return {
+      ...dto,
+      tournament_format: dto.tournament_format ?? "americano",
+      championship_enabled: false,
+    };
   }
 
-  let tournament_format = dto.tournament_format;
+  let tournament_format =
+    dto.tournament_format === "round_robin" || dto.tournament_format === "teams"
+      ? dto.tournament_format
+      : undefined;
   let championship_enabled = dto.championship_enabled;
 
   try {
     const { getTournamentPublicConfigExtended } = await import("../database");
     const cfg = await getTournamentPublicConfigExtended(dto.entity_id);
     if (cfg) {
-      if (tournament_format === undefined) {
-        tournament_format =
-          cfg.format === "round_robin" || cfg.format === "teams"
-            ? cfg.format
-            : null;
+      if (
+        tournament_format == null &&
+        (cfg.format === "round_robin" || cfg.format === "teams")
+      ) {
+        tournament_format = cfg.format;
       }
       if (championship_enabled === undefined) {
         const champRaw = cfg.championship_config;
@@ -505,11 +515,10 @@ export async function enrichPublicProductMeta(
       }
     }
   } catch {
-    /* seguir con tournaments */
+    /* seguir */
   }
 
-  // Round Robin suele vivir en tournaments.format (public_config se usa más en equipos).
-  if (tournament_format === undefined || tournament_format === null) {
+  if (tournament_format == null) {
     try {
       const { data } = await supabase
         .from("tournaments")
@@ -519,14 +528,16 @@ export async function enrichPublicProductMeta(
       const fmt = typeof data?.format === "string" ? data.format.trim() : "";
       if (fmt === "round_robin" || fmt === "teams") {
         tournament_format = fmt;
-      } else if (tournament_format === undefined) {
-        tournament_format = null;
       }
     } catch {
-      if (tournament_format === undefined) tournament_format = null;
+      /* default abajo */
     }
   }
 
+  // Misma regla que resolveTournamentGameMode: reta sin format = Round Robin.
+  if (tournament_format == null) {
+    tournament_format = "round_robin";
+  }
   if (championship_enabled === undefined) {
     championship_enabled = false;
   }
