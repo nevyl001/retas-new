@@ -22,7 +22,10 @@ jest.mock("../../lib/retaAbierta/retaAbiertaService", () => ({
   listOpenGameRegistrationEntries: jest.fn().mockResolvedValue([]),
   promoteOpenRegistrationEntry: jest.fn(),
   removeOpenRegistrationEntry: jest.fn(),
+  setOpenGameRegistrationCapacity: jest.fn(),
   upsertOpenRegistrationConfig: jest.fn(),
+  OPEN_REG_CAPACITY_MIN: 1,
+  OPEN_REG_CAPACITY_MAX: 64,
 }));
 
 describe("ConvocatoriaWhatsAppPanel presencia", () => {

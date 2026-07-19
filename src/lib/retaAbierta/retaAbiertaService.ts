@@ -555,9 +555,19 @@ export async function fetchOpenRegistrationPublic(
   }
   const dto = parsePublicDto(data);
   if (!dto) return { ok: false, error: "invalid_payload" };
-  const withMeta = await enrichPublicProductMeta(dto);
-  const withPhotos = await enrichPublicEntryPhotos(withMeta);
-  return { ok: true, dto: withPhotos };
+  // Enrichments nunca deben tumbar /jugar si fallan lecturas secundarias.
+  let enriched = dto;
+  try {
+    enriched = await enrichPublicProductMeta(dto);
+  } catch {
+    enriched = dto;
+  }
+  try {
+    enriched = await enrichPublicEntryPhotos(enriched);
+  } catch {
+    /* keep enriched */
+  }
+  return { ok: true, dto: enriched };
 }
 
 export async function previewRivieraIdForOpenRegistration(

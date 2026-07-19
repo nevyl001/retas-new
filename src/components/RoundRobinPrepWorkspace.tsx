@@ -314,7 +314,8 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
       : step === "equipos"
         ? "Equipos"
         : step === "convocatoria"
-          ? "Convocatoria"
+          ? // Evita “Convocatoria / Convocatoria Riviera” duplicado en el panel.
+            tournament.name?.trim() || "Compartir"
           : "Listo para iniciar";
 
   const workbenchBody =

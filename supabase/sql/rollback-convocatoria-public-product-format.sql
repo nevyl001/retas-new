@@ -1,11 +1,13 @@
--- Patch OPCIONAL y seguro: /jugar distingue Round Robin / Remontada / Equipos.
--- NO lee tournaments.format (esa columna puede no existir → RPC 400).
--- Solo añade tournament_format / championship_enabled desde tournament_public_config
--- con EXCEPTION para no tumbar la convocatoria si falta columna/tabla.
+-- HOTFIX: restaura get_tournament_open_registration_public al estado estable
+-- (patch-convocatoria-public-entry-fotos). Ejecutar YA si /jugar responde 400
+-- tras patch-convocatoria-public-product-format.sql
 --
--- Si ya aplicaste la versión anterior y /jugar da 400:
---   1) Ejecuta rollback-convocatoria-public-product-format.sql
---   2) Luego este archivo (opcional). El frontend ya enriquece el formato sin SQL.
+-- Patch: fotos de confirmados en /jugar
+-- COALESCE: local → origen (OPA) → canónico por legacy_player_id
+-- También expone riviera_jugador_id en entries.
+-- Idempotente. Aplicar en SQL Editor tras revisar.
+--
+-- ── RPC pública (meta desde entidad + fotos canónicas) ───────────────────────
 
 CREATE OR REPLACE FUNCTION public.get_tournament_open_registration_public(p_slug text)
 RETURNS jsonb
@@ -26,8 +28,6 @@ DECLARE
   v_scheduled_at timestamptz;
   v_scheduled_until timestamptz;
   v_duration int;
-  v_tournament_format text := null;
-  v_championship_enabled boolean := false;
 BEGIN
   SELECT * INTO v_cfg
   FROM public.tournament_open_registration
@@ -64,6 +64,7 @@ BEGIN
     FROM public.duelos_2v2 d
     WHERE d.id = v_cfg.entity_id;
   ELSE
+    -- reta (incluye round_robin / remontada) + americano
     SELECT
       nullif(trim(t.name), ''),
       t.description,
@@ -86,25 +87,6 @@ BEGIN
       v_scheduled_until
     FROM public.tournaments t
     WHERE t.id = v_cfg.entity_id;
-
-    BEGIN
-      SELECT
-        nullif(trim(coalesce(tpc.format::text, '')), ''),
-        coalesce(
-          lower(coalesce(tpc.championship_config->>'championshipEnabled', 'false'))
-            IN ('true', 't', '1'),
-          false
-        )
-      INTO
-        v_tournament_format,
-        v_championship_enabled
-      FROM public.tournament_public_config tpc
-      WHERE tpc.tournament_id = v_cfg.entity_id;
-    EXCEPTION
-      WHEN undefined_table OR undefined_column OR invalid_text_representation THEN
-        v_tournament_format := null;
-        v_championship_enabled := false;
-    END;
   END IF;
 
   IF v_mostrar_lugar IS FALSE THEN
@@ -216,8 +198,6 @@ BEGIN
     'rama_label', v_cfg.rama_label,
     'location_label', v_location,
     'cancha_label', v_cancha,
-    'tournament_format', v_tournament_format,
-    'championship_enabled', coalesce(v_championship_enabled, false),
     'display_rating', v_cfg.display_rating,
     'display_photo', v_cfg.display_photo,
     'entries', v_entries,

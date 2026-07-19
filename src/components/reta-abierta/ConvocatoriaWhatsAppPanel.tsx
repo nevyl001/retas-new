@@ -35,6 +35,7 @@ import {
   writeConvocatoriaLugarPrefs,
 } from "../../lib/retaAbierta/convocatoriaLugarPrefs";
 import { syncConvocatoriaMetaToEntity } from "../../lib/retaAbierta/syncConvocatoriaMetaToEntity";
+import { ConvocatoriaMoreMenu } from "./ConvocatoriaMoreMenu";
 import "./reta-abierta-organizer.css";
 
 export type EnsureDraftEntityResult = {
@@ -651,8 +652,12 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   if (loading && entityId) {
     return (
       <section className="ra-org" data-testid="convocatoria-whatsapp-panel">
-        <h3>Convocatoria Riviera</h3>
-        <p className="ra-org__muted">Cargando…</p>
+        <header className="ra-org__header">
+          <div className="ra-org__header-row">
+            <h3 className="ra-org__title">Convocatoria Riviera</h3>
+          </div>
+          <p className="ra-org__subtitle">Cargando…</p>
+        </header>
       </section>
     );
   }
@@ -673,6 +678,18 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const effectiveCapacity = context.lockCapacity
     ? context.defaultCapacity
     : cfg?.capacity ?? capacity;
+
+  const tournamentSubtitle =
+    (titlePublic.trim() || context.defaultTitle || "").trim() ||
+    "Sin nombre";
+  const categoryLine =
+    (cfg?.category_label?.trim() || categoryLabel.trim() || "").trim();
+  const progressPct =
+    effectiveCapacity > 0
+      ? Math.min(100, Math.round((confirmed.length / effectiveCapacity) * 100))
+      : 0;
+  const capacityMin = Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length);
+  const capacityHintText = `Mínimo ${capacityMin} (confirmados). Máximo ${OPEN_REG_CAPACITY_MAX}.`;
 
   const onAdjustCapacity = async (nextRaw: number) => {
     if (!entityId || context.lockCapacity || capacityBusy) return;
@@ -731,88 +748,123 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       className={`ra-org${compact || isLive || shareOnly ? " ra-org--compact" : ""}`}
       data-testid="convocatoria-whatsapp-panel"
     >
-      <h3>Convocatoria Riviera</h3>
-      <p className="ra-org__muted">
-        {isLive || shareOnly
-          ? "Copia el mensaje actualizado con los jugadores que ya se inscribieron y pégalo en WhatsApp."
-          : "Comparte este juego por WhatsApp: se copia el mensaje con todos los datos para que lo pegues en el chat."}
-      </p>
+      <header className="ra-org__header">
+        <div className="ra-org__header-row">
+          <h3 className="ra-org__title">Convocatoria Riviera</h3>
+          {(shareOnly || isLive) && cfg ? (
+            <span
+              className={`ra-org__badge ra-org__badge--${cfg.status}`}
+              data-testid="convocatoria-status-badge"
+            >
+              {statusLabel(cfg.status)}
+            </span>
+          ) : null}
+        </div>
+        <p className="ra-org__subtitle">
+          {tournamentSubtitle}
+          {categoryLine ? ` · ${categoryLine}` : ""}
+        </p>
+        {!(isLive || shareOnly) ? (
+          <p className="ra-org__muted">
+            Comparte este juego por WhatsApp: se copia el mensaje con todos los
+            datos para que lo pegues en el chat.
+          </p>
+        ) : null}
+      </header>
 
       {(shareOnly || isLive) && cfg ? (
         <div className="ra-org__summary">
-          <p>
-            <strong>Estado:</strong> {statusLabel(cfg.status)}
-            {cfg.category_label?.trim()
-              ? ` · ${cfg.category_label.trim()}`
-              : ""}
-          </p>
-          <p>
-            <strong>Confirmados:</strong> {confirmed.length} de{" "}
-            {effectiveCapacity}
-            {waitlist.length > 0 ? ` · Espera: ${waitlist.length}` : ""}
-            {confirmed.length > 0 && confirmed.length < effectiveCapacity
-              ? ` · Faltan ${effectiveCapacity - confirmed.length}`
-              : ""}
-          </p>
+          <div
+            className="ra-org__progress"
+            data-testid="convocatoria-progress"
+          >
+            <div className="ra-org__progress-meta">
+              <span className="ra-org__progress-label">
+                {confirmed.length} de {effectiveCapacity} confirmados
+              </span>
+              {waitlist.length > 0 ? (
+                <span className="ra-org__progress-extra">
+                  Espera: {waitlist.length}
+                </span>
+              ) : null}
+            </div>
+            <div
+              className="ra-org__progress-track"
+              role="progressbar"
+              aria-label="Confirmados"
+              aria-valuemin={0}
+              aria-valuemax={effectiveCapacity}
+              aria-valuenow={confirmed.length}
+            >
+              <div
+                className="ra-org__progress-fill"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+
           {showLiveCapacityControl ? (
             <div
               className="ra-org__capacity"
               data-testid="convocatoria-capacity-control"
             >
-              <span className="ra-org__capacity-label">Cupo</span>
-              <div className="ra-org__capacity-stepper">
-                <button
-                  type="button"
-                  className="ra-org__capacity-btn"
-                  aria-label="Bajar cupo"
-                  disabled={
-                    capacityBusy ||
-                    effectiveCapacity <=
-                      Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length)
-                  }
-                  onClick={() => void onAdjustCapacity(effectiveCapacity - 1)}
+              <div className="ra-org__capacity-row">
+                <span className="ra-org__capacity-label" id="ra-org-cupo-label">
+                  Cupo
+                </span>
+                <div
+                  className="ra-org__capacity-stepper"
+                  title={capacityHintText}
                 >
-                  −
-                </button>
-                <input
-                  className="ra-org__capacity-input"
-                  type="number"
-                  min={Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length)}
-                  max={OPEN_REG_CAPACITY_MAX}
-                  value={effectiveCapacity}
-                  disabled={capacityBusy}
-                  onChange={(e) => {
-                    const n = Number(e.target.value);
-                    if (!Number.isFinite(n)) return;
-                    setCapacity(n);
-                  }}
-                  onBlur={(e) => {
-                    const n = Number(e.target.value);
-                    if (!Number.isFinite(n)) return;
-                    void onAdjustCapacity(n);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="ra-org__capacity-btn"
-                  aria-label="Subir cupo"
-                  disabled={
-                    capacityBusy || effectiveCapacity >= OPEN_REG_CAPACITY_MAX
-                  }
-                  onClick={() => void onAdjustCapacity(effectiveCapacity + 1)}
-                >
-                  +
-                </button>
+                  <button
+                    type="button"
+                    className="ra-org__capacity-btn"
+                    aria-label="Bajar cupo"
+                    disabled={
+                      capacityBusy || effectiveCapacity <= capacityMin
+                    }
+                    onClick={() => void onAdjustCapacity(effectiveCapacity - 1)}
+                  >
+                    −
+                  </button>
+                  <input
+                    className="ra-org__capacity-input"
+                    type="number"
+                    min={capacityMin}
+                    max={OPEN_REG_CAPACITY_MAX}
+                    value={effectiveCapacity}
+                    disabled={capacityBusy}
+                    aria-labelledby="ra-org-cupo-label"
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (!Number.isFinite(n)) return;
+                      setCapacity(n);
+                    }}
+                    onBlur={(e) => {
+                      const n = Number(e.target.value);
+                      if (!Number.isFinite(n)) return;
+                      void onAdjustCapacity(n);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="ra-org__capacity-btn"
+                    aria-label="Subir cupo"
+                    disabled={
+                      capacityBusy || effectiveCapacity >= OPEN_REG_CAPACITY_MAX
+                    }
+                    onClick={() => void onAdjustCapacity(effectiveCapacity + 1)}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
               {capacityHint ? (
                 <p className="ra-org__capacity-hint" role="status">
                   {capacityHint}
                 </p>
               ) : (
-                <p className="ra-org__hint">
-                  Mínimo {Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length)}{" "}
-                  (confirmados). Máximo {OPEN_REG_CAPACITY_MAX}.
-                </p>
+                <p className="ra-org__hint ra-org__hint--xs">{capacityHintText}</p>
               )}
             </div>
           ) : null}
@@ -837,7 +889,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           <p className="ra-org__meetup-title">Datos del encuentro</p>
           <div className="ra-org__meetup-grid">
             <label>
-              Día y hora
+              <span className="ra-org__field-label">Día y hora</span>
               <input
                 type="datetime-local"
                 value={scheduledAt}
@@ -845,7 +897,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
               />
             </label>
             <label>
-              Duración (min)
+              <span className="ra-org__field-label">Duración (min)</span>
               <input
                 type="number"
                 min={30}
@@ -858,7 +910,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
               />
             </label>
             <label>
-              Cancha
+              <span className="ra-org__field-label">Cancha</span>
               <input
                 value={canchaLabel}
                 onChange={(e) => setCanchaLabel(e.target.value)}
@@ -874,20 +926,27 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             />
             <span>Incluir lugar en la convocatoria</span>
           </label>
-          {includeLugar ? (
-            <label className="ra-org__meetup-lugar">
-              Lugar
-              <input
-                value={locationLabel}
-                onChange={(e) => setLocationLabel(e.target.value)}
-                placeholder="Ej. Hack Pádel, Padelito…"
-              />
-            </label>
-          ) : (
+          <div
+            className={`ra-org__collapse${includeLugar ? " is-open" : ""}`}
+            aria-hidden={!includeLugar}
+          >
+            <div className="ra-org__collapse-inner">
+              <label className="ra-org__meetup-lugar">
+                <span className="ra-org__field-label">Lugar</span>
+                <input
+                  value={locationLabel}
+                  onChange={(e) => setLocationLabel(e.target.value)}
+                  placeholder="Ej. Hack Pádel, Padelito…"
+                  tabIndex={includeLugar ? 0 : -1}
+                />
+              </label>
+            </div>
+          </div>
+          {!includeLugar ? (
             <p className="ra-org__hint">
               Ideal si tu club siempre juega en la misma sede.
             </p>
-          )}
+          ) : null}
         </div>
       ) : null}
 
@@ -977,9 +1036,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 : "Lanzar y copiar"}
         </button>
         {hasShareLink ? (
-          <>
+          <div className="ra-org__actions-secondary">
             <a
-              className="ra-org__btn"
+              className="ra-org__btn ra-org__btn--outline"
               href={publicUrl}
               target="_blank"
               rel="noopener noreferrer"
@@ -988,40 +1047,44 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             </a>
             <button
               type="button"
-              className="ra-org__btn"
+              className="ra-org__btn ra-org__btn--outline"
               onClick={() => setShowAdmin((v) => !v)}
             >
               Administrar inscritos
             </button>
             {cfg?.status === "open" ? (
-              <button
-                type="button"
-                className="ra-org__btn"
-                disabled={saving}
-                onClick={async () => {
-                  if (!entityId) return;
-                  setSaving(true);
-                  try {
-                    const row = await savePayload(entityId, {
-                      enabled: true,
-                      status: "paused",
-                      categoryLabel:
-                        categoryLabel.trim() ||
-                        cfg.category_label ||
-                        context.defaultCategory ||
-                        null,
-                    });
-                    setCfg(row);
-                    setStatus("paused");
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
-              >
-                Pausar
-              </button>
+              <ConvocatoriaMoreMenu
+                items={[
+                  {
+                    id: "pause",
+                    label: "Pausar",
+                    disabled: saving,
+                    onSelect: () => {
+                      if (!entityId) return;
+                      setSaving(true);
+                      void (async () => {
+                        try {
+                          const row = await savePayload(entityId, {
+                            enabled: true,
+                            status: "paused",
+                            categoryLabel:
+                              categoryLabel.trim() ||
+                              cfg.category_label ||
+                              context.defaultCategory ||
+                              null,
+                          });
+                          setCfg(row);
+                          setStatus("paused");
+                        } finally {
+                          setSaving(false);
+                        }
+                      })();
+                    },
+                  },
+                ]}
+              />
             ) : null}
-          </>
+          </div>
         ) : null}
       </div>
 
