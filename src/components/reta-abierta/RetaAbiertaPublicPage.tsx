@@ -7,6 +7,7 @@ import {
   buildWhatsAppShareUrl,
   resolveLugarYCancha,
 } from "../../lib/retaAbierta/whatsappShareMessage";
+import { convocatoriaPublicModeLabel } from "../../lib/retaAbierta/modeWhitelist";
 import { normalizeRivieraIdLoose } from "../../lib/retaAbierta/normalizeRivieraId";
 import {
   cancelOpenRegistration,
@@ -70,15 +71,12 @@ function statusLabel(status: OpenRegistrationPublicDto["status"]): string {
   }
 }
 
-function modeLabel(mode: OpenRegistrationPublicDto["mode_type"]): string {
-  switch (mode) {
-    case "americano":
-      return "Americano";
-    case "duelo_2v2":
-      return "Duelo 2 vs 2";
-    default:
-      return "Reta abierta";
-  }
+function modeLabel(dto: OpenRegistrationPublicDto): string {
+  return convocatoriaPublicModeLabel({
+    mode: dto.mode_type,
+    tournamentFormat: dto.tournament_format,
+    championshipEnabled: dto.championship_enabled,
+  });
 }
 
 function formatWhen(dto: OpenRegistrationPublicDto): string {
@@ -771,7 +769,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
       ) : (
       <div className="ra-public">
         <header className="ra-public__hero">
-          <p className="ra-public__eyebrow">{modeLabel(dto.mode_type)}</p>
+          <p className="ra-public__eyebrow">{modeLabel(dto)}</p>
           <h1 className="ra-public__title">{dto.name}</h1>
           <div className="ra-public__hero-row">
             <span className={`ra-public__badge ra-public__badge--${dto.status}`}>

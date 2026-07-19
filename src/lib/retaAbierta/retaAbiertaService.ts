@@ -253,6 +253,16 @@ export function parsePublicDto(raw: unknown): OpenRegistrationPublicDto | null {
       typeof row.location_label === "string" ? row.location_label : null,
     cancha_label:
       typeof row.cancha_label === "string" ? row.cancha_label : null,
+    tournament_format:
+      typeof row.tournament_format === "string" && row.tournament_format.trim()
+        ? row.tournament_format.trim()
+        : row.tournament_format === null
+          ? null
+          : undefined,
+    championship_enabled:
+      typeof row.championship_enabled === "boolean"
+        ? row.championship_enabled
+        : undefined,
     display_rating: row.display_rating !== false,
     display_photo: row.display_photo !== false,
     entries: entriesRaw
@@ -457,6 +467,77 @@ export async function enrichPublicEntryPhotos(
   };
 }
 
+/**
+ * Si el RPC aún no expone formato/championship, completa desde
+ * tournament_public_config / tournaments (lectura anon) para el eyebrow de /jugar.
+ */
+export async function enrichPublicProductMeta(
+  dto: OpenRegistrationPublicDto
+): Promise<OpenRegistrationPublicDto> {
+  if (dto.mode_type === "duelo_2v2") return dto;
+  if (
+    dto.tournament_format !== undefined &&
+    dto.championship_enabled !== undefined
+  ) {
+    return dto;
+  }
+
+  let tournament_format = dto.tournament_format;
+  let championship_enabled = dto.championship_enabled;
+
+  try {
+    const { getTournamentPublicConfigExtended } = await import("../database");
+    const cfg = await getTournamentPublicConfigExtended(dto.entity_id);
+    if (cfg) {
+      if (tournament_format === undefined) {
+        tournament_format =
+          cfg.format === "round_robin" || cfg.format === "teams"
+            ? cfg.format
+            : null;
+      }
+      if (championship_enabled === undefined) {
+        const champRaw = cfg.championship_config;
+        championship_enabled =
+          champRaw &&
+          typeof champRaw === "object" &&
+          (champRaw as { championshipEnabled?: unknown })
+            .championshipEnabled === true;
+      }
+    }
+  } catch {
+    /* seguir con tournaments */
+  }
+
+  // Round Robin suele vivir en tournaments.format (public_config se usa más en equipos).
+  if (tournament_format === undefined || tournament_format === null) {
+    try {
+      const { data } = await supabase
+        .from("tournaments")
+        .select("format")
+        .eq("id", dto.entity_id)
+        .maybeSingle();
+      const fmt = typeof data?.format === "string" ? data.format.trim() : "";
+      if (fmt === "round_robin" || fmt === "teams") {
+        tournament_format = fmt;
+      } else if (tournament_format === undefined) {
+        tournament_format = null;
+      }
+    } catch {
+      if (tournament_format === undefined) tournament_format = null;
+    }
+  }
+
+  if (championship_enabled === undefined) {
+    championship_enabled = false;
+  }
+
+  return {
+    ...dto,
+    tournament_format,
+    championship_enabled,
+  };
+}
+
 export async function fetchOpenRegistrationPublic(
   slug: string
 ): Promise<
@@ -474,7 +555,8 @@ export async function fetchOpenRegistrationPublic(
   }
   const dto = parsePublicDto(data);
   if (!dto) return { ok: false, error: "invalid_payload" };
-  const withPhotos = await enrichPublicEntryPhotos(dto);
+  const withMeta = await enrichPublicProductMeta(dto);
+  const withPhotos = await enrichPublicEntryPhotos(withMeta);
   return { ok: true, dto: withPhotos };
 }
 

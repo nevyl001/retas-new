@@ -55,6 +55,12 @@ export interface OpenRegistrationPublicDto {
   location_label: string | null;
   /** Cancha del encuentro (entidad). Separada de location_label. */
   cancha_label?: string | null;
+  /**
+   * Formato de producto cuando mode_type es `reta` (round_robin | teams).
+   * Remontada Final = round_robin + championship_enabled.
+   */
+  tournament_format?: string | null;
+  championship_enabled?: boolean;
   display_rating: boolean;
   display_photo: boolean;
   entries: OpenRegistrationPublicEntry[];

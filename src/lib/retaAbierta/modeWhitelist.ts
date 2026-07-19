@@ -101,3 +101,12 @@ export function convocatoriaProductHeadline(opts: {
   if (opts.tournamentFormat === "round_robin") return "ROUND ROBIN";
   return "RETA ABIERTA";
 }
+
+/** Eyebrow de /jugar: mismo criterio de producto que WhatsApp. */
+export function convocatoriaPublicModeLabel(opts: {
+  mode: OpenGameModeType;
+  tournamentFormat?: string | null;
+  championshipEnabled?: boolean;
+}): string {
+  return convocatoriaProductHeadline(opts);
+}

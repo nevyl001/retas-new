@@ -25,6 +25,7 @@ import {
   CONVOCATORIA_COVERED_PRODUCTS,
   convocatoriaModeFromTournamentFormat,
   convocatoriaProductHeadline,
+  convocatoriaPublicModeLabel,
   isConvocatoriaAllowedMode,
   isConvocatoriaExcludedMode,
 } from "./modeWhitelist";
@@ -309,6 +310,48 @@ describe("public DTO privacy + modos", () => {
     });
     expect(dto?.mode_type).toBe("americano");
     expect(assertPublicDtoPrivacy(dto!)).toEqual([]);
+  });
+
+  it("parsea tournament_format y championship para eyebrow Round Robin", () => {
+    const dto = parsePublicDto({
+      ok: true,
+      slug: "ra-rr",
+      mode_type: "reta",
+      entity_id: "t-rr",
+      tournament_id: "t-rr",
+      organizador_id: "o1",
+      name: "Reta Test",
+      description: null,
+      status: "open",
+      capacity: 8,
+      confirmed_count: 0,
+      waitlist_count: 0,
+      spots_left: 8,
+      waitlist_enabled: true,
+      approval_required: false,
+      registration_deadline: null,
+      scheduled_at: null,
+      duration_minutes: 120,
+      category_label: null,
+      rama_label: null,
+      location_label: null,
+      tournament_format: "round_robin",
+      championship_enabled: false,
+      display_rating: true,
+      display_photo: true,
+      entries: [],
+      is_finished: false,
+      is_started: false,
+    });
+    expect(dto?.tournament_format).toBe("round_robin");
+    expect(dto?.championship_enabled).toBe(false);
+    expect(
+      convocatoriaPublicModeLabel({
+        mode: dto!.mode_type,
+        tournamentFormat: dto!.tournament_format,
+        championshipEnabled: dto!.championship_enabled,
+      })
+    ).toBe("ROUND ROBIN");
   });
 });
 
