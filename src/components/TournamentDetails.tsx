@@ -63,6 +63,7 @@ interface TournamentDetailsProps {
   winningTeamStats?: TeamWinnerCelebrateStats | null;
   onShowWinnerScreen: () => void;
   onBackToHome: () => void;
+  onTournamentPatched?: (tournament: Tournament) => void;
 }
 
 export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
@@ -102,6 +103,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
   winningTeamStats,
   onShowWinnerScreen,
   onBackToHome,
+  onTournamentPatched,
 }) => {
   const teamConfig = useResolvedTeamConfig(selectedTournament, pairs);
 
@@ -198,6 +200,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       isAmericanoShell={isAmericanoShell}
       americanoSnapshot={americanoSnapshot}
       americanoRemoteLoading={americanoRemoteLoading}
+      onTournamentPatched={onTournamentPatched}
       desktopContent={
     <div
       className={
@@ -228,6 +231,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           setForceRefresh={setForceRefresh}
           onStartTournament={(opts) => onStartTournament(opts)}
           onReset={onReset}
+          onTournamentPatched={onTournamentPatched}
         />
       ) : (
         <>
@@ -266,6 +270,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
                 <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
               )
             }
+            onTournamentPatched={onTournamentPatched}
           />
         </>
       )}

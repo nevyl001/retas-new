@@ -69,6 +69,8 @@ interface MainLayoutProps {
   winningTeamStats?: TeamWinnerCelebrateStats | null;
   onShowWinnerScreen: () => void;
   onBackToHome: () => void;
+  /** Tras guardar Editar detalles: actualiza el torneo en memoria (home al instante). */
+  onTournamentPatched?: (tournament: Tournament) => void;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
@@ -110,6 +112,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   winningTeamStats,
   onShowWinnerScreen,
   onBackToHome,
+  onTournamentPatched,
 }) => {
   const appPathname = useSyncPathname();
   const [locationSearch, setLocationSearch] = React.useState(() =>
@@ -242,6 +245,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               winningTeamStats={winningTeamStats}
               onShowWinnerScreen={onShowWinnerScreen}
               onBackToHome={onBackToHome}
+              onTournamentPatched={onTournamentPatched}
             />
           </GameModeShell>
         )}

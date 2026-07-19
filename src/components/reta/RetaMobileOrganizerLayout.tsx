@@ -85,6 +85,7 @@ export interface RetaMobileOrganizerLayoutProps {
   americanoSnapshot: AmericanoDinamicoSnapshotV1 | null;
   americanoRemoteLoading: boolean;
   desktopContent: React.ReactNode;
+  onTournamentPatched?: (tournament: Tournament) => void;
 }
 
 export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps> = ({
@@ -121,6 +122,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
   americanoSnapshot,
   americanoRemoteLoading,
   desktopContent,
+  onTournamentPatched,
 }) => {
   const isMobile = useMobileViewport(767);
   const modeEyebrow = useClubModeEyebrow();
@@ -183,6 +185,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
         setForceRefresh={setForceRefresh}
         onStartTournament={(opts) => onStartTournament(opts)}
         onReset={onReset}
+        onTournamentPatched={onTournamentPatched}
       />
     );
   }
@@ -308,6 +311,7 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
           setForceRefresh={setForceRefresh}
           mobileFilter="jugadores"
           userId={userId}
+          onTournamentPatched={onTournamentPatched}
         />
       </ModeSectionPanel>
 

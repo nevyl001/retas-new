@@ -955,6 +955,12 @@ function AppContent() {
               winningTeamStats={winningTeamStats}
               onShowWinnerScreen={handleShowWinner}
               onBackToHome={handleBackToHome}
+              onTournamentPatched={(t) => {
+                setSelectedTournament((prev) => {
+                  if (!prev || prev.id !== t.id) return t;
+                  return { ...prev, ...t };
+                });
+              }}
             />
             )}
             </>
