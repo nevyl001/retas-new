@@ -126,7 +126,6 @@
 
 .riviera-organizer-reta .public-link-button:hover {
   background: var(--accent-gold-light) !important;
-  box-shadow: var(--glow-gold) !important;
   transform: translateY(-1px);
 }
 
@@ -490,7 +489,6 @@
 .riviera-organizer-reta .elegant-add-btn:hover {
   background: var(--accent-gold-light) !important;
   color: var(--bg-base) !important;
-  box-shadow: var(--glow-gold);
 }
 
 /* Filas jugador / pareja */
@@ -970,7 +968,6 @@
   background: var(--bg-elevated) !important;
   border-color: var(--text-secondary) !important;
   transform: translateY(-1px) !important;
-  box-shadow: var(--glow-gold) !important;
 }
 
 @media (max-width: 768px) {

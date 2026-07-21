@@ -14,7 +14,7 @@
   font-size: 56px;
   line-height: 1;
   display: block;
-  filter: drop-shadow(0 4px 20px rgba(255, 255, 255, 0.35));
+  filter: drop-shadow(0 4px 20px var(--ro-pub-gold-glow, rgba(201, 162, 39, 0.35)));
 }
 
 .winner-hero__label {

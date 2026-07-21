@@ -138,7 +138,7 @@ body {
 .riviera-glass-card--interactive:hover {
   transform: translateY(-3px);
   border-color: var(--border-accent);
-  box-shadow: var(--glow-gold), var(--shadow-card);
+  box-shadow: var(--shadow-card);
   background: var(--bg-card-hover);
 }
 
@@ -163,7 +163,6 @@ body {
 
 .riviera-btn-primary:hover {
   background: var(--accent-gold-light);
-  box-shadow: var(--glow-gold);
 }
 
 .riviera-btn-primary:active {
@@ -191,7 +190,6 @@ body {
 .riviera-btn-outline:hover {
   background: var(--accent-gold);
   color: var(--bg-base);
-  box-shadow: var(--glow-gold);
 }
 
 .riviera-btn-ghost {

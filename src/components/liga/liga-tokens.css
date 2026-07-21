@@ -27,8 +27,7 @@
    * en vez del valor propio anterior (0 2px 12px rgba(0,0,0,0.25)). */
   --liga-shadow-card: var(--ro-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.5));
   --liga-shadow-hover: var(--ro-shadow-md);
-  --liga-shadow-gold: 0 2px 8px rgba(255, 255, 255, 0.35);
-  --liga-shadow-gold-glow: 0 0 40px rgba(255, 255, 255, 0.2);
+  --liga-shadow-gold: 0 2px 8px var(--ro-pub-gold-glow);
   --liga-shadow-green-glow: 0 0 8px rgba(16, 185, 129, 0.25);
 
   /* Tipografía */

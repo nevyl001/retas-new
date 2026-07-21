@@ -29,7 +29,6 @@
   --accent-gold: var(--ro-accent);
   --accent-gold-light: var(--ro-accent-hover);
   --accent-gold-dim: var(--ro-accent-dim);
-  --glow-gold: 0 0 20px rgba(255, 255, 255, 0.08);
 
   --riviera-accent-gold: var(--ro-accent);
   --te-gold: var(--ro-accent);
@@ -147,12 +146,10 @@
   --shadow-2: var(--ro-shadow-md);
   --shadow-3: var(--ro-shadow-lg);
   --shadow-card: var(--ro-shadow-sm);
-  --shadow-gold: var(--glow-gold);
   --shadow-soft: var(--ro-shadow-sm);
   --shadow-medium: var(--ro-shadow-md);
   --shadow-deep: var(--shadow-3);
   --shadow-elevated: var(--ro-shadow-md);
-  --shadow-glow-gold: var(--glow-gold);
 
   /* ── Motion ── */
   --motion-instant: 80ms ease;
@@ -221,7 +218,6 @@
   --riviera-border-accent: var(--border-accent);
   --riviera-accent-gold-light: var(--accent-gold-light);
   --riviera-accent-gold-dim: var(--accent-gold-dim);
-  --riviera-glow-gold: var(--glow-gold);
   --riviera-text-primary: var(--text-primary);
   --riviera-text-secondary: var(--text-secondary);
   --riviera-text-muted: var(--text-muted);
@@ -254,7 +250,6 @@
   --te-border: var(--border-subtle);
   --te-gold-bright: var(--accent-gold-light);
   --te-gold-muted: var(--accent-gold-dim);
-  --te-gold-glow: var(--glow-gold);
   --te-text: var(--text-primary);
   --te-text-muted: var(--text-muted);
   --te-red: var(--danger);

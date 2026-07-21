@@ -138,7 +138,6 @@
 
 .riviera-btn-primary:hover {
   background: var(--accent-hover);
-  box-shadow: var(--shadow-glow-gold);
 }
 
 .riviera-btn-primary:active {

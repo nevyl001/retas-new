@@ -48,7 +48,6 @@
 .riviera-btn-primary:hover:not(:disabled) {
   background: var(--ro-accent-hover);
   border-color: var(--ro-accent-hover);
-  box-shadow: var(--glow-gold);
 }
 
 .riviera-btn-secondary {
@@ -205,7 +204,7 @@
 .riviera-card--interactive:hover,
 .riviera-glass-card.riviera-card--interactive:hover {
   border-color: var(--border-accent);
-  box-shadow: var(--shadow-gold), var(--shadow-2);
+  box-shadow: var(--shadow-2);
   transform: translateY(-2px);
   background: var(--bg-card-hover);
 }

@@ -180,7 +180,6 @@
 .torneo-express-page .te-torneo-btn--gold-outline:hover:not(:disabled) {
   background: var(--accent-gold);
   color: var(--bg-base);
-  box-shadow: var(--glow-gold);
 }
 
 .torneo-express-page .te-torneo-btn--danger-outline {

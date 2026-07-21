@@ -225,7 +225,9 @@
 .ro-chrome,
 .riviera-sidebar,
 .mobile-app-navigation,
-.duelo2v2-page {
+.duelo2v2-page,
+.winner-hero,
+.winner-page--team-share {
   --ro-bg-base: var(--ro-chrome-bg);
   --ro-bg-deep: var(--ro-chrome-deep);
   --ro-bg-surface: var(--ro-chrome-bg);

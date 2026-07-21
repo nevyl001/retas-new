@@ -221,7 +221,6 @@
   background: var(--accent-gold-light);
   border-color: var(--accent-gold-light);
   color: var(--text-on-gold);
-  box-shadow: var(--glow-gold);
 }
 
 .torneo-express-btn:disabled {
@@ -1630,7 +1629,6 @@ button.te-partido-chip--cancha:disabled {
   background: var(--accent-gold-light);
   border-color: var(--accent-gold-light);
   color: var(--text-on-gold);
-  box-shadow: var(--glow-gold);
 }
 
 .te-crear-submit {
