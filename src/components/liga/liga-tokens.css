@@ -11,7 +11,10 @@
   --liga-gold-border: var(--ro-border-accent);
   --liga-purple: rgba(91, 79, 207, 0.85);
   --liga-purple-dim: rgba(91, 79, 207, 0.18);
-  --liga-purple-text: #ddd6fe;
+  /* Texto del chip de pareja. En claro (gestión de liga) debe ser púrpura
+     OSCURO: #ddd6fe era casi blanco y quedaba invisible sobre el lavanda claro.
+     La isla oscura (liga-pantalla pública) lo re-vuelve claro más abajo. */
+  --liga-purple-text: #3f37a3;
   --liga-green: var(--ro-mode-americano);
   --liga-green-light: #6ee7b7;
   --liga-green-dim: rgba(16, 185, 129, 0.15);
@@ -54,4 +57,10 @@
    * / --ro-radius-lg = 14px), en vez del valor propio anterior (16px). */
   --liga-radius-lg: var(--mode-radius, var(--ro-radius-lg));
   --liga-radius-pill: 999px;
+}
+
+/* Isla oscura (liga-pantalla pública): el texto del chip de pareja vuelve a
+   lavanda claro para contrastar sobre el púrpura oscuro. */
+.ro-surface-dark {
+  --liga-purple-text: #ddd6fe;
 }
