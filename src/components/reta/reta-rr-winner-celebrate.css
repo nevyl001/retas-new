@@ -40,9 +40,7 @@
 
   .reta-rr-celebrate__podium {
     border-radius: 8px;
-    box-shadow:
-      0 0 0 1px rgba(201, 162, 39, 0.35),
-      0 12px 40px rgba(0, 0, 0, 0.45);
+    box-shadow: var(--ro-shadow-lg);
   }
 
   .riviera-organizer-reta .reta-rr-celebrate {

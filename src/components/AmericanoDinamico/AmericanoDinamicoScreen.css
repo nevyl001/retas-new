@@ -94,7 +94,7 @@
   text-transform: uppercase;
   color: var(--accent-gold);
   background: var(--accent-gold-dim);
-  border: 0.5px solid rgba(255, 255, 255, 0.25);
+  border: 0.5px solid var(--ro-border);
   border-radius: var(--radius-full);
 }
 

@@ -194,7 +194,7 @@
   color: var(--ro-pub-gold-light, var(--ro-gold-light, var(--accent-gold-light)));
   background: var(--ro-pub-gold-dim, var(--ro-gold-dim));
   border: 1px solid var(--ro-pub-gold-border, var(--ro-gold-border));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 var(--ro-accent-ring);
 }
 
 .te-public-evento-role-card__body {
