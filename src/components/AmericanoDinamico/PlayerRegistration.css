@@ -195,7 +195,7 @@
 .americano-btn--danger {
   border-color: rgba(239, 68, 68, 0.4);
   background: rgba(239, 68, 68, 0.1);
-  color: var(--ro-error-dim);
+  color: var(--ro-error);
 }
 
 .americano-btn--primary {

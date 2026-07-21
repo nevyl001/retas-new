@@ -136,7 +136,7 @@
   border-radius: 6px;
   border: 1px solid rgba(239, 68, 68, 0.45);
   background: rgba(239, 68, 68, 0.12);
-  color: var(--ro-error-dim);
+  color: var(--ro-error);
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;

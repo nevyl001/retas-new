@@ -26,7 +26,7 @@
 .account-controls__banner--error {
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.35);
-  color: var(--ro-error-dim);
+  color: var(--ro-error);
 }
 
 .account-controls__banner--ok {

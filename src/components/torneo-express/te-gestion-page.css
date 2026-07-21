@@ -1091,7 +1091,7 @@
   border: 1px solid rgba(239, 68, 68, 0.35);
   font-size: 0.82rem;
   line-height: 1.45;
-  color: var(--ro-error-dim);
+  color: var(--ro-error);
 }
 
 .te-gestion-page .te-notif-panel__infra-warn p {

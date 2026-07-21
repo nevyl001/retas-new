@@ -170,7 +170,7 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: var(--ro-text-muted);
+  background: var(--ro-pending);
 }
 
 .reta-config-status__dot--done {

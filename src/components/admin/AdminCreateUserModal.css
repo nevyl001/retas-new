@@ -160,7 +160,7 @@
   border-radius: 8px;
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.35);
-  color: var(--ro-error-dim);
+  color: var(--ro-error);
   font-size: 0.8125rem;
   line-height: 1.4;
 }

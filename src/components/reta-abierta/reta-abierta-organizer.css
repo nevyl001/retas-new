@@ -434,7 +434,7 @@
 
 .ra-org__btn--primary {
   width: 100%;
-  background: var(--ro-text-primary);
+  background: var(--ro-accent);
   border-color: transparent;
   color: var(--brand-bg, var(--ro-text-primary));
 }

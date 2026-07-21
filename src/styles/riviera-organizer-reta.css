@@ -993,7 +993,7 @@
   border-radius: 8px;
   border: 1px solid rgba(239, 68, 68, 0.35);
   background: rgba(239, 68, 68, 0.1);
-  color: var(--ro-error-dim);
+  color: var(--ro-error);
   font-size: 0.9rem;
   line-height: 1.4;
 }

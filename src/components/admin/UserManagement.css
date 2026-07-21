@@ -81,7 +81,7 @@
 .user-management-notice--error {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.35);
-  color: var(--ro-error-dim);
+  color: var(--ro-error);
 }
 
 .user-management-notice-actions {

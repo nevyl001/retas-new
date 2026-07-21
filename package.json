@@ -37,6 +37,7 @@
     "e2e:public-player-profile": "node scripts/validate-career-totals-ui.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
+    "lint:tokens": "node scripts/lint-tokens.mjs",
     "verify:public-player": "npm run typecheck && CI=true npm test && npm run test:player-identity && npm run test:public-player-profile && npm run test:admin-player-profile && npm run test:global-career-architecture && npm run audit:global-career-parity -- --offline && npm run build",
     "eject": "react-scripts eject",
     "update-icons": "node scripts/update-icons.js",

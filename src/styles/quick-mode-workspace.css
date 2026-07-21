@@ -288,7 +288,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--ro-text-on-accent);
-  background: var(--ro-text-muted);
+  background: var(--ro-pending);
 }
 
 .qm-stepper__btn.is-active .qm-stepper__index,
