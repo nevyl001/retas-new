@@ -44,7 +44,7 @@ export const Duelo2v2Router: React.FC<{ pathname: string }> = ({ pathname }) => 
       return <Duelo2v2Publica dueloId={route.dueloId} />;
     default:
       return (
-        <div className="duelo2v2-page">
+        <div className="duelo2v2-page ro-surface-dark">
           <div className="duelo2v2-page__inner">
             <p className="duelo2v2-error">Ruta de duelo 2 vs 2 no válida.</p>
           </div>

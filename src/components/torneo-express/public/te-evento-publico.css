@@ -120,7 +120,7 @@
       var(--ro-pub-gold-dim, var(--ro-gold-dim)) 0%,
       transparent 42%
     ),
-    var(--ro-bg-card);
+    var(--ro-chrome-elevated);
   border: 1px solid var(--ro-border-subtle);
   border-radius: var(--ro-radius-xl);
   box-shadow: var(--ro-shadow-sm);

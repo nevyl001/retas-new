@@ -17,6 +17,7 @@ export const Duelo2v2PageShell: React.FC<Duelo2v2PageShellProps> = ({
 }) => {
   const pageClass = [
     "duelo2v2-page",
+    "ro-surface-dark",
     wide ? "duelo2v2-page--wide" : "",
     publicView ? "duelo2v2-page--public" : "",
     className,

@@ -25,11 +25,15 @@ export function QuickModePrepWorkspace({
     <div className={`qm-ws ${className}`.trim()}>
       {header}
       <div className="qm-ws__body">
-        <div className="qm-ws__main">
+        {/* Contenedores oscuros sobre pagina clara: los tokens de fondo y texto
+            se re-resuelven a la escala chrome dentro de .ro-surface-dark, asi que
+            stepper, workbench y sidebar salen negros con letra blanca sin tocar
+            cada componente. El header y la pagina quedan claros. */}
+        <div className="qm-ws__main ro-surface-dark">
           {stepper}
           <section className="qm-ws__workbench">{workbench}</section>
         </div>
-        <aside className="qm-ws__sidebar">{sidebar}</aside>
+        <aside className="qm-ws__sidebar ro-surface-dark">{sidebar}</aside>
       </div>
       {stickyCta ? (
         <div className="qm-ws__sticky-cta">{stickyCta}</div>

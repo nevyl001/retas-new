@@ -214,7 +214,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   };
 
   return (
-    <div className="matches-container-simplified rv-card-soft">
+    <div className="matches-container-simplified rv-card-soft ro-surface-dark">
       <div className="matches-header-simplified">
         <h3>Partidos</h3>
         <span className="matches-count-simplified">{matches.length} total</span>

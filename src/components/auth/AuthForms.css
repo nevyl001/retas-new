@@ -154,15 +154,31 @@
 
 .auth-page .riviera-input:focus,
 .auth-page .auth-password-field__input:focus {
-  border-color: var(--riviera-gold, var(--ro-gold-border));
-  background: rgba(212, 168, 67, 0.04);
-  box-shadow: 0 0 0 1px var(--riviera-gold, #d4a843);
+  border-color: var(--ro-accent-ring);
+  background: var(--ro-bg-elevated);
+  box-shadow: 0 0 0 2px var(--ro-accent-ring);
 }
 
 .auth-page .riviera-input:disabled,
 .auth-page .auth-password-field__input:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* Autofill de WebKit ignora `background`: Chrome pinta su azul pálido.
+   El único override real es un box-shadow inset opaco del color del input.
+   La transición eterna evita el flash amarillo/azul al autocompletar. */
+.auth-page .riviera-input:-webkit-autofill,
+.auth-page .riviera-input:-webkit-autofill:hover,
+.auth-page .riviera-input:-webkit-autofill:focus,
+.auth-page .auth-password-field__input:-webkit-autofill,
+.auth-page .auth-password-field__input:-webkit-autofill:hover,
+.auth-page .auth-password-field__input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ro-text-primary);
+  -webkit-box-shadow: 0 0 0 1000px var(--ro-bg-elevated) inset;
+  box-shadow: 0 0 0 1000px var(--ro-bg-elevated) inset;
+  caret-color: var(--ro-text-primary);
+  transition: background-color 9999s ease-out;
 }
 
 .auth-cta {

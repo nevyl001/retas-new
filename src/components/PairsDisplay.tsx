@@ -41,7 +41,7 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
           return (
           <div
             key={pair.id}
-            className="compact-pair-card"
+            className="compact-pair-card ro-surface-dark"
             style={{ animationDelay: `${index * 0.1}s` }}
           >
             {/* Número de Pareja */}

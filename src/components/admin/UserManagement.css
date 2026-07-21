@@ -441,7 +441,7 @@
 .modal-backdrop {
   position: absolute;
   inset: 0;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   backdrop-filter: blur(4px);
 }
 

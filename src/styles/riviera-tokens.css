@@ -6,7 +6,12 @@
 
 @import "./riviera-open-tokens.css";
 
-:root {
+/* `:root, .ro-surface-dark` — los alias legacy (--bg-*, --text-*, --border-*,
+   --accent-*) se declaran resolviendo --ro-*. En :root heredan la escala clara;
+   re-declararlos sobre .ro-surface-dark hace que cada alias se re-resuelva
+   contra los --ro-* ya oscuros del propio elemento, sin duplicar bloques. */
+:root,
+.ro-surface-dark {
   /* ── Superficies → --ro-* ── */
   --bg-base: var(--ro-bg-base);
   --bg-canvas: var(--ro-bg-surface);
@@ -15,7 +20,7 @@
   --bg-elevated: var(--ro-bg-elevated);
   --bg-card: var(--ro-bg-card);
   --bg-card-hover: var(--ro-bg-elevated);
-  --bg-overlay: var(--ro-bg-overlay);
+  --bg-overlay: var(--ro-scrim-modal);
   --bg-inset: var(--ro-bg-inset);
 
   /* ── Bordes ── */

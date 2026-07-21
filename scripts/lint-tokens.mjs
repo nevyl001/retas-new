@@ -24,6 +24,11 @@
  *   2. token de familia texto en background:             → error
  *   3. token de familia sombra fuera de *shadow*         → error
  *   4. hex literal en color:/background: fuera de tokens → warning
+ *   5. token de superficie CLARA (--ro-bg-*, --ro-cream) usado en un archivo
+ *      de la familia pública (vitrina oscura) → error. La familia pública es
+ *      una isla oscura; consumir la escala clara la rompe cuando el scope
+ *      .ro-surface-dark no está presente. Deben usar valores oscuros propios
+ *      (rgba literal, --ro-chrome-* o --ro-scrim-modal).
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, extname } from "node:path";
@@ -54,13 +59,38 @@ function familyOf(tok) {
   if (t.startsWith("--ro-shadow-")) return "sombra";
   if (t.startsWith("--ro-border") || t === "--ro-gold-border" || t === "--ro-cream-border" || t === "--ro-chrome-border") return "borde";
   if (t.endsWith("-dim")) return "fondo";
-  if (t.startsWith("--ro-bg-") || t === "--ro-chrome-bg" || t === "--ro-chrome-deep" || t === "--ro-chrome-elevated" || t === "--ro-chrome-active" || t === "--ro-cream") return "fondo";
+  if (t.startsWith("--ro-bg-") || t === "--ro-scrim-modal" || t === "--ro-chrome-bg" || t === "--ro-chrome-deep" || t === "--ro-chrome-elevated" || t === "--ro-chrome-active" || t === "--ro-cream") return "fondo";
   // Colores semánticos/decorativos: válidos como texto, borde O relleno
   // (badges, dots, tints, gradientes de podio). No son el bug de neutrales.
   if (t.startsWith("--ro-medal-") || t.startsWith("--ro-mode-") || t === "--ro-success" || t === "--ro-error" || t === "--ro-pending") return "semantico";
   if (t.startsWith("--ro-text-") || t.startsWith("--ro-chrome-text") || t === "--ro-gold-text") return "texto";
   return null; // familia no clasificada → sin regla
 }
+
+// Archivos de la familia pública: vitrinas oscuras con foto de cancha.
+// components/**/public/**, *-public*.css, *-pantalla*.css, *celebrate*.css
+function isPublicFamily(file) {
+  const f = file.replace(/\\/g, "/");
+  return (
+    /\/public\//.test(f) ||
+    /-public[^/]*\.css$/.test(f) ||
+    /-pantalla[^/]*\.css$/.test(f) ||
+    /celebrate[^/]*\.css$/.test(f)
+  );
+}
+
+// Escala clara de superficie: prohibida en la familia pública.
+// (--ro-scrim-modal y --ro-chrome-* son oscuros → permitidos.)
+const LIGHT_SURFACE = new Set([
+  "--ro-bg-base",
+  "--ro-bg-surface",
+  "--ro-bg-deep",
+  "--ro-bg-elevated",
+  "--ro-bg-card",
+  "--ro-bg-card-hover",
+  "--ro-bg-inset",
+  "--ro-cream",
+]);
 
 function selectorAt(src, offset) {
   const open = src.lastIndexOf("{", offset);
@@ -79,6 +109,7 @@ for (const file of files) {
   const raw = readFileSync(file, "utf8");
   const src = raw.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " ")); // borra comentarios, conserva saltos de línea
   const isTokenFile = /tokens/.test(file);
+  const isPublic = isPublicFamily(file);
   for (const m of src.matchAll(DECL)) {
     const prop = m[1];
     const value = m[2];
@@ -87,13 +118,23 @@ for (const file of files) {
     const line = src.slice(0, m.index).split("\n").length;
     const loc = () => `${file}:${line}  ${selectorAt(src, m.index)}\n      ${prop}: ${value.trim()}`;
 
+    // Un token de texto como PARADA de gradiente es color decorativo
+    // (anillos metálicos, insignias de podio), no el bug de fondo sólido.
+    // R2 sólo debe cazar `background: var(--ro-text-*)` sólido.
+    const isGradient = /gradient\(/i.test(value);
+
     // Reglas 1-3: tokens --ro-* en rol equivocado
     for (const tm of value.matchAll(/var\(\s*(--ro-[a-z0-9-]+)/gi)) {
       const fam = familyOf(tm[1]);
       if (!fam || !role) continue;
       if (fam === "fondo" && role === "texto") errors.push(`[R1 fondo→texto] ${loc()}  ← ${tm[1]}`);
-      else if (fam === "texto" && role === "fondo") errors.push(`[R2 texto→fondo] ${loc()}  ← ${tm[1]}`);
+      else if (fam === "texto" && role === "fondo" && !isGradient) errors.push(`[R2 texto→fondo] ${loc()}  ← ${tm[1]}`);
       else if (fam === "sombra" && role !== "sombra") errors.push(`[R3 sombra→${role}] ${loc()}  ← ${tm[1]}`);
+
+      // Regla 5: familia pública no debe consumir la escala clara de superficie.
+      if (isPublic && LIGHT_SURFACE.has(tm[1].toLowerCase())) {
+        errors.push(`[R5 superficie clara en vitrina pública] ${loc()}  ← ${tm[1]}`);
+      }
     }
 
     // Regla 4: hex literal en color/background fuera de archivos de tokens → warning

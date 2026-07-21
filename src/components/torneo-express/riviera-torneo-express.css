@@ -538,7 +538,7 @@
 
 /* —— Modal —— */
 .torneo-express-page .te-modal-overlay {
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   backdrop-filter: blur(4px);
 }
 

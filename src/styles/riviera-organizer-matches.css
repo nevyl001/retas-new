@@ -478,7 +478,7 @@
 .riviera-organizer-reta .omc-team-row--winner .team-badge--a,
 .riviera-organizer-reta .omc-team-row--winner .team-badge--b {
   color: var(--ro-text-primary);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-bg-elevated);
   border-color: var(--ro-border);
 }
 
@@ -563,7 +563,7 @@
 }
 
 .riviera-organizer-reta .omc-team-row--loser {
-  background: var(--ro-bg-overlay);
+  background: var(--ro-bg-inset);
   border-left-color: transparent;
 }
 

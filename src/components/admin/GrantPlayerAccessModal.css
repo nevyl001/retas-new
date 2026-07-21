@@ -12,7 +12,7 @@
   position: absolute;
   inset: 0;
   border: none;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   cursor: pointer;
 }
 

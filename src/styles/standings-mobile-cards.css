@@ -20,7 +20,7 @@
 .standings-mobile-card--leader {
   border-color: var(--ro-gold-border);
   background: var(--ro-gold-dim);
-  box-shadow: 0 0 20px var(--ro-gold-glow, rgba(201, 162, 39, 0.12));
+  box-shadow: var(--ro-rail-gold);
 }
 
 .standings-mobile-card__head {
@@ -78,7 +78,7 @@
   padding: 0.35rem 0.2rem;
   border-radius: var(--radius-sm, 6px);
   border: 1px solid var(--color-border-subtle, var(--ro-border-subtle));
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   text-align: center;
 }
 

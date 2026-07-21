@@ -1,14 +1,14 @@
 /* =============================================
-   RIVIERA OPEN — DESIGN SYSTEM MAESTRO v2.0
-   Chrome oscuro + contenido claro + dorado mínimo.
+   RIVIERA OPEN — DESIGN SYSTEM MAESTRO v2.1
+   Cambios sobre v2.0: más separación entre página
+   y tarjeta, bordes visibles, sombras contenidas.
    Reemplaza src/styles/riviera-open-tokens.css
 ============================================= */
 
 :root {
   /* ─────────────────────────────────────────
-     CHROME — navegación, sidebar, barra móvil.
-     Único lugar oscuro de la app. No es negro
-     puro: azulado para no vibrar en OLED.
+     CHROME — barra superior, navegación móvil,
+     islas inmersivas. Único lugar oscuro.
      ───────────────────────────────────────── */
   --ro-chrome-bg: #12161b;
   --ro-chrome-deep: #0d1116;
@@ -20,92 +20,101 @@
   --ro-chrome-text-dim: #666d78;
 
   /* ─────────────────────────────────────────
-     CONTENIDO — todo lo demás. Hueso cálido,
-     no blanco puro.
+     CONTENIDO
+     v2.0 tenía la página a 1.14:1 de la tarjeta:
+     demasiado cerca, todo se leía como un solo
+     plano blanco. v2.1 la baja a 1.27:1.
      ───────────────────────────────────────── */
-  --ro-bg-base: #f2f0ee;
-  --ro-bg-deep: #ebe8e4;
-  --ro-bg-surface: #faf9f8;
+  /* v2.5 — escalera de TRES niveles, ni uno más (sistema visual):
+       L0  página   #E9E4DC  --ro-bg-base / --ro-bg-surface   (siempre más oscura)
+       L1  tarjeta  #FFFFFF  --ro-bg-card / --ro-bg-elevated
+       L2  inset     #F4F1EB  --ro-bg-inset                    (fila/sección en tarjeta)
+     Separación L0→L1 = 1.27:1 (mínimo donde el ojo ve dos planos);
+     L1→L2 = 1.13:1 (basta, el inset ya está contenido). La página SIEMPRE es más
+     oscura que la tarjeta: eso hace que una tarjeta se lea como tarjeta. Si hace
+     falta un cuarto tono, el problema es exceso de anidado, no un color nuevo. */
+  --ro-bg-base: #e9e4dc;
+  --ro-bg-deep: #e0dad0;
+  --ro-bg-surface: #e9e4dc;
   --ro-bg-elevated: #ffffff;
   --ro-bg-card: #ffffff;
-  --ro-bg-inset: #f4f1ed;
+  --ro-bg-card-hover: #f4f1eb;
+  --ro-bg-inset: #f4f1eb;
   --ro-bg-input: #ffffff;
-  --ro-bg-overlay: rgba(20, 22, 26, 0.45);
+  --ro-scrim-modal: rgba(20, 22, 26, 0.45);
 
   /* ─────────────────────────────────────────
-     ACENTO UI — tinta. Botones primarios, foco,
-     estado activo. El color de acción NO es el
-     dorado.
+     ACENTO UI — tinta
      ───────────────────────────────────────── */
   --ro-accent: #15191f;
   --ro-accent-hover: #232931;
   --ro-accent-dim: rgba(21, 25, 31, 0.06);
   --ro-accent-ring: rgba(21, 25, 31, 0.18);
 
-  /* Botón secundario crema (el "Ver torneo" de la referencia) */
   --ro-cream: #f1ebe6;
   --ro-cream-hover: #e9e1da;
-  --ro-cream-border: #e2d9d1;
+  --ro-cream-border: #ded4ca;
 
   /* ─────────────────────────────────────────
-     DORADO — dosis mínima. Sólo: badge de
-     destacado, flechas de tendencia, punto de
-     estado de evento, marca de PREMIUM, fila
-     propia en ranking. Nunca como fondo de
-     bloque ni como botón primario.
+     DORADO — dosis mínima
      ───────────────────────────────────────── */
-  --ro-gold: #b5883f;          /* iconos y bordes — 3.05:1, no usar en texto chico */
-  --ro-gold-text: #8a6524;     /* texto sobre claro — 5.03:1 AA */
-  --ro-gold-light: #dfbe7f;    /* dorado sobre chrome oscuro */
-  --ro-gold-dim: #f5eee0;      /* fondo de badge */
+  --ro-gold: #b5883f;
+  --ro-gold-text: #8a6524;
+  --ro-gold-light: #dfbe7f;
+  --ro-gold-dim: #f5eee0;
   --ro-gold-border: #e4d2ae;
-  --ro-gold-rail: #c9a227;     /* barra lateral de 3px en fila destacada */
+  --ro-gold-rail: #c9a227;
+  /* Alias: existía como typo de --ro-pub-gold-glow en standings. */
+  --ro-gold-glow: rgba(201, 162, 39, 0.22);
 
   /* ─────────────────────────────────────────
      TEXTO
      ───────────────────────────────────────── */
-  --ro-text-primary: #14161a;   /* 17.22:1 */
-  --ro-text-secondary: #5c6069; /* 5.99:1 AA */
-  --ro-text-muted: #8b8f97;     /* 3.08:1 — sólo texto ≥18px o metadatos */
+  /* Tres niveles de texto, la jerarquía se construye con ellos, no con color:
+       primario    #14161A  18.1:1  lo que el usuario vino a leer
+       secundario  #55595F   7.1:1  apoyo, datos no ganadores (p. ej. pareja perdedora)
+       muted       #7E828A   3.9:1  SÓLO etiquetas/timestamps ≥18px o mayúsculas 1 palabra */
+  --ro-text-primary: #14161a;
+  --ro-text-secondary: #55595f;
+  --ro-text-muted: #7e828a;
   --ro-text-on-accent: #ffffff;
   --ro-text-on-gold: #3d2c0d;
 
   /* ─────────────────────────────────────────
-     BORDES — hairlines. En claro el borde hace
-     el trabajo que en oscuro hacía la sombra.
+     BORDES — en claro la separación entre planos la hace
+     el BORDE, no la sombra. Toda tarjeta L1 lleva borde
+     (0.5px solid --ro-border), sin excepción. Una sombra
+     visible sobre hueso se lee como suciedad, no elevación.
+       por defecto  #DDD8D0  --ro-border
+       marcado      #CBC4B9  --ro-border-strong
      ───────────────────────────────────────── */
-  --ro-border: #e6e2dd;
-  --ro-border-subtle: #f0ede9;
-  --ro-border-strong: #d6d1ca;
-  --ro-border-accent: rgba(21, 25, 31, 0.14);
+  --ro-border: #ddd8d0;
+  --ro-border-subtle: #e7e2db;
+  --ro-border-strong: #cbc4b9;
+  --ro-border-accent: rgba(21, 25, 31, 0.22);
 
   /* ─────────────────────────────────────────
-     ESTADOS — verde y rojo son funcionales
-     (ganado / perdido / error), no de marca.
-     Apagados para no competir con el dorado.
+     ESTADOS
      ───────────────────────────────────────── */
   --ro-success: #2f7d53;
-  --ro-success-dim: #e8f2ec;
+  --ro-success-dim: #e4efe8;
   --ro-error: #c0392b;
-  --ro-error-dim: #fbeae8;
+  --ro-error-dim: #f8e6e3;
   --ro-warning: #b5883f;
   --ro-warning-dim: #f5eee0;
   --ro-pending: #9a9ea6;
   --ro-live: #c0392b;
-  --ro-live-dim: #fbeae8;
+  --ro-live-dim: #f8e6e3;
 
   /* ─────────────────────────────────────────
-     MEDALLAS — metálicos apagados. Convención
-     universal de podio, no branding.
+     MEDALLAS
      ───────────────────────────────────────── */
   --ro-medal-gold: #b5883f;
-  --ro-medal-silver: #a0a4a9;
+  --ro-medal-silver: #8e9297;
   --ro-medal-bronze: #a07a55;
 
   /* ─────────────────────────────────────────
-     MODOS DE JUEGO — reoscurecidos para leerse
-     sobre fondo claro. Los originales estaban
-     calibrados contra negro y se lavan aquí.
+     MODOS DE JUEGO
      ───────────────────────────────────────── */
   --ro-mode-reta: #15191f;
   --ro-mode-equipos: #a8761b;
@@ -114,15 +123,14 @@
   --ro-mode-liga: #1f5fbf;
   --ro-mode-torneo: #6d46c8;
 
-  /* Fondos tenues de cada modo, para chips */
-  --ro-mode-equipos-dim: #f7efdf;
-  --ro-mode-duelo-dim: #fceee3;
-  --ro-mode-americano-dim: #e5f2ed;
-  --ro-mode-liga-dim: #e8effb;
-  --ro-mode-torneo-dim: #efeafb;
+  --ro-mode-equipos-dim: #f6edda;
+  --ro-mode-duelo-dim: #fbebdf;
+  --ro-mode-americano-dim: #e2efea;
+  --ro-mode-liga-dim: #e6edf9;
+  --ro-mode-torneo-dim: #ede8f9;
 
   /* ─────────────────────────────────────────
-     TIPOGRAFÍA — sin cambios
+     TIPOGRAFÍA
      ───────────────────────────────────────── */
   --ro-font-heading: "Stack Sans Headline", sans-serif;
   --ro-font-body: "Inter", system-ui, sans-serif;
@@ -138,7 +146,7 @@
   --ro-text-score: 2rem;
 
   /* ─────────────────────────────────────────
-     ESPACIADO / RADIOS — sin cambios
+     ESPACIADO / RADIOS
      ───────────────────────────────────────── */
   --ro-space-1: 4px;
   --ro-space-2: 8px;
@@ -158,14 +166,20 @@
   --ro-radius-full: 999px;
 
   /* ─────────────────────────────────────────
-     SOMBRAS — recalibradas para claro. Las
-     anteriores (negro al 50-85%) manchan sobre
-     fondo hueso.
+     SOMBRAS
+     En claro la separación la hace el borde + el
+     salto de la página; la sombra sólo da un leve
+     relieve. v2.4 las sube un punto (seguían casi a
+     cero) sin llegar a "mancha sobre hueso".
      ───────────────────────────────────────── */
-  --ro-shadow-sm: 0 1px 2px rgba(20, 22, 26, 0.05);
-  --ro-shadow-md: 0 4px 12px rgba(20, 22, 26, 0.07);
-  --ro-shadow-lg: 0 12px 32px rgba(20, 22, 26, 0.1);
+  --ro-shadow-sm: 0 1px 2px rgba(20, 22, 26, 0.06);
+  --ro-shadow-md: 0 3px 10px rgba(20, 22, 26, 0.08);
+  --ro-shadow-lg: 0 12px 32px rgba(20, 22, 26, 0.12);
   --ro-shadow-chrome: 0 8px 24px rgba(13, 17, 22, 0.35);
+
+  /* Realce de fila destacada: riel, nunca glow. */
+  --ro-rail-gold: inset 3px 0 0 var(--ro-gold-rail);
+  --ro-rail-accent: inset 3px 0 0 var(--ro-accent);
 
   /* ─────────────────────────────────────────
      TRANSICIONES / LAYOUT / Z-INDEX
@@ -199,8 +213,7 @@
   --ro-z-toast: 120;
 
   /* ─────────────────────────────────────────
-     ALIAS SEMÁNTICOS (.rv-* de
-     riviera-open-components.css)
+     ALIAS SEMÁNTICOS
      ───────────────────────────────────────── */
   --rv-bg-page: var(--ro-bg-base);
   --rv-bg-card: var(--ro-bg-card);
@@ -215,24 +228,32 @@
 }
 
 /* =============================================
-   SUPERFICIES OSCURAS: navegación + marcador inmersivo
-   Reapunta los tokens de superficie y texto a la
-   escala oscura, así el CSS existente de estos
-   componentes sigue funcionando sin tocarse. La
-   oscuridad de estas superficies es declarada aquí,
-   no heredada por accidente.
+   SUPERFICIES OSCURAS
+   Marcador único: .ro-surface-dark. Se aplica al contenedor raíz de cada
+   superficie oscura (chrome + islas inmersivas). Al ser una sola clase,
+   las 4 capas de alias (--bg-*, --brand-*, --effective-*, --liga-*) pueden
+   re-resolverse sobre el mismo elemento con `:root, .ro-surface-dark`.
+   Dos familias de superficie oscura:
+   1. Chrome — barra superior y navegación.
+   2. Islas inmersivas — pantallas de exhibición
+      y celebración, oscuras a propósito.
 ============================================= */
-.ro-chrome,
-.riviera-sidebar,
-.mobile-app-navigation,
-.duelo2v2-page,
-.winner-hero,
-.winner-page--team-share {
+.ro-surface-dark,
+html[data-brand="hack-padel"],
+html[data-club="hack-padel"],
+.club-experience-scope[data-brand="hack-padel"],
+.club-experience-scope[data-club="hack-padel"] {
+  /* Además de redefinir los tokens, fija el color heredado: sin esto, el texto
+     que no declara color explícito (labels, hints, valores de inputs) heredaba
+     el color oscuro del body (tema claro) y quedaba invisible sobre el negro. */
+  color: var(--ro-text-primary);
+
   --ro-bg-base: var(--ro-chrome-bg);
   --ro-bg-deep: var(--ro-chrome-deep);
   --ro-bg-surface: var(--ro-chrome-bg);
   --ro-bg-elevated: var(--ro-chrome-elevated);
   --ro-bg-card: var(--ro-chrome-elevated);
+  --ro-bg-card-hover: var(--ro-chrome-active);
   --ro-bg-inset: var(--ro-chrome-active);
 
   --ro-text-primary: var(--ro-chrome-text);
@@ -246,9 +267,65 @@
   --ro-accent: #ffffff;
   --ro-accent-hover: #e8eaed;
   --ro-accent-dim: rgba(255, 255, 255, 0.07);
+  --ro-accent-ring: rgba(255, 255, 255, 0.24);
   --ro-text-on-accent: var(--ro-chrome-bg);
 
   --ro-gold: var(--ro-gold-light);
   --ro-gold-text: var(--ro-gold-light);
   --ro-gold-dim: rgba(223, 190, 127, 0.12);
+
+  --ro-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --ro-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --ro-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* =============================================
+   HACK PADEL — tenant premium con escala propia
+   Hereda la escala oscura de arriba y luego restituye
+   lo suyo: lima como acento y su escala de negros.
+   Los combinadores descendientes garantizan que las
+   islas .ro-surface-dark anidadas (login, vistas
+   públicas, chrome) dentro de Hack también reciban
+   la escala de Hack y no la del chrome madre.
+   Valores: manifiesto hack-padel.ts + brand-tokens.css.
+============================================= */
+html[data-brand="hack-padel"],
+html[data-club="hack-padel"],
+.club-experience-scope[data-brand="hack-padel"],
+.club-experience-scope[data-club="hack-padel"],
+html[data-brand="hack-padel"] .ro-surface-dark,
+html[data-club="hack-padel"] .ro-surface-dark,
+.club-experience-scope[data-brand="hack-padel"] .ro-surface-dark,
+.club-experience-scope[data-club="hack-padel"] .ro-surface-dark {
+  --ro-accent: #bfff00;
+  --ro-accent-hover: #d4ff4d;
+  --ro-accent-dim: rgba(191, 255, 0, 0.12);
+  --ro-text-on-accent: #12161b;
+
+  --ro-bg-base: #000000;
+  --ro-bg-deep: #000000;
+  --ro-bg-surface: #0f0f0f;
+  --ro-bg-card: #0f0f0f;
+  --ro-bg-elevated: #1a1a1a;
+  --ro-bg-inset: #1a1a1a;
+
+  --ro-border: #4c4c4c;
+  --ro-border-subtle: #2a2a2a;
+  --ro-border-strong: #666666;
+
+  --ro-success: #bfff00;
+  --ro-text-secondary: #a0a0a0;
+  --ro-text-muted: #6a6a6a;
+}
+
+/* Logo: el PNG de Riviera (marca madre) es blanco y sólo es legible sobre
+   chrome. Sobre superficie clara hay que invertirlo a tinta hasta que exista
+   un /logo-riviera-ink.png real. NO aplica a clubes con marca propia
+   (.club-identity--premium), que ya traen su logo correcto por superficie. */
+.club-identity:not(.club-identity--premium) .club-identity__logo {
+  filter: invert(1) brightness(0.12);
+}
+
+.ro-surface-dark .club-identity:not(.club-identity--premium) .club-identity__logo {
+  filter: none;
 }

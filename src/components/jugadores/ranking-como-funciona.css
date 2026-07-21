@@ -334,7 +334,7 @@
     padding: 12px 12px 10px;
     margin-bottom: 8px;
     border-radius: 12px;
-    background: var(--ro-bg-overlay);
+    background: var(--ro-scrim-modal);
     border: 1px solid var(--ro-border-subtle);
   }
 
@@ -405,7 +405,7 @@
     gap: 12px;
     padding: 8px 10px;
     border-radius: 10px;
-    background: var(--ro-bg-overlay);
+    background: var(--ro-scrim-modal);
   }
 
   .rkcf-card__stat-lbl {

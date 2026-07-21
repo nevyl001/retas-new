@@ -1,4 +1,8 @@
-:root {
+/* `:root, .ro-surface-dark` — .liga-pantalla es isla oscura; re-declarar aquí
+   hace que los 9 alias --liga-* se re-resuelvan contra los --ro-* / --bg-* ya
+   oscuros del elemento en vez de heredar los valores claros de :root. */
+:root,
+.ro-surface-dark {
   /* Colores Liga */
   --liga-gold: var(--ro-accent);
   --liga-gold-light: var(--ro-accent-hover);
@@ -17,7 +21,7 @@
   --liga-bg-gradient: var(--bg-base);
   --liga-surface: var(--bg-card);
   --liga-surface-hover: var(--bg-card-hover);
-  --liga-surface-deep: var(--ro-bg-overlay);
+  --liga-surface-deep: var(--ro-scrim-modal);
   --liga-border: var(--border-default);
   --liga-border-subtle: var(--border-subtle);
   --liga-text: var(--text-primary);

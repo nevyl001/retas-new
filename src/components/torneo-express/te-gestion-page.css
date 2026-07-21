@@ -1123,7 +1123,7 @@
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1420,7 +1420,7 @@
 
 .te-gestion-page .te-notif-table__expand td {
   padding: 0;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
 }
 
 .te-gestion-page .te-notif-expand {
@@ -1519,7 +1519,7 @@
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   display: flex;
   align-items: center;
   justify-content: center;

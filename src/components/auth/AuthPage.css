@@ -5,7 +5,11 @@
   --riviera-ink: #070707;
   --riviera-card: rgba(24, 24, 24, 0.92);
   --riviera-border: rgba(255, 255, 255, 0.1);
-  --riviera-white: var(--ro-bg-card);
+  /* "white" es blanco literal: es el fondo del botón primario y el color de
+     los títulos/hero. NO puede aliasear a --ro-bg-card, que dentro de
+     .ro-surface-dark (login como isla oscura) se voltea a chrome oscuro y
+     dejaba el botón y los títulos oscuros sobre oscuro. */
+  --riviera-white: #ffffff;
   --riviera-muted: #9ca3af;
   --riviera-gold: #d4a843;
   --riviera-gold-soft: #e5c878;

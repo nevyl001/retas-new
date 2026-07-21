@@ -134,7 +134,7 @@ const V1_BAD = {
 };
 
 /* ── Bloques donde el fondo sigue siendo oscuro: no tocar. ── */
-const DARK_SCOPE = /\.ro-chrome|hack-padel|\.riviera-sidebar|\.mobile-app-navigation/;
+const DARK_SCOPE = /\.ro-chrome|\.ro-surface-dark|hack-padel|\.riviera-sidebar|\.mobile-app-navigation|\.ro-public-view|\.te-public|\.rjp-public|\.liga-pantalla/;
 
 function walk(dir, out = []) {
   for (const n of readdirSync(dir)) {

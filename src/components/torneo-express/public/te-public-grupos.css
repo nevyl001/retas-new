@@ -126,7 +126,7 @@
 .te-grupo-wrap {
   min-width: 0;
   padding: var(--ro-space-4);
-  background: var(--ro-bg-card);
+  background: var(--ro-chrome-elevated);
   border: 1px solid var(--ro-border);
   border-radius: var(--ro-radius-lg);
   box-shadow: var(--ro-shadow-sm);
@@ -193,7 +193,7 @@
   align-items: center;
   padding: 12px 14px;
   margin-bottom: var(--ro-space-2);
-  background: var(--ro-bg-elevated);
+  background: var(--ro-chrome-elevated);
   border: 1px solid var(--ro-border);
   border-radius: var(--ro-radius-lg);
   box-shadow: var(--ro-shadow-sm);
@@ -357,7 +357,7 @@
 
 .te-badge-final {
   color: var(--text-muted);
-  background: var(--ro-bg-elevated);
+  background: var(--ro-chrome-elevated);
   border: 0.5px solid var(--border-default);
 }
 
@@ -377,7 +377,7 @@
 
 .te-badge-proximo {
   color: var(--ro-text-muted);
-  background: var(--ro-bg-surface);
+  background: var(--ro-chrome-bg);
   border: 1px solid var(--ro-border);
 }
 
@@ -403,7 +403,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0.15rem;
-  background: var(--ro-bg-card);
+  background: var(--ro-chrome-elevated);
   border: 1px solid var(--ro-border-subtle);
   border-radius: var(--ro-radius-md);
 }
@@ -454,7 +454,7 @@
 .te-grupo-standing-full .te-pub-grupo-celebrate--aside {
   margin: 14px 0 0;
   border-radius: var(--radius-md);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   box-shadow: none;
 }
 
@@ -465,8 +465,8 @@
 .te-grupo-standing-full .te-pub-grupo-celebrate--aside::after {
   background: linear-gradient(
     160deg,
-    var(--ro-bg-elevated) 0%,
-    var(--ro-bg-elevated) 40%,
+    var(--ro-chrome-elevated) 0%,
+    var(--ro-chrome-elevated) 40%,
     transparent 70%
   );
 }
@@ -476,7 +476,7 @@
   text-align: center;
   background: radial-gradient(
     ellipse 80% 50% at 50% 0%,
-    var(--ro-bg-elevated) 0%,
+    var(--ro-chrome-elevated) 0%,
     transparent 65%
   );
 }
@@ -556,7 +556,7 @@
   flex: 1;
   min-width: 0;
   padding: 0.45rem 0.4rem 0.4rem;
-  background: var(--ro-bg-inset);
+  background: var(--ro-chrome-active);
   border: 0.5px solid var(--border-subtle);
 }
 

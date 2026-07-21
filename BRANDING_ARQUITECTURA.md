@@ -171,3 +171,41 @@ Reglas anti-flash Hack movidas a `src/index.css` (`html[data-club="hack-padel"]`
 **Eliminados:**
 - `public/club-theme-early.js`
 - `public/club-theme-early.css`
+
+---
+
+## Contrato de superficies para tenants premium (v2.3)
+
+**Regla:** un manifiesto de tenant premium debe declarar su escala `--ro-*`
+**completa** (superficies, texto, bordes, acento), no sólo `--brand-*`.
+
+### Por qué
+
+La identidad de Hack Padel se construyó como un *delta sobre una base oscura*:
+declaraba su lima (`--brand-accent`) y su tipografía, y **heredaba** las
+superficies negras del sistema (`--ro-bg-*`). Mientras el default global fue
+oscuro, funcionó. Cuando la paleta migró a claro (chrome oscuro + contenido
+claro), Hack heredó superficies **claras** y conservó su lima → tarjetas crema
+sobre negro.
+
+Un tenant premium **no puede depender de que el default global sea oscuro**.
+
+### Cómo se declara (ver `styles/riviera-open-tokens.css`)
+
+1. El scope del tenant se añade al bloque de **superficies oscuras** para heredar
+   la escala oscura como base (`--ro-text-primary`, `--ro-shadow-*`, ring, etc.).
+2. Un bloque posterior, con los mismos selectores **+ los combinadores
+   descendientes** `[data-brand="tenant"] .ro-surface-dark`, restituye lo propio
+   del tenant (`--ro-accent`, `--ro-bg-*`, `--ro-border*`). Los combinadores
+   garantizan que las islas `.ro-surface-dark` anidadas (login, vistas públicas,
+   chrome) también reciban la escala del tenant y no la del chrome madre.
+3. La capa de alias (`brand-tokens`, `brand-effective`) incluye el scope del
+   tenant en su lista de declaración `:root, .ro-surface-dark, [tenant]` para que
+   `--brand-*` y `--effective-*` se re-resuelvan contra los `--ro-*` del tenant.
+
+### Verificación automática
+
+`src/club-experience/premiumTenantScale.test.ts` verifica que, para cada tenant
+premium, la escala `--ro-*` en `riviera-open-tokens.css` resuelva a los valores
+de su manifiesto (`hack-padel.ts`) y no a los claros de `:root`. El contrato
+`publicBrandingFlash` (lógica JS) no detectaba esto porque el problema era CSS.

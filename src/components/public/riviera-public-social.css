@@ -36,7 +36,7 @@
   padding: 0.42rem 0.72rem;
   border-radius: 999px;
   border: 1px solid var(--ro-border);
-  background: var(--ro-bg-inset);
+  background: var(--ro-chrome-active);
   color: var(--ro-text-secondary);
   text-decoration: none;
   font-family: var(--font-body);

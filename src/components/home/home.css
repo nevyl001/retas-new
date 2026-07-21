@@ -1503,7 +1503,7 @@
   padding: var(--ro-space-3);
   border: 1px solid var(--ro-border);
   border-radius: var(--ro-radius-md);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
 }
 
 .home-sheet__courts-step {
@@ -1573,7 +1573,7 @@
   padding: var(--ro-space-4);
   border-radius: var(--ro-radius-md);
   border: 1px solid var(--ro-border);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   transition:
     border-color 0.2s,
     background 0.2s,
@@ -1670,7 +1670,7 @@
   transform: translateY(-50%);
   border: 1px solid var(--ro-border);
   border-radius: 999px;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   transition: background 0.2s, border-color 0.2s;
 }
 
@@ -1725,7 +1725,7 @@
   height: 44px;
   border-radius: var(--ro-radius-sm);
   border: 1px solid var(--ro-border);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   color: var(--ro-text-primary);
   font-size: 1.125rem;
   line-height: 1;

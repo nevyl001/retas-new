@@ -239,7 +239,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   if (loading && !detalle) {
     return (
       <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
-        <div className="liga-pantalla App--public-full-width ro-public-view">
+        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
           <div className="liga-pantalla__grain" aria-hidden />
           <PublicModeShell className="liga-pantalla__inner">
             <p className="liga-pantalla__loading">Cargando jornada…</p>
@@ -255,7 +255,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
         organizadorId={detalle?.organizador_id ?? null}
         pendingUntilOrganizador={!detalle?.organizador_id}
       >
-        <div className="liga-pantalla App--public-full-width ro-public-view">
+        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
           <div className="liga-pantalla__grain" aria-hidden />
           <PublicModeShell className="liga-pantalla__inner">
             <p className="liga-pantalla__error">{error ?? "Jornada no encontrada"}</p>
@@ -277,7 +277,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
       pendingUntilOrganizador
     >
     <div
-      className={`liga-pantalla App--public-full-width ro-public-view${
+      className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
         esParejasFijas ? " liga-pantalla--jornada-fijas" : ""
       }`}
     >

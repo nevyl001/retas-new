@@ -25,7 +25,7 @@
   /* Neutros champagne — texto y bordes base */
   --liga-pub-accent: #b5aa9a;
   --liga-pub-accent-soft: #8f8a82;
-  --liga-pub-accent-dim: var(--ro-bg-inset);
+  --liga-pub-accent-dim: var(--ro-chrome-active);
   --liga-pub-accent-border: var(--ro-border);
   --liga-pub-accent-border-strong: var(--ro-border-strong);
   --liga-pub-shadow: 0 1px 0 var(--ro-accent-ring);
@@ -246,7 +246,7 @@
 }
 
 .liga-pantalla-ranking tbody tr:hover {
-  background: var(--ro-bg-inset);
+  background: var(--ro-chrome-active);
 }
 
 .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__name {
@@ -396,7 +396,7 @@
   color: var(--liga-pub-text-muted);
   padding: 0.15rem 0.35rem;
   border-radius: 2px;
-  background: var(--ro-bg-inset);
+  background: var(--ro-chrome-active);
 }
 
 .liga-pantalla-matchup__score {
@@ -602,7 +602,7 @@
   text-transform: uppercase;
   text-align: center;
   color: var(--liga-pub-text-muted);
-  background: var(--ro-bg-inset);
+  background: var(--ro-chrome-active);
   border-bottom: 1px solid var(--liga-pub-border);
 }
 

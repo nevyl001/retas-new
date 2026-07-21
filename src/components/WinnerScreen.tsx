@@ -83,7 +83,7 @@ export const WinnerScreen: React.FC<WinnerScreenProps> = ({
 
   if (winningTeamName) {
     return (
-      <div className="winner-page winner-page--team-share">
+      <div className="winner-page winner-page--team-share ro-surface-dark">
         <PublicRetaWinnerSection
           title={winningTeamName}
           subtitle="Equipo ganador por games acumulados"

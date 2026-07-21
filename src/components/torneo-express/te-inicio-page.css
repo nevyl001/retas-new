@@ -491,7 +491,7 @@
   padding: 0 14px;
   border-radius: 10px;
   border: 0.5px solid var(--ro-border);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   color: var(--ro-text-primary);
   font-size: 16px;
   box-sizing: border-box;
@@ -575,7 +575,7 @@
   padding: 12px;
   border-radius: 12px;
   border: 0.5px solid var(--ro-border-subtle);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   margin-bottom: 12px;
   scrollbar-width: thin;
   scrollbar-color: rgba(61, 122, 92, 0.3) transparent;
@@ -726,7 +726,7 @@
   padding: 0 12px 0 38px;
   border-radius: 10px;
   border: 0.5px solid var(--ro-border-subtle);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   color: var(--ro-text-primary);
   font-size: 16px;
   box-sizing: border-box;
@@ -772,7 +772,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   scrollbar-width: thin;
   scrollbar-color: rgba(61, 122, 92, 0.28) transparent;
 }

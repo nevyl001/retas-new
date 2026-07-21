@@ -8,7 +8,7 @@
   position: relative;
   min-height: 100vh;
   width: 100%;
-  background-color: var(--ro-bg-deep);
+  background-color: var(--ro-chrome-deep);
   isolation: isolate;
 }
 

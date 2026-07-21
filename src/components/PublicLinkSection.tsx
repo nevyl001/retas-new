@@ -40,7 +40,7 @@ export const PublicLinkSection: React.FC<PublicLinkSectionProps> = ({
   if (!tournament.is_started) return null;
 
   return (
-    <div className="public-link-section">
+    <div className="public-link-section ro-surface-dark">
       <h3>Enlace público</h3>
       <div className="public-link-info">
         <p>Comparte el enlace para ver resultados en vivo (solo lectura).</p>

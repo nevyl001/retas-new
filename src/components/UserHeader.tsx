@@ -77,7 +77,7 @@ export const UserHeader: React.FC = () => {
     );
 
   return (
-    <header className="user-header">
+    <header className="user-header ro-surface-dark">
       <div className="user-header-content">
         <div className="user-header-main">
           <div className="user-header-logo">

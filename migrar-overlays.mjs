@@ -10,7 +10,7 @@
  *   background* :  blanco       α<0.05 → --ro-bg-inset ; α≥0.05 → --ro-bg-elevated
  *                  oscuro (negro puro o gris oscuro no puro, máx canal ≤64):
  *                               α≥0.85 → --ro-bg-elevated (superficie sólida)
- *                               α<0.85 → --ro-bg-overlay  (scrim de modal)
+ *                               α<0.85 → --ro-scrim-modal  (scrim de modal)
  *   border / outline / stroke : blanco α<0.1 → --ro-border-subtle ; α≥0.1 → --ro-border
  *                               negro → --ro-border-strong
  *   color :        blanco  α≥0.7 → --ro-text-secondary ; α<0.7 → --ro-text-muted
@@ -143,7 +143,7 @@ function splitDeclarations(css) {
 let totalReplaced = 0, totalFlagged = 0;
 for (const file of files) {
   const src = readFileSync(file, "utf8");
-  if (/\.ro-chrome\b|hack-padel|\.duelo2v2-page\b|\.riviera-sidebar\b|\.mobile-app-navigation\b/.test(src)) {
+  if (/\.ro-chrome\b|\.ro-surface-dark\b|hack-padel|\.duelo2v2-page\b|\.riviera-sidebar\b|\.mobile-app-navigation\b|\.ro-public-view\b|\.te-public\b|\.rjp-public\b|\.liga-pantalla\b/.test(src)) {
     console.log(`SKIP (superficie oscura declarada): ${file}`);
     continue;
   }
@@ -188,7 +188,7 @@ for (const file of files) {
       v = v.replace(RGBA, (m, r, g, b, a) => {
         if (!isDarkChannels(r, g, b)) return m;
         replaced++;
-        return parseFloat(a) >= 0.85 ? "var(--ro-bg-elevated)" : "var(--ro-bg-overlay)";
+        return parseFloat(a) >= 0.85 ? "var(--ro-bg-elevated)" : "var(--ro-scrim-modal)";
       });
     } else if (role === "border") {
       v = v.replace(new RegExp(WHITE.source, "gi"), (_m, a) => {

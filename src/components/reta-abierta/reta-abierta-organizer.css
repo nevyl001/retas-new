@@ -436,7 +436,9 @@
   width: 100%;
   background: var(--ro-accent);
   border-color: transparent;
-  color: var(--brand-bg, var(--ro-text-primary));
+  /* Texto sobre tinta = blanco. El fallback anterior (--ro-text-primary) era
+     tinta sobre tinta: el botón salía como un bloque negro sin label. */
+  color: var(--ro-text-on-accent);
 }
 
 .ra-org__btn--outline {
@@ -487,9 +489,10 @@
   padding: 0.35rem;
   list-style: none;
   border-radius: var(--ra-org-radius);
-  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-  background: var(--brand-surface, var(--brand-bg, #151515));
-  box-shadow: 0 8px 24px color-mix(in srgb, currentColor 12%, transparent);
+  border: 0.5px solid var(--ro-border);
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-primary);
+  box-shadow: var(--ro-shadow-md);
 }
 
 .ra-org__more-item {

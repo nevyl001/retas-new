@@ -112,7 +112,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   if (loading && !detalle) {
     return (
       <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
-        <div className="liga-pantalla App--public-full-width ro-public-view">
+        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
           <div className="liga-pantalla__grain" aria-hidden />
           <PublicModeShell className="liga-pantalla__inner">
             <p className="liga-pantalla__loading rv-muted">Cargando liga…</p>
@@ -125,7 +125,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   if (!detalle) {
     return (
       <ClubExperienceScope organizadorId={null} pendingUntilOrganizador>
-        <div className="liga-pantalla App--public-full-width ro-public-view">
+        <div className="liga-pantalla App--public-full-width ro-public-view ro-surface-dark">
           <div className="liga-pantalla__grain" aria-hidden />
           <PublicModeShell className="liga-pantalla__inner">
             <p className="liga-pantalla__error">{error ?? "No disponible"}</p>
@@ -164,7 +164,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       pendingUntilOrganizador
     >
     <div
-      className={`liga-pantalla App--public-full-width ro-public-view${
+      className={`liga-pantalla App--public-full-width ro-public-view ro-surface-dark${
         esParejasFijas ? " liga-pantalla--liga-fijas" : ""
       }`}
     >

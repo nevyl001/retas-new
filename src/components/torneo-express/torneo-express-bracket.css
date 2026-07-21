@@ -7,7 +7,7 @@
   justify-content: center;
   padding: 24px 16px;
   overflow-y: auto;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   backdrop-filter: blur(4px);
 }
 

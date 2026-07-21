@@ -45,7 +45,7 @@
 
 .te-standings-block .standings-scoring-help {
   border-color: var(--te-border, var(--ro-border));
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
 }
 
 .americano-ranking .standings-scoring-help {

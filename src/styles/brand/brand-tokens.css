@@ -1,7 +1,11 @@
 /* Capa de marca — no reemplaza tokens Riviera (--ro-*). */
 
+/* `.ro-surface-dark` re-resuelve los alias de marca madre contra los --ro-*
+   ya oscuros del elemento. Los clubes con marca propia (p. ej. Hack Padel)
+   se protegen abajo con mayor especificidad para conservar sus colores. */
 :root,
-[data-brand="riviera"] {
+[data-brand="riviera"],
+.ro-surface-dark {
   --brand-primary: var(--ro-bg-base);
   --brand-secondary: #4c4c4c;
   --brand-accent: var(--ro-accent);
@@ -22,7 +26,11 @@
 html[data-brand="hack-padel"],
 html[data-club="hack-padel"],
 .club-experience-scope[data-brand="hack-padel"],
-.club-experience-scope[data-club="hack-padel"] {
+.club-experience-scope[data-club="hack-padel"],
+html[data-brand="hack-padel"] .ro-surface-dark,
+html[data-club="hack-padel"] .ro-surface-dark,
+.club-experience-scope[data-brand="hack-padel"] .ro-surface-dark,
+.club-experience-scope[data-club="hack-padel"] .ro-surface-dark {
   --brand-primary: #000000;
   --brand-secondary: #4c4c4c;
   --brand-accent: #bfff00;

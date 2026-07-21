@@ -1,6 +1,13 @@
-/* Variables efectivas — componentes usan estas con fallback Riviera. */
-
-:root {
+/* Variables efectivas — componentes usan estas con fallback Riviera.
+   `:root, .ro-surface-dark` re-resuelve cada --effective-* contra el --brand-*
+   (ya oscuro) del propio elemento. brand-tokens debe cargar antes que este
+   archivo para que --brand-* esté resuelto en la cadena. */
+:root,
+.ro-surface-dark,
+html[data-brand="hack-padel"],
+html[data-club="hack-padel"],
+.club-experience-scope[data-brand="hack-padel"],
+.club-experience-scope[data-club="hack-padel"] {
   --effective-primary: var(--brand-primary, var(--ro-bg-base));
   --effective-secondary: var(--brand-secondary, #4c4c4c);
   --effective-accent: var(--brand-accent, var(--ro-accent));

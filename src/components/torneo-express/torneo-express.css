@@ -1468,7 +1468,7 @@ button.te-partido-chip--cancha:disabled {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   display: flex;
   align-items: center;
   justify-content: center;

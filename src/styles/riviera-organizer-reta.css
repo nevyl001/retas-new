@@ -278,7 +278,8 @@
   font-size: 1.35rem !important;
   font-weight: 400 !important;
   line-height: 1;
-  color: var(--text-secondary) !important;
+  color: var(--text-primary) !important;
+  font-variant-numeric: tabular-nums;
   filter: none !important;
 }
 

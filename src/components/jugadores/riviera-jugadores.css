@@ -250,7 +250,7 @@
   padding: 0;
   border: 1px solid var(--ro-border);
   border-radius: 8px;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   color: var(--ro-text-secondary);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -921,7 +921,7 @@
 .rj-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -966,7 +966,7 @@
   padding: 0.6rem 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--ro-border);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
   color: var(--ro-text-primary);
   font-size: 0.9375rem;
   box-sizing: border-box;
@@ -1559,7 +1559,7 @@
   padding: 0.2rem;
   border-radius: 10px;
   border: 1px solid var(--ro-border-subtle);
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
 }
 
 .rj-genero-tabs__btn {

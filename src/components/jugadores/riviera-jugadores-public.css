@@ -1,5 +1,17 @@
 /* Vista pública jugadores — Riviera Open premium (fondo cancha + glass) */
 
+/* Marca madre (Riviera) sobre la vitrina oscura: el acento de la app es tinta
+   (#15191F), que el scope de experiencia inyecta inline como --brand-accent /
+   --accent-gold y resulta invisible sobre el fondo oscuro. Aquí el acento del
+   showcase es dorado, igual que el podio. Los clubes con marca propia
+   (data-brand != riviera) conservan su acento, que sí contrasta en oscuro. */
+.club-experience-scope[data-brand="riviera"] .rjp-public,
+.club-experience-scope[data-brand="pending"] .rjp-public {
+  --brand-accent: var(--ro-gold-light);
+  --accent-gold: var(--ro-gold-light);
+  --accent-gold-light: var(--ro-gold-light);
+}
+
 .App--jugadores-public.ro-public-view::before {
   opacity: 0.12;
 }
@@ -7,10 +19,10 @@
 .App--jugadores-public.ro-public-view::after {
   background: linear-gradient(
     180deg,
-    var(--ro-bg-elevated) 0%,
-    var(--ro-bg-overlay) 28%,
-    var(--ro-bg-overlay) 55%,
-    var(--ro-bg-elevated) 100%
+    rgba(8, 8, 10, 0.9) 0%,
+    rgba(12, 12, 14, 0.62) 28%,
+    rgba(10, 10, 12, 0.72) 55%,
+    rgba(6, 6, 8, 0.94) 100%
   );
 }
 
@@ -63,7 +75,7 @@
   z-index: 2;
   background: radial-gradient(
     ellipse 70% 60% at 50% 0%,
-    var(--ro-bg-elevated) 0%,
+    rgba(255, 255, 255, 0.12) 0%,
     transparent 70%
   );
 }
@@ -159,7 +171,7 @@
 }
 
 .rjp-tab:hover {
-  color: var(--ro-text-secondary);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .rjp-tab--active {
@@ -206,8 +218,8 @@
   border: 1px solid var(--rjp-border);
   border-radius: 14px;
   box-shadow:
-    0 4px 24px rgba(20, 22, 26, 0.35),
-    inset 0 1px 0 var(--ro-accent-ring);
+    0 4px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   cursor: pointer;
   text-align: left;
   color: var(--rjp-text);
@@ -249,7 +261,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(145deg, var(--ro-border) 0%, var(--ro-bg-surface) 100%);
+  background: linear-gradient(145deg, var(--ro-border) 0%, var(--ro-chrome-bg) 100%);
   border: 1px solid var(--rjp-border);
   color: var(--rjp-gold-light);
   font-weight: 800;
@@ -260,16 +272,16 @@
 }
 
 .rjp-list li:first-child .rjp-rank {
-  background: linear-gradient(145deg, var(--ro-medal-gold) 0%, #a8863a 55%, var(--ro-bg-inset) 100%);
+  background: linear-gradient(145deg, var(--ro-medal-gold) 0%, #a8863a 55%, var(--ro-text-muted) 100%);
   color: var(--ro-text-on-accent);
-  border-color: var(--ro-gold-border);
-  box-shadow: 0 0 16px var(--ro-gold-dim);
+  border-color: var(--ro-gold-border, rgba(201, 168, 76, 0.38));
+  box-shadow: 0 0 16px var(--ro-gold-dim, rgba(201, 168, 76, 0.2));
 }
 
 .rjp-public .rj-avatar {
   border-color: var(--rjp-gold-border);
   color: var(--rjp-gold-light);
-  box-shadow: 0 0 12px var(--ro-accent-ring);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
 }
 
 .rjp-card__body {
@@ -336,20 +348,20 @@
   overflow: hidden;
   background: linear-gradient(
     145deg,
-    var(--ro-bg-elevated) 0%,
-    var(--ro-bg-elevated) 55%,
-    var(--ro-bg-elevated) 100%
+    rgba(32, 32, 36, 0.88) 0%,
+    rgba(18, 18, 20, 0.92) 55%,
+    rgba(24, 22, 16, 0.85) 100%
   );
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--ro-border);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 1.35rem 1.4rem;
   margin-bottom: 1rem;
   box-shadow:
-    0 8px 32px rgba(20, 22, 26, 0.45),
-    inset 0 1px 0 var(--ro-accent-ring),
-    0 0 0 1px var(--ro-accent-ring);
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
   animation: rjp-fade-in 0.5s ease-out both;
 }
 
@@ -379,7 +391,7 @@
   height: 80%;
   background: radial-gradient(
     ellipse at center,
-    var(--ro-bg-elevated) 0%,
+    rgba(255, 255, 255, 0.14) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -410,7 +422,7 @@
     from 200deg,
     var(--rjp-gold-light),
     var(--rjp-gold),
-    var(--ro-bg-inset),
+    var(--ro-text-muted),
     var(--rjp-gold),
     var(--rjp-gold-light)
   );
@@ -429,7 +441,7 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    var(--ro-bg-elevated) 0%,
+    rgba(255, 255, 255, 0.35) 0%,
     transparent 65%
   );
   filter: blur(8px);
@@ -443,8 +455,8 @@
   height: 100%;
   border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(160deg, var(--ro-bg-elevated) 0%, var(--ro-bg-deep) 45%, var(--ro-bg-elevated) 100%);
-  border: 2px solid var(--ro-border);
+  background: linear-gradient(160deg, var(--ro-chrome-elevated) 0%, var(--ro-chrome-deep) 45%, var(--ro-chrome-elevated) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -470,11 +482,11 @@
   font-size: 2.25rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  background: linear-gradient(180deg, var(--rjp-gold-light) 0%, var(--rjp-gold) 55%, var(--ro-bg-inset) 100%);
+  background: linear-gradient(180deg, var(--rjp-gold-light) 0%, var(--rjp-gold) 55%, var(--ro-text-muted) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 2px 20px var(--ro-accent-ring);
+  text-shadow: 0 2px 20px rgba(255, 255, 255, 0.35);
 }
 
 .rjp-avatar-hero__shine {
@@ -484,7 +496,7 @@
   border-radius: 50%;
   background: linear-gradient(
     135deg,
-    var(--ro-bg-elevated) 0%,
+    rgba(255, 255, 255, 0.22) 0%,
     transparent 42%,
     transparent 100%
   );
@@ -502,7 +514,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--ro-text-secondary);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .rjp-profile-card__title {
@@ -535,9 +547,9 @@
   gap: 0.55rem;
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
-  background: var(--ro-bg-overlay);
-  border: 1px solid var(--ro-border-subtle);
-  box-shadow: inset 0 1px 0 var(--ro-accent-ring);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .rjp-stat-tile__icon {
@@ -582,9 +594,9 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--ro-text-secondary);
-  background: var(--ro-bg-elevated);
-  border: 1px solid var(--ro-border);
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Redes */
@@ -592,7 +604,7 @@
   flex: 0 0 auto;
   min-width: 130px;
   padding: 0.5rem 0 0 0.75rem;
-  border-left: 1px solid var(--ro-border-subtle);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .rjp-profile-social__title {
@@ -637,8 +649,8 @@
   font-weight: 600;
   text-decoration: none;
   color: var(--rjp-text);
-  background: var(--ro-bg-inset);
-  border: 1px solid var(--ro-border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition:
     transform 0.15s,
     background 0.2s,
@@ -649,8 +661,8 @@
 .rjp-profile-social__link:hover {
   transform: translateX(-2px);
   border-color: var(--rjp-gold-border);
-  background: var(--ro-bg-elevated);
-  box-shadow: 0 4px 16px var(--ro-accent-ring);
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
 }
 
 .rjp-profile-social__icon {
@@ -690,7 +702,7 @@
     width: 100%;
     padding: 0.85rem 0 0;
     border-left: none;
-    border-top: 1px solid var(--ro-border-subtle);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .rjp-profile-social__title {
@@ -736,7 +748,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    var(--ro-bg-elevated),
+    rgba(255, 255, 255, 0.35),
     transparent
   );
 }
@@ -750,7 +762,7 @@
 .rjp-social-btn {
   display: inline-flex;
   padding: 0.65rem 1.25rem;
-  background: linear-gradient(135deg, var(--rjp-gold) 0%, var(--ro-bg-inset) 100%);
+  background: linear-gradient(135deg, var(--rjp-gold) 0%, var(--ro-text-muted) 100%);
   color: var(--ro-text-on-accent);
   border-radius: 10px;
   font-weight: 700;
@@ -801,12 +813,12 @@
   padding: 0.28rem 0.7rem;
   background: linear-gradient(
     135deg,
-    var(--ro-bg-elevated) 0%,
-    var(--ro-bg-elevated) 100%
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.12) 100%
   );
   color: var(--rjp-gold-light);
-  border: 1px solid var(--ro-border);
-  box-shadow: 0 0 12px var(--ro-accent-ring);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -820,13 +832,13 @@
 }
 
 .rjp-card-block--historial .rj-historial-timeline--public .rj-historial-resumen {
-  background: var(--ro-bg-overlay);
-  border-color: var(--ro-border-subtle);
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .rjp-card-block--historial .rj-historial-timeline--public .rj-historial-timeline__item {
-  background: var(--ro-bg-overlay);
-  border-color: var(--ro-border-subtle);
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .rjp-card-block--historial .rj-historial-timeline--public .rj-historial-timeline__evento {
@@ -840,5 +852,5 @@
   font-size: 0.6875rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ro-text-muted);
+  color: rgba(255, 255, 255, 0.28);
 }

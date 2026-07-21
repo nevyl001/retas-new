@@ -837,7 +837,9 @@ function AppContent() {
 
   const appShellClass = [
     "App",
-    isPublicSpectatorView ? "App--public-full-width ro-public-view" : "",
+    isPublicSpectatorView
+      ? "App--public-full-width ro-public-view ro-surface-dark"
+      : "",
     isJugadoresPublic ? "App--jugadores-public" : "",
     currentView === "legal" ? "App--legal" : "",
     showMobileAppNav ? "has-mobile-app-navigation" : "",

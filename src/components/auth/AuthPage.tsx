@@ -32,7 +32,7 @@ export const AuthPage: React.FC = () => {
 
   return (
     <div
-      className={`auth-page${isRivieraPremium ? " auth-page--riviera-premium" : ""}`}
+      className={`auth-page ro-surface-dark${isRivieraPremium ? " auth-page--riviera-premium" : ""}`}
     >
       <div className="auth-visual-panel">
         <div className="auth-visual-panel__photo" />

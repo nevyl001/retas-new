@@ -91,7 +91,7 @@ export const MobileAppNavigation: React.FC<MobileAppNavigationProps> = ({
   return (
     <>
       <nav
-        className="mobile-app-navigation"
+        className="mobile-app-navigation ro-surface-dark"
         aria-label="Navegación principal"
       >
         <ul className="mobile-app-navigation__list">

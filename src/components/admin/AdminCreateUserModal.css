@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: var(--ro-bg-overlay);
+  background: var(--ro-scrim-modal);
 }
 
 .admin-create-user-modal__panel {
