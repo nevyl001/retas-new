@@ -193,13 +193,13 @@
 
 .mis-retas-page .riviera-badge--mode-torneo {
   background: rgba(167, 139, 250, 0.12) !important;
-  color: #c4b5fd !important;
+  color: var(--ro-mode-torneo) !important;
   border: 0.5px solid rgba(167, 139, 250, 0.35) !important;
 }
 
 .mis-retas-page .riviera-badge--mode-robin {
   background: rgba(96, 165, 250, 0.12) !important;
-  color: #93c5fd !important;
+  color: var(--ro-mode-liga) !important;
   border: 0.5px solid rgba(96, 165, 250, 0.35) !important;
 }
 

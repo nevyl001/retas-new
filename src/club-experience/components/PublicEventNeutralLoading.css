@@ -2,7 +2,7 @@
 .public-event-neutral-loading {
   text-align: center;
   padding: 4rem 1rem;
-  color: #a1a1aa;
+  color: var(--ro-text-muted);
   min-height: 8rem;
   box-sizing: border-box;
 }
@@ -18,8 +18,8 @@
   height: 48px;
   margin: 0 auto 1rem;
   border-radius: 50%;
-  border: 2px solid #3f3f46;
-  border-top-color: #a1a1aa;
+  border: 2px solid var(--ro-border-strong);
+  border-top-color: var(--ro-border);
   animation: public-event-neutral-spin 0.8s linear infinite;
 }
 

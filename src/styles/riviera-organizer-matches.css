@@ -201,7 +201,7 @@
 }
 
 .riviera-organizer-reta .omc-pill--round {
-  color: #c4b5fd;
+  color: var(--ro-mode-torneo);
   background: rgba(167, 139, 250, 0.1);
   border: 1px solid rgba(167, 139, 250, 0.28);
 }
@@ -437,7 +437,7 @@
 }
 
 .riviera-organizer-reta .omc-team-row--pending .omc-team-name {
-  color: #e4e4e7;
+  color: var(--ro-text-muted);
 }
 
 .riviera-organizer-reta .omc-vs-divider {
@@ -726,7 +726,7 @@
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: 500;
-  color: #e4e4e7;
+  color: var(--ro-text-muted);
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 6px;
@@ -772,7 +772,7 @@
 }
 
 .riviera-organizer-reta .omc-btn-reopen:hover:not(:disabled) {
-  color: #aaa;
+  color: var(--ro-text-secondary);
   border-color: rgba(255, 255, 255, 0.2);
 }
 

@@ -4,7 +4,7 @@
   --admin-accent: var(--accent-gold);
   --admin-bg: #09090b;
   --admin-card: #111113;
-  --admin-border: #1f1f23;
+  --admin-border: var(--ro-border);
   --admin-text: var(--ro-bg-surface);
   --admin-text-muted: var(--ro-text-muted);
   --admin-input-bg: var(--ro-text-primary);
@@ -194,8 +194,8 @@
 }
 
 .create-user-btn:hover {
-  background: #e4e4e7;
-  border-color: #e4e4e7;
+  background: var(--ro-bg-inset);
+  border-color: var(--ro-border);
 }
 
 .sort-btn:hover,
@@ -363,7 +363,7 @@
 
 .view-btn:hover {
   background: var(--admin-input-border);
-  border-color: #3f3f46;
+  border-color: var(--ro-border-strong);
 }
 
 .delete-btn {

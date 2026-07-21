@@ -63,7 +63,7 @@
   margin: 0 1rem 0.35rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--admin-text-muted, #a1a1aa);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .grant-access-modal__search {

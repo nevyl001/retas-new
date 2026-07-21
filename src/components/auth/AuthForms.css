@@ -74,7 +74,7 @@
 .auth-form-header p {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--riviera-muted, #9ca3af);
+  color: var(--riviera-muted, var(--ro-text-muted));
   line-height: 1.5;
 }
 
@@ -116,7 +116,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--riviera-muted, #9ca3af);
+  color: var(--riviera-muted, var(--ro-text-muted));
   margin-bottom: 0.5rem;
 }
 
@@ -154,7 +154,7 @@
 
 .auth-page .riviera-input:focus,
 .auth-page .auth-password-field__input:focus {
-  border-color: var(--riviera-gold, #d4a843);
+  border-color: var(--riviera-gold, var(--ro-gold-border));
   background: rgba(212, 168, 67, 0.04);
   box-shadow: 0 0 0 1px var(--riviera-gold, #d4a843);
 }
@@ -205,7 +205,7 @@
 
 .btn-auth-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  background: var(--riviera-gold-soft, #e5c878);
+  background: var(--riviera-gold-soft, var(--ro-gold-dim));
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
 
@@ -269,7 +269,7 @@
 .auth-footer p {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--riviera-muted, #9ca3af);
+  color: var(--riviera-muted, var(--ro-text-muted));
   line-height: 1.5;
 }
 
@@ -278,7 +278,7 @@
   border: none;
   padding: 0;
   margin: 0;
-  color: var(--riviera-gold, #d4a843);
+  color: var(--riviera-gold, var(--ro-gold-text));
   font-weight: 600;
   font-size: inherit;
   cursor: pointer;
@@ -289,7 +289,7 @@
 }
 
 .auth-toggle-btn:hover {
-  color: var(--riviera-gold-soft, #e5c878);
+  color: var(--riviera-gold-soft, var(--ro-gold-text));
 }
 
 .auth-toggle-btn:focus-visible {
@@ -368,7 +368,7 @@
   min-height: 44px;
   border: none;
   background: transparent;
-  color: var(--riviera-gold, #d4a843);
+  color: var(--riviera-gold, var(--ro-gold-text));
   font-size: 0.6875rem;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -383,7 +383,7 @@
 
 .auth-password-field__toggle:hover:not(:disabled) {
   background: rgba(201, 162, 75, 0.1);
-  color: var(--riviera-gold-soft, #e5c878);
+  color: var(--riviera-gold-soft, var(--ro-gold-text));
 }
 
 .auth-password-field__toggle:focus-visible {

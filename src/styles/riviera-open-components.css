@@ -256,7 +256,7 @@
 
   /* Entrada a modos — eyebrow marca unificado */
   .rv-mode-header--entry .rv-mode-header__eyebrow {
-    color: var(--ro-green, #3d7a5c);
+    color: var(--ro-green, var(--ro-success));
     letter-spacing: 0.18em;
   }
 

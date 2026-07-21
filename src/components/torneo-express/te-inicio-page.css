@@ -446,7 +446,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ro-green, #3d7a5c);
+  color: var(--ro-green, var(--ro-success));
   background: rgba(61, 122, 92, 0.12);
   border: 0.5px solid rgba(61, 122, 92, 0.28);
 }
@@ -681,7 +681,7 @@
 }
 
 .torneo-express-page.te-inicio-page .te-crear-submit.riviera-btn-primary:not(:disabled) {
-  background: var(--ro-green, #3d7a5c);
+  background: var(--ro-green, var(--ro-success-dim));
   border-color: rgba(61, 122, 92, 0.5);
   color: var(--ro-text-primary);
 }

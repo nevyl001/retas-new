@@ -9,7 +9,7 @@
 }
 
 .standings-dif--zero {
-  color: var(--color-text-muted, #9ca3af);
+  color: var(--color-text-muted, var(--ro-text-muted));
 }
 
 .te-standings-table td.standings-dif--pos,

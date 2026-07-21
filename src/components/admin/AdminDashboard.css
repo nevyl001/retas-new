@@ -3,7 +3,7 @@
 .admin-dash {
   --admin-bg: #09090b;
   --admin-card: #111113;
-  --admin-border: #1f1f23;
+  --admin-border: var(--ro-border);
   --admin-text: var(--ro-bg-surface);
   --admin-text-muted: var(--ro-text-muted);
   --admin-accent: var(--accent-gold);
@@ -82,7 +82,7 @@
 
 .admin-dash__btn-logout:hover {
   color: var(--admin-text);
-  border-color: #3f3f46;
+  border-color: var(--ro-border-strong);
   background: rgba(255, 255, 255, 0.03);
 }
 

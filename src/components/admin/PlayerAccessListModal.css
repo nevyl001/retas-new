@@ -61,7 +61,7 @@
 .player-access-modal__meta {
   margin: 0 1rem 0.5rem;
   font-size: 0.75rem;
-  color: var(--admin-text-muted, #a1a1aa);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .player-access-modal__empty {
@@ -122,7 +122,7 @@
 }
 
 .player-access-modal__status--inactive {
-  color: #a1a1aa;
+  color: var(--ro-text-muted);
 }
 
 .player-access-modal__hint {

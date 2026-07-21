@@ -32,7 +32,7 @@
 }
 
 .liga-parejas-victorias-grid .podium-card__badge {
-  color: #c4ad72;
+  color: var(--ro-gold-text);
   border-color: rgba(196, 173, 114, 0.4);
   letter-spacing: 0.22em;
 }
@@ -45,7 +45,7 @@
 }
 
 .liga-parejas-victorias-grid .podium-card__subtitle {
-  color: #c4ad72;
+  color: var(--ro-gold-text);
   letter-spacing: 0.12em;
 }
 
@@ -63,7 +63,7 @@
 }
 
 .liga-parejas-victorias-grid .podium-card__trophy {
-  color: #c4ad72;
+  color: var(--ro-gold-text);
   opacity: 0.9;
 }
 

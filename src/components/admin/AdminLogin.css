@@ -3,7 +3,7 @@
 .admin-login-page {
   --admin-bg: #09090b;
   --admin-card: #111113;
-  --admin-border: #1f1f23;
+  --admin-border: var(--ro-border);
   --admin-text: var(--ro-bg-surface);
   --admin-text-muted: var(--ro-text-muted);
   --admin-input-bg: var(--ro-text-primary);
@@ -163,7 +163,7 @@
 }
 
 .admin-login-input:hover:not(:disabled) {
-  border-color: #3f3f46;
+  border-color: var(--ro-border-strong);
 }
 
 .admin-login-input:focus {
@@ -253,7 +253,7 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: #3f3f46;
+  background: var(--ro-bg-inset);
 }
 
 @media (max-width: 480px) {

@@ -43,7 +43,7 @@
 .resting-pair-card {
   padding: 6px 14px;
   background: var(--ro-bg-elevated);
-  border: 0.5px solid #333;
+  border: 0.5px solid var(--ro-border-strong);
   border-radius: 6px;
   backdrop-filter: none;
   transition: all var(--transition-base);
@@ -59,7 +59,7 @@
 .resting-pair-name {
   font-size: 13px;
   font-weight: var(--font-weight-medium);
-  color: #aaa;
+  color: var(--ro-text-secondary);
   white-space: nowrap;
 }
 

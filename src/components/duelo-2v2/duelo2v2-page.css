@@ -830,7 +830,7 @@
 }
 
 .duelo2v2-live-board__upcoming {
-  color: #93c5fd;
+  color: var(--ro-mode-liga);
   font-weight: 600;
 }
 
