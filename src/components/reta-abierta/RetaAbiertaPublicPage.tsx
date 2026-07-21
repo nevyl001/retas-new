@@ -4,6 +4,7 @@ import { PublicTorneoExpressShell } from "../torneo-express/public/PublicTorneoE
 import { formatDueloHorarioRange } from "../../lib/duelo2v2/schedule";
 import {
   buildRequestRivieraIdWhatsAppMessage,
+  buildRetaAbiertaWhatsAppMessage,
   buildWhatsAppShareUrl,
   resolveLugarYCancha,
 } from "../../lib/retaAbierta/whatsappShareMessage";
@@ -12,6 +13,7 @@ import { normalizeRivieraIdLoose } from "../../lib/retaAbierta/normalizeRivieraI
 import {
   cancelOpenRegistration,
   buildManageRegistrationPath,
+  buildRetaAbiertaPublicUrl,
   fetchOpenRegistrationPublic,
   joinOpenRegistration,
   loadAllCancellationTokens,
@@ -646,6 +648,29 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     }
   };
 
+  // Convocatoria lista para pegar en el grupo: reusa el mismo mensaje del
+  // organizador (quién ya está dentro con ✓, lugares libres con ○, horario de
+  // inicio y el enlace público) para que, tras inscribirse, el jugador la
+  // comparta y se apunten los demás. No es el enlace privado de cancelación.
+  const onCopyGroupMessage = async () => {
+    if (!dto) return;
+    setActionError(null);
+    setCopyFeedback(null);
+    const message = buildRetaAbiertaWhatsAppMessage({
+      dto,
+      publicUrl: buildRetaAbiertaPublicUrl(slug),
+      clubName: organizerName?.trim() || "",
+    });
+    const ok = await copyTextToClipboard(message);
+    if (ok) {
+      setCopyFeedback(
+        "Convocatoria copiada. Pégala en tu grupo para que se apunten los demás."
+      );
+    } else {
+      setActionError("No se pudo copiar. Inténtalo de nuevo.");
+    }
+  };
+
   const onConfirmCancel = async () => {
     if (!cancelTarget?.token) {
       setActionError("Selecciona a quién quieres cancelar.");
@@ -1236,6 +1261,16 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               <p className="ra-public__hint ra-public__hint--ok">{copyFeedback}</p>
             ) : null}
             <div className="ra-actions">
+              {joinStatus === "confirmed" && (
+                <button
+                  type="button"
+                  className="ra-btn ra-btn--primary"
+                  onClick={() => void onCopyGroupMessage()}
+                  disabled={busy}
+                >
+                  Copiar convocatoria para el grupo
+                </button>
+              )}
               {(joinManageToken || hasLocalCancel) && (
                 <button
                   type="button"
@@ -1258,7 +1293,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               )}
               <button
                 type="button"
-                className="ra-btn ra-btn--primary"
+                className="ra-btn ra-btn--ghost"
                 onClick={() => {
                   setCopyFeedback(null);
                   setActionError(null);
