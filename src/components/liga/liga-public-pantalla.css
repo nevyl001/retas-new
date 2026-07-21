@@ -25,10 +25,10 @@
   /* Neutros champagne — texto y bordes base */
   --liga-pub-accent: #b5aa9a;
   --liga-pub-accent-soft: #8f8a82;
-  --liga-pub-accent-dim: rgba(255, 255, 255, 0.05);
-  --liga-pub-accent-border: rgba(255, 255, 255, 0.1);
-  --liga-pub-accent-border-strong: rgba(255, 255, 255, 0.16);
-  --liga-pub-shadow: 0 1px 0 rgba(255, 255, 255, 0.03);
+  --liga-pub-accent-dim: var(--ro-bg-inset);
+  --liga-pub-accent-border: var(--ro-border);
+  --liga-pub-accent-border-strong: var(--ro-border-strong);
+  --liga-pub-shadow: 0 1px 0 var(--ro-accent-ring);
   --liga-pub-font-display: var(--liga-font-display);
   --liga-pub-font-body: var(--liga-font-body);
   --liga-pub-font-mono: ui-monospace, "SF Mono", "Cascadia Code", monospace;
