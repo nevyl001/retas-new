@@ -813,7 +813,9 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 {organizerName.trim()}
               </p>
             ) : null}
-            <p className="ra-public__meta">{formatWhen(dto)}</p>
+            <p className="ra-public__meta ra-public__meta--horario">
+              {formatWhen(dto)}
+            </p>
             {(() => {
               const { lugar, cancha } = resolveLugarYCancha({
                 locationLabel: dto.location_label,

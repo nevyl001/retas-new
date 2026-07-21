@@ -607,6 +607,25 @@
   color: rgba(255, 255, 255, 0.92);
 }
 
+/* Horario: el dato clave para saber si alcanzas a llegar. Debe DISTINGUIRSE del
+   resto del meta (club, lugar, categoría, que son texto plano) y quedar igual en
+   todos los formatos de convocatoria. Pill de oro relleno con tinta oscura, el
+   mismo acento que resalta el horario en los tableros públicos (peds-hero). */
+.ra-public__meta--horario {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0.15rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--ro-radius-full, 999px);
+  background: var(--ro-gold-light);
+  color: #12161b;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 14px rgba(223, 190, 127, 0.28);
+}
+
 .ra-public__hint--side {
   color: var(--ro-accent, #c9a227);
 }
