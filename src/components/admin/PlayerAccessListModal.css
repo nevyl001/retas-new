@@ -22,7 +22,7 @@
   max-height: min(80vh, 640px);
   display: flex;
   flex-direction: column;
-  background: var(--admin-surface, var(--ro-text-primary));
+  background: var(--admin-surface, var(--ro-bg-card));
   border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   border-radius: 12px;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
@@ -40,7 +40,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--admin-text, var(--ro-bg-surface));
+  color: var(--admin-text, var(--ro-text-primary));
 }
 
 .player-access-modal__subtitle {
@@ -101,7 +101,7 @@
 .player-access-modal__row-name {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--admin-text, var(--ro-bg-surface));
+  color: var(--admin-text, var(--ro-text-primary));
 }
 
 .player-access-modal__row-email {
@@ -159,7 +159,7 @@
   border-radius: 8px;
   border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: transparent;
-  color: var(--admin-text, var(--ro-bg-surface));
+  color: var(--admin-text, var(--ro-text-primary));
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;

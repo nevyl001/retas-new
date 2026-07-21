@@ -558,7 +558,7 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 4px 9px;
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   background: var(--ro-gold-dim);
   border-color: var(--ro-gold-border);
 }
@@ -594,7 +594,7 @@
   padding: 4px 9px;
   border-radius: 999px;
   background: rgba(212, 175, 55, 0.18);
-  color: var(--accent-gold-light, var(--ro-gold-light));
+  color: var(--accent-gold-light, var(--ro-gold-text));
   border: 0.5px solid rgba(212, 175, 55, 0.55);
   white-space: nowrap;
   font-family: var(--font-body);
@@ -610,7 +610,7 @@
   border: 0.5px solid rgba(212, 175, 55, 0.35);
   font-size: 11px;
   line-height: 1.45;
-  color: var(--accent-gold-light, var(--ro-gold-light));
+  color: var(--accent-gold-light, var(--ro-gold-text));
   font-weight: 600;
   position: relative;
   z-index: 1;
@@ -893,7 +893,7 @@
 
 .recent-reta-card .riviera-badge--mode-equipos {
   background: var(--ro-gold-dim);
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   border-color: var(--ro-gold-border);
 }
 
@@ -1516,7 +1516,7 @@
   border-radius: 50%;
   border: 1px solid var(--ro-gold-border);
   background: var(--ro-gold-dim);
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
@@ -1531,7 +1531,7 @@
 
 .home-sheet__courts-step:hover:not(:disabled) {
   background: rgba(201, 162, 39, 0.22);
-  border-color: var(--ro-gold);
+  border-color: var(--ro-gold-border);
 }
 
 .home-sheet__courts-step:active:not(:disabled) {
@@ -1550,7 +1550,7 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   font-family: var(--ro-font-heading, var(--font-display));
   font-size: clamp(1.75rem, 7vw, 2.25rem);
   font-weight: 700;
@@ -1610,7 +1610,7 @@
 }
 
 .home-sheet__optional--on .home-sheet__optional-title {
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
 }
 
 .home-sheet__optional-sub {
@@ -1632,7 +1632,7 @@
   font-family: var(--ro-font-body, var(--font-body));
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -1641,7 +1641,7 @@
 }
 
 .home-sheet__optional-link:hover {
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
 }
 
 .home-sheet__switch {
@@ -1687,7 +1687,7 @@
   height: 20px;
   margin-top: -10px;
   border-radius: 50%;
-  background: var(--ro-text-primary);
+  background: var(--ro-bg-card);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   transition: transform 0.2s;
   z-index: 1;
@@ -1695,7 +1695,7 @@
 
 .home-sheet__switch--on .home-sheet__switch-thumb {
   transform: translateX(22px);
-  background: var(--ro-gold-light);
+  background: var(--ro-gold-dim);
 }
 
 .home-sheet__optional-extra {
@@ -1746,7 +1746,7 @@
   font-weight: 700;
   font-size: 1.0625rem;
   font-variant-numeric: tabular-nums;
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
 }
 
 .home-sheet__hint {

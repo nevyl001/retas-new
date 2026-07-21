@@ -874,15 +874,15 @@
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader td,
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__name {
-  color: var(--ro-gold-light) !important;
+  color: var(--ro-gold-text) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__pos-num {
-  color: var(--ro-gold) !important;
+  color: var(--ro-gold-text) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader td:first-child {
-  border-left: 3px solid var(--ro-gold) !important;
+  border-left: 3px solid var(--ro-gold-border) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row__name {

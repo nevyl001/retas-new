@@ -487,7 +487,7 @@
   padding: 0 2rem;
   border-radius: 14px;
   background: var(--rkcf-gold);
-  color: var(--ro-bg-base);
+  color: var(--ro-text-primary);
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
@@ -504,13 +504,13 @@
 .rkcf-cta__btn:hover,
 .rkcf-cta__btn:focus-visible {
   background: var(--rkcf-gold-hover);
-  color: var(--ro-bg-base);
+  color: var(--ro-text-primary);
   border-color: var(--rkcf-gold-hover);
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.35);
 }
 
 .rkcf-cta__btn:focus-visible {
-  outline: 2px solid var(--ro-text-primary);
+  outline: 2px solid var(--ro-border-strong);
   outline-offset: 3px;
 }
 

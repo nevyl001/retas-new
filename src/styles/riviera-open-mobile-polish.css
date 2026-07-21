@@ -67,7 +67,7 @@ body,
 }
 
 .te-pub-match-winner--compact .te-pub-match-winner__name {
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
 }
 
 /* —— 4. Tablas: scroll contenido, no romper layout —— */

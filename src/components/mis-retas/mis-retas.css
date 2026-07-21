@@ -181,7 +181,7 @@
 
 .mis-retas-page .riviera-badge--mode-equipos {
   background: var(--ro-gold-dim) !important;
-  color: var(--ro-gold-light) !important;
+  color: var(--ro-gold-text) !important;
   border: 0.5px solid var(--ro-gold-border) !important;
 }
 

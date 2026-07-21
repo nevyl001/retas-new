@@ -123,7 +123,7 @@
 
 .duelo2v2-badge--done.rv-pill,
 .liga-badge--done.rv-pill {
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   background: var(--ro-gold-dim);
   border-color: var(--ro-gold-border);
 }
@@ -136,7 +136,7 @@
 }
 
 .americano-round-btn--primary {
-  background: var(--ro-gold);
+  background: var(--ro-gold-dim);
   color: var(--ro-text-on-accent);
   border: 0.5px solid var(--ro-gold-border);
   border-radius: var(--ro-radius-md);

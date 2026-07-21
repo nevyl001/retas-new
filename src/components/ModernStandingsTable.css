@@ -144,7 +144,7 @@
 }
 
 .new-first-place td {
-  color: var(--ro-gold-light) !important;
+  color: var(--ro-gold-text) !important;
   font-weight: var(--font-weight-semibold);
 }
 

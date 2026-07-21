@@ -215,16 +215,17 @@
 }
 
 /* =============================================
-   SCOPE DE CHROME
-   Aplica esta clase al sidebar, al header de la
-   app y a la navegación móvil. Reapunta los
-   tokens de superficie y texto a la escala
-   oscura, así el CSS existente de esos
-   componentes sigue funcionando sin tocarse.
+   SUPERFICIES OSCURAS: navegación + marcador inmersivo
+   Reapunta los tokens de superficie y texto a la
+   escala oscura, así el CSS existente de estos
+   componentes sigue funcionando sin tocarse. La
+   oscuridad de estas superficies es declarada aquí,
+   no heredada por accidente.
 ============================================= */
 .ro-chrome,
 .riviera-sidebar,
-.mobile-app-navigation {
+.mobile-app-navigation,
+.duelo2v2-page {
   --ro-bg-base: var(--ro-chrome-bg);
   --ro-bg-deep: var(--ro-chrome-deep);
   --ro-bg-surface: var(--ro-chrome-bg);

@@ -198,7 +198,7 @@
   font-size: 0.9375rem;
   font-weight: 600;
   font-family: inherit;
-  color: var(--ro-chrome-deep);
+  color: var(--ro-text-primary);
   background: var(--admin-accent);
   border: none;
   border-radius: 8px;

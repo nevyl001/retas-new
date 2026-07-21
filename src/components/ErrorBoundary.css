@@ -29,7 +29,7 @@
   font-family: var(--font-display, var(--font-body, sans-serif));
   font-size: clamp(1.25rem, 4vw, 1.5rem);
   font-weight: 700;
-  color: var(--text-primary, var(--ro-bg-card));
+  color: var(--text-primary, var(--ro-text-primary));
 }
 
 .error-boundary__message {
@@ -75,7 +75,7 @@
 .error-boundary__btn--primary {
   border: 0.5px solid rgba(61, 122, 92, 0.5);
   background: var(--ro-green, #2d6a4f);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .error-boundary__btn--primary:hover {
@@ -85,7 +85,7 @@
 .error-boundary__btn--secondary {
   border: 0.5px solid var(--border-default, rgba(255, 255, 255, 0.14));
   background: transparent;
-  color: var(--text-primary, var(--ro-bg-card));
+  color: var(--text-primary, var(--ro-text-primary));
 }
 
 .error-boundary__btn--secondary:hover {

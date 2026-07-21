@@ -370,7 +370,7 @@
 }
 
 .torneo-express-page .te-standings-table tr.te-row-top td {
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   background: var(--ro-gold-dim);
 }
 

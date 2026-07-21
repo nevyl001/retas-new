@@ -157,7 +157,7 @@
   font-size: 0.625rem;
   font-weight: 500;
   letter-spacing: 0.08em;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -166,7 +166,7 @@
   font-style: italic;
   font-weight: 400;
   letter-spacing: 0.04em;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   opacity: 0.9;
 }
 
@@ -176,7 +176,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   font-size: 0.95em;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .club-identity--header.club-identity--stacked .club-identity__attribution {

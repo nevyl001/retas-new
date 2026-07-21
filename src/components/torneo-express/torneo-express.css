@@ -673,7 +673,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-partido-cancha__edit:hover:not(:disabled) {
   background: #333;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   border-color: var(--text-secondary);
 }
 
@@ -910,7 +910,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-partido-order-btn:hover:not(:disabled) {
   background: #333;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .te-partido-order-btn:disabled {
@@ -1462,7 +1462,7 @@ button.te-partido-chip--cancha:disabled {
 .te-btn-delete--solid:hover:not(:disabled) {
   background: #dc2626;
   border-color: #dc2626;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .te-modal-overlay {
@@ -2136,7 +2136,7 @@ button.te-partido-chip--cancha:disabled {
   margin: 0 0 0.35rem;
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .te-torneo-card__info {
@@ -2172,12 +2172,12 @@ button.te-partido-chip--cancha:disabled {
 }
 
 .te-torneo-btn--outline {
-  border: 1px solid var(--ro-text-muted);
-  color: var(--ro-bg-card);
+  border: 1px solid var(--ro-border);
+  color: var(--ro-text-primary);
 }
 
 .te-torneo-btn--outline:hover:not(:disabled) {
-  border-color: var(--ro-text-secondary);
+  border-color: var(--ro-border);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -2192,7 +2192,7 @@ button.te-partido-chip--cancha:disabled {
 
 .te-torneo-btn--danger {
   border: 1px solid var(--ro-error);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   background: rgba(255, 68, 68, 0.2);
 }
 
@@ -2218,7 +2218,7 @@ button.te-partido-chip--cancha:disabled {
 .te-torneo-card__confirm-title {
   margin: 0 0 0.35rem;
   font-size: 0.9rem;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .te-torneo-card__confirm-text {

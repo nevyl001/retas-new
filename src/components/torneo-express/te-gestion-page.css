@@ -248,7 +248,7 @@
 .te-gestion-page .te-grupos-tab--active {
   border-color: var(--ro-accent);
   background: var(--ro-accent);
-  color: var(--ro-bg-base);
+  color: var(--ro-text-primary);
   box-shadow: var(--ro-shadow-sm);
 }
 
@@ -258,7 +258,7 @@
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--2,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--3,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--4 {
-  color: var(--ro-bg-base);
+  color: var(--ro-text-primary);
   border-color: transparent;
   background: transparent;
 }

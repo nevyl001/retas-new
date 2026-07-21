@@ -82,13 +82,13 @@
 }
 
 .rv-button-primary {
-  background: var(--ro-gold);
+  background: var(--ro-gold-dim);
   color: var(--ro-text-on-accent);
   border: 0.5px solid var(--ro-gold-border);
 }
 
 .rv-button-primary:hover:not(:disabled) {
-  background: var(--ro-gold-light);
+  background: var(--ro-gold-dim);
 }
 
 .rv-button-secondary {
@@ -162,7 +162,7 @@
 }
 
 .rv-pill--gold {
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   background: var(--ro-gold-dim);
   border-color: var(--ro-gold-border);
 }
@@ -366,7 +366,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   background: var(--ro-gold-dim);
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   border: 0.5px solid var(--ro-gold-border);
   align-self: flex-start;
 }

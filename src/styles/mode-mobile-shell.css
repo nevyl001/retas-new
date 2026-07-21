@@ -38,7 +38,7 @@
 
 .mode-section-tabs__btn--active {
   color: var(--ro-text-primary, var(--text-primary));
-  border-color: var(--ro-accent, var(--ro-bg-card));
+  border-color: var(--ro-accent, var(--ro-border));
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -170,11 +170,11 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: var(--ro-text-muted, var(--ro-text-muted));
+  background: var(--ro-text-muted, var(--ro-bg-inset));
 }
 
 .reta-config-status__dot--done {
-  background: var(--ro-success);
+  background: var(--ro-success-dim);
 }
 
 .reta-config-status__dot--live {

@@ -162,12 +162,12 @@
 }
 
 .americano-summary__leader td:first-child {
-  border-left: 3px solid var(--ro-gold);
+  border-left: 3px solid var(--ro-gold-border);
 }
 
 .americano-summary__leader td {
   background: var(--ro-gold-dim);
-  color: var(--ro-gold-light);
+  color: var(--ro-gold-text);
   font-weight: 600;
 }
 

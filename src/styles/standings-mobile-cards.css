@@ -43,7 +43,7 @@
 }
 
 .standings-mobile-card--leader .standings-mobile-card__pos {
-  color: var(--ro-gold, var(--ro-gold));
+  color: var(--ro-gold, var(--ro-gold-text));
 }
 
 .standings-mobile-card__name {
@@ -54,12 +54,12 @@
   font-size: clamp(0.875rem, 3.6vw, 1rem);
   font-weight: 600;
   line-height: 1.35;
-  color: var(--color-text-primary, var(--ro-bg-card));
+  color: var(--color-text-primary, var(--ro-text-primary));
   text-wrap: balance;
 }
 
 .standings-mobile-card--leader .standings-mobile-card__name {
-  color: var(--ro-gold-light, var(--ro-gold-light));
+  color: var(--ro-gold-light, var(--ro-gold-text));
 }
 
 .standings-mobile-card__stats {
@@ -95,7 +95,7 @@
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-primary, var(--ro-bg-card));
+  color: var(--color-text-primary, var(--ro-text-primary));
 }
 
 .standings-mobile-card__stat-value--win {

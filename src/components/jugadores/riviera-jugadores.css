@@ -50,8 +50,8 @@
 }
 
 .rj-btn--primary {
-  background: linear-gradient(135deg, var(--ro-accent) 0%, var(--ro-text-muted) 100%);
-  color: var(--ro-bg-base);
+  background: linear-gradient(135deg, var(--ro-accent) 0%, var(--ro-bg-inset) 100%);
+  color: var(--ro-text-primary);
 }
 
 .rj-btn--ghost {
@@ -91,7 +91,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.06);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-size: 0.9375rem;
 }
 
@@ -104,7 +104,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.06);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-size: 0.875rem;
 }
 
@@ -624,7 +624,7 @@
   border-radius: 50%;
   border: none;
   background: var(--ro-accent);
-  color: var(--ro-bg-base);
+  color: var(--ro-text-primary);
   font-size: 0.75rem;
   cursor: pointer;
   display: flex;
@@ -967,7 +967,7 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.25);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-size: 0.9375rem;
   box-sizing: border-box;
 }
@@ -1257,7 +1257,7 @@
 
 .rj-cat--open {
   background: rgba(28, 28, 30, 0.9);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .rj-cat--1 {
@@ -1579,7 +1579,7 @@
 }
 
 .rj-genero-tabs__btn:hover {
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .rj-genero-tabs__btn--active {

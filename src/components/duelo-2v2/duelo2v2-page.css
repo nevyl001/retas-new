@@ -1,7 +1,7 @@
 .duelo2v2-page {
   min-height: 100vh;
-  background: var(--ro-chrome-deep);
-  color: var(--ro-bg-base);
+  background: var(--ro-bg-deep);
+  color: var(--ro-text-primary);
   padding: clamp(1rem, 2.5vw, 2rem) clamp(1rem, 4vw, 3rem)
     max(3rem, env(safe-area-inset-bottom));
   box-sizing: border-box;
@@ -12,7 +12,7 @@
   padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 5vw, 4rem)
     max(2rem, env(safe-area-inset-bottom));
   background: transparent;
-  color: var(--ro-text-primary, var(--ro-bg-base));
+  color: var(--ro-text-primary, var(--ro-text-primary));
 }
 
 .App.ro-public-view .duelo2v2-page--public,
@@ -133,7 +133,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font: inherit;
   box-sizing: border-box;
 }
@@ -208,7 +208,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font: inherit;
   box-sizing: border-box;
 }
@@ -304,7 +304,7 @@
 }
 
 .duelo2v2-match-meta__value--accent {
-  color: var(--accent-gold-light, var(--ro-gold-light));
+  color: var(--accent-gold-light, var(--ro-gold-text));
 }
 
 .duelo2v2-match-meta__value--court {
@@ -623,7 +623,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.25);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font: inherit;
 }
 
@@ -690,7 +690,7 @@
 }
 
 .duelo2v2-roster__selection-preview strong {
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-weight: 600;
 }
 
@@ -810,7 +810,7 @@
   font-size: clamp(1.75rem, 4vw, 3rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--ro-text-primary, var(--ro-bg-card));
+  color: var(--ro-text-primary, var(--ro-text-primary));
 }
 
 .duelo2v2-live-board__sub {
@@ -825,7 +825,7 @@
 }
 
 .duelo2v2-live-board__done {
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
   font-weight: 600;
 }
 
@@ -844,7 +844,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
   padding: 0.25rem 0.55rem;
   border-radius: 999px;
   background: rgba(234, 179, 8, 0.15);
@@ -940,7 +940,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
   padding: 0.28rem 0.6rem;
   border-radius: 999px;
   border: 1px solid rgba(234, 179, 8, 0.4);
@@ -961,7 +961,7 @@
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--accent-gold, var(--ro-gold));
+  color: var(--accent-gold, var(--ro-gold-text));
 }
 
 .duelo2v2-celebrate__team-card-subheadline {
@@ -978,7 +978,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
   line-height: 1.35;
 }
 
@@ -1006,7 +1006,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.3;
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
   word-break: break-word;
 }
 
@@ -1089,7 +1089,7 @@
 }
 
 .duelo2v2-celebrate__pair--winner .duelo2v2-celebrate__pair-label {
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
 }
 
 .duelo2v2-celebrate__pair-players {
@@ -1222,7 +1222,7 @@
 }
 
 .duelo2v2-celebrate__score-team--winner {
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
 }
 
 .duelo2v2-celebrate__score-numbers {
@@ -1234,7 +1234,7 @@
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .duelo2v2-celebrate__score-dash {
@@ -1460,7 +1460,7 @@
 }
 
 .duelo2v2-live-team--winner .duelo2v2-live-team__set-score {
-  color: var(--ro-gold);
+  color: var(--ro-gold-text);
 }
 
 .duelo2v2-live-team__score {
@@ -1536,7 +1536,7 @@
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .duelo2v2-score-editor__mid {
@@ -1627,7 +1627,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.08);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-size: 1.25rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -1905,7 +1905,7 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(0, 0, 0, 0.35);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-size: 1.25rem;
   font-weight: 700;
 }

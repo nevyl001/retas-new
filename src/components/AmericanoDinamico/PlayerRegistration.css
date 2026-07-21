@@ -51,7 +51,7 @@
   border-radius: 8px;
   border: 0.5px solid var(--ro-border, rgba(255, 255, 255, 0.1));
   background: var(--ro-bg-input, var(--color-bg-elevated, #121212));
-  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-bg-card)));
+  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-text-primary)));
   padding: 8px 10px;
 }
 
@@ -129,7 +129,7 @@
   border-radius: 8px;
   border: 0.5px solid var(--ro-border, rgba(255, 255, 255, 0.1));
   background: var(--ro-bg-input, var(--color-bg-elevated, #121212));
-  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-bg-card)));
+  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-text-primary)));
   padding: 8px 10px;
 }
 
@@ -156,7 +156,7 @@
   background: var(--ro-bg-input, var(--color-bg-elevated, #121212));
   border-radius: 10px;
   padding: 10px 12px;
-  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-bg-card)));
+  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-text-primary)));
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -173,7 +173,7 @@
 .americano-registration__db-item.selected {
   border-color: rgba(61, 122, 92, 0.45);
   background: rgba(61, 122, 92, 0.12);
-  color: var(--ro-text-primary, var(--ro-bg-card));
+  color: var(--ro-text-primary, var(--ro-text-primary));
 }
 
 .americano-btn {
@@ -189,7 +189,7 @@
 .americano-btn--ghost {
   border-color: var(--ro-border, rgba(255, 255, 255, 0.1));
   background: var(--ro-bg-elevated, var(--color-bg-elevated, #121212));
-  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-bg-card)));
+  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-text-primary)));
 }
 
 .americano-btn--danger {
@@ -200,8 +200,8 @@
 
 .americano-btn--primary {
   background: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
-  color: var(--ro-text-on-accent, var(--ro-chrome-bg));
-  border-color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  color: var(--ro-text-on-accent, var(--ro-text-primary));
+  border-color: var(--brand-accent, var(--ro-accent, var(--ro-border)));
 }
 
 .americano-btn:disabled {

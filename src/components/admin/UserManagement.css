@@ -566,7 +566,7 @@
   min-height: 76px;
   padding: 12px 10px;
   text-align: center;
-  background: var(--ro-text-primary);
+  background: var(--ro-bg-card);
   border: 1px solid var(--admin-border);
   border-radius: 10px;
 }
@@ -598,7 +598,7 @@
   border: 1px solid var(--admin-border);
   border-radius: 10px;
   overflow: hidden;
-  background: var(--ro-text-primary);
+  background: var(--ro-bg-card);
 }
 
 .um-detail-modal__data-row {

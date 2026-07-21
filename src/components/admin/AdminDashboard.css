@@ -137,7 +137,7 @@
 
 .admin-dash__tab--active {
   color: var(--admin-text);
-  background: var(--ro-text-primary);
+  background: var(--ro-bg-card);
   box-shadow: 0 0 0 1px var(--admin-border) inset;
 }
 

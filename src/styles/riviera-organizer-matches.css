@@ -265,7 +265,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--ro-success);
+  background: var(--ro-success-dim);
   animation: pulse-dot 1.2s ease-in-out infinite;
 }
 
@@ -454,30 +454,30 @@
 /* Finalizado: ganador / perdedor */
 .riviera-organizer-reta .omc-team-row--winner {
   background: var(--ro-gold-dim, rgba(201, 162, 39, 0.14));
-  border-left-color: var(--ro-gold, var(--ro-gold));
+  border-left-color: var(--ro-gold, var(--ro-gold-border));
   box-shadow: inset 0 0 0 1px var(--ro-gold-border, rgba(201, 162, 39, 0.25));
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-label {
-  color: var(--ro-gold-light, var(--ro-gold-light));
+  color: var(--ro-gold-light, var(--ro-gold-text));
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-name {
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-score {
-  color: var(--ro-gold-light, var(--ro-gold-light));
+  color: var(--ro-gold-light, var(--ro-gold-text));
   font-size: 34px;
   font-weight: 500;
 }
 
 .riviera-organizer-reta .omc-team-row--winner .team-badge--a,
 .riviera-organizer-reta .omc-team-row--winner .team-badge--b {
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   background: rgba(0, 0, 0, 0.32);
   border-color: rgba(255, 255, 255, 0.28);
 }
@@ -494,18 +494,18 @@
 
 .riviera-organizer-reta .omc-team-row--tie {
   background: var(--ro-gold-dim, rgba(201, 162, 39, 0.14));
-  border-left-color: var(--ro-gold, var(--ro-gold));
+  border-left-color: var(--ro-gold, var(--ro-gold-border));
   box-shadow: inset 0 0 0 1px var(--ro-gold-border, rgba(201, 162, 39, 0.25));
 }
 
 .riviera-organizer-reta .omc-team-row--tie .omc-team-name {
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font-size: 14px;
   font-weight: 700;
 }
 
 .riviera-organizer-reta .omc-team-row--tie .omc-team-score {
-  color: var(--ro-gold-light, var(--ro-gold-light));
+  color: var(--ro-gold-light, var(--ro-gold-text));
   font-size: 34px;
   font-weight: 500;
 }
@@ -533,7 +533,7 @@
 .riviera-organizer-reta .omc-tie-banner__icon {
   font-size: 14px;
   line-height: 1;
-  color: var(--ro-gold, var(--ro-gold));
+  color: var(--ro-gold, var(--ro-gold-text));
 }
 
 .riviera-organizer-reta .omc-tie-banner__label {
@@ -542,14 +542,14 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ro-gold, var(--ro-gold));
+  color: var(--ro-gold, var(--ro-gold-text));
 }
 
 .riviera-organizer-reta .omc-tie-banner__score {
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 500;
-  color: var(--ro-gold-light, var(--ro-gold-light));
+  color: var(--ro-gold-light, var(--ro-gold-text));
   letter-spacing: 0.02em;
 }
 
@@ -559,7 +559,7 @@
 }
 
 .riviera-organizer-reta .omc-result-strip--tie .omc-result-strip__label {
-  color: var(--ro-gold, var(--ro-gold));
+  color: var(--ro-gold, var(--ro-gold-text));
 }
 
 .riviera-organizer-reta .omc-team-row--loser {
@@ -689,7 +689,7 @@
   font-size: 18px;
   font-weight: 600;
   text-align: center;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 6px;
@@ -735,7 +735,7 @@
 }
 
 .riviera-organizer-reta .omc-btn-add:hover:not(:disabled) {
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   border-color: rgba(255, 255, 255, 0.3);
   background: rgba(255, 255, 255, 0.14);
 }
@@ -745,7 +745,7 @@
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 600;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.45);
   border-radius: 6px;
@@ -861,7 +861,7 @@
 
 .riviera-organizer-reta .omc-footer-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.14);
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .riviera-organizer-reta .omc-footer-btn--ghost {
@@ -1015,7 +1015,7 @@
 .rr-championship__winner-name {
   margin: 0.2rem 0 0;
   font-size: 1rem;
-  color: var(--ro-bg-card);
+  color: var(--ro-text-primary);
 }
 
 .matches-team-winner {

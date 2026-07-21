@@ -64,7 +64,7 @@
 
 .rjp-rating-nivel__badge--media,
 .rjp-rating-nivel__badge--calibrando {
-  color: var(--brand-warning, var(--ro-gold));
+  color: var(--brand-warning, var(--ro-gold-text));
 }
 
 .rjp-rating-nivel__meta {

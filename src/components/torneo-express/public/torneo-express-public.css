@@ -871,11 +871,11 @@
 }
 
 .te-pub-standing-card--leader .te-pub-standing-card__pos {
-  color: var(--ro-gold, var(--ro-gold));
+  color: var(--ro-gold, var(--ro-gold-text));
 }
 
 .te-pub-standing-card--leader .te-pub-standing-card__name {
-  color: var(--ro-gold-light, var(--ro-gold-light));
+  color: var(--ro-gold-light, var(--ro-gold-text));
 }
 
 .te-pub-standing-card__pos-bg {
@@ -1140,7 +1140,7 @@
 }
 
 .te-pub-match__team--tie {
-  color: var(--ro-gold-light, var(--ro-gold-light));
+  color: var(--ro-gold-light, var(--ro-gold-text));
   font-weight: 700;
 }
 

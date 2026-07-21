@@ -22,7 +22,7 @@
   max-height: min(80vh, 640px);
   display: flex;
   flex-direction: column;
-  background: var(--admin-surface, var(--ro-text-primary));
+  background: var(--admin-surface, var(--ro-bg-card));
   border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   border-radius: 12px;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
@@ -40,7 +40,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--admin-text, var(--ro-bg-surface));
+  color: var(--admin-text, var(--ro-text-primary));
 }
 
 .grant-access-modal__close {
@@ -72,7 +72,7 @@
   border-radius: 8px;
   border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: var(--admin-input-bg, #09090b);
-  color: var(--admin-text, var(--ro-bg-surface));
+  color: var(--admin-text, var(--ro-text-primary));
   font-size: 0.875rem;
 }
 
@@ -102,13 +102,13 @@
   border-radius: 8px;
   border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: var(--admin-input-bg, #09090b);
-  color: var(--admin-text, var(--ro-bg-surface));
+  color: var(--admin-text, var(--ro-text-primary));
   cursor: pointer;
   text-align: left;
 }
 
 .grant-access-modal__option--selected {
-  border-color: var(--admin-accent, var(--ro-gold));
+  border-color: var(--admin-accent, var(--ro-gold-border));
   box-shadow: inset 0 0 0 1px var(--admin-accent, var(--ro-gold));
 }
 
@@ -141,13 +141,13 @@
 .grant-access-modal__btn--ghost {
   border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: transparent;
-  color: var(--admin-text, var(--ro-bg-surface));
+  color: var(--admin-text, var(--ro-text-primary));
 }
 
 .grant-access-modal__btn--primary {
   border: none;
-  background: var(--admin-accent, var(--ro-gold));
-  color: var(--ro-bg-card);
+  background: var(--admin-accent, var(--ro-gold-dim));
+  color: var(--ro-text-primary);
 }
 
 .grant-access-modal__btn:disabled {

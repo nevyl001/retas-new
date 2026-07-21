@@ -28,7 +28,7 @@
   gap: 0.65rem;
   padding: 0.35rem 0 0.75rem;
   margin-bottom: 0.65rem;
-  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-bg-inset)));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-border)));
 }
 
 @media (min-width: 900px) {
@@ -46,7 +46,7 @@
   font-family: var(--brand-font-body, var(--ro-font-body, inherit));
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-text-primary)));
 }
 
 @media (min-width: 900px) {
@@ -69,7 +69,7 @@
   font-weight: var(--brand-heading-weight, 700);
   letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
   line-height: 1.15;
-  color: var(--brand-text, var(--ro-text-primary, var(--ro-bg-card)));
+  color: var(--brand-text, var(--ro-text-primary, var(--ro-text-primary)));
 }
 
 .qm-event-header__status {
@@ -163,7 +163,7 @@
 .qm-event-header__metric-value {
   font-size: 0.9rem;
   font-weight: 650;
-  color: var(--ro-text-primary, var(--ro-bg-card));
+  color: var(--ro-text-primary, var(--ro-text-primary));
   overflow-wrap: anywhere;
 }
 
@@ -175,7 +175,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-text-primary)));
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -287,14 +287,14 @@
   border-radius: var(--ro-radius-sm, 6px);
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--ro-text-on-accent, var(--ro-chrome-bg));
-  background: var(--ro-text-muted, var(--ro-text-muted));
+  color: var(--ro-text-on-accent, var(--ro-text-primary));
+  background: var(--ro-text-muted, var(--ro-bg-inset));
 }
 
 .qm-stepper__btn.is-active .qm-stepper__index,
 .qm-stepper__btn.is-complete .qm-stepper__index {
   background: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
-  color: var(--ro-text-on-accent, var(--ro-chrome-bg));
+  color: var(--ro-text-on-accent, var(--ro-text-primary));
 }
 
 .qm-stepper__copy {
@@ -306,7 +306,7 @@
 .qm-stepper__label {
   font-size: 0.8125rem;
   font-weight: 650;
-  color: var(--ro-text-primary, var(--ro-bg-card));
+  color: var(--ro-text-primary, var(--ro-text-primary));
 }
 
 .qm-stepper__count {
@@ -338,7 +338,7 @@
 }
 
 .qm-stepper__btn.is-active .qm-stepper__state {
-  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-text-primary)));
 }
 
 .qm-stepper__btn.is-complete .qm-stepper__state {
@@ -367,7 +367,7 @@
   font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
   font-size: 1rem;
   font-weight: 700;
-  color: var(--ro-text-primary, var(--ro-bg-card));
+  color: var(--ro-text-primary, var(--ro-text-primary));
 }
 
 .qm-ws__workbench-body {
@@ -382,7 +382,7 @@
 .qm-ws__workbench .elegant-pair-header {
   margin-bottom: 0.65rem;
   padding-bottom: 0.45rem;
-  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-bg-inset));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-border));
 }
 
 .qm-ws__equipos-stack {
@@ -434,17 +434,17 @@
 }
 
 .qm-ws__ready-check .is-ok .qm-ws__ready-mark {
-  background: color-mix(in srgb, var(--ro-success, var(--ro-success)) 18%, transparent);
+  background: color-mix(in srgb, var(--ro-success, var(--ro-success-dim)) 18%, transparent);
   color: var(--ro-success, var(--ro-success));
 }
 
 .qm-ws__ready-check .is-miss .qm-ws__ready-mark {
-  background: color-mix(in srgb, var(--ro-error, var(--ro-error)) 16%, transparent);
+  background: color-mix(in srgb, var(--ro-error, var(--ro-error-dim)) 16%, transparent);
   color: var(--ro-error, var(--ro-error));
 }
 
 .qm-ws__ready-copy {
-  color: var(--ro-text-primary, var(--ro-bg-card));
+  color: var(--ro-text-primary, var(--ro-text-primary));
 }
 
 .qm-ws__ready-check .is-soft .qm-ws__ready-copy,
@@ -460,7 +460,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-text-primary)));
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -490,7 +490,7 @@
 
 .qm-ws-panel__block {
   padding: 0.75rem 0.9rem;
-  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-bg-inset));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-border));
 }
 
 .qm-ws-panel__block:last-child {
@@ -533,18 +533,18 @@
 }
 
 .qm-ws-panel__progress li.is-ok {
-  color: var(--ro-text-primary, var(--ro-bg-card));
+  color: var(--ro-text-primary, var(--ro-text-primary));
 }
 
 .qm-ws-panel__progress li.is-ok::before {
-  background: var(--ro-success, var(--ro-success));
+  background: var(--ro-success, var(--ro-success-dim));
 }
 
 .qm-ws-panel__conv-line {
   margin: 0 0 0.15rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--ro-text-primary, var(--ro-bg-card));
+  color: var(--ro-text-primary, var(--ro-text-primary));
   line-height: 1.35;
 }
 
@@ -649,7 +649,7 @@
     z-index: var(--ro-z-sticky, 50);
     padding: 0.55rem var(--ro-mobile-page-padding, 16px)
       calc(0.55rem + env(safe-area-inset-bottom, 0px));
-    background: color-mix(in srgb, var(--ro-bg-base, var(--ro-chrome-bg)) 94%, transparent);
+    background: color-mix(in srgb, var(--ro-bg-base, var(--ro-bg-base)) 94%, transparent);
     border-top: 1px solid var(--ro-border, var(--ro-border));
     backdrop-filter: blur(10px);
   }
