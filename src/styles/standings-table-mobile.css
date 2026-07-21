@@ -22,7 +22,7 @@
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--text-muted, rgba(255, 255, 255, 0.45));
+    color: var(--text-muted, var(--ro-text-muted));
     text-align: right;
   }
 
@@ -48,7 +48,7 @@
     z-index: 2;
     min-width: 36px;
     background-color: var(--standings-sticky-bg, var(--ro-bg-inset));
-    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--ro-shadow-sm);
   }
 
   .tabla-ranking .col-entity {
@@ -60,7 +60,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     background-color: var(--standings-sticky-bg, var(--ro-bg-inset));
-    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.25);
+    box-shadow: var(--ro-shadow-sm);
   }
 
   .te-standings-table tr.te-row-top .col-pos,

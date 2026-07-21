@@ -17,7 +17,7 @@
 /* Card */
 .riviera-card {
   background: var(--bg-surface);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--ro-border-subtle);
   border-radius: var(--radius-lg);
   padding: 1rem;
   transition: background var(--transition-fast), border-color var(--transition-fast),
@@ -30,7 +30,7 @@
 
 .riviera-card--interactive:hover {
   background: var(--bg-elevated);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: var(--ro-border);
   box-shadow: var(--shadow-elevated);
   transform: translateY(-2px);
 }
@@ -150,7 +150,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
   color: var(--text-primary);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
@@ -163,7 +163,7 @@
 }
 
 .riviera-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--ro-bg-elevated);
   border-color: var(--border-strong);
 }
 
@@ -187,7 +187,7 @@
 }
 
 .riviera-btn-back:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--ro-bg-elevated);
   border-color: var(--accent);
   color: var(--text-primary);
 }

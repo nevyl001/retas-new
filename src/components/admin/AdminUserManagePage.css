@@ -135,7 +135,7 @@
 
 .admin-user-page__email-input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: var(--ro-border);
 }
 
 .admin-user-page__email-actions {
@@ -159,7 +159,7 @@
 .admin-user-page__email-btn:hover:not(:disabled) {
   color: var(--admin-text);
   border-color: var(--ro-border-strong);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ro-bg-inset);
 }
 
 .admin-user-page__email-btn--primary {
@@ -214,7 +214,7 @@
   padding: 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--admin-border);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ro-bg-inset);
   text-align: center;
 }
 
@@ -242,7 +242,7 @@
   padding: 0.875rem 1rem;
   border-radius: 8px;
   border: 1px solid var(--admin-border);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ro-bg-inset);
 }
 
 .admin-user-page__ranking-label {

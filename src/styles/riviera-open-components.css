@@ -137,7 +137,7 @@
   content: "";
   flex: 1;
   height: 0.5px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent);
+  background: linear-gradient(90deg, var(--ro-bg-elevated), transparent);
 }
 
 .rv-muted {
@@ -169,7 +169,7 @@
 
 .rv-pill--muted {
   color: var(--rv-text-muted);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ro-bg-inset);
   border-color: var(--ro-border);
 }
 
@@ -181,7 +181,7 @@
 
 .rv-pill--pending {
   color: var(--rv-text-muted);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ro-bg-inset);
   border-color: var(--ro-border-subtle);
 }
 
@@ -399,7 +399,7 @@
   text-align: center;
   border-radius: var(--rv-radius);
   border: 0.5px dashed var(--ro-border);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ro-bg-inset);
 }
 
 .rv-empty-state__icon {

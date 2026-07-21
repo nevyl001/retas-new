@@ -2,8 +2,8 @@
   margin: 0 0 0.75rem;
   padding: 0.5rem 0.65rem;
   border-radius: 8px;
-  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-default, var(--ro-border-subtle));
+  background: var(--ro-bg-inset);
   font-size: 0.75rem;
   line-height: 1.4;
   color: var(--color-text-secondary, var(--ro-text-muted));
@@ -44,8 +44,8 @@
 }
 
 .te-standings-block .standings-scoring-help {
-  border-color: var(--te-border, rgba(255, 255, 255, 0.1));
-  background: rgba(0, 0, 0, 0.25);
+  border-color: var(--te-border, var(--ro-border));
+  background: var(--ro-bg-overlay);
 }
 
 .americano-ranking .standings-scoring-help {
