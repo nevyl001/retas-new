@@ -153,8 +153,9 @@ describe("public branding flash contract", () => {
     );
     expect(container.querySelector(".club-identity")).toBeNull();
     // Pending = mismos acentos que Riviera Open (sin flash gris/oro).
-    expect(scope?.style.getPropertyValue("--ro-accent").trim()).toBe("#ffffff");
-    expect(scope?.style.getPropertyValue("--brand-accent").trim()).toBe("#ffffff");
+    // Tras la migración a paleta v2.0 el acento es tinta (#15191F), no blanco.
+    expect(scope?.style.getPropertyValue("--ro-accent").trim()).toBe("#15191F");
+    expect(scope?.style.getPropertyValue("--brand-accent").trim()).toBe("#15191F");
   });
 
   it("loader neutro no incluye Riviera Open ni logo", () => {
