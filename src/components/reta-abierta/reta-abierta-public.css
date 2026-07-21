@@ -26,6 +26,22 @@
   box-sizing: border-box;
 }
 
+/* Marca madre (Riviera/pending) sobre la convocatoria oscura: el scope de
+   experiencia (.club-experience-scope) inyecta --ro-accent inline con el acento
+   del club, que en Riviera es tinta (#15191F). Ese scope es ancestro más cercano
+   que .App.ro-surface-dark, así que su valor inline gana y el botón primario
+   (Continuar, Quiero jugar, Copiar convocatoria…), el badge y el chip de cupo
+   quedaban tinta oscura sobre el court oscuro → invisibles. Igual que el ranking
+   público, aquí el acento pasa a oro claro, legible sobre oscuro. Los clubes con
+   marca propia (data-brand != riviera/pending) conservan su acento, que sí
+   contrasta en oscuro. */
+.club-experience-scope[data-brand="riviera"] .ra-public,
+.club-experience-scope[data-brand="pending"] .ra-public {
+  --ro-accent: var(--ro-gold-light);
+  --ro-accent-hover: var(--ro-gold);
+  --ro-border-accent: color-mix(in srgb, var(--ro-gold-light) 45%, transparent);
+}
+
 .ra-public__hero {
   margin-bottom: 1.25rem;
 }
