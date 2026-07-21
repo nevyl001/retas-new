@@ -118,6 +118,19 @@
   color: var(--ro-gold-light);
 }
 
+/* Horario de inicio (StatusBadge "upcoming"/pending del hero, p. ej.
+   "INICIA A LAS 3:00 P.M."). Por defecto el pill pending es gris muted y sobre el
+   court oscuro se perdía. En la vista pública debe RESALTAR: pill de oro relleno
+   con tinta oscura, el acento de exhibición Riviera. Live (verde) y done (oro
+   suave) ya destacan por sí solos, así que solo reforzamos el estado próximo. */
+.ro-public-view .peds-hero__estado .rv-pill--pending,
+.te-public .peds-hero__estado .rv-pill--pending {
+  color: var(--ro-chrome-bg);
+  background: var(--ro-gold-light);
+  border-color: var(--ro-gold-light);
+  box-shadow: 0 2px 14px rgba(223, 190, 127, 0.28);
+}
+
 /* —— Badge cancha unificado (rojo) —— */
 .ro-public-view .te-pub-cancha,
 .ro-public-view .te-pub-match-chip--cancha {
