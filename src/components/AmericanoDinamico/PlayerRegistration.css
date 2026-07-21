@@ -11,11 +11,11 @@
 
 .americano-registration__selected-title {
   margin: 1rem 0 0.5rem;
-  font-size: var(--ro-text-label, 0.6875rem);
+  font-size: var(--ro-text-label);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ro-text-muted, var(--color-text-secondary, var(--ro-text-secondary)));
+  color: var(--ro-text-muted);
 }
 
 .americano-registration__conv {
@@ -23,19 +23,19 @@
 }
 
 .americano-registration .card {
-  border: 0.5px solid var(--ro-border-subtle, var(--ro-border-subtle));
-  border-radius: var(--ro-radius-lg, 14px);
+  border: 0.5px solid var(--ro-border-subtle);
+  border-radius: var(--ro-radius-lg);
   padding: clamp(16px, 4vw, 20px);
-  background: var(--ro-bg-elevated, var(--color-bg-surface, var(--ro-bg-inset)));
+  background: var(--ro-bg-elevated);
 }
 
 .americano-registration__format-note {
   margin: 0;
   padding: 0.75rem 0.85rem;
-  border-radius: var(--ro-radius-md, 12px);
-  border: 0.5px solid var(--ro-border, var(--ro-border));
+  border-radius: var(--ro-radius-md);
+  border: 0.5px solid var(--ro-border);
   background: var(--ro-bg-inset);
-  color: var(--ro-text-secondary, var(--color-text-secondary, var(--ro-text-secondary)));
+  color: var(--ro-text-secondary);
   font-size: 0.8125rem;
   line-height: 1.5;
 }
@@ -49,9 +49,9 @@
 .americano-registration__controls input {
   flex: 1;
   border-radius: 8px;
-  border: 0.5px solid var(--ro-border, var(--ro-border));
-  background: var(--ro-bg-input, var(--color-bg-elevated, var(--ro-bg-card)));
-  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-text-primary)));
+  border: 0.5px solid var(--ro-border);
+  background: var(--ro-bg-input);
+  color: var(--ro-text-primary);
   padding: 8px 10px;
 }
 
@@ -65,16 +65,16 @@
 .americano-registration__meta p {
   margin: 0;
   font-size: 0.875rem;
-  color: var(--ro-text-secondary, var(--color-text-secondary, var(--ro-text-secondary)));
+  color: var(--ro-text-secondary);
 }
 
 .americano-registration .card h4 {
   margin: 0 0 12px;
-  font-size: var(--ro-text-label, 0.6875rem);
+  font-size: var(--ro-text-label);
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ro-text-muted, var(--color-text-secondary, var(--ro-text-secondary)));
+  color: var(--ro-text-muted);
 }
 
 .americano-registration__list {
@@ -92,13 +92,13 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  border: 0.5px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border: 0.5px solid var(--ro-border-subtle);
   border-radius: 10px;
   padding: 10px 12px;
 }
 
 .americano-registration__empty {
-  color: var(--ro-text-secondary, var(--color-text-secondary, var(--ro-text-secondary)));
+  color: var(--ro-text-secondary);
   font-size: 0.875rem;
   line-height: 1.45;
 }
@@ -121,15 +121,15 @@
   align-items: center;
   gap: 8px;
   font-size: 0.875rem;
-  color: var(--ro-text-secondary, var(--color-text-secondary, var(--ro-text-secondary)));
+  color: var(--ro-text-secondary);
 }
 
 .americano-registration__start input {
   width: 90px;
   border-radius: 8px;
-  border: 0.5px solid var(--ro-border, var(--ro-border));
-  background: var(--ro-bg-input, var(--color-bg-elevated, var(--ro-bg-card)));
-  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-text-primary)));
+  border: 0.5px solid var(--ro-border);
+  background: var(--ro-bg-input);
+  color: var(--ro-text-primary);
   padding: 8px 10px;
 }
 
@@ -139,7 +139,7 @@
 
 .americano-registration__hint {
   margin: 0 0 12px;
-  color: var(--ro-text-secondary, var(--color-text-secondary, var(--ro-text-secondary)));
+  color: var(--ro-text-secondary);
   font-size: 0.8125rem;
   line-height: 1.45;
 }
@@ -152,11 +152,11 @@
 
 .americano-registration__db-item {
   text-align: left;
-  border: 0.5px solid var(--ro-border, var(--ro-border));
-  background: var(--ro-bg-input, var(--color-bg-elevated, var(--ro-bg-card)));
+  border: 0.5px solid var(--ro-border);
+  background: var(--ro-bg-input);
   border-radius: 10px;
   padding: 10px 12px;
-  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-text-primary)));
+  color: var(--ro-text-primary);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -166,14 +166,14 @@
 }
 
 .americano-registration__db-item:hover {
-  border-color: var(--ro-border-accent, var(--ro-border));
+  border-color: var(--ro-border-accent);
   background: var(--ro-bg-inset);
 }
 
 .americano-registration__db-item.selected {
   border-color: rgba(61, 122, 92, 0.45);
   background: rgba(61, 122, 92, 0.12);
-  color: var(--ro-text-primary, var(--ro-text-primary));
+  color: var(--ro-text-primary);
 }
 
 .americano-btn {
@@ -187,9 +187,9 @@
 }
 
 .americano-btn--ghost {
-  border-color: var(--ro-border, var(--ro-border));
-  background: var(--ro-bg-elevated, var(--color-bg-elevated, var(--ro-bg-card)));
-  color: var(--ro-text-primary, var(--color-text-primary, var(--ro-text-primary)));
+  border-color: var(--ro-border);
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-primary);
 }
 
 .americano-btn--danger {
@@ -199,9 +199,9 @@
 }
 
 .americano-btn--primary {
-  background: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
-  color: var(--ro-text-on-accent, var(--ro-text-primary));
-  border-color: var(--brand-accent, var(--ro-accent, var(--ro-border)));
+  background: var(--brand-accent, var(--ro-accent));
+  color: var(--ro-text-on-accent);
+  border-color: var(--brand-accent, var(--ro-accent));
 }
 
 .americano-btn:disabled {
@@ -212,7 +212,7 @@
 .americano-registration__courts-hint {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--ro-text-muted, var(--color-text-secondary, var(--ro-text-secondary)));
+  color: var(--ro-text-muted);
   line-height: 1.45;
 }
 

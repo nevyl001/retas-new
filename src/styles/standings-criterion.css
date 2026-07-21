@@ -10,7 +10,7 @@
   font-size: 0.58em;
   font-weight: 700;
   vertical-align: super;
-  color: var(--ro-gold, var(--ro-gold-text));
+  color: var(--ro-gold);
   line-height: 1;
 }
 
@@ -27,12 +27,12 @@
 }
 
 .te-pub-standings-row--leader .standings-criterion-cell--rank-1 {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
   font-weight: 700;
 }
 
 .te-pub-standings-row--leader .standings-criterion-cell--rank-2 {
-  color: var(--ro-gold, var(--ro-gold-text));
+  color: var(--ro-gold);
   font-weight: 600;
 }
 
@@ -54,11 +54,11 @@
 }
 
 .standings-mobile-card--leader .standings-mobile-card__stat--criterion-1 .standings-mobile-card__stat-value {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
 }
 
 .standings-mobile-card--leader .standings-mobile-card__stat--criterion-2 .standings-mobile-card__stat-value {
-  color: var(--ro-gold, var(--ro-gold-text));
+  color: var(--ro-gold);
 }
 
 .standings-mobile-card--leader .standings-mobile-card__stat--criterion-3 .standings-mobile-card__stat-value {
@@ -77,6 +77,6 @@
 }
 
 .te-pub-standing-card--leader .te-pub-standing-card__criterion-fav {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
   font-weight: 700;
 }

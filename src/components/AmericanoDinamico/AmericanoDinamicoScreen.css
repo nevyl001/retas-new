@@ -18,8 +18,8 @@
 
 @media (max-width: 899px) {
   .americano-screen:has(.qm-ws) {
-    padding: 12px var(--ro-mobile-page-padding, 16px)
-      calc(40px + var(--ro-safe-bottom, env(safe-area-inset-bottom, 0px)));
+    padding: 12px var(--ro-mobile-page-padding)
+      calc(40px + var(--ro-safe-bottom));
   }
 
   .americano-registration--workspace .americano-registration__db-grid {

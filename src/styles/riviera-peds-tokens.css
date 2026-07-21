@@ -76,8 +76,8 @@
   --pub-motion-hover: var(--pub-motion-duration-fast) var(--pub-motion-ease-default);
 
   /* ── Tipografía — familia hereda club; escala es estructura PEDS ── */
-  --pub-font-display: var(--font-display, var(--ro-font-heading, inherit));
-  --pub-font-body: var(--font-body, var(--ro-font-body, inherit));
+  --pub-font-display: var(--font-display, var(--ro-font-heading));
+  --pub-font-body: var(--font-body, var(--ro-font-body));
   --pub-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
   --pub-font-weight-regular: 400;

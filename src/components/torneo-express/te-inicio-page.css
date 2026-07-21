@@ -127,8 +127,8 @@
 /* Event card compacta */
 .torneo-express-page.te-inicio-page .te-torneo-card {
   padding: 0;
-  border-radius: var(--ro-radius-lg, 14px);
-  border: 0.5px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-radius: var(--ro-radius-lg);
+  border: 0.5px solid var(--ro-border-subtle);
   background: var(--ro-bg-inset);
   box-shadow: none;
   opacity: 1;
@@ -195,7 +195,7 @@
 
 .torneo-express-page.te-inicio-page .te-torneo-card__nombre {
   margin: 0;
-  font-family: var(--ro-font-heading, var(--font-body));
+  font-family: var(--ro-font-heading);
   font-size: clamp(1.125rem, 2.2vw, 1.375rem);
   font-weight: 700;
   line-height: 1.2;
@@ -222,7 +222,7 @@
 .torneo-express-page.te-inicio-page .te-torneo-card__footer {
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 0.5px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-top: 0.5px solid var(--ro-border-subtle);
 }
 
 .torneo-express-page.te-inicio-page .te-torneo-card__actions-bar {
@@ -340,9 +340,9 @@
 
 .torneo-express-page.te-inicio-page .te-torneos-empty {
   padding: clamp(20px, 5vw, 28px);
-  border-radius: var(--ro-radius-lg, 14px);
+  border-radius: var(--ro-radius-lg);
   background: var(--ro-bg-inset);
-  border: 0.5px dashed var(--ro-border, var(--ro-border));
+  border: 0.5px dashed var(--ro-border);
   color: var(--te-inicio-text-secondary);
   text-align: center;
   line-height: 1.55;
@@ -383,8 +383,8 @@
 
 .torneo-express-page.te-inicio-page .te-crear-layout__panel,
 .torneo-express-page.te-inicio-page .te-crear-step--players {
-  border-radius: var(--ro-radius-lg, 14px);
-  border: 0.5px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-radius: var(--ro-radius-lg);
+  border: 0.5px solid var(--ro-border-subtle);
   background: var(--ro-bg-inset);
 }
 
@@ -420,7 +420,7 @@
 .torneo-express-page.te-inicio-page .te-crear-step + .te-crear-step {
   margin-top: clamp(20px, 4vw, 28px);
   padding-top: clamp(20px, 4vw, 28px);
-  border-top: 0.5px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-top: 0.5px solid var(--ro-border-subtle);
 }
 
 .torneo-express-page.te-inicio-page .te-crear-layout__panel .te-crear-step:first-child {
@@ -664,7 +664,7 @@
   width: 100%;
   margin-top: clamp(20px, 3vw, 28px);
   padding-top: clamp(20px, 3vw, 28px);
-  border-top: 0.5px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-top: 0.5px solid var(--ro-border-subtle);
 }
 
 .torneo-express-page.te-inicio-page .te-crear-submit.riviera-btn {

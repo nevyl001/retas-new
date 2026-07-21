@@ -18,7 +18,7 @@
   color: var(--riviera-white);
   position: relative;
   overflow-x: hidden;
-  font-family: var(--ro-font-body, Inter, system-ui, sans-serif);
+  font-family: var(--ro-font-body);
   -webkit-font-smoothing: antialiased;
 }
 

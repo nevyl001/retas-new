@@ -69,7 +69,7 @@
 .te-elim-champion strong,
 .te-elim-champion__names {
   font-weight: 700;
-  color: var(--ro-medal-gold, var(--accent-gold));
+  color: var(--ro-medal-gold);
   letter-spacing: -0.01em;
 }
 

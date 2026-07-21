@@ -54,7 +54,7 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 28%, transparent);
+  background: color-mix(in srgb, var(--ro-accent) 28%, transparent);
   color: var(--ro-text-primary);
 }
 
@@ -97,7 +97,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--ro-text-primary);
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 82%, var(--ro-bg-card));
+  background: color-mix(in srgb, var(--ro-accent) 82%, var(--ro-bg-card));
   white-space: nowrap;
 }
 
@@ -206,13 +206,13 @@
 
 .ra-player-card--invite {
   opacity: 1;
-  border: 1.5px solid color-mix(in srgb, var(--ro-accent, var(--ro-gold-border)) 72%, var(--ro-border));
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 14%, var(--ro-bg-elevated));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ro-accent, var(--ro-gold)) 22%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--ro-accent) 72%, var(--ro-border));
+  background: color-mix(in srgb, var(--ro-accent) 14%, var(--ro-bg-elevated));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ro-accent) 22%, transparent);
 }
 
 .ra-player-card__avatar--invite {
-  background: var(--ro-accent, var(--ro-gold-dim));
+  background: var(--ro-accent);
   color: var(--ro-text-primary);
   font-size: 1.25rem;
   font-weight: 800;
@@ -227,7 +227,7 @@
   margin-top: 0.15rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: color-mix(in srgb, var(--ro-accent, var(--ro-gold-text)) 75%, var(--ro-text-primary));
+  color: color-mix(in srgb, var(--ro-accent) 75%, var(--ro-text-primary));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -275,7 +275,7 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 35%, var(--ro-bg-card));
+  background: color-mix(in srgb, var(--ro-accent) 35%, var(--ro-bg-card));
   flex-shrink: 0;
   font-weight: 700;
   color: var(--ro-text-primary);
@@ -303,7 +303,7 @@
 }
 
 .ra-public__hint--warn {
-  border-left: 3px solid var(--ro-accent, var(--ro-gold-border));
+  border-left: 3px solid var(--ro-accent);
   padding-left: 0.65rem;
   color: var(--ra-ink);
 }
@@ -356,7 +356,7 @@
 }
 
 .ra-btn--primary {
-  background: var(--ro-accent, var(--ro-gold-dim));
+  background: var(--ro-accent);
   color: var(--ro-text-primary);
 }
 
@@ -407,7 +407,7 @@
 }
 
 .ra-public__last {
-  color: var(--ro-accent, var(--ro-gold-text));
+  color: var(--ro-accent);
 }
 
 .ra-public__sheet--success {
@@ -440,13 +440,13 @@
 
 .ra-public__hint--ok {
   margin-top: 0.85rem;
-  color: var(--ro-accent, var(--ro-gold-text));
+  color: var(--ro-accent);
 }
 
 .ra-confirm-card__rating {
   margin-top: 0.35rem;
   font-weight: 700;
-  color: var(--ro-accent, var(--ro-gold-text));
+  color: var(--ro-accent);
 }
 
 /* Duelo 2 vs 2 — lados de cancha */
@@ -486,13 +486,13 @@
 
 .ra-duelo-side--open.ra-duelo-side--pick {
   border-width: 1.5px;
-  border-color: color-mix(in srgb, var(--ro-accent, var(--ro-gold-border)) 65%, var(--ro-border));
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 10%, var(--ro-bg-overlay));
+  border-color: color-mix(in srgb, var(--ro-accent) 65%, var(--ro-border));
+  background: color-mix(in srgb, var(--ro-accent) 10%, var(--ro-bg-overlay));
 }
 
 .ra-duelo-side--joining {
-  border-color: var(--ro-accent, var(--ro-gold-border));
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 16%, var(--ro-bg-overlay));
+  border-color: var(--ro-accent);
+  background: color-mix(in srgb, var(--ro-accent) 16%, var(--ro-bg-overlay));
 }
 
 .ra-duelo-side--taken {
@@ -524,7 +524,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ro-accent, var(--ro-gold-text));
+  color: var(--ro-accent);
 }
 
 .ra-duelo-side--b .ra-duelo-side__label {
@@ -556,7 +556,7 @@
 .ra-duelo-side--pick:focus-visible {
   outline: none;
   transform: translateY(-1px);
-  border-color: var(--ro-accent, var(--ro-gold-border));
+  border-color: var(--ro-accent);
   background: rgba(201, 162, 39, 0.16);
 }
 
@@ -578,11 +578,11 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--ro-text-primary);
-  background: var(--ro-accent, var(--ro-gold-dim));
+  background: var(--ro-accent);
 }
 
 .ra-duelo-side__cta--busy {
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 55%, var(--ro-bg-card));
+  background: color-mix(in srgb, var(--ro-accent) 55%, var(--ro-bg-card));
   color: var(--ro-text-primary);
 }
 
@@ -592,7 +592,7 @@
 }
 
 .ra-public__hint--side {
-  color: var(--ro-accent, var(--ro-gold-text));
+  color: var(--ro-accent);
 }
 
 .ra-duelo-vs {
@@ -614,7 +614,7 @@
   font-weight: 800;
   letter-spacing: 0.18em;
   color: var(--ro-text-primary);
-  background: var(--ro-accent, var(--ro-gold-dim));
+  background: var(--ro-accent);
 }
 
 .ra-duelo-slot {
@@ -663,12 +663,12 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ro-accent, var(--ro-gold-text));
+  color: var(--ro-accent);
 }
 
 .ra-cancel-option:hover,
 .ra-cancel-option:focus-visible {
-  border-color: var(--ro-accent, var(--ro-gold-border));
+  border-color: var(--ro-accent);
   outline: none;
 }
 

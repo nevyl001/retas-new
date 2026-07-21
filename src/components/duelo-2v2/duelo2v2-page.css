@@ -12,7 +12,7 @@
   padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 5vw, 4rem)
     max(2rem, env(safe-area-inset-bottom));
   background: transparent;
-  color: var(--ro-text-primary, var(--ro-text-primary));
+  color: var(--ro-text-primary);
 }
 
 .App.ro-public-view .duelo2v2-page--public,
@@ -810,7 +810,7 @@
   font-size: clamp(1.75rem, 4vw, 3rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--ro-text-primary, var(--ro-text-primary));
+  color: var(--ro-text-primary);
 }
 
 .duelo2v2-live-board__sub {

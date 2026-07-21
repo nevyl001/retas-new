@@ -12,7 +12,7 @@
   width: 28px;
   height: 28px;
   border: 2px solid var(--ro-border);
-  border-top-color: var(--ro-accent, #c9a84c);
+  border-top-color: var(--ro-accent);
   border-radius: 50%;
   animation: loading-progress-hint-spin 0.75s linear infinite;
 }

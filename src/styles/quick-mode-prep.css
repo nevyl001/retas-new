@@ -17,73 +17,73 @@
 /* Compactar el hueco entre hero/CTA y acordeón en shell organizador */
 .tournament-details:has(.qm-prep),
 .riviera-organizer-reta .tournament-details:has(.qm-prep) {
-  gap: var(--ro-space-4, 16px);
+  gap: var(--ro-space-4);
 }
 
 /* —— Hero —— */
 .qm-hero {
   display: flex;
   flex-direction: column;
-  gap: var(--ro-space-2, 8px);
-  padding: var(--ro-space-4, 16px) 0 var(--ro-space-3, 12px);
-  margin-bottom: var(--ro-space-3, 12px);
-  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-border)));
+  gap: var(--ro-space-2);
+  padding: var(--ro-space-4) 0 var(--ro-space-3);
+  margin-bottom: var(--ro-space-3);
+  border-bottom: 1px solid var(--ro-border-subtle);
 }
 
 .qm-hero__eyebrow {
   margin: 0;
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-small, 0.8125rem);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-small);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--brand-accent, var(--ro-accent, var(--ro-text-primary)));
+  color: var(--brand-accent, var(--ro-accent));
 }
 
 .qm-hero__title-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--ro-space-2, 8px) var(--ro-space-3, 12px);
+  gap: var(--ro-space-2) var(--ro-space-3);
 }
 
 .qm-hero__title {
   margin: 0;
-  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
   font-size: clamp(1.5rem, 3.2vw, 2rem);
   font-weight: var(--brand-heading-weight, 700);
   line-height: 1.15;
   letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
-  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, var(--ro-text-primary))));
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary)));
 }
 
 .qm-hero__status {
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.55rem;
-  border-radius: var(--ro-radius-full, 999px);
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-label, 0.6875rem);
+  border-radius: var(--ro-radius-full);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-label);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--rv-text-subtle, var(--ro-text-muted, var(--ro-text-muted)));
-  background: var(--ro-accent-dim, rgba(255, 255, 255, 0.08));
-  border: 1px solid var(--ro-border, var(--brand-border, var(--ro-border)));
+  color: var(--rv-text-subtle, var(--ro-text-muted));
+  background: var(--ro-accent-dim);
+  border: 1px solid var(--ro-border);
 }
 
 .qm-hero__subtitle {
   margin: 0;
   max-width: 40rem;
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-body, 0.875rem);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-body);
   line-height: 1.45;
-  color: var(--rv-text-muted, var(--ro-text-secondary, var(--ro-text-secondary)));
+  color: var(--rv-text-muted, var(--ro-text-secondary));
 }
 
 .qm-hero__stats {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ro-space-3, 12px) var(--ro-space-6, 24px);
-  margin: var(--ro-space-2, 8px) 0 0;
+  gap: var(--ro-space-3) var(--ro-space-6);
+  margin: var(--ro-space-2) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -96,27 +96,27 @@
 }
 
 .qm-hero__stat-label {
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-label, 0.6875rem);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-label);
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: var(--rv-text-subtle, var(--ro-text-muted, var(--ro-text-muted)));
+  color: var(--rv-text-subtle, var(--ro-text-muted));
 }
 
 .qm-hero__stat-value {
-  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
   font-size: 1.05rem;
   font-weight: 650;
   line-height: 1.2;
-  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, var(--ro-text-primary))));
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary)));
 }
 
 /* —— Primary CTA (mismo acento que riviera-btn-primary) —— */
 .qm-primary-cta {
   display: flex;
   flex-direction: column;
-  gap: var(--ro-space-2, 8px);
-  margin: 0 0 var(--ro-space-5, 20px);
+  gap: var(--ro-space-2);
+  margin: 0 0 var(--ro-space-5);
 }
 
 .qm-primary-cta__btn {
@@ -124,27 +124,27 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: var(--ro-touch-target-min, 44px);
+  min-height: var(--ro-touch-target-min);
   padding: 0.95rem 1.25rem;
-  border: 1px solid var(--brand-accent, var(--ro-accent, var(--ro-border)));
-  border-radius: var(--ro-radius-md, 10px);
-  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  border: 1px solid var(--brand-accent, var(--ro-accent));
+  border-radius: var(--ro-radius-md);
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   cursor: pointer;
-  color: var(--ro-text-on-accent, var(--ro-text-primary));
-  background: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  color: var(--ro-text-on-accent);
+  background: var(--brand-accent, var(--ro-accent));
   box-shadow: none;
   transition:
-    background var(--ro-transition-fast, 150ms ease),
-    border-color var(--ro-transition-fast, 150ms ease),
-    opacity var(--ro-transition-fast, 150ms ease);
+    background var(--ro-transition-fast),
+    border-color var(--ro-transition-fast),
+    opacity var(--ro-transition-fast);
 }
 
 .qm-primary-cta__btn:hover:not(:disabled) {
-  background: var(--ro-accent-hover, #e0e0e0);
-  border-color: var(--ro-accent-hover, #e0e0e0);
+  background: var(--ro-accent-hover);
+  border-color: var(--ro-accent-hover);
 }
 
 .qm-primary-cta__btn:active:not(:disabled) {
@@ -157,17 +157,17 @@
 }
 
 .qm-primary-cta__btn:focus-visible {
-  outline: 2px solid var(--brand-accent, var(--ro-accent, var(--ro-border)));
+  outline: 2px solid var(--brand-accent, var(--ro-accent));
   outline-offset: 2px;
 }
 
 .qm-primary-cta__hint {
   margin: 0;
   text-align: center;
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-small, 0.8125rem);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-small);
   line-height: 1.4;
-  color: var(--rv-text-subtle, var(--ro-text-muted, var(--ro-text-muted)));
+  color: var(--rv-text-subtle, var(--ro-text-muted));
 }
 
 /* Club accent override for CTA hover when brand ≠ white */
@@ -184,32 +184,32 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 .qm-accordion {
   display: flex;
   flex-direction: column;
-  gap: var(--ro-space-2, 8px);
+  gap: var(--ro-space-2);
 }
 
 .qm-accordion__item {
-  border-radius: var(--ro-radius-md, 10px);
-  background: var(--rv-bg-card, var(--ro-bg-card, var(--ro-bg-card)));
-  border: 1px solid var(--ro-border, var(--brand-border, var(--ro-border)));
+  border-radius: var(--ro-radius-md);
+  background: var(--rv-bg-card, var(--ro-bg-card));
+  border: 1px solid var(--ro-border);
   overflow: hidden;
   transition:
-    border-color var(--ro-transition-fast, 150ms ease),
-    background var(--ro-transition-fast, 150ms ease);
+    border-color var(--ro-transition-fast),
+    background var(--ro-transition-fast);
 }
 
 .qm-accordion__item.is-open {
-  background: var(--rv-bg-card-soft, var(--ro-bg-elevated, var(--ro-bg-inset)));
-  border-color: var(--ro-border-accent, rgba(255, 255, 255, 0.15));
-  box-shadow: inset 3px 0 0 var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  background: var(--rv-bg-card-soft, var(--ro-bg-elevated));
+  border-color: var(--ro-border-accent);
+  box-shadow: inset 3px 0 0 var(--brand-accent, var(--ro-accent));
 }
 
 .qm-accordion__trigger {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  column-gap: var(--ro-space-3, 12px);
+  column-gap: var(--ro-space-3);
   width: 100%;
-  min-height: var(--ro-touch-target-min, 44px);
+  min-height: var(--ro-touch-target-min);
   padding: 0.85rem 1rem;
   margin: 0;
   border: none;
@@ -222,11 +222,11 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 }
 
 .qm-accordion__trigger:hover {
-  background: var(--ro-accent-dim, rgba(255, 255, 255, 0.08));
+  background: var(--ro-accent-dim);
 }
 
 .qm-accordion__trigger:focus-visible {
-  outline: 2px solid var(--brand-accent, var(--ro-accent, var(--ro-border)));
+  outline: 2px solid var(--brand-accent, var(--ro-accent));
   outline-offset: -2px;
 }
 
@@ -237,7 +237,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
   flex: 0 0 auto;
   width: 1.25rem;
   height: 1.25rem;
-  color: var(--rv-text-muted, var(--ro-text-secondary, var(--ro-text-secondary)));
+  color: var(--rv-text-muted, var(--ro-text-secondary));
 }
 
 .qm-accordion__chevron::before {
@@ -247,7 +247,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: rotate(-45deg);
-  transition: transform var(--ro-transition-fast, 150ms ease);
+  transition: transform var(--ro-transition-fast);
 }
 
 .qm-accordion__item.is-open .qm-accordion__chevron::before {
@@ -262,33 +262,33 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 }
 
 .qm-accordion__title {
-  font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
   font-size: 1rem;
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
-  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, var(--ro-text-primary))));
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary)));
 }
 
 .qm-accordion__subtitle {
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-small, 0.8125rem);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-small);
   line-height: 1.35;
-  color: var(--rv-text-subtle, var(--ro-text-muted, var(--ro-text-muted)));
+  color: var(--rv-text-subtle, var(--ro-text-muted));
 }
 
 .qm-accordion__meta {
   justify-self: end;
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-small, 0.8125rem);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-small);
   font-weight: 600;
-  color: var(--rv-text-muted, var(--ro-text-secondary, var(--ro-text-secondary)));
+  color: var(--rv-text-muted, var(--ro-text-secondary));
   white-space: nowrap;
 }
 
 .qm-accordion__panel {
   padding: 0 1rem 1rem 1rem;
-  border-top: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-border)));
+  border-top: 1px solid var(--ro-border-subtle);
   animation: qm-panel-in 160ms ease;
 }
 
@@ -307,19 +307,19 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 .qm-competition {
   display: flex;
   flex-direction: column;
-  gap: var(--ro-space-4, 16px);
-  padding-top: var(--ro-space-2, 8px);
+  gap: var(--ro-space-4);
+  padding-top: var(--ro-space-2);
 }
 
 .qm-competition__banner {
-  margin: 0 0 var(--ro-space-3, 12px);
+  margin: 0 0 var(--ro-space-3);
   padding: 0.5rem 0;
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-small, 0.8125rem);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-small);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--brand-accent, var(--ro-accent, var(--ro-text-primary)));
-  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-border)));
+  color: var(--brand-accent, var(--ro-accent));
+  border-bottom: 1px solid var(--ro-border-subtle);
 }
 
 .tournament-details.qm-competition .start-tournament-section {
@@ -335,20 +335,20 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 
 .qm-details-advanced {
   margin-top: 0.75rem;
-  border-top: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-border)));
+  border-top: 1px solid var(--ro-border-subtle);
   padding-top: 0.5rem;
 }
 
 .qm-details-advanced > summary {
   cursor: pointer;
   list-style: none;
-  min-height: var(--ro-touch-target-min, 44px);
+  min-height: var(--ro-touch-target-min);
   display: flex;
   align-items: center;
-  font-family: var(--brand-font-body, var(--ro-font-body, inherit));
-  font-size: var(--ro-text-small, 0.8125rem);
+  font-family: var(--brand-font-body, var(--ro-font-body));
+  font-size: var(--ro-text-small);
   font-weight: 600;
-  color: var(--rv-text-muted, var(--ro-text-secondary, var(--ro-text-secondary)));
+  color: var(--rv-text-muted, var(--ro-text-secondary));
 }
 
 .qm-details-advanced > summary::-webkit-details-marker {
@@ -356,7 +356,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 }
 
 .qm-details-advanced[open] > summary {
-  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, var(--ro-text-primary))));
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary)));
   margin-bottom: 0.75rem;
 }
 
@@ -381,7 +381,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 
 @media (max-width: 767px) {
   .qm-hero {
-    padding-top: var(--ro-space-3, 12px);
+    padding-top: var(--ro-space-3);
   }
 
   .qm-hero__title {

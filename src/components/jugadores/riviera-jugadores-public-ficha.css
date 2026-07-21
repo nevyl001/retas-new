@@ -1,17 +1,17 @@
 /* Ficha pública jugador — pasaporte deportivo (mobile first) */
 
 .rjp-public--ficha {
-  --rjp-ficha-accent: var(--brand-accent, var(--ro-accent, var(--accent-gold, var(--ro-medal-gold))));
+  --rjp-ficha-accent: var(--brand-accent, var(--ro-accent));
   --rjp-ficha-accent-bg: color-mix(in srgb, var(--rjp-ficha-accent) 14%, transparent);
   --rjp-ficha-accent-border: color-mix(in srgb, var(--rjp-ficha-accent) 38%, transparent);
   --rjp-ficha-bg: var(--ro-bg-deep);
   --rjp-ficha-card: rgba(16, 16, 18, 0.94);
   --rjp-ficha-surface: rgba(28, 28, 32, 0.96);
-  --rjp-ficha-border: var(--ro-border, rgba(255, 255, 255, 0.1));
-  --rjp-ficha-text: var(--ro-text-primary, var(--ro-bg-card));
-  --rjp-ficha-text-2: var(--ro-text-secondary, rgba(255, 255, 255, 0.72));
-  --rjp-ficha-text-3: var(--ro-text-muted, rgba(255, 255, 255, 0.52));
-  --rjp-ficha-text-empty: var(--ro-text-muted, rgba(255, 255, 255, 0.4));
+  --rjp-ficha-border: var(--ro-border);
+  --rjp-ficha-text: var(--ro-text-primary);
+  --rjp-ficha-text-2: var(--ro-text-secondary);
+  --rjp-ficha-text-3: var(--ro-text-muted);
+  --rjp-ficha-text-empty: var(--ro-text-muted);
   /* aliases legacy */
   --rjp-ficha-gold: var(--rjp-ficha-accent);
   --rjp-ficha-gold-bg: var(--rjp-ficha-accent-bg);
@@ -297,7 +297,7 @@
   border: 2px solid var(--rjp-ficha-card);
   font-size: 7px;
   font-weight: 700;
-  color: var(--ro-text-on-accent, var(--ro-text-primary));
+  color: var(--ro-text-on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -419,7 +419,7 @@
   border: 2px solid rgba(14, 14, 16, 0.85);
   font-size: 10px;
   font-weight: 800;
-  color: var(--ro-text-on-accent, var(--ro-text-primary));
+  color: var(--ro-text-on-accent);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -685,7 +685,7 @@
 .rjp-ficha-historial__body {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-top: 1px solid var(--ro-border-subtle);
 }
 
 .rjp-ficha-historial__more {
@@ -715,7 +715,7 @@
 .rjp-ficha-historial__otros-clubes {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-top: 1px solid var(--ro-border-subtle);
 }
 
 .rjp-ficha-historial__otros-label {
@@ -885,7 +885,7 @@
   gap: 12px;
   min-height: 44px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-bottom: 1px solid var(--ro-border-subtle);
 }
 
 .rjp-ficha-activity__row:last-child {

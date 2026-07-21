@@ -118,7 +118,7 @@
   font-size: 13px;
   color: var(--rjp-ficha-text, var(--ro-text-secondary));
   padding: 8px 0;
-  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-border-subtle));
+  border-bottom: 1px solid var(--ro-border-subtle);
   min-height: 44px;
 }
 

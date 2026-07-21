@@ -10,7 +10,7 @@
   display: flex;
   justify-content: center;
   width: 100%;
-  margin: 0 0 var(--ro-space-4, 1.15rem);
+  margin: 0 0 var(--ro-space-4);
   padding: 0;
   line-height: 0;
   background: transparent;
@@ -23,7 +23,7 @@
   margin: 0;
   object-fit: contain;
   object-position: center;
-  border-radius: var(--ro-radius-xl, 18px);
+  border-radius: var(--ro-radius-xl);
   border: 1px solid var(--ro-pub-gold-border, var(--ro-gold-border));
   box-shadow:
     var(--ro-shadow-md),
@@ -54,17 +54,17 @@
 
 /* —— Header del evento —— */
 .te-public-evento-header {
-  margin-bottom: var(--ro-space-5, 1.5rem);
+  margin-bottom: var(--ro-space-5);
 }
 
 .te-public-evento-header__title {
   margin: 0 0 0.35rem;
-  font-family: var(--ro-font-heading, var(--font-display, inherit));
+  font-family: var(--ro-font-heading);
   font-size: clamp(1.65rem, 5vw, 2.35rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.1;
-  color: var(--ro-text-primary, var(--te-text, var(--text-primary)));
+  color: var(--ro-text-primary);
 }
 
 .te-public-evento-header__dates {
@@ -76,7 +76,7 @@
 
 /* —— Roles de juego: cards Riviera (oro, no arcoíris) —— */
 .te-public-evento-roles {
-  margin-bottom: var(--ro-space-6, 2rem);
+  margin-bottom: var(--ro-space-6);
 }
 
 .te-public-evento-roles__title {
@@ -88,10 +88,10 @@
 }
 
 .te-public-evento-roles__hint {
-  margin: 0 0 var(--ro-space-4, 1.15rem);
+  margin: 0 0 var(--ro-space-4);
   font-size: 0.9375rem;
   line-height: 1.45;
-  color: var(--ro-text-secondary, var(--text-secondary));
+  color: var(--ro-text-secondary);
 }
 
 .te-public-evento-roles__list {
@@ -100,7 +100,7 @@
   padding: 0;
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--ro-space-3, 0.85rem);
+  gap: var(--ro-space-3);
 }
 
 .te-public-evento-role-card {
@@ -113,16 +113,16 @@
   min-height: 4.5rem;
   padding: 0;
   box-sizing: border-box;
-  color: var(--ro-text-primary, var(--text-primary));
+  color: var(--ro-text-primary);
   background:
     linear-gradient(
       135deg,
       var(--ro-pub-gold-dim, var(--ro-gold-dim)) 0%,
       transparent 42%
     ),
-    var(--ro-bg-card, var(--ro-bg-elevated, var(--bg-elevated)));
-  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
-  border-radius: var(--ro-radius-xl, 18px);
+    var(--ro-bg-card);
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: var(--ro-radius-xl);
   box-shadow: var(--ro-shadow-sm);
   overflow: hidden;
   transition:
@@ -139,7 +139,7 @@
   top: 0.85rem;
   bottom: 0.85rem;
   width: 3px;
-  border-radius: var(--ro-radius-full, 999px);
+  border-radius: var(--ro-radius-full);
   background: linear-gradient(
     180deg,
     var(--ro-pub-gold-light, var(--ro-gold-dim)),
@@ -187,7 +187,7 @@
   width: 2.35rem;
   height: 2.35rem;
   margin-left: 0.15rem;
-  border-radius: var(--ro-radius-full, 999px);
+  border-radius: var(--ro-radius-full);
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -206,7 +206,7 @@
 }
 
 .te-public-evento-role-card__label {
-  font-family: var(--ro-font-heading, var(--font-display, inherit));
+  font-family: var(--ro-font-heading);
   font-size: clamp(1.2rem, 4.2vw, 1.45rem);
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -222,7 +222,7 @@
 .te-public-evento-role-card__action {
   font-size: 0.72rem;
   letter-spacing: 0.02em;
-  color: var(--ro-text-muted, var(--text-muted));
+  color: var(--ro-text-muted);
 }
 
 .te-public-evento-role-card__chevron {
@@ -246,10 +246,10 @@
   display: block;
   margin: 0 1.15rem 0.9rem 1.2rem;
   padding: 0.45rem 0 0;
-  border-top: 1px solid var(--ro-border-subtle, var(--border-subtle));
+  border-top: 1px solid var(--ro-border-subtle);
   font-size: 0.75rem;
   letter-spacing: 0.02em;
-  color: var(--ro-text-secondary, var(--text-secondary));
+  color: var(--ro-text-secondary);
   text-decoration: none;
 }
 
@@ -262,12 +262,12 @@
 .te-public-evento__status {
   margin: 0.75rem 0;
   font-size: 0.875rem;
-  color: var(--ro-text-secondary, var(--text-secondary));
+  color: var(--ro-text-secondary);
 }
 
 @media (min-width: 768px) {
   .te-public-evento-banner {
-    margin-bottom: var(--ro-space-5, 1.5rem);
+    margin-bottom: var(--ro-space-5);
   }
 
   .te-public-evento-banner--landscape .te-public-evento-banner__img {
@@ -285,12 +285,12 @@
   }
 
   .te-public-evento-banner__img {
-    border-radius: var(--ro-radius-xl, 20px);
+    border-radius: var(--ro-radius-xl);
   }
 
   .te-public-evento-roles__list {
     grid-template-columns: 1fr 1fr;
-    gap: var(--ro-space-4, 1rem);
+    gap: var(--ro-space-4);
   }
 
   .te-public-evento-role-card__primary {

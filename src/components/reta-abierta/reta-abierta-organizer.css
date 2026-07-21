@@ -59,8 +59,8 @@
 }
 
 .ra-org__badge--open {
-  border-color: color-mix(in srgb, var(--ro-accent, currentColor) 55%, transparent);
-  color: var(--ro-accent, inherit);
+  border-color: color-mix(in srgb, var(--ro-accent) 55%, transparent);
+  color: var(--ro-accent);
 }
 
 .ra-org__badge--paused,
@@ -111,7 +111,7 @@
 .ra-org__progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: var(--ro-accent, currentColor);
+  background: var(--ro-accent);
   transition: width 200ms ease;
 }
 
@@ -156,7 +156,7 @@
 }
 
 .ra-org__capacity-btn:focus-visible {
-  outline: 2px solid var(--ro-accent, currentColor);
+  outline: 2px solid var(--ro-accent);
   outline-offset: 2px;
 }
 
@@ -187,20 +187,20 @@
 }
 
 .ra-org__capacity-input:focus-visible {
-  outline: 2px solid var(--ro-accent, currentColor);
+  outline: 2px solid var(--ro-accent);
   outline-offset: 2px;
 }
 
 .ra-org__capacity-hint {
   margin: 0;
   font-size: 0.82rem;
-  color: var(--ro-accent, inherit);
+  color: var(--ro-accent);
 }
 
 .ra-org__ready {
   margin: 0;
   font-weight: 600;
-  color: var(--ro-accent, inherit);
+  color: var(--ro-accent);
 }
 
 .ra-org--compact .ra-org__grid {
@@ -270,7 +270,7 @@
 
 .ra-org__meetup-grid input:focus-visible,
 .ra-org__meetup-lugar input:focus-visible {
-  outline: 2px solid var(--ro-accent, currentColor);
+  outline: 2px solid var(--ro-accent);
   outline-offset: 2px;
 }
 
@@ -290,7 +290,7 @@
 }
 
 .ra-org__toggle input:focus-visible {
-  outline: 2px solid var(--ro-accent, currentColor);
+  outline: 2px solid var(--ro-accent);
   outline-offset: 2px;
 }
 
@@ -334,7 +334,7 @@
 }
 
 .ra-org__muted--warn {
-  border-left: 3px solid var(--ro-accent, currentColor);
+  border-left: 3px solid var(--ro-accent);
   padding-left: 0.55rem;
 }
 
@@ -394,7 +394,7 @@
 
 .ra-org__grid input:focus-visible,
 .ra-org__grid select:focus-visible {
-  outline: 2px solid var(--ro-accent, currentColor);
+  outline: 2px solid var(--ro-accent);
   outline-offset: 2px;
 }
 
@@ -428,13 +428,13 @@
 }
 
 .ra-org__btn:focus-visible {
-  outline: 2px solid var(--ro-accent, currentColor);
+  outline: 2px solid var(--ro-accent);
   outline-offset: 2px;
 }
 
 .ra-org__btn--primary {
   width: 100%;
-  background: var(--ro-text-primary, var(--ro-bg-base));
+  background: var(--ro-text-primary);
   border-color: transparent;
   color: var(--brand-bg, var(--ro-text-primary));
 }
@@ -473,7 +473,7 @@
 }
 
 .ra-org__more-trigger:focus-visible {
-  outline: 2px solid var(--ro-accent, currentColor);
+  outline: 2px solid var(--ro-accent);
   outline-offset: 2px;
 }
 

@@ -81,7 +81,7 @@
 
 .mis-retas-page .riviera-filter-chip--active {
   background: var(--ro-bg-elevated);
-  border-color: var(--ro-border-accent, var(--ro-border));
+  border-color: var(--ro-border-accent);
   color: var(--text-primary);
 }
 

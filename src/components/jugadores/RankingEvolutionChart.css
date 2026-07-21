@@ -1,13 +1,13 @@
 .rjp-evolution {
-  margin-top: var(--ro-space-4, 1rem);
-  padding: var(--ro-space-4, 1rem);
-  border-radius: var(--ro-radius-md, 12px);
+  margin-top: var(--ro-space-4);
+  padding: var(--ro-space-4);
+  border-radius: var(--ro-radius-md);
   background: var(--rjp-ficha-surface, var(--ro-bg-elevated));
   border: 1px solid var(--rjp-ficha-border, var(--ro-border));
 }
 
 .rjp-evolution__head {
-  margin-bottom: var(--ro-space-3, 0.75rem);
+  margin-bottom: var(--ro-space-3);
 }
 
 .rjp-evolution__title {
@@ -68,7 +68,7 @@
 
 .rjp-evolution__recent {
   list-style: none;
-  margin: var(--ro-space-3, 0.75rem) 0 0;
+  margin: var(--ro-space-3) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;

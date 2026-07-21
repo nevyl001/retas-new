@@ -25,7 +25,7 @@
   --liga-text-soft: var(--text-secondary);
   /* Fase 2B — alineado al patrón real de Torneo Express (--ro-shadow-sm),
    * en vez del valor propio anterior (0 2px 12px rgba(0,0,0,0.25)). */
-  --liga-shadow-card: var(--ro-shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.5));
+  --liga-shadow-card: var(--ro-shadow-sm);
   --liga-shadow-hover: var(--ro-shadow-md);
   --liga-shadow-gold: 0 2px 8px var(--ro-pub-gold-glow);
   --liga-shadow-green-glow: 0 0 8px rgba(16, 185, 129, 0.25);
@@ -48,6 +48,6 @@
   --liga-radius-md: 12px;
   /* Fase 2B — alineado al radio real de cards de Torneo Express (--mode-radius
    * / --ro-radius-lg = 14px), en vez del valor propio anterior (16px). */
-  --liga-radius-lg: var(--mode-radius, var(--ro-radius-lg, 14px));
+  --liga-radius-lg: var(--mode-radius, var(--ro-radius-lg));
   --liga-radius-pill: 999px;
 }

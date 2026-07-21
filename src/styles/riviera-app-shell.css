@@ -3,7 +3,7 @@
 :root {
   --mobile-app-navigation-height: 56px;
   --mobile-app-navigation-offset: calc(
-    var(--mobile-app-navigation-height) + var(--ro-safe-bottom, env(safe-area-inset-bottom, 0px)) + 8px
+    var(--mobile-app-navigation-height) + var(--ro-safe-bottom) + 8px
   );
 }
 

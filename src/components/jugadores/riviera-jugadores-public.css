@@ -262,8 +262,8 @@
 .rjp-list li:first-child .rjp-rank {
   background: linear-gradient(145deg, var(--ro-medal-gold) 0%, #a8863a 55%, var(--ro-bg-inset) 100%);
   color: var(--ro-text-on-accent);
-  border-color: var(--ro-gold-border, rgba(201, 168, 76, 0.38));
-  box-shadow: 0 0 16px var(--ro-gold-dim, rgba(201, 168, 76, 0.2));
+  border-color: var(--ro-gold-border);
+  box-shadow: 0 0 16px var(--ro-gold-dim);
 }
 
 .rjp-public .rj-avatar {

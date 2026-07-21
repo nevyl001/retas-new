@@ -563,7 +563,7 @@
 
 .te-public-podium__card--gold .te-public-podium__name,
 .te-public-podium__card[data-rank="1"] .te-public-podium__name {
-  color: var(--ro-medal-gold, var(--accent-gold));
+  color: var(--ro-medal-gold);
 }
 
 .te-public-podium__card[data-rank="2"] .te-public-podium__place,
@@ -907,12 +907,12 @@
 
 .te-pub-pair--win .te-pub-pair__label,
 .te-pub-pair--win .te-pub-pair__player-name {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
 }
 
 .te-pub-pair--tie .te-pub-pair__label,
 .te-pub-pair--tie .te-pub-pair__player-name {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
   font-weight: 700;
 }
 
@@ -974,7 +974,7 @@
 }
 
 .te-pub-pair--tie .te-pub-pair__avatar {
-  border-color: var(--ro-gold, var(--ro-gold-border));
+  border-color: var(--ro-gold);
   box-shadow: var(--ro-shadow-lg);
 }
 
@@ -1581,32 +1581,32 @@
 }
 
 .te-pub-match-winner--tie {
-  border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
-  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.12));
-  box-shadow: inset 3px 0 0 var(--ro-gold, var(--ro-gold));
+  border-color: var(--ro-gold-border);
+  background: var(--ro-gold-dim);
+  box-shadow: inset 3px 0 0 var(--ro-gold);
 }
 
 .te-pub-match-winner--tie .te-pub-match-winner__icon {
-  color: var(--ro-gold, var(--ro-gold-text));
+  color: var(--ro-gold);
 }
 
 .te-pub-match-winner--tie .te-pub-match-winner__label {
-  color: var(--ro-gold, var(--ro-gold-text));
+  color: var(--ro-gold);
 }
 
 .te-pub-match-winner--tie .te-pub-match-winner__name {
   font-weight: 600;
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
 }
 
 .te-pub-match--tie {
   box-shadow:
-    inset 0 0 0 1px var(--ro-gold-border, rgba(201, 162, 39, 0.28)),
+    inset 0 0 0 1px var(--ro-gold-border),
     0 12px 32px rgba(20, 22, 26, 0.35);
 }
 
 .te-pub-score__num--tie {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
   font-weight: 700;
 }
 

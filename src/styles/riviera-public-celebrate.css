@@ -598,12 +598,12 @@
   font-weight: 900;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--ro-gold-light, var(--accent-gold));
+  color: var(--ro-gold-light);
   text-shadow: var(--ro-shadow-lg);
 }
 
 .ro-pub-celebrate--team-share .ro-pub-celebrate__rank {
-  color: var(--ro-gold-light, var(--accent-gold));
+  color: var(--ro-gold-light);
   opacity: 0.92;
 }
 
@@ -631,15 +631,15 @@
 }
 
 .ro-pub-celebrate__stat--highlight {
-  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.14));
-  border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
+  background: var(--ro-gold-dim);
+  border-color: var(--ro-gold-border);
   box-shadow:
     inset 0 1px 0 var(--ro-accent-ring),
     0 8px 24px rgba(201, 162, 39, 0.12);
 }
 
 .ro-pub-celebrate__stat--highlight .ro-pub-celebrate__stat-value {
-  color: var(--ro-gold-light, var(--accent-gold));
+  color: var(--ro-gold-light);
   font-size: clamp(1.35rem, 4.5vw, 1.85rem);
   font-weight: 800;
 }

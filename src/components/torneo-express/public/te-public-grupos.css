@@ -40,7 +40,7 @@
   align-items: center;
   min-height: 2rem;
   padding: 0.35rem 0.7rem;
-  border-radius: var(--ro-radius-md, 10px);
+  border-radius: var(--ro-radius-md);
   border: 1px solid var(--ro-pub-gold-border, var(--ro-gold-border, var(--accent-gold)));
   background: var(--ro-pub-gold-dim, var(--ro-gold-dim, transparent));
   color: var(--ro-pub-gold-light, var(--ro-gold-light, var(--accent-gold-light)));
@@ -52,7 +52,7 @@
 
 .te-public-phase-nav-link:hover,
 .te-public-phase-nav-link:focus-visible {
-  color: var(--ro-text-primary, var(--text-primary));
+  color: var(--ro-text-primary);
   outline: none;
   box-shadow: 0 0 0 1px var(--ro-pub-gold-border, var(--ro-gold-border));
 }
@@ -125,7 +125,7 @@
 
 .te-grupo-wrap {
   min-width: 0;
-  padding: var(--ro-space-4, 1rem);
+  padding: var(--ro-space-4);
   background: var(--ro-bg-card);
   border: 1px solid var(--ro-border);
   border-radius: var(--ro-radius-lg);
@@ -192,7 +192,7 @@
   gap: 10px 12px;
   align-items: center;
   padding: 12px 14px;
-  margin-bottom: var(--ro-space-2, 0.5rem);
+  margin-bottom: var(--ro-space-2);
   background: var(--ro-bg-elevated);
   border: 1px solid var(--ro-border);
   border-radius: var(--ro-radius-lg);
@@ -322,7 +322,7 @@
 }
 
 .te-team-score {
-  font-family: var(--ro-font-heading, var(--font-display));
+  font-family: var(--ro-font-heading);
   font-size: 1.125rem;
   font-weight: 800;
   color: var(--ro-text-muted);

@@ -18,9 +18,9 @@
 }
 
 .team-badge--a {
-  color: var(--ro-gold-light, var(--ro-gold-text));
-  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.14));
-  border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
+  color: var(--ro-gold-light);
+  background: var(--ro-gold-dim);
+  border-color: var(--ro-gold-border);
 }
 
 .team-badge--b {

@@ -148,8 +148,8 @@
 
 /* Marca Riviera / club — visible solo cuando el branding del scope está listo */
 .te-public-brand-bar {
-  margin-bottom: var(--ro-space-4, 1rem);
-  padding-bottom: var(--ro-space-3, 0.75rem);
+  margin-bottom: var(--ro-space-4);
+  padding-bottom: var(--ro-space-3);
   border-bottom: 1px solid var(--ro-border-subtle);
   min-height: 2.5rem;
   box-sizing: border-box;
@@ -164,11 +164,11 @@
 }
 
 .te-public--grupos-wide .te-public-brand-bar {
-  margin-bottom: var(--ro-space-3, 0.75rem);
+  margin-bottom: var(--ro-space-3);
 }
 
 .te-public--evento .te-public-brand-bar {
-  margin-bottom: var(--ro-space-4, 1rem);
+  margin-bottom: var(--ro-space-4);
 }
 
 /* Header */
@@ -602,7 +602,7 @@
   align-items: center;
   gap: 0.35rem;
   font-weight: 600;
-  color: var(--ro-success, #16a34a);
+  color: var(--ro-success);
 }
 
 .te-public-sync-footer__live-dot {
@@ -796,7 +796,7 @@
 .te-pub-standings-table tbody tr:first-child .te-pub-standings-row__pos-num,
 .te-pub-standings-row--leader td:first-child,
 .te-pub-standings-row--leader .te-pub-standings-row__pos-num {
-  border-left: 3px solid var(--ro-gold, var(--accent-gold));
+  border-left: 3px solid var(--ro-gold);
   color: var(--text-secondary);
   font-weight: 600;
 }
@@ -865,17 +865,17 @@
 }
 
 .te-pub-standing-card--leader {
-  border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
-  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.08));
-  box-shadow: inset 3px 0 0 var(--ro-gold, var(--ro-gold));
+  border-color: var(--ro-gold-border);
+  background: var(--ro-gold-dim);
+  box-shadow: inset 3px 0 0 var(--ro-gold);
 }
 
 .te-pub-standing-card--leader .te-pub-standing-card__pos {
-  color: var(--ro-gold, var(--ro-gold-text));
+  color: var(--ro-gold);
 }
 
 .te-pub-standing-card--leader .te-pub-standing-card__name {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
 }
 
 .te-pub-standing-card__pos-bg {
@@ -1140,7 +1140,7 @@
 }
 
 .te-pub-match__team--tie {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
   font-weight: 700;
 }
 

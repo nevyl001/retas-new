@@ -18,8 +18,8 @@
 }
 
 .standings-mobile-card--leader {
-  border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
-  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.08));
+  border-color: var(--ro-gold-border);
+  background: var(--ro-gold-dim);
   box-shadow: 0 0 20px var(--ro-gold-glow, rgba(201, 162, 39, 0.12));
 }
 
@@ -43,7 +43,7 @@
 }
 
 .standings-mobile-card--leader .standings-mobile-card__pos {
-  color: var(--ro-gold, var(--ro-gold-text));
+  color: var(--ro-gold);
 }
 
 .standings-mobile-card__name {
@@ -59,7 +59,7 @@
 }
 
 .standings-mobile-card--leader .standings-mobile-card__name {
-  color: var(--ro-gold-light, var(--ro-gold-text));
+  color: var(--ro-gold-light);
 }
 
 .standings-mobile-card__stats {
@@ -108,8 +108,8 @@
 }
 
 .standings-mobile-card--leader .standings-mobile-card__stat--deciding {
-  box-shadow: 0 0 0 1px var(--ro-gold-border, rgba(201, 162, 39, 0.38));
-  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.1));
+  box-shadow: 0 0 0 1px var(--ro-gold-border);
+  background: var(--ro-gold-dim);
 }
 
 .standings-mobile-card__dif {

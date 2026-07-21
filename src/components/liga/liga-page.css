@@ -678,7 +678,7 @@
   border-radius: var(--liga-radius-sm);
   color: var(--liga-text);
   /* 16px min en móvil evita el zoom automático de iOS al enfocar. */
-  font-size: max(0.9rem, var(--ro-input-font-size-mobile, 16px));
+  font-size: max(0.9rem, var(--ro-input-font-size-mobile));
   padding: 0.45rem 0.55rem;
   font-family: inherit;
 }
@@ -924,7 +924,7 @@
   border: 0.5px solid var(--liga-border);
   background: var(--ro-bg-elevated);
   color: var(--liga-text);
-  font-size: var(--ro-input-font-size-mobile, 16px);
+  font-size: var(--ro-input-font-size-mobile);
   font-family: inherit;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }

@@ -22,9 +22,9 @@
   justify-content: space-between;
   gap: 0.75rem 1rem;
   padding: 0.9rem 1rem;
-  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
-  border-radius: var(--ro-radius-lg, 14px);
-  background: var(--ro-bg-elevated, var(--bg-elevated));
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: var(--ro-radius-lg);
+  background: var(--ro-bg-elevated);
 }
 
 .te-evento-card__main {
@@ -44,7 +44,7 @@
   margin: 0;
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--ro-text-primary, var(--text-primary));
+  color: var(--ro-text-primary);
 }
 
 .te-evento-cat-edit__pencil {
@@ -55,9 +55,9 @@
   height: 2rem;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: var(--ro-radius-full, 999px);
+  border-radius: var(--ro-radius-full);
   background: transparent;
-  color: var(--ro-text-muted, var(--text-muted));
+  color: var(--ro-text-muted);
   cursor: pointer;
   transition:
     color 0.15s ease,
@@ -66,9 +66,9 @@
 }
 
 .te-evento-cat-edit__pencil:hover:not(:disabled) {
-  color: var(--ro-accent, var(--accent-gold));
-  border-color: var(--ro-border-subtle, var(--border-subtle));
-  background: var(--ro-bg-surface, var(--bg-elevated));
+  color: var(--ro-accent);
+  border-color: var(--ro-border-subtle);
+  background: var(--ro-bg-surface);
 }
 
 .te-evento-cat-edit {
@@ -84,10 +84,10 @@
   min-width: 0;
   max-width: 14rem;
   padding: 0.4rem 0.65rem;
-  border: 1px solid var(--ro-border, var(--border-subtle));
-  border-radius: var(--ro-radius-md, 10px);
-  background: var(--ro-bg-card, var(--bg-base));
-  color: var(--ro-text-primary, var(--text-primary));
+  border: 1px solid var(--ro-border);
+  border-radius: var(--ro-radius-md);
+  background: var(--ro-bg-card);
+  color: var(--ro-text-primary);
   font: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -95,8 +95,8 @@
 
 .te-evento-cat-edit__input:focus {
   outline: none;
-  border-color: var(--ro-accent, var(--accent-gold));
-  box-shadow: 0 0 0 2px var(--ro-accent-dim, var(--accent-gold-dim));
+  border-color: var(--ro-accent);
+  box-shadow: 0 0 0 2px var(--ro-accent-dim);
 }
 
 .te-evento-cat-edit__btn {
@@ -106,20 +106,20 @@
   width: 2rem;
   height: 2rem;
   padding: 0;
-  border: 1px solid var(--ro-border, var(--border-subtle));
-  border-radius: var(--ro-radius-full, 999px);
+  border: 1px solid var(--ro-border);
+  border-radius: var(--ro-radius-full);
   background: transparent;
-  color: var(--ro-text-secondary, var(--text-secondary));
+  color: var(--ro-text-secondary);
   cursor: pointer;
 }
 
 .te-evento-cat-edit__btn--ok {
-  border-color: var(--ro-accent, var(--accent-gold));
-  color: var(--ro-accent, var(--accent-gold));
+  border-color: var(--ro-accent);
+  color: var(--ro-accent);
 }
 
 .te-evento-cat-edit__btn:hover:not(:disabled) {
-  background: var(--ro-bg-surface, var(--bg-elevated));
+  background: var(--ro-bg-surface);
 }
 
 .te-evento-cat-edit__btn:disabled {
@@ -130,7 +130,7 @@
 .te-evento-card__meta {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--ro-text-secondary, var(--text-secondary));
+  color: var(--ro-text-secondary);
 }
 
 .te-evento-card__actions {
@@ -142,7 +142,7 @@
 }
 
 .te-eventos-page .te-btn-eliminar-torneo {
-  color: var(--ro-text-muted, var(--text-muted)) !important;
+  color: var(--ro-text-muted) !important;
   background: transparent !important;
   border-color: transparent !important;
   opacity: 0.8;
@@ -170,13 +170,13 @@
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--ro-text-primary, var(--text-primary));
+  color: var(--ro-text-primary);
 }
 
 .te-evento-detalle__meta {
   margin: 0 0 0.85rem;
   font-size: 0.875rem;
-  color: var(--ro-text-secondary, var(--text-secondary));
+  color: var(--ro-text-secondary);
 }
 
 .te-evento-detalle__actions {
@@ -193,13 +193,13 @@
   margin: 0 0 0.35rem;
   font-size: 1.125rem;
   font-weight: 700;
-  color: var(--ro-text-primary, var(--text-primary));
+  color: var(--ro-text-primary);
 }
 
 .te-evento-section__hint {
   margin: 0 0 0.85rem;
   font-size: 0.8125rem;
-  color: var(--ro-text-muted, var(--text-muted));
+  color: var(--ro-text-muted);
 }
 
 .te-evento-form-grid {
@@ -217,16 +217,16 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ro-text-muted, var(--text-muted));
+  color: var(--ro-text-muted);
 }
 
 .te-evento-brand {
   display: grid;
   gap: 0.85rem;
   padding: 0.9rem 1rem;
-  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
-  border-radius: var(--ro-radius-lg, 14px);
-  background: var(--ro-bg-elevated, var(--bg-elevated));
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: var(--ro-radius-lg);
+  background: var(--ro-bg-elevated);
 }
 
 .te-evento-brand__source {
@@ -242,7 +242,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.875rem;
-  color: var(--ro-text-primary, var(--text-primary));
+  color: var(--ro-text-primary);
   min-height: 44px;
 }
 
@@ -252,10 +252,10 @@
 }
 
 .te-evento-flyer-preview {
-  border-radius: var(--ro-radius-md, 10px);
+  border-radius: var(--ro-radius-md);
   overflow: hidden;
-  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
-  background: var(--ro-bg-deep, var(--bg-deep));
+  border: 1px solid var(--ro-border-subtle);
+  background: var(--ro-bg-deep);
   aspect-ratio: 16 / 7;
   max-height: 11rem;
 }
@@ -288,7 +288,7 @@
 
 .te-evento-flyer-upload__hint {
   font-size: 0.75rem;
-  color: var(--ro-text-muted, var(--text-muted));
+  color: var(--ro-text-muted);
 }
 
 /* Toast (mismo patrón que GestionGrupos / te-gestion-toast) */
@@ -299,7 +299,7 @@
   z-index: 1200;
   max-width: min(calc(100vw - 2rem), 22rem);
   padding: 0.75rem 1rem;
-  border-radius: var(--ro-radius-md, 10px);
+  border-radius: var(--ro-radius-md);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.4;
@@ -350,9 +350,9 @@
   gap: 0.75rem 1rem;
   margin-bottom: 0;
   padding: 0.9rem 1rem;
-  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
-  border-radius: var(--ro-radius-lg, 14px);
-  background: var(--ro-bg-elevated, var(--bg-elevated));
+  border: 1px solid var(--ro-border-subtle);
+  border-radius: var(--ro-radius-lg);
+  background: var(--ro-bg-elevated);
 }
 
 .te-eventos-home-card__copy {
@@ -364,13 +364,13 @@
   margin: 0 0 0.25rem;
   font-size: 1.0625rem;
   font-weight: 700;
-  color: var(--ro-text-primary, var(--text-primary));
+  color: var(--ro-text-primary);
 }
 
 .te-eventos-home-card__sub {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--ro-text-secondary, var(--text-secondary));
+  color: var(--ro-text-secondary);
 }
 
 .te-eventos-home-card__actions {
