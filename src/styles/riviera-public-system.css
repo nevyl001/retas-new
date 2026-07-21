@@ -17,6 +17,14 @@
   --font-display: var(--ro-font-heading);
   --font-family: var(--ro-font-body);
 
+  /* Isla oscura pública: los alias de texto se fijan a la escala chrome (siempre
+     clara). Sin esto, dentro del scope de marca público --text-secondary/-muted
+     se resolvían oscuros y muchos textos (chips, subtítulos, labels de sección)
+     quedaban invisibles sobre el fondo oscuro. Cubre todos los formatos. */
+  --text-primary: var(--ro-chrome-text);
+  --text-secondary: var(--ro-chrome-text-muted);
+  --text-muted: var(--ro-chrome-text-dim);
+
   /* Escala tipográfica pública (rem) */
   --ro-pub-text-kicker: 0.6875rem; /* 11px — eyebrow / modo */
   --ro-pub-text-eyebrow: 0.625rem; /* 10px */
@@ -74,7 +82,40 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--text-secondary);
+  /* Isla oscura: usar el token chrome (siempre claro), no --text-secondary, que
+     dentro del scope de marca público se resolvía oscuro → invisible. */
+  color: var(--ro-chrome-text-muted);
+}
+
+/* =============================================================================
+   Cabecera pública (PublicHero) — textos legibles sobre isla oscura.
+   El chip de categoría y el club usaban --text-secondary, y el meta usaba
+   --brand-accent; ambos se resolvían oscuros en el scope de marca público y
+   quedaban invisibles. Se fijan a tokens chrome/oro que no se re-resuelven.
+   Aplica a TODAS las vistas públicas (reta, TE, americano, liga, duelo).
+   ============================================================================= */
+.ro-public-view .peds-hero__evento,
+.te-public .peds-hero__evento {
+  color: var(--ro-chrome-text);
+}
+
+.ro-public-view .peds-hero__club,
+.te-public .peds-hero__club {
+  color: var(--ro-chrome-text-muted);
+}
+
+.ro-public-view .peds-hero__categoria,
+.te-public .peds-hero__categoria,
+.ro-public-view .peds-hero__fecha,
+.te-public .peds-hero__fecha {
+  color: var(--ro-chrome-text);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.ro-public-view .peds-hero__meta,
+.te-public .peds-hero__meta {
+  color: var(--ro-gold-light);
 }
 
 /* —— Badge cancha unificado (rojo) —— */

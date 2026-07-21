@@ -2,29 +2,33 @@
 
 .riviera-organizer-reta .matches-container-simplified {
   gap: 1.25rem;
+  padding: 1.25rem 1.25rem 1.5rem !important;
 }
 
 .riviera-organizer-reta .matches-header-simplified {
-  border-bottom: none !important;
-  padding-bottom: 0 !important;
-  margin-bottom: 0.5rem !important;
+  border-bottom: 1px solid var(--ro-chrome-border) !important;
+  padding-bottom: 0.75rem !important;
+  margin-bottom: 1.1rem !important;
 }
 
 /* —— Sección Partidos —— */
 .riviera-organizer-reta .matches-header-simplified h3 {
   font-family: var(--font-body) !important;
   font-size: 0.8rem !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
-  color: var(--text-muted) !important;
+  /* --text-muted en oscuro caía a chrome-text-dim (#666d78): casi invisible.
+     Chrome-text-muted (#8b93a0) es el gris legible de la escala oscura. */
+  color: var(--ro-chrome-text-muted) !important;
 }
 
 .riviera-organizer-reta .matches-count-simplified {
   font-size: 0.75rem !important;
-  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+  color: var(--ro-chrome-text-muted) !important;
   background: var(--ro-bg-inset) !important;
-  border: 1px solid var(--border-subtle) !important;
+  border: 1px solid var(--ro-chrome-border) !important;
 }
 
 /* —— Rondas —— */
