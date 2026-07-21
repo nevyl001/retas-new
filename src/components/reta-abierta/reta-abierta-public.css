@@ -7,10 +7,10 @@
 .ro-public-view:has(.ra-public)::after {
   background: linear-gradient(
     180deg,
-    rgba(8, 10, 12, 0.55) 0%,
-    rgba(8, 10, 12, 0.18) 34%,
-    rgba(8, 10, 12, 0.28) 62%,
-    rgba(8, 10, 12, 0.78) 100%
+    var(--ro-bg-overlay) 0%,
+    var(--ro-bg-overlay) 34%,
+    var(--ro-bg-overlay) 62%,
+    var(--ro-bg-overlay) 100%
   );
 }
 
@@ -19,7 +19,7 @@
   --ra-ink: var(--te-text, #f4f6f8);
   --ra-muted: color-mix(in srgb, var(--ra-ink) 68%, transparent);
   --ra-card: rgba(18, 24, 30, 0.92);
-  --ra-card-border: rgba(255, 255, 255, 0.14);
+  --ra-card-border: var(--ro-border);
   min-height: 100dvh;
   padding: 12px var(--ra-pad) calc(96px + env(safe-area-inset-bottom));
   color: var(--ra-ink);
@@ -43,7 +43,7 @@
   font-size: clamp(1.5rem, 5vw, 2rem);
   line-height: 1.15;
   color: var(--ro-text-primary);
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+  text-shadow: var(--ro-shadow-md);
 }
 
 .ra-public__badge {
@@ -62,7 +62,7 @@
 .ra-public__badge--cancelled,
 .ra-public__badge--paused {
   color: var(--ra-ink);
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--ro-bg-elevated);
 }
 
 .ra-public__meta,
@@ -103,7 +103,7 @@
 
 .ra-public__cupo-chip--full {
   color: var(--ra-ink);
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--ro-bg-elevated);
 }
 
 .ra-public__section-head,
@@ -129,7 +129,7 @@
   font-weight: 500;
   opacity: 0.82;
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.16);
+  border-color: var(--ro-border);
   color: var(--ra-muted);
 }
 
@@ -137,7 +137,7 @@
 .ra-btn--quiet:focus-visible {
   opacity: 1;
   color: var(--ra-ink);
-  border-color: rgba(255, 255, 255, 0.28);
+  border-color: var(--ro-border);
 }
 
 .ra-error--board {
@@ -199,15 +199,15 @@
 
 .ra-player-card--filled {
   opacity: 0.72;
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(14, 18, 22, 0.72);
+  border-color: var(--ro-border-subtle);
+  background: var(--ro-bg-overlay);
   box-shadow: none;
 }
 
 .ra-player-card--invite {
   opacity: 1;
   border: 1.5px solid color-mix(in srgb, var(--ro-accent, var(--ro-gold-border)) 72%, var(--ro-border));
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 14%, rgba(18, 24, 30, 0.92));
+  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 14%, var(--ro-bg-elevated));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ro-accent, var(--ro-gold)) 22%, transparent);
 }
 
@@ -255,13 +255,13 @@
   border-radius: 14px;
   background: var(--ra-card);
   border: 1px solid var(--ra-card-border);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--ro-shadow-md);
   color: var(--ra-ink);
 }
 
 .ra-player-card--open {
   border-style: dashed;
-  background: rgba(18, 24, 30, 0.72);
+  background: var(--ro-bg-overlay);
 }
 
 .ra-player-card--open.ra-player-card--invite {
@@ -323,7 +323,7 @@
   padding: 0.65rem 0.85rem;
   border-radius: 12px;
   border: 1px solid var(--ra-card-border);
-  background: rgba(12, 16, 20, 0.92);
+  background: var(--ro-bg-elevated);
   color: var(--ro-text-primary);
   box-sizing: border-box;
 }
@@ -366,7 +366,7 @@
 }
 
 .ra-btn--ghost {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
   border: 1px solid var(--ra-card-border);
   color: var(--ra-ink);
 }
@@ -399,8 +399,8 @@
     calc(12px + env(safe-area-inset-bottom));
   background: linear-gradient(
     to top,
-    rgba(8, 10, 12, 0.96) 0%,
-    rgba(8, 10, 12, 0.82) 55%,
+    var(--ro-bg-elevated) 0%,
+    var(--ro-bg-overlay) 55%,
     transparent 100%
   );
   z-index: 20;
@@ -458,8 +458,8 @@
   border-radius: 18px;
   border: 1px solid rgba(201, 162, 39, 0.28);
   background:
-    linear-gradient(180deg, rgba(24, 32, 28, 0.92), rgba(12, 16, 20, 0.88));
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    linear-gradient(180deg, var(--ro-bg-elevated), var(--ro-bg-elevated));
+  box-shadow: var(--ro-shadow-lg);
 }
 
 .ra-duelo-board__title {
@@ -468,7 +468,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ro-text-secondary);
 }
 
 .ra-duelo-side {
@@ -476,8 +476,8 @@
   gap: 0.45rem;
   padding: 0.55rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-overlay);
 }
 
 .ra-duelo-side--full {
@@ -487,12 +487,12 @@
 .ra-duelo-side--open.ra-duelo-side--pick {
   border-width: 1.5px;
   border-color: color-mix(in srgb, var(--ro-accent, var(--ro-gold-border)) 65%, var(--ro-border));
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 10%, rgba(0, 0, 0, 0.35));
+  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 10%, var(--ro-bg-overlay));
 }
 
 .ra-duelo-side--joining {
   border-color: var(--ro-accent, var(--ro-gold-border));
-  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 16%, rgba(0, 0, 0, 0.35));
+  background: color-mix(in srgb, var(--ro-accent, var(--ro-gold-dim)) 16%, var(--ro-bg-overlay));
 }
 
 .ra-duelo-side--taken {
@@ -535,7 +535,7 @@
   margin: 0;
   text-align: center;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--ro-text-secondary);
 }
 
 .ra-duelo-side--pick {
@@ -588,7 +588,7 @@
 
 .ra-public__meta--club {
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--ro-text-secondary);
 }
 
 .ra-public__hint--side {
@@ -778,7 +778,7 @@
 
 .ra-skel {
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
   animation: ra-pulse 1.2s ease-in-out infinite;
 }
 

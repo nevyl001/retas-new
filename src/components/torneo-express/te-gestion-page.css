@@ -299,7 +299,7 @@
 .te-gestion-page .te-grupos-tab__edit:hover:not(:disabled) {
   color: var(--accent-gold);
   border-color: var(--border-accent);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ro-bg-inset);
 }
 
 .te-gestion-page .te-grupos-tab__edit:disabled {
@@ -353,7 +353,7 @@
 }
 
 .te-gestion-page .te-grupos-tab-edit__btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
 }
 
 .te-gestion-page .te-grupos-tab-edit__btn:disabled {
@@ -595,7 +595,7 @@
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.4;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--ro-shadow-md);
   animation: te-gestion-toast-in 0.25s ease-out;
 }
 
@@ -806,7 +806,7 @@
 
 .te-gestion-page .te-partido-meta-edit__actions .riviera-btn-ghost:hover:not(:disabled) {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
 }
 
 .te-gestion-page .te-partido-meta-edit__error {
@@ -1123,7 +1123,7 @@
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--ro-bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1133,10 +1133,10 @@
 .te-notif-elim-modal {
   width: min(420px, 100%);
   background: var(--te-card-bg, #1a2332);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--ro-border-subtle);
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--ro-shadow-lg);
 }
 
 .te-notif-elim-modal__title {
@@ -1173,7 +1173,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 0.8rem;
-  background: var(--bg-elevated, rgba(255, 255, 255, 0.02));
+  background: var(--bg-elevated, var(--ro-bg-inset));
 }
 
 .te-gestion-page .te-notif-card h4 {
@@ -1307,7 +1307,7 @@
   margin-bottom: 0.55rem;
   padding: 0.45rem 0.55rem;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ro-bg-inset);
   border: 1px solid var(--border-subtle);
 }
 
@@ -1330,7 +1330,7 @@
   overflow: auto;
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  background: var(--bg-elevated, rgba(255, 255, 255, 0.02));
+  background: var(--bg-elevated, var(--ro-bg-inset));
 }
 
 .te-gestion-page .te-notif-table {
@@ -1364,7 +1364,7 @@
 }
 
 .te-gestion-page .te-notif-table__row--on {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
 }
 
 .te-gestion-page .te-notif-table__check {
@@ -1409,18 +1409,18 @@
 }
 
 .te-gestion-page .te-notif-pill--partial {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--ro-bg-elevated);
   color: var(--accent-gold, var(--ro-accent));
 }
 
 .te-gestion-page .te-notif-pill--off {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
   color: var(--te-muted, var(--ro-text-muted));
 }
 
 .te-gestion-page .te-notif-table__expand td {
   padding: 0;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--ro-bg-overlay);
 }
 
 .te-gestion-page .te-notif-expand {
@@ -1519,7 +1519,7 @@
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--ro-bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1531,7 +1531,7 @@
   border-radius: 14px;
   border: 1px solid var(--border-subtle);
   background: var(--te-gestion-surface, var(--ro-bg-card));
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--ro-shadow-lg);
 }
 
 .te-inscripcion-modal__head {

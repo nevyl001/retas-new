@@ -9,8 +9,8 @@
   margin-top: 0.85rem;
   padding: 1rem 1.1rem;
   border-radius: 14px;
-  border: 1px solid var(--rjp-ficha-border, rgba(255, 255, 255, 0.1));
-  background: var(--rjp-ficha-surface, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--rjp-ficha-border, var(--ro-border));
+  background: var(--rjp-ficha-surface, var(--ro-bg-inset));
 }
 
 .rjp-rating-nivel__head {
@@ -27,7 +27,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--rjp-ficha-text-3, rgba(255, 255, 255, 0.45));
+  color: var(--rjp-ficha-text-3, var(--ro-text-muted));
 }
 
 .rjp-rating-nivel__value {
@@ -55,7 +55,7 @@
 }
 
 .rjp-rating-nivel__badge--inicial {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
 }
 
 .rjp-rating-nivel__badge--fiable {
@@ -71,7 +71,7 @@
   margin: 0 0 12px;
   font-size: 14px;
   line-height: 1.4;
-  color: var(--rjp-ficha-text-2, rgba(255, 255, 255, 0.55));
+  color: var(--rjp-ficha-text-2, var(--ro-text-muted));
 }
 
 .rjp-rating-nivel__chart {
@@ -88,7 +88,7 @@
   margin: 0 0 16px;
   font-size: 14px;
   line-height: 1.45;
-  color: var(--rjp-ficha-text-3, rgba(255, 255, 255, 0.42));
+  color: var(--rjp-ficha-text-3, var(--ro-text-muted));
   font-style: italic;
 }
 
@@ -98,7 +98,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--rjp-ficha-text-3, rgba(255, 255, 255, 0.4));
+  color: var(--rjp-ficha-text-3, var(--ro-text-muted));
 }
 
 .rjp-rating-nivel__moves {
@@ -116,9 +116,9 @@
   gap: 8px 12px;
   align-items: center;
   font-size: 13px;
-  color: var(--rjp-ficha-text, rgba(255, 255, 255, 0.82));
+  color: var(--rjp-ficha-text, var(--ro-text-secondary));
   padding: 8px 0;
-  border-bottom: 1px solid var(--ro-border-subtle, rgba(255, 255, 255, 0.06));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-border-subtle));
   min-height: 44px;
 }
 
@@ -153,7 +153,7 @@
 }
 
 .rjp-rating-nivel__modo {
-  color: var(--rjp-ficha-text-2, rgba(255, 255, 255, 0.65));
+  color: var(--rjp-ficha-text-2, var(--ro-text-muted));
   min-width: 0;
 }
 
@@ -164,7 +164,7 @@
 }
 
 .rjp-rating-nivel__date {
-  color: var(--rjp-ficha-text-3, rgba(255, 255, 255, 0.4));
+  color: var(--rjp-ficha-text-3, var(--ro-text-muted));
   font-size: 12px;
 }
 

@@ -211,12 +211,12 @@
   text-transform: uppercase;
   padding: 3px 10px;
   border-radius: var(--liga-radius-pill);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
   color: var(--liga-text-muted);
 }
 
 .liga-badge--upcoming {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
   color: var(--liga-text-muted);
 }
 
@@ -344,7 +344,7 @@
 .liga-field select:focus {
   outline: none;
   border-color: var(--liga-gold);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px var(--ro-accent-ring);
 }
 
 .liga-form-row {
@@ -428,8 +428,8 @@
 .liga-banner--completed {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.12),
-    rgba(255, 255, 255, 0.04)
+    var(--ro-bg-elevated),
+    var(--ro-bg-inset)
   );
   border: 0.5px solid var(--liga-gold-border);
   border-radius: var(--liga-radius-md);
@@ -485,7 +485,7 @@
 }
 
 .liga-ronda-block__head {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ro-bg-inset);
   padding: 10px var(--liga-space-md);
   display: flex;
   justify-content: space-between;
@@ -545,7 +545,7 @@
   width: 52px;
   min-height: var(--mode-tab-min-height, 44px);
   text-align: center;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
   border: 0.5px solid var(--liga-border);
   border-radius: var(--liga-radius-sm);
   color: var(--liga-text);
@@ -560,7 +560,7 @@
 .liga-score-input:focus {
   border-color: var(--liga-gold);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px var(--ro-accent-ring);
 }
 
 .liga-sets-form {
@@ -673,7 +673,7 @@
 .liga-programacion-field input[type="time"] {
   min-width: 120px;
   min-height: var(--mode-tab-min-height, 44px);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
   border: 0.5px solid var(--liga-border);
   border-radius: var(--liga-radius-sm);
   color: var(--liga-text);
@@ -708,7 +708,7 @@
   padding: 0.85rem 1rem;
   border-radius: var(--liga-radius-md);
   border: 1px solid var(--liga-border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ro-bg-inset);
 }
 
 .liga-equipo-seleccion__label {
@@ -794,8 +794,8 @@
 }
 
 .liga-equipo-pool__item:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--ro-border);
+  background: var(--ro-bg-inset);
 }
 
 .liga-equipo-pool__item--selected {
@@ -922,7 +922,7 @@
   text-align: center;
   border-radius: var(--liga-radius-sm);
   border: 0.5px solid var(--liga-border);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
   color: var(--liga-text);
   font-size: var(--ro-input-font-size-mobile, 16px);
   font-family: inherit;
@@ -932,7 +932,7 @@
 .liga-jornada-manual__input:focus {
   border-color: var(--liga-gold);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 2px var(--ro-accent-ring);
 }
 
 .liga-jornada-share.public-link-section {

@@ -32,11 +32,11 @@
   position: relative;
   width: 100%;
   box-sizing: border-box;
-  background: var(--riviera-card, rgba(24, 24, 24, 0.92));
-  border: 1px solid var(--riviera-border, rgba(255, 255, 255, 0.1));
+  background: var(--riviera-card, var(--ro-bg-elevated));
+  border: 1px solid var(--riviera-border, var(--ro-border));
   border-radius: 1rem;
   padding: clamp(2.5rem, 3vw, 3rem);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--ro-shadow-lg);
   animation: authCardIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -131,8 +131,8 @@
   font-size: 0.9375rem;
   font-family: inherit;
   color: var(--riviera-white, var(--ro-text-primary));
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
   border-radius: 0.75rem;
   transition:
     border-color 0.22s ease,
@@ -148,8 +148,8 @@
 
 .auth-page .riviera-input:hover:not(:disabled),
 .auth-page .auth-password-field__input:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--ro-border);
+  background: var(--ro-bg-elevated);
 }
 
 .auth-page .riviera-input:focus,
@@ -199,14 +199,14 @@
     transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.24s ease,
     background-color 0.24s ease;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--ro-shadow-md);
   font-family: inherit;
 }
 
 .btn-auth-primary:hover:not(:disabled) {
   transform: translateY(-1px);
   background: var(--riviera-gold-soft, var(--ro-gold-dim));
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--ro-shadow-md);
 }
 
 .btn-auth-primary:hover:not(:disabled) .auth-cta-arrow {
@@ -324,8 +324,8 @@
 .auth-success-note {
   margin: 1.25rem 0 1.5rem !important;
   padding: 0.85rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--riviera-border, rgba(255, 255, 255, 0.12));
+  background: var(--ro-bg-inset);
+  border: 1px solid var(--riviera-border, var(--ro-border));
   border-radius: 10px;
   font-size: 0.8rem !important;
   text-align: left;
@@ -400,7 +400,7 @@
   .auth-form-card {
     padding: 1.35rem 1.125rem 1.4rem;
     border-radius: 1rem;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
+    box-shadow: var(--ro-shadow-lg);
   }
 
   .auth-form-header {
