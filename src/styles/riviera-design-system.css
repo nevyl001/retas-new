@@ -224,7 +224,7 @@ body {
   gap: 0.4rem;
   padding: 0.28rem 0.65rem;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--ro-border);
   background: var(--accent-gold-dim);
   color: var(--accent-gold);
   font-family: var(--font-body);
@@ -251,7 +251,7 @@ body {
   padding: 0.65rem 0.85rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--ro-bg-elevated);
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 0.9rem;

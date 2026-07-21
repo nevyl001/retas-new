@@ -80,7 +80,7 @@
   font-size: var(--ro-text-label, 0.6875rem);
   font-weight: 600;
   color: var(--ro-text-muted, var(--ro-text-muted));
-  background: var(--ro-accent-dim, rgba(255, 255, 255, 0.08));
+  background: var(--ro-accent-dim, var(--ro-bg-elevated));
   border: 1px solid var(--ro-border, var(--ro-border));
 }
 
@@ -271,7 +271,7 @@
 }
 
 .qm-stepper__btn.is-active {
-  border-color: var(--ro-border-accent, rgba(255, 255, 255, 0.15));
+  border-color: var(--ro-border-accent, var(--ro-border));
   background: var(--ro-bg-elevated, var(--ro-bg-inset));
   box-shadow: inset 2px 0 0 var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
 }

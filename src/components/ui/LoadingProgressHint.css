@@ -11,7 +11,7 @@
 .loading-progress-hint__spinner {
   width: 28px;
   height: 28px;
-  border: 2px solid rgba(255, 255, 255, 0.12);
+  border: 2px solid var(--ro-border);
   border-top-color: var(--ro-accent, #c9a84c);
   border-radius: 50%;
   animation: loading-progress-hint-spin 0.75s linear infinite;
@@ -20,7 +20,7 @@
 .loading-progress-hint__text {
   margin: 0;
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--ro-text-muted);
 }
 
 @keyframes loading-progress-hint-spin {

@@ -12,7 +12,7 @@
   position: absolute;
   inset: 0;
   border: none;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--ro-bg-overlay);
   cursor: pointer;
 }
 
@@ -25,7 +25,7 @@
   background: var(--admin-surface, var(--ro-bg-card));
   border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   border-radius: 12px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--ro-shadow-lg);
 }
 
 .player-access-modal__header {

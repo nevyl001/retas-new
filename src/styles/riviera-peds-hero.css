@@ -62,8 +62,8 @@
   align-items: center;
   padding: 0.35rem 0.75rem;
   border-radius: var(--pub-radius-full, 9999px);
-  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 28%, var(--border-subtle, rgba(255, 255, 255, 0.12)));
-  background: var(--bg-elevated, rgba(255, 255, 255, 0.04));
+  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 28%, var(--border-subtle, var(--ro-border)));
+  background: var(--bg-elevated, var(--ro-bg-inset));
   font-family: var(--pub-font-body, var(--font-body, inherit));
   font-size: var(--pub-font-size-badge, 0.6875rem);
   font-weight: var(--pub-font-weight-semibold, 600);
