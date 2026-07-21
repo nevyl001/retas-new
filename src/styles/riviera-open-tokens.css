@@ -1,70 +1,133 @@
 /* =============================================
-   RIVIERA OPEN — DESIGN SYSTEM MAESTRO v1.0
-   Negro + blanco + grises. Verde solo matices.
+   RIVIERA OPEN — DESIGN SYSTEM MAESTRO v2.0
+   Chrome oscuro + contenido claro + dorado mínimo.
+   Reemplaza src/styles/riviera-open-tokens.css
 ============================================= */
 
 :root {
-  /* FONDOS */
-  --ro-bg-base: #000000;
-  --ro-bg-deep: #0a0a0a;
-  --ro-bg-surface: #0f0f0f;
-  --ro-bg-elevated: #1a1a1a;
-  --ro-bg-card: #111111;
-  --ro-bg-input: #1a1a1a;
+  /* ─────────────────────────────────────────
+     CHROME — navegación, sidebar, barra móvil.
+     Único lugar oscuro de la app. No es negro
+     puro: azulado para no vibrar en OLED.
+     ───────────────────────────────────────── */
+  --ro-chrome-bg: #12161b;
+  --ro-chrome-deep: #0d1116;
+  --ro-chrome-elevated: #1a1f26;
+  --ro-chrome-active: #232931;
+  --ro-chrome-border: #232830;
+  --ro-chrome-text: #ffffff;
+  --ro-chrome-text-muted: #8b93a0;
+  --ro-chrome-text-dim: #666d78;
 
-  /* ACENTO UI — blanco (botones, foco, navegación) */
-  --ro-accent: #ffffff;
-  --ro-accent-hover: #e0e0e0;
-  --ro-accent-dim: rgba(255, 255, 255, 0.08);
+  /* ─────────────────────────────────────────
+     CONTENIDO — todo lo demás. Hueso cálido,
+     no blanco puro.
+     ───────────────────────────────────────── */
+  --ro-bg-base: #f2f0ee;
+  --ro-bg-deep: #ebe8e4;
+  --ro-bg-surface: #faf9f8;
+  --ro-bg-elevated: #ffffff;
+  --ro-bg-card: #ffffff;
+  --ro-bg-inset: #f4f1ed;
+  --ro-bg-input: #ffffff;
+  --ro-bg-overlay: rgba(20, 22, 26, 0.45);
 
-  /* VERDE RIVIERA — solo matices puntuales (badges, hover, marca) */
-  --ro-green: #2d6a4f;
-  --ro-green-hover: #3d8564;
-  --ro-green-dim: rgba(45, 106, 79, 0.08);
-  --ro-green-border: rgba(45, 106, 79, 0.22);
-  --ro-green-glow: rgba(45, 106, 79, 0.12);
+  /* ─────────────────────────────────────────
+     ACENTO UI — tinta. Botones primarios, foco,
+     estado activo. El color de acción NO es el
+     dorado.
+     ───────────────────────────────────────── */
+  --ro-accent: #15191f;
+  --ro-accent-hover: #232931;
+  --ro-accent-dim: rgba(21, 25, 31, 0.06);
+  --ro-accent-ring: rgba(21, 25, 31, 0.18);
 
-  /* DORADO — ganadores, marcadores, podio */
-  --ro-gold: #c9a227;
-  --ro-gold-light: #e8c547;
-  --ro-gold-dim: rgba(201, 162, 39, 0.14);
-  --ro-gold-border: rgba(201, 162, 39, 0.38);
-  --ro-gold-glow: rgba(201, 162, 39, 0.22);
+  /* Botón secundario crema (el "Ver torneo" de la referencia) */
+  --ro-cream: #f1ebe6;
+  --ro-cream-hover: #e9e1da;
+  --ro-cream-border: #e2d9d1;
 
-  /* TEXTO */
-  --ro-text-primary: #ffffff;
-  --ro-text-secondary: #a0a0a0;
-  --ro-text-muted: #7a7a7a;
-  --ro-text-on-accent: #000000;
+  /* ─────────────────────────────────────────
+     DORADO — dosis mínima. Sólo: badge de
+     destacado, flechas de tendencia, punto de
+     estado de evento, marca de PREMIUM, fila
+     propia en ranking. Nunca como fondo de
+     bloque ni como botón primario.
+     ───────────────────────────────────────── */
+  --ro-gold: #b5883f;          /* iconos y bordes — 3.05:1, no usar en texto chico */
+  --ro-gold-text: #8a6524;     /* texto sobre claro — 5.03:1 AA */
+  --ro-gold-light: #dfbe7f;    /* dorado sobre chrome oscuro */
+  --ro-gold-dim: #f5eee0;      /* fondo de badge */
+  --ro-gold-border: #e4d2ae;
+  --ro-gold-rail: #c9a227;     /* barra lateral de 3px en fila destacada */
 
-  /* BORDES */
-  --ro-border: #2a2a2a;
-  --ro-border-subtle: #1a1a1a;
-  --ro-border-accent: rgba(255, 255, 255, 0.15);
+  /* ─────────────────────────────────────────
+     TEXTO
+     ───────────────────────────────────────── */
+  --ro-text-primary: #14161a;   /* 17.22:1 */
+  --ro-text-secondary: #5c6069; /* 5.99:1 AA */
+  --ro-text-muted: #8b8f97;     /* 3.08:1 — sólo texto ≥18px o metadatos */
+  --ro-text-on-accent: #ffffff;
+  --ro-text-on-gold: #3d2c0d;
 
-  /* ESTADOS */
-  --ro-success: #4ade80;
-  --ro-error: #f87171;
-  --ro-pending: #555555;
+  /* ─────────────────────────────────────────
+     BORDES — hairlines. En claro el borde hace
+     el trabajo que en oscuro hacía la sombra.
+     ───────────────────────────────────────── */
+  --ro-border: #e6e2dd;
+  --ro-border-subtle: #f0ede9;
+  --ro-border-strong: #d6d1ca;
+  --ro-border-accent: rgba(21, 25, 31, 0.14);
 
-  /* MEDALLAS */
-  --ro-medal-gold: #d4af37;
-  --ro-medal-silver: #a0a0a0;
-  --ro-medal-bronze: #6b6b6b;
+  /* ─────────────────────────────────────────
+     ESTADOS — verde y rojo son funcionales
+     (ganado / perdido / error), no de marca.
+     Apagados para no competir con el dorado.
+     ───────────────────────────────────────── */
+  --ro-success: #2f7d53;
+  --ro-success-dim: #e8f2ec;
+  --ro-error: #c0392b;
+  --ro-error-dim: #fbeae8;
+  --ro-warning: #b5883f;
+  --ro-warning-dim: #f5eee0;
+  --ro-pending: #9a9ea6;
+  --ro-live: #c0392b;
+  --ro-live-dim: #fbeae8;
 
-  /* MODOS DE JUEGO */
-  --ro-mode-reta: #ffffff;
-  --ro-mode-equipos: #e8c547;
-  --ro-mode-duelo: #fb923c;
-  --ro-mode-americano: #10b981;
-  --ro-mode-liga: #3b82f6;
-  --ro-mode-torneo: #8b5cf6;
+  /* ─────────────────────────────────────────
+     MEDALLAS — metálicos apagados. Convención
+     universal de podio, no branding.
+     ───────────────────────────────────────── */
+  --ro-medal-gold: #b5883f;
+  --ro-medal-silver: #a0a4a9;
+  --ro-medal-bronze: #a07a55;
 
-  /* TIPOGRAFÍA */
+  /* ─────────────────────────────────────────
+     MODOS DE JUEGO — reoscurecidos para leerse
+     sobre fondo claro. Los originales estaban
+     calibrados contra negro y se lavan aquí.
+     ───────────────────────────────────────── */
+  --ro-mode-reta: #15191f;
+  --ro-mode-equipos: #a8761b;
+  --ro-mode-duelo: #c2570f;
+  --ro-mode-americano: #0f7355;
+  --ro-mode-liga: #1f5fbf;
+  --ro-mode-torneo: #6d46c8;
+
+  /* Fondos tenues de cada modo, para chips */
+  --ro-mode-equipos-dim: #f7efdf;
+  --ro-mode-duelo-dim: #fceee3;
+  --ro-mode-americano-dim: #e5f2ed;
+  --ro-mode-liga-dim: #e8effb;
+  --ro-mode-torneo-dim: #efeafb;
+
+  /* ─────────────────────────────────────────
+     TIPOGRAFÍA — sin cambios
+     ───────────────────────────────────────── */
   --ro-font-heading: "Stack Sans Headline", sans-serif;
   --ro-font-body: "Inter", system-ui, sans-serif;
+  --ro-font-mono: "JetBrains Mono", "Fira Code", monospace;
 
-  /* ESCALA TIPOGRÁFICA */
   --ro-text-hero: clamp(2.25rem, 6vw, 4.5rem);
   --ro-text-display: clamp(1.5rem, 4vw, 2.25rem);
   --ro-text-title: 1.25rem;
@@ -74,7 +137,9 @@
   --ro-text-label: 0.6875rem;
   --ro-text-score: 2rem;
 
-  /* ESPACIADO */
+  /* ─────────────────────────────────────────
+     ESPACIADO / RADIOS — sin cambios
+     ───────────────────────────────────────── */
   --ro-space-1: 4px;
   --ro-space-2: 8px;
   --ro-space-3: 12px;
@@ -86,68 +151,101 @@
   --ro-space-12: 48px;
   --ro-space-16: 64px;
 
-  /* RADIOS */
   --ro-radius-sm: 6px;
   --ro-radius-md: 10px;
   --ro-radius-lg: 14px;
   --ro-radius-xl: 20px;
   --ro-radius-full: 999px;
 
-  /* SOMBRAS */
-  --ro-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
-  --ro-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.7);
-  --ro-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.85);
+  /* ─────────────────────────────────────────
+     SOMBRAS — recalibradas para claro. Las
+     anteriores (negro al 50-85%) manchan sobre
+     fondo hueso.
+     ───────────────────────────────────────── */
+  --ro-shadow-sm: 0 1px 2px rgba(20, 22, 26, 0.05);
+  --ro-shadow-md: 0 4px 12px rgba(20, 22, 26, 0.07);
+  --ro-shadow-lg: 0 12px 32px rgba(20, 22, 26, 0.1);
+  --ro-shadow-chrome: 0 8px 24px rgba(13, 17, 22, 0.35);
 
-  /* TRANSICIONES */
+  /* ─────────────────────────────────────────
+     TRANSICIONES / LAYOUT / Z-INDEX
+     ───────────────────────────────────────── */
   --ro-transition-fast: 150ms ease;
   --ro-transition-base: 200ms ease;
   --ro-transition-slow: 320ms ease;
 
-  /* LAYOUT */
   --ro-page-max: min(1120px, 100%);
   --ro-shell-padding-x: clamp(16px, 4vw, 28px);
   --ro-shell-padding-y: clamp(12px, 2vw, 20px);
 
-  /*
-   * MOBILE-FIRST FOUNDATION (Fase 1)
-   * Breakpoints oficiales — referencia documental.
-   * No usar en @media: var() no es válido en condiciones de media queries estándar.
-   * En media queries usar los valores numéricos (480px, 768px, 1024px, 1200px).
-   */
   --ro-breakpoint-sm: 480px;
   --ro-breakpoint-md: 768px;
   --ro-breakpoint-lg: 1024px;
   --ro-breakpoint-xl: 1200px;
 
-  /* Safe areas (iOS notch / home indicator) */
   --ro-safe-top: env(safe-area-inset-top, 0px);
   --ro-safe-right: env(safe-area-inset-right, 0px);
   --ro-safe-bottom: env(safe-area-inset-bottom, 0px);
   --ro-safe-left: env(safe-area-inset-left, 0px);
 
-  /* Padding horizontal móvil (alineado con shells actuales ≤768px) */
   --ro-mobile-page-padding: clamp(14px, 3.8vw, 18px);
-
-  /* Táctil e inputs móviles */
   --ro-touch-target-min: 44px;
   --ro-input-font-size-mobile: 16px;
 
-  /* Z-INDEX */
   --ro-z-base: 1;
   --ro-z-dropdown: 40;
   --ro-z-sticky: 50;
   --ro-z-modal: 100;
   --ro-z-toast: 120;
 
-  /* ALIAS SEMÁNTICOS (clases .rv-* en riviera-open-components.css) */
+  /* ─────────────────────────────────────────
+     ALIAS SEMÁNTICOS (.rv-* de
+     riviera-open-components.css)
+     ───────────────────────────────────────── */
   --rv-bg-page: var(--ro-bg-base);
   --rv-bg-card: var(--ro-bg-card);
-  --rv-bg-card-soft: var(--ro-bg-elevated);
+  --rv-bg-card-soft: var(--ro-bg-inset);
   --rv-text: var(--ro-text-primary);
   --rv-text-muted: var(--ro-text-secondary);
   --rv-text-subtle: var(--ro-text-muted);
-  --rv-accent: var(--ro-gold);
-  --rv-accent-dim: var(--ro-gold-dim);
+  --rv-accent: var(--ro-accent);
+  --rv-accent-dim: var(--ro-accent-dim);
   --rv-border: var(--ro-border);
   --rv-radius: var(--ro-radius-lg);
+}
+
+/* =============================================
+   SCOPE DE CHROME
+   Aplica esta clase al sidebar, al header de la
+   app y a la navegación móvil. Reapunta los
+   tokens de superficie y texto a la escala
+   oscura, así el CSS existente de esos
+   componentes sigue funcionando sin tocarse.
+============================================= */
+.ro-chrome,
+.riviera-sidebar,
+.mobile-app-navigation {
+  --ro-bg-base: var(--ro-chrome-bg);
+  --ro-bg-deep: var(--ro-chrome-deep);
+  --ro-bg-surface: var(--ro-chrome-bg);
+  --ro-bg-elevated: var(--ro-chrome-elevated);
+  --ro-bg-card: var(--ro-chrome-elevated);
+  --ro-bg-inset: var(--ro-chrome-active);
+
+  --ro-text-primary: var(--ro-chrome-text);
+  --ro-text-secondary: var(--ro-chrome-text-muted);
+  --ro-text-muted: var(--ro-chrome-text-dim);
+
+  --ro-border: var(--ro-chrome-border);
+  --ro-border-subtle: var(--ro-chrome-border);
+  --ro-border-strong: #2e343d;
+
+  --ro-accent: #ffffff;
+  --ro-accent-hover: #e8eaed;
+  --ro-accent-dim: rgba(255, 255, 255, 0.07);
+  --ro-text-on-accent: var(--ro-chrome-bg);
+
+  --ro-gold: var(--ro-gold-light);
+  --ro-gold-text: var(--ro-gold-light);
+  --ro-gold-dim: rgba(223, 190, 127, 0.12);
 }
