@@ -16,7 +16,7 @@
 .legal-page__header {
   margin-bottom: clamp(2rem, 4vw, 2.75rem);
   padding-bottom: clamp(1.5rem, 3vw, 2rem);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--ro-border-strong);
 }
 
 .legal-page__eyebrow {
@@ -57,7 +57,7 @@
 .legal-page__section {
   margin-bottom: clamp(2rem, 4vw, 2.75rem);
   padding-bottom: clamp(1.5rem, 3vw, 2rem);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--ro-border-strong);
 }
 
 .legal-page__section:last-of-type {
@@ -124,7 +124,7 @@
 .legal-page__section--contact {
   margin-top: clamp(2rem, 4vw, 2.5rem);
   padding: clamp(1.25rem, 3vw, 1.75rem);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--ro-border-strong);
   border-radius: 12px;
   background: var(--ro-bg-surface);
 }

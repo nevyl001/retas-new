@@ -6,7 +6,7 @@
 }
 
 .app-site-foot--light {
-  border-top-color: rgba(0, 0, 0, 0.08);
+  border-top-color: var(--ro-border-strong);
 }
 
 .app-site-foot__link {
@@ -48,9 +48,9 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.28);
+  color: var(--ro-text-muted);
 }
 
 .app-site-foot--light .app-site-foot__brand {
-  color: rgba(0, 0, 0, 0.38);
+  color: var(--ro-text-primary);
 }

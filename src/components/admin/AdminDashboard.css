@@ -7,8 +7,8 @@
   --admin-text: var(--ro-bg-surface);
   --admin-text-muted: var(--ro-text-muted);
   --admin-accent: var(--accent-gold);
-  --admin-accent-soft: rgba(255, 255, 255, 0.1);
-  --admin-accent-border: rgba(255, 255, 255, 0.22);
+  --admin-accent-soft: var(--ro-bg-inset);
+  --admin-accent-border: var(--ro-border);
 
   min-height: 100vh;
   min-height: 100dvh;
@@ -83,7 +83,7 @@
 .admin-dash__btn-logout:hover {
   color: var(--admin-text);
   border-color: var(--ro-border-strong);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ro-bg-inset);
 }
 
 .admin-dash__banner {

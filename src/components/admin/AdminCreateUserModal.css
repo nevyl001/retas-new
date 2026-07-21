@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.72);
+  background: var(--ro-bg-overlay);
 }
 
 .admin-create-user-modal__panel {
@@ -19,7 +19,7 @@
   border: 1px solid var(--ro-border);
   background: #111113;
   color: var(--ro-text-primary);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--ro-shadow-lg);
 }
 
 .admin-create-user-modal__close {
@@ -83,7 +83,7 @@
 
 .admin-create-user-modal__field input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.35);
+  border-color: var(--ro-border);
 }
 
 .admin-create-user-modal__password-row {

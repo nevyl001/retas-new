@@ -150,7 +150,7 @@
   color: var(--text-primary);
   padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ro-bg-inset);
   border-left: 3px solid transparent;
 }
 
@@ -221,7 +221,7 @@
 .americano-match-card__score-field input {
   border-radius: 8px;
   border: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--ro-bg-elevated);
   color: var(--accent-gold-light);
   font-family: var(--font-display);
   font-size: 2rem;
@@ -268,7 +268,7 @@
   display: inline-block;
   padding: 6px 14px;
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   font-size: 13px;
