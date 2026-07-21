@@ -44,7 +44,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Actualizar el color del meta theme-color para móviles
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute("content", isDark ? "#1a1a1a" : "#ffffff");
+      metaThemeColor.setAttribute("content", isDark ? "#12161B" : "#F2F0EE");
     }
   }, [theme, isDark]);
 
