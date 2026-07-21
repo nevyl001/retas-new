@@ -24,7 +24,7 @@
 }
 
 .admin-player-debug__output {
-  background: #111;
+  background: var(--ro-bg-card);
   color: #e8e8e8;
   padding: 1rem;
   border-radius: 6px;

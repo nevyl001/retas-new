@@ -751,7 +751,7 @@
   height: 1.25rem;
   border-radius: 50%;
   background: var(--liga-gold);
-  color: #111;
+  color: var(--ro-bg-card);
   font-size: 0.7rem;
   font-weight: 700;
 }

@@ -520,7 +520,7 @@
 }
 
 .te-bracket-side-meta__item:last-child .te-bracket-side-meta__label {
-  color: var(--ro-pub-court, #f87171);
+  color: var(--ro-pub-court, var(--ro-error));
 }
 
 .te-bracket-side-meta__label {
@@ -548,7 +548,7 @@
 }
 
 .te-bracket-side-meta__item:last-child .te-bracket-side-meta__value {
-  color: var(--ro-pub-court, #f87171);
+  color: var(--ro-pub-court, var(--ro-error));
   font-weight: 700;
 }
 
@@ -631,7 +631,7 @@
 }
 
 .te-bracket-final-schedule__item:last-child .te-bracket-final-schedule__label {
-  color: var(--ro-pub-court, #f87171);
+  color: var(--ro-pub-court, var(--ro-error));
 }
 
 .te-bracket-final-schedule__value {
@@ -668,7 +668,7 @@
 }
 
 .te-bracket-final-schedule__item:last-child .te-bracket-final-schedule__value {
-  color: var(--ro-pub-court, #f87171);
+  color: var(--ro-pub-court, var(--ro-error));
   font-weight: 700;
 }
 

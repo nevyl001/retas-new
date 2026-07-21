@@ -10,6 +10,6 @@
   --effective-text: var(--brand-text, var(--ro-text-primary));
   --effective-muted: var(--brand-muted, var(--ro-text-muted));
   --effective-success: var(--brand-success, var(--ro-success));
-  --effective-warning: var(--brand-warning, #fbbf24);
+  --effective-warning: var(--brand-warning, var(--ro-gold));
   --effective-danger: var(--brand-danger, var(--ro-error));
 }

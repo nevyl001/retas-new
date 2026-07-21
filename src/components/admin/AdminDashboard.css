@@ -4,8 +4,8 @@
   --admin-bg: #09090b;
   --admin-card: #111113;
   --admin-border: #1f1f23;
-  --admin-text: #fafafa;
-  --admin-text-muted: #71717a;
+  --admin-text: var(--ro-bg-surface);
+  --admin-text-muted: var(--ro-text-muted);
   --admin-accent: var(--accent-gold);
   --admin-accent-soft: rgba(255, 255, 255, 0.1);
   --admin-accent-border: rgba(255, 255, 255, 0.22);
@@ -95,13 +95,13 @@
 }
 
 .admin-dash__banner--error {
-  color: #ef4444;
+  color: var(--ro-error);
   background: rgba(239, 68, 68, 0.08);
   border-color: rgba(239, 68, 68, 0.25);
 }
 
 .admin-dash__banner--ok {
-  color: #86efac;
+  color: var(--ro-success);
   background: rgba(34, 197, 94, 0.08);
   border-color: rgba(34, 197, 94, 0.25);
 }
@@ -137,7 +137,7 @@
 
 .admin-dash__tab--active {
   color: var(--admin-text);
-  background: #18181b;
+  background: var(--ro-text-primary);
   box-shadow: 0 0 0 1px var(--admin-border) inset;
 }
 

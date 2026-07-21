@@ -912,7 +912,7 @@
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader .te-pub-standings-row__pts {
-  color: var(--text-muted, #7a7a7a) !important;
+  color: var(--text-muted, var(--ro-text-muted)) !important;
   font-weight: 500 !important;
 }
 
@@ -996,7 +996,7 @@
   border-radius: 8px;
   border: 1px solid rgba(239, 68, 68, 0.35);
   background: rgba(239, 68, 68, 0.1);
-  color: #fecaca;
+  color: var(--ro-error-dim);
   font-size: 0.9rem;
   line-height: 1.4;
 }

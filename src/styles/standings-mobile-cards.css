@@ -39,11 +39,11 @@
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--color-text-secondary, #a0a0a0);
+  color: var(--color-text-secondary, var(--ro-text-secondary));
 }
 
 .standings-mobile-card--leader .standings-mobile-card__pos {
-  color: var(--ro-gold, #c9a227);
+  color: var(--ro-gold, var(--ro-gold));
 }
 
 .standings-mobile-card__name {
@@ -54,12 +54,12 @@
   font-size: clamp(0.875rem, 3.6vw, 1rem);
   font-weight: 600;
   line-height: 1.35;
-  color: var(--color-text-primary, #fff);
+  color: var(--color-text-primary, var(--ro-bg-card));
   text-wrap: balance;
 }
 
 .standings-mobile-card--leader .standings-mobile-card__name {
-  color: var(--ro-gold-light, #e8c547);
+  color: var(--ro-gold-light, var(--ro-gold-light));
 }
 
 .standings-mobile-card__stats {
@@ -87,7 +87,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-muted, #7a7a7a);
+  color: var(--color-text-muted, var(--ro-text-muted));
 }
 
 .standings-mobile-card__stat-value {
@@ -95,15 +95,15 @@
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-primary, #fff);
+  color: var(--color-text-primary, var(--ro-bg-card));
 }
 
 .standings-mobile-card__stat-value--win {
-  color: #86efac;
+  color: var(--ro-success);
 }
 
 .standings-mobile-card__stat-value--pts {
-  color: var(--text-muted, #7a7a7a);
+  color: var(--text-muted, var(--ro-text-muted));
   font-weight: 600;
 }
 
@@ -120,15 +120,15 @@
 }
 
 .standings-mobile-card__dif.standings-dif--pos {
-  color: #86efac;
+  color: var(--ro-success);
 }
 
 .standings-mobile-card__dif.standings-dif--neg {
-  color: #fca5a5;
+  color: var(--ro-error);
 }
 
 .standings-mobile-card__dif.standings-dif--zero {
-  color: var(--color-text-muted, #7a7a7a);
+  color: var(--color-text-muted, var(--ro-text-muted));
 }
 
 @media (max-width: 768px) {

@@ -38,7 +38,7 @@
 
 .mode-section-tabs__btn--active {
   color: var(--ro-text-primary, var(--text-primary));
-  border-color: var(--ro-accent, #ffffff);
+  border-color: var(--ro-accent, var(--ro-bg-card));
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -108,7 +108,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--loss, #f87171);
+  color: var(--loss, var(--ro-error));
 }
 
 .reta-danger-zone__hint {
@@ -170,11 +170,11 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: var(--ro-text-muted, #71717a);
+  background: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 .reta-config-status__dot--done {
-  background: #4ade80;
+  background: var(--ro-success);
 }
 
 .reta-config-status__dot--live {
@@ -394,7 +394,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--loss, #f87171);
+  color: var(--loss, var(--ro-error));
 }
 
 .mode-danger-zone__hint {

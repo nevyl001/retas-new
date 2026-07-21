@@ -594,7 +594,7 @@
   padding: 4px 9px;
   border-radius: 999px;
   background: rgba(212, 175, 55, 0.18);
-  color: var(--accent-gold-light, #e8c547);
+  color: var(--accent-gold-light, var(--ro-gold-light));
   border: 0.5px solid rgba(212, 175, 55, 0.55);
   white-space: nowrap;
   font-family: var(--font-body);
@@ -610,7 +610,7 @@
   border: 0.5px solid rgba(212, 175, 55, 0.35);
   font-size: 11px;
   line-height: 1.45;
-  color: var(--accent-gold-light, #e8c547);
+  color: var(--accent-gold-light, var(--ro-gold-light));
   font-weight: 600;
   position: relative;
   z-index: 1;
@@ -905,7 +905,7 @@
 
 .recent-reta-card .riviera-badge--mode-americano {
   background: rgba(74, 222, 128, 0.1);
-  color: #86efac;
+  color: var(--ro-success);
   border-color: rgba(74, 222, 128, 0.32);
 }
 

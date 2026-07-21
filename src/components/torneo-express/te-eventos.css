@@ -149,7 +149,7 @@
 }
 
 .te-eventos-page .te-btn-eliminar-torneo:hover:not(:disabled) {
-  color: var(--loss, #f87171) !important;
+  color: var(--loss, var(--ro-error)) !important;
   opacity: 1;
 }
 

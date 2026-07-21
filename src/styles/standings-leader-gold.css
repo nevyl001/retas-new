@@ -18,7 +18,7 @@
 
 /* PTS: solo informativo — sin dorado en líder */
 .te-pub-standings-row--leader .te-pub-standings-row__pts {
-  color: var(--text-muted, #7a7a7a) !important;
+  color: var(--text-muted, var(--ro-text-muted)) !important;
   font-weight: 500 !important;
 }
 

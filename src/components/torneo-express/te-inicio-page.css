@@ -683,7 +683,7 @@
 .torneo-express-page.te-inicio-page .te-crear-submit.riviera-btn-primary:not(:disabled) {
   background: var(--ro-green, #3d7a5c);
   border-color: rgba(61, 122, 92, 0.5);
-  color: #fff;
+  color: var(--ro-bg-card);
 }
 
 .torneo-express-page.te-inicio-page .te-crear-submit.riviera-btn-primary:hover:not(:disabled) {

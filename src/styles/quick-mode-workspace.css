@@ -28,7 +28,7 @@
   gap: 0.65rem;
   padding: 0.35rem 0 0.75rem;
   margin-bottom: 0.65rem;
-  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-bg-inset)));
 }
 
 @media (min-width: 900px) {
@@ -46,7 +46,7 @@
   font-family: var(--brand-font-body, var(--ro-font-body, inherit));
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--brand-accent, var(--ro-accent, #fff));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
 }
 
 @media (min-width: 900px) {
@@ -69,7 +69,7 @@
   font-weight: var(--brand-heading-weight, 700);
   letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
   line-height: 1.15;
-  color: var(--brand-text, var(--ro-text-primary, #fff));
+  color: var(--brand-text, var(--ro-text-primary, var(--ro-bg-card)));
 }
 
 .qm-event-header__status {
@@ -79,15 +79,15 @@
   border-radius: var(--ro-radius-full, 999px);
   font-size: var(--ro-text-label, 0.6875rem);
   font-weight: 600;
-  color: var(--ro-text-muted, #7a7a7a);
+  color: var(--ro-text-muted, var(--ro-text-muted));
   background: var(--ro-accent-dim, rgba(255, 255, 255, 0.08));
-  border: 1px solid var(--ro-border, #2a2a2a);
+  border: 1px solid var(--ro-border, var(--ro-border));
 }
 
 .qm-event-header__modality {
   margin: 0.2rem 0 0;
   font-size: var(--ro-text-small, 0.8125rem);
-  color: var(--ro-text-secondary, #a0a0a0);
+  color: var(--ro-text-secondary, var(--ro-text-secondary));
 }
 
 .qm-event-header__dot {
@@ -157,13 +157,13 @@
 .qm-event-header__metric-label {
   font-size: var(--ro-text-label, 0.6875rem);
   font-weight: 500;
-  color: var(--ro-text-muted, #7a7a7a);
+  color: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 .qm-event-header__metric-value {
   font-size: 0.9rem;
   font-weight: 650;
-  color: var(--ro-text-primary, #fff);
+  color: var(--ro-text-primary, var(--ro-bg-card));
   overflow-wrap: anywhere;
 }
 
@@ -175,7 +175,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: var(--brand-accent, var(--ro-accent, #fff));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -252,9 +252,9 @@
   width: 100%;
   min-height: 48px;
   padding: 0.45rem 0.55rem;
-  border: 1px solid var(--ro-border, #2a2a2a);
+  border: 1px solid var(--ro-border, var(--ro-border));
   border-radius: var(--ro-radius-md, 10px);
-  background: var(--ro-bg-card, #111);
+  background: var(--ro-bg-card, var(--ro-bg-card));
   color: inherit;
   text-align: left;
   cursor: pointer;
@@ -272,8 +272,8 @@
 
 .qm-stepper__btn.is-active {
   border-color: var(--ro-border-accent, rgba(255, 255, 255, 0.15));
-  background: var(--ro-bg-elevated, #1a1a1a);
-  box-shadow: inset 2px 0 0 var(--brand-accent, var(--ro-accent, #fff));
+  background: var(--ro-bg-elevated, var(--ro-bg-inset));
+  box-shadow: inset 2px 0 0 var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
 }
 
 .qm-stepper__index {
@@ -287,14 +287,14 @@
   border-radius: var(--ro-radius-sm, 6px);
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--ro-text-on-accent, #000);
-  background: var(--ro-text-muted, #7a7a7a);
+  color: var(--ro-text-on-accent, var(--ro-chrome-bg));
+  background: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 .qm-stepper__btn.is-active .qm-stepper__index,
 .qm-stepper__btn.is-complete .qm-stepper__index {
-  background: var(--brand-accent, var(--ro-accent, #fff));
-  color: var(--ro-text-on-accent, #000);
+  background: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  color: var(--ro-text-on-accent, var(--ro-chrome-bg));
 }
 
 .qm-stepper__copy {
@@ -306,19 +306,19 @@
 .qm-stepper__label {
   font-size: 0.8125rem;
   font-weight: 650;
-  color: var(--ro-text-primary, #fff);
+  color: var(--ro-text-primary, var(--ro-bg-card));
 }
 
 .qm-stepper__count {
   font-size: 0.7rem;
-  color: var(--ro-text-muted, #7a7a7a);
+  color: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 .qm-stepper__state {
   grid-column: 2;
   font-size: 0.65rem;
   font-weight: 600;
-  color: var(--ro-text-muted, #7a7a7a);
+  color: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 /* En móvil el estado “Pendiente/Activo” satura; basta label + count */
@@ -338,17 +338,17 @@
 }
 
 .qm-stepper__btn.is-active .qm-stepper__state {
-  color: var(--brand-accent, var(--ro-accent, #fff));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
 }
 
 .qm-stepper__btn.is-complete .qm-stepper__state {
-  color: var(--ro-success, #4ade80);
+  color: var(--ro-success, var(--ro-success));
 }
 
 /* —— Workbench —— */
 .qm-ws__workbench {
-  background: var(--ro-bg-elevated, #1a1a1a);
-  border: 1px solid var(--ro-border, #2a2a2a);
+  background: var(--ro-bg-elevated, var(--ro-bg-inset));
+  border: 1px solid var(--ro-border, var(--ro-border));
   border-radius: var(--ro-radius-md, 10px);
   padding: 0.85rem 1rem 1rem;
   min-height: 0;
@@ -367,7 +367,7 @@
   font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
   font-size: 1rem;
   font-weight: 700;
-  color: var(--ro-text-primary, #fff);
+  color: var(--ro-text-primary, var(--ro-bg-card));
 }
 
 .qm-ws__workbench-body {
@@ -382,7 +382,7 @@
 .qm-ws__workbench .elegant-pair-header {
   margin-bottom: 0.65rem;
   padding-bottom: 0.45rem;
-  border-bottom: 1px solid var(--ro-border-subtle, #1a1a1a);
+  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-bg-inset));
 }
 
 .qm-ws__equipos-stack {
@@ -415,7 +415,7 @@
   align-items: center;
   gap: 0.55rem 0.65rem;
   padding: 0.45rem 0.55rem;
-  border: 1px solid var(--ro-border, #2a2a2a);
+  border: 1px solid var(--ro-border, var(--ro-border));
   border-radius: var(--ro-radius-sm, 6px);
   font-size: 0.85rem;
 }
@@ -429,27 +429,27 @@
   border-radius: var(--ro-radius-sm, 6px);
   font-size: 0.65rem;
   font-weight: 700;
-  background: var(--ro-bg-card, #111);
-  color: var(--ro-text-muted, #7a7a7a);
+  background: var(--ro-bg-card, var(--ro-bg-card));
+  color: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 .qm-ws__ready-check .is-ok .qm-ws__ready-mark {
-  background: color-mix(in srgb, var(--ro-success, #4ade80) 18%, transparent);
-  color: var(--ro-success, #4ade80);
+  background: color-mix(in srgb, var(--ro-success, var(--ro-success)) 18%, transparent);
+  color: var(--ro-success, var(--ro-success));
 }
 
 .qm-ws__ready-check .is-miss .qm-ws__ready-mark {
-  background: color-mix(in srgb, var(--ro-error, #f87171) 16%, transparent);
-  color: var(--ro-error, #f87171);
+  background: color-mix(in srgb, var(--ro-error, var(--ro-error)) 16%, transparent);
+  color: var(--ro-error, var(--ro-error));
 }
 
 .qm-ws__ready-copy {
-  color: var(--ro-text-primary, #fff);
+  color: var(--ro-text-primary, var(--ro-bg-card));
 }
 
 .qm-ws__ready-check .is-soft .qm-ws__ready-copy,
 .qm-ws__ready-check .is-miss .qm-ws__ready-copy {
-  color: var(--ro-text-secondary, #a0a0a0);
+  color: var(--ro-text-secondary, var(--ro-text-secondary));
 }
 
 .qm-ws__text-btn {
@@ -460,7 +460,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: var(--brand-accent, var(--ro-accent, #fff));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -475,8 +475,8 @@
 }
 
 .qm-ws-panel {
-  background: var(--ro-bg-card, #111);
-  border: 1px solid var(--ro-border, #2a2a2a);
+  background: var(--ro-bg-card, var(--ro-bg-card));
+  border: 1px solid var(--ro-border, var(--ro-border));
   border-radius: var(--ro-radius-md, 10px);
   padding: 0.15rem 0;
 }
@@ -490,7 +490,7 @@
 
 .qm-ws-panel__block {
   padding: 0.75rem 0.9rem;
-  border-bottom: 1px solid var(--ro-border-subtle, #1a1a1a);
+  border-bottom: 1px solid var(--ro-border-subtle, var(--ro-bg-inset));
 }
 
 .qm-ws-panel__block:last-child {
@@ -503,7 +503,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ro-text-muted, #7a7a7a);
+  color: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 .qm-ws-panel__progress {
@@ -520,7 +520,7 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.8125rem;
-  color: var(--ro-text-muted, #7a7a7a);
+  color: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 .qm-ws-panel__progress li::before {
@@ -528,23 +528,23 @@
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
-  background: var(--ro-border, #2a2a2a);
+  background: var(--ro-border, var(--ro-border));
   flex: 0 0 auto;
 }
 
 .qm-ws-panel__progress li.is-ok {
-  color: var(--ro-text-primary, #fff);
+  color: var(--ro-text-primary, var(--ro-bg-card));
 }
 
 .qm-ws-panel__progress li.is-ok::before {
-  background: var(--ro-success, #4ade80);
+  background: var(--ro-success, var(--ro-success));
 }
 
 .qm-ws-panel__conv-line {
   margin: 0 0 0.15rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--ro-text-primary, #fff);
+  color: var(--ro-text-primary, var(--ro-bg-card));
   line-height: 1.35;
 }
 
@@ -563,7 +563,7 @@
   font-size: var(--ro-text-label, 0.6875rem);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ro-text-muted, #7a7a7a);
+  color: var(--ro-text-muted, var(--ro-text-muted));
 }
 
 .qm-ws-panel__block--danger .reta-danger-zone__hint {
@@ -589,9 +589,9 @@
 
 .qm-primary-cta--sidebar .qm-primary-cta__btn:disabled {
   opacity: 0.55;
-  background: var(--ro-bg-elevated, #1a1a1a);
-  border-color: var(--ro-border, #2a2a2a);
-  color: var(--ro-text-secondary, #a0a0a0);
+  background: var(--ro-bg-elevated, var(--ro-bg-inset));
+  border-color: var(--ro-border, var(--ro-border));
+  color: var(--ro-text-secondary, var(--ro-text-secondary));
 }
 
 .qm-primary-cta--sidebar .qm-primary-cta__hint {
@@ -649,8 +649,8 @@
     z-index: var(--ro-z-sticky, 50);
     padding: 0.55rem var(--ro-mobile-page-padding, 16px)
       calc(0.55rem + env(safe-area-inset-bottom, 0px));
-    background: color-mix(in srgb, var(--ro-bg-base, #000) 94%, transparent);
-    border-top: 1px solid var(--ro-border, #2a2a2a);
+    background: color-mix(in srgb, var(--ro-bg-base, var(--ro-chrome-bg)) 94%, transparent);
+    border-top: 1px solid var(--ro-border, var(--ro-border));
     backdrop-filter: blur(10px);
   }
 

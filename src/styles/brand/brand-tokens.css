@@ -11,7 +11,7 @@
   --brand-text: var(--ro-text-primary);
   --brand-muted: var(--ro-text-muted);
   --brand-success: var(--ro-success);
-  --brand-warning: #fbbf24;
+  --brand-warning: var(--ro-gold);
   --brand-danger: var(--ro-error);
   --brand-font-heading: var(--ro-font-heading);
   --brand-font-body: var(--ro-font-body);

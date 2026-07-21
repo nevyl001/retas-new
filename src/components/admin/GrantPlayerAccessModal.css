@@ -22,8 +22,8 @@
   max-height: min(80vh, 640px);
   display: flex;
   flex-direction: column;
-  background: var(--admin-surface, #18181b);
-  border: 1px solid var(--admin-input-border, #27272a);
+  background: var(--admin-surface, var(--ro-text-primary));
+  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   border-radius: 12px;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
 }
@@ -40,13 +40,13 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--admin-text, #fafafa);
+  color: var(--admin-text, var(--ro-bg-surface));
 }
 
 .grant-access-modal__close {
   border: none;
   background: transparent;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
@@ -55,7 +55,7 @@
 .grant-access-modal__intro {
   margin: 0 1rem 0.75rem;
   font-size: 0.8125rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
   line-height: 1.45;
 }
 
@@ -70,9 +70,9 @@
   margin: 0 1rem 0.75rem;
   padding: 0.5rem 0.65rem;
   border-radius: 8px;
-  border: 1px solid var(--admin-input-border, #27272a);
+  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: var(--admin-input-bg, #09090b);
-  color: var(--admin-text, #fafafa);
+  color: var(--admin-text, var(--ro-bg-surface));
   font-size: 0.875rem;
 }
 
@@ -89,7 +89,7 @@
 .grant-access-modal__empty {
   padding: 0.75rem 0;
   font-size: 0.8125rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .grant-access-modal__option {
@@ -100,16 +100,16 @@
   gap: 0.15rem;
   padding: 0.55rem 0.65rem;
   border-radius: 8px;
-  border: 1px solid var(--admin-input-border, #27272a);
+  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: var(--admin-input-bg, #09090b);
-  color: var(--admin-text, #fafafa);
+  color: var(--admin-text, var(--ro-bg-surface));
   cursor: pointer;
   text-align: left;
 }
 
 .grant-access-modal__option--selected {
-  border-color: var(--admin-accent, #c9a227);
-  box-shadow: inset 0 0 0 1px var(--admin-accent, #c9a227);
+  border-color: var(--admin-accent, var(--ro-gold));
+  box-shadow: inset 0 0 0 1px var(--admin-accent, var(--ro-gold));
 }
 
 .grant-access-modal__option-name {
@@ -119,7 +119,7 @@
 
 .grant-access-modal__option-email {
   font-size: 0.75rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .grant-access-modal__footer {
@@ -127,7 +127,7 @@
   justify-content: flex-end;
   gap: 0.5rem;
   padding: 0.75rem 1rem 1rem;
-  border-top: 1px solid var(--admin-input-border, #27272a);
+  border-top: 1px solid var(--admin-input-border, var(--ro-border-strong));
 }
 
 .grant-access-modal__btn {
@@ -139,15 +139,15 @@
 }
 
 .grant-access-modal__btn--ghost {
-  border: 1px solid var(--admin-input-border, #27272a);
+  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: transparent;
-  color: var(--admin-text, #fafafa);
+  color: var(--admin-text, var(--ro-bg-surface));
 }
 
 .grant-access-modal__btn--primary {
   border: none;
-  background: var(--admin-accent, #c9a227);
-  color: #111;
+  background: var(--admin-accent, var(--ro-gold));
+  color: var(--ro-bg-card);
 }
 
 .grant-access-modal__btn:disabled {

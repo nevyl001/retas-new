@@ -1,5 +1,5 @@
 .americano-history {
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  border: 1px solid var(--color-border-subtle, var(--ro-border-strong));
   border-radius: 12px;
   padding: 16px;
   background: var(--color-bg-surface, #181818);
@@ -10,7 +10,7 @@
 }
 
 .americano-history__round {
-  border-top: 1px solid var(--color-border-subtle, #2f2f2f);
+  border-top: 1px solid var(--color-border-subtle, var(--ro-border-strong));
   padding-top: 12px;
   margin-top: 12px;
 }
@@ -18,11 +18,11 @@
 .americano-history__toggle {
   width: 100%;
   text-align: left;
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  border: 1px solid var(--color-border-subtle, var(--ro-border-strong));
   border-radius: 10px;
   padding: 10px 12px;
   background: var(--color-bg-elevated, #121212);
-  color: var(--color-text-primary, #fff);
+  color: var(--color-text-primary, var(--ro-bg-card));
   font-weight: 600;
   cursor: pointer;
 }
@@ -38,7 +38,7 @@
 }
 
 .americano-history__match {
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  border: 1px solid var(--color-border-subtle, var(--ro-border-strong));
   border-radius: 10px;
   padding: 12px;
   display: grid;
@@ -60,7 +60,7 @@
   justify-self: start;
   border: none;
   background: transparent;
-  color: var(--color-text-secondary, #b8b8b8);
+  color: var(--color-text-secondary, var(--ro-text-secondary));
   text-decoration: underline;
   cursor: pointer;
   font-size: 13px;
@@ -80,9 +80,9 @@
 .americano-history__edit input {
   width: 72px;
   border-radius: 8px;
-  border: 1px solid var(--color-border-subtle, #2f2f2f);
+  border: 1px solid var(--color-border-subtle, var(--ro-border-strong));
   background: var(--color-bg-surface, #181818);
-  color: var(--color-text-primary, #fff);
+  color: var(--color-text-primary, var(--ro-bg-card));
   padding: 6px 8px;
 }
 

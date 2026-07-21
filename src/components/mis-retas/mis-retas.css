@@ -49,7 +49,7 @@
   border-radius: 8px;
   border: 1px solid rgba(239, 68, 68, 0.35);
   background: rgba(239, 68, 68, 0.1);
-  color: #fecaca;
+  color: var(--ro-error-dim);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -205,7 +205,7 @@
 
 .mis-retas-page .riviera-badge--mode-americano {
   background: rgba(74, 222, 128, 0.1) !important;
-  color: #86efac !important;
+  color: var(--ro-success) !important;
   border: 0.5px solid rgba(74, 222, 128, 0.32) !important;
 }
 

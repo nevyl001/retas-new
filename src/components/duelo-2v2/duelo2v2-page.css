@@ -1,7 +1,7 @@
 .duelo2v2-page {
   min-height: 100vh;
-  background: #0a0a0a;
-  color: #f5f5f5;
+  background: var(--ro-chrome-deep);
+  color: var(--ro-bg-base);
   padding: clamp(1rem, 2.5vw, 2rem) clamp(1rem, 4vw, 3rem)
     max(3rem, env(safe-area-inset-bottom));
   box-sizing: border-box;
@@ -12,7 +12,7 @@
   padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 5vw, 4rem)
     max(2rem, env(safe-area-inset-bottom));
   background: transparent;
-  color: var(--ro-text-primary, #f5f5f5);
+  color: var(--ro-text-primary, var(--ro-bg-base));
 }
 
 .App.ro-public-view .duelo2v2-page--public,
@@ -133,7 +133,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
-  color: #fff;
+  color: var(--ro-bg-card);
   font: inherit;
   box-sizing: border-box;
 }
@@ -167,7 +167,7 @@
 .duelo2v2-form__toggle input {
   width: 1rem;
   height: 1rem;
-  accent-color: #fff;
+  accent-color: var(--ro-bg-card);
 }
 
 .duelo2v2-form__hint {
@@ -208,7 +208,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.04);
-  color: #fff;
+  color: var(--ro-bg-card);
   font: inherit;
   box-sizing: border-box;
 }
@@ -304,11 +304,11 @@
 }
 
 .duelo2v2-match-meta__value--accent {
-  color: var(--accent-gold-light, #e8c547);
+  color: var(--accent-gold-light, var(--ro-gold-light));
 }
 
 .duelo2v2-match-meta__value--court {
-  color: #ef4444;
+  color: var(--ro-error);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -541,7 +541,7 @@
 }
 
 .duelo2v2-pair-slot__clear:hover {
-  color: #f87171;
+  color: var(--ro-error);
 }
 
 .duelo2v2-pair-slot__players {
@@ -608,7 +608,7 @@
 .duelo2v2-roster__sel {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #34d399;
+  color: var(--ro-success);
   padding: 0.25rem 0.65rem;
   border-radius: 999px;
   background: rgba(52, 211, 153, 0.12);
@@ -623,7 +623,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.25);
-  color: #fff;
+  color: var(--ro-bg-card);
   font: inherit;
 }
 
@@ -690,7 +690,7 @@
 }
 
 .duelo2v2-roster__selection-preview strong {
-  color: #fff;
+  color: var(--ro-bg-card);
   font-weight: 600;
 }
 
@@ -774,7 +774,7 @@
   top: 6px;
   right: 8px;
   font-size: 0.75rem;
-  color: #34d399;
+  color: var(--ro-success);
   font-weight: 700;
 }
 
@@ -810,7 +810,7 @@
   font-size: clamp(1.75rem, 4vw, 3rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--ro-text-primary, #fff);
+  color: var(--ro-text-primary, var(--ro-bg-card));
 }
 
 .duelo2v2-live-board__sub {
@@ -820,12 +820,12 @@
 }
 
 .duelo2v2-live-dot {
-  color: #34d399;
+  color: var(--ro-success);
   font-weight: 600;
 }
 
 .duelo2v2-live-board__done {
-  color: #fbbf24;
+  color: var(--ro-gold);
   font-weight: 600;
 }
 
@@ -844,7 +844,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fbbf24;
+  color: var(--ro-gold);
   padding: 0.25rem 0.55rem;
   border-radius: 999px;
   background: rgba(234, 179, 8, 0.15);
@@ -940,7 +940,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #fbbf24;
+  color: var(--ro-gold);
   padding: 0.28rem 0.6rem;
   border-radius: 999px;
   border: 1px solid rgba(234, 179, 8, 0.4);
@@ -961,7 +961,7 @@
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--accent-gold, #fbbf24);
+  color: var(--accent-gold, var(--ro-gold));
 }
 
 .duelo2v2-celebrate__team-card-subheadline {
@@ -978,7 +978,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fbbf24;
+  color: var(--ro-gold);
   line-height: 1.35;
 }
 
@@ -1006,7 +1006,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.3;
-  color: #fbbf24;
+  color: var(--ro-gold);
   word-break: break-word;
 }
 
@@ -1089,7 +1089,7 @@
 }
 
 .duelo2v2-celebrate__pair--winner .duelo2v2-celebrate__pair-label {
-  color: #fbbf24;
+  color: var(--ro-gold);
 }
 
 .duelo2v2-celebrate__pair-players {
@@ -1139,13 +1139,13 @@
 }
 
 .duelo2v2-celebrate__rating-move--up {
-  color: #34d399;
+  color: var(--ro-success);
   background: rgba(52, 211, 153, 0.12);
   border: 1px solid rgba(52, 211, 153, 0.35);
 }
 
 .duelo2v2-celebrate__rating-move--down {
-  color: #f87171;
+  color: var(--ro-error);
   background: rgba(248, 113, 113, 0.12);
   border: 1px solid rgba(248, 113, 113, 0.35);
 }
@@ -1188,11 +1188,11 @@
 }
 
 .duelo2v2-celebrate__rating-summary-item--up {
-  color: #34d399;
+  color: var(--ro-success);
 }
 
 .duelo2v2-celebrate__rating-summary-item--down {
-  color: #f87171;
+  color: var(--ro-error);
 }
 
 .duelo2v2-celebrate__scoreboard {
@@ -1222,7 +1222,7 @@
 }
 
 .duelo2v2-celebrate__score-team--winner {
-  color: #fbbf24;
+  color: var(--ro-gold);
 }
 
 .duelo2v2-celebrate__score-numbers {
@@ -1234,7 +1234,7 @@
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  color: #fff;
+  color: var(--ro-bg-card);
 }
 
 .duelo2v2-celebrate__score-dash {
@@ -1455,12 +1455,12 @@
 .duelo2v2-live-team__set-score {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: #34d399;
+  color: var(--ro-success);
   letter-spacing: 0.02em;
 }
 
 .duelo2v2-live-team--winner .duelo2v2-live-team__set-score {
-  color: #fbbf24;
+  color: var(--ro-gold);
 }
 
 .duelo2v2-live-team__score {
@@ -1536,7 +1536,7 @@
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--ro-bg-card);
 }
 
 .duelo2v2-score-editor__mid {
@@ -1611,7 +1611,7 @@
 }
 
 .duelo2v2-score-editor__set-row--a .duelo2v2-score-editor__set-label {
-  color: #34d399;
+  color: var(--ro-success);
 }
 
 .duelo2v2-score-editor__set-row--b .duelo2v2-score-editor__set-label {
@@ -1627,12 +1627,12 @@
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  color: var(--ro-bg-card);
   font-size: 1.25rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
-  -webkit-text-fill-color: #fff;
+  -webkit-text-fill-color: var(--ro-bg-card);
   caret-color: #eab308;
 }
 
@@ -1681,7 +1681,7 @@
   border-radius: 10px;
   background: rgba(52, 211, 153, 0.1);
   border: 1px solid rgba(52, 211, 153, 0.25);
-  color: #34d399;
+  color: var(--ro-success);
   text-align: center;
 }
 
@@ -1855,7 +1855,7 @@
 
 .duelo2v2-badge--live {
   background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
+  color: var(--ro-success);
 }
 
 .duelo2v2-badge--done {
@@ -1905,19 +1905,19 @@
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(0, 0, 0, 0.35);
-  color: #fff;
+  color: var(--ro-bg-card);
   font-size: 1.25rem;
   font-weight: 700;
 }
 
 .duelo2v2-error {
-  color: #f87171;
+  color: var(--ro-error);
   font-size: 0.9rem;
   margin: 0.5rem 0;
 }
 
 .duelo2v2-message {
-  color: #34d399;
+  color: var(--ro-success);
   font-size: 0.9rem;
   margin: 0.5rem 0;
 }

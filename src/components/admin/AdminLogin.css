@@ -4,13 +4,13 @@
   --admin-bg: #09090b;
   --admin-card: #111113;
   --admin-border: #1f1f23;
-  --admin-text: #fafafa;
-  --admin-text-muted: #71717a;
-  --admin-input-bg: #18181b;
-  --admin-input-border: #27272a;
+  --admin-text: var(--ro-bg-surface);
+  --admin-text-muted: var(--ro-text-muted);
+  --admin-input-bg: var(--ro-text-primary);
+  --admin-input-border: var(--ro-border-strong);
   --admin-accent: var(--accent-gold);
   --admin-accent-hover: var(--accent-gold-light);
-  --admin-error: #ef4444;
+  --admin-error: var(--ro-error);
   --admin-error-bg: rgba(239, 68, 68, 0.08);
   --admin-error-border: rgba(239, 68, 68, 0.25);
 
@@ -198,7 +198,7 @@
   font-size: 0.9375rem;
   font-weight: 600;
   font-family: inherit;
-  color: #0a0a0a;
+  color: var(--ro-chrome-deep);
   background: var(--admin-accent);
   border: none;
   border-radius: 8px;
@@ -226,7 +226,7 @@
   width: 1rem;
   height: 1rem;
   border: 2px solid rgba(10, 10, 10, 0.2);
-  border-top-color: #0a0a0a;
+  border-top-color: var(--ro-chrome-deep);
   border-radius: 50%;
   animation: adminLoginSpin 0.65s linear infinite;
 }

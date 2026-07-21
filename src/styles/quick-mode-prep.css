@@ -27,7 +27,7 @@
   gap: var(--ro-space-2, 8px);
   padding: var(--ro-space-4, 16px) 0 var(--ro-space-3, 12px);
   margin-bottom: var(--ro-space-3, 12px);
-  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-bg-inset)));
 }
 
 .qm-hero__eyebrow {
@@ -36,7 +36,7 @@
   font-size: var(--ro-text-small, 0.8125rem);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--brand-accent, var(--ro-accent, #fff));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
 }
 
 .qm-hero__title-row {
@@ -53,7 +53,7 @@
   font-weight: var(--brand-heading-weight, 700);
   line-height: 1.15;
   letter-spacing: var(--brand-heading-letter-spacing, -0.02em);
-  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, #fff)));
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, var(--ro-bg-card))));
 }
 
 .qm-hero__status {
@@ -65,9 +65,9 @@
   font-size: var(--ro-text-label, 0.6875rem);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--rv-text-subtle, var(--ro-text-muted, #7a7a7a));
+  color: var(--rv-text-subtle, var(--ro-text-muted, var(--ro-text-muted)));
   background: var(--ro-accent-dim, rgba(255, 255, 255, 0.08));
-  border: 1px solid var(--ro-border, var(--brand-border, #2a2a2a));
+  border: 1px solid var(--ro-border, var(--brand-border, var(--ro-border)));
 }
 
 .qm-hero__subtitle {
@@ -76,7 +76,7 @@
   font-family: var(--brand-font-body, var(--ro-font-body, inherit));
   font-size: var(--ro-text-body, 0.875rem);
   line-height: 1.45;
-  color: var(--rv-text-muted, var(--ro-text-secondary, #a0a0a0));
+  color: var(--rv-text-muted, var(--ro-text-secondary, var(--ro-text-secondary)));
 }
 
 .qm-hero__stats {
@@ -100,7 +100,7 @@
   font-size: var(--ro-text-label, 0.6875rem);
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: var(--rv-text-subtle, var(--ro-text-muted, #7a7a7a));
+  color: var(--rv-text-subtle, var(--ro-text-muted, var(--ro-text-muted)));
 }
 
 .qm-hero__stat-value {
@@ -108,7 +108,7 @@
   font-size: 1.05rem;
   font-weight: 650;
   line-height: 1.2;
-  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, #fff)));
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, var(--ro-bg-card))));
 }
 
 /* —— Primary CTA (mismo acento que riviera-btn-primary) —— */
@@ -126,15 +126,15 @@
   width: 100%;
   min-height: var(--ro-touch-target-min, 44px);
   padding: 0.95rem 1.25rem;
-  border: 1px solid var(--brand-accent, var(--ro-accent, #fff));
+  border: 1px solid var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
   border-radius: var(--ro-radius-md, 10px);
   font-family: var(--brand-font-heading, var(--ro-font-heading, inherit));
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   cursor: pointer;
-  color: var(--ro-text-on-accent, #000);
-  background: var(--brand-accent, var(--ro-accent, #fff));
+  color: var(--ro-text-on-accent, var(--ro-chrome-bg));
+  background: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
   box-shadow: none;
   transition:
     background var(--ro-transition-fast, 150ms ease),
@@ -157,7 +157,7 @@
 }
 
 .qm-primary-cta__btn:focus-visible {
-  outline: 2px solid var(--brand-accent, var(--ro-accent, #fff));
+  outline: 2px solid var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
   outline-offset: 2px;
 }
 
@@ -167,7 +167,7 @@
   font-family: var(--brand-font-body, var(--ro-font-body, inherit));
   font-size: var(--ro-text-small, 0.8125rem);
   line-height: 1.4;
-  color: var(--rv-text-subtle, var(--ro-text-muted, #7a7a7a));
+  color: var(--rv-text-subtle, var(--ro-text-muted, var(--ro-text-muted)));
 }
 
 /* Club accent override for CTA hover when brand ≠ white */
@@ -189,8 +189,8 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 
 .qm-accordion__item {
   border-radius: var(--ro-radius-md, 10px);
-  background: var(--rv-bg-card, var(--ro-bg-card, #111));
-  border: 1px solid var(--ro-border, var(--brand-border, #2a2a2a));
+  background: var(--rv-bg-card, var(--ro-bg-card, var(--ro-bg-card)));
+  border: 1px solid var(--ro-border, var(--brand-border, var(--ro-border)));
   overflow: hidden;
   transition:
     border-color var(--ro-transition-fast, 150ms ease),
@@ -198,9 +198,9 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 }
 
 .qm-accordion__item.is-open {
-  background: var(--rv-bg-card-soft, var(--ro-bg-elevated, #1a1a1a));
+  background: var(--rv-bg-card-soft, var(--ro-bg-elevated, var(--ro-bg-inset)));
   border-color: var(--ro-border-accent, rgba(255, 255, 255, 0.15));
-  box-shadow: inset 3px 0 0 var(--brand-accent, var(--ro-accent, #fff));
+  box-shadow: inset 3px 0 0 var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
 }
 
 .qm-accordion__trigger {
@@ -226,7 +226,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 }
 
 .qm-accordion__trigger:focus-visible {
-  outline: 2px solid var(--brand-accent, var(--ro-accent, #fff));
+  outline: 2px solid var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
   outline-offset: -2px;
 }
 
@@ -237,7 +237,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
   flex: 0 0 auto;
   width: 1.25rem;
   height: 1.25rem;
-  color: var(--rv-text-muted, var(--ro-text-secondary, #a0a0a0));
+  color: var(--rv-text-muted, var(--ro-text-secondary, var(--ro-text-secondary)));
 }
 
 .qm-accordion__chevron::before {
@@ -267,14 +267,14 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
   font-weight: 650;
   letter-spacing: -0.01em;
   line-height: 1.25;
-  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, #fff)));
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, var(--ro-bg-card))));
 }
 
 .qm-accordion__subtitle {
   font-family: var(--brand-font-body, var(--ro-font-body, inherit));
   font-size: var(--ro-text-small, 0.8125rem);
   line-height: 1.35;
-  color: var(--rv-text-subtle, var(--ro-text-muted, #7a7a7a));
+  color: var(--rv-text-subtle, var(--ro-text-muted, var(--ro-text-muted)));
 }
 
 .qm-accordion__meta {
@@ -282,13 +282,13 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
   font-family: var(--brand-font-body, var(--ro-font-body, inherit));
   font-size: var(--ro-text-small, 0.8125rem);
   font-weight: 600;
-  color: var(--rv-text-muted, var(--ro-text-secondary, #a0a0a0));
+  color: var(--rv-text-muted, var(--ro-text-secondary, var(--ro-text-secondary)));
   white-space: nowrap;
 }
 
 .qm-accordion__panel {
   padding: 0 1rem 1rem 1rem;
-  border-top: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+  border-top: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-bg-inset)));
   animation: qm-panel-in 160ms ease;
 }
 
@@ -318,8 +318,8 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
   font-size: var(--ro-text-small, 0.8125rem);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--brand-accent, var(--ro-accent, #fff));
-  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+  color: var(--brand-accent, var(--ro-accent, var(--ro-bg-card)));
+  border-bottom: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-bg-inset)));
 }
 
 .tournament-details.qm-competition .start-tournament-section {
@@ -335,7 +335,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 
 .qm-details-advanced {
   margin-top: 0.75rem;
-  border-top: 1px solid var(--ro-border-subtle, var(--brand-border, #1a1a1a));
+  border-top: 1px solid var(--ro-border-subtle, var(--brand-border, var(--ro-bg-inset)));
   padding-top: 0.5rem;
 }
 
@@ -348,7 +348,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
   font-family: var(--brand-font-body, var(--ro-font-body, inherit));
   font-size: var(--ro-text-small, 0.8125rem);
   font-weight: 600;
-  color: var(--rv-text-muted, var(--ro-text-secondary, #a0a0a0));
+  color: var(--rv-text-muted, var(--ro-text-secondary, var(--ro-text-secondary)));
 }
 
 .qm-details-advanced > summary::-webkit-details-marker {
@@ -356,7 +356,7 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
 }
 
 .qm-details-advanced[open] > summary {
-  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, #fff)));
+  color: var(--brand-text, var(--rv-text, var(--ro-text-primary, var(--ro-bg-card))));
   margin-bottom: 0.75rem;
 }
 

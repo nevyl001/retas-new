@@ -1091,7 +1091,7 @@
   border: 1px solid rgba(239, 68, 68, 0.35);
   font-size: 0.82rem;
   line-height: 1.45;
-  color: #fecaca;
+  color: var(--ro-error-dim);
 }
 
 .te-gestion-page .te-notif-panel__infra-warn p {
@@ -1232,7 +1232,7 @@
 
 .te-gestion-page .te-notif-log-row__error {
   margin-top: 0.2rem;
-  color: #fca5a5;
+  color: var(--ro-error);
 }
 
 /* Panel compacto — tabla de parejas */
@@ -1530,7 +1530,7 @@
   width: min(100%, 28rem);
   border-radius: 14px;
   border: 1px solid var(--border-subtle);
-  background: var(--te-gestion-surface, #111);
+  background: var(--te-gestion-surface, var(--ro-bg-card));
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
 }
 

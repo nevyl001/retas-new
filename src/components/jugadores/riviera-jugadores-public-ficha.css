@@ -8,7 +8,7 @@
   --rjp-ficha-card: rgba(16, 16, 18, 0.94);
   --rjp-ficha-surface: rgba(28, 28, 32, 0.96);
   --rjp-ficha-border: var(--ro-border, rgba(255, 255, 255, 0.1));
-  --rjp-ficha-text: var(--ro-text-primary, #fff);
+  --rjp-ficha-text: var(--ro-text-primary, var(--ro-bg-card));
   --rjp-ficha-text-2: var(--ro-text-secondary, rgba(255, 255, 255, 0.72));
   --rjp-ficha-text-3: var(--ro-text-muted, rgba(255, 255, 255, 0.52));
   --rjp-ficha-text-empty: var(--ro-text-muted, rgba(255, 255, 255, 0.4));
@@ -297,7 +297,7 @@
   border: 2px solid var(--rjp-ficha-card);
   font-size: 7px;
   font-weight: 700;
-  color: var(--ro-text-on-accent, #111);
+  color: var(--ro-text-on-accent, var(--ro-bg-card));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -419,7 +419,7 @@
   border: 2px solid rgba(14, 14, 16, 0.85);
   font-size: 10px;
   font-weight: 800;
-  color: var(--ro-text-on-accent, #111);
+  color: var(--ro-text-on-accent, var(--ro-bg-card));
   display: inline-flex;
   align-items: center;
   justify-content: center;

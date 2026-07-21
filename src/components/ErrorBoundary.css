@@ -13,7 +13,7 @@
   padding: clamp(24px, 5vw, 32px);
   border-radius: 14px;
   border: 0.5px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
-  background: var(--bg-elevated, #1a1a1a);
+  background: var(--bg-elevated, var(--ro-bg-inset));
   text-align: center;
 }
 
@@ -29,14 +29,14 @@
   font-family: var(--font-display, var(--font-body, sans-serif));
   font-size: clamp(1.25rem, 4vw, 1.5rem);
   font-weight: 700;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary, var(--ro-bg-card));
 }
 
 .error-boundary__message {
   margin: 0 0 16px;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--text-secondary, #a0a0a0);
+  color: var(--text-secondary, var(--ro-text-secondary));
 }
 
 .error-boundary__details {
@@ -45,7 +45,7 @@
   border-radius: 8px;
   background: rgba(248, 113, 113, 0.08);
   border: 0.5px solid rgba(248, 113, 113, 0.25);
-  color: #fca5a5;
+  color: var(--ro-error);
   font-size: 0.75rem;
   line-height: 1.45;
   text-align: left;
@@ -75,7 +75,7 @@
 .error-boundary__btn--primary {
   border: 0.5px solid rgba(61, 122, 92, 0.5);
   background: var(--ro-green, #2d6a4f);
-  color: #fff;
+  color: var(--ro-bg-card);
 }
 
 .error-boundary__btn--primary:hover {
@@ -85,7 +85,7 @@
 .error-boundary__btn--secondary {
   border: 0.5px solid var(--border-default, rgba(255, 255, 255, 0.14));
   background: transparent;
-  color: var(--text-primary, #fff);
+  color: var(--text-primary, var(--ro-bg-card));
 }
 
 .error-boundary__btn--secondary:hover {

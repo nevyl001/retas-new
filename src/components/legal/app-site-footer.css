@@ -39,7 +39,7 @@
 
 .app-site-foot--light .app-site-foot__link:hover,
 .app-site-foot--light .app-site-foot__link:focus-visible {
-  color: #1a1a1a;
+  color: var(--ro-bg-inset);
 }
 
 .app-site-foot__brand {

@@ -9,8 +9,8 @@
 .App--jugadores-public,
 .rjp-public,
 .te-public {
-  --ro-pub-gold: #c9a227;
-  --ro-pub-gold-light: #e8c547;
+  --ro-pub-gold: var(--ro-gold);
+  --ro-pub-gold-light: var(--ro-gold-light);
   --ro-pub-gold-dim: rgba(201, 162, 39, 0.14);
   --ro-pub-gold-border: rgba(201, 162, 39, 0.38);
   --ro-pub-gold-glow: rgba(201, 162, 39, 0.22);
@@ -21,17 +21,16 @@
   --ro-pub-green-border: var(--ro-green-border, rgba(45, 106, 79, 0.22));
 
   /* Horario — ámbar/dorado */
-  --ro-pub-schedule: #e8c547;
+  --ro-pub-schedule: var(--ro-gold-light);
   --ro-pub-schedule-dim: rgba(232, 197, 71, 0.14);
   --ro-pub-schedule-border: rgba(232, 197, 71, 0.38);
 
   /* Cancha — rojo distintivo */
-  --ro-pub-court: #f87171;
+  --ro-pub-court: var(--ro-error);
   --ro-pub-court-dim: rgba(248, 113, 113, 0.14);
   --ro-pub-court-border: rgba(248, 113, 113, 0.42);
 
-  /* Medallas podio público */
-  --ro-medal-gold: #d4af37;
+  /* Medallas podio público — heredan el token maestro */
   --ro-medal-silver: #b8bcc4;
   --ro-medal-bronze: #cd9a6a;
 
@@ -54,21 +53,20 @@
 .ro-public-view .rkcf,
 .liga-pantalla.ro-public-view,
 .public-americano-board {
-  --ro-pub-gold: #c9a227;
-  --ro-pub-gold-light: #e8c547;
+  --ro-pub-gold: var(--ro-gold);
+  --ro-pub-gold-light: var(--ro-gold-light);
   --ro-pub-gold-dim: rgba(201, 162, 39, 0.14);
   --ro-pub-gold-border: rgba(201, 162, 39, 0.38);
   --ro-pub-gold-glow: rgba(201, 162, 39, 0.22);
   --ro-pub-green: var(--ro-green, #2d6a4f);
   --ro-pub-green-dim: var(--ro-green-dim, rgba(45, 106, 79, 0.08));
   --ro-pub-green-border: var(--ro-green-border, rgba(45, 106, 79, 0.22));
-  --ro-pub-schedule: #e8c547;
+  --ro-pub-schedule: var(--ro-gold-light);
   --ro-pub-schedule-dim: rgba(232, 197, 71, 0.14);
   --ro-pub-schedule-border: rgba(232, 197, 71, 0.38);
-  --ro-pub-court: #f87171;
+  --ro-pub-court: var(--ro-error);
   --ro-pub-court-dim: rgba(248, 113, 113, 0.14);
   --ro-pub-court-border: rgba(248, 113, 113, 0.42);
-  --ro-medal-gold: #d4af37;
   --ro-medal-silver: #b8bcc4;
   --ro-medal-bronze: #cd9a6a;
   --accent-gold: var(--ro-pub-gold);

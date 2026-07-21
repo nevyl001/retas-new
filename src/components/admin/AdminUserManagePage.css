@@ -68,7 +68,7 @@
   height: 4.5rem;
   border-radius: 50%;
   overflow: hidden;
-  background: #27272a;
+  background: var(--ro-border-strong);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,7 +127,7 @@
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--admin-border);
-  background: #18181b;
+  background: var(--ro-text-primary);
   color: var(--admin-text);
   font-size: 0.875rem;
   font-family: inherit;
@@ -326,7 +326,7 @@
 .admin-user-page__btn--danger {
   border: 1px solid rgba(239, 68, 68, 0.45);
   background: rgba(239, 68, 68, 0.08);
-  color: #fca5a5;
+  color: var(--ro-error);
 }
 
 .admin-user-page__btn--danger:disabled {

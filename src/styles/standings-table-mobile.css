@@ -47,7 +47,7 @@
     left: 0;
     z-index: 2;
     min-width: 36px;
-    background-color: var(--standings-sticky-bg, #1a1a1a);
+    background-color: var(--standings-sticky-bg, var(--ro-bg-inset));
     box-shadow: 2px 0 6px rgba(0, 0, 0, 0.35);
   }
 
@@ -59,7 +59,7 @@
     max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
-    background-color: var(--standings-sticky-bg, #1a1a1a);
+    background-color: var(--standings-sticky-bg, var(--ro-bg-inset));
     box-shadow: 2px 0 6px rgba(0, 0, 0, 0.25);
   }
 

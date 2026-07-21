@@ -72,7 +72,7 @@
 }
 
 .mobile-app-navigation__btn--active .mobile-app-navigation__icon {
-  color: var(--ro-accent, #ffffff);
+  color: var(--ro-accent, var(--ro-bg-card));
 }
 
 .mobile-app-navigation__icon {

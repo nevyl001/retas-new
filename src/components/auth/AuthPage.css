@@ -1,11 +1,11 @@
 /* Auth — Riviera Open split-screen login */
 
 .auth-page {
-  --riviera-black: #0a0a0a;
+  --riviera-black: var(--ro-chrome-deep);
   --riviera-ink: #070707;
   --riviera-card: rgba(24, 24, 24, 0.92);
   --riviera-border: rgba(255, 255, 255, 0.1);
-  --riviera-white: #ffffff;
+  --riviera-white: var(--ro-bg-card);
   --riviera-muted: #9ca3af;
   --riviera-gold: #d4a843;
   --riviera-gold-soft: #e5c878;

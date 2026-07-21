@@ -66,7 +66,7 @@
   font-family: var(--font-display, var(--ro-font-heading), sans-serif);
   font-size: 1.875rem;
   font-weight: 700;
-  color: var(--riviera-white, #ffffff);
+  color: var(--riviera-white, var(--ro-bg-card));
   line-height: 1.15;
   letter-spacing: -0.02em;
 }
@@ -130,7 +130,7 @@
   padding: 14px 16px;
   font-size: 0.9375rem;
   font-family: inherit;
-  color: var(--riviera-white, #ffffff);
+  color: var(--riviera-white, var(--ro-bg-card));
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 0.75rem;
@@ -186,8 +186,8 @@
   min-height: 3.375rem;
   max-height: 3.5rem;
   padding: 0 1.25rem;
-  background: var(--riviera-white, #ffffff);
-  color: var(--riviera-black, #0a0a0a);
+  background: var(--riviera-white, var(--ro-bg-card));
+  color: var(--riviera-black, var(--ro-chrome-deep));
   font-size: 0.9375rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -253,7 +253,7 @@
 }
 
 .auth-error span {
-  color: #fca5a5;
+  color: var(--ro-error);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.45;

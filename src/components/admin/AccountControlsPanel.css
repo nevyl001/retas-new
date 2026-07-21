@@ -1,11 +1,11 @@
 .account-controls {
   margin-top: 1.25rem;
   padding-top: 1.25rem;
-  border-top: 1px solid var(--admin-input-border, #27272a);
+  border-top: 1px solid var(--admin-input-border, var(--ro-border-strong));
 }
 
 .account-controls--loading {
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
   font-size: 0.875rem;
 }
 
@@ -13,7 +13,7 @@
   margin: 0 0 1rem;
   font-size: 0.8125rem;
   line-height: 1.5;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .account-controls__banner {
@@ -26,7 +26,7 @@
 .account-controls__banner--error {
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #fecaca;
+  color: var(--ro-error-dim);
 }
 
 .account-controls__banner--ok {
@@ -43,14 +43,14 @@
   margin: 0 0 0.35rem;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--admin-text, #fafafa);
+  color: var(--admin-text, var(--ro-bg-surface));
 }
 
 .account-controls__subtitle {
   margin: 0 0 0.35rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--admin-text, #fafafa);
+  color: var(--admin-text, var(--ro-bg-surface));
 }
 
 .account-controls__field {
@@ -62,13 +62,13 @@
 
 .account-controls__field-label {
   font-size: 0.75rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .account-controls__hint {
   margin: 0 0 0.75rem;
   font-size: 0.75rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
   line-height: 1.45;
 }
 
@@ -93,7 +93,7 @@
 }
 
 .account-controls__toggle input {
-  accent-color: var(--admin-accent, #c9a227);
+  accent-color: var(--admin-accent, var(--ro-gold));
 }
 
 .account-controls__add-form {
@@ -109,18 +109,18 @@
   min-width: 0;
   padding: 0.45rem 0.6rem;
   border-radius: 6px;
-  border: 1px solid var(--admin-input-border, #27272a);
-  background: var(--admin-input-bg, #18181b);
-  color: var(--admin-text, #fafafa);
+  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
+  background: var(--admin-input-bg, var(--ro-text-primary));
+  color: var(--admin-text, var(--ro-bg-surface));
   font-size: 0.8125rem;
 }
 
 .account-controls__btn {
   padding: 0.45rem 0.75rem;
   border-radius: 6px;
-  border: 1px solid var(--admin-input-border, #27272a);
-  background: var(--admin-input-bg, #18181b);
-  color: var(--admin-text, #fafafa);
+  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
+  background: var(--admin-input-bg, var(--ro-text-primary));
+  color: var(--admin-text, var(--ro-bg-surface));
   font-size: 0.8125rem;
   cursor: pointer;
 }
@@ -131,9 +131,9 @@
 }
 
 .account-controls__btn--primary {
-  background: var(--admin-accent, #c9a227);
+  background: var(--admin-accent, var(--ro-gold));
   border-color: transparent;
-  color: #111;
+  color: var(--ro-bg-card);
   font-weight: 600;
 }
 
@@ -143,13 +143,13 @@
 
 .account-controls__btn--danger {
   border-color: rgba(239, 68, 68, 0.45);
-  color: #fca5a5;
+  color: var(--ro-error);
 }
 
 .account-controls__empty {
   margin: 0;
   font-size: 0.8125rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .account-controls__player-list {
@@ -171,7 +171,7 @@
   gap: 0.5rem;
   padding: 0.55rem 0.65rem;
   border-radius: 8px;
-  border: 1px solid var(--admin-input-border, #27272a);
+  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: var(--admin-card, #111113);
 }
 
@@ -188,7 +188,7 @@
 .account-controls__player-meta {
   display: block;
   font-size: 0.6875rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .account-controls__player-actions {
@@ -203,12 +203,12 @@
   align-items: center;
   gap: 0.25rem;
   font-size: 0.6875rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
   cursor: pointer;
 }
 
 .account-controls__mini-toggle input {
-  accent-color: var(--admin-accent, #c9a227);
+  accent-color: var(--admin-accent, var(--ro-gold));
 }
 
 .account-controls__sections-grid {
@@ -237,7 +237,7 @@
   margin-bottom: 0.75rem;
   padding: 0.65rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid var(--admin-input-border, #27272a);
+  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
   background: rgba(255, 255, 255, 0.02);
 }
 
@@ -249,7 +249,7 @@
 .account-controls__bulk-meta {
   margin: 0;
   font-size: 0.6875rem;
-  color: var(--admin-text-muted, #71717a);
+  color: var(--admin-text-muted, var(--ro-text-muted));
 }
 
 .account-controls__bulk-actions {
@@ -264,12 +264,12 @@
   gap: 0.35rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--admin-text, #fafafa);
+  color: var(--admin-text, var(--ro-bg-surface));
   cursor: pointer;
 }
 
 .account-controls__bulk-toggle input {
-  accent-color: var(--admin-accent, #c9a227);
+  accent-color: var(--admin-accent, var(--ro-gold));
 }
 
 .account-controls__bulk-buttons {
@@ -289,7 +289,7 @@
 .account-controls__permiso-block {
   margin: 1rem 0 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--admin-input-border, #27272a);
+  border-top: 1px solid var(--admin-input-border, var(--ro-border-strong));
 }
 
 .account-controls__toggle--block {
@@ -301,7 +301,7 @@
 }
 
 .account-controls__player--selected {
-  border-color: var(--admin-accent, #c9a227);
+  border-color: var(--admin-accent, var(--ro-gold));
   box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.35);
 }
 
@@ -319,7 +319,7 @@
 }
 
 .account-controls__player-select input {
-  accent-color: var(--admin-accent, #c9a227);
+  accent-color: var(--admin-accent, var(--ro-gold));
 }
 
 .account-controls__player-text {
@@ -329,7 +329,7 @@
 .account-controls__bulk-actions--grant {
   margin-top: 0.35rem;
   padding-top: 0.5rem;
-  border-top: 1px dashed var(--admin-input-border, #27272a);
+  border-top: 1px dashed var(--admin-input-border, var(--ro-border-strong));
   align-items: center;
   justify-content: space-between;
 }

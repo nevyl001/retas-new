@@ -18,7 +18,7 @@
   border-radius: 12px;
   border: 1px solid #1f1f23;
   background: #111113;
-  color: #fafafa;
+  color: var(--ro-bg-surface);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
 }
 
@@ -31,15 +31,15 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #71717a;
+  color: var(--ro-text-muted);
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .admin-create-user-modal__close:hover {
-  background: #18181b;
-  color: #fafafa;
+  background: var(--ro-text-primary);
+  color: var(--ro-bg-surface);
 }
 
 .admin-create-user-modal__title {
@@ -53,7 +53,7 @@
   margin: 0 0 1.25rem;
   font-size: 0.8125rem;
   line-height: 1.45;
-  color: #71717a;
+  color: var(--ro-text-muted);
 }
 
 .admin-create-user-modal__form {
@@ -74,9 +74,9 @@
   width: 100%;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #27272a;
-  background: #18181b;
-  color: #fafafa;
+  border: 1px solid var(--ro-border-strong);
+  background: var(--ro-text-primary);
+  color: var(--ro-bg-surface);
   font-size: 0.875rem;
   font-family: inherit;
 }
@@ -146,7 +146,7 @@
   gap: 0.5rem;
   align-items: flex-start;
   font-size: 0.75rem;
-  color: #fafafa;
+  color: var(--ro-bg-surface);
   cursor: pointer;
 }
 
@@ -160,7 +160,7 @@
   border-radius: 8px;
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.35);
-  color: #fecaca;
+  color: var(--ro-error-dim);
   font-size: 0.8125rem;
   line-height: 1.4;
 }
@@ -175,7 +175,7 @@
 .admin-create-user-modal__btn {
   padding: 8px 14px;
   border-radius: 8px;
-  border: 1px solid #27272a;
+  border: 1px solid var(--ro-border-strong);
   font-size: 13px;
   font-weight: 500;
   font-family: inherit;
@@ -190,16 +190,16 @@
 
 .admin-create-user-modal__btn--ghost {
   background: transparent;
-  color: #fafafa;
+  color: var(--ro-bg-surface);
 }
 
 .admin-create-user-modal__btn--ghost:hover:not(:disabled) {
-  background: #18181b;
+  background: var(--ro-text-primary);
 }
 
 .admin-create-user-modal__btn--primary {
-  background: #fafafa;
-  border-color: #fafafa;
+  background: var(--ro-bg-surface);
+  border-color: var(--ro-bg-surface);
   color: #09090b;
 }
 
@@ -222,13 +222,13 @@
 
 .admin-create-user-modal__success dt {
   font-size: 0.75rem;
-  color: #71717a;
+  color: var(--ro-text-muted);
 }
 
 .admin-create-user-modal__success dd {
   margin: 0;
   font-size: 0.875rem;
-  color: #fafafa;
+  color: var(--ro-bg-surface);
 }
 
 .admin-create-user-modal__password-display {
@@ -241,8 +241,8 @@
 .admin-create-user-modal__password-display code {
   padding: 8px 10px;
   border-radius: 8px;
-  background: #18181b;
-  border: 1px solid #27272a;
+  background: var(--ro-text-primary);
+  border: 1px solid var(--ro-border-strong);
   font-size: 0.875rem;
   word-break: break-all;
 }

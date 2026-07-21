@@ -367,11 +367,11 @@
     rgba(201, 162, 39, 0.2) 100%
   );
   -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
+    linear-gradient(var(--ro-bg-card) 0 0) content-box,
+    linear-gradient(var(--ro-bg-card) 0 0);
   mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
+    linear-gradient(var(--ro-bg-card) 0 0) content-box,
+    linear-gradient(var(--ro-bg-card) 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -867,15 +867,15 @@
 .te-pub-standing-card--leader {
   border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
   background: var(--ro-gold-dim, rgba(201, 162, 39, 0.08));
-  box-shadow: inset 3px 0 0 var(--ro-gold, #c9a227);
+  box-shadow: inset 3px 0 0 var(--ro-gold, var(--ro-gold));
 }
 
 .te-pub-standing-card--leader .te-pub-standing-card__pos {
-  color: var(--ro-gold, #c9a227);
+  color: var(--ro-gold, var(--ro-gold));
 }
 
 .te-pub-standing-card--leader .te-pub-standing-card__name {
-  color: var(--ro-gold-light, #e8c547);
+  color: var(--ro-gold-light, var(--ro-gold-light));
 }
 
 .te-pub-standing-card__pos-bg {
@@ -1032,7 +1032,7 @@
   white-space: nowrap;
   flex-shrink: 0;
   box-sizing: border-box;
-  color: var(--ro-pub-court, #f87171);
+  color: var(--ro-pub-court, var(--ro-error));
   background: var(--ro-pub-court-dim, rgba(248, 113, 113, 0.14));
   border: 1px solid var(--ro-pub-court-border, rgba(248, 113, 113, 0.42));
 }
@@ -1140,7 +1140,7 @@
 }
 
 .te-pub-match__team--tie {
-  color: var(--ro-gold-light, #e8c547);
+  color: var(--ro-gold-light, var(--ro-gold-light));
   font-weight: 700;
 }
 

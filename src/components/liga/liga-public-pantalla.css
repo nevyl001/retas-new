@@ -3,12 +3,12 @@
 /* Vista pública liga — premium nocturno Riviera Open */
 
 .liga-pantalla {
-  --liga-pub-bg: #0a0a0a;
+  --liga-pub-bg: var(--ro-chrome-deep);
   --liga-pub-surface: #121212;
   --liga-pub-surface-deep: #181818;
   --liga-pub-border: #222222;
   --liga-pub-border-card: #1e1e1e;
-  --liga-pub-border-chip: #2a2a2a;
+  --liga-pub-border-chip: var(--ro-border);
   --liga-pub-text: #f2efe8;
   --liga-pub-text-muted: #8a8680;
   --liga-pub-text-hint: #5c5a56;
@@ -336,7 +336,7 @@
 }
 
 .liga-pantalla-jornada-card:hover {
-  border-color: #2a2a2a;
+  border-color: var(--ro-border);
 }
 
 .liga-pantalla-jornada-card--live {

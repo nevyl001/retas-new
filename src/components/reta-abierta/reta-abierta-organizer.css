@@ -434,9 +434,9 @@
 
 .ra-org__btn--primary {
   width: 100%;
-  background: var(--ro-text-primary, #f5f5f5);
+  background: var(--ro-text-primary, var(--ro-bg-base));
   border-color: transparent;
-  color: var(--brand-bg, #101820);
+  color: var(--brand-bg, var(--ro-text-primary));
 }
 
 .ra-org__btn--outline {

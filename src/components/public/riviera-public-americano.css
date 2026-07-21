@@ -778,7 +778,7 @@
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: var(--accent-gold-light, #e8c547);
+  color: var(--accent-gold-light, var(--ro-gold-light));
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
@@ -907,12 +907,12 @@
 
 .te-pub-pair--win .te-pub-pair__label,
 .te-pub-pair--win .te-pub-pair__player-name {
-  color: var(--ro-gold-light, #e8c547);
+  color: var(--ro-gold-light, var(--ro-gold-light));
 }
 
 .te-pub-pair--tie .te-pub-pair__label,
 .te-pub-pair--tie .te-pub-pair__player-name {
-  color: var(--ro-gold-light, #e8c547);
+  color: var(--ro-gold-light, var(--ro-gold-light));
   font-weight: 700;
 }
 
@@ -977,7 +977,7 @@
 }
 
 .te-pub-pair--tie .te-pub-pair__avatar {
-  border-color: var(--ro-gold, #c9a227);
+  border-color: var(--ro-gold, var(--ro-gold));
   box-shadow:
     0 0 0 2px var(--ro-gold-border, rgba(201, 162, 39, 0.38)),
     0 14px 36px var(--ro-gold-glow, rgba(201, 162, 39, 0.22)),
@@ -1595,20 +1595,20 @@
 .te-pub-match-winner--tie {
   border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
   background: var(--ro-gold-dim, rgba(201, 162, 39, 0.12));
-  box-shadow: inset 3px 0 0 var(--ro-gold, #c9a227);
+  box-shadow: inset 3px 0 0 var(--ro-gold, var(--ro-gold));
 }
 
 .te-pub-match-winner--tie .te-pub-match-winner__icon {
-  color: var(--ro-gold, #c9a227);
+  color: var(--ro-gold, var(--ro-gold));
 }
 
 .te-pub-match-winner--tie .te-pub-match-winner__label {
-  color: var(--ro-gold, #c9a227);
+  color: var(--ro-gold, var(--ro-gold));
 }
 
 .te-pub-match-winner--tie .te-pub-match-winner__name {
   font-weight: 600;
-  color: var(--ro-gold-light, #e8c547);
+  color: var(--ro-gold-light, var(--ro-gold-light));
 }
 
 .te-pub-match--tie {
@@ -1618,7 +1618,7 @@
 }
 
 .te-pub-score__num--tie {
-  color: var(--ro-gold-light, #e8c547);
+  color: var(--ro-gold-light, var(--ro-gold-light));
   font-weight: 700;
 }
 

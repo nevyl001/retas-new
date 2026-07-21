@@ -59,12 +59,12 @@
 }
 
 .rjp-rating-nivel__badge--fiable {
-  color: var(--brand-success, #34d399);
+  color: var(--brand-success, var(--ro-success));
 }
 
 .rjp-rating-nivel__badge--media,
 .rjp-rating-nivel__badge--calibrando {
-  color: var(--brand-warning, #fbbf24);
+  color: var(--brand-warning, var(--ro-gold));
 }
 
 .rjp-rating-nivel__meta {
@@ -133,11 +133,11 @@
 }
 
 .rjp-rating-nivel__delta--up {
-  color: var(--brand-success, #34d399);
+  color: var(--brand-success, var(--ro-success));
 }
 
 .rjp-rating-nivel__delta--down {
-  color: var(--brand-danger, #f87171);
+  color: var(--brand-danger, var(--ro-error));
 }
 
 .rjp-rating-nivel__delta-sr {

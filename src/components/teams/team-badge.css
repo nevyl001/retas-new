@@ -18,7 +18,7 @@
 }
 
 .team-badge--a {
-  color: var(--ro-gold-light, #e8c547);
+  color: var(--ro-gold-light, var(--ro-gold-light));
   background: var(--ro-gold-dim, rgba(201, 162, 39, 0.14));
   border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
 }
@@ -30,7 +30,7 @@
 }
 
 .team-badge--neutral {
-  color: var(--text-secondary, #a0a0a0);
+  color: var(--text-secondary, var(--ro-text-secondary));
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.12);
 }

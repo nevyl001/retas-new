@@ -1285,7 +1285,7 @@
 }
 
 .start-tournament-section__error {
-  color: #ef4444;
+  color: var(--ro-error);
   font-size: 0.875rem;
   margin: 0 0 0.75rem;
 }
