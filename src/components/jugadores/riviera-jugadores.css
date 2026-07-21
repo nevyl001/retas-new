@@ -32,7 +32,7 @@
 .rj-page__sub {
   margin: 0;
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
 }
 
 .rj-btn {
@@ -55,9 +55,9 @@
 }
 
 .rj-btn--ghost {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
   color: var(--ro-text-primary);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--ro-border);
 }
 
 .rj-btn--danger {
@@ -89,21 +89,21 @@
   min-width: 0;
   padding: 0.65rem 0.85rem;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-elevated);
   color: var(--ro-text-primary);
   font-size: 0.9375rem;
 }
 
 .rj-search::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--ro-text-muted);
 }
 
 .rj-select {
   padding: 0.65rem 0.75rem;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-elevated);
   color: var(--ro-text-primary);
   font-size: 0.875rem;
 }
@@ -128,17 +128,17 @@
   min-width: 0;
   box-sizing: border-box;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--ro-border);
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.07) 0%,
-    rgba(255, 255, 255, 0.02) 100%
+    var(--ro-bg-elevated) 0%,
+    var(--ro-bg-inset) 100%
   );
   transition: border-color 0.15s;
 }
 
 .rj-row:hover {
-  border-color: rgba(255, 255, 255, 0.45);
+  border-color: var(--ro-border);
 }
 
 .rj-row__main {
@@ -163,7 +163,7 @@
 .rj-row__rank {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
   letter-spacing: 0.02em;
   white-space: nowrap;
   display: inline-flex;
@@ -215,14 +215,14 @@
 .rj-row__pts {
   font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--ro-text-secondary);
   white-space: nowrap;
   text-align: right;
 }
 
 .rj-row__pts-suffix {
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
 }
 
 .rj-row__partidos,
@@ -248,10 +248,10 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--ro-border);
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.45);
-  color: rgba(255, 255, 255, 0.75);
+  background: var(--ro-bg-overlay);
+  color: var(--ro-text-secondary);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -259,9 +259,9 @@
 }
 
 .rj-row__icon-btn:hover {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: var(--ro-border);
   color: var(--ro-accent);
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--ro-bg-elevated);
 }
 
 .rj-row__icon-btn--danger:hover:not(:disabled) {
@@ -410,7 +410,7 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--ro-text-muted);
   }
 
   .rj-list__head > span:nth-child(4),
@@ -434,7 +434,7 @@
   .rj-row__pct {
     display: block;
     font-size: 0.8125rem;
-    color: rgba(255, 255, 255, 0.65);
+    color: var(--ro-text-muted);
     text-align: right;
     white-space: nowrap;
   }
@@ -460,25 +460,25 @@
 .rj-ajuste-actual {
   margin: 0 0 1rem;
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--ro-text-muted);
 }
 
 .rj-ajuste-preview {
   margin: -0.25rem 0 0.75rem;
   font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
 }
 
 .rj-field__hint {
   margin: 0.35rem 0 0;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
 }
 
 .rj-modal__sub {
   margin: -0.25rem 0 0.75rem;
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
 }
 
 /* Usado por JugadorPerfilMeta variant="card" (ficha/otros) */
@@ -493,7 +493,7 @@
 .rj-card__perfil .rj-perfil-meta__item {
   font-size: 0.6875rem;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
   margin-bottom: 2px;
 }
 
@@ -508,18 +508,18 @@
 
 .rj-perfil-meta__item {
   font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--ro-text-muted);
   line-height: 1.35;
 }
 
 .rj-perfil-meta__lbl {
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
   margin-right: 0.35rem;
 }
 
 .rj-perfil-meta__val {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--ro-text-secondary);
 }
 
 .rj-avatar {
@@ -529,7 +529,7 @@
   border-radius: 50%;
   overflow: hidden;
   background: linear-gradient(135deg, var(--ro-border) 0%, var(--ro-text-on-accent) 100%);
-  border: 2px solid rgba(255, 255, 255, 0.35);
+  border: 2px solid var(--ro-border);
   font-weight: 700;
   color: var(--ro-accent);
   flex-shrink: 0;
@@ -599,7 +599,7 @@
 }
 
 .rj-nivel--elite {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--ro-bg-elevated);
   color: var(--ro-accent-hover);
 }
 
@@ -652,8 +652,8 @@
   gap: 0.35rem;
   padding: 0.2rem 0.45rem;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
   line-height: 1;
 }
 
@@ -675,7 +675,7 @@
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--ro-text-secondary);
 }
 
 .rj-pais-badge--sm .rj-pais-badge__code {
@@ -688,10 +688,10 @@
   gap: 0.25rem;
   margin: 0;
   padding: 0.12rem 0.45rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--ro-border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.62);
+  background: var(--ro-bg-inset);
+  color: var(--ro-text-muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.6875rem;
   font-weight: 500;
@@ -706,9 +706,9 @@
 
 .rj-riviera-id:hover,
 .rj-riviera-id:focus-visible {
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--ro-text-secondary);
   border-color: rgba(232, 220, 200, 0.35);
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--ro-bg-elevated);
   outline: none;
 }
 
@@ -735,7 +735,7 @@
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
   border: 1px solid rgba(232, 220, 200, 0.18);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ro-bg-inset);
 }
 
 .rj-riviera-id-share--public {
@@ -750,14 +750,14 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
 }
 
 .rj-riviera-id-share__hint {
   margin: 0;
   font-size: 0.75rem;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.52);
+  color: var(--ro-text-muted);
 }
 
 .rj-riviera-id-share .rj-riviera-id {
@@ -782,8 +782,8 @@
 .rj-stat-card {
   padding: 0.75rem 0.5rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border-subtle);
   text-align: center;
 }
 
@@ -796,7 +796,7 @@
 
 .rj-stat-card__lbl {
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--ro-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -805,14 +805,14 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--ro-border);
 }
 
 .rj-tab {
   padding: 0.5rem 0.75rem;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--ro-text-muted);
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -835,11 +835,11 @@
 .rj-historial td {
   padding: 0.5rem 0.35rem;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--ro-border-subtle);
 }
 
 .rj-historial th {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
   font-weight: 600;
   font-size: 0.6875rem;
   text-transform: uppercase;
@@ -864,13 +864,13 @@
 }
 
 .rj-resultado--draw {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--ro-bg-elevated);
   color: var(--ro-text-secondary);
 }
 
 .rj-resultado--neutral {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.55);
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-muted);
 }
 
 .rj-progress-list {
@@ -889,7 +889,7 @@
 .rj-progress-bar {
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--ro-bg-elevated);
   overflow: hidden;
 }
 
@@ -902,7 +902,7 @@
 .rj-empty {
   text-align: center;
   padding: 2rem 1rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
   font-size: 0.9375rem;
 }
 
@@ -921,7 +921,7 @@
 .rj-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: var(--ro-bg-overlay);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -941,7 +941,7 @@
   background: var(--ro-bg-elevated);
   border-radius: 16px;
   padding: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--ro-border);
 }
 
 .rj-modal h2 {
@@ -956,7 +956,7 @@
 .rj-field label {
   display: block;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
   margin-bottom: 0.25rem;
 }
 
@@ -965,8 +965,8 @@
   width: 100%;
   padding: 0.6rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-overlay);
   color: var(--ro-text-primary);
   font-size: 0.9375rem;
   box-sizing: border-box;
@@ -994,15 +994,15 @@
   margin-top: 1rem;
   padding: 0.85rem 0.9rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ro-bg-inset);
+  border: 1px solid var(--ro-border);
 }
 
 .rj-membership-preview__title {
   margin: 0 0 0.65rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--ro-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1021,7 +1021,7 @@
 .rj-membership-preview__list dt {
   margin: 0;
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -1033,7 +1033,7 @@
 }
 
 .rj-membership-preview__muted {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
 }
 
 .rj-membership-preview__badge {
@@ -1043,8 +1043,8 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.75);
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-secondary);
 }
 
 .rj-membership-preview__badge--ok {
@@ -1083,7 +1083,7 @@
 }
 
 .rj-back--secondary {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
 }
 
 .rj-back--secondary:hover {
@@ -1116,7 +1116,7 @@
   padding: 0.25rem;
   list-style: none;
   background: var(--ro-bg-elevated);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--ro-border);
   border-radius: 10px;
   max-height: 220px;
   overflow-y: auto;
@@ -1133,7 +1133,7 @@
 }
 
 .rj-autocomplete__item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
 }
 
 .rj-page__top-actions {
@@ -1230,9 +1230,9 @@
     min-width: 11.5rem;
     padding: 0.4rem;
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(18, 18, 20, 0.98);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--ro-border);
+    background: var(--ro-bg-elevated);
+    box-shadow: var(--ro-shadow-md);
   }
 
   .rj-page__more-menu .rj-btn {
@@ -1256,7 +1256,7 @@
 }
 
 .rj-cat--open {
-  background: rgba(28, 28, 30, 0.9);
+  background: var(--ro-bg-elevated);
   color: var(--ro-text-primary);
 }
 
@@ -1271,15 +1271,15 @@
 }
 
 .rj-cat--3 {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--ro-bg-elevated);
   color: var(--ro-accent-hover);
 }
 
 .rj-cat--4,
 .rj-cat--5,
 .rj-cat--6 {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.75);
+  background: var(--ro-bg-elevated);
+  color: var(--ro-text-secondary);
 }
 
 .rj-ficha-actions {
@@ -1297,8 +1297,8 @@
   margin-bottom: 1.25rem;
   padding: 1rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
 }
 
 .rj-edit-panel__title {
@@ -1312,13 +1312,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
 }
 
 .rj-ficha-contacto-privado {
   margin-top: 0.65rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--ro-border-subtle);
 }
 
 .rj-ficha-contacto-privado__lbl {
@@ -1327,7 +1327,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--ro-text-secondary);
   margin-bottom: 0.25rem;
 }
 
@@ -1341,9 +1341,9 @@
   border-radius: 10px;
   font-size: 0.8125rem;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--ro-text-secondary);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
 }
 
 .rj-edit-grid {
@@ -1396,8 +1396,8 @@
   margin-bottom: 1rem;
   padding: 0.75rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-inset);
+  border: 1px solid var(--ro-border-subtle);
 }
 
 .rj-historial-resumen__item {
@@ -1412,7 +1412,7 @@
 
 .rj-historial-resumen__item span {
   font-size: 0.6875rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--ro-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1422,13 +1422,13 @@
   gap: 0.75rem;
   padding: 0.85rem 1rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-inset);
+  border: 1px solid var(--ro-border-subtle);
   transition: border-color 0.2s;
 }
 
 .rj-historial-timeline__item:hover {
-  border-color: rgba(255, 255, 255, 0.25);
+  border-color: var(--ro-border);
 }
 
 .rj-historial-timeline__icon {
@@ -1436,7 +1436,7 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--ro-bg-elevated);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1462,7 +1462,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--ro-text-muted);
 }
 
 .rj-historial-timeline__head-end {
@@ -1501,7 +1501,7 @@
 .rj-historial-timeline__lugar {
   font-size: 0.75rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--ro-text-secondary);
 }
 
 .rj-historial-timeline__lugar--gold {
@@ -1529,13 +1529,13 @@
 .rj-historial-timeline__detalle {
   margin: 0.2rem 0 0;
   font-size: 0.8125rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
 }
 
 .rj-historial-timeline__fecha {
   margin: 0.35rem 0 0;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
 }
 
 .rj-historial-timeline__pts {
@@ -1558,8 +1558,8 @@
   margin: 0 0 1.15rem;
   padding: 0.2rem;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--ro-border-subtle);
+  background: var(--ro-bg-overlay);
 }
 
 .rj-genero-tabs__btn {
@@ -1567,7 +1567,7 @@
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
   font-family: inherit;
   font-size: 0.8125rem;
   font-weight: 600;
@@ -1583,9 +1583,9 @@
 }
 
 .rj-genero-tabs__btn--active {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--ro-bg-elevated);
   color: var(--accent-gold-light, var(--ro-accent-hover));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 0 0 1px var(--ro-accent-ring);
 }
 
 .rjp-ranking-genero-tabs {
@@ -1652,9 +1652,9 @@
   line-height: 1;
   letter-spacing: 0;
   text-transform: none;
-  color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--ro-text-muted);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
 }
 
 .rj-granted-badge--inline {

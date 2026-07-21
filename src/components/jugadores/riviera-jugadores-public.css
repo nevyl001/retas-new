@@ -7,10 +7,10 @@
 .App--jugadores-public.ro-public-view::after {
   background: linear-gradient(
     180deg,
-    rgba(8, 8, 10, 0.9) 0%,
-    rgba(12, 12, 14, 0.62) 28%,
-    rgba(10, 10, 12, 0.72) 55%,
-    rgba(6, 6, 8, 0.94) 100%
+    var(--ro-bg-elevated) 0%,
+    var(--ro-bg-overlay) 28%,
+    var(--ro-bg-overlay) 55%,
+    var(--ro-bg-elevated) 100%
   );
 }
 
@@ -63,7 +63,7 @@
   z-index: 2;
   background: radial-gradient(
     ellipse 70% 60% at 50% 0%,
-    rgba(255, 255, 255, 0.12) 0%,
+    var(--ro-bg-elevated) 0%,
     transparent 70%
   );
 }
@@ -159,7 +159,7 @@
 }
 
 .rjp-tab:hover {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--ro-text-secondary);
 }
 
 .rjp-tab--active {
@@ -206,8 +206,8 @@
   border: 1px solid var(--rjp-border);
   border-radius: 14px;
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 4px 24px rgba(20, 22, 26, 0.35),
+    inset 0 1px 0 var(--ro-accent-ring);
   cursor: pointer;
   text-align: left;
   color: var(--rjp-text);
@@ -269,7 +269,7 @@
 .rjp-public .rj-avatar {
   border-color: var(--rjp-gold-border);
   color: var(--rjp-gold-light);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 12px var(--ro-accent-ring);
 }
 
 .rjp-card__body {
@@ -336,20 +336,20 @@
   overflow: hidden;
   background: linear-gradient(
     145deg,
-    rgba(32, 32, 36, 0.88) 0%,
-    rgba(18, 18, 20, 0.92) 55%,
-    rgba(24, 22, 16, 0.85) 100%
+    var(--ro-bg-elevated) 0%,
+    var(--ro-bg-elevated) 55%,
+    var(--ro-bg-elevated) 100%
   );
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--ro-border);
   border-radius: 20px;
   padding: 1.35rem 1.4rem;
   margin-bottom: 1rem;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.06);
+    0 8px 32px rgba(20, 22, 26, 0.45),
+    inset 0 1px 0 var(--ro-accent-ring),
+    0 0 0 1px var(--ro-accent-ring);
   animation: rjp-fade-in 0.5s ease-out both;
 }
 
@@ -379,7 +379,7 @@
   height: 80%;
   background: radial-gradient(
     ellipse at center,
-    rgba(255, 255, 255, 0.14) 0%,
+    var(--ro-bg-elevated) 0%,
     transparent 70%
   );
   pointer-events: none;
@@ -429,7 +429,7 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(255, 255, 255, 0.35) 0%,
+    var(--ro-bg-elevated) 0%,
     transparent 65%
   );
   filter: blur(8px);
@@ -444,7 +444,7 @@
   border-radius: 50%;
   overflow: hidden;
   background: linear-gradient(160deg, var(--ro-bg-elevated) 0%, var(--ro-bg-deep) 45%, var(--ro-bg-elevated) 100%);
-  border: 2px solid rgba(255, 255, 255, 0.12);
+  border: 2px solid var(--ro-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -474,7 +474,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: 0 2px 20px rgba(255, 255, 255, 0.35);
+  text-shadow: 0 2px 20px var(--ro-accent-ring);
 }
 
 .rjp-avatar-hero__shine {
@@ -484,7 +484,7 @@
   border-radius: 50%;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.22) 0%,
+    var(--ro-bg-elevated) 0%,
     transparent 42%,
     transparent 100%
   );
@@ -502,7 +502,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--ro-text-secondary);
 }
 
 .rjp-profile-card__title {
@@ -535,9 +535,9 @@
   gap: 0.55rem;
   padding: 0.65rem 0.75rem;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: var(--ro-bg-overlay);
+  border: 1px solid var(--ro-border-subtle);
+  box-shadow: inset 0 1px 0 var(--ro-accent-ring);
 }
 
 .rjp-stat-tile__icon {
@@ -582,9 +582,9 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--ro-text-secondary);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
 }
 
 /* Redes */
@@ -592,7 +592,7 @@
   flex: 0 0 auto;
   min-width: 130px;
   padding: 0.5rem 0 0 0.75rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid var(--ro-border-subtle);
 }
 
 .rjp-profile-social__title {
@@ -637,8 +637,8 @@
   font-weight: 600;
   text-decoration: none;
   color: var(--rjp-text);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-inset);
+  border: 1px solid var(--ro-border-subtle);
   transition:
     transform 0.15s,
     background 0.2s,
@@ -649,8 +649,8 @@
 .rjp-profile-social__link:hover {
   transform: translateX(-2px);
   border-color: var(--rjp-gold-border);
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
+  background: var(--ro-bg-elevated);
+  box-shadow: 0 4px 16px var(--ro-accent-ring);
 }
 
 .rjp-profile-social__icon {
@@ -690,7 +690,7 @@
     width: 100%;
     padding: 0.85rem 0 0;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--ro-border-subtle);
   }
 
   .rjp-profile-social__title {
@@ -736,7 +736,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.35),
+    var(--ro-bg-elevated),
     transparent
   );
 }
@@ -801,12 +801,12 @@
   padding: 0.28rem 0.7rem;
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.28) 0%,
-    rgba(255, 255, 255, 0.12) 100%
+    var(--ro-bg-elevated) 0%,
+    var(--ro-bg-elevated) 100%
   );
   color: var(--rjp-gold-light);
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--ro-border);
+  box-shadow: 0 0 12px var(--ro-accent-ring);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -820,13 +820,13 @@
 }
 
 .rjp-card-block--historial .rj-historial-timeline--public .rj-historial-resumen {
-  background: rgba(0, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-overlay);
+  border-color: var(--ro-border-subtle);
 }
 
 .rjp-card-block--historial .rj-historial-timeline--public .rj-historial-timeline__item {
-  background: rgba(0, 0, 0, 0.22);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-overlay);
+  border-color: var(--ro-border-subtle);
 }
 
 .rjp-card-block--historial .rj-historial-timeline--public .rj-historial-timeline__evento {
@@ -840,5 +840,5 @@
   font-size: 0.6875rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.28);
+  color: var(--ro-text-muted);
 }

@@ -286,9 +286,9 @@
 }
 
 .te-public-btn--outline:hover {
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: var(--ro-border);
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--ro-bg-elevated);
 }
 
 /* Secciones */
@@ -337,7 +337,7 @@
   margin: 0 0 2rem;
   border-radius: var(--radius-lg);
   background: var(--riviera-bg-base, var(--ro-bg-base));
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--ro-shadow-lg);
   overflow: hidden;
 }
 
@@ -431,7 +431,7 @@
   font-style: italic;
   font-weight: 400;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
 }
 
 .te-pub-grupo-celebrate__inner > .te-divider-gold {
@@ -476,7 +476,7 @@
   font-style: italic;
   font-weight: 400;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--ro-text-muted);
 }
 
 .te-pub-grupo-celebrate__rank {
@@ -507,7 +507,7 @@
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--ro-text-muted);
 }
 
 .te-pub-grupo-celebrate__closing {
@@ -536,7 +536,7 @@
   min-width: 4.5rem;
   padding: 0.55rem 0.85rem 0.5rem;
   border-radius: var(--radius-md, 10px);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ro-bg-inset);
   border: var(--text-secondary);
 }
 
@@ -546,7 +546,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--ro-text-muted);
 }
 
 .te-pub-grupo-celebrate__stat-value {
@@ -570,7 +570,7 @@
 .te-public-section__divider {
   height: 1px;
   margin-bottom: 1.5rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
   opacity: 1;
 }
 
@@ -668,7 +668,7 @@
   padding: 0.45rem 0.6rem;
   border-radius: var(--radius-md);
   border: 0.5px solid var(--border-subtle);
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--ro-bg-overlay);
 }
 
 .te-pub-scoring-help__text {
@@ -754,12 +754,12 @@
 .te-pub-standings-row td {
   padding: 0.75rem 0.65rem;
   text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--ro-border-subtle);
   transition: background var(--motion-micro);
 }
 
 .te-pub-standings-row:hover td {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
 }
 
 .te-pub-standings-row__pos {
@@ -886,7 +886,7 @@
   font-family: var(--font-display);
   font-size: 4.5rem;
   line-height: 1;
-  color: rgba(255, 255, 255, 0.08);
+  color: var(--ro-text-muted);
   pointer-events: none;
   user-select: none;
 }
@@ -946,8 +946,8 @@
 .te-pub-match {
   padding: 1.15rem 1.25rem;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-elevated);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   transition:
@@ -956,8 +956,8 @@
 }
 
 .te-pub-match:hover {
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  border-color: var(--ro-border);
+  box-shadow: var(--ro-shadow-md);
 }
 
 .te-pub-match__top {
@@ -1002,8 +1002,8 @@
 
 .te-pub-match-chip--fecha {
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--ro-bg-elevated);
+  border: 1px solid var(--ro-border);
 }
 
 .te-pub-match-chip--hora {
@@ -1060,7 +1060,7 @@
 }
 
 .te-pub-status--played {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
@@ -1082,7 +1082,7 @@
 .te-pub-status--pending {
   background: transparent;
   color: var(--text-muted);
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border: 1px dashed var(--ro-border);
 }
 
 .te-pub-match__score-block {
@@ -1159,8 +1159,8 @@
   margin-top: 0.85rem;
   padding: 0.75rem 0.9rem;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-elevated);
 }
 
 .te-pub-match-winner__icon {
