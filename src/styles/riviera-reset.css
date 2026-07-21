@@ -12,6 +12,21 @@ body,
   background: var(--bg-canvas);
 }
 
+/* Vistas públicas / islas inmersivas = documento oscuro. El body por defecto es
+   arena claro (--bg-canvas); en iOS Safari el rubber-band/overscroll y los gaps
+   de los pseudo-elementos `position: fixed` dejaban asomar ese claro por debajo
+   de la isla oscura → se veía un velo blanco extraño SOLO en móvil (el emulador
+   de escritorio no hace overscroll, por eso ahí no aparecía). Al oscurecer el
+   documento, cualquier bleed es oscuro y desaparece el velo. */
+html:has(.ro-public-view),
+body:has(.ro-public-view),
+#root:has(.ro-public-view),
+html:has(.duelo2v2-page),
+body:has(.duelo2v2-page),
+#root:has(.duelo2v2-page) {
+  background: var(--ro-chrome-deep);
+}
+
 :focus-visible {
   outline: 2px solid var(--accent-gold);
   outline-offset: 2px;
