@@ -246,7 +246,7 @@
 }
 
 .liga-pantalla-ranking tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ro-bg-inset);
 }
 
 .liga-pantalla-ranking tr.liga-pantalla-ranking-top .liga-pantalla-ranking__name {
@@ -396,7 +396,7 @@
   color: var(--liga-pub-text-muted);
   padding: 0.15rem 0.35rem;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--ro-bg-inset);
 }
 
 .liga-pantalla-matchup__score {
@@ -602,7 +602,7 @@
   text-transform: uppercase;
   text-align: center;
   color: var(--liga-pub-text-muted);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ro-bg-inset);
   border-bottom: 1px solid var(--liga-pub-border);
 }
 
@@ -1081,7 +1081,7 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla-ranking td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--ro-border-subtle);
   padding: 0.7rem 0.45rem;
 }
 
@@ -1116,7 +1116,7 @@
 }
 
 .liga-pantalla--liga-fijas .liga-pantalla-ranking td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--ro-border-subtle);
 }
 
 .liga-pantalla--liga-fijas .liga-pantalla-jornada-card {
@@ -1131,7 +1131,7 @@
 
 .liga-pantalla--liga-fijas .liga-pantalla-matchup {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--ro-border-subtle);
 }
 
 .liga-pantalla--liga-fijas .liga-pantalla-ranking--parejas .liga-pantalla-ranking__pts {

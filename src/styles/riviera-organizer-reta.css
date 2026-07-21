@@ -88,7 +88,7 @@
 }
 
 .riviera-organizer-reta .public-link-info {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--ro-bg-inset) !important;
   border: 1px solid var(--border-subtle) !important;
   border-radius: var(--radius-md) !important;
   margin-bottom: 1rem !important;
@@ -258,7 +258,7 @@
   align-items: center;
   gap: 0.15rem;
   padding: 0.45rem 0.35rem !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--ro-bg-inset) !important;
   border: 1px solid var(--border-subtle) !important;
   border-radius: var(--radius-sm) !important;
   min-width: 0;
@@ -337,7 +337,7 @@
 
 .riviera-organizer-reta .resting-pair-card:hover {
   border-color: var(--border-accent) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  background: var(--ro-bg-elevated) !important;
   transform: none;
   box-shadow: none !important;
 }
@@ -435,7 +435,7 @@
   height: 2.25rem !important;
   border: 1px solid var(--border-subtle) !important;
   border-radius: var(--radius-sm) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--ro-bg-inset) !important;
   color: var(--text-muted) !important;
   font-size: 0.85rem !important;
 }
@@ -565,7 +565,7 @@
 .riviera-organizer-reta .elegant-delete-btn {
   border: 1px solid var(--border-subtle) !important;
   border-radius: var(--radius-sm) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--ro-bg-inset) !important;
   color: var(--text-muted) !important;
 }
 
@@ -645,7 +645,7 @@
 }
 
 .riviera-organizer-reta .elegant-detail-item {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--ro-bg-inset) !important;
   border: 1px solid var(--border-subtle) !important;
   border-radius: var(--radius-sm) !important;
   padding: 0.55rem 0.65rem !important;
@@ -671,7 +671,7 @@
 .riviera-organizer-reta .elegant-reset-btn {
   border: 1px solid var(--border-subtle) !important;
   border-radius: var(--radius-full) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: var(--ro-bg-inset) !important;
   min-height: 2.5rem !important;
 }
 
@@ -797,7 +797,7 @@
   padding: 0.85rem 1rem !important;
   border-radius: 12px !important;
   border: 1px solid var(--border-subtle) !important;
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: var(--ro-bg-inset) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .standings-scoring-help__title {
@@ -850,7 +850,7 @@
 .riviera-organizer-reta .riviera-standings .te-pub-standings-table tbody td {
   padding: 0.75rem 0.65rem !important;
   text-align: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid var(--ro-border-subtle) !important;
   font-family: var(--font-body) !important;
   font-size: 0.8rem !important;
   font-weight: 500 !important;
@@ -859,7 +859,7 @@
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row:hover td {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: var(--ro-bg-elevated) !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-pub-standings-row--leader td {

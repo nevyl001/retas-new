@@ -80,8 +80,8 @@
 }
 
 .mis-retas-page .riviera-filter-chip--active {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--ro-border-accent, rgba(255, 255, 255, 0.18));
+  background: var(--ro-bg-elevated);
+  border-color: var(--ro-border-accent, var(--ro-border));
   color: var(--text-primary);
 }
 
@@ -152,7 +152,7 @@
 }
 
 .mis-retas-page .mis-reta-card--status-pending {
-  border-color: rgba(255, 255, 255, 0.28) !important;
+  border-color: var(--ro-border) !important;
 }
 
 .mis-retas-page .mis-reta-card--status-finished {
@@ -161,8 +161,8 @@
 }
 
 .mis-retas-page .mis-reta-card--selected {
-  border-color: rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--ro-border) !important;
+  box-shadow: 0 0 0 1px var(--ro-accent-ring) !important;
 }
 
 .mis-retas-page .mis-reta-card__badges {
@@ -271,7 +271,7 @@
   font-size: 0.7rem;
   font-weight: 500;
   color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--ro-bg-elevated);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 0.2rem 0.5rem;
@@ -307,7 +307,7 @@
 }
 
 .mis-retas-page .mis-reta-card__continue:hover {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--ro-text-secondary);
 }
 
 .mis-retas-page .mis-reta-card__actions-right {

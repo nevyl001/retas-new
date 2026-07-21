@@ -53,11 +53,11 @@
 
   /* ── Sombras — elevación neutra (no branding) ── */
   --pub-shadow-none: none;
-  --pub-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
-  --pub-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
-  --pub-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.32);
-  --pub-shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.34);
-  --pub-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --pub-shadow-xs: var(--ro-shadow-sm);
+  --pub-shadow-sm: var(--ro-shadow-sm);
+  --pub-shadow-md: var(--ro-shadow-md);
+  --pub-shadow-lg: var(--ro-shadow-lg);
+  --pub-shadow-inset: inset 0 1px 0 var(--ro-accent-ring);
 
   /* ── Motion ── */
   --pub-motion-duration-instant: 0ms;

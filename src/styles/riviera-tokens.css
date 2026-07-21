@@ -15,15 +15,15 @@
   --bg-elevated: var(--ro-bg-elevated);
   --bg-card: var(--ro-bg-card);
   --bg-card-hover: var(--ro-bg-elevated);
-  --bg-overlay: rgba(0, 0, 0, 0.88);
-  --bg-inset: rgba(255, 255, 255, 0.03);
+  --bg-overlay: var(--ro-bg-overlay);
+  --bg-inset: var(--ro-bg-inset);
 
   /* ── Bordes ── */
   --border-subtle: var(--ro-border-subtle);
   --border-default: var(--ro-border);
-  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-strong: var(--ro-border-strong);
   --border-accent: var(--ro-border-accent);
-  --border-focus: rgba(255, 255, 255, 0.35);
+  --border-focus: var(--ro-border-strong);
 
   /* ── Acento UI (blanco). Dorado vía --ro-gold en público y podio. ── */
   --accent-gold: var(--ro-accent);
@@ -145,7 +145,7 @@
   --shadow-0: none;
   --shadow-1: var(--ro-shadow-sm);
   --shadow-2: var(--ro-shadow-md);
-  --shadow-3: 0 8px 32px rgba(0, 0, 0, 0.85);
+  --shadow-3: var(--ro-shadow-lg);
   --shadow-card: var(--ro-shadow-sm);
   --shadow-gold: var(--glow-gold);
   --shadow-soft: var(--ro-shadow-sm);
