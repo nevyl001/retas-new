@@ -797,8 +797,18 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
           <p className="ra-public__eyebrow">{modeLabel(dto)}</p>
           <h1 className="ra-public__title">{dto.name}</h1>
           <div className="ra-public__hero-row">
-            <span className={`ra-public__badge ra-public__badge--${dto.status}`}>
-              {statusLabel(dto.status)}
+            <span
+              className={`ra-public__badge ra-public__badge--${dto.status}${
+                dto.status === "open" && dto.spots_left > 0
+                  ? " ra-public__badge--spots"
+                  : ""
+              }`}
+            >
+              {dto.status === "open" && dto.spots_left > 0
+                ? `Abierta · ${dto.spots_left} ${
+                    dto.spots_left === 1 ? "lugar" : "lugares"
+                  }`
+                : statusLabel(dto.status)}
             </span>
             {dto.spots_left === 1 && dto.status === "open" ? (
               <span className="ra-public__last">Último lugar</span>

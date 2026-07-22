@@ -123,9 +123,9 @@
 
 .duelo2v2-badge--done.rv-pill,
 .liga-badge--done.rv-pill {
-  color: var(--ro-gold-text);
-  background: var(--ro-gold-dim);
-  border-color: var(--ro-gold-border);
+  color: var(--ro-gold-light, #dfbe7f);
+  background: color-mix(in srgb, var(--ro-gold-light, #dfbe7f) 18%, transparent);
+  border-color: color-mix(in srgb, var(--ro-gold-light, #dfbe7f) 40%, transparent);
 }
 
 /* —— Botones legacy → tokens —— */
