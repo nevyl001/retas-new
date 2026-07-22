@@ -15,6 +15,7 @@ import { listInternalClubJugadoresRanking } from "../../lib/rivieraJugadores/riv
 import { resolveOrganizerDisplayName } from "../../lib/organizer/organizerDisplayName";
 import { subscribeRivieraRanking } from "../../lib/rivieraJugadores/subscribeRivieraRanking";
 import { rankingPosicionesFromSortedForClub } from "../../lib/rivieraJugadores/rankingPosition";
+import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import {
   prefetchOrganizerDisplayNames,
   resolveOrigenConcedidoOrganizadorId,
@@ -309,15 +310,12 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
     });
   }, [orgId]);
 
-  useEffect(() => {
-    if (!orgId) return;
-
-    const id = window.setInterval(() => {
-      void loadRef.current({ silent: true });
-    }, RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS);
-
-    return () => window.clearInterval(id);
-  }, [orgId]);
+  useVisiblePolling({
+    callback: () => loadRef.current({ silent: true }),
+    intervalMs: RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS,
+    enabled: Boolean(orgId),
+    runImmediately: false,
+  });
 
   useEffect(() => {
     setSearchQuery("");

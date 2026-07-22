@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   fetchAmericanoLivePublic,
   getTournamentByIdPublic,
@@ -11,6 +11,7 @@ import type {
 import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
 import { resolveAmericanoRankingFromSnapshot } from "../lib/americanoSnapshotRoster";
 import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
+import { AMERICANO_PUBLIC_POLL_INTERVAL_MS } from "../lib/americano/publicPoll";
 import {
   formatTenantDocumentTitle,
   getPodiumFinalAriaLabel,
@@ -18,6 +19,7 @@ import {
   useOrganizerDisplayName,
 } from "../club-experience";
 import { isPubDsV2Enabled } from "../config/peds";
+import { useVisiblePolling } from "../hooks/useVisiblePolling";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { StatusBadge } from "./platform/StatusBadge";
 import { PublicHero } from "./public/peds";
@@ -30,8 +32,6 @@ import {
   PublicRivieraCelebrateClosing,
 } from "./public/PublicRivieraCelebrateBrand";
 import "./public/riviera-public-americano.css";
-
-const POLL_MS = 4000;
 
 interface PublicAmericanoViewProps {
   tournamentId: string;
@@ -102,11 +102,13 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   );
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedFetchRef =
-    React.useRef<FetchAmericanoLivePublicResult | null>(null);
+    useRef<FetchAmericanoLivePublicResult | null>(null);
+  const cancelledRef = useRef(false);
   const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
   const { isClubBranded } = useClubExperience();
 
   useEffect(() => {
+    cancelledRef.current = false;
     lastMergedFetchRef.current = null;
     setFetchStatus(null);
     setSnapshot(null);
@@ -114,7 +116,11 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     setTournamentDescription(null);
     setTournamentFinished(false);
     setTournamentStarted(false);
+    setOrganizadorId(null);
     setLoadError(null);
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [tournamentId]);
 
   useEffect(() => {
@@ -133,13 +139,41 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     };
   }, [tournamentName, organizerName]);
 
-  const load = useCallback(async () => {
+  // Metadatos del torneo (nombre, descripción, flags, org): una sola vez por id.
+  // Los polls posteriores solo recargan americano_live.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const tournament = await getTournamentByIdPublic(tournamentId).catch(
+          () => null
+        );
+        if (cancelled || cancelledRef.current) return;
+        if (tournament?.name) setTournamentName(tournament.name);
+        const desc =
+          typeof tournament?.description === "string"
+            ? tournament.description.trim()
+            : "";
+        setTournamentDescription(desc || null);
+        setTournamentFinished(!!tournament?.is_finished);
+        setTournamentStarted(!!tournament?.is_started);
+        setOrganizadorId(
+          typeof tournament?.user_id === "string" ? tournament.user_id : null
+        );
+      } catch {
+        /* metadatos opcionales; el live sigue funcionando */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tournamentId]);
+
+  const loadLive = useCallback(async () => {
     try {
       setLoadError(null);
-      const [remote, tournament] = await Promise.all([
-        fetchAmericanoLivePublic(tournamentId),
-        getTournamentByIdPublic(tournamentId).catch(() => null),
-      ]);
+      const remote = await fetchAmericanoLivePublic(tournamentId);
+      if (cancelledRef.current) return;
 
       const merged = applyFetchResult(lastMergedFetchRef.current, remote);
       lastMergedFetchRef.current = merged;
@@ -162,19 +196,8 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           setSnapshot(null);
         }
       }
-
-      if (tournament?.name) setTournamentName(tournament.name);
-      const desc =
-        typeof tournament?.description === "string"
-          ? tournament.description.trim()
-          : "";
-      setTournamentDescription(desc || null);
-      setTournamentFinished(!!tournament?.is_finished);
-      setTournamentStarted(!!tournament?.is_started);
-      const orgId =
-        typeof tournament?.user_id === "string" ? tournament.user_id : null;
-      setOrganizadorId(orgId);
     } catch (e) {
+      if (cancelledRef.current) return;
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(`No se pudo cargar: ${msg}`);
       let local: AmericanoDinamicoSnapshotV1 | null = null;
@@ -187,11 +210,10 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     }
   }, [tournamentId]);
 
-  useEffect(() => {
-    load();
-    const id = window.setInterval(load, POLL_MS);
-    return () => window.clearInterval(id);
-  }, [load]);
+  useVisiblePolling({
+    callback: loadLive,
+    intervalMs: AMERICANO_PUBLIC_POLL_INTERVAL_MS,
+  });
 
   const roundMatchesSorted = (round: AmericanoSnapshotRound) =>
     [...round.matches].sort((a, b) => a.court - b.court);

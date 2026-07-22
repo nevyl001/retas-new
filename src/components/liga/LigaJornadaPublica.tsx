@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { computeJornadaPublicStats } from "../../lib/liga/jornadaStats";
 import {
   buildVictoriaRankLabel,
@@ -12,6 +12,7 @@ import {
 } from "../../lib/liga/publicDisplay";
 import { formatPartidoCanchaHorarioLabel } from "../../lib/liga/programacion";
 import type { LigaDetalle, LigaJornada, LigaJornadaPareja, LigaPartido } from "../../lib/liga/types";
+import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import {
   resolvePlayerPublicProfiles,
   type PlayerPublicProfile,
@@ -19,6 +20,7 @@ import {
 import { getLigaById } from "../../services/ligaService";
 import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
+import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
@@ -26,8 +28,6 @@ import { PublicHero } from "../public/peds";
 import { LigaParejaVictoriaCelebrate } from "./LigaParejaVictoriaCelebrate";
 import "./liga-pareja-victoria-celebrate.css";
 import "./liga-public-pantalla.css";
-
-const POLL_MS = 12_000;
 
 function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
   if (estado === "completed") return "Finalizada";
@@ -101,25 +101,34 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   >({});
   const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
   const { isClubBranded } = useClubExperience();
+  const cancelledRef = useRef(false);
+
+  useEffect(() => {
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [ligaId, numero]);
 
   const load = useCallback(async () => {
     try {
       const d = await getLigaById(ligaId);
+      if (cancelledRef.current) return;
       setDetalle(d);
       setLastRefresh(new Date());
       setError(null);
     } catch (e) {
+      if (cancelledRef.current) return;
       setError(e instanceof Error ? e.message : "No disponible");
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   }, [ligaId]);
 
-  useEffect(() => {
-    load();
-    const id = window.setInterval(load, POLL_MS);
-    return () => window.clearInterval(id);
-  }, [load]);
+  useVisiblePolling({
+    callback: load,
+    intervalMs: LIGA_PUBLIC_POLL_INTERVAL_MS,
+  });
 
   const jornada = useMemo(
     () => detalle?.jornadas.find((j) => j.numero === numero),

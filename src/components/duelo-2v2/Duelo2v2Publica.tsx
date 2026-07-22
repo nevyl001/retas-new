@@ -18,6 +18,7 @@ import {
   parejaLabel,
   subscribeDuelo2v2,
 } from "../../services/duelo2v2Service";
+import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import { StatusBadge, type StatusBadgeVariant } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
@@ -154,12 +155,11 @@ export const Duelo2v2Publica: React.FC<Duelo2v2PublicaProps> = ({ dueloId }) => 
     });
   }, [dueloId]);
 
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      void loadRef.current({ silent: true });
-    }, DUELO_2V2_PUBLIC_POLL_INTERVAL_MS);
-    return () => window.clearInterval(id);
-  }, [dueloId]);
+  useVisiblePolling({
+    callback: () => loadRef.current({ silent: true }),
+    intervalMs: DUELO_2V2_PUBLIC_POLL_INTERVAL_MS,
+    runImmediately: false,
+  });
 
   useEffect(() => {
     const id = window.setInterval(() => {

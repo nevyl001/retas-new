@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type {
   LigaDetalle,
   LigaEquipoRankingItem,
@@ -10,6 +10,7 @@ import {
   listJornadaPublicMatches,
 } from "../../lib/liga/publicDisplay";
 import { formatFechaLegible, dateInputValue } from "../../lib/liga/programacion";
+import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import {
   getLigaById,
   getRanking,
@@ -18,12 +19,11 @@ import {
 } from "../../services/ligaService";
 import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
+import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
 import { PublicHero } from "../public/peds";
 import "./liga-public-pantalla.css";
-
-const POLL_MS = 15_000;
 
 function estadoLigaBadgeVariant(
   estado: LigaDetalle["estado"]
@@ -79,17 +79,28 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const organizerName = useOrganizerDisplayName(detalle?.organizador_id);
   const { isClubBranded } = useClubExperience();
+  const cancelledRef = useRef(false);
+
+  useEffect(() => {
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [ligaId]);
 
   const load = useCallback(async () => {
     try {
       const d = await getLigaById(ligaId);
+      if (cancelledRef.current) return;
       if (d.modalidad === "parejas_fijas") {
         const rEq = await getRankingEquipos(ligaId);
+        if (cancelledRef.current) return;
         setDetalle(d);
         setRankingEquipos(rEq);
         setRanking([]);
       } else {
         const r = await getRanking(ligaId);
+        if (cancelledRef.current) return;
         setDetalle(d);
         setRanking(r);
         setRankingEquipos([]);
@@ -97,17 +108,17 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
       setLastRefresh(new Date());
       setError(null);
     } catch (e) {
+      if (cancelledRef.current) return;
       setError(e instanceof Error ? e.message : "Liga no encontrada");
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   }, [ligaId]);
 
-  useEffect(() => {
-    load();
-    const id = window.setInterval(load, POLL_MS);
-    return () => window.clearInterval(id);
-  }, [load]);
+  useVisiblePolling({
+    callback: load,
+    intervalMs: LIGA_PUBLIC_POLL_INTERVAL_MS,
+  });
 
   if (loading && !detalle) {
     return (

@@ -11,6 +11,7 @@ import { Match, Pair, Game, Tournament } from "../lib/database";
 import { repairMatchCourtRotation } from "../lib/circleRoundRobinSchedule";
 import { compareMatchCourt, maxAssignedCourt } from "../lib/matchCourt";
 import { isTeamsTournament } from "../lib/gameModeMapping";
+import { PUBLIC_TOURNAMENT_POLL_INTERVAL_MS } from "../lib/publicTournament/publicPoll";
 import {
   getPairTeamIndex,
   getPairTeamName,
@@ -29,6 +30,7 @@ import {
 } from "../lib/standingsUtils";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
+import { useVisiblePolling } from "../hooks/useVisiblePolling";
 import { debugLog } from "../lib/debug/debugLog";
 import type { TournamentWinner } from "../lib/tournamentWinner";
 import {
@@ -386,12 +388,14 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     if (!tournamentId) return;
     setLoading(true);
     loadTournamentData();
-
-    const interval = setInterval(() => {
-      loadTournamentData();
-    }, 60000);
-    return () => clearInterval(interval);
   }, [tournamentId, loadTournamentData]);
+
+  useVisiblePolling({
+    callback: loadTournamentData,
+    intervalMs: PUBLIC_TOURNAMENT_POLL_INTERVAL_MS,
+    enabled: Boolean(tournamentId),
+    runImmediately: false,
+  });
 
   const formatPairLabel = useCallback(
     (pairId: string): string => {

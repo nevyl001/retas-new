@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { LigaDetalle as LigaDetalleType, LigaEquipoRankingItem } from "../../lib/liga/types";
 import { ligaModalidadLabel } from "../../lib/liga/types";
+import { LIGA_PUBLIC_POLL_INTERVAL_MS } from "../../lib/liga/publicPoll";
 import {
   getLigaById,
   getRanking,
@@ -8,6 +9,7 @@ import {
   publicLigaJornadaUrl,
 } from "../../services/ligaService";
 import type { RankingItem } from "../../lib/liga/types";
+import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import { LigaRanking } from "./LigaRanking";
 import { LigaRankingEquipos } from "./LigaRankingEquipos";
 import { LigaPageShell } from "./LigaPageShell";
@@ -29,32 +31,45 @@ export const LigaDetalle: React.FC<LigaDetalleProps> = ({
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const cancelledRef = useRef(false);
+
+  useEffect(() => {
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [ligaId]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const d = await getLigaById(ligaId);
+      if (cancelledRef.current) return;
       setDetalle(d);
       if (d.modalidad === "parejas_fijas") {
-        setRankingEquipos(await getRankingEquipos(ligaId));
+        const rEq = await getRankingEquipos(ligaId);
+        if (cancelledRef.current) return;
+        setRankingEquipos(rEq);
         setRanking([]);
       } else {
-        setRanking(await getRanking(ligaId));
+        const r = await getRanking(ligaId);
+        if (cancelledRef.current) return;
+        setRanking(r);
         setRankingEquipos([]);
       }
     } catch (e) {
+      if (cancelledRef.current) return;
       setError(e instanceof Error ? e.message : "Liga no encontrada");
     } finally {
-      setLoading(false);
+      if (!cancelledRef.current) setLoading(false);
     }
   }, [ligaId]);
 
-  useEffect(() => {
-    load();
-    const id = window.setInterval(load, 15000);
-    return () => window.clearInterval(id);
-  }, [load]);
+  useVisiblePolling({
+    callback: load,
+    intervalMs: LIGA_PUBLIC_POLL_INTERVAL_MS,
+  });
 
   if (loading && !detalle) {
     return (

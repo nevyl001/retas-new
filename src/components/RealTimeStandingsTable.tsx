@@ -32,6 +32,8 @@ import {
   loadChampionshipConfig,
 } from "../lib/roundRobinChampionship";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
+import { useVisiblePolling } from "../hooks/useVisiblePolling";
+import { PUBLIC_TOURNAMENT_POLL_INTERVAL_MS } from "../lib/publicTournament/publicPoll";
 import { debugLog } from "../lib/debug/debugLog";
 import { StandingsDifCell } from "./standings/StandingsDifCell";
 import { StandingsPtsCell } from "./standings/StandingsPtsCell";
@@ -215,20 +217,16 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
 
   useEffect(() => {
     if (!tournamentId) return;
-
-    // Cargar al montar
     loadTournamentData();
-
-    // Auto-refresh cada 60s como fallback (si Realtime falla o no está disponible)
-    // Con Realtime activo, esto solo se usará como respaldo
-    const interval = setInterval(() => {
-      debugLog("⏰ Polling de respaldo (60s) - Realtime debería actualizar antes");
-      loadTournamentData();
-    }, 60000); // Aumentado a 60s ya que Realtime debería actualizar antes
-
-    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentId]); // Solo recargar cuando cambia el torneo
+
+  useVisiblePolling({
+    callback: loadTournamentData,
+    intervalMs: PUBLIC_TOURNAMENT_POLL_INTERVAL_MS,
+    enabled: Boolean(tournamentId),
+    runImmediately: false,
+  });
 
   // Recargar cuando cambia forceRefresh con debounce para evitar múltiples recargas
   useEffect(() => {

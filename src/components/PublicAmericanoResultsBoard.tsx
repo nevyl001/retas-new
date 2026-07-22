@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   fetchAmericanoLivePublic,
   getTournamentByIdPublic,
@@ -6,6 +6,7 @@ import {
 } from "../lib/database";
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
+import { AMERICANO_RESULTS_BOARD_POLL_INTERVAL_MS } from "../lib/americano/publicPoll";
 import {
   ClubExperienceScope,
   formatTenantDocumentTitle,
@@ -14,11 +15,10 @@ import {
   useClubExperience,
   useOrganizerDisplayName,
 } from "../club-experience";
+import { useVisiblePolling } from "../hooks/useVisiblePolling";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
 import "./PublicAmericanoResultsBoard.css";
 import "../styles/riviera-public-board.css";
-
-const POLL_MS = 8000;
 
 interface PublicAmericanoResultsBoardProps {
   tournamentId: string;
@@ -77,19 +77,56 @@ export const PublicAmericanoResultsBoard: React.FC<
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const organizerName = useOrganizerDisplayName(organizadorId ?? undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const lastMergedRef = React.useRef<FetchAmericanoLivePublicResult | null>(
-    null
-  );
+  const lastMergedRef = useRef<FetchAmericanoLivePublicResult | null>(null);
+  const cancelledRef = useRef(false);
 
-  const load = useCallback(async () => {
+  useEffect(() => {
+    cancelledRef.current = false;
+    lastMergedRef.current = null;
+    setSnapshot(null);
+    setTournamentName(null);
+    setTournamentDescription(null);
+    setOrganizadorId(null);
+    setLoadError(null);
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [tournamentId]);
+
+  // Metadatos del torneo una sola vez; el poll solo refresca americano_live.
+  useEffect(() => {
+    let cancelled = false;
+    const tid = tournamentId.trim();
+    if (!tid) return;
+    (async () => {
+      try {
+        const tournament = await getTournamentByIdPublic(tid).catch(() => null);
+        if (cancelled || cancelledRef.current) return;
+        if (tournament?.name) setTournamentName(tournament.name);
+        const desc =
+          typeof tournament?.description === "string"
+            ? tournament.description.trim()
+            : "";
+        setTournamentDescription(desc || null);
+        setOrganizadorId(
+          typeof tournament?.user_id === "string" ? tournament.user_id : null
+        );
+      } catch {
+        /* opcional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tournamentId]);
+
+  const loadLive = useCallback(async () => {
     const tid = tournamentId.trim();
     if (!tid) return;
     try {
       setLoadError(null);
-      const [remote, tournament] = await Promise.all([
-        fetchAmericanoLivePublic(tid),
-        getTournamentByIdPublic(tid).catch(() => null),
-      ]);
+      const remote = await fetchAmericanoLivePublic(tid);
+      if (cancelledRef.current) return;
 
       const merged = mergeFetch(lastMergedRef.current, remote);
       lastMergedRef.current = merged;
@@ -107,17 +144,8 @@ export const PublicAmericanoResultsBoard: React.FC<
         }
         setSnapshot(local);
       }
-
-      if (tournament?.name) setTournamentName(tournament.name);
-      const desc =
-        typeof tournament?.description === "string"
-          ? tournament.description.trim()
-          : "";
-      setTournamentDescription(desc || null);
-      setOrganizadorId(
-        typeof tournament?.user_id === "string" ? tournament.user_id : null
-      );
     } catch (e) {
+      if (cancelledRef.current) return;
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(msg);
       try {
@@ -129,20 +157,10 @@ export const PublicAmericanoResultsBoard: React.FC<
     }
   }, [tournamentId]);
 
-  useEffect(() => {
-    lastMergedRef.current = null;
-    setSnapshot(null);
-    setTournamentName(null);
-    setTournamentDescription(null);
-    setOrganizadorId(null);
-    setLoadError(null);
-  }, [tournamentId]);
-
-  useEffect(() => {
-    void load();
-    const id = window.setInterval(() => void load(), POLL_MS);
-    return () => window.clearInterval(id);
-  }, [load]);
+  useVisiblePolling({
+    callback: loadLive,
+    intervalMs: AMERICANO_RESULTS_BOARD_POLL_INTERVAL_MS,
+  });
 
   useEffect(() => {
     const defaultTitle = formatTenantDocumentTitle(
