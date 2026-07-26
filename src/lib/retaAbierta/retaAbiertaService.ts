@@ -1027,6 +1027,8 @@ export function mapJoinErrorMessage(error: string): string {
       return "No encontramos esta convocatoria.";
     case "preferred_side_unavailable":
       return "Aún no se puede guardar el lado (A/B). Hay que aplicar el SQL de convocatoria en Supabase y volver a intentar.";
+    case "rate_limited":
+      return "Demasiados intentos. Espera unos minutos e intenta de nuevo.";
     default:
       return "No se pudo completar la inscripción. Intenta de nuevo.";
   }

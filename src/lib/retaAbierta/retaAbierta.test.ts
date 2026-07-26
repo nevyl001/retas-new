@@ -11,6 +11,7 @@ import {
   buildRequestRivieraIdWhatsAppMessage,
   formatCanchaLabel,
 } from "./whatsappShareMessage";
+import { mapJoinErrorMessage } from "./retaAbiertaService";
 import type { OpenRegistrationPublicDto } from "./types";
 import { resolveOpenRegistrationJoinStatus } from "./joinStatus";
 import { resolveAppViewFromPath, pathRequiresUserSession } from "../appRouting";
@@ -542,5 +543,87 @@ describe("convocatoria admin surface — sin SELECT directo", () => {
     expect(src).toMatch(/remove_open_game_registration_entry/);
     expect(src).toMatch(/list_open_game_registration_entries/);
     expect(src).toMatch(/close_open_game_registration/);
+  });
+});
+
+describe("rate-limit Riviera ID (hotfix seguridad)", () => {
+  it("mapJoinErrorMessage muestra mensaje amigable para rate_limited", () => {
+    expect(mapJoinErrorMessage("rate_limited")).toBe(
+      "Demasiados intentos. Espera unos minutos e intenta de nuevo."
+    );
+  });
+
+  it("códigos de error ya cubiertos siguen sin cambiar (no regresión)", () => {
+    expect(mapJoinErrorMessage("riviera_id_not_found")).toBe(
+      "No encontramos este Riviera ID."
+    );
+    expect(mapJoinErrorMessage("already_registered")).toBe(
+      "Ya estás inscrito en esta reta."
+    );
+    expect(mapJoinErrorMessage("full")).toBe(
+      "La reta está completa y no hay lista de espera."
+    );
+  });
+
+  it("el hotfix SQL agrega el throttle a preview y join sin tocar su firma pública", () => {
+    const fs = require("fs") as typeof import("fs");
+    const path = require("path") as typeof import("path");
+    const sql = fs.readFileSync(
+      path.join(
+        __dirname,
+        "../../../supabase/hotfix-riviera-id-lookup-throttle.sql"
+      ),
+      "utf8"
+    );
+
+    // Firma pública sin cambios: mismos nombres y parámetros de siempre.
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION public\.preview_riviera_id_for_open_registration\(\s*p_slug text,\s*p_riviera_id text\s*\)/
+    );
+    expect(sql).toMatch(
+      /CREATE OR REPLACE FUNCTION public\.join_tournament_open_registration\(\s*p_slug text,\s*p_riviera_id text,\s*p_preferred_side text DEFAULT NULL\s*\)/
+    );
+
+    // Lógica de duelo 2v2 / preferred_side se conserva íntegra.
+    expect(sql).toMatch(/v_side := upper\(nullif\(trim\(p_preferred_side\)/);
+    expect(sql).toMatch(/_open_reg_sync_duelo_slots/);
+    expect(sql).toMatch(/_open_reg_sync_americano_roster/);
+
+    // El throttle está presente en ambas funciones y responde con el mismo
+    // contrato {ok:false, error:string} que ya usan el resto de los casos.
+    const previewBody = sql.split(
+      "CREATE OR REPLACE FUNCTION public.join_tournament_open_registration"
+    )[0];
+    expect(previewBody).toMatch(
+      /_riviera_id_lookup_rate_limited\('preview', 30, interval '10 minutes'\)/
+    );
+    expect(sql).toMatch(
+      /_riviera_id_lookup_rate_limited\('join', 20, interval '10 minutes'\)/
+    );
+    expect(sql.match(/'ok', false, 'error', 'rate_limited'/g)?.length).toBe(2);
+
+    // preview_riviera_id_for_open_registration ya NO es STABLE: ahora llama
+    // (indirectamente) a un INSERT vía _riviera_id_lookup_rate_limited, así
+    // que declararla STABLE violaría ese contrato. Debe quedar VOLATILE
+    // (explícito o por omisión) y sin STABLE en su LANGUAGE clause.
+    const previewSignatureBlock = previewBody.slice(
+      previewBody.indexOf(
+        "CREATE OR REPLACE FUNCTION public.preview_riviera_id_for_open_registration"
+      )
+    );
+    const previewLanguageLine = previewSignatureBlock
+      .split("AS $$")[0]
+      .split("\n")
+      .filter((l) => l.includes("LANGUAGE"))[0];
+    expect(previewLanguageLine).toMatch(/VOLATILE/);
+    expect(previewLanguageLine).not.toMatch(/STABLE/);
+
+    // x-forwarded-for documentado como mitigación de abuso, no identidad.
+    expect(sql).toMatch(/mitigación de ABUSO, no una identidad/);
+
+    // No se agregó OTP ni ningún parámetro nuevo de verificación: las firmas
+    // públicas siguen teniendo exactamente los parámetros de siempre (ya
+    // verificado arriba), sin p_otp/p_codigo/p_verification_code.
+    expect(sql).not.toMatch(/p_otp|p_codigo_verificacion|p_verification_code/i);
   });
 });
