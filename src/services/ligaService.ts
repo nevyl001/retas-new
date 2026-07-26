@@ -1081,6 +1081,37 @@ export async function startJornada(jornadaId: string): Promise<void> {
   if (uErr) throw new Error(uErr.message);
 }
 
+export interface LigaScoreConflict {
+  scorePareja1: number | null;
+  scorePareja2: number | null;
+}
+
+/** Error explícito cuando el partido ya tiene un resultado distinto guardado por otro proceso. */
+export class LigaScoreConflictError extends Error {
+  readonly code = "conflict" as const;
+  readonly current: LigaScoreConflict;
+
+  constructor(current: LigaScoreConflict) {
+    super(
+      `Este partido ya tiene resultado (${current.scorePareja1 ?? "?"}-${current.scorePareja2 ?? "?"}). ` +
+        "Recarga para revisar el marcador actual antes de sobrescribir."
+    );
+    this.name = "LigaScoreConflictError";
+    this.current = current;
+  }
+}
+
+interface UpdateLigaPartidoScoreRpcResult {
+  ok: boolean;
+  status?: "updated" | "unchanged";
+  error?: string;
+  partido_id?: string;
+  jornada_id?: string;
+  ronda?: number;
+  score_pareja1?: number | null;
+  score_pareja2?: number | null;
+}
+
 export async function updateScore(
   partidoId: string,
   score1: number,
@@ -1089,31 +1120,39 @@ export async function updateScore(
 ): Promise<void> {
   const organizadorId = await requireUserId();
 
-  const { data: partido, error: pErr } = await supabase
-    .from("liga_partidos")
-    .select("*")
-    .eq("id", partidoId)
-    .maybeSingle();
+  const { data, error: rpcErr } = await supabase.rpc(
+    "update_liga_partido_score",
+    {
+      p_partido_id: partidoId,
+      p_score1: score1,
+      p_score2: score2,
+      p_force: force,
+    }
+  );
 
-  if (pErr) throw new Error(pErr.message);
-  if (!partido) throw new Error("Partido no encontrado.");
+  if (rpcErr) throw new Error(rpcErr.message);
 
-  if (partido.estado === "completed" && !force) {
-    throw new Error(
-      "Este partido ya tiene resultado. Confirma para sobrescribir."
-    );
+  const result = data as UpdateLigaPartidoScoreRpcResult | null;
+  if (!result) throw new Error("Respuesta inválida del servidor.");
+
+  if (!result.ok) {
+    if (result.error === "not_found") {
+      throw new Error("Partido no encontrado.");
+    }
+    if (result.error === "invalid_score") {
+      throw new Error("Marcador inválido.");
+    }
+    if (result.error === "conflict") {
+      throw new LigaScoreConflictError({
+        scorePareja1: result.score_pareja1 ?? null,
+        scorePareja2: result.score_pareja2 ?? null,
+      });
+    }
+    throw new Error(result.error ?? "No se pudo guardar el resultado.");
   }
 
-  const { error: uErr } = await supabase
-    .from("liga_partidos")
-    .update({
-      score_pareja1: score1,
-      score_pareja2: score2,
-      estado: "completed",
-    })
-    .eq("id", partidoId);
-
-  if (uErr) throw new Error(uErr.message);
+  // Idempotente: mismo marcador ya guardado antes — no re-disparar rating ni cascada.
+  if (result.status === "unchanged") return;
 
   void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
     ({ aplicarRatingLigaPartido }) =>
@@ -1122,8 +1161,8 @@ export async function updateScore(
       )
   );
 
-  const jornadaId = String(partido.jornada_id);
-  const ronda = Number(partido.ronda);
+  const jornadaId = String(result.jornada_id);
+  const ronda = Number(result.ronda);
 
   const { data: rondaPartidos, error: rErr } = await supabase
     .from("liga_partidos")
