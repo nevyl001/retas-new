@@ -419,3 +419,78 @@ export function eliminatoriaUltimaRondaCompleta(
 
   return rondaCompleta(partidos, RONDA_TERCER_LUGAR);
 }
+
+export interface EliminatoriaAdvancePlan {
+  inserts: EliminatoriaPartidoInsert[];
+  /** IDs de parejas a notificar (fase final recién generada), o null si no aplica. */
+  notifyFinalPhasePairIds: string[] | null;
+}
+
+/**
+ * Versión pura (sin I/O) de la decisión que hoy toma avanzarEliminatoriaSiCompleta:
+ * dado el estado COMPLETO de partidos de un torneo (ya reflejando cualquier
+ * guardado/propagación pendiente de aplicar), calcula qué filas habría que
+ * insertar (siguiente ronda / 3.er lugar) para mantener el bracket avanzando.
+ *
+ * No reemplaza ni modifica avanzarEliminatoriaSiCompleta (que sigue existiendo
+ * tal cual, con su propio I/O, para el flujo de reabrirTorneoExpressEliminatoria).
+ * Esta función solo reutiliza los mismos builders puros (buildSiguienteRondaPartidos,
+ * buildTercerLugarPartido, rondaCompleta, maxRondaActual) para que un caller que
+ * ya tiene los partidos en memoria (por ejemplo, tras aplicar patches de
+ * propagación sin haberlos escrito todavía) pueda calcular el mismo resultado
+ * sin depender de un refetch a la base de datos.
+ */
+export function computeEliminatoriaAdvancePlan(
+  torneoId: string,
+  partidos: TorneoExpressEliminatoriaPartido[],
+  fase: TorneoExpressFaseEliminacion,
+  bracketSlotCount?: number
+): EliminatoriaAdvancePlan {
+  const totalRondas = totalRondasEliminatoria(fase, bracketSlotCount);
+  const inserts: EliminatoriaPartidoInsert[] = [];
+  let notifyFinalPhasePairIds: string[] | null = null;
+  let tercerLugarQueued = partidos.some((p) => isRondaTercerLugar(p.ronda));
+
+  const tryTercerLugar = (base: TorneoExpressEliminatoriaPartido[]) => {
+    if (tercerLugarQueued) return;
+    if (!eliminatoriaIncluyeTercerLugar(fase, bracketSlotCount)) return;
+    const semiRonda = totalRondas - 1;
+    if (!rondaCompleta(base, semiRonda)) return;
+    const tercerRow = buildTercerLugarPartido(torneoId, base, semiRonda);
+    if (tercerRow) {
+      inserts.push(tercerRow);
+      tercerLugarQueued = true;
+    }
+  };
+
+  const ronda = maxRondaActual(
+    partidos.filter((p) => !isRondaTercerLugar(p.ronda))
+  );
+
+  if (ronda === 0 || !rondaCompleta(partidos, ronda)) {
+    tryTercerLugar(partidos);
+    return { inserts, notifyFinalPhasePairIds };
+  }
+
+  if (ronda < totalRondas && !partidos.some((p) => p.ronda === ronda + 1)) {
+    const nextRows = buildSiguienteRondaPartidos(torneoId, ronda, partidos);
+    if (nextRows.length > 0) {
+      inserts.push(...nextRows);
+      const nextRonda = ronda + 1;
+      if (nextRonda === totalRondas) {
+        const tercerRow = buildTercerLugarPartido(torneoId, partidos, ronda);
+        if (tercerRow) {
+          inserts.push(tercerRow);
+          tercerLugarQueued = true;
+        }
+        notifyFinalPhasePairIds = nextRows.flatMap((row) => [
+          row.pareja_local_id,
+          row.pareja_visitante_id,
+        ]) as string[];
+      }
+    }
+  }
+
+  tryTercerLugar(partidos);
+  return { inserts, notifyFinalPhasePairIds };
+}
