@@ -65,17 +65,37 @@ import { invalidatePlayersPool } from "./playersPoolCache";
 import { invalidateCareerIdentityCacheForPlayer } from "./careerIdentityCache";
 import { normalizeOptionalEmail, normalizeRequiredEmail } from "./emailValidation";
 
-const JUGADOR_SELECT_BASE =
+/**
+ * Select privado (contacto incluido). Debe permanecer byte-equivalente al
+ * antiguo JUGADOR_SELECT_BASE: mismo conjunto y orden de columnas.
+ * Todos los callers existentes siguen en esta vía hasta migraciones posteriores.
+ */
+const JUGADOR_SELECT_PRIVATE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
+
+/**
+ * Select público: mismas columnas que PRIVATE menos email, telefono, whatsapp
+ * y fecha_nacimiento. Alineado al GRANT anon de columnas (rating se añade vía
+ * JUGADOR_RATING_COLS). Ningún caller lo usa aún en este commit.
+ */
+const JUGADOR_SELECT_PUBLIC =
+  "id,nombre,slug,foto_url,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
 
 const JUGADOR_RATING_COLS = "rating,rating_partidos,rating_fiabilidad";
 
 /** null = aún no probado; false = columnas rating no existen en riviera_jugadores */
 let jugadorRatingColsInDb: boolean | null = null;
 
+/** Select privado (+ rating si existe). Default actual de todos los callers. */
 function getJugadorSelectColumns(): string {
-  if (jugadorRatingColsInDb === false) return JUGADOR_SELECT_BASE;
-  return `${JUGADOR_SELECT_BASE},${JUGADOR_RATING_COLS}`;
+  if (jugadorRatingColsInDb === false) return JUGADOR_SELECT_PRIVATE;
+  return `${JUGADOR_SELECT_PRIVATE},${JUGADOR_RATING_COLS}`;
+}
+
+/** Select público (+ rating si existe). Listo para migraciones; sin callers aún. */
+function getJugadorSelectColumnsPublic(): string {
+  if (jugadorRatingColsInDb === false) return JUGADOR_SELECT_PUBLIC;
+  return `${JUGADOR_SELECT_PUBLIC},${JUGADOR_RATING_COLS}`;
 }
 
 function isMissingRatingColumnError(
@@ -97,12 +117,28 @@ async function withJugadorSelectFallback<T>(
   run: (selectCols: string) => PromiseLike<SupabaseResult<T>>
 ): Promise<SupabaseResult<T>> {
   if (jugadorRatingColsInDb === false) {
-    return run(JUGADOR_SELECT_BASE);
+    return run(JUGADOR_SELECT_PRIVATE);
   }
   const result = await run(getJugadorSelectColumns());
   if (result.error && isMissingRatingColumnError(result.error)) {
     jugadorRatingColsInDb = false;
-    return run(JUGADOR_SELECT_BASE);
+    return run(JUGADOR_SELECT_PRIVATE);
+  }
+  if (!result.error) jugadorRatingColsInDb = true;
+  return result;
+}
+
+/** Misma lógica de fallback de rating que withJugadorSelectFallback, vía PUBLIC. */
+async function withJugadorSelectPublicFallback<T>(
+  run: (selectCols: string) => PromiseLike<SupabaseResult<T>>
+): Promise<SupabaseResult<T>> {
+  if (jugadorRatingColsInDb === false) {
+    return run(JUGADOR_SELECT_PUBLIC);
+  }
+  const result = await run(getJugadorSelectColumnsPublic());
+  if (result.error && isMissingRatingColumnError(result.error)) {
+    jugadorRatingColsInDb = false;
+    return run(JUGADOR_SELECT_PUBLIC);
   }
   if (!result.error) jugadorRatingColsInDb = true;
   return result;
