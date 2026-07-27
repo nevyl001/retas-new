@@ -16,3 +16,17 @@ build
 .env.*.local
 !.env.example
 
+# Claude Code — configuración personal, no compartida
+.claude/settings.local.json
+
+# Claude Code — skills de UX/UI: se versionan, pero no sus artefactos
+# de test generados localmente (Python)
+.claude/skills/**/__pycache__/
+.claude/skills/**/*.pyc
+.claude/skills/**/.pytest_cache/
+.claude/skills/**/.coverage
+.claude/skills/**/htmlcov/
+
+# Leftover de empaquetado de ui-ux-pro-max-cli (no es fuente)
+.claude/skills/ui-styling/scripts/tests/coverage-ui.json
+
