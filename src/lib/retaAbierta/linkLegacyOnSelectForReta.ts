@@ -7,7 +7,10 @@
  */
 import { supabase } from "../supabaseClient";
 import { resolveJugadorIdForOrganizer } from "../rivieraJugadores/organizerPlayerAccess";
-import { linkLegacyPlayerId } from "../rivieraJugadores/rivieraJugadoresService";
+import {
+  getRivieraJugadorPrivateById,
+  linkLegacyPlayerId,
+} from "../rivieraJugadores/rivieraJugadoresService";
 import type { RivieraJugador } from "../rivieraJugadores/types";
 import {
   LegacyLinkUnverifiableError,
@@ -73,15 +76,7 @@ export type LinkLegacyOnSelectResult = {
 async function defaultFetchRivieraJugadorById(
   id: string
 ): Promise<RivieraJugadorLegacyLinkRow | null> {
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .select(
-      "id, nombre, email, organizador_id, legacy_player_id, foto_url, rating"
-    )
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw error;
-  return data as RivieraJugadorLegacyLinkRow | null;
+  return getRivieraJugadorPrivateById(id);
 }
 
 async function defaultFetchPlayerById(

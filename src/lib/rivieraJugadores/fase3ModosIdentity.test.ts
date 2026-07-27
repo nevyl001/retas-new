@@ -25,6 +25,7 @@ jest.mock("./rivieraJugadoresService", () => {
 jest.mock("../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),
+    rpc: jest.fn(),
   },
 }));
 
@@ -39,6 +40,24 @@ const linkMock = linkLegacyPlayerId as jest.MockedFunction<
   typeof linkLegacyPlayerId
 >;
 const fromMock = supabase.from as jest.Mock;
+const rpcMock = supabase.rpc as jest.Mock;
+
+/**
+ * getRivieraJugadorPrivateById ahora llama a la RPC
+ * riviera_jugador_privado_por_id en vez de .from("riviera_jugadores").
+ * Puentea al mismo mock de fromMock("riviera_jugadores") que cada test ya
+ * configura, para no tener que duplicar cada fixture.
+ */
+function bridgeRpcToFromMock(): void {
+  rpcMock.mockImplementation(async (fnName: string) => {
+    if (fnName === "riviera_jugador_privado_por_id") {
+      const table = fromMock("riviera_jugadores");
+      const { data, error } = await table.select().eq().maybeSingle();
+      return { data: data ? [data] : [], error };
+    }
+    return { data: null, error: null };
+  });
+}
 
 function makePlayer(
   id: string,
@@ -99,6 +118,7 @@ describe("Fase 3 — ensureLocalPlayersLegacyForRivieraJugador (Americano/TE/Lig
   beforeEach(() => {
     jest.clearAllMocks();
     linkMock.mockResolvedValue(undefined);
+    bridgeRpcToFromMock();
   });
 
   it("Caso 1 — propio con legacy del anfitrión: reutiliza, 0 inserts, 0 relinks", async () => {

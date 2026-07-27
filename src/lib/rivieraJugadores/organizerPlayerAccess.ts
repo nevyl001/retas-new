@@ -879,14 +879,18 @@ export async function resolveGrantedJugadorForOrganizerUse(
   );
   if (effectiveId === jugador.id) return jugador;
 
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .select("*")
-    .eq("id", effectiveId)
-    .maybeSingle();
+  const { getRivieraJugadorPrivateById } = await import(
+    "./rivieraJugadoresService"
+  );
+  let data: RivieraJugador | null = null;
+  try {
+    data = await getRivieraJugadorPrivateById(effectiveId);
+  } catch {
+    return jugador;
+  }
 
-  if (error || !data) return jugador;
-  return data as RivieraJugador;
+  if (!data) return jugador;
+  return data;
 }
 
 export function isGrantedJugadorRow(

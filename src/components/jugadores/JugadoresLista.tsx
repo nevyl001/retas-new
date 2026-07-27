@@ -19,6 +19,7 @@ import {
 import {
   createRivieraJugador,
   deleteRivieraJugador,
+  getRivieraJugadorPrivateById,
   listRivieraJugadores,
   promoteImportedRivieraJugadores,
 } from "../../lib/rivieraJugadores/rivieraJugadoresService";
@@ -409,11 +410,9 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
         onClose={() => setExistingModalOpen(false)}
         onAdded={async (membership) => {
           if (!user?.id) return;
-          const { data: localRow } = await supabase
-            .from("riviera_jugadores")
-            .select("*")
-            .eq("id", membership.localJugadorId)
-            .maybeSingle();
+          const localRow = await getRivieraJugadorPrivateById(
+            membership.localJugadorId
+          );
           if (localRow) {
             const local = localRow as RivieraJugadorWithStats;
             try {

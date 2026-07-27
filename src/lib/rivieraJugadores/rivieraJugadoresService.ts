@@ -743,20 +743,75 @@ type ListRivieraJugadoresOpts = {
 };
 
 /**
- * Listado interno con contacto (JUGADOR_SELECT_PRIVATE).
- * Usar solo en sync/pool/legacy. Caché con clave `|priv|` distinta del list de producto.
+ * Listado interno con contacto, vía RPC SECURITY DEFINER
+ * (riviera_jugadores_privados_listar) — la RPC valida ownership/admin
+ * server-side, no depende del GRANT de columnas de authenticated sobre la
+ * tabla. Usar solo en sync/pool/legacy. Caché con clave `|priv|` distinta
+ * del list de producto.
  */
 export async function listRivieraJugadoresPrivate(
   organizadorId: string,
   opts?: ListRivieraJugadoresOpts
 ): Promise<RivieraJugadorWithStats[]> {
-  const { buildRivieraListCacheKeyPrivate } = await import("./playersPoolCache");
-  return listRivieraJugadoresWithCacheKey(
-    organizadorId,
-    opts,
+  const {
     buildRivieraListCacheKeyPrivate,
-    withJugadorSelectFallback
+    getCachedRivieraJugadoresList,
+    setCachedRivieraJugadoresList,
+  } = await import("./playersPoolCache");
+  const cacheKey = buildRivieraListCacheKeyPrivate(organizadorId, opts);
+  if (cacheKey) {
+    const cached = getCachedRivieraJugadoresList(cacheKey);
+    if (cached) return cached;
+  }
+
+  const { data, error } = await supabase.rpc(
+    "riviera_jugadores_privados_listar",
+    {
+      p_organizador_id: organizadorId,
+      p_genero: opts?.genero ?? null,
+      p_search: opts?.search?.trim() || null,
+      p_nivel: opts?.nivel || null,
+    }
   );
+  if (error) {
+    if (isMissingTableError(error) || isMissingRpcError(error)) return [];
+    throw error;
+  }
+
+  let rows = ((data ?? []) as unknown as Record<string, unknown>[]).map(
+    (row) => mapJugadorRowFromService(row)
+  );
+  if (opts?.genero) {
+    rows = rows.filter((row) =>
+      isJugadorInGeneroBracket(row.genero, opts.genero!)
+    );
+  }
+  if (opts?.activosRecientes) {
+    rows = [...rows].sort((a, b) => {
+      const da = a.stats?.ultima_actividad ?? "";
+      const db = b.stats?.ultima_actividad ?? "";
+      return db.localeCompare(da);
+    });
+  }
+
+  rows = await mergeGrantedJugadoresIntoList(organizadorId, rows, opts?.genero);
+
+  if (opts?.search?.trim()) {
+    const sq = opts.search.trim().toLowerCase();
+    rows = rows.filter((r) => r.nombre.toLowerCase().includes(sq));
+  }
+  if (opts?.nivel) {
+    rows = rows.filter((r) => r.categoria === opts.nivel);
+  }
+
+  if (!opts?.skipCareerEnrich) {
+    rows = await enrichJugadoresOrganizerScopedStats(organizadorId, rows);
+  }
+  rows = await enrichJugadoresWithRivieraId(rows);
+  if (cacheKey) {
+    setCachedRivieraJugadoresList(cacheKey, rows);
+  }
+  return rows;
 }
 
 /**
@@ -771,8 +826,7 @@ export async function listRivieraJugadores(
   return listRivieraJugadoresWithCacheKey(
     organizadorId,
     opts,
-    buildRivieraListCacheKey,
-    withJugadorSelectPublicFallback
+    buildRivieraListCacheKey
   );
 }
 
@@ -782,10 +836,7 @@ async function listRivieraJugadoresWithCacheKey(
   buildCacheKey: (
     organizadorId: string,
     opts?: ListRivieraJugadoresOpts
-  ) => string | null,
-  withSelect:
-    | typeof withJugadorSelectFallback
-    | typeof withJugadorSelectPublicFallback
+  ) => string | null
 ): Promise<RivieraJugadorWithStats[]> {
   const {
     getCachedRivieraJugadoresList,
@@ -821,7 +872,9 @@ async function listRivieraJugadoresWithCacheKey(
     return q;
   };
 
-  const { data, error } = await withSelect((cols) => buildQuery(cols));
+  const { data, error } = await withJugadorSelectPublicFallback((cols) =>
+    buildQuery(cols)
+  );
   if (error) {
     if (isMissingTableError(error)) return [];
     throw error;
@@ -863,23 +916,29 @@ async function listRivieraJugadoresWithCacheKey(
   return rows;
 }
 
-/** Ficha por id con contacto (JUGADOR_SELECT_PRIVATE). Sin stats join. */
+/**
+ * Ficha por id con contacto, vía RPC SECURITY DEFINER
+ * (riviera_jugador_privado_por_id) — no recibe organizador_id como
+ * parámetro: la RPC compara el organizador_id real de la fila contra
+ * auth.uid() server-side, sin ningún parámetro con el que se pueda
+ * suplantar a otro organizador. Sin stats join (igual que antes).
+ */
 export async function getRivieraJugadorPrivateById(
   id: string
 ): Promise<RivieraJugador | null> {
   const jugadorId = sanitizeUuid(id) || id.trim();
   if (!jugadorId) return null;
 
-  const { data, error } = await withJugadorSelectFallback((cols) =>
-    supabase
-      .from("riviera_jugadores")
-      .select(cols)
-      .eq("id", jugadorId)
-      .maybeSingle()
+  const { data, error } = await supabase.rpc(
+    "riviera_jugador_privado_por_id",
+    { p_jugador_id: jugadorId }
   );
-
-  if (error) throw error;
-  return (data as unknown as RivieraJugador | null) ?? null;
+  if (error) {
+    if (isMissingTableError(error) || isMissingRpcError(error)) return null;
+    throw error;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as unknown as RivieraJugador | null) ?? null;
 }
 
 export async function getRivieraJugadorBySlug(
