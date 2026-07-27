@@ -10,10 +10,7 @@ import type { Duelo2v2SetDetalle } from "../../lib/duelo2v2/types";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { JugadorAvatar } from "../jugadores/JugadorAvatar";
 import { JugadorRatingChip } from "../jugadores/JugadorRatingChip";
-import {
-  PublicRivieraCelebrateBrand,
-  PublicRivieraCelebrateClosing,
-} from "../public/PublicRivieraCelebrateBrand";
+import { PublicRivieraCelebrateClosing } from "../public/PublicRivieraCelebrateBrand";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
 
 interface Duelo2v2CelebrateSectionProps {
@@ -139,8 +136,6 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
     >
       <div className="ro-pub-celebrate__glow" aria-hidden />
       <div className="ro-pub-celebrate__inner">
-        <PublicRivieraCelebrateBrand showTagline={false} />
-
         <div className="duelo2v2-celebrate__outcome-cards">
           <article className="duelo2v2-celebrate__team-card duelo2v2-celebrate__team-card--winner">
             <p className="duelo2v2-celebrate__team-card-badge">Ganadores</p>

@@ -10,7 +10,8 @@
   padding-left: var(--te-gestion-pad-x);
   padding-right: var(--te-gestion-pad-x);
   box-sizing: border-box;
-  background: var(--ro-bg-deep);
+  /* Misma L0 que te-inicio / evento (no --ro-bg-deep, queda más “sucio”) */
+  background: var(--bg-canvas);
 }
 
 .te-gestion-page > * {
@@ -38,6 +39,17 @@
 .te-gestion-page .te-gestion-header__eyebrow {
   flex: 1 1 100%;
   width: 100%;
+  margin-left: 0;
+  padding-left: 0;
+  text-align: left;
+}
+
+.te-gestion-page .te-gestion-header__brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
 .te-gestion-page .te-gestion-back-toolbar {
@@ -58,6 +70,7 @@
 
 .te-gestion-page .te-gestion-title {
   margin: 0 0 0.35rem;
+  padding: 0;
   font-family: var(--ro-font-heading);
   font-size: clamp(1.75rem, 3.2vw, 2.125rem);
   font-weight: 800;
@@ -65,6 +78,7 @@
   line-height: 1.1;
   color: var(--ro-text-primary);
   text-transform: none;
+  text-align: left;
 }
 
 .te-gestion-page .te-gestion-header__event {
@@ -104,26 +118,34 @@
   text-transform: uppercase;
 }
 
+/* Misma semántica de color que EventoDetalle (finished/live/pending globales) */
 .te-gestion-page .te-gestion-estado-pill.riviera-badge--live {
-  background: var(--ro-accent-dim);
-  color: var(--ro-accent);
-  border: 1px solid var(--ro-border-accent);
+  background: rgba(248, 113, 113, 0.1);
+  color: var(--live, #ef4444);
+  border: 1px solid rgba(248, 113, 113, 0.35);
 }
 
 .te-gestion-page .te-gestion-estado-pill.riviera-badge--live::before {
-  background: var(--ro-accent);
+  background: var(--live, #ef4444);
 }
 
 .te-gestion-page .te-gestion-estado-pill.riviera-badge--finished {
-  background: var(--bg-elevated);
-  color: var(--color-text-secondary, var(--text-secondary));
-  border: 1px solid var(--border-subtle);
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--loss, #f87171);
+  border: 1px solid rgba(248, 113, 113, 0.32);
 }
 
 .te-gestion-page .te-gestion-estado-pill.riviera-badge--pending {
-  background: var(--bg-elevated);
-  color: var(--color-text-secondary, var(--text-secondary));
-  border: 1px solid var(--border-subtle);
+  background: var(--ro-bg-surface, var(--bg-elevated));
+  color: var(--ro-text-secondary);
+  border: 1px solid var(--ro-border);
+}
+
+.te-gestion-page .te-gestion-fase-pill.riviera-badge,
+.te-gestion-page .te-gestion-fase-pill {
+  background: var(--ro-bg-surface, var(--bg-card));
+  color: var(--ro-text-secondary);
+  border: 1px solid var(--ro-border);
 }
 
 .te-gestion-page .te-gestion-header__actions {
@@ -228,8 +250,8 @@
   padding: 0.55rem 1.1rem;
   border: 1px solid var(--ro-border);
   border-radius: var(--ro-radius-full);
-  background: var(--ro-bg-surface);
-  color: var(--ro-text-secondary);
+  background: var(--ro-bg-card, var(--ro-bg-surface));
+  color: var(--ro-text-primary);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -240,25 +262,33 @@
 }
 
 .te-gestion-page .te-grupos-tab:hover:not(.te-grupos-tab--active):not(:disabled) {
-  border-color: var(--ro-border-accent);
+  border-color: var(--ro-text-primary);
   background: var(--ro-bg-elevated);
   color: var(--ro-text-primary);
 }
 
+/* Activo = mismo contraste que riviera-btn-primary / CTAs de página de evento */
+.torneo-express-page.te-gestion-page .te-grupos-tab--active,
 .te-gestion-page .te-grupos-tab--active {
   border-color: var(--ro-accent);
   background: var(--ro-accent);
-  color: var(--ro-text-primary);
+  color: var(--ro-text-on-accent);
   box-shadow: var(--ro-shadow-sm);
 }
 
+.torneo-express-page.te-gestion-page .te-grupos-tab--active .te-grupo-badge,
+.torneo-express-page.te-gestion-page .te-grupos-tab--active .te-grupo-badge--0,
+.torneo-express-page.te-gestion-page .te-grupos-tab--active .te-grupo-badge--1,
+.torneo-express-page.te-gestion-page .te-grupos-tab--active .te-grupo-badge--2,
+.torneo-express-page.te-gestion-page .te-grupos-tab--active .te-grupo-badge--3,
+.torneo-express-page.te-gestion-page .te-grupos-tab--active .te-grupo-badge--4,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--0,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--1,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--2,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--3,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--4 {
-  color: var(--ro-text-primary);
+  color: var(--ro-text-on-accent);
   border-color: transparent;
   background: transparent;
 }
@@ -297,9 +327,9 @@
 }
 
 .te-gestion-page .te-grupos-tab__edit:hover:not(:disabled) {
-  color: var(--accent-gold);
-  border-color: var(--border-accent);
-  background: var(--ro-bg-inset);
+  color: var(--ro-text-primary);
+  border-color: var(--ro-border);
+  background: var(--ro-bg-elevated);
 }
 
 .te-gestion-page .te-grupos-tab__edit:disabled {

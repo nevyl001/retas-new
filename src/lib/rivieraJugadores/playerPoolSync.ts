@@ -466,7 +466,18 @@ export async function syncLigaJugadoresFromRivieraRegistry(
   const registry = await listRivieraJugadoresPrivate(organizadorId);
   const activePool = await loadActiveLigaJugadoresRows(organizadorId);
   for (const rj of registry) {
-    await ensureLigaJugadorForRivieraJugador(organizadorId, rj, activePool);
+    try {
+      await ensureLigaJugadorForRivieraJugador(organizadorId, rj, activePool);
+    } catch (e) {
+      // Fail-closed por fila: vínculo legacy no verificable = skip silencioso.
+      // No loguear: es esperado en sync masivo al abrir Liga y ensucia la consola.
+      if (e instanceof LegacyLinkUnverifiableError) continue;
+      console.warn(
+        "[riviera-jugadores] syncLigaJugadores skip:",
+        rj.id,
+        e
+      );
+    }
   }
   await consolidateDuplicateLigaJugadores(organizadorId);
   await deactivateOrphanLigaJugadores(organizadorId);
@@ -539,7 +550,9 @@ export async function loadOrganizadorLigaJugadoresPool(
       force: opts?.forceSync ?? false,
     });
   } catch (e) {
-    console.warn("loadOrganizadorLigaJugadoresPool sync:", e);
+    if (!(e instanceof LegacyLinkUnverifiableError)) {
+      console.warn("loadOrganizadorLigaJugadoresPool sync:", e);
+    }
   }
 
   const linkedIds = (await getLinkedLigaJugadorIds(organizadorId)).filter(

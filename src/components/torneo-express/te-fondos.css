@@ -20,7 +20,8 @@
 .te-gestion-page {
   --te-gestion-surface: var(--ro-bg-card);
   --te-gestion-card-shadow: var(--ro-shadow-sm);
-  background: var(--ro-bg-deep);
+  /* L0 canvas — mismo plano que evento / listados TE */
+  background: var(--bg-canvas);
 }
 
 .torneo-express-page .torneo-express-card,

@@ -22,6 +22,7 @@ import { ActionBar } from "../platform/ActionBar";
 import { TePageShell } from "./TePageShell";
 import { TorneoExpressDeleteModal } from "./TorneoExpressDeleteModal";
 import { navigateTorneoExpress } from "./torneoExpressNav";
+import "./te-inicio-page.css";
 import "./te-eventos.css";
 
 const EVENTO_ESTADO_LABEL: Record<TorneoExpressEvento["estado"], string> = {

@@ -40,7 +40,7 @@
   font-style: italic;
   font-weight: 500;
   line-height: 1.5;
-  color: var(--accent-gold);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.72));
   opacity: 0.95;
   max-width: 36rem;
 }
@@ -53,7 +53,7 @@
   margin: 1.15rem 0 0.5rem;
   font-size: 1rem;
   line-height: 1.45;
-  color: var(--accent-gold);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.78));
 }
 
 .te-elim-champion__icon {
@@ -260,10 +260,10 @@
   width: 5px;
   height: 5px;
   border-radius: 1px;
-  background: var(--accent-gold);
+  background: rgba(255, 255, 255, 0.65);
   transform: rotate(45deg);
   flex-shrink: 0;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
 }
 
 .te-bracket-final-caption__brand {
@@ -277,7 +277,7 @@
 }
 
 .te-bracket-final-caption__brand-sep {
-  color: var(--accent-gold);
+  color: rgba(255, 255, 255, 0.45);
   letter-spacing: 0.12em;
   opacity: 0.9;
 }
@@ -290,9 +290,9 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1.15;
-  color: var(--accent-gold);
+  color: var(--text-primary, #fff);
   text-wrap: balance;
-  text-shadow: 0 0 24px rgba(255, 255, 255, 0.18);
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.12);
 }
 
 .te-bracket-col {
@@ -399,7 +399,7 @@
   margin: 0;
   padding: clamp(1.5rem, 3vw, 2.35rem) clamp(1.75rem, 3.5vw, 2.75rem);
   gap: clamp(0.85rem, 1.75vw, 1.35rem);
-  border: 1px solid rgba(212, 160, 23, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 22px;
   background: transparent;
   box-shadow: none;
@@ -411,7 +411,7 @@
 
 .te-public.te-public--eliminatoria .te-elim-bracket-card--center.te-elim-bracket-card--live,
 .te-public.te-public--eliminatoria .te-elim-bracket-card--center.te-elim-bracket-card--finished {
-  border-color: rgba(212, 160, 23, 0.8);
+  border-color: rgba(255, 255, 255, 0.42);
 }
 
 .te-public.te-public--eliminatoria .te-elim-bracket-card--live:not(.te-elim-bracket-card--center) {
@@ -447,7 +447,7 @@
 
 .te-elim-bracket-card__phase--final {
   font-size: clamp(0.8125rem, 1.2vw, 0.9375rem);
-  color: var(--accent-gold);
+  color: var(--text-primary, #fff);
   letter-spacing: 0.18em;
   font-weight: 700;
 }
@@ -516,7 +516,7 @@
 }
 
 .te-bracket-side-meta__item:first-child .te-bracket-side-meta__label {
-  color: var(--ro-pub-schedule, var(--accent-gold));
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
 }
 
 .te-bracket-side-meta__item:last-child .te-bracket-side-meta__label {
@@ -543,7 +543,7 @@
   font-size: clamp(0.9375rem, 1.35vw, 1.125rem);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--ro-pub-schedule, var(--accent-gold));
+  color: var(--text-primary, #fff);
   white-space: nowrap;
 }
 
@@ -627,7 +627,7 @@
 }
 
 .te-bracket-final-schedule__item--time .te-bracket-final-schedule__label {
-  color: var(--ro-pub-schedule, var(--accent-gold));
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
 }
 
 .te-bracket-final-schedule__item:last-child .te-bracket-final-schedule__label {
@@ -663,7 +663,7 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
-  color: var(--ro-pub-schedule, var(--accent-gold));
+  color: var(--text-primary, #fff);
   white-space: nowrap;
 }
 
@@ -944,8 +944,8 @@
   font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--accent-gold);
-  background: var(--accent-gold-dim);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.78));
+  background: rgba(255, 255, 255, 0.08);
   border: 0.5px solid rgba(255, 255, 255, 0.2);
   vertical-align: middle;
 }
@@ -1145,8 +1145,8 @@
   justify-content: center;
   padding: 0.35rem 0;
   font-size: 1.25rem;
-  color: var(--accent-gold);
-  opacity: 0.75;
+  color: rgba(255, 255, 255, 0.45);
+  opacity: 0.9;
 }
 
 .te-public.te-public--eliminatoria .te-bracket-visual--mobile .te-elim-bracket-card {
@@ -1252,7 +1252,7 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent-gold);
+  color: var(--text-primary, #fff);
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.28);
 }
@@ -1346,7 +1346,7 @@
   line-height: 1.25;
   letter-spacing: -0.01em;
   text-align: center;
-  color: var(--accent-gold);
+  color: var(--text-primary, #fff);
 }
 
 .te-elim-finalists-pair__sep {
@@ -1819,7 +1819,7 @@
 }
 
 .te-elim-finalists-brand .te-pub-grupo-celebrate__wordmark-sep {
-  color: var(--accent-gold);
+  color: rgba(255, 255, 255, 0.45);
   opacity: 1;
 }
 
@@ -1848,7 +1848,7 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   text-align: center;
-  color: var(--accent-gold);
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
 }
 
 .te-elim-finalists-duel {
@@ -1934,7 +1934,7 @@
 }
 
 .te-elim-public-footer__icon {
-  color: var(--accent-gold);
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
   font-size: 0.9rem;
 }
 

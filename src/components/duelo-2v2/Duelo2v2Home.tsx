@@ -25,7 +25,8 @@ function estadoLabel(estado: Duelo2v2["estado"]): string {
 
 function badgeClass(estado: Duelo2v2["estado"]): string {
   if (estado === "finalizado") return "duelo2v2-badge duelo2v2-badge--done rv-pill";
-  return "duelo2v2-badge duelo2v2-badge--live rv-pill";
+  if (estado === "en_juego") return "duelo2v2-badge duelo2v2-badge--live rv-pill";
+  return "duelo2v2-badge duelo2v2-badge--pending rv-pill";
 }
 
 export const Duelo2v2Home: React.FC = () => {
