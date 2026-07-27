@@ -29,11 +29,21 @@ Ejemplo confirmado en código: `--ro-pub-gold` (acento dorado de vistas pública
 
 El dorado (`--ro-medal-gold`, `--ro-gold`, `--ro-pub-gold`, y el acento propio de la cuenta Riviera Open cuando resuelve a un tono dorado) debe usarse **lo menos posible**. No es un color decorativo de la interfaz — pierde valor si aparece seguido.
 
-**Sí usar dorado quando hay significado semántico competitivo real**: primer lugar, campeón, medalla de oro, un logro realmente destacado, o un detalle mínimo de identidad Riviera Open cuando sea indispensable.
+**Sí usar dorado cuando hay significado semántico competitivo real**: primer lugar, campeón, medalla de oro, un logro realmente destacado, o un detalle mínimo de identidad Riviera Open cuando sea indispensable.
 
-**Nunca usar dorado para**: botones normales, headers, bordes generales, fondos, inputs, tabs, navegación, cards comunes, iconos sin significado competitivo, estados activos genéricos, decoraciones.
+**Nunca usar dorado para**: botones normales, headers, bordes generales, fondos, inputs, tabs, navegación, cards comunes, iconos sin significado competitivo, estados activos genéricos, decoraciones, focos, hovers, links.
 
 La base visual por defecto debe ser **negro, blanco, marfil, grises**, más los **colores dinámicos del branding de cada club** (que para cuentas con upgrade propio pueden no ser dorado en absoluto — priorizar siempre el branding propio de la cuenta sobre cualquier acento por defecto). Antes de introducir cualquier uso nuevo de dorado, justificar explícitamente qué jerarquía competitiva o significado semántico representa — si no hay una razón clara, usar un token neutro.
+
+## Roadmap UX/UI de toda la plataforma (2026-07-27) — proceso obligatorio por fase
+
+Iniciativa en curso para llevar toda la plataforma (Reta, Reta Abierta, Americano, Liga, Torneo Express, Duelo 2v2, Rankings/Jugadores, Dashboards, Administración, vistas públicas) a un mismo nivel de consistencia visual, ejecutada en fases pequeñas y aprobadas una por una — nunca como cambio masivo. Reglas sin excepción para cada fase:
+
+1. **Solo UX/UI.** No tocar: servicios, hooks, RPC, Supabase, RLS, queries, modelos, validaciones, reducers, estado, navegación, flujos, permisos. Ningún cambio de comportamiento funcional.
+2. **El branding nunca se toca.** No reemplazar colores dinámicos por fijos, no eliminar tokens de branding, no hardcodear colores, no convertir el sistema en un tema único. La estructura (layout, spacing, tamaños, tipografía, botones, formularios, cards, badges, modales, estados, navegación, densidad, jerarquía visual, responsive) se unifica entre clubes; el branding (logo, colores, identidad, vía los tokens dinámicos existentes) se conserva automáticamente por cuenta.
+3. **Antes de modificar un módulo, analizar qué componentes/clases CSS comparte con otros módulos no incluidos en esa fase**, y proponer el scoping exacto (selector compuesto, className adicional, etc.) antes de implementar — no asumir que un archivo es de un solo módulo. Precedente real: `RatingNivel.css` es compartido entre la ficha admin y la ficha pública; el primer intento de compactar espaciado afectó ambas sin querer, se detectó y se corrigió escribiendo cada regla nueva con el selector compuesto `.rjp-rating-nivel--compact.rjp-rating-nivel--embedded` (único de la ficha admin) antes de hacer commit.
+4. **Cada fase debe cerrar con**: `tsc --noEmit` limpio, `eslint` limpio de los archivos tocados, `npm test` sin regresiones (mismo baseline), `npm run build` limpio.
+5. Ninguna fase se implementa sin aprobación explícita del roadmap/alcance primero.
 
 ## Uso de la skill `ui-ux-pro-max`
 

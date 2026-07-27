@@ -153,10 +153,6 @@
     gap: var(--space-sm, 0.65rem);
   }
 
-  .new-recalculate-button {
-    min-height: 44px;
-    padding: var(--space-sm, 0.5rem) var(--space-md, 0.85rem);
-  }
 }
 
 @media (max-width: 360px) {

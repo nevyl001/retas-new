@@ -316,23 +316,6 @@
   gap: 0.5rem;
 }
 
-.mis-retas-page .mis-reta-card__finish {
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--border-subtle);
-  background: transparent;
-  color: var(--text-secondary);
-}
-
-.mis-retas-page .mis-reta-card__finish:hover {
-  border-color: var(--border-accent);
-  color: var(--text-secondary);
-  background: var(--bg-elevated);
-}
-
 .mis-retas-page .riviera-btn-danger-icon {
   display: inline-flex;
   align-items: center;

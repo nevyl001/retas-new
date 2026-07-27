@@ -283,36 +283,6 @@
   display: none;
 }
 
-.riviera-organizer-reta .omc-pencil-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: color 0.15s ease;
-}
-
-.riviera-organizer-reta .omc-pencil-btn:hover:not(:disabled) {
-  /* GOLD-AUDIT: evaluar si es necesario */
-  color: var(--text-secondary);
-}
-
-.riviera-organizer-reta .omc-pencil-icon {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 .riviera-organizer-reta .omc-header__rule {
   height: 1px;
   background: var(--ro-bg-elevated);
@@ -332,53 +302,9 @@
   margin-bottom: 8px;
 }
 
-.riviera-organizer-reta .omc-meta-editor__field {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.riviera-organizer-reta .omc-meta-editor__field span {
-  font-family: var(--font-body);
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ro-text-muted);
-}
-
-.riviera-organizer-reta .omc-meta-editor__field input {
-  width: 100%;
-  padding: 6px 8px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  color: var(--text-primary);
-  background: var(--ro-bg-elevated);
-  border: 1px solid var(--ro-border-subtle);
-  border-radius: 6px;
-}
-
 .riviera-organizer-reta .omc-meta-editor__actions {
   display: flex;
   gap: 8px;
-}
-
-.riviera-organizer-reta .omc-meta-save,
-.riviera-organizer-reta .omc-meta-cancel {
-  padding: 4px 10px;
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 1px solid var(--ro-border-subtle);
-  background: transparent;
-  color: var(--ro-text-muted);
-}
-
-.riviera-organizer-reta .omc-meta-save:hover:not(:disabled) {
-  color: var(--text-primary);
 }
 
 /* —— Body: equipos —— */
@@ -455,15 +381,16 @@
   line-height: 1;
 }
 
-/* Finalizado: ganador / perdedor */
+/* Finalizado: ganador / perdedor — verde semántico (gana ESTE partido, no es el
+   campeón del torneo; el dorado queda reservado a Remontada Final/podio). */
 .riviera-organizer-reta .omc-team-row--winner {
-  background: var(--ro-gold-dim);
-  border-left-color: var(--ro-gold);
-  box-shadow: inset 0 0 0 1px var(--ro-gold-border);
+  background: color-mix(in srgb, var(--win) 14%, transparent);
+  border-left-color: var(--win);
+  box-shadow: inset 0 0 0 1px var(--win);
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-label {
-  color: var(--ro-gold-light);
+  color: var(--win);
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-name {
@@ -474,7 +401,7 @@
 }
 
 .riviera-organizer-reta .omc-team-row--winner .omc-team-score {
-  color: var(--ro-gold-light);
+  color: var(--win);
   font-size: 34px;
   font-weight: 500;
 }
@@ -497,9 +424,9 @@
 }
 
 .riviera-organizer-reta .omc-team-row--tie {
-  background: var(--ro-gold-dim);
-  border-left-color: var(--ro-gold);
-  box-shadow: inset 0 0 0 1px var(--ro-gold-border);
+  background: var(--ro-bg-elevated);
+  border-left-color: var(--ro-border-strong, var(--ro-border));
+  box-shadow: inset 0 0 0 1px var(--ro-border);
 }
 
 .riviera-organizer-reta .omc-team-row--tie .omc-team-name {
@@ -509,14 +436,14 @@
 }
 
 .riviera-organizer-reta .omc-team-row--tie .omc-team-score {
-  color: var(--ro-gold-light);
+  color: var(--ro-text-primary);
   font-size: 34px;
   font-weight: 500;
 }
 
 .riviera-organizer-reta .omc-card--tie {
   box-shadow:
-    inset 0 0 0 1px var(--ro-gold-border),
+    inset 0 0 0 1px var(--ro-border),
     0 10px 28px rgba(20, 22, 26, 0.35);
 }
 
@@ -529,15 +456,15 @@
   margin: 2px 12px 6px;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid var(--ro-gold-border);
-  background: var(--ro-gold-dim);
-  box-shadow: inset 3px 0 0 var(--ro-gold);
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-elevated);
+  box-shadow: inset 3px 0 0 var(--ro-border-strong, var(--ro-border));
 }
 
 .riviera-organizer-reta .omc-tie-banner__icon {
   font-size: 14px;
   line-height: 1;
-  color: var(--ro-gold);
+  color: var(--ro-text-secondary);
 }
 
 .riviera-organizer-reta .omc-tie-banner__label {
@@ -546,24 +473,24 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ro-gold);
+  color: var(--ro-text-secondary);
 }
 
 .riviera-organizer-reta .omc-tie-banner__score {
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 500;
-  color: var(--ro-gold-light);
+  color: var(--ro-text-primary);
   letter-spacing: 0.02em;
 }
 
 .riviera-organizer-reta .omc-result-strip--tie {
-  border-color: var(--ro-gold-border);
-  background: rgba(201, 162, 39, 0.08);
+  border-color: var(--ro-border);
+  background: var(--ro-bg-elevated);
 }
 
 .riviera-organizer-reta .omc-result-strip--tie .omc-result-strip__label {
-  color: var(--ro-gold);
+  color: var(--ro-text-secondary);
 }
 
 .riviera-organizer-reta .omc-team-row--loser {
@@ -708,8 +635,8 @@
 
 .riviera-organizer-reta .omc-register__input:focus {
   outline: none;
-  border-color: var(--accent-gold);
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
+  border-color: var(--ro-border-strong, var(--ro-border));
+  box-shadow: 0 0 0 2px var(--ro-bg-elevated);
 }
 
 .riviera-organizer-reta .omc-register__vs {
@@ -723,61 +650,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.riviera-organizer-reta .omc-btn-add {
-  padding: 6px 14px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ro-text-muted);
-  background: var(--ro-bg-elevated);
-  border: 1px solid var(--ro-border);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.riviera-organizer-reta .omc-btn-add:hover:not(:disabled) {
-  color: var(--ro-text-primary);
-  border-color: var(--ro-border);
-  background: var(--ro-bg-elevated);
-}
-
-.riviera-organizer-reta .omc-btn-finish {
-  padding: 8px 16px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ro-text-primary);
-  background: rgba(212, 175, 55, 0.12);
-  border: 1px solid rgba(212, 175, 55, 0.45);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.riviera-organizer-reta .omc-btn-finish:hover:not(:disabled) {
-  background: rgba(212, 175, 55, 0.2);
-  border-color: var(--accent-gold);
-}
-
-.riviera-organizer-reta .omc-btn-reopen {
-  padding: 6px 14px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ro-text-secondary);
-  background: var(--ro-bg-elevated);
-  border: 1px solid var(--ro-border);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.riviera-organizer-reta .omc-btn-reopen:hover:not(:disabled) {
-  color: var(--ro-text-secondary);
-  border-color: var(--ro-border);
 }
 
 /* Eliminar juegos (modo edición) */
@@ -812,31 +684,15 @@
   border-top: 1px solid var(--ro-border);
 }
 
-.riviera-organizer-reta .omc-btn-delete-game {
-  padding: 0;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(239, 68, 68, 0.6);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 150ms ease;
-}
-
-.riviera-organizer-reta .omc-btn-delete-game:hover:not(:disabled) {
-  color: var(--ro-error);
-}
-
 /* Error */
 .riviera-organizer-reta .omc-error {
   margin: 0 12px 8px;
   padding: 8px 10px;
   font-family: var(--font-body);
   font-size: 11px;
-  color: #ff6b6b;
-  background: rgba(255, 68, 68, 0.08);
-  border: 1px solid rgba(255, 68, 68, 0.2);
+  color: var(--ro-error);
+  background: color-mix(in srgb, var(--ro-error) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ro-error) 25%, transparent);
   border-radius: 6px;
 }
 
@@ -848,41 +704,6 @@
   margin-top: auto;
   padding: 8px 12px 10px;
   border-top: 1px solid var(--ro-border);
-}
-
-.riviera-organizer-reta .omc-footer-btn {
-  padding: 6px 14px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  color: #d4d4d8;
-  background: var(--ro-bg-elevated);
-  border: 1px solid var(--ro-border);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.riviera-organizer-reta .omc-footer-btn:hover:not(:disabled) {
-  background: var(--ro-bg-elevated);
-  color: var(--ro-text-primary);
-}
-
-.riviera-organizer-reta .omc-footer-btn--ghost {
-  color: var(--ro-text-muted);
-  background: transparent;
-  border-color: transparent;
-}
-
-.riviera-organizer-reta .omc-footer-btn--ghost:hover:not(:disabled) {
-  background: transparent;
-  color: var(--ro-text-secondary);
-  border-color: transparent;
-}
-
-.riviera-organizer-reta .omc-footer-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* Loading — skeleton */
@@ -1063,27 +884,14 @@
 
 /* —— Mobile: tarjetas de partido más claras y táctiles —— */
 @media (max-width: 639px) {
-  .riviera-organizer-reta .omc-pencil-btn {
-    width: 44px;
-    height: 44px;
+  .riviera-organizer-reta .omc-header__actions .riviera-btn,
+  .riviera-organizer-reta .omc-meta-editor__actions .riviera-btn {
+    min-width: var(--ro-touch-target-min);
+    min-height: var(--ro-touch-target-min);
   }
 
-  .riviera-organizer-reta .omc-pencil-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  .riviera-organizer-reta .omc-footer-btn {
-    min-height: 44px;
-    padding: 10px 16px;
-    font-size: 13px;
-  }
-
-  .riviera-organizer-reta .omc-meta-save,
-  .riviera-organizer-reta .omc-meta-cancel {
-    min-height: 40px;
-    padding: 8px 14px;
-    font-size: 12px;
+  .riviera-organizer-reta .omc-footer .riviera-btn {
+    min-height: var(--ro-touch-target-min);
   }
 
   .riviera-organizer-reta .omc-header__top {

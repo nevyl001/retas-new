@@ -560,26 +560,6 @@
   opacity: 1;
 }
 
-.riviera-organizer-reta .elegant-edit-btn,
-.riviera-organizer-reta .elegant-delete-btn {
-  border: 1px solid var(--border-subtle) !important;
-  border-radius: var(--radius-sm) !important;
-  background: var(--ro-bg-inset) !important;
-  color: var(--text-muted) !important;
-}
-
-.riviera-organizer-reta .elegant-edit-btn:hover {
-  border-color: var(--border-accent) !important;
-  color: var(--text-secondary) !important;
-  background: var(--bg-elevated) !important;
-}
-
-.riviera-organizer-reta .elegant-delete-btn:hover {
-  border-color: rgba(239, 68, 68, 0.4) !important;
-  color: var(--loss) !important;
-  background: rgba(239, 68, 68, 0.1) !important;
-}
-
 .riviera-organizer-reta .elegant-selection-indicator {
   background: var(--text-secondary) !important;
 }
@@ -665,31 +645,27 @@
   color: var(--win) !important;
 }
 
-/* Botones acción (debug / reset) */
-.riviera-organizer-reta .elegant-action-btn,
-.riviera-organizer-reta .elegant-reset-btn {
+/* Botones acción (debug) */
+.riviera-organizer-reta .elegant-action-btn {
   border: 1px solid var(--border-subtle) !important;
   border-radius: var(--radius-full) !important;
   background: var(--ro-bg-inset) !important;
   min-height: 2.5rem !important;
 }
 
-.riviera-organizer-reta .elegant-action-btn:hover,
-.riviera-organizer-reta .elegant-reset-btn:hover:not(:disabled) {
+.riviera-organizer-reta .elegant-action-btn:hover {
   border-color: var(--border-accent) !important;
   background: var(--bg-elevated) !important;
 }
 
-.riviera-organizer-reta .elegant-btn-content,
-.riviera-organizer-reta .elegant-reset-content {
+.riviera-organizer-reta .elegant-btn-content {
   font-family: var(--font-body) !important;
   font-size: 0.8rem !important;
   font-weight: 600 !important;
   color: var(--text-secondary) !important;
 }
 
-.riviera-organizer-reta .elegant-action-btn:hover .elegant-btn-content,
-.riviera-organizer-reta .elegant-reset-btn:hover:not(:disabled) .elegant-reset-content {
+.riviera-organizer-reta .elegant-action-btn:hover .elegant-btn-content {
   color: var(--text-secondary) !important;
 }
 
@@ -767,24 +743,6 @@
   filter: none !important;
   text-shadow: none !important;
   color: var(--text-primary) !important;
-}
-
-.riviera-organizer-reta .riviera-standings__recalc.new-recalculate-button {
-  padding: 0.4rem 0.9rem !important;
-  font-family: var(--font-body) !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  color: var(--text-muted) !important;
-  background: var(--bg-surface) !important;
-  border: 1px solid var(--border-subtle) !important;
-  border-radius: var(--radius-full) !important;
-}
-
-.riviera-organizer-reta .riviera-standings__recalc.new-recalculate-button:hover:not(:disabled) {
-  color: var(--text-secondary) !important;
-  border-color: var(--border-accent) !important;
-  background: var(--bg-elevated) !important;
-  transform: none !important;
 }
 
 .riviera-organizer-reta .riviera-standings .te-public-section__divider {

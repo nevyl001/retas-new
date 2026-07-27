@@ -1,6 +1,7 @@
 import React from "react";
 import { Pair } from "../lib/database";
 import { TeamBadge } from "./teams/TeamBadge";
+import { TablerIcon } from "./ui/TablerIcon";
 import {
   getPairTeamIndex,
   getPairTeamName,
@@ -26,7 +27,9 @@ export const PairsDisplay: React.FC<PairsDisplayProps> = ({
       <div className="compact-header">
         <div className="compact-header-content">
           <div className="compact-title">
-            <span className="compact-icon">👥</span>
+            <span className="compact-icon" aria-hidden>
+              <TablerIcon name="users" size={16} />
+            </span>
             <h3>Parejas registradas ({pairs.length})</h3>
           </div>
         </div>

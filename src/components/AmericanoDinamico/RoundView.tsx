@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import { ActionBar } from "../platform/ActionBar";
+import { Button, Input } from "../ui";
 import "./RoundView.css";
 
 export interface RoundScorePayload {
@@ -136,9 +137,10 @@ export const RoundView: React.FC<RoundViewProps> = ({
                 <span className="americano-match-card__court">
                   Cancha {match.court}
                 </span>
-                <button
+                <Button
                   type="button"
-                  className="americano-match-card__edit-link"
+                  variant="ghost"
+                  size="sm"
                   onClick={() =>
                     setEditingMatchId((prev) =>
                       prev === match.id ? null : match.id
@@ -146,7 +148,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
                   }
                 >
                   {isEditing ? "Cerrar" : "Editar"}
-                </button>
+                </Button>
               </div>
 
               <div className="americano-match-card__teams">
@@ -170,34 +172,30 @@ export const RoundView: React.FC<RoundViewProps> = ({
                   isEditing ? " americano-match-card__scores--editing" : ""
                 }`}
               >
-                <label className="americano-match-card__score-field">
-                  <span>Juegos equipo A</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={a}
-                    onChange={(e) =>
-                      setDraftScores((prev) => ({
-                        ...prev,
-                        [match.id]: { ...prev[match.id], a: e.target.value },
-                      }))
-                    }
-                  />
-                </label>
-                <label className="americano-match-card__score-field">
-                  <span>Juegos equipo B</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={b}
-                    onChange={(e) =>
-                      setDraftScores((prev) => ({
-                        ...prev,
-                        [match.id]: { ...prev[match.id], b: e.target.value },
-                      }))
-                    }
-                  />
-                </label>
+                <Input
+                  label="Juegos equipo A"
+                  type="number"
+                  min={0}
+                  value={a}
+                  onChange={(e) =>
+                    setDraftScores((prev) => ({
+                      ...prev,
+                      [match.id]: { ...prev[match.id], a: e.target.value },
+                    }))
+                  }
+                />
+                <Input
+                  label="Juegos equipo B"
+                  type="number"
+                  min={0}
+                  value={b}
+                  onChange={(e) =>
+                    setDraftScores((prev) => ({
+                      ...prev,
+                      [match.id]: { ...prev[match.id], b: e.target.value },
+                    }))
+                  }
+                />
               </div>
             </article>
           );
@@ -222,22 +220,22 @@ export const RoundView: React.FC<RoundViewProps> = ({
       </div>
 
       <ActionBar className="americano-round__actions">
-        <button
+        <Button
           type="button"
-          className="americano-round-btn americano-round-btn--secondary rv-button-secondary"
+          variant="secondary"
           onClick={handleConfirm}
           disabled={!draftComplete}
         >
           Confirmar resultados
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="americano-round-btn americano-round-btn--primary rv-button-primary"
+          variant="primary"
           onClick={onRoundFinalized}
           disabled={!canFinalizeRound}
         >
           Ronda finalizada
-        </button>
+        </Button>
       </ActionBar>
       {!draftComplete && (
         <p className="americano-round__footer-hint">

@@ -15,6 +15,8 @@ import {
   type QuickModeStep,
   type QuickModeStepStatus,
 } from "../platform/quickMode";
+import { Button, Input } from "../ui";
+import { TablerIcon } from "../ui/TablerIcon";
 import "./PlayerRegistration.css";
 
 type PrepStepId = "jugadores" | "configuracion" | "convocatoria" | "listo";
@@ -171,7 +173,13 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
                 }`}
                 onClick={() => onToggleExistingPlayer(player)}
               >
-                {selected ? "✓ " : ""}
+                {selected ? (
+                  <TablerIcon
+                    name="check"
+                    size={13}
+                    className="americano-registration__db-item-check"
+                  />
+                ) : null}
                 {player.name}
               </button>
             );
@@ -189,13 +197,14 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
             players.map((player) => (
               <li key={player.id}>
                 <span>{player.name}</span>
-                <button
+                <Button
                   type="button"
-                  className="americano-btn americano-btn--danger"
+                  variant="danger"
+                  size="sm"
                   onClick={() => onRemovePlayer(player.id)}
                 >
                   Quitar
-                </button>
+                </Button>
               </li>
             ))
           )}
@@ -207,31 +216,25 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           <p className="americano-registration__hint">{eventSubtitle}</p>
         ) : null}
         <div className="americano-registration__start-row">
-          <label>
-            Rondas:
-            <input
-              type="number"
-              min={1}
-              value={totalRounds}
-              onChange={(e) =>
-                setTotalRounds(Math.max(1, Number(e.target.value) || 1))
-              }
-            />
-          </label>
-          <label>
-            Canchas:
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={courts}
-              onChange={(e) =>
-                setCourts(
-                  Math.min(20, Math.max(1, Number(e.target.value) || 1))
-                )
-              }
-            />
-          </label>
+          <Input
+            label="Rondas"
+            type="number"
+            min={1}
+            value={totalRounds}
+            onChange={(e) =>
+              setTotalRounds(Math.max(1, Number(e.target.value) || 1))
+            }
+          />
+          <Input
+            label="Canchas"
+            type="number"
+            min={1}
+            max={20}
+            value={courts}
+            onChange={(e) =>
+              setCourts(Math.min(20, Math.max(1, Number(e.target.value) || 1)))
+            }
+          />
         </div>
         <p className="americano-registration__courts-hint">
           Solo hay tantos partidos simultáneos como canchas ({maxMatches}{" "}

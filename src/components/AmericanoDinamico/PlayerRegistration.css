@@ -116,23 +116,6 @@
   align-items: center;
 }
 
-.americano-registration__start label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.875rem;
-  color: var(--ro-text-secondary);
-}
-
-.americano-registration__start input {
-  width: 90px;
-  border-radius: 8px;
-  border: 0.5px solid var(--ro-border);
-  background: var(--ro-bg-input);
-  color: var(--ro-text-primary);
-  padding: 8px 10px;
-}
-
 .americano-registration__db {
   margin: 0;
 }
@@ -171,42 +154,15 @@
 }
 
 .americano-registration__db-item.selected {
-  border-color: rgba(61, 122, 92, 0.45);
-  background: rgba(61, 122, 92, 0.12);
+  border-color: var(--win);
+  background: color-mix(in srgb, var(--win) 12%, transparent);
   color: var(--ro-text-primary);
 }
 
-.americano-btn {
-  border-radius: 10px;
-  padding: 8px 12px;
-  border: 0.5px solid transparent;
-  cursor: pointer;
-  font-weight: 600;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-.americano-btn--ghost {
-  border-color: var(--ro-border);
-  background: var(--ro-bg-elevated);
-  color: var(--ro-text-primary);
-}
-
-.americano-btn--danger {
-  border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--ro-error);
-}
-
-.americano-btn--primary {
-  background: var(--brand-accent, var(--ro-accent));
-  color: var(--ro-text-on-accent);
-  border-color: var(--brand-accent, var(--ro-accent));
-}
-
-.americano-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.americano-registration__db-item-check {
+  color: var(--win);
+  margin-right: 0.3rem;
+  vertical-align: -1px;
 }
 
 .americano-registration__courts-hint {
@@ -237,12 +193,6 @@
     align-items: stretch;
   }
 
-  .americano-registration__start input {
-    width: 100%;
-    min-height: 44px;
-    font-size: 16px;
-  }
-
   .americano-registration__db-grid {
     grid-template-columns: 1fr;
   }
@@ -259,9 +209,8 @@
     min-height: 44px;
   }
 
-  .americano-btn {
-    min-height: 44px;
-    padding: 10px 14px;
+  .americano-registration__list .riviera-btn {
+    min-height: var(--ro-touch-target-min);
   }
 
   .americano-registration__start-btn {

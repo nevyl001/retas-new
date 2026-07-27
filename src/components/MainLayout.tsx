@@ -7,6 +7,7 @@ import {
   navigateToMisEventos,
 } from "../lib/mobileAppNavigation";
 import { Button } from "./ui";
+import { LoadingProgressHint } from "./ui/LoadingProgressHint";
 import { Tournament, Player, Pair, Match } from "../lib/database";
 import { continueTournament } from "../lib/tournamentRouting";
 import { TournamentWinner } from "../lib/tournamentWinner";
@@ -164,7 +165,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     <>
       {loading && (
         <div className="loading">
-          <p>⏳ Cargando...</p>
+          <LoadingProgressHint active label="Cargando" />
         </div>
       )}
 

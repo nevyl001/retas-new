@@ -54,6 +54,7 @@ import {
   TABLA_RANKING_CLASS,
   TABLA_WRAPPER_CLASS,
 } from "./standings/standingsTableColumns";
+import { Button } from "./ui";
 import "./ModernStandingsTable.css";
 import "./torneo-express/public/torneo-express-public.css";
 import "../styles/standings-mobile-cards.css";
@@ -434,13 +435,15 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     <div className="new-standings-container riviera-standings te-public-section te-pub-fade-in">
       <div className="new-standings-header riviera-standings__header">
         <h2 className="te-public-section__title">Clasificación</h2>
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
           onClick={recalculateStatistics}
-          className="new-recalculate-button riviera-standings__recalc"
           disabled={loading}
         >
           Recalcular
-        </button>
+        </Button>
       </div>
 
       <div className="te-public-section__divider" aria-hidden />

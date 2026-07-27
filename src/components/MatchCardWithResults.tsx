@@ -16,18 +16,8 @@ import {
   type TeamConfigLike,
 } from "../lib/teamConfigDisplay";
 import { formatMatchCourtLabel } from "../lib/matchCourt";
-
-const PencilIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    aria-hidden
-    focusable="false"
-  >
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-  </svg>
-);
+import { Button, Input } from "./ui";
+import { TablerIcon } from "./ui/TablerIcon";
 
 interface MatchCardWithResultsProps {
   match: Match;
@@ -552,9 +542,10 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               {isFinished ? "FINALIZADO" : "EN CURSO"}
             </span>
             {!isEditingMeta ? (
-              <button
+              <Button
                 type="button"
-                className="omc-pencil-btn"
+                variant="ghost"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   openMetaEditor();
@@ -563,12 +554,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                 aria-label="Editar cancha y ronda"
                 disabled={metaSaving}
               >
-                <PencilIcon className="omc-pencil-icon" />
-              </button>
+                <TablerIcon name="pencil" size={14} />
+              </Button>
             ) : (
-              <button
+              <Button
                 type="button"
-                className="omc-pencil-btn"
+                variant="ghost"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   cancelMetaEdit();
@@ -577,8 +569,8 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                 aria-label="Cerrar edición de cancha y ronda"
                 disabled={metaSaving}
               >
-                ×
-              </button>
+                <TablerIcon name="x" size={14} />
+              </Button>
             )}
           </div>
         </div>
@@ -592,45 +584,43 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
           onClick={stopCardClick}
         >
           <div className="omc-meta-editor__fields">
-            <label className="omc-meta-editor__field">
-              <span>Cancha</span>
-              <input
-                type="number"
-                min={1}
-                max={courtEditCap}
-                value={courtInput}
-                onChange={(e) => setCourtInput(e.target.value)}
-                aria-label="Número de cancha"
-              />
-            </label>
-            <label className="omc-meta-editor__field">
-              <span>Ronda</span>
-              <input
-                type="number"
-                min={1}
-                max={999}
-                value={roundInput}
-                onChange={(e) => setRoundInput(e.target.value)}
-                aria-label="Número de ronda"
-              />
-            </label>
+            <Input
+              label="Cancha"
+              type="number"
+              min={1}
+              max={courtEditCap}
+              value={courtInput}
+              onChange={(e) => setCourtInput(e.target.value)}
+              aria-label="Número de cancha"
+            />
+            <Input
+              label="Ronda"
+              type="number"
+              min={1}
+              max={999}
+              value={roundInput}
+              onChange={(e) => setRoundInput(e.target.value)}
+              aria-label="Número de ronda"
+            />
           </div>
           <div className="omc-meta-editor__actions">
-            <button
+            <Button
               type="button"
-              className="omc-meta-save"
+              variant="primary"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 saveCourtAndRound();
               }}
-              disabled={metaSaving}
+              loading={metaSaving}
             >
               {metaSaving ? "Guardando…" : "Guardar"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="omc-meta-cancel"
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 cancelMetaEdit();
@@ -638,7 +628,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               disabled={metaSaving}
             >
               Cancelar
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -772,13 +762,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                   ) : null}
                   <span className="omc-register__pair-name">{pair1DisplayName}</span>
                 </div>
-                <input
+                <Input
                   type="number"
                   min={0}
                   max={7}
                   value={pair1Score}
                   onChange={(e) => setPair1Score(e.target.value)}
-                  className="omc-register__input"
+                  inputClassName="omc-register__input"
                   onClick={stopCardClick}
                   placeholder="0"
                   aria-label={`Puntos ${pair1DisplayName}`}
@@ -796,13 +786,13 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                   ) : null}
                   <span className="omc-register__pair-name">{pair2DisplayName}</span>
                 </div>
-                <input
+                <Input
                   type="number"
                   min={0}
                   max={7}
                   value={pair2Score}
                   onChange={(e) => setPair2Score(e.target.value)}
-                  className="omc-register__input"
+                  inputClassName="omc-register__input"
                   onClick={stopCardClick}
                   placeholder="0"
                   aria-label={`Puntos ${pair2DisplayName}`}
@@ -810,43 +800,46 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
               </div>
             </div>
             <div className="omc-register__actions">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
                   void addGame();
                 }}
-                className="omc-btn-add"
-                disabled={saving}
+                loading={saving}
               >
                 Agregar juego
-              </button>
+              </Button>
               {!isFinished ? (
-                <button
+                <Button
                   type="button"
+                  variant="primary"
+                  size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     void finishMatch();
                   }}
-                  className="omc-btn-finish"
-                  disabled={saving}
+                  loading={saving}
                 >
                   Finalizar partido
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     reopenMatch();
                   }}
-                  className="omc-btn-reopen"
                   disabled={saving}
                 >
                   Reabrir partido
-                </button>
+                </Button>
               )}
             </div>
           </section>
@@ -859,18 +852,19 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
                   <span>
                     J{index + 1}: {game.pair1_games}–{game.pair2_games}
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="danger"
+                    size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
                       void removeGame(game.id);
                     }}
-                    className="omc-btn-delete-game"
                     disabled={saving}
                   >
                     Eliminar
-                  </button>
+                  </Button>
                 </div>
               ))}
             </section>
@@ -883,43 +877,46 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       <footer className="omc-footer" onClick={stopCardClick}>
         {isEditing ? (
           <>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 void reloadGamesSilently();
               }}
-              className="omc-footer-btn"
               title="Actualizar datos"
-              disabled={saving}
+              loading={saving}
             >
               Actualizar
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditing(false);
                 setError(null);
               }}
-              className="omc-footer-btn omc-footer-btn--ghost"
             >
               Cancelar
-            </button>
+            </Button>
           </>
         ) : (
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={(e) => {
               e.stopPropagation();
               setIsEditing(true);
             }}
-            className="omc-footer-btn"
             title="Editar marcador"
           >
             Marcador
-          </button>
+          </Button>
         )}
       </footer>
     </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "./ui";
+import { TablerIcon } from "./ui/TablerIcon";
 
 interface TournamentStatusContentProps {
   tournament: {
@@ -115,7 +116,7 @@ export const TournamentStatusContent: React.FC<
       <div className="elegant-status-details">
         <div className="elegant-detail-item">
           <span className="elegant-detail-icon" aria-hidden>
-            ✓
+            <TablerIcon name="check" size={14} />
           </span>
           <span className="elegant-detail-text">
             {tournament.is_finished
@@ -127,7 +128,7 @@ export const TournamentStatusContent: React.FC<
         </div>
         <div className="elegant-detail-item">
           <span className="elegant-detail-icon" aria-hidden>
-            👥
+            <TablerIcon name="users" size={14} />
           </span>
           <span className="elegant-detail-text">
             Tienes {pairsCount} parejas registradas
@@ -136,25 +137,19 @@ export const TournamentStatusContent: React.FC<
       </div>
 
       {showReset ? (
-        <button
-          className="elegant-reset-btn"
+        <Button
+          type="button"
+          variant="danger"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             if (!loading) onReset();
           }}
-          disabled={loading}
-          type="button"
+          loading={loading}
         >
-          <div className="elegant-reset-content">
-            <span className="elegant-reset-icon" aria-hidden>
-              {loading ? "⏳" : "↻"}
-            </span>
-            <span className="elegant-reset-text">
-              {loading ? "Reseteando..." : "Resetear Reta"}
-            </span>
-          </div>
-        </button>
+          <TablerIcon name="refresh" size={16} />
+          {loading ? "Reseteando..." : "Resetear Reta"}
+        </Button>
       ) : null}
     </div>
   );

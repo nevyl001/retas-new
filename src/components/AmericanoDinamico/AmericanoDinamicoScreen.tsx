@@ -42,6 +42,8 @@ import {
   ModeSectionTabs,
 } from "../platform";
 import { PublicShareSection } from "../platform/PublicShareSection";
+import { Button } from "../ui";
+import { LoadingProgressHint } from "../ui/LoadingProgressHint";
 import { AmericanoModeShell } from "./AmericanoModeShell";
 import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
 import { buildTournamentConvocatoriaContext } from "../../lib/retaAbierta/adapters";
@@ -346,7 +348,9 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   if (hydrating && phase === "registration" && players.length === 0) {
     return (
       <AmericanoModeShell showToolbar={false}>
-        <p className="americano-screen__loading">Cargando americano…</p>
+        <div className="americano-screen__loading">
+          <LoadingProgressHint active label="Cargando americano" />
+        </div>
       </AmericanoModeShell>
     );
   }
@@ -542,13 +546,14 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             El americano terminó, pero no se registró en el historial de
             jugadores: {participacionSyncError}
           </p>
-          <button
+          <Button
             type="button"
-            className="americano-screen__retry-sync"
+            variant="secondary"
+            size="sm"
             onClick={() => retryParticipacionSync()}
           >
             Reintentar registro
-          </button>
+          </Button>
         </div>
       )}
       {podiumPlayers.length > 0 && (

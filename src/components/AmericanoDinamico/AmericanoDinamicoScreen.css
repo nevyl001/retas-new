@@ -230,11 +230,11 @@
 .americano-podium .te-public-podium__card--gold .te-public-podium__place,
 .americano-podium .te-public-podium__card[data-rank="1"] .te-public-podium__name,
 .americano-podium .te-public-podium__card--gold .te-public-podium__name {
-  color: var(--accent-gold);
+  color: var(--ro-medal-gold);
 }
 
 .americano-podium .te-public-podium__card[data-rank="1"] .te-public-podium__avatar .rj-avatar {
-  border-color: var(--accent-gold);
+  border-color: var(--ro-medal-gold);
 }
 
 .americano-podium .te-public-podium__card--silver,

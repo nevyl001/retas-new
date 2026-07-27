@@ -1,6 +1,7 @@
 import React from "react";
 import { Pair, Match } from "../lib/database";
 import { pairPlayersDisplayLabel } from "../lib/pairPlayerNames";
+import { TablerIcon } from "./ui/TablerIcon";
 import "./RestingPairsSection.css";
 
 interface RestingPairsSectionProps {
@@ -59,7 +60,9 @@ export const RestingPairsSection: React.FC<RestingPairsSectionProps> = ({
   return (
     <div className="resting-pairs-section">
       <div className="resting-pairs-header">
-        <span className="resting-pairs-icon">😴</span>
+        <span className="resting-pairs-icon">
+          <TablerIcon name="moon" size={16} />
+        </span>
         <span className="resting-pairs-title">
           Parejas que Descansan ({restingPairs.length})
         </span>

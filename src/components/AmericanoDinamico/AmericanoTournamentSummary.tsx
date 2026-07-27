@@ -5,6 +5,7 @@ import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import { resolveAmericanoRankingFromSnapshot } from "../../lib/americanoSnapshotRoster";
 import { StandingsScoringHelp } from "../standings/StandingsScoringHelp";
 import { StandingsDifCell } from "../standings/StandingsDifCell";
+import { Button } from "../ui";
 import "./AmericanoTournamentSummary.css";
 
 interface AmericanoTournamentSummaryProps {
@@ -46,13 +47,9 @@ export const AmericanoTournamentSummary: React.FC<
             {isDisplay ? "Resumen del torneo" : "Americano Dinámico — resultados"}
           </h2>
           {!isDisplay && tournamentId ? (
-            <button
-              type="button"
-              className="americano-summary__screen-btn"
-              onClick={openResultsBoard}
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={openResultsBoard}>
               Ver vista pública
-            </button>
+            </Button>
           ) : null}
         </div>
         {!isDisplay ? (
@@ -179,6 +176,7 @@ export const AmericanoTournamentSummary: React.FC<
                     <button
                       type="button"
                       className="americano-summary__toggle"
+                      aria-expanded={openRound === round.roundNumber}
                       onClick={() =>
                         setOpenRound((prev) =>
                           prev === round.roundNumber ? null : round.roundNumber

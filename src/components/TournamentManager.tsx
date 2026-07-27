@@ -407,9 +407,10 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                     {item.kind === "tournament" &&
                       item.tournament.is_started &&
                       !item.tournament.is_finished && (
-                        <button
+                        <Button
                           type="button"
-                          className="mis-reta-card__finish"
+                          variant="secondary"
+                          size="sm"
                           disabled={loading}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -417,7 +418,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                           }}
                         >
                           Finalizar
-                        </button>
+                        </Button>
                       )}
                     <button
                       type="button"

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
+import { Button, Input } from "../ui";
 import "./RoundHistory.css";
 
 interface RoundHistoryProps {
@@ -32,7 +33,9 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
         return (
         <article key={round.roundNumber} className="americano-history__round">
           <button
+            type="button"
             className="americano-history__toggle"
+            aria-expanded={openRound === round.roundNumber}
             onClick={() =>
               setOpenRound((prev) => (prev === round.roundNumber ? null : round.roundNumber))
             }
@@ -53,7 +56,10 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
                     {typeof match.scoreA === "number" ? match.scoreA : "-"} :{" "}
                     {typeof match.scoreB === "number" ? match.scoreB : "-"}
                   </strong>
-                  <button
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setEditingMatchId(match.id);
                       setDraft({
@@ -63,30 +69,35 @@ export const RoundHistory: React.FC<RoundHistoryProps> = ({
                     }}
                   >
                     Editar
-                  </button>
+                  </Button>
 
                   {editingMatchId === match.id && (
                     <div className="americano-history__edit">
-                      <input
+                      <Input
                         type="number"
                         min={0}
                         value={draft.a}
+                        aria-label={`Marcador ${match.teamA[0].name}/${match.teamA[1].name}`}
                         onChange={(e) => setDraft((prev) => ({ ...prev, a: e.target.value }))}
                       />
-                      <input
+                      <Input
                         type="number"
                         min={0}
                         value={draft.b}
+                        aria-label={`Marcador ${match.teamB[0].name}/${match.teamB[1].name}`}
                         onChange={(e) => setDraft((prev) => ({ ...prev, b: e.target.value }))}
                       />
-                      <button
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
                         onClick={() => {
                           onEditScore(roundIndex, match.id, Number(draft.a), Number(draft.b));
                           setEditingMatchId(null);
                         }}
                       >
                         Guardar
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>

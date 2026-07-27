@@ -320,15 +320,6 @@ body,
     min-height: var(--ro-touch-target-min);
   }
 
-  .elegant-delete-btn,
-  .elegant-edit-btn,
-  .elegant-edit-save-btn,
-  .elegant-edit-cancel-btn,
-  .reta-btn-delete {
-    min-width: var(--ro-touch-target-min);
-    min-height: var(--ro-touch-target-min);
-  }
-
   .rj-card__edit,
   .rj-card__delete {
     min-width: var(--ro-touch-target-min);

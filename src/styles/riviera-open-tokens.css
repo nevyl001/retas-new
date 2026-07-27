@@ -255,6 +255,7 @@ html[data-club="hack-padel"],
   --ro-bg-card: var(--ro-chrome-elevated);
   --ro-bg-card-hover: var(--ro-chrome-active);
   --ro-bg-inset: var(--ro-chrome-active);
+  --ro-bg-input: var(--ro-chrome-elevated);
 
   --ro-text-primary: var(--ro-chrome-text);
   --ro-text-secondary: var(--ro-chrome-text-muted);
@@ -263,6 +264,7 @@ html[data-club="hack-padel"],
   --ro-border: var(--ro-chrome-border);
   --ro-border-subtle: var(--ro-chrome-border);
   --ro-border-strong: #2e343d;
+  --ro-border-accent: rgba(255, 255, 255, 0.35);
 
   --ro-accent: #ffffff;
   --ro-accent-hover: #e8eaed;
@@ -273,6 +275,7 @@ html[data-club="hack-padel"],
   --ro-gold: var(--ro-gold-light);
   --ro-gold-text: var(--ro-gold-light);
   --ro-gold-dim: rgba(223, 190, 127, 0.12);
+  --ro-gold-border: var(--ro-gold-light);
 
   --ro-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
   --ro-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
@@ -312,6 +315,7 @@ html[data-club="hack-padel"] .ro-surface-dark,
   --ro-border: #4c4c4c;
   --ro-border-subtle: #2a2a2a;
   --ro-border-strong: #666666;
+  --ro-border-accent: rgba(191, 255, 0, 0.45);
 
   --ro-success: #bfff00;
   --ro-text-secondary: #a0a0a0;

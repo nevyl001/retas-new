@@ -4,6 +4,8 @@ import {
   derivePlayerPoolViews,
   shouldShowPlayerPoolLoading,
 } from "../hooks/organizerPlayerPoolLogic";
+import { Button } from "./ui";
+import { TablerIcon } from "./ui/TablerIcon";
 
 interface NewPairManagerProps {
   pairs: Pair[];
@@ -82,13 +84,16 @@ export const NewPairManager: React.FC<NewPairManagerProps> = ({
                     </h4>
                   </div>
 
-                  <button
-                    className="elegant-delete-btn"
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
                     onClick={() => onPairDelete(pair.id)}
+                    aria-label="Eliminar pareja"
                     title="Eliminar pareja"
                   >
-                    <span className="elegant-delete-icon">🗑️</span>
-                  </button>
+                    <TablerIcon name="trash" size={16} />
+                  </Button>
                 </div>
 
                 <div className="elegant-particles">

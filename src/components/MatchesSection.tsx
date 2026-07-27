@@ -4,6 +4,8 @@ import MatchCardWithResults from "./MatchCardWithResults";
 import RealTimeStandingsTable from "./RealTimeStandingsTable";
 import RestingPairsSection from "./RestingPairsSection";
 import { Button } from "./ui";
+import { TablerIcon } from "./ui/TablerIcon";
+import { EmptyState } from "./platform/EmptyState";
 import {
   groupChampionshipByRound,
   isRoundRobinChampionshipActive,
@@ -221,10 +223,12 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       </div>
 
       {matches.length === 0 ? (
-        <div className="matches-error-simplified">
-          <p>📝 No hay partidos programados aún</p>
-          <p>Inicia la reta para generar los partidos automáticamente</p>
-        </div>
+        <EmptyState
+          className="matches-error-simplified"
+          icon={<TablerIcon name="clipboard-list" size={32} />}
+          title="No hay partidos programados aún"
+          description="Inicia la reta para generar los partidos automáticamente"
+        />
       ) : (
         <>
           {Object.entries(regularByRound)
@@ -237,7 +241,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
             <section className="rr-championship" aria-label="Remontada Final">
               <header className="rr-championship__header">
                 <span className="rr-championship__icon" aria-hidden>
-                  ⚡
+                  <TablerIcon name="bolt" size={20} />
                 </span>
                 <div>
                   <h3 className="rr-championship__title">REMONTADA FINAL</h3>
