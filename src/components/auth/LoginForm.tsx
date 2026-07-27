@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { Button, Input } from "../ui";
+import { TablerIcon } from "../ui/TablerIcon";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
 import { PasswordField } from "./PasswordField";
 import "./AuthForms.css";
@@ -61,6 +62,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
             required
             disabled={loading}
             autoComplete="email"
+            icon={
+              <span className="auth-field-icon" aria-hidden>
+                <TablerIcon name="mail" size={18} />
+              </span>
+            }
           />
 
           <PasswordField
@@ -72,6 +78,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
             required
             disabled={loading}
             autoComplete="current-password"
+            leadingIcon={
+              <span className="auth-field-icon" aria-hidden>
+                <TablerIcon name="lock" size={18} />
+              </span>
+            }
           />
 
           <p className="auth-forgot-row">

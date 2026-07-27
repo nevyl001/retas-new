@@ -1,60 +1,58 @@
-/* Auth — Riviera Open split-screen login */
+/* Auth — composición mockup + paleta oficial Riviera (valores anclados al :root claro) */
 
 .auth-page {
-  --riviera-black: var(--ro-chrome-deep);
-  --riviera-ink: #070707;
-  --riviera-card: rgba(24, 24, 24, 0.92);
-  --riviera-border: rgba(255, 255, 255, 0.1);
-  /* "white" es blanco literal: es el fondo del botón primario y el color de
-     los títulos/hero. NO puede aliasear a --ro-bg-card, que dentro de
-     .ro-surface-dark (login como isla oscura) se voltea a chrome oscuro y
-     dejaba el botón y los títulos oscuros sobre oscuro. */
-  --riviera-white: #ffffff;
-  --riviera-muted: #9ca3af;
-  --riviera-gold: #d4a843;
-  --riviera-gold-soft: #e5c878;
+  /*
+    Login = negro + crema elegante + tintes dorados mínimos (tokens oficiales).
+    Sin azules. Slogan "Organiza. Juega. Compite." solo en el titular.
+  */
+  --auth-page-bg: #000000;
+  --auth-panel-bg: #000000;
+  --auth-surface: #14161a; /* --ro-text-primary */
+  --auth-border: #2e2e2e;
+  --auth-text: #ffffff;
+  --auth-text-muted: #7e828a; /* --ro-text-muted */
+  --auth-text-dim: #55595f; /* --ro-text-secondary */
+  --auth-cream: #e9e4dc; /* --ro-bg-base */
+  --auth-cream-soft: #f4f1eb; /* --ro-bg-inset */
+  --auth-gold: #dfbe7f; /* --ro-gold-light */
+  --auth-gold-dim: #f5eee0; /* --ro-gold-dim */
+  --auth-gold-border: #e4d2ae; /* --ro-gold-border */
+  --auth-cta-bg: var(--auth-cream);
+  --auth-cta-fg: #14161a;
+  --auth-cta-hover: var(--auth-cream-soft);
+
+  /* Compat AuthForms */
+  --riviera-black: var(--auth-page-bg);
+  --riviera-ink: var(--auth-panel-bg);
+  --riviera-card: var(--auth-surface);
+  --riviera-border: var(--auth-border);
+  --riviera-white: var(--auth-text);
+  --riviera-muted: var(--auth-text-muted);
 
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--riviera-black);
-  color: var(--riviera-white);
+  background: var(--auth-page-bg);
+  color: var(--auth-text);
   position: relative;
   overflow-x: hidden;
   font-family: var(--ro-font-body);
   -webkit-font-smoothing: antialiased;
 }
 
-.auth-page--riviera-premium {
-  --accent-gold: var(--riviera-gold);
-  --accent-gold-light: var(--riviera-gold-soft);
-  --accent-gold-dim: rgba(212, 168, 67, 0.14);
+/* Clubs con Branding Upgrade: CTA = acento dinámico (sin hardcodear club) */
+html[data-brand]:not([data-brand="riviera"]) .auth-page,
+html[data-club]:not([data-club="riviera"]) .auth-page {
+  --auth-cta-bg: var(--brand-accent);
+  --auth-cta-fg: var(--brand-surface);
+  --auth-cta-hover: var(--brand-accent);
 }
-
-.auth-page--riviera-premium .auth-toggle-btn,
-.auth-page--riviera-premium .auth-password-field__toggle {
-  color: var(--riviera-gold);
-}
-
-.auth-page--riviera-premium .auth-toggle-btn:hover,
-.auth-page--riviera-premium .auth-password-field__toggle:hover:not(:disabled) {
-  color: var(--riviera-gold-soft);
-}
-
-.auth-page--riviera-premium .riviera-input:focus,
-.auth-page--riviera-premium .auth-password-field__input:focus {
-  border-color: var(--riviera-gold);
-  box-shadow: 0 0 0 1px var(--riviera-gold);
-}
-
-/* ── Columna izquierda — hero editorial ── */
 
 .auth-visual-panel {
   position: relative;
   flex: 0 0 auto;
-  min-height: 42vh;
-  background: var(--riviera-black);
+  background: var(--auth-page-bg);
   overflow: hidden;
 }
 
@@ -64,27 +62,28 @@
   background-image: url("../../assets/cancha-riviera.jpg");
   background-size: cover;
   background-position: center;
+  /* Monocromo cálido: sin azul, tinte crema/ámbar */
+  filter: grayscale(1) sepia(0.28) contrast(1.1) brightness(0.7);
   pointer-events: none;
 }
 
 .auth-visual-panel__overlay {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(10, 10, 10, 0.72) 0%,
-      rgba(10, 10, 10, 0.55) 50%,
-      rgba(10, 10, 10, 0.65) 100%
-    ),
-    rgba(10, 10, 10, 0.35);
+  background: linear-gradient(
+    100deg,
+    rgba(0, 0, 0, 0.58) 0%,
+    rgba(0, 0, 0, 0.3) 38%,
+    rgba(0, 0, 0, 0.52) 68%,
+    rgba(0, 0, 0, 0.97) 100%
+  );
   pointer-events: none;
 }
 
 .auth-visual-panel__grain {
   position: absolute;
   inset: 0;
-  opacity: 0.08;
+  opacity: 0.06;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
   background-size: 160px 160px;
   pointer-events: none;
@@ -100,10 +99,11 @@
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
   width: 100%;
   min-height: inherit;
-  padding: 2.5rem 1.5rem;
+  padding: 2rem 1.5rem 1.5rem;
   box-sizing: border-box;
 }
 
@@ -112,7 +112,7 @@
   flex-direction: column;
   align-items: flex-start;
   width: 100%;
-  max-width: 520px;
+  max-width: 34rem;
   margin: 0;
   padding: 0;
 }
@@ -133,92 +133,99 @@
 }
 
 .auth-hero-copy__logo .club-identity--auth .club-identity__name {
-  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
-  font-size: 1.125rem;
+  font-family: var(--ro-font-heading);
+  font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--riviera-white);
+  color: var(--auth-text);
 }
 
 .auth-hero-copy__logo .club-identity__tagline {
   font-size: 0.625rem;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--riviera-gold);
+  color: var(--auth-text-muted);
   margin-top: 0.2rem;
 }
 
 .auth-hero-copy__headline {
-  margin: 0 0 1rem;
-  font-family: var(--font-display, var(--ro-font-heading), sans-serif);
-  font-size: clamp(2.25rem, 5vw, 3.75rem);
+  margin: 0;
+  font-family: var(--ro-font-heading);
+  font-size: clamp(2.5rem, 5vw, 3.85rem);
   font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  color: var(--riviera-white);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: var(--auth-text);
+}
+
+.auth-hero-copy__line {
+  display: block;
+}
+
+.auth-hero-copy__rule {
+  width: 3rem;
+  height: 1px;
+  margin: 1.25rem 0 1.15rem;
+  background: var(--auth-gold);
+  opacity: 0.85;
 }
 
 .auth-hero-copy__subtitle {
-  margin: 0 0 2.5rem;
+  margin: 0;
   font-size: 1rem;
-  line-height: 1.6;
-  color: var(--riviera-muted);
-  max-width: 24rem;
-}
-
-.auth-hero-copy__markers {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 2rem;
-  row-gap: 1rem;
-  margin: 0 0 2rem;
-  padding: 0;
-  list-style: none;
+  line-height: 1.65;
+  color: var(--auth-cream);
   max-width: 28rem;
+  opacity: 0.9;
 }
 
-.auth-hero-copy__marker {
+.auth-hero-features {
+  list-style: none;
+  margin: 2.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.1rem 1.35rem;
+  width: 100%;
+  max-width: 34rem;
+}
+
+.auth-hero-features__item {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  margin: 0;
-  padding: 0;
+  gap: 0.65rem;
+  min-width: 0;
 }
 
-.auth-hero-copy__marker-title {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--riviera-white);
-  line-height: 1.35;
+.auth-hero-features__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--auth-gold);
 }
 
-.auth-hero-copy__marker-title::before {
-  content: "— ";
-  color: var(--riviera-gold);
-  font-weight: 400;
+.auth-hero-features__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
-.auth-hero-copy__marker-desc {
+.auth-hero-features__title {
   font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--auth-text);
+}
+
+.auth-hero-features__body {
+  font-size: 0.75rem;
   line-height: 1.4;
-  color: var(--riviera-muted);
-  padding-left: 1rem;
+  color: var(--auth-text-muted);
 }
-
-.auth-hero-copy__proof {
-  margin: 0 0 1.125rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--riviera-gold);
-}
-
-/* ── Columna derecha — formulario ── */
 
 .auth-form-panel {
   flex: 1 1 auto;
@@ -228,7 +235,7 @@
   justify-content: center;
   padding: 2rem 1.25rem;
   position: relative;
-  background: var(--riviera-ink);
+  background: var(--auth-panel-bg);
   z-index: 1;
   box-sizing: border-box;
 }
@@ -237,7 +244,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: min(100%, 480px);
+  width: min(100%, 420px);
   margin: 0 auto;
   flex: 0 0 auto;
   min-width: 0;
@@ -253,42 +260,33 @@
   position: relative;
   z-index: 2;
   width: 100%;
-  margin-top: 2rem;
-  padding-top: 0.5rem;
-  border-top: none;
+  margin-top: 2.25rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--auth-cream) 18%, transparent);
   text-align: center;
-}
-
-.auth-page-foot.app-site-foot {
-  margin-top: 2rem;
 }
 
 .auth-page-foot .app-site-foot__link {
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   line-height: 1.5;
-  color: var(--riviera-gold);
+  color: var(--auth-text-muted);
   text-decoration: underline;
   text-underline-offset: 3px;
-  max-width: none;
-  margin: 0 auto 1rem;
+  margin: 0 auto 0;
   display: inline-block;
+  transition: color var(--ro-transition-fast);
 }
 
 .auth-page-foot .app-site-foot__link:hover {
-  color: var(--riviera-gold-soft);
+  color: var(--auth-cream);
 }
 
+/* No repetir el slogan en el footer */
 .auth-page-foot .app-site-foot__brand {
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--riviera-muted);
+  display: none;
 }
-
-/* ── Mobile hero (oculto — usa panel visual) ── */
 
 .auth-mobile-hero {
   display: none;
@@ -315,8 +313,6 @@
   }
 }
 
-/* ── Desktop split screen ── */
-
 @media (min-width: 968px) {
   .auth-page {
     flex-direction: row;
@@ -329,7 +325,7 @@
   }
 
   .auth-visual-panel {
-    flex: 1 1 58%;
+    flex: 1 1 54%;
     min-height: 100vh;
     min-height: 100dvh;
   }
@@ -340,11 +336,11 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: 18%;
+    width: 22%;
     background: linear-gradient(
       90deg,
       transparent 0%,
-      var(--riviera-ink) 100%
+      var(--auth-panel-bg) 100%
     );
     z-index: 2;
   }
@@ -352,76 +348,54 @@
   .auth-visual-panel__inner {
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 3rem clamp(3rem, 6vw, 6.25rem);
+    padding: clamp(2.75rem, 5.5vh, 4rem) clamp(2.75rem, 5.5vw, 5.5rem)
+      clamp(1.75rem, 3vh, 2.5rem);
   }
 
   .auth-form-panel {
-    flex: 1 1 42%;
+    flex: 1 1 46%;
     min-height: 100vh;
     min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: clamp(3.75rem, 5vh, 5rem) clamp(3.75rem, 5vw, 5rem);
-    background: var(--riviera-ink);
+    padding: clamp(3rem, 6vh, 5rem) clamp(2.75rem, 5vw, 4.5rem);
+    background: var(--auth-panel-bg);
   }
 
   .auth-form-panel__stack {
-    width: min(100%, 480px);
+    width: min(100%, 400px);
     margin: 0;
-    flex: 0 0 auto;
-    min-width: 0;
-  }
-
-  .auth-page-foot {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: clamp(2.5rem, 4vh, 3.5rem);
-    width: min(100%, 480px);
-    max-width: calc(100% - (2 * clamp(3.75rem, 5vw, 5rem)));
-    margin-top: 0;
-    padding-top: 1.5rem;
   }
 }
 
 @media (min-width: 1200px) {
   .auth-visual-panel__inner {
-    padding-left: 6.25rem;
-    padding-right: 3rem;
+    padding-left: 5.5rem;
+    padding-right: 3.5rem;
   }
 }
 
-/* ── Mobile stack ── */
-
 @media (max-width: 967px) {
   .auth-page {
-    --auth-mobile-gutter: 1.375rem;
-    min-height: 100vh;
-    min-height: 100dvh;
+    --auth-mobile-gutter: 1.25rem;
   }
 
   .auth-visual-panel {
-    min-height: auto;
-    flex: 0 0 auto;
+    height: auto;
+    min-height: 0;
   }
 
   .auth-visual-panel__photo {
     background-image: url("../../assets/cancha-riviera-vertical.jpg");
-    background-position: center 38%;
-    background-size: cover;
+    background-position: center 30%;
+    filter: grayscale(1) sepia(0.28) contrast(1.08) brightness(0.66);
   }
 
   .auth-visual-panel__overlay {
-    background:
-      linear-gradient(
-        180deg,
-        rgba(10, 10, 10, 0.45) 0%,
-        rgba(10, 10, 10, 0.58) 45%,
-        rgba(7, 7, 7, 0.88) 100%
-      ),
-      rgba(10, 10, 10, 0.28);
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.5) 45%,
+      rgba(0, 0, 0, 0.97) 100%
+    );
   }
 
   .auth-visual-panel__fade {
@@ -429,149 +403,66 @@
     inset: auto 0 0 0;
     top: auto;
     width: 100%;
-    height: 3.5rem;
-    background: linear-gradient(180deg, transparent 0%, var(--riviera-ink) 100%);
+    height: 2.25rem;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      var(--auth-panel-bg) 100%
+    );
     z-index: 2;
   }
 
   .auth-visual-panel__inner {
-    align-items: center;
-    min-height: auto;
+    gap: 1rem;
     padding:
-      max(0.875rem, env(safe-area-inset-top, 0px))
+      max(1rem, env(safe-area-inset-top, 0px))
       var(--auth-mobile-gutter)
       1.25rem;
   }
 
-  .auth-hero-copy {
-    align-items: center;
-    max-width: none;
-    text-align: center;
-  }
-
   .auth-hero-copy__logo {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-    margin-bottom: 0.75rem;
-  }
-
-  .auth-hero-copy__logo .club-identity--auth {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-  }
-
-  .auth-hero-copy__logo .club-identity--auth .club-identity__text {
-    align-items: center;
-    text-align: center;
+    margin: 0 0 1.1rem;
   }
 
   .auth-hero-copy__logo .club-identity--auth .club-identity__logo {
     width: 40px;
     height: 40px;
-    max-width: none;
   }
 
   .auth-hero-copy__headline {
-    margin-bottom: 0.5rem;
-    font-size: clamp(1.5rem, 6.2vw, 2rem);
-    line-height: 1.1;
-    text-align: center;
+    font-size: clamp(2rem, 8vw, 2.5rem);
+  }
+
+  .auth-hero-copy__rule {
+    margin: 0.9rem 0 0.85rem;
   }
 
   .auth-hero-copy__subtitle {
-    margin-bottom: 0.875rem;
-    font-size: 0.8125rem;
-    line-height: 1.45;
-    max-width: 19rem;
-    text-align: center;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    max-width: none;
   }
 
-  .auth-hero-copy__markers {
-    margin-bottom: 0;
-    column-gap: 0.75rem;
-    row-gap: 0.5rem;
-    max-width: 17.5rem;
-    width: 100%;
-  }
-
-  .auth-hero-copy__marker-title {
-    font-size: 0.625rem;
-  }
-
-  .auth-hero-copy__marker {
-    align-items: center;
-    text-align: center;
-  }
-
-  .auth-hero-copy__marker-desc {
-    font-size: 0.6875rem;
-    padding-left: 0;
-  }
-
-  .auth-hero-copy__proof {
-    margin: 0.625rem 0 0;
-    font-size: 0.625rem;
-    text-align: center;
+  .auth-hero-features {
+    display: none;
   }
 
   .auth-form-panel {
     flex: 1 1 auto;
     padding:
-      1.5rem
+      0.35rem
       var(--auth-mobile-gutter)
-      max(1rem, env(safe-area-inset-bottom, 0px));
+      max(1.25rem, env(safe-area-inset-bottom, 0px));
     justify-content: flex-start;
-    margin-top: 0.25rem;
-  }
-
-  .auth-form-panel__card-wrap {
-    margin-top: 0.5rem;
   }
 
   .auth-form-panel__stack {
     width: 100%;
-    max-width: none;
+    flex: 1 1 auto;
   }
 
   .auth-page-foot {
     margin-top: auto;
-    padding-top: 1.25rem;
+    padding-top: 1.35rem;
   }
-}
-
-/* Riviera madre: anula acentos Hack en login */
-html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
-  .auth-page--riviera-premium
-  button[type="submit"].btn-auth-primary {
-  background: var(--riviera-white);
-  color: var(--riviera-black);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-
-html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
-  .auth-page--riviera-premium
-  button[type="submit"].btn-auth-primary:hover:not(:disabled) {
-  background: var(--riviera-gold-soft);
-  color: var(--riviera-black);
-  border-color: rgba(229, 200, 120, 0.5);
-}
-
-html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
-  .auth-page--riviera-premium
-  button[type="submit"]:focus-visible {
-  outline: 2px solid var(--riviera-gold);
-  outline-offset: 3px;
-}
-
-html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
-  .auth-page--riviera-premium
-  input:focus-visible,
-html:not([data-brand="hack-padel"]):not([data-club="hack-padel"])
-  .auth-page--riviera-premium
-  button.auth-toggle-btn:focus-visible {
-  outline-color: var(--riviera-gold);
 }

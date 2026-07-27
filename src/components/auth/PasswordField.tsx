@@ -10,6 +10,7 @@ export interface PasswordFieldProps
   inputClassName?: string;
   error?: string;
   hint?: string;
+  leadingIcon?: React.ReactNode;
 }
 
 export const PasswordField: React.FC<PasswordFieldProps> = ({
@@ -20,6 +21,7 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
   hint,
   id,
   disabled,
+  leadingIcon,
   ...props
 }) => {
   const autoId = useId();
@@ -29,6 +31,7 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
   const controlClass = [
     "riviera-input",
     "auth-password-field__input",
+    leadingIcon && "auth-password-field__input--with-icon",
     error && "riviera-input--error",
     inputClassName,
   ]
@@ -41,6 +44,7 @@ export const PasswordField: React.FC<PasswordFieldProps> = ({
         {label}
       </label>
       <div className="auth-password-field__wrap">
+        {leadingIcon}
         <input
           id={inputId}
           className={controlClass}
