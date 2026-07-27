@@ -9,6 +9,7 @@ import type { RivieraJugadorWithStats } from "./types";
  * Cubre:
  * - pool legacy (`Player[]`) vía getPlayers / buildLegacyPlayersFromRivieraRegistry
  * - lista Riviera (`RivieraJugadorWithStats[]`) vía listRivieraJugadores
+ * - lista Riviera PRIVATE (contacto) vía listRivieraJugadoresPrivate — claves `|priv|`
  *
  * Solo memoria de proceso: se pierde al recargar la página.
  */
@@ -42,16 +43,18 @@ function copyJugadores(
   return jugadores.slice();
 }
 
+type RivieraListCacheOpts = {
+  search?: string;
+  nivel?: string;
+  activosRecientes?: boolean;
+  genero?: RivieraJugadorGenero;
+  skipCareerEnrich?: boolean;
+};
+
 /** Clave de lista Riviera cacheable; null = no cachear (filtros search/nivel/etc.). */
 export function buildRivieraListCacheKey(
   organizadorId: string,
-  opts?: {
-    search?: string;
-    nivel?: string;
-    activosRecientes?: boolean;
-    genero?: RivieraJugadorGenero;
-    skipCareerEnrich?: boolean;
-  }
+  opts?: RivieraListCacheOpts
 ): string | null {
   const org = organizadorId.trim();
   if (!org) return null;
@@ -61,6 +64,20 @@ export function buildRivieraListCacheKey(
   const genero = opts?.genero ?? "";
   const skipCareer = opts?.skipCareerEnrich ? "1" : "0";
   return `${org}|g:${genero}|sc:${skipCareer}`;
+}
+
+/**
+ * Clave distinta de la lista “de producto” para no mezclar filas con/sin PII.
+ * Forma: `${org}|priv|g:…|sc:…` (sigue invalidándose con `invalidatePlayersPool`).
+ */
+export function buildRivieraListCacheKeyPrivate(
+  organizadorId: string,
+  opts?: RivieraListCacheOpts
+): string | null {
+  const publicKey = buildRivieraListCacheKey(organizadorId, opts);
+  if (!publicKey) return null;
+  const org = organizadorId.trim();
+  return `${org}|priv|${publicKey.slice(org.length + 1)}`;
 }
 
 export function getCachedLegacyPlayersPool(
@@ -111,7 +128,7 @@ export function setCachedRivieraJugadoresList(
 
 /**
  * Invalida toda la caché compartida de un organizador
- * (pool legacy + todas las variantes de listRivieraJugadores).
+ * (pool legacy + listas Riviera producto y PRIVATE).
  */
 export function invalidatePlayersPool(organizadorId: string): void {
   const org = organizadorId.trim();

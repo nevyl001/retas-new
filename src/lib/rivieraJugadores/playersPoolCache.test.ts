@@ -2,6 +2,7 @@ import type { Player } from "../db/types";
 import type { RivieraJugadorWithStats } from "./types";
 import {
   buildRivieraListCacheKey,
+  buildRivieraListCacheKeyPrivate,
   clearPlayersPoolCacheForTests,
   getCachedLegacyPlayersPool,
   getCachedRivieraJugadoresList,
@@ -75,5 +76,35 @@ describe("playersPoolCache", () => {
     expect(getCachedRivieraJugadoresList(k2!)?.map((j) => j.id)).toEqual([
       "j2",
     ]);
+  });
+
+  it("PRIVATE y producto no comparten clave de caché", () => {
+    const pub = buildRivieraListCacheKey("org-1", { skipCareerEnrich: true });
+    const priv = buildRivieraListCacheKeyPrivate("org-1", {
+      skipCareerEnrich: true,
+    });
+    expect(pub).toBeTruthy();
+    expect(priv).toBeTruthy();
+    expect(priv).not.toEqual(pub);
+    expect(priv).toContain("|priv|");
+
+    setCachedRivieraJugadoresList(pub!, [
+      { ...jugador("j1", "Ana"), email: null } as RivieraJugadorWithStats,
+    ]);
+    setCachedRivieraJugadoresList(priv!, [
+      {
+        ...jugador("j1", "Ana"),
+        email: "ana@real.com",
+      } as RivieraJugadorWithStats,
+    ]);
+
+    expect(getCachedRivieraJugadoresList(pub!)?.[0]?.email ?? null).toBeNull();
+    expect(getCachedRivieraJugadoresList(priv!)?.[0]?.email).toBe(
+      "ana@real.com"
+    );
+
+    invalidatePlayersPool("org-1");
+    expect(getCachedRivieraJugadoresList(pub!)).toBeNull();
+    expect(getCachedRivieraJugadoresList(priv!)).toBeNull();
   });
 });

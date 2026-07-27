@@ -13,9 +13,15 @@ import {
 jest.mock("./organizerPlayerAccess", () => ({
   resolveJugadorIdForOrganizer: jest.fn(),
 }));
-jest.mock("./rivieraJugadoresService", () => ({
-  linkLegacyPlayerId: jest.fn(),
-}));
+jest.mock("./rivieraJugadoresService", () => {
+  const actual = jest.requireActual(
+    "./rivieraJugadoresService"
+  ) as typeof import("./rivieraJugadoresService");
+  return {
+    ...actual,
+    linkLegacyPlayerId: jest.fn(),
+  };
+});
 jest.mock("../supabaseClient", () => ({
   supabase: {
     from: jest.fn(),

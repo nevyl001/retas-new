@@ -6,8 +6,10 @@ import { supabase } from "../supabaseClient";
 import type { LigaJugador } from "../liga/types";
 import {
   getRivieraJugadorByLegacyPlayerId,
+  getRivieraJugadorPrivateById,
   linkLegacyLigaJugadorId,
   listRivieraJugadores,
+  listRivieraJugadoresPrivate,
 } from "./rivieraJugadoresService";
 import type { RivieraJugador } from "./types";
 import { normalizePlayerNameKey } from "./playerNameKey";
@@ -163,7 +165,7 @@ export async function buildLegacyPlayersFromRivieraRegistry(
     console.warn("[riviera-jugadores] buildLegacyPlayers sync:", e);
   }
 
-  const registry = await listRivieraJugadores(organizadorId);
+  const registry = await listRivieraJugadoresPrivate(organizadorId);
 
   const linkedIds = registry
     .map((row) => row.legacy_player_id?.trim())
@@ -280,7 +282,7 @@ export async function syncLegacyPlayersFromRivieraRegistry(
     return;
   }
 
-  const registry = await listRivieraJugadores(organizadorId, {
+  const registry = await listRivieraJugadoresPrivate(organizadorId, {
     skipCareerEnrich: true,
   });
   for (const rj of registry) {
@@ -369,13 +371,9 @@ export async function ensureLigaJugadorForRivieraJugador(
     );
     let effectiveRj = rj;
     if (effectiveId !== rj.id) {
-      const { data, error: fetchErr } = await supabase
-        .from("riviera_jugadores")
-        .select("*")
-        .eq("id", effectiveId)
-        .maybeSingle();
-      if (!fetchErr && data) {
-        effectiveRj = data as RivieraJugador;
+      const data = await getRivieraJugadorPrivateById(effectiveId);
+      if (data) {
+        effectiveRj = data;
       }
     }
 
@@ -465,7 +463,7 @@ export async function syncLigaJugadoresFromRivieraRegistry(
     return;
   }
 
-  const registry = await listRivieraJugadores(organizadorId);
+  const registry = await listRivieraJugadoresPrivate(organizadorId);
   const activePool = await loadActiveLigaJugadoresRows(organizadorId);
   for (const rj of registry) {
     await ensureLigaJugadorForRivieraJugador(organizadorId, rj, activePool);

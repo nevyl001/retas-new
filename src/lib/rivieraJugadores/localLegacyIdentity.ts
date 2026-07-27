@@ -7,7 +7,10 @@ import { supabase } from "../supabaseClient";
 import { GLOBAL_TOURNAMENT_ID, isMissingColumnError } from "../db/schemaHelpers";
 import type { Player } from "../db/types";
 import { resolveJugadorIdForOrganizer } from "./organizerPlayerAccess";
-import { linkLegacyPlayerId } from "./rivieraJugadoresService";
+import {
+  getRivieraJugadorPrivateById,
+  linkLegacyPlayerId,
+} from "./rivieraJugadoresService";
 import type { RivieraJugador } from "./types";
 
 export type PlayerWithOwner = Player & { user_id?: string | null };
@@ -150,13 +153,7 @@ export async function fetchPlayerByIdStrict(
 export async function fetchRivieraJugadorRowById(
   id: string
 ): Promise<RivieraJugador | null> {
-  const { data, error } = await supabase
-    .from("riviera_jugadores")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw error;
-  return (data as RivieraJugador) ?? null;
+  return getRivieraJugadorPrivateById(id);
 }
 
 /**

@@ -720,23 +720,56 @@ async function persistJugadorStats(stats: JugadorStats): Promise<JugadorStats> {
   return stats;
 }
 
+type ListRivieraJugadoresOpts = {
+  search?: string;
+  nivel?: string;
+  activosRecientes?: boolean;
+  genero?: RivieraJugadorGenero;
+  /** Omite RPC de carrera por jugador (lista / sync legacy). Default false. */
+  skipCareerEnrich?: boolean;
+};
+
+/**
+ * Listado interno con contacto (JUGADOR_SELECT_PRIVATE).
+ * Usar solo en sync/pool/legacy. Caché con clave `|priv|` distinta del list de producto.
+ */
+export async function listRivieraJugadoresPrivate(
+  organizadorId: string,
+  opts?: ListRivieraJugadoresOpts
+): Promise<RivieraJugadorWithStats[]> {
+  const { buildRivieraListCacheKeyPrivate } = await import("./playersPoolCache");
+  return listRivieraJugadoresWithCacheKey(
+    organizadorId,
+    opts,
+    buildRivieraListCacheKeyPrivate
+  );
+}
+
 export async function listRivieraJugadores(
   organizadorId: string,
-  opts?: {
-    search?: string;
-    nivel?: string;
-    activosRecientes?: boolean;
-    genero?: RivieraJugadorGenero;
-    /** Omite RPC de carrera por jugador (lista / sync legacy). Default false. */
-    skipCareerEnrich?: boolean;
-  }
+  opts?: ListRivieraJugadoresOpts
+): Promise<RivieraJugadorWithStats[]> {
+  const { buildRivieraListCacheKey } = await import("./playersPoolCache");
+  return listRivieraJugadoresWithCacheKey(
+    organizadorId,
+    opts,
+    buildRivieraListCacheKey
+  );
+}
+
+async function listRivieraJugadoresWithCacheKey(
+  organizadorId: string,
+  opts: ListRivieraJugadoresOpts | undefined,
+  buildCacheKey: (
+    organizadorId: string,
+    opts?: ListRivieraJugadoresOpts
+  ) => string | null
 ): Promise<RivieraJugadorWithStats[]> {
   const {
-    buildRivieraListCacheKey,
     getCachedRivieraJugadoresList,
     setCachedRivieraJugadoresList,
   } = await import("./playersPoolCache");
-  const cacheKey = buildRivieraListCacheKey(organizadorId, opts);
+  const cacheKey = buildCacheKey(organizadorId, opts);
   if (cacheKey) {
     const cached = getCachedRivieraJugadoresList(cacheKey);
     if (cached) return cached;
@@ -766,6 +799,7 @@ export async function listRivieraJugadores(
     return q;
   };
 
+  // Ambos listados siguen en PRIVATE hasta migrar listRivieraJugadores a PUBLIC.
   const { data, error } = await withJugadorSelectFallback((cols) =>
     buildQuery(cols)
   );
@@ -808,6 +842,25 @@ export async function listRivieraJugadores(
     setCachedRivieraJugadoresList(cacheKey, rows);
   }
   return rows;
+}
+
+/** Ficha por id con contacto (JUGADOR_SELECT_PRIVATE). Sin stats join. */
+export async function getRivieraJugadorPrivateById(
+  id: string
+): Promise<RivieraJugador | null> {
+  const jugadorId = sanitizeUuid(id) || id.trim();
+  if (!jugadorId) return null;
+
+  const { data, error } = await withJugadorSelectFallback((cols) =>
+    supabase
+      .from("riviera_jugadores")
+      .select(cols)
+      .eq("id", jugadorId)
+      .maybeSingle()
+  );
+
+  if (error) throw error;
+  return (data as unknown as RivieraJugador | null) ?? null;
 }
 
 export async function getRivieraJugadorBySlug(
