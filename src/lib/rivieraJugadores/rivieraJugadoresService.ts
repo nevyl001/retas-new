@@ -114,22 +114,7 @@ type SupabaseResult<T> = {
   error: { code?: string; message?: string } | null;
 };
 
-async function withJugadorSelectFallback<T>(
-  run: (selectCols: string) => PromiseLike<SupabaseResult<T>>
-): Promise<SupabaseResult<T>> {
-  if (jugadorRatingColsInDb === false) {
-    return run(JUGADOR_SELECT_PRIVATE);
-  }
-  const result = await run(getJugadorSelectColumns());
-  if (result.error && isMissingRatingColumnError(result.error)) {
-    jugadorRatingColsInDb = false;
-    return run(JUGADOR_SELECT_PRIVATE);
-  }
-  if (!result.error) jugadorRatingColsInDb = true;
-  return result;
-}
-
-/** Misma lógica de fallback de rating que withJugadorSelectFallback, vía PUBLIC. */
+/** Misma lógica de fallback de rating que el helper privado retirado, vía PUBLIC. */
 async function withJugadorSelectPublicFallback<T>(
   run: (selectCols: string) => PromiseLike<SupabaseResult<T>>
 ): Promise<SupabaseResult<T>> {
@@ -945,7 +930,7 @@ export async function getRivieraJugadorBySlug(
   organizadorId: string,
   slug: string
 ): Promise<RivieraJugadorWithStats | null> {
-  const { data, error } = await withJugadorSelectFallback<
+  const { data, error } = await withJugadorSelectPublicFallback<
     Record<string, unknown> | null
   >((cols) =>
     supabase
@@ -964,12 +949,23 @@ export async function getRivieraJugadorBySlug(
   if (data) {
     const own = mapJugadorRowFromService(data as unknown as Record<string, unknown>);
     if (await isRevokedGrantLocalJugador(organizadorId, own.id)) return null;
+    // Select público arriba no trae contacto (GRANT de columnas de authenticated
+    // ya no incluye email/telefono/whatsapp/fecha_nacimiento). El dueño real
+    // (o Admin Maestro) lo recupera vía RPC SECURITY DEFINER, que valida
+    // ownership server-side sin reabrir el GRANT de tabla completa.
+    const privado = await getRivieraJugadorPrivateById(own.id);
+    if (privado) {
+      own.email = privado.email;
+      own.telefono = privado.telefono;
+      own.whatsapp = privado.whatsapp;
+      own.fecha_nacimiento = privado.fecha_nacimiento;
+    }
     return enrichJugadorWithRivieraId(
       await enrichInternalClubJugadorGrant(organizadorId, own)
     );
   }
 
-  const { data: grantedRow, error: grantedErr } = await withJugadorSelectFallback<
+  const { data: grantedRow, error: grantedErr } = await withJugadorSelectPublicFallback<
     Record<string, unknown> | null
   >((cols) =>
     supabase
@@ -1128,7 +1124,11 @@ export async function createRivieraJugador(
     slugExistsForOrg(organizadorId, s, genero)
   );
 
-  const { data, error } = await withJugadorSelectFallback((cols) =>
+  // INSERT ... RETURNING exige el mismo GRANT de columnas que un SELECT: el
+  // authenticated ya no tiene email/telefono/whatsapp/fecha_nacimiento vía
+  // tabla directa. El insert de esos valores sigue permitido (no es SELECT);
+  // se completan de vuelta con lo que ya escribimos, sin reabrir el GRANT.
+  const { data, error } = await withJugadorSelectPublicFallback((cols) =>
     supabase
       .from("riviera_jugadores")
       .insert({
@@ -1155,7 +1155,13 @@ export async function createRivieraJugador(
   );
 
   if (error) throw error;
-  const jugador = data as unknown as RivieraJugador;
+  const jugador = {
+    ...(data as unknown as RivieraJugador),
+    email: email ?? null,
+    telefono: input.telefono ?? null,
+    whatsapp: input.whatsapp ?? null,
+    fecha_nacimiento: null,
+  };
 
   if (RIVIERA_IDENTITY_ENSURE_ENABLED) {
     const { ensureRivieraIdentity } = await import("./careerIdentity");
@@ -1235,7 +1241,13 @@ export async function updateRivieraJugador(
     }
   }
 
-  const { data, error } = await withJugadorSelectFallback((cols) =>
+  // UPDATE ... RETURNING exige el mismo GRANT de columnas que un SELECT: el
+  // authenticated ya no tiene email/telefono/whatsapp/fecha_nacimiento vía
+  // tabla directa. Se recuperan vía RPC (dueño ya validado por el filtro
+  // organizador_id de este mismo UPDATE) para no reabrir el GRANT de tabla
+  // completa y sin dejar undefined donde otros consumidores esperan el valor
+  // actual (p.ej. syncRivieraJugadorToLinkedPools).
+  const { data, error } = await withJugadorSelectPublicFallback((cols) =>
     supabase
       .from("riviera_jugadores")
       .update(payload)
@@ -1247,6 +1259,13 @@ export async function updateRivieraJugador(
   if (error) throw error;
 
   const updated = data as unknown as RivieraJugador;
+  const privadoUpdated = await getRivieraJugadorPrivateById(updated.id);
+  if (privadoUpdated) {
+    updated.email = privadoUpdated.email;
+    updated.telefono = privadoUpdated.telefono;
+    updated.whatsapp = privadoUpdated.whatsapp;
+    updated.fecha_nacimiento = privadoUpdated.fecha_nacimiento;
+  }
   if (updated.organizador_id) {
     const { syncRivieraJugadorToLinkedPools } = await import("./playerPoolSync");
     await syncRivieraJugadorToLinkedPools(updated.organizador_id, updated);
@@ -1402,18 +1421,17 @@ export async function ensureRivieraJugadorForLegacyPlayer(
         : null;
 
     if (email) {
-      const { data: byEmail } = await withJugadorSelectFallback((cols) =>
-        supabase
-          .from("riviera_jugadores")
-          .select(cols)
-          .eq("organizador_id", organizadorId)
-          .ilike("email", email)
-          .maybeSingle()
+      // Búsqueda por email requiere columna privada: authenticated ya no
+      // puede filtrar/leer email vía tabla directa. Se resuelve por RPC
+      // privada listando lo propio y comparando aquí (mismo dueño ya
+      // filtrado por organizador_id, sin reabrir el GRANT de tabla completa).
+      const propios = await listRivieraJugadoresPrivate(organizadorId);
+      const byEmail = propios.find(
+        (j) => (j.email ?? "").toLowerCase() === email.toLowerCase()
       );
       if (byEmail) {
-        const jugador = byEmail as unknown as RivieraJugador;
-        await linkLegacyPlayerId(jugador.id, legacyPlayer.id);
-        return jugador;
+        await linkLegacyPlayerId(byEmail.id, legacyPlayer.id);
+        return byEmail;
       }
     }
 
