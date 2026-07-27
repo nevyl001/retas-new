@@ -69,16 +69,17 @@ import { normalizeOptionalEmail, normalizeRequiredEmail } from "./emailValidatio
  * Select privado (contacto incluido). Debe permanecer byte-equivalente al
  * antiguo JUGADOR_SELECT_BASE: mismo conjunto y orden de columnas.
  * Todos los callers existentes siguen en esta vía hasta migraciones posteriores.
+ * Exportado para pin tests; callers de producto aún no migran a PUBLIC.
  */
-const JUGADOR_SELECT_PRIVATE =
+export const JUGADOR_SELECT_PRIVATE =
   "id,nombre,slug,foto_url,email,telefono,whatsapp,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,fecha_nacimiento,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
 
 /**
  * Select público: mismas columnas que PRIVATE menos email, telefono, whatsapp
  * y fecha_nacimiento. Alineado al GRANT anon de columnas (rating se añade vía
- * JUGADOR_RATING_COLS). Ningún caller lo usa aún en este commit.
+ * JUGADOR_RATING_COLS). Ningún caller de producto lo usa aún.
  */
-const JUGADOR_SELECT_PUBLIC =
+export const JUGADOR_SELECT_PUBLIC =
   "id,nombre,slug,foto_url,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
 
 const JUGADOR_RATING_COLS = "rating,rating_partidos,rating_fiabilidad";
@@ -92,8 +93,8 @@ function getJugadorSelectColumns(): string {
   return `${JUGADOR_SELECT_PRIVATE},${JUGADOR_RATING_COLS}`;
 }
 
-/** Select público (+ rating si existe). Listo para migraciones; sin callers aún. */
-function getJugadorSelectColumnsPublic(): string {
+/** Select público (+ rating si existe). Listo para migraciones; sin callers de producto aún. */
+export function getJugadorSelectColumnsPublic(): string {
   if (jugadorRatingColsInDb === false) return JUGADOR_SELECT_PUBLIC;
   return `${JUGADOR_SELECT_PUBLIC},${JUGADOR_RATING_COLS}`;
 }
