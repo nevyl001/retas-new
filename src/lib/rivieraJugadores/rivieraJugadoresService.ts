@@ -881,7 +881,7 @@ export async function getRivieraJugadorByLegacyLigaId(
   const legacyId = sanitizeUuid(legacyLigaJugadorId);
   if (!legacyId) return null;
 
-  const { data, error } = await withJugadorSelectFallback((cols) =>
+  const { data, error } = await withJugadorSelectPublicFallback((cols) =>
     supabase
       .from("riviera_jugadores")
       .select(cols)
@@ -906,7 +906,7 @@ export async function listRivieraJugadoresByLegacyPlayerId(
   organizadorId?: string,
   limit = 20
 ): Promise<RivieraJugador[]> {
-  const { data, error } = await withJugadorSelectFallback((cols) => {
+  const { data, error } = await withJugadorSelectPublicFallback((cols) => {
     let q = supabase
       .from("riviera_jugadores")
       .select(cols)
