@@ -172,41 +172,6 @@
   margin-top: 0.25rem;
 }
 
-.admin-create-user-modal__btn {
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--ro-border-strong);
-  font-size: 13px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.admin-create-user-modal__btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.admin-create-user-modal__btn--ghost {
-  background: transparent;
-  color: var(--ro-text-primary);
-}
-
-.admin-create-user-modal__btn--ghost:hover:not(:disabled) {
-  background: var(--ro-bg-card);
-}
-
-.admin-create-user-modal__btn--primary {
-  background: var(--ro-bg-surface);
-  border-color: var(--ro-bg-surface);
-  color: #09090b;
-}
-
-.admin-create-user-modal__btn--primary:hover:not(:disabled) {
-  background: var(--ro-bg-inset);
-}
-
 .admin-create-user-modal__success {
   margin: 0 0 1.25rem;
   display: flex;

@@ -44,6 +44,7 @@ import { RivieraIdShareBlock } from "./RivieraIdShareBlock";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 import { RatingNivel } from "./RatingNivel";
 import { navigateJugadorFicha, navigateJugadores } from "./jugadoresNav";
+import { Button } from "../ui";
 import "./riviera-jugadores.css";
 
 interface JugadorFichaProps {
@@ -274,9 +275,9 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     return (
       <div className="rj-page">
         <div className="rj-page__inner">
-          <button type="button" className="rj-back" onClick={() => navigateJugadores()}>
+          <Button type="button" variant="ghost" size="sm" onClick={() => navigateJugadores()}>
             ← Jugadores
-          </button>
+          </Button>
           <p className="rj-empty">Jugador no encontrado.</p>
         </div>
       </div>
@@ -303,16 +304,12 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
     <div className="rj-page">
       <div className="rj-page__inner">
         <nav className="rj-ficha-nav" aria-label="Navegación">
-          <button type="button" className="rj-back" onClick={() => navigateJugadores()}>
+          <Button type="button" variant="ghost" size="sm" onClick={() => navigateJugadores()}>
             ← Jugadores
-          </button>
-          <button
-            type="button"
-            className="rj-back rj-back--secondary"
-            onClick={() => navigateToAppHome()}
-          >
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={() => navigateToAppHome()}>
             Inicio
-          </button>
+          </Button>
         </nav>
 
         {isGrantedReadOnly ? (
@@ -324,14 +321,15 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
 
         {canRemove ? (
           <div className="rj-ficha-actions">
-            <button
+            <Button
               type="button"
-              className="rj-btn rj-btn--danger"
-              disabled={leaving}
+              variant="danger"
+              size="sm"
+              loading={leaving}
               onClick={() => void handleLeaveFromClub()}
             >
               {leaving ? "Quitando…" : "Quitar de mi club"}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -396,31 +394,30 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
 
         {!isGrantedReadOnly && canDelete ? (
           <div className="rj-ficha-actions">
-            <button
-              type="button"
-              className="rj-btn rj-btn--ghost"
-              onClick={() => setEditOpen((v) => !v)}
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={() => setEditOpen((v) => !v)}>
               {editOpen ? "Cerrar edición" : "Editar perfil"}
-            </button>
+            </Button>
             {activeOrgId ? (
-              <a
-                className="rj-btn rj-btn--ghost"
+              <Button
+                as="a"
+                variant="ghost"
+                size="sm"
                 href={buildPublicJugadorPath(jugador.slug, activeOrgId)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 Ver perfil público
-              </a>
+              </Button>
             ) : null}
-            <button
+            <Button
               type="button"
-              className="rj-btn rj-btn--danger"
-              disabled={deleting}
+              variant="danger"
+              size="sm"
+              loading={deleting}
               onClick={() => void handleDelete()}
             >
               {deleting ? "Eliminando…" : "Eliminar jugador"}
-            </button>
+            </Button>
           </div>
         ) : null}
 
@@ -574,14 +571,15 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
               />
             </div>
             <div className="rj-edit-panel__actions">
-              <button
+              <Button
                 type="button"
-                className="rj-btn rj-btn--primary"
-                disabled={saving}
+                variant="primary"
+                size="sm"
+                loading={saving}
                 onClick={() => void handleSaveProfile()}
               >
                 {saving ? "Guardando…" : "Guardar cambios"}
-              </button>
+              </Button>
               {user?.id && (
                 <p className="rj-page__sub">
                   Ranking:{" "}

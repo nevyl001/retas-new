@@ -16,6 +16,15 @@ Al proponer o implementar cualquier cambio UX/UI:
 - Solo el **branding** puede variar por cuenta: colores, logo, imágenes, fondos, acentos visuales — vía los tokens dinámicos ya existentes (`--brand-primary`, `--brand-accent`, `--brand-surface`, etc., inyectados en runtime por `src/club-experience/applyClubExperienceTheme.ts` y `src/branding/BrandingService.ts`; alias legacy `--accent-gold`/`--ro-accent` apuntan al mismo valor).
 - Si encuentras un color hardcodeado (hex/rgba literal): **no lo reemplaces automáticamente por el dorado de Riviera**. Primero determina si es un color de marca (debe volverse `var(--brand-accent)`/token dinámico existente) o un color semántico de sistema (error/éxito/borde neutro — debe ser un token compartido, igual para todos los clubes). Nunca fijes un color literal como "solución".
 
+### Tokens de branding vs. tokens semánticos
+
+No todo color no-neutro es "de marca". Distinguir siempre entre dos categorías antes de tocar cualquier color:
+
+1. **Tokens de branding** (sí varían por club, vía `var(--brand-*)`/`var(--ro-accent)`/`var(--accent-gold)`): logo, botones, headers, enlaces, fondos, acentos visuales de la interfaz propia del club.
+2. **Tokens semánticos** (NUNCA siguen el branding del club, son iguales para todos): oro/plata/bronce (medallas, primer/segundo/tercer lugar), éxito, warning, error, información. Representan semántica universal de competencia o de estado del sistema, no identidad del club.
+
+Ejemplo confirmado en código: `--ro-pub-gold` (acento dorado de vistas públicas: bracket, standings, ranking) y `--ro-medal-gold/silver/bronze` (medallas de podio) son **intencionalmente fijos** — no derivan de `--ro-accent` ni deben hacerlo. Es una decisión de producto explícita (2026-07-26): el dorado de "ganador/marcador destacado" es semántica universal de competencia, no branding del club. Antes de "corregir" un color fijo en contexto de resultados/rankings/medallas, verificar primero si es semántico — no asumir que es un bug de branding.
+
 ## Uso de la skill `ui-ux-pro-max`
 
 Al invocar `.claude/skills/ui-ux-pro-max/scripts/search.py`, usar siempre:

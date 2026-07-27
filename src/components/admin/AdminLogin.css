@@ -188,38 +188,9 @@
 }
 
 .admin-login-submit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
   width: 100%;
   margin-top: 0.25rem;
-  padding: 0.6875rem 1rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
   font-family: inherit;
-  color: var(--ro-text-primary);
-  background: var(--admin-accent);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    opacity 0.15s ease;
-}
-
-.admin-login-submit:hover:not(:disabled) {
-  background: var(--admin-accent-hover);
-}
-
-.admin-login-submit:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ro-accent-ring);
-}
-
-.admin-login-submit:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
 }
 
 .admin-login-submit__spinner {

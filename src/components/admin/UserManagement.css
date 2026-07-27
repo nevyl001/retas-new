@@ -97,20 +97,6 @@
   text-decoration: underline;
 }
 
-.user-management-notice .notice-dismiss {
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid var(--admin-input-border);
-  background: transparent;
-  color: var(--admin-text);
-  font-size: 0.8125rem;
-  cursor: pointer;
-}
-
-.user-management-notice .notice-dismiss:hover {
-  background: var(--admin-input-bg);
-}
-
 /* Filtros */
 .user-management-filters {
   display: flex;
@@ -171,36 +157,6 @@
 .filter-select:focus {
   outline: none;
   border-color: var(--ro-border);
-}
-
-.sort-btn,
-.refresh-btn,
-.create-user-btn {
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: transparent;
-  border: 1px solid var(--admin-input-border);
-  color: var(--admin-accent);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.create-user-btn {
-  background: var(--admin-text);
-  border-color: var(--admin-text);
-  color: var(--admin-bg);
-}
-
-.create-user-btn:hover {
-  background: var(--ro-bg-inset);
-  border-color: var(--ro-border);
-}
-
-.sort-btn:hover,
-.refresh-btn:hover {
-  background: var(--admin-input-bg);
 }
 
 /* Lista */
@@ -341,38 +297,6 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
-}
-
-.action-btn {
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid var(--admin-input-border);
-  background: transparent;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-  font-family: inherit;
-}
-
-.view-btn {
-  color: var(--admin-text);
-}
-
-.view-btn:hover {
-  background: var(--admin-input-border);
-  border-color: var(--ro-border-strong);
-}
-
-.delete-btn {
-  color: var(--ro-error);
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.delete-btn:hover {
-  background: rgba(239, 68, 68, 0.08);
 }
 
 .no-users {

@@ -3,6 +3,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { useAdmin } from "../../contexts/AdminContext";
 import { navigateAdminUser } from "../../lib/admin/adminNav";
 import { deleteUserComplete } from "../../lib/admin/deleteUserComplete";
+import { Button } from "../ui";
 import { AdminCreateUserModal } from "./AdminCreateUserModal";
 import "./UserManagement.css";
 
@@ -408,21 +409,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         </div>
 
         <div className="header-controls">
-          <button
-            type="button"
-            className="create-user-btn"
-            onClick={() => setCreateModalOpen(true)}
-          >
+          <Button type="button" variant="primary" size="sm" onClick={() => setCreateModalOpen(true)}>
             Crear usuario
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="refresh-btn"
+            variant="ghost"
+            size="sm"
             onClick={() => void loadUsers()}
             title="Actualizar lista"
           >
             Actualizar
-          </button>
+          </Button>
         </div>
       </div>
       <p className="user-management-hint">
@@ -442,16 +440,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({
         >
           <p>{authCleanupNotice}</p>
           <div className="user-management-notice-actions">
-            <button
+            <Button
               type="button"
-              className="notice-dismiss"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setAuthCleanupNotice(null);
                 setAuthCleanupNoticeError(false);
               }}
             >
               Entendido
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -503,16 +502,17 @@ export const UserManagement: React.FC<UserManagementProps> = ({
             <option value="activity_total">Ordenar por actividad total</option>
           </select>
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-            className="sort-btn"
             title={`Ordenar ${
               sortOrder === "asc" ? "descendente" : "ascendente"
             }`}
           >
             {sortOrder === "asc" ? "Asc" : "Desc"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -564,23 +564,25 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                 </div>
 
                 <div className="user-actions">
-                  <button
+                  <Button
                     type="button"
-                    className="action-btn view-btn"
+                    variant="secondary"
+                    size="sm"
                     onClick={() => handleUserSelect(user)}
                     title="Modos de juego, jugadores y ranking"
                   >
                     Gestionar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="action-btn delete-btn"
+                    variant="danger"
+                    size="sm"
                     onClick={() => handleDeleteUser(user)}
                     title="Eliminar usuario"
-                    disabled={deletingUserId === user.id}
+                    loading={deletingUserId === user.id}
                   >
                     {deletingUserId === user.id ? "Eliminando…" : "Eliminar"}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

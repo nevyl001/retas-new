@@ -22,6 +22,7 @@ import {
   isValidEmailFormat,
   normalizeEmailInput,
 } from "../../lib/rivieraJugadores/emailValidation";
+import { Button } from "../ui";
 
 interface NuevoJugadorModalProps {
   open: boolean;
@@ -223,16 +224,17 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
             <p style={{ color: "#ff3b30", fontSize: "0.8125rem" }}>{error}</p>
           )}
           <div className="rj-modal__actions">
-            <button type="button" className="rj-btn rj-btn--ghost" onClick={onClose}>
+            <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="rj-btn rj-btn--primary"
-              disabled={saving || !nombre.trim() || !email.trim()}
+              variant="primary"
+              disabled={!nombre.trim() || !email.trim()}
+              loading={saving}
             >
               {saving ? "Guardando…" : "Crear"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

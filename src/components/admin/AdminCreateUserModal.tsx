@@ -3,6 +3,7 @@ import {
   createUserAdmin,
   type AdminCreateUserRole,
 } from "../../lib/admin/createUserAdmin";
+import { Button } from "../ui";
 import "./AdminCreateUserModal.css";
 
 interface AdminCreateUserModalProps {
@@ -142,14 +143,16 @@ export const AdminCreateUserModal: React.FC<AdminCreateUserModalProps> = ({
         aria-labelledby="admin-create-user-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           className="admin-create-user-modal__close"
           onClick={handleClose}
           aria-label="Cerrar"
         >
           ×
-        </button>
+        </Button>
 
         {step === "form" ? (
           <>
@@ -197,14 +200,15 @@ export const AdminCreateUserModal: React.FC<AdminCreateUserModalProps> = ({
                     disabled={saving}
                     placeholder="Mínimo 8 caracteres"
                   />
-                  <button
+                  <Button
                     type="button"
-                    className="admin-create-user-modal__btn admin-create-user-modal__btn--ghost"
+                    variant="ghost"
+                    size="sm"
                     onClick={handleGeneratePassword}
                     disabled={saving}
                   >
                     Generar automática
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -269,21 +273,12 @@ export const AdminCreateUserModal: React.FC<AdminCreateUserModalProps> = ({
               )}
 
               <div className="admin-create-user-modal__actions">
-                <button
-                  type="button"
-                  className="admin-create-user-modal__btn admin-create-user-modal__btn--ghost"
-                  onClick={handleClose}
-                  disabled={saving}
-                >
+                <Button type="button" variant="ghost" onClick={handleClose} disabled={saving}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="admin-create-user-modal__btn admin-create-user-modal__btn--primary"
-                  disabled={saving}
-                >
+                </Button>
+                <Button type="submit" variant="primary" loading={saving}>
                   {saving ? "Creando…" : "Crear usuario"}
-                </button>
+                </Button>
               </div>
             </form>
           </>
@@ -304,25 +299,17 @@ export const AdminCreateUserModal: React.FC<AdminCreateUserModalProps> = ({
                 <dt>Contraseña temporal</dt>
                 <dd className="admin-create-user-modal__password-display">
                   <code>{createdPassword}</code>
-                  <button
-                    type="button"
-                    className="admin-create-user-modal__btn admin-create-user-modal__btn--ghost"
-                    onClick={handleCopyPassword}
-                  >
+                  <Button type="button" variant="ghost" size="sm" onClick={handleCopyPassword}>
                     {copyLabel}
-                  </button>
+                  </Button>
                 </dd>
               </div>
             </dl>
 
             <div className="admin-create-user-modal__actions">
-              <button
-                type="button"
-                className="admin-create-user-modal__btn admin-create-user-modal__btn--primary"
-                onClick={handleClose}
-              >
+              <Button type="button" variant="primary" onClick={handleClose}>
                 Cerrar
-              </button>
+              </Button>
             </div>
           </>
         )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { ClubIdentity } from "../../club-experience";
 import { useAdmin } from "../../contexts/AdminContext";
 import { supabase } from "../../lib/supabaseClient";
+import { Button } from "../ui";
 import { UserManagement } from "./UserManagement";
 import "./AdminDashboard.css";
 
@@ -273,13 +274,9 @@ export const AdminDashboard: React.FC = () => {
             <p className="admin-dash__subtitle">{adminUser.email}</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          className="admin-dash__btn-logout"
-          onClick={handleLogout}
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={handleLogout}>
           Cerrar sesión
-        </button>
+        </Button>
       </header>
 
       {error ? (

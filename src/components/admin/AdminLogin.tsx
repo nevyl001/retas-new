@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
 import { ClubIdentity } from "../../club-experience";
 import { RIVIERA_MOTHER_BRAND_NAME } from "../../lib/rivieraBranding";
+import { Button } from "../ui";
 import "./AdminLogin.css";
 
 interface AdminLoginProps {
@@ -99,11 +100,12 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             </div>
           ) : null}
 
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="lg"
             className="admin-login-submit"
-            disabled={busy}
-            aria-busy={busy}
+            loading={busy}
           >
             {busy ? (
               <>
@@ -113,7 +115,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
             ) : (
               <span>Continuar</span>
             )}
-          </button>
+          </Button>
         </form>
 
         <footer className="admin-login-card__footer">

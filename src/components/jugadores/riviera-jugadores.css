@@ -1068,28 +1068,6 @@
   color: var(--ro-success);
 }
 
-.rj-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 0.75rem;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--ro-accent);
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.rj-back--secondary {
-  color: var(--ro-text-muted);
-}
-
-.rj-back--secondary:hover {
-  color: var(--ro-accent);
-}
-
 .rj-ficha-nav {
   display: flex;
   flex-wrap: wrap;

@@ -38,6 +38,7 @@ import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
 import { navigateJugadoresLista } from "./jugadoresGeneroNav";
 import { JugadorAjustePuntosModal } from "./JugadorAjustePuntosModal";
 import { LoadingProgressHint } from "../ui/LoadingProgressHint";
+import { Button } from "../ui";
 import { JugadorCompactRow } from "./JugadorCompactRow";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
 import { AgregarJugadorExistenteModal } from "./AgregarJugadorExistenteModal";
@@ -238,33 +239,37 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   const renderSecondaryActions = () => (
     <>
       {user?.id ? (
-        <a
-          className="rj-btn rj-btn--ghost"
+        <Button
+          as="a"
+          variant="ghost"
+          size="sm"
           href={buildPublicRankingUrl(user.id, genero)}
           target="_blank"
           rel="noopener noreferrer"
         >
           Ranking {genero === "F" ? "femenil" : "varonil"}
-        </a>
+        </Button>
       ) : null}
       {user?.id ? (
-        <button
+        <Button
           type="button"
-          className="rj-btn rj-btn--ghost"
-          disabled={backfilling}
+          variant="ghost"
+          size="sm"
+          loading={backfilling}
           title="Importa historial y recalcula rating de retas, americanos, ligas y duelos finalizados"
           onClick={() => void handleImportHistorial()}
         >
           {backfilling ? "Importando…" : "Importar historial"}
-        </button>
+        </Button>
       ) : null}
-      <button
+      <Button
         type="button"
-        className="rj-btn rj-btn--ghost"
+        variant="ghost"
+        size="sm"
         onClick={() => setExistingModalOpen(true)}
       >
         Agregar jugador existente
-      </button>
+      </Button>
     </>
   );
 
@@ -273,13 +278,9 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   return (
     <div className="rj-page">
       <div className="rj-page__inner">
-        <button
-          type="button"
-          className="rj-back"
-          onClick={() => navigateToAppHome()}
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={() => navigateToAppHome()}>
           ← Volver al inicio
-        </button>
+        </Button>
         <div className="rj-page__top">
           <div>
             <h1 className="rj-page__title">{pageTitle}</h1>
@@ -292,13 +293,9 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             <div className="rj-page__actions-desktop">
               {renderSecondaryActions()}
             </div>
-            <button
-              type="button"
-              className="rj-btn rj-btn--primary"
-              onClick={() => setModalOpen(true)}
-            >
+            <Button type="button" variant="primary" size="sm" onClick={() => setModalOpen(true)}>
               + {RIVIERA_GENERO_NEW_LABEL[genero]}
-            </button>
+            </Button>
             <details className="rj-page__more">
               <summary className="rj-btn rj-btn--ghost rj-page__more-summary">
                 Más ⋯
