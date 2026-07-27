@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAdmin } from "../../contexts/AdminContext";
 import { ClubIdentity } from "../../club-experience";
 import { RIVIERA_MOTHER_BRAND_NAME } from "../../lib/rivieraBranding";
-import { Button } from "../ui";
+import { Button, Input } from "../ui";
 import "./AdminLogin.css";
 
 interface AdminLoginProps {
@@ -60,39 +60,29 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
         </header>
 
         <form onSubmit={handleSubmit} className="admin-login-form" noValidate>
-          <div className="admin-login-field">
-            <label htmlFor="admin-email" className="admin-login-label">
-              Correo electrónico
-            </label>
-            <input
-              id="admin-email"
-              type="email"
-              className="admin-login-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              autoComplete="email"
-              required
-              disabled={busy}
-            />
-          </div>
+          <Input
+            id="admin-email"
+            label="Correo electrónico"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@email.com"
+            autoComplete="email"
+            required
+            disabled={busy}
+          />
 
-          <div className="admin-login-field">
-            <label htmlFor="admin-password" className="admin-login-label">
-              Contraseña
-            </label>
-            <input
-              id="admin-password"
-              type="password"
-              className="admin-login-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Introduce tu contraseña"
-              autoComplete="current-password"
-              required
-              disabled={busy}
-            />
-          </div>
+          <Input
+            id="admin-password"
+            label="Contraseña"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Introduce tu contraseña"
+            autoComplete="current-password"
+            required
+            disabled={busy}
+          />
 
           {error ? (
             <div className="admin-login-error" role="alert">

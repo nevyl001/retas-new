@@ -25,6 +25,16 @@ No todo color no-neutro es "de marca". Distinguir siempre entre dos categorías 
 
 Ejemplo confirmado en código: `--ro-pub-gold` (acento dorado de vistas públicas: bracket, standings, ranking) y `--ro-medal-gold/silver/bronze` (medallas de podio) son **intencionalmente fijos** — no derivan de `--ro-accent` ni deben hacerlo. Es una decisión de producto explícita (2026-07-26): el dorado de "ganador/marcador destacado" es semántica universal de competencia, no branding del club. Antes de "corregir" un color fijo en contexto de resultados/rankings/medallas, verificar primero si es semántico — no asumir que es un bug de branding.
 
+### Regla crítica: uso restrictivo del dorado (2026-07-27)
+
+El dorado (`--ro-medal-gold`, `--ro-gold`, `--ro-pub-gold`, y el acento propio de la cuenta Riviera Open cuando resuelve a un tono dorado) debe usarse **lo menos posible**. No es un color decorativo de la interfaz — pierde valor si aparece seguido.
+
+**Sí usar dorado quando hay significado semántico competitivo real**: primer lugar, campeón, medalla de oro, un logro realmente destacado, o un detalle mínimo de identidad Riviera Open cuando sea indispensable.
+
+**Nunca usar dorado para**: botones normales, headers, bordes generales, fondos, inputs, tabs, navegación, cards comunes, iconos sin significado competitivo, estados activos genéricos, decoraciones.
+
+La base visual por defecto debe ser **negro, blanco, marfil, grises**, más los **colores dinámicos del branding de cada club** (que para cuentas con upgrade propio pueden no ser dorado en absoluto — priorizar siempre el branding propio de la cuenta sobre cualquier acento por defecto). Antes de introducir cualquier uso nuevo de dorado, justificar explícitamente qué jerarquía competitiva o significado semántico representa — si no hay una razón clara, usar un token neutro.
+
 ## Uso de la skill `ui-ux-pro-max`
 
 Al invocar `.claude/skills/ui-ux-pro-max/scripts/search.py`, usar siempre:

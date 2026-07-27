@@ -3,7 +3,7 @@ import {
   createUserAdmin,
   type AdminCreateUserRole,
 } from "../../lib/admin/createUserAdmin";
-import { Button } from "../ui";
+import { Button, Input } from "../ui";
 import "./AdminCreateUserModal.css";
 
 interface AdminCreateUserModalProps {
@@ -165,51 +165,47 @@ export const AdminCreateUserModal: React.FC<AdminCreateUserModalProps> = ({
             </p>
 
             <form className="admin-create-user-modal__form" onSubmit={handleSubmit}>
-              <label className="admin-create-user-modal__field">
-                <span>Nombre</span>
-                <input
+              <Input
+                label="Nombre"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="off"
+                disabled={saving}
+                placeholder="Nombre del organizador"
+              />
+
+              <Input
+                label="Correo electrónico"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="off"
+                disabled={saving}
+                placeholder="correo@ejemplo.com"
+              />
+
+              <div className="admin-create-user-modal__password-row">
+                <Input
+                  className="admin-create-user-modal__password-field"
+                  label="Contraseña temporal"
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoComplete="off"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
                   disabled={saving}
-                  placeholder="Nombre del organizador"
+                  placeholder="Mínimo 8 caracteres"
                 />
-              </label>
-
-              <label className="admin-create-user-modal__field">
-                <span>Correo electrónico</span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="off"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="admin-create-user-modal__password-generate"
+                  onClick={handleGeneratePassword}
                   disabled={saving}
-                  placeholder="correo@ejemplo.com"
-                />
-              </label>
-
-              <div className="admin-create-user-modal__field">
-                <span>Contraseña temporal</span>
-                <div className="admin-create-user-modal__password-row">
-                  <input
-                    type="text"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="new-password"
-                    disabled={saving}
-                    placeholder="Mínimo 8 caracteres"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleGeneratePassword}
-                    disabled={saving}
-                  >
-                    Generar automática
-                  </Button>
-                </div>
+                >
+                  Generar automática
+                </Button>
               </div>
 
               <fieldset className="admin-create-user-modal__role-fieldset">

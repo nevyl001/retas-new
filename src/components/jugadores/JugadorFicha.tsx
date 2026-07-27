@@ -44,7 +44,7 @@ import { RivieraIdShareBlock } from "./RivieraIdShareBlock";
 import { JugadorHistorialList } from "./JugadorHistorialList";
 import { RatingNivel } from "./RatingNivel";
 import { navigateJugadorFicha, navigateJugadores } from "./jugadoresNav";
-import { Button } from "../ui";
+import { Button, Input } from "../ui";
 import "./riviera-jugadores.css";
 
 interface JugadorFichaProps {
@@ -312,27 +312,6 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           </Button>
         </nav>
 
-        {isGrantedReadOnly ? (
-          <p className="rj-ficha-readonly-notice" role="status">
-            Jugador vinculado desde otro club — solo puedes quitarlo de tu lista
-            local. Su carrera global no se modifica.
-          </p>
-        ) : null}
-
-        {canRemove ? (
-          <div className="rj-ficha-actions">
-            <Button
-              type="button"
-              variant="danger"
-              size="sm"
-              loading={leaving}
-              onClick={() => void handleLeaveFromClub()}
-            >
-              {leaving ? "Quitando…" : "Quitar de mi club"}
-            </Button>
-          </div>
-        ) : null}
-
         <header className="rj-ficha-header">
           <div className="rj-ficha-header__avatar-wrap">
             <JugadorAvatar fotoUrl={jugador.foto_url} nombre={jugador.nombre} size="lg" />
@@ -361,19 +340,30 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
               </>
             ) : null}
           </div>
-          <div>
+          <div className="rj-ficha-header__identity">
             <div className="rj-ficha-header__name-row">
               <h1 className="rj-ficha-header__name">{jugador.nombre}</h1>
               <JugadorPaisBadge codigo={jugador.pais_codigo} size="md" />
+              {isGrantedReadOnly ? (
+                <span
+                  className="rj-ficha-cedido-badge"
+                  title="Jugador vinculado desde otro club — solo puedes quitarlo de tu lista local. Su carrera global no se modifica."
+                >
+                  Cedido
+                </span>
+              ) : null}
             </div>
-            <RivieraIdShareBlock jugador={jugador} variant="private" />
-            <JugadorCategoriaBadge categoria={jugador.categoria} />
-            <JugadorPerfilMeta jugador={jugador} variant="inline" />
-            {jugador.club && (
-              <p className="rj-page__sub" style={{ marginTop: 6 }}>
-                {jugador.club}
+            <div className="rj-ficha-header__meta-row">
+              <JugadorCategoriaBadge categoria={jugador.categoria} />
+              <RivieraIdShareBlock jugador={jugador} variant="private" />
+              <JugadorPerfilMeta jugador={jugador} variant="inline" />
+            </div>
+            {jugador.club && <p className="rj-ficha-header__club">{jugador.club}</p>}
+            {isGrantedReadOnly ? (
+              <p className="rj-ficha-header__cedido-hint" role="status">
+                Vinculado desde otro club · su carrera global no se modifica.
               </p>
-            )}
+            ) : null}
             {(jugador.telefono || jugador.email) && (
               <div className="rj-ficha-contacto-privado">
                 <span className="rj-ficha-contacto-privado__lbl">Solo organizador</span>
@@ -392,23 +382,38 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           </div>
         </header>
 
-        {!isGrantedReadOnly && canDelete ? (
-          <div className="rj-ficha-actions">
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditOpen((v) => !v)}>
-              {editOpen ? "Cerrar edición" : "Editar perfil"}
-            </Button>
-            {activeOrgId ? (
-              <Button
-                as="a"
-                variant="ghost"
-                size="sm"
-                href={buildPublicJugadorPath(jugador.slug, activeOrgId)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Ver perfil público
+        <div className="rj-ficha-actions">
+          {!isGrantedReadOnly && canDelete ? (
+            <>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEditOpen((v) => !v)}>
+                {editOpen ? "Cerrar edición" : "Editar perfil"}
               </Button>
-            ) : null}
+              {activeOrgId ? (
+                <Button
+                  as="a"
+                  variant="ghost"
+                  size="sm"
+                  href={buildPublicJugadorPath(jugador.slug, activeOrgId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ver perfil público
+                </Button>
+              ) : null}
+            </>
+          ) : null}
+          {canRemove ? (
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              loading={leaving}
+              onClick={() => void handleLeaveFromClub()}
+            >
+              {leaving ? "Quitando…" : "Quitar de mi club"}
+            </Button>
+          ) : null}
+          {!isGrantedReadOnly && canDelete ? (
             <Button
               type="button"
               variant="danger"
@@ -418,28 +423,26 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             >
               {deleting ? "Eliminando…" : "Eliminar jugador"}
             </Button>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
 
         {!isGrantedReadOnly && editOpen && (
           <section className="rj-edit-panel">
             <h2 className="rj-edit-panel__title">Datos del jugador</h2>
-            <div className="rj-field">
-              <label htmlFor="rj-nombre">Nombre</label>
-              <input
-                id="rj-nombre"
-                type="text"
-                autoComplete="name"
-                placeholder="Nombre del jugador"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-            </div>
-            <div className="rj-field">
-              <label htmlFor="rj-cat">Categoría</label>
+            <Input
+              id="rj-nombre"
+              label="Nombre"
+              type="text"
+              autoComplete="name"
+              placeholder="Nombre del jugador"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+            <div className="riviera-field">
+              <label className="riviera-label" htmlFor="rj-cat">Categoría</label>
               <select
                 id="rj-cat"
-                className="rj-select"
+                className="riviera-input"
                 value={categoria}
                 onChange={(e) =>
                   setCategoria(e.target.value as RivieraJugadorCategoria)
@@ -452,11 +455,11 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
                 ))}
               </select>
             </div>
-            <div className="rj-field">
-              <label htmlFor="rj-pais">País / bandera</label>
+            <div className="riviera-field">
+              <label className="riviera-label" htmlFor="rj-pais">País / bandera</label>
               <select
                 id="rj-pais"
-                className="rj-select"
+                className="riviera-input"
                 value={paisCodigo}
                 onChange={(e) => setPaisCodigo(e.target.value)}
               >
@@ -469,23 +472,21 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
               </select>
             </div>
             <div className="rj-edit-grid">
-              <div className="rj-field">
-                <label htmlFor="rj-edad">Edad</label>
-                <input
-                  id="rj-edad"
-                  type="number"
-                  min={5}
-                  max={99}
-                  placeholder="Ej. 28"
-                  value={edad}
-                  onChange={(e) => setEdad(e.target.value)}
-                />
-              </div>
-              <div className="rj-field">
-                <label htmlFor="rj-mano">Mano dominante</label>
+              <Input
+                id="rj-edad"
+                label="Edad"
+                type="number"
+                min={5}
+                max={99}
+                placeholder="Ej. 28"
+                value={edad}
+                onChange={(e) => setEdad(e.target.value)}
+              />
+              <div className="riviera-field">
+                <label className="riviera-label" htmlFor="rj-mano">Mano dominante</label>
                 <select
                   id="rj-mano"
-                  className="rj-select"
+                  className="riviera-input"
                   value={mano}
                   onChange={(e) => setMano(e.target.value as ManoDominante | "")}
                 >
@@ -499,11 +500,11 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
                   )}
                 </select>
               </div>
-              <div className="rj-field">
-                <label htmlFor="rj-cancha">En la cancha</label>
+              <div className="riviera-field">
+                <label className="riviera-label" htmlFor="rj-cancha">En la cancha</label>
                 <select
                   id="rj-cancha"
-                  className="rj-select"
+                  className="riviera-input"
                   value={enCancha}
                   onChange={(e) => setEnCancha(e.target.value as EnCancha | "")}
                 >
@@ -518,58 +519,48 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
             </div>
             <p className="rj-edit-section-label">Contacto (privado — no aparece al público)</p>
             <div className="rj-edit-grid">
-              <div className="rj-field">
-                <label htmlFor="rj-tel">Teléfono</label>
-                <input
-                  id="rj-tel"
-                  type="tel"
-                  placeholder="+52 …"
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                />
-              </div>
-              <div className="rj-field">
-                <label htmlFor="rj-email">Email</label>
-                <input
-                  id="rj-email"
-                  type="email"
-                  placeholder="correo@ejemplo.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+              <Input
+                id="rj-tel"
+                label="Teléfono"
+                type="tel"
+                placeholder="+52 …"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+              />
+              <Input
+                id="rj-email"
+                label="Email"
+                type="email"
+                placeholder="correo@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <p className="rj-edit-section-label">Redes sociales (públicas en el perfil)</p>
-            <div className="rj-field">
-              <label htmlFor="rj-ig">Instagram (URL)</label>
-              <input
-                id="rj-ig"
-                type="url"
-                placeholder="https://instagram.com/..."
-                value={instagram}
-                onChange={(e) => setInstagram(e.target.value)}
-              />
-            </div>
-            <div className="rj-field">
-              <label htmlFor="rj-fb">Facebook (URL)</label>
-              <input
-                id="rj-fb"
-                type="url"
-                placeholder="https://facebook.com/..."
-                value={facebook}
-                onChange={(e) => setFacebook(e.target.value)}
-              />
-            </div>
-            <div className="rj-field">
-              <label htmlFor="rj-tt">TikTok (URL)</label>
-              <input
-                id="rj-tt"
-                type="url"
-                placeholder="https://tiktok.com/@..."
-                value={tiktok}
-                onChange={(e) => setTiktok(e.target.value)}
-              />
-            </div>
+            <Input
+              id="rj-ig"
+              label="Instagram (URL)"
+              type="url"
+              placeholder="https://instagram.com/..."
+              value={instagram}
+              onChange={(e) => setInstagram(e.target.value)}
+            />
+            <Input
+              id="rj-fb"
+              label="Facebook (URL)"
+              type="url"
+              placeholder="https://facebook.com/..."
+              value={facebook}
+              onChange={(e) => setFacebook(e.target.value)}
+            />
+            <Input
+              id="rj-tt"
+              label="TikTok (URL)"
+              type="url"
+              placeholder="https://tiktok.com/@..."
+              value={tiktok}
+              onChange={(e) => setTiktok(e.target.value)}
+            />
             <div className="rj-edit-panel__actions">
               <Button
                 type="button"
@@ -637,11 +628,12 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           fiabilidad={jugador.rating_fiabilidad ?? 0.2}
           partidosJugados={jugador.rating_partidos ?? 0}
           historial={historialRating}
+          density="compact"
         />
 
         {s?.racha_actual && (
           <p className="rj-page__sub" style={{ marginBottom: "1rem" }}>
-            Racha: <strong style={{ color: "var(--ro-accent)" }}>{s.racha_actual}</strong>
+            Racha: <strong style={{ color: "var(--ro-text-primary)" }}>{s.racha_actual}</strong>
           </p>
         )}
 

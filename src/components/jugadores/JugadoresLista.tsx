@@ -321,7 +321,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
-            className="rj-select"
+            className="riviera-input"
             value={nivelFilter}
             onChange={(e) => setNivelFilter(e.target.value)}
             aria-label="Filtrar por categoría"
@@ -333,7 +333,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
               </option>
             ))}
           </select>
-          <label className="rj-select" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <label className="rj-checkbox-pill">
             <input
               type="checkbox"
               checked={recientes}

@@ -62,39 +62,19 @@
   gap: 1rem;
 }
 
-.admin-create-user-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-  font-size: 0.8125rem;
-  color: var(--ro-text-muted);
-}
-
-.admin-create-user-modal__field input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--ro-border-strong);
-  background: var(--ro-bg-card);
-  color: var(--ro-text-primary);
-  font-size: 0.875rem;
-  font-family: inherit;
-}
-
-.admin-create-user-modal__field input:focus {
-  outline: none;
-  border-color: var(--ro-border);
-}
-
 .admin-create-user-modal__password-row {
   display: flex;
   gap: 8px;
-  align-items: stretch;
+  align-items: flex-end;
 }
 
-.admin-create-user-modal__password-row input {
+.admin-create-user-modal__password-field {
   flex: 1;
   min-width: 0;
+}
+
+.admin-create-user-modal__password-generate {
+  flex-shrink: 0;
 }
 
 .admin-create-user-modal__role-fieldset {

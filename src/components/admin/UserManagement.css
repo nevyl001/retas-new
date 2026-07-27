@@ -116,25 +116,8 @@
 }
 
 .search-input {
-  width: 100%;
-  box-sizing: border-box;
   flex: 1;
   min-width: 200px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--admin-input-bg);
-  border: 1px solid var(--admin-input-border);
-  color: var(--admin-text);
-  font-size: 14px;
-}
-
-.search-input::placeholder {
-  color: #52525b;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--ro-border);
 }
 
 .filter-controls {
@@ -142,21 +125,6 @@
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-}
-
-.filter-select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--admin-input-bg);
-  border: 1px solid var(--admin-input-border);
-  color: var(--admin-text);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: var(--ro-border);
 }
 
 /* Lista */

@@ -463,7 +463,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
               placeholder="Buscar por nombre o email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
+              className="search-input riviera-input"
             />
           </div>
         </div>
@@ -472,7 +472,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
           <select
             value={filterBy}
             onChange={(e) => setFilterBy(e.target.value as "all" | "active" | "inactive")}
-            className="filter-select"
+            className="riviera-input"
           >
             <option value="all">Todos los usuarios</option>
             <option value="active">Con actividad en curso</option>
@@ -492,7 +492,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({
                   | "activity_total"
               )
             }
-            className="filter-select"
+            className="riviera-input"
           >
             <option value="created_at">Ordenar por fecha de registro</option>
             <option value="updated_at">Ordenar por última actualización</option>

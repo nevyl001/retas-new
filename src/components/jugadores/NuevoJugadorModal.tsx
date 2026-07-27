@@ -22,7 +22,7 @@ import {
   isValidEmailFormat,
   normalizeEmailInput,
 } from "../../lib/rivieraJugadores/emailValidation";
-import { Button } from "../ui";
+import { Button, Input } from "../ui";
 
 interface NuevoJugadorModalProps {
   open: boolean;
@@ -112,39 +112,33 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
       >
         <h2 id="rj-modal-title">{RIVIERA_GENERO_NEW_LABEL[genero]}</h2>
         <form onSubmit={handleSubmit}>
-          <div className="rj-field">
-            <label htmlFor="rj-nombre">Nombre *</label>
-            <input
-              id="rj-nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              autoFocus
-              required
-            />
-          </div>
-          <div className="rj-field">
-            <label htmlFor="rj-email">Email *</label>
-            <input
-              id="rj-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="rj-field">
-            <label htmlFor="rj-tel">Teléfono / WhatsApp</label>
-            <input
-              id="rj-tel"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-            />
-          </div>
-          <div className="rj-field">
-            <label htmlFor="rj-pais-new">País / bandera</label>
+          <Input
+            id="rj-nombre"
+            label="Nombre *"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            autoFocus
+            required
+          />
+          <Input
+            id="rj-email"
+            label="Email *"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            id="rj-tel"
+            label="Teléfono / WhatsApp"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+          />
+          <div className="riviera-field">
+            <label className="riviera-label" htmlFor="rj-pais-new">País / bandera</label>
             <select
               id="rj-pais-new"
-              className="rj-select"
+              className="riviera-input"
               value={paisCodigo}
               onChange={(e) => setPaisCodigo(e.target.value)}
             >
@@ -156,11 +150,11 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
               ))}
             </select>
           </div>
-          <div className="rj-field">
-            <label htmlFor="rj-cat-new">Categoría</label>
+          <div className="riviera-field">
+            <label className="riviera-label" htmlFor="rj-cat-new">Categoría</label>
             <select
               id="rj-cat-new"
-              className="rj-select"
+              className="riviera-input"
               value={categoria}
               onChange={(e) =>
                 setCategoria(e.target.value as RivieraJugadorCategoria)
@@ -174,22 +168,20 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
             </select>
           </div>
           <div className="rj-edit-grid">
-            <div className="rj-field">
-              <label htmlFor="rj-edad-new">Edad</label>
-              <input
-                id="rj-edad-new"
-                type="number"
-                min={5}
-                max={99}
-                value={edad}
-                onChange={(e) => setEdad(e.target.value)}
-              />
-            </div>
-            <div className="rj-field">
-              <label htmlFor="rj-mano-new">Mano dominante</label>
+            <Input
+              id="rj-edad-new"
+              label="Edad"
+              type="number"
+              min={5}
+              max={99}
+              value={edad}
+              onChange={(e) => setEdad(e.target.value)}
+            />
+            <div className="riviera-field">
+              <label className="riviera-label" htmlFor="rj-mano-new">Mano dominante</label>
               <select
                 id="rj-mano-new"
-                className="rj-select"
+                className="riviera-input"
                 value={mano}
                 onChange={(e) => setMano(e.target.value as ManoDominante | "")}
               >
@@ -203,11 +195,11 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
                 )}
               </select>
             </div>
-            <div className="rj-field">
-              <label htmlFor="rj-cancha-new">En la cancha</label>
+            <div className="riviera-field">
+              <label className="riviera-label" htmlFor="rj-cancha-new">En la cancha</label>
               <select
                 id="rj-cancha-new"
-                className="rj-select"
+                className="riviera-input"
                 value={enCancha}
                 onChange={(e) => setEnCancha(e.target.value as EnCancha | "")}
               >
@@ -220,9 +212,7 @@ export const NuevoJugadorModal: React.FC<NuevoJugadorModalProps> = ({
               </select>
             </div>
           </div>
-          {error && (
-            <p style={{ color: "#ff3b30", fontSize: "0.8125rem" }}>{error}</p>
-          )}
+          {error && <p className="riviera-field-error">{error}</p>}
           <div className="rj-modal__actions">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancelar
