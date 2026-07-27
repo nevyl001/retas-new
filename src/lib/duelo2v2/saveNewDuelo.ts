@@ -8,6 +8,8 @@ export type SaveNewDueloFormInput = {
   organizadorId: string;
   nombre: string;
   cancha: string;
+  /** Categoría / nivel del encuentro; se persiste en `duelos_2v2.descripcion`. */
+  categoria?: string;
   lugar?: string;
   mostrarLugar?: boolean;
   draftDate: string;
@@ -52,8 +54,10 @@ export async function saveNewDuelo2v2(
     throw new Error(schedule.error);
   }
 
+  const categoria = form.categoria?.trim() || undefined;
   const duelo = await deps.createDuelo2v2OpenDraft({
     nombre,
+    descripcion: categoria,
     cancha: normalizeCanchaForSave(form.cancha),
     lugar: form.lugar?.trim() || undefined,
     mostrar_lugar: form.mostrarLugar !== false,

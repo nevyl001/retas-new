@@ -44,6 +44,37 @@ describe("saveNewDuelo2v2", () => {
     );
   });
 
+  it("persiste categoría en descripcion al crear", async () => {
+    const create = jest.fn().mockResolvedValue({
+      id: "duelo-cat-1",
+      nombre: "Con categoría",
+      descripcion: "5ta Fuerza",
+      estado: "configuracion",
+    });
+    await saveNewDuelo2v2(
+      {
+        organizadorId: "org-1",
+        nombre: "Con categoría",
+        cancha: "1",
+        categoria: "  5ta Fuerza  ",
+        draftDate: "2026-07-20",
+        draftTimeStart: "15:00",
+        draftTimeEnd: "17:00",
+      },
+      {
+        createDuelo2v2OpenDraft: create,
+        navigate: jest.fn(),
+        gestionarPath: (id) => `/duelo-2v2/${id}/gestionar`,
+      }
+    );
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        nombre: "Con categoría",
+        descripcion: "5ta Fuerza",
+      })
+    );
+  });
+
   it("no reutiliza openDueloId (create sin existingId)", async () => {
     const create = jest.fn().mockResolvedValue({
       id: "fresh-1",

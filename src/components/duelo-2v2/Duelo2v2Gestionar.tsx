@@ -93,6 +93,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           openDueloId: d.id,
           nombre: d.nombre,
           cancha: d.cancha ?? "",
+          categoria: d.descripcion?.trim() || "",
         });
       } else {
         const pending = peekDuelo2v2CreateDraft(d.organizador_id);
@@ -385,6 +386,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   scheduledAt: duelo.programado_en,
                   scheduledUntil: duelo.programado_hasta,
                   clubName: convocatoriaOrigin,
+                  categoryLabel: duelo.descripcion?.trim() || undefined,
                 })}
               />
               <PublicShareSection
@@ -494,6 +496,10 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     {
                       label: "Lugar",
                       value: includeLugar ? lugarConvocatoria : "Oculto",
+                    },
+                    {
+                      label: "Categoría",
+                      value: duelo.descripcion?.trim() || "—",
                     },
                     {
                       label: "Estado",

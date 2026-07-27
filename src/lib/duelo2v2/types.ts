@@ -71,6 +71,8 @@ export interface UpdateDuelo2v2ScoreInput {
 
 export interface UpdateDuelo2v2DetailsInput {
   nombre: string;
+  /** Categoría / nivel del encuentro (columna `descripcion`). */
+  descripcion?: string | null;
   cancha?: string;
   lugar?: string | null;
   mostrar_lugar?: boolean;

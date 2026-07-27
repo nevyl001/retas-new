@@ -33,6 +33,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
   const convocatoriaOrigin = useConvocatoriaOriginName();
   const [open, setOpen] = useState(false);
   const [nombre, setNombre] = useState(duelo.nombre);
+  const [categoria, setCategoria] = useState(duelo.descripcion?.trim() || "");
   const [mostrarLugar, setMostrarLugar] = useState(true);
   const [lugar, setLugar] = useState("");
   const [cancha, setCancha] = useState(
@@ -48,6 +49,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
     const schedule = dueloScheduleDraftFromDuelo(duelo);
     const prefs = readDueloLugarPrefs(duelo.id);
     setNombre(duelo.nombre);
+    setCategoria(duelo.descripcion?.trim() || "");
     setCancha(dueloCanchaDraftFromDuelo(duelo) || CANCHA_DEFAULT_VALUE);
     setDraftDate(schedule.date);
     setDraftTimeStart(schedule.timeStart);
@@ -103,6 +105,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
       });
       const updated = await updateDuelo2v2Details(duelo.id, {
         nombre: nombre.trim(),
+        descripcion: categoria.trim() || null,
         cancha: normalizeCanchaForSave(cancha),
         lugar: lugarTrim || null,
         mostrar_lugar: mostrarLugar,
@@ -152,6 +155,29 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
               onChange={(e) => setNombre(e.target.value)}
               required
             />
+          </div>
+
+          <div className="duelo2v2-form__schedule-row">
+            <label className="duelo2v2-form__field">
+              <span className="duelo2v2-form__field-label">Categoría / nivel</span>
+              <input
+                id={`duelo-edit-categoria-${duelo.id}`}
+                type="text"
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                placeholder="Ej. 5ta Fuerza"
+                list={`duelo-edit-categoria-sugerencias-${duelo.id}`}
+              />
+              <datalist id={`duelo-edit-categoria-sugerencias-${duelo.id}`}>
+                <option value="Open" />
+                <option value="1ra Fuerza" />
+                <option value="2da Fuerza" />
+                <option value="3ra Fuerza" />
+                <option value="4ta Fuerza" />
+                <option value="5ta Fuerza" />
+                <option value="6ta Fuerza" />
+              </datalist>
+            </label>
           </div>
 
           <div className="duelo2v2-form__lugar-block">

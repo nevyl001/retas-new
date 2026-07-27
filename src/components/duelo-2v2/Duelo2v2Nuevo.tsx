@@ -171,6 +171,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
           organizadorId: user.id,
           nombre,
           cancha,
+          categoria,
           lugar: mostrarLugar ? lugar : "",
           mostrarLugar,
           draftDate,
@@ -186,7 +187,8 @@ export const Duelo2v2Nuevo: React.FC = () => {
               openDueloId: duelo.id,
               nombre: duelo.nombre,
               cancha: duelo.cancha ?? cancha,
-              categoria: categoria.trim(),
+              categoria:
+                duelo.descripcion?.trim() || categoria.trim(),
               draftDate,
               draftTimeStart,
               draftTimeEnd,

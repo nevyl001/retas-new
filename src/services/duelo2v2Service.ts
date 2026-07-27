@@ -398,6 +398,9 @@ export async function updateDuelo2v2Details(
 
   const basePayload = {
     nombre,
+    ...(input.descripcion !== undefined
+      ? { descripcion: input.descripcion?.trim() || null }
+      : {}),
     cancha: input.cancha?.trim() || null,
     programado_en: input.programado_en ?? null,
     programado_hasta: input.programado_hasta ?? null,
