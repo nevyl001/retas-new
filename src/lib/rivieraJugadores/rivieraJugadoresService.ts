@@ -248,14 +248,18 @@ function emptyLocalJugadorStats(jugadorId: string): JugadorStats {
 async function fetchSourceJugadorForGrant(
   sourceJugadorId: string
 ): Promise<Record<string, unknown> | null> {
+  // Solo identidad/display pública: consumidores usan nombre/categoria/id +
+  // loadGrantedSourceDisplayData (rating/foto). No leen email/tel/wa/fecha.
   for (const client of [supabasePublicRead, supabase]) {
-    const { data, error } = await client
-      .from("riviera_jugadores")
-      .select("*")
-      .eq("id", sourceJugadorId)
-      .maybeSingle();
+    const { data, error } = await withJugadorSelectPublicFallback((cols) =>
+      client
+        .from("riviera_jugadores")
+        .select(cols)
+        .eq("id", sourceJugadorId)
+        .maybeSingle()
+    );
 
-    if (!error && data) return data as Record<string, unknown>;
+    if (!error && data) return data as unknown as Record<string, unknown>;
     if (error && !isMissingTableError(error) && client === supabase) throw error;
   }
   return null;
@@ -550,7 +554,7 @@ async function fetchInternalClubJugadorRow(
   }
 
   const { data: fallbackData, error: fallbackError } =
-    await withJugadorSelectFallback((cols) => {
+    await withJugadorSelectPublicFallback((cols) => {
       let q = supabasePublicRead
         .from("riviera_jugadores")
         .select(jugadorSelectWithStats(cols))
@@ -1789,7 +1793,7 @@ export async function getRivieraJugadorPublicById(
   const { isJugadorVisibleSitioOficial } = await import("../admin/accountControls");
   if (!(await isJugadorVisibleSitioOficial(jugadorId))) return null;
 
-  const { data, error } = await withJugadorSelectFallback((cols) =>
+  const { data, error } = await withJugadorSelectPublicFallback((cols) =>
     supabase
       .from("riviera_jugadores")
       .select(jugadorSelectWithStats(cols))
@@ -2073,7 +2077,7 @@ export async function listInternalClubJugadoresRanking(
     throw error;
   }
 
-  const { data: viewData, error: viewError } = await withJugadorSelectFallback((cols) => {
+  const { data: viewData, error: viewError } = await withJugadorSelectPublicFallback((cols) => {
     let q = supabasePublicRead
       .from("riviera_jugadores")
       .select(jugadorSelectWithStats(cols))
@@ -2149,7 +2153,7 @@ export async function getRivieraJugadorPublicBySlug(
     return row ? enrichJugadorWithRivieraId(row, { publicRanking: true }) : null;
   }
 
-  const { data, error } = await withJugadorSelectFallback((cols) => {
+  const { data, error } = await withJugadorSelectPublicFallback((cols) => {
     let q = supabase
       .from("riviera_jugadores")
       .select(jugadorSelectWithStats(cols))
@@ -2182,7 +2186,7 @@ export async function listPublicJugadoresRanking(
   const publicado = await isOrganizadorRankingPublico(organizadorId);
   if (!publicado) return [];
 
-  const { data, error } = await withJugadorSelectFallback((cols) => {
+  const { data, error } = await withJugadorSelectPublicFallback((cols) => {
     let q = supabase
       .from("riviera_jugadores")
       .select(jugadorSelectWithStats(cols))
