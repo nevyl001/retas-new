@@ -77,7 +77,7 @@ export const JUGADOR_SELECT_PRIVATE =
 /**
  * Select público: mismas columnas que PRIVATE menos email, telefono, whatsapp
  * y fecha_nacimiento. Alineado al GRANT anon de columnas (rating se añade vía
- * JUGADOR_RATING_COLS). Ningún caller de producto lo usa aún.
+ * JUGADOR_RATING_COLS). Usado por ficha/ranking públicos y list/search de producto.
  */
 export const JUGADOR_SELECT_PUBLIC =
   "id,nombre,slug,foto_url,nivel,categoria,edad,mano_dominante,en_cancha,pais_codigo,instagram_url,facebook_url,tiktok_url,visible_publico,suma_ranking,genero,club,organizador_id,estado,legacy_player_id,legacy_liga_jugador_id,created_at,updated_at";
@@ -189,6 +189,19 @@ function normalizeJugadorFields(
   }
   if (j.pais_codigo === undefined) {
     j.pais_codigo = null;
+  }
+  // PUBLIC select omite contacto; normalizar a null para el DTO tipado.
+  if (j.email === undefined) {
+    j.email = null;
+  }
+  if (j.telefono === undefined) {
+    j.telefono = null;
+  }
+  if (j.whatsapp === undefined) {
+    j.whatsapp = null;
+  }
+  if (j.fecha_nacimiento === undefined) {
+    j.fecha_nacimiento = null;
   }
   const ratingRaw = raw.rating;
   const partidosRaw = raw.rating_partidos;
@@ -741,10 +754,15 @@ export async function listRivieraJugadoresPrivate(
   return listRivieraJugadoresWithCacheKey(
     organizadorId,
     opts,
-    buildRivieraListCacheKeyPrivate
+    buildRivieraListCacheKeyPrivate,
+    withJugadorSelectFallback
   );
 }
 
+/**
+ * Listado de producto sin contacto (JUGADOR_SELECT_PUBLIC).
+ * Sync/legacy deben usar listRivieraJugadoresPrivate.
+ */
 export async function listRivieraJugadores(
   organizadorId: string,
   opts?: ListRivieraJugadoresOpts
@@ -753,7 +771,8 @@ export async function listRivieraJugadores(
   return listRivieraJugadoresWithCacheKey(
     organizadorId,
     opts,
-    buildRivieraListCacheKey
+    buildRivieraListCacheKey,
+    withJugadorSelectPublicFallback
   );
 }
 
@@ -763,7 +782,10 @@ async function listRivieraJugadoresWithCacheKey(
   buildCacheKey: (
     organizadorId: string,
     opts?: ListRivieraJugadoresOpts
-  ) => string | null
+  ) => string | null,
+  withSelect:
+    | typeof withJugadorSelectFallback
+    | typeof withJugadorSelectPublicFallback
 ): Promise<RivieraJugadorWithStats[]> {
   const {
     getCachedRivieraJugadoresList,
@@ -799,10 +821,7 @@ async function listRivieraJugadoresWithCacheKey(
     return q;
   };
 
-  // Ambos listados siguen en PRIVATE hasta migrar listRivieraJugadores a PUBLIC.
-  const { data, error } = await withJugadorSelectFallback((cols) =>
-    buildQuery(cols)
-  );
+  const { data, error } = await withSelect((cols) => buildQuery(cols));
   if (error) {
     if (isMissingTableError(error)) return [];
     throw error;

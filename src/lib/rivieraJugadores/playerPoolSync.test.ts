@@ -1,6 +1,8 @@
 import { mergeRivieraContactIntoLegacyPlayer } from "./playerPoolSync";
 import type { Player } from "../db/types";
 import type { RivieraJugador } from "./types";
+import * as fs from "fs";
+import * as path from "path";
 
 function legacy(
   email: string,
@@ -67,5 +69,23 @@ describe("mergeRivieraContactIntoLegacyPlayer", () => {
     );
     expect(merged.email).toBe("memo@ejemplo.com");
     expect(merged.email_verified).toBe(true);
+  });
+});
+
+describe("playerPoolSync — ruta PRIVATE de contacto", () => {
+  it("sync legacy/liga y build pool usan listRivieraJugadoresPrivate", () => {
+    const src = fs.readFileSync(
+      path.join(__dirname, "playerPoolSync.ts"),
+      "utf8"
+    );
+    expect(src).toMatch(/listRivieraJugadoresPrivate\(organizadorId/);
+    expect(src).toMatch(
+      /listRivieraJugadoresPrivate\(organizadorId,\s*\{\s*skipCareerEnrich:\s*true/
+    );
+    // Remap liga: PRIVATE by id, no select("*") sobre riviera_jugadores.
+    expect(src).toMatch(/getRivieraJugadorPrivateById\(effectiveId\)/);
+    expect(src).not.toMatch(
+      /from\("riviera_jugadores"\)\s*\n\s*\.select\("\*"\)/
+    );
   });
 });
