@@ -627,7 +627,7 @@ export async function syncRivieraJugadorToLinkedPools(
   const legacyLigaId = sanitizeUuid(rj.legacy_liga_jugador_id);
   if (legacyLigaId) {
     try {
-      await supabase
+      const { error: ligaSyncError } = await supabase
         .from("liga_jugadores")
         .update({
           nombre,
@@ -636,6 +636,9 @@ export async function syncRivieraJugadorToLinkedPools(
         })
         .eq("id", legacyLigaId)
         .eq("organizador_id", organizadorId);
+      if (ligaSyncError) {
+        console.warn("syncRivieraJugadorToLinkedPools liga:", ligaSyncError);
+      }
     } catch (e) {
       console.warn("syncRivieraJugadorToLinkedPools liga:", e);
     }

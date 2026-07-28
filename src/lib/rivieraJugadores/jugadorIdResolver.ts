@@ -311,16 +311,28 @@ export async function getOrCreateJugadorId(params: {
         { skipEmailRequirement: true }
       );
       if (legacyPlayerId) {
-        await supabase
+        const { error: legacyPlayerIdError } = await supabase
           .from("riviera_jugadores")
           .update({ legacy_player_id: legacyPlayerId })
           .eq("id", createdViaService.id);
+        if (legacyPlayerIdError) {
+          console.warn(
+            "[riviera-jugadores] getOrCreateJugadorId legacy_player_id link:",
+            legacyPlayerIdError
+          );
+        }
       }
       if (legacyLigaJugadorId) {
-        await supabase
+        const { error: legacyLigaJugadorIdError } = await supabase
           .from("riviera_jugadores")
           .update({ legacy_liga_jugador_id: legacyLigaJugadorId })
           .eq("id", createdViaService.id);
+        if (legacyLigaJugadorIdError) {
+          console.warn(
+            "[riviera-jugadores] getOrCreateJugadorId legacy_liga_jugador_id link:",
+            legacyLigaJugadorIdError
+          );
+        }
       }
       return finalizeJugadorIdForRanking(createdViaService.id);
     }

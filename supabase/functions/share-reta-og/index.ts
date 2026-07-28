@@ -214,11 +214,16 @@ async function resolveFromDest(
     };
   }
 
+  // NOTA (auditoría 2026-07-28): el match /torneo-express/:id es amplio y
+  // captura el primer segmento tras /torneo-express/ tal cual, sin validar
+  // contra las rutas reales de TorneoExpressRouter.tsx (general/grupos/
+  // grupo/eliminatoria). Antes de desplegar esta función, revisar que ese
+  // id corresponda siempre a torneo_express.id.
   const te = path.match(/^\/torneo-express\/([^/]+)/i);
   if (te?.[1]) {
     const id = decodeURIComponent(te[1]);
     const { data: t } = await sb
-      .from("torneos_express")
+      .from("torneo_express")
       .select("id, nombre, organizador_id")
       .eq("id", id)
       .maybeSingle();
@@ -234,7 +239,7 @@ async function resolveFromDest(
   if (evento?.[1]) {
     const slug = decodeURIComponent(evento[1]);
     const { data: e } = await sb
-      .from("eventos")
+      .from("torneo_express_evento")
       .select("id, nombre, organizador_id, slug")
       .eq("slug", slug)
       .maybeSingle();
