@@ -159,10 +159,6 @@
   pointer-events: none;
 }
 
-.auth-page .riviera-input-wrap .riviera-input {
-  padding-left: 2.65rem;
-}
-
 .auth-password-field__wrap {
   position: relative;
   display: flex;
@@ -181,8 +177,13 @@
   pointer-events: none;
 }
 
-.auth-password-field__input--with-icon {
-  padding-left: 2.65rem;
+/*
+  padding shorthand de .auth-page .auth-password-field__input gana por
+  especificidad; hay que reafirmar left/right después.
+*/
+.auth-page .riviera-input-wrap .riviera-input,
+.auth-page .auth-password-field__input--with-icon {
+  padding-left: 2.85rem;
 }
 
 .auth-page .riviera-input::placeholder,
@@ -411,6 +412,7 @@
   box-sizing: border-box;
 }
 
+.auth-page .auth-password-field__input,
 .auth-password-field__input {
   padding-right: 5.5rem;
 }
@@ -491,6 +493,15 @@
     padding: 0.625rem 0.875rem;
     font-size: 16px; /* evita zoom iOS */
     border-radius: var(--ro-radius-md);
+  }
+
+  .auth-page .riviera-input-wrap .riviera-input,
+  .auth-page .auth-password-field__input--with-icon {
+    padding-left: 2.85rem;
+  }
+
+  .auth-page .auth-password-field__input {
+    padding-right: 5.5rem;
   }
 
   .auth-password-field__toggle {
