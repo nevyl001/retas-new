@@ -1429,63 +1429,27 @@ export function subscribeTorneoExpress(
   };
 }
 
+/**
+ * Elimina un torneo (categoría) completo vía RPC transaccional -- revierte
+ * rating/ledger/totales de sus participaciones antes de borrar el árbol
+ * (RANK-002, supabase/fix-rank002-safe-delete-cascade-20260729.sql). El
+ * árbol de tablas hijas (grupos/partidos/parejas/notificaciones) se borra
+ * solo por ON DELETE CASCADE dentro de la misma RPC -- ya no se hace paso a
+ * paso desde aquí.
+ */
 export async function deleteTorneoExpress(torneoId: string): Promise<void> {
   const user = await requireAuthUser();
 
-  const { data: torneo, error: tErr } = await supabase
-    .from("torneo_express")
-    .select("id, organizador_id")
-    .eq("id", torneoId)
-    .maybeSingle();
-  throwIfError(tErr, "deleteTorneoExpress.verificar");
-  if (!torneo) {
+  const { data, error } = await supabase.rpc(
+    "admin_delete_torneo_express_categoria_cascade",
+    { p_organizador_id: user.id, p_torneo_id: torneoId }
+  );
+  throwIfError(error, "deleteTorneoExpress");
+
+  const status = (data as { status?: string } | null)?.status;
+  if (status === "not_found") {
     throw new Error("Torneo no encontrado");
   }
-  if (torneo.organizador_id !== user.id) {
-    throw new Error("No tienes permiso para eliminar este torneo");
-  }
-
-  const { error: elimErr } = await supabase
-    .from("torneo_express_eliminatoria_partidos")
-    .delete()
-    .eq("torneo_id", torneoId);
-  if (elimErr && !isBracketSchemaError(elimErr)) {
-    throwIfError(elimErr, "deleteTorneoExpress.eliminatoria");
-  }
-
-  const { data: grupos, error: gErr } = await supabase
-    .from("torneo_express_grupos")
-    .select("id")
-    .eq("torneo_id", torneoId);
-  throwIfError(gErr, "deleteTorneoExpress.grupos");
-
-  const grupoIds = (grupos ?? []).map((g: { id: string }) => g.id);
-
-  if (grupoIds.length > 0) {
-    const { error: partErr } = await supabase
-      .from("torneo_express_partidos")
-      .delete()
-      .in("grupo_id", grupoIds);
-    throwIfError(partErr, "deleteTorneoExpress.partidos");
-
-    const { error: parejaErr } = await supabase
-      .from("torneo_express_grupo_parejas")
-      .delete()
-      .in("grupo_id", grupoIds);
-    throwIfError(parejaErr, "deleteTorneoExpress.grupo_parejas");
-  }
-
-  const { error: gruposDelErr } = await supabase
-    .from("torneo_express_grupos")
-    .delete()
-    .eq("torneo_id", torneoId);
-  throwIfError(gruposDelErr, "deleteTorneoExpress.eliminar_grupos");
-
-  const { error: torneoDelErr } = await supabase
-    .from("torneo_express")
-    .delete()
-    .eq("id", torneoId);
-  throwIfError(torneoDelErr, "deleteTorneoExpress.torneo");
 }
 
 /**

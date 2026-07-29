@@ -531,58 +531,26 @@ async function insertJornadasForLiga(
   }
 }
 
-/** Elimina la liga y todos sus datos (inscripciones, jornadas, partidos). */
+/**
+ * Elimina la liga y todos sus datos vía RPC transaccional -- revierte
+ * rating/ledger/totales de sus participaciones antes de borrar el árbol
+ * (RANK-002, supabase/fix-rank002-safe-delete-cascade-20260729.sql). El
+ * árbol de tablas hijas (jornadas/partidos/parejas/inscripciones/equipos) se
+ * borra solo por ON DELETE CASCADE dentro de la misma RPC.
+ */
 export async function deleteLiga(ligaId: string): Promise<void> {
   const uid = await requireUserId();
 
-  const { data: liga, error: lErr } = await supabase
-    .from("ligas")
-    .select("id, organizador_id")
-    .eq("id", ligaId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("admin_delete_liga_cascade", {
+    p_organizador_id: uid,
+    p_liga_id: ligaId,
+  });
+  if (error) throw new Error(error.message);
 
-  if (lErr) throw new Error(lErr.message);
-  if (!liga) throw new Error("Liga no encontrada.");
-  if (liga.organizador_id !== uid) {
-    throw new Error("No tienes permiso para eliminar esta liga.");
+  const status = (data as { status?: string } | null)?.status;
+  if (status === "not_found") {
+    throw new Error("Liga no encontrada.");
   }
-
-  const { data: jornadas, error: jErr } = await supabase
-    .from("liga_jornadas")
-    .select("id")
-    .eq("liga_id", ligaId);
-
-  if (jErr) throw new Error(jErr.message);
-
-  const jornadaIds = (jornadas ?? []).map((j) => String(j.id));
-
-  if (jornadaIds.length > 0) {
-    const { error: partErr } = await supabase
-      .from("liga_partidos")
-      .delete()
-      .in("jornada_id", jornadaIds);
-    if (partErr) throw new Error(partErr.message);
-
-    const { error: parejaErr } = await supabase
-      .from("liga_jornada_parejas")
-      .delete()
-      .in("jornada_id", jornadaIds);
-    if (parejaErr) throw new Error(parejaErr.message);
-  }
-
-  await deleteAllJornadasLiga(ligaId);
-
-  const { error: inscErr } = await supabase
-    .from("liga_inscripciones")
-    .delete()
-    .eq("liga_id", ligaId);
-  if (inscErr) throw new Error(inscErr.message);
-
-  const { error: delErr } = await supabase
-    .from("ligas")
-    .delete()
-    .eq("id", ligaId);
-  if (delErr) throw new Error(delErr.message);
 }
 
 /** Borra jornadas, puntos y vuelve la liga a «upcoming». */
