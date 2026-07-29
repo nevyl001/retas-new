@@ -56,32 +56,25 @@ function isDuplicateRatingHistorialError(
   );
 }
 
-async function ratingPartidoYaAplicado(
-  partidoRef: string,
-  jugadorId: string
-): Promise<boolean> {
-  if (!partidoRef || !jugadorId) return false;
-  const { data, error } = await supabase
-    .from("rating_historial")
-    .select("id")
-    .eq("partido_ref", partidoRef)
-    .eq("jugador_id", jugadorId)
-    .limit(1)
-    .maybeSingle();
-  if (error) return false;
-  return !!data;
-}
-
-/** Llama al RPC de Supabase que actualiza rating de los 4 jugadores. */
+/**
+ * Llama al RPC de Supabase que actualiza rating de los 4 jugadores.
+ *
+ * No hay guard de "ya aplicado" aquí: el RPC `aplicar_rating_partido` (ver
+ * supabase/fix-rank001-rating-ledger-reconciliation-20260729.sql) es la
+ * única fuente de verdad sobre si el resultado ya está registrado. Antes
+ * existía un guard equivalente en el cliente (`ratingPartidoYaAplicado`)
+ * que retornaba `true` sin siquiera llamar al RPC en cuanto encontraba
+ * cualquier fila para el partido_ref -- eso hacía que, aunque el RPC
+ * aprendiera a reconciliar un resultado corregido, el cliente nunca lo
+ * invocara para averiguarlo (RANK-001). El RPC ahora compara el resultado
+ * registrado contra el nuevo antes de decidir si es no-op o si debe
+ * revertir y reaplicar, así que siempre debe llamarse.
+ */
 export async function aplicarRatingPartido(
   params: AplicarRatingPartidoParams
 ): Promise<boolean> {
   const { j1, j2, j3, j4, ganador, modoJuego, partidoRef, descripcion } = params;
   if (!j1 || !j2 || !j3 || !j4) return false;
-
-  if (partidoRef && (await ratingPartidoYaAplicado(partidoRef, j1))) {
-    return true;
-  }
 
   const { error } = await supabase.rpc("aplicar_rating_partido", {
     p_j1: j1,
