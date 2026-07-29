@@ -227,7 +227,14 @@ export async function getLigas(): Promise<Liga[]> {
   );
 }
 
-export async function getLigaById(ligaId: string): Promise<LigaDetalle> {
+/** Columnas de liga_jugadores sin PII (email/telefono) para consumo público. */
+const LIGA_JUGADOR_SELECT_PUBLIC =
+  "id,nombre,genero,nivel,estado,organizador_id,created_at" as const;
+
+export async function getLigaById(
+  ligaId: string,
+  usePublicClient = false
+): Promise<LigaDetalle> {
   const { data: liga, error: lErr } = await supabase
     .from("ligas")
     .select("*")
@@ -237,15 +244,22 @@ export async function getLigaById(ligaId: string): Promise<LigaDetalle> {
   if (lErr) throw new Error(lErr.message);
   if (!liga) throw new Error("Liga no encontrada.");
 
+  const inscripcionesQuery = usePublicClient
+    ? supabase
+        .from("liga_inscripciones")
+        .select(`*, jugador:liga_jugadores(${LIGA_JUGADOR_SELECT_PUBLIC})`)
+        .eq("liga_id", ligaId)
+    : supabase
+        .from("liga_inscripciones")
+        .select("*, jugador:liga_jugadores(*)")
+        .eq("liga_id", ligaId);
+
   const [
     { data: inscripciones, error: iErr },
     { data: jornadas, error: jErr },
     equipos,
   ] = await Promise.all([
-    supabase
-      .from("liga_inscripciones")
-      .select("*, jugador:liga_jugadores(*)")
-      .eq("liga_id", ligaId),
+    inscripcionesQuery,
     supabase
       .from("liga_jornadas")
       .select("*")

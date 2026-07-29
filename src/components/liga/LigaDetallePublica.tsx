@@ -90,7 +90,7 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
 
   const load = useCallback(async () => {
     try {
-      const d = await getLigaById(ligaId);
+      const d = await getLigaById(ligaId, true);
       if (cancelledRef.current) return;
       if (d.modalidad === "parejas_fijas") {
         const rEq = await getRankingEquipos(ligaId);

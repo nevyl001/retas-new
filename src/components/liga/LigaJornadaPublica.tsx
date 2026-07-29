@@ -112,7 +112,7 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
 
   const load = useCallback(async () => {
     try {
-      const d = await getLigaById(ligaId);
+      const d = await getLigaById(ligaId, true);
       if (cancelledRef.current) return;
       setDetalle(d);
       setLastRefresh(new Date());

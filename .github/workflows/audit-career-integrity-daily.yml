@@ -36,7 +36,14 @@ jobs:
           REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
           REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
 
-      # Si la auditoría falla (huérfanos HIGH con puntos, metadata rota, etc.),
-      # el paso anterior sale con exit code 1 y este job se marca en rojo.
+      - name: Auditoría de aislamiento RLS público (SEC-001, online, producción)
+        run: npm run audit:rls-public-isolation
+        env:
+          REACT_APP_SUPABASE_URL: ${{ secrets.REACT_APP_SUPABASE_URL }}
+          REACT_APP_SUPABASE_ANON_KEY: ${{ secrets.REACT_APP_SUPABASE_ANON_KEY }}
+
+      # Si alguna auditoría falla (huérfanos HIGH con puntos, metadata rota,
+      # política RLS abierta reaparecida, etc.), el paso correspondiente sale
+      # con exit code 1 y este job se marca en rojo.
       # Actívalo desde GitHub: Settings → Notifications, o conecta un paso de
       # Slack/email aquí si quieres alerta activa en vez de solo revisar el tab Actions.
