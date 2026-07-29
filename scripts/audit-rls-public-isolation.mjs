@@ -128,6 +128,38 @@ async function main() {
     }
   }
 
+  // 5. career_event_host_manual_overrides: anon no debe leer nada (tabla
+  //    administrativa interna, sin política pública -- ver Fase 0).
+  {
+    const { data, error } = await supabase
+      .from("career_event_host_manual_overrides")
+      .select("id")
+      .limit(1);
+    if (!error && data && data.length > 0) {
+      failures.push(
+        "career_event_host_manual_overrides: anon pudo leer una fila (debería estar completamente bloqueada, solo is_master_admin())."
+      );
+    }
+  }
+
+  // 6. admin_delete_user_completo: anon no debe poder ni siquiera invocar
+  //    la función (permission denied a nivel de GRANT, antes de que el
+  //    chequeo interno is_master_admin() se ejecute -- ver Fase 0 / 0.4).
+  {
+    const { error } = await supabase.rpc("admin_delete_user_completo", {
+      p_target_user_id: "00000000-0000-0000-0000-000000000000",
+    });
+    if (!error) {
+      failures.push(
+        "admin_delete_user_completo: anon pudo invocar la función sin error -- el REVOKE de anon (Fase 0) pudo haberse revertido."
+      );
+    } else if (error.code !== "42501") {
+      console.warn(
+        `[audit-rls-public-isolation] aviso: admin_delete_user_completo devolvió un error distinto del esperado (42501 permission denied): ${error.code} ${error.message}`
+      );
+    }
+  }
+
   if (failures.length > 0) {
     console.error("[audit-rls-public-isolation] FALLÓ:");
     for (const f of failures) console.error(`  - ${f}`);
