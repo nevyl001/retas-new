@@ -823,24 +823,27 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 {organizerName.trim()}
               </p>
             ) : null}
-            <p className="ra-public__meta ra-public__meta--horario">
-              {formatWhen(dto)}
-            </p>
             {(() => {
               const { lugar, cancha } = resolveLugarYCancha({
                 locationLabel: dto.location_label,
                 canchaLabel: dto.cancha_label,
                 clubName: organizerName,
               });
-              const placeLine = [lugar ? `Lugar: ${lugar}` : null, cancha]
-                .filter(Boolean)
-                .join(" · ");
-              return placeLine ? (
-                <p className="ra-public__meta">{placeLine}</p>
-              ) : null;
+              if (!lugar && !cancha) return null;
+              return (
+                <div className="ra-public__place">
+                  <span className="ra-public__place-label">Lugar</span>
+                  <p className="ra-public__place-value">
+                    {[lugar, cancha].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+              );
             })()}
+            <p className="ra-public__meta ra-public__meta--horario">
+              {formatWhen(dto)}
+            </p>
             {dto.category_label ? (
-              <p className="ra-public__meta">
+              <p className="ra-public__meta ra-public__meta--categoria">
                 {formatPublicCategoriaLabel(dto.category_label) ||
                   dto.category_label}
               </p>
