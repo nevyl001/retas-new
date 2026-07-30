@@ -1,0 +1,33 @@
+-- =============================================================================
+-- BACKUP -- estado EXACTO de las 4 filas de riviera_official_player_totals
+-- desalineadas respecto a la suma real de riviera_official_points_ledger,
+-- capturado en vivo el 2026-07-29, antes de
+-- fix-fase35-ledger-totals-desalineados-20260729.sql.
+--
+-- Causa raíz (determinada por análisis, no asumida): estas 4 filas
+-- corresponden a jugadores cuyos totales quedaron "adelantados" respecto al
+-- ledger real -- consistente con el bug ya cerrado en
+-- fix-rank001-rating-ledger-reconciliation-20260729.sql (antes de ese fix,
+-- una corrección de puntos hecha directamente por SQL ad-hoc sobre el
+-- ledger, sin pasar por try_write_riviera_official_ledger, pudo haber
+-- ajustado points en una fila del ledger sin ajustar el total
+-- correspondiente). El ledger (riviera_official_points_ledger) es la fuente
+-- autoritativa; el total es un campo derivado -- recalcularlo desde la suma
+-- real del ledger no pierde información, solo corrige un campo cacheado.
+-- =============================================================================
+
+-- official_player_key=de07b9b3-0e86-4fea-859a-7fed5196c06d: total_actual=40, suma_real_ledger=20 (1 fila)
+-- official_player_key=ee340f5b-eb86-4f72-b130-1730f9432aa7: total_actual=70, suma_real_ledger=50 (1 fila)
+-- official_player_key=39bb743a-a0c2-43c0-abd8-9db5d2d55536: total_actual=450, suma_real_ledger=400 (6 filas)
+-- official_player_key=af641bf7-702e-4427-b018-5f04b8a88d2c: total_actual=910, suma_real_ledger=890 (7 filas)
+
+-- Snapshot exacto de las 4 filas completas (official_player_key, points_total,
+-- last_activity_at, updated_at), capturado en vivo 2026-07-29:
+--
+-- de07b9b3-0e86-4fea-859a-7fed5196c06d | 40  | 2026-06-30 16:45:23.22168+00  | 2026-06-30 16:45:23.22168+00
+-- ee340f5b-eb86-4f72-b130-1730f9432aa7 | 70  | 2026-06-30 23:58:23.273765+00 | 2026-06-30 23:58:23.273765+00
+-- 39bb743a-a0c2-43c0-abd8-9db5d2d55536 | 450 | 2026-07-13 02:25:12.449984+00 | 2026-07-13 02:25:12.449984+00
+-- af641bf7-702e-4427-b018-5f04b8a88d2c | 910 | 2026-07-13 16:47:26.897579+00 | 2026-07-13 16:47:26.897579+00
+--
+-- Usado literalmente por rollback-fase35-ledger-totals-desalineados-20260729.sql
+-- para restaurar estos valores exactos si hiciera falta revertir.
