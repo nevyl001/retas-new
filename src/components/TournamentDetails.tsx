@@ -19,6 +19,7 @@ import { useResolvedTeamConfig } from "../hooks/useResolvedTeamConfig";
 import MatchesSection from "./MatchesSection";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
 import { RetaMobileOrganizerLayout } from "./reta/RetaMobileOrganizerLayout";
+import { CompetitionControlBar } from "./CompetitionControlBar";
 import { resolveTournamentStartFormat } from "../lib/gameModeMapping";
 
 interface TournamentDetailsProps {
@@ -210,7 +211,13 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
       }
     >
       {selectedTournament.is_started ? (
-        <p className="qm-competition__banner">Competencia en curso</p>
+        <CompetitionControlBar
+          tournament={selectedTournament}
+          pairsCount={pairs.length}
+          matchesCount={matches.length}
+          loading={loading}
+          onReset={onReset}
+        />
       ) : null}
 
       {isRetaQuickPrep ? (
@@ -233,7 +240,7 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
           onReset={onReset}
           onTournamentPatched={onTournamentPatched}
         />
-      ) : (
+      ) : !selectedTournament.is_started ? (
         <>
           <StartTournamentSection
             tournament={selectedTournament}
@@ -266,14 +273,12 @@ export const TournamentDetails: React.FC<TournamentDetailsProps> = ({
             setForceRefresh={setForceRefresh}
             userId={userId}
             convocatoriaSlot={
-              selectedTournament.is_started ? undefined : (
-                <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
-              )
+              <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
             }
             onTournamentPatched={onTournamentPatched}
           />
         </>
-      )}
+      ) : null}
 
       {selectedTournament.is_started ? (
         <PublicLinkSection

@@ -183,75 +183,62 @@ export const FourComponentsGrid: React.FC<FourComponentsGridProps> = ({
     );
   }
 
-  /* Live competition: only control surface (reset / estado) */
+  /* Live competition: control vive en CompetitionControlBar (arriba). */
   if (isStarted) {
+    if (!showDevTools) return null;
     return (
-      <div className="four-components-grid qm-prep">
-        <QuickModeAccordion defaultOpenId="control">
+      <div className="four-components-grid">
+        <QuickModeAccordion defaultOpenId="debug">
           <QuickModeAccordionItem
-            id="control"
-            title="Control de competencia"
-            subtitle="Estado y acciones del evento"
+            id="debug"
+            title="Herramientas de desarrollo"
+            subtitle="Solo visible en modo desarrollador"
           >
-            <TournamentStatusContent
-              tournament={selectedTournament}
+            <DebugPanelContent
+              status={
+                selectedTournament.is_started ? "✅ Iniciado" : "⏳ Pendiente"
+              }
               pairsCount={pairs.length}
-              loading={loading}
-              onReset={onReset}
+              matchesCount={matches.length}
+              onTestConnection={async () => {
+                try {
+                  const result = await testConnection();
+                  alert(
+                    result
+                      ? "✅ Conexión exitosa a la base de datos"
+                      : "❌ Error de conexión"
+                  );
+                } catch (error) {
+                  alert(
+                    "❌ Error al probar la conexión: " +
+                      (error as Error).message
+                  );
+                }
+              }}
+              onReloadData={() => {
+                loadTournamentData();
+                setForceRefresh((prev) => prev + 1);
+                void refreshPlayerPool();
+              }}
+              onVerifyStatus={async () => {
+                try {
+                  alert(
+                    `📊 Estado del Sistema:\n` +
+                      `• Retas: 1\n` +
+                      `• Parejas: ${pairs.length}\n` +
+                      `• Partidos: ${matches.length}\n` +
+                      `• Jugadores pool: ${playerPool.length}\n` +
+                      `• Estado: ✅ Todo funcionando correctamente`
+                  );
+                } catch (error) {
+                  alert(
+                    "❌ Error al verificar estado: " +
+                      (error as Error).message
+                  );
+                }
+              }}
             />
           </QuickModeAccordionItem>
-          {showDevTools ? (
-            <QuickModeAccordionItem
-              id="debug"
-              title="Herramientas de desarrollo"
-              subtitle="Solo visible en modo desarrollador"
-            >
-              <DebugPanelContent
-                status={
-                  selectedTournament.is_started ? "✅ Iniciado" : "⏳ Pendiente"
-                }
-                pairsCount={pairs.length}
-                matchesCount={matches.length}
-                onTestConnection={async () => {
-                  try {
-                    const result = await testConnection();
-                    alert(
-                      result
-                        ? "✅ Conexión exitosa a la base de datos"
-                        : "❌ Error de conexión"
-                    );
-                  } catch (error) {
-                    alert(
-                      "❌ Error al probar la conexión: " +
-                        (error as Error).message
-                    );
-                  }
-                }}
-                onReloadData={() => {
-                  loadTournamentData();
-                  setForceRefresh((prev) => prev + 1);
-                  void refreshPlayerPool();
-                }}
-                onVerifyStatus={async () => {
-                  try {
-                    alert(
-                      `📊 Estado del Sistema:\n` +
-                        `• Retas: 1\n` +
-                        `• Parejas: ${pairs.length}\n` +
-                        `• Partidos: ${matches.length}\n` +
-                        `• Jugadores pool: ${playerPool.length}\n` +
-                        `• Estado: ✅ Todo funcionando correctamente`
-                    );
-                  } catch (error) {
-                    alert(
-                      "❌ Error al verificar estado: " +
-                        (error as Error).message
-                    );
-                  }
-                }}
-              />
-            </QuickModeAccordionItem>
-          ) : null}
         </QuickModeAccordion>
       </div>
     );

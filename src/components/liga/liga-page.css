@@ -263,11 +263,13 @@
   white-space: nowrap;
 }
 
-.liga-tab--active {
-  background: var(--liga-gold);
-  color: var(--liga-bg);
+.liga-tab--active,
+.liga-tab--active:hover,
+.liga-tab--active:focus {
+  background: #15191f !important;
+  color: #ffffff !important;
   font-weight: 700;
-  box-shadow: var(--liga-shadow-gold);
+  box-shadow: none;
 }
 
 /* ── Fase 2A — ModeSectionTabs / ModeEventHeader en Liga ──────────

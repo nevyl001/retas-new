@@ -97,7 +97,7 @@
 .riviera-organizer-reta .public-link-info p {
   font-family: var(--font-body) !important;
   font-size: 0.875rem !important;
-  color: var(--text-muted) !important;
+  color: var(--text-secondary) !important;
   margin: 0 0 0.35rem !important;
 }
 
@@ -170,8 +170,9 @@
 
 .riviera-organizer-reta .compact-pairs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
   gap: 1rem;
+  width: 100%;
 }
 
 .riviera-organizer-reta .compact-pair-card {
@@ -764,8 +765,10 @@
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  padding: 0 !important;
+  /* No pegar el título al borde: mismo aire horizontal que el shell de modos */
+  padding: 0.25rem clamp(12px, 2vw, 20px) 0.5rem !important;
   margin-bottom: 1.5rem !important;
+  box-sizing: border-box;
 }
 
 .riviera-organizer-reta .riviera-standings__header.new-standings-header {
@@ -775,7 +778,7 @@
   justify-content: space-between;
   gap: 0.65rem;
   margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
+  padding: 0.15rem 0 0.35rem !important;
   border-bottom: none !important;
 }
 

@@ -2,44 +2,68 @@
 
 .mode-section-tabs {
   display: none;
-  gap: 0.35rem;
+  gap: 0.4rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0.25rem 0 0.75rem;
-  margin-bottom: 0.75rem;
+  padding: 0.35rem 0.15rem 0.75rem;
+  margin: 0 0 0.85rem;
   border-bottom: 1px solid var(--ro-border-subtle);
+  scrollbar-width: none;
+}
+
+.mode-section-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .mode-section-tabs__btn {
   flex: 0 0 auto;
   min-height: var(--ro-touch-target-min);
-  padding: 0.45rem 0.85rem;
+  padding: 0.45rem 0.9rem;
   border: 1px solid var(--ro-border);
-  border-radius: var(--ro-radius-full);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--ro-text-secondary);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #55595f;
   font-family: var(--ro-font-body);
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .mode-section-tabs__btn:hover {
-  color: var(--ro-text-primary);
-  border-color: var(--ro-border-accent);
+  color: #15191f;
+  border-color: #15191f;
+  background: #ffffff;
+}
+
+.mode-section-tabs__btn:focus {
+  outline: none;
 }
 
 .mode-section-tabs__btn:focus-visible {
-  outline: 2px solid var(--ro-accent);
+  outline: 2px solid #15191f;
   outline-offset: 2px;
 }
 
-.mode-section-tabs__btn--active {
-  color: var(--ro-text-primary);
-  border-color: var(--ro-accent);
-  background: rgba(255, 255, 255, 0.08);
+/*
+ * Activo = tinta + texto blanco. Obligatorio cubrir :hover/:focus:
+ * en iOS el :hover “sticky” dejaba texto negro sobre fondo negro.
+ */
+.mode-section-tabs__btn--active,
+.mode-section-tabs__btn--active:hover,
+.mode-section-tabs__btn--active:focus,
+.mode-section-tabs__btn--active:focus-visible,
+.mode-section-tabs__btn[aria-selected="true"],
+.mode-section-tabs__btn[aria-selected="true"]:hover,
+.mode-section-tabs__btn[aria-selected="true"]:focus,
+.mode-section-tabs__btn[aria-selected="true"]:focus-visible {
+  background: #15191f !important;
+  border-color: #15191f !important;
+  color: #ffffff !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .mode-section-panel--inactive {
@@ -319,16 +343,16 @@
     bottom: 0;
     z-index: calc(var(--ro-z-sticky) + 2);
     padding-bottom: var(--ro-safe-bottom);
-    background: var(--ro-bg-deep);
-    border-top: 1px solid var(--ro-border);
-    box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.45);
+    background: var(--ro-bg-card, #fff);
+    border-top: 1px solid var(--ro-border-subtle, #e2ddd4);
+    box-shadow: 0 -8px 24px rgba(20, 22, 26, 0.08);
   }
 
   .mobile-sticky-action-footer__inner {
     display: flex;
     gap: 0.5rem;
     min-height: var(--mobile-sticky-action-height);
-    padding: 0.5rem var(--ro-mobile-page-padding);
+    padding: 0.5rem var(--mode-shell-pad-x, var(--ro-mobile-page-padding));
     align-items: center;
   }
 

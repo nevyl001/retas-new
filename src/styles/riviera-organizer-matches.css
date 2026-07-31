@@ -2,7 +2,10 @@
 
 .riviera-organizer-reta .matches-container-simplified {
   gap: 1.25rem;
-  padding: 1.25rem 1.25rem 1.5rem !important;
+  width: 100%;
+  max-width: var(--mode-content-max, none);
+  padding: 1.25rem clamp(12px, 2vw, 20px) 1.5rem !important;
+  box-sizing: border-box;
 }
 
 .riviera-organizer-reta .matches-header-simplified {
@@ -112,7 +115,7 @@
 /* —— Grid —— */
 .riviera-organizer-reta .matches-grid-simplified {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   gap: 16px;
   width: 100%;
   justify-items: stretch;
@@ -552,7 +555,128 @@
   margin-right: 4px;
 }
 
-/* —— Registrar resultado —— */
+/* —— Marcador rápido (path principal) —— */
+.riviera-organizer-reta .omc-quick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.65rem 0.85rem 0.85rem;
+  width: 100%;
+}
+
+.riviera-organizer-reta .omc-quick__hint {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ro-chrome-text-muted, var(--ro-text-muted));
+}
+
+.riviera-organizer-reta .omc-quick__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem 0.65rem;
+  background: var(--ro-bg-inset, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--ro-chrome-border, var(--ro-border));
+  border-radius: var(--radius-md, 8px);
+}
+
+.riviera-organizer-reta .omc-quick__pair {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+}
+
+.riviera-organizer-reta .omc-quick__name {
+  display: block;
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ro-text-primary, var(--text-primary));
+  word-break: break-word;
+}
+
+.riviera-organizer-reta .omc-quick__team-badge {
+  max-width: 100%;
+}
+
+.riviera-organizer-reta .omc-quick__row .riviera-field {
+  flex-shrink: 0;
+  margin: 0;
+  width: auto;
+}
+
+.riviera-organizer-reta .omc-quick__row .riviera-input-wrap {
+  width: auto;
+}
+
+.riviera-organizer-reta .omc-quick__input {
+  width: 3.25rem;
+  min-width: 3.25rem;
+  min-height: var(--ro-touch-target-min, 44px);
+  padding: 0.35rem 0.25rem;
+  font-family: var(--font-body);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  color: var(--ro-text-primary);
+  background: var(--ro-bg-elevated, #1a1d24);
+  border: 1px solid var(--ro-border-strong, var(--ro-border));
+  border-radius: 8px;
+  -moz-appearance: textfield;
+}
+
+.riviera-organizer-reta .omc-quick__input::-webkit-outer-spin-button,
+.riviera-organizer-reta .omc-quick__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.riviera-organizer-reta .omc-quick__input:focus {
+  outline: none;
+  border-color: var(--ro-success, #4ade80);
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.25);
+}
+
+.riviera-organizer-reta .omc-quick__vs {
+  display: block;
+  align-self: center;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ro-chrome-text-muted, var(--ro-text-muted));
+}
+
+.riviera-organizer-reta .omc-quick__existing {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--ro-chrome-text-muted, var(--ro-text-muted));
+}
+
+.riviera-organizer-reta .omc-quick__save {
+  width: 100%;
+  min-height: var(--ro-touch-target-min, 44px);
+  margin-top: 0.15rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* —— Registrar resultado (corrección avanzada) —— */
 .riviera-organizer-reta .omc-register {
   padding: 10px 12px 12px;
   border-top: 1px solid var(--ro-border);
@@ -900,6 +1024,40 @@
 
   .riviera-organizer-reta .omc-status {
     font-size: 10px;
+  }
+
+  /* Pills neutras: menos arcoíris en móvil */
+  .riviera-organizer-reta .omc-pill--court,
+  .riviera-organizer-reta .omc-pill--round {
+    color: var(--ro-chrome-text-muted, #8b93a0);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .riviera-organizer-reta .omc-card {
+    margin-inline: 0;
+  }
+
+  .riviera-organizer-reta .matches-container-simplified {
+    padding-inline: clamp(12px, 3.5vw, 16px);
+  }
+
+  .riviera-organizer-reta .omc-result-strip {
+    font-size: 0.7rem;
+  }
+
+  .riviera-organizer-reta .omc-footer .riviera-btn {
+    width: 100%;
+  }
+
+  .riviera-organizer-reta .omc-quick__name {
+    font-size: 0.9rem;
+  }
+
+  .riviera-organizer-reta .omc-quick__input {
+    width: 3.5rem;
+    min-width: 3.5rem;
+    font-size: 1.5rem;
   }
 
   .rr-championship {

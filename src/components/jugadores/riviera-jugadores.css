@@ -1542,11 +1542,13 @@
   color: var(--ro-text-primary);
 }
 
-.rj-genero-tabs__btn--active {
-  background: var(--ro-bg-card, var(--ro-bg-elevated));
-  color: var(--ro-text-primary);
+.rj-genero-tabs__btn--active,
+.rj-genero-tabs__btn--active:hover,
+.rj-genero-tabs__btn--active:focus {
+  background: #15191f !important;
+  color: #ffffff !important;
   font-weight: 700;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
 }
 
 .rjp-ranking-genero-tabs {

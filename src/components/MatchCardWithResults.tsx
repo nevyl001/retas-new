@@ -180,38 +180,180 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     setError(null);
   }, [match.court, match.round, courtEditCap]);
 
-  // Agregar juego - OPTIMIZADO: una sola actualización al final
-  const addGame = async () => {
-    if (!currentMatch) return;
+  const parseGameError = (err: unknown): string => {
+    const code =
+      err && typeof err === "object" && "code" in err
+        ? String((err as { code?: string }).code)
+        : "";
+    const message =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message?: string }).message)
+        : "";
+    if (code === "23505" || message.toLowerCase().includes("duplicate")) {
+      return "Ese juego ya está guardado. Recarga e inténtalo de nuevo.";
+    }
+    if (message) {
+      return `No se pudo guardar: ${message.slice(0, 120)}`;
+    }
+    return "Error al guardar el marcador. Revisa e inténtalo de nuevo.";
+  };
 
-    const score1 = parseInt(pair1Score);
-    const score2 = parseInt(pair2Score);
+  const applyFinishedMatchState = async (
+    matchGames: Game[],
+    activeMatch: Match,
+    opts: { applyRating?: boolean } = {}
+  ): Promise<boolean> => {
+    const { applyRating = true } = opts;
+    const result = await MatchResultCalculator.accumulateMatchStatistics(
+      activeMatch,
+      matchGames,
+      pairs
+    );
+
+    if (!result.success) {
+      setError("Error: " + result.message);
+      return false;
+    }
+
+    let pair1FinalScore = 0;
+    let pair2FinalScore = 0;
+
+    matchGames.forEach((game) => {
+      if (game.pair1_games >= 6) {
+        pair1FinalScore++;
+      }
+      if (game.pair2_games >= 6) {
+        pair2FinalScore++;
+      }
+    });
+
+    await updateMatch(activeMatch.id, {
+      status: "finished",
+      pair1_score: pair1FinalScore,
+      pair2_score: pair2FinalScore,
+    });
+
+    if (applyRating && userId && pair1FinalScore !== pair2FinalScore) {
+      const pair1Row = pairs.find((p) => p.id === activeMatch.pair1_id);
+      const pair2Row = pairs.find((p) => p.id === activeMatch.pair2_id);
+      if (pair1Row && pair2Row) {
+        void aplicarRatingDesdePairs(
+          userId,
+          pair1Row,
+          pair2Row,
+          pair1FinalScore > pair2FinalScore ? "a" : "b",
+          {
+            modoJuego: "reta_rr",
+            partidoRef: `reta:${activeMatch.id}`,
+            descripcion: "Reta Round Robin",
+          }
+        ).catch((e) => console.warn("[rating] reta:", e));
+      }
+    }
+
+    setPair1Score("");
+    setPair2Score("");
+    setIsEditing(false);
+    setGames(matchGames);
+    setCurrentMatch((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: "finished",
+            pair1_score: pair1FinalScore,
+            pair2_score: pair2FinalScore,
+          }
+        : prev
+    );
+    notifyParent();
+    return true;
+  };
+
+  /** Path rápido: un marcador → guardar y cerrar el partido. */
+  const saveAndFinishResult = async () => {
+    if (!currentMatch || isUpdatingRef.current) return;
+
+    const score1 = parseInt(pair1Score, 10);
+    const score2 = parseInt(pair2Score, 10);
     const ownerId = userId || "";
-
-    if (isNaN(score1) || isNaN(score2)) {
-      setError("Ingresa puntuaciones válidas");
-      return;
-    }
-
-    if (score1 === score2 && score1 === 0) {
-      setError("Ingresa el marcador del juego (no puede ser 0-0)");
-      return;
-    }
-
-    if (!ownerId) {
-      setError("No se pudo identificar al usuario para guardar el juego");
-      return;
-    }
-
-    if (isUpdatingRef.current) return;
+    const hasNewScore =
+      !Number.isNaN(score1) &&
+      !Number.isNaN(score2) &&
+      !(score1 === 0 && score2 === 0);
 
     try {
       isUpdatingRef.current = true;
       setSaving(true);
       setError(null);
 
-      const gameNumber = await getNextGameNumber(currentMatch.id);
-      const savedGame = await createGame(currentMatch.id, gameNumber, ownerId, {
+      let matchGames = await getGames(currentMatch.id);
+
+      if (hasNewScore) {
+        if (!ownerId) {
+          setError("No se pudo identificar al usuario para guardar el resultado");
+          return;
+        }
+        const gameNumber = await getNextGameNumber(currentMatch.id);
+        const savedGame = await createGame(currentMatch.id, gameNumber, ownerId, {
+          pair1_games: score1,
+          pair2_games: score2,
+          is_tie_break: false,
+          tie_break_pair1_points: 0,
+          tie_break_pair2_points: 0,
+        });
+        matchGames = [...matchGames, savedGame];
+      } else if (matchGames.length === 0) {
+        setError("Ingresa el marcador de cada pareja");
+        return;
+      }
+
+      await applyFinishedMatchState(matchGames, currentMatch, {
+        applyRating: true,
+      });
+    } catch (err: unknown) {
+      console.error("❌ Error guardando resultado:", err);
+      setError(parseGameError(err));
+      await reloadGamesSilently();
+    } finally {
+      isUpdatingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Corregir: reemplaza el marcador y actualiza standings — sin Reabrir.
+   */
+  const saveCorrection = async () => {
+    if (!currentMatch || isUpdatingRef.current) return;
+
+    const score1 = parseInt(pair1Score, 10);
+    const score2 = parseInt(pair2Score, 10);
+    const ownerId = userId || "";
+
+    if (Number.isNaN(score1) || Number.isNaN(score2)) {
+      setError("Ingresa puntuaciones válidas");
+      return;
+    }
+    if (score1 === 0 && score2 === 0) {
+      setError("Ingresa el marcador (no puede ser 0-0)");
+      return;
+    }
+    if (!ownerId) {
+      setError("No se pudo identificar al usuario para guardar el resultado");
+      return;
+    }
+
+    try {
+      isUpdatingRef.current = true;
+      setSaving(true);
+      setError(null);
+
+      const existing = await getGames(currentMatch.id);
+      for (const g of existing) {
+        await deleteGame(g.id);
+      }
+
+      const savedGame = await createGame(currentMatch.id, 1, ownerId, {
         pair1_games: score1,
         pair2_games: score2,
         is_tie_break: false,
@@ -219,153 +361,44 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
         tie_break_pair2_points: 0,
       });
 
+      await applyFinishedMatchState([savedGame], currentMatch, {
+        applyRating: false,
+      });
+    } catch (err: unknown) {
+      console.error("❌ Error corrigiendo resultado:", err);
+      setError(parseGameError(err));
+      await reloadGamesSilently();
+    } finally {
+      isUpdatingRef.current = false;
+      setSaving(false);
+    }
+  };
+
+  const openCorrectEditor = () => {
+    const last = games[games.length - 1];
+    if (last) {
+      setPair1Score(String(last.pair1_games ?? ""));
+      setPair2Score(String(last.pair2_games ?? ""));
+    } else if (
+      currentMatch &&
+      typeof currentMatch.pair1_score === "number" &&
+      typeof currentMatch.pair2_score === "number"
+    ) {
+      setPair1Score(String(currentMatch.pair1_score));
+      setPair2Score(String(currentMatch.pair2_score));
+    } else {
       setPair1Score("");
       setPair2Score("");
-      setGames((prev) => [...prev, savedGame]);
-    } catch (err: unknown) {
-      console.error("❌ Error agregando juego:", err);
-      const code =
-        err && typeof err === "object" && "code" in err
-          ? String((err as { code?: string }).code)
-          : "";
-      const message =
-        err && typeof err === "object" && "message" in err
-          ? String((err as { message?: string }).message)
-          : "";
-      if (code === "23505" || message.toLowerCase().includes("duplicate")) {
-        setError("Ese juego ya está guardado. Pulsa «Actualizar».");
-      } else if (message) {
-        setError(
-          `No se pudo guardar el juego: ${message.slice(0, 120)}`
-        );
-      } else {
-        setError("Error al agregar juego. Revisa el marcador e inténtalo de nuevo.");
-      }
-      await reloadGamesSilently();
-    } finally {
-      isUpdatingRef.current = false;
-      setSaving(false);
     }
+    setError(null);
+    setIsEditing(true);
   };
 
-  // Eliminar juego - OPTIMIZADO: una sola actualización al final
-  const removeGame = async (gameId: string) => {
-    if (!currentMatch) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-
-      await deleteGame(gameId);
-      setGames((prev) => prev.filter((g) => g.id !== gameId));
-    } catch (err) {
-      console.error("❌ Error eliminando juego:", err);
-      setError("Error al eliminar juego");
-      await reloadGamesSilently();
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Finalizar partido
-  const finishMatch = async () => {
-    if (!currentMatch) return;
-
-    if (isUpdatingRef.current) return;
-
-    try {
-      isUpdatingRef.current = true;
-      setSaving(true);
-      setError(null);
-
-      const matchGames = await getGames(currentMatch.id);
-      const result = await MatchResultCalculator.accumulateMatchStatistics(
-        currentMatch,
-        matchGames,
-        pairs
-      );
-
-      if (result.success) {
-        let pair1FinalScore = 0;
-        let pair2FinalScore = 0;
-
-        matchGames.forEach((game) => {
-          if (game.pair1_games >= 6) {
-            pair1FinalScore++;
-          }
-          if (game.pair2_games >= 6) {
-            pair2FinalScore++;
-          }
-        });
-
-        // Marcar como finalizado y guardar marcador final
-        await updateMatch(currentMatch.id, {
-          status: "finished",
-          pair1_score: pair1FinalScore,
-          pair2_score: pair2FinalScore,
-        });
-
-        if (userId && pair1FinalScore !== pair2FinalScore) {
-          const pair1Row = pairs.find((p) => p.id === currentMatch.pair1_id);
-          const pair2Row = pairs.find((p) => p.id === currentMatch.pair2_id);
-          if (pair1Row && pair2Row) {
-            void aplicarRatingDesdePairs(
-              userId,
-              pair1Row,
-              pair2Row,
-              pair1FinalScore > pair2FinalScore ? "a" : "b",
-              {
-                modoJuego: "reta_rr",
-                partidoRef: `reta:${currentMatch.id}`,
-                descripcion: "Reta Round Robin",
-              }
-            ).catch((e) => console.warn("[rating] reta:", e));
-          }
-        }
-
-        setIsEditing(false);
-        setCurrentMatch((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: "finished",
-                pair1_score: pair1FinalScore,
-                pair2_score: pair2FinalScore,
-              }
-            : prev
-        );
-        notifyParent();
-      } else {
-        setError("Error: " + result.message);
-      }
-    } catch (err) {
-      console.error("❌ Error finalizando partido:", err);
-      setError("Error al finalizar partido");
-    } finally {
-      isUpdatingRef.current = false;
-      setSaving(false);
-    }
-  };
-
-  // Reabrir partido - OPTIMIZADO: una sola actualización
-  const reopenMatch = async () => {
-    if (!currentMatch) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-
-      await updateMatch(currentMatch.id, { status: "pending" });
-      setCurrentMatch((prev) =>
-        prev ? { ...prev, status: "pending" } : prev
-      );
-      notifyParent();
-    } catch (err) {
-      console.error("❌ Error reabriendo partido:", err);
-      setError("Error al reabrir partido");
-    } finally {
-      setSaving(false);
-    }
+  const cancelEditor = () => {
+    setIsEditing(false);
+    setPair1Score("");
+    setPair2Score("");
+    setError(null);
   };
 
   useEffect(() => {
@@ -634,7 +667,7 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       )}
 
       <div className="omc-body">
-        {isFinished ? (
+        {isFinished && !isEditing ? (
           <>
             <div
               className={`omc-team-row${
@@ -716,209 +749,113 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
             )}
           </>
         ) : (
-          <>
-            <div className="omc-team-row omc-team-row--pending">
-              <div className="omc-team-row__info">
+          <section className="omc-quick" onClick={stopCardClick}>
+            <p className="omc-quick__hint">
+              {isFinished
+                ? "Corregir marcador — cambia y guarda"
+                : "Marcador — escribe y guarda"}
+            </p>
+            <div className="omc-quick__row">
+              <div className="omc-quick__pair">
                 {pair1TeamName ? (
                   <TeamBadge
                     name={pair1TeamName}
                     teamIndex={pair1TeamIndex ?? undefined}
-                    className="omc-team-badge"
+                    className="omc-quick__team-badge"
                   />
                 ) : null}
-                <span className="omc-team-name">{pair1DisplayName}</span>
+                <span className="omc-quick__name">{pair1DisplayName}</span>
               </div>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={99}
+                value={pair1Score}
+                onChange={(e) => setPair1Score(e.target.value)}
+                inputClassName="omc-quick__input"
+                onClick={stopCardClick}
+                placeholder="—"
+                aria-label={`Marcador ${pair1DisplayName}`}
+              />
             </div>
-            <span className="omc-vs-divider">vs</span>
-            <div className="omc-team-row omc-team-row--pending">
-              <div className="omc-team-row__info">
+            <span className="omc-quick__vs" aria-hidden>
+              vs
+            </span>
+            <div className="omc-quick__row">
+              <div className="omc-quick__pair">
                 {pair2TeamName ? (
                   <TeamBadge
                     name={pair2TeamName}
                     teamIndex={pair2TeamIndex ?? undefined}
-                    className="omc-team-badge"
+                    className="omc-quick__team-badge"
                   />
                 ) : null}
-                <span className="omc-team-name">{pair2DisplayName}</span>
+                <span className="omc-quick__name">{pair2DisplayName}</span>
               </div>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={99}
+                value={pair2Score}
+                onChange={(e) => setPair2Score(e.target.value)}
+                inputClassName="omc-quick__input"
+                onClick={stopCardClick}
+                placeholder="—"
+                aria-label={`Marcador ${pair2DisplayName}`}
+              />
             </div>
-          </>
-        )}
-      </div>
-
-      {isEditing && (
-        <>
-          <section className="omc-register" onClick={stopCardClick}>
-            <h6 className="omc-register__label">Registrar resultado</h6>
-            <div className="omc-register__scores">
-              <div className="omc-register__side">
-                <div className="omc-register__pair-id">
-                  {pair1TeamName ? (
-                    <TeamBadge
-                      name={pair1TeamName}
-                      teamIndex={pair1TeamIndex ?? undefined}
-                      className="omc-register__team-badge"
-                    />
-                  ) : null}
-                  <span className="omc-register__pair-name">{pair1DisplayName}</span>
-                </div>
-                <Input
-                  type="number"
-                  min={0}
-                  max={7}
-                  value={pair1Score}
-                  onChange={(e) => setPair1Score(e.target.value)}
-                  inputClassName="omc-register__input"
-                  onClick={stopCardClick}
-                  placeholder="0"
-                  aria-label={`Puntos ${pair1DisplayName}`}
-                />
-              </div>
-              <span className="omc-register__vs">vs</span>
-              <div className="omc-register__side">
-                <div className="omc-register__pair-id">
-                  {pair2TeamName ? (
-                    <TeamBadge
-                      name={pair2TeamName}
-                      teamIndex={pair2TeamIndex ?? undefined}
-                      className="omc-register__team-badge"
-                    />
-                  ) : null}
-                  <span className="omc-register__pair-name">{pair2DisplayName}</span>
-                </div>
-                <Input
-                  type="number"
-                  min={0}
-                  max={7}
-                  value={pair2Score}
-                  onChange={(e) => setPair2Score(e.target.value)}
-                  inputClassName="omc-register__input"
-                  onClick={stopCardClick}
-                  placeholder="0"
-                  aria-label={`Puntos ${pair2DisplayName}`}
-                />
-              </div>
-            </div>
-            <div className="omc-register__actions">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  void addGame();
-                }}
-                loading={saving}
-              >
-                Agregar juego
-              </Button>
-              {!isFinished ? (
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    void finishMatch();
-                  }}
-                  loading={saving}
-                >
-                  Finalizar partido
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    reopenMatch();
-                  }}
-                  disabled={saving}
-                >
-                  Reabrir partido
-                </Button>
-              )}
-            </div>
-          </section>
-
-          {games.length > 0 && (
-            <section className="omc-delete-games" onClick={stopCardClick}>
-              <span className="omc-delete-games__label">Eliminar juegos</span>
-              {games.map((game, index) => (
-                <div key={game.id} className="omc-delete-games__item">
-                  <span>
-                    J{index + 1}: {game.pair1_games}–{game.pair2_games}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      void removeGame(game.id);
-                    }}
-                    disabled={saving}
-                  >
-                    Eliminar
-                  </Button>
-                </div>
-              ))}
-            </section>
-          )}
-        </>
-      )}
-
-      {error && <div className="omc-error">{error}</div>}
-
-      <footer className="omc-footer" onClick={stopCardClick}>
-        {isEditing ? (
-          <>
             <Button
               type="button"
-              variant="ghost"
-              size="sm"
+              variant="primary"
+              className="omc-quick__save"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                void reloadGamesSilently();
+                void (isFinished ? saveCorrection() : saveAndFinishResult());
               }}
-              title="Actualizar datos"
+              onMouseDown={(e) => e.preventDefault()}
               loading={saving}
             >
-              Actualizar
+              {saving ? "Guardando…" : "Guardar"}
             </Button>
+          </section>
+        )}
+      </div>
+
+      {error && <div className="omc-error">{error}</div>}
+
+      {(isFinished || isEditing) && (
+        <footer className="omc-footer" onClick={stopCardClick}>
+          {isEditing ? (
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={(e) => {
                 e.stopPropagation();
-                setIsEditing(false);
-                setError(null);
+                cancelEditor();
               }}
             >
               Cancelar
             </Button>
-          </>
-        ) : (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
-            title="Editar marcador"
-          >
-            Marcador
-          </Button>
-        )}
-      </footer>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                openCorrectEditor();
+              }}
+              title="Corregir marcador"
+            >
+              Corregir
+            </Button>
+          )}
+        </footer>
+      )}
     </div>
   );
 };

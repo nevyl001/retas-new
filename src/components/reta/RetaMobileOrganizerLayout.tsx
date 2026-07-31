@@ -25,6 +25,7 @@ import PairsDisplay from "../PairsDisplay";
 import MatchesSection from "../MatchesSection";
 import { AmericanoTournamentSummary } from "../AmericanoDinamico/AmericanoTournamentSummary";
 import { TournamentStatusContent, RetaConfigDangerReset } from "../TournamentStatusContent";
+import { CompetitionControlBar } from "../CompetitionControlBar";
 import { DebugPanelContent } from "../DebugPanelContent";
 import RealTimeStandingsTable from "../RealTimeStandingsTable";
 import { testConnection } from "../../lib/supabaseClient";
@@ -221,13 +222,25 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
       />
 
       <ModeSectionPanel id="resumen" activeId={activeTab}>
-        <StartTournamentSection
-          tournament={selectedTournament}
-          pairs={pairs}
-          loading={loading}
-          onStartTournament={onStartTournament}
-        />
-        <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
+        {selectedTournament.is_started ? (
+          <CompetitionControlBar
+            tournament={selectedTournament}
+            pairsCount={pairs.length}
+            matchesCount={matches.length}
+            loading={loading}
+            onReset={onReset}
+          />
+        ) : (
+          <StartTournamentSection
+            tournament={selectedTournament}
+            pairs={pairs}
+            loading={loading}
+            onStartTournament={onStartTournament}
+          />
+        )}
+        {!selectedTournament.is_started ? (
+          <RetaAbiertaOrganizerPanel tournament={selectedTournament} />
+        ) : null}
         <PublicLinkSection
           tournament={selectedTournament}
           onCopyPublicLink={onCopyPublicLink}

@@ -269,11 +269,15 @@
 
 /* Activo = mismo contraste que riviera-btn-primary / CTAs de página de evento */
 .torneo-express-page.te-gestion-page .te-grupos-tab--active,
-.te-gestion-page .te-grupos-tab--active {
-  border-color: var(--ro-accent);
-  background: var(--ro-accent);
-  color: var(--ro-text-on-accent);
-  box-shadow: var(--ro-shadow-sm);
+.torneo-express-page.te-gestion-page .te-grupos-tab--active:hover,
+.torneo-express-page.te-gestion-page .te-grupos-tab--active:focus,
+.te-gestion-page .te-grupos-tab--active,
+.te-gestion-page .te-grupos-tab--active:hover,
+.te-gestion-page .te-grupos-tab--active:focus {
+  border-color: #15191f !important;
+  background: #15191f !important;
+  color: #ffffff !important;
+  box-shadow: none;
 }
 
 .torneo-express-page.te-gestion-page .te-grupos-tab--active .te-grupo-badge,
@@ -288,7 +292,7 @@
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--2,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--3,
 .te-gestion-page .te-grupos-tab--active .te-grupo-badge--4 {
-  color: var(--ro-text-on-accent);
+  color: #ffffff !important;
   border-color: transparent;
   background: transparent;
 }

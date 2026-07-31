@@ -59,8 +59,9 @@
     max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
 }
 
-/* Prep Quick Mode — mismo inset en Reta / Americano / Duelo */
+/* Prep Quick Mode + competencia en curso — full-bleed (sin columna 1280) */
 .main-layout > .reta-content:has(.qm-ws),
+.main-layout > .reta-content:has(.qm-competition),
 .americano-screen:has(.qm-ws),
 .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) {
   max-width: none;
@@ -74,6 +75,7 @@
 
 @media (max-width: 899px) {
   .main-layout > .reta-content:has(.qm-ws),
+  .main-layout > .reta-content:has(.qm-competition),
   .americano-screen:has(.qm-ws),
   .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) {
     padding-top: calc(
@@ -82,6 +84,7 @@
   }
 
   .reta-content:has(.qm-ws) .riviera-back-toolbar,
+  .reta-content:has(.qm-competition) .riviera-back-toolbar,
   .americano-screen:has(.qm-ws) .riviera-back-toolbar,
   .duelo2v2-page:has(.qm-ws) .riviera-back-toolbar {
     margin-top: 0;

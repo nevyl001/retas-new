@@ -316,10 +316,13 @@
   background: var(--ro-bg-inset);
 }
 
-.torneo-express-page .te-grupos-tab--active {
-  border-color: var(--text-primary);
-  background: var(--bg-elevated);
-  box-shadow: 0 0 0 1px var(--border-accent);
+.torneo-express-page .te-grupos-tab--active,
+.torneo-express-page .te-grupos-tab--active:hover,
+.torneo-express-page .te-grupos-tab--active:focus {
+  border-color: #15191f !important;
+  background: #15191f !important;
+  color: #ffffff !important;
+  box-shadow: none;
 }
 
 .torneo-express-page .te-grupos-tab .te-grupo-badge {
@@ -333,9 +336,9 @@
 .torneo-express-page .te-grupos-tab--active .te-grupo-badge--2,
 .torneo-express-page .te-grupos-tab--active .te-grupo-badge--3,
 .torneo-express-page .te-grupos-tab--active .te-grupo-badge--4 {
-  color: var(--text-primary);
-  border-color: var(--border-accent);
-  background: var(--ro-bg-elevated);
+  color: #ffffff !important;
+  border-color: transparent;
+  background: transparent;
 }
 
 .torneo-express-page .te-grupos-card__active-name {

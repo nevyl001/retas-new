@@ -42,8 +42,19 @@
   color: var(--color-text-secondary, var(--ro-text-secondary));
 }
 
+.standings-mobile-card--leader .standings-mobile-card__stat-value,
+.standings-mobile-card--leader .standings-mobile-card__stat-value--pts,
+.standings-mobile-card--leader .standings-mobile-card__dif {
+  color: var(--ro-text-primary, #15191f);
+}
+
+.standings-mobile-card--leader .standings-mobile-card__stat-value--win,
+.standings-mobile-card--leader .standings-mobile-card__dif--pos {
+  color: var(--ro-success, #2f7d53);
+}
+
 .standings-mobile-card--leader .standings-mobile-card__pos {
-  color: var(--ro-gold);
+  color: var(--ro-gold-text, #8a6524);
 }
 
 .standings-mobile-card__name {
@@ -59,7 +70,8 @@
 }
 
 .standings-mobile-card--leader .standings-mobile-card__name {
-  color: var(--ro-gold-light);
+  /* Dorado claro sobre cream = ilegible; tinta oscura + medalla bastan */
+  color: var(--ro-gold-text, #8a6524);
 }
 
 .standings-mobile-card__stats {
@@ -78,7 +90,7 @@
   padding: 0.35rem 0.2rem;
   border-radius: var(--radius-sm, 6px);
   border: 1px solid var(--color-border-subtle, var(--ro-border-subtle));
-  background: var(--ro-scrim-modal);
+  background: var(--ro-bg-inset, var(--color-bg-inset, #f4f1eb));
   text-align: center;
 }
 
@@ -87,7 +99,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-muted, var(--ro-text-muted));
+  color: var(--color-text-secondary, var(--ro-text-secondary));
 }
 
 .standings-mobile-card__stat-value {

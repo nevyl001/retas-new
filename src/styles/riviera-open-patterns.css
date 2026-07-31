@@ -87,10 +87,14 @@
 
 /* Filtros / chips estilo nav preview */
 .mis-retas-page__filters .riviera-filter-chip--active,
-.riviera-filter-chip--active {
-  color: var(--ro-text-on-accent);
-  border-color: var(--ro-border-accent);
-  background: var(--ro-accent);
+.mis-retas-page__filters .riviera-filter-chip--active:hover,
+.mis-retas-page__filters .riviera-filter-chip--active:focus,
+.riviera-filter-chip--active,
+.riviera-filter-chip--active:hover,
+.riviera-filter-chip--active:focus {
+  color: #ffffff !important;
+  border-color: #15191f !important;
+  background: #15191f !important;
 }
 
 /* Welcome / containers — fondo unificado en .main-layout (riviera-app-surfaces.css) */
