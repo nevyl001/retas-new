@@ -19,6 +19,9 @@ type Props = {
   onSaved: (tournament: Tournament) => void;
   /** Cierra el panel embebido (p. ej. prep sin modal). */
   onCancel?: () => void;
+  /** Remontada Final — ocultar en Americano. */
+  showChampionship?: boolean;
+  subtitle?: string;
 };
 
 export const RetaConfigPanel: React.FC<Props> = ({
@@ -27,6 +30,8 @@ export const RetaConfigPanel: React.FC<Props> = ({
   pairsCount,
   onSaved,
   onCancel,
+  showChampionship,
+  subtitle = "Nombre, horario, sede y canchas.",
 }) => {
   const phase = useMemo(
     () =>
@@ -149,9 +154,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
       <header className="reta-config-panel__toolbar">
         <div className="reta-config-panel__toolbar-copy">
           <h2 className="reta-config-panel__title">Detalles de la reta</h2>
-          <p className="reta-config-panel__subtitle">
-            Nombre, horario, sede y canchas.
-          </p>
+          <p className="reta-config-panel__subtitle">{subtitle}</p>
         </div>
         <div className="reta-config-panel__actions">
           {onCancel != null || dirty ? (
@@ -184,7 +187,9 @@ export const RetaConfigPanel: React.FC<Props> = ({
         values={values}
         onChange={setValues}
         disabled={saving || !champReady}
-        showChampionship={tournament.format !== "teams"}
+        showChampionship={
+          showChampionship ?? tournament.format !== "teams"
+        }
         layout="essentials"
       />
 

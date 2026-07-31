@@ -6,14 +6,14 @@ import {
   useClubModeEyebrow,
 } from "../../club-experience";
 import type { AmericanoPlayer } from "../../lib/db/types";
-import type { Player } from "../../lib/database";
+import type { Player, Tournament } from "../../lib/database";
 import {
   fetchOpenGameRegistrationConfig,
   listOpenGameRegistrationEntries,
 } from "../../lib/retaAbierta/retaAbiertaService";
-import { buildTournamentConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import type { ConvocatoriaLiveSnapshot } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
-import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
+import { RetaAbiertaOrganizerPanel } from "../reta-abierta/RetaAbiertaOrganizerPanel";
+import { RetaConfigPanel } from "../reta/RetaConfigPanel";
 import {
   QuickModeConvocatoriaGate,
   QuickModeEventHeader,
@@ -35,14 +35,9 @@ interface PlayerRegistrationProps {
   onRemovePlayer: (id: string) => void;
   onToggleExistingPlayer: (player: Player) => void;
   onStartTournament: (totalRounds: number, courts: number) => void;
-  /** Canchas ya definidas al crear la reta (QuickStart / DB). */
-  initialCourts?: number;
-  /** Si hay torneo persistido, permite convocatoria embebida. */
-  openRegistration?: {
-    tournamentId: string;
-    name: string;
-    locationLabel: string;
-  } | null;
+  /** Torneo persistido: mismos detalles (lugar, horario…) que Reta / RR. */
+  tournament: Tournament | null;
+  onTournamentPatched?: (tournament: Tournament) => void;
   eventTitle?: string;
   eventSubtitle?: string | null;
   eyebrow?: string | null;
@@ -85,8 +80,8 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   onRemovePlayer,
   onToggleExistingPlayer,
   onStartTournament,
-  initialCourts = 1,
-  openRegistration = null,
+  tournament,
+  onTournamentPatched,
   eventTitle = "Americano",
   eventSubtitle = "Parejas rotativas y ranking por puntos. Prepara el registro e inicia.",
   eyebrow,
@@ -103,17 +98,10 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const [convIsLive, setConvIsLive] = useState(false);
   const [convLine, setConvLine] = useState("Sin abrir · —");
   const [totalRounds, setTotalRounds] = useState(3);
-  const [courts, setCourts] = useState(() =>
-    Math.min(20, Math.max(1, Math.floor(initialCourts) || 1))
-  );
-
-  useEffect(() => {
-    const next = Math.min(20, Math.max(1, Math.floor(initialCourts) || 1));
-    setCourts(next);
-  }, [initialCourts]);
+  const courts = Math.max(1, Math.floor(Number(tournament?.courts)) || 2);
 
   const refreshConvSummary = useCallback(async () => {
-    if (!openRegistration?.tournamentId) {
+    if (!tournament?.id) {
       setConvLine("Sin abrir · —");
       setConvIsLive(false);
       return;
@@ -121,7 +109,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     try {
       const cfg = await fetchOpenGameRegistrationConfig(
         "americano",
-        openRegistration.tournamentId
+        tournament.id
       );
       if (!cfg) {
         setConvLine("Sin abrir · —");
@@ -130,7 +118,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       }
       const entries = await listOpenGameRegistrationEntries(
         "americano",
-        openRegistration.tournamentId
+        tournament.id
       );
       const confirmed = entries.filter((e) => e.status === "confirmed").length;
       const capacity = cfg.capacity ?? 8;
@@ -146,7 +134,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     } catch {
       setConvLine("Gestionar convocatoria");
     }
-  }, [openRegistration?.tournamentId]);
+  }, [tournament?.id]);
 
   useEffect(() => {
     void refreshConvSummary();
@@ -379,52 +367,47 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       className="qm-ws__details-inline"
       aria-label="Detalles de la reta"
     >
-      <div className="reta-config-panel reta-config-panel--inline">
-        <header className="reta-config-panel__toolbar">
-          <div className="reta-config-panel__toolbar-copy">
-            <h2 className="reta-config-panel__title">Detalles de la reta</h2>
-            <p className="reta-config-panel__subtitle">
-              Rondas y canchas del americano.
-              {eventSubtitle ? ` ${eventSubtitle}` : ""}
-            </p>
-          </div>
-        </header>
-        <div className="reta-details-form">
-          <div className="reta-details-form__row reta-details-form__row--primary americano-registration__details-row">
-            <label className="home-sheet__field reta-details-form__field">
-              <span className="home-sheet__field-label">Rondas</span>
-              <Input
-                type="number"
-                min={1}
-                value={totalRounds}
-                onChange={(e) =>
-                  setTotalRounds(Math.max(1, Number(e.target.value) || 1))
-                }
-              />
-            </label>
-            <label className="home-sheet__field reta-details-form__field">
-              <span className="home-sheet__field-label">Canchas</span>
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={courts}
-                onChange={(e) =>
-                  setCourts(
-                    Math.min(20, Math.max(1, Number(e.target.value) || 1))
-                  )
-                }
-              />
-            </label>
-          </div>
-          <p className="americano-registration__courts-hint" role="note">
-            Partidos/ronda: {maxMatches} · Descansan: {benchPerRound}. Las
-            canchas rotan entre rondas.
-          </p>
+      {tournament ? (
+        <RetaConfigPanel
+          tournament={tournament}
+          matches={[]}
+          pairsCount={0}
+          showChampionship={false}
+          subtitle="Nombre, horario, sede, canchas y rondas del americano."
+          onSaved={(t) => {
+            onTournamentPatched?.(t);
+          }}
+        />
+      ) : (
+        <div className="reta-config-panel reta-config-panel--inline">
+          <header className="reta-config-panel__toolbar">
+            <div className="reta-config-panel__toolbar-copy">
+              <h2 className="reta-config-panel__title">Detalles de la reta</h2>
+              <p className="reta-config-panel__subtitle">Cargando datos…</p>
+            </div>
+          </header>
         </div>
+      )}
+
+      <div className="americano-registration__rounds-bar">
+        <label className="home-sheet__field reta-details-form__field americano-registration__rounds-field">
+          <span className="home-sheet__field-label">Rondas</span>
+          <Input
+            type="number"
+            min={1}
+            value={totalRounds}
+            onChange={(e) =>
+              setTotalRounds(Math.max(1, Number(e.target.value) || 1))
+            }
+          />
+        </label>
+        <p className="americano-registration__courts-hint" role="note">
+          Partidos/ronda: {maxMatches} · Descansan: {benchPerRound}. Las canchas
+          rotan entre rondas.
+        </p>
       </div>
 
-      {openRegistration ? (
+      {tournament ? (
         <div id="americano-convocatoria-inline">
           <QuickModeConvocatoriaGate
             open={wantConvocatoria}
@@ -439,16 +422,11 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
             }}
           >
             {showConvocatoriaPanel ? (
-              <ConvocatoriaWhatsAppPanel
+              <RetaAbiertaOrganizerPanel
+                tournament={tournament}
+                modeOverride="americano"
                 embedded
                 onLiveChange={onConvLiveChange}
-                context={buildTournamentConvocatoriaContext({
-                  mode: "americano",
-                  tournamentId: openRegistration.tournamentId,
-                  name: openRegistration.name,
-                  locationLabel: openRegistration.locationLabel,
-                  clubName: openRegistration.locationLabel,
-                })}
               />
             ) : null}
           </QuickModeConvocatoriaGate>

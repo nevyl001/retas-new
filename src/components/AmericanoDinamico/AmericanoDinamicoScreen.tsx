@@ -1,7 +1,6 @@
 import React from "react";
 import {
   useClubModeEyebrow,
-  useConvocatoriaOriginName,
 } from "../../club-experience";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import {
@@ -20,6 +19,7 @@ import {
   getTournamentById,
   updateTournament,
   type Player,
+  type Tournament,
 } from "../../lib/database";
 import { persistAmericanoDinamicoSnapshot } from "../../lib/americanoDinamicoSync";
 import { resolvePlayerAvatars } from "../../lib/rivieraJugadores/publicPlayerAvatars";
@@ -66,7 +66,6 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 }) => {
   const { user } = useUser();
   const modeEyebrow = useClubModeEyebrow();
-  const convocatoriaOrigin = useConvocatoriaOriginName();
   const isMobile = useMobileViewport(767);
   const [playingTab, setPlayingTab] = React.useState<AmericanoMobileTabId>("ronda");
   const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
@@ -78,7 +77,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   const [tournamentName, setTournamentName] = React.useState<string>("");
   const [tournamentDescription, setTournamentDescription] =
     React.useState<string>("");
-  const [tournamentCourts, setTournamentCourts] = React.useState(2);
+  const [tournament, setTournament] = React.useState<Tournament | null>(null);
   const finishedPersistedRef = React.useRef(false);
 
   const {
@@ -125,14 +124,14 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       try {
         const t = await getTournamentById(resolvedTournamentId);
         if (cancelled || !t) return;
+        setTournament(t);
         setTournamentName(typeof t.name === "string" ? t.name.trim() : "");
         setTournamentDescription(
           typeof t.description === "string" ? t.description.trim() : ""
         );
-        const loadedCourts = Math.max(1, Math.floor(Number(t.courts)) || 1);
-        setTournamentCourts(loadedCourts);
       } catch {
         if (!cancelled) {
+          setTournament(null);
           setTournamentName("");
           setTournamentDescription("");
         }
@@ -142,6 +141,14 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
       cancelled = true;
     };
   }, [resolvedTournamentId]);
+
+  const handleTournamentPatched = React.useCallback((t: Tournament) => {
+    setTournament(t);
+    setTournamentName(typeof t.name === "string" ? t.name.trim() : "");
+    setTournamentDescription(
+      typeof t.description === "string" ? t.description.trim() : ""
+    );
+  }, []);
 
   React.useEffect(() => {
     if (!effectiveUserId) return;
@@ -366,21 +373,13 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           onRemovePlayer={removePlayer}
           onToggleExistingPlayer={toggleExistingPlayer}
           onStartTournament={handleStartTournament}
-          initialCourts={tournamentCourts}
+          tournament={tournament}
+          onTournamentPatched={handleTournamentPatched}
           eyebrow={modeEyebrow}
           eventTitle={tournamentName || "Americano Dinámico"}
           eventSubtitle={
             tournamentDescription ||
             "Selecciona jugadores del registro y define rondas y canchas."
-          }
-          openRegistration={
-            resolvedTournamentId
-              ? {
-                  tournamentId: resolvedTournamentId,
-                  name: tournamentName || "Americano",
-                  locationLabel: convocatoriaOrigin,
-                }
-              : null
           }
         />
       </AmericanoModeShell>
