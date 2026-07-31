@@ -15,7 +15,11 @@ import {
 
 export type RetaConfigFieldsProps = {
   values: RetaConfigFormValues;
-  onChange: (next: RetaConfigFormValues) => void;
+  onChange: (
+    next:
+      | RetaConfigFormValues
+      | ((prev: RetaConfigFormValues) => RetaConfigFormValues)
+  ) => void;
   phase: RetaEditPhase;
   /** create = botón externo dice Iniciar; edit = Guardar */
   mode: "create" | "edit";
@@ -48,7 +52,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
 }) => {
   const essentials = layout === "essentials";
   const patch = (partial: Partial<RetaConfigFormValues>) =>
-    onChange({ ...values, ...partial });
+    onChange((prev) => ({ ...prev, ...partial }));
 
   const ed = (f: RetaConfigFieldKey) => {
     const info = fieldEditability(f, phase);

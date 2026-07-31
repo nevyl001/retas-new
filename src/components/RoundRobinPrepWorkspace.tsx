@@ -646,8 +646,11 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
               pairsCount={pairs.length}
               onSaved={(t) => {
                 onTournamentPatched?.(t);
-                loadTournamentData();
-                setForceRefresh((prev) => prev + 1);
+                // Refresh en background; el panel ya tiene el resultado guardado.
+                void Promise.resolve().then(() => {
+                  loadTournamentData();
+                  setForceRefresh((prev) => prev + 1);
+                });
               }}
             />
             <div

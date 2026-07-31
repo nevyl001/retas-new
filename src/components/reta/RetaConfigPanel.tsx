@@ -5,6 +5,7 @@ import {
 } from "../../lib/reta/retaConfigEditRules";
 import {
   resolveCanonicalChampionshipConfig,
+  sameUpdatedAt,
   saveRetaConfig,
   tournamentToFormValues,
   type RetaConfigFormValues,
@@ -23,6 +24,10 @@ type Props = {
   showChampionship?: boolean;
   subtitle?: string;
 };
+
+function formSnapshot(values: RetaConfigFormValues): string {
+  return JSON.stringify(values);
+}
 
 export const RetaConfigPanel: React.FC<Props> = ({
   tournament,
@@ -58,36 +63,72 @@ export const RetaConfigPanel: React.FC<Props> = ({
   const [loadedUpdatedAt, setLoadedUpdatedAt] = useState(
     tournament.updated_at || null
   );
-  const [baseline, setBaseline] = useState(() => JSON.stringify(values));
+  const [baseline, setBaseline] = useState(() => formSnapshot(values));
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [champReady, setChampReady] = useState(false);
   const saveGen = useRef(0);
+  const valuesRef = useRef(values);
+  const baselineRef = useRef(baseline);
+  const dirtyRef = useRef(false);
+  const skipNextHydrateRef = useRef(0);
+  const tournamentRef = useRef(tournament);
+
+  valuesRef.current = values;
+  baselineRef.current = baseline;
+  tournamentRef.current = tournament;
+  const dirty = formSnapshot(values) !== baseline;
+  dirtyRef.current = dirty;
 
   useEffect(() => {
     let cancelled = false;
+    const tournamentId = tournament.id;
+    const stamp = tournament.updated_at || null;
+
+    // Tras guardar: el padre parchea + recarga; no pisar el form ni reabrir dirty.
+    if (skipNextHydrateRef.current > 0) {
+      skipNextHydrateRef.current -= 1;
+      setLoadedUpdatedAt(stamp);
+      setChampReady(true);
+      return;
+    }
+
+    // No pisar edits en curso si solo cambió la referencia del objeto.
+    if (
+      dirtyRef.current &&
+      sameUpdatedAt(stamp, loadedUpdatedAt)
+    ) {
+      setChampReady(true);
+      return;
+    }
+
     setChampReady(false);
     (async () => {
-      const c = await resolveCanonicalChampionshipConfig(tournament.id);
+      const c = await resolveCanonicalChampionshipConfig(tournamentId);
       if (cancelled) return;
-      const next = tournamentToFormValues(tournament, {
+      if (dirtyRef.current) {
+        setChampReady(true);
+        return;
+      }
+      const next = tournamentToFormValues(tournamentRef.current, {
         championshipEnabled: c.championshipEnabled,
         championshipRounds: c.championshipRounds,
       });
       setValues(next);
-      setBaseline(JSON.stringify(next));
-      setLoadedUpdatedAt(tournament.updated_at || null);
+      setBaseline(formSnapshot(next));
+      setLoadedUpdatedAt(stamp);
       setStatus(null);
       setError(null);
       setChampReady(true);
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [tournament]);
-
-  const dirty = JSON.stringify(values) !== baseline;
+    // Hydrate por id + stamp — no por identidad del objeto tournament.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadedUpdatedAt leído a propósito en el gate
+  }, [tournament.id, tournament.updated_at]);
 
   const handleCancel = async () => {
     const c = await resolveCanonicalChampionshipConfig(tournament.id);
@@ -96,24 +137,30 @@ export const RetaConfigPanel: React.FC<Props> = ({
       championshipRounds: c.championshipRounds,
     });
     setValues(next);
-    setBaseline(JSON.stringify(next));
+    setBaseline(formSnapshot(next));
     setError(null);
     setStatus(null);
     onCancel?.();
   };
 
-  const handleSave = async (courtsDecreaseConfirmed = false) => {
-    if (saving || !dirty) return;
+  const handleSave = async (
+    courtsDecreaseConfirmed = false,
+    valuesOverride?: RetaConfigFormValues
+  ) => {
+    const latest = valuesOverride ?? valuesRef.current;
+    const isDirty = formSnapshot(latest) !== baselineRef.current;
+    if (saving || !isDirty) return;
+
     const gen = ++saveGen.current;
     setSaving(true);
     setError(null);
     setStatus(null);
     try {
       const result = await saveRetaConfig({
-        tournament,
+        tournament: tournamentRef.current,
         matches,
         phase,
-        values,
+        values: latest,
         loadedUpdatedAt,
         courtsDecreaseConfirmed,
       });
@@ -123,7 +170,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
           const ok = window.confirm(result.needsCourtsConfirm.message);
           if (ok) {
             setSaving(false);
-            await handleSave(true);
+            await handleSave(true, latest);
             return;
           }
           setError("Cambio de canchas cancelado.");
@@ -137,9 +184,16 @@ export const RetaConfigPanel: React.FC<Props> = ({
         }
         return;
       }
-      setBaseline(JSON.stringify(values));
+      const savedSnap = formSnapshot(latest);
+      setValues(latest);
+      setBaseline(savedSnap);
+      baselineRef.current = savedSnap;
+      valuesRef.current = latest;
+      dirtyRef.current = false;
       setLoadedUpdatedAt(result.tournament.updated_at || loadedUpdatedAt);
       setStatus(result.message);
+      // Absorbe onTournamentPatched + loadTournamentData sin rehidratar.
+      skipNextHydrateRef.current = 2;
       onSaved(result.tournament);
     } catch (e) {
       if (gen !== saveGen.current) return;
@@ -147,6 +201,22 @@ export const RetaConfigPanel: React.FC<Props> = ({
     } finally {
       if (gen === saveGen.current) setSaving(false);
     }
+  };
+
+  /** iOS: el 1.er tap solo cierra el teclado; commit + save en el mismo gesto. */
+  const commitAndSave = () => {
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      active.closest(".reta-config-panel") &&
+      typeof active.blur === "function"
+    ) {
+      active.blur();
+    }
+    // Deja que React aplique onChange del blur antes de leer valuesRef.
+    window.setTimeout(() => {
+      void handleSave(false, valuesRef.current);
+    }, 0);
   };
 
   return (
@@ -174,7 +244,11 @@ export const RetaConfigPanel: React.FC<Props> = ({
             size="sm"
             disabled={saving || !dirty || !champReady}
             loading={saving}
-            onClick={() => void handleSave(false)}
+            onMouseDown={(e) => {
+              // Safari/iOS: sin esto el primer tap no dispara click (solo blur).
+              e.preventDefault();
+            }}
+            onClick={commitAndSave}
           >
             Guardar
           </Button>
