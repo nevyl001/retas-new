@@ -62,7 +62,9 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(
+    () => new URLSearchParams(window.location.search).get("edit") === "1"
+  );
   const [nombre, setNombre] = useState("");
   const [categoria, setCategoria] = useState<RivieraJugadorCategoria>("open");
   const [edad, setEdad] = useState("");

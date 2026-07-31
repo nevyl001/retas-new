@@ -4,7 +4,10 @@ import { isAmericanoTournament } from "../../lib/gameModeMapping";
 import { loadChampionshipConfig } from "../../lib/roundRobinChampionship";
 import { useConvocatoriaOriginName } from "../../club-experience";
 import { buildTournamentConvocatoriaContext } from "../../lib/retaAbierta/adapters";
-import { ConvocatoriaWhatsAppPanel } from "./ConvocatoriaWhatsAppPanel";
+import {
+  ConvocatoriaWhatsAppPanel,
+  type ConvocatoriaLiveSnapshot,
+} from "./ConvocatoriaWhatsAppPanel";
 
 interface Props {
   tournament: Tournament;
@@ -12,6 +15,9 @@ interface Props {
   modeOverride?: "reta" | "americano";
   /** Vista compacta (sidebar / resumen). */
   compact?: boolean;
+  /** Strip en Detalles: lanzar / copiar / ver / admin sin duplicar sede. */
+  embedded?: boolean;
+  onLiveChange?: (snapshot: ConvocatoriaLiveSnapshot) => void;
 }
 
 /**
@@ -22,6 +28,8 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
   tournament,
   modeOverride,
   compact = false,
+  embedded = false,
+  onLiveChange,
 }) => {
   const clubName = useConvocatoriaOriginName();
   const mode =
@@ -35,6 +43,8 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
   return (
     <ConvocatoriaWhatsAppPanel
       compact={compact}
+      embedded={embedded}
+      onLiveChange={onLiveChange}
       context={buildTournamentConvocatoriaContext({
         mode,
         tournamentId: tournament.id,

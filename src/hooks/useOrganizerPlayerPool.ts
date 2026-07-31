@@ -38,6 +38,7 @@ export function useOrganizerPlayerPool(
   const [error, setError] = useState<string | null>(null);
   const gateRef = useRef(new PoolRequestGate());
   const playersRef = useRef<Player[]>([]);
+  const fetchedOnceForOrgRef = useRef<string | null>(null);
 
   useEffect(() => {
     playersRef.current = players;
@@ -52,8 +53,16 @@ export function useOrganizerPlayerPool(
       return;
     }
 
-    // Evita servir el pool legacy cacheado 90s tras vínculo/convocatoria.
-    invalidatePlayersPool(organizerId);
+    // Evita servir el pool legacy cacheado tras vínculo/convocatoria — pero
+    // solo a partir del segundo refresh de este organizerId. La primera
+    // carga (montaje) no invalida nada todavía: no hay evento previo que
+    // pueda haber dejado el pool obsoleto, y dejar la caché intacta ahí es
+    // lo que la hace servir de verdad en vez de reconstruirse siempre.
+    if (fetchedOnceForOrgRef.current === organizerId) {
+      invalidatePlayersPool(organizerId);
+    } else {
+      fetchedOnceForOrgRef.current = organizerId;
+    }
 
     const requestId = gateRef.current.begin();
     const isFirstLoad = playersRef.current.length === 0;

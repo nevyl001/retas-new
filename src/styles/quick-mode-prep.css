@@ -326,11 +326,52 @@ html[data-club="hack-padel"] .qm-primary-cta__btn:hover:not(:disabled),
   display: none;
 }
 
-/* —— Detalles: essentials + advanced —— */
-.qm-details-essentials {
+/* —— Detalles form (prep): densos —— */
+.reta-details-form {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.home-sheet__stepper-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--brand-accent, var(--ro-accent, var(--rv-accent, #c8f542)));
+}
+
+.home-sheet__field--check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.home-sheet__field--champ {
+  border: 1px solid var(--ro-border, rgba(255, 255, 255, 0.12));
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+}
+
+.home-sheet__champ-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.home-sheet__champ-row .home-sheet__field-optional {
+  margin-right: auto;
+}
+
+.home-sheet__field--inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  width: 100%;
 }
 
 .qm-details-advanced {

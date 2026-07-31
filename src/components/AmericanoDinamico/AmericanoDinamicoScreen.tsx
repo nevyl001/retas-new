@@ -45,8 +45,6 @@ import { PublicShareSection } from "../platform/PublicShareSection";
 import { Button } from "../ui";
 import { LoadingProgressHint } from "../ui/LoadingProgressHint";
 import { AmericanoModeShell } from "./AmericanoModeShell";
-import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
-import { buildTournamentConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import { closeOpenGameRegistration } from "../../lib/retaAbierta/retaAbiertaService";
 import "../public/riviera-public-americano.css";
 import "./AmericanoDinamicoScreen.css";
@@ -375,18 +373,14 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             tournamentDescription ||
             "Selecciona jugadores del registro y define rondas y canchas."
           }
-          convocatoriaSlot={
-            resolvedTournamentId ? (
-              <ConvocatoriaWhatsAppPanel
-                context={buildTournamentConvocatoriaContext({
-                  mode: "americano",
+          openRegistration={
+            resolvedTournamentId
+              ? {
                   tournamentId: resolvedTournamentId,
                   name: tournamentName || "Americano",
                   locationLabel: convocatoriaOrigin,
-                  clubName: convocatoriaOrigin,
-                })}
-              />
-            ) : null
+                }
+              : null
           }
         />
       </AmericanoModeShell>

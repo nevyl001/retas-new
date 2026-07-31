@@ -29,7 +29,7 @@ import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { navigateDuelo2v2, duelo2v2GestionarPath } from "./duelo2v2Nav";
 import "./duelo2v2-page.css";
 
-type NuevoStepId = "encuentro" | "horario" | "listo";
+type NuevoStepId = "listo";
 
 function stepStatus(
   id: NuevoStepId,
@@ -59,7 +59,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
     };
   }, []);
 
-  const [step, setStep] = useState<NuevoStepId>("encuentro");
+  const [step] = useState<NuevoStepId>("listo");
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [nombre, setNombre] = useState("");
   const [mostrarLugar, setMostrarLugar] = useState(true);
@@ -156,7 +156,6 @@ export const Duelo2v2Nuevo: React.FC = () => {
     setDraftTimeStart(defaultSchedule.timeStart);
     setDraftTimeEnd(defaultSchedule.timeEnd);
     setError(null);
-    setStep("encuentro");
   };
 
   const handleSubmit = async () => {
@@ -211,25 +210,13 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const steps: QuickModeStep[] = useMemo(
     () => [
       {
-        id: "encuentro",
-        label: "Encuentro",
-        status: stepStatus("encuentro", step, encuentroOk),
-        count: nombre.trim() || "Pendiente",
-      },
-      {
-        id: "horario",
-        label: "Horario",
-        status: stepStatus("horario", step, horarioOk),
-        count: draftDate || "Pendiente",
-      },
-      {
         id: "listo",
         label: "Listo",
         status: stepStatus("listo", step, canSubmit),
         count: canSubmit ? "OK" : "Pendiente",
       },
     ],
-    [step, encuentroOk, nombre, horarioOk, draftDate, canSubmit]
+    [step, canSubmit]
   );
 
   const ctaHint = !user?.id
@@ -254,167 +241,180 @@ export const Duelo2v2Nuevo: React.FC = () => {
     onClick: () => void handleSubmit(),
   };
 
-  const workbenchTitle =
-    step === "encuentro"
-      ? "Encuentro"
-      : step === "horario"
-        ? "Lugar y horario"
-        : "Listo para guardar";
+  const scrollToDetails = () => {
+    document
+      .getElementById("duelo-nuevo-detalles-inline")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
-  const workbenchBody =
-    step === "encuentro" ? (
-      <div className="duelo2v2-form duelo2v2-form--workspace">
-        <div className="duelo2v2-form__name-row">
-          <label htmlFor="duelo-nombre">Nombre del encuentro</label>
-          <input
-            id="duelo-nombre"
-            type="text"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Ej. Encuentro Riviera Open — Sábado"
-            required
-          />
-        </div>
-        <div className="duelo2v2-form__schedule-row">
-          <label className="duelo2v2-form__field">
-            <span className="duelo2v2-form__field-label">Cancha</span>
+  const detailsPanel = (
+    <section
+      id="duelo-nuevo-detalles-inline"
+      className="qm-ws__details-inline"
+      aria-label="Detalles del duelo"
+    >
+      <div className="reta-config-panel reta-config-panel--inline">
+        <header className="reta-config-panel__toolbar">
+          <div className="reta-config-panel__toolbar-copy">
+            <h2 className="reta-config-panel__title">Detalles del duelo</h2>
+            <p className="reta-config-panel__subtitle">
+              Nombre, cancha, categoría, lugar y horario.
+            </p>
+          </div>
+        </header>
+        <div className="duelo2v2-form duelo2v2-form--workspace reta-details-form">
+          <div className="duelo2v2-form__name-row">
+            <label htmlFor="duelo-nombre">Nombre del encuentro</label>
             <input
+              id="duelo-nombre"
               type="text"
-              value={cancha}
-              onChange={(e) => setCancha(e.target.value)}
-              placeholder="Ej. 1"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Ej. Encuentro Riviera Open — Sábado"
               required
             />
-          </label>
-          <label className="duelo2v2-form__field">
-            <span className="duelo2v2-form__field-label">Categoría / nivel</span>
-            <input
-              type="text"
-              value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
-              placeholder="Ej. 5ta Fuerza"
-              list="duelo-categoria-sugerencias"
-            />
-            <datalist id="duelo-categoria-sugerencias">
-              <option value="Open" />
-              <option value="1ra Fuerza" />
-              <option value="2da Fuerza" />
-              <option value="3ra Fuerza" />
-              <option value="4ta Fuerza" />
-              <option value="5ta Fuerza" />
-              <option value="6ta Fuerza" />
-            </datalist>
-          </label>
-        </div>
-      </div>
-    ) : step === "horario" ? (
-      <div className="duelo2v2-form duelo2v2-form--workspace">
-        <div className="duelo2v2-form__lugar-block">
-          <label className="duelo2v2-form__toggle">
-            <input
-              type="checkbox"
-              checked={mostrarLugar}
-              onChange={(e) => setMostrarLugar(e.target.checked)}
-            />
-            <span>Incluir lugar en la convocatoria</span>
-          </label>
-          {mostrarLugar ? (
+          </div>
+          <div className="duelo2v2-form__schedule-row">
             <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Lugar</span>
+              <span className="duelo2v2-form__field-label">Cancha</span>
               <input
                 type="text"
-                value={lugar}
-                onChange={(e) => setLugar(e.target.value)}
-                placeholder="Ej. Hack Pádel, Padelito…"
+                value={cancha}
+                onChange={(e) => setCancha(e.target.value)}
+                placeholder="Ej. 1"
                 required
               />
             </label>
-          ) : (
-            <p className="duelo2v2-form__hint">
-              Ideal si tu club siempre juega en la misma sede.
-            </p>
-          )}
-        </div>
-        <div className="duelo2v2-form__schedule-row">
-          <label className="duelo2v2-form__field">
-            <span className="duelo2v2-form__field-label">Día</span>
-            <input
-              type="date"
-              value={draftDate}
-              onChange={(e) => setDraftDate(e.target.value)}
-              required
-            />
-          </label>
-          <label className="duelo2v2-form__field">
-            <span className="duelo2v2-form__field-label">Hora inicio</span>
-            <input
-              type="time"
-              value={draftTimeStart}
-              onChange={(e) => setDraftTimeStart(e.target.value)}
-              required
-            />
-          </label>
-          <label className="duelo2v2-form__field">
-            <span className="duelo2v2-form__field-label">Hora fin</span>
-            <input
-              type="time"
-              value={draftTimeEnd}
-              onChange={(e) => setDraftTimeEnd(e.target.value)}
-              required
-            />
-          </label>
+            <label className="duelo2v2-form__field">
+              <span className="duelo2v2-form__field-label">Categoría / nivel</span>
+              <input
+                type="text"
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                placeholder="Ej. 5ta Fuerza"
+                list="duelo-categoria-sugerencias"
+              />
+              <datalist id="duelo-categoria-sugerencias">
+                <option value="Open" />
+                <option value="1ra Fuerza" />
+                <option value="2da Fuerza" />
+                <option value="3ra Fuerza" />
+                <option value="4ta Fuerza" />
+                <option value="5ta Fuerza" />
+                <option value="6ta Fuerza" />
+              </datalist>
+            </label>
+          </div>
+          <div className="duelo2v2-form__lugar-block">
+            <label className="duelo2v2-form__toggle">
+              <input
+                type="checkbox"
+                checked={mostrarLugar}
+                onChange={(e) => setMostrarLugar(e.target.checked)}
+              />
+              <span>Incluir lugar en la convocatoria</span>
+            </label>
+            {mostrarLugar ? (
+              <label className="duelo2v2-form__field">
+                <span className="duelo2v2-form__field-label">Lugar</span>
+                <input
+                  type="text"
+                  value={lugar}
+                  onChange={(e) => setLugar(e.target.value)}
+                  placeholder="Ej. Hack Pádel, Padelito…"
+                  required
+                />
+              </label>
+            ) : (
+              <p className="duelo2v2-form__hint">
+                Ideal si tu club siempre juega en la misma sede.
+              </p>
+            )}
+          </div>
+          <div className="duelo2v2-form__schedule-row">
+            <label className="duelo2v2-form__field">
+              <span className="duelo2v2-form__field-label">Día</span>
+              <input
+                type="date"
+                value={draftDate}
+                onChange={(e) => setDraftDate(e.target.value)}
+                required
+              />
+            </label>
+            <label className="duelo2v2-form__field">
+              <span className="duelo2v2-form__field-label">Hora inicio</span>
+              <input
+                type="time"
+                value={draftTimeStart}
+                onChange={(e) => setDraftTimeStart(e.target.value)}
+                required
+              />
+            </label>
+            <label className="duelo2v2-form__field">
+              <span className="duelo2v2-form__field-label">Hora fin</span>
+              <input
+                type="time"
+                value={draftTimeEnd}
+                onChange={(e) => setDraftTimeEnd(e.target.value)}
+                required
+              />
+            </label>
+          </div>
         </div>
       </div>
-    ) : (
-      <ul className="qm-ws__ready-check">
-        <li className={encuentroOk ? "is-ok" : "is-miss"}>
-          <span className="qm-ws__ready-mark" aria-hidden>
-            {encuentroOk ? "OK" : "!"}
-          </span>
-          <span className="qm-ws__ready-copy">
-            {encuentroOk
-              ? `${nombre.trim()} · cancha ${cancha.trim()}`
-              : "Falta nombre o cancha"}
-          </span>
-          {!encuentroOk ? (
-            <button
-              type="button"
-              className="qm-ws__text-btn"
-              onClick={() => setStep("encuentro")}
-            >
-              Completar
-            </button>
-          ) : null}
-        </li>
-        <li className={horarioOk ? "is-ok" : "is-miss"}>
-          <span className="qm-ws__ready-mark" aria-hidden>
-            {horarioOk ? "OK" : "!"}
-          </span>
-          <span className="qm-ws__ready-copy">
-            {horarioOk
-              ? `${draftDate} · ${draftTimeStart}–${draftTimeEnd}`
-              : "Falta lugar u horario"}
-          </span>
-          {!horarioOk ? (
-            <button
-              type="button"
-              className="qm-ws__text-btn"
-              onClick={() => setStep("horario")}
-            >
-              Completar
-            </button>
-          ) : null}
-        </li>
-        <li className="is-soft">
-          <span className="qm-ws__ready-mark" aria-hidden>
-            ·
-          </span>
-          <span className="qm-ws__ready-copy">
-            Después de guardar podrás lanzar la convocatoria por WhatsApp.
-          </span>
-        </li>
-      </ul>
-    );
+    </section>
+  );
+
+  const workbenchBody = (
+    <ul className="qm-ws__ready-check">
+      <li className={encuentroOk ? "is-ok" : "is-miss"}>
+        <span className="qm-ws__ready-mark" aria-hidden>
+          {encuentroOk ? "OK" : "!"}
+        </span>
+        <span className="qm-ws__ready-copy">
+          {encuentroOk
+            ? `${nombre.trim()} · cancha ${cancha.trim()}`
+            : "Falta nombre o cancha"}
+        </span>
+        {!encuentroOk ? (
+          <button
+            type="button"
+            className="qm-ws__text-btn"
+            onClick={scrollToDetails}
+          >
+            Completar
+          </button>
+        ) : null}
+      </li>
+      <li className={horarioOk ? "is-ok" : "is-miss"}>
+        <span className="qm-ws__ready-mark" aria-hidden>
+          {horarioOk ? "OK" : "!"}
+        </span>
+        <span className="qm-ws__ready-copy">
+          {horarioOk
+            ? `${draftDate} · ${draftTimeStart}–${draftTimeEnd}`
+            : "Falta lugar u horario"}
+        </span>
+        {!horarioOk ? (
+          <button
+            type="button"
+            className="qm-ws__text-btn"
+            onClick={scrollToDetails}
+          >
+            Completar
+          </button>
+        ) : null}
+      </li>
+      <li className="is-soft">
+        <span className="qm-ws__ready-mark" aria-hidden>
+          ·
+        </span>
+        <span className="qm-ws__ready-copy">
+          Después de guardar podrás lanzar la convocatoria por WhatsApp.
+        </span>
+      </li>
+    </ul>
+  );
 
   const sidebarPanel = (
     <div className="qm-ws-panel">
@@ -493,7 +493,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
           {error ? <p className="duelo2v2-error">{error}</p> : null}
 
           <QuickModePrepWorkspace
-            className={mobileSummaryOpen ? "is-summary-open" : ""}
+            className={`qm-ws--wide${mobileSummaryOpen ? " is-summary-open" : ""}`}
             header={
               <QuickModeEventHeader
                 club={modeEyebrow}
@@ -522,21 +522,20 @@ export const Duelo2v2Nuevo: React.FC = () => {
                     value: categoria.trim() || "—",
                   },
                 ]}
-                onEditDetails={() => setStep("horario")}
-                editDetailsLabel="Editar horario"
               />
             }
+            details={detailsPanel}
             stepper={
               <QuickModeStepper
                 steps={steps}
                 activeId={step}
-                onChange={(id) => setStep(id as NuevoStepId)}
+                onChange={() => undefined}
               />
             }
             workbench={
               <>
                 <div className="qm-ws__workbench-head">
-                  <h2 className="qm-ws__workbench-title">{workbenchTitle}</h2>
+                  <h2 className="qm-ws__workbench-title">Listo para guardar</h2>
                   <button
                     type="button"
                     className="qm-ws__text-btn qm-ws__summary-toggle"

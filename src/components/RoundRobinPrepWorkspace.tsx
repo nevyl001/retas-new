@@ -18,9 +18,11 @@ import { ModernPlayerManager } from "./ModernPlayerManager";
 import { NewPairManager } from "./NewPairManager";
 import { RetaConfigPanel } from "./reta/RetaConfigPanel";
 import { RetaAbiertaOrganizerPanel } from "./reta-abierta/RetaAbiertaOrganizerPanel";
+import type { ConvocatoriaLiveSnapshot } from "./reta-abierta/ConvocatoriaWhatsAppPanel";
 import { RetaConfigDangerReset } from "./TournamentStatusContent";
-import { Card, Input, Modal } from "./ui";
+import { Card, Input } from "./ui";
 import {
+  QuickModeConvocatoriaGate,
   QuickModeEventHeader,
   QuickModePrepWorkspace,
   QuickModePrimaryCta,
@@ -32,7 +34,6 @@ import {
 export type RoundRobinPrepStepId =
   | "jugadores"
   | "equipos"
-  | "convocatoria"
   | "listo";
 
 type StartOpts = {
@@ -111,6 +112,12 @@ function convStatusLabel(status: string | undefined): string {
   }
 }
 
+function scrollToConvocatoriaStrip() {
+  document
+    .getElementById("reta-convocatoria-inline")
+    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 /**
  * Workspace de preparación compartido: Round Robin + Reta por Equipos.
  * Solo UI; misma lógica de parejas / start / convocatoria.
@@ -143,10 +150,13 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
   );
   const isTeams = format === "teams";
   const [step, setStep] = useState<RoundRobinPrepStepId>("jugadores");
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [convLine, setConvLine] = useState("Sin abrir · —");
   const [convTouched, setConvTouched] = useState(false);
+  /** Selector: el usuario elige abrir el bloque para lanzar convocatoria. */
+  const [wantConvocatoria, setWantConvocatoria] = useState(false);
+  /** Ya hay convocatoria live (slug / abierta): el bloque no se oculta. */
+  const [convIsLive, setConvIsLive] = useState(false);
   const [teamsCount, setTeamsCount] = useState(2);
   const [teamNames, setTeamNames] = useState<string[]>(["Equipo 1", "Equipo 2"]);
   const [pairToTeam, setPairToTeam] = useState<Record<string, number>>({});
@@ -169,11 +179,17 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
       const cfg = await fetchOpenRegistrationConfig(tournament.id);
       if (!cfg) {
         setConvLine("Sin abrir · —");
+        setConvIsLive(false);
         return;
       }
       const entries = await listOpenRegistrationEntries(tournament.id);
       const confirmed = entries.filter((e) => e.status === "confirmed").length;
       const capacity = cfg.capacity ?? 8;
+      const live =
+        Boolean(cfg.public_slug) ||
+        (Boolean(cfg.enabled) && cfg.status !== "draft");
+      setConvIsLive(live);
+      if (live) setWantConvocatoria(true);
       setConvLine(
         `${convStatusLabel(cfg.status)} · ${confirmed} de ${capacity} confirmados`
       );
@@ -278,10 +294,30 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
       : null;
 
   const goConvocatoria = () => {
-    setStep("convocatoria");
+    setWantConvocatoria(true);
     setConvTouched(true);
     setMobileSummaryOpen(false);
+    window.requestAnimationFrame(() => scrollToConvocatoriaStrip());
   };
+
+  const onConvLiveChange = useCallback((snap: ConvocatoriaLiveSnapshot) => {
+    if (snap.isLive || snap.confirmed > 0) setConvTouched(true);
+    if (snap.isLive) {
+      setConvIsLive(true);
+      setWantConvocatoria(true);
+    } else if (!snap.publicSlug) {
+      setConvIsLive(false);
+    }
+    if (!snap.isLive && !snap.publicSlug) {
+      setConvLine("Sin abrir · —");
+      return;
+    }
+    setConvLine(
+      `${convStatusLabel(snap.status ?? undefined)} · ${snap.confirmed} de ${snap.capacity} confirmados`
+    );
+  }, []);
+
+  const showConvocatoriaPanel = wantConvocatoria || convIsLive;
 
   const steps: QuickModeStep[] = [
     {
@@ -297,11 +333,6 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
       status: stepStatus("equipos", step, equiposOk),
     },
     {
-      id: "convocatoria",
-      label: "Convocatoria",
-      status: stepStatus("convocatoria", step, convTouched),
-    },
-    {
       id: "listo",
       label: "Listo",
       status: stepStatus("listo", step, canStart),
@@ -313,10 +344,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
       ? "Jugadores"
       : step === "equipos"
         ? "Equipos"
-        : step === "convocatoria"
-          ? // Evita “Convocatoria / Convocatoria Riviera” duplicado en el panel.
-            tournament.name?.trim() || "Compartir"
-          : "Listo para iniciar";
+        : "Listo para iniciar";
 
   const workbenchBody =
     step === "jugadores" ? (
@@ -409,10 +437,6 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
           </Card>
         ) : null}
       </div>
-    ) : step === "convocatoria" ? (
-      <div className="qm-ws__convocatoria">
-        <RetaAbiertaOrganizerPanel tournament={tournament} />
-      </div>
     ) : (
       <ul className="qm-ws__ready-check">
         <li className={jugadoresOk ? "is-ok" : "is-miss"}>
@@ -466,9 +490,13 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
             <button
               type="button"
               className="qm-ws__text-btn"
-              onClick={() => setDetailsOpen(true)}
+              onClick={() => {
+                document
+                  .getElementById("reta-detalles-inline")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
             >
-              Editar detalles
+              Ir a detalles
             </button>
           ) : null}
         </li>
@@ -484,7 +512,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
             className="qm-ws__text-btn"
             onClick={goConvocatoria}
           >
-            Ver convocatoria
+            Ir a convocatoria
           </button>
         </li>
         <li className={datosOk ? "is-ok" : "is-soft"}>
@@ -498,9 +526,13 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
             <button
               type="button"
               className="qm-ws__text-btn"
-              onClick={() => setDetailsOpen(true)}
+              onClick={() => {
+                document
+                  .getElementById("reta-detalles-inline")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
             >
-              Editar detalles
+              Ir a detalles
             </button>
           ) : null}
         </li>
@@ -524,6 +556,21 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
 
   const sidebarPanel = (
     <div className="qm-ws-panel">
+      {step === "jugadores" && selectedPlayers.length > 0 ? (
+        <section className="qm-ws-panel__block">
+          <h3 className="qm-ws-panel__label">Formando pareja</h3>
+          <div className="qm-ws-panel__selected">
+            {selectedPlayers.map((p) => (
+              <span key={p.id} className="qm-ws-panel__selected-chip">
+                <span className="qm-ws-panel__selected-chip-name">
+                  {p.name}
+                </span>
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <section className="qm-ws-panel__block">
         <h3 className="qm-ws-panel__label">Progreso</h3>
         <ul className="qm-ws-panel__progress">
@@ -542,7 +589,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
           className="qm-ws__text-btn"
           onClick={goConvocatoria}
         >
-          Ver detalles
+          Ir a convocatoria
         </button>
       </section>
 
@@ -564,7 +611,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
   return (
     <>
       <QuickModePrepWorkspace
-        className={mobileSummaryOpen ? "is-summary-open" : ""}
+        className={`qm-ws--wide${mobileSummaryOpen ? " is-summary-open" : ""}`}
         header={
           <QuickModeEventHeader
             club={club}
@@ -574,30 +621,67 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
             }
             modality={getStartFormatLabel(format)}
             statusLabel="Pendiente"
-            centerMetrics={[
-              { label: "Jugadores", value: playerPool.length },
-              { label: "Parejas", value: pairs.length },
-              { label: "Canchas", value: tournament.courts ?? "—" },
-              {
-                label: "Duración",
-                value: duration != null ? `${duration} min` : "—",
-              },
-            ]}
-            rightMeta={[
-              { label: "Fecha", value: scheduleLabel },
-              { label: "Lugar", value: lugarLabel },
-            ]}
-            onEditDetails={() => setDetailsOpen(true)}
+            centerSummaryLine={[
+              `${playerPool.length} jugadores`,
+              `${pairs.length} parejas`,
+              `${tournament.courts ?? "—"} canchas`,
+              duration != null ? `${duration} min` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+            rightSummaryLine={[scheduleLabel, lugarLabel]
+              .filter((v) => v && v !== "—")
+              .join(" · ")}
           />
+        }
+        details={
+          <section
+            id="reta-detalles-inline"
+            className="qm-ws__details-inline"
+            aria-label="Detalles de la reta"
+          >
+            <RetaConfigPanel
+              tournament={tournament}
+              matches={matches}
+              pairsCount={pairs.length}
+              onSaved={(t) => {
+                onTournamentPatched?.(t);
+                loadTournamentData();
+                setForceRefresh((prev) => prev + 1);
+              }}
+            />
+            <div
+              id="reta-convocatoria-inline"
+            >
+              <QuickModeConvocatoriaGate
+                open={wantConvocatoria}
+                live={convIsLive}
+                panelId="reta-convocatoria-panel"
+                onToggle={() => {
+                  setWantConvocatoria((v) => {
+                    const next = !v;
+                    if (next) setConvTouched(true);
+                    return next;
+                  });
+                }}
+              >
+                {showConvocatoriaPanel ? (
+                  <RetaAbiertaOrganizerPanel
+                    tournament={tournament}
+                    embedded
+                    onLiveChange={onConvLiveChange}
+                  />
+                ) : null}
+              </QuickModeConvocatoriaGate>
+            </div>
+          </section>
         }
         stepper={
           <QuickModeStepper
             steps={steps}
             activeId={step}
             onChange={(id) => {
-              const next = id as RoundRobinPrepStepId;
-              if (next === "convocatoria") setConvTouched(true);
-              setStep(next);
+              setStep(id as RoundRobinPrepStepId);
             }}
           />
         }
@@ -620,25 +704,6 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
         sidebar={sidebarPanel}
         stickyCta={<QuickModePrimaryCta {...ctaProps} />}
       />
-
-      <Modal
-        open={detailsOpen}
-        onClose={() => setDetailsOpen(false)}
-        title="Editar detalles"
-        size="lg"
-      >
-        <RetaConfigPanel
-          tournament={tournament}
-          matches={matches}
-          pairsCount={pairs.length}
-          onSaved={(t) => {
-            onTournamentPatched?.(t);
-            loadTournamentData();
-            setForceRefresh((prev) => prev + 1);
-            setDetailsOpen(false);
-          }}
-        />
-      </Modal>
     </>
   );
 };

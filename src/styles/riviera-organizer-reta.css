@@ -495,7 +495,7 @@
 /* Filas jugador / pareja */
 .riviera-organizer-reta .elegant-players-grid,
 .riviera-organizer-reta .elegant-pairs-grid {
-  gap: 0.5rem;
+  gap: 0.4rem;
   padding-right: 0.35rem;
 }
 
@@ -507,6 +507,11 @@
   border-radius: var(--radius-md) !important;
   box-shadow: none !important;
   animation: fadeInUp 0.45s ease-out both;
+}
+
+.riviera-organizer-reta .elegant-player-card {
+  min-height: 38px;
+  padding: 6px 8px;
 }
 
 .riviera-organizer-reta .elegant-players-grid .elegant-player-card:nth-child(1) {
@@ -524,23 +529,58 @@
 
 .riviera-organizer-reta .elegant-player-card:hover,
 .riviera-organizer-reta .elegant-pair-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: var(--border-accent) !important;
   background: var(--bg-card-hover) !important;
-  box-shadow: var(--shadow-card) !important;
+  box-shadow: none !important;
 }
 
 .riviera-organizer-reta .elegant-player-card.selected {
-  border-color: var(--border-accent) !important;
-  box-shadow: var(--shadow-card) !important;
+  border: 2px solid var(--text-primary, #f4f1eb) !important;
+  background: color-mix(in srgb, var(--bg-card, #1a1a1a) 82%, #fff) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary, #f4f1eb) 28%, transparent) !important;
 }
 
-.riviera-organizer-reta .elegant-player-avatar {
-  background: var(--bg-elevated) !important;
-  border: 1px solid var(--border-accent) !important;
-  color: var(--text-secondary) !important;
-  font-family: var(--font-body) !important;
-  font-weight: 700 !important;
+.riviera-organizer-reta .elegant-player-card.selected:hover {
+  border-color: var(--text-primary, #f4f1eb) !important;
+  background: color-mix(in srgb, var(--bg-card, #1a1a1a) 78%, #fff) !important;
+}
+
+.riviera-organizer-reta .elegant-player-card.in-pair {
+  background: color-mix(in srgb, var(--bg-elevated, #f4f1eb) 70%, var(--border-subtle, #e2ddd4)) !important;
+  border: 1px dashed color-mix(in srgb, var(--text-secondary, #55595f) 32%, var(--border-subtle, #e2ddd4)) !important;
+  box-shadow: none !important;
+  opacity: 1;
+}
+
+.riviera-organizer-reta .elegant-player-card.in-pair:hover {
+  transform: none;
+  background: color-mix(in srgb, var(--bg-elevated, #f4f1eb) 70%, var(--border-subtle, #e2ddd4)) !important;
+  border-color: color-mix(in srgb, var(--text-secondary, #55595f) 42%, var(--border-subtle, #e2ddd4)) !important;
+  box-shadow: none !important;
+}
+
+.riviera-organizer-reta .elegant-player-card.in-pair.selected {
+  border-style: dashed !important;
+  border-color: color-mix(in srgb, var(--text-secondary, #55595f) 32%, var(--border-subtle, #e2ddd4)) !important;
+  box-shadow: none !important;
+}
+
+.riviera-organizer-reta .elegant-player-card--has-photo .elegant-player-card__overlay {
+  background: linear-gradient(
+    90deg,
+    var(--bg-card, #fff) 0%,
+    color-mix(in srgb, var(--bg-card, #fff) 86%, transparent) 40%,
+    color-mix(in srgb, var(--bg-card, #fff) 48%, transparent) 100%
+  );
+}
+
+.riviera-organizer-reta .elegant-player-card.in-pair .elegant-player-card__overlay {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--bg-elevated, #f4f1eb) 78%, var(--border-subtle, #e2ddd4)) 0%,
+    color-mix(in srgb, var(--bg-elevated, #f4f1eb) 45%, transparent) 100%
+  );
 }
 
 .riviera-organizer-reta .elegant-player-name,
@@ -548,6 +588,10 @@
   font-family: var(--font-body) !important;
   font-weight: 600 !important;
   color: var(--text-primary) !important;
+}
+
+.riviera-organizer-reta .elegant-player-card.in-pair .elegant-player-name {
+  color: var(--text-secondary) !important;
 }
 
 .riviera-organizer-reta .elegant-pair-indicator {

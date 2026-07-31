@@ -290,23 +290,6 @@
   flex: 1;
 }
 
-.rv-mode-card__cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: var(--ro-space-4);
-  min-height: 40px;
-  padding: 0 var(--ro-space-4);
-  border-radius: var(--ro-radius-md);
-  font-size: var(--ro-text-small);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  background: var(--ro-gold-dim);
-  color: var(--ro-gold-text);
-  border: 0.5px solid var(--ro-gold-border);
-  align-self: flex-start;
-}
-
 /* —— Action bar —— */
 .rv-action-bar {
   display: flex;

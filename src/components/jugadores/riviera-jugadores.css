@@ -8,9 +8,15 @@
 }
 
 .rj-page__inner {
-  max-width: 960px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 1rem 1rem 2.5rem;
+  padding: 1rem 1.5rem 2.5rem;
+}
+
+@media (min-width: 1024px) {
+  .rj-page__inner {
+    padding: 1.5rem 2.5rem 3rem;
+  }
 }
 
 .rj-page__top {
@@ -77,11 +83,34 @@
   cursor: not-allowed;
 }
 
+.rj-summary {
+  margin: 0 0 0.85rem;
+  font-size: 0.8125rem;
+  color: var(--ro-text-muted);
+}
+
 .rj-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .rj-filters {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .rj-filters > .riviera-input {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 11rem;
+  }
+
+  .rj-filters > .rj-checkbox-pill {
+    flex: 0 0 auto;
+  }
 }
 
 .rj-search {
@@ -93,6 +122,12 @@
   background: var(--ro-bg-elevated);
   color: var(--ro-text-primary);
   font-size: 0.9375rem;
+}
+
+@media (min-width: 640px) {
+  .rj-search {
+    flex: 1 1 auto;
+  }
 }
 
 .rj-search::placeholder {
@@ -112,48 +147,54 @@
   cursor: pointer;
 }
 
-/* —— Lista compacta (reemplaza grid de tarjetas) —— */
-.rj-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* —— Grid de tarjetas de jugador (no tabla, no lista de 1 columna) —— */
+.rj-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
-.rj-list__head {
-  display: none;
+@media (min-width: 640px) {
+  .rj-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
 }
 
-.rj-row {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  min-height: 70px;
+@media (min-width: 1440px) {
+  .rj-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+/* Tarjeta compacta: foto+nombre dominan, categoría rápida, stats en una
+   sola línea secundaria. El menú ⋯ flota aparte (no consume su propia
+   columna) para que la tarjeta no crezca de alto sin necesidad. */
+.rj-card {
+  position: relative;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   border-radius: 12px;
   border: 1px solid var(--ro-border);
-  background: linear-gradient(
-    180deg,
-    var(--ro-bg-elevated) 0%,
-    var(--ro-bg-inset) 100%
-  );
-  transition: border-color 0.15s;
+  background: var(--ro-bg-elevated);
+  transition: border-color 0.15s, background 0.15s;
 }
 
-.rj-row:hover {
-  border-color: var(--ro-border);
+.rj-card:hover {
+  border-color: var(--ro-border-accent, var(--ro-border));
+  background: var(--ro-bg-card-hover, var(--ro-bg-elevated));
 }
 
-.rj-row__main {
-  flex: 1;
+.rj-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
   min-width: 0;
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 0.4rem;
   margin: 0;
-  padding: 0.45rem 0.5rem 0.45rem 0.55rem;
+  padding: 12px 58px 12px 12px;
   border: none;
   background: transparent;
   color: inherit;
@@ -164,301 +205,146 @@
   touch-action: manipulation;
 }
 
-.rj-row__rank {
-  font-size: 0.6875rem;
+.rj-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.rj-card__name {
+  font-size: 0.9375rem;
   font-weight: 700;
-  color: var(--ro-text-muted);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rj-row__rank--gold {
-  color: var(--ro-accent);
-}
-
-.rj-row__player {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.rj-row__name-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  min-width: 0;
-  flex: 1;
-}
-
-.rj-row__name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+  color: var(--ro-text-primary);
 }
 
-.rj-row__cat {
+.rj-card__meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 4px 6px;
+  padding-left: 50px;
   min-width: 0;
 }
 
-.rj-row__cat .rj-cat-badge {
+.rj-card__cat.rj-cat-badge {
   font-size: 0.625rem;
   padding: 0.15rem 0.4rem;
-  white-space: nowrap;
 }
 
-.rj-row__pts {
+.rj-card__line {
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ro-text-secondary);
-  white-space: nowrap;
-  text-align: right;
-}
-
-.rj-row__pts-suffix {
-  font-weight: 500;
+  line-height: 1.4;
   color: var(--ro-text-muted);
+  padding-left: 50px;
 }
 
-.rj-row__partidos,
-.rj-row__pct {
-  display: none;
+.rj-card__line--muted {
+  font-style: italic;
 }
 
-.rj-row__actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.2rem;
-  flex-shrink: 0;
-  padding: 0 0.35rem 0 0;
+/* —— Menú ⋯: flota sobre la tarjeta, no dispara la navegación —— */
+.rj-card__menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
 
-.rj-row__icon-btn {
+.rj-card__menu-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0;
+  width: var(--ro-touch-target-min, 44px);
+  height: var(--ro-touch-target-min, 44px);
+  min-width: var(--ro-touch-target-min, 44px);
+  min-height: var(--ro-touch-target-min, 44px);
   border: 1px solid var(--ro-border);
   border-radius: 8px;
   background: var(--ro-scrim-modal);
   color: var(--ro-text-secondary);
   cursor: pointer;
+  list-style: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
-.rj-row__icon-btn:hover {
+.rj-card__menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.rj-card__menu-trigger:hover {
   border-color: var(--ro-border);
-  color: var(--ro-accent);
+  color: var(--ro-text-primary);
   background: var(--ro-bg-elevated);
 }
 
-.rj-row__icon-btn--danger:hover:not(:disabled) {
-  border-color: rgba(239, 68, 68, 0.55);
+.rj-card__menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 11.5rem;
+  padding: 0.4rem;
+  border-radius: 12px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-elevated);
+  box-shadow: var(--ro-shadow-md);
+}
+
+.rj-card__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 40px;
+  padding: 0.4rem 0.65rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ro-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background 0.15s;
+}
+
+.rj-card__menu-item:hover {
+  background: var(--ro-bg-inset, var(--ro-scrim-modal));
+}
+
+.rj-card__menu-item--danger {
   color: var(--ro-error);
+  border-top: 1px solid var(--ro-border-subtle);
+  margin-top: 2px;
+  padding-top: 0.55rem;
+}
+
+.rj-card__menu-item--danger:hover {
   background: rgba(239, 68, 68, 0.12);
 }
 
-.rj-row__icon-btn:disabled {
+.rj-card__menu-item:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* —— Móvil: el NOMBRE manda; bandera/cat/acciones compactas —— */
-@media (max-width: 767px) {
-  .rj-row {
-    min-height: 64px;
-  }
-
-  .rj-row__main {
-    grid-template-columns: 1.65rem minmax(0, 1fr) auto auto;
-    gap: 0.35rem;
-    padding: 0.4rem 0.35rem 0.4rem 0.4rem;
-  }
-
-  .rj-row__player {
-    gap: 0.4rem;
-    overflow: hidden;
-  }
-
-  .rj-row__player .rj-avatar {
-    flex-shrink: 0;
-  }
-
-  .rj-row__name-wrap {
-    flex: 1 1 0%;
-    min-width: 0;
-    overflow: hidden;
-    gap: 0.2rem;
-  }
-
-  /* Nombre con prioridad real de ancho */
-  .rj-row__name {
-    flex: 1 1 auto;
-    min-width: 5ch;
-    font-size: 0.875rem;
-  }
-
-  /* Solo emoji de bandera; sin "MEX" */
-  .rj-row .rj-pais-badge {
-    flex-shrink: 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-    gap: 0;
-  }
-
-  .rj-row .rj-pais-badge__code {
-    display: none;
-  }
-
-  /* Badge "concedido": en móvil solo el ícono (mismo criterio que la
-   * bandera de país arriba, que también oculta su texto y deja el emoji).
-   * El nombre del club de origen sigue disponible vía title/aria-label
-   * y completo en la ficha del jugador. */
-  .rj-row .rj-granted-badge {
-    flex-shrink: 0;
-    padding: 0;
-    gap: 0;
-    border: none;
-    background: transparent;
-  }
-
-  .rj-row .rj-granted-badge__label {
-    display: none;
-  }
-
-  /* Categoría corta: 5ta / 4ta / Open (sin "fuerza") */
-  .rj-row__cat {
-    flex-shrink: 0;
-  }
-
-  .rj-row__cat .rj-cat-badge {
-    font-size: 0;
-    line-height: 0;
-    padding: 0.28rem 0.35rem;
-    max-width: none;
-    overflow: visible;
-    text-overflow: clip;
-  }
-
-  .rj-row__cat .rj-cat-badge::after {
-    font-size: 0.625rem;
-    line-height: 1.2;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-
-  .rj-row__cat .rj-cat--open::after {
-    content: "Open";
-  }
-  .rj-row__cat .rj-cat--1::after {
-    content: "1ra";
-  }
-  .rj-row__cat .rj-cat--2::after {
-    content: "2da";
-  }
-  .rj-row__cat .rj-cat--3::after {
-    content: "3ra";
-  }
-  .rj-row__cat .rj-cat--4::after {
-    content: "4ta";
-  }
-  .rj-row__cat .rj-cat--5::after {
-    content: "5ta";
-  }
-  .rj-row__cat .rj-cat--6::after {
-    content: "6ta";
-  }
-
-  .rj-row__pts {
-    flex-shrink: 0;
-    font-size: 0.75rem;
-  }
-
-  .rj-row__actions {
-    gap: 0.15rem;
-    padding: 0 0.2rem 0 0;
-  }
-
-  .rj-row__icon-btn {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-  }
-}
-
-@media (min-width: 768px) {
-  .rj-list__head {
-    display: grid;
-    grid-template-columns: 2.5rem minmax(0, 1.6fr) 7rem 4.75rem 4rem 3.5rem 5.5rem;
-    gap: 0.5rem;
-    padding: 0 0.65rem 0.35rem;
-    font-size: 0.625rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ro-text-muted);
-  }
-
-  .rj-list__head > span:nth-child(4),
-  .rj-list__head > span:nth-child(5),
-  .rj-list__head > span:nth-child(6),
-  .rj-list__head > span:nth-child(7) {
-    text-align: right;
-  }
-
-  .rj-row {
-    min-height: 56px;
-  }
-
-  .rj-row__main {
-    grid-template-columns: 2.5rem minmax(0, 1.6fr) 7rem 4.75rem 4rem 3.5rem;
-    gap: 0.5rem;
-    padding: 0.35rem 0.5rem 0.35rem 0.65rem;
-  }
-
-  .rj-row__partidos,
-  .rj-row__pct {
-    display: block;
-    font-size: 0.8125rem;
-    color: var(--ro-text-muted);
-    text-align: right;
-    white-space: nowrap;
-  }
-
-  .rj-row__pts {
-    text-align: right;
-    font-size: 0.8125rem;
-  }
-
-  .rj-row__actions {
-    width: 5.5rem;
-    padding-right: 0.5rem;
-  }
-
-  .rj-row__icon-btn {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
-  }
+/* —— Cargar más —— */
+.rj-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
 .rj-ajuste-actual {
@@ -775,14 +661,22 @@
   outline: none;
 }
 
+.rj-riviera-id--copied,
+.rj-riviera-id--copied:hover,
+.rj-riviera-id--copied:focus-visible {
+  color: var(--ro-text-primary, #14161a);
+  border-color: color-mix(in srgb, var(--ro-bg-base, #e9e4dc) 55%, var(--ro-border));
+  background: var(--ro-bg-base, #e9e4dc);
+  cursor: default;
+}
+
 .rj-riviera-id--md {
   font-size: 0.75rem;
   padding: 0.18rem 0.55rem;
 }
 
 .rj-riviera-id__icon {
-  font-size: 0.75em;
-  opacity: 0.85;
+  display: none;
 }
 
 .rj-ficha-header__name-row + .rj-riviera-id {
@@ -1231,15 +1125,12 @@
   gap: 0.5rem;
 }
 
-.rj-page__actions-desktop {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* Más ⋯ solo en móvil */
+/* "Más ⋯" agrupa las acciones secundarias en todos los tamaños — un solo
+   mecanismo, no un duplicado desktop + un <details> aparte en móvil. */
 .rj-page__more {
-  display: none;
+  display: block;
+  position: relative;
+  flex: 0 0 auto;
 }
 
 /* Móvil: cabecera compacta — lista visible antes */
@@ -1276,22 +1167,12 @@
     gap: 0.4rem;
   }
 
-  .rj-page__actions-desktop {
-    display: none;
-  }
-
   .rj-page__top-actions > .rj-btn--primary {
     flex: 1 1 auto;
     min-height: 42px;
     padding: 0.45rem 0.85rem;
     font-size: 0.875rem;
     border-radius: 10px;
-  }
-
-  .rj-page__more {
-    display: block;
-    position: relative;
-    flex: 0 0 auto;
   }
 
   .rj-page__more-summary {
@@ -1634,20 +1515,21 @@
   display: inline-flex;
   gap: 0.35rem;
   margin: 0 0 1.15rem;
-  padding: 0.2rem;
-  border-radius: 10px;
+  padding: 0.25rem;
+  border-radius: 12px;
   border: 1px solid var(--ro-border-subtle);
   background: var(--ro-scrim-modal);
 }
 
 .rj-genero-tabs__btn {
-  padding: 0.45rem 0.95rem;
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   background: transparent;
-  color: var(--ro-text-muted);
+  color: var(--ro-text-secondary);
   font-family: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -1661,9 +1543,10 @@
 }
 
 .rj-genero-tabs__btn--active {
-  background: var(--ro-bg-elevated);
-  color: var(--accent-gold-light, var(--ro-accent-hover));
-  box-shadow: inset 0 0 0 1px var(--ro-accent-ring);
+  background: var(--ro-bg-card, var(--ro-bg-elevated));
+  color: var(--ro-text-primary);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .rjp-ranking-genero-tabs {

@@ -424,52 +424,77 @@ async function mergeGrantedJugadoresIntoList(
   const ownById = new Map(ownRows.map((r) => [r.id, r]));
   const merged = excludeRevokedGrantLocalClones([...ownRows], revokedLocalIds);
 
-  for (const grant of grants) {
-    if (grant.local_jugador_id) {
-      const existing = ownById.get(grant.local_jugador_id);
-      if (existing) {
-        const ownerOrgId = grant.owner_organizador_id;
+  // Fase 1: grants ya ligados a una fila propia — cada uno muta un objeto
+  // distinto (su `existing`), así que no compiten entre sí y pueden ir en
+  // paralelo.
+  await Promise.all(
+    grants
+      .filter((grant) => grant.local_jugador_id)
+      .map(async (grant) => {
+        const localId = grant.local_jugador_id;
+        if (!localId) return;
+        const existing = ownById.get(localId);
+        if (!existing) return;
         existing.concedidoPorAdmin = true;
         existing.grantedAccess = grantedAccessFromRow(grant);
         const enriched = await enrichGrantedJugadorFromSource(
           existing,
           grant.jugador_id,
-          ownerOrgId
+          grant.owner_organizador_id
         );
         Object.assign(existing, enriched);
+      })
+  );
+
+  // Fase 2: grants que insertan un clon de un jugador de otro club. Se
+  // deduplica por jugador_id de origen ANTES de disparar los fetches en
+  // paralelo (incluyendo lo que la fase 1 ya dejó en `merged`), para que el
+  // resultado no dependa del orden en que respondan las promesas.
+  const seenSourceIds = new Set<string>();
+  const uniqueSourceGrants = grants.filter((grant) => {
+    if (grant.local_jugador_id) return false;
+    if (mergedIncludesGrantedSource(merged, grant.jugador_id)) return false;
+    if (seenSourceIds.has(grant.jugador_id)) return false;
+    seenSourceIds.add(grant.jugador_id);
+    return true;
+  });
+
+  const sourceResults = await Promise.all(
+    uniqueSourceGrants.map(async (grant) => {
+      const source = await fetchSourceJugadorForGrant(grant.jugador_id);
+      if (!source) return null;
+
+      const nombre =
+        grant.local_display_name?.trim() ||
+        String(source.nombre ?? "Jugador");
+      const categoria =
+        grant.local_category?.trim() ||
+        String(source.categoria ?? "open");
+
+      let mapped = mapJugadorRowFromService({
+        ...source,
+        nombre,
+        categoria,
+        stats: null,
+      });
+
+      if (genero && !isJugadorInGeneroBracket(mapped.genero, genero)) {
+        return null;
       }
-      continue;
-    }
 
-    if (mergedIncludesGrantedSource(merged, grant.jugador_id)) continue;
+      mapped = await enrichGrantedJugadorFromSource(
+        mapped,
+        grant.jugador_id,
+        grant.owner_organizador_id
+      );
+      mapped.concedidoPorAdmin = true;
+      mapped.grantedAccess = grantedAccessFromRow(grant);
+      return mapped;
+    })
+  );
 
-    const source = await fetchSourceJugadorForGrant(grant.jugador_id);
-    if (!source) continue;
-
-    const nombre =
-      grant.local_display_name?.trim() ||
-      String(source.nombre ?? "Jugador");
-    const categoria =
-      grant.local_category?.trim() ||
-      String(source.categoria ?? "open");
-
-    let mapped = mapJugadorRowFromService({
-      ...source,
-      nombre,
-      categoria,
-      stats: null,
-    });
-
-    if (genero && !isJugadorInGeneroBracket(mapped.genero, genero)) continue;
-
-    mapped = await enrichGrantedJugadorFromSource(
-      mapped,
-      grant.jugador_id,
-      grant.owner_organizador_id
-    );
-    mapped.concedidoPorAdmin = true;
-    mapped.grantedAccess = grantedAccessFromRow(grant);
-    merged.push(mapped);
+  for (const mapped of sourceResults) {
+    if (mapped) merged.push(mapped);
   }
 
   merged.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));

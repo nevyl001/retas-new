@@ -13,7 +13,6 @@ export interface GameModeConfig {
   title: string;
   description: string;
   icon: string;
-  gradient: string;
   accentColor: string;
   category: GameModeCategory;
   typeLabel: string;
@@ -24,10 +23,8 @@ export const GAME_MODES: GameModeConfig[] = [
   {
     id: "reta-equipos",
     title: "Reta por Equipos",
-    description: "Parejas agrupadas compiten por equipos",
-    icon: "🏆",
-    gradient:
-      "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+    description: "Parejas agrupadas por equipos.",
+    icon: "👥",
     accentColor: "#ffffff",
     category: "reta-rapida",
     typeLabel: "Reta rápida",
@@ -35,10 +32,8 @@ export const GAME_MODES: GameModeConfig[] = [
   {
     id: "round-robin",
     title: "Round Robin",
-    description: "Todos contra todos, tabla en vivo",
+    description: "Todos contra todos.",
     icon: "🔄",
-    gradient:
-      "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#ffffff",
     category: "reta-rapida",
     typeLabel: "Reta rápida",
@@ -46,10 +41,8 @@ export const GAME_MODES: GameModeConfig[] = [
   {
     id: "americano",
     title: "Reta Pádel Americano",
-    description: "Rotación dinámica por rondas y canchas",
+    description: "Rotación dinámica por rondas.",
     icon: "🎾",
-    gradient:
-      "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#10b981",
     category: "reta-rapida",
     typeLabel: "Reta rápida",
@@ -57,10 +50,8 @@ export const GAME_MODES: GameModeConfig[] = [
   {
     id: "duelo-2v2",
     title: "Duelo 2 vs 2",
-    description: "Dos parejas del registro · suma al ranking del club",
+    description: "Dos parejas, suma al ranking.",
     icon: "⚔️",
-    gradient:
-      "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
     accentColor: "#f59e0b",
     category: "reta-rapida",
     typeLabel: "Reta rápida",
@@ -68,10 +59,8 @@ export const GAME_MODES: GameModeConfig[] = [
   {
     id: "mini-torneo",
     title: "Torneos",
-    description: "Grupos + round robin, tabla pública",
-    icon: "⚡",
-    gradient:
-      "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+    description: "Grupos y fase final.",
+    icon: "🏆",
     accentColor: "#8b5cf6",
     category: "competencia",
     typeLabel: "Competencia",
@@ -79,10 +68,8 @@ export const GAME_MODES: GameModeConfig[] = [
   {
     id: "liga",
     title: "Liga",
-    description: "Temporada con jornadas y ranking acumulado",
-    icon: "🏅",
-    gradient:
-      "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+    description: "Temporada con jornadas.",
+    icon: "📅",
     accentColor: "#3b82f6",
     category: "competencia",
     typeLabel: "Competencia",

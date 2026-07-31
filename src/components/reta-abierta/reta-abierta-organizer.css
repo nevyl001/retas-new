@@ -555,3 +555,91 @@
   border-bottom: 1px solid color-mix(in srgb, currentColor 8%, transparent);
   font-size: 0.9rem;
 }
+
+/* —— Embedded strip (Detalles de la reta) —— */
+.ra-org--embedded {
+  gap: 0.5rem;
+}
+
+.ra-org--embedded .ra-org__header-row {
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ra-org--embedded .ra-org__embedded-pre .ra-org__capacity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 1rem;
+}
+
+.ra-org--embedded .ra-org__embedded-pre-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.55rem 0.85rem;
+  align-items: end;
+}
+
+.ra-org--embedded .ra-org__embedded-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.ra-org--embedded .ra-org__embedded-field .ra-org__field-label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted, rgba(255, 255, 255, 0.52));
+}
+
+.ra-org--embedded .ra-org__embedded-input {
+  width: 100%;
+  min-height: 2.125rem;
+  height: 2.125rem;
+  padding: 0 0.6rem;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  color: inherit;
+  font-size: 0.8125rem;
+}
+
+.ra-org--embedded .ra-org__embedded-input:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--ro-accent));
+  outline-offset: 2px;
+}
+
+.ra-org--embedded .ra-org__embedded-pre-grid .ra-org__toggle--inline {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 639px) {
+  .ra-org--embedded .ra-org__embedded-pre-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ra-org--embedded .ra-org__toggle--inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ro-text-secondary, inherit);
+}
+
+.ra-org--embedded .ra-org__toggle--inline input {
+  accent-color: var(--brand-accent, var(--ro-accent));
+}
+
+.ra-org--embedded .ra-org__lists {
+  margin-top: 0.35rem;
+  padding-top: 0.55rem;
+}

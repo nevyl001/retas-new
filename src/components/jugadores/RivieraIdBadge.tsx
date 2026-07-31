@@ -1,8 +1,7 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { isValidRivieraId } from "../../lib/rivieraJugadores/rivieraIdDisplay";
 import type { RivieraJugador } from "../../lib/rivieraJugadores/types";
 import { copyToClipboard } from "../../services/torneoExpressService";
-import { ModernToast } from "../ModernToast";
 
 interface RivieraIdBadgeProps {
   rivieraId?: string | null;
@@ -18,7 +17,16 @@ export const RivieraIdBadge: React.FC<RivieraIdBadgeProps> = ({
   size = "sm",
   embedded = false,
 }) => {
-  const [toastVisible, setToastVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current != null) {
+        window.clearTimeout(copiedTimer.current);
+      }
+    };
+  }, []);
 
   const handleCopy = useCallback(
     async (event: React.MouseEvent<HTMLElement>) => {
@@ -27,51 +35,60 @@ export const RivieraIdBadge: React.FC<RivieraIdBadgeProps> = ({
       if (!isValidRivieraId(rivieraId)) return;
 
       const ok = await copyToClipboard(rivieraId);
-      if (ok) setToastVisible(true);
+      if (!ok) return;
+
+      setCopied(true);
+      if (copiedTimer.current != null) {
+        window.clearTimeout(copiedTimer.current);
+      }
+      copiedTimer.current = window.setTimeout(() => {
+        setCopied(false);
+        copiedTimer.current = null;
+      }, 1600);
     },
     [rivieraId]
   );
 
   if (!isValidRivieraId(rivieraId)) return null;
 
-  const classNames = `rj-riviera-id rj-riviera-id--${size} ${className}`.trim();
+  const classNames = [
+    "rj-riviera-id",
+    `rj-riviera-id--${size}`,
+    copied ? "rj-riviera-id--copied" : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-  return (
-    <>
-      {embedded ? (
-        <span
-          className={classNames}
-          onClick={(event) => void handleCopy(event)}
-          title="Copiar Riviera ID"
-          aria-label={`Copiar Riviera ID ${rivieraId}`}
-        >
-          <span className="rj-riviera-id__icon" aria-hidden>
-            🆔
-          </span>
-          <span className="rj-riviera-id__text">{rivieraId}</span>
-        </span>
-      ) : (
-        <button
-          type="button"
-          className={classNames}
-          onClick={(event) => void handleCopy(event)}
-          title="Copiar Riviera ID"
-          aria-label={`Copiar Riviera ID ${rivieraId}`}
-        >
-          <span className="rj-riviera-id__icon" aria-hidden>
-            🆔
-          </span>
-          <span className="rj-riviera-id__text">{rivieraId}</span>
-        </button>
-      )}
-      <ModernToast
-        message="Riviera ID copiado"
-        type="success"
-        isVisible={toastVisible}
-        onClose={() => setToastVisible(false)}
-        duration={2200}
-      />
-    </>
+  const label = copied ? "Copiado" : rivieraId;
+  const a11y = copied
+    ? `Riviera ID ${rivieraId} copiado`
+    : `Copiar Riviera ID ${rivieraId}`;
+
+  const inner = (
+    <span className="rj-riviera-id__text">{label}</span>
+  );
+
+  return embedded ? (
+    <span
+      className={classNames}
+      onClick={(event) => void handleCopy(event)}
+      title={copied ? "Copiado" : "Copiar Riviera ID"}
+      aria-label={a11y}
+      role="status"
+    >
+      {inner}
+    </span>
+  ) : (
+    <button
+      type="button"
+      className={classNames}
+      onClick={(event) => void handleCopy(event)}
+      title={copied ? "Copiado" : "Copiar Riviera ID"}
+      aria-label={a11y}
+    >
+      {inner}
+    </button>
   );
 };
 

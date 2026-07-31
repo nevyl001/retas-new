@@ -1,14 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { getPlayers, type Player } from "../lib/database";
 import { useUser } from "../contexts/UserContext";
-import type { RivieraJugador } from "../lib/rivieraJugadores/types";
+import type { RivieraJugadorCategoria } from "../lib/rivieraJugadores/types";
 import {
-  findPoolPlayerByLegacyId,
-  messageForRegistryLegacyLinkFailure,
-} from "../lib/retaAbierta/registrySelectForReta";
-import { linkLegacyOnSelectForReta } from "../lib/retaAbierta/linkLegacyOnSelectForReta";
+  JUGADOR_CATEGORIA_LABELS,
+  JUGADOR_CATEGORIAS_ORDER,
+} from "../lib/rivieraJugadores/constants";
+import { JugadorCategoriaBadge } from "./jugadores/JugadorCategoriaBadge";
+import { RivieraIdBadge } from "./jugadores/RivieraIdBadge";
 import { shouldShowPlayerPoolLoading } from "../hooks/organizerPlayerPoolLogic";
-import { JugadorAutocomplete } from "./jugadores/JugadorAutocomplete";
 import { navigateJugadoresLista } from "./jugadores/jugadoresGeneroNav";
 import { Button } from "./ui";
 import "./jugadores/riviera-jugadores.css";
@@ -29,6 +29,14 @@ interface ModernPlayerManagerProps {
   isCreatingPair?: boolean;
 }
 
+type PoolPlayer = Player & {
+  categoria?: RivieraJugadorCategoria | null;
+  foto_url?: string | null;
+  riviera_id?: string | null;
+};
+
+const PAGE_SIZE = 24;
+
 export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   onPlayerSelect,
   selectedPlayers = [],
@@ -48,10 +56,11 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   const [internalPlayers, setInternalPlayers] = useState<Player[]>([]);
   const [internalLoading, setInternalLoading] = useState(!usesExternalPool);
   const [internalError, setInternalError] = useState<string | null>(null);
-  const [registrySearch, setRegistrySearch] = useState("");
-  const [hoveredPlayer, setHoveredPlayer] = useState<string | null>(null);
-  const [registryHint, setRegistryHint] = useState<string | null>(null);
-  const [linkingLegacy, setLinkingLegacy] = useState(false);
+
+  const [gridSearch, setGridSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   React.useEffect(() => {
     if (usesExternalPool) return;
@@ -96,6 +105,25 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   const loading = usesExternalPool ? Boolean(loadingProp) : internalLoading;
   const error = usesExternalPool ? errorProp ?? null : internalError;
 
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [gridSearch, categoryFilter, onlyAvailable]);
+
+  const filteredPlayers = useMemo(() => {
+    const q = gridSearch.trim().toLowerCase();
+    return players.filter((p) => {
+      if (q && !p.name.toLowerCase().includes(q)) return false;
+      if (categoryFilter) {
+        const cat = (p as PoolPlayer).categoria;
+        if (cat !== categoryFilter) return false;
+      }
+      if (onlyAvailable && playersInPairs.includes(p.id)) return false;
+      return true;
+    });
+  }, [players, gridSearch, categoryFilter, onlyAvailable, playersInPairs]);
+
+  const visiblePlayers = filteredPlayers.slice(0, visibleCount);
+
   const emptyHint = useMemo(
     () =>
       organizadorId
@@ -127,54 +155,6 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
     }
   };
 
-  const handleRegistrySelect = (rj: RivieraJugador) => {
-    if (isCreatingPair || linkingLegacy) return;
-    setRegistryHint(null);
-
-    // Match solo por legacy_player_id (riviera → players), nunca por nombre.
-    const pl = findPoolPlayerByLegacyId(players, rj.legacy_player_id);
-
-    if (pl) {
-      handlePlayerSelect(pl);
-      setRegistrySearch("");
-      return;
-    }
-
-    if (!organizadorId) {
-      setRegistryHint("Inicia sesión para vincular jugadores al pool de retas.");
-      return;
-    }
-
-    const rivieraLabel = rj.riviera_id?.trim() || rj.id;
-    // Sin fila en pool: crear/reutilizar players legacy del club (perfil operativo local).
-    const ok = window.confirm(
-      `¿Agregar el perfil operativo de ${rj.nombre} (${rivieraLabel}) al pool de retas de este club?\n\nSe usará su ficha Riviera del club (sin crear identidad nueva ni tocar el perfil de origen).`
-    );
-    if (!ok) return;
-
-    void (async () => {
-      setLinkingLegacy(true);
-      try {
-        const linked = await linkLegacyOnSelectForReta(organizadorId, rj.id);
-        if (onRefreshPlayers) {
-          await onRefreshPlayers();
-        }
-        handlePlayerSelect(linked.player);
-        setRegistrySearch("");
-        setRegistryHint(
-          linked.created
-            ? "Agregado al pool de retas de este club."
-            : "Jugador ya vinculado al pool de este club."
-        );
-      } catch (err) {
-        // Fail-closed: no seleccionar, no crear por nombre, mensaje al organizador.
-        setRegistryHint(messageForRegistryLegacyLinkFailure(err));
-      } finally {
-        setLinkingLegacy(false);
-      }
-    })();
-  };
-
   // Primera carga sin datos: spinner. Con datos o refetch: no ocultar lista.
   if (shouldShowPlayerPoolLoading(loading, players.length)) {
     return (
@@ -190,37 +170,35 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
   return (
     <div className="elegant-player-manager">
       <div className="elegant-player-header">
-        <div className="elegant-header-content">
-          <div className="elegant-header-title">
-            <h3>Jugadores</h3>
-            <div className="elegant-player-count">{players.length}</div>
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            {isCreatingPair ? (
-              <span className="elegant-form-hint" role="status">
-                Creando pareja…
-              </span>
-            ) : null}
-            {onRefreshPlayers ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={loading}
-                onClick={() => void onRefreshPlayers()}
-              >
-                Actualizar
-              </Button>
-            ) : null}
-            <Button
+        <h3 className="elegant-player-header__title">
+          Jugadores <span className="elegant-player-count">{players.length}</span>
+        </h3>
+        <div className="elegant-player-header__actions">
+          {isCreatingPair ? (
+            <span className="elegant-form-hint" role="status">
+              Creando pareja…
+            </span>
+          ) : null}
+          {onRefreshPlayers ? (
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateJugadoresLista("M")}
+              className="elegant-text-action"
+              disabled={loading}
+              onClick={() => void onRefreshPlayers()}
             >
-              Ir al registro
-            </Button>
-          </div>
+              Actualizar
+            </button>
+          ) : null}
+          <span className="elegant-text-action-sep" aria-hidden>
+            ·
+          </span>
+          <button
+            type="button"
+            className="elegant-text-action"
+            onClick={() => navigateJugadoresLista("M")}
+          >
+            Ir al registro de jugadores →
+          </button>
         </div>
       </div>
 
@@ -228,43 +206,6 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
         <p className="elegant-form-hint" role="alert">
           {error}
         </p>
-      ) : null}
-
-      {organizadorId ? (
-        <div className="elegant-create-form">
-          <div className="elegant-form-header">
-            <h4>Buscar en el registro</h4>
-            <p>
-              Solo puedes elegir jugadores ya registrados. Para dar de alta a
-              alguien nuevo, usa «Registro de jugadores» en el dashboard.
-            </p>
-          </div>
-          <JugadorAutocomplete
-            organizadorId={organizadorId}
-            value={registrySearch}
-            onChange={setRegistrySearch}
-            onSelect={handleRegistrySelect}
-            placeholder="Buscar jugador registrado…"
-          />
-          {linkingLegacy ? (
-            <p className="elegant-form-hint" role="status">
-              Vinculando al pool de retas…
-            </p>
-          ) : null}
-          {registryHint ? (
-            <p className="elegant-form-hint" role="status">
-              {registryHint}{" "}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => navigateJugadoresLista("M")}
-              >
-                Abrir registro
-              </Button>
-            </p>
-          ) : null}
-        </div>
       ) : null}
 
       {players.length === 0 ? (
@@ -281,62 +222,141 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
           </Button>
         </div>
       ) : (
-        <div className="elegant-players-grid">
-          {players.map((player) => {
-            const isSelected = selectedPlayers.some((p) => p.id === player.id);
-            const isInPair = playersInPairs.includes(player.id);
-            const isHovered = hoveredPlayer === player.id;
+        <>
+          <div className="elegant-grid-filters">
+            <input
+              type="search"
+              className="elegant-grid-search"
+              placeholder="Buscar jugador por nombre…"
+              value={gridSearch}
+              onChange={(e) => setGridSearch(e.target.value)}
+            />
+            <select
+              className="riviera-input"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              aria-label="Filtrar por categoría"
+            >
+              <option value="">Todas las categorías</option>
+              {JUGADOR_CATEGORIAS_ORDER.map((c) => (
+                <option key={c} value={c}>
+                  {JUGADOR_CATEGORIA_LABELS[c]}
+                </option>
+              ))}
+            </select>
+            <label className="rj-checkbox-pill">
+              <input
+                type="checkbox"
+                checked={onlyAvailable}
+                onChange={(e) => setOnlyAvailable(e.target.checked)}
+              />
+              Solo disponibles
+            </label>
+          </div>
 
-            return (
-              <div
-                key={player.id}
-                className={`elegant-player-card ${
-                  isSelected ? "selected" : ""
-                } ${isInPair ? "in-pair" : ""} ${isHovered ? "hovered" : ""} ${
-                  isCreatingPair ? "disabled" : ""
-                }`}
-                onClick={() => handlePlayerSelect(player)}
-                aria-disabled={isCreatingPair}
-                style={
-                  isCreatingPair
-                    ? { opacity: 0.65, pointerEvents: "none" }
-                    : undefined
-                }
-                onMouseEnter={() => setHoveredPlayer(player.id)}
-                onMouseLeave={() => setHoveredPlayer(null)}
-              >
-                <div className="elegant-card-background"></div>
+          {filteredPlayers.length === 0 ? (
+            <p className="elegant-form-hint">
+              Ningún jugador coincide con la búsqueda o los filtros.
+            </p>
+          ) : (
+            <div className="elegant-players-grid" role="list">
+              {visiblePlayers.map((player) => {
+                const poolPlayer = player as PoolPlayer;
+                const categoria = poolPlayer.categoria;
+                const fotoUrl =
+                  typeof poolPlayer.foto_url === "string" &&
+                  poolPlayer.foto_url.trim()
+                    ? poolPlayer.foto_url.trim()
+                    : null;
+                const rivieraId =
+                  typeof poolPlayer.riviera_id === "string" &&
+                  poolPlayer.riviera_id.trim()
+                    ? poolPlayer.riviera_id.trim()
+                    : null;
+                const isSelected = selectedPlayers.some(
+                  (p) => p.id === player.id
+                );
+                const isInPair = playersInPairs.includes(player.id);
+                const statusLabel = isInPair
+                  ? "Pareja asignada"
+                  : isSelected
+                    ? "Seleccionado"
+                    : "Disponible";
 
-                <div className="elegant-player-content">
-                  <div className="elegant-player-avatar">
-                    {player.name.charAt(0).toUpperCase() || "?"}
-                  </div>
-                  <div className="elegant-player-info">
-                    <span className="elegant-player-name">{player.name}</span>
-                    {isInPair && (
-                      <span className="elegant-pair-indicator">
-                        <span className="elegant-indicator-dot"></span>
-                        En pareja
+                return (
+                  <div key={player.id} role="listitem">
+                    <button
+                      type="button"
+                      className={`elegant-player-card${
+                        fotoUrl ? " elegant-player-card--has-photo" : ""
+                      }${isSelected ? " selected" : ""}${
+                        isInPair ? " in-pair" : ""
+                      }`}
+                      onClick={() => handlePlayerSelect(player)}
+                      disabled={isCreatingPair}
+                      aria-pressed={isSelected}
+                      aria-label={`${player.name} — ${statusLabel}`}
+                    >
+                      {fotoUrl ? (
+                        <>
+                          <span
+                            className="elegant-player-card__photo"
+                            style={{ backgroundImage: `url(${fotoUrl})` }}
+                            aria-hidden
+                          />
+                          <span
+                            className="elegant-player-card__overlay"
+                            aria-hidden
+                          />
+                        </>
+                      ) : null}
+                      <span className="elegant-player-info">
+                        <span className="elegant-player-name" title={player.name}>
+                          {player.name}
+                        </span>
+                        <span className="elegant-player-meta">
+                          {categoria ? (
+                            <JugadorCategoriaBadge
+                              categoria={categoria}
+                              className="elegant-player-cat"
+                            />
+                          ) : null}
+                          {rivieraId ? (
+                            <RivieraIdBadge
+                              rivieraId={rivieraId}
+                              size="sm"
+                              embedded
+                              className="elegant-player-riviera-id"
+                            />
+                          ) : null}
+                        </span>
                       </span>
-                    )}
+                      {isSelected ? (
+                        <span className="elegant-player-mark" aria-hidden>
+                          ✓
+                        </span>
+                      ) : null}
+                    </button>
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          )}
 
-                {isSelected && (
-                  <div className="elegant-selection-indicator">
-                    <span className="elegant-check-icon">✓</span>
-                  </div>
-                )}
-
-                <div className="elegant-particles">
-                  <div className="elegant-particle"></div>
-                  <div className="elegant-particle"></div>
-                  <div className="elegant-particle"></div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          {filteredPlayers.length > visibleCount && (
+            <div className="elegant-load-more">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}
+              >
+                Mostrar más jugadores · {filteredPlayers.length - visibleCount}{" "}
+                restantes
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

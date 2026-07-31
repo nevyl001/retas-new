@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getRegistryEmptyMessage,
   getRegistrySectionLabel,
@@ -8,6 +8,14 @@ import {
 import type { AmericanoPlayer } from "../../lib/db/types";
 import type { Player } from "../../lib/database";
 import {
+  fetchOpenGameRegistrationConfig,
+  listOpenGameRegistrationEntries,
+} from "../../lib/retaAbierta/retaAbiertaService";
+import { buildTournamentConvocatoriaContext } from "../../lib/retaAbierta/adapters";
+import type { ConvocatoriaLiveSnapshot } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
+import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
+import {
+  QuickModeConvocatoriaGate,
   QuickModeEventHeader,
   QuickModePrepWorkspace,
   QuickModePrimaryCta,
@@ -19,7 +27,7 @@ import { Button, Input } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import "./PlayerRegistration.css";
 
-type PrepStepId = "jugadores" | "configuracion" | "convocatoria" | "listo";
+type PrepStepId = "jugadores" | "listo";
 
 interface PlayerRegistrationProps {
   players: AmericanoPlayer[];
@@ -29,7 +37,12 @@ interface PlayerRegistrationProps {
   onStartTournament: (totalRounds: number, courts: number) => void;
   /** Canchas ya definidas al crear la reta (QuickStart / DB). */
   initialCourts?: number;
-  convocatoriaSlot?: React.ReactNode;
+  /** Si hay torneo persistido, permite convocatoria embebida. */
+  openRegistration?: {
+    tournamentId: string;
+    name: string;
+    locationLabel: string;
+  } | null;
   eventTitle?: string;
   eventSubtitle?: string | null;
   eyebrow?: string | null;
@@ -45,6 +58,27 @@ function stepStatus(
   return "pending";
 }
 
+function convStatusLabel(status: string | undefined): string {
+  switch (status) {
+    case "open":
+      return "Abierta";
+    case "paused":
+      return "Pausada";
+    case "closed":
+      return "Cerrada";
+    case "draft":
+      return "Borrador";
+    default:
+      return "Sin abrir";
+  }
+}
+
+function scrollToConvocatoriaStrip() {
+  document
+    .getElementById("americano-convocatoria-inline")
+    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   players,
   availablePlayers,
@@ -52,7 +86,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   onToggleExistingPlayer,
   onStartTournament,
   initialCourts = 1,
-  convocatoriaSlot,
+  openRegistration = null,
   eventTitle = "Americano",
   eventSubtitle = "Parejas rotativas y ranking por puntos. Prepara el registro e inicia.",
   eyebrow,
@@ -65,6 +99,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const [step, setStep] = useState<PrepStepId>("jugadores");
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [convTouched, setConvTouched] = useState(false);
+  const [wantConvocatoria, setWantConvocatoria] = useState(false);
+  const [convIsLive, setConvIsLive] = useState(false);
+  const [convLine, setConvLine] = useState("Sin abrir · —");
   const [totalRounds, setTotalRounds] = useState(3);
   const [courts, setCourts] = useState(() =>
     Math.min(20, Math.max(1, Math.floor(initialCourts) || 1))
@@ -75,12 +112,70 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     setCourts(next);
   }, [initialCourts]);
 
+  const refreshConvSummary = useCallback(async () => {
+    if (!openRegistration?.tournamentId) {
+      setConvLine("Sin abrir · —");
+      setConvIsLive(false);
+      return;
+    }
+    try {
+      const cfg = await fetchOpenGameRegistrationConfig(
+        "americano",
+        openRegistration.tournamentId
+      );
+      if (!cfg) {
+        setConvLine("Sin abrir · —");
+        setConvIsLive(false);
+        return;
+      }
+      const entries = await listOpenGameRegistrationEntries(
+        "americano",
+        openRegistration.tournamentId
+      );
+      const confirmed = entries.filter((e) => e.status === "confirmed").length;
+      const capacity = cfg.capacity ?? 8;
+      const live =
+        Boolean(cfg.public_slug) ||
+        (Boolean(cfg.enabled) && cfg.status !== "draft");
+      setConvIsLive(live);
+      if (live) setWantConvocatoria(true);
+      setConvLine(
+        `${convStatusLabel(cfg.status)} · ${confirmed} de ${capacity} confirmados`
+      );
+      if (cfg.status === "open" || confirmed > 0) setConvTouched(true);
+    } catch {
+      setConvLine("Gestionar convocatoria");
+    }
+  }, [openRegistration?.tournamentId]);
+
+  useEffect(() => {
+    void refreshConvSummary();
+  }, [refreshConvSummary]);
+
+  const onConvLiveChange = useCallback((snap: ConvocatoriaLiveSnapshot) => {
+    if (snap.isLive || snap.confirmed > 0) setConvTouched(true);
+    if (snap.isLive) {
+      setConvIsLive(true);
+      setWantConvocatoria(true);
+    } else if (!snap.publicSlug) {
+      setConvIsLive(false);
+    }
+    if (!snap.isLive && !snap.publicSlug) {
+      setConvLine("Sin abrir · —");
+      return;
+    }
+    setConvLine(
+      `${convStatusLabel(snap.status ?? undefined)} · ${snap.confirmed} de ${snap.capacity} confirmados`
+    );
+  }, []);
+
   const maxMatches = Math.min(Math.floor(players.length / 4), courts);
   const benchPerRound = Math.max(0, players.length - maxMatches * 4);
 
   const jugadoresOk = players.length >= 4;
   const configOk = totalRounds >= 1 && courts >= 1;
   const canStart = jugadoresOk && configOk;
+  const showConvocatoriaPanel = wantConvocatoria || convIsLive;
 
   const ctaHint = !jugadoresOk
     ? players.length === 0
@@ -89,8 +184,10 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     : `${totalRounds} rondas · ${courts} cancha${courts === 1 ? "" : "s"}`;
 
   const goConvocatoria = () => {
+    setWantConvocatoria(true);
     setConvTouched(true);
-    setStep("convocatoria");
+    setMobileSummaryOpen(false);
+    window.requestAnimationFrame(() => scrollToConvocatoriaStrip());
   };
 
   const steps: QuickModeStep[] = useMemo(
@@ -102,49 +199,17 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         count: String(players.length),
       },
       {
-        id: "configuracion",
-        label: "Configuración",
-        status: stepStatus("configuracion", step, configOk),
-        count: `${totalRounds}r · ${courts}c`,
-      },
-      {
-        id: "convocatoria",
-        label: "Convocatoria",
-        status: stepStatus(
-          "convocatoria",
-          step,
-          convTouched || Boolean(convocatoriaSlot)
-        ),
-        count: convTouched ? "Revisada" : "Pendiente",
-      },
-      {
         id: "listo",
         label: "Listo",
         status: stepStatus("listo", step, canStart),
         count: canStart ? "OK" : "Pendiente",
       },
     ],
-    [
-      step,
-      jugadoresOk,
-      players.length,
-      configOk,
-      totalRounds,
-      courts,
-      convTouched,
-      convocatoriaSlot,
-      canStart,
-    ]
+    [step, jugadoresOk, players.length, canStart]
   );
 
   const workbenchTitle =
-    step === "jugadores"
-      ? "Jugadores"
-      : step === "configuracion"
-        ? "Configuración"
-        : step === "convocatoria"
-          ? "Convocatoria"
-          : "Listo para iniciar";
+    step === "jugadores" ? "Jugadores" : "Listo para iniciar";
 
   const workbenchBody =
     step === "jugadores" ? (
@@ -210,46 +275,6 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           )}
         </ul>
       </div>
-    ) : step === "configuracion" ? (
-      <div className="americano-registration__start">
-        {eventSubtitle ? (
-          <p className="americano-registration__hint">{eventSubtitle}</p>
-        ) : null}
-        <div className="americano-registration__start-row">
-          <Input
-            label="Rondas"
-            type="number"
-            min={1}
-            value={totalRounds}
-            onChange={(e) =>
-              setTotalRounds(Math.max(1, Number(e.target.value) || 1))
-            }
-          />
-          <Input
-            label="Canchas"
-            type="number"
-            min={1}
-            max={20}
-            value={courts}
-            onChange={(e) =>
-              setCourts(Math.min(20, Math.max(1, Number(e.target.value) || 1)))
-            }
-          />
-        </div>
-        <p className="americano-registration__courts-hint">
-          Solo hay tantos partidos simultáneos como canchas ({maxMatches}{" "}
-          partido{maxMatches === 1 ? "" : "s"}/ronda · {benchPerRound}{" "}
-          descansan). Las canchas rotan entre rondas.
-        </p>
-      </div>
-    ) : step === "convocatoria" ? (
-      <div className="qm-ws__convocatoria americano-registration__conv">
-        {convocatoriaSlot ?? (
-          <p className="americano-registration__empty">
-            Convocatoria no disponible todavía.
-          </p>
-        )}
-      </div>
     ) : (
       <ul className="qm-ws__ready-check">
         <li className={jugadoresOk ? "is-ok" : "is-miss"}>
@@ -283,9 +308,13 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           <button
             type="button"
             className="qm-ws__text-btn"
-            onClick={() => setStep("configuracion")}
+            onClick={() => {
+              document
+                .getElementById("americano-detalles-inline")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
           >
-            Configurar
+            Ir a detalles
           </button>
         </li>
         <li className={convTouched ? "is-ok" : "is-soft"}>
@@ -293,14 +322,14 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
             {convTouched ? "OK" : "·"}
           </span>
           <span className="qm-ws__ready-copy">
-            {convTouched ? "Convocatoria revisada" : "Convocatoria sin revisar"}
+            {convTouched ? convLine : "Convocatoria sin revisar"}
           </span>
           <button
             type="button"
             className="qm-ws__text-btn"
             onClick={goConvocatoria}
           >
-            Ver convocatoria
+            Ir a convocatoria
           </button>
         </li>
       </ul>
@@ -328,15 +357,13 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
 
       <section className="qm-ws-panel__block">
         <h3 className="qm-ws-panel__label">Convocatoria</h3>
-        <p className="qm-ws-panel__conv-line">
-          {convTouched ? "Revisada en el paso Convocatoria" : "Sin revisar"}
-        </p>
+        <p className="qm-ws-panel__conv-line">{convLine}</p>
         <button
           type="button"
           className="qm-ws__text-btn"
           onClick={goConvocatoria}
         >
-          Ver detalles
+          Ir a convocatoria
         </button>
       </section>
 
@@ -346,10 +373,94 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
     </div>
   );
 
+  const detailsPanel = (
+    <section
+      id="americano-detalles-inline"
+      className="qm-ws__details-inline"
+      aria-label="Detalles de la reta"
+    >
+      <div className="reta-config-panel reta-config-panel--inline">
+        <header className="reta-config-panel__toolbar">
+          <div className="reta-config-panel__toolbar-copy">
+            <h2 className="reta-config-panel__title">Detalles de la reta</h2>
+            <p className="reta-config-panel__subtitle">
+              Rondas y canchas del americano.
+              {eventSubtitle ? ` ${eventSubtitle}` : ""}
+            </p>
+          </div>
+        </header>
+        <div className="reta-details-form">
+          <div className="reta-details-form__row reta-details-form__row--primary americano-registration__details-row">
+            <label className="home-sheet__field reta-details-form__field">
+              <span className="home-sheet__field-label">Rondas</span>
+              <Input
+                type="number"
+                min={1}
+                value={totalRounds}
+                onChange={(e) =>
+                  setTotalRounds(Math.max(1, Number(e.target.value) || 1))
+                }
+              />
+            </label>
+            <label className="home-sheet__field reta-details-form__field">
+              <span className="home-sheet__field-label">Canchas</span>
+              <Input
+                type="number"
+                min={1}
+                max={20}
+                value={courts}
+                onChange={(e) =>
+                  setCourts(
+                    Math.min(20, Math.max(1, Number(e.target.value) || 1))
+                  )
+                }
+              />
+            </label>
+          </div>
+          <p className="americano-registration__courts-hint" role="note">
+            Partidos/ronda: {maxMatches} · Descansan: {benchPerRound}. Las
+            canchas rotan entre rondas.
+          </p>
+        </div>
+      </div>
+
+      {openRegistration ? (
+        <div id="americano-convocatoria-inline">
+          <QuickModeConvocatoriaGate
+            open={wantConvocatoria}
+            live={convIsLive}
+            panelId="americano-convocatoria-panel"
+            onToggle={() => {
+              setWantConvocatoria((v) => {
+                const next = !v;
+                if (next) setConvTouched(true);
+                return next;
+              });
+            }}
+          >
+            {showConvocatoriaPanel ? (
+              <ConvocatoriaWhatsAppPanel
+                embedded
+                onLiveChange={onConvLiveChange}
+                context={buildTournamentConvocatoriaContext({
+                  mode: "americano",
+                  tournamentId: openRegistration.tournamentId,
+                  name: openRegistration.name,
+                  locationLabel: openRegistration.locationLabel,
+                  clubName: openRegistration.locationLabel,
+                })}
+              />
+            ) : null}
+          </QuickModeConvocatoriaGate>
+        </div>
+      ) : null}
+    </section>
+  );
+
   return (
     <section className="americano-registration americano-registration--workspace">
       <QuickModePrepWorkspace
-        className={mobileSummaryOpen ? "is-summary-open" : ""}
+        className={`qm-ws--wide${mobileSummaryOpen ? " is-summary-open" : ""}`}
         header={
           <QuickModeEventHeader
             club={clubLabel}
@@ -364,24 +475,16 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
             ]}
             rightMeta={[
               { label: "Rondas", value: totalRounds },
-              {
-                label: "Formato",
-                value: "Rotativo",
-              },
+              { label: "Formato", value: "Rotativo" },
             ]}
-            onEditDetails={() => setStep("configuracion")}
-            editDetailsLabel="Editar configuración"
           />
         }
+        details={detailsPanel}
         stepper={
           <QuickModeStepper
             steps={steps}
             activeId={step}
-            onChange={(id) => {
-              const next = id as PrepStepId;
-              if (next === "convocatoria") setConvTouched(true);
-              setStep(next);
-            }}
+            onChange={(id) => setStep(id as PrepStepId)}
           />
         }
         workbench={

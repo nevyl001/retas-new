@@ -1,7 +1,6 @@
 /** WhatsApp de contacto para solicitar el desbloqueo de modos de juego.
- * Único punto de verdad: usado por GameModeCard (grid de inicio) y
- * HomeCreateEventCta (selector "Nuevo evento"), para que ambas superficies
- * de modos bloqueados abran exactamente el mismo mensaje.
+ * Único punto de verdad: usado por GameModeCard (grid de inicio) para que
+ * cualquier modo bloqueado abra exactamente el mismo mensaje.
  */
 const UNLOCK_WHATSAPP_NUMBER = "525514745677";
 const UNLOCK_WHATSAPP_MESSAGE = "Me gustaría desbloquear todos los modos de juego";

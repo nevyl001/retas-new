@@ -33,22 +33,9 @@
     0 0 0 1px color-mix(in srgb, var(--brand-accent) 22%, transparent);
 }
 
-[data-club="hack-padel"] .main-layout .game-mode-card::before {
-  background: var(--brand-accent);
-  opacity: 0.55;
-}
-
-[data-club="hack-padel"] .main-layout .game-mode-card .rv-mode-card__cta {
-  color: color-mix(in srgb, var(--brand-accent) 88%, #ffffff);
-}
-
-[data-club="hack-padel"] .main-layout .home-quick-card:hover,
-[data-club="hack-padel"] .main-layout .home-quick-card:focus-visible {
+[data-club="hack-padel"] .main-layout .home-access-card:hover,
+[data-club="hack-padel"] .main-layout .home-access-card:focus-visible {
   border-color: color-mix(in srgb, var(--brand-accent) 45%, var(--ro-border));
-}
-
-[data-club="hack-padel"] .main-layout .home-empty-retas__icon {
-  color: color-mix(in srgb, var(--brand-accent) 75%, #ffffff);
 }
 
 [data-club="hack-padel"] .main-layout .recent-reta-card--status-active {

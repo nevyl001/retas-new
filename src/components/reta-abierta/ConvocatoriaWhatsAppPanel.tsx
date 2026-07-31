@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   ConvocatoriaAdapterContext,
   OpenRegistrationStatus,
@@ -47,6 +47,14 @@ export type EnsureDraftEntityResult = {
   categoryLabel?: string | null;
 };
 
+export type ConvocatoriaLiveSnapshot = {
+  isLive: boolean;
+  status: OpenRegistrationStatus | null;
+  confirmed: number;
+  capacity: number;
+  publicSlug: string | null;
+};
+
 interface Props {
   context: ConvocatoriaAdapterContext;
   /**
@@ -58,6 +66,13 @@ interface Props {
   /** Validación previa ligera (nombre, cancha, etc.). */
   canLaunch?: () => string | null;
   compact?: boolean;
+  /**
+   * Strip embebido en Detalles de la reta: lanzar / copiar / ver / admin
+   * sin duplicar horario/lugar (ya están en RetaConfigPanel).
+   */
+  embedded?: boolean;
+  /** Notifica al host (prep) cuando cambia estado live / cupo / inscritos. */
+  onLiveChange?: (snapshot: ConvocatoriaLiveSnapshot) => void;
   /**
    * Pantalla gestionar: sin formulario de config; solo copiar mensaje
    * actualizado (jugadores ya inscritos).
@@ -92,6 +107,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   onEntityReady,
   canLaunch,
   compact = false,
+  embedded = false,
+  onLiveChange,
   shareOnly = false,
 }) => {
   const [entityId, setEntityId] = useState(context.entityId.trim());
@@ -109,6 +126,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [capacity, setCapacity] = useState(context.defaultCapacity);
   const [capacityBusy, setCapacityBusy] = useState(false);
   const [capacityHint, setCapacityHint] = useState<string | null>(null);
+  const capacitySaveTimer = useRef<number | null>(null);
+  const capacitySaveGen = useRef(0);
   const [waitlistEnabled, setWaitlistEnabled] = useState(
     context.mode !== "duelo_2v2"
   );
@@ -297,6 +316,135 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const confirmed = entries.filter((e) => e.status === "confirmed");
   const waitlist = entries.filter((e) => e.status === "waitlist");
   const pending = entries.filter((e) => e.status === "pending_approval");
+
+  const hasShareLink = Boolean(cfg?.public_slug);
+  const isLive =
+    shareOnly ||
+    hasShareLink ||
+    (Boolean(cfg?.enabled) && cfg?.status !== "draft");
+  const effectiveCapacity = context.lockCapacity
+    ? context.defaultCapacity
+    : cfg?.capacity ?? capacity;
+
+  useEffect(() => {
+    if (!onLiveChange) return;
+    onLiveChange({
+      isLive,
+      status: cfg?.status ?? null,
+      confirmed: confirmed.length,
+      capacity: effectiveCapacity,
+      publicSlug: cfg?.public_slug ?? null,
+    });
+  }, [
+    onLiveChange,
+    isLive,
+    cfg?.status,
+    cfg?.public_slug,
+    confirmed.length,
+    effectiveCapacity,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (capacitySaveTimer.current != null) {
+        window.clearTimeout(capacitySaveTimer.current);
+      }
+    };
+  }, []);
+
+  /** Persiste cupo en servidor (tras debounce). Solo avisa si hay error o promociones. */
+  const persistCapacity = useCallback(
+    async (nextRaw: number) => {
+      if (!entityId || context.lockCapacity) return;
+      const next = Math.max(
+        OPEN_REG_CAPACITY_MIN,
+        Math.min(OPEN_REG_CAPACITY_MAX, Math.round(nextRaw))
+      );
+      const gen = ++capacitySaveGen.current;
+      setCapacityBusy(true);
+      setError(null);
+      try {
+        const res = await setOpenGameRegistrationCapacity(
+          context.mode,
+          entityId,
+          next
+        );
+        if (gen !== capacitySaveGen.current) return;
+        if (!res.ok) {
+          setCapacityHint(res.message);
+          setError(res.message);
+          const row = await fetchOpenGameRegistrationConfig(
+            context.mode,
+            entityId
+          );
+          if (gen !== capacitySaveGen.current) return;
+          if (row) {
+            setCapacity(row.capacity);
+            setCfg(row);
+          }
+          return;
+        }
+        setCapacity(res.capacity);
+        setCfg((prev) =>
+          prev ? { ...prev, capacity: res.capacity } : prev
+        );
+        if (res.promoted_count > 0) {
+          setCapacityHint(
+            `Se confirmaron ${res.promoted_count} de la lista de espera.`
+          );
+          const list = await listOpenGameRegistrationEntries(
+            context.mode,
+            entityId
+          );
+          if (gen !== capacitySaveGen.current) return;
+          setEntries(list);
+          window.setTimeout(() => {
+            if (gen === capacitySaveGen.current) setCapacityHint(null);
+          }, 4000);
+        } else {
+          setCapacityHint(null);
+        }
+      } catch (e) {
+        if (gen !== capacitySaveGen.current) return;
+        setError(mapConvocatoriaUserError(e, "action"));
+      } finally {
+        if (gen === capacitySaveGen.current) setCapacityBusy(false);
+      }
+    },
+    [context.lockCapacity, context.mode, entityId]
+  );
+
+  const capacityMinForQueue = Math.max(
+    OPEN_REG_CAPACITY_MIN,
+    confirmed.length
+  );
+
+  /** UI al instante; guarda cuando dejas de tocar el stepper. */
+  const queueCapacityChange = useCallback(
+    (nextRaw: number) => {
+      if (!entityId || context.lockCapacity) return;
+      const next = Math.max(
+        capacityMinForQueue,
+        Math.min(OPEN_REG_CAPACITY_MAX, Math.round(nextRaw))
+      );
+      setCapacity(next);
+      setCfg((prev) => (prev ? { ...prev, capacity: next } : prev));
+      setCapacityHint(null);
+      if (capacitySaveTimer.current != null) {
+        window.clearTimeout(capacitySaveTimer.current);
+      }
+      capacitySaveTimer.current = window.setTimeout(() => {
+        capacitySaveTimer.current = null;
+        void persistCapacity(next);
+      }, 450);
+    },
+    [
+      capacityMinForQueue,
+      context.lockCapacity,
+      entityId,
+      persistCapacity,
+    ]
+  );
 
   const savePayload = (
     id: string,
@@ -669,10 +817,15 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
 
   if (loading && entityId) {
     return (
-      <section className="ra-org" data-testid="convocatoria-whatsapp-panel">
+      <section
+        className={`ra-org${embedded ? " ra-org--embedded ra-org--compact" : ""}`}
+        data-testid="convocatoria-whatsapp-panel"
+      >
         <header className="ra-org__header">
           <div className="ra-org__header-row">
-            <h3 className="ra-org__title">Convocatoria Riviera</h3>
+            <h3 className="ra-org__title">
+              {embedded ? "Convocatoria" : "Convocatoria Riviera"}
+            </h3>
           </div>
           <p className="ra-org__subtitle">Cargando…</p>
         </header>
@@ -680,22 +833,16 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     );
   }
 
-  const hasShareLink = Boolean(cfg?.public_slug);
-  const isLive =
-    shareOnly ||
-    hasShareLink ||
-    (Boolean(cfg?.enabled) && cfg?.status !== "draft");
   /** Ya lanzada o en gestionar: sin título/cupo/checks; sí lugar/horario. */
-  const showConfigForm = !compact && !isLive && !shareOnly;
+  const showConfigForm = !compact && !embedded && !isLive && !shareOnly;
   /** Lugar + horario en todos los modos de convocatoria (excepto shareOnly duelo). */
-  const showMeetupFields = !shareOnly && !compact;
+  const showMeetupFields = !shareOnly && !compact && !embedded;
   /** Cupo editable solo si no es duelo (lockCapacity) y ya hay convocatoria. */
   const showLiveCapacityControl =
     !context.lockCapacity && Boolean(cfg) && (isLive || shareOnly);
-
-  const effectiveCapacity = context.lockCapacity
-    ? context.defaultCapacity
-    : cfg?.capacity ?? capacity;
+  /** Cupo pre-lanzamiento en strip embebido (Detalles). */
+  const showEmbeddedPrelaunchCupo =
+    embedded && !isLive && !shareOnly && !context.lockCapacity;
 
   const tournamentSubtitle =
     (titlePublic.trim() || context.defaultTitle || "").trim() ||
@@ -709,50 +856,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const capacityMin = Math.max(OPEN_REG_CAPACITY_MIN, confirmed.length);
   const capacityHintText = `Mínimo ${capacityMin} (confirmados). Máximo ${OPEN_REG_CAPACITY_MAX}.`;
 
-  const onAdjustCapacity = async (nextRaw: number) => {
-    if (!entityId || context.lockCapacity || capacityBusy) return;
-    const next = Math.max(
-      OPEN_REG_CAPACITY_MIN,
-      Math.min(OPEN_REG_CAPACITY_MAX, Math.round(nextRaw))
-    );
-    if (next === effectiveCapacity) return;
-    setCapacityHint(null);
-    setCapacityBusy(true);
-    setError(null);
-    try {
-      const res = await setOpenGameRegistrationCapacity(
-        context.mode,
-        entityId,
-        next
-      );
-      if (!res.ok) {
-        setCapacityHint(res.message);
-        setError(res.message);
-        return;
-      }
-      setCapacity(res.capacity);
-      setCfg((prev) =>
-        prev ? { ...prev, capacity: res.capacity } : prev
-      );
-      if (res.promoted_count > 0) {
-        setCapacityHint(
-          `Cupo actualizado a ${res.capacity}. Se confirmaron ${res.promoted_count} de la lista de espera.`
-        );
-        const list = await listOpenGameRegistrationEntries(
-          context.mode,
-          entityId
-        );
-        setEntries(list);
-      } else {
-        setCapacityHint(`Cupo actualizado a ${res.capacity}.`);
-      }
-    } catch (e) {
-      setError(mapConvocatoriaUserError(e, "action"));
-    } finally {
-      setCapacityBusy(false);
-    }
-  };
-
   const onPrimaryShare = () => {
     if (hasShareLink) {
       void onCopy();
@@ -763,32 +866,132 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
 
   return (
     <section
-      className={`ra-org${compact || isLive || shareOnly ? " ra-org--compact" : ""}`}
+      className={`ra-org${compact || embedded || isLive || shareOnly ? " ra-org--compact" : ""}${embedded ? " ra-org--embedded" : ""}`}
       data-testid="convocatoria-whatsapp-panel"
     >
-      <header className="ra-org__header">
-        <div className="ra-org__header-row">
-          <h3 className="ra-org__title">Convocatoria Riviera</h3>
-          {(shareOnly || isLive) && cfg ? (
-            <span
-              className={`ra-org__badge ra-org__badge--${cfg.status}`}
-              data-testid="convocatoria-status-badge"
-            >
-              {statusLabel(cfg.status)}
-            </span>
-          ) : null}
+      {!(embedded && !isLive) ? (
+        <header className="ra-org__header">
+          <div className="ra-org__header-row">
+            <h3 className="ra-org__title">
+              {embedded ? "Convocatoria" : "Convocatoria Riviera"}
+            </h3>
+            {(shareOnly || isLive) && cfg ? (
+              <span
+                className={`ra-org__badge ra-org__badge--${cfg.status}`}
+                data-testid="convocatoria-status-badge"
+              >
+                {statusLabel(cfg.status)}
+              </span>
+            ) : null}
+          </div>
+          {embedded ? null : (
+            <>
+              <p className="ra-org__subtitle">
+                {tournamentSubtitle}
+                {categoryLine ? ` · ${categoryLine}` : ""}
+              </p>
+              {!(isLive || shareOnly) ? (
+                <p className="ra-org__muted">
+                  Comparte este juego por WhatsApp: se copia el mensaje con todos
+                  los datos para que lo pegues en el chat.
+                </p>
+              ) : null}
+            </>
+          )}
+        </header>
+      ) : null}
+
+      {showEmbeddedPrelaunchCupo ? (
+        <div
+          className="ra-org__embedded-pre"
+          data-testid="convocatoria-embedded-prelaunch"
+        >
+          <div className="ra-org__embedded-pre-grid">
+            <div className="ra-org__capacity">
+              <div className="ra-org__capacity-row">
+                <span
+                  className="ra-org__capacity-label"
+                  id="ra-org-cupo-pre-label"
+                >
+                  Cupo
+                </span>
+                <div
+                  className="ra-org__capacity-stepper"
+                  title={`Entre ${OPEN_REG_CAPACITY_MIN} y ${OPEN_REG_CAPACITY_MAX}`}
+                >
+                  <button
+                    type="button"
+                    className="ra-org__capacity-btn"
+                    aria-label="Bajar cupo"
+                    disabled={capacity <= OPEN_REG_CAPACITY_MIN}
+                    onClick={() =>
+                      setCapacity((c) =>
+                        Math.max(OPEN_REG_CAPACITY_MIN, c - 1)
+                      )
+                    }
+                  >
+                    −
+                  </button>
+                  <input
+                    className="ra-org__capacity-input"
+                    type="number"
+                    min={OPEN_REG_CAPACITY_MIN}
+                    max={OPEN_REG_CAPACITY_MAX}
+                    value={capacity}
+                    aria-labelledby="ra-org-cupo-pre-label"
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (!Number.isFinite(n)) return;
+                      setCapacity(
+                        Math.min(
+                          OPEN_REG_CAPACITY_MAX,
+                          Math.max(OPEN_REG_CAPACITY_MIN, Math.round(n))
+                        )
+                      );
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="ra-org__capacity-btn"
+                    aria-label="Subir cupo"
+                    disabled={capacity >= OPEN_REG_CAPACITY_MAX}
+                    onClick={() =>
+                      setCapacity((c) =>
+                        Math.min(OPEN_REG_CAPACITY_MAX, c + 1)
+                      )
+                    }
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <label className="ra-org__embedded-field">
+              <span className="ra-org__field-label" id="ra-org-cat-pre-label">
+                Categoría / nivel
+              </span>
+              <input
+                type="text"
+                className="ra-org__embedded-input"
+                placeholder="Ej. 5ta Fuerza"
+                value={categoryLabel}
+                aria-labelledby="ra-org-cat-pre-label"
+                onChange={(e) => setCategoryLabel(e.target.value)}
+              />
+            </label>
+
+            <label className="ra-org__toggle ra-org__toggle--inline">
+              <input
+                type="checkbox"
+                checked={waitlistEnabled}
+                onChange={(e) => setWaitlistEnabled(e.target.checked)}
+              />
+              <span>Lista de espera</span>
+            </label>
+          </div>
         </div>
-        <p className="ra-org__subtitle">
-          {tournamentSubtitle}
-          {categoryLine ? ` · ${categoryLine}` : ""}
-        </p>
-        {!(isLive || shareOnly) ? (
-          <p className="ra-org__muted">
-            Comparte este juego por WhatsApp: se copia el mensaje con todos los
-            datos para que lo pegues en el chat.
-          </p>
-        ) : null}
-      </header>
+      ) : null}
 
       {(shareOnly || isLive) && cfg ? (
         <div className="ra-org__summary">
@@ -825,6 +1028,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             <div
               className="ra-org__capacity"
               data-testid="convocatoria-capacity-control"
+              aria-busy={capacityBusy || undefined}
             >
               <div className="ra-org__capacity-row">
                 <span className="ra-org__capacity-label" id="ra-org-cupo-label">
@@ -838,10 +1042,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                     type="button"
                     className="ra-org__capacity-btn"
                     aria-label="Bajar cupo"
-                    disabled={
-                      capacityBusy || effectiveCapacity <= capacityMin
-                    }
-                    onClick={() => void onAdjustCapacity(effectiveCapacity - 1)}
+                    disabled={effectiveCapacity <= capacityMin}
+                    onClick={() => queueCapacityChange(effectiveCapacity - 1)}
                   >
                     −
                   </button>
@@ -851,27 +1053,27 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                     min={capacityMin}
                     max={OPEN_REG_CAPACITY_MAX}
                     value={effectiveCapacity}
-                    disabled={capacityBusy}
                     aria-labelledby="ra-org-cupo-label"
                     onChange={(e) => {
                       const n = Number(e.target.value);
                       if (!Number.isFinite(n)) return;
                       setCapacity(n);
+                      setCfg((prev) =>
+                        prev ? { ...prev, capacity: n } : prev
+                      );
                     }}
                     onBlur={(e) => {
                       const n = Number(e.target.value);
                       if (!Number.isFinite(n)) return;
-                      void onAdjustCapacity(n);
+                      queueCapacityChange(n);
                     }}
                   />
                   <button
                     type="button"
                     className="ra-org__capacity-btn"
                     aria-label="Subir cupo"
-                    disabled={
-                      capacityBusy || effectiveCapacity >= OPEN_REG_CAPACITY_MAX
-                    }
-                    onClick={() => void onAdjustCapacity(effectiveCapacity + 1)}
+                    disabled={effectiveCapacity >= OPEN_REG_CAPACITY_MAX}
+                    onClick={() => queueCapacityChange(effectiveCapacity + 1)}
                   >
                     +
                   </button>
@@ -881,9 +1083,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 <p className="ra-org__capacity-hint" role="status">
                   {capacityHint}
                 </p>
-              ) : (
-                <p className="ra-org__hint ra-org__hint--xs">{capacityHintText}</p>
-              )}
+              ) : null}
             </div>
           ) : null}
           {context.mode === "duelo_2v2" && confirmed.length >= 4 ? (
@@ -1046,12 +1246,20 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           disabled={saving}
         >
           {saving
-            ? "Copiando…"
+            ? embedded
+              ? "Un momento…"
+              : "Copiando…"
             : copied
-              ? "¡Copiado! Pégalo en WhatsApp"
+              ? embedded
+                ? "¡Copiado!"
+                : "¡Copiado! Pégalo en WhatsApp"
               : hasShareLink
-                ? "Copiar convocatoria actualizada"
-                : "Lanzar y copiar"}
+                ? embedded
+                  ? "Copiar convocatoria"
+                  : "Copiar convocatoria actualizada"
+                : embedded
+                  ? "Lanzar convocatoria"
+                  : "Lanzar y copiar"}
         </button>
         {hasShareLink ? (
           <div className="ra-org__actions-secondary">
@@ -1067,8 +1275,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
               type="button"
               className="ra-org__btn ra-org__btn--outline"
               onClick={() => setShowAdmin((v) => !v)}
+              aria-expanded={showAdmin}
             >
-              Administrar inscritos
+              {showAdmin ? "Ocultar inscritos" : "Administrar inscritos"}
             </button>
             {cfg?.status === "open" ? (
               <ConvocatoriaMoreMenu
@@ -1106,10 +1315,15 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         ) : null}
       </div>
 
-      {shareNote ? (
+      {shareNote && !embedded ? (
         <p className="ra-org__muted">
           Se copió el mensaje completo (fecha, cancha, cupos y enlace). Ábrelo
           en WhatsApp y pégalo. El enlace siempre muestra la lista actualizada.
+        </p>
+      ) : null}
+      {shareNote && embedded ? (
+        <p className="ra-org__muted ra-org__muted--tight" role="status">
+          Mensaje copiado. Pégalo en WhatsApp.
         </p>
       ) : null}
 

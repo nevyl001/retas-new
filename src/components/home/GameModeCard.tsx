@@ -13,21 +13,27 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
   title,
   description,
   icon,
-  typeLabel,
   accentColor,
   disabled,
   index,
   onClick,
 }) => {
+  const handleClick = () => {
+    if (disabled) {
+      window.open(UNLOCK_GAME_MODES_WHATSAPP_URL, "_blank", "noopener,noreferrer");
+      return;
+    }
+    onClick();
+  };
+
   return (
     <ModeCard
       title={title}
       description={description}
-      typeLabel={disabled ? "Upgrade" : typeLabel}
+      typeLabel={disabled ? "Upgrade" : undefined}
       icon={icon}
-      ctaLabel="Iniciar"
       disabled={disabled}
-      onClick={onClick}
+      onClick={handleClick}
       className={`game-mode-card game-mode-card--${id}${
         disabled ? " game-mode-card--disabled" : ""
       }`}
@@ -39,15 +45,9 @@ export const GameModeCard: React.FC<GameModeCardProps> = ({
       }
     >
       {disabled ? (
-        <a
-          className="game-mode-card__upgrade"
-          href={UNLOCK_GAME_MODES_WHATSAPP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <span className="game-mode-card__upgrade">
           ¿Deseas el upgrade del sistema? Contacta al administrador por WhatsApp.
-        </a>
+        </span>
       ) : null}
     </ModeCard>
   );

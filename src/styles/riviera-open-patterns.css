@@ -1,18 +1,12 @@
 /* Riviera Open Maestro v1.0 — patrones de componente compartidos */
 
 /* Display / kicker */
-.home-header__hero,
 .te-public-header__title,
 .te-public-podium__title {
   font-family: var(--font-display);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-
-.home-header__hero {
-  font-weight: var(--weight-display);
-  letter-spacing: 0.04em;
 }
 
 .te-public-header__kicker,

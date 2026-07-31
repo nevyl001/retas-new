@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createTournament,
   Tournament,
@@ -8,17 +8,16 @@ import {
   navigateToAmericanoDinamico,
   persistAmericanoActiveTournamentId,
 } from "../../lib/americanoDinamicoStorage";
-import { useUser } from "../../contexts/UserContext";
 import { useAccountFeatures } from "../../contexts/AccountFeaturesContext";
 import { GAME_MODE_LABELS } from "../../lib/admin/organizadorGameModes";
 import { navigateLiga } from "../liga/ligaNav";
-import { navigateDuelo2v2 } from "../duelo-2v2/duelo2v2Nav";
+import { navigateDuelo2v2, duelo2v2GestionarPath } from "../duelo-2v2/duelo2v2Nav";
 import { navigateTorneoExpress } from "../torneo-express/torneoExpressNav";
 import { navigateAppTo } from "../../lib/appRouting";
 import { buildRankingComoFuncionaPath } from "../jugadores/jugadoresPublicNav";
 import { navigateJugadores } from "../jugadores/jugadoresNav";
 import { TablerIcon } from "../ui/TablerIcon";
-import type { GameModeId } from "./gameModesConfig";
+import { GAME_MODES, type GameModeId } from "./gameModesConfig";
 import {
   gameModeIdToTournamentFormat,
   persistLastGameMode,
@@ -26,10 +25,16 @@ import {
   persistTournamentMode,
 } from "../../lib/gameModeMapping";
 import { initChampionshipConfig } from "../../lib/roundRobinChampionship";
-import { HomeHeader } from "./HomeHeader";
-import { HomeCreateEventCta } from "./HomeCreateEventCta";
+import {
+  filterHomeRetasByGameMode,
+  loadUserRetasForHome,
+  partitionHomeRetas,
+  type HomeRetaItem,
+} from "../../lib/retasList";
+import { GameModesGrid } from "./GameModesGrid";
+import { HomeContinueStrip } from "./HomeContinueStrip";
+import { HomeModeDetail } from "./HomeModeDetail";
 import { QuickStartSheet, QuickStartPayload } from "./QuickStartSheet";
-import { RecentRetasSection } from "./RecentRetasSection";
 import { AppSiteFooter } from "../legal/AppSiteFooter";
 import {
   getAccountModeDisabledMessage,
@@ -49,15 +54,47 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   onTournamentSelect,
   onShowAllRetas,
 }) => {
-  const { userProfile } = useUser();
   const { nombre: organizerName } = useBranding();
   const { isModeEnabled } = useAccountFeatures();
+  const [detailModeId, setDetailModeId] = useState<GameModeId | null>(null);
   const [sheetMode, setSheetMode] = useState<GameModeId | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retas, setRetas] = useState<HomeRetaItem[]>([]);
+
+  useEffect(() => {
+    if (!userId) {
+      setRetas([]);
+      return;
+    }
+    let active = true;
+    loadUserRetasForHome(userId)
+      .then((data) => {
+        if (active) setRetas(data);
+      })
+      .catch(() => {
+        if (active) setRetas([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  const { active: activeRetas } = useMemo(() => partitionHomeRetas(retas), [retas]);
+
+  const handleContinueItem = useCallback(
+    (item: HomeRetaItem) => {
+      if (item.kind === "duelo-2v2") {
+        navigateDuelo2v2(duelo2v2GestionarPath(item.duelo.id));
+        return;
+      }
+      onTournamentSelect(item.tournament);
+    },
+    [onTournamentSelect]
+  );
 
   const handleModeSelect = useCallback(
-    async (modeId: GameModeId) => {
+    (modeId: GameModeId) => {
       setError(null);
       if (!isModeEnabled(modeId)) {
         setError(
@@ -78,11 +115,16 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         navigateDuelo2v2("/duelo-2v2/nuevo");
         return;
       }
-      // Americano (y demás modos de sheet): siempre flujo de crear nuevo.
-      // Los activos se retoman desde "En curso", no hijackean "Nuevo".
+      // Reta clásica (equipos/round-robin/americano): si ya tiene activas de
+      // ESE modo, primero se le ofrece continuar; si no, va directo a crear.
+      const modeRetas = filterHomeRetasByGameMode(retas, modeId);
+      if (modeRetas.length > 0) {
+        setDetailModeId(modeId);
+        return;
+      }
       setSheetMode(modeId);
     },
-    [isModeEnabled, organizerName]
+    [isModeEnabled, organizerName, retas]
   );
 
   const handleQuickStart = useCallback(
@@ -136,73 +178,96 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     [userId, onTournamentSelect]
   );
 
+  const detailMode = detailModeId
+    ? GAME_MODES.find((m) => m.id === detailModeId) ?? null
+    : null;
+
   return (
     <div className="home-inner rv-page">
-      <div className="home-hero">
-        <HomeHeader
-          userName={userProfile?.name}
-          title="¿Qué quieres organizar hoy?"
-          subtitle="Crea un evento o continúa uno en curso."
-        />
-        <HomeCreateEventCta
-          onModeSelect={handleModeSelect}
-          isModeEnabled={isModeEnabled}
-        />
-      </div>
+      <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
+
       {error && <p className="home-error">{error}</p>}
-      <RecentRetasSection
-        userId={userId}
-        onSelectTournament={onTournamentSelect}
-        onShowAll={onShowAllRetas}
-      />
-      <section
-        className="home-quick-links home-quick-links--tertiary"
-        aria-label="Accesos rápidos"
-      >
-        <h2 className="home-section-title">Accesos rápidos</h2>
-        <div className="home-quick-links__grid home-quick-links__grid--compact">
-          <button
-            type="button"
-            className="home-quick-card home-quick-card--jugadores"
-            onClick={() => navigateJugadores()}
+
+      {detailMode ? (
+        <HomeModeDetail
+          mode={detailMode}
+          items={filterHomeRetasByGameMode(retas, detailMode.id)}
+          onContinue={handleContinueItem}
+          onCreateNew={() => {
+            setDetailModeId(null);
+            setSheetMode(detailMode.id);
+          }}
+          onBack={() => setDetailModeId(null)}
+        />
+      ) : (
+        <>
+          <div
+            className={`home-shell${
+              activeRetas.length > 0 ? " home-shell--with-panel" : ""
+            }`}
           >
-            <span className="home-quick-card__icon" aria-hidden>
-              <TablerIcon name="users" size={22} />
-            </span>
-            <span className="home-quick-card__body">
-              <span className="home-quick-card__title">Registro de jugadores</span>
-              <span className="home-quick-card__sub">
-                {getOrganizerRegistryCardSubtitle(organizerName)}
-              </span>
-            </span>
-            <TablerIcon
-              name="chevron-right"
-              size={20}
-              className="home-quick-card__chev"
-            />
-          </button>
-          <button
-            type="button"
-            className="home-quick-card home-quick-card--ranking"
-            onClick={() => navigateAppTo(buildRankingComoFuncionaPath())}
-          >
-            <span className="home-quick-card__icon" aria-hidden>
-              <TablerIcon name="trophy" size={22} />
-            </span>
-            <span className="home-quick-card__body">
-              <span className="home-quick-card__title">Cómo funciona el ranking</span>
-              <span className="home-quick-card__sub">
-                Sistema de puntos y niveles del club
-              </span>
-            </span>
-            <TablerIcon
-              name="chevron-right"
-              size={20}
-              className="home-quick-card__chev"
-            />
-          </button>
-        </div>
-      </section>
+            <div className="home-shell__main">
+              <GameModesGrid onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
+            </div>
+            <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
+          </div>
+
+          <section className="home-access" aria-label="Accesos rápidos">
+            <h2 className="home-section-title">Accesos rápidos</h2>
+            <div className="home-access__grid">
+              <button
+                type="button"
+                className="home-access-card home-access-card--primary"
+                onClick={() => navigateJugadores()}
+              >
+                <span className="home-access-card__icon" aria-hidden>
+                  <TablerIcon name="users" size={26} />
+                </span>
+                <span className="home-access-card__body">
+                  <span className="home-access-card__title">Registro de jugadores</span>
+                  <span className="home-access-card__desc">
+                    {getOrganizerRegistryCardSubtitle(organizerName)}
+                  </span>
+                </span>
+                <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+              </button>
+
+              <button
+                type="button"
+                className="home-access-card"
+                onClick={() => navigateAppTo(buildRankingComoFuncionaPath())}
+              >
+                <span className="home-access-card__icon" aria-hidden>
+                  <TablerIcon name="trophy" size={22} />
+                </span>
+                <span className="home-access-card__body">
+                  <span className="home-access-card__title">Cómo funciona el ranking</span>
+                  <span className="home-access-card__desc">
+                    Conoce el sistema de puntos y niveles.
+                  </span>
+                </span>
+                <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+              </button>
+
+              {onShowAllRetas ? (
+                <button type="button" className="home-access-card" onClick={onShowAllRetas}>
+                  <span className="home-access-card__icon" aria-hidden>
+                    <TablerIcon name="history" size={22} />
+                  </span>
+                  <span className="home-access-card__body">
+                    <span className="home-access-card__title">Historial</span>
+                    <span className="home-access-card__desc">
+                      Consulta eventos pasados y resultados.
+                    </span>
+                  </span>
+                  <TablerIcon name="chevron-right" size={20} className="home-access-card__go" />
+                </button>
+              ) : null}
+            </div>
+          </section>
+        </>
+      )}
+
       <QuickStartSheet
         modeId={sheetMode}
         onClose={() => !submitting && setSheetMode(null)}

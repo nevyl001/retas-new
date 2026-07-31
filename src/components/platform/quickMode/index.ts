@@ -23,3 +23,5 @@ export type {
 } from "./QuickModeStepper";
 export { QuickModePrepWorkspace } from "./QuickModePrepWorkspace";
 export type { QuickModePrepWorkspaceProps } from "./QuickModePrepWorkspace";
+export { QuickModeConvocatoriaGate } from "./QuickModeConvocatoriaGate";
+export type { QuickModeConvocatoriaGateProps } from "./QuickModeConvocatoriaGate";

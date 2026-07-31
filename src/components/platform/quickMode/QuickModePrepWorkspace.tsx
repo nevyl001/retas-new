@@ -2,6 +2,8 @@ import React from "react";
 
 export type QuickModePrepWorkspaceProps = {
   header: React.ReactNode;
+  /** Panel opcional entre cabecera y body (p. ej. editar detalles inline). */
+  details?: React.ReactNode;
   stepper: React.ReactNode;
   workbench: React.ReactNode;
   sidebar: React.ReactNode;
@@ -15,6 +17,7 @@ export type QuickModePrepWorkspaceProps = {
  */
 export function QuickModePrepWorkspace({
   header,
+  details,
   stepper,
   workbench,
   sidebar,
@@ -24,6 +27,9 @@ export function QuickModePrepWorkspace({
   return (
     <div className={`qm-ws ${className}`.trim()}>
       {header}
+      {details ? (
+        <div className="qm-ws__details">{details}</div>
+      ) : null}
       <div className="qm-ws__body">
         {/* Mismo canvas claro que el resto del organizador (tokens --ro-* L0/L1). */}
         <div className="qm-ws__main">

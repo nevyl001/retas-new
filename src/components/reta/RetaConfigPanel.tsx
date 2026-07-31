@@ -17,6 +17,8 @@ type Props = {
   matches: Match[];
   pairsCount: number;
   onSaved: (tournament: Tournament) => void;
+  /** Cierra el panel embebido (p. ej. prep sin modal). */
+  onCancel?: () => void;
 };
 
 export const RetaConfigPanel: React.FC<Props> = ({
@@ -24,6 +26,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
   matches,
   pairsCount,
   onSaved,
+  onCancel,
 }) => {
   const phase = useMemo(
     () =>
@@ -91,6 +94,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
     setBaseline(JSON.stringify(next));
     setError(null);
     setStatus(null);
+    onCancel?.();
   };
 
   const handleSave = async (courtsDecreaseConfirmed = false) => {
@@ -141,11 +145,39 @@ export const RetaConfigPanel: React.FC<Props> = ({
   };
 
   return (
-    <div className="reta-config-panel">
-      <p className="elegant-form-hint" role="note">
-        Edita nombre, canchas, horario y Remontada. La convocatoria pública
-        (cupo, rating, fotos) sigue en el panel Convocatoria Riviera.
-      </p>
+    <div className="reta-config-panel reta-config-panel--inline">
+      <header className="reta-config-panel__toolbar">
+        <div className="reta-config-panel__toolbar-copy">
+          <h2 className="reta-config-panel__title">Detalles de la reta</h2>
+          <p className="reta-config-panel__subtitle">
+            Nombre, horario, sede y canchas.
+          </p>
+        </div>
+        <div className="reta-config-panel__actions">
+          {onCancel != null || dirty ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={saving || !dirty}
+              onClick={() => void handleCancel()}
+            >
+              Descartar
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            disabled={saving || !dirty || !champReady}
+            loading={saving}
+            onClick={() => void handleSave(false)}
+          >
+            Guardar
+          </Button>
+        </div>
+      </header>
+
       <RetaConfigFields
         mode="edit"
         phase={phase}
@@ -155,39 +187,17 @@ export const RetaConfigPanel: React.FC<Props> = ({
         showChampionship={tournament.format !== "teams"}
         layout="essentials"
       />
+
       {error ? (
-        <p className="elegant-form-hint" role="alert">
+        <p className="reta-config-panel__feedback reta-config-panel__feedback--error" role="alert">
           {error}
         </p>
       ) : null}
       {status ? (
-        <p className="elegant-form-hint" role="status">
+        <p className="reta-config-panel__feedback" role="status">
           {status}
         </p>
       ) : null}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 12 }}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="md"
-          disabled={saving || !dirty}
-          onClick={() => void handleCancel()}
-          style={{ minHeight: 44 }}
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="button"
-          variant="primary"
-          size="md"
-          disabled={saving || !dirty || !champReady}
-          loading={saving}
-          onClick={() => void handleSave(false)}
-          style={{ minHeight: 44 }}
-        >
-          Guardar cambios
-        </Button>
-      </div>
     </div>
   );
 };

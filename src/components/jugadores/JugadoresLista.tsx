@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useClubExperience, useOrganizerDisplayName } from "../../club-experience";
+import { useClubExperience } from "../../club-experience";
 import { navigateToAppHome } from "../../lib/appRouting";
 import { useUser } from "../../contexts/UserContext";
 import { supabase } from "../../lib/supabaseClient";
@@ -29,9 +29,6 @@ import {
   RIVIERA_GENERO_NEW_LABEL,
   RIVIERA_GENERO_REGISTRY_TITLE,
 } from "../../lib/rivieraJugadores/genero";
-import {
-  rankingPosicionesFromSortedForClub,
-} from "../../lib/rivieraJugadores/rankingPosition";
 import { rankingPuntosJugadorLista, jugadorListaPartidosDisplay, jugadorListaPctVictoriasDisplay, prefetchOrganizerDisplayNames, resolveOrigenConcedidoOrganizadorId } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import { buildPublicRankingUrl } from "./jugadoresPublicNav";
 import { JugadoresGeneroTabs } from "./JugadoresGeneroTabs";
@@ -39,7 +36,7 @@ import { navigateJugadoresLista } from "./jugadoresGeneroNav";
 import { JugadorAjustePuntosModal } from "./JugadorAjustePuntosModal";
 import { LoadingProgressHint } from "../ui/LoadingProgressHint";
 import { Button } from "../ui";
-import { JugadorCompactRow } from "./JugadorCompactRow";
+import { JugadorCard } from "./JugadorCard";
 import { NuevoJugadorModal } from "./NuevoJugadorModal";
 import { AgregarJugadorExistenteModal } from "./AgregarJugadorExistenteModal";
 import {
@@ -50,13 +47,14 @@ import {
 } from "../../lib/rivieraJugadores/playerMembership";
 import "./riviera-jugadores.css";
 
+const JUGADORES_PAGE_SIZE = 24;
+
 export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   genero: generoProp = "M",
 }) => {
   const genero = generoProp;
   const { user } = useUser();
   const { organizadorId } = useClubExperience();
-  const organizerName = useOrganizerDisplayName(organizadorId ?? user?.id);
   const { permiteAjustePuntosManuales } = useAccountFeatures();
   const [jugadores, setJugadores] = useState<RivieraJugadorWithStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +68,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   const [error, setError] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(JUGADORES_PAGE_SIZE);
 
   const load = useCallback(async () => {
     const orgId = organizadorId ?? user?.id;
@@ -81,11 +80,16 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     setError(null);
     try {
       // Misma fuente que ranking/ficha: carrera por club (no stats locales del clon).
+      // La lista solo necesita puntos/partidos/% de este club (ya vienen en el
+      // join de stats de la query base) — se salta la resolución de carrera
+      // global multi-club (identidad + hasta 500 participaciones por jugador)
+      // que sí hace falta en la ficha individual, pero no aquí.
       const data = await listRivieraJugadores(orgId, {
         search,
         nivel: nivelFilter || undefined,
         activosRecientes: recientes,
         genero,
+        skipCareerEnrich: true,
       });
       void prefetchOrganizerDisplayNames([
         orgId,
@@ -110,6 +114,12 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     const t = setTimeout(load, search ? 280 : 0);
     return () => clearTimeout(t);
   }, [load, search]);
+
+  // Reinicia la paginación solo cuando cambia lo que el usuario busca/filtra
+  // (no en cada recarga incidental tras editar/eliminar un jugador).
+  useEffect(() => {
+    setVisibleCount(JUGADORES_PAGE_SIZE);
+  }, [search, nivelFilter, recientes, genero]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -181,24 +191,27 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
 
   const orgIdForPoints = organizadorId ?? user?.id ?? null;
 
-  const { jugadoresOrdenados, rankById } = useMemo(() => {
-    // Ranking (posición / trofeo) sigue por puntos del club (carrera en este org).
-    const byPoints = [...jugadores].sort((a, b) => {
-      const pa = rankingPuntosJugadorLista(a, orgIdForPoints);
-      const pb = rankingPuntosJugadorLista(b, orgIdForPoints);
-      if (pb !== pa) return pb - pa;
-      return a.nombre.localeCompare(b.nombre, "es");
-    });
-    const ranks = rankingPosicionesFromSortedForClub(byPoints, orgIdForPoints);
-    const map = new Map<string, number>();
-    byPoints.forEach((j, i) => map.set(j.id, ranks[i] ?? i + 1));
+  // Lista del registro: orden alfabético (más fácil de encontrar jugadores).
+  const jugadoresOrdenados = useMemo(
+    () =>
+      [...jugadores].sort((a, b) =>
+        a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" })
+      ),
+    [jugadores]
+  );
 
-    // Lista del registro: orden alfabético (más fácil de encontrar jugadores).
-    const sorted = [...jugadores].sort((a, b) =>
-      a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" })
-    );
-    return { jugadoresOrdenados: sorted, rankById: map };
-  }, [jugadores, orgIdForPoints]);
+  // Resumen: solo datos ya disponibles en la lista cargada, sin queries nuevas.
+  const summary = useMemo(() => {
+    const ACTIVITY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - ACTIVITY_WINDOW_MS;
+    const activos = jugadores.filter((j) => {
+      const ultima = j.stats?.ultima_actividad;
+      if (!ultima) return false;
+      const t = new Date(ultima).getTime();
+      return Number.isFinite(t) && t >= cutoff;
+    }).length;
+    return { total: jugadores.length, activos };
+  }, [jugadores]);
 
   const handleImportHistorial = useCallback(async () => {
     if (!user?.id) return;
@@ -273,8 +286,6 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
     </>
   );
 
-  const pageTitle = `Registro ${organizerName}`;
-
   return (
     <div className="rj-page">
       <div className="rj-page__inner">
@@ -283,16 +294,12 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
         </Button>
         <div className="rj-page__top">
           <div>
-            <h1 className="rj-page__title">{pageTitle}</h1>
+            <h1 className="rj-page__title">Registro de jugadores</h1>
             <p className="rj-page__sub">
-              Perfiles, categoría y estadísticas de tus{" "}
-              {RIVIERA_GENERO_REGISTRY_TITLE[genero]}
+              Administra perfiles, categorías y actividad de tus jugadores.
             </p>
           </div>
           <div className="rj-page__top-actions">
-            <div className="rj-page__actions-desktop">
-              {renderSecondaryActions()}
-            </div>
             <Button type="button" variant="primary" size="sm" onClick={() => setModalOpen(true)}>
               + {RIVIERA_GENERO_NEW_LABEL[genero]}
             </Button>
@@ -311,6 +318,14 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
           genero={genero}
           onChange={(g) => navigateJugadoresLista(g)}
         />
+
+        {!loading && !error && summary.total > 0 && (
+          <p className="rj-summary">
+            {summary.total} jugador{summary.total === 1 ? "" : "es"} ·{" "}
+            {summary.activos} activo{summary.activos === 1 ? "" : "s"}{" "}
+            recientemente
+          </p>
+        )}
 
         <div className="rj-filters">
           <input
@@ -362,30 +377,20 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
           </p>
         )}
 
-        <div className="rj-list" role="list">
-          <div className="rj-list__head" aria-hidden="true">
-            <span>Rank</span>
-            <span>Jugador</span>
-            <span>Categoría</span>
-            <span>Puntos</span>
-            <span>Partidos</span>
-            <span>% Vic.</span>
-            <span>Acciones</span>
-          </div>
-          {jugadoresOrdenados.map((j) => {
-            const pos = rankById.get(j.id) ?? 0;
+        <div className="rj-cards" role="list">
+          {jugadoresOrdenados.slice(0, visibleCount).map((j) => {
             const puntos = rankingPuntosJugadorLista(j, orgIdForPoints);
             const orgId = organizadorId ?? user?.id;
             const canRemove = canRemovePlayerFromCurrentClub(j, orgId);
             const canDelete = canDeleteGlobalPlayer(j, orgId);
             return (
               <div key={j.id} role="listitem">
-                <JugadorCompactRow
+                <JugadorCard
                   jugador={j}
-                  rank={pos}
                   puntos={puntos}
-                  partidosLabel={String(jugadorListaPartidosDisplay(j))}
+                  partidosCount={jugadorListaPartidosDisplay(j)}
                   pctLabel={pct(j)}
+                  showEditar={Boolean(canDelete && !canRemove)}
                   showAjustePuntos={Boolean(
                     canDelete && !canRemove && permiteAjustePuntosManuales
                   )}
@@ -400,6 +405,19 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             );
           })}
         </div>
+
+        {!loading && !error && jugadoresOrdenados.length > visibleCount && (
+          <div className="rj-load-more">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setVisibleCount((v) => v + JUGADORES_PAGE_SIZE)}
+            >
+              Cargar más ({jugadoresOrdenados.length - visibleCount} restantes)
+            </Button>
+          </div>
+        )}
       </div>
 
       <AgregarJugadorExistenteModal

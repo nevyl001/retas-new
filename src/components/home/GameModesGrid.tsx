@@ -28,9 +28,7 @@ function renderModeCards(
         {...mode}
         index={index}
         disabled={!enabled}
-        onClick={() => {
-          if (enabled) onModeSelect(mode.id);
-        }}
+        onClick={() => onModeSelect(mode.id)}
       />
     );
   });

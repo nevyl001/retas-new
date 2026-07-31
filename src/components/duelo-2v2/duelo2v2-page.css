@@ -458,6 +458,19 @@
   gap: 0.5rem;
 }
 
+.qm-ws__details-inline .duelo2v2-details-editor--inline {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.qm-ws__details-inline .duelo2v2-details-editor--inline .duelo2v2-details-editor__form {
+  margin-top: 0;
+  padding: 0.55rem 0.85rem 0.75rem;
+}
+
 .duelo2v2-form__submit {
   padding-top: 0.5rem;
 }

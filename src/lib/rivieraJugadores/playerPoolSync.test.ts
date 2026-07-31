@@ -88,4 +88,24 @@ describe("playerPoolSync — ruta PRIVATE de contacto", () => {
       /from\("riviera_jugadores"\)\s*\n\s*\.select\("\*"\)/
     );
   });
+
+  it("buildLegacyPlayersFromRivieraRegistry (pool de selección en Reta) usa skipCareerEnrich", () => {
+    const src = fs.readFileSync(
+      path.join(__dirname, "playerPoolSync.ts"),
+      "utf8"
+    );
+    const fnMatch = src.match(
+      /export async function buildLegacyPlayersFromRivieraRegistry[\s\S]*?\n}\n/
+    );
+    expect(fnMatch).not.toBeNull();
+    const fnBody = fnMatch![0];
+    // Esta función solo arma id/nombre/categoría/vínculo legacy para elegir
+    // jugadores — no debe volver a pagar el fetch caro de carrera global
+    // (regresión real detectada: un segundo fetch del registro sin el flag,
+    // redundante con el `syncLegacyPlayersFromRivieraRegistry` de arriba).
+    expect(fnBody).toMatch(
+      /listRivieraJugadoresPrivate\(organizadorId,\s*\{\s*skipCareerEnrich:\s*true/
+    );
+    expect(fnBody).not.toMatch(/listRivieraJugadoresPrivate\(organizadorId\)/);
+  });
 });

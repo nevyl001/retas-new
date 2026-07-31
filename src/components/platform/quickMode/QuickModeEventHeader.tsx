@@ -14,6 +14,14 @@ export type QuickModeEventHeaderProps = {
   centerMetrics?: QuickModeEventHeaderMeta[];
   /** Bloque derecho (fecha, lugar). */
   rightMeta?: QuickModeEventHeaderMeta[];
+  /**
+   * Alternativa compacta a centerMetrics: una sola línea ya formateada
+   * ("26 jugadores · 2 parejas · 2 canchas · 120 min"). Si se pasa, tiene
+   * prioridad sobre centerMetrics para esa zona.
+   */
+  centerSummaryLine?: string;
+  /** Alternativa compacta a rightMeta, misma idea para fecha/lugar. */
+  rightSummaryLine?: string;
   onEditDetails?: () => void;
   editDetailsLabel?: string;
   className?: string;
@@ -27,6 +35,8 @@ export function QuickModeEventHeader({
   statusLabel,
   centerMetrics = [],
   rightMeta = [],
+  centerSummaryLine,
+  rightSummaryLine,
   onEditDetails,
   editDetailsLabel = "Editar detalles",
   className = "",
@@ -48,7 +58,11 @@ export function QuickModeEventHeader({
         </p>
       </div>
 
-      {centerMetrics.length > 0 ? (
+      {centerSummaryLine ? (
+        <p className="qm-event-header__summary-line" aria-label="Resumen del evento">
+          {centerSummaryLine}
+        </p>
+      ) : centerMetrics.length > 0 ? (
         <ul
           className="qm-event-header__center"
           aria-label="Resumen del evento"
@@ -63,7 +77,11 @@ export function QuickModeEventHeader({
       ) : null}
 
       <div className="qm-event-header__right">
-        {rightMeta.length > 0 ? (
+        {rightSummaryLine ? (
+          <p className="qm-event-header__summary-line qm-event-header__summary-line--right">
+            {rightSummaryLine}
+          </p>
+        ) : rightMeta.length > 0 ? (
           <ul className="qm-event-header__right-meta">
             {rightMeta.map((item) => (
               <li key={item.label} className="qm-event-header__metric">

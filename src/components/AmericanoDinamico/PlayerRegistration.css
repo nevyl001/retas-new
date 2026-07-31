@@ -172,6 +172,14 @@
   line-height: 1.45;
 }
 
+.americano-registration__details-row {
+  grid-template-columns: repeat(2, minmax(0, 10rem));
+}
+
+.qm-ws__details-inline .americano-registration__details-row {
+  padding: 0.55rem 0.85rem 0.35rem;
+}
+
 .americano-registration__start-btn {
   align-self: flex-end;
   min-height: 48px;

@@ -64,7 +64,7 @@ export function QuickModeStepper({
                 onClick={() => onChange(step.id)}
               >
                 <span className="qm-stepper__index" aria-hidden>
-                  {index + 1}
+                  {step.status === "complete" ? "✓" : index + 1}
                 </span>
                 <span className="qm-stepper__copy">
                   <span className="qm-stepper__label">{step.label}</span>

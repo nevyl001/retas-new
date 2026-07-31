@@ -11,7 +11,7 @@ import {
   listRivieraJugadores,
   listRivieraJugadoresPrivate,
 } from "./rivieraJugadoresService";
-import type { RivieraJugador } from "./types";
+import type { RivieraJugador, RivieraJugadorCategoria } from "./types";
 import { normalizePlayerNameKey } from "./playerNameKey";
 import {
   isGrantedJugadorRow,
@@ -70,9 +70,15 @@ async function fetchPlayersByIds(ids: string[]): Promise<Map<string, Player>> {
   return byId;
 }
 
-type LegacyPlayerContact = Player & {
+export type LegacyPlayerContact = Player & {
   email_verified?: boolean | null;
   notif_opt_in_email?: boolean | null;
+  /** Solo para presentación (selección de jugadores en Reta) — no altera matching/permisos. */
+  categoria?: RivieraJugadorCategoria | null;
+  /** Solo presentación en cards del pool — no altera matching/permisos. */
+  foto_url?: string | null;
+  /** Solo presentación/copia en cards del pool — no altera matching/permisos. */
+  riviera_id?: string | null;
 };
 
 /** Datos de contacto del registro Riviera sobre la fila legacy (para torneos/retas). */
@@ -89,12 +95,23 @@ export function mergeRivieraContactIntoLegacyPlayer(
   const email_verified = rivieraEmail
     ? true
     : legacyRow.email_verified;
+  const rivieraFoto =
+    typeof rj.foto_url === "string" && rj.foto_url.trim()
+      ? rj.foto_url.trim()
+      : null;
+  const rivieraId =
+    typeof rj.riviera_id === "string" && rj.riviera_id.trim()
+      ? rj.riviera_id.trim()
+      : null;
 
   return {
     ...legacy,
     name: rj.nombre.trim() || legacy.name,
     email,
     email_verified,
+    categoria: rj.categoria ?? legacyRow.categoria ?? null,
+    foto_url: rivieraFoto ?? legacyRow.foto_url ?? null,
+    riviera_id: rivieraId ?? legacyRow.riviera_id ?? null,
   };
 }
 
@@ -151,7 +168,7 @@ function shouldSkipBulkLegacyEnsure(row: RivieraJugador): boolean {
  */
 export async function buildLegacyPlayersFromRivieraRegistry(
   organizadorId: string
-): Promise<Player[]> {
+): Promise<LegacyPlayerContact[]> {
   const {
     getCachedLegacyPlayersPool,
     setCachedLegacyPlayersPool,
@@ -165,55 +182,66 @@ export async function buildLegacyPlayersFromRivieraRegistry(
     console.warn("[riviera-jugadores] buildLegacyPlayers sync:", e);
   }
 
-  const registry = await listRivieraJugadoresPrivate(organizadorId);
+  // Solo hace falta id/nombre/categoría/vínculo legacy para armar el pool de
+  // selección — se salta la resolución de carrera global multi-club (ya
+  // innecesaria aquí: `syncLegacyPlayersFromRivieraRegistry` arriba ya la
+  // saltó también, este segundo fetch del registro completo era redundante
+  // y el único que pagaba el costo caro).
+  const registry = await listRivieraJugadoresPrivate(organizadorId, {
+    skipCareerEnrich: true,
+  });
 
   const linkedIds = registry
     .map((row) => row.legacy_player_id?.trim())
     .filter((id): id is string => Boolean(id));
   const playersById = await fetchPlayersByIds(linkedIds);
 
-  const pending: Array<{ canonical: RivieraJugador; legacy: Player }> = [];
   const seenLegacyIds = new Set<string>();
+  const resolved = await Promise.all(
+    registry.map(async (row) => {
+      let canonical = row;
+      let legacy: Player | null = null;
 
-  for (const row of registry) {
-    let canonical = row;
-    let legacy: Player | null = null;
-
-    if (canonical.legacy_player_id) {
-      legacy = playersById.get(canonical.legacy_player_id) ?? null;
-      if (!legacy) {
-        // Legacy definido pero no visible: no crear duplicado (fail-closed por fila).
-        continue;
+      if (canonical.legacy_player_id) {
+        legacy = playersById.get(canonical.legacy_player_id) ?? null;
+        if (!legacy) {
+          // Legacy definido pero no visible: no crear duplicado (fail-closed por fila).
+          return null;
+        }
+        const owner = (legacy as Player & { user_id?: string | null }).user_id;
+        if (owner && owner !== organizadorId) return null;
+      } else if (isGrantedJugadorRow(row)) {
+        return null;
+      } else {
+        try {
+          const ensured = await ensureLocalPlayersLegacyForRivieraJugador(
+            organizadorId,
+            canonical.id,
+            canonical
+          );
+          legacy = ensured.player;
+          canonical = { ...canonical, legacy_player_id: legacy.id };
+        } catch (e) {
+          console.warn(
+            "[riviera-jugadores] buildLegacyPlayers ensure skip:",
+            canonical.id,
+            e
+          );
+          return null;
+        }
       }
-      const owner = (legacy as Player & { user_id?: string | null }).user_id;
-      if (owner && owner !== organizadorId) continue;
-    } else if (isGrantedJugadorRow(row)) {
-      continue;
-    } else {
-      try {
-        const ensured = await ensureLocalPlayersLegacyForRivieraJugador(
-          organizadorId,
-          canonical.id,
-          canonical
-        );
-        legacy = ensured.player;
-        canonical = { ...canonical, legacy_player_id: legacy.id };
-        playersById.set(legacy.id, legacy);
-      } catch (e) {
-        console.warn(
-          "[riviera-jugadores] buildLegacyPlayers ensure skip:",
-          canonical.id,
-          e
-        );
-        continue;
-      }
-    }
 
-    if (!legacy) continue;
-    if (seenLegacyIds.has(legacy.id)) continue;
-    seenLegacyIds.add(legacy.id);
+      if (!legacy) return null;
+      return { canonical, legacy };
+    })
+  );
 
-    pending.push({ canonical, legacy });
+  const pending: Array<{ canonical: RivieraJugador; legacy: Player }> = [];
+  for (const item of resolved) {
+    if (!item) continue;
+    if (seenLegacyIds.has(item.legacy.id)) continue;
+    seenLegacyIds.add(item.legacy.id);
+    pending.push(item);
   }
 
   const out = await Promise.all(
@@ -223,7 +251,7 @@ export async function buildLegacyPlayersFromRivieraRegistry(
   );
 
   // Dedupe solo por players.id — nunca por nombre (homónimos).
-  const byId = new Map<string, Player>();
+  const byId = new Map<string, LegacyPlayerContact>();
   for (const p of out) byId.set(p.id, p);
   const deduped = Array.from(byId.values()).sort((a, b) =>
     a.name.localeCompare(b.name, "es")

@@ -18,7 +18,7 @@ export const ModeCard: React.FC<ModeCardProps> = ({
   description,
   typeLabel,
   icon,
-  ctaLabel = "Iniciar",
+  ctaLabel,
   disabled,
   onClick,
   className = "",
@@ -42,7 +42,7 @@ export const ModeCard: React.FC<ModeCardProps> = ({
     </div>
     <h3 className="rv-mode-card__title">{title}</h3>
     <p className="rv-mode-card__desc">{description}</p>
-    {!disabled ? <span className="rv-mode-card__cta">{ctaLabel}</span> : null}
+    {!disabled && ctaLabel ? <span className="rv-mode-card__cta">{ctaLabel}</span> : null}
     {children}
   </button>
 );

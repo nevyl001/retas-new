@@ -20,6 +20,8 @@ import { Button } from "../ui";
 interface Duelo2v2DetailsEditorProps {
   duelo: Duelo2v2;
   disabled?: boolean;
+  /** Siempre visible en el slot details (mismo formato que Reta / Americano). */
+  inline?: boolean;
   onSaved: (duelo: Duelo2v2) => void;
   onError?: (message: string) => void;
 }
@@ -27,11 +29,12 @@ interface Duelo2v2DetailsEditorProps {
 export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
   duelo,
   disabled = false,
+  inline = false,
   onSaved,
   onError,
 }) => {
   const convocatoriaOrigin = useConvocatoriaOriginName();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(inline);
   const [nombre, setNombre] = useState(duelo.nombre);
   const [categoria, setCategoria] = useState(duelo.descripcion?.trim() || "");
   const [mostrarLugar, setMostrarLugar] = useState(true);
@@ -113,7 +116,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
         programado_hasta: schedule.programado_hasta,
       });
       onSaved(updated);
-      setOpen(false);
+      if (!inline) setOpen(false);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "No se pudieron guardar los cambios";
@@ -125,22 +128,54 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
   };
 
   return (
-    <section className="duelo2v2-details-editor" aria-label="Editar encuentro">
-      <div className="duelo2v2-details-editor__header">
-        <h2 className="duelo2v2-details-editor__title">Datos del encuentro</h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={disabled || busy}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? "Cerrar" : "Editar"}
-        </Button>
-      </div>
+    <section
+      className={`duelo2v2-details-editor${inline ? " duelo2v2-details-editor--inline reta-config-panel reta-config-panel--inline" : ""}`}
+      aria-label="Editar encuentro"
+    >
+      {inline ? (
+        <header className="reta-config-panel__toolbar">
+          <div className="reta-config-panel__toolbar-copy">
+            <h2 className="reta-config-panel__title">Detalles del duelo</h2>
+            <p className="reta-config-panel__subtitle">
+              Nombre, horario, sede y categoría.
+            </p>
+          </div>
+          <div className="reta-config-panel__actions">
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={!canSave}
+              loading={busy}
+              onClick={() => {
+                const form = document.getElementById(
+                  `duelo-edit-form-${duelo.id}`
+                ) as HTMLFormElement | null;
+                form?.requestSubmit();
+              }}
+            >
+              Guardar
+            </Button>
+          </div>
+        </header>
+      ) : (
+        <div className="duelo2v2-details-editor__header">
+          <h2 className="duelo2v2-details-editor__title">Datos del encuentro</h2>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={disabled || busy}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? "Cerrar" : "Editar"}
+          </Button>
+        </div>
+      )}
 
       {open ? (
         <form
+          id={`duelo-edit-form-${duelo.id}`}
           className="duelo2v2-form duelo2v2-details-editor__form"
           onSubmit={(e) => void handleSave(e)}
         >
@@ -248,20 +283,22 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
 
           {localError ? <p className="duelo2v2-error">{localError}</p> : null}
 
-          <div className="duelo2v2-details-editor__actions">
-            <Button type="submit" variant="primary" size="sm" disabled={!canSave}>
-              {busy ? "Guardando…" : "Guardar cambios"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() => setOpen(false)}
-            >
-              Cancelar
-            </Button>
-          </div>
+          {inline ? null : (
+            <div className="duelo2v2-details-editor__actions">
+              <Button type="submit" variant="primary" size="sm" disabled={!canSave}>
+                {busy ? "Guardando…" : "Guardar cambios"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                onClick={() => setOpen(false)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          )}
         </form>
       ) : null}
     </section>

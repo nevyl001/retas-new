@@ -26,6 +26,7 @@ import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import { PublicShareSection } from "../platform/PublicShareSection";
 import {
+  QuickModeConvocatoriaGate,
   QuickModeEventHeader,
   QuickModePrepWorkspace,
   QuickModePrimaryCta,
@@ -34,7 +35,10 @@ import {
   type QuickModeStepStatus,
 } from "../platform/quickMode";
 import { Duelo2v2CelebrateSection } from "./Duelo2v2CelebrateSection";
-import { ConvocatoriaWhatsAppPanel } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
+import {
+  ConvocatoriaWhatsAppPanel,
+  type ConvocatoriaLiveSnapshot,
+} from "../reta-abierta/ConvocatoriaWhatsAppPanel";
 import { buildDueloConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import { Duelo2v2DetailsEditor } from "./Duelo2v2DetailsEditor";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
@@ -43,7 +47,7 @@ import { navigateDuelo2v2, publicDuelo2v2Url } from "./duelo2v2Nav";
 import "../../styles/riviera-public-celebrate.css";
 import "./duelo2v2-page.css";
 
-type GestionarStepId = "convocatoria" | "parejas" | "detalles" | "control";
+type GestionarStepId = "parejas" | "control";
 
 function stepStatus(
   id: GestionarStepId,
@@ -53,6 +57,12 @@ function stepStatus(
   if (active === id) return "active";
   if (complete) return "complete";
   return "pending";
+}
+
+function scrollToDueloConvocatoria() {
+  document
+    .getElementById("duelo-convocatoria-inline")
+    ?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 interface Duelo2v2GestionarProps {
@@ -74,9 +84,12 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const [ratingByJugadorId, setRatingByJugadorId] = useState<
     Record<string, RatingMovimientoPartido>
   >({});
-  const [step, setStep] = useState<GestionarStepId>("control");
+  const [step, setStep] = useState<GestionarStepId>("parejas");
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [convTouched, setConvTouched] = useState(false);
+  const [wantConvocatoria, setWantConvocatoria] = useState(false);
+  const [convIsLive, setConvIsLive] = useState(false);
+  const [convLine, setConvLine] = useState("Sin abrir · —");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -132,7 +145,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   useEffect(() => {
     if (!loadedDueloId || !loadedEstado || loadedEstado === "finalizado") return;
     if (loadedEstado === "configuracion") {
-      setStep("convocatoria");
+      setStep("parejas");
       setConvTouched(false);
     } else {
       setStep("control");
@@ -333,17 +346,29 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           const canFinalizar = Boolean(duelo.ganador) && !busy;
 
           const goConvocatoria = () => {
+            setWantConvocatoria(true);
             setConvTouched(true);
-            setStep("convocatoria");
+            setMobileSummaryOpen(false);
+            window.requestAnimationFrame(() => scrollToDueloConvocatoria());
           };
 
+          const onConvLiveChange = (snap: ConvocatoriaLiveSnapshot) => {
+            if (snap.isLive || snap.confirmed > 0) setConvTouched(true);
+            if (snap.isLive) {
+              setConvIsLive(true);
+              setWantConvocatoria(true);
+              setConvLine(
+                `Abierta · ${snap.confirmed} de ${snap.capacity} confirmados`
+              );
+            } else if (!snap.publicSlug) {
+              setConvIsLive(false);
+              setConvLine("Sin abrir · —");
+            }
+          };
+
+          const showConvocatoriaPanel = wantConvocatoria || convIsLive;
+
           const steps: QuickModeStep[] = [
-            {
-              id: "convocatoria",
-              label: "Convocatoria",
-              status: stepStatus("convocatoria", step, convTouched),
-              count: convTouched ? "Revisada" : "Pendiente",
-            },
             {
               id: "parejas",
               label: "Parejas",
@@ -351,71 +376,19 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
               count: pairsOk ? "Listas" : "Pendiente",
             },
             {
-              id: "detalles",
-              label: "Detalles",
-              status: stepStatus("detalles", step, detallesOk),
-              count: detallesOk ? "OK" : "Pendiente",
-            },
-            {
               id: "control",
-              label: "Control",
+              label: "Listo",
               status: stepStatus("control", step, Boolean(duelo.ganador)),
-              count: duelo.ganador ? "Listo" : "En curso",
+              count: duelo.ganador ? "OK" : "En curso",
             },
           ];
 
           const workbenchTitle =
-            step === "convocatoria"
-              ? "Convocatoria"
-              : step === "parejas"
-                ? "Parejas"
-                : step === "detalles"
-                  ? "Detalles"
-                  : "Control de competencia";
-
-          const convocatoriaBody = (
-            <>
-              <ConvocatoriaWhatsAppPanel
-                shareOnly
-                context={buildDueloConvocatoriaContext({
-                  dueloId: duelo.id,
-                  name: duelo.nombre,
-                  locationLabel: lugarConvocatoria,
-                  includeLugar,
-                  canchaLabel: duelo.cancha ?? undefined,
-                  scheduledAt: duelo.programado_en,
-                  scheduledUntil: duelo.programado_hasta,
-                  clubName: convocatoriaOrigin,
-                  categoryLabel: duelo.descripcion?.trim() || undefined,
-                })}
-              />
-              <PublicShareSection
-                publicUrl={publicDuelo2v2Url(dueloId)}
-                title="Enlace público"
-                infoLines={[
-                  "Comparte el enlace para ver el marcador del duelo (solo lectura).",
-                ]}
-                copyButtonLabel="Copiar vista pública"
-              />
-            </>
-          );
+            step === "parejas" ? "Parejas" : "Control de competencia";
 
           const workbenchBody =
-            step === "convocatoria" ? (
-              <div className="qm-ws__convocatoria">{convocatoriaBody}</div>
-            ) : step === "parejas" ? (
+            step === "parejas" ? (
               equiposPanel
-            ) : step === "detalles" ? (
-              <Duelo2v2DetailsEditor
-                duelo={duelo}
-                disabled={busy}
-                onSaved={(updated) => {
-                  setDuelo(updated);
-                  setMessage("Datos del encuentro actualizados.");
-                  setError(null);
-                }}
-                onError={setError}
-              />
             ) : (
               <>
                 <Duelo2v2ScoreEditor
@@ -451,32 +424,18 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     hint: "Registra el marcador hasta que haya ganador",
                     onClick: () => undefined,
                   }
-                : step === "convocatoria"
-                  ? {
-                      variant: "sidebar" as const,
-                      label: "Lanzar convocatoria",
-                      disabled: false,
-                      loading: false,
-                      hint: "Crea el enlace y copia el mensaje de WhatsApp",
-                      onClick: () => {
-                        const btn = document.querySelector(
-                          '[data-testid="lanzar-por-whatsapp"]'
-                        ) as HTMLButtonElement | null;
-                        btn?.click();
-                      },
-                    }
-                  : {
-                      variant: "sidebar" as const,
-                      label: "Lanzar convocatoria",
-                      disabled: false,
-                      loading: false,
-                      hint: "Abre el paso Convocatoria para copiar el link",
-                      onClick: goConvocatoria,
-                    };
+                : {
+                    variant: "sidebar" as const,
+                    label: "Lanzar convocatoria",
+                    disabled: false,
+                    loading: false,
+                    hint: "Activa la convocatoria en Detalles",
+                    onClick: goConvocatoria,
+                  };
 
           return (
             <QuickModePrepWorkspace
-              className={mobileSummaryOpen ? "is-summary-open" : ""}
+              className={`qm-ws--wide${mobileSummaryOpen ? " is-summary-open" : ""}`}
               header={
                 <QuickModeEventHeader
                   club={modeEyebrow}
@@ -509,18 +468,75 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                           : "En juego",
                     },
                   ]}
-                  onEditDetails={() => setStep("detalles")}
                 />
+              }
+              details={
+                <section
+                  id="duelo-detalles-inline"
+                  className="qm-ws__details-inline"
+                  aria-label="Detalles del duelo"
+                >
+                  <Duelo2v2DetailsEditor
+                    inline
+                    duelo={duelo}
+                    disabled={busy}
+                    onSaved={(updated) => {
+                      setDuelo(updated);
+                      setMessage("Datos del encuentro actualizados.");
+                      setError(null);
+                    }}
+                    onError={setError}
+                  />
+                  <div id="duelo-convocatoria-inline">
+                    <QuickModeConvocatoriaGate
+                      open={wantConvocatoria}
+                      live={convIsLive}
+                      panelId="duelo-convocatoria-panel"
+                      onToggle={() => {
+                        setWantConvocatoria((v) => {
+                          const next = !v;
+                          if (next) setConvTouched(true);
+                          return next;
+                        });
+                      }}
+                    >
+                      {showConvocatoriaPanel ? (
+                        <>
+                          <ConvocatoriaWhatsAppPanel
+                            embedded
+                            shareOnly
+                            onLiveChange={onConvLiveChange}
+                            context={buildDueloConvocatoriaContext({
+                              dueloId: duelo.id,
+                              name: duelo.nombre,
+                              locationLabel: lugarConvocatoria,
+                              includeLugar,
+                              canchaLabel: duelo.cancha ?? undefined,
+                              scheduledAt: duelo.programado_en,
+                              scheduledUntil: duelo.programado_hasta,
+                              clubName: convocatoriaOrigin,
+                              categoryLabel: duelo.descripcion?.trim() || undefined,
+                            })}
+                          />
+                          <PublicShareSection
+                            publicUrl={publicDuelo2v2Url(dueloId)}
+                            title="Enlace público"
+                            infoLines={[
+                              "Comparte el enlace para ver el marcador del duelo (solo lectura).",
+                            ]}
+                            copyButtonLabel="Copiar vista pública"
+                          />
+                        </>
+                      ) : null}
+                    </QuickModeConvocatoriaGate>
+                  </div>
+                </section>
               }
               stepper={
                 <QuickModeStepper
                   steps={steps}
                   activeId={step}
-                  onChange={(id) => {
-                    const next = id as GestionarStepId;
-                    if (next === "convocatoria") setConvTouched(true);
-                    setStep(next);
-                  }}
+                  onChange={(id) => setStep(id as GestionarStepId)}
                 />
               }
               workbench={
@@ -544,9 +560,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   <section className="qm-ws-panel__block">
                     <h3 className="qm-ws-panel__label">Progreso</h3>
                     <ul className="qm-ws-panel__progress">
+                      <li className={detallesOk ? "is-ok" : ""}>Detalles</li>
                       <li className={convTouched ? "is-ok" : ""}>Convocatoria</li>
                       <li className={pairsOk ? "is-ok" : ""}>Parejas A / B</li>
-                      <li className={detallesOk ? "is-ok" : ""}>Detalles</li>
                       <li className={duelo.ganador ? "is-ok" : ""}>
                         Listo para finalizar
                       </li>
@@ -554,17 +570,13 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   </section>
                   <section className="qm-ws-panel__block">
                     <h3 className="qm-ws-panel__label">Convocatoria</h3>
-                    <p className="qm-ws-panel__conv-line">
-                      {convTouched
-                        ? "Revisa o vuelve a lanzar el enlace"
-                        : "Lanza el link por WhatsApp desde este paso"}
-                    </p>
+                    <p className="qm-ws-panel__conv-line">{convLine}</p>
                     <button
                       type="button"
                       className="qm-ws__text-btn"
                       onClick={goConvocatoria}
                     >
-                      Abrir convocatoria
+                      Ir a convocatoria
                     </button>
                   </section>
                   <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">

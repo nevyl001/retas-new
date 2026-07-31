@@ -125,8 +125,7 @@ body,
   .liga-jornada-toolbar .riviera-btn,
   .te-gestion-header__actions .riviera-btn,
   .te-inicio-crear .riviera-btn-primary,
-  .start-tournament-section__cta .riviera-btn,
-  .home-inner .rv-mode-card__cta {
+  .start-tournament-section__cta .riviera-btn {
     min-height: 44px;
   }
 
@@ -320,18 +319,6 @@ body,
     min-height: var(--ro-touch-target-min);
   }
 
-  .rj-card__edit,
-  .rj-card__delete {
-    min-width: var(--ro-touch-target-min);
-    min-height: var(--ro-touch-target-min);
-  }
-
-  /* Filas compactas de registro: 40px por diseño (no forzar 44) */
-  .rj-list .rj-row__icon-btn {
-    min-width: 40px;
-    min-height: 40px;
-  }
-
   .torneo-express-page.te-inicio-page .te-torneo-card__actions-end .riviera-btn,
   .te-gestion-page .te-partido-meta-edit__actions .riviera-btn-primary,
   .te-gestion-page .te-partido-meta-edit__actions .riviera-btn-ghost {
@@ -341,10 +328,6 @@ body,
 
 /* Móvil compacto */
 @media (max-width: 389px) {
-  .home-inner .rv-mode-card__cta {
-    font-size: 0.75rem;
-  }
-
   .te-public--americano.te-public--americano-wide .te-pub-match--wide {
     padding: 0.65rem 0.7rem 0.6rem;
   }

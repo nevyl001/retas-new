@@ -1,4 +1,4 @@
-import { partitionHomeRetas } from "./RecentRetasSection";
+import { partitionHomeRetas } from "../../lib/retasList";
 import type { HomeRetaItem } from "../../lib/retasList";
 import type { Tournament } from "../../lib/database";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
@@ -113,47 +113,27 @@ describe("home presentation", () => {
     });
   });
 
-  describe("HomeCreateEventCta", () => {
-    it("no usa role option en modalidades", () => {
-      const React = require("react");
-      const { renderToStaticMarkup } = require("react-dom/server");
-      const { HomeCreateEventCta } = require("./HomeCreateEventCta");
-
-      const html = renderToStaticMarkup(
-        React.createElement(HomeCreateEventCta, {
-          onModeSelect: jest.fn(),
-        })
-      );
-
-      expect(html).toContain("Crear evento");
-      expect(html).toContain("Nuevo evento");
-      expect(html).not.toContain(">Cerrar<");
-      expect(html).not.toContain('role="option"');
-      expect(html).not.toContain('role="listbox"');
-    });
-  });
-
   describe("MobileAppNavigation", () => {
     it("no declara role list redundante en ul", () => {
       const React = require("react");
       const { renderToStaticMarkup } = require("react-dom/server");
       const { MobileAppNavigation } = require("../navigation/MobileAppNavigation");
 
-      const html = renderToStaticMarkup(
+      const view = renderToStaticMarkup(
         React.createElement(MobileAppNavigation, { pathname: "/" })
       );
 
-      expect(html).not.toContain('role="list"');
+      expect(view).not.toContain('role="list"');
     });
   });
 
   describe("HomeDashboard", () => {
-    it("muestra un solo CTA Crear evento y oculta secciones repetidas", () => {
+    it("la pregunta y el grid de modos son lo único protagonista, sin ruido visual", () => {
       const React = require("react");
       const { renderToStaticMarkup } = require("react-dom/server");
       const { HomeDashboard } = require("./HomeDashboard");
 
-      const html = renderToStaticMarkup(
+      const view = renderToStaticMarkup(
         React.createElement(HomeDashboard, {
           userId: "user-1",
           onTournamentSelect: jest.fn(),
@@ -161,18 +141,24 @@ describe("home presentation", () => {
         })
       );
 
-      expect(html).toContain("home-create-event__cta");
-      expect(html).toContain("Nuevo evento");
-      expect((html.match(/home-create-event__cta/g) || []).length).toBe(1);
-      expect(html).toContain("home-hero");
-      expect(html).not.toContain("Retas rápidas");
-      expect(html).not.toContain("Competencias organizadas");
-      expect(html).not.toContain("Gestionar mis retas");
-      expect(html).toContain("Registro de jugadores");
-      expect(html).toContain("Accesos rápidos");
-      expect(html).toContain("Cómo funciona el ranking");
-      expect(html).not.toContain("Aviso legal");
-      expect(html).toContain("Aviso de Privacidad y Términos y Condiciones");
+      expect(view).toContain("home-question");
+      expect(view).toContain("¿Qué quieres organizar hoy?");
+      expect(view).toContain("Retas rápidas");
+      expect(view).toContain("Competencias organizadas");
+      // Sin elementos decorativos ni CTA visible: toda la tarjeta es el botón.
+      expect(view).not.toContain("Próximamente");
+      expect(view).not.toContain("rv-mode-card__cta");
+      expect(view).not.toContain("home-create-event__cta");
+      expect(view).not.toContain("home-quick-card");
+      expect(view).not.toContain("Gestionar mis retas");
+      // Accesos rápidos: sección propia y visible, no franja de enlaces.
+      expect(view).toContain("home-access");
+      expect(view).toContain("Accesos rápidos");
+      expect(view).toContain("Registro de jugadores");
+      expect(view).toContain("Cómo funciona el ranking");
+      expect(view).toContain("Historial");
+      expect(view).not.toContain("Aviso legal");
+      expect(view).toContain("Aviso de Privacidad y Términos y Condiciones");
     });
   });
 });

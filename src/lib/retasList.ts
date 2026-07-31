@@ -7,7 +7,11 @@ import {
   mergeTournamentWithPublicConfig,
   Tournament,
 } from "./database";
-import { filterRetasForHomeDisplay } from "./gameModeMapping";
+import {
+  filterRetasForHomeDisplay,
+  resolveTournamentGameMode,
+} from "./gameModeMapping";
+import type { GameModeId } from "../components/home/gameModesConfig";
 import {
   formatTournamentCourtsLabel,
   getTournamentCourtsCount,
@@ -150,4 +154,44 @@ export function isRetaActive(item: HomeRetaItem): boolean {
 export function isRetaFinished(item: HomeRetaItem): boolean {
   if (item.kind === "duelo-2v2") return item.duelo.estado === "finalizado";
   return item.tournament.is_finished;
+}
+
+/** Modo de juego de un item de Home, para filtrar la vista de detalle por modo. */
+export function getRetaGameMode(item: HomeRetaItem): GameModeId {
+  if (item.kind === "duelo-2v2") return "duelo-2v2";
+  return resolveTournamentGameMode(item.tournament);
+}
+
+/** Items no finalizados que pertenecen específicamente a `modeId` (sin mezclar otros modos). */
+export function filterHomeRetasByGameMode(
+  items: HomeRetaItem[],
+  modeId: GameModeId
+): HomeRetaItem[] {
+  return items.filter(
+    (item) => !isRetaFinished(item) && getRetaGameMode(item) === modeId
+  );
+}
+
+const HOME_ACTIVE_LIMIT = 3;
+const HOME_RECENT_LIMIT = 3;
+
+function sortByRecency(items: HomeRetaItem[]): HomeRetaItem[] {
+  return [...items].sort(
+    (a, b) =>
+      new Date(getRetaCreatedAt(b)).getTime() - new Date(getRetaCreatedAt(a)).getTime()
+  );
+}
+
+export function partitionHomeRetas(retas: HomeRetaItem[]): {
+  active: HomeRetaItem[];
+  recent: HomeRetaItem[];
+  hasMore: boolean;
+} {
+  const unfinished = sortByRecency(retas.filter((item) => !isRetaFinished(item)));
+  const finished = sortByRecency(retas.filter((item) => isRetaFinished(item)));
+  const active = unfinished.slice(0, HOME_ACTIVE_LIMIT);
+  const recent = finished.slice(0, HOME_RECENT_LIMIT);
+  const hasMore =
+    unfinished.length > HOME_ACTIVE_LIMIT || finished.length > HOME_RECENT_LIMIT;
+  return { active, recent, hasMore };
 }

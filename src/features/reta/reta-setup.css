@@ -386,276 +386,316 @@
   color: var(--color-text-secondary);
 }
 
+/* Grid real de tarjetas — sin altura fija ni scroll propio; el scroll lo
+   maneja el navegador (el contenedor que antes lo forzaba, con
+   max-height + overflow-y, era el "scroll dentro de otro scroll"). */
 .elegant-players-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  grid-auto-rows: minmax(52px, auto);
-  gap: var(--space-sm);
-  min-height: 200px;
-  max-height: min(55vh, 420px);
-  overflow-y: auto;
-  padding-right: var(--space-sm);
+  /* Cards ~mitad de ancho: más columnas, min ~132px */
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 6px;
   flex: 1 1 auto;
 }
 
-.elegant-players-grid::-webkit-scrollbar {
-  width: 6px;
+@media (min-width: 640px) {
+  .elegant-players-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
 }
 
-.elegant-players-grid::-webkit-scrollbar-track {
-  background: var(--color-bg-surface);
-  border-radius: var(--radius-sm);
+@media (min-width: 1200px) {
+  .elegant-players-grid {
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  }
 }
 
-.elegant-players-grid::-webkit-scrollbar-thumb {
-  background: var(--color-border-soft);
-  border-radius: var(--radius-sm);
+/* —— Barra de filtros del grid (búsqueda + categoría + solo disponibles) —— */
+.elegant-grid-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
 }
 
-.elegant-players-grid::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-focus);
+@media (min-width: 640px) {
+  .elegant-grid-filters {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .elegant-grid-filters > .riviera-input {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 11rem;
+  }
+
+  .elegant-grid-filters > .rj-checkbox-pill {
+    flex: 0 0 auto;
+  }
 }
 
-.elegant-player-card {
-  background: var(--color-bg-surface);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  min-height: 48px;
+.elegant-grid-search {
+  flex: 1 1 200px;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
   border: 1px solid var(--color-border-subtle);
-  box-shadow: var(--shadow-soft);
-  transition: all var(--transition-base);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+}
+
+@media (min-width: 640px) {
+  .elegant-grid-search {
+    flex: 1 1 auto;
+  }
+}
+
+.elegant-grid-search::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.elegant-load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+/* Card compacta: nombre + fuerza; foto opcional de fondo (sin avatar). */
+.elegant-player-card {
+  --epc-pad-y: 6px;
+  --epc-pad-x: 8px;
+  background: var(--color-bg-surface);
+  border-radius: 8px;
+  padding: var(--epc-pad-y) var(--epc-pad-x);
+  min-height: 38px;
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: none;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
   cursor: pointer;
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  isolation: isolate;
 }
 
-.elegant-player-card:hover {
-  background: var(--color-bg-elevated);
-  border-color: var(--color-border-soft);
-  box-shadow: var(--shadow-deep);
-  transform: translateY(-2px);
+.elegant-player-card__photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
+  opacity: 0.28;
+  pointer-events: none;
+  transform: scale(1.02);
 }
 
-.elegant-player-card.selected {
-  border-color: var(--color-accent-border);
-  background: var(--color-bg-elevated);
+.elegant-player-card__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-surface, #fff) 0%,
+    color-mix(in srgb, var(--color-bg-surface, #fff) 88%, transparent) 42%,
+    color-mix(in srgb, var(--color-bg-surface, #fff) 55%, transparent) 100%
+  );
 }
 
-.elegant-player-card.in-pair {
-  opacity: 0.7;
-}
-
-.elegant-card-background {
+.elegant-player-card:not(.elegant-player-card--has-photo) .elegant-player-card__overlay {
   display: none;
 }
 
-.elegant-player-content {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  position: relative;
-  z-index: 2;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-/* Grupo lapicero + eliminar centrado verticalmente en el card (evita que "choque" arriba con "En pareja") */
-.elegant-player-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex-shrink: 0;
-  align-self: center;
-}
-
-.elegant-player-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+.elegant-player-card:hover:not(:disabled) {
   background: var(--color-bg-elevated);
-  border: 1px solid var(--color-accent-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-accent);
-  font-weight: var(--font-weight-semibold);
-  font-size: 0.9375rem;
-  flex-shrink: 0;
+  border-color: var(--color-border-soft);
+  transform: translateY(-1px);
+}
+
+.elegant-player-card:hover:not(:disabled) .elegant-player-card__overlay {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-elevated, #f4f1eb) 0%,
+    color-mix(in srgb, var(--color-bg-elevated, #f4f1eb) 88%, transparent) 42%,
+    color-mix(in srgb, var(--color-bg-elevated, #f4f1eb) 50%, transparent) 100%
+  );
+}
+
+.elegant-player-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ro-accent-ring, rgba(20, 22, 26, 0.22));
+}
+
+.elegant-player-card.selected {
+  border-color: var(--color-text-primary, #14161a);
+  border-width: 2px;
+  border-style: solid;
+  background: color-mix(
+    in srgb,
+    var(--color-bg-elevated, #f4f1eb) 70%,
+    var(--color-text-primary, #14161a) 8%
+  );
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text-primary, #14161a) 18%, transparent);
+}
+
+.elegant-player-card.selected:hover:not(:disabled) {
+  border-color: var(--color-text-primary, #14161a);
+  border-style: solid;
+}
+
+/* Ya en pareja: borde dashed + tono muted */
+.elegant-player-card.in-pair {
+  opacity: 1;
+  background: color-mix(
+    in srgb,
+    var(--color-bg-elevated, #f4f1eb) 55%,
+    var(--color-border-subtle, #e2ddd4)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--color-text-tertiary, #7e828a) 35%,
+    var(--color-border-subtle, #e2ddd4)
+  );
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.elegant-player-card.in-pair .elegant-player-card__photo {
+  opacity: 0.18;
+}
+
+.elegant-player-card.in-pair .elegant-player-card__overlay {
+  background: linear-gradient(
+    90deg,
+    color-mix(
+        in srgb,
+        var(--color-bg-elevated, #f4f1eb) 70%,
+        var(--color-border-subtle, #e2ddd4)
+      )
+      0%,
+    color-mix(in srgb, var(--color-bg-elevated, #f4f1eb) 55%, transparent) 100%
+  );
+}
+
+.elegant-player-card.in-pair:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: color-mix(
+    in srgb,
+    var(--color-bg-elevated, #f4f1eb) 55%,
+    var(--color-border-subtle, #e2ddd4)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--color-text-tertiary, #7e828a) 45%,
+    var(--color-border-subtle, #e2ddd4)
+  );
+}
+
+.elegant-player-card.in-pair .elegant-player-name {
+  color: var(--color-text-secondary);
+}
+
+.elegant-player-card.in-pair.selected {
+  border-style: dashed;
+  border-color: color-mix(
+    in srgb,
+    var(--color-text-tertiary, #7e828a) 35%,
+    var(--color-border-subtle, #e2ddd4)
+  );
+  background: color-mix(
+    in srgb,
+    var(--color-bg-elevated, #f4f1eb) 55%,
+    var(--color-border-subtle, #e2ddd4)
+  );
+  box-shadow: none;
+}
+
+.elegant-player-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .elegant-player-info {
+  position: relative;
+  z-index: 2;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-xs);
+  align-items: flex-start;
+  gap: 2px;
 }
 
-.elegant-player-name-row {
+.elegant-player-meta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 4px;
+  max-width: 100%;
   min-width: 0;
-  flex: 1;
 }
 
-.elegant-player-name-row .elegant-player-name {
-  flex: 1;
-  min-width: 0;
+.elegant-player-cat.rj-cat-badge {
+  font-size: 0.5625rem;
+  padding: 0.1rem 0.35rem;
+  letter-spacing: 0.04em;
+}
+
+.elegant-player-riviera-id.rj-riviera-id {
+  position: relative;
+  z-index: 3;
+  max-width: 100%;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.5625rem;
+  letter-spacing: 0.02em;
+  cursor: copy;
+}
+
+.elegant-player-riviera-id.rj-riviera-id--copied {
+  cursor: default;
+}
+
+.elegant-player-riviera-id .rj-riviera-id__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 7.5rem;
+}
+
+.elegant-player-mark {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .elegant-player-name {
+  position: relative;
+  z-index: 2;
   color: var(--color-text-primary);
-  font-size: 0.9375rem;
-  font-weight: var(--font-weight-medium);
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-semibold, 600);
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.elegant-edit-btn {
-  flex-shrink: 0;
-  background: transparent;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-sm);
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-base);
-  color: var(--color-text-secondary);
-}
-
-.elegant-edit-btn:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  background: var(--color-bg-hover);
-}
-
-.elegant-edit-icon {
-  font-size: 0.875rem;
-}
-
-.elegant-player-edit-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  flex: 1;
-  min-width: 0;
-}
-
-.elegant-player-edit-input {
-  flex: 1;
-  min-width: 0;
-  padding: 4px 8px;
-  font-size: 0.9375rem;
-  font-weight: var(--font-weight-medium);
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-elevated);
-  color: var(--color-text-primary);
-}
-
-.elegant-player-edit-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(var(--color-accent-rgb, 59, 130, 246), 0.25);
-}
-
-.elegant-edit-save-btn,
-.elegant-edit-cancel-btn {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-bg-elevated);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  transition: all var(--transition-base);
-}
-
-.elegant-edit-save-btn:hover {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-  background: var(--color-bg-hover);
-}
-
-.elegant-edit-cancel-btn:hover {
-  border-color: var(--color-text-tertiary);
-  color: var(--color-text-primary);
-  background: var(--color-bg-hover);
-}
-
-.elegant-pair-indicator {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-text-tertiary);
-  font-size: 0.75rem;
-}
-
-.elegant-indicator-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  opacity: 0.6;
-}
-
-.elegant-delete-btn {
-  flex-shrink: 0;
-  background: transparent;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-sm);
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-base);
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-}
-
-.elegant-delete-btn:hover {
-  border-color: rgba(220, 38, 38, 0.4);
-  color: rgba(220, 38, 38, 0.9);
-  background: var(--color-bg-hover);
-}
-
-.elegant-delete-icon {
-  font-size: 1rem;
-}
-
-.elegant-selection-indicator {
-  position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
-  width: 24px;
-  height: 24px;
-  background: var(--color-accent);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-}
-
-.elegant-check-icon {
-  color: var(--color-text-inverse);
-  font-size: 0.875rem;
-  font-weight: var(--font-weight-bold);
+  max-width: 100%;
 }
 
 .elegant-particles {

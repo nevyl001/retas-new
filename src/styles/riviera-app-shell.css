@@ -59,6 +59,14 @@
     max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
 }
 
+/* Prep con workspace ancho: casi full viewport */
+.main-layout > .reta-content:has(.qm-ws--wide) {
+  max-width: none;
+  width: 100%;
+  padding-left: clamp(8px, 1vw, 16px);
+  padding-right: clamp(8px, 1vw, 16px);
+}
+
 .main-layout > .reta-content .reta-content__toolbar {
   margin-bottom: clamp(12px, 2vw, 20px);
 }
