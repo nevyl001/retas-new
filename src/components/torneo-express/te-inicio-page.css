@@ -1,9 +1,9 @@
 /* Torneo Express — inicio premium (override torneo-express.css) */
 
 .torneo-express-page.te-inicio-page {
-  --te-inicio-max: 1200px;
-  --te-inicio-pad-x: clamp(20px, 3vw, 32px);
-  --te-inicio-section-gap: clamp(20px, 3vw, 28px);
+  --te-inicio-max: none;
+  --te-inicio-pad-x: var(--mode-shell-pad-x);
+  --te-inicio-section-gap: var(--mode-section-gap, clamp(20px, 3vw, 28px));
   --te-inicio-page-bg: var(--bg-canvas);
   --te-inicio-surface: var(--ro-bg-elevated);
   --te-inicio-text-muted: var(--ro-text-muted);
@@ -11,8 +11,8 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: clamp(16px, 2.5vw, 24px) var(--te-inicio-pad-x)
-    calc(40px + env(safe-area-inset-bottom, 0px));
+  padding: var(--mode-shell-pad-y) var(--te-inicio-pad-x)
+    var(--mode-shell-pad-bottom);
   background: var(--te-inicio-page-bg);
   color: var(--ro-text-primary);
   box-sizing: border-box;

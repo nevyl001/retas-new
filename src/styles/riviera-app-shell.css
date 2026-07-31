@@ -16,8 +16,8 @@
   max-width: none;
   min-height: 100vh;
   margin: 0;
-  padding: clamp(28px, 5vw, 52px) clamp(20px, 4vw, 56px)
-    max(clamp(48px, 6vw, 80px), env(safe-area-inset-bottom));
+  padding: var(--mode-shell-pad-y) var(--mode-shell-pad-x)
+    var(--mode-shell-pad-bottom);
   box-sizing: border-box;
   animation: fadeInUp 0.45s ease-out both;
   background:
@@ -68,8 +68,29 @@
   margin-left: 0;
   margin-right: 0;
   padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
-    max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
+    var(--mode-shell-pad-bottom, max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom)));
   box-sizing: border-box;
+}
+
+@media (max-width: 899px) {
+  .main-layout > .reta-content:has(.qm-ws),
+  .americano-screen:has(.qm-ws),
+  .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) {
+    padding-top: calc(
+      var(--qm-prep-pad-y) + env(safe-area-inset-top, 0px)
+    );
+  }
+
+  .reta-content:has(.qm-ws) .riviera-back-toolbar,
+  .americano-screen:has(.qm-ws) .riviera-back-toolbar,
+  .duelo2v2-page:has(.qm-ws) .riviera-back-toolbar {
+    margin-top: 0;
+  }
+
+  .qm-event-header__title {
+    overflow-wrap: anywhere;
+    line-height: 1.15;
+  }
 }
 
 .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) .duelo2v2-page__inner,
@@ -114,8 +135,8 @@
 @media (max-width: 768px) {
   .main-layout,
   .liga-page {
-    padding: clamp(16px, 4vw, 24px) clamp(14px, 3.8vw, 20px)
-      max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
+    padding: var(--mode-shell-pad-y) var(--mode-shell-pad-x)
+      var(--mode-shell-pad-bottom);
     overflow-x: clip;
   }
 

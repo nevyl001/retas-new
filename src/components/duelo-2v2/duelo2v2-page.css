@@ -2,15 +2,16 @@
   min-height: 100vh;
   background: var(--bg-canvas);
   color: var(--ro-text-primary);
-  padding: clamp(1rem, 2.5vw, 2rem) clamp(1rem, 4vw, 3rem)
-    max(3rem, env(safe-area-inset-bottom));
+  padding: var(--mode-shell-pad-y, clamp(1rem, 2.5vw, 2rem))
+    var(--mode-shell-pad-x, clamp(1rem, 4vw, 3rem))
+    var(--mode-shell-pad-bottom, max(3rem, env(safe-area-inset-bottom)));
   box-sizing: border-box;
 }
 
-/* Prep Quick Mode — padding unificado (tokens --qm-prep-*) */
+/* Prep Quick Mode — padding unificado (tokens --qm-prep-* → --mode-shell-*) */
 .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) {
   padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
-    max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
+    var(--mode-shell-pad-bottom, max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom)));
 }
 
 .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) .duelo2v2-toolbar.riviera-back-toolbar {

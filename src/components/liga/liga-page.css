@@ -11,7 +11,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: var(--mode-content-max, 1100px);
+  max-width: var(--mode-content-max, none);
   margin: 0 auto;
   box-sizing: border-box;
 }
@@ -29,7 +29,7 @@
 }
 
 .liga-page--public .liga-page__inner {
-  max-width: 1200px;
+  max-width: var(--mode-content-max-public, 1200px);
 }
 
 .liga-toolbar {
