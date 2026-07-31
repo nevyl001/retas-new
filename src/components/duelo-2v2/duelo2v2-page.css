@@ -7,6 +7,17 @@
   box-sizing: border-box;
 }
 
+/* Prep Quick Mode — padding unificado (tokens --qm-prep-*) */
+.duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) {
+  padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
+    max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
+}
+
+.duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) .duelo2v2-toolbar.riviera-back-toolbar {
+  margin-bottom: var(--qm-prep-toolbar-gap);
+  max-width: none;
+}
+
 .duelo2v2-page--public {
   min-height: 100vh;
   padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 5vw, 4rem)
@@ -74,7 +85,7 @@
 }
 
 .duelo2v2-toolbar {
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--qm-prep-toolbar-gap, 0.75rem);
 }
 
 /* —— Formulario nuevo duelo —— */
@@ -95,7 +106,7 @@
 @media (max-width: 899px) {
   .duelo2v2-nuevo .duelo2v2-toolbar,
   .duelo2v2-gestionar .duelo2v2-toolbar {
-    margin-bottom: 0.65rem;
+    margin-bottom: var(--qm-prep-toolbar-gap, 0.75rem);
   }
 
   .duelo2v2-form--workspace .duelo2v2-form__schedule-row {
@@ -467,8 +478,8 @@
 }
 
 .qm-ws__details-inline .duelo2v2-details-editor--inline .duelo2v2-details-editor__form {
-  margin-top: 0;
-  padding: 0.55rem 0.85rem 0.75rem;
+  margin: 0;
+  padding: 0;
 }
 
 .duelo2v2-form__submit {
@@ -794,6 +805,48 @@
   font-size: 0.75rem;
   color: var(--ro-success);
   font-weight: 700;
+}
+
+/* Pair builder dentro del workbench chrome (Gestionar) */
+.qm-ws__workbench .duelo2v2-pair-slot {
+  background: var(--qm-ink-inset);
+  border-color: var(--qm-ink-border);
+  color: var(--qm-ink-text);
+}
+
+.qm-ws__workbench .duelo2v2-pair-slot__hint,
+.qm-ws__workbench .duelo2v2-roster__sub,
+.qm-ws__workbench .duelo2v2-card__meta {
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws__workbench .duelo2v2-roster__title,
+.qm-ws__workbench .duelo2v2-pair-slot__label,
+.qm-ws__workbench .duelo2v2-vs {
+  color: var(--qm-ink-text);
+}
+
+.qm-ws__workbench .duelo2v2-roster__search {
+  background: var(--qm-ink-input);
+  border-color: var(--qm-ink-input-border);
+  color: var(--qm-ink-text);
+}
+
+.qm-ws__workbench .duelo2v2-player-chip {
+  background: var(--qm-ink-elevated);
+  border-color: var(--qm-ink-border);
+  color: var(--qm-ink-text);
+}
+
+.qm-ws__workbench .duelo2v2-player-chip:hover:not(:disabled) {
+  background: var(--qm-ink-inset);
+  border-color: var(--qm-ink-border-strong);
+}
+
+.qm-ws__workbench .duelo2v2-roster__selection-bar {
+  background: var(--qm-ink-elevated);
+  border-color: var(--qm-ink-border);
+  color: var(--qm-ink-text);
 }
 
 /* —— Vista pública en vivo —— */
@@ -1984,8 +2037,12 @@
   margin-right: auto;
 }
 
-.duelo2v2-gestionar .duelo2v2-toolbar {
-  max-width: 560px;
+.duelo2v2-gestionar .duelo2v2-toolbar,
+.duelo2v2-nuevo .duelo2v2-toolbar {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  align-items: flex-start;
 }
 
 .duelo2v2-gestionar .duelo2v2-error,

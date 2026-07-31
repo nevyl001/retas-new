@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   CANCHA_DEFAULT_VALUE,
   normalizeCanchaForSave,
@@ -16,6 +16,10 @@ import {
 import { updateDuelo2v2Details } from "../../services/duelo2v2Service";
 import { useConvocatoriaOriginName } from "../../club-experience";
 import { Button } from "../ui";
+import {
+  Duelo2v2ConfigFields,
+  type Duelo2v2ConfigFieldValues,
+} from "./Duelo2v2ConfigFields";
 
 interface Duelo2v2DetailsEditorProps {
   duelo: Duelo2v2;
@@ -24,6 +28,35 @@ interface Duelo2v2DetailsEditorProps {
   inline?: boolean;
   onSaved: (duelo: Duelo2v2) => void;
   onError?: (message: string) => void;
+}
+
+function valuesFromDuelo(
+  duelo: Duelo2v2,
+  convocatoriaOrigin: string
+): Duelo2v2ConfigFieldValues {
+  const schedule = dueloScheduleDraftFromDuelo(duelo);
+  const prefs = readDueloLugarPrefs(duelo.id);
+  const nextMostrar =
+    duelo.mostrar_lugar != null
+      ? duelo.mostrar_lugar !== false
+      : prefs
+        ? prefs.mostrarLugar !== false
+        : true;
+  return {
+    nombre: duelo.nombre,
+    categoria: duelo.descripcion?.trim() || "",
+    cancha: dueloCanchaDraftFromDuelo(duelo) || CANCHA_DEFAULT_VALUE,
+    draftDate: schedule.date,
+    draftTimeStart: schedule.timeStart,
+    draftTimeEnd: schedule.timeEnd,
+    mostrarLugar: nextMostrar,
+    lugar: (
+      duelo.lugar?.trim() ||
+      prefs?.lugar ||
+      convocatoriaOrigin ||
+      ""
+    ).trim(),
+  };
 }
 
 export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
@@ -35,62 +68,49 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
 }) => {
   const convocatoriaOrigin = useConvocatoriaOriginName();
   const [open, setOpen] = useState(inline);
-  const [nombre, setNombre] = useState(duelo.nombre);
-  const [categoria, setCategoria] = useState(duelo.descripcion?.trim() || "");
-  const [mostrarLugar, setMostrarLugar] = useState(true);
-  const [lugar, setLugar] = useState("");
-  const [cancha, setCancha] = useState(
-    dueloCanchaDraftFromDuelo(duelo) || CANCHA_DEFAULT_VALUE
+  const [values, setValues] = useState<Duelo2v2ConfigFieldValues>(() =>
+    valuesFromDuelo(duelo, convocatoriaOrigin)
   );
-  const [draftDate, setDraftDate] = useState("");
-  const [draftTimeStart, setDraftTimeStart] = useState("");
-  const [draftTimeEnd, setDraftTimeEnd] = useState("");
+  const [baseline, setBaseline] = useState(() => JSON.stringify(values));
   const [busy, setBusy] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
-    const schedule = dueloScheduleDraftFromDuelo(duelo);
-    const prefs = readDueloLugarPrefs(duelo.id);
-    setNombre(duelo.nombre);
-    setCategoria(duelo.descripcion?.trim() || "");
-    setCancha(dueloCanchaDraftFromDuelo(duelo) || CANCHA_DEFAULT_VALUE);
-    setDraftDate(schedule.date);
-    setDraftTimeStart(schedule.timeStart);
-    setDraftTimeEnd(schedule.timeEnd);
-    const nextMostrar =
-      duelo.mostrar_lugar != null
-        ? duelo.mostrar_lugar !== false
-        : prefs
-          ? prefs.mostrarLugar !== false
-          : true;
-    setMostrarLugar(nextMostrar);
-    setLugar(
-      (duelo.lugar?.trim() ||
-        prefs?.lugar ||
-        convocatoriaOrigin ||
-        "").trim()
-    );
+    const next = valuesFromDuelo(duelo, convocatoriaOrigin);
+    setValues(next);
+    setBaseline(JSON.stringify(next));
     setLocalError(null);
   }, [duelo, convocatoriaOrigin]);
 
+  const dirty = useMemo(
+    () => JSON.stringify(values) !== baseline,
+    [values, baseline]
+  );
+
   const canSave =
-    nombre.trim().length > 0 &&
-    (!mostrarLugar || lugar.trim().length > 0) &&
-    cancha.trim().length > 0 &&
-    draftDate.trim().length > 0 &&
-    draftTimeStart.trim().length > 0 &&
-    draftTimeEnd.trim().length > 0 &&
+    dirty &&
+    values.nombre.trim().length > 0 &&
+    (!values.mostrarLugar || values.lugar.trim().length > 0) &&
+    values.cancha.trim().length > 0 &&
+    values.draftDate.trim().length > 0 &&
+    values.draftTimeStart.trim().length > 0 &&
+    values.draftTimeEnd.trim().length > 0 &&
     !disabled &&
     !busy;
+
+  const handleDiscard = () => {
+    setValues(JSON.parse(baseline) as Duelo2v2ConfigFieldValues);
+    setLocalError(null);
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSave) return;
 
     const schedule = resolveDueloScheduleFromDraft(
-      draftDate,
-      draftTimeStart,
-      draftTimeEnd
+      values.draftDate,
+      values.draftTimeStart,
+      values.draftTimeEnd
     );
     if ("error" in schedule) {
       setLocalError(schedule.error);
@@ -101,17 +121,17 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
     setBusy(true);
     setLocalError(null);
     try {
-      const lugarTrim = lugar.trim();
+      const lugarTrim = values.lugar.trim();
       writeDueloLugarPrefs(duelo.id, {
         lugar: lugarTrim,
-        mostrarLugar,
+        mostrarLugar: values.mostrarLugar,
       });
       const updated = await updateDuelo2v2Details(duelo.id, {
-        nombre: nombre.trim(),
-        descripcion: categoria.trim() || null,
-        cancha: normalizeCanchaForSave(cancha),
+        nombre: values.nombre.trim(),
+        descripcion: values.categoria.trim() || null,
+        cancha: normalizeCanchaForSave(values.cancha),
         lugar: lugarTrim || null,
-        mostrar_lugar: mostrarLugar,
+        mostrar_lugar: values.mostrarLugar,
         programado_en: schedule.programado_en,
         programado_hasta: schedule.programado_hasta,
       });
@@ -127,6 +147,8 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
     }
   };
 
+  const formId = `duelo-edit-form-${duelo.id}`;
+
   return (
     <section
       className={`duelo2v2-details-editor${inline ? " duelo2v2-details-editor--inline reta-config-panel reta-config-panel--inline" : ""}`}
@@ -135,12 +157,23 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
       {inline ? (
         <header className="reta-config-panel__toolbar">
           <div className="reta-config-panel__toolbar-copy">
-            <h2 className="reta-config-panel__title">Detalles del duelo</h2>
+            <h2 className="reta-config-panel__title">Detalles de la reta</h2>
             <p className="reta-config-panel__subtitle">
-              Nombre, horario, sede y categoría.
+              Nombre, horario, sede y cancha.
             </p>
           </div>
           <div className="reta-config-panel__actions">
+            {dirty ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={busy || disabled}
+                onClick={handleDiscard}
+              >
+                Descartar
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="primary"
@@ -149,7 +182,7 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
               loading={busy}
               onClick={() => {
                 const form = document.getElementById(
-                  `duelo-edit-form-${duelo.id}`
+                  formId
                 ) as HTMLFormElement | null;
                 form?.requestSubmit();
               }}
@@ -175,113 +208,22 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
 
       {open ? (
         <form
-          id={`duelo-edit-form-${duelo.id}`}
-          className="duelo2v2-form duelo2v2-details-editor__form"
+          id={formId}
+          className="duelo2v2-details-editor__form"
           onSubmit={(e) => void handleSave(e)}
         >
-          <div className="duelo2v2-form__name-row">
-            <label htmlFor={`duelo-edit-nombre-${duelo.id}`}>
-              Nombre del encuentro
-            </label>
-            <input
-              id={`duelo-edit-nombre-${duelo.id}`}
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-            />
-          </div>
+          <Duelo2v2ConfigFields
+            idPrefix={`duelo-edit-${duelo.id}`}
+            values={values}
+            onChange={setValues}
+            disabled={disabled || busy}
+          />
 
-          <div className="duelo2v2-form__schedule-row">
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Categoría / nivel</span>
-              <input
-                id={`duelo-edit-categoria-${duelo.id}`}
-                type="text"
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                placeholder="Ej. 5ta Fuerza"
-                list={`duelo-edit-categoria-sugerencias-${duelo.id}`}
-              />
-              <datalist id={`duelo-edit-categoria-sugerencias-${duelo.id}`}>
-                <option value="Open" />
-                <option value="1ra Fuerza" />
-                <option value="2da Fuerza" />
-                <option value="3ra Fuerza" />
-                <option value="4ta Fuerza" />
-                <option value="5ta Fuerza" />
-                <option value="6ta Fuerza" />
-              </datalist>
-            </label>
-          </div>
-
-          <div className="duelo2v2-form__lugar-block">
-            <label className="duelo2v2-form__toggle">
-              <input
-                type="checkbox"
-                checked={mostrarLugar}
-                onChange={(e) => setMostrarLugar(e.target.checked)}
-              />
-              <span>Incluir lugar en la convocatoria</span>
-            </label>
-            {mostrarLugar ? (
-              <label className="duelo2v2-form__field">
-                <span className="duelo2v2-form__field-label">Lugar</span>
-                <input
-                  type="text"
-                  value={lugar}
-                  onChange={(e) => setLugar(e.target.value)}
-                  placeholder="Ej. Hack Pádel, Padelito…"
-                  required
-                />
-              </label>
-            ) : (
-              <p className="duelo2v2-form__hint">
-                Ideal si tu club siempre juega en la misma sede.
-              </p>
-            )}
-          </div>
-
-          <div className="duelo2v2-form__schedule-row">
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Cancha</span>
-              <input
-                type="text"
-                value={cancha}
-                onChange={(e) => setCancha(e.target.value)}
-                required
-              />
-            </label>
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Día</span>
-              <input
-                type="date"
-                value={draftDate}
-                onChange={(e) => setDraftDate(e.target.value)}
-                required
-              />
-            </label>
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Hora inicio</span>
-              <input
-                type="time"
-                value={draftTimeStart}
-                onChange={(e) => setDraftTimeStart(e.target.value)}
-                required
-              />
-            </label>
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Hora fin</span>
-              <input
-                type="time"
-                value={draftTimeEnd}
-                onChange={(e) => setDraftTimeEnd(e.target.value)}
-                required
-              />
-            </label>
-          </div>
-
-          {localError ? <p className="duelo2v2-error">{localError}</p> : null}
+          {localError ? (
+            <p className="reta-config-panel__feedback reta-config-panel__feedback--error">
+              {localError}
+            </p>
+          ) : null}
 
           {inline ? null : (
             <div className="duelo2v2-details-editor__actions">

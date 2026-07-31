@@ -825,7 +825,10 @@
 }
 
 .back-home-button-container.riviera-back-toolbar {
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: flex-start;
+  gap: 0.5rem;
 }
 
 .winner-button-container {

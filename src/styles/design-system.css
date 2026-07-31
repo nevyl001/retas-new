@@ -191,10 +191,36 @@
   color: var(--text-primary);
 }
 
-.riviera-back-toolbar {
+/* Toolbar Volver — mismo patrón en todos los modos (Americano = referencia) */
+.riviera-back-toolbar,
+.rv-action-bar.riviera-back-toolbar {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: flex-start;
-  margin-bottom: 1rem;
+  gap: 0.5rem;
+  margin: 0 0 var(--qm-prep-toolbar-gap, 0.75rem);
+  padding: 0;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+
+.riviera-back-toolbar::after,
+.rv-action-bar.riviera-back-toolbar::after {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 2px;
+  margin: 0;
+  background: var(--ro-text-primary, var(--text-primary, #14161a));
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.riviera-back-toolbar.rv-action-bar {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .riviera-btn-ghost {

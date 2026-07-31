@@ -20,6 +20,7 @@ import {
   finalizarDuelo2v2,
   getDuelo2v2ById,
   parejaLabel,
+  startDuelo2v2,
   updateDuelo2v2Score,
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
@@ -43,6 +44,11 @@ import { buildDueloConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import { Duelo2v2DetailsEditor } from "./Duelo2v2DetailsEditor";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { Duelo2v2ScoreEditor } from "./Duelo2v2ScoreEditor";
+import {
+  bothPairsReady,
+  DueloPairBuilder,
+  type DueloPair,
+} from "./DueloPairBuilder";
 import { navigateDuelo2v2, publicDuelo2v2Url } from "./duelo2v2Nav";
 import "../../styles/riviera-public-celebrate.css";
 import "./duelo2v2-page.css";
@@ -90,6 +96,8 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const [wantConvocatoria, setWantConvocatoria] = useState(false);
   const [convIsLive, setConvIsLive] = useState(false);
   const [convLine, setConvLine] = useState("Sin abrir · —");
+  const [pairA, setPairA] = useState<DueloPair | null>(null);
+  const [pairB, setPairB] = useState<DueloPair | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -162,6 +170,42 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
       setMessage("Marcador guardado.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo guardar");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleStartJuego = async () => {
+    if (!duelo || !pairA || !pairB || !bothPairsReady(pairA, pairB)) return;
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const updated = await startDuelo2v2({
+        existingDraftId: duelo.id,
+        input: {
+          nombre: duelo.nombre,
+          descripcion: duelo.descripcion?.trim() || undefined,
+          cancha: duelo.cancha ?? undefined,
+          programado_en: duelo.programado_en,
+          programado_hasta: duelo.programado_hasta,
+          pareja_a_j1_id: pairA.j1.id,
+          pareja_a_j2_id: pairA.j2.id,
+          pareja_a_j1_nombre: pairA.j1.nombre,
+          pareja_a_j2_nombre: pairA.j2.nombre,
+          pareja_b_j1_id: pairB.j1.id,
+          pareja_b_j2_id: pairB.j2.id,
+          pareja_b_j1_nombre: pairB.j1.nombre,
+          pareja_b_j2_nombre: pairB.j2.nombre,
+        },
+      });
+      setDuelo(updated);
+      setPairA(null);
+      setPairB(null);
+      setStep("control");
+      setMessage("Duelo iniciado. Registra el marcador.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo iniciar el duelo");
     } finally {
       setBusy(false);
     }
@@ -342,6 +386,12 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             Boolean(duelo.pareja_a_j2_nombre?.trim()) &&
             Boolean(duelo.pareja_b_j1_nombre?.trim()) &&
             Boolean(duelo.pareja_b_j2_nombre?.trim());
+          const draftPairsReady = bothPairsReady(pairA, pairB);
+          const canStartJuego =
+            !pairsOk &&
+            duelo.estado === "configuracion" &&
+            draftPairsReady &&
+            !busy;
           const detallesOk = Boolean(duelo.nombre?.trim());
           const canFinalizar = Boolean(duelo.ganador) && !busy;
 
@@ -388,7 +438,28 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
 
           const workbenchBody =
             step === "parejas" ? (
-              equiposPanel
+              pairsOk ? (
+                equiposPanel
+              ) : (
+                <DueloPairBuilder
+                  organizadorId={duelo.organizador_id}
+                  pairA={pairA}
+                  pairB={pairB}
+                  onPairAChange={setPairA}
+                  onPairBChange={setPairB}
+                  submitSlot={
+                    <Button
+                      type="button"
+                      variant="primary"
+                      disabled={!canStartJuego}
+                      loading={busy}
+                      onClick={() => void handleStartJuego()}
+                    >
+                      {busy ? "Iniciando…" : "Iniciar juego"}
+                    </Button>
+                  }
+                />
+              )
             ) : (
               <>
                 <Duelo2v2ScoreEditor
@@ -424,14 +495,32 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     hint: "Registra el marcador hasta que haya ganador",
                     onClick: () => undefined,
                   }
-                : {
-                    variant: "sidebar" as const,
-                    label: "Lanzar convocatoria",
-                    disabled: false,
-                    loading: false,
-                    hint: "Activa la convocatoria en Detalles",
-                    onClick: goConvocatoria,
-                  };
+                : canStartJuego
+                  ? {
+                      variant: "sidebar" as const,
+                      label: busy ? "Iniciando…" : "Iniciar juego",
+                      disabled: false,
+                      loading: busy,
+                      hint: "Confirma las 2 parejas e inicia el marcador",
+                      onClick: () => void handleStartJuego(),
+                    }
+                  : !pairsOk
+                    ? {
+                        variant: "sidebar" as const,
+                        label: "Iniciar juego",
+                        disabled: true,
+                        loading: false,
+                        hint: "Selecciona 4 jugadores (2 parejas)",
+                        onClick: () => undefined,
+                      }
+                    : {
+                        variant: "sidebar" as const,
+                        label: "Lanzar convocatoria",
+                        disabled: false,
+                        loading: false,
+                        hint: "Activa la convocatoria en Detalles",
+                        onClick: goConvocatoria,
+                      };
 
           return (
             <QuickModePrepWorkspace
@@ -474,7 +563,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 <section
                   id="duelo-detalles-inline"
                   className="qm-ws__details-inline"
-                  aria-label="Detalles del duelo"
+                  aria-label="Detalles de la reta"
                 >
                   <Duelo2v2DetailsEditor
                     inline

@@ -11,14 +11,18 @@
   box-sizing: border-box;
 }
 
-/* Prep workspace: misma caja que Round Robin (~1280) */
+/* Prep workspace: misma caja e inset que Round Robin / Duelo */
 .americano-screen:has(.qm-ws) {
-  max-width: min(1280px, 100%);
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
+    max(clamp(40px, 5vw, 56px), env(safe-area-inset-bottom));
 }
 
 @media (max-width: 899px) {
   .americano-screen:has(.qm-ws) {
-    padding: 12px var(--ro-mobile-page-padding)
+    padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
       calc(40px + var(--ro-safe-bottom));
   }
 
@@ -50,8 +54,14 @@
   align-items: flex-start;
   gap: 8px;
   justify-content: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: var(--qm-prep-toolbar-gap, 0.75rem);
 }
+
+.americano-screen:has(.qm-ws) .americano-screen__header {
+  margin-bottom: var(--qm-prep-toolbar-gap);
+}
+
+/* Línea unificada en .riviera-back-toolbar (design-system) — no duplicar aquí */
 
 .americano-tournament-banner.rv-mode-header {
   padding: 0;
@@ -96,14 +106,6 @@
   background: var(--accent-gold-dim);
   border: 0.5px solid var(--ro-border);
   border-radius: var(--radius-full);
-}
-
-.americano-screen__header::after {
-  content: "";
-  display: block;
-  width: 48px;
-  height: 2px;
-  background: var(--accent-gold);
 }
 
 .americano-primary-btn {

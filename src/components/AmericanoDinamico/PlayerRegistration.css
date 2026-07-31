@@ -181,6 +181,10 @@
   border-top: 1px solid var(--ro-border-subtle, rgba(0, 0, 0, 0.08));
 }
 
+.qm-ws__details-inline .americano-registration__rounds-bar {
+  border-top-color: var(--qm-ink-border);
+}
+
 .americano-registration__rounds-field {
   max-width: 8rem;
   margin: 0;

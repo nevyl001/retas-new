@@ -18,6 +18,7 @@ import {
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import {
+  QuickModeConvocatoriaGate,
   QuickModeEventHeader,
   QuickModePrepWorkspace,
   QuickModePrimaryCta,
@@ -25,6 +26,7 @@ import {
   type QuickModeStep,
   type QuickModeStepStatus,
 } from "../platform/quickMode";
+import { Duelo2v2ConfigFields } from "./Duelo2v2ConfigFields";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
 import { navigateDuelo2v2, duelo2v2GestionarPath } from "./duelo2v2Nav";
 import "./duelo2v2-page.css";
@@ -61,6 +63,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
 
   const [step] = useState<NuevoStepId>("listo");
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
+  const [wantConvocatoria, setWantConvocatoria] = useState(false);
   const [nombre, setNombre] = useState("");
   const [mostrarLugar, setMostrarLugar] = useState(true);
   const [lugar, setLugar] = useState(convocatoriaOrigin);
@@ -251,116 +254,58 @@ export const Duelo2v2Nuevo: React.FC = () => {
     <section
       id="duelo-nuevo-detalles-inline"
       className="qm-ws__details-inline"
-      aria-label="Detalles del duelo"
+      aria-label="Detalles de la reta"
     >
       <div className="reta-config-panel reta-config-panel--inline">
         <header className="reta-config-panel__toolbar">
           <div className="reta-config-panel__toolbar-copy">
-            <h2 className="reta-config-panel__title">Detalles del duelo</h2>
+            <h2 className="reta-config-panel__title">Detalles de la reta</h2>
             <p className="reta-config-panel__subtitle">
-              Nombre, cancha, categoría, lugar y horario.
+              Nombre, horario, sede y cancha.
             </p>
           </div>
         </header>
-        <div className="duelo2v2-form duelo2v2-form--workspace reta-details-form">
-          <div className="duelo2v2-form__name-row">
-            <label htmlFor="duelo-nombre">Nombre del encuentro</label>
-            <input
-              id="duelo-nombre"
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej. Encuentro Riviera Open — Sábado"
-              required
-            />
+        <Duelo2v2ConfigFields
+          idPrefix="duelo"
+          values={{
+            nombre,
+            cancha,
+            categoria,
+            mostrarLugar,
+            lugar,
+            draftDate,
+            draftTimeStart,
+            draftTimeEnd,
+          }}
+          onChange={(next) => {
+            setNombre(next.nombre);
+            setCancha(next.cancha);
+            setCategoria(next.categoria);
+            setMostrarLugar(next.mostrarLugar);
+            setLugar(next.lugar);
+            setDraftDate(next.draftDate);
+            setDraftTimeStart(next.draftTimeStart);
+            setDraftTimeEnd(next.draftTimeEnd);
+          }}
+          disabled={busy}
+        />
+      </div>
+      <div id="duelo-nuevo-convocatoria-inline">
+        <QuickModeConvocatoriaGate
+          open={wantConvocatoria}
+          live={false}
+          panelId="duelo-nuevo-convocatoria-panel"
+          onToggle={() => setWantConvocatoria((v) => !v)}
+          hintOn="Guarda el duelo para configurar cupo y WhatsApp"
+          hintOff="Opcional · Inscripciones con enlace público"
+        >
+          <div className="qm-ws__conv-prelaunch-note" role="note">
+            <p>
+              Primero guarda el duelo. Después podrás lanzar la convocatoria
+              con «Lanzar y copiar» para WhatsApp (cupo fijo de 4).
+            </p>
           </div>
-          <div className="duelo2v2-form__schedule-row">
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Cancha</span>
-              <input
-                type="text"
-                value={cancha}
-                onChange={(e) => setCancha(e.target.value)}
-                placeholder="Ej. 1"
-                required
-              />
-            </label>
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Categoría / nivel</span>
-              <input
-                type="text"
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                placeholder="Ej. 5ta Fuerza"
-                list="duelo-categoria-sugerencias"
-              />
-              <datalist id="duelo-categoria-sugerencias">
-                <option value="Open" />
-                <option value="1ra Fuerza" />
-                <option value="2da Fuerza" />
-                <option value="3ra Fuerza" />
-                <option value="4ta Fuerza" />
-                <option value="5ta Fuerza" />
-                <option value="6ta Fuerza" />
-              </datalist>
-            </label>
-          </div>
-          <div className="duelo2v2-form__lugar-block">
-            <label className="duelo2v2-form__toggle">
-              <input
-                type="checkbox"
-                checked={mostrarLugar}
-                onChange={(e) => setMostrarLugar(e.target.checked)}
-              />
-              <span>Incluir lugar en la convocatoria</span>
-            </label>
-            {mostrarLugar ? (
-              <label className="duelo2v2-form__field">
-                <span className="duelo2v2-form__field-label">Lugar</span>
-                <input
-                  type="text"
-                  value={lugar}
-                  onChange={(e) => setLugar(e.target.value)}
-                  placeholder="Ej. Hack Pádel, Padelito…"
-                  required
-                />
-              </label>
-            ) : (
-              <p className="duelo2v2-form__hint">
-                Ideal si tu club siempre juega en la misma sede.
-              </p>
-            )}
-          </div>
-          <div className="duelo2v2-form__schedule-row">
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Día</span>
-              <input
-                type="date"
-                value={draftDate}
-                onChange={(e) => setDraftDate(e.target.value)}
-                required
-              />
-            </label>
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Hora inicio</span>
-              <input
-                type="time"
-                value={draftTimeStart}
-                onChange={(e) => setDraftTimeStart(e.target.value)}
-                required
-              />
-            </label>
-            <label className="duelo2v2-form__field">
-              <span className="duelo2v2-form__field-label">Hora fin</span>
-              <input
-                type="time"
-                value={draftTimeEnd}
-                onChange={(e) => setDraftTimeEnd(e.target.value)}
-                required
-              />
-            </label>
-          </div>
-        </div>
+        </QuickModeConvocatoriaGate>
       </div>
     </section>
   );
@@ -410,7 +355,8 @@ export const Duelo2v2Nuevo: React.FC = () => {
           ·
         </span>
         <span className="qm-ws__ready-copy">
-          Después de guardar podrás lanzar la convocatoria por WhatsApp.
+          Al guardar abres Gestionar: ahí eliges las 2 parejas (4 jugadores) y
+          lanzas la convocatoria.
         </span>
       </li>
     </ul>
@@ -429,7 +375,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
       <section className="qm-ws-panel__block">
         <h3 className="qm-ws-panel__label">Siguiente</h3>
         <p className="qm-ws-panel__conv-line">
-          Al guardar abres Convocatoria con «Lanzar y copiar» para WhatsApp.
+          Al guardar eliges parejas y lanzas la convocatoria por WhatsApp.
         </p>
       </section>
       <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
@@ -446,7 +392,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
           variant="back"
           onClick={() => navigateDuelo2v2("/duelo-2v2")}
         >
-          ← Volver
+          ← Volver al inicio
         </Button>
       </ActionBar>
 

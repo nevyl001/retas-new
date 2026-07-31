@@ -59,11 +59,20 @@
 
 /* —— Toolbars y acciones —— */
 .riviera-back-toolbar.rv-action-bar,
-.duelo2v2-toolbar.rv-action-bar,
-.liga-toolbar.rv-action-bar,
-.te-inicio-toolbar.rv-action-bar,
-.mis-retas-page__toolbar.rv-action-bar,
-.americano-screen__header.rv-action-bar,
+.duelo2v2-toolbar.rv-action-bar.riviera-back-toolbar,
+.liga-toolbar.rv-action-bar.riviera-back-toolbar,
+.te-inicio-toolbar.rv-action-bar.riviera-back-toolbar,
+.mis-retas-page__toolbar.rv-action-bar.riviera-back-toolbar,
+.americano-screen__header.rv-action-bar.riviera-back-toolbar {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.duelo2v2-toolbar.rv-action-bar:not(.riviera-back-toolbar),
+.liga-toolbar.rv-action-bar:not(.riviera-back-toolbar),
+.te-inicio-toolbar.rv-action-bar:not(.riviera-back-toolbar),
+.mis-retas-page__toolbar.rv-action-bar:not(.riviera-back-toolbar),
+.americano-screen__header.rv-action-bar:not(.riviera-back-toolbar),
 .duelo2v2-actions.rv-action-bar,
 .liga-actions.rv-action-bar,
 .americano-round__actions.rv-action-bar,
@@ -225,8 +234,11 @@
   gap: clamp(var(--ro-space-4), 3vw, var(--ro-space-6));
 }
 
-.riviera-organizer-reta .reta-content__toolbar.rv-action-bar {
-  margin-bottom: clamp(var(--ro-space-2), 2vw, var(--ro-space-4));
+.riviera-organizer-reta .reta-content__toolbar.rv-action-bar,
+.riviera-organizer-reta .reta-content__toolbar.riviera-back-toolbar {
+  margin-bottom: var(--qm-prep-toolbar-gap, 0.75rem);
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 /* —— Mobile —— */

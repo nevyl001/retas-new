@@ -137,7 +137,7 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
     // Convocatoria aún no activa: panel CTA ausente; copy solo anticipa el
     // flujo post-guardar (copy actual del panel «Siguiente»).
     expect(container.textContent).toContain(
-      "Al guardar abres Convocatoria con «Lanzar y copiar» para WhatsApp."
+      "Al guardar eliges parejas y lanzas la convocatoria por WhatsApp."
     );
     expect(container.textContent).not.toMatch(/Lanzar por WhatsApp/);
   });
@@ -278,7 +278,7 @@ describe("Duelo2v2Nuevo — ciclo de vida limpio", () => {
 
     // cancha/lugar/horario ya tienen defaults; solo falta el nombre para canSubmit.
     await user.type(
-      screen.getByLabelText(/Nombre del encuentro/i),
+      screen.getByLabelText(/^Nombre$/i),
       "Idempotente"
     );
 
@@ -363,11 +363,11 @@ describe("Ausencia de CTA en modos excluidos (código fuente)", () => {
 
   it("Reta y Americano sí cablean convocatoria; Nuevo duelo no", () => {
     const reta = fs.readFileSync(
-      path.join(rootDir, "TournamentDetails.tsx"),
+      path.join(rootDir, "RoundRobinPrepWorkspace.tsx"),
       "utf8"
     );
     const americano = fs.readFileSync(
-      path.join(rootDir, "AmericanoDinamico/AmericanoDinamicoScreen.tsx"),
+      path.join(rootDir, "AmericanoDinamico/PlayerRegistration.tsx"),
       "utf8"
     );
     const nuevo = fs.readFileSync(
@@ -378,9 +378,10 @@ describe("Ausencia de CTA en modos excluidos (código fuente)", () => {
       path.join(rootDir, "duelo-2v2/Duelo2v2Gestionar.tsx"),
       "utf8"
     );
-    expect(reta).toMatch(/RetaAbiertaOrganizerPanel/);
-    expect(americano).toMatch(/ConvocatoriaWhatsAppPanel/);
+    expect(reta).toMatch(/RetaAbiertaOrganizerPanel|ConvocatoriaWhatsAppPanel/);
+    expect(americano).toMatch(/RetaAbiertaOrganizerPanel|ConvocatoriaWhatsAppPanel/);
     expect(nuevo).not.toMatch(/ConvocatoriaWhatsAppPanel/);
+    expect(nuevo).toMatch(/QuickModeConvocatoriaGate/);
     expect(gestionar).toMatch(/ConvocatoriaWhatsAppPanel/);
   });
 });

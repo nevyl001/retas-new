@@ -196,8 +196,17 @@ body,
     padding: 12px var(--ro-mobile-page-padding) calc(40px + var(--ro-safe-bottom));
   }
 
+  .americano-screen.rv-page:has(.qm-ws) {
+    padding: var(--qm-prep-pad-y) var(--qm-prep-pad-x)
+      calc(40px + var(--ro-safe-bottom));
+  }
+
   .duelo2v2-page__inner.rv-shell {
     padding-inline: clamp(14px, 3.8vw, 18px);
+  }
+
+  .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) .duelo2v2-page__inner.rv-shell {
+    padding-inline: 0;
   }
 
   .liga-page__inner.rv-shell {
