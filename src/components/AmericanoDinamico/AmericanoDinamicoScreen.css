@@ -26,19 +26,8 @@
       calc(40px + var(--ro-safe-bottom));
   }
 
-  .americano-registration--workspace .americano-registration__db-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .americano-registration--workspace .americano-registration__db-item,
   .americano-registration--workspace .americano-btn {
     min-height: 44px;
-  }
-
-  .americano-registration--workspace .americano-registration__start input {
-    width: 100%;
-    min-height: 44px;
-    font-size: 16px;
   }
 }
 

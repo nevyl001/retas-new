@@ -71,6 +71,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   const resolvedTournamentId = resolveAmericanoTournamentId(tournamentId);
   const effectiveUserId = userId || user?.id || null;
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
+  const [playersPoolLoading, setPlayersPoolLoading] = React.useState(false);
   const [playersLoadError, setPlayersLoadError] = React.useState<string | null>(
     null
   );
@@ -88,8 +89,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     rosterForUi,
     currentRound,
     totalRounds,
-    removePlayer,
-    toggleExistingPlayer,
+    syncRegistrationPlayers,
     startTournament,
     commitRoundScores,
     editScore,
@@ -150,30 +150,33 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     );
   }, []);
 
-  React.useEffect(() => {
-    if (!effectiveUserId) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        setPlayersLoadError(null);
-        const data = await getPlayers(
-          effectiveUserId,
-          resolvedTournamentId || undefined
-        );
-        if (!cancelled) setAvailablePlayers(data || []);
-      } catch {
-        if (!cancelled) {
-          setAvailablePlayers([]);
-          setPlayersLoadError(
-            "No se pudieron cargar los jugadores desde la base de datos."
-          );
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+  const refreshAvailablePlayers = React.useCallback(async () => {
+    if (!effectiveUserId) {
+      setAvailablePlayers([]);
+      setPlayersPoolLoading(false);
+      return;
+    }
+    setPlayersPoolLoading(true);
+    try {
+      setPlayersLoadError(null);
+      const data = await getPlayers(
+        effectiveUserId,
+        resolvedTournamentId || undefined
+      );
+      setAvailablePlayers(data || []);
+    } catch {
+      setAvailablePlayers([]);
+      setPlayersLoadError(
+        "No se pudieron cargar los jugadores desde la base de datos."
+      );
+    } finally {
+      setPlayersPoolLoading(false);
+    }
   }, [effectiveUserId, resolvedTournamentId]);
+
+  React.useEffect(() => {
+    void refreshAvailablePlayers();
+  }, [refreshAvailablePlayers]);
 
   /** Registro: guardar borrador en el mismo frame que la UI (F5 inmediato). */
   React.useLayoutEffect(() => {
@@ -364,14 +367,13 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return (
       <AmericanoModeShell onBack={goBackToRetas}>
         {syncWarning}
-        {playersLoadError && (
-          <p className="americano-screen__error">{playersLoadError}</p>
-        )}
         <PlayerRegistration
           players={players}
           availablePlayers={availablePlayers}
-          onRemovePlayer={removePlayer}
-          onToggleExistingPlayer={toggleExistingPlayer}
+          availablePlayersLoading={playersPoolLoading}
+          availablePlayersError={playersLoadError}
+          onRefreshAvailablePlayers={refreshAvailablePlayers}
+          onSyncPlayers={syncRegistrationPlayers}
           onStartTournament={handleStartTournament}
           tournament={tournament}
           onTournamentPatched={handleTournamentPatched}
@@ -381,6 +383,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             tournamentDescription ||
             "Selecciona jugadores del registro y define rondas y canchas."
           }
+          userId={effectiveUserId}
         />
       </AmericanoModeShell>
     );

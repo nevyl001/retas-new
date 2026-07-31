@@ -281,6 +281,24 @@ export function useAmericanoDinamico(
     });
   };
 
+  /** Sync roster from ModernPlayerManager multi-select (preserves stats). */
+  const syncRegistrationPlayers = (
+    next: ReadonlyArray<{ id: string; name: string }>
+  ) => {
+    if (phase !== "registration") return;
+    setPlayers((prev) => {
+      const prevById = new Map(prev.map((p) => [p.id, p]));
+      return next.map(
+        (p) =>
+          prevById.get(p.id) ?? {
+            id: p.id,
+            name: p.name,
+            stats: createEmptyStats(),
+          }
+      );
+    });
+  };
+
   const startTournament = (totalRounds: number, courts: number = 1) => {
     if (players.length < 4 || totalRounds < 1) return;
     const safeCourts = Math.max(1, Math.floor(courts) || 1);
@@ -497,6 +515,7 @@ export function useAmericanoDinamico(
     retryParticipacionSync,
     removePlayer,
     toggleExistingPlayer,
+    syncRegistrationPlayers,
     startTournament,
     commitRoundScores,
     submitScore,

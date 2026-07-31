@@ -945,8 +945,9 @@
   }
 }
 
+/* Activo: nunca --brand-accent (en tema claro es tinta #15191f = invisible en chrome) */
 .qm-stepper__btn.is-active .qm-stepper__state {
-  color: var(--brand-accent, var(--ro-accent));
+  color: var(--qm-ink-text);
 }
 
 .qm-stepper__btn.is-complete .qm-stepper__state {
@@ -964,6 +965,17 @@
   --color-text-primary: var(--qm-ink-text);
   --color-text-secondary: var(--qm-ink-muted);
   --color-text-tertiary: var(--qm-ink-muted);
+  /* Remap organizer bg/text tokens so light-theme cascade
+     no longer paints white selected cards / dark button labels on ink */
+  --bg-card: var(--qm-ink-elevated);
+  --bg-card-hover: var(--qm-ink-inset);
+  --bg-elevated: var(--qm-ink-elevated);
+  --bg-inset: var(--qm-ink-inset);
+  --text-primary: var(--qm-ink-text);
+  --text-secondary: var(--qm-ink-muted);
+  --text-muted: var(--qm-ink-muted);
+  --border-subtle: var(--qm-ink-border);
+  --border-accent: var(--qm-ink-border-strong);
   background: var(--qm-ink-bg);
   border: 1px solid var(--qm-ink-border);
   border-radius: var(--qm-module-radius);
@@ -1007,42 +1019,160 @@
   border-bottom: 1px solid var(--qm-ink-border);
 }
 
+/* “Actualizar · Ir al registro…” — buttons inherit --text-primary from :root (oscuro) */
+.qm-ws__workbench .elegant-player-header__title,
+.qm-ws__workbench .elegant-text-action,
+.qm-ws__workbench .elegant-text-action-sep,
+.qm-ws__workbench .elegant-form-hint {
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws__workbench .elegant-player-header__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--qm-ink-text);
+}
+
+.qm-ws__workbench .elegant-text-action {
+  padding: 0;
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--qm-ink-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.qm-ws__workbench .elegant-text-action:hover:not(:disabled),
+.qm-ws__workbench .elegant-text-action:focus-visible {
+  color: var(--qm-ink-text);
+}
+
+.qm-ws__workbench .elegant-text-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qm-ws__workbench .elegant-text-action-sep {
+  margin: 0 0.35rem;
+  font-size: 0.8125rem;
+}
+
 .qm-ws__workbench .elegant-player-card,
-.qm-ws__workbench .elegant-pair-card,
-.qm-ws__workbench .americano-registration__db-item {
-  background: var(--qm-ink-inset) !important;
+.qm-ws__workbench .elegant-pair-card {
+  background: var(--qm-ink-elevated) !important;
   border-color: var(--qm-ink-border) !important;
   color: var(--qm-ink-text) !important;
   box-shadow: none !important;
 }
 
-/* Gana a .riviera-organizer-reta .elegant-player-card (bg-card blanco) */
+/* Cards del prep: fila legible, no pastillas blancas amontonadas */
+.qm-ws__workbench .elegant-players-grid {
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 0.55rem;
+}
+
 .qm-ws__workbench .elegant-player-card.elegant-player-card,
 .riviera-organizer-reta .qm-ws__workbench .elegant-player-card,
 .riviera-organizer-reta .qm-ws__workbench .elegant-pair-card {
-  background: var(--qm-ink-inset) !important;
+  --epc-pad-y: 0.55rem;
+  --epc-pad-x: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 3.25rem !important;
+  padding: var(--epc-pad-y) var(--epc-pad-x) !important;
+  border-radius: 10px !important;
+  background: var(--qm-ink-elevated) !important;
   border: 1px solid var(--qm-ink-border) !important;
   color: var(--qm-ink-text) !important;
+  text-align: left;
+}
+
+.qm-ws__workbench .elegant-player-card:hover:not(:disabled),
+.riviera-organizer-reta .qm-ws__workbench .elegant-player-card:hover:not(:disabled) {
+  background: var(--qm-ink-inset) !important;
+  border-color: var(--qm-ink-border-strong) !important;
+  transform: none;
 }
 
 .riviera-organizer-reta .qm-ws__workbench .elegant-player-card.in-pair {
-  background: color-mix(in srgb, var(--qm-ink-elevated) 70%, var(--qm-ink-border)) !important;
-  border: 1px dashed var(--qm-ink-border-strong) !important;
+  background: color-mix(
+    in srgb,
+    var(--ro-success, #2f7d53) 10%,
+    var(--qm-ink-elevated)
+  ) !important;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--ro-success, #2f7d53) 40%,
+    var(--qm-ink-border)
+  ) !important;
+  opacity: 1;
 }
 
-.riviera-organizer-reta .qm-ws__workbench .elegant-player-card.selected {
-  border: 2px solid var(--qm-ink-text) !important;
-  background: color-mix(in srgb, var(--qm-ink-inset) 82%, #fff) !important;
+.riviera-organizer-reta .qm-ws__workbench .elegant-player-card.in-pair:hover:not(:disabled) {
+  opacity: 1;
+  background: color-mix(
+    in srgb,
+    var(--ro-success, #2f7d53) 14%,
+    var(--qm-ink-elevated)
+  ) !important;
+}
+
+/* Selected: rail verde + fondo ink (palomita verde = seleccionado para pareja) */
+.riviera-organizer-reta .qm-ws__workbench .elegant-player-card.selected,
+.qm-ws__workbench .elegant-player-card.selected,
+.riviera-organizer-reta .qm-ws__workbench .elegant-player-card.in-pair.selected {
+  border: 1px solid color-mix(in srgb, var(--ro-success, #2f7d53) 55%, var(--qm-ink-border)) !important;
+  background: color-mix(
+    in srgb,
+    var(--ro-success, #2f7d53) 12%,
+    var(--qm-ink-inset)
+  ) !important;
+  box-shadow: inset 2px 0 0 var(--ro-success, #2f7d53) !important;
+  opacity: 1;
+}
+
+.riviera-organizer-reta .qm-ws__workbench .elegant-player-card.selected:hover,
+.qm-ws__workbench .elegant-player-card.selected:hover:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--ro-success, #2f7d53) 18%,
+    var(--qm-ink-inset)
+  ) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--ro-success, #2f7d53) 70%,
+    var(--qm-ink-border)
+  ) !important;
+}
+
+.riviera-organizer-reta .qm-ws__workbench .elegant-player-card.selected .elegant-player-name,
+.qm-ws__workbench .elegant-player-card.selected .elegant-player-name {
+  color: #f5f2eb !important;
 }
 
 .qm-ws__workbench .elegant-player-card__overlay,
 .riviera-organizer-reta .qm-ws__workbench .elegant-player-card--has-photo .elegant-player-card__overlay {
   background: linear-gradient(
     90deg,
-    var(--qm-ink-inset) 0%,
-    color-mix(in srgb, var(--qm-ink-inset) 88%, transparent) 42%,
-    color-mix(in srgb, var(--qm-ink-inset) 55%, transparent) 100%
+    var(--qm-ink-elevated) 0%,
+    color-mix(in srgb, var(--qm-ink-elevated) 82%, transparent) 48%,
+    color-mix(in srgb, var(--qm-ink-elevated) 35%, transparent) 100%
   );
+}
+
+.qm-ws__workbench .elegant-player-info {
+  gap: 0.28rem;
+}
+
+.qm-ws__workbench .elegant-player-meta {
+  gap: 0.3rem;
+  flex-wrap: nowrap;
+  width: 100%;
 }
 
 .qm-ws__workbench .elegant-player-name,
@@ -1053,6 +1183,52 @@
 .riviera-organizer-reta .qm-ws__workbench .elegant-pair-names h4,
 .riviera-organizer-reta .qm-ws__workbench .elegant-player-card.in-pair .elegant-player-name {
   color: #f5f2eb !important;
+  font-size: 0.8125rem !important;
+  font-weight: 650 !important;
+  line-height: 1.25 !important;
+}
+
+/* Badges: chips ink, no pastillas blancas */
+.qm-ws__workbench .elegant-player-cat.rj-cat-badge,
+.qm-ws__workbench .rj-cat-badge {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: rgba(245, 242, 235, 0.78) !important;
+  font-size: 0.5625rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.4rem !important;
+  border-radius: 999px !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qm-ws__workbench .elegant-player-riviera-id.rj-riviera-id,
+.qm-ws__workbench .rj-riviera-id {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: rgba(245, 242, 235, 0.55) !important;
+  font-size: 0.5625rem !important;
+  padding: 0.1rem 0.35rem !important;
+  border-radius: 6px !important;
+}
+
+.qm-ws__workbench .elegant-player-mark {
+  position: relative;
+  z-index: 3;
+  color: var(--ro-success, #2f7d53) !important;
+  width: 1.25rem;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.qm-ws__workbench .elegant-player-mark--assigned {
+  color: var(--ro-success, #2f7d53) !important;
+  opacity: 0.92;
 }
 
 .qm-ws__workbench .elegant-player-count,
@@ -1089,18 +1265,26 @@
   color: var(--qm-ink-muted);
 }
 
-.qm-ws__workbench .americano-registration__format-note,
+.qm-ws__workbench .americano-registration__format-note {
+  background: var(--qm-ink-inset);
+  border-color: var(--qm-ink-border);
+  color: var(--qm-ink-muted);
+  margin-bottom: 0.65rem;
+}
+
 .qm-ws__workbench .americano-registration__hint,
 .qm-ws__workbench .americano-registration__empty {
   color: var(--qm-ink-muted);
-}
-
-.qm-ws__workbench .americano-registration__selected-title {
-  color: var(--qm-ink-text);
+  margin-bottom: 0.75rem;
 }
 
 .qm-ws__workbench .qm-ws__summary-toggle {
-  color: var(--brand-accent, var(--ro-accent));
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws__workbench .qm-ws__summary-toggle:hover,
+.qm-ws__workbench .qm-ws__summary-toggle:focus-visible {
+  color: var(--qm-ink-text);
 }
 
 .qm-ws__equipos-stack {
@@ -1511,25 +1695,25 @@
     padding-bottom: 0.4rem;
   }
 
-  /* Grid jugadores más denso */
+  /* Grid jugadores: 2 cols en móvil, aire real */
   .qm-ws__workbench .elegant-players-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    gap: 0.5rem;
   }
 
   .qm-ws__workbench .elegant-player-card,
   .riviera-organizer-reta .qm-ws__workbench .elegant-player-card {
-    --epc-pad-y: 4px;
-    --epc-pad-x: 6px;
-    min-height: 32px !important;
-    padding: 4px 6px !important;
-    border-radius: 6px !important;
-    gap: 6px;
+    --epc-pad-y: 0.5rem;
+    --epc-pad-x: 0.55rem;
+    min-height: 3rem !important;
+    padding: 0.5rem 0.55rem !important;
+    border-radius: 10px !important;
+    gap: 0.4rem;
   }
 
   .qm-ws__workbench .elegant-player-name {
-    font-size: 0.72rem !important;
-    line-height: 1.2;
+    font-size: 0.78rem !important;
+    line-height: 1.25;
     color: #f5f2eb !important;
   }
 
@@ -1537,6 +1721,11 @@
   .qm-ws__workbench .elegant-player-category {
     font-size: 0.6rem !important;
     color: rgba(245, 242, 235, 0.72) !important;
+  }
+
+  .qm-ws__workbench .elegant-player-cat.rj-cat-badge,
+  .qm-ws__workbench .rj-cat-badge {
+    font-size: 0.55rem !important;
   }
 
   .qm-ws__workbench .elegant-player-header,

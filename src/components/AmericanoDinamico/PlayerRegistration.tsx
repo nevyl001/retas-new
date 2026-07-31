@@ -1,8 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  getRegistryEmptyMessage,
-  getRegistrySectionLabel,
-  useBranding,
   useClubModeEyebrow,
 } from "../../club-experience";
 import type { AmericanoPlayer } from "../../lib/db/types";
@@ -14,6 +11,7 @@ import {
 import type { ConvocatoriaLiveSnapshot } from "../reta-abierta/ConvocatoriaWhatsAppPanel";
 import { RetaAbiertaOrganizerPanel } from "../reta-abierta/RetaAbiertaOrganizerPanel";
 import { RetaConfigPanel } from "../reta/RetaConfigPanel";
+import { ModernPlayerManager } from "../ModernPlayerManager";
 import {
   QuickModeConvocatoriaGate,
   QuickModeEventHeader,
@@ -23,8 +21,7 @@ import {
   type QuickModeStep,
   type QuickModeStepStatus,
 } from "../platform/quickMode";
-import { Button, Input } from "../ui";
-import { TablerIcon } from "../ui/TablerIcon";
+import { Input } from "../ui";
 import "./PlayerRegistration.css";
 
 type PrepStepId = "jugadores" | "listo";
@@ -32,8 +29,10 @@ type PrepStepId = "jugadores" | "listo";
 interface PlayerRegistrationProps {
   players: AmericanoPlayer[];
   availablePlayers: Player[];
-  onRemovePlayer: (id: string) => void;
-  onToggleExistingPlayer: (player: Player) => void;
+  availablePlayersLoading?: boolean;
+  availablePlayersError?: string | null;
+  onRefreshAvailablePlayers?: () => Promise<void> | void;
+  onSyncPlayers: (next: ReadonlyArray<{ id: string; name: string }>) => void;
   onStartTournament: (totalRounds: number, courts: number) => void;
   /** Torneo persistido: mismos detalles (lugar, horario…) que Reta / RR. */
   tournament: Tournament | null;
@@ -41,6 +40,7 @@ interface PlayerRegistrationProps {
   eventTitle?: string;
   eventSubtitle?: string | null;
   eyebrow?: string | null;
+  userId?: string | null;
 }
 
 function stepStatus(
@@ -77,19 +77,20 @@ function scrollToConvocatoriaStrip() {
 export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   players,
   availablePlayers,
-  onRemovePlayer,
-  onToggleExistingPlayer,
+  availablePlayersLoading = false,
+  availablePlayersError = null,
+  onRefreshAvailablePlayers,
+  onSyncPlayers,
   onStartTournament,
   tournament,
   onTournamentPatched,
   eventTitle = "Americano",
   eventSubtitle = "Parejas rotativas y ranking por puntos. Prepara el registro e inicia.",
   eyebrow,
+  userId,
 }) => {
   const club = useClubModeEyebrow();
   const clubLabel = eyebrow?.trim() || club;
-  const { nombre: organizerName } = useBranding();
-  const registryTitle = getRegistrySectionLabel(organizerName);
 
   const [step, setStep] = useState<PrepStepId>("jugadores");
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
@@ -99,6 +100,26 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const [convLine, setConvLine] = useState("Sin abrir · —");
   const [totalRounds, setTotalRounds] = useState(3);
   const courts = Math.max(1, Math.floor(Number(tournament?.courts)) || 2);
+
+  const selectedPlayers = useMemo<Player[]>(() => {
+    const byId = new Map(availablePlayers.map((p) => [p.id, p]));
+    return players.map(
+      (p) =>
+        byId.get(p.id) ?? {
+          id: p.id,
+          name: p.name,
+          email: "",
+          created_at: "",
+        }
+    );
+  }, [players, availablePlayers]);
+
+  const handlePlayerSelect = useCallback(
+    (next: Player[]) => {
+      onSyncPlayers(next.map((p) => ({ id: p.id, name: p.name })));
+    },
+    [onSyncPlayers]
+  );
 
   const refreshConvSummary = useCallback(async () => {
     if (!tournament?.id) {
@@ -207,61 +228,18 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           El ranking solo muestra posiciones; no forma partidos.
         </p>
         <p className="americano-registration__hint">
-          {registryTitle}. Toca un jugador para seleccionarlo o deseleccionarlo.
+          Toca una tarjeta para sumar o quitar del roster. Mínimo 4 jugadores.
         </p>
-        {availablePlayers.length === 0 ? (
-          <p className="americano-registration__empty">
-            {getRegistryEmptyMessage(organizerName)}
-          </p>
-        ) : null}
-        <div className="americano-registration__db-grid">
-          {availablePlayers.map((player) => {
-            const selected = players.some((p) => p.id === player.id);
-            return (
-              <button
-                type="button"
-                key={player.id}
-                className={`americano-registration__db-item${
-                  selected ? " selected" : ""
-                }`}
-                onClick={() => onToggleExistingPlayer(player)}
-              >
-                {selected ? (
-                  <TablerIcon
-                    name="check"
-                    size={13}
-                    className="americano-registration__db-item-check"
-                  />
-                ) : null}
-                {player.name}
-              </button>
-            );
-          })}
-        </div>
-        <h4 className="americano-registration__selected-title">
-          Seleccionados ({players.length})
-        </h4>
-        <ul className="americano-registration__list">
-          {players.length === 0 ? (
-            <li className="americano-registration__empty">
-              Aún no has seleccionado jugadores.
-            </li>
-          ) : (
-            players.map((player) => (
-              <li key={player.id}>
-                <span>{player.name}</span>
-                <Button
-                  type="button"
-                  variant="danger"
-                  size="sm"
-                  onClick={() => onRemovePlayer(player.id)}
-                >
-                  Quitar
-                </Button>
-              </li>
-            ))
-          )}
-        </ul>
+        <ModernPlayerManager
+          players={availablePlayers}
+          loading={availablePlayersLoading}
+          error={availablePlayersError}
+          onRefreshPlayers={onRefreshAvailablePlayers}
+          selectedPlayers={selectedPlayers}
+          onPlayerSelect={handlePlayerSelect}
+          allowMultipleSelection={true}
+          userId={userId ?? undefined}
+        />
       </div>
     ) : (
       <ul className="qm-ws__ready-check">

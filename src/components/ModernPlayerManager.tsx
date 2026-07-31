@@ -282,6 +282,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                   : isSelected
                     ? "Seleccionado"
                     : "Disponible";
+                const showSelectedMark = isSelected || isInPair;
 
                 return (
                   <div key={player.id} role="listitem">
@@ -294,7 +295,7 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                       }`}
                       onClick={() => handlePlayerSelect(player)}
                       disabled={isCreatingPair}
-                      aria-pressed={isSelected}
+                      aria-pressed={isSelected || isInPair}
                       aria-label={`${player.name} — ${statusLabel}`}
                     >
                       {fotoUrl ? (
@@ -331,8 +332,15 @@ export const ModernPlayerManager: React.FC<ModernPlayerManagerProps> = ({
                           ) : null}
                         </span>
                       </span>
-                      {isSelected ? (
-                        <span className="elegant-player-mark" aria-hidden>
+                      {showSelectedMark ? (
+                        <span
+                          className={`elegant-player-mark${
+                            isInPair && !isSelected
+                              ? " elegant-player-mark--assigned"
+                              : ""
+                          }`}
+                          aria-hidden
+                        >
                           ✓
                         </span>
                       ) : null}

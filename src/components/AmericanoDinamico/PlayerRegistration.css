@@ -9,15 +9,6 @@
   max-width: none;
 }
 
-.americano-registration__selected-title {
-  margin: 1rem 0 0.5rem;
-  font-size: var(--ro-text-label);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ro-text-muted);
-}
-
 .americano-registration__conv {
   min-width: 0;
 }
@@ -40,86 +31,6 @@
   line-height: 1.5;
 }
 
-.americano-registration__controls {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 0;
-}
-
-.americano-registration__controls input {
-  flex: 1;
-  border-radius: 8px;
-  border: 0.5px solid var(--ro-border);
-  background: var(--ro-bg-input);
-  color: var(--ro-text-primary);
-  padding: 8px 10px;
-}
-
-.americano-registration__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 0;
-}
-
-.americano-registration__meta p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--ro-text-secondary);
-}
-
-.americano-registration .card h4 {
-  margin: 0 0 12px;
-  font-size: var(--ro-text-label);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ro-text-muted);
-}
-
-.americano-registration__list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 8px;
-  max-height: 220px;
-  overflow: auto;
-}
-
-.americano-registration__list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  border: 0.5px solid var(--ro-border-subtle);
-  border-radius: 10px;
-  padding: 10px 12px;
-}
-
-.americano-registration__empty {
-  color: var(--ro-text-secondary);
-  font-size: 0.875rem;
-  line-height: 1.45;
-}
-
-.americano-registration__start {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.americano-registration__start-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: center;
-}
-
-.americano-registration__db {
-  margin: 0;
-}
-
 .americano-registration__hint {
   margin: 0 0 12px;
   color: var(--ro-text-secondary);
@@ -127,42 +38,14 @@
   line-height: 1.45;
 }
 
-.americano-registration__db-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 8px;
+.americano-registration__db {
+  margin: 0;
 }
 
-.americano-registration__db-item {
-  text-align: left;
-  border: 0.5px solid var(--ro-border);
-  background: var(--ro-bg-input);
-  border-radius: 10px;
-  padding: 10px 12px;
-  color: var(--ro-text-primary);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-
-.americano-registration__db-item:hover {
-  border-color: var(--ro-border-accent);
-  background: var(--ro-bg-inset);
-}
-
-.americano-registration__db-item.selected {
-  border-color: var(--win);
-  background: color-mix(in srgb, var(--win) 12%, transparent);
-  color: var(--ro-text-primary);
-}
-
-.americano-registration__db-item-check {
-  color: var(--win);
-  margin-right: 0.3rem;
-  vertical-align: -1px;
+.americano-registration__empty {
+  color: var(--ro-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
 }
 
 .americano-registration__courts-hint {
@@ -193,51 +76,4 @@
 .qm-ws__details-inline .americano-registration__rounds-bar .riviera-input,
 .qm-ws__details-inline .americano-registration__rounds-bar input {
   min-height: 2.125rem;
-}
-
-.americano-registration__start-btn {
-  align-self: flex-end;
-  min-height: 48px;
-  padding: 12px 18px;
-}
-
-@media (max-width: 639px) {
-  .americano-registration__controls {
-    flex-direction: column;
-  }
-
-  .americano-registration__controls input {
-    min-height: 44px;
-    font-size: 16px;
-  }
-
-  .americano-registration__start-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .americano-registration__db-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .americano-registration__db-item {
-    min-height: 44px;
-  }
-
-  .americano-registration__list {
-    max-height: min(40vh, 280px);
-  }
-
-  .americano-registration__list li {
-    min-height: 44px;
-  }
-
-  .americano-registration__list .riviera-btn {
-    min-height: var(--ro-touch-target-min);
-  }
-
-  .americano-registration__start-btn {
-    align-self: stretch;
-    width: 100%;
-  }
 }
