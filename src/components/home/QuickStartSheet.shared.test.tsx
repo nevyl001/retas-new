@@ -88,7 +88,10 @@ describe("QuickStartSheet shared form", () => {
     ) as HTMLInputElement;
     expect(nameInput.value).toBe("Reta cargada");
     expect(container.textContent).toMatch(/3/);
-    expect(container.textContent).toMatch(/Día y hora/);
+    expect(container.textContent).toMatch(/Día/);
+    expect(container.textContent).toMatch(/Hora/);
+    expect(container.querySelector('input[type="date"]')).toBeTruthy();
+    expect(container.querySelector('input[type="time"]')).toBeTruthy();
     const errors = validateRetaConfigForm({
       ...values,
       mode: "edit",
