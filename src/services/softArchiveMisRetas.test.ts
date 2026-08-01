@@ -108,7 +108,8 @@ describe("soft-archive Mis retas — duelo 2v2", () => {
     expect(result.nombre).toBe("test2");
   });
 
-  it("no permite archivar duelo en_juego", async () => {
+  it("permite archivar duelo en_juego (no se jugó / se cancela)", async () => {
+    let updatePayloads: Record<string, unknown>[] = [];
     mockFrom.mockImplementation(() => ({
       select: () => ({
         eq: () => ({
@@ -118,15 +119,33 @@ describe("soft-archive Mis retas — duelo 2v2", () => {
           }),
         }),
       }),
-      update: () => {
-        throw new Error("no debería actualizar");
+      update: (payload: Record<string, unknown>) => {
+        updatePayloads.push(payload);
+        return {
+          eq: () => ({
+            select: () => ({
+              single: async () => ({
+                data: {
+                  ...FINALIZED,
+                  estado: "en_juego",
+                  ganador: null,
+                  archived_at: payload.archived_at,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
       },
       delete: () => {
         throw new Error("no debería borrar");
       },
     }));
 
-    await expect(archiveDuelo2v2("live-id")).rejects.toThrow(/en curso/i);
+    const result = await archiveDuelo2v2("live-id");
+    expect(updatePayloads).toHaveLength(1);
+    expect(typeof updatePayloads[0].archived_at).toBe("string");
+    expect(result.archived_at).toBeTruthy();
   });
 
   it("deleteDuelo2v2 delega a archive (sin DELETE físico)", async () => {

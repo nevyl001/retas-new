@@ -661,17 +661,14 @@ export async function finalizarDuelo2v2(id: string): Promise<FinalizarDuelo2v2Re
  * Soft-archive: oculta el duelo de Mis retas / listados admin.
  * Conserva fila padre, participaciones, puntos, rating y ledger.
  * No es DELETE físico.
+ * Permitido en cualquier estado (config / en juego / finalizado): el organizador
+ * puede ocultar un duelo que no se jugó o que quiere sacar de la lista.
  */
 export async function archiveDuelo2v2(id: string): Promise<Duelo2v2> {
   const uid = await requireUserId();
   const current = await getDuelo2v2ById(id);
   if (!current) throw new Error("Duelo no encontrado.");
   if (current.archived_at) return current;
-  if (current.estado === "en_juego") {
-    throw new Error(
-      "No puedes archivar un duelo en curso. Finalízalo primero."
-    );
-  }
 
   const now = new Date().toISOString();
   const { data, error } = await supabase
