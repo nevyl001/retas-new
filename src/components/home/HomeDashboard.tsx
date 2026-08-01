@@ -24,7 +24,6 @@ import {
   persistTournamentGameMode,
   persistTournamentMode,
 } from "../../lib/gameModeMapping";
-import { initChampionshipConfig } from "../../lib/roundRobinChampionship";
 import {
   filterHomeRetasByGameMode,
   loadUserRetasForHome,
@@ -34,13 +33,17 @@ import {
 import { GameModesGrid } from "./GameModesGrid";
 import { HomeContinueStrip } from "./HomeContinueStrip";
 import { HomeModeDetail } from "./HomeModeDetail";
-import { QuickStartSheet, QuickStartPayload } from "./QuickStartSheet";
 import { AppSiteFooter } from "../legal/AppSiteFooter";
 import {
   getAccountModeDisabledMessage,
   getOrganizerRegistryCardSubtitle,
   useBranding,
+  useConvocatoriaOriginName,
 } from "../../club-experience";
+import { CANCHA_DEFAULT_VALUE } from "../../lib/torneoExpress/canchaDisplay";
+import { partidoDateInputValue } from "../../lib/torneoExpress/partidoSchedule";
+import { saveNewDuelo2v2 } from "../../lib/duelo2v2/saveNewDuelo";
+import { createDuelo2v2OpenDraft } from "../../services/duelo2v2Service";
 import "./home.css";
 
 interface HomeDashboardProps {
@@ -55,9 +58,9 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   onShowAllRetas,
 }) => {
   const { nombre: organizerName } = useBranding();
+  const convocatoriaOrigin = useConvocatoriaOriginName();
   const { isModeEnabled } = useAccountFeatures();
   const [detailModeId, setDetailModeId] = useState<GameModeId | null>(null);
-  const [sheetMode, setSheetMode] = useState<GameModeId | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retas, setRetas] = useState<HomeRetaItem[]>([]);
@@ -93,71 +96,31 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     [onTournamentSelect]
   );
 
-  const handleModeSelect = useCallback(
-    (modeId: GameModeId) => {
-      setError(null);
-      if (!isModeEnabled(modeId)) {
-        setError(
-          getAccountModeDisabledMessage(GAME_MODE_LABELS[modeId], organizerName)
-        );
-        return;
-      }
-      persistLastGameMode(modeId);
-      if (modeId === "mini-torneo") {
-        navigateTorneoExpress("/torneo-express");
-        return;
-      }
-      if (modeId === "liga") {
-        navigateLiga("/liga");
-        return;
-      }
-      if (modeId === "duelo-2v2") {
-        navigateDuelo2v2("/duelo-2v2/nuevo");
-        return;
-      }
-      // Reta clásica (equipos/round-robin/americano): si ya tiene activas de
-      // ESE modo, primero se le ofrece continuar; si no, va directo a crear.
-      const modeRetas = filterHomeRetasByGameMode(retas, modeId);
-      if (modeRetas.length > 0) {
-        setDetailModeId(modeId);
-        return;
-      }
-      setSheetMode(modeId);
-    },
-    [isModeEnabled, organizerName, retas]
-  );
-
-  const handleQuickStart = useCallback(
-    async (payload: QuickStartPayload) => {
+  const startTournamentMode = useCallback(
+    async (modeId: GameModeId) => {
       if (!userId) {
         setError("Debes iniciar sesión");
         return;
       }
+      const mode = GAME_MODES.find((m) => m.id === modeId);
       setSubmitting(true);
       setError(null);
       try {
-        const dbFormat = gameModeIdToTournamentFormat(payload.modeId);
+        const dbFormat = gameModeIdToTournamentFormat(modeId);
         const tournament = await createTournament(
-          payload.name,
+          `Reta ${mode?.title ?? "nueva"}`,
           userId,
-          payload.description,
-          payload.courts,
+          undefined,
+          2,
           dbFormat
         );
-        persistLastGameMode(payload.modeId);
-        persistTournamentGameMode(tournament.id, payload.modeId);
+        persistLastGameMode(modeId);
+        persistTournamentGameMode(tournament.id, modeId);
         if (dbFormat) {
           persistTournamentMode(tournament.id, dbFormat);
         }
-        if (payload.modeId === "round-robin" && payload.championshipEnabled) {
-          initChampionshipConfig(tournament.id, {
-            enabled: true,
-            rounds: payload.championshipRounds ?? 2,
-          });
-        }
-        setSheetMode(null);
 
-        if (payload.modeId === "americano") {
+        if (modeId === "americano") {
           markTournamentAsAmericano(tournament.id);
           persistAmericanoActiveTournamentId(tournament.id);
           navigateToAmericanoDinamico(tournament.id, userId);
@@ -178,6 +141,80 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     [userId, onTournamentSelect]
   );
 
+  const startDueloMode = useCallback(async () => {
+    if (!userId) {
+      setError("Debes iniciar sesión");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const date = partidoDateInputValue(new Date().toISOString());
+      await saveNewDuelo2v2(
+        {
+          organizadorId: userId,
+          nombre: `Duelo ${date}`,
+          cancha: CANCHA_DEFAULT_VALUE,
+          lugar: convocatoriaOrigin || organizerName,
+          mostrarLugar: true,
+          draftDate: date,
+          draftTimeStart: "15:00",
+          draftTimeEnd: "17:00",
+        },
+        {
+          createDuelo2v2OpenDraft,
+          navigate: navigateDuelo2v2,
+          gestionarPath: duelo2v2GestionarPath,
+        }
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo crear el duelo");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [userId, convocatoriaOrigin, organizerName]);
+
+  const handleModeSelect = useCallback(
+    (modeId: GameModeId) => {
+      if (submitting) return;
+      setError(null);
+      if (!isModeEnabled(modeId)) {
+        setError(
+          getAccountModeDisabledMessage(GAME_MODE_LABELS[modeId], organizerName)
+        );
+        return;
+      }
+      persistLastGameMode(modeId);
+      if (modeId === "mini-torneo") {
+        navigateTorneoExpress("/torneo-express");
+        return;
+      }
+      if (modeId === "liga") {
+        navigateLiga("/liga");
+        return;
+      }
+      if (modeId === "duelo-2v2") {
+        void startDueloMode();
+        return;
+      }
+      // Si ya hay activas de ese modo, ofrecer continuar; si no, crear y abrir prep.
+      const modeRetas = filterHomeRetasByGameMode(retas, modeId);
+      if (modeRetas.length > 0) {
+        setDetailModeId(modeId);
+        return;
+      }
+      void startTournamentMode(modeId);
+    },
+    [
+      submitting,
+      isModeEnabled,
+      organizerName,
+      retas,
+      startDueloMode,
+      startTournamentMode,
+    ]
+  );
+
   const detailMode = detailModeId
     ? GAME_MODES.find((m) => m.id === detailModeId) ?? null
     : null;
@@ -187,6 +224,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
       <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
 
       {error && <p className="home-error">{error}</p>}
+      {submitting && !error ? (
+        <p className="home-muted" role="status">
+          Abriendo modo…
+        </p>
+      ) : null}
 
       {detailMode ? (
         <HomeModeDetail
@@ -195,7 +237,11 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
           onContinue={handleContinueItem}
           onCreateNew={() => {
             setDetailModeId(null);
-            setSheetMode(detailMode.id);
+            if (detailMode.id === "duelo-2v2") {
+              void startDueloMode();
+              return;
+            }
+            void startTournamentMode(detailMode.id);
           }}
           onBack={() => setDetailModeId(null)}
         />
@@ -207,7 +253,10 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
             }`}
           >
             <div className="home-shell__main">
-              <GameModesGrid onModeSelect={handleModeSelect} isModeEnabled={isModeEnabled} />
+              <GameModesGrid
+                onModeSelect={handleModeSelect}
+                isModeEnabled={isModeEnabled}
+              />
             </div>
             <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
           </div>
@@ -268,12 +317,6 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
         </>
       )}
 
-      <QuickStartSheet
-        modeId={sheetMode}
-        onClose={() => !submitting && setSheetMode(null)}
-        onSubmit={handleQuickStart}
-        submitting={submitting}
-      />
       <AppSiteFooter />
     </div>
   );
