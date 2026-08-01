@@ -172,29 +172,51 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
 
   const descriptionField = essentials ? (
     <label className="home-sheet__field reta-details-form__field reta-details-form__field--desc">
-      <span className="home-sheet__field-label">Descripción</span>
+      <span className="home-sheet__field-label">Categoría</span>
       <input
         type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Ej. Mixta, verano, amigos…"
+        placeholder="Ej. 5ta Fuerza"
         value={values.description}
         disabled={descEd.locked}
         onChange={(e) => patch({ description: e.target.value })}
+        list="reta-categoria-sugerencias"
       />
+      <datalist id="reta-categoria-sugerencias">
+        <option value="Open" />
+        <option value="1ra Fuerza" />
+        <option value="2da Fuerza" />
+        <option value="3ra Fuerza" />
+        <option value="4ta Fuerza" />
+        <option value="5ta Fuerza" />
+        <option value="6ta Fuerza" />
+        <option value="Mixta" />
+      </datalist>
       {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
     </label>
   ) : (
     <label className="home-sheet__field home-sheet__field--desc">
-      <span className="home-sheet__field-label">Descripción</span>
+      <span className="home-sheet__field-label">Categoría</span>
       <span className="home-sheet__field-optional">Opcional</span>
-      <textarea
+      <input
+        type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Ej: Reta de verano, grupo de amigos…"
-        rows={3}
+        placeholder="Ej. 5ta Fuerza"
         value={values.description}
         disabled={descEd.locked}
         onChange={(e) => patch({ description: e.target.value })}
+        list="reta-categoria-sugerencias-full"
       />
+      <datalist id="reta-categoria-sugerencias-full">
+        <option value="Open" />
+        <option value="1ra Fuerza" />
+        <option value="2da Fuerza" />
+        <option value="3ra Fuerza" />
+        <option value="4ta Fuerza" />
+        <option value="5ta Fuerza" />
+        <option value="6ta Fuerza" />
+        <option value="Mixta" />
+      </datalist>
       {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
     </label>
   );
