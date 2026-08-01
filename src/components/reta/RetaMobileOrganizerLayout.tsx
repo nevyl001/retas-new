@@ -200,7 +200,16 @@ export const RetaMobileOrganizerLayout: React.FC<RetaMobileOrganizerLayoutProps>
         : null;
 
   return (
-    <div className="mode-mobile-shell mode-mobile-shell--tabbed reta-mobile-shell">
+    <div
+      className={[
+        "mode-mobile-shell",
+        "mode-mobile-shell--tabbed",
+        "reta-mobile-shell",
+        stickyLabel ? "has-mobile-sticky-action" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <ModeEventHeader
         eyebrow={modeEyebrow}
         title={selectedTournament.name}

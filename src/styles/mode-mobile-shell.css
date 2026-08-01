@@ -306,8 +306,9 @@
 
 :root {
   --mobile-sticky-action-height: 64px;
+  /* Más aire: el CTA sticky no debe tapar la última card */
   --mobile-sticky-action-offset: calc(
-    var(--mobile-sticky-action-height) + var(--ro-safe-bottom) + 8px
+    var(--mobile-sticky-action-height) + var(--ro-safe-bottom) + 28px
   );
 }
 
@@ -361,12 +362,29 @@
     min-height: var(--ro-touch-target-min);
   }
 
+  /*
+   * has-mobile-sticky-action suele ir en el MISMO elemento que el shell
+   * (.reta-content, .liga-page, .mode-mobile-shell…), no en un ancestro.
+   * El combinador descendiente nunca coincidía → el CTA tapaba el contenido.
+   */
+  .has-mobile-sticky-action.main-layout,
+  .has-mobile-sticky-action.liga-page,
+  .has-mobile-sticky-action.torneo-express-page:not(.te-public),
+  .has-mobile-sticky-action.duelo2v2-page:not(.duelo2v2-page--public),
+  .has-mobile-sticky-action.americano-screen.rv-page,
+  .has-mobile-sticky-action.reta-content,
+  .has-mobile-sticky-action.reta-content.rv-page,
+  .has-mobile-sticky-action.rv-page,
+  .has-mobile-sticky-action.mode-mobile-shell,
+  .has-mobile-sticky-action.reta-mobile-shell,
+  /* Legacy: por si algún modo lo pone en un padre */
   .has-mobile-sticky-action .main-layout,
   .has-mobile-sticky-action .liga-page,
   .has-mobile-sticky-action .torneo-express-page:not(.te-public),
   .has-mobile-sticky-action .duelo2v2-page:not(.duelo2v2-page--public),
   .has-mobile-sticky-action .americano-screen.rv-page,
-  .has-mobile-sticky-action .reta-content.rv-page {
+  .has-mobile-sticky-action .reta-content.rv-page,
+  .has-mobile-sticky-action .mode-mobile-shell {
     padding-bottom: var(--mobile-sticky-action-offset);
   }
 

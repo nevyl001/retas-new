@@ -191,7 +191,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             />
           )
         ) : (
-          <GameModeShell className="reta-content riviera-organizer-reta has-mobile-sticky-action">
+          <GameModeShell className="reta-content riviera-organizer-reta">
             {error ? (
               <div className="riviera-inline-error" role="alert">
                 {error}
