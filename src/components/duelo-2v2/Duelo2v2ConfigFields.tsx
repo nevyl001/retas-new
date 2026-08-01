@@ -196,48 +196,51 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
 
         <div className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
           <span className="home-sheet__field-label">Duración (min)</span>
-          <div className="home-sheet__stepper reta-details-form__stepper">
-            <button
-              type="button"
-              className="home-sheet__stepper-btn"
-              disabled={
-                disabled || values.durationMinutes <= RETA_DURATION_MIN
-              }
-              onClick={() =>
-                applySchedule({
-                  durationMinutes: clampRetaDurationMinutes(
-                    values.durationMinutes - 15
-                  ),
-                })
-              }
-              aria-label="Menos duración"
-            >
-              −
-            </button>
-            <span className="home-sheet__stepper-value" aria-live="polite">
-              {values.durationMinutes}
-            </span>
-            <button
-              type="button"
-              className="home-sheet__stepper-btn"
-              disabled={
-                disabled || values.durationMinutes >= RETA_DURATION_MAX
-              }
-              onClick={() =>
-                applySchedule({
-                  durationMinutes: clampRetaDurationMinutes(
-                    values.durationMinutes + 15
-                  ),
-                })
-              }
-              aria-label="Más duración"
-            >
-              +
-            </button>
+          <div className="reta-details-form__duration-stack">
+            <div className="home-sheet__stepper reta-details-form__stepper">
+              <button
+                type="button"
+                className="home-sheet__stepper-btn"
+                disabled={
+                  disabled || values.durationMinutes <= RETA_DURATION_MIN
+                }
+                onClick={() =>
+                  applySchedule({
+                    durationMinutes: clampRetaDurationMinutes(
+                      values.durationMinutes - 15
+                    ),
+                  })
+                }
+                aria-label="Menos duración"
+              >
+                −
+              </button>
+              <span className="home-sheet__stepper-value" aria-live="polite">
+                {values.durationMinutes}
+              </span>
+              <button
+                type="button"
+                className="home-sheet__stepper-btn"
+                disabled={
+                  disabled || values.durationMinutes >= RETA_DURATION_MAX
+                }
+                onClick={() =>
+                  applySchedule({
+                    durationMinutes: clampRetaDurationMinutes(
+                      values.durationMinutes + 15
+                    ),
+                  })
+                }
+                aria-label="Más duración"
+              >
+                +
+              </button>
+            </div>
+            <p className="reta-details-form__end-time" role="status">
+              <span className="reta-details-form__end-time-label">Fin</span>
+              <span className="reta-details-form__end-time-value">{endLabel}</span>
+            </p>
           </div>
-          <p className="home-sheet__field-optional" role="note">
-            Fin automático: {endLabel}
-          </p>
         </div>
 
         <div className="home-sheet__field reta-details-form__field reta-details-form__field--lugar">
