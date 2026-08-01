@@ -447,17 +447,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   pairB={pairB}
                   onPairAChange={setPairA}
                   onPairBChange={setPairB}
-                  submitSlot={
-                    <Button
-                      type="button"
-                      variant="primary"
-                      disabled={!canStartJuego}
-                      loading={busy}
-                      onClick={() => void handleStartJuego()}
-                    >
-                      {busy ? "Iniciando…" : "Iniciar juego"}
-                    </Button>
-                  }
                 />
               )
             ) : (

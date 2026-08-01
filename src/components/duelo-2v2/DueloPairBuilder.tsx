@@ -24,8 +24,6 @@ interface DueloPairBuilderProps {
   pairB: DueloPair | null;
   onPairAChange: (pair: DueloPair | null) => void;
   onPairBChange: (pair: DueloPair | null) => void;
-  /** Acciones (p. ej. Iniciar juego) justo debajo de las parejas cuando están listas. */
-  submitSlot?: React.ReactNode;
 }
 
 const PAGE_SIZE = 24;
@@ -102,7 +100,6 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   pairB,
   onPairAChange,
   onPairBChange,
-  submitSlot,
 }) => {
   const organizerName = useOrganizerDisplayName(organizadorId);
   const [jugadores, setJugadores] = useState<RivieraJugador[]>([]);
@@ -218,11 +215,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
         <PairCard label="Pareja 2" pair={pairB} onClear={handleClearPairB} />
       </div>
 
-      {pairsComplete ? (
-        submitSlot ? (
-          <div className="duelo2v2-pairs-submit">{submitSlot}</div>
-        ) : null
-      ) : (
+      {pairsComplete ? null : (
         <div className="duelo2v2-roster">
           <div className="duelo2v2-roster__head">
             <div>
