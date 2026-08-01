@@ -106,8 +106,12 @@
 
 .ro-public-view .peds-hero__categoria,
 .te-public .peds-hero__categoria,
+.ro-public-view .peds-hero__nivel,
+.te-public .peds-hero__nivel,
 .ro-public-view .peds-hero__fecha,
-.te-public .peds-hero__fecha {
+.te-public .peds-hero__fecha,
+.ro-public-view .peds-hero__lugar,
+.te-public .peds-hero__lugar {
   color: var(--ro-chrome-text);
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.18);
@@ -115,20 +119,36 @@
 
 .ro-public-view .peds-hero__meta,
 .te-public .peds-hero__meta {
-  color: var(--ro-gold-light);
+  color: var(--ro-chrome-text-muted);
 }
 
-/* Horario de inicio (StatusBadge "upcoming"/pending del hero, p. ej.
-   "INICIA A LAS 3:00 P.M."). Por defecto el pill pending es gris muted y sobre el
-   court oscuro se perdía. En la vista pública debe RESALTAR: pill de oro relleno
-   con tinta oscura, el acento de exhibición Riviera. Live (verde) y done (oro
-   suave) ya destacan por sí solos, así que solo reforzamos el estado próximo. */
+/* Estados del hero: neutro / verde / muted — sin dorado decorativo. */
 .ro-public-view .peds-hero__estado .rv-pill--pending,
 .te-public .peds-hero__estado .rv-pill--pending {
-  color: var(--ro-chrome-bg);
-  background: var(--ro-gold-light);
-  border-color: var(--ro-gold-light);
-  box-shadow: 0 2px 14px rgba(223, 190, 127, 0.28);
+  color: var(--ro-chrome-text);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+}
+
+.ro-public-view .peds-hero__estado .rv-pill--gold,
+.te-public .peds-hero__estado .rv-pill--gold,
+.ro-public-view .peds-hero__estado .rv-pill--muted,
+.te-public .peds-hero__estado .rv-pill--muted {
+  color: var(--ro-chrome-text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+}
+
+.ro-public-view .peds-hero__divider,
+.te-public .peds-hero__divider {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.14) 55%,
+    transparent 100%
+  );
 }
 
 /* —— Badge cancha unificado (rojo) —— */

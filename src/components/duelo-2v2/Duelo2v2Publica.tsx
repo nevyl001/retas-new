@@ -37,7 +37,7 @@ function dueloStatusBadgeVariant(
   tone: NonNullable<ReturnType<typeof getDueloPublicStatus>>["tone"]
 ): StatusBadgeVariant {
   if (tone === "live") return "live";
-  if (tone === "done") return "gold";
+  if (tone === "done") return "muted";
   if (tone === "upcoming") return "pending";
   return "muted";
 }
@@ -66,7 +66,7 @@ const Duelo2v2PublicHero: React.FC<Duelo2v2PublicHeroProps> = ({
       ? `${fechaLabel} · ${horario}`
       : fechaLabel || horario || undefined;
   const { lugar } = resolveDueloLugarForShare(duelo, organizerName || "");
-  const meta = ["Duelo 2 vs 2", lugar].filter(Boolean).join(" · ");
+  const nivelLabel = duelo.descripcion?.trim() || undefined;
 
   return (
     <PublicHero
@@ -82,9 +82,10 @@ const Duelo2v2PublicHero: React.FC<Duelo2v2PublicHeroProps> = ({
       }
       nombreEvento={duelo.nombre}
       club={isClubBranded ? organizerName : undefined}
-      categoria={duelo.descripcion || undefined}
+      nivel={nivelLabel}
       fecha={fechaHorario}
-      meta={meta}
+      lugar={lugar || undefined}
+      meta="Duelo 2 vs 2"
     />
   );
 };

@@ -57,13 +57,15 @@
 }
 
 .peds-hero__categoria,
-.peds-hero__fecha {
+.peds-hero__nivel,
+.peds-hero__fecha,
+.peds-hero__lugar {
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.75rem;
   border-radius: var(--pub-radius-full, 9999px);
-  border: 1px solid color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 28%, var(--border-subtle, var(--ro-border)));
-  background: var(--bg-elevated, var(--ro-bg-inset));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
   font-family: var(--pub-font-body, var(--font-body, inherit));
   font-size: var(--pub-font-size-badge, 0.6875rem);
   font-weight: var(--pub-font-weight-semibold, 600);
@@ -81,19 +83,19 @@
   letter-spacing: var(--pub-letter-spacing-section, 0.18em);
   text-transform: uppercase;
   line-height: var(--pub-line-height-snug, 1.25);
-  color: var(--brand-accent, var(--accent-gold));
+  color: var(--text-secondary);
 }
 
 .peds-hero__divider {
   width: 100%;
   max-width: min(280px, 72vw);
-  height: 3px;
+  height: 2px;
   margin-block: var(--pub-space-4, 1rem) var(--pub-space-2, 0.5rem);
   border-radius: var(--pub-radius-full, 9999px);
   background: linear-gradient(
     90deg,
-    var(--brand-accent, var(--accent-gold)) 0%,
-    color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 45%, transparent) 55%,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.18) 55%,
     transparent 100%
   );
   transform-origin: left center;

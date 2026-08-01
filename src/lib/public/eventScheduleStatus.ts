@@ -3,7 +3,7 @@ import { formatPartidoFecha } from "../torneoExpress/partidoSchedule";
 
 export type EventSchedulePhase = "upcoming" | "in_window" | "after" | "unknown";
 
-export type PublicEventStatusTone = "pending" | "live" | "gold";
+export type PublicEventStatusTone = "pending" | "live" | "muted";
 
 export type PublicEventScheduleStatus = {
   label: "Por comenzar" | "En vivo" | "Finalizada";
@@ -45,7 +45,7 @@ export function getPublicEventScheduleStatus(
   now: Date = new Date()
 ): PublicEventScheduleStatus {
   if (schedule.is_finished) {
-    return { label: "Finalizada", tone: "gold", phase: "after" };
+    return { label: "Finalizada", tone: "muted", phase: "after" };
   }
 
   const phase = resolveEventSchedulePhase(schedule, now);
@@ -53,7 +53,7 @@ export function getPublicEventScheduleStatus(
     return { label: "Por comenzar", tone: "pending", phase };
   }
   if (phase === "after") {
-    return { label: "Finalizada", tone: "gold", phase };
+    return { label: "Finalizada", tone: "muted", phase };
   }
   if (phase === "in_window") {
     return { label: "En vivo", tone: "live", phase };

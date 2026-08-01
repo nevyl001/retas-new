@@ -34,7 +34,7 @@ describe("eventScheduleStatus", () => {
       new Date("2026-08-01T18:00:00.000Z")
     );
     expect(status.label).toBe("Finalizada");
-    expect(status.tone).toBe("gold");
+    expect(status.tone).toBe("muted");
   });
 
   it("finished flag overrides clock", () => {
@@ -47,6 +47,7 @@ describe("eventScheduleStatus", () => {
       new Date("2026-08-01T14:00:00.000Z")
     );
     expect(status.label).toBe("Finalizada");
+    expect(status.tone).toBe("muted");
   });
 
   it("hides lugar when mostrar_lugar is false", () => {

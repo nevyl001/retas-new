@@ -49,12 +49,14 @@ const AmericanoPublicHeader: React.FC<{
   statusLabel: string;
   fechaHorario?: string | null;
   lugar?: string | null;
+  nivel?: string | null;
 }> = ({
   tournamentName,
   tournamentDescription,
   statusLabel,
   fechaHorario = null,
   lugar = null,
+  nivel = null,
 }) => {
   return (
     <header className="te-public-header te-public-header--americano te-pub-fade-in">
@@ -70,6 +72,9 @@ const AmericanoPublicHeader: React.FC<{
             <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
               {tournamentDescription}
             </span>
+          ) : null}
+          {nivel ? (
+            <span className="te-public-header__categoria-pill">{nivel}</span>
           ) : null}
           {fechaHorario ? (
             <span className="te-public-header__subtitle">{fechaHorario}</span>
@@ -381,9 +386,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     programadoEn,
     programadoHasta
   );
-  const heroMeta = ["Americano", nivelPublico, lugarPublico]
-    .filter(Boolean)
-    .join(" · ");
+  const heroMeta = "Americano";
 
   return (
     <PublicTorneoExpressShell
@@ -400,7 +403,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           nombreEvento={tournamentName || "Torneo Americano"}
           club={isClubBranded ? organizerName : undefined}
           categoria={tournamentDescription}
+          nivel={nivelPublico || undefined}
           fecha={fechaHorarioLine || undefined}
+          lugar={lugarPublico || undefined}
           meta={heroMeta}
         />
       ) : (
@@ -410,6 +415,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           statusLabel={eventScheduleStatus.label}
           fechaHorario={fechaHorarioLine}
           lugar={lugarPublico}
+          nivel={nivelPublico}
         />
       )}
 

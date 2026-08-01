@@ -27,9 +27,9 @@ import "./liga-public-pantalla.css";
 
 function estadoLigaBadgeVariant(
   estado: LigaDetalle["estado"]
-): "live" | "gold" | "pending" {
+): "live" | "muted" | "pending" {
   if (estado === "in_progress") return "live";
-  if (estado === "completed") return "gold";
+  if (estado === "completed") return "muted";
   return "pending";
 }
 

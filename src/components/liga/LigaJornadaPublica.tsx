@@ -37,9 +37,9 @@ function jornadaEstadoLabel(estado: LigaJornada["estado"]): string {
 
 function jornadaEstadoBadgeVariant(
   estado: LigaJornada["estado"]
-): "live" | "gold" | "pending" {
+): "live" | "muted" | "pending" {
   if (estado === "in_progress") return "live";
-  if (estado === "completed") return "gold";
+  if (estado === "completed") return "muted";
   return "pending";
 }
 

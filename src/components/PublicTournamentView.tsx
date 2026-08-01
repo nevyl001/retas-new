@@ -98,6 +98,7 @@ const RetaPublicHeader: React.FC<{
   statusLabel: string;
   fechaHorario?: string | null;
   lugar?: string | null;
+  nivel?: string | null;
 }> = ({
   formatKicker,
   publicTournamentName,
@@ -105,6 +106,7 @@ const RetaPublicHeader: React.FC<{
   statusLabel,
   fechaHorario = null,
   lugar = null,
+  nivel = null,
 }) => {
   return (
     <header className="te-public-header te-public-header--reta te-pub-fade-in">
@@ -122,6 +124,9 @@ const RetaPublicHeader: React.FC<{
             <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
               {publicTournamentDescription}
             </span>
+          ) : null}
+          {nivel ? (
+            <span className="te-public-header__categoria-pill">{nivel}</span>
           ) : null}
           {fechaHorario ? (
             <span className="te-public-header__subtitle">{fechaHorario}</span>
@@ -839,9 +844,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     programadoEn,
     programadoHasta
   );
-  const heroMeta = [formatKicker, nivelPublico, lugarPublico]
-    .filter(Boolean)
-    .join(" · ");
+  const heroMeta = formatKicker;
 
   return (
     <PublicTorneoExpressShell
@@ -858,7 +861,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           nombreEvento={publicTournamentName || "Resultados en tiempo real"}
           club={showClubBranding ? organizerName : undefined}
           categoria={publicTournamentDescription}
+          nivel={nivelPublico || undefined}
           fecha={fechaHorarioLine || undefined}
+          lugar={lugarPublico || undefined}
           meta={heroMeta}
         />
       ) : (
@@ -869,6 +874,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           statusLabel={eventScheduleStatus.label}
           fechaHorario={fechaHorarioLine}
           lugar={lugarPublico}
+          nivel={nivelPublico}
         />
       )}
 

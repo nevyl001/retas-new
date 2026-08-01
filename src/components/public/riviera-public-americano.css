@@ -405,13 +405,13 @@
   font-family: var(--font-body);
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--live-color);
+  color: var(--ro-success, var(--live-color, #4ade80));
   text-transform: lowercase;
   letter-spacing: 0.02em;
 }
 
 .te-public-round-head__live--pending {
-  color: var(--qm-ink-muted, rgba(255, 255, 255, 0.55));
+  color: var(--ro-chrome-text-muted, rgba(255, 255, 255, 0.55));
 }
 
 .te-pub-score--pending-label {

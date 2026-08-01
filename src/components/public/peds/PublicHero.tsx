@@ -6,8 +6,14 @@ export interface PublicHeroProps {
   estado?: React.ReactNode;
   nombreEvento: React.ReactNode;
   club?: React.ReactNode;
+  /** Categoría libre (ej. Reta Prueba). */
   categoria?: React.ReactNode;
+  /** Nivel / fuerza (ej. 5ta Fuerza). */
+  nivel?: React.ReactNode;
   fecha?: React.ReactNode;
+  /** Lugar / sede cuando se muestra al público. */
+  lugar?: React.ReactNode;
+  /** Formato del juego (Round Robin, Americano, Duelo…). Sin color de marca. */
   meta?: React.ReactNode;
   className?: string;
 }
@@ -19,11 +25,14 @@ export const PublicHero: React.FC<PublicHeroProps> = ({
   nombreEvento,
   club,
   categoria,
+  nivel,
   fecha,
+  lugar,
   meta,
   className = "",
 }) => {
-  const hasMetaRow = Boolean(categoria) || Boolean(fecha);
+  const hasMetaRow =
+    Boolean(categoria) || Boolean(nivel) || Boolean(fecha) || Boolean(lugar);
 
   return (
     <header className={`peds-hero te-pub-fade-in ${className}`.trim()}>
@@ -36,7 +45,9 @@ export const PublicHero: React.FC<PublicHeroProps> = ({
           {categoria ? (
             <span className="peds-hero__categoria">{categoria}</span>
           ) : null}
+          {nivel ? <span className="peds-hero__nivel">{nivel}</span> : null}
           {fecha ? <span className="peds-hero__fecha">{fecha}</span> : null}
+          {lugar ? <span className="peds-hero__lugar">{lugar}</span> : null}
         </div>
       ) : null}
       {meta ? <p className="peds-hero__meta">{meta}</p> : null}
