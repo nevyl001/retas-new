@@ -69,7 +69,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const courtsEd = ed("courts");
   const champEd = ed("championship");
   const lugarEd = ed("lugar");
-  const canchaEd = ed("cancha");
   const schedEd = ed("programado_en");
   const durEd = ed("duration_minutes");
 
@@ -247,21 +246,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       </div>
     ) : null;
 
-  const canchaField =
-    mode === "edit" ? (
-      <label className="home-sheet__field reta-details-form__field reta-details-form__field--cancha">
-        <span className="home-sheet__field-label">Cancha</span>
-        <input
-          type="text"
-          className="home-sheet__input riviera-input"
-          placeholder="Ej. 1-2"
-          value={values.cancha}
-          disabled={canchaEd.locked}
-          onChange={(e) => patch({ cancha: e.target.value })}
-        />
-      </label>
-    ) : null;
-
   const lugarField =
     mode === "edit" ? (
       essentials ? (
@@ -314,7 +298,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     mode === "edit" && !essentials ? (
       <>
         {durationField}
-        {canchaField}
         {lugarField}
       </>
     ) : null;
@@ -371,7 +354,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <div className="reta-details-form__row reta-details-form__row--meta">
           {descriptionField}
           {durationField}
-          {canchaField}
           {lugarField}
           {championshipField}
         </div>

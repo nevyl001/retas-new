@@ -440,7 +440,7 @@
   }
 
   .qm-ws__details-inline .reta-details-form__row--meta {
-    grid-template-columns: minmax(0, 1.2fr) auto auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.2fr) auto minmax(0, 1fr);
   }
 
   .qm-ws__details-inline .reta-details-form__field--champ {
@@ -460,7 +460,7 @@
   }
 
   .qm-ws__details-inline .reta-details-form__row--meta {
-    grid-template-columns: minmax(0, 1.3fr) auto auto minmax(0, 1fr) minmax(8rem, auto);
+    grid-template-columns: minmax(0, 1.3fr) auto minmax(0, 1fr) minmax(8rem, auto);
   }
 
   .qm-ws__details-inline .reta-details-form__field--champ {
