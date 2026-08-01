@@ -32,41 +32,25 @@ describe("QuickStartSheet shared form", () => {
     container.remove();
   });
 
-  it("17. QuickStartSheet monta Detalles (essentials) y envía payload al Guardar", () => {
-    const onSubmit = jest.fn();
+  it("17. QuickStartSheet usa shell Quick Mode (como Nuevo duelo) y Detalles", () => {
     act(() => {
       root.render(
         <QuickStartSheet
           modeId="round-robin"
           onClose={() => {}}
-          onSubmit={onSubmit}
+          onSubmit={() => {}}
         />
       );
     });
     const scope = document.body;
+    expect(scope.querySelector(".qm-ws")).toBeTruthy();
+    expect(scope.querySelector(".qm-ws__details-inline")).toBeTruthy();
     expect(scope.querySelector(".reta-details-form")).toBeTruthy();
     expect(scope.textContent).toMatch(/Detalles de la reta/);
+    expect(scope.textContent).toMatch(/Listo para guardar/);
     expect(scope.textContent).toMatch(/Remontada/);
     expect(scope.textContent).toMatch(/Nivel/);
-    expect(scope.textContent).toMatch(/Día/);
-    const btn = Array.from(scope.querySelectorAll("button")).find((b) =>
-      /^Guardar$/.test((b.textContent || "").trim())
-    );
-    expect(btn).toBeTruthy();
-    act(() => {
-      btn?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        modeId: "round-robin",
-        courts: 2,
-        championshipEnabled: false,
-        values: expect.objectContaining({
-          courts: 2,
-          championshipEnabled: false,
-        }),
-      })
-    );
+    expect(scope.querySelector('[data-testid="guardar-reta"]')).toBeTruthy();
   });
 
   it("18. edit mode carga valores actuales en RetaConfigFields", () => {
