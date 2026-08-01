@@ -8,12 +8,15 @@
  * la jornada equivocada.
  */
 
+import { supabase } from "../lib/supabaseClient";
+import { insertJornadasForLiga } from "./ligaService";
+
+// jest.mock se hoistea automáticamente por encima de los imports (Jest +
+// babel-plugin-jest-hoist), así que escribirlo después es equivalente en
+// tiempo de ejecución y respeta la regla import/first.
 jest.mock("../lib/supabaseClient", () => ({
   supabase: { from: jest.fn(), rpc: jest.fn(), auth: { getUser: jest.fn() } },
 }));
-
-import { supabase } from "../lib/supabaseClient";
-import { insertJornadasForLiga } from "./ligaService";
 
 type Row = Record<string, unknown>;
 

@@ -1198,19 +1198,15 @@
   color: var(--qm-ink-muted);
 }
 
-.qm-stepper__state {
-  grid-column: 2;
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--qm-ink-muted);
+.qm-stepper__btn.is-active .qm-stepper__count {
+  color: var(--qm-ink-text);
 }
 
-/* En móvil el estado “Pendiente/Activo” satura; basta label + count */
-@media (max-width: 899px) {
-  .qm-stepper__state {
-    display: none;
-  }
+.qm-stepper__btn.is-complete .qm-stepper__count {
+  color: var(--ro-success);
+}
 
+@media (max-width: 899px) {
   .qm-stepper__btn {
     grid-template-rows: auto;
     align-items: center;
@@ -1219,15 +1215,6 @@
   .qm-stepper__index {
     grid-row: auto;
   }
-}
-
-/* Activo: nunca --brand-accent (en tema claro es tinta #15191f = invisible en chrome) */
-.qm-stepper__btn.is-active .qm-stepper__state {
-  color: var(--qm-ink-text);
-}
-
-.qm-stepper__btn.is-complete .qm-stepper__state {
-  color: var(--ro-success);
 }
 
 /* —— Workbench —— */

@@ -10,6 +10,28 @@
  * sobre el estado final sin asumir nada del orden de un RETURNING.
  */
 
+import { supabase } from "../supabaseClient";
+import {
+  listRivieraJugadoresPrivate,
+  getRivieraJugadorPrivateById,
+  linkLegacyLigaJugadorId,
+} from "./rivieraJugadoresService";
+import {
+  listActiveGrantedAccessForOrganizer,
+  resolveJugadorIdForOrganizer,
+} from "./organizerPlayerAccess";
+import {
+  loadOrganizadorLigaJugadoresPool,
+  assertLigaJugadoresDelOrganizador,
+} from "./playerPoolSync";
+import type { RivieraJugador } from "./types";
+import type { LigaJugador } from "../liga/types";
+import type { OrganizerPlayerAccessRow } from "./organizerPlayerAccess";
+
+// jest.mock se hoistea automáticamente por encima de los imports (Jest +
+// babel-plugin-jest-hoist), así que escribirlo después es equivalente en
+// tiempo de ejecución y respeta la regla import/first (mismo patrón que
+// LigaGestionar.render.test.tsx).
 jest.mock("../supabaseClient", () => ({
   supabase: { from: jest.fn() },
 }));
@@ -28,24 +50,6 @@ jest.mock("./organizerPlayerAccess", () => ({
   listActiveGrantedAccessForOrganizer: jest.fn(),
   resolveJugadorIdForOrganizer: jest.fn(),
 }));
-
-import { supabase } from "../supabaseClient";
-import {
-  listRivieraJugadoresPrivate,
-  getRivieraJugadorPrivateById,
-  linkLegacyLigaJugadorId,
-} from "./rivieraJugadoresService";
-import {
-  listActiveGrantedAccessForOrganizer,
-  resolveJugadorIdForOrganizer,
-} from "./organizerPlayerAccess";
-import {
-  loadOrganizadorLigaJugadoresPool,
-  assertLigaJugadoresDelOrganizador,
-} from "./playerPoolSync";
-import type { RivieraJugador } from "./types";
-import type { LigaJugador } from "../liga/types";
-import type { OrganizerPlayerAccessRow } from "./organizerPlayerAccess";
 
 /** UUID v4 válido y determinístico a partir de un entero — legacy_liga_jugador_id
  *  y organizador_id pasan por sanitizeUuid/isValidUuid, así que los fixtures

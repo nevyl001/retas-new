@@ -44,6 +44,17 @@ export function QuickModeStepper({
       <ol ref={listRef} className="qm-stepper__list">
         {steps.map((step, index) => {
           const active = step.id === activeId;
+          const statusLabel =
+            step.status === "complete"
+              ? "Listo"
+              : active
+                ? "Activo"
+                : "Pendiente";
+          // Una sola línea secundaria: count (contenido) o status (navegación).
+          // Mostrar ambos repetía «Pendiente / Activo» y confundía.
+          const detail =
+            step.count != null && step.count !== "" ? step.count : statusLabel;
+
           return (
             <li
               key={step.id}
@@ -68,16 +79,7 @@ export function QuickModeStepper({
                 </span>
                 <span className="qm-stepper__copy">
                   <span className="qm-stepper__label">{step.label}</span>
-                  {step.count != null ? (
-                    <span className="qm-stepper__count">{step.count}</span>
-                  ) : null}
-                </span>
-                <span className="qm-stepper__state">
-                  {step.status === "complete"
-                    ? "Listo"
-                    : active
-                      ? "Activo"
-                      : "Pendiente"}
+                  <span className="qm-stepper__count">{detail}</span>
                 </span>
               </button>
             </li>
