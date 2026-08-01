@@ -546,7 +546,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                       value: includeLugar ? lugarConvocatoria : "Oculto",
                     },
                     {
-                      label: "Categoría",
+                      label: "Descripción",
                       value:
                         readDueloLugarPrefs(duelo.id)?.categoria?.trim() || "—",
                     },

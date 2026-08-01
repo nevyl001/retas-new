@@ -159,11 +159,11 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
 
       <div className="reta-details-form__row reta-details-form__row--meta">
         <label className="home-sheet__field reta-details-form__field reta-details-form__field--desc">
-          <span className="home-sheet__field-label">Categoría</span>
+          <span className="home-sheet__field-label">Descripción</span>
           <input
             type="text"
             className="home-sheet__input riviera-input"
-            placeholder="Descripción: mixta, verano, amigos…"
+            placeholder="Ej. mixta, verano, amigos…"
             value={values.categoria}
             disabled={disabled}
             onChange={(e) => patch({ categoria: e.target.value })}

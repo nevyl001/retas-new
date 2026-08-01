@@ -476,7 +476,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
                     value: mostrarLugar ? lugar.trim() || "—" : "Oculto",
                   },
                   {
-                    label: "Categoría",
+                    label: "Descripción",
                     value: categoria.trim() || "—",
                   },
                   {

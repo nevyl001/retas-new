@@ -175,11 +175,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
 
   const descriptionField = essentials ? (
     <label className="home-sheet__field reta-details-form__field reta-details-form__field--desc">
-      <span className="home-sheet__field-label">Categoría</span>
+      <span className="home-sheet__field-label">Descripción</span>
       <input
         type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Descripción: mixta, verano, amigos…"
+        placeholder="Ej. mixta, verano, amigos…"
         value={values.description}
         disabled={descEd.locked}
         onChange={(e) => patch({ description: e.target.value })}
@@ -189,12 +189,12 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     </label>
   ) : (
     <label className="home-sheet__field home-sheet__field--desc">
-      <span className="home-sheet__field-label">Categoría</span>
-      <span className="home-sheet__field-optional">Descripción</span>
+      <span className="home-sheet__field-label">Descripción</span>
+      <span className="home-sheet__field-optional">Opcional</span>
       <input
         type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Descripción: mixta, verano, amigos…"
+        placeholder="Ej. mixta, verano, amigos…"
         value={values.description}
         disabled={descEd.locked}
         onChange={(e) => patch({ description: e.target.value })}

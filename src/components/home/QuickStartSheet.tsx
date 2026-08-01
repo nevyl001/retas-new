@@ -341,7 +341,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
                   : "Oculto",
               },
               {
-                label: "Categoría",
+                label: "Descripción",
                 value: values.description.trim() || "—",
               },
               {
