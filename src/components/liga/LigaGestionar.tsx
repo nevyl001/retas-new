@@ -1,5 +1,5 @@
 import { useClubModeEyebrow } from "../../club-experience";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import {
   calendarioDesactualizado,
@@ -111,24 +111,42 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      // getJugadoresOrganizador ya responde con el pool actual sin esperar
+      // ninguna reconciliación con el registro Riviera; si hiciera falta
+      // sincronizar algo (jugador nuevo, cambio de nombre, etc.), esa
+      // escritura corre en segundo plano y este callback repinta el pool
+      // cuando termina — nunca bloquea el render inicial de la pantalla.
       const [d, pool] = await Promise.all([
         getLigaById(ligaId),
-        getJugadoresOrganizador(),
+        getJugadoresOrganizador((updated) => {
+          if (!mountedRef.current) return;
+          setJugadoresPool(updated);
+        }),
       ]);
+      if (!mountedRef.current) return;
       setDetalle(d);
       setJugadoresPool(pool);
       if (d.modalidad === "parejas_fijas") {
         setTab((prev) => (prev === "jugadores" ? "parejas" : prev));
       }
     } catch (e) {
+      if (!mountedRef.current) return;
       setError(e instanceof Error ? e.message : "Error al cargar");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, [ligaId]);
 

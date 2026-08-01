@@ -1626,13 +1626,14 @@
   color: var(--ro-error);
 }
 
+/* Ink workbench: no usar --ro-text-* del tema claro (quedan ilegibles) */
 .qm-ws__ready-copy {
-  color: var(--ro-text-primary);
+  color: var(--qm-ink-text);
 }
 
 .qm-ws__ready-check .is-soft .qm-ws__ready-copy,
 .qm-ws__ready-check .is-miss .qm-ws__ready-copy {
-  color: var(--ro-text-secondary);
+  color: var(--qm-ink-muted);
 }
 
 .qm-ws__text-btn {

@@ -8,14 +8,15 @@ import {
   getRivieraJugadorByLegacyPlayerId,
   getRivieraJugadorPrivateById,
   linkLegacyLigaJugadorId,
-  listRivieraJugadores,
   listRivieraJugadoresPrivate,
 } from "./rivieraJugadoresService";
 import type { RivieraJugador, RivieraJugadorCategoria } from "./types";
 import { normalizePlayerNameKey } from "./playerNameKey";
 import {
   isGrantedJugadorRow,
+  listActiveGrantedAccessForOrganizer,
   resolveJugadorIdForOrganizer,
+  type OrganizerPlayerAccessRow,
 } from "./organizerPlayerAccess";
 import {
   LegacyLinkUnverifiableError,
@@ -25,7 +26,6 @@ import {
 
 const SYNC_TTL_MS = 45_000;
 const lastLegacySyncAt: Record<string, number> = {};
-const lastLigaSyncAt: Record<string, number> = {};
 
 function normalizeName(n: string): string {
   return normalizePlayerNameKey(n);
@@ -478,84 +478,258 @@ export async function consolidateDuplicateLigaJugadores(
   // Intencionalmente vacío.
 }
 
-export async function syncLigaJugadoresFromRivieraRegistry(
-  organizadorId: string,
-  opts?: { force?: boolean }
-): Promise<void> {
-  const now = Date.now();
-  if (
-    !opts?.force &&
-    lastLigaSyncAt[organizadorId] &&
-    now - lastLigaSyncAt[organizadorId] < SYNC_TTL_MS
-  ) {
-    return;
-  }
-
-  const registry = await listRivieraJugadoresPrivate(organizadorId);
-  const activePool = await loadActiveLigaJugadoresRows(organizadorId);
-  for (const rj of registry) {
-    try {
-      await ensureLigaJugadorForRivieraJugador(organizadorId, rj, activePool);
-    } catch (e) {
-      // Fail-closed por fila: vínculo legacy no verificable = skip silencioso.
-      // No loguear: es esperado en sync masivo al abrir Liga y ensucia la consola.
-      if (e instanceof LegacyLinkUnverifiableError) continue;
-      console.warn(
-        "[riviera-jugadores] syncLigaJugadores skip:",
-        rj.id,
-        e
-      );
-    }
-  }
-  await consolidateDuplicateLigaJugadores(organizadorId);
-  await deactivateOrphanLigaJugadores(organizadorId);
-  lastLigaSyncAt[organizadorId] = now;
+/**
+ * Datos crudos para reconciliar `liga_jugadores` con el registro Riviera:
+ * 3 lecturas en paralelo, sin N+1 — reemplazan el antiguo `for..await` por
+ * jugador que hacía 2-6 round-trips secuenciales POR JUGADOR del registro.
+ */
+interface LigaSyncBulkData {
+  registry: RivieraJugador[];
+  activeLigaJugadores: LigaJugador[];
+  grants: OrganizerPlayerAccessRow[];
 }
 
-/** Desactiva filas en liga_jugadores que ya no están en el registro Riviera activo. */
-async function deactivateOrphanLigaJugadores(
+async function fetchLigaSyncBulkData(
   organizadorId: string
-): Promise<void> {
-  const registry = await listRivieraJugadores(organizadorId);
-  const allowed = new Set(
-    registry
-      .map((r) => sanitizeUuid(r.legacy_liga_jugador_id))
-      .filter((id): id is string => !!id)
+): Promise<LigaSyncBulkData> {
+  const [registry, activeLigaJugadores, grants] = await Promise.all([
+    listRivieraJugadoresPrivate(organizadorId, { skipCareerEnrich: true }),
+    loadActiveLigaJugadoresRows(organizadorId),
+    listActiveGrantedAccessForOrganizer(organizadorId),
+  ]);
+  return { registry, activeLigaJugadores, grants };
+}
+
+interface LigaSyncPlan {
+  /** Pool listo para pintar de inmediato (ya enlazados, sin esperar altas). */
+  pool: LigaJugador[];
+  toCreate: RivieraJugador[];
+  toUpdateContact: Array<{ rj: RivieraJugador; existing: LigaJugador }>;
+  toDeactivateIds: string[];
+  /** Cedidos cross-club sin clon local todavía — caso raro, requiere RPC. */
+  pendingGrantResolution: RivieraJugador[];
+  hasWork: boolean;
+}
+
+/** Calcula el diff completo en memoria — cero llamadas de red. */
+function planLigaSync(bulk: LigaSyncBulkData): LigaSyncPlan {
+  const { registry, activeLigaJugadores, grants } = bulk;
+  const activeById = new Map(activeLigaJugadores.map((j) => [j.id, j]));
+  const grantsPendingLocal = new Set(
+    grants.filter((g) => !g.local_jugador_id).map((g) => g.jugador_id)
   );
 
-  const { data: activeRows, error } = await supabase
+  const toCreate: RivieraJugador[] = [];
+  const toUpdateContact: Array<{ rj: RivieraJugador; existing: LigaJugador }> =
+    [];
+  const pendingGrantResolution: RivieraJugador[] = [];
+  const allowedLegacyIds = new Set<string>();
+  const poolById = new Map<string, LigaJugador>();
+
+  for (const rj of registry) {
+    const legacyLigaId = sanitizeUuid(rj.legacy_liga_jugador_id);
+    if (legacyLigaId) allowedLegacyIds.add(legacyLigaId);
+
+    if (grantsPendingLocal.has(rj.id)) {
+      pendingGrantResolution.push(rj);
+      continue;
+    }
+
+    if (legacyLigaId) {
+      const existing = activeById.get(legacyLigaId);
+      if (!existing) {
+        // Vínculo legacy roto/inactivo: mismo fail-closed que
+        // LegacyLinkUnverifiableError en el flujo anterior — se omite esta
+        // fila en silencio, no se crea ni se toca nada.
+        continue;
+      }
+      poolById.set(existing.id, existing);
+      const nombre = rj.nombre.trim();
+      if (nombre && normalizeName(existing.nombre) !== normalizeName(nombre)) {
+        toUpdateContact.push({ rj, existing });
+      }
+    } else {
+      toCreate.push(rj);
+    }
+  }
+
+  const toDeactivateIds = activeLigaJugadores
+    .map((j) => j.id)
+    .filter((id) => !allowedLegacyIds.has(id));
+
+  const hasWork =
+    toCreate.length > 0 ||
+    toUpdateContact.length > 0 ||
+    toDeactivateIds.length > 0 ||
+    pendingGrantResolution.length > 0;
+
+  const pool = Array.from(poolById.values()).sort((a, b) =>
+    a.nombre.localeCompare(b.nombre, "es")
+  );
+
+  return { pool, toCreate, toUpdateContact, toDeactivateIds, pendingGrantResolution, hasWork };
+}
+
+/** Alta en bloque: 1 insert multi-fila + 1 update de vínculo por fila creada (en paralelo). */
+async function bulkCreateLigaJugadores(
+  organizadorId: string,
+  rows: RivieraJugador[]
+): Promise<void> {
+  if (!rows.length) return;
+
+  const payload = rows.map((rj) => ({
+    nombre: rj.nombre.trim(),
+    email: isRealEmail(rj.email) ? rj.email!.trim() : null,
+    telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
+    genero: rj.genero ?? null,
+    nivel: null,
+    organizador_id: organizadorId,
+    estado: "activo",
+  }));
+
+  const { data, error } = await supabase
     .from("liga_jugadores")
-    .select("id")
-    .eq("organizador_id", organizadorId)
-    .eq("estado", "activo");
+    .insert(payload)
+    .select();
 
   if (error) {
-    console.warn("deactivateOrphanLigaJugadores:", error.message);
+    console.warn("bulkCreateLigaJugadores:", error.message);
     return;
   }
 
-  const orphanIds = (activeRows ?? [])
-    .map((r) => sanitizeUuid(String(r.id ?? "")))
-    .filter((id): id is string => !!id && !allowed.has(id));
+  // Postgres/PostgREST preservan el orden de entrada en el RETURNING de un
+  // INSERT multi-fila: se puede emparejar por índice con `rows`.
+  const created = (data ?? []) as LigaJugador[];
+  await Promise.all(
+    created.map((row, i) => {
+      const rj = rows[i];
+      if (!rj) return Promise.resolve();
+      return linkLegacyLigaJugadorId(rj.id, row.id).catch((e) =>
+        console.warn("bulkCreateLigaJugadores link:", rj.id, e)
+      );
+    })
+  );
+}
 
-  if (!orphanIds.length) return;
+async function applyContactUpdate(
+  organizadorId: string,
+  rj: RivieraJugador,
+  existing: LigaJugador
+): Promise<void> {
+  const { error } = await supabase
+    .from("liga_jugadores")
+    .update({
+      nombre: rj.nombre.trim(),
+      telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
+      ...(isRealEmail(rj.email) ? { email: rj.email!.trim() } : {}),
+    })
+    .eq("id", existing.id)
+    .eq("organizador_id", organizadorId);
 
-  const { error: upErr } = await supabase
+  if (error) {
+    console.warn("applyContactUpdate:", existing.id, error.message);
+  }
+}
+
+async function deactivateLigaJugadores(
+  organizadorId: string,
+  ids: string[]
+): Promise<void> {
+  if (!ids.length) return;
+
+  const { error } = await supabase
     .from("liga_jugadores")
     .update({ estado: "inactivo" })
     .eq("organizador_id", organizadorId)
-    .in("id", orphanIds);
+    .in("id", ids);
 
-  if (upErr) {
-    console.warn("deactivateOrphanLigaJugadores update:", upErr.message);
+  if (error) {
+    console.warn("deactivateLigaJugadores:", error.message);
   }
+}
+
+/** Aplica el diff y devuelve el pool final recalculado tras los cambios. */
+async function applyLigaSyncPlan(
+  organizadorId: string,
+  plan: LigaSyncPlan
+): Promise<LigaJugador[]> {
+  const activePool = [...plan.pool];
+
+  await Promise.all([
+    bulkCreateLigaJugadores(organizadorId, plan.toCreate),
+    Promise.all(
+      plan.toUpdateContact.map(({ rj, existing }) =>
+        applyContactUpdate(organizadorId, rj, existing)
+      )
+    ),
+    // Caso raro (cedidos cross-club sin clon local): se resuelve con la
+    // misma ruta ya validada de siempre, jugador por jugador, pero en
+    // paralelo — no bloquea ni afecta al resto del roster.
+    Promise.all(
+      plan.pendingGrantResolution.map((rj) =>
+        ensureLigaJugadorForRivieraJugador(organizadorId, rj, activePool).catch(
+          (e) => {
+            if (!(e instanceof LegacyLinkUnverifiableError)) {
+              console.warn(
+                "[riviera-jugadores] syncLigaJugadores (cedido) skip:",
+                rj.id,
+                e
+              );
+            }
+          }
+        )
+      )
+    ),
+    deactivateLigaJugadores(organizadorId, plan.toDeactivateIds),
+  ]);
+
+  // Releer el estado final en una sola tanda (3 lecturas en paralelo, sin
+  // N+1) para devolver el pool exacto tras aplicar los cambios.
+  const refreshed = await fetchLigaSyncBulkData(organizadorId);
+  return planLigaSync(refreshed).pool;
+}
+
+const inFlightLigaSyncApply: Record<string, Promise<LigaJugador[]> | undefined> =
+  {};
+
+/** Comparte una única escritura en curso por organizador (evita duplicarla). */
+function runLigaSyncApply(
+  organizadorId: string,
+  plan: LigaSyncPlan
+): Promise<LigaJugador[]> {
+  const existing = inFlightLigaSyncApply[organizadorId];
+  if (existing) return existing;
+
+  const applied = applyLigaSyncPlan(organizadorId, plan).finally(() => {
+    delete inFlightLigaSyncApply[organizadorId];
+  });
+  inFlightLigaSyncApply[organizadorId] = applied;
+  return applied;
+}
+
+/**
+ * Reconcilia `liga_jugadores` con el registro Riviera activo. Ya no depende
+ * de una ventana de tiempo (`SYNC_TTL_MS`): el propio diff en memoria decide
+ * si hay algo que sincronizar, así que una liga sin cambios en el registro
+ * no dispara ninguna escritura sin importar cuántas veces se recargue.
+ */
+export async function syncLigaJugadoresFromRivieraRegistry(
+  organizadorId: string,
+  _opts?: { force?: boolean }
+): Promise<void> {
+  const bulk = await fetchLigaSyncBulkData(organizadorId);
+  const plan = planLigaSync(bulk);
+  if (!plan.hasWork) return;
+  await runLigaSyncApply(organizadorId, plan);
 }
 
 /** IDs de liga_jugadores enlazados al registro Riviera activo del organizador. */
 export async function getLinkedLigaJugadorIds(
   organizadorId: string
 ): Promise<string[]> {
-  const registry = await listRivieraJugadores(organizadorId);
+  const registry = await listRivieraJugadoresPrivate(organizadorId, {
+    skipCareerEnrich: true,
+  });
   return Array.from(
     new Set(
       registry
@@ -568,36 +742,39 @@ export async function getLinkedLigaJugadorIds(
 /**
  * Pool autorizado para ligas: solo jugadores activos del organizador
  * enlazados a su registro Riviera (nunca huérfanos ni de otros usuarios).
+ *
+ * Sin `forceSync`, el pool ya calculado (bulk, sin N+1) se devuelve de
+ * inmediato y — si hace falta reconciliar algo — la escritura corre en
+ * segundo plano sin bloquear el render; `onBackgroundSync` avisa cuando
+ * termina para refrescar la UI. Con `forceSync: true` (validación de
+ * membresía antes de inscribir/crear pareja) se espera la reconciliación
+ * completa antes de responder.
  */
 export async function loadOrganizadorLigaJugadoresPool(
   organizadorId: string,
-  opts?: { forceSync?: boolean }
+  opts?: {
+    forceSync?: boolean;
+    onBackgroundSync?: (pool: LigaJugador[]) => void;
+  }
 ): Promise<LigaJugador[]> {
-  try {
-    await syncLigaJugadoresFromRivieraRegistry(organizadorId, {
-      force: opts?.forceSync ?? false,
-    });
-  } catch (e) {
-    if (!(e instanceof LegacyLinkUnverifiableError)) {
-      console.warn("loadOrganizadorLigaJugadoresPool sync:", e);
-    }
+  const bulk = await fetchLigaSyncBulkData(organizadorId);
+  const plan = planLigaSync(bulk);
+
+  if (!plan.hasWork) {
+    return plan.pool;
   }
 
-  const linkedIds = (await getLinkedLigaJugadorIds(organizadorId)).filter(
-    (id) => isValidUuid(id)
-  );
-  if (!linkedIds.length) return [];
+  if (opts?.forceSync) {
+    return runLigaSyncApply(organizadorId, plan);
+  }
 
-  const { data, error } = await supabase
-    .from("liga_jugadores")
-    .select("*")
-    .eq("organizador_id", organizadorId)
-    .eq("estado", "activo")
-    .in("id", linkedIds)
-    .order("nombre", { ascending: true });
+  void runLigaSyncApply(organizadorId, plan)
+    .then((updatedPool) => opts?.onBackgroundSync?.(updatedPool))
+    .catch((e) =>
+      console.warn("loadOrganizadorLigaJugadoresPool background sync:", e)
+    );
 
-  if (error) throw new Error(error.message);
-  return (data ?? []) as LigaJugador[];
+  return plan.pool;
 }
 
 /** Rechaza IDs que no pertenezcan al registro activo del organizador. */

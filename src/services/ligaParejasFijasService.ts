@@ -213,72 +213,79 @@ export async function insertJornadasForLigaParejasFijas(
   const schedule = buildFixedPairLeagueSchedule(equipoIds, vueltas);
   const canchas = Math.max(1, canchasDisponibles);
 
-  for (const jornadaPlan of schedule) {
-    const { data: jornada, error: jErr } = await supabase
-      .from("liga_jornadas")
-      .insert({
+  // Todas las jornadas en un solo insert (Postgres/PostgREST preservan el
+  // orden del RETURNING en un insert multi-fila, así que jornadaIds[i]
+  // corresponde a schedule[i]).
+  const { data: jornadasRows, error: jErr } = await supabase
+    .from("liga_jornadas")
+    .insert(
+      schedule.map((jornadaPlan) => ({
         liga_id: ligaId,
         numero: jornadaPlan.numero,
         estado: "upcoming",
-      })
-      .select("id")
-      .single();
+      }))
+    )
+    .select("id");
 
-    if (jErr) throw new Error(jErr.message);
-    const jornadaId = String(jornada.id);
+  if (jErr) throw new Error(jErr.message);
+  const jornadaIds = (jornadasRows ?? []).map((j) => String(j.id));
+
+  // Por jornada: 1 insert para todas sus parejas + 1 insert para todos sus
+  // partidos (antes: 1 insert por pareja única + 1 por partido).
+  for (let i = 0; i < schedule.length; i++) {
+    const jornadaPlan = schedule[i];
+    const jornadaId = jornadaIds[i];
+
+    const equipoIdsEnJornada: string[] = [];
+    const seenEquipoIds = new Set<string>();
+    for (const match of jornadaPlan.matches) {
+      for (const equipoId of [match.equipo1_id, match.equipo2_id]) {
+        if (seenEquipoIds.has(equipoId)) continue;
+        seenEquipoIds.add(equipoId);
+        equipoIdsEnJornada.push(equipoId);
+      }
+    }
+
+    const { data: parejasRows, error: parejasErr } = await supabase
+      .from("liga_jornada_parejas")
+      .insert(
+        equipoIdsEnJornada.map((equipoId) => {
+          const eq = equiposById.get(equipoId);
+          if (!eq) throw new Error(`Equipo no encontrado: ${equipoId}`);
+          return {
+            jornada_id: jornadaId,
+            equipo_id: equipoId,
+            jugador1_id: eq.jugador1_id,
+            jugador2_id: eq.jugador2_id,
+          };
+        })
+      )
+      .select("id");
+
+    if (parejasErr) throw new Error(parejasErr.message);
 
     const parejaIdByEquipo = new Map<string, string>();
+    (parejasRows ?? []).forEach((row, idx) => {
+      parejaIdByEquipo.set(equipoIdsEnJornada[idx], String(row.id));
+    });
 
-    const ensureJornadaPareja = async (equipoId: string): Promise<string> => {
-      const cached = parejaIdByEquipo.get(equipoId);
-      if (cached) return cached;
-      const eq = equiposById.get(equipoId);
-      if (!eq) throw new Error(`Equipo no encontrado: ${equipoId}`);
-
-      const { data: row, error } = await supabase
-        .from("liga_jornada_parejas")
-        .insert({
-          jornada_id: jornadaId,
-          equipo_id: equipoId,
-          jugador1_id: eq.jugador1_id,
-          jugador2_id: eq.jugador2_id,
-        })
-        .select("id")
-        .single();
-
-      if (error) throw new Error(error.message);
-      const pid = String(row.id);
-      parejaIdByEquipo.set(equipoId, pid);
-      return pid;
-    };
-
-    const partidoRows: Array<{
-      jornada_id: string;
-      pareja1_id: string;
-      pareja2_id: string;
-      ronda: number;
-      cancha: number;
-      estado: "upcoming";
-      score_pareja1: null;
-      score_pareja2: null;
-    }> = [];
-
-    let canchaSlot = 0;
-    for (const match of jornadaPlan.matches) {
-      const p1 = await ensureJornadaPareja(match.equipo1_id);
-      const p2 = await ensureJornadaPareja(match.equipo2_id);
-      canchaSlot += 1;
-      partidoRows.push({
+    const partidoRows = jornadaPlan.matches.map((match, matchIdx) => {
+      const p1 = parejaIdByEquipo.get(match.equipo1_id);
+      const p2 = parejaIdByEquipo.get(match.equipo2_id);
+      if (!p1 || !p2) {
+        throw new Error(`Pareja de jornada no encontrada para el partido ${matchIdx}`);
+      }
+      return {
         jornada_id: jornadaId,
         pareja1_id: p1,
         pareja2_id: p2,
         ronda: 1,
-        cancha: ((canchaSlot - 1) % canchas) + 1,
-        estado: "upcoming",
+        cancha: (matchIdx % canchas) + 1,
+        estado: "upcoming" as const,
         score_pareja1: null,
         score_pareja2: null,
-      });
-    }
+      };
+    });
 
     if (partidoRows.length > 0) {
       const { error: insErr } = await supabase
