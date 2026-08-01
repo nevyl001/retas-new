@@ -498,7 +498,8 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 : canStartJuego
                   ? {
                       variant: "sidebar" as const,
-                      label: busy ? "Iniciando…" : "Iniciar juego",
+                      label: "Iniciar juego",
+                      loadingLabel: "Preparando marcador…",
                       disabled: false,
                       loading: busy,
                       hint: "Confirma las 2 parejas e inicia el marcador",

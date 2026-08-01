@@ -133,7 +133,8 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
       />
 
       <QuickModePrimaryCta
-        label={loading ? "Iniciando…" : "Iniciar"}
+        label="Iniciar"
+        loadingLabel="Calculando partidos…"
         disabled={!canStart}
         loading={loading}
         hint={ctaHint}

@@ -99,6 +99,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const [convIsLive, setConvIsLive] = useState(false);
   const [convLine, setConvLine] = useState("Sin abrir · —");
   const [totalRounds, setTotalRounds] = useState(3);
+  const [starting, setStarting] = useState(false);
   const courts = Math.max(1, Math.floor(Number(tournament?.courts)) || 2);
 
   const selectedPlayers = useMemo<Player[]>(() => {
@@ -304,9 +305,22 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const ctaProps = {
     variant: "sidebar" as const,
     label: "Iniciar reta",
-    disabled: !canStart,
+    loadingLabel: "Calculando partidos…",
+    disabled: !canStart || starting,
+    loading: starting,
     hint: ctaHint,
-    onClick: () => onStartTournament(totalRounds, courts),
+    onClick: () => {
+      if (starting || !canStart) return;
+      setStarting(true);
+      // Deja pintar el estado de carga antes del cálculo síncrono.
+      window.setTimeout(() => {
+        try {
+          onStartTournament(totalRounds, courts);
+        } finally {
+          setStarting(false);
+        }
+      }, 40);
+    },
   };
 
   const sidebarPanel = (

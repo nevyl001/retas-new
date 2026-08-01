@@ -1763,13 +1763,26 @@
 }
 
 .qm-primary-cta--sidebar .qm-primary-cta__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   width: 100%;
   min-height: 50px;
   max-width: none;
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1rem;
   font-size: 0.95rem;
   letter-spacing: -0.01em;
+  line-height: 1.2;
   text-transform: none;
+}
+
+.qm-primary-cta--sidebar.is-loading .qm-primary-cta__btn:disabled {
+  opacity: 1;
+  background: var(--brand-accent, var(--ro-accent));
+  border-color: var(--brand-accent, var(--ro-accent));
+  color: var(--ro-text-on-accent);
+  cursor: wait;
 }
 
 .qm-primary-cta--sidebar .qm-primary-cta__btn:disabled {
@@ -1780,8 +1793,9 @@
 }
 
 .qm-primary-cta--sidebar .qm-primary-cta__hint {
-  text-align: left;
+  text-align: center;
   font-size: 0.8rem;
+  margin: 0;
 }
 
 .qm-ws__sticky-cta {
@@ -2023,8 +2037,9 @@
     right: 0;
     bottom: var(--mobile-app-navigation-height, 0px);
     z-index: var(--ro-z-sticky);
-    padding: 0.4rem var(--qm-prep-pad-x)
-      calc(0.4rem + env(safe-area-inset-bottom, 0px));
+    /* Padding simétrico; safe-area va aparte para no “bajar” el botón */
+    padding: 0.55rem var(--qm-prep-pad-x);
+    padding-bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
     background: color-mix(in srgb, var(--ro-chrome-bg) 92%, transparent);
     border-top: 1px solid var(--ro-chrome-border);
     backdrop-filter: blur(10px);
@@ -2032,14 +2047,19 @@
 
   .qm-ws__sticky-cta .qm-primary-cta--sidebar {
     max-width: none;
-    margin-inline: 0;
-    gap: 0.2rem;
+    margin: 0;
+    gap: 0.35rem;
   }
 
   .qm-ws__sticky-cta .qm-primary-cta__btn {
-    min-height: 44px;
-    padding: 0.55rem 0.85rem;
-    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    line-height: 1.2;
     background: var(--ro-chrome-elevated);
     border-color: var(--ro-chrome-border-strong, var(--ro-chrome-border));
     color: var(--ro-chrome-text);
@@ -2051,9 +2071,23 @@
     color: var(--ro-text-on-accent);
   }
 
+  .qm-ws__sticky-cta .qm-primary-cta.is-loading .qm-primary-cta__btn {
+    opacity: 1;
+    background: var(--brand-accent, var(--ro-accent));
+    border-color: var(--brand-accent, var(--ro-accent));
+    color: var(--ro-text-on-accent);
+  }
+
+  .qm-ws__sticky-cta .qm-primary-cta__busy {
+    border-color: var(--ro-chrome-border);
+    background: color-mix(in srgb, var(--ro-chrome-elevated) 88%, transparent);
+    color: var(--ro-chrome-text);
+  }
+
   .qm-ws__sticky-cta .qm-primary-cta__hint {
-    font-size: 0.68rem;
-    margin-top: 0.15rem;
+    font-size: 0.7rem;
+    margin: 0;
+    text-align: center;
     color: var(--ro-chrome-text-muted);
   }
 

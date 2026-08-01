@@ -541,7 +541,8 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
 
   const ctaProps = {
     variant: "sidebar" as const,
-    label: loading ? "Iniciando…" : "Iniciar reta",
+    label: "Iniciar reta",
+    loadingLabel: "Calculando partidos…",
     disabled: !canStart,
     loading,
     hint: ctaHint,
