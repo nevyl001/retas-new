@@ -442,10 +442,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             window.requestAnimationFrame(() => scrollToDueloConvocatoria());
           };
 
-          const goPublica = () => {
-            window.open(publicUrl, "_blank", "noopener,noreferrer");
-          };
-
           const onConvLiveChange = (snap: ConvocatoriaLiveSnapshot) => {
             if (snap.isLive || snap.confirmed > 0) setConvTouched(true);
             if (snap.isLive) {
@@ -498,14 +494,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                       </Button>
                       <Button
                         type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={goPublica}
-                      >
-                        Vista pública
-                      </Button>
-                      <Button
-                        type="button"
                         variant="ghost"
                         size="sm"
                         disabled={busy}
@@ -537,14 +525,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 />
                 {enJuego ? (
                   <div className="duelo2v2-live-actions">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={goPublica}
-                    >
-                      Vista pública
-                    </Button>
                     <Button
                       type="button"
                       variant="ghost"
@@ -771,7 +751,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     {enJuego ? (
                       <>
                         <p className="qm-ws-panel__conv-line">
-                          Marcador y vista pública
+                          Marcador en vivo
                         </p>
                         <button
                           type="button"
@@ -779,13 +759,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                           onClick={() => setStep("control")}
                         >
                           Ir al marcador
-                        </button>
-                        <button
-                          type="button"
-                          className="qm-ws__text-btn"
-                          onClick={goPublica}
-                        >
-                          Vista pública
                         </button>
                         <button
                           type="button"
