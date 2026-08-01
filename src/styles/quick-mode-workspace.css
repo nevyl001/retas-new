@@ -1806,21 +1806,41 @@
   letter-spacing: -0.01em;
   line-height: 1.2;
   text-transform: none;
+  /* Sidebar ink: acento oscuro del tema claro se pierde */
+  background: #f5f2eb;
+  border-color: #f5f2eb;
+  color: var(--qm-ink-bg, var(--ro-chrome-bg));
 }
 
 .qm-primary-cta--sidebar.is-loading .qm-primary-cta__btn:disabled {
   opacity: 1;
-  background: var(--brand-accent, var(--ro-accent));
-  border-color: var(--brand-accent, var(--ro-accent));
-  color: var(--ro-text-on-accent);
+  background: #f5f2eb;
+  border-color: #f5f2eb;
+  color: var(--qm-ink-bg, var(--ro-chrome-bg));
   cursor: wait;
 }
 
 .qm-primary-cta--sidebar .qm-primary-cta__btn:disabled {
-  opacity: 0.55;
-  background: var(--ro-bg-elevated);
-  border-color: var(--ro-border);
-  color: var(--ro-text-secondary);
+  opacity: 1;
+  background: color-mix(in srgb, var(--qm-ink-elevated, var(--ro-chrome-elevated)) 88%, transparent);
+  border-color: var(--qm-ink-border, var(--ro-chrome-border));
+  color: var(--qm-ink-muted, var(--ro-chrome-text-muted));
+  cursor: not-allowed;
+}
+
+.qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled):hover {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: var(--qm-ink-bg, var(--ro-chrome-bg));
+}
+
+html[data-club="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled),
+html[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled),
+.club-experience-scope[data-club="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled),
+.club-experience-scope[data-brand="hack-padel"] .qm-primary-cta--sidebar .qm-primary-cta__btn:not(:disabled) {
+  background: var(--brand-accent);
+  border-color: var(--brand-accent);
+  color: var(--ro-text-on-accent);
 }
 
 .qm-primary-cta--sidebar .qm-primary-cta__hint {
@@ -2099,21 +2119,48 @@
     padding: 0.75rem 1rem;
     font-size: 0.9375rem;
     line-height: 1.2;
-    background: var(--ro-chrome-elevated);
+    /* Barra chrome oscura: el --ro-accent claro (#15191f) se pierde */
+    background: color-mix(in srgb, var(--ro-chrome-elevated) 88%, transparent);
     border-color: var(--ro-chrome-border-strong, var(--ro-chrome-border));
-    color: var(--ro-chrome-text);
+    color: var(--ro-chrome-text-muted);
   }
 
   .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled) {
-    background: var(--brand-accent, var(--ro-accent));
-    border-color: var(--brand-accent, var(--ro-accent));
-    color: var(--ro-text-on-accent);
+    background: #f5f2eb;
+    border-color: #f5f2eb;
+    color: var(--ro-chrome-bg);
+    opacity: 1;
+  }
+
+  .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled):hover {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: var(--ro-chrome-bg);
+  }
+
+  .qm-ws__sticky-cta .qm-primary-cta__btn:disabled {
+    opacity: 1;
+    cursor: not-allowed;
   }
 
   .qm-ws__sticky-cta .qm-primary-cta.is-loading .qm-primary-cta__btn {
     opacity: 1;
-    background: var(--brand-accent, var(--ro-accent));
-    border-color: var(--brand-accent, var(--ro-accent));
+    background: #f5f2eb;
+    border-color: #f5f2eb;
+    color: var(--ro-chrome-bg);
+  }
+
+  /* Club con acento claro (p. ej. lima): sí usa branding en el sticky */
+  html[data-club="hack-padel"] .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled),
+  html[data-brand="hack-padel"] .qm-ws__sticky-cta .qm-primary-cta__btn:not(:disabled),
+  .club-experience-scope[data-club="hack-padel"]
+    .qm-ws__sticky-cta
+    .qm-primary-cta__btn:not(:disabled),
+  .club-experience-scope[data-brand="hack-padel"]
+    .qm-ws__sticky-cta
+    .qm-primary-cta__btn:not(:disabled) {
+    background: var(--brand-accent);
+    border-color: var(--brand-accent);
     color: var(--ro-text-on-accent);
   }
 

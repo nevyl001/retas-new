@@ -387,6 +387,17 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
         </Button>
       </ActionBar>
 
+      {error ? (
+        <p className="duelo2v2-error duelo2v2-error--banner" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p className="duelo2v2-message duelo2v2-message--banner" role="status">
+          {message}
+        </p>
+      ) : null}
+
       {finalizado ? (
         <>
           <QuickModeEventHeader
@@ -786,9 +797,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           );
         })()
       )}
-
-      {error && <p className="duelo2v2-error">{error}</p>}
-      {message && <p className="duelo2v2-message">{message}</p>}
     </Duelo2v2PageShell>
   );
 };

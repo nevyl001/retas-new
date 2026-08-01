@@ -2273,12 +2273,30 @@
   text-align: center;
   max-width: none;
   width: 100%;
-  margin-left: 0;
-  margin-right: 0;
-  margin-bottom: calc(
-    7.5rem + var(--mobile-app-navigation-height, 0px) +
-      env(safe-area-inset-bottom, 0px)
-  );
+  margin: 0;
+}
+
+.duelo2v2-gestionar .duelo2v2-message--banner,
+.duelo2v2-gestionar .duelo2v2-error--banner {
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  box-sizing: border-box;
+}
+
+.duelo2v2-gestionar .duelo2v2-message--banner {
+  color: var(--ro-success);
+  background: color-mix(in srgb, var(--ro-success) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ro-success) 28%, transparent);
+}
+
+.duelo2v2-gestionar .duelo2v2-error--banner {
+  color: var(--ro-error);
+  background: color-mix(in srgb, var(--ro-error) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ro-error) 28%, transparent);
 }
 
 .duelo2v2-live-actions {
