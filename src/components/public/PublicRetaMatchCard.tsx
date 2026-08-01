@@ -21,6 +21,8 @@ export const PublicRetaMatchCard: React.FC<{
   court: number | null;
   status: "finished" | "active";
   live?: boolean;
+  /** Override badge when event schedule phase is known. */
+  scheduleStatus?: "finished" | "live" | "upcoming" | "pending";
   index: number;
   winnerLabel?: string | null;
   games?: { id: string; pair1: number; pair2: number }[];
@@ -41,6 +43,7 @@ export const PublicRetaMatchCard: React.FC<{
   court,
   status,
   live = false,
+  scheduleStatus,
   index,
   winnerLabel: winnerLabelProp,
   games,
@@ -73,11 +76,12 @@ export const PublicRetaMatchCard: React.FC<{
           ) : null}
           <TePubMatchStatus
             variant={
-              status === "finished"
+              scheduleStatus ??
+              (status === "finished"
                 ? "finished"
                 : live
                   ? "live"
-                  : "pending"
+                  : "pending")
             }
           />
         </div>

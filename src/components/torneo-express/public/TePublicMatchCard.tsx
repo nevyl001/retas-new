@@ -2,6 +2,10 @@ import React from "react";
 import type { TorneoExpressPartido } from "../../../lib/torneoExpress/types";
 import { matchWinnerSideFromPartido } from "../../../lib/torneoExpress/partidoSets";
 import {
+  resolveEventSchedulePhase,
+  resolvePublicMatchStatusVariant,
+} from "../../../lib/public/eventScheduleStatus";
+import {
   TePubMatchOutcome,
   TePubMatchStatus,
 } from "../../public/tePubShared";
@@ -25,6 +29,20 @@ export const TePublicMatchCard: React.FC<{
     : visitWins
       ? visitLabel
       : null;
+  const schedulePhase = resolveEventSchedulePhase({
+    programado_en: partido.programado_en,
+    programado_hasta: null,
+  });
+  const statusVariant = played
+    ? "played"
+    : schedulePhase === "upcoming"
+      ? "upcoming"
+      : enVivo || schedulePhase === "in_window" || schedulePhase === "unknown"
+        ? "live"
+        : resolvePublicMatchStatusVariant({
+            matchFinished: false,
+            eventPhase: schedulePhase,
+          });
 
   return (
     <article
@@ -32,9 +50,7 @@ export const TePublicMatchCard: React.FC<{
       style={{ animationDelay: `${0.12 + index * 0.07}s` }}
     >
       <div className="te-pub-match__top">
-        <TePubMatchStatus
-          variant={played ? "played" : enVivo ? "live" : "pending"}
-        />
+        <TePubMatchStatus variant={statusVariant} />
       </div>
       <TePublicMatchMeta partido={partido} />
 

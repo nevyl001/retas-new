@@ -18,7 +18,7 @@ export function TePubDifPill({
 export function TePubMatchStatus({
   variant,
 }: {
-  variant: "played" | "live" | "pending" | "finished";
+  variant: "played" | "live" | "pending" | "finished" | "upcoming";
 }) {
   if (variant === "played" || variant === "finished") {
     return (
@@ -34,6 +34,11 @@ export function TePubMatchStatus({
         <span className="te-pub-status__dot" aria-hidden />
         En vivo
       </span>
+    );
+  }
+  if (variant === "upcoming") {
+    return (
+      <span className="te-pub-status te-pub-status--pending">Por comenzar</span>
     );
   }
   return <span className="te-pub-status te-pub-status--pending">Pendiente</span>;

@@ -79,6 +79,12 @@ import {
   type RoundRobinChampionshipConfig,
 } from "../lib/roundRobinChampionship";
 import { preferDbChampionshipOverLocal } from "../lib/reta/retaConfigEditRules";
+import {
+  formatPublicEventFechaHorarioLine,
+  getPublicEventScheduleStatus,
+  resolvePublicEventLugar,
+  resolvePublicMatchStatusVariant,
+} from "../lib/public/eventScheduleStatus";
 import "./public/riviera-public-americano.css";
 
 interface PublicTournamentViewProps {
@@ -89,19 +95,23 @@ const RetaPublicHeader: React.FC<{
   formatKicker: string;
   publicTournamentName: string | null;
   publicTournamentDescription: string | null;
-  finalizado?: boolean;
+  statusLabel: string;
+  fechaHorario?: string | null;
+  lugar?: string | null;
 }> = ({
   formatKicker,
   publicTournamentName,
   publicTournamentDescription,
-  finalizado = false,
+  statusLabel,
+  fechaHorario = null,
+  lugar = null,
 }) => {
   return (
     <header className="te-public-header te-public-header--reta te-pub-fade-in">
       <div className="te-public-header__brand">
         {/* Marca: PublicTorneoExpressShell (te-public-brand-bar) */}
         <p className="te-public-header__kicker">
-          {formatKicker} · {finalizado ? "Finalizada" : "En vivo"}
+          {formatKicker} · {statusLabel}
         </p>
         <h1 className="te-public-header__title te-public-header__title--event">
           {publicTournamentName || "Resultados en tiempo real"}
@@ -112,6 +122,12 @@ const RetaPublicHeader: React.FC<{
             <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
               {publicTournamentDescription}
             </span>
+          ) : null}
+          {fechaHorario ? (
+            <span className="te-public-header__subtitle">{fechaHorario}</span>
+          ) : null}
+          {lugar ? (
+            <span className="te-public-header__subtitle">{lugar}</span>
           ) : null}
         </div>
       </div>
@@ -158,6 +174,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [publicTournamentDescription, setPublicTournamentDescription] = useState<
     string | null
   >(null);
+  const [programadoEn, setProgramadoEn] = useState<string | null>(null);
+  const [programadoHasta, setProgramadoHasta] = useState<string | null>(null);
+  const [lugarPublico, setLugarPublico] = useState<string | null>(null);
+  const [clockNow, setClockNow] = useState(() => new Date());
   const [championshipConfig, setChampionshipConfig] =
     useState<RoundRobinChampionshipConfig | null>(null);
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
@@ -223,6 +243,22 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         rawDesc && rawDesc !== nameNorm ? rawDesc : null
       );
       setTournamentFinished(Boolean(t?.is_finished));
+      setProgramadoEn(
+        typeof t?.programado_en === "string" && t.programado_en.trim()
+          ? t.programado_en.trim()
+          : null
+      );
+      setProgramadoHasta(
+        typeof t?.programado_hasta === "string" && t.programado_hasta.trim()
+          ? t.programado_hasta.trim()
+          : null
+      );
+      setLugarPublico(
+        resolvePublicEventLugar({
+          lugar: t?.lugar,
+          mostrar_lugar: t?.mostrar_lugar,
+        })
+      );
       setOrganizadorId(
         typeof t?.user_id === "string" && t.user_id.trim()
           ? t.user_id.trim()
@@ -397,6 +433,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     runImmediately: false,
   });
 
+  useEffect(() => {
+    const id = window.setInterval(() => setClockNow(new Date()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const formatPairLabel = useCallback(
     (pairId: string): string => {
       const resolved = pairPlayersByPairId[pairId];
@@ -480,7 +521,15 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         hasResult={result.hasResult}
         court={match.court}
         status={match.status === "finished" ? "finished" : "active"}
-        live={match.status !== "finished"}
+        live={
+          match.status !== "finished" &&
+          (eventScheduleStatus.phase === "in_window" ||
+            eventScheduleStatus.phase === "unknown")
+        }
+        scheduleStatus={resolvePublicMatchStatusVariant({
+          matchFinished: match.status === "finished",
+          eventPhase: eventScheduleStatus.phase,
+        })}
         index={matchIdx}
         winnerLabel={winnerLabel}
         games={matchGames.length > 0 ? matchGames : undefined}
@@ -774,6 +823,19 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     matches.length > 0 ? Math.max(1, maxAssignedCourt(matches.map((m) => m.court))) : 1;
 
   const tournamentFinalizado = showWinner || tournamentFinished;
+  const eventScheduleStatus = getPublicEventScheduleStatus(
+    {
+      programado_en: programadoEn,
+      programado_hasta: programadoHasta,
+      is_finished: tournamentFinalizado,
+    },
+    clockNow
+  );
+  const fechaHorarioLine = formatPublicEventFechaHorarioLine(
+    programadoEn,
+    programadoHasta
+  );
+  const heroMeta = [formatKicker, lugarPublico].filter(Boolean).join(" · ");
 
   return (
     <PublicTorneoExpressShell
@@ -783,21 +845,24 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {isPubDsV2Enabled ? (
         <PublicHero
           estado={
-            <StatusBadge variant={tournamentFinalizado ? "gold" : "live"}>
-              {tournamentFinalizado ? "Finalizada" : "En vivo"}
+            <StatusBadge variant={eventScheduleStatus.tone}>
+              {eventScheduleStatus.label}
             </StatusBadge>
           }
           nombreEvento={publicTournamentName || "Resultados en tiempo real"}
           club={showClubBranding ? organizerName : undefined}
           categoria={publicTournamentDescription}
-          meta={formatKicker}
+          fecha={fechaHorarioLine || undefined}
+          meta={heroMeta}
         />
       ) : (
         <RetaPublicHeader
           formatKicker={formatKicker}
           publicTournamentName={publicTournamentName}
           publicTournamentDescription={publicTournamentDescription}
-          finalizado={tournamentFinalizado}
+          statusLabel={eventScheduleStatus.label}
+          fechaHorario={fechaHorarioLine}
+          lugar={lugarPublico}
         />
       )}
 
@@ -810,9 +875,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           .map((roundKey, roundIdx) => {
             const roundNum = parseInt(roundKey, 10);
             const roundMatches = matchesByRound[roundNum];
-            const roundInProgress = roundMatches.some(
-              (m) => m.status !== "finished"
-            );
+            const roundInProgress =
+              eventScheduleStatus.phase === "in_window" &&
+              roundMatches.some((m) => m.status !== "finished");
 
             return (
               <div
@@ -833,10 +898,19 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         </span>
                       </>
                     ) : null}
-                    {roundInProgress ? (
+                    {eventScheduleStatus.phase === "upcoming" ? (
+                      <span className="te-public-round-head__live te-public-round-head__live--pending">
+                        por comenzar
+                      </span>
+                    ) : roundInProgress ? (
                       <span className="te-public-round-head__live">
                         <span className="te-pub-status__dot" aria-hidden />
                         en curso
+                      </span>
+                    ) : eventScheduleStatus.phase === "after" ||
+                      roundMatches.every((m) => m.status === "finished") ? (
+                      <span className="te-public-round-head__live te-public-round-head__live--pending">
+                        finalizada
                       </span>
                     ) : null}
                   </h3>
@@ -906,9 +980,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                   totalRounds,
                   semiMatches
                 );
-                const roundInProgress = roundMatches.some(
-                  (m) => m.status !== "finished"
-                );
+                const roundInProgress =
+                  eventScheduleStatus.phase === "in_window" &&
+                  roundMatches.some((m) => m.status !== "finished");
                 return (
                   <div
                     key={`champ-${roundKey}`}
@@ -920,7 +994,11 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                         <span className="rr-championship__round-label">
                           {championshipRoundLabel(idx, totalRounds)}
                         </span>
-                        {roundInProgress ? (
+                        {eventScheduleStatus.phase === "upcoming" ? (
+                          <span className="te-public-round-head__live te-public-round-head__live--pending">
+                            por comenzar
+                          </span>
+                        ) : roundInProgress ? (
                           <span className="te-public-round-head__live">
                             <span className="te-pub-status__dot" aria-hidden />
                             en curso

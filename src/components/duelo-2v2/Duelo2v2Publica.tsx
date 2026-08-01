@@ -10,8 +10,9 @@ import { fetchRivieraJugadorProfilesByIds } from "../../lib/rivieraJugadores/pub
 import { fetchDuelo2v2RatingBySlot } from "../../lib/duelo2v2/duelo2v2RatingDisplay";
 import type { RatingMovimientoPartido } from "../../lib/rivieraJugadores/types";
 import { DUELO_2V2_PUBLIC_POLL_INTERVAL_MS } from "../../lib/duelo2v2/publicPoll";
-import { getDueloPublicStatus } from "../../lib/duelo2v2/schedule";
+import { getDueloPublicStatus, formatDueloHorarioRange } from "../../lib/duelo2v2/schedule";
 import type { Duelo2v2 } from "../../lib/duelo2v2/types";
+import { resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
 import { formatPartidoFecha } from "../../lib/torneoExpress/partidoSchedule";
 import {
   getDuelo2v2ById,
@@ -56,6 +57,16 @@ const Duelo2v2PublicHero: React.FC<Duelo2v2PublicHeroProps> = ({
   const fechaLabel = duelo.programado_en
     ? formatPartidoFecha(duelo.programado_en)
     : undefined;
+  const horario = formatDueloHorarioRange(
+    duelo.programado_en,
+    duelo.programado_hasta
+  );
+  const fechaHorario =
+    fechaLabel && horario
+      ? `${fechaLabel} · ${horario}`
+      : fechaLabel || horario || undefined;
+  const { lugar } = resolveDueloLugarForShare(duelo, organizerName || "");
+  const meta = ["Duelo 2 vs 2", lugar].filter(Boolean).join(" · ");
 
   return (
     <PublicHero
@@ -72,8 +83,8 @@ const Duelo2v2PublicHero: React.FC<Duelo2v2PublicHeroProps> = ({
       nombreEvento={duelo.nombre}
       club={isClubBranded ? organizerName : undefined}
       categoria={duelo.descripcion || undefined}
-      fecha={fechaLabel}
-      meta="Duelo 2 vs 2"
+      fecha={fechaHorario}
+      meta={meta}
     />
   );
 };

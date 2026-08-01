@@ -30,9 +30,10 @@ function teamLabel(
 export const PublicAmericanoMatchCard: React.FC<{
   match: AmericanoSnapshotMatch;
   live: boolean;
+  scheduleStatus?: "finished" | "live" | "upcoming" | "pending" | "played";
   index: number;
   playerRatings?: Record<string, number>;
-}> = ({ match: m, live, index, playerRatings }) => {
+}> = ({ match: m, live, scheduleStatus, index, playerRatings }) => {
   const played =
     typeof m.scoreA === "number" && typeof m.scoreB === "number";
   const aWins = played && (m.scoreA as number) > (m.scoreB as number);
@@ -54,7 +55,10 @@ export const PublicAmericanoMatchCard: React.FC<{
       <div className="te-pub-match__top">
         <div className="te-pub-match__top-left">
           <TePubMatchStatus
-            variant={played ? "played" : live ? "live" : "pending"}
+            variant={
+              scheduleStatus ??
+              (played ? "played" : live ? "live" : "pending")
+            }
           />
         </div>
         <span className="te-pub-cancha" title="Cancha">

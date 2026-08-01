@@ -179,7 +179,7 @@ function PartidoStatusBadge({ estado }: { estado: TEPartidoEstadoPublico }) {
   }
   return (
     <span className="te-badge-proximo">
-      <span aria-hidden>◷</span> Próximo
+      <span aria-hidden>◷</span> Por comenzar
     </span>
   );
 }

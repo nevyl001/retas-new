@@ -20,6 +20,12 @@ import {
 } from "../club-experience";
 import { isPubDsV2Enabled } from "../config/peds";
 import { useVisiblePolling } from "../hooks/useVisiblePolling";
+import {
+  formatPublicEventFechaHorarioLine,
+  getPublicEventScheduleStatus,
+  resolvePublicEventLugar,
+  resolvePublicMatchStatusVariant,
+} from "../lib/public/eventScheduleStatus";
 import { PublicTorneoExpressShell } from "./torneo-express/public/PublicTorneoExpressShell";
 import { StatusBadge } from "./platform/StatusBadge";
 import { PublicHero } from "./public/peds";
@@ -40,12 +46,21 @@ interface PublicAmericanoViewProps {
 const AmericanoPublicHeader: React.FC<{
   tournamentName: string | null;
   tournamentDescription: string | null;
-}> = ({ tournamentName, tournamentDescription }) => {
+  statusLabel: string;
+  fechaHorario?: string | null;
+  lugar?: string | null;
+}> = ({
+  tournamentName,
+  tournamentDescription,
+  statusLabel,
+  fechaHorario = null,
+  lugar = null,
+}) => {
   return (
     <header className="te-public-header te-public-header--americano te-pub-fade-in">
       <div className="te-public-header__brand">
         {/* Marca: PublicTorneoExpressShell (te-public-brand-bar) */}
-        <p className="te-public-header__kicker">Americano · En vivo</p>
+        <p className="te-public-header__kicker">Americano · {statusLabel}</p>
         <h1 className="te-public-header__title te-public-header__title--event">
           {tournamentName || "Torneo Americano"}
         </h1>
@@ -55,6 +70,12 @@ const AmericanoPublicHeader: React.FC<{
             <span className="te-public-header__categoria-pill te-public-header__categoria-pill--desc">
               {tournamentDescription}
             </span>
+          ) : null}
+          {fechaHorario ? (
+            <span className="te-public-header__subtitle">{fechaHorario}</span>
+          ) : null}
+          {lugar ? (
+            <span className="te-public-header__subtitle">{lugar}</span>
           ) : null}
         </div>
       </div>
@@ -93,6 +114,10 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   >(null);
   const [tournamentFinished, setTournamentFinished] = useState(false);
   const [tournamentStarted, setTournamentStarted] = useState(false);
+  const [programadoEn, setProgramadoEn] = useState<string | null>(null);
+  const [programadoHasta, setProgramadoHasta] = useState<string | null>(null);
+  const [lugarPublico, setLugarPublico] = useState<string | null>(null);
+  const [clockNow, setClockNow] = useState(() => new Date());
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const [podiumAvatars, setPodiumAvatars] = useState<
     Record<string, string | null>
@@ -157,6 +182,24 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
         setTournamentDescription(desc || null);
         setTournamentFinished(!!tournament?.is_finished);
         setTournamentStarted(!!tournament?.is_started);
+        setProgramadoEn(
+          typeof tournament?.programado_en === "string" &&
+            tournament.programado_en.trim()
+            ? tournament.programado_en.trim()
+            : null
+        );
+        setProgramadoHasta(
+          typeof tournament?.programado_hasta === "string" &&
+            tournament.programado_hasta.trim()
+            ? tournament.programado_hasta.trim()
+            : null
+        );
+        setLugarPublico(
+          resolvePublicEventLugar({
+            lugar: tournament?.lugar,
+            mostrar_lugar: tournament?.mostrar_lugar,
+          })
+        );
         setOrganizadorId(
           typeof tournament?.user_id === "string" ? tournament.user_id : null
         );
@@ -214,6 +257,11 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     callback: loadLive,
     intervalMs: AMERICANO_PUBLIC_POLL_INTERVAL_MS,
   });
+
+  useEffect(() => {
+    const id = window.setInterval(() => setClockNow(new Date()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const roundMatchesSorted = (round: AmericanoSnapshotRound) =>
     [...round.matches].sort((a, b) => a.court - b.court);
@@ -315,6 +363,20 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     };
   }, [organizadorId, podiumPlayers]);
 
+  const eventScheduleStatus = getPublicEventScheduleStatus(
+    {
+      programado_en: programadoEn,
+      programado_hasta: programadoHasta,
+      is_finished: showFinishedPodium || tournamentFinished,
+    },
+    clockNow
+  );
+  const fechaHorarioLine = formatPublicEventFechaHorarioLine(
+    programadoEn,
+    programadoHasta
+  );
+  const heroMeta = ["Americano", lugarPublico].filter(Boolean).join(" · ");
+
   return (
     <PublicTorneoExpressShell
       className="te-public--americano te-public--americano-wide"
@@ -322,16 +384,24 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     >
       {isPubDsV2Enabled ? (
         <PublicHero
-          estado={<StatusBadge variant="live">En vivo</StatusBadge>}
+          estado={
+            <StatusBadge variant={eventScheduleStatus.tone}>
+              {eventScheduleStatus.label}
+            </StatusBadge>
+          }
           nombreEvento={tournamentName || "Torneo Americano"}
           club={isClubBranded ? organizerName : undefined}
           categoria={tournamentDescription}
-          meta="Americano"
+          fecha={fechaHorarioLine || undefined}
+          meta={heroMeta}
         />
       ) : (
         <AmericanoPublicHeader
           tournamentName={tournamentName}
           tournamentDescription={tournamentDescription}
+          statusLabel={eventScheduleStatus.label}
+          fechaHorario={fechaHorarioLine}
+          lugar={lugarPublico}
         />
       )}
 
@@ -417,7 +487,10 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           {snapshot.rounds.length > 0 &&
             snapshot.rounds.map((round, roundIdx) => {
               const isLastRound = roundIdx === snapshot.rounds.length - 1;
-              const inProgress = isLastRound && !roundFullyScored(round);
+              const roundLive =
+                eventScheduleStatus.phase === "in_window" &&
+                isLastRound &&
+                !roundFullyScored(round);
               const matches = roundMatchesSorted(round);
               const phaseCaption = americanoRoundPhaseCaption(
                 round,
@@ -443,12 +516,16 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                           </span>
                         </>
                       ) : null}
-                      {inProgress && (
+                      {eventScheduleStatus.phase === "upcoming" ? (
+                        <span className="te-public-round-head__live te-public-round-head__live--pending">
+                          por comenzar
+                        </span>
+                      ) : roundLive ? (
                         <span className="te-public-round-head__live">
                           <span className="te-pub-status__dot" aria-hidden />
                           en curso
                         </span>
-                      )}
+                      ) : null}
                     </h2>
                   </div>
                   <div className="te-public-section__divider" aria-hidden />
@@ -461,15 +538,28 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                   )}
 
                   <div className="te-pub-matches-grid te-pub-matches-grid--wide">
-                    {matches.map((m, matchIdx) => (
+                    {matches.map((m, matchIdx) => {
+                      const played =
+                        typeof m.scoreA === "number" &&
+                        typeof m.scoreB === "number";
+                      return (
                       <PublicAmericanoMatchCard
                         key={m.id}
                         match={m}
-                        live={inProgress}
+                        live={roundLive && !played}
+                        scheduleStatus={
+                          played
+                            ? "played"
+                            : resolvePublicMatchStatusVariant({
+                                matchFinished: false,
+                                eventPhase: eventScheduleStatus.phase,
+                              })
+                        }
                         index={matchIdx}
                         playerRatings={playerRatings}
                       />
-                    ))}
+                      );
+                    })}
                   </div>
                 </section>
               );

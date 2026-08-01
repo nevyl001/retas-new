@@ -401,12 +401,17 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  margin-left: 0.5rem;
   font-family: var(--font-body);
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--live-color);
   text-transform: lowercase;
   letter-spacing: 0.02em;
+}
+
+.te-public-round-head__live--pending {
+  color: var(--qm-ink-muted, rgba(255, 255, 255, 0.55));
 }
 
 .te-pub-score--pending-label {

@@ -115,16 +115,16 @@ export function getDueloPublicStatus(
   now: Date = new Date()
 ): { label: string; tone: DueloPublicStatusTone } | null {
   if (duelo.ganador) {
-    return { label: "Duelo decidido", tone: "done" };
+    return { label: "Finalizada", tone: "done" };
   }
   if (duelo.estado === "finalizado") {
-    return { label: "Finalizado", tone: "done" };
+    return { label: "Finalizada", tone: "done" };
   }
 
   const phase = resolveDueloSchedulePhase(duelo, now);
-  if (phase === "upcoming" && duelo.programado_en) {
+  if (phase === "upcoming") {
     return {
-      label: `Inicia a las ${formatPartidoHora(duelo.programado_en)}`,
+      label: "Por comenzar",
       tone: "upcoming",
     };
   }
@@ -132,18 +132,14 @@ export function getDueloPublicStatus(
     return { label: "En vivo", tone: "live" };
   }
   if (phase === "after") {
-    const horario = formatDueloHorarioRange(
-      duelo.programado_en,
-      duelo.programado_hasta
-    );
     return {
-      label: horario ? `Horario: ${horario}` : "Fuera de horario programado",
-      tone: "muted",
+      label: "Finalizada",
+      tone: "done",
     };
   }
 
   if (duelo.estado === "en_juego") {
-    return { label: "En curso", tone: "live" };
+    return { label: "En vivo", tone: "live" };
   }
 
   return null;
