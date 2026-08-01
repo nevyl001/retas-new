@@ -11,7 +11,10 @@ export interface Duelo2v2 {
   id: string;
   organizador_id: string;
   nombre: string;
+  /** Nivel / fuerza del encuentro (legado: columna `descripcion`). */
   descripcion: string | null;
+  /** Descripción libre (columna `categoria`; distinta del nivel). */
+  categoria?: string | null;
   cancha: string | null;
   /** Sede donde se juega (puede diferir del nombre del club/comunidad). */
   lugar?: string | null;
@@ -41,7 +44,10 @@ export interface Duelo2v2 {
 
 export interface CreateDuelo2v2DraftInput {
   nombre: string;
+  /** Nivel / fuerza → columna `descripcion`. */
   descripcion?: string;
+  /** Descripción libre → columna `categoria`. */
+  categoria?: string | null;
   cancha?: string;
   lugar?: string;
   mostrar_lugar?: boolean;
@@ -71,8 +77,10 @@ export interface UpdateDuelo2v2ScoreInput {
 
 export interface UpdateDuelo2v2DetailsInput {
   nombre: string;
-  /** Categoría / nivel del encuentro (columna `descripcion`). */
+  /** Nivel / fuerza (columna `descripcion`). */
   descripcion?: string | null;
+  /** Descripción libre (columna `categoria`). */
+  categoria?: string | null;
   cancha?: string;
   lugar?: string | null;
   mostrar_lugar?: boolean;

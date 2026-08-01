@@ -850,6 +850,15 @@
   color: var(--qm-ink-text);
 }
 
+/* Preview “Pareja: A + B” usa --ro-text-* del tema claro → ilegible en ink */
+.qm-ws__workbench .duelo2v2-roster__selection-preview {
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws__workbench .duelo2v2-roster__selection-preview strong {
+  color: var(--qm-ink-text);
+}
+
 /* —— Vista pública en vivo —— */
 .duelo2v2-live-board {
   width: 100%;

@@ -10,7 +10,7 @@ export type SaveNewDueloFormInput = {
   cancha: string;
   /** Nivel / fuerza; se persiste en `duelos_2v2.descripcion` (vista pública). */
   nivel?: string;
-  /** Descripción libre (categoría); se antepone en descripcion si hay nivel. */
+  /** Descripción libre; se persiste en `duelos_2v2.categoria`. */
   categoria?: string;
   lugar?: string;
   mostrarLugar?: boolean;
@@ -58,11 +58,11 @@ export async function saveNewDuelo2v2(
 
   const nivel = form.nivel?.trim() || undefined;
   const categoria = form.categoria?.trim() || undefined;
-  // Vista pública lee `descripcion` como nivel/fuerza.
-  const descripcion = nivel || categoria;
+  // `descripcion` BD = nivel/fuerza; `categoria` BD = descripción libre.
   const duelo = await deps.createDuelo2v2OpenDraft({
     nombre,
-    descripcion,
+    descripcion: nivel,
+    categoria,
     cancha: normalizeCanchaForSave(form.cancha),
     lugar: form.lugar?.trim() || undefined,
     mostrar_lugar: form.mostrarLugar !== false,

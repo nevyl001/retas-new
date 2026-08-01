@@ -114,7 +114,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           openDueloId: d.id,
           nombre: d.nombre,
           cancha: d.cancha ?? "",
-          categoria: d.descripcion?.trim() || "",
+          categoria: d.categoria?.trim() || "",
         });
       } else {
         const pending = peekDuelo2v2CreateDraft(d.organizador_id);
@@ -548,8 +548,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     },
                     {
                       label: "Descripción",
-                      value:
-                        readDueloLugarPrefs(duelo.id)?.categoria?.trim() || "—",
+                      value: duelo.categoria?.trim() ||
+                        readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
+                        "—",
                     },
                     {
                       label: "Nivel",

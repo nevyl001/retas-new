@@ -72,6 +72,7 @@ describe("saveNewDuelo2v2", () => {
       expect.objectContaining({
         nombre: "Con nivel",
         descripcion: "5ta Fuerza",
+        categoria: "Mixta",
       })
     );
   });

@@ -1,9 +1,12 @@
-/** Preferencias de meta del duelo en el cliente (lugar + categoría). */
+/**
+ * Preferencias de meta del duelo en el cliente (lugar + descripción libre).
+ * Cache local; la SoT de descripción libre es `duelos_2v2.categoria` cuando exista.
+ */
 
 export type DueloLugarPrefs = {
   lugar: string;
   mostrarLugar: boolean;
-  /** Descripción libre (categoría); el nivel/fuerza vive en `descripcion` BD. */
+  /** Descripción libre; el nivel/fuerza vive en `descripcion` BD. */
   categoria?: string;
 };
 
@@ -11,11 +14,18 @@ function key(dueloId: string): string {
   return `duelo-2v2-lugar-prefs:${dueloId.trim()}`;
 }
 
+function storage(): Storage | null {
+  if (typeof localStorage !== "undefined") return localStorage;
+  if (typeof sessionStorage !== "undefined") return sessionStorage;
+  return null;
+}
+
 export function readDueloLugarPrefs(dueloId: string): DueloLugarPrefs | null {
   const id = dueloId.trim();
-  if (!id || typeof sessionStorage === "undefined") return null;
+  const store = storage();
+  if (!id || !store) return null;
   try {
-    const raw = sessionStorage.getItem(key(id));
+    const raw = store.getItem(key(id));
     if (raw) {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       return {
@@ -25,8 +35,22 @@ export function readDueloLugarPrefs(dueloId: string): DueloLugarPrefs | null {
           typeof parsed.categoria === "string" ? parsed.categoria.trim() : "",
       };
     }
+    // Migrar cache legacy de sessionStorage → localStorage
+    if (typeof sessionStorage !== "undefined" && store !== sessionStorage) {
+      const legacySession = sessionStorage.getItem(key(id));
+      if (legacySession) {
+        store.setItem(key(id), legacySession);
+        sessionStorage.removeItem(key(id));
+        return readDueloLugarPrefs(id);
+      }
+    }
     // legacy key solo texto
-    const legacy = sessionStorage.getItem(`duelo-2v2-lugar:${id}`)?.trim();
+    const legacy =
+      store.getItem(`duelo-2v2-lugar:${id}`)?.trim() ||
+      (typeof sessionStorage !== "undefined"
+        ? sessionStorage.getItem(`duelo-2v2-lugar:${id}`)?.trim()
+        : "") ||
+      "";
     if (legacy) return { lugar: legacy, mostrarLugar: true, categoria: "" };
   } catch {
     /* ignore */
@@ -39,14 +63,20 @@ export function writeDueloLugarPrefs(
   prefs: DueloLugarPrefs
 ): void {
   const id = dueloId.trim();
-  if (!id || typeof sessionStorage === "undefined") return;
+  const store = storage();
+  if (!id || !store) return;
   try {
-    sessionStorage.setItem(
+    const prev = readDueloLugarPrefs(id);
+    const categoria =
+      prefs.categoria !== undefined
+        ? prefs.categoria.trim()
+        : (prev?.categoria || "").trim();
+    store.setItem(
       key(id),
       JSON.stringify({
         lugar: prefs.lugar.trim(),
         mostrarLugar: prefs.mostrarLugar !== false,
-        categoria: (prefs.categoria || "").trim(),
+        categoria,
       })
     );
   } catch {

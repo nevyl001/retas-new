@@ -10,7 +10,7 @@ import type {
   UpdateDuelo2v2ScoreInput,
 } from "../lib/duelo2v2/types";
 import { computeDueloScore } from "../lib/duelo2v2/scoring";
-import { writeDueloLugarPrefs } from "../lib/duelo2v2/dueloLugarPrefs";
+import { writeDueloLugarPrefs, readDueloLugarPrefs } from "../lib/duelo2v2/dueloLugarPrefs";
 
 function isLugarColumnMissing(error: {
   code?: string;
@@ -18,7 +18,16 @@ function isLugarColumnMissing(error: {
 } | null): boolean {
   if (!error) return false;
   const msg = error.message ?? "";
-  return /lugar|mostrar_lugar|column .* does not exist|42703/i.test(msg);
+  return /lugar|mostrar_lugar/i.test(msg) && /does not exist|42703/i.test(msg);
+}
+
+function isCategoriaColumnMissing(error: {
+  code?: string;
+  message?: string;
+} | null): boolean {
+  if (!error) return false;
+  const msg = error.message ?? "";
+  return /categoria/i.test(msg) && /does not exist|42703/i.test(msg);
 }
 
 async function requireUserId(): Promise<string> {
@@ -77,6 +86,7 @@ function mapDuelo(row: Record<string, unknown>): Duelo2v2 {
     organizador_id: String(row.organizador_id),
     nombre: String(row.nombre),
     descripcion: row.descripcion ? String(row.descripcion) : null,
+    categoria: row.categoria != null ? String(row.categoria) : null,
     cancha: row.cancha != null ? String(row.cancha) : null,
     lugar: row.lugar != null ? String(row.lugar) : null,
     mostrar_lugar:
@@ -194,42 +204,75 @@ export async function createDuelo2v2OpenDraft(
     detalle_sets: [],
   };
 
+  const categoriaTrim =
+    input.categoria !== undefined
+      ? input.categoria?.trim() || null
+      : undefined;
   const lugarTrim = input.lugar?.trim() || null;
   const mostrarLugar = input.mostrar_lugar !== false;
-  const insertWithLugar = {
+  const insertFull = {
     ...insertBase,
+    ...(categoriaTrim !== undefined ? { categoria: categoriaTrim } : {}),
     ...(lugarTrim != null ? { lugar: lugarTrim } : {}),
     mostrar_lugar: mostrarLugar,
   };
 
   let { data, error } = await supabase
     .from("duelos_2v2")
-    .insert(insertWithLugar)
+    .insert(insertFull)
     .select()
     .single();
 
-  if (error && isLugarColumnMissing(error)) {
+  if (error && isCategoriaColumnMissing(error)) {
+    const { categoria: _c, ...withoutCategoria } = insertFull as Record<
+      string,
+      unknown
+    > & { categoria?: unknown };
+    void _c;
     const fallback = await supabase
       .from("duelos_2v2")
-      .insert(insertBase)
+      .insert(withoutCategoria)
       .select()
       .single();
     data = fallback.data;
     error = fallback.error;
   }
 
+  if (error && isLugarColumnMissing(error)) {
+    const fallback = await supabase
+      .from("duelos_2v2")
+      .insert({
+        ...insertBase,
+        ...(categoriaTrim !== undefined ? { categoria: categoriaTrim } : {}),
+      })
+      .select()
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+    if (error && isCategoriaColumnMissing(error)) {
+      const fallback2 = await supabase
+        .from("duelos_2v2")
+        .insert(insertBase)
+        .select()
+        .single();
+      data = fallback2.data;
+      error = fallback2.error;
+    }
+  }
+
   if (error) throw new Error(formatDueloDbError(error));
   const mapped = mapDuelo(data as Record<string, unknown>);
-  if (lugarTrim || input.mostrar_lugar !== undefined) {
-    writeDueloLugarPrefs(mapped.id, {
-      lugar: lugarTrim ?? "",
-      mostrarLugar,
-    });
-  }
+  writeDueloLugarPrefs(mapped.id, {
+    lugar: lugarTrim ?? "",
+    mostrarLugar,
+    categoria: categoriaTrim ?? "",
+  });
   return {
     ...mapped,
     lugar: lugarTrim ?? mapped.lugar,
     mostrar_lugar: mostrarLugar,
+    categoria:
+      categoriaTrim !== undefined ? categoriaTrim : mapped.categoria,
   };
 }
 
@@ -254,6 +297,8 @@ export async function ensureDuelo2v2OpenDraft(opts: {
     ) {
       return updateDuelo2v2Details(current.id, {
         nombre: opts.input.nombre,
+        descripcion: opts.input.descripcion,
+        categoria: opts.input.categoria,
         cancha: opts.input.cancha,
         lugar: opts.input.lugar,
         mostrar_lugar: opts.input.mostrar_lugar,
@@ -396,7 +441,7 @@ export async function updateDuelo2v2Details(
     throw new Error("El nombre del encuentro es obligatorio.");
   }
 
-  const basePayload = {
+  const basePayload: Record<string, unknown> = {
     nombre,
     ...(input.descripcion !== undefined
       ? { descripcion: input.descripcion?.trim() || null }
@@ -409,20 +454,23 @@ export async function updateDuelo2v2Details(
 
   const wantsLugar =
     input.lugar !== undefined || input.mostrar_lugar !== undefined;
+  const wantsCategoria = input.categoria !== undefined;
   const lugarValue =
     input.lugar !== undefined ? input.lugar?.trim() || null : undefined;
   const mostrarLugarValue =
     input.mostrar_lugar !== undefined ? input.mostrar_lugar !== false : undefined;
+  const categoriaValue = wantsCategoria
+    ? input.categoria?.trim() || null
+    : undefined;
 
-  const fullPayload = wantsLugar
-    ? {
-        ...basePayload,
-        ...(lugarValue !== undefined ? { lugar: lugarValue } : {}),
-        ...(mostrarLugarValue !== undefined
-          ? { mostrar_lugar: mostrarLugarValue }
-          : {}),
-      }
-    : basePayload;
+  const fullPayload: Record<string, unknown> = {
+    ...basePayload,
+    ...(lugarValue !== undefined ? { lugar: lugarValue } : {}),
+    ...(mostrarLugarValue !== undefined
+      ? { mostrar_lugar: mostrarLugarValue }
+      : {}),
+    ...(categoriaValue !== undefined ? { categoria: categoriaValue } : {}),
+  };
 
   let { data, error } = await supabase
     .from("duelos_2v2")
@@ -431,10 +479,12 @@ export async function updateDuelo2v2Details(
     .select()
     .single();
 
-  if (error && wantsLugar && isLugarColumnMissing(error)) {
+  if (error && isCategoriaColumnMissing(error)) {
+    const { categoria: _c, ...withoutCategoria } = fullPayload;
+    void _c;
     const fallback = await supabase
       .from("duelos_2v2")
-      .update(basePayload)
+      .update(withoutCategoria)
       .eq("id", id)
       .select()
       .single();
@@ -442,24 +492,54 @@ export async function updateDuelo2v2Details(
     error = fallback.error;
   }
 
+  if (error && wantsLugar && isLugarColumnMissing(error)) {
+    const withoutLugar: Record<string, unknown> = { ...basePayload };
+    if (categoriaValue !== undefined) {
+      withoutLugar.categoria = categoriaValue;
+    }
+    const fallback = await supabase
+      .from("duelos_2v2")
+      .update(withoutLugar)
+      .eq("id", id)
+      .select()
+      .single();
+    data = fallback.data;
+    error = fallback.error;
+    if (error && isCategoriaColumnMissing(error)) {
+      const fallback2 = await supabase
+        .from("duelos_2v2")
+        .update(basePayload)
+        .eq("id", id)
+        .select()
+        .single();
+      data = fallback2.data;
+      error = fallback2.error;
+    }
+  }
+
   if (error) throw new Error(formatDueloDbError(error));
 
   const mapped = mapDuelo(data as Record<string, unknown>);
-  if (wantsLugar) {
-    writeDueloLugarPrefs(id, {
-      lugar: lugarValue ?? mapped.lugar ?? "",
-      mostrarLugar: mostrarLugarValue ?? mapped.mostrar_lugar !== false,
-    });
-    return {
-      ...mapped,
-      lugar: lugarValue !== undefined ? lugarValue : mapped.lugar,
-      mostrar_lugar:
-        mostrarLugarValue !== undefined
-          ? mostrarLugarValue
-          : mapped.mostrar_lugar,
-    };
-  }
-  return mapped;
+  const resolvedCategoria =
+    categoriaValue !== undefined
+      ? categoriaValue
+      : mapped.categoria ?? readDueloLugarPrefs(id)?.categoria ?? null;
+
+  writeDueloLugarPrefs(id, {
+    lugar: lugarValue ?? mapped.lugar ?? "",
+    mostrarLugar: mostrarLugarValue ?? mapped.mostrar_lugar !== false,
+    categoria: resolvedCategoria?.trim() || "",
+  });
+
+  return {
+    ...mapped,
+    lugar: lugarValue !== undefined ? lugarValue : mapped.lugar,
+    mostrar_lugar:
+      mostrarLugarValue !== undefined
+        ? mostrarLugarValue
+        : mapped.mostrar_lugar,
+    categoria: resolvedCategoria,
+  };
 }
 
 export async function updateDuelo2v2Score(
