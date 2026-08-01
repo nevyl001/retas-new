@@ -49,19 +49,19 @@ function playerInPairs(
 function PairCard({
   label,
   pair,
+  emptyHint,
   onClear,
 }: {
   label: string;
   pair: DueloPair | null;
+  emptyHint: string;
   onClear: () => void;
 }) {
   if (!pair) {
     return (
       <div className="duelo2v2-pair-slot duelo2v2-pair-slot--empty">
         <span className="duelo2v2-pair-slot__label">{label}</span>
-        <p className="duelo2v2-pair-slot__hint">
-          Selecciona 2 jugadores y agrega la pareja
-        </p>
+        <p className="duelo2v2-pair-slot__hint">{emptyHint}</p>
       </div>
     );
   }
@@ -139,7 +139,7 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
   }, [filter, categoryFilter, onlyAvailable]);
 
   useEffect(() => {
-    if (selected.length === 0) return;
+    if (selected.length !== 1) return;
     selectionBarRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
@@ -177,8 +177,19 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
     setSelected([]);
   };
 
+  const assignPair = useCallback(
+    (j1: RivieraJugador, j2: RivieraJugador, slot: "a" | "b") => {
+      const pair: DueloPair = { j1, j2 };
+      if (slot === "a") onPairAChange(pair);
+      else onPairBChange(pair);
+      setSelected([]);
+    },
+    [onPairAChange, onPairBChange]
+  );
+
   const togglePlayer = (j: RivieraJugador) => {
     if (playerInPairs(j, pairA, pairB)) return;
+    if (!nextPairSlot) return;
 
     const isSelected = selected.some((s) => s.id === j.id);
     if (isSelected) {
@@ -189,37 +200,48 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
       setSelected([j]);
       return;
     }
-    setSelected([...selected, j]);
+    const next = [...selected, j];
+    if (next.length === 2) {
+      assignPair(next[0], next[1], nextPairSlot);
+      return;
+    }
+    setSelected(next);
   };
 
-  const addPair = () => {
-    if (selected.length !== 2 || !nextPairSlot) return;
-    const [j1, j2] = selected;
-    const pair: DueloPair = { j1, j2 };
-    if (nextPairSlot === "a") onPairAChange(pair);
-    else onPairBChange(pair);
-    setSelected([]);
-  };
+  const rosterTitle =
+    nextPairSlot === "b"
+      ? "Selecciona la segunda pareja"
+      : "Selecciona la primera pareja";
 
   return (
     <section
       className={`duelo2v2-pair-builder${
         pairsComplete ? " duelo2v2-pair-builder--complete" : ""
       }`}
-      aria-label="Agregar parejas"
+      aria-label="Seleccionar parejas"
       data-pairs-complete={pairsComplete ? "true" : "false"}
     >
       <div className="duelo2v2-pairs-row">
-        <PairCard label="Pareja 1" pair={pairA} onClear={handleClearPairA} />
+        <PairCard
+          label="Pareja 1"
+          pair={pairA}
+          emptyHint="Selecciona la primera pareja"
+          onClear={handleClearPairA}
+        />
         <div className="duelo2v2-vs duelo2v2-vs--large">VS</div>
-        <PairCard label="Pareja 2" pair={pairB} onClear={handleClearPairB} />
+        <PairCard
+          label="Pareja 2"
+          pair={pairB}
+          emptyHint="Selecciona la segunda pareja"
+          onClear={handleClearPairB}
+        />
       </div>
 
       {pairsComplete ? null : (
         <div className="duelo2v2-roster">
           <div className="duelo2v2-roster__head">
             <div>
-              <h2 className="duelo2v2-roster__title">Agregar parejas</h2>
+              <h2 className="duelo2v2-roster__title">{rosterTitle}</h2>
               <p className="duelo2v2-roster__sub">
                 {getDueloRegistryHint(organizerName)}
               </p>
@@ -231,36 +253,18 @@ export const DueloPairBuilder: React.FC<DueloPairBuilderProps> = ({
             )}
           </div>
 
-          {selected.length > 0 && nextPairSlot ? (
+          {selected.length === 1 ? (
             <div
               ref={selectionBarRef}
               className="duelo2v2-roster__selection-bar"
-              role="region"
-              aria-label="Confirmar pareja seleccionada"
+              role="status"
+              aria-live="polite"
             >
               <p className="duelo2v2-roster__selection-preview">
-                {selected.length === 2 ? (
-                  <>
-                    Pareja: <strong>{selected[0].nombre}</strong> +{" "}
-                    <strong>{selected[1].nombre}</strong>
-                  </>
-                ) : (
-                  <>
-                    Seleccionado: <strong>{selected[0].nombre}</strong> — elige
-                    el segundo jugador
-                  </>
-                )}
+                Seleccionado: <strong>{selected[0].nombre}</strong> — elige el
+                segundo jugador
               </p>
               <div className="duelo2v2-roster__selection-actions">
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  disabled={selected.length !== 2}
-                  onClick={addPair}
-                >
-                  Agregar pareja {nextPairSlot === "b" ? "2" : "1"}
-                </Button>
                 <Button
                   type="button"
                   variant="ghost"

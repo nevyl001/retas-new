@@ -570,44 +570,61 @@ function planLigaSync(bulk: LigaSyncBulkData): LigaSyncPlan {
   return { pool, toCreate, toUpdateContact, toDeactivateIds, pendingGrantResolution, hasWork };
 }
 
-/** Alta en bloque: 1 insert multi-fila + 1 update de vínculo por fila creada (en paralelo). */
+/** RFC4122 v4 — mismo patrón defensivo que useAmericanoDinamico.tsx. */
+function generateClientUuid(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/**
+ * Alta de jugadores nuevos en un único insert bulk. `riviera_jugadores` y
+ * `liga_jugadores` no comparten ninguna clave de negocio antes del alta (el
+ * vínculo es justo lo que este alta va a crear vía
+ * `legacy_liga_jugador_id`), así que la correlación se resuelve generando el
+ * `id` en el cliente ANTES del insert — no depende del orden del RETURNING
+ * en absoluto, porque el id ya se conoce desde antes de escribir.
+ */
 async function bulkCreateLigaJugadores(
   organizadorId: string,
   rows: RivieraJugador[]
 ): Promise<void> {
   if (!rows.length) return;
 
-  const payload = rows.map((rj) => ({
-    nombre: rj.nombre.trim(),
-    email: isRealEmail(rj.email) ? rj.email!.trim() : null,
-    telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
-    genero: rj.genero ?? null,
-    nivel: null,
-    organizador_id: organizadorId,
-    estado: "activo",
+  const withClientId = rows.map((rj) => ({
+    rj,
+    clientId: generateClientUuid(),
   }));
 
-  const { data, error } = await supabase
-    .from("liga_jugadores")
-    .insert(payload)
-    .select();
+  const { error } = await supabase.from("liga_jugadores").insert(
+    withClientId.map(({ rj, clientId }) => ({
+      id: clientId,
+      nombre: rj.nombre.trim(),
+      email: isRealEmail(rj.email) ? rj.email!.trim() : null,
+      telefono: rj.telefono?.trim() || rj.whatsapp?.trim() || null,
+      genero: rj.genero ?? null,
+      nivel: null,
+      organizador_id: organizadorId,
+      estado: "activo",
+    }))
+  );
 
   if (error) {
     console.warn("bulkCreateLigaJugadores:", error.message);
     return;
   }
 
-  // Postgres/PostgREST preservan el orden de entrada en el RETURNING de un
-  // INSERT multi-fila: se puede emparejar por índice con `rows`.
-  const created = (data ?? []) as LigaJugador[];
   await Promise.all(
-    created.map((row, i) => {
-      const rj = rows[i];
-      if (!rj) return Promise.resolve();
-      return linkLegacyLigaJugadorId(rj.id, row.id).catch((e) =>
+    withClientId.map(({ rj, clientId }) =>
+      linkLegacyLigaJugadorId(rj.id, clientId).catch((e) =>
         console.warn("bulkCreateLigaJugadores link:", rj.id, e)
-      );
-    })
+      )
+    )
   );
 }
 
@@ -757,15 +774,29 @@ export async function loadOrganizadorLigaJugadoresPool(
     onBackgroundSync?: (pool: LigaJugador[]) => void;
   }
 ): Promise<LigaJugador[]> {
+  if (opts?.forceSync) {
+    // Si ya hay una reconciliación en vuelo (p. ej. disparada en background
+    // por otra carga de la pantalla), esperarla primero: su plan pudo
+    // calcularse ANTES del cambio que motivó este forceSync (inscribir/crear
+    // pareja) y no reflejarlo. Tras esperarla, se relee y planea con datos
+    // frescos — así la validación de membresía siempre ve el estado actual,
+    // nunca uno de una reconciliación vieja que ya estaba en curso.
+    const inFlight = inFlightLigaSyncApply[organizadorId];
+    if (inFlight) {
+      await inFlight.catch(() => undefined);
+    }
+
+    const freshBulk = await fetchLigaSyncBulkData(organizadorId);
+    const freshPlan = planLigaSync(freshBulk);
+    if (!freshPlan.hasWork) return freshPlan.pool;
+    return runLigaSyncApply(organizadorId, freshPlan);
+  }
+
   const bulk = await fetchLigaSyncBulkData(organizadorId);
   const plan = planLigaSync(bulk);
 
   if (!plan.hasWork) {
     return plan.pool;
-  }
-
-  if (opts?.forceSync) {
-    return runLigaSyncApply(organizadorId, plan);
   }
 
   void runLigaSyncApply(organizadorId, plan)

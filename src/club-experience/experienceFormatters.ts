@@ -32,7 +32,7 @@ export function getOrganizerRegistryCardSubtitle(
 }
 
 export function getDueloRegistryHint(organizerDisplayName: string): string {
-  return `Jugadores de tu registro ${resolveOrganizerLabel(organizerDisplayName)} · elige 2 y pulsa agregar pareja`;
+  return `Jugadores de tu registro ${resolveOrganizerLabel(organizerDisplayName)} · elige 2 para armar la pareja`;
 }
 
 export function getDueloHomeSubtitle(organizerDisplayName: string): string {

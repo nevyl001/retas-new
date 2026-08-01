@@ -112,6 +112,11 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const mountedRef = useRef(true);
+  // Generación de carga: si un load() más nuevo arrancó mientras uno viejo
+  // seguía en vuelo (incluido el callback de sync en segundo plano de uno
+  // viejo), la respuesta vieja se descarta en vez de pisar el estado más
+  // reciente.
+  const loadSeqRef = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -121,32 +126,36 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
   }, []);
 
   const load = useCallback(async () => {
+    const seq = ++loadSeqRef.current;
+    const isStale = () => !mountedRef.current || loadSeqRef.current !== seq;
+
     setLoading(true);
     setError(null);
     try {
       // getJugadoresOrganizador ya responde con el pool actual sin esperar
       // ninguna reconciliación con el registro Riviera; si hiciera falta
       // sincronizar algo (jugador nuevo, cambio de nombre, etc.), esa
-      // escritura corre en segundo plano y este callback repinta el pool
-      // cuando termina — nunca bloquea el render inicial de la pantalla.
+      // escritura corre en segundo plano y este callback repinta solo el
+      // pool cuando termina — nunca bloquea el render inicial ni recarga
+      // el resto de la liga.
       const [d, pool] = await Promise.all([
         getLigaById(ligaId),
         getJugadoresOrganizador((updated) => {
-          if (!mountedRef.current) return;
+          if (isStale()) return;
           setJugadoresPool(updated);
         }),
       ]);
-      if (!mountedRef.current) return;
+      if (isStale()) return;
       setDetalle(d);
       setJugadoresPool(pool);
       if (d.modalidad === "parejas_fijas") {
         setTab((prev) => (prev === "jugadores" ? "parejas" : prev));
       }
     } catch (e) {
-      if (!mountedRef.current) return;
+      if (isStale()) return;
       setError(e instanceof Error ? e.message : "Error al cargar");
     } finally {
-      if (mountedRef.current) setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, [ligaId]);
 

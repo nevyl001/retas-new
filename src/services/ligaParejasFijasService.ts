@@ -213,9 +213,9 @@ export async function insertJornadasForLigaParejasFijas(
   const schedule = buildFixedPairLeagueSchedule(equipoIds, vueltas);
   const canchas = Math.max(1, canchasDisponibles);
 
-  // Todas las jornadas en un solo insert (Postgres/PostgREST preservan el
-  // orden del RETURNING en un insert multi-fila, así que jornadaIds[i]
-  // corresponde a schedule[i]).
+  // Todas las jornadas en un solo insert. El vínculo numero -> id se
+  // reconstruye leyendo `numero` del propio RETURNING (clave estable, única
+  // por liga_id) — nunca por la posición del arreglo devuelto.
   const { data: jornadasRows, error: jErr } = await supabase
     .from("liga_jornadas")
     .insert(
@@ -225,16 +225,24 @@ export async function insertJornadasForLigaParejasFijas(
         estado: "upcoming",
       }))
     )
-    .select("id");
+    .select("id, numero");
 
   if (jErr) throw new Error(jErr.message);
-  const jornadaIds = (jornadasRows ?? []).map((j) => String(j.id));
+
+  const jornadaIdByNumero = new Map<number, string>();
+  for (const row of jornadasRows ?? []) {
+    jornadaIdByNumero.set(Number(row.numero), String(row.id));
+  }
 
   // Por jornada: 1 insert para todas sus parejas + 1 insert para todos sus
   // partidos (antes: 1 insert por pareja única + 1 por partido).
-  for (let i = 0; i < schedule.length; i++) {
-    const jornadaPlan = schedule[i];
-    const jornadaId = jornadaIds[i];
+  for (const jornadaPlan of schedule) {
+    const jornadaId = jornadaIdByNumero.get(jornadaPlan.numero);
+    if (!jornadaId) {
+      throw new Error(
+        `No se pudo resolver la jornada número ${jornadaPlan.numero} recién creada.`
+      );
+    }
 
     const equipoIdsEnJornada: string[] = [];
     const seenEquipoIds = new Set<string>();
@@ -260,14 +268,16 @@ export async function insertJornadasForLigaParejasFijas(
           };
         })
       )
-      .select("id");
+      .select("id, equipo_id");
 
     if (parejasErr) throw new Error(parejasErr.message);
 
+    // Clave estable = equipo_id devuelto en el propio RETURNING (único por
+    // jornada), nunca la posición del arreglo.
     const parejaIdByEquipo = new Map<string, string>();
-    (parejasRows ?? []).forEach((row, idx) => {
-      parejaIdByEquipo.set(equipoIdsEnJornada[idx], String(row.id));
-    });
+    for (const row of parejasRows ?? []) {
+      parejaIdByEquipo.set(String(row.equipo_id), String(row.id));
+    }
 
     const partidoRows = jornadaPlan.matches.map((match, matchIdx) => {
       const p1 = parejaIdByEquipo.get(match.equipo1_id);

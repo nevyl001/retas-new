@@ -497,7 +497,7 @@ async function resetPuntosLiga(ligaId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-async function insertJornadasForLiga(
+export async function insertJornadasForLiga(
   ligaId: string,
   playerIds: string[]
 ): Promise<void> {
@@ -505,8 +505,10 @@ async function insertJornadasForLiga(
   const jornadasParejas = buildJornadaParejasFromPlayers(playerIds);
 
   // 2 inserts en bloque en vez de 1 por jornada: se dan de alta todas las
-  // jornadas primero (Postgres/PostgREST preservan el orden del RETURNING
-  // en un insert multi-fila) y luego todas sus parejas de una sola vez.
+  // jornadas primero y luego todas sus parejas de una sola vez. El vínculo
+  // jornada -> id se reconstruye por `numero` (clave estable, única por
+  // liga_id ya que el round-robin las numera 1..N sin huecos ni repetidos),
+  // nunca por la posición del arreglo devuelto en el RETURNING.
   const { data: jornadasRows, error: jErr } = await supabase
     .from("liga_jornadas")
     .insert(
@@ -516,18 +518,29 @@ async function insertJornadasForLiga(
         estado: "upcoming",
       }))
     )
-    .select("id");
+    .select("id, numero");
 
   if (jErr) throw new Error(jErr.message);
-  const jornadaIds = (jornadasRows ?? []).map((j) => j.id);
 
-  const parejasRows = jornadasParejas.flatMap((parejas, i) =>
-    parejas.map((p) => ({
-      jornada_id: jornadaIds[i],
+  const jornadaIdByNumero = new Map<number, string>();
+  for (const row of jornadasRows ?? []) {
+    jornadaIdByNumero.set(Number(row.numero), String(row.id));
+  }
+
+  const parejasRows = jornadasParejas.flatMap((parejas, i) => {
+    const numero = i + 1;
+    const jornadaId = jornadaIdByNumero.get(numero);
+    if (!jornadaId) {
+      throw new Error(
+        `No se pudo resolver la jornada número ${numero} recién creada.`
+      );
+    }
+    return parejas.map((p) => ({
+      jornada_id: jornadaId,
       jugador1_id: p.jugador1_id,
       jugador2_id: p.jugador2_id,
-    }))
-  );
+    }));
+  });
 
   if (parejasRows.length > 0) {
     const { error: pErr } = await supabase
@@ -701,7 +714,18 @@ export async function getJugadoresOrganizador(
   const rows = await loadOrganizadorLigaJugadoresPool(uid, {
     onBackgroundSync: onBackgroundSync
       ? (updatedRows) => {
-          void withCategoria(updatedRows).then(onBackgroundSync);
+          // Cadena separada de la promesa principal (fire-and-forget): sin
+          // este catch, un error de enrichLigaJugadoresWithCategoria acá
+          // quedaría como rechazo no manejado — no debe romper nada, solo
+          // registrarse.
+          void withCategoria(updatedRows)
+            .then(onBackgroundSync)
+            .catch((e) => {
+              console.warn(
+                "getJugadoresOrganizador: error al refrescar el pool en segundo plano",
+                e
+              );
+            });
         }
       : undefined,
   });
