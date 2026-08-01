@@ -15,7 +15,7 @@ import {
   markDuelo2v2PendingDraft,
   peekDuelo2v2CreateDraft,
 } from "../../lib/duelo2v2/duelo2v2CreateDraft";
-import { resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
+import { readDueloLugarPrefs, resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
 import {
   finalizarDuelo2v2,
   getDuelo2v2ById,
@@ -547,6 +547,11 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     },
                     {
                       label: "Categoría",
+                      value:
+                        readDueloLugarPrefs(duelo.id)?.categoria?.trim() || "—",
+                    },
+                    {
+                      label: "Nivel",
                       value: duelo.descripcion?.trim() || "—",
                     },
                     {
@@ -604,7 +609,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                               scheduledAt: duelo.programado_en,
                               scheduledUntil: duelo.programado_hasta,
                               clubName: convocatoriaOrigin,
-                              categoryLabel: duelo.descripcion?.trim() || undefined,
+                              categoryLabel:
+                                readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
+                                undefined,
                             })}
                           />
                           <PublicShareSection

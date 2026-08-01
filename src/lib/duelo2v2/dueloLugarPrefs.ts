@@ -1,8 +1,10 @@
-/** Preferencias de lugar del duelo en el cliente (fallback si falta columna SQL). */
+/** Preferencias de meta del duelo en el cliente (lugar + categoría). */
 
 export type DueloLugarPrefs = {
   lugar: string;
   mostrarLugar: boolean;
+  /** Descripción libre (categoría); el nivel/fuerza vive en `descripcion` BD. */
+  categoria?: string;
 };
 
 function key(dueloId: string): string {
@@ -19,11 +21,13 @@ export function readDueloLugarPrefs(dueloId: string): DueloLugarPrefs | null {
       return {
         lugar: typeof parsed.lugar === "string" ? parsed.lugar.trim() : "",
         mostrarLugar: parsed.mostrarLugar !== false,
+        categoria:
+          typeof parsed.categoria === "string" ? parsed.categoria.trim() : "",
       };
     }
     // legacy key solo texto
     const legacy = sessionStorage.getItem(`duelo-2v2-lugar:${id}`)?.trim();
-    if (legacy) return { lugar: legacy, mostrarLugar: true };
+    if (legacy) return { lugar: legacy, mostrarLugar: true, categoria: "" };
   } catch {
     /* ignore */
   }
@@ -42,6 +46,7 @@ export function writeDueloLugarPrefs(
       JSON.stringify({
         lugar: prefs.lugar.trim(),
         mostrarLugar: prefs.mostrarLugar !== false,
+        categoria: (prefs.categoria || "").trim(),
       })
     );
   } catch {

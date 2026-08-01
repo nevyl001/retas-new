@@ -44,19 +44,20 @@ describe("saveNewDuelo2v2", () => {
     );
   });
 
-  it("persiste categoría en descripcion al crear", async () => {
+  it("persiste nivel (fuerza) en descripcion al crear", async () => {
     const create = jest.fn().mockResolvedValue({
       id: "duelo-cat-1",
-      nombre: "Con categoría",
+      nombre: "Con nivel",
       descripcion: "5ta Fuerza",
       estado: "configuracion",
     });
     await saveNewDuelo2v2(
       {
         organizadorId: "org-1",
-        nombre: "Con categoría",
+        nombre: "Con nivel",
         cancha: "1",
-        categoria: "  5ta Fuerza  ",
+        categoria: "  Mixta  ",
+        nivel: "  5ta Fuerza  ",
         draftDate: "2026-07-20",
         draftTimeStart: "15:00",
         draftTimeEnd: "17:00",
@@ -69,7 +70,7 @@ describe("saveNewDuelo2v2", () => {
     );
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
-        nombre: "Con categoría",
+        nombre: "Con nivel",
         descripcion: "5ta Fuerza",
       })
     );

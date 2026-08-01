@@ -70,6 +70,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const [lugar, setLugar] = useState(convocatoriaOrigin);
   const [cancha, setCancha] = useState(CANCHA_DEFAULT_VALUE);
   const [categoria, setCategoria] = useState("");
+  const [nivel, setNivel] = useState("");
   const [draftDate, setDraftDate] = useState(defaultSchedule.date);
   const [draftTimeStart, setDraftTimeStart] = useState(defaultSchedule.timeStart);
   const [draftTimeEnd, setDraftTimeEnd] = useState(defaultSchedule.timeEnd);
@@ -159,6 +160,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
     setLugar(convocatoriaOrigin);
     setCancha(CANCHA_DEFAULT_VALUE);
     setCategoria("");
+    setNivel("");
     setDraftDate(defaultSchedule.date);
     setDraftTimeStart(defaultSchedule.timeStart);
     setDraftTimeEnd(defaultSchedule.timeEnd);
@@ -179,6 +181,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
           nombre,
           cancha,
           categoria,
+          nivel,
           lugar: mostrarLugar ? lugar : "",
           mostrarLugar,
           draftDate,
@@ -194,8 +197,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
               openDueloId: duelo.id,
               nombre: duelo.nombre,
               cancha: duelo.cancha ?? cancha,
-              categoria:
-                duelo.descripcion?.trim() || categoria.trim(),
+              categoria: categoria.trim(),
               draftDate,
               draftTimeStart,
               draftTimeEnd,
@@ -203,6 +205,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
             writeDueloLugarPrefs(duelo.id, {
               lugar: lugar.trim(),
               mostrarLugar,
+              categoria: categoria.trim(),
             });
           },
         }
@@ -276,6 +279,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
             nombre,
             cancha,
             categoria,
+            nivel,
             mostrarLugar,
             lugar,
             draftDate,
@@ -287,6 +291,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
             setNombre(next.nombre);
             setCancha(next.cancha);
             setCategoria(next.categoria);
+            setNivel(next.nivel);
             setMostrarLugar(next.mostrarLugar);
             setLugar(next.lugar);
             setDraftDate(next.draftDate);
@@ -473,6 +478,10 @@ export const Duelo2v2Nuevo: React.FC = () => {
                   {
                     label: "Categoría",
                     value: categoria.trim() || "—",
+                  },
+                  {
+                    label: "Nivel",
+                    value: nivel.trim() || "—",
                   },
                 ]}
               />

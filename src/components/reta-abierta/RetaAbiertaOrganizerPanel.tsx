@@ -57,7 +57,7 @@ export const RetaAbiertaOrganizerPanel: React.FC<Props> = ({
         tournamentFormat: tournament.format,
         championshipEnabled,
         clubName,
-        categoryLabel: tournament.nivel?.trim() || undefined,
+        categoryLabel: tournament.description?.trim() || undefined,
       })}
     />
   );

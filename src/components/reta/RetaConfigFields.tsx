@@ -179,24 +179,26 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       <input
         type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Ej. Mixta, verano, amigos…"
+        placeholder="Descripción: mixta, verano, amigos…"
         value={values.description}
         disabled={descEd.locked}
         onChange={(e) => patch({ description: e.target.value })}
+        autoComplete="off"
       />
       {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
     </label>
   ) : (
     <label className="home-sheet__field home-sheet__field--desc">
       <span className="home-sheet__field-label">Categoría</span>
-      <span className="home-sheet__field-optional">Opcional</span>
+      <span className="home-sheet__field-optional">Descripción</span>
       <input
         type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Ej. Mixta, verano, amigos…"
+        placeholder="Descripción: mixta, verano, amigos…"
         value={values.description}
         disabled={descEd.locked}
         onChange={(e) => patch({ description: e.target.value })}
+        autoComplete="off"
       />
       {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
     </label>
@@ -208,11 +210,12 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       <input
         type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Ej. 5ta Fuerza"
+        placeholder="Fuerza: 5ta Fuerza, Open…"
         value={values.nivel}
         disabled={nivelEd.locked}
         onChange={(e) => patch({ nivel: e.target.value })}
         list="reta-nivel-sugerencias"
+        autoComplete="off"
       />
       <datalist id="reta-nivel-sugerencias">
         <option value="Open" />

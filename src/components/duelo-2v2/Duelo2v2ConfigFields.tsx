@@ -11,7 +11,10 @@ import {
 export type Duelo2v2ConfigFieldValues = {
   nombre: string;
   cancha: string;
+  /** Descripción libre del encuentro (no es la fuerza). */
   categoria: string;
+  /** Fuerza / nivel competitivo. */
+  nivel: string;
   mostrarLugar: boolean;
   lugar: string;
   draftDate: string;
@@ -156,17 +159,31 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
 
       <div className="reta-details-form__row reta-details-form__row--meta">
         <label className="home-sheet__field reta-details-form__field reta-details-form__field--desc">
-          <span className="home-sheet__field-label">Categoría / nivel</span>
+          <span className="home-sheet__field-label">Categoría</span>
           <input
             type="text"
             className="home-sheet__input riviera-input"
-            placeholder="Ej. 5ta Fuerza"
+            placeholder="Descripción: mixta, verano, amigos…"
             value={values.categoria}
             disabled={disabled}
             onChange={(e) => patch({ categoria: e.target.value })}
-            list={`${idPrefix}-categoria-sugerencias`}
+            autoComplete="off"
           />
-          <datalist id={`${idPrefix}-categoria-sugerencias`}>
+        </label>
+
+        <label className="home-sheet__field reta-details-form__field reta-details-form__field--nivel">
+          <span className="home-sheet__field-label">Nivel</span>
+          <input
+            type="text"
+            className="home-sheet__input riviera-input"
+            placeholder="Fuerza: 5ta Fuerza, Open…"
+            value={values.nivel}
+            disabled={disabled}
+            onChange={(e) => patch({ nivel: e.target.value })}
+            list={`${idPrefix}-nivel-sugerencias`}
+            autoComplete="off"
+          />
+          <datalist id={`${idPrefix}-nivel-sugerencias`}>
             <option value="Open" />
             <option value="1ra Fuerza" />
             <option value="2da Fuerza" />

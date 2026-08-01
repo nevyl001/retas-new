@@ -344,6 +344,10 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
                 label: "Categoría",
                 value: values.description.trim() || "—",
               },
+              {
+                label: "Nivel",
+                value: values.nivel.trim() || "—",
+              },
             ]}
           />
         }

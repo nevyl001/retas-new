@@ -44,7 +44,8 @@ function valuesFromDuelo(
         : true;
   return {
     nombre: duelo.nombre,
-    categoria: duelo.descripcion?.trim() || "",
+    categoria: (prefs?.categoria || "").trim(),
+    nivel: duelo.descripcion?.trim() || "",
     cancha: dueloCanchaDraftFromDuelo(duelo) || CANCHA_DEFAULT_VALUE,
     draftDate: schedule.date,
     draftTimeStart: schedule.timeStart,
@@ -126,10 +127,11 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
       writeDueloLugarPrefs(duelo.id, {
         lugar: lugarTrim,
         mostrarLugar: values.mostrarLugar,
+        categoria: values.categoria.trim(),
       });
       const updated = await updateDuelo2v2Details(duelo.id, {
         nombre: values.nombre.trim(),
-        descripcion: values.categoria.trim() || null,
+        descripcion: values.nivel.trim() || null,
         cancha: normalizeCanchaForSave(values.cancha),
         lugar: lugarTrim || null,
         mostrar_lugar: values.mostrarLugar,
