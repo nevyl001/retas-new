@@ -1,10 +1,16 @@
 /* Shell unificado — Home y Liga (Torneo Express usa su propio .torneo-express-page) */
 
 :root {
-  --mobile-app-navigation-height: 56px;
+  /* 0 por defecto: en gestionar evento la nav inferior se oculta.
+     Si queda en 56px el CTA sticky “flota” y deja un hueco blanco. */
+  --mobile-app-navigation-height: 0px;
   --mobile-app-navigation-offset: calc(
     var(--mobile-app-navigation-height) + var(--ro-safe-bottom) + 8px
   );
+}
+
+.has-mobile-app-navigation {
+  --mobile-app-navigation-height: 56px;
 }
 
 .main-layout,

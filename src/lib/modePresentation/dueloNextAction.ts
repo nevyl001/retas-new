@@ -7,8 +7,12 @@ export type DueloNextAction = {
 
 export function resolveDueloStatusLabel(input: {
   finalizado: boolean;
+  estado?: string;
 }): { label: string; variant: "live" | "pending" | "gold" | "muted" } {
   if (input.finalizado) return { label: "Finalizado", variant: "gold" };
+  if (input.estado === "configuracion") {
+    return { label: "Preparación", variant: "pending" };
+  }
   return { label: "En curso", variant: "live" };
 }
 

@@ -10,6 +10,8 @@ export type QuickModeEventHeaderProps = {
   title: string;
   modality: string;
   statusLabel: string;
+  /** Fase bajo el título (p. ej. Preparación / En juego). */
+  phaseLabel?: string;
   /** Métricas centrales (jugadores, parejas, canchas, duración). */
   centerMetrics?: QuickModeEventHeaderMeta[];
   /** Bloque derecho (fecha, lugar). */
@@ -33,6 +35,7 @@ export function QuickModeEventHeader({
   title,
   modality,
   statusLabel,
+  phaseLabel = "Preparación",
   centerMetrics = [],
   rightMeta = [],
   centerSummaryLine,
@@ -54,7 +57,7 @@ export function QuickModeEventHeader({
           <span className="qm-event-header__dot" aria-hidden>
             ·
           </span>
-          Preparación
+          {phaseLabel}
         </p>
       </div>
 

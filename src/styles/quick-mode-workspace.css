@@ -50,7 +50,7 @@
   gap: var(--qm-stack-gap);
   /* Espacio para CTA sticky + nav inferior de la app */
   padding-bottom: calc(
-    5.75rem + var(--mobile-app-navigation-height, 0px) +
+    8.25rem + var(--mobile-app-navigation-height, 0px) +
       env(safe-area-inset-bottom, 0px)
   );
 }
@@ -2050,10 +2050,10 @@
     padding: 0.35rem 0.55rem;
   }
 
-  /* Menos aire bajo el prep: CTA sticky más bajo */
+  /* Aire bajo el prep: altura real del sticky (btn + hint + pad) */
   .qm-ws {
     padding-bottom: calc(
-      4.5rem + var(--mobile-app-navigation-height, 0px) +
+      8.25rem + var(--mobile-app-navigation-height, 0px) +
         env(safe-area-inset-bottom, 0px)
     );
   }
@@ -2065,12 +2065,20 @@
     right: 0;
     bottom: var(--mobile-app-navigation-height, 0px);
     z-index: var(--ro-z-sticky);
-    /* Padding simétrico; safe-area va aparte para no “bajar” el botón */
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
     padding: 0.55rem var(--qm-prep-pad-x);
     padding-bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
-    background: color-mix(in srgb, var(--ro-chrome-bg) 92%, transparent);
+    background: color-mix(in srgb, var(--ro-chrome-bg) 96%, transparent);
     border-top: 1px solid var(--ro-chrome-border);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Con nav inferior visible: el safe-area lo absorbe la nav */
+  .has-mobile-app-navigation .qm-ws__sticky-cta {
+    padding-bottom: 0.55rem;
   }
 
   .qm-ws__sticky-cta .qm-primary-cta--sidebar {

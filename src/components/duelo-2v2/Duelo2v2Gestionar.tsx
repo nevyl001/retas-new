@@ -260,6 +260,32 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     }
   };
 
+  const handleReiniciarMarcador = async () => {
+    if (
+      !window.confirm(
+        "¿Reiniciar el marcador a 0–0? Los sets registrados se borrarán."
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const updated = await updateDuelo2v2Score(dueloId, { detalle_sets: [] });
+      setDuelo(updated);
+      setEditorKey((k) => k + 1);
+      setStep("control");
+      setMessage("Marcador reiniciado.");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "No se pudo reiniciar el marcador"
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <Duelo2v2PageShell wide>
@@ -289,7 +315,16 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const lugarConvocatoria = lugarResolved.lugar || convocatoriaOrigin;
   const includeLugar = lugarResolved.includeLugar;
 
-  const dueloStatus = resolveDueloStatusLabel({ finalizado });
+  const dueloStatus = resolveDueloStatusLabel({
+    finalizado,
+    estado: duelo.estado,
+  });
+  const phaseLabel =
+    finalizado
+      ? "Finalizado"
+      : duelo.estado === "en_juego"
+        ? "En juego"
+        : "Preparación";
 
   const equiposPanel = (
     <div className="duelo2v2-equipos-panel">
@@ -358,6 +393,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             title={duelo.nombre}
             modality="Duelo 2 vs 2"
             statusLabel={dueloStatus.label}
+            phaseLabel={phaseLabel}
             centerMetrics={[
               { label: "Equipo A", value: teamAName },
               { label: "Equipo B", value: teamBName },
@@ -387,19 +423,27 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             Boolean(duelo.pareja_b_j1_nombre?.trim()) &&
             Boolean(duelo.pareja_b_j2_nombre?.trim());
           const draftPairsReady = bothPairsReady(pairA, pairB);
+          const enConfig = duelo.estado === "configuracion";
+          const enJuego = duelo.estado === "en_juego";
           const canStartJuego =
+            enConfig &&
             !pairsOk &&
-            duelo.estado === "configuracion" &&
             draftPairsReady &&
             !busy;
           const detallesOk = Boolean(duelo.nombre?.trim());
-          const canFinalizar = Boolean(duelo.ganador) && !busy;
+          const canFinalizar = enJuego && Boolean(duelo.ganador) && !busy;
+          const publicUrl = publicDuelo2v2Url(dueloId);
 
           const goConvocatoria = () => {
+            if (!enConfig) return;
             setWantConvocatoria(true);
             setConvTouched(true);
             setMobileSummaryOpen(false);
             window.requestAnimationFrame(() => scrollToDueloConvocatoria());
+          };
+
+          const goPublica = () => {
+            window.open(publicUrl, "_blank", "noopener,noreferrer");
           };
 
           const onConvLiveChange = (snap: ConvocatoriaLiveSnapshot) => {
@@ -416,7 +460,8 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             }
           };
 
-          const showConvocatoriaPanel = wantConvocatoria || convIsLive;
+          const showConvocatoriaPanel =
+            enConfig && (wantConvocatoria || convIsLive);
 
           const steps: QuickModeStep[] = [
             {
@@ -427,9 +472,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             },
             {
               id: "control",
-              label: "Listo",
+              label: "Marcador",
               status: stepStatus("control", step, Boolean(duelo.ganador)),
-              count: duelo.ganador ? "OK" : "En curso",
+              count: duelo.ganador ? "OK" : enJuego ? "En curso" : "Pendiente",
             },
           ];
 
@@ -439,7 +484,38 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           const workbenchBody =
             step === "parejas" ? (
               pairsOk ? (
-                equiposPanel
+                <>
+                  {equiposPanel}
+                  {enJuego ? (
+                    <div className="duelo2v2-live-actions">
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={() => setStep("control")}
+                      >
+                        Ir al marcador
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={goPublica}
+                      >
+                        Vista pública
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={busy}
+                        onClick={() => void handleReiniciarMarcador()}
+                      >
+                        Reiniciar marcador
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
               ) : (
                 <DueloPairBuilder
                   organizadorId={duelo.organizador_id}
@@ -456,26 +532,49 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   teamAName={teamAName}
                   teamBName={teamBName}
                   initialDetalle={duelo.detalle_sets}
-                  disabled={busy}
+                  disabled={busy || !enJuego}
                   onSave={handleSaveScore}
                 />
+                {enJuego ? (
+                  <div className="duelo2v2-live-actions">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={goPublica}
+                    >
+                      Vista pública
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={busy}
+                      onClick={() => void handleReiniciarMarcador()}
+                    >
+                      Reiniciar marcador
+                    </Button>
+                  </div>
+                ) : null}
                 <p className="duelo2v2-card__meta" style={{ marginTop: "0.75rem" }}>
-                  Guarda el marcador y finaliza cuando haya ganador.
+                  {enJuego
+                    ? "Guarda el marcador y finaliza cuando haya ganador."
+                    : "Inicia el duelo para registrar el marcador."}
                 </p>
               </>
             );
 
-          const ctaProps =
-            canFinalizar
-              ? {
-                  variant: "sidebar" as const,
-                  label: busy ? "Finalizando…" : "Finalizar duelo",
-                  disabled: false,
-                  loading: busy,
-                  hint: "Suma el resultado al ranking",
-                  onClick: () => void handleFinalizar(),
-                }
-              : step === "control"
+          const ctaProps = canFinalizar
+            ? {
+                variant: "sidebar" as const,
+                label: busy ? "Finalizando…" : "Finalizar duelo",
+                disabled: false,
+                loading: busy,
+                hint: "Suma el resultado al ranking",
+                onClick: () => void handleFinalizar(),
+              }
+            : enJuego
+              ? step === "control"
                 ? {
                     variant: "sidebar" as const,
                     label: "Finalizar duelo",
@@ -484,33 +583,32 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     hint: "Registra el marcador hasta que haya ganador",
                     onClick: () => undefined,
                   }
-                : canStartJuego
-                  ? {
-                      variant: "sidebar" as const,
-                      label: "Iniciar juego",
-                      loadingLabel: "Preparando marcador…",
-                      disabled: false,
-                      loading: busy,
-                      hint: "Confirma las 2 parejas e inicia el marcador",
-                      onClick: () => void handleStartJuego(),
-                    }
-                  : !pairsOk
-                    ? {
-                        variant: "sidebar" as const,
-                        label: "Iniciar juego",
-                        disabled: true,
-                        loading: false,
-                        hint: "Selecciona 4 jugadores (2 parejas)",
-                        onClick: () => undefined,
-                      }
-                    : {
-                        variant: "sidebar" as const,
-                        label: "Lanzar convocatoria",
-                        disabled: false,
-                        loading: false,
-                        hint: "Activa la convocatoria en Detalles",
-                        onClick: goConvocatoria,
-                      };
+                : {
+                    variant: "sidebar" as const,
+                    label: "Ir al marcador",
+                    disabled: false,
+                    loading: false,
+                    hint: "Registra sets o reinicia el marcador",
+                    onClick: () => setStep("control"),
+                  }
+              : canStartJuego
+                ? {
+                    variant: "sidebar" as const,
+                    label: "Iniciar juego",
+                    loadingLabel: "Preparando marcador…",
+                    disabled: false,
+                    loading: busy,
+                    hint: "Confirma las 2 parejas e inicia el marcador",
+                    onClick: () => void handleStartJuego(),
+                  }
+                : {
+                    variant: "sidebar" as const,
+                    label: "Iniciar juego",
+                    disabled: true,
+                    loading: false,
+                    hint: "Selecciona 4 jugadores (2 parejas)",
+                    onClick: () => undefined,
+                  };
 
           return (
             <QuickModePrepWorkspace
@@ -521,6 +619,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   title={duelo.nombre}
                   modality="Duelo 2 vs 2"
                   statusLabel={dueloStatus.label}
+                  phaseLabel={phaseLabel}
                   centerMetrics={[
                     { label: "Equipo A", value: teamAName },
                     { label: "Equipo B", value: teamBName },
@@ -547,10 +646,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     },
                     {
                       label: "Estado",
-                      value:
-                        duelo.estado === "configuracion"
-                          ? "Preparación"
-                          : "En juego",
+                      value: phaseLabel,
                     },
                   ]}
                 />
@@ -564,7 +660,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                   <Duelo2v2DetailsEditor
                     inline
                     duelo={duelo}
-                    disabled={busy}
+                    disabled={busy || enJuego}
                     onSaved={(updated) => {
                       setDuelo(updated);
                       setMessage("Datos del encuentro actualizados.");
@@ -573,49 +669,62 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     onError={setError}
                   />
                   <div id="duelo-convocatoria-inline">
-                    <QuickModeConvocatoriaGate
-                      open={wantConvocatoria}
-                      live={convIsLive}
-                      panelId="duelo-convocatoria-panel"
-                      onToggle={() => {
-                        setWantConvocatoria((v) => {
-                          const next = !v;
-                          if (next) setConvTouched(true);
-                          return next;
-                        });
-                      }}
-                    >
-                      {showConvocatoriaPanel ? (
-                        <>
-                          <ConvocatoriaWhatsAppPanel
-                            embedded
-                            shareOnly
-                            onLiveChange={onConvLiveChange}
-                            context={buildDueloConvocatoriaContext({
-                              dueloId: duelo.id,
-                              name: duelo.nombre,
-                              locationLabel: lugarConvocatoria,
-                              includeLugar,
-                              canchaLabel: duelo.cancha ?? undefined,
-                              scheduledAt: duelo.programado_en,
-                              scheduledUntil: duelo.programado_hasta,
-                              clubName: convocatoriaOrigin,
-                              categoryLabel:
-                                readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
-                                undefined,
-                            })}
-                          />
-                          <PublicShareSection
-                            publicUrl={publicDuelo2v2Url(dueloId)}
-                            title="Enlace público"
-                            infoLines={[
-                              "Comparte el enlace para ver el marcador del duelo (solo lectura).",
-                            ]}
-                            copyButtonLabel="Copiar vista pública"
-                          />
-                        </>
-                      ) : null}
-                    </QuickModeConvocatoriaGate>
+                    {enConfig ? (
+                      <QuickModeConvocatoriaGate
+                        open={wantConvocatoria}
+                        live={convIsLive}
+                        panelId="duelo-convocatoria-panel"
+                        onToggle={() => {
+                          setWantConvocatoria((v) => {
+                            const next = !v;
+                            if (next) setConvTouched(true);
+                            return next;
+                          });
+                        }}
+                      >
+                        {showConvocatoriaPanel ? (
+                          <>
+                            <ConvocatoriaWhatsAppPanel
+                              embedded
+                              shareOnly
+                              onLiveChange={onConvLiveChange}
+                              context={buildDueloConvocatoriaContext({
+                                dueloId: duelo.id,
+                                name: duelo.nombre,
+                                locationLabel: lugarConvocatoria,
+                                includeLugar,
+                                canchaLabel: duelo.cancha ?? undefined,
+                                scheduledAt: duelo.programado_en,
+                                scheduledUntil: duelo.programado_hasta,
+                                clubName: convocatoriaOrigin,
+                                categoryLabel:
+                                  readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
+                                  undefined,
+                              })}
+                            />
+                            <PublicShareSection
+                              publicUrl={publicUrl}
+                              title="Enlace público"
+                              infoLines={[
+                                "Comparte el enlace para ver el marcador del duelo (solo lectura).",
+                              ]}
+                              copyButtonLabel="Copiar vista pública"
+                            />
+                          </>
+                        ) : null}
+                      </QuickModeConvocatoriaGate>
+                    ) : (
+                      <div className="duelo2v2-live-public-share">
+                        <PublicShareSection
+                          publicUrl={publicUrl}
+                          title="Vista pública"
+                          infoLines={[
+                            "El duelo ya está en juego. Comparte el marcador en vivo (solo lectura).",
+                          ]}
+                          copyButtonLabel="Copiar vista pública"
+                        />
+                      </div>
+                    )}
                   </div>
                 </section>
               }
@@ -656,15 +765,49 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                     </ul>
                   </section>
                   <section className="qm-ws-panel__block">
-                    <h3 className="qm-ws-panel__label">Convocatoria</h3>
-                    <p className="qm-ws-panel__conv-line">{convLine}</p>
-                    <button
-                      type="button"
-                      className="qm-ws__text-btn"
-                      onClick={goConvocatoria}
-                    >
-                      Ir a convocatoria
-                    </button>
+                    <h3 className="qm-ws-panel__label">
+                      {enJuego ? "En juego" : "Convocatoria"}
+                    </h3>
+                    {enJuego ? (
+                      <>
+                        <p className="qm-ws-panel__conv-line">
+                          Marcador y vista pública
+                        </p>
+                        <button
+                          type="button"
+                          className="qm-ws__text-btn"
+                          onClick={() => setStep("control")}
+                        >
+                          Ir al marcador
+                        </button>
+                        <button
+                          type="button"
+                          className="qm-ws__text-btn"
+                          onClick={goPublica}
+                        >
+                          Vista pública
+                        </button>
+                        <button
+                          type="button"
+                          className="qm-ws__text-btn"
+                          disabled={busy}
+                          onClick={() => void handleReiniciarMarcador()}
+                        >
+                          Reiniciar marcador
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="qm-ws-panel__conv-line">{convLine}</p>
+                        <button
+                          type="button"
+                          className="qm-ws__text-btn"
+                          onClick={goConvocatoria}
+                        >
+                          Ir a convocatoria
+                        </button>
+                      </>
+                    )}
                   </section>
                   <section className="qm-ws-panel__block qm-ws-panel__cta-desktop">
                     <QuickModePrimaryCta {...ctaProps} />

@@ -175,6 +175,15 @@ describe("modePresentation", () => {
       expect(resolveDueloStatusLabel({ finalizado: true }).label).toBe(
         "Finalizado"
       );
+      expect(
+        resolveDueloStatusLabel({
+          finalizado: false,
+          estado: "configuracion",
+        }).label
+      ).toBe("Preparación");
+      expect(
+        resolveDueloStatusLabel({ finalizado: false, estado: "en_juego" }).label
+      ).toBe("En curso");
     });
   });
 

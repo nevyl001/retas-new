@@ -105,6 +105,21 @@
 }
 
 @media (max-width: 899px) {
+  .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public),
+  .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) .duelo2v2-page__inner,
+  .duelo2v2-page:has(.qm-ws):not(.duelo2v2-page--public) .duelo2v2-page__inner--wide,
+  .duelo2v2-page:has(.qm-ws) .qm-ws,
+  .duelo2v2-page:has(.qm-ws) .qm-ws__body,
+  .duelo2v2-page:has(.qm-ws) .qm-ws__main,
+  .duelo2v2-page:has(.qm-ws) .qm-ws__workbench,
+  .duelo2v2-page:has(.qm-ws) .qm-ws__workbench-body,
+  .duelo2v2-page:has(.qm-ws) .duelo2v2-pair-builder {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   .duelo2v2-nuevo .duelo2v2-toolbar,
   .duelo2v2-gestionar .duelo2v2-toolbar {
     margin-bottom: var(--qm-prep-toolbar-gap, 0.75rem);
@@ -1794,14 +1809,29 @@
     padding: 1rem;
   }
 
+  .duelo2v2-score-editor__side-name {
+    font-size: 0.8125rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
   .duelo2v2-score-editor__sets-head-cell {
-    font-size: 0.65rem;
+    font-size: 0.625rem;
+  }
+
+  .duelo2v2-score-editor__sets-head-cell--a,
+  .duelo2v2-score-editor__sets-head-cell--b {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.2;
+    hyphens: auto;
   }
 
   .duelo2v2-score-editor__sets-head,
   .duelo2v2-score-editor__set-row {
-    grid-template-columns: 3.5rem 1fr 1.25rem 1fr;
-    gap: 0.35rem;
+    grid-template-columns: 3.25rem minmax(0, 1fr) 1.1rem minmax(0, 1fr);
+    gap: 0.3rem;
   }
 
   .duelo2v2-score-editor__input {
@@ -2071,6 +2101,22 @@
   width: 100%;
   margin-left: 0;
   margin-right: 0;
+  margin-bottom: calc(
+    7.5rem + var(--mobile-app-navigation-height, 0px) +
+      env(safe-area-inset-bottom, 0px)
+  );
+}
+
+.duelo2v2-live-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.duelo2v2-live-public-share {
+  padding: 0.65rem var(--qm-module-pad-x, 1rem) 0.85rem;
+  border-top: 1px solid var(--qm-ink-border, var(--ro-chrome-border));
 }
 
 .duelo2v2-public-sync {
