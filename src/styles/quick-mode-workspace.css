@@ -161,6 +161,27 @@
   border: none;
 }
 
+/* Primary en ink: theme.css pone color:var(--bg-base) en hover (= claro → ilegible) */
+.qm-ws__details-inline .riviera-btn-primary {
+  background: var(--ro-accent);
+  border-color: var(--ro-accent);
+  color: var(--qm-ink-bg);
+}
+
+.qm-ws__details-inline .riviera-btn-primary:hover:not(:disabled),
+.qm-ws__details-inline .riviera-btn-primary:focus-visible:not(:disabled) {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: var(--qm-ink-bg);
+}
+
+.qm-ws__details-inline .riviera-btn-primary:disabled {
+  opacity: 0.45;
+  background: var(--qm-ink-elevated);
+  border-color: var(--qm-ink-border);
+  color: var(--qm-ink-muted);
+}
+
 .qm-ws__details-inline .reta-config-panel__feedback {
   margin: 0;
   padding: 0.4rem 0.85rem 0.55rem;
