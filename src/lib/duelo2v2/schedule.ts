@@ -51,17 +51,56 @@ export function formatDueloHorarioRange(
 
 export function dueloScheduleDraftFromDuelo(
   duelo: Pick<Duelo2v2, "programado_en" | "programado_hasta" | "created_at">
-): { date: string; timeStart: string; timeEnd: string } {
+): { date: string; timeStart: string; timeEnd: string; durationMinutes: number } {
   const base = duelo.programado_en?.trim() || duelo.created_at;
   const endBase =
     duelo.programado_hasta?.trim() ||
     duelo.programado_en?.trim() ||
     duelo.created_at;
+  const timeStart = partidoTimeInputValue(base);
+  const timeEnd = partidoTimeInputValue(endBase);
   return {
     date: partidoDateInputValue(base),
-    timeStart: partidoTimeInputValue(base),
-    timeEnd: partidoTimeInputValue(endBase),
+    timeStart,
+    timeEnd,
+    durationMinutes: durationMinutesBetweenTimes(timeStart, timeEnd),
   };
+}
+
+/** Suma minutos a "HH:MM" (24h). Cruza medianoche si hace falta. */
+export function addMinutesToTimeInput(
+  timeHHMM: string,
+  minutes: number
+): string {
+  const parts = (timeHHMM || "").trim().split(":");
+  const h = Number(parts[0]);
+  const m = Number(parts[1] ?? 0);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return "";
+  const total = h * 60 + m + Math.floor(minutes);
+  const dayMins = 24 * 60;
+  const wrapped = ((total % dayMins) + dayMins) % dayMins;
+  const hh = Math.floor(wrapped / 60);
+  const mm = wrapped % 60;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+/** Minutos entre dos "HH:MM". Si fin ≤ inicio, asume cruza medianoche. Default 120. */
+export function durationMinutesBetweenTimes(
+  timeStart: string,
+  timeEnd: string
+): number {
+  const parse = (t: string) => {
+    const [h, m] = (t || "").trim().split(":").map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return NaN;
+    return h * 60 + m;
+  };
+  const a = parse(timeStart);
+  const b = parse(timeEnd);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 120;
+  let diff = b - a;
+  if (diff <= 0) diff += 24 * 60;
+  // Clamp al mismo rango de retas
+  return Math.max(15, Math.min(480, diff));
 }
 
 export function resolveDueloScheduleFromDraft(

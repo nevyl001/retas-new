@@ -49,6 +49,7 @@ function valuesFromDuelo(
     draftDate: schedule.date,
     draftTimeStart: schedule.timeStart,
     draftTimeEnd: schedule.timeEnd,
+    durationMinutes: schedule.durationMinutes,
     mostrarLugar: nextMostrar,
     lugar: (
       duelo.lugar?.trim() ||

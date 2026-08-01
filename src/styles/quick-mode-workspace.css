@@ -247,6 +247,7 @@
 .qm-ws__details-inline input[type="time"],
 .qm-ws__details-inline input[type="datetime-local"] {
   display: block;
+  position: relative;
   width: 100%;
   min-width: 0;
   min-height: 2.75rem;
@@ -256,13 +257,23 @@
   line-height: normal;
   text-align: left;
   color: var(--qm-ink-text);
-  background: var(--qm-ink-input);
+  background-color: var(--qm-ink-input);
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 1rem 1rem;
   border: 1px solid var(--qm-ink-input-border);
   border-radius: 8px;
   box-sizing: border-box;
   color-scheme: dark;
-  -webkit-appearance: none;
-  appearance: none;
+}
+
+.qm-ws__details-inline input[type="date"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5f2eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+}
+
+.qm-ws__details-inline input[type="time"],
+.qm-ws__details-inline input[type="datetime-local"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5f2eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpolyline points='12 7 12 12 15 14'/%3E%3C/svg%3E");
 }
 
 .qm-ws__details-inline input[type="date"]::-webkit-date-and-time-value,
@@ -272,19 +283,31 @@
   min-height: 1.25rem;
 }
 
+/* Contenedor relativo para anclar el picker */
+.qm-ws__details-inline .reta-details-form__field--date,
+.qm-ws__details-inline .reta-details-form__field--time,
+.qm-ws__details-inline .reta-details-form__field--schedule,
+.qm-ws__details-inline label:has(> input[type="date"]),
+.qm-ws__details-inline label:has(> input[type="time"]) {
+  position: relative;
+}
+
+/*
+ * Hit-area a todo el input: en Chrome el indicator nativo es un icono chico
+ * a la derecha; si queda mal anclado no abre. Cubrir el campo entero.
+ */
 .qm-ws__details-inline input[type="date"]::-webkit-calendar-picker-indicator,
 .qm-ws__details-inline input[type="time"]::-webkit-calendar-picker-indicator,
 .qm-ws__details-inline input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   position: absolute;
-  right: 0.55rem;
-  opacity: 0.9;
+  inset: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
   cursor: pointer;
-  filter: invert(1);
-}
-
-.qm-ws__details-inline .reta-details-form__field--date,
-.qm-ws__details-inline .reta-details-form__field--time {
-  position: relative;
+  opacity: 0.001;
+  z-index: 2;
 }
 
 @media (max-width: 639px) {
@@ -1976,7 +1999,7 @@
     height: 2.75rem;
     font-size: 16px;
     line-height: normal;
-    padding: 0 0.65rem;
+    padding: 0 2.25rem 0 0.65rem;
   }
 
   /* Volver: menos volumen */

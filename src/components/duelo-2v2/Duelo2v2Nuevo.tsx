@@ -58,6 +58,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
       date: partidoDateInputValue(now.toISOString()),
       timeStart: "15:00",
       timeEnd: "17:00",
+      durationMinutes: 120,
     };
   }, []);
 
@@ -72,6 +73,9 @@ export const Duelo2v2Nuevo: React.FC = () => {
   const [draftDate, setDraftDate] = useState(defaultSchedule.date);
   const [draftTimeStart, setDraftTimeStart] = useState(defaultSchedule.timeStart);
   const [draftTimeEnd, setDraftTimeEnd] = useState(defaultSchedule.timeEnd);
+  const [durationMinutes, setDurationMinutes] = useState(
+    defaultSchedule.durationMinutes
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** ID de un duelo en configuración (solo para tarjeta explícita; no hidrata form). */
@@ -158,6 +162,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
     setDraftDate(defaultSchedule.date);
     setDraftTimeStart(defaultSchedule.timeStart);
     setDraftTimeEnd(defaultSchedule.timeEnd);
+    setDurationMinutes(defaultSchedule.durationMinutes);
     setError(null);
   };
 
@@ -276,6 +281,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
             draftDate,
             draftTimeStart,
             draftTimeEnd,
+            durationMinutes,
           }}
           onChange={(next) => {
             setNombre(next.nombre);
@@ -286,6 +292,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
             setDraftDate(next.draftDate);
             setDraftTimeStart(next.draftTimeStart);
             setDraftTimeEnd(next.draftTimeEnd);
+            setDurationMinutes(next.durationMinutes);
           }}
           disabled={busy}
         />
