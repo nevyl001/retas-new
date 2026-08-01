@@ -1,5 +1,19 @@
 /* Riviera Gold — Home / Dashboard (contenido; shell en riviera-app-shell.css) */
 
+/* —— Alta: Detalles (sin sheet modal) —— */
+.home-create-details {
+  width: 100%;
+  min-width: 0;
+}
+
+.home-create-details__header {
+  margin-bottom: clamp(16px, 3vw, 28px);
+}
+
+.home-create-details__panel {
+  max-width: 920px;
+}
+
 /* Contenedor ancho: dashboard, no landing page centrada */
 .home-inner,
 .main-layout > .home-inner {

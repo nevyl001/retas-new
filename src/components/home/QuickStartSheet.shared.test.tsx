@@ -1,5 +1,5 @@
 import React from "react";
-import { createRoot, type Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import { act } from "react-dom/test-utils";
 import { QuickStartSheet } from "./QuickStartSheet";
 import { RetaConfigFields } from "../reta/RetaConfigFields";
@@ -8,13 +8,14 @@ import { validateRetaConfigForm } from "../../lib/reta/retaConfigValidation";
 
 jest.mock("../../club-experience", () => ({
   useClubModeEyebrow: () => "RivieraApp",
+  useConvocatoriaOriginName: () => "Club Test",
 }));
 
 /* eslint-disable testing-library/no-unnecessary-act */
 
 describe("QuickStartSheet shared form", () => {
   let container: HTMLDivElement;
-  let root: Root;
+  let root: ReturnType<typeof createRoot>;
 
   beforeEach(() => {
     (global as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
@@ -31,7 +32,7 @@ describe("QuickStartSheet shared form", () => {
     container.remove();
   });
 
-  it("17. QuickStartSheet monta RetaConfigFields (create) y envía payload", () => {
+  it("17. QuickStartSheet monta Detalles (essentials) y envía payload al Guardar", () => {
     const onSubmit = jest.fn();
     act(() => {
       root.render(
@@ -43,11 +44,13 @@ describe("QuickStartSheet shared form", () => {
       );
     });
     const scope = document.body;
-    expect(scope.querySelector(".reta-config-fields")).toBeTruthy();
+    expect(scope.querySelector(".reta-details-form")).toBeTruthy();
+    expect(scope.textContent).toMatch(/Detalles de la reta/);
     expect(scope.textContent).toMatch(/Remontada/);
     expect(scope.textContent).toMatch(/Nivel/);
+    expect(scope.textContent).toMatch(/Día/);
     const btn = Array.from(scope.querySelectorAll("button")).find((b) =>
-      /Iniciar reta/.test(b.textContent || "")
+      /^Guardar$/.test((b.textContent || "").trim())
     );
     expect(btn).toBeTruthy();
     act(() => {
@@ -58,9 +61,14 @@ describe("QuickStartSheet shared form", () => {
         modeId: "round-robin",
         courts: 2,
         championshipEnabled: false,
+        values: expect.objectContaining({
+          courts: 2,
+          championshipEnabled: false,
+        }),
       })
     );
   });
+
   it("18. edit mode carga valores actuales en RetaConfigFields", () => {
     const values: RetaConfigFormValues = {
       name: "Reta cargada",

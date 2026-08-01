@@ -28,11 +28,10 @@ export type RetaConfigFieldsProps = {
   showChampionship?: boolean;
   disabled?: boolean;
   /**
-   * essentials = grid denso (prep).
-   * entry = alta mínima (nombre + canchas + remontada); resto en Detalles.
+   * essentials = grid denso (Detalles / alta).
    * full = layout legacy (todos los campos a la vista).
    */
-  layout?: "full" | "essentials" | "entry";
+  layout?: "full" | "essentials";
 };
 
 function FieldLock({ reason }: { reason?: string }) {
@@ -54,7 +53,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   layout = "full",
 }) => {
   const essentials = layout === "essentials";
-  const entry = layout === "entry";
+  /** En Detalles (essentials) o edición: día/hora, duración y lugar. */
+  const showScheduleMeta = mode === "edit" || essentials;
   const patch = (partial: Partial<RetaConfigFormValues>) =>
     onChange((prev) => ({ ...prev, ...partial }));
 
@@ -143,7 +143,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   };
 
   const scheduleField =
-    mode === "edit" ? (
+    showScheduleMeta ? (
       <div
         className="reta-details-form__schedule-split"
         role="group"
@@ -228,7 +228,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   );
 
   const durationField =
-    mode === "edit" ? (
+    showScheduleMeta ? (
       <div className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
         <span className="home-sheet__field-label">Duración (min)</span>
         <div className="home-sheet__stepper reta-details-form__stepper">
@@ -275,7 +275,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     ) : null;
 
   const lugarField =
-    mode === "edit" ? (
+    showScheduleMeta ? (
       essentials ? (
         <div className="home-sheet__field reta-details-form__field reta-details-form__field--lugar">
           <span className="reta-details-form__lugar-label">
@@ -366,24 +366,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       ) : null}
     </div>
   ) : null;
-
-  if (entry) {
-    return (
-      <div
-        className="home-sheet__fields reta-config-fields"
-        role="group"
-        aria-label="Alta rápida de la reta"
-      >
-        {nameField}
-        {courtsField}
-        {championshipField}
-        <p className="home-sheet__field-optional" role="note">
-          Categoría, nivel, horario y lugar se configuran en Detalles después de
-          iniciar.
-        </p>
-      </div>
-    );
-  }
 
   if (essentials) {
     return (
