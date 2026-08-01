@@ -780,6 +780,7 @@
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  justify-content: center;
   justify-items: stretch;
   align-content: start;
 }
@@ -804,17 +805,21 @@
 }
 
 .matches-grid-simplified:has(> :only-child) {
-  display: flex;
+  grid-template-columns: minmax(min(100%, 360px), 480px);
   justify-content: center;
-  align-content: start;
-  width: 100%;
 }
 
 .matches-grid-simplified:has(> :only-child) > * {
-  flex: 0 1 480px;
-  max-width: 480px;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
+}
+
+@media (min-width: 701px) {
+  .matches-grid-simplified:has(> :nth-child(2):last-child) {
+    grid-template-columns: repeat(2, minmax(min(100%, 280px), 420px));
+    justify-content: center;
+  }
 }
 
 .winner-button-container,
