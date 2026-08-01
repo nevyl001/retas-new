@@ -1243,35 +1243,62 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             >
               {showAdmin ? "Ocultar inscritos" : "Administrar inscritos"}
             </button>
-            {cfg?.status === "open" ? (
+            {cfg?.status === "open" || cfg?.status === "paused" ? (
               <ConvocatoriaMoreMenu
                 items={[
-                  {
-                    id: "pause",
-                    label: "Pausar",
-                    disabled: saving,
-                    onSelect: () => {
-                      if (!entityId) return;
-                      setSaving(true);
-                      void (async () => {
-                        try {
-                          const row = await savePayload(entityId, {
-                            enabled: true,
-                            status: "paused",
-                            categoryLabel:
-                              categoryLabel.trim() ||
-                              cfg.category_label ||
-                              context.defaultCategory ||
-                              null,
-                          });
-                          setCfg(row);
-                          setStatus("paused");
-                        } finally {
-                          setSaving(false);
-                        }
-                      })();
-                    },
-                  },
+                  cfg.status === "open"
+                    ? {
+                        id: "pause",
+                        label: "Pausar",
+                        disabled: saving,
+                        onSelect: () => {
+                          if (!entityId) return;
+                          setSaving(true);
+                          void (async () => {
+                            try {
+                              const row = await savePayload(entityId, {
+                                enabled: true,
+                                status: "paused",
+                                categoryLabel:
+                                  categoryLabel.trim() ||
+                                  cfg.category_label ||
+                                  context.defaultCategory ||
+                                  null,
+                              });
+                              setCfg(row);
+                              setStatus("paused");
+                            } finally {
+                              setSaving(false);
+                            }
+                          })();
+                        },
+                      }
+                    : {
+                        id: "resume",
+                        label: "Reanudar",
+                        disabled: saving,
+                        onSelect: () => {
+                          if (!entityId) return;
+                          setSaving(true);
+                          void (async () => {
+                            try {
+                              const row = await savePayload(entityId, {
+                                enabled: true,
+                                status: "open",
+                                categoryLabel:
+                                  categoryLabel.trim() ||
+                                  cfg.category_label ||
+                                  context.defaultCategory ||
+                                  null,
+                              });
+                              setCfg(row);
+                              setStatus("open");
+                            } finally {
+                              setSaving(false);
+                            }
+                          })();
+                        },
+                      },
                 ]}
               />
             ) : null}
