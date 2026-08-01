@@ -8,6 +8,8 @@ import {
 import {
   RETA_COURTS_MAX,
   RETA_COURTS_MIN,
+  RETA_DURATION_MAX,
+  RETA_DURATION_MIN,
   clampChampionshipRoundsShared,
   clampRetaCourts,
   clampRetaDurationMinutes,
@@ -200,23 +202,49 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
 
   const durationField =
     mode === "edit" ? (
-      <label className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
+      <div className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
         <span className="home-sheet__field-label">Duración (min)</span>
-        <input
-          type="number"
-          min={15}
-          max={480}
-          step={15}
-          className="home-sheet__input riviera-input"
-          value={values.duration_minutes}
-          disabled={durEd.locked}
-          onChange={(e) =>
-            patch({
-              duration_minutes: clampRetaDurationMinutes(e.target.value),
-            })
-          }
-        />
-      </label>
+        <div className="home-sheet__stepper reta-details-form__stepper">
+          <button
+            type="button"
+            className="home-sheet__stepper-btn"
+            disabled={
+              durEd.locked || values.duration_minutes <= RETA_DURATION_MIN
+            }
+            onClick={() =>
+              patch({
+                duration_minutes: clampRetaDurationMinutes(
+                  values.duration_minutes - 15
+                ),
+              })
+            }
+            aria-label="Menos duración"
+          >
+            −
+          </button>
+          <span className="home-sheet__stepper-value" aria-live="polite">
+            {values.duration_minutes}
+          </span>
+          <button
+            type="button"
+            className="home-sheet__stepper-btn"
+            disabled={
+              durEd.locked || values.duration_minutes >= RETA_DURATION_MAX
+            }
+            onClick={() =>
+              patch({
+                duration_minutes: clampRetaDurationMinutes(
+                  values.duration_minutes + 15
+                ),
+              })
+            }
+            aria-label="Más duración"
+          >
+            +
+          </button>
+        </div>
+        {durEd.locked ? <FieldLock reason={durEd.reason} /> : null}
+      </div>
     ) : null;
 
   const canchaField =

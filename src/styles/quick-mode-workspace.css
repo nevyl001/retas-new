@@ -231,15 +231,16 @@
 
 .qm-ws__details-inline .reta-details-form__schedule-split {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 0.55rem;
   width: 100%;
   min-width: 0;
-  align-items: start;
+  align-items: stretch;
 }
 
 .qm-ws__details-inline .reta-details-form__schedule-split .reta-details-form__field {
   margin: 0;
+  min-width: 0;
 }
 
 .qm-ws__details-inline input[type="date"],
@@ -250,9 +251,15 @@
   min-width: 0;
   min-height: 2.75rem;
   height: 2.75rem;
-  padding: 0 0.65rem;
-  font-size: 1rem;
-  line-height: 2.75rem;
+  padding: 0 2.25rem 0 0.7rem;
+  font-size: 16px;
+  line-height: normal;
+  text-align: left;
+  color: var(--qm-ink-text);
+  background: var(--qm-ink-input);
+  border: 1px solid var(--qm-ink-input-border);
+  border-radius: 8px;
+  box-sizing: border-box;
   color-scheme: dark;
   -webkit-appearance: none;
   appearance: none;
@@ -261,16 +268,37 @@
 .qm-ws__details-inline input[type="date"]::-webkit-date-and-time-value,
 .qm-ws__details-inline input[type="time"]::-webkit-date-and-time-value {
   text-align: left;
-  margin: 0;
+  margin-inline: 0;
+  min-height: 1.25rem;
 }
 
 .qm-ws__details-inline input[type="date"]::-webkit-calendar-picker-indicator,
 .qm-ws__details-inline input[type="time"]::-webkit-calendar-picker-indicator,
 .qm-ws__details-inline input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0.55rem;
   opacity: 0.9;
   cursor: pointer;
   filter: invert(1);
-  margin-left: 0.15rem;
+}
+
+.qm-ws__details-inline .reta-details-form__field--date,
+.qm-ws__details-inline .reta-details-form__field--time {
+  position: relative;
+}
+
+@media (max-width: 639px) {
+  .qm-ws__details-inline .reta-details-form__schedule-split {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .qm-ws__details-inline .reta-details-form__field--duration .reta-details-form__stepper,
+  .qm-ws__details-inline .reta-details-form__field--courts .reta-details-form__stepper {
+    width: 100%;
+    justify-content: space-between;
+    max-width: 12rem;
+  }
 }
 
 .qm-ws__details-inline .home-sheet__input::placeholder,
@@ -412,7 +440,7 @@
   }
 
   .qm-ws__details-inline .reta-details-form__row--meta {
-    grid-template-columns: minmax(0, 1.3fr) 5.5rem 5.5rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.2fr) auto auto minmax(0, 1fr);
   }
 
   .qm-ws__details-inline .reta-details-form__field--champ {
@@ -432,7 +460,7 @@
   }
 
   .qm-ws__details-inline .reta-details-form__row--meta {
-    grid-template-columns: minmax(0, 1.4fr) 6rem 6.5rem minmax(0, 1.1fr) minmax(8rem, auto);
+    grid-template-columns: minmax(0, 1.3fr) auto auto minmax(0, 1fr) minmax(8rem, auto);
   }
 
   .qm-ws__details-inline .reta-details-form__field--champ {
