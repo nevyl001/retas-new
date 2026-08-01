@@ -43,6 +43,7 @@ import {
 import { buildDueloConvocatoriaContext } from "../../lib/retaAbierta/adapters";
 import { Duelo2v2DetailsEditor } from "./Duelo2v2DetailsEditor";
 import { Duelo2v2PageShell } from "./Duelo2v2PageShell";
+import { Duelo2v2PublicShare } from "./Duelo2v2PublicShare";
 import { Duelo2v2ScoreEditor } from "./Duelo2v2ScoreEditor";
 import {
   bothPairsReady,
@@ -632,81 +633,74 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 />
               }
               details={
-                <section
-                  id="duelo-detalles-inline"
-                  className="qm-ws__details-inline"
-                  aria-label="Detalles de la reta"
-                >
-                  <Duelo2v2DetailsEditor
-                    inline
-                    duelo={duelo}
-                    disabled={busy || enJuego}
-                    onSaved={(updated) => {
-                      setDuelo(updated);
-                      setMessage("Datos del encuentro actualizados.");
-                      setError(null);
-                    }}
-                    onError={setError}
-                  />
-                  <div id="duelo-convocatoria-inline">
+                <>
+                  <section
+                    id="duelo-detalles-inline"
+                    className="qm-ws__details-inline"
+                    aria-label="Detalles de la reta"
+                  >
+                    <Duelo2v2DetailsEditor
+                      inline
+                      collapsible={enJuego}
+                      duelo={duelo}
+                      disabled={busy}
+                      onSaved={(updated) => {
+                        setDuelo(updated);
+                        setMessage("Datos del encuentro actualizados.");
+                        setError(null);
+                      }}
+                      onError={setError}
+                    />
                     {enConfig ? (
-                      <QuickModeConvocatoriaGate
-                        open={wantConvocatoria}
-                        live={convIsLive}
-                        panelId="duelo-convocatoria-panel"
-                        onToggle={() => {
-                          setWantConvocatoria((v) => {
-                            const next = !v;
-                            if (next) setConvTouched(true);
-                            return next;
-                          });
-                        }}
-                      >
-                        {showConvocatoriaPanel ? (
-                          <>
-                            <ConvocatoriaWhatsAppPanel
-                              embedded
-                              shareOnly
-                              onLiveChange={onConvLiveChange}
-                              context={buildDueloConvocatoriaContext({
-                                dueloId: duelo.id,
-                                name: duelo.nombre,
-                                locationLabel: lugarConvocatoria,
-                                includeLugar,
-                                canchaLabel: duelo.cancha ?? undefined,
-                                scheduledAt: duelo.programado_en,
-                                scheduledUntil: duelo.programado_hasta,
-                                clubName: convocatoriaOrigin,
-                                categoryLabel:
-                                  readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
-                                  undefined,
-                              })}
-                            />
-                            <PublicShareSection
-                              publicUrl={publicUrl}
-                              title="Enlace público"
-                              infoLines={[
-                                "Comparte el enlace para ver el marcador del duelo (solo lectura).",
-                              ]}
-                              copyButtonLabel="Copiar vista pública"
-                            />
-                          </>
-                        ) : null}
-                      </QuickModeConvocatoriaGate>
-                    ) : (
-                      <div className="duelo2v2-live-public-share">
-                        <PublicShareSection
-                          publicUrl={publicUrl}
-                          title="Vista pública"
-                          infoLines={[
-                            "El duelo ya está en juego. Comparte el marcador en vivo (solo lectura).",
-                          ]}
-                          copyButtonLabel="Copiar vista pública"
-                        />
+                      <div id="duelo-convocatoria-inline">
+                        <QuickModeConvocatoriaGate
+                          open={wantConvocatoria}
+                          live={convIsLive}
+                          panelId="duelo-convocatoria-panel"
+                          onToggle={() => {
+                            setWantConvocatoria((v) => {
+                              const next = !v;
+                              if (next) setConvTouched(true);
+                              return next;
+                            });
+                          }}
+                        >
+                          {showConvocatoriaPanel ? (
+                            <>
+                              <ConvocatoriaWhatsAppPanel
+                                embedded
+                                shareOnly
+                                onLiveChange={onConvLiveChange}
+                                context={buildDueloConvocatoriaContext({
+                                  dueloId: duelo.id,
+                                  name: duelo.nombre,
+                                  locationLabel: lugarConvocatoria,
+                                  includeLugar,
+                                  canchaLabel: duelo.cancha ?? undefined,
+                                  scheduledAt: duelo.programado_en,
+                                  scheduledUntil: duelo.programado_hasta,
+                                  clubName: convocatoriaOrigin,
+                                  categoryLabel:
+                                    readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
+                                    undefined,
+                                })}
+                              />
+                              <PublicShareSection
+                                publicUrl={publicUrl}
+                                title="Enlace público"
+                                infoLines={[
+                                  "Comparte el enlace para ver el marcador del duelo (solo lectura).",
+                                ]}
+                                copyButtonLabel="Copiar vista pública"
+                              />
+                            </>
+                          ) : null}
+                        </QuickModeConvocatoriaGate>
                       </div>
-                    )}
-                  </div>
-                </section>
+                    ) : null}
+                  </section>
+                  {enJuego ? <Duelo2v2PublicShare publicUrl={publicUrl} /> : null}
+                </>
               }
               stepper={
                 <QuickModeStepper

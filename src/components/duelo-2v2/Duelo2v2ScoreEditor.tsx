@@ -172,7 +172,7 @@ export const Duelo2v2ScoreEditor: React.FC<Duelo2v2ScoreEditorProps> = ({
           <div className="duelo2v2-score-editor__save">
             <Button
               type="button"
-              variant="secondary"
+              variant="primary"
               onClick={() => void onSave(summary.detalle)}
             >
               Guardar marcador

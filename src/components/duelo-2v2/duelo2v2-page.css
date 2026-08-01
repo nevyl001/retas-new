@@ -498,6 +498,158 @@
   padding: 0;
 }
 
+/* Detalles colapsables cuando el duelo ya está en juego */
+.duelo2v2-details-editor--collapsible .duelo2v2-details-editor__toggle {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: var(--qm-module-pad-y, 0.85rem) var(--qm-module-pad-x, 1rem);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.duelo2v2-details-editor--collapsible .duelo2v2-details-editor__toggle:focus-visible {
+  outline: 2px solid var(--qm-ink-text, var(--ro-chrome-text));
+  outline-offset: -2px;
+}
+
+.duelo2v2-details-editor__toggle-chevron {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.duelo2v2-details-editor--collapsible.is-open .duelo2v2-details-editor__toggle-chevron {
+  transform: rotate(45deg);
+}
+
+.duelo2v2-details-editor__toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.duelo2v2-details-editor__toggle-title {
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--qm-ink-text, var(--ro-text-primary));
+}
+
+.duelo2v2-details-editor__toggle-subtitle {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--qm-ink-muted, var(--ro-text-muted));
+}
+
+.duelo2v2-details-editor__toggle-action {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--qm-ink-muted, var(--ro-text-muted));
+  white-space: nowrap;
+}
+
+.duelo2v2-details-editor--collapsible.is-open .duelo2v2-details-editor__toolbar--nested,
+.duelo2v2-details-editor--collapsible.is-open .duelo2v2-details-editor__form {
+  padding-left: var(--qm-module-pad-x, 1rem);
+  padding-right: var(--qm-module-pad-x, 1rem);
+}
+
+.duelo2v2-details-editor--collapsible.is-open .duelo2v2-details-editor__form {
+  padding-bottom: var(--qm-module-pad-y, 0.85rem);
+}
+
+.duelo2v2-details-editor__toolbar--nested {
+  padding-top: 0;
+  border-top: 1px solid var(--qm-ink-border, var(--ro-chrome-border));
+}
+
+/* Vista pública: bloque propio (fuera de detalles), escala ink */
+.duelo2v2-public-share {
+  width: 100%;
+  margin-top: 0;
+  box-sizing: border-box;
+}
+
+.duelo2v2-public-share .duelo2v2-public-share__card.public-link-section {
+  margin: 0;
+  padding: var(--qm-module-pad-y, 0.85rem) var(--qm-module-pad-x, 1rem);
+  border-radius: var(--qm-module-radius, 10px);
+  border: 1px solid var(--qm-ink-border, var(--ro-chrome-border));
+  background: var(--qm-ink-bg, var(--ro-chrome-bg));
+  box-shadow: none;
+  color: var(--qm-ink-text, var(--ro-chrome-text));
+}
+
+.duelo2v2-public-share .public-link-section h3 {
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--qm-ink-text, var(--ro-chrome-text));
+  margin: 0 0 0.55rem;
+}
+
+.duelo2v2-public-share .public-link-info {
+  margin-bottom: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--qm-ink-border, var(--ro-chrome-border));
+  background: var(--qm-ink-inset, var(--ro-chrome-active));
+}
+
+.duelo2v2-public-share .public-link-info p {
+  margin: 0;
+  padding-left: 0;
+  color: var(--qm-ink-muted, var(--ro-chrome-text-muted));
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.duelo2v2-public-share .public-link-info p::before {
+  content: none;
+}
+
+.duelo2v2-public-share .public-link-actions {
+  gap: 0.5rem;
+}
+
+.duelo2v2-public-share .public-link-button,
+.duelo2v2-public-share .public-link-preview {
+  min-height: 40px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--qm-ink-border-strong, #2e343d);
+  background: var(--qm-ink-elevated, var(--ro-chrome-elevated));
+  color: var(--qm-ink-text, var(--ro-chrome-text));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.duelo2v2-public-share .public-link-button:hover,
+.duelo2v2-public-share .public-link-preview:hover {
+  border-color: var(--qm-ink-text, var(--ro-chrome-text));
+}
+
 .duelo2v2-form__submit {
   padding-top: 0.5rem;
 }
@@ -1588,14 +1740,23 @@
   color:var(--ro-text-muted);
 }
 
-/* —— Editor de marcador por sets —— */
+/* —— Editor de marcador por sets ——
+   Panel claro dentro del workbench ink: los --text-* del workbench
+   apuntan a ivory y dejan botones secondary/ghost ilegibles. */
 .duelo2v2-score-editor {
+  --text-primary: var(--ro-text-primary);
+  --text-secondary: var(--ro-text-secondary);
+  --text-muted: var(--ro-text-muted);
+  --bg-card: var(--ro-bg-card);
+  --bg-elevated: var(--ro-bg-elevated);
+  --border-default: var(--ro-border);
   margin: 1.5rem auto;
   max-width: 560px;
   padding: clamp(1.25rem, 3vw, 1.75rem);
   border-radius: 18px;
   border:1px solid var(--ro-border);
-  background:var(--ro-bg-input);
+  background:var(--ro-bg-card);
+  color: var(--ro-text-primary);
   box-shadow: 0 8px 32px var(--ro-scrim-modal);
 }
 
@@ -1802,6 +1963,19 @@
 
 .duelo2v2-score-editor__save button {
   min-width: 200px;
+}
+
+/* CTA sobre panel claro: contraste fijo (no hereda ivory del workbench) */
+.duelo2v2-score-editor__save .riviera-btn-primary {
+  background: var(--ro-chrome-bg);
+  color: var(--ro-chrome-text);
+  border-color: var(--ro-chrome-bg);
+}
+
+.duelo2v2-score-editor__save .riviera-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ro-chrome-bg) 88%, var(--ro-chrome-text));
+  border-color: color-mix(in srgb, var(--ro-chrome-bg) 88%, var(--ro-chrome-text));
+  color: var(--ro-chrome-text);
 }
 
 @media (max-width: 480px) {

@@ -26,6 +26,11 @@ interface Duelo2v2DetailsEditorProps {
   disabled?: boolean;
   /** Siempre visible en el slot details (mismo formato que Reta / Americano). */
   inline?: boolean;
+  /**
+   * En juego: cerrado por defecto; se abre con dropdown para corregir
+   * nombre/horario/sede sin ocupar la pantalla.
+   */
+  collapsible?: boolean;
   onSaved: (duelo: Duelo2v2) => void;
   onError?: (message: string) => void;
 }
@@ -65,11 +70,12 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
   duelo,
   disabled = false,
   inline = false,
+  collapsible = false,
   onSaved,
   onError,
 }) => {
   const convocatoriaOrigin = useConvocatoriaOriginName();
-  const [open, setOpen] = useState(inline);
+  const [open, setOpen] = useState(() => inline && !collapsible);
   const [values, setValues] = useState<Duelo2v2ConfigFieldValues>(() =>
     valuesFromDuelo(duelo, convocatoriaOrigin)
   );
@@ -83,6 +89,11 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
     setBaseline(JSON.stringify(next));
     setLocalError(null);
   }, [duelo, convocatoriaOrigin]);
+
+  useEffect(() => {
+    if (collapsible) setOpen(false);
+    else if (inline) setOpen(true);
+  }, [collapsible, inline, duelo.id]);
 
   const dirty = useMemo(
     () => JSON.stringify(values) !== baseline,
@@ -152,13 +163,38 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
   };
 
   const formId = `duelo-edit-form-${duelo.id}`;
+  const panelId = `${formId}-panel`;
+  const useDropdown = inline && collapsible;
 
   return (
     <section
-      className={`duelo2v2-details-editor${inline ? " duelo2v2-details-editor--inline reta-config-panel reta-config-panel--inline" : ""}`}
+      className={`duelo2v2-details-editor${inline ? " duelo2v2-details-editor--inline reta-config-panel reta-config-panel--inline" : ""}${useDropdown ? " duelo2v2-details-editor--collapsible" : ""}${useDropdown && open ? " is-open" : ""}`}
       aria-label="Editar encuentro"
     >
-      {inline ? (
+      {useDropdown ? (
+        <button
+          type="button"
+          className="duelo2v2-details-editor__toggle"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span className="duelo2v2-details-editor__toggle-chevron" aria-hidden />
+          <span className="duelo2v2-details-editor__toggle-copy">
+            <span className="duelo2v2-details-editor__toggle-title">
+              Detalles de la reta
+            </span>
+            <span className="duelo2v2-details-editor__toggle-subtitle">
+              {open
+                ? "Nombre, horario, sede y cancha"
+                : "Editar si te equivocaste en algo"}
+            </span>
+          </span>
+          <span className="duelo2v2-details-editor__toggle-action">
+            {open ? "Cerrar" : "Editar"}
+          </span>
+        </button>
+      ) : inline ? (
         <header className="reta-config-panel__toolbar">
           <div className="reta-config-panel__toolbar-copy">
             <h2 className="reta-config-panel__title">Detalles de la reta</h2>
@@ -211,41 +247,80 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
       )}
 
       {open ? (
-        <form
-          id={formId}
-          className="duelo2v2-details-editor__form"
-          onSubmit={(e) => void handleSave(e)}
-        >
-          <Duelo2v2ConfigFields
-            idPrefix={`duelo-edit-${duelo.id}`}
-            values={values}
-            onChange={setValues}
-            disabled={disabled || busy}
-          />
-
-          {localError ? (
-            <p className="reta-config-panel__feedback reta-config-panel__feedback--error">
-              {localError}
-            </p>
+        <div id={useDropdown ? panelId : undefined}>
+          {useDropdown ? (
+            <header className="reta-config-panel__toolbar duelo2v2-details-editor__toolbar--nested">
+              <div className="reta-config-panel__toolbar-copy">
+                <p className="reta-config-panel__subtitle">
+                  Corrige y guarda los cambios.
+                </p>
+              </div>
+              <div className="reta-config-panel__actions">
+                {dirty ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy || disabled}
+                    onClick={handleDiscard}
+                  >
+                    Descartar
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  disabled={!canSave}
+                  loading={busy}
+                  onClick={() => {
+                    const form = document.getElementById(
+                      formId
+                    ) as HTMLFormElement | null;
+                    form?.requestSubmit();
+                  }}
+                >
+                  Guardar
+                </Button>
+              </div>
+            </header>
           ) : null}
+          <form
+            id={formId}
+            className="duelo2v2-details-editor__form"
+            onSubmit={(e) => void handleSave(e)}
+          >
+            <Duelo2v2ConfigFields
+              idPrefix={`duelo-edit-${duelo.id}`}
+              values={values}
+              onChange={setValues}
+              disabled={disabled || busy}
+            />
 
-          {inline ? null : (
-            <div className="duelo2v2-details-editor__actions">
-              <Button type="submit" variant="primary" size="sm" disabled={!canSave}>
-                {busy ? "Guardando…" : "Guardar cambios"}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={busy}
-                onClick={() => setOpen(false)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          )}
-        </form>
+            {localError ? (
+              <p className="reta-config-panel__feedback reta-config-panel__feedback--error">
+                {localError}
+              </p>
+            ) : null}
+
+            {inline ? null : (
+              <div className="duelo2v2-details-editor__actions">
+                <Button type="submit" variant="primary" size="sm" disabled={!canSave}>
+                  {busy ? "Guardando…" : "Guardar cambios"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => setOpen(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            )}
+          </form>
+        </div>
       ) : null}
     </section>
   );
