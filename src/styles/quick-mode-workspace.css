@@ -694,6 +694,11 @@
   grid-template-columns: auto minmax(10rem, 1fr);
 }
 
+.qm-ws__details-conv .ra-org--embedded .ra-org__embedded-pre-grid--cupo-only {
+  grid-template-columns: auto;
+  justify-content: start;
+}
+
 .qm-ws__details-conv .ra-org--embedded .ra-org__capacity-input,
 .qm-ws__details-conv .ra-org--embedded .ra-org__capacity-hint,
 .qm-ws__details-conv .ra-org--embedded .home-sheet__stepper-value {

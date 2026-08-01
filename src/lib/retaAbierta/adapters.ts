@@ -30,6 +30,8 @@ export function buildTournamentConvocatoriaContext(opts: {
   tournamentFormat?: string | null;
   championshipEnabled?: boolean;
   productHeadline?: string;
+  /** Categoría / nivel desde Detalles (description). */
+  categoryLabel?: string;
 }): ConvocatoriaAdapterContext {
   const productHeadline =
     opts.productHeadline ??
@@ -57,6 +59,7 @@ export function buildTournamentConvocatoriaContext(opts: {
       : undefined,
     includeLugar,
     defaultCancha: opts.canchaLabel?.trim() || undefined,
+    defaultCategory: opts.categoryLabel?.trim() || undefined,
     defaultDurationMinutes: duration,
     defaultScheduledAt: opts.scheduledAt ?? null,
     clubName: club,

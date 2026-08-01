@@ -254,7 +254,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             90
         );
         setCategoryLabel(
-          row.category_label ?? context.defaultCategory ?? ""
+          context.defaultCategory?.trim() ||
+            row.category_label?.trim() ||
+            ""
         );
         setRamaLabel(row.rama_label ?? "");
         const prefs =
@@ -906,7 +908,7 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           className="ra-org__embedded-pre"
           data-testid="convocatoria-embedded-prelaunch"
         >
-          <div className="ra-org__embedded-pre-grid">
+          <div className="ra-org__embedded-pre-grid ra-org__embedded-pre-grid--cupo-only">
             <div className="ra-org__capacity">
               <div className="ra-org__capacity-row">
                 <span
@@ -966,29 +968,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 </div>
               </div>
             </div>
-
-            <label className="ra-org__embedded-field">
-              <span className="ra-org__field-label" id="ra-org-cat-pre-label">
-                Categoría / nivel
-              </span>
-              <input
-                type="text"
-                className="ra-org__embedded-input"
-                placeholder="Ej. 5ta Fuerza"
-                value={categoryLabel}
-                aria-labelledby="ra-org-cat-pre-label"
-                onChange={(e) => setCategoryLabel(e.target.value)}
-              />
-            </label>
-
-            <label className="ra-org__toggle ra-org__toggle--inline">
-              <input
-                type="checkbox"
-                checked={waitlistEnabled}
-                onChange={(e) => setWaitlistEnabled(e.target.checked)}
-              />
-              <span>Lista de espera</span>
-            </label>
           </div>
         </div>
       ) : null}
@@ -1206,14 +1185,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
               </label>
             )}
             <label>
-              Categoría / nivel
-              <input
-                value={categoryLabel}
-                onChange={(e) => setCategoryLabel(e.target.value)}
-                placeholder="Ej. 5ta Fuerza"
-              />
-            </label>
-            <label>
               Mostrar rating
               <select
                 value={displayRating ? "1" : "0"}
@@ -1222,16 +1193,6 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
                 <option value="1">Sí</option>
                 <option value="0">No</option>
               </select>
-            </label>
-          </div>
-          <div className="ra-org__checks">
-            <label>
-              <input
-                type="checkbox"
-                checked={waitlistEnabled}
-                onChange={(e) => setWaitlistEnabled(e.target.checked)}
-              />
-              Permitir lista de espera
             </label>
           </div>
         </>
