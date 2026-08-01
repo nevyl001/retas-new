@@ -51,7 +51,8 @@ export function buildShareDtoFromOrganizerState(
     duration_minutes,
     location_label: context.defaultLocation ?? cfg.location_label ?? null,
     cancha_label: context.defaultCancha ?? null,
-    category_label: cfg.category_label ?? context.defaultCategory ?? null,
+    // Detalles.nivel (fuerza) manda sobre cache stale de open_registration.
+    category_label: context.defaultCategory ?? cfg.category_label ?? null,
     rama_label: cfg.rama_label,
     capacity,
     confirmed_count: confirmed.length,

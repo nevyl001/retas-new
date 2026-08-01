@@ -636,8 +636,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       let launchDuration = durationMinutes || context.defaultDurationMinutes || 90;
       let launchTitle = titlePublic.trim() || context.defaultTitle;
       let launchCategory =
-        categoryLabel.trim() ||
         context.defaultCategory?.trim() ||
+        categoryLabel.trim() ||
         cfg?.category_label?.trim() ||
         "";
       const launchIncludeLugar = includeLugar;
@@ -850,7 +850,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     (titlePublic.trim() || context.defaultTitle || "").trim() ||
     "Sin nombre";
   const categoryLine =
-    (cfg?.category_label?.trim() || categoryLabel.trim() || "").trim();
+    (context.defaultCategory?.trim() ||
+      categoryLabel.trim() ||
+      cfg?.category_label?.trim() ||
+      "").trim();
   const progressPct =
     effectiveCapacity > 0
       ? Math.min(100, Math.round((confirmed.length / effectiveCapacity) * 100))
