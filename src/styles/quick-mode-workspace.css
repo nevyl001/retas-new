@@ -229,6 +229,108 @@
   color: var(--qm-ink-text);
 }
 
+/* date/time: iOS colapsa datetime-local con height fijo; estos sí se ven */
+.qm-ws__details-inline input[type="date"],
+.qm-ws__details-inline input[type="time"],
+.qm-ws__details-inline input[type="datetime-local"] {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  height: auto;
+  padding: 0.55rem 0.65rem;
+  font-size: 1rem; /* evita zoom iOS */
+  line-height: 1.35;
+  color-scheme: dark;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.qm-ws__details-inline input[type="date"]::-webkit-calendar-picker-indicator,
+.qm-ws__details-inline input[type="time"]::-webkit-calendar-picker-indicator,
+.qm-ws__details-inline input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  opacity: 0.85;
+  cursor: pointer;
+  filter: invert(1);
+}
+
+.qm-ws__details-inline .reta-details-form__schedule-split {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.qm-ws__details-inline .reta-details-form__schedule-part {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.qm-ws__details-inline .reta-details-form__schedule-part-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws__details-inline .reta-details-form__field--schedule {
+  gap: 0.35rem;
+}
+
+.qm-ws__details-inline .reta-details-form__more {
+  margin: 0;
+  border: 1px solid var(--qm-ink-border);
+  border-radius: 8px;
+  background: var(--qm-ink-inset);
+  overflow: hidden;
+}
+
+.qm-ws__details-inline .reta-details-form__more-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.65rem;
+  cursor: pointer;
+  list-style: none;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--qm-ink-text);
+  user-select: none;
+}
+
+.qm-ws__details-inline .reta-details-form__more-summary::-webkit-details-marker {
+  display: none;
+}
+
+.qm-ws__details-inline .reta-details-form__more-summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.85rem;
+  color: var(--qm-ink-muted);
+  transition: transform 0.15s ease;
+}
+
+.qm-ws__details-inline .reta-details-form__more[open] > .reta-details-form__more-summary::before {
+  transform: rotate(90deg);
+}
+
+.qm-ws__details-inline .reta-details-form__more-hint {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--qm-ink-muted);
+}
+
+.qm-ws__details-inline .reta-details-form__more .reta-details-form__row--meta {
+  padding: 0 0.75rem 0.75rem;
+}
+
 .qm-ws__details-inline .home-sheet__input::placeholder,
 .qm-ws__details-inline .riviera-input::placeholder,
 .qm-ws__details-inline input::placeholder {
@@ -364,7 +466,7 @@
 
 @media (min-width: 640px) {
   .qm-ws__details-inline .reta-details-form__row--primary {
-    grid-template-columns: minmax(0, 1.4fr) minmax(11rem, 1fr) auto;
+    grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 1.15fr) auto;
   }
 
   .qm-ws__details-inline .reta-details-form__row--meta {
@@ -384,7 +486,7 @@
   }
 
   .qm-ws__details-inline .reta-details-form__row--primary {
-    grid-template-columns: minmax(0, 1.6fr) minmax(14rem, 1.1fr) auto;
+    grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1.2fr) auto;
   }
 
   .qm-ws__details-inline .reta-details-form__row--meta {
@@ -1884,11 +1986,20 @@
     min-height: 40px;
   }
 
-  .qm-ws__details-inline input:not([type="checkbox"]):not([type="radio"]),
+  .qm-ws__details-inline
+    input:not([type="checkbox"]):not([type="radio"]):not([type="date"]):not([type="time"]):not([type="datetime-local"]),
   .qm-ws__details-inline select,
   .qm-ws__details-inline textarea {
     min-height: var(--rd-input-h);
     height: var(--rd-input-h);
+  }
+
+  .qm-ws__details-inline input[type="date"],
+  .qm-ws__details-inline input[type="time"],
+  .qm-ws__details-inline input[type="datetime-local"] {
+    min-height: 2.75rem;
+    height: auto;
+    font-size: 16px;
   }
 
   /* Volver: menos volumen */

@@ -36,7 +36,7 @@ export const RetaConfigPanel: React.FC<Props> = ({
   onSaved,
   onCancel,
   showChampionship,
-  subtitle = "Nombre, horario, sede y canchas.",
+  subtitle = "Nombre, horario y canchas.",
 }) => {
   const phase = useMemo(
     () =>

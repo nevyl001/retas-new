@@ -116,19 +116,58 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     </div>
   );
 
+  const scheduleParts = (() => {
+    const raw = values.programado_en || "";
+    const tIdx = raw.indexOf("T");
+    if (tIdx <= 0) {
+      return { date: raw.slice(0, 10) || "", time: "" };
+    }
+    return {
+      date: raw.slice(0, tIdx),
+      time: raw.slice(tIdx + 1, tIdx + 6),
+    };
+  })();
+
+  const patchSchedule = (next: { date?: string; time?: string }) => {
+    const date = next.date !== undefined ? next.date : scheduleParts.date;
+    const time = next.time !== undefined ? next.time : scheduleParts.time;
+    if (!date) {
+      patch({ programado_en: "" });
+      return;
+    }
+    patch({ programado_en: `${date}T${time || "00:00"}` });
+  };
+
   const scheduleField =
     mode === "edit" ? (
-      <label className="home-sheet__field reta-details-form__field reta-details-form__field--schedule">
+      <div className="home-sheet__field reta-details-form__field reta-details-form__field--schedule">
         <span className="home-sheet__field-label">Día y hora</span>
-        <input
-          type="datetime-local"
-          className="home-sheet__input riviera-input"
-          value={values.programado_en}
-          disabled={schedEd.locked}
-          onChange={(e) => patch({ programado_en: e.target.value })}
-        />
+        <div className="reta-details-form__schedule-split">
+          <label className="reta-details-form__schedule-part">
+            <span className="reta-details-form__schedule-part-label">Día</span>
+            <input
+              type="date"
+              className="home-sheet__input riviera-input reta-details-form__date"
+              value={scheduleParts.date}
+              disabled={schedEd.locked}
+              onChange={(e) => patchSchedule({ date: e.target.value })}
+              aria-label="Día"
+            />
+          </label>
+          <label className="reta-details-form__schedule-part">
+            <span className="reta-details-form__schedule-part-label">Hora</span>
+            <input
+              type="time"
+              className="home-sheet__input riviera-input reta-details-form__time"
+              value={scheduleParts.time}
+              disabled={schedEd.locked}
+              onChange={(e) => patchSchedule({ time: e.target.value })}
+              aria-label="Hora"
+            />
+          </label>
+        </div>
         {schedEd.locked ? <FieldLock reason={schedEd.reason} /> : null}
-      </label>
+      </div>
     ) : null;
 
   const descriptionField = essentials ? (
@@ -302,13 +341,21 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           {scheduleField}
           {courtsField}
         </div>
-        <div className="reta-details-form__row reta-details-form__row--meta">
-          {descriptionField}
-          {durationField}
-          {canchaField}
-          {lugarField}
-          {championshipField}
-        </div>
+        <details className="reta-details-form__more">
+          <summary className="reta-details-form__more-summary">
+            Más opciones
+            <span className="reta-details-form__more-hint">
+              descripción, sede, remontada…
+            </span>
+          </summary>
+          <div className="reta-details-form__row reta-details-form__row--meta">
+            {descriptionField}
+            {durationField}
+            {canchaField}
+            {lugarField}
+            {championshipField}
+          </div>
+        </details>
       </div>
     );
   }
