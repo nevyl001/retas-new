@@ -82,6 +82,9 @@
   --text-primary: var(--qm-ink-text);
   --text-secondary: var(--qm-ink-muted);
   --text-muted: var(--qm-ink-muted);
+  --ro-text-primary: var(--qm-ink-text);
+  --ro-text-secondary: var(--qm-ink-muted);
+  --ro-text-muted: var(--qm-ink-muted);
   /* Acentos UI en ink: el --ro-accent del tema claro es tinta casi negra */
   --ro-accent: #f5f2eb;
   --ro-accent-hover: #ffffff;
@@ -765,6 +768,31 @@
 
 .qm-ws__details-conv .ra-org--embedded .ra-org__btn--outline {
   border-color: var(--qm-ink-border-strong);
+  color: var(--qm-ink-text);
+}
+
+/* Menú ⋯ / Pausar: --ro-text-primary no se remapea en ink → texto ilegible */
+.qm-ws__details-conv .ra-org--embedded .ra-org__more-trigger {
+  border-color: var(--qm-ink-border-strong);
+  color: var(--qm-ink-text);
+  background: var(--qm-ink-input);
+}
+
+.qm-ws__details-conv .ra-org--embedded .ra-org__more-menu {
+  background: var(--qm-ink-elevated);
+  border-color: var(--qm-ink-border-strong);
+  color: var(--qm-ink-text);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+.qm-ws__details-conv .ra-org--embedded .ra-org__more-item {
+  color: var(--qm-ink-text);
+  background: transparent;
+}
+
+.qm-ws__details-conv .ra-org--embedded .ra-org__more-item:hover:not(:disabled),
+.qm-ws__details-conv .ra-org--embedded .ra-org__more-item:focus-visible {
+  background: color-mix(in srgb, var(--qm-ink-text) 12%, transparent);
   color: var(--qm-ink-text);
 }
 
