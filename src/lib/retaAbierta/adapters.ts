@@ -30,7 +30,7 @@ export function buildTournamentConvocatoriaContext(opts: {
   tournamentFormat?: string | null;
   championshipEnabled?: boolean;
   productHeadline?: string;
-  /** Categoría / nivel desde Detalles (description). */
+  /** Nivel / fuerza desde Detalles (tournaments.nivel). */
   categoryLabel?: string;
 }): ConvocatoriaAdapterContext {
   const productHeadline =

@@ -26,6 +26,7 @@ interface QuickStartSheetProps {
 const DEFAULT_VALUES: RetaConfigFormValues = {
   name: "",
   description: "",
+  nivel: "",
   courts: 2,
   championshipEnabled: false,
   championshipRounds: 2,

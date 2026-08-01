@@ -44,7 +44,8 @@ describe("QuickStartSheet shared form", () => {
     });
     const scope = document.body;
     expect(scope.querySelector(".reta-config-fields")).toBeTruthy();
-    expect(scope.textContent).toMatch(/Remontada Final/);
+    expect(scope.textContent).toMatch(/Remontada/);
+    expect(scope.textContent).toMatch(/Nivel/);
     const btn = Array.from(scope.querySelectorAll("button")).find((b) =>
       /Iniciar reta/.test(b.textContent || "")
     );
@@ -64,6 +65,7 @@ describe("QuickStartSheet shared form", () => {
     const values: RetaConfigFormValues = {
       name: "Reta cargada",
       description: "Desc",
+      nivel: "5ta Fuerza",
       courts: 3,
       championshipEnabled: true,
       championshipRounds: 4,

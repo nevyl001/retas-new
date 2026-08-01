@@ -12,6 +12,7 @@ export type RetaEditPhase =
 export type RetaConfigFieldKey =
   | "name"
   | "description"
+  | "nivel"
   | "courts"
   | "championship"
   | "lugar"
@@ -55,6 +56,7 @@ export function fieldEditability(
     const editorial: RetaConfigFieldKey[] = [
       "name",
       "description",
+      "nivel",
       "lugar",
       "mostrar_lugar",
       "cancha",

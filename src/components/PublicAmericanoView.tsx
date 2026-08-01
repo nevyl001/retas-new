@@ -117,6 +117,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   const [programadoEn, setProgramadoEn] = useState<string | null>(null);
   const [programadoHasta, setProgramadoHasta] = useState<string | null>(null);
   const [lugarPublico, setLugarPublico] = useState<string | null>(null);
+  const [nivelPublico, setNivelPublico] = useState<string | null>(null);
   const [clockNow, setClockNow] = useState(() => new Date());
   const [organizadorId, setOrganizadorId] = useState<string | null>(null);
   const [podiumAvatars, setPodiumAvatars] = useState<
@@ -199,6 +200,11 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
             lugar: tournament?.lugar,
             mostrar_lugar: tournament?.mostrar_lugar,
           })
+        );
+        setNivelPublico(
+          typeof tournament?.nivel === "string" && tournament.nivel.trim()
+            ? tournament.nivel.trim()
+            : null
         );
         setOrganizadorId(
           typeof tournament?.user_id === "string" ? tournament.user_id : null
@@ -375,7 +381,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     programadoEn,
     programadoHasta
   );
-  const heroMeta = ["Americano", lugarPublico].filter(Boolean).join(" · ");
+  const heroMeta = ["Americano", nivelPublico, lugarPublico]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <PublicTorneoExpressShell

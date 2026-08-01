@@ -22,6 +22,8 @@ export interface Tournament {
   mostrar_lugar?: boolean | null;
   /** Etiqueta de cancha (distinto de `courts`). */
   cancha?: string | null;
+  /** Nivel / fuerza (ej. 5ta Fuerza). Requiere patch-tournaments-nivel.sql. */
+  nivel?: string | null;
   programado_en?: string | null;
   programado_hasta?: string | null;
 }

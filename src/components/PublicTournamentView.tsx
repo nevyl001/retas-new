@@ -177,6 +177,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
   const [programadoEn, setProgramadoEn] = useState<string | null>(null);
   const [programadoHasta, setProgramadoHasta] = useState<string | null>(null);
   const [lugarPublico, setLugarPublico] = useState<string | null>(null);
+  const [nivelPublico, setNivelPublico] = useState<string | null>(null);
   const [clockNow, setClockNow] = useState(() => new Date());
   const [championshipConfig, setChampionshipConfig] =
     useState<RoundRobinChampionshipConfig | null>(null);
@@ -258,6 +259,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
           lugar: t?.lugar,
           mostrar_lugar: t?.mostrar_lugar,
         })
+      );
+      setNivelPublico(
+        typeof t?.nivel === "string" && t.nivel.trim() ? t.nivel.trim() : null
       );
       setOrganizadorId(
         typeof t?.user_id === "string" && t.user_id.trim()
@@ -835,7 +839,9 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     programadoEn,
     programadoHasta
   );
-  const heroMeta = [formatKicker, lugarPublico].filter(Boolean).join(" · ");
+  const heroMeta = [formatKicker, nivelPublico, lugarPublico]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <PublicTorneoExpressShell

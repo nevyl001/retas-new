@@ -28,6 +28,8 @@ import { clampRetaCourts, clampRetaDurationMinutes } from "./retaConfigValidatio
 export type RetaConfigFormValues = {
   name: string;
   description: string;
+  /** Nivel / fuerza (ej. 5ta Fuerza). */
+  nivel: string;
   courts: number;
   championshipEnabled: boolean;
   championshipRounds: number;
@@ -178,6 +180,7 @@ export function tournamentToFormValues(
   return {
     name: t.name || "",
     description: t.description || "",
+    nivel: t.nivel || "",
     courts: Math.max(1, t.courts || 1),
     championshipEnabled: Boolean(champ?.championshipEnabled),
     championshipRounds: champ?.championshipRounds ?? 2,
@@ -252,6 +255,10 @@ function pickAllowedUpdates(
     if (next !== (current.description || "")) {
       updates.description = next || undefined;
     }
+  }
+  if (allow("nivel")) {
+    const next = values.nivel.trim() || null;
+    if (next !== (current.nivel ?? null)) updates.nivel = next;
   }
   if (allow("lugar")) {
     const next = values.lugar.trim() || null;
@@ -423,20 +430,46 @@ export async function saveRetaConfig(
   // 2) Resto de campos con optimistic lock
   const updates = pickAllowedUpdates(phase, values, workingTournament);
   if (Object.keys(updates).length > 0) {
-    updates.updated_at = new Date().toISOString();
-    let query = supabase
-      .from("tournaments")
-      .update(updates)
-      .eq("id", tournament.id);
-    if (workingUpdatedAt) {
-      query = query.eq("updated_at", workingUpdatedAt);
+    const stamp = new Date().toISOString();
+    const runUpdate = async (payload: Partial<Tournament>) => {
+      let query = supabase
+        .from("tournaments")
+        .update({ ...payload, updated_at: stamp })
+        .eq("id", tournament.id);
+      if (workingUpdatedAt) {
+        query = query.eq("updated_at", workingUpdatedAt);
+      }
+      return query.select().maybeSingle();
+    };
+
+    let { data, error } = await runUpdate(updates);
+    if (
+      error &&
+      updates.nivel !== undefined &&
+      /nivel|schema cache|column/i.test(error.message)
+    ) {
+      const { nivel: _omitNivel, ...withoutNivel } = updates;
+      void _omitNivel;
+      messages.push(
+        "Nivel no se guardó en BD: aplica patch-tournaments-nivel.sql en Supabase."
+      );
+      if (Object.keys(withoutNivel).length > 0) {
+        ({ data, error } = await runUpdate(withoutNivel));
+      } else {
+        error = null;
+        data = { ...workingTournament, updated_at: stamp } as Tournament;
+      }
     }
-    const { data, error } = await query.select().maybeSingle();
     if (error) {
       if (isAuthFailureMessage(error.message)) {
         return { ok: false, sessionExpired: true, error: SESSION_EXPIRED_MSG };
       }
-      return { ok: false, error: error.message };
+      return {
+        ok: false,
+        error: /nivel/i.test(error.message)
+          ? "Falta aplicar SQL patch-tournaments-nivel.sql en Supabase para guardar el nivel."
+          : error.message,
+      };
     }
     if (!data) {
       return classifyEmptyTournamentUpdate(tournament.id, workingUpdatedAt);

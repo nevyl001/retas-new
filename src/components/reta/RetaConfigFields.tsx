@@ -66,6 +66,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
 
   const nameEd = ed("name");
   const descEd = ed("description");
+  const nivelEd = ed("nivel");
   const courtsEd = ed("courts");
   const champEd = ed("championship");
   const lugarEd = ed("lugar");
@@ -176,22 +177,11 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       <input
         type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Ej. 5ta Fuerza"
+        placeholder="Ej. Mixta, verano, amigos…"
         value={values.description}
         disabled={descEd.locked}
         onChange={(e) => patch({ description: e.target.value })}
-        list="reta-categoria-sugerencias"
       />
-      <datalist id="reta-categoria-sugerencias">
-        <option value="Open" />
-        <option value="1ra Fuerza" />
-        <option value="2da Fuerza" />
-        <option value="3ra Fuerza" />
-        <option value="4ta Fuerza" />
-        <option value="5ta Fuerza" />
-        <option value="6ta Fuerza" />
-        <option value="Mixta" />
-      </datalist>
       {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
     </label>
   ) : (
@@ -201,13 +191,28 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       <input
         type="text"
         className="home-sheet__input riviera-input"
-        placeholder="Ej. 5ta Fuerza"
+        placeholder="Ej. Mixta, verano, amigos…"
         value={values.description}
         disabled={descEd.locked}
         onChange={(e) => patch({ description: e.target.value })}
-        list="reta-categoria-sugerencias-full"
       />
-      <datalist id="reta-categoria-sugerencias-full">
+      {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
+    </label>
+  );
+
+  const nivelField = (
+    <label className="home-sheet__field reta-details-form__field reta-details-form__field--nivel">
+      <span className="home-sheet__field-label">Nivel</span>
+      <input
+        type="text"
+        className="home-sheet__input riviera-input"
+        placeholder="Ej. 5ta Fuerza"
+        value={values.nivel}
+        disabled={nivelEd.locked}
+        onChange={(e) => patch({ nivel: e.target.value })}
+        list="reta-nivel-sugerencias"
+      />
+      <datalist id="reta-nivel-sugerencias">
         <option value="Open" />
         <option value="1ra Fuerza" />
         <option value="2da Fuerza" />
@@ -215,9 +220,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <option value="4ta Fuerza" />
         <option value="5ta Fuerza" />
         <option value="6ta Fuerza" />
-        <option value="Mixta" />
       </datalist>
-      {descEd.locked ? <FieldLock reason={descEd.reason} /> : null}
+      {nivelEd.locked ? <FieldLock reason={nivelEd.reason} /> : null}
     </label>
   );
 
@@ -375,6 +379,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         </div>
         <div className="reta-details-form__row reta-details-form__row--meta">
           {descriptionField}
+          {nivelField}
           {durationField}
           {lugarField}
           {championshipField}
@@ -387,6 +392,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     <div className="home-sheet__fields reta-config-fields">
       {nameField}
       {descriptionField}
+      {nivelField}
       {courtsField}
       {mode === "edit" ? (
         <>
