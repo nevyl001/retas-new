@@ -114,6 +114,7 @@ export const QuickStartSheet: React.FC<QuickStartSheetProps> = ({
       <RetaConfigFields
         mode="create"
         phase="draft"
+        layout="entry"
         values={values}
         onChange={setValues}
         disabled={submitting}

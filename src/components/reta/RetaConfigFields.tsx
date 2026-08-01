@@ -29,9 +29,10 @@ export type RetaConfigFieldsProps = {
   disabled?: boolean;
   /**
    * essentials = grid denso (prep).
+   * entry = alta mínima (nombre + canchas + remontada); resto en Detalles.
    * full = layout legacy (todos los campos a la vista).
    */
-  layout?: "full" | "essentials";
+  layout?: "full" | "essentials" | "entry";
 };
 
 function FieldLock({ reason }: { reason?: string }) {
@@ -53,6 +54,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   layout = "full",
 }) => {
   const essentials = layout === "essentials";
+  const entry = layout === "entry";
   const patch = (partial: Partial<RetaConfigFormValues>) =>
     onChange((prev) => ({ ...prev, ...partial }));
 
@@ -364,6 +366,24 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       ) : null}
     </div>
   ) : null;
+
+  if (entry) {
+    return (
+      <div
+        className="home-sheet__fields reta-config-fields"
+        role="group"
+        aria-label="Alta rápida de la reta"
+      >
+        {nameField}
+        {courtsField}
+        {championshipField}
+        <p className="home-sheet__field-optional" role="note">
+          Categoría, nivel, horario y lugar se configuran en Detalles después de
+          iniciar.
+        </p>
+      </div>
+    );
+  }
 
   if (essentials) {
     return (
