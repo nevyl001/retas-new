@@ -335,38 +335,78 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
 
   const championshipField = showChampionship ? (
     <div
-      className={`home-sheet__field home-sheet__field--champ reta-details-form__field reta-details-form__field--champ${
-        essentials ? " reta-details-form__field--champ-compact" : ""
+      className={`home-sheet__field reta-details-form__field reta-details-form__field--champ${
+        essentials ? " reta-details-form__field--champ-compact" : " home-sheet__field--champ"
       }`}
     >
-      <div className="home-sheet__champ-row">
-        <span className="home-sheet__field-label">Remontada</span>
-        <input
-          type="checkbox"
-          checked={values.championshipEnabled}
-          disabled={champEd.locked}
-          onChange={(e) => patch({ championshipEnabled: e.target.checked })}
-          aria-label="Activar Remontada Final"
-        />
-      </div>
-      {champEd.locked ? <FieldLock reason={champEd.reason} /> : null}
-      {values.championshipEnabled && !champEd.locked ? (
-        <label className="home-sheet__field home-sheet__field--inline">
-          <span className="home-sheet__field-label">Rondas</span>
-          <input
-            type="number"
-            min={1}
-            max={10}
-            className="home-sheet__input riviera-input"
-            value={values.championshipRounds}
-            onChange={(e) =>
-              patch({
-                championshipRounds: clampChampionshipRoundsShared(e.target.value),
-              })
-            }
-          />
-        </label>
-      ) : null}
+      <span className="home-sheet__field-label">Remontada</span>
+      {essentials ? (
+        <>
+          <label className="reta-details-form__champ-control">
+            <input
+              type="checkbox"
+              checked={values.championshipEnabled}
+              disabled={champEd.locked}
+              onChange={(e) => patch({ championshipEnabled: e.target.checked })}
+            />
+            <span>
+              {values.championshipEnabled ? "Activada" : "Desactivada"}
+            </span>
+          </label>
+          {champEd.locked ? <FieldLock reason={champEd.reason} /> : null}
+          {values.championshipEnabled && !champEd.locked ? (
+            <label className="home-sheet__field home-sheet__field--inline reta-details-form__champ-rounds">
+              <span className="home-sheet__field-label">Rondas</span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                className="home-sheet__input riviera-input"
+                value={values.championshipRounds}
+                onChange={(e) =>
+                  patch({
+                    championshipRounds: clampChampionshipRoundsShared(
+                      e.target.value
+                    ),
+                  })
+                }
+              />
+            </label>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <div className="home-sheet__champ-row">
+            <input
+              type="checkbox"
+              checked={values.championshipEnabled}
+              disabled={champEd.locked}
+              onChange={(e) => patch({ championshipEnabled: e.target.checked })}
+              aria-label="Activar Remontada Final"
+            />
+          </div>
+          {champEd.locked ? <FieldLock reason={champEd.reason} /> : null}
+          {values.championshipEnabled && !champEd.locked ? (
+            <label className="home-sheet__field home-sheet__field--inline">
+              <span className="home-sheet__field-label">Rondas</span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                className="home-sheet__input riviera-input"
+                value={values.championshipRounds}
+                onChange={(e) =>
+                  patch({
+                    championshipRounds: clampChampionshipRoundsShared(
+                      e.target.value
+                    ),
+                  })
+                }
+              />
+            </label>
+          ) : null}
+        </>
+      )}
     </div>
   ) : null;
 

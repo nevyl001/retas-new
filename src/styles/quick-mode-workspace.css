@@ -466,8 +466,56 @@
 }
 
 .qm-ws__details-inline .reta-details-form__field--champ,
-.qm-ws__details-inline .reta-details-form__field--champ-compact,
-.qm-ws__details-inline .home-sheet__field--champ {
+.qm-ws__details-inline .reta-details-form__field--champ-compact {
+  /* Mismo patrón que Descripción / Nivel / Lugar: label arriba, control abajo */
+  padding: 0;
+  border: none !important;
+  background: transparent !important;
+  min-height: 0;
+  justify-content: flex-start;
+  gap: 0.2rem;
+  color: inherit;
+}
+
+.qm-ws__details-inline .reta-details-form__field--champ .home-sheet__field-label,
+.qm-ws__details-inline .reta-details-form__field--champ-compact .home-sheet__field-label {
+  color: var(--qm-ink-muted) !important;
+}
+
+.qm-ws__details-inline .reta-details-form__champ-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: var(--rd-input-h);
+  height: var(--rd-input-h);
+  padding: 0 0.65rem;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid var(--qm-ink-input-border);
+  background: var(--qm-ink-input);
+  color: var(--qm-ink-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  margin: 0;
+}
+
+.qm-ws__details-inline .reta-details-form__champ-control input[type="checkbox"] {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--ro-success, #2f7d53);
+}
+
+.qm-ws__details-inline .reta-details-form__champ-rounds {
+  margin-top: 0.15rem;
+  width: 100%;
+}
+
+.qm-ws__details-inline .home-sheet__field--champ:not(.reta-details-form__field--champ-compact) {
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--qm-ink-border) !important;
   border-radius: 8px;
@@ -478,21 +526,11 @@
   color: var(--qm-ink-text);
 }
 
-.qm-ws__details-inline .reta-details-form__field--champ .home-sheet__field-label,
-.qm-ws__details-inline .reta-details-form__field--champ-compact .home-sheet__field-label,
-.qm-ws__details-inline .home-sheet__field--champ .home-sheet__field-label {
+.qm-ws__details-inline .home-sheet__field--champ:not(.reta-details-form__field--champ-compact)
+  .home-sheet__field-label {
   color: var(--qm-ink-text) !important;
 }
 
-.qm-ws__details-inline .reta-details-form__field--champ-compact .home-sheet__champ-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-  width: 100%;
-}
-
-.qm-ws__details-inline .reta-details-form__field--champ-compact .home-sheet__champ-row input,
 .qm-ws__details-inline .home-sheet__field--champ input[type="checkbox"] {
   accent-color: var(--ro-success, #2f7d53);
 }
@@ -521,13 +559,9 @@
       minmax(0, 1.15fr)
       minmax(0, 1fr)
       minmax(8.75rem, 0.95fr)
-      minmax(0, 1.2fr);
+      minmax(0, 1.2fr)
+      minmax(8.5rem, 0.85fr);
     align-items: start;
-  }
-
-  .qm-ws__details-inline .reta-details-form__field--champ {
-    grid-column: 1 / -1;
-    max-width: 12rem;
   }
 }
 
