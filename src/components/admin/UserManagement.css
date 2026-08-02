@@ -68,6 +68,44 @@
   gap: 8px;
 }
 
+.user-management .riviera-btn-primary {
+  background: #f5f2eb;
+  border-color: #f5f2eb;
+  color: var(--ro-chrome-bg, #12161b);
+}
+
+.user-management .riviera-btn-primary:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: var(--ro-chrome-bg, #12161b);
+}
+
+.user-management .riviera-btn-ghost,
+.user-management .riviera-btn-secondary {
+  color: var(--admin-text-muted);
+  border-color: var(--admin-border);
+  background: transparent;
+}
+
+.user-management .riviera-btn-ghost:hover:not(:disabled),
+.user-management .riviera-btn-secondary:hover:not(:disabled) {
+  color: var(--admin-text);
+  border-color: var(--admin-input-border);
+  background: var(--admin-card);
+}
+
+.user-management .riviera-input,
+.user-management .search-input {
+  background: var(--admin-input-bg);
+  border-color: var(--admin-input-border);
+  color: var(--admin-text);
+}
+
+.user-management .riviera-input::placeholder,
+.user-management .search-input::placeholder {
+  color: var(--admin-text-muted);
+}
+
 /* Notice */
 .user-management-notice {
   margin-bottom: 1rem;
