@@ -16,9 +16,17 @@
   overflow-y: auto;
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid var(--ro-border);
-  background: #111113;
-  color: var(--ro-text-primary);
+  border: 1px solid var(--ro-chrome-border, #232830);
+  background: var(--ro-chrome-elevated, #1a1f26);
+  color: var(--ro-chrome-text, #ffffff);
+  --text-primary: var(--ro-chrome-text, #ffffff);
+  --text-secondary: var(--ro-chrome-text-muted, #8b93a0);
+  --text-muted: var(--ro-chrome-text-muted, #8b93a0);
+  --ro-text-primary: var(--ro-chrome-text, #ffffff);
+  --ro-text-muted: var(--ro-chrome-text-muted, #8b93a0);
+  --ro-text-on-accent: var(--ro-chrome-bg, #12161b);
+  --ro-accent: #f5f2eb;
+  --ro-accent-hover: #ffffff;
   box-shadow: var(--ro-shadow-lg);
 }
 
