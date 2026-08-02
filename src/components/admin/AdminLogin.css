@@ -4,8 +4,8 @@
   --admin-bg: var(--ro-chrome-bg, #12161b);
   --admin-card: var(--ro-chrome-elevated, #1a1f26);
   --admin-border: var(--ro-chrome-border, #232830);
-  --admin-text: var(--ro-chrome-text, #ffffff);
-  --admin-text-muted: var(--ro-chrome-text-muted, #8b93a0);
+  --admin-text: #ffffff;
+  --admin-text-muted: #a8b0bc;
   --admin-input-bg: var(--ro-chrome-elevated, #1a1f26);
   --admin-input-border: #2e343d;
   --admin-accent: #f5f2eb;
@@ -15,6 +15,8 @@
   --admin-error-border: rgba(239, 68, 68, 0.25);
   --text-primary: var(--admin-text);
   --text-secondary: var(--admin-text-muted);
+  --bg-canvas: var(--admin-bg);
+  --bg-card: var(--admin-card);
   --ro-text-primary: var(--admin-text);
   --ro-text-muted: var(--admin-text-muted);
   --ro-text-on-accent: var(--admin-bg);
@@ -154,6 +156,10 @@
 .admin-login-brand .club-identity__organizer,
 .admin-login-brand .club-identity__tagline {
   color: var(--admin-text-muted);
+}
+
+.admin-login-page .club-identity:not(.club-identity--premium) .club-identity__logo {
+  filter: none;
 }
 
 .admin-login-page .riviera-btn-primary,

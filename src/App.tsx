@@ -835,11 +835,18 @@ function AppContent() {
       userOrganizadorId: user?.id,
     });
 
+  const isAdminShell =
+    currentView === "admin-dashboard" ||
+    currentView === "admin-user" ||
+    currentView === "admin-login" ||
+    currentView === "admin-dev-player-debug";
+
   const appShellClass = [
     "App",
     isPublicSpectatorView
       ? "App--public-full-width ro-public-view ro-surface-dark"
       : "",
+    isAdminShell ? "App--admin ro-surface-dark" : "",
     isJugadoresPublic ? "App--jugadores-public" : "",
     currentView === "legal" ? "App--legal" : "",
     showMobileAppNav ? "has-mobile-app-navigation" : "",

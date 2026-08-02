@@ -45,7 +45,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="admin-login-page">
+    <div className="admin-login-page ro-surface-dark">
       <div className="admin-login-page__glow" aria-hidden="true" />
 
       <main className="admin-login-card">

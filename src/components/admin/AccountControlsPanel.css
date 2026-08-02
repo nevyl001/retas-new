@@ -109,10 +109,16 @@
   min-width: 0;
   padding: 0.45rem 0.6rem;
   border-radius: 6px;
-  border: 1px solid var(--admin-input-border, var(--ro-border-strong));
-  background: var(--admin-input-bg, var(--ro-bg-card));
-  color: var(--admin-text, var(--ro-text-primary));
+  border: 1px solid var(--admin-input-border, #2e343d);
+  background: var(--admin-input-bg, #1a1f26);
+  color: var(--admin-text, #ffffff);
   font-size: 0.8125rem;
+  color-scheme: dark;
+}
+
+.account-controls__input::placeholder {
+  color: var(--admin-text-muted, #a8b0bc);
+  opacity: 1;
 }
 
 .account-controls__btn {

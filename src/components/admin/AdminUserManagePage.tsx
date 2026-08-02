@@ -224,7 +224,7 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
 
   if (loading) {
     return (
-      <div className="admin-dash admin-user-page">
+      <div className="admin-dash admin-user-page ro-surface-dark">
         <div className="admin-dash__loading">
           <div className="admin-dash__spinner" aria-hidden />
           <p className="admin-dash__loading-text">Cargando cuenta…</p>
@@ -235,7 +235,7 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
 
   if (error || !user) {
     return (
-      <div className="admin-dash admin-user-page">
+      <div className="admin-dash admin-user-page ro-surface-dark">
         <button
           type="button"
           className="admin-user-page__back"
@@ -254,7 +254,7 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
   const officialSiteRankingUrl = buildMarketingOfficialRankingsUrl(userId);
 
   return (
-    <div className="admin-dash admin-user-page">
+    <div className="admin-dash admin-user-page ro-surface-dark">
       <header className="admin-user-page__top">
         <div className="admin-user-page__top-left">
           <button

@@ -257,7 +257,7 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="admin-dash">
+      <div className="admin-dash ro-surface-dark">
         <div className="admin-dash__loading">
           <div className="admin-dash__spinner" aria-hidden="true" />
           <p className="admin-dash__loading-text">Cargando datos...</p>
@@ -267,7 +267,7 @@ export const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="admin-dash">
+    <div className="admin-dash ro-surface-dark">
       <header className="admin-dash__header">
         <div className="admin-dash__brand">
           <ClubIdentity variant="compact" showTagline={false} logoSurface="dark" />

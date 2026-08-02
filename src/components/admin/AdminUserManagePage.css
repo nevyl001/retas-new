@@ -70,7 +70,8 @@
   height: 4.5rem;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--ro-border-strong);
+  border: 1px solid var(--admin-border-strong);
+  background: var(--admin-inset, #151a21);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,7 +86,7 @@
 .admin-user-page__avatar-initials {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--admin-text-muted);
+  color: #f5f2eb;
 }
 
 .admin-user-page__name-block {
@@ -102,7 +103,13 @@
 .admin-user-page__email {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
-  color: var(--admin-text-muted);
+  color: var(--admin-text-muted, #a8b0bc);
+}
+
+.admin-user-page p.admin-user-page__email,
+.admin-user-page p.admin-user-page__meta,
+.admin-user-page p.admin-user-page__email-hint {
+  color: var(--admin-text-muted, #a8b0bc);
 }
 
 .admin-user-page__email-block {
@@ -128,11 +135,12 @@
   width: 100%;
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid var(--admin-border);
-  background: var(--ro-bg-card);
-  color: var(--admin-text);
+  border: 1px solid var(--admin-border-strong);
+  background: var(--admin-input-bg, #1a1f26);
+  color: var(--admin-text, #ffffff);
   font-size: 0.875rem;
   font-family: inherit;
+  color-scheme: dark;
 }
 
 .admin-user-page__email-input:focus {

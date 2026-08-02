@@ -6,8 +6,8 @@
   --admin-inset: #151a21;
   --admin-border: var(--ro-chrome-border, #232830);
   --admin-border-strong: #2e343d;
-  --admin-text: var(--ro-chrome-text, #ffffff);
-  --admin-text-muted: var(--ro-chrome-text-muted, #8b93a0);
+  --admin-text: #ffffff;
+  --admin-text-muted: #a8b0bc;
   --admin-accent: #f5f2eb;
   --admin-accent-hover: #ffffff;
   --admin-ink: var(--ro-chrome-bg, #12161b);
@@ -18,12 +18,17 @@
   --admin-danger: #f87171;
   --admin-danger-bg: rgba(248, 113, 113, 0.12);
   --admin-danger-border: rgba(248, 113, 113, 0.42);
-  /* Inputs / botones dentro del panel — no heredar tema claro */
+  /* Inputs / botones / aliases legacy — no heredar tema claro */
   --text-primary: var(--admin-text);
   --text-secondary: var(--admin-text-muted);
   --text-muted: var(--admin-text-muted);
+  --color-muted: var(--admin-text-muted);
   --danger: var(--admin-danger);
   --error: var(--admin-danger);
+  --bg-canvas: var(--admin-bg);
+  --bg-card: var(--admin-card);
+  --bg-elevated: var(--admin-card);
+  --bg-inset: var(--admin-inset);
   --ro-text-primary: var(--admin-text);
   --ro-text-secondary: var(--admin-text-muted);
   --ro-text-muted: var(--admin-text-muted);
@@ -31,6 +36,7 @@
   --ro-bg-card: var(--admin-card);
   --ro-bg-elevated: var(--admin-card);
   --ro-bg-inset: var(--admin-inset);
+  --ro-bg-input: var(--admin-input-bg);
   --ro-border: var(--admin-border);
   --ro-border-strong: var(--admin-border-strong);
   --ro-error: var(--admin-danger);
@@ -45,6 +51,35 @@
     Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
+}
+
+/* Logo madre: el PNG es blanco; el invert global lo deja negro/invisible aquí */
+.admin-dash .club-identity:not(.club-identity--premium) .club-identity__logo {
+  filter: none;
+}
+
+/* Shell de App en rutas admin — evita fondo crema/blanco detrás del panel */
+.App.App--admin,
+.App.App--admin.ro-surface-dark {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--ro-chrome-bg, #12161b);
+  color: var(--ro-chrome-text, #ffffff);
+}
+
+.admin-dash input:not([type="checkbox"]):not([type="radio"]),
+.admin-dash select,
+.admin-dash textarea {
+  background: var(--admin-input-bg, #1a1f26);
+  color: var(--admin-text, #ffffff);
+  border-color: var(--admin-input-border, #2e343d);
+  color-scheme: dark;
+}
+
+.admin-dash input::placeholder,
+.admin-dash textarea::placeholder {
+  color: var(--admin-text-muted, #a8b0bc);
+  opacity: 1;
 }
 
 .admin-dash *,
@@ -98,6 +133,13 @@
   font-size: 0.875rem;
   color: var(--admin-text-muted);
   word-break: break-all;
+  opacity: 1;
+}
+
+.admin-dash p.admin-dash__subtitle,
+.admin-dash p.admin-dash__hint-muted,
+.admin-dash p.admin-dash__loading-text {
+  color: var(--admin-text-muted);
 }
 
 .admin-dash__header .riviera-btn-ghost,

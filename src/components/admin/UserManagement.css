@@ -8,8 +8,8 @@
   --admin-card: var(--ro-chrome-elevated, #1a1f26);
   --admin-inset: #151a21;
   --admin-border: var(--ro-chrome-border, #232830);
-  --admin-text: var(--ro-chrome-text, #ffffff);
-  --admin-text-muted: var(--ro-chrome-text-muted, #8b93a0);
+  --admin-text: #ffffff;
+  --admin-text-muted: #a8b0bc;
   --admin-input-bg: var(--ro-chrome-elevated, #1a1f26);
   --admin-input-border: #2e343d;
   --admin-danger: #f87171;
@@ -18,8 +18,11 @@
   --text-primary: var(--admin-text);
   --text-secondary: var(--admin-text-muted);
   --text-muted: var(--admin-text-muted);
+  --color-muted: var(--admin-text-muted);
   --danger: var(--admin-danger);
   --error: var(--admin-danger);
+  --bg-card: var(--admin-card);
+  --bg-elevated: var(--admin-card);
   --ro-text-primary: var(--admin-text);
   --ro-text-secondary: var(--admin-text-muted);
   --ro-text-muted: var(--admin-text-muted);
@@ -229,14 +232,15 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--ro-bg-elevated);
+  background: var(--admin-inset, #151a21);
+  border: 1px solid var(--admin-input-border, #2e343d);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--admin-accent);
+  color: #f5f2eb;
 }
 
 .user-avatar-img {
@@ -249,6 +253,7 @@
 
 .user-avatar-initials {
   line-height: 1;
+  color: #f5f2eb;
 }
 
 /* Info + stats en fila */
