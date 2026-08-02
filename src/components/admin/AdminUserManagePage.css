@@ -1,6 +1,7 @@
 .admin-user-page {
-  max-width: 72rem;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
 }
 
 .admin-user-page__top {
@@ -311,13 +312,20 @@
 @media (min-width: 960px) {
   .account-controls--page .account-controls__sections-grid {
     display: grid;
-    grid-template-columns: 1fr 1.4fr;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.6fr);
     gap: 1.25rem;
     align-items: start;
   }
 
   .account-controls--page .account-controls__section {
     margin-top: 0;
+  }
+}
+
+@media (min-width: 1280px) {
+  .account-controls--page .account-controls__sections-grid {
+    grid-template-columns: minmax(300px, 0.75fr) minmax(0, 1.75fr);
+    gap: 1.5rem;
   }
 }
 

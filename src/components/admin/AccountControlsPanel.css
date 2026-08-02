@@ -105,7 +105,7 @@
 
 .account-controls__input,
 .account-controls__select {
-  flex: 1 1 140px;
+  flex: 1 1 180px;
   min-width: 0;
   padding: 0.45rem 0.6rem;
   border-radius: 6px;
@@ -119,6 +119,11 @@
 .account-controls__input::placeholder {
   color: var(--admin-text-muted, #a8b0bc);
   opacity: 1;
+}
+
+.account-controls__add-form .account-controls__btn--primary {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .account-controls__btn {
