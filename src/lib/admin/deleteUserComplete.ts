@@ -16,7 +16,7 @@ export async function deleteUserComplete(userId: string): Promise<void> {
       error.code === "42883"
     ) {
       throw new Error(
-        "Falta desplegar el SQL de borrado completo en Supabase (admin-delete-user-completo.sql)."
+        "Falta actualizar el SQL de borrado en Supabase: ejecuta supabase/admin-delete-user-completo.sql en el SQL Editor."
       );
     }
     throw new Error(error.message || "No se pudo eliminar el usuario");
