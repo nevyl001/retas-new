@@ -3,6 +3,7 @@ import { ClubIdentity } from "../../club-experience";
 import { useAdmin } from "../../contexts/AdminContext";
 import { supabase } from "../../lib/supabaseClient";
 import { Button } from "../ui";
+import { ErrorBoundary } from "../ErrorBoundary";
 import { UserManagement } from "./UserManagement";
 import "./AdminDashboard.css";
 
@@ -138,7 +139,10 @@ export const AdminDashboard: React.FC = () => {
   const [error, setError] = useState("");
 
   const loadDashboardData = useCallback(async () => {
-    if (!adminUser) return;
+    if (!adminUser) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -410,7 +414,9 @@ export const AdminDashboard: React.FC = () => {
 
       {activeSection === "users" ? (
         <section className="admin-dash__users-shell" aria-label="Gestión de usuarios">
-          <UserManagement />
+          <ErrorBoundary>
+            <UserManagement />
+          </ErrorBoundary>
         </section>
       ) : null}
     </div>

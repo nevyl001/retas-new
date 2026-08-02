@@ -7,17 +7,17 @@ export function resolveClubLogo(
   manifest: BrandManifest,
   surface: ClubLogoSurface = "auto"
 ): string | null {
-  const { logos } = manifest;
+  const logos = manifest?.logos ?? {};
 
   if (surface === "light") {
-    return logos.light ?? logos.dark ?? logos.square;
+    return logos.light ?? logos.dark ?? logos.square ?? null;
   }
 
   if (surface === "dark") {
-    return logos.dark ?? logos.light ?? logos.square;
+    return logos.dark ?? logos.light ?? logos.square ?? null;
   }
 
-  return logos.dark ?? logos.light ?? logos.square;
+  return logos.dark ?? logos.light ?? logos.square ?? null;
 }
 
 export function manifestHasClubLogo(manifest: BrandManifest): boolean {

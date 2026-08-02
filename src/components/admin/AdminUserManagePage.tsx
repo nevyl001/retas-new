@@ -104,7 +104,7 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
 
   const handleStartEmailEdit = () => {
     if (!user) return;
-    setEmailDraft(user.email);
+    setEmailDraft(user.email ?? "");
     setEditingEmail(true);
     setEditingName(false);
     setNotice("");
@@ -187,7 +187,7 @@ export const AdminUserManagePage: React.FC<AdminUserManagePageProps> = ({
       return;
     }
 
-    if (trimmed.toLowerCase() === user.email.trim().toLowerCase()) {
+    if (trimmed.toLowerCase() === (user.email ?? "").trim().toLowerCase()) {
       setEditingEmail(false);
       return;
     }

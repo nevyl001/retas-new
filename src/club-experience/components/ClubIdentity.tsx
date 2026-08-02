@@ -97,7 +97,7 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
               ) : null}
               {showSloganLine ? (
                 <span className="club-identity__tagline">
-                  {manifest.slogans.primary}
+                  {manifest.slogans?.primary ?? ""}
                 </span>
               ) : null}
             </>

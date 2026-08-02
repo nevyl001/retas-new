@@ -77,7 +77,9 @@ export const AccountControlsPanel: React.FC<AccountControlsPanelProps> = ({
   const jugadoresFiltrados = useMemo(() => {
     const q = playerSearch.trim().toLowerCase();
     if (!q) return jugadores;
-    return jugadores.filter((j) => j.nombre.toLowerCase().includes(q));
+    return jugadores.filter((j) =>
+      (j.nombre ?? "").toLowerCase().includes(q)
+    );
   }, [jugadores, playerSearch]);
 
   const jugadoresEditables = useMemo(

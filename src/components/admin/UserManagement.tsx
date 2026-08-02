@@ -287,10 +287,11 @@ export const UserManagement: React.FC<UserManagementProps> = ({
   }, [loadUsers]);
 
   const filteredAndSortedUsers = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
     let filtered = users.filter((user) => {
-      const matchesSearch =
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const name = (user.name ?? "").toLowerCase();
+      const email = (user.email ?? "").toLowerCase();
+      const matchesSearch = !q || name.includes(q) || email.includes(q);
 
       const hasClassicActive = (user.tournaments_active || 0) > 0;
       const hasExpressActive = (user.express_active || 0) > 0;
@@ -306,13 +307,13 @@ export const UserManagement: React.FC<UserManagementProps> = ({
     filtered.sort((a, b) => {
       let cmp = 0;
       if (sortBy === "created_at" || sortBy === "updated_at") {
-        cmp =
-          new Date(a[sortBy]).getTime() - new Date(b[sortBy]).getTime();
+        const aTime = a[sortBy] ? new Date(a[sortBy]).getTime() : 0;
+        const bTime = b[sortBy] ? new Date(b[sortBy]).getTime() : 0;
+        cmp = aTime - bTime;
       } else if (sortBy === "name" || sortBy === "email") {
-        cmp = String(a[sortBy]).localeCompare(String(b[sortBy]), "es");
+        cmp = String(a[sortBy] ?? "").localeCompare(String(b[sortBy] ?? ""), "es");
       } else {
-        cmp =
-          Number(a[sortBy] ?? 0) - Number(b[sortBy] ?? 0);
+        cmp = Number(a[sortBy] ?? 0) - Number(b[sortBy] ?? 0);
       }
       return sortOrder === "asc" ? cmp : -cmp;
     });
