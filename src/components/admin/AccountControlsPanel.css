@@ -93,7 +93,7 @@
 }
 
 .account-controls__toggle input {
-  accent-color: var(--admin-accent, var(--ro-gold));
+  accent-color: var(--admin-accent, #f5f2eb);
 }
 
 .account-controls__add-form {
@@ -122,7 +122,17 @@
   background: var(--admin-input-bg, var(--ro-bg-card));
   color: var(--admin-text, var(--ro-text-primary));
   font-size: 0.8125rem;
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.account-controls__btn:hover:not(:disabled) {
+  border-color: var(--admin-border-strong, #2e343d);
+  background: var(--admin-accent-soft, #232931);
 }
 
 .account-controls__btn:disabled {
@@ -131,10 +141,16 @@
 }
 
 .account-controls__btn--primary {
-  background: var(--admin-accent, var(--ro-gold-dim));
-  border-color: transparent;
-  color: var(--ro-text-primary);
+  background: var(--admin-accent, #f5f2eb);
+  border-color: var(--admin-accent, #f5f2eb);
+  color: var(--admin-ink, var(--ro-chrome-bg, #12161b));
   font-weight: 600;
+}
+
+.account-controls__btn--primary:hover:not(:disabled) {
+  background: var(--admin-accent-hover, #ffffff);
+  border-color: var(--admin-accent-hover, #ffffff);
+  color: var(--admin-ink, var(--ro-chrome-bg, #12161b));
 }
 
 .account-controls__btn--ghost {
@@ -142,8 +158,16 @@
 }
 
 .account-controls__btn--danger {
-  border-color: rgba(239, 68, 68, 0.45);
-  color: var(--ro-error);
+  background: var(--admin-danger-bg, rgba(248, 113, 113, 0.12));
+  border-color: var(--admin-danger-border, rgba(248, 113, 113, 0.42));
+  color: var(--admin-danger, #f87171);
+  font-weight: 600;
+}
+
+.account-controls__btn--danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fca5a5;
 }
 
 .account-controls__empty {
@@ -208,7 +232,7 @@
 }
 
 .account-controls__mini-toggle input {
-  accent-color: var(--admin-accent, var(--ro-gold));
+  accent-color: var(--admin-accent, #f5f2eb);
 }
 
 .account-controls__sections-grid {
@@ -238,7 +262,7 @@
   padding: 0.65rem 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--admin-input-border, var(--ro-border-strong));
-  background: var(--ro-bg-inset);
+  background: var(--admin-inset, var(--ro-bg-inset));
 }
 
 .account-controls__input--search {
@@ -269,7 +293,7 @@
 }
 
 .account-controls__bulk-toggle input {
-  accent-color: var(--admin-accent, var(--ro-gold));
+  accent-color: var(--admin-accent, #f5f2eb);
 }
 
 .account-controls__bulk-buttons {
@@ -301,8 +325,8 @@
 }
 
 .account-controls__player--selected {
-  border-color: var(--admin-accent, var(--ro-gold-border));
-  box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.35);
+  border-color: var(--admin-border-strong, #2e343d);
+  box-shadow: inset 0 0 0 1px rgba(245, 242, 235, 0.22);
 }
 
 .account-controls__player-main {
@@ -319,7 +343,7 @@
 }
 
 .account-controls__player-select input {
-  accent-color: var(--admin-accent, var(--ro-gold));
+  accent-color: var(--admin-accent, #f5f2eb);
 }
 
 .account-controls__player-text {

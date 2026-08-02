@@ -26,15 +26,17 @@
   padding: 0;
   border: none;
   background: none;
-  color: var(--admin-text-muted);
+  color: var(--admin-text);
   font-size: 0.8125rem;
   font-family: inherit;
   cursor: pointer;
   transition: color 0.15s ease;
+  opacity: 0.85;
 }
 
 .admin-user-page__back:hover {
   color: var(--admin-accent);
+  opacity: 1;
 }
 
 .admin-user-page__hero {
@@ -158,20 +160,20 @@
 
 .admin-user-page__email-btn:hover:not(:disabled) {
   color: var(--admin-text);
-  border-color: var(--ro-border-strong);
-  background: var(--ro-bg-inset);
+  border-color: var(--admin-border-strong);
+  background: var(--admin-accent-soft);
 }
 
 .admin-user-page__email-btn--primary {
-  background: var(--admin-text);
-  border-color: var(--admin-text);
-  color: var(--admin-bg);
+  background: var(--admin-accent);
+  border-color: var(--admin-accent);
+  color: var(--admin-ink);
 }
 
 .admin-user-page__email-btn--primary:hover:not(:disabled) {
-  background: var(--ro-bg-inset);
-  border-color: var(--ro-border);
-  color: var(--admin-bg);
+  background: var(--admin-accent-hover, #ffffff);
+  border-color: var(--admin-accent-hover, #ffffff);
+  color: var(--admin-ink);
 }
 
 .admin-user-page__email-btn:disabled {
@@ -213,8 +215,8 @@
 .admin-user-page__metric {
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid var(--admin-border);
-  background: var(--ro-bg-inset);
+  border: 1px solid var(--admin-border-strong);
+  background: var(--admin-inset, var(--admin-accent-soft));
   text-align: center;
 }
 
@@ -223,6 +225,7 @@
   font-size: 1.375rem;
   font-weight: 600;
   line-height: 1.1;
+  color: var(--admin-text);
 }
 
 .admin-user-page__metric-label {
@@ -240,9 +243,9 @@
   gap: 0.35rem;
   margin-bottom: 1.25rem;
   padding: 0.875rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--admin-border);
-  background: var(--ro-bg-inset);
+  border-radius: 10px;
+  border: 1px solid var(--admin-border-strong);
+  background: var(--admin-card);
 }
 
 .admin-user-page__ranking-label {
@@ -277,6 +280,7 @@
 
 .admin-user-page__ranking-url:hover {
   text-decoration: underline;
+  color: var(--admin-accent-hover, #ffffff);
 }
 
 .admin-user-page__controls .account-controls {
@@ -324,9 +328,16 @@
 }
 
 .admin-user-page__btn--danger {
-  border: 1px solid rgba(239, 68, 68, 0.45);
-  background: rgba(239, 68, 68, 0.08);
-  color: var(--ro-error);
+  border: 1px solid var(--admin-danger-border, rgba(248, 113, 113, 0.42));
+  background: var(--admin-danger-bg, rgba(248, 113, 113, 0.12));
+  color: var(--admin-danger, #f87171);
+  font-weight: 600;
+}
+
+.admin-user-page__btn--danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.2);
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fca5a5;
 }
 
 .admin-user-page__btn--danger:disabled {

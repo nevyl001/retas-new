@@ -2,19 +2,31 @@
 
 .user-management {
   --admin-accent: #f5f2eb;
+  --admin-accent-hover: #ffffff;
+  --admin-ink: var(--ro-chrome-bg, #12161b);
   --admin-bg: var(--ro-chrome-bg, #12161b);
   --admin-card: var(--ro-chrome-elevated, #1a1f26);
+  --admin-inset: #151a21;
   --admin-border: var(--ro-chrome-border, #232830);
   --admin-text: var(--ro-chrome-text, #ffffff);
   --admin-text-muted: var(--ro-chrome-text-muted, #8b93a0);
   --admin-input-bg: var(--ro-chrome-elevated, #1a1f26);
   --admin-input-border: #2e343d;
+  --admin-danger: #f87171;
+  --admin-danger-bg: rgba(248, 113, 113, 0.12);
+  --admin-danger-border: rgba(248, 113, 113, 0.42);
   --text-primary: var(--admin-text);
   --text-secondary: var(--admin-text-muted);
   --text-muted: var(--admin-text-muted);
+  --danger: var(--admin-danger);
+  --error: var(--admin-danger);
   --ro-text-primary: var(--admin-text);
   --ro-text-secondary: var(--admin-text-muted);
   --ro-text-muted: var(--admin-text-muted);
+  --ro-bg-elevated: var(--admin-card);
+  --ro-bg-inset: var(--admin-inset);
+  --ro-border: var(--admin-border);
+  --ro-error: var(--admin-danger);
 
   padding: 0;
   color: var(--admin-text);
@@ -82,16 +94,29 @@
 
 .user-management .riviera-btn-ghost,
 .user-management .riviera-btn-secondary {
-  color: var(--admin-text-muted);
-  border-color: var(--admin-border);
+  color: var(--admin-text);
+  border-color: var(--admin-input-border);
   background: transparent;
 }
 
 .user-management .riviera-btn-ghost:hover:not(:disabled),
 .user-management .riviera-btn-secondary:hover:not(:disabled) {
-  color: var(--admin-text);
-  border-color: var(--admin-input-border);
-  background: var(--admin-card);
+  color: var(--admin-ink);
+  border-color: var(--admin-accent);
+  background: var(--admin-accent);
+}
+
+.user-management .riviera-btn-danger {
+  color: var(--admin-danger);
+  border-color: var(--admin-danger-border);
+  background: var(--admin-danger-bg);
+  font-weight: 600;
+}
+
+.user-management .riviera-btn-danger:hover:not(:disabled) {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(248, 113, 113, 0.2);
 }
 
 .user-management .riviera-input,
@@ -594,18 +619,20 @@
 
 .um-detail-modal__btn--ghost:hover {
   color: var(--admin-text);
-  background: var(--ro-bg-inset);
+  background: var(--admin-inset, var(--admin-accent-soft, #232931));
   border-color: var(--admin-border);
 }
 
 .um-detail-modal__btn--danger {
-  color: var(--ro-error);
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--admin-danger, #f87171);
+  background: var(--admin-danger-bg, rgba(248, 113, 113, 0.12));
+  border: 1px solid var(--admin-danger-border, rgba(248, 113, 113, 0.42));
+  font-weight: 600;
 }
 
 .um-detail-modal__btn--danger:hover {
-  background: rgba(239, 68, 68, 0.18);
+  background: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
 }
 
 @media (max-width: 520px) {
