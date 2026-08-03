@@ -18,6 +18,10 @@ import {
 import { readDueloLugarPrefs, resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
 import { formatDueloHorarioRange } from "../../lib/duelo2v2/schedule";
 import {
+  fetchOpenGameRegistrationConfig,
+  listOpenGameRegistrationEntries,
+} from "../../lib/retaAbierta/retaAbiertaService";
+import {
   finalizarDuelo2v2,
   getDuelo2v2ById,
   parejaLabel,
@@ -71,6 +75,23 @@ function scrollToDueloConvocatoria() {
   document
     .getElementById("duelo-convocatoria-inline")
     ?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function convStatusLabel(status: string | undefined): string {
+  switch (status) {
+    case "open":
+      return "Abierta";
+    case "paused":
+      return "Pausada";
+    case "closed":
+      return "Cerrada";
+    case "cancelled":
+      return "Cancelada";
+    case "draft":
+      return "Borrador";
+    default:
+      return "Convocatoria";
+  }
 }
 
 interface Duelo2v2GestionarProps {
@@ -149,6 +170,49 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     load();
   }, [load]);
 
+  /** Si ya hay convocatoria publicada, reabre el panel al volver a la app. */
+  const refreshConvSummary = useCallback(async () => {
+    try {
+      const cfg = await fetchOpenGameRegistrationConfig("duelo_2v2", dueloId);
+      if (!cfg) {
+        setConvIsLive(false);
+        setConvLine("Sin abrir · —");
+        return;
+      }
+      const entries = await listOpenGameRegistrationEntries("duelo_2v2", dueloId);
+      const confirmed = entries.filter((e) => e.status === "confirmed").length;
+      const capacity = cfg.capacity ?? 4;
+      const live =
+        Boolean(cfg.public_slug) ||
+        (Boolean(cfg.enabled) && cfg.status !== "draft");
+      setConvIsLive(live);
+      if (live) {
+        setWantConvocatoria(true);
+        setConvTouched(true);
+      }
+      setConvLine(
+        `${convStatusLabel(cfg.status)} · ${confirmed} de ${capacity} confirmados`
+      );
+    } catch {
+      setConvLine("Gestionar convocatoria");
+    }
+  }, [dueloId]);
+
+  useEffect(() => {
+    if (!duelo || duelo.estado !== "configuracion") return;
+    void refreshConvSummary();
+  }, [duelo?.id, duelo?.estado, refreshConvSummary]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (!duelo || duelo.estado !== "configuracion") return;
+      void refreshConvSummary();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [duelo, refreshConvSummary]);
+
   const loadedDueloId = duelo?.id ?? null;
   const loadedEstado = duelo?.estado ?? null;
 
@@ -156,7 +220,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     if (!loadedDueloId || !loadedEstado || loadedEstado === "finalizado") return;
     if (loadedEstado === "configuracion") {
       setStep("parejas");
-      setConvTouched(false);
     } else {
       setStep("control");
     }
@@ -482,8 +545,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             }
           };
 
-          const showConvocatoriaPanel = enConfig && wantConvocatoria;
-
           const steps: QuickModeStep[] = [
             {
               id: "parejas",
@@ -686,12 +747,12 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                           onToggle={() => {
                             setWantConvocatoria((v) => {
                               const next = !v;
-                              if (next) setConvTouched(true);
+                              if (next || convIsLive) setConvTouched(true);
                               return next;
                             });
                           }}
                         >
-                          {showConvocatoriaPanel ? (
+                          {wantConvocatoria ? (
                             <ConvocatoriaWhatsAppPanel
                               embedded
                               shareOnly
