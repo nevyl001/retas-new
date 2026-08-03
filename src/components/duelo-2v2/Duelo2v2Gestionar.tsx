@@ -16,6 +16,7 @@ import {
   peekDuelo2v2CreateDraft,
 } from "../../lib/duelo2v2/duelo2v2CreateDraft";
 import { readDueloLugarPrefs, resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
+import { formatDueloHorarioRange } from "../../lib/duelo2v2/schedule";
 import {
   finalizarDuelo2v2,
   getDuelo2v2ById,
@@ -23,6 +24,7 @@ import {
   startDuelo2v2,
   updateDuelo2v2Score,
 } from "../../services/duelo2v2Service";
+import { formatPartidoFecha } from "../../lib/torneoExpress/partidoSchedule";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
 import {
@@ -326,6 +328,13 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
         ? "En juego"
         : "Preparación";
 
+  const diaLabel = duelo.programado_en?.trim()
+    ? formatPartidoFecha(duelo.programado_en)
+    : "—";
+  const horarioLabel =
+    formatDueloHorarioRange(duelo.programado_en, duelo.programado_hasta) ||
+    "—";
+
   const equiposPanel = (
     <div className="duelo2v2-equipos-panel">
       <div className="duelo2v2-equipo-card">
@@ -412,9 +421,11 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                 label: "Marcador",
                 value: `${duelo.sets_pareja_a ?? 0}–${duelo.sets_pareja_b ?? 0}`,
               },
+              { label: "Día", value: diaLabel },
+              { label: "Horario", value: horarioLabel },
+              { label: "Cancha", value: duelo.cancha?.trim() || "—" },
             ]}
             rightMeta={[
-              { label: "Cancha", value: duelo.cancha?.trim() || "—" },
               {
                 label: "Lugar",
                 value: includeLugar ? lugarConvocatoria : "Oculto",
@@ -621,6 +632,8 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                       label: "Marcador",
                       value: `${duelo.sets_pareja_a ?? 0}–${duelo.sets_pareja_b ?? 0}`,
                     },
+                    { label: "Día", value: diaLabel },
+                    { label: "Horario", value: horarioLabel },
                     { label: "Cancha", value: duelo.cancha?.trim() || "—" },
                   ]}
                   rightMeta={[
