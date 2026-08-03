@@ -170,6 +170,9 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     load();
   }, [load]);
 
+  const loadedDueloId = duelo?.id ?? null;
+  const loadedEstado = duelo?.estado ?? null;
+
   /** Si ya hay convocatoria publicada, reabre el panel al volver a la app. */
   const refreshConvSummary = useCallback(async () => {
     try {
@@ -199,22 +202,19 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   }, [dueloId]);
 
   useEffect(() => {
-    if (!duelo || duelo.estado !== "configuracion") return;
+    if (!loadedDueloId || loadedEstado !== "configuracion") return;
     void refreshConvSummary();
-  }, [duelo?.id, duelo?.estado, refreshConvSummary]);
+  }, [loadedDueloId, loadedEstado, refreshConvSummary]);
 
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
-      if (!duelo || duelo.estado !== "configuracion") return;
+      if (!loadedDueloId || loadedEstado !== "configuracion") return;
       void refreshConvSummary();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [duelo, refreshConvSummary]);
-
-  const loadedDueloId = duelo?.id ?? null;
-  const loadedEstado = duelo?.estado ?? null;
+  }, [loadedDueloId, loadedEstado, refreshConvSummary]);
 
   useEffect(() => {
     if (!loadedDueloId || !loadedEstado || loadedEstado === "finalizado") return;
