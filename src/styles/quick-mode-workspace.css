@@ -220,56 +220,18 @@
   overflow: hidden;
 }
 
-.qm-ws__details-inline .reta-details-form__duration-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.35rem;
-  min-width: 0;
-  width: 100%;
-}
-
 .qm-ws__details-inline .reta-details-form__field--duration .reta-details-form__stepper {
   width: 100%;
   justify-content: space-between;
   max-width: none;
 }
 
-.qm-ws__details-inline .reta-details-form__end-time {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.35rem;
-  margin: 0;
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 0.3rem 0.45rem;
-  border-radius: 8px;
-  border: 1px solid var(--qm-ink-border);
-  background: color-mix(in srgb, var(--qm-ink-elevated) 70%, transparent);
-  font-size: 0.625rem;
-  line-height: 1.2;
+/* Fin estimado en la etiqueta — no apila altura ni rompe la fila */
+.qm-ws__details-inline .reta-details-form__end-inline {
+  font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--qm-ink-muted);
-}
-
-.qm-ws__details-inline .reta-details-form__end-time-label {
-  flex: 0 0 auto;
-  font-weight: 700;
-  opacity: 0.85;
-}
-
-.qm-ws__details-inline .reta-details-form__end-time-value {
-  flex: 1 1 auto;
-  min-width: 0;
-  text-align: right;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--qm-ink-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-transform: none;
+  color: color-mix(in srgb, var(--qm-ink-text) 72%, var(--qm-ink-muted));
   white-space: nowrap;
 }
 
@@ -285,11 +247,11 @@
 }
 
 .qm-ws__details-inline .home-sheet__field-label {
-  font-size: 0.5625rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  line-height: 1.2;
-  color: var(--qm-ink-muted);
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  color: color-mix(in srgb, var(--qm-ink-text) 78%, var(--qm-ink-muted));
 }
 
 .qm-ws__details-inline .home-sheet__input,
@@ -312,8 +274,8 @@
 
 .qm-ws__details-inline .reta-details-form__schedule-split {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(7.5rem, 0.9fr);
-  gap: 0.55rem;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) minmax(7.25rem, 0.95fr);
+  gap: 0.5rem;
   width: 100%;
   min-width: 0;
   align-items: end;
@@ -425,9 +387,16 @@
 
 @media (max-width: 639px) {
   .qm-ws__details-inline .reta-details-form__schedule-split {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(6.75rem, 0.85fr);
-    gap: 0.45rem;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(6.5rem, 0.9fr);
+    gap: 0.4rem;
     align-items: end;
+  }
+
+  .qm-ws__details-inline .reta-details-form__end-inline {
+    display: block;
+    margin-top: 0.05rem;
+    font-size: 0.5625rem;
+    letter-spacing: 0.02em;
   }
 
   .qm-ws__details-inline .reta-details-form__schedule-split .reta-details-form__field--duration .reta-details-form__stepper,
@@ -620,18 +589,35 @@
 }
 
 @media (min-width: 640px) {
+  /* Nombre | Día+Hora+Duración | Cancha/Canchas — sin huecos muertos */
   .qm-ws__details-inline .reta-details-form__row--primary {
-    grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 1.15fr) auto;
+    grid-template-columns: minmax(9rem, 1.05fr) minmax(22rem, 2.1fr) minmax(5.75rem, 0.55fr);
+    align-items: end;
   }
 
+  /* Descripción | Nivel | Lugar (| campeonato si aplica) */
   .qm-ws__details-inline .reta-details-form__row--meta {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--meta:has(
+      > .reta-details-form__field--champ
+    ),
+  .qm-ws__details-inline .reta-details-form__row--meta:has(
+      > .reta-details-form__field--champ-compact
+    ) {
     grid-template-columns:
-      minmax(0, 1.15fr)
-      minmax(0, 1fr)
-      minmax(8.75rem, 0.95fr)
       minmax(0, 1.2fr)
-      minmax(8.5rem, 0.85fr);
-    align-items: start;
+      minmax(0, 1fr)
+      minmax(0, 1.15fr)
+      minmax(7.5rem, auto);
+  }
+
+  .qm-ws__details-inline .reta-details-form__field--cancha .home-sheet__input,
+  .qm-ws__details-inline .reta-details-form__field--courts .reta-details-form__stepper {
+    width: 100%;
+    max-width: none;
   }
 }
 
@@ -642,17 +628,7 @@
   }
 
   .qm-ws__details-inline .reta-details-form__row--primary {
-    grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1.2fr) auto;
-  }
-
-  .qm-ws__details-inline .reta-details-form__row--meta {
-    grid-template-columns:
-      minmax(0, 1.15fr)
-      minmax(0, 1fr)
-      minmax(9rem, 0.95fr)
-      minmax(0, 1.2fr)
-      minmax(8rem, auto);
-    align-items: start;
+    grid-template-columns: minmax(11rem, 1.15fr) minmax(26rem, 2.2fr) minmax(6rem, 0.5fr);
   }
 
   .qm-ws__details-inline .reta-details-form__field--champ {

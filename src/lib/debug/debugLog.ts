@@ -1,11 +1,16 @@
 /**
- * Logger de desarrollo centralizado. No-op en producción (gate de build-time
- * de CRA: process.env.NODE_ENV === "production" se elimina por dead-code
- * elimination en el bundle final, igual que los `if` de App.tsx).
+ * Logger de desarrollo centralizado.
  *
- * Uso: reemplazo directo de console.log/info/debug/group/time para código
- * que aporta valor de diagnóstico en desarrollo. NO usar para errores ni
- * advertencias reales — para eso sigue usando console.error / console.warn.
+ * - Producción: siempre no-op (dead-code elimination de CRA con NODE_ENV).
+ * - Desarrollo: silencioso por defecto (los logs verbosos — branding, realtime,
+ *   etc. — no deben ralentizar ni ensuciar la consola en el día a día).
+ *
+ * Activar en local (cualquiera de los dos):
+ *   localStorage.setItem("ro:debug", "1")  // luego recargar
+ *   REACT_APP_DEBUG=1                      // al arrancar npm start
+ *
+ * NO usar para errores ni advertencias reales — console.error / console.warn
+ * (o debugWarn abajo) siguen siendo el canal correcto.
  */
 
 const isProd = process.env.NODE_ENV === "production";
@@ -13,18 +18,32 @@ const isProd = process.env.NODE_ENV === "production";
 // no-console: off para este archivo vía override en .eslintrc.js — es el
 // único wrapper autorizado a llamar console.* directamente.
 
+function isVerboseDebugEnabled(): boolean {
+  if (isProd) return false;
+  if (process.env.REACT_APP_DEBUG === "1") return true;
+  try {
+    return (
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem("ro:debug") === "1"
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function debugLog(...args: unknown[]): void {
-  if (isProd) return;
+  if (!isVerboseDebugEnabled()) return;
   console.log(...args);
 }
 
+/** Warnings de diagnóstico en desarrollo; sigue silenciado en producción. */
 export function debugWarn(...args: unknown[]): void {
   if (isProd) return;
   console.warn(...args);
 }
 
 export function debugGroup(label: string, fn: () => void): void {
-  if (isProd) {
+  if (!isVerboseDebugEnabled()) {
     fn();
     return;
   }
@@ -37,11 +56,11 @@ export function debugGroup(label: string, fn: () => void): void {
 }
 
 export function debugTime(label: string): void {
-  if (isProd) return;
+  if (!isVerboseDebugEnabled()) return;
   console.time(label);
 }
 
 export function debugTimeEnd(label: string): void {
-  if (isProd) return;
+  if (!isVerboseDebugEnabled()) return;
   console.timeEnd(label);
 }

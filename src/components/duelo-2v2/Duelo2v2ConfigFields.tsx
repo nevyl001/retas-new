@@ -4,9 +4,7 @@ import {
   RETA_DURATION_MIN,
   clampRetaDurationMinutes,
 } from "../../lib/reta/retaConfigValidation";
-import {
-  addMinutesToTimeInput,
-} from "../../lib/duelo2v2/schedule";
+import { addMinutesToTimeInput } from "../../lib/duelo2v2/schedule";
 
 export type Duelo2v2ConfigFieldValues = {
   nombre: string;
@@ -33,10 +31,8 @@ export type Duelo2v2ConfigFieldsProps = {
 };
 
 /**
- * Campos densos del duelo — mismo chrome que RetaConfigFields essentials
- * (reta-details-form + home-sheet) para que qm-ws__details-inline pinte igual.
- *
- * Horario: Día + Hora inicio + Duración → fin automático.
+ * Campos densos del duelo — mismo chrome y ritmo que RetaConfigFields essentials.
+ * Horario: Día + Hora + Duración en una fila; fin automático en la etiqueta.
  */
 export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
   values,
@@ -78,7 +74,7 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
   const endLabel =
     values.draftTimeStart.trim() && values.draftTimeEnd.trim()
       ? values.draftTimeEnd
-      : "—";
+      : null;
 
   return (
     <div
@@ -107,7 +103,7 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
         <div
           className="reta-details-form__schedule-split"
           role="group"
-          aria-label="Día y hora de inicio"
+          aria-label="Día, hora y duración"
         >
           <label
             className="home-sheet__field reta-details-form__field reta-details-form__field--date"
@@ -128,7 +124,7 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
             className="home-sheet__field reta-details-form__field reta-details-form__field--time"
             htmlFor={`${idPrefix}-hora-inicio`}
           >
-            <span className="home-sheet__field-label">Hora inicio</span>
+            <span className="home-sheet__field-label">Hora</span>
             <input
               id={`${idPrefix}-hora-inicio`}
               type="time"
@@ -141,6 +137,60 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
               required
             />
           </label>
+          <div className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
+            <span className="home-sheet__field-label">
+              Duración
+              {endLabel ? (
+                <span
+                  className="reta-details-form__end-inline"
+                  role="status"
+                >
+                  {" "}
+                  · fin {endLabel}
+                </span>
+              ) : null}
+            </span>
+            <div className="home-sheet__stepper reta-details-form__stepper">
+              <button
+                type="button"
+                className="home-sheet__stepper-btn"
+                disabled={
+                  disabled || values.durationMinutes <= RETA_DURATION_MIN
+                }
+                onClick={() =>
+                  applySchedule({
+                    durationMinutes: clampRetaDurationMinutes(
+                      values.durationMinutes - 15
+                    ),
+                  })
+                }
+                aria-label="Menos duración"
+              >
+                −
+              </button>
+              <span className="home-sheet__stepper-value" aria-live="polite">
+                {values.durationMinutes}
+                <span className="reta-details-form__duration-unit"> min</span>
+              </span>
+              <button
+                type="button"
+                className="home-sheet__stepper-btn"
+                disabled={
+                  disabled || values.durationMinutes >= RETA_DURATION_MAX
+                }
+                onClick={() =>
+                  applySchedule({
+                    durationMinutes: clampRetaDurationMinutes(
+                      values.durationMinutes + 15
+                    ),
+                  })
+                }
+                aria-label="Más duración"
+              >
+                +
+              </button>
+            </div>
+          </div>
         </div>
 
         <label className="home-sheet__field reta-details-form__field reta-details-form__field--cancha">
@@ -193,55 +243,6 @@ export const Duelo2v2ConfigFields: React.FC<Duelo2v2ConfigFieldsProps> = ({
             <option value="6ta Fuerza" />
           </datalist>
         </label>
-
-        <div className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
-          <span className="home-sheet__field-label">Duración (min)</span>
-          <div className="reta-details-form__duration-stack">
-            <div className="home-sheet__stepper reta-details-form__stepper">
-              <button
-                type="button"
-                className="home-sheet__stepper-btn"
-                disabled={
-                  disabled || values.durationMinutes <= RETA_DURATION_MIN
-                }
-                onClick={() =>
-                  applySchedule({
-                    durationMinutes: clampRetaDurationMinutes(
-                      values.durationMinutes - 15
-                    ),
-                  })
-                }
-                aria-label="Menos duración"
-              >
-                −
-              </button>
-              <span className="home-sheet__stepper-value" aria-live="polite">
-                {values.durationMinutes}
-              </span>
-              <button
-                type="button"
-                className="home-sheet__stepper-btn"
-                disabled={
-                  disabled || values.durationMinutes >= RETA_DURATION_MAX
-                }
-                onClick={() =>
-                  applySchedule({
-                    durationMinutes: clampRetaDurationMinutes(
-                      values.durationMinutes + 15
-                    ),
-                  })
-                }
-                aria-label="Más duración"
-              >
-                +
-              </button>
-            </div>
-            <p className="reta-details-form__end-time" role="status">
-              <span className="reta-details-form__end-time-label">Fin</span>
-              <span className="reta-details-form__end-time-value">{endLabel}</span>
-            </p>
-          </div>
-        </div>
 
         <div className="home-sheet__field reta-details-form__field reta-details-form__field--lugar">
           <span className="reta-details-form__lugar-label">
