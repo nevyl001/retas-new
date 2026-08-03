@@ -7,7 +7,7 @@ interface HomeContinueStripProps {
   onContinue: (item: HomeRetaItem) => void;
 }
 
-/** Panel de contexto: responde una sola pregunta — "¿qué tengo pendiente?". */
+/** Franja superior: muestra retas activas primero para continuar o gestionarlas. */
 export const HomeContinueStrip: React.FC<HomeContinueStripProps> = ({
   items,
   onContinue,
@@ -15,8 +15,11 @@ export const HomeContinueStrip: React.FC<HomeContinueStripProps> = ({
   if (items.length === 0) return null;
 
   return (
-    <aside className="home-pending" aria-label="Pendiente">
-      <h2 className="home-pending__title">Pendiente</h2>
+    <section className="home-pending" aria-label="Retas activas">
+      <div className="home-pending__header">
+        <h2 className="home-pending__title">Activas</h2>
+        <p className="home-pending__hint">Continúa o gestiona lo que tienes en curso</p>
+      </div>
       <div className="home-pending__list">
         {items.map((item) => {
           const mode = GAME_MODES.find((m) => m.id === getRetaGameMode(item));
@@ -38,6 +41,6 @@ export const HomeContinueStrip: React.FC<HomeContinueStripProps> = ({
           );
         })}
       </div>
-    </aside>
+    </section>
   );
 };

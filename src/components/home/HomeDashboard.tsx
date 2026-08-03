@@ -200,22 +200,19 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
   return (
     <div className="home-inner rv-page">
+      <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
+
       <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
 
       {error && <p className="home-error">{error}</p>}
 
-      <div
-        className={`home-shell${
-          activeRetas.length > 0 ? " home-shell--with-panel" : ""
-        }`}
-      >
+      <div className="home-shell">
         <div className="home-shell__main">
           <GameModesGrid
             onModeSelect={handleModeSelect}
             isModeEnabled={isModeEnabled}
           />
         </div>
-        <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
       </div>
 
       <section className="home-access" aria-label="Accesos rápidos">

@@ -39,39 +39,38 @@
   color: var(--text-primary, var(--ro-text-primary));
 }
 
-/* —— Cuerpo del Home: grid principal + panel de contexto —— */
+/* —— Cuerpo del Home: modos a ancho completo —— */
 .home-shell {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   gap: 40px;
-  max-width: 1220px;
-}
-
-@media (min-width: 1024px) {
-  .home-shell--with-panel {
-    grid-template-columns: minmax(0, 1fr) 320px;
-    max-width: 1620px;
-    gap: 64px;
-  }
+  max-width: none;
+  width: 100%;
 }
 
 .home-shell__main {
   min-width: 0;
 }
 
-/* —— Panel "Pendiente": responde una sola pregunta —— */
+/* —— Activas: franja superior, no sidebar —— */
 .home-pending {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  width: 100%;
+  margin: 0 0 clamp(24px, 4vw, 36px);
+  padding: 16px 18px;
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--radius-lg, 14px);
+  background: var(--bg-card);
 }
 
-@media (min-width: 1024px) {
-  .home-pending {
-    position: sticky;
-    top: clamp(20px, 3vw, 36px);
-  }
+.home-pending__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
 }
 
 .home-pending__title {
@@ -84,9 +83,16 @@
   font-family: var(--font-body);
 }
 
+.home-pending__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--ro-text-secondary);
+}
+
 .home-pending__list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
   gap: 10px;
 }
 
@@ -96,10 +102,10 @@
   gap: 14px;
   width: 100%;
   min-height: var(--ro-touch-target-min, 44px);
-  padding: 16px 18px;
-  border: 0.5px solid var(--border-subtle);
+  padding: 14px 16px;
+  border: 0.5px solid var(--border-default);
   border-radius: var(--radius-lg, 14px);
-  background: var(--bg-card);
+  background: var(--bg-elevated, var(--bg-card));
   color: inherit;
   font-family: var(--font-body);
   text-align: left;
@@ -113,7 +119,7 @@
 }
 
 .home-pending-card:hover {
-  border-color: var(--border-default);
+  border-color: var(--ro-border-strong, var(--border-default));
   background: var(--bg-card-hover);
   transform: translateY(-1px);
 }
