@@ -214,10 +214,11 @@
   flex-direction: column;
   align-items: stretch;
   flex-wrap: nowrap;
-  gap: 0.2rem;
+  gap: 0.4rem;
   min-width: 0;
   margin: 0;
-  overflow: hidden;
+  /* visible: overflow:hidden recortaba date/time nativos en móvil */
+  overflow: visible;
 }
 
 .qm-ws__details-inline .reta-details-form__field--duration .reta-details-form__stepper {
@@ -386,34 +387,89 @@
 }
 
 @media (max-width: 639px) {
-  .qm-ws__details-inline .reta-details-form__schedule-split {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) minmax(6.5rem, 0.9fr);
-    gap: 0.4rem;
+  /*
+   * Móvil premium: Nombre full → Día | Hora | Cancha → Duración full.
+   * display:contents saca Día/Hora/Duración al grid del primary.
+   */
+  .qm-ws__details-inline .reta-details-form__row--primary {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr) minmax(5.5rem, 0.7fr);
+    grid-template-areas:
+      "name name name"
+      "date time cancha"
+      "duration duration duration";
+    gap: 0.65rem 0.5rem;
     align-items: end;
   }
 
+  .qm-ws__details-inline .reta-details-form__row--primary > .reta-details-form__field--name {
+    grid-area: name;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--primary > .reta-details-form__schedule-split {
+    display: contents;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--date {
+    grid-area: date;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--time {
+    grid-area: time;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--duration {
+    grid-area: duration;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--primary > .reta-details-form__field--cancha,
+  .qm-ws__details-inline .reta-details-form__row--primary > .reta-details-form__field--courts {
+    grid-area: cancha;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--cancha .home-sheet__input,
+  .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--courts .reta-details-form__stepper {
+    width: 100%;
+    max-width: none;
+    min-height: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--primary .reta-details-form__field--duration .reta-details-form__stepper {
+    width: 100%;
+    max-width: none;
+    min-height: 2.75rem;
+    height: 2.75rem;
+    justify-content: space-between;
+  }
+
   .qm-ws__details-inline .reta-details-form__end-inline {
-    display: block;
-    margin-top: 0.05rem;
+    display: inline;
+    margin-top: 0;
     font-size: 0.5625rem;
     letter-spacing: 0.02em;
   }
 
-  .qm-ws__details-inline .reta-details-form__schedule-split .reta-details-form__field--duration .reta-details-form__stepper,
-  .qm-ws__details-inline .reta-details-form__field--courts .reta-details-form__stepper {
+  .qm-ws__details-inline .reta-details-form__row--primary input[type="date"],
+  .qm-ws__details-inline .reta-details-form__row--primary input[type="time"] {
     width: 100%;
-    max-width: none;
-    justify-content: space-between;
+    max-width: 100%;
+    min-width: 0;
+    padding-inline: 0.5rem 1.75rem;
   }
 
-  .qm-ws__details-inline .reta-details-form__schedule-split .home-sheet__stepper-btn {
-    width: 1.85rem;
-    min-width: 1.85rem;
-    height: 1.85rem;
+  .qm-ws__details-inline .reta-details-form__row--primary .home-sheet__stepper-btn {
+    width: 2rem;
+    min-width: 2rem;
+    height: 2rem;
   }
 
-  .qm-ws__details-inline .reta-details-form__schedule-split .home-sheet__stepper-value {
-    font-size: 0.8125rem;
+  .qm-ws__details-inline .reta-details-form__row--primary .home-sheet__stepper-value {
+    font-size: 0.875rem;
+  }
+
+  .qm-ws__details-inline .reta-details-form__row--meta {
+    gap: 0.65rem;
   }
 }
 
