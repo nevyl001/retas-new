@@ -5,6 +5,13 @@
   border-top: 0.5px solid var(--border-subtle);
 }
 
+@media (max-width: 767px) {
+  .has-mobile-app-navigation .app-site-foot {
+    margin-bottom: 0.25rem;
+    padding-bottom: 1.25rem;
+  }
+}
+
 .app-site-foot--light {
   border-top-color: var(--ro-border-strong);
 }

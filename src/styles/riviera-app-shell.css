@@ -4,8 +4,9 @@
   /* 0 por defecto: en gestionar evento la nav inferior se oculta.
      Si queda en 56px el CTA sticky “flota” y deja un hueco blanco. */
   --mobile-app-navigation-height: 0px;
+  /* Holgura extra para que el aviso legal / footer no quede bajo la nav. */
   --mobile-app-navigation-offset: calc(
-    var(--mobile-app-navigation-height) + var(--ro-safe-bottom) + 8px
+    var(--mobile-app-navigation-height) + var(--ro-safe-bottom) + 28px
   );
 }
 
@@ -141,7 +142,7 @@
   z-index: 1;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .main-layout,
   .liga-page {
     padding: var(--mode-shell-pad-y) var(--mode-shell-pad-x)
