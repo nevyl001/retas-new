@@ -12,6 +12,7 @@ jest.mock("../lib/supabaseClient", () => ({
       getUser: jest.fn(),
     },
     from: jest.fn(),
+    rpc: jest.fn(),
   },
   supabasePublicRead: {},
 }));
@@ -41,76 +42,24 @@ describe("torneoExpressService — bloqueo torneo cerrado", () => {
     authOk();
   });
 
-  it("savePartidoResultado rechaza si fase_torneo=cerrado", async () => {
-    (supabase.from as jest.Mock).mockImplementation((table: string) => {
-      if (table === "torneo_express_partidos") {
-        return chain({
-          data: {
-            pareja_local_id: "p1",
-            pareja_visitante_id: "p2",
-            grupo_id: "g1",
-          },
-          error: null,
-        });
-      }
-      if (table === "torneo_express_grupos") {
-        return chain({ data: { torneo_id: "t1" }, error: null });
-      }
-      if (table === "torneo_express") {
-        return chain({
-          data: {
-            id: "t1",
-            fase_torneo: "cerrado",
-            estado: "en_curso",
-          },
-          error: null,
-        });
-      }
-      throw new Error(`unexpected table ${table}`);
+  it("savePartidoResultado rechaza si el torneo ya fue cerrado (BLK-06: chequeo server-side vía RPC)", async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValue({
+      data: { ok: false, error: "torneo_cerrado" },
+      error: null,
     });
 
     await expect(
       savePartidoResultado("partido-1", [{ local: 6, visitante: 4 }])
     ).rejects.toThrow(TORNEO_CERRADO_RESULTADO_MSG);
 
-    const updateCalls = (supabase.from as jest.Mock).mock.calls.filter(
-      (c) => c[0] === "torneo_express_partidos"
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "apply_torneo_express_grupo_resultado",
+      expect.objectContaining({ p_partido_id: "partido-1" })
     );
-    // Solo el fetch inicial; no update de resultado.
-    expect(updateCalls.length).toBe(1);
-  });
-
-  it("savePartidoResultado rechaza si estado=finalizado", async () => {
-    (supabase.from as jest.Mock).mockImplementation((table: string) => {
-      if (table === "torneo_express_partidos") {
-        return chain({
-          data: {
-            pareja_local_id: "p1",
-            pareja_visitante_id: "p2",
-            grupo_id: "g1",
-          },
-          error: null,
-        });
-      }
-      if (table === "torneo_express_grupos") {
-        return chain({ data: { torneo_id: "t1" }, error: null });
-      }
-      if (table === "torneo_express") {
-        return chain({
-          data: {
-            id: "t1",
-            fase_torneo: "grupos",
-            estado: "finalizado",
-          },
-          error: null,
-        });
-      }
-      throw new Error(`unexpected table ${table}`);
-    });
-
-    await expect(
-      savePartidoResultado("partido-1", [{ local: 6, visitante: 4 }])
-    ).rejects.toThrow(TORNEO_CERRADO_RESULTADO_MSG);
+    // El chequeo de "torneo cerrado" ahora es responsabilidad exclusiva del
+    // RPC (server-side, bajo lock) — no debe haber ningún fetch/update
+    // directo de tabla en este flujo.
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it("saveEliminatoriaResultado rechaza si torneo cerrado", async () => {

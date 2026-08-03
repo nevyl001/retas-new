@@ -59,9 +59,9 @@ import {
   adjustRankingPuntosManual,
   ensureRivieraJugadorVisibleEnRanking,
   rebuildJugadorStats,
-  registrarParticipacion,
+  registrarParticipacionConLedger,
+  actualizarParticipacionConLedger,
 } from "./rivieraJugadoresService";
-import { tryWriteRivieraOfficialLedger } from "./rivieraOfficialLedger";
 import type { JugadorResultado, JugadorTipoEvento } from "./types";
 import type { Duelo2v2 } from "../duelo2v2/types";
 import {
@@ -400,12 +400,15 @@ async function safeRegistrar(params: {
       tipoEvento: params.tipoEvento,
     });
 
-    const participacionId = await registrarParticipacion({
+    // BLK-04: registro local + ledger oficial global en una sola llamada
+    // RPC transaccional (antes: 2 llamadas separadas, podían quedar
+    // desalineadas si la segunda fallaba). Ver
+    // supabase/migrations/0005_participacion_con_ledger.sql.
+    const participacionId = await registrarParticipacionConLedger({
       ...params,
       puntosObtenidos: puntos,
     });
     if (participacionId) {
-      await tryWriteRivieraOfficialLedger(participacionId);
       logMulticlubPhase21({
         action: "participacion_inserted",
         participacionId,
@@ -530,19 +533,21 @@ async function upsertParticipacionRanking(params: {
   });
 
   if (existing) {
-    const { error } = await supabase
-      .from("jugador_participaciones")
-      .update({
-        evento_nombre: params.eventoNombre,
+    // BLK-04: UPDATE local + ledger oficial global en una sola llamada RPC
+    // transaccional (antes: UPDATE directo + ledger por separado). Ver
+    // supabase/migrations/0005_participacion_con_ledger.sql.
+    try {
+      await actualizarParticipacionConLedger({
+        participacionId: existing.id,
+        eventoNombre: params.eventoNombre,
         resultado: params.resultado,
-        sets_favor: setsFavor,
-        sets_contra: setsContra,
-        puntos_obtenidos: puntosObtenidos,
-        pareja_con: params.parejaCon ?? existing.pareja_con,
+        setsFavor,
+        setsContra,
+        puntosObtenidos,
+        parejaCon: params.parejaCon ?? existing.pareja_con,
         metadata: mergedMeta,
-      })
-      .eq("id", existing.id);
-    if (error) {
+      });
+    } catch (error) {
       console.error("[riviera-jugadores] upsertParticipacionRanking:", error);
       return;
     }
@@ -553,7 +558,6 @@ async function upsertParticipacionRanking(params: {
       tipoEvento: params.tipoEvento,
       eventoId: params.eventoId,
     });
-    await tryWriteRivieraOfficialLedger(existing.id);
     return;
   }
 

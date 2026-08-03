@@ -1791,6 +1791,89 @@ export async function registrarParticipacion(
   return data as string;
 }
 
+/**
+ * Igual que registrarParticipacion(), pero además escribe el ledger oficial
+ * global en la MISMA transacción server-side (BLK-04) — una sola llamada RPC
+ * en vez de dos por separado, para que no pueda completarse el ranking local
+ * y fallar el global (o viceversa). Ver
+ * supabase/migrations/0005_participacion_con_ledger.sql. Usar solo para
+ * participaciones reales de evento (no ajustes manuales, que ya se excluyen
+ * del ledger por su propio metadata.subtipo).
+ */
+export async function registrarParticipacionConLedger(
+  params: RegistrarParticipacionParams
+): Promise<string | null> {
+  const { data, error } = await supabase.rpc(
+    "registrar_participacion_jugador_con_ledger",
+    {
+      p_jugador_id: params.jugadorId,
+      p_tipo_evento: params.tipoEvento,
+      p_evento_id: params.eventoId,
+      p_evento_nombre: params.eventoNombre,
+      p_pareja_con: params.parejaCon ?? null,
+      p_resultado: params.resultado,
+      p_sets_favor: params.setsFavor ?? 0,
+      p_sets_contra: params.setsContra ?? 0,
+      p_puntos_obtenidos: params.puntosObtenidos ?? 0,
+      p_metadata: params.metadata ?? {},
+      p_fecha: params.fecha ?? toMexicoCalendarDate(new Date().toISOString()),
+    }
+  );
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      console.warn("registrarParticipacionConLedger: tabla/RPC no disponible");
+      return null;
+    }
+    throw error;
+  }
+
+  invalidateCareerIdentityCacheForPlayer(params.jugadorId);
+  const result = data as { ok: boolean; participacion_id: string } | null;
+  return result?.participacion_id ?? null;
+}
+
+/**
+ * Igual que un UPDATE directo de jugador_participaciones + ledger separado,
+ * pero atómico (BLK-04) — ver
+ * supabase/migrations/0005_participacion_con_ledger.sql.
+ */
+export async function actualizarParticipacionConLedger(params: {
+  participacionId: string;
+  eventoNombre: string;
+  resultado: RegistrarParticipacionParams["resultado"];
+  setsFavor: number;
+  setsContra: number;
+  puntosObtenidos: number;
+  parejaCon?: string | null;
+  metadata: Record<string, unknown>;
+}): Promise<void> {
+  const { data, error } = await supabase.rpc(
+    "actualizar_participacion_jugador_con_ledger",
+    {
+      p_participacion_id: params.participacionId,
+      p_evento_nombre: params.eventoNombre,
+      p_resultado: params.resultado,
+      p_sets_favor: params.setsFavor,
+      p_sets_contra: params.setsContra,
+      p_puntos_obtenidos: params.puntosObtenidos,
+      p_pareja_con: params.parejaCon ?? null,
+      p_metadata: params.metadata,
+    }
+  );
+
+  if (error) throw error;
+
+  const result = data as { ok: boolean; error?: string } | null;
+  if (!result?.ok) {
+    console.warn(
+      "actualizarParticipacionConLedger: no aplicado",
+      result?.error ?? "unknown"
+    );
+    return;
+  }
+}
+
 /** Ajuste manual de puntos de ranking (suma o resta vía participación). */
 export async function adjustRankingPuntosManual(
   organizadorId: string,

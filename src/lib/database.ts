@@ -20,6 +20,9 @@ import {
   readAmericanoActiveTournamentId,
   readAmericanoTournamentIdFromSession,
   type AmericanoDinamicoSnapshotV1,
+  type AmericanoSnapshotPlayer,
+  type AmericanoSnapshotRosterEntry,
+  type AmericanoSnapshotTournamentPhase,
 } from "./americanoDinamicoStorage";
 import { isAmericanoResumableAsync } from "./americanoDinamicoSync";
 
@@ -428,6 +431,111 @@ export const upsertAmericanoLivePublic = async (
     return true;
   } catch (e) {
     console.warn("upsertAmericanoLivePublic:", e);
+    return false;
+  }
+};
+
+export type ApplyAmericanoLiveMatchScoreResult =
+  | { status: "ok"; snapshot: AmericanoDinamicoSnapshotV1 }
+  | { status: "conflict"; scoreA: number; scoreB: number }
+  | { status: "not_found" }
+  | { status: "invalid" }
+  | { status: "error"; message: string };
+
+/**
+ * Guardado atómico server-side de UN partido del Americano en vivo (BLK-02):
+ * localiza el partido por `matchId` dentro del `rounds` vigente en el
+ * servidor (bajo lock de fila) y solo parchea su score — dos dispositivos
+ * guardando partidos DISTINTOS nunca se pisan. Ver
+ * supabase/migrations/0004_apply_americano_live_match_score.sql.
+ */
+export const applyAmericanoLiveMatchScore = async (params: {
+  tournamentId: string;
+  matchId: string;
+  scoreA: number;
+  scoreB: number;
+  ranking?: AmericanoSnapshotPlayer[];
+  phase?: AmericanoSnapshotTournamentPhase;
+  totalRounds?: number;
+  roster?: AmericanoSnapshotRosterEntry[];
+  force?: boolean;
+}): Promise<ApplyAmericanoLiveMatchScoreResult> => {
+  const { data, error } = await supabase.rpc("apply_americano_live_match_score", {
+    p_tournament_id: params.tournamentId,
+    p_match_id: params.matchId,
+    p_score_a: params.scoreA,
+    p_score_b: params.scoreB,
+    p_ranking: params.ranking ?? null,
+    p_phase: params.phase ?? null,
+    p_total_rounds: params.totalRounds ?? null,
+    p_roster: params.roster ?? null,
+    p_force: params.force ?? false,
+  });
+
+  if (error) return { status: "error", message: error.message };
+
+  const result = data as
+    | {
+        ok: boolean;
+        error?: string;
+        snapshot?: AmericanoDinamicoSnapshotV1;
+        score_a?: number;
+        score_b?: number;
+      }
+    | null;
+
+  if (!result) return { status: "error", message: "Respuesta inválida del servidor." };
+
+  if (!result.ok) {
+    if (result.error === "conflict") {
+      return {
+        status: "conflict",
+        scoreA: result.score_a ?? 0,
+        scoreB: result.score_b ?? 0,
+      };
+    }
+    if (result.error === "not_found" || result.error === "match_not_found") {
+      return { status: "not_found" };
+    }
+    if (result.error === "invalid_score" || result.error === "invalid_match") {
+      return { status: "invalid" };
+    }
+    return { status: "error", message: result.error ?? "No se pudo guardar el resultado." };
+  }
+
+  return { status: "ok", snapshot: result.snapshot as AmericanoDinamicoSnapshotV1 };
+};
+
+/**
+ * Actualiza SOLO ranking/fase/totalRounds/roster del Americano en vivo, sin
+ * tocar `rounds` (que durante "playing"/"finished" es propiedad exclusiva de
+ * applyAmericanoLiveMatchScore). Evita que este guardado de metadata
+ * sobreescriba en silencio el resultado de un partido guardado por otro
+ * dispositivo momentos antes.
+ */
+export const applyAmericanoLiveMetadata = async (params: {
+  tournamentId: string;
+  ranking?: AmericanoSnapshotPlayer[];
+  phase?: AmericanoSnapshotTournamentPhase;
+  totalRounds?: number;
+  roster?: AmericanoSnapshotRosterEntry[];
+}): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.rpc("apply_americano_live_metadata", {
+      p_tournament_id: params.tournamentId,
+      p_ranking: params.ranking ?? null,
+      p_phase: params.phase ?? null,
+      p_total_rounds: params.totalRounds ?? null,
+      p_roster: params.roster ?? null,
+    });
+    if (error) {
+      console.warn("applyAmericanoLiveMetadata:", error);
+      return false;
+    }
+    const result = data as { ok: boolean } | null;
+    return Boolean(result?.ok);
+  } catch (e) {
+    console.warn("applyAmericanoLiveMetadata:", e);
     return false;
   }
 };

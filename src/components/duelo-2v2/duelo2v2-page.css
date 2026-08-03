@@ -583,19 +583,27 @@
 
 /* Vista pública: bloque propio (fuera de detalles), escala ink */
 .duelo2v2-public-share {
+  --qm-ink-bg: var(--ro-chrome-bg, #0c0e12);
+  --qm-ink-elevated: var(--ro-chrome-elevated, #15191f);
+  --qm-ink-inset: var(--ro-chrome-active, #1a1f27);
+  --qm-ink-border: var(--ro-chrome-border, #252b33);
+  --qm-ink-border-strong: #2e343d;
+  --qm-ink-text: var(--ro-chrome-text, #f5f2eb);
+  --qm-ink-muted: var(--ro-chrome-text-muted, #a8a89e);
   width: 100%;
   margin-top: 0;
   box-sizing: border-box;
+  color: var(--qm-ink-text);
 }
 
 .duelo2v2-public-share .duelo2v2-public-share__card.public-link-section {
   margin: 0;
   padding: var(--qm-module-pad-y, 0.85rem) var(--qm-module-pad-x, 1rem);
   border-radius: var(--qm-module-radius, 10px);
-  border: 1px solid var(--qm-ink-border, var(--ro-chrome-border));
-  background: var(--qm-ink-bg, var(--ro-chrome-bg));
+  border: 1px solid var(--qm-ink-border);
+  background: var(--qm-ink-bg);
   box-shadow: none;
-  color: var(--qm-ink-text, var(--ro-chrome-text));
+  color: var(--qm-ink-text);
 }
 
 .duelo2v2-public-share .public-link-section h3 {
@@ -604,7 +612,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--qm-ink-text, var(--ro-chrome-text));
+  color: var(--qm-ink-text) !important;
   margin: 0 0 0.55rem;
 }
 
@@ -612,14 +620,14 @@
   margin-bottom: 0.65rem;
   padding: 0.55rem 0.65rem;
   border-radius: 8px;
-  border: 1px solid var(--qm-ink-border, var(--ro-chrome-border));
-  background: var(--qm-ink-inset, var(--ro-chrome-active));
+  border: 1px solid var(--qm-ink-border);
+  background: var(--qm-ink-inset);
 }
 
 .duelo2v2-public-share .public-link-info p {
   margin: 0;
   padding-left: 0;
-  color: var(--qm-ink-muted, var(--ro-chrome-text-muted));
+  color: color-mix(in srgb, var(--qm-ink-text) 82%, var(--qm-ink-muted)) !important;
   font-size: 0.8125rem;
   line-height: 1.4;
 }
@@ -633,21 +641,55 @@
 }
 
 .duelo2v2-public-share .public-link-button,
-.duelo2v2-public-share .public-link-preview {
+.duelo2v2-public-share .public-link-preview,
+.duelo2v2-public-share a.public-link-preview,
+.duelo2v2-public-share a.public-link-preview:link,
+.duelo2v2-public-share a.public-link-preview:visited,
+.duelo2v2-public-share a.public-link-preview:hover,
+.duelo2v2-public-share a.public-link-preview:active,
+.duelo2v2-public-share a.public-link-preview:focus-visible {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 40px;
   padding: 0.45rem 0.85rem;
   border-radius: 999px;
-  border: 1px solid var(--qm-ink-border-strong, #2e343d);
-  background: var(--qm-ink-elevated, var(--ro-chrome-elevated));
-  color: var(--qm-ink-text, var(--ro-chrome-text));
+  border: 1px solid var(--qm-ink-border-strong) !important;
+  background: var(--qm-ink-elevated) !important;
+  color: var(--qm-ink-text) !important;
+  -webkit-text-fill-color: var(--qm-ink-text);
   font-size: 0.8125rem;
   font-weight: 600;
-  text-decoration: none;
+  text-decoration: none !important;
+  box-shadow: none;
+}
+
+/* Copiar: CTA claro legible sobre ink */
+.duelo2v2-public-share .public-link-button {
+  background: #f5f2eb !important;
+  border-color: #f5f2eb !important;
+  color: #0c0e12 !important;
+  -webkit-text-fill-color: #0c0e12;
 }
 
 .duelo2v2-public-share .public-link-button:hover,
-.duelo2v2-public-share .public-link-preview:hover {
-  border-color: var(--qm-ink-text, var(--ro-chrome-text));
+.duelo2v2-public-share .public-link-button:focus-visible {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+  color: #0c0e12 !important;
+  -webkit-text-fill-color: #0c0e12;
+}
+
+.duelo2v2-public-share .public-link-preview:hover,
+.duelo2v2-public-share .public-link-preview:focus-visible,
+.duelo2v2-public-share a.public-link-preview:hover,
+.duelo2v2-public-share a.public-link-preview:focus-visible {
+  border-color: var(--qm-ink-text) !important;
+  background: color-mix(in srgb, var(--qm-ink-elevated) 70%, #ffffff) !important;
+  color: var(--qm-ink-text) !important;
+  -webkit-text-fill-color: var(--qm-ink-text);
+  transform: none;
+  box-shadow: none;
 }
 
 .duelo2v2-form__submit {

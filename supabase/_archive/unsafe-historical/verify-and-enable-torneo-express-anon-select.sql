@@ -1,3 +1,17 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- HISTÓRICO — NO EJECUTAR
+--
+-- Movido a supabase/_archive/unsafe-historical/ el 2026-08-03 (BLK-05,
+-- auditoría de preproducción). Este archivo recreaba, para
+-- torneo_express/torneo_express_grupos/torneo_express_grupo_parejas/
+-- torneo_express_partidos/torneo_express_eliminatoria_partidos, exactamente
+-- las mismas 5 políticas anon `USING (true)` de SEC-001 — duplicando el
+-- bootstrap original, sin ningún valor propio. Esas 5 tablas ya tienen hoy
+-- políticas seguras (`is_torneo_express_public(...)`) desde
+-- supabase/rls-multiclub-pr1-public-read-helpers.sql. Ejecutar este archivo
+-- por error reabriría SEC-001 para esas 5 tablas.
+-- ══════════════════════════════════════════════════════════════════════════════
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- SEPARADO — Lectura pública (anon) para las tablas que escucha Realtime.
 -- Fecha: 2026-07-15

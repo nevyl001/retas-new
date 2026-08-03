@@ -1,3 +1,15 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- HISTÓRICO — NO EJECUTAR
+--
+-- Movido a supabase/_archive/unsafe-historical/ el 2026-08-03 (BLK-05,
+-- auditoría de preproducción). Este es el rollback DELIBERADO de
+-- fix-rls-open-policies-liga-torneo-express-20260729.sql — ejecutarlo REABRE
+-- SEC-001 a propósito (es su función). Se conserva únicamente como registro
+-- histórico de qué políticas existían antes del fix; git preserva el archivo
+-- igual si alguna vez hiciera falta un rollback real y deliberado (decisión
+-- operativa que debe tomarse con contexto vigente, no replayando esto a ciegas).
+-- ══════════════════════════════════════════════════════════════════════════════
+
 -- =============================================================================
 -- ROLLBACK -- restaura EXACTAMENTE las políticas y grants previos a
 -- fix-rls-open-policies-liga-torneo-express-20260729.sql (reabre el hueco de

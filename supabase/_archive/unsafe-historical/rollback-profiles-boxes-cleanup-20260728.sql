@@ -1,3 +1,15 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- HISTÓRICO — NO EJECUTAR
+--
+-- Movido a supabase/_archive/unsafe-historical/ el 2026-08-03 (BLK-05,
+-- auditoría de preproducción). Reconstruye `profiles`/`boxes` (esquema de una
+-- app de gimnasio ajena — "Parabellum Cross" — que compartía el mismo
+-- proyecto Supabase, ver supabase/cleanup-foreign-block-20260728.sql) con una
+-- policy `profiles_insert_own ... WITH CHECK (true)`. No es RLS del modelo
+-- multi-tenant de Riviera Open — es rollback de un esquema ya limpiado y sin
+-- relación con clubes/organizadores reales. Se conserva solo como registro.
+-- ══════════════════════════════════════════════════════════════════════════════
+
 -- =============================================================================
 -- ROLLBACK — restaura exactamente lo que elimina cleanup-profiles-boxes-20260728.sql.
 -- NO EJECUTAR salvo que esa limpieza ya se haya aplicado y se decida revertir.

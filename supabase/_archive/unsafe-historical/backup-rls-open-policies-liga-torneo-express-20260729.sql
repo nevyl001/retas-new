@@ -1,3 +1,14 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- HISTÓRICO — NO EJECUTAR
+--
+-- Movido a supabase/_archive/unsafe-historical/ el 2026-08-03 (BLK-05,
+-- auditoría de preproducción). Es un snapshot de solo lectura de políticas
+-- YA CORREGIDAS por supabase/fix-rls-open-policies-liga-torneo-express-20260729.sql
+-- (que sigue vigente en supabase/, sin cambios). Este archivo no crea tablas
+-- ni columnas — no tiene ningún valor de bootstrap; se conserva únicamente
+-- como registro histórico del estado inseguro capturado antes del fix.
+-- ══════════════════════════════════════════════════════════════════════════════
+
 -- =============================================================================
 -- BACKUP -- definiciones EXACTAS de las políticas RLS heredadas/permisivas
 -- (qual/with_check = true o equivalente de bypass) capturadas en vivo el

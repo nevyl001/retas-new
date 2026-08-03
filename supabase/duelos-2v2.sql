@@ -1,3 +1,20 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ⚠️  HISTÓRICO — NO EJECUTAR SOLO (BLK-05, auditoría de preproducción 2026-08-03)
+--
+-- El bootstrap original de duelos_2v2 (abajo) define
+-- `duelos_2v2_select_anon USING (true)` y
+-- `duelos_2v2_select_auth USING (organizador_id = auth.uid() OR true)` —
+-- el `OR true` anula por completo el aislamiento (SEC-001). Si este archivo
+-- se re-ejecuta solo, reabre la vulnerabilidad para esta tabla.
+--
+-- Para un ambiente nuevo, este archivo SIEMPRE debe ir seguido, en la misma
+-- sesión/ventana de mantenimiento, de:
+--   supabase/fix-rls-open-policies-liga-torneo-express-20260729.sql
+-- (crea `duelos_2v2_select_anon`/`duelos_2v2_select_auth` con
+-- `is_duelo_public(id)` en vez de `true`). Ver supabase/migrations/README.md
+-- para el orden canónico completo.
+-- ══════════════════════════════════════════════════════════════════════════════
+
 -- =============================================================================
 -- Duelo 2 vs 2 — encuentro entre dos parejas del registro Riviera Open
 -- Ejecutar en Supabase → SQL Editor

@@ -21,7 +21,10 @@ import {
   type Player,
   type Tournament,
 } from "../../lib/database";
-import { persistAmericanoDinamicoSnapshot } from "../../lib/americanoDinamicoSync";
+import {
+  persistAmericanoDinamicoSnapshot,
+  persistAmericanoDinamicoMetadata,
+} from "../../lib/americanoDinamicoSync";
 import { resolvePlayerAvatars } from "../../lib/rivieraJugadores/publicPlayerAvatars";
 import { useUser } from "../../contexts/UserContext";
 import { PublicAmericanoPodiumCard } from "../public/PublicAmericanoPodiumCard";
@@ -238,19 +241,27 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return () => window.clearTimeout(t);
   }, [resolvedTournamentId, phase, players]);
 
-  /** Playing/finished: local inmediato + Supabase (debounced). */
+  /**
+   * Playing/finished: local inmediato + metadata en Supabase (debounced).
+   *
+   * BLK-02: durante "playing"/"finished", `rounds` es propiedad EXCLUSIVA de
+   * los guardados atómicos por partido (persistAmericanoDinamicoMatchScore,
+   * ver useAmericanoDinamico.submitScore/commitRoundScores) — este efecto ya
+   * NO debe escribir `rounds` como parte de un blob completo, o volvería a
+   * sobreescribir en silencio el resultado de un partido guardado por otro
+   * dispositivo momentos antes. Solo persiste ranking/fase/totalRounds/roster.
+   */
   React.useEffect(() => {
     if (!resolvedTournamentId || rounds.length === 0) return;
     if (phase !== "playing" && phase !== "finished") return;
-    const snap = buildAmericanoDinamicoSnapshot(
-      ranking,
-      rounds,
-      phase,
-      totalRounds,
-      rosterForUi
-    );
     const t = window.setTimeout(() => {
-      void persistAmericanoDinamicoSnapshot(resolvedTournamentId, snap);
+      void persistAmericanoDinamicoMetadata({
+        tournamentId: resolvedTournamentId,
+        ranking,
+        phase,
+        totalRounds,
+        roster: rosterForUi,
+      });
     }, 450);
     return () => window.clearTimeout(t);
   }, [resolvedTournamentId, phase, rounds, ranking, totalRounds, rosterForUi]);

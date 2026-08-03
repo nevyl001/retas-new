@@ -982,9 +982,46 @@ function throwIfSetsResultadoColumnMissing(
   }
 }
 
+interface ApplyTorneoExpressGrupoResultadoRpcResult {
+  ok: boolean;
+  status?: "updated" | "unchanged";
+  error?: string;
+  partido_id?: string;
+  grupo_id?: string;
+  torneo_id?: string;
+  puntos_local?: number | null;
+  puntos_visitante?: number | null;
+  sets_resultado?: PartidoSetScore[] | null;
+}
+
+/** Conflicto explícito: otro guardado ya cerró este partido con otro resultado. */
+export class TorneoExpressResultadoConflictError extends Error {
+  readonly code = "conflict" as const;
+  readonly current: {
+    puntosLocal: number | null;
+    puntosVisitante: number | null;
+  };
+
+  constructor(current: { puntosLocal: number | null; puntosVisitante: number | null }) {
+    super(
+      `Este partido ya tiene resultado (${current.puntosLocal ?? "?"}-${current.puntosVisitante ?? "?"}). ` +
+        "Recarga para revisar el marcador actual antes de sobrescribir."
+    );
+    this.name = "TorneoExpressResultadoConflictError";
+    this.current = current;
+  }
+}
+
+/**
+ * Guardado atómico server-side (BLK-06): RPC con SELECT...FOR UPDATE +
+ * ownership + detección de conflicto, mismo patrón usado en Liga (rotativa y
+ * parejas fijas) y en la fase eliminatoria de Torneo Express — ver
+ * supabase/migrations/0003_apply_torneo_express_grupo_resultado.sql.
+ */
 export async function savePartidoResultado(
   partidoId: string,
-  sets: PartidoSetScore[]
+  sets: PartidoSetScore[],
+  force = false
 ): Promise<TorneoExpressPartido> {
   await requireAuthUser();
 
@@ -997,69 +1034,70 @@ export async function savePartidoResultado(
     );
   }
 
-  const { data: existing, error: fetchErr } = await supabase
-    .from("torneo_express_partidos")
-    .select("pareja_local_id, pareja_visitante_id, grupo_id")
-    .eq("id", partidoId)
-    .single();
-  throwIfError(fetchErr, "fetch partido para resultado");
-  if (!existing) {
-    throw new Error("Error en fetch partido para resultado: partido no encontrado");
-  }
-
-  const { data: grupo, error: grupoErr } = await supabase
-    .from("torneo_express_grupos")
-    .select("torneo_id")
-    .eq("id", existing.grupo_id)
-    .maybeSingle();
-  throwIfError(grupoErr, "fetch grupo para resultado");
-  if (!grupo?.torneo_id) {
-    throw new Error("No se pudo resolver el torneo del partido");
-  }
-  await assertTorneoExpressNotClosed(String(grupo.torneo_id));
-
-  const ganadorId =
-    payload.ganadorSide === "local"
-      ? existing.pareja_local_id
-      : existing.pareja_visitante_id;
-
-  if (!ganadorId) {
-    throw new Error("No se pudo determinar el ganador del partido");
-  }
-
-  const updateRow: Record<string, unknown> = {
-    puntos_local: payload.puntos_local,
-    puntos_visitante: payload.puntos_visitante,
-    ganador_id: ganadorId,
-    estado: "jugado",
-    sets_resultado: payload.sets_resultado,
-  };
-
-  const { data, error } = await supabase
-    .from("torneo_express_partidos")
-    .update(updateRow)
-    .eq("id", partidoId)
-    .select()
-    .single();
-
-  // Migración requerida: supabase/torneo-express-partidos-sets-resultado.sql
-  // No guardar BO3/1-set nuevo sin JSON (evita pérdida silenciosa de sets).
-  throwIfSetsResultadoColumnMissing(error, "torneo_express_partidos");
-  throwIfError(error, "update torneo_express_partidos");
-  if (!data) {
-    throw new Error("Error en update torneo_express_partidos: sin datos");
-  }
-
-  void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
-    ({ aplicarRatingTorneoExpressGrupoPartido }) =>
-      aplicarRatingTorneoExpressGrupoPartido(
-        partidoId,
-        payload.puntos_local,
-        payload.puntos_visitante
-      ).catch((e) => console.warn("[rating] torneo express grupo:", e))
+  const { data, error: rpcErr } = await supabase.rpc(
+    "apply_torneo_express_grupo_resultado",
+    {
+      p_partido_id: partidoId,
+      p_puntos_local: payload.puntos_local,
+      p_puntos_visitante: payload.puntos_visitante,
+      p_ganador_side: payload.ganadorSide,
+      p_sets_resultado: payload.sets_resultado,
+      p_force: force,
+    }
   );
 
-  return data as TorneoExpressPartido;
+  if (rpcErr) throw new Error(rpcErr.message);
+
+  const result = data as ApplyTorneoExpressGrupoResultadoRpcResult | null;
+  if (!result) throw new Error("Respuesta inválida del servidor.");
+
+  if (!result.ok) {
+    if (result.error === "not_found") {
+      throw new Error("Partido no encontrado.");
+    }
+    if (result.error === "invalid_score") {
+      throw new Error("Completa todos los sets y asegúrate de que haya un ganador");
+    }
+    if (result.error === "torneo_cerrado") {
+      throw new Error(TORNEO_CERRADO_RESULTADO_MSG);
+    }
+    if (result.error === "conflict") {
+      throw new TorneoExpressResultadoConflictError({
+        puntosLocal: result.puntos_local ?? null,
+        puntosVisitante: result.puntos_visitante ?? null,
+      });
+    }
+    throw new Error(result.error ?? "No se pudo guardar el resultado.");
+  }
+
+  if (result.status !== "unchanged") {
+    void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
+      ({ aplicarRatingTorneoExpressGrupoPartido }) =>
+        aplicarRatingTorneoExpressGrupoPartido(
+          partidoId,
+          payload.puntos_local,
+          payload.puntos_visitante
+        ).catch((e) => console.warn("[rating] torneo express grupo:", e))
+    );
+  }
+
+  const fresh = await fetchPartidoResultadoById(partidoId);
+  if (!fresh) {
+    throw new Error("No se pudo recargar el partido tras guardar el resultado");
+  }
+  return fresh;
+}
+
+async function fetchPartidoResultadoById(
+  partidoId: string
+): Promise<TorneoExpressPartido | null> {
+  const { data, error } = await supabase
+    .from("torneo_express_partidos")
+    .select("*")
+    .eq("id", partidoId)
+    .maybeSingle();
+  throwIfError(error, "fetch partido tras guardar resultado");
+  return (data as TorneoExpressPartido) ?? null;
 }
 
 export class PartidosOrdenColumnMissingError extends Error {
@@ -1578,26 +1616,43 @@ export async function confirmarFaseEliminatoria(
     })
     .filter(Boolean);
 
-  const torneoPayload: Record<string, unknown> = {
-    fase_torneo: "eliminatoria",
-    fase_eliminacion: fase as TorneoExpressFaseEliminacion,
-    bracket_slots: serializeBracketSlots(slots),
-    fase_grupos_finalizada_at: new Date().toISOString(),
-    estado: "en_curso",
-  };
+  // Transición atómica de fase (BLK-06): evita que dos clics/llamadas
+  // concurrentes generen la fase eliminatoria dos veces — solo transiciona
+  // si el torneo sigue en 'grupos' en el momento exacto del UPDATE. Ver
+  // supabase/migrations/0003_apply_torneo_express_grupo_resultado.sql.
+  const { data: transicionData, error: transicionErr } = await supabase.rpc(
+    "confirmar_torneo_express_fase_eliminatoria_transicion",
+    {
+      p_torneo_id: torneoId,
+      p_fase_eliminacion: fase as TorneoExpressFaseEliminacion,
+      p_bracket_slots: serializeBracketSlots(slots),
+    }
+  );
+
+  if (isBracketSchemaError(transicionErr)) {
+    throw new BracketSchemaMissingError();
+  }
+  throwIfError(transicionErr, "confirmarFaseEliminatoria.torneo");
+
+  const transicion = transicionData as
+    | { ok: boolean; error?: string; torneo_id?: string }
+    | null;
+  if (!transicion?.ok) {
+    if (transicion?.error === "ya_en_eliminatoria") {
+      throw new Error(
+        "El cuadro eliminatorio ya fue generado (por otra pestaña o guardado simultáneo). Recarga para verlo."
+      );
+    }
+    throw new Error("No se pudo actualizar el torneo");
+  }
 
   const { data: torneo, error: tErr } = await supabase
     .from("torneo_express")
-    .update(torneoPayload)
+    .select("*")
     .eq("id", torneoId)
-    .select()
     .single();
-
-  if (isBracketSchemaError(tErr)) {
-    throw new BracketSchemaMissingError();
-  }
-  throwIfError(tErr, "confirmarFaseEliminatoria.torneo");
-  if (!torneo) throw new Error("No se pudo actualizar el torneo");
+  throwIfError(tErr, "confirmarFaseEliminatoria.recargar_torneo");
+  if (!torneo) throw new Error("No se pudo recargar el torneo");
 
   await supabase
     .from("torneo_express_eliminatoria_partidos")

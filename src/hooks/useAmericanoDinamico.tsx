@@ -25,7 +25,10 @@ import {
   resolveAmericanoTournamentId,
 } from "../lib/americanoDinamicoStorage";
 import { applyAmericanoSnapshotToState } from "../lib/americanoDinamicoRestore";
-import { loadAmericanoDinamicoSnapshotMerged } from "../lib/americanoDinamicoSync";
+import {
+  loadAmericanoDinamicoSnapshotMerged,
+  persistAmericanoDinamicoMatchScore,
+} from "../lib/americanoDinamicoSync";
 import { aplicarRatingAmericanoPartido } from "../lib/rivieraJugadores/aplicarRatingPartido";
 
 type AmericanoPhase = "registration" | "playing" | "finished";
@@ -349,6 +352,26 @@ export function useAmericanoDinamico(
     setPlayers(rebuilt.players);
   }, []);
 
+  /**
+   * Reconcilia el estado local con el resultado REAL del servidor cuando
+   * apply_americano_live_match_score() devuelve conflicto (BLK-02) — evita
+   * que el intento rechazado del usuario quede divergiendo en silencio del
+   * valor ya guardado por otro dispositivo.
+   */
+  const reconcileMatchScore = useCallback(
+    (matchId: string, scoreA: number, scoreB: number) => {
+      const prevRounds = roundsRef.current;
+      const nextRounds = prevRounds.map((round) => ({
+        ...round,
+        matches: round.matches.map((match) =>
+          match.id === matchId ? { ...match, scoreA, scoreB } : match
+        ),
+      }));
+      persistRebuiltState(nextRounds);
+    },
+    [persistRebuiltState]
+  );
+
   const commitRoundScores = useCallback(
     (scores: { matchId: string; scoreA: number; scoreB: number }[]) => {
       if (phase !== "playing") return;
@@ -377,8 +400,40 @@ export function useAmericanoDinamico(
           );
         }
       }
+
+      // Guardado atómico server-side por partido (BLK-02): dos dispositivos
+      // guardando partidos distintos nunca se pisan entre sí. Si el servidor
+      // reporta conflicto (mismo partido ya guardado con otro resultado por
+      // otro dispositivo), se reconcilia el estado local con el valor real
+      // del servidor en vez de dejarlo divergir en silencio.
+      if (resolvedTournamentId) {
+        for (const s of scores) {
+          void persistAmericanoDinamicoMatchScore({
+            tournamentId: resolvedTournamentId,
+            matchId: s.matchId,
+            scoreA: s.scoreA,
+            scoreB: s.scoreB,
+          })
+            .then((result) => {
+              if (result.status === "conflict") {
+                console.warn(
+                  "[americano-live] conflicto en partido, reconciliando con el servidor:",
+                  s.matchId
+                );
+                reconcileMatchScore(s.matchId, result.scoreA, result.scoreB);
+              }
+            })
+            .catch((e) => console.warn("[americano-live] commitRoundScores:", e));
+        }
+      }
     },
-    [phase, persistRebuiltState, options?.organizadorId]
+    [
+      phase,
+      persistRebuiltState,
+      options?.organizadorId,
+      resolvedTournamentId,
+      reconcileMatchScore,
+    ]
   );
 
   const submitScore = useCallback(
@@ -406,8 +461,35 @@ export function useAmericanoDinamico(
           );
         }
       }
+
+      // Guardado atómico server-side por partido (BLK-02). Igual que en
+      // commitRoundScores: si hay conflicto, reconcilia con el servidor.
+      if (resolvedTournamentId) {
+        void persistAmericanoDinamicoMatchScore({
+          tournamentId: resolvedTournamentId,
+          matchId,
+          scoreA,
+          scoreB,
+        })
+          .then((result) => {
+            if (result.status === "conflict") {
+              console.warn(
+                "[americano-live] conflicto en partido, reconciliando con el servidor:",
+                matchId
+              );
+              reconcileMatchScore(matchId, result.scoreA, result.scoreB);
+            }
+          })
+          .catch((e) => console.warn("[americano-live] submitScore:", e));
+      }
     },
-    [phase, persistRebuiltState, options?.organizadorId]
+    [
+      phase,
+      persistRebuiltState,
+      options?.organizadorId,
+      resolvedTournamentId,
+      reconcileMatchScore,
+    ]
   );
 
   const editScore = useCallback(

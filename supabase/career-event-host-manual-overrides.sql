@@ -86,16 +86,27 @@ $$;
 GRANT EXECUTE ON FUNCTION public.riviera_career_event_host_manual_override(text, text)
   TO anon, authenticated;
 
--- RLS: solo master admin escribe; lectura para audit autenticado
+-- RLS: solo master admin lee y escribe.
+--
+-- NOTA (BLK-05, 2026-08-03): la policy de lectura original de este archivo
+-- era `career_event_host_manual_overrides_select ... USING (true)` —
+-- cualquier cuenta autenticada podía leer la tabla completa (SEC-001). Se
+-- sustituye aquí por la versión ya vigente en producción desde
+-- supabase/fix-rls-open-policies-liga-torneo-express-20260729.sql (que hace
+-- DROP POLICY IF EXISTS de ambos nombres antes de crear la suya), para que
+-- este archivo sea seguro de re-ejecutar por sí solo sin depender de recordar
+-- aplicar un segundo archivo.
 ALTER TABLE public.career_event_host_manual_overrides ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS career_event_host_manual_overrides_select
   ON public.career_event_host_manual_overrides;
-CREATE POLICY career_event_host_manual_overrides_select
+DROP POLICY IF EXISTS cehmo_select_master_admin
+  ON public.career_event_host_manual_overrides;
+CREATE POLICY cehmo_select_master_admin
   ON public.career_event_host_manual_overrides
   FOR SELECT
   TO authenticated
-  USING (true);
+  USING (public.is_master_admin());
 
 DROP POLICY IF EXISTS career_event_host_manual_overrides_insert
   ON public.career_event_host_manual_overrides;

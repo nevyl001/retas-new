@@ -25,7 +25,6 @@ import {
   resetPuntosEquiposLiga,
 } from "./ligaParejasFijasService";
 import { dedupeLigaJugadoresById } from "../lib/liga/dedupeJugadores";
-import { isMissingColumnError } from "../lib/db/schemaHelpers";
 import {
   computeParejasFijasMatchTotals,
   parseSetScoresJson,
@@ -1238,71 +1237,68 @@ export async function updateScore(
   }
 }
 
-const SET_SCORES_MIGRATION_HINT =
-  "Ejecuta supabase/liga-partidos-set-scores.sql en el SQL Editor de Supabase.";
-
-async function updateLigaPartidoScoreParejasFijas(
-  partidoId: string,
-  totals: ReturnType<typeof computeParejasFijasMatchTotals>,
-  sets: LigaPartidoSetScore[]
-): Promise<{ setScoresPersisted: boolean }> {
-  const fullPatch = {
-    score_pareja1: totals.gamesP1,
-    score_pareja2: totals.gamesP2,
-    set_scores: { sets },
-    estado: "completed" as const,
-  };
-
-  const { error: uErr } = await supabase
-    .from("liga_partidos")
-    .update(fullPatch)
-    .eq("id", partidoId);
-
-  if (!uErr) return { setScoresPersisted: true };
-
-  if (!isMissingColumnError(uErr, "liga_partidos", "set_scores")) {
-    throw new Error(uErr.message);
-  }
-
-  const { error: fallbackErr } = await supabase
-    .from("liga_partidos")
-    .update({
-      score_pareja1: totals.gamesP1,
-      score_pareja2: totals.gamesP2,
-      estado: "completed",
-    })
-    .eq("id", partidoId);
-
-  if (fallbackErr) throw new Error(fallbackErr.message);
-
-  console.warn(
-    `[liga] Columna set_scores ausente; games guardados sin detalle por sets. ${SET_SCORES_MIGRATION_HINT}`
-  );
-  return { setScoresPersisted: false };
+interface UpdateLigaPartidoScoreParejasFijasRpcResult {
+  ok: boolean;
+  status?: "updated" | "unchanged";
+  error?: string;
+  partido_id?: string;
+  jornada_id?: string;
+  score_pareja1?: number | null;
+  score_pareja2?: number | null;
+  set_scores?: { sets: LigaPartidoSetScore[] } | null;
 }
 
-/** Resultado al mejor de 3 sets (parejas fijas): sets 1-2 normales, set 3 super tie-break a 10. */
+/**
+ * Resultado al mejor de 3 sets (parejas fijas): sets 1-2 normales, set 3
+ * super tie-break a 10. Guardado atómico server-side (BLK-03): RPC con
+ * SELECT...FOR UPDATE + ownership + detección de conflicto, mismo patrón que
+ * `updateScore` (Liga rotativa) — ver
+ * supabase/migrations/0002_update_liga_partido_score_parejas_fijas.sql.
+ */
 export async function updateScoreParejasFijas(
   partidoId: string,
-  sets: LigaPartidoSetScore[]
+  sets: LigaPartidoSetScore[],
+  force = false
 ): Promise<{ setScoresPersisted: boolean }> {
   const organizadorId = await requireUserId();
   const totals = computeParejasFijasMatchTotals(sets);
 
-  const { data: partido, error: pErr } = await supabase
-    .from("liga_partidos")
-    .select("*")
-    .eq("id", partidoId)
-    .maybeSingle();
-
-  if (pErr) throw new Error(pErr.message);
-  if (!partido) throw new Error("Partido no encontrado.");
-
-  const { setScoresPersisted } = await updateLigaPartidoScoreParejasFijas(
-    partidoId,
-    totals,
-    sets
+  const { data, error: rpcErr } = await supabase.rpc(
+    "update_liga_partido_score_parejas_fijas",
+    {
+      p_partido_id: partidoId,
+      p_score1: totals.gamesP1,
+      p_score2: totals.gamesP2,
+      p_set_scores: { sets },
+      p_force: force,
+    }
   );
+
+  if (rpcErr) throw new Error(rpcErr.message);
+
+  const result = data as UpdateLigaPartidoScoreParejasFijasRpcResult | null;
+  if (!result) throw new Error("Respuesta inválida del servidor.");
+
+  if (!result.ok) {
+    if (result.error === "not_found") {
+      throw new Error("Partido no encontrado.");
+    }
+    if (result.error === "invalid_score") {
+      throw new Error("Marcador inválido.");
+    }
+    if (result.error === "conflict") {
+      throw new LigaScoreConflictError({
+        scorePareja1: result.score_pareja1 ?? null,
+        scorePareja2: result.score_pareja2 ?? null,
+      });
+    }
+    throw new Error(result.error ?? "No se pudo guardar el resultado.");
+  }
+
+  // Idempotente: mismo marcador ya guardado antes — no re-disparar rating ni cascada.
+  if (result.status === "unchanged") {
+    return { setScoresPersisted: true };
+  }
 
   void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
     ({ aplicarRatingLigaPartido }) =>
@@ -1311,21 +1307,22 @@ export async function updateScoreParejasFijas(
       )
   );
 
-  const jornadaId = String(partido.jornada_id);
+  const jornadaId = result.jornada_id ? String(result.jornada_id) : null;
+  if (jornadaId) {
+    const { data: jornadaRow, error: jRowErr } = await supabase
+      .from("liga_jornadas")
+      .select("liga_id")
+      .eq("id", jornadaId)
+      .maybeSingle();
 
-  const { data: jornadaRow, error: jRowErr } = await supabase
-    .from("liga_jornadas")
-    .select("liga_id")
-    .eq("id", jornadaId)
-    .maybeSingle();
+    if (jRowErr) throw new Error(jRowErr.message);
 
-  if (jRowErr) throw new Error(jRowErr.message);
-
-  if (jornadaRow?.liga_id) {
-    await recalcularPuntosLiga(String(jornadaRow.liga_id));
+    if (jornadaRow?.liga_id) {
+      await recalcularPuntosLiga(String(jornadaRow.liga_id));
+    }
   }
 
-  return { setScoresPersisted };
+  return { setScoresPersisted: true };
 }
 
 export async function updateJornadaFecha(

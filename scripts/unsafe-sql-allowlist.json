@@ -1,0 +1,37 @@
+{
+  "_readme": "Excepciones explícitas y revisables para scripts/scan-unsafe-sql.mjs (BLK-05). Cada entrada documenta POR QUÉ el archivo puede contener un patrón normalmente inseguro. No se ignoran carpetas completas (salvo supabase/_archive/, que el scanner excluye siempre por ser histórico no ejecutable) — cada archivo de esta lista se revisó individualmente.",
+  "entries": [
+    {
+      "file": "supabase/rls-enable-public-schema.sql",
+      "reason": "Bootstrap original con 17 policies anon USING(true) (SEC-001), ya superadas. Lleva banner ⚠️ HISTÓRICO — NO EJECUTAR SOLO explicando qué fix debe seguirlo. Se conserva sin mover porque también define ALTER TABLE ... ENABLE ROW LEVEL SECURITY necesario para bootstrap desde cero. Ver supabase/migrations/README.md."
+    },
+    {
+      "file": "supabase/duelos-2v2.sql",
+      "reason": "Bootstrap original de duelos_2v2 con policy 'organizador_id = auth.uid() OR true' (SEC-001), ya superada. Lleva banner ⚠️ HISTÓRICO — NO EJECUTAR SOLO. Se conserva porque también crea la tabla base. Ver supabase/migrations/README.md."
+    },
+    {
+      "file": "supabase/rating-sistema.sql",
+      "reason": "Bootstrap original de aplicar_rating_partido() con GRANT EXECUTE a anon sin guard de autorización, ya superado por rls-fase1-rating-rpc-hardening.sql. Lleva banner ⚠️ HISTÓRICO — NO EJECUTAR SOLO. Se conserva porque también crea rating_historial y las columnas de rating. Ver supabase/migrations/README.md."
+    },
+    {
+      "file": "supabase/fix-rls-open-policies-liga-torneo-express-20260729.sql",
+      "reason": "Contiene el string de detección 'OR true'/'true' dentro de comentarios y de una query de verificación (qual ILIKE '%OR true%') que documenta/detecta el bug ya corregido — no crea ninguna policy insegura nueva. El scanner ya excluye comentarios y literales de cadena; esta entrada queda como registro explícito por si el heurístico cambia."
+    },
+    {
+      "file": "supabase/verify-rls-open-policies-liga-torneo-express-20260729.sql",
+      "reason": "Script de verificación de solo lectura: usa 'qual ILIKE %OR true%' para CONFIRMAR que ya no existan policies inseguras, no para crear una. Mismo caso que el fix homónimo."
+    },
+    {
+      "file": "supabase/rls-fase1-players-aislamiento.sql",
+      "reason": "Los comentarios narran el bug histórico ('players_select_auth estaba en USING (true)') pero el SQL activo del archivo ya usa la condición segura. Registrado por si el heurístico de comentarios cambia."
+    },
+    {
+      "file": "supabase/rls-multiclub-pr1-public-read-helpers.sql",
+      "reason": "El comentario de cabecera menciona 'políticas anon USING (true)' como el problema que este archivo reemplaza — no crea ninguna policy con ese patrón."
+    },
+    {
+      "file": "supabase/sql/verify-torneo-express-realtime.sql",
+      "reason": "Diagnóstico de solo lectura: el comentario menciona 'SELECT anon USING(true)' como estado esperado a confirmar contra pg_policies, no crea ninguna policy."
+    }
+  ]
+}

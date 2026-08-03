@@ -328,7 +328,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     }
   };
 
-  const saveScoreParejasFijas = async (partido: LigaPartido) => {
+  const saveScoreParejasFijas = async (partido: LigaPartido, force = false) => {
     const draft = normalizeParejasFijasDraft(
       getSetsDraftForPartido(partido, setsDrafts)
     );
@@ -341,25 +341,25 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setError(null);
     try {
       const sets = buildSetsFromDraft(draft);
-      const { setScoresPersisted } = await updateScoreParejasFijas(
-        partido.id,
-        sets
-      );
+      await updateScoreParejasFijas(partido.id, sets, force);
       setSetsDrafts((prev) => {
         const next = { ...prev };
         delete next[partido.id];
         return next;
       });
       setMessage(
-        setScoresPersisted
-          ? partido.estado === "completed"
-            ? "Resultado corregido."
-            : "Resultado guardado."
-          : "Resultado guardado (games totales). Para detalle por sets, ejecuta la migración SQL set_scores en Supabase."
+        partido.estado === "completed" ? "Resultado corregido." : "Resultado guardado."
       );
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      const msg = err instanceof Error ? err.message : "Error";
+      if (msg.includes("sobrescribir") && !force) {
+        if (window.confirm(`${msg} ¿Continuar?`)) {
+          await saveScoreParejasFijas(partido, true);
+          return;
+        }
+      }
+      setError(msg);
     } finally {
       setBusy(false);
     }

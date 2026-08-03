@@ -5,8 +5,16 @@
 import {
   fetchAmericanoLivePublic,
   upsertAmericanoLivePublic,
+  applyAmericanoLiveMatchScore,
+  applyAmericanoLiveMetadata,
+  type ApplyAmericanoLiveMatchScoreResult,
 } from "./database";
-import type { AmericanoDinamicoSnapshotV1 } from "./americanoDinamicoStorage";
+import type {
+  AmericanoDinamicoSnapshotV1,
+  AmericanoSnapshotPlayer,
+  AmericanoSnapshotRosterEntry,
+  AmericanoSnapshotTournamentPhase,
+} from "./americanoDinamicoStorage";
 import {
   loadAmericanoDinamicoSnapshot,
   saveAmericanoDinamicoSnapshot,
@@ -102,6 +110,42 @@ export async function isAmericanoResumableAsync(
   if (!snapshot) return false;
   if (snapshot.tournamentPhase === "finished") return false;
   return snapshot.ranking.length > 0 || snapshot.rounds.length > 0;
+}
+
+/**
+ * Guardado atómico de UN partido en vivo (BLK-02) — ver
+ * src/lib/database.ts:applyAmericanoLiveMatchScore. La unidad de
+ * concurrencia es el partido: dos dispositivos guardando partidos distintos
+ * nunca se pisan entre sí.
+ */
+export async function persistAmericanoDinamicoMatchScore(params: {
+  tournamentId: string;
+  matchId: string;
+  scoreA: number;
+  scoreB: number;
+  ranking?: AmericanoSnapshotPlayer[];
+  phase?: AmericanoSnapshotTournamentPhase;
+  totalRounds?: number;
+  roster?: AmericanoSnapshotRosterEntry[];
+  force?: boolean;
+}): Promise<ApplyAmericanoLiveMatchScoreResult> {
+  return applyAmericanoLiveMatchScore(params);
+}
+
+/**
+ * Guardado de metadata (ranking/fase/roster) SIN tocar `rounds` — para el
+ * efecto debounced de AmericanoDinamicoScreen durante "playing"/"finished",
+ * donde `rounds` ya es propiedad exclusiva de
+ * persistAmericanoDinamicoMatchScore.
+ */
+export async function persistAmericanoDinamicoMetadata(params: {
+  tournamentId: string;
+  ranking?: AmericanoSnapshotPlayer[];
+  phase?: AmericanoSnapshotTournamentPhase;
+  totalRounds?: number;
+  roster?: AmericanoSnapshotRosterEntry[];
+}): Promise<boolean> {
+  return applyAmericanoLiveMetadata(params);
 }
 
 export function isValidAmericanoSnapshot(

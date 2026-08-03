@@ -1,3 +1,23 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ⚠️  HISTÓRICO — NO EJECUTAR SOLO (BLK-05, auditoría de preproducción 2026-08-03)
+--
+-- Este archivo crea RLS para tournaments/players/pairs/matches/games/
+-- torneo_express*/ligas/liga_* con policies anon `USING (true)` (SEC-001).
+-- Esas policies quedaron SUPERADAS por fixes posteriores — si este archivo se
+-- re-ejecuta SOLO (ej. al levantar un ambiente nuevo desde cero, o por error),
+-- REABRE el aislamiento multi-tenant para esas tablas.
+--
+-- Migración segura que reemplaza el comportamiento: si vas a construir un
+-- ambiente desde cero, sigue el orden documentado en
+-- supabase/migrations/README.md — este archivo SIEMPRE debe ir seguido, en la
+-- misma sesión/ventana de mantenimiento, de:
+--   1. supabase/rls-multiclub-pr1-public-read-helpers.sql
+--   2. supabase/fix-rls-open-policies-liga-torneo-express-20260729.sql
+--   3. supabase/rls-fase1-players-aislamiento.sql
+-- El script de CI `npm run lint:sql` (scripts/scan-unsafe-sql.mjs) falla si
+-- detecta este patrón fuera de esta lista de excepciones documentada.
+-- ══════════════════════════════════════════════════════════════════════════════
+
 -- =============================================================================
 -- RLS — Esquema public (Riviera Open / padel-app)
 -- =============================================================================

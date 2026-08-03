@@ -12,6 +12,7 @@ import { UserProvider, useUser } from "./contexts/UserContext";
 import { AccountFeaturesProvider } from "./contexts/AccountFeaturesContext";
 import { ClubExperienceProvider } from "./club-experience";
 import { BrandingTransitionGate } from "./branding/BrandingTransitionGate";
+import { BrandingDegradedBanner } from "./branding/BrandingDegradedBanner";
 import {
   clearTenantBranding,
   resolveAndApplyBranding,
@@ -1109,6 +1110,7 @@ function App() {
         <AccountFeaturesProvider>
           <AdminProvider>
             <ClubExperienceProvider>
+              <BrandingDegradedBanner />
               <BrandingTransitionGate>
                 <AppContent />
               </BrandingTransitionGate>

@@ -182,11 +182,11 @@ export function useTorneoExpress(
   }, [bundle]);
 
   const saveResultado = useCallback(
-    async (partidoId: string, sets: PartidoSetScore[]) => {
+    async (partidoId: string, sets: PartidoSetScore[], force = false) => {
       setSavingPartidoId(partidoId);
       setError(null);
       try {
-        await savePartidoResultado(partidoId, sets);
+        await savePartidoResultado(partidoId, sets, force);
         await reload();
       } catch (e) {
         setError(e instanceof Error ? e.message : "No se pudo guardar el resultado");

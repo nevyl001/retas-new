@@ -1,3 +1,23 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ⚠️  HISTÓRICO — NO EJECUTAR SOLO (BLK-05, auditoría de preproducción 2026-08-03)
+--
+-- Este archivo define la VERSIÓN ORIGINAL de aplicar_rating_partido() sin
+-- ningún guard de autorización, y la otorga con
+-- `GRANT EXECUTE ... TO anon, authenticated` (línea ~146) — cualquiera con
+-- solo la anon key podía manipular el rating de cualquier jugador de
+-- cualquier club. Re-ejecutar este archivo SOLO revierte tanto el CUERPO de
+-- la función como el GRANT a su estado original inseguro, aunque hoy la
+-- versión vigente ya esté corregida.
+--
+-- Para un ambiente nuevo, este archivo SIEMPRE debe ir seguido, en la misma
+-- sesión/ventana de mantenimiento, de (en este orden):
+--   1. supabase/rls-fase1-rating-rpc-hardening.sql   (agrega los guards de
+--      autorización y revoca el GRANT de anon/PUBLIC)
+--   2. supabase/fix-rank001-rating-ledger-reconciliation-20260729.sql (última
+--      versión del cuerpo de la función, con reconciliación de correcciones)
+-- Ver supabase/migrations/README.md para el orden canónico completo.
+-- ══════════════════════════════════════════════════════════════════════════════
+
 -- Sistema de rating Playtomic-style (1.00–7.00) para Riviera Open
 -- Ejecutar en Supabase SQL Editor si aún no existe.
 
