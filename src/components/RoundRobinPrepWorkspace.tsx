@@ -669,7 +669,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
                   });
                 }}
               >
-                {showConvocatoriaPanel ? (
+                {wantConvocatoria ? (
                   <RetaAbiertaOrganizerPanel
                     tournament={tournament}
                     embedded

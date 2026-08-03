@@ -413,7 +413,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
               });
             }}
           >
-            {showConvocatoriaPanel ? (
+            {wantConvocatoria ? (
               <RetaAbiertaOrganizerPanel
                 tournament={tournament}
                 modeOverride="americano"

@@ -320,10 +320,9 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const pending = entries.filter((e) => e.status === "pending_approval");
 
   const hasShareLink = Boolean(cfg?.public_slug);
+  /** Live real = enlace o registro abierto. shareOnly es solo modo UI (duelo), no implica live. */
   const isLive =
-    shareOnly ||
-    hasShareLink ||
-    (Boolean(cfg?.enabled) && cfg?.status !== "draft");
+    hasShareLink || (Boolean(cfg?.enabled) && cfg?.status !== "draft");
   const effectiveCapacity = context.lockCapacity
     ? context.defaultCapacity
     : cfg?.capacity ?? capacity;

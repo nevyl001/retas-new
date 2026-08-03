@@ -461,14 +461,17 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
               setConvLine(
                 `Abierta · ${snap.confirmed} de ${snap.capacity} confirmados`
               );
-            } else if (!snap.publicSlug) {
+            } else {
               setConvIsLive(false);
-              setConvLine("Sin abrir · —");
+              setConvLine(
+                snap.publicSlug
+                  ? `Borrador · ${snap.confirmed} de ${snap.capacity}`
+                  : "Sin abrir · —"
+              );
             }
           };
 
-          const showConvocatoriaPanel =
-            enConfig && (wantConvocatoria || convIsLive);
+          const showConvocatoriaPanel = enConfig && wantConvocatoria;
 
           const steps: QuickModeStep[] = [
             {
