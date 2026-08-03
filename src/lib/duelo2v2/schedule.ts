@@ -103,22 +103,37 @@ export function durationMinutesBetweenTimes(
   return Math.max(15, Math.min(480, diff));
 }
 
+/**
+ * Resuelve ISO de inicio/fin. La duración es la fuente de verdad:
+ * fin = inicio + minutos (permite cruzar medianoche).
+ * Si no hay duración, se infiere de timeStart→timeEnd (también overnight).
+ */
 export function resolveDueloScheduleFromDraft(
   date: string,
   timeStart: string,
-  timeEnd: string
+  timeEnd: string,
+  durationMinutes?: number
 ):
   | { programado_en: string; programado_hasta: string }
   | { error: string } {
   const programadoEn = combinePartidoDateAndTime(date, timeStart);
-  const programadoHasta = combinePartidoDateAndTime(date, timeEnd);
-  if (!programadoEn || !programadoHasta) {
-    return { error: "Revisa la fecha y las horas del encuentro" };
+  if (!programadoEn) {
+    return { error: "Revisa la fecha y la hora de inicio" };
   }
-  if (new Date(programadoHasta).getTime() <= new Date(programadoEn).getTime()) {
-    return { error: "La hora de fin debe ser posterior a la de inicio" };
+  const startMs = new Date(programadoEn).getTime();
+  if (!Number.isFinite(startMs)) {
+    return { error: "Revisa la fecha y la hora de inicio" };
   }
-  return { programado_en: programadoEn, programado_hasta: programadoHasta };
+
+  const duration =
+    durationMinutes != null && Number.isFinite(durationMinutes)
+      ? Math.max(15, Math.min(480, Math.floor(durationMinutes)))
+      : durationMinutesBetweenTimes(timeStart, timeEnd);
+
+  return {
+    programado_en: programadoEn,
+    programado_hasta: new Date(startMs + duration * 60_000).toISOString(),
+  };
 }
 
 export function dueloCanchaDraftFromDuelo(

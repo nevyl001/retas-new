@@ -17,6 +17,8 @@ export type SaveNewDueloFormInput = {
   draftDate: string;
   draftTimeStart: string;
   draftTimeEnd: string;
+  /** Minutos; si se omite se infiere de inicio→fin (permite overnight). */
+  durationMinutes?: number;
 };
 
 export type SaveNewDueloDeps = {
@@ -39,18 +41,15 @@ export async function saveNewDuelo2v2(
   const nombre = form.nombre.trim();
   if (!nombre) throw new Error("Escribe el nombre del encuentro.");
   if (!form.cancha.trim()) throw new Error("Indica la cancha.");
-  if (
-    !form.draftDate.trim() ||
-    !form.draftTimeStart.trim() ||
-    !form.draftTimeEnd.trim()
-  ) {
+  if (!form.draftDate.trim() || !form.draftTimeStart.trim()) {
     throw new Error("Completa día y horario.");
   }
 
   const schedule = resolveDueloScheduleFromDraft(
     form.draftDate,
     form.draftTimeStart,
-    form.draftTimeEnd
+    form.draftTimeEnd,
+    form.durationMinutes
   );
   if ("error" in schedule) {
     throw new Error(schedule.error);

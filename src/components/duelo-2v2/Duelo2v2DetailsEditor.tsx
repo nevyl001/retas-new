@@ -123,7 +123,8 @@ export const Duelo2v2DetailsEditor: React.FC<Duelo2v2DetailsEditorProps> = ({
     const schedule = resolveDueloScheduleFromDraft(
       values.draftDate,
       values.draftTimeStart,
-      values.draftTimeEnd
+      values.draftTimeEnd,
+      values.durationMinutes
     );
     if ("error" in schedule) {
       setLocalError(schedule.error);

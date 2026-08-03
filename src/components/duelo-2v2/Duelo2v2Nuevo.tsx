@@ -187,6 +187,7 @@ export const Duelo2v2Nuevo: React.FC = () => {
           draftDate,
           draftTimeStart,
           draftTimeEnd,
+          durationMinutes,
         },
         {
           createDuelo2v2OpenDraft,
