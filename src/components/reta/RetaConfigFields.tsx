@@ -147,7 +147,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       <div
         className="reta-details-form__schedule-split"
         role="group"
-        aria-label="Día y hora"
+        aria-label="Día, hora y duración"
       >
         <label className="home-sheet__field reta-details-form__field reta-details-form__field--date">
           <span className="home-sheet__field-label">Día</span>
@@ -170,6 +170,50 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
             onChange={(e) => patchSchedule({ time: e.target.value })}
           />
         </label>
+        <div className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
+          <span className="home-sheet__field-label">Duración</span>
+          <div className="home-sheet__stepper reta-details-form__stepper">
+            <button
+              type="button"
+              className="home-sheet__stepper-btn"
+              disabled={
+                durEd.locked || values.duration_minutes <= RETA_DURATION_MIN
+              }
+              onClick={() =>
+                patch({
+                  duration_minutes: clampRetaDurationMinutes(
+                    values.duration_minutes - 15
+                  ),
+                })
+              }
+              aria-label="Menos duración"
+            >
+              −
+            </button>
+            <span className="home-sheet__stepper-value" aria-live="polite">
+              {values.duration_minutes}
+              <span className="reta-details-form__duration-unit"> min</span>
+            </span>
+            <button
+              type="button"
+              className="home-sheet__stepper-btn"
+              disabled={
+                durEd.locked || values.duration_minutes >= RETA_DURATION_MAX
+              }
+              onClick={() =>
+                patch({
+                  duration_minutes: clampRetaDurationMinutes(
+                    values.duration_minutes + 15
+                  ),
+                })
+              }
+              aria-label="Más duración"
+            >
+              +
+            </button>
+          </div>
+          {durEd.locked ? <FieldLock reason={durEd.reason} /> : null}
+        </div>
       </div>
     ) : null;
 
@@ -230,53 +274,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     </label>
   );
 
-  const durationField =
-    showScheduleMeta ? (
-      <div className="home-sheet__field reta-details-form__field reta-details-form__field--duration">
-        <span className="home-sheet__field-label">Duración (min)</span>
-        <div className="home-sheet__stepper reta-details-form__stepper">
-          <button
-            type="button"
-            className="home-sheet__stepper-btn"
-            disabled={
-              durEd.locked || values.duration_minutes <= RETA_DURATION_MIN
-            }
-            onClick={() =>
-              patch({
-                duration_minutes: clampRetaDurationMinutes(
-                  values.duration_minutes - 15
-                ),
-              })
-            }
-            aria-label="Menos duración"
-          >
-            −
-          </button>
-          <span className="home-sheet__stepper-value" aria-live="polite">
-            {values.duration_minutes}
-          </span>
-          <button
-            type="button"
-            className="home-sheet__stepper-btn"
-            disabled={
-              durEd.locked || values.duration_minutes >= RETA_DURATION_MAX
-            }
-            onClick={() =>
-              patch({
-                duration_minutes: clampRetaDurationMinutes(
-                  values.duration_minutes + 15
-                ),
-              })
-            }
-            aria-label="Más duración"
-          >
-            +
-          </button>
-        </div>
-        {durEd.locked ? <FieldLock reason={durEd.reason} /> : null}
-      </div>
-    ) : null;
-
   const lugarField =
     showScheduleMeta ? (
       essentials ? (
@@ -326,12 +323,7 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
     ) : null;
 
   const editAdvancedFields =
-    mode === "edit" && !essentials ? (
-      <>
-        {durationField}
-        {lugarField}
-      </>
-    ) : null;
+    mode === "edit" && !essentials ? <>{lugarField}</> : null;
 
   const championshipField = showChampionship ? (
     <div
@@ -425,7 +417,6 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
         <div className="reta-details-form__row reta-details-form__row--meta">
           {descriptionField}
           {nivelField}
-          {durationField}
           {lugarField}
           {championshipField}
         </div>

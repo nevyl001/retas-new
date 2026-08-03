@@ -312,16 +312,37 @@
 
 .qm-ws__details-inline .reta-details-form__schedule-split {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(7.5rem, 0.9fr);
   gap: 0.55rem;
   width: 100%;
   min-width: 0;
-  align-items: stretch;
+  align-items: end;
 }
 
 .qm-ws__details-inline .reta-details-form__schedule-split .reta-details-form__field {
   margin: 0;
   min-width: 0;
+  width: 100%;
+}
+
+.qm-ws__details-inline .reta-details-form__schedule-split .reta-details-form__field--duration {
+  min-width: 0;
+}
+
+.qm-ws__details-inline .reta-details-form__schedule-split .reta-details-form__stepper {
+  width: 100%;
+  max-width: none;
+  min-height: 2.75rem;
+  height: 2.75rem;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.qm-ws__details-inline .reta-details-form__duration-unit {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--qm-ink-muted);
+  margin-left: 0.15rem;
 }
 
 .qm-ws__details-inline input[type="date"],
@@ -330,22 +351,25 @@
   display: block;
   position: relative;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: 2.75rem;
   height: 2.75rem;
-  padding: 0 2.25rem 0 0.7rem;
+  padding: 0 2.1rem 0 0.65rem;
   font-size: 16px;
   line-height: normal;
   text-align: left;
   color: var(--qm-ink-text);
   background-color: var(--qm-ink-input);
   background-repeat: no-repeat;
-  background-position: right 0.65rem center;
+  background-position: right 0.55rem center;
   background-size: 1rem 1rem;
   border: 1px solid var(--qm-ink-input-border);
   border-radius: 8px;
   box-sizing: border-box;
   color-scheme: dark;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .qm-ws__details-inline input[type="date"] {
@@ -362,6 +386,14 @@
   text-align: left;
   margin-inline: 0;
   min-height: 1.25rem;
+  width: 100%;
+}
+
+.qm-ws__details-inline input[type="date"]::-webkit-datetime-edit,
+.qm-ws__details-inline input[type="time"]::-webkit-datetime-edit {
+  width: 100%;
+  padding: 0;
+  min-width: 0;
 }
 
 /* Contenedor relativo para anclar el picker */
@@ -393,15 +425,26 @@
 
 @media (max-width: 639px) {
   .qm-ws__details-inline .reta-details-form__schedule-split {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(6.75rem, 0.85fr);
+    gap: 0.45rem;
+    align-items: end;
   }
 
-  .qm-ws__details-inline .reta-details-form__field--duration .reta-details-form__stepper,
+  .qm-ws__details-inline .reta-details-form__schedule-split .reta-details-form__field--duration .reta-details-form__stepper,
   .qm-ws__details-inline .reta-details-form__field--courts .reta-details-form__stepper {
     width: 100%;
+    max-width: none;
     justify-content: space-between;
-    max-width: 12rem;
+  }
+
+  .qm-ws__details-inline .reta-details-form__schedule-split .home-sheet__stepper-btn {
+    width: 1.85rem;
+    min-width: 1.85rem;
+    height: 1.85rem;
+  }
+
+  .qm-ws__details-inline .reta-details-form__schedule-split .home-sheet__stepper-value {
+    font-size: 0.8125rem;
   }
 }
 
