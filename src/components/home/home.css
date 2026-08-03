@@ -229,14 +229,13 @@
 
 .home-inner .game-modes-grid {
   display: grid;
-  gap: 14px;
-  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @media (min-width: 540px) {
   .home-inner .game-modes-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    gap: 14px;
   }
 }
 
@@ -247,8 +246,7 @@
   }
 }
 
-/* Tarjeta de modo: icono grande, nombre protagonista, una frase, toda la
-   tarjeta es el botón (ModeCard ya renderiza un <button> completo). */
+/* Tarjeta de modo: compacta en móvil (2 cols), más aire en desktop */
 .home-inner .game-mode-card {
   position: relative;
   display: flex;
@@ -256,15 +254,15 @@
   align-items: flex-start;
   justify-content: flex-start;
   width: 100%;
-  min-height: 172px;
-  padding: clamp(22px, 3vw, 28px);
+  min-height: 0;
+  padding: 14px 12px;
   text-align: left;
   cursor: pointer;
   color: var(--text-primary);
   font-family: var(--font-body);
   background: var(--bg-card);
   border: 0.5px solid var(--border-subtle);
-  border-radius: var(--radius-lg, 16px);
+  border-radius: 12px;
   overflow: hidden;
   opacity: 0;
   animation: fadeInUp 0.5s ease-out forwards;
@@ -275,9 +273,18 @@
     background 200ms ease;
 }
 
+@media (min-width: 540px) {
+  .home-inner .game-mode-card {
+    min-height: 156px;
+    padding: 18px 16px;
+    border-radius: var(--radius-lg, 16px);
+  }
+}
+
 @media (min-width: 1024px) {
   .home-inner .game-mode-card {
     min-height: 188px;
+    padding: clamp(22px, 3vw, 28px);
   }
 }
 
@@ -307,7 +314,7 @@
 }
 
 .home-inner .rv-mode-card__top {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .home-inner .rv-mode-card__icon {
@@ -315,29 +322,92 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--mode-accent, var(--ro-border)) 14%, var(--bg-card));
   border: 0.5px solid color-mix(in srgb, var(--mode-accent, var(--ro-border)) 32%, transparent);
-  font-size: 1.5rem;
+  font-size: 1.05rem;
   line-height: 1;
+}
+
+@media (min-width: 540px) {
+  .home-inner .rv-mode-card__top {
+    margin-bottom: 14px;
+  }
+
+  .home-inner .rv-mode-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-inner .rv-mode-card__top {
+    margin-bottom: 16px;
+  }
+
+  .home-inner .rv-mode-card__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 1.5rem;
+  }
 }
 
 .home-inner .rv-mode-card__title {
   font-family: var(--font-display, var(--ro-font-heading), sans-serif);
-  font-size: clamp(1.1rem, 2vw, 1.25rem);
+  font-size: 0.875rem;
   font-weight: 600;
-  margin: 0 0 6px;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+  margin: 0 0 4px;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+}
+
+@media (min-width: 540px) {
+  .home-inner .rv-mode-card__title {
+    font-size: 1.05rem;
+    margin: 0 0 6px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-inner .rv-mode-card__title {
+    font-size: clamp(1.1rem, 2vw, 1.25rem);
+  }
 }
 
 .home-inner .rv-mode-card__desc {
-  font-size: 0.875rem;
-  line-height: 1.45;
+  font-size: 0.6875rem;
+  line-height: 1.4;
   color: var(--ro-text-secondary);
   margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+@media (min-width: 540px) {
+  .home-inner .rv-mode-card__desc {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-inner .rv-mode-card__desc {
+    font-size: 0.875rem;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    display: block;
+    overflow: visible;
+  }
 }
 
 .home-inner .rv-pill.rv-pill--muted {
@@ -1318,26 +1388,32 @@
 /* —— Home mobile-first —— */
 @media (max-width: 767px) {
   .home-question {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    font-size: 1.375rem;
   }
 
   .home-shell {
-    gap: 28px;
+    gap: 22px;
   }
 
   .home-inner .game-modes-groups {
-    gap: clamp(20px, 5vw, 28px);
+    gap: 22px;
   }
 
-  .home-inner .game-mode-card {
-    min-height: 0;
-    padding: clamp(16px, 4vw, 20px);
+  .home-inner .game-modes-section + .game-modes-section {
+    padding-top: 18px;
   }
 
-  .home-inner .rv-mode-card__icon {
-    width: 44px;
-    height: 44px;
-    font-size: 1.3rem;
+  .home-section-title,
+  .home-inner .home-section-title.rv-section-title {
+    margin-bottom: 10px;
+  }
+
+  .home-inner .game-mode-card__upgrade {
+    margin-top: 8px;
+    padding: 8px;
+    font-size: 0.625rem;
+    line-height: 1.35;
   }
 
   .home-access-card--primary .home-access-card__icon {
