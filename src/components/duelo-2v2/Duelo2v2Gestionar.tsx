@@ -25,7 +25,6 @@ import {
 } from "../../services/duelo2v2Service";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
-import { PublicShareSection } from "../platform/PublicShareSection";
 import {
   QuickModeConvocatoriaGate,
   QuickModeEventHeader,
@@ -677,34 +676,24 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                           }}
                         >
                           {showConvocatoriaPanel ? (
-                            <>
-                              <ConvocatoriaWhatsAppPanel
-                                embedded
-                                shareOnly
-                                onLiveChange={onConvLiveChange}
-                                context={buildDueloConvocatoriaContext({
-                                  dueloId: duelo.id,
-                                  name: duelo.nombre,
-                                  locationLabel: lugarConvocatoria,
-                                  includeLugar,
-                                  canchaLabel: duelo.cancha ?? undefined,
-                                  scheduledAt: duelo.programado_en,
-                                  scheduledUntil: duelo.programado_hasta,
-                                  clubName: convocatoriaOrigin,
-                                  categoryLabel:
-                                    readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
-                                    undefined,
-                                })}
-                              />
-                              <PublicShareSection
-                                publicUrl={publicUrl}
-                                title="Enlace público"
-                                infoLines={[
-                                  "Comparte el enlace para ver el marcador del duelo (solo lectura).",
-                                ]}
-                                copyButtonLabel="Copiar vista pública"
-                              />
-                            </>
+                            <ConvocatoriaWhatsAppPanel
+                              embedded
+                              shareOnly
+                              onLiveChange={onConvLiveChange}
+                              context={buildDueloConvocatoriaContext({
+                                dueloId: duelo.id,
+                                name: duelo.nombre,
+                                locationLabel: lugarConvocatoria,
+                                includeLugar,
+                                canchaLabel: duelo.cancha ?? undefined,
+                                scheduledAt: duelo.programado_en,
+                                scheduledUntil: duelo.programado_hasta,
+                                clubName: convocatoriaOrigin,
+                                categoryLabel:
+                                  readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
+                                  undefined,
+                              })}
+                            />
                           ) : null}
                         </QuickModeConvocatoriaGate>
                       </div>
