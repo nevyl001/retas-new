@@ -317,8 +317,6 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
     );
   }, []);
 
-  const showConvocatoriaPanel = wantConvocatoria || convIsLive;
-
   const steps: QuickModeStep[] = [
     {
       id: "jugadores",

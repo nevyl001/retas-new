@@ -185,8 +185,6 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const jugadoresOk = players.length >= 4;
   const configOk = totalRounds >= 1 && courts >= 1;
   const canStart = jugadoresOk && configOk;
-  const showConvocatoriaPanel = wantConvocatoria || convIsLive;
-
   const ctaHint = !jugadoresOk
     ? players.length === 0
       ? "Selecciona al menos 4 jugadores"
