@@ -4,9 +4,8 @@
   /* 0 por defecto: en gestionar evento la nav inferior se oculta.
      Si queda en 56px el CTA sticky “flota” y deja un hueco blanco. */
   --mobile-app-navigation-height: 0px;
-  /* Holgura extra para que el aviso legal / footer no quede bajo la nav. */
   --mobile-app-navigation-offset: calc(
-    var(--mobile-app-navigation-height) + var(--ro-safe-bottom) + 28px
+    var(--mobile-app-navigation-height) + var(--ro-safe-bottom) + 1.25rem
   );
 }
 
@@ -158,5 +157,9 @@
   .has-mobile-app-navigation .americano-screen.rv-page,
   .has-mobile-app-navigation .mis-retas-page.tournament-manager {
     padding-bottom: var(--mobile-app-navigation-offset);
+  }
+
+  .has-mobile-app-navigation .main-layout > .home-inner {
+    padding-bottom: 0.5rem;
   }
 }

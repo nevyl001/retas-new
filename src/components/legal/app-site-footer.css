@@ -7,8 +7,12 @@
 
 @media (max-width: 767px) {
   .has-mobile-app-navigation .app-site-foot {
-    margin-bottom: 0.25rem;
-    padding-bottom: 1.25rem;
+    margin-bottom: 0;
+    /* El footer carga el clearance: nav fija + safe-area + aire legible. */
+    padding-bottom: calc(
+      var(--mobile-app-navigation-height, 56px) + env(safe-area-inset-bottom, 0px) +
+        2rem
+    );
   }
 }
 
