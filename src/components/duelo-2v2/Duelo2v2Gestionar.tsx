@@ -16,6 +16,10 @@ import {
   peekDuelo2v2CreateDraft,
 } from "../../lib/duelo2v2/duelo2v2CreateDraft";
 import { readDueloLugarPrefs, resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
+import {
+  readDueloConvocatoriaPanelOpen,
+  writeDueloConvocatoriaPanelOpen,
+} from "../../lib/duelo2v2/dueloConvocatoriaPanelPrefs";
 import { formatDueloHorarioRange } from "../../lib/duelo2v2/schedule";
 import {
   fetchOpenGameRegistrationConfig,
@@ -116,11 +120,28 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const [step, setStep] = useState<GestionarStepId>("parejas");
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [convTouched, setConvTouched] = useState(false);
-  const [wantConvocatoria, setWantConvocatoria] = useState(false);
+  const [wantConvocatoria, setWantConvocatoria] = useState(() =>
+    readDueloConvocatoriaPanelOpen(dueloId)
+  );
   const [convIsLive, setConvIsLive] = useState(false);
   const [convLine, setConvLine] = useState("Sin abrir · —");
   const [pairA, setPairA] = useState<DueloPair | null>(null);
   const [pairB, setPairB] = useState<DueloPair | null>(null);
+
+  const setConvPanelOpen = useCallback(
+    (next: boolean | ((prev: boolean) => boolean)) => {
+      setWantConvocatoria((prev) => {
+        const value = typeof next === "function" ? next(prev) : next;
+        writeDueloConvocatoriaPanelOpen(dueloId, value);
+        return value;
+      });
+    },
+    [dueloId]
+  );
+
+  useEffect(() => {
+    setConvPanelOpen(readDueloConvocatoriaPanelOpen(dueloId));
+  }, [dueloId, setConvPanelOpen]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -173,7 +194,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   const loadedDueloId = duelo?.id ?? null;
   const loadedEstado = duelo?.estado ?? null;
 
-  /** Si ya hay convocatoria publicada, reabre el panel al volver a la app. */
+  /** Solo sincroniza estado live / cupo; no fuerza abrir/cerrar el panel. */
   const refreshConvSummary = useCallback(async () => {
     try {
       const cfg = await fetchOpenGameRegistrationConfig("duelo_2v2", dueloId);
@@ -189,10 +210,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
         Boolean(cfg.public_slug) ||
         (Boolean(cfg.enabled) && cfg.status !== "draft");
       setConvIsLive(live);
-      if (live) {
-        setWantConvocatoria(true);
-        setConvTouched(true);
-      }
+      if (live || confirmed > 0) setConvTouched(true);
       setConvLine(
         `${convStatusLabel(cfg.status)} · ${confirmed} de ${capacity} confirmados`
       );
@@ -521,7 +539,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
 
           const goConvocatoria = () => {
             if (!enConfig) return;
-            setWantConvocatoria(true);
+            setConvPanelOpen(true);
             setConvTouched(true);
             setMobileSummaryOpen(false);
             window.requestAnimationFrame(() => scrollToDueloConvocatoria());
@@ -531,7 +549,6 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
             if (snap.isLive || snap.confirmed > 0) setConvTouched(true);
             if (snap.isLive) {
               setConvIsLive(true);
-              setWantConvocatoria(true);
               setConvLine(
                 `Abierta · ${snap.confirmed} de ${snap.capacity} confirmados`
               );
@@ -745,7 +762,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                           live={convIsLive}
                           panelId="duelo-convocatoria-panel"
                           onToggle={() => {
-                            setWantConvocatoria((v) => {
+                            setConvPanelOpen((v) => {
                               const next = !v;
                               if (next || convIsLive) setConvTouched(true);
                               return next;

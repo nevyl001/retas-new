@@ -14,6 +14,8 @@ export type QuickModeConvocatoriaGateProps = {
   hintOn?: string;
   hintOff?: string;
   hintLive?: string;
+  /** Cuando la convocatoria está live pero el panel está cerrado. */
+  hintLiveClosed?: string;
   children?: React.ReactNode;
 };
 
@@ -32,6 +34,7 @@ export function QuickModeConvocatoriaGate({
   hintOn = "Pulsa para cerrar este panel",
   hintOff = "Opcional · Inscripciones con enlace público",
   hintLive = "Convocatoria activa · pulsa para ocultar el panel",
+  hintLiveClosed = "Convocatoria activa · pulsa para ver el panel",
   children,
 }: QuickModeConvocatoriaGateProps) {
   return (
@@ -56,7 +59,13 @@ export function QuickModeConvocatoriaGate({
             {open ? titleOn : titleOff}
           </span>
           <span className="qm-ws__conv-gate-hint">
-            {open ? (live ? hintLive : hintOn) : hintOff}
+            {open
+              ? live
+                ? hintLive
+                : hintOn
+              : live
+                ? hintLiveClosed
+                : hintOff}
           </span>
         </span>
       </button>
