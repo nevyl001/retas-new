@@ -19,24 +19,27 @@ jest.mock("../../contexts/AccountFeaturesContext", () => ({
 
 jest.mock("../../club-experience", () => ({
   useBranding: () => ({ nombre: "Club Test" }),
-  getAccountModeDisabledMessage: () => "Modo deshabilitado",
-  getOrganizerRegistryCardSubtitle: () => "Gestiona el registro de jugadores",
   useClubExperience: () => ({
     manifest: {
       home: {
         welcomeTitle: "Título",
-        welcomeSubtitle: "Subtítulo",
+        welcomeSubtitle: "Elige un modo y lanza tu reta en menos de un minuto.",
       },
     },
     isClubBranded: false,
     organizadorId: null,
   }),
-  useOrganizerDisplayName: () => "Club Test",
+  getAccountModeDisabledMessage: () => "Modo deshabilitado",
+  getOrganizerRegistryCardSubtitle: () => "Gestiona el registro de jugadores",
   getHomeEyebrow: () => "Club Test",
   getHomeWelcomeTitle: () => "Título",
-  getHomeWelcomeSubtitle: () => "Subtítulo",
+  getHomeWelcomeSubtitle: (_manifest: unknown, userName?: string) =>
+    userName
+      ? `Hola, ${userName}. Elige un modo y lanza tu reta en menos de un minuto.`
+      : "Elige un modo y lanza tu reta en menos de un minuto.",
   getDuelo2v2ModeDescription: () => "Duelo 2 vs 2",
   useClubModeEyebrow: () => "Club Test",
+  useOrganizerDisplayName: () => "Club Test",
 }));
 
 function mockTournament(
@@ -143,6 +146,8 @@ describe("home presentation", () => {
 
       expect(view).toContain("home-question");
       expect(view).toContain("¿Qué quieres organizar hoy?");
+      expect(view).toContain("home-greeting");
+      expect(view).toContain("Hola, Test User.");
       expect(view).toContain("Retas rápidas");
       expect(view).toContain("Competencias organizadas");
       // Sin elementos decorativos ni CTA visible: toda la tarjeta es el botón.

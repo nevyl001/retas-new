@@ -37,9 +37,12 @@ import { QuickStartSheet, type QuickStartPayload } from "./QuickStartSheet";
 import { AppSiteFooter } from "../legal/AppSiteFooter";
 import {
   getAccountModeDisabledMessage,
+  getHomeWelcomeSubtitle,
   getOrganizerRegistryCardSubtitle,
   useBranding,
+  useClubExperience,
 } from "../../club-experience";
+import { useUser } from "../../contexts/UserContext";
 import "./home.css";
 
 interface HomeDashboardProps {
@@ -54,11 +57,24 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
   onShowAllRetas,
 }) => {
   const { nombre: organizerName } = useBranding();
+  const { manifest } = useClubExperience();
+  const { userProfile, user } = useUser();
   const { isModeEnabled } = useAccountFeatures();
   const [createModeId, setCreateModeId] = useState<GameModeId | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retas, setRetas] = useState<HomeRetaItem[]>([]);
+
+  const greetingName =
+    userProfile?.name?.trim() ||
+    user?.user_metadata?.name?.trim() ||
+    user?.email?.split("@")[0] ||
+    "";
+
+  const greeting = useMemo(
+    () => getHomeWelcomeSubtitle(manifest, greetingName || undefined),
+    [manifest, greetingName]
+  );
 
   useEffect(() => {
     if (!userId) {
@@ -202,7 +218,10 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
     <div className="home-inner rv-page">
       <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
 
-      <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
+      <header className="home-hero">
+        <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
+        <p className="home-greeting">{greeting}</p>
+      </header>
 
       {error && <p className="home-error">{error}</p>}
 
