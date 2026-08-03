@@ -216,12 +216,12 @@ export const HomeDashboard: React.FC<HomeDashboardProps> = ({
 
   return (
     <div className="home-inner rv-page">
-      <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
-
       <header className="home-hero">
         <h1 className="home-question">¿Qué quieres organizar hoy?</h1>
         <p className="home-greeting">{greeting}</p>
       </header>
+
+      <HomeContinueStrip items={activeRetas} onContinue={handleContinueItem} />
 
       {error && <p className="home-error">{error}</p>}
 
