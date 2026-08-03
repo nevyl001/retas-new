@@ -927,59 +927,66 @@
   inset: 0;
   background: var(--ro-scrim-modal);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem;
-}
-
-@media (min-width: 520px) {
-  .rj-modal-backdrop {
-    align-items: center;
-  }
+  padding: max(0.75rem, env(safe-area-inset-top, 0px)) 0.75rem
+    max(0.75rem, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 .rj-modal {
   width: 100%;
   max-width: 400px;
+  max-height: min(92dvh, 640px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: var(--ro-bg-elevated);
-  border-radius: 16px;
-  padding: 1.25rem;
+  border-radius: 14px;
+  padding: 1rem 0.9rem 0.9rem;
   border: 1px solid var(--ro-border);
+  box-sizing: border-box;
 }
 
 .rj-modal h2 {
-  margin: 0 0 1rem;
-  font-size: 1.125rem;
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
 .rj-field {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.55rem;
 }
 
 .rj-field label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   color: var(--ro-text-muted);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .rj-field input,
 .rj-field select {
   width: 100%;
-  padding: 0.6rem 0.75rem;
+  padding: 0.45rem 0.6rem;
   border-radius: 8px;
   border: 1px solid var(--ro-border);
   background: var(--ro-scrim-modal);
   color: var(--ro-text-primary);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   box-sizing: border-box;
 }
 
 .rj-modal__actions {
   display: flex;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
+  position: sticky;
+  bottom: 0;
+  padding-top: 0.35rem;
+  background: var(--ro-bg-elevated);
 }
 
 .rj-modal__actions .rj-btn {
@@ -992,6 +999,95 @@
 
 .rj-modal__actions--compact {
   margin-top: 0.5rem;
+}
+
+/* Compacto en móvil: cabe mejor y tipografía más fina */
+@media (max-width: 767px) {
+  .rj-modal-backdrop {
+    padding: max(0.5rem, env(safe-area-inset-top, 0px)) 0.65rem
+      max(0.5rem, calc(env(safe-area-inset-bottom, 0px) + 0.35rem));
+  }
+
+  .rj-modal {
+    max-width: min(100%, 22.5rem);
+    max-height: min(88dvh, 36rem);
+    padding: 0.85rem 0.8rem 0.75rem;
+    border-radius: 12px;
+  }
+
+  .rj-modal h2 {
+    margin: 0 0 0.55rem;
+    font-size: 0.9375rem;
+  }
+
+  .rj-modal .riviera-field {
+    margin-bottom: 0;
+    gap: 0.2rem;
+  }
+
+  .rj-modal .riviera-label {
+    margin-bottom: 0.15rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+  }
+
+  .rj-modal .riviera-input,
+  .rj-modal select.riviera-input,
+  .rj-modal .riviera-field input {
+    min-height: 2.25rem;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.8125rem;
+    border-radius: 7px;
+  }
+
+  .rj-modal .rj-edit-grid {
+    gap: 0.45rem 0.55rem;
+  }
+
+  .rj-modal__actions {
+    margin-top: 0.55rem;
+    gap: 0.4rem;
+  }
+
+  .rj-modal__actions .riviera-btn,
+  .rj-modal__actions .riviera-btn-primary,
+  .rj-modal__actions .riviera-btn-ghost,
+  .rj-modal__actions .riviera-btn-secondary {
+    min-height: 2.35rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+
+@media (min-width: 520px) {
+  .rj-modal {
+    padding: 1.25rem;
+    max-height: min(90vh, 680px);
+  }
+
+  .rj-modal h2 {
+    margin: 0 0 1rem;
+    font-size: 1.125rem;
+  }
+
+  .rj-field {
+    margin-bottom: 0.75rem;
+  }
+
+  .rj-field label {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .rj-field input,
+  .rj-field select {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9375rem;
+  }
+
+  .rj-modal__actions {
+    margin-top: 1rem;
+  }
 }
 
 .rj-membership-preview {
