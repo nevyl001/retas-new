@@ -144,10 +144,10 @@ describe("home presentation", () => {
         })
       );
 
+      expect(view).toContain("home-greeting");
+      expect(view).toContain("Hola, Test User");
       expect(view).toContain("home-question");
       expect(view).toContain("¿Qué quieres organizar hoy?");
-      expect(view).toContain("home-greeting");
-      expect(view).toContain("Hola, Test User.");
       expect(view).toContain("Retas rápidas");
       expect(view).toContain("Competencias organizadas");
       // Sin elementos decorativos ni CTA visible: toda la tarjeta es el botón.
