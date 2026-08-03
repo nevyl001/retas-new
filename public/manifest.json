@@ -1,29 +1,29 @@
 {
-  "short_name": "RivieraApp",
-  "name": "RivieraApp — Organiza. Juega. Compite.",
+  "short_name": "Riviera Open",
+  "name": "Riviera Open — Organiza. Juega. Compite.",
   "description": "Organiza. Juega. Compite. Crea retas y torneos de pádel, gestiona jugadores, estadísticas en tiempo real y enlaces públicos.",
-  "id": "com.rivieraapp.padel",
+  "id": "com.rivieraopen.padel",
   "icons": [
     {
-      "src": "/icon-192x192.png?v=8",
+      "src": "/icon-192x192.png?v=9",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-192x192.png?v=8",
+      "src": "/icon-192x192.png?v=9",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icon-512x512.png?v=8",
+      "src": "/icon-512x512.png?v=9",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512x512.png?v=8",
+      "src": "/icon-512x512.png?v=9",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -31,25 +31,25 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#000000",
+  "theme_color": "#12161B",
+  "background_color": "#12161B",
   "orientation": "portrait-primary",
   "categories": ["sports", "productivity", "utilities"],
   "lang": "es",
   "screenshots": [
     {
-      "src": "screenshot-desktop.png",
+      "src": "screenshot-desktop.png?v=9",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "RivieraApp en escritorio"
+      "label": "Riviera Open en escritorio"
     },
     {
-      "src": "screenshot-mobile.png",
+      "src": "screenshot-mobile.png?v=9",
       "sizes": "375x667",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "RivieraApp en móvil"
+      "label": "Riviera Open en móvil"
     }
   ]
 }

@@ -1,10 +1,10 @@
-// Service Worker para RivieraApp PWA — versión minimalista
-const CACHE_NAME = "rivieraapp-v1.0.2";
+// Service Worker para Riviera Open PWA — versión minimalista
+const CACHE_NAME = "riviera-open-v1.0.3";
 const urlsToCache = [
   "/manifest.json",
-  "/icon-192x192.png?v=8",
-  "/icon-512x512.png?v=8",
-  "/apple-touch-icon-180.png?v=8",
+  "/icon-192x192.png?v=9",
+  "/icon-512x512.png?v=9",
+  "/apple-touch-icon-180.png?v=9",
   "/logo-riviera.png?v=1",
 ];
 
