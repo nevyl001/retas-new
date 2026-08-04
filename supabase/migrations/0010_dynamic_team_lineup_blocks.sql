@@ -58,7 +58,10 @@
 -- (no se borra nunca un bloque con datos reales).
 --
 -- Idempotente: CREATE TABLE IF NOT EXISTS + CREATE OR REPLACE FUNCTION +
--- REVOKE/GRANT son repetibles sin error.
+-- REVOKE/GRANT son repetibles sin error. `begin_dynamic_team_block` usa
+-- DROP FUNCTION IF EXISTS + CREATE (no solo CREATE OR REPLACE) porque un
+-- parámetro cambió de nombre durante el desarrollo de esta migración --
+-- ver el comentario junto a esa función para el detalle.
 -- Rollback:
 --   DROP FUNCTION public.retry_dynamic_team_block(uuid, integer);
 --   DROP FUNCTION public.commit_dynamic_team_block(uuid, jsonb, jsonb);
@@ -119,6 +122,26 @@ REVOKE ALL ON public.reta_dynamic_blocks FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.reta_dynamic_blocks TO authenticated, anon;
 
 -- ── begin_dynamic_team_block ────────────────────────────────────────────────
+-- El 5to parámetro se llamó `p_generation_reason` en un borrador anterior de
+-- esta misma migración y se renombró a `p_stage` (ver `DynamicStage` en
+-- `dynamicTeamLineups.ts`) antes de que esta migración se aplicara a
+-- ningún entorno real de uso continuo -- pero si algún entorno llegó a
+-- ejecutar esa versión anterior, `CREATE OR REPLACE FUNCTION` falla con
+-- 42P13 ("cannot change name of input parameter") porque Postgres no
+-- permite renombrar parámetros de una función existente aunque el tipo y
+-- la posición no cambien. `DROP FUNCTION IF EXISTS` con la firma por TIPOS
+-- (los nombres no importan para el DROP) hace esta migración idempotente
+-- sin depender de qué nombre de parámetro haya quedado de una corrida
+-- previa -- así cualquier instalación futura, nueva o parcialmente
+-- aplicada, converge al mismo resultado sin edición manual.
+DROP FUNCTION IF EXISTS public.begin_dynamic_team_block(
+  uuid,
+  integer,
+  integer,
+  integer,
+  text
+);
+
 CREATE OR REPLACE FUNCTION public.begin_dynamic_team_block(
   p_tournament_id uuid,
   p_block_number integer,
