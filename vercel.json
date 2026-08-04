@@ -4,6 +4,29 @@
   ],
   "headers": [
     {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+        },
+        {
+          "key": "Content-Security-Policy-Report-Only",
+          "value": "default-src 'self'; script-src 'self' 'sha256-oAdB7Z+sF2MOy7V1OLlIRz7B+5vzU/ppzz8DfzWysBk='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://appriviera.rivieraopen.com https://giswxhmjgjepoobdoljb.supabase.co; connect-src 'self' https://giswxhmjgjepoobdoljb.supabase.co wss://giswxhmjgjepoobdoljb.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+        }
+      ]
+    },
+    {
       "source": "/manifest.json",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }

@@ -1,4 +1,8 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders, handleOptions } from "../_shared/cors.ts";
+import { newCorrelationId, logError, logWarn } from "../_shared/logger.ts";
+import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
+import { checkRateLimit, rateLimitedResponse } from "../_shared/rateLimit.ts";
 
 type AccountRole = "organizador" | "admin_maestro";
 
@@ -9,13 +13,8 @@ interface RequestBody {
   role?: AccountRole;
 }
 
-/** Mismo patrón que enviar-notificaciones y procesar-notificaciones-evento. */
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const MAX_BODY_BYTES = 10_000;
+const MODULE = "admin-crear-usuario";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -26,12 +25,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase env vars.");
 }
 
-function jsonResponse(status: number, payload: unknown): Response {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-  });
-}
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -57,12 +50,25 @@ async function rollbackAuthUser(
 }
 
 Deno.serve(async (req: Request) => {
+  const cors = corsHeaders(req);
+  const correlationId = newCorrelationId();
+  const jsonResponse = (status: number, payload: unknown): Response =>
+    new Response(JSON.stringify(payload), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS_HEADERS });
+    return handleOptions(req);
   }
 
   if (req.method !== "POST") {
     return jsonResponse(405, { ok: false, error: "Método no permitido" });
+  }
+
+  const contentLength = Number(req.headers.get("content-length") ?? "0");
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonResponse(413, { ok: false, error: "Solicitud demasiado grande" });
   }
 
   const authHeader = req.headers.get("Authorization");
@@ -125,6 +131,14 @@ Deno.serve(async (req: Request) => {
 
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Rate limit por admin autenticado — antes de tocar admin_users o Auth,
+  // para no dejar hacer ni siquiera el lookup de permisos en un burst.
+  const rl = await checkRateLimit(supabaseAdmin, `${MODULE}:${caller.id}`, 5, 600);
+  if (!rl.allowed) {
+    logWarn({ correlationId, module: MODULE, event: "rate_limited", actorId: caller.id });
+    return rateLimitedResponse(rl, cors);
+  }
+
   const { data: adminRow, error: adminLookupError } = await supabaseAdmin
     .from("admin_users")
     .select("id")
@@ -132,10 +146,13 @@ Deno.serve(async (req: Request) => {
     .maybeSingle();
 
   if (adminLookupError) {
-    return jsonResponse(500, {
-      ok: false,
-      error: "No se pudo verificar permisos de administrador",
+    logError({
+      correlationId,
+      module: MODULE,
+      errorType: "admin_lookup_failed",
+      detail: internalErrorDetail(adminLookupError),
     });
+    return jsonResponse(500, { ok: false, error: safeClientMessage(correlationId) });
   }
 
   if (!adminRow) {

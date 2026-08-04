@@ -1,16 +1,16 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders, handleOptions } from "../_shared/cors.ts";
+import { newCorrelationId, logError, logWarn } from "../_shared/logger.ts";
+import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
+import { checkRateLimit, rateLimitedResponse } from "../_shared/rateLimit.ts";
 
 interface RequestBody {
   target_user_id?: string;
   new_email?: string;
 }
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const MAX_BODY_BYTES = 10_000;
+const MODULE = "admin-actualizar-email-usuario";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -19,13 +19,6 @@ const SUPABASE_SERVICE_ROLE_KEY =
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("Missing Supabase env vars.");
-}
-
-function jsonResponse(status: number, payload: unknown): Response {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-  });
 }
 
 function isValidEmail(email: string): boolean {
@@ -47,7 +40,8 @@ function mapAuthUpdateError(message: string): string {
 async function syncAuthEmailIdentity(
   supabaseAdmin: ReturnType<typeof createClient>,
   userId: string,
-  newEmail: string
+  newEmail: string,
+  correlationId: string
 ): Promise<{ ok: boolean; error?: string }> {
   const { data, error } = await supabaseAdmin.rpc(
     "admin_sync_auth_email_identity",
@@ -64,29 +58,55 @@ async function syncAuthEmailIdentity(
       error.code === "PGRST202" ||
       error.code === "42883"
     ) {
+      logError({
+        correlationId,
+        module: MODULE,
+        errorType: "sync_rpc_missing",
+        detail: internalErrorDetail(error),
+      });
       return {
         ok: false,
         error:
           "Falta desplegar el SQL admin-sync-auth-email-identity.sql en Supabase.",
       };
     }
-    return { ok: false, error: msg || "No se pudo sincronizar el acceso" };
+    logError({
+      correlationId,
+      module: MODULE,
+      errorType: "sync_rpc_failed",
+      detail: internalErrorDetail(error),
+    });
+    return { ok: false, error: safeClientMessage(correlationId) };
   }
 
   if (data && typeof data === "object" && (data as { ok?: boolean }).ok === true) {
     return { ok: true };
   }
 
+  logWarn({ correlationId, module: MODULE, event: "sync_incomplete" });
   return { ok: false, error: "Sincronización de acceso incompleta" };
 }
 
 Deno.serve(async (req: Request) => {
+  const cors = corsHeaders(req);
+  const correlationId = newCorrelationId();
+  const jsonResponse = (status: number, payload: unknown): Response =>
+    new Response(JSON.stringify(payload), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS_HEADERS });
+    return handleOptions(req);
   }
 
   if (req.method !== "POST") {
     return jsonResponse(405, { ok: false, error: "Método no permitido" });
+  }
+
+  const contentLength = Number(req.headers.get("content-length") ?? "0");
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonResponse(413, { ok: false, error: "Solicitud demasiado grande" });
   }
 
   const authHeader = req.headers.get("Authorization");
@@ -136,6 +156,12 @@ Deno.serve(async (req: Request) => {
 
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  const rl = await checkRateLimit(supabaseAdmin, `${MODULE}:${caller.id}`, 5, 600);
+  if (!rl.allowed) {
+    logWarn({ correlationId, module: MODULE, event: "rate_limited", actorId: caller.id });
+    return rateLimitedResponse(rl, cors);
+  }
+
   const { data: adminRow, error: adminLookupError } = await supabaseAdmin
     .from("admin_users")
     .select("id")
@@ -143,10 +169,13 @@ Deno.serve(async (req: Request) => {
     .maybeSingle();
 
   if (adminLookupError) {
-    return jsonResponse(500, {
-      ok: false,
-      error: "No se pudo verificar permisos de administrador",
+    logError({
+      correlationId,
+      module: MODULE,
+      errorType: "admin_lookup_failed",
+      detail: internalErrorDetail(adminLookupError),
     });
+    return jsonResponse(500, { ok: false, error: safeClientMessage(correlationId) });
   }
 
   if (!adminRow) {
@@ -193,7 +222,8 @@ Deno.serve(async (req: Request) => {
     const syncOnly = await syncAuthEmailIdentity(
       supabaseAdmin,
       targetUserId,
-      newEmail
+      newEmail,
+      correlationId
     );
     if (!syncOnly.ok) {
       return jsonResponse(500, { ok: false, error: syncOnly.error });
@@ -227,7 +257,8 @@ Deno.serve(async (req: Request) => {
   const syncResult = await syncAuthEmailIdentity(
     supabaseAdmin,
     targetUserId,
-    newEmail
+    newEmail,
+    correlationId
   );
 
   if (!syncResult.ok) {
@@ -237,7 +268,7 @@ Deno.serve(async (req: Request) => {
         email_confirm: true,
         role: "authenticated",
       });
-      await syncAuthEmailIdentity(supabaseAdmin, targetUserId, rollbackEmail);
+      await syncAuthEmailIdentity(supabaseAdmin, targetUserId, rollbackEmail, correlationId);
     }
     return jsonResponse(500, { ok: false, error: syncResult.error });
   }
@@ -266,7 +297,7 @@ Deno.serve(async (req: Request) => {
         email_confirm: true,
         role: "authenticated",
       });
-      await syncAuthEmailIdentity(supabaseAdmin, targetUserId, rollbackEmail);
+      await syncAuthEmailIdentity(supabaseAdmin, targetUserId, rollbackEmail, correlationId);
       await supabaseAdmin
         .from("users")
         .update({ email: rollbackEmail })

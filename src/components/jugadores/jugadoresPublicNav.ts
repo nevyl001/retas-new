@@ -43,6 +43,33 @@ export function buildOfficialSiteRankingUrl(
   return buildMarketingOfficialRankingsUrl(orgId, genero);
 }
 
+/** Único host externo (y subdominios) al que esta app puede redirigir por completo. */
+const TRUSTED_EXTERNAL_HOST_SUFFIX = "rivieraopen.com";
+const SAFE_FALLBACK_PATH = "/ranking";
+
+function isTrustedExternalUrl(raw: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "https:") return false;
+  const host = parsed.hostname.toLowerCase();
+  return (
+    host === TRUSTED_EXTERNAL_HOST_SUFFIX ||
+    host.endsWith(`.${TRUSTED_EXTERNAL_HOST_SUFFIX}`)
+  );
+}
+
+/**
+ * Cualquier valor con un esquema de URL explícito que no sea http(s)
+ * (javascript:, data:, vbscript:, etc.) se rechaza sin intentar navegar.
+ */
+function hasNonHttpScheme(raw: string): boolean {
+  return /^[a-z][a-z0-9+.-]*:/i.test(raw) && !/^https?:\/\//i.test(raw);
+}
+
 export function navigatePublicJugadores(path?: string): void {
   const url =
     path ??
@@ -52,10 +79,21 @@ export function navigatePublicJugadores(path?: string): void {
         typeof window !== "undefined" ? window.location.pathname : undefined
       )
     );
-  if (url.startsWith("http")) {
+
+  if (hasNonHttpScheme(url)) {
+    navigateAppTo(SAFE_FALLBACK_PATH);
+    return;
+  }
+
+  if (/^https?:\/\//i.test(url)) {
+    if (!isTrustedExternalUrl(url)) {
+      navigateAppTo(SAFE_FALLBACK_PATH);
+      return;
+    }
     window.location.href = url;
     return;
   }
+
   navigateAppTo(url);
 }
 

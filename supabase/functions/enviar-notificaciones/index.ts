@@ -11,10 +11,13 @@ import { resolveClasificadosPairIds } from "../_shared/clasificadosPairs.ts";
 import { notifAlreadySentForPair } from "../_shared/notifDedup.ts";
 import {
   logResendConfig,
-  RESEND_FROM,
   resendApiKeyConfigured,
   sendByResend,
 } from "../_shared/resendEmail.ts";
+import { corsHeaders, handleOptions } from "../_shared/cors.ts";
+import { newCorrelationId, logError, logWarn } from "../_shared/logger.ts";
+import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
+import { checkRateLimit, rateLimitedResponse } from "../_shared/rateLimit.ts";
 
 type NotifTipo =
   | "bienvenida_torneo"
@@ -55,12 +58,8 @@ interface PlayerContact {
   optInEmail: boolean;
 }
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const MODULE = "enviar-notificaciones";
+const MAX_BODY_BYTES = 5_000;
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -72,13 +71,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 logResendConfig("enviar-notificaciones");
-
-function jsonResponse(status: number, payload: unknown): Response {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-  });
-}
 
 function isFakeEmail(email: string | null | undefined): boolean {
   if (!email) return true;
@@ -162,16 +154,48 @@ async function buildPlayerEmail(
 }
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req);
+  const correlationId = newCorrelationId();
+  const jsonResponse = (status: number, payload: unknown): Response =>
+    new Response(JSON.stringify(payload), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS_HEADERS });
+    return handleOptions(req);
   }
   if (req.method !== "POST") {
     return jsonResponse(405, { error: "Method not allowed" });
   }
 
+  const contentLength = Number(req.headers.get("content-length") ?? "0");
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonResponse(413, { error: "Solicitud demasiado grande" });
+  }
+
   const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return jsonResponse(401, { error: "Missing Authorization header" });
+  }
+
+  // Autenticación ANTES de leer el body (Fase B) — antes se validaba el JWT
+  // después de parsear/validar el body.
+  const supabaseAuthed = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  const { data: userData, error: userError } =
+    await supabaseAuthed.auth.getUser();
+  if (userError || !userData.user) {
+    return jsonResponse(401, { error: "Token inválido o sesión expirada" });
+  }
+
+  const rl = await checkRateLimit(supabaseAdmin, `${MODULE}:${userData.user.id}`, 10, 300);
+  if (!rl.allowed) {
+    logWarn({ correlationId, module: MODULE, event: "rate_limited", actorId: userData.user.id });
+    return rateLimitedResponse(rl, cors);
   }
 
   let body: RequestBody;
@@ -200,21 +224,8 @@ Deno.serve(async (req) => {
   }
 
   if (!resendApiKeyConfigured()) {
-    return jsonResponse(500, {
-      error: "RESEND_API_KEY no configurada en producción (Supabase Edge Function secrets).",
-      resend_from: RESEND_FROM,
-    });
-  }
-
-  const supabaseAuthed = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    global: { headers: { Authorization: authHeader } },
-  });
-  const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-  const { data: userData, error: userError } =
-    await supabaseAuthed.auth.getUser();
-  if (userError || !userData.user) {
-    return jsonResponse(401, { error: "Token inválido o sesión expirada" });
+    logError({ correlationId, module: MODULE, errorType: "resend_not_configured" });
+    return jsonResponse(500, { error: safeClientMessage(correlationId) });
   }
 
   const { data: torneo, error: torneoErr } = await supabaseAuthed
@@ -234,7 +245,13 @@ Deno.serve(async (req) => {
     .select("id")
     .eq("torneo_id", body.torneo_express_id);
   if (gruposErr) {
-    return jsonResponse(500, { error: gruposErr.message });
+    logError({
+      correlationId,
+      module: MODULE,
+      errorType: "grupos_lookup_failed",
+      detail: internalErrorDetail(gruposErr),
+    });
+    return jsonResponse(500, { error: safeClientMessage(correlationId) });
   }
 
   const grupoIds = (grupos ?? []).map((g) => g.id as string);
@@ -251,7 +268,15 @@ Deno.serve(async (req) => {
     .from("torneo_express_grupo_parejas")
     .select("pareja_id")
     .in("grupo_id", grupoIds);
-  if (gpErr) return jsonResponse(500, { error: gpErr.message });
+  if (gpErr) {
+    logError({
+      correlationId,
+      module: MODULE,
+      errorType: "grupo_parejas_lookup_failed",
+      detail: internalErrorDetail(gpErr),
+    });
+    return jsonResponse(500, { error: safeClientMessage(correlationId) });
+  }
 
   const allPairIds = Array.from(
     new Set((gpRows ?? []).map((r) => r.pareja_id as string).filter(Boolean)),
@@ -287,8 +312,13 @@ Deno.serve(async (req) => {
           body.torneo_express_id,
         );
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Error al resolver clasificados";
-        return jsonResponse(500, { error: msg });
+        logError({
+          correlationId,
+          module: MODULE,
+          errorType: "clasificados_resolve_failed",
+          detail: internalErrorDetail(e),
+        });
+        return jsonResponse(500, { error: safeClientMessage(correlationId) });
       }
 
       targetPairIds = allPairIds.filter((id) =>
@@ -313,7 +343,13 @@ Deno.serve(async (req) => {
     .select("*")
     .in("pair_id", targetPairIds);
   if (pairContactsErr) {
-    return jsonResponse(500, { error: pairContactsErr.message });
+    logError({
+      correlationId,
+      module: MODULE,
+      errorType: "pair_contacts_lookup_failed",
+      detail: internalErrorDetail(pairContactsErr),
+    });
+    return jsonResponse(500, { error: safeClientMessage(correlationId) });
   }
 
   let enviadosEmail = 0;

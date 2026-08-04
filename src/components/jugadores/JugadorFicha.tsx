@@ -428,7 +428,7 @@ export const JugadorFicha: React.FC<JugadorFichaProps> = ({ slug }) => {
           ) : null}
         </div>
 
-        {!isGrantedReadOnly && editOpen && (
+        {!isGrantedReadOnly && canDelete && editOpen && (
           <section className="rj-edit-panel">
             <h2 className="rj-edit-panel__title">Datos del jugador</h2>
             <Input

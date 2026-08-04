@@ -17,6 +17,10 @@ import {
 } from "../_shared/emailTemplates.ts";
 import { notifAlreadySentForPair } from "../_shared/notifDedup.ts";
 import { logResendConfig, sendByResend } from "../_shared/resendEmail.ts";
+import { corsHeaders, handleOptions } from "../_shared/cors.ts";
+import { newCorrelationId, logError, logWarn } from "../_shared/logger.ts";
+import { safeClientMessage, internalErrorDetail } from "../_shared/errors.ts";
+import { checkRateLimit, rateLimitedResponse } from "../_shared/rateLimit.ts";
 
 type ActiveQueueEventType =
   | "bienvenida_torneo"
@@ -62,12 +66,10 @@ interface PairWithContactRow {
   player2_opt_email: boolean | null;
 }
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-notificaciones-secret",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const MODULE = "procesar-notificaciones-evento";
+const MAX_BODY_BYTES = 5_000;
+/** Bucket global (no hay identidad de usuario — es un webhook interno de Supabase). */
+const WEBHOOK_RATE_BUCKET = `${MODULE}:webhook`;
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY =
@@ -86,13 +88,6 @@ if (!NOTIFICACIONES_WEBHOOK_SECRET) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 logResendConfig("procesar-notificaciones-evento");
-
-function jsonResponse(status: number, payload: unknown): Response {
-  return new Response(JSON.stringify(payload), {
-    status,
-    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-  });
-}
 
 /** Comparación en tiempo constante para evitar filtrar el secret por timing. */
 function secretsEqual(a: string, b: string): boolean {
@@ -170,26 +165,44 @@ async function markQueue(
   id: string,
   patch: Partial<Pick<QueueRow, "estado" | "error_detalle">> & {
     processed_at?: string | null;
-    attemptsInc?: boolean;
   },
 ) {
   const updatePayload: Record<string, unknown> = {};
   if (patch.estado) updatePayload.estado = patch.estado;
   if ("error_detalle" in patch) updatePayload.error_detalle = patch.error_detalle;
   if ("processed_at" in patch) updatePayload.processed_at = patch.processed_at;
-  if (patch.attemptsInc) {
-    const { data: current } = await supabase
-      .from("notificaciones_eventos_queue")
-      .select("attempts")
-      .eq("id", id)
-      .single();
-    updatePayload.attempts = ((current?.attempts as number | undefined) ?? 0) + 1;
-  }
 
   await supabase
     .from("notificaciones_eventos_queue")
     .update(updatePayload)
     .eq("id", id);
+}
+
+/**
+ * Reclama el evento de forma atómica: el UPDATE solo afecta la fila si
+ * `estado` sigue siendo 'pendiente' en el momento exacto del UPDATE (Fase B
+ * — antes era un SELECT + UPDATE en dos pasos separados, con una ventana de
+ * carrera real entre dos invocaciones casi simultáneas del mismo webhook).
+ * Devuelve null si otra invocación ya se quedó con el evento primero.
+ */
+async function tryClaimQueueEvent(id: string): Promise<QueueRow | null> {
+  const { data: current } = await supabase
+    .from("notificaciones_eventos_queue")
+    .select("attempts")
+    .eq("id", id)
+    .maybeSingle();
+  const nextAttempts = ((current?.attempts as number | undefined) ?? 0) + 1;
+
+  const { data, error } = await supabase
+    .from("notificaciones_eventos_queue")
+    .update({ estado: "procesando", attempts: nextAttempts })
+    .eq("id", id)
+    .eq("estado", "pendiente")
+    .select()
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data as QueueRow;
 }
 
 async function fetchPairsWithContacts(
@@ -417,8 +430,16 @@ async function runQueueEvent(queue: QueueRow) {
 }
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req, { extraAllowedHeaders: "x-notificaciones-secret" });
+  const correlationId = newCorrelationId();
+  const jsonResponse = (status: number, payload: unknown): Response =>
+    new Response(JSON.stringify(payload), {
+      status,
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: CORS_HEADERS });
+    return handleOptions(req, { extraAllowedHeaders: "x-notificaciones-secret" });
   }
   if (req.method !== "POST") {
     return jsonResponse(405, { error: "Method not allowed" });
@@ -426,6 +447,19 @@ Deno.serve(async (req) => {
 
   if (!isAuthorizedWebhook(req)) {
     return jsonResponse(401, { error: "Unauthorized" });
+  }
+
+  const contentLength = Number(req.headers.get("content-length") ?? "0");
+  if (contentLength > MAX_BODY_BYTES) {
+    return jsonResponse(413, { error: "Solicitud demasiado grande" });
+  }
+
+  // Rate limit global (webhook interno, sin identidad de usuario) — red de
+  // seguridad ante un trigger de Supabase mal configurado que dispare en bucle.
+  const rl = await checkRateLimit(supabase, WEBHOOK_RATE_BUCKET, 300, 60);
+  if (!rl.allowed) {
+    logWarn({ correlationId, module: MODULE, event: "rate_limited" });
+    return rateLimitedResponse(rl, cors);
   }
 
   let body: Record<string, unknown>;
@@ -443,25 +477,14 @@ Deno.serve(async (req) => {
     return jsonResponse(400, { error: "Missing queue event id (record.id)" });
   }
 
-  const { data: queueRowRaw, error: queueErr } = await supabase
-    .from("notificaciones_eventos_queue")
-    .select("*")
-    .eq("id", queueId)
-    .single();
-  if (queueErr || !queueRowRaw) {
-    return jsonResponse(404, { error: "Queue event not found" });
-  }
-  const queue = queueRowRaw as QueueRow;
-
-  if (queue.estado !== "pendiente") {
-    return jsonResponse(200, {
-      ok: true,
-      skipped: true,
-      reason: `estado=${queue.estado}`,
-    });
+  const queue = await tryClaimQueueEvent(queueId);
+  if (!queue) {
+    // O no existe, o ya no está 'pendiente' (ya reclamado por otra invocación
+    // concurrente, o ya procesado/errado antes) — en ambos casos, no hay
+    // nada que este request deba hacer.
+    return jsonResponse(200, { ok: true, skipped: true, queue_id: queueId });
   }
 
-  await markQueue(queue.id, { estado: "procesando", attemptsInc: true });
   try {
     await runQueueEvent(queue);
     await markQueue(queue.id, {
@@ -475,16 +498,19 @@ Deno.serve(async (req) => {
       estado: "procesado",
     });
   } catch (e) {
-    const errorDetalle = e instanceof Error ? e.message : "Error desconocido";
+    // error_detalle en la tabla SÍ guarda el detalle completo (auditoría
+    // interna para el equipo) — la respuesta HTTP al webhook caller no.
+    const detail = internalErrorDetail(e);
     await markQueue(queue.id, {
       estado: "error",
-      error_detalle: errorDetalle,
+      error_detalle: detail,
       processed_at: new Date().toISOString(),
     });
+    logError({ correlationId, module: MODULE, errorType: "queue_event_failed", detail });
     return jsonResponse(500, {
       ok: false,
       queue_id: queue.id,
-      error: errorDetalle,
+      error: safeClientMessage(correlationId),
     });
   }
 });

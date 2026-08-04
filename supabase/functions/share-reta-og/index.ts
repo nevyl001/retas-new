@@ -11,7 +11,16 @@
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+// Import de solo-tipo sin pin de versión — coincide con el que usa
+// _shared/rateLimit.ts. Esta función es la única que fija "@2.57.4" (el
+// resto usa "@2" sin fijar), así que esm.sh resuelve dos clases
+// nominalmente distintas para el mismo cliente; el cast de abajo reconcilia
+// eso sin introducir "any" ni ocultar un error real.
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit } from "../_shared/rateLimit.ts";
+import { newCorrelationId, logWarn } from "../_shared/logger.ts";
 
+const MODULE = "share-reta-og";
 const RIVIERA_OG_IMAGE = "https://appriviera.rivieraopen.com/icon-512x512.png";
 const RIVIERA_TITLE = "RivieraApp — Retas y torneos de pádel";
 const RIVIERA_DESC =
@@ -272,6 +281,12 @@ async function resolveFromDest(
 }
 
 serve(async (req) => {
+  const correlationId = newCorrelationId();
+
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
   const url = new URL(req.url);
   const slug = (url.searchParams.get("slug") || "").trim();
   const destRaw = (url.searchParams.get("dest") || "").trim();
@@ -283,6 +298,25 @@ serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const sb = createClient(supabaseUrl, serviceKey);
+
+  // Endpoint público sin sesión (crawlers de WhatsApp/Facebook/Twitter) — el
+  // rate limit es por IP, generoso (varios crawlers pueden compartir salida
+  // NAT/proxy al pre-fetchear el mismo link para muchos usuarios a la vez).
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const rl = await checkRateLimit(
+    sb as unknown as SupabaseClient,
+    `${MODULE}:ip:${clientIp}`,
+    60,
+    60
+  );
+  if (!rl.allowed) {
+    logWarn({ correlationId, module: MODULE, event: "rate_limited", clientIp });
+    return new Response("Too many requests", {
+      status: 429,
+      headers: { "Retry-After": String(rl.retryAfterSeconds) },
+    });
+  }
 
   let playUrl: string;
   let resolved: BrandCtx | Response;
