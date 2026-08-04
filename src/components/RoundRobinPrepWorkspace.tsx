@@ -164,7 +164,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
   /** Ya hay convocatoria live (slug / abierta): el bloque no se oculta. */
   const [convIsLive, setConvIsLive] = useState(false);
   const [teamsCount, setTeamsCount] = useState(2);
-  const [teamNames, setTeamNames] = useState<string[]>(["Equipo 1", "Equipo 2"]);
+  const [teamNames, setTeamNames] = useState<string[]>(["", ""]);
   const [pairToTeam, setPairToTeam] = useState<Record<string, number>>({});
   const [dynamicLineupsEnabled, setDynamicLineupsEnabled] = useState(false);
   const [dynamicTotalRounds, setDynamicTotalRounds] = useState(2);
@@ -240,7 +240,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
     const n = Math.min(teamsCount, pairs.length);
     setTeamNames((prev) => {
       const next = [...prev.slice(0, n)];
-      while (next.length < n) next.push(`Equipo ${next.length + 1}`);
+      while (next.length < n) next.push("");
       return next;
     });
     const sortedPairs = [...pairs].sort((a, b) => a.id.localeCompare(b.id));
@@ -290,8 +290,16 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
     const [a, b] = teamsPreview;
     return {
       ...base,
-      teamA: { teamIndex: a.teamIndex, name: teamNames[a.teamIndex] ?? "Equipo 1", pairs: a.pairs },
-      teamB: { teamIndex: b.teamIndex, name: teamNames[b.teamIndex] ?? "Equipo 2", pairs: b.pairs },
+      teamA: {
+        teamIndex: a.teamIndex,
+        name: teamNames[a.teamIndex]?.trim() || `Equipo ${a.teamIndex + 1}`,
+        pairs: a.pairs,
+      },
+      teamB: {
+        teamIndex: b.teamIndex,
+        name: teamNames[b.teamIndex]?.trim() || `Equipo ${b.teamIndex + 1}`,
+        pairs: b.pairs,
+      },
     };
   }, [isTeams, teamsPreview, pairs, teamNames, tournament.courts]);
 
@@ -463,11 +471,11 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
               >
                 <Input
                   type="text"
-                  value={teamNames[t.teamIndex] ?? `Equipo ${t.teamIndex + 1}`}
+                  value={teamNames[t.teamIndex] ?? ""}
+                  placeholder={`Equipo ${t.teamIndex + 1}`}
                   onChange={(e) => {
                     const next = [...teamNames];
-                    next[t.teamIndex] =
-                      e.target.value || `Equipo ${t.teamIndex + 1}`;
+                    next[t.teamIndex] = e.target.value;
                     setTeamNames(next);
                   }}
                   disabled={loading}
@@ -494,7 +502,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
                       >
                         {teamsPreview.map((other) => (
                           <option key={other.teamIndex} value={other.teamIndex}>
-                            {teamNames[other.teamIndex] ??
+                            {teamNames[other.teamIndex]?.trim() ||
                               `Equipo ${other.teamIndex + 1}`}
                           </option>
                         ))}
@@ -634,7 +642,9 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
       onStartTournament({
         format,
         teamsCount: isTeams ? teamsCount : undefined,
-        teamNames: isTeams ? teamNames : undefined,
+        teamNames: isTeams
+          ? teamNames.map((name, i) => name.trim() || `Equipo ${i + 1}`)
+          : undefined,
         pairToTeam: isTeams ? pairToTeam : undefined,
         dynamicLineups: dynamicLineupsActive
           ? {

@@ -36,7 +36,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
   );
 
   const [teamsCount, setTeamsCount] = useState<number>(2);
-  const [teamNames, setTeamNames] = useState<string[]>(["Equipo 1", "Equipo 2"]);
+  const [teamNames, setTeamNames] = useState<string[]>(["", ""]);
   const [pairToTeam, setPairToTeam] = useState<Record<string, number>>({});
 
   const safeTeams = useMemo(
@@ -52,7 +52,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
     const n = Math.min(teamsCount, pairs.length);
     setTeamNames((prev) => {
       const next = [...prev.slice(0, n)];
-      while (next.length < n) next.push(`Equipo ${next.length + 1}`);
+      while (next.length < n) next.push("");
       return next;
     });
     const sortedPairs = [...pairs].sort((a, b) => a.id.localeCompare(b.id));
@@ -142,7 +142,10 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
           onStartTournament({
             format,
             teamsCount: format === "teams" ? teamsCount : undefined,
-            teamNames: format === "teams" ? teamNames : undefined,
+            teamNames:
+              format === "teams"
+                ? teamNames.map((name, i) => name.trim() || `Equipo ${i + 1}`)
+                : undefined,
             pairToTeam: format === "teams" ? pairToTeam : undefined,
           })
         }
@@ -170,11 +173,11 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
             <div key={t.teamIndex} className="start-tournament-section__team-block">
               <Input
                 type="text"
-                value={teamNames[t.teamIndex] ?? `Equipo ${t.teamIndex + 1}`}
+                value={teamNames[t.teamIndex] ?? ""}
+                placeholder={`Equipo ${t.teamIndex + 1}`}
                 onChange={(e) => {
                   const next = [...teamNames];
-                  next[t.teamIndex] =
-                    e.target.value || `Equipo ${t.teamIndex + 1}`;
+                  next[t.teamIndex] = e.target.value;
                   setTeamNames(next);
                 }}
                 disabled={loading}
@@ -198,7 +201,7 @@ export const StartTournamentSection: React.FC<StartTournamentSectionProps> = ({
                     >
                       {teamsPreview.map((other) => (
                         <option key={other.teamIndex} value={other.teamIndex}>
-                          {teamNames[other.teamIndex] ??
+                          {teamNames[other.teamIndex]?.trim() ||
                             `Equipo ${other.teamIndex + 1}`}
                         </option>
                       ))}
