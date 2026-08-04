@@ -388,3 +388,50 @@
     font-size: 0.75rem;
   }
 }
+
+/* —— Equipos con alineación dinámica: clasificación por equipos —— */
+.dynamic-team-standings-wrapper {
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.dynamic-team-standings-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dynamic-team-standings-table th,
+.dynamic-team-standings-table td {
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.dynamic-team-standings-table th {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.dynamic-team-standings-table tbody tr + tr td {
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.dynamic-team-standings-row--leader td {
+  background: var(--ro-gold-dim, rgba(201, 162, 39, 0.08));
+  font-weight: var(--font-weight-semibold);
+}
+
+.dynamic-team-standings-outcome {
+  margin: var(--space-md) 0 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}

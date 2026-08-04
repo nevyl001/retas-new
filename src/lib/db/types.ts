@@ -1,6 +1,28 @@
+/**
+ * Configuración estática de "Equipos con alineación dinámica" (opt-in).
+ * Se escribe una sola vez al iniciar la reta y nunca se muta después —
+ * `playerToTeam` es la única fuente de verdad de que un jugador jamás
+ * cambia de equipo. El estado mutable (bloques generados, alineaciones
+ * por bloque) vive en la tabla `reta_dynamic_blocks`, no aquí.
+ */
+export interface DynamicLineupsConfig {
+  enabled: boolean;
+  totalRounds: number;
+  /**
+   * Parejas originales por equipo (ambos equipos deben tener la misma
+   * cantidad). El Round Robin inicial dura exactamente `pairsPerTeam`
+   * rondas; desde la ronda `pairsPerTeam + 1` cada ronda es una rotación
+   * dinámica. No se hardcodea ningún valor fijo en la lógica.
+   */
+  pairsPerTeam: number;
+  /** playerId -> teamIndex, fijo para toda la reta. */
+  playerToTeam: Record<string, number>;
+}
+
 export interface TournamentTeamConfig {
   teamNames: string[];
   pairToTeam: Record<string, number>;
+  dynamicLineups?: DynamicLineupsConfig;
 }
 
 export interface Tournament {

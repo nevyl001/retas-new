@@ -19,6 +19,10 @@ import {
   buildHeadToHeadFromMatches,
 } from "../lib/standingsUtils";
 import {
+  computeDynamicTeamStandings,
+  resolveDynamicTeamWinner,
+} from "../lib/reta/dynamicTeamLineups";
+import {
   pairPlayer1DisplayName,
   pairPlayer2DisplayName,
 } from "../lib/pairPlayerNames";
@@ -62,6 +66,12 @@ import "../styles/standings-mobile-cards.css";
 export interface TeamConfig {
   teamNames: string[];
   pairToTeam: Record<string, number>;
+  dynamicLineups?: {
+    enabled: boolean;
+    totalRounds: number;
+    pairsPerTeam: number;
+    playerToTeam: Record<string, number>;
+  };
 }
 
 interface RealTimeStandingsTableProps {
@@ -124,7 +134,7 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
   }, [tournamentId, teamConfigProp]);
   // Si no hay config guardada, inferir equipos por nombres (ej. alva vs hack) para mostrar tabla por equipos
   const teamConfig = resolvedTeamConfig;
-  const effectiveTeamConfig = useMemo(
+  const effectiveTeamConfig: TeamConfig | null = useMemo(
     () => teamConfig ?? (pairs.length >= 2 ? inferTeamConfigFromPairs(pairs) : null),
     [teamConfig, pairs]
   );
@@ -274,6 +284,16 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
     }
     return computeTeamStandings(pairsWithStats, effectiveTeamConfig);
   }, [pairsWithStats, effectiveTeamConfig]);
+
+  const isDynamicLineups = effectiveTeamConfig?.dynamicLineups?.enabled === true;
+  const dynamicTeamStandings = useMemo(() => {
+    if (!isDynamicLineups || !effectiveTeamConfig) return null;
+    return computeDynamicTeamStandings(pairs, standingsMatches, allGames, effectiveTeamConfig);
+  }, [isDynamicLineups, effectiveTeamConfig, pairs, standingsMatches, allGames]);
+  const dynamicWinner = useMemo(
+    () => (dynamicTeamStandings ? resolveDynamicTeamWinner(dynamicTeamStandings) : null),
+    [dynamicTeamStandings]
+  );
 
   const h2hMatches = useMemo(
     () => buildHeadToHeadFromMatches(standingsMatches, allGames),
@@ -427,6 +447,55 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
           <div className="new-loading-spinner"></div>
           <p>Cargando clasificación...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (isDynamicLineups && dynamicTeamStandings) {
+    return (
+      <div className="new-standings-container riviera-standings te-public-section te-pub-fade-in">
+        <div className="new-standings-header riviera-standings__header">
+          <h2 className="te-public-section__title">Clasificación por equipos</h2>
+        </div>
+        <div className="te-public-section__divider" aria-hidden />
+        <div className="dynamic-team-standings-wrapper">
+          <table className="dynamic-team-standings-table">
+            <thead>
+              <tr>
+                <th>Equipo</th>
+                <th>Games a favor</th>
+                <th>Games en contra</th>
+                <th>Diferencia</th>
+                <th>Partidos jugados</th>
+                <th>Partidos ganados</th>
+                <th>Partidos perdidos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dynamicTeamStandings.map((row) => (
+                <tr
+                  key={row.teamIndex}
+                  className={
+                    !dynamicWinner?.isDraw && dynamicWinner?.winningTeamIndex === row.teamIndex
+                      ? "dynamic-team-standings-row--leader"
+                      : undefined
+                  }
+                >
+                  <td>{row.name}</td>
+                  <td>{row.gamesFor}</td>
+                  <td>{row.gamesAgainst}</td>
+                  <td>{row.gameDifference > 0 ? `+${row.gameDifference}` : row.gameDifference}</td>
+                  <td>{row.matchesPlayed}</td>
+                  <td>{row.matchesWon}</td>
+                  <td>{row.matchesLost}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {dynamicWinner?.isDraw ? (
+          <p className="dynamic-team-standings-outcome">Empate</p>
+        ) : null}
       </div>
     );
   }

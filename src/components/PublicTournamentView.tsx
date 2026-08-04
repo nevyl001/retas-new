@@ -28,6 +28,11 @@ import {
   resolvePublicStandingsTeamConfig,
   sortPairsForStandings,
 } from "../lib/standingsUtils";
+import {
+  computeDynamicTeamStandings,
+  resolveDynamicTeamWinner,
+  toLegacyTeamStandingRows,
+} from "../lib/reta/dynamicTeamLineups";
 import type { TeamConfig } from "./RealTimeStandingsTable";
 import { useRealtimeSubscription } from "../hooks/useRealtimeSubscription";
 import { useVisiblePolling } from "../hooks/useVisiblePolling";
@@ -86,6 +91,7 @@ import {
   resolvePublicMatchStatusVariant,
 } from "../lib/public/eventScheduleStatus";
 import "./public/riviera-public-americano.css";
+import "./ModernStandingsTable.css";
 
 interface PublicTournamentViewProps {
   tournamentId: string;
@@ -587,11 +593,21 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
     () => computePairsWithStats(pairs, standingsMatches, games),
     [pairs, standingsMatches, games]
   );
+  const isDynamicLineups = teamConfig?.dynamicLineups?.enabled === true;
   const teamStandings = useMemo(() => {
     if (!teamConfig?.teamNames?.length || !teamConfig.pairToTeam || Object.keys(teamConfig.pairToTeam).length === 0)
       return null;
+    if (isDynamicLineups) {
+      const dynamicRows = computeDynamicTeamStandings(pairs, standingsMatches, games, teamConfig);
+      return dynamicRows ? toLegacyTeamStandingRows(dynamicRows) : null;
+    }
     return computeTeamStandings(pairsWithStats, teamConfig);
-  }, [teamConfig, pairsWithStats]);
+  }, [teamConfig, pairsWithStats, isDynamicLineups, pairs, standingsMatches, games]);
+  const dynamicTeamWinner = useMemo(() => {
+    if (!isDynamicLineups || !teamConfig) return null;
+    const dynamicRows = computeDynamicTeamStandings(pairs, standingsMatches, games, teamConfig);
+    return dynamicRows ? resolveDynamicTeamWinner(dynamicRows) : null;
+  }, [isDynamicLineups, teamConfig, pairs, standingsMatches, games]);
   const winningTeamRow = useMemo(() => {
     if (!teamStandings?.length) return null;
     const targetName = winningTeamName ?? teamStandings[0]?.name;
@@ -1052,6 +1068,7 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
       {showWinner &&
         teamStandings &&
         teamStandings.length > 0 &&
+        !dynamicTeamWinner?.isDraw &&
         (winningTeamName || teamStandings[0]?.name) && (
           <PublicRetaWinnerSection
             title={winningTeamName || teamStandings[0]?.name}
@@ -1062,6 +1079,10 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
             shareable
           />
         )}
+
+      {showWinner && isDynamicLineups && dynamicTeamWinner?.isDraw && (
+        <p className="dynamic-team-standings-outcome">Empate</p>
+      )}
 
       {showWinner &&
         (!teamStandings || teamStandings.length === 0) &&

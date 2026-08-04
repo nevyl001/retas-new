@@ -6,7 +6,10 @@ import {
 import { isTeamsTournament } from "./gameModeMapping";
 import { getTeamConfigFromStorage } from "./standingsUtils";
 
-export type TeamConfigLike = Pick<TournamentTeamConfig, "teamNames" | "pairToTeam">;
+export type TeamConfigLike = Pick<
+  TournamentTeamConfig,
+  "teamNames" | "pairToTeam" | "dynamicLineups"
+>;
 
 export function isCompleteTeamConfigLike(
   config: TeamConfigLike | TournamentTeamConfig | null | undefined

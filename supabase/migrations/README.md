@@ -79,3 +79,12 @@ ignorados por carpeta.
 |---|---|
 | `0001_te_select_master_admin.sql` | BLK-07: policy SELECT para Admin Maestro en `torneo_express` (faltaba, sus tablas hermanas ya la tenían) |
 | `0001_verify_te_select_master_admin.sql` | Verificación manual de la migración anterior (solo lectura + ROLLBACK, requiere IDs reales de staging) |
+| `0002_update_liga_partido_score_parejas_fijas.sql` | BLK-03: guardado atómico de marcador en Liga de parejas fijas (lock + idempotencia + conflicto explícito) |
+| `0003_apply_torneo_express_grupo_resultado.sql` | BLK-06: guardado atómico de resultado de grupo + transición de fase en Torneo Express |
+| `0004_apply_americano_live_match_score.sql` | BLK-02: guardado atómico de marcador de un partido del Americano en vivo |
+| `0005_participacion_con_ledger.sql` | BLK-04: registro/actualización de participación + ledger oficial en una sola transacción |
+| `0006_edge_rate_limit.sql` | Fase B: tabla y función de rate limiting persistente para Edge Functions |
+| `0007_apply_americano_new_round.sql` | FC-01 (Fase C1): empuja la estructura de una ronda nueva del Americano al servidor (idempotente por key), cierra el hueco que dejaba `rounds` vacío tras BLK-02 |
+| `0008_reverse_ledger_on_participacion_delete.sql` | FC-02 (Fase C1): revierte el ledger oficial al borrar una participación individual, reutilizando `_reverse_ledger_for_participacion_safe()` |
+| `0009_apply_reta_match_update.sql` | FC-04+FC-05 (Fase C1): RPC único para toda actualización de un partido de Reta (cancha/ronda/resultado), bloqueo tras cierre y scaffolding de corrección administrativa auditada (`reta_match_admin_corrections`) |
+| `0010_dynamic_team_lineup_blocks.sql` | Equipos con alineación dinámica (opt-in, Fase 2): tabla `reta_dynamic_blocks` (candado `UNIQUE (tournament_id, block_number)`) + RPCs `begin_/commit_/retry_dynamic_team_block` para generar cada bloque de rondas de forma idempotente (lock de fila + conflicto explícito, mismo patrón que 0009) |

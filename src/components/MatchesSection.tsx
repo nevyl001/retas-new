@@ -20,6 +20,12 @@ import {
 } from "../lib/roundRobinChampionship";
 import { useResolvedTeamConfig } from "../hooks/useResolvedTeamConfig";
 import { compareMatchCourt } from "../lib/matchCourt";
+import {
+  getDynamicTeamBlocks,
+  type RetaDynamicBlockRow,
+} from "../lib/reta/dynamicTeamBlocksApi";
+import { generateNextDynamicBlock } from "../lib/reta/generateNextDynamicBlock";
+import { resolveTotalDynamicBlocks } from "../lib/reta/dynamicTeamLineups";
 
 interface MatchesSectionProps {
   tournament: Tournament;
@@ -203,6 +209,85 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     void tryGenerateChampionship();
   }, [tryGenerateChampionship, forceRefresh, matches]);
 
+  const isDynamicLineups = Boolean(tournament.team_config?.dynamicLineups?.enabled);
+  const [dynamicBlocks, setDynamicBlocks] = useState<RetaDynamicBlockRow[]>([]);
+  const [dynamicBlocksTick, setDynamicBlocksTick] = useState(0);
+
+  useEffect(() => {
+    if (!isDynamicLineups) return;
+    let cancelled = false;
+    void getDynamicTeamBlocks(tournament.id).then((rows) => {
+      if (!cancelled) setDynamicBlocks(rows);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isDynamicLineups, tournament.id, forceRefresh, dynamicBlocksTick]);
+
+  const dynamicGeneratingRef = useRef(false);
+  const tryGenerateNextDynamicBlock = useCallback(async () => {
+    if (!isDynamicLineups || !userId || dynamicGeneratingRef.current) return;
+    dynamicGeneratingRef.current = true;
+    try {
+      const result = await generateNextDynamicBlock({ tournament, pairs, matches, userId });
+      if (result.status === "generated") {
+        setDynamicBlocksTick((n) => n + 1);
+        await onReloadMatches?.();
+        setForceRefresh((n) => n + 1);
+      }
+    } catch (e) {
+      console.warn("[alineacion-dinamica] no se pudo generar el siguiente bloque:", e);
+    } finally {
+      dynamicGeneratingRef.current = false;
+    }
+  }, [isDynamicLineups, userId, tournament, pairs, matches, onReloadMatches, setForceRefresh]);
+
+  useEffect(() => {
+    void tryGenerateNextDynamicBlock();
+  }, [tryGenerateNextDynamicBlock, forceRefresh, matches]);
+
+  const completedDynamicBlocks = useMemo(
+    () =>
+      dynamicBlocks
+        .filter((b) => b.status === "completed")
+        .sort((a, b) => a.block_number - b.block_number),
+    [dynamicBlocks]
+  );
+
+  const dynamicBlockGroups = useMemo(() => {
+    if (!isDynamicLineups) return [];
+    return completedDynamicBlocks.map((block) => ({
+      block,
+      matches: regular.filter(
+        (m) => (m.round ?? 0) >= block.round_start && (m.round ?? 0) <= block.round_end
+      ),
+    }));
+  }, [isDynamicLineups, completedDynamicBlocks, regular]);
+
+  const playerNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    pairs.forEach((p) => {
+      if (p.player1_id) map.set(p.player1_id, p.player1_name);
+      if (p.player2_id) map.set(p.player2_id, p.player2_name);
+    });
+    return map;
+  }, [pairs]);
+
+  const canOfferNextDynamicBlock = useMemo(() => {
+    const dyn = tournament.team_config?.dynamicLineups;
+    const current = completedDynamicBlocks[completedDynamicBlocks.length - 1];
+    if (!isDynamicLineups || !dyn || !current) return false;
+    const totalBlocks = resolveTotalDynamicBlocks(dyn.totalRounds, dyn.pairsPerTeam);
+    if (current.block_number >= totalBlocks) return false;
+    const currentBlockMatches = matches.filter(
+      (m) => (m.round ?? 0) >= current.round_start && (m.round ?? 0) <= current.round_end
+    );
+    return (
+      currentBlockMatches.length > 0 &&
+      currentBlockMatches.every((m) => m.status === "finished")
+    );
+  }, [isDynamicLineups, tournament.team_config, completedDynamicBlocks, matches]);
+
   if (!tournament.is_started) return null;
 
   const roundBlockOpts = {
@@ -231,11 +316,91 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         />
       ) : (
         <>
-          {Object.entries(regularByRound)
-            .sort(([a], [b]) => Number(a) - Number(b))
-            .map(([round, roundMatches]) =>
-              renderRoundBlock(round, roundMatches, roundBlockOpts)
-            )}
+          {isDynamicLineups
+            ? dynamicBlockGroups.map(({ block, matches: blockMatches }) => {
+                const matchesByRoundInBlock: Record<number, Match[]> = {};
+                blockMatches.forEach((m) => {
+                  const r = m.round || block.round_start;
+                  if (!matchesByRoundInBlock[r]) matchesByRoundInBlock[r] = [];
+                  matchesByRoundInBlock[r].push(m);
+                });
+                return (
+                  <section
+                    key={block.block_number}
+                    className="dynamic-lineups-block"
+                    aria-label={
+                      block.stage === "initial_round_robin"
+                        ? "Round Robin inicial"
+                        : `Ronda ${block.round_start}`
+                    }
+                  >
+                    <header className="dynamic-lineups-block__header">
+                      <h3 className="dynamic-lineups-block__title">
+                        {block.stage === "initial_round_robin"
+                          ? "ROUND ROBIN INICIAL"
+                          : `RONDA ${block.round_start}`}
+                      </h3>
+                      <span className="dynamic-lineups-block__rounds">
+                        {block.round_start === block.round_end
+                          ? `Ronda ${block.round_start}`
+                          : `Rondas ${block.round_start}–${block.round_end}`}
+                      </span>
+                    </header>
+                    {block.stage === "dynamic_round" ? (
+                      <div className="dynamic-lineups-block__change" role="status">
+                        <p className="dynamic-lineups-block__change-title">
+                          Ronda {block.round_start - 1} completada. Las nuevas
+                          alineaciones fueron generadas según el rendimiento de
+                          los jugadores.
+                        </p>
+                        <div className="dynamic-lineups-block__change-teams">
+                          {block.teams.map((t) => (
+                            <div key={t.teamIndex} className="dynamic-lineups-block__change-team">
+                              <span className="dynamic-lineups-block__change-team-name">
+                                {teamConfig?.teamNames?.[t.teamIndex] ??
+                                  `Equipo ${t.teamIndex + 1}`}
+                              </span>
+                              <ul>
+                                {t.lineup.pairs.map((pair, idx) => (
+                                  <li key={idx}>
+                                    {pair
+                                      .map((playerId: string) => playerNameById.get(playerId) ?? "—")
+                                      .join(" / ")}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                    {Object.entries(matchesByRoundInBlock)
+                      .sort(([a], [b]) => Number(a) - Number(b))
+                      .map(([round, roundMatches]) =>
+                        renderRoundBlock(round, roundMatches, roundBlockOpts)
+                      )}
+                  </section>
+                );
+              })
+            : Object.entries(regularByRound)
+                .sort(([a], [b]) => Number(a) - Number(b))
+                .map(([round, roundMatches]) =>
+                  renderRoundBlock(round, roundMatches, roundBlockOpts)
+                )}
+
+          {isDynamicLineups && canOfferNextDynamicBlock ? (
+            <div className="dynamic-lineups-block__next-action">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  void tryGenerateNextDynamicBlock();
+                }}
+              >
+                Generar siguiente bloque
+              </Button>
+            </div>
+          ) : null}
 
           {championshipActive && (
             <section className="rr-championship" aria-label="Remontada Final">

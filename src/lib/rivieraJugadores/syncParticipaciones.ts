@@ -48,6 +48,10 @@ import {
   getMatchScoresForStandings,
   getTeamConfigFromStorage,
 } from "../standingsUtils";
+import {
+  computeDynamicTeamStandings,
+  resolveDynamicTeamWinner,
+} from "../reta/dynamicTeamLineups";
 import { matchesForStandingsTable } from "../resolveTournamentOutcome";
 import {
   loadChampionshipConfig,
@@ -901,10 +905,32 @@ async function syncRetaParticipacionesInner(params: {
   const modalidad = esEquipos ? "reta_equipos" : "round_robin";
   const modalidadLabel = esEquipos ? "Reta por equipos" : "Reta";
 
+  // Equipos con alineación dinámica: la config estática vive en
+  // `tournament.team_config` (dato fresco de BD, ya recibido como parámetro
+  // de esta función) -- a propósito NO se usa `getTeamConfigFromStorage`
+  // (localStorage) para esta rama nueva, para no heredar la fragilidad ya
+  // existente de Equipos clásico (ver auditoría: el cierre de Equipos
+  // clásico puede perder silenciosamente la config si se cierra desde otro
+  // dispositivo/sesión). Equipos clásico no se toca.
+  const isDynamicTeams = esEquipos && tournament.team_config?.dynamicLineups?.enabled === true;
+
   let winningTeamIndex: number | null = null;
   const teamPosByIndex = new Map<number, number>();
-  const teamConfig = esEquipos ? getTeamConfigFromStorage(tournament.id) : null;
-  if (esEquipos && teamConfig) {
+  const teamConfig = isDynamicTeams
+    ? (tournament.team_config ?? null)
+    : esEquipos
+      ? getTeamConfigFromStorage(tournament.id)
+      : null;
+  if (isDynamicTeams && teamConfig) {
+    const dynamicRows = computeDynamicTeamStandings(pairs, matches, allGames, teamConfig);
+    if (dynamicRows) {
+      const outcome = resolveDynamicTeamWinner(dynamicRows);
+      winningTeamIndex = outcome.winningTeamIndex;
+      dynamicRows.forEach((row, i) => {
+        teamPosByIndex.set(row.teamIndex, i + 1);
+      });
+    }
+  } else if (esEquipos && teamConfig) {
     const teamRows = computeTeamStandings(sortedPairs, teamConfig);
     winningTeamIndex = teamRows?.[0]?.teamIndex ?? null;
     teamRows?.forEach((row, i) => {

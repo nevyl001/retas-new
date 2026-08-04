@@ -58,6 +58,7 @@ interface MainLayoutProps {
     teamsCount?: number;
     teamNames?: string[];
     pairToTeam?: Record<string, number>;
+    dynamicLineups?: { enabled: boolean; totalRounds: number };
   }) => void;
   onCopyPublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => void;
   generatePublicLink: (tournamentId: string, teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null) => string;

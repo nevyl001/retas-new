@@ -98,6 +98,49 @@ describe("buildRetaPartidosDetalle", () => {
     expect(byPlayer.get("u1")).toHaveLength(1);
   });
 
+  it("acumula los partidos de un jugador que jugó en varias parejas (alineación dinámica) en vez de sobrescribir", () => {
+    // u1 ("Devyl") jugó su pareja original "pa" en la ronda 1, y luego una
+    // pareja NUEVA "pc" (rotación dinámica, con un jugador u5 que no
+    // pertenece a ninguna otra pareja) en la ronda 2 -- ambos partidos deben
+    // quedar en su detalle, no solo el último procesado.
+    const pairsWithRotation: Pair[] = [
+      ...pairs,
+      {
+        id: "pc",
+        tournament_id: "t1",
+        player1_id: "u1",
+        player2_id: "u5",
+        player1_name: "Devyl",
+        player2_name: "Otro",
+        created_at: "2026-06-02T10:00:00Z",
+      },
+    ];
+    const matches = [
+      mkMatch("m1", 1, "pa", "pb", 6, 3),
+      mkMatch("m2", 2, "pc", "pb", 6, 4),
+    ];
+    const gamesByMatchId = new Map<string, Game[]>();
+
+    const byPlayer = buildPartidosDetalleByLegacyPlayerId(
+      pairsWithRotation,
+      matches,
+      gamesByMatchId
+    );
+
+    const u1Detalle = byPlayer.get("u1")!;
+    expect(u1Detalle).toHaveLength(2);
+    expect(u1Detalle.map((d) => d.id).sort()).toEqual(["m1", "m2"]);
+    expect(u1Detalle[0].ronda).toBe(1);
+    expect(u1Detalle[1].ronda).toBe(2);
+    // u2 (solo en "pa", que solo jugó m1) conserva su único partido; u5
+    // (solo en "pc", que solo jugó m2) también. u3/u4 (en "pb", que jugó
+    // ambos partidos como rival) correctamente tienen los 2.
+    expect(byPlayer.get("u2")).toHaveLength(1);
+    expect(byPlayer.get("u5")).toHaveLength(1);
+    expect(byPlayer.get("u3")).toHaveLength(2);
+    expect(byPlayer.get("u4")).toHaveLength(2);
+  });
+
   it("ignora partidos sin marcador", () => {
     const matches = [mkMatch("m0", 1, "pa", "pb", 0, 0)];
     const gamesByMatchId = new Map<string, Game[]>();

@@ -17,6 +17,8 @@ import {
 import { ModernPlayerManager } from "./ModernPlayerManager";
 import { NewPairManager } from "./NewPairManager";
 import { RetaConfigPanel } from "./reta/RetaConfigPanel";
+import { DynamicLineupsConfigCard } from "./reta/DynamicLineupsConfigCard";
+import { evaluateDynamicLineupsEligibility } from "../lib/reta/dynamicTeamLineups";
 import { RetaAbiertaOrganizerPanel } from "./reta-abierta/RetaAbiertaOrganizerPanel";
 import type { ConvocatoriaLiveSnapshot } from "./reta-abierta/ConvocatoriaWhatsAppPanel";
 import { RetaConfigDangerReset } from "./TournamentStatusContent";
@@ -41,6 +43,10 @@ type StartOpts = {
   teamsCount?: number;
   teamNames?: string[];
   pairToTeam?: Record<string, number>;
+  dynamicLineups?: {
+    enabled: boolean;
+    totalRounds: number;
+  };
 };
 
 type Props = {
@@ -160,6 +166,8 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
   const [teamsCount, setTeamsCount] = useState(2);
   const [teamNames, setTeamNames] = useState<string[]>(["Equipo 1", "Equipo 2"]);
   const [pairToTeam, setPairToTeam] = useState<Record<string, number>>({});
+  const [dynamicLineupsEnabled, setDynamicLineupsEnabled] = useState(false);
+  const [dynamicTotalRounds, setDynamicTotalRounds] = useState(2);
 
   const organizerId =
     userIdProp?.trim() ||
@@ -258,6 +266,64 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
     return teams;
   }, [isTeams, pairs, pairToTeam, safeTeams]);
 
+  /**
+   * Alineación dinámica: 2 equipos completos con la misma cantidad de
+   * parejas originales (2 o más) cada uno, sin jugadores repetidos entre
+   * parejas, y canchas suficientes para que el Round Robin inicial dure
+   * exactamente `pairsPerTeam` rondas. No toca la validación de Equipos
+   * clásico (`isTeamsConfigValid` más abajo).
+   */
+  const dynamicLineupsEligibility = useMemo((): {
+    eligible: boolean;
+    reason?: string;
+    pairsPerTeam?: number;
+    teamA?: { teamIndex: number; name: string; pairs: Pair[] };
+    teamB?: { teamIndex: number; name: string; pairs: Pair[] };
+  } => {
+    const base = evaluateDynamicLineupsEligibility({
+      isTeams,
+      teams: teamsPreview,
+      allPairs: pairs,
+      courts: tournament.courts ?? 0,
+    });
+    if (!base.eligible || !teamsPreview) return base;
+    const [a, b] = teamsPreview;
+    return {
+      ...base,
+      teamA: { teamIndex: a.teamIndex, name: teamNames[a.teamIndex] ?? "Equipo 1", pairs: a.pairs },
+      teamB: { teamIndex: b.teamIndex, name: teamNames[b.teamIndex] ?? "Equipo 2", pairs: b.pairs },
+    };
+  }, [isTeams, teamsPreview, pairs, teamNames, tournament.courts]);
+
+  useEffect(() => {
+    if (!dynamicLineupsEligibility.eligible && dynamicLineupsEnabled) {
+      setDynamicLineupsEnabled(false);
+    }
+  }, [dynamicLineupsEligibility.eligible, dynamicLineupsEnabled]);
+
+  // El total de rondas nunca puede ser menor que pairsPerTeam (Round Robin
+  // inicial completo) -- si el mínimo sube (p.ej. el organizador agrega una
+  // 3ra pareja por equipo), el selector sube con él en vez de quedar en un
+  // valor ya inválido.
+  useEffect(() => {
+    const min = dynamicLineupsEligibility.pairsPerTeam;
+    if (min != null && dynamicTotalRounds < min) {
+      setDynamicTotalRounds(min);
+    }
+  }, [dynamicLineupsEligibility.pairsPerTeam, dynamicTotalRounds]);
+
+  const dynamicRoundsValid =
+    dynamicLineupsEligibility.pairsPerTeam != null &&
+    dynamicTotalRounds >= dynamicLineupsEligibility.pairsPerTeam;
+  const dynamicLineupsActive =
+    isTeams &&
+    dynamicLineupsEnabled &&
+    dynamicLineupsEligibility.eligible &&
+    dynamicRoundsValid;
+  const isDynamicLineupsConfigValid =
+    !dynamicLineupsEnabled ||
+    (dynamicLineupsEligibility.eligible && dynamicRoundsValid);
+
   const handlePlayerSelect = (players: Player[]) => {
     validatePlayerSelection(
       players,
@@ -283,7 +349,11 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
   const canchasOk = (tournament.courts ?? 0) >= 1;
   const datosOk = Boolean(tournament.programado_en);
   const canStart =
-    !loading && equiposOk && isTeamsConfigValid && !tournament.is_started;
+    !loading &&
+    equiposOk &&
+    isTeamsConfigValid &&
+    isDynamicLineupsConfigValid &&
+    !tournament.is_started;
 
   const ctaHint = !equiposOk
     ? pairs.length === 1
@@ -291,7 +361,9 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
       : "Faltan al menos 2 parejas"
     : isTeams && !isTeamsConfigValid
       ? "Revisa la organización de equipos"
-      : null;
+      : isTeams && !isDynamicLineupsConfigValid
+        ? "Revisa la configuración de alineación dinámica"
+        : null;
 
   const goConvocatoria = () => {
     setWantConvocatoria(true);
@@ -434,6 +506,20 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
             ))}
           </Card>
         ) : null}
+        {isTeams && pairs.length >= 2 ? (
+          <DynamicLineupsConfigCard
+            eligible={dynamicLineupsEligibility.eligible}
+            ineligibleReason={dynamicLineupsEligibility.reason}
+            pairsPerTeam={dynamicLineupsEligibility.pairsPerTeam}
+            enabled={dynamicLineupsEnabled}
+            onToggle={setDynamicLineupsEnabled}
+            totalRounds={dynamicTotalRounds}
+            onTotalRoundsChange={setDynamicTotalRounds}
+            teamA={dynamicLineupsEligibility.teamA ?? null}
+            teamB={dynamicLineupsEligibility.teamB ?? null}
+            disabled={loading}
+          />
+        ) : null}
       </div>
     ) : (
       <ul className="qm-ws__ready-check">
@@ -550,6 +636,12 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
         teamsCount: isTeams ? teamsCount : undefined,
         teamNames: isTeams ? teamNames : undefined,
         pairToTeam: isTeams ? pairToTeam : undefined,
+        dynamicLineups: dynamicLineupsActive
+          ? {
+              enabled: true,
+              totalRounds: dynamicTotalRounds,
+            }
+          : undefined,
       }),
   };
 

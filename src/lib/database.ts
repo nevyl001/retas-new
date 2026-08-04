@@ -22,6 +22,7 @@ import {
   type AmericanoDinamicoSnapshotV1,
   type AmericanoSnapshotPlayer,
   type AmericanoSnapshotRosterEntry,
+  type AmericanoSnapshotRound,
   type AmericanoSnapshotTournamentPhase,
 } from "./americanoDinamicoStorage";
 import { isAmericanoResumableAsync } from "./americanoDinamicoSync";
@@ -538,6 +539,82 @@ export const applyAmericanoLiveMetadata = async (params: {
     console.warn("applyAmericanoLiveMetadata:", e);
     return false;
   }
+};
+
+export type ApplyAmericanoNewRoundResult =
+  | { status: "created" | "exists"; round: AmericanoSnapshotRound & { idempotencyKey: string } }
+  | { status: "out_of_order"; expectedRoundNumber: number }
+  | { status: "invalid" }
+  | { status: "not_found" }
+  | { status: "error"; message: string };
+
+/**
+ * Agrega la ESTRUCTURA de una ronda nueva (FC-01, Fase C1) al `rounds`
+ * vigente en el servidor — startTournament()/nextRound() generan la ronda
+ * localmente pero, a diferencia de un marcador puntual, nunca tenían forma
+ * de empujarla al servidor (regresión real de BLK-02: ver
+ * supabase/migrations/0007_apply_americano_new_round.sql). Idempotente por
+ * `idempotencyKey` estable (no un UUID aleatorio): un reintento de red de la
+ * MISMA operación produce la MISMA key, así que nunca duplica una ronda ya
+ * creada por otro dispositivo o por un reintento anterior.
+ */
+export const applyAmericanoNewRound = async (params: {
+  tournamentId: string;
+  roundNumber: number;
+  idempotencyKey: string;
+  round: AmericanoSnapshotRound;
+  ranking?: AmericanoSnapshotPlayer[];
+  phase?: AmericanoSnapshotTournamentPhase;
+  totalRounds?: number;
+  roster?: AmericanoSnapshotRosterEntry[];
+}): Promise<ApplyAmericanoNewRoundResult> => {
+  const { data, error } = await supabase.rpc("apply_americano_new_round", {
+    p_tournament_id: params.tournamentId,
+    p_round_number: params.roundNumber,
+    p_idempotency_key: params.idempotencyKey,
+    p_round_data: params.round,
+    p_ranking: params.ranking ?? null,
+    p_phase: params.phase ?? null,
+    p_total_rounds: params.totalRounds ?? null,
+    p_roster: params.roster ?? null,
+  });
+
+  if (error) return { status: "error", message: error.message };
+
+  const result = data as
+    | {
+        ok: boolean;
+        error?: string;
+        status?: string;
+        round?: AmericanoSnapshotRound & { idempotencyKey: string };
+        expected_round_number?: number;
+      }
+    | null;
+
+  if (!result) return { status: "error", message: "Respuesta inválida del servidor." };
+
+  if (!result.ok) {
+    if (result.error === "out_of_order") {
+      return {
+        status: "out_of_order",
+        expectedRoundNumber: result.expected_round_number ?? params.roundNumber,
+      };
+    }
+    if (result.error === "not_found") return { status: "not_found" };
+    if (result.error === "invalid_round_number" || result.error === "invalid_round_data" || result.error === "invalid_idempotency_key") {
+      return { status: "invalid" };
+    }
+    return { status: "error", message: result.error ?? "No se pudo guardar la ronda." };
+  }
+
+  if (!result.round) {
+    return { status: "error", message: "Respuesta sin ronda del servidor." };
+  }
+
+  return {
+    status: result.status === "exists" ? "exists" : "created",
+    round: result.round,
+  };
 };
 
 const publicConfigColumnCache = new Map<string, boolean>();
@@ -1332,4 +1409,93 @@ export const deleteGame = async (id: string) => {
   const { error } = await supabase.from("games").delete().eq("id", id);
 
   if (error) throw error;
+};
+
+export interface RetaMatchSetInput {
+  pair1_games: number;
+  pair2_games: number;
+  is_tie_break?: boolean;
+  tie_break_pair1_points?: number;
+  tie_break_pair2_points?: number;
+}
+
+export type ApplyRetaMatchUpdateResult =
+  | { status: "updated" | "unchanged"; pair1Score: number; pair2Score: number; sets: Game[] }
+  | { status: "updated_metadata" }
+  | { status: "conflict"; pair1Score: number; pair2Score: number; sets: Game[] }
+  | { status: "tournament_closed" }
+  /** Alineación dinámica: la ronda ya se usó para generar un bloque posterior -- ver 0010_dynamic_team_lineup_blocks.sql. */
+  | { status: "dynamic_block_locked" }
+  | { status: "not_found" }
+  | { status: "invalid" }
+  | { status: "error"; message: string };
+
+/**
+ * Guardado atómico server-side de TODA actualización de un partido de Reta
+ * (FC-04 + FC-05, Fase C1): cancha/ronda y/o resultado (sets), bajo lock de
+ * fila + idempotencia + conflicto explícito -- mismo patrón que ya usan
+ * Liga/Torneo Express/Americano. Reemplaza el camino anterior de 3-4
+ * llamadas separadas (getGames/getNextGameNumber/createGame/updateMatch)
+ * sin lock. Ver supabase/migrations/0009_apply_reta_match_update.sql.
+ */
+export const applyRetaMatchUpdate = async (params: {
+  matchId: string;
+  court?: number;
+  round?: number;
+  sets?: RetaMatchSetInput[];
+  force?: boolean;
+  adminOverride?: boolean;
+  adminReason?: string;
+}): Promise<ApplyRetaMatchUpdateResult> => {
+  const { data, error } = await supabase.rpc("apply_reta_match_update", {
+    p_match_id: params.matchId,
+    p_court: params.court ?? null,
+    p_round: params.round ?? null,
+    p_sets: params.sets ?? null,
+    p_force: params.force ?? false,
+    p_admin_override: params.adminOverride ?? false,
+    p_admin_reason: params.adminReason ?? null,
+  });
+
+  if (error) return { status: "error", message: error.message };
+
+  const result = data as
+    | {
+        ok: boolean;
+        error?: string;
+        status?: string;
+        pair1_score?: number;
+        pair2_score?: number;
+        sets?: Game[];
+      }
+    | null;
+
+  if (!result) return { status: "error", message: "Respuesta inválida del servidor." };
+
+  if (!result.ok) {
+    if (result.error === "conflict") {
+      return {
+        status: "conflict",
+        pair1Score: result.pair1_score ?? 0,
+        pair2Score: result.pair2_score ?? 0,
+        sets: (result.sets as Game[]) ?? [],
+      };
+    }
+    if (result.error === "tournament_closed") return { status: "tournament_closed" };
+    if (result.error === "dynamic_block_locked") return { status: "dynamic_block_locked" };
+    if (result.error === "not_found") return { status: "not_found" };
+    if (result.error === "invalid_sets") return { status: "invalid" };
+    return { status: "error", message: result.error ?? "No se pudo guardar el resultado." };
+  }
+
+  if (result.status === "updated_metadata") {
+    return { status: "updated_metadata" };
+  }
+
+  return {
+    status: result.status === "unchanged" ? "unchanged" : "updated",
+    pair1Score: result.pair1_score ?? 0,
+    pair2Score: result.pair2_score ?? 0,
+    sets: (result.sets as Game[]) ?? [],
+  };
 };

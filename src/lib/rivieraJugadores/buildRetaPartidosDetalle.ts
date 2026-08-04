@@ -121,6 +121,16 @@ export function buildPartidosDetalleForPair(
 }
 
 /** Mapa legacy player_id → partidos de su pareja en la reta. */
+/**
+ * Un jugador puede aparecer en más de una pareja de la misma reta (Equipos
+ * con alineación dinámica: la pareja original del Round Robin inicial +
+ * cada rotación posterior son filas de `pairs` distintas). Se ACUMULAN los
+ * partidos de todas sus parejas, ordenados por ronda -- antes se
+ * sobrescribía con la última pareja procesada y se perdía el historial de
+ * las parejas anteriores (bug encontrado en la auditoría 2026-08-04, sin
+ * efecto en Equipos clásico ni en reta individual porque ahí un jugador
+ * nunca tiene más de una pareja).
+ */
 export function buildPartidosDetalleByLegacyPlayerId(
   pairs: Pair[],
   matches: Match[],
@@ -131,6 +141,15 @@ export function buildPartidosDetalleByLegacyPlayerId(
   const allGames = Array.from(gamesByMatchId.values()).flat();
   const byPlayer = new Map<string, PartidoDetalle[]>();
 
+  const appendForPlayer = (
+    playerId: string | undefined,
+    detalle: PartidoDetalle[]
+  ) => {
+    if (!playerId) return;
+    const existing = byPlayer.get(playerId);
+    byPlayer.set(playerId, existing ? [...existing, ...detalle] : detalle);
+  };
+
   for (const pair of pairs) {
     const detalle = buildPartidosDetalleForPair(
       pair.id,
@@ -140,9 +159,17 @@ export function buildPartidosDetalleByLegacyPlayerId(
       regularRoundsMax,
       allGames
     );
-    if (pair.player1_id) byPlayer.set(pair.player1_id, detalle);
-    if (pair.player2_id) byPlayer.set(pair.player2_id, detalle);
+    appendForPlayer(pair.player1_id, detalle);
+    appendForPlayer(pair.player2_id, detalle);
   }
+
+  byPlayer.forEach((detalle, playerId) => {
+    if (detalle.length <= 1) return;
+    byPlayer.set(
+      playerId,
+      [...detalle].sort((a, b) => a.ronda - b.ronda || a.fecha.localeCompare(b.fecha))
+    );
+  });
 
   return byPlayer;
 }

@@ -2,12 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Match, Pair, Game } from "../lib/database";
 import {
   getGames,
-  createGame,
-  getNextGameNumber,
-  deleteGame,
-  updateMatch,
+  applyRetaMatchUpdate,
+  type RetaMatchSetInput,
 } from "../lib/database";
-import { MatchResultCalculator } from "./MatchResultCalculator";
 import { aplicarRatingDesdePairs } from "../lib/rivieraJugadores/aplicarRatingPartido";
 import { TeamBadge } from "./teams/TeamBadge";
 import {
@@ -140,7 +137,20 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       }
       const court = Math.min(courtEditCap, Math.max(1, parsedCourt));
       const round = Math.min(999, Math.max(1, parsedRound));
-      const updated = await updateMatch(currentMatch.id, { court, round });
+      const result = await applyRetaMatchUpdate({
+        matchId: currentMatch.id,
+        court,
+        round,
+      });
+      if (result.status === "tournament_closed") {
+        setError("La reta ya está cerrada. No se puede reasignar cancha/ronda.");
+        return;
+      }
+      if (result.status !== "updated_metadata") {
+        setError("No se pudo guardar cancha ni ronda");
+        return;
+      }
+      const updated: Match = { ...currentMatch, court, round };
       setCurrentMatch(updated);
       setCourtInput(String(court));
       setRoundInput(String(round));
@@ -198,40 +208,60 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     return "Error al guardar el marcador. Revisa e inténtalo de nuevo.";
   };
 
-  const applyFinishedMatchState = async (
-    matchGames: Game[],
+  /**
+   * FC-04 (Fase C1): persiste el set de la reta vía el RPC atómico único
+   * (cancha/ronda/resultado) -- lock de fila + idempotencia + conflicto
+   * explícito, en vez del camino anterior de 3-4 llamadas separadas sin
+   * lock. Si el servidor reporta conflicto (otro dispositivo ya guardó un
+   * resultado distinto), se ofrece sobrescribir explícitamente -- nunca se
+   * pisa en silencio. FC-05: si el torneo ya cerró, el servidor rechaza la
+   * edición normal (mensaje claro, no error crudo).
+   */
+  const persistMatchSets = async (
+    setsPayload: RetaMatchSetInput[],
     activeMatch: Match,
     opts: { applyRating?: boolean } = {}
   ): Promise<boolean> => {
     const { applyRating = true } = opts;
-    const result = await MatchResultCalculator.accumulateMatchStatistics(
-      activeMatch,
-      matchGames,
-      pairs
-    );
 
-    if (!result.success) {
-      setError("Error: " + result.message);
+    let result = await applyRetaMatchUpdate({
+      matchId: activeMatch.id,
+      sets: setsPayload,
+    });
+
+    if (result.status === "conflict") {
+      const overwrite = window.confirm(
+        `Otro dispositivo ya guardó un resultado distinto para este partido (${result.pair1Score}-${result.pair2Score}).\n\n¿Sobrescribir con tu marcador?`
+      );
+      if (!overwrite) {
+        setError("No se guardó: ya había otro resultado guardado para este partido.");
+        await reloadGamesSilently();
+        return false;
+      }
+      result = await applyRetaMatchUpdate({
+        matchId: activeMatch.id,
+        sets: setsPayload,
+        force: true,
+      });
+    }
+
+    if (result.status === "tournament_closed") {
+      setError("La reta ya está cerrada. No se puede guardar ni corregir el resultado.");
+      return false;
+    }
+    if (result.status === "dynamic_block_locked") {
+      setError(
+        "Esta ronda ya fue utilizada para generar alineaciones posteriores. Para corregirla, primero debes eliminar y regenerar las rondas siguientes."
+      );
+      return false;
+    }
+    if (result.status !== "updated" && result.status !== "unchanged") {
+      setError("Error al guardar el resultado. Intenta de nuevo.");
       return false;
     }
 
-    let pair1FinalScore = 0;
-    let pair2FinalScore = 0;
-
-    matchGames.forEach((game) => {
-      if (game.pair1_games >= 6) {
-        pair1FinalScore++;
-      }
-      if (game.pair2_games >= 6) {
-        pair2FinalScore++;
-      }
-    });
-
-    await updateMatch(activeMatch.id, {
-      status: "finished",
-      pair1_score: pair1FinalScore,
-      pair2_score: pair2FinalScore,
-    });
+    const pair1FinalScore = result.pair1Score;
+    const pair2FinalScore = result.pair2Score;
 
     if (applyRating && userId && pair1FinalScore !== pair2FinalScore) {
       const pair1Row = pairs.find((p) => p.id === activeMatch.pair1_id);
@@ -251,10 +281,14 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       }
     }
 
+    // Relee de la tabla real (no del jsonb del RPC) para que `games` en
+    // estado local mantenga la forma completa de `Game` (id, timestamps…).
+    const freshGames = await getGames(activeMatch.id);
+
     setPair1Score("");
     setPair2Score("");
     setIsEditing(false);
-    setGames(matchGames);
+    setGames(freshGames);
     setCurrentMatch((prev) =>
       prev
         ? {
@@ -269,13 +303,20 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
     return true;
   };
 
+  const gameToSetInput = (g: Game): RetaMatchSetInput => ({
+    pair1_games: g.pair1_games,
+    pair2_games: g.pair2_games,
+    is_tie_break: g.is_tie_break,
+    tie_break_pair1_points: g.tie_break_pair1_points,
+    tie_break_pair2_points: g.tie_break_pair2_points,
+  });
+
   /** Path rápido: un marcador → guardar y cerrar el partido. */
   const saveAndFinishResult = async () => {
     if (!currentMatch || isUpdatingRef.current) return;
 
     const score1 = parseInt(pair1Score, 10);
     const score2 = parseInt(pair2Score, 10);
-    const ownerId = userId || "";
     const hasNewScore =
       !Number.isNaN(score1) &&
       !Number.isNaN(score2) &&
@@ -286,30 +327,25 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setSaving(true);
       setError(null);
 
-      let matchGames = await getGames(currentMatch.id);
+      const existingGames = await getGames(currentMatch.id);
 
+      if (!hasNewScore && existingGames.length === 0) {
+        setError("Ingresa el marcador de cada pareja");
+        return;
+      }
+
+      const setsPayload = existingGames.map(gameToSetInput);
       if (hasNewScore) {
-        if (!ownerId) {
-          setError("No se pudo identificar al usuario para guardar el resultado");
-          return;
-        }
-        const gameNumber = await getNextGameNumber(currentMatch.id);
-        const savedGame = await createGame(currentMatch.id, gameNumber, ownerId, {
+        setsPayload.push({
           pair1_games: score1,
           pair2_games: score2,
           is_tie_break: false,
           tie_break_pair1_points: 0,
           tie_break_pair2_points: 0,
         });
-        matchGames = [...matchGames, savedGame];
-      } else if (matchGames.length === 0) {
-        setError("Ingresa el marcador de cada pareja");
-        return;
       }
 
-      await applyFinishedMatchState(matchGames, currentMatch, {
-        applyRating: true,
-      });
+      await persistMatchSets(setsPayload, currentMatch, { applyRating: true });
     } catch (err: unknown) {
       console.error("❌ Error guardando resultado:", err);
       setError(parseGameError(err));
@@ -328,7 +364,6 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
 
     const score1 = parseInt(pair1Score, 10);
     const score2 = parseInt(pair2Score, 10);
-    const ownerId = userId || "";
 
     if (Number.isNaN(score1) || Number.isNaN(score2)) {
       setError("Ingresa puntuaciones válidas");
@@ -338,32 +373,25 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
       setError("Ingresa el marcador (no puede ser 0-0)");
       return;
     }
-    if (!ownerId) {
-      setError("No se pudo identificar al usuario para guardar el resultado");
-      return;
-    }
 
     try {
       isUpdatingRef.current = true;
       setSaving(true);
       setError(null);
 
-      const existing = await getGames(currentMatch.id);
-      for (const g of existing) {
-        await deleteGame(g.id);
-      }
-
-      const savedGame = await createGame(currentMatch.id, 1, ownerId, {
-        pair1_games: score1,
-        pair2_games: score2,
-        is_tie_break: false,
-        tie_break_pair1_points: 0,
-        tie_break_pair2_points: 0,
-      });
-
-      await applyFinishedMatchState([savedGame], currentMatch, {
-        applyRating: false,
-      });
+      await persistMatchSets(
+        [
+          {
+            pair1_games: score1,
+            pair2_games: score2,
+            is_tie_break: false,
+            tie_break_pair1_points: 0,
+            tie_break_pair2_points: 0,
+          },
+        ],
+        currentMatch,
+        { applyRating: false }
+      );
     } catch (err: unknown) {
       console.error("❌ Error corrigiendo resultado:", err);
       setError(parseGameError(err));

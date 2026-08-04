@@ -1469,3 +1469,78 @@
   line-height: 1.6;
 }
 
+/* —— Equipos con alineación dinámica —— */
+.dynamic-lineups-block {
+  margin-bottom: var(--space-xl);
+}
+
+.dynamic-lineups-block__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.dynamic-lineups-block__title {
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.dynamic-lineups-block__rounds {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.dynamic-lineups-block__change {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.dynamic-lineups-block__change-title {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  margin: 0 0 var(--space-md);
+}
+
+.dynamic-lineups-block__change-teams {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+.dynamic-lineups-block__change-team-name {
+  display: block;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-size: 0.85rem;
+  margin-bottom: var(--space-xs);
+}
+
+.dynamic-lineups-block__change-team ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dynamic-lineups-block__change-team li {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.dynamic-lineups-block__next-action {
+  display: flex;
+  justify-content: center;
+  margin: var(--space-lg) 0;
+}
+

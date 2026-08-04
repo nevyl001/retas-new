@@ -648,6 +648,7 @@ function AppContent() {
     teamsCount?: number;
     teamNames?: string[];
     pairToTeam?: Record<string, number>;
+    dynamicLineups?: { enabled: boolean; totalRounds: number };
   }) => {
     return startTournament(selectedTournament!, pairs, user?.id || "", opts);
   };
