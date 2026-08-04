@@ -304,10 +304,13 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
               + {RIVIERA_GENERO_NEW_LABEL[genero]}
             </Button>
             <details className="rj-page__more">
-              <summary className="rj-btn rj-btn--ghost rj-page__more-summary">
-                Más ⋯
+              <summary
+                className="riviera-btn riviera-btn-secondary riviera-btn--sm rj-page__more-summary"
+                aria-label="Más acciones"
+              >
+                Más
               </summary>
-              <div className="rj-page__more-menu">
+              <div className="rj-page__more-menu" role="menu">
                 {renderSecondaryActions()}
               </div>
             </details>
