@@ -1216,81 +1216,51 @@
 
 .rj-page__top-actions {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  position: relative;
-  z-index: 5;
+  justify-content: flex-end;
+  gap: 0.45rem 0.65rem;
 }
 
-/* "Más" = dropdown absoluto: no reflujo del header al abrir */
-.rj-page__more {
-  display: block;
-  position: relative;
-  flex: 0 0 auto;
+/* Acciones secundarias siempre visibles — tipografía limpia, sin dropdown */
+.rj-page__secondary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.15rem;
 }
 
-.rj-page__more-summary {
-  list-style: none;
-  cursor: pointer;
-  user-select: none;
-  min-height: 36px;
+.rj-page__secondary-actions .riviera-btn {
+  min-height: 2rem;
+  padding: 0.3rem 0.65rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ro-text-muted, #a8a89e);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
-.rj-page__more-summary::-webkit-details-marker,
-.rj-page__more-summary::marker {
-  display: none;
-  content: "";
-}
-
-.rj-page__more-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.2rem;
-  min-width: 14.5rem;
-  max-width: min(18rem, calc(100vw - 1.5rem));
-  padding: 0.4rem;
-  border-radius: 12px;
-  border: 1px solid var(--ro-border, #2e343d);
-  background: var(--ro-bg-elevated, #15191f);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
-  box-sizing: border-box;
-}
-
-.rj-page__more-menu .riviera-btn,
-.rj-page__more-menu .rj-btn,
-.rj-page__more-menu a,
-.rj-page__more-menu button {
-  width: 100%;
-  justify-content: flex-start;
-  min-height: 40px;
-  padding: 0.45rem 0.7rem;
-  border-radius: 8px;
-  font-size: 0.8125rem;
-  white-space: normal;
-  text-align: left;
-  box-sizing: border-box;
-}
-
-.rj-page__more-menu .riviera-btn-ghost {
-  border: 1px solid transparent;
+.rj-page__secondary-actions .riviera-btn:hover:not(:disabled),
+.rj-page__secondary-actions .riviera-btn:focus-visible:not(:disabled) {
   color: var(--ro-text-primary, #f5f2eb);
+  background: color-mix(in srgb, var(--ro-bg-elevated, #15191f) 85%, transparent);
+  outline: none;
 }
 
-.rj-page__more-menu .riviera-btn-ghost:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ro-bg-inset, #1a1f27) 80%, transparent);
-  color: var(--ro-text-primary, #f5f2eb);
+.rj-page__secondary-actions .riviera-btn:disabled,
+.rj-page__secondary-actions .riviera-btn.riviera-btn--loading {
+  opacity: 0.55;
 }
 
-/* "Más ⋯" agrupa las acciones secundarias en todos los tamaños — un solo
-   mecanismo, no un duplicado desktop + un <details> aparte en móvil. */
-/* Móvil: cabecera compacta — lista visible antes */
+.rj-page__top-actions > .riviera-btn-primary {
+  flex: 0 0 auto;
+}
+
+/* Móvil: cabecera compacta */
 @media (max-width: 767px) {
   .rj-page__inner {
     padding: 0.65rem 0.85rem 2rem;
@@ -1319,27 +1289,27 @@
 
   .rj-page__top-actions {
     display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 0.4rem;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.45rem;
   }
 
   .rj-page__top-actions > .riviera-btn-primary,
   .rj-page__top-actions > .rj-btn--primary {
-    flex: 1 1 auto;
+    width: 100%;
     min-height: 42px;
-    padding: 0.45rem 0.85rem;
+    justify-content: center;
     font-size: 0.875rem;
   }
 
-  .rj-page__more-summary {
-    min-height: 42px;
-    padding: 0.4rem 0.85rem;
-    font-size: 0.8125rem;
+  .rj-page__secondary-actions {
+    justify-content: flex-start;
+    gap: 0.1rem;
   }
 
-  .rj-page__more-menu {
-    min-width: min(15rem, calc(100vw - 1.25rem));
+  .rj-page__secondary-actions .riviera-btn {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
   }
 }
 

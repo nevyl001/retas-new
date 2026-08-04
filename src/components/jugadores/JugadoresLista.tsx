@@ -250,7 +250,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
   }, [user?.id, load]);
 
   const renderSecondaryActions = () => (
-    <>
+    <div className="rj-page__secondary-actions" aria-label="Acciones del registro">
       {user?.id ? (
         <Button
           as="a"
@@ -283,7 +283,7 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
       >
         Agregar jugador existente
       </Button>
-    </>
+    </div>
   );
 
   return (
@@ -300,20 +300,10 @@ export const JugadoresLista: React.FC<{ genero?: RivieraJugadorGenero }> = ({
             </p>
           </div>
           <div className="rj-page__top-actions">
+            {renderSecondaryActions()}
             <Button type="button" variant="primary" size="sm" onClick={() => setModalOpen(true)}>
               + {RIVIERA_GENERO_NEW_LABEL[genero]}
             </Button>
-            <details className="rj-page__more">
-              <summary
-                className="riviera-btn riviera-btn-secondary riviera-btn--sm rj-page__more-summary"
-                aria-label="Más acciones"
-              >
-                Más
-              </summary>
-              <div className="rj-page__more-menu" role="menu">
-                {renderSecondaryActions()}
-              </div>
-            </details>
           </div>
         </div>
 
