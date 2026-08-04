@@ -19,6 +19,7 @@ import { buildInitialDynamicLineupBlock, type PlayerPair } from "../lib/reta/dyn
 import {
   beginDynamicTeamBlock,
   commitDynamicTeamBlock,
+  getDynamicTeamBlocks,
   retryDynamicTeamBlock,
 } from "../lib/reta/dynamicTeamBlocksApi";
 import {
@@ -112,13 +113,51 @@ async function startDynamicLineupsTournament(params: {
     stage: "initial_round_robin",
   });
 
+  let claimedBlockId = begin.status === "claimed" ? begin.blockId : "";
+
   if (begin.status === "already_claimed") {
-    showToast("La reta ya estaba iniciada. Cargando partidos…", "info");
     const recovery = await recoverAlreadyClaimedDynamicStart(
       selectedTournament.id,
       selectedTournament
     );
-    if (recovery.status !== "recovered") {
+
+    if (recovery.status === "recovered") {
+      showToast("La reta ya estaba iniciada. Cargando partidos…", "info");
+      setError("");
+      setSelectedTournament(recovery.tournament);
+      persistTournamentGameMode(selectedTournament.id, "reta-equipos");
+      persistTournamentMode(selectedTournament.id, "teams");
+      await loadTournamentData(recovery.tournament);
+      return;
+    }
+
+    if (recovery.status === "orphan_block") {
+      const released = await retryDynamicTeamBlock({
+        tournamentId: selectedTournament.id,
+        blockNumber: 1,
+      });
+      if (released.status !== "released") {
+        const msg =
+          "No se pudo liberar el bloque 1 sin partidos. Prueba Resetear reta e inicia de nuevo.";
+        setError(msg);
+        showToast(msg, "error");
+        return;
+      }
+      const retryBegin = await beginDynamicTeamBlock({
+        tournamentId: selectedTournament.id,
+        blockNumber: 1,
+        roundStart: 1,
+        roundEnd: pairsPerTeam,
+        stage: "initial_round_robin",
+      });
+      if (retryBegin.status !== "claimed") {
+        const msg = "No se pudo reiniciar la reta con alineación dinámica.";
+        setError(msg);
+        showToast(msg, "error");
+        return;
+      }
+      claimedBlockId = retryBegin.blockId;
+    } else {
       const msg =
         recovery.status === "inconsistent"
           ? recovery.message
@@ -127,15 +166,7 @@ async function startDynamicLineupsTournament(params: {
       showToast(msg, "error");
       return;
     }
-    setError("");
-    setSelectedTournament(recovery.tournament);
-    persistTournamentGameMode(selectedTournament.id, "reta-equipos");
-    persistTournamentMode(selectedTournament.id, "teams");
-    await loadTournamentData(recovery.tournament);
-    return;
-  }
-
-  if (begin.status !== "claimed") {
+  } else if (begin.status !== "claimed") {
     const msg = "No se pudo iniciar la reta con alineación dinámica.";
     setError(msg);
     showToast(msg, "error");
@@ -168,7 +199,7 @@ async function startDynamicLineupsTournament(params: {
   });
 
   const commit = await commitDynamicTeamBlock({
-    blockId: begin.blockId,
+    blockId: claimedBlockId,
     teams: [plan.teamA, plan.teamB],
     pairToTeamDelta: pairToTeam,
   });
@@ -442,6 +473,19 @@ export const useTournamentActions = (
         }
         if (deleteGate.outcome === "deleted" && deleteGate.warning) {
           showToast(deleteGate.warning, "info");
+        }
+
+        // Liberar bloques dinámicos huérfanos (sin partidos) para poder reiniciar.
+        try {
+          const blocks = await getDynamicTeamBlocks(selectedTournament.id);
+          for (const block of blocks) {
+            await retryDynamicTeamBlock({
+              tournamentId: selectedTournament.id,
+              blockNumber: block.block_number,
+            });
+          }
+        } catch (e) {
+          console.warn("[tournament-actions] no se pudieron liberar bloques dinámicos:", e);
         }
 
         await updateTournament(selectedTournament.id, { is_started: false });

@@ -110,10 +110,9 @@ export type RetryDynamicTeamBlockResult =
   | { status: "error"; message: string };
 
 /**
- * Recuperación administrativa: libera un `block_number` atascado en
- * `generating` sin partidos asociados (p.ej. la pestaña se cerró a mitad de
- * la generación) para poder reintentar. Nunca borra un bloque con partidos
- * reales.
+ * Recuperación administrativa: libera un `block_number` sin partidos en su
+ * rango (generating o completed huérfano, p.ej. tras reset). Nunca borra un
+ * bloque que todavía tiene partidos reales.
  */
 export async function retryDynamicTeamBlock(params: {
   tournamentId: string;

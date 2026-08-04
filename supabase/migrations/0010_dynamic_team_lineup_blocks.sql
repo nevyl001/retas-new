@@ -335,9 +335,9 @@ GRANT EXECUTE ON FUNCTION public.commit_dynamic_team_block(uuid, jsonb, jsonb)
   TO authenticated;
 
 -- ── retry_dynamic_team_block (recuperación administrativa) ────────────────
--- Solo libera un bloque atascado en 'generating' que NO tiene ningún match
--- asociado en su rango de rondas -- si ya hay matches, nunca se borra nada
--- con datos reales; el cliente debe reintentar el commit normal.
+-- Libera un block_number sin partidos en su rango de rondas (generating o
+-- completed huérfano tras reset). Si YA hay matches, nunca se borra nada
+-- con datos reales.
 CREATE OR REPLACE FUNCTION public.retry_dynamic_team_block(
   p_tournament_id uuid,
   p_block_number integer
@@ -375,19 +375,20 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'not_found');
   END IF;
 
-  IF v_block.status = 'completed' THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'already_completed');
-  END IF;
-
   SELECT count(*) INTO v_match_count
   FROM public.matches
   WHERE tournament_id = p_tournament_id
     AND round BETWEEN v_block.round_start AND v_block.round_end;
 
   IF v_match_count > 0 THEN
+    IF v_block.status = 'completed' THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'already_completed');
+    END IF;
     RETURN jsonb_build_object('ok', false, 'error', 'matches_exist');
   END IF;
 
+  -- Sin partidos en el rango: liberar generating o completed huérfano
+  -- (p.ej. tras Resetear reta, que borra matches pero dejaba el bloque).
   DELETE FROM public.reta_dynamic_blocks WHERE id = v_block.id;
 
   RETURN jsonb_build_object('ok', true, 'status', 'released');

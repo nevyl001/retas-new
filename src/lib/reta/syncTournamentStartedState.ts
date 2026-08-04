@@ -19,8 +19,9 @@ export type DynamicStartRecovery =
       status: "recovered";
       tournament: Tournament;
     }
-  | { status: "inconsistent"; message: string }
-  | { status: "not_applicable" };
+  /** Bloque 1 existe pero sin partidos: hay que liberarlo y regenerar. */
+  | { status: "orphan_block" }
+  | { status: "inconsistent"; message: string };
 
 function resolveTeamConfig(
   tournament: Tournament | null | undefined,
@@ -101,8 +102,9 @@ export async function ensureTournamentStartedIfMatchesExist(
 }
 
 /**
- * Recuperación cuando begin_dynamic_team_block responde already_claimed:
- * bloque 1 usable + partidos iniciales + alineación dinámica activa.
+ * Recuperación cuando begin_dynamic_team_block responde already_claimed.
+ * - Con partidos: entra a competencia.
+ * - Sin partidos (bloque huérfano tras reset): el llamador debe liberar y regenerar.
  */
 export async function recoverAlreadyClaimedDynamicStart(
   tournamentId: string,
@@ -117,7 +119,6 @@ export async function recoverAlreadyClaimedDynamicStart(
 
   const block1 = blocks.find((b) => b.block_number === 1);
   const team_config = resolveTeamConfig(fresh ?? fallback, pub?.team_config ?? null);
-  const dynEnabled = team_config?.dynamicLineups?.enabled === true;
 
   if (!block1) {
     return {
@@ -127,25 +128,23 @@ export async function recoverAlreadyClaimedDynamicStart(
     };
   }
 
-  const blockUsable =
-    block1.status === "completed" ||
-    (block1.status === "generating" && matches.length > 0);
-
-  if (!blockUsable || matches.length === 0 || !dynEnabled) {
-    return {
-      status: "inconsistent",
-      message:
-        "El bloque 1 ya existe pero el estado de la reta está incompleto. Revisa partidos y configuración antes de reintentar.",
-    };
+  if (matches.length === 0) {
+    return { status: "orphan_block" };
   }
 
   const base: Tournament = {
     ...fallback,
     ...(fresh ?? {}),
     format: "teams",
-    team_config,
+    ...(team_config ? { team_config } : {}),
   };
 
-  const recovered = await ensureTournamentStartedIfMatchesExist(base);
-  return { status: "recovered", tournament: recovered };
+  const recovered = await ensureTournamentStartedIfMatchesExist({
+    ...base,
+    is_started: false,
+  });
+  return {
+    status: "recovered",
+    tournament: { ...recovered, is_started: true },
+  };
 }
