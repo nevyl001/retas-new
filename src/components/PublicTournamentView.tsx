@@ -15,6 +15,7 @@ import { PUBLIC_TOURNAMENT_POLL_INTERVAL_MS } from "../lib/publicTournament/publ
 import {
   getPairTeamIndex,
   getPairTeamName,
+  pairsAppearingInMatches,
 } from "../lib/teamConfigDisplay";
 import { resolveRetaStandingsHelpMode } from "../lib/standingsHelpMode";
 import {
@@ -527,10 +528,42 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
         pair2Label={formatPairLabel(match.pair2_id)}
         pair1Players={getPairPlayers(match.pair1_id)}
         pair2Players={getPairPlayers(match.pair2_id)}
-        pair1TeamLabel={teamConfig ? getPairTeamName(match.pair1_id, teamConfig) : null}
-        pair2TeamLabel={teamConfig ? getPairTeamName(match.pair2_id, teamConfig) : null}
-        pair1TeamIndex={teamConfig ? getPairTeamIndex(match.pair1_id, teamConfig) : null}
-        pair2TeamIndex={teamConfig ? getPairTeamIndex(match.pair2_id, teamConfig) : null}
+        pair1TeamLabel={
+          teamConfig
+            ? getPairTeamName(
+                match.pair1_id,
+                teamConfig,
+                pairs.find((p) => p.id === match.pair1_id)
+              )
+            : null
+        }
+        pair2TeamLabel={
+          teamConfig
+            ? getPairTeamName(
+                match.pair2_id,
+                teamConfig,
+                pairs.find((p) => p.id === match.pair2_id)
+              )
+            : null
+        }
+        pair1TeamIndex={
+          teamConfig
+            ? getPairTeamIndex(
+                match.pair1_id,
+                teamConfig,
+                pairs.find((p) => p.id === match.pair1_id)
+              )
+            : null
+        }
+        pair2TeamIndex={
+          teamConfig
+            ? getPairTeamIndex(
+                match.pair2_id,
+                teamConfig,
+                pairs.find((p) => p.id === match.pair2_id)
+              )
+            : null
+        }
         score1={result.hasResult ? result.pair1Score : 0}
         score2={result.hasResult ? result.pair2Score : 0}
         hasResult={result.hasResult}
@@ -907,6 +940,25 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
               eventScheduleStatus.phase === "in_window" &&
               roundMatches.some((m) => m.status !== "finished");
 
+            const pairsPerTeam = teamConfig?.dynamicLineups?.pairsPerTeam;
+            let restingPairsSource = pairs;
+            if (isDynamicLineups && pairsPerTeam) {
+              const scopeMatches =
+                roundNum <= pairsPerTeam
+                  ? regularMatches.filter(
+                      (m) => (m.round ?? 1) <= pairsPerTeam
+                    )
+                  : roundMatches;
+              restingPairsSource = pairsAppearingInMatches(
+                pairs,
+                scopeMatches
+              ) as Pair[];
+            } else if (teamConfig?.pairToTeam) {
+              restingPairsSource = pairs.filter((p) =>
+                Object.prototype.hasOwnProperty.call(teamConfig.pairToTeam, p.id)
+              );
+            }
+
             return (
               <div
                 key={roundKey}
@@ -955,8 +1007,8 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
                 </div>
 
                 <PublicRetaRestingPairsSection
-                  pairs={pairs}
-                  matches={matches}
+                  pairs={restingPairsSource}
+                  matches={roundMatches}
                   round={roundNum}
                   courts={courts}
                   pairLabelById={Object.fromEntries(

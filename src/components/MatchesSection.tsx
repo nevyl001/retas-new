@@ -26,6 +26,7 @@ import {
 } from "../lib/reta/dynamicTeamBlocksApi";
 import { generateNextDynamicBlock } from "../lib/reta/generateNextDynamicBlock";
 import { resolveTotalDynamicBlocks } from "../lib/reta/dynamicTeamLineups";
+import { pairsAppearingInMatches } from "../lib/teamConfigDisplay";
 
 interface MatchesSectionProps {
   tournament: Tournament;
@@ -54,6 +55,9 @@ function renderRoundBlock(
     matchEncounterLabel?: (match: Match) => string | undefined;
     onAfterScoreSaved?: () => void | Promise<void>;
     teamConfig?: { teamNames: string[]; pairToTeam: Record<string, number> } | null;
+    /** Si se pasa, "parejas que descansan" solo considera este set (p.ej. parejas del bloque). */
+    restingCandidatePairs?: Pair[];
+    hideRestingPairs?: boolean;
   }
 ) {
   const {
@@ -66,6 +70,8 @@ function renderRoundBlock(
     matchEncounterLabel,
     onAfterScoreSaved,
     teamConfig,
+    restingCandidatePairs,
+    hideRestingPairs,
   } = opts;
 
   return (
@@ -113,12 +119,14 @@ function renderRoundBlock(
           );
         })}
       </div>
-      <RestingPairsSection
-        pairs={pairs}
-        matches={roundMatches}
-        round={roundMatches[0]?.round ?? parseInt(round, 10)}
-        courts={tournament.courts}
-      />
+      {!hideRestingPairs ? (
+        <RestingPairsSection
+          pairs={restingCandidatePairs ?? pairs}
+          matches={roundMatches}
+          round={roundMatches[0]?.round ?? parseInt(round, 10)}
+          courts={tournament.courts}
+        />
+      ) : null}
     </div>
   );
 }
@@ -298,6 +306,10 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     userId,
     onAfterScoreSaved: tryGenerateChampionship,
     teamConfig,
+    restingCandidatePairs:
+      teamConfig?.pairToTeam && !isDynamicLineups
+        ? pairs.filter((p) => Object.prototype.hasOwnProperty.call(teamConfig.pairToTeam, p.id))
+        : undefined,
   };
 
   return (
@@ -324,6 +336,10 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                   if (!matchesByRoundInBlock[r]) matchesByRoundInBlock[r] = [];
                   matchesByRoundInBlock[r].push(m);
                 });
+                const blockActivePairs = pairsAppearingInMatches(
+                  pairs,
+                  blockMatches
+                ) as Pair[];
                 return (
                   <section
                     key={block.block_number}
@@ -377,7 +393,11 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                     {Object.entries(matchesByRoundInBlock)
                       .sort(([a], [b]) => Number(a) - Number(b))
                       .map(([round, roundMatches]) =>
-                        renderRoundBlock(round, roundMatches, roundBlockOpts)
+                        renderRoundBlock(round, roundMatches, {
+                          ...roundBlockOpts,
+                          hideRestingPairs: false,
+                          restingCandidatePairs: blockActivePairs,
+                        })
                       )}
                   </section>
                 );

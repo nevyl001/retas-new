@@ -542,10 +542,10 @@ const MatchCardWithResults: React.FC<MatchCardWithResultsProps> = ({
   const matchWinner = getMatchWinner();
   const pair1DisplayName = getPairName(pair1);
   const pair2DisplayName = getPairName(pair2);
-  const pair1TeamName = getPairTeamName(currentMatch.pair1_id, teamConfig);
-  const pair2TeamName = getPairTeamName(currentMatch.pair2_id, teamConfig);
-  const pair1TeamIndex = getPairTeamIndex(currentMatch.pair1_id, teamConfig);
-  const pair2TeamIndex = getPairTeamIndex(currentMatch.pair2_id, teamConfig);
+  const pair1TeamName = getPairTeamName(currentMatch.pair1_id, teamConfig, pair1);
+  const pair2TeamName = getPairTeamName(currentMatch.pair2_id, teamConfig, pair2);
+  const pair1TeamIndex = getPairTeamIndex(currentMatch.pair1_id, teamConfig, pair1);
+  const pair2TeamIndex = getPairTeamIndex(currentMatch.pair2_id, teamConfig, pair2);
   const pair1IsWinner = isFinished && matchWinner?.winner === "pair1";
   const pair2IsWinner = isFinished && matchWinner?.winner === "pair2";
   const pair1IsLoser = isFinished && matchWinner?.winner === "pair2";

@@ -79,22 +79,73 @@ export async function loadTeamConfigForTournament(
 
 export function getPairTeamIndex(
   pairId: string,
-  config: TeamConfigLike | null | undefined
+  config: TeamConfigLike | null | undefined,
+  pairPlayers?: { player1_id?: string | null; player2_id?: string | null } | null
 ): number | null {
-  if (!config?.pairToTeam || !config.teamNames?.length) return null;
-  const idx = config.pairToTeam[pairId];
-  if (typeof idx !== "number" || idx < 0 || idx >= config.teamNames.length) {
+  if (!config?.teamNames?.length) return null;
+
+  const direct = config.pairToTeam?.[pairId];
+  if (
+    typeof direct === "number" &&
+    direct >= 0 &&
+    direct < config.teamNames.length
+  ) {
+    return direct;
+  }
+
+  // Alineación dinámica: el jugador nunca cambia de equipo; si la pareja es
+  // nueva y aún no está en pairToTeam (o el estado local está desfasado),
+  // resolvemos por playerToTeam.
+  const playerToTeam = config.dynamicLineups?.playerToTeam;
+  if (!playerToTeam || !pairPlayers) return null;
+
+  const t1 = pairPlayers.player1_id
+    ? playerToTeam[pairPlayers.player1_id]
+    : undefined;
+  const t2 = pairPlayers.player2_id
+    ? playerToTeam[pairPlayers.player2_id]
+    : undefined;
+  const resolved =
+    typeof t1 === "number" && typeof t2 === "number" && t1 === t2
+      ? t1
+      : typeof t1 === "number"
+        ? t1
+        : typeof t2 === "number"
+          ? t2
+          : null;
+  if (
+    resolved == null ||
+    resolved < 0 ||
+    resolved >= config.teamNames.length
+  ) {
     return null;
   }
-  return idx;
+  return resolved;
 }
 
 export function getPairTeamName(
   pairId: string,
-  config: TeamConfigLike | null | undefined
+  config: TeamConfigLike | null | undefined,
+  pairPlayers?: { player1_id?: string | null; player2_id?: string | null } | null
 ): string | null {
-  const idx = getPairTeamIndex(pairId, config);
+  const idx = getPairTeamIndex(pairId, config, pairPlayers);
   if (idx == null || !config) return null;
   const name = config.teamNames[idx]?.trim();
   return name || `Equipo ${idx + 1}`;
 }
+
+/** Parejas candidatas a "descansan" acotadas al set de un bloque/ronda. */
+export function pairsAppearingInMatches(
+  pairs: PairLike[],
+  scopeMatches: { pair1_id: string; pair2_id: string }[]
+): PairLike[] {
+  if (!scopeMatches.length) return [];
+  const ids = new Set<string>();
+  scopeMatches.forEach((m) => {
+    ids.add(m.pair1_id);
+    ids.add(m.pair2_id);
+  });
+  return pairs.filter((p) => ids.has(p.id));
+}
+
+type PairLike = { id: string };
