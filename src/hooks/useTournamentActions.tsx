@@ -3,6 +3,7 @@ import {
   Tournament,
   Pair,
   deleteMatchesByTournamentSafely,
+  getTournamentById,
   updateTournament,
   upsertTournamentPublicConfig,
 } from "../lib/database";
@@ -20,6 +21,10 @@ import {
   commitDynamicTeamBlock,
   retryDynamicTeamBlock,
 } from "../lib/reta/dynamicTeamBlocksApi";
+import {
+  ensureTournamentStartedIfMatchesExist,
+  recoverAlreadyClaimedDynamicStart,
+} from "../lib/reta/syncTournamentStartedState";
 
 type DynamicLineupsStartOpts = {
   enabled: boolean;
@@ -106,11 +111,32 @@ async function startDynamicLineupsTournament(params: {
     roundEnd: pairsPerTeam,
     stage: "initial_round_robin",
   });
+
+  if (begin.status === "already_claimed") {
+    showToast("La reta ya estaba iniciada. Cargando partidos…", "info");
+    const recovery = await recoverAlreadyClaimedDynamicStart(
+      selectedTournament.id,
+      selectedTournament
+    );
+    if (recovery.status !== "recovered") {
+      const msg =
+        recovery.status === "inconsistent"
+          ? recovery.message
+          : "No se pudo recuperar la reta ya iniciada.";
+      setError(msg);
+      showToast(msg, "error");
+      return;
+    }
+    setError("");
+    setSelectedTournament(recovery.tournament);
+    persistTournamentGameMode(selectedTournament.id, "reta-equipos");
+    persistTournamentMode(selectedTournament.id, "teams");
+    await loadTournamentData(recovery.tournament);
+    return;
+  }
+
   if (begin.status !== "claimed") {
-    const msg =
-      begin.status === "already_claimed"
-        ? "El bloque 1 ya fue generado — recarga la página."
-        : "No se pudo iniciar la reta con alineación dinámica.";
+    const msg = "No se pudo iniciar la reta con alineación dinámica.";
     setError(msg);
     showToast(msg, "error");
     return;
@@ -141,11 +167,20 @@ async function startDynamicLineupsTournament(params: {
     teamB: { teamIndex: teamBIndex, pairs: teamBPairs.map(asPlayerPair) },
   });
 
-  await commitDynamicTeamBlock({
+  const commit = await commitDynamicTeamBlock({
     blockId: begin.blockId,
     teams: [plan.teamA, plan.teamB],
     pairToTeamDelta: pairToTeam,
   });
+  if (commit.status !== "completed" && commit.status !== "unchanged") {
+    const msg =
+      commit.status === "error"
+        ? commit.message
+        : "No se pudo confirmar el bloque inicial de alineación dinámica.";
+    setError(msg);
+    showToast(msg, "error");
+    return;
+  }
 
   const teamConfigPayload = {
     team_config: {
@@ -193,14 +228,6 @@ async function startDynamicLineupsTournament(params: {
     selectedTournament.id
   );
 
-  const updatedTournament: Tournament = {
-    ...selectedTournament,
-    is_started: true,
-    format: "teams",
-    ...teamConfigPayload,
-  };
-  setSelectedTournament(updatedTournament);
-
   try {
     localStorage.setItem(
       `rivieraapp_teams_${selectedTournament.id}`,
@@ -217,6 +244,17 @@ async function startDynamicLineupsTournament(params: {
 
   persistTournamentGameMode(selectedTournament.id, "reta-equipos");
   persistTournamentMode(selectedTournament.id, "teams");
+
+  const fresh = await getTournamentById(selectedTournament.id);
+  let updatedTournament: Tournament = {
+    ...selectedTournament,
+    ...(fresh ?? {}),
+    is_started: true,
+    format: "teams",
+    ...teamConfigPayload,
+  };
+  updatedTournament = await ensureTournamentStartedIfMatchesExist(updatedTournament);
+  setSelectedTournament(updatedTournament);
 
   await loadTournamentData(updatedTournament);
   showToast(

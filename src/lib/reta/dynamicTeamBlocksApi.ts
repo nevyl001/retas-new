@@ -36,7 +36,22 @@ export async function beginDynamicTeamBlock(params: {
     p_stage: params.stage,
   });
 
-  if (error) return { status: "error", message: error.message };
+  if (error) {
+    console.error("[begin_dynamic_team_block]", {
+      code: (error as { code?: string }).code,
+      message: error.message,
+      details: (error as { details?: string }).details,
+      hint: (error as { hint?: string }).hint,
+      payload: {
+        p_tournament_id: params.tournamentId,
+        p_block_number: params.blockNumber,
+        p_round_start: params.roundStart,
+        p_round_end: params.roundEnd,
+        p_stage: params.stage,
+      },
+    });
+    return { status: "error", message: error.message };
+  }
 
   const result = data as { ok: boolean; error?: string; block_id?: string } | null;
   if (!result) return { status: "error", message: "Respuesta inválida del servidor." };

@@ -72,6 +72,7 @@ import {
 
 // Types
 import { Tournament, Player, getTournamentById, upsertTournamentPublicConfig } from "./lib/database";
+import { ensureTournamentStartedIfMatchesExist } from "./lib/reta/syncTournamentStartedState";
 import { isRoundRobinTournamentComplete } from "./lib/roundRobinChampionship";
 import { readPersistedTournamentMode } from "./lib/gameModeMapping";
 import { loadTeamConfigForTournament, resolveEffectiveTeamConfig } from "./lib/teamConfigDisplay";
@@ -469,16 +470,19 @@ function AppContent() {
           return;
         }
 
-        const route = getRouteForTournament(fetched);
+        const synced = await ensureTournamentStartedIfMatchesExist(fetched);
+        if (cancelled) return;
+
+        const route = getRouteForTournament(synced);
         if (route !== "main") {
-          continueTournament(fetched, {
+          continueTournament(synced, {
             userId: user.id,
             onSelectMain: setSelectedTournament,
           });
           return;
         }
 
-        setSelectedTournament(fetched);
+        setSelectedTournament(synced);
       } catch {
         if (!cancelled) {
           navigateToAppHome();
@@ -574,6 +578,8 @@ function AppContent() {
         if (!merged.format && persistedFormat) {
           merged = { ...merged, format: persistedFormat };
         }
+        merged = await ensureTournamentStartedIfMatchesExist(merged);
+        if (cancelled) return;
         if (merged !== selectedTournament) setSelectedTournament(merged);
         await loadTournamentData(merged);
       } catch {

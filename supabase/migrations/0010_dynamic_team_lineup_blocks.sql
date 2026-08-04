@@ -86,6 +86,51 @@ CREATE TABLE IF NOT EXISTS public.reta_dynamic_blocks (
   UNIQUE (tournament_id, block_number)
 );
 
+-- Si un borrador previo creó la tabla con `generation_reason` en lugar de
+-- `stage`, CREATE TABLE IF NOT EXISTS no la alinea. Sin este bloque el RPC
+-- begin_dynamic_team_block falla con 42703 ("column stage does not exist")
+-- → HTTP 400. Ver también 0011_align_reta_dynamic_blocks_stage.sql.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'reta_dynamic_blocks'
+      AND column_name = 'generation_reason'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'reta_dynamic_blocks'
+      AND column_name = 'stage'
+  ) THEN
+    ALTER TABLE public.reta_dynamic_blocks
+      DROP CONSTRAINT IF EXISTS reta_dynamic_blocks_generation_reason_check;
+    ALTER TABLE public.reta_dynamic_blocks
+      RENAME COLUMN generation_reason TO stage;
+  END IF;
+END $$;
+
+ALTER TABLE public.reta_dynamic_blocks
+  DROP CONSTRAINT IF EXISTS reta_dynamic_blocks_stage_check;
+ALTER TABLE public.reta_dynamic_blocks
+  DROP CONSTRAINT IF EXISTS reta_dynamic_blocks_generation_reason_check;
+
+UPDATE public.reta_dynamic_blocks
+SET stage = CASE stage
+  WHEN 'initial' THEN 'initial_round_robin'
+  WHEN 'dynamic' THEN 'dynamic_round'
+  ELSE stage
+END
+WHERE stage IS DISTINCT FROM CASE stage
+  WHEN 'initial' THEN 'initial_round_robin'
+  WHEN 'dynamic' THEN 'dynamic_round'
+  ELSE stage
+END;
+
+ALTER TABLE public.reta_dynamic_blocks
+  ADD CONSTRAINT reta_dynamic_blocks_stage_check
+  CHECK (stage IN ('initial_round_robin', 'dynamic_round'));
+
 CREATE INDEX IF NOT EXISTS reta_dynamic_blocks_tournament_idx
   ON public.reta_dynamic_blocks (tournament_id, block_number);
 
