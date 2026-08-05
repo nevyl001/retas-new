@@ -17,6 +17,10 @@ interface RoundViewProps {
   totalRounds?: number;
   onCommitRound: (scores: RoundScorePayload[]) => void;
   onRoundFinalized: () => void;
+  /** FC-01 (Fase C1): true mientras la ronda siguiente se confirma con el servidor. */
+  roundSyncPending?: boolean;
+  /** Mensaje si el servidor rechazó/no confirmó el avance de ronda — reintentar es seguro (idempotente). */
+  roundSyncError?: string | null;
 }
 
 function readDraft(
@@ -75,6 +79,8 @@ export const RoundView: React.FC<RoundViewProps> = ({
   totalRounds = 0,
   onCommitRound,
   onRoundFinalized,
+  roundSyncPending = false,
+  roundSyncError = null,
 }) => {
   const [draftScores, setDraftScores] = useState<
     Record<string, { a?: string; b?: string }>
@@ -97,7 +103,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
     [round, draftScores]
   );
 
-  const canFinalizeRound = committed && !dirty;
+  const canFinalizeRound = committed && !dirty && !roundSyncPending;
 
   const handleConfirm = () => {
     if (!draftComplete) return;
@@ -233,8 +239,9 @@ export const RoundView: React.FC<RoundViewProps> = ({
           variant="primary"
           onClick={onRoundFinalized}
           disabled={!canFinalizeRound}
+          loading={roundSyncPending}
         >
-          Ronda finalizada
+          {roundSyncPending ? "Guardando…" : "Ronda finalizada"}
         </Button>
       </ActionBar>
       {!draftComplete && (
@@ -246,6 +253,11 @@ export const RoundView: React.FC<RoundViewProps> = ({
         <p className="americano-round__footer-hint">
           Hay cambios sin confirmar. Pulsa <strong>Confirmar resultados</strong>{" "}
           antes de finalizar la ronda.
+        </p>
+      )}
+      {roundSyncError && (
+        <p className="americano-round__footer-hint americano-round__footer-hint--error">
+          {roundSyncError} Puedes volver a pulsar «Ronda finalizada» — reintentar es seguro.
         </p>
       )}
     </section>

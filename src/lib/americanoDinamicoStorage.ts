@@ -245,6 +245,23 @@ function miniPlayer(p: AmericanoPlayer): AmericanoSnapshotPlayer {
   };
 }
 
+/** Convierte una ronda en memoria (jugadores completos embebidos) a su forma serializable. */
+export function buildAmericanoSnapshotRound(r: AmericanoRound): AmericanoSnapshotRound {
+  return {
+    roundNumber: r.roundNumber,
+    phase: r.phase,
+    benchPlayers: r.benchPlayers.map(miniPlayer),
+    matches: r.matches.map((m) => ({
+      id: m.id,
+      court: m.court,
+      scoreA: m.scoreA,
+      scoreB: m.scoreB,
+      teamA: [miniPlayer(m.teamA[0]), miniPlayer(m.teamA[1])],
+      teamB: [miniPlayer(m.teamB[0]), miniPlayer(m.teamB[1])],
+    })),
+  };
+}
+
 /** Serializa ranking y rondas del Americano Dinámico (incluye fase para vista pública). */
 export function buildAmericanoDinamicoSnapshot(
   ranking: AmericanoPlayer[],
@@ -261,18 +278,6 @@ export function buildAmericanoDinamicoSnapshot(
     totalRounds: totalRounds > 0 ? totalRounds : undefined,
     roster: rosterSource.map((p) => ({ id: p.id, name: p.name })),
     ranking: ranking.map(miniPlayer),
-    rounds: rounds.map((r) => ({
-      roundNumber: r.roundNumber,
-      phase: r.phase,
-      benchPlayers: r.benchPlayers.map(miniPlayer),
-      matches: r.matches.map((m) => ({
-        id: m.id,
-        court: m.court,
-        scoreA: m.scoreA,
-        scoreB: m.scoreB,
-        teamA: [miniPlayer(m.teamA[0]), miniPlayer(m.teamA[1])],
-        teamB: [miniPlayer(m.teamB[0]), miniPlayer(m.teamB[1])],
-      })),
-    })),
+    rounds: rounds.map(buildAmericanoSnapshotRound),
   };
 }

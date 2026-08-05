@@ -33,7 +33,12 @@ interface PlayerRegistrationProps {
   availablePlayersError?: string | null;
   onRefreshAvailablePlayers?: () => Promise<void> | void;
   onSyncPlayers: (next: ReadonlyArray<{ id: string; name: string }>) => void;
-  onStartTournament: (totalRounds: number, courts: number) => void;
+  onStartTournament: (
+    totalRounds: number,
+    courts: number
+  ) => Promise<boolean> | void;
+  /** FC-01 (Fase C1): mensaje si el servidor no confirmó el inicio del torneo. */
+  startTournamentError?: string | null;
   /** Torneo persistido: mismos detalles (lugar, horario…) que Reta / RR. */
   tournament: Tournament | null;
   onTournamentPatched?: (tournament: Tournament) => void;
@@ -82,6 +87,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   onRefreshAvailablePlayers,
   onSyncPlayers,
   onStartTournament,
+  startTournamentError = null,
   tournament,
   onTournamentPatched,
   eventTitle = "Americano",
@@ -185,7 +191,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const jugadoresOk = players.length >= 4;
   const configOk = totalRounds >= 1 && courts >= 1;
   const canStart = jugadoresOk && configOk;
-  const ctaHint = !jugadoresOk
+  const ctaHint = startTournamentError
+    ? startTournamentError
+    : !jugadoresOk
     ? players.length === 0
       ? "Selecciona al menos 4 jugadores"
       : `Faltan ${4 - players.length} jugador${4 - players.length === 1 ? "" : "es"}`
@@ -311,12 +319,13 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
       if (starting || !canStart) return;
       setStarting(true);
       // Deja pintar el estado de carga antes del cálculo síncrono.
+      // FC-01 (Fase C1): onStartTournament ahora espera confirmación del
+      // servidor antes de resolver -- el loading debe cubrir esa espera
+      // también, no solo el cálculo local de la ronda.
       window.setTimeout(() => {
-        try {
-          onStartTournament(totalRounds, courts);
-        } finally {
-          setStarting(false);
-        }
+        void Promise.resolve(onStartTournament(totalRounds, courts)).finally(
+          () => setStarting(false)
+        );
       }, 40);
     },
   };

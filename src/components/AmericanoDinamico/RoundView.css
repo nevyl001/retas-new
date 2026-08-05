@@ -247,6 +247,10 @@
   color: var(--text-muted);
 }
 
+.americano-round__footer-hint--error {
+  color: var(--danger);
+}
+
 @media (max-width: 768px) {
   .americano-match-card__team strong {
     font-size: 15px;

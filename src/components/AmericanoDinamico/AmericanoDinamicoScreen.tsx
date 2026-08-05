@@ -101,6 +101,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     remoteSyncReady,
     participacionSyncError,
     retryParticipacionSync,
+    roundSyncPending,
+    roundSyncError,
   } = useAmericanoDinamico(tournamentId ?? null, {
     organizadorId: effectiveUserId,
     sessionLabel: tournamentName || "Sesión",
@@ -273,9 +275,10 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
 
   const handleStartTournament = React.useCallback(
     async (totalRounds: number, courts: number) => {
-      startTournament(totalRounds, courts);
+      const started = await startTournament(totalRounds, courts);
+      if (!started) return false;
       finishedPersistedRef.current = false;
-      if (!resolvedTournamentId) return;
+      if (!resolvedTournamentId) return true;
       try {
         const safeCourts = Math.max(1, Math.floor(courts) || 1);
         await updateTournament(resolvedTournamentId, {
@@ -293,6 +296,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         // Si falla persistencia, no bloqueamos el torneo local.
         console.warn("No se pudo marcar la reta como iniciada:", e);
       }
+      return true;
     },
     [startTournament, resolvedTournamentId, onTournamentStatusChange]
   );
@@ -386,6 +390,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           onRefreshAvailablePlayers={refreshAvailablePlayers}
           onSyncPlayers={syncRegistrationPlayers}
           onStartTournament={handleStartTournament}
+          startTournamentError={roundSyncError}
           tournament={tournament}
           onTournamentPatched={handleTournamentPatched}
           eyebrow={modeEyebrow}
@@ -463,6 +468,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               totalRounds={totalRounds}
               onCommitRound={commitRoundScores}
               onRoundFinalized={nextRound}
+              roundSyncPending={roundSyncPending}
+              roundSyncError={roundSyncError}
             />
           ) : (
             <p className="americano-screen__loading">Preparando ronda…</p>
@@ -496,6 +503,8 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             totalRounds={totalRounds}
             onCommitRound={commitRoundScores}
             onRoundFinalized={nextRound}
+            roundSyncPending={roundSyncPending}
+            roundSyncError={roundSyncError}
           />
         )}
         <div className="americano-screen__block">

@@ -1726,13 +1726,29 @@ export async function ensureTercerLugarPartidoSiAplica(
   const tercerRow = buildTercerLugarPartido(torneoId, partidos, semiRonda);
   if (!tercerRow) return;
 
-  const { error } = await supabase
-    .from("torneo_express_eliminatoria_partidos")
-    .insert(tercerRow);
+  // FC-03 (Fase C1): antes hacía un INSERT directo sin lock ni dedupe, desde
+  // un camino de LECTURA (fetchTorneoExpressBundle) que se dispara en cada
+  // carga del bundle -- dos dispositivos cargando justo tras completarse
+  // ambas semifinales podían duplicar el partido de 3.er lugar. Se reutiliza
+  // el mismo RPC atómico que ya usa saveEliminatoriaResultado (lock del
+  // bracket completo + dedupe server-side de (ronda, cruce_index), ver
+  // hotfix-torneo-express-eliminatoria-atomic.sql punto 11) — sin mecanismo
+  // nuevo.
+  const { data: rpcData, error } = await supabase.rpc(
+    "apply_torneo_express_eliminatoria_writes",
+    {
+      p_torneo_id: torneoId,
+      p_updates: [],
+      p_inserts: [tercerRow],
+    }
+  );
   if (isBracketSchemaError(error)) {
     throw new BracketSchemaMissingError();
   }
   throwIfError(error, "ensureTercerLugarPartidoSiAplica");
+  if (!rpcData || !(rpcData as { ok?: boolean }).ok) {
+    throw new Error("No se pudo crear el partido de 3.er lugar");
+  }
 }
 
 /** Tras completar una ronda, genera la siguiente. Nunca cierra el torneo solo. */

@@ -7,12 +7,15 @@ import {
   upsertAmericanoLivePublic,
   applyAmericanoLiveMatchScore,
   applyAmericanoLiveMetadata,
+  applyAmericanoNewRound,
   type ApplyAmericanoLiveMatchScoreResult,
+  type ApplyAmericanoNewRoundResult,
 } from "./database";
 import type {
   AmericanoDinamicoSnapshotV1,
   AmericanoSnapshotPlayer,
   AmericanoSnapshotRosterEntry,
+  AmericanoSnapshotRound,
   AmericanoSnapshotTournamentPhase,
 } from "./americanoDinamicoStorage";
 import {
@@ -146,6 +149,45 @@ export async function persistAmericanoDinamicoMetadata(params: {
   roster?: AmericanoSnapshotRosterEntry[];
 }): Promise<boolean> {
   return applyAmericanoLiveMetadata(params);
+}
+
+/**
+ * Key determinística (NO un UUID aleatorio): el mismo torneo + el mismo
+ * número de ronda producen siempre la misma key, así que un reintento de
+ * red de la MISMA operación (p. ej. un timeout donde el servidor sí llegó a
+ * aplicarla) es idempotente por diseño — nunca se interpreta como una ronda
+ * nueva.
+ */
+export function buildAmericanoRoundIdempotencyKey(
+  tournamentId: string,
+  roundNumber: number
+): string {
+  return `${tournamentId}:round:${roundNumber}`;
+}
+
+/**
+ * Empuja la ESTRUCTURA de una ronda nueva al servidor (FC-01, Fase C1) — ver
+ * supabase/migrations/0007_apply_americano_new_round.sql. A diferencia de
+ * persistAmericanoDinamicoMatchScore (que solo parchea un marcador dentro de
+ * una ronda ya existente), esta función es la que hace que la ronda misma
+ * (qué pareja juega contra cuál, en qué cancha) exista en el servidor.
+ */
+export async function persistAmericanoNewRound(params: {
+  tournamentId: string;
+  roundNumber: number;
+  round: AmericanoSnapshotRound;
+  ranking?: AmericanoSnapshotPlayer[];
+  phase?: AmericanoSnapshotTournamentPhase;
+  totalRounds?: number;
+  roster?: AmericanoSnapshotRosterEntry[];
+}): Promise<ApplyAmericanoNewRoundResult> {
+  return applyAmericanoNewRound({
+    ...params,
+    idempotencyKey: buildAmericanoRoundIdempotencyKey(
+      params.tournamentId,
+      params.roundNumber
+    ),
+  });
 }
 
 export function isValidAmericanoSnapshot(

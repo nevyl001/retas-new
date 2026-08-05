@@ -21,6 +21,7 @@ import {
 } from "../lib/americanoStandings";
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import {
+  buildAmericanoSnapshotRound,
   loadAmericanoDinamicoSnapshot,
   resolveAmericanoTournamentId,
 } from "../lib/americanoDinamicoStorage";
@@ -28,6 +29,7 @@ import { applyAmericanoSnapshotToState } from "../lib/americanoDinamicoRestore";
 import {
   loadAmericanoDinamicoSnapshotMerged,
   persistAmericanoDinamicoMatchScore,
+  persistAmericanoNewRound,
 } from "../lib/americanoDinamicoSync";
 import { aplicarRatingAmericanoPartido } from "../lib/rivieraJugadores/aplicarRatingPartido";
 
@@ -148,6 +150,18 @@ export function useAmericanoDinamico(
   const [participacionSyncError, setParticipacionSyncError] = useState<string | null>(
     null
   );
+
+  /**
+   * FC-01 (Fase C1): avanzar de ronda (iniciar el torneo o generar la
+   * siguiente) ahora requiere confirmación del servidor antes de reflejarse
+   * en la UI — evita la falsa sensación de "guardado" que causaba el bug
+   * original (rounds nunca llegaba a la base). Mientras `roundSyncPending`
+   * es true, la UI debe deshabilitar el botón de avance; si
+   * `roundSyncError` no es null, debe mostrarlo y permitir reintentar (la
+   * operación es idempotente, reintentar es seguro).
+   */
+  const [roundSyncPending, setRoundSyncPending] = useState(false);
+  const [roundSyncError, setRoundSyncError] = useState<string | null>(null);
 
   const runParticipacionSync = useCallback(async () => {
     if (!options?.organizadorId || playersRef.current.length === 0) return;
@@ -302,48 +316,100 @@ export function useAmericanoDinamico(
     });
   };
 
-  const startTournament = (totalRounds: number, courts: number = 1) => {
-    if (players.length < 4 || totalRounds < 1) return;
-    const safeCourts = Math.max(1, Math.floor(courts) || 1);
-    totalRoundsRef.current = totalRounds;
-    courtsRef.current = safeCourts;
+  const startTournament = useCallback(
+    async (totalRounds: number, courts: number = 1): Promise<boolean> => {
+      if (players.length < 4 || totalRounds < 1) return false;
+      const safeCourts = Math.max(1, Math.floor(courts) || 1);
 
-    const seededPlayers = players.map((p) => ({
-      ...p,
-      stats: createEmptyStats(),
-    }));
+      const seededPlayers = players.map((p) => ({
+        ...p,
+        stats: createEmptyStats(),
+      }));
+      const seededBaseRoster = seededPlayers.map((p) => ({
+        id: p.id,
+        name: p.name,
+        stats: createEmptyStats(),
+      }));
 
-    baseRosterRef.current = seededPlayers.map((p) => ({
-      id: p.id,
-      name: p.name,
-      stats: createEmptyStats(),
-    }));
+      const { partnerMatrix, rivalMatrix } = buildMatricesFromScoredRounds(
+        seededPlayers,
+        []
+      );
+      const r1 = generateAmericanoRound({
+        allPlayers: seededPlayers,
+        roundNumber: 1,
+        totalRounds,
+        courts: safeCourts,
+        partnerMatrix,
+        rivalMatrix,
+        lastBenchPlayerIds: new Set(),
+        priorRounds: [],
+        scoredRounds: [],
+      });
 
-    participacionSyncedRef.current = false;
-    sesionIdRef.current =
-      resolvedTournamentId ??
-      (typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `americano-${Date.now()}`);
+      const commit = (round: AmericanoRound) => {
+        totalRoundsRef.current = totalRounds;
+        courtsRef.current = safeCourts;
+        baseRosterRef.current = seededBaseRoster;
+        participacionSyncedRef.current = false;
+        sesionIdRef.current =
+          resolvedTournamentId ??
+          (typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `americano-${Date.now()}`);
+        setPlayers(seededPlayers);
+        setRounds([round]);
+        setCurrentRoundIndex(0);
+        setPhase("playing");
+      };
 
-    const { partnerMatrix, rivalMatrix } = buildMatricesFromScoredRounds(seededPlayers, []);
-    const r1 = generateAmericanoRound({
-      allPlayers: seededPlayers,
-      roundNumber: 1,
-      totalRounds,
-      courts: safeCourts,
-      partnerMatrix,
-      rivalMatrix,
-      lastBenchPlayerIds: new Set(),
-      priorRounds: [],
-      scoredRounds: [],
-    });
+      if (!resolvedTournamentId) {
+        // Sin id de torneo persistible (uso local-only, fuera del flujo
+        // normal de la app) — no hay servidor al que empujar la ronda.
+        commit(r1);
+        return true;
+      }
 
-    setPlayers(seededPlayers);
-    setRounds([r1]);
-    setCurrentRoundIndex(0);
-    setPhase("playing");
-  };
+      setRoundSyncPending(true);
+      setRoundSyncError(null);
+      try {
+        const result = await persistAmericanoNewRound({
+          tournamentId: resolvedTournamentId,
+          roundNumber: 1,
+          round: buildAmericanoSnapshotRound(r1),
+          ranking: [],
+          phase: "playing",
+          totalRounds,
+          roster: seededBaseRoster.map((p) => ({ id: p.id, name: p.name })),
+        });
+
+        if (result.status === "created") {
+          commit(r1);
+          return true;
+        }
+        if (result.status === "exists") {
+          // Otra pestaña/dispositivo ya inició este torneo — adoptamos la
+          // ronda 1 autoritativa del servidor en vez de la generada aquí
+          // (mismo principio que reconcileMatchScore para marcadores).
+          commit(result.round as unknown as AmericanoRound);
+          return true;
+        }
+        setRoundSyncError(
+          "No se pudo iniciar el torneo. Verifica tu conexión e intenta de nuevo."
+        );
+        return false;
+      } catch (e) {
+        console.warn("[americano-live] startTournament:", e);
+        setRoundSyncError(
+          "No se pudo iniciar el torneo. Verifica tu conexión e intenta de nuevo."
+        );
+        return false;
+      } finally {
+        setRoundSyncPending(false);
+      }
+    },
+    [players, resolvedTournamentId]
+  );
 
   const persistRebuiltState = useCallback((nextRounds: AmericanoRound[]) => {
     const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
@@ -509,12 +575,12 @@ export function useAmericanoDinamico(
     [persistRebuiltState]
   );
 
-  const nextRound = useCallback(() => {
-    if (phase !== "playing") return;
+  const nextRound = useCallback(async (): Promise<boolean> => {
+    if (phase !== "playing") return false;
     const prevRounds = roundsRef.current;
     const idx = currentRoundIndexRef.current;
     const cur = prevRounds[idx];
-    if (!cur) return;
+    if (!cur) return false;
 
     const allScores = cur.matches.every(
       (m) =>
@@ -525,12 +591,12 @@ export function useAmericanoDinamico(
         m.scoreA >= 0 &&
         m.scoreB >= 0
     );
-    if (!allScores) return;
+    if (!allScores) return false;
 
     const total = totalRoundsRef.current;
     if (idx + 1 >= total) {
       setPhase("finished");
-      return;
+      return true;
     }
 
     const template = rosterTemplateFromRef(baseRosterRef, playersRef.current);
@@ -558,10 +624,53 @@ export function useAmericanoDinamico(
       scoredRounds,
     });
 
-    setPlayers(rebuilt.players);
-    setRounds([...rebuilt.rounds, newRound]);
-    setCurrentRoundIndex(idx + 1);
-  }, [phase]);
+    const commit = (round: AmericanoRound) => {
+      setPlayers(rebuilt.players);
+      setRounds([...rebuilt.rounds, round]);
+      setCurrentRoundIndex(idx + 1);
+    };
+
+    if (!resolvedTournamentId) {
+      commit(newRound);
+      return true;
+    }
+
+    setRoundSyncPending(true);
+    setRoundSyncError(null);
+    try {
+      const result = await persistAmericanoNewRound({
+        tournamentId: resolvedTournamentId,
+        roundNumber: nextRoundNumber,
+        round: buildAmericanoSnapshotRound(newRound),
+        ranking: rebuilt.players.map((p) => ({ id: p.id, name: p.name, stats: p.stats })),
+        phase: "playing",
+        totalRounds: total,
+      });
+
+      if (result.status === "created") {
+        commit(newRound);
+        return true;
+      }
+      if (result.status === "exists") {
+        // Otra pestaña ya generó esta ronda -- adoptamos la del servidor en
+        // vez de la generada aquí, para no divergir del bracket real.
+        commit(result.round as unknown as AmericanoRound);
+        return true;
+      }
+      setRoundSyncError(
+        "No se pudo guardar la siguiente ronda. Verifica tu conexión e intenta de nuevo."
+      );
+      return false;
+    } catch (e) {
+      console.warn("[americano-live] nextRound:", e);
+      setRoundSyncError(
+        "No se pudo guardar la siguiente ronda. Verifica tu conexión e intenta de nuevo."
+      );
+      return false;
+    } finally {
+      setRoundSyncPending(false);
+    }
+  }, [phase, resolvedTournamentId]);
 
   const ranking = useMemo(() => {
     if (phase === "registration") return [];
@@ -595,6 +704,8 @@ export function useAmericanoDinamico(
     remoteSyncReady,
     participacionSyncError,
     retryParticipacionSync,
+    roundSyncPending,
+    roundSyncError,
     removePlayer,
     toggleExistingPlayer,
     syncRegistrationPlayers,
