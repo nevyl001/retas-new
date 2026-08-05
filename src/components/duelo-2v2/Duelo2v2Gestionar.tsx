@@ -16,6 +16,7 @@ import {
   peekDuelo2v2CreateDraft,
 } from "../../lib/duelo2v2/duelo2v2CreateDraft";
 import { readDueloLugarPrefs, resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
+import { dueloConvocatoriaNivel } from "../../lib/duelo2v2/convocatoriaNivel";
 import {
   readDueloConvocatoriaPanelOpen,
   writeDueloConvocatoriaPanelOpen,
@@ -783,9 +784,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
                                 scheduledAt: duelo.programado_en,
                                 scheduledUntil: duelo.programado_hasta,
                                 clubName: convocatoriaOrigin,
-                                categoryLabel:
-                                  readDueloLugarPrefs(duelo.id)?.categoria?.trim() ||
-                                  undefined,
+                                categoryLabel: dueloConvocatoriaNivel(duelo),
                               })}
                             />
                           ) : null}
