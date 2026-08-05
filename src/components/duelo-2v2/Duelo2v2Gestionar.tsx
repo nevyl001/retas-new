@@ -17,6 +17,7 @@ import {
 } from "../../lib/duelo2v2/duelo2v2CreateDraft";
 import { readDueloLugarPrefs, resolveDueloLugarForShare } from "../../lib/duelo2v2/dueloLugarPrefs";
 import { dueloConvocatoriaNivel } from "../../lib/duelo2v2/convocatoriaNivel";
+import { resolvePersistedDueloPairs } from "../../lib/duelo2v2/dueloPairSlots";
 import {
   readDueloConvocatoriaPanelOpen,
   writeDueloConvocatoriaPanelOpen,
@@ -260,7 +261,32 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
   };
 
   const handleStartJuego = async () => {
-    if (!duelo || !pairA || !pairB || !bothPairsReady(pairA, pairB)) return;
+    if (!duelo) return;
+
+    // El borrador del constructor manda si está completo (el organizador acaba
+    // de armar las parejas); si no, se usan las que ya están guardadas —el caso
+    // de la convocatoria, que llena los 4 slots al confirmarse los jugadores.
+    const slots =
+      pairA && pairB && bothPairsReady(pairA, pairB)
+        ? {
+            pareja_a_j1_id: pairA.j1.id,
+            pareja_a_j2_id: pairA.j2.id,
+            pareja_a_j1_nombre: pairA.j1.nombre,
+            pareja_a_j2_nombre: pairA.j2.nombre,
+            pareja_b_j1_id: pairB.j1.id,
+            pareja_b_j2_id: pairB.j2.id,
+            pareja_b_j1_nombre: pairB.j1.nombre,
+            pareja_b_j2_nombre: pairB.j2.nombre,
+          }
+        : resolvePersistedDueloPairs(duelo);
+
+    if (!slots) {
+      setError(
+        "Faltan los 4 jugadores para iniciar. Organiza las 2 parejas e intenta de nuevo."
+      );
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setMessage(null);
@@ -273,14 +299,7 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           cancha: duelo.cancha ?? undefined,
           programado_en: duelo.programado_en,
           programado_hasta: duelo.programado_hasta,
-          pareja_a_j1_id: pairA.j1.id,
-          pareja_a_j2_id: pairA.j2.id,
-          pareja_a_j1_nombre: pairA.j1.nombre,
-          pareja_a_j2_nombre: pairA.j2.nombre,
-          pareja_b_j1_id: pairB.j1.id,
-          pareja_b_j2_id: pairB.j2.id,
-          pareja_b_j1_nombre: pairB.j1.nombre,
-          pareja_b_j2_nombre: pairB.j2.nombre,
+          ...slots,
         },
       });
       setDuelo(updated);
@@ -529,11 +548,14 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
           const draftPairsReady = bothPairsReady(pairA, pairB);
           const enConfig = duelo.estado === "configuracion";
           const enJuego = duelo.estado === "en_juego";
+          // Las parejas pueden venir del constructor local o ya guardadas por
+          // la convocatoria al confirmarse los 4 jugadores. Antes se exigía
+          // `!pairsOk`, así que un duelo con parejas ya guardadas no se podía
+          // iniciar nunca (el constructor ni se mostraba para llenar el
+          // borrador). Cualquiera de las dos fuentes sirve para arrancar.
+          const persistedPairs = resolvePersistedDueloPairs(duelo);
           const canStartJuego =
-            enConfig &&
-            !pairsOk &&
-            draftPairsReady &&
-            !busy;
+            enConfig && (draftPairsReady || persistedPairs !== null) && !busy;
           const detallesOk = Boolean(duelo.nombre?.trim());
           const canFinalizar = enJuego && Boolean(duelo.ganador) && !busy;
           const publicUrl = publicDuelo2v2Url(dueloId);
