@@ -1821,8 +1821,11 @@ export async function registrarParticipacionConLedger(
   );
 
   if (error) {
-    if (isMissingTableError(error)) {
-      console.warn("registrarParticipacionConLedger: tabla/RPC no disponible");
+    // Nunca tragar PGRST202 / RPC ausente: el cierre de carrera depende de
+    // esta función. Solo degradar silenciosamente ante tabla local ausente
+    // en entornos legacy sin esquema de jugadores.
+    if (isMissingTableError(error) && !isMissingRpcError(error)) {
+      console.warn("registrarParticipacionConLedger: tabla no disponible");
       return null;
     }
     throw error;

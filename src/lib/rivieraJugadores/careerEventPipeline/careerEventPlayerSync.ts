@@ -1,3 +1,4 @@
+import { errorMessage } from "../../errors/normalizeError";
 import {
   CareerIntegrityException,
   isCareerIntegrityException,
@@ -7,6 +8,27 @@ import {
   type ResolveJugadorIdForParticipacionParams,
 } from "../jugadorIdResolver";
 import type { CareerEventAssertionFailure } from "./types";
+
+function supabaseErrorFields(error: unknown): {
+  code?: string;
+  message?: string;
+  details?: unknown;
+  hint?: unknown;
+} {
+  if (!error || typeof error !== "object") return {};
+  const e = error as {
+    code?: string;
+    message?: string;
+    details?: unknown;
+    hint?: unknown;
+  };
+  return {
+    ...(e.code != null ? { code: String(e.code) } : {}),
+    ...(e.message != null ? { message: String(e.message) } : {}),
+    ...(e.details !== undefined ? { details: e.details } : {}),
+    ...(e.hint !== undefined ? { hint: e.hint } : {}),
+  };
+}
 
 export function careerAssertionFailureFromError(
   error: unknown,
@@ -33,14 +55,25 @@ export function careerAssertionFailureFromError(
       },
     };
   }
+  const pg = supabaseErrorFields(error);
+  const baseMessage = pg.message ?? errorMessage(error);
+  const who =
+    ctx.nombre?.trim() ||
+    (ctx.jugadorId ? `jugador ${ctx.jugadorId.slice(0, 8)}…` : null);
   return {
-    code: "career_integrity_blocked",
-    message: error instanceof Error ? error.message : String(error),
+    code: "sync_failed",
+    message: who
+      ? `No se pudo sincronizar a ${who}: ${baseMessage}`
+      : baseMessage,
     jugadorId: ctx.jugadorId,
     details: {
       ...(ctx.kind ? { kind: ctx.kind } : {}),
       ...(ctx.nombre ? { nombre: ctx.nombre } : {}),
       ...(ctx.legacyPlayerId ? { legacyPlayerId: ctx.legacyPlayerId } : {}),
+      ...(pg.code ? { code: pg.code } : {}),
+      ...(pg.message ? { message: pg.message } : {}),
+      ...(pg.details !== undefined ? { details: pg.details } : {}),
+      ...(pg.hint !== undefined ? { hint: pg.hint } : {}),
     },
   };
 }
@@ -131,29 +164,60 @@ export async function runPlayerParticipacionSyncIsolated(
   }
 }
 
-/** Ejecuta sync de jugadores en paralelo; mergea failures al final sin mutación en map(). */
+/** Límite de escritura concurrente al cerrar (idempotente por jugador/evento). */
+const PLAYER_PARTICIPACION_SYNC_CONCURRENCY = 6;
+
+async function mapSettledWithConcurrency(
+  items: ParallelPlayerParticipacionItem[],
+  concurrency: number
+): Promise<PromiseSettledResult<PlayerParticipacionSyncResult>[]> {
+  const results: PromiseSettledResult<PlayerParticipacionSyncResult>[] =
+    new Array(items.length);
+  let next = 0;
+
+  async function worker() {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      const { ctx, fn } = items[index];
+      try {
+        const value = await runPlayerParticipacionSyncIsolated(ctx, fn);
+        results[index] = { status: "fulfilled", value };
+      } catch (reason) {
+        results[index] = { status: "rejected", reason };
+      }
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, Math.max(items.length, 1)) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return results;
+}
+
+/** Ejecuta sync de jugadores en paralelo acotado; mergea failures al final. */
 export async function runParallelPlayerParticipacionSync(
   items: ParallelPlayerParticipacionItem[]
 ): Promise<{
   touchedJugadorIds: string[];
   syncFailures: CareerEventAssertionFailure[];
 }> {
-  const outcomes = await Promise.allSettled(
-    items.map(({ ctx, fn }) => runPlayerParticipacionSyncIsolated(ctx, fn))
+  const outcomes = await mapSettledWithConcurrency(
+    items,
+    PLAYER_PARTICIPACION_SYNC_CONCURRENCY
   );
 
   const touchedJugadorIds: string[] = [];
   const syncFailures: CareerEventAssertionFailure[] = [];
 
-  for (const outcome of outcomes) {
+  for (let i = 0; i < outcomes.length; i++) {
+    const outcome = outcomes[i];
     if (outcome.status === "rejected") {
-      syncFailures.push({
-        code: "career_integrity_blocked",
-        message:
-          outcome.reason instanceof Error
-            ? outcome.reason.message
-            : String(outcome.reason),
-      });
+      syncFailures.push(
+        careerAssertionFailureFromError(outcome.reason, items[i]?.ctx)
+      );
       continue;
     }
     const result = outcome.value;

@@ -1,4 +1,5 @@
 import { supabase } from "../../supabaseClient";
+import { errorLogPayload, errorMessage, normalizeError } from "../../errors/normalizeError";
 import { ensureRivieraIdentity } from "../careerIdentity";
 import {
   CareerIntegrityException,
@@ -162,7 +163,7 @@ async function assertParentEventExists(
   } catch (e) {
     return {
       code: "missing_parent_event",
-      message: `Error validando evento padre: ${String(e)}`,
+      message: `Error validando evento padre: ${errorMessage(e)}`,
       details: { kind: input.kind },
     };
   }
@@ -179,6 +180,7 @@ export function collectProspectiveJugadorRefs(
   input: FinalizeCareerEventInput
 ): ProspectiveJugadorRef[] {
   const refs: ProspectiveJugadorRef[] = [];
+  const seen = new Set<string>();
 
   const push = (r: {
     jugadorId?: string | null;
@@ -190,9 +192,23 @@ export function collectProspectiveJugadorRefs(
     const nombre = r.nombre?.trim() || undefined;
     const legacyPlayerId = r.legacyPlayerId?.trim() || undefined;
     const legacyLigaJugadorId = r.legacyLigaJugadorId?.trim() || undefined;
-    if (jugadorId || nombre || legacyPlayerId || legacyLigaJugadorId) {
-      refs.push({ jugadorId, nombre, legacyPlayerId, legacyLigaJugadorId });
+    if (!jugadorId && !nombre && !legacyPlayerId && !legacyLigaJugadorId) {
+      return;
     }
+    // Dedup por clave fuerte: en una reta el mismo players.id aparece en
+    // varias parejas (round robin / equipos). Sin dedup se resolvía la misma
+    // identidad N veces — N× más RPCs secuenciales y N× más probabilidad de
+    // que un fallo transitorio bloqueara el cierre completo.
+    const dedupKey =
+      jugadorId ??
+      legacyPlayerId ??
+      legacyLigaJugadorId ??
+      (nombre ? `nombre:${nombre.toLowerCase()}` : null);
+    if (dedupKey) {
+      if (seen.has(dedupKey)) return;
+      seen.add(dedupKey);
+    }
+    refs.push({ jugadorId, nombre, legacyPlayerId, legacyLigaJugadorId });
   };
 
   switch (input.kind) {
@@ -297,15 +313,27 @@ async function assertJugadorCareerIntegrity(
         details: { ...e.toStructuredLog(), kind: ctx.kind, nombre: ctx.nombre },
       };
     }
+    // No es un fallo de identidad: es un error técnico (RPC/red/RLS). Se
+    // reporta como tal, con code/hint, en vez de culpar al jugador con un
+    // "[object Object]" (incidente 2026-08-05).
+    const normalized = normalizeError(e);
+    console.error(LOG_PREFIX, "identity check failed", {
+      jugadorId,
+      nombre: ctx.nombre,
+      ...errorLogPayload(e),
+    });
     return {
-      code: "career_integrity_blocked",
-      message: formatIdentityPreCloseMessage({
+      code: "sync_failed",
+      message:
+        `No se pudo verificar la identidad de ` +
+        `${ctx.nombre?.trim() ? `«${ctx.nombre.trim()}»` : "un jugador"}: ` +
+        `${normalized.message}${normalized.code ? ` [${normalized.code}]` : ""}`,
+      jugadorId,
+      details: {
         kind: ctx.kind,
         nombre: ctx.nombre,
-        reason: String(e),
-      }),
-      jugadorId,
-      details: { kind: ctx.kind, nombre: ctx.nombre },
+        ...errorLogPayload(e),
+      },
     };
   }
 }
@@ -352,18 +380,37 @@ export async function validateCareerEventPreClose(
         legacyPlayerId: ref.legacyPlayerId,
         kind: input.kind,
       });
+      // Solo es un problema de identidad si la capa de integridad lo declaró
+      // como tal. Un error de red/RPC/RLS se reporta con su causa real.
+      const isIdentityProblem = isCareerIntegrityException(error);
+      const normalized = normalizeError(error);
+      if (!isIdentityProblem) {
+        console.error(LOG_PREFIX, "resolve failed (technical)", {
+          nombre: ref.nombre,
+          legacyPlayerId: ref.legacyPlayerId,
+          ...errorLogPayload(error),
+        });
+      }
       failures.push({
         ...base,
-        message: formatIdentityPreCloseMessage({
-          kind: input.kind,
-          nombre: ref.nombre,
-          reason: base.message,
-        }),
+        code: isIdentityProblem ? base.code : "sync_failed",
+        message: isIdentityProblem
+          ? formatIdentityPreCloseMessage({
+              kind: input.kind,
+              nombre: ref.nombre,
+              reason: normalized.message,
+            })
+          : `No se pudo resolver a ` +
+            `${ref.nombre?.trim() ? `«${ref.nombre.trim()}»` : "un jugador"}: ` +
+            `${normalized.message}` +
+            `${normalized.code ? ` [${normalized.code}]` : ""}`,
         details: {
           ...base.details,
           legacyLigaJugadorId: ref.legacyLigaJugadorId,
-          actionSugerida:
-            "Vuelve a seleccionar al jugador o vincula su Riviera ID",
+          ...errorLogPayload(error),
+          actionSugerida: isIdentityProblem
+            ? "Vuelve a seleccionar al jugador o vincula su Riviera ID"
+            : "Reintenta finalizar; si persiste, revisa conexión y permisos",
         },
       });
       continue;

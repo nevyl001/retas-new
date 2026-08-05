@@ -44,7 +44,7 @@ export function formatCareerPipelineSuccessMessage(
 
 /**
  * Mensaje cuando el pre-close u otras fallas críticas bloquean el cierre.
- * Prefiere failures[].message (accionables) sobre códigos técnicos.
+ * Resumen claro para el organizador; detalle técnico en console / failures[].details.
  */
 export function formatCareerPipelineFailureMessage(
   result: CareerEventPipelineResult,
@@ -60,8 +60,7 @@ export function formatCareerPipelineFailureMessage(
       ? result.criticalFailures
       : result.failures;
 
-  const lines = details.map((f) => f.message).filter(Boolean);
-  if (lines.length === 0) {
+  if (details.length === 0) {
     return [
       title,
       "",
@@ -69,5 +68,40 @@ export function formatCareerPipelineFailureMessage(
     ].join("\n");
   }
 
-  return [title, "", ...lines].join("\n");
+  const byCode = new Map<string, number>();
+  for (const f of details) {
+    byCode.set(f.code, (byCode.get(f.code) ?? 0) + 1);
+  }
+  const summary = Array.from(byCode.entries())
+    .map(([code, n]) => `${code} (${n})`)
+    .join(", ");
+
+  const maxLines = 5;
+  const lines = details
+    .map((f) => {
+      const name =
+        typeof f.details?.nombre === "string" ? f.details.nombre : null;
+      const code =
+        typeof f.details?.code === "string" ? f.details.code : f.code;
+      const msg = f.message?.trim() || "Error de sincronización";
+      if (name && !msg.includes(name)) {
+        return `• ${name}: ${msg} [${code}]`;
+      }
+      return `• ${msg}`;
+    })
+    .filter(Boolean);
+
+  const shown = lines.slice(0, maxLines);
+  const extra = lines.length - shown.length;
+
+  return [
+    title,
+    "",
+    `${details.length} problema(s): ${summary}`,
+    "",
+    ...shown,
+    ...(extra > 0 ? [`… y ${extra} más (detalle en consola).`] : []),
+    "",
+    "Los resultados del marcador no se revierten. Corrige el problema e intenta cerrar de nuevo.",
+  ].join("\n");
 }

@@ -1,4 +1,6 @@
 import { supabase } from "../supabaseClient";
+import { toError } from "../errors/normalizeError";
+import { retryTransient } from "../errors/retryTransient";
 import type { RivieraIdentityEnsureResult } from "./careerIdentity.types";
 
 export type { RivieraIdentityEnsureResult } from "./careerIdentity.types";
@@ -56,10 +58,19 @@ export async function ensureRivieraIdentity(
   const id = rivieraJugadorId?.trim();
   if (!id) return null;
 
-  const { data, error } = await supabase.rpc("ensure_riviera_identity", {
-    p_riviera_jugador_id: id,
-  });
+  // Reintento solo ante fallos transitorios de red: esta RPC se invoca por
+  // jugador al cerrar un evento y un blip bloqueaba el cierre completo.
+  return retryTransient(
+    async () => {
+      const { data, error } = await supabase.rpc("ensure_riviera_identity", {
+        p_riviera_jugador_id: id,
+      });
 
-  if (error) throw error;
-  return parseEnsureResult(data);
+      // Se relanza como Error real (no el objeto crudo de PostgREST) para que
+      // ningún consumidor pueda mostrarlo como "[object Object]".
+      if (error) throw toError(error, "ensure_riviera_identity");
+      return parseEnsureResult(data);
+    },
+    { label: `ensure_riviera_identity(${id})` }
+  );
 }

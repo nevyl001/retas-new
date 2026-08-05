@@ -1,4 +1,5 @@
 import { GAME_MODES } from "../components/home/gameModesConfig";
+import { errorMessage } from "./errors/normalizeError";
 import { getDuelos2v2 } from "../services/duelo2v2Service";
 import type { Duelo2v2 } from "./duelo2v2/types";
 import {
@@ -40,9 +41,15 @@ export async function loadUserRetasForHome(userId: string): Promise<HomeRetaItem
   ]);
 
   const homeTournaments = filterRetasForHomeDisplay(tournaments ?? []);
+  // La config pública es solo enriquecimiento (flags/branding de vista
+  // pública). Si falla, la lista debe mostrarse igual: antes su error
+  // rechazaba toda la carga y el organizador no veía ninguna reta.
   const publicConfigs = await getTournamentsPublicConfigsByIds(
     homeTournaments.map((tournament) => tournament.id)
-  );
+  ).catch((e) => {
+    console.warn("[retas-list] public configs no disponibles:", errorMessage(e));
+    return new Map<string, never>();
+  });
   const enrichedTournaments = homeTournaments.map((tournament) =>
     mergeTournamentWithPublicConfig(tournament, publicConfigs.get(tournament.id))
   );

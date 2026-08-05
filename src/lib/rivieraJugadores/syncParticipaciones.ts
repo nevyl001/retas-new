@@ -1,6 +1,7 @@
 import type { Match, Pair, Tournament } from "../db/types";
 import type { AmericanoPlayer, AmericanoRound } from "../db/types";
 import { isValidUuid } from "../db/schemaHelpers";
+import { errorMessageWithCode } from "../errors/normalizeError";
 import { getGames, getMatches, getPairs, getTournaments } from "../database";
 import { computeJornadaPublicStats } from "../liga/jornadaStats";
 import { formatLugarOrdinal } from "./historialDisplay";
@@ -432,7 +433,27 @@ async function safeRegistrar(params: {
     if (msg.includes("No autorizado para registrar participación")) {
       return;
     }
-    console.error("[riviera-jugadores] safeRegistrar:", e);
+    console.error("[riviera-jugadores] safeRegistrar:", {
+      jugadorId: params.jugadorId,
+      tipoEvento: params.tipoEvento,
+      eventoId: params.eventoId,
+      code:
+        e && typeof e === "object" && "code" in e
+          ? String((e as { code?: string }).code ?? "")
+          : undefined,
+      message: msg,
+      details:
+        e && typeof e === "object" && "details" in e
+          ? (e as { details?: unknown }).details
+          : undefined,
+      hint:
+        e && typeof e === "object" && "hint" in e
+          ? (e as { hint?: unknown }).hint
+          : undefined,
+    });
+    // No silenciar: el pipeline de cierre debe fallar con syncFailures
+    // accionables (PGRST202, RLS, etc.), no seguir como si hubiera escrito.
+    throw e;
   }
 }
 
@@ -1205,7 +1226,7 @@ export async function syncRetaParticipaciones(params: {
       syncFailures: [
         {
           code: "sync_failed",
-          message: e instanceof Error ? e.message : String(e),
+          message: errorMessageWithCode(e),
         },
       ],
     };

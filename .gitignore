@@ -14,6 +14,7 @@ build
 .env.backup
 .env.old
 .env.*.local
+.env.local.*
 !.env.example
 
 # Claude Code — configuración personal, no compartida

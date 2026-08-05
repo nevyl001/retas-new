@@ -1,4 +1,5 @@
 import { supabase } from "../supabaseClient";
+import { errorMessageWithCode } from "../errors/normalizeError";
 import { debugWarn } from "../debug/debugLog";
 
 const TEMP_ROMC_LOG_PREFIX = "TEMP_MULTICLUB_ROMC_2_2";
@@ -169,7 +170,7 @@ export async function tryWriteRivieraOfficialLedger(
 
     return parsed;
   } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
+    const message = errorMessageWithCode(e);
     logRomcPhase22({
       action: "ledger_exception",
       participacionId,

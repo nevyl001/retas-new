@@ -99,6 +99,62 @@ describe("collectProspectiveJugadorRefs — tipado de IDs", () => {
     expect(refs.every((r) => r.legacyLigaJugadorId === undefined)).toBe(true);
   });
 
+  it("Reta: deduplica al mismo players.id repetido en varias parejas", () => {
+    // Caso real (Batalla Equipos, 2026-08-05): en round robin / equipos el
+    // mismo jugador aparece en varias parejas. Sin dedup se resolvía su
+    // identidad una vez por pareja, multiplicando las llamadas del cierre.
+    const input: FinalizeCareerEventInput = {
+      kind: "reta",
+      organizadorId: "org",
+      tournament: { id: "t1", name: "Reta", is_finished: false } as never,
+      pairs: [
+        pair("said", "Said C", "nevyl", "Nevyl"),
+        pair("said", "Said C", "hector", "Hector"),
+        pair("said", "Said C", "eduardo", "Eduardo L"),
+        pair("nevyl", "Nevyl", "hector", "Hector"),
+      ],
+      matches: [],
+    };
+
+    const refs = collectProspectiveJugadorRefs(input);
+
+    expect(refs.map((r) => r.legacyPlayerId)).toEqual([
+      "said",
+      "nevyl",
+      "hector",
+      "eduardo",
+    ]);
+    // 8 pushes → 4 refs únicas.
+    expect(refs).toHaveLength(4);
+  });
+
+  it("Duelo: deduplica el mismo riviera_jugadores.id repetido", () => {
+    const duelo = {
+      id: "d1",
+      organizador_id: "org",
+      pareja_a_j1_id: "riviera-1",
+      pareja_a_j2_id: "riviera-2",
+      pareja_a_j1_nombre: "A1",
+      pareja_a_j2_nombre: "A2",
+      pareja_b_j1_id: "riviera-1",
+      pareja_b_j2_id: "riviera-3",
+      pareja_b_j1_nombre: "A1",
+      pareja_b_j2_nombre: "B2",
+    } as Duelo2v2;
+
+    const refs = collectProspectiveJugadorRefs({
+      kind: "duelo_2v2",
+      organizadorId: "org",
+      duelo,
+    });
+
+    expect(refs.map((r) => r.jugadorId)).toEqual([
+      "riviera-1",
+      "riviera-2",
+      "riviera-3",
+    ]);
+  });
+
   it("Americano: roster.id como legacyPlayerId", () => {
     const refs = collectProspectiveJugadorRefs({
       kind: "americano",

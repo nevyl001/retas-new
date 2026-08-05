@@ -119,14 +119,61 @@ describe("ensureRivieraIdentity", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("propaga error de RPC", async () => {
+  // El error se relanza como Error real (no el objeto crudo de PostgREST):
+  // antes cualquier consumidor que hiciera String(error) mostraba
+  // "[object Object]" al organizador (incidente 2026-08-05).
+  it("propaga error de RPC como Error con mensaje legible", async () => {
     mockRpc.mockResolvedValue({
       data: null,
       error: { message: "Sin permiso" },
     });
 
+    const promise = ensureRivieraIdentity(BASE_PAYLOAD.riviera_jugador_id);
+
+    await expect(promise).rejects.toBeInstanceOf(Error);
+    await expect(promise).rejects.toThrow(/Sin permiso/);
+  });
+
+  it("conserva el code del error y no lo reintenta si es determinista", async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: "denied", code: "42501" },
+    });
+
     await expect(
       ensureRivieraIdentity(BASE_PAYLOAD.riviera_jugador_id)
-    ).rejects.toEqual({ message: "Sin permiso" });
+    ).rejects.toMatchObject({ code: "42501" });
+
+    // Un error de permisos no se reintenta: una sola llamada.
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("reintenta un fallo transitorio de red y termina bien", async () => {
+    mockRpc
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValue({ data: BASE_PAYLOAD, error: null });
+
+    const result = await ensureRivieraIdentity(BASE_PAYLOAD.riviera_jugador_id);
+
+    expect(result?.officialPlayerKey).toBe(BASE_PAYLOAD.official_player_key);
+    expect(mockRpc).toHaveBeenCalledTimes(2);
+  });
+
+  it("nunca produce [object Object] al formatear el error", async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "PGRST202", message: "Could not find the function" },
+    });
+
+    const captured = await ensureRivieraIdentity(
+      BASE_PAYLOAD.riviera_jugador_id
+    ).then(
+      () => null,
+      (e: unknown) => String(e)
+    );
+
+    expect(captured).not.toBeNull();
+    expect(captured).not.toContain("[object Object]");
+    expect(captured).toContain("Could not find the function");
   });
 });

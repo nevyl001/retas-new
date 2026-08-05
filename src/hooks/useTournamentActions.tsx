@@ -26,6 +26,7 @@ import {
   ensureTournamentStartedIfMatchesExist,
   recoverAlreadyClaimedDynamicStart,
 } from "../lib/reta/syncTournamentStartedState";
+import { validateRetaParticipants } from "../lib/reta/validateRetaParticipants";
 
 type DynamicLineupsStartOpts = {
   enabled: boolean;
@@ -325,6 +326,42 @@ export const useTournamentActions = (
     try {
       setLoading(true);
       setError("");
+
+      // Gate de identidad (incidente 2026-08-05, "Said C"): un jugador que no
+      // puede cerrar la reta tampoco debe poder empezarla. Misma regla que ya
+      // corre al finalizar (validateCareerEventPreClose); si falla acá, cero
+      // partidos, cero bloques dinámicos, cero estado parcial.
+      const participantsCheck = await validateRetaParticipants({
+        tournament: selectedTournament,
+        pairs,
+        organizadorId: userId,
+      });
+      if (!participantsCheck.ok) {
+        // Un fallo técnico (red/RLS/RPC) no debe acusar al jugador de no tener
+        // identidad: es reintentable y el mensaje debe decirlo.
+        const identityProblems = participantsCheck.invalidPlayers.filter(
+          (p) => p.isIdentityProblem
+        );
+        const msg = participantsCheck.onlyTechnicalFailures
+          ? `No se pudo verificar a los jugadores por un problema de conexión ` +
+            `o permisos. Intenta de nuevo.\n\n` +
+            participantsCheck.invalidPlayers
+              .map((p) => p.reason)
+              .slice(0, 3)
+              .join("\n")
+          : `No se puede iniciar la reta: ${identityProblems.length} ` +
+            `jugador(es) sin identidad Riviera válida ` +
+            `(${identityProblems.map((p) => p.displayName).join(", ")}). ` +
+            `Vuelve a seleccionarlos o vincula su Riviera ID.`;
+        console.warn("[tournament-actions] inicio bloqueado por identidad:", {
+          tournamentId: selectedTournament.id,
+          invalidPlayers: participantsCheck.invalidPlayers,
+        });
+        setError(msg);
+        showToast(msg, "error");
+        setLoading(false);
+        return;
+      }
 
       debugLog("[tournament-actions] iniciando reta:", {
         nombre: selectedTournament.name,

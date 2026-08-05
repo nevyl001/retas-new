@@ -1,4 +1,6 @@
 import { supabase } from "../supabaseClient";
+import { errorMessage, toError } from "../errors/normalizeError";
+import { isTransientError, retryTransient } from "../errors/retryTransient";
 import {
   CareerIntegrityException,
   mapConfidenceToIntegrityCode,
@@ -94,13 +96,25 @@ export async function ensureOfficialProfileLinkForParticipacion(
     };
   }
 
-  const { data, error } = await supabase.rpc(
-    "ensure_official_profile_link_for_participacion",
-    {
-      p_jugador_id: id,
-      p_organizador_id: org || null,
-    }
-  );
+  // Reintento acotado solo para fallos transitorios (ver retryTransient):
+  // esta RPC corre por jugador al cerrar y un blip de red hacía fallar el
+  // cierre entero con un mensaje engañoso de "identidad inválida".
+  const { data, error } = await retryTransient(
+    async () => {
+      const response = await supabase.rpc(
+        "ensure_official_profile_link_for_participacion",
+        {
+          p_jugador_id: id,
+          p_organizador_id: org || null,
+        }
+      );
+      if (response.error && isTransientError(response.error)) {
+        throw toError(response.error, "ensure_official_profile_link");
+      }
+      return response;
+    },
+    { label: `ensure_official_profile_link(${id})` }
+  ).catch((e) => ({ data: null, error: e as { message?: string } }));
 
   if (error) {
     if (isMissingLinkRpcError(error)) {
@@ -116,7 +130,7 @@ export async function ensureOfficialProfileLinkForParticipacion(
     return {
       linked: false,
       confidence: "LOW",
-      reason: error.message,
+      reason: errorMessage(error),
       actionSugerida: "INSUFFICIENT_EVIDENCE",
       jugadorId: id,
     };

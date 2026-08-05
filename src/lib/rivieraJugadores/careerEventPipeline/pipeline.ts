@@ -1,4 +1,5 @@
 import { clearOrganizerDisplayNameCache } from "../../organizer/organizerDisplayName";
+import { errorLogPayload, errorMessage } from "../../errors/normalizeError";
 import { isCareerIntegrityException } from "../careerIntegrity";
 import { prepareParticipacionIdentityForOrganizer } from "../jugadorIdResolver";
 import { resolveJugadorIdForParticipacion } from "../jugadorIdResolver";
@@ -62,9 +63,9 @@ function integrityFailureFromError(
   }
   return {
     code: "career_integrity_blocked",
-    message: error instanceof Error ? error.message : String(error),
+    message: errorMessage(error),
     severity: "critical",
-    details: { kind: input.kind },
+    details: { kind: input.kind, ...errorLogPayload(error) },
   };
 }
 

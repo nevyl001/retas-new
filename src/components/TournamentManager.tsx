@@ -27,6 +27,9 @@ import {
   type HomeRetaItem,
   type RetaFilterId,
 } from "../lib/retasList";
+import { errorLogPayload, errorMessage } from "../lib/errors/normalizeError";
+import { retryTransient } from "../lib/errors/retryTransient";
+import { withTimeout } from "../lib/async/withTimeout";
 import { archiveDuelo2v2 } from "../services/duelo2v2Service";
 import { duelo2v2GestionarPath, navigateDuelo2v2 } from "./duelo-2v2/duelo2v2Nav";
 import { useClubModeEyebrow } from "../club-experience";
@@ -40,6 +43,15 @@ import "./mis-retas/mis-retas.css";
 
 const ARCHIVE_RETA_CONFIRM =
   "Esta reta dejará de aparecer en Mis retas, pero el resultado, los puntos, el rating y el historial de los jugadores se conservarán.";
+
+/** Techo de espera de la lista: nunca dejar el spinner sin salida. */
+const LIST_LOAD_TIMEOUT_MS = 20_000;
+/**
+ * Techo del cierre completo (participaciones + ledger + rating + carrera).
+ * Generoso porque son muchas escrituras, pero acotado: todas son idempotentes,
+ * así que expirar y reintentar no duplica nada.
+ */
+const FINISH_TIMEOUT_MS = 180_000;
 
 interface TournamentManagerProps {
   onTournamentSelect: (tournament: Tournament | null) => void;
@@ -57,15 +69,22 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   const [retas, setRetas] = useState<HomeRetaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [reloadToken, setReloadToken] = useState(0);
   const [filter, setFilter] = useState<RetaFilterId>("all");
   const [deletingIds, setDeletingIds] = useState<Set<string>>(() => new Set());
+  // Finalizar NO usa `loading` (el del skeleton de la lista): al compartirlo, un
+  // cierre lento dejaba toda la vista en "Cargando retas…" sin salida.
+  const [finishingIds, setFinishingIds] = useState<Set<string>>(() => new Set());
 
   const reloadRetas = async () => {
     if (!user?.id) {
       setRetas([]);
       return;
     }
-    const data = await loadUserRetasForHome(user.id);
+    const data = await withTimeout(loadUserRetasForHome(user.id), {
+      timeoutMs: LIST_LOAD_TIMEOUT_MS,
+      label: "La carga de retas",
+    });
     setRetas(data);
   };
 
@@ -77,26 +96,52 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     }
 
     let isMounted = true;
+    const userId = user.id;
 
     const loadRetas = async () => {
       try {
         setLoading(true);
-        const data = await loadUserRetasForHome(user.id);
+        setError("");
+        // Timeout obligatorio: `fetch` no expira por su cuenta, así que una
+        // conexión colgada dejaba el spinner encendido para siempre.
+        const data = await withTimeout(loadUserRetasForHome(userId), {
+          timeoutMs: LIST_LOAD_TIMEOUT_MS,
+          label: "La carga de retas",
+        });
         if (!isMounted) return;
         setRetas(data);
       } catch (err) {
         if (!isMounted) return;
-        console.error("Error al cargar retas:", err);
-        setError("Error al cargar las retas");
-        setRetas([]);
+        console.error("Error al cargar retas:", errorLogPayload(err), err);
+        setError(
+          `No se pudieron cargar las retas. ${errorMessage(err)}`
+        );
       } finally {
+        // Se apaga el spinner siempre, incluso si la petición falló o expiró.
         if (isMounted) setLoading(false);
       }
     };
 
-    loadRetas();
+    void loadRetas();
     return () => {
       isMounted = false;
+    };
+  }, [user?.id, reloadToken]);
+
+  // Al volver del segundo plano (móvil suspende pestañas y puede congelar
+  // peticiones en vuelo) se refresca la lista: así una reta que el backend ya
+  // cerró deja de mostrarse "En curso".
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      setReloadToken((token) => token + 1);
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [user?.id]);
 
@@ -154,12 +199,8 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         onTournamentSelect(null);
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Error al archivar la reta. Se actualizó la lista."
-      );
-      console.error(err);
+      setError(`No se pudo archivar la reta. ${errorMessage(err)}`);
+      console.error("Error al archivar reta:", errorLogPayload(err), err);
       try {
         await reloadRetas();
       } catch (reloadErr) {
@@ -175,6 +216,11 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
   };
 
   const handleFinishTournament = async (tournament: Tournament) => {
+    // Guarda de doble click / doble submit: el cierre es idempotente en BD,
+    // pero lanzarlo dos veces en paralelo duplica trabajo y puede producir
+    // mensajes contradictorios en la UI.
+    if (finishingIds.has(tournament.id)) return;
+
     if (
       !window.confirm(
         "¿Estás seguro de que quieres finalizar la reta? Esta acción no se puede deshacer."
@@ -183,54 +229,25 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       return;
     }
 
-    try {
-      setError("");
-      setLoading(true);
+    if (!user?.id) {
+      const msg = "No se pudo cerrar la reta: sesión no disponible.";
+      setError(msg);
+      alert(msg);
+      return;
+    }
+    const userId = user.id;
 
-      if (!user?.id) {
-        const msg = "No se pudo cerrar la reta: sesión no disponible.";
-        setError(msg);
-        alert(msg);
-        return;
-      }
+    setFinishingIds((prev) => new Set(prev).add(tournament.id));
+    setError("");
 
-      const [pairs, matches] = await Promise.all([
-        getPairs(tournament.id),
-        getMatches(tournament.id),
-      ]);
-
-      let pipelineResult: CareerEventPipelineResult;
-      try {
-        pipelineResult = await finalizeCareerEvent({
-          kind: "reta",
-          organizadorId: user.id,
-          tournament: { ...tournament, is_finished: true },
-          pairs,
-          matches,
-        });
-      } catch (syncErr) {
-        const detail =
-          syncErr instanceof Error ? syncErr.message : String(syncErr);
-        console.warn("[career-event-pipeline] reta sync error:", syncErr);
-        const msg = `No se pudo cerrar la reta. Intenta de nuevo.\n\n${detail}`;
-        setError(msg);
-        alert(msg);
-        return;
-      }
-
-      if (!pipelineResult.ok) {
-        const msg = formatCareerPipelineFailureMessage(
-          pipelineResult,
-          tournament.name
-        );
-        console.warn("[career-event-pipeline] reta incompleta:", pipelineResult);
-        setError(msg);
-        alert(msg);
-        return;
-      }
-
-      await updateTournament(tournament.id, { is_finished: true });
-
+    // Marca is_finished cuando la carrera ya quedó sincronizada. Se separa del
+    // pipeline para poder reintentar SOLO este paso: si el pipeline terminó y
+    // este UPDATE falló, la reta quedaba "En curso" con la carrera ya escrita.
+    const markFinished = async () => {
+      await retryTransient(
+        () => updateTournament(tournament.id, { is_finished: true }),
+        { label: `updateTournament(${tournament.id})` }
+      );
       setRetas((prev) =>
         prev.map((item) =>
           item.kind === "tournament" && item.tournament.id === tournament.id
@@ -241,16 +258,62 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
       if (selectedTournament?.id === tournament.id) {
         onTournamentSelect({ ...tournament, is_finished: true });
       }
+    };
 
+    try {
+      const [pairs, matches] = await Promise.all([
+        getPairs(tournament.id),
+        getMatches(tournament.id),
+      ]);
+
+      const pipelineResult: CareerEventPipelineResult = await withTimeout(
+        finalizeCareerEvent({
+          kind: "reta",
+          organizadorId: userId,
+          tournament: { ...tournament, is_finished: true },
+          pairs,
+          matches,
+        }),
+        { timeoutMs: FINISH_TIMEOUT_MS, label: "El cierre de la reta" }
+      );
+
+      if (!pipelineResult.ok) {
+        const msg = formatCareerPipelineFailureMessage(
+          pipelineResult,
+          tournament.name
+        );
+        console.warn("[career-event-pipeline] reta incompleta:", pipelineResult);
+        setError(msg);
+        alert(msg);
+        // El estado real puede haber avanzado parcialmente: se resincroniza la
+        // lista para no mostrar información obsoleta.
+        await reloadRetas().catch((reloadErr) => {
+          console.error("Error al recargar retas:", errorLogPayload(reloadErr));
+        });
+        return;
+      }
+
+      await markFinished();
       alert(formatCareerPipelineSuccessMessage(pipelineResult, tournament.name));
     } catch (err) {
-      console.error("Error finalizando reta:", err);
-      const detail = err instanceof Error ? err.message : String(err);
-      const msg = `No se pudo cerrar la reta. Intenta de nuevo.\n\n${detail}`;
+      console.error("Error finalizando reta:", errorLogPayload(err), err);
+      const msg =
+        `No se pudo cerrar «${tournament.name}».\n\n${errorMessage(err)}\n\n` +
+        `Los resultados guardados no se pierden. Puedes volver a pulsar ` +
+        `Finalizar: el proceso continúa desde donde quedó.`;
       setError(msg);
       alert(msg);
+      // Puede que el backend sí haya terminado (p. ej. timeout del cliente):
+      // se relee el estado real en vez de dejar la tarjeta desactualizada.
+      await reloadRetas().catch((reloadErr) => {
+        console.error("Error al recargar retas:", errorLogPayload(reloadErr));
+      });
     } finally {
-      setLoading(false);
+      setFinishingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(tournament.id);
+        return next;
+      });
     }
   };
 
@@ -338,6 +401,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                 : item.duelo.estado === "en_juego";
             const retaId = getRetaId(item);
             const isDeleting = deletingIds.has(retaId);
+            const isFinishing = finishingIds.has(retaId);
             const statusCardClass = finished
               ? "mis-reta-card--status-finished"
               : active
@@ -411,13 +475,14 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                           type="button"
                           variant="secondary"
                           size="sm"
-                          disabled={loading}
+                          disabled={isFinishing}
+                          aria-busy={isFinishing}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleFinishTournament(item.tournament);
+                            void handleFinishTournament(item.tournament);
                           }}
                         >
-                          Finalizar
+                          {isFinishing ? "Finalizando…" : "Finalizar"}
                         </Button>
                       )}
                     <button
@@ -425,7 +490,7 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                       className="riviera-btn-danger-icon mis-reta-card__delete"
                       aria-label="Archivar reta"
                       title="Archivar reta"
-                      disabled={isDeleting || loading}
+                      disabled={isDeleting || isFinishing}
                       onPointerDown={(e) => {
                         e.stopPropagation();
                       }}

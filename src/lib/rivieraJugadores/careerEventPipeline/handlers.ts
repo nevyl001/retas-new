@@ -1,3 +1,4 @@
+import { errorLogPayload, errorMessageWithCode } from "../../errors/normalizeError";
 import type { CareerEventContext, FinalizeCareerEventInput } from "./types";
 import { CAREER_EVENT_KIND_TO_TIPO } from "./types";
 import { isCareerIntegrityException } from "../careerIntegrity";
@@ -142,11 +143,8 @@ export async function runCareerEventSync(
     if (isCareerIntegrityException(e)) {
       throw e;
     }
-    syncError =
-      e && typeof e === "object" && "message" in e
-        ? String((e as { message?: string }).message)
-        : String(e);
-    console.error("[career-event-pipeline:sync]", syncError, e);
+    syncError = errorMessageWithCode(e);
+    console.error("[career-event-pipeline:sync]", errorLogPayload(e), e);
   }
 
   if (touchedJugadorIds.length === 0 && eventoId) {
