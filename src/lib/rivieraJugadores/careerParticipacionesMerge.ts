@@ -41,15 +41,17 @@ export async function mergeCareerParticipacionesForIdentity(
   const ids = careerProfileIdsForIdentity(identity);
   if (ids.length === 0) return [];
 
+  // Las dos lecturas son independientes (ninguna depende del resultado de
+  // la otra) -- se piden en paralelo en vez de una tras otra (incidente de
+  // rendimiento de la ficha pública, 2026-08-05). El merge/dedupe de abajo
+  // no cambia: mismo resultado, solo se espera menos tiempo por él.
+  const [byIds, careerRows] = await Promise.all([
+    listParticipacionesForJugadorIds(ids, limit),
+    listCareerParticipacionesPublic(identity.anchorJugadorId, limit),
+  ]);
+
   const sources: JugadorParticipacion[][] = [];
-
-  const byIds = await listParticipacionesForJugadorIds(ids, limit);
   if (byIds?.length) sources.push(byIds);
-
-  const careerRows = await listCareerParticipacionesPublic(
-    identity.anchorJugadorId,
-    limit
-  );
   if (careerRows?.length) sources.push(careerRows);
 
   const merged = dedupeParticipacionesById(sources.flat());

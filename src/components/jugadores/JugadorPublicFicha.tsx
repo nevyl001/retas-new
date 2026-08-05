@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ClubExperienceScope,
   getOrganizerCelebrateTagline,
@@ -14,6 +14,8 @@ import {
   participacionToHistorialItem,
 } from "../../lib/rivieraJugadores/historialDisplay";
 import { getPublicPlayerProfileData } from "../../lib/rivieraJugadores/getPublicPlayerProfileData";
+import { withTimeout } from "../../lib/async/withTimeout";
+import { errorLogPayload, errorMessage } from "../../lib/errors/normalizeError";
 import { prefetchOrganizerDisplayNames } from "../../lib/rivieraJugadores/grantedRankingDisplay";
 import {
   rankingLabelForPublicFicha,
@@ -81,6 +83,31 @@ function FichaSkeleton() {
   );
 }
 
+/**
+ * Techo de espera: nunca dejar el skeleton sin salida (incidente de
+ * rendimiento 2026-08-05, ficha pública tardando 15s+). No cancela el
+ * trabajo real del servidor -- withTimeout solo acota cuánto espera este
+ * componente antes de mostrar un error con reintento.
+ */
+const LOAD_TIMEOUT_MS = 20_000;
+
+/**
+ * Corre `fn`, pero descarta el resultado si ya no es la carga vigente (evita
+ * que un doble-invoke de React StrictMode, o un cambio rápido de slug/org,
+ * deje una respuesta vieja pisando una más nueva). `getPublicPlayerProfileData`
+ * no soporta AbortSignal hoy -- esto no cancela la red, solo protege el
+ * setState final.
+ */
+function useLatestGuard() {
+  const tokenRef = useRef(0);
+  const next = useCallback(() => {
+    tokenRef.current += 1;
+    const token = tokenRef.current;
+    return () => token === tokenRef.current;
+  }, []);
+  return next;
+}
+
 export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   slug,
   playerId,
@@ -95,16 +122,24 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [rankingPos, setRankingPos] = useState<number | null>(null);
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const nextLoadToken = useLatestGuard();
 
   const load = useCallback(async () => {
+    const isCurrent = nextLoadToken();
     setLoading(true);
+    setLoadError(null);
     try {
-      const profile = await getPublicPlayerProfileData({
-        playerId,
-        slug,
-        viewingOrgId,
-        ratingRpc: viewingOrgId ? PUBLIC_ORGANIZER_RPC_FALLBACK : undefined,
-      });
+      const profile = await withTimeout(
+        getPublicPlayerProfileData({
+          playerId,
+          slug,
+          viewingOrgId,
+          ratingRpc: viewingOrgId ? PUBLIC_ORGANIZER_RPC_FALLBACK : undefined,
+        }),
+        { timeoutMs: LOAD_TIMEOUT_MS, label: "El perfil del jugador" }
+      );
+      if (!isCurrent()) return;
 
       if (!profile) {
         setJugador(null);
@@ -116,6 +151,8 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       }
 
       // Evita flash con labels fallback («Riviera Open»): nombres antes de pintar.
+      // Falla no crítica: si esto tarda o falla, el perfil igual debe mostrarse
+      // (con el nombre de club que ya esté en caché) en vez de quedar vacío.
       await prefetchOrganizerDisplayNames([
         profile.viewingOrgId,
         profile.identity.homeOrganizadorId,
@@ -126,7 +163,13 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         ...(profile.jugador.pointsBreakdown?.pointsByClub.map(
           (c) => c.organizador_id
         ) ?? []),
-      ]);
+      ]).catch((e) => {
+        console.warn(
+          "[JugadorPublicFicha] prefetchOrganizerDisplayNames:",
+          errorLogPayload(e)
+        );
+      });
+      if (!isCurrent()) return;
 
       setJugador(profile.jugador);
       setHasOrgContext(profile.hasOrgContext);
@@ -135,19 +178,24 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       setHistorialRating(profile.historialRating);
       setRankingPos(profile.localRankingPos);
     } catch (e) {
-      console.warn("[JugadorPublicFicha] load:", e);
+      if (!isCurrent()) return;
+      console.warn("[JugadorPublicFicha] load:", errorLogPayload(e));
+      setLoadError(`No se pudo cargar el perfil. ${errorMessage(e)}`);
       setJugador(null);
       setRankingPos(null);
       setHistorial([]);
       setHistorialOtrosClubes([]);
       setHistorialRating([]);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [slug, viewingOrgId, playerId]);
+  }, [slug, viewingOrgId, playerId, nextLoadToken]);
 
   useEffect(() => {
     void load();
+    // load() ya se auto-descarta si queda obsoleto (useLatestGuard, protege
+    // contra el doble-invoke de React StrictMode y cambios rápidos de
+    // slug/org) -- no hace falta cleanup de cancelación aquí.
   }, [load]);
 
   const rankingUrl = hasOrgContext
@@ -170,43 +218,60 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     [historial, historialOtrosClubes]
   );
 
-  const historialItems = useMemo(
-    () =>
-      filterParticipacionesHistorialVisible(historialCompleto)
+  // Falla en la derivación de "últimos resultados"/stats (dato secundario)
+  // no debe tumbar la ficha completa (nombre/ranking/puntos ya cargados) --
+  // se degrada esa sección sola en vez de dejar la página entera en blanco.
+  const historialItems = useMemo(() => {
+    try {
+      return filterParticipacionesHistorialVisible(historialCompleto)
         .map((row) =>
           participacionToHistorialItem(row, {
             categoriaFallback: jugador?.categoria,
           })
         )
-        .sort((a, b) => b.fecha.localeCompare(a.fecha)),
-    [historialCompleto, jugador?.categoria]
-  );
+        .sort((a, b) => b.fecha.localeCompare(a.fecha));
+    } catch (e) {
+      console.warn("[JugadorPublicFicha] historialItems:", errorLogPayload(e));
+      return [];
+    }
+  }, [historialCompleto, jugador?.categoria]);
 
   const profileStats = useMemo(() => {
-    const fromHist = computePublicProfileStats(historialCompleto);
-    const tieneHistorial = historialCompleto.length > 0;
-    const victorias = tieneHistorial
-      ? fromHist.partidosGanados
-      : jugador?.stats?.victorias ?? 0;
-    const perdidas = tieneHistorial
-      ? fromHist.partidosPerdidos
-      : jugador?.stats?.derrotas ?? 0;
-    const winRate =
-      victorias + perdidas > 0
-        ? Math.round((victorias / (victorias + perdidas)) * 100)
-        : null;
+    try {
+      const fromHist = computePublicProfileStats(historialCompleto);
+      const tieneHistorial = historialCompleto.length > 0;
+      const victorias = tieneHistorial
+        ? fromHist.partidosGanados
+        : jugador?.stats?.victorias ?? 0;
+      const perdidas = tieneHistorial
+        ? fromHist.partidosPerdidos
+        : jugador?.stats?.derrotas ?? 0;
+      const winRate =
+        victorias + perdidas > 0
+          ? Math.round((victorias / (victorias + perdidas)) * 100)
+          : null;
 
-    return {
-      torneosExpress: tieneHistorial
-        ? fromHist.torneosExpress
-        : jugador?.stats?.total_torneos_express ?? 0,
-      eventosJugados: tieneHistorial
-        ? fromHist.eventosJugados
-        : jugador?.stats?.total_partidos ?? 0,
-      victorias,
-      partidosPerdidos: perdidas,
-      winRate,
-    };
+      return {
+        torneosExpress: tieneHistorial
+          ? fromHist.torneosExpress
+          : jugador?.stats?.total_torneos_express ?? 0,
+        eventosJugados: tieneHistorial
+          ? fromHist.eventosJugados
+          : jugador?.stats?.total_partidos ?? 0,
+        victorias,
+        partidosPerdidos: perdidas,
+        winRate,
+      };
+    } catch (e) {
+      console.warn("[JugadorPublicFicha] profileStats:", errorLogPayload(e));
+      return {
+        torneosExpress: 0,
+        eventosJugados: 0,
+        victorias: 0,
+        partidosPerdidos: 0,
+        winRate: null as number | null,
+      };
+    }
   }, [historialCompleto, jugador?.stats]);
 
   const recentActivity = useMemo(() => historialItems.slice(0, 3), [historialItems]);
@@ -237,11 +302,20 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
       >
         <JugadoresPublicShell variant="ficha">
           <FichaTopbar rankingUrl={rankingUrl} />
-          <p className="rjp-ficha-empty">
-            {viewingOrgId
-              ? "Jugador no encontrado en este club."
-              : "Jugador no encontrado o no está visible al público."}
-          </p>
+          {loadError ? (
+            <div className="rjp-ficha-empty" role="alert">
+              <p>{loadError}</p>
+              <button type="button" className="riviera-btn-secondary" onClick={() => void load()}>
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <p className="rjp-ficha-empty">
+              {viewingOrgId
+                ? "Jugador no encontrado en este club."
+                : "Jugador no encontrado o no está visible al público."}
+            </p>
+          )}
         </JugadoresPublicShell>
       </ClubExperienceScope>
     );

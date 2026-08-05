@@ -168,4 +168,40 @@ describe("mergeCareerParticipacionesForIdentity", () => {
     expect(merged).toHaveLength(2);
     expect(merged.some((r) => r.metadata?.organizador_id === RIVIERA)).toBe(true);
   });
+
+  it("pide las dos fuentes en paralelo, no una tras otra (incidente de rendimiento 2026-08-05)", async () => {
+    const order: string[] = [];
+    (listParticipacionesForJugadorIds as jest.Mock).mockImplementation(() => {
+      order.push("byIds:start");
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          order.push("byIds:end");
+          resolve([]);
+        }, 10);
+      });
+    });
+    (listCareerParticipacionesPublic as jest.Mock).mockImplementation(() => {
+      order.push("career:start");
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          order.push("career:end");
+          resolve([]);
+        }, 10);
+      });
+    });
+
+    await mergeCareerParticipacionesForIdentity(
+      {
+        canonicalJugadorId: CANONICAL,
+        anchorJugadorId: CANONICAL,
+        linkedJugadorIds: [CANONICAL],
+        viewingOrganizadorId: null,
+      },
+      100
+    );
+
+    // Si fuera secuencial, "career:start" solo aparecería después de
+    // "byIds:end". En paralelo, ambos "start" ocurren antes que cualquier "end".
+    expect(order.slice(0, 2).sort()).toEqual(["byIds:start", "career:start"]);
+  });
 });

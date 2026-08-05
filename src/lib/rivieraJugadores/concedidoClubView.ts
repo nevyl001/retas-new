@@ -1,5 +1,10 @@
 import { supabase, supabasePublicRead } from "../supabaseClient";
-import { findGrantedAccessMetaForJugador } from "./organizerPlayerAccess";
+import {
+  findGrantedAccessMetaForJugador,
+  listActiveGrantedAccessForOrganizerPublic,
+  listOrganizerPlayerAccessRowsForJugadorIds,
+  type FindGrantedAccessMetaOptions,
+} from "./organizerPlayerAccess";
 import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
 import type { JugadorStats, RivieraJugadorWithStats } from "./types";
 import {
@@ -112,8 +117,35 @@ export async function enrichJugadoresConcedidoClubViewBatch(
 
   // Ranking / ficha pública: degradar a grants + RLS, nunca RPC auth-only.
   if (options?.publicRpcContext) {
+    // El grant list del organizador no depende del jugador -- se pedía una
+    // vez POR CADA jugador del roster (N llamadas a list_public_grants_for_
+    // ranking + hasta N consultas directas a organizer_player_access), que
+    // era la causa dominante de los ~15s de carga de la ficha pública en
+    // clubes con roster grande (incidente 2026-08-05). Se resuelve una sola
+    // vez para todo el roster y se reutiliza -- mismo resultado, mismo
+    // predicado que antes, solo que pedido 1 vez en vez de N.
+    const preloadedGrants = await listActiveGrantedAccessForOrganizerPublic(org);
+    const knownIds = new Set(
+      preloadedGrants.flatMap((g) =>
+        [g.jugador_id, g.local_jugador_id].filter(
+          (id): id is string => Boolean(id)
+        )
+      )
+    );
+    const missingIds = jugadores
+      .map((j) => j.id)
+      .filter((id) => !knownIds.has(id));
+    const fallbackRows = missingIds.length
+      ? await listOrganizerPlayerAccessRowsForJugadorIds(org, missingIds)
+      : [];
+    const grantsContext: FindGrantedAccessMetaOptions = {
+      preloadedGrants: [...preloadedGrants, ...fallbackRows],
+      grantsFullyResolved: true,
+    };
     return Promise.all(
-      jugadores.map((j) => enrichJugadorConcedidoClubView(org, j, { rpc: options }))
+      jugadores.map((j) =>
+        enrichJugadorConcedidoClubView(org, j, { rpc: options, grantsContext })
+      )
     );
   }
 
@@ -203,25 +235,29 @@ export async function fetchConcedidoClubMeta(
 
 async function fetchOrigenStatsPublic(
   sourceJugadorId: string
-): Promise<JugadorStats | null> {
+): Promise<Pick<JugadorStats, "jugador_id" | "puntos_totales"> | null> {
+  // Solo puntos_totales se lee en el llamador (línea de abajo) -- columnas
+  // explícitas en vez de "*" (incidente de rendimiento 2026-08-05).
   const { data, error } = await supabasePublicRead
     .from("jugador_stats")
-    .select("*")
+    .select("jugador_id, puntos_totales")
     .eq("jugador_id", sourceJugadorId)
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as JugadorStats;
+  return data as Pick<JugadorStats, "jugador_id" | "puntos_totales">;
 }
 
 /** Cedido solo si hay grant activo hacia el club anfitrión (no por ids enlazados). */
 async function fetchConcedidoClubMetaFromGrant(
   granteeOrganizadorId: string,
-  jugador: RivieraJugadorWithStats
+  jugador: RivieraJugadorWithStats,
+  grantsContext?: FindGrantedAccessMetaOptions
 ): Promise<ConcedidoClubMeta | null> {
   const meta = await findGrantedAccessMetaForJugador(
     granteeOrganizadorId,
-    jugador.id
+    jugador.id,
+    grantsContext
   );
   if (!meta) return null;
 
@@ -313,7 +349,11 @@ export function applyConcedidoClubMeta(
 export async function enrichJugadorConcedidoClubView(
   granteeOrganizadorId: string | null | undefined,
   jugador: RivieraJugadorWithStats,
-  options?: { rpc?: RatingRpcFallbackOptions }
+  options?: {
+    rpc?: RatingRpcFallbackOptions;
+    /** Grants ya resueltos por el llamador (ver enrichJugadoresConcedidoClubViewBatch). */
+    grantsContext?: FindGrantedAccessMetaOptions;
+  }
 ): Promise<RivieraJugadorWithStats> {
   if (
     jugador.concedidoPorAdmin &&
@@ -340,7 +380,7 @@ export async function enrichJugadorConcedidoClubView(
     return jugador;
   }
   if (!meta?.isConcedido && org) {
-    meta = await fetchConcedidoClubMetaFromGrant(org, jugador);
+    meta = await fetchConcedidoClubMetaFromGrant(org, jugador, options?.grantsContext);
   }
   if (!meta?.isConcedido) return jugador;
 

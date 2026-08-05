@@ -6,6 +6,8 @@ jest.mock("../supabaseClient", () => ({
 jest.mock("./organizerPlayerAccess", () => ({
   findGrantedAccessMetaForJugador: jest.fn(),
   listGrantedLocalJugadorIdsForSource: jest.fn().mockResolvedValue([]),
+  listActiveGrantedAccessForOrganizerPublic: jest.fn().mockResolvedValue([]),
+  listOrganizerPlayerAccessRowsForJugadorIds: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock("./rivieraOfficialActivity", () => ({
@@ -20,7 +22,11 @@ import {
   enrichJugadoresConcedidoClubViewBatch,
   fetchConcedidosRankingMetaBatch,
 } from "./concedidoClubView";
-import { findGrantedAccessMetaForJugador } from "./organizerPlayerAccess";
+import {
+  findGrantedAccessMetaForJugador,
+  listActiveGrantedAccessForOrganizerPublic,
+  listOrganizerPlayerAccessRowsForJugadorIds,
+} from "./organizerPlayerAccess";
 import type { RivieraJugadorWithStats } from "./types";
 
 function jugador(
@@ -57,6 +63,16 @@ function jugador(
 describe("concedidoClubView", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // CRA jest config trae resetMocks:true -- las implementaciones puestas
+    // en la factory de jest.mock (arriba) se pierden entre tests, hay que
+    // volver a fijarlas acá (mismo motivo por el que supabase.rpc/from se
+    // re-configuran en cada beforeEach en este archivo).
+    (listActiveGrantedAccessForOrganizerPublic as jest.Mock).mockResolvedValue(
+      []
+    );
+    (
+      listOrganizerPlayerAccessRowsForJugadorIds as jest.Mock
+    ).mockResolvedValue([]);
     (supabase.rpc as jest.Mock).mockResolvedValue({
       data: [{ source_jugador_id: "same", local_jugador_id: "same" }],
       error: null,
@@ -150,5 +166,87 @@ describe("concedidoClubView", () => {
     expect(enriched.concedidoPorAdmin).toBe(true);
     expect(enriched.stats?.puntos_totales).toBe(50);
     expect(enriched.statsOrigenConcedido?.puntos_totales).toBe(70);
+  });
+
+  describe("enrichJugadoresConcedidoClubViewBatch — publicRpcContext (incidente 2026-08-05)", () => {
+    it("pide la lista de grants UNA sola vez para todo el roster, sin importar N", async () => {
+      (findGrantedAccessMetaForJugador as jest.Mock).mockResolvedValue(null);
+      const roster = Array.from({ length: 25 }, (_, i) =>
+        jugador({ id: `j${i}` })
+      );
+
+      await enrichJugadoresConcedidoClubViewBatch("hack-org", roster, {
+        publicRpcContext: true,
+      });
+
+      // Antes del fix: N llamadas (una por jugador). Ahora: exactamente 1.
+      expect(listActiveGrantedAccessForOrganizerPublic).toHaveBeenCalledTimes(1);
+      expect(listActiveGrantedAccessForOrganizerPublic).toHaveBeenCalledWith(
+        "hack-org"
+      );
+    });
+
+    it("resuelve el fallback directo en UNA consulta batched, no una por jugador", async () => {
+      (listActiveGrantedAccessForOrganizerPublic as jest.Mock).mockResolvedValue(
+        []
+      );
+      (findGrantedAccessMetaForJugador as jest.Mock).mockResolvedValue(null);
+      const roster = Array.from({ length: 10 }, (_, i) =>
+        jugador({ id: `j${i}` })
+      );
+
+      await enrichJugadoresConcedidoClubViewBatch("hack-org", roster, {
+        publicRpcContext: true,
+      });
+
+      expect(listOrganizerPlayerAccessRowsForJugadorIds).toHaveBeenCalledTimes(1);
+      const [, idsArg] = (
+        listOrganizerPlayerAccessRowsForJugadorIds as jest.Mock
+      ).mock.calls[0];
+      expect(idsArg).toHaveLength(10);
+    });
+
+    it("cada jugador de findGrantedAccessMetaForJugador recibe los grants ya resueltos (grantsFullyResolved)", async () => {
+      (findGrantedAccessMetaForJugador as jest.Mock).mockResolvedValue(null);
+      const roster = [jugador({ id: "j1" }), jugador({ id: "j2" })];
+
+      await enrichJugadoresConcedidoClubViewBatch("hack-org", roster, {
+        publicRpcContext: true,
+      });
+
+      expect(findGrantedAccessMetaForJugador).toHaveBeenCalledTimes(2);
+      for (const call of (findGrantedAccessMetaForJugador as jest.Mock).mock
+        .calls) {
+        expect(call[2]).toMatchObject({ grantsFullyResolved: true });
+      }
+    });
+
+    it("no consulta a los jugadores encontrados en la lista de grants (no repite el fallback)", async () => {
+      (listActiveGrantedAccessForOrganizerPublic as jest.Mock).mockResolvedValue(
+        [
+          {
+            id: "grant-1",
+            jugador_id: "j1",
+            owner_organizador_id: "owner-org",
+            local_jugador_id: null,
+            local_display_name: null,
+            local_category: null,
+          },
+        ]
+      );
+      (findGrantedAccessMetaForJugador as jest.Mock).mockResolvedValue(null);
+      const roster = [jugador({ id: "j1" }), jugador({ id: "j2" })];
+
+      await enrichJugadoresConcedidoClubViewBatch("hack-org", roster, {
+        publicRpcContext: true,
+      });
+
+      // Solo "j2" falta en la lista ya resuelta -- el fallback batched se
+      // pide únicamente para él, no para "j1".
+      const [, idsArg] = (
+        listOrganizerPlayerAccessRowsForJugadorIds as jest.Mock
+      ).mock.calls[0];
+      expect(idsArg).toEqual(["j2"]);
+    });
   });
 });

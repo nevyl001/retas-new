@@ -138,6 +138,53 @@ export async function listActiveGrantedAccessForOrganizerPublic(
   return [];
 }
 
+/**
+ * Mismo predicado que el fallback directo de findGrantedAccessMetaForJugador
+ * (jugador_id = X O local_jugador_id = X, grantee + is_active), pero
+ * resuelto para VARIOS jugadorId en una sola consulta -- evita el N+1 que
+ * causaba ~15s de carga en la ficha pública de un club con roster grande
+ * (incidente 2026-08-05): antes se llamaba una vez por jugador del club.
+ * ids se asume que ya vienen del propio jugador_id de la BD (uuid), nunca
+ * texto libre de usuario -- misma superficie que ya existe en el fallback
+ * de un solo id (línea de abajo), no introduce riesgo nuevo de inyección.
+ */
+export async function listOrganizerPlayerAccessRowsForJugadorIds(
+  granteeOrganizerId: string,
+  jugadorIds: string[]
+): Promise<OrganizerPlayerAccessRow[]> {
+  const org = granteeOrganizerId.trim();
+  const ids = Array.from(
+    new Set(jugadorIds.map((id) => id.trim()).filter(Boolean))
+  );
+  if (!org || ids.length === 0) return [];
+
+  const idList = ids.join(",");
+  const { data, error } = await supabase
+    .from("organizer_player_access")
+    .select(
+      "id, jugador_id, owner_organizador_id, local_jugador_id, local_display_name, local_category"
+    )
+    .eq("grantee_organizer_id", org)
+    .eq("is_active", true)
+    .or(`jugador_id.in.(${idList}),local_jugador_id.in.(${idList})`);
+
+  if (error) {
+    if (isMissingAccessFeatureError(error)) return [];
+    throw error;
+  }
+
+  return (data ?? []).map((row) => ({
+    id: String(row.id),
+    jugador_id: String(row.jugador_id),
+    owner_organizador_id: String(row.owner_organizador_id),
+    local_jugador_id: row.local_jugador_id ? String(row.local_jugador_id) : null,
+    local_display_name: row.local_display_name
+      ? String(row.local_display_name)
+      : null,
+    local_category: row.local_category ? String(row.local_category) : null,
+  }));
+}
+
 export async function listActiveGrantedAccessForOrganizer(
   granteeOrganizerId: string
 ): Promise<OrganizerPlayerAccessRow[]> {
@@ -271,15 +318,33 @@ export async function enrichJugadorWithGlobalGrantedAccess(
   );
 }
 
+export interface FindGrantedAccessMetaOptions {
+  /**
+   * Lista de grants ya obtenida por el llamador (p.ej. una sola vez para
+   * todo un roster) -- si se pasa, se usa en vez de volver a pedirla.
+   */
+  preloadedGrants?: OrganizerPlayerAccessRow[];
+  /**
+   * true cuando el llamador YA corrió el fallback directo a
+   * organizer_player_access para este jugadorId (por ejemplo en batch,
+   * vía listOrganizerPlayerAccessRowsForJugadorIds) y preloadedGrants ya
+   * incluye ese resultado -- evita repetir la consulta directa.
+   */
+  grantsFullyResolved?: boolean;
+}
+
 export async function findGrantedAccessMetaForJugador(
   granteeOrganizerId: string,
-  jugadorId: string
+  jugadorId: string,
+  options?: FindGrantedAccessMetaOptions
 ): Promise<GrantedAccessMeta | null> {
   const org = granteeOrganizerId.trim();
   const id = jugadorId.trim();
   if (!org || !id) return null;
 
-  const grants = await listActiveGrantedAccessForOrganizerPublic(org);
+  const grants =
+    options?.preloadedGrants ??
+    (await listActiveGrantedAccessForOrganizerPublic(org));
   const fromList = grants.find(
     (g) => g.jugador_id === id || g.local_jugador_id === id
   );
@@ -293,6 +358,8 @@ export async function findGrantedAccessMetaForJugador(
       localCategory: fromList.local_category,
     };
   }
+
+  if (options?.grantsFullyResolved) return null;
 
   const { data, error } = await supabase
     .from("organizer_player_access")
