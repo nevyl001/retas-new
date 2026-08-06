@@ -9,6 +9,7 @@ import { nextPairPick } from "../../lib/torneoExpress/pairPick";
 import { TE_CREATE_NOTIFS_ENABLED } from "../../lib/torneoExpress/teCreateNotifs";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
 import { TePlayerCard, type TePlayerCardPlayer } from "./TePlayerCard";
+import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
 import { Button } from "../ui";
 import "../jugadores/riviera-jugadores.css";
 
@@ -22,13 +23,12 @@ export interface ArmarParejasPickerProps {
   addingPair: boolean;
   onFormarPareja: (jugador1: Player, jugador2: Player) => void;
   onEliminarPareja: (pareja: ParejaDraft) => void;
+  onRefreshRegistro?: () => void;
 }
 
 /**
- * Flujo pensado para móvil / uso rápido:
- * 1) Toca jugador A
- * 2) Toca jugador B → la pareja se forma sola
- * 3) Si te equivocaste, bórrala abajo
+ * Una sola lista de jugadores (con Riviera ID).
+ * Primer toque = selecciona; segundo toque = forma la pareja.
  */
 export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
   jugadoresPool,
@@ -36,8 +36,10 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
   addingPair,
   onFormarPareja,
   onEliminarPareja,
+  onRefreshRegistro,
 }) => {
   const [pickedId, setPickedId] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
 
   const idsInPairs = useMemo(() => playerIdsInPairs(parejas), [parejas]);
 
@@ -48,6 +50,16 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
       ) as PlayerWithContact[],
     [jugadoresPool, idsInPairs]
   );
+
+  const filtrados = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    if (!q) return disponibles;
+    return disponibles.filter((j) => {
+      const nameHit = j.name.toLowerCase().includes(q);
+      const idHit = (j.riviera_id ?? "").toLowerCase().includes(q);
+      return nameHit || idHit;
+    });
+  }, [disponibles, busqueda]);
 
   const pickedPlayer = useMemo(
     () => (pickedId ? disponibles.find((p) => p.id === pickedId) ?? null : null),
@@ -85,10 +97,32 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
 
   return (
     <section className="te-armar-parejas te-armar-parejas--picker">
-      <p className="te-armar-parejas__howto">
-        <strong>Toca un jugador</strong> y luego <strong>otro</strong>. La
-        pareja se forma sola. Si te equivocas, bórrala abajo.
-      </p>
+      <div className="te-armar-parejas__toolbar">
+        <p className="te-armar-parejas__toolbar-meta">
+          {jugadoresPool.length} en el registro
+          {parejas.length > 0 ? ` · ${parejas.length} pareja(s)` : ""}
+        </p>
+        <div className="te-armar-parejas__toolbar-actions">
+          {onRefreshRegistro ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onRefreshRegistro}
+            >
+              Actualizar
+            </Button>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => navigateJugadoresLista("M")}
+          >
+            Ir al registro
+          </Button>
+        </div>
+      </div>
 
       <div
         className="te-armar-parejas__slots"
@@ -142,55 +176,83 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
         </div>
       ) : null}
 
-      {disponibles.length === 0 && parejas.length === 0 ? (
-        <p className="te-armar-parejas__empty">
-          Primero revisa el Paso 2: necesitas jugadores en el registro.
-        </p>
-      ) : null}
-
-      {disponibles.length > 0 ? (
+      {jugadoresPool.length === 0 ? (
+        <div className="te-armar-parejas__empty-box">
+          <p>No hay jugadores en el registro.</p>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={() => navigateJugadoresLista("M")}
+          >
+            Registrar jugadores
+          </Button>
+        </div>
+      ) : (
         <>
+          <div className="torneo-express-field te-players-search">
+            <label htmlFor="te-parejas-buscar" className="sr-only">
+              Buscar jugador
+            </label>
+            <span className="te-players-search__icon" aria-hidden>
+              🔍
+            </span>
+            <input
+              id="te-parejas-buscar"
+              type="search"
+              placeholder="Buscar por nombre o Riviera ID…"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
+
           <p className="te-armar-parejas__meta">
-            {disponibles.length} sin pareja
+            {filtrados.length} disponibles
             {pickedPlayer ? " · elige al compañero" : ""}
           </p>
-          <div
-            className="te-players-grid te-armar-parejas__grid"
-            role="group"
-            aria-label="Jugadores disponibles para formar pareja"
-          >
-            {disponibles.map((j) => {
-              const selected = pickedId === j.id;
-              const sinEmail =
-                TE_CREATE_NOTIFS_ENABLED &&
-                playerNeedsEmailContact(j as PlayerWithContact);
-              return (
-                <div key={j.id} className="te-players-grid__item">
-                  <TePlayerCard
-                    player={j}
-                    selected={selected}
-                    disabled={addingPair}
-                    onClick={() => seleccionarJugador(j)}
-                  />
-                  {sinEmail ? (
-                    <span
-                      className="te-jugador-pick__warn te-players-grid__warn"
-                      title="Sin email"
-                      aria-label="Sin email"
-                    >
-                      ⚠️
-                    </span>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
+
+          {filtrados.length === 0 ? (
+            <p className="te-armar-parejas__empty">
+              {disponibles.length === 0
+                ? "Todos ya tienen pareja."
+                : "Ningún jugador coincide con la búsqueda."}
+            </p>
+          ) : (
+            <div
+              className="te-players-grid te-armar-parejas__grid"
+              role="group"
+              aria-label="Jugadores disponibles para formar pareja"
+            >
+              {filtrados.map((j) => {
+                const selected = pickedId === j.id;
+                const sinEmail =
+                  TE_CREATE_NOTIFS_ENABLED &&
+                  playerNeedsEmailContact(j as PlayerWithContact);
+                return (
+                  <div key={j.id} className="te-players-grid__item">
+                    <TePlayerCard
+                      player={j}
+                      selected={selected}
+                      disabled={addingPair}
+                      onClick={() => seleccionarJugador(j)}
+                    />
+                    {sinEmail ? (
+                      <span
+                        className="te-jugador-pick__warn te-players-grid__warn"
+                        title="Sin email"
+                        aria-label="Sin email"
+                      >
+                        ⚠️
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </>
-      ) : parejas.length > 0 ? (
-        <p className="te-armar-parejas__empty">
-          Todos los jugadores del registro ya tienen pareja.
-        </p>
-      ) : null}
+      )}
 
       <div className="te-armar-parejas__formed">
         <div className="te-armar-parejas__formed-head">
@@ -200,7 +262,7 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
           </h3>
           {parejas.length === 0 ? (
             <p className="te-armar-parejas__formed-empty">
-              Todavía ninguna. Toca dos fichas arriba.
+              Todavía ninguna. Toca dos fichas.
             </p>
           ) : (
             <p className="te-armar-parejas__formed-hint">

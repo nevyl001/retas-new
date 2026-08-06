@@ -4,6 +4,7 @@ import {
   createTournament,
   dedupeLegacyPlayersById,
   deletePair,
+  getPlayers,
   getTournamentById,
   updatePair,
   type Player,
@@ -20,7 +21,6 @@ import {
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import { ArmarParejasPicker } from "./ArmarParejasPicker";
 import { AsignarParejasGrupos } from "./AsignarParejasGrupos";
-import { TorneoExpressPlayerPanel } from "./TorneoExpressPlayerPanel";
 import {
   ParejaDraft,
   TE_DRAFT_TOURNAMENT_KEY,
@@ -47,6 +47,15 @@ import { Button } from "../ui";
 type PlayerWithContact = Player & {
   email_verified?: boolean | null;
 };
+
+const WIZARD_STEPS = [
+  { id: "datos", label: "Datos", num: 1 },
+  { id: "parejas", label: "Parejas", num: 2 },
+  { id: "grupos", label: "Grupos", num: 3 },
+  { id: "crear", label: "Crear", num: 4 },
+] as const;
+
+type WizardStepId = (typeof WIZARD_STEPS)[number]["id"];
 
 interface CrearTorneoExpressProps {
   /** Si viene, el torneo creado se vincula a este Evento (categoría). */
@@ -77,6 +86,8 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const [addingPair, setAddingPair] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [wizardStep, setWizardStep] = useState<WizardStepId>("datos");
+  const [loadingJugadores, setLoadingJugadores] = useState(false);
 
   const jugadoresEnParejasSinEmail = useMemo(() => {
     const ids = new Set<string>();
@@ -113,6 +124,24 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     },
     [syncParejasFromPlayers]
   );
+
+  const cargarJugadores = useCallback(async () => {
+    if (!user?.id) return;
+    setLoadingJugadores(true);
+    try {
+      const data = await getPlayers(user.id);
+      handleJugadoresChange(data ?? []);
+    } catch {
+      setError("No se pudieron cargar los jugadores del registro");
+    } finally {
+      setLoadingJugadores(false);
+    }
+  }, [user?.id, handleJugadoresChange]);
+
+  useEffect(() => {
+    if (!user?.id || initializing) return;
+    void cargarJugadores();
+  }, [user?.id, initializing, cargarJugadores]);
 
   const loadPairsForDraft = useCallback(
     async (tournamentId: string, players: Player[]) => {
@@ -408,9 +437,58 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     }
   };
 
+  const stepIndex = WIZARD_STEPS.findIndex((s) => s.id === wizardStep);
+
+  const gruposIncomplete = useMemo(() => {
+    if (parejas.length < 2) return true;
+    return assignments.some((g) => g.parejaIds.length < 2);
+  }, [parejas.length, assignments]);
+
+  const goNext = () => {
+    setError(null);
+    if (wizardStep === "datos") {
+      if (!nombre.trim()) {
+        setError("Escribe el nombre del torneo");
+        return;
+      }
+      setNumGrupos((prev) => (prev === "" ? 2 : clampNumGrupos(prev)));
+      setWizardStep("parejas");
+      return;
+    }
+    if (wizardStep === "parejas") {
+      if (parejas.length < 2) {
+        setError("Arma al menos 2 parejas para continuar");
+        return;
+      }
+      setWizardStep("grupos");
+      return;
+    }
+    if (wizardStep === "grupos") {
+      if (gruposIncomplete) {
+        setError("Cada grupo necesita al menos 2 parejas");
+        return;
+      }
+      setWizardStep("crear");
+    }
+  };
+
+  const goBack = () => {
+    setError(null);
+    if (wizardStep === "parejas") setWizardStep("datos");
+    else if (wizardStep === "grupos") setWizardStep("parejas");
+    else if (wizardStep === "crear") setWizardStep("grupos");
+  };
+
+  const jumpToStep = (id: WizardStepId) => {
+    const target = WIZARD_STEPS.findIndex((s) => s.id === id);
+    if (target < 0 || target > stepIndex) return;
+    setError(null);
+    setWizardStep(id);
+  };
+
   return (
     <form
-      className="te-crear-layout te-crear-form te-crear-layout--linear"
+      className="te-crear-layout te-crear-form te-crear-layout--wizard"
       onSubmit={handleSubmit}
     >
       <div className="te-crear-layout__main">
@@ -421,198 +499,262 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
             <p className="te-subtitle">Preparando borrador…</p>
           ) : (
             <>
-              <ol className="te-crear-roadmap" aria-label="Pasos para crear el torneo">
-                <li>Datos</li>
-                <li>Jugadores</li>
-                <li>Parejas</li>
-                <li>Grupos</li>
-                <li>Crear</li>
-              </ol>
+              <nav className="te-crear-wizard-nav" aria-label="Progreso">
+                <ol className="te-crear-wizard-nav__list">
+                  {WIZARD_STEPS.map((step, i) => {
+                    const state =
+                      i < stepIndex
+                        ? "done"
+                        : i === stepIndex
+                          ? "current"
+                          : "todo";
+                    return (
+                      <li
+                        key={step.id}
+                        className={`te-crear-wizard-nav__item te-crear-wizard-nav__item--${state}`}
+                      >
+                        <button
+                          type="button"
+                          className="te-crear-wizard-nav__btn"
+                          disabled={i > stepIndex}
+                          onClick={() => jumpToStep(step.id)}
+                          aria-current={state === "current" ? "step" : undefined}
+                        >
+                          <span className="te-crear-wizard-nav__num" aria-hidden>
+                            {step.num}
+                          </span>
+                          <span className="te-crear-wizard-nav__label">
+                            {step.label}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </nav>
 
-              <section
-                className="te-crear-step"
-                aria-labelledby="te-step-datos-heading"
-              >
-                <header className="te-crear-step__head">
-                  <span className="te-crear-step__badge">Paso 1</span>
-                  <h3 id="te-step-datos-heading" className="te-crear-step__title">
-                    Datos del torneo
-                  </h3>
-                </header>
-                <p className="te-crear-step__lead">
-                  Ponle nombre, categoría y cuántos grupos quieres.
-                </p>
-                <div className="te-crear-step__body">
-                  <div className="te-crear-form__fields">
-                    <div className="torneo-express-field">
-                      <label htmlFor="te-nombre">Nombre</label>
-                      <input
-                        id="te-nombre"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                        placeholder="Ej. Riviera Open Mayo"
-                      />
-                    </div>
-
-                    <div className="torneo-express-field">
-                      <label htmlFor="te-categoria">Categoría</label>
-                      <input
-                        id="te-categoria"
-                        value={categoria}
-                        onChange={(e) => setCategoria(e.target.value)}
-                        placeholder="Ej. 4ta, 5ta, Open"
-                        autoComplete="off"
-                      />
-                    </div>
-
-                    <div className="torneo-express-field">
-                      <label htmlFor="te-grupos">Grupos</label>
-                      <input
-                        id="te-grupos"
-                        type="number"
-                        inputMode="numeric"
-                        min={2}
-                        max={8}
-                        value={numGrupos}
-                        onChange={(e) => {
-                          const next = parseNumGruposInput(e.target.value);
-                          if (next !== null) setNumGrupos(next);
-                        }}
-                        onBlur={() => {
-                          setNumGrupos((prev) =>
-                            prev === "" ? 2 : clampNumGrupos(prev)
-                          );
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* PENDIENTE: reactivar con TE_CREATE_NOTIFS_ENABLED */}
-                  {TE_CREATE_NOTIFS_ENABLED ? (
-                    <div className="te-crear-form__notices">
-                      <div className="te-crear-notif-hint" role="note">
-                        <strong>Notificaciones automáticas</strong>
-                        <p>
-                          Al crear el torneo, cada jugador con email real recibe
-                          aviso de inscripción y grupo.
-                        </p>
+              {wizardStep === "datos" ? (
+                <section
+                  className="te-crear-step"
+                  aria-labelledby="te-step-datos-heading"
+                >
+                  <header className="te-crear-step__head">
+                    <span className="te-crear-step__badge">Paso 1 de 4</span>
+                    <h3
+                      id="te-step-datos-heading"
+                      className="te-crear-step__title"
+                    >
+                      Datos del torneo
+                    </h3>
+                  </header>
+                  <p className="te-crear-step__lead">
+                    Nombre, categoría y cuántos grupos.
+                  </p>
+                  <div className="te-crear-step__body">
+                    <div className="te-crear-form__fields">
+                      <div className="torneo-express-field">
+                        <label htmlFor="te-nombre">Nombre</label>
+                        <input
+                          id="te-nombre"
+                          value={nombre}
+                          onChange={(e) => setNombre(e.target.value)}
+                          placeholder="Ej. Riviera Open Mayo"
+                        />
                       </div>
 
-                      {jugadoresEnParejasSinEmail.length > 0 ? (
-                        <p className="te-crear-notif-warn" role="alert">
-                          {jugadoresEnParejasSinEmail.length} jugador(es) en tus
-                          parejas aún sin email:{" "}
-                          {jugadoresEnParejasSinEmail
-                            .map((j) => j.name)
-                            .join(", ")}
-                          . Completa su contacto con 📧 antes de crear el torneo.
-                        </p>
-                      ) : null}
+                      <div className="torneo-express-field">
+                        <label htmlFor="te-categoria">Categoría</label>
+                        <input
+                          id="te-categoria"
+                          value={categoria}
+                          onChange={(e) => setCategoria(e.target.value)}
+                          placeholder="Ej. 4ta, 5ta, Open"
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div className="torneo-express-field">
+                        <label htmlFor="te-grupos">Grupos</label>
+                        <input
+                          id="te-grupos"
+                          type="number"
+                          inputMode="numeric"
+                          min={2}
+                          max={8}
+                          value={numGrupos}
+                          onChange={(e) => {
+                            const next = parseNumGruposInput(e.target.value);
+                            if (next !== null) setNumGrupos(next);
+                          }}
+                          onBlur={() => {
+                            setNumGrupos((prev) =>
+                              prev === "" ? 2 : clampNumGrupos(prev)
+                            );
+                          }}
+                        />
+                      </div>
                     </div>
-                  ) : null}
-                </div>
-              </section>
 
-              <section
-                className="te-crear-step te-crear-step--players"
-                aria-labelledby="te-step-jugadores-heading"
-              >
-                <header className="te-crear-step__head">
-                  <span className="te-crear-step__badge">Paso 2</span>
-                  <h3
-                    id="te-step-jugadores-heading"
-                    className="te-crear-step__title"
-                  >
-                    Jugadores del registro
-                  </h3>
-                </header>
-                <p className="te-crear-step__lead">
-                  Revisa quiénes están disponibles (con su Riviera ID). Si falta
-                  alguien, agrégalo en el registro.
-                </p>
-                <div className="te-crear-step__body te-crear-players-wrap">
-                  {user?.id ? (
-                    <TorneoExpressPlayerPanel
-                      userId={user.id}
-                      parejas={parejas}
-                      onJugadoresChange={handleJugadoresChange}
-                    />
-                  ) : (
-                    <p className="te-players-empty">
-                      Inicia sesión para gestionar jugadores
-                    </p>
-                  )}
-                </div>
-              </section>
+                    {TE_CREATE_NOTIFS_ENABLED ? (
+                      <div className="te-crear-form__notices">
+                        <div className="te-crear-notif-hint" role="note">
+                          <strong>Notificaciones automáticas</strong>
+                          <p>
+                            Al crear el torneo, cada jugador con email real
+                            recibe aviso de inscripción y grupo.
+                          </p>
+                        </div>
+                        {jugadoresEnParejasSinEmail.length > 0 ? (
+                          <p className="te-crear-notif-warn" role="alert">
+                            {jugadoresEnParejasSinEmail.length} jugador(es) sin
+                            email:{" "}
+                            {jugadoresEnParejasSinEmail
+                              .map((j) => j.name)
+                              .join(", ")}
+                            .
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                </section>
+              ) : null}
 
-              <section
-                className="te-crear-step"
-                aria-labelledby="te-step-parejas-heading"
-              >
-                <header className="te-crear-step__head">
-                  <span className="te-crear-step__badge">Paso 3</span>
-                  <h3
-                    id="te-step-parejas-heading"
-                    className="te-crear-step__title"
-                  >
-                    Armar parejas
-                  </h3>
-                </header>
-                <p className="te-crear-step__lead">
-                  Toca dos fichas: la pareja se forma sola. Puedes borrar si te
-                  equivocas.
-                </p>
-                <div className="te-crear-step__body">
-                  <ArmarParejasPicker
-                    jugadoresPool={jugadoresPool}
-                    parejas={parejas}
-                    addingPair={addingPair}
-                    onFormarPareja={(j1, j2) => void formarPareja(j1, j2)}
-                    onEliminarPareja={(p) => void eliminarPareja(p)}
-                  />
-                </div>
-              </section>
-
-              <section
-                className="te-crear-step"
-                aria-labelledby="te-step-grupos-heading"
-              >
-                <header className="te-crear-step__head">
-                  <span className="te-crear-step__badge">Paso 4</span>
-                  <h3
-                    id="te-step-grupos-heading"
-                    className="te-crear-step__title"
-                  >
-                    Repartir en grupos
-                  </h3>
-                </header>
-                <p className="te-crear-step__lead">
-                  Asigna cada pareja a un grupo. Mínimo 2 parejas por grupo.
-                </p>
-                <div className="te-crear-step__body">
-                  <AsignarParejasGrupos
-                    parejas={parejas}
-                    assignments={assignments}
-                    assignedIds={assignedIds}
-                    onAssignmentsChange={setAssignments}
-                    onTogglePair={togglePair}
-                  />
-                </div>
-              </section>
-
-              <div className="te-crear-layout__cta">
-                <p className="te-crear-layout__cta-hint">
-                  Paso 5 · Cuando tengas parejas y grupos listos, crea el torneo.
-                </p>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="te-crear-submit"
-                  disabled={submitting || parejas.length < 2}
-                  loading={submitting}
+              {wizardStep === "parejas" ? (
+                <section
+                  className="te-crear-step"
+                  aria-labelledby="te-step-parejas-heading"
                 >
-                  {submitting ? "Creando…" : "Crear torneo y generar partidos"}
-                </Button>
+                  <header className="te-crear-step__head">
+                    <span className="te-crear-step__badge">Paso 2 de 4</span>
+                    <h3
+                      id="te-step-parejas-heading"
+                      className="te-crear-step__title"
+                    >
+                      Armar parejas
+                    </h3>
+                  </header>
+                  <p className="te-crear-step__lead">
+                    Toca dos jugadores: la pareja se forma sola. Si te
+                    equivocas, bórrala abajo.
+                  </p>
+                  <div className="te-crear-step__body">
+                    {loadingJugadores ? (
+                      <p className="te-subtitle">Cargando jugadores…</p>
+                    ) : (
+                      <ArmarParejasPicker
+                        jugadoresPool={jugadoresPool}
+                        parejas={parejas}
+                        addingPair={addingPair}
+                        onFormarPareja={(j1, j2) => void formarPareja(j1, j2)}
+                        onEliminarPareja={(p) => void eliminarPareja(p)}
+                        onRefreshRegistro={() => void cargarJugadores()}
+                      />
+                    )}
+                  </div>
+                </section>
+              ) : null}
+
+              {wizardStep === "grupos" ? (
+                <section
+                  className="te-crear-step"
+                  aria-labelledby="te-step-grupos-heading"
+                >
+                  <header className="te-crear-step__head">
+                    <span className="te-crear-step__badge">Paso 3 de 4</span>
+                    <h3
+                      id="te-step-grupos-heading"
+                      className="te-crear-step__title"
+                    >
+                      Repartir en grupos
+                    </h3>
+                  </header>
+                  <p className="te-crear-step__lead">
+                    Asigna cada pareja a un grupo. Mínimo 2 parejas por grupo.
+                  </p>
+                  <div className="te-crear-step__body">
+                    <AsignarParejasGrupos
+                      parejas={parejas}
+                      assignments={assignments}
+                      assignedIds={assignedIds}
+                      onAssignmentsChange={setAssignments}
+                      onTogglePair={togglePair}
+                    />
+                  </div>
+                </section>
+              ) : null}
+
+              {wizardStep === "crear" ? (
+                <section
+                  className="te-crear-step"
+                  aria-labelledby="te-step-crear-heading"
+                >
+                  <header className="te-crear-step__head">
+                    <span className="te-crear-step__badge">Paso 4 de 4</span>
+                    <h3
+                      id="te-step-crear-heading"
+                      className="te-crear-step__title"
+                    >
+                      Confirmar y crear
+                    </h3>
+                  </header>
+                  <p className="te-crear-step__lead">
+                    Revisa el resumen y crea el torneo con sus partidos.
+                  </p>
+                  <div className="te-crear-step__body">
+                    <ul className="te-crear-summary">
+                      <li>
+                        <span>Nombre</span>
+                        <strong>{nombre.trim() || "—"}</strong>
+                      </li>
+                      <li>
+                        <span>Categoría</span>
+                        <strong>{categoria.trim() || "—"}</strong>
+                      </li>
+                      <li>
+                        <span>Grupos</span>
+                        <strong>{resolveNumGrupos(numGrupos)}</strong>
+                      </li>
+                      <li>
+                        <span>Parejas</span>
+                        <strong>{parejas.length}</strong>
+                      </li>
+                    </ul>
+                  </div>
+                </section>
+              ) : null}
+
+              <div className="te-crear-wizard-actions">
+                {wizardStep !== "datos" ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={goBack}
+                    disabled={submitting}
+                  >
+                    ← Atrás
+                  </Button>
+                ) : (
+                  <span />
+                )}
+
+                {wizardStep !== "crear" ? (
+                  <Button type="button" variant="primary" onClick={goNext}>
+                    Siguiente →
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="te-crear-submit"
+                    disabled={submitting || parejas.length < 2}
+                    loading={submitting}
+                  >
+                    {submitting
+                      ? "Creando…"
+                      : "Crear torneo y generar partidos"}
+                  </Button>
+                )}
               </div>
             </>
           )}

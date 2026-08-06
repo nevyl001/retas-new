@@ -378,78 +378,192 @@
 
 /* Layout pasos: flujo lineal (Datos → Jugadores → Parejas → Grupos → Crear) */
 .torneo-express-page.te-inicio-page .te-crear-layout,
-.torneo-express-page.te-inicio-page .te-crear-layout--linear {
+.torneo-express-page.te-inicio-page .te-crear-layout--linear,
+.torneo-express-page.te-inicio-page .te-crear-layout--wizard {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: clamp(20px, 3.5vw, 28px);
   align-items: start;
-  max-width: 720px;
+  max-width: 640px;
 }
 
-.torneo-express-page.te-inicio-page .te-crear-layout__panel,
-.torneo-express-page.te-inicio-page .te-crear-step--players {
+.torneo-express-page.te-inicio-page .te-crear-layout__panel {
   border-radius: var(--ro-radius-lg);
   border: 1px solid var(--ro-border);
   background: var(--ro-bg-elevated);
   box-shadow: var(--ro-shadow-sm);
-}
-
-.torneo-express-page.te-inicio-page .te-crear-layout__panel {
   padding: clamp(20px, 3vw, 28px);
 }
 
-.torneo-express-page.te-inicio-page .te-crear-layout--linear .te-crear-step--players {
-  padding: 0;
-  margin-top: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-}
-
-.torneo-express-page.te-inicio-page .te-crear-roadmap {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav {
   margin: 0 0 clamp(18px, 3vw, 24px);
-  padding: 0;
 }
 
-.torneo-express-page.te-inicio-page .te-crear-roadmap li {
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__item {
+  min-width: 0;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 4px;
+  border-radius: 12px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-inset);
+  color: var(--te-inicio-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__btn:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__num {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.06);
+  color: inherit;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__label {
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--te-inicio-text-secondary);
-  background: var(--ro-bg-inset);
+  line-height: 1.2;
+  text-align: center;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__item--current .te-crear-wizard-nav__btn {
+  border-color: rgba(61, 122, 92, 0.45);
+  background: rgba(61, 122, 92, 0.1);
+  color: #1f4d38;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__item--current .te-crear-wizard-nav__num {
+  background: #3d7a5c;
+  color: #fff;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__item--done .te-crear-wizard-nav__btn {
+  border-color: rgba(61, 122, 92, 0.28);
+  color: #2f6b4f;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-nav__item--done .te-crear-wizard-nav__num {
+  background: rgba(61, 122, 92, 0.2);
+  color: #1f4d38;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: clamp(20px, 3vw, 28px);
+  padding-top: clamp(16px, 2.5vw, 22px);
+  border-top: 1px solid var(--ro-border);
+}
+
+.torneo-express-page.te-inicio-page .te-crear-wizard-actions .riviera-btn-primary {
+  min-height: 48px;
+  min-width: 9rem;
+  padding-inline: 18px;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-summary {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.torneo-express-page.te-inicio-page .te-crear-summary li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
   border: 1px solid var(--ro-border);
+  background: var(--ro-bg-inset);
 }
 
-.torneo-express-page.te-inicio-page .te-crear-roadmap li::before {
-  counter-increment: none;
+.torneo-express-page.te-inicio-page .te-crear-summary span {
+  font-size: 0.8125rem;
+  color: var(--te-inicio-text-secondary);
 }
 
-@media (min-width: 900px) {
-  .torneo-express-page.te-inicio-page .te-crear-layout:not(.te-crear-layout--linear) {
-    grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
-    gap: clamp(20px, 2.5vw, 28px);
-    max-width: none;
-  }
+.torneo-express-page.te-inicio-page .te-crear-summary strong {
+  font-size: 0.9375rem;
+  color: var(--ro-text-primary);
+}
 
-  .torneo-express-page.te-inicio-page .te-crear-layout:not(.te-crear-layout--linear) .te-crear-layout__main {
-    grid-column: 1;
-    grid-row: 1;
-  }
+.torneo-express-page.te-inicio-page .te-armar-parejas__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
 
-  .torneo-express-page.te-inicio-page .te-crear-layout:not(.te-crear-layout--linear) .te-crear-layout__aside {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: start;
-  }
+.torneo-express-page.te-inicio-page .te-armar-parejas__toolbar-meta {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--te-inicio-text-secondary);
+}
+
+.torneo-express-page.te-inicio-page .te-armar-parejas__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.torneo-express-page.te-inicio-page .te-armar-parejas__empty-box {
+  margin: 0 0 14px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--ro-border);
+  background: var(--ro-bg-inset);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.torneo-express-page.te-inicio-page .te-armar-parejas__empty-box p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--te-inicio-text-secondary);
+}
+
+/* Legacy roadmap pills (ya no se usan en wizard) */
+.torneo-express-page.te-inicio-page .te-crear-roadmap {
+  display: none;
 }
 
 /* Pasos visuales */
