@@ -43,7 +43,7 @@ export const CrearTorneoExpressPage: React.FC = () => {
             id="te-crear-page-heading"
             className="te-inicio-crear__title rv-section-title"
           >
-            Datos del torneo
+            Cómo crear tu torneo
           </h2>
           <CrearTorneoExpress />
         </section>

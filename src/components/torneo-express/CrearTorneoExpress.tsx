@@ -41,6 +41,7 @@ import {
   resolveNumGrupos,
   type NumGruposDraft,
 } from "../../lib/torneoExpress/numGruposInput";
+import { TE_CREATE_NOTIFS_ENABLED } from "../../lib/torneoExpress/teCreateNotifs";
 import { Button } from "../ui";
 
 type PlayerWithContact = Player & {
@@ -408,7 +409,10 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   };
 
   return (
-    <form className="te-crear-layout te-crear-form" onSubmit={handleSubmit}>
+    <form
+      className="te-crear-layout te-crear-form te-crear-layout--linear"
+      onSubmit={handleSubmit}
+    >
       <div className="te-crear-layout__main">
         <div className="te-crear-layout__panel">
           {error ? <p className="te-error">{error}</p> : null}
@@ -417,6 +421,14 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
             <p className="te-subtitle">Preparando borrador…</p>
           ) : (
             <>
+              <ol className="te-crear-roadmap" aria-label="Pasos para crear el torneo">
+                <li>Datos</li>
+                <li>Jugadores</li>
+                <li>Parejas</li>
+                <li>Grupos</li>
+                <li>Crear</li>
+              </ol>
+
               <section
                 className="te-crear-step"
                 aria-labelledby="te-step-datos-heading"
@@ -427,6 +439,9 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     Datos del torneo
                   </h3>
                 </header>
+                <p className="te-crear-step__lead">
+                  Ponle nombre, categoría y cuántos grupos quieres.
+                </p>
                 <div className="te-crear-step__body">
                   <div className="te-crear-form__fields">
                     <div className="torneo-express-field">
@@ -472,24 +487,61 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     </div>
                   </div>
 
-                  <div className="te-crear-form__notices">
-                    <div className="te-crear-notif-hint" role="note">
-                      <strong>Notificaciones automáticas</strong>
-                      <p>
-                        Al crear el torneo, cada jugador con email real recibe
-                        aviso de inscripción y grupo.
-                      </p>
-                    </div>
+                  {/* PENDIENTE: reactivar con TE_CREATE_NOTIFS_ENABLED */}
+                  {TE_CREATE_NOTIFS_ENABLED ? (
+                    <div className="te-crear-form__notices">
+                      <div className="te-crear-notif-hint" role="note">
+                        <strong>Notificaciones automáticas</strong>
+                        <p>
+                          Al crear el torneo, cada jugador con email real recibe
+                          aviso de inscripción y grupo.
+                        </p>
+                      </div>
 
-                    {jugadoresEnParejasSinEmail.length > 0 ? (
-                      <p className="te-crear-notif-warn" role="alert">
-                        {jugadoresEnParejasSinEmail.length} jugador(es) en tus
-                        parejas aún sin email:{" "}
-                        {jugadoresEnParejasSinEmail.map((j) => j.name).join(", ")}.
-                        Completa su contacto con 📧 antes de crear el torneo.
-                      </p>
-                    ) : null}
-                  </div>
+                      {jugadoresEnParejasSinEmail.length > 0 ? (
+                        <p className="te-crear-notif-warn" role="alert">
+                          {jugadoresEnParejasSinEmail.length} jugador(es) en tus
+                          parejas aún sin email:{" "}
+                          {jugadoresEnParejasSinEmail
+                            .map((j) => j.name)
+                            .join(", ")}
+                          . Completa su contacto con 📧 antes de crear el torneo.
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+
+              <section
+                className="te-crear-step te-crear-step--players"
+                aria-labelledby="te-step-jugadores-heading"
+              >
+                <header className="te-crear-step__head">
+                  <span className="te-crear-step__badge">Paso 2</span>
+                  <h3
+                    id="te-step-jugadores-heading"
+                    className="te-crear-step__title"
+                  >
+                    Jugadores del registro
+                  </h3>
+                </header>
+                <p className="te-crear-step__lead">
+                  Revisa quiénes están disponibles (con su Riviera ID). Si falta
+                  alguien, agrégalo en el registro.
+                </p>
+                <div className="te-crear-step__body te-crear-players-wrap">
+                  {user?.id ? (
+                    <TorneoExpressPlayerPanel
+                      userId={user.id}
+                      parejas={parejas}
+                      onJugadoresChange={handleJugadoresChange}
+                    />
+                  ) : (
+                    <p className="te-players-empty">
+                      Inicia sesión para gestionar jugadores
+                    </p>
+                  )}
                 </div>
               </section>
 
@@ -498,11 +550,18 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                 aria-labelledby="te-step-parejas-heading"
               >
                 <header className="te-crear-step__head">
-                  <span className="te-crear-step__badge">Paso 2</span>
-                  <h3 id="te-step-parejas-heading" className="te-crear-step__title">
+                  <span className="te-crear-step__badge">Paso 3</span>
+                  <h3
+                    id="te-step-parejas-heading"
+                    className="te-crear-step__title"
+                  >
                     Armar parejas
                   </h3>
                 </header>
+                <p className="te-crear-step__lead">
+                  Toca dos fichas: la pareja se forma sola. Puedes borrar si te
+                  equivocas.
+                </p>
                 <div className="te-crear-step__body">
                   <ArmarParejasPicker
                     jugadoresPool={jugadoresPool}
@@ -511,7 +570,26 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                     onFormarPareja={(j1, j2) => void formarPareja(j1, j2)}
                     onEliminarPareja={(p) => void eliminarPareja(p)}
                   />
+                </div>
+              </section>
 
+              <section
+                className="te-crear-step"
+                aria-labelledby="te-step-grupos-heading"
+              >
+                <header className="te-crear-step__head">
+                  <span className="te-crear-step__badge">Paso 4</span>
+                  <h3
+                    id="te-step-grupos-heading"
+                    className="te-crear-step__title"
+                  >
+                    Repartir en grupos
+                  </h3>
+                </header>
+                <p className="te-crear-step__lead">
+                  Asigna cada pareja a un grupo. Mínimo 2 parejas por grupo.
+                </p>
+                <div className="te-crear-step__body">
                   <AsignarParejasGrupos
                     parejas={parejas}
                     assignments={assignments}
@@ -522,50 +600,24 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                 </div>
               </section>
 
-              {!initializing ? (
-                <div className="te-crear-layout__cta">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="te-crear-submit"
-                    disabled={submitting || parejas.length < 2}
-                    loading={submitting}
-                  >
-                    {submitting ? "Creando…" : "Crear torneo y generar partidos"}
-                  </Button>
-                </div>
-              ) : null}
+              <div className="te-crear-layout__cta">
+                <p className="te-crear-layout__cta-hint">
+                  Paso 5 · Cuando tengas parejas y grupos listos, crea el torneo.
+                </p>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="te-crear-submit"
+                  disabled={submitting || parejas.length < 2}
+                  loading={submitting}
+                >
+                  {submitting ? "Creando…" : "Crear torneo y generar partidos"}
+                </Button>
+              </div>
             </>
           )}
         </div>
       </div>
-
-      <aside className="te-crear-layout__aside">
-        <section
-          className="te-crear-step te-crear-step--players"
-          aria-labelledby="te-step-jugadores-heading"
-        >
-          <header className="te-crear-step__head">
-            <span className="te-crear-step__badge">Paso 3</span>
-            <h3 id="te-step-jugadores-heading" className="te-crear-step__title">
-              Jugadores del registro
-            </h3>
-          </header>
-          <div className="te-crear-step__body te-crear-players-wrap">
-            {user?.id ? (
-              <TorneoExpressPlayerPanel
-                userId={user.id}
-                parejas={parejas}
-                onJugadoresChange={handleJugadoresChange}
-              />
-            ) : (
-              <p className="te-players-empty">
-                Inicia sesión para gestionar jugadores
-              </p>
-            )}
-          </div>
-        </section>
-      </aside>
     </form>
   );
 };

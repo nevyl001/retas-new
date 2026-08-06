@@ -12,13 +12,15 @@ import {
   playerHasNotifiableEmail,
   playerNeedsEmailContact,
 } from "../../services/torneoExpressNotificacionesService";
+import { TE_CREATE_NOTIFS_ENABLED } from "../../lib/torneoExpress/teCreateNotifs";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
 import { InscripcionParejaModal } from "./InscripcionParejaModal";
+import { TePlayerCard, type TePlayerCardPlayer } from "./TePlayerCard";
 import { navigateJugadoresLista } from "../jugadores/jugadoresGeneroNav";
 import { Button } from "../ui";
 import "../jugadores/riviera-jugadores.css";
 
-type PlayerRow = Player & {
+type PlayerRow = TePlayerCardPlayer & {
   email_verified?: boolean | null;
 };
 
@@ -54,20 +56,6 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
     onJugadoresChangeRef.current(sorted);
   }, []);
 
-  const cargarJugadores = useCallback(async () => {
-    if (!userId) return;
-    setCargandoJugadores(true);
-    try {
-      const data = await getPlayers(userId);
-      syncJugadores(data ?? []);
-    } catch {
-      setError("No se pudieron cargar los jugadores");
-    } finally {
-      setCargandoJugadores(false);
-    }
-  }, [userId, syncJugadores]);
-
-  // Una sola carga por userId; getPlayers además coalesce in-flight.
   useEffect(() => {
     let cancelled = false;
     if (!userId) return;
@@ -99,7 +87,12 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
   const jugadoresFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
     if (!q) return jugadores;
-    return jugadores.filter((j) => j.name.toLowerCase().includes(q));
+    return jugadores.filter((j) => {
+      const row = j as PlayerRow;
+      const nameHit = j.name.toLowerCase().includes(q);
+      const idHit = (row.riviera_id ?? "").toLowerCase().includes(q);
+      return nameHit || idHit;
+    });
   }, [jugadores, busqueda]);
 
   const abrirContacto = (jugador: PlayerRow) => {
@@ -119,12 +112,10 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
   return (
     <aside className="te-players-panel torneo-express-card">
       <div className="te-players-panel__title-row">
-        <h2 className="te-players-panel__title">
-          <span className="te-players-panel__title-icon" aria-hidden>
-            👥
-          </span>
-          Jugadores del registro
-        </h2>
+        <p className="te-players-panel__lead">
+          Estos son tus jugadores del registro. Úsalos en el siguiente paso para
+          armar parejas.
+        </p>
         <Button
           type="button"
           variant="ghost"
@@ -159,33 +150,36 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
         <input
           id="te-buscar-jugador"
           type="search"
-          placeholder="Buscar jugador…"
+          placeholder="Buscar por nombre o Riviera ID…"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           autoComplete="off"
         />
       </div>
 
-      <p className="te-players-panel__hint te-players-panel__hint--notif">
-        Los jugadores se registran solo en{" "}
-        <strong>Registro de jugadores</strong>. Aquí se listan los del registro
-        para armar parejas. Para notificaciones necesitan{" "}
-        <strong>email real</strong> (agrégalo en el registro o con 📧 si aún
-        falta).
-      </p>
+      {/* PENDIENTE: reactivar con TE_CREATE_NOTIFS_ENABLED */}
+      {TE_CREATE_NOTIFS_ENABLED ? (
+        <p className="te-players-panel__hint te-players-panel__hint--notif">
+          Los jugadores se registran solo en{" "}
+          <strong>Registro de jugadores</strong>. Aquí se listan los del registro
+          para armar parejas. Para notificaciones necesitan{" "}
+          <strong>email real</strong> (agrégalo en el registro o con 📧 si aún
+          falta).
+        </p>
+      ) : null}
 
       <p className="te-players-list-meta">
         {cargandoJugadores
           ? "Cargando jugadores…"
-          : `Lista (${jugadores.length} jugador${jugadores.length === 1 ? "" : "es"}${
-              jugadoresSinEmail > 0
+          : `${jugadores.length} jugador${jugadores.length === 1 ? "" : "es"}${
+              TE_CREATE_NOTIFS_ENABLED && jugadoresSinEmail > 0
                 ? ` · ${jugadoresSinEmail} sin email listo`
                 : ""
             }${
-              jugadoresFiltrados.length > 6
-                ? " · desplázate en la lista ↓"
+              jugadoresFiltrados.length > 8
+                ? " · desplázate ↓"
                 : ""
-            })`}
+            }`}
       </p>
 
       {cargandoJugadores ? (
@@ -208,79 +202,45 @@ export const TorneoExpressPlayerPanel: React.FC<TorneoExpressPlayerPanelProps> =
         </div>
       ) : jugadoresFiltrados.length === 0 ? (
         <p className="te-players-empty">
-          No se encontró ningún jugador con ese nombre
+          No se encontró ningún jugador con ese nombre o Riviera ID
         </p>
       ) : (
-        <ul className="te-players-list">
+        <div className="te-players-grid" role="list">
           {jugadoresFiltrados.map((jugador) => {
             const row = jugador as PlayerRow;
             const emailOk = playerHasNotifiableEmail(row);
 
             return (
-              <li
-                key={jugador.id}
-                className={`te-players-row${
-                  !emailOk ? " te-players-row--sin-contacto" : ""
-                }`}
-              >
-                <div className="te-players-row__main">
-                  <span className="te-players-row__name">{jugador.name}</span>
-                  <span
-                    className={`te-players-row__contact-badge${
-                      emailOk
-                        ? " te-players-row__contact-badge--ok"
-                        : " te-players-row__contact-badge--warn"
-                    }`}
-                    title={
-                      emailOk
-                        ? "Email listo para notificaciones"
-                        : "Falta email real en el registro"
-                    }
+              <div key={jugador.id} className="te-players-grid__item" role="listitem">
+                <TePlayerCard player={row} />
+                {/* PENDIENTE: reactivar contacto email con TE_CREATE_NOTIFS_ENABLED */}
+                {TE_CREATE_NOTIFS_ENABLED && !emailOk ? (
+                  <button
+                    type="button"
+                    className="te-players-icon-btn te-players-icon-btn--contact te-players-grid__contact"
+                    onClick={() => abrirContacto(row)}
+                    aria-label={`Contacto de ${jugador.name}`}
+                    title="Completar email de contacto"
                   >
-                    {emailOk ? "✉️ OK" : "⚠️ sin email"}
-                  </span>
-                </div>
-                <div className="te-players-row__actions">
-                  {!emailOk ? (
-                    <button
-                      type="button"
-                      className="te-players-icon-btn te-players-icon-btn--contact"
-                      onClick={() => abrirContacto(row)}
-                      aria-label={`Contacto de ${jugador.name}`}
-                      title="Completar email de contacto"
-                    >
-                      📧
-                    </button>
-                  ) : null}
-                </div>
-              </li>
+                    📧
+                  </button>
+                ) : null}
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
 
+      {/* Modal de contacto: se mantiene montado para no perder el flujo pendiente */}
       <InscripcionParejaModal
-        open={Boolean(contactModal)}
+        open={TE_CREATE_NOTIFS_ENABLED && Boolean(contactModal)}
         playerId={contactModal?.playerId ?? ""}
         playerName={contactModal?.playerName ?? ""}
-        initialEmail={contactModal?.email}
+        initialEmail={contactModal?.email ?? ""}
         onClose={() => setContactModal(null)}
-        onSaved={(updated) => {
-          if (updated) {
-            syncJugadores(
-              jugadores.map((j) =>
-                j.id === updated.id
-                  ? ({
-                      ...j,
-                      email: updated.email ?? j.email,
-                      email_verified: updated.email_verified,
-                    } as PlayerRow)
-                  : j
-              )
-            );
-          } else {
-            void cargarJugadores();
-          }
+        onSaved={() => {
+          setContactModal(null);
+          void getPlayers(userId).then((data) => syncJugadores(data ?? []));
         }}
       />
     </aside>

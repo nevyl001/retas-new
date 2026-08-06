@@ -6,10 +6,15 @@ import {
 } from "../../lib/rivieraJugadores/playerNameKey";
 import { playerNeedsEmailContact } from "../../services/torneoExpressNotificacionesService";
 import { nextPairPick } from "../../lib/torneoExpress/pairPick";
+import { TE_CREATE_NOTIFS_ENABLED } from "../../lib/torneoExpress/teCreateNotifs";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
+import { TePlayerCard, type TePlayerCardPlayer } from "./TePlayerCard";
 import { Button } from "../ui";
+import "../jugadores/riviera-jugadores.css";
 
-type PlayerWithContact = Player & { email_verified?: boolean | null };
+type PlayerWithContact = TePlayerCardPlayer & {
+  email_verified?: boolean | null;
+};
 
 export interface ArmarParejasPickerProps {
   jugadoresPool: Player[];
@@ -40,7 +45,7 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
     () =>
       dedupePlayersForSelect(
         jugadoresPool.filter((j) => j.id && !idsInPairs.has(j.id))
-      ),
+      ) as PlayerWithContact[],
     [jugadoresPool, idsInPairs]
   );
 
@@ -139,7 +144,7 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
 
       {disponibles.length === 0 && parejas.length === 0 ? (
         <p className="te-armar-parejas__empty">
-          Agrega jugadores en el registro (Paso 3) para empezar.
+          Primero revisa el Paso 2: necesitas jugadores en el registro.
         </p>
       ) : null}
 
@@ -150,35 +155,33 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
             {pickedPlayer ? " · elige al compañero" : ""}
           </p>
           <div
-            className="te-armar-parejas__pool"
+            className="te-players-grid te-armar-parejas__grid"
             role="group"
             aria-label="Jugadores disponibles para formar pareja"
           >
             {disponibles.map((j) => {
               const selected = pickedId === j.id;
-              const sinEmail = playerNeedsEmailContact(j as PlayerWithContact);
+              const sinEmail =
+                TE_CREATE_NOTIFS_ENABLED &&
+                playerNeedsEmailContact(j as PlayerWithContact);
               return (
-                <button
-                  key={j.id}
-                  type="button"
-                  className={`te-jugador-pick${
-                    selected ? " te-jugador-pick--selected" : ""
-                  }`}
-                  onClick={() => seleccionarJugador(j)}
-                  disabled={addingPair}
-                  aria-pressed={selected}
-                >
-                  <span className="te-jugador-pick__name">{j.name}</span>
+                <div key={j.id} className="te-players-grid__item">
+                  <TePlayerCard
+                    player={j}
+                    selected={selected}
+                    disabled={addingPair}
+                    onClick={() => seleccionarJugador(j)}
+                  />
                   {sinEmail ? (
                     <span
-                      className="te-jugador-pick__warn"
+                      className="te-jugador-pick__warn te-players-grid__warn"
                       title="Sin email"
                       aria-label="Sin email"
                     >
                       ⚠️
                     </span>
                   ) : null}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -197,7 +200,7 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
           </h3>
           {parejas.length === 0 ? (
             <p className="te-armar-parejas__formed-empty">
-              Todavía ninguna. Toca dos nombres arriba.
+              Todavía ninguna. Toca dos fichas arriba.
             </p>
           ) : (
             <p className="te-armar-parejas__formed-hint">

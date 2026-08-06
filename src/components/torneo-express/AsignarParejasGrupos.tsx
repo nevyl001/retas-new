@@ -25,27 +25,21 @@ export const AsignarParejasGrupos: React.FC<AsignarParejasGruposProps> = ({
   );
 
   if (parejas.length < 2) {
-    return null;
+    return (
+      <p className="te-asignar-grupos__empty">
+        Arma al menos 2 parejas en el Paso 3 para repartirlas en grupos.
+      </p>
+    );
   }
 
   return (
-    <section className="te-asignar-grupos">
-      <div className="te-armar-parejas__step">
-        <span className="te-armar-parejas__step-num" aria-hidden>
-          2
-        </span>
-        <div>
-          <h2 className="te-section-title">Repartir en grupos</h2>
-          <p className="te-subtitle">
-            Pulsa cada pareja para asignarla a un grupo. Mínimo 2 parejas por
-            grupo. Una pareja solo puede estar en un grupo.
-          </p>
-        </div>
-      </div>
-
+    <section className="te-asignar-grupos te-asignar-grupos--embedded">
       {unassigned.length > 0 ? (
         <p className="te-asignar-grupos__warn" role="status">
-          Sin grupo: {unassigned.map((p) => `${p.jugador1.name} / ${p.jugador2.name}`).join(" · ")}
+          Sin grupo:{" "}
+          {unassigned
+            .map((p) => `${p.jugador1.name} / ${p.jugador2.name}`)
+            .join(" · ")}
         </p>
       ) : (
         <p className="te-asignar-grupos__ok" role="status">
