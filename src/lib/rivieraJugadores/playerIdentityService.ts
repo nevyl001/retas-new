@@ -35,6 +35,7 @@ import {
   obtenerHistorialRatingPublic,
   resolveRankingPosicionForPublicFicha,
 } from "./rivieraJugadoresService";
+import type { FindGrantedAccessMetaOptions } from "./organizerPlayerAccess";
 import { fetchRivieraIdMapForJugadorIds, isValidRivieraId } from "./rivieraIdDisplay";
 import type {
   JugadorParticipacion,
@@ -245,6 +246,21 @@ async function loadDisplayJugadorIdentityFirst(params: {
   linkedProfiles: Array<{ jugadorId: string; organizadorId: string }>;
   homeOrganizadorId: string | null;
   slug?: string;
+  /**
+   * Grants precargados PARA viewingOrganizadorId (ver
+   * buildGrantsContextForRoster). Solo es válido reusarlo en los probes que
+   * apuntan exactamente a ese org -- un org distinto tiene sus propios
+   * grants, pasar el contexto ahí daría un resultado incorrecto. Por eso
+   * cada llamada de abajo lo pasa solo cuando el org coincide.
+   */
+  grantsContext?: FindGrantedAccessMetaOptions;
+  /**
+   * Fila ya conocida para (anchorJugadorId, viewingOrganizadorId) -- ver
+   * fetchInternalClubJugadorRow. Solo aplica al probe viewingInternal (el
+   * único que apunta exactamente a ese par jugador/org); los demás probes
+   * (sibling, home, linkedProfiles, probeOrgs) nunca la reciben.
+   */
+  knownViewingRow?: RivieraJugadorWithStats;
 }): Promise<{
   jugador: RivieraJugadorWithStats;
   source: PlayerIdentityResolutionSource;
@@ -255,13 +271,19 @@ async function loadDisplayJugadorIdentityFirst(params: {
     linkedProfiles,
     homeOrganizadorId,
     slug,
+    grantsContext,
+    knownViewingRow,
   } = params;
   const viewOrg = viewingOrganizadorId?.trim() || null;
+  const contextForOrg = (org: string | null) =>
+    org && viewOrg && org === viewOrg ? grantsContext : undefined;
 
   if (viewOrg) {
     const viewingInternal = await getRivieraJugadorInternalClubById(
       anchorJugadorId,
-      viewOrg
+      viewOrg,
+      grantsContext,
+      knownViewingRow
     );
     if (viewingInternal) {
       return { jugador: viewingInternal, source: "viewing_org_internal" };
@@ -273,7 +295,8 @@ async function loadDisplayJugadorIdentityFirst(params: {
     if (siblingInView) {
       const row = await getRivieraJugadorInternalClubById(
         siblingInView.jugadorId,
-        viewOrg
+        viewOrg,
+        grantsContext
       );
       if (row) return { jugador: row, source: "sibling_discovery" };
     }
@@ -288,7 +311,8 @@ async function loadDisplayJugadorIdentityFirst(params: {
   if (homeOrg) {
     const homeRow = await getRivieraJugadorInternalClubById(
       anchorJugadorId,
-      homeOrg
+      homeOrg,
+      contextForOrg(homeOrg)
     );
     if (homeRow) {
       return { jugador: homeRow, source: "home_org_internal" };
@@ -299,7 +323,8 @@ async function loadDisplayJugadorIdentityFirst(params: {
     if (!profile.organizadorId) continue;
     const row = await getRivieraJugadorInternalClubById(
       profile.jugadorId,
-      profile.organizadorId
+      profile.organizadorId,
+      contextForOrg(profile.organizadorId)
     );
     if (row) {
       return { jugador: row, source: "home_org_internal" };
@@ -334,7 +359,11 @@ async function loadDisplayJugadorIdentityFirst(params: {
     )
   );
   for (const org of probeOrgs) {
-    const probed = await getRivieraJugadorInternalClubById(anchorJugadorId, org);
+    const probed = await getRivieraJugadorInternalClubById(
+      anchorJugadorId,
+      org,
+      contextForOrg(org)
+    );
     if (probed) {
       return { jugador: probed, source: "home_org_internal" };
     }
@@ -346,7 +375,10 @@ async function loadDisplayJugadorIdentityFirst(params: {
 /** Resuelve identidad global ANTES del contexto de club. */
 export async function resolvePlayerIdentity(
   input: PlayerIdentityInput,
-  viewingOrganizadorId?: string | null
+  viewingOrganizadorId?: string | null,
+  grantsContext?: FindGrantedAccessMetaOptions,
+  /** Fila ya conocida para el jugador de `input` en viewingOrganizadorId -- ver loadDisplayJugadorIdentityFirst. */
+  knownRow?: RivieraJugadorWithStats
 ): Promise<ResolvedPlayerIdentity | null> {
   const viewOrg = viewingOrganizadorId?.trim() || null;
   let anchorJugadorId: string | null = null;
@@ -375,6 +407,8 @@ export async function resolvePlayerIdentity(
     linkedProfiles: linkage.linkedProfiles,
     homeOrganizadorId: linkage.homeOrganizadorId,
     slug,
+    grantsContext,
+    knownViewingRow: knownRow?.id === anchorJugadorId ? knownRow : undefined,
   });
 
   if (!display) return null;

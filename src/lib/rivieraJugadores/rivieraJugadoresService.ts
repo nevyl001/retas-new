@@ -35,6 +35,7 @@ import {
   listRevokedGrantLocalJugadorIds,
   loadGrantedSourceDisplayData,
   syncGrantedLocalsFromSource,
+  type FindGrantedAccessMetaOptions,
 } from "./organizerPlayerAccess";
 import {
   enrichJugadorConcedidoClubView,
@@ -300,9 +301,14 @@ async function listGrantsForInternalClubMerge(organizadorId: string) {
 async function enrichInternalClubJugadorGrant(
   organizadorId: string,
   jugador: RivieraJugadorWithStats,
-  rpc?: RatingRpcFallbackOptions
+  rpc?: RatingRpcFallbackOptions,
+  grantsContext?: FindGrantedAccessMetaOptions
 ): Promise<RivieraJugadorWithStats> {
-  const meta = await findGrantedAccessMetaForJugador(organizadorId, jugador.id);
+  const meta = await findGrantedAccessMetaForJugador(
+    organizadorId,
+    jugador.id,
+    grantsContext
+  );
   if (!meta) return jugador;
 
   const ownerOrgId = meta.ownerOrganizadorId;
@@ -318,7 +324,7 @@ async function enrichInternalClubJugadorGrant(
       meta.sourceJugadorId,
       ownerOrgId
     ),
-    { rpc }
+    { rpc, grantsContext }
   );
 }
 
@@ -537,9 +543,37 @@ function isRlsPolicyError(error: { code?: string; message?: string } | null): bo
 
 async function fetchInternalClubJugadorRow(
   organizadorId: string,
-  opts: { slug?: string; jugadorId?: string }
+  opts: { slug?: string; jugadorId?: string },
+  grantsContext?: FindGrantedAccessMetaOptions,
+  /**
+   * Fila ya disponible en memoria para (organizadorId, jugadorId) -- p.ej. el
+   * roster que enrichJugadoresOrganizerScopedStats ya trae de
+   * riviera_ranking_interno_por_organizador (mapeada por el mismo
+   * mapInternalClubJugadorRow que usa riviera_jugador_interno_por_id, mismo
+   * shape). Evita re-pedir por RPC una fila que el llamador ya tiene
+   * (incidente de rendimiento 2026-08-05, tercera fuente de N+1). Solo se usa
+   * si NO está marcada como cedida -- una fila cedida ya viene mutada con
+   * datos del club origen (nombre/categoria/stats), un shape distinto al que
+   * produce esta función por su cuenta; para esos casos se sigue pidiendo por
+   * RPC como hoy, sin cambio de comportamiento.
+   */
+  knownRow?: RivieraJugadorWithStats
 ): Promise<RivieraJugadorWithStats | null> {
   const trimmedOrg = organizadorId.trim();
+  if (
+    opts.jugadorId &&
+    knownRow &&
+    !knownRow.concedidoPorAdmin &&
+    knownRow.id === opts.jugadorId &&
+    knownRow.organizador_id === trimmedOrg
+  ) {
+    return enrichInternalClubJugadorGrant(
+      trimmedOrg,
+      knownRow,
+      PUBLIC_ORGANIZER_RPC_FALLBACK,
+      grantsContext
+    );
+  }
   const rpcName = opts.jugadorId
     ? "riviera_jugador_interno_por_id"
     : "riviera_jugador_interno_por_slug";
@@ -552,11 +586,19 @@ async function fetchInternalClubJugadorRow(
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) return null;
     const mapped = mapInternalClubJugadorRow(row as Record<string, unknown>);
-    if (await isRevokedGrantLocalJugador(trimmedOrg, mapped.id)) return null;
+    if (
+      await isRevokedGrantLocalJugador(
+        trimmedOrg,
+        mapped.id,
+        grantsContext?.preloadedRevokedLocalIds
+      )
+    )
+      return null;
     return enrichInternalClubJugadorGrant(
       trimmedOrg,
       mapped,
-      PUBLIC_ORGANIZER_RPC_FALLBACK
+      PUBLIC_ORGANIZER_RPC_FALLBACK,
+      grantsContext
     );
   }
   if (error && !isMissingRpcError(error) && !isMissingTableError(error)) {
@@ -568,8 +610,20 @@ async function fetchInternalClubJugadorRow(
       const row = Array.isArray(authData) ? authData[0] : authData;
       if (!row) return null;
       const mapped = mapInternalClubJugadorRow(row as Record<string, unknown>);
-      if (await isRevokedGrantLocalJugador(trimmedOrg, mapped.id)) return null;
-      return enrichInternalClubJugadorGrant(trimmedOrg, mapped);
+      if (
+        await isRevokedGrantLocalJugador(
+          trimmedOrg,
+          mapped.id,
+          grantsContext?.preloadedRevokedLocalIds
+        )
+      )
+        return null;
+      return enrichInternalClubJugadorGrant(
+        trimmedOrg,
+        mapped,
+        undefined,
+        grantsContext
+      );
     }
     if (!isMissingRpcError(authError) && !isMissingTableError(authError)) {
       throw authError ?? error;
@@ -601,21 +655,34 @@ async function fetchInternalClubJugadorRow(
   const mapped = mapJugadorRowFromService(
     fallbackData as unknown as Record<string, unknown>
   );
-  if (await isRevokedGrantLocalJugador(trimmedOrg, mapped.id)) return null;
+  if (
+    await isRevokedGrantLocalJugador(
+      trimmedOrg,
+      mapped.id,
+      grantsContext?.preloadedRevokedLocalIds
+    )
+  )
+    return null;
   return enrichInternalClubJugadorGrant(
     trimmedOrg,
     mapped,
-    PUBLIC_ORGANIZER_RPC_FALLBACK
+    PUBLIC_ORGANIZER_RPC_FALLBACK,
+    grantsContext
   );
 }
 
 /** Cedido sin perfil local en el club: ficha por ID del jugador origen. */
 async function fetchGrantedJugadorForInternalClub(
   organizadorId: string,
-  jugadorId: string
+  jugadorId: string,
+  grantsContext?: FindGrantedAccessMetaOptions
 ): Promise<RivieraJugadorWithStats | null> {
   const trimmedId = jugadorId.trim();
-  const meta = await findGrantedAccessMetaForJugador(organizadorId, trimmedId);
+  const meta = await findGrantedAccessMetaForJugador(
+    organizadorId,
+    trimmedId,
+    grantsContext
+  );
   if (!meta) return null;
 
   if (
@@ -623,15 +690,21 @@ async function fetchGrantedJugadorForInternalClub(
     meta.sourceJugadorId === trimmedId &&
     meta.localJugadorId !== trimmedId
   ) {
-    return fetchInternalClubJugadorRow(organizadorId, {
-      jugadorId: meta.localJugadorId,
-    });
+    return fetchInternalClubJugadorRow(
+      organizadorId,
+      { jugadorId: meta.localJugadorId },
+      grantsContext
+    );
   }
 
   const source = await fetchSourceJugadorForGrant(meta.sourceJugadorId);
   if (!source) return null;
 
-  const grants = await listActiveGrantedAccessForOrganizerPublic(organizadorId);
+  // Mismo dato que ya trae grantsContext.preloadedGrants (si vino) -- evita
+  // volver a pedir la lista completa de grants solo para buscar por id.
+  const grants =
+    grantsContext?.preloadedGrants ??
+    (await listActiveGrantedAccessForOrganizerPublic(organizadorId));
   const grant = grants.find((g) => g.id === meta.accessId);
   if (!grant) return null;
 
@@ -661,13 +734,21 @@ async function fetchGrantedJugadorForInternalClub(
 
 export async function getRivieraJugadorInternalClubById(
   jugadorId: string,
-  organizadorId: string
+  organizadorId: string,
+  grantsContext?: FindGrantedAccessMetaOptions,
+  knownRow?: RivieraJugadorWithStats
 ): Promise<RivieraJugadorWithStats | null> {
-  const direct = await fetchInternalClubJugadorRow(organizadorId, { jugadorId });
+  const direct = await fetchInternalClubJugadorRow(
+    organizadorId,
+    { jugadorId },
+    grantsContext,
+    knownRow
+  );
   if (direct) return enrichJugadorWithRivieraId(direct, { publicRanking: true });
   const granted = await fetchGrantedJugadorForInternalClub(
     organizadorId,
-    jugadorId
+    jugadorId,
+    grantsContext
   );
   return granted ? enrichJugadorWithRivieraId(granted, { publicRanking: true }) : null;
 }

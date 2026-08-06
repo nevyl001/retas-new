@@ -1,6 +1,31 @@
 -- Ranking sitio oficial (rivieraopen.com): visibilidad SOLO por jugador (visible_publico).
 -- Ya no depende de visible_ranking_oficial del club — funciona igual para todos los organizadores.
 -- Ejecutar en Supabase SQL Editor (producción).
+--
+-- ⚠️  SUPERSEDIDO PARCIAL (auditoría 2026-08-05, verificado con
+-- pg_get_functiondef byte a byte contra una copia del esquema real de
+-- producción cargada en Postgres local -- no solo comparación de texto):
+--   - riviera_ranking_sitio_oficial_por_organizador, riviera_ranking_sitio_oficial_global
+--     y riviera_ranking_posicion_sitio_oficial_global de ESTE archivo ya NO son la
+--     versión vigente -- el cuerpo actual está en supabase/riviera-official-site-ranking-fix-nulls.sql.
+--   - is_jugador_visible_sitio_oficial y riviera_organizadores_ranking_oficial
+--     (de este archivo) SÍ coinciden con producción, sin cambios.
+--   - is_organizador_ranking_publico (de este archivo) es DISTINTA a la que
+--     corre en producción -- NO es solo un archivo viejo sin actualizar. El
+--     cuerpo VIGENTE en producción es el de supabase/admin-master-controls.sql
+--     (gate MANUAL vía organizador_game_modes.visible_ranking_oficial). La
+--     versión de ESTE archivo (derivada automáticamente de
+--     riviera_jugadores.visible_publico por jugador) fue escrita/commiteada
+--     pero NUNCA se desplegó a producción.
+--
+--     DECISIÓN DE PRODUCTO (2026-08-05): se descarta este rediseño. El
+--     ranking público del organizador se mantiene controlado por el toggle
+--     MANUAL organizador_game_modes.visible_ranking_oficial, exactamente
+--     como corre hoy en producción -- no se migra al cálculo automático por
+--     jugador. La definición de abajo (líneas ~301+) queda como referencia
+--     histórica de un diseño evaluado y descartado -- NO ejecutar contra
+--     producción bajo ninguna circunstancia. La función real que gobierna
+--     esto sigue siendo la de supabase/admin-master-controls.sql, sin cambios.
 
 -- ── ¿Este jugador aparece en el sitio oficial? ──
 CREATE OR REPLACE FUNCTION public.is_jugador_visible_sitio_oficial(p_jugador_id uuid)
@@ -276,7 +301,10 @@ COMMENT ON FUNCTION public.riviera_organizadores_ranking_oficial() IS
 
 GRANT EXECUTE ON FUNCTION public.riviera_organizadores_ranking_oficial() TO anon, authenticated;
 
--- ── is_organizador_ranking_publico: derivado de jugadores publicados (no manual por club) ──
+-- ── is_organizador_ranking_publico: NUNCA DESPLEGADO, DISEÑO DESCARTADO (2026-08-05) --
+-- NO ejecutar contra producción. Ver header del archivo. La función vigente
+-- (gate manual por organizador_game_modes.visible_ranking_oficial) vive en
+-- supabase/admin-master-controls.sql. ──
 CREATE OR REPLACE FUNCTION public.is_organizador_ranking_publico(p_org_id uuid)
 RETURNS boolean
 LANGUAGE sql

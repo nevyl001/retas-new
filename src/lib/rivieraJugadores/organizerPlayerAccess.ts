@@ -99,9 +99,12 @@ export function excludeRevokedGrantLocalClones<T extends { id: string }>(
 
 export async function isRevokedGrantLocalJugador(
   granteeOrganizerId: string,
-  jugadorId: string
+  jugadorId: string,
+  preloadedRevokedLocalIds?: Set<string>
 ): Promise<boolean> {
-  const revoked = await listRevokedGrantLocalJugadorIds(granteeOrganizerId);
+  const revoked =
+    preloadedRevokedLocalIds ??
+    (await listRevokedGrantLocalJugadorIds(granteeOrganizerId));
   return revoked.has(jugadorId.trim());
 }
 
@@ -331,6 +334,12 @@ export interface FindGrantedAccessMetaOptions {
    * incluye ese resultado -- evita repetir la consulta directa.
    */
   grantsFullyResolved?: boolean;
+  /**
+   * local_jugador_id de grants revocados para este organizador, ya resuelto
+   * por el llamador (ver buildGrantsContextForRoster) -- evita que
+   * isRevokedGrantLocalJugador vuelva a pedirlo por cada jugador del roster.
+   */
+  preloadedRevokedLocalIds?: Set<string>;
 }
 
 export async function findGrantedAccessMetaForJugador(
@@ -384,6 +393,52 @@ export async function findGrantedAccessMetaForJugador(
     localJugadorId: data.local_jugador_id ? String(data.local_jugador_id) : null,
     localDisplayName: data.local_display_name ? String(data.local_display_name) : null,
     localCategory: data.local_category ? String(data.local_category) : null,
+  };
+}
+
+/**
+ * Precarga los grants de un organizador para TODO un roster de una sola vez
+ * (1 RPC + a lo más 1 consulta batched de fallback), en vez de que cada
+ * jugador del roster los vuelva a pedir por separado. Único punto que arma
+ * un FindGrantedAccessMetaOptions "grantsFullyResolved" -- reusado por cada
+ * ruta que hoy resuelve grants por-jugador (concedidoClubView.ts,
+ * organizerScopedStats.ts) en vez de que cada una reimplemente el mismo
+ * preload+fallback (incidente de rendimiento 2026-08-05, ficha pública).
+ * No es un caché: es un valor calculado una vez por carga y pasado por
+ * parámetro -- se descarta al terminar la función que lo pidió.
+ */
+export async function buildGrantsContextForRoster(
+  granteeOrganizerId: string,
+  jugadorIds: string[]
+): Promise<FindGrantedAccessMetaOptions> {
+  const org = granteeOrganizerId.trim();
+  if (!org)
+    return {
+      preloadedGrants: [],
+      grantsFullyResolved: true,
+      preloadedRevokedLocalIds: new Set(),
+    };
+
+  const [preloadedGrants, preloadedRevokedLocalIds] = await Promise.all([
+    listActiveGrantedAccessForOrganizerPublic(org),
+    listRevokedGrantLocalJugadorIds(org),
+  ]);
+  const knownIds = new Set(
+    preloadedGrants.flatMap((g) =>
+      [g.jugador_id, g.local_jugador_id].filter((id): id is string => Boolean(id))
+    )
+  );
+  const missingIds = Array.from(new Set(jugadorIds.map((id) => id.trim()).filter(Boolean))).filter(
+    (id) => !knownIds.has(id)
+  );
+  const fallbackRows = missingIds.length
+    ? await listOrganizerPlayerAccessRowsForJugadorIds(org, missingIds)
+    : [];
+
+  return {
+    preloadedGrants: [...preloadedGrants, ...fallbackRows],
+    grantsFullyResolved: true,
+    preloadedRevokedLocalIds,
   };
 }
 

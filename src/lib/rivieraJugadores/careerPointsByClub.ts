@@ -221,6 +221,14 @@ export async function attachCareerPuntosToJugador(
     linkedJugadorIds?: string[];
     viewingOrganizadorId?: string | null;
     includeViewingOrgWithZero?: boolean;
+    /**
+     * Puntos ROMC ya resueltos por el llamador (p.ej. precargados para todo
+     * un roster, ver resolveRosterCareerIdentityBatch en organizerScopedStats.ts)
+     * -- si viene, se usa directo y se salta resolveOfficialGlobalPuntos.
+     * `null` es un valor válido (sin identidad oficial), distinto de
+     * `undefined` (no se precargó nada, comportamiento de hoy sin cambios).
+     */
+    preloadedOfficialGlobalPuntos?: number | null;
   }
 ): Promise<RivieraJugadorWithStats> {
   const linkedIds = Array.from(
@@ -262,7 +270,10 @@ export async function attachCareerPuntosToJugador(
   if (career.byClub.length === 0 && career.total === 0) return jugador;
 
   const homeOrg = jugador.organizador_id?.trim() ?? "";
-  const officialGlobal = await resolveOfficialGlobalPuntos(jugador.id);
+  const officialGlobal =
+    options?.preloadedOfficialGlobalPuntos !== undefined
+      ? options.preloadedOfficialGlobalPuntos
+      : await resolveOfficialGlobalPuntos(jugador.id);
 
   const enrichedJugador = {
     ...jugador,

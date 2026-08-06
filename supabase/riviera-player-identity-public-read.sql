@@ -1,3 +1,12 @@
+-- ⚠️  SUPERSEDIDO (auditoría 2026-08-05) — este archivo ya NO representa el
+-- cuerpo real de resolve_public_player_identity en producción. La versión
+-- vigente (verificada contra `supabase db dump --linked`) vive en
+-- supabase/riviera-career-global-identity-fix.sql — delega el cálculo de
+-- carrera a get_public_career_jugador_ids (CROSS JOIN LATERAL) en vez de
+-- reimplementarlo inline. No usar este archivo como referencia de la lógica
+-- actual; se conserva solo como historial. Ver migración 0019 y el reporte
+-- de auditoría identidad/carrera del 2026-08-05.
+--
 -- Identidad pública global: resolver jugador por UUID / Riviera ID sin gate org-first.
 -- Complementa get_public_career_jugador_ids (sin exigir visible_publico en toda la carrera).
 -- Ejecutar en Supabase SQL Editor (staging → prod).

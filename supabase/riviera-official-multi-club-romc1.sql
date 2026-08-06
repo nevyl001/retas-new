@@ -138,6 +138,13 @@ CREATE POLICY ropt_admin_all ON public.riviera_official_player_totals
 -- ══════════════════════════════════════════════════════════════════════════════
 -- Helper interno: resolver official_player_key desde riviera_jugador_id
 -- (solo para RPCs admin; no expuesto a la app en ROMC-1)
+--
+-- ⚠️  SUPERSEDIDO (auditoría 2026-08-05) — SOLO esta función de este archivo
+-- (las demás abajo -- admin_create_official_player_identity_from_jugador,
+-- admin_link/unlink_official_player_profile, etc. -- no se auditaron en esta
+-- pasada). El cuerpo vigente de _resolve_official_player_key vive en
+-- supabase/riviera-career-global-identity-fix.sql, verificado contra
+-- `supabase db dump --linked`. Ver migración 0019.
 -- ══════════════════════════════════════════════════════════════════════════════
 
 CREATE OR REPLACE FUNCTION public._resolve_official_player_key(p_riviera_jugador_id uuid)

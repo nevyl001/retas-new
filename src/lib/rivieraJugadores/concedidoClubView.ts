@@ -1,8 +1,7 @@
 import { supabase, supabasePublicRead } from "../supabaseClient";
 import {
+  buildGrantsContextForRoster,
   findGrantedAccessMetaForJugador,
-  listActiveGrantedAccessForOrganizerPublic,
-  listOrganizerPlayerAccessRowsForJugadorIds,
   type FindGrantedAccessMetaOptions,
 } from "./organizerPlayerAccess";
 import { resolveOfficialGlobalPuntos } from "./rivieraOfficialActivity";
@@ -124,24 +123,10 @@ export async function enrichJugadoresConcedidoClubViewBatch(
     // clubes con roster grande (incidente 2026-08-05). Se resuelve una sola
     // vez para todo el roster y se reutiliza -- mismo resultado, mismo
     // predicado que antes, solo que pedido 1 vez en vez de N.
-    const preloadedGrants = await listActiveGrantedAccessForOrganizerPublic(org);
-    const knownIds = new Set(
-      preloadedGrants.flatMap((g) =>
-        [g.jugador_id, g.local_jugador_id].filter(
-          (id): id is string => Boolean(id)
-        )
-      )
+    const grantsContext = await buildGrantsContextForRoster(
+      org,
+      jugadores.map((j) => j.id)
     );
-    const missingIds = jugadores
-      .map((j) => j.id)
-      .filter((id) => !knownIds.has(id));
-    const fallbackRows = missingIds.length
-      ? await listOrganizerPlayerAccessRowsForJugadorIds(org, missingIds)
-      : [];
-    const grantsContext: FindGrantedAccessMetaOptions = {
-      preloadedGrants: [...preloadedGrants, ...fallbackRows],
-      grantsFullyResolved: true,
-    };
     return Promise.all(
       jugadores.map((j) =>
         enrichJugadorConcedidoClubView(org, j, { rpc: options, grantsContext })

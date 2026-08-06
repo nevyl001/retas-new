@@ -1,3 +1,19 @@
+-- ⚠️  SUPERSEDIDO (auditoría 2026-08-05) — este archivo ya NO representa el
+-- cuerpo real de get_public_career_jugador_ids NI de
+-- riviera_list_career_participaciones_public en producción (verificado
+-- contra `supabase db dump --linked`). La versión vigente de AMBAS funciones
+-- vive en supabase/riviera-career-global-identity-fix.sql:
+--   - get_public_career_jugador_ids en producción tiene una 6ª rama UNION
+--     que este archivo no tiene (perfil ancla como ORIGEN directo de un
+--     grant, sin pasar por identidad oficial).
+--   - riviera_list_career_participaciones_public en producción ya no
+--     reimplementa el filtro/enriquecimiento: es un wrapper de una línea
+--     sobre riviera_list_participaciones_for_jugador_ids + la función de
+--     arriba.
+-- No usar este archivo como referencia de la lógica actual; se conserva
+-- solo como historial. Ver migración 0019 y el reporte de auditoría
+-- identidad/carrera del 2026-08-05.
+--
 -- Carrera global en ficha pública (anon): participaciones de todos los perfiles
 -- enlazados (profile_link + grants) aunque el clon local no sea visible_publico.
 -- Ejecutar en Supabase SQL Editor (staging → prod).
