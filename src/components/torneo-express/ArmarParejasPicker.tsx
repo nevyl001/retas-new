@@ -4,10 +4,8 @@ import {
   dedupePlayersForSelect,
   playerIdsInPairs,
 } from "../../lib/rivieraJugadores/playerNameKey";
-import {
-  playerHasNotifiableEmail,
-  playerNeedsEmailContact,
-} from "../../services/torneoExpressNotificacionesService";
+import { playerNeedsEmailContact } from "../../services/torneoExpressNotificacionesService";
+import { nextPairPick } from "../../lib/torneoExpress/pairPick";
 import type { ParejaDraft } from "./crearTorneoExpressTypes";
 import { Button } from "../ui";
 
@@ -21,6 +19,12 @@ export interface ArmarParejasPickerProps {
   onEliminarPareja: (pareja: ParejaDraft) => void;
 }
 
+/**
+ * Flujo pensado para móvil / uso rápido:
+ * 1) Toca jugador A
+ * 2) Toca jugador B → la pareja se forma sola
+ * 3) Si te equivocaste, bórrala abajo
+ */
 export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
   jugadoresPool,
   parejas,
@@ -28,7 +32,7 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
   onFormarPareja,
   onEliminarPareja,
 }) => {
-  const [pickedIds, setPickedIds] = useState<string[]>([]);
+  const [pickedId, setPickedId] = useState<string | null>(null);
 
   const idsInPairs = useMemo(() => playerIdsInPairs(parejas), [parejas]);
 
@@ -40,68 +44,110 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
     [jugadoresPool, idsInPairs]
   );
 
-  const pickedPlayers = useMemo(() => {
-    return pickedIds
-      .map((id) => disponibles.find((p) => p.id === id))
-      .filter((p): p is Player => !!p);
-  }, [pickedIds, disponibles]);
-
-  const toggleJugador = useCallback(
-    (j: Player) => {
-      if (!j.id || idsInPairs.has(j.id)) return;
-
-      setPickedIds((prev) => {
-        if (prev.includes(j.id)) {
-          return prev.filter((id) => id !== j.id);
-        }
-        if (prev.length >= 2) {
-          return [prev[1], j.id];
-        }
-        return [...prev, j.id];
-      });
-    },
-    [idsInPairs]
+  const pickedPlayer = useMemo(
+    () => (pickedId ? disponibles.find((p) => p.id === pickedId) ?? null : null),
+    [pickedId, disponibles]
   );
 
-  const limpiarSeleccion = () => setPickedIds([]);
+  const seleccionarJugador = useCallback(
+    (j: Player) => {
+      if (!j.id || idsInPairs.has(j.id) || addingPair) return;
 
-  const formarPareja = () => {
-    if (pickedPlayers.length !== 2) return;
-    onFormarPareja(pickedPlayers[0], pickedPlayers[1]);
-    setPickedIds([]);
-  };
+      const action = nextPairPick(pickedId, j.id);
 
-  const puedeFormar =
-    pickedPlayers.length === 2 && pickedPlayers[0].id !== pickedPlayers[1].id;
+      if (action.type === "clear") {
+        setPickedId(null);
+        return;
+      }
+
+      if (action.type === "select") {
+        setPickedId(action.id);
+        return;
+      }
+
+      const primero = disponibles.find((p) => p.id === action.id1);
+      const segundo = disponibles.find((p) => p.id === action.id2);
+      if (!primero || !segundo || primero.id === segundo.id) {
+        setPickedId(action.id2);
+        return;
+      }
+
+      setPickedId(null);
+      onFormarPareja(primero, segundo);
+    },
+    [addingPair, disponibles, idsInPairs, onFormarPareja, pickedId]
+  );
 
   return (
     <section className="te-armar-parejas te-armar-parejas--picker">
-      <div className="te-armar-parejas__step">
-        <span className="te-armar-parejas__step-num" aria-hidden>
-          1
+      <p className="te-armar-parejas__howto">
+        <strong>Toca un jugador</strong> y luego <strong>otro</strong>. La
+        pareja se forma sola. Si te equivocas, bórrala abajo.
+      </p>
+
+      <div
+        className="te-armar-parejas__slots"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div
+          className={`te-armar-parejas__slot${
+            pickedPlayer ? " te-armar-parejas__slot--filled" : ""
+          }`}
+        >
+          <span className="te-armar-parejas__slot-label">Jugador 1</span>
+          <span className="te-armar-parejas__slot-value">
+            {pickedPlayer ? pickedPlayer.name : "Toca un nombre"}
+          </span>
+        </div>
+        <span className="te-armar-parejas__slots-plus" aria-hidden>
+          +
         </span>
-        <div>
-          <h2 className="te-section-title">Armar parejas</h2>
-          <p className="te-subtitle">
-            Toca <strong>dos jugadores</strong> del registro y pulsa «Formar
-            pareja». Ya emparejados desaparecen de la lista.
-          </p>
+        <div
+          className={`te-armar-parejas__slot${
+            addingPair ? " te-armar-parejas__slot--busy" : ""
+          }`}
+        >
+          <span className="te-armar-parejas__slot-label">Jugador 2</span>
+          <span className="te-armar-parejas__slot-value">
+            {addingPair
+              ? "Formando…"
+              : pickedPlayer
+                ? "Toca al compañero"
+                : "—"}
+          </span>
         </div>
       </div>
 
+      {pickedPlayer ? (
+        <div className="te-armar-parejas__pick-bar">
+          <p className="te-armar-parejas__pick-hint">
+            Elegiste a <strong>{pickedPlayer.name}</strong>. Ahora toca a su
+            pareja.
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={addingPair}
+            onClick={() => setPickedId(null)}
+          >
+            Cancelar
+          </Button>
+        </div>
+      ) : null}
+
       {disponibles.length === 0 && parejas.length === 0 ? (
         <p className="te-armar-parejas__empty">
-          Agrega jugadores en el panel derecho para empezar.
+          Agrega jugadores en el registro (Paso 3) para empezar.
         </p>
       ) : null}
 
       {disponibles.length > 0 ? (
         <>
           <p className="te-armar-parejas__meta">
-            Disponibles: {disponibles.length}
-            {pickedIds.length > 0
-              ? ` · Seleccionados: ${pickedIds.length}/2`
-              : ""}
+            {disponibles.length} sin pareja
+            {pickedPlayer ? " · elige al compañero" : ""}
           </p>
           <div
             className="te-armar-parejas__pool"
@@ -109,7 +155,7 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
             aria-label="Jugadores disponibles para formar pareja"
           >
             {disponibles.map((j) => {
-              const selected = pickedIds.includes(j.id);
+              const selected = pickedId === j.id;
               const sinEmail = playerNeedsEmailContact(j as PlayerWithContact);
               return (
                 <button
@@ -118,17 +164,18 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
                   className={`te-jugador-pick${
                     selected ? " te-jugador-pick--selected" : ""
                   }`}
-                  onClick={() => toggleJugador(j)}
+                  onClick={() => seleccionarJugador(j)}
+                  disabled={addingPair}
                   aria-pressed={selected}
                 >
                   <span className="te-jugador-pick__name">{j.name}</span>
                   {sinEmail ? (
-                    <span className="te-jugador-pick__warn" title="Sin email">
+                    <span
+                      className="te-jugador-pick__warn"
+                      title="Sin email"
+                      aria-label="Sin email"
+                    >
                       ⚠️
-                    </span>
-                  ) : playerHasNotifiableEmail(j as PlayerWithContact) ? (
-                    <span className="te-jugador-pick__ok" title="Email listo">
-                      ✓
                     </span>
                   ) : null}
                 </button>
@@ -138,44 +185,58 @@ export const ArmarParejasPicker: React.FC<ArmarParejasPickerProps> = ({
         </>
       ) : parejas.length > 0 ? (
         <p className="te-armar-parejas__empty">
-          Todos los jugadores del registro ya están en una pareja.
+          Todos los jugadores del registro ya tienen pareja.
         </p>
       ) : null}
 
-      <div className="te-armar-parejas__actions">
-        {pickedIds.length > 0 ? (
-          <Button type="button" variant="ghost" onClick={limpiarSeleccion}>
-            Limpiar selección
-          </Button>
-        ) : null}
-        <Button
-          type="button"
-          variant="primary"
-          disabled={!puedeFormar || addingPair}
-          onClick={formarPareja}
-        >
-          {addingPair ? "Formando…" : "Formar pareja"}
-        </Button>
-      </div>
+      <div className="te-armar-parejas__formed">
+        <div className="te-armar-parejas__formed-head">
+          <h3 className="te-armar-parejas__formed-title">
+            Parejas armadas
+            {parejas.length > 0 ? ` (${parejas.length})` : ""}
+          </h3>
+          {parejas.length === 0 ? (
+            <p className="te-armar-parejas__formed-empty">
+              Todavía ninguna. Toca dos nombres arriba.
+            </p>
+          ) : (
+            <p className="te-armar-parejas__formed-hint">
+              ¿Te equivocaste? Pulsa <strong>Borrar</strong>.
+            </p>
+          )}
+        </div>
 
-      {parejas.length > 0 ? (
-        <ul className="te-armar-parejas__list">
-          {parejas.map((p) => (
-            <li key={p.id} className="te-armar-parejas__item">
-              <span>
-                {p.jugador1.name} / {p.jugador2.name}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onEliminarPareja(p)}
-              >
-                Quitar
-              </Button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+        {parejas.length > 0 ? (
+          <ul className="te-armar-parejas__list">
+            {parejas.map((p, index) => (
+              <li key={p.id} className="te-armar-parejas__item">
+                <div className="te-armar-parejas__item-main">
+                  <span className="te-armar-parejas__item-num" aria-hidden>
+                    {index + 1}
+                  </span>
+                  <span className="te-armar-parejas__item-names">
+                    <span>{p.jugador1.name}</span>
+                    <span className="te-armar-parejas__item-sep" aria-hidden>
+                      /
+                    </span>
+                    <span>{p.jugador2.name}</span>
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="te-armar-parejas__item-delete"
+                  onClick={() => onEliminarPareja(p)}
+                  aria-label={`Borrar pareja ${p.jugador1.name} y ${p.jugador2.name}`}
+                >
+                  Borrar
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
     </section>
   );
 };
