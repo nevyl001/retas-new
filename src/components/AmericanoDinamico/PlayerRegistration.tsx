@@ -3,7 +3,11 @@ import {
   useClubModeEyebrow,
 } from "../../club-experience";
 import type { AmericanoPlayer } from "../../lib/db/types";
-import type { Player, Tournament } from "../../lib/database";
+import {
+  updateTournament,
+  type Player,
+  type Tournament,
+} from "../../lib/database";
 import {
   fetchOpenGameRegistrationConfig,
   listOpenGameRegistrationEntries,
@@ -21,10 +25,10 @@ import {
   type QuickModeStep,
   type QuickModeStepStatus,
 } from "../platform/quickMode";
-import { Input } from "../ui";
+import { Button, Input } from "../ui";
 import "./PlayerRegistration.css";
 
-type PrepStepId = "jugadores" | "listo";
+type PrepStepId = "jugadores" | "config" | "listo";
 
 interface PlayerRegistrationProps {
   players: AmericanoPlayer[];
@@ -104,9 +108,40 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
   const [wantConvocatoria, setWantConvocatoria] = useState(false);
   const [convIsLive, setConvIsLive] = useState(false);
   const [convLine, setConvLine] = useState("Sin abrir · —");
-  const [totalRounds, setTotalRounds] = useState(3);
+  const [roundsDraft, setRoundsDraft] = useState<number | "">(3);
+  const [courtsDraft, setCourtsDraft] = useState(2);
   const [starting, setStarting] = useState(false);
-  const courts = Math.max(1, Math.floor(Number(tournament?.courts)) || 2);
+  const [savingCourts, setSavingCourts] = useState(false);
+
+  useEffect(() => {
+    const fromTournament = Math.max(
+      1,
+      Math.floor(Number(tournament?.courts)) || 2
+    );
+    setCourtsDraft(fromTournament);
+  }, [tournament?.courts]);
+
+  const courts = Math.max(1, Math.floor(Number(courtsDraft)) || 1);
+  const totalRounds =
+    roundsDraft === "" ? 3 : Math.max(1, Math.floor(Number(roundsDraft)) || 1);
+
+  const persistCourts = useCallback(
+    async (next: number) => {
+      const safe = Math.max(1, Math.floor(next) || 1);
+      setCourtsDraft(safe);
+      if (!tournament?.id) return;
+      setSavingCourts(true);
+      try {
+        await updateTournament(tournament.id, { courts: safe });
+        onTournamentPatched?.({ ...tournament, courts: safe });
+      } catch {
+        /* la UI ya muestra el draft; al iniciar se vuelve a persistir */
+      } finally {
+        setSavingCourts(false);
+      }
+    },
+    [tournament, onTournamentPatched]
+  );
 
   const selectedPlayers = useMemo<Player[]>(() => {
     const byId = new Map(availablePlayers.map((p) => [p.id, p]));
@@ -215,17 +250,27 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         count: String(players.length),
       },
       {
+        id: "config",
+        label: "Rondas y canchas",
+        status: stepStatus("config", step, configOk),
+        count: configOk ? `${totalRounds}·${courts}` : "—",
+      },
+      {
         id: "listo",
         label: "Listo",
         status: stepStatus("listo", step, canStart),
         count: canStart ? "OK" : "Pendiente",
       },
     ],
-    [step, jugadoresOk, players.length, canStart]
+    [step, jugadoresOk, players.length, canStart, configOk, totalRounds, courts]
   );
 
   const workbenchTitle =
-    step === "jugadores" ? "Jugadores" : "Listo para iniciar";
+    step === "jugadores"
+      ? "Jugadores"
+      : step === "config"
+        ? "Rondas y canchas"
+        : "Listo para iniciar";
 
   const workbenchBody =
     step === "jugadores" ? (
@@ -247,6 +292,128 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           allowMultipleSelection={true}
           userId={userId ?? undefined}
         />
+      </div>
+    ) : step === "config" ? (
+      <div className="americano-registration__config">
+        <p className="americano-registration__format-note" role="note">
+          Define cuántas rondas se juegan y en cuántas canchas. Esto se usa al
+          iniciar la reta.
+        </p>
+
+        <div className="americano-registration__config-grid">
+          <label className="americano-registration__config-card">
+            <span className="americano-registration__config-label">Rondas</span>
+            <div className="americano-registration__stepper">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                aria-label="Menos rondas"
+                disabled={totalRounds <= 1}
+                onClick={() => {
+                  const next = Math.max(1, totalRounds - 1);
+                  setRoundsDraft(next);
+                }}
+              >
+                −
+              </Button>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={roundsDraft}
+                aria-label="Número de rondas"
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw.trim() === "") {
+                    setRoundsDraft("");
+                    return;
+                  }
+                  const n = Number(raw);
+                  if (!Number.isFinite(n)) return;
+                  setRoundsDraft(Math.max(1, Math.trunc(n)));
+                }}
+                onBlur={() => {
+                  setRoundsDraft((prev) =>
+                    prev === "" ? 3 : Math.max(1, Math.floor(Number(prev)) || 1)
+                  );
+                }}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                aria-label="Más rondas"
+                onClick={() => setRoundsDraft(totalRounds + 1)}
+              >
+                +
+              </Button>
+            </div>
+          </label>
+
+          <label className="americano-registration__config-card">
+            <span className="americano-registration__config-label">Canchas</span>
+            <div className="americano-registration__stepper">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                aria-label="Menos canchas"
+                disabled={courts <= 1 || savingCourts}
+                onClick={() => void persistCourts(courts - 1)}
+              >
+                −
+              </Button>
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={courtsDraft}
+                aria-label="Número de canchas"
+                disabled={savingCourts}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  if (!Number.isFinite(n)) return;
+                  setCourtsDraft(Math.max(1, Math.trunc(n)));
+                }}
+                onBlur={() => {
+                  void persistCourts(courtsDraft);
+                }}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                aria-label="Más canchas"
+                disabled={savingCourts}
+                onClick={() => void persistCourts(courts + 1)}
+              >
+                +
+              </Button>
+            </div>
+          </label>
+        </div>
+
+        <p className="americano-registration__courts-hint" role="note">
+          Partidos/ronda: {maxMatches} · Descansan: {benchPerRound}. Las canchas
+          rotan entre rondas.
+        </p>
+
+        <div className="americano-registration__config-actions">
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => {
+              setRoundsDraft((prev) =>
+                prev === "" ? 3 : Math.max(1, Math.floor(Number(prev)) || 1)
+              );
+              void persistCourts(courts);
+              setStep(jugadoresOk ? "listo" : "jugadores");
+            }}
+          >
+            {jugadoresOk ? "Continuar →" : "Ir a jugadores"}
+          </Button>
+        </div>
       </div>
     ) : (
       <ul className="qm-ws__ready-check">
@@ -281,13 +448,9 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           <button
             type="button"
             className="qm-ws__text-btn"
-            onClick={() => {
-              document
-                .getElementById("americano-detalles-inline")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
+            onClick={() => setStep("config")}
           >
-            Ir a detalles
+            Editar rondas y canchas
           </button>
         </li>
         <li className={convTouched ? "is-ok" : "is-soft"}>
@@ -336,7 +499,15 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         <h3 className="qm-ws-panel__label">Progreso</h3>
         <ul className="qm-ws-panel__progress">
           <li className={jugadoresOk ? "is-ok" : ""}>Jugadores (min. 4)</li>
-          <li className={configOk ? "is-ok" : ""}>Rondas y canchas</li>
+          <li className={configOk ? "is-ok" : ""}>
+            <button
+              type="button"
+              className="qm-ws-panel__progress-link"
+              onClick={() => setStep("config")}
+            >
+              Rondas y canchas
+            </button>
+          </li>
           <li className={convTouched ? "is-ok" : ""}>Convocatoria</li>
           <li className={canStart ? "is-ok" : ""}>Listo para iniciar</li>
         </ul>
@@ -372,7 +543,7 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
           matches={[]}
           pairsCount={0}
           showChampionship={false}
-          subtitle="Nombre, horario, sede, canchas y rondas del americano."
+          subtitle="Nombre, horario y sede del americano."
           onSaved={(t) => {
             onTournamentPatched?.(t);
           }}
@@ -388,22 +559,23 @@ export const PlayerRegistration: React.FC<PlayerRegistrationProps> = ({
         </div>
       )}
 
-      <div className="americano-registration__rounds-bar">
-        <label className="home-sheet__field reta-details-form__field americano-registration__rounds-field">
-          <span className="home-sheet__field-label">Rondas</span>
-          <Input
-            type="number"
-            min={1}
-            value={totalRounds}
-            onChange={(e) =>
-              setTotalRounds(Math.max(1, Number(e.target.value) || 1))
-            }
-          />
-        </label>
+      <div className="americano-registration__rounds-bar americano-registration__rounds-bar--link">
         <p className="americano-registration__courts-hint" role="note">
-          Partidos/ronda: {maxMatches} · Descansan: {benchPerRound}. Las canchas
-          rotan entre rondas.
+          Rondas y canchas: <strong>{totalRounds}</strong> ·{" "}
+          <strong>{courts}</strong>
+          {savingCourts ? " (guardando…)" : ""}
         </p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setStep("config");
+            setMobileSummaryOpen(false);
+          }}
+        >
+          Editar rondas y canchas
+        </Button>
       </div>
 
       {tournament ? (

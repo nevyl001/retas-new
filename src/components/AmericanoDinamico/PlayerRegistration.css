@@ -58,7 +58,8 @@
 .americano-registration__rounds-bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.65rem 1rem;
   padding: 0.55rem 0.85rem 0.75rem;
   border-top: 1px solid var(--ro-border-subtle, rgba(0, 0, 0, 0.08));
@@ -66,6 +67,10 @@
 
 .qm-ws__details-inline .americano-registration__rounds-bar {
   border-top-color: var(--qm-ink-border);
+}
+
+.americano-registration__rounds-bar--link {
+  align-items: center;
 }
 
 .americano-registration__rounds-field {
@@ -76,4 +81,75 @@
 .qm-ws__details-inline .americano-registration__rounds-bar .riviera-input,
 .qm-ws__details-inline .americano-registration__rounds-bar input {
   min-height: 2.125rem;
+}
+
+.americano-registration__config {
+  display: grid;
+  gap: 14px;
+}
+
+.americano-registration__config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.americano-registration__config-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--ro-border);
+  background: var(--ro-bg-elevated);
+}
+
+.americano-registration__config-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ro-text-secondary);
+}
+
+.americano-registration__stepper {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 8px;
+  align-items: center;
+}
+
+.americano-registration__stepper .riviera-input,
+.americano-registration__stepper input {
+  min-height: 48px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.americano-registration__stepper .riviera-btn {
+  min-height: 48px;
+  min-width: 44px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.americano-registration__config-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.qm-ws-panel__progress-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
