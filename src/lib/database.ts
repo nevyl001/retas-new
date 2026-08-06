@@ -1098,13 +1098,22 @@ export const deletePairsByTournament = async (tournamentId: string) => {
 };
 
 // Funciones para Partidos
+/** null = desconocido; false = columna ausente (no reintentar en cada partido). */
+let matchesTableSupportsMatchType: boolean | null = null;
+
+/**
+ * Inserta un partido. La tabla `matches` en producción NO tiene `user_id` ni
+ * (a menudo) `match_type` — mandarlos provoca PGRST204/400 por cada partido
+ * del cuadro y deja la UI de "Iniciar reta" llena de errores rojos.
+ * `@param _userId` se conserva por compatibilidad de callers; no se persiste.
+ */
 export const createMatch = async (
   tournamentId: string,
   pair1Id: string,
   pair2Id: string,
   court: number,
   round: number = 1,
-  userId: string,
+  _userId: string,
   matchType?: "roundrobin" | "championship"
 ) => {
   // First, get the pair names from the pairs table
@@ -1133,35 +1142,41 @@ export const createMatch = async (
   const pair1Name = `${pair1.player1_name}/${pair1.player2_name}`;
   const pair2Name = `${pair2.player1_name}/${pair2.player2_name}`;
 
-  // Crear el objeto de inserción sin el campo round por ahora
-  const insertData: any = {
+  // Sin user_id: columna inexistente en prod (mismo patrón que createGame/createPair).
+  let payload: Record<string, unknown> = {
     tournament_id: tournamentId,
     pair1_id: pair1Id,
     pair2_id: pair2Id,
     pair1_name: pair1Name,
     pair2_name: pair2Name,
     court,
-    user_id: userId,
+    round,
   };
 
-  insertData.round = round;
-  if (matchType) {
-    insertData.match_type = matchType;
+  if (matchType && matchesTableSupportsMatchType !== false) {
+    payload.match_type = matchType;
   }
 
-  const insertOnce = async (payload: Record<string, unknown>) =>
-    supabase.from("matches").insert([payload]).select("*").single();
+  const insertOnce = async (row: Record<string, unknown>) =>
+    supabase.from("matches").insert([row]).select("*").single();
 
-  let { data, error } = await insertOnce(insertData);
+  let { data, error } = await insertOnce(payload);
 
-  if (error && matchType) {
-    const { match_type: _omit, ...withoutType } = insertData;
-    ({ data, error } = await insertOnce(withoutType));
+  if (
+    error &&
+    matchType &&
+    "match_type" in payload &&
+    isMissingColumnError(error, "matches", "match_type")
+  ) {
+    matchesTableSupportsMatchType = false;
+    const { match_type: _omit, ...withoutType } = payload;
+    payload = withoutType;
+    ({ data, error } = await insertOnce(payload));
   }
 
+  // Defensa por si algún caller vuelve a meter user_id en el futuro vía payload.
   if (error && isMissingColumnError(error, "matches", "user_id")) {
-    const { user_id: _omitUserId, match_type: _omitType, ...withoutUser } =
-      insertData;
+    const { user_id: _omitUserId, ...withoutUser } = payload;
     ({ data, error } = await insertOnce(withoutUser));
   }
 
