@@ -1,12 +1,30 @@
 import {
   Pair,
-  Match,
-  createMatch,
+  createMatchesBulk,
   deleteMatchesByTournamentSafely,
   getMatches,
 } from "../lib/database";
 import { generateCircleRoundRobinSchedule } from "../lib/circleRoundRobinSchedule";
 import { debugLog } from "../lib/debug/debugLog";
+
+function pairMatchLabel(pair: Pair): string {
+  return `${pair.player1_name}/${pair.player2_name}`;
+}
+
+function toBulkMatchRows(
+  tournamentId: string,
+  matches: Array<{ pair1: Pair; pair2: Pair; round: number; court: number }>
+) {
+  return matches.map((match) => ({
+    tournamentId,
+    pair1Id: match.pair1.id,
+    pair2Id: match.pair2.id,
+    pair1Name: pairMatchLabel(match.pair1),
+    pair2Name: pairMatchLabel(match.pair2),
+    court: match.court,
+    round: match.round,
+  }));
+}
 
 export interface CircleSchedulingResult {
   success: boolean;
@@ -426,25 +444,10 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      // Crear partidos en la base de datos
-      const createdMatches: Match[] = [];
-
-      for (const match of matches) {
-        try {
-          const createdMatch = await createMatch(
-            tournamentId,
-            match.pair1.id,
-            match.pair2.id,
-            match.court,
-            match.round,
-            userId
-          );
-          createdMatches.push(createdMatch);
-        } catch (error) {
-          console.error(`❌ Error creando partido:`, error);
-          throw error;
-        }
-      }
+      // Un solo insert (o pocos chunks) — no 3 requests por partido en serie.
+      const createdMatches = await createMatchesBulk(
+        toBulkMatchRows(tournamentId, matches)
+      );
 
       const totalRounds = Math.max(...matches.map((m) => m.round));
       const expectedMatches = (pairs.length * (pairs.length - 1)) / 2;
@@ -540,18 +543,9 @@ export class CircleRoundRobinScheduler {
         };
       }
 
-      const createdMatches: Match[] = [];
-      for (const match of matches) {
-        const createdMatch = await createMatch(
-          tournamentId,
-          match.pair1.id,
-          match.pair2.id,
-          match.court,
-          match.round,
-          userId
-        );
-        createdMatches.push(createdMatch);
-      }
+      const createdMatches = await createMatchesBulk(
+        toBulkMatchRows(tournamentId, matches)
+      );
 
       const totalRounds = Math.max(...matches.map((m) => m.round));
       return {

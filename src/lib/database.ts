@@ -1101,11 +1101,97 @@ export const deletePairsByTournament = async (tournamentId: string) => {
 /** null = desconocido; false = columna ausente (no reintentar en cada partido). */
 let matchesTableSupportsMatchType: boolean | null = null;
 
+const MATCH_INSERT_CHUNK = 40;
+
+export type CreateMatchBulkRow = {
+  tournamentId: string;
+  pair1Id: string;
+  pair2Id: string;
+  pair1Name: string;
+  pair2Name: string;
+  court: number;
+  round: number;
+  matchType?: "roundrobin" | "championship";
+};
+
+function buildMatchInsertPayload(
+  row: CreateMatchBulkRow,
+  includeMatchType: boolean
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    tournament_id: row.tournamentId,
+    pair1_id: row.pair1Id,
+    pair2_id: row.pair2Id,
+    pair1_name: row.pair1Name,
+    pair2_name: row.pair2Name,
+    court: row.court,
+    round: row.round,
+  };
+  if (includeMatchType && row.matchType) {
+    payload.match_type = row.matchType;
+  }
+  return payload;
+}
+
+/**
+ * Inserta muchos partidos en pocos requests (chunks).
+ * Usa nombres ya en memoria — no re-fetch de pairs por partido.
+ * Sin `user_id` (columna inexistente en prod).
+ */
+export async function createMatchesBulk(
+  rows: CreateMatchBulkRow[]
+): Promise<Match[]> {
+  if (rows.length === 0) return [];
+
+  const wantsMatchType =
+    matchesTableSupportsMatchType !== false &&
+    rows.some((r) => Boolean(r.matchType));
+
+  const out: Match[] = [];
+  for (let i = 0; i < rows.length; i += MATCH_INSERT_CHUNK) {
+    const chunk = rows.slice(i, i + MATCH_INSERT_CHUNK);
+    let payloads = chunk.map((r) =>
+      buildMatchInsertPayload(r, wantsMatchType)
+    );
+
+    let { data, error } = await supabase
+      .from("matches")
+      .insert(payloads)
+      .select("*");
+
+    if (
+      error &&
+      wantsMatchType &&
+      isMissingColumnError(error, "matches", "match_type")
+    ) {
+      matchesTableSupportsMatchType = false;
+      payloads = chunk.map((r) => buildMatchInsertPayload(r, false));
+      ({ data, error } = await supabase
+        .from("matches")
+        .insert(payloads)
+        .select("*"));
+    }
+
+    if (error) {
+      console.error(
+        "Database error creating matches bulk:",
+        error.message,
+        error
+      );
+      throw error;
+    }
+    if (data?.length) out.push(...(data as Match[]));
+  }
+  return out;
+}
+
 /**
  * Inserta un partido. La tabla `matches` en producción NO tiene `user_id` ni
  * (a menudo) `match_type` — mandarlos provoca PGRST204/400 por cada partido
  * del cuadro y deja la UI de "Iniciar reta" llena de errores rojos.
  * `@param _userId` se conserva por compatibilidad de callers; no se persiste.
+ *
+ * Preferir `createMatchesBulk` al armar el cuadro completo (inicio de reta).
  */
 export const createMatch = async (
   tournamentId: string,
@@ -1139,53 +1225,22 @@ export const createMatch = async (
     throw pair2Error;
   }
 
-  const pair1Name = `${pair1.player1_name}/${pair1.player2_name}`;
-  const pair2Name = `${pair2.player1_name}/${pair2.player2_name}`;
-
-  // Sin user_id: columna inexistente en prod (mismo patrón que createGame/createPair).
-  let payload: Record<string, unknown> = {
-    tournament_id: tournamentId,
-    pair1_id: pair1Id,
-    pair2_id: pair2Id,
-    pair1_name: pair1Name,
-    pair2_name: pair2Name,
-    court,
-    round,
-  };
-
-  if (matchType && matchesTableSupportsMatchType !== false) {
-    payload.match_type = matchType;
+  const [row] = await createMatchesBulk([
+    {
+      tournamentId,
+      pair1Id,
+      pair2Id,
+      pair1Name: `${pair1.player1_name}/${pair1.player2_name}`,
+      pair2Name: `${pair2.player1_name}/${pair2.player2_name}`,
+      court,
+      round,
+      matchType,
+    },
+  ]);
+  if (!row) {
+    throw new Error("No se pudo crear el partido");
   }
-
-  const insertOnce = async (row: Record<string, unknown>) =>
-    supabase.from("matches").insert([row]).select("*").single();
-
-  let { data, error } = await insertOnce(payload);
-
-  if (
-    error &&
-    matchType &&
-    "match_type" in payload &&
-    isMissingColumnError(error, "matches", "match_type")
-  ) {
-    matchesTableSupportsMatchType = false;
-    const { match_type: _omit, ...withoutType } = payload;
-    payload = withoutType;
-    ({ data, error } = await insertOnce(payload));
-  }
-
-  // Defensa por si algún caller vuelve a meter user_id en el futuro vía payload.
-  if (error && isMissingColumnError(error, "matches", "user_id")) {
-    const { user_id: _omitUserId, ...withoutUser } = payload;
-    ({ data, error } = await insertOnce(withoutUser));
-  }
-
-  if (error) {
-    console.error("Database error creating match:", error.message, error);
-    throw error;
-  }
-
-  return data;
+  return row;
 };
 
 export const getMatches = async (tournamentId: string) => {
