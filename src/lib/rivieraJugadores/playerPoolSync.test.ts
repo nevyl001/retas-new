@@ -108,4 +108,22 @@ describe("playerPoolSync — ruta PRIVATE de contacto", () => {
     );
     expect(fnBody).not.toMatch(/listRivieraJugadoresPrivate\(organizadorId\)/);
   });
+
+  it("buildLegacyPlayers sanea cedidos con legacy cross-org (no los descarta)", () => {
+    const src = fs.readFileSync(
+      path.join(__dirname, "playerPoolSync.ts"),
+      "utf8"
+    );
+    const fnMatch = src.match(
+      /export async function buildLegacyPlayersFromRivieraRegistry[\s\S]*?\n}\n/
+    );
+    expect(fnMatch).not.toBeNull();
+    const fnBody = fnMatch![0];
+    // Regresión Mario/Yusuke: isGranted → return null sacaba importados del pool.
+    expect(fnBody).not.toMatch(
+      /else if \(isGrantedJugadorRow\(row\)\) \{\s*return null/
+    );
+    expect(fnBody).toMatch(/buildLegacyPlayers heal skip/);
+    expect(fnBody).toMatch(/usableLocal/);
+  });
 });

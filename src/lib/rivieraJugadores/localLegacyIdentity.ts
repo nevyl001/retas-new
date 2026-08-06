@@ -159,6 +159,8 @@ export async function fetchRivieraJugadorRowById(
 /**
  * Resuelve perfil LOCAL del anfitrión y asegura players legacy sin matching por nombre.
  * Solo escribe link en el perfil local.
+ * Si el perfil local apunta a un players de otro club (clon cedido) o el legacy
+ * no es visible, crea un players del anfitrión y re-enlaza el perfil local.
  */
 export async function ensureLocalPlayersLegacyForRivieraJugador(
   organizadorId: string,
@@ -197,7 +199,7 @@ export async function ensureLocalPlayersLegacyForRivieraJugador(
 
   const existingLegacyId = localProfile.legacy_player_id?.trim() || null;
   if (existingLegacyId) {
-    let existing: PlayerWithOwner | null;
+    let existing: PlayerWithOwner | null = null;
     try {
       existing = await fetchPlayerByIdStrict(existingLegacyId);
     } catch {
@@ -206,14 +208,16 @@ export async function ensureLocalPlayersLegacyForRivieraJugador(
         "RIVIERA_LEGACY_NOT_VERIFIABLE"
       );
     }
-    if (!existing) {
-      throw new LegacyLinkUnverifiableError(
-        "No pudimos verificar el vínculo local de este jugador. No se realizó ningún cambio.",
-        "RIVIERA_LEGACY_NOT_VERIFIABLE"
-      );
+    if (existing) {
+      const owner = existing.user_id?.trim();
+      // Sin user_id o del club anfitrión → vínculo usable.
+      // Cross-org (típico: clon cedido que copió legacy del origen) → sanear
+      // creando players local y re-enlazando SOLO el perfil local.
+      if (!owner || owner === org) {
+        return { player: existing, created: false, localId };
+      }
     }
-    assertPlayerBelongsToOrganizer(existing, org);
-    return { player: existing, created: false, localId };
+    // existing null (FK rota / no visible por RLS) o cross-org → heal abajo.
   }
 
   assertResolvedLocalProfileSafe(localProfile, localId, org);

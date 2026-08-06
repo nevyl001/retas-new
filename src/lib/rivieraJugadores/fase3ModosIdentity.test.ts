@@ -214,17 +214,16 @@ describe("Fase 3 — ensureLocalPlayersLegacyForRivieraJugador (Americano/TE/Lig
     expect(linkMock).not.toHaveBeenCalled();
   });
 
-  it("Caso 3 — legacy local oculto por RLS: fail-closed, 0 writes", async () => {
+  it("Caso 3 — legacy local oculto por RLS: sanea con players del anfitrión", async () => {
     const org = "org-b";
     const localId = "llllllll-llll-llll-llll-llllllllllll";
+    const healed = makePlayer(
+      "new-p",
+      "Ana",
+      syntheticEmailForRivieraJugadorId(localId),
+      org
+    );
     resolveMock.mockResolvedValue(localId);
-    mockFetchRj({
-      id: localId,
-      nombre: "Ana",
-      email: null,
-      organizador_id: org,
-      legacy_player_id: "hidden",
-    });
     fromMock.mockImplementation((table: string) => {
       if (table === "riviera_jugadores") {
         return {
@@ -251,18 +250,20 @@ describe("Fase 3 — ensureLocalPlayersLegacyForRivieraJugador (Americano/TE/Lig
               maybeSingle: async () => ({ data: null, error: null }),
             }),
           }),
-          insert: () => {
-            throw new Error("no insert");
-          },
+          insert: () => ({
+            select: () => ({
+              single: async () => ({ data: healed, error: null }),
+            }),
+          }),
         };
       }
       return {};
     });
 
-    await expect(
-      ensureLocalPlayersLegacyForRivieraJugador(org, localId)
-    ).rejects.toMatchObject({ code: "RIVIERA_LEGACY_NOT_VERIFIABLE" });
-    expect(linkMock).not.toHaveBeenCalled();
+    const result = await ensureLocalPlayersLegacyForRivieraJugador(org, localId);
+    expect(result.created).toBe(true);
+    expect(result.player.id).toBe(healed.id);
+    expect(linkMock).toHaveBeenCalledWith(localId, healed.id);
   });
 
   it("Caso 4 — local sin legacy: crea y linkea solo local", async () => {
@@ -312,10 +313,11 @@ describe("Fase 3 — ensureLocalPlayersLegacyForRivieraJugador (Americano/TE/Lig
     expect(linkMock).toHaveBeenCalledWith(localId, created.id);
   });
 
-  it("Caso 5 — legacy local cross-org: fail-closed", async () => {
+  it("Caso 5 — legacy local cross-org: sanea con players del anfitrión", async () => {
     const org = "org-b";
     const localId = "llllllll-llll-llll-llll-llllllllllll";
     const foreign = makePlayer("fx", "Ana", "a@x.com", "org-other");
+    const healed = makePlayer("local-p", "Ana", "a@padel.local", org);
     resolveMock.mockResolvedValue(localId);
 
     fromMock.mockImplementation((table: string) => {
@@ -344,18 +346,20 @@ describe("Fase 3 — ensureLocalPlayersLegacyForRivieraJugador (Americano/TE/Lig
               maybeSingle: async () => ({ data: foreign, error: null }),
             }),
           }),
-          insert: () => {
-            throw new Error("no");
-          },
+          insert: () => ({
+            select: () => ({
+              single: async () => ({ data: healed, error: null }),
+            }),
+          }),
         };
       }
       return {};
     });
 
-    await expect(
-      ensureLocalPlayersLegacyForRivieraJugador(org, localId)
-    ).rejects.toMatchObject({ code: "RIVIERA_LOCAL_LEGACY_CROSS_ORG" });
-    expect(linkMock).not.toHaveBeenCalled();
+    const result = await ensureLocalPlayersLegacyForRivieraJugador(org, localId);
+    expect(result.created).toBe(true);
+    expect(result.player.id).toBe(healed.id);
+    expect(linkMock).toHaveBeenCalledWith(localId, healed.id);
   });
 
   it("Caso 6 — resolve devuelve source de otro org: fail-closed", async () => {

@@ -14,7 +14,6 @@ import {
 import type { RivieraJugador } from "../rivieraJugadores/types";
 import {
   LegacyLinkUnverifiableError,
-  assertPlayerBelongsToOrganizer,
   assertResolvedLocalProfileSafe,
   insertPlayerRowWithoutNameLookup,
   syntheticEmailForRivieraJugadorId,
@@ -179,7 +178,7 @@ export async function linkLegacyOnSelectForReta(
 
   const existingLegacyId = effectiveRj.legacy_player_id?.trim() || null;
   if (existingLegacyId) {
-    let existing: PlayerWithOwner | null;
+    let existing: PlayerWithOwner | null = null;
     try {
       existing = await deps.fetchPlayerById(existingLegacyId);
     } catch (err) {
@@ -190,25 +189,23 @@ export async function linkLegacyOnSelectForReta(
       );
     }
 
-    if (!existing) {
-      throw new LegacyLinkUnverifiableError(
-        "El perfil local ya tiene un vínculo legacy, pero no puede verificarse bajo la sesión actual. No se modificó el vínculo.",
-        "RIVIERA_LEGACY_NOT_VERIFIABLE"
-      );
+    if (existing) {
+      const owner = existing.user_id?.trim();
+      if (!owner || owner === org) {
+        return {
+          player: {
+            ...existing,
+            name: effectiveRj.nombre.trim() || existing.name,
+          },
+          created: false,
+          rivieraJugadorId: effectiveRj.id,
+          requestedRivieraJugadorId: requestedId,
+          resolvedLocalRivieraJugadorId: effectiveRj.id,
+        };
+      }
+      // Cross-org (clon que copió legacy del origen): sanear abajo.
     }
-
-    assertPlayerBelongsToOrganizer(existing, org);
-
-    return {
-      player: {
-        ...existing,
-        name: effectiveRj.nombre.trim() || existing.name,
-      },
-      created: false,
-      rivieraJugadorId: effectiveRj.id,
-      requestedRivieraJugadorId: requestedId,
-      resolvedLocalRivieraJugadorId: effectiveRj.id,
-    };
+    // Null / inaccesible por RLS: sanear con players local del anfitrión.
   }
 
   assertResolvedLocalProfileSafe(effectiveRj, effectiveId, org);

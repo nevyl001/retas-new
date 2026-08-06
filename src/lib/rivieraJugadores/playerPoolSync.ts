@@ -204,15 +204,33 @@ export async function buildLegacyPlayersFromRivieraRegistry(
 
       if (canonical.legacy_player_id) {
         legacy = playersById.get(canonical.legacy_player_id) ?? null;
-        if (!legacy) {
-          // Legacy definido pero no visible: no crear duplicado (fail-closed por fila).
-          return null;
+        const owner = legacy
+          ? (legacy as Player & { user_id?: string | null }).user_id?.trim()
+          : null;
+        const usableLocal =
+          Boolean(legacy) && (!owner || owner === organizadorId);
+        if (!usableLocal) {
+          // Cedido/importado suele copiar legacy del club origen (cross-org o
+          // invisible por RLS). Sanear con players local del anfitrión.
+          try {
+            const ensured = await ensureLocalPlayersLegacyForRivieraJugador(
+              organizadorId,
+              canonical.id,
+              canonical
+            );
+            legacy = ensured.player;
+            canonical = { ...canonical, legacy_player_id: legacy.id };
+          } catch (e) {
+            console.warn(
+              "[riviera-jugadores] buildLegacyPlayers heal skip:",
+              canonical.id,
+              e
+            );
+            return null;
+          }
         }
-        const owner = (legacy as Player & { user_id?: string | null }).user_id;
-        if (owner && owner !== organizadorId) return null;
-      } else if (isGrantedJugadorRow(row)) {
-        return null;
       } else {
+        // Incluye cedidos sin legacy: crear vínculo local fail-closed (sin match por nombre).
         try {
           const ensured = await ensureLocalPlayersLegacyForRivieraJugador(
             organizadorId,
@@ -262,7 +280,8 @@ export async function buildLegacyPlayersFromRivieraRegistry(
 
 /**
  * Crea o reutiliza `players` para el perfil LOCAL del organizador.
- * Fail-closed si legacy no verificable o cross-org. Sin matching por nombre.
+ * Sanea legacy cross-org / inaccesible en el perfil local; fail-closed si la
+ * lectura de players falla por red. Sin matching por nombre.
  */
 export async function ensureLegacyPlayerForRivieraJugador(
   organizadorId: string,

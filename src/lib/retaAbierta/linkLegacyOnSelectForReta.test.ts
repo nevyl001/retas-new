@@ -251,9 +251,15 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
     expect(result.player.email).toBe(syntheticEmailForRivieraJugadorId(localId));
   });
 
-  it("Caso 6 — RLS oculta legacy (data null): fail-closed, 0 inserts, 0 links", async () => {
+  it("Caso 6 — RLS oculta legacy (data null): sanea con players del anfitrión", async () => {
     const org = "org-dest";
     const localId = "llllllll-llll-llll-llll-llllllllllll";
+    const healed = makePlayer(
+      "local-p",
+      "Yusuke",
+      syntheticEmailForRivieraJugadorId(localId),
+      org
+    );
     let insertCount = 0;
     let linkCount = 0;
 
@@ -269,18 +275,18 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
       fetchPlayerById: async () => null,
       insertPlayerRow: async () => {
         insertCount += 1;
-        throw new Error("no debe insertar");
+        return healed;
       },
       linkLegacyPlayerId: async () => {
         linkCount += 1;
       },
     };
 
-    await expect(
-      linkLegacyOnSelectForReta(org, localId, deps)
-    ).rejects.toBeInstanceOf(LegacyLinkUnverifiableError);
-    expect(insertCount).toBe(0);
-    expect(linkCount).toBe(0);
+    const result = await linkLegacyOnSelectForReta(org, localId, deps);
+    expect(result.created).toBe(true);
+    expect(result.player.id).toBe(healed.id);
+    expect(insertCount).toBe(1);
+    expect(linkCount).toBe(1);
   });
 
   it("error de red/permisos al leer players: 0 inserts, 0 links", async () => {
@@ -515,9 +521,15 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
     expect(codeOnly).toMatch(/resolveJugadorIdForOrganizer/);
   });
 
-  it("legacy existente no verificable → fail closed (no repara huérfano)", async () => {
+  it("legacy existente no verificable (null/RLS) → sanea con players del anfitrión", async () => {
     const org = "org-1";
     const rjId = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
+    const healed = makePlayer(
+      "local-p",
+      "Yusuke",
+      syntheticEmailForRivieraJugadorId(rjId),
+      org
+    );
     let insertCount = 0;
     let linkCount = 0;
 
@@ -533,18 +545,18 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
       fetchPlayerById: async () => null,
       insertPlayerRow: async () => {
         insertCount += 1;
-        throw new Error("no");
+        return healed;
       },
       linkLegacyPlayerId: async () => {
         linkCount += 1;
       },
     };
 
-    await expect(
-      linkLegacyOnSelectForReta(org, rjId, deps)
-    ).rejects.toMatchObject({ code: "RIVIERA_LEGACY_NOT_VERIFIABLE" });
-    expect(insertCount).toBe(0);
-    expect(linkCount).toBe(0);
+    const result = await linkLegacyOnSelectForReta(org, rjId, deps);
+    expect(result.created).toBe(true);
+    expect(result.player.id).toBe(healed.id);
+    expect(insertCount).toBe(1);
+    expect(linkCount).toBe(1);
   });
 
   it("resolveJugadorIdForOrganizer corre antes de leer legacy / insert", async () => {
@@ -640,10 +652,11 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
     expect(first.player.id).toBe(second.player.id);
   });
 
-  it("Caso 9 — legacy local apunta a otro org → fail-closed, 0 inserts", async () => {
+  it("Caso 9 — legacy local apunta a otro org → sanea con players del anfitrión", async () => {
     const org = "org-dest";
     const rjId = "llllllll-llll-llll-llll-llllllllllll";
     const foreign = makePlayer("foreign-p", "Yusuke", "y@x.com", "org-other");
+    const healed = makePlayer("local-p", "Yusuke", "y@padel.local", org);
     let insertCount = 0;
     let linkCount = 0;
 
@@ -659,18 +672,18 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
       fetchPlayerById: async () => foreign,
       insertPlayerRow: async () => {
         insertCount += 1;
-        throw new Error("no");
+        return healed;
       },
       linkLegacyPlayerId: async () => {
         linkCount += 1;
       },
     };
 
-    await expect(
-      linkLegacyOnSelectForReta(org, rjId, deps)
-    ).rejects.toMatchObject({ code: "RIVIERA_LOCAL_LEGACY_CROSS_ORG" });
-    expect(insertCount).toBe(0);
-    expect(linkCount).toBe(0);
+    const result = await linkLegacyOnSelectForReta(org, rjId, deps);
+    expect(result.created).toBe(true);
+    expect(result.player.id).toBe(healed.id);
+    expect(insertCount).toBe(1);
+    expect(linkCount).toBe(1);
   });
 
   it("Caso 10 — source legacy apunta al grantee → detecta y fail-closed", async () => {
@@ -817,9 +830,15 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
     expect(linkCalls).toEqual([localId]);
   });
 
-  it("B — Local oculto por RLS con legacy definido: fail-closed, 0 escrituras", async () => {
+  it("B — Local oculto por RLS con legacy definido: sanea con players del anfitrión", async () => {
     const org = "org-dest";
     const localId = "llllllll-llll-llll-llll-llllllllllll";
+    const healed = makePlayer(
+      "local-p",
+      "Yusuke",
+      syntheticEmailForRivieraJugadorId(localId),
+      org
+    );
     let insertCount = 0;
     let linkCount = 0;
 
@@ -835,18 +854,18 @@ describe("linkLegacyOnSelectForReta (Bloque 1)", () => {
       fetchPlayerById: async () => null,
       insertPlayerRow: async () => {
         insertCount += 1;
-        throw new Error("no");
+        return healed;
       },
       linkLegacyPlayerId: async () => {
         linkCount += 1;
       },
     };
 
-    await expect(
-      linkLegacyOnSelectForReta(org, localId, deps)
-    ).rejects.toMatchObject({ code: "RIVIERA_LEGACY_NOT_VERIFIABLE" });
-    expect(insertCount).toBe(0);
-    expect(linkCount).toBe(0);
+    const result = await linkLegacyOnSelectForReta(org, localId, deps);
+    expect(result.created).toBe(true);
+    expect(result.player.id).toBe(healed.id);
+    expect(insertCount).toBe(1);
+    expect(linkCount).toBe(1);
   });
 
   it("D — Resolución local con organizador incorrecto: fail-closed, 0 escrituras", async () => {
