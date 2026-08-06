@@ -35,6 +35,12 @@ import {
   unorderedPairIdKey,
 } from "../../lib/rivieraJugadores/playerNameKey";
 import { playerNeedsEmailContact } from "../../services/torneoExpressNotificacionesService";
+import {
+  clampNumGrupos,
+  parseNumGruposInput,
+  resolveNumGrupos,
+  type NumGruposDraft,
+} from "../../lib/torneoExpress/numGruposInput";
 import { Button } from "../ui";
 
 type PlayerWithContact = Player & {
@@ -61,7 +67,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   const { user } = useUser();
   const [nombre, setNombre] = useState("");
   const [categoria, setCategoria] = useState("");
-  const [numGrupos, setNumGrupos] = useState(2);
+  const [numGrupos, setNumGrupos] = useState<NumGruposDraft>(2);
   const [draftTournamentId, setDraftTournamentId] = useState<string | null>(null);
   const [jugadores, setJugadores] = useState<Player[]>([]);
   const [parejas, setParejas] = useState<ParejaDraft[]>([]);
@@ -231,7 +237,7 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   }, [draftTournamentId, jugadores.length, loadPairsForDraft]);
 
   useEffect(() => {
-    const n = Math.max(2, Math.min(8, numGrupos));
+    const n = resolveNumGrupos(numGrupos);
     setAssignments((prev) => {
       const next: GrupoAssignmentDraft[] = [];
       for (let i = 0; i < n; i++) {
@@ -449,10 +455,19 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
                       <input
                         id="te-grupos"
                         type="number"
+                        inputMode="numeric"
                         min={2}
                         max={8}
                         value={numGrupos}
-                        onChange={(e) => setNumGrupos(Number(e.target.value) || 2)}
+                        onChange={(e) => {
+                          const next = parseNumGruposInput(e.target.value);
+                          if (next !== null) setNumGrupos(next);
+                        }}
+                        onBlur={() => {
+                          setNumGrupos((prev) =>
+                            prev === "" ? 2 : clampNumGrupos(prev)
+                          );
+                        }}
                       />
                     </div>
                   </div>
