@@ -31,11 +31,13 @@ export {
   RIVIERA_DEFAULT_BRAND,
 } from "./manifests/riviera-default";
 export { HACK_PADEL_MANIFEST, HACK_PADEL_BRAND } from "./manifests/hack-padel";
+export { PADEL_COURT_SERIES_MANIFEST } from "./manifests/padel-court-series";
 
 export {
   ORGANIZADOR_CLUB_BINDINGS,
   ORGANIZADOR_CLUB_INDEX,
   ORGANIZADOR_BRAND_INDEX,
+  PADEL_COURT_SERIES_ORGANIZADOR_ID,
 } from "./organizadorClubIndex";
 
 export {

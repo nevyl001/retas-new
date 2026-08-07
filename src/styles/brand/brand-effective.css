@@ -7,7 +7,11 @@
 html[data-brand="hack-padel"],
 html[data-club="hack-padel"],
 .club-experience-scope[data-brand="hack-padel"],
-.club-experience-scope[data-club="hack-padel"] {
+.club-experience-scope[data-club="hack-padel"],
+html[data-brand="padel-court-series"],
+html[data-club="padel-court-series"],
+.club-experience-scope[data-brand="padel-court-series"],
+.club-experience-scope[data-club="padel-court-series"] {
   --effective-primary: var(--brand-primary, var(--ro-bg-base));
   --effective-secondary: var(--brand-secondary, #4c4c4c);
   --effective-accent: var(--brand-accent, var(--ro-accent));

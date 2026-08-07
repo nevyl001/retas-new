@@ -1,4 +1,5 @@
 import { HACK_PADEL_MANIFEST } from "./manifests/hack-padel";
+import { PADEL_COURT_SERIES_MANIFEST } from "./manifests/padel-court-series";
 import { RIVIERA_DEFAULT_MANIFEST } from "./manifests/riviera-default";
 import { resolveBrandingKeyForOrganizador } from "./organizerBindingResolver";
 import type { BrandManifest, ClubBrandingKey } from "./types";
@@ -6,6 +7,7 @@ import type { BrandManifest, ClubBrandingKey } from "./types";
 const MANIFESTS_BY_KEY: Record<string, BrandManifest> = {
   riviera: RIVIERA_DEFAULT_MANIFEST,
   "hack-padel": HACK_PADEL_MANIFEST,
+  "padel-court-series": PADEL_COURT_SERIES_MANIFEST,
 };
 
 export function getManifestByKey(key: ClubBrandingKey): BrandManifest {

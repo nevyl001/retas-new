@@ -3,9 +3,16 @@ import {
   resolveBrandingKeyForOrganizador,
   setRuntimeOrganizerClubBindings,
 } from "./organizerBindingResolver";
-import { ORGANIZADOR_CLUB_BINDINGS } from "./organizadorClubIndex";
+import {
+  ORGANIZADOR_CLUB_BINDINGS,
+  PADEL_COURT_SERIES_ORGANIZADOR_ID,
+} from "./organizadorClubIndex";
+import { listPremiumManifestOptions } from "./manifestRegistry";
 
-const HACK_ORG = ORGANIZADOR_CLUB_BINDINGS[0]?.organizadorId ?? "";
+const HACK_ORG =
+  ORGANIZADOR_CLUB_BINDINGS.find((b) => b.brandingKey === "hack-padel")
+    ?.organizadorId ?? "";
+const PCS_ORG = PADEL_COURT_SERIES_ORGANIZADOR_ID;
 const OTHER_ORG = "00000000-0000-4000-8000-000000000001";
 
 describe("organizerBindingResolver", () => {
@@ -16,6 +23,26 @@ describe("organizerBindingResolver", () => {
   it("activa premium branding solo con upgrade elegible", () => {
     expect(isPremiumBrandingEnabledForOrganizador(HACK_ORG)).toBe(true);
     expect(resolveBrandingKeyForOrganizador(HACK_ORG)).toBe("hack-padel");
+  });
+
+  it("resuelve Padel Court Series solo por UUID de organizador", () => {
+    expect(PCS_ORG).toBe("35e31ab8-2a2f-4526-9e84-e130c85f8ca9");
+    expect(isPremiumBrandingEnabledForOrganizador(PCS_ORG)).toBe(true);
+    expect(resolveBrandingKeyForOrganizador(PCS_ORG)).toBe(
+      "padel-court-series"
+    );
+    expect(
+      resolveBrandingKeyForOrganizador(PCS_ORG.toUpperCase())
+    ).toBe("padel-court-series");
+  });
+
+  it("no resuelve PCS por email ni por nombre (solo UUID)", () => {
+    expect(
+      resolveBrandingKeyForOrganizador("padelcourtseries@gmail.com")
+    ).toBe("riviera");
+    expect(resolveBrandingKeyForOrganizador("Padel Court Series")).toBe(
+      "riviera"
+    );
   });
 
   it("hace fallback a riviera sin binding", () => {
@@ -49,5 +76,12 @@ describe("organizerBindingResolver", () => {
 
     expect(isPremiumBrandingEnabledForOrganizador(HACK_ORG)).toBe(false);
     expect(resolveBrandingKeyForOrganizador(HACK_ORG)).toBe("riviera");
+  });
+
+  it("lista PCS como opción premium en el registry", () => {
+    const options = listPremiumManifestOptions();
+    expect(options.some((o) => o.key === "hack-padel")).toBe(true);
+    expect(options.some((o) => o.key === "padel-court-series")).toBe(true);
+    expect(options.some((o) => o.key === "riviera")).toBe(false);
   });
 });

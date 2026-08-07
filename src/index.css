@@ -47,7 +47,10 @@ body {
   color: var(--text-primary);
 }
 
-html:not([data-brand="hack-padel"]):not([data-club="hack-padel"]) body {
+html:not([data-brand="hack-padel"]):not([data-club="hack-padel"]):not(
+    [data-brand="padel-court-series"]
+  ):not([data-club="padel-court-series"])
+  body {
   transition: background-color var(--transition-base), color var(--transition-base);
 }
 
@@ -63,5 +66,20 @@ html[data-brand="hack-padel"] #root,
 html[data-club="hack-padel"] #root {
   background-color: #000000;
   color: #ffffff;
+  transition: none !important;
+}
+
+html[data-brand="padel-court-series"],
+html[data-club="padel-court-series"] {
+  background-color: #192e2c;
+  color-scheme: dark;
+}
+
+html[data-brand="padel-court-series"] body,
+html[data-club="padel-court-series"] body,
+html[data-brand="padel-court-series"] #root,
+html[data-club="padel-court-series"] #root {
+  background-color: #192e2c;
+  color: #efefef;
   transition: none !important;
 }

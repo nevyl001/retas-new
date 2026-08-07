@@ -53,3 +53,35 @@ html[data-club="hack-padel"] .ro-surface-dark,
   --accent-gold-dim: color-mix(in srgb, var(--brand-accent) 14%, transparent);
   --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
 }
+
+html[data-brand="padel-court-series"],
+html[data-club="padel-court-series"],
+.club-experience-scope[data-brand="padel-court-series"],
+.club-experience-scope[data-club="padel-court-series"],
+html[data-brand="padel-court-series"] .ro-surface-dark,
+html[data-club="padel-court-series"] .ro-surface-dark,
+.club-experience-scope[data-brand="padel-court-series"] .ro-surface-dark,
+.club-experience-scope[data-club="padel-court-series"] .ro-surface-dark {
+  --brand-primary: #192e2c;
+  --brand-secondary: #242424;
+  --brand-accent: #fc9908;
+  --brand-surface: #192e2c;
+  --brand-surface-alt: #242424;
+  --brand-border: #ced1c6;
+  --brand-text: #efefef;
+  --brand-muted: #ced1c6;
+  --brand-success: #2f7d53;
+  --brand-warning: #b5883f;
+  --brand-danger: #c0392b;
+  --brand-font-heading: "Squada One", "Stack Sans Headline", system-ui, sans-serif;
+  --brand-font-body: "Open Sans Semi Condensed", "Open Sans", "Inter",
+    system-ui, sans-serif;
+  --brand-heading-weight: 400;
+  --brand-heading-letter-spacing: 0em;
+  --bg-canvas: var(--brand-surface);
+  --bg-base: var(--brand-surface);
+  --accent-gold: var(--brand-accent);
+  --accent-gold-light: var(--brand-accent);
+  --accent-gold-dim: color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}

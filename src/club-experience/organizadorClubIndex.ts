@@ -15,6 +15,11 @@ import type { ClubOrganizerBinding } from "./types";
  * Hack Padel (cuenta de prueba, upgrade premium):
  *   Nombre visible: Hackpadel
  *   Email (referencia humana): aaronduran2020@gmail.com
+ *
+ * Padel Court Series (upgrade premium):
+ *   Nombre visible: Padel Court Series
+ *   Email (referencia humana): padelcourtseries@gmail.com
+ *   Binding SOLO por UUID — nunca por email en componentes.
  */
 
 const HACK_PADEL_ORGANIZADOR_ID = (
@@ -22,10 +27,21 @@ const HACK_PADEL_ORGANIZADOR_ID = (
   "e724de97-3552-4a01-a269-f621e6f1ed26"
 ).toLowerCase();
 
+export const PADEL_COURT_SERIES_ORGANIZADOR_ID = (
+  process.env.REACT_APP_PADEL_COURT_SERIES_ORGANIZADOR_ID?.trim() ||
+  "35e31ab8-2a2f-4526-9e84-e130c85f8ca9"
+).toLowerCase();
+
 export const ORGANIZADOR_CLUB_BINDINGS: readonly ClubOrganizerBinding[] = [
   {
     organizadorId: HACK_PADEL_ORGANIZADOR_ID,
     brandingKey: "hack-padel",
+    active: true,
+    premiumBrandingEnabled: true,
+  },
+  {
+    organizadorId: PADEL_COURT_SERIES_ORGANIZADOR_ID,
+    brandingKey: "padel-court-series",
     active: true,
     premiumBrandingEnabled: true,
   },

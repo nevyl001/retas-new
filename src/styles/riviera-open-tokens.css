@@ -242,7 +242,11 @@
 html[data-brand="hack-padel"],
 html[data-club="hack-padel"],
 .club-experience-scope[data-brand="hack-padel"],
-.club-experience-scope[data-club="hack-padel"] {
+.club-experience-scope[data-club="hack-padel"],
+html[data-brand="padel-court-series"],
+html[data-club="padel-court-series"],
+.club-experience-scope[data-brand="padel-court-series"],
+.club-experience-scope[data-club="padel-court-series"] {
   /* Además de redefinir los tokens, fija el color heredado: sin esto, el texto
      que no declara color explícito (labels, hints, valores de inputs) heredaba
      el color oscuro del body (tema claro) y quedaba invisible sobre el negro. */
@@ -320,6 +324,49 @@ html[data-club="hack-padel"] .ro-surface-dark,
   --ro-success: #bfff00;
   --ro-text-secondary: #a0a0a0;
   --ro-text-muted: #6a6a6a;
+}
+
+/* =============================================
+   PADEL COURT SERIES — tenant premium con escala propia
+   Deep green dominante, charcoal en cards, naranja solo acento.
+   Valores: manifiesto padel-court-series.ts + brand-tokens.css.
+============================================= */
+html[data-brand="padel-court-series"],
+html[data-club="padel-court-series"],
+.club-experience-scope[data-brand="padel-court-series"],
+.club-experience-scope[data-club="padel-court-series"],
+html[data-brand="padel-court-series"] .ro-surface-dark,
+html[data-club="padel-court-series"] .ro-surface-dark,
+.club-experience-scope[data-brand="padel-court-series"] .ro-surface-dark,
+.club-experience-scope[data-club="padel-court-series"] .ro-surface-dark {
+  --ro-accent: #fc9908;
+  --ro-accent-hover: color-mix(in srgb, #fc9908 88%, #efefef);
+  --ro-accent-dim: color-mix(in srgb, #fc9908 14%, transparent);
+  --ro-accent-ring: color-mix(in srgb, #fc9908 32%, transparent);
+  --ro-text-on-accent: #242424;
+
+  --ro-bg-base: #192e2c;
+  --ro-bg-deep: #192e2c;
+  --ro-bg-surface: #192e2c;
+  --ro-bg-card: #242424;
+  --ro-bg-elevated: #242424;
+  --ro-bg-inset: color-mix(in srgb, #242424 85%, #192e2c);
+  --ro-bg-card-hover: color-mix(in srgb, #242424 92%, #fc9908);
+  --ro-bg-input: #242424;
+
+  --ro-border: #ced1c6;
+  --ro-border-subtle: color-mix(in srgb, #ced1c6 28%, transparent);
+  --ro-border-strong: color-mix(in srgb, #ced1c6 55%, #242424);
+  --ro-border-accent: color-mix(in srgb, #fc9908 45%, transparent);
+
+  --ro-text-primary: #efefef;
+  --ro-text-secondary: #ced1c6;
+  --ro-text-muted: color-mix(in srgb, #ced1c6 78%, transparent);
+
+  --ro-success: #2f7d53;
+  --ro-font-heading: "Squada One", "Stack Sans Headline", system-ui, sans-serif;
+  --ro-font-body: "Open Sans Semi Condensed", "Open Sans", "Inter",
+    system-ui, sans-serif;
 }
 
 /* Logo: el PNG de Riviera (marca madre) es blanco y sólo es legible sobre
