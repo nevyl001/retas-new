@@ -41,7 +41,8 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
 
   const logoUrl = resolveClubLogo(manifest, logoSurface);
   const showLogo = Boolean(logoUrl) && !logoFailed;
-  const logoSize = variant === "auth" ? 56 : variant === "inline" ? 32 : 40;
+  /** Hint cuadrado solo para Riviera; logos premium horizontales no deben forzar 1:1. */
+  const logoSizeHint = variant === "auth" ? 56 : variant === "inline" ? 32 : 40;
 
   const organizerLabel = organizerDisplayName?.trim() || "";
   const clubLogoIdentifiesOrganizer = isClubBranded && showLogo;
@@ -75,8 +76,9 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
           src={logoUrl!}
           alt=""
           className="club-identity__logo"
-          width={logoSize}
-          height={logoSize}
+          {...(isClubBranded
+            ? {}
+            : { width: logoSizeHint, height: logoSizeHint })}
           onError={() => setLogoFailed(true)}
         />
       ) : null}

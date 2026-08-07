@@ -1,10 +1,7 @@
 # Assets oficiales Padel Court Series
 #
-# Actual (lockup horizontal beige sobre negro):
-#   logo-light.jpg
-#   logo-dark.jpg
-#   icon.jpg
-#   favicon.jpg
-#
-# Si más adelante hay variantes transparentes / solo monograma, reemplazar
-# estos archivos manteniendo los mismos nombres (o actualizar el manifiesto).
+# PNG con fondo transparente (lockup horizontal recortado al contenido):
+#   logo-dark.png   — beige/cream sobre transparente (UI oscura)
+#   logo-light.png  — blanco sobre transparente
+#   icon.png
+#   favicon.png

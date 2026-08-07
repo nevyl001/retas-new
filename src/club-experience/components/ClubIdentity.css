@@ -13,9 +13,19 @@
   object-fit: contain;
 }
 
+/* Logos premium horizontales: no encajar en caja cuadrada chica. */
+.club-identity--premium > .club-identity__logo {
+  height: auto;
+  max-height: 2.5rem;
+  max-width: min(12rem, 52vw);
+  width: auto;
+}
+
 .club-identity--auth .club-identity__logo {
-  height: 3rem;
-  max-width: 3.25rem;
+  height: auto;
+  max-height: 3.25rem;
+  max-width: min(16rem, 70vw);
+  width: auto;
 }
 
 .club-identity--inline .club-identity__logo {
@@ -23,9 +33,23 @@
   max-width: 2rem;
 }
 
+.club-identity--premium.club-identity--inline > .club-identity__logo {
+  height: auto;
+  max-height: 1.75rem;
+  max-width: min(8rem, 40vw);
+  width: auto;
+}
+
 .club-identity--menu .club-identity__logo {
   height: 1.5rem;
   max-width: 1.75rem;
+}
+
+.club-identity--premium.club-identity--menu > .club-identity__logo {
+  height: auto;
+  max-height: 1.75rem;
+  max-width: min(9rem, 48vw);
+  width: auto;
 }
 
 .club-identity__text {
@@ -123,8 +147,8 @@
 
 .club-identity--logo-only .club-identity__logo {
   height: auto;
-  max-height: 2.25rem;
-  max-width: min(11rem, 42vw);
+  max-height: 2.75rem;
+  max-width: min(14rem, 56vw);
   width: auto;
   object-fit: contain;
 }
@@ -138,8 +162,8 @@
 
 .club-identity--stacked .club-identity__logo {
   height: auto;
-  max-height: 2.125rem;
-  max-width: min(9.5rem, 44vw);
+  max-height: 2.75rem;
+  max-width: min(14rem, 56vw);
   width: auto;
   object-fit: contain;
 }
@@ -184,31 +208,31 @@
 }
 
 .club-identity--header.club-identity--logo-only .club-identity__logo {
-  max-height: 2.5rem;
-  max-width: min(12rem, 48vw);
+  max-height: 3rem;
+  max-width: min(16rem, 58vw);
 }
 
 .club-identity--compact.club-identity--logo-only .club-identity__logo {
-  max-height: 2.75rem;
-  max-width: min(14rem, 75vw);
+  max-height: 3rem;
+  max-width: min(16rem, 78vw);
 }
 
 .club-identity--wordmark .club-identity__logo {
   height: auto;
-  max-height: 2.25rem;
-  max-width: min(11rem, 42vw);
+  max-height: 2.75rem;
+  max-width: min(14rem, 56vw);
   width: auto;
   object-fit: contain;
 }
 
 .club-identity--header.club-identity--wordmark .club-identity__logo {
-  max-height: 2.5rem;
-  max-width: min(12rem, 48vw);
+  max-height: 3rem;
+  max-width: min(16rem, 58vw);
 }
 
 .club-identity--compact.club-identity--wordmark .club-identity__logo {
-  max-height: 2.75rem;
-  max-width: min(14rem, 75vw);
+  max-height: 3rem;
+  max-width: min(16rem, 78vw);
 }
 
 .club-identity--wordmark .club-identity__text {
