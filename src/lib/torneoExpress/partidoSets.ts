@@ -223,6 +223,66 @@ export function isSetComplete(set: PartidoSetScore): boolean {
   );
 }
 
+/** Marcadores legales de un set normal: 6-0 a 6-4, 7-5 y 7-6, más sus inversos. */
+export const LEGAL_SET_SCORE_HINT = "6-0 a 6-4, 7-5 o 7-6";
+
+/** El tercer set admite además súper muerte súbita a 10 con 2 de diferencia. */
+export const LEGAL_THIRD_SET_SCORE_HINT =
+  "6-0 a 6-4, 7-5, 7-6, o súper muerte súbita a 10 con 2 de diferencia";
+
+/**
+ * Cierra la brecha de integridad que permitía guardar marcadores imposibles
+ * (60-40, 8-6): el input acepta dos dígitos, pero el dominio es el que decide
+ * qué es un set válido.
+ */
+export function isLegalSetScore(set: PartidoSetScore): boolean {
+  const { local, visitante } = set;
+  if (!Number.isInteger(local) || !Number.isInteger(visitante)) return false;
+  if (local < 0 || visitante < 0) return false;
+
+  const games = Math.max(local, visitante);
+  const opponent = Math.min(local, visitante);
+  if (games === 6) return opponent >= 0 && opponent <= 4;
+  if (games === 7) return opponent === 5 || opponent === 6;
+  return false;
+}
+
+/**
+ * Súper muerte súbita (tercer set): se juega a 10 puntos con ventaja de 2. De
+ * ahí las dos ramas: si el ganador llegó a 10, el rival no pasó de 8; si se fue
+ * más allá del 10-10, el punto de cierre siempre deja exactamente 2 de
+ * diferencia (11-9, 12-10, 13-11…). Esa exigencia es la que impide que un
+ * 60-40 se cuele por aquí.
+ */
+export function isLegalSuperTieBreakScore(set: PartidoSetScore): boolean {
+  const { local, visitante } = set;
+  if (!Number.isInteger(local) || !Number.isInteger(visitante)) return false;
+  if (local < 0 || visitante < 0) return false;
+
+  const winner = Math.max(local, visitante);
+  const loser = Math.min(local, visitante);
+  if (winner === 10) return loser >= 0 && loser <= 8;
+  if (winner > 10) return loser === winner - 2;
+  return false;
+}
+
+/** El tercer set (índice 2) puede ser un set normal o una súper muerte súbita. */
+export function isLegalSetScoreAtIndex(
+  set: PartidoSetScore,
+  index: number
+): boolean {
+  if (index === 2) {
+    return isLegalSetScore(set) || isLegalSuperTieBreakScore(set);
+  }
+  return isLegalSetScore(set);
+}
+
+export function areLegalSetScores(sets: PartidoSetScore[]): boolean {
+  return (
+    sets.length > 0 && sets.every((set, i) => isLegalSetScoreAtIndex(set, i))
+  );
+}
+
 export function allSetsComplete(sets: PartidoSetScore[]): boolean {
   return sets.length > 0 && sets.every(isSetComplete);
 }
@@ -255,6 +315,11 @@ export function getSetsValidationMessage(
     }
     if (s.local === s.visitante) {
       return `El Set ${i + 1} no puede terminar empatado.`;
+    }
+    if (!isLegalSetScoreAtIndex(s, i)) {
+      const hint =
+        i === 2 ? LEGAL_THIRD_SET_SCORE_HINT : LEGAL_SET_SCORE_HINT;
+      return `El Set ${i + 1} no es un marcador válido de pádel (${hint}).`;
     }
   }
   const winner = detectMatchWinner(sets);

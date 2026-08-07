@@ -1,4 +1,5 @@
 import {
+  areLegalSetScores,
   buildPersistPayload,
   canAddAnotherSet,
   countSetWins,
@@ -6,6 +7,9 @@ import {
   formatSetWinsForWinner,
   getPartidoSets,
   getSetsValidationMessage,
+  isLegalSetScore,
+  isLegalSetScoreAtIndex,
+  isLegalSuperTieBreakScore,
   looksLikeSetWinTally,
   matchWinnerSideFromPartido,
   parseSetsResultado,
@@ -53,6 +57,7 @@ describe("partidoSets", () => {
     expect(detectMatchWinner(sets)).toBe("local");
     expect(countSetWins(sets)).toEqual({ local: 2, visitante: 1 });
     expect(totalGamesFromSets(sets)).toEqual({ local: 19, visitante: 18 });
+    expect(getSetsValidationMessage(sets)).toBeNull();
   });
 
   it("empate 1-1: no permite guardar y pide tercer set", () => {
@@ -194,6 +199,198 @@ describe("partidoSets", () => {
     expect(
       formatSetWinsForWinner("visitante", { local: 0, visitante: 1 })
     ).toEqual({ winnerSets: 1, loserSets: 0 });
+  });
+});
+
+/**
+ * Brecha de integridad detectada el 2026-08-07: el dominio aceptaba cualquier
+ * entero no negativo, así que un 60-40 (dígito tecleado antes del 0 por
+ * defecto del input) se guardaba como resultado legal y contaminaba games,
+ * DIF, rating y ranking.
+ */
+describe("validación estricta de marcador de set", () => {
+  const validos: Array<[number, number]> = [
+    [6, 0],
+    [6, 1],
+    [6, 2],
+    [6, 3],
+    [6, 4],
+    [7, 5],
+    [7, 6],
+  ];
+
+  it.each(validos)("acepta %i-%i y su inverso", (a, b) => {
+    expect(isLegalSetScore({ local: a, visitante: b })).toBe(true);
+    expect(isLegalSetScore({ local: b, visitante: a })).toBe(true);
+    expect(getSetsValidationMessage([{ local: a, visitante: b }])).toBeNull();
+    expect(getSetsValidationMessage([{ local: b, visitante: a }])).toBeNull();
+  });
+
+  const invalidos: Array<[number, number]> = [
+    [6, 5],
+    [6, 6],
+    [7, 0],
+    [7, 4],
+    [7, 7],
+    [8, 6],
+    [10, 8],
+    [60, 40],
+    [70, 50],
+    [60, 30],
+    [0, 0],
+    [1, 0],
+    [5, 3],
+    [12, 10],
+    [99, 0],
+  ];
+
+  it("el tercer set admite súper muerte súbita; los sets 1 y 2 no", () => {
+    const superTb = { local: 10, visitante: 8 };
+    expect(isLegalSetScoreAtIndex(superTb, 2)).toBe(true);
+    expect(isLegalSetScoreAtIndex(superTb, 0)).toBe(false);
+    expect(isLegalSetScoreAtIndex(superTb, 1)).toBe(false);
+
+    // Como set 1 se rechaza…
+    expect(getSetsValidationMessage([{ local: 10, visitante: 8 }])).toBe(
+      "El Set 1 no es un marcador válido de pádel (6-0 a 6-4, 7-5 o 7-6)."
+    );
+    // …y como tercer set se acepta.
+    expect(
+      getSetsValidationMessage([
+        { local: 6, visitante: 4 },
+        { local: 3, visitante: 6 },
+        { local: 10, visitante: 8 },
+      ])
+    ).toBeNull();
+  });
+
+  it("el tercer set también acepta un set normal completo", () => {
+    expect(
+      getSetsValidationMessage([
+        { local: 6, visitante: 4 },
+        { local: 3, visitante: 6 },
+        { local: 7, visitante: 5 },
+      ])
+    ).toBeNull();
+  });
+
+  const superTieBreaksValidos: Array<[number, number]> = [
+    [10, 0],
+    [10, 5],
+    [10, 8],
+    [11, 9],
+    [12, 10],
+    [15, 13],
+  ];
+
+  it.each(superTieBreaksValidos)(
+    "acepta súper muerte súbita %i-%i y su inverso",
+    (a, b) => {
+      expect(isLegalSuperTieBreakScore({ local: a, visitante: b })).toBe(true);
+      expect(isLegalSuperTieBreakScore({ local: b, visitante: a })).toBe(true);
+      expect(isLegalSetScoreAtIndex({ local: a, visitante: b }, 2)).toBe(true);
+    }
+  );
+
+  const superTieBreaksInvalidos: Array<[number, number]> = [
+    [10, 9], // a 10 el rival no puede tener 9
+    [11, 8], // debió cerrar en 10-8
+    [12, 9], // ventaja de 3: imposible
+    [13, 8],
+    [9, 7], // no llegó a 10
+    [10, 10], // empate
+    [60, 40], // el bug original: ventaja de 20
+    [70, 50],
+    [99, 0],
+  ];
+
+  it.each(superTieBreaksInvalidos)(
+    "rechaza súper muerte súbita imposible %i-%i, incluso en el tercer set",
+    (a, b) => {
+      expect(isLegalSuperTieBreakScore({ local: a, visitante: b })).toBe(false);
+      expect(isLegalSuperTieBreakScore({ local: b, visitante: a })).toBe(false);
+      expect(isLegalSetScoreAtIndex({ local: a, visitante: b }, 2)).toBe(false);
+      expect(
+        buildPersistPayload([
+          { local: 6, visitante: 4 },
+          { local: 3, visitante: 6 },
+          { local: a, visitante: b },
+        ])
+      ).toBeNull();
+    }
+  );
+
+  it("el 60-40 no se cuela ni siquiera como tercer set", () => {
+    expect(
+      getSetsValidationMessage([
+        { local: 6, visitante: 4 },
+        { local: 3, visitante: 6 },
+        { local: 60, visitante: 40 },
+      ])
+    ).toBe(
+      "El Set 3 no es un marcador válido de pádel (6-0 a 6-4, 7-5, 7-6, o súper muerte súbita a 10 con 2 de diferencia)."
+    );
+  });
+
+  it.each(invalidos)("rechaza %i-%i y su inverso", (a, b) => {
+    expect(isLegalSetScore({ local: a, visitante: b })).toBe(false);
+    expect(isLegalSetScore({ local: b, visitante: a })).toBe(false);
+    expect(buildPersistPayload([{ local: a, visitante: b }])).toBeNull();
+    expect(getSetsValidationMessage([{ local: a, visitante: b }])).not.toBeNull();
+  });
+
+  it("rechaza negativos", () => {
+    expect(isLegalSetScore({ local: -6, visitante: 4 })).toBe(false);
+    expect(isLegalSetScore({ local: 6, visitante: -1 })).toBe(false);
+    expect(buildPersistPayload([{ local: -6, visitante: 4 }])).toBeNull();
+    expect(buildPersistPayload([{ local: 6, visitante: -1 }])).toBeNull();
+    // isSetComplete ya descarta negativos antes de evaluar el rango.
+    expect(getSetsValidationMessage([{ local: 6, visitante: -1 }])).toBe(
+      "Completa el Set 1."
+    );
+  });
+
+  it("rechaza no enteros y NaN", () => {
+    expect(isLegalSetScore({ local: 6.5, visitante: 4 })).toBe(false);
+    expect(isLegalSetScore({ local: NaN, visitante: 4 })).toBe(false);
+  });
+
+  it("el mensaje de empate tiene prioridad sobre el de rango", () => {
+    expect(getSetsValidationMessage([{ local: 6, visitante: 6 }])).toBe(
+      "El Set 1 no puede terminar empatado."
+    );
+  });
+
+  it("señala el set exacto que está fuera de rango", () => {
+    expect(
+      getSetsValidationMessage([
+        { local: 6, visitante: 4 },
+        { local: 8, visitante: 6 },
+        { local: 6, visitante: 3 },
+      ])
+    ).toBe("El Set 2 no es un marcador válido de pádel (6-0 a 6-4, 7-5 o 7-6).");
+  });
+
+  it("un set inválido invalida todo el partido, no solo ese set", () => {
+    const sets = [
+      { local: 60, visitante: 40 },
+      { local: 6, visitante: 3 },
+    ];
+    expect(areLegalSetScores(sets)).toBe(false);
+    expect(buildPersistPayload(sets)).toBeNull();
+  });
+
+  it("areLegalSetScores exige al menos un set", () => {
+    expect(areLegalSetScores([])).toBe(false);
+    expect(areLegalSetScores([{ local: 6, visitante: 4 }])).toBe(true);
+  });
+
+  it("el 60-40 de la simulación PCS ya no se puede persistir", () => {
+    expect(buildPersistPayload([{ local: 60, visitante: 40 }])).toBeNull();
+    expect(buildPersistPayload([{ local: 70, visitante: 50 }])).toBeNull();
+    expect(getSetsValidationMessage([{ local: 60, visitante: 40 }])).toBe(
+      "El Set 1 no es un marcador válido de pádel (6-0 a 6-4, 7-5 o 7-6)."
+    );
   });
 });
 
