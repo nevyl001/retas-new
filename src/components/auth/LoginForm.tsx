@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
+import { mapAuthLoginError } from "../../lib/auth/mapAuthLoginError";
 import { Button, Input } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import { ForgotPasswordForm } from "./ForgotPasswordForm";
@@ -27,10 +28,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
     setLoading(true);
     setError(null);
 
-    const { error } = await signIn(email, password);
+    const { error: signInError } = await signIn(email, password);
 
-    if (error) {
-      setError(error.message);
+    if (signInError) {
+      setError(mapAuthLoginError(signInError));
     }
 
     setLoading(false);
