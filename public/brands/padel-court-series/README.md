@@ -1,9 +1,10 @@
 # Assets oficiales Padel Court Series
 #
-# Colocar aquí (PNG transparentes, sin recortar la guía de marca):
-#   logo-light.png
-#   logo-dark.png
-#   icon.png
-#   favicon.png
+# Actual (lockup horizontal beige sobre negro):
+#   logo-light.jpg
+#   logo-dark.jpg
+#   icon.jpg
+#   favicon.jpg
 #
-# Hasta entonces el manifiesto deja logos en null y la UI usa displayName / PCS.
+# Si más adelante hay variantes transparentes / solo monograma, reemplazar
+# estos archivos manteniendo los mismos nombres (o actualizar el manifiesto).

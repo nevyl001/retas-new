@@ -17,10 +17,10 @@ export const PADEL_COURT_SERIES_MANIFEST: BrandManifest = createBrandManifest({
     secondary: "Padel Court Series",
   },
   logos: {
-    light: null,
-    dark: null,
-    favicon: null,
-    square: null,
+    light: "/brands/padel-court-series/logo-light.jpg",
+    dark: "/brands/padel-court-series/logo-dark.jpg",
+    favicon: "/brands/padel-court-series/favicon.jpg",
+    square: "/brands/padel-court-series/icon.jpg",
   },
   images: {
     hero: null,
