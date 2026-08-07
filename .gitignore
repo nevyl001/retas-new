@@ -17,6 +17,9 @@ build
 .env.local.*
 !.env.example
 
+# Artefactos de simulación/QA y credenciales de entorno que viven ahí
+tmp/
+
 # Claude Code — configuración personal, no compartida
 .claude/settings.local.json
 
