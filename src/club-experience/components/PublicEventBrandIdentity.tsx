@@ -4,6 +4,8 @@ import { ClubIdentity } from "./ClubIdentity";
 
 type PublicEventBrandIdentityProps = {
   className?: string;
+  /** Desactivar solo si la vista ya imprime la atribución madre por su cuenta. */
+  showMotherAttribution?: boolean;
 };
 
 /**
@@ -11,11 +13,12 @@ type PublicEventBrandIdentityProps = {
  * Reutiliza ClubIdentity (mismo componente del home / UserHeader).
  * - Pending (org desconocido / binding en curso): no renderiza nada.
  * - Sin upgrade: logo Riviera Open + "Riviera Open" + nombre de la cuenta.
- * - Con upgrade: solo logo del club (wordmarkOnly).
+ * - Con upgrade: logo del club + atribución "by Riviera Open", que debe estar
+ *   siempre presente en las vistas públicas.
  */
 export const PublicEventBrandIdentity: React.FC<
   PublicEventBrandIdentityProps
-> = ({ className = "" }) => {
+> = ({ className = "", showMotherAttribution = true }) => {
   const { isClubBranded, isScopeBrandingReady, brandingStatus } =
     useClubExperience();
 
@@ -29,6 +32,7 @@ export const PublicEventBrandIdentity: React.FC<
       showTagline={false}
       logoSurface="dark"
       wordmarkOnly={isClubBranded}
+      showMotherAttribution={showMotherAttribution}
       className={className}
     />
   );

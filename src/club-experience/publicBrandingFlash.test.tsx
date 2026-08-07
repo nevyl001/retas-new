@@ -15,7 +15,10 @@ import {
 } from "../branding/organizerResolver";
 import { CLUB_EXPERIENCE_CACHE_KEY } from "../branding/constants";
 import { getPublicOrganizadorIdFromPath } from "../lib/rivieraJugadores/publicOrganizador";
-import { RIVIERA_PRODUCT_NAME } from "./motherBrand";
+import {
+  RIVIERA_CO_BRAND_ATTRIBUTION,
+  RIVIERA_PRODUCT_NAME,
+} from "./motherBrand";
 import { ORGANIZADOR_CLUB_BINDINGS } from "./organizadorClubIndex";
 import { PublicEventBrandIdentity } from "./components/PublicEventBrandIdentity";
 import { PublicEventNeutralLoading } from "./components/PublicEventNeutralLoading";
@@ -170,7 +173,7 @@ describe("public branding flash contract", () => {
     expect(container.querySelector(".club-identity")).toBeNull();
   });
 
-  it("tras resolver org premium: identity lista y club branded", async () => {
+  it("tras resolver org premium: identity lista, club branded y atribución madre", async () => {
     if (!HACK_ORG) return;
 
     mockSyncDeferred = createDeferred();
@@ -200,7 +203,9 @@ describe("public branding flash contract", () => {
     expect(probe?.getAttribute("data-club")).toBe("true");
     expect(probe?.getAttribute("data-key")).toBe("hack-padel");
     expect(container.querySelector(".club-identity")).not.toBeNull();
-    expect(container.textContent).not.toContain(RIVIERA_PRODUCT_NAME);
+    expect(
+      container.querySelector(".club-identity__attribution")?.textContent
+    ).toContain(RIVIERA_CO_BRAND_ATTRIBUTION);
   });
 
   it("tras resolver org sin upgrade: branding final Riviera", async () => {

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ClubExperienceScope,
   PublicEventBrandIdentity,
+  RIVIERA_CO_BRAND_ATTRIBUTION,
   useClubExperience,
   useOrganizerDisplayName,
 } from "../../club-experience";
@@ -78,14 +79,18 @@ function resolvePublicRankingOrgId(routeOrganizadorId?: string): string | null {
 }
 
 function RankingFooter() {
-  const { isScopeBrandingReady, brandingStatus } = useClubExperience();
+  const { isClubBranded, isScopeBrandingReady, brandingStatus } =
+    useClubExperience();
   const organizerName = useOrganizerDisplayName();
   if (!isScopeBrandingReady || brandingStatus === "pending") {
     return <footer className="rjp-ranking-footer" aria-hidden />;
   }
+  const organizerLine = isClubBranded
+    ? `${organizerName} ${RIVIERA_CO_BRAND_ATTRIBUTION}`
+    : organizerName;
   return (
     <footer className="rjp-ranking-footer">
-      {organizerName} · Vive el pádel diferente
+      {organizerLine} · Vive el pádel diferente
     </footer>
   );
 }

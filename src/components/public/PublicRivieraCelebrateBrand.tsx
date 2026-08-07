@@ -35,7 +35,10 @@ export const PublicRivieraCelebrateBrand: React.FC<{
       <header className="ro-pub-celebrate__brand">
         <div className="ro-divider-gold ro-divider-gold--wide" aria-hidden />
         {showClubIdentity ? (
-          <PublicEventBrandIdentity className="ro-pub-celebrate__club-identity" />
+          <PublicEventBrandIdentity
+            className="ro-pub-celebrate__club-identity"
+            showMotherAttribution={false}
+          />
         ) : null}
         {organizerName ? (
           <p className="ro-pub-celebrate__wordmark">

@@ -21,6 +21,8 @@ interface ClubIdentityProps {
   logoSurface?: ClubLogoSurface;
   /** Solo logo del upgrade (sin bloque de texto). */
   wordmarkOnly?: boolean;
+  /** En modo `wordmarkOnly`, conserva visible la atribución "by Riviera Open". */
+  showMotherAttribution?: boolean;
   className?: string;
 }
 
@@ -33,6 +35,7 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   showTagline = true,
   logoSurface = "auto",
   wordmarkOnly = false,
+  showMotherAttribution = false,
   className = "",
 }) => {
   const { manifest, isClubBranded, organizadorId } = useClubExperience();
@@ -62,6 +65,16 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   const logoOnly = wordmarkOnly && isClubBranded && showLogo;
   const useStackedClubHeader =
     isClubBranded && showLogo && variant === "header" && !wordmarkOnly;
+  const showAttributionOnly = logoOnly && showMotherAttribution;
+
+  const motherAttribution = (
+    <span className="club-identity__attribution">
+      <span className="club-identity__attribution-by">by</span>{" "}
+      <span className="club-identity__attribution-brand">
+        {RIVIERA_PRODUCT_NAME}
+      </span>
+    </span>
+  );
 
   return (
     <div
@@ -82,15 +95,13 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
           onError={() => setLogoFailed(true)}
         />
       ) : null}
+      {showAttributionOnly ? (
+        <div className="club-identity__text">{motherAttribution}</div>
+      ) : null}
       {!logoOnly ? (
         <div className="club-identity__text">
           {useStackedClubHeader ? (
-            <span className="club-identity__attribution">
-              <span className="club-identity__attribution-by">by</span>{" "}
-              <span className="club-identity__attribution-brand">
-                {RIVIERA_PRODUCT_NAME}
-              </span>
-            </span>
+            motherAttribution
           ) : (
             <>
               <span className="club-identity__name">{RIVIERA_PRODUCT_NAME}</span>
