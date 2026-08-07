@@ -42,6 +42,7 @@ export async function fetchOrganizadorAccountSettings(
     .maybeSingle();
 
   if (error) {
+    // B) error de consulta (tabla/columna ausente u otro fallo) → DEFAULT
     if (
       isMissingTableError(error) ||
       isMissingColumnError(error, "permite_ajuste_puntos_manuales") ||
@@ -49,13 +50,29 @@ export async function fetchOrganizadorAccountSettings(
       isMissingColumnError(error, "premium_branding_enabled") ||
       isMissingColumnError(error, "branding_key")
     ) {
+      console.warn(
+        "[admin] fetchOrganizadorAccountSettings: DEFAULT por error de consulta (schema/tabla)",
+        { organizadorId, code: error.code, message: error.message }
+      );
       return rowToAccountSettings(DEFAULT_ORGANIZADOR_GAME_MODES);
     }
-    console.warn("[admin] fetchOrganizadorAccountSettings:", error);
+    console.warn(
+      "[admin] fetchOrganizadorAccountSettings: DEFAULT por error de consulta",
+      { organizadorId, code: error.code, message: error.message }
+    );
     return rowToAccountSettings(DEFAULT_ORGANIZADOR_GAME_MODES);
   }
 
-  return rowToAccountSettings((data as OrganizadorGameModesRow | null) ?? null);
+  if (data == null) {
+    // A) fila inexistente → DEFAULT (distinto de error de consulta)
+    console.warn(
+      "[admin] fetchOrganizadorAccountSettings: DEFAULT por fila inexistente",
+      { organizadorId }
+    );
+    return rowToAccountSettings(null);
+  }
+
+  return rowToAccountSettings(data as OrganizadorGameModesRow);
 }
 
 /** @deprecated Usar fetchOrganizadorAccountSettings */
