@@ -75,9 +75,12 @@ DECLARE
     'id','pareja_local_id','pareja_visitante_id','puntos_local',
     'puntos_visitante','ganador_id','estado','sets_resultado'
   ];
+  -- torneo_id llega del FE (builders) pero el valor escrito es siempre p_torneo_id.
+  -- sets_resultado/cancha/programado_en: tolerados si el payload los trae.
   v_allowed_insert_keys text[] := ARRAY[
-    'ronda','orden','cruce_index','pareja_local_id','pareja_visitante_id',
-    'puntos_local','puntos_visitante','ganador_id','estado','es_bye'
+    'torneo_id','ronda','orden','cruce_index','pareja_local_id','pareja_visitante_id',
+    'puntos_local','puntos_visitante','ganador_id','estado','es_bye','sets_resultado',
+    'cancha','programado_en'
   ];
   v_seen_ids uuid[] := ARRAY[]::uuid[];
   v_valid_parejas uuid[];
@@ -278,7 +281,7 @@ BEGIN
 
     INSERT INTO public.torneo_express_eliminatoria_partidos (
       torneo_id, ronda, orden, cruce_index, pareja_local_id, pareja_visitante_id,
-      puntos_local, puntos_visitante, ganador_id, estado, es_bye
+      puntos_local, puntos_visitante, ganador_id, estado, es_bye, sets_resultado
     ) VALUES (
       p_torneo_id, -- (7/10) torneo_id SIEMPRE del parámetro, nunca del payload
       v_ronda,
@@ -290,7 +293,8 @@ BEGIN
       NULLIF(v_insert->>'puntos_visitante', '')::int,
       NULLIF(v_insert->>'ganador_id', '')::uuid,
       v_estado,
-      COALESCE((v_insert->>'es_bye')::boolean, false)
+      COALESCE((v_insert->>'es_bye')::boolean, false),
+      CASE WHEN v_insert ? 'sets_resultado' THEN (v_insert->'sets_resultado') ELSE NULL END
     )
     RETURNING id INTO v_new_id;
 
