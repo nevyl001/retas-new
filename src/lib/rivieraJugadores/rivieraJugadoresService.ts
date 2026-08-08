@@ -1558,7 +1558,19 @@ export async function ensureRivieraJugadorForLegacyPlayer(
  * Las participaciones son la fuente de verdad (p. ej. tras borrar del historial).
  */
 export async function rebuildJugadorStats(
-  jugadorId: string
+  jugadorId: string,
+  options?: {
+    /**
+     * Perf batch-1 (2026-08-08): el cierre de evento llama a esta función en
+     * batch para TODOS los jugadores tocados y descarta el valor de retorno
+     * (solo le importa que refresh_jugador_stats se haya ejecutado). El
+     * SELECT de vuelta (fetchJugadorStatsRow) era un round-trip por jugador
+     * completamente desperdiciado en ese caso. Callers que sí necesitan el
+     * objeto de stats (p.ej. pantallas admin) NO deben pasar esta opción --
+     * el comportamiento por default es idéntico al anterior.
+     */
+    skipRefetch?: boolean;
+  }
 ): Promise<JugadorStats | null> {
   const { error: rpcErr } = await supabase.rpc("refresh_jugador_stats", {
     p_jugador_id: jugadorId,
@@ -1569,6 +1581,7 @@ export async function rebuildJugadorStats(
     (isMissingTableError(rpcErr) || isMissingRpcError(rpcErr));
 
   if (!rpcErr) {
+    if (options?.skipRefetch) return null;
     try {
       return await fetchJugadorStatsRow(jugadorId);
     } catch {
@@ -1578,6 +1591,7 @@ export async function rebuildJugadorStats(
 
   if (rpcErr && !rpcMissing) {
     console.warn("[riviera-jugadores] refresh_jugador_stats:", rpcErr);
+    if (options?.skipRefetch) return null;
     try {
       return await fetchJugadorStatsRow(jugadorId);
     } catch {
@@ -1590,6 +1604,7 @@ export async function rebuildJugadorStats(
     return await persistJugadorStats(computed);
   } catch (e) {
     console.warn("[riviera-jugadores] rebuildJugadorStats:", e);
+    if (options?.skipRefetch) return null;
     try {
       return await fetchJugadorStatsRow(jugadorId);
     } catch {

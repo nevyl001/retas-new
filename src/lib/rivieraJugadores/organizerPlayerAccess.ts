@@ -630,6 +630,19 @@ export async function ensureGrantedLocalPlayerSumsRanking(
 }
 
 /** Asegura clon local + suma_ranking para cada cedido antes de sync/backfill de puntos. */
+/** Mismo límite que PLAYER_PARTICIPACION_SYNC_CONCURRENCY (careerEventPlayerSync.ts). */
+const GRANTED_PLAYERS_PREP_CONCURRENCY = 6;
+
+/**
+ * Perf batch-1 (2026-08-08): cada `grant` es un jugador ORIGEN distinto
+ * (fila distinta en riviera_official_player_grants / jugadores locales
+ * distintos) -- no hay lectura/escritura compartida entre grants distintos,
+ * así que se procesan con concurrencia acotada en vez de uno por uno. Antes
+ * este for-secuencial era un costo fijo por cierre proporcional a la
+ * cantidad de grants activos del organizador, independiente del tamaño del
+ * evento. Mismo resultado, mismo manejo de error por grant (un grant que
+ * falla no aborta a los demás, igual que antes).
+ */
 export async function prepareGrantedPlayersForParticipacionSync(
   granteeOrganizerId: string
 ): Promise<string[]> {
@@ -637,29 +650,41 @@ export async function prepareGrantedPlayersForParticipacionSync(
   if (!org) return [];
 
   const grants = await listActiveGrantedAccessForOrganizer(org);
-  const localIds: string[] = [];
+  const localIds: (string | null)[] = new Array(grants.length).fill(null);
+  let next = 0;
 
-  for (const grant of grants) {
-    try {
-      const sourceId = grant.jugador_id.trim();
-      if (!sourceId) continue;
+  async function worker() {
+    while (next < grants.length) {
+      const index = next;
+      next += 1;
+      const grant = grants[index];
+      try {
+        const sourceId = grant.jugador_id.trim();
+        if (!sourceId) continue;
 
-      let localId = grant.local_jugador_id?.trim() || null;
-      if (!localId) {
-        localId = await ensureGrantedPlayerLocal(sourceId);
+        let localId = grant.local_jugador_id?.trim() || null;
+        if (!localId) {
+          localId = await ensureGrantedPlayerLocal(sourceId);
+        }
+        await ensureGrantedLocalPlayerSumsRanking(org, localId);
+        localIds[index] = localId;
+      } catch (e) {
+        console.warn(
+          "[riviera-jugadores] prepareGrantedPlayersForParticipacionSync:",
+          grant.jugador_id,
+          e
+        );
       }
-      await ensureGrantedLocalPlayerSumsRanking(org, localId);
-      localIds.push(localId);
-    } catch (e) {
-      console.warn(
-        "[riviera-jugadores] prepareGrantedPlayersForParticipacionSync:",
-        grant.jugador_id,
-        e
-      );
     }
   }
 
-  return localIds;
+  const workers = Array.from(
+    { length: Math.min(GRANTED_PLAYERS_PREP_CONCURRENCY, Math.max(grants.length, 1)) },
+    () => worker()
+  );
+  await Promise.all(workers);
+
+  return localIds.filter((id): id is string => Boolean(id));
 }
 
 export async function listGrantedLocalJugadorIdsForSource(

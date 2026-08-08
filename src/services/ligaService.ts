@@ -779,6 +779,8 @@ export async function inscribirJugador(
         organizadorId: uid,
         ligaId,
         jugadorId,
+        // Perf batch-1 (2026-08-08): mismo patrón ya probado en Reta.
+        options: { telemetry: true, identityCache: true },
       })
     )
     .then((result) => {
@@ -1677,6 +1679,8 @@ export async function finishJornada(jornadaId: string): Promise<void> {
           organizadorId: userId,
           ligaId: String(jornada.liga_id),
           jornadaNumero: Number(jornada.numero),
+          // Perf batch-1 (2026-08-08): mismo patrón ya probado en Reta.
+          options: { telemetry: true, identityCache: true },
         })
       )
       .then((result) => {
@@ -1756,6 +1760,8 @@ export async function finishLiga(ligaId: string): Promise<void> {
         kind: "liga_podio",
         organizadorId: uid,
         ligaId,
+        // Perf batch-1 (2026-08-08): mismo patrón ya probado en Reta.
+        options: { telemetry: true, identityCache: true },
       })
     )
     .then((result) => {

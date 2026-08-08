@@ -13,7 +13,12 @@ export type CareerEventHandlerResult = {
 
 export type CareerEventSyncRunOptions = {
   excludeJugadorIds?: string[];
-  /** Solo aplica a la rama "reta" -- otras modalidades lo ignoran. */
+  /**
+   * Perf batch-1 (2026-08-08): se propaga a TODAS las modalidades (antes
+   * solo a "reta"). Cada sync* decide internamente si lo usa; pasar el
+   * mismo caché no cambia ninguna validación, solo evita repetir una
+   * resolución de identidad ya hecha en este mismo cierre.
+   */
   identityCache?: CloseIdentityCache;
 };
 
@@ -68,6 +73,7 @@ export async function runCareerEventSync(
           organizadorId,
           duelo: input.duelo,
           excludeJugadorIds,
+          identityCache: runOptions?.identityCache,
         });
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
@@ -82,7 +88,7 @@ export async function runCareerEventSync(
           input.roster,
           input.rounds,
           organizadorId,
-          { excludeJugadorIds }
+          { excludeJugadorIds, identityCache: runOptions?.identityCache }
         );
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
@@ -94,7 +100,7 @@ export async function runCareerEventSync(
         const outcome = await syncTorneoExpressParticipaciones(
           input.torneoId,
           organizadorId,
-          { excludeJugadorIds }
+          { excludeJugadorIds, identityCache: runOptions?.identityCache }
         );
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
@@ -107,7 +113,7 @@ export async function runCareerEventSync(
           input.ligaId,
           input.jornadaNumero,
           organizadorId,
-          { excludeJugadorIds }
+          { excludeJugadorIds, identityCache: runOptions?.identityCache }
         );
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
@@ -119,6 +125,7 @@ export async function runCareerEventSync(
         eventoId = input.ligaId;
         const outcome = await syncLigaFinalPodio(input.ligaId, organizadorId, {
           excludeJugadorIds,
+          identityCache: runOptions?.identityCache,
         });
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;
@@ -131,7 +138,7 @@ export async function runCareerEventSync(
           input.ligaId,
           input.jugadorId,
           organizadorId,
-          { excludeJugadorIds }
+          { excludeJugadorIds, identityCache: runOptions?.identityCache }
         );
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;

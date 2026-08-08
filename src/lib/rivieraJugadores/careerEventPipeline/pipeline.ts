@@ -32,8 +32,14 @@ const LOG_PREFIX = "[career-event-pipeline]";
 async function refreshJugadorStatsBatch(
   jugadorIds: Iterable<string>
 ): Promise<void> {
+  // Dedup por jugador ya existía (Set) -- refresh_jugador_stats corre como
+  // máximo 1 vez por jugador por cierre. Perf batch-1: el resultado de
+  // rebuildJugadorStats no se usa aquí, así que se salta el SELECT de
+  // vuelta (skipRefetch) -- 1 round trip menos por jugador tocado.
   const unique = Array.from(new Set(Array.from(jugadorIds).filter(Boolean)));
-  await Promise.allSettled(unique.map((id) => rebuildJugadorStats(id)));
+  await Promise.allSettled(
+    unique.map((id) => rebuildJugadorStats(id, { skipRefetch: true }))
+  );
 }
 
 function defaultRatingPartidoRefs(
@@ -150,14 +156,20 @@ async function processCareerEventInner(
     }
   }
 
-  // Incidente 2026-08-06: caché de identidad de UN cierre, solo reta (doble
-  // seguro flag+kind -- ver closeIdentityCache.ts). Memoiza resolución de
-  // jugador + ensure_riviera_identity + ensure_official_profile_link entre
-  // pre-close/sync/assertions para no verificar la misma identidad 3 veces.
-  const identityCache =
-    options.identityCache && input.kind === "reta"
-      ? createCloseIdentityCache(input.organizadorId)
-      : undefined;
+  // Incidente 2026-08-06 (reta) + batch-1 perf (2026-08-08, generalizado a
+  // las demás modalidades): caché de identidad de UN cierre -- ver
+  // closeIdentityCache.ts. Memoiza resolución de jugador +
+  // ensure_riviera_identity + ensure_official_profile_link entre
+  // pre-close/sync/assertions para no verificar la misma identidad 3-4 veces
+  // por jugador. Antes solo se armaba para `kind === "reta"`; duelo_2v2,
+  // americano, torneo_express y las variantes de liga sufrían exactamente el
+  // mismo patrón sin mitigación. El caché sigue viviendo exclusivamente
+  // dentro de esta ejecución de processCareerEvent (no persiste, no cruza
+  // cierres, no se comparte entre eventos) -- solo se generalizó A QUÉ kinds
+  // aplica, no se cambió su alcance ni su semántica.
+  const identityCache = options.identityCache
+    ? createCloseIdentityCache(input.organizadorId)
+    : undefined;
 
   let syncResult: Awaited<ReturnType<typeof runCareerEventSync>> | null = null;
   let touchedJugadorIds: string[] = [];

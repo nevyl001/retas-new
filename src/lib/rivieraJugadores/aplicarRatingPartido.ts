@@ -5,6 +5,7 @@ import { supabase } from "../supabaseClient";
 import { getMatchScoresForStandings } from "../standingsUtils";
 import { resolveJugadorIdForParticipacion } from "./jugadorIdResolver";
 import { resolveJugadorIdForRating } from "./organizerPlayerAccess";
+import type { CloseIdentityCache } from "./careerEventPipeline/closeIdentityCache";
 import {
   parseSetScoresJson,
   resolveParejasFijasPartidoTotals,
@@ -184,22 +185,43 @@ async function reconcileRatingPartidoRef(
   );
 }
 
+/**
+ * Resuelve los dos jugadores de una pareja para rating.
+ *
+ * Perf batch-1 (2026-08-08): las dos resoluciones (player1/player2) son
+ * SIEMPRE de jugadores distintos dentro de la misma pareja -- no hay
+ * dependencia entre ellas, así que se paralelizan con Promise.all. Si se
+ * pasa `identityCache` (mismo caché del cierre, ver closeIdentityCache.ts),
+ * cada jugador que ya fue resuelto en participación/registro no vuelve a
+ * disparar red aquí (esto es lo que rompe el patrón de round robin: el
+ * mismo jugador participa en múltiples partidos y antes se resolvía desde
+ * cero en cada uno). No cambia ni el resultado ni el orden de aplicación
+ * de rating -- solo evita repetir lookups/creates ya resueltos.
+ */
 export async function resolverRivieraIdsDesdePair(
   organizadorId: string,
-  pair: Pick<Pair, "player1_id" | "player2_id" | "player1_name" | "player2_name">
+  pair: Pick<Pair, "player1_id" | "player2_id" | "player1_name" | "player2_name">,
+  identityCache?: CloseIdentityCache
 ): Promise<[string, string] | null> {
-  const j1Op = await resolveJugadorIdForParticipacion({
-    organizadorId,
-    legacyPlayerId: pair.player1_id,
-    nombre: pair.player1_name || "Jugador 1",
-    tipoEvento: "reta",
-  });
-  const j2Op = await resolveJugadorIdForParticipacion({
-    organizadorId,
-    legacyPlayerId: pair.player2_id,
-    nombre: pair.player2_name || "Jugador 2",
-    tipoEvento: "reta",
-  });
+  const resolve = (params: Parameters<typeof resolveJugadorIdForParticipacion>[0]) =>
+    identityCache
+      ? identityCache.resolveJugadorId(params)
+      : resolveJugadorIdForParticipacion(params);
+
+  const [j1Op, j2Op] = await Promise.all([
+    resolve({
+      organizadorId,
+      legacyPlayerId: pair.player1_id,
+      nombre: pair.player1_name || "Jugador 1",
+      tipoEvento: "reta",
+    }),
+    resolve({
+      organizadorId,
+      legacyPlayerId: pair.player2_id,
+      nombre: pair.player2_name || "Jugador 2",
+      tipoEvento: "reta",
+    }),
+  ]);
   if (!j1Op || !j2Op) return null;
 
   const [j1, j2] = await Promise.all([
@@ -218,10 +240,19 @@ export async function aplicarRatingDesdePairs(
     modoJuego: RatingModoJuego;
     partidoRef: string;
     descripcion?: string;
+    /** Perf batch-1: caché de identidad de este cierre (opcional). */
+    identityCache?: CloseIdentityCache;
   }
 ): Promise<void> {
-  const [a1, a2] = (await resolverRivieraIdsDesdePair(organizadorId, pairA)) ?? [];
-  const [b1, b2] = (await resolverRivieraIdsDesdePair(organizadorId, pairB)) ?? [];
+  // pairA y pairB son los dos lados de UN MISMO partido -- por definición no
+  // comparten jugadores, así que resolverlos en paralelo es seguro (no hay
+  // ninguna dependencia de rating aquí, solo resolución de identidad).
+  const [resA, resB] = await Promise.all([
+    resolverRivieraIdsDesdePair(organizadorId, pairA, opts.identityCache),
+    resolverRivieraIdsDesdePair(organizadorId, pairB, opts.identityCache),
+  ]);
+  const [a1, a2] = resA ?? [];
+  const [b1, b2] = resB ?? [];
   if (!a1 || !a2 || !b1 || !b2) return;
 
   await reconcileRatingPartidoRef(opts.partidoRef, [a1, a2, b1, b2]);
@@ -573,15 +604,29 @@ export async function aplicarRatingAmericanoPartido(
   });
 }
 
-/** Aplica rating a todos los partidos finalizados de una reta (idempotente). */
+/**
+ * Aplica rating a todos los partidos finalizados de una reta (idempotente).
+ *
+ * Perf batch-1 (2026-08-08): el `for` secuencial se conserva TAL CUAL --
+ * cada `aplicarRatingPartido` RPC lee y escribe el rating vigente de 4
+ * jugadores, y en round robin un jugador juega varios partidos dentro del
+ * mismo cierre, así que el partido N puede depender del rating recién
+ * actualizado por el partido N-1. Paralelizar esas llamadas cambiaría el
+ * resultado y está explícitamente prohibido. Lo único que cambia es que
+ * ahora se le pasa `identityCache` (mismo caché del cierre) a la resolución
+ * de identidad de cada pareja -- esa parte no tiene relación con el cálculo
+ * de rating, es pura resolución de "quién es este jugador", y por eso es
+ * segura de cachear/paralelizar sin alterar el resultado ni el orden.
+ */
 export async function aplicarRatingRetaFinishedMatches(params: {
   organizadorId: string;
   pairs: Pair[];
   matches: Match[];
   gamesByMatchId: Map<string, Game[]>;
   descripcion?: string;
+  identityCache?: CloseIdentityCache;
 }): Promise<number> {
-  const { organizadorId, pairs, matches, gamesByMatchId, descripcion } =
+  const { organizadorId, pairs, matches, gamesByMatchId, descripcion, identityCache } =
     params;
   const pairById = new Map(pairs.map((p) => [p.id, p]));
   let applied = 0;
@@ -605,6 +650,7 @@ export async function aplicarRatingRetaFinishedMatches(params: {
           modoJuego: "reta_rr",
           partidoRef: `reta:${match.id}`,
           descripcion: descripcion ?? "Reta Round Robin",
+          identityCache,
         }
       );
       applied += 1;

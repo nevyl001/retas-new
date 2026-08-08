@@ -186,6 +186,8 @@ export function useAmericanoDinamico(
         nombre: label,
         roster: playersRef.current,
         rounds: roundsRef.current,
+        // Perf batch-1 (2026-08-08): mismo patrón ya probado en Reta.
+        options: { telemetry: true, identityCache: true },
       });
 
       if (result.ok) {

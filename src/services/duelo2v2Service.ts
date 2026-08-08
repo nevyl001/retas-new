@@ -616,6 +616,11 @@ export async function finalizarDuelo2v2(id: string): Promise<FinalizarDuelo2v2Re
     kind: "duelo_2v2",
     organizadorId: uid,
     duelo: finalizado,
+    // Perf batch-1 (2026-08-08): mismo patrón que Reta (identityCache evita
+    // resolver la misma identidad 3-4 veces en pre-close/sync/assertions;
+    // telemetry es instrumentación temporal solo para medir este batch, no
+    // cambia ningún resultado). Ver careerEventPipeline/pipelineTelemetry.ts.
+    options: { telemetry: true, identityCache: true },
   });
 
   const careerSyncOk = pipelineResult.ok;

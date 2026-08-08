@@ -69,11 +69,14 @@ export type CareerEventPipelineOptions = {
   telemetry?: boolean;
   /**
    * Arma un caché de identidad de un solo cierre (closeIdentityCache.ts,
-   * incidente 2026-08-06): memoiza resolución de jugador + ensure_riviera_identity
-   * + ensure_official_profile_link_for_participacion entre pre-close/sync/
-   * assertions, en vez de verificar la misma identidad 3 veces por jugador.
-   * Solo tiene efecto cuando kind === "reta" (ver pipeline.ts) -- default
-   * false, cero cambio de comportamiento en las demás modalidades.
+   * incidente 2026-08-06, generalizado a todas las modalidades en perf
+   * batch-1 2026-08-08): memoiza resolución de jugador +
+   * ensure_riviera_identity + ensure_official_profile_link_for_participacion
+   * entre pre-close/sync/assertions, en vez de verificar la misma identidad
+   * 3-4 veces por jugador. Aplica a cualquier `kind` (ver pipeline.ts).
+   * Vive solo dentro de esta ejecución de finalizeCareerEvent -- no
+   * persiste, no cruza cierres. Default false -- cero cambio de
+   * comportamiento si no se activa explícitamente.
    */
   identityCache?: boolean;
 };
