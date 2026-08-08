@@ -1,5 +1,6 @@
 import { useClubModeEyebrow } from "../../club-experience";
 import React, { useEffect, useMemo, useState } from "react";
+import { useUser } from "../../contexts/UserContext";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
 import { eliminatoriaUltimaRondaCompleta, eliminatoriaBracketSize } from "../../lib/torneoExpress/bracketRounds";
@@ -49,8 +50,16 @@ import { TablerIcon } from "../ui/TablerIcon";
 import "./te-gestion-page.css";
 import "./te-fondos.css";
 
+// Temporal: panel de Notificaciones en pruebas de funcionalidad, oculto para
+// todas las cuentas salvo la de Riviera Open mientras se valida. Quitar este
+// gate cuando termine la prueba.
+const NOTIF_PANEL_TEST_ACCOUNT_EMAIL = "nrm001sm@hotmail.com";
+
 export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
   const modeEyebrow = useClubModeEyebrow();
+  const { user } = useUser();
+  const showNotifPanel =
+    user?.email?.toLowerCase() === NOTIF_PANEL_TEST_ACCOUNT_EMAIL;
   const {
     bundle,
     loading,
@@ -517,7 +526,9 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           Ver tabla general
         </Button>
       </ActionBar>
-      <TorneoExpressNotificacionesPanel torneoExpressId={torneoId} />
+      {showNotifPanel && (
+        <TorneoExpressNotificacionesPanel torneoExpressId={torneoId} />
+      )}
     </div>
   );
 
@@ -1150,7 +1161,9 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         </div>
       )}
 
-      <TorneoExpressNotificacionesPanel torneoExpressId={torneoId} />
+      {showNotifPanel && (
+        <TorneoExpressNotificacionesPanel torneoExpressId={torneoId} />
+      )}
         </>
       )}
 
