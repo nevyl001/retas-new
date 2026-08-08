@@ -15,6 +15,7 @@ import {
   useClubExperience,
   useOrganizerDisplayName,
 } from "../club-experience";
+import { useAmericanoLiveRealtime } from "../hooks/useAmericanoLiveRealtime";
 import { useVisiblePolling } from "../hooks/useVisiblePolling";
 import { AmericanoTournamentSummary } from "./AmericanoDinamico/AmericanoTournamentSummary";
 import "./PublicAmericanoResultsBoard.css";
@@ -160,6 +161,13 @@ export const PublicAmericanoResultsBoard: React.FC<
   useVisiblePolling({
     callback: loadLive,
     intervalMs: AMERICANO_RESULTS_BOARD_POLL_INTERVAL_MS,
+  });
+
+  // Realtime como actualización principal; el polling de arriba queda como respaldo.
+  useAmericanoLiveRealtime({
+    tournamentId,
+    onUpdate: loadLive,
+    enabled: true,
   });
 
   useEffect(() => {

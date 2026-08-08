@@ -7,6 +7,14 @@ interface UseRealtimeSubscriptionOptions {
   tournamentId: string;
   onUpdate: () => void;
   enabled?: boolean; // Permitir desactivar si es necesario
+  /**
+   * IDs de los matches del torneo actual. La tabla `games` no tiene columna
+   * `tournament_id` (solo `match_id`), así que no hay filtro de servidor
+   * posible por torneo: se escucha la tabla completa pero se descarta en
+   * cliente todo cambio cuyo match_id no pertenezca a este torneo, para que
+   * cambios de otra reta no disparen actualizaciones aquí.
+   */
+  matchIds?: string[];
 }
 
 /**
@@ -22,9 +30,15 @@ export const useRealtimeSubscription = ({
   tournamentId,
   onUpdate,
   enabled = true,
+  matchIds,
 }: UseRealtimeSubscriptionOptions) => {
   const channelsRef = useRef<RealtimeChannel[]>([]);
   const isSubscribedRef = useRef(false);
+  const matchIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    matchIdsRef.current = new Set(matchIds ?? []);
+  }, [matchIds]);
 
   const handleUpdate = useCallback(() => {
     debugLog("🔄 Cambio detectado en tiempo real, actualizando...");
@@ -81,7 +95,8 @@ export const useRealtimeSubscription = ({
         });
 
       // Suscribirse a cambios en games (todos los games, ya que no tenemos filtro directo por tournament_id)
-      // Nota: Esto escuchará todos los games, pero solo actualizaremos si es necesario
+      // Filtrado en cliente por match_id: solo dispara handleUpdate si el juego
+      // pertenece a un match de este torneo (ver matchIdsRef).
       const gamesChannel = supabase
         .channel(`games:${tournamentId}`)
         .on(
@@ -92,8 +107,14 @@ export const useRealtimeSubscription = ({
             table: "games",
           },
           (payload) => {
+            const row = (payload.new ?? payload.old) as
+              | { match_id?: string }
+              | null;
+            const matchId = row?.match_id;
+            if (!matchId || !matchIdsRef.current.has(matchId)) {
+              return;
+            }
             debugLog("🎮 Cambio en games:", payload.eventType);
-            // Solo actualizar si el cambio es relevante (podríamos filtrar más si es necesario)
             handleUpdate();
           }
         )

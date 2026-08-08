@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   LigaDetalle,
   LigaEquipoRankingItem,
@@ -19,6 +19,7 @@ import {
 } from "../../services/ligaService";
 import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
+import { useLigaRealtime } from "../../hooks/useLigaRealtime";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import { PublicModeShell } from "../platform/PublicModeShell";
 import { StatusBadge } from "../platform/StatusBadge";
@@ -118,6 +119,18 @@ export const LigaDetallePublica: React.FC<LigaDetallePublicaProps> = ({
   useVisiblePolling({
     callback: load,
     intervalMs: LIGA_PUBLIC_POLL_INTERVAL_MS,
+  });
+
+  // Realtime como actualización principal; el polling de arriba queda como respaldo.
+  const jornadaIds = useMemo(
+    () => (detalle?.jornadas ?? []).map((j) => j.id),
+    [detalle]
+  );
+  useLigaRealtime({
+    ligaId: ligaId,
+    jornadaIds,
+    onUpdate: load,
+    enabled: true,
   });
 
   if (loading && !detalle) {

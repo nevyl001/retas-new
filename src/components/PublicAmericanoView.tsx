@@ -19,6 +19,7 @@ import {
   useOrganizerDisplayName,
 } from "../club-experience";
 import { isPubDsV2Enabled } from "../config/peds";
+import { useAmericanoLiveRealtime } from "../hooks/useAmericanoLiveRealtime";
 import { useVisiblePolling } from "../hooks/useVisiblePolling";
 import {
   formatPublicEventFechaHorarioLine,
@@ -267,6 +268,13 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   useVisiblePolling({
     callback: loadLive,
     intervalMs: AMERICANO_PUBLIC_POLL_INTERVAL_MS,
+  });
+
+  // Realtime como actualización principal; el polling de arriba queda como respaldo.
+  useAmericanoLiveRealtime({
+    tournamentId,
+    onUpdate: loadLive,
+    enabled: true,
   });
 
   useEffect(() => {

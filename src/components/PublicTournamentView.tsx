@@ -391,10 +391,12 @@ const PublicTournamentView: React.FC<PublicTournamentViewProps> = ({
 
   // Suscripción en tiempo real (con polling como fallback)
   // IMPORTANTE: Debe ir DESPUÉS de la definición de loadTournamentData
+  const matchIds = useMemo(() => matches.map((m) => m.id), [matches]);
   useRealtimeSubscription({
     tournamentId,
     onUpdate: loadTournamentData,
     enabled: true,
+    matchIds,
   });
 
   // Cargar teamConfig desde config pública (anon) lo antes posible

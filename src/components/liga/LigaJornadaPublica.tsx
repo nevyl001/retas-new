@@ -20,6 +20,7 @@ import {
 import { getLigaById } from "../../services/ligaService";
 import { ClubExperienceScope, PublicClubModeEyebrow, PublicEventBrandIdentity, useClubExperience, useOrganizerDisplayName } from "../../club-experience";
 import { isPubDsV2Enabled } from "../../config/peds";
+import { useLigaRealtime } from "../../hooks/useLigaRealtime";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import type { PublicRetaWinnerAvatar } from "../public/PublicRetaWinnerSection";
 import { PublicModeShell } from "../platform/PublicModeShell";
@@ -128,6 +129,18 @@ export const LigaJornadaPublica: React.FC<LigaJornadaPublicaProps> = ({
   useVisiblePolling({
     callback: load,
     intervalMs: LIGA_PUBLIC_POLL_INTERVAL_MS,
+  });
+
+  // Realtime como actualización principal; el polling de arriba queda como respaldo.
+  const jornadaIds = useMemo(
+    () => (detalle?.jornadas ?? []).map((j) => j.id),
+    [detalle]
+  );
+  useLigaRealtime({
+    ligaId,
+    jornadaIds,
+    onUpdate: load,
+    enabled: true,
   });
 
   const jornada = useMemo(

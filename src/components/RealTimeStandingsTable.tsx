@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import {
   getPairs,
   getMatches,
-  getGames,
+  getTournamentGames,
   updateMatch,
   getTournamentById,
   getTournamentPublicConfig,
@@ -169,10 +169,8 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
       setPairs(pairsData);
       setMatches(matchesData);
 
-      // Cargar todos los juegos de todos los partidos
-      const gamesPromises = matchesData.map((match) => getGames(match.id));
-      const gamesArrays = await Promise.all(gamesPromises);
-      const allGamesData = gamesArrays.flat();
+      // Cargar todos los juegos de la reta en una sola pasada batch (antes: 1 request por match, N+1)
+      const allGamesData = await getTournamentGames(tournamentId);
       setAllGames(allGamesData);
 
       debugLog("- Juegos cargados:", allGamesData.length);
@@ -220,10 +218,12 @@ const RealTimeStandingsTable: React.FC<RealTimeStandingsTableProps> = ({
 
   // Suscripción en tiempo real (con polling como fallback)
   // IMPORTANTE: Debe ir DESPUÉS de la definición de loadTournamentData
+  const matchIds = useMemo(() => matches.map((m) => m.id), [matches]);
   useRealtimeSubscription({
     tournamentId,
     onUpdate: loadTournamentData,
     enabled: true,
+    matchIds,
   });
 
   useEffect(() => {
