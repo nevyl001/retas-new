@@ -340,11 +340,39 @@ BEGIN
     );
   END IF;
 
-  IF v_actor IS NOT NULL AND p_organizador_id IS NOT NULL AND NOT public.is_master_admin() THEN
-    IF v_actor IS DISTINCT FROM p_organizador_id THEN
+  -- P0 (2026-08-08): anon nunca escribe; p_organizador_id NULL exige ownership.
+  -- service_role / SQL editor (auth.role() vacío) conservan repair ops.
+  IF COALESCE(auth.role(), '') = 'anon' THEN
+    RETURN jsonb_build_object(
+      'linked', false, 'confidence', 'LOW', 'reason', 'permission_denied',
+      'action_sugerida', 'INSUFFICIENT_EVIDENCE', 'jugador_id', p_jugador_id
+    );
+  END IF;
+
+  IF COALESCE(auth.role(), '') = 'authenticated' AND NOT public.is_master_admin() THEN
+    IF v_actor IS NULL THEN
+      RETURN jsonb_build_object(
+        'linked', false, 'confidence', 'LOW', 'reason', 'permission_denied',
+        'action_sugerida', 'INSUFFICIENT_EVIDENCE', 'jugador_id', p_jugador_id
+      );
+    END IF;
+
+    IF p_organizador_id IS NOT NULL THEN
+      IF v_actor IS DISTINCT FROM p_organizador_id THEN
+        IF NOT EXISTS (
+          SELECT 1 FROM public.riviera_jugadores rj
+          WHERE rj.id = p_jugador_id AND rj.organizador_id = p_organizador_id
+        ) THEN
+          RETURN jsonb_build_object(
+            'linked', false, 'confidence', 'LOW', 'reason', 'permission_denied',
+            'action_sugerida', 'INSUFFICIENT_EVIDENCE', 'jugador_id', p_jugador_id
+          );
+        END IF;
+      END IF;
+    ELSE
       IF NOT EXISTS (
         SELECT 1 FROM public.riviera_jugadores rj
-        WHERE rj.id = p_jugador_id AND rj.organizador_id = p_organizador_id
+        WHERE rj.id = p_jugador_id AND rj.organizador_id = v_actor
       ) THEN
         RETURN jsonb_build_object(
           'linked', false, 'confidence', 'LOW', 'reason', 'permission_denied',
@@ -373,8 +401,10 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public._riviera_profile_link_resolution(uuid) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public._riviera_orphan_profile_audit() TO anon, authenticated;
+-- P0 (2026-08-08): ops-only para audit/resolution; ensure solo authenticated.
+REVOKE ALL ON FUNCTION public._riviera_profile_link_resolution(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public._riviera_orphan_profile_audit() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.ensure_official_profile_link_for_participacion(uuid, uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.ensure_official_profile_link_for_participacion(uuid, uuid) TO authenticated;
 
 NOTIFY pgrst, 'reload schema';
