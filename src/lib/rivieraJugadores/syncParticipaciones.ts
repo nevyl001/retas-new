@@ -87,6 +87,8 @@ import {
   type PlayerParticipacionSyncResult,
 } from "./careerEventPipeline/careerEventPlayerSync";
 import type { CareerEventAssertionFailure } from "./careerEventPipeline/types";
+import { addStageMs, withStage } from "./careerEventPipeline/pipelineTelemetry";
+import type { CloseIdentityCache } from "./careerEventPipeline/closeIdentityCache";
 import {
   runRetaPairLegacyRepairsGrouped,
   type RetaPlayerPreResolveEntry,
@@ -787,19 +789,29 @@ async function syncRetaParticipacionesInner(params: {
   pairs: Pair[];
   matches: Match[];
   excludeJugadorIds?: string[];
+  identityCache?: CloseIdentityCache;
 }): Promise<CareerEventSyncOutcome> {
-  const { organizadorId, tournament, pairs, matches } = params;
+  const { organizadorId, tournament, pairs, matches, identityCache } = params;
   const excluded = toExcludedJugadorIdSet(params.excludeJugadorIds);
 
-  try {
-    await prepareParticipacionIdentityForOrganizer(organizadorId);
-    const { syncLegacyPlayersFromRivieraRegistry } = await import(
-      "./playerPoolSync"
-    );
-    await syncLegacyPlayersFromRivieraRegistry(organizadorId, { force: true });
-  } catch (e) {
-    console.warn("[riviera-jugadores] syncReta legacy pool:", e);
-  }
+  // Incidente 2026-08-06: prepareParticipacionIdentityForOrganizer ya se
+  // llamó en pipeline.ts (processCareerEvent) antes de sync, mismo ciclo de
+  // cierre -- era un segundo llamado idéntico, confirmado redundante
+  // (medido: prepareGrantedPlayersForParticipacionSync es una operación de
+  // organizador completa, no por-jugador). syncLegacyPlayersFromRivieraRegistry
+  // sí es una operación distinta (linkea legacy players del registro propio,
+  // no de grants) y se conserva.
+  await withStage("resolveIdentitiesMs", async () => {
+    try {
+      const { syncLegacyPlayersFromRivieraRegistry } = await import(
+        "./playerPoolSync"
+      );
+      await syncLegacyPlayersFromRivieraRegistry(organizadorId, { force: true });
+    } catch (e) {
+      console.warn("[riviera-jugadores] syncReta legacy pool:", e);
+    }
+  });
+  const collectPlayerRefsStart = performance.now();
   const pairById = new Map(pairs.map((p) => [p.id, p]));
   const agg = new Map<string, PlayerAgg>();
 
@@ -921,6 +933,7 @@ async function syncRetaParticipacionesInner(params: {
     gamesByMatchId,
     regularRoundsMax
   );
+  addStageMs("collectPlayerRefsMs", performance.now() - collectPlayerRefsStart);
 
   const esEquipos = tournament.format === "teams";
   const modalidad = esEquipos ? "reta_equipos" : "round_robin";
@@ -973,6 +986,7 @@ async function syncRetaParticipacionesInner(params: {
       email: st.email ?? undefined,
     }));
 
+  const legacyRepairStart = performance.now();
   const { resolvedByLegacyId, failures: repairFailures } =
     await runRetaPairLegacyRepairsGrouped({
       tournamentId: tournament.id,
@@ -980,8 +994,11 @@ async function syncRetaParticipacionesInner(params: {
       pairs,
       players: repairPlayers,
       excluded,
+      identityCache,
     });
+  addStageMs("resolveIdentitiesMs", performance.now() - legacyRepairStart);
 
+  const registerParticipationsStart = performance.now();
   const parallelOutcome = await runParallelPlayerParticipacionSync(
     Array.from(agg.values()).map((st) => ({
       ctx: { nombre: st.nombre, legacyPlayerId: st.legacyPlayerId },
@@ -1007,7 +1024,8 @@ async function syncRetaParticipacionesInner(params: {
               tipoEvento: "reta",
               eventoId: tournament.id,
             },
-            excluded
+            excluded,
+            identityCache
           );
           jugadorId = resolved.jugadorId;
           failure = resolved.failure;
@@ -1181,10 +1199,20 @@ async function syncRetaParticipacionesInner(params: {
       },
     }))
   );
+  // NOTA telemetry: participación local + ledger oficial van en la MISMA RPC
+  // transaccional (registrarParticipacionConLedger, ver BLK-04 /
+  // supabase/migrations/0005_participacion_con_ledger.sql) -- no hay un
+  // round-trip de red separado para ledger que medir aparte de
+  // registerParticipationsMs en este pipeline.
+  addStageMs(
+    "registerParticipationsMs",
+    performance.now() - registerParticipationsStart
+  );
 
   const syncFailures = [...repairFailures, ...parallelOutcome.syncFailures];
   const touchedJugadorIds = Array.from(new Set(parallelOutcome.touchedJugadorIds));
 
+  const ratingStart = performance.now();
   try {
     const ratingApplied = await aplicarRatingRetaFinishedMatches({
       organizadorId,
@@ -1200,6 +1228,8 @@ async function syncRetaParticipacionesInner(params: {
     }
   } catch (e) {
     console.warn("[rating] sync reta:", e);
+  } finally {
+    addStageMs("ratingMs", performance.now() - ratingStart);
   }
 
   return {
@@ -1216,6 +1246,7 @@ export async function syncRetaParticipaciones(params: {
   pairs: Pair[];
   matches: Match[];
   excludeJugadorIds?: string[];
+  identityCache?: CloseIdentityCache;
 }): Promise<CareerEventSyncOutcome> {
   try {
     return await syncRetaParticipacionesInner(params);

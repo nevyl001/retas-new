@@ -1,6 +1,7 @@
 import type { Pair } from "../db/types";
 import { resolveJugadorForEventSync } from "./careerEventPipeline/careerEventPlayerSync";
 import type { CareerEventAssertionFailure } from "./careerEventPipeline/types";
+import type { CloseIdentityCache } from "./careerEventPipeline/closeIdentityCache";
 import { supabase } from "../supabaseClient";
 
 export type RetaRepairPlayerRef = {
@@ -65,11 +66,12 @@ export async function runRetaPairLegacyRepairsGrouped(params: {
   pairs: Pair[];
   players: RetaRepairPlayerRef[];
   excluded?: ReadonlySet<string>;
+  identityCache?: CloseIdentityCache;
 }): Promise<{
   resolvedByLegacyId: Map<string, RetaPlayerPreResolveEntry>;
   failures: CareerEventAssertionFailure[];
 }> {
-  const { tournamentId, organizadorId, pairs, players, excluded } = params;
+  const { tournamentId, organizadorId, pairs, players, excluded, identityCache } = params;
   const resolvedByLegacyId = new Map<string, RetaPlayerPreResolveEntry>();
   const failures: CareerEventAssertionFailure[] = [];
 
@@ -85,7 +87,8 @@ export async function runRetaPairLegacyRepairsGrouped(params: {
         tipoEvento: "reta",
         eventoId: tournamentId,
       },
-      excluded
+      excluded,
+      identityCache
     );
 
     resolvedByLegacyId.set(player.legacyPlayerId, {

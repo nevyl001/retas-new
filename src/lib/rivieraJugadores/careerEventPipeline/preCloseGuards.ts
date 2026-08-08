@@ -5,14 +5,51 @@ import {
   CareerIntegrityException,
   isCareerIntegrityException,
 } from "../careerIntegrity";
+import type { ProfileLinkResolution } from "../careerIntegrity";
 import { isValidRivieraId } from "../rivieraIdDisplay";
-import { requireOfficialProfileLinkForParticipacion } from "../orphanProfileLink";
+import {
+  requireOfficialProfileLinkForParticipacion,
+  assertProfileLinkResolutionOk,
+} from "../orphanProfileLink";
 import { careerAssertionFailureFromError } from "./careerEventPlayerSync";
+import type { CloseIdentityCache } from "./closeIdentityCache";
 import type {
   CareerEventAssertionFailure,
   CareerEventKind,
   FinalizeCareerEventInput,
 } from "./types";
+
+/** Concurrencia de la validación pre-close (incidente 2026-08-06): antes era
+ * un `for` 100% secuencial, una cadena completa de resolución de identidad
+ * por jugador tras otra. Mismo número que PLAYER_PARTICIPACION_SYNC_CONCURRENCY
+ * (careerEventPlayerSync.ts) -- no hay razón para un límite distinto, ambas
+ * son escrituras/lecturas idempotentes por jugador.
+ */
+const PRE_CLOSE_VALIDATION_CONCURRENCY = 6;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+
+  async function worker(): Promise<void> {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await fn(items[index], index);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, Math.max(items.length, 1)) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return results;
+}
 
 const LOG_PREFIX = "[career-event-pipeline:pre-close]";
 
@@ -254,14 +291,22 @@ export function collectProspectiveJugadorRefs(
 async function assertJugadorCareerIntegrity(
   jugadorId: string,
   organizadorId: string,
-  ctx: { kind: CareerEventKind; nombre?: string }
+  ctx: { kind: CareerEventKind; nombre?: string },
+  identityCache?: CloseIdentityCache
 ): Promise<CareerEventAssertionFailure | null> {
   try {
-    await ensureRivieraIdentity(jugadorId);
-    const linkResult = await requireOfficialProfileLinkForParticipacion(
-      jugadorId,
-      organizadorId
-    );
+    let linkResult: ProfileLinkResolution;
+    if (identityCache) {
+      await identityCache.ensureIdentity(jugadorId);
+      linkResult = await identityCache.ensureProfileLink(jugadorId, organizadorId);
+      assertProfileLinkResolutionOk(linkResult, jugadorId, organizadorId);
+    } else {
+      await ensureRivieraIdentity(jugadorId);
+      linkResult = await requireOfficialProfileLinkForParticipacion(
+        jugadorId,
+        organizadorId
+      );
+    }
 
     const officialPlayerKey = linkResult.officialPlayerKey;
     if (!officialPlayerKey) {
@@ -347,7 +392,8 @@ export async function validateCareerEventPreClose(
   resolveParticipant: (
     ref: ProspectiveJugadorRef,
     organizadorId: string
-  ) => Promise<string | null>
+  ) => Promise<string | null>,
+  identityCache?: CloseIdentityCache
 ): Promise<PreCloseValidationResult> {
   const failures: CareerEventAssertionFailure[] = [];
   const org = input.organizadorId.trim();
@@ -368,9 +414,17 @@ export async function validateCareerEventPreClose(
   }
 
   const refs = collectProspectiveJugadorRefs(input);
+  // Nota (incidente 2026-08-06): resolvedIds no es estrictamente
+  // concurrency-safe (dos refs distintos podrían resolver al mismo id en una
+  // carrera rarísima de multiclub y ambos pasar el check). Se acepta: el
+  // peor caso es una llamada duplicada a assertJugadorCareerIntegrity para
+  // el mismo jugador, que con identityCache activo es un cache-hit gratis,
+  // no una llamada de red real.
   const resolvedIds = new Set<string>();
 
-  for (const ref of refs) {
+  async function processRef(
+    ref: ProspectiveJugadorRef
+  ): Promise<CareerEventAssertionFailure[]> {
     let resolvedId: string | null = null;
     try {
       resolvedId = await resolveParticipant(ref, org);
@@ -391,63 +445,73 @@ export async function validateCareerEventPreClose(
           ...errorLogPayload(error),
         });
       }
-      failures.push({
-        ...base,
-        code: isIdentityProblem ? base.code : "sync_failed",
-        message: isIdentityProblem
-          ? formatIdentityPreCloseMessage({
-              kind: input.kind,
-              nombre: ref.nombre,
-              reason: normalized.message,
-            })
-          : `No se pudo resolver a ` +
-            `${ref.nombre?.trim() ? `«${ref.nombre.trim()}»` : "un jugador"}: ` +
-            `${normalized.message}` +
-            `${normalized.code ? ` [${normalized.code}]` : ""}`,
-        details: {
-          ...base.details,
-          legacyLigaJugadorId: ref.legacyLigaJugadorId,
-          ...errorLogPayload(error),
-          actionSugerida: isIdentityProblem
-            ? "Vuelve a seleccionar al jugador o vincula su Riviera ID"
-            : "Reintenta finalizar; si persiste, revisa conexión y permisos",
+      return [
+        {
+          ...base,
+          code: isIdentityProblem ? base.code : "sync_failed",
+          message: isIdentityProblem
+            ? formatIdentityPreCloseMessage({
+                kind: input.kind,
+                nombre: ref.nombre,
+                reason: normalized.message,
+              })
+            : `No se pudo resolver a ` +
+              `${ref.nombre?.trim() ? `«${ref.nombre.trim()}»` : "un jugador"}: ` +
+              `${normalized.message}` +
+              `${normalized.code ? ` [${normalized.code}]` : ""}`,
+          details: {
+            ...base.details,
+            legacyLigaJugadorId: ref.legacyLigaJugadorId,
+            ...errorLogPayload(error),
+            actionSugerida: isIdentityProblem
+              ? "Vuelve a seleccionar al jugador o vincula su Riviera ID"
+              : "Reintenta finalizar; si persiste, revisa conexión y permisos",
+          },
         },
-      });
-      continue;
+      ];
     }
 
     if (!resolvedId) {
-      failures.push({
-        code: "missing_player_identity",
-        message: formatIdentityPreCloseMessage({
-          kind: input.kind,
-          nombre: ref.nombre,
-          reason: "identidad no resoluble con IDs fuertes",
-        }),
-        details: {
-          kind: input.kind,
-          nombre: ref.nombre,
-          legacyPlayerId: ref.legacyPlayerId,
-          legacyLigaJugadorId: ref.legacyLigaJugadorId,
-          jugadorId: ref.jugadorId,
-          actionSugerida:
-            "Vuelve a seleccionar al jugador o vincula su Riviera ID",
+      return [
+        {
+          code: "missing_player_identity",
+          message: formatIdentityPreCloseMessage({
+            kind: input.kind,
+            nombre: ref.nombre,
+            reason: "identidad no resoluble con IDs fuertes",
+          }),
+          details: {
+            kind: input.kind,
+            nombre: ref.nombre,
+            legacyPlayerId: ref.legacyPlayerId,
+            legacyLigaJugadorId: ref.legacyLigaJugadorId,
+            jugadorId: ref.jugadorId,
+            actionSugerida:
+              "Vuelve a seleccionar al jugador o vincula su Riviera ID",
+          },
         },
-      });
-      continue;
+      ];
     }
 
-    if (resolvedIds.has(resolvedId)) continue;
+    if (resolvedIds.has(resolvedId)) return [];
     resolvedIds.add(resolvedId);
 
     const playerFailure = await assertJugadorCareerIntegrity(
       resolvedId,
       org,
-      { kind: input.kind, nombre: ref.nombre }
+      { kind: input.kind, nombre: ref.nombre },
+      identityCache
     );
-    if (playerFailure) {
-      failures.push(playerFailure);
-    }
+    return playerFailure ? [playerFailure] : [];
+  }
+
+  const perRefResults = await mapWithConcurrency(
+    refs,
+    PRE_CLOSE_VALIDATION_CONCURRENCY,
+    processRef
+  );
+  for (const refFailures of perRefResults) {
+    failures.push(...refFailures);
   }
 
   if (failures.length > 0) {

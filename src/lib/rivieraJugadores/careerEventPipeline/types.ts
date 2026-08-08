@@ -60,6 +60,22 @@ export type CareerEventPipelineOptions = {
   skipAssertions?: boolean;
   /** Omite ensure de identidad (backfill). */
   skipIdentityEnsure?: boolean;
+  /**
+   * Arma pipelineTelemetry.ts para esta ejecución: mide tiempo por etapa +
+   * toda llamada de red y loguea un reporte al terminar (incidente
+   * 2026-08-06, cierre de reta 78s). Default false -- cero costo/ruido en
+   * las demás modalidades hasta que se opte explícitamente por medir.
+   */
+  telemetry?: boolean;
+  /**
+   * Arma un caché de identidad de un solo cierre (closeIdentityCache.ts,
+   * incidente 2026-08-06): memoiza resolución de jugador + ensure_riviera_identity
+   * + ensure_official_profile_link_for_participacion entre pre-close/sync/
+   * assertions, en vez de verificar la misma identidad 3 veces por jugador.
+   * Solo tiene efecto cuando kind === "reta" (ver pipeline.ts) -- default
+   * false, cero cambio de comportamiento en las demás modalidades.
+   */
+  identityCache?: boolean;
 };
 
 export type CareerEventContext = {

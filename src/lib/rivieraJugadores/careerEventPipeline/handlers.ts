@@ -2,6 +2,7 @@ import { errorLogPayload, errorMessageWithCode } from "../../errors/normalizeErr
 import type { CareerEventContext, FinalizeCareerEventInput } from "./types";
 import { CAREER_EVENT_KIND_TO_TIPO } from "./types";
 import { isCareerIntegrityException } from "../careerIntegrity";
+import type { CloseIdentityCache } from "./closeIdentityCache";
 
 export type CareerEventHandlerResult = {
   context: CareerEventContext;
@@ -12,6 +13,8 @@ export type CareerEventHandlerResult = {
 
 export type CareerEventSyncRunOptions = {
   excludeJugadorIds?: string[];
+  /** Solo aplica a la rama "reta" -- otras modalidades lo ignoran. */
+  identityCache?: CloseIdentityCache;
 };
 
 /**
@@ -52,6 +55,7 @@ export async function runCareerEventSync(
           pairs: input.pairs,
           matches: input.matches,
           excludeJugadorIds,
+          identityCache: runOptions?.identityCache,
         });
         touchedJugadorIds = outcome.touchedJugadorIds;
         participacionEventoId = outcome.participacionEventoId;

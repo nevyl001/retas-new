@@ -140,20 +140,20 @@ export async function ensureOfficialProfileLinkForParticipacion(
 }
 
 /**
- * Exige profile_link antes de escribir participación.
- * REVIEW/LOW → CareerIntegrityException (sin participación).
+ * Lanza si `result` no cumple el mínimo para escribir participación
+ * (REVIEW/LOW → CareerIntegrityException). Extraído de
+ * requireOfficialProfileLinkForParticipacion para reusarse cuando `result`
+ * viene de un caché de identidad de un solo cierre (closeIdentityCache.ts,
+ * incidente 2026-08-06) en vez de una llamada de red fresca -- misma lógica,
+ * misma excepción, sin repetir la RPC.
  */
-export async function requireOfficialProfileLinkForParticipacion(
+export function assertProfileLinkResolutionOk(
+  result: ProfileLinkResolution,
   jugadorId: string,
   organizadorId: string
-): Promise<ProfileLinkResolution> {
-  const result = await ensureOfficialProfileLinkForParticipacion(
-    jugadorId,
-    organizadorId
-  );
-
+): void {
   if (result.linked && (result.alreadyLinked || result.linkCreated || result.confidence === "OK")) {
-    return result;
+    return;
   }
 
   if (result.reason === "rpc_not_deployed") {
@@ -205,6 +205,22 @@ export async function requireOfficialProfileLinkForParticipacion(
       ...result.details,
     },
   });
+}
+
+/**
+ * Exige profile_link antes de escribir participación.
+ * REVIEW/LOW → CareerIntegrityException (sin participación).
+ */
+export async function requireOfficialProfileLinkForParticipacion(
+  jugadorId: string,
+  organizadorId: string
+): Promise<ProfileLinkResolution> {
+  const result = await ensureOfficialProfileLinkForParticipacion(
+    jugadorId,
+    organizadorId
+  );
+  assertProfileLinkResolutionOk(result, jugadorId, organizadorId);
+  return result;
 }
 
 export type { ProfileLinkResolution };

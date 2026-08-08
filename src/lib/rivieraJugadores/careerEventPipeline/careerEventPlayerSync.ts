@@ -8,6 +8,7 @@ import {
   type ResolveJugadorIdForParticipacionParams,
 } from "../jugadorIdResolver";
 import type { CareerEventAssertionFailure } from "./types";
+import type { CloseIdentityCache } from "./closeIdentityCache";
 
 function supabaseErrorFields(error: unknown): {
   code?: string;
@@ -86,10 +87,13 @@ export type ResolveJugadorForEventSyncResult = {
 /** Resuelve jugador para sync; nunca lanza — devuelve failure aislado. */
 export async function resolveJugadorForEventSync(
   params: ResolveJugadorIdForParticipacionParams,
-  excludedJugadorIds?: ReadonlySet<string>
+  excludedJugadorIds?: ReadonlySet<string>,
+  identityCache?: CloseIdentityCache
 ): Promise<ResolveJugadorForEventSyncResult> {
   try {
-    const jugadorId = await resolveJugadorIdForParticipacion(params);
+    const jugadorId = identityCache
+      ? await identityCache.resolveJugadorId(params)
+      : await resolveJugadorIdForParticipacion(params);
     if (!jugadorId) {
       return { jugadorId: null };
     }

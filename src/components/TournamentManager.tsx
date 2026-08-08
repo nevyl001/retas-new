@@ -243,6 +243,9 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     // Marca is_finished cuando la carrera ya quedó sincronizada. Se separa del
     // pipeline para poder reintentar SOLO este paso: si el pipeline terminó y
     // este UPDATE falló, la reta quedaba "En curso" con la carrera ya escrita.
+    // Es el paso CRÍTICO antes de confirmar éxito al usuario -- la tarjeta
+    // pasa a "Finalizada" en cuanto esto termina, sin esperar recargas
+    // secundarias (incidente 2026-08-06, ver pipelineTelemetry.ts).
     const markFinished = async () => {
       await retryTransient(
         () => updateTournament(tournament.id, { is_finished: true }),
@@ -273,6 +276,13 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
           tournament: { ...tournament, is_finished: true },
           pairs,
           matches,
+          // Incidente 2026-08-06 (cierre de reta de 8 jugadores: 78.1s):
+          // arma pipelineTelemetry.ts para esta ejecución y el caché de
+          // identidad de un solo cierre (closeIdentityCache.ts) que elimina
+          // la triple verificación de identidad por jugador. Solo reta -- no
+          // se activa para duelo/americano/torneo/liga (ver
+          // CareerEventPipelineOptions.telemetry/identityCache).
+          options: { telemetry: true, identityCache: true },
         }),
         { timeoutMs: FINISH_TIMEOUT_MS, label: "El cierre de la reta" }
       );
@@ -287,13 +297,34 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
         alert(msg);
         // El estado real puede haber avanzado parcialmente: se resincroniza la
         // lista para no mostrar información obsoleta.
+        const reloadStart = performance.now();
         await reloadRetas().catch((reloadErr) => {
           console.error("Error al recargar retas:", errorLogPayload(reloadErr));
+        });
+        // eslint-disable-next-line no-console -- reporte de diagnóstico pedido explícitamente (incidente 2026-08-06)
+        console.info("[career-event-pipeline:telemetry] ui", {
+          tournamentId: tournament.id,
+          markFinishedMs: null,
+          reloadMs: Math.round(performance.now() - reloadStart),
+          outcome: "pipeline_incomplete",
         });
         return;
       }
 
+      const markFinishedStart = performance.now();
       await markFinished();
+      const markFinishedMs = Math.round(performance.now() - markFinishedStart);
+      // Éxito confirmado y crítico ya persistido (resultados, participaciones,
+      // rating, ledger, is_finished) -- la tarjeta ya muestra "Finalizada" en
+      // este punto. No hay reload de "Mis retas" en el camino feliz: la lista
+      // ya se actualizó localmente arriba (setRetas), sin consulta adicional.
+      // eslint-disable-next-line no-console -- reporte de diagnóstico pedido explícitamente (incidente 2026-08-06)
+      console.info("[career-event-pipeline:telemetry] ui", {
+        tournamentId: tournament.id,
+        markFinishedMs,
+        reloadMs: 0,
+        outcome: "ok",
+      });
       alert(formatCareerPipelineSuccessMessage(pipelineResult, tournament.name));
     } catch (err) {
       console.error("Error finalizando reta:", errorLogPayload(err), err);

@@ -18,12 +18,14 @@ import {
 import { ensureRivieraIdentity } from "./careerIdentity";
 import {
   requireOfficialProfileLinkForParticipacion,
+  assertProfileLinkResolutionOk,
 } from "./orphanProfileLink";
 import {
   CareerIntegrityException,
   isCareerIntegrityException,
 } from "./careerIntegrity";
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
+import type { CloseIdentityCache } from "./careerEventPipeline/closeIdentityCache";
 
 import { debugWarn } from "../debug/debugLog";
 
@@ -114,7 +116,15 @@ async function resolveLocalJugadorIdForOrganizer(
   return finalizeJugadorIdForRanking(localId);
 }
 
-/** players.id de la reta → clon local del club anfitrión (cedidos incluidos). */
+/**
+ * players.id de la reta → clon local del club anfitrión (cedidos incluidos).
+ *
+ * Nota (incidente 2026-08-06): NO finaliza para ranking aquí -- su único
+ * llamador (resolveJugadorIdForParticipacion, rama legacy_player_id) siempre
+ * pasa el id devuelto a finalizeResolvedParticipacionId, que ya lo finaliza.
+ * Finalizar también aquí duplicaba ensureRivieraJugadorVisibleEnRanking por
+ * cada jugador de reta (verificado: único caller, grep en todo el repo).
+ */
 export async function resolveLocalJugadorIdByLegacyPlayerId(
   organizadorId: string,
   legacyPlayerId: string
@@ -128,7 +138,7 @@ export async function resolveLocalJugadorIdByLegacyPlayerId(
     const localId = await findWritableLocalJugadorId(org, resolved);
     if (!localId) return null;
     await linkLegacyPlayerId(localId, legacy);
-    return finalizeJugadorIdForRanking(localId);
+    return localId;
   };
 
   const localRows = await listRivieraJugadoresByLegacyPlayerId(legacy, org);
@@ -168,7 +178,7 @@ export async function resolveLocalJugadorIdByLegacyPlayerId(
     const writable = await findWritableLocalJugadorId(org, localId);
     if (!writable) continue;
     await linkLegacyPlayerId(writable, legacy);
-    return finalizeJugadorIdForRanking(writable);
+    return writable;
   }
 
   const globalRows = await listRivieraJugadoresByLegacyPlayerId(legacy);
@@ -359,9 +369,11 @@ async function finalizeResolvedParticipacionId(
   localId: string,
   organizadorId: string,
   params: ResolveJugadorIdForParticipacionParams,
-  originalJugadorId: string | null
+  originalJugadorId: string | null,
+  identityCache?: CloseIdentityCache
 ): Promise<string | null> {
-  if (await isRevokedGrantLocalJugador(organizadorId, localId)) {
+  const revokedLocalIds = await identityCache?.revokedLocalIds;
+  if (await isRevokedGrantLocalJugador(organizadorId, localId, revokedLocalIds)) {
     return null;
   }
 
@@ -369,11 +381,18 @@ async function finalizeResolvedParticipacionId(
 
   if (finalId) {
     try {
-      await ensureRivieraIdentity(finalId);
-      const linkResult = await requireOfficialProfileLinkForParticipacion(
-        finalId,
-        organizadorId
-      );
+      let linkResult;
+      if (identityCache) {
+        await identityCache.ensureIdentity(finalId);
+        linkResult = await identityCache.ensureProfileLink(finalId, organizadorId);
+        assertProfileLinkResolutionOk(linkResult, finalId, organizadorId);
+      } else {
+        await ensureRivieraIdentity(finalId);
+        linkResult = await requireOfficialProfileLinkForParticipacion(
+          finalId,
+          organizadorId
+        );
+      }
       if (linkResult?.linkCreated) {
         logMulticlubPhase21({
           action: "orphan_profile_linked",
@@ -419,7 +438,8 @@ async function finalizeResolvedParticipacionId(
  * por legacy → unresolved. Cero resolución por nombre.
  */
 export async function resolveJugadorIdForParticipacion(
-  params: ResolveJugadorIdForParticipacionParams
+  params: ResolveJugadorIdForParticipacionParams,
+  identityCache?: CloseIdentityCache
 ): Promise<string | null> {
   const organizadorId = params.organizadorId.trim();
   if (!organizadorId) return null;
@@ -459,7 +479,8 @@ export async function resolveJugadorIdForParticipacion(
       localId,
       organizadorId,
       params,
-      originalJugadorId
+      originalJugadorId,
+      identityCache
     );
   }
 
@@ -474,7 +495,8 @@ export async function resolveJugadorIdForParticipacion(
         byLegacy,
         organizadorId,
         params,
-        originalJugadorId
+        originalJugadorId,
+        identityCache
       );
     }
   }
@@ -517,6 +539,7 @@ export async function resolveJugadorIdForParticipacion(
     localId,
     organizadorId,
     params,
-    originalJugadorId
+    originalJugadorId,
+    identityCache
   );
 }

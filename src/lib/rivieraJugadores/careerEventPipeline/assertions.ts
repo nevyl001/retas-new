@@ -5,6 +5,7 @@ import { isValidRivieraId } from "../rivieraIdDisplay";
 import {
   ensureOfficialProfileLinkForParticipacion,
 } from "../orphanProfileLink";
+import type { CloseIdentityCache } from "./closeIdentityCache";
 import type {
   CareerEventAssertionFailure,
   CareerEventAssertionSeverity,
@@ -19,6 +20,7 @@ export type AssertCareerEventParams = {
   touchedJugadorIds: string[];
   requireRating?: boolean;
   ratingPartidoRefs?: string[];
+  identityCache?: CloseIdentityCache;
 };
 
 type ParticipacionRow = {
@@ -120,17 +122,19 @@ async function hasJugadorStats(jugadorId: string): Promise<boolean> {
 
 async function loadRivieraIdentity(
   jugadorId: string,
-  organizadorId: string
+  organizadorId: string,
+  identityCache?: CloseIdentityCache
 ): Promise<{
   rivieraId: string | null;
   hasProfileLink: boolean;
 }> {
-  const identity = await ensureRivieraIdentity(jugadorId);
+  const identity = identityCache
+    ? await identityCache.ensureIdentity(jugadorId)
+    : await ensureRivieraIdentity(jugadorId);
   // Soft check: no usar require* (lanza). El enlace ya se exigió en pre-close/sync.
-  const linkResult = await ensureOfficialProfileLinkForParticipacion(
-    jugadorId,
-    organizadorId
-  );
+  const linkResult = identityCache
+    ? await identityCache.ensureProfileLink(jugadorId, organizadorId)
+    : await ensureOfficialProfileLinkForParticipacion(jugadorId, organizadorId);
 
   return {
     rivieraId:
@@ -192,7 +196,7 @@ function withSeverity(
 export async function assertCareerEventIntegrity(
   params: AssertCareerEventParams
 ): Promise<CareerEventAssertionFailure[]> {
-  const { context, touchedJugadorIds, requireRating, ratingPartidoRefs } =
+  const { context, touchedJugadorIds, requireRating, ratingPartidoRefs, identityCache } =
     params;
   const failures: CareerEventAssertionFailure[] = [];
 
@@ -314,7 +318,8 @@ export async function assertCareerEventIntegrity(
 
     const identity = await loadRivieraIdentity(
       jugadorId,
-      context.organizadorId
+      context.organizadorId,
+      identityCache
     );
     if (!identity.rivieraId || !isValidRivieraId(identity.rivieraId)) {
       failures.push(

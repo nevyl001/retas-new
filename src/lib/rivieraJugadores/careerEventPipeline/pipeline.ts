@@ -11,6 +11,14 @@ import {
   partitionAssertionFailures,
 } from "./assertions";
 import { runCareerEventSync } from "./handlers";
+import { createCloseIdentityCache } from "./closeIdentityCache";
+import {
+  armPipelineTelemetry,
+  disarmPipelineTelemetry,
+  isPipelineTelemetryArmed,
+  logPipelineTelemetryReport,
+  withStage,
+} from "./pipelineTelemetry";
 import { validateCareerEventPreClose } from "./preCloseGuards";
 import type {
   CareerEventAssertionFailure,
@@ -88,8 +96,37 @@ export async function finalizeCareerEvent(
   return processCareerEvent(input);
 }
 
-/** Alias público del pipeline canónico. */
+/**
+ * Alias público del pipeline canónico. Envoltura fina solo para garantizar
+ * que, si se armó telemetry, se desarma SIEMPRE (éxito, falla de negocio, o
+ * excepción no capturada) -- sin esto una excepción que escape del cuerpo
+ * (ej. assertParentEventExists lanzando) deja pipelineTelemetry armada para
+ * siempre y pierde el reporte de esa ejecución (bug real encontrado en la
+ * primera medición en vivo, incidente 2026-08-06).
+ */
 export async function processCareerEvent(
+  input: FinalizeCareerEventInput
+): Promise<CareerEventPipelineResult> {
+  const options = input.options ?? {};
+  if (!options.telemetry) return processCareerEventInner(input);
+
+  armPipelineTelemetry();
+  try {
+    return await processCareerEventInner(input);
+  } finally {
+    if (isPipelineTelemetryArmed()) {
+      // El cuerpo no llegó a desarmar (excepción no capturada dentro) --
+      // igual se cierra y se loguea lo que se alcanzó a medir.
+      const report = disarmPipelineTelemetry(
+        (input.kind === "reta" && input.tournament.id) || "",
+        0
+      );
+      if (report) logPipelineTelemetryReport(report);
+    }
+  }
+}
+
+async function processCareerEventInner(
   input: FinalizeCareerEventInput
 ): Promise<CareerEventPipelineResult> {
   const started = Date.now();
@@ -113,23 +150,38 @@ export async function processCareerEvent(
     }
   }
 
+  // Incidente 2026-08-06: caché de identidad de UN cierre, solo reta (doble
+  // seguro flag+kind -- ver closeIdentityCache.ts). Memoiza resolución de
+  // jugador + ensure_riviera_identity + ensure_official_profile_link entre
+  // pre-close/sync/assertions para no verificar la misma identidad 3 veces.
+  const identityCache =
+    options.identityCache && input.kind === "reta"
+      ? createCloseIdentityCache(input.organizadorId)
+      : undefined;
+
   let syncResult: Awaited<ReturnType<typeof runCareerEventSync>> | null = null;
   let touchedJugadorIds: string[] = [];
   let excludedFromPreClose: string[] = [];
   let eventBlocked = false;
 
   if (!options.skipAssertions) {
-    const preClose = await validateCareerEventPreClose(
-      input,
-      async (ref, organizadorId) =>
-        resolveJugadorIdForParticipacion({
-          organizadorId,
-          jugadorId: ref.jugadorId,
-          nombre: ref.nombre,
-          legacyPlayerId: ref.legacyPlayerId,
-          legacyLigaJugadorId: ref.legacyLigaJugadorId,
-          tipoEvento: input.kind,
-        })
+    const preClose = await withStage("validateParticipantsMs", () =>
+      validateCareerEventPreClose(
+        input,
+        async (ref, organizadorId) =>
+          resolveJugadorIdForParticipacion(
+            {
+              organizadorId,
+              jugadorId: ref.jugadorId,
+              nombre: ref.nombre,
+              legacyPlayerId: ref.legacyPlayerId,
+              legacyLigaJugadorId: ref.legacyLigaJugadorId,
+              tipoEvento: input.kind,
+            },
+            identityCache
+          ),
+        identityCache
+      )
     );
     failures.push(...preClose.failures);
     // Opción B: pre-close fallido → cero sync / rating / ledger de cierre
@@ -141,6 +193,7 @@ export async function processCareerEvent(
     try {
       syncResult = await runCareerEventSync(input, {
         excludeJugadorIds: excludedFromPreClose,
+        identityCache,
       });
       if (syncResult.syncFailures?.length) {
         failures.push(...syncResult.syncFailures);
@@ -161,7 +214,9 @@ export async function processCareerEvent(
   }
 
   if (touchedJugadorIds.length > 0) {
-    await refreshJugadorStatsBatch(touchedJugadorIds);
+    await withStage("statisticsMs", () =>
+      refreshJugadorStatsBatch(touchedJugadorIds)
+    );
     // Cerrar el evento escribe nuevas jugador_participaciones para cada
     // jugador tocado: el historial cacheado en careerIdentityCache quedaría
     // incompleto (sin la participación recién creada) si no se invalida.
@@ -178,6 +233,7 @@ export async function processCareerEvent(
       requireRating: options.requireRating ?? defaultRequireRating(input),
       ratingPartidoRefs:
         options.ratingPartidoRefs ?? defaultRatingPartidoRefs(input),
+      identityCache,
     });
     if (assertionFailures?.length) {
       failures.push(...assertionFailures);
@@ -214,6 +270,14 @@ export async function processCareerEvent(
     warnings,
     durationMs,
   };
+
+  if (options.telemetry) {
+    const report = disarmPipelineTelemetry(
+      syncResult?.context.eventoId || "",
+      touchedJugadorIds.length
+    );
+    if (report) logPipelineTelemetryReport(report);
+  }
 
   if (!ok) {
     console.error(LOG_PREFIX, "incomplete", {
