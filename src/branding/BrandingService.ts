@@ -233,6 +233,19 @@ export function clearBrandingCache(): void {
 }
 
 /**
+ * Pinta identidad madre en `<html>` SIN borrar la caché premium del club.
+ * Usar en vistas públicas/espectador (ranking, invitaciones): el scope pinta
+ * el anfitrión; al volver a la cuenta del organizador la caché anti-flash
+ * sigue viva. No usar en logout — ahí va `clearTenantBranding()`.
+ */
+export function applyDocumentMotherBrandPreservingCache(): void {
+  clearClubExperienceTheme();
+  appliedBranding = null;
+  const mother = resolveBrandingSync(null);
+  applyBrandingToDocument(mother);
+}
+
+/**
  * Limpieza total de branding (logout / cambio de tenant).
  * Estado visual = identidad madre Riviera Open (decisión arquitectura).
  */

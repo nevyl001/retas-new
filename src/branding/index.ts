@@ -3,6 +3,7 @@ export type { TenantBranding } from "./types";
 export {
   applyBrandingSyncForOrganizador,
   applyBrandingToDocument,
+  applyDocumentMotherBrandPreservingCache,
   clearBrandingCache,
   clearTenantBranding,
   getAppliedBranding,

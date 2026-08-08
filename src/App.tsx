@@ -1,6 +1,7 @@
 import React, {
   useState,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useCallback,
   Suspense,
@@ -14,11 +15,14 @@ import { ClubExperienceProvider } from "./club-experience";
 import { BrandingTransitionGate } from "./branding/BrandingTransitionGate";
 import { BrandingDegradedBanner } from "./branding/BrandingDegradedBanner";
 import {
-  clearTenantBranding,
+  applyBrandingSyncForOrganizador,
+  applyDocumentMotherBrandPreservingCache,
   resolveAndApplyBranding,
 } from "./branding/BrandingService";
 import { shouldKeepDocumentMotherBrand } from "./branding/documentMotherBrandPath";
+import { resolveDocumentBrandingIntent } from "./branding/resolveDocumentBrandingIntent";
 import { debugLog } from "./lib/debug/debugLog";
+import { getPublicOrganizadorIdFromPath } from "./lib/rivieraJugadores/publicOrganizador";
 
 // Components
 import MainLayout from "./components/MainLayout";
@@ -816,21 +820,38 @@ function AppContent() {
     isJugadoresPublic ||
     isRetaAbiertaPublic;
 
-  // Invitaciones/públicas: <html> siempre madre. El club del anfitrión vive en el scope.
-  // Evita que sesión Hack pinte verde lime en convocatorias de otros clubs.
-  useEffect(() => {
+  // Document branding: invitaciones → madre suave (sin wipe de caché premium).
+  // Ranking del propio club → conservar PCS en <html> (scope también pinta).
+  // Al volver a Inicio → apply sync ANTES del paint (useLayoutEffect) para
+  // cero flash Riviera. Incidente PCS Ranking→Home 2026-08-08.
+  useLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    if (
-      isPublicSpectatorView ||
-      shouldKeepDocumentMotherBrand(window.location.pathname)
-    ) {
-      clearTenantBranding();
+
+    const pathname = window.location.pathname;
+    const intent = resolveDocumentBrandingIntent({
+      pathname,
+      userId: user?.id,
+      isPublicSpectatorView,
+      isJugadoresPublic,
+      shouldKeepMotherPath: shouldKeepDocumentMotherBrand(pathname),
+      pathOrganizadorId: getPublicOrganizadorIdFromPath(pathname),
+    });
+
+    if (intent.action === "mother-preserve-cache") {
+      applyDocumentMotherBrandPreservingCache();
+      debugLog("[branding] App.document:mother-preserve-cache", { pathname });
       return;
     }
-    if (user?.id) {
-      void resolveAndApplyBranding(user.id);
+
+    if (intent.action === "organizer-sync") {
+      applyBrandingSyncForOrganizador(intent.organizadorId);
+      void resolveAndApplyBranding(intent.organizadorId);
+      debugLog("[branding] App.document:organizer-sync", {
+        pathname,
+        orgId: intent.organizadorId,
+      });
     }
-  }, [isPublicSpectatorView, user?.id, appPathname]);
+  }, [isPublicSpectatorView, isJugadoresPublic, user?.id, appPathname]);
 
   const showMobileAppNav =
     !authLoading &&
