@@ -76,10 +76,7 @@ import {
 import { buildAmericanoPartidosDetalleForPlayer } from "./buildAmericanoPartidosDetalle";
 import { buildDuelo2vs2PartidosDetalle } from "./buildDuelo2vs2PartidosDetalle";
 import { buildLigaJornadaPartidosDetalleByJugadorId } from "./buildLigaJornadaPartidosDetalle";
-import {
-  logMulticlubPhase21,
-  prepareParticipacionIdentityForOrganizer,
-} from "./jugadorIdResolver";
+import { prepareParticipacionIdentityForOrganizer } from "./jugadorIdResolver";
 import {
   resolveJugadorForEventSync,
   runParallelPlayerParticipacionSync,
@@ -106,14 +103,6 @@ import {
   summarizePartidosDetalle,
   type PartidoDetalle,
 } from "../shared/buildPartidosDetalle";
-import { debugWarn } from "../debug/debugLog";
-
-const TEMP_POINTS_LOG_PREFIX = "TEMP_MULTICLUB_POINTS_2_1_B";
-
-/** Audit trail temporal de puntos multiclub — solo desarrollo. */
-function logMulticlubPoints21B(payload: Record<string, unknown>): void {
-  debugWarn(TEMP_POINTS_LOG_PREFIX, payload);
-}
 
 async function readJugadorSumaRankingState(jugadorId: string): Promise<{
   sumaRanking: boolean;
@@ -308,22 +297,6 @@ async function registrarPuntosRanking(params: {
     ...params.calcParams,
   });
 
-  const subtipoForLog =
-    params.upsertSubtipo ??
-    (typeof params.metadata?.subtipo === "string"
-      ? params.metadata.subtipo
-      : null);
-
-  logMulticlubPoints21B({
-    action: "puntos_calculados",
-    jugadorId: params.jugadorId,
-    puntosCalculados: total,
-    desglose,
-    tipoEvento: params.tipoEvento,
-    eventoId: params.eventoId,
-    subtipo: subtipoForLog,
-  });
-
   const metadata = rankingMetadata(desglose, {
     ...(params.metadata ?? {}),
     ...(params.eventoEn
@@ -390,40 +363,15 @@ async function safeRegistrar(params: {
     const rankingState = await readJugadorSumaRankingState(params.jugadorId);
     const puntosCalculados = Math.max(0, params.puntosObtenidos ?? 0);
     const puntos = rankingState.sumaRanking ? puntosCalculados : 0;
-    const subtipo =
-      typeof params.metadata?.subtipo === "string"
-        ? params.metadata.subtipo
-        : null;
-
-    logMulticlubPoints21B({
-      action: "safe_registrar_gate",
-      jugadorId: params.jugadorId,
-      sumaRanking: rankingState.sumaRanking,
-      estado: rankingState.estado,
-      puntosCalculados,
-      puntosFinales: puntos,
-      subtipo,
-      eventoId: params.eventoId,
-      tipoEvento: params.tipoEvento,
-    });
 
     // BLK-04: registro local + ledger oficial global en una sola llamada
     // RPC transaccional (antes: 2 llamadas separadas, podían quedar
     // desalineadas si la segunda fallaba). Ver
     // supabase/migrations/0005_participacion_con_ledger.sql.
-    const participacionId = await registrarParticipacionConLedger({
+    await registrarParticipacionConLedger({
       ...params,
       puntosObtenidos: puntos,
     });
-    if (participacionId) {
-      logMulticlubPhase21({
-        action: "participacion_inserted",
-        participacionId,
-        jugadorId: params.jugadorId,
-        tipoEvento: params.tipoEvento,
-        eventoId: params.eventoId,
-      });
-    }
     if (rankingState.sumaRanking) {
       await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
     }
@@ -547,18 +495,6 @@ async function upsertParticipacionRanking(params: {
   const puntosCalculados = params.puntosObtenidos;
   const puntosObtenidos = rankingState.sumaRanking ? puntosCalculados : 0;
 
-  logMulticlubPoints21B({
-    action: existing ? "upsert_update_gate" : "upsert_insert_gate",
-    jugadorId: params.jugadorId,
-    sumaRanking: rankingState.sumaRanking,
-    estado: rankingState.estado,
-    puntosCalculados,
-    puntosFinales: puntosObtenidos,
-    subtipo: params.subtipo,
-    eventoId: params.eventoId,
-    tipoEvento: params.tipoEvento,
-  });
-
   if (existing) {
     // BLK-04: UPDATE local + ledger oficial global en una sola llamada RPC
     // transaccional (antes: UPDATE directo + ledger por separado). Ver
@@ -578,13 +514,6 @@ async function upsertParticipacionRanking(params: {
       console.error("[riviera-jugadores] upsertParticipacionRanking:", error);
       return;
     }
-    logMulticlubPhase21({
-      action: "participacion_updated",
-      participacionId: existing.id,
-      jugadorId: params.jugadorId,
-      tipoEvento: params.tipoEvento,
-      eventoId: params.eventoId,
-    });
     return;
   }
 

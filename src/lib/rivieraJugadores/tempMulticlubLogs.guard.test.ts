@@ -1,28 +1,26 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 
-describe("TEMP_MULTICLUB logs gated for production", () => {
+/**
+ * La instrumentación temporal TEMP_MULTICLUB (Fase 2.1/2.2 del rollout de
+ * identidad/ledger multi-club) ya cumplió su función de auditoría y fue
+ * retirada. Este guard evita que los prefijos reaparezcan por accidente en
+ * los módulos de runtime donde vivían.
+ */
+describe("TEMP_MULTICLUB logs retirados definitivamente", () => {
   const roots = [
     join(__dirname, "jugadorIdResolver.ts"),
     join(__dirname, "rivieraOfficialLedger.ts"),
     join(__dirname, "syncParticipaciones.ts"),
   ];
 
-  it("usan debugWarn/debugLog y no console.warn directo con el prefijo", () => {
+  it("no reintroducen los prefijos de instrumentación temporal ya retirada", () => {
     for (const file of roots) {
       const src = readFileSync(file, "utf8");
-      expect(src).toMatch(/debugWarn/);
-      expect(src).not.toMatch(/console\.warn\(\s*TEMP_/);
-      expect(src).not.toMatch(/console\.warn\(\s*TEMP_LOG_PREFIX/);
-      expect(src).not.toMatch(/console\.warn\(\s*TEMP_ROMC_LOG_PREFIX/);
-      expect(src).not.toMatch(/console\.warn\(\s*TEMP_POINTS_LOG_PREFIX/);
+      expect(src).not.toContain("TEMP_MULTICLUB_PHASE_2_1");
+      expect(src).not.toContain("TEMP_MULTICLUB_POINTS_2_1_B");
+      expect(src).not.toContain("TEMP_MULTICLUB_ROMC_2_2");
+      expect(src).not.toMatch(/logMulticlubPhase21|logMulticlubPoints21B|logRomcPhase22\b/);
     }
-  });
-
-  it("prefijos TEMP_MULTICLUB siguen existiendo solo como constantes de debug", () => {
-    const joined = roots.map((f) => readFileSync(f, "utf8")).join("\n");
-    expect(joined).toContain("TEMP_MULTICLUB_PHASE_2_1");
-    expect(joined).toContain("TEMP_MULTICLUB_ROMC_2_2");
-    expect(joined).toContain("TEMP_MULTICLUB_POINTS_2_1_B");
   });
 });

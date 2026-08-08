@@ -1,8 +1,5 @@
 import { supabase } from "../supabaseClient";
 import { errorMessageWithCode } from "../errors/normalizeError";
-import { debugWarn } from "../debug/debugLog";
-
-const TEMP_ROMC_LOG_PREFIX = "TEMP_MULTICLUB_ROMC_2_2";
 
 export type RivieraOfficialLedgerStatus =
   | "inserted"
@@ -24,11 +21,6 @@ export interface RivieraOfficialLedgerResult {
   tipoEvento?: string;
   subtipo?: string;
   raw?: Record<string, unknown>;
-}
-
-// Audit trail temporal del ledger oficial ROMC (Fase 2.2) — solo desarrollo.
-function logRomcPhase22(payload: Record<string, unknown>): void {
-  debugWarn(TEMP_ROMC_LOG_PREFIX, payload);
 }
 
 function parseLedgerRpcResult(
@@ -116,17 +108,6 @@ export async function tryWriteRivieraOfficialLedger(
 
   const context = await loadParticipacionLedgerContext(participacionId);
 
-  logRomcPhase22({
-    action: "ledger_attempt",
-    participacionId,
-    jugadorId: context?.jugadorId ?? null,
-    organizadorId: context?.organizadorId ?? null,
-    puntosObtenidos: context?.puntosObtenidos ?? null,
-    tipoEvento: context?.tipoEvento ?? null,
-    eventoId: context?.eventoId ?? null,
-    subtipo: context?.subtipo ?? null,
-  });
-
   try {
     const { data, error } = await supabase.rpc(
       "try_write_riviera_official_ledger",
@@ -136,14 +117,6 @@ export async function tryWriteRivieraOfficialLedger(
     );
 
     if (error) {
-      logRomcPhase22({
-        action: "ledger_error",
-        participacionId,
-        message: error.message,
-        code: error.code ?? null,
-        jugadorId: context?.jugadorId ?? null,
-        organizadorId: context?.organizadorId ?? null,
-      });
       console.error("[riviera-official-ledger] try_write:", error);
       return {
         status: "error",
@@ -156,11 +129,6 @@ export async function tryWriteRivieraOfficialLedger(
 
     const parsed = parseLedgerRpcResult(participacionId, data);
 
-    logRomcPhase22({
-      action: "ledger_result",
-      ...parsed,
-    });
-
     if (parsed.status === "skipped" && parsed.reason) {
       console.warn(
         `[riviera-official-ledger] skipped (${parsed.reason})`,
@@ -171,13 +139,6 @@ export async function tryWriteRivieraOfficialLedger(
     return parsed;
   } catch (e) {
     const message = errorMessageWithCode(e);
-    logRomcPhase22({
-      action: "ledger_exception",
-      participacionId,
-      message,
-      jugadorId: context?.jugadorId ?? null,
-      organizadorId: context?.organizadorId ?? null,
-    });
     console.error("[riviera-official-ledger] try_write:", e);
     return {
       status: "error",

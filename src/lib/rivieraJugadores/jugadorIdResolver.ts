@@ -27,17 +27,6 @@ import {
 import { slugifyJugadorNombre, ensureUniqueSlug } from "./slug";
 import type { CloseIdentityCache } from "./careerEventPipeline/closeIdentityCache";
 
-import { debugWarn } from "../debug/debugLog";
-
-const TEMP_LOG_PREFIX = "TEMP_MULTICLUB_PHASE_2_1";
-
-/**
- * Audit trail temporal Fase 2.1 — solo desarrollo (no producción).
- */
-export function logMulticlubPhase21(payload: Record<string, unknown>): void {
-  debugWarn(TEMP_LOG_PREFIX, payload);
-}
-
 async function slugExistsForOrg(
   organizadorId: string,
   slug: string
@@ -393,18 +382,6 @@ async function finalizeResolvedParticipacionId(
           organizadorId
         );
       }
-      if (linkResult?.linkCreated) {
-        logMulticlubPhase21({
-          action: "orphan_profile_linked",
-          organizadorId,
-          tipoEvento: params.tipoEvento ?? null,
-          eventoId: params.eventoId ?? null,
-          jugadorId: finalId,
-          rivieraId: linkResult.rivieraId ?? null,
-          officialPlayerKey: linkResult.officialPlayerKey ?? null,
-          confidence: linkResult.confidence,
-        });
-      }
     } catch (e) {
       if (isCareerIntegrityException(e)) {
         console.error(
@@ -416,17 +393,6 @@ async function finalizeResolvedParticipacionId(
       console.warn("[riviera-jugadores] identity/link guard:", e);
       throw e;
     }
-  }
-
-  if (finalId && finalId !== originalJugadorId) {
-    logMulticlubPhase21({
-      action: "identity_resolved",
-      organizadorId,
-      tipoEvento: params.tipoEvento ?? null,
-      eventoId: params.eventoId ?? null,
-      jugadorOriginal: originalJugadorId,
-      jugadorResuelto: finalId,
-    });
   }
 
   return finalId;
