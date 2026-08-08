@@ -201,6 +201,23 @@ export const Duelo2v2CelebrateSection: React.FC<Duelo2v2CelebrateSectionProps> =
 
             <TeamPlayers players={losers} ratingByJugadorId={ratingByJugadorId} />
 
+            <div className="duelo2v2-celebrate__team-card-score duelo2v2-celebrate__team-card-score--loser">
+              <div className="duelo2v2-celebrate__team-card-score-main">
+                <span className="duelo2v2-celebrate__team-card-score-rival">
+                  {losersName}
+                </span>
+                <div className="duelo2v2-celebrate__score-numbers">
+                  <strong>{setsLoss}</strong>
+                  <span className="duelo2v2-celebrate__score-dash">–</span>
+                  <strong>{setsWin}</strong>
+                </div>
+                <span className="duelo2v2-celebrate__team-card-score-winner">
+                  {winnersName}
+                </span>
+              </div>
+              <p className="duelo2v2-celebrate__score-caption">Marcador final</p>
+            </div>
+
             <p className="duelo2v2-celebrate__team-card-message duelo2v2-celebrate__team-card-message--loser">
               {loserMessage}
             </p>

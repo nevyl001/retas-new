@@ -437,24 +437,29 @@ export const Duelo2v2Gestionar: React.FC<Duelo2v2GestionarProps> = ({
     "—";
 
   const equiposPanel = (
-    <div className="duelo2v2-equipos-panel">
-      <div className="duelo2v2-equipo-card">
-        <h3 className="duelo2v2-equipo-card__title">Equipo A</h3>
-        <p className="duelo2v2-equipo-card__name">{teamAName}</p>
-        <ul className="duelo2v2-equipo-card__players">
-          <li>{duelo.pareja_a_j1_nombre}</li>
-          <li>{duelo.pareja_a_j2_nombre}</li>
-        </ul>
+    <section aria-label="Jugadores del duelo">
+      {finalizado ? (
+        <p className="duelo2v2-equipos-panel__heading">Jugadores</p>
+      ) : null}
+      <div className="duelo2v2-equipos-panel">
+        <div className="duelo2v2-equipo-card">
+          <h3 className="duelo2v2-equipo-card__title">Equipo A</h3>
+          <p className="duelo2v2-equipo-card__name">{teamAName}</p>
+          <ul className="duelo2v2-equipo-card__players">
+            <li>{duelo.pareja_a_j1_nombre}</li>
+            <li>{duelo.pareja_a_j2_nombre}</li>
+          </ul>
+        </div>
+        <div className="duelo2v2-equipo-card">
+          <h3 className="duelo2v2-equipo-card__title">Equipo B</h3>
+          <p className="duelo2v2-equipo-card__name">{teamBName}</p>
+          <ul className="duelo2v2-equipo-card__players">
+            <li>{duelo.pareja_b_j1_nombre}</li>
+            <li>{duelo.pareja_b_j2_nombre}</li>
+          </ul>
+        </div>
       </div>
-      <div className="duelo2v2-equipo-card">
-        <h3 className="duelo2v2-equipo-card__title">Equipo B</h3>
-        <p className="duelo2v2-equipo-card__name">{teamBName}</p>
-        <ul className="duelo2v2-equipo-card__players">
-          <li>{duelo.pareja_b_j1_nombre}</li>
-          <li>{duelo.pareja_b_j2_nombre}</li>
-        </ul>
-      </div>
-    </div>
+    </section>
   );
 
   const resultadoPanel =

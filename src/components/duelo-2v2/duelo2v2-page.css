@@ -27,6 +27,31 @@
   color: var(--ro-text-primary);
 }
 
+/* Fix de contraste: --rv-text/--rv-text-muted/--rv-text-subtle (usados por
+   .rv-page/.rv-shell de riviera-open-components.css) solo se declaran en
+   :root y nunca se redefinen dentro de .ro-surface-dark, así que su valor
+   computado queda congelado en el tono claro y se hereda tal cual (ya
+   resuelto) hacia todo el árbol oscuro, incluidos los nombres bajo avatar
+   que no declaran su propio color. Redeclararlos aquí, ya dentro de la
+   superficie oscura del Duelo 2v2, hace que se resuelvan de nuevo contra
+   los --ro-text-* que sí están correctamente invertidos para dark. */
+.duelo2v2-page.ro-surface-dark {
+  --rv-text: var(--ro-text-primary);
+  --rv-text-muted: var(--ro-text-secondary);
+  --rv-text-subtle: var(--ro-text-muted);
+}
+
+/* Fix de contraste (superficie clara /gestionar): el nombre del torneo del
+   cierre de celebración (.ro-pub-celebrate__torneo, compartido) usa
+   rgba(255,255,255,0.45) hardcodeado, pensado para la isla oscura pública.
+   En el admin claro esa capa blanca translúcida es invisible sobre el
+   marfil. Solo dentro del Duelo 2v2 claro (sin .ro-surface-dark) se
+   reemplaza por un token de texto oscuro legible. No toca la vista pública
+   oscura (mantiene el valor original) ni otros módulos. */
+.duelo2v2-page:not(.ro-surface-dark) .ro-pub-celebrate__torneo {
+  color: var(--ro-text-secondary);
+}
+
 .App.ro-public-view .duelo2v2-page--public,
 .App--public-full-width .duelo2v2-page--public {
   background: transparent !important;
@@ -72,6 +97,28 @@
   max-width: min(1280px, 100%);
 }
 
+/* Fix de especificidad: .rv-page (--ro-page-max, 1120px) y la red de
+   seguridad anti-overflow .duelo2v2-page__inner.rv-shell (max-width:100%
+   en riviera-open-mobile-polish.css) empatan o ganan en especificidad a
+   .duelo2v2-page__inner--wide de arriba, dejando el contenedor de
+   Duelo 2v2 sin tope real en pantallas anchas (encuesta visual 2026-08-08:
+   la sección de resultado y el header quedaban como una isla diminuta
+   rodeada de vacío, mientras el panel de equipos —sin tope— sí ocupaba
+   todo el ancho). Este selector compuesto (especificidad 0,3,0) gana
+   siempre, sin depender del orden de imports entre hojas de estilo. Solo
+   aplica dentro de .duelo2v2-gestionar; no toca Torneo Express/Americano/
+   Liga ni la vista pública (que ya resuelve max-width:none a propósito). */
+.duelo2v2-gestionar .duelo2v2-page__inner.duelo2v2-page__inner--wide {
+  max-width: 1280px;
+}
+
+/* Ritmo vertical del resultado finalizado: un poco más de aire que el
+   --ro-space-4 (16px) compartido por .qm-competition, ahora que el
+   contenedor tiene un ancho editorial real y la celebración pesa más. */
+.duelo2v2-gestionar .qm-competition {
+  gap: clamp(1.5rem, 3vw, 2.25rem);
+}
+
 .duelo2v2-page__inner--public {
   max-width: min(1400px, 100%);
   width: 100%;
@@ -102,6 +149,30 @@
 
 .duelo2v2-form--workspace .duelo2v2-form__name-row input {
   max-width: none;
+}
+
+/* —— Panel de equipos (resumen de parejas) ——
+   El estilo base de .duelo2v2-equipo-card (borde, radio, fondo) vive en
+   src/styles/mode-mobile-shell.css, compartido con el resumen de
+   jugadores de Americano — no se toca. Lo que faltaba ahí es
+   grid-template-columns en .duelo2v2-equipos-panel: sin esa propiedad el
+   grid usa una sola columna implícita en TODOS los anchos, por eso Equipo
+   A / Equipo B salían apilados a ancho completo. Aquí solo se agrega la
+   variante de 2 columnas en escritorio (mismo umbral que .qm-ws, 900px) y
+   la etiqueta "Jugadores" (nueva, solo se usa en el cierre finalizado). */
+@media (min-width: 900px) {
+  .duelo2v2-equipos-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.duelo2v2-equipos-panel__heading {
+  margin: 0 0 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ro-text-muted);
 }
 
 @media (max-width: 899px) {
@@ -1211,6 +1282,19 @@
   box-sizing: border-box;
 }
 
+@media (min-width: 900px) {
+  .duelo2v2-celebrate__team-card {
+    gap: 0.85rem;
+    padding: 1.75rem 1.65rem 1.5rem;
+  }
+
+  .duelo2v2-celebrate__player-avatar.rj-avatar--xl {
+    width: 108px;
+    height: 108px;
+    font-size: 1.9rem;
+  }
+}
+
 .duelo2v2-celebrate__team-card--winner {
   border-color: var(--ro-medal-gold, var(--ro-gold));
   background: linear-gradient(
@@ -1282,7 +1366,10 @@
 }
 
 .duelo2v2-celebrate__team-card-names--loser {
-  color:var(--ro-text-muted);
+  /* Nombre de la pareja perdedora: secundario frente al ganador (dorado),
+     pero debe leerse de inmediato — --ro-text-muted lo dejaba casi
+     invisible sobre el fondo de la tarjeta. */
+  color: var(--ro-text-secondary);
 }
 
 .duelo2v2-celebrate__team-card-score {
@@ -1290,8 +1377,23 @@
   margin-top: 0.35rem;
   padding: 0.85rem 0.75rem 0.7rem;
   border-radius: 14px;
-  border: 1px solid rgba(234, 179, 8, 0.22);
-  background: var(--ro-scrim-modal);
+  border: 1px solid var(--ro-border);
+  /* --ro-scrim-modal es un backdrop translúcido para detrás de modales, no
+     una superficie de tarjeta: al componerse sobre fondos claros u oscuros
+     daba un gris intermedio impredecible que rompía el contraste de los
+     tokens de texto (pensados contra --ro-bg-*, no contra un scrim). Con
+     --ro-bg-inset (nivel L2 "fila/sección en tarjeta" del sistema) el
+     contraste vuelve a estar garantizado en ambos temas. */
+  background: var(--ro-bg-inset);
+}
+
+.duelo2v2-celebrate__team-card-score--loser {
+  margin-top: 0.5rem;
+}
+
+.duelo2v2-celebrate__team-card-score--loser .duelo2v2-celebrate__score-numbers {
+  font-size: clamp(1.35rem, 3.4vw, 1.75rem);
+  color: var(--ro-text-secondary);
 }
 
 .duelo2v2-celebrate__team-card-score-main {
@@ -1313,7 +1415,9 @@
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1.3;
-  color:var(--ro-text-muted);
+  /* antes --ro-text-muted (nivel "solo etiquetas/timestamps grandes"):
+     insuficiente para un nombre de pareja, que es información nivel 2. */
+  color: var(--ro-text-secondary);
   word-break: break-word;
 }
 
@@ -1547,7 +1651,7 @@
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color:var(--ro-text-muted);
+  color: var(--ro-text-secondary);
 }
 
 .duelo2v2-celebrate__sets-list {
@@ -1572,7 +1676,7 @@
   margin: 0.65rem 0 0;
   font-size: 0.8125rem;
   font-weight: 500;
-  color:var(--ro-text-muted);
+  color: var(--ro-text-secondary);
 }
 
 @media (max-width: 720px) {
