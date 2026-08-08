@@ -177,7 +177,13 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       }
 
       setLoading(true);
-      beginBrandingTransition(reason);
+      const skipVisualTransition =
+        (reason === "bootstrap" || reason === "session-restore") &&
+        !!nextUserId &&
+        brandingAlreadyAppliedForUser(nextUserId);
+      if (!skipVisualTransition) {
+        beginBrandingTransition(reason);
+      }
 
       debugLog("[branding] UserContext.applySession:start", {
         event,
@@ -272,7 +278,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         }
       } finally {
         if (isMounted && generation === applySessionGenerationRef.current) {
-          endBrandingTransition(reason);
+          if (!skipVisualTransition) {
+            endBrandingTransition(reason);
+          }
           setLoading(false);
           debugLog("[branding] UserContext.applySession:done", {
             orgId: nextUserId,

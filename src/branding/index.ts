@@ -32,4 +32,5 @@ export {
 } from "./organizerResolver";
 
 export { bootstrapAppBranding } from "./bootstrapAppBranding";
+export { applyCachedClubExperienceIfSafe } from "./applyCachedClubExperience";
 export { shouldKeepDocumentMotherBrand } from "./documentMotherBrandPath";

@@ -21,6 +21,7 @@ jest.mock("../lib/rivieraJugadores/publicOrganizador", () => ({
 jest.mock("./BrandingService", () => ({
   clearTenantBranding: jest.fn(),
   resolveAndApplyBranding: jest.fn(),
+  applyBrandingSyncForOrganizador: jest.fn(),
 }));
 
 jest.mock("./documentMotherBrandPath", () => ({
@@ -35,10 +36,41 @@ const resolveAndApplyBrandingMock = resolveAndApplyBranding as jest.Mock;
 describe("bootstrapAppBranding — nunca impide el primer render (BLK-01)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.localStorage.clear();
     getPathOrgMock.mockReturnValue(null);
     getSessionMock.mockResolvedValue({ data: { session: null } });
     resolveAndApplyBrandingMock.mockResolvedValue(undefined);
     window.history.pushState({}, "", "/");
+  });
+
+  it("con caché premium: aplica branding sync antes de getSession y no oculta la UI", async () => {
+    window.localStorage.setItem(
+      "ro_club_experience_v1",
+      JSON.stringify({
+        organizadorId: "35e31ab8-2a2f-4526-9e84-e130c85f8ca9",
+        brandingKey: "padel-court-series",
+      })
+    );
+    const { applyBrandingSyncForOrganizador } = jest.requireMock("./BrandingService");
+    getSessionMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () => resolve({ data: { session: { user: { id: "35e31ab8-2a2f-4526-9e84-e130c85f8ca9" } } } }),
+            20
+          );
+        })
+    );
+
+    const pending = bootstrapAppBranding();
+    expect(applyBrandingSyncForOrganizador).toHaveBeenCalledWith(
+      "35e31ab8-2a2f-4526-9e84-e130c85f8ca9"
+    );
+    expect(document.documentElement.classList.contains("branding-transitioning")).toBe(
+      false
+    );
+    await pending;
+    window.localStorage.clear();
   });
 
   it("branding exitoso: resuelve sin marcar degraded y aplica el default (sin sesión)", async () => {

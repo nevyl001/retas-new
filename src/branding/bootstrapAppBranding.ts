@@ -6,6 +6,7 @@ import {
   endBrandingTransition,
   markBrandingBootstrapReady,
 } from "./brandingTransition";
+import { applyCachedClubExperienceIfSafe } from "./applyCachedClubExperience";
 import { clearTenantBranding, resolveAndApplyBranding } from "./BrandingService";
 import { shouldKeepDocumentMotherBrand } from "./documentMotherBrandPath";
 
@@ -123,21 +124,30 @@ async function resolveBrandingForCurrentLocation(): Promise<void> {
  * reintento manual vía `retryBrandingBootstrap()`.
  */
 export async function bootstrapAppBranding(): Promise<void> {
-  if (typeof document !== "undefined") {
+  const cachedApplied = applyCachedClubExperienceIfSafe();
+
+  if (typeof document !== "undefined" && !cachedApplied) {
     document.documentElement.classList.add("branding-bootstrapping");
   }
 
-  beginBrandingTransition("bootstrap");
+  // Con caché premium ya pintada, no ocultar la UI ni forzar splash Riviera.
+  if (!cachedApplied) {
+    beginBrandingTransition("bootstrap");
+  }
 
   try {
     await resolveBrandingForCurrentLocation();
     setBootstrapDegraded(false);
   } catch (error) {
     logBrandingBootstrapFailure(error);
-    clearTenantBranding();
+    if (!cachedApplied) {
+      clearTenantBranding();
+    }
     setBootstrapDegraded(true);
   } finally {
-    endBrandingTransition("bootstrap");
+    if (!cachedApplied) {
+      endBrandingTransition("bootstrap");
+    }
     markBrandingBootstrapReady();
   }
 }
