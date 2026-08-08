@@ -19,7 +19,9 @@
 
 .te-public--americano.te-public--americano-wide .te-public__inner {
   width: 100%;
-  max-width: min(1280px, 100%);
+  /* Vista pública a ancho completo: sin tope central, solo gutters laterales
+     para que el contenido use todo el espacio disponible del viewport. */
+  max-width: none;
   margin-left: auto;
   margin-right: auto;
   padding-left: clamp(1rem, 3vw, 2.5rem);

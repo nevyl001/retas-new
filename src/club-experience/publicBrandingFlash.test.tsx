@@ -173,7 +173,7 @@ describe("public branding flash contract", () => {
     expect(container.querySelector(".club-identity")).toBeNull();
   });
 
-  it("tras resolver org premium: identity lista, club branded y atribución madre", async () => {
+  it("tras resolver org premium: vista pública genérica (sin white label) — logo Riviera Open + nombre de cuenta como texto", async () => {
     if (!HACK_ORG) return;
 
     mockSyncDeferred = createDeferred();
@@ -203,6 +203,17 @@ describe("public branding flash contract", () => {
     expect(probe?.getAttribute("data-club")).toBe("true");
     expect(probe?.getAttribute("data-key")).toBe("hack-padel");
     expect(container.querySelector(".club-identity")).not.toBeNull();
+    // 2026-08-08: vistas públicas nunca muestran el logo propio del club
+    // (aunque tenga upgrade de branding) — siempre el de Riviera Open, con el
+    // nombre de la cuenta + atribución "by Riviera Open" como texto plano.
+    const logoSrc = container.querySelector<HTMLImageElement>(
+      ".club-identity__logo"
+    )?.src;
+    expect(logoSrc).toContain("/logo-riviera.png");
+    expect(logoSrc).not.toContain("hack-padel");
+    expect(
+      container.querySelector(".club-identity__organizer")?.textContent
+    ).toBe("Club Test");
     expect(
       container.querySelector(".club-identity__attribution")?.textContent
     ).toContain(RIVIERA_CO_BRAND_ATTRIBUTION);

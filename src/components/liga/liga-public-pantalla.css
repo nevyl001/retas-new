@@ -57,9 +57,13 @@
 .liga-pantalla__inner {
   position: relative;
   z-index: 2;
-  max-width: 1320px;
+  /* Vista pública a ancho completo: sin tope central, solo gutters laterales
+     (padding) para usar todo el espacio disponible del viewport. */
+  max-width: none;
+  width: 100%;
   margin: 0 auto;
   padding: 2.5rem var(--liga-space-lg) 2rem;
+  box-sizing: border-box;
 }
 
 .liga-pantalla__header {
@@ -943,7 +947,7 @@
 }
 
 .liga-pantalla--jornada-fijas .liga-pantalla__inner {
-  max-width: 1080px;
+  max-width: none;
 }
 
 .liga-pantalla-parejas--center {
@@ -1097,7 +1101,7 @@
 /* ─── Liga pública parejas fijas: sin fondos grises, diseño de tarjetas ─── */
 
 .liga-pantalla--liga-fijas .liga-pantalla__inner {
-  max-width: 1100px;
+  max-width: none;
 }
 
 .liga-pantalla--liga-fijas .liga-pantalla__layout--parejas {

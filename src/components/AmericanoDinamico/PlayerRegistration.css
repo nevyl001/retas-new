@@ -133,6 +133,20 @@
   min-width: 44px;
   font-size: 1.25rem;
   font-weight: 700;
+  /* El botón secundario base usa los tokens legacy --text-primary/
+     --border-default, que sobre la card clara (--ro-bg-elevated) dejaban el
+     borde y el signo +/- casi invisibles. Se fijan con tokens --ro-* (que
+     aquí resuelven a texto oscuro/borde visible y se adaptan solos si la
+     card fuera oscura). */
+  color: var(--ro-text-primary);
+  border: 1px solid var(--ro-border-strong, var(--ro-border));
+  background: var(--ro-bg-inset);
+}
+
+.americano-registration__stepper .riviera-btn:hover:not(:disabled),
+.americano-registration__stepper .riviera-btn:focus-visible:not(:disabled) {
+  border-color: var(--ro-accent);
+  background: var(--ro-bg-card-hover, var(--ro-bg-inset));
 }
 
 .americano-registration__config-actions {

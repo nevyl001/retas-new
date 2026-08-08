@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useClubExperience } from "../ClubExperienceContext";
 import { useOrganizerDisplayName } from "../useOrganizerDisplayName";
 import { RIVIERA_PRODUCT_NAME } from "../motherBrand";
+import { RIVIERA_DEFAULT_MANIFEST } from "../manifests/riviera-default";
 import {
   resolveClubLogo,
   type ClubLogoSurface,
@@ -23,6 +24,15 @@ interface ClubIdentityProps {
   wordmarkOnly?: boolean;
   /** En modo `wordmarkOnly`, conserva visible la atribución "by Riviera Open". */
   showMotherAttribution?: boolean;
+  /**
+   * Vistas públicas (2026-08-08): sin white label — el logo SIEMPRE debe ser
+   * el de Riviera Open, nunca el logo propio subido por el club aunque tenga
+   * upgrade de branding. El nombre de la cuenta se sigue mostrando como
+   * texto. No afecta colores/acentos del club (se aplican aparte, vía CSS
+   * vars). Usar solo en superficies públicas — el header/menú privado del
+   * organizador conserva su propio logo.
+   */
+  forceRivieraLogo?: boolean;
   className?: string;
 }
 
@@ -36,11 +46,63 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   logoSurface = "auto",
   wordmarkOnly = false,
   showMotherAttribution = false,
+  forceRivieraLogo = false,
   className = "",
 }) => {
   const { manifest, isClubBranded, organizadorId } = useClubExperience();
   const organizerDisplayName = useOrganizerDisplayName(organizadorId);
   const [logoFailed, setLogoFailed] = useState(false);
+
+  const motherAttribution = (
+    <span className="club-identity__attribution">
+      <span className="club-identity__attribution-by">by</span>{" "}
+      <span className="club-identity__attribution-brand">
+        {RIVIERA_PRODUCT_NAME}
+      </span>
+    </span>
+  );
+
+  if (forceRivieraLogo) {
+    // Vistas públicas (2026-08-08, sin white label): el logo SIEMPRE es el de
+    // Riviera Open (nunca el propio del club, aunque tenga upgrade).
+    // - Cuenta propia de Riviera Open (sin nombre de organizador distinto):
+    //   solo el logo, sin texto.
+    // - Cualquier otra cuenta: nombre de la cuenta + atribución "by Riviera Open".
+    const logoUrl = resolveClubLogo(RIVIERA_DEFAULT_MANIFEST, logoSurface);
+    const showLogo = Boolean(logoUrl) && !logoFailed;
+    const logoSizeHint = variant === "auth" ? 56 : variant === "inline" ? 32 : 40;
+    const organizerLabel = organizerDisplayName?.trim() || "";
+    const isRivieraOwnAccount =
+      !organizerLabel ||
+      organizerLabel.localeCompare(RIVIERA_PRODUCT_NAME, undefined, {
+        sensitivity: "accent",
+      }) === 0;
+
+    return (
+      <div
+        className={`club-identity club-identity--mother club-identity--${variant} club-identity--public${
+          isRivieraOwnAccount ? " club-identity--logo-only" : ""
+        } ${className}`.trim()}
+      >
+        {showLogo ? (
+          <img
+            src={logoUrl!}
+            alt=""
+            className="club-identity__logo"
+            width={logoSizeHint}
+            height={logoSizeHint}
+            onError={() => setLogoFailed(true)}
+          />
+        ) : null}
+        {!isRivieraOwnAccount ? (
+          <div className="club-identity__text">
+            <span className="club-identity__organizer">{organizerLabel}</span>
+            {showMotherAttribution ? motherAttribution : null}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   const logoUrl = resolveClubLogo(manifest, logoSurface);
   const showLogo = Boolean(logoUrl) && !logoFailed;
@@ -66,15 +128,6 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   const useStackedClubHeader =
     isClubBranded && showLogo && variant === "header" && !wordmarkOnly;
   const showAttributionOnly = logoOnly && showMotherAttribution;
-
-  const motherAttribution = (
-    <span className="club-identity__attribution">
-      <span className="club-identity__attribution-by">by</span>{" "}
-      <span className="club-identity__attribution-brand">
-        {RIVIERA_PRODUCT_NAME}
-      </span>
-    </span>
-  );
 
   return (
     <div

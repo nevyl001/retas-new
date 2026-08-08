@@ -12,15 +12,15 @@ type PublicEventBrandIdentityProps = {
  * Slot de marca en vistas públicas de eventos.
  * Reutiliza ClubIdentity (mismo componente del home / UserHeader).
  * - Pending (org desconocido / binding en curso): no renderiza nada.
- * - Sin upgrade: logo Riviera Open + "Riviera Open" + nombre de la cuenta.
- * - Con upgrade: logo del club + atribución "by Riviera Open", que debe estar
- *   siempre presente en las vistas públicas.
+ * - Vista pública SIEMPRE es genérica (2026-08-08, sin white label): logo
+ *   Riviera Open + "Riviera Open" + nombre de la cuenta como texto, tenga o
+ *   no upgrade de branding. El logo propio del club (si lo tiene) solo se ve
+ *   en superficies privadas del organizador (UserHeader/menú), nunca aquí.
  */
 export const PublicEventBrandIdentity: React.FC<
   PublicEventBrandIdentityProps
 > = ({ className = "", showMotherAttribution = true }) => {
-  const { isClubBranded, isScopeBrandingReady, brandingStatus } =
-    useClubExperience();
+  const { isScopeBrandingReady, brandingStatus } = useClubExperience();
 
   if (!isScopeBrandingReady || brandingStatus === "pending") {
     return null;
@@ -31,7 +31,7 @@ export const PublicEventBrandIdentity: React.FC<
       variant="compact"
       showTagline={false}
       logoSurface="dark"
-      wordmarkOnly={isClubBranded}
+      forceRivieraLogo
       showMotherAttribution={showMotherAttribution}
       className={className}
     />

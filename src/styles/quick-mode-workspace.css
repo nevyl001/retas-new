@@ -255,6 +255,15 @@
   color: color-mix(in srgb, var(--qm-ink-text) 78%, var(--qm-ink-muted));
 }
 
+/* Nota informativa (p. ej. aviso de canchas en Americano): es hija directa
+   del panel, fuera del form con padding, así que quedaba sin sangría
+   horizontal y pegada al bloque de convocatoria siguiente. Se alinea con el
+   padding del módulo y se le da aire inferior para separarla del toggle. */
+.qm-ws__details-inline .home-sheet__field-hint {
+  margin: 0;
+  padding: 0.4rem var(--qm-module-pad-x) 0.85rem;
+}
+
 .qm-ws__details-inline .home-sheet__input,
 .qm-ws__details-inline .riviera-input,
 .qm-ws__details-inline input:not([type="checkbox"]):not([type="radio"]),
@@ -680,7 +689,11 @@
   /* Nombre | Día+Hora+Duración | Cancha/Canchas — sin huecos muertos */
   .qm-ws__details-inline .reta-details-form__row--primary {
     grid-template-columns: minmax(9rem, 1.05fr) minmax(22rem, 2.1fr) minmax(5.75rem, 0.55fr);
-    align-items: end;
+    /* start (no end): Canchas trae un aviso debajo (fieldEditability) que lo
+       hace más alto que el resto; con align-items:end ese campo más alto
+       quedaba "anclado arriba" mientras Nombre/Día/Hora/Duración se
+       empujaban hacia abajo, desalineando toda la fila. */
+    align-items: start;
   }
 
   /* Descripción | Nivel | Lugar (| campeonato si aplica) */
@@ -706,6 +719,10 @@
   .qm-ws__details-inline .reta-details-form__field--courts .reta-details-form__stepper {
     width: 100%;
     max-width: none;
+    /* Mismo patrón que Duración (línea 224): sin esto, el stepper estirado a
+       100% dejaba los botones −/+ pegados a la izquierda y un hueco vacío a
+       la derecha. */
+    justify-content: space-between;
   }
 }
 

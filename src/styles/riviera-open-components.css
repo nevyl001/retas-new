@@ -229,7 +229,10 @@
 /* —— Tablero público —— */
 .rv-public-board {
   width: 100%;
-  max-width: min(1180px, 100%);
+  /* Vistas públicas a ancho completo: sin tope central, solo gutters laterales
+     (padding-inline). Cada módulo puede afinar el padding, pero por defecto
+     cualquier tablero público usa todo el espacio disponible del viewport. */
+  max-width: none;
   margin-inline: auto;
   padding-inline: var(--ro-shell-padding-x);
   padding-block: var(--ro-space-5);

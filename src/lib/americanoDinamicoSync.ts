@@ -87,6 +87,30 @@ export async function loadAmericanoDinamicoSnapshotMerged(
   };
 }
 
+/**
+ * Reinicio del americano en la nube: sobreescribe `americano_live` con un
+ * snapshot vacío de "registration". Al recargar u otro dispositivo, el merge
+ * elige este snapshot vacío y el estado vuelve a registro (sin rondas ni
+ * ranking). NO toca participaciones/ledger/ROMC: solo el snapshot en vivo.
+ * Pensado para reiniciar un americano que aún NO ha finalizado.
+ */
+export async function resetAmericanoDinamicoRemote(
+  tournamentId: string
+): Promise<boolean> {
+  const tid = tournamentId.trim();
+  if (!tid) return false;
+  const emptySnapshot: AmericanoDinamicoSnapshotV1 = {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    tournamentPhase: "registration",
+    totalRounds: 0,
+    roster: [],
+    ranking: [],
+    rounds: [],
+  };
+  return upsertAmericanoLivePublic(tid, emptySnapshot);
+}
+
 /** Guarda en localStorage y publica en Supabase (fuente de verdad en nube). */
 export async function persistAmericanoDinamicoSnapshot(
   tournamentId: string,

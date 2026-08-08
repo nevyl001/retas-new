@@ -22,6 +22,7 @@ import {
 import type { AmericanoDinamicoSnapshotV1 } from "../lib/americanoDinamicoStorage";
 import {
   buildAmericanoSnapshotRound,
+  clearAmericanoDinamicoSnapshot,
   loadAmericanoDinamicoSnapshot,
   resolveAmericanoTournamentId,
 } from "../lib/americanoDinamicoStorage";
@@ -30,6 +31,7 @@ import {
   loadAmericanoDinamicoSnapshotMerged,
   persistAmericanoDinamicoMatchScore,
   persistAmericanoNewRound,
+  resetAmericanoDinamicoRemote,
 } from "../lib/americanoDinamicoSync";
 import { aplicarRatingAmericanoPartido } from "../lib/rivieraJugadores/aplicarRatingPartido";
 
@@ -672,6 +674,40 @@ export function useAmericanoDinamico(
     }
   }, [phase, resolvedTournamentId]);
 
+  /**
+   * Reiniciar el americano a "recién creado" (registro vacío). SOLO permitido
+   * mientras NO ha finalizado: así no hay participaciones/ranking/ROMC ya
+   * registrados que revertir (esos se escriben al finalizar). Limpia estado
+   * local, caché local y snapshot remoto; NO toca la tabla `tournaments`
+   * (los flags is_started/is_finished los ajusta el componente de pantalla).
+   */
+  const resetTournament = useCallback(async (): Promise<boolean> => {
+    if (phase === "finished") return false;
+
+    setPlayers([]);
+    setRounds([]);
+    setCurrentRoundIndex(0);
+    setPhase("registration");
+    baseRosterRef.current = [];
+    totalRoundsRef.current = 0;
+    courtsRef.current = 1;
+    roundsRef.current = [];
+    playersRef.current = [];
+    participacionSyncedRef.current = false;
+    setParticipacionSyncError(null);
+    setRoundSyncPending(false);
+    setRoundSyncError(null);
+
+    if (!resolvedTournamentId) return true;
+    clearAmericanoDinamicoSnapshot(resolvedTournamentId);
+    try {
+      await resetAmericanoDinamicoRemote(resolvedTournamentId);
+    } catch (e) {
+      console.warn("[americano-live] no se pudo reiniciar el snapshot remoto:", e);
+    }
+    return true;
+  }, [phase, resolvedTournamentId]);
+
   const ranking = useMemo(() => {
     if (phase === "registration") return [];
     const roster = rosterTemplateFromRef(baseRosterRef, players);
@@ -714,6 +750,7 @@ export function useAmericanoDinamico(
     submitScore,
     editScore,
     nextRound,
+    resetTournament,
     ranking,
     rosterForUi,
     currentRound,

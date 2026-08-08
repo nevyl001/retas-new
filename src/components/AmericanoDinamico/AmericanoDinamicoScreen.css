@@ -134,6 +134,46 @@
   color: var(--loss);
 }
 
+.americano-screen__danger-zone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+  padding: 18px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.americano-screen__danger-copy {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.americano-screen__danger-title {
+  margin: 0 0 4px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.americano-screen__danger-hint {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 767px) {
+  .americano-screen__danger-zone {
+    padding: 16px 18px;
+  }
+}
+
 .americano-screen__finished {
   margin: 0 0 20px;
   padding: 16px 24px;

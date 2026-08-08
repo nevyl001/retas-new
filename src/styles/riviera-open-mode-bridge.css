@@ -218,7 +218,9 @@
 .duelo2v2-page__inner--public.rv-public-board,
 .liga-pantalla__inner.rv-public-board {
   width: 100%;
-  max-width: min(1180px, 100%);
+  /* Vista pública a ancho completo: sin tope central (solo gutters laterales
+     vía padding del contenedor). */
+  max-width: none;
   margin-inline: auto;
 }
 

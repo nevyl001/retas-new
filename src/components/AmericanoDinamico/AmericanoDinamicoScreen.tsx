@@ -97,6 +97,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     commitRoundScores,
     editScore,
     nextRound,
+    resetTournament,
     hydrating,
     remoteSyncReady,
     participacionSyncError,
@@ -349,6 +350,55 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     };
   }, [effectiveUserId, phase, podiumPlayers]);
 
+  const [resetting, setResetting] = React.useState(false);
+
+  const handleResetAmericano = React.useCallback(async () => {
+    if (resetting) return;
+    if (
+      !window.confirm(
+        "¿Reiniciar este americano? Se borrarán todas las rondas y los marcadores registrados, y volverás a la pantalla de registro con la lista vacía. Esta acción no se puede deshacer."
+      )
+    ) {
+      return;
+    }
+    setResetting(true);
+    try {
+      const ok = await resetTournament();
+      if (!ok) return;
+      finishedPersistedRef.current = false;
+      if (resolvedTournamentId) {
+        try {
+          await updateTournament(resolvedTournamentId, {
+            is_started: false,
+            is_finished: false,
+          });
+          onTournamentStatusChange?.({ is_started: false, is_finished: false });
+          // Sin esto, el panel de Detalles (RetaConfigPanel/deriveRetaEditPhase)
+          // seguía viendo el `tournament` local con is_started:true tras el
+          // reset -> fase "in_play" -> mostraba el aviso de canchas como si ya
+          // hubiera partidos, cuando en realidad se volvió a "registro".
+          setTournament((prev) =>
+            prev ? { ...prev, is_started: false, is_finished: false } : prev
+          );
+        } catch (e) {
+          console.warn(
+            "No se pudo marcar la reta como no iniciada tras reiniciar:",
+            e
+          );
+        }
+      }
+      await refreshAvailablePlayers();
+    } finally {
+      setResetting(false);
+    }
+  }, [
+    resetting,
+    resetTournament,
+    resolvedTournamentId,
+    onTournamentStatusChange,
+    refreshAvailablePlayers,
+  ]);
+
   const tournamentBanner =
     tournamentName || tournamentDescription ? (
       <ModeHeader
@@ -540,6 +590,26 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
           />
         ) : null}
         {playingBody}
+        <div className="americano-screen__danger-zone">
+          <div className="americano-screen__danger-copy">
+            <p className="americano-screen__danger-title">¿Algo salió mal?</p>
+            <p className="americano-screen__danger-hint">
+              Reiniciar borra todas las rondas y marcadores de este americano y
+              vuelve al registro con la lista vacía. No afecta el ranking global
+              ni el historial de los jugadores.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="danger"
+            size="sm"
+            loading={resetting}
+            disabled={resetting}
+            onClick={() => void handleResetAmericano()}
+          >
+            {resetting ? "Reiniciando…" : "Reiniciar americano"}
+          </Button>
+        </div>
         </div>
       </AmericanoModeShell>
     );

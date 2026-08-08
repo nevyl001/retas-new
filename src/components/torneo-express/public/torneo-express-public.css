@@ -72,9 +72,13 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  max-width: 900px;
+  /* Vista pública a ancho completo: sin tope central, solo gutters laterales
+     (padding) para que use todo el espacio disponible del viewport. */
+  max-width: none;
+  width: 100%;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 3rem;
+  box-sizing: border-box;
 }
 
 .te-public__inner > :not(.te-public-sync-footer) {

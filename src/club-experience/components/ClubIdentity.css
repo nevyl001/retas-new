@@ -207,6 +207,32 @@
   font-size: 0.8125rem;
 }
 
+/*
+ * Vistas públicas (forceRivieraLogo, 2026-08-08): el nombre de la cuenta es
+ * la identidad principal (protagonista); "by Riviera Open" es solo una
+ * atribución secundaria. Sin esto, `.club-identity__organizer` (pensado como
+ * línea secundaria bajo "Riviera Open" en superficies privadas) se veía más
+ * apagado que la atribución en mayúsculas, invirtiendo la jerarquía.
+ */
+.club-identity--public .club-identity__organizer {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--effective-text, var(--ro-text-primary));
+}
+
+.club-identity--public .club-identity__attribution {
+  font-size: 0.6875rem;
+  color: var(--effective-muted, var(--ro-text-muted));
+}
+
+.club-identity--public .club-identity__attribution-by,
+.club-identity--public .club-identity__attribution-brand {
+  color: inherit;
+  font-weight: 500;
+}
+
 .club-identity--header.club-identity--logo-only .club-identity__logo {
   max-height: 3rem;
   max-width: min(16rem, 58vw);
