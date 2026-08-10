@@ -14,6 +14,7 @@ import {
   PartidosOrdenColumnMissingError,
   PartidosProgramadoColumnMissingError,
   finalizarTorneoExpressEliminatoria as persistFinalizarTorneoEliminatoria,
+  resyncTorneoExpressCareer as persistResyncTorneoExpressCareer,
   reabrirTorneoExpressEliminatoria as persistReabrirTorneoEliminatoria,
   resetEliminatoriaTorneoExpress as persistResetEliminatoria,
   saveEliminatoriaCancha as persistEliminatoriaCancha,
@@ -335,12 +336,35 @@ export function useTorneoExpress(
       if (outcome && outcome.careerSyncOk === false) {
         setError(
           outcome.careerSyncMessage ||
-            "El torneo se cerró, pero no se registró el historial de jugadores. Puedes reintentar el sync desde administración o contactar soporte."
+            "El torneo se cerró, pero no se registró el historial de jugadores. Usa «Sincronizar historial» para reintentar sin reabrir el torneo."
         );
       }
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "No se pudo finalizar el torneo"
+      );
+      throw e;
+    } finally {
+      setFinalizandoTorneo(false);
+    }
+  }, [reload, torneoId]);
+
+  const resyncTorneoCareer = useCallback(async () => {
+    if (!torneoId) return;
+    setFinalizandoTorneo(true);
+    setError(null);
+    try {
+      const outcome = await persistResyncTorneoExpressCareer(torneoId);
+      await reload();
+      if (outcome && outcome.careerSyncOk === false) {
+        setError(
+          outcome.careerSyncMessage ||
+            "No se pudo sincronizar el historial. Puedes reintentar sin reabrir el torneo."
+        );
+      }
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "No se pudo sincronizar el historial"
       );
       throw e;
     } finally {
@@ -428,6 +452,7 @@ export function useTorneoExpress(
     saveEliminatoriaCancha,
     saveEliminatoriaProgramado,
     finalizarTorneoEliminatoria,
+    resyncTorneoCareer,
     reabrirTorneoEliminatoria,
     resetEliminatoriaTorneo,
     eliminatoriaLabelMap,

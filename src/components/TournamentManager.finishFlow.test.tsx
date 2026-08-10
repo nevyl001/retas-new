@@ -247,7 +247,40 @@ describe("Finalizar reta — resiliencia de UI", () => {
       expect(
         screen.queryByRole("button", { name: /^Finalizar$/ })
       ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /^Reparar historial$/ })
+      ).toBeInTheDocument();
     });
+  });
+
+  it("reta ya cerrada: Reparar historial reintenta pipeline sin update is_finished", async () => {
+    mockLoadRetas.mockResolvedValue(retaItem({ is_finished: true }));
+    mockFinalize
+      .mockResolvedValueOnce({
+        ...okResult(),
+        ok: false,
+        careerSynced: false,
+        criticalFailures: [{ code: "x", message: "fail" }],
+        failures: [{ code: "x", message: "fail" }],
+      })
+      .mockResolvedValueOnce(okResult());
+
+    renderManager();
+    const repair = await screen.findByRole("button", {
+      name: /^Reparar historial$/,
+    });
+    await userEvent.click(repair);
+    await waitFor(() => expect(alertSpy).toHaveBeenCalled());
+    expect(mockUpdateTournament).not.toHaveBeenCalled();
+
+    const retry = await screen.findByRole("button", {
+      name: /^Reparar historial$/,
+    });
+    await userEvent.click(retry);
+    await waitFor(() => {
+      expect(mockFinalize).toHaveBeenCalledTimes(2);
+    });
+    expect(mockUpdateTournament).not.toHaveBeenCalled();
   });
 
   it("permite reintentar después de un error y cerrar correctamente", async () => {

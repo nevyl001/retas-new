@@ -1981,6 +1981,70 @@ export async function resetEliminatoriaTorneoExpress(
   return fresh ?? updated;
 }
 
+async function syncTorneoExpressCareerAfterClose(
+  torneoId: string,
+  organizadorId: string
+): Promise<{ careerSyncOk: boolean; careerSyncMessage?: string }> {
+  try {
+    const { repairTorneoExpressCareerSync } = await import(
+      "../lib/rivieraJugadores/repairCareerClose"
+    );
+    const outcome = await repairTorneoExpressCareerSync({
+      organizadorId,
+      torneoId,
+    });
+    if (!outcome.careerSyncOk) {
+      console.error(
+        "[riviera-jugadores] sync torneo express incompleto:",
+        {
+          torneoId,
+          organizadorId,
+          failures: outcome.pipeline.failures,
+        }
+      );
+    }
+    return {
+      careerSyncOk: outcome.careerSyncOk,
+      careerSyncMessage: outcome.careerSyncMessage,
+    };
+  } catch (err) {
+    console.error(
+      "[riviera-jugadores] sync tras finalizar torneo express:",
+      err
+    );
+    return {
+      careerSyncOk: false,
+      careerSyncMessage:
+        err instanceof Error
+          ? err.message
+          : "El torneo se cerró, pero no se registró el historial de jugadores.",
+    };
+  }
+}
+
+/**
+ * Repara carrera/ROMC/rating de un Express ya cerrado sin reabrir ni
+ * volver a jugar. Idempotente (re-ejecuta finalizeCareerEvent).
+ */
+export async function resyncTorneoExpressCareer(torneoId: string): Promise<{
+  torneo: TorneoExpress;
+  careerSyncOk: boolean;
+  careerSyncMessage?: string;
+}> {
+  const user = await requireAuthUser();
+  const torneo = await fetchTorneoExpress(torneoId);
+  if (!torneo) {
+    throw new Error("Torneo no encontrado");
+  }
+  if (torneo.fase_torneo !== "cerrado" && torneo.estado !== "finalizado") {
+    throw new Error(
+      "El torneo aún no está cerrado. Usa «Finalizar torneo» primero."
+    );
+  }
+  const sync = await syncTorneoExpressCareerAfterClose(torneoId, user.id);
+  return { torneo, ...sync };
+}
+
 /** Cierra eliminatoria y marca torneo finalizado — solo vía acción explícita del organizador. */
 export async function finalizarTorneoExpressEliminatoria(
   torneoId: string
@@ -1995,8 +2059,9 @@ export async function finalizarTorneoExpressEliminatoria(
   if (!torneo?.fase_eliminacion) {
     throw new Error("El torneo no tiene fase eliminatoria configurada");
   }
+  // Ya cerrado + carrera incompleta → retry reparable (no reabrir).
   if (torneo.fase_torneo === "cerrado" || torneo.estado === "finalizado") {
-    throw new Error("El torneo ya está finalizado");
+    return resyncTorneoExpressCareer(torneoId);
   }
 
   const partidos = await fetchEliminatoriaPartidos(torneoId);
@@ -2023,41 +2088,8 @@ export async function finalizarTorneoExpressEliminatoria(
   // Carrera/ROMC: await (no fire-and-forget). El torneo ya está cerrado porque
   // syncTorneoExpressParticipaciones exige estado finalizado/cerrado; si falla
   // la sync, devolvemos careerSyncOk=false para retry/recuperación explícita.
-  let careerSyncOk = true;
-  let careerSyncMessage: string | undefined;
-  try {
-    const { finalizeCareerEvent } = await import(
-      "../lib/rivieraJugadores/careerEventPipeline"
-    );
-    const result = await finalizeCareerEvent({
-      kind: "torneo_express",
-      organizadorId: user.id,
-      torneoId,
-      options: { telemetry: true, identityCache: true },
-    });
-    careerSyncOk = Boolean(result?.ok);
-    if (!careerSyncOk) {
-      careerSyncMessage =
-        result.criticalFailures.map((f) => f.message).join("; ") ||
-        "El torneo se cerró, pero no se registró el historial de jugadores.";
-      console.error(
-        "[riviera-jugadores] sync tras finalizar torneo express incompleto:",
-        { torneoId, organizadorId: user.id, failures: result.failures }
-      );
-    }
-  } catch (err) {
-    careerSyncOk = false;
-    careerSyncMessage =
-      err instanceof Error
-        ? err.message
-        : "El torneo se cerró, pero no se registró el historial de jugadores.";
-    console.error(
-      "[riviera-jugadores] sync tras finalizar torneo express:",
-      err
-    );
-  }
-
-  return { torneo: updated, careerSyncOk, careerSyncMessage };
+  const sync = await syncTorneoExpressCareerAfterClose(torneoId, user.id);
+  return { torneo: updated, ...sync };
 }
 
 export async function saveEliminatoriaResultado(

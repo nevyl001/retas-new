@@ -43,7 +43,7 @@ describe("Express/Liga career sync no silenciosa", () => {
     expect(typeof finalizarTorneoExpressEliminatoria).toBe("function");
   });
 
-  it("Express ya no usa void finalizeCareerEvent; await + careerSyncOk", () => {
+  it("Express ya no usa void finalizeCareerEvent; await + careerSyncOk + repair", () => {
     const src = readFileSync(
       join(__dirname, "torneoExpressService.ts"),
       "utf8"
@@ -52,10 +52,11 @@ describe("Express/Liga career sync no silenciosa", () => {
       /void import\("\.\.\/lib\/rivieraJugadores\/careerEventPipeline"\)/
     );
     expect(src).toMatch(/careerSyncOk/);
-    expect(src).toMatch(/await finalizeCareerEvent/);
+    expect(src).toMatch(/repairTorneoExpressCareerSync/);
+    expect(src).toMatch(/resyncTorneoExpressCareer/);
   });
 
-  it("Liga jornada/podio ya no usan void finalizeCareerEvent", () => {
+  it("Liga jornada/podio usan resync reparable (no void)", () => {
     const src = readFileSync(join(__dirname, "ligaService.ts"), "utf8");
     const finishJornadaBlock = src.slice(
       src.indexOf("export async function finishJornada"),
@@ -67,9 +68,9 @@ describe("Express/Liga career sync no silenciosa", () => {
     );
     expect(finishJornadaBlock).not.toMatch(/void import\(/);
     expect(finishLigaBlock).not.toMatch(/void import\(/);
-    expect(finishJornadaBlock).toMatch(/await finalizeCareerEvent/);
-    expect(finishLigaBlock).toMatch(/await finalizeCareerEvent/);
-    expect(finishJornadaBlock).toMatch(/careerSyncOk/);
-    expect(finishLigaBlock).toMatch(/careerSyncOk/);
+    expect(finishJornadaBlock).toMatch(/resyncLigaJornadaCareer/);
+    expect(finishLigaBlock).toMatch(/resyncLigaPodioCareer/);
+    expect(src).toMatch(/repairLigaJornadaCareerSync/);
+    expect(src).toMatch(/repairLigaPodioCareerSync/);
   });
 });

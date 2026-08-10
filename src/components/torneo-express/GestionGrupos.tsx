@@ -85,6 +85,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     savingEliminatoriaCanchaId,
     savingEliminatoriaProgramadoId,
     finalizarTorneoEliminatoria,
+    resyncTorneoCareer,
     reabrirTorneoEliminatoria,
     resetEliminatoriaTorneo,
     finalizandoTorneo,
@@ -140,6 +141,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots)
     );
   }, [bundle, faseTorneo]);
+
+  const puedeResyncCareer = faseTorneo === "cerrado";
 
   const cancelEditGrupo = () => {
     setEditingGrupoId(null);
@@ -507,6 +510,22 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               Finalizar torneo
             </Button>
           )
+        ) : null}
+        {puedeResyncCareer ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="te-btn-finalizar-fase"
+            loading={finalizandoTorneo}
+            disabled={finalizandoTorneo}
+            title="Completa historial Riviera faltante sin reabrir el torneo"
+            onClick={() => {
+              void resyncTorneoCareer();
+            }}
+          >
+            Sincronizar historial
+          </Button>
         ) : null}
         <Button
           type="button"
@@ -901,6 +920,22 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 Finalizar torneo
               </Button>
             )
+          ) : null}
+          {puedeResyncCareer ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="te-btn-finalizar-fase"
+              loading={finalizandoTorneo}
+              disabled={finalizandoTorneo}
+              title="Completa historial Riviera faltante sin reabrir el torneo"
+              onClick={() => {
+                void resyncTorneoCareer();
+              }}
+            >
+              Sincronizar historial
+            </Button>
           ) : null}
           <Button
             type="button"

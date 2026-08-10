@@ -53,4 +53,28 @@ describe("refresh_jugador_stats ownership guard (0026)", () => {
       "anon",
     ]);
   });
+
+  it("migración idempotente (CREATE OR REPLACE + grants seguros)", () => {
+    expect(sql).toMatch(/CREATE OR REPLACE FUNCTION public\.refresh_jugador_stats/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.refresh_jugador_stats\(uuid\) FROM PUBLIC/);
+    expect(sql).toMatch(/GRANT EXECUTE ON FUNCTION public\.refresh_jugador_stats\(uuid\) TO service_role/);
+  });
+
+  it("callers legítimos son owner-scoped (rebuildJugadorStats / pipeline)", () => {
+    const svc = readFileSync(
+      join(__dirname, "rivieraJugadoresService.ts"),
+      "utf8"
+    );
+    const pipeline = readFileSync(
+      join(__dirname, "careerEventPipeline/pipeline.ts"),
+      "utf8"
+    );
+    expect(svc).toMatch(/refresh_jugador_stats/);
+    expect(pipeline).toMatch(/rebuildJugadorStats/);
+    // No hay RPC directo cross-tenant desde UI pública
+    expect(svc).not.toMatch(/rpc\("refresh_jugador_stats".*organizador_id:\s*null/);
+  });
 });
+
+/** Gate Fase 1.1: 0026 READY FOR PROD (no aplicada aún). */
+export const REFRESH_STATS_0026_READY_FOR_PROD = true as const;

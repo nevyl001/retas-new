@@ -12,6 +12,7 @@ import {
   formatCareerPipelineSuccessMessage,
   type CareerEventPipelineResult,
 } from "../lib/rivieraJugadores/careerEventPipeline";
+import { repairRetaCareerSync } from "../lib/rivieraJugadores/repairCareerClose";
 import {
   getRetaCreatedAt,
   getRetaDescription,
@@ -215,11 +216,77 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
     }
   };
 
+  /**
+   * Reta ya is_finished + carrera incompleta (timeout/race/legacy):
+   * re-ejecuta solo finalizeCareerEvent. No toca is_finished ni duplica.
+   */
+  const handleRepairRetaCareer = async (tournament: Tournament) => {
+    if (finishingIds.has(tournament.id)) return;
+    if (!user?.id) {
+      const msg = "No se pudo reparar el historial: sesión no disponible.";
+      setError(msg);
+      alert(msg);
+      return;
+    }
+    if (
+      !window.confirm(
+        `¿Sincronizar el historial Riviera de «${tournament.name}»?\n\n` +
+          `La reta ya está cerrada. Solo se completan escrituras faltantes ` +
+          `(participaciones, ROMC, rating) sin duplicar.`
+      )
+    ) {
+      return;
+    }
+
+    setFinishingIds((prev) => new Set(prev).add(tournament.id));
+    setError("");
+    try {
+      const outcome = await withTimeout(
+        repairRetaCareerSync({
+          organizadorId: user.id,
+          tournament,
+        }),
+        { timeoutMs: FINISH_TIMEOUT_MS, label: "La reparación del historial" }
+      );
+      if (!outcome.careerSyncOk) {
+        const msg = formatCareerPipelineFailureMessage(
+          outcome.pipeline,
+          tournament.name
+        );
+        setError(msg);
+        alert(msg);
+        return;
+      }
+      alert(
+        formatCareerPipelineSuccessMessage(outcome.pipeline, tournament.name)
+      );
+    } catch (err) {
+      console.error("Error reparando historial reta:", errorLogPayload(err), err);
+      const msg =
+        `No se pudo sincronizar el historial de «${tournament.name}».\n\n` +
+        `${errorMessage(err)}\n\nPuedes volver a pulsar «Reparar historial».`;
+      setError(msg);
+      alert(msg);
+    } finally {
+      setFinishingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(tournament.id);
+        return next;
+      });
+    }
+  };
+
   const handleFinishTournament = async (tournament: Tournament) => {
     // Guarda de doble click / doble submit: el cierre es idempotente en BD,
     // pero lanzarlo dos veces en paralelo duplica trabajo y puede producir
     // mensajes contradictorios en la UI.
     if (finishingIds.has(tournament.id)) return;
+
+    // Si ya está cerrada, el único camino válido es repair (no re-marcar).
+    if (tournament.is_finished) {
+      await handleRepairRetaCareer(tournament);
+      return;
+    }
 
     if (
       !window.confirm(
@@ -514,6 +581,23 @@ export const TournamentManager: React.FC<TournamentManagerProps> = ({
                           }}
                         >
                           {isFinishing ? "Finalizando…" : "Finalizar"}
+                        </Button>
+                      )}
+                    {item.kind === "tournament" &&
+                      item.tournament.is_finished && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={isFinishing}
+                          aria-busy={isFinishing}
+                          title="Completa participaciones/ROMC/rating faltantes sin reabrir la reta"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleRepairRetaCareer(item.tournament);
+                          }}
+                        >
+                          {isFinishing ? "Sincronizando…" : "Reparar historial"}
                         </Button>
                       )}
                     <button

@@ -1665,15 +1665,17 @@ export type LigaCareerCloseResult = {
   careerSyncMessage?: string;
 };
 
-export async function finishJornada(
+/**
+ * Repara historial Riviera de una jornada ya cerrada sin reabrirla.
+ * No recalcula ranking local — solo finalizeCareerEvent (idempotente).
+ */
+export async function resyncLigaJornadaCareer(
   jornadaId: string
 ): Promise<LigaCareerCloseResult> {
-  await aplicarPuntosJornada(jornadaId);
-
   const userId = await requireUserId();
   const { data: jornada, error: jErr } = await supabase
     .from("liga_jornadas")
-    .select("liga_id, numero")
+    .select("liga_id, numero, estado")
     .eq("id", jornadaId)
     .maybeSingle();
 
@@ -1681,55 +1683,91 @@ export async function finishJornada(
     return {
       careerSyncOk: false,
       careerSyncMessage:
-        "Jornada cerrada en ranking de liga, pero no se pudo localizar para sync de historial.",
+        "No se pudo localizar la jornada para sincronizar el historial.",
     };
   }
 
-  // Jornada ya marcada completed en recalcularPuntosLiga; await carrera
-  // (no void) para no perder historial/ROMC en silencio.
   try {
-    const { finalizeCareerEvent } = await import(
-      "../lib/rivieraJugadores/careerEventPipeline"
+    const { repairLigaJornadaCareerSync } = await import(
+      "../lib/rivieraJugadores/repairCareerClose"
     );
-    const result = await finalizeCareerEvent({
-      kind: "liga_jornada",
+    const outcome = await repairLigaJornadaCareerSync({
       organizadorId: userId,
       ligaId: String(jornada.liga_id),
       jornadaNumero: Number(jornada.numero),
-      options: { telemetry: true, identityCache: true },
     });
-    if (!result.ok) {
+    if (!outcome.careerSyncOk) {
       console.error(
-        "[riviera-jugadores] sync tras finalizar jornada de liga incompleto:",
+        "[riviera-jugadores] repair jornada de liga incompleto:",
         {
           ligaId: jornada.liga_id,
           jornadaNumero: jornada.numero,
           jornadaId,
           organizadorId: userId,
-          failures: result.failures,
+          failures: outcome.pipeline.failures,
         }
       );
-      return {
-        careerSyncOk: false,
-        careerSyncMessage:
-          result.criticalFailures.map((f) => f.message).join("; ") ||
-          "La jornada se cerró, pero no se registró el historial Riviera.",
-      };
     }
-    return { careerSyncOk: true };
+    return {
+      careerSyncOk: outcome.careerSyncOk,
+      careerSyncMessage: outcome.careerSyncMessage,
+    };
   } catch (err) {
-    console.error(
-      "[riviera-jugadores] sync tras finalizar jornada de liga:",
-      err
-    );
+    console.error("[riviera-jugadores] repair jornada de liga:", err);
     return {
       careerSyncOk: false,
       careerSyncMessage:
         err instanceof Error
           ? err.message
-          : "La jornada se cerró, pero no se registró el historial Riviera.",
+          : "No se pudo sincronizar el historial Riviera de la jornada.",
     };
   }
+}
+
+/** Repara podio/carrera de una liga ya completed sin reabrir. */
+export async function resyncLigaPodioCareer(
+  ligaId: string
+): Promise<LigaCareerCloseResult> {
+  const uid = await requireUserId();
+  try {
+    const { repairLigaPodioCareerSync } = await import(
+      "../lib/rivieraJugadores/repairCareerClose"
+    );
+    const outcome = await repairLigaPodioCareerSync({
+      organizadorId: uid,
+      ligaId,
+    });
+    if (!outcome.careerSyncOk) {
+      console.error("[riviera-jugadores] repair podio liga incompleto:", {
+        ligaId,
+        organizadorId: uid,
+        failures: outcome.pipeline.failures,
+      });
+    }
+    return {
+      careerSyncOk: outcome.careerSyncOk,
+      careerSyncMessage: outcome.careerSyncMessage,
+    };
+  } catch (err) {
+    console.error("[riviera-jugadores] repair podio liga:", err);
+    return {
+      careerSyncOk: false,
+      careerSyncMessage:
+        err instanceof Error
+          ? err.message
+          : "No se pudo sincronizar el historial Riviera (podio).",
+    };
+  }
+}
+
+export async function finishJornada(
+  jornadaId: string
+): Promise<LigaCareerCloseResult> {
+  await aplicarPuntosJornada(jornadaId);
+
+  // Jornada ya marcada completed en recalcularPuntosLiga; await carrera
+  // (no void). Si falla → careerSyncOk=false; resyncLigaJornadaCareer repara.
+  return resyncLigaJornadaCareer(jornadaId);
 }
 
 export async function actualizarPuntosInscripcion(
@@ -1766,6 +1804,11 @@ export async function finishLiga(ligaId: string): Promise<LigaCareerCloseResult>
     throw new Error("La liga no tiene jornadas.");
   }
 
+  // Ya completed → solo repair de carrera (no reabrir).
+  if (detalle.estado === "completed") {
+    return resyncLigaPodioCareer(ligaId);
+  }
+
   const pendientes = detalle.jornadas.filter((j) => j.estado !== "completed");
   if (pendientes.length > 0) {
     throw new Error("Todas las jornadas deben estar completadas.");
@@ -1779,40 +1822,7 @@ export async function finishLiga(ligaId: string): Promise<LigaCareerCloseResult>
 
   if (error) throw new Error(error.message);
 
-  const uid = await requireUserId();
-  try {
-    const { finalizeCareerEvent } = await import(
-      "../lib/rivieraJugadores/careerEventPipeline"
-    );
-    const result = await finalizeCareerEvent({
-      kind: "liga_podio",
-      organizadorId: uid,
-      ligaId,
-      options: { telemetry: true, identityCache: true },
-    });
-    if (!result.ok) {
-      console.error(
-        "[riviera-jugadores] sync podio final liga incompleto:",
-        { ligaId, organizadorId: uid, failures: result.failures }
-      );
-      return {
-        careerSyncOk: false,
-        careerSyncMessage:
-          result.criticalFailures.map((f) => f.message).join("; ") ||
-          "La liga se cerró, pero no se registró el historial Riviera (podio).",
-      };
-    }
-    return { careerSyncOk: true };
-  } catch (err) {
-    console.error("[riviera-jugadores] sync podio final liga:", err);
-    return {
-      careerSyncOk: false,
-      careerSyncMessage:
-        err instanceof Error
-          ? err.message
-          : "La liga se cerró, pero no se registró el historial Riviera (podio).",
-    };
-  }
+  return resyncLigaPodioCareer(ligaId);
 }
 
 export async function getRanking(ligaId: string): Promise<RankingItem[]> {

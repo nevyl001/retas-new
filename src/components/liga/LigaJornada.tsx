@@ -13,6 +13,7 @@ import type {
 import {
   actualizarPuntosInscripcion,
   finishJornada,
+  resyncLigaJornadaCareer,
   getLigaById,
   getRanking,
   getRankingEquipos,
@@ -473,7 +474,7 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
       if (outcome.careerSyncOk === false) {
         setError(
           outcome.careerSyncMessage ||
-            "La jornada se cerró en la liga, pero no se registró el historial Riviera."
+            "La jornada se cerró en la liga, pero no se registró el historial Riviera. Usa «Sincronizar historial» para reintentar."
         );
         setMessage(
           jornada.puntos_aplicados
@@ -486,6 +487,36 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
             ? "Ranking recalculado desde la base de datos."
             : "Jornada finalizada. Puntos aplicados al ranking."
         );
+      }
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleResyncJornadaCareer = async () => {
+    if (!jornada) return;
+    if (
+      !window.confirm(
+        "¿Sincronizar el historial Riviera de esta jornada?\n\nLa jornada no se reabre. Solo se completan escrituras faltantes."
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const outcome = await resyncLigaJornadaCareer(jornada.id);
+      if (outcome.careerSyncOk === false) {
+        setError(
+          outcome.careerSyncMessage ||
+            "No se pudo sincronizar el historial Riviera."
+        );
+        setMessage("Historial Riviera pendiente.");
+      } else {
+        setMessage("Historial Riviera sincronizado.");
       }
       await load();
     } catch (err) {
@@ -971,6 +1002,19 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
               ? "Recalcular puntos y ranking"
               : "Finalizar jornada"}
           </Button>
+          {jornada.puntos_aplicados ? (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={busy}
+              title="Completa historial Riviera faltante sin recalcular ranking local"
+              onClick={() => {
+                void handleResyncJornadaCareer();
+              }}
+            >
+              Sincronizar historial
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"

@@ -17,6 +17,7 @@ import {
   deleteLiga,
   desinscribirJugador,
   finishLiga,
+  resyncLigaPodioCareer,
   getJugadoresOrganizador,
   getLigaById,
   inscribirJugador,
@@ -381,11 +382,40 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
       if (outcome.careerSyncOk === false) {
         setError(
           outcome.careerSyncMessage ||
-            "La liga se cerró, pero no se registró el historial Riviera."
+            "La liga se cerró, pero no se registró el historial Riviera. Usa «Sincronizar historial» para reintentar."
         );
         setMessage("Liga finalizada; historial Riviera pendiente.");
       } else {
         setMessage("Liga finalizada.");
+      }
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleResyncLigaCareer = async () => {
+    if (
+      !window.confirm(
+        "¿Sincronizar el historial Riviera de esta liga?\n\nLa liga ya está cerrada. Solo se completan escrituras faltantes."
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const outcome = await resyncLigaPodioCareer(ligaId);
+      if (outcome.careerSyncOk === false) {
+        setError(
+          outcome.careerSyncMessage ||
+            "No se pudo sincronizar el historial Riviera."
+        );
+        setMessage("Historial Riviera pendiente.");
+      } else {
+        setMessage("Historial Riviera sincronizado.");
       }
       await load();
     } catch (err) {
@@ -506,6 +536,19 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
             onClick={handleFinishLiga}
           >
             Finalizar liga
+          </Button>
+        )}
+        {detalle?.estado === "completed" && (
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={busy}
+            title="Completa historial Riviera faltante sin reabrir la liga"
+            onClick={() => {
+              void handleResyncLigaCareer();
+            }}
+          >
+            Sincronizar historial
           </Button>
         )}
       </ActionBar>

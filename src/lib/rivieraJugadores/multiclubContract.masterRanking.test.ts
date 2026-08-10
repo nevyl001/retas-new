@@ -244,4 +244,36 @@ describe("multiclub-contract: Club A/B/C + ranking maestro ROMC", () => {
       })
     ).toEqual({ emit: false, reason: "ajuste_manual" });
   });
+
+  it("fallo artificial de sync + retry: carrera/ROMC siguen 60 (nunca 70/80/90/120)", () => {
+    // Simula: Club A sync falló → faltaba fila; retry escribe una vez;
+    // segundo retry reutiliza mismo id (dedupe) — no infla.
+    let synced = baseRows.filter((r) => r.id !== "p-a");
+    expect(computeCareerPointsByClubFromParticipaciones(synced).total).toBe(50);
+
+    // Retry escribe A
+    synced = [...synced, baseRows[0]];
+    expect(computeCareerPointsByClubFromParticipaciones(synced).total).toBe(60);
+    expect(sumRomc(synced, new Set([CLUB_A, CLUB_B, CLUB_C]), true)).toBe(60);
+
+    // Retry adicional “duplica” intento → dedupe por id
+    const afterDupAttempt = dedupeParticipacionesById([
+      ...synced,
+      baseRows[0],
+      baseRows[1],
+      baseRows[2],
+    ]);
+    const career = computeCareerPointsByClubFromParticipaciones(afterDupAttempt);
+    const romc = sumRomc(
+      afterDupAttempt,
+      new Set([CLUB_A, CLUB_B, CLUB_C]),
+      true
+    );
+    expect(career.total).toBe(60);
+    expect(romc).toBe(60);
+    for (const bad of [70, 80, 90, 120]) {
+      expect(career.total).not.toBe(bad);
+      expect(romc).not.toBe(bad);
+    }
+  });
 });
