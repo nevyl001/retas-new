@@ -44,6 +44,7 @@ import { StatusBadge } from "../platform/StatusBadge";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { RivieraIdBadgeFromJugador } from "./RivieraIdBadge";
 import { JugadoresPublicShell } from "./JugadoresPublicShell";
+import { JugadoresPublicParticipaciones } from "./JugadoresPublicParticipaciones";
 import {
   buildInternalClubRankingUrl,
   buildRankingComoFuncionaPath,
@@ -78,6 +79,35 @@ function resolvePublicRankingOrgId(routeOrganizadorId?: string): string | null {
   );
 }
 
+type RankingView = "ranking" | "participaciones";
+
+/** Permite abrir directo en `?vista=participaciones` (compartible/bookmarkeable). */
+function readInitialRankingView(): RankingView {
+  if (typeof window === "undefined") return "ranking";
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("vista") === "participaciones" ? "participaciones" : "ranking";
+  } catch {
+    return "ranking";
+  }
+}
+
+/** Solo actualiza la URL (sin navegación/recarga) -- cambiar de tab no debe apilar historial. */
+function writeRankingViewToUrl(view: RankingView): void {
+  if (typeof window === "undefined") return;
+  try {
+    const url = new URL(window.location.href);
+    if (view === "participaciones") {
+      url.searchParams.set("vista", "participaciones");
+    } else {
+      url.searchParams.delete("vista");
+    }
+    window.history.replaceState({}, "", url.pathname + url.search);
+  } catch {
+    /* ignore */
+  }
+}
+
 function RankingFooter() {
   const { isClubBranded, isScopeBrandingReady, brandingStatus } =
     useClubExperience();
@@ -100,11 +130,13 @@ function RankingHero({
   categoria,
   playerCount,
   loading,
+  view,
 }: {
   genero: RivieraJugadorGenero;
   categoria: RivieraJugadorCategoria;
   playerCount: number;
   loading: boolean;
+  view: RankingView;
 }) {
   const { isScopeBrandingReady, brandingStatus } = useClubExperience();
   const organizerName = useOrganizerDisplayName();
@@ -144,11 +176,11 @@ function RankingHero({
           </>
         ) : null}
       </p>
-      <p className="rjp-ranking-hero__count" aria-live="polite">
-        {loading
-          ? "Cargando…"
-          : `${playerCount} ${personaLabel}`}
-      </p>
+      {view === "ranking" ? (
+        <p className="rjp-ranking-hero__count" aria-live="polite">
+          {loading ? "Cargando…" : `${playerCount} ${personaLabel}`}
+        </p>
+      ) : null}
     </header>
   );
 }
@@ -202,6 +234,12 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [view, setView] = useState<RankingView>(readInitialRankingView);
+
+  const handleViewChange = useCallback((next: RankingView) => {
+    setView(next);
+    writeRankingViewToUrl(next);
+  }, []);
 
   const jugadoresVisibles = useMemo(() => {
     const q = searchQuery.trim();
@@ -339,6 +377,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
               categoria={categoria}
               playerCount={jugadores.length}
               loading={loading}
+              view={view}
             />
 
             <JugadoresGeneroTabs
@@ -351,9 +390,30 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
               }
             />
 
+            <div className="rjp-view-tabs" role="tablist" aria-label="Ranking o Participaciones">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === "ranking"}
+                className={`rjp-view-tabs__btn${view === "ranking" ? " rjp-view-tabs__btn--active" : ""}`}
+                onClick={() => handleViewChange("ranking")}
+              >
+                Ranking
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={view === "participaciones"}
+                className={`rjp-view-tabs__btn${view === "participaciones" ? " rjp-view-tabs__btn--active" : ""}`}
+                onClick={() => handleViewChange("participaciones")}
+              >
+                Participaciones
+              </button>
+            </div>
+
             <section
               className="rjp-ranking-main"
-              aria-label="Ranking por categoría"
+              aria-label={view === "ranking" ? "Ranking por categoría" : "Participaciones mensuales"}
             >
               <div className="rjp-ranking-cats" role="tablist" aria-label="Categorías">
                 {JUGADOR_CATEGORIAS_ORDER.map((cat) => {
@@ -388,6 +448,14 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                 })}
               </div>
 
+              {view === "participaciones" ? (
+                <JugadoresPublicParticipaciones
+                  organizadorId={orgId}
+                  genero={genero}
+                  categoria={categoria}
+                />
+              ) : (
+              <>
               <div className="rjp-ranking-toolbar">
                 <label className="rjp-ranking-search">
                   <span className="sr-only">
@@ -584,8 +652,11 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                   </>
                 ) : null}
               </div>
+              </>
+              )}
             </section>
 
+            {view === "ranking" ? (
             <section className="rjp-ranking-rules" aria-labelledby="rjp-rules-title">
               <button
                 type="button"
@@ -631,6 +702,7 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
                 <RankingPuntosTeaser />
               </div>
             </section>
+            ) : null}
 
             <RankingFooter />
           </div>

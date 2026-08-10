@@ -36,6 +36,7 @@
     "diagnose:career-host": "node scripts/diagnose-career-event-host-organizer.mjs",
     "verify:career-integrity": "npm run test:career-pipeline && npm run test:player-points && npm run test:career-integrity && npm run test:career-integrity-strict && npm run audit:career-integrity -- --offline && npm run verify:public-player",
     "test:career-integrity-strict": "react-scripts test --watchAll=false --testPathPattern=careerIntegrity.strict.test.ts",
+    "test:participaciones-mensual-sql": "RUN_SQL_INTEGRATION=1 NODE_OPTIONS=--experimental-vm-modules react-scripts test --watchAll=false --testPathPattern=participacionesMensualRpc.integration.test.ts",
     "e2e:public-player-profile": "node scripts/validate-career-totals-ui.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
@@ -60,6 +61,7 @@
     ]
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.6.1",

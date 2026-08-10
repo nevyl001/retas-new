@@ -1,0 +1,617 @@
+/* Ranking -> Participaciones — clasificación mensual de actividad (2026-08-08).
+   Reutiliza tokens/estados/vacíos ya definidos en
+   riviera-jugadores-public-ranking.css (--text-*, --border-*, --brand-accent,
+   .rjp-ranking-empty*, .rjp-sk). Oro/plata/bronce aquí son SEMÁNTICOS
+   (posición competitiva real 1/2/3, no branding del club) -- ver
+   --ro-medal-gold/silver/bronze en riviera-open-tokens.css. */
+
+.rjp-part {
+  display: flex;
+  flex-direction: column;
+}
+
+/* —— Navegación de mes —— */
+.rjp-part-monthnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+}
+
+.rjp-part-monthnav__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 44px;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.rjp-part-monthnav__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.rjp-part-monthnav__btn:not(:disabled):hover,
+.rjp-part-monthnav__btn:not(:disabled):focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 55%, transparent);
+  color: var(--text-primary);
+}
+
+.rjp-part-monthnav__btn:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--accent-gold));
+  outline-offset: 1px;
+}
+
+.rjp-part-monthnav__btn-label {
+  display: none;
+}
+
+.rjp-part-monthnav__current {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.rjp-part-monthnav__badge {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 20%, transparent);
+  color: var(--brand-accent, var(--accent-gold-light, #fff));
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* —— Skeleton —— */
+.rjp-part-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* —— Lista / tarjetas —— */
+.rjp-part-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid var(--border-default);
+  background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  transition: opacity 0.15s ease;
+}
+
+.rjp-part-list.is-loading {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.rjp-part-list > li + li {
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+}
+
+.rjp-part-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 2.35rem 2.5rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 0.6rem;
+  min-height: 68px;
+  padding: 0.7rem 0.75rem;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.rjp-part-card:hover,
+.rjp-part-card:focus-visible {
+  background: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 8%, transparent);
+}
+
+.rjp-part-card:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--accent-gold));
+  outline-offset: -2px;
+}
+
+.rjp-part-card--gold {
+  border-left-color: var(--ro-medal-gold);
+}
+
+.rjp-part-card--silver {
+  border-left-color: var(--ro-medal-silver);
+}
+
+.rjp-part-card--bronze {
+  border-left-color: var(--ro-medal-bronze);
+}
+
+.rjp-part-card__rank {
+  font-size: 0.875rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.rjp-part-card--gold .rjp-part-card__rank {
+  color: var(--ro-medal-gold);
+}
+
+.rjp-part-card--silver .rjp-part-card__rank {
+  color: var(--ro-medal-silver);
+}
+
+.rjp-part-card--bronze .rjp-part-card__rank {
+  color: var(--ro-medal-bronze);
+}
+
+.rjp-part-card__avatar {
+  flex-shrink: 0;
+}
+
+.rjp-part-card .rj-avatar {
+  width: 40px;
+  height: 40px;
+  border-color: var(--border-default);
+  color: var(--brand-accent, var(--accent-gold));
+}
+
+.rjp-part-card__body {
+  min-width: 0;
+}
+
+.rjp-part-card__name {
+  display: block;
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: var(--text-primary);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.rjp-part-card__id {
+  display: block;
+  margin-top: 3px;
+}
+
+.rjp-part-card__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  text-align: right;
+}
+
+.rjp-part-card__count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.rjp-part-card__pts {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--brand-accent, var(--accent-gold));
+  white-space: nowrap;
+}
+
+.rjp-part-card__chev {
+  color: var(--text-muted);
+}
+
+/* —— Overlay de detalle (drawer móvil / modal desktop) —— */
+.rjp-part-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.rjp-part-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.62);
+  cursor: pointer;
+}
+
+.rjp-part-overlay__panel {
+  /* Superficie oscura autocontenida: el ranking público pinta texto claro
+     sobre fondos oscuros, pero --ro-surface/--ro-bg-* pueden ser claros
+     (tema base). Sin estos tokens locales el drawer queda ilegible
+     (texto blanco sobre gris claro). No usa dorado decorativo. */
+  --rjp-part-panel-bg: #16181d;
+  --rjp-part-panel-elevated: rgba(255, 255, 255, 0.07);
+  --rjp-part-panel-text: #f2f2f3;
+  --rjp-part-panel-text-secondary: rgba(242, 242, 243, 0.78);
+  --rjp-part-panel-text-muted: rgba(242, 242, 243, 0.62);
+  --rjp-part-panel-border: rgba(255, 255, 255, 0.14);
+  position: relative;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px 20px 0 0;
+  border: 1px solid var(--rjp-part-panel-border);
+  border-bottom: none;
+  background: var(--rjp-part-panel-bg);
+  color: var(--rjp-part-panel-text);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+  animation: rjp-part-sheet-in 0.22s ease-out both;
+}
+
+@keyframes rjp-part-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.rjp-part-overlay__header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 1px solid var(--rjp-part-panel-border);
+}
+
+.rjp-part-overlay__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.rjp-part-overlay__name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--rjp-part-panel-text);
+  overflow-wrap: anywhere;
+}
+
+/* Riviera ID dentro del drawer: contraste forzado (el badge global usa
+   --ro-bg-inset / --ro-text-muted que pueden quedar casi negros sobre oscuro). */
+.rjp-part-overlay__panel .rj-riviera-id {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--rjp-part-panel-text-secondary);
+}
+
+.rjp-part-overlay__panel .rj-riviera-id:hover,
+.rjp-part-overlay__panel .rj-riviera-id:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--rjp-part-panel-text);
+}
+
+.rjp-part-overlay__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--rjp-part-panel-border);
+  border-radius: 10px;
+  background: var(--rjp-part-panel-elevated);
+  color: var(--rjp-part-panel-text-secondary);
+  cursor: pointer;
+}
+
+.rjp-part-overlay__close:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--accent-gold));
+  outline-offset: 1px;
+}
+
+.rjp-part-overlay__body {
+  overflow-y: auto;
+  padding: 1rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
+  -webkit-overflow-scrolling: touch;
+  color: var(--rjp-part-panel-text);
+}
+
+.rjp-part-overlay__month {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rjp-part-panel-text-muted);
+}
+
+.rjp-part-overlay__summary {
+  margin: 0.25rem 0 1rem;
+  font-size: 0.9375rem;
+  color: var(--rjp-part-panel-text-secondary);
+}
+
+.rjp-part-overlay__summary strong {
+  color: var(--rjp-part-panel-text);
+}
+
+.rjp-part-overlay__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rjp-part-overlay__list-title {
+  margin: 1.25rem 0 0.6rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rjp-part-panel-text-muted);
+}
+
+.rjp-part-overlay__empty {
+  margin: 0.5rem 0;
+  font-size: 0.8125rem;
+  color: var(--rjp-part-panel-text-muted);
+  text-align: center;
+}
+
+.rjp-part-overlay__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rjp-part-overlay__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--rjp-part-panel-border);
+  background: var(--rjp-part-panel-elevated);
+}
+
+.rjp-part-overlay__item-date {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--rjp-part-panel-text-secondary);
+  white-space: nowrap;
+}
+
+.rjp-part-overlay__item-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rjp-part-overlay__item-evento {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--rjp-part-panel-text);
+  overflow-wrap: anywhere;
+}
+
+.rjp-part-overlay__item-tipo {
+  font-size: 0.75rem;
+  color: var(--rjp-part-panel-text-muted);
+}
+
+.rjp-part-overlay__item-pts {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--brand-accent, var(--accent-gold-light, #e8c96a));
+  white-space: nowrap;
+}
+
+/* —— Calendario de actividad —— */
+.rjp-part-cal {
+  margin: 0.25rem 0 1rem;
+  padding: 0.85rem;
+  border-radius: 14px;
+  border: 1px solid var(--rjp-part-panel-border);
+  background: var(--rjp-part-panel-elevated);
+}
+
+.rjp-part-cal__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 0.4rem;
+}
+
+.rjp-part-cal__weekdays span {
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rjp-part-panel-text-secondary);
+}
+
+.rjp-part-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.2rem;
+}
+
+.rjp-part-cal__cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 2.35rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--rjp-part-panel-text-secondary);
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: default;
+}
+
+.rjp-part-cal__cell--empty {
+  visibility: hidden;
+}
+
+.rjp-part-cal__cell--active {
+  color: var(--rjp-part-panel-text);
+  font-weight: 700;
+  cursor: pointer;
+  border-color: var(--rjp-part-panel-border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.rjp-part-cal__cell--active:hover,
+.rjp-part-cal__cell--active:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 55%, transparent);
+}
+
+.rjp-part-cal__cell--active:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--accent-gold));
+  outline-offset: 1px;
+}
+
+.rjp-part-cal__cell--selected {
+  background: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 22%, transparent);
+  border-color: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 55%, transparent);
+  color: var(--rjp-part-panel-text);
+}
+
+.rjp-part-cal__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brand-accent, var(--accent-gold));
+}
+
+.rjp-part-cal__detail {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rjp-part-panel-border);
+}
+
+.rjp-part-cal__detail-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--rjp-part-panel-text);
+}
+
+.rjp-part-cal__detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.rjp-part-cal__detail-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.rjp-part-cal__detail-evento {
+  color: var(--rjp-part-panel-text);
+  font-weight: 600;
+}
+
+.rjp-part-cal__detail-tipo {
+  color: var(--rjp-part-panel-text-muted);
+  font-size: 0.75rem;
+}
+
+.rjp-part-cal__detail-pts {
+  margin-left: auto;
+  color: var(--brand-accent, var(--accent-gold-light, #e8c96a));
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+/* —— Tablet / escritorio —— */
+@media (min-width: 768px) {
+  .rjp-part-monthnav__btn-label {
+    display: inline;
+  }
+
+  .rjp-part-overlay {
+    align-items: center;
+  }
+
+  .rjp-part-overlay__panel {
+    max-width: 30rem;
+    max-height: 85vh;
+    border-radius: 18px;
+    border-bottom: 1px solid var(--rjp-part-panel-border);
+    animation: rjp-part-modal-in 0.2s ease-out both;
+  }
+
+  @keyframes rjp-part-modal-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .rjp-part-cal__cell {
+    height: 2.6rem;
+    font-size: 0.8125rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .rjp-part-card {
+    min-height: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rjp-part-overlay__panel {
+    animation: none !important;
+  }
+}
