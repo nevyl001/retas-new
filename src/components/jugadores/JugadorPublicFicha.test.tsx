@@ -118,7 +118,7 @@ describe("JugadorPublicFicha — resiliencia de carga (incidente 2026-08-05)", (
 
     render(<JugadorPublicFicha slug="luis-miguel" />);
 
-    expect(screen.getByLabelText("Cargando perfil")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cargando jugador")).toBeInTheDocument();
     // El techo real de espera (withTimeout, 20s) ya se prueba de forma
     // aislada y rápida (con fake timers) en src/lib/async/withTimeout.test.ts
     // -- no se re-espera acá para no volver esta suite lenta.

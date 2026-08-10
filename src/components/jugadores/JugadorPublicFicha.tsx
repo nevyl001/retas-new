@@ -21,6 +21,7 @@ import {
   rankingLabelForPublicFicha,
   resolveRegistrationOrganizadorIdForPublicFicha,
 } from "../../lib/rivieraJugadores/publicFichaRanking";
+import { clearPublicFichaHandoff, takePublicFichaHandoff } from "../../lib/rivieraJugadores/publicFichaHandoff";
 import { getOrganizerDisplayNameSync } from "../../lib/organizer/organizerDisplayName";
 import { getRedesPublicas } from "../../lib/rivieraJugadores/jugadorRedes";
 import { normalizeRivieraGenero } from "../../lib/rivieraJugadores/genero";
@@ -74,7 +75,8 @@ function FichaTopbar({ rankingUrl }: { rankingUrl: string }) {
 
 function FichaSkeleton() {
   return (
-    <div className="rjp-ficha-skel" aria-busy="true" aria-label="Cargando perfil">
+    <div className="rjp-ficha-skel" aria-busy="true" aria-label="Cargando jugador">
+      <p className="rjp-ficha-skel__label">Cargando jugador…</p>
       <div className="rjp-ficha-skel__block rjp-ficha-skel__hero" />
       <div className="rjp-ficha-skel__block rjp-ficha-skel__row" />
       <div className="rjp-ficha-skel__block rjp-ficha-skel__chart" />
@@ -83,21 +85,8 @@ function FichaSkeleton() {
   );
 }
 
-/**
- * Techo de espera: nunca dejar el skeleton sin salida (incidente de
- * rendimiento 2026-08-05, ficha pública tardando 15s+). No cancela el
- * trabajo real del servidor -- withTimeout solo acota cuánto espera este
- * componente antes de mostrar un error con reintento.
- */
 const LOAD_TIMEOUT_MS = 20_000;
 
-/**
- * Corre `fn`, pero descarta el resultado si ya no es la carga vigente (evita
- * que un doble-invoke de React StrictMode, o un cambio rápido de slug/org,
- * deje una respuesta vieja pisando una más nueva). `getPublicPlayerProfileData`
- * no soporta AbortSignal hoy -- esto no cancela la red, solo protege el
- * setState final.
- */
 function useLatestGuard() {
   const tokenRef = useRef(0);
   const next = useCallback(() => {
@@ -106,6 +95,48 @@ function useLatestGuard() {
     return () => token === tokenRef.current;
   }, []);
   return next;
+}
+
+function handoffToJugador(
+  handoff: NonNullable<ReturnType<typeof takePublicFichaHandoff>>
+): RivieraJugadorWithStats {
+  return {
+    id: handoff.jugadorId,
+    nombre: handoff.nombre,
+    slug: handoff.jugadorId,
+    foto_url: handoff.fotoUrl,
+    categoria: handoff.categoria as RivieraJugadorWithStats["categoria"],
+    genero: (handoff.genero as RivieraJugadorWithStats["genero"]) ?? "M",
+    organizador_id: handoff.organizadorId,
+    estado: "activo",
+    visible_publico: true,
+    riviera_id: handoff.rivieraId,
+    rating: null,
+    rating_partidos: 0,
+    rating_fiabilidad: null,
+    stats:
+      handoff.puntosClub != null
+        ? {
+            jugador_id: handoff.jugadorId,
+            total_partidos: 0,
+            victorias: 0,
+            derrotas: 0,
+            empates: 0,
+            participaciones_solo: 0,
+            pct_victorias: 0,
+            total_retas: 0,
+            total_torneos_express: 0,
+            total_ligas: 0,
+            total_americanos: 0,
+            sets_favor_total: 0,
+            sets_contra_total: 0,
+            racha_actual: "",
+            ultima_actividad: null,
+            puntos_totales: handoff.puntosClub,
+            updated_at: new Date().toISOString(),
+          }
+        : undefined,
+  } as unknown as RivieraJugadorWithStats;
 }
 
 export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
@@ -121,14 +152,34 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   const [hasOrgContext, setHasOrgContext] = useState(Boolean(viewingOrgId?.trim()));
   const [rankingPos, setRankingPos] = useState<number | null>(null);
   const [historialRating, setHistorialRating] = useState<RatingHistorialEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  /** Hero aún no tiene fila base (ni handoff). */
+  const [heroLoading, setHeroLoading] = useState(true);
+  /** Carrera / rating / historial aún en vuelo. */
+  const [detailLoading, setDetailLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const nextLoadToken = useLatestGuard();
 
   const load = useCallback(async () => {
     const isCurrent = nextLoadToken();
-    setLoading(true);
     setLoadError(null);
+    setDetailLoading(true);
+
+    const handoff = takePublicFichaHandoff(viewingOrgId, playerId);
+    if (handoff && isCurrent()) {
+      setJugador(handoffToJugador(handoff));
+      // # provisional del handoff; la verdad final siempre es la RPC 1-jugador.
+      setRankingPos(handoff.posicion);
+      setHasOrgContext(true);
+      setHeroLoading(false);
+    } else {
+      setHeroLoading(true);
+      setJugador(null);
+      setRankingPos(null);
+      setHistorial([]);
+      setHistorialOtrosClubes([]);
+      setHistorialRating([]);
+    }
+
     try {
       const profile = await withTimeout(
         getPublicPlayerProfileData({
@@ -136,24 +187,55 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           slug,
           viewingOrgId,
           ratingRpc: viewingOrgId ? PUBLIC_ORGANIZER_RPC_FALLBACK : undefined,
+          onHeroReady: (heroJugador) => {
+            if (!isCurrent()) return;
+            setJugador((prev) => {
+              if (!prev) return heroJugador;
+              return {
+                ...heroJugador,
+                stats: heroJugador.stats ?? prev.stats,
+                riviera_id: heroJugador.riviera_id ?? prev.riviera_id,
+                foto_url: heroJugador.foto_url ?? prev.foto_url,
+              };
+            });
+            setHeroLoading(false);
+          },
+          onRankingPosReady: (pos) => {
+            if (!isCurrent()) return;
+            if (pos != null && pos > 0) setRankingPos(pos);
+          },
         }),
         { timeoutMs: LOAD_TIMEOUT_MS, label: "El perfil del jugador" }
       );
       if (!isCurrent()) return;
 
       if (!profile) {
-        setJugador(null);
-        setRankingPos(null);
+        if (!handoff) {
+          setJugador(null);
+          setRankingPos(null);
+        }
         setHistorial([]);
         setHistorialOtrosClubes([]);
         setHistorialRating([]);
+        setHeroLoading(false);
+        setDetailLoading(false);
         return;
       }
 
-      // Evita flash con labels fallback («Riviera Open»): nombres antes de pintar.
-      // Falla no crítica: si esto tarda o falla, el perfil igual debe mostrarse
-      // (con el nombre de club que ya esté en caché) en vez de quedar vacío.
-      await prefetchOrganizerDisplayNames([
+      setJugador(profile.jugador);
+      setHasOrgContext(profile.hasOrgContext);
+      setHistorial(profile.historialMain);
+      setHistorialOtrosClubes(profile.historialOtrosClubes);
+      setHistorialRating(profile.historialRating);
+      // Conservar # del handoff si la RPC aún no devolvió posición.
+      setRankingPos((prev) =>
+        profile.localRankingPos != null ? profile.localRankingPos : prev
+      );
+      setHeroLoading(false);
+      setDetailLoading(false);
+      clearPublicFichaHandoff(viewingOrgId, playerId);
+
+      void prefetchOrganizerDisplayNames([
         profile.viewingOrgId,
         profile.identity.homeOrganizadorId,
         profile.jugador.grantedAccess?.ownerOrganizadorId,
@@ -169,33 +251,24 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
           errorLogPayload(e)
         );
       });
-      if (!isCurrent()) return;
-
-      setJugador(profile.jugador);
-      setHasOrgContext(profile.hasOrgContext);
-      setHistorial(profile.historialMain);
-      setHistorialOtrosClubes(profile.historialOtrosClubes);
-      setHistorialRating(profile.historialRating);
-      setRankingPos(profile.localRankingPos);
     } catch (e) {
       if (!isCurrent()) return;
       console.warn("[JugadorPublicFicha] load:", errorLogPayload(e));
       setLoadError(`No se pudo cargar el perfil. ${errorMessage(e)}`);
-      setJugador(null);
-      setRankingPos(null);
+      if (!handoff) {
+        setJugador(null);
+        setRankingPos(null);
+      }
       setHistorial([]);
       setHistorialOtrosClubes([]);
       setHistorialRating([]);
-    } finally {
-      if (isCurrent()) setLoading(false);
+      setHeroLoading(false);
+      setDetailLoading(false);
     }
   }, [slug, viewingOrgId, playerId, nextLoadToken]);
 
   useEffect(() => {
     void load();
-    // load() ya se auto-descarta si queda obsoleto (useLatestGuard, protege
-    // contra el doble-invoke de React StrictMode y cambios rápidos de
-    // slug/org) -- no hace falta cleanup de cancelación aquí.
   }, [load]);
 
   const rankingUrl = hasOrgContext
@@ -218,9 +291,6 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
     [historial, historialOtrosClubes]
   );
 
-  // Falla en la derivación de "últimos resultados"/stats (dato secundario)
-  // no debe tumbar la ficha completa (nombre/ranking/puntos ya cargados) --
-  // se degrada esa sección sola en vez de dejar la página entera en blanco.
   const historialItems = useMemo(() => {
     try {
       return filterParticipacionesHistorialVisible(historialCompleto)
@@ -276,7 +346,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
   const recentActivity = useMemo(() => historialItems.slice(0, 3), [historialItems]);
 
-  if (loading) {
+  if (heroLoading && !jugador) {
     return (
       <ClubExperienceScope
         organizadorId={viewingOrgId}
@@ -396,6 +466,10 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                         <span className="rjp-ficha-hero__rank-badge">
                           {rankingLabel} #{rankingPos}
                         </span>
+                      ) : detailLoading ? (
+                        <span className="rjp-ficha-hero__rank-badge rjp-ficha-hero__rank-badge--pending">
+                          {rankingLabel} …
+                        </span>
                       ) : null}
                     </div>
 
@@ -487,23 +561,35 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
 
           <div className="rjp-ficha__col rjp-ficha__col--rating">
             <section className="rjp-ficha-card rjp-ficha-rating">
-              <RatingNivel
-                layout="standalone"
-                density="compact"
-                rating={jugador.rating ?? 3}
-                fiabilidad={jugador.rating_fiabilidad ?? 0.2}
-                partidosJugados={jugador.rating_partidos ?? 0}
-                historial={historialRating}
-              />
+              {detailLoading && historialRating.length === 0 ? (
+                <div className="rjp-ficha-skel rjp-ficha-skel--secondary" aria-busy="true">
+                  <div className="rjp-ficha-skel__block rjp-ficha-skel__chart" />
+                </div>
+              ) : (
+                <RatingNivel
+                  layout="standalone"
+                  density="compact"
+                  rating={jugador.rating ?? 3}
+                  fiabilidad={jugador.rating_fiabilidad ?? 0.2}
+                  partidosJugados={jugador.rating_partidos ?? 0}
+                  historial={historialRating}
+                />
+              )}
             </section>
           </div>
 
           <div className="rjp-ficha__col rjp-ficha__col--historial">
-            <JugadorPublicHistorial
-              participaciones={historial}
-              otrosClubesParticipaciones={historialOtrosClubes}
-              categoriaFallback={jugador.categoria}
-            />
+            {detailLoading && historial.length === 0 ? (
+              <div className="rjp-ficha-skel rjp-ficha-skel--secondary" aria-busy="true">
+                <div className="rjp-ficha-skel__block rjp-ficha-skel__list" />
+              </div>
+            ) : (
+              <JugadorPublicHistorial
+                participaciones={historial}
+                otrosClubesParticipaciones={historialOtrosClubes}
+                categoriaFallback={jugador.categoria}
+              />
+            )}
           </div>
 
           <div className="rjp-ficha__col rjp-ficha__col--summary">

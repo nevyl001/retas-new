@@ -114,10 +114,20 @@ export type GetPublicPlayerProfileInput = {
   historialLimit?: number;
   includeDebug?: boolean;
   /**
-   * Omite listInternalClubJugadoresRanking (ranking completo del club).
-   * Ficha admin no muestra localRankingPos; ficha pública debe dejarlo en false (default).
+   * Omite la resolución de # en ranking del club.
+   * La ficha pública obtiene # vía RPC 1-jugador (o handoff), nunca vía roster N.
    */
   skipRankingPosicion?: boolean;
+  /**
+   * Paint progresivo: fila mínima (nombre/foto/cat) tan pronto exista.
+   * No debe hacer trabajo pesado.
+   */
+  onHeroReady?: (jugador: RivieraJugadorWithStats) => void;
+  /**
+   * Paint progresivo del #: tan pronto resuelva la RPC 1-jugador (0024),
+   * sin esperar carrera/historial/rating.
+   */
+  onRankingPosReady?: (posicion: number | null) => void;
 };
 
 export type GetAdminPlayerProfileInput = {
@@ -408,7 +418,12 @@ export async function resolvePlayerIdentity(
     homeOrganizadorId: linkage.homeOrganizadorId,
     slug,
     grantsContext,
-    knownViewingRow: knownRow?.id === anchorJugadorId ? knownRow : undefined,
+    // Reutilizar fila early aunque el deep-link haya entrado por source id
+    // (knownRow.id = local, anchor = source).
+    knownViewingRow:
+      knownRow && viewOrg && knownRow.organizador_id === viewOrg
+        ? knownRow
+        : undefined,
   });
 
   if (!display) return null;
@@ -542,6 +557,8 @@ export async function getPublicPlayerProfileData(
     historialLimit = 100,
     includeDebug = false,
     skipRankingPosicion = false,
+    onHeroReady,
+    onRankingPosReady,
   } = params;
 
   const org = viewingOrgId?.trim() || null;
@@ -553,14 +570,114 @@ export async function getPublicPlayerProfileData(
     ? { kind: "jugadorId", jugadorId: playerId.trim() }
     : { kind: "slug", slug: slug?.trim() ?? "" };
 
-  const identity = await resolvePlayerIdentity(input, org);
+  const { normalizeRivieraGenero } = await import("./genero");
+
+  // Hero lite + # temprano (RPC 0024) sin esperar identidad/carrera/rating.
+  let early: RivieraJugadorWithStats | null = null;
+  let posicionPromise: Promise<number | null> = Promise.resolve(null);
+
+  if (org && playerId?.trim()) {
+    try {
+      early = await getRivieraJugadorInternalClubById(
+        playerId.trim(),
+        org,
+        undefined,
+        undefined,
+        { lite: true }
+      );
+      if (early) {
+        try {
+          onHeroReady?.(early);
+        } catch {
+          /* ignore */
+        }
+        if (!skipRankingPosicion) {
+          const genero = normalizeRivieraGenero(early.genero) ?? "M";
+          const { getClubRankingPosicionForJugador } = await import(
+            "./clubRankingPosicion"
+          );
+          posicionPromise = getClubRankingPosicionForJugador(
+            org,
+            early.id,
+            early.categoria,
+            genero
+          )
+            .then((row) => {
+              const pos =
+                row != null && row.posicion > 0 ? row.posicion : null;
+              try {
+                onRankingPosReady?.(pos);
+              } catch {
+                /* ignore */
+              }
+              return pos;
+            })
+            .catch(() => {
+              try {
+                onRankingPosReady?.(null);
+              } catch {
+                /* ignore */
+              }
+              return null;
+            });
+        }
+      }
+    } catch {
+      /* identity path reintenta */
+    }
+  }
+
+  const identity = await resolvePlayerIdentity(
+    input,
+    org,
+    undefined,
+    early ?? undefined
+  );
   if (!identity) return null;
 
+  let jugador: RivieraJugadorWithStats = {
+    ...identity.displayJugador,
+    ...(identity.rivieraId && !identity.displayJugador.riviera_id
+      ? { riviera_id: identity.rivieraId }
+      : {}),
+  };
+
+  try {
+    onHeroReady?.(jugador);
+  } catch {
+    /* el caller no debe tumbar el perfil */
+  }
+
+  // Si no hubo early (slug/rivieraId), dispara # ahora — aún antes de carrera.
+  const needsLatePosicion = !skipRankingPosicion && org && early == null;
+  if (needsLatePosicion) {
+    posicionPromise = resolveRankingPosicionForPublicFicha(jugador, {
+      orgId: org,
+      preferClubRanking: true,
+    })
+      .then((pos) => {
+        try {
+          onRankingPosReady?.(pos);
+        } catch {
+          /* ignore */
+        }
+        return pos;
+      })
+      .catch(() => {
+        try {
+          onRankingPosReady?.(null);
+        } catch {
+          /* ignore */
+        }
+        return null;
+      });
+  }
+
+  // Carrera en paralelo con # (si # ya iba en vuelo desde early).
   const careerBundle = await resolvePlayerCareer(identity, historialLimit);
   const historialGlobal = careerBundle.participaciones;
   const career = await resolvePlayerPoints(identity, careerBundle);
 
-  let jugador = identity.displayJugador;
   const careerJugador = await attachCareerPuntosToJugador(jugador, {
     linkedJugadorIds: identity.linkedJugadorIds,
     participaciones: historialGlobal,
@@ -578,15 +695,23 @@ export async function getPublicPlayerProfileData(
   };
   jugador = { ...jugador, ...careerFields };
 
-  const ratingView = await loadUnifiedRatingViewForJugador(jugador, {
-    limite: 10,
-    organizadorId: null,
-    participacionesHistorial: historialGlobal,
-    fetchHistorial: obtenerHistorialRatingPublic,
-    rpc: hasOrgContext ? ratingRpc : undefined,
-  });
+  const [ratingView, localRankingPosFromLite, localContext] = await Promise.all([
+    loadUnifiedRatingViewForJugador(jugador, {
+      limite: 10,
+      organizadorId: null,
+      participacionesHistorial: historialGlobal,
+      fetchHistorial: obtenerHistorialRatingPublic,
+      rpc: hasOrgContext ? ratingRpc : undefined,
+    }),
+    posicionPromise,
+    resolvePlayerLocalContext(identity, jugador, {
+      ratingRpc,
+      skipRankingPosicion: true,
+    }),
+  ]);
 
   jugador = { ...ratingView.jugador, ...careerFields };
+  jugador = { ...localContext.jugador, ...careerFields };
 
   if (!hasOrgContext && careerJugador.officialPuntosGlobal != null) {
     const statsBase = jugador.stats ?? emptyStats(jugador.id);
@@ -599,12 +724,6 @@ export async function getPublicPlayerProfileData(
     };
   }
 
-  const localContext = await resolvePlayerLocalContext(identity, jugador, {
-    ratingRpc,
-    skipRankingPosicion,
-  });
-  jugador = { ...localContext.jugador, ...careerFields };
-
   const pointsBreakdown = await resolvePlayerPointsBreakdown({
     jugador,
     identity,
@@ -612,6 +731,10 @@ export async function getPublicPlayerProfileData(
     participaciones: historialGlobal,
   });
   jugador = { ...jugador, pointsBreakdown };
+
+  const localRankingPos = skipRankingPosicion
+    ? null
+    : localRankingPosFromLite;
 
   const debug: PlayerIdentityDebugSnapshot | undefined = includeDebug
     ? {
@@ -631,7 +754,7 @@ export async function getPublicPlayerProfileData(
     identity,
     viewingOrgId: org,
     hasOrgContext,
-    localRankingPos: localContext.localRankingPos,
+    localRankingPos,
     historialGlobal,
     historialMain: historialGlobal,
     historialOtrosClubes: [],

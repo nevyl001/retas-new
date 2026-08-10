@@ -3,6 +3,10 @@ import { resolvePublicOrganizadorId } from "../../lib/rivieraJugadores/publicOrg
 import { buildMarketingOfficialRankingsUrl } from "../../lib/rivieraOfficialSite";
 import type { RivieraJugadorGenero } from "../../lib/rivieraJugadores/genero";
 import { parseRivieraGeneroFromPath } from "../../lib/rivieraJugadores/genero";
+import {
+  savePublicFichaHandoff,
+  type PublicFichaHandoff,
+} from "../../lib/rivieraJugadores/publicFichaHandoff";
 
 const RANKING_SEGMENT: Record<RivieraJugadorGenero, string> = {
   M: "varonil",
@@ -120,8 +124,12 @@ export function navigatePublicJugadorFicha(
 
 export function navigateInternalClubJugadorFicha(
   jugadorId: string,
-  orgId: string
+  orgId: string,
+  handoff?: Omit<PublicFichaHandoff, "savedAt">
 ): void {
+  if (handoff) {
+    savePublicFichaHandoff(handoff);
+  }
   navigateAppTo(buildInternalClubJugadorPath(jugadorId, orgId));
 }
 

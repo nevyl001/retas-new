@@ -732,19 +732,77 @@ async function fetchGrantedJugadorForInternalClub(
   return mapped;
 }
 
+function knownRowMatchesLookup(
+  knownRow: RivieraJugadorWithStats,
+  lookupId: string,
+  organizadorId: string
+): boolean {
+  const org = organizadorId.trim();
+  const id = lookupId.trim();
+  if (!org || !id) return false;
+  if (knownRow.organizador_id !== org) return false;
+  if (knownRow.id === id) return true;
+  const sourceId = knownRow.grantedAccess?.sourceJugadorId?.trim();
+  return Boolean(sourceId && sourceId === id);
+}
+
 export async function getRivieraJugadorInternalClubById(
   jugadorId: string,
   organizadorId: string,
   grantsContext?: FindGrantedAccessMetaOptions,
-  knownRow?: RivieraJugadorWithStats
+  knownRow?: RivieraJugadorWithStats,
+  options?: { lite?: boolean }
 ): Promise<RivieraJugadorWithStats | null> {
+  const lite = Boolean(options?.lite);
+
+  if (knownRow && knownRowMatchesLookup(knownRow, jugadorId, organizadorId)) {
+    if (lite) {
+      return enrichJugadorWithRivieraId(knownRow, { publicRanking: true });
+    }
+    const enrichedKnown = await enrichInternalClubJugadorGrant(
+      organizadorId,
+      knownRow,
+      PUBLIC_ORGANIZER_RPC_FALLBACK,
+      grantsContext
+    );
+    return enrichJugadorWithRivieraId(enrichedKnown, { publicRanking: true });
+  }
+
+  // 1) Membresía canónica del ranking público del club (0025).
+  try {
+    const {
+      resolvePublicClubPlayerContext,
+      mapPublicClubPlayerContextToJugador,
+    } = await import("./publicClubPlayerContext");
+    const ctx = await resolvePublicClubPlayerContext(organizadorId, jugadorId);
+    if (ctx) {
+      const mapped = mapPublicClubPlayerContextToJugador(ctx);
+      if (lite) {
+        // Hero early: sin enrich grant pesado (list_public_grants / source / stats).
+        return enrichJugadorWithRivieraId(mapped, { publicRanking: true });
+      }
+      const enriched = await enrichInternalClubJugadorGrant(
+        organizadorId,
+        mapped,
+        PUBLIC_ORGANIZER_RPC_FALLBACK,
+        grantsContext
+      );
+      return enrichJugadorWithRivieraId(enriched, { publicRanking: true });
+    }
+  } catch (e) {
+    console.warn("[getRivieraJugadorInternalClubById] public club context:", e);
+  }
+
+  // 2) Fallback legacy (RPC 0025 ausente o sin match): interno + grant TS.
   const direct = await fetchInternalClubJugadorRow(
     organizadorId,
     { jugadorId },
-    grantsContext,
-    knownRow
+    grantsContext
   );
   if (direct) return enrichJugadorWithRivieraId(direct, { publicRanking: true });
+
+  if (lite) return null;
+
   const granted = await fetchGrantedJugadorForInternalClub(
     organizadorId,
     jugadorId,
@@ -2582,22 +2640,25 @@ export async function listPublicJugadoresRanking(
   return enrichJugadoresWithRivieraId(sorted);
 }
 
-/** Posición # en el ranking interno del club (empates comparten número). */
+/**
+ * Posición # en el ranking interno del club (empates comparten número).
+ * 1-jugador: NO carga ni enriquece el roster completo (incidente perf ficha 2026-08-09).
+ */
 export async function getRankingPosicionEnCategoria(
   organizadorId: string,
   jugadorId: string,
   categoria: string,
   genero: RivieraJugadorGenero = "M",
-  rpcOptions?: RatingRpcFallbackOptions
+  _rpcOptions?: RatingRpcFallbackOptions
 ): Promise<number | null> {
-  const { rankingPosicionEnListaForClub } = await import("./rankingPosition");
-  const list = await listInternalClubJugadoresRanking(
+  const { getClubRankingPosicionForJugador } = await import("./clubRankingPosicion");
+  const row = await getClubRankingPosicionForJugador(
     organizadorId,
+    jugadorId,
     categoria,
-    genero,
-    rpcOptions
+    genero
   );
-  return rankingPosicionEnListaForClub(list, jugadorId);
+  return row != null && row.posicion > 0 ? row.posicion : null;
 }
 
 /**

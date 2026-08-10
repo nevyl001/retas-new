@@ -15,7 +15,7 @@ import { RIVIERA_RANKING_PUBLIC_POLL_INTERVAL_MS } from "../../lib/rivieraJugado
 import { listInternalClubJugadoresRanking } from "../../lib/rivieraJugadores/rivieraJugadoresService";
 import { resolveOrganizerDisplayName } from "../../lib/organizer/organizerDisplayName";
 import { subscribeRivieraRanking } from "../../lib/rivieraJugadores/subscribeRivieraRanking";
-import { rankingPosicionesFromSortedForClub } from "../../lib/rivieraJugadores/rankingPosition";
+import { rankingPosicionesFromSortedForClub, rankingPuntosClubLocal } from "../../lib/rivieraJugadores/rankingPosition";
 import { useVisiblePolling } from "../../hooks/useVisiblePolling";
 import {
   prefetchOrganizerDisplayNames,
@@ -292,12 +292,25 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
   const openPlayer = useCallback(
     (j: RivieraJugadorWithStats) => {
       if (orgId) {
-        navigateInternalClubJugadorFicha(j.id, orgId);
+        const idx = jugadoresVisibles.findIndex((row) => row.id === j.id);
+        const pos =
+          idx >= 0 && rankingRanks[idx] != null ? rankingRanks[idx]! : null;
+        navigateInternalClubJugadorFicha(j.id, orgId, {
+          jugadorId: j.id,
+          organizadorId: orgId,
+          nombre: j.nombre,
+          fotoUrl: j.foto_url ?? null,
+          categoria: j.categoria,
+          genero: j.genero ?? null,
+          posicion: pos,
+          puntosClub: rankingPuntosClubLocal(j, orgId),
+          rivieraId: j.riviera_id ?? null,
+        });
         return;
       }
       navigatePublicJugadorFicha(j.slug);
     },
-    [orgId]
+    [orgId, rankingRanks, jugadoresVisibles]
   );
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
