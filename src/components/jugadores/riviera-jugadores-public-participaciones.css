@@ -372,6 +372,12 @@
   color: var(--rjp-part-panel-text);
 }
 
+/* "N pts" del resumen: número + unidad en blanco legible. */
+.rjp-part-overlay__summary-pts {
+  color: var(--rjp-part-panel-text);
+  font-weight: 700;
+}
+
 .rjp-part-overlay__skeleton {
   display: flex;
   flex-direction: column;
@@ -497,7 +503,8 @@
 .rjp-part-overlay__item-pts {
   font-size: 0.8125rem;
   font-weight: 700;
-  color: var(--brand-accent, var(--accent-gold-light, #e8c96a));
+  /* Blanco del panel: --brand-accent puede ser tinta oscura (Riviera) e ilegible aquí. */
+  color: var(--rjp-part-panel-text);
   white-space: nowrap;
 }
 
@@ -625,7 +632,7 @@
 
 .rjp-part-cal__detail-pts {
   margin-left: auto;
-  color: var(--brand-accent, var(--accent-gold-light, #e8c96a));
+  color: var(--rjp-part-panel-text);
   font-weight: 700;
   font-size: 0.75rem;
 }

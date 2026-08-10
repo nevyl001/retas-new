@@ -135,7 +135,9 @@ export const ParticipacionesDetalleOverlay: React.FC<
           <p className="rjp-part-overlay__month">{formatYearMonthLong(ym)}</p>
           <p className="rjp-part-overlay__summary">
             <strong>{jugador.total_participaciones}</strong> {personaLabel} ·{" "}
-            <strong>{jugador.puntos_mes}</strong> pts
+            <span className="rjp-part-overlay__summary-pts">
+              {jugador.puntos_mes} pts
+            </span>
           </p>
 
           {loading ? (
