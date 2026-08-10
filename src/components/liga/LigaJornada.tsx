@@ -469,12 +469,24 @@ export const LigaJornadaView: React.FC<LigaJornadaProps> = ({
     setBusy(true);
     setError(null);
     try {
-      await finishJornada(jornada.id);
-      setMessage(
-        jornada.puntos_aplicados
-          ? "Ranking recalculado desde la base de datos."
-          : "Jornada finalizada. Puntos aplicados al ranking."
-      );
+      const outcome = await finishJornada(jornada.id);
+      if (outcome.careerSyncOk === false) {
+        setError(
+          outcome.careerSyncMessage ||
+            "La jornada se cerró en la liga, pero no se registró el historial Riviera."
+        );
+        setMessage(
+          jornada.puntos_aplicados
+            ? "Ranking recalculado; historial Riviera pendiente."
+            : "Jornada finalizada; historial Riviera pendiente."
+        );
+      } else {
+        setMessage(
+          jornada.puntos_aplicados
+            ? "Ranking recalculado desde la base de datos."
+            : "Jornada finalizada. Puntos aplicados al ranking."
+        );
+      }
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");

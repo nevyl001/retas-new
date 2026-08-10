@@ -24,6 +24,34 @@ const AccountFeaturesContext = createContext<
   AccountFeaturesContextType | undefined
 >(undefined);
 
+const modesCacheKey = (userId: string) =>
+  `riviera_account_game_modes_v1:${userId}`;
+
+function readCachedModes(
+  userId: string
+): Record<GameModeId, boolean> | null {
+  try {
+    const raw = sessionStorage.getItem(modesCacheKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<GameModeId, boolean>;
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedModes(
+  userId: string,
+  modes: Record<GameModeId, boolean>
+): void {
+  try {
+    sessionStorage.setItem(modesCacheKey(userId), JSON.stringify(modes));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 export const AccountFeaturesProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -31,7 +59,7 @@ export const AccountFeaturesProvider: React.FC<{ children: React.ReactNode }> = 
   const [enabledModes, setEnabledModes] = useState<Record<
     GameModeId,
     boolean
-  > | null>(null);
+  > | null>(() => (user?.id ? readCachedModes(user.id) : null));
   const [permiteAjustePuntosManuales, setPermiteAjustePuntosManuales] =
     useState(true);
   const [visibleRankingOficial, setVisibleRankingOficial] = useState(false);
@@ -45,14 +73,20 @@ export const AccountFeaturesProvider: React.FC<{ children: React.ReactNode }> = 
       setLoading(false);
       return;
     }
+    // No vaciar enabledModes al refrescar: evita re-flash UPGRADE.
+    // Si hay caché de sesión, úsala hasta que llegue la respuesta.
+    const cached = readCachedModes(user.id);
+    if (cached) setEnabledModes(cached);
     setLoading(true);
     try {
       const settings = await fetchOrganizadorAccountSettings(user.id);
       setEnabledModes(settings.modes);
+      writeCachedModes(user.id, settings.modes);
       setPermiteAjustePuntosManuales(settings.permiteAjustePuntosManuales);
       setVisibleRankingOficial(settings.visibleRankingOficial);
     } catch {
-      setEnabledModes(null);
+      // Mantener caché/previo si existe; null solo si nunca hubo dato.
+      setEnabledModes((prev) => prev ?? readCachedModes(user.id));
       setPermiteAjustePuntosManuales(true);
       setVisibleRankingOficial(false);
     } finally {

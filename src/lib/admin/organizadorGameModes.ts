@@ -79,7 +79,9 @@ export function isGameModeEnabled(
   modes: Record<GameModeId, boolean> | null | undefined,
   modeId: GameModeId
 ): boolean {
-  if (!modes) return false;
+  // Fail-closed solo cuando ya hay mapa de modos.
+  // null/undefined = aún no cargado → no bloquear (evita flash UPGRADE en home).
+  if (!modes) return true;
   return modes[modeId] !== false;
 }
 

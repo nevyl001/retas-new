@@ -581,20 +581,71 @@ export async function finalizarDuelo2v2(id: string): Promise<FinalizarDuelo2v2Re
   const uid = await requireUserId();
   const duelo = await getDuelo2v2ById(id);
   if (!duelo) throw new Error("Duelo no encontrado.");
-  if (duelo.estado === "finalizado") {
-    return {
-      duelo,
-      careerSyncOk: true,
-      resultSaved: true,
-      careerSynced: true,
-      warnings: [],
-      criticalFailures: [],
-    };
-  }
   if (!duelo.ganador) {
     throw new Error(
       "Registra los sets con al menos 2 ganados por una pareja (al mejor de 3). Si van 1–1, el set decisivo debe tener ganador."
     );
+  }
+
+  const runCareer = async (dueloForSync: Duelo2v2) => {
+    const pipelineResult = await finalizeCareerEvent({
+      kind: "duelo_2v2",
+      organizadorId: uid,
+      duelo: dueloForSync,
+      // Perf batch-1 (2026-08-08): mismo patrón que Reta (identityCache evita
+      // resolver la misma identidad 3-4 veces en pre-close/sync/assertions;
+      // telemetry es instrumentación temporal solo para medir este batch, no
+      // cambia ningún resultado). Ver careerEventPipeline/pipelineTelemetry.ts.
+      options: { telemetry: true, identityCache: true },
+    });
+
+    const careerSyncOk = pipelineResult.ok;
+    const warnings = pipelineResult.warnings.map((f) => f.message);
+    const criticalFailures = pipelineResult.criticalFailures.map((f) => f.message);
+    let careerSyncMessage: string | undefined;
+    if (!careerSyncOk) {
+      careerSyncMessage =
+        criticalFailures.join("; ") ||
+        "No se pudo registrar el historial del duelo.";
+      console.error(
+        "[career-event-pipeline] duelo 2v2 incompleto:",
+        pipelineResult.criticalFailures
+      );
+    } else if (warnings.length > 0 && process.env.NODE_ENV !== "production") {
+      console.warn(
+        "[career-event-pipeline] duelo 2v2 warnings:",
+        pipelineResult.warnings
+      );
+    }
+
+    return {
+      careerSyncOk,
+      careerSyncMessage,
+      resultSaved: pipelineResult.resultSaved,
+      careerSynced: pipelineResult.careerSynced,
+      warnings,
+      criticalFailures,
+    };
+  };
+
+  // Ya finalizado: reintento idempotente de carrera/ROMC. Nunca inventar
+  // careerSyncOk=true sin ejecutar (o verificar) el pipeline.
+  if (duelo.estado === "finalizado") {
+    const career = await runCareer(duelo);
+    return {
+      duelo,
+      ...career,
+    };
+  }
+
+  // Primer cierre: carrera ANTES de marcar finalizado. Si falla, el evento
+  // permanece recuperable (no queda "cerrado" con historial perdido).
+  const career = await runCareer(duelo);
+  if (!career.careerSyncOk) {
+    return {
+      duelo,
+      ...career,
+    };
   }
 
   const now = new Date().toISOString();
@@ -612,36 +663,6 @@ export async function finalizarDuelo2v2(id: string): Promise<FinalizarDuelo2v2Re
   if (error) throw new Error(formatDueloDbError(error));
   const finalizado = mapDuelo(data as Record<string, unknown>);
 
-  const pipelineResult = await finalizeCareerEvent({
-    kind: "duelo_2v2",
-    organizadorId: uid,
-    duelo: finalizado,
-    // Perf batch-1 (2026-08-08): mismo patrón que Reta (identityCache evita
-    // resolver la misma identidad 3-4 veces en pre-close/sync/assertions;
-    // telemetry es instrumentación temporal solo para medir este batch, no
-    // cambia ningún resultado). Ver careerEventPipeline/pipelineTelemetry.ts.
-    options: { telemetry: true, identityCache: true },
-  });
-
-  const careerSyncOk = pipelineResult.ok;
-  const warnings = pipelineResult.warnings.map((f) => f.message);
-  const criticalFailures = pipelineResult.criticalFailures.map((f) => f.message);
-  let careerSyncMessage: string | undefined;
-  if (!careerSyncOk) {
-    careerSyncMessage =
-      criticalFailures.join("; ") ||
-      "No se pudo registrar el historial del duelo.";
-    console.error(
-      "[career-event-pipeline] duelo 2v2 incompleto:",
-      pipelineResult.criticalFailures
-    );
-  } else if (warnings.length > 0 && process.env.NODE_ENV !== "production") {
-    console.warn(
-      "[career-event-pipeline] duelo 2v2 warnings:",
-      pipelineResult.warnings
-    );
-  }
-
   try {
     const { clearDuelo2v2CreateSession } = await import(
       "../lib/duelo2v2/duelo2v2CreateDraft"
@@ -653,12 +674,7 @@ export async function finalizarDuelo2v2(id: string): Promise<FinalizarDuelo2v2Re
 
   return {
     duelo: finalizado,
-    careerSyncOk,
-    careerSyncMessage,
-    resultSaved: pipelineResult.resultSaved,
-    careerSynced: pipelineResult.careerSynced,
-    warnings,
-    criticalFailures,
+    ...career,
   };
 }
 

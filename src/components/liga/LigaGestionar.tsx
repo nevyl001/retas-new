@@ -377,8 +377,16 @@ export const LigaGestionar: React.FC<LigaGestionarProps> = ({ ligaId }) => {
     setBusy(true);
     setError(null);
     try {
-      await finishLiga(ligaId);
-      setMessage("Liga finalizada.");
+      const outcome = await finishLiga(ligaId);
+      if (outcome.careerSyncOk === false) {
+        setError(
+          outcome.careerSyncMessage ||
+            "La liga se cerró, pero no se registró el historial Riviera."
+        );
+        setMessage("Liga finalizada; historial Riviera pendiente.");
+      } else {
+        setMessage("Liga finalizada.");
+      }
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");

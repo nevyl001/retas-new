@@ -1660,7 +1660,14 @@ export async function aplicarPuntosJornada(jornadaId: string): Promise<void> {
   await recalcularPuntosLiga(String(jornada.liga_id));
 }
 
-export async function finishJornada(jornadaId: string): Promise<void> {
+export type LigaCareerCloseResult = {
+  careerSyncOk: boolean;
+  careerSyncMessage?: string;
+};
+
+export async function finishJornada(
+  jornadaId: string
+): Promise<LigaCareerCloseResult> {
   await aplicarPuntosJornada(jornadaId);
 
   const userId = await requireUserId();
@@ -1670,39 +1677,58 @@ export async function finishJornada(jornadaId: string): Promise<void> {
     .eq("id", jornadaId)
     .maybeSingle();
 
-  if (!jErr && jornada?.liga_id != null && jornada.numero != null) {
-    // Registro Riviera Open: una participación por jugador y jornada.
-    void import("../lib/rivieraJugadores/careerEventPipeline")
-      .then(({ finalizeCareerEvent }) =>
-        finalizeCareerEvent({
-          kind: "liga_jornada",
+  if (jErr || jornada?.liga_id == null || jornada.numero == null) {
+    return {
+      careerSyncOk: false,
+      careerSyncMessage:
+        "Jornada cerrada en ranking de liga, pero no se pudo localizar para sync de historial.",
+    };
+  }
+
+  // Jornada ya marcada completed en recalcularPuntosLiga; await carrera
+  // (no void) para no perder historial/ROMC en silencio.
+  try {
+    const { finalizeCareerEvent } = await import(
+      "../lib/rivieraJugadores/careerEventPipeline"
+    );
+    const result = await finalizeCareerEvent({
+      kind: "liga_jornada",
+      organizadorId: userId,
+      ligaId: String(jornada.liga_id),
+      jornadaNumero: Number(jornada.numero),
+      options: { telemetry: true, identityCache: true },
+    });
+    if (!result.ok) {
+      console.error(
+        "[riviera-jugadores] sync tras finalizar jornada de liga incompleto:",
+        {
+          ligaId: jornada.liga_id,
+          jornadaNumero: jornada.numero,
+          jornadaId,
           organizadorId: userId,
-          ligaId: String(jornada.liga_id),
-          jornadaNumero: Number(jornada.numero),
-          // Perf batch-1 (2026-08-08): mismo patrón ya probado en Reta.
-          options: { telemetry: true, identityCache: true },
-        })
-      )
-      .then((result) => {
-        if (result && !result.ok) {
-          console.error(
-            "[riviera-jugadores] sync tras finalizar jornada de liga incompleto:",
-            {
-              ligaId: jornada.liga_id,
-              jornadaNumero: jornada.numero,
-              jornadaId,
-              organizadorId: userId,
-              failures: result.failures,
-            }
-          );
+          failures: result.failures,
         }
-      })
-      .catch((err) =>
-        console.error(
-          "[riviera-jugadores] sync tras finalizar jornada de liga:",
-          err
-        )
       );
+      return {
+        careerSyncOk: false,
+        careerSyncMessage:
+          result.criticalFailures.map((f) => f.message).join("; ") ||
+          "La jornada se cerró, pero no se registró el historial Riviera.",
+      };
+    }
+    return { careerSyncOk: true };
+  } catch (err) {
+    console.error(
+      "[riviera-jugadores] sync tras finalizar jornada de liga:",
+      err
+    );
+    return {
+      careerSyncOk: false,
+      careerSyncMessage:
+        err instanceof Error
+          ? err.message
+          : "La jornada se cerró, pero no se registró el historial Riviera.",
+    };
   }
 }
 
@@ -1732,7 +1758,7 @@ export async function actualizarPuntosInscripcion(
   }
 }
 
-export async function finishLiga(ligaId: string): Promise<void> {
+export async function finishLiga(ligaId: string): Promise<LigaCareerCloseResult> {
   await requireUserId();
 
   const detalle = await getLigaById(ligaId);
@@ -1754,27 +1780,39 @@ export async function finishLiga(ligaId: string): Promise<void> {
   if (error) throw new Error(error.message);
 
   const uid = await requireUserId();
-  void import("../lib/rivieraJugadores/careerEventPipeline")
-    .then(({ finalizeCareerEvent }) =>
-      finalizeCareerEvent({
-        kind: "liga_podio",
-        organizadorId: uid,
-        ligaId,
-        // Perf batch-1 (2026-08-08): mismo patrón ya probado en Reta.
-        options: { telemetry: true, identityCache: true },
-      })
-    )
-    .then((result) => {
-      if (result && !result.ok) {
-        console.error(
-          "[riviera-jugadores] sync podio final liga incompleto:",
-          { ligaId, organizadorId: uid, failures: result.failures }
-        );
-      }
-    })
-    .catch((err) =>
-      console.error("[riviera-jugadores] sync podio final liga:", err)
+  try {
+    const { finalizeCareerEvent } = await import(
+      "../lib/rivieraJugadores/careerEventPipeline"
     );
+    const result = await finalizeCareerEvent({
+      kind: "liga_podio",
+      organizadorId: uid,
+      ligaId,
+      options: { telemetry: true, identityCache: true },
+    });
+    if (!result.ok) {
+      console.error(
+        "[riviera-jugadores] sync podio final liga incompleto:",
+        { ligaId, organizadorId: uid, failures: result.failures }
+      );
+      return {
+        careerSyncOk: false,
+        careerSyncMessage:
+          result.criticalFailures.map((f) => f.message).join("; ") ||
+          "La liga se cerró, pero no se registró el historial Riviera (podio).",
+      };
+    }
+    return { careerSyncOk: true };
+  } catch (err) {
+    console.error("[riviera-jugadores] sync podio final liga:", err);
+    return {
+      careerSyncOk: false,
+      careerSyncMessage:
+        err instanceof Error
+          ? err.message
+          : "La liga se cerró, pero no se registró el historial Riviera (podio).",
+    };
+  }
 }
 
 export async function getRanking(ligaId: string): Promise<RankingItem[]> {

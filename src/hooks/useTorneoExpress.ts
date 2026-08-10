@@ -330,8 +330,14 @@ export function useTorneoExpress(
     setFinalizandoTorneo(true);
     setError(null);
     try {
-      await persistFinalizarTorneoEliminatoria(torneoId);
+      const outcome = await persistFinalizarTorneoEliminatoria(torneoId);
       await reload();
+      if (outcome && outcome.careerSyncOk === false) {
+        setError(
+          outcome.careerSyncMessage ||
+            "El torneo se cerró, pero no se registró el historial de jugadores. Puedes reintentar el sync desde administración o contactar soporte."
+        );
+      }
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "No se pudo finalizar el torneo"

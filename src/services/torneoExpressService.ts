@@ -1984,7 +1984,11 @@ export async function resetEliminatoriaTorneoExpress(
 /** Cierra eliminatoria y marca torneo finalizado — solo vía acción explícita del organizador. */
 export async function finalizarTorneoExpressEliminatoria(
   torneoId: string
-): Promise<TorneoExpress> {
+): Promise<{
+  torneo: TorneoExpress;
+  careerSyncOk: boolean;
+  careerSyncMessage?: string;
+}> {
   const user = await requireAuthUser();
 
   const torneo = await fetchTorneoExpress(torneoId);
@@ -2016,33 +2020,44 @@ export async function finalizarTorneoExpressEliminatoria(
 
   await syncParentEventoAfterCategoriaChange(updated);
 
-  // Registro Riviera Open: historial por jugador (no bloquea la finalización).
-  void import("../lib/rivieraJugadores/careerEventPipeline")
-    .then(({ finalizeCareerEvent }) =>
-      finalizeCareerEvent({
-        kind: "torneo_express",
-        organizadorId: user.id,
-        torneoId,
-        // Perf batch-1 (2026-08-08): mismo patrón ya probado en Reta.
-        options: { telemetry: true, identityCache: true },
-      })
-    )
-    .then((result) => {
-      if (result && !result.ok) {
-        console.error(
-          "[riviera-jugadores] sync tras finalizar torneo express incompleto:",
-          { torneoId, organizadorId: user.id, failures: result.failures }
-        );
-      }
-    })
-    .catch((err) =>
-      console.error(
-        "[riviera-jugadores] sync tras finalizar torneo express:",
-        err
-      )
+  // Carrera/ROMC: await (no fire-and-forget). El torneo ya está cerrado porque
+  // syncTorneoExpressParticipaciones exige estado finalizado/cerrado; si falla
+  // la sync, devolvemos careerSyncOk=false para retry/recuperación explícita.
+  let careerSyncOk = true;
+  let careerSyncMessage: string | undefined;
+  try {
+    const { finalizeCareerEvent } = await import(
+      "../lib/rivieraJugadores/careerEventPipeline"
     );
+    const result = await finalizeCareerEvent({
+      kind: "torneo_express",
+      organizadorId: user.id,
+      torneoId,
+      options: { telemetry: true, identityCache: true },
+    });
+    careerSyncOk = Boolean(result?.ok);
+    if (!careerSyncOk) {
+      careerSyncMessage =
+        result.criticalFailures.map((f) => f.message).join("; ") ||
+        "El torneo se cerró, pero no se registró el historial de jugadores.";
+      console.error(
+        "[riviera-jugadores] sync tras finalizar torneo express incompleto:",
+        { torneoId, organizadorId: user.id, failures: result.failures }
+      );
+    }
+  } catch (err) {
+    careerSyncOk = false;
+    careerSyncMessage =
+      err instanceof Error
+        ? err.message
+        : "El torneo se cerró, pero no se registró el historial de jugadores.";
+    console.error(
+      "[riviera-jugadores] sync tras finalizar torneo express:",
+      err
+    );
+  }
 
-  return updated;
+  return { torneo: updated, careerSyncOk, careerSyncMessage };
 }
 
 export async function saveEliminatoriaResultado(
