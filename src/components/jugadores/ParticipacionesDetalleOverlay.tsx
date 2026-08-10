@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { TablerIcon } from "../ui/TablerIcon";
 import { JugadorAvatar } from "./JugadorAvatar";
 import { RivieraIdBadge } from "./RivieraIdBadge";
@@ -20,10 +21,16 @@ interface ParticipacionesDetalleOverlayProps {
   onClose: () => void;
 }
 
+type DetalleFiltro = "todos" | string;
+
 /**
  * Drawer/overlay de transparencia pública: "tiene N participaciones porque
  * jugó estos N eventos". El listado cronológico es SIEMPRE la evidencia
  * principal; el calendario es complementario (nunca la única fuente).
+ *
+ * Se porta a document.body para escapar stacking contexts (p. ej.
+ * isolation:isolate del shell) que dejarían el sheet bajo el
+ * MobileAppNavigation.
  */
 export const ParticipacionesDetalleOverlay: React.FC<
   ParticipacionesDetalleOverlayProps
@@ -31,11 +38,13 @@ export const ParticipacionesDetalleOverlay: React.FC<
   const [detalle, setDetalle] = useState<ParticipacionDetalleRow[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filtroTipo, setFiltroTipo] = useState<DetalleFiltro>("todos");
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setFiltroTipo("todos");
     void listParticipacionesMensualDetalle(organizadorId, jugador.jugador_id, ym).then(
       (data) => {
         if (cancelled) return;
@@ -53,17 +62,41 @@ export const ParticipacionesDetalleOverlay: React.FC<
   }, [organizadorId, jugador.jugador_id, ym]);
 
   useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [onClose]);
+
+  const tiposDisponibles = useMemo(() => {
+    if (!detalle) return [] as string[];
+    const seen = new Set<string>();
+    const ordered: string[] = [];
+    for (const row of detalle) {
+      const t = row.tipo_evento?.trim();
+      if (!t || seen.has(t)) continue;
+      seen.add(t);
+      ordered.push(t);
+    }
+    return ordered;
+  }, [detalle]);
+
+  const detalleFiltrado = useMemo(() => {
+    if (!detalle) return [];
+    if (filtroTipo === "todos") return detalle;
+    return detalle.filter((d) => d.tipo_evento === filtroTipo);
+  }, [detalle, filtroTipo]);
 
   const personaLabel =
     jugador.total_participaciones === 1 ? "participación" : "participaciones";
 
-  return (
+  return createPortal(
     <div
       className="rjp-part-overlay"
       role="dialog"
@@ -123,14 +156,46 @@ export const ParticipacionesDetalleOverlay: React.FC<
             <>
               <ParticipacionesActivityCalendar ym={ym} detalle={detalle} />
 
-              <h3 className="rjp-part-overlay__list-title">Detalle cronológico</h3>
-              {detalle.length === 0 ? (
+              <div className="rjp-part-overlay__list-head">
+                <h3 className="rjp-part-overlay__list-title">Detalle cronológico</h3>
+                <label className="rjp-part-overlay__filter">
+                  <span className="sr-only">Filtrar historial por modalidad</span>
+                  <select
+                    className="rjp-part-overlay__filter-select"
+                    value={filtroTipo}
+                    onChange={(e) => setFiltroTipo(e.target.value)}
+                    aria-label="Filtrar historial por modalidad"
+                  >
+                    <option value="todos">
+                      Todos ({detalle.length})
+                    </option>
+                    {tiposDisponibles.map((tipo) => {
+                      const count = detalle.filter((d) => d.tipo_evento === tipo).length;
+                      return (
+                        <option key={tipo} value={tipo}>
+                          {participacionTipoEventoLabel(tipo)} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <TablerIcon
+                    name="chevron-down"
+                    size={16}
+                    className="rjp-part-overlay__filter-chev"
+                    aria-hidden
+                  />
+                </label>
+              </div>
+
+              {detalleFiltrado.length === 0 ? (
                 <p className="rjp-part-overlay__empty">
-                  Sin participaciones registradas este mes.
+                  {detalle.length === 0
+                    ? "Sin participaciones registradas este mes."
+                    : "Sin participaciones para este filtro."}
                 </p>
               ) : (
                 <ul className="rjp-part-overlay__list">
-                  {detalle.map((d) => (
+                  {detalleFiltrado.map((d) => (
                     <li key={d.participacion_id} className="rjp-part-overlay__item">
                       <span className="rjp-part-overlay__item-date">
                         {formatDetalleFechaShort(d.fecha)}
@@ -156,6 +221,7 @@ export const ParticipacionesDetalleOverlay: React.FC<
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

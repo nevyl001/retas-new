@@ -121,35 +121,33 @@ export const JugadorPublicHistorial: React.FC<JugadorPublicHistorialProps> = ({
         </div>
       </header>
 
-      <div
-        className="rjp-ficha-historial__tabs"
-        role="tablist"
-        aria-label="Filtrar historial"
-      >
-        {HISTORIAL_TABS.map((tab) => {
-          const count = counts[tab.id];
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              className={`rjp-ficha-historial__tab${
-                isActive ? " rjp-ficha-historial__tab--active" : ""
-              }`}
-              onClick={() => handleTabChange(tab.id)}
-            >
-              {tab.label}
-              {count > 0 ? (
-                <span className="rjp-ficha-historial__tab-count">{count}</span>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
+      <label className="rjp-ficha-historial__filter">
+        <span className="sr-only">Filtrar historial por modalidad</span>
+        <select
+          className="rjp-ficha-historial__filter-select"
+          value={activeTab}
+          onChange={(e) => handleTabChange(e.target.value as HistorialTab)}
+          aria-label="Filtrar historial por modalidad"
+        >
+          {HISTORIAL_TABS.map((tab) => {
+            const count = counts[tab.id];
+            return (
+              <option key={tab.id} value={tab.id}>
+                {tab.label}
+                {count > 0 ? ` (${count})` : ""}
+              </option>
+            );
+          })}
+        </select>
+        <TablerIcon
+          name="chevron-down"
+          size={16}
+          className="rjp-ficha-historial__filter-chev"
+          aria-hidden
+        />
+      </label>
 
-      <div className="rjp-ficha-historial__body" role="tabpanel">
+      <div className="rjp-ficha-historial__body" role="region" aria-live="polite">
         <JugadorHistorialList
           participaciones={visible}
           categoriaFallback={categoriaFallback}

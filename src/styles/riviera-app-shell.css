@@ -159,6 +159,13 @@
     padding-bottom: var(--mobile-app-navigation-offset);
   }
 
+  /* Ranking / ficha pública: clearance para no chocar con el banner inferior. */
+  .has-mobile-app-navigation .rjp-public--ranking .rjp-public__inner,
+  .has-mobile-app-navigation .rjp-public--ficha .rjp-public__inner,
+  .has-mobile-app-navigation .rjp-public--rules .rjp-public__inner {
+    padding-bottom: var(--mobile-app-navigation-offset);
+  }
+
   .has-mobile-app-navigation .main-layout > .home-inner {
     padding-bottom: 0.5rem;
   }

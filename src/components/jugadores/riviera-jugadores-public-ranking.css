@@ -1048,6 +1048,12 @@
       max(2rem, env(safe-area-inset-bottom) + 1rem)
       max(16px, env(safe-area-inset-right) + 1rem);
   }
+
+  /* Banner inferior (MobileAppNavigation): no tapar la última fila. */
+  .has-mobile-app-navigation .rjp-public--ranking .rjp-public__inner,
+  .has-mobile-app-navigation .rjp-public--rules .rjp-public__inner {
+    padding-bottom: var(--mobile-app-navigation-offset);
+  }
 }
 
 @media (max-width: 380px) {

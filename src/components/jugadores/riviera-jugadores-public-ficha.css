@@ -31,6 +31,12 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 767px) {
+  .has-mobile-app-navigation .rjp-public--ficha .rjp-public__inner {
+    padding-bottom: var(--mobile-app-navigation-offset);
+  }
+}
+
 .rjp-ficha {
   width: 100%;
   max-width: 100%;
@@ -635,62 +641,46 @@
   line-height: 1.4;
 }
 
-.rjp-ficha-historial__tabs {
-  display: flex;
-  gap: 8px;
+.rjp-ficha-historial__filter {
+  position: relative;
+  display: block;
+  width: 100%;
   margin-top: 16px;
-  padding-bottom: 2px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  overscroll-behavior-x: contain;
 }
 
-.rjp-ficha-historial__tabs::-webkit-scrollbar {
-  display: none;
-}
-
-.rjp-ficha-historial__tab {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.rjp-ficha-historial__filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
   min-height: 44px;
-  padding: 10px 14px;
-  border-radius: 999px;
+  padding: 10px 40px 10px 14px;
+  border-radius: 12px;
   border: 1px solid var(--rjp-ficha-border);
   background: var(--rjp-ficha-surface);
-  color: var(--rjp-ficha-text-2);
+  color: var(--rjp-ficha-text);
   font-size: 14px;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  white-space: nowrap;
 }
 
-.rjp-ficha-historial__tab:focus-visible {
+.rjp-ficha-historial__filter-select:focus-visible {
   outline: 2px solid var(--rjp-ficha-accent);
   outline-offset: 2px;
 }
 
-.rjp-ficha-historial__tab--active {
-  color: var(--rjp-ficha-accent);
-  border-color: var(--rjp-ficha-accent-border);
-  background: var(--rjp-ficha-accent-bg);
+.rjp-ficha-historial__filter-select option {
+  background: #16181d;
+  color: #f2f2f3;
 }
 
-.rjp-ficha-historial__tab-count {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  background: rgba(255, 255, 255, 0.08);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.rjp-ficha-historial__filter-chev {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--rjp-ficha-text-3);
 }
 
 .rjp-ficha-historial__body {

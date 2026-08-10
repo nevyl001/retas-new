@@ -226,14 +226,21 @@
   color: var(--text-muted);
 }
 
-/* —— Overlay de detalle (drawer móvil / modal desktop) —— */
+/* —— Overlay de detalle (drawer móvil / modal desktop) ——
+   Portado a document.body; z-modal por encima de MobileAppNavigation
+   (--ro-z-sticky). En móvil el panel se eleva sobre el banner inferior. */
 .rjp-part-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: var(--ro-z-modal, 100);
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  /* Deja el banner inferior visible y evita que el sheet lo tape. */
+  padding-bottom: calc(
+    var(--mobile-app-navigation-height, 0px) + env(safe-area-inset-bottom, 0px)
+  );
+  box-sizing: border-box;
 }
 
 .rjp-part-overlay__backdrop {
@@ -340,7 +347,8 @@
 
 .rjp-part-overlay__body {
   overflow-y: auto;
-  padding: 1rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
+  /* El safe-area / nav ya van en el padding del overlay; aquí solo aire legible. */
+  padding: 1rem 1rem 1.75rem;
   -webkit-overflow-scrolling: touch;
   color: var(--rjp-part-panel-text);
 }
@@ -370,12 +378,65 @@
   gap: 0.5rem;
 }
 
-.rjp-part-overlay__list-title {
+.rjp-part-overlay__list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 0.75rem;
   margin: 1.25rem 0 0.6rem;
+}
+
+.rjp-part-overlay__list-title {
+  margin: 0;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--rjp-part-panel-text-muted);
+}
+
+.rjp-part-overlay__filter {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: min(100%, 11.5rem);
+  flex: 1 1 10rem;
+  max-width: 100%;
+}
+
+.rjp-part-overlay__filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 2.25rem 0.55rem 0.85rem;
+  border: 1px solid var(--rjp-part-panel-border);
+  border-radius: 10px;
+  background: var(--rjp-part-panel-elevated);
+  color: var(--rjp-part-panel-text);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rjp-part-overlay__filter-select:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--accent-gold));
+  outline-offset: 1px;
+}
+
+.rjp-part-overlay__filter-select option {
+  background: #16181d;
+  color: #f2f2f3;
+}
+
+.rjp-part-overlay__filter-chev {
+  position: absolute;
+  right: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
   color: var(--rjp-part-panel-text-muted);
 }
 
@@ -577,6 +638,7 @@
 
   .rjp-part-overlay {
     align-items: center;
+    padding-bottom: 0;
   }
 
   .rjp-part-overlay__panel {
@@ -585,6 +647,11 @@
     border-radius: 18px;
     border-bottom: 1px solid var(--rjp-part-panel-border);
     animation: rjp-part-modal-in 0.2s ease-out both;
+  }
+
+  .rjp-part-overlay__filter {
+    flex: 0 0 auto;
+    min-width: 12rem;
   }
 
   @keyframes rjp-part-modal-in {
