@@ -119,15 +119,37 @@ function resolveHeadline(
   return convocatoriaProductHeadline({ mode });
 }
 
-function formatOpenSlotsLine(openSlots: number): string | null {
+function formatOpenSlotsLabel(openSlots: number): string | null {
   if (openSlots <= 0) return null;
   if (openSlots === 1) return "○ 1 disponible";
   return `○ ${openSlots} disponibles`;
 }
 
+/** Roster en pocas líneas (WhatsApp trunca por altura, no solo por caracteres). */
+function formatConfirmedRosterLines(
+  confirmed: { nombre: string; rating?: number | null }[],
+  displayFullName: boolean,
+  displayRating: boolean,
+  perLine = 2
+): string[] {
+  const labels = confirmed.map((e) => {
+    const name = displayNameForShare(e.nombre, displayFullName);
+    const rating =
+      displayRating && e.rating != null
+        ? ` (${Number(e.rating).toFixed(2)})`
+        : "";
+    return `✓ ${name}${rating}`;
+  });
+  const lines: string[] = [];
+  for (let i = 0; i < labels.length; i += perLine) {
+    lines.push(labels.slice(i, i + perLine).join(" · "));
+  }
+  return lines;
+}
+
 /**
  * Mensaje WhatsApp Riviera: compacto para reducir «Leer más».
- * Meta en pocas líneas · enlace antes del roster · cupos en 1 línea · pie corto.
+ * Cupos visibles arriba del roster · enlace temprano · 2 jugadores por línea.
  */
 export function buildRetaAbiertaWhatsAppMessage(opts: {
   dto: Pick<
@@ -173,6 +195,8 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline);
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
+  const openSlots = Math.max(dto.capacity - confirmed.length, 0);
+  const openLabel = formatOpenSlotsLabel(openSlots);
   const { lugar, cancha } = resolveLugarYCancha({
     locationLabel: dto.location_label,
     canchaLabel: opts.canchaLabel ?? dto.cancha_label,
@@ -218,7 +242,15 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   if (includePremio && premio) detailParts.push(`🏆 ${premio}`);
   if (detailParts.length) lines.push(detailParts.join(" · "));
 
-  // Enlace arriba del roster: queda visible aunque WhatsApp truncque con «Leer más».
+  // Cupo ANTES del roster y del enlace: no puede quedar detrás de «Leer más».
+  if (mode !== "americano") {
+    if (openLabel) {
+      lines.push(openLabel);
+    } else if (confirmed.length > 0 && dto.capacity > 0) {
+      lines.push("Completo");
+    }
+  }
+
   lines.push(publicUrl);
 
   if (mode === "americano") {
@@ -226,17 +258,14 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
       `${dto.confirmed_count} de ${dto.capacity} jugadores confirmados`
     );
   } else {
-    for (const e of confirmed) {
-      const name = displayNameForShare(e.nombre, displayFullName);
-      const rating =
-        dto.display_rating && e.rating != null
-          ? ` (${Number(e.rating).toFixed(2)})`
-          : "";
-      lines.push(`✓ ${name}${rating}`);
-    }
-    const openSlots = Math.max(dto.capacity - confirmed.length, 0);
-    const openLine = formatOpenSlotsLine(openSlots);
-    if (openLine) lines.push(openLine);
+    lines.push(
+      ...formatConfirmedRosterLines(
+        confirmed,
+        displayFullName,
+        Boolean(dto.display_rating),
+        2
+      )
+    );
   }
 
   lines.push(RIVIERA_WHATSAPP_FOOTER);

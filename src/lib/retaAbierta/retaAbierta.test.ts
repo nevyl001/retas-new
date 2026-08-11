@@ -106,7 +106,10 @@ describe("WhatsApp share message por modo", () => {
     expect(text).not.toContain("⚪");
     expect(text).not.toContain("¿Quieres jugar?");
     expect(text).not.toMatch(/○ Disponible$/m);
-    // Enlace antes del roster para que no quede detrás de «Leer más».
+    // Cupos y enlace antes del roster: no quedan detrás de «Leer más».
+    expect(text.indexOf("○ 3 disponibles")).toBeLessThan(
+      text.indexOf("https://app.example/jugar/ra-1")
+    );
     expect(text.indexOf("https://app.example/jugar/ra-1")).toBeLessThan(
       text.indexOf("✓ Arturo Cortes")
     );
@@ -187,8 +190,72 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("Nivel 5ta Fuerza");
     expect(text).toContain("○ 3 disponibles");
     expect(text).toContain("Riviera ID · todos los juegos cuentan.");
+    expect(text.indexOf("○ 3 disponibles")).toBeLessThan(
+      text.indexOf("https://app.example/jugar/ra-3")
+    );
     expect(text.indexOf("📍 Hack Pádel")).toBeLessThan(
       text.indexOf("🎾 Cancha 1")
+    );
+  });
+
+  it("compacta el roster en 2 jugadores por línea", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Reta",
+        mode_type: "reta",
+        scheduled_at: null,
+        duration_minutes: 90,
+        location_label: "Club",
+        category_label: null,
+        rama_label: null,
+        capacity: 4,
+        confirmed_count: 3,
+        spots_left: 1,
+        display_rating: false,
+        entries: [
+          {
+            id: "e1",
+            status: "confirmed",
+            display_order: 1,
+            joined_at: null,
+            riviera_id: null,
+            nombre: "Ana",
+            foto_url: null,
+            rating: null,
+            categoria: null,
+          },
+          {
+            id: "e2",
+            status: "confirmed",
+            display_order: 2,
+            joined_at: null,
+            riviera_id: null,
+            nombre: "Beto",
+            foto_url: null,
+            rating: null,
+            categoria: null,
+          },
+          {
+            id: "e3",
+            status: "confirmed",
+            display_order: 3,
+            joined_at: null,
+            riviera_id: null,
+            nombre: "Cata",
+            foto_url: null,
+            rating: null,
+            categoria: null,
+          },
+        ],
+      },
+      publicUrl: "https://app.example/jugar/ra-pack",
+      clubName: "Club",
+    });
+    expect(text).toContain("○ 1 disponible");
+    expect(text).toContain("✓ Ana · ✓ Beto");
+    expect(text).toContain("✓ Cata");
+    expect(text.indexOf("○ 1 disponible")).toBeLessThan(
+      text.indexOf("✓ Ana")
     );
   });
 
