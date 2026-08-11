@@ -159,6 +159,8 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false);
   const [convLine, setConvLine] = useState("Sin abrir · —");
   const [convTouched, setConvTouched] = useState(false);
+  const [convConfirmed, setConvConfirmed] = useState(0);
+  const [convCapacity, setConvCapacity] = useState(0);
   /** Selector: el usuario elige abrir el bloque para lanzar convocatoria. */
   const [wantConvocatoria, setWantConvocatoria] = useState(false);
   /** Ya hay convocatoria live (slug / abierta): el bloque no se oculta. */
@@ -188,6 +190,8 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
       if (!cfg) {
         setConvLine("Sin abrir · —");
         setConvIsLive(false);
+        setConvConfirmed(0);
+        setConvCapacity(0);
         return;
       }
       const entries = await listOpenRegistrationEntries(tournament.id);
@@ -198,6 +202,8 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
         (Boolean(cfg.enabled) && cfg.status !== "draft");
       setConvIsLive(live);
       if (live) setWantConvocatoria(true);
+      setConvConfirmed(confirmed);
+      setConvCapacity(capacity);
       setConvLine(
         `${convStatusLabel(cfg.status)} · ${confirmed} de ${capacity} confirmados`
       );
@@ -352,6 +358,11 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
 
   const jugadoresOk = playerPool.length > 0 || playersInPairs.length > 0;
   const equiposOk = pairs.length >= 2;
+  const convSpotsLeft =
+    convIsLive && convCapacity > 0
+      ? Math.max(0, convCapacity - convConfirmed)
+      : 0;
+  const convCupoCompleto = !convIsLive || convSpotsLeft === 0;
   const isTeamsConfigValid =
     !isTeams || (teamsCount >= 2 && teamsCount <= pairs.length);
   const canchasOk = (tournament.courts ?? 0) >= 1;
@@ -363,15 +374,24 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
     isDynamicLineupsConfigValid &&
     !tournament.is_started;
 
+  const pairsGapLabel =
+    pairs.length === 0
+      ? "Sin parejas armadas (mín. 2)"
+      : pairs.length === 1
+        ? "Falta 1 pareja más"
+        : `Parejas listas (${pairs.length})`;
+
   const ctaHint = !equiposOk
     ? pairs.length === 1
-      ? "Falta 1 pareja más"
-      : "Faltan al menos 2 parejas"
-    : isTeams && !isTeamsConfigValid
-      ? "Revisa la organización de equipos"
-      : isTeams && !isDynamicLineupsConfigValid
-        ? "Revisa la configuración de alineación dinámica"
-        : null;
+      ? "Falta 1 pareja más — ve a Equipos"
+      : "Arma al menos 2 parejas en Equipos"
+    : !convCupoCompleto
+      ? `Faltan ${convSpotsLeft} jugador${convSpotsLeft === 1 ? "" : "es"} en la convocatoria`
+      : isTeams && !isTeamsConfigValid
+        ? "Revisa la organización de equipos"
+        : isTeams && !isDynamicLineupsConfigValid
+          ? "Revisa la configuración de alineación dinámica"
+          : null;
 
   const goConvocatoria = () => {
     setWantConvocatoria(true);
@@ -388,6 +408,8 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
     } else if (!snap.publicSlug) {
       setConvIsLive(false);
     }
+    setConvConfirmed(snap.confirmed);
+    setConvCapacity(snap.capacity);
     if (!snap.isLive && !snap.publicSlug) {
       setConvLine("Sin abrir · —");
       return;
@@ -555,9 +577,7 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
             {equiposOk ? "OK" : "!"}
           </span>
           <span className="qm-ws__ready-copy">
-            {equiposOk
-              ? `Parejas listas (${pairs.length})`
-              : `Faltan ${Math.max(0, 2 - pairs.length)} parejas`}
+            {equiposOk ? `Parejas listas (${pairs.length})` : pairsGapLabel}
           </span>
           {!equiposOk ? (
             <button
@@ -592,12 +612,26 @@ export const RoundRobinPrepWorkspace: React.FC<Props> = ({
             </button>
           ) : null}
         </li>
-        <li className={convTouched ? "is-ok" : "is-soft"}>
+        <li
+          className={
+            !convTouched
+              ? "is-soft"
+              : convCupoCompleto
+                ? "is-ok"
+                : "is-miss"
+          }
+        >
           <span className="qm-ws__ready-mark" aria-hidden>
-            {convTouched ? "OK" : "·"}
+            {!convTouched ? "·" : convCupoCompleto ? "OK" : "!"}
           </span>
           <span className="qm-ws__ready-copy">
-            {convTouched ? convLine : "Convocatoria sin revisar"}
+            {!convTouched
+              ? "Convocatoria sin revisar"
+              : convCupoCompleto
+                ? convLine
+                : `Faltan ${convSpotsLeft} jugador${
+                    convSpotsLeft === 1 ? "" : "es"
+                  } · ${convConfirmed} de ${convCapacity} confirmados`}
           </span>
           <button
             type="button"
