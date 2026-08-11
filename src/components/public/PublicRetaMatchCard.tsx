@@ -99,6 +99,7 @@ export const PublicRetaMatchCard: React.FC<{
             players={pair1Players}
             label={pair1Label}
             align="left"
+            variant="band"
             isWinner={pair1Wins}
             isTie={isTie}
             teamLabel={pair1TeamLabel}
@@ -106,15 +107,18 @@ export const PublicRetaMatchCard: React.FC<{
           />
         </div>
 
-        <span className="te-pub-match__vs" aria-hidden>
-          VS
-        </span>
+        <div className="te-pub-match__vs" role="separator" aria-label="versus">
+          <span className="te-pub-match__vs-line" aria-hidden />
+          <span className="te-pub-match__vs-text">VS</span>
+          <span className="te-pub-match__vs-line" aria-hidden />
+        </div>
 
         <div className="te-pub-match__slot te-pub-match__slot--pair2">
           <PublicRetaPairSide
             players={pair2Players}
             label={pair2Label}
             align="right"
+            variant="band"
             isWinner={pair2Wins}
             isTie={isTie}
             teamLabel={pair2TeamLabel}

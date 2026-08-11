@@ -73,100 +73,6 @@
   padding: 0.75rem 0.85rem 0.7rem;
 }
 
-/* Americano — pareja arriba / pareja abajo / marcador (evita amontonar nombres) */
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-match__faceoff {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-areas:
-    "pair1"
-    "pair2"
-    "score";
-  gap: 0.65rem;
-  align-items: stretch;
-  width: 100%;
-  margin-top: 0.55rem;
-  padding: 1rem 0.65rem 0.85rem;
-  border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-pair--left,
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-pair--right {
-  align-items: center;
-  text-align: center;
-}
-
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-pair__showcase {
-  justify-content: center;
-  gap: 0.85rem;
-  width: 100%;
-}
-
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-pair__player
-  + .te-pub-pair__player {
-  margin-left: 0;
-}
-
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-pair__player {
-  flex: 1 1 0;
-  max-width: calc(50% - 0.4rem);
-}
-
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-pair__player-name {
-  max-width: 100%;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
-  word-break: break-word;
-  hyphens: auto;
-}
-
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-match__faceoff
-  > :nth-child(1) {
-  grid-area: pair1;
-}
-
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-match__faceoff
-  > :nth-child(2) {
-  grid-area: score;
-  justify-self: stretch;
-  min-width: 0;
-  width: 100%;
-  margin-top: 0.15rem;
-  padding: 0.42rem 0.5rem;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.te-public--americano.te-public--americano-wide
-  .te-pub-match--americano.te-pub-match--wide
-  .te-pub-match__faceoff
-  > :nth-child(3) {
-  grid-area: pair2;
-  padding-top: 0.55rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
 .te-public--americano.te-public--americano-wide
   .te-pub-match--americano.te-pub-match--wide
   .te-pub-match__score-block--center {
@@ -184,44 +90,6 @@
 }
 
 @media (min-width: 769px) {
-  .te-public--americano.te-public--americano-wide .te-pub-pair--left,
-  .te-public--americano.te-public--americano-wide .te-pub-pair--right {
-    align-items: center;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__showcase {
-    flex-direction: row;
-    justify-content: center;
-    gap: 0.85rem;
-    width: 100%;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__player {
-    gap: 0.2rem;
-    flex: 1 1 0;
-    max-width: calc(50% - 0.4rem);
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__player + .te-pub-pair__player {
-    margin-left: 0;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__avatar.rj-avatar--xl {
-    width: 52px;
-    height: 52px;
-    font-size: 0.95rem;
-    border-width: 2px;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__player-name {
-    max-width: 100%;
-    font-size: 0.72rem;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-    word-break: break-word;
-  }
-
   .te-public--americano.te-public--americano-wide .te-pub-score--faceoff {
     width: auto;
     justify-content: center;
@@ -741,8 +609,8 @@
 
 .te-pub-matches-grid--wide {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 1rem;
   width: 100%;
   align-items: stretch;
 }
@@ -750,7 +618,7 @@
 .te-pub-match--wide {
   min-width: 0;
   height: 100%;
-  padding: 1.2rem 1.3rem 1.2rem;
+  padding: 0.85rem 0.95rem 0.9rem;
   overflow: visible;
   background: linear-gradient(
     155deg,
@@ -786,8 +654,12 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-/* Round Robin — pareja arriba, VS, pareja abajo, marcador (más espacio para nombres) */
-.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-match__faceoff {
+/* Faceoff público: pareja (banda) → VS → pareja → marcador */
+.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-match__faceoff,
+.te-public--americano.te-public--americano-wide
+  .te-pub-match--americano.te-pub-match--wide
+  .te-pub-match__faceoff,
+.te-pub-match__faceoff {
   display: grid;
   grid-template-columns: 1fr;
   grid-template-areas:
@@ -795,46 +667,13 @@
     "vs"
     "pair2"
     "score";
-  gap: 0.55rem;
+  gap: 0.45rem;
   align-items: stretch;
-  margin-top: 0.55rem;
-  padding: 1rem 0.65rem 0.85rem;
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.35rem 0.35rem;
   border-radius: var(--radius-md);
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-pair--left,
-.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-pair--right {
-  align-items: center;
-  text-align: center;
-}
-
-.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-pair__showcase {
-  justify-content: center;
-  gap: 0.85rem;
-  width: 100%;
-}
-
-.te-public--reta.te-public--reta-wide
-  .te-pub-match--wide
-  .te-pub-pair__player
-  + .te-pub-pair__player {
-  margin-left: 0;
-}
-
-.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-pair__player {
-  flex: 1 1 0;
-  max-width: calc(50% - 0.4rem);
-}
-
-.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-pair__player-name {
-  max-width: 100%;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
-  word-break: break-word;
-  hyphens: auto;
+  background: transparent;
+  border: none;
 }
 
 .te-pub-match__slot--pair1 {
@@ -853,24 +692,158 @@
   width: 100%;
 }
 
+/* VS como separador horizontal elegante (no círculo centrado en 2×2) */
 .te-pub-match__vs {
   grid-area: vs;
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
-  align-self: center;
-  justify-self: center;
-  flex-shrink: 0;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 50%;
+  gap: 0.55rem;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0.1rem 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.62rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
-  color: var(--accent-gold-light, #e8c547);
+  letter-spacing: 0.16em;
+}
+
+.te-pub-match__vs-line {
+  display: block;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.28),
+    transparent
+  );
+}
+
+.te-pub-match__vs-text {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* Banda de pareja: deja claro quién juega con quién */
+.te-pub-pair--band {
+  width: 100%;
+  align-items: stretch;
+  text-align: left;
+}
+
+.te-pub-pair__band {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.te-pub-pair--win .te-pub-pair__band {
+  border-color: rgba(255, 255, 255, 0.28);
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+.te-pub-pair--tie .te-pub-pair__band {
+  border-color: var(--ro-gold-border, rgba(201, 162, 39, 0.38));
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.te-pub-pair__band-avatars {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.te-pub-pair__band-avatars .te-pub-pair__avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 0.85rem;
+  border-width: 2px;
+}
+
+.te-pub-pair__band-avatars .te-pub-pair__avatar--front {
+  margin-left: -0.55rem;
+  position: relative;
+  z-index: 1;
+}
+
+.te-pub-pair__band-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.te-pub-pair__band-names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.4rem;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-primary, #fff);
+}
+
+.te-pub-pair__band-name {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.te-pub-pair__band-join {
+  opacity: 0.45;
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+
+.te-pub-pair__band-ratings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.te-pub-pair__band-ratings .te-pub-pair__player-rating {
+  margin-top: 0;
+  font-size: 0.62rem;
+  padding: 0.08rem 0.35rem;
+}
+
+.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-match__score-block--center,
+.te-public--americano.te-public--americano-wide
+  .te-pub-match--americano.te-pub-match--wide
+  .te-pub-match__score-block--center {
+  min-width: 0;
+  width: 100%;
+}
+
+.te-public--reta.te-public--reta-wide .te-pub-match--wide .te-pub-score--pending-label,
+.te-public--americano.te-public--americano-wide
+  .te-pub-match--americano.te-pub-match--wide
+  .te-pub-score--pending-label {
+  display: block;
+  width: 100%;
+  padding: 0.42rem 0.65rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  text-align: center;
+  font-size: 0.72rem;
 }
 
 .te-pub-match__faceoff {
@@ -936,8 +909,8 @@
 }
 
 .te-pub-matches-grid--wide .te-pub-match__faceoff {
-  gap: 0.65rem 0.85rem;
-  padding: 1.05rem 0.65rem 0.9rem;
+  gap: 0.45rem;
+  padding: 0.45rem 0.2rem 0.25rem;
 }
 
 .te-pub-match-winner--compact {
@@ -1312,23 +1285,21 @@
   }
 
   .te-public--reta.te-public--reta-wide .te-pub-match__vs {
-    align-self: center;
+    align-self: stretch;
+    width: 100%;
+    height: auto;
   }
 
   .te-pub-match__vs {
-    justify-self: center;
-    width: 2.1rem;
-    height: 2.1rem;
+    justify-self: stretch;
+    width: 100%;
+    height: auto;
     font-size: 0.58rem;
-    margin: 0.1rem 0;
+    margin: 0.05rem 0;
   }
 
   .te-pub-match__slot--score {
     margin-top: 0.1rem;
-    padding: 0.42rem 0.5rem;
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .te-pub-match__score-block--center {
@@ -1945,7 +1916,7 @@
   font-style: italic;
 }
 
-/* Americano público — móvil: equipos legibles, marcador centrado abajo */
+/* Americano público — mismo faceoff en banda (pareja / VS / pareja) */
 @media (max-width: 768px) {
   .te-public--americano.te-public--americano-wide .te-pub-match--americano.te-pub-match--wide,
   .te-public--americano.te-public--americano-wide .te-pub-match--wide {
@@ -1955,92 +1926,23 @@
 
   .te-public--americano.te-public--americano-wide .te-pub-match__faceoff {
     display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-columns: 1fr !important;
     grid-template-areas:
-      "pair1 pair2"
-      "score score" !important;
-    gap: 0.6rem 0.45rem !important;
-    align-items: start;
+      "pair1"
+      "vs"
+      "pair2"
+      "score" !important;
+    gap: 0.45rem !important;
+    align-items: stretch;
     width: 100%;
-    margin-top: 0.45rem;
-    padding: 0.7rem 0.45rem 0.6rem !important;
+    margin-top: 0.35rem;
+    padding: 0.35rem 0 !important;
+    background: transparent !important;
+    border: none !important;
   }
 
-  .te-public--americano.te-public--americano-wide .te-pub-match__faceoff > :nth-child(1) {
-    grid-area: pair1;
-    min-width: 0;
+  .te-public--americano.te-public--americano-wide .te-pub-pair--band {
     width: 100%;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-match__faceoff > :nth-child(2) {
-    grid-area: score;
-    justify-self: stretch;
-    width: 100%;
-    min-width: 0;
-    margin: 0.1rem 0 0;
-    padding: 0.45rem 0.55rem;
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-match__faceoff > :nth-child(3) {
-    grid-area: pair2;
-    min-width: 0;
-    width: 100%;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair--left,
-  .te-public--americano.te-public--americano-wide .te-pub-pair--right {
-    align-items: center;
-    text-align: center;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__showcase {
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.4rem;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__player {
-    width: 100%;
-    max-width: 8.75rem;
-    gap: 0.22rem;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__player + .te-pub-pair__player {
-    margin-left: 0;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__avatar.rj-avatar--xl {
-    width: 42px;
-    height: 42px;
-    font-size: 0.82rem;
-    border-width: 2px;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__player-name {
-    max-width: 100%;
-    font-size: clamp(0.68rem, 2.9vw, 0.78rem);
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-    word-break: break-word;
-    line-height: 1.2;
-  }
-
-  .te-public--americano.te-public--americano-wide .te-pub-pair__player-rating {
-    margin-top: 0.12rem;
-    font-size: 0.58rem;
-    padding: 0.08rem 0.32rem;
   }
 
   .te-public--americano.te-public--americano-wide .te-pub-match__score-block--center {

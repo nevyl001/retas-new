@@ -70,15 +70,35 @@ export const PublicAmericanoMatchCard: React.FC<{
       </div>
 
       <div className="te-pub-match__faceoff">
-        <PublicRetaPairSide
-          players={teamPlayers(m.teamA, playerRatings)}
-          label={teamLabel(m.teamA)}
-          align="left"
-          isWinner={aWins}
-          isTie={isTie}
-        />
+        <div className="te-pub-match__slot te-pub-match__slot--pair1">
+          <PublicRetaPairSide
+            players={teamPlayers(m.teamA, playerRatings)}
+            label={teamLabel(m.teamA)}
+            align="left"
+            variant="band"
+            isWinner={aWins}
+            isTie={isTie}
+          />
+        </div>
 
-        <div className="te-pub-match__score-block te-pub-match__score-block--center">
+        <div className="te-pub-match__vs" role="separator" aria-label="versus">
+          <span className="te-pub-match__vs-line" aria-hidden />
+          <span className="te-pub-match__vs-text">VS</span>
+          <span className="te-pub-match__vs-line" aria-hidden />
+        </div>
+
+        <div className="te-pub-match__slot te-pub-match__slot--pair2">
+          <PublicRetaPairSide
+            players={teamPlayers(m.teamB, playerRatings)}
+            label={teamLabel(m.teamB)}
+            align="right"
+            variant="band"
+            isWinner={bWins}
+            isTie={isTie}
+          />
+        </div>
+
+        <div className="te-pub-match__score-block te-pub-match__score-block--center te-pub-match__slot te-pub-match__slot--score">
           {played ? (
             <div className="te-pub-score te-pub-score--faceoff">
               <span
@@ -105,14 +125,6 @@ export const PublicAmericanoMatchCard: React.FC<{
             </span>
           )}
         </div>
-
-        <PublicRetaPairSide
-          players={teamPlayers(m.teamB, playerRatings)}
-          label={teamLabel(m.teamB)}
-          align="right"
-          isWinner={bWins}
-          isTie={isTie}
-        />
       </div>
 
       <TePubMatchOutcome winnerLabel={winnerLabel} isTie={isTie} />
