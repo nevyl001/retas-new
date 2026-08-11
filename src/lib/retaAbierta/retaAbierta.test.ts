@@ -216,9 +216,7 @@ describe("WhatsApp share message por modo", () => {
           {
             id: "e1",
             status: "confirmed",
-            display_order: 1,
-            joined_at: null,
-            riviera_id: null,
+            riviera_id: "RIV-00000011",
             nombre: "Ana",
             foto_url: null,
             rating: null,
@@ -227,9 +225,7 @@ describe("WhatsApp share message por modo", () => {
           {
             id: "e2",
             status: "confirmed",
-            display_order: 2,
-            joined_at: null,
-            riviera_id: null,
+            riviera_id: "RIV-00000012",
             nombre: "Beto",
             foto_url: null,
             rating: null,
@@ -238,9 +234,7 @@ describe("WhatsApp share message por modo", () => {
           {
             id: "e3",
             status: "confirmed",
-            display_order: 3,
-            joined_at: null,
-            riviera_id: null,
+            riviera_id: "RIV-00000013",
             nombre: "Cata",
             foto_url: null,
             rating: null,
