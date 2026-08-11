@@ -51,13 +51,11 @@ export const PublicRetaPairSide: React.FC<{
           size="md"
           className="te-pub-pair__avatar"
         />
-        <div className="te-pub-pair__band-player-meta">
-          <span className="te-pub-pair__band-name">{p.name}</span>
-          <JugadorRatingChip
-            rating={p.rating}
-            className="te-pub-pair__player-rating"
-          />
-        </div>
+        <span className="te-pub-pair__band-name">{p.name}</span>
+        <JugadorRatingChip
+          rating={p.rating}
+          className="te-pub-pair__player-rating"
+        />
       </div>
     );
 
