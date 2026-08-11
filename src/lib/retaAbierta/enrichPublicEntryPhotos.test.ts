@@ -12,6 +12,7 @@ jest.mock("../rivieraJugadores/publicPlayerAvatars", () => ({
 }));
 
 import { supabase } from "../supabaseClient";
+import { fetchRivieraJugadorProfilesByIds } from "../rivieraJugadores/publicPlayerAvatars";
 import {
   clearPublicEntryFotoCacheForTests,
   enrichPublicEntryPhotos,
@@ -47,6 +48,7 @@ const baseDto = (): OpenRegistrationPublicDto => ({
       id: "e1",
       status: "confirmed",
       riviera_id: "RIV-00000011",
+      riviera_jugador_id: "j1",
       nombre: "Nevyl",
       foto_url: null,
       rating: 3.2,
@@ -63,27 +65,34 @@ describe("enrichPublicEntryPhotos", () => {
     clearPublicEntryFotoCacheForTests();
   });
 
-  it("rellena foto desde preview canónico por Riviera ID", async () => {
-    (supabase.rpc as jest.Mock).mockResolvedValue({
-      data: {
-        ok: true,
-        riviera_id: "RIV-00000011",
-        jugador_id: "j1",
-        nombre: "Nevyl",
-        foto_url: "https://cdn.example/nevyl.jpg",
-        rating: 3.2,
-        categoria: "5ta",
-        club_origen_id: null,
-      },
-      error: null,
-    });
+  it("rellena foto desde perfiles públicos (sin RPC preview rate-limited)", async () => {
+    (fetchRivieraJugadorProfilesByIds as jest.Mock).mockResolvedValue(
+      new Map([
+        [
+          "j1",
+          {
+            fotoUrl: "https://cdn.example/nevyl.jpg",
+            nombre: "Nevyl",
+          },
+        ],
+      ])
+    );
 
     const out = await enrichPublicEntryPhotos(baseDto());
     expect(out.entries[0]?.foto_url).toBe("https://cdn.example/nevyl.jpg");
-    expect(supabase.rpc).toHaveBeenCalledWith(
+    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(fetchRivieraJugadorProfilesByIds).toHaveBeenCalled();
+  });
+
+  it("NO llama preview_riviera_id aunque falte foto (protege cupo anti-enumeración)", async () => {
+    (fetchRivieraJugadorProfilesByIds as jest.Mock).mockResolvedValue(new Map());
+    const out = await enrichPublicEntryPhotos(baseDto());
+    expect(out.entries[0]?.foto_url).toBeNull();
+    expect(supabase.rpc).not.toHaveBeenCalledWith(
       "preview_riviera_id_for_open_registration",
-      { p_slug: "ra-hack", p_riviera_id: "RIV-00000011" }
+      expect.anything()
     );
+    expect(supabase.rpc).not.toHaveBeenCalled();
   });
 
   it("no llama preview si ya hay foto", async () => {
@@ -92,5 +101,6 @@ describe("enrichPublicEntryPhotos", () => {
     const out = await enrichPublicEntryPhotos(dto);
     expect(out.entries[0]?.foto_url).toBe("https://cdn.example/already.jpg");
     expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(fetchRivieraJugadorProfilesByIds).not.toHaveBeenCalled();
   });
 });
