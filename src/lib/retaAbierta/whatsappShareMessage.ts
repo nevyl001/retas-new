@@ -119,10 +119,11 @@ function resolveHeadline(
   return convocatoriaProductHeadline({ mode });
 }
 
-function formatOpenSlotsLabel(openSlots: number): string | null {
-  if (openSlots <= 0) return null;
-  if (openSlots === 1) return "○ 1 disponible";
-  return `○ ${openSlots} disponibles`;
+function formatOpenSlotLines(openSlots: number): string[] {
+  if (openSlots <= 0) return [];
+  // Pocos huecos → lista clásica; muchos → 1 línea (evita inflar el mensaje).
+  if (openSlots > 4) return [`○ ${openSlots} disponibles`];
+  return Array.from({ length: openSlots }, () => "○ Disponible");
 }
 
 /** Roster en pocas líneas (WhatsApp trunca por altura, no solo por caracteres). */
@@ -149,7 +150,7 @@ function formatConfirmedRosterLines(
 
 /**
  * Mensaje WhatsApp Riviera: compacto para reducir «Leer más».
- * Cupos visibles arriba del roster · enlace temprano · 2 jugadores por línea.
+ * Huecos en lista (○ Disponible) antes del enlace · roster 2 por línea.
  */
 export function buildRetaAbiertaWhatsAppMessage(opts: {
   dto: Pick<
@@ -196,7 +197,7 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   const headline = resolveHeadline(mode, opts.productHeadline);
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
   const openSlots = Math.max(dto.capacity - confirmed.length, 0);
-  const openLabel = formatOpenSlotsLabel(openSlots);
+  const openLines = formatOpenSlotLines(openSlots);
   const { lugar, cancha } = resolveLugarYCancha({
     locationLabel: dto.location_label,
     canchaLabel: opts.canchaLabel ?? dto.cancha_label,
@@ -242,22 +243,19 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   if (includePremio && premio) detailParts.push(`🏆 ${premio}`);
   if (detailParts.length) lines.push(detailParts.join(" · "));
 
-  // Cupo ANTES del roster y del enlace: no puede quedar detrás de «Leer más».
-  if (mode !== "americano") {
-    if (openLabel) {
-      lines.push(openLabel);
-    } else if (confirmed.length > 0 && dto.capacity > 0) {
-      lines.push("Completo");
-    }
-  }
-
-  lines.push(publicUrl);
-
   if (mode === "americano") {
+    lines.push(publicUrl);
     lines.push(
       `${dto.confirmed_count} de ${dto.capacity} jugadores confirmados`
     );
   } else {
+    // Huecos en lista ANTES del enlace/roster: visibles aunque WhatsApp truncque.
+    if (openLines.length > 0) {
+      lines.push(...openLines);
+    } else if (confirmed.length > 0 && dto.capacity > 0) {
+      lines.push("Completo");
+    }
+    lines.push(publicUrl);
     lines.push(
       ...formatConfirmedRosterLines(
         confirmed,
@@ -267,8 +265,6 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
       )
     );
   }
-
-  lines.push(RIVIERA_WHATSAPP_FOOTER);
 
   return lines.join("\n");
 }
