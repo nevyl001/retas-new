@@ -43,6 +43,24 @@ export const PublicRetaPairSide: React.FC<{
       : "";
 
   if (hasBothPlayers && variant === "band") {
+    const bandPlayer = (p: PublicRetaPairPlayer) => (
+      <div className="te-pub-pair__band-player" key={p.id}>
+        <JugadorAvatar
+          fotoUrl={p.fotoUrl}
+          nombre={p.name}
+          size="md"
+          className="te-pub-pair__avatar"
+        />
+        <div className="te-pub-pair__band-player-meta">
+          <span className="te-pub-pair__band-name">{p.name}</span>
+          <JugadorRatingChip
+            rating={p.rating}
+            className="te-pub-pair__player-rating"
+          />
+        </div>
+      </div>
+    );
+
     return (
       <div
         className={`te-pub-pair te-pub-pair--band te-pub-pair--${align}${rowClass}`}
@@ -56,39 +74,11 @@ export const PublicRetaPairSide: React.FC<{
           />
         ) : null}
         <div className="te-pub-pair__band">
-          <div className="te-pub-pair__band-avatars" aria-hidden>
-            <JugadorAvatar
-              fotoUrl={p1!.fotoUrl}
-              nombre={p1!.name}
-              size="md"
-              className="te-pub-pair__avatar"
-            />
-            <JugadorAvatar
-              fotoUrl={p2!.fotoUrl}
-              nombre={p2!.name}
-              size="md"
-              className="te-pub-pair__avatar te-pub-pair__avatar--front"
-            />
-          </div>
-          <div className="te-pub-pair__band-meta">
-            <p className="te-pub-pair__band-names">
-              <span className="te-pub-pair__band-name">{p1!.name}</span>
-              <span className="te-pub-pair__band-join" aria-hidden>
-                &
-              </span>
-              <span className="te-pub-pair__band-name">{p2!.name}</span>
-            </p>
-            <div className="te-pub-pair__band-ratings">
-              <JugadorRatingChip
-                rating={p1!.rating}
-                className="te-pub-pair__player-rating"
-              />
-              <JugadorRatingChip
-                rating={p2!.rating}
-                className="te-pub-pair__player-rating"
-              />
-            </div>
-          </div>
+          {bandPlayer(p1!)}
+          <span className="te-pub-pair__band-join" aria-hidden>
+            &
+          </span>
+          {bandPlayer(p2!)}
         </div>
       </div>
     );
