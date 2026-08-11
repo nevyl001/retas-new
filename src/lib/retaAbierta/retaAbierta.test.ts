@@ -99,14 +99,17 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("🎾 Cancha 3");
     expect(text).toContain("Nivel 5ta Fuerza");
     expect(text).toContain("✓ Arturo Cortes (0.73)");
-    expect(text).toContain("○ Disponible");
+    expect(text).toContain("○ 3 disponibles");
     expect(text).toContain("https://app.example/jugar/ra-1");
-    expect(text).toContain("Solo necesitas tu Riviera ID.");
-    expect(text).toContain("🎾 Todos los juegos cuentan");
+    expect(text).toContain("Riviera ID · todos los juegos cuentan.");
     expect(text).toContain("🗓️");
     expect(text).not.toContain("⚪");
     expect(text).not.toContain("¿Quieres jugar?");
-    expect(text.match(/○ Disponible/g)?.length).toBe(3);
+    expect(text).not.toMatch(/○ Disponible$/m);
+    // Enlace antes del roster para que no quede detrás de «Leer más».
+    expect(text.indexOf("https://app.example/jugar/ra-1")).toBeLessThan(
+      text.indexOf("✓ Arturo Cortes")
+    );
   });
 
   it("Remontada Final: mismo mode_type reta, headline de producto", () => {
@@ -154,8 +157,8 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("AMERICANO");
     expect(text).toContain("📍 Hack");
     expect(text).toContain("6 de 16 jugadores confirmados");
-    expect(text).toContain("Solo necesitas tu Riviera ID.");
-    expect(text).not.toContain("○ Disponible");
+    expect(text).toContain("Riviera ID · todos los juegos cuentan.");
+    expect(text).not.toContain("○ ");
   });
 
   it("Duelo: compacto Riviera con lugar, cancha y Disponibles", () => {
@@ -182,10 +185,8 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("📍 Hack Pádel");
     expect(text).toContain("🎾 Cancha 1");
     expect(text).toContain("Nivel 5ta Fuerza");
-    expect(text).toContain("○ Disponible");
-    expect(text).toContain("Solo necesitas tu Riviera ID.");
-    expect(text).toContain("🎾 Todos los juegos cuentan");
-    expect(text.match(/○ Disponible/g)?.length).toBe(3);
+    expect(text).toContain("○ 3 disponibles");
+    expect(text).toContain("Riviera ID · todos los juegos cuentan.");
     expect(text.indexOf("📍 Hack Pádel")).toBeLessThan(
       text.indexOf("🎾 Cancha 1")
     );
@@ -240,7 +241,7 @@ describe("WhatsApp share message por modo", () => {
     expect(text).not.toContain("📍");
     expect(text).not.toContain("Hack Pádel");
     expect(text).toContain("🎾 Cancha 1");
-    expect(text).toContain("Solo necesitas tu Riviera ID.");
+    expect(text).toContain("Riviera ID · todos los juegos cuentan.");
   });
 
   it("incluye costo y premio solo cuando los flags están activos", () => {
@@ -281,7 +282,7 @@ describe("WhatsApp share message por modo", () => {
       includeCosto: true,
       includePremio: false,
     });
-    expect(withCostoOnly).toContain("💵 Costo: $200 por jugador");
+    expect(withCostoOnly).toContain("💵 $200 por jugador");
     expect(withCostoOnly).not.toContain("🏆");
 
     const withBoth = buildRetaAbiertaWhatsAppMessage({
@@ -289,14 +290,11 @@ describe("WhatsApp share message por modo", () => {
       includeCosto: true,
       includePremio: true,
     });
-    expect(withBoth).toContain("💵 Costo: $200 por jugador");
-    expect(withBoth).toContain("🏆 Premio: Trofeo + pelotas");
-    const costoIdx = withBoth.indexOf("💵 Costo:");
-    const premioIdx = withBoth.indexOf("🏆 Premio:");
-    const nivelIdx = withBoth.indexOf("Nivel 5ta Fuerza");
-    expect(nivelIdx).toBeGreaterThan(-1);
-    expect(costoIdx).toBeGreaterThan(nivelIdx);
-    expect(premioIdx).toBeGreaterThan(costoIdx);
+    expect(withBoth).toContain("💵 $200 por jugador");
+    expect(withBoth).toContain("🏆 Trofeo + pelotas");
+    expect(withBoth).toMatch(
+      /Nivel 5ta Fuerza · 💵 \$200 por jugador · 🏆 Trofeo \+ pelotas/
+    );
   });
 
   it("no imprime costo/premio si el flag está on pero el texto vacío", () => {

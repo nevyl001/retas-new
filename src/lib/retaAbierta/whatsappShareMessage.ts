@@ -98,6 +98,10 @@ export function formatScheduledLabelCompact(
 export const RIVIERA_WHATSAPP_MOTTO =
   "🎾 Todos los juegos cuentan: suman a tu ranking.";
 
+/** Pie corto: evita 2 líneas extras que empujan el CTA a «Leer más». */
+export const RIVIERA_WHATSAPP_FOOTER =
+  "Riviera ID · todos los juegos cuentan.";
+
 function displayNameForShare(nombre: string, displayFullName: boolean): string {
   const t = nombre.trim();
   if (displayFullName || !t) return t || "Jugador";
@@ -115,9 +119,15 @@ function resolveHeadline(
   return convocatoriaProductHeadline({ mode });
 }
 
+function formatOpenSlotsLine(openSlots: number): string | null {
+  if (openSlots <= 0) return null;
+  if (openSlots === 1) return "○ 1 disponible";
+  return `○ ${openSlots} disponibles`;
+}
+
 /**
- * Mensaje WhatsApp Riviera: compacto, propio.
- * Emojis discretos · lugar opcional · Riviera ID · motto.
+ * Mensaje WhatsApp Riviera: compacto para reducir «Leer más».
+ * Meta en pocas líneas · enlace antes del roster · cupos en 1 línea · pie corto.
  */
 export function buildRetaAbiertaWhatsAppMessage(opts: {
   dto: Pick<
@@ -179,31 +189,37 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     const datePart = Number.isNaN(d.getTime())
       ? null
       : d.toLocaleString("es-MX", {
-          weekday: "long",
+          weekday: "short",
           day: "numeric",
           month: "numeric",
-          year: "numeric",
         });
-    lines.push(
-      datePart ? `🗓️ ${datePart}, ${range}` : `🗓️ ${range}`
-    );
+    lines.push(datePart ? `🗓️ ${datePart}, ${range}` : `🗓️ ${range}`);
   } else {
     lines.push(
       `🗓️ ${formatScheduledLabelCompact(dto.scheduled_at, dto.duration_minutes)}`
     );
   }
 
-  if (includeLugar && lugar) lines.push(`📍 ${lugar}`);
-  if (cancha) lines.push(`🎾 ${cancha}`);
+  const lugarParts: string[] = [];
+  if (includeLugar && lugar) lugarParts.push(`📍 ${lugar}`);
+  if (cancha) lugarParts.push(`🎾 ${cancha}`);
+  if (lugarParts.length) lines.push(lugarParts.join(" · "));
 
   if (dto.rama_label?.trim()) lines.push(dto.rama_label.trim());
+
+  const detailParts: string[] = [];
   if (dto.category_label?.trim()) {
     const cat = dto.category_label.trim();
-    lines.push(cat.toLowerCase().startsWith("nivel") ? cat : `Nivel ${cat}`);
+    detailParts.push(
+      cat.toLowerCase().startsWith("nivel") ? cat : `Nivel ${cat}`
+    );
   }
+  if (includeCosto && costo) detailParts.push(`💵 ${costo}`);
+  if (includePremio && premio) detailParts.push(`🏆 ${premio}`);
+  if (detailParts.length) lines.push(detailParts.join(" · "));
 
-  if (includeCosto && costo) lines.push(`💵 Costo: ${costo}`);
-  if (includePremio && premio) lines.push(`🏆 Premio: ${premio}`);
+  // Enlace arriba del roster: queda visible aunque WhatsApp truncque con «Leer más».
+  lines.push(publicUrl);
 
   if (mode === "americano") {
     lines.push(
@@ -219,14 +235,11 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
       lines.push(`✓ ${name}${rating}`);
     }
     const openSlots = Math.max(dto.capacity - confirmed.length, 0);
-    for (let i = 0; i < openSlots; i++) {
-      lines.push("○ Disponible");
-    }
+    const openLine = formatOpenSlotsLine(openSlots);
+    if (openLine) lines.push(openLine);
   }
 
-  lines.push(publicUrl);
-  lines.push("Solo necesitas tu Riviera ID.");
-  lines.push(RIVIERA_WHATSAPP_MOTTO);
+  lines.push(RIVIERA_WHATSAPP_FOOTER);
 
   return lines.join("\n");
 }
