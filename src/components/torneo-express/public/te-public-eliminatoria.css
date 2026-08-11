@@ -1259,7 +1259,7 @@
 
 .te-elim-finalists-faceoff {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: 1fr;
   align-items: center;
   gap: clamp(0.65rem, 2vw, 1.15rem);
   width: 100%;
@@ -1396,18 +1396,30 @@
   }
 
   .te-elim-finalists-faceoff {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    gap: clamp(2rem, 8vw, 6rem);
+    grid-template-columns: 1fr;
+    gap: clamp(1.25rem, 3vw, 2rem);
     max-width: none;
     margin: clamp(2rem, 4vw, 3rem) 0 clamp(1.75rem, 3vw, 2.5rem);
   }
 
   .te-elim-finalists-faceoff__vs {
-    min-width: 4rem;
+    flex-direction: row;
+    width: 100%;
+    max-width: 14rem;
+    margin-inline: auto;
+    min-width: 0;
   }
 
   .te-elim-finalists-faceoff__vs-line {
-    height: clamp(2rem, 4vw, 3.25rem);
+    width: auto;
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.45),
+      transparent
+    );
   }
 
   .te-elim-finalists-faceoff__vs-text {
