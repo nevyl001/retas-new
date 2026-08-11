@@ -144,6 +144,14 @@ export interface ConvocatoriaAdapterContext {
    * (clubes con sede fija / comunidad = sede). Default true.
    */
   includeLugar?: boolean;
+  /** Costo (texto libre) desde Detalles. Default omitido. */
+  defaultCosto?: string;
+  /** Si true, incluir costo en WhatsApp. Default false. */
+  includeCosto?: boolean;
+  /** Premio (texto libre) desde Detalles. Default omitido. */
+  defaultPremio?: string;
+  /** Si true, incluir premio en WhatsApp. Default false. */
+  includePremio?: boolean;
   /** Número o etiqueta de cancha (separado del lugar). */
   defaultCancha?: string;
   defaultCategory?: string;

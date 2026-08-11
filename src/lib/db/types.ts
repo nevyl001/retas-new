@@ -42,6 +42,12 @@ export interface Tournament {
   /** Sede del encuentro (SoT para /jugar). Requiere patch-convocatoria-public-meta-from-entity. */
   lugar?: string | null;
   mostrar_lugar?: boolean | null;
+  /** Costo/inscripción (texto libre). Solo en convocatoria si mostrar_costo. */
+  costo?: string | null;
+  mostrar_costo?: boolean | null;
+  /** Premio (texto libre). Solo en convocatoria si mostrar_premio. */
+  premio?: string | null;
+  mostrar_premio?: boolean | null;
   /** Etiqueta de cancha (distinto de `courts`). */
   cancha?: string | null;
   /** Nivel / fuerza (ej. 5ta Fuerza). Requiere patch-tournaments-nivel.sql. */

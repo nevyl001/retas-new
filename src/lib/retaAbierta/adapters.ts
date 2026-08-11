@@ -22,6 +22,11 @@ export function buildTournamentConvocatoriaContext(opts: {
   includeLugar?: boolean;
   /** Número de cancha (opcional). */
   canchaLabel?: string;
+  /** Costo / premio (opcionales; default no incluir). */
+  costo?: string | null;
+  includeCosto?: boolean;
+  premio?: string | null;
+  includePremio?: boolean;
   /** Inicio del encuentro (ISO). */
   scheduledAt?: string | null;
   /** Fin del encuentro (ISO). */
@@ -43,6 +48,8 @@ export function buildTournamentConvocatoriaContext(opts: {
 
   const club = opts.clubName?.trim() || undefined;
   const includeLugar = opts.includeLugar !== false;
+  const includeCosto = opts.includeCosto === true;
+  const includePremio = opts.includePremio === true;
   const duration = durationMinutesBetween(
     opts.scheduledAt,
     opts.scheduledUntil,
@@ -58,6 +65,10 @@ export function buildTournamentConvocatoriaContext(opts: {
       ? opts.locationLabel?.trim() || club
       : undefined,
     includeLugar,
+    defaultCosto: opts.costo?.trim() || undefined,
+    includeCosto,
+    defaultPremio: opts.premio?.trim() || undefined,
+    includePremio,
     defaultCancha: opts.canchaLabel?.trim() || undefined,
     defaultCategory: opts.categoryLabel?.trim() || undefined,
     defaultDurationMinutes: duration,

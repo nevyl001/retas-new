@@ -35,6 +35,10 @@ export type RetaConfigFormValues = {
   championshipRounds: number;
   lugar: string;
   mostrar_lugar: boolean;
+  costo: string;
+  mostrar_costo: boolean;
+  premio: string;
+  mostrar_premio: boolean;
   cancha: string;
   programado_en: string;
   duration_minutes: number;
@@ -186,6 +190,10 @@ export function tournamentToFormValues(
     championshipRounds: champ?.championshipRounds ?? 2,
     lugar: t.lugar || "",
     mostrar_lugar: t.mostrar_lugar !== false,
+    costo: t.costo || "",
+    mostrar_costo: t.mostrar_costo === true,
+    premio: t.premio || "",
+    mostrar_premio: t.mostrar_premio === true,
     cancha: t.cancha || "",
     programado_en: isoToDatetimeLocal(t.programado_en),
     duration_minutes: duration,
@@ -269,6 +277,26 @@ function pickAllowedUpdates(
     values.mostrar_lugar !== (current.mostrar_lugar !== false)
   ) {
     updates.mostrar_lugar = values.mostrar_lugar;
+  }
+  if (allow("costo")) {
+    const next = values.costo.trim() || null;
+    if (next !== (current.costo ?? null)) updates.costo = next;
+  }
+  if (
+    allow("mostrar_costo") &&
+    values.mostrar_costo !== (current.mostrar_costo === true)
+  ) {
+    updates.mostrar_costo = values.mostrar_costo;
+  }
+  if (allow("premio")) {
+    const next = values.premio.trim() || null;
+    if (next !== (current.premio ?? null)) updates.premio = next;
+  }
+  if (
+    allow("mostrar_premio") &&
+    values.mostrar_premio !== (current.mostrar_premio === true)
+  ) {
+    updates.mostrar_premio = values.mostrar_premio;
   }
   if (allow("cancha")) {
     const next = values.cancha.trim() || null;

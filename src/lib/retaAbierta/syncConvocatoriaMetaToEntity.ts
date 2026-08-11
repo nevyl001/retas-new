@@ -12,6 +12,10 @@ export type EntityConvocatoriaMetaInput = {
   locationLabel?: string | null;
   canchaLabel?: string | null;
   includeLugar?: boolean;
+  costo?: string | null;
+  includeCosto?: boolean;
+  premio?: string | null;
+  includePremio?: boolean;
   scheduledAt?: string | null;
   /** Fin explícito; si falta, se deriva de durationMinutes. */
   scheduledUntil?: string | null;
@@ -76,6 +80,11 @@ export async function syncConvocatoriaMetaToEntity(
     input.durationMinutes
   );
   const mostrar_lugar = input.includeLugar !== false;
+  const syncCostoPremio = input.mode === "reta";
+  const costo = input.costo?.trim() || null;
+  const premio = input.premio?.trim() || null;
+  const mostrar_costo = input.includeCosto === true;
+  const mostrar_premio = input.includePremio === true;
 
   if (input.mode === "duelo_2v2") {
     const nombre = input.name?.trim();
@@ -102,10 +111,22 @@ export async function syncConvocatoriaMetaToEntity(
       cancha,
       programado_en,
       programado_hasta,
+      ...(syncCostoPremio
+        ? {
+            costo,
+            mostrar_costo,
+            premio,
+            mostrar_premio,
+          }
+        : {}),
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (/lugar|cancha|programado_|column .* does not exist|42703/i.test(msg)) {
+    if (
+      /lugar|cancha|programado_|costo|premio|column .* does not exist|42703/i.test(
+        msg
+      )
+    ) {
       // Patch tournaments aún no aplicado — el upsert open_reg sigue como fallback.
       return;
     }

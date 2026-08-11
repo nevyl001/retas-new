@@ -243,6 +243,89 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("Solo necesitas tu Riviera ID.");
   });
 
+  it("incluye costo y premio solo cuando los flags están activos", () => {
+    const base = {
+      dto: {
+        name: "Reta domingo",
+        mode_type: "reta" as const,
+        scheduled_at: "2026-08-10T22:00:00.000Z",
+        duration_minutes: 90,
+        location_label: "Club Norte",
+        category_label: "5ta Fuerza",
+        rama_label: null,
+        capacity: 8,
+        confirmed_count: 0,
+        spots_left: 8,
+        display_rating: false,
+        entries: [],
+      },
+      publicUrl: "https://app.example/jugar/ra-costo",
+      clubName: "Riviera Open",
+      includeLugar: true,
+      costo: "$200 por jugador",
+      premio: "Trofeo + pelotas",
+    };
+
+    const omitted = buildRetaAbiertaWhatsAppMessage({
+      ...base,
+      includeCosto: false,
+      includePremio: false,
+    });
+    expect(omitted).not.toContain("💵");
+    expect(omitted).not.toContain("🏆");
+    expect(omitted).not.toContain("$200");
+    expect(omitted).not.toContain("Trofeo");
+
+    const withCostoOnly = buildRetaAbiertaWhatsAppMessage({
+      ...base,
+      includeCosto: true,
+      includePremio: false,
+    });
+    expect(withCostoOnly).toContain("💵 Costo: $200 por jugador");
+    expect(withCostoOnly).not.toContain("🏆");
+
+    const withBoth = buildRetaAbiertaWhatsAppMessage({
+      ...base,
+      includeCosto: true,
+      includePremio: true,
+    });
+    expect(withBoth).toContain("💵 Costo: $200 por jugador");
+    expect(withBoth).toContain("🏆 Premio: Trofeo + pelotas");
+    const costoIdx = withBoth.indexOf("💵 Costo:");
+    const premioIdx = withBoth.indexOf("🏆 Premio:");
+    const nivelIdx = withBoth.indexOf("Nivel 5ta Fuerza");
+    expect(nivelIdx).toBeGreaterThan(-1);
+    expect(costoIdx).toBeGreaterThan(nivelIdx);
+    expect(premioIdx).toBeGreaterThan(costoIdx);
+  });
+
+  it("no imprime costo/premio si el flag está on pero el texto vacío", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Reta",
+        mode_type: "reta",
+        scheduled_at: null,
+        duration_minutes: 90,
+        location_label: null,
+        category_label: null,
+        rama_label: null,
+        capacity: 8,
+        confirmed_count: 0,
+        spots_left: 8,
+        display_rating: false,
+        entries: [],
+      },
+      publicUrl: "https://app.example/jugar/ra-empty",
+      clubName: "Riviera Open",
+      includeCosto: true,
+      costo: "   ",
+      includePremio: true,
+      premio: "",
+    });
+    expect(text).not.toContain("💵");
+    expect(text).not.toContain("🏆");
+  });
+
   it("no imprime la etiqueta vacía Club cuando falta el origen", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {

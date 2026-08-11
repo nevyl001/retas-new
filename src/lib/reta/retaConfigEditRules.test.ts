@@ -78,4 +78,18 @@ describe("retaConfigEditRules", () => {
     expect(fieldEditability("championship", phase).editable).toBe(false);
     expect(fieldEditability("courts", phase).editable).toBe(true);
   });
+
+  it("finished permite editar costo/premio (editoriales como lugar)", () => {
+    const phase = deriveRetaEditPhase({
+      is_started: true,
+      is_finished: true,
+      pairsCount: 4,
+      matchesCount: 10,
+    });
+    expect(phase).toBe("finished");
+    expect(fieldEditability("costo", phase).editable).toBe(true);
+    expect(fieldEditability("mostrar_costo", phase).editable).toBe(true);
+    expect(fieldEditability("premio", phase).editable).toBe(true);
+    expect(fieldEditability("mostrar_premio", phase).editable).toBe(true);
+  });
 });

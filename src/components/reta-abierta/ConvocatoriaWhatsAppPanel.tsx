@@ -152,6 +152,14 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
   const [includeLugar, setIncludeLugar] = useState(
     context.includeLugar !== false
   );
+  const [costoLabel, setCostoLabel] = useState(context.defaultCosto ?? "");
+  const [includeCosto, setIncludeCosto] = useState(
+    context.includeCosto === true
+  );
+  const [premioLabel, setPremioLabel] = useState(context.defaultPremio ?? "");
+  const [includePremio, setIncludePremio] = useState(
+    context.includePremio === true
+  );
   const [displayRating, setDisplayRating] = useState(true);
   const [displayFullName, setDisplayFullName] = useState(true);
 
@@ -174,6 +182,26 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       setIncludeLugar(context.includeLugar !== false);
     }
   }, [context.includeLugar]);
+
+  useEffect(() => {
+    if (context.defaultCosto != null) {
+      setCostoLabel(context.defaultCosto);
+    }
+  }, [context.defaultCosto]);
+
+  useEffect(() => {
+    setIncludeCosto(context.includeCosto === true);
+  }, [context.includeCosto]);
+
+  useEffect(() => {
+    if (context.defaultPremio != null) {
+      setPremioLabel(context.defaultPremio);
+    }
+  }, [context.defaultPremio]);
+
+  useEffect(() => {
+    setIncludePremio(context.includePremio === true);
+  }, [context.includePremio]);
 
   useEffect(() => {
     setEntityId(context.entityId.trim());
@@ -511,6 +539,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         locationLabel: loc.trim() || null,
         canchaLabel: canchaLabel.trim() || null,
         includeLugar,
+        costo: costoLabel.trim() || null,
+        includeCosto,
+        premio: premioLabel.trim() || null,
+        includePremio,
         scheduledAt: schedLocal,
         durationMinutes: dur,
       });
@@ -545,6 +577,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       locationLabel?: string | null;
       categoryLabel?: string | null;
       includeLugar?: boolean;
+      costo?: string | null;
+      includeCosto?: boolean;
+      premio?: string | null;
+      includePremio?: boolean;
     }
   ) => {
     const dto = buildShareDtoFromOrganizerState(row, entries, context);
@@ -558,6 +594,8 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       ? new Date(scheduledAt).toISOString()
       : null;
     const showLugar = overrides?.includeLugar ?? includeLugar;
+    const showCosto = overrides?.includeCosto ?? includeCosto;
+    const showPremio = overrides?.includePremio ?? includePremio;
     const localLocation = locationLabel.trim() || null;
     /** En gestionar (shareOnly), el horario del duelo viene del context/editor. */
     const resolvedScheduled = shareOnly
@@ -584,6 +622,20 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
           context.defaultLocation ??
           null
       : null;
+    const resolvedCosto = !showCosto
+      ? null
+      : overrides?.costo?.trim() ||
+        (shareOnly ? context.defaultCosto?.trim() : "") ||
+        costoLabel.trim() ||
+        context.defaultCosto?.trim() ||
+        null;
+    const resolvedPremio = !showPremio
+      ? null
+      : overrides?.premio?.trim() ||
+        (shareOnly ? context.defaultPremio?.trim() : "") ||
+        premioLabel.trim() ||
+        context.defaultPremio?.trim() ||
+        null;
     return buildRetaAbiertaWhatsAppMessage({
       dto: {
         ...dto,
@@ -607,6 +659,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
       includeLugar: shareOnly
         ? context.includeLugar !== false
         : showLugar,
+      costo: resolvedCosto,
+      includeCosto: shareOnly ? context.includeCosto === true : showCosto,
+      premio: resolvedPremio,
+      includePremio: shareOnly ? context.includePremio === true : showPremio,
       displayFullName,
       productHeadline: context.productHeadline,
     });
@@ -641,6 +697,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         "";
       const launchIncludeLugar = includeLugar;
       const launchCancha = canchaLabel.trim();
+      const launchIncludeCosto = includeCosto;
+      const launchCosto = costoLabel.trim();
+      const launchIncludePremio = includePremio;
+      const launchPremio = premioLabel.trim();
 
       if (!id) {
         if (!ensureDraftEntity) {
@@ -721,6 +781,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         locationLabel: launchIncludeLugar ? launchLocation : null,
         categoryLabel: launchCategory.trim() || null,
         includeLugar: launchIncludeLugar,
+        costo: launchCosto || null,
+        includeCosto: launchIncludeCosto,
+        premio: launchPremio || null,
+        includePremio: launchIncludePremio,
       });
       const copied = await copyTextToClipboard(text);
       if (!copied) {
@@ -767,6 +831,18 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
     const copyIncludeLugar = shareOnly
       ? context.includeLugar !== false
       : includeLugar;
+    const copyIncludeCosto = shareOnly
+      ? context.includeCosto === true
+      : includeCosto;
+    const copyIncludePremio = shareOnly
+      ? context.includePremio === true
+      : includePremio;
+    const copyCosto = shareOnly
+      ? (context.defaultCosto ?? "").trim()
+      : costoLabel.trim();
+    const copyPremio = shareOnly
+      ? (context.defaultPremio ?? "").trim()
+      : premioLabel.trim();
 
     void (async () => {
       try {
@@ -799,6 +875,10 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
         durationMinutes: dur,
         locationLabel: copyIncludeLugar ? loc || null : null,
         includeLugar: copyIncludeLugar,
+        costo: copyCosto || null,
+        includeCosto: copyIncludeCosto,
+        premio: copyPremio || null,
+        includePremio: copyIncludePremio,
       });
       const copied = await copyTextToClipboard(text);
       if (!copied) {
@@ -1145,6 +1225,58 @@ export const ConvocatoriaWhatsAppPanel: React.FC<Props> = ({
             <p className="ra-org__hint">
               Ideal si tu club siempre juega en la misma sede.
             </p>
+          ) : null}
+          {context.mode === "reta" ? (
+            <>
+              <label className="ra-org__toggle">
+                <input
+                  type="checkbox"
+                  checked={includeCosto}
+                  onChange={(e) => setIncludeCosto(e.target.checked)}
+                />
+                <span>Incluir costo en la convocatoria</span>
+              </label>
+              <div
+                className={`ra-org__collapse${includeCosto ? " is-open" : ""}`}
+                aria-hidden={!includeCosto}
+              >
+                <div className="ra-org__collapse-inner">
+                  <label className="ra-org__meetup-lugar">
+                    <span className="ra-org__field-label">Costo</span>
+                    <input
+                      value={costoLabel}
+                      onChange={(e) => setCostoLabel(e.target.value)}
+                      placeholder="$200 por jugador"
+                      tabIndex={includeCosto ? 0 : -1}
+                    />
+                  </label>
+                </div>
+              </div>
+              <label className="ra-org__toggle">
+                <input
+                  type="checkbox"
+                  checked={includePremio}
+                  onChange={(e) => setIncludePremio(e.target.checked)}
+                />
+                <span>Incluir premio en la convocatoria</span>
+              </label>
+              <div
+                className={`ra-org__collapse${includePremio ? " is-open" : ""}`}
+                aria-hidden={!includePremio}
+              >
+                <div className="ra-org__collapse-inner">
+                  <label className="ra-org__meetup-lugar">
+                    <span className="ra-org__field-label">Premio</span>
+                    <input
+                      value={premioLabel}
+                      onChange={(e) => setPremioLabel(e.target.value)}
+                      placeholder="Trofeo + pelotas"
+                      tabIndex={includePremio ? 0 : -1}
+                    />
+                  </label>
+                </div>
+              </div>
+            </>
           ) : null}
         </div>
       ) : null}

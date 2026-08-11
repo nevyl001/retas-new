@@ -63,6 +63,10 @@ describe("QuickStartSheet shared form", () => {
       championshipRounds: 4,
       lugar: "Club",
       mostrar_lugar: true,
+      costo: "",
+      mostrar_costo: false,
+      premio: "",
+      mostrar_premio: false,
       cancha: "1-2",
       programado_en: "2026-07-20T18:00",
       duration_minutes: 120,
@@ -72,6 +76,7 @@ describe("QuickStartSheet shared form", () => {
         <RetaConfigFields
           mode="edit"
           phase="draft"
+          layout="essentials"
           values={values}
           onChange={() => {}}
         />
@@ -86,6 +91,24 @@ describe("QuickStartSheet shared form", () => {
     expect(container.textContent).toMatch(/Hora/);
     expect(container.querySelector('input[type="date"]')).toBeTruthy();
     expect(container.querySelector('input[type="time"]')).toBeTruthy();
+    const costoCb = container.querySelector(
+      'input[aria-label="Incluir costo en la convocatoria"]'
+    ) as HTMLInputElement | null;
+    const premioCb = container.querySelector(
+      'input[aria-label="Incluir premio en la convocatoria"]'
+    ) as HTMLInputElement | null;
+    expect(costoCb?.checked).toBe(false);
+    expect(premioCb?.checked).toBe(false);
+    const costoInput = container.querySelector(
+      'input[placeholder="$200 por jugador"]'
+    ) as HTMLInputElement | null;
+    const premioInput = Array.from(
+      container.querySelectorAll("input[type='text']")
+    ).find(
+      (el) => (el as HTMLInputElement).placeholder === "Trofeo + pelotas"
+    ) as HTMLInputElement | undefined;
+    expect(costoInput?.disabled).toBe(true);
+    expect(premioInput?.disabled).toBe(true);
     const errors = validateRetaConfigForm({
       ...values,
       mode: "edit",

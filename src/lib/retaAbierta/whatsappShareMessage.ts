@@ -142,12 +142,24 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   canchaLabel?: string | null;
   /** Si false, omite la línea de lugar (clubes con sede fija). Default true. */
   includeLugar?: boolean;
+  /** Texto libre de costo; solo si includeCosto. */
+  costo?: string | null;
+  /** Default false — el organizador activa en Detalles. */
+  includeCosto?: boolean;
+  /** Texto libre de premio; solo si includePremio. */
+  premio?: string | null;
+  /** Default false — el organizador activa en Detalles. */
+  includePremio?: boolean;
   displayFullName?: boolean;
   productHeadline?: string;
 }): string {
   const { dto, publicUrl } = opts;
   const displayFullName = opts.displayFullName !== false;
   const includeLugar = opts.includeLugar !== false;
+  const includeCosto = opts.includeCosto === true;
+  const includePremio = opts.includePremio === true;
+  const costo = opts.costo?.trim() || "";
+  const premio = opts.premio?.trim() || "";
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline);
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
@@ -189,6 +201,9 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     const cat = dto.category_label.trim();
     lines.push(cat.toLowerCase().startsWith("nivel") ? cat : `Nivel ${cat}`);
   }
+
+  if (includeCosto && costo) lines.push(`💵 Costo: ${costo}`);
+  if (includePremio && premio) lines.push(`🏆 Premio: ${premio}`);
 
   if (mode === "americano") {
     lines.push(

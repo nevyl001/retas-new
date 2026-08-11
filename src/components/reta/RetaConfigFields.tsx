@@ -72,6 +72,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
   const courtsEd = ed("courts");
   const champEd = ed("championship");
   const lugarEd = ed("lugar");
+  const costoEd = ed("costo");
+  const premioEd = ed("premio");
   const schedEd = ed("programado_en");
   const durEd = ed("duration_minutes");
 
@@ -322,8 +324,112 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
       )
     ) : null;
 
+  const costoField =
+    showScheduleMeta ? (
+      essentials ? (
+        <div className="home-sheet__field reta-details-form__field reta-details-form__field--costo">
+          <span className="reta-details-form__lugar-label">
+            <input
+              type="checkbox"
+              checked={values.mostrar_costo}
+              disabled={costoEd.locked}
+              onChange={(e) => patch({ mostrar_costo: e.target.checked })}
+              aria-label="Incluir costo en la convocatoria"
+            />
+            <span className="home-sheet__field-label">Costo</span>
+          </span>
+          <input
+            type="text"
+            className="home-sheet__input riviera-input"
+            placeholder="$200 por jugador"
+            value={values.costo}
+            disabled={costoEd.locked || !values.mostrar_costo}
+            onChange={(e) => patch({ costo: e.target.value })}
+          />
+        </div>
+      ) : (
+        <>
+          <label className="home-sheet__field home-sheet__field--check">
+            <input
+              type="checkbox"
+              checked={values.mostrar_costo}
+              disabled={costoEd.locked}
+              onChange={(e) => patch({ mostrar_costo: e.target.checked })}
+            />
+            <span className="home-sheet__field-label">Incluir costo</span>
+          </label>
+          <label className="home-sheet__field">
+            <span className="home-sheet__field-label">Costo</span>
+            <input
+              type="text"
+              className="home-sheet__input riviera-input"
+              placeholder="$200 por jugador"
+              value={values.costo}
+              disabled={costoEd.locked || !values.mostrar_costo}
+              onChange={(e) => patch({ costo: e.target.value })}
+            />
+          </label>
+        </>
+      )
+    ) : null;
+
+  const premioField =
+    showScheduleMeta ? (
+      essentials ? (
+        <div className="home-sheet__field reta-details-form__field reta-details-form__field--premio">
+          <span className="reta-details-form__lugar-label">
+            <input
+              type="checkbox"
+              checked={values.mostrar_premio}
+              disabled={premioEd.locked}
+              onChange={(e) => patch({ mostrar_premio: e.target.checked })}
+              aria-label="Incluir premio en la convocatoria"
+            />
+            <span className="home-sheet__field-label">Premio</span>
+          </span>
+          <input
+            type="text"
+            className="home-sheet__input riviera-input"
+            placeholder="Trofeo + pelotas"
+            value={values.premio}
+            disabled={premioEd.locked || !values.mostrar_premio}
+            onChange={(e) => patch({ premio: e.target.value })}
+          />
+        </div>
+      ) : (
+        <>
+          <label className="home-sheet__field home-sheet__field--check">
+            <input
+              type="checkbox"
+              checked={values.mostrar_premio}
+              disabled={premioEd.locked}
+              onChange={(e) => patch({ mostrar_premio: e.target.checked })}
+            />
+            <span className="home-sheet__field-label">Incluir premio</span>
+          </label>
+          <label className="home-sheet__field">
+            <span className="home-sheet__field-label">Premio</span>
+            <input
+              type="text"
+              className="home-sheet__input riviera-input"
+              placeholder="Trofeo + pelotas"
+              value={values.premio}
+              disabled={premioEd.locked || !values.mostrar_premio}
+              onChange={(e) => patch({ premio: e.target.value })}
+            />
+          </label>
+        </>
+      )
+    ) : null;
+
   const editAdvancedFields =
-    mode === "edit" && !essentials ? <>{lugarField}</> : null;
+    mode === "edit" && !essentials ? (
+      <>
+        {lugarField}
+        {costoField}
+        {premioField}
+      </>
+    ) : null;
 
   const championshipField = showChampionship ? (
     <div
@@ -418,6 +524,8 @@ export const RetaConfigFields: React.FC<RetaConfigFieldsProps> = ({
           {descriptionField}
           {nivelField}
           {lugarField}
+          {costoField}
+          {premioField}
           {championshipField}
         </div>
       </div>
