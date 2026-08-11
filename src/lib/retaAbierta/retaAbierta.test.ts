@@ -198,7 +198,7 @@ describe("WhatsApp share message por modo", () => {
     );
   });
 
-  it("compacta el roster en 2 jugadores por línea", () => {
+  it("lista un jugador por línea y huecos visibles arriba del enlace", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {
         name: "Reta",
@@ -247,11 +247,15 @@ describe("WhatsApp share message por modo", () => {
     });
     expect(text).toContain("○ Disponible");
     expect(text.match(/○ Disponible/g)?.length).toBe(1);
-    expect(text).toContain("✓ Ana · ✓ Beto");
+    expect(text).toContain("✓ Ana");
+    expect(text).toContain("✓ Beto");
     expect(text).toContain("✓ Cata");
+    expect(text).not.toContain("✓ Ana · ✓ Beto");
     expect(text.indexOf("○ Disponible")).toBeLessThan(
       text.indexOf("✓ Ana")
     );
+    expect(text.indexOf("✓ Ana")).toBeLessThan(text.indexOf("✓ Beto"));
+    expect(text.indexOf("✓ Beto")).toBeLessThan(text.indexOf("✓ Cata"));
   });
 
   it("muestra Lugar y Cancha explícitos cuando vienen separados", () => {

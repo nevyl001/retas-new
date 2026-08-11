@@ -126,12 +126,12 @@ function formatOpenSlotLines(openSlots: number): string[] {
   return Array.from({ length: openSlots }, () => "○ Disponible");
 }
 
-/** Roster en pocas líneas (WhatsApp trunca por altura, no solo por caracteres). */
+/** Roster: un jugador por línea (lista clásica de convocatoria). */
 function formatConfirmedRosterLines(
   confirmed: { nombre: string; rating?: number | null }[],
   displayFullName: boolean,
   displayRating: boolean,
-  perLine = 2
+  perLine = 1
 ): string[] {
   const labels = confirmed.map((e) => {
     const name = displayNameForShare(e.nombre, displayFullName);
@@ -261,7 +261,7 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
         confirmed,
         displayFullName,
         Boolean(dto.display_rating),
-        2
+        1
       )
     );
   }
