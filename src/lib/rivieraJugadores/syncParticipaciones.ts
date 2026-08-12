@@ -271,6 +271,23 @@ function hostClubMetadata(organizadorId: string): Record<string, string> {
   };
 }
 
+/** Persistencia confirmada de una participación de ranking/carrera. */
+type ParticipacionPersistResult = {
+  ok: true;
+  jugadorId: string;
+  participacionId: string;
+};
+
+/** Solo toca touchedJugadorIds cuando hubo escritura/confirmación real. */
+function playerSyncFromPersist(
+  persisted: ParticipacionPersistResult | null
+): PlayerParticipacionSyncResult {
+  if (!persisted?.ok || !persisted.participacionId) {
+    return {};
+  }
+  return { jugadorId: persisted.jugadorId };
+}
+
 async function registrarPuntosRanking(params: {
   jugadorId: string;
   tipoEvento: JugadorTipoEvento;
@@ -286,19 +303,25 @@ async function registrarPuntosRanking(params: {
   skipIfSubtipoExists?: string;
   upsertSubtipo?: string;
   eventoEn?: string;
-}): Promise<void> {
+}): Promise<ParticipacionPersistResult | null> {
   if (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId)) {
-    return;
+    return null;
   }
 
   if (params.skipIfSubtipoExists) {
-    const exists = await tieneParticipacionSubtipo(
+    const existing = await getParticipacionBySubtipo(
       params.jugadorId,
       params.tipoEvento,
       params.eventoId,
       params.skipIfSubtipoExists
     );
-    if (exists) return;
+    if (existing) {
+      return {
+        ok: true,
+        jugadorId: params.jugadorId,
+        participacionId: existing.id,
+      };
+    }
   }
 
   // Perf batch-1 (2026-08-08): ya se confirmó arriba que NO está excluido y
@@ -325,7 +348,7 @@ async function registrarPuntosRanking(params: {
       : undefined);
 
   if (subtipo) {
-    await upsertParticipacionRanking({
+    const participacionId = await upsertParticipacionRanking({
       jugadorId: params.jugadorId,
       tipoEvento: params.tipoEvento,
       eventoId: params.eventoId,
@@ -338,13 +361,17 @@ async function registrarPuntosRanking(params: {
       parejaCon: params.parejaCon,
       metadata,
       fecha: typeof metadata.fecha === "string" ? metadata.fecha : undefined,
-      precomputedExcluded: true,
+      precomputedExcluded: false,
       precomputedRankingState: rankingState,
     });
-    return;
+    return {
+      ok: true,
+      jugadorId: params.jugadorId,
+      participacionId,
+    };
   }
 
-  await safeRegistrar({
+  const participacionId = await safeRegistrar({
     jugadorId: params.jugadorId,
     tipoEvento: params.tipoEvento,
     eventoId: params.eventoId,
@@ -356,11 +383,20 @@ async function registrarPuntosRanking(params: {
     parejaCon: params.parejaCon,
     metadata,
     fecha: typeof metadata.fecha === "string" ? metadata.fecha : undefined,
-    precomputedExcluded: true,
+    precomputedExcluded: false,
     precomputedRankingState: rankingState,
   });
+  return {
+    ok: true,
+    jugadorId: params.jugadorId,
+    participacionId,
+  };
 }
 
+/**
+ * Contrato de persistencia: éxito solo con participacion_id confirmado.
+ * Errores (incl. autorización) siempre se propagan — nunca swallow.
+ */
 async function safeRegistrar(params: {
   jugadorId: string;
   tipoEvento: JugadorTipoEvento;
@@ -374,70 +410,57 @@ async function safeRegistrar(params: {
   metadata?: Record<string, unknown>;
   fecha?: string;
   /**
-   * Perf batch-1 (2026-08-08): permite a un caller que YA verificó exclusión
-   * / estado de ranking para este mismo (jugadorId, tipoEvento, eventoId) en
-   * esta misma ejecución reenviar el resultado en vez de que se repita el
-   * RPC/SELECT. Si no se pasa, el comportamiento es idéntico al anterior
-   * (se resuelve aquí mismo).
+   * Perf batch-1 (2026-08-08): si el caller YA resolvió isParticipacionExcluded
+   * para este mismo (jugadorId, tipoEvento, eventoId), reenvía el boolean
+   * resultante (true = excluido, false = no excluido) para no repetir el RPC.
+   * Tras confirmar que NO está excluido debe pasarse `false` — nunca `true`
+   * como “ya verificado” (bug 2026-08-12: true saltaba la escritura).
    */
   precomputedExcluded?: boolean;
   precomputedRankingState?: { sumaRanking: boolean; estado: string | null };
-}): Promise<void> {
+}): Promise<string> {
   const excluded =
-    params.precomputedExcluded ??
-    (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId));
+    params.precomputedExcluded !== undefined
+      ? params.precomputedExcluded
+      : await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId);
   if (excluded) {
-    return;
+    throw new Error(
+      `participación excluida para jugador ${params.jugadorId} en ${params.tipoEvento}/${params.eventoId}`
+    );
   }
 
-  try {
-    const rankingState =
-      params.precomputedRankingState ??
-      (await readJugadorSumaRankingState(params.jugadorId));
-    const puntosCalculados = Math.max(0, params.puntosObtenidos ?? 0);
-    const puntos = rankingState.sumaRanking ? puntosCalculados : 0;
+  const rankingState =
+    params.precomputedRankingState ??
+    (await readJugadorSumaRankingState(params.jugadorId));
+  const puntosCalculados = Math.max(0, params.puntosObtenidos ?? 0);
+  const puntos = rankingState.sumaRanking ? puntosCalculados : 0;
 
-    // BLK-04: registro local + ledger oficial global en una sola llamada
-    // RPC transaccional (antes: 2 llamadas separadas, podían quedar
-    // desalineadas si la segunda fallaba). Ver
-    // supabase/migrations/0005_participacion_con_ledger.sql.
-    await registrarParticipacionConLedger({
-      ...params,
-      puntosObtenidos: puntos,
-    });
-    if (rankingState.sumaRanking) {
-      await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
-    }
-  } catch (e) {
-    const msg =
-      e && typeof e === "object" && "message" in e
-        ? String((e as { message?: string }).message ?? "")
-        : "";
-    if (msg.includes("No autorizado para registrar participación")) {
-      return;
-    }
-    console.error("[riviera-jugadores] safeRegistrar:", {
-      jugadorId: params.jugadorId,
-      tipoEvento: params.tipoEvento,
-      eventoId: params.eventoId,
-      code:
-        e && typeof e === "object" && "code" in e
-          ? String((e as { code?: string }).code ?? "")
-          : undefined,
-      message: msg,
-      details:
-        e && typeof e === "object" && "details" in e
-          ? (e as { details?: unknown }).details
-          : undefined,
-      hint:
-        e && typeof e === "object" && "hint" in e
-          ? (e as { hint?: unknown }).hint
-          : undefined,
-    });
-    // No silenciar: el pipeline de cierre debe fallar con syncFailures
-    // accionables (PGRST202, RLS, etc.), no seguir como si hubiera escrito.
-    throw e;
+  // BLK-04: registro local + ledger oficial global en una sola llamada
+  // RPC transaccional (antes: 2 llamadas separadas, podían quedar
+  // desalineadas si la segunda fallaba). Ver
+  // supabase/migrations/0005_participacion_con_ledger.sql.
+  const participacionId = await registrarParticipacionConLedger({
+    jugadorId: params.jugadorId,
+    tipoEvento: params.tipoEvento,
+    eventoId: params.eventoId,
+    eventoNombre: params.eventoNombre,
+    resultado: params.resultado,
+    setsFavor: params.setsFavor,
+    setsContra: params.setsContra,
+    puntosObtenidos: puntos,
+    parejaCon: params.parejaCon,
+    metadata: params.metadata,
+    fecha: params.fecha,
+  });
+  if (!participacionId) {
+    throw new Error(
+      "registrar_participacion_jugador_con_ledger no devolvió participacion_id"
+    );
   }
+  if (rankingState.sumaRanking) {
+    await ensureRivieraJugadorVisibleEnRanking(params.jugadorId);
+  }
+  return participacionId;
 }
 
 async function getParticipacionBySubtipo(
@@ -497,12 +520,15 @@ async function upsertParticipacionRanking(params: {
   /** Perf batch-1 (2026-08-08): ver safeRegistrar. */
   precomputedExcluded?: boolean;
   precomputedRankingState?: { sumaRanking: boolean; estado: string | null };
-}): Promise<void> {
+}): Promise<string> {
   const excluded =
-    params.precomputedExcluded ??
-    (await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId));
+    params.precomputedExcluded !== undefined
+      ? params.precomputedExcluded
+      : await isParticipacionExcluded(params.jugadorId, params.tipoEvento, params.eventoId);
   if (excluded) {
-    return;
+    throw new Error(
+      `participación excluida para jugador ${params.jugadorId} en ${params.tipoEvento}/${params.eventoId}`
+    );
   }
 
   const incomingDetalle = parsePartidosDetalle(params.metadata.partidos_detalle);
@@ -540,25 +566,21 @@ async function upsertParticipacionRanking(params: {
     // BLK-04: UPDATE local + ledger oficial global en una sola llamada RPC
     // transaccional (antes: UPDATE directo + ledger por separado). Ver
     // supabase/migrations/0005_participacion_con_ledger.sql.
-    try {
-      await actualizarParticipacionConLedger({
-        participacionId: existing.id,
-        eventoNombre: params.eventoNombre,
-        resultado: params.resultado,
-        setsFavor,
-        setsContra,
-        puntosObtenidos,
-        parejaCon: params.parejaCon ?? existing.pareja_con,
-        metadata: mergedMeta,
-      });
-    } catch (error) {
-      console.error("[riviera-jugadores] upsertParticipacionRanking:", error);
-      return;
-    }
-    return;
+    // Errores de persistencia se propagan — nunca swallow.
+    await actualizarParticipacionConLedger({
+      participacionId: existing.id,
+      eventoNombre: params.eventoNombre,
+      resultado: params.resultado,
+      setsFavor,
+      setsContra,
+      puntosObtenidos,
+      parejaCon: params.parejaCon ?? existing.pareja_con,
+      metadata: mergedMeta,
+    });
+    return existing.id;
   }
 
-  await safeRegistrar({
+  return safeRegistrar({
     jugadorId: params.jugadorId,
     tipoEvento: params.tipoEvento,
     eventoId: params.eventoId,
@@ -570,9 +592,9 @@ async function upsertParticipacionRanking(params: {
     parejaCon: params.parejaCon,
     metadata: mergedMeta,
     fecha: params.fecha,
-    // Ya se verificó exclusión y se resolvió rankingState arriba en esta
-    // misma llamada -- no repetir el RPC/SELECT.
-    precomputedExcluded: true,
+    // Ya se verificó que NO está excluido; cachear boolean false.
+    // Nunca pasar true aquí: true significa "excluido" y salta la escritura.
+    precomputedExcluded: false,
     precomputedRankingState: rankingState,
   });
 }
@@ -1149,7 +1171,7 @@ async function syncRetaParticipacionesInner(params: {
           partidosDetalle
         );
 
-        await registrarPuntosRanking({
+        const persisted = await registrarPuntosRanking({
           jugadorId,
           tipoEvento: "reta",
           eventoId: tournament.id,
@@ -1168,7 +1190,7 @@ async function syncRetaParticipacionesInner(params: {
           eventoEn,
         });
 
-        return { jugadorId };
+        return playerSyncFromPersist(persisted);
       },
     }))
   );
@@ -1185,23 +1207,34 @@ async function syncRetaParticipacionesInner(params: {
   const syncFailures = [...repairFailures, ...parallelOutcome.syncFailures];
   const touchedJugadorIds = Array.from(new Set(parallelOutcome.touchedJugadorIds));
 
+  const persistenceBatchOk =
+    syncFailures.length === 0 && touchedJugadorIds.length > 0;
+
   const ratingStart = performance.now();
   try {
-    const ratingApplied = await aplicarRatingRetaFinishedMatches({
-      organizadorId,
-      pairs,
-      matches,
-      gamesByMatchId,
-      descripcion: tournament.name?.trim()
-        ? `Reta: ${tournament.name.trim()}`
-        : "Reta Round Robin",
-      // Perf batch-1: mismo caché de identidad de este cierre (participación
-      // + rating comparten jugadores en round robin) -- evita re-resolver
-      // identidad de un jugador que ya se resolvió en registrarPuntosRanking.
-      identityCache,
-    });
-    if (ratingApplied > 0) {
-      console.warn(`[rating] reta ${tournament.id}: ${ratingApplied} partido(s)`);
+    if (!persistenceBatchOk) {
+      if (syncFailures.length > 0) {
+        console.warn(
+          `[rating] reta ${tournament.id}: omitido — historial incompleto (${syncFailures.length} syncFailure(s), touched=${touchedJugadorIds.length})`
+        );
+      }
+    } else {
+      const ratingApplied = await aplicarRatingRetaFinishedMatches({
+        organizadorId,
+        pairs,
+        matches,
+        gamesByMatchId,
+        descripcion: tournament.name?.trim()
+          ? `Reta: ${tournament.name.trim()}`
+          : "Reta Round Robin",
+        // Perf batch-1: mismo caché de identidad de este cierre (participación
+        // + rating comparten jugadores en round robin) -- evita re-resolver
+        // identidad de un jugador que ya se resolvió en registrarPuntosRanking.
+        identityCache,
+      });
+      if (ratingApplied > 0) {
+        console.warn(`[rating] reta ${tournament.id}: ${ratingApplied} partido(s)`);
+      }
     }
   } catch (e) {
     console.warn("[rating] sync reta:", e);
@@ -1546,7 +1579,7 @@ async function flushTorneoExpressPlayerAgg(
         if (posicion_final === 1) resultado = "victoria";
         else if (posicion_final === 2) resultado = "derrota";
 
-        await registrarPuntosRanking({
+        const persisted = await registrarPuntosRanking({
           jugadorId,
           tipoEvento: "torneo_express",
           eventoId: torneoId,
@@ -1593,7 +1626,7 @@ async function flushTorneoExpressPlayerAgg(
           eventoEn,
         });
 
-        return { jugadorId };
+        return playerSyncFromPersist(persisted);
       },
     }))
   );
@@ -1962,7 +1995,7 @@ export async function syncLigaJornada(
             partidosDetalle
           );
 
-          await registrarPuntosRanking({
+          const persisted = await registrarPuntosRanking({
             jugadorId,
             tipoEvento: "liga",
             eventoId: jornada.id,
@@ -1978,7 +2011,7 @@ export async function syncLigaJornada(
             eventoEn,
           });
 
-          return { jugadorId };
+          return playerSyncFromPersist(persisted);
         },
       }))
     );
@@ -2027,7 +2060,7 @@ export async function syncLigaInscripcionRanking(
     }
     if (!jugadorId) return { touchedJugadorIds: [] };
 
-    await registrarPuntosRanking({
+    const persisted = await registrarPuntosRanking({
       jugadorId,
       tipoEvento: "liga",
       eventoId: ligaId,
@@ -2046,8 +2079,11 @@ export async function syncLigaInscripcionRanking(
       },
       skipIfSubtipoExists: "liga_inscripcion",
     });
+    if (!persisted) {
+      return { touchedJugadorIds: [], participacionEventoId: ligaId };
+    }
     return {
-      touchedJugadorIds: [jugadorId],
+      touchedJugadorIds: [persisted.jugadorId],
       participacionEventoId: ligaId,
     };
   } catch (e) {
@@ -2100,7 +2136,7 @@ export async function syncLigaFinalPodio(
           const resultado: JugadorResultado =
             posicion === 1 ? "victoria" : posicion === 2 ? "derrota" : "empate";
 
-          await registrarPuntosRanking({
+          const persisted = await registrarPuntosRanking({
             jugadorId,
             tipoEvento: "liga",
             eventoId: ligaId,
@@ -2120,7 +2156,7 @@ export async function syncLigaFinalPodio(
             },
           });
 
-          return { jugadorId };
+          return playerSyncFromPersist(persisted);
         },
       }))
     );
@@ -2360,7 +2396,7 @@ export async function syncAmericanoParticipaciones(
               }
             }
 
-            await registrarPuntosRanking({
+            const persisted = await registrarPuntosRanking({
               jugadorId,
               tipoEvento: "americano",
               eventoId: sesionId,
@@ -2375,7 +2411,7 @@ export async function syncAmericanoParticipaciones(
               eventoEn: fechaFallback,
             });
 
-            return { jugadorId };
+            return playerSyncFromPersist(persisted);
           },
         };
       })
@@ -2516,23 +2552,6 @@ export async function syncDuelo2v2Participaciones(params: {
     },
   ];
 
-  try {
-    const resolvedIds = await resolveDuelo2v2RatingPlayerIds(organizadorId, duelo);
-    if (resolvedIds) {
-      const ratingApplied = await aplicarRatingDuelo2v2({
-        id: duelo.id,
-        nombre: duelo.nombre,
-        ganador: duelo.ganador,
-        ...resolvedIds,
-      });
-      if (ratingApplied) {
-        console.warn(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
-      }
-    }
-  } catch (e) {
-    console.warn("[rating] duelo 2v2 sync:", e);
-  }
-
   const excluded = toExcludedJugadorIdSet(params.excludeJugadorIds);
 
   const parallelOutcome = await runParallelPlayerParticipacionSync(
@@ -2594,7 +2613,7 @@ export async function syncDuelo2v2Participaciones(params: {
           partidosDetalle
         );
 
-        await registrarPuntosRanking({
+        const persisted = await registrarPuntosRanking({
           jugadorId,
           tipoEvento: "duelo_2v2",
           eventoId: duelo.id,
@@ -2610,10 +2629,37 @@ export async function syncDuelo2v2Participaciones(params: {
           eventoEn,
         });
 
-        return { jugadorId };
+        return playerSyncFromPersist(persisted);
       },
     }))
   );
+
+  const persistenceBatchOk =
+    parallelOutcome.syncFailures.length === 0 &&
+    parallelOutcome.touchedJugadorIds.length > 0;
+
+  if (persistenceBatchOk) {
+    try {
+      const resolvedIds = await resolveDuelo2v2RatingPlayerIds(organizadorId, duelo);
+      if (resolvedIds) {
+        const ratingApplied = await aplicarRatingDuelo2v2({
+          id: duelo.id,
+          nombre: duelo.nombre,
+          ganador: duelo.ganador,
+          ...resolvedIds,
+        });
+        if (ratingApplied) {
+          console.warn(`[rating] duelo 2v2 ${duelo.id}: rating actualizado`);
+        }
+      }
+    } catch (e) {
+      console.warn("[rating] duelo 2v2 sync:", e);
+    }
+  } else if (parallelOutcome.syncFailures.length > 0) {
+    console.warn(
+      `[rating] duelo 2v2 ${duelo.id}: omitido — historial incompleto (${parallelOutcome.syncFailures.length} syncFailure(s))`
+    );
+  }
 
   return {
     touchedJugadorIds: parallelOutcome.touchedJugadorIds,

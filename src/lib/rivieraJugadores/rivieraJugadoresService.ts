@@ -2004,7 +2004,7 @@ export async function actualizarParticipacionConLedger(params: {
   puntosObtenidos: number;
   parejaCon?: string | null;
   metadata: Record<string, unknown>;
-}): Promise<void> {
+}): Promise<string> {
   const { data, error } = await supabase.rpc(
     "actualizar_participacion_jugador_con_ledger",
     {
@@ -2021,14 +2021,15 @@ export async function actualizarParticipacionConLedger(params: {
 
   if (error) throw error;
 
-  const result = data as { ok: boolean; error?: string } | null;
+  const result = data as { ok: boolean; error?: string; participacion_id?: string } | null;
   if (!result?.ok) {
-    console.warn(
-      "actualizarParticipacionConLedger: no aplicado",
-      result?.error ?? "unknown"
+    throw new Error(
+      result?.error
+        ? `actualizar_participacion_jugador_con_ledger: ${result.error}`
+        : "actualizar_participacion_jugador_con_ledger no aplicado"
     );
-    return;
   }
+  return result.participacion_id ?? params.participacionId;
 }
 
 /** Ajuste manual de puntos de ranking (suma o resta vía participación). */

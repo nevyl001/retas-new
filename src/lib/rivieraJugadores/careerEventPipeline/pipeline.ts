@@ -256,10 +256,14 @@ async function processCareerEventInner(
 
   const normalized = normalizeFailures(failures);
   const { criticalFailures, warnings } = partitionAssertionFailures(normalized);
-  const processed =
+  // processed = persistencia real confirmada (touched), sin syncFailures.
+  // No equivale a "se intentó el sync".
+  const persisted =
     Boolean(syncResult) &&
     !syncResult?.syncError &&
+    !(syncResult?.syncFailures?.length) &&
     touchedJugadorIds.length > 0;
+  const processed = persisted;
   const ok = criticalFailures.length === 0 && !eventBlocked;
   const durationMs = Date.now() - started;
 

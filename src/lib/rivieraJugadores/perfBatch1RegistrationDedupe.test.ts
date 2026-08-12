@@ -40,19 +40,25 @@ jest.mock("./rivieraJugadoresService", () => ({
   ensureRivieraJugadorVisibleEnRanking: jest.fn().mockResolvedValue(undefined),
   rebuildJugadorStats: jest.fn().mockResolvedValue(undefined),
   registrarParticipacionConLedger: jest.fn().mockResolvedValue("part-1"),
-  actualizarParticipacionConLedger: jest.fn().mockResolvedValue(undefined),
+  actualizarParticipacionConLedger: jest.fn().mockResolvedValue("part-1"),
   adjustRankingPuntosManual: jest.fn().mockResolvedValue(undefined),
 }));
 
 import { supabase } from "../supabaseClient";
 import { isParticipacionExcluded } from "./participacionExclusions";
 import { resolveJugadorIdForParticipacion } from "./jugadorIdResolver";
+import {
+  registrarParticipacionConLedger,
+  actualizarParticipacionConLedger,
+} from "./rivieraJugadoresService";
 import { syncDuelo2v2Participaciones } from "./syncParticipaciones";
 import type { Duelo2v2 } from "../duelo2v2/types";
 /* eslint-enable import/first */
 
 const mockExcluded = isParticipacionExcluded as jest.Mock;
 const mockResolve = resolveJugadorIdForParticipacion as jest.Mock;
+const mockRegistrar = registrarParticipacionConLedger as jest.Mock;
+const mockActualizar = actualizarParticipacionConLedger as jest.Mock;
 
 const ORG = "org-perf-2";
 
@@ -81,6 +87,8 @@ function installLeafMocks(rankingStateCalls: { count: number }) {
   mockResolve.mockImplementation(async (params: { jugadorId?: string | null }) =>
     params.jugadorId ?? null
   );
+  mockRegistrar.mockResolvedValue("part-1");
+  mockActualizar.mockResolvedValue("part-1");
 
   (supabase.from as jest.Mock).mockImplementation((table: string) => {
     const chain: Record<string, jest.Mock> = {};
@@ -121,7 +129,7 @@ describe("Perf batch-1 — dedupe de isParticipacionExcluded/readJugadorSumaRank
     expect(result.touchedJugadorIds).toHaveLength(4);
 
     // Perf batch-1: 1 sola verificación de exclusión por jugador (se
-    // reenvía precomputedExcluded a upsertParticipacionRanking/
+    // reenvía precomputedExcluded=false a upsertParticipacionRanking/
     // safeRegistrar). Antes de este batch eran 3 llamadas por jugador
     // (registrarPuntosRanking + upsertParticipacionRanking + safeRegistrar
     // anidado, ver diff de syncParticipaciones.ts).

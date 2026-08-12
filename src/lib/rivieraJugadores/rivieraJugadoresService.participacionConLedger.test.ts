@@ -202,7 +202,7 @@ describe("actualizarParticipacionConLedger — corrección local + ledger global
     );
   });
 
-  it("participación inexistente o de otro organizador: no lanza, solo advierte (respeta el ok:false del RPC)", async () => {
+  it("participación inexistente o de otro organizador: propaga ok:false (no swallow)", async () => {
     mockRpc.mockResolvedValue({
       data: { ok: false, error: "not_found" },
       error: null,
@@ -218,7 +218,7 @@ describe("actualizarParticipacionConLedger — corrección local + ledger global
         puntosObtenidos: 0,
         metadata: {},
       })
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow(/not_found|no aplicado/);
   });
 
   it("error de red/RPC: propaga el error (no hay escritura parcial que ocultar)", async () => {
