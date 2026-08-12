@@ -186,29 +186,6 @@ export async function yaRegistrada(
 
 export { getOrCreateJugadorId } from "./jugadorIdResolver";
 
-async function tieneParticipacionSubtipo(
-  jugadorId: string,
-  tipoEvento: JugadorTipoEvento,
-  eventoId: string,
-  subtipo: string
-): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from("jugador_participaciones")
-      .select("id")
-      .eq("jugador_id", jugadorId)
-      .eq("tipo_evento", tipoEvento)
-      .eq("evento_id", eventoId)
-      .filter("metadata->>subtipo", "eq", subtipo)
-      .limit(1)
-      .maybeSingle();
-    if (error) return false;
-    return !!data;
-  } catch {
-    return false;
-  }
-}
-
 function rankingMetadata(
   desglose: PuntosDesglose,
   extra: Record<string, unknown> = {}
