@@ -1040,7 +1040,7 @@ export async function savePartidoResultado(
       p_partido_id: partidoId,
       p_puntos_local: payload.puntos_local,
       p_puntos_visitante: payload.puntos_visitante,
-      p_ganador_side: payload.ganadorSide,
+      p_ganador_side: payload.ganadorSide ?? "empate",
       p_sets_resultado: payload.sets_resultado,
       p_force: force,
     }
@@ -1056,7 +1056,9 @@ export async function savePartidoResultado(
       throw new Error("Partido no encontrado.");
     }
     if (result.error === "invalid_score") {
-      throw new Error("Completa todos los sets y asegúrate de que haya un ganador");
+      throw new Error(
+        "No se pudo guardar ese marcador. Revisa el resultado e inténtalo de nuevo."
+      );
     }
     if (result.error === "torneo_cerrado") {
       throw new Error(TORNEO_CERRADO_RESULTADO_MSG);

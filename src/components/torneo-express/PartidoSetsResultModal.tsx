@@ -151,7 +151,17 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
             size="sm"
             loading={saving}
             disabled={!canSave || saving}
-            onClick={() => void onSave(sets).then(onClose)}
+            onClick={() => {
+              void onSave(sets)
+                .then(onClose)
+                .catch((err: unknown) => {
+                  const msg =
+                    err instanceof Error
+                      ? err.message
+                      : "No se pudo guardar el resultado";
+                  window.alert(msg);
+                });
+            }}
           >
             Guardar resultado
           </Button>
