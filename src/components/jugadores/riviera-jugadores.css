@@ -56,14 +56,25 @@
 }
 
 .rj-btn--primary {
-  background: linear-gradient(135deg, var(--ro-accent) 0%, var(--ro-bg-inset) 100%);
-  color: var(--ro-text-primary);
+  background: var(--ro-accent);
+  color: var(--ro-text-on-accent);
+  border: 1px solid var(--ro-accent);
+}
+
+.rj-btn--primary:hover:not(:disabled) {
+  background: var(--ro-accent-hover);
+  border-color: var(--ro-accent-hover);
 }
 
 .rj-btn--ghost {
-  background: var(--ro-bg-elevated);
+  background: var(--ro-bg-card);
   color: var(--ro-text-primary);
   border: 1px solid var(--ro-border);
+}
+
+.rj-btn--ghost:hover:not(:disabled) {
+  background: var(--ro-bg-inset);
+  border-color: var(--ro-border);
 }
 
 .rj-btn--danger {
@@ -79,7 +90,7 @@
 }
 
 .rj-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -362,13 +373,14 @@
 .rj-field__hint {
   margin: 0.35rem 0 0;
   font-size: 0.75rem;
-  color: var(--ro-text-muted);
+  color: var(--ro-text-secondary);
 }
 
 .rj-modal__sub {
   margin: -0.25rem 0 0.75rem;
   font-size: 0.875rem;
-  color: var(--ro-text-muted);
+  color: var(--ro-text-secondary);
+  line-height: 1.4;
 }
 
 /* Usado por JugadorPerfilMeta variant="card" (ficha/otros) */
@@ -941,11 +953,13 @@
   max-height: min(92dvh, 640px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: var(--ro-bg-elevated);
+  background: var(--ro-bg-card);
   border-radius: 14px;
   padding: 1rem 0.9rem 0.9rem;
   border: 1px solid var(--ro-border);
+  box-shadow: var(--ro-shadow-md, 0 12px 40px rgba(20, 22, 26, 0.18));
   box-sizing: border-box;
+  color: var(--ro-text-primary);
 }
 
 .rj-modal h2 {
@@ -954,6 +968,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.25;
+  color: var(--ro-text-primary);
 }
 
 .rj-field {
@@ -963,20 +978,39 @@
 .rj-field label {
   display: block;
   font-size: 0.6875rem;
-  color: var(--ro-text-muted);
+  font-weight: 600;
+  color: var(--ro-text-secondary);
   margin-bottom: 0.2rem;
 }
 
+/*
+ * Inputs: --ro-scrim-modal es overlay oscuro de backdrop, no superficie de
+ * formulario. Sobre tarjeta clara dejaba placeholder/texto ilegibles.
+ */
 .rj-field input,
 .rj-field select {
   width: 100%;
-  padding: 0.45rem 0.6rem;
+  padding: 0.55rem 0.7rem;
+  min-height: 2.5rem;
   border-radius: 8px;
   border: 1px solid var(--ro-border);
-  background: var(--ro-scrim-modal);
+  background: var(--ro-bg-input);
   color: var(--ro-text-primary);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   box-sizing: border-box;
+}
+
+.rj-field input::placeholder,
+.rj-field select::placeholder {
+  color: var(--ro-text-muted);
+  opacity: 1;
+}
+
+.rj-field input:focus,
+.rj-field select:focus {
+  outline: none;
+  border-color: var(--ro-accent);
+  box-shadow: 0 0 0 3px var(--ro-accent-ring);
 }
 
 .rj-modal__actions {
@@ -986,7 +1020,7 @@
   position: sticky;
   bottom: 0;
   padding-top: 0.35rem;
-  background: var(--ro-bg-elevated);
+  background: var(--ro-bg-card);
 }
 
 .rj-modal__actions .rj-btn {
