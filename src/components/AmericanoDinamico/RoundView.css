@@ -176,10 +176,12 @@
 }
 
 .americano-match-card__avatar.rj-avatar {
-  width: 52px;
-  height: 52px;
-  font-size: 1rem;
+  width: 64px;
+  height: 64px;
+  font-size: 1.15rem;
   flex-shrink: 0;
+  border-width: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .americano-match-card__player-name {

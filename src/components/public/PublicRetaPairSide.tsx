@@ -74,7 +74,7 @@ export const PublicRetaPairSide: React.FC<{
         <div className="te-pub-pair__band">
           {bandPlayer(p1!)}
           <span className="te-pub-pair__band-join" aria-hidden>
-            &
+            /
           </span>
           {bandPlayer(p2!)}
         </div>
