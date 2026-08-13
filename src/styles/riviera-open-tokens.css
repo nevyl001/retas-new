@@ -436,7 +436,11 @@ html[data-club="valvidub-sports"] .club-identity__logo {
 /* Vitrina pública: no heredar el tema claro interno.
    El ranking/ficha/eventos públicos son islas oscuras; el texto espresso
    sobre la cancha dejaba todo ilegible. Aquí se restaura chrome claro
-   + cobre del logo. */
+   + cobre del logo.
+
+   Importante: .club-experience-scope vive DENTRO de .ro-public-view y
+   redeclara --brand-* (inline) + --ro-text-* (CSS claro). Hay que
+   sobreescribir en el scope y en .te-public, no solo en el padre. */
 html[data-brand="valvidub-sports"] .ro-public-view,
 html[data-club="valvidub-sports"] .ro-public-view,
 .club-experience-scope[data-brand="valvidub-sports"] .ro-public-view,
@@ -444,8 +448,14 @@ html[data-club="valvidub-sports"] .ro-public-view,
 html[data-brand="valvidub-sports"] .rjp-public,
 html[data-club="valvidub-sports"] .rjp-public,
 .club-experience-scope[data-brand="valvidub-sports"] .rjp-public,
-.club-experience-scope[data-club="valvidub-sports"] .rjp-public {
-  color: #f4ede4;
+.club-experience-scope[data-club="valvidub-sports"] .rjp-public,
+html[data-brand="valvidub-sports"] .te-public,
+html[data-club="valvidub-sports"] .te-public,
+.club-experience-scope[data-brand="valvidub-sports"] .te-public,
+.club-experience-scope[data-club="valvidub-sports"] .te-public,
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"],
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] {
+  color: #f4ede4 !important;
 
   --ro-chrome-bg: #16110e;
   --ro-chrome-deep: #100c0a;
@@ -480,12 +490,17 @@ html[data-club="valvidub-sports"] .rjp-public,
   --ro-text-secondary: #d4c4b5;
   --ro-text-muted: #b59a88;
 
-  --brand-text: #f4ede4;
-  --brand-muted: #d4c4b5;
-  --brand-surface: #16110e;
-  --brand-surface-alt: #221c18;
-  --brand-border: rgba(244, 237, 228, 0.22);
-  --brand-accent: #c47a58;
+  /* !important: pisa el style inline del scope (tema claro interno) */
+  --brand-text: #f4ede4 !important;
+  --brand-muted: #d4c4b5 !important;
+  --brand-surface: #16110e !important;
+  --brand-surface-alt: #221c18 !important;
+  --brand-border: rgba(244, 237, 228, 0.22) !important;
+  --brand-accent: #c47a58 !important;
+  --accent-gold: #c47a58 !important;
+  --accent-gold-light: #d49272 !important;
+  --ro-accent: #c47a58 !important;
+
   --effective-text: #f4ede4;
   --effective-muted: #d4c4b5;
   --effective-surface: #16110e;
@@ -498,6 +513,8 @@ html[data-club="valvidub-sports"] .rjp-public,
   --text-muted: #b59a88;
   --rjp-text: #f4ede4;
   --rjp-muted: #d4c4b5;
+  --te-text: #f4ede4;
+  --te-text-muted: #d4c4b5;
 }
 
 html[data-brand="valvidub-sports"] .ro-public-view::after,

@@ -36,7 +36,13 @@ html[data-club="valvidub-sports"] .ro-public-view,
 html[data-brand="valvidub-sports"] .rjp-public,
 html[data-club="valvidub-sports"] .rjp-public,
 .club-experience-scope[data-brand="valvidub-sports"] .rjp-public,
-.club-experience-scope[data-club="valvidub-sports"] .rjp-public {
+.club-experience-scope[data-club="valvidub-sports"] .rjp-public,
+html[data-brand="valvidub-sports"] .te-public,
+html[data-club="valvidub-sports"] .te-public,
+.club-experience-scope[data-brand="valvidub-sports"] .te-public,
+.club-experience-scope[data-club="valvidub-sports"] .te-public,
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"],
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] {
   --effective-primary: #16110e;
   --effective-secondary: #d4c4b5;
   --effective-accent: #c47a58;

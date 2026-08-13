@@ -187,3 +187,31 @@
 [data-brand="valvidub-sports"].club-experience-scope button:focus-visible {
   outline-color: #c47a58;
 }
+
+/* Evento público TE — tipografía legible sobre cancha oscura */
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-evento-header__title,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-evento-header__title,
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-header__title,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-header__title {
+  color: #f4ede4;
+}
+
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-evento-header__dates,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-evento-header__dates,
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-evento-roles__title,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-evento-roles__title,
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-section__title,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-section__title {
+  color: #d49272;
+}
+
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-evento-roles__hint,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-evento-roles__hint,
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-empty,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-empty,
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-evento__status,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-evento__status,
+.ro-public-view .club-experience-scope[data-brand="valvidub-sports"] .te-public-header__subtitle,
+.ro-public-view .club-experience-scope[data-club="valvidub-sports"] .te-public-header__subtitle {
+  color: #d4c4b5;
+}
