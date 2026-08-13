@@ -191,9 +191,14 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
     : null;
   const team1Wins = winnerSide === "local";
   const team2Wins = winnerSide === "visitante";
+  const isTie = played && !winnerSide;
 
   return (
-    <article className="te-partido-item">
+    <article
+      className={`te-partido-item${played ? " te-partido-item--played" : ""}${
+        isTie ? " te-partido-item--tie" : ""
+      }`}
+    >
       <header className="te-partido-item__top">
         <div className="te-partido-meta">
           <span className="te-partido-hora">{partido.hora}</span>
@@ -208,11 +213,21 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
 
       <div className="te-partido-body">
         <div className="te-partido-teams">
-          <div className="te-team-row">
+          <div
+            className={`te-team-row${
+              team1Wins ? " te-team-row--winner" : ""
+            }${played && !team1Wins && !isTie ? " te-team-row--loser" : ""}`}
+          >
+            {team1Wins ? (
+              <span className="te-team-win-mark" aria-hidden>
+                ✓
+              </span>
+            ) : null}
             <span
               className={`te-team-name${
                 team1Wins ? " te-team-name--winner" : ""
-              }`}
+              }${played && !team1Wins && !isTie ? " te-team-name--loser" : ""}`}
+              {...(team1Wins ? { "aria-label": `Ganador: ${partido.pareja1}` } : {})}
             >
               {partido.pareja1}
             </span>
@@ -220,11 +235,21 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
           <div className="te-team-row te-team-row--vs" aria-hidden>
             <span className="te-partido-vs">vs</span>
           </div>
-          <div className="te-team-row">
+          <div
+            className={`te-team-row${
+              team2Wins ? " te-team-row--winner" : ""
+            }${played && !team2Wins && !isTie ? " te-team-row--loser" : ""}`}
+          >
+            {team2Wins ? (
+              <span className="te-team-win-mark" aria-hidden>
+                ✓
+              </span>
+            ) : null}
             <span
               className={`te-team-name${
                 team2Wins ? " te-team-name--winner" : ""
-              }`}
+              }${played && !team2Wins && !isTie ? " te-team-name--loser" : ""}`}
+              {...(team2Wins ? { "aria-label": `Ganador: ${partido.pareja2}` } : {})}
             >
               {partido.pareja2}
             </span>
@@ -236,6 +261,7 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
             <div className="te-partido-sets-wrap">
               <PartidoSetsScoreDisplay
                 partido={partido.partidoExpress}
+                winnerSide={winnerSide}
                 variant="inline"
               />
             </div>

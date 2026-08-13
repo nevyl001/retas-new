@@ -359,7 +359,9 @@
 }
 
 .te-team-row {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   width: 100%;
   min-width: 0;
 }
@@ -367,11 +369,29 @@
 .te-team-row--vs {
   line-height: 1;
   margin: 1px 0;
+  display: block;
+}
+
+.te-team-row--winner {
+  padding: 4px 0;
+}
+
+.te-team-win-mark {
+  flex: 0 0 auto;
+  margin-top: 0.15em;
+  width: 0.9rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--ro-pub-gold, var(--accent-gold, #c9a227));
+  opacity: 0.9;
 }
 
 .te-team-name {
   display: block;
   min-width: 0;
+  flex: 1 1 auto;
   overflow: visible;
   font-size: 0.9375rem;
   font-weight: 600;
@@ -384,8 +404,26 @@
 }
 
 .te-team-name--winner {
-  font-weight: 800;
-  color: var(--ro-text-primary);
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.te-team-name--loser,
+.te-team-row--loser .te-team-name {
+  font-weight: 500;
+  color: var(--text-muted, rgba(255, 255, 255, 0.52));
+}
+
+.te-partido-item--played .te-partido-sets-wrap .te-set-game--win {
+  color: var(--ro-pub-gold, var(--accent-gold, #c9a227));
+  opacity: 1;
+  font-weight: 700;
+}
+
+.te-partido-item--played .te-partido-sets-wrap .te-set-game--lose {
+  color: var(--text-muted, rgba(255, 255, 255, 0.45));
+  opacity: 0.75;
+  font-weight: 500;
 }
 
 .te-team-score {
@@ -397,7 +435,7 @@
 }
 
 .te-team-score--winner {
-  color: var(--ro-accent);
+  color: var(--ro-pub-gold, var(--accent-gold, #c9a227));
 }
 
 .te-score-pending {
