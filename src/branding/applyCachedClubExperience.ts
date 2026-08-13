@@ -3,7 +3,11 @@ import { shouldKeepDocumentMotherBrand } from "./documentMotherBrandPath";
 import { readClubExperienceCache } from "./organizerResolver";
 import { debugLog } from "../lib/debug/debugLog";
 
-const PREMIUM_KEYS = new Set(["padel-court-series", "hack-padel"]);
+const PREMIUM_KEYS = new Set([
+  "padel-court-series",
+  "hack-padel",
+  "valvidub-sports",
+]);
 
 function isMotherBrandOnlyPath(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, "") || "/";

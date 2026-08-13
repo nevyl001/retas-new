@@ -383,3 +383,96 @@
 [data-club="hack-padel"] .mis-retas-page button:focus-visible {
   outline-color: var(--brand-accent);
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Valvidub Sports — premium claro (cobre + marfil)
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-club="valvidub-sports"] .user-header,
+[data-brand="valvidub-sports"] .user-header {
+  background: var(--brand-surface);
+  border-bottom-color: color-mix(in srgb, var(--brand-accent) 28%, var(--ro-border));
+}
+
+[data-club="valvidub-sports"] .club-identity__logo,
+[data-brand="valvidub-sports"] .club-identity__logo {
+  background: transparent !important;
+  mix-blend-mode: normal;
+}
+
+[data-club="valvidub-sports"] .user-header-logo .club-identity--premium .club-identity__logo,
+[data-brand="valvidub-sports"] .user-header-logo .club-identity--premium .club-identity__logo {
+  max-height: 3.25rem;
+  max-width: min(14rem, 58vw);
+}
+
+[data-club="valvidub-sports"] .user-profile-btn:hover,
+[data-club="valvidub-sports"] .user-header-mobile-btn:hover {
+  border-color: color-mix(in srgb, var(--brand-accent) 45%, var(--ro-border));
+}
+
+[data-club="valvidub-sports"] .club-identity__mother,
+[data-club="valvidub-sports"] .club-identity__attribution-brand {
+  color: var(--brand-accent);
+}
+
+[data-club="valvidub-sports"] .main-layout .rv-mode-header__eyebrow,
+[data-club="valvidub-sports"] .home-inner .rv-mode-header__eyebrow,
+[data-club="valvidub-sports"] .home-section-title {
+  color: var(--brand-accent);
+}
+
+[data-club="valvidub-sports"] .main-layout .game-mode-card {
+  background: var(--brand-surface-alt);
+  border-color: color-mix(in srgb, var(--brand-accent) 18%, var(--ro-border));
+}
+
+[data-club="valvidub-sports"] .main-layout .game-mode-card:hover:not(:disabled),
+[data-club="valvidub-sports"] .main-layout .game-mode-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand-accent) 50%, var(--ro-border));
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px color-mix(in srgb, var(--brand-accent) 18%, transparent);
+}
+
+[data-club="valvidub-sports"] .home-inner .game-mode-card__upgrade {
+  background: color-mix(in srgb, var(--brand-accent) 10%, var(--brand-surface));
+  border-color: color-mix(in srgb, var(--brand-accent) 22%, var(--ro-border));
+  color: var(--brand-text);
+}
+
+[data-club="valvidub-sports"] .main-layout .rv-button-primary,
+[data-club="valvidub-sports"] .liga-page .rv-button-primary,
+[data-club="valvidub-sports"] .duelo2v2-page:not(.duelo2v2-page--public) .rv-button-primary,
+[data-club="valvidub-sports"] .torneo-express-page.te-inicio-page .rv-button-primary,
+[data-club="valvidub-sports"] .te-gestion-page .rv-button-primary,
+[data-club="valvidub-sports"] .riviera-organizer-reta .rv-button-primary {
+  background: var(--brand-accent);
+  color: var(--ro-text-on-accent, #fffbf7);
+  border-color: color-mix(in srgb, var(--brand-accent) 80%, #2a1c16);
+}
+
+[data-club="valvidub-sports"] .main-layout .rv-button-primary:hover:not(:disabled),
+[data-club="valvidub-sports"] .liga-page .rv-button-primary:hover:not(:disabled),
+[data-club="valvidub-sports"] .duelo2v2-page:not(.duelo2v2-page--public) .rv-button-primary:hover:not(:disabled),
+[data-club="valvidub-sports"] .torneo-express-page.te-inicio-page .rv-button-primary:hover:not(:disabled),
+[data-club="valvidub-sports"] .te-gestion-page .rv-button-primary:hover:not(:disabled),
+[data-club="valvidub-sports"] .riviera-organizer-reta .rv-button-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--brand-accent) 88%, #2a1c16);
+}
+
+[data-club="valvidub-sports"] .liga-page .rv-mode-header__eyebrow,
+[data-club="valvidub-sports"] .duelo2v2-page:not(.duelo2v2-page--public) .rv-mode-header__eyebrow,
+[data-club="valvidub-sports"] .torneo-express-page.te-inicio-page .rv-mode-header__eyebrow,
+[data-club="valvidub-sports"] .te-gestion-page .rv-mode-header__eyebrow,
+[data-club="valvidub-sports"] .riviera-organizer-reta .rv-mode-header__eyebrow,
+[data-club="valvidub-sports"] .mis-retas-page .rv-mode-header__eyebrow,
+[data-club="valvidub-sports"] .americano-entry-header .rv-mode-header__eyebrow {
+  color: var(--brand-accent);
+}
+
+[data-club="valvidub-sports"] .main-layout a:focus-visible,
+[data-club="valvidub-sports"] .main-layout button:focus-visible,
+[data-club="valvidub-sports"] .main-layout input:focus-visible {
+  outline-color: var(--brand-accent);
+}

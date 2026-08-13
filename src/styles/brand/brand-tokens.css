@@ -85,3 +85,34 @@ html[data-club="padel-court-series"] .ro-surface-dark,
   --accent-gold-dim: color-mix(in srgb, var(--brand-accent) 14%, transparent);
   --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
 }
+
+html[data-brand="valvidub-sports"],
+html[data-club="valvidub-sports"],
+.club-experience-scope[data-brand="valvidub-sports"],
+.club-experience-scope[data-club="valvidub-sports"],
+html[data-brand="valvidub-sports"] .ro-surface-dark,
+html[data-club="valvidub-sports"] .ro-surface-dark,
+.club-experience-scope[data-brand="valvidub-sports"] .ro-surface-dark,
+.club-experience-scope[data-club="valvidub-sports"] .ro-surface-dark {
+  --brand-primary: #f4ede4;
+  --brand-secondary: #c4a892;
+  --brand-accent: #a66042;
+  --brand-surface: #f4ede4;
+  --brand-surface-alt: #fffbf7;
+  --brand-border: #d9c8b8;
+  --brand-text: #2a1c16;
+  --brand-muted: #8a7063;
+  --brand-success: #2f7d53;
+  --brand-warning: #b5883f;
+  --brand-danger: #c0392b;
+  --brand-font-heading: Montserrat, var(--ro-font-heading, system-ui, sans-serif);
+  --brand-font-body: Montserrat, var(--ro-font-body, system-ui, sans-serif);
+  --brand-heading-weight: 700;
+  --brand-heading-letter-spacing: 0.02em;
+  --bg-canvas: var(--brand-surface);
+  --bg-base: var(--brand-surface);
+  --accent-gold: var(--brand-accent);
+  --accent-gold-light: var(--brand-accent);
+  --accent-gold-dim: color-mix(in srgb, var(--brand-accent) 14%, transparent);
+  --border-accent: color-mix(in srgb, var(--brand-accent) 35%, transparent);
+}

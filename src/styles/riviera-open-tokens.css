@@ -369,6 +369,70 @@ html[data-club="padel-court-series"] .ro-surface-dark,
     system-ui, sans-serif;
 }
 
+/* =============================================
+   VALVIDUB SPORTS — tenant premium claro
+   Marfil / champagne + cobre del logo. No hereda
+   la escala oscura de Hack/PCS: el header (.ro-surface-dark)
+   también se aclara para que el logo transparente
+   no se vea sobre un recuadro negro.
+============================================= */
+html[data-brand="valvidub-sports"],
+html[data-club="valvidub-sports"],
+.club-experience-scope[data-brand="valvidub-sports"],
+.club-experience-scope[data-club="valvidub-sports"],
+html[data-brand="valvidub-sports"] .ro-surface-dark,
+html[data-club="valvidub-sports"] .ro-surface-dark,
+.club-experience-scope[data-brand="valvidub-sports"] .ro-surface-dark,
+.club-experience-scope[data-club="valvidub-sports"] .ro-surface-dark {
+  color: #2a1c16;
+
+  --ro-chrome-bg: #f4ede4;
+  --ro-chrome-deep: #ebe1d4;
+  --ro-chrome-elevated: #fffbf7;
+  --ro-chrome-active: color-mix(in srgb, #fffbf7 88%, #a66042);
+  --ro-chrome-text: #2a1c16;
+  --ro-chrome-text-muted: #6b5348;
+  --ro-chrome-text-dim: #8a7063;
+  --ro-chrome-border: #d9c8b8;
+
+  --ro-accent: #a66042;
+  --ro-accent-hover: #8f5138;
+  --ro-accent-dim: color-mix(in srgb, #a66042 12%, transparent);
+  --ro-accent-ring: color-mix(in srgb, #a66042 28%, transparent);
+  --ro-text-on-accent: #fffbf7;
+
+  --ro-bg-base: #f4ede4;
+  --ro-bg-deep: #ebe1d4;
+  --ro-bg-surface: #f4ede4;
+  --ro-bg-card: #fffbf7;
+  --ro-bg-elevated: #fffbf7;
+  --ro-bg-inset: #ebe1d4;
+  --ro-bg-card-hover: color-mix(in srgb, #fffbf7 88%, #a66042);
+  --ro-bg-input: #fffbf7;
+
+  --ro-border: #d9c8b8;
+  --ro-border-subtle: color-mix(in srgb, #d9c8b8 55%, transparent);
+  --ro-border-strong: color-mix(in srgb, #a66042 35%, #d9c8b8);
+  --ro-border-accent: color-mix(in srgb, #a66042 40%, transparent);
+
+  --ro-text-primary: #2a1c16;
+  --ro-text-secondary: #6b5348;
+  --ro-text-muted: #8a7063;
+
+  --ro-success: #2f7d53;
+  --ro-font-heading: Montserrat, "Stack Sans Headline", system-ui, sans-serif;
+  --ro-font-body: Montserrat, "Inter", system-ui, sans-serif;
+
+  --ro-shadow-sm: 0 1px 3px rgba(42, 28, 22, 0.08);
+  --ro-shadow-md: 0 4px 16px rgba(42, 28, 22, 0.1);
+  --ro-shadow-lg: 0 12px 40px rgba(42, 28, 22, 0.12);
+}
+
+html[data-brand="valvidub-sports"] .club-identity__logo,
+html[data-club="valvidub-sports"] .club-identity__logo {
+  background: transparent;
+}
+
 /* Logo: el PNG de Riviera (marca madre) es blanco y sólo es legible sobre
    chrome. Sobre superficie clara hay que invertirlo a tinta hasta que exista
    un /logo-riviera-ink.png real. NO aplica a clubes con marca propia

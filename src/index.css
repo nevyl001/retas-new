@@ -49,7 +49,9 @@ body {
 
 html:not([data-brand="hack-padel"]):not([data-club="hack-padel"]):not(
     [data-brand="padel-court-series"]
-  ):not([data-club="padel-court-series"])
+  ):not([data-club="padel-court-series"]):not(
+    [data-brand="valvidub-sports"]
+  ):not([data-club="valvidub-sports"])
   body {
   transition: background-color var(--transition-base), color var(--transition-base);
 }
@@ -81,5 +83,20 @@ html[data-brand="padel-court-series"] #root,
 html[data-club="padel-court-series"] #root {
   background-color: #192e2c;
   color: #efefef;
+  transition: none !important;
+}
+
+html[data-brand="valvidub-sports"],
+html[data-club="valvidub-sports"] {
+  background-color: #f4ede4;
+  color-scheme: light;
+}
+
+html[data-brand="valvidub-sports"] body,
+html[data-club="valvidub-sports"] body,
+html[data-brand="valvidub-sports"] #root,
+html[data-club="valvidub-sports"] #root {
+  background-color: #f4ede4;
+  color: #2a1c16;
   transition: none !important;
 }

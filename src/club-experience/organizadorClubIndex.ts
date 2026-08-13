@@ -20,6 +20,10 @@ import type { ClubOrganizerBinding } from "./types";
  *   Nombre visible: Padel Court Series
  *   Email (referencia humana): padelcourtseries@gmail.com
  *   Binding SOLO por UUID — nunca por email en componentes.
+ *
+ * Valvidub Sports (upgrade premium):
+ *   Nombre visible: Valvidub Sports
+ *   Email (referencia humana): valvidubsportspadel@outlook.com
  */
 
 const HACK_PADEL_ORGANIZADOR_ID = (
@@ -32,6 +36,11 @@ export const PADEL_COURT_SERIES_ORGANIZADOR_ID = (
   "35e31ab8-2a2f-4526-9e84-e130c85f8ca9"
 ).toLowerCase();
 
+export const VALVIDUB_SPORTS_ORGANIZADOR_ID = (
+  process.env.REACT_APP_VALVIDUB_SPORTS_ORGANIZADOR_ID?.trim() ||
+  "cbc93677-0450-4622-a2fa-2f40947e385b"
+).toLowerCase();
+
 export const ORGANIZADOR_CLUB_BINDINGS: readonly ClubOrganizerBinding[] = [
   {
     organizadorId: HACK_PADEL_ORGANIZADOR_ID,
@@ -42,6 +51,12 @@ export const ORGANIZADOR_CLUB_BINDINGS: readonly ClubOrganizerBinding[] = [
   {
     organizadorId: PADEL_COURT_SERIES_ORGANIZADOR_ID,
     brandingKey: "padel-court-series",
+    active: true,
+    premiumBrandingEnabled: true,
+  },
+  {
+    organizadorId: VALVIDUB_SPORTS_ORGANIZADOR_ID,
+    brandingKey: "valvidub-sports",
     active: true,
     premiumBrandingEnabled: true,
   },

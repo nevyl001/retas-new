@@ -6,6 +6,7 @@ import {
 import {
   ORGANIZADOR_CLUB_BINDINGS,
   PADEL_COURT_SERIES_ORGANIZADOR_ID,
+  VALVIDUB_SPORTS_ORGANIZADOR_ID,
 } from "./organizadorClubIndex";
 import { listPremiumManifestOptions } from "./manifestRegistry";
 
@@ -13,6 +14,7 @@ const HACK_ORG =
   ORGANIZADOR_CLUB_BINDINGS.find((b) => b.brandingKey === "hack-padel")
     ?.organizadorId ?? "";
 const PCS_ORG = PADEL_COURT_SERIES_ORGANIZADOR_ID;
+const VALVIDUB_ORG = VALVIDUB_SPORTS_ORGANIZADOR_ID;
 const OTHER_ORG = "00000000-0000-4000-8000-000000000001";
 
 describe("organizerBindingResolver", () => {
@@ -78,10 +80,19 @@ describe("organizerBindingResolver", () => {
     expect(resolveBrandingKeyForOrganizador(HACK_ORG)).toBe("riviera");
   });
 
-  it("lista PCS como opción premium en el registry", () => {
+  it("resuelve Valvidub Sports por UUID de organizador", () => {
+    expect(VALVIDUB_ORG).toBe("cbc93677-0450-4622-a2fa-2f40947e385b");
+    expect(isPremiumBrandingEnabledForOrganizador(VALVIDUB_ORG)).toBe(true);
+    expect(resolveBrandingKeyForOrganizador(VALVIDUB_ORG)).toBe(
+      "valvidub-sports"
+    );
+  });
+
+  it("lista tenants premium en el registry", () => {
     const options = listPremiumManifestOptions();
     expect(options.some((o) => o.key === "hack-padel")).toBe(true);
     expect(options.some((o) => o.key === "padel-court-series")).toBe(true);
+    expect(options.some((o) => o.key === "valvidub-sports")).toBe(true);
     expect(options.some((o) => o.key === "riviera")).toBe(false);
   });
 });
