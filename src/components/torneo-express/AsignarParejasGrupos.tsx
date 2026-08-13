@@ -47,50 +47,63 @@ export const AsignarParejasGrupos: React.FC<AsignarParejasGruposProps> = ({
         </p>
       )}
 
-      {assignments.map((grupo, gi) => (
-        <div key={grupo.orden} className="te-grupo-assignment">
-          <div className="torneo-express-field te-grupo-assignment__name">
-            <label htmlFor={`te-grupo-nombre-${gi}`}>Nombre del grupo</label>
-            <input
-              id={`te-grupo-nombre-${gi}`}
-              value={grupo.nombre}
-              onChange={(e) =>
-                onAssignmentsChange((prev) =>
-                  prev.map((g, i) =>
-                    i === gi ? { ...g, nombre: e.target.value } : g
-                  )
-                )
-              }
-            />
-          </div>
-          <p className="te-subtitle te-grupo-assignment__count">
-            {grupo.parejaIds.length} pareja
-            {grupo.parejaIds.length === 1 ? "" : "s"} en este grupo
-            {grupo.parejaIds.length < 2 ? " (mín. 2)" : ""}
-          </p>
-          <div className="te-pareja-pool" role="group" aria-label={`Parejas en ${grupo.nombre}`}>
-            {parejas.map((p) => {
-              const label = `${p.jugador1.name} / ${p.jugador2.name}`;
-              const inThis = grupo.parejaIds.includes(p.id);
-              const inOther = !inThis && assignedIds.has(p.id);
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`te-pareja-chip${inThis ? " te-pareja-chip--selected" : ""}${
-                    inOther ? " te-pareja-chip--assigned" : ""
-                  }`}
-                  disabled={inOther}
-                  aria-pressed={inThis}
-                  onClick={() => onTogglePair(gi, p.id)}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      ))}
+      <div className="te-asignar-grupos__grid">
+        {assignments.map((grupo, gi) => (
+          <article key={grupo.orden} className="te-grupo-assignment">
+            <header className="te-grupo-assignment__head">
+              <span className="te-grupo-assignment__index" aria-hidden>
+                {gi + 1}
+              </span>
+              <div className="torneo-express-field te-grupo-assignment__name">
+                <label htmlFor={`te-grupo-nombre-${gi}`}>Nombre del grupo</label>
+                <input
+                  id={`te-grupo-nombre-${gi}`}
+                  value={grupo.nombre}
+                  onChange={(e) =>
+                    onAssignmentsChange((prev) =>
+                      prev.map((g, i) =>
+                        i === gi ? { ...g, nombre: e.target.value } : g
+                      )
+                    )
+                  }
+                />
+              </div>
+            </header>
+            <p className="te-subtitle te-grupo-assignment__count">
+              {grupo.parejaIds.length} pareja
+              {grupo.parejaIds.length === 1 ? "" : "s"} en este grupo
+              {grupo.parejaIds.length < 2 ? " (mín. 2)" : ""}
+            </p>
+            <div
+              className="te-pareja-pool"
+              role="group"
+              aria-label={`Parejas en ${grupo.nombre}`}
+            >
+              {parejas.map((p) => {
+                const label = `${p.jugador1.name} / ${p.jugador2.name}`;
+                const inThis = grupo.parejaIds.includes(p.id);
+                const inOther = !inThis && assignedIds.has(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`te-pareja-chip${
+                      inThis ? " te-pareja-chip--selected" : ""
+                    }${inOther ? " te-pareja-chip--assigned" : ""}`}
+                    disabled={inOther}
+                    aria-pressed={inThis}
+                    aria-label={label}
+                    onClick={() => onTogglePair(gi, p.id)}
+                  >
+                    <span className="te-pareja-chip__name">{p.jugador1.name}</span>
+                    <span className="te-pareja-chip__name">{p.jugador2.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </article>
+        ))}
+      </div>
     </section>
   );
 };

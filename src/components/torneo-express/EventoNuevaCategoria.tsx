@@ -1,10 +1,8 @@
 import React from "react";
-import { useClubModeEyebrow } from "../../club-experience";
 import { CrearTorneoExpress } from "./CrearTorneoExpress";
 import { TePageShell } from "./TePageShell";
 import { Button } from "../ui";
 import { ActionBar } from "../platform/ActionBar";
-import { ModeHeader } from "../platform/ModeHeader";
 import { navigateTorneoExpress } from "./torneoExpressNav";
 import "./te-inicio-page.css";
 import "./te-eventos.css";
@@ -17,8 +15,6 @@ type EventoNuevaCategoriaProps = {
 export const EventoNuevaCategoria: React.FC<EventoNuevaCategoriaProps> = ({
   eventoId,
 }) => {
-  const modeEyebrow = useClubModeEyebrow();
-
   return (
     <TePageShell className="te-inicio-page te-eventos-page">
       <div className="te-inicio-page__shell">
@@ -34,25 +30,21 @@ export const EventoNuevaCategoria: React.FC<EventoNuevaCategoriaProps> = ({
           </Button>
         </ActionBar>
 
-        <div className="te-inicio-page__intro">
-          <ModeHeader
-            className="te-inicio-header te-header rv-mode-header rv-mode-header--entry"
-            eyebrow={modeEyebrow}
-            title="Agregar categoría"
-            subtitle="Mismo armado de siempre (parejas, grupos, partidos). Al crear se vincula a este evento."
-          />
-        </div>
-
         <section
-          className="te-inicio-crear te-inicio-crear__shell"
+          className="te-inicio-crear te-inicio-crear__shell te-inicio-crear--categoria"
           aria-labelledby="te-evento-cat-crear-heading"
         >
-          <h2
-            id="te-evento-cat-crear-heading"
-            className="te-inicio-crear__title rv-section-title"
-          >
-            Datos de la categoría
-          </h2>
+          <header className="te-inicio-crear__intro">
+            <h1
+              id="te-evento-cat-crear-heading"
+              className="te-inicio-crear__title rv-section-title"
+            >
+              Agregar categoría
+            </h1>
+            <p className="te-inicio-crear__sub">
+              Se vincula a este evento: parejas, grupos y partidos.
+            </p>
+          </header>
           <CrearTorneoExpress
             eventoId={eventoId}
             returnToEventoAfterCreate

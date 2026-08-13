@@ -395,3 +395,218 @@
     flex: 1 1 auto;
   }
 }
+
+/* —— Agregar categoría: densidad compacta para caber en viewport —— */
+.torneo-express-page.te-inicio-page.te-eventos-page {
+  --te-inicio-section-gap: 12px;
+  padding-top: clamp(8px, 1.5vw, 12px);
+  padding-bottom: clamp(16px, 3vw, 24px);
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-inicio-toolbar {
+  margin-bottom: 10px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-inicio-crear--categoria {
+  max-width: none;
+  width: 100%;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page
+  .te-inicio-crear--categoria
+  .te-inicio-crear__intro {
+  margin: 0 0 14px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page
+  .te-inicio-crear--categoria
+  .te-inicio-crear__title {
+  margin: 0 0 4px;
+  font-size: clamp(1.25rem, 2.8vw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: var(--ro-text-primary);
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page
+  .te-inicio-crear--categoria
+  .te-inicio-crear__sub {
+  margin: 0;
+  max-width: 48ch;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--ro-text-secondary);
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-layout,
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-layout--wizard {
+  gap: 12px;
+  max-width: none;
+  width: 100%;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-layout__panel {
+  padding: 14px 14px 16px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-wizard-nav {
+  margin-bottom: 12px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-wizard-nav__btn {
+  padding: 6px 3px;
+  gap: 3px;
+  border-radius: 10px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-wizard-nav__num {
+  width: 22px;
+  height: 22px;
+  font-size: 0.6875rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-wizard-nav__label {
+  font-size: 0.625rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-step__head {
+  margin-bottom: 4px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-step__lead {
+  margin-bottom: 10px;
+  font-size: 0.8125rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-step__badge {
+  padding: 2px 8px;
+  font-size: 0.625rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-step__title {
+  font-size: 1.0625rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__howto {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__slots {
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__slot {
+  min-height: 48px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__step {
+  margin-bottom: 10px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-players-search {
+  margin-bottom: 8px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-players-search input {
+  min-height: 40px;
+  padding: 8px 12px 8px 36px;
+  font-size: 0.875rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-players-list-meta {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-players-grid,
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__grid {
+  gap: 6px;
+  max-height: min(260px, 36vh);
+  margin-bottom: 10px;
+  padding: 8px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-player-card {
+  min-height: 56px;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-player-card__name {
+  font-size: 0.8125rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__formed {
+  margin-top: 8px;
+  padding: 10px 12px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__formed-head {
+  margin-bottom: 8px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__list {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 1100px) {
+  .torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__item {
+  min-height: 60px;
+  padding: 10px 12px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-asignar-grupos__grid {
+  gap: 12px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-grupo-assignment {
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-pareja-pool {
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 7px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-pareja-chip {
+  min-height: 52px;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page .te-crear-wizard-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  gap: 8px;
+}
+
+.torneo-express-page.te-inicio-page.te-eventos-page
+  .te-crear-wizard-actions
+  .riviera-btn-primary {
+  min-height: 42px;
+  min-width: 7.5rem;
+  padding-inline: 14px;
+}
+
+@media (max-width: 540px) {
+  .torneo-express-page.te-inicio-page.te-eventos-page .te-players-grid,
+  .torneo-express-page.te-inicio-page.te-eventos-page .te-armar-parejas__grid {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    max-height: min(240px, 34vh);
+  }
+}
