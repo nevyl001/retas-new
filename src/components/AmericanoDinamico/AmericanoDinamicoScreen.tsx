@@ -28,6 +28,8 @@ import {
 import { resolvePlayerAvatars } from "../../lib/rivieraJugadores/publicPlayerAvatars";
 import { useUser } from "../../contexts/UserContext";
 import { PublicAmericanoPodiumCard } from "../public/PublicAmericanoPodiumCard";
+import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import "../jugadores/riviera-jugadores.css";
 import { navigateToAppHome } from "../../lib/appRouting";
 import {
   buildAmericanoDinamicoSnapshot,
@@ -332,10 +334,48 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
   const [podiumAvatars, setPodiumAvatars] = React.useState<
     Record<string, string | null>
   >({});
+  const [playerFotos, setPlayerFotos] = React.useState<
+    Record<string, string | null>
+  >({});
+
+  const rosterAvatarEntries = React.useMemo(
+    () => rosterForUi.map((p) => ({ id: p.id, name: p.name })),
+    [rosterForUi]
+  );
+
+  React.useEffect(() => {
+    if (!effectiveUserId || rosterAvatarEntries.length === 0) {
+      setPlayerFotos({});
+      return;
+    }
+    let cancelled = false;
+    void resolvePlayerAvatars(effectiveUserId, rosterAvatarEntries).then(
+      (map) => {
+        if (!cancelled) setPlayerFotos(map);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveUserId, rosterAvatarEntries]);
 
   React.useEffect(() => {
     if (!effectiveUserId || podiumPlayers.length === 0 || phase !== "finished") {
       setPodiumAvatars({});
+      return;
+    }
+    const fromRoster: Record<string, string | null> = {};
+    let missing = false;
+    for (const p of podiumPlayers) {
+      if (Object.prototype.hasOwnProperty.call(playerFotos, p.id)) {
+        fromRoster[p.id] = playerFotos[p.id];
+      } else {
+        missing = true;
+        break;
+      }
+    }
+    if (!missing) {
+      setPodiumAvatars(fromRoster);
       return;
     }
     let cancelled = false;
@@ -348,7 +388,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
     return () => {
       cancelled = true;
     };
-  }, [effectiveUserId, phase, podiumPlayers]);
+  }, [effectiveUserId, phase, podiumPlayers, playerFotos]);
 
   const [resetting, setResetting] = React.useState(false);
 
@@ -482,7 +522,15 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
         </p>
         <ul className="americano-screen__jugadores-list">
           {rosterForUi.map((p) => (
-            <li key={p.id}>{p.name}</li>
+            <li key={p.id} className="americano-screen__jugadores-item">
+              <JugadorAvatar
+                fotoUrl={playerFotos[p.id]}
+                nombre={p.name}
+                size="md"
+                className="americano-screen__jugadores-avatar"
+              />
+              <span>{p.name}</span>
+            </li>
           ))}
         </ul>
       </div>
@@ -520,6 +568,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
               onRoundFinalized={nextRound}
               roundSyncPending={roundSyncPending}
               roundSyncError={roundSyncError}
+              playerFotos={playerFotos}
             />
           ) : (
             <p className="americano-screen__loading">Preparando ronda…</p>
@@ -555,6 +604,7 @@ export const AmericanoDinamicoScreen: React.FC<AmericanoDinamicoScreenProps> = (
             onRoundFinalized={nextRound}
             roundSyncPending={roundSyncPending}
             roundSyncError={roundSyncError}
+            playerFotos={playerFotos}
           />
         )}
         <div className="americano-screen__block">

@@ -12,12 +12,14 @@ import {
 
 function teamPlayers(
   pair: [{ id: string; name: string }, { id: string; name: string }],
-  ratings?: Record<string, number>
+  ratings?: Record<string, number>,
+  fotos?: Record<string, string | null>
 ): PublicRetaPairPlayer[] {
   return pair.map((p) => ({
     id: p.id,
     name: p.name,
     rating: ratings?.[p.id] ?? null,
+    fotoUrl: fotos?.[p.id] ?? null,
   }));
 }
 
@@ -33,7 +35,8 @@ export const PublicAmericanoMatchCard: React.FC<{
   scheduleStatus?: "finished" | "live" | "upcoming" | "pending" | "played";
   index: number;
   playerRatings?: Record<string, number>;
-}> = ({ match: m, live, scheduleStatus, index, playerRatings }) => {
+  playerFotos?: Record<string, string | null>;
+}> = ({ match: m, live, scheduleStatus, index, playerRatings, playerFotos }) => {
   const played =
     typeof m.scoreA === "number" && typeof m.scoreB === "number";
   const aWins = played && (m.scoreA as number) > (m.scoreB as number);
@@ -72,7 +75,7 @@ export const PublicAmericanoMatchCard: React.FC<{
       <div className="te-pub-match__faceoff">
         <div className="te-pub-match__slot te-pub-match__slot--pair1">
           <PublicRetaPairSide
-            players={teamPlayers(m.teamA, playerRatings)}
+            players={teamPlayers(m.teamA, playerRatings, playerFotos)}
             label={teamLabel(m.teamA)}
             align="left"
             variant="band"
@@ -89,7 +92,7 @@ export const PublicAmericanoMatchCard: React.FC<{
 
         <div className="te-pub-match__slot te-pub-match__slot--pair2">
           <PublicRetaPairSide
-            players={teamPlayers(m.teamB, playerRatings)}
+            players={teamPlayers(m.teamB, playerRatings, playerFotos)}
             label={teamLabel(m.teamB)}
             align="right"
             variant="band"

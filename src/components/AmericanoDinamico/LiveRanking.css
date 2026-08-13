@@ -1,9 +1,10 @@
 .americano-ranking {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--ro-border, var(--border-subtle));
   border-radius: var(--radius-lg);
   padding: 20px 24px;
-  background: var(--bg-card);
+  background: var(--rv-bg-card, var(--ro-bg-card, var(--bg-card)));
   margin-bottom: 16px;
+  box-shadow: var(--ro-shadow-sm);
   animation: fadeInUp var(--motion-enter) both;
 }
 
@@ -39,9 +40,10 @@
   letter-spacing: 0.1em;
   color: var(--text-muted);
   padding: 8px 12px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--ro-border, var(--border-subtle));
   font-weight: 500;
   text-align: left;
+  background: var(--ro-bg-inset, var(--rv-bg-card-soft));
 }
 
 .americano-ranking .tabla-ranking td {

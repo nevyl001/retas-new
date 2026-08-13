@@ -1,8 +1,9 @@
 .americano-round {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--ro-border, var(--border-subtle));
   border-radius: var(--radius-lg);
   padding: 16px;
-  background: var(--bg-card);
+  background: var(--rv-bg-card, var(--ro-bg-card, var(--bg-card)));
+  box-shadow: var(--ro-shadow-sm);
 }
 
 .americano-round__header {
@@ -84,18 +85,19 @@
 }
 
 .americano-match-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--rv-bg-card-soft, var(--ro-bg-inset, var(--bg-elevated)));
+  border: 1px solid var(--ro-border, var(--border-subtle));
   border-radius: var(--radius-lg);
   padding: 16px 20px;
   transition: border-color var(--motion-micro), background var(--motion-micro);
   animation: fadeInUp var(--motion-enter) both;
   animation-delay: calc(var(--motion-stagger) * var(--i, 0));
+  box-shadow: none;
 }
 
 .americano-match-card:hover {
-  border-color: var(--border-accent);
-  background: var(--bg-card-hover);
+  border-color: var(--ro-border-strong, var(--border-accent));
+  background: var(--ro-bg-card-hover, var(--bg-card-hover));
 }
 
 .americano-match-card__top {
@@ -135,7 +137,8 @@
   color: var(--text-primary);
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--ro-bg-inset);
+  background: var(--ro-bg-card, var(--bg-card));
+  border: 1px solid var(--ro-border-subtle, var(--border-subtle));
   border-left: 3px solid transparent;
 }
 
@@ -156,6 +159,36 @@
   letter-spacing: 0.1em;
   font-weight: 600;
   color: var(--text-muted);
+}
+
+.americano-match-card__players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.americano-match-card__player {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.americano-match-card__avatar.rj-avatar {
+  width: 52px;
+  height: 52px;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.americano-match-card__player-name {
+  font-weight: 650;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .americano-match-card__team strong {
@@ -223,7 +256,9 @@
 }
 
 .americano-round__bench-player {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 6px 14px;
   border-radius: var(--radius-sm);
   background: var(--ro-bg-elevated);
@@ -231,6 +266,13 @@
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
+}
+
+.americano-round__bench-avatar.rj-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 0.8rem;
+  flex-shrink: 0;
 }
 
 .americano-round__actions {

@@ -132,6 +132,9 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   const [playerRatings, setPlayerRatings] = useState<Record<string, number>>(
     {}
   );
+  const [playerFotos, setPlayerFotos] = useState<
+    Record<string, string | null>
+  >({});
   const [loadError, setLoadError] = useState<string | null>(null);
   const lastMergedFetchRef =
     useRef<FetchAmericanoLivePublicResult | null>(null);
@@ -346,6 +349,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   useEffect(() => {
     if (!organizadorId || snapshotPlayerEntries.length === 0) {
       setPlayerRatings({});
+      setPlayerFotos({});
       return;
     }
     let cancelled = false;
@@ -354,10 +358,13 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     }).then((profiles) => {
       if (cancelled) return;
       const ratings: Record<string, number> = {};
+      const fotos: Record<string, string | null> = {};
       for (const e of snapshotPlayerEntries) {
         ratings[e.id] = profiles[e.id]?.rating ?? 3;
+        fotos[e.id] = profiles[e.id]?.fotoUrl ?? null;
       }
       setPlayerRatings(ratings);
+      setPlayerFotos(fotos);
     });
     return () => {
       cancelled = true;
@@ -367,6 +374,21 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
   useEffect(() => {
     if (!organizadorId || podiumPlayers.length === 0) {
       setPodiumAvatars({});
+      return;
+    }
+    // Reutilizar fotos ya resueltas del roster cuando existan.
+    const fromRoster: Record<string, string | null> = {};
+    let missing = false;
+    for (const p of podiumPlayers) {
+      if (Object.prototype.hasOwnProperty.call(playerFotos, p.id)) {
+        fromRoster[p.id] = playerFotos[p.id];
+      } else {
+        missing = true;
+        break;
+      }
+    }
+    if (!missing) {
+      setPodiumAvatars(fromRoster);
       return;
     }
     let cancelled = false;
@@ -380,7 +402,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [organizadorId, podiumPlayers]);
+  }, [organizadorId, podiumPlayers, playerFotos]);
 
   const eventScheduleStatus = getPublicEventScheduleStatus(
     {
@@ -579,6 +601,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
                         }
                         index={matchIdx}
                         playerRatings={playerRatings}
+                        playerFotos={playerFotos}
                       />
                       );
                     })}

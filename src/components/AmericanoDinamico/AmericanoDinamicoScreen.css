@@ -1,7 +1,7 @@
-/* Americano dinámico — shell (Riviera Gold) */
+/* Americano dinámico — shell (Riviera: L0 crema / L1 tarjeta / L2 inset) */
 
 .americano-screen {
-  background: var(--bg-canvas);
+  background: var(--rv-bg-page, var(--ro-bg-base, var(--bg-canvas)));
   font-family: var(--font-body);
   color: var(--text-primary);
   min-height: 100vh;
@@ -119,11 +119,12 @@
 }
 
 .americano-screen__block {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--rv-bg-card, var(--ro-bg-card));
+  border: 1px solid var(--ro-border, var(--border-subtle));
   border-radius: var(--radius-lg);
   padding: 20px 24px;
   margin-bottom: 16px;
+  box-shadow: var(--ro-shadow-sm);
   animation: fadeInUp var(--motion-enter) both;
 }
 
@@ -478,4 +479,66 @@
   .americano-podium__grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* —— Superficies Riviera: evita blanco-sobre-blanco (L0/L1/L2) —— */
+.americano-screen.rv-page {
+  background: var(--rv-bg-page, var(--ro-bg-base, var(--bg-canvas)));
+}
+
+.americano-screen .public-link-section.rv-card,
+.americano-screen .americano-ranking.rv-card,
+.americano-screen .americano-round.rv-card {
+  background: var(--rv-bg-card, var(--ro-bg-card));
+  border: 1px solid var(--ro-border, var(--ro-border-subtle));
+  box-shadow: var(--ro-shadow-sm);
+}
+
+/* Partidos dentro de la ronda = L2 inset (no otra tarjeta blanca) */
+.americano-screen .americano-round .americano-match-card.rv-card,
+.americano-screen .americano-match-card.rv-card {
+  background: var(--rv-bg-card-soft, var(--ro-bg-inset));
+  border: 1px solid var(--ro-border, var(--ro-border-subtle));
+  box-shadow: none;
+}
+
+.americano-screen .americano-round .americano-match-card.rv-card:hover,
+.americano-screen .americano-match-card.rv-card:hover {
+  background: var(--ro-bg-card-hover, var(--bg-card-hover));
+  border-color: var(--ro-border-strong, var(--border-accent));
+}
+
+.americano-screen .americano-round__bench.rv-card-soft {
+  background: var(--rv-bg-card-soft, var(--ro-bg-inset));
+  border: 1px solid var(--ro-border-subtle);
+}
+
+.americano-screen .americano-screen__danger-zone {
+  background: var(--rv-bg-card, var(--ro-bg-card));
+  border: 1px solid var(--ro-border, var(--border-subtle));
+  box-shadow: var(--ro-shadow-sm);
+}
+
+.americano-screen__jugadores-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.americano-screen__jugadores-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.americano-screen__jugadores-avatar.rj-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 0.95rem;
+  flex-shrink: 0;
 }

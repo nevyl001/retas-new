@@ -164,8 +164,13 @@
   .te-public-podium__card[data-rank="1"]
   .te-public-podium__avatar
   .rj-avatar {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
+}
+
+.te-public--americano .te-public-podium__avatar .rj-avatar {
+  width: 56px;
+  height: 56px;
 }
 
 @media (max-width: 559px) {
@@ -776,6 +781,14 @@
   font-size: 0.88rem;
   border-width: 2px;
   flex-shrink: 0;
+}
+
+/* Americano público: fotos más visibles para los jugadores */
+.te-public--americano .te-pub-pair__band-player .te-pub-pair__avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 1.05rem;
+  border-width: 2px;
 }
 
 .te-pub-pair__band-name {

@@ -3,6 +3,8 @@ import type { AmericanoMatch, AmericanoRound } from "../../lib/db/types";
 import { americanoRoundPhaseCaption } from "../../lib/americanoPhaseLabels";
 import { ActionBar } from "../platform/ActionBar";
 import { Button, Input } from "../ui";
+import { JugadorAvatar } from "../jugadores/JugadorAvatar";
+import "../jugadores/riviera-jugadores.css";
 import "./RoundView.css";
 
 export interface RoundScorePayload {
@@ -21,6 +23,8 @@ interface RoundViewProps {
   roundSyncPending?: boolean;
   /** Mensaje si el servidor rechazó/no confirmó el avance de ronda — reintentar es seguro (idempotente). */
   roundSyncError?: string | null;
+  /** foto_url resuelta por id de jugador (legacy). */
+  playerFotos?: Record<string, string | null>;
 }
 
 function readDraft(
@@ -81,6 +85,7 @@ export const RoundView: React.FC<RoundViewProps> = ({
   onRoundFinalized,
   roundSyncPending = false,
   roundSyncError = null,
+  playerFotos = {},
 }) => {
   const [draftScores, setDraftScores] = useState<
     Record<string, { a?: string; b?: string }>
@@ -160,16 +165,40 @@ export const RoundView: React.FC<RoundViewProps> = ({
               <div className="americano-match-card__teams">
                 <div className="americano-match-card__team">
                   <span className="americano-match-card__team-label">Equipo A</span>
-                  <strong>
-                    {match.teamA[0].name} / {match.teamA[1].name}
-                  </strong>
+                  <div className="americano-match-card__players">
+                    {match.teamA.map((p) => (
+                      <div key={p.id} className="americano-match-card__player">
+                        <JugadorAvatar
+                          fotoUrl={playerFotos[p.id]}
+                          nombre={p.name}
+                          size="md"
+                          className="americano-match-card__avatar"
+                        />
+                        <span className="americano-match-card__player-name">
+                          {p.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="americano-match-card__vs">vs</div>
                 <div className="americano-match-card__team">
                   <span className="americano-match-card__team-label">Equipo B</span>
-                  <strong>
-                    {match.teamB[0].name} / {match.teamB[1].name}
-                  </strong>
+                  <div className="americano-match-card__players">
+                    {match.teamB.map((p) => (
+                      <div key={p.id} className="americano-match-card__player">
+                        <JugadorAvatar
+                          fotoUrl={playerFotos[p.id]}
+                          nombre={p.name}
+                          size="md"
+                          className="americano-match-card__avatar"
+                        />
+                        <span className="americano-match-card__player-name">
+                          {p.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -218,6 +247,12 @@ export const RoundView: React.FC<RoundViewProps> = ({
           ) : (
             round.benchPlayers.map((player) => (
               <span key={player.id} className="americano-round__bench-player">
+                <JugadorAvatar
+                  fotoUrl={playerFotos[player.id]}
+                  nombre={player.name}
+                  size="sm"
+                  className="americano-round__bench-avatar"
+                />
                 {player.name}
               </span>
             ))
