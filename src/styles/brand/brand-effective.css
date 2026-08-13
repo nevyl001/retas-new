@@ -28,3 +28,21 @@ html[data-club="valvidub-sports"],
   --effective-warning: var(--brand-warning, var(--ro-gold));
   --effective-danger: var(--brand-danger, var(--ro-error));
 }
+
+html[data-brand="valvidub-sports"] .ro-public-view,
+html[data-club="valvidub-sports"] .ro-public-view,
+.club-experience-scope[data-brand="valvidub-sports"] .ro-public-view,
+.club-experience-scope[data-club="valvidub-sports"] .ro-public-view,
+html[data-brand="valvidub-sports"] .rjp-public,
+html[data-club="valvidub-sports"] .rjp-public,
+.club-experience-scope[data-brand="valvidub-sports"] .rjp-public,
+.club-experience-scope[data-club="valvidub-sports"] .rjp-public {
+  --effective-primary: #16110e;
+  --effective-secondary: #d4c4b5;
+  --effective-accent: #c47a58;
+  --effective-surface: #16110e;
+  --effective-surface-alt: #221c18;
+  --effective-border: rgba(244, 237, 228, 0.22);
+  --effective-text: #f4ede4;
+  --effective-muted: #d4c4b5;
+}

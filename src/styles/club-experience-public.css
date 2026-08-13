@@ -142,3 +142,48 @@
 [data-club="hack-padel"].club-experience-scope button:focus-visible {
   outline-color: var(--brand-accent);
 }
+
+/* —— Valvidub Sports — vitrina pública (texto claro + cobre) —— */
+[data-club="valvidub-sports"].club-experience-scope .club-identity__mother,
+[data-club="valvidub-sports"].club-experience-scope .club-identity__attribution-brand,
+[data-brand="valvidub-sports"].club-experience-scope .club-identity__mother,
+[data-brand="valvidub-sports"].club-experience-scope .club-identity__attribution-brand {
+  color: color-mix(in srgb, #c47a58 82%, #f4ede4);
+}
+
+[data-club="valvidub-sports"].club-experience-scope .club-identity__organizer,
+[data-brand="valvidub-sports"].club-experience-scope .club-identity__organizer,
+[data-club="valvidub-sports"].club-experience-scope .rjp-ranking-hero__title,
+[data-brand="valvidub-sports"].club-experience-scope .rjp-ranking-hero__title {
+  color: #f4ede4;
+}
+
+[data-club="valvidub-sports"].club-experience-scope .rjp-ranking-hero__count,
+[data-brand="valvidub-sports"].club-experience-scope .rjp-ranking-hero__count,
+[data-club="valvidub-sports"].club-experience-scope .rjp-ranking-header__brand,
+[data-brand="valvidub-sports"].club-experience-scope .rjp-ranking-header__brand {
+  color: #c47a58;
+}
+
+[data-club="valvidub-sports"].club-experience-scope .rjp-view-tabs__btn--active,
+[data-brand="valvidub-sports"].club-experience-scope .rjp-view-tabs__btn--active,
+[data-club="valvidub-sports"].club-experience-scope .rjp-ranking .rjp-cat-chip--active,
+[data-brand="valvidub-sports"].club-experience-scope .rjp-ranking .rjp-cat-chip--active {
+  background: color-mix(in srgb, #a66042 88%, #f4ede4);
+  color: #1a120e;
+  border-color: color-mix(in srgb, #c47a58 70%, #f4ede4);
+}
+
+[data-club="valvidub-sports"].club-experience-scope .rjp-empty,
+[data-brand="valvidub-sports"].club-experience-scope .rjp-empty,
+[data-club="valvidub-sports"].club-experience-scope .rjp-ranking-hero__meta,
+[data-brand="valvidub-sports"].club-experience-scope .rjp-ranking-hero__meta {
+  color: #d4c4b5;
+}
+
+[data-club="valvidub-sports"].club-experience-scope a:focus-visible,
+[data-club="valvidub-sports"].club-experience-scope button:focus-visible,
+[data-brand="valvidub-sports"].club-experience-scope a:focus-visible,
+[data-brand="valvidub-sports"].club-experience-scope button:focus-visible {
+  outline-color: #c47a58;
+}
