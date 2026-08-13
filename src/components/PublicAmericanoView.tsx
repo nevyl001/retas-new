@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchAmericanoLivePublic,
   getTournamentByIdPublic,
@@ -9,7 +9,17 @@ import type {
   AmericanoSnapshotRound,
 } from "../lib/americanoDinamicoStorage";
 import { loadAmericanoDinamicoSnapshot } from "../lib/americanoDinamicoStorage";
-import { resolveAmericanoRankingFromSnapshot } from "../lib/americanoSnapshotRoster";
+import {
+  rebuildAmericanoFromSnapshot,
+  resolveAmericanoRankingFromSnapshot,
+  rosterFromAmericanoSnapshot,
+} from "../lib/americanoSnapshotRoster";
+import { computeAmericanoLiveStatsMap } from "../lib/americanoLiveStandings";
+import {
+  buildAmericanoPublicMatchHistoryByPlayerId,
+  type AmericanoPublicMatchHistoryEntry,
+} from "../lib/buildAmericanoPublicMatchHistory";
+import type { UnifiedStandingStats } from "../lib/unifiedStandings";
 import { americanoRoundPhaseCaption } from "../lib/americanoPhaseLabels";
 import { AMERICANO_PUBLIC_POLL_INTERVAL_MS } from "../lib/americano/publicPoll";
 import {
@@ -34,6 +44,7 @@ import { resolvePlayerAvatars, resolvePlayerPublicProfiles } from "../lib/rivier
 import { PublicAmericanoMatchCard } from "./public/PublicAmericanoMatchCard";
 import { PublicAmericanoPodiumCard } from "./public/PublicAmericanoPodiumCard";
 import { PublicAmericanoStandingsSection } from "./public/PublicAmericanoStandingsSection";
+import { PublicAmericanoPlayerPerformance } from "./public/PublicAmericanoPlayerPerformance";
 import {
   PublicRivieraCelebrateBrand,
   PublicRivieraCelebrateClosing,
@@ -312,6 +323,34 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
     () => (snapshot ? resolveAmericanoRankingFromSnapshot(snapshot) : []),
     [snapshot]
   );
+
+  const liveStatsMap = useMemo(() => {
+    if (!snapshot) {
+      return new Map<string, UnifiedStandingStats>();
+    }
+    const roster = rosterFromAmericanoSnapshot(snapshot);
+    const rebuilt = rebuildAmericanoFromSnapshot(snapshot);
+    return computeAmericanoLiveStatsMap(roster, rebuilt?.rounds ?? []);
+  }, [snapshot]);
+
+  const matchHistoryByPlayerId = useMemo(() => {
+    if (!snapshot || rankedRows.length === 0) {
+      return new Map<string, AmericanoPublicMatchHistoryEntry[]>();
+    }
+    return buildAmericanoPublicMatchHistoryByPlayerId(
+      rankedRows.map((r) => r.id),
+      snapshot.rounds
+    );
+  }, [snapshot, rankedRows]);
+
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+
+  const selectedStanding = useMemo(() => {
+    if (!selectedPlayerId) return null;
+    const index = rankedRows.findIndex((r) => r.id === selectedPlayerId);
+    if (index < 0) return null;
+    return { row: rankedRows[index], position: index + 1 };
+  }, [selectedPlayerId, rankedRows]);
 
   const showFinishedPodium =
     rankedRows.length > 0 &&
@@ -661,11 +700,30 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
           {rankedRows.length > 0 && (
             <PublicAmericanoStandingsSection
               rows={rankedRows}
-              title="Clasificación"
+              isFinished={showFinishedPodium}
+              onPlayerSelect={setSelectedPlayerId}
             />
           )}
         </>
       )}
+
+      {selectedStanding ? (
+        <PublicAmericanoPlayerPerformance
+          open
+          onClose={() => setSelectedPlayerId(null)}
+          playerName={selectedStanding.row.name}
+          position={selectedStanding.position}
+          fotoUrl={playerFotos[selectedStanding.row.id]}
+          eventName={tournamentName}
+          clubName={isClubBranded ? organizerName : null}
+          isFinished={showFinishedPodium}
+          stats={liveStatsMap.get(selectedStanding.row.id) ?? null}
+          gamesPlayed={selectedStanding.row.stats.gamesPlayed}
+          pointsFor={selectedStanding.row.stats.pointsFor}
+          pointsAgainst={selectedStanding.row.stats.pointsAgainst}
+          history={matchHistoryByPlayerId.get(selectedStanding.row.id) ?? []}
+        />
+      ) : null}
 
       <footer className="te-public-sync-footer te-pub-fade-in" aria-live="polite">
         <p className="te-public-sync-footer__line">
