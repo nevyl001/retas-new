@@ -1015,7 +1015,7 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           onSaveProgramado={saveEliminatoriaProgramado}
         />
       ) : (
-        <div className="torneo-express-card te-grupos-card te-gestion-card">
+        <div className="torneo-express-card te-grupos-card te-gestion-card te-gestion-card--ops">
           <h2 className="te-grupos-card__title te-label-section">Grupos</h2>
           <div
             className="te-grupos-card__tabs"
@@ -1102,18 +1102,16 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           </div>
 
           {grupo && (
-            <div className="te-grupos-card__body te-gestion-layout">
+            <div className="te-grupos-card__body te-gestion-layout te-gestion-layout--stack">
               <section className="te-gestion-layout__partidos">
-                <h3 className="te-grupos-card__active-name te-label-section">
-                  {grupo.nombre}
-                </h3>
-
-                <h3 className="te-grupos-card__partidos-title te-label-section">
-                  Partidos
-                </h3>
-                <p className="te-grupos-card__partidos-hint">
-                  Captura resultados, horarios y canchas de cada juego.
-                </p>
+                <div className="te-gestion-section-head">
+                  <h3 className="te-grupos-card__partidos-title te-label-section">
+                    Partidos del grupo
+                  </h3>
+                  <p className="te-grupos-card__partidos-hint">
+                    Captura resultados, horarios y canchas de cada juego.
+                  </p>
+                </div>
                 {faseTorneo !== "grupos" ? (
                   <p className="te-partidos-migration-hint" role="status">
                     La eliminatoria ya fue generada. Para corregir resultados de
@@ -1179,18 +1177,20 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
                 />
               </section>
 
-              <aside className="te-gestion-layout__aside">
-                <h3 className="te-grupos-card__standings-title te-label-section">
-                  Clasificación
-                </h3>
-                <p className="te-grupos-card__standings-hint">
-                  Se actualiza sola al guardar resultados en los partidos.
-                </p>
+              <section className="te-gestion-layout__standings">
+                <div className="te-gestion-section-head">
+                  <h3 className="te-grupos-card__standings-title te-label-section">
+                    Clasificación
+                  </h3>
+                  <p className="te-grupos-card__standings-hint">
+                    Se actualiza sola al guardar resultados en los partidos.
+                  </p>
+                </div>
                 <TablaGrupo
                   rows={standingsByGrupo[grupo.id] ?? []}
                   scoringHelpVariant="express"
                 />
-              </aside>
+              </section>
             </div>
           )}
         </div>

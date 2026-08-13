@@ -12,7 +12,10 @@ import {
   programadoDraftFromPartido,
   programadoIsoFromDraft,
 } from "../../lib/torneoExpress/partidoSchedule";
-import { matchWinnerSideFromPartido } from "../../lib/torneoExpress/partidoSets";
+import {
+  getPartidoSets,
+  matchWinnerSideFromPartido,
+} from "../../lib/torneoExpress/partidoSets";
 import type {
   PartidoSetScore,
   TorneoExpressGrupoPareja,
@@ -21,7 +24,6 @@ import type {
 import { Badge, Button } from "../ui";
 import { TablerIcon } from "../ui/TablerIcon";
 import { PartidoSetsResultModal } from "./PartidoSetsResultModal";
-import { PartidoSetsScoreDisplay } from "./PartidoSetsScoreDisplay";
 
 interface PartidosGrupoProps {
   partidos: TorneoExpressPartido[];
@@ -297,6 +299,7 @@ function PartidoRow({
   partido,
   localLabel,
   visitLabel,
+  matchNumber,
   editable,
   saving,
   enJuego,
@@ -312,6 +315,8 @@ function PartidoRow({
   partido: TorneoExpressPartido;
   localLabel: string;
   visitLabel: string;
+  /** Solo presentación (Partido 01…). */
+  matchNumber: number;
   editable: boolean;
   saving: boolean;
   savingCancha: boolean;
@@ -332,6 +337,19 @@ function PartidoRow({
   const winnerSide = played ? matchWinnerSideFromPartido(partido) : null;
   const pair1Won = winnerSide === "local";
   const pair2Won = winnerSide === "visitante";
+  const sets = played ? getPartidoSets(partido) : [];
+  const localPtsLabel =
+    sets.length === 0
+      ? ""
+      : sets.length === 1
+        ? String(sets[0].local)
+        : sets.map((s) => s.local).join(" · ");
+  const visitPtsLabel =
+    sets.length === 0
+      ? ""
+      : sets.length === 1
+        ? String(sets[0].visitante)
+        : sets.map((s) => s.visitante).join(" · ");
 
   const scheduleIso = partidoScheduleIso(partido);
   const fechaLabel = formatPartidoFecha(scheduleIso);
@@ -339,12 +357,16 @@ function PartidoRow({
   const canchaLabel = formatCanchaDisplay(partido.cancha);
   const metaBusy = savingCancha || savingProgramado;
   const canEditResult = editable && !!onSave;
+  const matchLabel = `Partido ${String(matchNumber).padStart(2, "0")}`;
 
   return (
     <>
       <div className="te-partido-row te-partido-card">
         <div className="te-partido-row__toolbar">
-          {dragHandle ?? <span />}
+          <div className="te-partido-row__toolbar-start">
+            {dragHandle ?? null}
+            <span className="te-partido-card__index">{matchLabel}</span>
+          </div>
           <PartidoStatusBadge partido={partido} enJuego={enJuego} />
         </div>
 
@@ -357,18 +379,10 @@ function PartidoRow({
               onClick={() => setHorarioEditOpen(true)}
               aria-label={`Editar día (${fechaLabel})`}
             >
-              <span className="te-partido-chip__icon" aria-hidden>
-                📅
-              </span>
               {fechaLabel}
             </button>
           ) : (
-            <span className="te-partido-chip">
-              <span className="te-partido-chip__icon" aria-hidden>
-                📅
-              </span>
-              {fechaLabel}
-            </span>
+            <span className="te-partido-chip">{fechaLabel}</span>
           )}
           {horarioEditable && onSaveProgramado ? (
             <button
@@ -378,18 +392,10 @@ function PartidoRow({
               onClick={() => setHorarioEditOpen(true)}
               aria-label={`Editar hora (${horaLabel})`}
             >
-              <span className="te-partido-chip__icon" aria-hidden>
-                🕐
-              </span>
               {horaLabel}
             </button>
           ) : (
-            <span className="te-partido-chip">
-              <span className="te-partido-chip__icon" aria-hidden>
-                🕐
-              </span>
-              {horaLabel}
-            </span>
+            <span className="te-partido-chip">{horaLabel}</span>
           )}
           {canchaEditable && onSaveCancha ? (
             <button
@@ -399,53 +405,69 @@ function PartidoRow({
               onClick={() => setCanchaEditOpen(true)}
               aria-label={`Editar cancha (${canchaLabel})`}
             >
-              <span className="te-partido-chip__icon" aria-hidden>
-                📍
-              </span>
               {canchaLabel}
             </button>
           ) : (
             <span className="te-partido-chip te-partido-chip--cancha">
-              <span className="te-partido-chip__icon" aria-hidden>
-                📍
-              </span>
               {canchaLabel}
             </span>
           )}
         </div>
 
-        <div className="te-partido-matchup">
-          <span
-            className={`te-partido-team te-partido-team--local${
-              pair1Won
-                ? " te-partido-team--winner"
-                : pair2Won
-                  ? " te-partido-team--loser"
-                  : ""
-            }`}
-          >
-            {localLabel}
-          </span>
-          {played ? (
-            <PartidoSetsScoreDisplay
-              partido={partido}
-              variant="inline"
-              className="te-partido-score-center"
-            />
-          ) : (
-            <span className="te-partido-score-center is-pending">—</span>
-          )}
-          <span
-            className={`te-partido-team te-partido-team--visit${
-              pair2Won
-                ? " te-partido-team--winner"
-                : pair1Won
-                  ? " te-partido-team--loser"
-                  : ""
-            }`}
-          >
-            {visitLabel}
-          </span>
+        <div
+          className={`te-partido-scoreboard${
+            played ? " te-partido-scoreboard--played" : ""
+          }`}
+        >
+          <div className="te-partido-scoreboard__row">
+            <span
+              className={`te-partido-team te-partido-team--local${
+                pair1Won
+                  ? " te-partido-team--winner"
+                  : pair2Won
+                    ? " te-partido-team--loser"
+                    : ""
+              }`}
+            >
+              {localLabel}
+            </span>
+            {played ? (
+              <span
+                className={`te-partido-scoreboard__pts${
+                  pair1Won ? " te-partido-scoreboard__pts--win" : ""
+                }`}
+              >
+                {localPtsLabel}
+              </span>
+            ) : null}
+          </div>
+          {!played ? (
+            <span className="te-partido-vs" aria-hidden>
+              vs
+            </span>
+          ) : null}
+          <div className="te-partido-scoreboard__row">
+            <span
+              className={`te-partido-team te-partido-team--visit${
+                pair2Won
+                  ? " te-partido-team--winner"
+                  : pair1Won
+                    ? " te-partido-team--loser"
+                    : ""
+              }`}
+            >
+              {visitLabel}
+            </span>
+            {played ? (
+              <span
+                className={`te-partido-scoreboard__pts${
+                  pair2Won ? " te-partido-scoreboard__pts--win" : ""
+                }`}
+              >
+                {visitPtsLabel}
+              </span>
+            ) : null}
+          </div>
         </div>
 
         {((horarioEditOpen && horarioEditable && onSaveProgramado) ||
@@ -681,6 +703,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
             visitLabel={
               labelById.get(partido.pareja_visitante_id) ?? "Visitante"
             }
+            matchNumber={index + 1}
             editable={editable}
             saving={savingPartidoId === partido.id}
             savingCancha={savingCanchaId === partido.id}
