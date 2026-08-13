@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from "react";
+import {
+  useClubExperience,
+  useOrganizerDisplayName,
+} from "../../../club-experience";
 import type {
   TorneoExpress,
   TorneoExpressEvento,
   TorneoExpressEventoPublico,
 } from "../../../lib/torneoExpress/types";
-import { buildCategoriaPublicPhasePresentation } from "../../../lib/torneoExpress/categoriaPublicPhase";
-import { formatTorneoExpressCategoria } from "../../../lib/torneoExpress/formatCategoria";
+import { buildCategoriaPublicCardStats } from "../../../lib/torneoExpress/categoriaPublicCardStats";
 import {
   fetchEventoPublicoPorSlug,
   formatSupabaseError,
 } from "../../../services/torneoExpressService";
 import { PublicTorneoExpressShell } from "./PublicTorneoExpressShell";
 import { PublicEventNeutralLoading } from "../../../club-experience";
+import { EventoCategoriaHubCard } from "./EventoCategoriaHubCard";
 import "./te-evento-publico.css";
 
-function formatFecha(iso: string | null): string | null {
+function formatFechaHeader(iso: string | null): string | null {
   if (!iso) return null;
   try {
     return new Date(`${iso}T12:00:00`).toLocaleDateString("es-MX", {
@@ -27,34 +31,42 @@ function formatFecha(iso: string | null): string | null {
   }
 }
 
-function categoryLabel(cat: TorneoExpress): string {
-  return (
-    formatTorneoExpressCategoria(cat.categoria) ||
-    cat.nombre?.trim() ||
-    "Categoría"
-  );
-}
-
 type EventoPublicoBodyProps = {
   evento: TorneoExpressEvento;
   categorias: TorneoExpress[];
   eliminatoriaPartidosByTorneoId: TorneoExpressEventoPublico["eliminatoriaPartidosByTorneoId"];
+  gruposByTorneoId: TorneoExpressEventoPublico["gruposByTorneoId"];
+  statsByTorneoId: TorneoExpressEventoPublico["statsByTorneoId"];
 };
 
 const EventoPublicoBody: React.FC<EventoPublicoBodyProps> = ({
   evento,
   categorias,
   eliminatoriaPartidosByTorneoId,
+  gruposByTorneoId,
+  statsByTorneoId,
 }) => {
   const showFlyerBanner =
     evento.logo_source === "flyer" && Boolean(evento.flyer_url?.trim());
   const [flyerShape, setFlyerShape] = useState<
     "landscape" | "portrait" | "square"
   >("landscape");
+  const [openCategoriaId, setOpenCategoriaId] = useState<string | null>(null);
 
-  const fechas = [formatFecha(evento.fecha_inicio), formatFecha(evento.fecha_fin)]
-    .filter(Boolean)
-    .join(" – ");
+  const { isClubBranded } = useClubExperience();
+  const organizerName = useOrganizerDisplayName(evento.organizador_id);
+
+  const fechaInicio = formatFechaHeader(evento.fecha_inicio);
+  const fechaFin = formatFechaHeader(evento.fecha_fin);
+  const fechaLine =
+    fechaInicio && fechaFin && fechaInicio !== fechaFin
+      ? `${fechaInicio} – ${fechaFin}`
+      : fechaInicio || fechaFin;
+
+  const metaParts = [
+    fechaLine,
+    isClubBranded && organizerName ? organizerName : null,
+  ].filter(Boolean);
 
   return (
     <>
@@ -79,26 +91,24 @@ const EventoPublicoBody: React.FC<EventoPublicoBodyProps> = ({
       ) : null}
 
       <header className="te-public-evento-header te-pub-fade-in">
-        <div className="te-public-evento-header__brand">
-          <h1 className="te-public-evento-header__title">{evento.nombre}</h1>
-          {fechas ? (
-            <p className="te-public-evento-header__dates">{fechas}</p>
-          ) : null}
-        </div>
+        <h1 className="te-public-evento-header__title">{evento.nombre}</h1>
+        {metaParts.length > 0 ? (
+          <p className="te-public-evento-header__meta">{metaParts.join(" · ")}</p>
+        ) : null}
       </header>
 
       <section
         className="te-public-evento-roles"
-        aria-labelledby="te-evento-roles-heading"
+        aria-labelledby="te-evento-categorias-heading"
       >
         <h2
-          id="te-evento-roles-heading"
-          className="te-public-evento-roles__title te-label-section"
+          id="te-evento-categorias-heading"
+          className="te-public-evento-roles__title"
         >
-          Roles de juego
+          Categorías
         </h2>
         <p className="te-public-evento-roles__hint">
-          Elige tu categoría para ver grupos, partidos y resultados.
+          Consulta grupos, partidos y fase final.
         </p>
         {categorias.length === 0 ? (
           <p className="te-public-evento__status">
@@ -107,54 +117,28 @@ const EventoPublicoBody: React.FC<EventoPublicoBodyProps> = ({
         ) : (
           <ul className="te-public-evento-roles__list">
             {categorias.map((cat) => {
-              const phase = buildCategoriaPublicPhasePresentation(
-                cat,
-                eliminatoriaPartidosByTorneoId[cat.id] ?? []
-              );
+              const grupos = gruposByTorneoId[cat.id] ?? [];
+              const stats = buildCategoriaPublicCardStats({
+                categoria: cat,
+                grupos,
+                stats: statsByTorneoId[cat.id],
+                eliminatoriaPartidos:
+                  eliminatoriaPartidosByTorneoId[cat.id] ?? [],
+              });
+              const open = openCategoriaId === cat.id;
               return (
                 <li key={cat.id}>
-                  <article className="te-public-evento-role-card">
-                    <a
-                      href={phase.primaryHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="te-public-evento-role-card__primary"
-                    >
-                      <span
-                        className="te-public-evento-role-card__mark"
-                        aria-hidden
-                      >
-                        RO
-                      </span>
-                      <span className="te-public-evento-role-card__body">
-                        <span className="te-public-evento-role-card__label">
-                          {categoryLabel(cat)}
-                        </span>
-                        <span className="te-public-evento-role-card__meta">
-                          {phase.phaseLabel}
-                        </span>
-                        <span className="te-public-evento-role-card__action">
-                          {phase.primaryActionLabel}
-                        </span>
-                      </span>
-                      <span
-                        className="te-public-evento-role-card__chevron"
-                        aria-hidden
-                      >
-                        ›
-                      </span>
-                    </a>
-                    {phase.secondaryHref && phase.secondaryActionLabel ? (
-                      <a
-                        href={phase.secondaryHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="te-public-evento-role-card__secondary"
-                      >
-                        {phase.secondaryActionLabel}
-                      </a>
-                    ) : null}
-                  </article>
+                  <EventoCategoriaHubCard
+                    categoriaId={cat.id}
+                    stats={stats}
+                    grupos={grupos}
+                    open={open}
+                    onToggle={() =>
+                      setOpenCategoriaId((cur) =>
+                        cur === cat.id ? null : cat.id
+                      )
+                    }
+                  />
                 </li>
               );
             })}
@@ -170,7 +154,7 @@ type VistaPublicaEventoProps = {
 };
 
 /**
- * Contenedor público del Evento: banner (flyer) + nombre + selector de categorías.
+ * Contenedor público del Evento: banner (flyer) + nombre + hub de categorías.
  * Datos deportivos viven en cada categoría (`torneo_express.id`).
  */
 export const VistaPublicaEvento: React.FC<VistaPublicaEventoProps> = ({
@@ -180,6 +164,12 @@ export const VistaPublicaEvento: React.FC<VistaPublicaEventoProps> = ({
   const [categorias, setCategorias] = useState<TorneoExpress[]>([]);
   const [eliminatoriaPartidosByTorneoId, setEliminatoriaPartidosByTorneoId] =
     useState<TorneoExpressEventoPublico["eliminatoriaPartidosByTorneoId"]>({});
+  const [gruposByTorneoId, setGruposByTorneoId] = useState<
+    TorneoExpressEventoPublico["gruposByTorneoId"]
+  >({});
+  const [statsByTorneoId, setStatsByTorneoId] = useState<
+    TorneoExpressEventoPublico["statsByTorneoId"]
+  >({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -195,18 +185,24 @@ export const VistaPublicaEvento: React.FC<VistaPublicaEventoProps> = ({
           setEvento(null);
           setCategorias([]);
           setEliminatoriaPartidosByTorneoId({});
+          setGruposByTorneoId({});
+          setStatsByTorneoId({});
           setError("Evento no encontrado o no publicado");
           return;
         }
         setEvento(data.evento);
         setCategorias(data.categorias);
         setEliminatoriaPartidosByTorneoId(data.eliminatoriaPartidosByTorneoId);
+        setGruposByTorneoId(data.gruposByTorneoId);
+        setStatsByTorneoId(data.statsByTorneoId);
       } catch (e) {
         if (!cancelled) {
           setError(formatSupabaseError(e));
           setEvento(null);
           setCategorias([]);
           setEliminatoriaPartidosByTorneoId({});
+          setGruposByTorneoId({});
+          setStatsByTorneoId({});
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -231,6 +227,8 @@ export const VistaPublicaEvento: React.FC<VistaPublicaEventoProps> = ({
           evento={evento}
           categorias={categorias}
           eliminatoriaPartidosByTorneoId={eliminatoriaPartidosByTorneoId}
+          gruposByTorneoId={gruposByTorneoId}
+          statsByTorneoId={statsByTorneoId}
         />
       ) : null}
     </PublicTorneoExpressShell>

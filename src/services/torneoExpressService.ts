@@ -2563,7 +2563,13 @@ export async function fetchEventoPublicoPorSlug(
     .order("created_at", { ascending: true });
 
   if (error && isMissingColumnError(error, "torneo_express", "evento_id")) {
-    return { evento, categorias: [], eliminatoriaPartidosByTorneoId: {} };
+    return {
+      evento,
+      categorias: [],
+      eliminatoriaPartidosByTorneoId: {},
+      gruposByTorneoId: {},
+      statsByTorneoId: {},
+    };
   }
   throwIfError(error, "fetchEventoPublicoPorSlug.categorias");
 
@@ -2598,10 +2604,90 @@ export async function fetchEventoPublicoPorSlug(
     }
   }
 
+  const gruposByTorneoId: TorneoExpressEventoPublico["gruposByTorneoId"] = {};
+  const statsByTorneoId: TorneoExpressEventoPublico["statsByTorneoId"] = {};
+  for (const id of torneoIds) {
+    gruposByTorneoId[id] = [];
+    statsByTorneoId[id] = {
+      parejaCount: 0,
+      partidoTotal: 0,
+      partidoJugados: 0,
+    };
+  }
+
+  if (torneoIds.length > 0) {
+    const { data: grupoRows, error: grupoErr } = await supabase
+      .from("torneo_express_grupos")
+      .select("id, torneo_id, nombre, orden")
+      .in("torneo_id", torneoIds)
+      .order("orden", { ascending: true });
+    throwIfError(grupoErr, "fetchEventoPublicoPorSlug.grupos");
+
+    const grupoToTorneo = new Map<string, string>();
+    for (const row of grupoRows ?? []) {
+      const torneoId = String((row as { torneo_id?: string }).torneo_id ?? "");
+      const grupoId = String((row as { id?: string }).id ?? "");
+      if (!torneoId || !grupoId) continue;
+      if (!gruposByTorneoId[torneoId]) gruposByTorneoId[torneoId] = [];
+      gruposByTorneoId[torneoId].push(
+        row as TorneoExpressEventoPublico["gruposByTorneoId"][string][number]
+      );
+      grupoToTorneo.set(grupoId, torneoId);
+    }
+
+    const grupoIds = Array.from(grupoToTorneo.keys());
+    if (grupoIds.length > 0) {
+      const { data: parejaRows, error: parejaErr } = await supabase
+        .from("torneo_express_grupo_parejas")
+        .select("grupo_id")
+        .in("grupo_id", grupoIds);
+      throwIfError(parejaErr, "fetchEventoPublicoPorSlug.parejas");
+
+      for (const row of parejaRows ?? []) {
+        const grupoId = String((row as { grupo_id?: string }).grupo_id ?? "");
+        const torneoId = grupoToTorneo.get(grupoId);
+        if (!torneoId) continue;
+        if (!statsByTorneoId[torneoId]) {
+          statsByTorneoId[torneoId] = {
+            parejaCount: 0,
+            partidoTotal: 0,
+            partidoJugados: 0,
+          };
+        }
+        statsByTorneoId[torneoId].parejaCount += 1;
+      }
+
+      const { data: partidoRows, error: partidoErr } = await supabase
+        .from("torneo_express_partidos")
+        .select("grupo_id, estado")
+        .in("grupo_id", grupoIds);
+      throwIfError(partidoErr, "fetchEventoPublicoPorSlug.partidos");
+
+      for (const row of partidoRows ?? []) {
+        const grupoId = String((row as { grupo_id?: string }).grupo_id ?? "");
+        const torneoId = grupoToTorneo.get(grupoId);
+        if (!torneoId) continue;
+        if (!statsByTorneoId[torneoId]) {
+          statsByTorneoId[torneoId] = {
+            parejaCount: 0,
+            partidoTotal: 0,
+            partidoJugados: 0,
+          };
+        }
+        statsByTorneoId[torneoId].partidoTotal += 1;
+        if ((row as { estado?: string }).estado === "jugado") {
+          statsByTorneoId[torneoId].partidoJugados += 1;
+        }
+      }
+    }
+  }
+
   return {
     evento,
     categorias,
     eliminatoriaPartidosByTorneoId,
+    gruposByTorneoId,
+    statsByTorneoId,
   };
 }
 

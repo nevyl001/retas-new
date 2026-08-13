@@ -34,6 +34,19 @@ export interface TorneoExpressEventoConCategorias {
   categorias: TorneoExpress[];
 }
 
+/** Grupo ligero para el hub público del Evento (sin parejas ni partidos). */
+export type TorneoExpressEventoPublicoGrupo = Pick<
+  TorneoExpressGrupo,
+  "id" | "torneo_id" | "nombre" | "orden"
+>;
+
+/** Conteos agregados por categoría para la face de la card pública. */
+export type TorneoExpressEventoPublicoCategoriaStats = {
+  parejaCount: number;
+  partidoTotal: number;
+  partidoJugados: number;
+};
+
 /** Lectura pública del Evento + evidencia de eliminatoria por categoría. */
 export interface TorneoExpressEventoPublico
   extends TorneoExpressEventoConCategorias {
@@ -50,6 +63,10 @@ export interface TorneoExpressEventoPublico
       >
     >
   >;
+  /** Grupos por `torneo_express.id`, ordenados por `orden`. */
+  gruposByTorneoId: Record<string, TorneoExpressEventoPublicoGrupo[]>;
+  /** Parejas / partidos de fase de grupos por categoría. */
+  statsByTorneoId: Record<string, TorneoExpressEventoPublicoCategoriaStats>;
 }
 
 /** Marcador por set en partidos al mejor de 3. */
