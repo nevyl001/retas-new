@@ -2108,6 +2108,7 @@ export async function saveEliminatoriaResultado(
         "Completa todos los sets y asegúrate de que haya un ganador"
     );
   }
+  const ganadorSide = payload.ganadorSide;
 
   const { data: existing, error: fetchErr } = await supabase
     .from("torneo_express_eliminatoria_partidos")
@@ -2131,7 +2132,7 @@ export async function saveEliminatoriaResultado(
   await assertTorneoExpressNotClosed(existing.torneo_id as string);
 
   const ganadorId =
-    payload.ganadorSide === "local"
+    ganadorSide === "local"
       ? existing.pareja_local_id
       : existing.pareja_visitante_id;
 
@@ -2280,7 +2281,7 @@ export async function saveEliminatoriaResultado(
     ({ aplicarRatingTorneoExpressEliminatoriaPartido }) =>
       aplicarRatingTorneoExpressEliminatoriaPartido(
         partidoId,
-        payload.ganadorSide,
+        ganadorSide,
         torneoId
       ).catch((e) => console.warn("[rating] torneo express elim:", e))
   );
