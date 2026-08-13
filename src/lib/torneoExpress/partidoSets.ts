@@ -223,36 +223,33 @@ export function isSetComplete(set: PartidoSetScore): boolean {
   );
 }
 
-/** Marcadores legales de un set normal: 6-0 a 6-4, 7-5 y 7-6, más sus inversos. */
-export const LEGAL_SET_SCORE_HINT = "6-0 a 6-4, 7-5 o 7-6";
+/** Marcadores aceptados: enteros 0–99 (input UI de 2 dígitos).
+ * Torneo Express admite formatos flexibles (a 6, a 8, por tiempo, etc.).
+ * El ganador del set/partido es quien tiene más games; empate permitido en 1 set.
+ */
+export const LEGAL_SET_SCORE_HINT = "cualquier marcador 0–99 (gana quien tiene más)";
 
-/** El tercer set admite además súper muerte súbita a 10 con 2 de diferencia. */
+/** @deprecated Conservado por compat; mismo criterio flexible que sets 1–2. */
 export const LEGAL_THIRD_SET_SCORE_HINT =
-  "6-0 a 6-4, 7-5, 7-6, o súper muerte súbita a 10 con 2 de diferencia";
+  "cualquier marcador 0–99 (gana quien tiene más; empate solo en 1 set)";
 
 /**
- * Cierra la brecha de integridad que permitía guardar marcadores imposibles
- * (60-40, 8-6): el input acepta dos dígitos, pero el dominio es el que decide
- * qué es un set válido.
+ * Score aceptable para persistir. Ya no exige 6-x / 7-5 de pádel clásico:
+ * hay torneos a 8 games, por tiempo (<6) y empates.
+ * Sigue rechazando basura no entera o fuera de 0–99 (p. ej. tecleo 60–40 tipográfico
+ * se mitiga en UI con select-on-focus; aquí el techo es el del input).
  */
 export function isLegalSetScore(set: PartidoSetScore): boolean {
   const { local, visitante } = set;
   if (!Number.isInteger(local) || !Number.isInteger(visitante)) return false;
   if (local < 0 || visitante < 0) return false;
-
-  const games = Math.max(local, visitante);
-  const opponent = Math.min(local, visitante);
-  if (games === 6) return opponent >= 0 && opponent <= 4;
-  if (games === 7) return opponent === 5 || opponent === 6;
-  return false;
+  if (local > 99 || visitante > 99) return false;
+  return true;
 }
 
 /**
- * Súper muerte súbita (tercer set): se juega a 10 puntos con ventaja de 2. De
- * ahí las dos ramas: si el ganador llegó a 10, el rival no pasó de 8; si se fue
- * más allá del 10-10, el punto de cierre siempre deja exactamente 2 de
- * diferencia (11-9, 12-10, 13-11…). Esa exigencia es la que impide que un
- * 60-40 se cuele por aquí.
+ * Súper muerte súbita clásica (a 10 con 2 de ventaja). Se conserva como helper
+ * documental; la validación de partido ya no la exige.
  */
 export function isLegalSuperTieBreakScore(set: PartidoSetScore): boolean {
   const { local, visitante } = set;
@@ -266,14 +263,11 @@ export function isLegalSuperTieBreakScore(set: PartidoSetScore): boolean {
   return false;
 }
 
-/** El tercer set (índice 2) puede ser un set normal o una súper muerte súbita. */
+/** En TE flexible, todos los sets usan el mismo criterio. */
 export function isLegalSetScoreAtIndex(
   set: PartidoSetScore,
-  index: number
+  _index: number
 ): boolean {
-  if (index === 2) {
-    return isLegalSetScore(set) || isLegalSuperTieBreakScore(set);
-  }
   return isLegalSetScore(set);
 }
 
@@ -295,10 +289,22 @@ export function emptySetDraft(): PartidoSetScore {
   return { local: 0, visitante: 0 };
 }
 
+export type SetsValidationOptions = {
+  /**
+   * Permite empate en partido a un set (fase de grupos / por tiempo).
+   * En eliminatoria debe ser false: hace falta un ganador para avanzar.
+   * Default: true.
+   */
+  allowDraw?: boolean;
+};
+
 /** Mensaje de validación para UI; null si se puede guardar. */
 export function getSetsValidationMessage(
-  sets: PartidoSetScore[]
+  sets: PartidoSetScore[],
+  options?: SetsValidationOptions
 ): string | null {
+  const allowDraw = options?.allowDraw !== false;
+
   if (sets.length === 0) {
     return "Agrega al menos un set.";
   }
@@ -313,17 +319,30 @@ export function getSetsValidationMessage(
     if (s.local < 0 || s.visitante < 0) {
       return "Los marcadores no pueden ser negativos.";
     }
-    if (s.local === s.visitante) {
-      return `El Set ${i + 1} no puede terminar empatado.`;
-    }
     if (!isLegalSetScoreAtIndex(s, i)) {
-      const hint =
-        i === 2 ? LEGAL_THIRD_SET_SCORE_HINT : LEGAL_SET_SCORE_HINT;
-      return `El Set ${i + 1} no es un marcador válido de pádel (${hint}).`;
+      return `El Set ${i + 1} debe ser un marcador entre 0 y 99.`;
+    }
+    if (s.local === s.visitante) {
+      if (sets.length === 1 && allowDraw) {
+        continue;
+      }
+      if (sets.length === 1 && !allowDraw) {
+        return "En eliminatoria el partido no puede empatar; necesita un ganador.";
+      }
+      return `El Set ${i + 1} no puede terminar empatado en mejor de 3.`;
     }
   }
+
   const winner = detectMatchWinner(sets);
   if (winner) return null;
+
+  if (
+    sets.length === 1 &&
+    allowDraw &&
+    sets[0].local === sets[0].visitante
+  ) {
+    return null;
+  }
 
   const wins = countSetWins(sets);
   if (sets.length === 2 && wins.local === 1 && wins.visitante === 1) {
@@ -357,16 +376,17 @@ export interface PersistSetsPayload {
   puntos_local: number;
   puntos_visitante: number;
   sets_resultado: PartidoSetScore[];
-  ganadorSide: PartidoSetsSide;
+  /** null = empate (solo partido a 1 set). */
+  ganadorSide: PartidoSetsSide | null;
 }
 
-/** Prepara datos para guardar en BD a partir de sets completos con ganador. */
+/** Prepara datos para guardar en BD a partir de sets completos. */
 export function buildPersistPayload(
-  sets: PartidoSetScore[]
+  sets: PartidoSetScore[],
+  options?: SetsValidationOptions
 ): PersistSetsPayload | null {
-  if (getSetsValidationMessage(sets) !== null) return null;
+  if (getSetsValidationMessage(sets, options) !== null) return null;
   const winner = detectMatchWinner(sets);
-  if (!winner) return null;
 
   if (sets.length === 1) {
     return {
@@ -376,6 +396,8 @@ export function buildPersistPayload(
       ganadorSide: winner,
     };
   }
+
+  if (!winner) return null;
 
   const wins = countSetWins(sets);
   return {

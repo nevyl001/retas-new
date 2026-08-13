@@ -194,51 +194,55 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
 
   return (
     <article className="te-partido-item">
-      <div className="te-partido-meta">
-        <span className="te-partido-hora">{partido.hora}</span>
-        <span className="te-partido-cancha">
-          <span className="te-partido-cancha__icon" aria-hidden>
-            📍
-          </span>
-          {partido.cancha}
-        </span>
-      </div>
-
-      <div className="te-partido-divider" aria-hidden />
-
-      <div className="te-partido-teams">
-        <div className="te-team-row">
-          <span
-            className={`te-team-name${
-              team1Wins ? " te-team-name--winner" : ""
-            }`}
-          >
-            {partido.pareja1}
+      <header className="te-partido-item__top">
+        <div className="te-partido-meta">
+          <span className="te-partido-hora">{partido.hora}</span>
+          <span className="te-partido-cancha" title={partido.cancha}>
+            {partido.cancha}
           </span>
         </div>
-        <div className="te-team-row">
-          <span
-            className={`te-team-name${
-              team2Wins ? " te-team-name--winner" : ""
-            }`}
-          >
-            {partido.pareja2}
-          </span>
+        <div className="te-partido-badge">
+          <PartidoStatusBadge estado={partido.estado} />
         </div>
-        {played ? (
-          <div className="te-partido-sets-wrap">
-            <PartidoSetsScoreDisplay
-              partido={partido.partidoExpress}
-              variant="inline"
-            />
+      </header>
+
+      <div className="te-partido-body">
+        <div className="te-partido-teams">
+          <div className="te-team-row">
+            <span
+              className={`te-team-name${
+                team1Wins ? " te-team-name--winner" : ""
+              }`}
+            >
+              {partido.pareja1}
+            </span>
           </div>
-        ) : (
-          <span className="te-score-pending">—</span>
-        )}
-      </div>
+          <div className="te-team-row te-team-row--vs" aria-hidden>
+            <span className="te-partido-vs">vs</span>
+          </div>
+          <div className="te-team-row">
+            <span
+              className={`te-team-name${
+                team2Wins ? " te-team-name--winner" : ""
+              }`}
+            >
+              {partido.pareja2}
+            </span>
+          </div>
+        </div>
 
-      <div className="te-partido-badge">
-        <PartidoStatusBadge estado={partido.estado} />
+        <div className="te-partido-score">
+          {played ? (
+            <div className="te-partido-sets-wrap">
+              <PartidoSetsScoreDisplay
+                partido={partido.partidoExpress}
+                variant="inline"
+              />
+            </div>
+          ) : (
+            <span className="te-score-pending">—</span>
+          )}
+        </div>
       </div>
     </article>
   );

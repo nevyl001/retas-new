@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
+import { useTorneoPublicDisplayNombre } from "../../hooks/useTorneoPublicDisplayNombre";
 import { copyToClipboard, publicGeneralUrl } from "../../services/torneoExpressService";
 import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import { PublicStandingsSection } from "./public/PublicStandingsSection";
@@ -23,6 +24,7 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
       realtime: true,
       pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
     });
+  const displayNombre = useTorneoPublicDisplayNombre(bundle?.torneo);
   const [copyMsg, setCopyMsg] = useState("");
 
   const goBack = () => {
@@ -57,7 +59,7 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
   return (
     <PublicTorneoExpressShell organizadorId={bundle.torneo.organizador_id}>
       <PublicTorneoExpressHeader
-        torneoNombre={bundle.torneo.nombre}
+        torneoNombre={displayNombre || bundle.torneo.nombre}
         categoria={bundle.torneo.categoria}
         subtitle="Tabla general · todos los grupos"
         onCopyLink={copyLink}

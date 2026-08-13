@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
+import { useTorneoPublicDisplayNombre } from "../../hooks/useTorneoPublicDisplayNombre";
 import { hasCategoriaEliminatoria } from "../../lib/torneoExpress/categoriaPublicPhase";
 import {
   copyToClipboard,
@@ -24,14 +25,18 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
       realtime: true,
       pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
     });
+  const displayNombre = useTorneoPublicDisplayNombre(bundle?.torneo);
   const [copyMsg, setCopyMsg] = useState("");
 
   const gruposProps = useMemo(
     () =>
       bundle
-        ? buildTEPublicGruposProps(bundle, standingsByGrupo)
+        ? {
+            ...buildTEPublicGruposProps(bundle, standingsByGrupo),
+            torneoNombre: displayNombre || bundle.torneo.nombre,
+          }
         : null,
-    [bundle, standingsByGrupo]
+    [bundle, standingsByGrupo, displayNombre]
   );
 
   const faseFinalHref = useMemo(() => {

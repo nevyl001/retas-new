@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
+import { useTorneoPublicDisplayNombre } from "../../hooks/useTorneoPublicDisplayNombre";
 import { copyToClipboard, publicGrupoUrl } from "../../services/torneoExpressService";
 import { buildSharePublicOgUrlFromPlayUrl } from "../../lib/retaAbierta/shareOgUrl";
 import {
@@ -21,14 +22,18 @@ export const VistaPublicaGrupo: React.FC<{
       realtime: true,
       pollIntervalMs: TE_PUBLIC_POLL_INTERVAL_MS,
     });
+  const displayNombre = useTorneoPublicDisplayNombre(bundle?.torneo);
   const [copyMsg, setCopyMsg] = useState("");
 
   const grupoProps = useMemo(
     () =>
       bundle
-        ? buildTEPublicGrupoProps(bundle, standingsByGrupo, grupoId)
+        ? {
+            ...buildTEPublicGrupoProps(bundle, standingsByGrupo, grupoId),
+            torneoNombre: displayNombre || bundle.torneo.nombre,
+          }
         : null,
-    [bundle, standingsByGrupo, grupoId]
+    [bundle, standingsByGrupo, grupoId, displayNombre]
   );
 
   const copyLink = async () => {

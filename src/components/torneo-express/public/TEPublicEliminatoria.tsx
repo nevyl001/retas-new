@@ -3,6 +3,7 @@ import { buildPublicPodiumStatsForPair } from "../../../lib/torneoExpress/public
 import { formatTorneoExpressCategoria } from "../../../lib/torneoExpress/formatCategoria";
 import { buildPublicBracketViewModel } from "../../../lib/torneoExpress/publicBracketModel";
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
+import { useTorneoPublicDisplayNombre } from "../../../hooks/useTorneoPublicDisplayNombre";
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
 import { PodiumCard } from "./PodiumCard";
@@ -93,6 +94,8 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   );
 
   const categoria = formatTorneoExpressCategoria(bundle.torneo.categoria);
+  const displayNombre =
+    useTorneoPublicDisplayNombre(bundle.torneo) || bundle.torneo.nombre;
 
   const championStats = useMemo(
     () =>
@@ -138,9 +141,13 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         <div className="te-grupos-hero__top">
           <div>
             <p className="te-grupos-eyebrow">
-              TORNEO · {bundle.torneo.nombre.trim().toUpperCase()}
+              TORNEO · {displayNombre.trim().toUpperCase()}
             </p>
-            <h1 className="te-grupos-title">{bundle.torneo.nombre}</h1>
+            <h1 className="te-grupos-title">
+              {categoria
+                ? `${categoria} — ${displayNombre}`
+                : displayNombre}
+            </h1>
             <p className="te-elim-tagline">{model.motivationalMessage}</p>
           </div>
           {onCopyLink || gruposHref ? (

@@ -81,6 +81,10 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
     () => getSetsValidationMessage(sets),
     [sets]
   );
+  const isDraw =
+    sets.length === 1 &&
+    sets[0].local === sets[0].visitante &&
+    validationMessage === null;
   const canSave = useMemo(
     () => buildPersistPayload(sets) !== null && validationMessage === null,
     [sets, validationMessage]
@@ -177,6 +181,7 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
                   value={drafts[index * 2] ?? ""}
                   disabled={saving}
                   aria-label={`Set ${index + 1} ${localLabel}`}
+                  onFocus={(e) => e.currentTarget.select()}
                   onChange={(e) => updateSet(index, "local", e.target.value)}
                 />
                 <span className="te-sets-modal__vs">vs</span>
@@ -188,6 +193,7 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
                   value={drafts[index * 2 + 1] ?? ""}
                   disabled={saving}
                   aria-label={`Set ${index + 1} ${visitLabel}`}
+                  onFocus={(e) => e.currentTarget.select()}
                   onChange={(e) =>
                     updateSet(index, "visitante", e.target.value)
                   }
@@ -236,13 +242,18 @@ export const PartidoSetsResultModal: React.FC<PartidoSetsResultModalProps> = ({
                   })`}
             </strong>
           </p>
+        ) : isDraw ? (
+          <p className="te-sets-modal__winner" role="status">
+            Empate detectado: mismo número de games. Se guardará como empate.
+          </p>
         ) : validationMessage ? (
           <p className="te-sets-modal__hint" role="status">
             {validationMessage}
           </p>
         ) : (
           <p className="te-sets-modal__hint">
-            Un set = partido a un set. Añade un segundo set para mejor de 3.
+            Cualquier marcador vale (a 6, a 8 o por tiempo). Gana quien tenga
+            más games. Un set = partido; añade otro para mejor de 3.
           </p>
         )}
       </div>

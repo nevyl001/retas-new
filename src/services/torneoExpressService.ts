@@ -1071,14 +1071,16 @@ export async function savePartidoResultado(
   }
 
   if (result.status !== "unchanged") {
-    void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
-      ({ aplicarRatingTorneoExpressGrupoPartido }) =>
-        aplicarRatingTorneoExpressGrupoPartido(
-          partidoId,
-          payload.puntos_local,
-          payload.puntos_visitante
-        ).catch((e) => console.warn("[rating] torneo express grupo:", e))
-    );
+    if (payload.ganadorSide) {
+      void import("../lib/rivieraJugadores/aplicarRatingPartido").then(
+        ({ aplicarRatingTorneoExpressGrupoPartido }) =>
+          aplicarRatingTorneoExpressGrupoPartido(
+            partidoId,
+            payload.puntos_local,
+            payload.puntos_visitante
+          ).catch((e) => console.warn("[rating] torneo express grupo:", e))
+      );
+    }
   }
 
   const fresh = await fetchPartidoResultadoById(partidoId);
@@ -2098,9 +2100,9 @@ export async function saveEliminatoriaResultado(
 ): Promise<TorneoExpressEliminatoriaPartido> {
   await requireAuthUser();
 
-  const validation = getSetsValidationMessage(sets);
-  const payload = buildPersistPayload(sets);
-  if (!payload || validation) {
+  const validation = getSetsValidationMessage(sets, { allowDraw: false });
+  const payload = buildPersistPayload(sets, { allowDraw: false });
+  if (!payload || validation || !payload.ganadorSide) {
     throw new Error(
       validation ??
         "Completa todos los sets y asegúrate de que haya un ganador"
@@ -2473,12 +2475,14 @@ export async function fetchEventosByOrganizador(): Promise<TorneoExpressEvento[]
 }
 
 export async function fetchEventoById(
-  eventoId: string
+  eventoId: string,
+  usePublicClient = false
 ): Promise<TorneoExpressEvento | null> {
   const id = eventoId.trim();
   if (!id) return null;
 
-  const { data, error } = await supabase
+  const client = usePublicClient ? readClient : supabase;
+  const { data, error } = await client
     .from("torneo_express_evento")
     .select("*")
     .eq("id", id)
