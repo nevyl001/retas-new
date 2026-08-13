@@ -6,6 +6,11 @@ type PublicEventBrandIdentityProps = {
   className?: string;
   /** Desactivar solo si la vista ya imprime la atribución madre por su cuenta. */
   showMotherAttribution?: boolean;
+  /**
+   * Solo logo Riviera Open (sin nombre de cuenta ni "by Riviera Open").
+   * Útil en celebraciones donde el wordmark de la card ya aporta la marca.
+   */
+  logoOnly?: boolean;
 };
 
 /**
@@ -13,13 +18,16 @@ type PublicEventBrandIdentityProps = {
  * Reutiliza ClubIdentity (mismo componente del home / UserHeader).
  * - Pending (org desconocido / binding en curso): no renderiza nada.
  * - Vista pública SIEMPRE es genérica (2026-08-08, sin white label): logo
- *   Riviera Open + "Riviera Open" + nombre de la cuenta como texto, tenga o
- *   no upgrade de branding. El logo propio del club (si lo tiene) solo se ve
- *   en superficies privadas del organizador (UserHeader/menú), nunca aquí.
+ *   Riviera Open (+ nombre de cuenta salvo `logoOnly`), nunca el logo propio
+ *   del club. El logo propio solo se ve en superficies privadas del organizador.
  */
 export const PublicEventBrandIdentity: React.FC<
   PublicEventBrandIdentityProps
-> = ({ className = "", showMotherAttribution = true }) => {
+> = ({
+  className = "",
+  showMotherAttribution = true,
+  logoOnly = false,
+}) => {
   const { isScopeBrandingReady, brandingStatus } = useClubExperience();
 
   if (!isScopeBrandingReady || brandingStatus === "pending") {
@@ -32,7 +40,8 @@ export const PublicEventBrandIdentity: React.FC<
       showTagline={false}
       logoSurface="dark"
       forceRivieraLogo
-      showMotherAttribution={showMotherAttribution}
+      hideOrganizerName={logoOnly}
+      showMotherAttribution={logoOnly ? false : showMotherAttribution}
       className={className}
     />
   );

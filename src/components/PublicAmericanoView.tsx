@@ -593,7 +593,7 @@ export const PublicAmericanoView: React.FC<PublicAmericanoViewProps> = ({
               aria-label={getPodiumFinalAriaLabel(organizerName)}
             >
               <div className="ro-pub-celebrate__inner">
-                <PublicRivieraCelebrateBrand />
+                <PublicRivieraCelebrateBrand logoOnly />
                 <div className="ro-divider-gold" aria-hidden />
                 <h2 className="ro-pub-celebrate__headline">¡Felicidades!</h2>
                 <p className="te-public-podium__badge">Americano finalizado</p>

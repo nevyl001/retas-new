@@ -104,4 +104,30 @@ describe("ClubIdentity forceRivieraLogo (vista pública genérica)", () => {
 
     expect(container.querySelector(".club-identity__text")).toBeNull();
   });
+
+  it("hideOrganizerName: solo logo Riviera Open, sin nombre de cuenta ni atribución", () => {
+    mockOrganizerName = "Club Test";
+    act(() => {
+      root.render(
+        <ClubIdentity
+          variant="compact"
+          showTagline={false}
+          showMotherAttribution
+          forceRivieraLogo
+          hideOrganizerName
+        />
+      );
+    });
+
+    const logoSrc = container.querySelector<HTMLImageElement>(
+      ".club-identity__logo"
+    )?.src;
+    expect(logoSrc).toContain("/logo-riviera.png");
+    expect(container.querySelector(".club-identity__text")).toBeNull();
+    expect(container.querySelector(".club-identity__organizer")).toBeNull();
+    expect(container.querySelector(".club-identity__attribution")).toBeNull();
+    expect(
+      container.querySelector(".club-identity--logo-only")
+    ).not.toBeNull();
+  });
 });

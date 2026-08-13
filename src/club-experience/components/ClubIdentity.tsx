@@ -33,6 +33,11 @@ interface ClubIdentityProps {
    * organizador conserva su propio logo.
    */
   forceRivieraLogo?: boolean;
+  /**
+   * Con `forceRivieraLogo`: oculta nombre de cuenta y atribución; solo el logo
+   * Riviera Open. Para celebraciones que ya muestran wordmark propio.
+   */
+  hideOrganizerName?: boolean;
   className?: string;
 }
 
@@ -47,6 +52,7 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   wordmarkOnly = false,
   showMotherAttribution = false,
   forceRivieraLogo = false,
+  hideOrganizerName = false,
   className = "",
 }) => {
   const { manifest, isClubBranded, organizadorId } = useClubExperience();
@@ -65,8 +71,7 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
   if (forceRivieraLogo) {
     // Vistas públicas (2026-08-08, sin white label): el logo SIEMPRE es el de
     // Riviera Open (nunca el propio del club, aunque tenga upgrade).
-    // - Cuenta propia de Riviera Open (sin nombre de organizador distinto):
-    //   solo el logo, sin texto.
+    // - hideOrganizerName / cuenta propia Riviera Open: solo el logo, sin texto.
     // - Cualquier otra cuenta: nombre de la cuenta + atribución "by Riviera Open".
     const logoUrl = resolveClubLogo(RIVIERA_DEFAULT_MANIFEST, logoSurface);
     const showLogo = Boolean(logoUrl) && !logoFailed;
@@ -77,11 +82,12 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
       organizerLabel.localeCompare(RIVIERA_PRODUCT_NAME, undefined, {
         sensitivity: "accent",
       }) === 0;
+    const hideAccountText = hideOrganizerName || isRivieraOwnAccount;
 
     return (
       <div
         className={`club-identity club-identity--mother club-identity--${variant} club-identity--public${
-          isRivieraOwnAccount ? " club-identity--logo-only" : ""
+          hideAccountText ? " club-identity--logo-only" : ""
         } ${className}`.trim()}
       >
         {showLogo ? (
@@ -94,7 +100,7 @@ export const ClubIdentity: React.FC<ClubIdentityProps> = ({
             onError={() => setLogoFailed(true)}
           />
         ) : null}
-        {!isRivieraOwnAccount ? (
+        {!hideAccountText ? (
           <div className="club-identity__text">
             <span className="club-identity__organizer">{organizerLabel}</span>
             {showMotherAttribution ? motherAttribution : null}
