@@ -240,17 +240,24 @@ export const ClubExperienceScope: React.FC<ClubExperienceScopeProps> = ({
   );
 
   // Clubs sin upgrade: siempre Riviera Open (pending = resolved visualmente).
-  // Premium (Hack): puede pintar manifiesto estático ya en pending; si no hay binding, madre.
+  // Premium: puede pintar manifiesto estático ya en pending (inline + data-club).
+  const premiumPending =
+    Boolean(normalizedOrgId) &&
+    isPremiumBrandingEnabledForOrganizador(normalizedOrgId);
   const scopeStyleManifest =
-    isPending && !isPremiumBrandingEnabledForOrganizador(normalizedOrgId)
+    isPending && !premiumPending
       ? getNeutralPublicScopeStyle()
       : getClubExperienceScopeStyle(manifest);
+  // Evita flash Riviera→club: CSS tenant ([data-club=valvidub-sports] …)
+  // debe matchear desde el primer paint con org premium conocido.
+  const scopeClubKey =
+    isPending && !premiumPending ? "pending" : manifest.brandingKey;
 
   return (
     <ClubExperienceContext.Provider value={value}>
       <div
-        data-brand={isPending ? "pending" : manifest.brandingKey}
-        data-club={isPending ? "pending" : manifest.brandingKey}
+        data-brand={scopeClubKey}
+        data-club={scopeClubKey}
         data-branding-status={brandingStatus}
         className="club-experience-scope"
         style={scopeStyleManifest}

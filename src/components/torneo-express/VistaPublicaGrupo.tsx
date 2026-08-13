@@ -45,36 +45,33 @@ export const VistaPublicaGrupo: React.FC<{
     setTimeout(() => setCopyMsg(""), 2500);
   };
 
-  if (loading && !bundle) {
-    return (
-      <PublicTorneoExpressShell>
-        <PublicEventNeutralLoading message="Cargando grupo…" />
-      </PublicTorneoExpressShell>
-    );
-  }
-
-  if (!bundle || !grupoProps || grupoProps.grupos.length === 0) {
-    return (
-      <PublicTorneoExpressShell>
-        <p className="te-public-error">{error ?? "Grupo no encontrado"}</p>
-      </PublicTorneoExpressShell>
-    );
-  }
+  const notFound =
+    !loading && (!bundle || !grupoProps || grupoProps.grupos.length === 0);
 
   return (
     <PublicTorneoExpressShell
       className="te-public--grupos-wide"
-      organizadorId={bundle.torneo.organizador_id}
+      organizadorId={bundle?.torneo.organizador_id ?? null}
     >
-      <TEPublicGrupos
-        {...grupoProps}
-        onCopyLink={copyLink}
-        copyMsg={copyMsg || undefined}
-      />
-      <PublicTorneoExpressSyncFooter
-        lastRefreshedAt={lastRefreshedAt}
-        realtimeConnected={realtimeConnected}
-      />
+      {loading && !bundle ? (
+        <PublicEventNeutralLoading message="Cargando grupo…" />
+      ) : null}
+      {notFound ? (
+        <p className="te-public-error">{error ?? "Grupo no encontrado"}</p>
+      ) : null}
+      {bundle && grupoProps && grupoProps.grupos.length > 0 ? (
+        <>
+          <TEPublicGrupos
+            {...grupoProps}
+            onCopyLink={copyLink}
+            copyMsg={copyMsg || undefined}
+          />
+          <PublicTorneoExpressSyncFooter
+            lastRefreshedAt={lastRefreshedAt}
+            realtimeConnected={realtimeConnected}
+          />
+        </>
+      ) : null}
     </PublicTorneoExpressShell>
   );
 };

@@ -191,6 +191,13 @@ describe("public branding flash contract", () => {
       container.querySelector("[data-testid='probe']")?.getAttribute("data-status")
     ).toBe("pending");
     expect(container.querySelector(".club-identity")).toBeNull();
+    // Premium conocido: data-club del tenant ya en pending (CSS sin flash Riviera→club).
+    const scopePending = container.querySelector(
+      ".club-experience-scope"
+    ) as HTMLElement | null;
+    expect(scopePending?.getAttribute("data-club")).toBe("hack-padel");
+    expect(scopePending?.getAttribute("data-brand")).toBe("hack-padel");
+    expect(scopePending?.getAttribute("data-branding-status")).toBe("pending");
 
     await act(async () => {
       mockSyncDeferred!.resolve();
@@ -217,6 +224,25 @@ describe("public branding flash contract", () => {
     expect(
       container.querySelector(".club-identity__attribution")?.textContent
     ).toContain(RIVIERA_CO_BRAND_ATTRIBUTION);
+  });
+
+  it("org sin upgrade en pending: data-club sigue pending (no inventa tenant)", () => {
+    mockSyncDeferred = createDeferred();
+
+    act(() => {
+      root.render(
+        <ClubExperienceScope organizadorId={OTHER_ORG} pendingUntilOrganizador>
+          <BrandProbe />
+        </ClubExperienceScope>
+      );
+    });
+
+    const scope = container.querySelector(
+      ".club-experience-scope"
+    ) as HTMLElement | null;
+    expect(scope?.getAttribute("data-branding-status")).toBe("pending");
+    expect(scope?.getAttribute("data-club")).toBe("pending");
+    expect(scope?.getAttribute("data-brand")).toBe("pending");
   });
 
   it("tras resolver org sin upgrade: branding final Riviera", async () => {

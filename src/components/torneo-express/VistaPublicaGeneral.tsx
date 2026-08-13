@@ -40,49 +40,47 @@ export const VistaPublicaGeneral: React.FC<{ torneoId: string }> = ({ torneoId }
     setTimeout(() => setCopyMsg(""), 2500);
   };
 
-  if (loading && !bundle) {
-    return (
-      <PublicTorneoExpressShell>
-        <PublicEventNeutralLoading message="Cargando tabla general…" />
-      </PublicTorneoExpressShell>
-    );
-  }
-
-  if (!bundle) {
-    return (
-      <PublicTorneoExpressShell>
-        <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
-      </PublicTorneoExpressShell>
-    );
-  }
+  const notFound = !loading && !bundle;
 
   return (
-    <PublicTorneoExpressShell organizadorId={bundle.torneo.organizador_id}>
-      <PublicTorneoExpressHeader
-        torneoNombre={displayNombre || bundle.torneo.nombre}
-        categoria={bundle.torneo.categoria}
-        subtitle="Tabla general · todos los grupos"
-        onCopyLink={copyLink}
-        copyMsg={copyMsg || undefined}
-        extraActions={
-          user ? (
-            <Button type="button" variant="back" size="sm" onClick={goBack}>
-              ← Regresar
-            </Button>
-          ) : undefined
-        }
-      />
+    <PublicTorneoExpressShell
+      organizadorId={bundle?.torneo.organizador_id ?? null}
+    >
+      {loading && !bundle ? (
+        <PublicEventNeutralLoading message="Cargando tabla general…" />
+      ) : null}
+      {notFound ? (
+        <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
+      ) : null}
+      {bundle ? (
+        <>
+          <PublicTorneoExpressHeader
+            torneoNombre={displayNombre || bundle.torneo.nombre}
+            categoria={bundle.torneo.categoria}
+            subtitle="Tabla general · todos los grupos"
+            onCopyLink={copyLink}
+            copyMsg={copyMsg || undefined}
+            extraActions={
+              user ? (
+                <Button type="button" variant="back" size="sm" onClick={goBack}>
+                  ← Regresar
+                </Button>
+              ) : undefined
+            }
+          />
 
-      <PublicStandingsSection
-        rows={standingsGeneral}
-        showGrupoColumn
-        title="Tabla general"
-      />
+          <PublicStandingsSection
+            rows={standingsGeneral}
+            showGrupoColumn
+            title="Tabla general"
+          />
 
-      <PublicTorneoExpressSyncFooter
-        lastRefreshedAt={lastRefreshedAt}
-        realtimeConnected={realtimeConnected}
-      />
+          <PublicTorneoExpressSyncFooter
+            lastRefreshedAt={lastRefreshedAt}
+            realtimeConnected={realtimeConnected}
+          />
+        </>
+      ) : null}
     </PublicTorneoExpressShell>
   );
 };

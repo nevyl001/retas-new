@@ -36,54 +36,50 @@ export const VistaPublicaEliminatoria: React.FC<{ torneoId: string }> = ({
     setTimeout(() => setCopyMsg(""), 2500);
   };
 
-  if (loading && !bundle) {
-    return (
-      <PublicTorneoExpressShell className="te-public--eliminatoria">
-        <PublicEventNeutralLoading
-          className="te-pub-elim-loading"
-          message="Cargando fase eliminatoria…"
-        />
-      </PublicTorneoExpressShell>
-    );
-  }
-
   const enEliminatoria =
     bundle?.torneo.fase_torneo === "eliminatoria" ||
     bundle?.torneo.fase_torneo === "cerrado";
   const hasElimPartidos = (bundle?.eliminatoriaPartidos.length ?? 0) > 0;
-
-  if (!bundle || !enEliminatoria || !hasElimPartidos) {
-    return (
-      <PublicTorneoExpressShell className="te-public--eliminatoria">
-        <p className="te-public-error">
-          {error ??
-            "Este torneo aún no tiene fase eliminatoria o no fue encontrado."}
-        </p>
-        {bundle ? (
-          <p className="te-public-error">
-            <a href={`/torneo-express/${torneoId}/grupos`}>
-              Ver grupos y resultados
-            </a>
-          </p>
-        ) : null}
-      </PublicTorneoExpressShell>
-    );
-  }
+  const showContent = Boolean(bundle && enEliminatoria && hasElimPartidos);
+  const showUnavailable = !loading && !showContent;
 
   return (
     <PublicTorneoExpressShell
       className="te-public--eliminatoria"
-      organizadorId={bundle.torneo.organizador_id}
+      organizadorId={bundle?.torneo.organizador_id ?? null}
     >
-      <TEPublicEliminatoria
-        bundle={bundle}
-        labelMap={eliminatoriaLabelMap}
-        lastRefreshedAt={lastRefreshedAt}
-        realtimeConnected={realtimeConnected}
-        onCopyLink={copyLink}
-        copyMsg={copyMsg || undefined}
-        gruposHref={`/torneo-express/${torneoId}/grupos`}
-      />
+      {loading && !bundle ? (
+        <PublicEventNeutralLoading
+          className="te-pub-elim-loading"
+          message="Cargando fase eliminatoria…"
+        />
+      ) : null}
+      {showUnavailable ? (
+        <>
+          <p className="te-public-error">
+            {error ??
+              "Este torneo aún no tiene fase eliminatoria o no fue encontrado."}
+          </p>
+          {bundle ? (
+            <p className="te-public-error">
+              <a href={`/torneo-express/${torneoId}/grupos`}>
+                Ver grupos y resultados
+              </a>
+            </p>
+          ) : null}
+        </>
+      ) : null}
+      {showContent && bundle ? (
+        <TEPublicEliminatoria
+          bundle={bundle}
+          labelMap={eliminatoriaLabelMap}
+          lastRefreshedAt={lastRefreshedAt}
+          realtimeConnected={realtimeConnected}
+          onCopyLink={copyLink}
+          copyMsg={copyMsg || undefined}
+          gruposHref={`/torneo-express/${torneoId}/grupos`}
+        />
+      ) : null}
     </PublicTorneoExpressShell>
   );
 };

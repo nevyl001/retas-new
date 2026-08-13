@@ -57,37 +57,33 @@ export const VistaPublicaGrupos: React.FC<{ torneoId: string }> = ({
     setTimeout(() => setCopyMsg(""), 2500);
   };
 
-  if (loading && !bundle) {
-    return (
-      <PublicTorneoExpressShell>
-        <PublicEventNeutralLoading message="Cargando fase de grupos…" />
-      </PublicTorneoExpressShell>
-    );
-  }
-
-  if (!bundle || !gruposProps) {
-    return (
-      <PublicTorneoExpressShell>
-        <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
-      </PublicTorneoExpressShell>
-    );
-  }
+  const notFound = !loading && (!bundle || !gruposProps);
 
   return (
     <PublicTorneoExpressShell
       className="te-public--grupos-wide"
-      organizadorId={bundle.torneo.organizador_id}
+      organizadorId={bundle?.torneo.organizador_id ?? null}
     >
-      <TEPublicGrupos
-        {...gruposProps}
-        onCopyLink={copyLink}
-        copyMsg={copyMsg || undefined}
-        faseFinalHref={faseFinalHref}
-      />
-      <PublicTorneoExpressSyncFooter
-        lastRefreshedAt={lastRefreshedAt}
-        realtimeConnected={realtimeConnected}
-      />
+      {loading && !bundle ? (
+        <PublicEventNeutralLoading message="Cargando fase de grupos…" />
+      ) : null}
+      {notFound ? (
+        <p className="te-public-error">{error ?? "Torneo no encontrado"}</p>
+      ) : null}
+      {bundle && gruposProps ? (
+        <>
+          <TEPublicGrupos
+            {...gruposProps}
+            onCopyLink={copyLink}
+            copyMsg={copyMsg || undefined}
+            faseFinalHref={faseFinalHref}
+          />
+          <PublicTorneoExpressSyncFooter
+            lastRefreshedAt={lastRefreshedAt}
+            realtimeConnected={realtimeConnected}
+          />
+        </>
+      ) : null}
     </PublicTorneoExpressShell>
   );
 };
