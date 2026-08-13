@@ -216,18 +216,21 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
           <div
             className={`te-team-row${
               team1Wins ? " te-team-row--winner" : ""
-            }${played && !team1Wins && !isTie ? " te-team-row--loser" : ""}`}
+            }${isTie ? " te-team-row--tie" : ""}${
+              played && !team1Wins && !isTie ? " te-team-row--loser" : ""
+            }`}
           >
-            {team1Wins ? (
-              <span className="te-team-win-mark" aria-hidden>
-                ✓
-              </span>
-            ) : null}
             <span
               className={`te-team-name${
                 team1Wins ? " te-team-name--winner" : ""
-              }${played && !team1Wins && !isTie ? " te-team-name--loser" : ""}`}
-              {...(team1Wins ? { "aria-label": `Ganador: ${partido.pareja1}` } : {})}
+              }${isTie ? " te-team-name--tie" : ""}${
+                played && !team1Wins && !isTie ? " te-team-name--loser" : ""
+              }`}
+              {...(team1Wins
+                ? { "aria-label": `Ganador: ${partido.pareja1}` }
+                : isTie
+                  ? { "aria-label": `Empate: ${partido.pareja1}` }
+                  : {})}
             >
               {partido.pareja1}
             </span>
@@ -238,18 +241,21 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
           <div
             className={`te-team-row${
               team2Wins ? " te-team-row--winner" : ""
-            }${played && !team2Wins && !isTie ? " te-team-row--loser" : ""}`}
+            }${isTie ? " te-team-row--tie" : ""}${
+              played && !team2Wins && !isTie ? " te-team-row--loser" : ""
+            }`}
           >
-            {team2Wins ? (
-              <span className="te-team-win-mark" aria-hidden>
-                ✓
-              </span>
-            ) : null}
             <span
               className={`te-team-name${
                 team2Wins ? " te-team-name--winner" : ""
-              }${played && !team2Wins && !isTie ? " te-team-name--loser" : ""}`}
-              {...(team2Wins ? { "aria-label": `Ganador: ${partido.pareja2}` } : {})}
+              }${isTie ? " te-team-name--tie" : ""}${
+                played && !team2Wins && !isTie ? " te-team-name--loser" : ""
+              }`}
+              {...(team2Wins
+                ? { "aria-label": `Ganador: ${partido.pareja2}` }
+                : isTie
+                  ? { "aria-label": `Empate: ${partido.pareja2}` }
+                  : {})}
             >
               {partido.pareja2}
             </span>

@@ -382,21 +382,14 @@
   border: 1px solid color-mix(in srgb, var(--ro-success, #22c55e) 28%, transparent);
 }
 
+.te-team-row--tie {
+  background: color-mix(in srgb, #eab308 16%, transparent);
+  border: 1px solid color-mix(in srgb, #eab308 28%, transparent);
+}
+
 .te-team-row--loser {
   background: color-mix(in srgb, var(--ro-error, #ef4444) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--ro-error, #ef4444) 22%, transparent);
-}
-
-.te-team-win-mark {
-  flex: 0 0 auto;
-  margin-top: 0.15em;
-  width: 0.9rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  line-height: 1.3;
-  text-align: center;
-  color: var(--ro-success, #4ade80);
-  opacity: 0.95;
 }
 
 .te-team-name {
@@ -419,6 +412,12 @@
   color: var(--text-primary, #fff);
 }
 
+.te-team-name--tie,
+.te-team-row--tie .te-team-name {
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
 .te-team-name--loser,
 .te-team-row--loser .te-team-name {
   font-weight: 500;
@@ -435,6 +434,12 @@
   color: color-mix(in srgb, var(--ro-error, #f87171) 85%, transparent);
   opacity: 0.9;
   font-weight: 600;
+}
+
+.te-partido-item--tie .te-partido-sets-wrap .te-set-game {
+  color: #eab308;
+  opacity: 1;
+  font-weight: 700;
 }
 
 .te-team-score {
