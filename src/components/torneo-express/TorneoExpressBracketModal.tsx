@@ -28,11 +28,20 @@ import {
 import { Button } from "../ui";
 import "./torneo-express-bracket.css";
 
-const FASE_OPCIONES: { id: BracketFase; label: string }[] = [
-  { id: "octavos", label: "Octavos de final" },
-  { id: "cuartos", label: "Cuartos de final" },
-  { id: "semifinal", label: "Semifinal directa" },
+const FASE_OPCIONES: {
+  id: BracketFase;
+  shortLabel: string;
+}[] = [
+  { id: "octavos", shortLabel: "Octavos" },
+  { id: "cuartos", shortLabel: "Cuartos" },
+  { id: "semifinal", shortLabel: "Semifinal" },
 ];
+
+function faseEyebrow(fase: BracketFase): string {
+  if (fase === "semifinal") return "Semifinal";
+  if (fase === "cuartos") return "Cuartos de final";
+  return "Octavos de final";
+}
 
 interface TorneoExpressBracketModalProps {
   torneoId: string;
@@ -53,9 +62,8 @@ export const TorneoExpressBracketModal: React.FC<
   const [cantidadTerceros, setCantidadTerceros] = useState(0);
   const [slots, setSlots] = useState<BracketSlotEntry[]>([]);
   const [autoSlots, setAutoSlots] = useState<BracketSlotEntry[]>([]);
-  const [resolverResult, setResolverResult] = useState<BracketResolverResult | null>(
-    null
-  );
+  const [resolverResult, setResolverResult] =
+    useState<BracketResolverResult | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [confirming, setConfirming] = useState(false);
 
@@ -108,6 +116,11 @@ export const TorneoExpressBracketModal: React.FC<
     }
   }, [bundle, fase, faseValidacion]);
 
+  const faseSugerida = useMemo(() => {
+    if (!bundle) return null;
+    return sugerirFaseAutomatica(bundle.grupos.length);
+  }, [bundle]);
+
   const fasePreviews = useMemo(() => {
     if (!bundle) return {} as Partial<Record<BracketFase, string>>;
     const numGrupos = bundle.grupos.length;
@@ -159,7 +172,13 @@ export const TorneoExpressBracketModal: React.FC<
   };
 
   const handleRestablecer = () => {
-    setSlots(autoSlots.map((s) => (s.type === "team" ? { ...s, qualifier: { ...s.qualifier } } : { type: "bye" })));
+    setSlots(
+      autoSlots.map((s) =>
+        s.type === "team"
+          ? { ...s, qualifier: { ...s.qualifier } }
+          : { type: "bye" }
+      )
+    );
   };
 
   const handleConfirmar = async () => {
@@ -185,9 +204,23 @@ export const TorneoExpressBracketModal: React.FC<
     }
   };
 
+  const adjustTerceros = (delta: number) => {
+    setCantidadTerceros((prev) =>
+      Math.max(0, Math.min(maxTerceros, prev + delta))
+    );
+  };
+
   if (!open) return null;
 
   const totalSlots = slots.length > 0 ? slots.length : BRACKET_FASE_SLOTS[fase];
+  const fijosCount = resumenClasificados?.fijos.length ?? 0;
+  const tercerosIncluidos = Math.min(cantidadTerceros, maxTerceros);
+  const totalAvanzan = fijosCount + tercerosIncluidos;
+  const teamCount =
+    slots.length > 0
+      ? slots.filter((s) => s.type === "team").length
+      : totalAvanzan;
+  const matchCount = Math.floor(totalSlots / 2);
 
   return (
     <div
@@ -198,14 +231,39 @@ export const TorneoExpressBracketModal: React.FC<
     >
       <div className="te-bracket-modal">
         <header className="te-bracket-modal__head">
-          <div>
-            <h2 id="te-bracket-title" className="te-bracket-modal__title">
-              Siguiente fase — {torneoNombre}
-            </h2>
-            <p className="te-bracket-modal__subtitle">
-              Fase de grupos finalizada. Elige el formato eliminatorio y confirma
-              el cuadro.
-            </p>
+          <div className="te-bracket-modal__head-copy">
+            {step === "fase" ? (
+              <>
+                <p className="te-bracket-modal__eyebrow">
+                  Fase de grupos completada
+                </p>
+                <h2 id="te-bracket-title" className="te-bracket-modal__title">
+                  Configura la fase eliminatoria
+                </h2>
+                <p className="te-bracket-modal__meta">
+                  {torneoNombre}
+                  {totalAvanzan > 0
+                    ? ` · ${totalAvanzan} parejas disponibles`
+                    : null}
+                </p>
+                <p className="te-bracket-modal__subtitle">
+                  Selecciona desde qué ronda comenzará el cuadro.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="te-bracket-modal__eyebrow">{faseEyebrow(fase)}</p>
+                <h2 id="te-bracket-title" className="te-bracket-modal__title">
+                  Revisa los cruces
+                </h2>
+                <p className="te-bracket-modal__meta">
+                  {teamCount} clasificados · {matchCount} partidos
+                </p>
+                <p className="te-bracket-modal__subtitle">
+                  Puedes ajustar los cruces antes de comenzar la fase.
+                </p>
+              </>
+            )}
           </div>
           <button
             type="button"
@@ -217,7 +275,9 @@ export const TorneoExpressBracketModal: React.FC<
           </button>
         </header>
 
-        {loading && <p className="te-bracket-modal__loading">Cargando datos…</p>}
+        {loading && (
+          <p className="te-bracket-modal__loading">Cargando datos…</p>
+        )}
 
         {error && (
           <p className="te-bracket-modal__error" role="alert">
@@ -227,31 +287,54 @@ export const TorneoExpressBracketModal: React.FC<
 
         {!loading && bundle && step === "fase" && (
           <div className="te-bracket-step te-bracket-step--fase">
-            <h3 className="te-bracket-step__heading">
-              ¿A qué fase avanza este torneo?
-            </h3>
-
-            <div className="te-bracket-fase-options" role="radiogroup">
-              {FASE_OPCIONES.map((opt) => (
-                <label key={opt.id} className="te-bracket-fase-option">
-                  <input
-                    type="radio"
-                    name="te-bracket-fase"
-                    value={opt.id}
-                    checked={fase === opt.id}
-                    onChange={() => setFase(opt.id)}
-                  />
-                  <span>{opt.label}</span>
-                  <span className="te-bracket-fase-option__slots">
-                    {BRACKET_FASE_SLOTS[opt.id]} plazas
-                  </span>
-                  {fasePreviews[opt.id] && (
-                    <span className="te-bracket-fase-option__desc">
-                      {fasePreviews[opt.id]}
+            <div
+              className="te-bracket-fase-options"
+              role="radiogroup"
+              aria-label="Fase eliminatoria"
+            >
+              {FASE_OPCIONES.map((opt) => {
+                const selected = fase === opt.id;
+                const recommended = faseSugerida === opt.id;
+                return (
+                  <label
+                    key={opt.id}
+                    className={`te-bracket-fase-option${
+                      selected ? " te-bracket-fase-option--selected" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="te-bracket-fase"
+                      value={opt.id}
+                      checked={selected}
+                      onChange={() => setFase(opt.id)}
+                    />
+                    <span className="te-bracket-fase-option__radio" aria-hidden>
+                      <span className="te-bracket-fase-option__radio-dot" />
                     </span>
-                  )}
-                </label>
-              ))}
+                    <span className="te-bracket-fase-option__body">
+                      <span className="te-bracket-fase-option__top">
+                        <span className="te-bracket-fase-option__name">
+                          {opt.shortLabel}
+                        </span>
+                        {recommended ? (
+                          <span className="te-bracket-fase-option__badge">
+                            Recomendado
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="te-bracket-fase-option__slots">
+                        {BRACKET_FASE_SLOTS[opt.id]} plazas
+                      </span>
+                      {fasePreviews[opt.id] ? (
+                        <span className="te-bracket-fase-option__desc">
+                          {fasePreviews[opt.id]}
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
 
             {!faseValidacion.ok && (
@@ -260,34 +343,72 @@ export const TorneoExpressBracketModal: React.FC<
 
             {faseValidacion.ok && resumenClasificados && (
               <div className="te-bracket-resumen">
-                <p>
-                  <strong>{resumenClasificados.fijos.length}</strong> clasificados
-                  fijos (1° y 2° por grupo)
-                  {maxTerceros > 0 ? (
-                    <>
-                      {" "}
-                      · hasta <strong>{maxTerceros}</strong> mejores terceros
-                    </>
-                  ) : null}
-                </p>
+                <div className="te-bracket-resumen__advance">
+                  <p className="te-bracket-resumen__advance-title">
+                    {totalAvanzan} parejas avanzan
+                  </p>
+                  <p className="te-bracket-resumen__advance-breakdown">
+                    <span className="te-bracket-resumen__chip">
+                      {fijosCount} automáticos
+                    </span>
+                    {maxTerceros > 0 ? (
+                      <>
+                        <span
+                          className="te-bracket-resumen__plus"
+                          aria-hidden
+                        >
+                          +
+                        </span>
+                        <span className="te-bracket-resumen__chip te-bracket-resumen__chip--tercero">
+                          {tercerosIncluidos} mejores terceros
+                        </span>
+                      </>
+                    ) : null}
+                  </p>
+                </div>
+
                 {maxTerceros > 0 && (
-                  <label className="te-bracket-terceros-field">
-                    <span>Mejores terceros a incluir</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={maxTerceros}
-                      value={cantidadTerceros}
-                      onChange={(e) =>
-                        setCantidadTerceros(
-                          Math.max(
-                            0,
-                            Math.min(maxTerceros, Number(e.target.value) || 0)
-                          )
-                        )
-                      }
-                    />
-                  </label>
+                  <div className="te-bracket-terceros-field">
+                    <span
+                      id="te-bracket-terceros-label"
+                      className="te-bracket-terceros-field__label"
+                    >
+                      Mejores terceros
+                    </span>
+                    <div
+                      className="te-bracket-stepper"
+                      role="group"
+                      aria-labelledby="te-bracket-terceros-label"
+                    >
+                      <button
+                        type="button"
+                        className="te-bracket-stepper__btn"
+                        onClick={() => adjustTerceros(-1)}
+                        disabled={cantidadTerceros <= 0}
+                        aria-label="Disminuir mejores terceros"
+                      >
+                        −
+                      </button>
+                      <span
+                        className="te-bracket-stepper__value"
+                        aria-live="polite"
+                      >
+                        {cantidadTerceros}
+                      </span>
+                      <button
+                        type="button"
+                        className="te-bracket-stepper__btn"
+                        onClick={() => adjustTerceros(1)}
+                        disabled={cantidadTerceros >= maxTerceros}
+                        aria-label="Aumentar mejores terceros"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className="te-bracket-terceros-field__hint">
+                      Máximo {maxTerceros}
+                    </span>
+                  </div>
                 )}
               </div>
             )}
@@ -332,29 +453,36 @@ export const TorneoExpressBracketModal: React.FC<
                 const i = cruceIdx * 2;
                 const a = slots[i];
                 const b = slots[i + 1];
-                const clash = advertencias.some((w) => w.cruceIndex === cruceIdx);
+                const clash = advertencias.some(
+                  (w) => w.cruceIndex === cruceIdx
+                );
+                const matchLabel = String(cruceIdx + 1).padStart(2, "0");
 
                 return (
                   <div
                     key={`cruce-${cruceIdx}`}
-                    className={`te-bracket-cruce${clash ? " te-bracket-cruce--clash" : ""}`}
+                    className={`te-bracket-cruce${
+                      clash ? " te-bracket-cruce--clash" : ""
+                    }`}
                   >
                     <span className="te-bracket-cruce__label">
-                      Cruce {cruceIdx + 1}
-                      {clash ? " · ⚠ Mismo grupo" : ""}
+                      Partido {matchLabel}
+                      {clash ? " · Mismo grupo" : ""}
                     </span>
                     <div className="te-bracket-cruce__pair">
                       <BracketSlotCard
                         slot={a}
                         index={i}
+                        dragging={dragIndex === i}
                         onDragStart={handleDragStart}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                       />
-                      <span className="te-bracket-cruce__vs">vs</span>
+                      <span className="te-bracket-cruce__vs">VS</span>
                       <BracketSlotCard
                         slot={b}
                         index={i + 1}
+                        dragging={dragIndex === i + 1}
                         onDragStart={handleDragStart}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
@@ -366,21 +494,31 @@ export const TorneoExpressBracketModal: React.FC<
             </div>
 
             <div className="te-bracket-modal__actions te-bracket-modal__actions--bracket">
-              <Button type="button" variant="ghost" onClick={() => setStep("fase")}>
-                ← Cambiar fase
-              </Button>
-              <Button type="button" variant="secondary" onClick={handleRestablecer}>
-                Restablecer automático
-              </Button>
               <Button
                 type="button"
-                variant="primary"
-                disabled={confirming}
-                loading={confirming}
-                onClick={() => void handleConfirmar()}
+                variant="ghost"
+                onClick={() => setStep("fase")}
               >
-                Confirmar bracket y comenzar fase
+                ← Cambiar configuración
               </Button>
+              <div className="te-bracket-modal__actions-end">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleRestablecer}
+                >
+                  Restablecer cruces
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  disabled={confirming}
+                  loading={confirming}
+                  onClick={() => void handleConfirmar()}
+                >
+                  Confirmar y comenzar eliminatoria →
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -392,12 +530,14 @@ export const TorneoExpressBracketModal: React.FC<
 function BracketSlotCard({
   slot,
   index,
+  dragging,
   onDragStart,
   onDragOver,
   onDrop,
 }: {
   slot: BracketSlotEntry | undefined;
   index: number;
+  dragging?: boolean;
   onDragStart: (i: number) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (i: number) => void;
@@ -409,7 +549,7 @@ function BracketSlotCard({
         onDragOver={onDragOver}
         onDrop={() => onDrop(index)}
       >
-        <span>BYE · pasa</span>
+        <span className="te-bracket-slot__bye-label">BYE · pasa</span>
       </div>
     );
   }
@@ -421,14 +561,18 @@ function BracketSlotCard({
 
   return (
     <div
-      className="te-bracket-slot te-bracket-slot--team"
+      className={`te-bracket-slot te-bracket-slot--team${
+        dragging ? " te-bracket-slot--dragging" : ""
+      }`}
       draggable
       onDragStart={() => onDragStart(index)}
       onDragOver={onDragOver}
       onDrop={() => onDrop(index)}
     >
-      <span className={badgeClass}>{grupoBadgeLabel(q)}</span>
-      <span className="te-bracket-slot__seed">#{q.seed}</span>
+      <div className="te-bracket-slot__meta">
+        <span className={badgeClass}>{grupoBadgeLabel(q)}</span>
+        <span className="te-bracket-slot__seed">#{q.seed}</span>
+      </div>
       <span className="te-bracket-slot__name" title={q.parejaLabel}>
         {q.parejaLabel}
       </span>
