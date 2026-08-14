@@ -613,58 +613,61 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
       role="group"
       aria-label="Enlaces públicos"
     >
-      {enEliminatoria ? (
+      <p className="te-public-links-compact__label">Enlaces públicos</p>
+      <div className="te-public-links-compact__row">
+        {enEliminatoria ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="te-public-link-btn"
+            onClick={() => copyLink(publicEliminatoriaUrl(torneoId))}
+          >
+            <span className="te-public-link-btn__icon" aria-hidden>
+              ⎘
+            </span>
+            <span className="te-public-link-btn__text">Cuadro eliminatorio</span>
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="secondary"
           size="sm"
           className="te-public-link-btn"
-          onClick={() => copyLink(publicEliminatoriaUrl(torneoId))}
+          onClick={() => copyLink(publicGruposUrl(torneoId))}
         >
-          <span className="te-btn-icon" aria-hidden>
+          <span className="te-public-link-btn__icon" aria-hidden>
             ⎘
           </span>
-          Cuadro eliminatorio
+          <span className="te-public-link-btn__text">Tablas por grupo</span>
         </Button>
-      ) : null}
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        className="te-public-link-btn"
-        onClick={() => copyLink(publicGruposUrl(torneoId))}
-      >
-        <span className="te-btn-icon" aria-hidden>
-          ⎘
-        </span>
-        Tablas por grupo
-      </Button>
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        className="te-public-link-btn"
-        onClick={() => copyLink(publicGeneralUrl(torneoId))}
-      >
-        <span className="te-btn-icon" aria-hidden>
-          ⎘
-        </span>
-        Tabla general
-      </Button>
-      {grupo && !mostrarEliminatoria ? (
         <Button
           type="button"
           variant="secondary"
           size="sm"
           className="te-public-link-btn"
-          onClick={() => copyLink(publicGrupoUrl(torneoId, grupo.id))}
+          onClick={() => copyLink(publicGeneralUrl(torneoId))}
         >
-          <span className="te-btn-icon" aria-hidden>
+          <span className="te-public-link-btn__icon" aria-hidden>
             ⎘
           </span>
-          Grupo activo
+          <span className="te-public-link-btn__text">Tabla general</span>
         </Button>
-      ) : null}
+        {grupo && !mostrarEliminatoria ? (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="te-public-link-btn"
+            onClick={() => copyLink(publicGrupoUrl(torneoId, grupo.id))}
+          >
+            <span className="te-public-link-btn__icon" aria-hidden>
+              ⎘
+            </span>
+            <span className="te-public-link-btn__text">Grupo activo</span>
+          </Button>
+        ) : null}
+      </div>
       {copyMsg ? <span className="te-copy-ok">{copyMsg}</span> : null}
     </div>
   );
