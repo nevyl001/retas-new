@@ -7,7 +7,7 @@ import {
   useState,
   type MutableRefObject,
 } from "react";
-import type { AmericanoPlayer, AmericanoRound } from "../lib/db/types";
+import type { AmericanoMatch, AmericanoPlayer, AmericanoRound } from "../lib/db/types";
 import {
   buildMatricesFromScoredRounds,
   generateAmericanoRound,
@@ -44,6 +44,32 @@ function createEmptyStats() {
     gamesPlayed: 0,
     roundsOnBench: 0,
   };
+}
+
+/** Partido ya tenía marcador válido → corrección requiere force en la RPC. */
+function matchAlreadyHasScore(match: {
+  scoreA?: number;
+  scoreB?: number;
+}): boolean {
+  return (
+    typeof match.scoreA === "number" &&
+    typeof match.scoreB === "number" &&
+    Number.isFinite(match.scoreA) &&
+    Number.isFinite(match.scoreB) &&
+    match.scoreA >= 0 &&
+    match.scoreB >= 0
+  );
+}
+
+function findMatchInRounds(
+  rounds: AmericanoRound[],
+  matchId: string
+): AmericanoMatch | undefined {
+  for (const round of rounds) {
+    const found = round.matches.find((m) => m.id === matchId);
+    if (found) return found;
+  }
+  return undefined;
 }
 
 function rosterTemplateFromRef(
@@ -478,11 +504,14 @@ export function useAmericanoDinamico(
       // del servidor en vez de dejarlo divergir en silencio.
       if (resolvedTournamentId) {
         for (const s of scores) {
+          const previous = findMatchInRounds(prevRounds, s.matchId);
+          const force = previous ? matchAlreadyHasScore(previous) : false;
           void persistAmericanoDinamicoMatchScore({
             tournamentId: resolvedTournamentId,
             matchId: s.matchId,
             scoreA: s.scoreA,
             scoreB: s.scoreB,
+            force,
           })
             .then((result) => {
               if (result.status === "conflict") {
@@ -535,11 +564,14 @@ export function useAmericanoDinamico(
       // Guardado atómico server-side por partido (BLK-02). Igual que en
       // commitRoundScores: si hay conflicto, reconcilia con el servidor.
       if (resolvedTournamentId) {
+        const previous = findMatchInRounds(prevRounds, matchId);
+        const force = previous ? matchAlreadyHasScore(previous) : false;
         void persistAmericanoDinamicoMatchScore({
           tournamentId: resolvedTournamentId,
           matchId,
           scoreA,
           scoreB,
+          force,
         })
           .then((result) => {
             if (result.status === "conflict") {
@@ -564,7 +596,16 @@ export function useAmericanoDinamico(
 
   const editScore = useCallback(
     (roundIndex: number, matchId: string, scoreA: number, scoreB: number) => {
+      if (
+        !Number.isFinite(scoreA) ||
+        !Number.isFinite(scoreB) ||
+        scoreA < 0 ||
+        scoreB < 0
+      ) {
+        return;
+      }
       const prevRounds = roundsRef.current;
+      const previous = findMatchInRounds(prevRounds, matchId);
       const nextRounds = prevRounds.map((round, idx) => {
         if (idx !== roundIndex) return round;
         return {
@@ -575,8 +616,46 @@ export function useAmericanoDinamico(
         };
       });
       persistRebuiltState(nextRounds);
+
+      // Corrección desde Historial: siempre force si ya había marcador.
+      // Sin esto solo se actualiza localStorage y Supabase vuelve a pisar el valor viejo.
+      if (resolvedTournamentId) {
+        const force = previous ? matchAlreadyHasScore(previous) : true;
+        void persistAmericanoDinamicoMatchScore({
+          tournamentId: resolvedTournamentId,
+          matchId,
+          scoreA,
+          scoreB,
+          force,
+        })
+          .then((result) => {
+            if (result.status === "conflict") {
+              console.warn(
+                "[americano-live] conflicto al corregir partido, reconciliando:",
+                matchId
+              );
+              reconcileMatchScore(matchId, result.scoreA, result.scoreB);
+            }
+          })
+          .catch((e) => console.warn("[americano-live] editScore:", e));
+      }
+
+      if (options?.organizadorId) {
+        const round = nextRounds[roundIndex];
+        const m = round?.matches.find((match) => match.id === matchId);
+        if (m) {
+          void aplicarRatingAmericanoPartido(options.organizadorId, m).catch(
+            (e) => console.warn("[rating] americano edit:", e)
+          );
+        }
+      }
     },
-    [persistRebuiltState]
+    [
+      persistRebuiltState,
+      resolvedTournamentId,
+      reconcileMatchScore,
+      options?.organizadorId,
+    ]
   );
 
   const nextRound = useCallback(async (): Promise<boolean> => {
