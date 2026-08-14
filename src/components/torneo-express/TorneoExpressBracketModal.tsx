@@ -409,7 +409,7 @@ function BracketSlotCard({
         onDragOver={onDragOver}
         onDrop={() => onDrop(index)}
       >
-        <span>BYE — pasa directo</span>
+        <span>BYE · pasa</span>
       </div>
     );
   }
@@ -429,7 +429,9 @@ function BracketSlotCard({
     >
       <span className={badgeClass}>{grupoBadgeLabel(q)}</span>
       <span className="te-bracket-slot__seed">#{q.seed}</span>
-      <span className="te-bracket-slot__name">{q.parejaLabel}</span>
+      <span className="te-bracket-slot__name" title={q.parejaLabel}>
+        {q.parejaLabel}
+      </span>
     </div>
   );
 }
