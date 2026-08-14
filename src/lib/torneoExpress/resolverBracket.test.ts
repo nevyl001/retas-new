@@ -1,5 +1,10 @@
-import type { BracketFase, BracketQualifier } from "./bracketTypes";
-import { previsualizarResolverBracket, resolverBracket } from "./resolverBracket";
+import type { BracketFase, BracketQualifier, BracketSlotEntry } from "./bracketTypes";
+import {
+  previsualizarResolverBracket,
+  resolverBracket,
+  resolverChoquesAutomaticos,
+  validarChoques,
+} from "./resolverBracket";
 
 function makeClasificados(
   numGrupos: number,
@@ -105,5 +110,101 @@ describe("impar en fase previa", () => {
     expect(result.byeExtra?.qualifier.seed).toBe(7);
     expect(result.partidosPrevios.length).toBe(2);
     expect(result.slots.filter((s) => s.type === "team").length).toBe(7);
+  });
+});
+
+describe("resolverChoquesAutomaticos", () => {
+  function qf(
+    grupo: string,
+    label: string,
+    pos: 1 | 2 | 3,
+    seed: number
+  ): BracketQualifier {
+    const grupoOrden = grupo.charCodeAt(0) - 65;
+    return {
+      seed,
+      parejaId: `p-${seed}`,
+      parejaLabel: label,
+      grupoId: `g-${grupo}`,
+      grupoNombre: grupo,
+      grupoOrden,
+      posEnGrupo: pos,
+      isMejorTercero: pos === 3,
+      pj: 3,
+      pg: 4 - pos,
+      pp: pos - 1,
+      ptsFav: 20 - seed,
+      ptsCon: 10,
+      dif: 10 - seed,
+      puntos: 6,
+    };
+  }
+
+  /** Coloca seeds en slots con el mapa clásico de 8. */
+  function placeClassic8(qs: BracketQualifier[]): BracketSlotEntry[] {
+    const map = [0, 7, 3, 4, 2, 5, 6, 1];
+    const slots: BracketSlotEntry[] = Array.from({ length: 8 }, () => ({
+      type: "bye" as const,
+    }));
+    for (const q of qs) {
+      slots[map[q.seed - 1]] = { type: "team", qualifier: q };
+    }
+    return slots;
+  }
+
+  function partnerSeed(slots: BracketSlotEntry[], seed: number): number {
+    const idx = slots.findIndex(
+      (s) => s.type === "team" && s.qualifier.seed === seed
+    );
+    const p = idx % 2 === 0 ? idx + 1 : idx - 1;
+    const slot = slots[p];
+    return slot?.type === "team" ? slot.qualifier.seed : -1;
+  }
+
+  it("caso Summer: resuelve 1ºC vs 2ºC sin sacar terceros de #1/#2", () => {
+    // Tras swap premium: #1 vs #7, #2 vs #8; mid sigue con #5C vs #3C.
+    const slots = placeClassic8([
+      qf("A", "Tpvs1", 1, 1),
+      qf("B", "Tpvs11", 1, 2),
+      qf("C", "Tpvs19", 1, 3),
+      qf("B", "Tpvs9", 2, 4),
+      qf("C", "Tpvs23", 2, 5),
+      qf("A", "Tpvs7", 2, 6),
+      qf("C", "Tpvs17", 3, 7),
+      qf("A", "Tpvs5", 3, 8),
+    ]);
+    // Simula el estado del screenshot (#1 ya vs #7, #2 vs #8).
+    const pre = slots.map((s) =>
+      s.type === "team"
+        ? { type: "team" as const, qualifier: { ...s.qualifier } }
+        : { type: "bye" as const }
+    );
+    // Classic starts #1 vs #8 (mismo grupo A); el auto-resolver premium lo cruza.
+    const fixed = resolverChoquesAutomaticos(pre);
+
+    expect([partnerSeed(fixed, 1), partnerSeed(fixed, 2)].sort()).toEqual([
+      7, 8,
+    ]);
+    expect(validarChoques(fixed)).toEqual([]);
+  });
+
+  it("mantiene #1/#2 vs #7/#8 y limpia choque mid 1ºC–2ºC", () => {
+    // #3 y #5 del mismo grupo C (cruce mid clásico); #1/#2 vs terceros intactos.
+    const slots = placeClassic8([
+      qf("A", "A1", 1, 1),
+      qf("B", "B1", 1, 2),
+      qf("C", "C1", 1, 3),
+      qf("B", "B2", 2, 4),
+      qf("C", "C2", 2, 5),
+      qf("A", "A2", 2, 6),
+      qf("D", "D3", 3, 7),
+      qf("A", "A3", 3, 8),
+    ]);
+    // Classic: #1A vs #8A → swap premium a #1 vs #7 / #2 vs #8.
+    const fixed = resolverChoquesAutomaticos(slots);
+    expect([partnerSeed(fixed, 1), partnerSeed(fixed, 2)].sort()).toEqual([
+      7, 8,
+    ]);
+    expect(validarChoques(fixed)).toEqual([]);
   });
 });

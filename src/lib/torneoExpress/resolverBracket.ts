@@ -188,12 +188,53 @@ function slotIndexBySeed(
   return map;
 }
 
+function swapSlots(slots: BracketSlotEntry[], a: number, b: number): void {
+  const tmp = slots[a];
+  slots[a] = slots[b];
+  slots[b] = tmp;
+}
+
+function countChoques(slots: BracketSlotEntry[]): number {
+  let n = 0;
+  for (let i = 0; i < slots.length; i += 2) {
+    if (sameGrupoPair(slots[i], slots[i + 1])) n += 1;
+  }
+  return n;
+}
+
+/**
+ * Busca un intercambio que reduzca choques de grupo sin tocar slots protegidos
+ * (cruces de seeds #1 y #2 contra N / N-1).
+ */
+function findMiddleSwapCandidate(
+  slots: BracketSlotEntry[],
+  clashSlot: number,
+  protectedSlots: Set<number>
+): number | null {
+  const team = slots[clashSlot];
+  if (team?.type !== "team") return null;
+  const partner = partnerSlotIndex(clashSlot);
+  const before = countChoques(slots);
+
+  for (let other = 0; other < slots.length; other++) {
+    if (other === clashSlot || other === partner) continue;
+    if (protectedSlots.has(other) || protectedSlots.has(clashSlot)) continue;
+    if (protectedSlots.has(partnerSlotIndex(other))) continue;
+    if (slots[other]?.type !== "team") continue;
+
+    swapSlots(slots, clashSlot, other);
+    const after = countChoques(slots);
+    swapSlots(slots, clashSlot, other); // revert trial
+
+    if (after < before) return other;
+  }
+  return null;
+}
+
 /**
  * Evita choques de grupo SIN romper el seeding premium:
- * seed 1 debe enfrentar a N, seed 2 a N-1 (mejores terceros / peores seeds).
- *
- * Solo se permite intercambiar entre sí a los rivales de #1 y #2.
- * Si el choque no se puede resolver así, se deja y se avisa (drag & drop).
+ * - #1 y #2 siguen enfrentando a N y N-1 (mejores terceros / peores seeds).
+ * - El resto del cuadro sí puede reordenarse para evitar mismo grupo en 1ª ronda.
  */
 export function resolverChoquesAutomaticos(
   slots: BracketSlotEntry[]
@@ -213,47 +254,64 @@ export function resolverChoquesAutomaticos(
   const slotN = bySeed.get(n);
   const slotNm1 = bySeed.get(n - 1);
 
-  // Bracket incompleto (BYEs / híbrido): no reordenar de forma agresiva.
+  const protectedSlots = new Set<number>();
+
   if (
-    slot1 == null ||
-    slot2 == null ||
-    slotN == null ||
-    slotNm1 == null
+    slot1 != null &&
+    slot2 != null &&
+    slotN != null &&
+    slotNm1 != null
   ) {
-    return next;
-  }
+    const opp1 = partnerSlotIndex(slot1);
+    const opp2 = partnerSlotIndex(slot2);
+    const oppSeeds = new Set(
+      [next[opp1], next[opp2]]
+        .filter(
+          (s): s is { type: "team"; qualifier: BracketQualifier } =>
+            s.type === "team"
+        )
+        .map((s) => s.qualifier.seed)
+    );
 
-  const opp1 = partnerSlotIndex(slot1);
-  const opp2 = partnerSlotIndex(slot2);
+    if (oppSeeds.has(n) && oppSeeds.has(n - 1)) {
+      protectedSlots.add(slot1);
+      protectedSlots.add(slot2);
+      protectedSlots.add(opp1);
+      protectedSlots.add(opp2);
 
-  // Los rivales de #1/#2 deben ser N y N-1 (en cualquier orden).
-  const oppSeeds = new Set(
-    [next[opp1], next[opp2]]
-      .filter((s): s is { type: "team"; qualifier: BracketQualifier } => s.type === "team")
-      .map((s) => s.qualifier.seed)
-  );
-  if (!oppSeeds.has(n) || !oppSeeds.has(n - 1)) {
-    return next;
-  }
-
-  const trySwapOpponents = () => {
-    const tmp = next[opp1];
-    next[opp1] = next[opp2];
-    next[opp2] = tmp;
-  };
-
-  const clash1 = sameGrupoPair(next[slot1], next[opp1]);
-  const clash2 = sameGrupoPair(next[slot2], next[opp2]);
-
-  if (clash1 || clash2) {
-    trySwapOpponents();
-    const after1 = sameGrupoPair(next[slot1], next[opp1]);
-    const after2 = sameGrupoPair(next[slot2], next[opp2]);
-    const beforeCount = Number(clash1) + Number(clash2);
-    const afterCount = Number(after1) + Number(after2);
-    if (afterCount >= beforeCount) {
-      trySwapOpponents(); // revertir: no hubo mejora
+      const clash1 = sameGrupoPair(next[slot1], next[opp1]);
+      const clash2 = sameGrupoPair(next[slot2], next[opp2]);
+      if (clash1 || clash2) {
+        swapSlots(next, opp1, opp2);
+        const after =
+          Number(sameGrupoPair(next[slot1], next[opp1])) +
+          Number(sameGrupoPair(next[slot2], next[opp2]));
+        const before = Number(clash1) + Number(clash2);
+        if (after >= before) {
+          swapSlots(next, opp1, opp2);
+        }
+      }
     }
+  }
+
+  // Resolver choques en el resto del cuadro (p. ej. 1ºC vs 2ºC).
+  for (let pass = 0; pass < n; pass++) {
+    let progressed = false;
+    for (let i = 0; i < next.length; i += 2) {
+      if (!sameGrupoPair(next[i], next[i + 1])) continue;
+      // No tocar cruces protegidos de #1/#2.
+      if (protectedSlots.has(i) || protectedSlots.has(i + 1)) continue;
+
+      const candidates = [i, i + 1];
+      for (const from of candidates) {
+        const to = findMiddleSwapCandidate(next, from, protectedSlots);
+        if (to == null) continue;
+        swapSlots(next, from, to);
+        progressed = true;
+        break;
+      }
+    }
+    if (!progressed) break;
   }
 
   return next;
