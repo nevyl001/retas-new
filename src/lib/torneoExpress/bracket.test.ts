@@ -199,4 +199,33 @@ describe("calcularClasificadosFase", () => {
       expect(cmp).toBeLessThanOrEqual(0);
     }
   });
+
+  it("3 grupos / cuartos: mejores terceros (#7/#8) enfrentan a los 2 mejores 1º (#1/#2)", () => {
+    const bundle = makeBundle({ numGrupos: 3 });
+    const result = calcularBracketInicial(bundle, "cuartos", {
+      cantidadTerceros: 2,
+    });
+    const thirds = result.qualifiers.filter((q) => q.isMejorTercero);
+    expect(thirds.map((q) => q.seed).sort()).toEqual([7, 8]);
+
+    const bySeed = new Map(
+      result.slots
+        .map((s, i) =>
+          s.type === "team" ? ([s.qualifier.seed, i] as const) : null
+        )
+        .filter((x): x is readonly [number, number] => x != null)
+    );
+    const partner = (seed: number) => {
+      const idx = bySeed.get(seed);
+      expect(idx).toBeDefined();
+      const p = (idx! % 2 === 0 ? idx! + 1 : idx! - 1);
+      const slot = result.slots[p];
+      expect(slot.type).toBe("team");
+      return slot.type === "team" ? slot.qualifier.seed : -1;
+    };
+
+    const opp1 = partner(1);
+    const opp2 = partner(2);
+    expect([opp1, opp2].sort()).toEqual([7, 8]);
+  });
 });
