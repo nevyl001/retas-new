@@ -158,8 +158,16 @@
 }
 
 .te-gestion-page .te-gestion-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
   margin-left: auto;
   flex-shrink: 0;
+  padding: 0.35rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ro-bg-surface, #fff) 70%, transparent);
 }
 
 .te-gestion-page .te-gestion-header__actions .riviera-btn {
@@ -172,6 +180,88 @@
   font-size: 1rem;
   line-height: 1;
   opacity: 0.9;
+}
+
+/* CTA de cierre de fase: acción dominante del header */
+.te-gestion-page .te-btn-fase-cta.riviera-btn-primary {
+  min-height: 44px;
+  padding: 0.7rem 1.15rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 22%, transparent),
+    0 8px 20px color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 16%, transparent);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    filter 180ms ease;
+}
+
+.te-gestion-page .te-btn-fase-cta.riviera-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 24%, transparent),
+    0 12px 24px color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 22%, transparent);
+  filter: brightness(1.03);
+}
+
+.te-gestion-page .te-btn-fase-cta.riviera-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.98);
+}
+
+.te-gestion-page .te-btn-fase-cta.riviera-btn-primary:focus-visible {
+  outline: 2px solid var(--brand-accent, var(--accent-gold));
+  outline-offset: 3px;
+}
+
+.te-gestion-page .te-btn-fase-cta__arrow {
+  display: inline-block;
+  margin-left: 0.15rem;
+  font-weight: 600;
+  opacity: 0.9;
+  transition: transform 180ms ease;
+}
+
+.te-gestion-page .te-btn-fase-cta.riviera-btn-primary:hover:not(:disabled) .te-btn-fase-cta__arrow {
+  transform: translateX(2px);
+}
+
+.te-gestion-page .te-btn-tabla-general.riviera-btn-ghost {
+  min-height: 40px;
+  padding: 0.55rem 0.9rem;
+  color: var(--ro-text-secondary);
+  font-weight: 550;
+  border: 0.5px solid var(--ro-border-subtle, var(--border-subtle));
+  background: var(--ro-bg-elevated, transparent);
+}
+
+.te-gestion-page .te-btn-tabla-general.riviera-btn-ghost:hover:not(:disabled) {
+  color: var(--ro-text-primary);
+  background: var(--ro-bg-inset, rgba(0, 0, 0, 0.03));
+  border-color: var(--ro-border, var(--border-default));
+}
+
+.te-gestion-page .te-gestion-config-panel__actions {
+  gap: 0.65rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-gestion-page .te-btn-fase-cta.riviera-btn-primary,
+  .te-gestion-page .te-btn-fase-cta__arrow {
+    transition: none;
+  }
+
+  .te-gestion-page .te-btn-fase-cta.riviera-btn-primary:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .te-gestion-page .te-btn-fase-cta.riviera-btn-primary:hover:not(:disabled) .te-btn-fase-cta__arrow {
+    transform: none;
+  }
 }
 
 /* —— Enlaces públicos compactos —— */

@@ -428,12 +428,15 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         {faseTorneo === "grupos" && bundle!.torneo.estado !== "finalizado" ? (
           <Button
             type="button"
-            variant="secondary"
-            size="sm"
-            className="te-btn-finalizar-fase"
+            variant="primary"
+            size="md"
+            className="te-btn-finalizar-fase te-btn-fase-cta"
             onClick={() => setBracketOpen(true)}
           >
             Finalizar fase
+            <span className="te-btn-fase-cta__arrow" aria-hidden>
+              →
+            </span>
           </Button>
         ) : null}
         {puedeReanudarEliminatoria ? (
@@ -529,8 +532,9 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
         ) : null}
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           size="sm"
+          className="te-btn-tabla-general"
           onClick={() => {
             setTorneoExpressGeneralBack(
               torneoId,
@@ -539,9 +543,6 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
             navigateTorneoExpress(`/torneo-express/${torneoId}/general`);
           }}
         >
-          <span className="te-btn-icon" aria-hidden>
-            ⊞
-          </span>
           Ver tabla general
         </Button>
       </ActionBar>
@@ -838,12 +839,15 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           {faseTorneo === "grupos" && bundle.torneo.estado !== "finalizado" ? (
             <Button
               type="button"
-              variant="secondary"
-              size="sm"
-              className="te-btn-finalizar-fase"
+              variant="primary"
+              size="md"
+              className="te-btn-finalizar-fase te-btn-fase-cta"
               onClick={() => setBracketOpen(true)}
             >
               Finalizar fase
+              <span className="te-btn-fase-cta__arrow" aria-hidden>
+                →
+              </span>
             </Button>
           ) : null}
           {puedeReanudarEliminatoria ? (
@@ -939,8 +943,9 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
           ) : null}
           <Button
             type="button"
-            variant="secondary"
+            variant="ghost"
             size="sm"
+            className="te-btn-tabla-general"
             onClick={() => {
               setTorneoExpressGeneralBack(
                 torneoId,
@@ -949,9 +954,6 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
               navigateTorneoExpress(`/torneo-express/${torneoId}/general`);
             }}
           >
-            <span className="te-btn-icon" aria-hidden>
-              ⊞
-            </span>
             Ver tabla general
           </Button>
         </ActionBar>
