@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { TEPublicBracketVisual } from "../../components/torneo-express/public/TEPublicBracketVisual";
 import { getJugadorInitials } from "../../components/jugadores/JugadorAvatar";
@@ -89,6 +89,21 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(screen.queryByText(/^FINAL$/)).toBeNull();
   });
 
+  it("builds quarterfinals around the desktop bracket without future nodes", () => {
+    render(
+      <TEPublicBracketVisual
+        allCards={cards}
+        totalRondas={3}
+        activeRonda={1}
+      />
+    );
+
+    const desktopTree = within(screen.getByLabelText("Cuadro de eliminatoria"));
+    expect(desktopTree.getAllByText(/^QF[1-4]$/)).toHaveLength(4);
+    expect(desktopTree.queryByText(/^SF[1-2]$/)).toBeNull();
+    expect(desktopTree.queryByText(/^GRAN FINAL$/)).toBeNull();
+  });
+
   it("keeps completed history when semifinals become available", () => {
     const progressedCards = [
       ...cards.map((match) => ({
@@ -106,9 +121,58 @@ describe("TEPublicBracketVisual presentation", () => {
         activeRonda={2}
       />
     );
-    expect(screen.getByText(/^CUARTOS$/)).toBeInTheDocument();
-    expect(screen.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
-    expect(screen.queryByText(/^FINAL$/)).toBeNull();
+    const journey = within(
+      screen.getByLabelText("Historia de la eliminatoria")
+    );
+    expect(journey.getByText(/^CUARTOS$/)).toBeInTheDocument();
+    expect(journey.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
+    expect(
+      journey.getByText(/^Felicidades a los semifinalistas$/i)
+    ).toBeInTheDocument();
+    expect(journey.getByLabelText("Semifinales enfrentadas")).toBeInTheDocument();
+    expect(journey.getByText(/^VS$/)).toBeInTheDocument();
+    expect(journey.queryByText(/^FINAL$/)).toBeNull();
+  });
+
+  it("congratulates finalists and champions in the final chapter", () => {
+    const finalCards = [
+      card("s1", 2, 0, "Carlos Méndez / Diego Ramírez", "Luis Pérez / Mario Soto"),
+      card("s2", 2, 1, "Ana Ruiz / Eva López", "Nora Díaz / Paz Luna"),
+      {
+        ...card("f1", 3, 0, "Carlos Méndez / Diego Ramírez", "Ana Ruiz / Eva López"),
+        status: "finished" as const,
+        local: {
+          ...card("f1", 3, 0, "Carlos Méndez / Diego Ramírez", "Ana Ruiz / Eva López")
+            .local,
+          isWinner: true,
+        },
+      },
+    ].map((match, index) =>
+      index < 2
+        ? {
+            ...match,
+            status: "finished" as const,
+            local: { ...match.local, isWinner: true },
+          }
+        : match
+    );
+
+    render(
+      <TEPublicBracketVisual
+        allCards={finalCards}
+        totalRondas={3}
+        activeRonda={3}
+      />
+    );
+
+    const journey = within(
+      screen.getByLabelText("Historia de la eliminatoria")
+    );
+    expect(
+      journey.getByText(/^Felicidades a los finalistas$/i)
+    ).toBeInTheDocument();
+    expect(journey.getByText(/^CAMPEONES$/)).toBeInTheDocument();
+    expect(journey.getByText(/^GRAN FINAL$/)).toBeInTheDocument();
   });
 
   it("omits third-place UI when bronze card is absent", () => {
@@ -131,8 +195,11 @@ describe("TEPublicBracketVisual presentation", () => {
       />
     );
 
-    const times = screen.getAllByText("13:50");
-    const courts = screen.getAllByText("CANCHA 3");
+    const journey = within(
+      screen.getByLabelText("Historia de la eliminatoria")
+    );
+    const times = journey.getAllByText("13:50");
+    const courts = journey.getAllByText("CANCHA 3");
     expect(times).toHaveLength(4);
     expect(courts).toHaveLength(4);
     times.forEach((node) => expect(node).toHaveClass("te-pb-match__time"));
@@ -153,7 +220,10 @@ describe("TEPublicBracketVisual presentation", () => {
         activeRonda={1}
       />
     );
-    expect(screen.getByText("Cancha por confirmar")).toHaveClass(
+    const journey = within(
+      screen.getByLabelText("Historia de la eliminatoria")
+    );
+    expect(journey.getByText("Cancha por confirmar")).toHaveClass(
       "te-pb-match__court--pending"
     );
   });

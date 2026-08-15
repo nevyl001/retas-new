@@ -187,6 +187,9 @@ describe("publicBracketPresentation", () => {
     ]);
     expect(model.rounds[0].isCompleted).toBe(true);
     expect(model.rounds[1].isActive).toBe(true);
+    expect(model.rounds[0].isSemifinal).toBe(false);
+    expect(model.rounds[1].isSemifinal).toBe(true);
+    expect(model.rounds[1].isFinalRound).toBe(false);
   });
 
   it("keeps every existing chapter once a final is available", () => {
@@ -204,6 +207,8 @@ describe("publicBracketPresentation", () => {
       "FINAL",
     ]);
     expect(model.rounds[2].isActive).toBe(true);
+    expect(model.rounds[2].isFinalRound).toBe(true);
+    expect(model.rounds[2].isSemifinal).toBe(false);
   });
 
   it("does not invent a previous round for a tournament starting in semifinals", () => {

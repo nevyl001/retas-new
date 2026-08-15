@@ -93,6 +93,8 @@ export interface BracketRoundPresentation {
   tabLabel: string;
   matches: BracketMatchPresentation[];
   isThirdPlace: boolean;
+  isSemifinal: boolean;
+  isFinalRound: boolean;
   isActive: boolean;
   isCompleted: boolean;
 }
@@ -473,6 +475,7 @@ function buildRoundPresentation(
   );
 
   const labelSource = existing[0]?.roundLabel ?? inferRoundLabel(ronda, totalRondas);
+  const isFinalRound = !isThird && ronda === totalRondas;
   return {
     id: isThird ? "tercer" : `ronda-${ronda}`,
     ronda,
@@ -480,6 +483,8 @@ function buildRoundPresentation(
     tabLabel: shortRoundName(labelSource, ronda, totalRondas),
     matches,
     isThirdPlace: isThird,
+    isSemifinal: !isThird && !isFinalRound && ronda === totalRondas - 1,
+    isFinalRound,
     isActive: !isThird && ronda === activeRonda,
     isCompleted:
       matches.length > 0 && matches.every((match) => match.status === "finished"),

@@ -230,6 +230,10 @@
   width: 100%;
 }
 
+.te-pb-desktop-tree {
+  display: none;
+}
+
 .te-pb-round {
   display: flex;
   flex-direction: column;
@@ -327,6 +331,160 @@
   color: var(--te-elim-accent);
 }
 
+.te-pb-celebrate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0 0 1.15rem;
+  padding: 0.85rem 0.95rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--te-elim-accent) 8%, rgba(255, 255, 255, 0.03)),
+    rgba(8, 8, 10, 0.22)
+  );
+}
+
+.te-pb-celebrate__eyebrow {
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--te-elim-accent);
+}
+
+.te-pb-celebrate__names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-pb-celebrate__names li {
+  position: relative;
+  font-family: var(--font-display, var(--font-body));
+  font-size: clamp(0.875rem, 1.8vw, 1.05rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #fff);
+}
+
+.te-pb-celebrate__names li:not(:last-child)::after {
+  content: "·";
+  margin-left: 0.85rem;
+  color: color-mix(in srgb, var(--text-primary, #fff) 34%, transparent);
+}
+
+.te-pb-celebrate--final {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--te-elim-accent) 12%, rgba(255, 255, 255, 0.04)),
+    rgba(8, 8, 10, 0.28)
+  );
+}
+
+.te-pb-round__advance {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  margin: -0.35rem 0 1.1rem;
+  font-family: var(--font-display, var(--font-body));
+  font-size: clamp(0.9375rem, 1.7vw, 1.125rem);
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.te-pb-round__advance span {
+  font-size: 0.5625rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.te-pb-round__arena {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+  align-items: stretch;
+}
+
+.te-pb-round__arena-center {
+  display: none;
+}
+
+.te-pb-round__arena-side {
+  min-width: 0;
+}
+
+.te-pb-round--semis-arena .te-pb-match {
+  height: 100%;
+}
+
+@media (min-width: 900px) {
+  .te-pb-round--semis-arena .te-pb-round__arena {
+    grid-template-columns: minmax(0, 1fr) 4.5rem minmax(0, 1fr);
+    gap: 1.1rem;
+    align-items: center;
+  }
+
+  .te-pb-round--semis-arena .te-pb-round__arena-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 100%;
+  }
+
+  .te-pb-round--semis-arena .te-pb-round__arena-rule {
+    display: block;
+    width: 1px;
+    flex: 1 1 auto;
+    min-height: 2.5rem;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      color-mix(in srgb, var(--te-elim-accent) 55%, transparent),
+      transparent
+    );
+  }
+
+  .te-pb-round--semis-arena .te-pb-round__arena-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid
+      color-mix(in srgb, var(--te-elim-accent) 42%, transparent);
+    border-radius: 999px;
+    background: color-mix(
+      in srgb,
+      var(--te-elim-accent) 12%,
+      rgba(8, 8, 10, 0.72)
+    );
+    color: var(--te-elim-accent);
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+  }
+
+  .te-pb-round--semis-arena .te-pb-round__arena-side--left .te-pb-match {
+    border-right: 1px solid
+      color-mix(in srgb, var(--te-elim-accent) 18%, transparent);
+  }
+
+  .te-pb-round--semis-arena .te-pb-round__arena-side--right .te-pb-match {
+    border-left: 1px solid
+      color-mix(in srgb, var(--te-elim-accent) 18%, transparent);
+  }
+}
+
 .te-pb-round__stack {
   display: grid;
   grid-template-columns: 1fr;
@@ -388,6 +546,77 @@
 .te-pb-match--third {
   opacity: 0.92;
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+.te-pb-match--semifinal {
+  padding: 0.9rem 1rem 0.95rem;
+  border-top-color: color-mix(
+    in srgb,
+    var(--te-elim-accent) 30%,
+    rgba(255, 255, 255, 0.16)
+  );
+  background: rgba(8, 8, 10, 0.48);
+}
+
+.te-pb-match--semifinal .te-pb-match__title,
+.te-pb-match--semifinal .te-pb-match__status {
+  font-size: 0.75rem;
+}
+
+.te-pb-match--semifinal .te-pb-match__logistics {
+  font-size: 1rem;
+}
+
+.te-pb-match--semifinal .te-pb-team {
+  min-height: 3rem;
+}
+
+.te-pb-match--semifinal .te-pb-team__avatar--inline.rj-avatar,
+.te-pb-match--semifinal .te-pb-team__avatar--inline.rj-avatar--sm {
+  width: 38px;
+  height: 38px;
+}
+
+.te-pb-match--semifinal .te-pb-team__name {
+  font-size: 1.0625rem;
+}
+
+.te-pb-match--semifinal .te-pb-team__score {
+  font-size: clamp(1.375rem, 2.2vw, 1.625rem);
+}
+
+.te-pb-match--final {
+  padding: 1.1rem 1.2rem 1.2rem;
+}
+
+.te-pb-match--final .te-pb-match__title,
+.te-pb-match--final .te-pb-match__status {
+  font-size: 0.8125rem;
+}
+
+.te-pb-match--final .te-pb-match__logistics {
+  font-size: 1.0625rem;
+}
+
+.te-pb-match--final .te-pb-team {
+  min-height: 3.55rem;
+  gap: 0.85rem;
+}
+
+.te-pb-match--final .te-pb-team__avatar--inline.rj-avatar,
+.te-pb-match--final .te-pb-team__avatar--inline.rj-avatar--sm {
+  width: 48px;
+  height: 48px;
+  font-size: 0.8rem;
+}
+
+.te-pb-match--final .te-pb-team__name {
+  font-size: clamp(1.0625rem, 1.55vw, 1.25rem);
+}
+
+.te-pb-match--final .te-pb-team__score {
+  min-width: 1.65rem;
+  font-size: clamp(1.625rem, 2.15vw, 2rem);
 }
 
 .te-pb-match--live {
@@ -659,6 +888,369 @@
   font-weight: 600;
   font-style: italic;
   color: var(--text-muted, rgba(255, 255, 255, 0.55));
+}
+
+/* Desktop championship geometry. The vertical journey stays intact below
+   1280px; only real rounds are supplied to this tree by the presentation
+   model, so it never creates a future match or a placeholder. */
+@media (min-width: 1280px) {
+  .te-pb-desktop-tree {
+    display: block;
+    width: min(100%, 1480px);
+    margin: 0 auto;
+  }
+
+  .te-pb--has-desktop-tree .te-pb-history {
+    display: none;
+  }
+
+  .te-pb-desktop-tree__header {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1.25fr;
+    align-items: center;
+    gap: 1rem;
+    margin: 0 0 1.25rem;
+    color: var(--text-muted, rgba(255, 255, 255, 0.54));
+    font-size: 0.625rem;
+    font-weight: 750;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .te-pb-desktop-tree__header span:nth-child(2) {
+    text-align: center;
+  }
+
+  .te-pb-desktop-tree__header span:last-child {
+    text-align: right;
+    color: var(--te-elim-accent);
+  }
+
+  .te-pb-desktop-tree__grid {
+    position: relative;
+    display: grid;
+    grid-template-columns:
+      minmax(210px, 0.78fr)
+      minmax(260px, 1fr)
+      minmax(380px, 1.35fr)
+      minmax(260px, 1fr)
+      minmax(210px, 0.78fr);
+    grid-template-rows: repeat(4, minmax(8.75rem, auto));
+    align-items: center;
+    width: 100%;
+  }
+
+  .te-pb-desktop-tree__node {
+    position: relative;
+    min-width: 0;
+    z-index: 1;
+  }
+
+  .te-pb-desktop-tree__node--qf-1 {
+    grid-column: 1;
+    grid-row: 1;
+    padding-right: 1.15rem;
+  }
+
+  .te-pb-desktop-tree__node--qf-2 {
+    grid-column: 1;
+    grid-row: 2;
+    padding-right: 1.15rem;
+  }
+
+  .te-pb-desktop-tree__node--sf-1 {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    padding: 0 1.15rem;
+  }
+
+  .te-pb-desktop-tree__node--final {
+    grid-column: 3;
+    grid-row: 2 / span 2;
+    align-self: center;
+    z-index: 2;
+    padding: 0 0.85rem;
+  }
+
+  .te-pb-desktop-tree__node--sf-2 {
+    grid-column: 4;
+    grid-row: 3 / span 2;
+    align-self: center;
+    padding: 0 1.15rem;
+  }
+
+  .te-pb-desktop-tree__node--qf-3 {
+    grid-column: 5;
+    grid-row: 3;
+    padding-left: 1.15rem;
+  }
+
+  .te-pb-desktop-tree__node--qf-4 {
+    grid-column: 5;
+    grid-row: 4;
+    padding-left: 1.15rem;
+  }
+
+  /* Orthogonal feeder paths: every rail starts at its source card edge and
+     ends at the incoming edge of its semifinal module. */
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-1::after,
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-2::after {
+    content: "";
+    position: absolute;
+    right: -0.02rem;
+    top: 50%;
+    width: 1.2rem;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-1::before,
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-2::before {
+    content: "";
+    position: absolute;
+    right: -0.02rem;
+    width: 1px;
+    height: 50%;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-1::before {
+    top: 50%;
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-2::before {
+    bottom: 50%;
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-3::after,
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-4::after {
+    content: "";
+    position: absolute;
+    left: -0.02rem;
+    top: 50%;
+    width: 1.2rem;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-3::before,
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-4::before {
+    content: "";
+    position: absolute;
+    left: -0.02rem;
+    width: 1px;
+    height: 50%;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-3::before {
+    top: 50%;
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--qf-4::before {
+    bottom: 50%;
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--sf-1::before,
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--sf-2::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 1.15rem;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--sf-1::before {
+    left: 0;
+  }
+
+  .te-pb-desktop-tree__grid--has-semis
+    .te-pb-desktop-tree__node--sf-2::before {
+    right: 0;
+  }
+
+  .te-pb-desktop-tree__grid--has-final
+    .te-pb-desktop-tree__node--sf-1::after,
+  .te-pb-desktop-tree__grid--has-final
+    .te-pb-desktop-tree__node--sf-2::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 2rem;
+    height: 1px;
+    background: color-mix(
+      in srgb,
+      var(--te-elim-accent) 38%,
+      rgba(255, 255, 255, 0.16)
+    );
+  }
+
+  .te-pb-desktop-tree__grid--has-final
+    .te-pb-desktop-tree__node--sf-1::after {
+    right: -0.85rem;
+  }
+
+  .te-pb-desktop-tree__grid--has-final
+    .te-pb-desktop-tree__node--sf-2::after {
+    left: -0.85rem;
+  }
+
+  /* The final spans the midpoint of both semifinal rows. These vertical rails
+     complete the orthogonal SF → Final paths at the exact final column edge. */
+  .te-pb-desktop-tree__grid--has-final
+    .te-pb-desktop-tree__node--final::before,
+  .te-pb-desktop-tree__grid--has-final
+    .te-pb-desktop-tree__node--final::after {
+    content: "";
+    position: absolute;
+    width: 1px;
+    height: 50%;
+    background: color-mix(
+      in srgb,
+      var(--te-elim-accent) 38%,
+      rgba(255, 255, 255, 0.16)
+    );
+  }
+
+  .te-pb-desktop-tree__grid--has-final
+    .te-pb-desktop-tree__node--final::before {
+    left: 0;
+    top: 0;
+  }
+
+  .te-pb-desktop-tree__grid--has-final
+    .te-pb-desktop-tree__node--final::after {
+    right: 0;
+    bottom: 0;
+  }
+
+  .te-pb-desktop-tree__editorial {
+    margin: 0 0 0.85rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--te-elim-accent) 26%, transparent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.45;
+    text-align: center;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  }
+
+  .te-pb-desktop-tree__semis-copy {
+    max-width: 35rem;
+    margin: 0 auto 1.1rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  }
+
+  .te-pb-desktop-tree__third {
+    width: min(100%, 31rem);
+    margin: 2rem auto 0;
+  }
+
+  .te-pb-desktop-tree__third > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.55rem;
+  }
+
+  .te-pb-desktop-tree__third p,
+  .te-pb-desktop-tree__third span {
+    margin: 0;
+  }
+
+  .te-pb-desktop-tree__third p {
+    font-size: 0.625rem;
+    font-weight: 750;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted, rgba(255, 255, 255, 0.54));
+  }
+
+  .te-pb-desktop-tree__third span {
+    font-size: 0.75rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  }
+
+  .te-pb-champion-moment {
+    display: grid;
+    justify-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.9rem;
+    padding: 0.8rem;
+    border-top: 1px solid
+      color-mix(in srgb, var(--te-elim-accent) 42%, transparent);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: color-mix(
+      in srgb,
+      var(--te-elim-accent) 8%,
+      rgba(8, 8, 10, 0.2)
+    );
+    text-align: center;
+  }
+
+  .te-pb-champion-moment__eyebrow,
+  .te-pb-champion-moment__copy {
+    margin: 0;
+  }
+
+  .te-pb-champion-moment__eyebrow {
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--te-elim-accent);
+  }
+
+  .te-pb-champion-moment__players {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .te-pb-champion-moment__player {
+    display: grid;
+    justify-items: center;
+    gap: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-primary, #fff);
+  }
+
+  .te-pb-champion-moment__avatar.rj-avatar {
+    width: 60px;
+    height: 60px;
+    border: 1px solid
+      color-mix(in srgb, var(--te-elim-accent) 52%, rgba(255, 255, 255, 0.32));
+  }
+
+  .te-pb-champion-moment__copy {
+    max-width: 30rem;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.68));
+  }
 }
 
 /* Connectors between round columns */
