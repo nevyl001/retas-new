@@ -91,9 +91,9 @@
 }
 
 .te-public-evento-roles__hint {
-  margin: 0 0 var(--ro-space-4);
-  font-size: 0.9375rem;
-  line-height: 1.45;
+  margin: 0 0 var(--ro-space-3);
+  font-size: 0.8125rem;
+  line-height: 1.4;
   color: var(--ro-text-secondary);
 }
 
@@ -103,7 +103,7 @@
   padding: 0;
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--ro-space-3);
+  gap: 0.65rem;
   align-items: start;
 }
 
@@ -113,14 +113,14 @@
   color: var(--ro-text-secondary);
 }
 
-/* Card hub */
+/* Card hub — densidad mobile-first: varias categorías deben escanearse rápido */
 .te-cat-hub {
   position: relative;
   width: 100%;
   box-sizing: border-box;
   background: var(--ro-chrome-elevated);
   border: 1px solid var(--ro-border-subtle);
-  border-radius: var(--ro-radius-xl);
+  border-radius: var(--ro-radius-lg);
   overflow: hidden;
   transition:
     border-color 0.2s ease,
@@ -131,8 +131,8 @@
   content: "";
   position: absolute;
   left: 0;
-  top: 1rem;
-  bottom: 1rem;
+  top: 0.7rem;
+  bottom: 0.7rem;
   width: 2px;
   border-radius: var(--ro-radius-full);
   background: var(--brand-accent, var(--ro-accent));
@@ -143,9 +143,9 @@
   display: flex;
   align-items: stretch;
   width: 100%;
-  min-height: 11.5rem;
+  min-height: 0;
   margin: 0;
-  padding: 1rem 1.3rem 1rem 1.4rem;
+  padding: 0.75rem 0.95rem 0.7rem 1.05rem;
   box-sizing: border-box;
   text-align: left;
   color: inherit;
@@ -176,29 +176,29 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.18rem;
 }
 
 .te-cat-hub__title-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
 .te-cat-hub__title {
   margin: 0;
   font-family: var(--ro-font-heading);
-  font-size: clamp(1.625rem, 7vw, 1.875rem);
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
+  font-size: clamp(1.0625rem, 4.4vw, 1.1875rem);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   color: var(--ro-text-primary);
 }
 
 .te-cat-hub__estado {
   flex-shrink: 0;
-  font-size: 0.625rem;
+  font-size: 0.5625rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -219,21 +219,22 @@
 
 .te-cat-hub__phase {
   margin: 0;
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.01em;
   color: var(--ro-text-secondary);
 }
 
 .te-cat-hub__meta {
-  margin: 0.15rem 0 0;
-  font-size: 0.875rem;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
   color: var(--ro-text-muted);
 }
 
 .te-cat-hub__progress-label {
-  margin: 0.45rem 0 0;
-  font-size: 0.8125rem;
+  margin: 0.1rem 0 0;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--ro-text-secondary);
 }
@@ -244,7 +245,7 @@
 }
 
 .te-cat-hub__progress {
-  margin-top: 0.3rem;
+  margin-top: 0.2rem;
   height: 2px;
   width: 100%;
   border-radius: var(--ro-radius-full);
@@ -263,11 +264,13 @@
 .te-cat-hub__action {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  min-height: 2.75rem;
-  margin-top: auto;
-  padding-top: 0.7rem;
-  font-size: 0.875rem;
+  gap: 0.3rem;
+  min-height: 2.5rem;
+  margin-top: 0.2rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid
+    color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 28%, transparent);
+  font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--brand-accent, var(--ro-accent));
@@ -305,7 +308,7 @@
 
   .te-public-evento-roles__list {
     grid-template-columns: 1fr 1fr;
-    gap: var(--ro-space-4);
+    gap: var(--ro-space-3);
     align-items: start;
   }
 
@@ -314,14 +317,27 @@
   }
 
   .te-cat-hub__face {
-    min-height: 12rem;
-    padding: 1.4rem 1.5rem 1.3rem 1.6rem;
+    min-height: 0;
+    padding: 0.95rem 1.15rem 0.9rem 1.25rem;
   }
 
   .te-cat-hub__title {
-    font-size: 1.4rem;
+    font-size: 1.1875rem;
   }
 
+  .te-cat-hub__phase {
+    font-size: 0.875rem;
+  }
+
+  .te-cat-hub__meta,
+  .te-cat-hub__progress-label {
+    font-size: 0.8125rem;
+  }
+
+  .te-cat-hub__action {
+    min-height: 2.5rem;
+    font-size: 0.875rem;
+  }
 }
 
 @media (max-width: 480px) {
