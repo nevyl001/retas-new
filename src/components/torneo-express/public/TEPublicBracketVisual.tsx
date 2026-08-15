@@ -10,13 +10,7 @@ import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
 import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
 import "../../jugadores/riviera-jugadores.css";
 
-function BracketTeamRow({
-  team,
-  players,
-}: {
-  team: BracketTeamPresentation;
-  players?: PublicRetaPairPlayer[];
-}) {
+function BracketTeamRow({ team }: { team: BracketTeamPresentation }) {
   if (team.kind === "bye") {
     return (
       <div className="te-pb-team te-pb-team--bye">
@@ -33,12 +27,15 @@ function BracketTeamRow({
     );
   }
 
-  const p1 = players?.[0];
-  const p2 = players?.[1];
-  const name1 = p1?.name ?? team.names[0] ?? team.label;
-  const name2 = p2?.name ?? team.names[1] ?? null;
-  const rating1 = p1?.rating;
-  const rating2 = p2?.rating;
+  const playerRows =
+    team.players.length > 0
+      ? team.players
+      : team.names.map((name, index) => ({
+          id: `${team.parejaId ?? team.label}-${index + 1}`,
+          name,
+          fotoUrl: null,
+          rating: null,
+        }));
 
   const roleClass = team.isWinner
     ? " te-pb-team--winner"
@@ -63,36 +60,28 @@ function BracketTeamRow({
           ) : null}
         </div>
         <div className="te-pb-team__names">
-          <span className="te-pb-team__name">
-            {p1?.fotoUrl?.trim() ? (
+          {playerRows.map((player) => (
+            <span
+              className="te-pb-team__name"
+              key={player.id}
+              data-player-id={player.id}
+              data-pair-id={team.parejaId ?? undefined}
+              data-photo-state={player.fotoUrl ? "provided" : "missing"}
+            >
               <JugadorAvatar
-                fotoUrl={p1.fotoUrl}
-                nombre={name1}
+                fotoUrl={player.fotoUrl}
+                nombre={player.name}
                 size="sm"
                 className="te-pb-team__avatar te-pb-team__avatar--inline"
               />
-            ) : null}
-            {name1}
-            {rating1 != null ? (
-              <span className="te-pb-team__rating">{rating1.toFixed(2)}</span>
-            ) : null}
-          </span>
-          {name2 ? (
-            <span className="te-pb-team__name">
-              {p2?.fotoUrl?.trim() ? (
-                <JugadorAvatar
-                  fotoUrl={p2.fotoUrl}
-                  nombre={name2}
-                  size="sm"
-                  className="te-pb-team__avatar te-pb-team__avatar--inline"
-                />
-              ) : null}
-              {name2}
-              {rating2 != null ? (
-                <span className="te-pb-team__rating">{rating2.toFixed(2)}</span>
+              <span className="te-pb-team__player-name">{player.name}</span>
+              {player.rating != null ? (
+                <span className="te-pb-team__rating">
+                  {player.rating.toFixed(2)}
+                </span>
               ) : null}
             </span>
-          ) : null}
+          ))}
         </div>
       </div>
 
@@ -111,18 +100,9 @@ function BracketTeamRow({
 
 function BracketMatchCard({
   match,
-  pairPlayersById,
 }: {
   match: BracketMatchPresentation;
-  pairPlayersById: Record<string, PublicRetaPairPlayer[]>;
 }) {
-  const localPlayers = match.local.parejaId
-    ? pairPlayersById[match.local.parejaId]
-    : undefined;
-  const visitPlayers = match.visit.parejaId
-    ? pairPlayersById[match.visit.parejaId]
-    : undefined;
-
   const ariaTeams = [
     match.local.kind === "dependency"
       ? match.local.dependencyLabel
@@ -142,34 +122,60 @@ function BracketMatchCard({
       data-match-id={match.id}
       data-ronda={match.ronda}
       data-cruce={match.cruceIndex}
-      aria-label={`${match.shortTitle}: ${ariaTeams}`}
+      aria-label={`${match.shortTitle}: ${ariaTeams}. ${match.metaLine}`}
     >
       <header className="te-pb-match__head">
-        <span className="te-pb-match__title">{match.shortTitle}</span>
-        <span
-          className={`te-pb-match__status te-pb-match__status--${match.status}`}
+        <div className="te-pb-match__identity">
+          <span className="te-pb-match__title">{match.shortTitle}</span>
+          {match.status === "live" || match.status === "finished" ? (
+            <span
+              className={`te-pb-match__status te-pb-match__status--${match.status}`}
+            >
+              {match.statusLabel}
+            </span>
+          ) : null}
+        </div>
+
+        <div
+          className={`te-pb-match__logistics${
+            match.courtConfirmed
+              ? " te-pb-match__logistics--court-confirmed"
+              : " te-pb-match__logistics--court-pending"
+          }${
+            match.timeConfirmed
+              ? " te-pb-match__logistics--time-confirmed"
+              : " te-pb-match__logistics--time-pending"
+          }`}
         >
-          {match.statusLabel}
-        </span>
+          <span className="te-pb-match__time">{match.timeLabel}</span>
+          <span className="te-pb-match__logistics-sep" aria-hidden="true">
+            ·
+          </span>
+          <span
+            className={`te-pb-match__court${
+              match.courtConfirmed
+                ? " te-pb-match__court--confirmed"
+                : " te-pb-match__court--pending"
+            }`}
+          >
+            {match.courtLabel}
+          </span>
+        </div>
       </header>
 
       <div className="te-pb-match__body">
-        <BracketTeamRow team={match.local} players={localPlayers} />
+        <BracketTeamRow team={match.local} />
         <div className="te-pb-match__divider" aria-hidden />
-        <BracketTeamRow team={match.visit} players={visitPlayers} />
+        <BracketTeamRow team={match.visit} />
       </div>
-
-      <footer className="te-pb-match__meta">{match.metaLine}</footer>
     </article>
   );
 }
 
 function BracketRoundColumn({
   round,
-  pairPlayersById,
 }: {
   round: BracketRoundPresentation;
-  pairPlayersById: Record<string, PublicRetaPairPlayer[]>;
 }) {
   const isFinal = round.matches.some((match) => match.isFinal);
   const champion = isFinal
@@ -231,7 +237,6 @@ function BracketRoundColumn({
           <BracketMatchCard
             key={match.id}
             match={match}
-            pairPlayersById={pairPlayersById}
           />
         ))}
       </div>
@@ -263,8 +268,14 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   pairPlayersById = {},
 }) => {
   const presentation = useMemo(
-    () => buildBracketPresentationModel(allCards, totalRondas, activeRonda),
-    [allCards, totalRondas, activeRonda]
+    () =>
+      buildBracketPresentationModel(
+        allCards,
+        totalRondas,
+        activeRonda,
+        pairPlayersById
+      ),
+    [allCards, totalRondas, activeRonda, pairPlayersById]
   );
 
   if (allCards.length === 0) {
@@ -286,10 +297,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
                 round.isActive ? " te-pb-stage--active" : ""
               }${round.isCompleted ? " te-pb-stage--completed" : ""}`}
             >
-              <BracketRoundColumn
-                round={round}
-                pairPlayersById={pairPlayersById}
-              />
+              <BracketRoundColumn round={round} />
             </section>
           </React.Fragment>
         ))}

@@ -1,5 +1,6 @@
 import {
   buildBracketPresentationModel,
+  formatMatchLogistics,
   formatMatchMetaLine,
   formatOriginLabel,
   statusLabelEs,
@@ -71,13 +72,36 @@ describe("publicBracketPresentation", () => {
     expect(formatOriginLabel(null)).toBeNull();
   });
 
-  it("formats schedule metadata without error-red pending court", () => {
-    expect(formatMatchMetaLine("13:50", null)).toBe(
-      "13:50 · Cancha por confirmar"
+  it("formats schedule logistics with confirmed vs pending court hierarchy", () => {
+    expect(formatMatchLogistics("13:50", null)).toEqual({
+      timeLabel: "13:50",
+      courtLabel: "Cancha por confirmar",
+      timeConfirmed: true,
+      courtConfirmed: false,
+      metaLine: "13:50 · Cancha por confirmar",
+    });
+    expect(formatMatchLogistics("Por confirmar", "2")).toEqual({
+      timeLabel: "Horario por confirmar",
+      courtLabel: "CANCHA 2",
+      timeConfirmed: false,
+      courtConfirmed: true,
+      metaLine: "Horario por confirmar · CANCHA 2",
+    });
+    expect(formatMatchMetaLine("13:50", "3")).toBe("13:50 · CANCHA 3");
+  });
+
+  it("exposes first-class time/court fields on each match presentation", () => {
+    const model = buildBracketPresentationModel(
+      [card("q1", 1, 0, { horaDisplay: "13:50", canchaLabel: "3" })],
+      3,
+      1
     );
-    expect(formatMatchMetaLine("Por confirmar", "2")).toBe(
-      "Horario por confirmar · Cancha 2"
-    );
+    const match = model.rounds[0].matches[0];
+    expect(match.timeLabel).toBe("13:50");
+    expect(match.courtLabel).toBe("CANCHA 3");
+    expect(match.timeConfirmed).toBe(true);
+    expect(match.courtConfirmed).toBe(true);
+    expect(match.metaLine).toBe("13:50 · CANCHA 3");
   });
 
   it("maps status labels without relying on color alone", () => {
@@ -94,6 +118,43 @@ describe("publicBracketPresentation", () => {
     const match = model.rounds[0].matches[0];
     expect(match.local.names).toEqual(["Carlos Méndez", "Diego Ramírez"]);
     expect(match.local.names).toHaveLength(2);
+  });
+
+  it("keeps each photo, name, and rating bound to its stable player ID", () => {
+    const qf = card("q1", 1, 0, {
+      localLabel: "Carlos Méndez / Diego Ramírez",
+    });
+    const model = buildBracketPresentationModel([qf], 3, 1, {
+      "q1-l": [
+        {
+          id: "player-diego",
+          name: "Diego Ramírez",
+          fotoUrl: "https://cdn.example/diego.jpg",
+          rating: 3.03,
+        },
+        {
+          id: "player-carlos",
+          name: "Carlos Méndez",
+          fotoUrl: "https://cdn.example/carlos.jpg",
+          rating: 3.13,
+        },
+      ],
+    });
+
+    expect(model.rounds[0].matches[0].local.players).toEqual([
+      {
+        id: "player-diego",
+        name: "Diego Ramírez",
+        fotoUrl: "https://cdn.example/diego.jpg",
+        rating: 3.03,
+      },
+      {
+        id: "player-carlos",
+        name: "Carlos Méndez",
+        fotoUrl: "https://cdn.example/carlos.jpg",
+        rating: 3.13,
+      },
+    ]);
   });
 
   it("reveals only the active starting round until a real next round exists", () => {

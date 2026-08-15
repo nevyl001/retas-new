@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { TEPublicBracketVisual } from "../../components/torneo-express/public/TEPublicBracketVisual";
+import { getJugadorInitials } from "../../components/jugadores/JugadorAvatar";
 import type { PublicMatchupCard } from "./publicBracketModel";
 
 function card(
@@ -52,6 +53,13 @@ describe("TEPublicBracketVisual presentation", () => {
     card("q3", 1, 2, "A1 / A2", "B1 / B2"),
     card("q4", 1, 3, "C1 / C2", "D1 / D2"),
   ];
+
+  it("derives player-specific initials instead of a generic first letter", () => {
+    expect(getJugadorInitials("Carlos Méndez")).toBe("CM");
+    expect(getJugadorInitials("Diego Ruiz")).toBe("DR");
+    expect(getJugadorInitials("Tpvs1")).toBe("T1");
+    expect(getJugadorInitials("Tpvs11")).toBe("T11");
+  });
 
   it("renders both pair names once and no standalone VS badge", () => {
     render(
@@ -112,5 +120,41 @@ describe("TEPublicBracketVisual presentation", () => {
       />
     );
     expect(screen.queryByText(/^3\.ER LUGAR$/)).toBeNull();
+  });
+
+  it("shows time and court in each match header, not as muted footer metadata", () => {
+    render(
+      <TEPublicBracketVisual
+        allCards={cards}
+        totalRondas={3}
+        activeRonda={1}
+      />
+    );
+
+    const times = screen.getAllByText("13:50");
+    const courts = screen.getAllByText("CANCHA 3");
+    expect(times).toHaveLength(4);
+    expect(courts).toHaveLength(4);
+    times.forEach((node) => expect(node).toHaveClass("te-pb-match__time"));
+    courts.forEach((node) =>
+      expect(node).toHaveClass("te-pb-match__court--confirmed")
+    );
+    expect(screen.queryByRole("contentinfo")).toBeNull();
+  });
+
+  it("keeps pending court readable without alarm styling", () => {
+    const pendingCourtCards = cards.map((match, index) =>
+      index === 0 ? { ...match, canchaLabel: null } : match
+    );
+    render(
+      <TEPublicBracketVisual
+        allCards={pendingCourtCards}
+        totalRondas={3}
+        activeRonda={1}
+      />
+    );
+    expect(screen.getByText("Cancha por confirmar")).toHaveClass(
+      "te-pb-match__court--pending"
+    );
   });
 });

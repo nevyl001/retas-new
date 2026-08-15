@@ -14,9 +14,29 @@ import type { PartidoSetScore } from "./types";
 
 export type BracketTeamSlotKind = "team" | "bye" | "dependency";
 
+export interface BracketPlayerPresentation {
+  /** Stable player identity from the pair record. */
+  id: string;
+  name: string;
+  fotoUrl: string | null;
+  rating: number | null;
+}
+
+export type BracketPairPlayersById = Record<
+  string,
+  Array<{
+    id: string;
+    name: string;
+    fotoUrl?: string | null;
+    rating?: number | null;
+  }>
+>;
+
 export interface BracketTeamPresentation {
   kind: BracketTeamSlotKind;
   parejaId: string | null;
+  /** Identity-safe player rows. Photo/name/rating always travel together by ID. */
+  players: BracketPlayerPresentation[];
   /** Player display names (exactly once each). Empty when dependency/bye. */
   names: string[];
   /** Full pair label from the model (for aria / fallback). */
@@ -32,6 +52,17 @@ export interface BracketTeamPresentation {
   setScores: number[];
 }
 
+export interface BracketMatchLogisticsPresentation {
+  /** Scheduled time, ready for high-contrast display. */
+  timeLabel: string;
+  /** Court label: confirmed uppercase (CANCHA 3) or muted pending copy. */
+  courtLabel: string;
+  timeConfirmed: boolean;
+  courtConfirmed: boolean;
+  /** Combined line for aria / scanning helpers. */
+  metaLine: string;
+}
+
 export interface BracketMatchPresentation {
   id: string;
   ronda: number;
@@ -39,7 +70,12 @@ export interface BracketMatchPresentation {
   shortTitle: string;
   status: PublicMatchStatus;
   statusLabel: string;
-  /** Single-line schedule/court metadata. */
+  /** Operational schedule/court — first-class match logistics. */
+  timeLabel: string;
+  courtLabel: string;
+  timeConfirmed: boolean;
+  courtConfirmed: boolean;
+  /** Single-line schedule/court for aria and legacy consumers. */
   metaLine: string;
   local: BracketTeamPresentation;
   visit: BracketTeamPresentation;
@@ -99,22 +135,39 @@ export function formatOriginLabel(originBadge: string | null): string | null {
   return raw;
 }
 
+export function formatMatchLogistics(
+  horaDisplay: string,
+  canchaLabel: string | null
+): BracketMatchLogisticsPresentation {
+  const timeRaw = (horaDisplay || "").trim();
+  const timeConfirmed =
+    Boolean(timeRaw) && !/^por confirmar$/i.test(timeRaw);
+  const timeLabel = timeConfirmed ? timeRaw : "Horario por confirmar";
+
+  const courtRaw = canchaLabel?.trim() ?? "";
+  const courtConfirmed = Boolean(courtRaw);
+  const courtLabel = courtConfirmed
+    ? `CANCHA ${courtRaw.replace(/^cancha\s*/i, "").trim()}`.replace(
+        /\s+/g,
+        " "
+      )
+    : "Cancha por confirmar";
+
+  return {
+    timeLabel,
+    courtLabel,
+    timeConfirmed,
+    courtConfirmed,
+    metaLine: `${timeLabel} · ${courtLabel}`,
+  };
+}
+
+/** @deprecated Prefer formatMatchLogistics for structured logistics. */
 export function formatMatchMetaLine(
   horaDisplay: string,
   canchaLabel: string | null
 ): string {
-  const timeRaw = (horaDisplay || "").trim();
-  const time =
-    !timeRaw || /^por confirmar$/i.test(timeRaw)
-      ? "Horario por confirmar"
-      : timeRaw;
-  const courtRaw = canchaLabel?.trim() ?? "";
-  const court = !courtRaw
-    ? "Cancha por confirmar"
-    : /^cancha\s+/i.test(courtRaw)
-      ? courtRaw.replace(/^cancha\s*/i, "Cancha ")
-      : `Cancha ${courtRaw}`;
-  return `${time} · ${court}`;
+  return formatMatchLogistics(horaDisplay, canchaLabel).metaLine;
 }
 
 export function statusLabelEs(status: PublicMatchStatus): string {
@@ -224,12 +277,14 @@ function mapTeam(
   opts: {
     dependencyLabel: string | null;
     played: boolean;
-  }
+  },
+  pairPlayersById: BracketPairPlayersById
 ): BracketTeamPresentation {
   if (team.isBye) {
     return {
       kind: "bye",
       parejaId: null,
+      players: [],
       names: [],
       label: "BYE",
       seed: null,
@@ -245,6 +300,7 @@ function mapTeam(
     return {
       kind: "dependency",
       parejaId: null,
+      players: [],
       names: [],
       label: "",
       seed: null,
@@ -268,6 +324,14 @@ function mapTeam(
   return {
     kind: "team",
     parejaId: team.parejaId,
+    players: team.parejaId
+      ? (pairPlayersById[team.parejaId] ?? []).map((player) => ({
+          id: player.id,
+          name: player.name,
+          fotoUrl: player.fotoUrl ?? null,
+          rating: player.rating ?? null,
+        }))
+      : [],
     names: parsePairNames(team.label),
     label: team.label,
     seed: team.seed,
@@ -303,7 +367,8 @@ function expectedMatchCount(totalRondas: number, ronda: number): number {
 function mapMatchCard(
   card: PublicMatchupCard,
   totalRondas: number,
-  byRound: Map<number, PublicMatchupCard[]>
+  byRound: Map<number, PublicMatchupCard[]>,
+  pairPlayersById: BracketPairPlayersById
 ): BracketMatchPresentation {
   const played = card.status === "finished";
   const matchCount = expectedMatchCount(totalRondas, card.ronda);
@@ -351,15 +416,27 @@ function mapMatchCard(
     ),
     status: card.status,
     statusLabel: statusLabelEs(card.status),
-    metaLine: formatMatchMetaLine(card.horaDisplay, card.canchaLabel),
-    local: mapTeam(card.local, "local", card, {
-      dependencyLabel: localDep,
-      played,
-    }),
-    visit: mapTeam(card.visit, "visitante", card, {
-      dependencyLabel: visitDep,
-      played,
-    }),
+    ...formatMatchLogistics(card.horaDisplay, card.canchaLabel),
+    local: mapTeam(
+      card.local,
+      "local",
+      card,
+      {
+        dependencyLabel: localDep,
+        played,
+      },
+      pairPlayersById
+    ),
+    visit: mapTeam(
+      card.visit,
+      "visitante",
+      card,
+      {
+        dependencyLabel: visitDep,
+        played,
+      },
+      pairPlayersById
+    ),
     sets: card.sets,
     isFinal,
     isThirdPlace: isThird,
@@ -382,7 +459,8 @@ function buildRoundPresentation(
   ronda: number,
   totalRondas: number,
   byRound: Map<number, PublicMatchupCard[]>,
-  activeRonda: number
+  activeRonda: number,
+  pairPlayersById: BracketPairPlayersById
 ): BracketRoundPresentation {
   const isThird = isRondaTercerLugar(ronda);
   const existing = (byRound.get(ronda) ?? []).filter(
@@ -391,7 +469,7 @@ function buildRoundPresentation(
       (card.visit.isBye || Boolean(card.visit.parejaId))
   );
   const matches = existing.map((card) =>
-    mapMatchCard(card, totalRondas, byRound)
+    mapMatchCard(card, totalRondas, byRound, pairPlayersById)
   );
 
   const labelSource = existing[0]?.roundLabel ?? inferRoundLabel(ronda, totalRondas);
@@ -415,7 +493,8 @@ function buildRoundPresentation(
 export function buildBracketPresentationModel(
   allCards: PublicMatchupCard[],
   totalRondas: number,
-  activeRonda?: number
+  activeRonda?: number,
+  pairPlayersById: BracketPairPlayersById = {}
 ): BracketPresentationModel {
   const byRound = cardsByRound(allCards);
   const resolvedActive =
@@ -437,7 +516,8 @@ export function buildBracketPresentationModel(
       r,
       totalRondas,
       byRound,
-      resolvedActive
+      resolvedActive,
+      pairPlayersById
     );
     if (round.matches.length > 0) rounds.push(round);
   }
@@ -449,7 +529,8 @@ export function buildBracketPresentationModel(
       RONDA_TERCER_LUGAR,
       totalRondas,
       byRound,
-      resolvedActive
+      resolvedActive,
+      pairPlayersById
     );
     if (thirdPlace.matches.length === 0) thirdPlace = null;
   }
