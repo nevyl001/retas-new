@@ -2,7 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { formatTorneoExpressCategoria } from "../../../lib/torneoExpress/formatCategoria";
 import { buildPublicBracketViewModel } from "../../../lib/torneoExpress/publicBracketModel";
 import { buildBracketPresentationModel } from "../../../lib/torneoExpress/publicBracketPresentation";
+import {
+  buildPublicPodiumStatsForPair,
+  type PublicEliminatoriaPodiumStats,
+} from "../../../lib/torneoExpress/publicEliminatoriaPodiumStats";
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
+import { useClubExperience } from "../../../club-experience";
 import { useTorneoPublicDisplayNombre } from "../../../hooks/useTorneoPublicDisplayNombre";
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
@@ -29,8 +34,8 @@ function RefreshFooter({
       setSecondsAgo(
         Math.max(
           0,
-          Math.floor((Date.now() - lastRefreshedAt.getTime()) / 1000)
-        )
+          Math.floor((Date.now() - lastRefreshedAt.getTime()) / 1000),
+        ),
       );
     };
     tick();
@@ -50,9 +55,7 @@ function RefreshFooter({
       </span>
       <span>
         RIVIERA OPEN · Vista pública ·{" "}
-        {realtimeConnected
-          ? "En vivo"
-          : `Actualizado hace ${secondsAgo}s`}
+        {realtimeConnected ? "En vivo" : `Actualizado hace ${secondsAgo}s`}
       </span>
     </footer>
   );
@@ -84,17 +87,40 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
 
   const model = useMemo(
     () => buildPublicBracketViewModel(bundle, labelMap),
-    [bundle, labelMap]
+    [bundle, labelMap],
   );
 
   const pairPlayersById = usePublicBracketPairPlayers(
     bundle.torneo.organizador_id,
-    model.allBracketCards
+    model.allBracketCards,
   );
 
   const categoria = formatTorneoExpressCategoria(bundle.torneo.categoria);
   const displayNombre =
     useTorneoPublicDisplayNombre(bundle.torneo) || bundle.torneo.nombre;
+  const { branding, manifest, isScopeBrandingReady } = useClubExperience();
+  const clubName =
+    isScopeBrandingReady && manifest.displayName.trim()
+      ? manifest.displayName.trim()
+      : isScopeBrandingReady && branding.nombre.trim()
+        ? branding.nombre.trim()
+        : "Riviera Open";
+  const clubLogoUrl = isScopeBrandingReady ? branding.logoUrl : null;
+  const closingPairStatsById = useMemo(() => {
+    const pairIds = [
+      model.championCelebrate?.parejaId,
+      model.runnerUpCelebrate?.parejaId,
+      model.thirdPlaceCelebrate?.parejaId,
+    ].filter((pairId): pairId is string => Boolean(pairId));
+
+    return pairIds.reduce<Record<string, PublicEliminatoriaPodiumStats | null>>(
+      (statsById, pairId) => {
+        statsById[pairId] = buildPublicPodiumStatsForPair(bundle, pairId);
+        return statsById;
+      },
+      {},
+    );
+  }, [bundle, model]);
 
   useEffect(() => {
     if (!lastRefreshedAt) return;
@@ -115,24 +141,24 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
       buildBracketPresentationModel(
         model.allBracketCards,
         model.totalRondas,
-        model.activeRonda
+        model.activeRonda,
       ),
-    [model.activeRonda, model.allBracketCards, model.totalRondas]
+    [model.activeRonda, model.allBracketCards, model.totalRondas],
   );
   const visibleStage = presentation.visibleRound;
   const isChampionStage = Boolean(
-    visibleStage?.isFinalRound && visibleStage.isCompleted
+    visibleStage?.isFinalRound && visibleStage.isCompleted,
   );
   const phaseLine = visibleStage
     ? isChampionStage
-      ? "Campeones definidos"
+      ? "Torneo finalizado"
       : visibleStage.isFinalRound
         ? "Gran Final"
         : visibleStage.title.charAt(0) +
           visibleStage.title.slice(1).toLowerCase()
     : null;
   const hasVisibleLiveMatch = Boolean(
-    visibleStage?.matches.some((match) => match.status === "live")
+    visibleStage?.matches.some((match) => match.status === "live"),
   );
 
   return (
@@ -141,9 +167,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         <div className="te-elim-public__header-top">
           <div>
             <h1 className="te-elim-public__title">
-              {categoria
-                ? `${displayNombre} · ${categoria}`
-                : displayNombre}
+              {categoria ? `${displayNombre} · ${categoria}` : displayNombre}
             </h1>
             {phaseLine || hasVisibleLiveMatch ? (
               <p className="te-elim-public__subtitle">
@@ -180,7 +204,6 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
             </div>
           ) : null}
         </div>
-
       </header>
 
       <section className="te-elim-public-bracket-wrap te-pub-fade-in">
@@ -189,6 +212,11 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           totalRondas={model.totalRondas}
           activeRonda={model.activeRonda}
           pairPlayersById={pairPlayersById}
+          tournamentName={displayNombre}
+          category={categoria}
+          clubName={clubName}
+          clubLogoUrl={clubLogoUrl}
+          pairStatsById={closingPairStatsById}
         />
       </section>
 

@@ -86,6 +86,29 @@ export interface BracketMatchPresentation {
   isPlaceholder: boolean;
 }
 
+export interface MatchScoreDisplayColumn {
+  key: string;
+  label: string;
+  local: number;
+  visit: number;
+}
+
+/**
+ * Canonical public score formatter.
+ * Preserves each stored set as an independent ordered column.
+ * It never calculates winners, parses score strings, or changes score values.
+ */
+export function formatMatchScoreForDisplay(
+  sets: PartidoSetScore[],
+): MatchScoreDisplayColumn[] {
+  return sets.map((set, index) => ({
+    key: `set-${index + 1}`,
+    label: `S${index + 1}`,
+    local: set.local,
+    visit: set.visitante,
+  }));
+}
+
 export interface BracketRoundPresentation {
   id: string;
   ronda: number;
@@ -126,11 +149,11 @@ export interface BracketPresentationModel {
  * mapper already proved to be publicly available.
  */
 export function getVisiblePublicEliminationStage(
-  rounds: BracketRoundPresentation[]
+  rounds: BracketRoundPresentation[],
 ): BracketRoundPresentation | null {
   return rounds.reduce<BracketRoundPresentation | null>(
     (latest, round) => (!latest || round.ronda > latest.ronda ? round : latest),
-    null
+    null,
   );
 }
 
@@ -157,11 +180,10 @@ export function formatOriginLabel(originBadge: string | null): string | null {
 
 export function formatMatchLogistics(
   horaDisplay: string,
-  canchaLabel: string | null
+  canchaLabel: string | null,
 ): BracketMatchLogisticsPresentation {
   const timeRaw = (horaDisplay || "").trim();
-  const timeConfirmed =
-    Boolean(timeRaw) && !/^por confirmar$/i.test(timeRaw);
+  const timeConfirmed = Boolean(timeRaw) && !/^por confirmar$/i.test(timeRaw);
   const timeLabel = timeConfirmed ? timeRaw : "Horario por confirmar";
 
   const courtRaw = canchaLabel?.trim() ?? "";
@@ -169,7 +191,7 @@ export function formatMatchLogistics(
   const courtLabel = courtConfirmed
     ? `CANCHA ${courtRaw.replace(/^cancha\s*/i, "").trim()}`.replace(
         /\s+/g,
-        " "
+        " ",
       )
     : "Cancha por confirmar";
 
@@ -185,7 +207,7 @@ export function formatMatchLogistics(
 /** @deprecated Prefer formatMatchLogistics for structured logistics. */
 export function formatMatchMetaLine(
   horaDisplay: string,
-  canchaLabel: string | null
+  canchaLabel: string | null,
 ): string {
   return formatMatchLogistics(horaDisplay, canchaLabel).metaLine;
 }
@@ -203,7 +225,11 @@ export function statusLabelEs(status: PublicMatchStatus): string {
   }
 }
 
-function shortRoundName(roundLabel: string, ronda: number, totalRondas: number): string {
+function shortRoundName(
+  roundLabel: string,
+  ronda: number,
+  totalRondas: number,
+): string {
   if (isRondaTercerLugar(ronda)) return "3.er lugar";
   if (ronda === totalRondas) return "Final";
   const lower = roundLabel.toLowerCase();
@@ -214,7 +240,11 @@ function shortRoundName(roundLabel: string, ronda: number, totalRondas: number):
   return roundLabel;
 }
 
-function columnTitle(roundLabel: string, ronda: number, totalRondas: number): string {
+function columnTitle(
+  roundLabel: string,
+  ronda: number,
+  totalRondas: number,
+): string {
   if (isRondaTercerLugar(ronda)) return "3.ER LUGAR";
   if (ronda === totalRondas) return "FINAL";
   const lower = roundLabel.toLowerCase();
@@ -229,7 +259,7 @@ function matchShortTitle(
   ronda: number,
   cruceIndex: number,
   totalRondas: number,
-  matchCount: number
+  matchCount: number,
 ): string {
   if (isRondaTercerLugar(ronda)) return "3.er lugar";
   if (ronda === totalRondas) return "Final";
@@ -247,7 +277,7 @@ function matchShortTitle(
 function feederRoundPrefix(
   feederRoundLabel: string,
   feederRonda: number,
-  totalRondas: number
+  totalRondas: number,
 ): string {
   const short = shortRoundName(feederRoundLabel, feederRonda, totalRondas);
   if (short === "Semifinales") return "SF";
@@ -262,10 +292,14 @@ function winnerDependencyLabel(
   feederRonda: number,
   feederCruceIndex: number,
   totalRondas: number,
-  matchCountInFeeder: number
+  matchCountInFeeder: number,
 ): string {
   if (feeder) {
-    const prefix = feederRoundPrefix(feeder.roundLabel, feederRonda, totalRondas);
+    const prefix = feederRoundPrefix(
+      feeder.roundLabel,
+      feederRonda,
+      totalRondas,
+    );
     if (matchCountInFeeder <= 1 && prefix === "SF") {
       return "Ganador SF";
     }
@@ -280,7 +314,10 @@ function winnerDependencyLabel(
   return `Ganador ${prefix} ${feederCruceIndex + 1}`;
 }
 
-function loserDependencyLabel(feederCruceIndex: number, matchCount: number): string {
+function loserDependencyLabel(
+  feederCruceIndex: number,
+  matchCount: number,
+): string {
   if (matchCount <= 1) return "Perdedor SF";
   return `Perdedor SF${feederCruceIndex + 1}`;
 }
@@ -298,7 +335,7 @@ function mapTeam(
     dependencyLabel: string | null;
     played: boolean;
   },
-  pairPlayersById: BracketPairPlayersById
+  pairPlayersById: BracketPairPlayersById,
 ): BracketTeamPresentation {
   if (team.isBye) {
     return {
@@ -337,8 +374,8 @@ function mapTeam(
   const isWinner = Boolean(opts.played && team.isWinner);
   const isLoser = Boolean(
     opts.played &&
-      !team.isWinner &&
-      (card?.local.isWinner || card?.visit.isWinner)
+    !team.isWinner &&
+    (card?.local.isWinner || card?.visit.isWinner),
   );
 
   return {
@@ -363,7 +400,9 @@ function mapTeam(
   };
 }
 
-function cardsByRound(cards: PublicMatchupCard[]): Map<number, PublicMatchupCard[]> {
+function cardsByRound(
+  cards: PublicMatchupCard[],
+): Map<number, PublicMatchupCard[]> {
   const map = new Map<number, PublicMatchupCard[]>();
   for (const c of cards) {
     const list = map.get(c.ronda) ?? [];
@@ -373,7 +412,7 @@ function cardsByRound(cards: PublicMatchupCard[]): Map<number, PublicMatchupCard
   map.forEach((list, r) => {
     map.set(
       r,
-      [...list].sort((a, b) => a.cruceIndex - b.cruceIndex)
+      [...list].sort((a, b) => a.cruceIndex - b.cruceIndex),
     );
   });
   return map;
@@ -388,7 +427,7 @@ function mapMatchCard(
   card: PublicMatchupCard,
   totalRondas: number,
   byRound: Map<number, PublicMatchupCard[]>,
-  pairPlayersById: BracketPairPlayersById
+  pairPlayersById: BracketPairPlayersById,
 ): BracketMatchPresentation {
   const played = card.status === "finished";
   const matchCount = expectedMatchCount(totalRondas, card.ronda);
@@ -412,14 +451,14 @@ function mapMatchCard(
       feederRonda,
       a,
       totalRondas,
-      feeders.length || expectedMatchCount(totalRondas, feederRonda)
+      feeders.length || expectedMatchCount(totalRondas, feederRonda),
     );
     visitDep = winnerDependencyLabel(
       feeders[b],
       feederRonda,
       b,
       totalRondas,
-      feeders.length || expectedMatchCount(totalRondas, feederRonda)
+      feeders.length || expectedMatchCount(totalRondas, feederRonda),
     );
   }
 
@@ -432,7 +471,7 @@ function mapMatchCard(
       card.ronda,
       card.cruceIndex,
       totalRondas,
-      matchCount
+      matchCount,
     ),
     status: card.status,
     statusLabel: statusLabelEs(card.status),
@@ -445,7 +484,7 @@ function mapMatchCard(
         dependencyLabel: localDep,
         played,
       },
-      pairPlayersById
+      pairPlayersById,
     ),
     visit: mapTeam(
       card.visit,
@@ -455,7 +494,7 @@ function mapMatchCard(
         dependencyLabel: visitDep,
         played,
       },
-      pairPlayersById
+      pairPlayersById,
     ),
     sets: card.sets,
     isFinal,
@@ -480,19 +519,20 @@ function buildRoundPresentation(
   totalRondas: number,
   byRound: Map<number, PublicMatchupCard[]>,
   activeRonda: number,
-  pairPlayersById: BracketPairPlayersById
+  pairPlayersById: BracketPairPlayersById,
 ): BracketRoundPresentation {
   const isThird = isRondaTercerLugar(ronda);
   const existing = (byRound.get(ronda) ?? []).filter(
     (card) =>
       (card.local.isBye || Boolean(card.local.parejaId)) &&
-      (card.visit.isBye || Boolean(card.visit.parejaId))
+      (card.visit.isBye || Boolean(card.visit.parejaId)),
   );
   const matches = existing.map((card) =>
-    mapMatchCard(card, totalRondas, byRound, pairPlayersById)
+    mapMatchCard(card, totalRondas, byRound, pairPlayersById),
   );
 
-  const labelSource = existing[0]?.roundLabel ?? inferRoundLabel(ronda, totalRondas);
+  const labelSource =
+    existing[0]?.roundLabel ?? inferRoundLabel(ronda, totalRondas);
   const isFinalRound = !isThird && ronda === totalRondas;
   return {
     id: isThird ? "tercer" : `ronda-${ronda}`,
@@ -505,7 +545,8 @@ function buildRoundPresentation(
     isFinalRound,
     isActive: !isThird && ronda === activeRonda,
     isCompleted:
-      matches.length > 0 && matches.every((match) => match.status === "finished"),
+      matches.length > 0 &&
+      matches.every((match) => match.status === "finished"),
   };
 }
 
@@ -517,7 +558,7 @@ export function buildBracketPresentationModel(
   allCards: PublicMatchupCard[],
   totalRondas: number,
   activeRonda?: number,
-  pairPlayersById: BracketPairPlayersById = {}
+  pairPlayersById: BracketPairPlayersById = {},
 ): BracketPresentationModel {
   const byRound = cardsByRound(allCards);
   const resolvedActive =
@@ -528,9 +569,9 @@ export function buildBracketPresentationModel(
             1,
             allCards
               .filter((c) => !isRondaTercerLugar(c.ronda))
-              .reduce((max, c) => Math.max(max, c.ronda), 1)
+              .reduce((max, c) => Math.max(max, c.ronda), 1),
           ),
-          totalRondas
+          totalRondas,
         );
 
   const rounds: BracketRoundPresentation[] = [];
@@ -540,7 +581,7 @@ export function buildBracketPresentationModel(
       totalRondas,
       byRound,
       resolvedActive,
-      pairPlayersById
+      pairPlayersById,
     );
     if (round.matches.length > 0) rounds.push(round);
   }
@@ -553,15 +594,14 @@ export function buildBracketPresentationModel(
       totalRondas,
       byRound,
       resolvedActive,
-      pairPlayersById
+      pairPlayersById,
     );
     if (thirdPlace.matches.length === 0) thirdPlace = null;
   }
 
   const allRounds = thirdPlace ? [...rounds, thirdPlace] : rounds;
   const visibleRound = getVisiblePublicEliminationStage(rounds);
-  const visibleThirdPlace =
-    visibleRound?.isFinalRound ? thirdPlace : null;
+  const visibleThirdPlace = visibleRound?.isFinalRound ? thirdPlace : null;
 
   const mobileTabs: BracketMobileTab[] = allRounds.map((r) => ({
     id: r.id,
@@ -575,13 +615,13 @@ export function buildBracketPresentationModel(
     defaultMobileTabId = activeRound.id;
   } else if (thirdPlace && resolvedActive >= totalRondas) {
     const unfinishedThird = thirdPlace.matches.some(
-      (m) => m.status !== "finished"
+      (m) => m.status !== "finished",
     );
     if (unfinishedThird) defaultMobileTabId = thirdPlace.id;
   }
 
   const unfinished = allRounds.find((r) =>
-    r.matches.some((m) => m.status === "live" || m.status === "pending")
+    r.matches.some((m) => m.status === "live" || m.status === "pending"),
   );
   if (unfinished && !activeRound) {
     defaultMobileTabId = unfinished.id;

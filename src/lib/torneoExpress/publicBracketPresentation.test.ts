@@ -1,5 +1,6 @@
 import {
   buildBracketPresentationModel,
+  formatMatchScoreForDisplay,
   formatMatchLogistics,
   formatMatchMetaLine,
   formatOriginLabel,
@@ -16,7 +17,7 @@ function card(
     visitLabel?: string;
     localWinner?: boolean;
     visitWinner?: boolean;
-  } = {}
+  } = {},
 ): PublicMatchupCard {
   const {
     localLabel = `Local ${id} A / Local ${id} B`,
@@ -67,6 +68,40 @@ function card(
 }
 
 describe("publicBracketPresentation", () => {
+  it("preserves every stored score part as an ordered display column", () => {
+    expect(
+      formatMatchScoreForDisplay([
+        { local: 6, visitante: 2 },
+        { local: 6, visitante: 4 },
+      ]),
+    ).toEqual([
+      { key: "set-1", label: "S1", local: 6, visit: 2 },
+      { key: "set-2", label: "S2", local: 6, visit: 4 },
+    ]);
+
+    expect(
+      formatMatchScoreForDisplay([
+        { local: 6, visitante: 2 },
+        { local: 2, visitante: 6 },
+        { local: 10, visitante: 4 },
+      ]),
+    ).toEqual([
+      { key: "set-1", label: "S1", local: 6, visit: 2 },
+      { key: "set-2", label: "S2", local: 2, visit: 6 },
+      { key: "set-3", label: "S3", local: 10, visit: 4 },
+    ]);
+
+    expect(
+      formatMatchScoreForDisplay([
+        { local: 6, visitante: 2 },
+        { local: 6, visitante: 2 },
+      ]),
+    ).toEqual([
+      { key: "set-1", label: "S1", local: 6, visit: 2 },
+      { key: "set-2", label: "S2", local: 6, visit: 2 },
+    ]);
+  });
+
   it("formats origin badges for readability", () => {
     expect(formatOriginLabel("3°C")).toBe("3º · C");
     expect(formatOriginLabel(null)).toBeNull();
@@ -94,7 +129,7 @@ describe("publicBracketPresentation", () => {
     const model = buildBracketPresentationModel(
       [card("q1", 1, 0, { horaDisplay: "13:50", canchaLabel: "3" })],
       3,
-      1
+      1,
     );
     const match = model.rounds[0].matches[0];
     expect(match.timeLabel).toBe("13:50");
@@ -195,8 +230,10 @@ describe("publicBracketPresentation", () => {
 
   it("keeps every existing chapter once a final is available", () => {
     const cards = [
-      card("q1", 1, 0), card("q2", 1, 1),
-      card("q3", 1, 2), card("q4", 1, 3),
+      card("q1", 1, 0),
+      card("q2", 1, 1),
+      card("q3", 1, 2),
+      card("q4", 1, 3),
       card("s1", 2, 0, { roundLabel: "Semifinal" }),
       card("s2", 2, 1, { roundLabel: "Semifinal" }),
       card("f", 3, 0, { roundLabel: "Final" }),
@@ -220,7 +257,7 @@ describe("publicBracketPresentation", () => {
         card("s2", 1, 1, { roundLabel: "Semifinal" }),
       ],
       2,
-      1
+      1,
     );
     expect(model.rounds.map((round) => round.title)).toEqual(["SEMIFINALES"]);
   });
@@ -243,7 +280,7 @@ describe("publicBracketPresentation", () => {
     const off = buildBracketPresentationModel(
       [card("s1", 1, 0), card("s2", 1, 1), card("f", 2, 0)],
       2,
-      2
+      2,
     );
     expect(off.thirdPlace).toBeNull();
     expect(off.mobileTabs.some((t) => t.label === "3.er lugar")).toBe(false);
