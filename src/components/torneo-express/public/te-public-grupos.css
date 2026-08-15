@@ -2702,3 +2702,216 @@
     font-size: 0.71875rem;
   }
 }
+
+/* Achievement co-branded: la pieza superior se puede capturar sin el CTA. */
+.te-public.te-public--grupos-wide .te-grupo-achievement {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  background:
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--te-groups-bg) 95%, transparent),
+      color-mix(in srgb, var(--te-groups-surface) 91%, transparent)
+    ),
+    var(--te-groups-bg);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__art {
+  position: relative;
+  isolation: isolate;
+  padding: 18px 18px 16px;
+  overflow: hidden;
+}
+
+/* Cancha de pádel en perspectiva: textura editorial, no diagrama funcional. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__art::before,
+.te-public.te-public--grupos-wide .te-grupo-achievement__art::after {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__art::before {
+  right: -22%;
+  bottom: 8%;
+  width: 118%;
+  height: 53%;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 6%, transparent);
+  background:
+    linear-gradient(
+      90deg,
+      transparent 49.5%,
+      color-mix(in srgb, var(--text-primary) 5%, transparent) 49.5% 50.5%,
+      transparent 50.5%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 49.5%,
+      color-mix(in srgb, var(--text-primary) 5%, transparent) 49.5% 50.5%,
+      transparent 50.5%
+    );
+  opacity: 0.8;
+  transform: perspective(500px) rotateX(54deg) rotateZ(-18deg);
+  transform-origin: 50% 100%;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__art::after {
+  right: -10%;
+  bottom: 28%;
+  width: 105%;
+  height: 1px;
+  background: color-mix(in srgb, var(--te-groups-accent) 17%, transparent);
+  transform: rotate(-18deg);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__topline {
+  position: relative;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__topline > span:first-child {
+  max-width: calc(100% - 44px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__main {
+  padding: 16px 0 14px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__event {
+  color: var(--te-groups-accent);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__stats {
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__tagline {
+  margin: 14px 0 12px;
+  color: var(--text-primary);
+  font-family: var(--ro-font-heading, var(--font-heading));
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  text-align: center;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__signature {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--te-groups-border);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__club {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__club-logo {
+  display: inline-flex;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__club-logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__club-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__club-name {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__club-by {
+  color: var(--text-muted);
+  font-size: 0.625rem;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--te-groups-border);
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.025em;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__social ul {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__social a {
+  display: inline-flex;
+  min-width: 28px;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--te-groups-motion);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__social a:hover,
+.te-public.te-public--grupos-wide .te-grupo-achievement__social a:focus-visible {
+  color: var(--te-groups-accent);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__footer {
+  display: block;
+  padding: 15px 18px 18px;
+  border-top: 1px solid var(--te-groups-border);
+  background: color-mix(in srgb, var(--te-groups-bg) 66%, transparent);
+  text-align: center;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__footer .te-grupo-achievement__share {
+  margin: 0;
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__footer > p {
+  margin-top: 9px;
+}

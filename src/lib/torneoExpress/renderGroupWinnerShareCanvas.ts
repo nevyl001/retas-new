@@ -1,5 +1,8 @@
+import { RIVIERA_SOCIAL_HANDLE } from "../rivieraBranding";
+
 export const GROUP_WINNER_SHARE_WIDTH = 1080;
 export const GROUP_WINNER_SHARE_HEIGHT = 1920;
+export const WINNER_TAGLINE = "Juntos hasta lo más alto.";
 
 export type GroupWinnerSharePlayer = {
   name: string;
@@ -9,6 +12,7 @@ export type GroupWinnerSharePlayer = {
 export type GroupWinnerShareData = {
   tournamentName: string;
   clubName?: string | null;
+  clubLogoUrl?: string | null;
   categoryName: string;
   groupName: string;
   pairName: string;
@@ -32,8 +36,7 @@ const STORY_LAYOUT = {
   safeBottom: 172,
   padX: 88,
   header: {
-    brandY: 160,
-    tournamentY: 242,
+    tournamentY: 294,
     contextGap: 42,
   },
   achievement: {
@@ -52,15 +55,15 @@ const STORY_LAYOUT = {
     nameWidth: 344,
   },
   stats: {
-    top: 1338,
-    valueY: 1454,
-    labelY: 1502,
-    bottom: 1562,
+    top: 1242,
+    valueY: 1352,
+    labelY: 1400,
+    bottom: 1450,
   },
   footer: {
-    ruleY: 1644,
-    taglineY: 1724,
-    urlY: 1774,
+    ruleY: 1518,
+    taglineY: 1578,
+    socialY: 1692,
   },
 } as const;
 
@@ -415,6 +418,147 @@ async function drawAvatar(
   ctx.restore();
 }
 
+/** Textura editorial de cancha: perspectiva y red, deliberadamente sutil. */
+function drawMinimalPadelCourt(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  accent: string
+): void {
+  const leftTop = { x: 124, y: 760 };
+  const rightTop = { x: width - 124, y: 704 };
+  const rightBottom = { x: width - 78, y: 1562 };
+  const leftBottom = { x: 78, y: 1620 };
+  const midpoint = (a: typeof leftTop, b: typeof rightTop, ratio: number) => ({
+    x: a.x + (b.x - a.x) * ratio,
+    y: a.y + (b.y - a.y) * ratio,
+  });
+
+  const topQuarterLeft = midpoint(leftTop, leftBottom, 0.29);
+  const topQuarterRight = midpoint(rightTop, rightBottom, 0.29);
+  const netLeft = midpoint(leftTop, leftBottom, 0.51);
+  const netRight = midpoint(rightTop, rightBottom, 0.51);
+  const bottomQuarterLeft = midpoint(leftTop, leftBottom, 0.74);
+  const bottomQuarterRight = midpoint(rightTop, rightBottom, 0.74);
+
+  ctx.save();
+  ctx.globalAlpha = 0.05;
+  ctx.strokeStyle = "#f7f3ed";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(leftTop.x, leftTop.y);
+  ctx.lineTo(rightTop.x, rightTop.y);
+  ctx.lineTo(rightBottom.x, rightBottom.y);
+  ctx.lineTo(leftBottom.x, leftBottom.y);
+  ctx.closePath();
+  ctx.stroke();
+  [topQuarterLeft, netLeft, bottomQuarterLeft].forEach((left, index) => {
+    const right = [topQuarterRight, netRight, bottomQuarterRight][index];
+    ctx.beginPath();
+    ctx.moveTo(left.x, left.y);
+    ctx.lineTo(right.x, right.y);
+    ctx.stroke();
+  });
+  ctx.beginPath();
+  ctx.moveTo((leftTop.x + rightTop.x) / 2, (leftTop.y + rightTop.y) / 2);
+  ctx.lineTo(
+    (leftBottom.x + rightBottom.x) / 2,
+    (leftBottom.y + rightBottom.y) / 2
+  );
+  ctx.stroke();
+
+  ctx.globalAlpha = 0.085;
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(netLeft.x, netLeft.y);
+  ctx.lineTo(netRight.x, netRight.y);
+  ctx.stroke();
+  ctx.restore();
+}
+
+async function drawClubIdentity(
+  ctx: CanvasRenderingContext2D,
+  data: GroupWinnerShareData,
+  accent: string,
+  cream: string,
+  muted: string
+): Promise<void> {
+  const x = STORY_LAYOUT.padX;
+  const top = STORY_LAYOUT.safeTop;
+  const logoBox = 96;
+  const clubName = data.clubName?.trim() || "Riviera Open";
+  let image: HTMLImageElement | null = null;
+  if (data.clubLogoUrl?.trim()) {
+    try {
+      image = await loadImage(data.clubLogoUrl.trim());
+    } catch {
+      image = null;
+    }
+  }
+
+  if (image) {
+    const imageWidth = image.naturalWidth || image.width;
+    const imageHeight = image.naturalHeight || image.height;
+    const scale = Math.min(logoBox / imageWidth, logoBox / imageHeight);
+    const targetWidth = imageWidth * scale;
+    const targetHeight = imageHeight * scale;
+    ctx.drawImage(
+      image,
+      x + (logoBox - targetWidth) / 2,
+      top + (logoBox - targetHeight) / 2,
+      targetWidth,
+      targetHeight
+    );
+  }
+
+  const textX = x + (image ? logoBox + 22 : 0);
+  ctx.textAlign = "left";
+  ctx.fillStyle = cream;
+  ctx.font = font(780, 42, "body");
+  ctx.fillText(
+    ellipsizeText(
+      ctx,
+      clubName.toUpperCase(),
+      GROUP_WINNER_SHARE_WIDTH - textX - x
+    ),
+    textX,
+    top + 39
+  );
+  ctx.fillStyle = muted;
+  ctx.font = font(700, 24, "body");
+  drawTrackedText(
+    ctx,
+    "BY RIVIERA OPEN",
+    textX,
+    top + 77,
+    2.3
+  );
+  ctx.fillStyle = accent;
+  ctx.fillRect(x, top + 112, 92, 3);
+}
+
+function drawSocialSignature(
+  ctx: CanvasRenderingContext2D,
+  cream: string,
+  muted: string
+): void {
+  const x = STORY_LAYOUT.padX;
+  ctx.fillStyle = muted;
+  ctx.font = font(650, 25, "body");
+  drawTrackedText(
+    ctx,
+    "IG   TIKTOK   FACEBOOK",
+    x,
+    STORY_LAYOUT.footer.socialY,
+    1.1
+  );
+  ctx.textAlign = "right";
+  ctx.fillStyle = cream;
+  ctx.font = font(700, 27, "body");
+  ctx.fillText(RIVIERA_SOCIAL_HANDLE, 992, STORY_LAYOUT.footer.socialY);
+  ctx.textAlign = "left";
+}
+
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -450,7 +594,6 @@ export async function renderGroupWinnerShareCanvas(
   const muted = "#c8c0b7";
   const quiet = "rgba(247,243,237,0.46)";
   const pad = STORY_LAYOUT.padX;
-  const clubName = data.clubName?.trim() || "Riviera Open";
 
   // BACKGROUND — graphite editorial con identidad ambiental muy contenida.
   ctx.fillStyle = "#0e0e10";
@@ -503,23 +646,12 @@ export async function renderGroupWinnerShareCanvas(
   ctx.textAlign = "left";
   ctx.fillText("RIVIERA", -44, 1075);
   ctx.restore();
+  drawMinimalPadelCourt(ctx, w, accent);
 
-  // HEADER — contexto pequeño, alineado a la izquierda y dentro del safe area.
+  // HEADER — el club anfitrión abre la pieza; Riviera queda como plataforma.
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = muted;
-  ctx.font = font(750, 30, "body");
-  const brand = clubName.toUpperCase();
-  const brandTracking = 4.2;
-  drawTrackedText(ctx, brand, pad, STORY_LAYOUT.header.brandY, brandTracking);
-  const brandWidth = trackedTextWidth(ctx, brand, brandTracking);
-  ctx.fillStyle = accent;
-  ctx.fillRect(
-    pad + brandWidth + 22,
-    STORY_LAYOUT.header.brandY - 11,
-    64,
-    3
-  );
+  await drawClubIdentity(ctx, data, accent, cream, muted);
 
   const eventLines = textLinesToFit(
     ctx,
@@ -587,7 +719,7 @@ export async function renderGroupWinnerShareCanvas(
   ctx.fillStyle = muted;
   ctx.font = font(550, 32, "body");
   ctx.fillText(
-    "Lo dieron todo y terminaron en lo más alto.",
+    "Lo dieron todo de principio a fin.",
     pad + 4,
     STORY_LAYOUT.achievement.copyY
   );
@@ -689,24 +821,19 @@ export async function renderGroupWinnerShareCanvas(
     );
   });
 
-  // FOOTER — Riviera firma una sola vez; no compite con el logro.
+  // FOOTER — tagline y redes como firma secundaria.
   ctx.strokeStyle = "rgba(247,243,237,0.18)";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(pad, STORY_LAYOUT.footer.ruleY);
   ctx.lineTo(w - pad, STORY_LAYOUT.footer.ruleY);
   ctx.stroke();
-  ctx.textAlign = "left";
+  ctx.textAlign = "center";
   ctx.fillStyle = cream;
-  ctx.font = font(650, 32, "body");
-  ctx.fillText("Así se juega en Riviera.", pad, STORY_LAYOUT.footer.taglineY);
-  ctx.fillStyle = quiet;
-  ctx.font = font(500, 22, "body");
-  ctx.fillText(
-    "appriviera.rivieraopen.com",
-    pad,
-    STORY_LAYOUT.footer.urlY
-  );
+  ctx.font = font(750, 36, "heading");
+  ctx.fillText(WINNER_TAGLINE, w / 2, STORY_LAYOUT.footer.taglineY);
+  ctx.textAlign = "left";
+  drawSocialSignature(ctx, cream, muted);
 
   return canvas;
 }

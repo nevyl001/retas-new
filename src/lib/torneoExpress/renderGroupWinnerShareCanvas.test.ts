@@ -11,6 +11,7 @@ import {
 
 const baseData: GroupWinnerShareData = {
   tournamentName: "Summer Open",
+  clubName: "Valvidub Sports",
   categoryName: "3ra Fuerza",
   groupName: "Grupo A",
   pairName: "Pablo Pérez / David Díaz",
@@ -90,6 +91,8 @@ describe("renderGroupWinnerShareCanvas", () => {
     );
     expect(paintedText).toContain("Pablo Pérez");
     expect(paintedText).toContain("David Díaz");
+    expect(paintedText).toContain("VALVIDUB SPORTS");
+    expect(paintedText.join("")).toContain("BY RIVIERA OPEN");
     expect(paintedText).not.toContain(baseData.pairName);
     expect(paintedText).not.toContain("GANADORES DEL GRUPO A");
   });
@@ -152,6 +155,8 @@ describe("renderGroupWinnerShareCanvas", () => {
         pairName: "Pablo Maximiliano Pérez / David Alejandro Díaz",
         player1: { name: "Pablo Maximiliano Pérez", avatarUrl: "https://bad.example/a.jpg" },
         player2: { name: "David Alejandro Díaz" },
+              clubName: "Club con Nombre Muy Largo para la Story",
+              clubLogoUrl: "https://bad.example/club-logo.png",
         diff: -4,
       })
     ).resolves.toBe(canvas);
@@ -160,6 +165,58 @@ describe("renderGroupWinnerShareCanvas", () => {
       expect.any(Number),
       expect.any(Number)
     );
+    Object.defineProperty(global, "Image", {
+      configurable: true,
+      value: previousImage,
+    });
+  });
+
+  it("integra fotos y logo disponibles sin cambiar su proporción", async () => {
+    const context = canvasContext();
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: jest.fn(() => context),
+      toBlob: jest.fn(),
+    } as unknown as HTMLCanvasElement;
+    const realCreate = document.createElement.bind(document);
+    jest.spyOn(document, "createElement").mockImplementation((tag: string) =>
+      tag === "canvas" ? canvas : realCreate(tag)
+    );
+    const previousImage = global.Image;
+    class LoadedImage {
+      crossOrigin = "";
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      naturalWidth = 640;
+      naturalHeight = 360;
+      width = 640;
+      height = 360;
+
+      set src(_value: string) {
+        this.onload?.();
+      }
+    }
+    Object.defineProperty(global, "Image", {
+      configurable: true,
+      value: LoadedImage,
+    });
+
+    await expect(
+      renderGroupWinnerShareCanvas({
+        ...baseData,
+        clubLogoUrl: "https://assets.example/club-logo.png",
+        player1: {
+          name: "Emiliano Cárdenas Hernández",
+          avatarUrl: "https://assets.example/player-1.jpg",
+        },
+        player2: {
+          name: "Martín Rodríguez",
+          avatarUrl: "https://assets.example/player-2.jpg",
+        },
+      })
+    ).resolves.toBe(canvas);
+    expect(context.drawImage).toHaveBeenCalled();
     Object.defineProperty(global, "Image", {
       configurable: true,
       value: previousImage,

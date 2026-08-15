@@ -12,11 +12,19 @@ import {
 import { sortPartidosByOrden } from "../../../lib/torneoExpress/roundRobin";
 import { isGrupoPartidosCompletos } from "../../../lib/torneoExpress/grupoCompletion";
 import { shareGroupWinnerImage } from "../../../lib/torneoExpress/shareGroupWinnerImage";
+import { WINNER_TAGLINE } from "../../../lib/torneoExpress/renderGroupWinnerShareCanvas";
+import {
+  RIVIERA_SOCIAL_HANDLE,
+  RIVIERA_SOCIAL_LINKS,
+} from "../../../lib/rivieraBranding";
+import { RIVIERA_CO_BRAND_ATTRIBUTION } from "../../../club-experience/motherBrand";
+import { useClubExperience } from "../../../club-experience";
 import type {
   StandingRowExpress,
   TorneoExpressBundle,
   TorneoExpressPartido,
 } from "../../../lib/torneoExpress/types";
+import { TablerIcon } from "../../ui/TablerIcon";
 import "./te-public-grupos.css";
 
 export type TEPartidoEstadoPublico = "pendiente" | "en_vivo" | "finalizado";
@@ -437,6 +445,70 @@ function GrupoStandings({
   );
 }
 
+const SOCIAL_ICON_BY_ID = {
+  instagram: "brand-instagram",
+  tiktok: "brand-tiktok",
+  facebook: "brand-facebook",
+} as const;
+
+function AchievementClubSignature({
+  clubName,
+  clubLogoUrl,
+}: {
+  clubName: string;
+  clubLogoUrl?: string | null;
+}) {
+  const [logoFailed, setLogoFailed] = useState(false);
+  const showLogo = Boolean(clubLogoUrl?.trim()) && !logoFailed;
+
+  return (
+    <section
+      className="te-grupo-achievement__signature"
+      aria-label={`Organizado por ${clubName}`}
+    >
+      <div className="te-grupo-achievement__club">
+        {showLogo ? (
+          <span className="te-grupo-achievement__club-logo">
+            <img
+              src={clubLogoUrl!}
+              alt=""
+              onError={() => setLogoFailed(true)}
+            />
+          </span>
+        ) : null}
+        <div className="te-grupo-achievement__club-copy">
+          <span className="te-grupo-achievement__club-name">{clubName}</span>
+          <span className="te-grupo-achievement__club-by">
+            {RIVIERA_CO_BRAND_ATTRIBUTION}
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AchievementSocialSignature() {
+  return (
+    <div className="te-grupo-achievement__social">
+      <ul aria-label="Redes sociales Riviera Open">
+        {RIVIERA_SOCIAL_LINKS.map((link) => (
+          <li key={link.id}>
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${link.label} ${RIVIERA_SOCIAL_HANDLE}`}
+            >
+              <TablerIcon name={SOCIAL_ICON_BY_ID[link.id]} size={16} />
+            </a>
+          </li>
+        ))}
+      </ul>
+      <span>{RIVIERA_SOCIAL_HANDLE}</span>
+    </div>
+  );
+}
+
 function GrupoWinnerSummary({
   grupoNombre,
   rows,
@@ -444,6 +516,8 @@ function GrupoWinnerSummary({
   torneoNombre,
   categoria,
   players,
+  clubName,
+  clubLogoUrl,
 }: {
   grupoNombre: string;
   rows: StandingRowExpress[];
@@ -451,6 +525,8 @@ function GrupoWinnerSummary({
   torneoNombre: string;
   categoria: string;
   players?: TEPublicGruposAchievementPlayer[];
+  clubName: string;
+  clubLogoUrl?: string | null;
 }) {
   const [shareMsg, setShareMsg] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
@@ -478,7 +554,8 @@ function GrupoWinnerSummary({
       const theme = readShareTheme();
       const result = await shareGroupWinnerImage({
         tournamentName: torneoNombre,
-        clubName: "Riviera Open",
+        clubName,
+        clubLogoUrl,
         categoryName: categoria || "Torneo Express",
         groupName: grupoNombre,
         pairName: winner.parejaLabel,
@@ -512,46 +589,55 @@ function GrupoWinnerSummary({
       className="te-grupo-achievement"
       aria-label={`Ganadores de ${grupoNombre}`}
     >
-      <div className="te-grupo-achievement__topline">
-        <span>Riviera Open · {torneoNombre}</span>
-        <span aria-hidden>01</span>
-      </div>
-      <div className="te-grupo-achievement__main">
-        <div
-          className="te-grupo-achievement__avatars"
-          aria-label="Pareja ganadora"
-        >
-          {achievementPlayers.map((player, index) => (
-            <div
-              key={`${player.name}-${index}`}
-              className="te-grupo-achievement__player"
-            >
-              <AchievementAvatar player={player} />
-              <span title={player.name}>{player.name}</span>
-            </div>
-          ))}
+      <div className="te-grupo-achievement__art">
+        <AchievementClubSignature
+          clubName={clubName}
+          clubLogoUrl={clubLogoUrl}
+        />
+        <div className="te-grupo-achievement__topline">
+          <span>{torneoNombre}</span>
+          <span aria-hidden>01</span>
         </div>
-        <h3>¡Felicidades!</h3>
-        <p>
-          Lo dieron todo y se quedaron con el {grupoNombre}.
-        </p>
-        <span className="te-grupo-achievement__event">
-          {categoria || "Torneo Express"} · Ganadores de grupo
-        </span>
-      </div>
-      <div className="te-grupo-achievement__stats" aria-label="Estadísticas del logro">
-        <span>
-          <strong>{winner.puntos}</strong>
-          <small>PTS</small>
-        </span>
-        <span>
-          <strong>{winner.pg}</strong>
-          <small>PG</small>
-        </span>
-        <span>
-          <strong>{formatDif(winner.dif)}</strong>
-          <small>DIF</small>
-        </span>
+        <div className="te-grupo-achievement__main">
+          <div
+            className="te-grupo-achievement__avatars"
+            aria-label="Pareja ganadora"
+          >
+            {achievementPlayers.map((player, index) => (
+              <div
+                key={`${player.name}-${index}`}
+                className="te-grupo-achievement__player"
+              >
+                <AchievementAvatar player={player} />
+                <span title={player.name}>{player.name}</span>
+              </div>
+            ))}
+          </div>
+          <h3>¡Felicidades!</h3>
+          <p>Lo dieron todo de principio a fin.</p>
+          <span className="te-grupo-achievement__event">
+            {categoria || "Torneo Express"} · {grupoNombre}
+          </span>
+        </div>
+        <div
+          className="te-grupo-achievement__stats"
+          aria-label="Estadísticas del logro"
+        >
+          <span>
+            <strong>{winner.puntos}</strong>
+            <small>PTS</small>
+          </span>
+          <span>
+            <strong>{winner.pg}</strong>
+            <small>PG</small>
+          </span>
+          <span>
+            <strong>{formatDif(winner.dif)}</strong>
+            <small>DIF</small>
+          </span>
+        </div>
+        <p className="te-grupo-achievement__tagline">{WINNER_TAGLINE}</p>
+        <AchievementSocialSignature />
       </div>
       <footer className="te-grupo-achievement__footer">
         <button
@@ -577,7 +663,7 @@ function GrupoWinnerSummary({
           </svg>
           {isSharing ? "Preparando tu logro…" : "Compartir logro"}
         </button>
-        <p aria-live="polite">{shareMsg || "Así se juega en Riviera."}</p>
+        {shareMsg ? <p aria-live="polite">{shareMsg}</p> : null}
       </footer>
     </aside>
   );
@@ -595,6 +681,14 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   faseFinalHref,
 }) => {
   const [selectedGrupoId, setSelectedGrupoId] = useState<string | null>(null);
+  const { branding, manifest, isScopeBrandingReady } = useClubExperience();
+  const clubName =
+    isScopeBrandingReady && manifest.displayName.trim()
+      ? manifest.displayName.trim()
+      : isScopeBrandingReady && branding.nombre.trim()
+        ? branding.nombre.trim()
+      : "Riviera Open";
+  const clubLogoUrl = isScopeBrandingReady ? branding.logoUrl : null;
   const showGrupoIndex = !singleGrupo && grupos.length > 1;
 
   useEffect(() => {
@@ -788,6 +882,8 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
                   torneoNombre={torneoNombre}
                   categoria={categoria}
                   players={grupo.achievementPlayers}
+                  clubName={clubName}
+                  clubLogoUrl={clubLogoUrl}
                 />
               </div>
             </div>
