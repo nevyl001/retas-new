@@ -1107,6 +1107,16 @@
   --te-groups-motion: 170ms ease;
 }
 
+/* Riviera usa tinta #15191F como acento en superficies claras. En esta isla
+   pública oscura, el acento operativo debe ser neutro y legible. Los tenants
+   premium conservan intacto su --brand-accent dinámico. */
+.club-experience-scope[data-brand="riviera"]
+  .te-public.te-public--grupos-wide,
+.club-experience-scope[data-brand="pending"]
+  .te-public.te-public--grupos-wide {
+  --te-groups-accent: var(--ro-chrome-text);
+}
+
 .te-public.te-public--grupos-wide .te-public__inner {
   padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);

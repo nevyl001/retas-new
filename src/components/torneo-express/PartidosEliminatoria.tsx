@@ -27,6 +27,7 @@ import type {
   TorneoExpressPartido,
 } from "../../lib/torneoExpress/types";
 import { Badge, Button } from "../ui";
+import { TablerIcon } from "../ui/TablerIcon";
 import { PartidoSetsResultModal } from "./PartidoSetsResultModal";
 import { PartidoSetsScoreDisplay } from "./PartidoSetsScoreDisplay";
 
@@ -77,6 +78,7 @@ function EliminatoriaPartidoCard({
   saving,
   savingCancha,
   savingProgramado,
+  matchNumber,
   onSave,
   onSaveCancha,
   onSaveProgramado,
@@ -88,6 +90,7 @@ function EliminatoriaPartidoCard({
   saving: boolean;
   savingCancha: boolean;
   savingProgramado: boolean;
+  matchNumber: number;
   onSave?: PartidosEliminatoriaProps["onSaveResultado"];
   onSaveCancha?: PartidosEliminatoriaProps["onSaveCancha"];
   onSaveProgramado?: PartidosEliminatoriaProps["onSaveProgramado"];
@@ -123,8 +126,11 @@ function EliminatoriaPartidoCard({
         ? localLabel
         : visitLabel;
     return (
-      <div className="te-partido-card te-partido-card--bye">
+      <div className="te-partido-card te-elim-partido-card te-partido-card--bye">
         <div className="te-partido-card__head">
+          <span className="te-elim-partido-card__number">
+            Partido {matchNumber}
+          </span>
           <Badge variant="finished">BYE</Badge>
         </div>
         <p className="te-elim-bye-label">
@@ -137,7 +143,7 @@ function EliminatoriaPartidoCard({
   return (
     <>
       <div
-        className={`te-partido-card${
+        className={`te-partido-card te-elim-partido-card${
           canEditResult && !played ? " te-partido-card--clickable" : ""
         }`}
         onClick={() => {
@@ -157,6 +163,9 @@ function EliminatoriaPartidoCard({
         tabIndex={canEditResult && !played ? 0 : undefined}
       >
         <div className="te-partido-card__head">
+          <span className="te-elim-partido-card__number">
+            Partido {matchNumber}
+          </span>
           {played ? (
             <Badge variant="finished">✓ JUGADO</Badge>
           ) : (
@@ -176,14 +185,14 @@ function EliminatoriaPartidoCard({
               }}
             >
               <span className="te-partido-chip__icon" aria-hidden>
-                📅
+                <TablerIcon name="calendar" size={14} />
               </span>
               {fechaLabel}
             </button>
           ) : (
             <span className="te-partido-chip">
               <span className="te-partido-chip__icon" aria-hidden>
-                📅
+                <TablerIcon name="calendar" size={14} />
               </span>
               {fechaLabel}
             </span>
@@ -199,14 +208,14 @@ function EliminatoriaPartidoCard({
               }}
             >
               <span className="te-partido-chip__icon" aria-hidden>
-                🕐
+                <TablerIcon name="clock" size={14} />
               </span>
               {horaLabel}
             </button>
           ) : (
             <span className="te-partido-chip">
               <span className="te-partido-chip__icon" aria-hidden>
-                🕐
+                <TablerIcon name="clock" size={14} />
               </span>
               {horaLabel}
             </span>
@@ -223,14 +232,14 @@ function EliminatoriaPartidoCard({
                 }}
               >
                 <span className="te-partido-chip__icon" aria-hidden>
-                  📍
+                  <TablerIcon name="map-pin" size={14} />
                 </span>
                 {canchaLabel}
               </button>
             ) : (
               <span className="te-partido-chip te-partido-chip--cancha">
                 <span className="te-partido-chip__icon" aria-hidden>
-                  📍
+                  <TablerIcon name="map-pin" size={14} />
                 </span>
                 {canchaLabel}
               </span>
@@ -516,7 +525,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
       </div>
 
       <div className="te-partidos-list">
-        {partidosRonda.map((p) => (
+        {partidosRonda.map((p, index) => (
           <EliminatoriaPartidoCard
             key={p.id}
             partido={p}
@@ -526,6 +535,7 @@ export const PartidosEliminatoria: React.FC<PartidosEliminatoriaProps> = ({
             saving={savingPartidoId === p.id}
             savingCancha={savingCanchaId === p.id}
             savingProgramado={savingProgramadoId === p.id}
+            matchNumber={index + 1}
             onSave={onSaveResultado}
             onSaveCancha={onSaveCancha}
             onSaveProgramado={onSaveProgramado}

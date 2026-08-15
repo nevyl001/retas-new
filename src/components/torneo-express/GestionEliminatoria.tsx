@@ -1,7 +1,6 @@
 import React from "react";
 import type { PartidoSetScore, TorneoExpressBundle } from "../../lib/torneoExpress/types";
 import { torneoExpressFaseLabel } from "../../lib/torneoExpress/labels";
-import { BracketCuadroPanel } from "./BracketCuadroPanel";
 import { PartidosEliminatoria } from "./PartidosEliminatoria";
 import { Badge } from "../ui";
 
@@ -75,26 +74,6 @@ export const GestionEliminatoria: React.FC<GestionEliminatoriaProps> = ({
             onSaveProgramado={onSaveProgramado}
           />
         </section>
-
-        <aside className="te-gestion-layout__aside">
-          <h3 className="te-grupos-card__standings-title te-label-section">
-            Cuadro
-          </h3>
-          <p className="te-grupos-card__standings-hint">
-            Vista del bracket confirmado con resultados en vivo.
-          </p>
-          <p className="te-bracket-scroll-hint">
-            Desliza horizontalmente para ver el cuadro completo.
-          </p>
-          <div className="te-bracket-scroll-container">
-            <BracketCuadroPanel
-              bracketSlots={bundle.torneo.bracket_slots}
-              fase={fase}
-              partidos={bundle.eliminatoriaPartidos}
-              labelMap={labelMap}
-            />
-          </div>
-        </aside>
       </div>
     </div>
   );

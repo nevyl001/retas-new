@@ -1,5 +1,14 @@
 /* Vista pública del Evento — Riviera Open (tokens --ro-*). */
 
+.te-public.te-public--evento {
+  --te-event-accent: var(--brand-accent, var(--ro-accent));
+}
+
+.club-experience-scope[data-brand="riviera"] .te-public.te-public--evento,
+.club-experience-scope[data-brand="pending"] .te-public.te-public--evento {
+  --te-event-accent: var(--ro-chrome-text);
+}
+
 .te-public--evento .te-public__inner {
   max-width: 920px;
   padding-top: 0.65rem;
@@ -135,7 +144,7 @@
   bottom: 0.7rem;
   width: 2px;
   border-radius: var(--ro-radius-full);
-  background: var(--brand-accent, var(--ro-accent));
+  background: var(--te-event-accent);
   opacity: 0.85;
 }
 
@@ -167,7 +176,7 @@
 }
 
 .te-cat-hub__face:focus-visible {
-  outline: 2px solid var(--brand-accent, var(--ro-accent));
+  outline: 2px solid var(--te-event-accent);
   outline-offset: -2px;
 }
 
@@ -257,7 +266,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--brand-accent, var(--ro-accent));
+  background: var(--te-event-accent);
   transition: width 0.25s ease;
 }
 
@@ -269,11 +278,11 @@
   margin-top: 0.2rem;
   padding-top: 0.4rem;
   border-top: 1px solid
-    color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 28%, transparent);
+    color-mix(in srgb, var(--te-event-accent) 28%, transparent);
   font-size: 0.8125rem;
   font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--brand-accent, var(--ro-accent));
+  color: var(--te-event-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {

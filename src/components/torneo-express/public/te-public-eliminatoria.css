@@ -1,7 +1,15 @@
 /* Vista pública eliminatoria — bracket premium */
 
 .te-public.te-public--eliminatoria {
+  --te-elim-accent: var(--brand-accent, var(--ro-accent));
   background: transparent !important;
+}
+
+.club-experience-scope[data-brand="riviera"]
+  .te-public.te-public--eliminatoria,
+.club-experience-scope[data-brand="pending"]
+  .te-public.te-public--eliminatoria {
+  --te-elim-accent: var(--ro-chrome-text);
 }
 
 .te-public.te-public--eliminatoria .te-public__inner {
@@ -176,7 +184,7 @@
   width: 1px;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 48%, transparent),
+    color-mix(in srgb, var(--te-elim-accent) 48%, transparent),
     rgba(255, 255, 255, 0.12) 55%,
     transparent
   );
@@ -256,9 +264,9 @@
 }
 
 .te-pb-round--active .te-pb-round__marker {
-  color: var(--brand-accent, var(--ro-accent));
+  color: var(--te-elim-accent);
   text-shadow: 0 0 12px
-    color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 55%, transparent);
+    color-mix(in srgb, var(--te-elim-accent) 55%, transparent);
   animation: te-pb-marker-breathe 3.2s ease-in-out infinite;
 }
 
@@ -287,7 +295,7 @@
 }
 
 .te-pb-round--active .te-pb-round__title {
-  color: var(--brand-accent, var(--ro-accent));
+  color: var(--te-elim-accent);
 }
 
 .te-pb-round__summary {
@@ -299,7 +307,7 @@
 }
 
 .te-pb-round--active .te-pb-round__summary {
-  color: var(--brand-accent, var(--ro-accent));
+  color: var(--te-elim-accent);
 }
 
 .te-pb-round__champion {
@@ -316,7 +324,7 @@
 .te-pb-round__champion span {
   font-size: 0.625rem;
   letter-spacing: 0.18em;
-  color: var(--brand-accent, var(--ro-accent));
+  color: var(--te-elim-accent);
 }
 
 .te-pb-round__stack {
@@ -367,14 +375,14 @@
 }
 
 .te-pb-match--final {
-  border-top-color: color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 54%, rgba(255, 255, 255, 0.14));
+  border-top-color: color-mix(in srgb, var(--te-elim-accent) 54%, rgba(255, 255, 255, 0.14));
   background: color-mix(
     in srgb,
-    var(--brand-accent, var(--ro-accent, #a66042)) 8%,
+    var(--te-elim-accent) 8%,
     rgba(255, 255, 255, 0.04)
   );
   box-shadow: 0 -8px 34px
-    color-mix(in srgb, var(--brand-accent, var(--ro-accent)) 8%, transparent);
+    color-mix(in srgb, var(--te-elim-accent) 8%, transparent);
 }
 
 .te-pb-match--third {
@@ -383,7 +391,7 @@
 }
 
 .te-pb-match--live {
-  border-color: color-mix(in srgb, var(--brand-accent, var(--ro-accent, #a66042)) 42%, rgba(255, 255, 255, 0.12));
+  border-color: color-mix(in srgb, var(--te-elim-accent) 42%, rgba(255, 255, 255, 0.12));
 }
 
 .te-pb-match--placeholder {
@@ -423,7 +431,7 @@
 }
 
 .te-pb-match__status--live {
-  color: var(--brand-accent, var(--ro-accent, #c47a58));
+  color: var(--te-elim-accent);
 }
 
 .te-pb-match__status--finished {
@@ -470,7 +478,7 @@
   text-transform: uppercase;
   color: color-mix(
     in srgb,
-    var(--brand-accent, var(--ro-accent, #c47a58)) 42%,
+    var(--te-elim-accent) 42%,
     #fff 58%
   );
 }
@@ -585,7 +593,7 @@
 .te-pb-team__check {
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--brand-accent, var(--ro-accent, #c47a58));
+  color: var(--te-elim-accent);
 }
 
 .te-pb-team__names {
@@ -764,14 +772,14 @@
 }
 
 .te-pb-mobile-nav__tab:focus-visible {
-  outline: 2px solid var(--brand-accent, var(--ro-accent, #c47a58));
+  outline: 2px solid var(--te-elim-accent);
   outline-offset: 2px;
 }
 
 .te-pb-mobile-nav__tab--active {
   background: color-mix(
     in srgb,
-    var(--brand-accent, var(--ro-accent, #a66042)) 22%,
+    var(--te-elim-accent) 22%,
     rgba(255, 255, 255, 0.06)
   );
   color: var(--text-primary, #fff);
