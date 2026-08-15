@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { formatCanchaDisplay } from "../../../lib/torneoExpress/canchaDisplay";
 import {
   formatPartidoFecha,
@@ -291,6 +291,25 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
   copyMsg,
   faseFinalHref,
 }) => {
+  const [selectedGrupoId, setSelectedGrupoId] = useState<string | null>(null);
+  const showGrupoIndex = !singleGrupo && grupos.length > 1;
+
+  useEffect(() => {
+    if (
+      selectedGrupoId &&
+      !grupos.some((grupo) => grupo.id === selectedGrupoId)
+    ) {
+      setSelectedGrupoId(null);
+    }
+  }, [grupos, selectedGrupoId]);
+
+  const visibleGrupos = useMemo(() => {
+    if (singleGrupo || !selectedGrupoId) return grupos;
+    return grupos.filter((grupo) => grupo.id === selectedGrupoId);
+  }, [grupos, selectedGrupoId, singleGrupo]);
+
+  const showingFiltered = showGrupoIndex && selectedGrupoId != null;
+
   const subInfo = useMemo(() => {
     const totalParejas = grupos.reduce(
       (sum, g) => sum + g.standingRows.length,
@@ -320,9 +339,10 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
       : `${torneoNombre} — Fase de grupos`;
   const eyebrow = `TORNEO · ${torneoNombre.trim().toUpperCase()}`;
 
-  const gridClass = singleGrupo
-    ? "te-grupos-grid te-grupos-grid--single"
-    : "te-grupos-grid";
+  const gridClass =
+    singleGrupo || showingFiltered
+      ? "te-grupos-grid te-grupos-grid--single"
+      : "te-grupos-grid";
 
   return (
     <div className="te-grupos-page">
@@ -354,6 +374,37 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
         {copyMsg ? <p className="te-grupos-copy-msg">{copyMsg}</p> : null}
       </header>
 
+      {showGrupoIndex ? (
+        <nav className="te-grupos-index" aria-label="Índice de grupos">
+          <button
+            type="button"
+            className={`te-grupos-index__btn${
+              selectedGrupoId == null ? " te-grupos-index__btn--active" : ""
+            }`}
+            aria-pressed={selectedGrupoId == null}
+            onClick={() => setSelectedGrupoId(null)}
+          >
+            Todos
+          </button>
+          {grupos.map((grupo) => {
+            const active = selectedGrupoId === grupo.id;
+            return (
+              <button
+                key={grupo.id}
+                type="button"
+                className={`te-grupos-index__btn${
+                  active ? " te-grupos-index__btn--active" : ""
+                }`}
+                aria-pressed={active}
+                onClick={() => setSelectedGrupoId(grupo.id)}
+              >
+                {grupo.nombre}
+              </button>
+            );
+          })}
+        </nav>
+      ) : null}
+
       {grupos.length > 0 && (
         <div className="te-grupos-scoring-help">
           <PublicStandingsScoringHelp />
@@ -364,7 +415,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
         <p className="te-grupos-empty">Sin grupos en este torneo.</p>
       ) : (
         <div className={gridClass}>
-        {grupos.map((grupo) => (
+        {visibleGrupos.map((grupo) => (
           <section key={grupo.id} className="te-grupo-wrap">
             <div className="te-grupo-head">
               <h2 className="te-grupo-label">{grupo.nombre}</h2>
