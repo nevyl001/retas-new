@@ -52,6 +52,7 @@ function canvasContext(): CanvasRenderingContext2D {
     save: jest.fn(),
     restore: jest.fn(),
     createLinearGradient: jest.fn(() => gradient),
+    createRadialGradient: jest.fn(() => gradient),
     measureText: jest.fn((text: string) => ({
       width: text.length * 14,
     })),
@@ -84,6 +85,13 @@ describe("renderGroupWinnerShareCanvas", () => {
       expect.any(Number),
       expect.any(Number)
     );
+    const paintedText = (context.fillText as jest.Mock).mock.calls.map(
+      ([text]) => text
+    );
+    expect(paintedText).toContain("Pablo Pérez");
+    expect(paintedText).toContain("David Díaz");
+    expect(paintedText).not.toContain(baseData.pairName);
+    expect(paintedText).not.toContain("GANADORES DEL GRUPO A");
   });
 
   it("admite datos dinámicos, nombres largos y diferencias con signo", async () => {

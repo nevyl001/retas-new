@@ -27,6 +27,43 @@ export type GroupWinnerShareData = {
 
 type TextLine = { text: string; fontSize: number };
 
+const STORY_LAYOUT = {
+  safeTop: 136,
+  safeBottom: 172,
+  padX: 88,
+  header: {
+    brandY: 160,
+    tournamentY: 242,
+    contextGap: 42,
+  },
+  achievement: {
+    detailY: 424,
+    titleY: 548,
+    copyY: 620,
+  },
+  players: {
+    firstX: 336,
+    secondX: 744,
+    firstY: 914,
+    secondY: 950,
+    diameter: 276,
+    firstNameY: 1090,
+    secondNameY: 1126,
+    nameWidth: 344,
+  },
+  stats: {
+    top: 1338,
+    valueY: 1454,
+    labelY: 1502,
+    bottom: 1562,
+  },
+  footer: {
+    ruleY: 1644,
+    taglineY: 1724,
+    urlY: 1774,
+  },
+} as const;
+
 export function formatSignedNumber(value: number): string {
   if (value > 0) return `+${value}`;
   return String(value);
@@ -80,16 +117,43 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function font(weight: number, size: number): string {
-  const family =
-    typeof document !== "undefined"
-      ? getComputedStyle(document.documentElement)
-          .getPropertyValue("--ro-font-heading")
-          .trim()
-      : "";
+function fontFamily(role: "heading" | "body"): string {
+  if (typeof document === "undefined") {
+    return 'system-ui, -apple-system, "Segoe UI", sans-serif';
+  }
+  const styles = getComputedStyle(document.documentElement);
+  const properties =
+    role === "heading"
+      ? ["--ro-font-heading", "--font-heading", "--font-display"]
+      : ["--ro-font-body", "--font-body"];
+  for (const property of properties) {
+    const family = styles.getPropertyValue(property).trim();
+    if (family) return family;
+  }
+  return 'system-ui, -apple-system, "Segoe UI", sans-serif';
+}
+
+function font(
+  weight: number,
+  size: number,
+  role: "heading" | "body" = "heading"
+): string {
   return `${weight} ${size}px ${
-    family || 'system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontFamily(role)
   }`;
+}
+
+function ellipsizeText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+): string {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let value = text.trim();
+  while (value.length > 1 && ctx.measureText(`${value}…`).width > maxWidth) {
+    value = value.slice(0, -1).trimEnd();
+  }
+  return `${value}…`;
 }
 
 function wrapText(
@@ -116,8 +180,11 @@ function wrapText(
     }
   }
   lines.push(current);
-  if (lines.length <= maxLines) return lines;
-  return lines.slice(0, maxLines);
+  const visible = lines.slice(0, maxLines);
+  if (lines.length > maxLines) {
+    visible[maxLines - 1] = `${visible[maxLines - 1]}…`;
+  }
+  return visible;
 }
 
 function textLinesToFit(
@@ -141,10 +208,115 @@ function textLinesToFit(
   return lines.map((line, index) => ({
     text:
       index === maxLines - 1 && ctx.measureText(line).width > maxWidth
-        ? `${line.slice(0, Math.max(1, Math.floor(line.length * 0.78)))}…`
+        ? ellipsizeText(ctx, line, maxWidth)
         : line,
     fontSize: minFont,
   }));
+}
+
+function trackedTextWidth(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  tracking: number
+): number {
+  return text.split("").reduce(
+    (width, char, index, chars) =>
+      width +
+      ctx.measureText(char).width +
+      (index < chars.length - 1 ? tracking : 0),
+    0
+  );
+}
+
+function drawTrackedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  tracking: number
+): void {
+  const chars = text.split("");
+  let cursor = x;
+  ctx.save();
+  ctx.textAlign = "left";
+  chars.forEach((char, index) => {
+    ctx.fillText(char, cursor, y);
+    cursor +=
+      ctx.measureText(char).width + (index < chars.length - 1 ? tracking : 0);
+  });
+  ctx.restore();
+}
+
+function drawTextLines(
+  ctx: CanvasRenderingContext2D,
+  lines: TextLine[],
+  x: number,
+  startY: number,
+  lineHeight: number,
+  weight: number,
+  role: "heading" | "body" = "heading"
+): number {
+  let y = startY;
+  lines.forEach((line) => {
+    ctx.font = font(weight, line.fontSize, role);
+    ctx.fillText(line.text, x, y);
+    y += line.fontSize * lineHeight;
+  });
+  return y;
+}
+
+function placementLabel(position: number): string {
+  if (position === 1) return "PRIMER LUGAR";
+  return `${position}º LUGAR`;
+}
+
+function parseCssRgb(color: string): [number, number, number] | null {
+  const value = color.trim();
+  const shortHex = value.match(/^#([\da-f])([\da-f])([\da-f])$/i);
+  if (shortHex) {
+    return shortHex.slice(1).map((channel) =>
+      Number.parseInt(`${channel}${channel}`, 16)
+    ) as [number, number, number];
+  }
+  const hex = value.match(/^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i);
+  if (hex) {
+    return hex.slice(1).map((channel) =>
+      Number.parseInt(channel, 16)
+    ) as [number, number, number];
+  }
+  const rgb = value.match(
+    /^rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)/i
+  );
+  if (!rgb) return null;
+  return rgb.slice(1, 4).map((channel) =>
+    Math.max(0, Math.min(255, Number(channel)))
+  ) as [number, number, number];
+}
+
+function relativeLuminance([red, green, blue]: [
+  number,
+  number,
+  number,
+]): number {
+  const channels = [red, green, blue].map((channel) => {
+    const value = channel / 255;
+    return value <= 0.03928
+      ? value / 12.92
+      : Math.pow((value + 0.055) / 1.055, 2.4);
+  });
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+function resolveEditorialAccent(themeAccent?: string): string {
+  const fallback = "#c9845c";
+  const candidate = themeAccent?.trim();
+  if (!candidate) return fallback;
+  const rgb = parseCssRgb(candidate);
+  if (!rgb) return candidate;
+  const light = relativeLuminance(rgb);
+  const dark = relativeLuminance([14, 14, 16]);
+  const contrast = (Math.max(light, dark) + 0.05) / (Math.min(light, dark) + 0.05);
+  return contrast >= 2.25 ? candidate : fallback;
 }
 
 async function drawAvatar(
@@ -156,9 +328,28 @@ async function drawAvatar(
   accent: string
 ) {
   const radius = diameter / 2;
+  const portraitRadius = radius - 12;
+
+  ctx.save();
+  ctx.fillStyle = "#101114";
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius + 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#08090b";
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius - 2, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius - 7, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
   ctx.save();
   ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, portraitRadius, 0, Math.PI * 2);
   ctx.closePath();
   ctx.clip();
 
@@ -174,8 +365,8 @@ async function drawAvatar(
     const crop = computeCoverCrop(
       image.naturalWidth || image.width,
       image.naturalHeight || image.height,
-      diameter,
-      diameter
+      portraitRadius * 2,
+      portraitRadius * 2
     );
     ctx.drawImage(
       image,
@@ -183,34 +374,45 @@ async function drawAvatar(
       crop.sy,
       crop.sw,
       crop.sh,
-      centerX - radius,
-      centerY - radius,
-      diameter,
-      diameter
+      centerX - portraitRadius,
+      centerY - portraitRadius,
+      portraitRadius * 2,
+      portraitRadius * 2
     );
   } else {
-    const gradient = ctx.createLinearGradient(
-      centerX - radius,
-      centerY - radius,
-      centerX + radius,
-      centerY + radius
+    const gradient = ctx.createRadialGradient(
+      centerX - portraitRadius * 0.28,
+      centerY - portraitRadius * 0.34,
+      portraitRadius * 0.08,
+      centerX,
+      centerY,
+      portraitRadius
     );
-    gradient.addColorStop(0, "#30343a");
-    gradient.addColorStop(1, "#131518");
+    gradient.addColorStop(0, "#3b3d42");
+    gradient.addColorStop(0.5, "#24262b");
+    gradient.addColorStop(1, "#111216");
     ctx.fillStyle = gradient;
-    ctx.fillRect(centerX - radius, centerY - radius, diameter, diameter);
+    ctx.fillRect(
+      centerX - portraitRadius,
+      centerY - portraitRadius,
+      portraitRadius * 2,
+      portraitRadius * 2
+    );
     ctx.fillStyle = "#f7f3ed";
-    ctx.font = font(800, 66);
+    ctx.font = font(800, 78);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(initialsFromName(player.name), centerX, centerY + 4);
+    ctx.fillText(initialsFromName(player.name), centerX, centerY + 5);
   }
   ctx.restore();
-  ctx.strokeStyle = accent;
-  ctx.lineWidth = 7;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(247,243,237,0.15)";
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(centerX, centerY, radius - 3, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, portraitRadius, 0, Math.PI * 2);
   ctx.stroke();
+  ctx.restore();
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -242,116 +444,219 @@ export async function renderGroupWinnerShareCanvas(
 
   const w = canvas.width;
   const h = canvas.height;
-  const accent = data.themeAccent?.trim() || "#c9845c";
+  const accent = resolveEditorialAccent(data.themeAccent);
   const primary = data.themePrimary?.trim() || "#111416";
   const cream = "#f7f3ed";
-  const muted = "#c9beb2";
-  const pad = 86;
+  const muted = "#c8c0b7";
+  const quiet = "rgba(247,243,237,0.46)";
+  const pad = STORY_LAYOUT.padX;
+  const clubName = data.clubName?.trim() || "Riviera Open";
+
+  // BACKGROUND — graphite editorial con identidad ambiental muy contenida.
+  ctx.fillStyle = "#0e0e10";
+  ctx.fillRect(0, 0, w, h);
 
   const background = ctx.createLinearGradient(0, 0, w, h);
   background.addColorStop(0, primary);
-  background.addColorStop(0.52, "#111110");
-  background.addColorStop(1, "#1d1612");
+  background.addColorStop(0.46, "#111216");
+  background.addColorStop(1, "#171310");
+  ctx.save();
+  ctx.globalAlpha = 0.28;
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, w, h);
+  ctx.restore();
 
-  ctx.globalAlpha = 0.16;
+  const playerLight = ctx.createRadialGradient(
+    w / 2,
+    980,
+    20,
+    w / 2,
+    980,
+    610
+  );
+  playerLight.addColorStop(0, accent);
+  playerLight.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.save();
+  ctx.globalAlpha = 0.075;
+  ctx.fillStyle = playerLight;
+  ctx.fillRect(0, 430, w, 1050);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = 0.055;
   ctx.strokeStyle = accent;
-  ctx.lineWidth = 3;
-  for (let x = -h; x < w; x += 180) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x + h, h);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(-180, 710);
+  ctx.lineTo(940, 140);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(140, 1720);
+  ctx.lineTo(1160, 1170);
+  ctx.stroke();
+  ctx.restore();
 
-  ctx.fillStyle = accent;
-  ctx.fillRect(pad, 148, 78, 5);
-  ctx.fillStyle = muted;
-  ctx.font = font(750, 26);
-  ctx.fillText("RIVIERA OPEN", pad, 118);
-
-  ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(247,243,237,0.48)";
-  ctx.font = font(700, 22);
-  ctx.fillText("LOGRO DE GRUPO", w - pad, 118);
+  ctx.save();
+  ctx.globalAlpha = 0.022;
+  ctx.fillStyle = cream;
+  ctx.font = font(850, 190);
   ctx.textAlign = "left";
+  ctx.fillText("RIVIERA", -44, 1075);
+  ctx.restore();
+
+  // HEADER — contexto pequeño, alineado a la izquierda y dentro del safe area.
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = muted;
+  ctx.font = font(750, 30, "body");
+  const brand = clubName.toUpperCase();
+  const brandTracking = 4.2;
+  drawTrackedText(ctx, brand, pad, STORY_LAYOUT.header.brandY, brandTracking);
+  const brandWidth = trackedTextWidth(ctx, brand, brandTracking);
+  ctx.fillStyle = accent;
+  ctx.fillRect(
+    pad + brandWidth + 22,
+    STORY_LAYOUT.header.brandY - 11,
+    64,
+    3
+  );
 
   const eventLines = textLinesToFit(
     ctx,
     data.tournamentName.toUpperCase(),
-    w - pad * 2,
+    690,
     2,
-    54,
-    34,
+    46,
+    32,
     800
   );
-  let eventY = 252;
   ctx.fillStyle = cream;
-  for (const line of eventLines) {
-    ctx.font = font(800, line.fontSize);
-    ctx.fillText(line.text, pad, eventY);
-    eventY += line.fontSize * 1.12;
-  }
+  const eventBottom = drawTextLines(
+    ctx,
+    eventLines,
+    pad,
+    STORY_LAYOUT.header.tournamentY,
+    1.08,
+    800
+  );
   ctx.fillStyle = muted;
-  ctx.font = font(750, 28);
-  ctx.fillText(`${data.categoryName.toUpperCase()}  ·  ${data.groupName.toUpperCase()}`, pad, eventY + 30);
+  ctx.font = font(700, 27, "body");
+  const context = `${data.categoryName.toUpperCase()}  ·  ${data.groupName.toUpperCase()}`;
+  ctx.fillText(
+    ellipsizeText(ctx, context, w - pad * 2),
+    pad,
+    eventBottom + STORY_LAYOUT.header.contextGap
+  );
 
-  const avatarY = 590;
+  // ACHIEVEMENT — microdetalle de posición + mensaje principal.
+  ctx.fillStyle = accent;
+  ctx.font = font(800, 34);
+  ctx.fillText(
+    String(data.position).padStart(2, "0"),
+    pad,
+    STORY_LAYOUT.achievement.detailY
+  );
+  ctx.fillRect(pad + 60, STORY_LAYOUT.achievement.detailY - 12, 126, 3);
+  ctx.font = font(750, 25, "body");
+  drawTrackedText(
+    ctx,
+    placementLabel(data.position),
+    pad + 214,
+    STORY_LAYOUT.achievement.detailY,
+    2.4
+  );
+
+  ctx.fillStyle = cream;
+  const titleLines = textLinesToFit(
+    ctx,
+    "¡FELICIDADES!",
+    w - pad * 2,
+    1,
+    94,
+    78,
+    850
+  );
+  drawTextLines(
+    ctx,
+    titleLines,
+    pad,
+    STORY_LAYOUT.achievement.titleY,
+    1,
+    850
+  );
+  ctx.fillStyle = muted;
+  ctx.font = font(550, 32, "body");
+  ctx.fillText(
+    "Lo dieron todo y terminaron en lo más alto.",
+    pad + 4,
+    STORY_LAYOUT.achievement.copyY
+  );
+
+  // PLAYERS — retratos dominantes, levemente asimétricos y con igual peso.
+  ctx.save();
+  ctx.strokeStyle = accent;
+  ctx.globalAlpha = 0.24;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(112, 1008);
+  ctx.lineTo(968, 1008);
+  ctx.stroke();
+  ctx.restore();
+
   await Promise.all([
-    drawAvatar(ctx, data.player1, 345, avatarY, 222, accent),
-    drawAvatar(ctx, data.player2, 735, avatarY, 222, accent),
+    drawAvatar(
+      ctx,
+      data.player1,
+      STORY_LAYOUT.players.firstX,
+      STORY_LAYOUT.players.firstY,
+      STORY_LAYOUT.players.diameter,
+      accent
+    ),
+    drawAvatar(
+      ctx,
+      data.player2,
+      STORY_LAYOUT.players.secondX,
+      STORY_LAYOUT.players.secondY,
+      STORY_LAYOUT.players.diameter,
+      accent
+    ),
   ]);
+
   ctx.textAlign = "center";
   ctx.fillStyle = cream;
-  for (const [player, x] of [
-    [data.player1, 345],
-    [data.player2, 735],
+  for (const [player, x, y] of [
+    [
+      data.player1,
+      STORY_LAYOUT.players.firstX,
+      STORY_LAYOUT.players.firstNameY,
+    ],
+    [
+      data.player2,
+      STORY_LAYOUT.players.secondX,
+      STORY_LAYOUT.players.secondNameY,
+    ],
   ] as const) {
-    const lines = textLinesToFit(ctx, player.name, 270, 2, 30, 22, 700);
-    let playerY = 746;
-    for (const line of lines) {
-      ctx.font = font(700, line.fontSize);
-      ctx.fillText(line.text, x, playerY);
-      playerY += line.fontSize * 1.16;
-    }
+    const lines = textLinesToFit(
+      ctx,
+      player.name,
+      STORY_LAYOUT.players.nameWidth,
+      2,
+      44,
+      30,
+      750
+    );
+    drawTextLines(ctx, lines, x, y, 1.12, 750);
   }
 
-  ctx.fillStyle = cream;
-  ctx.font = font(800, 84);
-  ctx.fillText("¡FELICIDADES!", w / 2, 930);
-  ctx.fillStyle = muted;
-  ctx.font = font(550, 34);
-  const copy = textLinesToFit(
-    ctx,
-    `Lo dieron todo y se quedaron con el ${data.groupName}.`,
-    w - 180,
-    2,
-    34,
-    28,
-    550
-  );
-  let copyY = 992;
-  for (const line of copy) {
-    ctx.font = font(550, line.fontSize);
-    ctx.fillText(line.text, w / 2, copyY);
-    copyY += line.fontSize * 1.28;
-  }
+  // STATS — una sola unidad visual, sin cards ni información redundante.
+  ctx.textAlign = "center";
+  ctx.strokeStyle = "rgba(247,243,237,0.16)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(pad, STORY_LAYOUT.stats.top);
+  ctx.lineTo(w - pad, STORY_LAYOUT.stats.top);
+  ctx.stroke();
 
-  ctx.fillStyle = muted;
-  ctx.font = font(800, 26);
-  ctx.fillText(`GANADORES DEL ${data.groupName.toUpperCase()}`, w / 2, 1135);
-  ctx.fillStyle = cream;
-  const pair = textLinesToFit(ctx, data.pairName, w - 160, 2, 54, 34, 800);
-  let pairY = 1200;
-  for (const line of pair) {
-    ctx.font = font(800, line.fontSize);
-    ctx.fillText(line.text, w / 2, pairY);
-    pairY += line.fontSize * 1.12;
-  }
-
-  const statsTop = 1355;
   const statW = (w - pad * 2) / 3;
   const stats = [
     { value: String(data.points), label: "PTS" },
@@ -364,33 +669,44 @@ export async function renderGroupWinnerShareCanvas(
       ctx.strokeStyle = "rgba(247,243,237,0.16)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(x, statsTop);
-      ctx.lineTo(x, statsTop + 164);
+      ctx.moveTo(x, STORY_LAYOUT.stats.top + 40);
+      ctx.lineTo(x, STORY_LAYOUT.stats.bottom - 12);
       ctx.stroke();
     }
-    ctx.fillStyle = cream;
+    ctx.fillStyle = index === 2 && data.diff > 0 ? accent : cream;
     ctx.font = font(800, 72);
-    ctx.fillText(stat.value, x + statW / 2, statsTop + 72);
-    ctx.fillStyle = muted;
-    ctx.font = font(800, 22);
-    ctx.fillText(stat.label, x + statW / 2, statsTop + 116);
+    ctx.fillText(stat.value, x + statW / 2, STORY_LAYOUT.stats.valueY);
+    ctx.fillStyle = quiet;
+    ctx.font = font(750, 24, "body");
+    drawTrackedText(
+      ctx,
+      stat.label,
+      x +
+        statW / 2 -
+        trackedTextWidth(ctx, stat.label, 2.6) / 2,
+      STORY_LAYOUT.stats.labelY,
+      2.6
+    );
   });
 
+  // FOOTER — Riviera firma una sola vez; no compite con el logro.
   ctx.strokeStyle = "rgba(247,243,237,0.18)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(pad, 1605);
-  ctx.lineTo(w - pad, 1605);
+  ctx.moveTo(pad, STORY_LAYOUT.footer.ruleY);
+  ctx.lineTo(w - pad, STORY_LAYOUT.footer.ruleY);
   ctx.stroke();
-  ctx.fillStyle = cream;
-  ctx.font = font(600, 32);
-  ctx.fillText("Así se juega en Riviera.", w / 2, 1685);
-  ctx.fillStyle = muted;
-  ctx.font = font(750, 24);
-  ctx.fillText("RIVIERA OPEN", w / 2, 1760);
-  ctx.font = font(500, 23);
-  ctx.fillText("appriviera.rivieraopen.com", w / 2, 1802);
   ctx.textAlign = "left";
+  ctx.fillStyle = cream;
+  ctx.font = font(650, 32, "body");
+  ctx.fillText("Así se juega en Riviera.", pad, STORY_LAYOUT.footer.taglineY);
+  ctx.fillStyle = quiet;
+  ctx.font = font(500, 22, "body");
+  ctx.fillText(
+    "appriviera.rivieraopen.com",
+    pad,
+    STORY_LAYOUT.footer.urlY
+  );
 
   return canvas;
 }
