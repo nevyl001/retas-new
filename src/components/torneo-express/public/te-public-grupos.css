@@ -372,7 +372,7 @@
 
 @media (min-width: 900px) {
   .te-grupos-grid--single .te-grupo-inner {
-    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 1fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.95fr);
     gap: 16px;
   }
 }
@@ -1971,10 +1971,33 @@
 }
 
 .te-public.te-public--grupos-wide .te-standing-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
   margin-top: 4px;
   color: var(--text-secondary);
   font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
   line-height: 1.35;
+}
+
+/* En móvil las estadísticas se leen como una frase separada por puntos; en
+   escritorio (más abajo) las mismas celdas se alinean en columnas fijas. */
+.te-public.te-public--grupos-wide .te-standing-row__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.22em;
+  white-space: nowrap;
+}
+
+.te-public.te-public--grupos-wide .te-standing-row__stat b {
+  font-weight: inherit;
+}
+
+.te-public.te-public--grupos-wide .te-standing-row__stat:not(:last-child)::after {
+  content: "·";
+  margin: 0 0.4em;
+  color: var(--text-disabled);
 }
 
 .te-public.te-public--grupos-wide .te-standing-row__qualified {
@@ -2323,9 +2346,38 @@
   transform: scale(0.985);
 }
 
+.te-public.te-public--grupos-wide .te-grupo-achievement__share:disabled {
+  cursor: wait;
+  opacity: 0.76;
+  filter: saturate(0.72);
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__share[aria-busy="true"]::before {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  content: "";
+  animation: te-groups-share-spin 700ms linear infinite;
+}
+
 .te-public.te-public--grupos-wide .te-grupo-achievement__share:focus-visible {
   outline: 2px solid var(--text-primary);
   outline-offset: 2px;
+}
+
+@keyframes te-groups-share-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .te-public.te-public--grupos-wide
+    .te-grupo-achievement__share[aria-busy="true"]::before {
+    animation: none;
+  }
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement {
@@ -2345,4 +2397,219 @@
 .te-public.te-public--grupos-wide .te-grupo-achievement__stats small {
   display: block;
   margin: 0;
+}
+
+/**
+ * Desktop: usa todo el ancho, pero reparte los grupos en columnas para que
+ * ninguna card quede desproporcionada. Escala tipográfica intermedia: menor
+ * que la móvil (pensada para el pulgar) y mayor que una tabla de datos densa.
+ */
+@media (min-width: 769px) {
+  .te-public.te-public--grupos-wide .te-grupos-hero {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-title {
+    font-size: clamp(1.25rem, 0.95rem + 0.5vw, 1.4rem);
+  }
+
+  .te-public.te-public--grupos-wide .te-phase-segment {
+    width: min(100%, 320px);
+  }
+
+  .te-public.te-public--grupos-wide .te-phase-segment__item {
+    min-height: 38px;
+    font-size: 0.75rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupos-grid {
+    gap: 14px;
+  }
+
+  /* Cada columna nace lo bastante ancha para que la card siempre supere el
+     umbral del container query y la clasificación quede al lado, no debajo. */
+  .te-public.te-public--grupos-wide
+    .te-grupos-grid:not(.te-grupos-grid--single) {
+    grid-template-columns: repeat(auto-fit, minmax(680px, 1fr));
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-standings__header {
+    gap: 10px;
+  }
+
+  /* El split interno depende del ancho real de la card, no del viewport:
+     así la clasificación nunca queda estrangulada en pantallas medianas. */
+  .te-public.te-public--grupos-wide .te-grupo-wrap {
+    container-type: inline-size;
+    padding: 11px;
+    border-radius: 14px;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-inner {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  @container (min-width: 620px) {
+    .te-public.te-public--grupos-wide .te-grupo-inner {
+      grid-template-columns: minmax(0, 1fr) minmax(330px, 0.92fr);
+      gap: 12px;
+    }
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-label {
+    font-size: 0.8125rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-partido-item {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .te-public.te-public--grupos-wide .te-partido-hora,
+  .te-public.te-public--grupos-wide .te-partido-meta .te-partido-hora {
+    font-size: 0.625rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-badge-final,
+  .te-public.te-public--grupos-wide .te-badge-live,
+  .te-public.te-public--grupos-wide .te-badge-proximo {
+    font-size: 0.59375rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-partidos {
+    gap: 7px;
+  }
+
+  .te-public.te-public--grupos-wide .te-team-row {
+    min-height: 26px;
+    gap: 6px;
+  }
+
+  .te-public.te-public--grupos-wide .te-team-name {
+    font-size: 0.78125rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-team-score-mobile {
+    min-width: 26px;
+    font-size: 0.9375rem;
+  }
+
+  /* El header y las filas comparten el mismo padding lateral para que
+     CLASIFICACIÓN, los nombres y la columna PTS caigan en el mismo eje. */
+  .te-public.te-public--grupos-wide .te-grupo-standings {
+    padding: 0;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-standings__header {
+    min-height: 34px;
+    padding: 0 12px;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row {
+    min-height: 0;
+    grid-template-columns: 24px minmax(0, 1fr) 34px;
+    gap: 10px;
+    padding: 7px 12px;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__position {
+    width: 24px;
+    height: 24px;
+    font-size: 0.6875rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__name {
+    font-size: 0.75rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__meta {
+    margin-top: 2px;
+    font-size: 0.625rem;
+    white-space: nowrap;
+  }
+
+  /* Columnas fijas: PJ, PG, marcador y DIF quedan alineados fila a fila. */
+  .te-public.te-public--grupos-wide .te-standing-row__stat {
+    justify-content: flex-start;
+    min-width: 38px;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__stat:nth-child(3) {
+    min-width: 46px;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__stat:last-child {
+    min-width: 0;
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-standing-row__stat:not(:last-child)::after {
+    display: none;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__qualified {
+    margin-top: 3px;
+    font-size: 0.5rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__points {
+    min-width: 0;
+    font-size: 0.875rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__points small {
+    margin-top: 2px;
+    font-size: 0.4375rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement {
+    min-height: 0;
+    padding: 11px;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__main {
+    padding: 6px 0;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__avatars {
+    min-height: 62px;
+    margin-bottom: 4px;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__player {
+    width: 54px;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 0.75rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__main h3 {
+    font-size: 1.1875rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__main p {
+    margin: 5px auto 7px;
+    font-size: 0.71875rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__stats > span {
+    padding: 6px;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__stats strong {
+    font-size: 0.875rem;
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__share {
+    min-height: 36px;
+    margin-bottom: 7px;
+    font-size: 0.71875rem;
+  }
 }

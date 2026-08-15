@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { formatCanchaDisplay } from "../../../lib/torneoExpress/canchaDisplay";
 import {
   formatPartidoFecha,
@@ -11,6 +11,7 @@ import {
 } from "../../../lib/torneoExpress/partidoSets";
 import { sortPartidosByOrden } from "../../../lib/torneoExpress/roundRobin";
 import { isGrupoPartidosCompletos } from "../../../lib/torneoExpress/grupoCompletion";
+import { shareGroupWinnerImage } from "../../../lib/torneoExpress/shareGroupWinnerImage";
 import type {
   StandingRowExpress,
   TorneoExpressBundle,
@@ -303,6 +304,20 @@ function formatDif(dif: number): string {
   return dif > 0 ? `+${dif}` : String(dif);
 }
 
+function readShareTheme(): { primary: string; accent: string } {
+  if (typeof document === "undefined") {
+    return { primary: "#111416", accent: "#c9845c" };
+  }
+  const styles = getComputedStyle(document.documentElement);
+  return {
+    primary: styles.getPropertyValue("--brand-primary").trim() || "#111416",
+    accent:
+      styles.getPropertyValue("--brand-accent").trim() ||
+      styles.getPropertyValue("--ro-accent").trim() ||
+      "#c9845c",
+  };
+}
+
 function initialsFromName(name: string): string {
   const words = name
     .trim()
@@ -390,8 +405,18 @@ function GrupoStandings({
                     </span>
                   </div>
                   <span className="te-standing-row__meta">
-                    {row.pj} PJ · {row.pg} PG · {row.ptsFav}–{row.ptsCon} ·{" "}
-                    {formatDif(row.dif)} DIF
+                    <span className="te-standing-row__stat">
+                      <b>{row.pj}</b> PJ
+                    </span>
+                    <span className="te-standing-row__stat">
+                      <b>{row.pg}</b> PG
+                    </span>
+                    <span className="te-standing-row__stat">
+                      {row.ptsFav}–{row.ptsCon}
+                    </span>
+                    <span className="te-standing-row__stat">
+                      <b>{formatDif(row.dif)}</b> DIF
+                    </span>
                   </span>
                   {clasifica ? (
                     <span className="te-standing-row__qualified">
@@ -412,25 +437,6 @@ function GrupoStandings({
   );
 }
 
-function copyTextLegacy(text: string): boolean {
-  if (typeof document === "undefined") return false;
-  const area = document.createElement("textarea");
-  area.value = text;
-  area.setAttribute("readonly", "true");
-  area.style.position = "fixed";
-  area.style.opacity = "0";
-  document.body.appendChild(area);
-  area.select();
-  let copied = false;
-  try {
-    copied = document.execCommand("copy");
-  } catch {
-    copied = false;
-  }
-  document.body.removeChild(area);
-  return copied;
-}
-
 function GrupoWinnerSummary({
   grupoNombre,
   rows,
@@ -447,6 +453,8 @@ function GrupoWinnerSummary({
   players?: TEPublicGruposAchievementPlayer[];
 }) {
   const [shareMsg, setShareMsg] = useState<string | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+  const sharingRef = useRef(false);
 
   if (!isGrupoPartidosCompletos(partidos) || rows.length === 0) return null;
   const winner = rows[0];
@@ -456,42 +464,47 @@ function GrupoWinnerSummary({
       ? players.slice(0, 2)
       : fallbackPlayersFromPair(winner.parejaLabel);
 
-  const shareText = `${winner.parejaLabel} ganaron el ${grupoNombre} en ${torneoNombre}${
-    categoria ? ` · ${categoria}` : ""
-  }. Así se juega en Riviera.`;
-
   const flashShareMsg = (msg: string) => {
     setShareMsg(msg);
     window.setTimeout(() => setShareMsg(null), 2600);
   };
 
   const handleShare = async () => {
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    const payload = `${shareText} ${url}`.trim();
+    if (sharingRef.current) return;
+    sharingRef.current = true;
+    setIsSharing(true);
+    setShareMsg(null);
     try {
-      if (typeof navigator !== "undefined" && navigator.share) {
-        await navigator.share({
-          title: `${torneoNombre} · ${grupoNombre}`,
-          text: shareText,
-          url,
-        });
-        return;
+      const theme = readShareTheme();
+      const result = await shareGroupWinnerImage({
+        tournamentName: torneoNombre,
+        clubName: "Riviera Open",
+        categoryName: categoria || "Torneo Express",
+        groupName: grupoNombre,
+        pairName: winner.parejaLabel,
+        player1: achievementPlayers[0],
+        player2: achievementPlayers[1],
+        position: 1,
+        points: winner.puntos,
+        played: winner.pj,
+        wins: winner.pg,
+        fav: winner.ptsFav,
+        con: winner.ptsCon,
+        diff: winner.dif,
+        themePrimary: theme.primary,
+        themeAccent: theme.accent,
+      });
+      if (result.status === "downloaded") {
+        flashShareMsg("Logro guardado. Ya puedes compartirlo en tus redes.");
+      } else if (result.status === "error") {
+        flashShareMsg("No pudimos preparar tu logro. Intenta nuevamente.");
       }
-    } catch (error) {
-      if ((error as DOMException)?.name === "AbortError") return;
-    }
-    try {
-      await navigator.clipboard.writeText(payload);
-      flashShareMsg("Copiado, ya puedes pegarlo.");
-      return;
     } catch {
-      // Navegadores sin permiso de portapapeles: respaldo con selección manual.
+      flashShareMsg("No pudimos preparar tu logro. Intenta nuevamente.");
+    } finally {
+      sharingRef.current = false;
+      setIsSharing(false);
     }
-    if (copyTextLegacy(payload)) {
-      flashShareMsg("Copiado, ya puedes pegarlo.");
-      return;
-    }
-    flashShareMsg("No se pudo compartir, intenta de nuevo.");
   };
 
   return (
@@ -545,6 +558,8 @@ function GrupoWinnerSummary({
           type="button"
           className="te-grupo-achievement__share"
           onClick={handleShare}
+          disabled={isSharing}
+          aria-busy={isSharing}
         >
           <svg
             width="17"
@@ -560,7 +575,7 @@ function GrupoWinnerSummary({
             <circle cx="18" cy="19" r="3" />
             <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
           </svg>
-          Compartir
+          {isSharing ? "Preparando tu logro…" : "Compartir logro"}
         </button>
         <p aria-live="polite">{shareMsg || "Así se juega en Riviera."}</p>
       </footer>
