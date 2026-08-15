@@ -5,6 +5,7 @@ import {
   useClubExperience,
 } from "../../../club-experience";
 import { PublicModeShell } from "../../platform/PublicModeShell";
+import { RivieraAmbientBackground } from "./RivieraAmbientBackground";
 import "./torneo-express-public.css";
 
 const PublicTorneoExpressShellInner: React.FC<{
@@ -15,7 +16,7 @@ const PublicTorneoExpressShellInner: React.FC<{
 
   return (
     <div className={`te-public App--public-full-width ${className}`.trim()}>
-      <div className="te-public__grain" aria-hidden />
+      <RivieraAmbientBackground />
       <PublicModeShell className="te-public__inner">
         <div
           className={`te-public-brand-bar${

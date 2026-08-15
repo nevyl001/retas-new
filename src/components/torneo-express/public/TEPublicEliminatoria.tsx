@@ -135,49 +135,58 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
     prevRefreshRef.current = lastRefreshedAt;
   }, [lastRefreshedAt]);
 
+  const phaseSubtitle = model.currentPhaseUpper
+    .replace(/DE FINAL\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const phaseLine = phaseSubtitle
+    ? phaseSubtitle.charAt(0) + phaseSubtitle.slice(1).toLowerCase()
+    : null;
+
   return (
     <div className="te-grupos-page te-elim-public">
-      <header className="te-grupos-hero te-pub-fade-in">
-        <div className="te-grupos-hero__top">
+      <header className="te-elim-public__header te-pub-fade-in">
+        <div className="te-elim-public__header-top">
           <div>
-            <p className="te-grupos-eyebrow">
-              TORNEO · {displayNombre.trim().toUpperCase()}
-            </p>
-            <h1 className="te-grupos-title">
+            <h1 className="te-elim-public__title">
               {categoria
-                ? `${categoria} — ${displayNombre}`
+                ? `${displayNombre} · ${categoria}`
                 : displayNombre}
             </h1>
+            {phaseLine || model.hasLiveMatch ? (
+              <p className="te-elim-public__subtitle">
+                {phaseLine}
+                {phaseLine && model.hasLiveMatch ? " · " : null}
+                {model.hasLiveMatch ? (
+                  <span className="te-elim-public__live">
+                    <Badge variant="live">EN VIVO</Badge>
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
             <p className="te-elim-tagline">{model.motivationalMessage}</p>
           </div>
           {onCopyLink || gruposHref ? (
-            <div className="te-grupos-hero__actions">
+            <div className="te-elim-public__actions">
               {gruposHref ? (
                 <a href={gruposHref} className="te-public-phase-nav-link">
-                  Ver grupos y resultados
+                  Ver grupos
                 </a>
               ) : null}
               {onCopyLink ? (
-                <Button type="button" variant="secondary" size="sm" onClick={onCopyLink}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={onCopyLink}
+                >
                   Copiar enlace
                 </Button>
               ) : null}
               {copyMsg ? (
-                <p className="te-grupos-copy-msg">{copyMsg}</p>
+                <p className="te-elim-public__copy-msg">{copyMsg}</p>
               ) : null}
             </div>
-          ) : null}
-        </div>
-
-        <div className="te-public-header__meta">
-          {categoria ? (
-            <span className="te-public-header__categoria-pill">{categoria}</span>
-          ) : null}
-          <span className="te-public-header__grupo-pill">
-            {model.currentPhaseUpper}
-          </span>
-          {model.hasLiveMatch ? (
-            <Badge variant="live">EN VIVO</Badge>
           ) : null}
         </div>
 
@@ -187,7 +196,9 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
               🏆
             </span>
             <span className="te-elim-champion__label">Campeones:</span>
-            <strong className="te-elim-champion__names">{model.championLabel}</strong>
+            <strong className="te-elim-champion__names">
+              {model.championLabel}
+            </strong>
           </p>
         ) : null}
       </header>
@@ -197,8 +208,6 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           allCards={model.allBracketCards}
           totalRondas={model.totalRondas}
           activeRonda={model.activeRonda}
-          categoria={categoria}
-          fase={bundle.torneo.fase_eliminacion}
           pairPlayersById={pairPlayersById}
         />
       </section>

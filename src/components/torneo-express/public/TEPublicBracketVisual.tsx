@@ -1,932 +1,251 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo } from "react";
+import type { PublicMatchupCard } from "../../../lib/torneoExpress/publicBracketModel";
 import {
-  buildPublicBracketVisualLayout,
-  type BracketVisualColumn,
-  type BracketVisualSlot,
-} from "../../../lib/torneoExpress/publicBracketLayout";
-import type { TorneoExpressFaseEliminacion } from "../../../lib/torneoExpress/types";
-import type {
-  PublicBracketTeam,
-  PublicMatchStatus,
-  PublicMatchupCard,
-} from "../../../lib/torneoExpress/publicBracketModel";
-import type { PartidoSetScore } from "../../../lib/torneoExpress/types";
-import {
-  isRondaTercerLugar,
-  labelRondaEliminatoria,
-} from "../../../lib/torneoExpress/bracketRounds";
-import { detectMatchWinner } from "../../../lib/torneoExpress/partidoSets";
+  buildBracketPresentationModel,
+  type BracketMatchPresentation,
+  type BracketRoundPresentation,
+  type BracketTeamPresentation,
+} from "../../../lib/torneoExpress/publicBracketPresentation";
 import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
-import { JugadorRatingChip } from "../../jugadores/JugadorRatingChip";
 import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
 import "../../jugadores/riviera-jugadores.css";
 
-const BracketPairPlayersContext = React.createContext<
-  Record<string, PublicRetaPairPlayer[]>
->({});
-
-function useBracketPairPlayers(parejaId: string | null | undefined) {
-  const map = useContext(BracketPairPlayersContext);
-  return parejaId ? map[parejaId] : undefined;
-}
-
-function parseLabelPlayers(label: string): [string, string] {
-  const parts = label.split(/\s*\/\s*/).map((s) => s.trim()).filter(Boolean);
-  return [parts[0] ?? "?", parts[1] ?? "?"];
-}
-
-function avatarSizeForPhase(
-  phase: "octavos" | "cuartos" | "semifinal" | "final",
-  centered: boolean
-): "sm" | "md" | "lg" {
-  if (centered || phase === "final") return "lg";
-  if (phase === "semifinal") return "md";
-  if (phase === "octavos") return "sm";
-  return "md";
-}
-
-function statusLabel(status: PublicMatchStatus): string {
-  switch (status) {
-    case "live":
-      return "EN JUEGO";
-    case "finished":
-      return "JUGADO";
-    case "bye":
-      return "BYE";
-    default:
-      return "PENDIENTE";
-  }
-}
-
-function cardVisualPhase(
-  card: PublicMatchupCard,
-  isCenter: boolean
-): "octavos" | "cuartos" | "semifinal" | "final" {
-  const label = card.roundLabel.toLowerCase();
-  if (label.includes("tercer")) return "final";
-  if (isCenter) return "final";
-  if (label.includes("octavo")) return "octavos";
-  if (label.includes("cuarto")) return "cuartos";
-  if (label.includes("semi")) return "semifinal";
-  return "cuartos";
-}
-
-function BracketSideMeta({ card }: { card: PublicMatchupCard }) {
-  const hora = formatFinalTime(card.horaDisplay, card.scheduleMs);
-  const cancha = formatFinalCourt(card.canchaLabel);
-
-  return (
-    <div className="te-bracket-side-meta" aria-label="Horario y cancha">
-      <div className="te-bracket-side-meta__item">
-        <span className="te-bracket-side-meta__label">Horario</span>
-        <span className="te-bracket-side-meta__value te-bracket-side-meta__value--time">
-          {hora}
-        </span>
-      </div>
-      <div className="te-bracket-side-meta__item">
-        <span className="te-bracket-side-meta__label">Cancha</span>
-        <span className="te-bracket-side-meta__value">{cancha}</span>
-      </div>
-    </div>
-  );
-}
-
-function formatFinalDateParts(
-  scheduleMs: number | null
-): { weekday: string; date: string } {
-  if (scheduleMs == null) {
-    return { weekday: "Por confirmar", date: "" };
-  }
-  try {
-    const d = new Date(scheduleMs);
-    const weekday = d
-      .toLocaleDateString("es-MX", { weekday: "long" })
-      .replace(/^\w/, (c) => c.toUpperCase());
-    const date = d.toLocaleDateString("es-MX", {
-      day: "numeric",
-      month: "long",
-    });
-    return { weekday, date };
-  } catch {
-    return { weekday: "Por confirmar", date: "" };
-  }
-}
-
-function formatFinalTime(horaDisplay: string, scheduleMs: number | null): string {
-  if (scheduleMs != null) {
-    try {
-      return new Date(scheduleMs).toLocaleTimeString("es-MX", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch {
-      /* fall through */
-    }
-  }
-  const time = horaDisplay.replace(/\s*p\.?\s*m\.?/gi, "").trim();
-  return time || "Por confirmar";
-}
-
-function formatFinalCourt(cancha: string | null): string {
-  if (!cancha?.trim()) return "Por confirmar";
-  return cancha.replace(/^cancha\s*/i, "Cancha ");
-}
-
-function BracketFinalSchedule({ card }: { card: PublicMatchupCard }) {
-  const { weekday, date } = formatFinalDateParts(card.scheduleMs);
-  const hora = formatFinalTime(card.horaDisplay, card.scheduleMs);
-  const cancha = formatFinalCourt(card.canchaLabel);
-
-  return (
-    <div className="te-bracket-final-schedule" aria-label="Programación de la final">
-      <div className="te-bracket-final-schedule__item">
-        <span className="te-bracket-final-schedule__label">Fecha</span>
-        <span className="te-bracket-final-schedule__value te-bracket-final-schedule__value--date">
-          <span className="te-bracket-final-schedule__date-line">{weekday}</span>
-          {date ? (
-            <span className="te-bracket-final-schedule__date-line">{date}</span>
-          ) : null}
-        </span>
-      </div>
-      <div className="te-bracket-final-schedule__item te-bracket-final-schedule__item--time">
-        <span className="te-bracket-final-schedule__label">Horario</span>
-        <span className="te-bracket-final-schedule__value te-bracket-final-schedule__value--time">
-          {hora}
-        </span>
-      </div>
-      <div className="te-bracket-final-schedule__item">
-        <span className="te-bracket-final-schedule__label">Cancha</span>
-        <span className="te-bracket-final-schedule__value">{cancha}</span>
-      </div>
-    </div>
-  );
-}
-
-function BracketSetsList({
-  sets,
-  layout = "inline",
-}: {
-  sets: PartidoSetScore[];
-  layout?: "inline" | "aligned";
-}) {
-  if (sets.length === 0) return null;
-
-  if (layout === "aligned") {
-    return (
-      <div
-        className="te-bracket-sets te-bracket-sets--aligned"
-        aria-label="Marcador por sets"
-      >
-        <ul className="te-bracket-sets__list te-bracket-sets__list--aligned">
-          {sets.map((set, i) => {
-            const localWonSet = set.local > set.visitante;
-            const visitWonSet = set.visitante > set.local;
-            return (
-              <li key={i} className="te-bracket-sets__aligned-row">
-                <span className="te-bracket-sets__aligned-label">
-                  Set {i + 1}
-                </span>
-                <span
-                  className={`te-bracket-sets__aligned-num te-bracket-sets__aligned-num--top${
-                    localWonSet ? " te-bracket-sets__num--accent" : ""
-                  }`}
-                >
-                  {set.local}
-                </span>
-                <span
-                  className={`te-bracket-sets__aligned-num te-bracket-sets__aligned-num--bottom${
-                    visitWonSet ? " te-bracket-sets__num--accent" : ""
-                  }`}
-                >
-                  {set.visitante}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    );
-  }
-
-  return (
-    <div className="te-bracket-sets" aria-label="Marcador por sets">
-      <p className="te-bracket-sets__label" aria-hidden>
-        Sets
-      </p>
-      <ul className="te-bracket-sets__list">
-        {sets.map((set, i) => {
-          const localWonSet = set.local > set.visitante;
-          const visitWonSet = set.visitante > set.local;
-
-          const localClass = localWonSet ? " te-bracket-sets__num--accent" : "";
-          const visitClass = visitWonSet ? " te-bracket-sets__num--accent" : "";
-
-          return (
-            <li key={i} className="te-bracket-sets__row">
-              <span className="te-bracket-sets__set-name">Set {i + 1}:</span>
-              <span className="te-bracket-sets__score">
-                <span className={`te-bracket-sets__num${localClass}`}>
-                  {set.local}
-                </span>
-                <span className="te-bracket-sets__sep" aria-hidden>
-                  –
-                </span>
-                <span className={`te-bracket-sets__num${visitClass}`}>
-                  {set.visitante}
-                </span>
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function bracketWinnerFlags(card: PublicMatchupCard, played: boolean) {
-  if (!played) {
-    return { localWins: false, visitWins: false };
-  }
-  const fromSets = detectMatchWinner(card.sets);
-  if (fromSets === "local") {
-    return { localWins: true, visitWins: false };
-  }
-  if (fromSets === "visitante") {
-    return { localWins: false, visitWins: true };
-  }
-  return {
-    localWins: card.local.isWinner,
-    visitWins: card.visit.isWinner,
-  };
-}
-
 function BracketTeamRow({
   team,
-  role,
-  centered = false,
-  visualPhase = "cuartos",
+  players,
 }: {
-  team: PublicBracketTeam;
-  role: "winner" | "loser" | "neutral";
-  centered?: boolean;
-  visualPhase?: "octavos" | "cuartos" | "semifinal" | "final";
+  team: BracketTeamPresentation;
+  players?: PublicRetaPairPlayer[];
 }) {
-  const isWinner = role === "winner";
-  const playersFromMap = useBracketPairPlayers(team.parejaId);
-  const pending = !team.label?.trim() && !team.parejaId;
-  const avatarSize = avatarSizeForPhase(visualPhase, centered);
-
-  if (pending || team.isBye) {
+  if (team.kind === "bye") {
     return (
-      <div
-        className={`te-bracket-team te-bracket-team--pending${
-          centered ? " te-bracket-team--centered" : ""
-        }`}
-      >
-        <span className="te-bracket-team__pending-label">
-          {team.isBye ? "BYE" : "Por definir"}
-        </span>
+      <div className="te-pb-team te-pb-team--bye">
+        <span className="te-pb-team__dep">BYE</span>
       </div>
     );
   }
 
-  const [name1, name2] = parseLabelPlayers(team.label);
-  const p1: PublicRetaPairPlayer = playersFromMap?.[0] ?? {
-    id: `${team.parejaId ?? team.label}-1`,
-    name: name1,
-  };
-  const p2: PublicRetaPairPlayer = playersFromMap?.[1] ?? {
-    id: `${team.parejaId ?? team.label}-2`,
-    name: name2,
-  };
+  if (team.kind === "dependency") {
+    return (
+      <div className="te-pb-team te-pb-team--pending">
+        <span className="te-pb-team__dep">{team.dependencyLabel}</span>
+      </div>
+    );
+  }
+
+  const p1 = players?.[0];
+  const p2 = players?.[1];
+  const name1 = p1?.name ?? team.names[0] ?? team.label;
+  const name2 = p2?.name ?? team.names[1] ?? null;
+  const rating1 = p1?.rating;
+  const rating2 = p2?.rating;
+
+  const roleClass = team.isWinner
+    ? " te-pb-team--winner"
+    : team.isLoser
+      ? " te-pb-team--loser"
+      : "";
 
   return (
-    <div
-      className={`te-bracket-team te-bracket-team--${role}${
-        isWinner ? " te-bracket-team--winner" : ""
-      }${centered ? " te-bracket-team--centered" : ""}`}
-    >
-      <div className="te-bracket-team__avatars" aria-hidden>
-        <JugadorAvatar
-          fotoUrl={p1.fotoUrl}
-          nombre={p1.name}
-          size={avatarSize}
-          className="te-bracket-team__avatar"
-        />
-        <JugadorAvatar
-          fotoUrl={p2.fotoUrl}
-          nombre={p2.name}
-          size={avatarSize}
-          className="te-bracket-team__avatar te-bracket-team__avatar--front"
-        />
-      </div>
-      <div className="te-bracket-team__main">
-        {team.seed != null ? (
-          <span className="te-bracket-team__seed">#{team.seed}</span>
-        ) : null}
-        <div className="te-bracket-team__names">
-          <span className="te-bracket-team__player">
-            {p1.name}
-            <JugadorRatingChip
-              rating={p1.rating}
-              className="te-bracket-team__rating"
-            />
-          </span>
-          <span className="te-bracket-team__sep" aria-hidden>
-            /
-          </span>
-          <span className="te-bracket-team__player">
-            {p2.name}
-            <JugadorRatingChip
-              rating={p2.rating}
-              className="te-bracket-team__rating"
-            />
-          </span>
+    <div className={`te-pb-team${roleClass}`}>
+      <div className="te-pb-team__body">
+        <div className="te-pb-team__meta">
+          {team.seed != null ? (
+            <span className="te-pb-team__seed">#{team.seed}</span>
+          ) : null}
+          {team.originLabel ? (
+            <span className="te-pb-team__origin">{team.originLabel}</span>
+          ) : null}
+          {team.isWinner ? (
+            <span className="te-pb-team__check" aria-label="Ganador">
+              ✓
+            </span>
+          ) : null}
         </div>
-        {team.originBadge ? (
-          <span className="te-bracket-origin">{team.originBadge}</span>
-        ) : null}
+        <div className="te-pb-team__names">
+          <span className="te-pb-team__name">
+            {p1?.fotoUrl?.trim() ? (
+              <JugadorAvatar
+                fotoUrl={p1.fotoUrl}
+                nombre={name1}
+                size="sm"
+                className="te-pb-team__avatar te-pb-team__avatar--inline"
+              />
+            ) : null}
+            {name1}
+            {rating1 != null ? (
+              <span className="te-pb-team__rating">{rating1.toFixed(2)}</span>
+            ) : null}
+          </span>
+          {name2 ? (
+            <span className="te-pb-team__name">
+              {p2?.fotoUrl?.trim() ? (
+                <JugadorAvatar
+                  fotoUrl={p2.fotoUrl}
+                  nombre={name2}
+                  size="sm"
+                  className="te-pb-team__avatar te-pb-team__avatar--inline"
+                />
+              ) : null}
+              {name2}
+              {rating2 != null ? (
+                <span className="te-pb-team__rating">{rating2.toFixed(2)}</span>
+              ) : null}
+            </span>
+          ) : null}
+        </div>
       </div>
-      {isWinner ? (
-        <span className="te-bracket-team__dot" aria-hidden title="Ganador" />
+
+      {team.setScores.length > 0 ? (
+        <div className="te-pb-team__scores" aria-hidden={team.setScores.length === 0}>
+          {team.setScores.map((n, i) => (
+            <span key={i} className="te-pb-team__score">
+              {n}
+            </span>
+          ))}
+        </div>
       ) : null}
     </div>
-  );
-}
-
-function BracketFinalistBlock({
-  team,
-  pending,
-  visualPhase = "final",
-}: {
-  team?: PublicBracketTeam;
-  pending: boolean;
-  visualPhase?: "octavos" | "cuartos" | "semifinal" | "final";
-}) {
-  if (team && !pending) {
-    return (
-      <BracketTeamRow
-        team={team}
-        role="neutral"
-        centered
-        visualPhase={visualPhase}
-      />
-    );
-  }
-
-  return (
-    <span
-      className={`te-elim-bracket-finalist${
-        pending ? " te-elim-bracket-finalist--pending" : ""
-      }`}
-    >
-      {team?.label?.trim() || "Por definir"}
-    </span>
   );
 }
 
 function BracketMatchCard({
-  card,
-  isCenter = false,
+  match,
+  pairPlayersById,
 }: {
-  card: PublicMatchupCard;
-  isCenter?: boolean;
+  match: BracketMatchPresentation;
+  pairPlayersById: Record<string, PublicRetaPairPlayer[]>;
 }) {
-  const played = card.status === "finished";
-  const { localWins, visitWins } = bracketWinnerFlags(card, played);
-  const hasSets = played && card.sets.length > 0;
+  const localPlayers = match.local.parejaId
+    ? pairPlayersById[match.local.parejaId]
+    : undefined;
+  const visitPlayers = match.visit.parejaId
+    ? pairPlayersById[match.visit.parejaId]
+    : undefined;
 
-  const localRole: "winner" | "loser" | "neutral" = played
-    ? localWins
-      ? "winner"
-      : visitWins
-        ? "loser"
-        : "neutral"
-    : "neutral";
-  const visitRole: "winner" | "loser" | "neutral" = played
-    ? visitWins
-      ? "winner"
-      : localWins
-        ? "loser"
-        : "neutral"
-    : "neutral";
-
-  const phaseLabel = isCenter
-    ? "FINAL"
-    : isRondaTercerLugar(card.ronda)
-      ? "TERCER LUGAR"
-      : card.matchTitle.toUpperCase();
-  const visualPhase = cardVisualPhase(card, isCenter);
-  const localPending = !card.local.label?.trim();
-  const visitPending = !card.visit.label?.trim();
-
-  const renderFinalPending = () => (
-    <>
-      <BracketFinalistBlock
-        team={card.local}
-        pending={localPending}
-        visualPhase={visualPhase}
-      />
-      <span className="te-bracket-vs te-bracket-vs--final">
-        <span className="te-bracket-vs__line" aria-hidden />
-        <span className="te-bracket-vs__text">vs</span>
-        <span className="te-bracket-vs__line" aria-hidden />
-      </span>
-      <BracketFinalistBlock
-        team={card.visit}
-        pending={visitPending}
-        visualPhase={visualPhase}
-      />
-    </>
-  );
+  const ariaTeams = [
+    match.local.kind === "dependency"
+      ? match.local.dependencyLabel
+      : match.local.label || match.local.names.join(" / "),
+    match.visit.kind === "dependency"
+      ? match.visit.dependencyLabel
+      : match.visit.label || match.visit.names.join(" / "),
+  ].join(" contra ");
 
   return (
     <article
-      className={`te-elim-bracket-card te-elim-bracket-card--${card.status}${
-        isCenter ? " te-elim-bracket-card--center" : ""
+      className={`te-pb-match te-pb-match--${match.status}${
+        match.isFinal ? " te-pb-match--final" : ""
+      }${match.isThirdPlace ? " te-pb-match--third" : ""}${
+        match.isPlaceholder ? " te-pb-match--placeholder" : ""
       }`}
-      data-bracket-card={
-        isCenter ? "final" : isRondaTercerLugar(card.ronda) ? "tercer" : "side"
-      }
-      data-bracket-phase={visualPhase}
-      aria-label={`${card.matchTitle}: ${card.local.label} vs ${card.visit.label}`}
+      data-match-id={match.id}
+      data-ronda={match.ronda}
+      data-cruce={match.cruceIndex}
+      aria-label={`${match.shortTitle}: ${ariaTeams}`}
     >
-      <header
-        className={`te-elim-bracket-card__head${
-          isCenter ? " te-elim-bracket-card__head--center" : ""
-        }`}
-      >
+      <header className="te-pb-match__head">
+        <span className="te-pb-match__title">{match.shortTitle}</span>
         <span
-          className={`te-elim-bracket-card__phase${
-            isCenter ? " te-elim-bracket-card__phase--final" : ""
-          }`}
+          className={`te-pb-match__status te-pb-match__status--${match.status}`}
         >
-          {phaseLabel}
-        </span>
-        <span
-          className={`te-elim-bracket-card__status te-elim-bracket-card__status--${card.status}`}
-        >
-          {statusLabel(card.status)}
+          {match.statusLabel}
         </span>
       </header>
 
-      {!isCenter ? (
-        <BracketSideMeta card={card} />
-      ) : (
-        <BracketFinalSchedule card={card} />
-      )}
-
-      <div
-        className={`te-elim-bracket-card__body${
-          isCenter ? " te-elim-bracket-card__body--final" : ""
-        }`}
-      >
-        {isCenter && !played ? (
-          renderFinalPending()
-        ) : played && (localWins || visitWins) ? (
-          <>
-            <BracketTeamRow
-              team={card.local}
-              role={localRole}
-              centered={isCenter}
-              visualPhase={visualPhase}
-            />
-            {hasSets ? (
-              <BracketSetsList sets={card.sets} layout="aligned" />
-            ) : null}
-            <BracketTeamRow
-              team={card.visit}
-              role={visitRole}
-              centered={isCenter}
-              visualPhase={visualPhase}
-            />
-          </>
-        ) : (
-          <>
-            <BracketTeamRow
-              team={card.local}
-              role="neutral"
-              centered={isCenter}
-              visualPhase={visualPhase}
-            />
-            <span className="te-bracket-vs">
-              <span className="te-bracket-vs__line" aria-hidden />
-              <span className="te-bracket-vs__text">vs</span>
-              <span className="te-bracket-vs__line" aria-hidden />
-            </span>
-            <BracketTeamRow
-              team={card.visit}
-              role="neutral"
-              centered={isCenter}
-              visualPhase={visualPhase}
-            />
-          </>
-        )}
+      <div className="te-pb-match__body">
+        <BracketTeamRow team={match.local} players={localPlayers} />
+        <div className="te-pb-match__divider" aria-hidden />
+        <BracketTeamRow team={match.visit} players={visitPlayers} />
       </div>
+
+      <footer className="te-pb-match__meta">{match.metaLine}</footer>
     </article>
   );
 }
 
-function placeholderPhaseLabel(
-  placeholderRound: number,
-  totalRondas: number,
-  placeholderIndex = 0,
-  fase?: TorneoExpressFaseEliminacion | null
-): string {
-  if (placeholderRound === totalRondas) return "FINAL";
-  const base = fase
-    ? labelRondaEliminatoria(fase, placeholderRound, totalRondas).toUpperCase()
-    : placeholderRound === totalRondas - 1
-      ? "SEMIFINAL"
-      : "SIGUIENTE RONDA";
-  const matchCount =
-    placeholderRound < totalRondas
-      ? Math.max(1, 2 ** (totalRondas - placeholderRound - 1))
-      : 1;
-  if (matchCount >= 2) {
-    return `${base} ${placeholderIndex + 1}`;
-  }
-  return base;
-}
-
-function BracketRoundPlaceholderCard({
-  slot,
-  totalRondas,
-  fase,
+function BracketRoundColumn({
+  round,
+  pairPlayersById,
 }: {
-  slot: BracketVisualSlot;
-  totalRondas: number;
-  fase?: TorneoExpressFaseEliminacion | null;
+  round: BracketRoundPresentation;
+  pairPlayersById: Record<string, PublicRetaPairPlayer[]>;
 }) {
-  const top = slot.finalistTop ?? "Por definir";
-  const bottom = slot.finalistBottom ?? "Por definir";
-  const topPending = top === "Por definir";
-  const bottomPending = bottom === "Por definir";
-  const placeholderRound = slot.placeholderRound ?? totalRondas;
-  const phaseLabel = placeholderPhaseLabel(
-    placeholderRound,
-    totalRondas,
-    slot.placeholderIndex ?? 0,
-    fase
-  );
-  const isFinal = placeholderRound === totalRondas;
+  const isFinal = round.matches.some((match) => match.isFinal);
+  const champion = isFinal
+    ? round.matches
+        .flatMap((match) => [match.local, match.visit])
+        .find((team) => team.isWinner)
+    : null;
 
   return (
-    <article
-      className={`te-elim-bracket-card te-elim-bracket-card--center te-elim-bracket-card--placeholder te-elim-bracket-card--pending${
-        isFinal ? "" : " te-elim-bracket-card--next-round"
+    <section
+      className={`te-pb-round${
+        round.isThirdPlace ? " te-pb-round--third" : ""
+      }${
+        round.matches.some((m) => m.isFinal) ? " te-pb-round--final" : ""
+      }${round.isActive ? " te-pb-round--active" : ""}${
+        round.isCompleted ? " te-pb-round--completed" : ""
       }`}
-      data-bracket-card={isFinal ? "final" : "center-next"}
-      data-bracket-phase={
-        placeholderRound === totalRondas
-          ? "final"
-          : placeholderRound === totalRondas - 1
-            ? "semifinal"
-            : "cuartos"
-      }
-      aria-label={phaseLabel}
+      data-round={round.id}
+      aria-label={round.title}
     >
-      <header className="te-elim-bracket-card__head te-elim-bracket-card__head--center">
-        <span
-          className={`te-elim-bracket-card__phase${
-            isFinal ? " te-elim-bracket-card__phase--final" : ""
-          }`}
-        >
-          {phaseLabel}
-        </span>
-        <span className="te-elim-bracket-card__status te-elim-bracket-card__status--pending">
-          PENDIENTE
-        </span>
+      <header className="te-pb-round__head">
+        <div>
+          <span
+            className={`te-pb-round__marker${
+              isFinal ? " te-pb-round__marker--final" : ""
+            }`}
+            aria-hidden
+          >
+            {isFinal ? "◆" : round.isCompleted ? "✓" : "●"}
+          </span>
+          <h3 className="te-pb-round__title">
+            {isFinal ? "GRAN FINAL" : round.title}
+          </h3>
+        </div>
+        <p className="te-pb-round__summary">
+          {round.isThirdPlace
+            ? "Partido por el podio"
+            : round.isActive
+              ? round.matches.some((match) => match.status === "live")
+                ? "● EN VIVO"
+                : `${round.matches.length} ${
+                    round.matches.length === 1 ? "partido" : "partidos"
+                  }`
+              : round.isCompleted
+                ? "✓ COMPLETADO"
+                : `${round.matches.length} ${
+                    round.matches.length === 1 ? "partido" : "partidos"
+                  }`}
+        </p>
       </header>
-
-      <div className="te-elim-bracket-card__body te-elim-bracket-card__body--final">
-        <span
-          className={`te-elim-bracket-finalist${
-            topPending ? " te-elim-bracket-finalist--pending" : ""
-          }`}
-        >
-          {top}
-        </span>
-        <span className="te-bracket-vs te-bracket-vs--final">
-          <span className="te-bracket-vs__line" aria-hidden />
-          <span className="te-bracket-vs__text">vs</span>
-          <span className="te-bracket-vs__line" aria-hidden />
-        </span>
-        <span
-          className={`te-elim-bracket-finalist${
-            bottomPending ? " te-elim-bracket-finalist--pending" : ""
-          }`}
-        >
-          {bottom}
-        </span>
-      </div>
-    </article>
-  );
-}
-
-function BracketFinalCaption({
-  categoria,
-  showThirdPlace = false,
-  centerRound,
-  totalRondas,
-  fase,
-}: {
-  categoria: string | null;
-  showThirdPlace?: boolean;
-  centerRound: number;
-  totalRondas: number;
-  fase?: TorneoExpressFaseEliminacion | null;
-}) {
-  const roundTitle = fase
-    ? labelRondaEliminatoria(fase, centerRound, totalRondas)
-    : centerRound === totalRondas
-      ? "Final"
-      : centerRound === totalRondas - 1
-        ? "Semifinal"
-        : "Siguiente ronda";
-
-  const categoryLine = showThirdPlace
-    ? categoria
-      ? `Final y tercer lugar · ${categoria.toUpperCase()}`
-      : "Final y tercer lugar"
-    : categoria
-      ? `${roundTitle} · ${categoria.toUpperCase()}`
-      : roundTitle;
-
-  return (
-    <header className="te-bracket-final-caption" aria-label={categoryLine}>
-      <div className="te-bracket-final-caption__ornament" aria-hidden>
-        <span className="te-bracket-final-caption__line" />
-        <span className="te-bracket-final-caption__diamond" />
-        <span className="te-bracket-final-caption__line" />
-      </div>
-      <p className="te-bracket-final-caption__brand">
-        RIVIERA
-        <span className="te-bracket-final-caption__brand-sep" aria-hidden>
-          {" "}
-          ·{" "}
-        </span>
-        OPEN
-      </p>
-      <p className="te-bracket-final-caption__title">{categoryLine}</p>
-    </header>
-  );
-}
-
-function BracketSlotView({
-  slot,
-  categoria,
-  inFinaleStack = false,
-  totalRondas,
-  centerRound,
-  fase,
-  showCenterCaption = false,
-}: {
-  slot: BracketVisualSlot;
-  categoria: string | null;
-  inFinaleStack?: boolean;
-  totalRondas: number;
-  centerRound: number;
-  fase?: TorneoExpressFaseEliminacion | null;
-  showCenterCaption?: boolean;
-}) {
-  const isCenter = Boolean(slot.isCenter);
-  const content =
-    slot.kind === "round-placeholder" || !slot.card ? (
-      <BracketRoundPlaceholderCard
-        slot={slot}
-        totalRondas={totalRondas}
-        fase={fase}
-      />
-    ) : (
-      <BracketMatchCard card={slot.card} isCenter={isCenter} />
-    );
-
-  if (isCenter && showCenterCaption && !inFinaleStack) {
-    return (
-      <div className="te-bracket-final-wrap">
-        <BracketFinalCaption
-          categoria={categoria}
-          centerRound={centerRound}
-          totalRondas={totalRondas}
-          fase={fase}
-        />
-        {content}
-      </div>
-    );
-  }
-
-  return content;
-}
-
-function BracketColumn({
-  column,
-  categoria,
-  totalRondas,
-  centerRound,
-  fase,
-}: {
-  column: BracketVisualColumn;
-  categoria: string | null;
-  totalRondas: number;
-  centerRound: number;
-  fase?: TorneoExpressFaseEliminacion | null;
-}) {
-  const hasFinaleStack =
-    column.side === "center" &&
-    column.slots.some(
-      (s) => s.card != null && isRondaTercerLugar(s.card.ronda)
-    );
-
-  const centerMatchSlots = column.slots.filter(
-    (s) => s.isCenter || s.kind === "round-placeholder"
-  );
-  const useCenterStack =
-    column.side === "center" && centerMatchSlots.length > 1;
-
-  if (hasFinaleStack) {
-    return (
-      <div
-        className="te-bracket-col te-bracket-col--center"
-        data-col="center"
-      >
-        <div className="te-bracket-final-wrap te-bracket-final-wrap--duo">
-          <BracketFinalCaption
-            categoria={categoria}
-            showThirdPlace
-            centerRound={centerRound}
-            totalRondas={totalRondas}
-            fase={fase}
-          />
-          <div className="te-bracket-col__stack te-bracket-col__stack--finale">
-            {column.slots.map((slot, i) => (
-              <BracketSlotView
-                key={`${column.index}-${i}-${slot.card?.id ?? "ph"}`}
-                slot={slot}
-                categoria={categoria}
-                inFinaleStack
-                totalRondas={totalRondas}
-                centerRound={centerRound}
-                fase={fase}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (useCenterStack) {
-    return (
-      <div
-        className="te-bracket-col te-bracket-col--center"
-        data-col="center"
-      >
-        <div className="te-bracket-final-wrap te-bracket-final-wrap--duo">
-          <BracketFinalCaption
-            categoria={categoria}
-            centerRound={centerRound}
-            totalRondas={totalRondas}
-            fase={fase}
-          />
-          <div className="te-bracket-col__stack te-bracket-col__stack--finale">
-            {centerMatchSlots.map((slot, i) => (
-              <BracketSlotView
-                key={`${column.index}-c-${i}-${slot.card?.id ?? "ph"}`}
-                slot={slot}
-                categoria={categoria}
-                inFinaleStack
-                totalRondas={totalRondas}
-                centerRound={centerRound}
-                fase={fase}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`te-bracket-col te-bracket-col--${column.side}`}
-      data-col={column.side}
-    >
-      <div className="te-bracket-col__stack">
-        {column.slots.map((slot, i) => (
-          <BracketSlotView
-            key={`${column.index}-${i}-${slot.card?.id ?? "ph"}`}
-            slot={slot}
-            categoria={categoria}
-            totalRondas={totalRondas}
-            centerRound={centerRound}
-            fase={fase}
-            showCenterCaption={column.side === "center" && i === 0}
+      {champion ? (
+        <p className="te-pb-round__champion">
+          <span>CAMPEONES</span>
+          {champion.names.join(" / ") || champion.label}
+        </p>
+      ) : null}
+      <div className="te-pb-round__stack">
+        {round.matches.map((match) => (
+          <BracketMatchCard
+            key={match.id}
+            match={match}
+            pairPlayersById={pairPlayersById}
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
-interface ConnectorPaths {
-  left: string;
-  right: string;
-}
-
-function BracketConnectorOverlay({
-  stageRef,
-  leftHasWinner,
-  rightHasWinner,
-  enabled,
-}: {
-  stageRef: React.RefObject<HTMLDivElement | null>;
-  leftHasWinner: boolean;
-  rightHasWinner: boolean;
-  enabled: boolean;
-}) {
-  const [paths, setPaths] = useState<ConnectorPaths>({ left: "", right: "" });
-
-  const measure = useCallback(() => {
-    const stage = stageRef.current;
-    if (!stage || !enabled) {
-      setPaths({ left: "", right: "" });
-      return;
-    }
-
-    const leftCard = stage.querySelector<HTMLElement>(
-      '[data-col="left"] [data-bracket-card="side"]'
-    );
-    const finalCard = stage.querySelector<HTMLElement>(
-      '[data-col="center"] [data-bracket-card="final"], [data-col="center"] [data-bracket-card="center-next"]'
-    );
-    const rightCard = stage.querySelector<HTMLElement>(
-      '[data-col="right"] [data-bracket-card="side"]'
-    );
-
-    if (!leftCard || !finalCard || !rightCard) {
-      setPaths({ left: "", right: "" });
-      return;
-    }
-
-    const sr = stage.getBoundingClientRect();
-    const lr = leftCard.getBoundingClientRect();
-    const fr = finalCard.getBoundingClientRect();
-    const rr = rightCard.getBoundingClientRect();
-
-    const leftY = lr.top + lr.height / 2 - sr.top;
-    const leftX = lr.right - sr.left;
-    const finalLeftX = fr.left - sr.left;
-    const finalRightX = fr.right - sr.left;
-    const finalY = fr.top + fr.height / 2 - sr.top;
-    const rightY = rr.top + rr.height / 2 - sr.top;
-    const rightX = rr.left - sr.left;
-
-    setPaths({
-      left: `M ${leftX} ${leftY} L ${finalLeftX} ${finalY}`,
-      right: `M ${rightX} ${rightY} L ${finalRightX} ${finalY}`,
-    });
-  }, [enabled, stageRef]);
-
-  useEffect(() => {
-    measure();
-    const stage = stageRef.current;
-    if (!stage || !enabled) return;
-
-    const ro = new ResizeObserver(() => measure());
-    ro.observe(stage);
-    const cards = stage.querySelectorAll("[data-bracket-card]");
-    cards.forEach((el) => ro.observe(el));
-
-    window.addEventListener("resize", measure);
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [enabled, measure, stageRef]);
-
-  if (!enabled || (!paths.left && !paths.right)) return null;
-
+function BracketStageDivider() {
   return (
-    <svg className="te-bracket-connectors" aria-hidden>
-      {paths.left ? (
-        <path
-          d={paths.left}
-          className={`te-bracket-connectors__path${
-            leftHasWinner ? " te-bracket-connectors__path--active" : ""
-          }`}
-        />
-      ) : null}
-      {paths.right ? (
-        <path
-          d={paths.right}
-          className={`te-bracket-connectors__path${
-            rightHasWinner ? " te-bracket-connectors__path--active" : ""
-          }`}
-        />
-      ) : null}
-    </svg>
+    <div className="te-pb-stage-divider" aria-hidden>
+      <span className="te-pb-stage-divider__line" />
+      <span className="te-pb-stage-divider__arrow">↓</span>
+      <span className="te-pb-stage-divider__line" />
+    </div>
   );
 }
 
@@ -934,8 +253,6 @@ export interface TEPublicBracketVisualProps {
   allCards: PublicMatchupCard[];
   totalRondas: number;
   activeRonda?: number;
-  categoria?: string | null;
-  fase?: TorneoExpressFaseEliminacion | null;
   pairPlayersById?: Record<string, PublicRetaPairPlayer[]>;
 }
 
@@ -943,41 +260,12 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   allCards,
   totalRondas,
   activeRonda,
-  categoria = null,
-  fase = null,
   pairPlayersById = {},
 }) => {
-  const stageRef = useRef<HTMLDivElement>(null);
-
-  const layout = useMemo(
-    () => buildPublicBracketVisualLayout(allCards, totalRondas, activeRonda),
+  const presentation = useMemo(
+    () => buildBracketPresentationModel(allCards, totalRondas, activeRonda),
     [allCards, totalRondas, activeRonda]
   );
-
-  const sideHasWinner = useCallback((card: PublicMatchupCard) => {
-    if (card.status !== "finished") return false;
-    const w = detectMatchWinner(card.sets);
-    if (w === "local" || w === "visitante") return true;
-    return card.local.isWinner || card.visit.isWinner;
-  }, []);
-
-  const leftHasWinner = useMemo(
-    () =>
-      layout.columns
-        .find((c) => c.side === "left")
-        ?.slots.some((s) => s.card && sideHasWinner(s.card)) ?? false,
-    [layout.columns, sideHasWinner]
-  );
-
-  const rightHasWinner = useMemo(
-    () =>
-      layout.columns
-        .find((c) => c.side === "right")
-        ?.slots.some((s) => s.card && sideHasWinner(s.card)) ?? false,
-    [layout.columns, sideHasWinner]
-  );
-
-  const showConnectors = layout.columnCount > 1;
 
   if (allCards.length === 0) {
     return (
@@ -988,50 +276,24 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   }
 
   return (
-    <BracketPairPlayersContext.Provider value={pairPlayersById}>
-      <div
-        ref={stageRef}
-        className="te-bracket-stage te-bracket-visual te-bracket-visual--desktop te-pub-fade-in"
-      >
-        <div className="te-bracket-visual__grid">
-          {layout.columns.map((col) => (
-            <BracketColumn
-              key={`col-${col.index}`}
-              column={col}
-              categoria={categoria}
-              totalRondas={totalRondas}
-              centerRound={layout.centerRound}
-              fase={fase}
-            />
-          ))}
-        </div>
-        <BracketConnectorOverlay
-          stageRef={stageRef}
-          leftHasWinner={leftHasWinner}
-          rightHasWinner={rightHasWinner}
-          enabled={showConnectors}
-        />
-      </div>
-
-      <div className="te-bracket-visual te-bracket-visual--mobile te-pub-fade-in">
-        {layout.mobileSlots.map((slot, i) => (
-          <React.Fragment key={`m-${i}-${slot.card?.id ?? "ph"}`}>
-            {i > 0 ? (
-              <div className="te-bracket-mobile-arrow" aria-hidden>
-                ↓
-              </div>
-            ) : null}
-            <BracketSlotView
-              slot={slot}
-              categoria={categoria}
-              totalRondas={totalRondas}
-              centerRound={layout.centerRound}
-              fase={fase}
-              showCenterCaption={Boolean(slot.isCenter)}
-            />
+    <div className="te-pb">
+      <div className="te-pb-history" aria-label="Historia de la eliminatoria">
+        {presentation.allRounds.map((round, index) => (
+          <React.Fragment key={round.id}>
+            {index > 0 ? <BracketStageDivider /> : null}
+            <section
+              className={`te-pb-stage te-pb-stage--${round.id}${
+                round.isActive ? " te-pb-stage--active" : ""
+              }${round.isCompleted ? " te-pb-stage--completed" : ""}`}
+            >
+              <BracketRoundColumn
+                round={round}
+                pairPlayersById={pairPlayersById}
+              />
+            </section>
           </React.Fragment>
         ))}
       </div>
-    </BracketPairPlayersContext.Provider>
+    </div>
   );
 };
