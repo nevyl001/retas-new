@@ -7,6 +7,7 @@ interface JugadorAvatarProps {
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
   loading?: "eager" | "lazy";
+  alt?: string;
 }
 
 const SIZE_PX = { sm: 40, md: 48, lg: 64, xl: 96 } as const;
@@ -39,6 +40,7 @@ export const JugadorAvatar: React.FC<JugadorAvatarProps> = ({
   size = "sm",
   className = "",
   loading = "lazy",
+  alt = "",
 }) => {
   const px = SIZE_PX[size];
   const initials = getJugadorInitials(nombre);
@@ -47,11 +49,11 @@ export const JugadorAvatar: React.FC<JugadorAvatarProps> = ({
 
   if (src) {
     return (
-      <span className={cls} aria-hidden>
+      <span className={cls} aria-hidden={alt ? undefined : true}>
         <img
           className="rj-avatar__img"
           src={src}
-          alt=""
+          alt={alt}
           width={px}
           height={px}
           loading={loading}

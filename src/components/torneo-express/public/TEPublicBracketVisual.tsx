@@ -27,17 +27,25 @@ function PlayerRow({
       data-pair-id={parejaId ?? undefined}
       data-photo-state={player.fotoUrl ? "provided" : "missing"}
     >
-      <JugadorAvatar
-        fotoUrl={player.fotoUrl}
-        nombre={player.name}
-        size="sm"
-        loading={imageLoading}
-        className="te-pb-team__avatar te-pb-team__avatar--inline"
-      />
-      <span className="te-pb-team__player-name">{player.name}</span>
-      {player.rating != null ? (
-        <span className="te-pb-team__rating">{player.rating.toFixed(2)}</span>
-      ) : null}
+      <span className="te-pb-player__portrait">
+        <JugadorAvatar
+          fotoUrl={player.fotoUrl}
+          nombre={player.name}
+          size="sm"
+          loading={imageLoading}
+          alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
+          className="te-pb-team__avatar te-pb-team__avatar--inline"
+        />
+      </span>
+      <span className="te-pb-player__identity">
+        <span className="te-pb-team__player-name">{player.name}</span>
+        {player.rating != null ? (
+          <span className="te-pb-team__rating">
+            <span className="te-pb-team__rating-label">Rating</span>
+            {player.rating.toFixed(2)}
+          </span>
+        ) : null}
+      </span>
     </span>
   );
 }
@@ -110,12 +118,19 @@ function TeamBlock({
       </div>
 
       {team.setScores.length > 0 ? (
-        <div className="te-pb-team__scores" aria-hidden={team.setScores.length === 0}>
-          {team.setScores.map((n, i) => (
-            <span key={i} className="te-pb-team__score">
-              {n}
-            </span>
-          ))}
+        <div
+          className="te-pb-team__score-rail"
+          role="group"
+          aria-label={`Marcador de ${team.label}: ${team.setScores.join(", ")}`}
+        >
+          <span className="te-pb-team__score-label">Marcador</span>
+          <div className="te-pb-team__scores">
+            {team.setScores.map((n, i) => (
+              <span key={i} className="te-pb-team__score">
+                {n}
+              </span>
+            ))}
+          </div>
         </div>
       ) : null}
     </div>
@@ -198,9 +213,7 @@ function MatchScoreboard({
           team={match.local}
           imageLoading={variant === "history" ? "lazy" : "eager"}
         />
-        <div className="te-pb-match__divider" aria-hidden>
-          <span>VS</span>
-        </div>
+        <div className="te-pb-match__divider" aria-hidden />
         <TeamBlock
           team={match.visit}
           imageLoading={variant === "history" ? "lazy" : "eager"}
@@ -239,6 +252,7 @@ function ChampionMoment({ champion }: { champion: BracketTeamPresentation }) {
               nombre={player.name}
               size="xl"
               loading="eager"
+              alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
               className="te-pb-champion-moment__avatar"
             />
           </span>

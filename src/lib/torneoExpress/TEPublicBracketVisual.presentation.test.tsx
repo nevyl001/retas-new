@@ -62,7 +62,7 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(getJugadorInitials("Tpvs11")).toBe("T11");
   });
 
-  it("renders both pair names with one clear VS separator per match", () => {
+  it("renders both pair names without decorative VS labels", () => {
     render(
       <TEPublicBracketVisual
         allCards={cards}
@@ -73,7 +73,90 @@ describe("TEPublicBracketVisual presentation", () => {
 
     expect(screen.getAllByText("Carlos Méndez").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Diego Ramírez").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/^VS$/)).toHaveLength(4);
+    expect(screen.queryByText(/^VS$/)).toBeNull();
+  });
+
+  it("binds each active semifinal portrait to its stable player identity", () => {
+    const semifinals = [
+      {
+        ...card("s1", 1, 0, "Carlos Méndez / Diego Ramírez", "Luis Pérez / Mario Soto"),
+        roundLabel: "Semifinal",
+      },
+      {
+        ...card("s2", 1, 1, "Ana Ruiz / Eva López", "Nora Díaz / Paz Luna"),
+        roundLabel: "Semifinal",
+      },
+    ];
+
+    render(
+      <TEPublicBracketVisual
+        allCards={semifinals}
+        totalRondas={2}
+        activeRonda={1}
+        pairPlayersById={{
+          "s1-l": [
+            {
+              id: "player-carlos",
+              name: "Carlos Méndez",
+              fotoUrl: "https://cdn.example/carlos.jpg",
+              rating: 3.17,
+            },
+            {
+              id: "player-diego",
+              name: "Diego Ramírez",
+              fotoUrl: null,
+              rating: 3.09,
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getAllByLabelText(/^Jugador /)).toHaveLength(8);
+    expect(screen.getByLabelText("Jugador Carlos Méndez")).toHaveAttribute(
+      "data-player-id",
+      "player-carlos"
+    );
+    expect(screen.getByLabelText("Jugador Carlos Méndez")).toHaveAttribute(
+      "data-photo-state",
+      "provided"
+    );
+    expect(
+      screen.getByRole("img", { name: "Foto de Carlos Méndez" })
+    ).toHaveAttribute("src", "https://cdn.example/carlos.jpg");
+    expect(screen.queryByRole("img", { name: "Foto de Diego Ramírez" })).toBeNull();
+    expect(screen.getByText("DR")).toBeInTheDocument();
+  });
+
+  it("exposes each pair score as its own scoreboard rail", () => {
+    const semifinal = {
+      ...card("s1", 1, 0, "Carlos Méndez / Diego Ramírez", "Luis Pérez / Mario Soto"),
+      roundLabel: "Semifinal",
+      status: "finished" as const,
+      sets: [
+        { local: 6, visitante: 2 },
+        { local: 6, visitante: 4 },
+      ],
+    };
+
+    render(
+      <TEPublicBracketVisual
+        allCards={[semifinal]}
+        totalRondas={2}
+        activeRonda={1}
+      />
+    );
+
+    expect(
+      screen.getByRole("group", {
+        name: "Marcador de Carlos Méndez / Diego Ramírez: 6, 6",
+      })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", {
+        name: "Marcador de Luis Pérez / Mario Soto: 2, 4",
+      })
+    ).toBeInTheDocument();
   });
 
   const renderStage = (
