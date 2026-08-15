@@ -98,7 +98,8 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   const categoria = formatTorneoExpressCategoria(bundle.torneo.categoria);
   const displayNombre =
     useTorneoPublicDisplayNombre(bundle.torneo) || bundle.torneo.nombre;
-  const { branding, manifest, isScopeBrandingReady } = useClubExperience();
+  const { branding, manifest, isClubBranded, isScopeBrandingReady } =
+    useClubExperience();
   const clubName =
     isScopeBrandingReady && manifest.displayName.trim()
       ? manifest.displayName.trim()
@@ -216,6 +217,7 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           category={categoria}
           clubName={clubName}
           clubLogoUrl={clubLogoUrl}
+          showMotherAttribution={isScopeBrandingReady && isClubBranded}
           pairStatsById={closingPairStatsById}
         />
       </section>

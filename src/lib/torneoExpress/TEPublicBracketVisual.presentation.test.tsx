@@ -340,6 +340,7 @@ describe("TEPublicBracketVisual presentation", () => {
         category="3ra fuerza"
         clubName="Valvidub Sports"
         clubLogoUrl="https://cdn.example/valvidub-logo.png"
+        showMotherAttribution
         pairStatsById={{
           "f1-l": {
             partidos: 4,
@@ -507,6 +508,7 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(
       screen.getByLabelText("Tarjeta de tercer lugar"),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/^by Riviera Open$/i)).toBeNull();
     const thirdPlaceResult = screen.getByRole("article", {
       name: /^3\.er lugar:/,
     });

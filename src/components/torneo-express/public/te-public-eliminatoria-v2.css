@@ -807,9 +807,9 @@
   isolation: isolate;
   display: grid;
   grid-template-areas:
-    "core"
-    "local"
-    "visit";
+    "core core"
+    "local visit";
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: clamp(1rem, 2.2vw, 2rem);
   width: 100%;
   min-width: 0;
@@ -1079,6 +1079,95 @@
   font-size: clamp(0.75rem, 0.9vw, 0.875rem);
   line-height: 1.4;
   color: var(--text-muted);
+}
+
+@media (max-width: 48rem) {
+  .te-elim-v2 .te-pb-final-hero {
+    gap: 0.625rem;
+    padding: 0.75rem;
+    border-radius: 0.875rem;
+  }
+
+  .te-elim-v2 .te-pb-final-core {
+    gap: 0.5rem;
+    padding: 0.25rem 0.25rem 0.75rem;
+    border-bottom: 1px solid var(--te-v2-border);
+  }
+
+  .te-elim-v2 .te-pb-final-core__logistics {
+    gap: 0.3rem;
+    font-size: clamp(0.9375rem, 4.2vw, 1.0625rem);
+  }
+
+  .te-elim-v2 .te-pb-final-core__score {
+    grid-template-columns:
+      minmax(2.75rem, auto)
+      repeat(var(--te-final-score-columns), minmax(1.75rem, 1fr));
+    gap: 0.25rem;
+    padding-block: 0.5rem;
+  }
+
+  .te-elim-v2 .te-pb-final-core__score strong {
+    font-size: clamp(1.75rem, 8vw, 2.125rem);
+  }
+
+  .te-elim-v2 .te-pb-final-core__caption {
+    font-size: 0.6875rem;
+  }
+
+  .te-elim-v2 .te-pb-finalist {
+    align-content: start;
+    gap: 0.625rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: 0.75rem;
+  }
+
+  .te-elim-v2 .te-pb-finalist__label {
+    min-height: 2.5em;
+    font-size: 0.5625rem;
+    letter-spacing: 0.1em;
+    line-height: 1.25;
+    text-align: center;
+  }
+
+  .te-elim-v2 .te-pb-finalist__players {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+  }
+
+  .te-elim-v2 .te-pb-finalist__player {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    align-content: start;
+    gap: 0.35rem;
+    text-align: center;
+  }
+
+  .te-elim-v2 .te-pb-finalist__avatar.rj-avatar {
+    width: clamp(2.5rem, 12vw, 3.25rem);
+    height: clamp(2.5rem, 12vw, 3.25rem);
+    font-size: 0.75rem;
+  }
+
+  .te-elim-v2 .te-pb-finalist__identity {
+    justify-items: center;
+    gap: 0.15rem;
+    width: 100%;
+  }
+
+  .te-elim-v2 .te-pb-finalist__identity strong {
+    max-width: 100%;
+    font-size: clamp(0.75rem, 3.4vw, 0.9375rem);
+    line-height: 1.15;
+  }
+
+  .te-elim-v2 .te-pb-finalist__identity span {
+    font-size: 0.59375rem;
+  }
+
+  .te-elim-v2 .te-pb-finalist__journey {
+    display: none;
+  }
 }
 
 @media (min-width: 64rem) {

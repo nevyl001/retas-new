@@ -439,9 +439,11 @@ function MatchScoreboard({
 function ClosingClubSignature({
   clubName,
   clubLogoUrl,
+  showMotherAttribution,
 }: {
   clubName: string;
   clubLogoUrl?: string | null;
+  showMotherAttribution: boolean;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const showLogo = Boolean(clubLogoUrl?.trim()) && !logoFailed;
@@ -463,9 +465,11 @@ function ClosingClubSignature({
         ) : null}
         <div className="te-pb-closing-card__club-copy">
           <span className="te-pb-closing-card__club-name">{clubName}</span>
-          <span className="te-pb-closing-card__club-by">
-            {RIVIERA_CO_BRAND_ATTRIBUTION}
-          </span>
+          {showMotherAttribution ? (
+            <span className="te-pb-closing-card__club-by">
+              {RIVIERA_CO_BRAND_ATTRIBUTION}
+            </span>
+          ) : null}
         </div>
       </div>
     </section>
@@ -534,6 +538,7 @@ function TournamentClosingCardBase({
   category,
   clubName,
   clubLogoUrl,
+  showMotherAttribution,
   stats,
 }: {
   team: BracketTeamPresentation;
@@ -542,6 +547,7 @@ function TournamentClosingCardBase({
   category?: string | null;
   clubName: string;
   clubLogoUrl?: string | null;
+  showMotherAttribution: boolean;
   stats: PublicEliminatoriaPodiumStats | null;
 }) {
   if (team.kind !== "team") return null;
@@ -600,7 +606,11 @@ function TournamentClosingCardBase({
     >
       <div className="te-pb-closing-card__art">
         <span className="te-pb-closing-card__court" aria-hidden />
-        <ClosingClubSignature clubName={clubName} clubLogoUrl={clubLogoUrl} />
+        <ClosingClubSignature
+          clubName={clubName}
+          clubLogoUrl={clubLogoUrl}
+          showMotherAttribution={showMotherAttribution}
+        />
         <div className="te-pb-closing-card__topline">
           <div>
             <span>{tournamentName}</span>
@@ -644,6 +654,7 @@ function TournamentClosingStack({
   category,
   clubName,
   clubLogoUrl,
+  showMotherAttribution,
   pairStatsById,
 }: {
   champion: BracketTeamPresentation;
@@ -653,6 +664,7 @@ function TournamentClosingStack({
   category?: string | null;
   clubName: string;
   clubLogoUrl?: string | null;
+  showMotherAttribution: boolean;
   pairStatsById: Record<string, PublicEliminatoriaPodiumStats | null>;
 }) {
   const statsFor = (team: BracketTeamPresentation) =>
@@ -667,6 +679,7 @@ function TournamentClosingStack({
         category={category}
         clubName={clubName}
         clubLogoUrl={clubLogoUrl}
+        showMotherAttribution={showMotherAttribution}
         stats={statsFor(champion)}
       />
       {runnerUp ? (
@@ -677,6 +690,7 @@ function TournamentClosingStack({
           category={category}
           clubName={clubName}
           clubLogoUrl={clubLogoUrl}
+          showMotherAttribution={showMotherAttribution}
           stats={statsFor(runnerUp)}
         />
       ) : null}
@@ -688,6 +702,7 @@ function TournamentClosingStack({
           category={category}
           clubName={clubName}
           clubLogoUrl={clubLogoUrl}
+          showMotherAttribution={showMotherAttribution}
           stats={statsFor(thirdPlace)}
         />
       ) : null}
@@ -838,6 +853,7 @@ export interface TEPublicBracketVisualProps {
   category?: string | null;
   clubName?: string;
   clubLogoUrl?: string | null;
+  showMotherAttribution?: boolean;
   pairStatsById?: Record<string, PublicEliminatoriaPodiumStats | null>;
 }
 
@@ -850,6 +866,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   category = null,
   clubName = "Riviera Open",
   clubLogoUrl = null,
+  showMotherAttribution = false,
   pairStatsById = {},
 }) => {
   const presentation = useMemo(
@@ -926,6 +943,7 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
                 category={category}
                 clubName={clubName}
                 clubLogoUrl={clubLogoUrl}
+                showMotherAttribution={showMotherAttribution}
                 pairStatsById={pairStatsById}
               />
             ) : null}
