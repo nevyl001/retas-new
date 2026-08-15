@@ -2717,53 +2717,106 @@
     var(--te-groups-bg);
 }
 
+/* La pieza solo admite luz ambiental: la única geometría es la cancha. */
+.te-public.te-public--grupos-wide .te-grupo-achievement::before {
+  background: radial-gradient(
+    ellipse 66% 44% at 100% 0%,
+    color-mix(in srgb, var(--te-groups-accent) 9%, transparent),
+    transparent 72%
+  );
+}
+
 .te-public.te-public--grupos-wide .te-grupo-achievement__art {
   position: relative;
   isolation: isolate;
   padding: 18px 18px 16px;
   overflow: hidden;
-}
-
-/* Cancha de pádel en perspectiva: textura editorial, no diagrama funcional. */
-.te-public.te-public--grupos-wide .te-grupo-achievement__art::before,
-.te-public.te-public--grupos-wide .te-grupo-achievement__art::after {
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
-  content: "";
+  background: radial-gradient(
+    ellipse 74% 46% at 50% 62%,
+    color-mix(in srgb, var(--te-groups-accent) 6%, transparent),
+    transparent 68%
+  );
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__art::before {
-  right: -22%;
-  bottom: 8%;
-  width: 118%;
-  height: 53%;
+  position: absolute;
+  z-index: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 42%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, #000 26%, transparent)
+  );
+  content: "";
+  pointer-events: none;
+}
+
+.te-public.te-public--grupos-wide
+  .te-grupo-achievement__art
+  > :not(.te-grupo-achievement__court) {
+  position: relative;
+  z-index: 2;
+}
+
+/* Cancha abstracta: plano en fuga, zonas de servicio y red insinuada. */
+.te-public.te-public--grupos-wide .te-grupo-achievement__court {
+  position: absolute;
+  z-index: 1;
+  bottom: 6%;
+  left: 50%;
+  width: 124%;
+  height: 58%;
   border: 1px solid color-mix(in srgb, var(--text-primary) 6%, transparent);
   background:
     linear-gradient(
       90deg,
-      transparent 49.5%,
-      color-mix(in srgb, var(--text-primary) 5%, transparent) 49.5% 50.5%,
-      transparent 50.5%
+      transparent 49.7%,
+      color-mix(in srgb, var(--text-primary) 4.5%, transparent) 49.7% 50.3%,
+      transparent 50.3%
     ),
     linear-gradient(
       180deg,
-      transparent 49.5%,
-      color-mix(in srgb, var(--text-primary) 5%, transparent) 49.5% 50.5%,
-      transparent 50.5%
+      transparent 27%,
+      color-mix(in srgb, var(--text-primary) 4%, transparent) 27% 27.5%,
+      transparent 27.5% 51%,
+      color-mix(in srgb, var(--text-primary) 5%, transparent) 51% 51.6%,
+      transparent 51.6% 76%,
+      color-mix(in srgb, var(--text-primary) 4%, transparent) 76% 76.5%,
+      transparent 76.5%
     );
-  opacity: 0.8;
-  transform: perspective(500px) rotateX(54deg) rotateZ(-18deg);
+  clip-path: polygon(19% 0, 81% 0, 100% 100%, 0 100%);
+  opacity: 0.85;
+  pointer-events: none;
+  transform: translateX(-50%) perspective(620px) rotateX(52deg);
   transform-origin: 50% 100%;
 }
 
-.te-public.te-public--grupos-wide .te-grupo-achievement__art::after {
-  right: -10%;
-  bottom: 28%;
-  width: 105%;
-  height: 1px;
-  background: color-mix(in srgb, var(--te-groups-accent) 17%, transparent);
-  transform: rotate(-18deg);
+.te-public.te-public--grupos-wide .te-grupo-achievement__court::before {
+  position: absolute;
+  inset: 7% 8%;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 4.5%, transparent);
+  content: "";
+}
+
+.te-public.te-public--grupos-wide .te-grupo-achievement__court::after {
+  position: absolute;
+  right: 0;
+  top: 49%;
+  left: 0;
+  height: 9%;
+  border-top: 1px solid
+    color-mix(in srgb, var(--te-groups-accent) 9%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--text-primary) 5%, transparent);
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 8%,
+    color-mix(in srgb, var(--text-primary) 3.5%, transparent) 8% 8.4%
+  );
+  content: "";
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__topline {

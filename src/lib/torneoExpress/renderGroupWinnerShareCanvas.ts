@@ -471,16 +471,17 @@ async function drawAvatar(
   ctx.restore();
 }
 
-/** Cancha editorial en perspectiva: estructura la pieza sin parecer un diagrama. */
-function drawPremiumPadelCourtBackground(
+/** Cancha abstracta en perspectiva: ancla retratos y stats sin competir con ellos. */
+function drawMinimalPadelCourtBackground(
   ctx: CanvasRenderingContext2D,
   width: number,
+  height: number,
   accent: string
 ): void {
-  const leftTop = { x: 88, y: 684 };
-  const rightTop = { x: width - 112, y: 628 };
-  const rightBottom = { x: width + 26, y: 1512 };
-  const leftBottom = { x: -34, y: 1594 };
+  const leftTop = { x: 88, y: height * 0.356 };
+  const rightTop = { x: width - 112, y: height * 0.327 };
+  const rightBottom = { x: width + 26, y: height * 0.788 };
+  const leftBottom = { x: -34, y: height * 0.83 };
   const midpoint = (a: typeof leftTop, b: typeof rightTop, ratio: number) => ({
     x: a.x + (b.x - a.x) * ratio,
     y: a.y + (b.y - a.y) * ratio,
@@ -494,9 +495,14 @@ function drawPremiumPadelCourtBackground(
   const serviceBottomRight = midpoint(rightTop, rightBottom, 0.77);
 
   ctx.save();
-  const courtWash = ctx.createLinearGradient(0, 670, width, 1510);
+  const courtWash = ctx.createLinearGradient(
+    0,
+    leftTop.y,
+    width,
+    rightBottom.y
+  );
   courtWash.addColorStop(0, "rgba(247,243,237,0.012)");
-  courtWash.addColorStop(0.52, "rgba(247,243,237,0.036)");
+  courtWash.addColorStop(0.52, "rgba(247,243,237,0.032)");
   courtWash.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = courtWash;
   ctx.beginPath();
@@ -507,7 +513,7 @@ function drawPremiumPadelCourtBackground(
   ctx.closePath();
   ctx.fill();
 
-  ctx.globalAlpha = 0.105;
+  ctx.globalAlpha = 0.078;
   ctx.strokeStyle = "#f7f3ed";
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -532,7 +538,7 @@ function drawPremiumPadelCourtBackground(
   );
   ctx.stroke();
 
-  ctx.globalAlpha = 0.22;
+  ctx.globalAlpha = 0.14;
   ctx.strokeStyle = accent;
   ctx.lineWidth = 4;
   ctx.beginPath();
@@ -540,7 +546,7 @@ function drawPremiumPadelCourtBackground(
   ctx.lineTo(netRight.x, netRight.y);
   ctx.stroke();
 
-  ctx.globalAlpha = 0.09;
+  ctx.globalAlpha = 0.055;
   ctx.strokeStyle = "#f7f3ed";
   ctx.lineWidth = 1;
   for (let offset = 12; offset <= 48; offset += 12) {
@@ -550,7 +556,7 @@ function drawPremiumPadelCourtBackground(
     ctx.stroke();
   }
 
-  ctx.globalAlpha = 0.16;
+  ctx.globalAlpha = 0.1;
   ctx.fillStyle = accent;
   ctx.fillRect(netLeft.x - 3, netLeft.y - 18, 6, 92);
   ctx.fillRect(netRight.x - 3, netRight.y - 18, 6, 92);
@@ -789,22 +795,12 @@ export async function renderGroupWinnerShareCanvas(
   ctx.restore();
 
   ctx.save();
-  ctx.globalAlpha = 0.09;
+  ctx.globalAlpha = 0.03;
   ctx.strokeStyle = accent;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 30;
   ctx.beginPath();
-  ctx.moveTo(-160, 718);
-  ctx.lineTo(954, 116);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(34, 1700);
-  ctx.lineTo(1210, 1116);
-  ctx.stroke();
-  ctx.globalAlpha = 0.035;
-  ctx.lineWidth = 28;
-  ctx.beginPath();
-  ctx.moveTo(720, -120);
-  ctx.lineTo(1080, 420);
+  ctx.moveTo(742, -140);
+  ctx.lineTo(1104, 404);
   ctx.stroke();
   ctx.restore();
 
@@ -815,7 +811,7 @@ export async function renderGroupWinnerShareCanvas(
   ctx.textAlign = "left";
   ctx.fillText("RIVIERA", -34, 1148);
   ctx.restore();
-  drawPremiumPadelCourtBackground(ctx, w, accent);
+  drawMinimalPadelCourtBackground(ctx, w, h, accent);
 
   const vignette = ctx.createLinearGradient(0, 0, 0, h);
   vignette.addColorStop(0, "rgba(0,0,0,0.12)");
@@ -917,36 +913,12 @@ export async function renderGroupWinnerShareCanvas(
 
   // PLAYERS — retratos protagonistas con eje central y profundidad de póster.
   ctx.save();
-  ctx.strokeStyle = "rgba(247,243,237,0.1)";
-  ctx.lineWidth = 2;
-  roundedRectPath(ctx, pad - 12, 676, w - pad * 2 + 24, 476, 34);
-  ctx.stroke();
   ctx.strokeStyle = accent;
-  ctx.globalAlpha = 0.24;
+  ctx.globalAlpha = 0.2;
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(w / 2, 704);
-  ctx.lineTo(w / 2, 1126);
-  ctx.stroke();
-  ctx.globalAlpha = 0.12;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(
-    STORY_LAYOUT.players.firstX - 20,
-    STORY_LAYOUT.players.firstY + 12,
-    186,
-    0,
-    Math.PI * 2
-  );
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(
-    STORY_LAYOUT.players.secondX + 18,
-    STORY_LAYOUT.players.secondY - 10,
-    186,
-    0,
-    Math.PI * 2
-  );
+  ctx.moveTo(w / 2, 716);
+  ctx.lineTo(w / 2, 1114);
   ctx.stroke();
   ctx.restore();
 

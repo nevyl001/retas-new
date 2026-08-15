@@ -590,6 +590,7 @@ function GrupoWinnerSummary({
       aria-label={`Ganadores de ${grupoNombre}`}
     >
       <div className="te-grupo-achievement__art">
+        <span className="te-grupo-achievement__court" aria-hidden="true" />
         <AchievementClubSignature
           clubName={clubName}
           clubLogoUrl={clubLogoUrl}
