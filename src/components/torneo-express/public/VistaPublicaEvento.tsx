@@ -51,8 +51,6 @@ const EventoPublicoBody: React.FC<EventoPublicoBodyProps> = ({
   const [flyerShape, setFlyerShape] = useState<
     "landscape" | "portrait" | "square"
   >("landscape");
-  const [openCategoriaId, setOpenCategoriaId] = useState<string | null>(null);
-
   const { isClubBranded } = useClubExperience();
   const organizerName = useOrganizerDisplayName(evento.organizador_id);
 
@@ -115,29 +113,24 @@ const EventoPublicoBody: React.FC<EventoPublicoBodyProps> = ({
             Aún no hay categorías públicas en este evento.
           </p>
         ) : (
-          <ul className="te-public-evento-roles__list">
+          <ul
+            className={`te-public-evento-roles__list${
+              categorias.length === 1 ? " te-public-evento-roles__list--single" : ""
+            }`}
+          >
             {categorias.map((cat) => {
-              const grupos = gruposByTorneoId[cat.id] ?? [];
               const stats = buildCategoriaPublicCardStats({
                 categoria: cat,
-                grupos,
+                grupos: gruposByTorneoId[cat.id] ?? [],
                 stats: statsByTorneoId[cat.id],
                 eliminatoriaPartidos:
                   eliminatoriaPartidosByTorneoId[cat.id] ?? [],
               });
-              const open = openCategoriaId === cat.id;
               return (
                 <li key={cat.id}>
                   <EventoCategoriaHubCard
                     categoriaId={cat.id}
                     stats={stats}
-                    grupos={grupos}
-                    open={open}
-                    onToggle={() =>
-                      setOpenCategoriaId((cur) =>
-                        cur === cat.id ? null : cat.id
-                      )
-                    }
                   />
                 </li>
               );
