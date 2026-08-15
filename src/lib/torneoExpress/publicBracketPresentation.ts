@@ -110,10 +110,28 @@ export interface BracketPresentationModel {
   thirdPlace: BracketRoundPresentation | null;
   /** Main path + optional third place, in column order. */
   allRounds: BracketRoundPresentation[];
+  /** One real current stage; historical rounds remain data only. */
+  visibleRound: BracketRoundPresentation | null;
+  /** Third place is supplementary only when the real Final is visible. */
+  visibleThirdPlace: BracketRoundPresentation | null;
   mobileTabs: BracketMobileTab[];
   defaultMobileTabId: string;
   totalRondas: number;
   activeRonda: number;
+}
+
+/**
+ * Chooses the most advanced stage which already has real participants.
+ * It never advances a tournament: callers only pass rounds that the existing
+ * mapper already proved to be publicly available.
+ */
+export function getVisiblePublicEliminationStage(
+  rounds: BracketRoundPresentation[]
+): BracketRoundPresentation | null {
+  return rounds.reduce<BracketRoundPresentation | null>(
+    (latest, round) => (!latest || round.ronda > latest.ronda ? round : latest),
+    null
+  );
 }
 
 function parsePairNames(label: string): string[] {
@@ -541,6 +559,9 @@ export function buildBracketPresentationModel(
   }
 
   const allRounds = thirdPlace ? [...rounds, thirdPlace] : rounds;
+  const visibleRound = getVisiblePublicEliminationStage(rounds);
+  const visibleThirdPlace =
+    visibleRound?.isFinalRound ? thirdPlace : null;
 
   const mobileTabs: BracketMobileTab[] = allRounds.map((r) => ({
     id: r.id,
@@ -572,6 +593,8 @@ export function buildBracketPresentationModel(
     rounds,
     thirdPlace,
     allRounds,
+    visibleRound,
+    visibleThirdPlace,
     mobileTabs,
     defaultMobileTabId,
     totalRondas,

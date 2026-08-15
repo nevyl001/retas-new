@@ -1,8 +1,9 @@
 import React from "react";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { TEPublicBracketVisual } from "../../components/torneo-express/public/TEPublicBracketVisual";
 import { getJugadorInitials } from "../../components/jugadores/JugadorAvatar";
+import { RONDA_TERCER_LUGAR } from "./bracketRounds";
 import type { PublicMatchupCard } from "./publicBracketModel";
 
 function card(
@@ -61,7 +62,7 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(getJugadorInitials("Tpvs11")).toBe("T11");
   });
 
-  it("renders both pair names once and no standalone VS badge", () => {
+  it("renders both pair names with one clear VS separator per match", () => {
     render(
       <TEPublicBracketVisual
         allCards={cards}
@@ -72,39 +73,43 @@ describe("TEPublicBracketVisual presentation", () => {
 
     expect(screen.getAllByText("Carlos Méndez").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Diego Ramírez").length).toBeGreaterThanOrEqual(1);
-    expect(screen.queryByText(/^vs$/i)).toBeNull();
-    expect(screen.queryByText(/^VS$/)).toBeNull();
+    expect(screen.getAllByText(/^VS$/)).toHaveLength(4);
   });
 
-  it("does not show future-round dependency placeholders while cuartos are active", () => {
+  const renderStage = (
+    allCards: PublicMatchupCard[],
+    totalRondas = 3,
+    activeRonda?: number
+  ) => {
     render(
       <TEPublicBracketVisual
-        allCards={cards}
-        totalRondas={3}
-        activeRonda={1}
+        allCards={allCards}
+        totalRondas={totalRondas}
+        activeRonda={activeRonda}
       />
     );
-    expect(screen.queryByText(/Ganador Cuartos 1/i)).toBeNull();
+  };
+
+  it("shows only quarterfinals until a real semifinal exists", () => {
+    renderStage(cards, 3, 1);
+    expect(screen.getByText(/^CUARTOS DE FINAL$/)).toBeInTheDocument();
+    expect(screen.getAllByText(/^QF[1-4]$/)).toHaveLength(4);
     expect(screen.queryByText(/^SEMIFINALES$/)).toBeNull();
-    expect(screen.queryByText(/^FINAL$/)).toBeNull();
+    expect(screen.queryByText(/^GRAN FINAL$/)).toBeNull();
   });
 
-  it("builds quarterfinals around the desktop bracket without future nodes", () => {
-    render(
-      <TEPublicBracketVisual
-        allCards={cards}
-        totalRondas={3}
-        activeRonda={1}
-      />
-    );
-
-    const desktopTree = within(screen.getByLabelText("Cuadro de eliminatoria"));
-    expect(desktopTree.getAllByText(/^QF[1-4]$/)).toHaveLength(4);
-    expect(desktopTree.queryByText(/^SF[1-2]$/)).toBeNull();
-    expect(desktopTree.queryByText(/^GRAN FINAL$/)).toBeNull();
+  it("keeps finished quarterfinals visible while semifinals are unavailable", () => {
+    const finishedQf = cards.map((match) => ({
+      ...match,
+      status: "finished" as const,
+      local: { ...match.local, isWinner: true },
+    }));
+    renderStage(finishedQf, 3, 1);
+    expect(screen.getByText(/^CUARTOS DE FINAL$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^SEMIFINALES$/)).toBeNull();
   });
 
-  it("keeps completed history when semifinals become available", () => {
+  it("keeps quarterfinals as compact history beneath real semifinals", () => {
     const progressedCards = [
       ...cards.map((match) => ({
         ...match,
@@ -114,27 +119,45 @@ describe("TEPublicBracketVisual presentation", () => {
       card("s1", 2, 0, "Carlos Méndez / Diego Ramírez", "Luis Pérez / Mario Soto"),
       card("s2", 2, 1, "Ana Ruiz / Eva López", "Nora Díaz / Paz Luna"),
     ];
-    render(
-      <TEPublicBracketVisual
-        allCards={progressedCards}
-        totalRondas={3}
-        activeRonda={2}
-      />
-    );
-    const journey = within(
-      screen.getByLabelText("Historia de la eliminatoria")
-    );
-    expect(journey.getByText(/^CUARTOS$/)).toBeInTheDocument();
-    expect(journey.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
+    renderStage(progressedCards, 3, 2);
+    expect(screen.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
     expect(
-      journey.getByText(/^Felicidades a los semifinalistas$/i)
+      screen.getByText(/^Felicidades, semifinalistas\.$/)
     ).toBeInTheDocument();
-    expect(journey.getByLabelText("Semifinales enfrentadas")).toBeInTheDocument();
-    expect(journey.getByText(/^VS$/)).toBeInTheDocument();
-    expect(journey.queryByText(/^FINAL$/)).toBeNull();
+    expect(screen.getAllByText(/^SF[1-2]$/)).toHaveLength(2);
+    expect(screen.getByText(/^CUARTOS DE FINAL$/)).toBeInTheDocument();
+    expect(screen.getAllByText(/^QF[1-4]$/)).toHaveLength(4);
+    expect(screen.queryByText(/^GRAN FINAL$/)).toBeNull();
+    expect(
+      screen.getAllByText(/^Felicidades, semifinalistas\.$/)
+    ).toHaveLength(1);
+    expect(screen.getByRole("article", { name: /^SF1:/ })).toHaveAttribute(
+      "data-variant",
+      "semifinal"
+    );
+    expect(screen.getByRole("article", { name: /^QF1:/ })).toHaveAttribute(
+      "data-variant",
+      "history"
+    );
   });
 
-  it("congratulates finalists and champions in the final chapter", () => {
+  it("keeps finished semifinals visible while the final is unavailable", () => {
+    const finishedSemis = [
+      {
+        ...card("s1", 2, 0, "Carlos Méndez / Diego Ramírez", "Luis Pérez / Mario Soto"),
+        status: "finished" as const,
+      },
+      {
+        ...card("s2", 2, 1, "Ana Ruiz / Eva López", "Nora Díaz / Paz Luna"),
+        status: "finished" as const,
+      },
+    ];
+    renderStage(finishedSemis, 3, 2);
+    expect(screen.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^GRAN FINAL$/)).toBeNull();
+  });
+
+  it("keeps previous stages as history while the final owns the current stage", () => {
     const finalCards = [
       card("s1", 2, 0, "Carlos Méndez / Diego Ramírez", "Luis Pérez / Mario Soto"),
       card("s2", 2, 1, "Ana Ruiz / Eva López", "Nora Díaz / Paz Luna"),
@@ -157,22 +180,57 @@ describe("TEPublicBracketVisual presentation", () => {
         : match
     );
 
-    render(
-      <TEPublicBracketVisual
-        allCards={finalCards}
-        totalRondas={3}
-        activeRonda={3}
-      />
+    renderStage(finalCards, 3, 3);
+    expect(screen.getByText(/^RESULTADO FINAL$/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Campeones")).toBeInTheDocument();
+    expect(screen.getAllByText(/^CAMPEONES$/)).toHaveLength(1);
+    expect(screen.getByRole("article", { name: /^Final:/ })).toHaveAttribute(
+      "data-variant",
+      "final"
+    );
+    expect(screen.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
+  });
+
+  it("keeps the real third-place match secondary to the visible final", () => {
+    const final = {
+      ...card("f1", 3, 0, "Carlos Méndez / Diego Ramírez", "Ana Ruiz / Eva López"),
+      status: "finished" as const,
+      local: {
+        ...card("f1", 3, 0, "Carlos Méndez / Diego Ramírez", "Ana Ruiz / Eva López")
+          .local,
+        isWinner: true,
+      },
+    };
+    const bronze = {
+      ...card("b1", RONDA_TERCER_LUGAR, 0, "Luis Pérez / Mario Soto", "Nora Díaz / Paz Luna"),
+      status: "finished" as const,
+    };
+    renderStage([final, bronze], 3, 3);
+
+    expect(screen.getByText(/^RESULTADO FINAL$/)).toBeInTheDocument();
+    expect(screen.getByText(/^3\.ER LUGAR$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^SEMIFINALES$/)).toBeNull();
+  });
+
+  it("shows tournaments that start in semifinals without fabricating an earlier round", () => {
+    renderStage(
+      [
+        {
+          ...card("s1", 1, 0, "Carlos Méndez / Diego Ramírez", "Luis Pérez / Mario Soto"),
+          roundLabel: "Semifinal",
+        },
+        {
+          ...card("s2", 1, 1, "Ana Ruiz / Eva López", "Nora Díaz / Paz Luna"),
+          roundLabel: "Semifinal",
+        },
+      ],
+      2,
+      1
     );
 
-    const journey = within(
-      screen.getByLabelText("Historia de la eliminatoria")
-    );
-    expect(
-      journey.getByText(/^Felicidades a los finalistas$/i)
-    ).toBeInTheDocument();
-    expect(journey.getByText(/^CAMPEONES$/)).toBeInTheDocument();
-    expect(journey.getByText(/^GRAN FINAL$/)).toBeInTheDocument();
+    expect(screen.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^CUARTOS DE FINAL$/)).toBeNull();
+    expect(screen.queryByText(/^GRAN FINAL$/)).toBeNull();
   });
 
   it("omits third-place UI when bronze card is absent", () => {
@@ -195,11 +253,8 @@ describe("TEPublicBracketVisual presentation", () => {
       />
     );
 
-    const journey = within(
-      screen.getByLabelText("Historia de la eliminatoria")
-    );
-    const times = journey.getAllByText("13:50");
-    const courts = journey.getAllByText("CANCHA 3");
+    const times = screen.getAllByText("13:50");
+    const courts = screen.getAllByText("CANCHA 3");
     expect(times).toHaveLength(4);
     expect(courts).toHaveLength(4);
     times.forEach((node) => expect(node).toHaveClass("te-pb-match__time"));
@@ -220,10 +275,7 @@ describe("TEPublicBracketVisual presentation", () => {
         activeRonda={1}
       />
     );
-    const journey = within(
-      screen.getByLabelText("Historia de la eliminatoria")
-    );
-    expect(journey.getByText("Cancha por confirmar")).toHaveClass(
+    expect(screen.getByText("Cancha por confirmar")).toHaveClass(
       "te-pb-match__court--pending"
     );
   });

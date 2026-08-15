@@ -10,7 +10,45 @@ import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
 import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
 import "../../jugadores/riviera-jugadores.css";
 
-function BracketTeamRow({ team }: { team: BracketTeamPresentation }) {
+function PlayerRow({
+  player,
+  parejaId,
+  imageLoading,
+}: {
+  player: BracketTeamPresentation["players"][number];
+  parejaId: string | null;
+  imageLoading: "eager" | "lazy";
+}) {
+  return (
+    <span
+      className="te-pb-team__name"
+      aria-label={`Jugador ${player.name}`}
+      data-player-id={player.id}
+      data-pair-id={parejaId ?? undefined}
+      data-photo-state={player.fotoUrl ? "provided" : "missing"}
+    >
+      <JugadorAvatar
+        fotoUrl={player.fotoUrl}
+        nombre={player.name}
+        size="sm"
+        loading={imageLoading}
+        className="te-pb-team__avatar te-pb-team__avatar--inline"
+      />
+      <span className="te-pb-team__player-name">{player.name}</span>
+      {player.rating != null ? (
+        <span className="te-pb-team__rating">{player.rating.toFixed(2)}</span>
+      ) : null}
+    </span>
+  );
+}
+
+function TeamBlock({
+  team,
+  imageLoading,
+}: {
+  team: BracketTeamPresentation;
+  imageLoading: "eager" | "lazy";
+}) {
   if (team.kind === "bye") {
     return (
       <div className="te-pb-team te-pb-team--bye">
@@ -61,26 +99,12 @@ function BracketTeamRow({ team }: { team: BracketTeamPresentation }) {
         </div>
         <div className="te-pb-team__names">
           {playerRows.map((player) => (
-            <span
-              className="te-pb-team__name"
+            <PlayerRow
               key={player.id}
-              data-player-id={player.id}
-              data-pair-id={team.parejaId ?? undefined}
-              data-photo-state={player.fotoUrl ? "provided" : "missing"}
-            >
-              <JugadorAvatar
-                fotoUrl={player.fotoUrl}
-                nombre={player.name}
-                size="sm"
-                className="te-pb-team__avatar te-pb-team__avatar--inline"
-              />
-              <span className="te-pb-team__player-name">{player.name}</span>
-              {player.rating != null ? (
-                <span className="te-pb-team__rating">
-                  {player.rating.toFixed(2)}
-                </span>
-              ) : null}
-            </span>
+              player={player}
+              parejaId={team.parejaId}
+              imageLoading={imageLoading}
+            />
           ))}
         </div>
       </div>
@@ -98,12 +122,14 @@ function BracketTeamRow({ team }: { team: BracketTeamPresentation }) {
   );
 }
 
-function BracketMatchCard({
+function MatchScoreboard({
   match,
   variant = "standard",
+  hideLiveStatus = false,
 }: {
   match: BracketMatchPresentation;
-  variant?: "standard" | "semifinal" | "final" | "third";
+  variant?: "history" | "standard" | "semifinal" | "final" | "third";
+  hideLiveStatus?: boolean;
 }) {
   const ariaTeams = [
     match.local.kind === "dependency"
@@ -124,12 +150,14 @@ function BracketMatchCard({
       data-match-id={match.id}
       data-ronda={match.ronda}
       data-cruce={match.cruceIndex}
+      data-variant={variant}
       aria-label={`${match.shortTitle}: ${ariaTeams}. ${match.metaLine}`}
     >
       <header className="te-pb-match__head">
         <div className="te-pb-match__identity">
           <span className="te-pb-match__title">{match.shortTitle}</span>
-          {match.status === "live" || match.status === "finished" ? (
+          {(match.status === "finished" ||
+            (match.status === "live" && !hideLiveStatus)) ? (
             <span
               className={`te-pb-match__status te-pb-match__status--${match.status}`}
             >
@@ -166,41 +194,19 @@ function BracketMatchCard({
       </header>
 
       <div className="te-pb-match__body">
-        <BracketTeamRow team={match.local} />
-        <div className="te-pb-match__divider" aria-hidden />
-        <BracketTeamRow team={match.visit} />
+        <TeamBlock
+          team={match.local}
+          imageLoading={variant === "history" ? "lazy" : "eager"}
+        />
+        <div className="te-pb-match__divider" aria-hidden>
+          <span>VS</span>
+        </div>
+        <TeamBlock
+          team={match.visit}
+          imageLoading={variant === "history" ? "lazy" : "eager"}
+        />
       </div>
     </article>
-  );
-}
-
-function teamDisplayName(team: BracketTeamPresentation): string {
-  if (team.kind === "bye") return "BYE";
-  if (team.kind === "dependency") {
-    return team.dependencyLabel?.trim() || "Por definir";
-  }
-  return team.names.join(" / ") || team.label;
-}
-
-function BracketCelebrate({
-  eyebrow,
-  names,
-  tone,
-}: {
-  eyebrow: string;
-  names: string[];
-  tone: "semi" | "final";
-}) {
-  if (names.length === 0) return null;
-  return (
-    <div className={`te-pb-celebrate te-pb-celebrate--${tone}`}>
-      <p className="te-pb-celebrate__eyebrow">{eyebrow}</p>
-      <ul className="te-pb-celebrate__names">
-        {names.map((name) => (
-          <li key={name}>{name}</li>
-        ))}
-      </ul>
-    </div>
   );
 }
 
@@ -219,20 +225,28 @@ function ChampionMoment({ champion }: { champion: BracketTeamPresentation }) {
 
   return (
     <aside className="te-pb-champion-moment" aria-label="Campeones">
-      <p className="te-pb-champion-moment__eyebrow">Campeones</p>
+      <p className="te-pb-champion-moment__eyebrow">Torneo finalizado</p>
+      <h3 className="te-pb-champion-moment__title">CAMPEONES</h3>
       <div className="te-pb-champion-moment__players">
         {players.map((player) => (
-          <span className="te-pb-champion-moment__player" key={player.id}>
+          <span
+            className="te-pb-champion-moment__player"
+            key={player.id}
+            aria-label={player.name}
+          >
             <JugadorAvatar
               fotoUrl={player.fotoUrl}
               nombre={player.name}
-              size="md"
+              size="xl"
+              loading="eager"
               className="te-pb-champion-moment__avatar"
             />
-            <span>{player.name}</span>
           </span>
         ))}
       </div>
+      <strong className="te-pb-champion-moment__pair">
+        {champion.names.join(" / ") || champion.label}
+      </strong>
       <p className="te-pb-champion-moment__copy">
         El camino terminó en lo más alto. Felicidades, campeones.
       </p>
@@ -240,109 +254,17 @@ function ChampionMoment({ champion }: { champion: BracketTeamPresentation }) {
   );
 }
 
-function DesktopSymmetricalBracket({
-  rounds,
-}: {
-  rounds: BracketRoundPresentation[];
-}) {
-  const quarterfinals = rounds.find((round) => round.matches.length === 4);
-  const semifinals = rounds.find((round) => round.isSemifinal);
-  const final = rounds.find((round) => round.isFinalRound);
-  const thirdPlace = rounds.find((round) => round.isThirdPlace);
-
-  if (!quarterfinals && !semifinals) return null;
-
-  const champion = final?.matches
-    .flatMap((match) => [match.local, match.visit])
-    .find((team) => team.kind === "team" && team.isWinner);
-
-  return (
-    <div className="te-pb-desktop-tree" aria-label="Cuadro de eliminatoria">
-      <div className="te-pb-desktop-tree__header">
-        <span>{quarterfinals?.title ?? ""}</span>
-        {semifinals ? <span>Semifinales</span> : null}
-        {final ? <span>Gran final</span> : null}
-      </div>
-
-      {semifinals ? (
-        <p className="te-pb-desktop-tree__semis-copy">
-          {semifinals.isCompleted
-            ? "✓ Semifinales completadas"
-            : "Están entre las mejores parejas. Solo un partido los separa de la Gran Final."}
-        </p>
-      ) : null}
-
-      <div
-        className={`te-pb-desktop-tree__grid${
-          semifinals ? " te-pb-desktop-tree__grid--has-semis" : ""
-        }${final ? " te-pb-desktop-tree__grid--has-final" : ""}`}
-      >
-        {quarterfinals?.matches.map((match, index) => (
-          <div
-            className={`te-pb-desktop-tree__node te-pb-desktop-tree__node--qf-${index + 1}`}
-            key={match.id}
-          >
-            <BracketMatchCard match={match} />
-          </div>
-        ))}
-
-        {semifinals?.matches[0] ? (
-          <div className="te-pb-desktop-tree__node te-pb-desktop-tree__node--sf-1">
-            <BracketMatchCard match={semifinals.matches[0]} variant="semifinal" />
-          </div>
-        ) : null}
-        {semifinals?.matches[1] ? (
-          <div className="te-pb-desktop-tree__node te-pb-desktop-tree__node--sf-2">
-            <BracketMatchCard match={semifinals.matches[1]} variant="semifinal" />
-          </div>
-        ) : null}
-
-        {final?.matches[0] ? (
-          <div className="te-pb-desktop-tree__node te-pb-desktop-tree__node--final">
-            <p className="te-pb-desktop-tree__editorial">
-              Todo el camino conduce hasta aquí. Es momento de definir a los
-              campeones.
-            </p>
-            {champion ? <ChampionMoment champion={champion} /> : null}
-            <BracketMatchCard match={final.matches[0]} variant="final" />
-          </div>
-        ) : null}
-      </div>
-
-      {thirdPlace?.matches[0] ? (
-        <section className="te-pb-desktop-tree__third">
-          <div>
-            <p>3.er lugar</p>
-            <span>
-              {thirdPlace.isCompleted
-                ? "✓ 3.er lugar definido"
-                : "Una última batalla por subir al podio."}
-            </span>
-          </div>
-          <BracketMatchCard match={thirdPlace.matches[0]} variant="third" />
-        </section>
-      ) : null}
-    </div>
-  );
-}
-
 function BracketRoundColumn({
   round,
+  display = "current",
 }: {
   round: BracketRoundPresentation;
+  display?: "history" | "current";
 }) {
   const isFinal = round.isFinalRound || round.matches.some((match) => match.isFinal);
-  const isSemisArena = round.isSemifinal && round.matches.length === 2;
   const pairTeams = round.matches
     .flatMap((match) => [match.local, match.visit])
     .filter((team) => team.kind === "team");
-  const finalists = isFinal ? pairTeams.map(teamDisplayName) : [];
-  const semifinalists = round.isSemifinal
-    ? pairTeams.map(teamDisplayName)
-    : [];
-  const advancing = round.isSemifinal
-    ? pairTeams.filter((team) => team.isWinner).map(teamDisplayName)
-    : [];
   const champion = isFinal
     ? pairTeams.find((team) => team.isWinner) ?? null
     : null;
@@ -353,12 +275,14 @@ function BracketRoundColumn({
         round.isThirdPlace ? " te-pb-round--third" : ""
       }${isFinal ? " te-pb-round--final" : ""}${
         round.isSemifinal ? " te-pb-round--semis" : ""
-      }${isSemisArena ? " te-pb-round--semis-arena" : ""}${
-        round.isActive ? " te-pb-round--active" : ""
-      }${round.isCompleted ? " te-pb-round--completed" : ""}`}
+      }${round.isCompleted ? " te-pb-round--completed" : ""}${
+        display === "history" ? " te-pb-round--history" : " te-pb-round--current"
+      }`}
       data-round={round.id}
+      data-display={display}
       aria-label={round.title}
     >
+      {champion ? <ChampionMoment champion={champion} /> : null}
       <header className="te-pb-round__head">
         <div>
           <span
@@ -369,89 +293,83 @@ function BracketRoundColumn({
           >
             {isFinal ? "◆" : round.isCompleted ? "✓" : "●"}
           </span>
+          {display === "current" && !champion && (round.isSemifinal || isFinal) ? (
+            <span className="te-pb-round__eyebrow">
+              {isFinal ? "Etapa final" : "Etapa decisiva"}
+            </span>
+          ) : null}
           <h3 className="te-pb-round__title">
-            {isFinal ? "GRAN FINAL" : round.title}
+            {champion
+              ? "RESULTADO FINAL"
+              : isFinal
+                ? "GRAN FINAL"
+                : round.title === "CUARTOS"
+                  ? "CUARTOS DE FINAL"
+                  : round.title}
           </h3>
         </div>
         <p className="te-pb-round__summary">
           {round.isThirdPlace
-            ? "Partido por el podio"
-            : round.isActive
-              ? round.matches.some((match) => match.status === "live")
-                ? "● EN VIVO"
-                : `${round.matches.length} ${
-                    round.matches.length === 1 ? "partido" : "partidos"
-                  }`
-              : round.isCompleted
-                ? "✓ COMPLETADO"
-                : `${round.matches.length} ${
-                    round.matches.length === 1 ? "partido" : "partidos"
-                  }`}
+            ? round.isCompleted
+              ? "✓ 3.er lugar definido"
+              : "Una última batalla por subir al podio."
+            : round.isCompleted
+              ? display === "history"
+                ? round.isSemifinal
+                  ? "✓ Semifinales completadas"
+                  : "✓ Completados"
+                : "✓ Completado"
+              : null}
         </p>
       </header>
 
-      {round.isSemifinal ? (
-        <BracketCelebrate
-          tone="semi"
-          eyebrow="Felicidades a los semifinalistas"
-          names={semifinalists}
-        />
-      ) : null}
-
-      {isFinal ? (
-        <BracketCelebrate
-          tone="final"
-          eyebrow="Felicidades a los finalistas"
-          names={finalists}
-        />
-      ) : null}
-
-      {champion ? (
-        <p className="te-pb-round__champion">
-          <span>CAMPEONES</span>
-          {teamDisplayName(champion)}
-        </p>
-      ) : null}
-
-      {round.isSemifinal && advancing.length > 0 ? (
-        <p className="te-pb-round__advance">
-          <span>Clasifican a la Final</span>
-          {advancing.join("  ·  ")}
-        </p>
-      ) : null}
-
-      {isSemisArena ? (
-        <div className="te-pb-round__arena" aria-label="Semifinales enfrentadas">
-          <div className="te-pb-round__arena-side te-pb-round__arena-side--left">
-            <BracketMatchCard match={round.matches[0]} />
-          </div>
-          <div className="te-pb-round__arena-center" aria-hidden>
-            <span className="te-pb-round__arena-rule" />
-            <span className="te-pb-round__arena-badge">VS</span>
-            <span className="te-pb-round__arena-rule" />
-          </div>
-          <div className="te-pb-round__arena-side te-pb-round__arena-side--right">
-            <BracketMatchCard match={round.matches[1]} />
-          </div>
+      {display === "current" && !round.isThirdPlace && !champion ? (
+        <div className="te-pb-round__editorial">
+          {round.isSemifinal ? (
+            <>
+              <strong>Felicidades, semifinalistas.</strong>
+              <p>
+                Ya están entre las mejores parejas del torneo. Un partido más
+                los separa de la Gran Final.
+              </p>
+            </>
+          ) : (
+            <p>
+              {isFinal
+                ? "Todo el camino conduce hasta aquí. Es momento de definir a los campeones."
+                : round.title === "OCTAVOS"
+                  ? "El cuadro está abierto. Cada punto empieza a marcar el camino."
+                  : "La competencia sube de nivel. Cada partido acerca a una pareja a la definición."}
+            </p>
+          )}
         </div>
-      ) : (
-        <div className="te-pb-round__stack">
-          {round.matches.map((match) => (
-            <BracketMatchCard key={match.id} match={match} />
-          ))}
-        </div>
-      )}
+      ) : null}
+
+      <div className="te-pb-round__stack">
+        {round.matches.map((match) => (
+          <MatchScoreboard
+            key={match.id}
+            match={match}
+            variant={
+              display === "history"
+                ? "history"
+                : isFinal
+                  ? "final"
+                  : round.isSemifinal
+                    ? "semifinal"
+                    : round.isThirdPlace
+                      ? "third"
+                      : "standard"
+            }
+            hideLiveStatus={
+              display === "current" &&
+              round.matches.length > 1 &&
+              round.matches.every((entry) => entry.status === "live")
+            }
+          />
+        ))}
+      </div>
     </section>
-  );
-}
-
-function BracketStageDivider() {
-  return (
-    <div className="te-pb-stage-divider" aria-hidden>
-      <span className="te-pb-stage-divider__line" />
-      <span className="te-pb-stage-divider__arrow">↓</span>
-      <span className="te-pb-stage-divider__line" />
-    </div>
   );
 }
 
@@ -478,10 +396,6 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
       ),
     [allCards, totalRondas, activeRonda, pairPlayersById]
   );
-  const hasDesktopTree = presentation.rounds.some(
-    (round) => round.matches.length === 4 || round.isSemifinal
-  );
-
   if (allCards.length === 0) {
     return (
       <p className="te-elim-public-empty">
@@ -491,24 +405,32 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
   }
 
   return (
-    <div className={`te-pb${hasDesktopTree ? " te-pb--has-desktop-tree" : ""}`}>
-      <DesktopSymmetricalBracket rounds={presentation.allRounds} />
-      <div
-        className="te-pb-history"
-        aria-label="Historia de la eliminatoria"
-      >
-        {presentation.allRounds.map((round, index) => (
-          <React.Fragment key={round.id}>
-            {index > 0 ? <BracketStageDivider /> : null}
-            <section
-              className={`te-pb-stage te-pb-stage--${round.id}${
-                round.isActive ? " te-pb-stage--active" : ""
-              }${round.isCompleted ? " te-pb-stage--completed" : ""}`}
-            >
-              <BracketRoundColumn round={round} />
-            </section>
-          </React.Fragment>
-        ))}
+    <div className="te-pb te-elim-v2">
+      <div className="te-pb-current-stage" aria-label="Etapa actual de la eliminatoria">
+        {presentation.visibleRound ? (
+          <section
+            className={`te-pb-stage te-pb-stage--${presentation.visibleRound.id}`}
+            key={presentation.visibleRound.id}
+          >
+            {presentation.rounds
+              .filter((round) => round.ronda < presentation.visibleRound!.ronda)
+              .map((round) => (
+                <React.Fragment key={round.id}>
+                  <BracketRoundColumn round={round} display="history" />
+                  <div className="te-pb-stage-progression" aria-hidden>
+                    <span />
+                    <i>●</i>
+                  </div>
+                </React.Fragment>
+              ))}
+            <BracketRoundColumn round={presentation.visibleRound} />
+            {presentation.visibleThirdPlace ? (
+              <div className="te-pb-current-stage__third">
+                <BracketRoundColumn round={presentation.visibleThirdPlace} />
+              </div>
+            ) : null}
+          </section>
+        ) : null}
       </div>
     </div>
   );

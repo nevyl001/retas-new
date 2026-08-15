@@ -1,17 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { buildPublicPodiumStatsForPair } from "../../../lib/torneoExpress/publicEliminatoriaPodiumStats";
 import { formatTorneoExpressCategoria } from "../../../lib/torneoExpress/formatCategoria";
 import { buildPublicBracketViewModel } from "../../../lib/torneoExpress/publicBracketModel";
+import { buildBracketPresentationModel } from "../../../lib/torneoExpress/publicBracketPresentation";
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
 import { useTorneoPublicDisplayNombre } from "../../../hooks/useTorneoPublicDisplayNombre";
 import { Badge, Button } from "../../ui";
 import { TEPublicBracketVisual } from "./TEPublicBracketVisual";
-import { PodiumCard } from "./PodiumCard";
-import { PublicEliminatoriaFinalistsCelebrate } from "./PublicEliminatoriaFinalistsCelebrate";
 import { usePublicBracketPairPlayers } from "../../../hooks/usePublicBracketPairPlayers";
 import "./te-public-grupos.css";
 import "./torneo-express-public.css";
 import "./te-public-eliminatoria.css";
+import "./te-public-eliminatoria-v2.css";
 
 function RefreshFooter({
   lastRefreshedAt,
@@ -97,30 +96,6 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
   const displayNombre =
     useTorneoPublicDisplayNombre(bundle.torneo) || bundle.torneo.nombre;
 
-  const championStats = useMemo(
-    () =>
-      buildPublicPodiumStatsForPair(
-        bundle,
-        model.championCelebrate?.parejaId
-      ),
-    [bundle, model.championCelebrate?.parejaId]
-  );
-
-  const runnerUpStats = useMemo(
-    () =>
-      buildPublicPodiumStatsForPair(bundle, model.runnerUpCelebrate?.parejaId),
-    [bundle, model.runnerUpCelebrate?.parejaId]
-  );
-
-  const thirdPlaceStats = useMemo(
-    () =>
-      buildPublicPodiumStatsForPair(
-        bundle,
-        model.thirdPlaceCelebrate?.parejaId
-      ),
-    [bundle, model.thirdPlaceCelebrate?.parejaId]
-  );
-
   useEffect(() => {
     if (!lastRefreshedAt) return;
     if (
@@ -135,13 +110,30 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
     prevRefreshRef.current = lastRefreshedAt;
   }, [lastRefreshedAt]);
 
-  const phaseSubtitle = model.currentPhaseUpper
-    .replace(/DE FINAL\b/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-  const phaseLine = phaseSubtitle
-    ? phaseSubtitle.charAt(0) + phaseSubtitle.slice(1).toLowerCase()
+  const presentation = useMemo(
+    () =>
+      buildBracketPresentationModel(
+        model.allBracketCards,
+        model.totalRondas,
+        model.activeRonda
+      ),
+    [model.activeRonda, model.allBracketCards, model.totalRondas]
+  );
+  const visibleStage = presentation.visibleRound;
+  const isChampionStage = Boolean(
+    visibleStage?.isFinalRound && visibleStage.isCompleted
+  );
+  const phaseLine = visibleStage
+    ? isChampionStage
+      ? "Campeones definidos"
+      : visibleStage.isFinalRound
+        ? "Gran Final"
+        : visibleStage.title.charAt(0) +
+          visibleStage.title.slice(1).toLowerCase()
     : null;
+  const hasVisibleLiveMatch = Boolean(
+    visibleStage?.matches.some((match) => match.status === "live")
+  );
 
   return (
     <div className="te-grupos-page te-elim-public">
@@ -153,18 +145,17 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
                 ? `${displayNombre} · ${categoria}`
                 : displayNombre}
             </h1>
-            {phaseLine || model.hasLiveMatch ? (
+            {phaseLine || hasVisibleLiveMatch ? (
               <p className="te-elim-public__subtitle">
                 {phaseLine}
-                {phaseLine && model.hasLiveMatch ? " · " : null}
-                {model.hasLiveMatch ? (
+                {phaseLine && hasVisibleLiveMatch ? " · " : null}
+                {hasVisibleLiveMatch ? (
                   <span className="te-elim-public__live">
                     <Badge variant="live">EN VIVO</Badge>
                   </span>
                 ) : null}
               </p>
             ) : null}
-            <p className="te-elim-tagline">{model.motivationalMessage}</p>
           </div>
           {onCopyLink || gruposHref ? (
             <div className="te-elim-public__actions">
@@ -190,17 +181,6 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           ) : null}
         </div>
 
-        {model.championLabel ? (
-          <p className="te-elim-champion">
-            <span className="te-elim-champion__icon" aria-hidden>
-              🏆
-            </span>
-            <span className="te-elim-champion__label">Campeones:</span>
-            <strong className="te-elim-champion__names">
-              {model.championLabel}
-            </strong>
-          </p>
-        ) : null}
       </header>
 
       <section className="te-elim-public-bracket-wrap te-pub-fade-in">
@@ -211,82 +191,6 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
           pairPlayersById={pairPlayersById}
         />
       </section>
-
-      {model.finalistsCelebrate && !model.championLabel ? (
-        <>
-          <div
-            className="te-elim-public-bracket-divider"
-            aria-hidden
-          />
-          <PublicEliminatoriaFinalistsCelebrate
-            finalists={model.finalistsCelebrate.finalists}
-            categoria={categoria}
-            torneoNombre={bundle.torneo.nombre}
-            pairPlayersById={pairPlayersById}
-          />
-        </>
-      ) : null}
-
-      {model.championCelebrate ? (
-        <>
-          <div className="te-elim-public-bracket-divider" aria-hidden />
-          <PodiumCard
-            position={1}
-            entry={model.championCelebrate}
-            categoria={categoria}
-            torneoNombre={bundle.torneo.nombre}
-            pairPlayersById={pairPlayersById}
-            stats={championStats}
-          />
-        </>
-      ) : null}
-
-      {model.runnerUpCelebrate ? (
-        <>
-          <div className="te-elim-public-bracket-divider" aria-hidden />
-          <PodiumCard
-            position={2}
-            entry={model.runnerUpCelebrate}
-            categoria={categoria}
-            torneoNombre={bundle.torneo.nombre}
-            pairPlayersById={pairPlayersById}
-            stats={runnerUpStats}
-          />
-        </>
-      ) : null}
-
-      {model.thirdPlaceCelebrate ? (
-        <>
-          <div className="te-elim-public-bracket-divider" aria-hidden />
-          <PodiumCard
-            position={3}
-            entry={model.thirdPlaceCelebrate}
-            categoria={categoria}
-            torneoNombre={bundle.torneo.nombre}
-            pairPlayersById={pairPlayersById}
-            stats={thirdPlaceStats}
-          />
-        </>
-      ) : null}
-
-      {model.sharedSemifinalists && model.sharedSemifinalists.length > 0 ? (
-        <>
-          <div className="te-elim-public-bracket-divider" aria-hidden />
-          <section
-            className="te-elim-shared-semis"
-            aria-label="Semifinalistas"
-          >
-            <h2 className="te-elim-shared-semis__title">Semifinalistas</h2>
-            <ul className="te-elim-shared-semis__list">
-              {model.sharedSemifinalists.map((entry) => (
-                <li key={entry.parejaId ?? entry.label} className="te-elim-shared-semis__item">
-                  {entry.label}
-                </li>
-              ))}
-            </ul>
-          </section>
-        </>
-      ) : null}
 
       <RefreshFooter
         lastRefreshedAt={lastRefreshedAt}
