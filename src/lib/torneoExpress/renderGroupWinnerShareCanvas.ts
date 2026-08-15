@@ -32,38 +32,39 @@ export type GroupWinnerShareData = {
 type TextLine = { text: string; fontSize: number };
 
 const STORY_LAYOUT = {
-  safeTop: 136,
-  safeBottom: 172,
-  padX: 88,
+  safeTop: 124,
+  safeBottom: 164,
+  padX: 76,
   header: {
-    tournamentY: 294,
-    contextGap: 42,
+    tournamentY: 282,
+    contextY: 332,
   },
   achievement: {
-    detailY: 424,
+    detailY: 426,
     titleY: 548,
-    copyY: 620,
+    copyY: 610,
   },
   players: {
-    firstX: 336,
-    secondX: 744,
-    firstY: 914,
-    secondY: 950,
-    diameter: 276,
-    firstNameY: 1090,
-    secondNameY: 1126,
-    nameWidth: 344,
+    firstX: 326,
+    secondX: 758,
+    firstY: 842,
+    secondY: 912,
+    diameter: 292,
+    firstNameY: 1025,
+    secondNameY: 1095,
+    nameWidth: 370,
   },
   stats: {
-    top: 1242,
-    valueY: 1352,
-    labelY: 1400,
-    bottom: 1450,
+    top: 1212,
+    valueY: 1334,
+    labelY: 1384,
+    bottom: 1438,
   },
   footer: {
-    ruleY: 1518,
-    taglineY: 1578,
-    socialY: 1692,
+    taglineTop: 1510,
+    taglineY: 1584,
+    socialTop: 1644,
+    socialY: 1708,
   },
 } as const;
 
@@ -322,6 +323,28 @@ function resolveEditorialAccent(themeAccent?: string): string {
   return contrast >= 2.25 ? candidate : fallback;
 }
 
+function roundedRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+): void {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.arcTo(x + width, y, x + width, y + r, r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.arcTo(x + width, y + height, x + width - r, y + height, r);
+  ctx.lineTo(x + r, y + height);
+  ctx.arcTo(x, y + height, x, y + height - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
 async function drawAvatar(
   ctx: CanvasRenderingContext2D,
   player: GroupWinnerSharePlayer,
@@ -331,22 +354,33 @@ async function drawAvatar(
   accent: string
 ) {
   const radius = diameter / 2;
-  const portraitRadius = radius - 12;
+  const portraitRadius = radius - 18;
 
   ctx.save();
-  ctx.fillStyle = "#101114";
+  ctx.shadowColor = "rgba(0,0,0,0.72)";
+  ctx.shadowBlur = 42;
+  ctx.shadowOffsetY = 20;
+  ctx.fillStyle = "#090a0c";
   ctx.beginPath();
-  ctx.arc(centerX, centerY, radius + 6, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, radius + 12, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = "#08090b";
-  ctx.lineWidth = 14;
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(247,243,237,0.1)";
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(centerX, centerY, radius - 2, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, radius + 7, 0, Math.PI * 2);
   ctx.stroke();
   ctx.strokeStyle = accent;
-  ctx.lineWidth = 5;
+  ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.arc(centerX, centerY, radius - 7, 0, Math.PI * 2);
+  ctx.arc(centerX, centerY, radius + 1, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = "#090a0c";
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius - 8, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 
@@ -384,16 +418,17 @@ async function drawAvatar(
     );
   } else {
     const gradient = ctx.createRadialGradient(
-      centerX - portraitRadius * 0.28,
-      centerY - portraitRadius * 0.34,
-      portraitRadius * 0.08,
-      centerX,
-      centerY,
+      centerX - portraitRadius * 0.38,
+      centerY - portraitRadius * 0.42,
+      portraitRadius * 0.03,
+      centerX + portraitRadius * 0.1,
+      centerY + portraitRadius * 0.16,
       portraitRadius
     );
-    gradient.addColorStop(0, "#3b3d42");
-    gradient.addColorStop(0.5, "#24262b");
-    gradient.addColorStop(1, "#111216");
+    gradient.addColorStop(0, "#4b4d52");
+    gradient.addColorStop(0.22, "#303238");
+    gradient.addColorStop(0.68, "#1b1d22");
+    gradient.addColorStop(1, "#0c0d10");
     ctx.fillStyle = gradient;
     ctx.fillRect(
       centerX - portraitRadius,
@@ -401,16 +436,34 @@ async function drawAvatar(
       portraitRadius * 2,
       portraitRadius * 2
     );
+    const innerLight = ctx.createLinearGradient(
+      centerX - portraitRadius,
+      centerY - portraitRadius,
+      centerX + portraitRadius,
+      centerY + portraitRadius
+    );
+    innerLight.addColorStop(0, "rgba(247,243,237,0.11)");
+    innerLight.addColorStop(0.5, "rgba(247,243,237,0)");
+    innerLight.addColorStop(1, "rgba(0,0,0,0.18)");
+    ctx.fillStyle = innerLight;
+    ctx.fillRect(
+      centerX - portraitRadius,
+      centerY - portraitRadius,
+      portraitRadius * 2,
+      portraitRadius * 2
+    );
     ctx.fillStyle = "#f7f3ed";
-    ctx.font = font(800, 78);
+    ctx.font = font(820, 84);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(initialsFromName(player.name), centerX, centerY + 5);
+    ctx.shadowColor = "rgba(0,0,0,0.55)";
+    ctx.shadowBlur = 12;
+    ctx.fillText(initialsFromName(player.name), centerX, centerY + 7);
   }
   ctx.restore();
 
   ctx.save();
-  ctx.strokeStyle = "rgba(247,243,237,0.15)";
+  ctx.strokeStyle = "rgba(247,243,237,0.22)";
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(centerX, centerY, portraitRadius, 0, Math.PI * 2);
@@ -418,30 +471,43 @@ async function drawAvatar(
   ctx.restore();
 }
 
-/** Textura editorial de cancha: perspectiva y red, deliberadamente sutil. */
-function drawMinimalPadelCourt(
+/** Cancha editorial en perspectiva: estructura la pieza sin parecer un diagrama. */
+function drawPremiumPadelCourtBackground(
   ctx: CanvasRenderingContext2D,
   width: number,
   accent: string
 ): void {
-  const leftTop = { x: 124, y: 760 };
-  const rightTop = { x: width - 124, y: 704 };
-  const rightBottom = { x: width - 78, y: 1562 };
-  const leftBottom = { x: 78, y: 1620 };
+  const leftTop = { x: 88, y: 684 };
+  const rightTop = { x: width - 112, y: 628 };
+  const rightBottom = { x: width + 26, y: 1512 };
+  const leftBottom = { x: -34, y: 1594 };
   const midpoint = (a: typeof leftTop, b: typeof rightTop, ratio: number) => ({
     x: a.x + (b.x - a.x) * ratio,
     y: a.y + (b.y - a.y) * ratio,
   });
 
-  const topQuarterLeft = midpoint(leftTop, leftBottom, 0.29);
-  const topQuarterRight = midpoint(rightTop, rightBottom, 0.29);
-  const netLeft = midpoint(leftTop, leftBottom, 0.51);
-  const netRight = midpoint(rightTop, rightBottom, 0.51);
-  const bottomQuarterLeft = midpoint(leftTop, leftBottom, 0.74);
-  const bottomQuarterRight = midpoint(rightTop, rightBottom, 0.74);
+  const serviceTopLeft = midpoint(leftTop, leftBottom, 0.28);
+  const serviceTopRight = midpoint(rightTop, rightBottom, 0.28);
+  const netLeft = midpoint(leftTop, leftBottom, 0.53);
+  const netRight = midpoint(rightTop, rightBottom, 0.53);
+  const serviceBottomLeft = midpoint(leftTop, leftBottom, 0.77);
+  const serviceBottomRight = midpoint(rightTop, rightBottom, 0.77);
 
   ctx.save();
-  ctx.globalAlpha = 0.05;
+  const courtWash = ctx.createLinearGradient(0, 670, width, 1510);
+  courtWash.addColorStop(0, "rgba(247,243,237,0.012)");
+  courtWash.addColorStop(0.52, "rgba(247,243,237,0.036)");
+  courtWash.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = courtWash;
+  ctx.beginPath();
+  ctx.moveTo(leftTop.x, leftTop.y);
+  ctx.lineTo(rightTop.x, rightTop.y);
+  ctx.lineTo(rightBottom.x, rightBottom.y);
+  ctx.lineTo(leftBottom.x, leftBottom.y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.globalAlpha = 0.105;
   ctx.strokeStyle = "#f7f3ed";
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -451,8 +517,8 @@ function drawMinimalPadelCourt(
   ctx.lineTo(leftBottom.x, leftBottom.y);
   ctx.closePath();
   ctx.stroke();
-  [topQuarterLeft, netLeft, bottomQuarterLeft].forEach((left, index) => {
-    const right = [topQuarterRight, netRight, bottomQuarterRight][index];
+  [serviceTopLeft, netLeft, serviceBottomLeft].forEach((left, index) => {
+    const right = [serviceTopRight, netRight, serviceBottomRight][index];
     ctx.beginPath();
     ctx.moveTo(left.x, left.y);
     ctx.lineTo(right.x, right.y);
@@ -466,13 +532,28 @@ function drawMinimalPadelCourt(
   );
   ctx.stroke();
 
-  ctx.globalAlpha = 0.085;
+  ctx.globalAlpha = 0.22;
   ctx.strokeStyle = accent;
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(netLeft.x, netLeft.y);
   ctx.lineTo(netRight.x, netRight.y);
   ctx.stroke();
+
+  ctx.globalAlpha = 0.09;
+  ctx.strokeStyle = "#f7f3ed";
+  ctx.lineWidth = 1;
+  for (let offset = 12; offset <= 48; offset += 12) {
+    ctx.beginPath();
+    ctx.moveTo(netLeft.x, netLeft.y + offset);
+    ctx.lineTo(netRight.x, netRight.y + offset);
+    ctx.stroke();
+  }
+
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = accent;
+  ctx.fillRect(netLeft.x - 3, netLeft.y - 18, 6, 92);
+  ctx.fillRect(netRight.x - 3, netRight.y - 18, 6, 92);
   ctx.restore();
 }
 
@@ -485,7 +566,7 @@ async function drawClubIdentity(
 ): Promise<void> {
   const x = STORY_LAYOUT.padX;
   const top = STORY_LAYOUT.safeTop;
-  const logoBox = 96;
+  const logoBox = 92;
   const clubName = data.clubName?.trim() || "Riviera Open";
   let image: HTMLImageElement | null = null;
   if (data.clubLogoUrl?.trim()) {
@@ -509,12 +590,26 @@ async function drawClubIdentity(
       targetWidth,
       targetHeight
     );
+  } else {
+    const initials = initialsFromName(clubName);
+    roundedRectPath(ctx, x, top, logoBox, logoBox, 18);
+    ctx.fillStyle = "rgba(247,243,237,0.035)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(247,243,237,0.16)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = accent;
+    ctx.font = font(800, 31, "body");
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(initials, x + logoBox / 2, top + logoBox / 2 + 2);
   }
 
-  const textX = x + (image ? logoBox + 22 : 0);
+  const textX = x + logoBox + 24;
   ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = cream;
-  ctx.font = font(780, 42, "body");
+  ctx.font = font(790, 39, "body");
   ctx.fillText(
     ellipsizeText(
       ctx,
@@ -522,40 +617,105 @@ async function drawClubIdentity(
       GROUP_WINNER_SHARE_WIDTH - textX - x
     ),
     textX,
-    top + 39
+    top + 38
   );
   ctx.fillStyle = muted;
-  ctx.font = font(700, 24, "body");
+  ctx.font = font(720, 21, "body");
   drawTrackedText(
     ctx,
     "BY RIVIERA OPEN",
     textX,
-    top + 77,
-    2.3
+    top + 74,
+    2.5
   );
+  ctx.fillStyle = "rgba(247,243,237,0.14)";
+  ctx.fillRect(x, top + 112, GROUP_WINNER_SHARE_WIDTH - x * 2, 2);
   ctx.fillStyle = accent;
-  ctx.fillRect(x, top + 112, 92, 3);
+  ctx.fillRect(x, top + 112, 118, 3);
+}
+
+function drawSocialIcon(
+  ctx: CanvasRenderingContext2D,
+  platform: "instagram" | "tiktok" | "facebook",
+  centerX: number,
+  centerY: number,
+  color: string
+): void {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 3;
+  if (platform === "instagram") {
+    roundedRectPath(ctx, centerX - 15, centerY - 15, 30, 30, 8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(centerX + 9, centerY - 9, 2, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (platform === "tiktok") {
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(centerX + 2, centerY - 15);
+    ctx.lineTo(centerX + 2, centerY + 7);
+    ctx.arc(centerX - 6, centerY + 7, 8, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(centerX + 2, centerY - 14);
+    ctx.lineTo(centerX + 13, centerY - 7);
+    ctx.stroke();
+  } else {
+    ctx.font = font(850, 34, "body");
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("f", centerX, centerY + 2);
+  }
+  ctx.restore();
 }
 
 function drawSocialSignature(
   ctx: CanvasRenderingContext2D,
   cream: string,
-  muted: string
+  muted: string,
+  accent: string
 ): void {
   const x = STORY_LAYOUT.padX;
+  const width = GROUP_WINNER_SHARE_WIDTH - x * 2;
+  roundedRectPath(ctx, x, STORY_LAYOUT.footer.socialTop, width, 104, 24);
+  ctx.fillStyle = "rgba(247,243,237,0.025)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(247,243,237,0.12)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.fillStyle = accent;
+  ctx.fillRect(x + 1, STORY_LAYOUT.footer.socialTop + 1, 6, 102);
+  const iconY = STORY_LAYOUT.footer.socialY - 7;
+  drawSocialIcon(ctx, "instagram", x + 62, iconY, muted);
+  drawSocialIcon(ctx, "tiktok", x + 122, iconY, muted);
+  drawSocialIcon(ctx, "facebook", x + 182, iconY, muted);
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
   ctx.fillStyle = muted;
-  ctx.font = font(650, 25, "body");
+  ctx.font = font(700, 18, "body");
+  drawTrackedText(ctx, "SÍGUENOS", x + 230, STORY_LAYOUT.footer.socialY - 18, 2.4);
+  ctx.fillStyle = cream;
+  ctx.font = font(760, 28, "body");
+  ctx.fillText(RIVIERA_SOCIAL_HANDLE, x + 230, STORY_LAYOUT.footer.socialY + 22);
+
+  ctx.textAlign = "right";
+  ctx.fillStyle = muted;
+  ctx.font = font(680, 18, "body");
   drawTrackedText(
     ctx,
-    "IG   TIKTOK   FACEBOOK",
-    x,
-    STORY_LAYOUT.footer.socialY,
-    1.1
+    "RIVIERA OPEN",
+    GROUP_WINNER_SHARE_WIDTH - x - trackedTextWidth(ctx, "RIVIERA OPEN", 2.2),
+    STORY_LAYOUT.footer.socialY + 4,
+    2.2
   );
-  ctx.textAlign = "right";
   ctx.fillStyle = cream;
-  ctx.font = font(700, 27, "body");
-  ctx.fillText(RIVIERA_SOCIAL_HANDLE, 992, STORY_LAYOUT.footer.socialY);
   ctx.textAlign = "left";
 }
 
@@ -595,58 +755,75 @@ export async function renderGroupWinnerShareCanvas(
   const quiet = "rgba(247,243,237,0.46)";
   const pad = STORY_LAYOUT.padX;
 
-  // BACKGROUND — graphite editorial con identidad ambiental muy contenida.
-  ctx.fillStyle = "#0e0e10";
+  // BACKGROUND — seis capas contenidas: base, diagonales, luz, cancha,
+  // watermark y viñeta. Profundidad editorial sin ruido visual.
+  ctx.fillStyle = "#090a0c";
   ctx.fillRect(0, 0, w, h);
 
   const background = ctx.createLinearGradient(0, 0, w, h);
   background.addColorStop(0, primary);
-  background.addColorStop(0.46, "#111216");
-  background.addColorStop(1, "#171310");
+  background.addColorStop(0.36, "#111216");
+  background.addColorStop(0.7, "#151313");
+  background.addColorStop(1, "#08090b");
   ctx.save();
-  ctx.globalAlpha = 0.28;
+  ctx.globalAlpha = 0.34;
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, w, h);
   ctx.restore();
 
-  const playerLight = ctx.createRadialGradient(
-    w / 2,
-    980,
-    20,
-    w / 2,
-    980,
-    610
+  const terracottaLight = ctx.createRadialGradient(
+    704,
+    824,
+    10,
+    704,
+    824,
+    690
   );
-  playerLight.addColorStop(0, accent);
-  playerLight.addColorStop(1, "rgba(0,0,0,0)");
+  terracottaLight.addColorStop(0, accent);
+  terracottaLight.addColorStop(0.42, "rgba(0,0,0,0)");
+  terracottaLight.addColorStop(1, "rgba(0,0,0,0)");
   ctx.save();
-  ctx.globalAlpha = 0.075;
-  ctx.fillStyle = playerLight;
-  ctx.fillRect(0, 430, w, 1050);
+  ctx.globalAlpha = 0.105;
+  ctx.fillStyle = terracottaLight;
+  ctx.fillRect(0, 260, w, 1320);
   ctx.restore();
 
   ctx.save();
-  ctx.globalAlpha = 0.055;
+  ctx.globalAlpha = 0.09;
   ctx.strokeStyle = accent;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(-180, 710);
-  ctx.lineTo(940, 140);
+  ctx.moveTo(-160, 718);
+  ctx.lineTo(954, 116);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(140, 1720);
-  ctx.lineTo(1160, 1170);
+  ctx.moveTo(34, 1700);
+  ctx.lineTo(1210, 1116);
+  ctx.stroke();
+  ctx.globalAlpha = 0.035;
+  ctx.lineWidth = 28;
+  ctx.beginPath();
+  ctx.moveTo(720, -120);
+  ctx.lineTo(1080, 420);
   ctx.stroke();
   ctx.restore();
 
   ctx.save();
-  ctx.globalAlpha = 0.022;
+  ctx.globalAlpha = 0.032;
   ctx.fillStyle = cream;
-  ctx.font = font(850, 190);
+  ctx.font = font(860, 210);
   ctx.textAlign = "left";
-  ctx.fillText("RIVIERA", -44, 1075);
+  ctx.fillText("RIVIERA", -34, 1148);
   ctx.restore();
-  drawMinimalPadelCourt(ctx, w, accent);
+  drawPremiumPadelCourtBackground(ctx, w, accent);
+
+  const vignette = ctx.createLinearGradient(0, 0, 0, h);
+  vignette.addColorStop(0, "rgba(0,0,0,0.12)");
+  vignette.addColorStop(0.18, "rgba(0,0,0,0)");
+  vignette.addColorStop(0.76, "rgba(0,0,0,0)");
+  vignette.addColorStop(1, "rgba(0,0,0,0.48)");
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, w, h);
 
   // HEADER — el club anfitrión abre la pieza; Riviera queda como plataforma.
   ctx.textAlign = "left";
@@ -656,14 +833,14 @@ export async function renderGroupWinnerShareCanvas(
   const eventLines = textLinesToFit(
     ctx,
     data.tournamentName.toUpperCase(),
-    690,
-    2,
-    46,
-    32,
+    760,
+    1,
+    42,
+    30,
     800
   );
   ctx.fillStyle = cream;
-  const eventBottom = drawTextLines(
+  drawTextLines(
     ctx,
     eventLines,
     pad,
@@ -672,31 +849,45 @@ export async function renderGroupWinnerShareCanvas(
     800
   );
   ctx.fillStyle = muted;
-  ctx.font = font(700, 27, "body");
+  ctx.font = font(700, 24, "body");
   const context = `${data.categoryName.toUpperCase()}  ·  ${data.groupName.toUpperCase()}`;
   ctx.fillText(
     ellipsizeText(ctx, context, w - pad * 2),
     pad,
-    eventBottom + STORY_LAYOUT.header.contextGap
+    STORY_LAYOUT.header.contextY
   );
 
-  // ACHIEVEMENT — microdetalle de posición + mensaje principal.
+  // ACHIEVEMENT — índice, regla editorial y logro construyen un solo gesto.
+  ctx.save();
+  ctx.strokeStyle = "rgba(247,243,237,0.13)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(pad, 376);
+  ctx.lineTo(w - pad, 376);
+  ctx.stroke();
+  ctx.restore();
+
   ctx.fillStyle = accent;
-  ctx.font = font(800, 34);
+  ctx.font = font(820, 36);
   ctx.fillText(
     String(data.position).padStart(2, "0"),
     pad,
     STORY_LAYOUT.achievement.detailY
   );
-  ctx.fillRect(pad + 60, STORY_LAYOUT.achievement.detailY - 12, 126, 3);
-  ctx.font = font(750, 25, "body");
+  ctx.fillRect(pad + 66, STORY_LAYOUT.achievement.detailY - 12, 206, 3);
+  ctx.fillStyle = cream;
+  ctx.font = font(760, 23, "body");
   drawTrackedText(
     ctx,
     placementLabel(data.position),
-    pad + 214,
+    pad + 300,
     STORY_LAYOUT.achievement.detailY,
-    2.4
+    2.8
   );
+  ctx.fillStyle = accent;
+  ctx.fillRect(w - pad - 74, STORY_LAYOUT.achievement.detailY - 22, 74, 3);
+  ctx.fillRect(w - pad - 42, STORY_LAYOUT.achievement.detailY - 8, 42, 3);
+  ctx.fillRect(w - pad - 20, STORY_LAYOUT.achievement.detailY + 6, 20, 3);
 
   ctx.fillStyle = cream;
   const titleLines = textLinesToFit(
@@ -704,8 +895,8 @@ export async function renderGroupWinnerShareCanvas(
     "¡FELICIDADES!",
     w - pad * 2,
     1,
-    94,
-    78,
+    98,
+    82,
     850
   );
   drawTextLines(
@@ -717,42 +908,64 @@ export async function renderGroupWinnerShareCanvas(
     850
   );
   ctx.fillStyle = muted;
-  ctx.font = font(550, 32, "body");
+  ctx.font = font(560, 30, "body");
   ctx.fillText(
     "Lo dieron todo de principio a fin.",
     pad + 4,
     STORY_LAYOUT.achievement.copyY
   );
 
-  // PLAYERS — retratos dominantes, levemente asimétricos y con igual peso.
+  // PLAYERS — retratos protagonistas con eje central y profundidad de póster.
   ctx.save();
+  ctx.strokeStyle = "rgba(247,243,237,0.1)";
+  ctx.lineWidth = 2;
+  roundedRectPath(ctx, pad - 12, 676, w - pad * 2 + 24, 476, 34);
+  ctx.stroke();
   ctx.strokeStyle = accent;
   ctx.globalAlpha = 0.24;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(w / 2, 704);
+  ctx.lineTo(w / 2, 1126);
+  ctx.stroke();
+  ctx.globalAlpha = 0.12;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(112, 1008);
-  ctx.lineTo(968, 1008);
+  ctx.arc(
+    STORY_LAYOUT.players.firstX - 20,
+    STORY_LAYOUT.players.firstY + 12,
+    186,
+    0,
+    Math.PI * 2
+  );
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(
+    STORY_LAYOUT.players.secondX + 18,
+    STORY_LAYOUT.players.secondY - 10,
+    186,
+    0,
+    Math.PI * 2
+  );
   ctx.stroke();
   ctx.restore();
 
-  await Promise.all([
-    drawAvatar(
-      ctx,
-      data.player1,
-      STORY_LAYOUT.players.firstX,
-      STORY_LAYOUT.players.firstY,
-      STORY_LAYOUT.players.diameter,
-      accent
-    ),
-    drawAvatar(
-      ctx,
-      data.player2,
-      STORY_LAYOUT.players.secondX,
-      STORY_LAYOUT.players.secondY,
-      STORY_LAYOUT.players.diameter,
-      accent
-    ),
-  ]);
+  await drawAvatar(
+    ctx,
+    data.player1,
+    STORY_LAYOUT.players.firstX,
+    STORY_LAYOUT.players.firstY,
+    STORY_LAYOUT.players.diameter,
+    accent
+  );
+  await drawAvatar(
+    ctx,
+    data.player2,
+    STORY_LAYOUT.players.secondX,
+    STORY_LAYOUT.players.secondY,
+    STORY_LAYOUT.players.diameter,
+    accent
+  );
 
   ctx.textAlign = "center";
   ctx.fillStyle = cream;
@@ -780,14 +993,32 @@ export async function renderGroupWinnerShareCanvas(
     drawTextLines(ctx, lines, x, y, 1.12, 750);
   }
 
-  // STATS — una sola unidad visual, sin cards ni información redundante.
+  // STATS — scoreboard continuo: una superficie, tres lecturas, un solo ritmo.
   ctx.textAlign = "center";
+  roundedRectPath(
+    ctx,
+    pad,
+    STORY_LAYOUT.stats.top,
+    w - pad * 2,
+    STORY_LAYOUT.stats.bottom - STORY_LAYOUT.stats.top,
+    26
+  );
+  const scoreboard = ctx.createLinearGradient(
+    pad,
+    STORY_LAYOUT.stats.top,
+    w - pad,
+    STORY_LAYOUT.stats.bottom
+  );
+  scoreboard.addColorStop(0, "rgba(247,243,237,0.055)");
+  scoreboard.addColorStop(0.5, "rgba(247,243,237,0.025)");
+  scoreboard.addColorStop(1, "rgba(247,243,237,0.045)");
+  ctx.fillStyle = scoreboard;
+  ctx.fill();
   ctx.strokeStyle = "rgba(247,243,237,0.16)";
   ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(pad, STORY_LAYOUT.stats.top);
-  ctx.lineTo(w - pad, STORY_LAYOUT.stats.top);
   ctx.stroke();
+  ctx.fillStyle = accent;
+  ctx.fillRect(pad + 26, STORY_LAYOUT.stats.top, 126, 4);
 
   const statW = (w - pad * 2) / 3;
   const stats = [
@@ -798,18 +1029,27 @@ export async function renderGroupWinnerShareCanvas(
   stats.forEach((stat, index) => {
     const x = pad + statW * index;
     if (index > 0) {
-      ctx.strokeStyle = "rgba(247,243,237,0.16)";
-      ctx.lineWidth = 2;
+      const divider = ctx.createLinearGradient(
+        x,
+        STORY_LAYOUT.stats.top + 30,
+        x,
+        STORY_LAYOUT.stats.bottom - 30
+      );
+      divider.addColorStop(0, "rgba(247,243,237,0)");
+      divider.addColorStop(0.5, "rgba(247,243,237,0.22)");
+      divider.addColorStop(1, "rgba(247,243,237,0)");
+      ctx.strokeStyle = divider;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(x, STORY_LAYOUT.stats.top + 40);
-      ctx.lineTo(x, STORY_LAYOUT.stats.bottom - 12);
+      ctx.moveTo(x, STORY_LAYOUT.stats.top + 28);
+      ctx.lineTo(x, STORY_LAYOUT.stats.bottom - 28);
       ctx.stroke();
     }
     ctx.fillStyle = index === 2 && data.diff > 0 ? accent : cream;
-    ctx.font = font(800, 72);
+    ctx.font = font(830, 76);
     ctx.fillText(stat.value, x + statW / 2, STORY_LAYOUT.stats.valueY);
     ctx.fillStyle = quiet;
-    ctx.font = font(750, 24, "body");
+    ctx.font = font(760, 21, "body");
     drawTrackedText(
       ctx,
       stat.label,
@@ -817,23 +1057,23 @@ export async function renderGroupWinnerShareCanvas(
         statW / 2 -
         trackedTextWidth(ctx, stat.label, 2.6) / 2,
       STORY_LAYOUT.stats.labelY,
-      2.6
+      3
     );
+    ctx.fillStyle = index === 2 && data.diff > 0 ? accent : "rgba(247,243,237,0.22)";
+    ctx.fillRect(x + statW / 2 - 28, STORY_LAYOUT.stats.labelY + 18, 56, 2);
   });
 
-  // FOOTER — tagline y redes como firma secundaria.
-  ctx.strokeStyle = "rgba(247,243,237,0.18)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(pad, STORY_LAYOUT.footer.ruleY);
-  ctx.lineTo(w - pad, STORY_LAYOUT.footer.ruleY);
-  ctx.stroke();
+  // FOOTER — cierre emocional primero; firma social integrada después.
+  ctx.fillStyle = accent;
+  ctx.fillRect(w / 2 - 24, STORY_LAYOUT.footer.taglineTop, 48, 3);
   ctx.textAlign = "center";
   ctx.fillStyle = cream;
-  ctx.font = font(750, 36, "heading");
+  ctx.font = font(760, 38, "heading");
   ctx.fillText(WINNER_TAGLINE, w / 2, STORY_LAYOUT.footer.taglineY);
+  ctx.fillStyle = "rgba(247,243,237,0.16)";
+  ctx.fillRect(w / 2 - 132, STORY_LAYOUT.footer.taglineY + 36, 264, 2);
   ctx.textAlign = "left";
-  drawSocialSignature(ctx, cream, muted);
+  drawSocialSignature(ctx, cream, muted, accent);
 
   return canvas;
 }
