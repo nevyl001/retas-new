@@ -178,11 +178,7 @@ export function buildTEPublicGrupoProps(
 
 function PartidoStatusBadge({ estado }: { estado: TEPartidoEstadoPublico }) {
   if (estado === "finalizado") {
-    return (
-      <span className="te-badge-final">
-        <span aria-hidden>✓</span> Final
-      </span>
-    );
+    return <span className="te-badge-final">Final</span>;
   }
   if (estado === "en_vivo") {
     return (
@@ -192,11 +188,7 @@ function PartidoStatusBadge({ estado }: { estado: TEPartidoEstadoPublico }) {
       </span>
     );
   }
-  return (
-    <span className="te-badge-proximo">
-      Próximo
-    </span>
-  );
+  return <span className="te-badge-proximo">Próximo</span>;
 }
 
 function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
@@ -241,11 +233,6 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
               played && !team1Wins && !isTie ? " te-team-row--loser" : ""
             }`}
           >
-            {team1Wins ? (
-              <span className="te-team-result-indicator" aria-hidden>
-                ✓
-              </span>
-            ) : null}
             <span
               className={`te-team-name${
                 team1Wins ? " te-team-name--winner" : ""
@@ -256,7 +243,9 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
                 ? { "aria-label": `Ganador: ${partido.pareja1}` }
                 : isTie
                   ? { "aria-label": `Empate: ${partido.pareja1}` }
-                  : {})}
+                  : played
+                    ? { "aria-label": `Perdedor: ${partido.pareja1}` }
+                    : {})}
             >
               {partido.pareja1}
             </span>
@@ -275,11 +264,6 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
               played && !team2Wins && !isTie ? " te-team-row--loser" : ""
             }`}
           >
-            {team2Wins ? (
-              <span className="te-team-result-indicator" aria-hidden>
-                ✓
-              </span>
-            ) : null}
             <span
               className={`te-team-name${
                 team2Wins ? " te-team-name--winner" : ""
@@ -290,7 +274,9 @@ function PartidoRow({ partido }: { partido: TEPublicGruposPartido }) {
                 ? { "aria-label": `Ganador: ${partido.pareja2}` }
                 : isTie
                   ? { "aria-label": `Empate: ${partido.pareja2}` }
-                  : {})}
+                  : played
+                    ? { "aria-label": `Perdedor: ${partido.pareja2}` }
+                    : {})}
             >
               {partido.pareja2}
             </span>

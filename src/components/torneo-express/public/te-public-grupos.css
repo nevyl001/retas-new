@@ -1098,6 +1098,10 @@
     var(--te-groups-accent) 11%,
     transparent
   );
+  /* Semántica de resultado desaturada: se lee sin gritar sobre el graphite. */
+  --te-result-win: color-mix(in srgb, var(--ro-success, #4ade80) 46%, #cfc8bd);
+  --te-result-lose: color-mix(in srgb, var(--ro-error, #f87171) 42%, #8b847b);
+  --te-result-tie: color-mix(in srgb, #eab308 40%, #cfc8bd);
   --te-groups-radius: 18px;
   --te-groups-radius-sm: 12px;
   --te-groups-motion: 170ms ease;
@@ -1570,54 +1574,53 @@
     padding-top: 1px;
   }
 
-  .te-public.te-public--grupos-wide .te-partido-teams {
-    display: grid;
-    gap: 1px;
-  }
-
   .te-public.te-public--grupos-wide .te-team-row {
     display: grid;
-    grid-template-columns: 12px minmax(0, 1fr) 46px;
+    grid-template-columns: minmax(0, 1fr) 46px;
     min-height: 37px;
     align-items: center;
-    gap: 6px;
-    padding: 2px 0;
-    border: 0;
-    border-radius: 0;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 8px;
     background: transparent;
   }
 
-  .te-public.te-public--grupos-wide
-    .te-team-row:not(.te-team-row--winner)
-    .te-team-name {
-    grid-column: 2;
+  .te-public.te-public--grupos-wide .te-team-row--winner {
+    border: 1px solid
+      color-mix(in srgb, var(--ro-success, #22c55e) 22%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--ro-success, #22c55e) 12%,
+      transparent
+    );
   }
 
-  .te-public.te-public--grupos-wide
-    .te-team-row:not(.te-team-row--winner)
-    .te-team-score-mobile {
-    grid-column: 3;
+  .te-public.te-public--grupos-wide .te-team-row--loser {
+    border: 1px solid
+      color-mix(in srgb, var(--ro-error, #ef4444) 18%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--ro-error, #ef4444) 9%,
+      transparent
+    );
   }
 
-  .te-public.te-public--grupos-wide .te-team-row--winner,
-  .te-public.te-public--grupos-wide .te-team-row--loser,
   .te-public.te-public--grupos-wide .te-team-row--tie {
-    border: 0;
-    background: transparent;
+    border: 1px solid color-mix(in srgb, #eab308 20%, transparent);
+    background: color-mix(in srgb, #eab308 11%, transparent);
   }
 
   .te-public.te-public--grupos-wide .te-team-result-indicator {
-    display: inline-flex;
-    grid-column: 1;
-    align-items: center;
-    justify-content: center;
-    color: var(--ro-success, #4ade80);
-    font-size: 0.6875rem;
-    font-weight: 800;
+    display: none;
+  }
+
+  .te-public.te-public--grupos-wide .te-partido-teams {
+    display: grid;
+    gap: 4px;
   }
 
   .te-public.te-public--grupos-wide .te-team-name {
-    grid-column: 2;
+    grid-column: 1;
     min-width: 0;
     display: -webkit-box;
     overflow: hidden;
@@ -1636,7 +1639,7 @@
   }
 
   .te-public.te-public--grupos-wide .te-team-name--loser {
-    color: color-mix(in srgb, var(--text-primary) 76%, transparent);
+    color: color-mix(in srgb, var(--text-primary) 70%, transparent);
     font-weight: 500;
   }
 
@@ -1647,7 +1650,7 @@
 
   .te-public.te-public--grupos-wide .te-team-score-mobile {
     display: inline-flex;
-    grid-column: 3;
+    grid-column: 2;
     width: 46px;
     min-width: 46px;
     align-items: center;
@@ -1671,7 +1674,14 @@
   .te-public.te-public--grupos-wide
     .te-team-row--loser
     .te-team-score-mobile {
-    color: color-mix(in srgb, var(--text-primary, #fff) 68%, transparent);
+    color: color-mix(in srgb, var(--ro-error, #f87171) 88%, transparent);
+    font-weight: 700;
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-team-row--tie
+    .te-team-score-mobile {
+    color: #eab308;
   }
 
   .te-public.te-public--grupos-wide .te-grupo-standing-full {
@@ -1872,8 +1882,26 @@
     font-variant-numeric: tabular-nums;
   }
 
-  .te-public.te-public--grupos-wide .te-team-result-indicator {
+  .te-public.te-public--grupos-wide
+    .te-team-row--winner
+    .te-team-score-mobile {
     color: var(--ro-success, #4ade80);
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-team-row--loser
+    .te-team-score-mobile {
+    color: color-mix(in srgb, var(--ro-error, #f87171) 88%, transparent);
+  }
+
+  .te-public.te-public--grupos-wide
+    .te-team-row--tie
+    .te-team-score-mobile {
+    color: #eab308;
+  }
+
+  .te-public.te-public--grupos-wide .te-team-result-indicator {
+    display: none;
   }
 
   .te-public.te-public--grupos-wide .te-grupo-standings__header,
