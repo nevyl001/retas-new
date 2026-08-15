@@ -1,5 +1,9 @@
 import { BRACKET_FASE_SLOTS } from "./bracketTypes";
-import { deserializeBracketSlots } from "./bracketPersistence";
+import {
+  DEFAULT_THIRD_PLACE_MATCH_ENABLED,
+  deserializeBracketSlots,
+  readThirdPlaceMatchEnabled,
+} from "./bracketPersistence";
 import type {
   PartidoSetScore,
   TorneoExpressFaseEliminacion,
@@ -28,11 +32,24 @@ export function isFinaleEliminatoriaStage(
   return hasFinal || hasTercer;
 }
 
+/**
+ * Whether this eliminatoria should create/require a bronze match.
+ * Requires enough rounds (≥2) AND `thirdPlaceMatchEnabled` (default true for legacy).
+ */
 export function eliminatoriaIncluyeTercerLugar(
   fase: TorneoExpressFaseEliminacion,
-  bracketSlotCount?: number
+  bracketSlotCount?: number,
+  thirdPlaceMatchEnabled: boolean = DEFAULT_THIRD_PLACE_MATCH_ENABLED
 ): boolean {
+  if (!thirdPlaceMatchEnabled) return false;
   return totalRondasEliminatoria(fase, bracketSlotCount) >= 2;
+}
+
+/** Convenience: size + bronze flag from `torneo.bracket_slots`. */
+export function eliminatoriaThirdPlaceMatchEnabled(
+  bracketSlots?: unknown
+): boolean {
+  return readThirdPlaceMatchEnabled(bracketSlots);
 }
 
 export function eliminatoriaBracketSize(
@@ -188,6 +205,112 @@ export function buildTercerLugarPartido(
     ganador_id: null,
     estado: "pendiente",
     es_bye: false,
+  };
+}
+
+export interface EliminatoriaPlacementParejaIds {
+  campeonId: string | null;
+  subcampeonId: string | null;
+  /** Unique 3rd when bronze was played. */
+  tercerId: string | null;
+  /** Unique 4th when bronze was played. */
+  cuartoId: string | null;
+  /** Shared 3rd (SF losers) when no bronze match was played. */
+  sharedTercerIds: string[];
+}
+
+/**
+ * Pure podium placement from eliminatoria matches.
+ * With bronze finished → unique 1/2/3/4.
+ * Without bronze → 1/2 + shared 3rd for both SF losers (never invent unique 3rd/4th).
+ */
+export function resolveEliminatoriaPlacementParejaIds(
+  partidos: TorneoExpressEliminatoriaPartido[],
+  fase: TorneoExpressFaseEliminacion,
+  bracketSlotCount?: number
+): EliminatoriaPlacementParejaIds {
+  const empty: EliminatoriaPlacementParejaIds = {
+    campeonId: null,
+    subcampeonId: null,
+    tercerId: null,
+    cuartoId: null,
+    sharedTercerIds: [],
+  };
+
+  const total = totalRondasEliminatoria(fase, bracketSlotCount);
+  const finales = partidosDeRonda(partidos, total).filter(
+    (p) => !p.es_bye && p.estado === "jugado" && p.ganador_id
+  );
+  const finalMatch = finales[finales.length - 1] ?? finales[0] ?? null;
+  if (!finalMatch?.ganador_id) return empty;
+
+  const campeonId = finalMatch.ganador_id;
+  const local = finalMatch.pareja_local_id;
+  const visit = finalMatch.pareja_visitante_id;
+  const subcampeonId =
+    local && visit
+      ? campeonId === local
+        ? visit
+        : local
+      : null;
+
+  const tercerMatch = partidos.find(
+    (p) =>
+      isRondaTercerLugar(p.ronda) &&
+      p.estado === "jugado" &&
+      !p.es_bye &&
+      p.ganador_id
+  );
+
+  if (tercerMatch?.ganador_id) {
+    const tercerId = tercerMatch.ganador_id;
+    const tLocal = tercerMatch.pareja_local_id;
+    const tVisit = tercerMatch.pareja_visitante_id;
+    const cuartoResolved =
+      tLocal && tVisit
+        ? tercerId === tLocal
+          ? tVisit
+          : tLocal
+        : null;
+    return {
+      campeonId,
+      subcampeonId,
+      tercerId,
+      cuartoId: cuartoResolved,
+      sharedTercerIds: [],
+    };
+  }
+
+  const sharedTercerIds: string[] = [];
+  if (total >= 2) {
+    const semiRonda = total - 1;
+    for (const m of partidosDeRonda(partidos, semiRonda).filter(
+      (p) => p.estado === "jugado" && !p.es_bye && p.ganador_id
+    )) {
+      if (!m.pareja_local_id || !m.pareja_visitante_id || !m.ganador_id) {
+        continue;
+      }
+      const loser =
+        m.ganador_id === m.pareja_local_id
+          ? m.pareja_visitante_id
+          : m.pareja_local_id;
+      if (
+        loser &&
+        loser !== campeonId &&
+        loser !== subcampeonId &&
+        !sharedTercerIds.includes(loser)
+      ) {
+        sharedTercerIds.push(loser);
+      }
+    }
+  }
+
+  return {
+    campeonId,
+    subcampeonId,
+    tercerId: null,
+    cuartoId: null,
+    sharedTercerIds,
   };
 }
 
@@ -405,12 +528,19 @@ export function computeWinnerChangePropagation(
 export function eliminatoriaUltimaRondaCompleta(
   partidos: TorneoExpressEliminatoriaPartido[],
   fase: TorneoExpressFaseEliminacion,
-  bracketSlotCount?: number
+  bracketSlotCount?: number,
+  thirdPlaceMatchEnabled: boolean = DEFAULT_THIRD_PLACE_MATCH_ENABLED
 ): boolean {
   const total = totalRondasEliminatoria(fase, bracketSlotCount);
   if (!rondaCompleta(partidos, total)) return false;
 
-  if (!eliminatoriaIncluyeTercerLugar(fase, bracketSlotCount)) {
+  if (
+    !eliminatoriaIncluyeTercerLugar(
+      fase,
+      bracketSlotCount,
+      thirdPlaceMatchEnabled
+    )
+  ) {
     return true;
   }
 
@@ -444,16 +574,22 @@ export function computeEliminatoriaAdvancePlan(
   torneoId: string,
   partidos: TorneoExpressEliminatoriaPartido[],
   fase: TorneoExpressFaseEliminacion,
-  bracketSlotCount?: number
+  bracketSlotCount?: number,
+  thirdPlaceMatchEnabled: boolean = DEFAULT_THIRD_PLACE_MATCH_ENABLED
 ): EliminatoriaAdvancePlan {
   const totalRondas = totalRondasEliminatoria(fase, bracketSlotCount);
   const inserts: EliminatoriaPartidoInsert[] = [];
   let notifyFinalPhasePairIds: string[] | null = null;
   let tercerLugarQueued = partidos.some((p) => isRondaTercerLugar(p.ronda));
+  const incluyeTercer = eliminatoriaIncluyeTercerLugar(
+    fase,
+    bracketSlotCount,
+    thirdPlaceMatchEnabled
+  );
 
   const tryTercerLugar = (base: TorneoExpressEliminatoriaPartido[]) => {
     if (tercerLugarQueued) return;
-    if (!eliminatoriaIncluyeTercerLugar(fase, bracketSlotCount)) return;
+    if (!incluyeTercer) return;
     const semiRonda = totalRondas - 1;
     if (!rondaCompleta(base, semiRonda)) return;
     const tercerRow = buildTercerLugarPartido(torneoId, base, semiRonda);
@@ -478,10 +614,16 @@ export function computeEliminatoriaAdvancePlan(
       inserts.push(...nextRows);
       const nextRonda = ronda + 1;
       if (nextRonda === totalRondas) {
-        const tercerRow = buildTercerLugarPartido(torneoId, partidos, ronda);
-        if (tercerRow) {
-          inserts.push(tercerRow);
-          tercerLugarQueued = true;
+        if (incluyeTercer) {
+          const tercerRow = buildTercerLugarPartido(
+            torneoId,
+            partidos,
+            ronda
+          );
+          if (tercerRow) {
+            inserts.push(tercerRow);
+            tercerLugarQueued = true;
+          }
         }
         notifyFinalPhasePairIds = nextRows.flatMap((row) => [
           row.pareja_local_id,

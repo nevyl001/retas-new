@@ -18,6 +18,7 @@ import {
   computeWinnerChangePropagation,
   eliminatoriaBracketSize,
   eliminatoriaIncluyeTercerLugar,
+  eliminatoriaThirdPlaceMatchEnabled,
   eliminatoriaUltimaRondaCompleta,
   isRondaTercerLugar,
   maxRondaActual,
@@ -25,7 +26,7 @@ import {
   totalRondasEliminatoria,
   type EliminatoriaPartidoInsert,
 } from "../lib/torneoExpress/bracketRounds";
-import { serializeBracketSlots } from "../lib/torneoExpress/bracketPersistence";
+import { serializeBracketSlotsDocument } from "../lib/torneoExpress/bracketPersistence";
 import {
   buildPersistPayload,
   getSetsValidationMessage,
@@ -1589,7 +1590,8 @@ function isBracketSchemaError(error: { message?: string; code?: string } | null)
 export async function confirmarFaseEliminatoria(
   torneoId: string,
   fase: BracketFase,
-  slots: BracketSlotEntry[]
+  slots: BracketSlotEntry[],
+  thirdPlaceMatchEnabled: boolean = true
 ): Promise<TorneoExpress> {
   await requireAuthUser();
 
@@ -1629,7 +1631,10 @@ export async function confirmarFaseEliminatoria(
     {
       p_torneo_id: torneoId,
       p_fase_eliminacion: fase as TorneoExpressFaseEliminacion,
-      p_bracket_slots: serializeBracketSlots(slots),
+      p_bracket_slots: serializeBracketSlotsDocument(
+        slots,
+        thirdPlaceMatchEnabled
+      ),
     }
   );
 
@@ -1715,7 +1720,16 @@ export async function ensureTercerLugarPartidoSiAplica(
     torneo.fase_eliminacion,
     torneo.bracket_slots
   );
-  if (!eliminatoriaIncluyeTercerLugar(torneo.fase_eliminacion, bracketSize)) {
+  const thirdPlaceEnabled = eliminatoriaThirdPlaceMatchEnabled(
+    torneo.bracket_slots
+  );
+  if (
+    !eliminatoriaIncluyeTercerLugar(
+      torneo.fase_eliminacion,
+      bracketSize,
+      thirdPlaceEnabled
+    )
+  ) {
     return;
   }
   if (partidos.some((p) => isRondaTercerLugar(p.ronda))) return;
@@ -1770,6 +1784,9 @@ export async function avanzarEliminatoriaSiCompleta(
     torneo.fase_eliminacion,
     torneo.bracket_slots
   );
+  const thirdPlaceEnabled = eliminatoriaThirdPlaceMatchEnabled(
+    torneo.bracket_slots
+  );
   const totalRondas = totalRondasEliminatoria(
     torneo.fase_eliminacion,
     bracketSize
@@ -1789,7 +1806,14 @@ export async function avanzarEliminatoriaSiCompleta(
       if (nextRows.length > 0) {
         const inserts = [...nextRows];
         const nextRonda = ronda + 1;
-        if (nextRonda === totalRondas) {
+        if (
+          nextRonda === totalRondas &&
+          eliminatoriaIncluyeTercerLugar(
+            torneo.fase_eliminacion,
+            bracketSize,
+            thirdPlaceEnabled
+          )
+        ) {
           const tercerRow = buildTercerLugarPartido(
             torneoId,
             partidos,
@@ -1845,7 +1869,8 @@ export async function reabrirTorneoExpressEliminatoria(
     eliminatoriaUltimaRondaCompleta(
       partidos,
       torneo.fase_eliminacion,
-      eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots)
+      eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots),
+      eliminatoriaThirdPlaceMatchEnabled(torneo.bracket_slots)
     )
   ) {
     throw new Error(
@@ -2069,15 +2094,21 @@ export async function finalizarTorneoExpressEliminatoria(
   }
 
   const partidos = await fetchEliminatoriaPartidos(torneoId);
+  const thirdPlaceEnabled = eliminatoriaThirdPlaceMatchEnabled(
+    torneo.bracket_slots
+  );
   if (
     !eliminatoriaUltimaRondaCompleta(
       partidos,
       torneo.fase_eliminacion,
-      eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots)
+      eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots),
+      thirdPlaceEnabled
     )
   ) {
     throw new Error(
-      "Completa la final y el partido por el tercer lugar antes de finalizar el torneo"
+      thirdPlaceEnabled
+        ? "Completa la final y el partido por el tercer lugar antes de finalizar el torneo"
+        : "Completa la final antes de finalizar el torneo"
     );
   }
 
@@ -2227,7 +2258,8 @@ export async function saveEliminatoriaResultado(
       torneoId,
       allPartidos,
       torneo.fase_eliminacion,
-      eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots)
+      eliminatoriaBracketSize(torneo.fase_eliminacion, torneo.bracket_slots),
+      eliminatoriaThirdPlaceMatchEnabled(torneo.bracket_slots)
     );
     inserts = plan.inserts;
     notifyFinalPhasePairIds = plan.notifyFinalPhasePairIds;

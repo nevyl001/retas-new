@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useMobileViewport } from "../../hooks/useMobileViewport";
 import { useTorneoExpress } from "../../hooks/useTorneoExpress";
-import { eliminatoriaUltimaRondaCompleta, eliminatoriaBracketSize } from "../../lib/torneoExpress/bracketRounds";
+import { eliminatoriaUltimaRondaCompleta, eliminatoriaBracketSize, eliminatoriaThirdPlaceMatchEnabled } from "../../lib/torneoExpress/bracketRounds";
 import { isGrupoPartidosCompletos } from "../../lib/torneoExpress/grupoCompletion";
 import {
   copyToClipboard,
@@ -138,7 +138,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     return eliminatoriaUltimaRondaCompleta(
       bundle.eliminatoriaPartidos,
       fase,
-      eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots)
+      eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots),
+      eliminatoriaThirdPlaceMatchEnabled(bundle.torneo.bracket_slots)
     );
   }, [bundle, faseTorneo]);
 
@@ -194,7 +195,8 @@ export const GestionGrupos: React.FC<{ torneoId: string }> = ({ torneoId }) => {
     return !eliminatoriaUltimaRondaCompleta(
       bundle.eliminatoriaPartidos,
       fase,
-      eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots)
+      eliminatoriaBracketSize(fase, bundle.torneo.bracket_slots),
+      eliminatoriaThirdPlaceMatchEnabled(bundle.torneo.bracket_slots)
     );
   }, [bundle, faseTorneo]);
 

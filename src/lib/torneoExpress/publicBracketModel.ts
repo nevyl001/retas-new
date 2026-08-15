@@ -66,6 +66,11 @@ export interface PublicBracketViewModel {
   thirdPlaceCelebrate: PublicFinalistEntry | null;
   /** Tarjeta del juego por el bronce (si ya está creado). */
   thirdPlaceCard: PublicMatchupCard | null;
+  /**
+   * Sin partido de bronce y final jugada: perdedores de SF como semifinalistas
+   * compartidos (no hay 3.º único).
+   */
+  sharedSemifinalists: PublicFinalistEntry[] | null;
   currentPhaseUpper: string;
   motivationalMessage: string;
   hasLiveMatch: boolean;
@@ -750,6 +755,23 @@ export function buildPublicBracketViewModel(
     thirdPlaceCelebrate = winnerPairFromCard(thirdPlaceCard);
   }
 
+  let sharedSemifinalists: PublicFinalistEntry[] | null = null;
+  if (
+    championCelebrate &&
+    !thirdPlaceCard &&
+    totalRondas >= 2
+  ) {
+    const semiCards = displayCards.filter(
+      (c) => c.ronda === totalRondas - 1 && c.status === "finished"
+    );
+    const losers = semiCards
+      .map((c) => loserPairFromCard(c))
+      .filter((entry): entry is PublicFinalistEntry => Boolean(entry));
+    if (losers.length > 0) {
+      sharedSemifinalists = losers;
+    }
+  }
+
   return {
     championLabel,
     championCelebrate,
@@ -757,6 +779,7 @@ export function buildPublicBracketViewModel(
     finalistsCelebrate,
     thirdPlaceCelebrate,
     thirdPlaceCard,
+    sharedSemifinalists,
     currentPhaseUpper: phaseUpper,
     motivationalMessage: motivationalMessageForRound(
       phaseUpper,

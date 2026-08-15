@@ -260,6 +260,25 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         </>
       ) : null}
 
+      {model.sharedSemifinalists && model.sharedSemifinalists.length > 0 ? (
+        <>
+          <div className="te-elim-public-bracket-divider" aria-hidden />
+          <section
+            className="te-elim-shared-semis"
+            aria-label="Semifinalistas"
+          >
+            <h2 className="te-elim-shared-semis__title">Semifinalistas</h2>
+            <ul className="te-elim-shared-semis__list">
+              {model.sharedSemifinalists.map((entry) => (
+                <li key={entry.parejaId ?? entry.label} className="te-elim-shared-semis__item">
+                  {entry.label}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      ) : null}
+
       <RefreshFooter
         lastRefreshedAt={lastRefreshedAt}
         spinning={spinning}

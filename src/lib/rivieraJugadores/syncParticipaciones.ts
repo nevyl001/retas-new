@@ -1434,6 +1434,8 @@ function buildExpressPlacementContext(
       );
     }
   } else if (semiRonda != null) {
+    // Sin partido de bronce: ambos perdedores de SF = 3.º compartido.
+    // Nunca inventar un 4.º único por orden/seed/marcadores.
     const semiMatches = partidosDeRonda(
       bundle.eliminatoriaPartidos,
       semiRonda
@@ -1461,15 +1463,10 @@ function buildExpressPlacementContext(
       }
     }
 
-    if (semiLoserParejaIds[0]) {
-      Array.from(
-        legacyPlayerIdsFromPair(pairMap.get(semiLoserParejaIds[0]))
-      ).forEach((id) => tercerPlayerIds.add(id));
-    }
-    if (semiLoserParejaIds[1]) {
-      Array.from(
-        legacyPlayerIdsFromPair(pairMap.get(semiLoserParejaIds[1]))
-      ).forEach((id) => cuartoPlayerIds.add(id));
+    for (const loserParejaId of semiLoserParejaIds) {
+      Array.from(legacyPlayerIdsFromPair(pairMap.get(loserParejaId))).forEach(
+        (id) => tercerPlayerIds.add(id)
+      );
     }
   }
 

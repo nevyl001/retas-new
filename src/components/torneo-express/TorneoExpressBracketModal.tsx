@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   calcularBracketInicial,
   calcularResumenClasificados,
@@ -60,6 +61,7 @@ export const TorneoExpressBracketModal: React.FC<
   const [step, setStep] = useState<"fase" | "bracket">("fase");
   const [fase, setFase] = useState<BracketFase>("cuartos");
   const [cantidadTerceros, setCantidadTerceros] = useState(0);
+  const [thirdPlaceMatchEnabled, setThirdPlaceMatchEnabled] = useState(true);
   const [slots, setSlots] = useState<BracketSlotEntry[]>([]);
   const [autoSlots, setAutoSlots] = useState<BracketSlotEntry[]>([]);
   const [resolverResult, setResolverResult] =
@@ -94,8 +96,18 @@ export const TorneoExpressBracketModal: React.FC<
     setSlots([]);
     setAutoSlots([]);
     setResolverResult(null);
+    setThirdPlaceMatchEnabled(true);
     void loadBundle();
   }, [open, loadBundle]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
 
   const faseValidacion = useMemo(() => {
     if (!bundle) return { ok: true as const };
@@ -190,7 +202,12 @@ export const TorneoExpressBracketModal: React.FC<
     setConfirming(true);
     setError(null);
     try {
-      await confirmarFaseEliminatoria(torneoId, fase, slots);
+      await confirmarFaseEliminatoria(
+        torneoId,
+        fase,
+        slots,
+        thirdPlaceMatchEnabled
+      );
       onConfirmed();
       onClose();
     } catch (e) {
@@ -222,7 +239,7 @@ export const TorneoExpressBracketModal: React.FC<
       : totalAvanzan;
   const matchCount = Math.floor(totalSlots / 2);
 
-  return (
+  return createPortal(
     <div
       className="te-bracket-overlay"
       role="dialog"
@@ -286,132 +303,193 @@ export const TorneoExpressBracketModal: React.FC<
         )}
 
         {!loading && bundle && step === "fase" && (
-          <div className="te-bracket-step te-bracket-step--fase">
-            <div
-              className="te-bracket-fase-options"
-              role="radiogroup"
-              aria-label="Fase eliminatoria"
-            >
-              {FASE_OPCIONES.map((opt) => {
-                const selected = fase === opt.id;
-                const recommended = faseSugerida === opt.id;
-                return (
-                  <label
-                    key={opt.id}
-                    className={`te-bracket-fase-option${
-                      selected ? " te-bracket-fase-option--selected" : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="te-bracket-fase"
-                      value={opt.id}
-                      checked={selected}
-                      onChange={() => setFase(opt.id)}
-                    />
-                    <span className="te-bracket-fase-option__radio" aria-hidden>
-                      <span className="te-bracket-fase-option__radio-dot" />
-                    </span>
-                    <span className="te-bracket-fase-option__body">
-                      <span className="te-bracket-fase-option__top">
-                        <span className="te-bracket-fase-option__name">
-                          {opt.shortLabel}
-                        </span>
-                        {recommended ? (
-                          <span className="te-bracket-fase-option__badge">
-                            Recomendado
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="te-bracket-fase-option__slots">
-                        {BRACKET_FASE_SLOTS[opt.id]} plazas
-                      </span>
-                      {fasePreviews[opt.id] ? (
-                        <span className="te-bracket-fase-option__desc">
-                          {fasePreviews[opt.id]}
-                        </span>
-                      ) : null}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-
-            {!faseValidacion.ok && (
-              <p className="te-bracket-modal__warn">{faseValidacion.error}</p>
-            )}
-
-            {faseValidacion.ok && resumenClasificados && (
-              <div className="te-bracket-resumen">
-                <div className="te-bracket-resumen__advance">
-                  <p className="te-bracket-resumen__advance-title">
-                    {totalAvanzan} parejas avanzan
-                  </p>
-                  <p className="te-bracket-resumen__advance-breakdown">
-                    <span className="te-bracket-resumen__chip">
-                      {fijosCount} automáticos
-                    </span>
-                    {maxTerceros > 0 ? (
-                      <>
+          <>
+            <div className="te-bracket-modal__body">
+              <div className="te-bracket-step te-bracket-step--fase">
+                <div
+                  className="te-bracket-fase-options"
+                  role="radiogroup"
+                  aria-label="Fase eliminatoria"
+                >
+                  {FASE_OPCIONES.map((opt) => {
+                    const selected = fase === opt.id;
+                    const recommended = faseSugerida === opt.id;
+                    return (
+                      <label
+                        key={opt.id}
+                        className={`te-bracket-fase-option${
+                          selected ? " te-bracket-fase-option--selected" : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="te-bracket-fase"
+                          value={opt.id}
+                          checked={selected}
+                          onChange={() => setFase(opt.id)}
+                        />
                         <span
-                          className="te-bracket-resumen__plus"
+                          className="te-bracket-fase-option__radio"
                           aria-hidden
                         >
-                          +
+                          <span className="te-bracket-fase-option__radio-dot" />
                         </span>
-                        <span className="te-bracket-resumen__chip te-bracket-resumen__chip--tercero">
-                          {tercerosIncluidos} mejores terceros
+                        <span className="te-bracket-fase-option__body">
+                          <span className="te-bracket-fase-option__top">
+                            <span className="te-bracket-fase-option__name">
+                              {opt.shortLabel}
+                            </span>
+                            {recommended ? (
+                              <span className="te-bracket-fase-option__badge">
+                                Recomendado
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="te-bracket-fase-option__slots">
+                            {BRACKET_FASE_SLOTS[opt.id]} plazas
+                          </span>
+                          {fasePreviews[opt.id] ? (
+                            <span className="te-bracket-fase-option__desc">
+                              {fasePreviews[opt.id]}
+                            </span>
+                          ) : null}
                         </span>
-                      </>
-                    ) : null}
-                  </p>
+                      </label>
+                    );
+                  })}
                 </div>
 
-                {maxTerceros > 0 && (
-                  <div className="te-bracket-terceros-field">
+                {!faseValidacion.ok && (
+                  <p className="te-bracket-modal__warn">
+                    {faseValidacion.error}
+                  </p>
+                )}
+
+                {faseValidacion.ok && resumenClasificados && (
+                  <div className="te-bracket-resumen">
+                    <div className="te-bracket-resumen__advance">
+                      <p className="te-bracket-resumen__advance-title">
+                        {totalAvanzan} parejas avanzan
+                      </p>
+                      <p className="te-bracket-resumen__advance-breakdown">
+                        <span className="te-bracket-resumen__chip">
+                          {fijosCount} automáticos
+                        </span>
+                        {maxTerceros > 0 ? (
+                          <>
+                            <span
+                              className="te-bracket-resumen__plus"
+                              aria-hidden
+                            >
+                              +
+                            </span>
+                            <span className="te-bracket-resumen__chip te-bracket-resumen__chip--tercero">
+                              {tercerosIncluidos} mejores terceros
+                            </span>
+                          </>
+                        ) : null}
+                      </p>
+                    </div>
+
+                    {maxTerceros > 0 && (
+                      <div className="te-bracket-terceros-field">
+                        <span
+                          id="te-bracket-terceros-label"
+                          className="te-bracket-terceros-field__label"
+                        >
+                          Mejores terceros
+                        </span>
+                        <div
+                          className="te-bracket-stepper"
+                          role="group"
+                          aria-labelledby="te-bracket-terceros-label"
+                        >
+                          <button
+                            type="button"
+                            className="te-bracket-stepper__btn"
+                            onClick={() => adjustTerceros(-1)}
+                            disabled={cantidadTerceros <= 0}
+                            aria-label="Disminuir mejores terceros"
+                          >
+                            −
+                          </button>
+                          <span
+                            className="te-bracket-stepper__value"
+                            aria-live="polite"
+                          >
+                            {cantidadTerceros}
+                          </span>
+                          <button
+                            type="button"
+                            className="te-bracket-stepper__btn"
+                            onClick={() => adjustTerceros(1)}
+                            disabled={cantidadTerceros >= maxTerceros}
+                            aria-label="Aumentar mejores terceros"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="te-bracket-terceros-field__hint">
+                          Máximo {maxTerceros}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {faseValidacion.ok && (
+                  <div className="te-bracket-third-place">
                     <span
-                      id="te-bracket-terceros-label"
-                      className="te-bracket-terceros-field__label"
+                      id="te-bracket-third-place-label"
+                      className="te-bracket-third-place__label"
                     >
-                      Mejores terceros
+                      Partido por 3.er lugar
                     </span>
                     <div
-                      className="te-bracket-stepper"
-                      role="group"
-                      aria-labelledby="te-bracket-terceros-label"
+                      className="te-bracket-third-place__segmented"
+                      role="radiogroup"
+                      aria-labelledby="te-bracket-third-place-label"
                     >
-                      <button
-                        type="button"
-                        className="te-bracket-stepper__btn"
-                        onClick={() => adjustTerceros(-1)}
-                        disabled={cantidadTerceros <= 0}
-                        aria-label="Disminuir mejores terceros"
+                      <label
+                        className={`te-bracket-third-place__option${
+                          thirdPlaceMatchEnabled
+                            ? " te-bracket-third-place__option--selected"
+                            : ""
+                        }`}
                       >
-                        −
-                      </button>
-                      <span
-                        className="te-bracket-stepper__value"
-                        aria-live="polite"
+                        <input
+                          type="radio"
+                          name="te-bracket-third-place"
+                          checked={thirdPlaceMatchEnabled}
+                          onChange={() => setThirdPlaceMatchEnabled(true)}
+                        />
+                        Sí, jugarlo
+                      </label>
+                      <label
+                        className={`te-bracket-third-place__option${
+                          !thirdPlaceMatchEnabled
+                            ? " te-bracket-third-place__option--selected"
+                            : ""
+                        }`}
                       >
-                        {cantidadTerceros}
-                      </span>
-                      <button
-                        type="button"
-                        className="te-bracket-stepper__btn"
-                        onClick={() => adjustTerceros(1)}
-                        disabled={cantidadTerceros >= maxTerceros}
-                        aria-label="Aumentar mejores terceros"
-                      >
-                        +
-                      </button>
+                        <input
+                          type="radio"
+                          name="te-bracket-third-place"
+                          checked={!thirdPlaceMatchEnabled}
+                          onChange={() => setThirdPlaceMatchEnabled(false)}
+                        />
+                        No jugarlo
+                      </label>
                     </div>
-                    <span className="te-bracket-terceros-field__hint">
-                      Máximo {maxTerceros}
-                    </span>
+                    <p className="te-bracket-third-place__hint">
+                      {thirdPlaceMatchEnabled
+                        ? "Los perdedores de semifinal disputarán el 3.er lugar."
+                        : "Los perdedores de semifinal terminarán como semifinalistas. No se generará otro partido."}
+                    </p>
                   </div>
                 )}
               </div>
-            )}
+            </div>
 
             <div className="te-bracket-modal__actions">
               <Button type="button" variant="ghost" onClick={onClose}>
@@ -426,71 +504,81 @@ export const TorneoExpressBracketModal: React.FC<
                 Continuar al cuadro →
               </Button>
             </div>
-          </div>
+          </>
         )}
 
         {!loading && bundle && step === "bracket" && (
-          <div className="te-bracket-step te-bracket-step--bracket">
-            <p className="te-bracket-resumen-line">
-              {resumenConfirmacion(slots, fase, resolverResult ?? undefined)}
-            </p>
-
-            {advertencias.length > 0 && (
-              <div className="te-bracket-warnings" role="status">
-                <p className="te-bracket-warnings__title">
-                  Advertencias (mismo grupo en 1ª ronda)
+          <>
+            <div className="te-bracket-modal__body">
+              <div className="te-bracket-step te-bracket-step--bracket">
+                <p className="te-bracket-resumen-line">
+                  {resumenConfirmacion(
+                    slots,
+                    fase,
+                    resolverResult ?? undefined
+                  )}
                 </p>
-                <ul>
-                  {advertencias.map((a) => (
-                    <li key={`${a.cruceIndex}-${a.slotA}`}>{a.mensaje}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
-            <div className="te-bracket-grid">
-              {Array.from({ length: totalSlots / 2 }, (_, cruceIdx) => {
-                const i = cruceIdx * 2;
-                const a = slots[i];
-                const b = slots[i + 1];
-                const clash = advertencias.some(
-                  (w) => w.cruceIndex === cruceIdx
-                );
-                const matchLabel = String(cruceIdx + 1).padStart(2, "0");
-
-                return (
-                  <div
-                    key={`cruce-${cruceIdx}`}
-                    className={`te-bracket-cruce${
-                      clash ? " te-bracket-cruce--clash" : ""
-                    }`}
-                  >
-                    <span className="te-bracket-cruce__label">
-                      Partido {matchLabel}
-                      {clash ? " · Mismo grupo" : ""}
-                    </span>
-                    <div className="te-bracket-cruce__pair">
-                      <BracketSlotCard
-                        slot={a}
-                        index={i}
-                        dragging={dragIndex === i}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                      />
-                      <span className="te-bracket-cruce__vs">VS</span>
-                      <BracketSlotCard
-                        slot={b}
-                        index={i + 1}
-                        dragging={dragIndex === i + 1}
-                        onDragStart={handleDragStart}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                      />
-                    </div>
+                {advertencias.length > 0 && (
+                  <div className="te-bracket-warnings" role="status">
+                    <p className="te-bracket-warnings__title">
+                      Advertencias (mismo grupo en 1ª ronda)
+                    </p>
+                    <ul>
+                      {advertencias.map((a) => (
+                        <li key={`${a.cruceIndex}-${a.slotA}`}>
+                          {a.mensaje}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                );
-              })}
+                )}
+
+                <div className="te-bracket-grid">
+                  {Array.from({ length: totalSlots / 2 }, (_, cruceIdx) => {
+                    const i = cruceIdx * 2;
+                    const a = slots[i];
+                    const b = slots[i + 1];
+                    const clash = advertencias.some(
+                      (w) => w.cruceIndex === cruceIdx
+                    );
+                    const matchLabel = String(cruceIdx + 1).padStart(2, "0");
+
+                    return (
+                      <div
+                        key={`cruce-${cruceIdx}`}
+                        className={`te-bracket-cruce${
+                          clash ? " te-bracket-cruce--clash" : ""
+                        }`}
+                      >
+                        <span className="te-bracket-cruce__label">
+                          Partido {matchLabel}
+                          {clash ? " · Mismo grupo" : ""}
+                        </span>
+                        <div className="te-bracket-cruce__pair">
+                          <BracketSlotCard
+                            slot={a}
+                            index={i}
+                            dragging={dragIndex === i}
+                            onDragStart={handleDragStart}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                          />
+                          <span className="te-bracket-cruce__vs">VS</span>
+                          <BracketSlotCard
+                            slot={b}
+                            index={i + 1}
+                            dragging={dragIndex === i + 1}
+                            onDragStart={handleDragStart}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="te-bracket-modal__actions te-bracket-modal__actions--bracket">
@@ -520,10 +608,11 @@ export const TorneoExpressBracketModal: React.FC<
                 </Button>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

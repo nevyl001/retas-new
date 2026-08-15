@@ -73,6 +73,38 @@
   letter-spacing: -0.01em;
 }
 
+.te-elim-shared-semis {
+  margin: 0.75rem 0 0.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-lg, 12px);
+  border: 0.5px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--ro-chrome-elevated, #17191c) 88%, transparent);
+}
+
+.te-elim-shared-semis__title {
+  margin: 0 0 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, rgba(255, 255, 255, 0.55));
+}
+
+.te-elim-shared-semis__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.te-elim-shared-semis__item {
+  font-size: 0.9375rem;
+  font-weight: 650;
+  color: var(--text-primary, #fff);
+}
+
 .te-elim-public .te-public-header__meta {
   margin-bottom: 0.15rem;
 }

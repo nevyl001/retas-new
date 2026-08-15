@@ -149,6 +149,27 @@ export const BracketCuadroPanel: React.FC<BracketCuadroPanelProps> = ({
     return tercer?.ganador_id ?? null;
   }, [partidos]);
 
+  const sharedSemifinalistas = useMemo(() => {
+    if (ganadorTercer) return [] as string[];
+    if (!ganadorFinal || totalRondas < 2) return [] as string[];
+    if (partidos.some((p) => isRondaTercerLugar(p.ronda))) return [];
+    const semiRonda = totalRondas - 1;
+    const losers: string[] = [];
+    for (const p of partidos.filter(
+      (x) => x.ronda === semiRonda && x.estado === "jugado" && !x.es_bye
+    )) {
+      if (!p.ganador_id || !p.pareja_local_id || !p.pareja_visitante_id) {
+        continue;
+      }
+      const loser =
+        p.ganador_id === p.pareja_local_id
+          ? p.pareja_visitante_id
+          : p.pareja_local_id;
+      if (loser && !losers.includes(loser)) losers.push(loser);
+    }
+    return losers;
+  }, [ganadorFinal, ganadorTercer, partidos, totalRondas]);
+
   if (slots.length === 0) {
     return (
       <p className="te-grupos-card__partidos-hint">
@@ -169,6 +190,16 @@ export const BracketCuadroPanel: React.FC<BracketCuadroPanelProps> = ({
         <p className="te-elim-campeon te-elim-campeon--tercer">
           3.er lugar:{" "}
           <strong>{parejaLabelFromMap(labelMap, ganadorTercer)}</strong>
+        </p>
+      ) : null}
+      {sharedSemifinalistas.length > 0 ? (
+        <p className="te-elim-campeon te-elim-campeon--tercer">
+          Semifinalistas:{" "}
+          <strong>
+            {sharedSemifinalistas
+              .map((id) => parejaLabelFromMap(labelMap, id))
+              .join(" · ")}
+          </strong>
         </p>
       ) : null}
 
