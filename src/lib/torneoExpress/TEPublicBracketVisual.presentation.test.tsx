@@ -362,21 +362,18 @@ describe("TEPublicBracketVisual presentation", () => {
       />,
     );
     expect(screen.getByText(/^RESULTADO FINAL$/)).toBeInTheDocument();
-    const championsCard = screen.getByLabelText("Tarjeta de campeones");
-    const runnersUpCard = screen.getByLabelText("Tarjeta de subcampeones");
+    const championsCard = screen.getByLabelText("CAMPEONES · 1.er LUGAR");
+    const runnersUpCard = screen.getByLabelText("SUBCAMPEONES · 2.º LUGAR");
     expect(championsCard).toBeInTheDocument();
-    expect(championsCard).toHaveClass("te-pb-closing-card");
-    expect(runnersUpCard).toHaveClass("te-pb-closing-card");
-    expect(championsCard).toHaveAttribute(
-      "data-closing-layout",
-      "tournament-recognition",
-    );
-    expect(runnersUpCard).toHaveAttribute(
-      "data-closing-layout",
-      "tournament-recognition",
-    );
-    expect(championsCard).toHaveAttribute("data-podium-tone", "gold");
-    expect(runnersUpCard).toHaveAttribute("data-podium-tone", "silver");
+    expect(championsCard).toHaveClass("te-podium-share");
+    expect(runnersUpCard).toHaveClass("te-podium-share");
+    expect(championsCard).toHaveAttribute("data-podium-layout", "story-9x16");
+    expect(runnersUpCard).toHaveAttribute("data-podium-layout", "story-9x16");
+    expect(championsCard).toHaveAttribute("data-podium-place", "first");
+    expect(runnersUpCard).toHaveAttribute("data-podium-place", "second");
+    expect(
+      screen.getByRole("button", { name: "Compartir campeones" }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/^CAMPEONES$/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/^Felicidades, campeones\.$/)).toBeInTheDocument();
     expect(
@@ -416,30 +413,26 @@ describe("TEPublicBracketVisual presentation", () => {
       within(runnersUpCard).getByText("+11", { selector: "dd" }),
     ).toBeVisible();
     expect(
-      within(championsCard).getByLabelText(
-        "Estadísticas de la pareja en este torneo",
-      ),
+      within(championsCard).getByText("EN ESTE TORNEO"),
     ).toBeInTheDocument();
     expect(within(championsCard).getByText("Summer Open")).toBeInTheDocument();
     expect(within(championsCard).getByText("3ra fuerza")).toBeInTheDocument();
-    expect(within(championsCard).getByText("1.er lugar")).toBeInTheDocument();
-    expect(within(runnersUpCard).getByText("2.º lugar")).toBeInTheDocument();
-    const organizer = within(championsCard).getByLabelText(
-      "Organizado por Valvidub Sports",
-    );
-    expect(organizer).toHaveTextContent("Valvidub Sports");
-    expect(within(organizer).getByRole("img", { name: "" })).toHaveAttribute(
-      "src",
-      "https://cdn.example/valvidub-logo.png",
-    );
+    expect(within(championsCard).getByText("1.er LUGAR")).toBeInTheDocument();
+    expect(within(runnersUpCard).getByText("2.º LUGAR")).toBeInTheDocument();
+    expect(
+      within(championsCard).getByText("Valvidub Sports"),
+    ).toBeInTheDocument();
+    expect(
+      within(championsCard).getByRole("img", { name: "" }),
+    ).toHaveAttribute("src", "https://cdn.example/valvidub-logo.png");
     expect(
       screen.getAllByText(/^by Riviera Open$/i).length,
     ).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByText(
+      screen.getAllByText(
         /Esto no termina aquí\. Nos vemos en la próxima competencia\./,
       ),
-    ).toBeInTheDocument();
+    ).toHaveLength(3);
     expect(screen.getByText(/^Campeones · Pareja A$/)).toBeInTheDocument();
     expect(screen.getByText(/^Subcampeones · Pareja B$/)).toBeInTheDocument();
     const finalArticle = screen.getByRole("article", { name: /^Final:/ });
@@ -465,6 +458,16 @@ describe("TEPublicBracketVisual presentation", () => {
       finalArticle.compareDocumentPosition(championsCard) & 4,
     ).toBeTruthy();
     expect(screen.getAllByText(/^Camino a la final$/)).toHaveLength(2);
+    const journeyBlocks = screen.getAllByLabelText("Camino a la final");
+    expect(journeyBlocks).toHaveLength(2);
+    expect(within(journeyBlocks[0]).getByText("PJ")).toBeInTheDocument();
+    expect(within(journeyBlocks[0]).getByText("PG")).toBeInTheDocument();
+    expect(within(journeyBlocks[0]).getByText("PF")).toBeInTheDocument();
+    expect(within(journeyBlocks[0]).getByText("PC")).toBeInTheDocument();
+    expect(within(journeyBlocks[0]).getByText("48")).toBeInTheDocument();
+    expect(within(journeyBlocks[0]).getByText("22")).toBeInTheDocument();
+    expect(within(journeyBlocks[1]).getByText("42")).toBeInTheDocument();
+    expect(within(journeyBlocks[1]).getByText("31")).toBeInTheDocument();
     expect(screen.getByText(/^SEMIFINALES$/)).toBeInTheDocument();
   });
 
@@ -506,13 +509,13 @@ describe("TEPublicBracketVisual presentation", () => {
     expect(screen.getByText(/^RESULTADO FINAL$/)).toBeInTheDocument();
     expect(screen.getByText(/^3\.ER LUGAR$/)).toBeInTheDocument();
     expect(
-      screen.getByLabelText("Tarjeta de tercer lugar"),
+      screen.getByLabelText("TERCER LUGAR · 3.er LUGAR"),
     ).toBeInTheDocument();
     expect(screen.queryByText(/^by Riviera Open$/i)).toBeNull();
     const thirdPlaceResult = screen.getByRole("article", {
       name: /^3\.er lugar:/,
     });
-    const championsCard = screen.getByLabelText("Tarjeta de campeones");
+    const championsCard = screen.getByLabelText("CAMPEONES · 1.er LUGAR");
     expect(
       thirdPlaceResult.compareDocumentPosition(championsCard) & 4,
     ).toBeTruthy();

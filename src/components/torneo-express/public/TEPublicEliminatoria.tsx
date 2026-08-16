@@ -108,19 +108,26 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
         : "Riviera Open";
   const clubLogoUrl = isScopeBrandingReady ? branding.logoUrl : null;
   const closingPairStatsById = useMemo(() => {
-    const pairIds = [
+    const pairIds = new Set<string>();
+    for (const pairId of [
       model.championCelebrate?.parejaId,
       model.runnerUpCelebrate?.parejaId,
       model.thirdPlaceCelebrate?.parejaId,
-    ].filter((pairId): pairId is string => Boolean(pairId));
+    ]) {
+      if (pairId) pairIds.add(pairId);
+    }
+    for (const card of model.allBracketCards) {
+      if (card.ronda !== model.totalRondas) continue;
+      if (card.local.parejaId) pairIds.add(card.local.parejaId);
+      if (card.visit.parejaId) pairIds.add(card.visit.parejaId);
+    }
 
-    return pairIds.reduce<Record<string, PublicEliminatoriaPodiumStats | null>>(
-      (statsById, pairId) => {
-        statsById[pairId] = buildPublicPodiumStatsForPair(bundle, pairId);
-        return statsById;
-      },
-      {},
-    );
+    return Array.from(pairIds).reduce<
+      Record<string, PublicEliminatoriaPodiumStats | null>
+    >((statsById, pairId) => {
+      statsById[pairId] = buildPublicPodiumStatsForPair(bundle, pairId);
+      return statsById;
+    }, {});
   }, [bundle, model]);
 
   useEffect(() => {

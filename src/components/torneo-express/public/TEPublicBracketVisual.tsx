@@ -12,6 +12,11 @@ import {
   formatPublicPodiumDif,
   type PublicEliminatoriaPodiumStats,
 } from "../../../lib/torneoExpress/publicEliminatoriaPodiumStats";
+import {
+  createPodiumSharePresentation,
+  type PodiumSharePlace,
+} from "../../../lib/torneoExpress/publicPodiumSharePresentation";
+import { shareTournamentPodiumImage } from "../../../lib/torneoExpress/shareTournamentPodiumImage";
 import { RIVIERA_CO_BRAND_ATTRIBUTION } from "../../../club-experience/motherBrand";
 import {
   RIVIERA_SOCIAL_HANDLE,
@@ -20,6 +25,7 @@ import {
 import { JugadorAvatar } from "../../jugadores/JugadorAvatar";
 import type { PublicRetaPairPlayer } from "../../public/PublicRetaPairSide";
 import { TablerIcon } from "../../ui/TablerIcon";
+import { TournamentPodiumShareCard } from "./TournamentPodiumShareCard";
 import "../../jugadores/riviera-jugadores.css";
 
 const SOCIAL_ICON_BY_ID = {
@@ -171,10 +177,12 @@ function FinalistPairHero({
   team,
   side,
   completed,
+  stats,
 }: {
   team: BracketTeamPresentation;
   side: "local" | "visit";
   completed: boolean;
+  stats: PublicEliminatoriaPodiumStats | null;
 }) {
   if (team.kind !== "team") {
     return (
@@ -222,20 +230,49 @@ function FinalistPairHero({
       </div>
       <div className="te-pb-finalist__journey" aria-label="Camino a la final">
         <span className="te-pb-finalist__journey-title">Camino a la final</span>
-        <div>
-          {team.seed != null ? <span>Seed #{team.seed}</span> : null}
-          {team.originLabel ? <span>{team.originLabel}</span> : null}
-          <span>Clasificados a la final</span>
-        </div>
+        {stats ? (
+          <dl className="te-pb-finalist__journey-stats">
+            <div>
+              <dt title="Partidos jugados">PJ</dt>
+              <dd>{stats.partidos}</dd>
+            </div>
+            <div>
+              <dt title="Partidos ganados">PG</dt>
+              <dd>{stats.victorias}</dd>
+            </div>
+            <div>
+              <dt title="Puntos a favor">PF</dt>
+              <dd>{stats.juegosFavor}</dd>
+            </div>
+            <div>
+              <dt title="Puntos en contra">PC</dt>
+              <dd>{stats.juegosContra}</dd>
+            </div>
+          </dl>
+        ) : null}
+        {team.seed != null || team.originLabel ? (
+          <div className="te-pb-finalist__journey-meta">
+            {team.seed != null ? <span>Seed #{team.seed}</span> : null}
+            {team.originLabel ? <span>{team.originLabel}</span> : null}
+          </div>
+        ) : null}
       </div>
     </section>
   );
 }
 
-function FinalHeroScoreboard({ match }: { match: BracketMatchPresentation }) {
+function FinalHeroScoreboard({
+  match,
+  pairStatsById,
+}: {
+  match: BracketMatchPresentation;
+  pairStatsById: Record<string, PublicEliminatoriaPodiumStats | null>;
+}) {
   const ariaTeams = [match.local.label, match.visit.label].join(" contra ");
   const scoreColumns = formatMatchScoreForDisplay(match.sets);
   const hasScore = scoreColumns.length > 0;
+  const statsFor = (team: BracketTeamPresentation) =>
+    team.parejaId ? (pairStatsById[team.parejaId] ?? null) : null;
 
   return (
     <article
@@ -251,6 +288,7 @@ function FinalHeroScoreboard({ match }: { match: BracketMatchPresentation }) {
         team={match.local}
         side="local"
         completed={match.status === "finished"}
+        stats={statsFor(match.local)}
       />
 
       <section
@@ -338,6 +376,7 @@ function FinalHeroScoreboard({ match }: { match: BracketMatchPresentation }) {
         team={match.visit}
         side="visit"
         completed={match.status === "finished"}
+        stats={statsFor(match.visit)}
       />
     </article>
   );
@@ -531,6 +570,8 @@ function ClosingStatsStrip({
   );
 }
 
+// Legacy closing markup retained temporarily while share previews roll out.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TournamentClosingCardBase({
   team,
   variant,
@@ -667,45 +708,70 @@ function TournamentClosingStack({
   showMotherAttribution: boolean;
   pairStatsById: Record<string, PublicEliminatoriaPodiumStats | null>;
 }) {
+  const [sharingPlace, setSharingPlace] = useState<PodiumSharePlace | null>(
+    null,
+  );
   const statsFor = (team: BracketTeamPresentation) =>
     team.parejaId ? (pairStatsById[team.parejaId] ?? null) : null;
+  const presentationFor = (
+    team: BracketTeamPresentation,
+    place: PodiumSharePlace,
+  ) => {
+    if (team.kind !== "team") return null;
+    return createPodiumSharePresentation({
+      place,
+      tournamentName,
+      category: category ?? null,
+      clubName,
+      clubLogoUrl: clubLogoUrl ?? null,
+      showMotherAttribution,
+      players: getTeamPlayers(team).map((player) => ({
+        id: player.id,
+        name: player.name,
+        fotoUrl: player.fotoUrl,
+      })),
+      stats: statsFor(team),
+    });
+  };
+  const share = async (presentation: ReturnType<typeof presentationFor>) => {
+    if (!presentation || sharingPlace) return;
+    setSharingPlace(presentation.place);
+    try {
+      await shareTournamentPodiumImage(presentation);
+    } finally {
+      setSharingPlace(null);
+    }
+  };
+  const podiums = [
+    { team: champion, place: "first" as const },
+    ...(runnerUp ? [{ team: runnerUp, place: "second" as const }] : []),
+    ...(thirdPlace ? [{ team: thirdPlace, place: "third" as const }] : []),
+  ]
+    .map(({ team, place }) => ({
+      place,
+      presentation: presentationFor(team, place),
+    }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        place: PodiumSharePlace;
+        presentation: NonNullable<ReturnType<typeof presentationFor>>;
+      } => Boolean(entry.presentation),
+    );
 
   return (
     <div className="te-pb-closing-stack" aria-label="Cierre del torneo">
-      <TournamentClosingCardBase
-        team={champion}
-        variant="champion"
-        tournamentName={tournamentName}
-        category={category}
-        clubName={clubName}
-        clubLogoUrl={clubLogoUrl}
-        showMotherAttribution={showMotherAttribution}
-        stats={statsFor(champion)}
-      />
-      {runnerUp ? (
-        <TournamentClosingCardBase
-          team={runnerUp}
-          variant="runner-up"
-          tournamentName={tournamentName}
-          category={category}
-          clubName={clubName}
-          clubLogoUrl={clubLogoUrl}
-          showMotherAttribution={showMotherAttribution}
-          stats={statsFor(runnerUp)}
-        />
-      ) : null}
-      {thirdPlace ? (
-        <TournamentClosingCardBase
-          team={thirdPlace}
-          variant="third"
-          tournamentName={tournamentName}
-          category={category}
-          clubName={clubName}
-          clubLogoUrl={clubLogoUrl}
-          showMotherAttribution={showMotherAttribution}
-          stats={statsFor(thirdPlace)}
-        />
-      ) : null}
+      <div className="te-pb-podium-share-grid">
+        {podiums.map(({ place, presentation }) => (
+          <TournamentPodiumShareCard
+            key={place}
+            presentation={presentation}
+            onShare={() => void share(presentation)}
+            isSharing={sharingPlace === place}
+          />
+        ))}
+      </div>
       <footer className="te-pb-closing-community" aria-label="Agradecimiento">
         <p>
           Gracias a todos los jugadores por ser parte del torneo, competir con
@@ -722,9 +788,11 @@ function TournamentClosingStack({
 function BracketRoundColumn({
   round,
   display = "current",
+  pairStatsById = {},
 }: {
   round: BracketRoundPresentation;
   display?: "history" | "current";
+  pairStatsById?: Record<string, PublicEliminatoriaPodiumStats | null>;
 }) {
   const isFinal =
     round.isFinalRound || round.matches.some((match) => match.isFinal);
@@ -817,7 +885,11 @@ function BracketRoundColumn({
       <div className="te-pb-round__stack">
         {round.matches.map((match) =>
           display === "current" && isFinal ? (
-            <FinalHeroScoreboard key={match.id} match={match} />
+            <FinalHeroScoreboard
+              key={match.id}
+              match={match}
+              pairStatsById={pairStatsById}
+            />
           ) : (
             <MatchScoreboard
               key={match.id}
@@ -921,17 +993,27 @@ export const TEPublicBracketVisual: React.FC<TEPublicBracketVisualProps> = ({
               .filter((round) => round.ronda < presentation.visibleRound!.ronda)
               .map((round) => (
                 <React.Fragment key={round.id}>
-                  <BracketRoundColumn round={round} display="history" />
+                  <BracketRoundColumn
+                    round={round}
+                    display="history"
+                    pairStatsById={pairStatsById}
+                  />
                   <div className="te-pb-stage-progression" aria-hidden>
                     <span />
                     <i>●</i>
                   </div>
                 </React.Fragment>
               ))}
-            <BracketRoundColumn round={presentation.visibleRound} />
+            <BracketRoundColumn
+              round={presentation.visibleRound}
+              pairStatsById={pairStatsById}
+            />
             {presentation.visibleThirdPlace ? (
               <div className="te-pb-current-stage__third">
-                <BracketRoundColumn round={presentation.visibleThirdPlace} />
+                <BracketRoundColumn
+                  round={presentation.visibleThirdPlace}
+                  pairStatsById={pairStatsById}
+                />
               </div>
             ) : null}
             {completedChampion ? (
