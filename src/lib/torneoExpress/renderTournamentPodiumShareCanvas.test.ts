@@ -20,6 +20,8 @@ function canvasContext(): CanvasRenderingContext2D {
     beginPath: jest.fn(),
     moveTo: jest.fn(),
     lineTo: jest.fn(),
+    arcTo: jest.fn(),
+    closePath: jest.fn(),
     arc: jest.fn(),
     clip: jest.fn(),
     fill: jest.fn(),

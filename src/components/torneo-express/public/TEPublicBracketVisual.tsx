@@ -869,19 +869,11 @@ function BracketRoundColumn({
                   : round.title}
           </h3>
         </div>
-        <p className="te-pb-round__summary">
-          {round.isThirdPlace
-            ? round.isCompleted
-              ? "✓ 3.er lugar definido"
-              : "Una última batalla por subir al podio."
-            : round.isCompleted
-              ? display === "history"
-                ? round.isSemifinal
-                  ? "✓ Semifinales completadas"
-                  : "✓ Completados"
-                : "✓ Completado"
-              : null}
-        </p>
+        {round.isThirdPlace && !round.isCompleted ? (
+          <p className="te-pb-round__summary">
+            Una última batalla por subir al podio.
+          </p>
+        ) : null}
       </header>
 
       {display === "current" && !round.isThirdPlace && !champion ? (

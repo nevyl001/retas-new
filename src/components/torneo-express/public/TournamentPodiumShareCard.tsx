@@ -36,7 +36,9 @@ export function TournamentPodiumShareCard({
       aria-label={`${presentation.title} · ${presentation.positionLabel}`}
     >
       <div className="te-podium-share__art">
+        <span className="te-podium-share__ambient" aria-hidden />
         <span className="te-podium-share__court" aria-hidden />
+        <span className="te-podium-share__grain" aria-hidden />
         <span className="te-podium-share__watermark" aria-hidden>
           RIVIERA OPEN
         </span>
@@ -49,11 +51,18 @@ export function TournamentPodiumShareCard({
               className="te-podium-share__club-logo"
               onError={() => setLogoFailed(true)}
             />
-          ) : null}
+          ) : (
+            <span className="te-podium-share__club-mark" aria-hidden>
+              {presentation.clubName.trim().slice(0, 1).toUpperCase()}
+            </span>
+          )}
           <div>
             <strong>{presentation.clubName}</strong>
             {presentation.showMotherAttribution ? (
-              <span>by Riviera Open</span>
+              <span>
+                <i aria-hidden />
+                by Riviera Open
+              </span>
             ) : null}
           </div>
         </header>
@@ -74,18 +83,27 @@ export function TournamentPodiumShareCard({
             className="te-podium-share__players"
             aria-label={presentation.title}
           >
-            {displayPlayers.map((player) => (
-              <div key={player.id} className="te-podium-share__player">
-                <JugadorAvatar
-                  fotoUrl={player.fotoUrl}
-                  nombre={player.name}
-                  size="xl"
-                  loading="lazy"
-                  alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
-                  className="te-podium-share__avatar"
-                />
-                <strong title={player.name}>{player.name}</strong>
-              </div>
+            {displayPlayers.map((player, index) => (
+              <React.Fragment key={player.id}>
+                {index > 0 ? (
+                  <span className="te-podium-share__pair-axis" aria-hidden>
+                    <i />
+                  </span>
+                ) : null}
+                <div className="te-podium-share__player">
+                  <span className="te-podium-share__avatar-frame">
+                    <JugadorAvatar
+                      fotoUrl={player.fotoUrl}
+                      nombre={player.name}
+                      size="xl"
+                      loading="lazy"
+                      alt={player.fotoUrl ? `Foto de ${player.name}` : ""}
+                      className="te-podium-share__avatar"
+                    />
+                  </span>
+                  <strong title={player.name}>{player.name}</strong>
+                </div>
+              </React.Fragment>
             ))}
           </div>
           <h3>{presentation.headline}</h3>
@@ -130,14 +148,17 @@ export function TournamentPodiumShareCard({
         </div>
 
         <footer className="te-podium-share__social">
-          <ul aria-label="Redes sociales Riviera Open">
-            {RIVIERA_SOCIAL_LINKS.map((link) => (
-              <li key={link.id}>
-                <TablerIcon name={SOCIAL_ICON_BY_ID[link.id]} size={14} />
-              </li>
-            ))}
-          </ul>
-          <span>{RIVIERA_SOCIAL_HANDLE}</span>
+          <strong>RIVIERA OPEN</strong>
+          <div>
+            <ul aria-label="Redes sociales Riviera Open">
+              {RIVIERA_SOCIAL_LINKS.map((link) => (
+                <li key={link.id}>
+                  <TablerIcon name={SOCIAL_ICON_BY_ID[link.id]} size={14} />
+                </li>
+              ))}
+            </ul>
+            <span>{RIVIERA_SOCIAL_HANDLE}</span>
+          </div>
         </footer>
       </div>
 
