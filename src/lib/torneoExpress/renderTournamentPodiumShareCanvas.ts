@@ -155,10 +155,13 @@ function drawWrapped(
   maxWidth: number,
   lineHeight: number,
   maxLines: number,
-) {
-  wrap(ctx, text, maxWidth, maxLines).forEach((line, index) =>
+): number {
+  const lines = wrap(ctx, text, maxWidth, maxLines);
+  lines.forEach((line, index) =>
     centered(ctx, line, y + index * lineHeight),
   );
+  if (lines.length === 0) return y;
+  return y + (lines.length - 1) * lineHeight;
 }
 
 function drawBackground(ctx: CanvasRenderingContext2D, tone: string) {
@@ -405,12 +408,12 @@ function drawStats(
   ctx: CanvasRenderingContext2D,
   data: PodiumSharePresentation,
   tone: string,
-) {
-  if (!data.stats) return;
+  y: number,
+): number {
+  if (!data.stats) return y;
   const x = 104;
-  const y = 1192;
   const width = 872;
-  const height = 190;
+  const height = 178;
 
   const surface = ctx.createLinearGradient(0, y, 0, y + height);
   surface.addColorStop(0, "rgba(244,241,234,0.055)");
@@ -424,7 +427,7 @@ function drawStats(
 
   ctx.font = font(750, 17);
   ctx.fillStyle = COLOR.textMuted;
-  centered(ctx, "EN ESTE TORNEO", y + 44);
+  centered(ctx, "EN ESTE TORNEO", y + 40);
 
   const values = [
     ["PJ", String(data.stats.partidos)],
@@ -438,68 +441,75 @@ function drawStats(
     if (index > 0) {
       ctx.strokeStyle = COLOR.line;
       ctx.beginPath();
-      ctx.moveTo(x + columnWidth * index, y + 70);
-      ctx.lineTo(x + columnWidth * index, y + height - 24);
+      ctx.moveTo(x + columnWidth * index, y + 64);
+      ctx.lineTo(x + columnWidth * index, y + height - 22);
       ctx.stroke();
     }
     ctx.font = font(750, 16);
     ctx.fillStyle = COLOR.textMuted;
-    centeredAt(ctx, label, centerX, y + 95);
-    ctx.font = font(800, 43);
+    centeredAt(ctx, label, centerX, y + 88);
+    ctx.font = font(800, 40);
     ctx.fillStyle = label === "DIF" ? tone : COLOR.text;
-    centeredAt(ctx, value, centerX, y + 151);
+    centeredAt(ctx, value, centerX, y + 140);
   });
+
+  return y + height;
 }
 
 function drawFooter(
   ctx: CanvasRenderingContext2D,
   data: PodiumSharePresentation,
   tone: string,
+  startY: number,
 ) {
-  ctx.font = font(600, 25, "body");
+  let y = startY + 42;
+  ctx.font = font(600, 24, "body");
   ctx.fillStyle = COLOR.textSoft;
-  drawWrapped(ctx, data.motivation, 1485, 790, 35, 3);
+  y = drawWrapped(ctx, data.motivation, y, 790, 34, 3) + 36;
 
-  ctx.font = font(500, 22, "body");
+  ctx.font = font(500, 21, "body");
   ctx.fillStyle = COLOR.textMuted;
-  drawWrapped(
-    ctx,
-    "Gracias por participar en el torneo y ser parte de esta competencia.",
-    1592,
-    780,
-    31,
-    2,
-  );
+  y =
+    drawWrapped(
+      ctx,
+      "Gracias por participar en el torneo y ser parte de esta competencia.",
+      y,
+      780,
+      30,
+      2,
+    ) + 34;
 
-  ctx.font = font(800, 24);
+  ctx.font = font(800, 23);
   ctx.fillStyle = COLOR.text;
-  drawWrapped(
-    ctx,
-    "Esto no termina aquí. Nos vemos en la próxima competencia.",
-    1688,
-    790,
-    32,
-    2,
-  );
+  y =
+    drawWrapped(
+      ctx,
+      "Esto no termina aquí. Nos vemos en la próxima competencia.",
+      y,
+      790,
+      31,
+      2,
+    ) + 42;
 
+  const footerY = Math.min(Math.max(y, 1768), 1810);
   ctx.strokeStyle = COLOR.line;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(104, 1770);
-  ctx.lineTo(976, 1770);
+  ctx.moveTo(104, footerY);
+  ctx.lineTo(976, footerY);
   ctx.stroke();
 
   ctx.textAlign = "left";
   ctx.fillStyle = COLOR.text;
   ctx.font = font(800, 18);
-  ctx.fillText("RIVIERA OPEN", 104, 1822);
+  ctx.fillText("RIVIERA OPEN", 104, footerY + 46);
   ctx.fillStyle = tone;
-  ctx.fillRect(104, 1838, 48, 2);
+  ctx.fillRect(104, footerY + 58, 48, 2);
 
   ctx.textAlign = "right";
   ctx.fillStyle = COLOR.textMuted;
   ctx.font = font(650, 17, "body");
-  ctx.fillText("@rivieraopen  ·  Instagram  TikTok  Facebook", 976, 1822);
+  ctx.fillText("@rivieraopen  ·  Instagram  TikTok  Facebook", 976, footerY + 46);
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -576,15 +586,23 @@ export async function renderTournamentPodiumShareCanvas(
   if (first) drawPlayerName(ctx, first.name, 320, 838);
   if (second) drawPlayerName(ctx, second.name, 760, 838);
 
-  ctx.font = font(800, 55);
+  ctx.font = font(800, 48);
   ctx.fillStyle = COLOR.text;
-  drawWrapped(ctx, data.headline, 960, 830, 62, 2);
-  ctx.font = font(500, 25, "body");
-  ctx.fillStyle = COLOR.textSoft;
-  drawWrapped(ctx, data.recognition, 1085, 770, 36, 3);
+  const headlineBottom = drawWrapped(ctx, data.headline, 920, 820, 54, 2);
 
-  drawStats(ctx, data, tone);
-  drawFooter(ctx, data, tone);
+  ctx.font = font(500, 24, "body");
+  ctx.fillStyle = COLOR.textSoft;
+  const recognitionBottom = drawWrapped(
+    ctx,
+    data.recognition,
+    headlineBottom + 48,
+    760,
+    34,
+    3,
+  );
+
+  const statsBottom = drawStats(ctx, data, tone, recognitionBottom + 42);
+  drawFooter(ctx, data, tone, statsBottom);
   return canvas;
 }
 
