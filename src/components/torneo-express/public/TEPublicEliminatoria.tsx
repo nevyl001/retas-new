@@ -6,6 +6,7 @@ import {
   buildPublicPodiumStatsForPair,
   type PublicEliminatoriaPodiumStats,
 } from "../../../lib/torneoExpress/publicEliminatoriaPodiumStats";
+import { isRondaTercerLugar } from "../../../lib/torneoExpress/bracketRounds";
 import type { TorneoExpressBundle } from "../../../lib/torneoExpress/types";
 import { useClubExperience } from "../../../club-experience";
 import { useTorneoPublicDisplayNombre } from "../../../hooks/useTorneoPublicDisplayNombre";
@@ -117,7 +118,8 @@ export const TEPublicEliminatoria: React.FC<TEPublicEliminatoriaProps> = ({
       if (pairId) pairIds.add(pairId);
     }
     for (const card of model.allBracketCards) {
-      if (card.ronda !== model.totalRondas) continue;
+      const isFinalCard = card.ronda === model.totalRondas;
+      if (!isFinalCard && !isRondaTercerLugar(card.ronda)) continue;
       if (card.local.parejaId) pairIds.add(card.local.parejaId);
       if (card.visit.parejaId) pairIds.add(card.visit.parejaId);
     }

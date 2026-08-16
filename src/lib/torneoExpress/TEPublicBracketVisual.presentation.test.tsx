@@ -515,6 +515,19 @@ describe("TEPublicBracketVisual presentation", () => {
     const thirdPlaceResult = screen.getByRole("article", {
       name: /^3\.er lugar:/,
     });
+    expect(thirdPlaceResult).toHaveAttribute("data-variant", "third");
+    expect(thirdPlaceResult).toHaveClass("te-pb-final-hero--third");
+    expect(
+      within(thirdPlaceResult).getByText(/^3\.er Lugar$/),
+    ).toBeInTheDocument();
+    expect(
+      within(thirdPlaceResult).getAllByLabelText("Camino al podio"),
+    ).toHaveLength(2);
+    expect(
+      within(thirdPlaceResult).getByText(
+        /El partido que define el tercer lugar/,
+      ),
+    ).toBeInTheDocument();
     const championsCard = screen.getByLabelText("CAMPEONES · 1.er LUGAR");
     expect(
       thirdPlaceResult.compareDocumentPosition(championsCard) & 4,

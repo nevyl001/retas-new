@@ -178,11 +178,13 @@ function FinalistPairHero({
   side,
   completed,
   stats,
+  place = "final",
 }: {
   team: BracketTeamPresentation;
   side: "local" | "visit";
   completed: boolean;
   stats: PublicEliminatoriaPodiumStats | null;
+  place?: "final" | "third";
 }) {
   if (team.kind !== "team") {
     return (
@@ -193,21 +195,30 @@ function FinalistPairHero({
   }
 
   const players = getTeamPlayers(team);
+  const pairLetter = side === "local" ? "A" : "B";
+  const isThird = place === "third";
+  const roleLabel = (() => {
+    if (isThird) {
+      if (completed && team.isWinner) return `Ganadores · Pareja ${pairLetter}`;
+      if (completed && team.isLoser) return `Pareja ${pairLetter}`;
+      return `Pareja ${pairLetter}`;
+    }
+    if (completed && team.isWinner) return `Campeones · Pareja ${pairLetter}`;
+    if (completed && team.isLoser) return `Subcampeones · Pareja ${pairLetter}`;
+    return side === "local" ? "Finalistas A" : "Finalistas B";
+  })();
+  const journeyLabel = isThird ? "Camino al podio" : "Camino a la final";
 
   return (
     <section
       className={`te-pb-finalist te-pb-finalist--${side}`}
-      aria-label={`Pareja finalista: ${team.label}`}
+      aria-label={
+        isThird
+          ? `Pareja del 3.er lugar: ${team.label}`
+          : `Pareja finalista: ${team.label}`
+      }
     >
-      <p className="te-pb-finalist__label">
-        {completed && team.isWinner
-          ? `Campeones · Pareja ${side === "local" ? "A" : "B"}`
-          : completed && team.isLoser
-            ? `Subcampeones · Pareja ${side === "local" ? "A" : "B"}`
-            : side === "local"
-              ? "Finalistas A"
-              : "Finalistas B"}
-      </p>
+      <p className="te-pb-finalist__label">{roleLabel}</p>
       <div className="te-pb-finalist__players">
         {players.map((player) => (
           <div className="te-pb-finalist__player" key={player.id}>
@@ -228,8 +239,8 @@ function FinalistPairHero({
           </div>
         ))}
       </div>
-      <div className="te-pb-finalist__journey" aria-label="Camino a la final">
-        <span className="te-pb-finalist__journey-title">Camino a la final</span>
+      <div className="te-pb-finalist__journey" aria-label={journeyLabel}>
+        <span className="te-pb-finalist__journey-title">{journeyLabel}</span>
         {stats ? (
           <dl className="te-pb-finalist__journey-stats">
             <div>
@@ -264,23 +275,28 @@ function FinalistPairHero({
 function FinalHeroScoreboard({
   match,
   pairStatsById,
+  place = "final",
 }: {
   match: BracketMatchPresentation;
   pairStatsById: Record<string, PublicEliminatoriaPodiumStats | null>;
+  place?: "final" | "third";
 }) {
   const ariaTeams = [match.local.label, match.visit.label].join(" contra ");
   const scoreColumns = formatMatchScoreForDisplay(match.sets);
   const hasScore = scoreColumns.length > 0;
+  const isThird = place === "third";
   const statsFor = (team: BracketTeamPresentation) =>
     team.parejaId ? (pairStatsById[team.parejaId] ?? null) : null;
 
   return (
     <article
-      className={`te-pb-final-hero te-pb-match--${match.status}`}
+      className={`te-pb-final-hero te-pb-match--${match.status}${
+        isThird ? " te-pb-final-hero--third" : ""
+      }`}
       data-match-id={match.id}
       data-ronda={match.ronda}
       data-cruce={match.cruceIndex}
-      data-variant="final"
+      data-variant={isThird ? "third" : "final"}
       aria-label={`${match.shortTitle}: ${ariaTeams}. ${match.metaLine}`}
     >
       <span className="te-pb-final-hero__light" aria-hidden />
@@ -289,13 +305,18 @@ function FinalHeroScoreboard({
         side="local"
         completed={match.status === "finished"}
         stats={statsFor(match.local)}
+        place={place}
       />
 
       <section
         className="te-pb-final-core"
-        aria-label="Marcador de la Gran Final"
+        aria-label={
+          isThird ? "Marcador del 3.er lugar" : "Marcador de la Gran Final"
+        }
       >
-        <p className="te-pb-final-core__stage">Gran Final</p>
+        <p className="te-pb-final-core__stage">
+          {isThird ? "3.er Lugar" : "Gran Final"}
+        </p>
         <div
           className={`te-pb-final-core__status te-pb-final-core__status--${match.status}`}
         >
@@ -368,7 +389,9 @@ function FinalHeroScoreboard({
           )}
         </div>
         <p className="te-pb-final-core__caption">
-          El partido que define a los campeones
+          {isThird
+            ? "El partido que define el tercer lugar"
+            : "El partido que define a los campeones"}
         </p>
       </section>
 
@@ -377,6 +400,7 @@ function FinalHeroScoreboard({
         side="visit"
         completed={match.status === "finished"}
         stats={statsFor(match.visit)}
+        place={place}
       />
     </article>
   );
@@ -884,11 +908,12 @@ function BracketRoundColumn({
 
       <div className="te-pb-round__stack">
         {round.matches.map((match) =>
-          display === "current" && isFinal ? (
+          display === "current" && (isFinal || round.isThirdPlace) ? (
             <FinalHeroScoreboard
               key={match.id}
               match={match}
               pairStatsById={pairStatsById}
+              place={round.isThirdPlace ? "third" : "final"}
             />
           ) : (
             <MatchScoreboard
