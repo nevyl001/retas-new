@@ -251,31 +251,40 @@
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__avatars {
   display: flex;
+  width: 100%;
   min-height: 94px;
   align-items: flex-start;
   justify-content: center;
-  gap: 7px;
+  gap: 10px;
   margin-bottom: 12px;
-  padding: 0;
+  padding: 0 4px;
+  box-sizing: border-box;
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__player {
   display: grid;
-  width: 70px;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: calc(50% - 5px);
   justify-items: center;
   gap: 6px;
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__player > span:last-child {
   width: 100%;
-  overflow: hidden;
+  max-width: 100%;
+  overflow: visible;
   color: var(--text-primary);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 650;
-  line-height: 1.15;
+  line-height: 1.2;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-overflow: unset;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
 }
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__avatar {
@@ -2703,12 +2712,20 @@
   }
 
   .te-public.te-public--grupos-wide .te-grupo-achievement__avatars {
-    min-height: 62px;
-    margin-bottom: 4px;
+    min-height: 72px;
+    gap: 12px;
+    margin-bottom: 6px;
+    padding: 0 2px;
   }
 
   .te-public.te-public--grupos-wide .te-grupo-achievement__player {
-    width: 54px;
+    width: auto;
+    max-width: calc(50% - 6px);
+  }
+
+  .te-public.te-public--grupos-wide .te-grupo-achievement__player > span:last-child {
+    font-size: 0.71875rem;
+    line-height: 1.2;
   }
 
   .te-public.te-public--grupos-wide .te-grupo-achievement__avatar {
@@ -3005,4 +3022,358 @@
 
 .te-public.te-public--grupos-wide .te-grupo-achievement__footer > p {
   margin-top: 9px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Padel Court Series — ajuste tenant-only de la vista pública de grupos.     */
+/* Verde profundo dominante, carbón como elevación y naranja solo como señal. */
+/* -------------------------------------------------------------------------- */
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide {
+  --te-groups-bg: var(--brand-primary);
+  --te-groups-surface: color-mix(
+    in srgb,
+    var(--brand-primary) 72%,
+    var(--brand-secondary)
+  );
+  --te-groups-surface-raised: color-mix(
+    in srgb,
+    var(--brand-secondary) 82%,
+    var(--brand-primary)
+  );
+  --te-groups-border: color-mix(
+    in srgb,
+    var(--brand-border) 18%,
+    transparent
+  );
+  --te-groups-border-strong: color-mix(
+    in srgb,
+    var(--brand-border) 31%,
+    transparent
+  );
+  --te-groups-accent: var(--brand-accent);
+  --te-groups-accent-soft: color-mix(
+    in srgb,
+    var(--brand-accent) 8%,
+    transparent
+  );
+  --te-match-surface: linear-gradient(
+    150deg,
+    color-mix(
+      in srgb,
+      var(--brand-secondary) 88%,
+      var(--brand-primary)
+    ),
+    color-mix(
+      in srgb,
+      var(--brand-primary) 86%,
+      var(--brand-secondary)
+    )
+  );
+  --te-match-court-bg: color-mix(
+    in srgb,
+    var(--brand-muted) 7%,
+    transparent
+  );
+
+  color: var(--brand-text);
+  font-family: var(--brand-font-body, var(--font-body));
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-title,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-label,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement__main
+  h3 {
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
+  font-weight: var(--brand-heading-weight, 400);
+  letter-spacing: var(--brand-heading-letter-spacing, 0);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-title {
+  color: var(--brand-text);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-eyebrow,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-sub {
+  color: color-mix(in srgb, var(--brand-muted) 82%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-phase-segment {
+  border-color: var(--te-groups-border-strong);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--brand-primary) 88%, var(--brand-secondary)),
+      color-mix(in srgb, var(--brand-secondary) 82%, var(--brand-primary))
+    );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--brand-text) 4%, transparent),
+    0 14px 34px color-mix(in srgb, var(--brand-secondary) 28%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-phase-segment__item--active {
+  background: color-mix(
+    in srgb,
+    var(--brand-secondary) 78%,
+    var(--brand-primary)
+  );
+  color: var(--brand-text);
+  box-shadow: inset 0 -2px 0
+    color-mix(in srgb, var(--brand-accent) 72%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-index__btn--active,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-index__btn--active:hover,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupos-index__btn--active:focus-visible {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent) 36%,
+    var(--te-groups-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--brand-secondary) 82%,
+    var(--brand-primary)
+  );
+  color: var(--brand-text);
+  box-shadow: inset 0 -2px 0
+    color-mix(in srgb, var(--brand-accent) 66%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-label {
+  border-left-color: var(--brand-accent);
+  color: var(--brand-text);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-clasifican-badge {
+  border-color: var(--te-groups-border);
+  background: color-mix(in srgb, var(--brand-muted) 6%, transparent);
+  color: var(--brand-muted);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-partido-item {
+  border-color: var(--te-groups-border);
+  background: var(--te-match-surface);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--brand-text) 4%, transparent),
+    0 10px 24px color-mix(in srgb, var(--brand-secondary) 22%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-partido-item::before {
+  height: 1px;
+  background: var(--brand-accent);
+  opacity: 0.28;
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-partido-item:not(.te-partido-item--played) {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-border) 26%,
+    transparent
+  );
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-partido-meta
+  .te-partido-cancha,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-partido-item:not(.te-partido-item--played)
+  .te-partido-cancha {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-border) 24%,
+    transparent
+  );
+  background: var(--te-match-court-bg);
+  color: var(--brand-muted);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-partido-hora,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-partido-meta
+  .te-partido-hora {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-border) 22%,
+    transparent
+  );
+  background: color-mix(in srgb, var(--brand-primary) 66%, transparent);
+  color: var(--brand-text);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-standings {
+  border-color: var(--te-groups-border-strong);
+  background: color-mix(
+    in srgb,
+    var(--brand-primary) 78%,
+    var(--brand-secondary)
+  );
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-standings__header {
+  background: color-mix(
+    in srgb,
+    var(--brand-secondary) 64%,
+    var(--brand-primary)
+  );
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-standing-row--qualifies {
+  background: color-mix(in srgb, var(--brand-accent) 3.5%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-standing-row--leader
+  .te-standing-row__position {
+  border-color: color-mix(
+    in srgb,
+    var(--ro-medal-gold) 46%,
+    transparent
+  );
+  background: color-mix(in srgb, var(--ro-medal-gold) 8%, transparent);
+  color: var(--ro-medal-gold);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-border) 25%,
+    transparent
+  );
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--brand-primary) 92%, var(--brand-secondary)),
+      color-mix(in srgb, var(--brand-secondary) 84%, var(--brand-primary))
+    );
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement::before {
+  background: radial-gradient(
+    ellipse 68% 46% at 50% 45%,
+    color-mix(in srgb, var(--brand-accent) 5%, transparent),
+    transparent 72%
+  );
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement::after {
+  content: "PCS";
+  color: color-mix(in srgb, var(--brand-muted) 3%, transparent);
+  font-family: var(--brand-font-heading, var(--ro-font-heading));
+  letter-spacing: 0.02em;
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement__main
+  p,
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement__event {
+  color: var(--brand-accent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement__share {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent) 38%,
+    var(--te-groups-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--brand-secondary) 84%,
+    var(--brand-primary)
+  );
+  color: var(--brand-text);
+  box-shadow: inset 0 -2px 0
+    color-mix(in srgb, var(--brand-accent) 48%, transparent);
+}
+
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement__share:hover:not(:disabled),
+.club-experience-scope[data-brand="padel-court-series"]
+  .te-public.te-public--grupos-wide
+  .te-grupo-achievement__share:focus-visible {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-accent) 62%,
+    var(--te-groups-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--brand-secondary) 78%,
+    var(--brand-accent)
+  );
+  filter: none;
+}
+
+@media (min-width: 769px) {
+  .club-experience-scope[data-brand="padel-court-series"]
+    .te-public.te-public--grupos-wide
+    .te-grupo-wrap {
+    border-color: var(--te-groups-border-strong);
+    background:
+      linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--brand-primary) 88%, var(--brand-secondary)),
+        color-mix(in srgb, var(--brand-secondary) 82%, var(--brand-primary))
+      );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--brand-text) 4%, transparent),
+      0 14px 34px color-mix(in srgb, var(--brand-secondary) 28%, transparent);
+  }
 }
