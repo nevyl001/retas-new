@@ -285,6 +285,12 @@
   color: var(--te-event-accent);
 }
 
+/* Una sola raya: si hay barra de progreso, ella es el divisor. */
+.te-cat-hub__progress + .te-cat-hub__action {
+  border-top: none;
+  padding-top: 0.25rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .te-cat-hub,
   .te-cat-hub__face,

@@ -59,7 +59,7 @@ export const EventoCategoriaHubCard: React.FC<EventoCategoriaHubCardProps> = ({
               Sin partidos programados
             </p>
           )}
-          {progressPct != null ? (
+          {progressPct != null && progressPct < 100 ? (
             <div
               className="te-cat-hub__progress"
               role="progressbar"
