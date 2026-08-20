@@ -1358,6 +1358,17 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               >
                 Copiar convocatoria para el grupo
               </button>
+              <button
+                type="button"
+                className="ra-btn ra-btn--ghost"
+                onClick={() => {
+                  setCopyFeedback(null);
+                  setActionError(null);
+                  setStep("overview");
+                }}
+              >
+                Ver jugadores
+              </button>
             </div>
           </section>
         )}
