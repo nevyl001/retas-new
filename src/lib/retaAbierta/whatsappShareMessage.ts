@@ -258,6 +258,9 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
         )
       );
     }
+    if (openLines.length > 0) {
+      lines.push(...openLines);
+    }
   } else {
     // Huecos en lista ANTES del enlace/roster: visibles aunque WhatsApp truncque.
     if (openLines.length > 0) {

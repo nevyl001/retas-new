@@ -139,7 +139,7 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("REMONTADA FINAL");
   });
 
-  it("Americano: resumen de cupo sin slots vacíos", () => {
+  it("Americano: resumen de cupo con roster y huecos disponibles", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {
         name: "Americano sábado",
@@ -162,7 +162,70 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("📍 Hack");
     expect(text).toContain("6 de 16 jugadores confirmados");
     expect(text).toContain("✓ Arturo Cortes (0.73)");
-    expect(text).not.toContain("○ ");
+    expect(text).toContain("○ 15 disponibles");
+  });
+
+  it("Americano: lista huecos uno por uno cuando quedan pocos", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Americano jueves",
+        mode_type: "americano",
+        scheduled_at: "2026-07-18T10:00:00.000Z",
+        duration_minutes: null,
+        location_label: "Hack",
+        category_label: "5ta Fuerza",
+        rama_label: null,
+        capacity: 8,
+        confirmed_count: 4,
+        spots_left: 4,
+        display_rating: true,
+        entries: [
+          {
+            id: "1",
+            status: "confirmed",
+            riviera_id: "RIV-00000001",
+            nombre: "Enrique Soto",
+            foto_url: null,
+            rating: 3,
+            categoria: null,
+          },
+          {
+            id: "2",
+            status: "confirmed",
+            riviera_id: "RIV-00000002",
+            nombre: "Eduardo López",
+            foto_url: null,
+            rating: 2.79,
+            categoria: null,
+          },
+          {
+            id: "3",
+            status: "confirmed",
+            riviera_id: "RIV-00000003",
+            nombre: "Nevyl",
+            foto_url: null,
+            rating: 3.28,
+            categoria: null,
+          },
+          {
+            id: "4",
+            status: "confirmed",
+            riviera_id: "RIV-00000004",
+            nombre: "Axel Arriaga",
+            foto_url: null,
+            rating: 2.91,
+            categoria: null,
+          },
+        ],
+      },
+      publicUrl: "https://app.example/jugar/ra-am",
+      clubName: "Hack Pádel",
+    });
+    expect(text).toContain("4 de 8 jugadores confirmados");
+    expect(text.match(/○ Disponible/g)?.length).toBe(4);
+    expect(text.indexOf("✓ Nevyl (3.28)")).toBeLessThan(
+      text.indexOf("○ Disponible")
+    );
   });
 
   it("Duelo: compacto Riviera con lugar, cancha y Disponibles", () => {
