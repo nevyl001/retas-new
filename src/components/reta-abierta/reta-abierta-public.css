@@ -33,7 +33,7 @@
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  padding: 14px var(--ra-pad) calc(118px + env(safe-area-inset-bottom));
+  padding: 14px var(--ra-pad) calc(168px + env(safe-area-inset-bottom));
   color: var(--ra-ink);
   box-sizing: border-box;
 }
@@ -50,11 +50,13 @@
   margin-bottom: 1rem;
   padding-bottom: 0;
   border-bottom: none;
-}
-
-.ra-public__hero--match {
   display: grid;
   gap: 0.7rem;
+}
+
+.ra-public__hero-copy {
+  display: grid;
+  gap: 0.25rem;
 }
 
 .ra-public__hero-top {
@@ -164,7 +166,7 @@
 .ra-public__match-card {
   display: grid;
   gap: 0.7rem;
-  margin-top: 0.15rem;
+  margin-top: 0;
   padding: 0.85rem 0.9rem;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -178,6 +180,17 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+.ra-public__stage {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.ra-public__panel {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .ra-public__meta--club {
@@ -309,6 +322,13 @@
 
 .ra-actions--cancel {
   margin-top: 0.85rem;
+  padding-bottom: 0.25rem;
+}
+
+.ra-actions--cancel .ra-btn--ghost {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--ra-ink);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .ra-btn--quiet {
@@ -415,16 +435,41 @@
 }
 
 .ra-player-card__id {
-  display: none;
-  font-size: 0.625rem;
-  letter-spacing: 0.04em;
-  color: rgba(247, 244, 239, 0.38);
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.12rem 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 550;
+  letter-spacing: 0.03em;
+  color: rgba(247, 244, 239, 0.78);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: underline;
+  text-decoration-color: rgba(247, 244, 239, 0.28);
+  text-underline-offset: 0.16em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-@media (min-width: 720px) {
-  .ra-player-card__id {
-    display: block;
-  }
+.ra-player-card__id:hover,
+.ra-player-card__id:focus-visible {
+  color: #fff;
+  text-decoration-color: rgba(255, 255, 255, 0.55);
+  outline: none;
+}
+
+.ra-player-card__id--copied {
+  color: #c8e6c0;
+  text-decoration: none;
+  font-weight: 650;
 }
 
 .ra-player-card--filled {
@@ -852,19 +897,27 @@
   z-index: 20;
 }
 
-.ra-public__sticky .ra-btn--block {
+.ra-public__sticky-inner {
+  display: grid;
+  gap: 0.5rem;
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
+}
+
+.ra-public__sticky .ra-btn--block {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
 }
 
 /* ——— Tablet ——— */
 @media (min-width: 768px) {
   .ra-public {
     --ra-pad: 28px;
-    max-width: 720px;
+    max-width: 760px;
     padding-top: 28px;
-    padding-bottom: calc(128px + env(safe-area-inset-bottom));
+    padding-bottom: calc(178px + env(safe-area-inset-bottom));
   }
 
   .ra-public__title {
@@ -884,8 +937,8 @@
     gap: 0.55rem;
   }
 
-  .ra-public__sticky .ra-btn--block {
-    max-width: 720px;
+  .ra-public__sticky-inner {
+    max-width: 760px;
   }
 
   .ra-btn--cta {
@@ -893,67 +946,117 @@
   }
 }
 
-/* ——— Desktop ——— */
+/* ——— Desktop: cabecera full + escenario 2 columnas densas ——— */
 @media (min-width: 1024px) {
   .ra-public {
-    --ra-pad: 36px;
-    max-width: 1100px;
-    display: grid;
-    grid-template-columns: minmax(300px, 0.92fr) minmax(380px, 1.2fr);
-    column-gap: 2rem;
-    row-gap: 1rem;
-    align-items: start;
-    padding-top: 36px;
-    padding-bottom: calc(136px + env(safe-area-inset-bottom));
+    --ra-pad: 40px;
+    max-width: 1080px;
+    display: block;
+    padding-top: 40px;
+    padding-bottom: 48px;
   }
 
-  .ra-public__hero--match {
-    grid-column: 1;
-    grid-row: 1 / span 12;
+  .ra-public__hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "chips urgency"
+      "copy urgency";
+    column-gap: 1.25rem;
+    row-gap: 0.55rem;
+    align-items: end;
+    margin-bottom: 1.35rem;
+  }
+
+  .ra-public__hero-top {
+    grid-area: chips;
+    display: contents;
+  }
+
+  .ra-public__chip-row {
+    grid-area: chips;
+    align-self: end;
+  }
+
+  .ra-public__urgency,
+  .ra-public__hero-top > .ra-public__badge {
+    grid-area: urgency;
+    align-self: center;
+    justify-self: end;
+  }
+
+  .ra-public__hero-copy {
+    grid-area: copy;
+  }
+
+  .ra-public__title {
+    font-size: clamp(2.1rem, 2.6vw, 2.6rem);
+    max-width: 18ch;
+  }
+
+  .ra-public__stage {
+    display: grid;
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .ra-public__match-card {
     position: sticky;
     top: 1.25rem;
-    align-self: start;
-    margin-bottom: 0;
+    padding: 1.2rem 1.25rem;
+    gap: 1rem;
   }
 
-  .ra-public__section--roster,
-  .ra-duelo-board,
-  .ra-public__section,
-  .ra-actions--cancel {
-    grid-column: 2;
+  .ra-public__panel {
+    gap: 0.9rem;
   }
 
-  .ra-public__sheet,
-  .ra-public__full,
-  .ra-public__hint--ok,
-  .ra-public--skeleton > *,
-  .ra-public--error {
-    grid-column: 1 / -1;
+  .ra-public__section-head {
+    margin-top: 0;
   }
 
-  .ra-public__sheet {
-    max-width: 480px;
-    justify-self: center;
-    width: 100%;
+  .ra-public__players {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
   }
 
   .ra-public__slots {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr 1fr;
+    margin-top: 0.35rem;
   }
 
-  .ra-public__progress {
-    padding: 0.9rem 1rem;
+  .ra-public__sticky {
+    position: static;
+    display: grid;
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+    gap: 1.25rem;
+    margin-top: 1.1rem;
+    padding: 0;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
-  .ra-public__sticky .ra-btn--block {
-    max-width: 520px;
+  .ra-public__sticky-inner {
+    grid-column: 2;
+    max-width: none;
+  }
+
+  .ra-duelo-board {
+    margin: 0;
   }
 }
 
 @media (min-width: 1280px) {
   .ra-public {
-    max-width: 1180px;
-    column-gap: 2.5rem;
+    max-width: 1140px;
+  }
+
+  .ra-public__stage,
+  .ra-public__sticky {
+    grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+    gap: 1.5rem;
   }
 
   .ra-public__slots {
@@ -1311,7 +1414,7 @@
 @media (max-width: 480px) {
   .ra-public {
     padding-top: 8px;
-    padding-bottom: calc(118px + env(safe-area-inset-bottom));
+    padding-bottom: calc(168px + env(safe-area-inset-bottom));
   }
 
   .ra-public__hero {

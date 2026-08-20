@@ -522,7 +522,8 @@ GRANT EXECUTE ON FUNCTION public.join_tournament_open_registration(text, text, t
 
 CREATE OR REPLACE FUNCTION public.cancel_tournament_open_registration(
   p_slug text,
-  p_cancellation_token text
+  p_cancellation_token text DEFAULT NULL,
+  p_riviera_id text DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public, extensions AS $$
@@ -530,6 +531,8 @@ DECLARE
   v_cfg public.tournament_open_registration;
   v_hash text;
   v_entry public.tournament_open_registration_entries%ROWTYPE;
+  v_norm text;
+  v_token text := nullif(trim(coalesce(p_cancellation_token, '')), '');
 BEGIN
   SELECT * INTO v_cfg FROM public.tournament_open_registration
   WHERE public_slug = trim(coalesce(p_slug, '')) FOR UPDATE;
@@ -537,21 +540,35 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'not_found');
   END IF;
 
-  IF length(trim(coalesce(p_cancellation_token, ''))) < 16 THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
-  END IF;
+  IF v_token IS NOT NULL AND length(v_token) >= 16 THEN
+    v_hash := encode(extensions.digest(v_token, 'sha256'), 'hex');
 
-  v_hash := encode(extensions.digest(trim(p_cancellation_token), 'sha256'), 'hex');
+    SELECT * INTO v_entry
+    FROM public.tournament_open_registration_entries e
+    WHERE e.registration_id = v_cfg.id
+      AND e.cancellation_token_hash = v_hash
+      AND e.status IN ('confirmed', 'waitlist', 'pending_approval')
+    FOR UPDATE;
 
-  SELECT * INTO v_entry
-  FROM public.tournament_open_registration_entries e
-  WHERE e.registration_id = v_cfg.id
-    AND e.cancellation_token_hash = v_hash
-    AND e.status IN ('confirmed', 'waitlist', 'pending_approval')
-  FOR UPDATE;
+    IF NOT FOUND THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
+    END IF;
+  ELSE
+    v_norm := public._normalize_riviera_id_loose(p_riviera_id);
+    IF v_norm IS NULL THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'invalid_riviera_id');
+    END IF;
 
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
+    SELECT * INTO v_entry
+    FROM public.tournament_open_registration_entries e
+    WHERE e.registration_id = v_cfg.id
+      AND public._normalize_riviera_id_loose(e.riviera_id) = v_norm
+      AND e.status IN ('confirmed', 'waitlist', 'pending_approval')
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+      RETURN jsonb_build_object('ok', false, 'error', 'not_registered');
+    END IF;
   END IF;
 
   UPDATE public.tournament_open_registration_entries
@@ -575,7 +592,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.cancel_tournament_open_registration(text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cancel_tournament_open_registration(text, text, text) TO anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.list_tournament_open_registration_entries(p_tournament_id uuid)
 RETURNS jsonb

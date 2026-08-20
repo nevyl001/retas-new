@@ -643,13 +643,17 @@ export async function joinOpenRegistration(
 export async function cancelOpenRegistration(
   slug: string,
   cancellationToken: string,
-  entryId?: string
+  entryId?: string,
+  rivieraId?: string
 ): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  const token = cancellationToken.trim();
+  const riv = rivieraId?.trim() || "";
   const { data, error } = await supabase.rpc(
     "cancel_tournament_open_registration",
     {
       p_slug: slug.trim(),
-      p_cancellation_token: cancellationToken.trim(),
+      p_cancellation_token: token.length >= 16 ? token : null,
+      p_riviera_id: riv || null,
     }
   );
   if (error) return { ok: false, error: error.message };
@@ -659,9 +663,9 @@ export async function cancelOpenRegistration(
   }
   if (entryId) {
     removeCancellationToken(slug, entryId);
-  } else {
+  } else if (token.length >= 16) {
     const match = loadAllCancellationTokens(slug).find(
-      (e) => e.token === cancellationToken.trim()
+      (e) => e.token === token
     );
     if (match) removeCancellationToken(slug, match.entryId);
     else clearCancellationToken(slug);
@@ -946,6 +950,8 @@ export function mapJoinErrorMessage(error: string): string {
       return "El Riviera ID no tiene un formato válido (RIV-00000001).";
     case "already_registered":
       return "Ya estás inscrito en esta reta.";
+    case "not_registered":
+      return "Ese Riviera ID no está inscrito en esta convocatoria.";
     case "full":
       return "La reta está completa y no hay lista de espera.";
     case "registration_closed":
