@@ -477,18 +477,6 @@ function drawFooter(
       780,
       30,
       2,
-    ) + 34;
-
-  ctx.font = font(800, 23);
-  ctx.fillStyle = COLOR.text;
-  y =
-    drawWrapped(
-      ctx,
-      "Esto no termina aquí. Nos vemos en la próxima competencia.",
-      y,
-      790,
-      31,
-      2,
     ) + 42;
 
   const footerY = Math.min(Math.max(y, 1768), 1810);

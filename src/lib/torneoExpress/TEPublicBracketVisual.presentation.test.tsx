@@ -432,7 +432,17 @@ describe("TEPublicBracketVisual presentation", () => {
       screen.getAllByText(
         /Esto no termina aquí\. Nos vemos en la próxima competencia\./,
       ),
-    ).toHaveLength(3);
+    ).toHaveLength(1);
+    expect(
+      within(championsCard).queryByText(
+        /Esto no termina aquí\. Nos vemos en la próxima competencia\./,
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      within(runnersUpCard).queryByText(
+        /Esto no termina aquí\. Nos vemos en la próxima competencia\./,
+      ),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/^Campeones · Pareja A$/)).toBeInTheDocument();
     expect(screen.getByText(/^Subcampeones · Pareja B$/)).toBeInTheDocument();
     const finalArticle = screen.getByRole("article", { name: /^Final:/ });

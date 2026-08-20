@@ -142,9 +142,6 @@ export function TournamentPodiumShareCard({
           <p>
             Gracias por participar en el torneo y ser parte de esta competencia.
           </p>
-          <strong>
-            Esto no termina aquí. Nos vemos en la próxima competencia.
-          </strong>
         </div>
 
         <footer className="te-podium-share__social">
