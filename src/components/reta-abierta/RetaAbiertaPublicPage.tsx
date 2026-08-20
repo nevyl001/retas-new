@@ -1066,25 +1066,44 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               ID para confirmar.
             </p>
             <ul className="ra-public__players ra-cancel-list">
-              {cancelCandidates.map((c) => (
-                <li key={c.entryId}>
-                  <button
-                    type="button"
-                    className="ra-player-card ra-cancel-option"
-                    onClick={() => {
-                      setCancelTarget(c);
-                      setCancelRivieraInput("");
-                      setStep("cancel_confirm");
-                      setActionError(null);
-                    }}
-                  >
-                    <div className="ra-player-card__body">
-                      <strong>{resolveCancelLabel(c)}</strong>
-                      <span className="ra-cancel-option__cta">Soy yo</span>
-                    </div>
-                  </button>
-                </li>
-              ))}
+              {cancelCandidates.map((c) => {
+                const entry =
+                  [...confirmed, ...waitlist].find((e) => e.id === c.entryId) ||
+                  null;
+                const photoUrl = entry?.foto_url || null;
+                const showPhoto = Boolean(dto.display_photo && photoUrl);
+                const rivId = c.rivieraId || entry?.riviera_id || null;
+                const label = resolveCancelLabel(c);
+                return (
+                  <li key={c.entryId}>
+                    <button
+                      type="button"
+                      className="ra-player-card ra-player-card--filled ra-cancel-option"
+                      onClick={() => {
+                        setCancelTarget(c);
+                        setCancelRivieraInput("");
+                        setStep("cancel_confirm");
+                        setActionError(null);
+                      }}
+                    >
+                      <div className="ra-player-card__avatar" aria-hidden>
+                        {showPhoto ? (
+                          <img src={photoUrl!} alt="" />
+                        ) : (
+                          <span>{label.charAt(0)}</span>
+                        )}
+                      </div>
+                      <div className="ra-player-card__body">
+                        <strong className="ra-player-card__name">{label}</strong>
+                        {rivId ? (
+                          <span className="ra-player-card__sub">{rivId}</span>
+                        ) : null}
+                        <span className="ra-cancel-option__cta">Soy yo</span>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
             {humanError ? (
               <p className="ra-error" role="alert">

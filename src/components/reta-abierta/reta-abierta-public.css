@@ -1370,24 +1370,23 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
-  background: var(--ra-card);
-  border: 1px solid var(--ra-card-border);
   color: inherit;
 }
 
 .ra-cancel-option__cta {
   display: inline-block;
-  margin-top: 0.35rem;
+  margin-top: 0.15rem;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ro-accent, #e9e4dc);
+  color: var(--ra-cream-soft, #f4f1eb);
+  opacity: 0.85;
 }
 
 .ra-cancel-option:hover,
 .ra-cancel-option:focus-visible {
-  border-color: var(--ro-accent, #e9e4dc);
+  border-color: rgba(255, 255, 255, 0.28);
   outline: none;
 }
 
