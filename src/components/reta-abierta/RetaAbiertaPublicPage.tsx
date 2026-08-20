@@ -509,14 +509,6 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     (dto?.spots_left ?? 0) > 0 &&
     !isDueloMode;
 
-  const localTokens = useMemo(
-    () => loadAllCancellationTokens(slug),
-    // tokenVersion fuerza relectura tras join/cancel/store
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [slug, tokenVersion, step]
-  );
-  const hasLocalCancel = localTokens.length > 0 || Boolean(joinManageToken);
-
   // Realtime: si el lado elegido se llena mientras el usuario confirma, avisar al instante.
   useEffect(() => {
     if (!isDueloMode) return;
