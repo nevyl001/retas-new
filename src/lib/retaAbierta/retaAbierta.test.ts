@@ -161,6 +161,7 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("AMERICANO");
     expect(text).toContain("📍 Hack");
     expect(text).toContain("6 de 16 jugadores confirmados");
+    expect(text).toContain("✓ Arturo Cortes (0.73)");
     expect(text).not.toContain("○ ");
   });
 

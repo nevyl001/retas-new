@@ -248,6 +248,16 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     lines.push(
       `${dto.confirmed_count} de ${dto.capacity} jugadores confirmados`
     );
+    if (confirmed.length > 0) {
+      lines.push(
+        ...formatConfirmedRosterLines(
+          confirmed,
+          displayFullName,
+          Boolean(dto.display_rating),
+          1
+        )
+      );
+    }
   } else {
     // Huecos en lista ANTES del enlace/roster: visibles aunque WhatsApp truncque.
     if (openLines.length > 0) {
