@@ -102,6 +102,7 @@ describe("WhatsApp share message por modo", () => {
     expect(text).toContain("○ Disponible");
     expect(text.match(/○ Disponible/g)?.length).toBe(3);
     expect(text).toContain("https://app.example/jugar/ra-1");
+    expect(text).toContain("🎾 Juega en Riviera Open — sube tu ranking y rating.");
     expect(text).not.toContain("Riviera ID · todos los juegos cuentan.");
     expect(text).toContain("🗓️");
     expect(text).not.toContain("⚪");

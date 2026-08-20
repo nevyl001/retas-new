@@ -34,9 +34,9 @@ module.exports = function shareOg(req, res) {
   const origin = resolveOrigin(req);
   const playUrl = `${origin}/jugar/${encodeURIComponent(slug)}`;
   const canonical = `${origin}/s/${encodeURIComponent(slug)}`;
-  const title = "Convocatoria · Riviera Open";
+  const title = "Convocatoria · Juega en Riviera Open";
   const description =
-    "Hay lugares disponibles. Abre el enlace para ver cupo y unirte.";
+    "Todos los juegos cuentan. Sube tu ranking y rating — abre el enlace y únete.";
 
   const html = `<!DOCTYPE html>
 <html lang="es">

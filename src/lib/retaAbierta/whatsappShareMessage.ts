@@ -96,11 +96,11 @@ export function formatScheduledLabelCompact(
 }
 
 export const RIVIERA_WHATSAPP_MOTTO =
-  "🎾 Todos los juegos cuentan: suman a tu ranking.";
+  "🎾 Juega en Riviera Open — sube tu ranking y rating.";
 
 /** Pie corto: evita 2 líneas extras que empujan el CTA a «Leer más». */
 export const RIVIERA_WHATSAPP_FOOTER =
-  "Riviera ID · todos los juegos cuentan.";
+  "Riviera Open · todos los juegos cuentan.";
 
 function displayNameForShare(nombre: string, displayFullName: boolean): string {
   const t = nombre.trim();
@@ -247,6 +247,8 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   if (includeLugar && lugar) lugarParts.push(`📍 ${lugar}`);
   if (cancha) lugarParts.push(`🎾 ${cancha}`);
   if (lugarParts.length) lines.push(lugarParts.join(" · "));
+
+  lines.push(RIVIERA_WHATSAPP_MOTTO);
 
   if (dto.rama_label?.trim()) lines.push(dto.rama_label.trim());
 

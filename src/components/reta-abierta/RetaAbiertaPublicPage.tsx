@@ -884,26 +884,30 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
 
         <div className="ra-public__stage">
           <aside className="ra-public__match-card" aria-label="Datos del partido">
-            {(() => {
-              const { lugar, cancha } = resolveLugarYCancha({
-                locationLabel: dto.location_label,
-                canchaLabel: dto.cancha_label,
-                clubName: organizerName,
-              });
-              if (!lugar && !cancha) return null;
-              return (
-                <div className="ra-public__place">
-                  <span className="ra-public__place-label">Lugar</span>
-                  <p className="ra-public__place-value">
-                    {[lugar, cancha].filter(Boolean).join(" · ")}
-                  </p>
-                </div>
-              );
-            })()}
-            <p className="ra-public__meta ra-public__meta--horario">
-              <span className="ra-public__meta-kicker">Horario</span>
-              {formatWhen(dto)}
-            </p>
+            <div className="ra-public__facts">
+              {(() => {
+                const { lugar, cancha } = resolveLugarYCancha({
+                  locationLabel: dto.location_label,
+                  canchaLabel: dto.cancha_label,
+                  clubName: organizerName,
+                });
+                if (!lugar && !cancha) return null;
+                return (
+                  <div className="ra-public__fact">
+                    <span className="ra-public__fact-label">Lugar</span>
+                    <strong className="ra-public__fact-value">
+                      {[lugar, cancha].filter(Boolean).join(" · ")}
+                    </strong>
+                  </div>
+                );
+              })()}
+              <div className="ra-public__fact">
+                <span className="ra-public__fact-label">Horario</span>
+                <strong className="ra-public__fact-value">
+                  {formatWhen(dto)}
+                </strong>
+              </div>
+            </div>
             {dto.description?.trim() ? (
               <p className="ra-public__meta ra-public__meta--desc">
                 {dto.description.trim()}
