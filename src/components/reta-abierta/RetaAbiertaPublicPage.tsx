@@ -12,7 +12,6 @@ import { convocatoriaPublicModeLabel } from "../../lib/retaAbierta/modeWhitelist
 import { normalizeRivieraIdLoose } from "../../lib/retaAbierta/normalizeRivieraId";
 import {
   cancelOpenRegistration,
-  buildManageRegistrationPath,
   fetchOpenRegistrationPublic,
   joinOpenRegistration,
   loadAllCancellationTokens,
@@ -693,30 +692,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     }
   };
 
-  const onCopyManageLink = async () => {
-    setActionError(null);
-    setCopyFeedback(null);
-    const token =
-      joinManageToken ||
-      loadAllCancellationTokens(slug).slice(-1)[0]?.token ||
-      null;
-    if (!token) {
-      setActionError("No hay enlace de inscripción en este dispositivo.");
-      return;
-    }
-    const manageUrl = `${window.location.origin}${buildManageRegistrationPath(slug, token)}`;
-    const ok = await copyTextToClipboard(manageUrl);
-    if (ok) {
-      setCopyFeedback("Enlace copiado. Guárdalo para cancelar después.");
-    } else {
-      setActionError("No se pudo copiar. Copia el enlace manualmente desde la barra.");
-    }
-  };
-
   // Convocatoria lista para pegar en el grupo: reusa el mismo mensaje del
   // organizador (quién ya está dentro con ✓, lugares libres con ○, horario de
   // inicio y el enlace público) para que, tras inscribirse, el jugador la
-  // comparta y se apunten los demás. No es el enlace privado de cancelación.
+  // comparta y se apunten los demás.
   const onCopyGroupMessage = async () => {
     if (!dto) return;
     setActionError(null);
@@ -1345,9 +1324,6 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 Lado: <strong>{sideHint}</strong>
               </p>
             ) : null}
-            <p className="ra-public__hint">
-              Guarda este enlace para administrar o cancelar tu asistencia.
-            </p>
             {humanError ? (
               <p className="ra-error" role="alert">
                 {humanError}
@@ -1357,46 +1333,13 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               <p className="ra-public__hint ra-public__hint--ok">{copyFeedback}</p>
             ) : null}
             <div className="ra-actions">
-              {joinStatus === "confirmed" && (
-                <button
-                  type="button"
-                  className="ra-btn ra-btn--primary"
-                  onClick={() => void onCopyGroupMessage()}
-                  disabled={busy}
-                >
-                  Copiar convocatoria para el grupo
-                </button>
-              )}
-              {(joinManageToken || hasLocalCancel) && (
-                <button
-                  type="button"
-                  className="ra-btn ra-btn--ghost"
-                  onClick={() => void onCopyManageLink()}
-                  disabled={busy}
-                >
-                  Copiar enlace de mi inscripción
-                </button>
-              )}
-              {(joinManageToken || hasLocalCancel) && (
-                <button
-                  type="button"
-                  className="ra-btn ra-btn--ghost"
-                  onClick={beginCancelFlow}
-                  disabled={busy}
-                >
-                  Cancelar asistencia
-                </button>
-              )}
               <button
                 type="button"
-                className="ra-btn ra-btn--ghost"
-                onClick={() => {
-                  setCopyFeedback(null);
-                  setActionError(null);
-                  setStep("overview");
-                }}
+                className="ra-btn ra-btn--primary"
+                onClick={() => void onCopyGroupMessage()}
+                disabled={busy}
               >
-                Ver convocatoria
+                Copiar convocatoria para el grupo
               </button>
             </div>
           </section>
