@@ -769,11 +769,13 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
       if (!res.ok) {
         setActionError(
           res.error === "invalid_token"
-            ? "El enlace de cancelación no es válido."
+            ? "No pudimos validar la cancelación. Revisa tu Riviera ID e inténtalo de nuevo."
             : res.error === "not_registered"
               ? "Ese Riviera ID no está inscrito en esta convocatoria."
-              : toHumanActionError(mapJoinErrorMessage(res.error)) ||
-                "No pudimos cancelar tu lugar, intenta de nuevo."
+              : res.error === "invalid_riviera_id"
+                ? "El Riviera ID no tiene un formato válido."
+                : toHumanActionError(mapJoinErrorMessage(res.error)) ||
+                  "No pudimos cancelar tu lugar, intenta de nuevo."
         );
         return;
       }

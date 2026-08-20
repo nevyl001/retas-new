@@ -648,11 +648,15 @@ export async function cancelOpenRegistration(
 ): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
   const token = cancellationToken.trim();
   const riv = rivieraId?.trim() || "";
+  // Si el usuario ya confirmó su Riviera ID, cancelar por ID (no por token
+  // local, que puede estar vencido o ser de otra inscripción).
+  const preferRiviera = Boolean(riv);
   const { data, error } = await supabase.rpc(
     "cancel_tournament_open_registration",
     {
       p_slug: slug.trim(),
-      p_cancellation_token: token.length >= 16 ? token : null,
+      p_cancellation_token:
+        !preferRiviera && token.length >= 16 ? token : null,
       p_riviera_id: riv || null,
     }
   );

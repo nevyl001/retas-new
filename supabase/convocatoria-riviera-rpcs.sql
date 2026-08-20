@@ -540,7 +540,8 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'not_found');
   END IF;
 
-  IF v_token IS NOT NULL AND length(v_token) >= 16 THEN
+  IF v_token IS NOT NULL AND length(v_token) >= 16
+     AND nullif(trim(coalesce(p_riviera_id, '')), '') IS NULL THEN
     v_hash := encode(extensions.digest(v_token, 'sha256'), 'hex');
 
     SELECT * INTO v_entry
