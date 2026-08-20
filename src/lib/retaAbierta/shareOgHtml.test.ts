@@ -98,11 +98,12 @@ describe("share-reta-og HTML + URL", () => {
     process.env.REACT_APP_SHARE_OG_BASE_URL = prev;
   });
 
-  it("sin REACT_APP_SHARE_OG_BASE_URL: fallback /jugar (no /share/public)", () => {
+  it("sin REACT_APP_SHARE_OG_BASE_URL: fallback /s/:slug (preview compacta)", () => {
     const prev = process.env.REACT_APP_SHARE_OG_BASE_URL;
     delete process.env.REACT_APP_SHARE_OG_BASE_URL;
     const url = buildShareRetaOgUrl("ra-c09d3480e5");
-    expect(url).toContain("/jugar/ra-c09d3480e5");
+    expect(url).toContain("/s/ra-c09d3480e5");
+    expect(url).not.toMatch(/\/jugar\//);
     expect(url).not.toMatch(/\/share\/public/);
     expect(url).not.toMatch(/\/share\/reta/);
     process.env.REACT_APP_SHARE_OG_BASE_URL = prev;

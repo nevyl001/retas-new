@@ -5,10 +5,10 @@
  *   ${BASE}?slug=<public_slug>
  *   ${BASE}?dest=<pathname>
  *
- * SIN esa variable (producción aún sin Edge cableada):
- *   fallback = URL SPA real (/jugar/:slug o el dest).
- *   Así la invitación abre la convocatoria; WhatsApp verá OG madre
- *   hasta desplegar la función + env + og.png.
+ * SIN esa variable:
+ *   convocatoria → /s/:slug (API Vercel sin og:image; evita el banner
+ *   negro del icono 512 que WhatsApp inventa al scrapear /jugar).
+ *   otros destinos → URL SPA real.
  *
  * NUNCA usar /share/public ni /share/reta como fallback: la SPA no
  * sirve meta OG y rompe el destino al abrir el enlace.
@@ -45,6 +45,13 @@ export function normalizePublicDestPath(urlOrPath: string): string {
   return path.split("#")[0] || "/";
 }
 
+/** Preview compacta en Vercel (sin imagen) para convocatorias. */
+export function buildCompactConvocatoriaSharePath(slug: string): string {
+  const s = slug.trim();
+  if (!s) return "";
+  return `/s/${encodeURIComponent(s)}`;
+}
+
 export function buildSharePublicOgUrl(target: SharePublicOgTarget): string {
   const envBase = configuredShareOgBase();
 
@@ -55,7 +62,7 @@ export function buildSharePublicOgUrl(target: SharePublicOgTarget): string {
       return `${envBase}?slug=${encodeURIComponent(s)}`;
     }
     const o = appOrigin();
-    const path = `/jugar/${encodeURIComponent(s)}`;
+    const path = buildCompactConvocatoriaSharePath(s);
     return o ? `${o}${path}` : path;
   }
 
@@ -68,19 +75,19 @@ export function buildSharePublicOgUrl(target: SharePublicOgTarget): string {
   return o ? `${o}${dest}` : dest;
 }
 
-/** Compat convocatoria: slug → OG (o /jugar si no hay Edge). */
+/** Compat convocatoria: slug → OG compacto (Edge o /s/:slug). */
 export function buildShareRetaOgUrl(slug: string): string {
   return buildSharePublicOgUrl({ kind: "slug", slug });
 }
 
 /**
  * A partir de la URL SPA, genera la URL a copiar para WhatsApp.
- * Con Edge configurada → share-reta-og; si no → la propia SPA.
+ * Con Edge configurada → share-reta-og; si no → /s/:slug (compacto).
  */
 export function buildSharePublicOgUrlFromPlayUrl(playUrl: string): string {
   const dest = normalizePublicDestPath(playUrl);
   if (!dest) return "";
-  const jugar = dest.match(/^\/(?:jugar|reta-abierta)\/([^/?#]+)/i);
+  const jugar = dest.match(/^\/(?:jugar|reta-abierta|s)\/([^/?#]+)/i);
   if (jugar?.[1]) {
     return buildSharePublicOgUrl({
       kind: "slug",

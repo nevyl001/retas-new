@@ -13,7 +13,6 @@ import { normalizeRivieraIdLoose } from "../../lib/retaAbierta/normalizeRivieraI
 import {
   cancelOpenRegistration,
   buildManageRegistrationPath,
-  buildRetaAbiertaPublicUrl,
   fetchOpenRegistrationPublic,
   joinOpenRegistration,
   loadAllCancellationTokens,
@@ -23,6 +22,7 @@ import {
   storeCancellationToken,
   type StoredCancellationEntry,
 } from "../../lib/retaAbierta/retaAbiertaService";
+import { buildShareRetaOgUrl } from "../../lib/retaAbierta/shareOgUrl";
 import {
   clearPreferredSide,
   loadPreferredSides,
@@ -658,7 +658,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
     setCopyFeedback(null);
     const message = buildRetaAbiertaWhatsAppMessage({
       dto,
-      publicUrl: buildRetaAbiertaPublicUrl(slug),
+      publicUrl: buildShareRetaOgUrl(slug),
       clubName: organizerName?.trim() || "",
     });
     const ok = await copyTextToClipboard(message);
