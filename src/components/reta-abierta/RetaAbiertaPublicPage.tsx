@@ -312,6 +312,41 @@ function CupoChip({
   );
 }
 
+function CupoProgress({
+  confirmed,
+  capacity,
+}: {
+  confirmed: number;
+  capacity: number;
+}) {
+  const safeCap = Math.max(capacity, 1);
+  const pct = Math.min(100, Math.round((confirmed / safeCap) * 100));
+  return (
+    <div
+      className="ra-public__progress"
+      role="meter"
+      aria-valuemin={0}
+      aria-valuemax={safeCap}
+      aria-valuenow={confirmed}
+      aria-label={`Jugadores confirmados: ${confirmed} de ${capacity}`}
+    >
+      <div className="ra-public__progress-head">
+        <span>Jugadores confirmados</span>
+        <strong>
+          {confirmed} de {capacity}
+          <span className="ra-public__progress-pct"> · {pct}%</span>
+        </strong>
+      </div>
+      <div className="ra-public__progress-track">
+        <span
+          className="ra-public__progress-fill"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function FlatPlayerCard({
   entry,
   displayPhoto,
@@ -326,9 +361,8 @@ function FlatPlayerCard({
     displayRating && entry.rating != null
       ? Number(entry.rating).toFixed(2)
       : null;
-  const subParts = [entry.riviera_id, ratingPart, cat].filter(Boolean);
   return (
-    <li className="ra-player-card ra-player-card--filled">
+    <li className="ra-player-card ra-player-card--filled ra-player-card--pro">
       <div className="ra-player-card__avatar" aria-hidden>
         {displayPhoto && entry.foto_url ? (
           <img src={entry.foto_url} alt="" />
@@ -337,8 +371,18 @@ function FlatPlayerCard({
         )}
       </div>
       <div className="ra-player-card__body">
-        <strong className="ra-player-card__name">{entry.nombre}</strong>
-        <span className="ra-player-card__sub">{subParts.join(" · ")}</span>
+        <strong className="ra-player-card__name" title={entry.nombre}>
+          {entry.nombre}
+        </strong>
+        <div className="ra-player-card__meta">
+          {ratingPart ? (
+            <span className="ra-player-card__pill">{ratingPart}</span>
+          ) : null}
+          {cat ? <span className="ra-player-card__pill ra-player-card__pill--muted">{cat}</span> : null}
+        </div>
+        <span className="ra-player-card__id" title={entry.riviera_id}>
+          {entry.riviera_id}
+        </span>
       </div>
     </li>
   );
@@ -793,36 +837,45 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
         </div>
       ) : (
       <div className="ra-public">
-        <header className="ra-public__hero">
-          <p className="ra-public__eyebrow">{modeLabel(dto)}</p>
-          <h1 className="ra-public__title">{dto.name}</h1>
-          <div className="ra-public__hero-row">
-            <span
-              className={`ra-public__badge ra-public__badge--${dto.status}${
-                dto.status === "open" && dto.spots_left > 0
-                  ? " ra-public__badge--spots"
-                  : ""
-              }`}
-            >
-              {dto.status === "open" && dto.spots_left > 0
-                ? `Abierta · ${dto.spots_left} ${
-                    dto.spots_left === 1 ? "lugar" : "lugares"
-                  }`
-                : statusLabel(dto.status)}
-            </span>
-            {dto.spots_left === 1 && dto.status === "open" ? (
-              <span className="ra-public__last">Último lugar</span>
-            ) : null}
-            {dto.spots_left === 0 && dto.status === "open" ? (
-              <span className="ra-public__full-inline">Completo</span>
-            ) : null}
+        <header className="ra-public__hero ra-public__hero--match">
+          <div className="ra-public__hero-top">
+            <div className="ra-public__chip-row" aria-label="Tipo y nivel">
+              <span className="ra-public__chip">{modeLabel(dto)}</span>
+              {dto.category_label ? (
+                <span className="ra-public__chip ra-public__chip--soft">
+                  {formatPublicCategoriaLabel(dto.category_label) ||
+                    dto.category_label}
+                </span>
+              ) : null}
+            </div>
+            {dto.status === "open" && dto.spots_left > 0 ? (
+              <span
+                className={`ra-public__urgency${
+                  dto.spots_left <= 2 ? " ra-public__urgency--hot" : ""
+                }`}
+              >
+                {dto.spots_left === 1
+                  ? "¡Último lugar!"
+                  : `¡Quedan ${dto.spots_left} lugares!`}
+              </span>
+            ) : (
+              <span
+                className={`ra-public__badge ra-public__badge--${dto.status}`}
+              >
+                {statusLabel(dto.status)}
+              </span>
+            )}
           </div>
-          <div className="ra-public__meta-stack">
-            {organizerName?.trim() ? (
-              <p className="ra-public__meta ra-public__meta--club">
-                {organizerName.trim()}
-              </p>
-            ) : null}
+
+          <h1 className="ra-public__title">{dto.name}</h1>
+
+          {organizerName?.trim() ? (
+            <p className="ra-public__meta ra-public__meta--club">
+              {organizerName.trim()}
+            </p>
+          ) : null}
+
+          <div className="ra-public__match-card">
             {(() => {
               const { lugar, cancha } = resolveLugarYCancha({
                 locationLabel: dto.location_label,
@@ -840,12 +893,12 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
               );
             })()}
             <p className="ra-public__meta ra-public__meta--horario">
+              <span className="ra-public__meta-kicker">Horario</span>
               {formatWhen(dto)}
             </p>
-            {dto.category_label ? (
-              <p className="ra-public__meta ra-public__meta--categoria">
-                {formatPublicCategoriaLabel(dto.category_label) ||
-                  dto.category_label}
+            {dto.description?.trim() ? (
+              <p className="ra-public__meta ra-public__meta--desc">
+                {dto.description.trim()}
               </p>
             ) : null}
           </div>
@@ -910,6 +963,10 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 className="ra-public__section ra-public__section--roster"
                 aria-label="Confirmados"
               >
+                <CupoProgress
+                  confirmed={dto.confirmed_count}
+                  capacity={dto.capacity}
+                />
                 <div className="ra-public__section-head">
                   <h2>Confirmados</h2>
                   <CupoChip
@@ -927,28 +984,27 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                       displayRating={dto.display_rating}
                     />
                   ))}
-                  {Array.from({ length: Math.max(dto.spots_left, 0) }).map(
-                    (_, i) => (
-                      <li
-                        key={`open-${i}`}
-                        className="ra-player-card ra-player-card--open ra-player-card--invite"
-                      >
-                        <div
-                          className="ra-player-card__avatar ra-player-card__avatar--invite"
-                          aria-hidden
-                        >
-                          <span>+</span>
-                        </div>
-                        <div className="ra-player-card__body">
-                          <strong>Lugar disponible</strong>
-                          <span className="ra-player-card__sub">
-                            Únete con tu Riviera ID
-                          </span>
-                        </div>
-                      </li>
-                    )
-                  )}
                 </ul>
+                {dto.spots_left > 0 ? (
+                  <ul
+                    className="ra-public__slots"
+                    aria-label="Lugares disponibles"
+                  >
+                    {Array.from({ length: Math.max(dto.spots_left, 0) }).map(
+                      (_, i) => (
+                        <li key={`open-${i}`} className="ra-public__slot">
+                          <span className="ra-public__slot-plus" aria-hidden>
+                            +
+                          </span>
+                          <span className="ra-public__slot-body">
+                            <strong>Lugar disponible</strong>
+                            <span>¡Únete al partido!</span>
+                          </span>
+                        </li>
+                      )
+                    )}
+                  </ul>
+                ) : null}
               </section>
             )}
 
@@ -963,9 +1019,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                     >
                       <div className="ra-player-card__body">
                         <strong className="ra-player-card__name">{e.nombre}</strong>
-                        <span className="ra-player-card__sub">
-                          {e.riviera_id}
-                        </span>
+                        <span className="ra-player-card__id">{e.riviera_id}</span>
                       </div>
                     </li>
                   ))}
@@ -984,7 +1038,7 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                 ) : null}
                 <button
                   type="button"
-                  className="ra-btn ra-btn--ghost ra-btn--quiet"
+                  className="ra-link-quiet"
                   onClick={beginCancelFlow}
                   disabled={busy || Boolean(joiningSide)}
                 >
@@ -1325,10 +1379,15 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
           <div className="ra-public__sticky">
             <button
               type="button"
-              className="ra-btn ra-btn--primary ra-btn--block"
+              className="ra-btn ra-btn--primary ra-btn--block ra-btn--cta"
               onClick={() => beginJoinForSide(null)}
             >
-              Quiero jugar
+              <span className="ra-btn__cta-main">Quiero jugar</span>
+              <span className="ra-btn__cta-sub">
+                {dto.spots_left === 1
+                  ? "Último lugar disponible"
+                  : `Quedan ${dto.spots_left} lugares`}
+              </span>
             </button>
           </div>
         ) : null}
