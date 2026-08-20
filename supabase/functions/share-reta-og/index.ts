@@ -43,10 +43,10 @@ function shouldExpose(enabled: unknown, status: unknown): boolean {
   return true;
 }
 
+/** Preview compacta: sin og:image (evita el banner negro grande de Riviera). */
 function htmlPage(opts: {
   title: string;
   description: string;
-  image: string;
   playUrl: string;
   canonical: string;
 }): string {
@@ -58,12 +58,10 @@ function htmlPage(opts: {
   <meta property="og:type" content="website" />
   <meta property="og:title" content="${escapeHtml(opts.title)}" />
   <meta property="og:description" content="${escapeHtml(opts.description)}" />
-  <meta property="og:image" content="${escapeHtml(opts.image)}" />
   <meta property="og:url" content="${escapeHtml(opts.canonical)}" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${escapeHtml(opts.title)}" />
   <meta name="twitter:description" content="${escapeHtml(opts.description)}" />
-  <meta name="twitter:image" content="${escapeHtml(opts.image)}" />
   <link rel="canonical" href="${escapeHtml(opts.canonical)}" />
   <meta http-equiv="refresh" content="8;url=${escapeHtml(opts.playUrl)}" />
 </head>
@@ -344,7 +342,6 @@ serve(async (req) => {
     htmlPage({
       title: branded.title,
       description: branded.description,
-      image: branded.image,
       playUrl,
       canonical,
     }),

@@ -21,7 +21,7 @@ describe("share-reta-og HTML + URL", () => {
     appOrigin: "https://appriviera.rivieraopen.com",
   };
 
-  it("25. HTML premium contiene metadatos del club", () => {
+  it("25. HTML premium contiene metadatos del club sin imagen grande", () => {
     const html = buildShareRetaOgHtml({
       ...basePayload,
       brand: {
@@ -32,20 +32,21 @@ describe("share-reta-og HTML + URL", () => {
     });
     expect(html).toMatch(/og:title/);
     expect(html).toMatch(/Club Demo/);
-    expect(html).toMatch(/og:image/);
-    expect(html).toMatch(/branding\/club-demo\/og\.png/);
-    expect(html).toMatch(/twitter:card/);
+    expect(html).not.toMatch(/og:image/);
+    expect(html).not.toMatch(/twitter:image/);
+    expect(html).toMatch(/twitter:card" content="summary"/);
     expect(html).toMatch(/http-equiv="refresh" content="8;/);
     expect(html).toMatch(/Abrir convocatoria/);
   });
 
-  it("26. HTML básico contiene metadatos Riviera", () => {
+  it("26. HTML básico contiene metadatos Riviera sin banner", () => {
     const html = buildShareRetaOgHtml({
       ...basePayload,
       title: RIVIERA_OG_TITLE,
       brand: { premiumBrandingEnabled: false, brandingKey: null },
     });
-    expect(html).toContain(RIVIERA_OG_IMAGE);
+    expect(html).not.toContain(RIVIERA_OG_IMAGE);
+    expect(html).not.toMatch(/og:image/);
     expect(html).toMatch(/RivieraApp/);
     expect(html).not.toMatch(/branding\//);
   });
@@ -60,7 +61,7 @@ describe("share-reta-og HTML + URL", () => {
     expect(shouldExposeShareOg({ enabled: true, status: "open" })).toBe(true);
   });
 
-  it("29. og:image es URL absoluta", () => {
+  it("29. resolveShareOgImage sigue resolviendo URL absoluta (legacy)", () => {
     const img = resolveShareOgImage({
       brand: { premiumBrandingEnabled: false, brandingKey: null },
       appOrigin: "https://appriviera.rivieraopen.com",
@@ -70,8 +71,7 @@ describe("share-reta-og HTML + URL", () => {
       ...basePayload,
       brand: { premiumBrandingEnabled: false, brandingKey: null },
     });
-    const m = html.match(/property="og:image" content="([^"]+)"/);
-    expect(m?.[1]).toMatch(/^https:\/\//);
+    expect(html).not.toMatch(/property="og:image"/);
   });
 
   it("premium sin imagen club → path absoluto (fallback Riviera si falta key)", () => {

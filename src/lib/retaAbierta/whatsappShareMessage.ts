@@ -122,8 +122,19 @@ function resolveHeadline(
 function formatOpenSlotLines(openSlots: number): string[] {
   if (openSlots <= 0) return [];
   // Pocos huecos → lista clásica; muchos → 1 línea (evita inflar el mensaje).
-  if (openSlots > 4) return [`○ ${openSlots} disponibles`];
+  if (openSlots > 4) return [`○ ${openSlots} lugares disponibles`];
   return Array.from({ length: openSlots }, () => "○ Disponible");
+}
+
+function formatCupoSummaryLine(
+  confirmedCount: number,
+  capacity: number,
+  openSlots: number
+): string {
+  if (openSlots <= 0 && capacity > 0) {
+    return `Completo · ${confirmedCount} de ${capacity} confirmados`;
+  }
+  return `${confirmedCount} de ${capacity} confirmados · ${openSlots} lugares disponibles`;
 }
 
 /** Roster: un jugador por línea (lista clásica de convocatoria). */
@@ -196,7 +207,11 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   const mode = dto.mode_type || "reta";
   const headline = resolveHeadline(mode, opts.productHeadline);
   const confirmed = dto.entries.filter((e) => e.status === "confirmed");
-  const openSlots = Math.max(dto.capacity - confirmed.length, 0);
+  const confirmedCount = Math.max(
+    confirmed.length,
+    Number(dto.confirmed_count) || 0
+  );
+  const openSlots = Math.max(dto.capacity - confirmedCount, 0);
   const openLines = formatOpenSlotLines(openSlots);
   const { lugar, cancha } = resolveLugarYCancha({
     locationLabel: dto.location_label,
@@ -245,9 +260,7 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
 
   if (mode === "americano") {
     lines.push(publicUrl);
-    lines.push(
-      `${dto.confirmed_count} de ${dto.capacity} jugadores confirmados`
-    );
+    lines.push(formatCupoSummaryLine(confirmedCount, dto.capacity, openSlots));
     if (confirmed.length > 0) {
       lines.push(
         ...formatConfirmedRosterLines(

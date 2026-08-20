@@ -134,7 +134,8 @@ describe("WhatsApp OG URLs for all public dests", () => {
       appOrigin: "https://appriviera.rivieraopen.com",
       brand: { premiumBrandingEnabled: false, brandingKey: null },
     });
-    expect(basic).toContain(RIVIERA_OG_IMAGE);
+    expect(basic).not.toContain(RIVIERA_OG_IMAGE);
+    expect(basic).not.toMatch(/og:image/);
     const premium = buildShareRetaOgHtml({
       slug: "s",
       title: "Reta",
@@ -149,7 +150,8 @@ describe("WhatsApp OG URLs for all public dests", () => {
       },
     });
     expect(premium).toMatch(/Club Z/);
-    expect(premium).toMatch(/branding\/club-z\/og\.png/);
+    expect(premium).not.toMatch(/og:image/);
+    expect(premium).not.toMatch(/branding\/club-z\/og\.png/);
     expect(shouldExposeShareOg({ enabled: true, status: "open" })).toBe(true);
   });
 });

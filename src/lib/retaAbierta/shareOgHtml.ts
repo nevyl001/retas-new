@@ -73,21 +73,17 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * HTML OG de convocatoria: sin imagen grande.
+ * WhatsApp muestra título + descripción compactos; el mensaje de texto
+ * (cupo, nombres, huecos) es lo que debe motivar a unirse.
+ */
 export function buildShareRetaOgHtml(payload: ShareOgPayload): string {
-  const image = resolveShareOgImage({
-    brand: payload.brand,
-    appOrigin: payload.appOrigin,
-    clubImageAbsoluteUrl: payload.clubImageAbsoluteUrl,
-  });
   const title = resolveShareOgTitle({
     eventTitle: payload.title,
     brand: payload.brand,
   });
   const description = payload.description || RIVIERA_OG_DESCRIPTION;
-
-  if (!image.startsWith("http://") && !image.startsWith("https://")) {
-    throw new Error("og:image must be absolute URL");
-  }
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -97,12 +93,10 @@ export function buildShareRetaOgHtml(payload: ShareOgPayload): string {
   <meta property="og:type" content="website" />
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
-  <meta property="og:image" content="${escapeHtml(image)}" />
   <meta property="og:url" content="${escapeHtml(payload.canonicalUrl)}" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${escapeHtml(title)}" />
   <meta name="twitter:description" content="${escapeHtml(description)}" />
-  <meta name="twitter:image" content="${escapeHtml(image)}" />
   <link rel="canonical" href="${escapeHtml(payload.canonicalUrl)}" />
   <meta http-equiv="refresh" content="8;url=${escapeHtml(payload.playUrl)}" />
 </head>

@@ -160,9 +160,9 @@ describe("WhatsApp share message por modo", () => {
     });
     expect(text).toContain("AMERICANO");
     expect(text).toContain("📍 Hack");
-    expect(text).toContain("6 de 16 jugadores confirmados");
+    expect(text).toContain("6 de 16 confirmados · 10 lugares disponibles");
     expect(text).toContain("✓ Arturo Cortes (0.73)");
-    expect(text).toContain("○ 15 disponibles");
+    expect(text).toContain("○ 10 lugares disponibles");
   });
 
   it("Americano: lista huecos uno por uno cuando quedan pocos", () => {
@@ -221,7 +221,7 @@ describe("WhatsApp share message por modo", () => {
       publicUrl: "https://app.example/jugar/ra-am",
       clubName: "Hack Pádel",
     });
-    expect(text).toContain("4 de 8 jugadores confirmados");
+    expect(text).toContain("4 de 8 confirmados · 4 lugares disponibles");
     expect(text.match(/○ Disponible/g)?.length).toBe(4);
     expect(text.indexOf("✓ Nevyl (3.28)")).toBeLessThan(
       text.indexOf("○ Disponible")
@@ -239,8 +239,8 @@ describe("WhatsApp share message por modo", () => {
         category_label: "5ta Fuerza",
         rama_label: null,
         capacity: 4,
-        confirmed_count: 3,
-        spots_left: 1,
+        confirmed_count: 1,
+        spots_left: 3,
         display_rating: false,
         entries: baseEntries,
       },
