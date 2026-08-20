@@ -27,6 +27,8 @@ export function buildTournamentConvocatoriaContext(opts: {
   includeCosto?: boolean;
   premio?: string | null;
   includePremio?: boolean;
+  /** Breve descripción desde Detalles de la reta. */
+  description?: string | null;
   /** Inicio del encuentro (ISO). */
   scheduledAt?: string | null;
   /** Fin del encuentro (ISO). */
@@ -69,6 +71,7 @@ export function buildTournamentConvocatoriaContext(opts: {
     includeCosto,
     defaultPremio: opts.premio?.trim() || undefined,
     includePremio,
+    defaultDescription: opts.description?.trim() || undefined,
     defaultCancha: opts.canchaLabel?.trim() || undefined,
     defaultCategory: opts.categoryLabel?.trim() || undefined,
     defaultDurationMinutes: duration,

@@ -152,6 +152,8 @@ export interface ConvocatoriaAdapterContext {
   defaultPremio?: string;
   /** Si true, incluir premio en WhatsApp. Default false. */
   includePremio?: boolean;
+  /** Breve descripción de la reta (Detalles). Si hay texto, va en WhatsApp. */
+  defaultDescription?: string;
   /** Número o etiqueta de cancha (separado del lugar). */
   defaultCancha?: string;
   defaultCategory?: string;

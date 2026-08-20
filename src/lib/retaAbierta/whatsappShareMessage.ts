@@ -180,7 +180,10 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
     | "display_rating"
     | "mode_type"
     | "spots_left"
-  >;
+  > & {
+    /** Breve descripción de la reta (Detalles). Opcional. */
+    description?: string | null;
+  };
   publicUrl: string;
   clubName: string;
   canchaLabel?: string | null;
@@ -257,6 +260,9 @@ export function buildRetaAbiertaWhatsAppMessage(opts: {
   if (includeCosto && costo) detailParts.push(`💵 ${costo}`);
   if (includePremio && premio) detailParts.push(`🏆 ${premio}`);
   if (detailParts.length) lines.push(detailParts.join(" · "));
+
+  const descLine = dto.description?.trim();
+  if (descLine) lines.push(descLine);
 
   if (mode === "americano") {
     lines.push(publicUrl);

@@ -19,6 +19,7 @@ export function buildShareDtoFromOrganizerState(
   cancha_label: string | null;
   category_label: string | null;
   rama_label: string | null;
+  description: string | null;
   capacity: number;
   confirmed_count: number;
   entries: OpenRegistrationPublicEntry[];
@@ -54,6 +55,7 @@ export function buildShareDtoFromOrganizerState(
     // Detalles.nivel (fuerza) manda sobre cache stale de open_registration.
     category_label: context.defaultCategory ?? cfg.category_label ?? null,
     rama_label: cfg.rama_label,
+    description: context.defaultDescription?.trim() || null,
     capacity,
     confirmed_count: confirmed.length,
     entries: confirmed.map((e) => ({

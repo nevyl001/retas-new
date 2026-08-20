@@ -228,6 +228,38 @@ describe("WhatsApp share message por modo", () => {
     );
   });
 
+  it("incluye la descripción breve de la reta cuando existe", () => {
+    const text = buildRetaAbiertaWhatsAppMessage({
+      dto: {
+        name: "Americano jueves",
+        mode_type: "americano",
+        scheduled_at: "2026-07-18T10:00:00.000Z",
+        duration_minutes: null,
+        location_label: "Hack",
+        category_label: "5ta Fuerza",
+        rama_label: null,
+        capacity: 8,
+        confirmed_count: 0,
+        spots_left: 8,
+        display_rating: false,
+        entries: [],
+        description:
+          "5 rondas de 20 min, parejas rotativas. Gana quien más puntos sume 🔥",
+      },
+      publicUrl: "https://app.example/s/ra-desc",
+      clubName: "Hack Pádel",
+    });
+    expect(text).toContain(
+      "5 rondas de 20 min, parejas rotativas. Gana quien más puntos sume 🔥"
+    );
+    expect(text.indexOf("Nivel 5ta Fuerza")).toBeLessThan(
+      text.indexOf("5 rondas de 20 min")
+    );
+    expect(text.indexOf("5 rondas de 20 min")).toBeLessThan(
+      text.indexOf("https://app.example/s/ra-desc")
+    );
+  });
+
   it("Duelo: compacto Riviera con lugar, cancha y Disponibles", () => {
     const text = buildRetaAbiertaWhatsAppMessage({
       dto: {
