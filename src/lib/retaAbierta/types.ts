@@ -56,6 +56,11 @@ export interface OpenRegistrationPublicDto {
   /** Cancha del encuentro (entidad). Separada de location_label. */
   cancha_label?: string | null;
   /**
+   * Costo/inscripción público. Solo viene cuando el organizador activó
+   * mostrar_costo y hay texto; si no, null/ausente.
+   */
+  costo?: string | null;
+  /**
    * Formato de producto cuando mode_type es `reta` (round_robin | teams).
    * Remontada Final = round_robin + championship_enabled.
    */

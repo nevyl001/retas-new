@@ -899,6 +899,14 @@ export const RetaAbiertaPublicPage: React.FC<{ slug: string }> = ({ slug }) => {
                   {formatWhen(dto)}
                 </strong>
               </div>
+              {dto.costo?.trim() ? (
+                <div className="ra-public__fact">
+                  <span className="ra-public__fact-label">Precio</span>
+                  <strong className="ra-public__fact-value">
+                    {dto.costo.trim()}
+                  </strong>
+                </div>
+              ) : null}
             </div>
             {dto.description?.trim() ? (
               <p className="ra-public__meta ra-public__meta--desc">
