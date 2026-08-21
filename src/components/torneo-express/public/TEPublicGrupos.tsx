@@ -382,49 +382,52 @@ function GrupoStandings({
         <p className="te-grupos-empty">Sin datos de clasificación.</p>
       ) : (
         <ol className="te-grupo-standings__list">
-          {rows.map((row, index) => {
-            const clasifica = index < clasifican;
-            return (
-              <li
-                key={`${row.grupoId}-${row.parejaId}`}
-                className={`te-standing-row${
-                  index === 0 ? " te-standing-row--leader" : ""
-                }${clasifica ? " te-standing-row--qualifies" : ""}`}
-              >
-                <span className="te-standing-row__position">{index + 1}</span>
-                <div className="te-standing-row__content">
-                  <div className="te-standing-row__primary">
-                    <span className="te-standing-row__name">
-                      {row.parejaLabel}
+          {(() => {
+            const grupoIniciado = rows.some((r) => r.pj > 0);
+            return rows.map((row, index) => {
+              const clasifica = grupoIniciado && index < clasifican;
+              return (
+                <li
+                  key={`${row.grupoId}-${row.parejaId}`}
+                  className={`te-standing-row${
+                    index === 0 ? " te-standing-row--leader" : ""
+                  }${clasifica ? " te-standing-row--qualifies" : ""}`}
+                >
+                  <span className="te-standing-row__position">{index + 1}</span>
+                  <div className="te-standing-row__content">
+                    <div className="te-standing-row__primary">
+                      <span className="te-standing-row__name">
+                        {row.parejaLabel}
+                      </span>
+                    </div>
+                    <span className="te-standing-row__meta">
+                      <span className="te-standing-row__stat">
+                        <b>{row.pj}</b> PJ
+                      </span>
+                      <span className="te-standing-row__stat">
+                        <b>{row.pg}</b> PG
+                      </span>
+                      <span className="te-standing-row__stat">
+                        {row.ptsFav}–{row.ptsCon}
+                      </span>
+                      <span className="te-standing-row__stat">
+                        <b>{formatDif(row.dif)}</b> DIF
+                      </span>
                     </span>
+                    {clasifica ? (
+                      <span className="te-standing-row__qualified">
+                        <span aria-hidden>✓</span> Clasificado
+                      </span>
+                    ) : null}
                   </div>
-                  <span className="te-standing-row__meta">
-                    <span className="te-standing-row__stat">
-                      <b>{row.pj}</b> PJ
-                    </span>
-                    <span className="te-standing-row__stat">
-                      <b>{row.pg}</b> PG
-                    </span>
-                    <span className="te-standing-row__stat">
-                      {row.ptsFav}–{row.ptsCon}
-                    </span>
-                    <span className="te-standing-row__stat">
-                      <b>{formatDif(row.dif)}</b> DIF
-                    </span>
-                  </span>
-                  {clasifica ? (
-                    <span className="te-standing-row__qualified">
-                      <span aria-hidden>✓</span> Clasificado
-                    </span>
-                  ) : null}
-                </div>
-                <strong className="te-standing-row__points">
-                  {row.puntos}
-                  <small>PTS</small>
-                </strong>
-              </li>
-            );
-          })}
+                  <strong className="te-standing-row__points">
+                    {row.puntos}
+                    <small>PTS</small>
+                  </strong>
+                </li>
+              );
+            });
+          })()}
         </ol>
       )}
     </section>
