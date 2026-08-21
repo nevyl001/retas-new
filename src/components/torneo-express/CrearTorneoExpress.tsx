@@ -23,8 +23,12 @@ import { ArmarParejasPicker } from "./ArmarParejasPicker";
 import { AsignarParejasGrupos } from "./AsignarParejasGrupos";
 import {
   ParejaDraft,
-  TE_DRAFT_TOURNAMENT_KEY,
   TE_EXPRESS_DRAFT_TOURNAMENT_NAME,
+  clearTeWizardDraft,
+  loadTeWizardDraft,
+  saveTeWizardDraft,
+  teDraftTournamentStorageKey,
+  type TeWizardStepId,
 } from "./crearTorneoExpressTypes";
 import { persistTournamentGameMode } from "../../lib/gameModeMapping";
 import {
@@ -55,7 +59,7 @@ const WIZARD_STEPS = [
   { id: "crear", label: "Crear", num: 4 },
 ] as const;
 
-type WizardStepId = (typeof WIZARD_STEPS)[number]["id"];
+type WizardStepId = TeWizardStepId;
 
 interface CrearTorneoExpressProps {
   /** Si viene, el torneo creado se vincula a este Evento (categoría). */
@@ -69,24 +73,42 @@ interface CrearTorneoExpressProps {
   returnToEventoAfterCreate?: boolean;
 }
 
+function readInitialWizardDraft(eventoId?: string) {
+  return loadTeWizardDraft(eventoId);
+}
+
 export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
   eventoId,
   onTorneoCreated,
   returnToEventoAfterCreate,
 }) => {
   const { user } = useUser();
-  const [nombre, setNombre] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [numGrupos, setNumGrupos] = useState<NumGruposDraft>(2);
-  const [draftTournamentId, setDraftTournamentId] = useState<string | null>(null);
+  const initialDraft = useMemo(
+    () => readInitialWizardDraft(eventoId),
+    // Solo al montar / cambiar de evento
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [eventoId]
+  );
+  const [nombre, setNombre] = useState(initialDraft?.nombre ?? "");
+  const [categoria, setCategoria] = useState(initialDraft?.categoria ?? "");
+  const [numGrupos, setNumGrupos] = useState<NumGruposDraft>(
+    initialDraft?.numGrupos ?? 2
+  );
+  const [draftTournamentId, setDraftTournamentId] = useState<string | null>(
+    initialDraft?.draftTournamentId ?? null
+  );
   const [jugadores, setJugadores] = useState<Player[]>([]);
   const [parejas, setParejas] = useState<ParejaDraft[]>([]);
-  const [assignments, setAssignments] = useState<GrupoAssignmentDraft[]>([]);
+  const [assignments, setAssignments] = useState<GrupoAssignmentDraft[]>(
+    initialDraft?.assignments ?? []
+  );
   const [initializing, setInitializing] = useState(true);
   const [addingPair, setAddingPair] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [wizardStep, setWizardStep] = useState<WizardStepId>("datos");
+  const [wizardStep, setWizardStep] = useState<WizardStepId>(
+    initialDraft?.wizardStep ?? "datos"
+  );
   const [loadingJugadores, setLoadingJugadores] = useState(false);
 
   const jugadoresEnParejasSinEmail = useMemo(() => {
@@ -215,10 +237,14 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     }
 
     let cancelled = false;
+    const draftKey = teDraftTournamentStorageKey(eventoId);
 
     (async () => {
       try {
-        const stored = sessionStorage.getItem(TE_DRAFT_TOURNAMENT_KEY);
+        const stored =
+          sessionStorage.getItem(draftKey) ||
+          initialDraft?.draftTournamentId ||
+          null;
         let tournamentId = stored;
 
         if (tournamentId) {
@@ -237,7 +263,10 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
           );
           tournamentId = created.id;
           persistTournamentGameMode(created.id, "mini-torneo");
-          sessionStorage.setItem(TE_DRAFT_TOURNAMENT_KEY, created.id);
+        }
+
+        if (tournamentId) {
+          sessionStorage.setItem(draftKey, tournamentId);
         }
 
         if (cancelled || !tournamentId) return;
@@ -254,7 +283,28 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, eventoId, initialDraft?.draftTournamentId]);
+
+  useEffect(() => {
+    if (initializing) return;
+    saveTeWizardDraft(eventoId, {
+      wizardStep,
+      nombre,
+      categoria,
+      numGrupos,
+      assignments,
+      draftTournamentId,
+    });
+  }, [
+    initializing,
+    eventoId,
+    wizardStep,
+    nombre,
+    categoria,
+    numGrupos,
+    assignments,
+    draftTournamentId,
+  ]);
 
   const jugadoresForPairsRef = useRef(jugadores);
   jugadoresForPairsRef.current = jugadores;
@@ -413,7 +463,8 @@ export const CrearTorneoExpress: React.FC<CrearTorneoExpressProps> = ({
         grupos: assignments,
         keepPairIds: keepIds,
       });
-      sessionStorage.removeItem(TE_DRAFT_TOURNAMENT_KEY);
+      sessionStorage.removeItem(teDraftTournamentStorageKey(eventoId));
+      clearTeWizardDraft(eventoId);
 
       const linkedEventoId = eventoId?.trim() || null;
       if (linkedEventoId) {
