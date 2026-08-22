@@ -190,6 +190,18 @@ export function useTorneoExpress(
         await savePartidoResultado(partidoId, sets, force);
         await reload();
       } catch (e) {
+        if (
+          e instanceof Error &&
+          e.message.includes("sobrescribir") &&
+          !force &&
+          window.confirm(
+            `${e.message}\n\n¿Continuar y guardar tu corrección?`
+          )
+        ) {
+          await savePartidoResultado(partidoId, sets, true);
+          await reload();
+          return;
+        }
         setError(e instanceof Error ? e.message : "No se pudo guardar el resultado");
         // Reflejar estado real si el update parcial/remoto ya ocurrió.
         await reload({ silent: true }).catch(() => undefined);

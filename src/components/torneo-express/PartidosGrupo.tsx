@@ -38,7 +38,8 @@ interface PartidosGrupoProps {
   horarioEditable?: boolean;
   onSaveResultado?: (
     partidoId: string,
-    sets: PartidoSetScore[]
+    sets: PartidoSetScore[],
+    force?: boolean
   ) => Promise<void>;
   onSaveCancha?: (partidoId: string, cancha: string | null) => Promise<void>;
   onSaveProgramado?: (
@@ -534,7 +535,7 @@ function PartidoRow({
           visitLabel={visitLabel}
           initialPartido={partido}
           saving={saving}
-          onSave={(sets) => onSave!(partido.id, sets)}
+          onSave={(sets) => onSave!(partido.id, sets, played)}
         />
       ) : null}
     </>
