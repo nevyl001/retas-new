@@ -420,9 +420,6 @@ function GrupoStandings({
                     <span className="te-standing-row__stat">
                       {row.ptsFav}–{row.ptsCon}
                     </span>
-                    <span className="te-standing-row__stat">
-                      <b>{formatDif(row.dif)}</b> DIF
-                    </span>
                   </span>
                   {clasifica ? (
                     <span className="te-standing-row__qualified">
@@ -431,8 +428,8 @@ function GrupoStandings({
                   ) : null}
                 </div>
                 <strong className="te-standing-row__points">
-                  {row.puntos}
-                  <small>PTS</small>
+                  {formatDif(row.dif)}
+                  <small>DIF</small>
                 </strong>
               </li>
             );
@@ -840,7 +837,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
         <details className="te-grupos-scoring-help">
           <summary>Criterios de clasificación</summary>
           <p>
-            DIF → FAV → PG → H2H · PTS = referencia
+            DIF → FAV → PG → H2H · la columna derecha muestra DIF
           </p>
         </details>
       )}
