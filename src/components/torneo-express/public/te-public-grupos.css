@@ -1791,14 +1791,22 @@
   }
 
   .te-public.te-public--grupos-wide .te-standing-row__name {
+    display: flex;
     min-width: 0;
-    overflow: hidden;
+    flex-direction: column;
+    gap: 1px;
+    overflow: visible;
     color: var(--text-primary);
     font-size: 0.875rem;
     font-weight: 650;
     line-height: 1.25;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+  }
+
+  .te-public.te-public--grupos-wide .te-standing-row__player {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .te-public.te-public--grupos-wide .te-standing-row__qualified {
@@ -2096,14 +2104,24 @@
 }
 
 .te-public.te-public--grupos-wide .te-standing-row__name {
-  display: block;
-  overflow: hidden;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+  overflow: visible;
+  overflow-wrap: anywhere;
   color: var(--text-primary);
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.te-public.te-public--grupos-wide .te-standing-row__player {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .te-public.te-public--grupos-wide .te-standing-row__meta {
