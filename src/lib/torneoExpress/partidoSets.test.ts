@@ -389,7 +389,7 @@ describe("standings con sets_resultado", () => {
     expect(rows[0].ptsCon).toBe(2);
   });
 
-  it("ordena PG → FAV → DIF (no DIF antes que FAV)", () => {
+  it("ordena DIF → FAV → PG (DIF manda sobre FAV)", () => {
     const parejas3: TorneoExpressGrupoPareja[] = [
       ...parejas,
       {
@@ -402,7 +402,7 @@ describe("standings con sets_resultado", () => {
     ];
 
     // p1 y p2 empatan a 1 PG; p1 tiene menos FAV pero mejor DIF.
-    // Con orden correcto (FAV antes que DIF), p2 debe quedar arriba de p1.
+    // Con orden DIF → FAV, p1 debe quedar arriba de p2.
     const partidos: TorneoExpressPartido[] = [
       {
         id: "m1",
@@ -432,8 +432,8 @@ describe("standings con sets_resultado", () => {
     // p1: PG1 FAV6 CON0 DIF+6
     // p2: PG1 FAV7 CON5 DIF+2
     // p3: PG0 FAV5 CON13 DIF-8
-    expect(rows.map((r) => r.parejaId)).toEqual(["p2", "p1", "p3"]);
-    expect(rows[0].ptsFav).toBe(7);
-    expect(rows[1].ptsFav).toBe(6);
+    expect(rows.map((r) => r.parejaId)).toEqual(["p1", "p2", "p3"]);
+    expect(rows[0].dif).toBe(6);
+    expect(rows[1].dif).toBe(2);
   });
 });

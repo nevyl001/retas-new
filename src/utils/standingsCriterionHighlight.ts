@@ -2,7 +2,7 @@ import { getHeadToHead, type MatchResult } from "./standings";
 
 export type StandingsCriterionKey = "fav" | "dif" | "pg";
 
-/** Americano/Reta: FAV → DIF → PG. Torneo Express: PG → FAV → DIF. */
+/** Americano/Reta: FAV → DIF → PG. Torneo Express: DIF → FAV → PG. */
 export type StandingsCriterionOrder = "americano" | "express";
 
 export interface StandingsCompareRow {
@@ -24,14 +24,14 @@ export function getDecidingCriterionBetween(
   order: StandingsCriterionOrder = "americano"
 ): StandingsCriterionKey {
   if (order === "express") {
-    if (higher.pg !== lower.pg) return "pg";
-    if (higher.fav !== lower.fav) return "fav";
     if (standingsRowDiff(higher) !== standingsRowDiff(lower)) return "dif";
+    if (higher.fav !== lower.fav) return "fav";
+    if (higher.pg !== lower.pg) return "pg";
     if (higher.id && lower.id && h2hMatches.length > 0) {
       const h2h = getHeadToHead(higher.id, lower.id, h2hMatches);
-      if (h2h !== 0) return "dif";
+      if (h2h !== 0) return "pg";
     }
-    return "pg";
+    return "dif";
   }
 
   if (higher.fav !== lower.fav) return "fav";
@@ -49,7 +49,7 @@ export function criterionRank(
   order: StandingsCriterionOrder = "americano"
 ): 1 | 2 | 3 {
   if (order === "express") {
-    if (column === "pg") return 1;
+    if (column === "dif") return 1;
     if (column === "fav") return 2;
     return 3;
   }

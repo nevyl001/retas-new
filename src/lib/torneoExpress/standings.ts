@@ -44,12 +44,12 @@ function partidosToMatches(partidos: TorneoExpressPartido[]): MatchResult[] {
   return matches;
 }
 
-/** Torneo Express: PG → FAV → DIF → H2H → seed. */
+/** Torneo Express: DIF → FAV → PG → H2H → seed. */
 function createExpressStandingsComparator(matches: MatchResult[]) {
   return (a: PairStanding, b: PairStanding): number => {
-    if (b.PG !== a.PG) return b.PG - a.PG;
-    if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
     if (b.diferencia !== a.diferencia) return b.diferencia - a.diferencia;
+    if (b.juegosFavor !== a.juegosFavor) return b.juegosFavor - a.juegosFavor;
+    if (b.PG !== a.PG) return b.PG - a.PG;
     const h2h = getHeadToHead(a.pairId, b.pairId, matches);
     if (h2h !== 0) return h2h;
     return a.seed - b.seed;

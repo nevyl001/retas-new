@@ -840,7 +840,7 @@ export const TEPublicGrupos: React.FC<TEPublicGruposProps> = ({
         <details className="te-grupos-scoring-help">
           <summary>Criterios de clasificación</summary>
           <p>
-            PG → FAV → DIF → H2H · PTS = referencia
+            DIF → FAV → PG → H2H · PTS = referencia
           </p>
         </details>
       )}

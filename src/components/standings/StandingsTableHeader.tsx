@@ -54,7 +54,7 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
         className={`${COL_PG} ${criterionHeaderClass("pg", criterionOrder)}`}
         title={
           isExpress
-            ? "Partidos ganados (1.er criterio)"
+            ? "Partidos ganados (3.er criterio de desempate)"
             : "Partidos ganados (3.er criterio de desempate)"
         }
       >
@@ -80,7 +80,7 @@ export const StandingsTableHeader: React.FC<StandingsTableHeaderProps> = ({
         className={`${COL_DIF} ${criterionHeaderClass("dif", criterionOrder)}`}
         title={
           isExpress
-            ? "Diferencia FAV − CON (3.er criterio)"
+            ? "Diferencia FAV − CON (1.er criterio)"
             : "Diferencia FAV − CON (2.º criterio)"
         }
       >

@@ -182,7 +182,7 @@ describe("calcularClasificadosFase", () => {
     expect(q.map((x) => x.seed)).toEqual([1, 2, 3, 4]);
   });
 
-  it("ordena primeros/segundos/terceros por PG → FAV → DIF", () => {
+  it("ordena primeros/segundos/terceros por DIF → FAV → PG", () => {
     const bundle = makeBundle({ numGrupos: 3 });
     const q = calcularClasificadosFase(bundle, "cuartos");
     const primeros = q.filter((x) => x.posEnGrupo === 1);
@@ -191,11 +191,11 @@ describe("calcularClasificadosFase", () => {
       const a = primeros[i - 1];
       const b = primeros[i];
       const cmp =
-        b.pg !== a.pg
-          ? b.pg - a.pg
+        b.dif !== a.dif
+          ? b.dif - a.dif
           : b.ptsFav !== a.ptsFav
             ? b.ptsFav - a.ptsFav
-            : b.dif - a.dif;
+            : b.pg - a.pg;
       expect(cmp).toBeLessThanOrEqual(0);
     }
   });

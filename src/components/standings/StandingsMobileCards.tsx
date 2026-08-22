@@ -38,7 +38,7 @@ export const StandingsMobileCards: React.FC<{
   const decidingCriterion = useMemo(() => {
     if (decidingProp) return decidingProp;
     if (rows.length < 2) {
-      return criterionOrder === "express" ? ("pg" as const) : ("fav" as const);
+      return criterionOrder === "express" ? ("dif" as const) : ("fav" as const);
     }
     return getDecidingCriterionBetween(
       {
@@ -60,7 +60,7 @@ export const StandingsMobileCards: React.FC<{
 
   const rankClass = (key: StandingsCriterionKey) => {
     if (criterionOrder === "express") {
-      if (key === "pg") return "standings-mobile-card__stat--criterion-1";
+      if (key === "dif") return "standings-mobile-card__stat--criterion-1";
       if (key === "fav") return "standings-mobile-card__stat--criterion-2";
       return "standings-mobile-card__stat--criterion-3";
     }
