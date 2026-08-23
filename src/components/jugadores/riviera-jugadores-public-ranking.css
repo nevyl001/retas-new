@@ -512,7 +512,7 @@
 .rjp-ranking-card {
   width: 100%;
   display: grid;
-  grid-template-columns: 2.35rem 2.5rem minmax(0, 1fr) auto;
+  grid-template-columns: 2.35rem 2.75rem minmax(0, 1fr) auto;
   grid-template-areas:
     "rank avatar body pts"
     "rank avatar body chev";
@@ -574,8 +574,8 @@
   font-weight: 650;
   color: var(--text-primary);
   line-height: 1.25;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .rjp-ranking-card__id-mobile {
@@ -623,6 +623,30 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
+}
+
+.rjp-ranking .rjp-pts-breakdown__line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.2rem 0.35rem;
+  max-width: 100%;
+}
+
+.rjp-ranking .rjp-pts-breakdown__club {
+  min-width: 0;
+  color: inherit;
+  font-weight: 650;
+}
+
+.rjp-ranking .rjp-pts-breakdown__value {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rjp-ranking .rjp-pts-breakdown__unit {
+  font-weight: 650;
 }
 
 /* Compactar desglose en ranking: pts del club anfitrión */
@@ -1053,6 +1077,175 @@
   .has-mobile-app-navigation .rjp-public--ranking .rjp-public__inner,
   .has-mobile-app-navigation .rjp-public--rules .rjp-public__inner {
     padding-bottom: var(--mobile-app-navigation-offset);
+  }
+
+  /* Ranking card: nombre protagonista; club + pts debajo (sin pelear por ancho). */
+  .rjp-ranking-card {
+    grid-template-columns: 2.1rem 3rem minmax(0, 1fr) 1.15rem;
+    grid-template-areas:
+      "rank avatar body chev"
+      "rank avatar pts  pts";
+    column-gap: 0.75rem;
+    row-gap: 0.55rem;
+    align-items: start;
+    min-height: 0;
+    padding: 1rem 0.85rem;
+  }
+
+  .rjp-ranking-list > li + li {
+    border-top-color: color-mix(
+      in srgb,
+      var(--text-primary, #fff) 7%,
+      transparent
+    );
+  }
+
+  .rjp-ranking-card__rank {
+    padding-top: 0.45rem;
+    font-size: 0.8125rem;
+  }
+
+  .rjp-ranking-card__avatar {
+    padding-top: 0.15rem;
+  }
+
+  .rjp-public--ranking .rjp-ranking-card .rj-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .rjp-ranking-card__name {
+    font-size: 1.125rem;
+    font-weight: 750;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+
+  .rjp-ranking-card__id-mobile {
+    margin-top: 0.4rem;
+  }
+
+  .rjp-ranking-card__id-mobile .rj-riviera-id {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rjp-ranking-card__pts {
+    justify-self: stretch;
+    align-self: start;
+    width: 100%;
+    text-align: left;
+    padding-top: 0.05rem;
+  }
+
+  .rjp-ranking-card__chev {
+    align-self: start;
+    justify-self: end;
+    padding-top: 0.5rem;
+  }
+
+  .rjp-ranking .rjp-ranking-card .rjp-pts-breakdown--stacked {
+    align-items: flex-start;
+    gap: 0.35rem;
+    width: 100%;
+  }
+
+  .rjp-ranking .rjp-ranking-card .rjp-pts-breakdown__line--home {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    max-width: 100%;
+    font-size: inherit;
+  }
+
+  .rjp-ranking .rjp-ranking-card .rjp-pts-breakdown__club {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    color: var(--text-secondary);
+    overflow-wrap: break-word;
+  }
+
+  .rjp-ranking .rjp-ranking-card .rjp-pts-breakdown__value {
+    font-size: 1.375rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--brand-accent, var(--accent-gold));
+  }
+
+  .rjp-ranking .rjp-ranking-card .rjp-pts-breakdown__unit {
+    margin-left: 0.28rem;
+    font-size: 0.6875rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.9;
+  }
+
+  /* Podio móvil: nombre + club con más aire */
+  .rjp-podio {
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .rjp-podio__slot {
+    gap: 0.45rem;
+    padding: 1rem 0.75rem 1.05rem;
+  }
+
+  .rjp-podio__name {
+    max-width: none;
+    font-size: clamp(0.9375rem, 3.6vw, 1.0625rem);
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  .rjp-podio__slot .rj-riviera-id {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .rjp-ranking .rjp-podio .rjp-pts-breakdown--stacked {
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+  }
+
+  .rjp-ranking .rjp-podio .rjp-pts-breakdown__line--home {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    text-align: center;
+  }
+
+  .rjp-ranking .rjp-podio .rjp-pts-breakdown__club {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  .rjp-ranking .rjp-podio .rjp-pts-breakdown__value {
+    font-size: 1.125rem;
+    font-weight: 800;
+    color: var(--brand-accent, var(--accent-gold));
+  }
+
+  .rjp-ranking .rjp-podio .rjp-pts-breakdown__unit {
+    margin-left: 0.2rem;
+    font-size: 0.625rem;
+    font-weight: 750;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 }
 

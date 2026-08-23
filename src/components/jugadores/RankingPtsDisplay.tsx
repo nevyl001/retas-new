@@ -99,7 +99,11 @@ function RankingPtsDisplayInner({
           key={line.key}
           className={`rjp-pts-breakdown__line rjp-pts-breakdown__line--${line.role}`}
         >
-          {line.clubLabel}: {line.puntos.toLocaleString("es-MX")} pts
+          <span className="rjp-pts-breakdown__club">{line.clubLabel}</span>
+          <span className="rjp-pts-breakdown__value">
+            {line.puntos.toLocaleString("es-MX")}
+            <span className="rjp-pts-breakdown__unit"> pts</span>
+          </span>
         </span>
       ))}
     </span>
