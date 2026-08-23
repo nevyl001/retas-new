@@ -77,18 +77,22 @@ export function buildClubPointsDisplayRows(
   const viewOrg = options.contextualOrganizerId?.trim() || null;
   const regOrg = options.registrationOrganizerId?.trim() || null;
 
-  const byId = new Map<string, number>();
+  const byId = new Map<string, { points: number; hint: string }>();
   for (const club of pointsByClub) {
     const id = club.organizador_id?.trim();
     if (!id) continue;
     if (club.points <= 0 && id !== viewOrg) continue;
-    byId.set(id, club.points);
+    const prev = byId.get(id);
+    byId.set(id, {
+      points: club.points,
+      hint: club.club_name?.trim() || prev?.hint || "",
+    });
   }
 
   const rows: ClubPointsDisplayRow[] = Array.from(byId.entries()).map(
-    ([organizerId, points]) => ({
+    ([organizerId, { points, hint }]) => ({
       organizerId,
-      clubName: getOrganizerDisplayNameSync(organizerId),
+      clubName: getOrganizerDisplayNameSync(organizerId, hint || null),
       points,
       isContextClub: Boolean(viewOrg && organizerId === viewOrg),
       isRegistrationClub: Boolean(regOrg && organizerId === regOrg),

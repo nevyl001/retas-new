@@ -341,7 +341,15 @@ export const JugadoresPublicRanking: React.FC<JugadoresPublicRankingProps> = ({
       void prefetchOrganizerDisplayNames([
         orgId,
         ...rows.map((j) => resolveOrigenConcedidoOrganizadorId(j)),
-      ]);
+        ...rows.flatMap(
+          (j) =>
+            j.careerPuntosByClub?.map((c) => c.organizadorId) ??
+            j.pointsBreakdown?.pointsByClub.map((c) => c.organizador_id) ??
+            []
+        ),
+      ]).then(() => {
+        setJugadores((prev) => (prev === rows ? [...prev] : prev));
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo cargar el ranking");
     } finally {

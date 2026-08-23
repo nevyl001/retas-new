@@ -191,4 +191,40 @@ describe("PUNTOS EN ESTE CLUB — labels por organizerId", () => {
       isRegistrationClub: true,
     });
   });
+
+  it("sin caché no etiqueta un UUID ajeno como Riviera Open (regresión móvil)", () => {
+    clearOrganizerDisplayNameCache();
+    const lines = breakdownToDisplayLines(
+      {
+        currentClubPoints: 150,
+        careerTotalAllClubs: 845,
+        pointsByClub: [
+          {
+            organizador_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+            club_name: "",
+            points: 150,
+          },
+          {
+            organizador_id: RIVIERA_OPEN,
+            club_name: "Riviera Open",
+            points: 475,
+          },
+          {
+            organizador_id: HACKPADEL,
+            club_name: "Riviera Open", // hint contaminado histórico
+            points: 220,
+          },
+        ],
+      },
+      "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      { forceBreakdown: true, registrationOrganizerId: RIVIERA_OPEN }
+    );
+
+    const hack = lines.find((l) => l.key === HACKPADEL);
+    expect(hack?.puntos).toBe(220);
+    expect(hack?.clubLabel).not.toBe("Riviera Open");
+    expect(
+      lines.filter((l) => l.clubLabel === "Riviera Open" && l.puntos === 220)
+    ).toHaveLength(0);
+  });
 });

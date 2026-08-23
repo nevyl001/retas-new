@@ -157,6 +157,8 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
   /** Carrera / rating / historial aún en vuelo. */
   const [detailLoading, setDetailLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  /** Sube tras prefetch de nombres de club para refrescar labels (Hackpadel ≠ Riviera Open). */
+  const [clubLabelsEpoch, setClubLabelsEpoch] = useState(0);
   const nextLoadToken = useLatestGuard();
 
   const load = useCallback(async () => {
@@ -245,12 +247,16 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
         ...(profile.jugador.pointsBreakdown?.pointsByClub.map(
           (c) => c.organizador_id
         ) ?? []),
-      ]).catch((e) => {
-        console.warn(
-          "[JugadorPublicFicha] prefetchOrganizerDisplayNames:",
-          errorLogPayload(e)
-        );
-      });
+      ])
+        .then(() => {
+          if (isCurrent()) setClubLabelsEpoch((n) => n + 1);
+        })
+        .catch((e) => {
+          console.warn(
+            "[JugadorPublicFicha] prefetchOrganizerDisplayNames:",
+            errorLogPayload(e)
+          );
+        });
     } catch (e) {
       if (!isCurrent()) return;
       console.warn("[JugadorPublicFicha] load:", errorLogPayload(e));
@@ -537,6 +543,7 @@ export const JugadorPublicFicha: React.FC<JugadorPublicFichaProps> = ({
                       {hasOrgContext ? "Puntos en este club" : "Total carrera"}
                     </span>
                     <JugadorPuntosBreakdown
+                      key={`pts-breakdown-${clubLabelsEpoch}`}
                       jugador={jugador}
                       clubOrganizadorId={viewingOrgId}
                       hasOrgContext={hasOrgContext}

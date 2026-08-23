@@ -3,6 +3,9 @@ import { supabase } from "../supabaseClient";
 
 const organizerNameCache = new Map<string, string>();
 
+/** Placeholder mientras llega el nombre real vía RPC (nunca el producto madre). */
+export const ORGANIZER_DISPLAY_NAME_PENDING = "Club";
+
 export function clearOrganizerDisplayNameCache(): void {
   organizerNameCache.clear();
 }
@@ -27,7 +30,19 @@ export function rememberOrganizerDisplayName(
   return trimmed;
 }
 
-/** Resolución síncrona (caché o hint del perfil). */
+function isMotherBrandLabel(name: string): boolean {
+  return (
+    name.localeCompare(RIVIERA_PRODUCT_NAME, undefined, {
+      sensitivity: "accent",
+    }) === 0
+  );
+}
+
+/**
+ * Resolución síncrona (caché o hint del perfil).
+ * Sin caché no devolvemos «Riviera Open» para un UUID ajeno: ese fallback
+ * contaminaba filas (p. ej. Hackpadel → Riviera Open) hasta el prefetch.
+ */
 export function getOrganizerDisplayNameSync(
   organizadorId: string | null | undefined,
   hintName?: string | null
@@ -37,11 +52,13 @@ export function getOrganizerDisplayNameSync(
   const cached = getCachedOrganizerDisplayName(organizadorId);
   if (cached) return cached;
 
-  if (hintName?.trim()) {
-    return rememberOrganizerDisplayName(organizadorId, hintName.trim());
+  const hint = hintName?.trim();
+  // El hint «Riviera Open» suele ser el fallback histórico, no el nombre real.
+  if (hint && !isMotherBrandLabel(hint)) {
+    return rememberOrganizerDisplayName(organizadorId, hint);
   }
 
-  return RIVIERA_PRODUCT_NAME;
+  return ORGANIZER_DISPLAY_NAME_PENDING;
 }
 
 /** Nombre del club/organizador desde users.name vía RPC (upgrade no cambia el texto). */
@@ -54,8 +71,9 @@ export async function resolveOrganizerDisplayName(
   const cached = getCachedOrganizerDisplayName(organizadorId);
   if (cached) return cached;
 
-  if (options?.hintName?.trim()) {
-    return rememberOrganizerDisplayName(organizadorId, options.hintName.trim());
+  const hint = options?.hintName?.trim();
+  if (hint && !isMotherBrandLabel(hint)) {
+    return rememberOrganizerDisplayName(organizadorId, hint);
   }
 
   const { data, error } = await supabase.rpc("get_organizador_display_name", {
@@ -66,5 +84,5 @@ export async function resolveOrganizerDisplayName(
     return rememberOrganizerDisplayName(organizadorId, data);
   }
 
-  return RIVIERA_PRODUCT_NAME;
+  return ORGANIZER_DISPLAY_NAME_PENDING;
 }
