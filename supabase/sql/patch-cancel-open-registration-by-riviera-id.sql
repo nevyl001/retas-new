@@ -35,8 +35,7 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'error', 'not_found');
   END IF;
 
-  IF v_token IS NOT NULL AND length(v_token) >= 16
-     AND nullif(trim(coalesce(p_riviera_id, '')), '') IS NULL THEN
+  IF v_token IS NOT NULL AND length(v_token) >= 16 THEN
     v_hash := encode(extensions.digest(v_token, 'sha256'), 'hex');
 
     SELECT * INTO v_entry
@@ -58,7 +57,7 @@ BEGIN
     SELECT * INTO v_entry
     FROM public.tournament_open_registration_entries e
     WHERE e.registration_id = v_cfg.id
-      AND public._normalize_riviera_id_loose(e.riviera_id) = v_norm
+      AND upper(trim(e.riviera_id)) = v_norm
       AND e.status IN ('confirmed', 'waitlist', 'pending_approval')
     FOR UPDATE;
 
