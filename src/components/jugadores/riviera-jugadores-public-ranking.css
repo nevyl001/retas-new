@@ -1,5 +1,40 @@
 /* Ranking público — experiencia deportiva premium */
 
+/*
+  Fondo cancha: en móvil la foto vertical (rejas/luces claras) se filtra por el
+  overlay a media opacidad y se lee como “bloque / sombra blanca”. En ranking
+  tapamos casi todo; la atmósfera queda en paneles opacos, no en la foto.
+*/
+.App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::before,
+html[data-brand="valvidub-sports"]
+  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::before,
+html[data-club="valvidub-sports"]
+  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::before {
+  opacity: 0.025 !important;
+}
+
+.App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after,
+html[data-brand="valvidub-sports"]
+  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after,
+html[data-club="valvidub-sports"]
+  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after,
+.club-experience-scope[data-brand="valvidub-sports"]
+  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after,
+.club-experience-scope[data-club="valvidub-sports"]
+  .App--jugadores-public.ro-public-view:has(.rjp-public--ranking)::after {
+  background: linear-gradient(
+    180deg,
+    rgba(12, 10, 9, 0.98) 0%,
+    rgba(14, 11, 10, 0.97) 40%,
+    rgba(12, 10, 9, 0.98) 100%
+  ) !important;
+}
+
+.rjp-public--ranking > .rjp-public__grain,
+.rjp-public--ranking > .rjp-public__glow--top {
+  display: none !important;
+}
+
 .rjp-ranking {
   width: 100%;
   max-width: 72rem;
@@ -374,7 +409,7 @@
   padding: 0.85rem 0.65rem 0.9rem;
   border: 1px solid var(--border-default);
   border-radius: 14px;
-  background: rgba(8, 8, 10, 0.72);
+  background: var(--ro-bg-card, #16110e);
   color: inherit;
   font-family: inherit;
   cursor: pointer;
@@ -397,7 +432,11 @@
 .rjp-podio__slot--gold {
   padding: 1rem 0.85rem 1.05rem;
   border-color: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 45%, transparent);
-  background: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 10%, rgba(8, 8, 10, 0.78));
+  background: color-mix(
+    in srgb,
+    var(--brand-accent, var(--accent-gold)) 12%,
+    var(--ro-bg-card, #16110e)
+  );
 }
 
 .rjp-podio__rank {
@@ -495,7 +534,7 @@
   flex-direction: column;
   border-radius: 14px;
   border: 1px solid var(--border-default);
-  background: rgba(8, 8, 10, 0.72);
+  background: var(--ro-bg-card, #16110e);
   overflow: hidden;
   transition: opacity 0.15s ease;
 }

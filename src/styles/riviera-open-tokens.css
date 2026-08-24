@@ -525,10 +525,10 @@ html[data-brand="valvidub-sports"] .App--jugadores-public.ro-public-view::after,
 .club-experience-scope[data-brand="valvidub-sports"] .App--jugadores-public.ro-public-view::after {
   background: linear-gradient(
     180deg,
-    rgba(16, 12, 10, 0.92) 0%,
-    rgba(22, 16, 12, 0.62) 28%,
-    rgba(18, 13, 10, 0.74) 55%,
-    rgba(10, 8, 6, 0.96) 100%
+    rgba(16, 12, 10, 0.96) 0%,
+    rgba(18, 13, 10, 0.92) 28%,
+    rgba(16, 12, 10, 0.94) 55%,
+    rgba(10, 8, 6, 0.98) 100%
   );
 }
 
