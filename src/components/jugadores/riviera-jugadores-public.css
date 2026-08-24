@@ -64,20 +64,26 @@
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* Soften top glow — white radial read as milky fog on mobile court bg */
 .rjp-public__glow--top {
   position: fixed;
   top: -20%;
   left: 50%;
   transform: translateX(-50%);
   width: min(900px, 120vw);
-  height: 45vh;
+  height: 32vh;
   pointer-events: none;
   z-index: 2;
   background: radial-gradient(
-    ellipse 70% 60% at 50% 0%,
-    rgba(255, 255, 255, 0.12) 0%,
-    transparent 70%
+    ellipse 65% 55% at 50% 0%,
+    rgba(255, 255, 255, 0.035) 0%,
+    transparent 72%
   );
+}
+
+/* Ranking: no white bloom; court + dark panels carry the atmosphere */
+.rjp-public--ranking > .rjp-public__glow--top {
+  display: none;
 }
 
 .rjp-public__inner {
@@ -281,7 +287,7 @@
 .rjp-public .rj-avatar {
   border-color: var(--rjp-gold-border);
   color: var(--rjp-gold-light);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+  box-shadow: none;
 }
 
 .rjp-card__body {

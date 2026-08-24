@@ -374,7 +374,7 @@
   padding: 0.85rem 0.65rem 0.9rem;
   border: 1px solid var(--border-default);
   border-radius: 14px;
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(8, 8, 10, 0.72);
   color: inherit;
   font-family: inherit;
   cursor: pointer;
@@ -397,7 +397,7 @@
 .rjp-podio__slot--gold {
   padding: 1rem 0.85rem 1.05rem;
   border-color: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 45%, transparent);
-  background: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 10%, rgba(0, 0, 0, 0.28));
+  background: color-mix(in srgb, var(--brand-accent, var(--accent-gold)) 10%, rgba(8, 8, 10, 0.78));
 }
 
 .rjp-podio__rank {
@@ -495,7 +495,7 @@
   flex-direction: column;
   border-radius: 14px;
   border: 1px solid var(--border-default);
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(8, 8, 10, 0.72);
   overflow: hidden;
   transition: opacity 0.15s ease;
 }
