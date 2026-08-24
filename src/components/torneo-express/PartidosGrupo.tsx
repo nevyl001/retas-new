@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { dedupePartidosExpress } from "../../lib/torneoExpress/roundRobin";
 import {
-  hasPairSameSlotConflict,
+  findPairSameSlotConflictDetails,
+  formatPairSameSlotConflictMessage,
   reassignScheduleSlotsOnReorder,
-  REORDER_PAIR_SLOT_CONFLICT_MSG,
 } from "../../lib/torneoExpress/reorderPartidosSlots";
 import {
   canchaDraftFromStored,
@@ -22,9 +22,10 @@ import {
   matchWinnerSideFromPartido,
 } from "../../lib/torneoExpress/partidoSets";
 import {
-  assertPartidoCourtSlotAvailable,
+  formatProgramadoSwapPrompt,
   findConflictingPartidoIds,
   planCanchaChange,
+  planProgramadoChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
 } from "../../lib/torneoExpress/partidoCourtSlotConflict";
 import type {
@@ -225,6 +226,8 @@ function PartidoHorarioField({
   const [draftDate, setDraftDate] = useState(initial.date);
   const [draftTime, setDraftTime] = useState(initial.time);
   const [horarioError, setHorarioError] = useState<string | null>(null);
+  const [swapPrompt, setSwapPrompt] = useState<string | null>(null);
+  const [pendingSwapIso, setPendingSwapIso] = useState<string | null>(null);
 
   useEffect(() => {
     if (forceEdit) setEditing(true);
@@ -243,37 +246,17 @@ function PartidoHorarioField({
     setDraftDate(d.date);
     setDraftTime(d.time);
     setHorarioError(null);
+    setSwapPrompt(null);
+    setPendingSwapIso(null);
     setEditing(false);
     onClose?.();
   };
 
-  const guardarHorario = () => {
+  const persistHorario = (next: string) => {
     if (!onSaveProgramado) return;
-    const next = programadoIsoFromDraft(draftDate, draftTime);
-    if (!next) {
-      setHorarioError("Revisa la fecha y la hora");
-      return;
-    }
-    try {
-      assertPartidoCourtSlotAvailable(
-        partido.id,
-        next,
-        partido.cancha,
-        courtCheckScope
-      );
-    } catch (e) {
-      setHorarioError(
-        e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG
-      );
-      return;
-    }
-    const prevMs = new Date(partidoScheduleIso(partido)).getTime();
-    const nextMs = new Date(next).getTime();
-    if (prevMs === nextMs) {
-      closeEdit();
-      return;
-    }
     setHorarioError(null);
+    setSwapPrompt(null);
+    setPendingSwapIso(null);
     void onSaveProgramado(partido.id, next)
       .then(() => closeEdit())
       .catch((e) => {
@@ -284,6 +267,50 @@ function PartidoHorarioField({
         setDraftDate(d.date);
         setDraftTime(d.time);
       });
+  };
+
+  const guardarHorario = () => {
+    if (!onSaveProgramado) return;
+    const next = programadoIsoFromDraft(draftDate, draftTime);
+    if (!next) {
+      setHorarioError("Revisa la fecha y la hora");
+      setSwapPrompt(null);
+      setPendingSwapIso(null);
+      return;
+    }
+
+    let plan;
+    try {
+      plan = planProgramadoChange(partido, next, courtCheckScope);
+    } catch (e) {
+      setSwapPrompt(null);
+      setPendingSwapIso(null);
+      setHorarioError(
+        e instanceof Error ? e.message : PARTIDO_CANCHA_OCUPADA_MSG
+      );
+      return;
+    }
+
+    if (plan.kind === "noop") {
+      closeEdit();
+      return;
+    }
+
+    if (plan.kind === "swap") {
+      setHorarioError(null);
+      setPendingSwapIso(plan.programado_en);
+      setSwapPrompt(
+        formatProgramadoSwapPrompt(plan.programado_en, plan.swapProgramadoEn)
+      );
+      return;
+    }
+
+    persistHorario(plan.programado_en);
+  };
+
+  const confirmarIntercambio = () => {
+    if (!pendingSwapIso) return;
+    persistHorario(pendingSwapIso);
   };
 
   if (!horarioEditable || !onSaveProgramado || !editing) {
@@ -301,7 +328,12 @@ function PartidoHorarioField({
             className="te-partido-meta-edit__input"
             value={draftDate}
             disabled={savingProgramado}
-            onChange={(e) => setDraftDate(e.target.value)}
+            onChange={(e) => {
+              setDraftDate(e.target.value);
+              setSwapPrompt(null);
+              setPendingSwapIso(null);
+              setHorarioError(null);
+            }}
           />
         </label>
         <label className="te-partido-meta-edit__field">
@@ -311,30 +343,69 @@ function PartidoHorarioField({
             className="te-partido-meta-edit__input"
             value={draftTime}
             disabled={savingProgramado}
-            onChange={(e) => setDraftTime(e.target.value)}
+            onChange={(e) => {
+              setDraftTime(e.target.value);
+              setSwapPrompt(null);
+              setPendingSwapIso(null);
+              setHorarioError(null);
+            }}
           />
         </label>
       </div>
+      {swapPrompt ? (
+        <p className="te-partido-meta-edit__confirm" role="status">
+          {swapPrompt}
+        </p>
+      ) : null}
       <div className="te-partido-meta-edit__actions">
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
-          disabled={savingProgramado}
-          loading={savingProgramado}
-          onClick={guardarHorario}
-        >
-          {savingProgramado ? "…" : "Guardar"}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={savingProgramado}
-          onClick={closeEdit}
-        >
-          Cancelar
-        </Button>
+        {swapPrompt ? (
+          <>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={savingProgramado}
+              loading={savingProgramado}
+              onClick={confirmarIntercambio}
+            >
+              {savingProgramado ? "…" : "Intercambiar"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={savingProgramado}
+              onClick={() => {
+                setSwapPrompt(null);
+                setPendingSwapIso(null);
+              }}
+            >
+              No intercambiar
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              disabled={savingProgramado}
+              loading={savingProgramado}
+              onClick={guardarHorario}
+            >
+              {savingProgramado ? "…" : "Guardar"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={savingProgramado}
+              onClick={closeEdit}
+            >
+              Cancelar
+            </Button>
+          </>
+        )}
       </div>
       {horarioError ? (
         <p className="te-partido-meta-edit__error">{horarioError}</p>
@@ -361,6 +432,7 @@ function PartidoRow({
   savingProgramado,
   dragHandle,
   courtConflict = false,
+  pairSlotConflict = false,
 }: {
   partido: TorneoExpressPartido;
   localLabel: string;
@@ -376,11 +448,14 @@ function PartidoRow({
   horarioEditable: boolean;
   courtCheckScope: TorneoExpressPartido[];
   courtConflict?: boolean;
+  /** Pareja ya tiene otro partido en el mismo horario (tras reordenar). */
+  pairSlotConflict?: boolean;
   dragHandle?: React.ReactNode;
   onSave?: PartidosGrupoProps["onSaveResultado"];
   onSaveCancha?: PartidosGrupoProps["onSaveCancha"];
   onSaveProgramado?: PartidosGrupoProps["onSaveProgramado"];
 }) {
+  const scheduleConflict = courtConflict || pairSlotConflict;
   const played = partido.estado === "jugado";
   const [setsModalOpen, setSetsModalOpen] = useState(false);
   const [canchaEditOpen, setCanchaEditOpen] = useState(false);
@@ -415,7 +490,7 @@ function PartidoRow({
     <>
       <div
         className={`te-partido-row te-partido-card${
-          courtConflict ? " te-partido-card--court-conflict" : ""
+          scheduleConflict ? " te-partido-card--court-conflict" : ""
         }`}
       >
         <div className="te-partido-row__toolbar">
@@ -433,6 +508,14 @@ function PartidoRow({
               role="status"
             >
               Cancha ocupada
+            </span>
+          ) : null}
+          {pairSlotConflict ? (
+            <span
+              className="te-partido-chip te-partido-chip--conflict"
+              role="status"
+            >
+              Pareja a esa hora
             </span>
           ) : null}
           {horarioEditable && onSaveProgramado ? (
@@ -646,6 +729,9 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
 
   const [localPartidos, setLocalPartidos] = useState(partidosLimpios);
   const [ordenError, setOrdenError] = useState<string | null>(null);
+  const [pairConflictPartidoIds, setPairConflictPartidoIds] = useState<
+    Set<string>
+  >(() => new Set());
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [pendingOrderSave, setPendingOrderSave] = useState(false);
@@ -685,6 +771,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
     async (ordered: TorneoExpressPartido[]) => {
       if (!onSaveOrden) return;
       setOrdenError(null);
+      setPairConflictPartidoIds(new Set());
       setPendingOrderSave(true);
       const updates = ordered.map((p, index) => ({
         id: p.id,
@@ -714,14 +801,19 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
         fromIndex,
         toIndex
       );
-      if (hasPairSameSlotConflict(next)) {
-        setOrdenError(REORDER_PAIR_SLOT_CONFLICT_MSG);
+      const conflict = findPairSameSlotConflictDetails(next);
+      if (conflict.pairIds.length > 0) {
+        setPairConflictPartidoIds(new Set(conflict.partidoIds));
+        setOrdenError(
+          formatPairSameSlotConflictMessage(conflict.pairIds, labelById)
+        );
         return;
       }
+      setPairConflictPartidoIds(new Set());
       setLocalPartidos(next);
       await persistOrder(next);
     },
-    [localPartidos, persistOrder]
+    [labelById, localPartidos, persistOrder]
   );
 
   const clearDragState = useCallback(() => {
@@ -735,6 +827,8 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
         e.preventDefault();
         return;
       }
+      setOrdenError(null);
+      setPairConflictPartidoIds(new Set());
       setDragFromIndex(index);
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", String(index));
@@ -777,7 +871,14 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
         </p>
       ) : null}
 
-      {ordenError ? <p className="te-error">{ordenError}</p> : null}
+      {ordenError ? (
+        <div className="te-partidos-court-conflict-banner" role="alert">
+          <span className="te-partidos-court-conflict-banner__label">
+            Conflicto de parejas
+          </span>
+          <p className="te-partidos-court-conflict-banner__text">{ordenError}</p>
+        </div>
+      ) : null}
 
       {conflictingPartidoIds.size > 0 ? (
         <div className="te-partidos-court-conflict-banner" role="alert">
@@ -828,6 +929,7 @@ export const PartidosGrupo: React.FC<PartidosGrupoProps> = ({
             onSaveProgramado={onSaveProgramado}
             courtCheckScope={courtCheckScope}
             courtConflict={conflictingPartidoIds.has(partido.id)}
+            pairSlotConflict={pairConflictPartidoIds.has(partido.id)}
             dragHandle={
               showReorder ? (
                 <button

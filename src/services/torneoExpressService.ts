@@ -15,8 +15,8 @@ import {
 } from "../lib/torneoExpress/scheduleInvariants";
 import { dedupePartidosExpress } from "../lib/torneoExpress/roundRobin";
 import {
-  assertPartidoCourtSlotAvailable,
   planCanchaChange,
+  planProgramadoChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
 } from "../lib/torneoExpress/partidoCourtSlotConflict";
 import { formatPairDisplay } from "../lib/torneoExpress/standings";
@@ -1329,17 +1329,71 @@ export async function savePartidoProgramado(
   if (programadoEn) {
     const { data: current, error: currentErr } = await supabase
       .from("torneo_express_partidos")
-      .select("cancha")
+      .select("*")
       .eq("id", partidoId)
       .maybeSingle();
     throwIfError(currentErr, "fetch partido programado conflict");
+    if (!current) {
+      throw new Error("Partido no encontrado");
+    }
+    const currentPartido = current as TorneoExpressPartido;
     const torneoPartidos = await fetchTorneoPartidosForConflictCheck(partidoId);
-    assertPartidoCourtSlotAvailable(
-      partidoId,
-      programadoEn,
-      current?.cancha ?? null,
-      torneoPartidos
-    );
+
+    let plan;
+    try {
+      plan = planProgramadoChange(
+        currentPartido,
+        programadoEn,
+        torneoPartidos
+      );
+    } catch (e) {
+      throw e instanceof Error ? e : new Error(PARTIDO_CANCHA_OCUPADA_MSG);
+    }
+
+    if (plan.kind === "noop") {
+      return currentPartido;
+    }
+
+    if (plan.kind === "swap") {
+      const { error: swapErr } = await supabase
+        .from("torneo_express_partidos")
+        .update({ programado_en: plan.swapProgramadoEn })
+        .eq("id", plan.swapWithId);
+      if (swapErr) {
+        if (
+          isMissingColumnError(
+            swapErr,
+            "torneo_express_partidos",
+            "programado_en"
+          )
+        ) {
+          partidosProgramadoColumnKnown = false;
+          throw new PartidosProgramadoColumnMissingError();
+        }
+        throwIfError(swapErr, "swap programado_en torneo_express_partidos");
+      }
+    }
+
+    const { data, error } = await supabase
+      .from("torneo_express_partidos")
+      .update({ programado_en: plan.programado_en })
+      .eq("id", partidoId)
+      .select()
+      .single();
+
+    if (error) {
+      if (
+        isMissingColumnError(error, "torneo_express_partidos", "programado_en")
+      ) {
+        partidosProgramadoColumnKnown = false;
+        throw new PartidosProgramadoColumnMissingError();
+      }
+      throwIfError(error, "update programado_en torneo_express_partidos");
+    }
+    if (!data) {
+      throw new Error("Error en update programado: sin datos");
+    }
+    return data as TorneoExpressPartido;
   }
 
   const { data, error } = await supabase

@@ -48,7 +48,17 @@ export function reassignScheduleSlotsOnReorder(
 export function hasPairSameSlotConflict(
   partidos: TorneoExpressPartido[]
 ): boolean {
-  const seen = new Set<string>();
+  return findPairSameSlotConflictDetails(partidos).pairIds.length > 0;
+}
+
+/** Parejas y partidos que quedarían dos veces en el mismo horario. */
+export function findPairSameSlotConflictDetails(
+  partidos: TorneoExpressPartido[]
+): { partidoIds: string[]; pairIds: string[] } {
+  const seen = new Map<string, string>();
+  const conflictingPartidoIds = new Set<string>();
+  const conflictingPairIds = new Set<string>();
+
   for (const partido of partidos) {
     const iso = partidoScheduleIso(partido);
     let slotKey: string;
@@ -59,9 +69,36 @@ export function hasPairSameSlotConflict(
     }
     for (const pairId of [partido.pareja_local_id, partido.pareja_visitante_id]) {
       const key = `${slotKey}|${pairId}`;
-      if (seen.has(key)) return true;
-      seen.add(key);
+      const prevPartidoId = seen.get(key);
+      if (prevPartidoId) {
+        conflictingPartidoIds.add(prevPartidoId);
+        conflictingPartidoIds.add(partido.id);
+        conflictingPairIds.add(pairId);
+      } else {
+        seen.set(key, partido.id);
+      }
     }
   }
-  return false;
+
+  return {
+    partidoIds: Array.from(conflictingPartidoIds),
+    pairIds: Array.from(conflictingPairIds),
+  };
+}
+
+export function formatPairSameSlotConflictMessage(
+  pairIds: string[],
+  labelById: Map<string, string>
+): string {
+  const names = pairIds
+    .map((id) => labelById.get(id)?.trim())
+    .filter((name): name is string => Boolean(name));
+
+  if (names.length === 1) {
+    return `${names[0]} ya juega a esa hora. Elige otro lugar.`;
+  }
+  if (names.length > 1) {
+    return `${names.join(" y ")} ya juegan a esa hora. Elige otro lugar.`;
+  }
+  return REORDER_PAIR_SLOT_CONFLICT_MSG;
 }

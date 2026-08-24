@@ -2,6 +2,7 @@ import {
   findPartidoCourtSlotConflict,
   findConflictingPartidoIds,
   planCanchaChange,
+  planProgramadoChange,
   PARTIDO_CANCHA_OCUPADA_MSG,
   assertPartidoCourtSlotAvailable,
 } from "./partidoCourtSlotConflict";
@@ -108,6 +109,47 @@ describe("partidoCourtSlotConflict", () => {
     expect(planCanchaChange(a, "2", [a, b])).toEqual({
       kind: "update",
       cancha: "2",
+    });
+  });
+
+  it("planProgramadoChange propone swap si el horario+cancha está ocupado", () => {
+    const a = partido("a", {
+      cancha: "1",
+      programado_en: "2026-08-24T15:30:00.000Z",
+      pareja_local_id: "p1",
+      pareja_visitante_id: "p2",
+    });
+    const b = partido("b", {
+      cancha: "1",
+      programado_en: "2026-08-24T14:00:00.000Z",
+      pareja_local_id: "p3",
+      pareja_visitante_id: "p4",
+    });
+    const plan = planProgramadoChange(a, b.programado_en!, [a, b]);
+    expect(plan).toEqual({
+      kind: "swap",
+      programado_en: b.programado_en,
+      swapWithId: "b",
+      swapProgramadoEn: a.programado_en,
+    });
+  });
+
+  it("planProgramadoChange update si el horario está libre en esa cancha", () => {
+    const a = partido("a", {
+      cancha: "1",
+      programado_en: "2026-08-24T15:30:00.000Z",
+    });
+    const b = partido("b", {
+      cancha: "Estadio",
+      programado_en: "2026-08-24T14:00:00.000Z",
+      pareja_local_id: "p3",
+      pareja_visitante_id: "p4",
+    });
+    expect(
+      planProgramadoChange(a, "2026-08-24T14:00:00.000Z", [a, b])
+    ).toEqual({
+      kind: "update",
+      programado_en: "2026-08-24T14:00:00.000Z",
     });
   });
 });

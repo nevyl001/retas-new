@@ -1254,7 +1254,17 @@
 .te-gestion-page .te-partido-meta-edit__error {
   margin: 0.5rem 0 0;
   font-size: 0.75rem;
-  color: var(--text-secondary, var(--ro-text-secondary));
+  color: var(--error, var(--loss, #b42318));
+}
+
+.te-gestion-page .te-partido-meta-edit__confirm {
+  margin: 0.65rem 0 0;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--text-primary, #111);
+  background: var(--ro-bg-elevated, #f5f5f5);
+  border-left: 2px solid var(--text-primary, #111);
 }
 
 .te-gestion-page .te-partidos-court-conflict-banner {

@@ -1,7 +1,10 @@
 import {
+  findPairSameSlotConflictDetails,
+  formatPairSameSlotConflictMessage,
   hasPairSameSlotConflict,
   reassignScheduleSlotsOnReorder,
 } from "./reorderPartidosSlots";
+import { programadoIsoFromMexicoCalendar } from "./teScheduleTime";
 import type { TorneoExpressPartido } from "./types";
 
 function partido(
@@ -22,22 +25,25 @@ function partido(
   };
 }
 
+const iso0800 = programadoIsoFromMexicoCalendar("2026-08-24", "08:00")!;
+const iso0900 = programadoIsoFromMexicoCalendar("2026-08-24", "09:00")!;
+
 describe("reassignScheduleSlotsOnReorder", () => {
   it("el partido arrastrado ocupa horario y cancha del destino", () => {
     const list = [
       partido("a", {
         orden: 1,
-        programado_en: "2026-08-24T14:30:00.000Z",
+        programado_en: iso0800,
         cancha: "1",
       }),
       partido("b", {
         orden: 2,
-        programado_en: "2026-08-24T14:30:00.000Z",
+        programado_en: iso0800,
         cancha: "Estadio",
       }),
       partido("c", {
         orden: 3,
-        programado_en: "2026-08-24T15:30:00.000Z",
+        programado_en: iso0900,
         cancha: "1",
       }),
     ];
@@ -46,19 +52,19 @@ describe("reassignScheduleSlotsOnReorder", () => {
     expect(next.map((p) => p.id)).toEqual(["c", "a", "b"]);
     expect(next[0]).toMatchObject({
       id: "c",
-      programado_en: "2026-08-24T14:30:00.000Z",
+      programado_en: iso0800,
       cancha: "1",
       orden: 1,
     });
     expect(next[1]).toMatchObject({
       id: "a",
-      programado_en: "2026-08-24T14:30:00.000Z",
+      programado_en: iso0800,
       cancha: "Estadio",
       orden: 2,
     });
     expect(next[2]).toMatchObject({
       id: "b",
-      programado_en: "2026-08-24T15:30:00.000Z",
+      programado_en: iso0900,
       cancha: "1",
       orden: 3,
     });
@@ -69,16 +75,30 @@ describe("reassignScheduleSlotsOnReorder", () => {
       partido("a", {
         pareja_local_id: "lalo",
         pareja_visitante_id: "pepito",
-        programado_en: "2026-08-24T14:30:00.000Z",
+        programado_en: iso0800,
         cancha: "1",
       }),
       partido("b", {
         pareja_local_id: "lalo",
         pareja_visitante_id: "devyl",
-        programado_en: "2026-08-24T14:30:00.000Z",
+        programado_en: iso0800,
         cancha: "Estadio",
       }),
     ];
     expect(hasPairSameSlotConflict(list)).toBe(true);
+    expect(findPairSameSlotConflictDetails(list)).toEqual({
+      partidoIds: expect.arrayContaining(["a", "b"]),
+      pairIds: ["lalo"],
+    });
+  });
+
+  it("mensaje con nombre de la pareja en conflicto", () => {
+    const msg = formatPairSameSlotConflictMessage(
+      ["ferrito"],
+      new Map([["ferrito", "Ferrito / Duran"]])
+    );
+    expect(msg).toBe(
+      "Ferrito / Duran ya juega a esa hora. Elige otro lugar."
+    );
   });
 });
